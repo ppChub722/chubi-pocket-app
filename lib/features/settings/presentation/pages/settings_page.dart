@@ -22,10 +22,6 @@ import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
 import '../../../users/data/users_repository.dart';
 import '../../../users/presentation/refresh_me.dart';
 
-/// `/settings` (its own tab, opened by the 👤 chip): profile card (→ the
-/// profile page) → แอป (theme, appearance, language, font) → เงิน (currency,
-/// main wallet) → การแจ้งเตือน → ข้อมูล (archive, CSV export) → เกี่ยวกับ →
-/// ออกจากระบบ. Opens with the auth cubit's `GET /users/me`; pull = that call.
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
@@ -44,7 +40,6 @@ class SettingsPage extends StatelessWidget {
             return DetailPageBody(
               onRefresh: () => refreshMe(context),
               physics: const AlwaysScrollableScrollPhysics(),
-              // Clear the floating top bar.
               topInset: inset.top + AppSpacing.sm,
               bottomInset: AppSpacing.huge + inset.bottom,
               hero: _profileCard(context, user),
@@ -65,7 +60,6 @@ class SettingsPage extends StatelessWidget {
                   children: [
                     _CurrencyRow(user: user),
                     _MoneyStyleRow(user: user),
-                    // Colour only is always coloured: no switch for it.
                     if (MoneyStyle.fromPreference(user.moneyStyle).sign !=
                         MoneySign.none)
                       _MoneyColorRow(user: user),
@@ -129,7 +123,6 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  /// The profile card: avatar · name · @username · email, › the profile page.
   Widget _profileCard(BuildContext context, User user) {
     final tint = user.iconCode.tintFor(
       Theme.of(context).extension<AppColors>()!,
@@ -174,7 +167,6 @@ User? _userOf(AuthState state) {
   return null;
 }
 
-/// Theme as ONE row: its swatches + name, › a sheet of the themes.
 class _ThemeRow extends StatelessWidget {
   const _ThemeRow();
 
@@ -269,18 +261,16 @@ class _LanguageRow extends StatelessWidget {
         for (final e in kLanguageNames.entries)
           SheetOption(value: e.key, label: e.value),
       ],
-      builder: (context, toggle) => DetailRow(
+      builder: (context, toggle) => SettingDropdownRow(
         leading: const AppIcon(AppIcons.language),
         label: l.settingsLanguage,
-        trailing: Text(kLanguageNames[code] ?? code),
-        showChevron: true,
+        value: kLanguageNames[code] ?? code,
         onTap: toggle,
       ),
     );
   }
 }
 
-/// Font sheet — each option previews itself in its own family.
 class _FontRow extends StatelessWidget {
   const _FontRow();
 
@@ -326,7 +316,6 @@ class _FontRow extends StatelessWidget {
   }
 }
 
-/// Version row. Hidden dev entrance: 5 quick taps open `/dev`.
 class _VersionRow extends StatefulWidget {
   const _VersionRow();
 
@@ -364,8 +353,7 @@ class _VersionRowState extends State<_VersionRow> {
   }
 }
 
-/// Currency: a label, never converted. Pick → the "not converted" dialog →
-/// ONE `PUT /users/me`.
+/// Currency: a label, never converted.
 class _CurrencyRow extends StatefulWidget {
   const _CurrencyRow({required this.user});
 
@@ -419,20 +407,17 @@ class _CurrencyRowState extends State<_CurrencyRow> {
             ),
           ),
       ],
-      builder: (context, toggle) => DetailRow(
+      builder: (context, toggle) => SettingDropdownRow(
         leading: const AppIcon(AppIcons.currency),
         label: l.profileCurrencyLabel,
         helper: l.settingsCurrencyHint,
-        trailing: Text('${Currencies.symbolOf(value)} $value'),
-        showChevron: true,
+        value: '${Currencies.symbolOf(value)} $value',
         onTap: _busy ? null : toggle,
       ),
     );
   }
 }
 
-/// Saves the money style (ONE `PUT /users/me`, preference `money_style`);
-/// the whole app re-draws its amounts from the answer.
 Future<void> _saveMoneyStyle(BuildContext context, MoneyStyle style) async {
   final auth = context.read<AuthCubit>();
   final users = context.read<UsersRepository>();
@@ -444,8 +429,6 @@ Future<void> _saveMoneyStyle(BuildContext context, MoneyStyle style) async {
   }
 }
 
-/// Money format (owner 2026-10-17): + / −, ( ) or colour only — each option
-/// and the row's helper show an example in that style.
 class _MoneyStyleRow extends StatefulWidget {
   const _MoneyStyleRow({required this.user});
 
@@ -489,16 +472,15 @@ class _MoneyStyleRowState extends State<_MoneyStyleRow> {
         ])
           SheetOption(value: sign, label: label, subtitle: example(sign)),
       ],
-      builder: (context, toggle) => DetailRow(
+      builder: (context, toggle) => SettingDropdownRow(
         leading: const AppIcon(AppIcons.moneyStyle),
         label: l.settingsMoneyStyle,
         helper: example(current.sign),
-        trailing: Text(switch (current.sign) {
+        value: switch (current.sign) {
           MoneySign.plusMinus => l.settingsMoneySignPlusMinus,
           MoneySign.parentheses => l.settingsMoneySignParentheses,
           MoneySign.none => l.settingsMoneySignNone,
-        }),
-        showChevron: true,
+        },
         onTap: _busy ? null : toggle,
       ),
     );
@@ -506,7 +488,7 @@ class _MoneyStyleRowState extends State<_MoneyStyleRow> {
 }
 
 /// Decimals: always / never (rounded) / hide .00 only — each option shows
-/// ฿1,000 and ฿99.50 its way. ONE `PUT /users/me` (`money_decimals`).
+/// ฿1,000 and ฿99.50 its way.
 class _MoneyDecimalsRow extends StatefulWidget {
   const _MoneyDecimalsRow({required this.user});
 
@@ -560,19 +542,17 @@ class _MoneyDecimalsRowState extends State<_MoneyDecimalsRow> {
         for (final d in MoneyDecimals.values)
           SheetOption(value: d, label: label(d), subtitle: example(d)),
       ],
-      builder: (context, toggle) => DetailRow(
+      builder: (context, toggle) => SettingDropdownRow(
         leading: const AppIcon(AppIcons.moneyDecimals),
         label: l.settingsMoneyDecimals,
         helper: example(current),
-        trailing: Text(label(current)),
-        showChevron: true,
+        value: label(current),
         onTap: _busy ? null : toggle,
       ),
     );
   }
 }
 
-/// Red / green on or off, for + / − and ( ) (colour only is always on).
 class _MoneyColorRow extends StatefulWidget {
   const _MoneyColorRow({required this.user});
 
@@ -604,8 +584,6 @@ class _MoneyColorRowState extends State<_MoneyColorRow> {
   }
 }
 
-/// Main wallet (`default_account`): the default when recording. Pick → ONE
-/// `PUT /users/me` with `default_account_id`.
 class _MainWalletRow extends StatefulWidget {
   const _MainWalletRow({required this.user});
 

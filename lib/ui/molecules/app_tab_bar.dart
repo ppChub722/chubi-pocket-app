@@ -5,13 +5,6 @@ import 'page_dots.dart';
 
 import '../tokens/app_spacing.dart';
 
-/// One tab of an [AppTabBar].
-///
-/// [icon] before the label — REQUIRED in spirit for a bar whose pages don't
-/// swipe (a mode switch, e.g. quick create's รายการ · หนี้ · ออม): with no
-/// finger-following page to explain it, the icon says what each tab is.
-/// [color] tints the selected tab and the underline (a mode's own colour);
-/// null = the theme primary.
 class AppTab<T> {
   const AppTab({
     required this.value,
@@ -28,11 +21,6 @@ class AppTab<T> {
   final Color? color;
 }
 
-/// Equal-width underline tab bar (categories' expense/income tabs style).
-/// Value-driven — no `TabController` needed; the page swaps its body on
-/// [onChanged]. The underline is one indicator that slides to the selected
-/// tab. Put the body in an [AppTabPager] (and pass its [pager] here) to
-/// swipe between tabs with the underline following the finger.
 class AppTabBar<T> extends StatelessWidget {
   const AppTabBar({
     required this.tabs,
@@ -52,7 +40,6 @@ class AppTabBar<T> extends StatelessWidget {
 
   static const _slide = Duration(milliseconds: 240);
 
-  /// The underline's key (tests measure its position).
   static const underlineKey = ValueKey('app-tab-bar-underline');
 
   @override
@@ -135,7 +122,6 @@ class AppTabBar<T> extends StatelessWidget {
       child: InkWell(
         onTap: () => onChanged(t.value),
         child: Padding(
-          // Bottom: room for the indicator.
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.xs,
             AppSpacing.md,
@@ -143,7 +129,6 @@ class AppTabBar<T> extends StatelessWidget {
             AppSpacing.md + 2.5,
           ),
           child: Center(
-            // The shared count badge, floating off the label's top-right.
             child: CountBadge.floating(
               child: label,
               count: t.badgeCount,
@@ -156,19 +141,6 @@ class AppTabBar<T> extends StatelessWidget {
   }
 }
 
-/// The body under an [AppTabBar], one page per tab: the content follows
-/// the finger sideways and settles on a tab; tapping a tab slides there
-/// slow → fast → slow (owner 2026-10-09: this, not a fling-and-cut, app
-/// wide). Pages stay alive off-screen (scroll, filters, loaded data).
-///
-/// The page owns [controller] — create it with `initialPage` = the
-/// selected tab's index — and passes it to [AppTabBar.pager] too, so the
-/// underline tracks the swipe.
-///
-/// [enabled] false stops paging via physics only — the tree doesn't
-/// change, so a long-press that turns into a drag mid-gesture (reorder)
-/// isn't torn down. Each page builds its own scrollables: a
-/// `ScrollController` must not be shared between pages.
 class AppTabPager<T> extends StatefulWidget {
   const AppTabPager({
     required this.values,
@@ -181,22 +153,16 @@ class AppTabPager<T> extends StatefulWidget {
     super.key,
   });
 
-  /// Tab values, in bar order.
   final List<T> values;
   final T selected;
 
-  /// A swipe landed on another tab.
   final ValueChanged<T> onChanged;
   final PageController controller;
   final Widget Function(BuildContext context, T value) builder;
   final bool enabled;
 
-  /// Each page ends with the [PageDots]: a `ListPageBody` inside adds them
-  /// itself (via [PageDotsScope]); a custom scrollable puts a
-  /// [PageDotsFooter] last.
   final bool showPageDots;
 
-  /// A tap on the bar → this slide.
   static const duration = Duration(milliseconds: 320);
   static const curve = Curves.easeInOutCubic;
 
@@ -205,7 +171,6 @@ class AppTabPager<T> extends StatefulWidget {
 }
 
 class _AppTabPagerState<T> extends State<AppTabPager<T>> {
-  /// A tap-driven slide is running — the pages it passes aren't picks.
   bool _sliding = false;
 
   @override
@@ -256,8 +221,6 @@ class _AppTabPagerState<T> extends State<AppTabPager<T>> {
   }
 }
 
-/// Paging with a stiffer spring — a released swipe settles quicker than
-/// the stock page physics.
 class _SnappyPagePhysics extends PageScrollPhysics {
   const _SnappyPagePhysics({super.parent});
 

@@ -9,8 +9,6 @@ import '../../../recurring/data/recurring_link_repository.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 
-/// The amount question after a link: the setting's amount vs the
-/// transaction's (`amount_differs`). Asked once.
 class RecurringAmountAsk {
   const RecurringAmountAsk({
     required this.recurringId,
@@ -23,18 +21,12 @@ class RecurringAmountAsk {
   final double txAmount;
 }
 
-/// "งวด 16 ต.ค." — the period an occurrence stands for.
 String recurringPeriodLabel(AppLocalizations l, DateTime date) =>
     l.recurringPickerPeriod(DateFormat.MMMd(l.localeName).format(date));
 
-/// The text of a failed link: 409 ITEM_ALREADY_LINKED has its own words,
-/// anything else the BE's message.
 String recurringLinkError(AppLocalizations l, ApiException e) =>
     e.code == 'ITEM_ALREADY_LINKED' ? l.recurringLinkAlreadyLinked : e.message;
 
-/// The route of the recurring create page prefilled from a transaction
-/// (type, amount, category, wallet, name). The page reads `type=saving` and
-/// `account` today; the rest are for it to pick up (see the report).
 String recurringCreateRoute({
   required TransactionType type,
   double? amount,
@@ -52,22 +44,15 @@ String recurringCreateRoute({
   },
 ).toString();
 
-/// The recurring link of ONE transaction form, shared by quick create (the
-/// pick is held until the transaction exists, then [link]) and the
-/// transaction detail ([linkNow], immediate). Holds the chosen candidate, the
-/// busy flag and the open amount question; the page listens and rebuilds.
 class RecurringLinkHandle extends ChangeNotifier {
   RecurringLinkHandle({this.repository});
 
-  /// Tests inject one; null = built from the app's ApiClient.
   final RecurringLinkRepository? repository;
 
   LinkCandidate? _candidate;
   RecurringAmountAsk? _ask;
   bool _busy = false;
 
-  /// The chosen recurring — only while it still fits [type] (a switch of the
-  /// draft's type drops it, silently).
   LinkCandidate? candidateFor(TransactionType type) =>
       _candidate != null && _candidate!.setting.type == type
       ? _candidate
@@ -82,8 +67,6 @@ class RecurringLinkHandle extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Forget the chosen candidate but keep the open amount question: the link
-  /// is done (the saved row now carries it).
   void clearChoice() {
     _candidate = null;
     notifyListeners();
@@ -96,7 +79,6 @@ class RecurringLinkHandle extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Opens the picker; the choice is kept in the handle and returned.
   Future<LinkCandidate?> choose(
     BuildContext context, {
     required TransactionType type,
@@ -120,9 +102,6 @@ class RecurringLinkHandle extends ChangeNotifier {
   RecurringLinkRepository _repo(BuildContext context) =>
       repository ?? RecurringLinkRepository.of(context);
 
-  /// The link call for [txId] with the chosen candidate. Returns the answer
-  /// (null on a failure: [error] says why). Opens the amount question when
-  /// the BE says the amounts differ.
   Future<LinkResult?> link(
     BuildContext context,
     String txId, {
@@ -153,7 +132,6 @@ class RecurringLinkHandle extends ChangeNotifier {
     }
   }
 
-  /// Detail page: link [txId] now, hand the answer's row to [onLinked].
   Future<Transaction?> linkNow(
     BuildContext context,
     String txId, {
@@ -167,10 +145,6 @@ class RecurringLinkHandle extends ChangeNotifier {
     return tx;
   }
 
-  /// Detail page: the ✕ of a saved link — ONE `unlinkRecurringItem` call
-  /// (the occurrence is open again, the transaction untouched). On success
-  /// [onUnlinked] runs (the page patches its cached row); a failure goes to
-  /// [error]. Returns whether it worked.
   Future<bool> unlinkNow(
     BuildContext context,
     String itemId, {
@@ -191,8 +165,6 @@ class RecurringLinkHandle extends ChangeNotifier {
     }
   }
 
-  /// The answer to the amount question: "อัปเดต" = ONE `PUT /recurring/:id
-  /// {amount}`; "ไม่ต้อง" = nothing. Either way the link stays.
   Future<void> answer(
     BuildContext context, {
     required bool update,
@@ -218,10 +190,6 @@ class RecurringLinkHandle extends ChangeNotifier {
     }
   }
 
-  /// The row's slot. [linkedName] = the saved transaction's own link (shown
-  /// as the chip, [onOpenLinked] opens it); otherwise the chosen candidate.
-  /// The ✕: on a saved link [onUnlink] (the unlink call); on a draft's pick
-  /// [onClear] (local, only before the transaction exists).
   SplitRecurringSlot slot(
     BuildContext context, {
     required TransactionType type,
@@ -270,8 +238,6 @@ class RecurringLinkHandle extends ChangeNotifier {
   }
 }
 
-/// After a quick create saved the transaction: the amount question as a
-/// dialog (the sheet is gone, so there is no row to put a card under).
 Future<void> askRecurringAmountAfterCreate(
   BuildContext context,
   RecurringLinkHandle handle, {
@@ -295,11 +261,6 @@ Future<void> askRecurringAmountAfterCreate(
   await handle.answer(context, update: yes, error: error, done: done);
 }
 
-/// The picker sheet (thin wrapper over [RecurringPickerSheet]): loads the
-/// candidates for [type] in one call, shows them in the BE's order — the
-/// recurring group, then the เตือนจ่าย ones (no amount yet) — and resolves
-/// the chosen [LinkCandidate]. The footer opens the create page at
-/// [createRoute]. Resolves null when dismissed.
 Future<LinkCandidate?> showRecurringLinkPicker(
   BuildContext context, {
   required TransactionType type,
@@ -413,8 +374,6 @@ class _RecurringLinkSheetState extends State<_RecurringLinkSheet> {
       error: _error,
       onRetry: _load,
       selectedId: widget.selectedItemId,
-      // The BE's order, grouped as it came: a row sits in exactly one group
-      // (likely rows leave their normal one); no client-side ranking.
       groups: [
         RecurringPickGroup(
           title: l.recurringPickerGroupLikely,

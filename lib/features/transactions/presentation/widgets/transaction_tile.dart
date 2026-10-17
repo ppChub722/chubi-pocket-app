@@ -9,18 +9,6 @@ import '../../../tags/presentation/widgets/tag_chip.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 
-/// The one transaction row used everywhere (dashboard recent list, the
-/// transactions tab, account detail, …) — built on [MoneyListTile] so
-/// metrics, colours and the 👁 privacy toggle match every money row.
-///
-/// Leading: the category's icon exactly as on the categories page (L2/L3
-/// carry their own icon); no category → a type glyph
-/// tinted expense / income. Title: the description, else the category name
-/// (system ones in the user's language). Subtitle: the context the current
-/// screen doesn't already show — toggle with [showAccount] /
-/// [showDate] (e.g. hide the account on that account's own page, hide the
-/// date under a date header) — plus the tags (`#name` in each tag's
-/// colour) on the same line, and a split marker.
 class TransactionTile extends StatelessWidget {
   const TransactionTile({
     required this.transaction,
@@ -34,7 +22,6 @@ class TransactionTile extends StatelessWidget {
   final bool showAccount;
   final bool showDate;
 
-  /// Defaults to opening the transaction detail.
   final VoidCallback? onTap;
 
   @override
@@ -44,8 +31,6 @@ class TransactionTile extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
 
-    // Everything comes embedded in the row (API v2): the category's own
-    // icon (L2/L3 are not resolved through their parent) and name.
     final cat = tx.category;
     final Widget leading = cat != null
         ? IconDisplay(type: IconType.category, size: 36, iconCode: cat.iconCode)
@@ -59,8 +44,6 @@ class TransactionTile extends StatelessWidget {
             size: 36,
           );
 
-    // The record's own title ("what for") first, else its category (system
-    // ones in the user's language).
     final categoryName = cat != null
         ? categoryDisplayName(
             l,
@@ -72,11 +55,16 @@ class TransactionTile extends StatelessWidget {
         ? description
         : (categoryName.isNotEmpty ? categoryName : '—');
 
-    // The wallet's own icon inside its mini chip; unknown wallet → no icon.
     final wallet = tx.account;
+    final walletCode = wallet?.iconCode;
+    final walletFill = walletCode?.background != null
+        ? walletCode!.bgColorFor(palette)
+        : null;
+    final walletOnFill =
+        walletFill != null && (walletCode?.iconColors.isNotEmpty ?? false)
+        ? resolveColor(walletCode!.iconColors.first, palette)
+        : null;
 
-    // The shared row (owner 2026-10-11): title + wallet chip, then
-    // `category · #tags`; the date lives in the list's day headers.
     return TxRow(
       leading: leading,
       title: title,
@@ -90,6 +78,14 @@ class TransactionTile extends StatelessWidget {
               type: IconType.account,
               size: 14,
               iconCode: wallet.iconCode,
+            ),
+      walletFill: walletFill,
+      walletOnFill: walletOnFill,
+      walletGlyph: walletFill == null
+          ? null
+          : IconRegistry.get(
+              walletCode!.icon,
+              fallback: IconType.account.fallbackIcon,
             ),
       category: description.isNotEmpty && categoryName.isNotEmpty
           ? categoryName

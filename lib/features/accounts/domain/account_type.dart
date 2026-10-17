@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../ui/ui.dart';
 
-/// The five account types from
-/// [`design/spec/03-accounts.md §3.1`](../../../../../chubi-pocket-docs/design/spec/03-accounts.md).
-///
-/// Loans and savings are intentionally NOT account types — see §3.11. Loans
-/// live in `scheduled_transactions` (P1c); savings goals link to a `bank`.
 enum AccountType {
   cash,
   bank,
@@ -13,8 +8,6 @@ enum AccountType {
   creditCard,
   payLater;
 
-  /// Glyph used for the type chip in the create / edit form. Outline style
-  /// keeps the chip visually consistent with the M3 default.
   IconData get icon {
     switch (this) {
       case AccountType.cash:
@@ -30,8 +23,6 @@ enum AccountType {
     }
   }
 
-  /// Server-side string representation. Snake_case to match the spec
-  /// (`'cash' | 'bank' | 'e_wallet' | 'credit_card' | 'pay_later'`).
   String toJson() {
     switch (this) {
       case AccountType.cash:
@@ -64,15 +55,9 @@ enum AccountType {
     }
   }
 
-  /// Credit-style accounts that carry billing fields and behave as debt
-  /// (negative balance is debt; carry a `credit_limit` and statement / due
-  /// date columns).
   bool get isCredit =>
       this == AccountType.creditCard || this == AccountType.payLater;
 
-  /// The type's group colour (owner 2026-10-11) — the one place to read
-  /// it: what you have ([AppColors.walletAsset]) or what you owe
-  /// ([AppColors.walletLiability], [isCredit]). Theme tokens, light / dark.
   Color colorOf(BuildContext context) {
     final palette = Theme.of(context).extension<AppColors>()!;
     return isCredit ? palette.walletLiability : palette.walletAsset;

@@ -13,27 +13,20 @@ import '../cubit/tx_form_options_cubit.dart';
 
 export '../tx_rules.dart' show txCanJoinEvent, typeCanJoinEvent;
 
-// A transaction ↔ an event (project): the quick create's "เพิ่มเข้าอีเวนต์"
-// and the detail page's event card (owner 2026-10-10).
-
-/// What the event sheet picked.
 sealed class EventTarget {
   const EventTarget();
 }
 
-/// A new event, made with this name on บันทึก.
 class NewEventTarget extends EventTarget {
   const NewEventTarget(this.name);
   final String name;
 }
 
-/// One of my active events.
 class ExistingEventTarget extends EventTarget {
   const ExistingEventTarget(this.project);
   final Project project;
 }
 
-/// Out of the event it's in (the detail page only).
 class RemoveFromEvent extends EventTarget {
   const RemoveFromEvent();
 }
@@ -44,21 +37,15 @@ String eventErrorMessage(AppLocalizations l, ApiException e) =>
       'TX_NOT_FOUND' => l.quickCreateErrorTxNotFound,
       'TX_ALREADY_IN_PROJECT' => l.quickCreateErrorTxAlreadyInProject,
       'VALIDATION_ERROR' => l.quickCreateErrorValidation,
-      // 422: an opening-balance / adjustment / repayment row.
       'TX_NOT_BILLABLE' => l.quickCreateErrorNotBillable,
-      // 422: someone already paid their share back / a split was
-      // forgiven — those can't move into an event.
+      // 422: someone already paid their share back / a split was forgiven —
+      // those can't move into an event.
       'TX_SPLIT_HAS_REPAYMENT' => l.txEventSplitRepaid,
       'TX_SPLIT_CANCELLED' => l.txEventSplitCancelled,
-      // 400: a split's contact is gone.
       'CONTACT_NOT_FOUND' || 'CONTACT_ARCHIVED' => l.txSplitErrorContact,
       _ => e.message,
     };
 
-/// Applies [change] to the saved row [txId], now in [currentProjectId]
-/// (null = none): into an existing event (bills), into a new one (quick)
-/// — `move` when it's leaving another — or out of it (DELETE). Throws
-/// [ApiException].
 Future<void> applyEventChange(
   ProjectsRepository repo, {
   required String txId,
@@ -78,7 +65,6 @@ Future<void> applyEventChange(
   }
 }
 
-/// [target]'s row text: "ใหม่: name" for one made on save.
 String? eventTargetName(AppLocalizations l, EventTarget? target) =>
     switch (target) {
       null || RemoveFromEvent() => null,
@@ -86,25 +72,6 @@ String? eventTargetName(AppLocalizations l, EventTarget? target) =>
       ExistingEventTarget(:final project) => project.name,
     };
 
-/// "เพิ่มเข้าอีเวนต์" (owner 2026-10-10) — the thin wrapper of the kit's
-/// [EventTargetSheet]: it reads the events from the form options (or the
-/// [ProjectsCubit]), maps them + the l10n words to the organism's plain data
-/// and maps its pick back to an [EventTarget].
-///
-///   อีเวนต์ที่เปิดอยู่                 (most recently updated first)
-///   🎉 ทริปเชียงใหม่                    ← highlighted when it's the pick
-///      4 คน · 12 ต.ค. – 15 ต.ค.
-///   ▬▬▬▬
-///   ＋ สร้างอีเวนต์ใหม่   → name (prefilled [suggestedName]) · who joins ·
-///                         [สร้าง "name"]
-///   ▬▬▬▬
-///   เอาออกจากอีเวนต์       (when it's in one — [currentProjectId], which
-///                         isn't offered again)
-///
-/// No open events: straight to the create section. [selectedProjectId]
-/// highlights the event picked so far. [allowCreate] false (a draft can only
-/// name an event that exists) leaves the create section out. Null when
-/// dismissed.
 Future<EventTarget?> showEventTargetSheet(
   BuildContext context, {
   required String suggestedName,
@@ -113,8 +80,6 @@ Future<EventTarget?> showEventTargetSheet(
   bool useRootNavigator = true,
   bool allowCreate = true,
 }) {
-  // A form that holds the form options (quick create) lends its events: the
-  // sheet's route sits outside the form's tree, so pass the cubit along.
   final options = maybeTxFormOptions(context, watch: false);
   return showAppSheetCustom<EventTarget>(
     context,
@@ -136,7 +101,6 @@ Future<EventTarget?> showEventTargetSheet(
   );
 }
 
-/// Reads the cubit(s), feeds [EventTargetSheet], maps its pick.
 class _EventTargetLoader extends StatefulWidget {
   const _EventTargetLoader({
     required this.suggestedName,
@@ -159,7 +123,6 @@ class _EventTargetLoaderState extends State<_EventTargetLoader> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      // The form options carry the events: no extra call.
       final opts = maybeTxFormOptions(context, watch: false);
       if (opts != null) {
         opts.loadIfNeeded();
@@ -169,7 +132,6 @@ class _EventTargetLoaderState extends State<_EventTargetLoader> {
     });
   }
 
-  /// "4 คน · 12 ต.ค. – 15 ต.ค." from what the list already carries.
   String? _subtitle(AppLocalizations l, Project p) {
     final locale = Localizations.localeOf(context).toLanguageTag();
     String? day(String? ymd) {
@@ -191,8 +153,6 @@ class _EventTargetLoaderState extends State<_EventTargetLoader> {
     final l = AppLocalizations.of(context)!;
     final opts = maybeTxFormOptions(context);
     final state = opts == null ? context.watch<ProjectsCubit>().state : null;
-    // From the form options an event is just id + name + icon: no member
-    // count / dates, so no subtitle.
     final projects = opts == null
         ? state!.projects
         : [
@@ -229,8 +189,6 @@ class _EventTargetLoaderState extends State<_EventTargetLoader> {
         newTitle: l.quickEventNew,
         newRow: l.quickEventNewRow,
         nameHint: l.quickEventNameLabel,
-        // Nothing is created here — the event is made on บันทึก, with the
-        // split people in it.
         membersInfo: l.quickEventMembersInfo,
         remove: l.txEventRemove,
         createNamed: l.quickEventCreateNamed,

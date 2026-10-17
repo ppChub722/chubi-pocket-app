@@ -6,8 +6,6 @@ import '../../transactions/domain/refs.dart';
 import '../domain/budget.dart';
 import '../domain/budget_detail.dart';
 
-/// The editing snapshot of a budget's setup — drives the dirty check and the
-/// undo history of the page ([EditModeMixin]). Plain values only.
 class BudgetDraft extends Equatable {
   const BudgetDraft({
     required this.start,
@@ -27,7 +25,6 @@ class BudgetDraft extends Equatable {
     this.end = const BudgetEnd.none(),
   });
 
-  /// A new budget: monthly from the 1st of this month, nothing counted yet.
   factory BudgetDraft.blank() {
     final t = today();
     return BudgetDraft(start: DateTime(t.year, t.month, 1));
@@ -55,11 +52,9 @@ class BudgetDraft extends Equatable {
   final String description;
   final String note;
 
-  /// Formatted text, as in the field.
   final String amount;
   final IconCode? iconCode;
 
-  /// Null = ไม่เตือน.
   final int? warnPct;
   final bool allScope;
   final List<BudgetScopeCategory> categories;
@@ -76,7 +71,6 @@ class BudgetDraft extends Equatable {
 
   BudgetRule get rule => BudgetRule(freq: freq, interval: interval);
 
-  /// The kit's rule for the period sheet (freq · every N · end).
   RecurrenceRule get kitRule => RecurrenceRule(
     freq: RecurrenceFreq.values.firstWhere(
       (f) => f.name == freq,
@@ -104,8 +98,6 @@ class BudgetDraft extends Equatable {
     },
   );
 
-  /// The amount / period shape differs from [other]'s — what "ใช้กับรอบไหน"
-  /// is about.
   bool periodShapeDiffers(BudgetDraft other) =>
       amount.trim() != other.amount.trim() ||
       freq != other.freq ||

@@ -18,23 +18,15 @@ class DescriptionPickerLabels {
     required this.useLabel,
   });
 
-  /// The sheet title.
   final String title;
 
-  /// The text field's hint.
   final String hint;
 
-  /// Heading of the suggestions list ("used before").
   final String pastHeading;
 
-  /// The "use what I typed" row, given the typed text.
   final String Function(String typed) useLabel;
 }
 
-/// A free-text field with suggestions (e.g. descriptions used before),
-/// filtered as you type. Presentational: data in ([current], [suggestions]),
-/// the chosen / typed text out, words as [labels]. Resolves null when
-/// dismissed.
 Future<String?> showDescriptionPickerSheet(
   BuildContext context, {
   required List<String> suggestions,
@@ -53,7 +45,6 @@ Future<String?> showDescriptionPickerSheet(
   ),
 );
 
-/// The body of [showDescriptionPickerSheet].
 class DescriptionPickerSheet extends StatefulWidget {
   const DescriptionPickerSheet({
     required this.current,
@@ -111,7 +102,6 @@ class _DescriptionPickerSheetState extends State<DescriptionPickerSheet> {
               onSubmitted: (v) => widget.onPicked(v.trim()),
             ),
           ),
-          // Typed something new → use it as-is.
           if (q.isNotEmpty && !exact)
             Padding(
               padding: const EdgeInsets.fromLTRB(

@@ -4,8 +4,6 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../domain/category.dart';
 import '../../../../ui/ui.dart';
 
-/// Reusable category-row card. Used as form live-preview and inside the
-/// icon-maker sheet preview builder.
 class CategoryPreviewCard extends StatelessWidget {
   const CategoryPreviewCard({
     required this.category,

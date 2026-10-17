@@ -14,7 +14,6 @@ import '../../tokens/chip_size.dart';
 import '../../tokens/typography.dart';
 import '../icons/icon_code.dart';
 
-/// The words of the reject confirmation of a [NotificationTileView].
 class NotificationRejectConfirm {
   const NotificationRejectConfirm({
     required this.title,
@@ -27,11 +26,6 @@ class NotificationRejectConfirm {
   final String confirmLabel;
 }
 
-/// One inbox row, presentational: sender avatar with a type badge, the
-/// sentence, time (+ amount), a dot when unread. When [pending] it shows big
-/// accept / reject buttons under the text; [rejectConfirm] non-null asks
-/// before [onReject]. [acceptedLabel] non-null shows the "done" chip.
-/// All words come from the caller.
 class NotificationTileView extends StatelessWidget {
   const NotificationTileView({
     required this.actorName,
@@ -53,7 +47,6 @@ class NotificationTileView extends StatelessWidget {
     super.key,
   });
 
-  /// The sender avatar's diameter.
   static const double _avatar = 40;
 
   final String actorName;
@@ -64,17 +57,13 @@ class NotificationTileView extends StatelessWidget {
   final IconData typeIcon;
   final bool unread;
 
-  /// Still awaiting an answer: shows the accept / reject buttons.
   final bool pending;
 
-  /// Non-null = answered: the success chip with this label.
   final String? acceptedLabel;
   final String acceptLabel;
 
-  /// null = one full-width action (no second button).
   final String? rejectLabel;
 
-  /// A notice from the app itself: [typeIcon] in a circle, no avatar.
   final bool system;
   final NotificationRejectConfirm? rejectConfirm;
   final VoidCallback? onTap;
@@ -144,7 +133,6 @@ class NotificationTileView extends StatelessWidget {
                 : null,
           ),
           if (pending)
-            // The answer buttons sit under the text, past the avatar.
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.lg + _avatar + AppSpacing.md,

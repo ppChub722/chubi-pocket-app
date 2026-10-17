@@ -6,22 +6,6 @@ import 'package:dio/dio.dart';
 import '../logger/app_logger.dart';
 import '../logger/log_entry.dart';
 
-/// Dio interceptor that:
-///  - Generates a UUID v4 per outbound request, sends it as
-///    `X-Request-ID`, and stamps every log line + the eventual error
-///    with the same id (matches the BE plan's request-id correlation).
-///  - Logs request line: method, url, status, latency.
-///  - Optionally captures request + response body, redacted, capped at
-///    [_maxBodyBytes]. Gated by [LogConfig.logBodies] so prod doesn't
-///    leak payloads.
-///  - On error responses, escalates to warn (4xx) or error (5xx).
-///
-/// Per the plan's redact list (logging-plan.md §3 / line 81):
-///   password, passwd, secret, token, authorization, apikey, api_key,
-///   pin, otp, ssn, card, cvv
-///
-/// Headers + JSON body get walked recursively; matching keys (case-
-/// insensitive substring) get their values replaced with `[REDACTED]`.
 class HttpLoggerInterceptor extends Interceptor {
   HttpLoggerInterceptor({AppLogger? logger})
     : _logger = logger ?? AppLogger.instance;
@@ -121,8 +105,6 @@ class HttpLoggerInterceptor extends Interceptor {
     handler.next(err);
   }
 
-  // ── helpers ──────────────────────────────────────────────────────
-
   void _emit(
     LogLevel level,
     String msg, {
@@ -153,9 +135,8 @@ class HttpLoggerInterceptor extends Interceptor {
   }
 
   String _safeUrl(RequestOptions options) {
-    // Dio's options.uri can throw on malformed combinations; fall back
-    // to path concatenation. Either form is fine — we just want
-    // grep-able context.
+    // Dio's options.uri can throw on malformed combinations; fall back to path
+    // concatenation.
     try {
       return options.uri.toString();
     } catch (_) {
@@ -163,11 +144,6 @@ class HttpLoggerInterceptor extends Interceptor {
     }
   }
 
-  /// Returns a redacted, length-capped, JSON-encoded preview of [data].
-  /// Returns null when the body is empty / not capturable.
-  ///
-  /// [extraScrub] is an optional second map of keys to scrub (used to
-  /// pass headers through the same redactor).
   String? _captureBody(Object? data, Map<String, dynamic>? extraScrub) {
     if (data == null) return null;
     Object? structured;
@@ -195,13 +171,12 @@ class HttpLoggerInterceptor extends Interceptor {
       enc = '${enc.substring(0, _maxBodyBytes)}…[truncated]';
     }
     if (extraScrub != null) {
-      // Bookkeeping: caller can append redacted headers if they want;
-      // we don't currently inject them into the body string. Reserved.
+      // Bookkeeping: caller can append redacted headers if they want; we don't
+      // currently inject them into the body string.
     }
     return enc;
   }
 
-  /// Walk `value`; redact map entries whose key matches the redact list.
   Object? _redactValue(Object? value) {
     if (value is Map) {
       return value.map((k, v) {
@@ -224,9 +199,6 @@ class HttpLoggerInterceptor extends Interceptor {
     return false;
   }
 
-  /// UUID v4. We don't pull in `uuid` package for this single use —
-  /// the spec only needs 122 random bits + 6 deterministic version/
-  /// variant bits.
   String _newRequestId() {
     final bytes = List<int>.generate(16, (_) => _rng.nextInt(256));
     bytes[6] = (bytes[6] & 0x0F) | 0x40; // version 4
@@ -241,7 +213,6 @@ class HttpLoggerInterceptor extends Interceptor {
   }
 }
 
-/// dart:math.Random alias so the file doesn't need a top-level import.
 class _Random {
   _Random() : _r = Random.secure();
   final Random _r;

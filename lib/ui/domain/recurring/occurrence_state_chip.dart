@@ -4,11 +4,6 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../molecules/status_chip.dart';
 import '../../tokens/chip_size.dart';
 
-/// Where one produced item of a recurring stands (owner 2026-10-13, FINAL):
-/// derived from its link — no link yet and its date is ahead = [upcoming];
-/// its date came but nothing was made = [notCreated]; a pending draft =
-/// [pending]; a real transaction = [done]; [archived] = "don't want it"
-/// (a user flag, hidden).
 enum OccurrenceState {
   upcoming(StatusKind.upcoming),
   notCreated(StatusKind.notCreated),
@@ -20,8 +15,6 @@ enum OccurrenceState {
 
   final StatusKind kind;
 
-  /// The BE's wire value (`upcoming` | `not_created` | `pending` | `done` |
-  /// `archived`); unknown → [notCreated].
   static OccurrenceState parse(String? wire) => switch (wire) {
     'upcoming' => upcoming,
     'pending' => pending,
@@ -39,8 +32,6 @@ enum OccurrenceState {
   };
 }
 
-/// An occurrence's state as a [StatusChip] (ล่วงหน้า / ยังไม่สร้าง /
-/// รอยืนยัน / บันทึกแล้ว / เก็บถาวร), one tone per state app-wide.
 class OccurrenceStateChip extends StatelessWidget {
   const OccurrenceStateChip({required this.state, this.size, super.key});
 

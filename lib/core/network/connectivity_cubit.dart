@@ -3,12 +3,6 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Tracks whether the device has network connectivity. Emits a single boolean:
-/// `true` = online, `false` = offline.
-///
-/// `connectivity_plus` reports the link layer (wifi/ethernet/mobile/none), not
-/// reachability — but for the OfflineBanner's purpose ("nothing will work
-/// right now") this is good enough. Reachability checks are Phase 2+ polish.
 class ConnectivityCubit extends Cubit<bool> {
   ConnectivityCubit({Connectivity? connectivity})
     : _connectivity = connectivity ?? Connectivity(),

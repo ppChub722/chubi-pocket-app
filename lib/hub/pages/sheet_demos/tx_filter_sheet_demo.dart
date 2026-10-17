@@ -18,6 +18,9 @@ final _labels = TxFilterSheetLabels(
   walletTitle: 'Wallet',
   categoryTitle: 'Category',
   tagTitle: 'Tag',
+  amountTitle: 'Amount',
+  amountMin: 'Min',
+  amountMax: 'Max',
   expense: 'Expense',
   income: 'Income',
   transfer: 'Transfer',
@@ -91,6 +94,20 @@ const _options = TxFilterOptions(
   ],
 );
 
+/// Far more chips than the 4 lines hold: "More" shows only here — in
+/// [_options] every chip fits, so it is hidden.
+final _manyOptions = TxFilterOptions(
+  wallets: [
+    for (var i = 1; i <= 24; i++)
+      TxFilterOption(id: 'mw$i', label: 'Wallet $i', icon: AppIcons.wallet),
+  ],
+  categories: _options.categories,
+  tags: [
+    for (var i = 1; i <= 24; i++)
+      TxFilterOption(id: 'mt$i', label: 'tag $i', icon: AppIcons.tag),
+  ],
+);
+
 class _TxFilterSheetDemo extends StatefulWidget {
   const _TxFilterSheetDemo();
 
@@ -104,11 +121,12 @@ class _TxFilterSheetDemoState extends State<_TxFilterSheetDemo> {
   Future<void> _open({
     required Future<TxFilterOptions> options,
     bool walletLocked = false,
+    TxFilterSelection initial = const TxFilterSelection(),
   }) async {
     const empty = TxFilterSelection();
     final r = await showTxFilterSideSheet(
       context,
-      initial: empty,
+      initial: initial,
       reset: empty,
       options: options,
       labels: _labels,
@@ -121,7 +139,8 @@ class _TxFilterSheetDemoState extends State<_TxFilterSheetDemo> {
           : 'types ${r.types.map((t) => t.name).toList()} '
                 '· wallets ${r.walletIds}${r.noWallet ? ' + none' : ''} '
                 '· categories ${r.categoryIds}${r.uncategorized ? ' + none' : ''} '
-                '· tags ${r.tagIds}${r.noTags ? ' + none' : ''}',
+                '· tags ${r.tagIds}${r.noTags ? ' + none' : ''} '
+                '· amount ${r.amountMin ?? '…'} – ${r.amountMax ?? '…'}',
     );
   }
 
@@ -146,6 +165,19 @@ class _TxFilterSheetDemoState extends State<_TxFilterSheetDemo> {
                 const Duration(seconds: 2),
                 () => _options,
               ),
+            ),
+          ),
+          AppButton(
+            label: 'Many options (More shows)',
+            variant: AppButtonVariant.outlined,
+            onPressed: () => _open(options: Future.value(_manyOptions)),
+          ),
+          AppButton(
+            label: 'Amount range preset',
+            variant: AppButtonVariant.outlined,
+            onPressed: () => _open(
+              options: Future.value(_options),
+              initial: const TxFilterSelection(amountMin: 100, amountMax: 5000),
             ),
           ),
           AppButton(

@@ -5,11 +5,6 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/saving_goal.dart';
 
-// Wording only: maps the BE's numbers / states to Thai strings and kit chips.
-// No layout, no styling (the pages hand these to kit pieces).
-
-/// The one status chip of a goal's hero: closed / archived / ongoing (no
-/// target) / reached / behind / on track — or none. "ช้า N เดือน" never shows with 0 months.
 Widget? savingGoalStatusChip(AppLocalizations l, SavingGoal g) {
   if (g.isArchived) {
     return StatusChip(label: l.sgv2FilterArchived, kind: StatusKind.archived);
@@ -39,8 +34,6 @@ Widget? savingGoalStatusChip(AppLocalizations l, SavingGoal g) {
   };
 }
 
-/// The ETA badge of a list row: "ถึงเป้า ส.ค. 2029 · ช้า 2 เดือน" (amber when
-/// behind) / "ถึงเป้า มี.ค. 2027" / "ถึงเป้าแล้ว". Null with nothing to say.
 ({String label, Tone tone})? savingGoalEtaBadge(
   BuildContext context,
   AppLocalizations l,
@@ -78,7 +71,6 @@ Widget? savingGoalStatusChip(AppLocalizations l, SavingGoal g) {
   };
 }
 
-/// "วันที่ 25 ของทุกเดือน · ฿5,500 จาก โดราเอมอน" (or "จาก ไม่มีกระเป๋า").
 String savingAutoSaveCaption(
   BuildContext context,
   AppLocalizations l,

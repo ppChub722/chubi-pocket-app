@@ -3,10 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/account.dart';
 
-/// A wallet as a [PickCard], dressed like the wallet cards on the wallets
-/// page once picked: the wallet's colour wash, its icon (+ the shared-wallet
-/// badge), the balance in its accent colour and the type glyph faded in the
-/// corner. Nothing picked → the dashed empty card.
 class WalletPickCard extends StatelessWidget {
   const WalletPickCard({
     required this.account,
@@ -27,15 +23,11 @@ class WalletPickCard extends StatelessWidget {
   final VoidCallback? onTap;
   final String? errorText;
 
-  /// See [PickCard.editable] / [PickCard.onLongPress].
   final bool editable;
   final VoidCallback? onLongPress;
 
-  /// Two lines only (caption + name): no balance line. The flow cards of
-  /// quick create (transfer / debt / saving).
   final bool twoLine;
 
-  /// [PickCard.dense], with a smaller icon — two cards on one row.
   final bool dense;
 
   double get _icon =>

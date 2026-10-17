@@ -7,9 +7,6 @@ import '../../transactions/domain/transaction_type.dart';
 import '../domain/recurring.dart';
 import '../domain/recurring_item.dart';
 
-// Thin wrappers: models → the kit's TxRow (no styling here).
-
-/// The kind's label ("ค่าสมาชิก", "ผ่อนชำระ", "รายรับ", "เตือนจ่าย").
 String recurringKindLabel(AppLocalizations l, RecurringKind k) => switch (k) {
   RecurringKind.subscription => l.fpRecurringKindSubscription,
   RecurringKind.installment => l.fpRecurringKindInstallment,
@@ -17,8 +14,6 @@ String recurringKindLabel(AppLocalizations l, RecurringKind k) => switch (k) {
   RecurringKind.reminder => l.fpRecurringKindReminder,
 };
 
-/// One recurring setting in a list: icon · name · wallet chip | amount (or
-/// "รอยอด" while a reminder has none); line 2 = next due · rule (· n/N).
 class RecurringRow extends StatelessWidget {
   const RecurringRow({
     required this.recurring,
@@ -29,8 +24,6 @@ class RecurringRow extends StatelessWidget {
 
   final Recurring recurring;
 
-  /// The amount to show; defaults to the setting's own. A reminder tab passes
-  /// the next occurrence's.
   final double? amount;
   final VoidCallback? onTap;
 
@@ -93,8 +86,6 @@ class RecurringRow extends StatelessWidget {
   };
 }
 
-/// One item (produced / upcoming / manual): icon · title · wallet chip |
-/// amount; line 2 = [recurring name ·] category (· n/N); its state chip.
 class RecurringItemRow extends StatelessWidget {
   const RecurringItemRow({
     required this.item,
@@ -108,15 +99,12 @@ class RecurringItemRow extends StatelessWidget {
 
   final RecurringItem item;
 
-  /// Name the recurring it came from (a mixed list).
   final bool showParent;
   final bool showState;
 
-  /// A `SelectCheck` in bulk mode.
   final Widget? select;
   final VoidCallback? onTap;
 
-  /// Enters bulk-select (long-press).
   final VoidCallback? onLongPress;
 
   @override
@@ -170,14 +158,12 @@ class RecurringItemRow extends StatelessWidget {
   }
 }
 
-/// Expense shows negative, income positive, a transfer unsigned.
 num signedOf(TransactionType type, double amount) =>
     type == TransactionType.expense ? -amount : amount;
 
 MoneyTone toneOf(TransactionType type) =>
     type == TransactionType.transfer ? MoneyTone.plain : MoneyTone.signed;
 
-/// Items of one day, in list order.
 class ItemDateGroup {
   const ItemDateGroup(this.date, this.items);
 
@@ -185,7 +171,6 @@ class ItemDateGroup {
   final List<RecurringItem> items;
 }
 
-/// Consecutive items grouped by date (the list is already sorted).
 List<ItemDateGroup> groupItemsByDate(List<RecurringItem> items) {
   final out = <ItemDateGroup>[];
   for (final i in items) {
@@ -198,8 +183,6 @@ List<ItemDateGroup> groupItemsByDate(List<RecurringItem> items) {
   return out;
 }
 
-/// A day header: future days relative ("พรุ่งนี้", "อีก 3 วัน · 3 พ.ย."),
-/// past days friendly ("วันนี้", "เมื่อวาน", "3 พ.ย.").
 String itemDateLabel(BuildContext context, DateTime date) {
   final l = AppLocalizations.of(context)!;
   final now = DateTime.now();

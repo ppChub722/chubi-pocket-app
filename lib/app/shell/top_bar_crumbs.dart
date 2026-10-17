@@ -3,9 +3,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../l10n/gen/app_localizations.dart';
 
-/// The "parent" half of the top-bar breadcrumb — `[ ← │ โปรเจกต์ › test ]`
-/// (ux-overhaul-plan §1.1). Tapping it returns to [routeName] if it's in the
-/// stack, else goes to [path].
 class TopBarCrumb {
   const TopBarCrumb({
     required this.label,
@@ -16,15 +13,9 @@ class TopBarCrumb {
   final String label;
   final String path;
 
-  /// go_router route name — used to pop back to the existing page.
   final String routeName;
 }
 
-/// Default crumb for the current location: the section a page lives in
-/// (`/projects/…` → โปรเจกต์). Null on a section's own root (`/projects`),
-/// on tab roots, and when the location isn't known (e.g. a page pushed
-/// with Navigator outside go_router). Pages one level deeper whose parent
-/// is a named item (members of "ทริปญี่ปุ่น") pass their own crumb.
 TopBarCrumb? defaultTopBarCrumb(BuildContext context) {
   final String path;
   try {

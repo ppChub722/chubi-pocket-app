@@ -6,10 +6,6 @@ import '../../../categories/domain/category.dart';
 import '../../../categories/presentation/category_label.dart';
 import '../../domain/transaction_type.dart';
 
-/// "฿1,250  อาหาร" — the amount in the type's colour, then the category:
-/// what a transaction form's title says once its hero card's amount has
-/// scrolled away (the quick create's title row, the detail page's top bar
-/// in edit mode via [AppTopBar.titleSlot]). [onTap] → back to the top.
 class TxSummaryTitle extends StatelessWidget {
   const TxSummaryTitle({
     required this.type,
@@ -23,7 +19,6 @@ class TxSummaryTitle extends StatelessWidget {
   final TransactionType type;
   final double amount;
 
-  /// Null = amount only (a transfer, an event row).
   final Category? category;
   final VoidCallback? onTap;
   final String symbol;

@@ -3,20 +3,15 @@ import 'package:flutter/material.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 
-/// One slice of a [SegmentedBar].
 class BarSegment {
   const BarSegment({required this.value, required this.color, this.label});
 
-  /// Its share (any positive number; the bar normalises them).
   final double value;
   final Color color;
 
-  /// The legend text ([SegmentedBar.legend]).
   final String? label;
 }
 
-/// A thin proportion bar split into coloured segments (the wallets summary:
-/// how the total divides by type), optionally with a [LegendDot] row under it.
 class SegmentedBar extends StatelessWidget {
   const SegmentedBar({
     required this.segments,
@@ -28,7 +23,6 @@ class SegmentedBar extends StatelessWidget {
   final List<BarSegment> segments;
   final double height;
 
-  /// A wrapping row of dot + label under the bar (the segments' labels).
   final bool legend;
 
   @override
@@ -74,7 +68,6 @@ class SegmentedBar extends StatelessWidget {
   }
 }
 
-/// A colour dot with a label — a chart or bar legend entry.
 class LegendDot extends StatelessWidget {
   const LegendDot({required this.color, required this.label, super.key});
 

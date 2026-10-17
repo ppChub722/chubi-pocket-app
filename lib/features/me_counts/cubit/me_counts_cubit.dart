@@ -8,7 +8,6 @@ import '../domain/me_counts.dart';
 class MeCountsState extends Equatable {
   const MeCountsState({this.counts, this.loading = false, this.error});
 
-  /// Last good payload — kept while reloading / on a failed refresh.
   final MeCounts? counts;
   final bool loading;
   final ApiException? error;
@@ -17,7 +16,6 @@ class MeCountsState extends Equatable {
   List<Object?> get props => [counts, loading, error];
 }
 
-/// Owns one `GET /me/counts` per [load] (open / pull-to-refresh).
 class MeCountsCubit extends Cubit<MeCountsState> {
   MeCountsCubit({required MeCountsRepository repository})
     : _repo = repository,

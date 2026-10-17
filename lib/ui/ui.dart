@@ -1,13 +1,5 @@
-/// The app's shared UI kit — one import for every reusable widget.
-///
-/// ```dart
-/// import '../../../../shared/widgets/ui.dart';
-/// ```
-///
-/// Browse them live at `/dev/widgets` (Dev hub → Widget gallery).
 library;
 
-// Buttons
 export 'atoms/app_avatar.dart';
 export 'atoms/app_button.dart';
 export 'atoms/app_card.dart';
@@ -33,7 +25,6 @@ export 'molecules/daily_bars.dart';
 export 'atoms/app_avatar_button.dart';
 export 'atoms/bulk_delete_button.dart';
 
-// Inputs
 export 'molecules/amount_input.dart';
 export 'molecules/chat_dial.dart';
 export 'atoms/app_divider.dart';
@@ -54,12 +45,10 @@ export 'molecules/select_card_group.dart';
 export 'atoms/select_check.dart';
 export 'molecules/theme_mode_chips.dart';
 
-// Charts
 export 'organisms/charts/chart_palette.dart';
 export 'organisms/charts/donut_chart.dart';
 export 'organisms/charts/paired_bar_chart.dart';
 
-// Chips & pills
 export 'atoms/app_chip.dart';
 export 'molecules/chip_row.dart';
 export 'molecules/filter_bar.dart';
@@ -76,7 +65,6 @@ export 'tokens/chip_size.dart';
 export 'atoms/app_badge.dart';
 export 'tokens/tone.dart';
 
-// Layout
 export 'atoms/add_tile.dart';
 export 'molecules/card_action_button.dart';
 export 'molecules/app_tab_bar.dart';
@@ -92,6 +80,7 @@ export 'organisms/note_section.dart';
 export 'organisms/people_strip.dart';
 export 'organisms/settings_section.dart';
 export 'organisms/header_card.dart';
+export 'organisms/app_hero_card.dart';
 export 'organisms/hero_card.dart';
 export 'molecules/linked_field_hint.dart';
 export 'molecules/linked_prompt.dart';
@@ -113,7 +102,6 @@ export 'atoms/icon_tile.dart';
 export 'molecules/mode_action_bar.dart';
 export 'organisms/reorder/reorder.dart';
 
-// Feedback
 export 'organisms/async_state_view.dart';
 export 'organisms/page_skeletons.dart';
 export 'molecules/empty_view.dart';
@@ -134,7 +122,6 @@ export 'organisms/page_pop_observer.dart';
 export 'atoms/skeletons.dart';
 export 'atoms/connection_scope.dart';
 
-// Popovers (short lists) & sheets (long / searchable lists)
 export 'molecules/option_menu.dart';
 export 'organisms/action_sheet.dart';
 export 'organisms/app_sheet.dart';
@@ -144,7 +131,6 @@ export 'organisms/language_theme_bar.dart';
 export 'organisms/picker_sheet.dart';
 export 'organisms/side_sheet.dart';
 
-// Data display
 export 'domain/money/money_list_tile.dart';
 export 'domain/money/money_style.dart';
 export 'domain/money/money_text.dart';
@@ -221,7 +207,6 @@ export 'atoms/editable_circle.dart';
 export 'debug/secret_tap.dart';
 export 'atoms/user_avatar.dart';
 
-// Tokens, icons and mixins features reach for (absorbed from direct imports).
 export 'atoms/skeleton_box.dart';
 export 'domain/feedback/offline_banner.dart';
 export 'domain/icons/color_token.dart';

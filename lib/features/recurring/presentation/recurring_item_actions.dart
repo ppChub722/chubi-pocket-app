@@ -15,14 +15,6 @@ import '../domain/recurring.dart';
 import '../domain/recurring_item.dart';
 import 'recurring_writes.dart';
 
-/// What can be done to one item, by its state (owner 2026-10-13) — every
-/// state starts with แก้ไข (the entry sheet; any field incl. the date):
-/// - upcoming → ส่งเข้ารอยืนยันเลย · เก็บถาวร · ลบ
-/// - ยังไม่สร้าง / เก็บถาวร → สร้างใหม่ (→ รอยืนยัน | บันทึกเลย) · เก็บถาวร /
-///   กู้คืน · ลบ
-/// - รอยืนยัน → เปิดรายการรอยืนยัน · ลบ
-/// - บันทึกแล้ว → เปิดรายการ · ลบ (asks "ลบรายการจริงด้วยไหม")
-/// plus ไปที่รายการประจำ when the list mixes recurrings.
 enum ItemMenuAction {
   edit,
   sendNow,
@@ -35,9 +27,6 @@ enum ItemMenuAction {
   delete,
 }
 
-/// Wraps an item row in its action popover; every action is ONE call whose
-/// result goes to [onChanged] (the page patches its list from it). Wallet
-/// balances a call moved are patched here.
 class RecurringItemActions extends StatefulWidget {
   const RecurringItemActions({
     required this.item,
@@ -51,13 +40,10 @@ class RecurringItemActions extends StatefulWidget {
   final RecurringItem item;
   final ValueChanged<ItemWriteResult> onChanged;
 
-  /// The row; call `open` on tap.
   final Widget Function(BuildContext context, VoidCallback open) builder;
 
-  /// null = no "ไปที่รายการประจำ" (we're already on its page).
   final VoidCallback? onOpenRecurring;
 
-  /// A call started / ended (the page dims itself while it runs).
   final ValueChanged<bool>? onBusy;
 
   @override
@@ -187,9 +173,6 @@ class _RecurringItemActionsState extends State<RecurringItemActions> {
   }
 }
 
-/// One write from the entry sheet: patch the wallets, hand the result on.
-/// true = saved (the sheet closes); a failure stays in the sheet with the
-/// typed input and says why.
 Future<bool> _sheetWrite(
   BuildContext context,
   Future<ItemWriteResult> Function(RecurringRepository repo) run,
@@ -212,9 +195,6 @@ Future<bool> _sheetWrite(
   }
 }
 
-/// แก้ไข one item (owner 2026-10-13): any field incl. the date. An item of a
-/// recurring asks which items take it (the edit scope); a linked one asks
-/// whether its draft / real tx changes too. ยังก่อน keeps the sheet open.
 Future<void> editRecurringItem(
   BuildContext context,
   RecurringItem item, {
@@ -265,8 +245,6 @@ Future<void> editRecurringItem(
   );
 }
 
-/// สร้างใหม่ (ยังไม่สร้าง / เก็บถาวร): the entry sheet, every field editable
-/// incl. the date, then [รอยืนยัน] or [บันทึกเลย] — one call either way.
 Future<void> createFromRecurringItem(
   BuildContext context,
   RecurringItem item, {
@@ -292,7 +270,6 @@ Future<void> createFromRecurringItem(
   );
 }
 
-/// เพิ่มรายการ: a manual item on [recurring] (normal statuses after).
 Future<void> addRecurringItem(
   BuildContext context,
   Recurring recurring, {
@@ -325,7 +302,6 @@ Future<void> addRecurringItem(
   );
 }
 
-/// Which items an item edit applies to (Google Calendar style).
 Future<EditScope?> askItemScope(BuildContext context) {
   final l = AppLocalizations.of(context)!;
   return showEditScopeChoice(
@@ -342,7 +318,6 @@ Future<EditScope?> askItemScope(BuildContext context) {
   );
 }
 
-/// "สร้างใหม่" → where to: รอยืนยัน or บันทึกเลย (null = ยังก่อน).
 Future<ItemTarget?> askCreateTarget(BuildContext context) {
   final l = AppLocalizations.of(context)!;
   return showChoiceDialog<ItemTarget?>(
@@ -361,8 +336,8 @@ Future<ItemTarget?> askCreateTarget(BuildContext context) {
   );
 }
 
-/// Deleting items: with a linked real tx it asks "ลบรายการจริงด้วยไหม"
-/// (true = both sides); otherwise a plain confirm (false). null = ยังก่อน.
+/// Deleting items: with a linked real tx it asks "ลบรายการจริงด้วยไหม" (true =
+/// both sides); otherwise a plain confirm (false).
 Future<bool?> askDeleteLinked(
   BuildContext context, {
   required bool linkedTx,

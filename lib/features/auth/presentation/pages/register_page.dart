@@ -9,9 +9,6 @@ import '../../../../ui/ui.dart';
 import '../cubit/auth_cubit.dart';
 import '../widgets/auth_widgets.dart';
 
-/// Register form. Built from the kit only: `AuthPageBody` + `SectionCard`s of
-/// framed `AppInput`s + buttons; this file holds state, validation, the API
-/// call and navigation.
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
@@ -34,7 +31,6 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void initState() {
     super.initState();
-    // A failure left by another page (a wrong login) is not this page's.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<AuthCubit>().acknowledgeFailure();
     });
@@ -230,8 +226,6 @@ class _RegisterPageState extends State<RegisterPage> {
         newValue.copyWith(text: newValue.text.toLowerCase()),
   );
 
-  /// Field-level mapping. `USERNAME_EXISTS`/`EMAIL_EXISTS` show inline next to
-  /// the offending field as well as in the top banner — per spec.
   String? _fieldErrorFor(
     AppLocalizations l,
     String field,

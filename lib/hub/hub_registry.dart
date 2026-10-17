@@ -677,6 +677,8 @@ final List<HubPage> hubPages = [
       'SettingsSection',
       'SettingToggleRow',
       'SettingSummaryRow',
+      'SettingDropdownRow',
+      'SettingSwitchViewRow',
       'PeopleStrip',
       'PeopleStripMember',
       'NoteSection',

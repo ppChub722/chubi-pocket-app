@@ -4,28 +4,12 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../tokens/app/app_colors.dart';
 import 'money_text.dart';
 
-/// Where a [NetBalance] sits — it sets the text sizes and the alignment.
 enum NetBalanceSize {
-  /// The trailing end of a list row: the amount over the caption, both
-  /// right-aligned, small.
   row,
 
-  /// A hero card's footer: a large amount over the caption, left-aligned.
   hero,
 }
 
-/// A person's net with me, as one number + what it means (owner
-/// 2026-10-12, debts rework):
-///
-/// - [amount] > 0 → they owe me: the amount in the income colour +
-///   [owedToMeLabel] ("ติดคุณ").
-/// - [amount] < 0 → I owe them: the amount shown POSITIVE in the expense
-///   colour + [iOweLabel] ("คุณติด").
-/// - 0 (anything that shows as 0.00) → only [settledLabel] ("หายกัน"),
-///   muted, no amount.
-///
-/// No sign is drawn: the caption says the direction. The captions come from
-/// the caller (l10n).
 class NetBalance extends StatelessWidget {
   const NetBalance({
     required this.amount,
@@ -38,10 +22,8 @@ class NetBalance extends StatelessWidget {
     super.key,
   });
 
-  /// false: the amount alone (its colour says the side) — the people list.
   final bool showCaption;
 
-  /// The signed net: + = they owe me, − = I owe them.
   final num amount;
   final String owedToMeLabel;
   final String iOweLabel;
@@ -49,7 +31,6 @@ class NetBalance extends StatelessWidget {
   final NetBalanceSize size;
   final String currencySymbol;
 
-  /// True when [amount] shows as zero (settled).
   bool get isSettled => CurrencyFormatter.roundsToZero(amount);
 
   @override

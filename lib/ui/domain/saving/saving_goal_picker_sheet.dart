@@ -5,12 +5,6 @@ import '../../organisms/app_sheet.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 
-/// One card of the goal picker.
-///
-/// [id] null = "ยังไม่จัดสรร" (the spare pool): choosing it saves into no
-/// goal. [amountText] / [targetText] ("฿52,000" / "฿80,000"), [progress]
-/// 0..1 (null = no bar: no target) and [caption] ("เดือนนี้ขาด ฿2,500") are
-/// the little detail the card shows. Every word is a param.
 class SavingGoalPick {
   const SavingGoalPick({
     required this.id,
@@ -33,16 +27,8 @@ class SavingGoalPick {
   final String? caption;
 }
 
-/// What the picker resolves: the chosen goal's id (null = ยังไม่จัดสรร).
-/// A dismissed sheet resolves null (no record at all).
 typedef SavingGoalChoice = ({String? id});
 
-/// The goal picker (owner 2026-10-17): two columns of cards like the wallets
-/// list, each with the goal's saved / target, a progress bar and a short
-/// status, so a goal can be told apart without opening it. The current one
-/// wears the "chosen and still changeable" border (dashed edge + a thin solid
-/// line inside). [items] come in the order to show: the caller puts
-/// ยังไม่จัดสรร (id null) first.
 Future<SavingGoalChoice?> showSavingGoalPickerSheet(
   BuildContext context, {
   required String title,
@@ -56,9 +42,8 @@ Future<SavingGoalChoice?> showSavingGoalPickerSheet(
       builder: (context, box) {
         // Two columns inside the side padding (the card width must be taken
         // AFTER it, or the second card wraps onto its own line).
-        final w =
-            ((box.maxWidth - AppSpacing.lg * 2 - AppSpacing.sm) / 2)
-                .floorToDouble();
+        final w = ((box.maxWidth - AppSpacing.lg * 2 - AppSpacing.sm) / 2)
+            .floorToDouble();
         return Padding(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.lg,
@@ -87,7 +72,6 @@ Future<SavingGoalChoice?> showSavingGoalPickerSheet(
   );
 }
 
-/// A goal as a card (the picker's cell). [selected] = chosen + changeable.
 class SavingGoalCard extends StatelessWidget {
   const SavingGoalCard({
     required this.pick,
@@ -199,7 +183,6 @@ class SavingGoalCard extends StatelessWidget {
               ),
             ),
             if (selected)
-              // The thin solid line 3 px inside the dashed edge (no layout).
               Positioned.fill(
                 child: IgnorePointer(
                   child: Padding(

@@ -1,14 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
-/// Keeps a money field as `#,##0.##` while the user types: digits + one
-/// dot, max 2 decimals, commas re-inserted on every edit, caret kept after
-/// the same digit it was after.
-///
-/// [allowNegative] keeps one leading `-` (balances can go below zero —
-/// an overdraft, an overpaid card); the sign itself is toggled by
-/// [AmountInput]'s ± chip rather than typed, since the decimal keypad has
-/// no minus on most phones.
 class ThousandsInputFormatter extends TextInputFormatter {
   ThousandsInputFormatter({this.allowNegative = false});
 
@@ -23,7 +15,6 @@ class ThousandsInputFormatter extends TextInputFormatter {
   ) {
     final negative = allowNegative && newValue.text.startsWith('-');
     if (negative) {
-      // Format the magnitude, then put the sign back (caret shifted by 1).
       final inner = _format(
         oldValue.text.startsWith('-')
             ? oldValue.copyWith(text: oldValue.text.substring(1))
@@ -66,8 +57,6 @@ class ThousandsInputFormatter extends TextInputFormatter {
         : _grouping.format(int.parse(intPart));
     final formatted = '$groupedInt$decPart';
 
-    // Caret: count significant chars (digits / dot) before it in the new
-    // raw input, then find the same position in the formatted text.
     final caret = newValue.selection.baseOffset.clamp(0, newValue.text.length);
     final significantBefore =
         newValue.text.substring(0, caret).replaceAll(',', '').length +
@@ -85,8 +74,6 @@ class ThousandsInputFormatter extends TextInputFormatter {
   }
 }
 
-/// Keeps a number within [min]..[max] while typing (the percent type): digits
-/// and at most one dot, up to [decimals] places (0 = integers only).
 class RangeInputFormatter extends TextInputFormatter {
   RangeInputFormatter(this.min, this.max, {this.decimals = 0});
 
@@ -103,7 +90,6 @@ class RangeInputFormatter extends TextInputFormatter {
     if (decimals == 0) t = t.replaceAll('.', '');
     final dot = t.indexOf('.');
     if (dot >= 0) {
-      // One dot, at most [decimals] places.
       final whole = t.substring(0, dot);
       var frac = t.substring(dot + 1).replaceAll('.', '');
       if (frac.length > decimals) frac = frac.substring(0, decimals);

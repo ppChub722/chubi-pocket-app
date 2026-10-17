@@ -1,12 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-/// Aggregates returned by `GET /v1/accounts/:id/summary` and
-/// `GET /v1/transactions/summary`. Spec §03/§2.7 + §04/§3.6.
-///
-/// Transfers are excluded from the per-user `total_income` /
-/// `total_expense` aggregates (spec §4.13) — they're money movement,
-/// not earning or spending. The per-account variant DOES count
-/// transfers (spec §03/§2.7) since they affect the account's balance.
 class TransactionsSummary extends Equatable {
   const TransactionsSummary({
     required this.from,
@@ -20,7 +13,6 @@ class TransactionsSummary extends Equatable {
     this.groups = const [],
   });
 
-  /// Range bounds, `YYYY-MM-DD`. Echoed back from the request.
   final String from;
   final String to;
 
@@ -29,12 +21,9 @@ class TransactionsSummary extends Equatable {
   final double net;
   final int transactionCount;
 
-  /// Set on per-account summaries (`/accounts/:id/summary`); null on
-  /// the global summary.
   final String? currency;
   final String? accountId;
 
-  /// `group_by=…` buckets (global summary only).
   final List<SummaryGroup> groups;
 
   factory TransactionsSummary.fromAccountJson(Map<String, dynamic> json) {
@@ -80,8 +69,6 @@ class TransactionsSummary extends Equatable {
   ];
 }
 
-/// One `group_by` bucket. `income` / `expense` are the typed split from
-/// contract §2 (null until the BE sends them); [total] is the old mixed sum.
 class SummaryGroup extends Equatable {
   const SummaryGroup({
     required this.key,
@@ -99,7 +86,6 @@ class SummaryGroup extends Equatable {
   final double? income;
   final double? expense;
 
-  /// Spending in this bucket — the typed figure when present.
   double get spent => expense ?? total;
 
   factory SummaryGroup.fromJson(Map<String, dynamic> json) => SummaryGroup(

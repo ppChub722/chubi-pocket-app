@@ -12,13 +12,6 @@ import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../users/data/users_repository.dart';
 import '../../../users/presentation/refresh_me.dart';
 
-/// `/settings/profile` — the profile detail page on the 0.4.0 detail template:
-/// hero (avatar · name · @username, tinted with the avatar's colour), ONE box
-/// with the email, a ความปลอดภัย section (username locked, change password ›)
-/// and the meta. Opens in view mode with the auth cubit's `GET /users/me`
-/// (pull = that call); ✏️ / long-press edits. Edit mode shows only avatar,
-/// display name and email (username and password are hidden). The currency
-/// lives on the settings home.
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
 
@@ -39,7 +32,6 @@ class _EditProfilePageState extends State<EditProfilePage>
   @override
   void initState() {
     super.initState();
-    // Reached from settings, so the user is signed in (possibly refreshing).
     final s = context.read<AuthCubit>().state;
     _user = s is AuthAuthenticated
         ? s.user
@@ -121,7 +113,6 @@ class _EditProfilePageState extends State<EditProfilePage>
     }
   }
 
-  /// The name shown by the avatar: the draft's, else the saved one.
   String get _shownName =>
       working.name.trim().isEmpty ? _user.displayName : working.name;
 
@@ -129,7 +120,6 @@ class _EditProfilePageState extends State<EditProfilePage>
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final editing = isEditing;
-    // A refresh (pull) while viewing re-reads the profile into the page.
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated && !isEditing) {
@@ -140,7 +130,6 @@ class _EditProfilePageState extends State<EditProfilePage>
       child: editScope(
         Scaffold(
           appBar: AppTopBar(
-            // Edit mode keeps the page's title; the action bar shows the mode.
             title: l.profileTitle,
             showBack: true,
             editing: editing,
@@ -149,7 +138,6 @@ class _EditProfilePageState extends State<EditProfilePage>
           extendBodyBehindAppBar: true,
           body: Form(
             key: _formKey,
-            // Builder: the floating bar's height is only visible inside the body.
             child: Builder(
               builder: (context) => DetailLayout(
                 onRefresh: () => refreshMe(context),
@@ -160,8 +148,6 @@ class _EditProfilePageState extends State<EditProfilePage>
                 hero: _hero(l, editing),
                 info: SectionCard(
                   children: [
-                    // The same field as the contact page's email row: one row
-                    // "not set" when empty.
                     DetailTextField(
                       label: l.editProfileEmailLabel,
                       controller: _emailCtrl,
@@ -197,7 +183,6 @@ class _EditProfilePageState extends State<EditProfilePage>
                     ),
                   ],
                 ),
-                // Edit mode hides the locked username and the password row.
                 settings: editing
                     ? null
                     : SettingsSection(

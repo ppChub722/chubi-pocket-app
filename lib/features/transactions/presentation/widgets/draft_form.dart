@@ -34,9 +34,6 @@ import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
 
 part 'draft_form_event.dart';
 
-/// The fields of one transaction draft — owned by whoever shows a
-/// [DraftForm] (the `+` quick create sheet, one row of "เพิ่มร่าง"), so the
-/// owner can read them back ([toDraft]) and listen for changes.
 class DraftFormController extends ChangeNotifier {
   DraftFormController() {
     amount.addListener(notifyListeners);
@@ -47,22 +44,16 @@ class DraftFormController extends ChangeNotifier {
   final amount = TextEditingController();
   final note = TextEditingController();
 
-  /// What it was for — the record's title (the hero's big line). A
-  /// project row's คำอธิบาย too.
   final description = TextEditingController();
 
-  // ── Event mode (a project row) ──
-  /// The project member who paid / received.
   String? payerId;
 
-  /// The row's project tags (names).
   final List<String> tagNames = [];
   final List<MemberSplitDraft> memberSplits = [];
 
   double get memberSplitSum =>
       memberSplits.fold(0, (a, s) => a + s.amountValue);
 
-  /// A save was tried with no payer — the payer card shows why.
   bool payerMissing = false;
 
   void flagMissingPayer() {
@@ -108,7 +99,6 @@ class DraftFormController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Everyone but the payer gets total / headcount (payer counted in).
   void splitEqually(List<String> memberIds) {
     final others = memberIds.where((id) => id != payerId).toList();
     if (amountValue <= 0 || others.isEmpty) return;
@@ -124,11 +114,9 @@ class DraftFormController extends ChangeNotifier {
 
   void _dropSplit(MemberSplitDraft s) {
     memberSplits.remove(s);
-    // Its field may still be on screen this frame.
     WidgetsBinding.instance.addPostFrameCallback((_) => s.amount.dispose());
   }
 
-  /// Loads a saved project row (+ its split children) for editing.
   void prefillProjectRow(ProjectTxTree tree) {
     final p = tree.parent;
     type = p.type == 'income'
@@ -145,7 +133,6 @@ class DraftFormController extends ChangeNotifier {
     }
   }
 
-  /// The event fields as a comparable snapshot (the close guard).
   String eventSnapshot() => [
     type.name,
     amount.text,
@@ -166,16 +153,11 @@ class DraftFormController extends ChangeNotifier {
   final Set<String> tagIds = {};
   List<SplitDraft> splits = const [];
 
-  /// A saved row's category / wallet that isn't in this user's lists
-  /// (another member's, on a shared wallet) — shown by name, not editable.
   String? foreignCategoryName;
   String? foreignAccountName;
 
-  /// A saved row's tags, for ones missing from this user's list.
   final Map<String, Tag> knownTags = {};
 
-  /// A draft's event (`project_id`): an existing event the draft joins when
-  /// it's confirmed. [projectName] is what to show until the events load.
   String? projectId;
   String? projectName;
 
@@ -188,7 +170,6 @@ class DraftFormController extends ChangeNotifier {
   bool get isTransfer => type == TransactionType.transfer;
   double get amountValue => AmountInput.parse(amount.text) ?? 0;
 
-  /// Anything beyond the basics: tags, splits, project tags / splits.
   bool get hasExtras =>
       tagIds.isNotEmpty ||
       projectId != null ||
@@ -196,20 +177,14 @@ class DraftFormController extends ChangeNotifier {
       tagNames.isNotEmpty ||
       memberSplits.isNotEmpty;
 
-  /// Anything typed or picked beyond the defaults.
   bool get hasContent =>
       amount.text.isNotEmpty ||
       note.text.trim().isNotEmpty ||
       description.text.trim().isNotEmpty ||
       hasExtras;
 
-  /// The category last picked under each type — a category belongs to one
-  /// type, so switching away and back restores it (owner 2026-10-10).
   final Map<TransactionType, Category?> _categoryByType = {};
 
-  /// Switching type keeps everything else (amount, wallets, tags, splits —
-  /// a transfer just doesn't send splits); only the category follows the
-  /// type.
   void setType(TransactionType t) {
     if (t == type) return;
     _categoryByType[type] = category;
@@ -252,7 +227,6 @@ class DraftFormController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// The tag picker's result — the whole selection at once.
   void setTagIds(Set<String> ids) {
     tagIds
       ..clear()
@@ -265,15 +239,6 @@ class DraftFormController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// "ฉัน" in the split editor (owner 2026-10-11) — my own share. Once
-  /// anyone is in the split, ฉัน + the people must equal [splitCap] to save
-  /// ([splitsBalanced]).
-  ///
-  /// [meAuto] (the "อัตโนมัติ" chip, on by default): ฉัน is what's left
-  /// ([splitCap] − the people, never below 0 — past that it's "แบ่งเกิน"),
-  /// live as the others change. Typing an amount ([setMeAmount]) turns it
-  /// off; the chip ([setMeAuto]) turns it back on and re-fills ฉัน. Null =
-  /// no ฉัน (nobody to split with), or typed empty (counts as 0).
   double? get meAmount {
     if (splits.isEmpty) return null;
     if (!meAuto) return _meTyped;
@@ -284,41 +249,31 @@ class DraftFormController extends ChangeNotifier {
   bool meAuto = true;
   double? _meTyped;
 
-  /// ฉัน typed by hand — auto goes off.
   void setMeAmount(double? v) {
     _meTyped = v;
     meAuto = false;
     notifyListeners();
   }
 
-  /// The chip: on = what's left from now on; off = keep the number shown,
-  /// as typed.
   void setMeAuto(bool on) {
     if (!on) _meTyped = meAmount;
     meAuto = on;
     notifyListeners();
   }
 
-  /// [splitCap] − (ฉัน + the people's amounts): what's still to split.
   double get splitLeftover => splitLeft(splitCap, meAmount, splits);
 
-  /// Nobody to split with, or it adds up exactly.
   bool get splitsBalanced => splits.isEmpty || splitLeftover.abs() <= 0.005;
 
-  /// A fresh form (create, a loaded row, a restore): ฉัน on auto — a loaded
-  /// row comes out balanced, as it was saved.
   void _seedMe() {
     meAuto = true;
     _meTyped = null;
   }
 
-  /// The wallet to show until the user picks one — silent (no notify), it's
-  /// called from build.
   void applyDefaultAccount(Account? a) {
     if (!accountTouched) account = a;
   }
 
-  /// Loads a pending draft into the fields (wallet "none" stays none).
   void prefill(
     PendingDraft d, {
     required List<Account> accounts,
@@ -349,8 +304,6 @@ class DraftFormController extends ChangeNotifier {
     _seedMe();
   }
 
-  /// Loads a saved transaction for editing. [toAccount] is the other side
-  /// of a transfer (the caller finds it — it's a sibling row).
   void prefillTransaction(
     Transaction t, {
     required List<Account> accounts,
@@ -378,8 +331,8 @@ class DraftFormController extends ChangeNotifier {
     splits = [for (final s in t.splits) _fromSaved(s, s.amount)];
     _savedMyShare = t.myShare;
     _shareBasis = _shareKey();
-    // An event bill: what the other members carry on the event row =
-    // amount − my_share − my own splits (forgiven ones never came off).
+    // An event bill: what the other members carry on the event row = amount −
+    // my_share − my own splits (forgiven ones never came off).
     final mine = t.myShare;
     final myOwn = t.splits
         .where((s) => s.status != 'cancelled')
@@ -391,19 +344,14 @@ class DraftFormController extends ChangeNotifier {
     _seedMe();
   }
 
-  /// The saved row is an event bill (its splits sit on my share).
   bool savedInEvent = false;
 
   /// An event bill's other members' part (0 off an event, or without
-  /// `my_share`). My own splits share only what's left: Σ ≤ amount − this
-  /// (the BE says SPLITS_EXCEED_SHARE otherwise).
+  /// `my_share`).
   double eventOthers = 0;
 
-  /// What my own splits may add up to.
   double get splitCap => amountValue - eventOthers;
 
-  /// The row's `my_share` as loaded (null: a transfer, or a BE that
-  /// doesn't send it) and the amount + splits it was worked out from.
   double? _savedMyShare;
   String? _shareBasis;
 
@@ -412,17 +360,11 @@ class DraftFormController extends ChangeNotifier {
     for (final s in splits) jsonEncode(s.toUpdateJson()),
   ].join('|');
 
-  /// "ส่วนของคุณ" as the server counts it — only while the amount and the
-  /// splits are as loaded; an unsaved change → null (work it out from the
-  /// draft instead), back to the server's after the save reloads.
   double? get savedMyShare =>
       _savedMyShare != null && _shareKey() == _shareBasis
       ? _savedMyShare
       : null;
 
-  /// Puts a saved transaction's fields back as [d] (undo / cancel on the
-  /// detail page). Text controllers each notify; a caller listening for
-  /// edits should ignore changes while this runs.
   void restoreTransaction(
     PendingDraft d, {
     required List<Account> accounts,
@@ -445,8 +387,6 @@ class DraftFormController extends ChangeNotifier {
     splits = [
       for (final m in d.splits)
         switch (savedSplits[m['debt_id']]) {
-          // Back to the saved debt, with the person as it was at that
-          // step (an unlinked one may have been renamed / linked since).
           final saved? => _fromSaved(
             saved,
             (m['owed_amount'] as num?)?.toDouble(),
@@ -460,17 +400,12 @@ class DraftFormController extends ChangeNotifier {
           ),
         },
     ];
-    // Back to a saved state — balanced, as it was.
     _seedMe();
     notifyListeners();
   }
 
-  /// A saved transaction's splits as loaded, by debt — what a restore or a
-  /// save compares against.
   final Map<String, TxSplit> savedSplits = {};
 
-  /// A saved split as a row: who it was saved with, then — when [name] is
-  /// given and the row isn't locked — the person it has now.
   static SplitDraft _fromSaved(
     TxSplit s,
     double? owed, {
@@ -490,10 +425,6 @@ class DraftFormController extends ChangeNotifier {
     return d;
   }
 
-  /// The fields as a draft — no validation, anything may be empty.
-  /// [keepIncomplete] (a draft saved for later): half-filled split rows —
-  /// a name without an amount or the other way round — stay in it for
-  /// finishing later; otherwise only complete rows go.
   PendingDraft toDraft({bool keepIncomplete = false}) {
     final d = description.text.trim();
     final n = note.text.trim();
@@ -535,7 +466,6 @@ class DraftFormController extends ChangeNotifier {
   }
 }
 
-/// One "หารกับ" row of a project row: a member and what they owe the payer.
 class MemberSplitDraft {
   MemberSplitDraft(this.memberId);
   String? memberId;
@@ -546,8 +476,6 @@ class MemberSplitDraft {
 String _ymd(DateTime d) =>
     '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-/// "วันนี้" / "เมื่อวาน" / a short date.
-/// Whether [d] (a day) is after today, on this device's calendar.
 bool isAfterToday(DateTime d) {
   final now = DateTime.now();
   return DateTime(
@@ -567,25 +495,6 @@ String _dayLabel(BuildContext context, DateTime d) {
   );
 }
 
-/// One transaction's fields — the single form behind the `+` quick create,
-/// "แก้ร่าง", every row of "เพิ่มร่าง" and the transaction detail page
-/// (owner design 2026-10-10). Everything shows at once, no "more" toggle:
-///
-///   [TxHeroCard]: type chips · amount · ค่าอะไร (description) · date
-///   โน้ต
-///   category + wallet cards (a transfer: [จาก] → [ไป])
-///   tags · หารกับ… · [extra]
-///
-/// Editing a saved transaction: [typeLocked] (the API can't change it),
-/// [allowSplits] false (splits are set at create only), [categoryLockedHint]
-/// on another member's row (only the author picks its category), and
-/// [readOnly] on an ex-member's locked row.
-///
-/// [editing] false = the detail page's view mode: the same layout, nothing
-/// editable. A long-press on a field calls [onEnterEdit] (with the field's
-/// focus node, if it's a text field) and [onEdit] adds the hero's ✏️. The
-/// category / wallet cards open nothing there (owner 2026-10-10: a tap in
-/// view mode never leaves the page).
 class DraftForm extends StatefulWidget {
   const DraftForm({
     required this.controller,
@@ -616,79 +525,42 @@ class DraftForm extends StatefulWidget {
     super.key,
   });
 
-  /// The pending drafts' layout (owner 2026-10-11, "เพิ่มร่าง" rows and
-  /// "แก้ร่าง"): no category / wallet cards — a wallet chip row above a
-  /// category chip row, each led by a dashed "เลือก…" chip for the full
-  /// picker — then tags, the inline note, and a collapsible "หารกับ /
-  /// อีเวนต์" section (an event is an existing one, `project_id`).
   final bool chipLayout;
 
-  /// The transaction detail's layout (owner 2026-10-12): the big wallet ·
-  /// category pick cards sit INSIDE the hero card (its footer), no category
-  /// chip row below; the tag row stays outside the hero. Off = the cards
-  /// under the hero (quick create, on hold).
   final bool cardsInHero;
 
-  /// The EntryCard layout (owner 2026-10-12) WITHOUT the pending drafts'
-  /// collapsible section behaviour: quick create. [chipLayout] implies it.
-  /// The card holds type · date, description · amount, the wallet chip row
-  /// and the category chip row; the tags row, the note and the splits sit
-  /// below it.
   final bool chipRows;
 
-  /// Rows of the [EntryCard] a draft still lacks (danger outline).
   final Set<EntryField> missing;
 
-  /// Put on the [TxHeroCard] — the quick create watches where it scrolled
-  /// to (its title row shows the amount once the card is out of view).
   final GlobalKey? heroKey;
 
-  /// Non-null → event mode: the form is a project row (see [DraftEvent]).
   final DraftEvent? event;
 
   final bool typeLocked;
   final bool allowSplits;
 
-  /// A date after today shows "รายการล่วงหน้า › จะเข้ารอยืนยันวันที่ …"
-  /// under the date (owner 2026-10-13: saving it makes an upcoming item, not
-  /// a transaction). Not for transfers (the BE refuses future transfers).
   final bool upcomingHint;
 
-  /// The hint's tap (the recurring page, upcoming tab); null = not tappable.
   final VoidCallback? onUpcomingHintTap;
 
   /// Non-null → the category card can't be changed; this says why.
   final String? categoryLockedHint;
 
-  /// Everything shown, nothing editable (dimmed).
   final bool readOnly;
 
-  /// False = view mode (the detail page outside edit mode).
   final bool editing;
 
-  /// View mode: long-press on a field → enter edit, focusing that field.
   final ValueChanged<FocusNode?>? onEnterEdit;
 
-  /// View mode: what a tap on a changeable card does (the page says "long-press
-  /// to edit"); the long-press itself goes through [onEnterEdit].
   final VoidCallback? onViewTap;
 
-  /// View mode: the hero's ✏️.
   final VoidCallback? onEdit;
 
-  /// An event is being picked / changed in this form (quick create with
-  /// one chosen, the detail page moving the row into one): the splits go
-  /// to the event's board with it — titled "หารในอีเวนต์". An event bill
-  /// left where it is keeps "หารกับ", split from my share.
   final bool eventPending;
 
-  /// The อีเวนต์ row of the "แบ่งรายการ" section ([SplitEventSection]) — a
-  /// saved row's / a new transaction's event, held by the page. Null = no
-  /// event row (the drafts' layout keeps the draft's own, [DraftFormController
-  /// .projectId]).
   final SplitEventSlot? eventSlot;
 
-  /// The รายการประจำ row of the same section (0.4.0); null = no such row.
   final SplitRecurringSlot? recurringSlot;
 
   /// The "แบ่งยอด" row when the people can't be edited here (view mode, or
@@ -697,14 +569,11 @@ class DraftForm extends StatefulWidget {
 
   final DraftFormController controller;
 
-  /// Smaller amount — for several forms on one page.
   final bool compact;
   final bool autofocus;
 
-  /// Wallet shown until the user picks one.
   final Account? defaultAccount;
 
-  /// Extra tile at the bottom (the quick create's "เพิ่มเข้าอีเวนต์").
   final Widget? extra;
 
   @override
@@ -716,9 +585,7 @@ class _DraftFormState extends State<DraftForm> {
   final _descriptionFocus = FocusNode();
   final _noteFocus = FocusNode();
 
-  /// The chip rows' orders, fixed for the form's life (one per type for
-  /// categories) — see [ChipOrder].
-  final _categoryOrders = <TransactionType, ChipOrder>{};
+  final _categoryOrders = <TransactionType, ChipOrder>{};
   final _walletOrder = ChipOrder();
 
   DraftFormController get _c => widget.controller;
@@ -763,7 +630,6 @@ class _DraftFormState extends State<DraftForm> {
           ? _c.account?.id
           : (_c.isTransfer ? _c.toAccount?.id : null),
       title: to ? l.quickTo : l.transactionFormAccountLabel,
-      // Expense / income may be floating; a transfer needs real wallets.
       allowNone: !_c.isTransfer && !to,
       allowCreate: true,
     );
@@ -775,8 +641,6 @@ class _DraftFormState extends State<DraftForm> {
     }
   }
 
-  /// The upcoming hint under the date, when it applies
-  /// ([DraftForm.upcomingHint]).
   Widget? _upcomingNote(BuildContext context) {
     if (!widget.upcomingHint || _c.isTransfer || !isAfterToday(_c.date)) {
       return null;
@@ -795,7 +659,6 @@ class _DraftFormState extends State<DraftForm> {
     );
   }
 
-  /// Tags "เพิ่มเติม": the full picker (search, "+ แท็กใหม่").
   Future<void> _moreTags() async {
     final next = await showTagPickerSheet(context, selected: _c.tagIds);
     if (next != null && mounted) _c.setTagIds(next);
@@ -811,8 +674,6 @@ class _DraftFormState extends State<DraftForm> {
     if (r is AppDatePicked) _c.setDate(r.date);
   }
 
-  /// The tags: the edit chip row, or the view strip (none when empty).
-  /// [longPress] wraps the view strip (a long-press enters edit mode).
   List<Widget> _tagsBlock({
     required bool editing,
     Widget Function(Widget child)? longPress,
@@ -823,7 +684,7 @@ class _DraftFormState extends State<DraftForm> {
           selected: _c.tagIds,
           onRemove: _c.toggleTag,
           onMore: _moreTags,
-          known: _c.knownTags,
+          known: _c.knownTags,
         ),
       ];
     }
@@ -841,8 +702,6 @@ class _DraftFormState extends State<DraftForm> {
     return [longPress == null ? strip : longPress(strip)];
   }
 
-  /// The description's stand-in on the detail hero: the category's name
-  /// (localised for system ones), else the type's label.
   String _titlePlaceholder(AppLocalizations l) {
     final c = _c.isTransfer ? null : _c.category;
     if (c != null) return categoryDisplayName(l, c);
@@ -855,19 +714,13 @@ class _DraftFormState extends State<DraftForm> {
     };
   }
 
-  /// A card's tap: the picker in edit / create mode; in view mode it enters
-  /// edit mode first, then opens the picker (the placeholder rule). Null =
-  /// not tappable (read-only, or no way into edit mode).
   VoidCallback? _heroTap(VoidCallback pick, {bool locked = false}) {
     if (locked || widget.readOnly) return null;
     if (widget.editing) return pick;
-    // View mode (owner 2026-10-17): a tap only says how to edit; the
-    // long-press does it ([_heroLongPress]).
     if (widget.onEnterEdit == null) return null;
     return widget.onViewTap;
   }
 
-  /// View mode: a long-press enters edit mode and opens the picker.
   VoidCallback? _heroLongPress(VoidCallback pick, {bool locked = false}) {
     if (locked || widget.readOnly || widget.editing) return null;
     final enter = widget.onEnterEdit;
@@ -878,9 +731,6 @@ class _DraftFormState extends State<DraftForm> {
     };
   }
 
-  /// A wallet card: the picker in edit mode; in view mode a tap enters edit
-  /// and opens it. One that isn't in this user's list (someone else's, on a
-  /// shared wallet) still shows its name, just not tappable.
   Widget _walletCard({
     required Account? account,
     required String label,
@@ -960,7 +810,6 @@ class _DraftFormState extends State<DraftForm> {
     _c.applyDefaultAccount(widget.defaultAccount ?? accounts.firstOrNull);
     final editing = widget.editing;
     final enterEdit = widget.onEnterEdit;
-    // View mode: a long-press anywhere on the cards enters edit mode too.
     Widget longPressable(Widget child) => editing || enterEdit == null
         ? child
         : GestureDetector(onLongPress: () => enterEdit(null), child: child);
@@ -993,8 +842,6 @@ class _DraftFormState extends State<DraftForm> {
                     ? _ShareLine.of(_c)
                     : null,
                 missing: widget.missing,
-                // A transfer: no description (the system names it) and the two
-                // wallets as flow cards; others keep the chip rows.
                 showTitle: !isTransfer,
                 titleHint: isTransfer
                     ? null
@@ -1014,8 +861,6 @@ class _DraftFormState extends State<DraftForm> {
                 onTypeChanged: widget.typeLocked ? null : _c.setType,
                 amount: _c.amount,
                 title: _c.description,
-                // The detail hero: no description → the category's name (else
-                // the type) stands in, italic and muted.
                 titlePlaceholder: widget.cardsInHero
                     ? _titlePlaceholder(l)
                     : null,
@@ -1036,8 +881,6 @@ class _DraftFormState extends State<DraftForm> {
                         _pickDate();
                       },
                 inline: true,
-                // "ส่วนของคุณ" under the total — while editing only where
-                // splits can be edited; in view whenever the people loaded.
                 amountNote: !isTransfer && (!editing || widget.allowSplits)
                     ? _ShareLine.of(_c)
                     : null,
@@ -1048,8 +891,6 @@ class _DraftFormState extends State<DraftForm> {
             if (entryLayout)
               ..._chipBody(l, isTransfer: isTransfer)
             else ...[
-              // Category · wallet cards: inside the hero on the detail page
-              // (cardsInHero), else under it (quick create). 16 from the hero.
               const SizedBox(height: HeroSpacing.after),
               if (!widget.cardsInHero)
                 longPressable(_cardsRow(l, isTransfer: isTransfer)),
@@ -1069,8 +910,6 @@ class _DraftFormState extends State<DraftForm> {
                       ),
                     ),
                   ),
-                // One tap on a recent category picks it (owner 2026-10-10);
-                // not on the detail page (its category sits in the hero).
                 if (!widget.cardsInHero &&
                     !isTransfer &&
                     categoryHint == null) ...[
@@ -1083,9 +922,6 @@ class _DraftFormState extends State<DraftForm> {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                 ],
-                // Editing: [🏷 chips…] (not a "แท็ก" row in the sections).
-                // View mode keeps the tag strip below. (The detail page
-                // puts the tags after the note instead, see [_sections].)
                 if (!widget.cardsInHero) ..._tagsBlock(editing: true),
               ] else if (!widget.cardsInHero && _c.tagIds.isNotEmpty) ...[
                 ..._tagsBlock(editing: false, longPress: longPressable),
@@ -1100,15 +936,11 @@ class _DraftFormState extends State<DraftForm> {
     );
   }
 
-  /// The wallet chip row of the entry card: a dashed "เลือกกระเป๋า" chip
-  /// first, then the wallets most used. A transfer's is the source.
   Widget _entryWalletRow(AppLocalizations l, {required bool isTransfer}) =>
       WalletChipRow(
         selectedId: _c.account?.id,
         onPick: isTransfer
             ? _c.setAccount
-            // Tapping the picked wallet again leaves it out (a wallet is
-            // optional here).
             : (a) => _c.setAccount(_c.account?.id == a.id ? null : a),
         onMore: _pickAccount,
         order: _walletOrder,
@@ -1116,8 +948,6 @@ class _DraftFormState extends State<DraftForm> {
         excludeId: isTransfer ? _c.toAccount?.id : null,
       );
 
-  /// [จาก] → [ไป]: two wallet cards (two lines, picked in the full picker),
-  /// the arrow swaps them.
   Widget _transferFlow(AppLocalizations l) => FlowCards(
     from: WalletPickCard(
       account: _c.account,
@@ -1150,11 +980,6 @@ class _DraftFormState extends State<DraftForm> {
     pickLabel: l.draftPickCategory,
   );
 
-  /// The entry layout below the card (wallet · category are IN the card):
-  ///
-  ///   [🏷] [#a] [#b] [⋯]
-  ///   โน้ต  [ … ]
-  ///   หารกับ / อีเวนต์  (summary)                ⌄   (not a transfer)
   List<Widget> _chipBody(AppLocalizations l, {required bool isTransfer}) {
     const gap = SizedBox(height: AppSpacing.sm);
     return [
@@ -1163,7 +988,7 @@ class _DraftFormState extends State<DraftForm> {
         selected: _c.tagIds,
         onRemove: _c.toggleTag,
         onMore: _moreTags,
-        known: _c.knownTags,
+        known: _c.knownTags,
       ),
       gap,
       DraftFieldRow(
@@ -1189,12 +1014,9 @@ class _DraftFormState extends State<DraftForm> {
     ];
   }
 
-  /// Category + wallet cards, one row — a transfer [จาก] → [ไป].
   Widget _cardsRow(AppLocalizations l, {required bool isTransfer}) {
     final editing = widget.editing;
     if (isTransfer) {
-      // One row, money flows left → right (owner 2026-10-10). The arrow
-      // never turns: tapping it swaps the wallets instead.
       return IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1226,8 +1048,6 @@ class _DraftFormState extends State<DraftForm> {
         ),
       );
     }
-    // Picked → the card takes the category's / wallet's own colour; blank
-    // (both optional) → dashed. Same height both.
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1248,9 +1068,6 @@ class _DraftFormState extends State<DraftForm> {
     );
   }
 
-  /// The one "แบ่งรายการ" section (owner 2026-10-12): the "แบ่งยอด" row (the
-  /// split editor, or [DraftForm.splitsReadOnly]) and the อีเวนต์ row. Null
-  /// when there is nothing to show (a transfer only gets the recurring row).
   Widget? _splitEventSection(
     AppLocalizations l, {
     required bool editing,
@@ -1258,12 +1075,9 @@ class _DraftFormState extends State<DraftForm> {
     bool transfer = false,
   }) {
     final canEdit = editing && widget.allowSplits;
-    // The quick forms (quick create + the drafts) get the compact look; the
-    // detail page the full one.
     final compact = widget.chipLayout || widget.chipRows;
     final helper = widget.eventPending || _c.projectId != null
         ? l.txSplitInEventHelper
-        // An event bill staying put: my splits sit on my share.
         : _c.savedInEvent
         ? l.txSplitFromMyShare
         : null;
@@ -1273,8 +1087,6 @@ class _DraftFormState extends State<DraftForm> {
         ? SplitsSection(
             embedded: true,
             compact: compact,
-            // "แบ่งยอด" — the row label; going into an event the people
-            // become the event's (the helper says so).
             label: widget.chipLayout ? l.txSplitRowLabel : l.txSplitPeopleLabel,
             helper: compact ? null : helper,
             totalAmount: _c.splitCap,
@@ -1287,7 +1099,6 @@ class _DraftFormState extends State<DraftForm> {
             onMeAutoChanged: _c.setMeAuto,
           )
         : widget.splitsReadOnly;
-    // The drafts' layout keeps its event on the controller.
     final slot = transfer
         ? null
         : widget.chipLayout
@@ -1303,19 +1114,14 @@ class _DraftFormState extends State<DraftForm> {
       splits: splits,
       event: slot,
       recurring: widget.recurringSlot,
-      // Always open, no toggle (owner 2026-10-17): the rows are short and
-      // each says what it holds.
       collapsible: false,
       initiallyOpen: true,
     );
   }
 
-  /// A draft's event (`project_id`): an existing event only.
   SplitEventSlot _draftEventSlot() {
     final id = _c.projectId;
     final opts = maybeTxFormOptions(context);
-    // Events from the form options when a form provides them, else the
-    // events cache.
     final known = id == null
         ? null
         : opts != null
@@ -1344,7 +1150,6 @@ class _DraftFormState extends State<DraftForm> {
       context,
       suggestedName: '',
       selectedProjectId: _c.projectId,
-      // A draft can only name an event that exists.
       allowCreate: false,
     );
     if (!mounted) return;
@@ -1353,43 +1158,33 @@ class _DraftFormState extends State<DraftForm> {
     }
   }
 
-  /// [DraftForm.sectioned] — the detail page below the hero (and, in view
-  /// mode, the [TxTagStrip] under it):
-  ///
-  ///   โน้ต   [ the input, wrapping in its column ]  (label left)
-  ///   ▬▬▬▬
-  ///   หารกับ        [+ เพิ่มคน] [หารเท่ากัน]   (edit: the split editor)
-  ///   …[DraftForm.trailingRows]: the page's sections (view splits, event)
-  ///
-  /// The note always shows where it can be edited — empty, the long-press
-  /// hint (owner 2026-10-11).
   List<Widget> _sections(
     AppLocalizations l, {
     required bool editing,
     required bool isTransfer,
   }) {
     final enter = widget.onEnterEdit;
-    final first = <Widget>[
-      if (editing || enter != null || _c.note.text.trim().isNotEmpty)
-        // The detail standard's note: label above, the value below with the
-        // editable-text indent rule (plain indented text in view, the frame
-        // only while editing).
-        DetailStacked(
-          label: l.commonNote,
-          child: AppInput.inline(
+    final note = editing || enter != null || _c.note.text.trim().isNotEmpty
+        ? NoteSection(
+            first: true,
+            label: l.commonNote,
             editing: editing,
-            controller: _c.note,
-            focusNode: _noteFocus,
-            maxLines: 5,
-            maxLength: TextLimits.note,
-            hint: l.txNoteAddHint,
-            viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
-            onEnterEdit: enter == null ? null : () => enter(_noteFocus),
-          ),
-        ),
-    ];
-    // The detail page's order (owner 2026-10-12): hero → groups without a
-    // heading (the note, then the tags) → headed sections (แบ่งรายการ).
+            text: _c.note.text,
+            hint: l.commonLongPressToEdit,
+            onLongPress: enter == null ? null : () => enter(_noteFocus),
+            editField: DetailStacked(
+              label: l.commonNote,
+              child: AppInput.inline(
+                editing: true,
+                controller: _c.note,
+                focusNode: _noteFocus,
+                maxLines: 5,
+                maxLength: TextLimits.note,
+                hint: l.txNoteAddHint,
+              ),
+            ),
+          )
+        : null;
     final enterEdit = widget.onEnterEdit;
     final tags = widget.cardsInHero
         ? _tagsBlock(
@@ -1403,23 +1198,16 @@ class _DraftFormState extends State<DraftForm> {
           )
         : const <Widget>[];
     return [
-      // The tags sit DIRECTLY under the card (owner 2026-10-12), then the
-      // note, then the headed sections.
-      // (The 16 px under the hero card is already in the legacy branch.)
       if (tags.isNotEmpty) ...[
         ...tags,
         const SizedBox(height: HeroSpacing.after),
       ],
-      if (first.isNotEmpty) SectionCard(first: true, children: first),
+      ?note,
       ?_splitEventSection(l, editing: editing, transfer: isTransfer),
     ];
   }
 }
 
-// ── Pieces ────────────────────────────────────────────────────────────
-
-/// A transaction's tags in view mode, right under the hero: `🏷 [#a] [#b]`
-/// — the tag icon leads, like the edit mode's chip row; the chips wrap.
 class TxTagStrip extends StatelessWidget {
   const TxTagStrip({required this.tags, super.key});
 
@@ -1453,8 +1241,6 @@ class TxTagStrip extends StatelessWidget {
   }
 }
 
-/// A labelled text field under the hero of an event row / scheduled entry
-/// (คำอธิบาย, โน้ต) — label on top, an [AppInput.inline] box below.
 class _TextBlock extends StatelessWidget {
   const _TextBlock({
     required this.label,
@@ -1468,7 +1254,6 @@ class _TextBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // A headless group: plain on the page, the kit's label-on-top row.
     return SectionCard(
       first: true,
       children: [
@@ -1486,15 +1271,6 @@ class _TextBlock extends StatelessWidget {
   }
 }
 
-/// "ส่วนของคุณ ฿y · คนอื่นติดคุณ ฿x" under the hero's amount once the row
-/// is split — the key number (owner 2026-10-10; reports count it). Income
-/// splits are what I pass on: "· คุณติดคนอื่น ฿x" (owner 2026-10-11).
-/// A negative share shows in the error colour.
-///
-/// y = the server's `my_share` while the form is as loaded (it also knows
-/// an event share), x = amount − y. With unsaved split / amount changes
-/// (or a BE without it): x = the event's others + the people, y = ฉัน as
-/// typed (else what's left of the amount).
 class _ShareLine extends StatelessWidget {
   const _ShareLine({
     required this.type,
@@ -1506,7 +1282,6 @@ class _ShareLine extends StatelessWidget {
   final double mine;
   final double others;
 
-  /// Null while it's all mine.
   static Widget? of(DraftFormController c) {
     final saved = c.savedMyShare;
     if (saved != null) {

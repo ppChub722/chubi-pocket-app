@@ -10,20 +10,6 @@ import '../../data/contacts_repository.dart';
 import '../../domain/contact.dart';
 import '../cubit/contacts_cubit.dart';
 
-/// The contact form of the link-request flows only — plain create / edit
-/// is the contact detail page. Reached from an accepted
-/// `contact_link_request` (the inbox):
-///
-/// - **Link-create** (`/contacts/new` with `extra.linkRequestId`, no
-///   [editingId]) — B has no matching contact yet. Display_name + email
-///   are read-only, pre-filled from the sender's profile (the BE pulls them
-///   server-side at save time too). Save calls
-///   `createLinkedContactFromLinkRequest`.
-/// - **Link-existing** (`/contacts/:id/edit` with `extra.linkRequestId`)
-///   — B has an unlinked email-match. Loads that contact, locks
-///   display_name + email (about to become linked-driven), keeps phone /
-///   description / note editable. Save calls
-///   `linkExistingContactFromLinkRequest`.
 class ContactFormPage extends StatefulWidget {
   const ContactFormPage({
     required this.linkRequestId,
@@ -35,15 +21,8 @@ class ContactFormPage extends StatefulWidget {
 
   final String? editingId;
 
-  /// Notification id of an *actioned* `contact_link_request`. Save calls
-  /// the link-request endpoint picked by whether [editingId] is set:
-  /// - editingId null → `createLinkedContactFromLinkRequest`
-  /// - editingId set  → `linkExistingContactFromLinkRequest`
   final String linkRequestId;
 
-  /// Pre-fill values for the locked display_name + email fields in
-  /// link-create mode. Sourced by the inbox tap handler from the
-  /// sender-profile endpoint.
   final String? lockedDisplayName;
   final String? lockedEmail;
 
@@ -60,7 +39,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
 
   bool _loading = false;
 
-  /// The contact being linked (link-existing), once loaded.
   Contact? _existing;
 
   bool get _isLinkExisting => widget.editingId != null;
@@ -72,9 +50,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
     if (_isLinkExisting) {
       _loadExisting();
     } else {
-      // Pre-fill (read-only) from the sender profile passed in by the
-      // inbox tap handler. The BE will pull the canonical values from
-      // the user record on save anyway — these fields are display-only.
       _name.text = widget.lockedDisplayName ?? '';
       _email.text = widget.lockedEmail ?? '';
     }
@@ -88,7 +63,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
       )).contact;
       if (!mounted) return;
       _existing = c;
-      // The BE-resolved values.
       _name.text = c.name;
       _email.text = c.email ?? '';
       _phone.text = c.phone ?? '';
@@ -119,7 +93,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
     final note = _note.text.trim().isEmpty ? null : _note.text.trim();
     try {
       if (_isLinkExisting) {
-        // The cubit patches its list from the returned contact.
         await cubit.linkExistingFromRequest(
           widget.linkRequestId,
           widget.editingId!,
@@ -153,8 +126,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
     final title = _isLinkCreate
         ? l.contactLinkCreateTitle
         : l.contactLinkExistingTitle;
-    // Display_name + email are read-only in both flows: link-create shows
-    // the sender's profile, link-existing is about to become linked-driven.
     final lockedHelper = l.contactLinkedLockedHint;
     final loadingExisting = _loading && _isLinkExisting && _existing == null;
     final name = _name.text;
@@ -162,7 +133,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
     return Scaffold(
       appBar: AppTopBar(title: title, showBack: true, editing: true),
       extendBodyBehindAppBar: true,
-      // Builder: its context sees the floating bar's height.
       body: Builder(
         builder: (context) {
           final top = MediaQuery.paddingOf(context).top;
@@ -193,8 +163,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
                     helper: lockedHelper,
                     trailing: AppText(name),
                   ),
-                  // The contact's own — editable even when name/email are
-                  // locked.
                   DetailStacked(
                     label: l.commonDescription,
                     child: AppInput.inline(

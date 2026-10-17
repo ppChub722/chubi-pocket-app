@@ -3,11 +3,6 @@ import 'package:flutter/material.dart';
 import '../atoms/app_button.dart';
 import '../atoms/ui_config.dart';
 
-/// The app's one confirmation dialog. Resolves `true` only when the user
-/// taps the confirm button (dismiss / cancel / back → `false`).
-///
-/// [destructive] paints the confirm button red — use for delete, leave,
-/// discard, reject.
 Future<bool> showConfirmDialog(
   BuildContext context, {
   required String title,

@@ -19,7 +19,6 @@ class TxFormOptionsState extends Equatable {
   final TxFormOptions? options;
   final ApiException? error;
 
-  /// A first load is pending (or hasn't started): nothing to show yet.
   bool get isLoading =>
       options == null &&
       (status == TxFormOptionsStatus.initial ||
@@ -29,12 +28,6 @@ class TxFormOptionsState extends Equatable {
   List<Object?> get props => [status, options, error];
 }
 
-/// `GET /transactions/form-options`: wallets (with balances), categories,
-/// tags and events for one form, in ONE call. Created locally by whoever
-/// opens a form (the quick create sheet makes one per open, so the balances
-/// are fresh) — not an app-wide cubit. The pick rows / [DraftForm] use it
-/// when one is in the tree ([maybeTxFormOptions]) and fall back to the
-/// app-wide cubits otherwise.
 class TxFormOptionsCubit extends Cubit<TxFormOptionsState> {
   TxFormOptionsCubit(this._repo) : super(const TxFormOptionsState());
 
@@ -68,7 +61,6 @@ class TxFormOptionsCubit extends Cubit<TxFormOptionsState> {
     }
   }
 
-  /// Loads once: a no-op while loading or after a successful load.
   Future<void> loadIfNeeded() async {
     if (state.status == TxFormOptionsStatus.loaded ||
         state.status == TxFormOptionsStatus.loading) {
@@ -78,9 +70,6 @@ class TxFormOptionsCubit extends Cubit<TxFormOptionsState> {
   }
 }
 
-/// The nearest [TxFormOptionsCubit], or null when no form provides one (the
-/// pending page, the scheduled form, the detail page's edit mode). [watch]
-/// subscribes the caller to its state (use it from `build`).
 TxFormOptionsCubit? maybeTxFormOptions(
   BuildContext context, {
   bool watch = true,

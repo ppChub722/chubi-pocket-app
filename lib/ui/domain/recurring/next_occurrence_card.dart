@@ -7,7 +7,6 @@ import '../../tokens/app/app_colors.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';
 
-/// One action of a [NextOccurrenceCard] (แก้ยอด / เลื่อนวัน / ข้าม).
 @immutable
 class NextOccurrenceAction {
   const NextOccurrenceAction({
@@ -19,19 +18,9 @@ class NextOccurrenceAction {
   final String label;
   final VoidCallback? onTap;
 
-  /// The main action (filled) — ใส่ยอด on a reminder with no amount.
   final bool primary;
 }
 
-/// The NEXT occurrence of a recurring, prominent (reference "รายการประจำ" ›
-/// ล่วงหน้า):
-///
-///   งวดถัดไป · อีก 30 วัน                         −฿3,023
-///   จะขึ้นร่างใน pending วันนั้น
-///   [แก้ยอด] [เลื่อนวัน] [ข้าม]
-///
-/// Words come from the caller; the amount is a widget (a `MoneyText`, or
-/// the "รอใส่ยอด" text of a reminder with no amount).
 class NextOccurrenceCard extends StatelessWidget {
   const NextOccurrenceCard({
     required this.title,
@@ -43,16 +32,12 @@ class NextOccurrenceCard extends StatelessWidget {
     super.key,
   });
 
-  /// "งวดถัดไป · อีก 30 วัน".
   final String title;
 
-  /// The amount (or its absence) on the right.
   final Widget amount;
 
-  /// A small line under the title.
   final String? caption;
 
-  /// Mini chips after the caption ("แก้แล้ว", "งวดที่ 4/10").
   final List<Widget> chips;
   final List<NextOccurrenceAction> actions;
   final VoidCallback? onTap;
@@ -137,18 +122,14 @@ class NextOccurrenceCard extends StatelessWidget {
   }
 }
 
-/// How one date of [OccurrenceDates] looks.
 enum OccurrenceDateKind {
   normal,
 
-  /// Edited on its own (amber).
   edited,
 
-  /// Skipped (struck through, muted).
   skipped,
 }
 
-/// One date chip of [OccurrenceDates].
 @immutable
 class OccurrenceDate {
   const OccurrenceDate({
@@ -157,15 +138,11 @@ class OccurrenceDate {
     this.onTap,
   });
 
-  /// "16 ธ.ค." (+ " · ฿3,500" when edited, + " · ข้าม" when skipped).
   final String label;
   final OccurrenceDateKind kind;
   final VoidCallback? onTap;
 }
 
-/// "ต่อจากนั้น · อีก 11 งวด" + the remaining occurrences as date chips
-/// (edited ones amber, skipped struck through) and a "+6 ›" chip. No row of
-/// twelve identical lines.
 class OccurrenceDates extends StatelessWidget {
   const OccurrenceDates({
     required this.title,
@@ -178,7 +155,6 @@ class OccurrenceDates extends StatelessWidget {
   final String title;
   final List<OccurrenceDate> dates;
 
-  /// "+6 ›": the chip that shows the rest; null = none.
   final String? moreLabel;
   final VoidCallback? onMore;
 

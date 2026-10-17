@@ -12,12 +12,6 @@ import '../../domain/debt_ledger.dart';
 import '../cubit/debt_people_cubit.dart';
 import '../debt_wiring.dart';
 
-/// `/personal-debts` — ONE people list (รอรับ and รอจ่าย together): the
-/// summary card (two side tiles that filter, the BE's net line when both are
-/// open, an amber "ค้างเกิน 30 วัน" alert), the hidden toolbar (search ·
-/// รวมคนที่เคลียร์แล้ว · sort), then one row per person (name · ค้าง N วัน ·
-/// amount) → their page. Open = 1 call; search / filter / sort / next page =
-/// 1 call each, on the server. The centre + opens debt mode.
 class PersonalDebtsPage extends StatelessWidget {
   const PersonalDebtsPage({super.key});
 
@@ -61,8 +55,6 @@ class _PeopleViewState extends State<_PeopleView> {
         appBar: AppTopBar(title: l.moreDebts, showBack: true),
         extendBodyBehindAppBar: true,
         body: TabSwitchBody(
-          // A failed reload with rows on screen keeps them + a snackbar
-          // (the template).
           child: BlocBuilder<DebtPeopleCubit, DebtPeopleState>(
             builder: (context, s) => ListPageBody(
               loading:
@@ -117,7 +109,6 @@ class _PeopleViewState extends State<_PeopleView> {
                       onTap: () => cubit.toggleSide(NetSide.iOwe),
                     ),
                   ],
-                  // The BE's net, only when both sides are open.
                   infoLine: s.totals.owedToMe > 0 && s.totals.iOwe > 0
                       ? DebtNetLine(
                           label: l.debtsNet,

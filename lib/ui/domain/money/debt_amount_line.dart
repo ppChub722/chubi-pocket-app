@@ -7,14 +7,6 @@ import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';
 import 'money_text.dart';
 
-/// The debt person hero's row C (owner 2026-10-17, reference §4): ONE line,
-///
-///   [รอรับ]  ฿1,189.67
-///
-/// a pill chip saying the side (green "รอรับ" = they owe me, red "รอจ่าย" = I
-/// owe) and the amount (magnitude, coloured by side). A net that shows as
-/// zero is the muted [settledLabel] alone — no pill, no colour. Goes into
-/// `HeroCard.number`. Words come from the caller.
 class DebtAmountLine extends StatelessWidget {
   const DebtAmountLine({
     required this.net,
@@ -25,7 +17,6 @@ class DebtAmountLine extends StatelessWidget {
     super.key,
   });
 
-  /// The signed net: + = they owe me, − = I owe them.
   final num net;
   final String owedToMeLabel;
   final String iOweLabel;
@@ -72,9 +63,6 @@ class DebtAmountLine extends StatelessWidget {
   }
 }
 
-/// "ค้าง 45 วัน": the age text of a debt person (hero fact line). [warn]
-/// (over 30 days) turns it amber and semibold. Same look as the list row's
-/// subtitle.
 class DebtAgeText extends StatelessWidget {
   const DebtAgeText(this.text, {this.warn = false, super.key});
 
@@ -95,8 +83,6 @@ class DebtAgeText extends StatelessWidget {
   }
 }
 
-/// The people list card's net line, shown only when both sides are open:
-/// "สุทธิ  +฿1,250.00" — the label muted, the signed amount tinted.
 class DebtNetLine extends StatelessWidget {
   const DebtNetLine({
     required this.label,

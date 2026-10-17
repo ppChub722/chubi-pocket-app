@@ -2,19 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../atoms/app_spinner.dart';
 
-/// Dims [child], shows a spinner and blocks all input while a save / delete /
-/// reorder call is running ([saving]). Skeletons are for the first page load
-/// only — every write to the server goes through this.
-///
-/// ```dart
-/// SavingOverlay(
-///   saving: state.saving,
-///   child: Scaffold(...),
-/// )
-/// ```
-///
-/// Wrap the page body (or the whole Scaffold to cover the bars too). The
-/// overlay fades in; with `disableAnimations` it just appears.
 class SavingOverlay extends StatelessWidget {
   const SavingOverlay({required this.saving, required this.child, super.key});
 

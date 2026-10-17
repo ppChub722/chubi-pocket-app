@@ -16,16 +16,6 @@ import '../recurring_rows.dart';
 
 enum RecurringHomeTab { recurring, reminder, calendar }
 
-/// `/recurring` — the management page (reference "รายการประจำ", owner
-/// 2026-10-17): the summary card ("30 วันข้างหน้า ต้องจ่าย" + the amber
-/// "รอใส่ยอด n" alert) → swipe tabs [รายการประจำ] [เตือนจ่าย] [ปฏิทิน] → the
-/// hidden search row → rows.
-///
-/// Open = ONE call (`GET /recurring`): the card, both list tabs (split by
-/// kind) and the tab badge come from it. The calendar tab loads the month it
-/// shows the first time it shows (`GET /recurring-items?month=`); the month
-/// stepper re-asks. Pull-to-refresh re-runs the tab's load; a failed reload
-/// keeps what is on screen and says so. Every number is the BE's.
 class RecurringHomePage extends StatefulWidget {
   const RecurringHomePage({
     this.initialTab = RecurringHomeTab.recurring,
@@ -52,7 +42,6 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   RecurringList? _list;
   Object? _listError;
 
-  // ปฏิทิน: the month on screen, its items, the picked day.
   late DateTime _month = DateTime(today().year, today().month);
   late DateTime _day = today();
   ItemPage? _calendar;
@@ -78,7 +67,6 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     super.dispose();
   }
 
-  /// `listRecurring` — the page's ONE call. A reload keeps the rows on screen.
   Future<void> _loadList() async {
     final seq = ++_listSeq;
     try {
@@ -103,7 +91,6 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     }
   }
 
-  /// `listRecurringItems?month=` — the calendar tab's call.
   Future<void> _loadCalendar() async {
     final seq = ++_calendarSeq;
     try {
@@ -152,7 +139,6 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     final first = DateTime(m.year, m.month);
     setState(() {
       _month = first;
-      // Keep the day of the month when it exists, else the 1st.
       final last = DateUtils.getDaysInMonth(first.year, first.month);
       _day = DateTime(first.year, first.month, _day.day > last ? 1 : _day.day);
     });
@@ -171,8 +157,6 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     if (t == RecurringHomeTab.calendar && _calendar == null) _loadCalendar();
   }
 
-  /// Another tab-aware page open (a cross-tab link). Coming back, the page
-  /// template re-runs the page call by itself (refresh on show).
   void _open(String path) => openPage(context, path);
 
   @override
@@ -226,7 +210,6 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
       caption: l.fpRecurringListCaption,
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
       actions: [
-        // No search on the calendar tab.
         if (_tab != RecurringHomeTab.calendar)
           ListenableBuilder(
             listenable: _search,
@@ -275,7 +258,6 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     ],
   );
 
-  /// Both list tabs share the loading / error / refresh wiring.
   Widget _listBody(
     AppLocalizations l, {
     required List<Recurring> rows,
@@ -284,7 +266,6 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   }) {
     final list = _list;
     return ListPageBody(
-      // The skeleton only until the FIRST answer: a reload keeps the rows.
       loading: list == null && _listError == null,
       error: list == null ? _listError : null,
       isEmpty: rows.isEmpty,
@@ -355,8 +336,6 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
       for (final r in _list?.items ?? const <Recurring>[])
         if (r.kind == RecurringKind.reminder) r,
     ];
-    // Due already (its occurrence is a draft / waiting) vs still to come —
-    // by the BE's current_occurrence status.
     bool due(Recurring r) {
       final s = r.currentOccurrence?.status;
       return s == OccurrenceState.pending || s == OccurrenceState.notCreated;

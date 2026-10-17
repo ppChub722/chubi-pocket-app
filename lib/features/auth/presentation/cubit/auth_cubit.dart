@@ -10,29 +10,15 @@ import '../../../../core/storage/secure_token_storage.dart';
 import '../../data/auth_repository.dart';
 import '../../domain/user.dart';
 
-// ────────────────────────────────────────────────────────────────────────────
-//  AuthState — sealed hierarchy.
-//
-//  Routing only cares about [isAuthenticated]. [AuthLoading] and [AuthFailure]
-//  preserve the previous identity so the user is not bounced to /auth/login
-//  while a login / change-password / logout call is in flight.
-// ────────────────────────────────────────────────────────────────────────────
-
 sealed class AuthState extends Equatable {
   const AuthState();
 
-  /// Whether the user is currently considered logged in. The router uses this.
   bool get isAuthenticated;
 
   @override
   List<Object?> get props => const [];
 }
 
-/// Cold-start, before [AuthCubit.init] resolves the stored token.
-///
-/// [startupError] set = the check couldn't reach the server (offline,
-/// timeout, 5xx). The token is kept; the splash shows the error and a
-/// retry that calls [AuthCubit.init] again.
 class AuthInitial extends AuthState {
   const AuthInitial({this.startupError});
 
@@ -45,9 +31,6 @@ class AuthInitial extends AuthState {
   List<Object?> get props => [startupError];
 }
 
-/// An auth action is in flight (login / register / logout / changePassword
-/// / cold-start token validation). Wraps the previous state so the router
-/// keeps the user on the right side of the auth gate.
 class AuthLoading extends AuthState {
   const AuthLoading(this.previous);
   final AuthState previous;
@@ -59,8 +42,6 @@ class AuthLoading extends AuthState {
   List<Object?> get props => [previous];
 }
 
-/// User is signed in. Token is held in secure storage; the cubit only carries
-/// the [User].
 class AuthAuthenticated extends AuthState {
   const AuthAuthenticated(this.user);
   final User user;
@@ -79,8 +60,6 @@ class AuthUnauthenticated extends AuthState {
   bool get isAuthenticated => false;
 }
 
-/// Last action failed. The screen reads [error] to display feedback. The
-/// underlying identity is preserved in [previous] so routing is stable.
 class AuthFailure extends AuthState {
   const AuthFailure({required this.error, required this.previous});
   final ApiException error;
@@ -92,10 +71,6 @@ class AuthFailure extends AuthState {
   @override
   List<Object?> get props => [error, previous];
 }
-
-// ────────────────────────────────────────────────────────────────────────────
-//  AuthCubit — the reference Cubit that Phase 1+ modules copy.
-// ────────────────────────────────────────────────────────────────────────────
 
 class AuthCubit extends Cubit<AuthState> {
   AuthCubit({
@@ -114,19 +89,6 @@ class AuthCubit extends Cubit<AuthState> {
   final SecureTokenStorage _tokens;
   late final StreamSubscription<void> _unauthorizedSub;
 
-  /// Cold-start: read token from secure storage and validate via /users/me.
-  /// Stays on [AuthInitial] for the duration of the call — the SplashPage's
-  /// own spinner is the loading indicator. This keeps the router's "is auth
-  /// resolved?" check to a single state type.
-  ///
-  /// Only a rejected token (401 / 403) logs out and clears it. Anything
-  /// else — offline, timeout, server error, a malformed response — keeps
-  /// the token (it may well still be good) and stays on the splash with
-  /// [AuthInitial.startupError]; calling [init] again retries (owner
-  /// 2026-10-09: opening the app without signal used to log you out).
-  /// A 12 s wall-clock cap is the last line of defence against a hang.
-  /// Calls while one is running join it (the version-check splash and the
-  /// auth splash both start it on cold start; a reconnect retries it too).
   Future<void> init() =>
       _initRun ??= _init().whenComplete(() => _initRun = null);
 
@@ -135,7 +97,6 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> _init() async {
     final s = state;
     if (s is! AuthInitial) return;
-    // Retry → back to the plain spinner while it runs.
     if (s.startupError != null) emit(const AuthInitial());
     try {
       final token = await _tokens.readAuthToken();
@@ -238,7 +199,6 @@ class AuthCubit extends Cubit<AuthState> {
         currentPassword: currentPassword,
         newPassword: newPassword,
       );
-      // Identity unchanged — restore previous state.
       emit(previous);
     } on ApiException catch (e) {
       emit(AuthFailure(error: e, previous: previous));
@@ -255,20 +215,15 @@ class AuthCubit extends Cubit<AuthState> {
     emit(const AuthUnauthenticated());
   }
 
-  /// Clear the [AuthFailure] wrapper so subsequent reads see the underlying
-  /// identity. Screens call this after dismissing an error banner.
   void acknowledgeFailure() {
     final s = state;
     if (s is AuthFailure) emit(s.previous);
   }
 
-  /// Replace the cached [User] after a successful profile edit. No-op when
-  /// the user is not currently authenticated.
   void updateUser(User user) {
     if (state is AuthAuthenticated) emit(AuthAuthenticated(user));
   }
 
-  /// Triggered by [ApiClient.onUnauthorized] — wipe token and route to login.
   Future<void> _onUnauthorized() async {
     if (state is! AuthAuthenticated) return;
     AppLogger.instance.warn('auth.unauthorized_kicked');

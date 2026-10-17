@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../../ui/ui.dart';
 
-/// The default wallet as `/users/me` returns it (`default_account`).
 class DefaultWalletRef extends Equatable {
   const DefaultWalletRef({required this.id, required this.name, this.iconCode});
 
@@ -24,8 +23,6 @@ class DefaultWalletRef extends Equatable {
   List<Object?> get props => [id, name, iconCode];
 }
 
-/// `/users/me` `notification_summary`: the settings tile's numbers (mutable
-/// types not muted, types running automatically).
 class NotificationSummary extends Equatable {
   const NotificationSummary({required this.on, required this.auto});
 
@@ -42,7 +39,6 @@ class NotificationSummary extends Equatable {
   List<Object?> get props => [on, auto];
 }
 
-/// Authenticated user — the subset of fields surfaced in the Phase 0 UI.
 class User extends Equatable {
   const User({
     required this.id,
@@ -71,27 +67,17 @@ class User extends Equatable {
   final String? email;
   final IconCode? iconCode;
 
-  /// Server preference `fee_category_id` (spec 15 §7): the expense category
-  /// fee drafts from bank slips get. Only on `GET`/`PUT /users/me` —
-  /// login answers without preferences, so it may be stale until then.
   final String? feeCategoryId;
 
-  /// Server preference `money_style` (owner 2026-10-17): how amounts mark
-  /// income / expense; null = a user from before it (+/− in colour). Only on
-  /// `GET`/`PUT /users/me`, like [feeCategoryId].
   final String? moneyStyle;
 
   /// Server preference `money_decimals`: always / never / auto (null = auto).
   final String? moneyDecimals;
 
-  /// The default wallet (`default_account`; null = none).
   final DefaultWalletRef? defaultAccount;
 
-  /// `auto_copy_own_event_bills`: a bill I record in an event also lands in my
-  /// own book (set on the event settings, not here).
   final bool autoCopyOwnEventBills;
 
-  /// The settings tile's numbers; null when the answer has none (login).
   final NotificationSummary? notificationSummary;
   final DateTime? createdAt;
   final DateTime? updatedAt;

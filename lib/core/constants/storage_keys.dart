@@ -7,7 +7,5 @@ class StorageKeys {
   static const String locale = 'pref.locale';
   static const String hideAmounts = 'pref.hide_amounts';
 
-  /// The wallet last used to record money (quick create, settle a debt) —
-  /// the next one starts there.
   static const String lastAccountId = 'quick.last_account_id';
 }

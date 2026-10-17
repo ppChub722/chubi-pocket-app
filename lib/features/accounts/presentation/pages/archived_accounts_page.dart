@@ -8,7 +8,6 @@ import '../../../../ui/ui.dart';
 import '../../domain/account.dart';
 import '../cubit/accounts_cubit.dart';
 
-/// `/accounts/archived` — archived wallets with "กู้คืน" (§10).
 class ArchivedAccountsPage extends StatefulWidget {
   const ArchivedAccountsPage({super.key});
 
@@ -32,7 +31,6 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
     try {
       await f;
     } catch (_) {
-      // The FutureBuilder renders the failure (AsyncStateView).
     }
   }
 
@@ -71,7 +69,6 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
                 : null,
             isEmpty: list.isEmpty,
             onRetry: _refresh,
-            // Rows are full-width kit cards.
             sidePadding: 0,
             topInset: 0,
             empty: EmptyView(
@@ -80,8 +77,6 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
               message: l.accountsArchivedEmptyMessage,
             ),
             children: [
-              // Kit rows (owner 2026-10-10): dimmed icon · name ·
-              // balance, and [กู้คืน].
               SectionCard(
                 first: true,
                 children: [
@@ -99,7 +94,6 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
                       helper: a.showsBalance
                           ? moneyString(context, a.balance)
                           : null,
-                      // Only the owner restores (the BE checks too).
                       trailing: !a.canEdit
                           ? null
                           : AppChip(

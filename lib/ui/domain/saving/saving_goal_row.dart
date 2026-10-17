@@ -10,18 +10,6 @@ import '../../tokens/tone.dart';
 import '../icons/icon_code.dart';
 import '../icons/icon_code_widget.dart';
 
-/// One goal of the goals list (reference §2, owner 2026-10-17):
-///
-/// ```
-/// (icon)  name                                   ขาด ฿2,500   ← [trailing]
-///         ▓▓▓▓▓▒▒▒░░░░░░░░░░░░░░  thick bar in the goal colour
-///         ฿60,000 / ฿200,000        [ถึงเป้า ส.ค. 2029 · ช้า 2 เดือน]
-/// ```
-///
-/// No buttons: a tap opens the goal. Every word is a param (no l10n here);
-/// [value] is the bar fraction (presentation only — the BE sends the
-/// numbers); null = no bar (a goal with no target, 0.4.0-1). [badge] is the
-/// ETA chip, amber via [badgeTone] when behind.
 class SavingGoalRow extends StatelessWidget {
   const SavingGoalRow({
     required this.title,
@@ -40,19 +28,15 @@ class SavingGoalRow extends StatelessWidget {
 
   final String title;
 
-  /// Bar fill, 0–1 (over 1 stays full); null = no bar.
   final double? value;
 
-  /// "฿60,000 / ฿200,000".
   final String amountText;
   final IconCode? iconCode;
   final IconData? fallbackIcon;
 
-  /// Right of the name: "ขาด ฿2,500" (amber) or "✓" (green).
   final String? trailing;
   final Tone trailingTone;
 
-  /// The ETA chip text; null = none.
   final String? badge;
   final Tone badgeTone;
   final bool dimmed;

@@ -7,11 +7,6 @@ import '../tokens/app_spacing.dart';
 import '../tokens/chip_size.dart';
 import '../tokens/icon_size.dart';
 
-/// The tag row under a hero: a tag icon, then the wrapping mini chips
-/// ([tags], already-built `AppChip(size: ChipSize.mini)`s). Same in view and
-/// edit mode. [onAdd] adds a dashed "+ tag" chip labelled [addLabel]. [label]
-/// is a small muted name for the row ("My tags") between the icon and the
-/// chips.
 class TagRow extends StatelessWidget {
   const TagRow({
     required this.tags,

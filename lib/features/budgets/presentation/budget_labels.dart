@@ -9,9 +9,6 @@ import '../domain/budget.dart';
 import '../domain/budget_detail.dart';
 import '../domain/budget_period.dart';
 
-// Words and small mappers only: models → kit parameters (no styling).
-
-/// "รายเดือน" / "ทุก 2 เดือน" — a recurring budget's period length.
 String budgetRuleLabel(AppLocalizations l, BudgetRule rule) {
   final n = rule.interval < 1 ? 1 : rule.interval;
   if (n == 1) {
@@ -35,17 +32,14 @@ String _day(BuildContext context, DateTime d) => DateFormatter.medium(
   locale: Localizations.localeOf(context).toLanguageTag(),
 );
 
-/// A date as the pages show it ("8 ต.ค. 2026").
 String budgetDate(BuildContext context, DateTime d) => _day(context, d);
 
-/// "1 ต.ค. 2026 – 31 ต.ค. 2026"; an open end shows "ตั้งแต่ 1 ส.ค. 2026".
 String budgetRange(BuildContext context, DateTime start, DateTime? end) {
   final l = AppLocalizations.of(context)!;
   if (end == null) return l.bgRowSince(_day(context, start));
   return l.bgRowRange(_day(context, start), _day(context, end));
 }
 
-/// The period's name: a month for a monthly rule, else its range.
 String budgetPeriodTitle(BuildContext context, Budget budget, BudgetPeriod p) {
   final locale = Localizations.localeOf(context).toLanguageTag();
   if (budget.rule?.freq == 'monthly' && (budget.rule?.interval ?? 1) == 1) {
@@ -57,7 +51,6 @@ String budgetPeriodTitle(BuildContext context, Budget budget, BudgetPeriod p) {
   return budgetRange(context, p.start, p.end);
 }
 
-/// The status chip of a budget row / hero (null = nothing to flag).
 Widget? budgetStatusChip(
   AppLocalizations l,
   Budget budget, {
@@ -107,7 +100,6 @@ Widget? budgetStatusChip(
   };
 }
 
-/// The source's name on a breakdown row / an item.
 String budgetSourceLabel(AppLocalizations l, BudgetSource s) => switch (s) {
   BudgetSource.normal => l.bgSourceNormal,
   BudgetSource.recurring => l.bgSourceRecurring,
@@ -123,26 +115,20 @@ ProgressTone budgetProgressTone(BudgetPeriod p) => switch (p.tone) {
   BudgetTone.neutral => ProgressTone.neutral,
 };
 
-/// A budget's own tint (its icon colour) — what a neutral tone resolves to.
 Color budgetTint(BuildContext context, Budget budget) =>
     budget.iconCode.tintFor(Theme.of(context).extension<AppColors>()!);
 
-/// The hero accent: the tone colour, else the budget's tint.
 Color budgetToneColor(BuildContext context, Budget budget, BudgetPeriod p) =>
     budgetProgressTone(
       p,
     ).resolve(context, entityTint: budgetTint(context, budget));
 
-/// The row's bar tone: the BE's neutral reads as the primary (teal) bar, then
-/// amber (warning) and red (danger).
 ProgressTone budgetRowTone(BudgetPeriod p) => switch (p.tone) {
   BudgetTone.danger => ProgressTone.danger,
   BudgetTone.warning => ProgressTone.warning,
   BudgetTone.neutral => ProgressTone.normal,
 };
 
-/// How far [today] is through a period, 0..1 (the row's pace tick); null for
-/// an open-ended or empty period.
 double? budgetPaceFraction(DateTime start, DateTime? end, DateTime today) {
   if (end == null) return null;
   final total = end.difference(start).inHours;
@@ -151,12 +137,9 @@ double? budgetPaceFraction(DateTime start, DateTime? end, DateTime today) {
   return (elapsed / total).clamp(0.0, 1.0);
 }
 
-/// An amount for a row: the user's currency and decimals setting.
 String budgetRowMoney(BuildContext context, num amount) =>
     moneyString(context, amount, symbol: context.readUserCurrencySymbol);
 
-/// What the budget counts, in one line ("Buffet + sub · Tags: เที่ยว"); null
-/// when nothing is picked. [all] = "Every expense".
 String? budgetScopeSummary(
   AppLocalizations l, {
   required bool all,
@@ -181,8 +164,8 @@ String? budgetScopeSummary(
   return parts.isEmpty ? null : parts.join(' · ');
 }
 
-/// Why a counted row counts ("Counted because: category Buffet"), from the
-/// BE's `reason`; null when it has none.
+/// Why a counted row counts ("Counted because: category Buffet"), from the BE's
+/// `reason`; null when it has none.
 String? budgetReasonText(AppLocalizations l, Budget b, BudgetItem i) {
   switch (i.reason) {
     case BudgetReason.all:
@@ -209,7 +192,6 @@ String? budgetReasonText(AppLocalizations l, Budget b, BudgetItem i) {
   }
 }
 
-/// "รายปี · เหลือ 77 วัน": the period kind and the days left.
 String budgetRowCaption(BuildContext context, AppLocalizations l, Budget b) {
   final kind = b.recurring && b.rule != null
       ? budgetRuleLabel(l, b.rule!)

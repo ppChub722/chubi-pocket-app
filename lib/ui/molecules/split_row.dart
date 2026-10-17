@@ -7,14 +7,6 @@ import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/icon_size.dart';
 
-/// One row of a split — `avatar | name | amount | trailing` — with the same
-/// slots on every row (me, a typed name, a contact, a linked person) so the
-/// amounts, their underlines and the trailing icons line up (owner
-/// 2026-10-12). The trailing slot is a FIXED [trailingSlot] wide whatever it
-/// holds (a [SplitRowAction], or nothing).
-///
-/// Generic: the caller builds the pieces — the avatar (with whatever it
-/// reserves for a 🔗), a [SplitRowName], the amount box.
 class SplitRow extends StatelessWidget {
   const SplitRow({
     required this.avatar,
@@ -24,13 +16,10 @@ class SplitRow extends StatelessWidget {
     super.key,
   });
 
-  /// A split row's height — a comfortable tap target (owner 2026-10-11).
   static const double height = 44;
 
-  /// The avatar's size.
   static const double avatarSize = 36;
 
-  /// The trailing slot's width: the ✕ or ⟳ is centred in it.
   static const double trailingSlot = 40;
 
   final Widget avatar;
@@ -57,9 +46,6 @@ class SplitRow extends StatelessWidget {
   );
 }
 
-/// The trailing icon of a [SplitRow]: one icon size for all. [selected] = a
-/// tinted circle (fits inside the slot) — the "auto" switch ON; unselected
-/// and the ✕ are the plain icon.
 class SplitRowAction extends StatelessWidget {
   const SplitRowAction({
     required this.icon,
@@ -69,7 +55,6 @@ class SplitRowAction extends StatelessWidget {
     super.key,
   });
 
-  /// The tinted circle: inside [SplitRow.trailingSlot].
   static const double circle = 32;
 
   final IconData icon;
@@ -104,13 +89,6 @@ class SplitRowAction extends StatelessWidget {
   }
 }
 
-/// The name cell of a [SplitRow], by who it is:
-/// - [SplitRowName.muted] — me ("ส่วนของฉัน"): lighter weight, muted colour
-///   (no italic: the Thai font has none);
-/// - [SplitRowName.input] — level 1, a typed name: an outlined [AppInput],
-///   clearly typeable;
-/// - [SplitRowName.picked] — level 2 / 3, a contact: the name on a faint
-///   highlight in the avatar's colour; a tap opens the picker.
 class SplitRowName extends StatelessWidget {
   const SplitRowName.muted(this.text, {super.key})
     : _kind = _Kind.muted,
@@ -153,18 +131,10 @@ class SplitRowName extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final VoidCallback? onTap;
 
-  /// Where a name's text starts inside its cell — the outlined input's own
-  /// inner inset (measured, test/ui/split_row_align_test.dart), so "my
-  /// share", a typed name and a contact's highlighted name all start at the
-  /// same x.
   static const double textInset = 16;
 
-  /// The height of a name's box: the typed name's framed input and a
-  /// contact's highlight are the SAME height (so the looks line up row to
-  /// row), growing together with the text scale.
   static const double frameHeight = 40;
 
-  /// Every name in the normal weight.
   static TextStyle? style(BuildContext context) =>
       Theme.of(context).textTheme.bodyLarge;
 
@@ -179,8 +149,6 @@ class SplitRowName extends StatelessWidget {
             alignment: AlignmentDirectional.centerStart,
             child: Padding(
               padding: const EdgeInsetsDirectional.only(start: textInset),
-              // Italic + muted sets "my share" apart from the names (the
-              // Thai font has no true italic: Flutter slants it).
               child: Text(
                 text,
                 maxLines: 1,

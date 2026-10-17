@@ -7,9 +7,6 @@ import '../../domain/category_tree.dart';
 import '../../domain/category_type.dart';
 import '../pages/category_detail_page.dart';
 
-/// Result returned by [showCategoryPickerSheet]. Distinct from `null`
-/// (which means "user dismissed without picking") — `cleared` means
-/// "user explicitly chose the None option".
 sealed class CategoryPickerResult {
   const CategoryPickerResult();
 }
@@ -23,26 +20,6 @@ class CategoryPickerCleared extends CategoryPickerResult {
   const CategoryPickerCleared();
 }
 
-/// Shared category-tree picker — a THIN WRAPPER over the presentational
-/// organism `showCategoryPicker` (lib/ui/domain/pickers): maps the
-/// [Category] models + l10n strings to its plain rows / labels and the
-/// result back to a [CategoryPickerResult].
-///
-/// Reusable across features via arguments:
-/// - [maxDepth] — deepest level (0-based: L1=0, L2=1, L3=2) that is shown
-///   **and** selectable. Quick-create picks any of 3 levels (`maxDepth: 2`);
-///   the category-parent picker only allows L1/L2 (`maxDepth: 1`) because a
-///   child of the picked parent must stay within 3 levels.
-/// - [excludeIds] — rows (and their whole subtree) to hide. The parent
-///   picker passes the edited category + its descendants so you can't pick
-///   yourself or create a cycle.
-/// - [allowNone] / [noneLabel] — show a "None" row (clear / top-level).
-/// - [title] — sheet heading (default "เลือกหมวดหมู่").
-/// - [allowCreate] — a "＋ เพิ่มหมวดหมู่" row: opens the create page over the
-///   sheet; saving there picks the new category and closes the picker, back
-///   returns to the picker (owner 2026-10-10).
-///
-/// System categories are always filtered out (server auto-assigns them).
 Future<CategoryPickerResult?> showCategoryPickerSheet({
   required BuildContext context,
   required List<Category> categories,
@@ -83,8 +60,6 @@ Future<CategoryPickerResult?> showCategoryPickerSheet({
     selectedId: selected?.id,
     allowNone: allowNone,
     maxDepth: maxDepth,
-    // The create page, pushed over the sheet. Saving there pops with the
-    // new category -> pick it; back (nothing saved) returns to the picker.
     onCreate: allowCreate
         ? () async {
             created = await Navigator.of(context, rootNavigator: true).push(

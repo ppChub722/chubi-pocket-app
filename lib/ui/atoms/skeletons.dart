@@ -3,13 +3,6 @@ import 'package:flutter/material.dart';
 import '../tokens/app_spacing.dart';
 import 'skeleton_box.dart';
 
-/// Composable skeleton primitives built on [SkeletonBox]. Pages compose
-/// these into a page-specific skeleton (co-located with the page) that
-/// mirrors the real content shape, then pass it to
-/// `LoadingView(skeleton: ...)`. Per design-sheet §8.5 — no spinners on
-/// lists.
-
-/// A single shimmer text line.
 class SkeletonLine extends StatelessWidget {
   const SkeletonLine({this.width, this.height = 14, super.key});
 
@@ -22,7 +15,6 @@ class SkeletonLine extends StatelessWidget {
   }
 }
 
-/// A shimmer circle — avatar / icon placeholder.
 class SkeletonCircle extends StatelessWidget {
   const SkeletonCircle({required this.size, super.key});
 
@@ -34,8 +26,6 @@ class SkeletonCircle extends StatelessWidget {
   }
 }
 
-/// A list-row skeleton: leading circle + one or two text lines. [indent]
-/// shifts the whole row right (for tree-style lists).
 class SkeletonListTile extends StatelessWidget {
   const SkeletonListTile({
     this.avatarSize = 40,
@@ -79,18 +69,9 @@ class SkeletonListTile extends StatelessWidget {
   }
 }
 
-/// A shimmer bar that takes EXACTLY the height of a line of real text: it lays
-/// out an invisible `' '` in the same [style], then draws the bar over it. A
-/// skeleton built from these has the same row heights as the real content (no
-/// jump when the data arrives), at any text scale.
-///
-/// ```dart
-/// SkeletonText(style: (t) => t.bodyLarge, width: 150)
-/// ```
 class SkeletonText extends StatelessWidget {
   const SkeletonText({required this.style, this.width, super.key});
 
-  /// Picks the text style of the line this stands in for.
   final TextStyle? Function(TextTheme theme) style;
   final double? width;
 

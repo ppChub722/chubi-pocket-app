@@ -4,22 +4,12 @@ import '../atoms/ui_config.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 
-/// Shown when an async call fails (design-sheet §8.5): an icon, a headline, a
-/// sentence and — with [onRetry] — a retry button. The words come from the
-/// app's [UiErrors] (network / server / unexpected), so this piece knows
-/// nothing about the app's exception type.
-///
-/// ```dart
-/// ErrorView(error: state.error!, onRetry: () => cubit.load())
-/// ```
 class ErrorView extends StatelessWidget {
   const ErrorView({super.key, required this.error, this.onRetry});
 
   final Object error;
   final VoidCallback? onRetry;
 
-  /// Short headline for [e] — the same text the full view shows, for
-  /// snackbars (a failed refresh while data is already on screen).
   static String titleFor(BuildContext context, Object e) =>
       UiConfig.of(context).errors.describe(e).title;
 

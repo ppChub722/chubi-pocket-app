@@ -7,9 +7,6 @@ import '../../molecules/option_menu.dart';
 import '../../organisms/option_sheet.dart';
 import '../../molecules/detail_rows.dart';
 
-/// Currency field: a [DetailRow] picker (›) that opens a popover of
-/// [Currencies.codes] (short list → popover, per the app rule).
-/// `onChanged: null` = read-only (e.g. an account's currency after create).
 class CurrencyTile extends StatelessWidget {
   const CurrencyTile({
     required this.value,
@@ -21,7 +18,6 @@ class CurrencyTile extends StatelessWidget {
   final String value;
   final ValueChanged<String>? onChanged;
 
-  /// Defaults to the localized "สกุลเงิน".
   final String? label;
 
   @override
@@ -31,7 +27,6 @@ class CurrencyTile extends StatelessWidget {
         '${Currencies.symbolOf(value)}  $value · ${Currencies.nameOf(l, value)}';
     final tileLabel = label ?? l.commonCurrency;
     if (onChanged == null) {
-      // Fixed after create: a 🔒 row, no ›.
       return DetailRow.pick(
         label: tileLabel,
         value: display,

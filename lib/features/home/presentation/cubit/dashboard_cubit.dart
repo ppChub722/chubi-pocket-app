@@ -20,11 +20,10 @@ class DashboardState extends Equatable {
 
   final DashboardStatus status;
 
-  /// Last good payload — kept while reloading / on a failed refresh so
-  /// the screen never blanks.
+  /// Last good payload — kept while reloading / on a failed refresh so the
+  /// screen never blanks.
   final Dashboard? data;
 
-  /// Selected month (first day); null = current month.
   final DateTime? month;
   final ApiException? error;
   String? get errorMessage => error?.message;
@@ -33,9 +32,6 @@ class DashboardState extends Equatable {
   List<Object?> get props => [status, data, month, error];
 }
 
-/// Home screen state — one `GET /dashboard` per load. The page reloads it
-/// on pull-to-refresh, month change, and whenever transactions / wallets
-/// change elsewhere in the app.
 class DashboardCubit extends Cubit<DashboardState> with Clearable {
   DashboardCubit({required DashboardRepository repository})
     : _repo = repository,
@@ -50,20 +46,14 @@ class DashboardCubit extends Cubit<DashboardState> with Clearable {
     emit(const DashboardState());
   }
 
-  /// First visit only — later visits keep the cached payload (listeners
-  /// keep it fresh).
   Future<void> loadIfNeeded() async {
     if (state.status == DashboardStatus.initial) await load();
   }
 
   Timer? _stale;
 
-  /// Bumped per [load] and on [clear]; stale responses are dropped.
   int _seq = 0;
 
-  /// Something elsewhere changed (a budget, goal, debt, schedule) —
-  /// reload once things settle. Bursts (a save that reloads several
-  /// cubits) collapse into one request.
   void markStale() {
     _stale?.cancel();
     _stale = Timer(const Duration(milliseconds: 400), load);
@@ -87,7 +77,6 @@ class DashboardCubit extends Cubit<DashboardState> with Clearable {
     );
     try {
       final data = await _repo.get(month: month);
-      // A newer load (month switch, refresh) or a logout wins.
       if (isClosed || seq != _seq) return;
       emit(
         DashboardState(
@@ -109,8 +98,6 @@ class DashboardCubit extends Cubit<DashboardState> with Clearable {
     }
   }
 
-  /// Moves the month-scoped blocks by [delta] months. Never past the
-  /// current month — there's nothing to see in the future.
   Future<void> shiftMonth(int delta) async {
     final now = DateTime.now();
     final current = DateTime(now.year, now.month);
@@ -120,8 +107,6 @@ class DashboardCubit extends Cubit<DashboardState> with Clearable {
     await setMonth(next);
   }
 
-  /// Jumps the month-scoped blocks to [month]'s month (the month picker),
-  /// clamped to the current month. No-op when it's already selected.
   Future<void> setMonth(DateTime month) async {
     final now = DateTime.now();
     final current = DateTime(now.year, now.month);

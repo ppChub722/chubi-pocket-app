@@ -5,8 +5,6 @@ import '../../../ui/ui.dart';
 // TODO(be-spec): shapes follow fe-saving's goals v2 proposal (ai/inbox/fe-saving.md
 // + the message to BE). Re-check every key against openapi.yaml when BE lands it.
 
-/// Lifecycle state of a goal. The BE decides it (thin FE); the FE only maps it
-/// to a chip.
 enum SavingGoalState {
   active,
   completed,
@@ -19,8 +17,6 @@ enum SavingGoalState {
   };
 }
 
-/// Where a goal stands against its plan (BE `status`): the BE decides, the
-/// FE only maps it to a chip / badge.
 enum SavingStatus {
   none,
   reached,
@@ -35,7 +31,6 @@ enum SavingStatus {
   };
 }
 
-/// A wallet as the saving feature sees it (the shared AccountRef, no balance).
 class SavingWalletRef extends Equatable {
   const SavingWalletRef({
     required this.id,
@@ -84,8 +79,6 @@ class SavingWalletRef extends Equatable {
   ];
 }
 
-/// A goal's (or the spare bucket's) auto-saving: on [day] of each month a
-/// pending saving draft of [amount] is made — from [wallet], or none.
 class SavingAutoSave extends Equatable {
   const SavingAutoSave({
     required this.amount,
@@ -96,7 +89,6 @@ class SavingAutoSave extends Equatable {
 
   final double amount;
 
-  /// 1–31 (31 = the last day of the month).
   final int day;
   final SavingWalletRef? wallet;
   final String? nextDate;
@@ -116,7 +108,6 @@ class SavingAutoSave extends Equatable {
   List<Object?> get props => [amount, day, wallet, nextDate];
 }
 
-/// One 25 / 50 / 75 / 100 % step of a goal (BE computes `reached`).
 class SavingMilestone extends Equatable {
   const SavingMilestone({
     required this.pct,
@@ -139,7 +130,6 @@ class SavingMilestone extends Equatable {
   List<Object?> get props => [pct, amount, reached];
 }
 
-/// Which buttons the BE allows for a goal right now.
 class SavingGoalActions extends Equatable {
   const SavingGoalActions({
     this.save = true,
@@ -182,9 +172,6 @@ class SavingGoalActions extends Equatable {
   ];
 }
 
-/// One saving goal: a target in a notebook of saved money. Saved money is a
-/// sum of saving entries (never real transactions); every number below is
-/// computed by the BE.
 class SavingGoal extends Equatable {
   const SavingGoal({
     required this.id,
@@ -220,7 +207,6 @@ class SavingGoal extends Equatable {
   final String id;
   final String name;
 
-  /// Null = no target: an open-ended goal (ออมต่อเนื่อง, 0.4.0-1).
   final double? targetAmount;
   final String currency;
   final SavingGoalState state;
@@ -242,21 +228,15 @@ class SavingGoal extends Equatable {
   final SavingStatus status;
   final int? behindMonths;
 
-  /// This month: the plan (auto-saving amount, else the needed monthly),
-  /// what is saved so far and what is still short — all BE numbers.
   final double? monthPlan;
   final double monthSaved;
   final double? monthShort;
 
-  /// The goal's auto-saving (null = off).
   final SavingAutoSave? autoSave;
 
-  /// The list group the BE puts the goal in whatever this month:
-  /// `ongoing` (ออมต่อเนื่อง) for a goal with no target; null = by month.
   final String? group;
   final List<SavingMilestone> milestones;
 
-  /// What the BE allows right now (buttons follow these flags).
   final SavingGoalActions actions;
   final DateTime? closedAt;
   final DateTime? createdAt;
@@ -265,7 +245,6 @@ class SavingGoal extends Equatable {
   bool get isCompleted => state == SavingGoalState.completed;
   bool get isArchived => state == SavingGoalState.archived;
 
-  /// No target: no bar, %, ETA or behind / on-track (ออมต่อเนื่อง).
   bool get isOngoing => targetAmount == null;
 
   static DateTime? _date(Object? v) =>
@@ -316,8 +295,6 @@ class SavingGoal extends Equatable {
     );
   }
 
-  /// Create / update body: name, target (null = none: clears it on update),
-  /// deadline, icon, description, note. No wallet and no % (goals v2).
   Map<String, dynamic> toWriteJson() => <String, dynamic>{
     'name': name,
     'target_amount': targetAmount,

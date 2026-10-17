@@ -7,17 +7,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'api_client.dart';
 
 enum ConnectionStatus {
-  /// Talking to the server.
   online,
 
-  /// A network-level failure: nothing reaches the server. Polls /health.
   offline,
 
-  /// Offline and a poll is in flight right now.
   reconnecting,
 
-  /// Just came back — the "connected again" message shows briefly, then
-  /// [online]. [ServerConnectionState.reconnects] has gone up by one: pages reload.
   backOnline,
 }
 
@@ -29,8 +24,6 @@ class ServerConnectionState extends Equatable {
 
   final ConnectionStatus status;
 
-  /// How many times the connection came back — the templates re-run their
-  /// load (like a pull-to-refresh) when it changes.
   final int reconnects;
 
   bool get isOffline =>
@@ -41,17 +34,6 @@ class ServerConnectionState extends Equatable {
   List<Object?> get props => [status, reconnects];
 }
 
-/// App-wide server reachability (owner 2026-10-12, offline mode).
-///
-/// - **Detect once:** the [ApiClient] reports a network-level failure (refused,
-///   DNS, timeout — never an HTTP status) → [ConnectionStatus.offline].
-/// - **Poll:** while offline, `GET /health` every few seconds (backoff 3 → 10 s)
-///   until the server answers. Any answer counts — a 404 still proves the
-///   server is there. Any other call that gets through ends it too.
-/// - **Back:** [ConnectionStatus.backOnline] for a moment (a "connected again"
-///   message), [ServerConnectionState.reconnects] +1 so pages reload.
-/// - The device link going down ([deviceOnline] false) is offline at once; it
-///   coming back polls straight away.
 class ConnectionCubit extends Cubit<ServerConnectionState> {
   ConnectionCubit({
     required ApiClient client,
@@ -129,7 +111,6 @@ class ConnectionCubit extends Cubit<ServerConnectionState> {
     _poll = Timer(delay, _ping);
   }
 
-  /// The retry button: poll now.
   Future<void> retryNow() async {
     if (!state.isOffline) return;
     _poll?.cancel();
@@ -152,18 +133,14 @@ class ConnectionCubit extends Cubit<ServerConnectionState> {
           receiveTimeout: const Duration(seconds: 4),
         ),
       );
-      // Any answer proves the server is there (the interceptor may have said so
-      // already; this is idempotent).
       _goOnline();
       return;
     } on DioException catch (e) {
-      // An HTTP error status still means the server is there.
       if (e.response != null) {
         _goOnline();
         return;
       }
     } catch (_) {
-      // Fall through: still offline.
     }
     if (isClosed || !state.isOffline) return;
     emit(

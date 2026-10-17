@@ -14,24 +14,10 @@ import '../../domain/account.dart';
 import '../../domain/account_type.dart';
 import '../cubit/accounts_cubit.dart';
 
-/// How the wallets list is ordered — client-side. [type] (the default) groups
-/// the cards by wallet type with a header (count + subtotal); [custom] is
-/// the user's own order.
 enum _WalletSort { type, custom, balance, name }
 
-/// The summary card's two filter tiles.
 enum _WalletTile { cash, card }
 
-/// Wallets tab root (reference §6, owner 2026-10-17):
-///
-///   summary card (net · กระเป๋าตังค์ / หนี้บัตร filter tiles · saved line)
-///   hidden search row: [≡ ตามประเภท ▾] ………………… [⇅ จัดลำดับ]
-///   2-column cards, grouped by type with a header · dashed "+ เพิ่มกระเป๋า"
-///   "กระเป๋าที่เก็บถาวร (n) ›"
-///
-/// ⇅ จัดลำดับ (or a long-press on a wallet) → the kit's reorder mode, flat.
-/// The order is the caller's own, saved in one PATCH /accounts/reorder
-/// (contract §3).
 class AccountsPage extends StatefulWidget {
   const AccountsPage({super.key});
 
@@ -39,17 +25,15 @@ class AccountsPage extends StatefulWidget {
   State<AccountsPage> createState() => _AccountsPageState();
 }
 
-/// One grid's mainAxisExtent: icon row · name · description · balance ·
-/// credit bar. The skeleton uses it too.
 const double _cardExtent = 156;
 
 class _AccountsPageState extends State<AccountsPage> {
-  _WalletSort _sort = _WalletSort.type;
+  _WalletSort _sort = _WalletSort.custom;
   _WalletTile? _tile;
   final _search = TextEditingController();
   final _toolbarOpen = ToolbarToggleState.of('wallets');
+  final _summaryOpen = ToolbarToggleState.of('wallets_summary', open: true);
 
-  /// Non-null while reordering — the kit's flat reorder mode.
   ReorderController? _reorder;
   final _reorderScroll = ScrollController();
   bool _savingOrder = false;
@@ -57,8 +41,6 @@ class _AccountsPageState extends State<AccountsPage> {
 
   bool get _reordering => _reorder != null;
 
-  /// The reorder mode works on the user's own order, whatever the list is
-  /// sorted by right now.
   bool _canReorder(List<Account> accounts) => accounts.length > 1;
 
   @override
@@ -82,21 +64,16 @@ class _AccountsPageState extends State<AccountsPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final cubit = context.read<AccountsCubit>();
-      // One call: the wallets, the totals and the archived count. A write
-      // elsewhere only patched rows — re-read once now if the totals lag.
       cubit.loadIfNeeded().then((_) => cubit.refreshIfStale());
     });
   }
 
   Future<void> _refresh() => context.read<AccountsCubit>().load();
 
-  /// Pushed pages patch the cubit; the totals catch up on return.
   Future<void> _open(Future<Object?> Function() push) async {
     await push();
     if (mounted) unawaited(context.read<AccountsCubit>().refreshIfStale());
   }
-
-  // ── Sort ────────────────────────────────────────────────────────────
 
   String _sortLabel(AppLocalizations l, _WalletSort s) => switch (s) {
     _WalletSort.custom => l.accountsSortCustom,
@@ -105,15 +82,12 @@ class _AccountsPageState extends State<AccountsPage> {
     _WalletSort.type => l.fpWalletsSortByType,
   };
 
-  /// [accounts] in the cubit's (the user's) order, re-sorted for [_sort];
-  /// ties keep the user's order.
   List<Account> _sorted(List<Account> accounts) {
     final indexed = [...accounts.indexed];
     int byOrder((int, Account) a, (int, Account) b) => a.$1.compareTo(b.$1);
     final int Function((int, Account), (int, Account)) cmp = switch (_sort) {
       _WalletSort.custom => byOrder,
       _WalletSort.balance => (a, b) {
-        // Untracked wallets have no balance to rank by: they go last.
         final c = (b.$2.showsBalance ? b.$2.balance : double.negativeInfinity)
             .compareTo(
               a.$2.showsBalance ? a.$2.balance : double.negativeInfinity,
@@ -133,13 +107,9 @@ class _AccountsPageState extends State<AccountsPage> {
     return [for (final (_, a) in indexed) a];
   }
 
-  // ── Reorder mode ────────────────────────────────────────────────────
-
-  /// [select] — the long-pressed wallet, selected on entry so its ↑ ↓ bar
-  /// is right there.
   void _enterReorder(List<Account> current, {String? select}) {
     HapticFeedback.lightImpact();
-    _shellChrome?.hide(); // the action bar replaces the shell nav
+    _shellChrome?.hide();
     final c = ReorderController(
       maxDepth: 1,
       items: [for (final a in current) OutlineItem(a.id, 1)],
@@ -157,7 +127,6 @@ class _AccountsPageState extends State<AccountsPage> {
       _reorder = null;
       _savingOrder = false;
     });
-    // After the frame: the scope stops listening first.
     WidgetsBinding.instance.addPostFrameCallback((_) => c?.dispose());
   }
 
@@ -186,13 +155,9 @@ class _AccountsPageState extends State<AccountsPage> {
     }
   }
 
-  // ── Build ───────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    // Back while reordering leaves the mode (the staged order dropped) and
-    // stays on the page — the shell asks a tab's root page first.
     return PopScope(
       canPop: !_reordering,
       onPopInvokedWithResult: (didPop, _) {
@@ -222,7 +187,6 @@ class _AccountsPageState extends State<AccountsPage> {
               error: state.accounts.isEmpty ? state.error : null,
               isEmpty: accounts.isEmpty,
               onRetry: _refresh,
-              // Summary · sort row · the cards grid at the cards' height.
               skeletonShape: ListSkeletonShape.grid(
                 headerHeight: 168,
                 sortRow: true,
@@ -239,8 +203,6 @@ class _AccountsPageState extends State<AccountsPage> {
                   onPressed: () => context.push('/accounts/new'),
                 ),
               ),
-              // Full-width children (the summary card and the grid pad
-              // themselves).
               sidePadding: 0,
               topInset: 0,
               children: _gridChildren(context, state, cols),
@@ -251,8 +213,6 @@ class _AccountsPageState extends State<AccountsPage> {
     );
   }
 
-  /// The collapsible toolbar (🔍 in the summary card): search by name, the
-  /// order chip, and ⇅ จัดลำดับ at the right end.
   Widget _listToolbar(AppLocalizations l, List<Account> accounts) {
     return ListToolbar(
       collapse: _toolbarOpen,
@@ -270,7 +230,7 @@ class _AccountsPageState extends State<AccountsPage> {
           builder: (context, toggle) => AppChip(
             label: _sortLabel(l, _sort),
             icon: AppIcons.sort,
-            selected: _sort != _WalletSort.type,
+            selected: _sort != _WalletSort.custom,
             trailing: AppChipTrailing.dropdown,
             onTap: toggle,
           ),
@@ -284,7 +244,6 @@ class _AccountsPageState extends State<AccountsPage> {
     );
   }
 
-  /// A money string for the card's lines.
   String _money(BuildContext context, double v) =>
       moneyString(context, v == 0 ? 0 : v);
 
@@ -298,7 +257,6 @@ class _AccountsPageState extends State<AccountsPage> {
     final t = state.totals;
     final hasCards = t.byType.any((b) => b.type.isCredit && b.count > 0);
     if (!hasCards) return const [];
-    // The BE's split (no client percentages).
     final split = t.cashSplit.isEmpty
         ? null
         : t.cashSplit
@@ -337,6 +295,7 @@ class _AccountsPageState extends State<AccountsPage> {
   ) {
     final t = state.totals;
     return ListSummaryCard(
+      expanded: _summaryOpen,
       caption:
           '${l.accountsSummaryNet} · '
           '${l.accountsSummaryWalletCount(state.accounts.length)}'
@@ -349,7 +308,7 @@ class _AccountsPageState extends State<AccountsPage> {
             state: _toolbarOpen,
             filtered:
                 _search.text.isNotEmpty ||
-                _sort != _WalletSort.type ||
+                _sort != _WalletSort.custom ||
                 _tile != null,
             tooltip: l.commonSearch,
           ),
@@ -375,10 +334,6 @@ class _AccountsPageState extends State<AccountsPage> {
     _WalletTile.card => a.type.isCredit,
   };
 
-  /// The page's scrolling content, in order: summary · toolbar · the wallet
-  /// cards (grouped by type in the default order) + add tile · the archived
-  /// link. ListPageBody supplies the scroll view, the insets,
-  /// pull-to-refresh and the data states.
   List<Widget> _gridChildren(
     BuildContext context,
     AccountsState state,
@@ -386,7 +341,6 @@ class _AccountsPageState extends State<AccountsPage> {
   ) {
     final accounts = state.accounts;
     final l = AppLocalizations.of(context)!;
-    // Search is local (the list is not paged): name contains the text.
     final q = _search.text.trim().toLowerCase();
     final list = [
       for (final a in _sorted(accounts))
@@ -428,7 +382,6 @@ class _AccountsPageState extends State<AccountsPage> {
     ];
   }
 
-  /// One type's header (count + subtotal) and its cards.
   List<Widget> _group(
     BuildContext context,
     AccountsState state,
@@ -494,9 +447,6 @@ class _AccountsPageState extends State<AccountsPage> {
     );
   }
 
-  /// Reorder mode (the kit's, flat): a hint, the wallets with ⠿ handles
-  /// (drag at once; tap → the ↑ ↓ bar), then the move bar + ยกเลิก / ↶ /
-  /// บันทึก at the bottom.
   Widget _reorderView(BuildContext context, List<Account> accounts) {
     final l = AppLocalizations.of(context)!;
     final c = _reorder!;
@@ -510,7 +460,6 @@ class _AccountsPageState extends State<AccountsPage> {
             child: ListView(
               controller: _reorderScroll,
               padding: EdgeInsets.only(
-                // Clear the transparent top bar.
                 top: MediaQuery.paddingOf(context).top + AppSpacing.sm,
                 bottom: AppSpacing.lg,
               ),

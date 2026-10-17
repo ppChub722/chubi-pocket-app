@@ -27,16 +27,6 @@ import '../widgets/debt_entry_form.dart';
 import '../widgets/draft_form.dart';
 import '../widgets/pick_chip_rows.dart';
 
-/// The transaction detail page in DEBT MODE (owner 2026-10-12: a debt entry's
-/// detail IS the tx detail page, opened from the debts side or from a tx row
-/// that is an entry's wallet side). The same template and hero: Paid /
-/// Received in place of the type, the PERSON card in place of the category,
-/// the wallet card may be "ไม่ผูก" (ledger only), tags only with a wallet.
-///
-/// One call on open (GET /personal-debts/{id}: the entry, the person's
-/// balance and the linked transaction); one on บันทึก (PUT) and one on ลบ
-/// (DELETE, which takes the wallet transaction with it — the confirm names
-/// both). Everything shown elsewhere is patched from the answers.
 class DebtEntryDetailPage extends StatefulWidget {
   const DebtEntryDetailPage({required this.entryId, super.key});
 
@@ -104,7 +94,6 @@ class _DebtEntryDetailPageState extends State<DebtEntryDetailPage> {
   }
 }
 
-/// What the page edits (Equatable: dirty check + undo).
 class _DebtDraft extends Equatable {
   const _DebtDraft({
     required this.direction,
@@ -129,7 +118,6 @@ class _DebtDraft extends Equatable {
   final List<String> tagIds;
   final bool paid;
 
-  /// Also written as a transaction ("สร้างรายการด้วย").
   final bool createTx;
 
   _DebtDraft copyWith({bool? paid}) => _DebtDraft(
@@ -178,20 +166,16 @@ class _DebtEntryView extends StatefulWidget {
 class _DebtEntryViewState extends State<_DebtEntryView>
     with EditModeMixin<_DebtEntryView, _DebtDraft> {
   final _c = DebtEntryController();
-  final _heroKey = GlobalKey();
+  final _heroKey = GlobalKey();
   bool _paid = false;
 
-  /// Pushing a draft into the fields — not a user edit.
   bool _restoring = false;
 
-  /// Every person / wallet the form has shown, by key / id (undo restores
-  /// them).
   final Map<String, DebtPick> _people = {};
   final Map<String, Account> _accounts = {};
 
   DebtEntry get _entry => widget.detail.entry;
 
-  /// A split-sourced entry: only description / note / paid change.
   bool get _sourced => _entry.source != null;
 
   @override
@@ -222,7 +206,6 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     final e = d.entry;
     final tx = d.transaction;
     final key = e.key ?? d.balance.key;
-    // The balance before this entry, so the result line shows the new one.
     final contribution = e.direction == DebtEntryDirection.paid
         ? e.amount
         : -e.amount;
@@ -250,7 +233,6 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       _c.tagIds.add(t.id);
     }
     _paid = e.paid;
-    // A transaction exists exactly when the entry has one (wallet or not).
     _c.createTransaction = tx != null;
     _restoring = false;
   }
@@ -319,8 +301,6 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     }
   }
 
-  // ── Pickers ───────────────────────────────────────────────────────
-
   Future<void> _pickPerson() async {
     final p = await showDebtPersonPicker(context, selected: _c.person);
     if (p == null || !mounted) return;
@@ -366,15 +346,11 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     _onFormChanged();
   }
 
-  /// Snackbars float above this page's own action bar ([pageMessenger]).
   void _say(String text, Tone tone) {
     final m = pageMessenger;
     if (m != null) showAppSnackBarOn(m, text, tone: tone);
   }
 
-  // ── Save / delete ─────────────────────────────────────────────────
-
-  /// ONE PUT with only what changed; the answer patches every cache.
   Future<void> _save() async {
     final l = AppLocalizations.of(context)!;
     commitTextSession();
@@ -391,17 +367,12 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       direction: w.direction != o.direction ? w.direction : null,
       amount: w.amount != o.amount ? _c.amountValue : null,
       date: w.date != o.date ? _c.date : null,
-      // The transaction is the switch's (a split-sourced entry has none to
-      // change); the wallet and tags only matter while it is on.
       createTransaction: _sourced ? null : w.createTx,
       accountId: w.createTx && (w.accountId != o.accountId || txChange)
           ? w.accountId
           : null,
       clearAccount:
-          w.createTx &&
-          !txChange &&
-          o.accountId != null &&
-          w.accountId == null,
+          w.createTx && !txChange && o.accountId != null && w.accountId == null,
       description: w.description != o.description ? w.description.trim() : null,
       note: w.note != o.note ? w.note.trim() : null,
       paid: w.paid != o.paid ? w.paid : null,
@@ -427,7 +398,6 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       if (tx != null) {
         txCubit.patchRow(tx, afterWrite: true);
       } else if (oldTxId != null) {
-        // Made ledger-only: its wallet transaction is gone.
         txCubit.dropRow(oldTxId);
       }
       dashboard.markStale();
@@ -488,8 +458,6 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     }
   }
 
-  // ── Build ─────────────────────────────────────────────────────────
-
   String _dayLabel(AppLocalizations l, DateTime d) => DateFormatter.friendly(
     d,
     today: l.commonToday,
@@ -497,7 +465,6 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     locale: Localizations.localeOf(context).languageCode,
   );
 
-  /// View: where the person stands now; edit: where they'll stand.
   Widget? _balanceLine(AppLocalizations l, String symbol) {
     final p = _c.person;
     if (p == null) return null;
@@ -516,7 +483,6 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     );
   }
 
-  /// View mode: tapping a changeable card only says how to edit.
   void _longPressHint() =>
       _say(AppLocalizations.of(context)!.commonLongPressToEdit, Tone.info);
 
@@ -546,7 +512,6 @@ class _DebtEntryViewState extends State<_DebtEntryView>
               onLongPress: canEditHere
                   ? () => enterEdit(then: _pickPerson)
                   : null,
-              // View: the person's page; edit: the picker.
               onTap: editable
                   ? _pickPerson
                   : isEditing || p == null
@@ -554,7 +519,6 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                   : () => openPage(context, debtPersonPath(p.key)),
             ),
           ),
-          // Ledger only: no wallet card.
           if (_c.createTransaction) ...[
             const SizedBox(width: AppSpacing.sm),
             Expanded(
@@ -594,7 +558,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
             selected: _c.tagIds,
             onRemove: _c.toggleTag,
             onMore: _moreTags,
-            known: _c.knownTags,
+            known: _c.knownTags,
           )
         : _c.tagIds.isEmpty
         ? null
@@ -676,22 +640,31 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                           onChanged: editing ? _setPaid : null,
                         ),
                       ),
-                      DetailTextField(
-                        label: l.commonNote,
-                        controller: _c.note,
-                        editing: editing,
-                        maxLines: 5,
-                        maxLength: TextLimits.note,
-                        hint: l.txNoteAddHint,
-                        placeholderWhenEmpty: true,
-                        onEnterEdit: () => enterEdit(),
-                      ),
-                      // A split-sourced entry keeps what it is.
-                      if (!_sourced)
+                    ],
+                  ),
+                  (first) => NoteSection(
+                    first: first,
+                    label: l.commonNote,
+                    editing: editing,
+                    text: _c.note.text,
+                    hint: l.commonLongPressToEdit,
+                    onLongPress: () => enterEdit(),
+                    editField: DetailTextField(
+                      label: l.commonNote,
+                      controller: _c.note,
+                      editing: true,
+                      maxLines: 5,
+                      maxLength: TextLimits.note,
+                      hint: l.txNoteAddHint,
+                    ),
+                  ),
+                  if (!_sourced)
+                    (first) => SectionCard(
+                      first: first,
+                      children: [
                         DetailRow(
                           label: l.debtCreateTxLabel,
                           helper: l.debtCreateTxHint,
-                          // The whole row toggles it (while editing).
                           onTap: editing
                               ? () => _c.setCreateTransaction(
                                   !_c.createTransaction,
@@ -702,8 +675,8 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                             onChanged: editing ? _c.setCreateTransaction : null,
                           ),
                         ),
-                    ],
-                  ),
+                      ],
+                    ),
                   if (source != null)
                     (first) => SectionCard(
                       first: first,

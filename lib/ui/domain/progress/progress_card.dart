@@ -8,30 +8,6 @@ import '../icons/icon_code.dart';
 import '../icons/icon_code_widget.dart';
 import 'progress_tone.dart';
 
-/// One progress item — a budget, a saving goal, a budget PERIOD (owner
-/// 2026-10-13; the mockup `budget-v2.html`). A hairline-list row, not a
-/// boxed card:
-///
-///   (icon)  title                                  [badge]
-///           caption
-///   ▓▓▓▓▓▓▓▓▒▒▒░░░░░░░░░░          used ▓ · expected ▒ (striped)
-///   value label · over label                          122%
-///
-/// - leading tile: [iconCode] (+ [fallbackIcon] when it has none), or a
-///   custom [leading]; none of them = no tile. [ProgressCard.compact] never
-///   has one (a period row: title = "ต.ค. 2026").
-/// - [badge]: a mini `StatusChip` (the BE's warning / danger) or any widget.
-/// - bar: [value] (ratio, >1 = over) and [expected] (the not-yet-spent
-///   ratio, a lighter striped segment); the bar clamps visually, the
-///   percent text is [percentText] (the caller's string, NOT clamped —
-///   "122%").
-/// - [tone] picks the colour (neutral = the icon's tint) — never derived
-///   from [value]. The percent text takes the tone colour unless neutral.
-/// - [label]: the value line ("ใช้ ฿430 จาก ฿500 · คาด +฿35"); [overLabel]: an
-///   optional second line in the danger colour ("เกินงบ ฿860"); [struckLabel]:
-///   a muted struck-through tail ("฿8,000" — the limit before a period-only
-///   change).
-/// - [onTap]; [dimmed] fades it (archived).
 class ProgressCard extends StatelessWidget {
   const ProgressCard({
     required this.title,
@@ -57,7 +33,6 @@ class ProgressCard extends StatelessWidget {
        skeleton = false,
        skeletonIcon = true;
 
-  /// The period-list variant: no icon tile, a thinner bar.
   const ProgressCard.compact({
     required this.title,
     required this.value,
@@ -82,8 +57,6 @@ class ProgressCard extends StatelessWidget {
        skeleton = false,
        skeletonIcon = true;
 
-  /// A loading placeholder with the same slots ([compact]: no icon tile;
-  /// [withIcon] false: no tile either).
   const ProgressCard.skeleton({
     this.compact = false,
     bool withIcon = true,
@@ -113,10 +86,8 @@ class ProgressCard extends StatelessWidget {
   final String? caption;
   final IconCode? iconCode;
 
-  /// The glyph when [iconCode] is null (set one of the two to show a tile).
   final IconData? fallbackIcon;
 
-  /// A custom leading widget (replaces the tile).
   final Widget? leading;
   final Widget? badge;
   final double value;
@@ -129,13 +100,10 @@ class ProgressCard extends StatelessWidget {
   final VoidCallback? onTap;
   final bool dimmed;
 
-  /// Far right of the name line, after the [badge] (a budget's "เหลือ ฿X").
   final Widget? trailing;
 
-  /// Where on the bar a thin tick marks today's pace (0..1); null = none.
   final double? paceMarker;
 
-  /// Bar and footer start under the title, not under the icon tile.
   final bool alignWithTitle;
   final bool compact;
   final bool skeleton;
@@ -359,9 +327,6 @@ class ProgressCard extends StatelessWidget {
   );
 }
 
-/// A ProgressCard row's far-right figure (owner 2026-10-17): the small
-/// [label] ("เหลือ" / "เกิน") + the bold [amount], in the error colour when
-/// [over]. Pass it as `ProgressCard.trailing`.
 class ProgressRemainder extends StatelessWidget {
   const ProgressRemainder({
     required this.label,
@@ -370,10 +335,8 @@ class ProgressRemainder extends StatelessWidget {
     super.key,
   });
 
-  /// e.g. "เหลือ" / "เกิน".
   final String label;
 
-  /// The formatted amount.
   final String amount;
   final bool over;
 
@@ -405,8 +368,6 @@ class ProgressRemainder extends StatelessWidget {
   }
 }
 
-/// Two or more mini chips side by side with the standard gap — a
-/// ProgressCard `badge` that carries a status AND another flag.
 class ProgressBadges extends StatelessWidget {
   const ProgressBadges({required this.children, super.key});
 

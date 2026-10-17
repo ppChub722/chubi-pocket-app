@@ -4,8 +4,6 @@ import '../../recurring/domain/recurrence_rule.dart' show parseYmd;
 
 double _money(Object? v) => (v as num?)?.toDouble() ?? 0;
 
-/// A period's BE status: over > warn > pace > ok (`pace` = the current
-/// period is on course to pass its amount; only the current period).
 enum BudgetStatus {
   ok,
   pace,
@@ -18,7 +16,6 @@ enum BudgetStatus {
   );
 }
 
-/// The BE's tone for a status (`neutral` / `warning` / `danger`).
 enum BudgetTone {
   neutral,
   warning,
@@ -30,8 +27,6 @@ enum BudgetTone {
   );
 }
 
-/// One period (an instance) of a budget, with its own amount / note.
-/// Every figure is computed by the BE (`BudgetPeriod` in the spec).
 class BudgetPeriod extends Equatable {
   const BudgetPeriod({
     required this.id,
@@ -58,39 +53,30 @@ class BudgetPeriod extends Equatable {
   final int seq;
   final DateTime start;
 
-  /// Null = open-ended.
   final DateTime? end;
   final double amount;
 
-  /// The setup amount; differs from [amount] when [overridden].
   final double baseAmount;
 
-  /// Set for this period only ("✏️ เฉพาะรอบนี้").
   final bool overridden;
   final String? note;
   final bool isCurrent;
   final double used;
 
-  /// Upcoming + pending (current period only); not in [pct] / [remaining].
   final double expected;
   final double remaining;
   final double overBy;
 
-  /// used / amount, rounded, NOT clamped.
   final int pct;
   final BudgetStatus status;
   final BudgetTone tone;
 
-  /// Today included; null for past / open-ended periods.
   final int? daysLeft;
 
-  /// The forecast ends this (current) period over its amount: a row badge.
   final bool onPaceToExceed;
 
-  /// used / amount as a bar ratio (0 when the amount is 0).
   double get usedRatio => amount <= 0 ? 0 : used / amount;
 
-  /// expected / amount as a bar ratio.
   double get expectedRatio => amount <= 0 ? 0 : expected / amount;
 
   factory BudgetPeriod.fromJson(Map<String, dynamic> json) => BudgetPeriod(
@@ -137,7 +123,6 @@ class BudgetPeriod extends Equatable {
   ];
 }
 
-/// A page of periods (`periods` of the detail, `listBudgetPeriods`).
 class BudgetPeriodPage extends Equatable {
   const BudgetPeriodPage({
     this.periods = const [],
@@ -163,14 +148,12 @@ class BudgetPeriodPage extends Equatable {
     );
   }
 
-  /// The same page with [p] in place of the period that has its id.
   BudgetPeriodPage replace(BudgetPeriod p) => BudgetPeriodPage(
     periods: [for (final x in periods) x.id == p.id ? p : x],
     hasMore: hasMore,
     page: page,
   );
 
-  /// This page followed by [next].
   BudgetPeriodPage append(BudgetPeriodPage next) => BudgetPeriodPage(
     periods: [...periods, ...next.periods],
     hasMore: next.hasMore,

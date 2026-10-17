@@ -2,36 +2,21 @@ import 'package:equatable/equatable.dart';
 
 import '../../../ui/ui.dart';
 
-/// Notification trigger types — mirror of [`design/spec/13-notifications.md
-/// §2`](../../../../../chubi-pocket-docs/design/spec/13-notifications.md).
-/// `split_paid` / `split_received` are retired (they arrive as unknown).
 enum NotificationType {
   splitCreated('split_created'),
 
-  /// The splitter changed or removed my share of their split (spec: BE
-  /// contract 2026-10-10). Pending, one action "อัปเดตตาม" — unless a newer
-  /// change superseded it (payload.superseded).
   splitChanged('split_changed'),
   projectTxRecordedForYou('project_tx_recorded_for_you'),
   projectTxChanged('project_tx_changed'),
   projectInvite('project_invite'),
   contactLinkRequest('contact_link_request'),
 
-  /// Shared-wallet invite (spec §14/4 + §14/8.1 — notification pattern,
-  /// same as project member invites). Payload carries `account_id` +
-  /// `account_name`; pending rows render inline Accept / Reject.
   accountInvite('account_invite'),
 
-  /// "You were added to a project" (quick create, spec §10/4.24) —
-  /// informational, mutable.
   projectAdded('project_added'),
 
-  /// Recurring items fell due and wait as drafts (owner 2026-10-13): ONE
-  /// grouped notice while unread, payload {count}, deep link /pending.
   recurringDue('recurring_due'),
 
-  /// A recurring has few upcoming items left: payload {recurring_id, name,
-  /// left}, deep link /recurring/{id}.
   recurringEnding('recurring_ending'),
   unknown('unknown');
 
@@ -46,7 +31,6 @@ enum NotificationType {
   }
 }
 
-/// Who triggered a notification (API `UserRef`).
 class NotificationActor extends Equatable {
   const NotificationActor({
     required this.userId,
@@ -74,7 +58,6 @@ class NotificationActor extends Equatable {
   List<Object?> get props => [userId, displayName, iconCode];
 }
 
-/// Computed by the BE (actioned > dismissed > read > unread).
 enum NotificationState {
   unread,
   read,
@@ -87,9 +70,6 @@ enum NotificationState {
   );
 }
 
-/// The inbox card's numbers (`GET /notifications` `summary`, and every
-/// write's answer): over ALL the user's notifications, the same whatever
-/// the list filter.
 class InboxSummary extends Equatable {
   const InboxSummary({
     this.all = 0,
@@ -98,7 +78,6 @@ class InboxSummary extends Equatable {
     this.dismissed = 0,
   });
 
-  /// Everything not dismissed (the ทั้งหมด tile).
   final int all;
   final int needsAnswer;
   final int unread;
@@ -115,7 +94,6 @@ class InboxSummary extends Equatable {
   List<Object?> get props => [all, needsAnswer, unread, dismissed];
 }
 
-/// App-wide counters returned by every notification write (API `Badges`).
 class Badges extends Equatable {
   const Badges({
     required this.unreadNotifications,
@@ -134,8 +112,6 @@ class Badges extends Equatable {
   List<Object?> get props => [unreadNotifications, pendingDrafts];
 }
 
-/// One inbox row; payload is kept as a raw map — type-specific tiles read
-/// the fields they care about (names inside are resolved by the BE).
 class AppNotification extends Equatable {
   const AppNotification({
     required this.id,
@@ -154,21 +130,14 @@ class AppNotification extends Equatable {
   final String id;
   final NotificationType type;
 
-  /// Set when the action originated from a user (almost always). NULL for
-  /// pure system events.
   final NotificationActor? actor;
 
-  /// Trigger-specific shape. See spec §13.2.
   final Map<String, dynamic> payload;
 
-  /// Optional client-routing hint set by the BE dispatcher. The shell's
-  /// deep-link handler routes via `go_router` when present.
   final String? deepLink;
 
   final NotificationState state;
 
-  /// The BE's call: the row still waits for the user (a request or a
-  /// one-tap action not yet taken) and shows its answer buttons.
   final bool awaitsAnswer;
 
   final DateTime? readAt;
@@ -201,8 +170,6 @@ class AppNotification extends Equatable {
     );
   }
 
-  /// Local flip after an answer that carries only the inbox numbers (an event
-  /// invite accept / reject): the row is done and no longer waits.
   AppNotification asActioned(DateTime at) => AppNotification(
     id: id,
     type: type,
@@ -217,7 +184,6 @@ class AppNotification extends Equatable {
     dismissedAt: dismissedAt,
   );
 
-  /// Local flip for bulk "mark all read" (the BE has already done it).
   AppNotification asRead(DateTime at) => AppNotification(
     id: id,
     type: type,
@@ -248,8 +214,6 @@ class AppNotification extends Equatable {
   ];
 }
 
-/// A write's reply (read / actioned / dismiss / restore): the row in its new
-/// state + the fresh badges + the inbox card's numbers.
 class NotificationActionResult {
   const NotificationActionResult({
     required this.notification,
@@ -275,8 +239,6 @@ class NotificationActionResult {
       );
 }
 
-/// `POST /notifications/read-all` and `DELETE /notifications/:id` answers:
-/// the fresh badges + the inbox card's numbers.
 class InboxCounts {
   const InboxCounts({required this.badges, required this.summary});
 
@@ -300,8 +262,6 @@ DateTime? _parseDate(Object? raw) {
   return null;
 }
 
-/// The wallet the "record receipt" auto-action writes into (API
-/// `AccountRef`, trimmed to what the settings row shows).
 class DefaultAccountRef extends Equatable {
   const DefaultAccountRef({
     required this.id,
@@ -329,13 +289,8 @@ class DefaultAccountRef extends Equatable {
   List<Object?> get props => [id, name, iconCode];
 }
 
-/// How a type reaches me (the settings page's 3-state control).
 enum NotifyMode { off, notify, auto }
 
-/// Per-user notification switches (contract §5). For each type the
-/// recipient picks: receive it (not in [mutedTypes]) and run its action
-/// automatically on arrival ([autoTypes]). A muted type ignores its auto
-/// choice — kept, and back in force once it's unmuted.
 class NotificationSettings extends Equatable {
   const NotificationSettings({
     this.mutedTypes = const {},
@@ -346,13 +301,11 @@ class NotificationSettings extends Equatable {
   final Set<String> mutedTypes;
   final Set<String> autoTypes;
 
-  /// Wallet the "record receipt" auto-action uses; null = no wallet.
   final DefaultAccountRef? defaultAccount;
 
   bool isMuted(NotificationType t) => mutedTypes.contains(t.wire);
   bool isAuto(NotificationType t) => autoTypes.contains(t.wire);
 
-  /// The one state the page shows for a type: off (muted) > auto > notify.
   NotifyMode modeOf(NotificationType t) => isMuted(t)
       ? NotifyMode.off
       : (isAuto(t) ? NotifyMode.auto : NotifyMode.notify);

@@ -1,12 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
-/// What started a call: the page opening, or something done on it.
 enum NetworkTrigger { open, action }
 
-/// One recorded API call (the dev hub's Network page). No bodies are kept —
-/// only the shape of the traffic: what was called, when, how long, how big,
-/// and how it ended.
 @immutable
 class NetworkCall {
   const NetworkCall({
@@ -36,23 +32,16 @@ class NetworkCall {
   final int? durationMs;
   final int? responseBytes;
 
-  /// A transport failure / API error code (`NETWORK_TIMEOUT`, …).
   final String? errorCode;
   final String? requestId;
   final bool pending;
 
-  /// The route the app was on when the call started.
   final String page;
 
-  /// Best effort: [NetworkTrigger.open] when the call started within ~1 s of
-  /// that route appearing (the page loading), else [NetworkTrigger.action]
-  /// (a button, a refresh, a background timer).
   final NetworkTrigger trigger;
 
   bool get failed => !pending && (statusCode == null || statusCode! >= 400);
 
-  /// `GET /accounts/:id` — ids (uuids / numbers) collapsed so identical
-  /// endpoints group together.
   String get endpoint => '$method ${normalizePath(path)}';
 
   static final _id = RegExp(r'/([0-9a-fA-F]{8}-[0-9a-fA-F-]{27}|\d+)(?=/|$)');
@@ -84,9 +73,6 @@ class NetworkCall {
   );
 }
 
-/// A ring buffer of the app's recent API calls, filled by
-/// [NetworkRecorderInterceptor]. A singleton so the dev hub can read it
-/// without a provider; listen to it for live updates.
 class NetworkRecorder extends ChangeNotifier {
   NetworkRecorder._();
 
@@ -100,14 +86,12 @@ class NetworkRecorder extends ChangeNotifier {
   String _page = '';
   DateTime _pageSince = DateTime.fromMillisecondsSinceEpoch(0);
 
-  /// The app calls this when the visible route changes (see app.dart).
   void noteRoute(String location) {
     if (location == _page) return;
     _page = location;
     _pageSince = DateTime.now();
   }
 
-  /// Newest first.
   List<NetworkCall> get calls => List.unmodifiable(_calls.reversed);
 
   int get length => _calls.length;
@@ -161,8 +145,6 @@ class NetworkRecorder extends ChangeNotifier {
   }
 }
 
-/// Records every call into [NetworkRecorder.instance]: path, status, latency,
-/// response size, request id, error code. No headers and no bodies.
 class NetworkRecorderInterceptor extends Interceptor {
   NetworkRecorderInterceptor({NetworkRecorder? recorder})
     : _recorder = recorder ?? NetworkRecorder.instance;
@@ -219,7 +201,6 @@ class NetworkRecorderInterceptor extends Interceptor {
     caseSensitive: false,
   );
 
-  /// The query string with secret-looking values masked.
   static String _safeQuery(Uri uri) => uri.queryParametersAll.entries
       .expand(
         (e) => e.value.map(
@@ -228,7 +209,6 @@ class NetworkRecorderInterceptor extends Interceptor {
       )
       .join('&');
 
-  /// The response's `Content-Length`, or null (the body is already decoded).
   static int? _size(Response<dynamic> r) =>
       int.tryParse(r.headers.value('content-length') ?? '');
 }

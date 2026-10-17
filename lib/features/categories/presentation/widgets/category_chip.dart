@@ -6,12 +6,6 @@ import '../../domain/category.dart';
 import '../../domain/category_tree.dart';
 import '../category_label.dart';
 
-/// A category as an [AppChip] — `[icon] name` in the category's colour
-/// (owner 2026-10-11: one chip for the whole app). [selected] = the full
-/// colour, otherwise a neutral outline (the icon keeps its colour). [all]
-/// is the category list: L2 / L3 wear their top-level parent's icon, as
-/// everywhere else. [dashed]: the chip is in an edit form, so it is
-/// changeable (see [AppChip.dashed]).
 AppChip categoryAppChip(
   BuildContext context,
   Category category, {
@@ -29,7 +23,6 @@ AppChip categoryAppChip(
     color: code.tintFor(palette),
     selected: selected,
     onTap: onTap,
-    // In an edit form: dashed = changeable; chosen + changeable = inset line.
     dashed: dashed,
     inset: dashed && selected,
     size: size,

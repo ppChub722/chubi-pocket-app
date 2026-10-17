@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_spacing.dart';
 
-/// Opens the app's standard bottom sheet: drag handle, optional [title]
-/// row, safe-area + keyboard padding, scrolls when tall.
-///
-/// [footer] stays pinned under the scrolling body (confirm buttons).
 Future<T?> showAppSheet<T>(
   BuildContext context, {
   required WidgetBuilder builder,
@@ -24,10 +20,6 @@ Future<T?> showAppSheet<T>(
   );
 }
 
-/// [showAppSheet] for a sheet that builds its own [AppSheetScaffold]
-/// (stateful sheets: a form with its own buttons, a picker with search) —
-/// same route (drag handle, safe area, root navigator, keyboard), no
-/// second scaffold around it.
 Future<T?> showAppSheetCustom<T>(
   BuildContext context, {
   required WidgetBuilder builder,
@@ -43,10 +35,6 @@ Future<T?> showAppSheetCustom<T>(
   );
 }
 
-/// Layout used by [showAppSheet] — exposed so custom sheets (stateful
-/// pickers) can share the same chrome (open them with
-/// [showAppSheetCustom]). It pads for the keyboard itself, so content
-/// inside must not add `viewInsets` again.
 class AppSheetScaffold extends StatelessWidget {
   const AppSheetScaffold({
     required this.child,
@@ -97,9 +85,6 @@ class AppSheetScaffold extends StatelessWidget {
     );
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
-      // The keyboard is handled right here — below this, viewInsets read
-      // zero, so a sheet's own content can't pad for it a second time (a
-      // double gap above the keyboard).
       child: MediaQuery.removeViewInsets(
         context: context,
         removeBottom: true,

@@ -13,7 +13,6 @@ final sweetTheme = AppTheme(
   nameKey: 'theme_sweet',
   isPremium: false,
   previewSwatch: const [_sweetPink, _sweetAccent, Color(0xFFFFFFFF)],
-  // Feature groups — warm pink family: pink · peach · purple.
   lightModules: const ModuleColors(
     library: Color(0xFFEC4899),
     people: Color(0xFFF97316),

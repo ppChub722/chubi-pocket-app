@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// One slice of a [DonutChart].
 class DonutSegment {
   const DonutSegment({required this.value, required this.color});
 
@@ -10,12 +9,6 @@ class DonutSegment {
   final Color color;
 }
 
-/// Ring chart — share of a whole (e.g. expense by category). Slices run
-/// clockwise from 12 o'clock with a thin surface gap between them; an
-/// empty or all-zero list draws a neutral track.
-///
-/// Identity lives in a legend next to it (colour is never the only cue);
-/// [center] usually holds the total.
 class DonutChart extends StatelessWidget {
   const DonutChart({
     required this.segments,
@@ -40,7 +33,6 @@ class DonutChart extends StatelessWidget {
           segments: segments.where((s) => s.value > 0).toList(),
           thickness: thickness,
           track: scheme.surfaceContainerHighest,
-          // Gaps take the card's colour — the chart normally sits on one.
           gapColor:
               Theme.of(context).cardTheme.color ?? scheme.surfaceContainerLow,
         ),
@@ -87,8 +79,6 @@ class _DonutPainter extends CustomPainter {
       canvas.drawArc(rect, start, sweep, false, stroke..color = s.color);
       start += sweep;
     }
-    // 2px surface spokes at each boundary — slices stay distinct even
-    // when neighbouring hues are close.
     if (segments.length > 1) {
       final c = size.center(Offset.zero);
       final outer = size.shortestSide / 2;

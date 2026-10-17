@@ -3,8 +3,6 @@ import 'package:intl/intl.dart';
 
 import '../../ui.dart';
 
-/// What [showOccurrenceSheet] resolves to: the occurrence's new [date] and
-/// [amount] (null when the sheet has no amount field).
 @immutable
 class OccurrenceEdit {
   const OccurrenceEdit({required this.date, this.amount});
@@ -13,13 +11,8 @@ class OccurrenceEdit {
   final double? amount;
 }
 
-/// Which field of [showOccurrenceSheet] the user came for.
 enum OccurrenceFocus { amount, date }
 
-/// The sheet that edits ONE occurrence of a recurring (reference: แก้ยอด /
-/// เลื่อนวัน / ใส่ยอด): an amount field (when [withAmount]) and the date row.
-/// [amountRequired] (a reminder with no amount: ใส่ยอด) needs an amount > 0
-/// to save. Words are params. The date only moves within [first]..[last].
 Future<OccurrenceEdit?> showOccurrenceSheet(
   BuildContext context, {
   required String title,
@@ -158,9 +151,6 @@ class _OccurrenceSheetState extends State<_OccurrenceSheet> {
   }
 }
 
-/// The sheet that asks for a whole number (the installments' "จำนวนงวด"):
-/// one numeric field, Cancel · Save. Resolves the number (≥ [min], ≤ [max]),
-/// null on cancel.
 Future<int?> showCountSheet(
   BuildContext context, {
   required String title,

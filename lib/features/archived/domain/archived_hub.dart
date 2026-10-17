@@ -1,6 +1,5 @@
 import '../../../ui/ui.dart';
 
-/// The six kinds the archive hub groups, in display order.
 enum ArchivedKind {
   wallets('wallets'),
   budgets('budgets'),
@@ -11,10 +10,8 @@ enum ArchivedKind {
 
   const ArchivedKind(this.key);
 
-  /// The key in `GET /me/archived`.
   final String key;
 
-  /// The entity's detail page (all of them open archived rows).
   String detailPath(String id) => switch (this) {
     wallets => '/accounts/$id',
     budgets => '/budgets/$id',
@@ -25,7 +22,6 @@ enum ArchivedKind {
   };
 }
 
-/// One archived row of `GET /me/archived`.
 class ArchivedItem {
   const ArchivedItem({
     required this.id,
@@ -54,22 +50,15 @@ class ArchivedItem {
   final String name;
   final IconCode? iconCode;
 
-  /// The row's last change (when it was archived).
   final DateTime? archivedAt;
 
-  /// Whether the caller may restore it (wallets and events: owner only);
-  /// absent = true.
   final bool canRestore;
 
-  /// The row's second line as data (null for contacts).
   final ArchivedSecondary? secondary;
 }
 
-/// What the second line shows: wallet balance / budget limit / goal target /
-/// event planned amount / recurring amount.
 enum ArchivedSecondaryKind { balance, limit, target, planned, amount }
 
-/// `secondary {kind, amount}` of an archived row.
 class ArchivedSecondary {
   const ArchivedSecondary({required this.kind, required this.amount});
 
@@ -90,7 +79,6 @@ class ArchivedSecondary {
   }
 }
 
-/// The archive hub: every kind's rows, one call.
 class ArchivedHub {
   const ArchivedHub({required this.total, required this.groups});
 

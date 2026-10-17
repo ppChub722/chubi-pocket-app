@@ -1,30 +1,11 @@
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
-/// Lets the page currently shown inside [MainShell] temporarily take
-/// over the shell's bottom chrome (the `MainBottomNav` + docked FAB).
-///
-/// The shell owns a single [ShellChromeController] and exposes it down
-/// the tree through [ShellChrome]. A page that needs to swap the global
-/// nav for its own bottom bar — e.g. categories' reorder mode showing a
-/// Cancel · Undo · Save action bar — calls [ShellChromeController.hide]
-/// on entry and [ShellChromeController.show] on exit. While hidden, the
-/// shell renders no bottom nav and no FAB, so the page's own
-/// `bottomNavigationBar` is the only bar on screen (no stacking).
-///
-/// COUNTED by owner: every page that hides the chrome passes itself as the
-/// [owner] and releases that same owner on dispose, so the nav is hidden
-/// exactly while at least ONE owner holds it. Overlapping pages (an edit page
-/// opening another) and quick back presses can no longer leave it stuck
-/// hidden on a tab root, or show it under a page that still wants it hidden.
-/// Calls without an [owner] share one anonymous owner (a page toggling its own
-/// in-place mode).
 class ShellChromeController extends ChangeNotifier {
   static const Object _anonymous = Object();
 
   final Set<Object> _owners = {};
 
-  /// True while any page has asked the shell to drop its bottom nav.
   bool get hidden => _owners.isNotEmpty;
 
   void hide({Object? owner}) {
@@ -39,9 +20,9 @@ class ShellChromeController extends ChangeNotifier {
     if (was && !hidden) _notify();
   }
 
-  /// Pages call [hide]/[show] from `dispose` too, which runs while the tree
-  /// is locked — rebuilding the shell then throws (debug) and the nav never
-  /// comes back. Mid-frame calls are deferred to the end of the frame.
+  /// Pages call [hide]/[show] from `dispose` too, which runs while the tree is
+  /// locked — rebuilding the shell then throws (debug) and the nav never comes
+  /// back.
   void _notify() {
     final phase = SchedulerBinding.instance.schedulerPhase;
     if (phase == SchedulerPhase.persistentCallbacks ||
@@ -53,18 +34,7 @@ class ShellChromeController extends ChangeNotifier {
   }
 }
 
-/// Runs [action] once [route] has finished sliding in — right away if it
-/// already has (or there's no route). If it's popped first, never.
-///
-/// Pages that open in edit mode (create / forms) hide the shell nav; doing
-/// that while the page is still sliding in collapses the nav *during* the
-/// transition, re-laying out the whole tab (both pages) every frame — the
-/// "slight stutter when a create page comes in" (owner 2026-10-09) — and
-/// stretches the top bar's hero flight. After the transition it's one
-/// smooth slide of its own.
 void whenRouteSettled(ModalRoute<dynamic>? route, VoidCallback action) {
-  // A just-pushed route spends its first frame offstage (heroes measure
-  // it) with its animation pinned to "complete" — ask again after that.
   if (route != null && route.offstage) {
     SchedulerBinding.instance.addPostFrameCallback(
       (_) => whenRouteSettled(route, action),
@@ -85,9 +55,6 @@ void whenRouteSettled(ModalRoute<dynamic>? route, VoidCallback action) {
   animation.addStatusListener(listener);
 }
 
-/// Hides the shell's bottom nav + FAB for as long as [child] is on screen —
-/// wrap whole-page forms with it (app rule: forms are edit mode). Pages
-/// with an in-place edit mode toggle the controller themselves instead.
 class ShellChromeHider extends StatefulWidget {
   const ShellChromeHider({required this.child, super.key});
 
@@ -109,8 +76,6 @@ class _ShellChromeHiderState extends State<ShellChromeHider> {
     final controller = (element?.widget as ShellChrome?)?.notifier;
     if (controller == null) return; // outside the shell (tests)
     _controller = controller;
-    // Not mid-build (hiding rebuilds the shell), and not mid page
-    // transition either — see [whenRouteSettled].
     final route = ModalRoute.of(context);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -130,7 +95,6 @@ class _ShellChromeHiderState extends State<ShellChromeHider> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Provides the shell's [ShellChromeController] to descendant pages.
 class ShellChrome extends InheritedNotifier<ShellChromeController> {
   const ShellChrome({
     required ShellChromeController controller,
@@ -138,9 +102,6 @@ class ShellChrome extends InheritedNotifier<ShellChromeController> {
     super.key,
   }) : super(notifier: controller);
 
-  /// Returns the controller without registering a build dependency —
-  /// callers toggle it from event handlers, not from `build`, so they
-  /// don't want to rebuild when it changes.
   static ShellChromeController of(BuildContext context) {
     final element = context
         .getElementForInheritedWidgetOfExactType<ShellChrome>();

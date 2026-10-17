@@ -8,13 +8,6 @@ import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
 import '../event_errors.dart';
 
-/// "จัดการแท็กอีเวนต์" — the thin wrapper over the kit's [EventTagsSheet]:
-/// the BE calls, the error snackbar, the list kept in step with every
-/// answer. EVERY member may edit the event's tags (owner 2026-10-17; the BE
-/// allows the owner and the contributors).
-///
-/// [onPatch] gets each write's [EventPatch] (the page patches itself from
-/// it); [onImported] the import's answer (my personal tags may have grown).
 Future<void> showEventTagsManager(
   BuildContext context, {
   required String projectId,
@@ -63,8 +56,6 @@ class _EventTagsManagerState extends State<_EventTagsManager> {
     return null;
   }
 
-  /// One call; its answer replaces the list. A failure keeps the sheet as
-  /// it was and says why.
   Future<void> _run(Future<List<BoardTag>> Function() call) async {
     setState(() => _busy = true);
     try {

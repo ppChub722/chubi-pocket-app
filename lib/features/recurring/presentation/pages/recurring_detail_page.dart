@@ -28,35 +28,12 @@ import '../recurring_item_actions.dart';
 import '../recurring_rows.dart';
 import '../recurring_writes.dart';
 
-/// Past = the produced occurrences, Upcoming = the ones still to come.
 enum _Tab { past, upcoming }
 
-/// Which text field a typing burst belongs to (undo grouping).
 enum _Field { name, description, amount, note }
 
-/// The occurrence actions (a chip's menu).
 enum _Occ { editAmount, move, skip, restore, editFull }
 
-/// `/recurring/new`, `/recurring/:id` (+ `/settings` = straight into edit) —
-/// ONE page for a recurring of any kind (reference "รายการประจำ", owner
-/// 2026-10-17): view ⇄ edit in place ([EditModeMixin]).
-///
-/// VIEW: the hero card (status + kind chips, the amount, tiles ปีละ / บันทึก
-/// แล้ว / รอยืนยัน, the amber "รอใส่ยอด" alert) → the tag row → ONE info box
-/// (ทำซ้ำ · หมวด · จ่ายจาก · เริ่ม – สิ้นสุด) → บันทึก → the swipe tabs
-/// [งวดที่ผ่านมา] [ล่วงหน้า]. ล่วงหน้า shows the NEXT occurrence as a card with
-/// แก้ยอด / เลื่อนวัน / ข้าม (ใส่ยอด for a reminder with no amount) and the rest
-/// as date chips. An action is ONE call whose answer patches the page.
-///
-/// EDIT / CREATE: its own form — four kind chips switch the fields; icon,
-/// name, description and the amount (optional for เตือนจ่าย) in the card; the
-/// tag row; repeat · category · wallet · start · end (installment: จำนวนงวด) ·
-/// trial date; บันทึก; the end zone (ทำสำเนา · เก็บถาวร · ลบ). Computed
-/// numbers, tabs and occurrences are hidden.
-///
-/// Open = ONE call (`getRecurring`; it also runs the BE's due check, so a
-/// pull = recheck); the ล่วงหน้า tab loads its list the first time it shows.
-/// Pops `true` when anything changed.
 class RecurringDetailPage extends StatefulWidget {
   const RecurringDetailPage({
     this.id,
@@ -65,13 +42,10 @@ class RecurringDetailPage extends StatefulWidget {
     super.key,
   });
 
-  /// Null = create.
   final String? id;
 
-  /// `/recurring/:id/settings` opens straight in edit mode.
   final bool startEditing;
 
-  /// Create presets (`?kind=&type=&amount=&category=&name=&account=`).
   final RecurringPreset preset;
 
   bool get isCreate => id == null;
@@ -91,11 +65,8 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   RecurringDetail? _detail;
   bool _loading = false;
 
-  /// The first load failed (nothing on screen yet).
   ApiException? _error;
 
-  /// A reload failed with the page on screen: the data stays, a banner says
-  /// why.
   ApiException? _refreshError;
 
   _Tab _tab = _Tab.past;
@@ -103,14 +74,12 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   bool _changed = false;
   bool _walletMissing = false;
 
-  // Past: page 1 comes with the detail; more pages on scroll.
   ItemPage _produced = const ItemPage();
   bool _producedMore = false;
   Object? _producedMoreError;
   final Set<String> _selected = {};
   bool _selecting = false;
 
-  // Upcoming: page 1 comes with the detail; more pages on scroll.
   ItemPage _upcoming = const ItemPage();
   bool _upcomingMore = false;
   Object? _upcomingMoreError;
@@ -146,10 +115,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     super.dispose();
   }
 
-  // ── Loading ─────────────────────────────────────────────────────────
-
-  /// `getRecurring` — the page's ONE call (open, pull-to-refresh). A reload
-  /// while editing keeps the draft; a failed reload keeps the data.
   Future<void> _load({bool first = false}) async {
     if (_detail == null) {
       setState(() {
@@ -181,7 +146,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     }
   }
 
-  /// The page takes a returned state (open, refresh, any recurring write).
   void _take(RecurringDetail d) {
     context.read<AccountsCubit>().patchBalances(d.balances);
     setState(() {
@@ -241,10 +205,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
 
   void _onTab(_Tab t) => setState(() => _tab = t);
 
-  // ── Occurrence writes ───────────────────────────────────────────────
-
-  /// An item write: patch both lists in place. An item whose state moved
-  /// between the tabs (a skip) moves with it.
   void _applyItems(ItemWriteResult r) {
     _changed = true;
     final all = [..._produced.items, ..._upcoming.items];
@@ -273,8 +233,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         totalPages: up.totalPages,
       );
       _selected.removeAll(r.deletedIds);
-      // The write returns the owning setting (next date, counts, status):
-      // patch the card from it, no re-read.
       final setting = r.setting;
       final d = _detail;
       if (setting != null && d != null) {
@@ -286,11 +244,9 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         );
       }
     });
-    // No setting in the answer: run the page's one call again.
     if (r.setting == null) _load();
   }
 
-  /// One occurrence call: busy while it runs, the answer patches the page.
   Future<void> _occurrenceCall(Future<ItemWriteResult> Function() call) async {
     setState(() => _busy = true);
     final accounts = context.read<AccountsCubit>();
@@ -357,7 +313,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   Future<void> _restoreItem(RecurringItem i) =>
       _occurrenceCall(() => _repo.setItemArchived(i.id, archived: false));
 
-  /// A date chip's menu.
   Future<void> _occurrenceMenu(RecurringItem i) async {
     final l = AppLocalizations.of(context)!;
     final skipped = i.state == OccurrenceState.archived;
@@ -452,8 +407,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     }
   }
 
-  // ── Lifecycle (status chip, extend) ─────────────────────────────────
-
   Future<void> _action(RecurringAction a) async {
     setState(() => _busy = true);
     try {
@@ -470,12 +423,9 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     }
   }
 
-  // ── EditModeMixin hooks ─────────────────────────────────────────────
-
   @override
   bool get leaveOnCancel => widget.isCreate;
 
-  /// Back with whether anything changed (the opener reloads itself).
   @override
   void leavePage() {
     if (context.canPop()) {
@@ -504,13 +454,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     _Field.note => working.copyWith(note: v),
   });
 
-  /// A picker in view mode starts editing first.
   void _change(RecurringDraft next) {
     if (!isEditing) enterEdit();
     applyChange(next);
   }
-
-  // ── Pickers ─────────────────────────────────────────────────────────
 
   Future<void> _pickIcon() async {
     final l = AppLocalizations.of(context)!;
@@ -582,7 +529,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     _change(working.copyWith(tagIds: picked));
   }
 
-  /// A reminder is an expense or a transfer.
   Future<void> _pickMode() async {
     final l = AppLocalizations.of(context)!;
     final picked = await showOptionSheet<TransactionType>(
@@ -610,8 +556,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     );
   }
 
-  /// ทำซ้ำ: the presets for the start date (Google Calendar style), then
-  /// กำหนดเอง… and เลือกวันเอง… (hand-picked dates).
   Future<void> _pickRepeat() async {
     final l = AppLocalizations.of(context)!;
     final start = working.rule.start;
@@ -718,7 +662,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     if (!mounted || picked is! AppDatePicked) return;
     final d = picked.date;
     final r = working.rule;
-    // Day-anchored rules follow the new start (like Google Calendar).
     _change(
       working.copyWith(
         rule: r.copyWith(
@@ -732,14 +675,12 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     );
   }
 
-  /// กำหนดเอง…: every N, weekdays, Nth weekday, ends — the kit sheet.
   Future<void> _openRecurrenceSheet() async {
     final picked = await showRecurrenceSheet(context, initial: working.rule);
     if (!mounted || picked == null) return;
     _change(working.copyWith(rule: picked));
   }
 
-  /// สิ้นสุด: ไม่กำหนด · ถึงวันที่ · ครบ N งวด.
   Future<void> _pickEnd() async {
     final l = AppLocalizations.of(context)!;
     final rule = working.rule;
@@ -786,7 +727,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     }
   }
 
-  /// จำนวนงวด (an installment's, or "ครบ N งวด").
   Future<void> _pickCount() async {
     final l = AppLocalizations.of(context)!;
     final n = await showCountSheet(
@@ -824,8 +764,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     }
   }
 
-  // ── Save / lifecycle ────────────────────────────────────────────────
-
   Future<void> _save() async {
     commitTextSession();
     final l = AppLocalizations.of(context)!;
@@ -846,8 +784,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     var alsoUpdateLink = false;
     final r = _recurring;
     if (r != null && working.valuesDiffer(original)) {
-      // Value changes: which items take them (the rule only rebuilds the
-      // upcoming ones).
       final picked = await showEditScopeChoice(
         context,
         title: l.recurringScopeTitle,
@@ -904,7 +840,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     }
   }
 
-  /// A lifecycle call (archive / restore): the page takes the returned state.
   Future<void> _run(Future<RecurringDetail> Function() call) async {
     setSaving(true);
     try {
@@ -940,7 +875,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     );
   }
 
-  /// ทำสำเนา: ONE call; the page closes into the copy's page.
   Future<void> _duplicate(Recurring r) async {
     setSaving(true);
     try {
@@ -948,7 +882,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       if (!mounted) return;
       markRecurringChanged(context);
       _changed = true;
-      // The copy replaces this page (no discard prompt: nothing is lost).
       commitSaved(working);
       context.pushReplacement('/recurring/${d.recurring.id}');
     } on ApiException catch (e) {
@@ -961,7 +894,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   Future<void> _delete(Recurring r) async {
     final l = AppLocalizations.of(context)!;
     bool deleteTxs = false;
-    // ONE call on this button: what the delete touches (the BE's numbers).
     final RecurringDeletePreview? preview;
     try {
       preview = (await _repo.get(r.id, deletePreview: true)).deletePreview;
@@ -1021,8 +953,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     leavePage();
   }
 
-  // ── Build ───────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -1074,8 +1004,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       ),
     );
   }
-
-  // ── View mode ───────────────────────────────────────────────────────
 
   HeroStyle _style(Recurring r) {
     final palette = Theme.of(context).extension<AppColors>()!;
@@ -1148,7 +1076,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     );
   }
 
-  /// Ending soon → "ต่ออีก"; paused → why nothing is produced.
   Widget? _notice(AppLocalizations l, Recurring r) {
     if (r.endingSoon && r.actions.extend) {
       return AppMessage(
@@ -1180,8 +1107,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     return StatusChip(label: label, kind: kind, onTap: onTap);
   }
 
-  /// The hero card: status + kind chips, icon + description, the amount, the
-  /// BE's tiles and the amber alert. Every number is the BE's.
   Widget _viewHero(AppLocalizations l, Recurring r) {
     final symbol = context.readUserCurrencySymbol;
     final amount = r.amount;
@@ -1306,8 +1231,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     );
   }
 
-  // ── Info box (view + edit) ──────────────────────────────────────────
-
   String _date(DateTime d) => DateFormatter.medium(
     d,
     locale: Localizations.localeOf(context).toLanguageTag(),
@@ -1319,8 +1242,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     RecurrenceEndKind.afterCount => l.recurEndCount(end.count ?? 0),
   };
 
-  /// ONE box of facts (reference: "ข้อมูล"). View: ทำซ้ำ (+ next) · หมวด ·
-  /// จ่ายจาก · เริ่ม – สิ้นสุด · ทดลองฟรี. Edit: the same rows as pickers.
   Widget _infoBox(AppLocalizations l, Recurring? r, {required bool editing}) {
     final accounts = context.watch<AccountsCubit>();
     final cats = context.watch<CategoriesCubit>();
@@ -1449,10 +1370,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     );
   }
 
-  // ── Tabs ────────────────────────────────────────────────────────────
-
-  /// งวดที่ผ่านมา: the produced occurrences, a state chip each. Long-press
-  /// enters bulk select.
   Widget _pastTab(AppLocalizations l, Recurring r) {
     final items = _produced.items;
     return ListPageBody(
@@ -1545,8 +1462,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         : _selected.add(item.id),
   );
 
-  /// ล่วงหน้า: the NEXT occurrence as a card with its actions, the rest as
-  /// date chips (edited amber, skipped struck, "โหลดเพิ่ม ›").
   Widget _upcomingTab(AppLocalizations l, Recurring r) {
     final page = _upcoming;
     final items = page.items;
@@ -1554,8 +1469,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     final locale = Localizations.localeOf(context).toLanguageTag();
     String day(DateTime d) => DateFormat.MMMd(locale).format(d);
     final symbol = context.readUserCurrencySymbol;
-    // Upcoming ones after the first + the future ones that were skipped
-    // (they sit in the past tab's list), by date.
     final rest = <RecurringItem>[
       ...items.skip(1),
       for (final i in _produced.items)
@@ -1654,10 +1567,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     );
   }
 
-  // ── Edit / create mode ──────────────────────────────────────────────
-
-  /// Edit mode is its own form: kind chips, icon + name + description + the
-  /// amount in the card; tags; the info rows; the note; the end zone.
   Widget _editBody(
     BuildContext context,
     AppLocalizations l,
@@ -1781,8 +1690,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     );
   }
 
-  /// ทำสำเนา → เก็บถาวร / กู้คืน → ลบ, each with its consequence; a confirm
-  /// guards the destructive ones.
   Widget _endZone(AppLocalizations l, Recurring r) {
     final archived = r.status == RecurringStatus.archived;
     final canArchive = archived ? r.actions.restore : r.actions.archive;

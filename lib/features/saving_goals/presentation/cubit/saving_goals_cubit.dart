@@ -9,7 +9,6 @@ import '../../domain/saving_goals_overview.dart';
 
 enum SavingGoalsStatus { initial, loading, loaded, error }
 
-/// `GET /saving-goals?sort=` (BE default: created).
 enum SavingGoalsSort {
   created,
   deadline,
@@ -20,7 +19,6 @@ enum SavingGoalsSort {
   String get query => this == byName ? 'name' : name;
 }
 
-/// The list page's filter chips.
 enum SavingGoalsFilter {
   active,
   completed,
@@ -45,8 +43,6 @@ class SavingGoalsState extends Equatable {
   final SavingGoalsStatus status;
   final ApiException? error;
 
-  /// Bumped when savings changed elsewhere ([SavingGoalsCubit.markStale]);
-  /// open pages listen to it and reload.
   final int staleTick;
 
   List<SavingGoal> get goals => overview.goals;
@@ -72,10 +68,6 @@ class SavingGoalsState extends Equatable {
   List<Object?> get props => [overview, filter, sort, status, error, staleTick];
 }
 
-/// The list page's state: ONE call per open (`GET /saving-goals?status=`).
-/// Other cubits never patch it; a page that changed savings calls [markStale]
-/// and the list reloads on its next open (the goal page lives in
-/// `SavingGoalCubit`). Home listens to `goals` to refresh its tile.
 class SavingGoalsCubit extends Cubit<SavingGoalsState> with Clearable {
   SavingGoalsCubit({required SavingGoalsRepository repository})
     : _repo = repository,
@@ -87,7 +79,6 @@ class SavingGoalsCubit extends Cubit<SavingGoalsState> with Clearable {
   @override
   void clear() => emit(const SavingGoalsState());
 
-  /// The list changed elsewhere: reload on the next [loadIfNeeded].
   void markStale({bool silent = false}) {
     _stale = true;
     if (!silent) emit(state.copyWith(staleTick: state.staleTick + 1));
@@ -101,7 +92,6 @@ class SavingGoalsCubit extends Cubit<SavingGoalsState> with Clearable {
     return load();
   }
 
-  /// Switching chip = re-opening the page with another status.
   Future<void> setFilter(SavingGoalsFilter filter) {
     emit(state.copyWith(filter: filter));
     return load();

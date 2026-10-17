@@ -5,9 +5,6 @@ import '../../transactions/domain/transaction_type.dart';
 import '../domain/recurrence_rule.dart';
 import '../domain/recurring.dart';
 
-/// The create-form presets of `/recurring/new?...` (owner 2026-10-17: the
-/// picker's "+ สร้างรายการประจำใหม่จากรายการนี้" opens the form filled from a
-/// transaction): any of them may be absent.
 @immutable
 class RecurringPreset {
   const RecurringPreset({
@@ -19,7 +16,6 @@ class RecurringPreset {
     this.accountId,
   });
 
-  /// Reads `kind`, `type`, `amount`, `category` (id), `name`, `account` (id).
   factory RecurringPreset.fromQuery(Map<String, String> q) {
     final type = q['type'];
     return RecurringPreset(
@@ -40,7 +36,6 @@ class RecurringPreset {
   final String? accountId;
 }
 
-/// The editing snapshot of the recurring form (dirty check + undo).
 @immutable
 class RecurringDraft {
   const RecurringDraft({
@@ -59,14 +54,10 @@ class RecurringDraft {
     this.trialUntil,
   });
 
-  /// A blank form for [kind]: monthly on today's day, no end (an installment
-  /// starts at 12 payments).
   factory RecurringDraft.blank({
     RecurringKind kind = RecurringKind.subscription,
     RecurringPreset preset = const RecurringPreset(),
   }) {
-    // A transaction's type picks the kind when none was asked for: income →
-    // รายรับ, transfer → เตือนจ่าย (the only kind that can transfer).
     final k =
         preset.kind ??
         switch (preset.type) {
@@ -130,16 +121,12 @@ class RecurringDraft {
   final String? categoryId;
   final Set<String> tagIds;
 
-  /// Subscription only.
   final DateTime? trialUntil;
 
   bool get isTransfer => type == TransactionType.transfer;
 
-  /// An amount is optional for a reminder only.
   bool get amountOptional => kind == RecurringKind.reminder;
 
-  /// Switching the kind switches the money direction with it (a reminder
-  /// keeps expense / transfer) and gives an installment its count.
   RecurringDraft withKind(RecurringKind k) {
     if (k == kind) return this;
     final nextType = switch (k) {
@@ -166,15 +153,12 @@ class RecurringDraft {
       type: nextType,
       accountId: accountId,
       toAccountId: nextType == TransactionType.transfer ? toAccountId : null,
-      // A category belongs to its direction.
       categoryId: nextType == type ? categoryId : null,
       tagIds: tagIds,
       trialUntil: k == RecurringKind.subscription ? trialUntil : null,
     );
   }
 
-  /// A change to what the items carry (not the rule / name / icon): the save
-  /// asks which items take it.
   bool valuesDiffer(RecurringDraft o) =>
       description.trim() != o.description.trim() ||
       note.trim() != o.note.trim() ||
@@ -186,8 +170,6 @@ class RecurringDraft {
       categoryId != o.categoryId ||
       !setEquals(tagIds, o.tagIds);
 
-  /// Missing parts the save needs: a wallet (and a target for a transfer), an
-  /// amount (a reminder's is optional), a count (an installment).
   bool get walletOk =>
       accountId != null && (!isTransfer || toAccountId != null);
 

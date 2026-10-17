@@ -25,27 +25,6 @@ import '../widgets/transaction_tile.dart';
 import '../widgets/tx_filter_sheet.dart';
 import '../widgets/tx_period_pill.dart';
 
-/// `/transactions` (owner 2026-10-10 redesign):
-///
-/// ```
-///        ‹  ตุลาคม 2026 ▾  ›          the date filter: ‹ › / swipe step
-///                                      one unit, the label opens the
-///                                      period sheet (วัน…กำหนดเอง)
-///  [ รายรับ · รายจ่าย · คงเหลือ ]        totals of the whole filtered set
-///  [🔍 ค้นหา…                    ]      full width
-///  [⚙ ตัวกรอง •n]      [⇅ ใหม่สุด ▾]    → right side sheet · the sort
-///  (รายจ่าย ✕) (KBank ✕) (#ทริป ✕)      the active filters, wrapping
-///  วันนี้                    −฿540
-///  rows (2 lines: title · category · wallet · #tags)
-/// ```
-///
-/// Everything above the rows scrolls with them, so the list keeps the
-/// screen. The same page is a wallet's รายการ tab ([lockedAccount], no
-/// wallet filter, this month to start) and the dashboard drill-down pages.
-///
-/// [initialCategoryId] / [initialUncategorized] + [initialMonth] open a
-/// dashboard slice ("เงินไปไหน" → one category in one month).
-/// Picking a category always includes its sub-categories.
 class TransactionsListPage extends StatefulWidget {
   const TransactionsListPage({
     this.initialCategoryId,
@@ -57,37 +36,26 @@ class TransactionsListPage extends StatefulWidget {
     this.embedded = false,
     this.lockedAccount,
     this.typeFilter,
+    this.headerTiles,
     super.key,
   });
 
-  /// Just the list, no Scaffold / top bar — a tab of another page (a
-  /// wallet's รายการ). Give it its own [TransactionsCubit].
   final bool embedded;
 
-  /// Pinned to this wallet: no wallet filter, everything added from here
-  /// presets it, and the list ends in an add tile.
   final Account? lockedAccount;
 
-  /// A type filter owned by the opener (a wallet hero's in / out tiles): the
-  /// list follows it; null = all. Embedded use only.
   final ValueListenable<TransactionType?>? typeFilter;
+
+  final List<Widget> Function()? headerTiles;
 
   final String? initialCategoryId;
 
-  /// The drill-down category's name and type, when the caller knows them
-  /// (the list itself is the only call this page makes). Without a name the
-  /// chip takes it from the first row of that category.
-  // The dashboard drill-down route passes both (the slice's label and
-  // expense), so the chip never waits on the categories cache.
   final String? initialCategoryName;
   final CategoryType? initialCategoryType;
   final bool initialUncategorized;
 
-  /// Any day in the month to show; null = the current month.
   final DateTime? initialMonth;
 
-  /// Set when pushed outside the tab root (a wallet's "ดูทั้งหมด") — the
-  /// page then draws its own top bar.
   final String? title;
 
   @override
@@ -98,17 +66,19 @@ class _TransactionsListPageState extends State<TransactionsListPage>
     implements ShellSwipeHandler {
   TxFilters _f = TxFilters(period: TxPeriod.month(DateTime.now()));
 
-  /// How the page opened — what ล้าง goes back to, and what "filtered" is
-  /// measured against (a wallet's list starts on its wallet).
   late TxFilters _base = _f;
   String _q = '';
   Timer? _debounce;
   final _search = TextEditingController();
-  final _toolbarOpen = ToolbarToggleState.of('transactions');
+  late final _toolbarOpen = ToolbarToggleState.of(
+    widget.embedded ? 'transactions_wallet' : 'transactions',
+  );
+  final _summaryOpen = ToolbarToggleState.of(
+    'transactions_summary',
+    open: true,
+  );
   Map<ShellTab, ShellSwipeHandler>? _swipeHandlers;
 
-  /// The transactions tab's own root — the only place the sideways swipe
-  /// steps the period (elsewhere it belongs to the wallet tabs / the shell).
   bool get _isTabRoot =>
       !widget.embedded && widget.title == null && widget.lockedAccount == null;
 
@@ -120,7 +90,6 @@ class _TransactionsListPageState extends State<TransactionsListPage>
       if (!mounted) return;
       var f = _f;
       final locked = widget.lockedAccount;
-      // A wallet's รายการ tab opens at this month too (owner 2026-10-10).
       if (locked != null) f = f.copyWith(wallets: [locked]);
       final catId = widget.initialCategoryId;
       if (catId != null) {
@@ -153,7 +122,6 @@ class _TransactionsListPageState extends State<TransactionsListPage>
     });
   }
 
-  /// The opener's type tile changed (income / expense / none).
   void _onTypeFilter() {
     final t = widget.typeFilter?.value;
     final next = t == null ? const <TransactionType>{} : {t};
@@ -181,8 +149,6 @@ class _TransactionsListPageState extends State<TransactionsListPage>
     super.dispose();
   }
 
-  // ── Swipe = step the period (like the dashboard's month) ────────────
-
   @override
   bool canSwipe(int dir) {
     final p = _f.period;
@@ -196,8 +162,6 @@ class _TransactionsListPageState extends State<TransactionsListPage>
     if (next != null) _apply(_f.copyWith(period: next));
   }
 
-  // ── Loading ─────────────────────────────────────────────────────────
-
   Future<void> _refetch() {
     final b = _f.period.bounds;
     return context.read<TransactionsCubit>().load(
@@ -208,6 +172,8 @@ class _TransactionsListPageState extends State<TransactionsListPage>
       accountIds: [for (final w in _f.wallets) w.id],
       noWallet: _f.noWallet,
       noTags: _f.noTags,
+      amountMin: _f.amountMin,
+      amountMax: _f.amountMax,
       q: _q,
       tagIds: [for (final t in _f.tags) t.id],
       from: b.from,
@@ -241,18 +207,13 @@ class _TransactionsListPageState extends State<TransactionsListPage>
     if (f != null && mounted) _apply(f);
   }
 
-  /// Filters changed from how the page opened (the period isn't one — the
-  /// pill shows it) or a search is on.
   bool get _filtered => !_f.sameFiltersAs(_base) || _q.isNotEmpty;
 
   void _clearFilters() {
     _search.clear();
     _q = '';
-    // The period and the sort are the page's own controls — kept.
     _apply(_base.copyWith(period: _f.period, sort: _f.sort));
   }
-
-  // ── Build ───────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -266,20 +227,49 @@ class _TransactionsListPageState extends State<TransactionsListPage>
                 state.transactions.isEmpty);
         final activeFilters = _f.activeCount(_base);
         final header = <Widget>[
-          // The page's card (month ‹ ›, net, daily bars, รายรับ / รายจ่าย
-          // tiles); a wallet's embedded list keeps just the pill — its in /
-          // out are the wallet card's tiles.
           if (widget.embedded) ...[
             const SizedBox(height: AppSpacing.sm),
-            Center(child: _periodPill()),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Row(
+                children: [
+                  Flexible(child: _periodPill()),
+                  const Spacer(),
+                  ListenableBuilder(
+                    listenable: _search,
+                    builder: (context, _) => ToolbarToggleButton(
+                      state: _toolbarOpen,
+                      filtered: activeFilters > 0 || _q.isNotEmpty,
+                      tooltip: l.commonSearch,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (widget.headerTiles?.call() case final tiles?
+                when tiles.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final (i, t) in tiles.indexed) ...[
+                        if (i > 0) const SizedBox(width: AppSpacing.sm),
+                        Expanded(child: t),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ] else if (state.totals case final t?)
             _summary(l, t, activeFilters)
           else
             const SizedBox(height: AppSpacing.sm),
-          // Hidden behind the card's 🔍 (embedded: always there): search +
-          // the filter sheet chip … sort, ONE block.
           ListToolbar(
-            collapse: widget.embedded ? null : _toolbarOpen,
+            collapse: _toolbarOpen,
             searchKey: const ValueKey('tx-search'),
             searchController: _search,
             onSearchChanged: _onSearch,
@@ -329,12 +319,9 @@ class _TransactionsListPageState extends State<TransactionsListPage>
           hasMore: state.hasMore,
           loadingMore: state.loadingMore,
           onLoadMore: () => context.read<TransactionsCubit>().loadMore(),
-          // Rows run edge to edge; the header items pad themselves.
           sidePadding: 0,
           rowDividers: true,
           topInset: 0,
-          // Embedded in a tab under the wallet's pinned tab bar: the page
-          // already cleared the top bar.
           clearTopBar: !widget.embedded,
           children: state.transactions.isEmpty
               ? const []
@@ -356,20 +343,14 @@ class _TransactionsListPageState extends State<TransactionsListPage>
 
     if (widget.embedded) return content;
     return Scaffold(
-      // Tab root (no title passed) → the tab's own bar; pushed → back + title.
       appBar: AppTopBar(
         title: widget.title ?? l.navTransactions,
         showBack: widget.title != null,
       ),
-      // Tab switch animates the body only — the bar stays put.
       body: TabSwitchBody(child: content),
     );
   }
 
-  /// The ONE summary card (reference §7): the month stepper, the net (big,
-  /// signed), the daily bars (BE `daily` — tap a bar = that day), and the
-  /// income / expense tiles as type filters (tap again clears). All numbers
-  /// are the server's.
   Widget _summary(AppLocalizations l, ListTotals t, int activeFilters) {
     final locale = Localizations.localeOf(context).languageCode;
     final now = DateTime.now();
@@ -384,12 +365,13 @@ class _TransactionsListPageState extends State<TransactionsListPage>
         : DailyBarKind.future;
     String dayLabel(DateTime? d) =>
         d == null ? '' : DateFormatter.short(d, locale: locale);
-    // A tile = "only this type": tap again to clear.
     bool only(TransactionType type) =>
         _f.types.length == 1 && _f.types.contains(type);
     void toggle(TransactionType type) =>
         _apply(_f.copyWith(types: only(type) ? const {} : {type}));
     return ListSummaryCard(
+      expanded: _summaryOpen,
+      padding: HeroSpacing.tight,
       captionWidget: Row(
         mainAxisSize: MainAxisSize.min,
         children: [Flexible(child: _periodPill())],
@@ -402,6 +384,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
         ),
       ],
       amount: t.net,
+      mainLabel: l.txSummaryNet,
       mainTone: MoneyTone.signed,
       chart: t.daily.isEmpty
           ? null
@@ -443,14 +426,11 @@ class _TransactionsListPageState extends State<TransactionsListPage>
     );
   }
 
-  /// The page's date filter: ‹ › step, the label opens the period sheet.
   Widget _periodPill() => TxPeriodPill(
     period: _f.period,
     onChanged: (p) => _apply(_f.copyWith(period: p)),
   );
 
-  /// Filters changed → "nothing matches" + clear (back to how the page
-  /// opened, keeping the period); as opened → nothing here yet + add.
   EmptyView _empty(AppLocalizations l, Account? locked) {
     final thisMonth =
         _f.period == TxPeriod.month(DateTime.now()) && locked == null;
@@ -476,15 +456,11 @@ class _TransactionsListPageState extends State<TransactionsListPage>
             )
           : AddTile(
               label: l.homeAddFirstTx,
-              // Same flow as the nav's +.
               onTap: () => showQuickCreateSheet(context, account: locked),
             ),
     );
   }
 
-  /// Rows under "วันนี้ · −฿540" headers (net of the day's income /
-  /// expense), days always in date order. Sorted by amount → a flat list
-  /// with dates on the rows (day headers would repeat).
   List<Widget> _rows(
     BuildContext context,
     TransactionsState state, {

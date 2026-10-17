@@ -12,9 +12,6 @@ import '../cubit/archived_cubit.dart';
 import '../data/archived_repository.dart';
 import '../domain/archived_hub.dart';
 
-/// `/archived` — ที่เก็บถาวร: everything the user archived, grouped by kind,
-/// from ONE `GET /me/archived`. Each row has [กู้คืน] (one restore call; the
-/// row leaves the list from the answer); a tap on the row opens its page.
 class ArchivedPage extends StatelessWidget {
   const ArchivedPage({
     super.key,
@@ -25,7 +22,6 @@ class ArchivedPage extends StatelessWidget {
   /// Tests: a ready cubit instead of the one built from [ApiClient].
   final ArchivedCubit? cubit;
 
-  /// Tests: replaces the shell's top bar.
   final PreferredSizeWidget? topBar;
 
   @override
@@ -65,7 +61,6 @@ class _ArchivedView extends StatelessWidget {
     ArchivedKind.recurring => AppIcons.recurring,
   };
 
-  /// "คงเหลือ ฿x" — the second line, from the BE's `secondary`.
   String? _secondary(BuildContext context, AppLocalizations l, ArchivedItem i) {
     final s = i.secondary;
     if (s == null) return null;
@@ -79,7 +74,6 @@ class _ArchivedView extends StatelessWidget {
     };
   }
 
-  /// "คงเหลือ ฿x · เก็บถาวรเมื่อ …"; null when there is neither.
   String? _helper(
     BuildContext context,
     AppLocalizations l,

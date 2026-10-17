@@ -2,14 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 
-/// Colour of each feature **group** — the เพิ่มเติม hub's sections
-/// (คลัง / คน / วางแผน). Every card in a group shares its group's colour.
-///
-/// Kept apart from [AppColors] on purpose: those are *semantic* colours
-/// (income, expense, error …); these only mark "which part of the app".
-/// Each [AppTheme] ships its own set (light + dark) in its own family —
-/// warm pinks for Sweet, cool greens / blues for Mint. A theme without a
-/// set falls back to its primary colour everywhere ([of]).
 @immutable
 class ModuleColors extends ThemeExtension<ModuleColors> {
   const ModuleColors({
@@ -18,17 +10,12 @@ class ModuleColors extends ThemeExtension<ModuleColors> {
     required this.planning,
   });
 
-  /// คลัง — categories, tags.
   final Color library;
 
-  /// คน — contacts, projects, personal debts.
   final Color people;
 
-  /// วางแผน — budgets, saving goals, scheduled transactions.
   final Color planning;
 
-  /// The active theme's set, or every group in the theme's primary colour
-  /// when the theme defines none.
   static ModuleColors of(BuildContext context) {
     final theme = Theme.of(context);
     final set = theme.extension<ModuleColors>();

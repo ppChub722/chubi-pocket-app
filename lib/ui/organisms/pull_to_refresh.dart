@@ -8,19 +8,6 @@ import '../tokens/app_durations.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app/app_colors.dart';
 
-/// The app's one pull-to-refresh (every list / detail / empty page), so
-/// the gesture and the look stay identical app-wide.
-///
-/// Look (owner 2026-10-09 — the stock spinner felt stale): a ฿ coin over a
-/// wallet. Pulling grows and spins the coin; once released it keeps
-/// dropping into the wallet until [onRefresh] resolves.
-///
-/// The gesture itself (when it arms, cancels, waits for [onRefresh]) is
-/// Flutter's [RefreshIndicator.noSpinner]; this only draws.
-///
-/// [child] must be a scrollable. For short lists — and empty / error
-/// states — give it `physics: const AlwaysScrollableScrollPhysics()` so the
-/// pull still fires (`AsyncStateView` does that for its own states).
 class PullToRefresh extends StatefulWidget {
   const PullToRefresh({
     required this.onRefresh,
@@ -29,14 +16,10 @@ class PullToRefresh extends StatefulWidget {
     super.key,
   });
 
-  /// Called when the user pulls down. Resolve the future when the refresh
-  /// completes — the coin keeps dropping until then.
   final Future<void> Function() onRefresh;
 
   final Widget child;
 
-  /// false = just [child] (a detail page in create mode — nothing to
-  /// reload yet).
   final bool enabled;
 
   @override
@@ -47,29 +30,21 @@ class _PullToRefreshState extends State<PullToRefresh>
     with TickerProviderStateMixin {
   RefreshIndicatorStatus? _status;
 
-  /// How far the list has been pulled past its top, in px.
   double _pull = 0;
   double _viewport = 0;
 
-  /// One coin drop, repeated while refreshing.
   late final AnimationController _drop = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 900),
   );
 
-  /// Fade-out after done / cancel.
   late final AnimationController _exit = AnimationController(
     vsync: this,
     duration: AppDurations.fast,
   );
 
-  /// The reconnect count last seen — a change means the connection came back.
   int? _reconnects;
 
-  /// Refresh on show (owner 2026-10-17): the page re-runs its ONE page call,
-  /// silently (no pull animation; the page keeps its data and swaps it when
-  /// the answer arrives), whenever it becomes visible again — its shell tab
-  /// is switched back to, or the page opened on top of it is popped.
   bool? _tabActive;
   bool? _routeCurrent;
   int _popsWhenCovered = 0;
@@ -85,9 +60,7 @@ class _PullToRefreshState extends State<PullToRefresh>
 
     final active = TickerMode.valuesOf(context).enabled;
     final current = ModalRoute.of(context)?.isCurrent ?? true;
-    // A tab brought back to the front.
     if (_tabActive == false && active) reopen = true;
-    // A PAGE above this one was popped (not a sheet, dialog or menu).
     if (_routeCurrent != false && !current) {
       _popsWhenCovered = PagePopObserver.generation;
     }
@@ -108,7 +81,6 @@ class _PullToRefreshState extends State<PullToRefresh>
         try {
           await widget.onRefresh();
         } catch (_) {
-          // The page's own load keeps its data and shows its error state.
         } finally {
           _showRefreshing = false;
         }
@@ -123,9 +95,6 @@ class _PullToRefreshState extends State<PullToRefresh>
     super.dispose();
   }
 
-  /// 0 → 1 as the pull approaches the point where letting go refreshes —
-  /// mirrors [RefreshIndicator]'s own threshold (¼ of the viewport, armed
-  /// at ⅔ of that).
   double get _progress {
     if (_viewport <= 0) return 0;
     return (_pull / (_viewport * 0.25 / 1.5)).clamp(0.0, 1.0);
@@ -159,7 +128,6 @@ class _PullToRefreshState extends State<PullToRefresh>
     }
   }
 
-  /// Same bookkeeping [RefreshIndicator] does, to know how far we are.
   bool _track(ScrollNotification n) {
     if (n.depth != 0 || n.metrics.axisDirection != AxisDirection.down) {
       return false;
@@ -180,9 +148,6 @@ class _PullToRefreshState extends State<PullToRefresh>
   @override
   Widget build(BuildContext context) {
     if (!widget.enabled) return widget.child;
-    // Pages float the top bar over their body (extendBodyBehindAppBar),
-    // which folds the bar height into the top padding — the coin starts
-    // below it. 0 on pages without one.
     final edge = MediaQuery.paddingOf(context).top;
     return Stack(
       fit: StackFit.passthrough,
@@ -216,8 +181,6 @@ class _PullToRefreshState extends State<PullToRefresh>
   }
 }
 
-/// The coin-into-wallet mark, drawn for one frame. Public so the widget
-/// gallery can show every phase without a real pull.
 class CoinDropIndicator extends StatelessWidget {
   const CoinDropIndicator({
     required this.pull,
@@ -226,13 +189,11 @@ class CoinDropIndicator extends StatelessWidget {
     super.key,
   });
 
-  /// 0 → 1 while pulling (1 = letting go refreshes).
   final double pull;
 
   /// Position in the drop loop (0 → 1) while refreshing; null = pulling.
   final double? drop;
 
-  /// 0 → 1 while fading out.
   final double exit;
 
   static const double _bubble = 52;
@@ -245,13 +206,10 @@ class CoinDropIndicator extends StatelessWidget {
     final refreshing = drop != null;
     final t = drop ?? 0;
 
-    // The bubble slides down with the pull, then rests.
     final dy = refreshing ? 24.0 : -24 + 48 * pull;
     final appear = refreshing ? 1.0 : Curves.easeOut.transform(pull);
     final scale = (0.6 + 0.4 * appear) * (1 - 0.3 * exit);
 
-    // Coin: spins while pulled; while refreshing it falls into the wallet
-    // (0 → 0.6), vanishes into it, then respawns on top.
     final double coinY;
     final double coinOpacity;
     final double spin;
@@ -269,7 +227,6 @@ class CoinDropIndicator extends StatelessWidget {
           : (1 - (t - 0.55) / 0.1).clamp(0.0, 1.0);
       spin = t * 4 * math.pi;
     }
-    // Wallet gives a little when the coin lands (0.6 → 0.8).
     final squash = refreshing && t > 0.6 && t < 0.8
         ? math.sin((t - 0.6) / 0.2 * math.pi) * 0.12
         : 0.0;
@@ -318,7 +275,6 @@ class CoinDropIndicator extends StatelessWidget {
                       opacity: coinOpacity,
                       child: Transform(
                         alignment: Alignment.center,
-                        // A coin turning on its edge.
                         transform: Matrix4.diagonal3Values(
                           math.cos(spin).abs().clamp(0.15, 1.0),
                           1,

@@ -12,57 +12,6 @@ import '../organisms/saving_overlay.dart';
 import '../molecules/mode_action_bar.dart';
 import 'edit_mode_scope.dart';
 
-/// The app's in-place edit-mode lifecycle, shared by every detail page
-/// (category, tag, contact, account, project, …) so they all behave the
-/// same:
-///
-/// * view ⇄ edit, with the shell's nav + FAB hidden while editing
-///   ([ShellChrome]) and a [ModeActionBar] (ยกเลิก · ↶ · บันทึก) instead;
-/// * an immutable draft [D] (use Equatable) — `original` vs `working`
-///   gives [isDirty] for free;
-/// * undo — every discrete change is one step; typing bursts in one field
-///   collapse into one step (500 ms debounce, or switching field);
-///   undoing back to the original leaves edit mode;
-/// * back (system gesture / the top bar's ✕) while editing asks before
-///   dropping unsaved changes ([handleBack]); with nothing changed it just
-///   returns to view mode — or leaves, for create. The ยกเลิก button is
-///   direct.
-///
-/// The edit-mode rules every page follows (owner 2026-10-17):
-///
-/// * [canEdit] — can this record be edited AT ALL? false (a system row, a
-///   locked row, someone else's): no ✏️, no edit mode; [enterEdit] does
-///   nothing.
-/// * Each field, in edit mode, is one of: editable (dashed / an input),
-///   not editable but needed to read the form (a plain solid line, no 🔒),
-///   or hidden (the default for anything not editable — never shown greyed).
-/// * View mode shows every field and changes none; a long-press on an
-///   editable one calls [enterEdit] with that field: an input is focused, a
-///   picker is opened (`then`).
-///
-/// Usage:
-/// ```dart
-/// class _FooPageState extends State<FooPage>
-///     with EditModeMixin<FooPage, FooDraft> {
-///   @override
-///   void initState() { super.initState(); initDraft(FooDraft.from(foo)); }
-///
-///   @override
-///   void onDraftRestored() => _nameCtrl.text = working.name; // undo/cancel
-///
-///   Widget build(context) => editScope(Scaffold(
-///     appBar: AppTopBar(editing: isEditing, onBack: handleBack, …),
-///     bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
-///   ));
-///
-///   Future<void> _save() async {
-///     commitTextSession();
-///     setSaving(true);
-///     try { … await repo.update(working); commitSaved(working); }
-///     finally { if (mounted) setSaving(false); }
-///   }
-/// }
-/// ```
 mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   bool _editing = false;
   bool _askingToDiscard = false;
@@ -71,7 +20,6 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   late D _working;
   final List<D> _undoStack = [];
 
-  // Open typing burst: state when it started + which field it belongs to.
   D? _sessionStart;
   Object? _sessionField;
   Timer? _debounce;
@@ -80,7 +28,6 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
 
   /// This page's own snackbar messenger ([editScope] installs it): snackbars
   /// shown through it float above the page's action bar instead of over it.
-  /// Use `showAppSnackBarOn(pageMessenger!, …)`; null before the first build.
   ScaffoldMessengerState? get pageMessenger => _messengerKey.currentState;
 
   ShellChromeController? _shellChrome;
@@ -88,8 +35,6 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
 
   bool get isEditing => _editing;
 
-  /// Can the record be edited at all? Override for a page whose record can be
-  /// read-only; false makes [enterEdit] a no-op.
   bool get canEdit => true;
   bool get isSaving => _saving;
   D get original => _original;
@@ -97,18 +42,10 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   bool get isDirty => _working != _original;
   bool get canUndo => _sessionStart != null || _undoStack.isNotEmpty;
 
-  // ── Hooks ───────────────────────────────────────────────────────────
-
-  /// `working` jumped (undo / cancel) — push it back into text controllers.
   void onDraftRestored() {}
 
-  /// Create flows: there's no view mode, so Cancel / back leave the page.
   bool get leaveOnCancel => false;
 
-  /// Leaving the page (create cancel, back in view mode). A plain pop —
-  /// `maybePop` would come back through this page's own PopScope. A page
-  /// opened alone in its tab has nothing to pop: the shell's back takes
-  /// over (previous tab, the เพิ่มเติม hub, or the dashboard).
   void leavePage() {
     if (context.canPop()) {
       context.pop();
@@ -117,17 +54,12 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     }
   }
 
-  // ── Setup ───────────────────────────────────────────────────────────
-
-  /// Call from `initState`. [editing] = open straight in edit mode (create).
   void initDraft(D draft, {bool editing = false}) {
     _original = draft;
     _working = draft;
     _editing = editing;
   }
 
-  /// The persisted record changed underneath (e.g. a cubit refresh) while
-  /// not editing — rebase without touching an in-progress edit.
   void resetDraft(D draft) {
     if (_editing) return;
     setState(() {
@@ -153,12 +85,6 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     super.dispose();
   }
 
-  // ── Mode ────────────────────────────────────────────────────────────
-
-  /// Enter edit mode; optionally focus a field once it's editable.
-  /// Enters edit mode (no-op when [!canEdit]). [focus]: an input to focus;
-  /// [then]: a picker to open once edit mode is up (long-pressing a pick
-  /// chip / card in view mode).
   void enterEdit({FocusNode? focus, VoidCallback? then}) {
     if (!canEdit) return;
     if (!_editing) {
@@ -174,7 +100,6 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     }
   }
 
-  /// Revert everything and return to view mode (or leave, for create).
   void cancelEdit() {
     if (leaveOnCancel) {
       leavePage();
@@ -194,10 +119,6 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     onDraftRestored();
   }
 
-  /// Top-bar ← / ✕ and system back. While editing with unsaved changes it
-  /// asks first ("ยกเลิกการแก้ไข?" [แก้ต่อ] [ยกเลิกการแก้ไข]); with none it
-  /// just leaves edit mode (owner 2026-10-10, reversing "back = cancel, no
-  /// prompt"). The ยกเลิก button itself stays direct ([cancelEdit]).
   Future<void> handleBack() async {
     if (_saving || _askingToDiscard) return;
     if (!_editing) {
@@ -221,10 +142,6 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     cancelEdit();
   }
 
-  // ── Changes ─────────────────────────────────────────────────────────
-
-  /// One discrete change (switch, chip, picker, icon) = one undo step.
-  /// Auto-enters edit mode, so view-mode controls can stay live.
   void applyChange(D next) {
     commitTextSession();
     if (next == _working) return;
@@ -236,8 +153,6 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     HapticFeedback.selectionClick();
   }
 
-  /// A keystroke in text field [field] (any stable key, e.g. an enum).
-  /// The controller already shows the text, so no [onDraftRestored].
   void applyTextChange(Object field, D next) {
     if (_sessionStart == null) {
       _sessionStart = _working;
@@ -254,7 +169,6 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     });
   }
 
-  /// Close the open typing burst into a single undo step. Call before save.
   void commitTextSession() {
     _debounce?.cancel();
     _debounce = null;
@@ -282,15 +196,11 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     if (_undoStack.isEmpty && !isDirty) cancelEdit();
   }
 
-  // ── Save ────────────────────────────────────────────────────────────
-
   void setSaving(bool value) {
     if (_saving == value) return;
     setState(() => _saving = value);
   }
 
-  /// Saved successfully — [saved] (usually `working`, or what the server
-  /// returned) becomes the new baseline and edit mode closes.
   void commitSaved(D saved) {
     _debounce?.cancel();
     _debounce = null;
@@ -306,10 +216,6 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     onDraftRestored();
   }
 
-  /// A multi-step save failed part-way: [original] becomes what the server
-  /// now has and [working] the edit still pending on top of it. Edit mode
-  /// stays; the undo history goes (its snapshots predate what was saved, so
-  /// restoring one would redo it).
   void rebaseEdit({required D original, required D working}) {
     _debounce?.cancel();
     _debounce = null;
@@ -323,10 +229,6 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     onDraftRestored();
   }
 
-  // ── Chrome ──────────────────────────────────────────────────────────
-
-  /// Wrap the page's Scaffold: routes back through [handleBack] and keeps
-  /// the shell's nav + FAB hidden while editing.
   Widget editScope(Widget child) {
     _syncShellChrome();
     return PopScope(
@@ -346,7 +248,6 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     );
   }
 
-  /// The standard ยกเลิก · ↶ · บันทึก bar for `bottomNavigationBar`.
   Widget editActionBar({required VoidCallback onSave, bool canSave = true}) {
     final l = UiConfig.stringsOf(context);
     return ModeActionBar(
@@ -365,7 +266,6 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   void _syncShellChrome() {
     if (_chromeHiddenFor == _editing) return;
     _chromeHiddenFor = _editing;
-    // Called from build, so the route lookup is safe here.
     final route = ModalRoute.of(context);
     // Deferred: toggling notifies the shell, which can't rebuild mid-build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -374,8 +274,6 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
         _shellChrome?.show(owner: this);
         return;
       }
-      // A page that opens in edit mode (create) hides the nav only once it
-      // has slid in — see [whenRouteSettled].
       whenRouteSettled(route, () {
         if (mounted && _editing) _shellChrome?.hide(owner: this);
       });

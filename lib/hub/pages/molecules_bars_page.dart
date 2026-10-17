@@ -648,6 +648,30 @@ class _BarsPageState extends State<_BarsPage> {
               ),
             ),
             HubUse(
+              label: 'ChipRow — moreOnlyWhenCut: everything fits, no More',
+              page: 'Transaction filter sheet (wallet / category / tag rows)',
+              wide: true,
+              child: ChipRow(
+                maxLines: 2,
+                moreOnlyWhenCut: true,
+                chips: [for (final n in _chipNames.take(4)) AppChip(label: n)],
+                onMore: () {},
+                moreLabel: 'More',
+              ),
+            ),
+            HubUse(
+              label: 'ChipRow — moreOnlyWhenCut: cut, so More shows',
+              page: 'Transaction filter sheet (wallet / category / tag rows)',
+              wide: true,
+              child: ChipRow(
+                maxLines: 2,
+                moreOnlyWhenCut: true,
+                chips: [for (final n in _chipNames) AppChip(label: n)],
+                onMore: () {},
+                moreLabel: 'More',
+              ),
+            ),
+            HubUse(
               label: 'ChipRow — moreFirst, nothing chosen yet',
               page: 'Pending draft form (choose wallet / category)',
               child: ChipRow(

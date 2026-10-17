@@ -5,21 +5,14 @@ import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import 'dashed_rect_border.dart';
 
-/// Shape of an [AddTile].
 enum AddTileVariant {
-  /// Full-width dashed card — end of card/grid collections, empty-state CTA.
   card,
 
-  /// Compact dashed row — inside lists and forms ("+ เพิ่มการหาร").
   row,
 
-  /// Dashed circle + caption — avatar strips ("+ เชิญ").
   circle,
 }
 
-/// The app's "add something here" affordance: brand-coloured dashed outline,
-/// transparent fill, centred `+` and label. Visually distinct from real
-/// items so the user reads it as "the way to add one".
 class AddTile extends StatelessWidget {
   const AddTile({
     required this.label,
@@ -36,11 +29,8 @@ class AddTile extends StatelessWidget {
   final AddTileVariant variant;
   final IconData icon;
 
-  /// Diameter for [AddTileVariant.circle] — match the avatars beside it.
   final double circleSize;
 
-  /// The tile that ends a full-width list ([ListPageBody] with no side
-  /// padding): inset like the rows and spaced from the last one.
   final bool inList;
 
   @override

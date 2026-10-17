@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_spacing.dart';
 
-/// Horizontal row of filter chips (+ optional trailing sort chip) that
-/// scrolls sideways when it overflows — the toolbar row under a search bar.
 class FilterBar extends StatelessWidget {
   const FilterBar({
     required this.chips,
@@ -29,8 +27,6 @@ class FilterBar extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            // The chips scroll sideways; the right edge fades so a chip that
-            // runs off the viewport reads as scrolling, not as a clipped chip.
             child: ShaderMask(
               blendMode: BlendMode.dstIn,
               shaderCallback: (r) {

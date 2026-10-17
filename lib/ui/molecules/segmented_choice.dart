@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 
-/// One choice of a [SegmentedChoice].
 class ChoiceSegment<T> {
   const ChoiceSegment(this.value, this.label);
 
@@ -11,15 +10,6 @@ class ChoiceSegment<T> {
   final String label;
 }
 
-/// A compact connected control that picks ONE of 2-4 short options — the
-/// notification settings' ปิด / แจ้ง / อัตโนมัติ. The chosen segment is
-/// highlighted (never a ✓). Not for proportions ([SegmentedBar]) or an
-/// icon-led theme pick ([ThemeModeChips]).
-///
-///   ( ปิด | [แจ้ง] | อัตโนมัติ )
-///
-/// [onChanged] fires only for a segment that is not already chosen.
-/// [enabled] false fades it and ignores taps.
 class SegmentedChoice<T> extends StatelessWidget {
   const SegmentedChoice({
     required this.segments,

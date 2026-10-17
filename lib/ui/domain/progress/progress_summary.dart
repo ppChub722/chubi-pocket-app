@@ -6,18 +6,6 @@ import '../../tokens/app_spacing.dart';
 import '../money/money_text.dart';
 import 'progress_tone.dart';
 
-/// A progress SUMMARY with no icon (owner 2026-10-13): the budgets list
-/// header ("this period, all budgets"), the goals list header, a goal hero
-/// footer.
-///
-///   ฿12,400            the big money [amount]
-///   caption            "ใช้ไปแล้ว จาก ฿20,000"
-///   ▓▓▓▓▓▒▒▒░░░░░░░    [value] + [expected], clamped bar
-///   label          62%  [label] left, [percentText] right (not clamped)
-///   footnote           "เหลือ ฿7,600 · เกิน 1 งบ"
-///
-/// [tone] colours the bar (and the % unless neutral; neutral = [color], else
-/// the primary colour).
 class ProgressSummary extends StatelessWidget {
   const ProgressSummary({
     required this.amount,
@@ -32,7 +20,6 @@ class ProgressSummary extends StatelessWidget {
     super.key,
   }) : skeleton = false;
 
-  /// A loading placeholder with the same slots.
   const ProgressSummary.skeleton({super.key})
     : amount = 0,
       value = 0,
@@ -45,14 +32,12 @@ class ProgressSummary extends StatelessWidget {
       footnote = null,
       skeleton = true;
 
-  /// The big figure (money).
   final num amount;
   final String? caption;
   final double value;
   final double? expected;
   final ProgressTone tone;
 
-  /// The bar colour for [ProgressTone.neutral].
   final Color? color;
   final String? label;
   final String? percentText;

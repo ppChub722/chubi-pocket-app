@@ -1,7 +1,5 @@
 import '../../../ui/ui.dart';
 
-/// The API's `rule` + `start_date` + `end` (openapi `RecurrenceRule` /
-/// `RecurrenceEnd`) ⇄ the kit's [RecurrenceRule].
 RecurrenceRule recurrenceFromJson(
   Map<String, dynamic>? rule, {
   required String? start,
@@ -44,7 +42,6 @@ RecurrenceRule recurrenceFromJson(
   );
 }
 
-/// The `rule`, `start_date` and `end` keys of a write body.
 Map<String, dynamic> recurrenceToJson(RecurrenceRule r) {
   final m = r.monthly;
   return <String, dynamic>{
@@ -76,20 +73,17 @@ Map<String, dynamic> recurrenceToJson(RecurrenceRule r) {
   };
 }
 
-/// Today as a date (no time).
 DateTime today() {
   final n = DateTime.now();
   return DateTime(n.year, n.month, n.day);
 }
 
-/// `YYYY-MM-DD` → a local date (null when absent or malformed).
 DateTime? parseYmd(String? v) {
   if (v == null || v.isEmpty) return null;
   final d = DateTime.tryParse(v);
   return d == null ? null : DateTime(d.year, d.month, d.day);
 }
 
-/// A date → `YYYY-MM-DD`.
 String ymd(DateTime d) =>
     '${d.year.toString().padLeft(4, '0')}-'
     '${d.month.toString().padLeft(2, '0')}-'

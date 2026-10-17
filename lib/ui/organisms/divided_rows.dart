@@ -4,13 +4,6 @@ import '../atoms/app_divider.dart';
 import '../atoms/list_break.dart';
 import '../tokens/app_spacing.dart';
 
-/// The grouped-list separators, ONE implementation shared by `ListPageBody`
-/// and its skeleton so they can never differ (owner 2026-10-12):
-///
-/// - a hairline between consecutive ROWS, from [indent] to the side margin;
-/// - a hairline (full width) between a group header ([ListBreak]) and its
-///   first row;
-/// - a thick 8 px full-width band BETWEEN groups.
 List<Widget> dividedRows(
   BuildContext context,
   List<Widget> items, {

@@ -22,13 +22,11 @@ class NotificationsPage {
   final int total;
   final int totalPages;
 
-  /// The card numbers, over all rows (not narrowed by the filter).
   final InboxSummary summary;
 
   bool get hasMore => page < totalPages;
 }
 
-/// `/v1/notifications/*` endpoints. Spec §13.3.
 class NotificationsRepository {
   NotificationsRepository({required ApiClient client}) : _client = client;
 
@@ -78,7 +76,6 @@ class NotificationsRepository {
     }
   }
 
-  /// Lightweight badge poll — `GET /notifications/unread-count`.
   Future<int> unreadCount() async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(
@@ -96,14 +93,12 @@ class NotificationsRepository {
   Future<NotificationActionResult> markActioned(String id) =>
       _post('/notifications/$id/actioned');
 
-  /// Un-hides a dismissed row (`POST /notifications/:id/restore`).
   Future<NotificationActionResult> restore(String id) =>
       _post('/notifications/$id/restore');
 
   Future<NotificationActionResult> markDismissed(String id) =>
       _post('/notifications/$id/dismiss');
 
-  /// Marks everything read; returns the fresh badges + card numbers.
   Future<InboxCounts> markReadAll() async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
@@ -115,7 +110,6 @@ class NotificationsRepository {
     }
   }
 
-  /// Hard delete; returns the fresh badges + card numbers.
   Future<InboxCounts> delete(String id) async {
     try {
       final res = await _client.dio.delete<Map<String, dynamic>>(
@@ -138,7 +132,6 @@ class NotificationsRepository {
     }
   }
 
-  /// `PUT /v1/notifications/settings` — partial; lists replace wholesale.
   Future<NotificationSettings> updateSettings({
     Set<String>? mutedTypes,
     Set<String>? autoTypes,
@@ -151,7 +144,6 @@ class NotificationsRepository {
         data: <String, dynamic>{
           if (mutedTypes != null) 'muted_types': mutedTypes.toList(),
           if (autoTypes != null) 'auto_types': autoTypes.toList(),
-          // Explicit null clears it (contract §5).
           if (clearDefaultAccount)
             'default_account_id': null
           else

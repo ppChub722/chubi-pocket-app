@@ -4,11 +4,6 @@ import '../atoms/app_button.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 
-/// An inline question under the row it is about (0.4.0, the link's "update
-/// the recurring amount too?"): the [message] and two buttons — [noLabel]
-/// (outlined) and [yesLabel] (filled). Not a dialog: the answer is optional
-/// and the card stays in the flow. [busy] disables both while the answer's
-/// call runs; [yesLabel]'s button [submits] (off while offline).
 class AskCard extends StatelessWidget {
   const AskCard({
     required this.message,

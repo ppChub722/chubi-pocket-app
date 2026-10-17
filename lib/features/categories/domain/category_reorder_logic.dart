@@ -2,16 +2,7 @@ import 'category.dart';
 import 'category_type.dart';
 import '../../../ui/ui.dart';
 
-/// Categories ⇄ the reorder kit's outline ([ReorderOutline]).
-///
-/// The reorder mode stages moves as an outline — rows in display order,
-/// each with a level, one section per [CategoryType]. On save the outline
-/// becomes `parent_id` + `sort_order` per row (a row's parent is the
-/// nearest row above it with a smaller level) for
-/// `PATCH /v1/categories/reorder`.
 abstract final class CategoryReorderLogic {
-  /// IDs in display order rooted at [rootId] — root first, then
-  /// descendants.
   static List<String> subtreeIds(String rootId, List<Category> all) {
     final result = <String>[rootId];
     for (final c in _children(rootId, all)) {
@@ -20,8 +11,6 @@ abstract final class CategoryReorderLogic {
     return result;
   }
 
-  /// Levels in the subtree rooted at [rootId]: 1 = a leaf, 2 = has
-  /// children, 3 = has grandchildren.
   static int subtreeHeight(String rootId, List<Category> all) {
     var deepest = 0;
     for (final c in all) {
@@ -33,9 +22,6 @@ abstract final class CategoryReorderLogic {
     return deepest + 1;
   }
 
-  /// The user categories as an outline: [types] in order, each type its
-  /// own section, rows parent-first by sort order. System categories never
-  /// appear in the management UI.
   static List<OutlineItem> toOutline(
     List<Category> all, {
     List<CategoryType> types = CategoryType.values,
@@ -61,8 +47,6 @@ abstract final class CategoryReorderLogic {
     return out;
   }
 
-  /// [all] with `parent_id` + `sort_order` rewritten from [outline]; rows
-  /// not in it (system ones) pass through unchanged.
   static List<Category> fromOutline(
     List<OutlineItem> outline,
     List<Category> all,
@@ -74,7 +58,6 @@ abstract final class CategoryReorderLogic {
     Object? section;
     for (final row in outline) {
       if (row.section != section) {
-        // Each type numbers its own top level from 0.
         section = row.section;
         stack.clear();
         counters.remove(null);

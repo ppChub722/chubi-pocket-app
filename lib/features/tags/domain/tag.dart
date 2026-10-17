@@ -40,7 +40,6 @@ class Tag extends Equatable {
     };
   }
 
-  /// Full replace — null clears.
   Map<String, dynamic> toUpdateJson() {
     return <String, dynamic>{
       'name': name,

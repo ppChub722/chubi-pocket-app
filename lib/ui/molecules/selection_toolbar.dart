@@ -6,7 +6,6 @@ import '../atoms/select_check.dart';
 import '../tokens/app_spacing.dart';
 import 'filter_bar.dart';
 
-/// One bulk action of a [SelectionToolbar] ("สี", "ไอคอน", "นำเข้าสลิป").
 class SelectionAction {
   const SelectionAction({
     required this.label,
@@ -19,18 +18,9 @@ class SelectionAction {
   final IconData icon;
   final VoidCallback? onTap;
 
-  /// Dimmed until something is selected (default); false = always available
-  /// (an "import" next to the select-all).
   final bool needsSelection;
 }
 
-/// The select-mode bar of a list (owner 2026-10-12: one control on every
-/// multi-select list): `[☐ n/N] [action] [action] …  [🗑]` — select / deselect
-/// everything shown, the bulk actions on the selection (dimmed until
-/// something is selected), and the red trash at the end.
-///
-/// Not [ModeActionBar] (that is the bottom Cancel · Save bar of an edit
-/// mode); this sits at the top of the list.
 class SelectionToolbar extends StatelessWidget {
   const SelectionToolbar({
     required this.selected,
@@ -44,20 +34,16 @@ class SelectionToolbar extends StatelessWidget {
     super.key,
   });
 
-  /// How many are picked, of how many shown.
   final int selected;
   final int total;
 
-  /// Select all / deselect all.
   final VoidCallback? onSelectAll;
   final String? selectAllTooltip;
   final List<SelectionAction> actions;
 
-  /// Null = no trash.
   final VoidCallback? onDelete;
   final String? deleteTooltip;
 
-  /// Extra widgets at the end, before the trash.
   final List<Widget> trailing;
 
   @override

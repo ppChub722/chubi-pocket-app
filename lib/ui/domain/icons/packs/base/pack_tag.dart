@@ -1,10 +1,6 @@
 import '../icon_pack.dart';
 import '_shared.dart';
 
-/// Tag base pack — icons sized for label use, plus the shared bg + borders
-/// so the picker offers full customization. Display-time rendering strips
-/// bg + border via `IconType.applyDisplayRules`, so saved bg/border data is
-/// preserved but never shown when a tag is rendered on screen.
 const basePackTag = IconPack(
   id: 'base',
   icons: [

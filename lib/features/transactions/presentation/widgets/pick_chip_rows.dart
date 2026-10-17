@@ -18,18 +18,6 @@ import '../cubit/transactions_cubit.dart';
 import '../cubit/tx_form_options_cubit.dart';
 import '../tx_list_filters.dart';
 
-// The pick rows the transaction form and the transactions filter share
-// (owner 2026-10-10): [icon] chips … [เพิ่มเติม], the chips ranked by
-// use from the cached transactions, that order frozen ([ChipOrder]).
-// [leading] / [trailing] add the caller's own chips (the filter's
-// "ทั้งหมด", a "ไม่ระบุหมวด" picked through เพิ่มเติม).
-
-/// หมวด: the categories most used lately for [type] — the most frequent
-/// of the latest 100 rows, ties to the most recent; topped up with the
-/// type's categories in their own order, [max] in all. [type] null = both
-/// types (the filter's "ทั้งหมด"). Tapping a chip calls [onPick];
-/// "เพิ่มเติม" calls [onMore] (the full picker). [selected] not in the row
-/// joins at its end.
 class CategoryChipRow extends StatelessWidget {
   const CategoryChipRow({
     required this.type,
@@ -55,24 +43,18 @@ class CategoryChipRow extends StatelessWidget {
   final ValueChanged<Category> onPick;
   final VoidCallback onMore;
 
-  /// Keep one per [type] for the screen's life.
   final ChipOrder order;
   final List<Widget> leading;
   final List<Widget> trailing;
   final int max;
 
-  /// False under a section title that shows the icon (the filter sheet).
   final bool leadingIcon;
 
-  /// [ChipRow.maxLines]: wrap, cut past this many lines (the filter
-  /// sheet); null = one scrolling line (the forms).
   final int? maxLines;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    // Form options (one call for the whole form) when a form provides them,
-    // else the app-wide cubit.
     final opts = maybeTxFormOptions(context);
     final catState = opts == null
         ? context.watch<CategoriesCubit>().state
@@ -134,10 +116,6 @@ class CategoryChipRow extends StatelessWidget {
       child: ChipRow(
         icon: leadingIcon ? AppIcons.category : null,
         moreLabel: pickLabel ?? l.commonMore,
-        // The entry layout (pickLabel): the FIRST slot is the pick chip —
-        // dashed while nothing is picked, the picked category (highlighted,
-        // tap = the full picker) once there is one; the quick options after
-        // it never repeat it. Else "เพิ่มเติม" ends the row.
         onMore: pickLabel != null ? null : onMore,
         maxLines: maxLines,
         chips: [
@@ -180,12 +158,6 @@ class CategoryChipRow extends StatelessWidget {
   }
 }
 
-/// แท็ก (owner 2026-10-17): only the tags picked, then "⋯ เพิ่มเติม" (dashed,
-/// opens the full tag picker — add or change them there). A picked tag is a
-/// solid chip whose body does nothing; only its ✕ drops it ([onRemove]).
-/// [editing] false = the row's own tags only, no เพิ่มเติม. [known] resolves
-/// picked tags missing from this user's list (another member's, on a shared
-/// wallet).
 class TagChipRow extends StatelessWidget {
   const TagChipRow({
     required this.selected,
@@ -206,11 +178,8 @@ class TagChipRow extends StatelessWidget {
   final Map<String, Tag> known;
   final List<Widget> leading;
 
-  /// False under a section title that shows the icon (the filter sheet).
   final bool leadingIcon;
 
-  /// [ChipRow.maxLines]: wrap, cut past this many lines (the filter
-  /// sheet); null = one scrolling line (the forms).
   final int? maxLines;
 
   @override
@@ -253,10 +222,6 @@ class TagChipRow extends StatelessWidget {
   }
 }
 
-/// กระเป๋า: the wallets most used lately (latest 100 rows), topped up with
-/// the rest in their own order, [max] in all — each in its own colour and
-/// icon, that order frozen. Tapping calls [onPick]; "เพิ่มเติม" calls
-/// [onMore] (the full list).
 class WalletChipRow extends StatelessWidget {
   const WalletChipRow({
     required this.selectedId,
@@ -273,10 +238,8 @@ class WalletChipRow extends StatelessWidget {
     super.key,
   });
 
-  /// Like [CategoryChipRow.pickLabel] ("เลือกกระเป๋า").
   final String? pickLabel;
 
-  /// A wallet left out of the row (a transfer's other side).
   final String? excludeId;
 
   final String? selectedId;
@@ -287,11 +250,8 @@ class WalletChipRow extends StatelessWidget {
   final List<Widget> trailing;
   final int max;
 
-  /// False under a section title that shows the icon (the filter sheet).
   final bool leadingIcon;
 
-  /// [ChipRow.maxLines]: wrap, cut past this many lines (the filter
-  /// sheet); null = one scrolling line (the forms).
   final int? maxLines;
 
   @override
@@ -341,8 +301,6 @@ class WalletChipRow extends StatelessWidget {
       child: ChipRow(
         icon: leadingIcon ? AppIcons.wallet : null,
         moreLabel: pickLabel ?? l.commonMore,
-        // See [CategoryChipRow]: the entry layout's first slot is the pick
-        // chip (dashed) or the picked wallet.
         onMore: pickLabel != null ? null : onMore,
         maxLines: maxLines,
         chips: [
@@ -381,9 +339,6 @@ class WalletChipRow extends StatelessWidget {
   }
 }
 
-/// Fetches a row's list if nothing has yet (QA run-3 E2): the filter sheet
-/// can open before any page loaded the wallets / categories / tags. [load]
-/// runs once, after the first frame.
 class _EnsureLoaded extends StatefulWidget {
   const _EnsureLoaded({required this.load, required this.child});
 
@@ -407,14 +362,11 @@ class _EnsureLoadedState extends State<_EnsureLoaded> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Chip-sized shimmer placeholders while a row's list loads — [size] high,
-/// like the chips that replace them.
 List<Widget> _skeletonChips({ChipSize size = ChipSize.control}) => [
   for (final w in const [72.0, 56.0, 64.0])
     SkeletonBox(width: w, height: size.height, borderRadius: 999),
 ];
 
-/// [first], then [rest] not already in it, up to [max] — distinct.
 List<String> _topUp(List<String> first, List<String> rest, int max) {
   final out = <String>[];
   for (final id in [...first, ...rest]) {
@@ -424,7 +376,6 @@ List<String> _topUp(List<String> first, List<String> rest, int max) {
   return out;
 }
 
-/// A wallet as a chip: its icon, name and colour.
 AppChip _walletChip(
   Account a,
   AppColors palette, {
@@ -436,7 +387,6 @@ AppChip _walletChip(
   color: a.iconCode.tintFor(palette),
   selected: selected,
   onTap: onTap,
-  // The wallet rows are edit-form rows: changeable = dashed, chosen = inset.
   dashed: true,
   inset: selected,
 );

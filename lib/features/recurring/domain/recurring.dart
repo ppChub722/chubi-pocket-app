@@ -6,8 +6,6 @@ import '../../transactions/domain/refs.dart';
 import '../../transactions/domain/transaction_type.dart';
 import 'recurrence_rule.dart';
 
-/// A recurring's lifecycle (the BE decides which moves are allowed:
-/// [RecurringActions]).
 enum RecurringStatus {
   active,
   paused,
@@ -17,8 +15,6 @@ enum RecurringStatus {
       .firstWhere((s) => s.name == v, orElse: () => RecurringStatus.active);
 }
 
-/// The four kinds of a recurring (owner 2026-10-17): the user-facing choice;
-/// the BE derives the money direction from it.
 enum RecurringKind {
   subscription,
   installment,
@@ -32,12 +28,10 @@ enum RecurringKind {
 
   String toJson() => name;
 
-  /// The money type a fresh form of this kind starts with.
   TransactionType get defaultType =>
       this == income ? TransactionType.income : TransactionType.expense;
 }
 
-/// The list filter: current = active + paused (the default).
 enum RecurringFilter {
   current,
   archived,
@@ -46,7 +40,6 @@ enum RecurringFilter {
   String toJson() => name;
 }
 
-/// What the BE allows on this recurring right now.
 class RecurringActions extends Equatable {
   const RecurringActions({
     this.pause = false,
@@ -75,7 +68,6 @@ class RecurringActions extends Equatable {
   List<Object?> get props => [pause, resume, archive, restore, extend];
 }
 
-/// Items per state — the recurring page's tab badges and filters.
 class RecurringCounts extends Equatable {
   const RecurringCounts({
     this.upcoming = 0,
@@ -102,15 +94,12 @@ class RecurringCounts extends Equatable {
   final int done;
   final int archived;
 
-  /// Everything whose date came (the produced tab).
   int get produced => notCreated + pending + done + archived;
 
   @override
   List<Object?> get props => [upcoming, notCreated, pending, done, archived];
 }
 
-/// The present period's occurrence (API `RecurringOccurrence`): what a
-/// transaction links to; the list's reminder tab groups by its [status].
 class CurrentOccurrence extends Equatable {
   const CurrentOccurrence({
     required this.itemId,
@@ -133,7 +122,6 @@ class CurrentOccurrence extends Equatable {
   final DateTime date;
   final int daysUntil;
 
-  /// null = not known yet (a reminder).
   final double? amount;
   final OccurrenceState status;
 
@@ -141,7 +129,6 @@ class CurrentOccurrence extends Equatable {
   List<Object?> get props => [itemId, date, daysUntil, amount, status];
 }
 
-/// รายการประจำ — the setup that produces the upcoming items.
 class Recurring extends Equatable {
   const Recurring({
     required this.id,
@@ -185,44 +172,34 @@ class Recurring extends Equatable {
   final RecurringKind kind;
   final TransactionType type;
 
-  /// null = a reminder with no amount yet ("รอใส่ยอด").
   final double? amount;
   final AccountRef? account;
 
-  /// Transfers only.
   final AccountRef? toAccount;
   final EmbeddedCategory? category;
   final List<TagRef> tags;
   final RecurrenceRule rule;
   final RecurringStatus status;
 
-  /// Subscription: the free trial runs until this date.
   final DateTime? trialUntil;
 
-  /// The BE's yearly cost / counts (the detail tiles).
   final double yearlyCost;
 
-  /// Amount x the times it happens in an average month (the hero's ต่อเดือน);
-  /// null = no amount.
   final double? monthlyAmount;
   final int savedCount;
   final int pendingCount;
 
-  /// The next upcoming occurrence's amount (null = unknown / none).
   final double? nextAmount;
   final CurrentOccurrence? currentOccurrence;
   final DateTime? nextDate;
   final int? daysUntil;
 
-  /// n / N — [progressTotal] null = no end.
   final int progressDone;
   final int? progressTotal;
 
-  /// ≤ 2 upcoming left: warning + "ต่ออีก".
   final bool endingSoon;
   final RecurringCounts counts;
 
-  /// False → the upcoming tab shows the one-line summary, not the list.
   final bool editedAny;
   final RecurringActions actions;
   final DateTime? createdAt;
@@ -324,7 +301,6 @@ class Recurring extends Equatable {
   ];
 }
 
-/// The create / update body of a recurring (what the form edits).
 class RecurringWrite extends Equatable {
   const RecurringWrite({
     required this.name,
@@ -349,10 +325,8 @@ class RecurringWrite extends Equatable {
   final IconCode? iconCode;
   final TransactionType type;
 
-  /// null / 0 = no amount (a reminder only).
   final double? amount;
 
-  /// Subscription only; null clears it.
   final DateTime? trialUntil;
   final String? accountId;
   final String? toAccountId;
@@ -360,7 +334,6 @@ class RecurringWrite extends Equatable {
   final List<String> tagIds;
   final RecurrenceRule rule;
 
-  /// The create / PUT body (every key sent: null clears a nullable one).
   Map<String, dynamic> toJson({bool forUpdate = false}) => <String, dynamic>{
     'name': name,
     'kind': kind.toJson(),
@@ -373,7 +346,6 @@ class RecurringWrite extends Equatable {
     'to_account_id': type == TransactionType.transfer ? toAccountId : null,
     'category_id': type == TransactionType.transfer ? null : categoryId,
     'tag_ids': tagIds,
-    // A PUT sends "" to clear the trial; a create just leaves it out.
     if (kind == RecurringKind.subscription && trialUntil != null)
       'trial_until': ymd(trialUntil!)
     else if (forUpdate)

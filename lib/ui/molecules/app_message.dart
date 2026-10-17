@@ -6,7 +6,6 @@ import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/tone.dart';
 
-/// One action of an [AppMessage] ("เลิกทำ", "ลองใหม่").
 class AppMessageAction {
   const AppMessageAction({required this.label, required this.onPressed});
 
@@ -14,18 +13,6 @@ class AppMessageAction {
   final VoidCallback onPressed;
 }
 
-/// THE message body (owner 2026-10-12): one look for the snackbar
-/// AND the banner — same tone colours, icon set, radius, padding and type;
-/// only placement and lifetime differ. The rule stays: something that just
-/// happened → a snackbar, something still true → a banner.
-///
-/// - **Banner** (`AppMessage(...)`) — inline in a page / section, stays until
-///   resolved or closed ([onClose] adds the ✕); 1–2 [actions].
-/// - **Snackbar** ([showAppMessage]) — the same body [floating] at the bottom
-///   (a soft shadow), gone after a few seconds; at most one action.
-///
-/// Tones: [Tone.info] (also neutral / primary), success, warning, danger.
-/// One action sits at the end of the text; two go under the text, right-aligned.
 class AppMessage extends StatelessWidget {
   const AppMessage({
     required this.message,
@@ -40,15 +27,11 @@ class AppMessage extends StatelessWidget {
   final String message;
   final Tone tone;
 
-  /// Replaces the tone's icon (a 🔒 on a "locked" banner); the colour is
-  /// still the tone's.
   final IconData? icon;
   final List<AppMessageAction> actions;
 
-  /// Banner: adds a ✕.
   final VoidCallback? onClose;
 
-  /// The snackbar's placement: the same body with a soft shadow.
   final bool floating;
 
   static IconData iconOf(Tone tone) => switch (tone) {
@@ -144,9 +127,6 @@ class AppMessage extends StatelessWidget {
   }
 }
 
-/// The snackbar: an [AppMessage] floating at the bottom, replacing the
-/// current one, gone after a few seconds, at most one action. (Inside a sheet
-/// the same body shows as a toast on top of it — see [showAppSnackBar].)
 void showAppMessage(
   BuildContext context,
   String message, {
@@ -163,8 +143,6 @@ void showAppMessage(
   duration: duration,
 );
 
-/// [showAppMessage] on a messenger captured up front — for calls after an
-/// `await` / pop, when the original context may already be gone.
 void showAppMessageOn(
   ScaffoldMessengerState messenger,
   String message, {

@@ -7,20 +7,13 @@ import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/icon_size.dart';
 
-/// The end of a paged list when the next page failed: "couldn't load more"
-/// + Retry, in place of the loading rows. The rows already loaded stay above
-/// it; `ListPageBody` shows it from its `loadMoreError`.
 class LoadMoreErrorRow extends StatelessWidget {
   const LoadMoreErrorRow({required this.onRetry, this.message, super.key});
 
-  /// Null = no retry button (nothing to call).
   final VoidCallback? onRetry;
 
-  /// Defaults to [UiStrings.loadMoreFailed].
   final String? message;
 
-  /// The same height as a list row, so nothing jumps when it swaps with the
-  /// loading rows.
   static const double height = 56;
 
   @override

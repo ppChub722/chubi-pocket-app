@@ -2,11 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_spacing.dart';
 
-/// "Which page of N am I on": a wider pill in the primary colour for the
-/// current page and small dots for the others (owner 2026-10-17, swipe
-/// tabs). Rendered at the END of a swipe tab's content ([AppTabPager] /
-/// `TabbedListPageBody` / `TabbedDetailBody` do it for you), in the flow —
-/// it scrolls with the content, it never floats.
 class PageDots extends StatelessWidget {
   const PageDots({
     required this.count,
@@ -20,7 +15,6 @@ class PageDots extends StatelessWidget {
 
   final int count;
 
-  /// The current page, 0-based.
   final int index;
   final EdgeInsetsGeometry padding;
 
@@ -60,10 +54,6 @@ class PageDots extends StatelessWidget {
   }
 }
 
-/// Handed down by an [AppTabPager] to each page: where this page sits among
-/// the tabs. A `ListPageBody` inside reads it and ends its list with the
-/// [PageDots]; a page with its own scrollable adds a [PageDotsFooter] as the
-/// scroll's last child.
 class PageDotsScope extends InheritedWidget {
   const PageDotsScope({
     required this.count,
@@ -83,8 +73,6 @@ class PageDotsScope extends InheritedWidget {
       old.count != count || old.index != index;
 }
 
-/// The dots of the enclosing [PageDotsScope] (nothing outside a swipe tab or
-/// with a single tab) — put it LAST in a tab's scrollable content.
 class PageDotsFooter extends StatelessWidget {
   const PageDotsFooter({super.key});
 

@@ -5,37 +5,18 @@ import '../tokens/app_spacing.dart';
 import '../tokens/avatar_metrics.dart';
 import 'corner_badge.dart';
 
-/// The outline of an [IconTile].
 enum IconTileShape {
-  /// A circle — list-row glyphs.
   circle,
 
-  /// A rounded square (radius 12 from 40 px up, 8 below) — the head of a card.
   rounded,
 }
 
-/// How an [IconTile] is filled.
 enum IconTileStyle {
-  /// An 18 % wash of the colour with a glyph in the colour — quiet, for rows.
   soft,
 
-  /// The solid colour with a white glyph — loud, for the head of a tinted card.
   solid,
 }
 
-/// The one icon tile (owner 2026-10-12): a glyph in a coloured shape. It
-/// replaces the old `IconBubble` (circle · soft) and `TintedIconBadge`
-/// (rounded · solid), which differed only by these two parameters.
-///
-/// ```dart
-/// IconTile(icon: AppIcons.expense, color: c)                  // row glyph
-/// IconTile(icon: AppIcons.budget, color: c,
-///          shape: IconTileShape.rounded, style: IconTileStyle.solid,
-///          size: 40)                                          // card head
-/// ```
-///
-/// The glyph scales with the tile ([AvatarMetrics.glyph]). [badgeIcon] adds a
-/// [CornerBadge] (left out below 40 px).
 class IconTile extends StatelessWidget {
   const IconTile({
     required this.icon,
@@ -53,10 +34,8 @@ class IconTile extends StatelessWidget {
   final IconTileShape shape;
   final IconTileStyle style;
 
-  /// A corner badge glyph (e.g. the notification type over an avatar).
   final IconData? badgeIcon;
 
-  /// Gap under a tile before the card's title.
   static const gap = SizedBox(height: AppSpacing.sm);
 
   @override
@@ -74,7 +53,6 @@ class IconTile extends StatelessWidget {
             ? null
             : BorderRadius.circular(size >= 40 ? AppRadius.md : AppRadius.sm),
       ),
-      // Module / accent colours are saturated — white reads on all of them.
       child: Icon(
         icon,
         size: AvatarMetrics.glyph(size),

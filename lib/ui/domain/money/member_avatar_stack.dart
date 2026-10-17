@@ -3,9 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../features/accounts/domain/wallet_member.dart';
 import '../../ui.dart';
 
-/// An overlapping avatar stack for wallet members — max [maxVisible]
-/// avatars, then a "+N" overflow bubble (spec B2). A thin wrapper over the
-/// kit [AvatarStack]: wallet members are mapped to [PersonRef]s.
 class MemberAvatarStack extends StatelessWidget {
   const MemberAvatarStack({
     required this.members,

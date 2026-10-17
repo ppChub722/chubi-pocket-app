@@ -4,8 +4,6 @@ import '../atoms/list_break.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 
-/// Section title with an optional count and a trailing "ดูทั้งหมด ›" style
-/// action — dashboard cards, member strips, grouped lists.
 class SectionHeader extends StatelessWidget implements ListBreak {
   const SectionHeader({
     required this.title,
@@ -25,7 +23,6 @@ class SectionHeader extends StatelessWidget implements ListBreak {
 
   final String title;
 
-  /// An icon (or any widget) before the title — a group's mark.
   final Widget? leading;
   final int? count;
   final String? actionLabel;

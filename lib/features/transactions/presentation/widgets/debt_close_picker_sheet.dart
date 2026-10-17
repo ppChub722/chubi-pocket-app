@@ -10,10 +10,6 @@ import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
 import 'debt_entry_form.dart';
 
-/// "ปิดหนี้" picker (owner 2026-10-17): the person's open debt entries, any
-/// number ticked. It only MARKS them paid — nothing is checked against the
-/// amount of the entry being written, and nothing is sent until the form's
-/// บันทึก. Resolves the ticked ids (null = dismissed, nothing changes).
 Future<Set<String>?> showDebtClosePickerSheet(
   BuildContext context, {
   required DebtPick person,
@@ -48,7 +44,6 @@ class _DebtClosePickerSheetState extends State<_DebtClosePickerSheet> {
 
   Future<void> _load() async {
     final key = widget.person.key;
-    // A person typed just now has no entries yet.
     if (key.startsWith('n:') && widget.person.typedName != null) {
       setState(() => _entries = const []);
       return;

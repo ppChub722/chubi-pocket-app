@@ -5,10 +5,6 @@ import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/icon_size.dart';
 
-/// One small line that tells where something will go, e.g. under a future
-/// date in quick create (owner 2026-10-13): "🕒 รายการล่วงหน้า › จะเข้า
-/// รอยืนยันวันที่ 3 พ.ย.". [linkLabel] (+ ›) is the tappable part when
-/// [onTap] is set; [text] is the muted explanation after it.
 class HintLine extends StatelessWidget {
   const HintLine({
     required this.text,
@@ -22,7 +18,6 @@ class HintLine extends StatelessWidget {
   final IconData? icon;
   final String? linkLabel;
 
-  /// Null = a plain hint (no ›, not tappable).
   final VoidCallback? onTap;
 
   @override

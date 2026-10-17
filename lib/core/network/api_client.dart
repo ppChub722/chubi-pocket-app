@@ -9,16 +9,6 @@ import '../storage/secure_token_storage.dart';
 import 'http_logger_interceptor.dart';
 import 'network_recorder.dart';
 
-/// API base URL — picks the right host depending on build flags/platform.
-///
-/// Priority:
-/// 1. `--dart-define=API_BASE_URL=https://chubipocket-api.ppforge.dev/api/v1`
-///    — full URL, used for **production/release builds** (APK via Firebase
-///    App Distribution).
-/// 2. `--dart-define=API_HOST=<lan-ip>` — dev on a **real** Android phone
-///    (the phone can't reach `localhost` or `10.0.2.2`).
-/// 3. Platform default: Android emulator → `10.0.2.2`; web/desktop →
-///    `localhost`.
 String _devBaseUrl() {
   const apiBaseUrl = String.fromEnvironment('API_BASE_URL');
   if (apiBaseUrl.isNotEmpty) {
@@ -34,13 +24,6 @@ String _devBaseUrl() {
   return 'http://localhost:8080/api/v1';
 }
 
-/// Single shared HTTP client. Owns the [Dio] instance, attaches the auth
-/// header from [SecureTokenStorage], and exposes [onUnauthorized] so the auth
-/// feature can react to 401 responses (clear token, route to login).
-///
-/// Repositories receive an [ApiClient] via constructor injection and call
-/// [dio] directly. They catch [DioException] and convert via
-/// `ApiException.fromDioException`.
 class ApiClient {
   ApiClient({
     required SecureTokenStorage tokenStorage,
@@ -60,16 +43,9 @@ class ApiClient {
       ..headers['Content-Type'] = 'application/json'
       ..headers['Accept'] = 'application/json';
 
-    // Order matters: auth runs first so the bearer token is attached
-    // BEFORE the logger captures the headers (which redacts it on the
-    // way out — we don't want the raw token in any log line). The
-    // unauthorized notifier sits last so 401 is observed on the inbound
-    // path.
     _dio.interceptors.add(_pageLoadTimeouts());
     _dio.interceptors.add(_authInterceptor());
     _dio.interceptors.add(HttpLoggerInterceptor());
-    // After the logger (so the request id header is set): feeds the dev hub's
-    // Network page. Keeps only a ring buffer of call metadata, no bodies.
     _dio.interceptors.add(NetworkRecorderInterceptor());
     _dio.interceptors.add(_unauthorizedNotifier());
     _dio.interceptors.add(_outdatedNotifier());
@@ -83,34 +59,21 @@ class ApiClient {
   final StreamController<Map<String, dynamic>?> _outdatedController =
       StreamController<Map<String, dynamic>?>.broadcast();
 
-  /// Reachability, learned from every call: [onUnreachable] fires on a
-  /// network-level failure (refused, DNS, timeout) — never on an HTTP status;
-  /// [onReachable] on any answer from the server, 4xx / 5xx included.
   final StreamController<void> _unreachableController =
       StreamController<void>.broadcast();
   final StreamController<void> _reachableController =
       StreamController<void>.broadcast();
 
-  /// This app's build number (resolved once) — sent as `X-App-Build`.
   final Future<String?> _appBuild;
 
-  /// The device's IANA timezone (resolved once) — sent as `X-Timezone` so the
-  /// BE computes "today" / "this month" in the user's own zone (owner
-  /// 2026-10-17). Null when unknown: the BE falls back to the stored one.
   final Future<String?> _timezone;
 
   Dio get dio => _dio;
 
-  /// This app's build number as an int, or null when unknown.
   Future<int?> appBuild() async => int.tryParse(await _appBuild ?? '');
 
-  /// Emits when any request returns a 401. The auth feature subscribes to
-  /// clear the stored token and route to `/auth/login`.
   Stream<void> get onUnauthorized => _unauthorizedController.stream;
 
-  /// Emits the error `details` (min / latest build, download URL, message)
-  /// when any request comes back 426 `APP_OUTDATED` — the server refuses
-  /// this build. The version gate subscribes and blocks at once.
   Stream<Map<String, dynamic>?> get onOutdated => _outdatedController.stream;
 
   Stream<void> get onUnreachable => _unreachableController.stream;
@@ -132,12 +95,6 @@ class ApiClient {
     }
   }
 
-  /// Page loads fail FAST (owner 2026-10-12): a GET gives up connecting after
-  /// [pageLoadConnectTimeout] and waiting for the answer after
-  /// [pageLoadReceiveTimeout], so a dead server reaches the error + retry view in
-  /// seconds, not 25. Writes keep the longer defaults (a save must not be
-  /// abandoned half-way). A request that really needs longer sets its own
-  /// `Options(receiveTimeout: …)`.
   static const Duration pageLoadConnectTimeout = Duration(seconds: 5);
   static const Duration pageLoadReceiveTimeout = Duration(seconds: 10);
 
@@ -161,8 +118,6 @@ class ApiClient {
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
       }
-      // The version gate (BE contract v1): the server answers 426 when
-      // this build is below its minimum.
       final build = await _appBuild;
       if (build != null && build.isNotEmpty) {
         options.headers['X-App-Build'] = build;
@@ -199,7 +154,6 @@ class ApiClient {
     },
   );
 
-  /// A failure at the network level (no answer at all) — the offline signal.
   static bool isNetworkFailure(DioException e) =>
       e.type == DioExceptionType.connectionError ||
       e.type == DioExceptionType.connectionTimeout ||

@@ -4,15 +4,11 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../domain/dashboard.dart';
 
-/// Thin Dio wrapper for `GET /v1/dashboard` (contract §4) — the whole
-/// home screen in one request.
 class DashboardRepository {
   DashboardRepository({required ApiClient client}) : _client = client;
 
   final ApiClient _client;
 
-  /// [month] is any day in the wanted month; null = the current month
-  /// (resolved by the BE in the user's timezone).
   Future<Dashboard> get({DateTime? month}) async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(

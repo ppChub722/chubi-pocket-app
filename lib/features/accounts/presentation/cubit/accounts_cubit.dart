@@ -7,8 +7,6 @@ import '../../data/accounts_repository.dart';
 import '../../domain/account.dart';
 import '../../domain/wallet_member.dart';
 
-/// State for [AccountsCubit]. See [CategoriesState] for rationale on the
-/// single-class-with-enum-status shape.
 class AccountsState extends Equatable {
   const AccountsState({
     this.accounts = const [],
@@ -21,14 +19,10 @@ class AccountsState extends Equatable {
 
   final List<Account> accounts;
 
-  /// The BE's summary over [accounts] (the accounts page's card).
   final AccountTotals totals;
 
-  /// Archived wallets (the "ที่เก็บถาวร" row).
   final int archivedCount;
 
-  /// A write moved a balance / the wallet set since [totals] was read: the
-  /// accounts page re-reads once when it is next opened.
   final bool totalsStale;
 
   final AccountsStatus status;
@@ -67,15 +61,6 @@ class AccountsState extends Equatable {
 
 enum AccountsStatus { initial, loading, loaded, error }
 
-/// The accounts store backed by [AccountsRepository].
-///
-/// **No registration seed.** Per product decision, new users start with
-/// zero accounts — the empty-state UX prompts them to create their first.
-/// (Categories and tags are seeded; accounts are deliberately not.)
-///
-/// Mutators round-trip through the API, patch the state from the write's
-/// response (never a list refetch) and re-throw [ApiException] on failure so
-/// the form page can show a snackbar.
 class AccountsCubit extends Cubit<AccountsState> with Clearable {
   AccountsCubit({required AccountsRepository repository})
     : _repo = repository,
@@ -102,7 +87,6 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
       final list = await _repo.list();
       emit(_fromList(list));
     } catch (_) {
-      // Keep the cached rows; the next open tries again.
     }
   }
 
@@ -129,7 +113,6 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     }
   }
 
-  /// Creates the wallet; returns it as the server made it (its id).
   Future<Account> add(Account draft) async {
     final created = await _repo.create(draft);
     emit(
@@ -138,9 +121,6 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     return created;
   }
 
-  /// Saves the wallet's edits; returns the server's row. [currentBalance]:
-  /// tracking turned back on — the balance it has now (one call; the BE
-  /// books the adjustment). Totals change when tracking flips.
   Future<Account> update(Account account, {double? currentBalance}) async {
     final before = state.accounts.where((a) => a.id == account.id).firstOrNull;
     final updated = await _repo.update(account, currentBalance: currentBalance);
@@ -151,16 +131,11 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     return updated;
   }
 
-  /// One wallet by id with its summary and members history — ONE call, any
-  /// status (archived included). Not cached in the list.
   Future<AccountDetail> getDetail(String id) => _repo.getDetail(id);
 
-  /// Archived wallets (for the "กระเป๋าที่เก็บถาวร" page).
   Future<List<Account>> listArchived() async =>
       (await _repo.list(status: 'archived')).data;
 
-  /// Un-archive: the wallet comes back into the active list (its place by
-  /// the caller's order). Returns it.
   Future<Account> restore(String id) async {
     final restored = await _repo.restore(id);
     final list = [
@@ -178,8 +153,6 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     return restored;
   }
 
-  /// Archive (soft delete) — spec §3.10. The wallet leaves the active list
-  /// and joins the archived count. Returns the archived wallet.
   Future<Account> remove(String id) async {
     final archived = await _repo.archive(id);
     emit(
@@ -197,8 +170,6 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
   Future<AccountDeletePreview?> deletePreview(String id) =>
       _repo.deletePreview(id);
 
-  /// Hard delete (owner, no other members): the wallet leaves the list (and
-  /// the archived count when it was archived). Returns what was done.
   Future<AccountDeletePreview> deleteForever(String id) async {
     final wasArchived = state.accounts.every((a) => a.id != id);
     final done = await _repo.delete(id);
@@ -214,9 +185,6 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     return done;
   }
 
-  /// Manual balance adjustment (spec §2.5): patches the wallet and every
-  /// balance the write touched. Returns the result so the caller can show a
-  /// "View" snackbar that links to the new transaction.
   Future<AdjustBalanceResult> adjustBalance({
     required String id,
     required double newBalance,
@@ -236,9 +204,6 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     return result;
   }
 
-  /// Update the caller's own report scope on a shared wallet
-  /// (spec §14/5). Re-throws [ApiException] (e.g. `SCOPE_NOT_ALLOWED`) for
-  /// the caller to surface. Returns the wallet.
   Future<Account> setReportScope({
     required String accountId,
     required WalletReportScope scope,
@@ -251,7 +216,6 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     return updated;
   }
 
-  /// Remember one slip number on the wallet (owner). Returns the wallet.
   Future<Account> addIdentifier(
     String accountId,
     Map<String, dynamic> identifier,
@@ -260,8 +224,6 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     _replace(updated);
     return updated;
   }
-
-  // ─── Shared wallets ─────────────────────────────────────────────────
 
   Future<MembersResult> inviteMember({
     required String accountId,
@@ -276,8 +238,6 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     accountId,
   );
 
-  /// Leave (self), remove or cancel an invite. When the caller left, the
-  /// wallet is dropped from the list (the result's `account` is null).
   Future<MembersResult> removeMember({
     required String accountId,
     required String memberId,
@@ -300,7 +260,6 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
   MembersResult _applyMembers(MembersResult r, String accountId) {
     final account = r.account;
     if (account == null) {
-      // The caller left: the wallet is gone from their list.
       emit(
         state.copyWith(
           accounts: state.accounts.where((a) => a.id != accountId).toList(),
@@ -313,14 +272,11 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     return r;
   }
 
-  /// Accept a wallet invite: the joined wallet joins the list.
   Future<AcceptedInvite> acceptInvite(String notificationId) async {
     final joined = await _repo.acceptInvite(notificationId);
     upsert(joined.account);
     return joined;
   }
-
-  // ─── Patching ───────────────────────────────────────────────────────
 
   Account? byId(String id) {
     for (final a in state.accounts) {
@@ -341,10 +297,8 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     );
   }
 
-  /// Replace the row when the wallet is in the list (a fresher copy of it).
   void patch(Account account) => _replace(account);
 
-  /// Replace the row, or add it (a wallet that just became active here).
   void upsert(Account account) {
     if (byId(account.id) != null) {
       _replace(account);
@@ -355,16 +309,10 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     );
   }
 
-  /// Surgical balance update used by [TransactionsCubit] consumers
-  /// after a transaction mutation. Avoids a full `/v1/accounts` reload
-  /// when the BE already told us the post-state via
-  /// `account_balance_after` (spec §3.1).
   void patchBalance({required String accountId, required double newBalance}) {
     patchBalances({accountId: newBalance});
   }
 
-  /// The wallets' new savings after a saving write (`wallets[].savings`), by
-  /// account id. Wallets not in the map are left alone.
   void patchSavings(Map<String, WalletSavings> savings) {
     if (savings.isEmpty) return;
     emit(
@@ -380,9 +328,6 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     );
   }
 
-  /// [patchBalance] for several wallets at once (a transfer moves two): the
-  /// post-write balances the BE returned (`account_balances`), by account
-  /// id. Wallets not in the map are left alone.
   void patchBalances(Map<String, double> balances) {
     if (balances.isEmpty) return;
     emit(
@@ -399,9 +344,6 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     );
   }
 
-  /// Saves the caller's own wallet order ([ordered] = the full active
-  /// list, top to bottom). Re-throws [ApiException]; state is untouched
-  /// on failure. The response is the list in the new order.
   Future<void> saveOrder(List<Account> ordered) async {
     final fresh = await _repo.reorder([for (final a in ordered) a.id]);
     emit(_fromList(fresh));

@@ -59,30 +59,6 @@ import '../../features/settings/presentation/pages/edit_profile_page.dart';
 import '../../features/archived/presentation/archived_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 
-/// Builds and returns the app's [GoRouter].
-///
-/// Auth-aware:
-/// - While [AuthCubit] is in [AuthInitial], the shell is replaced with
-///   [SplashPage] (no chrome). Once auth resolves, the shell appears.
-/// - When unauthenticated, any non-`/auth/*`, non-`/dev/*` route redirects to
-///   `/auth/login`.
-/// - When authenticated, visiting any `/auth/*` route redirects to `/`.
-/// - `/dev/*` is always accessible (debug hub).
-///
-/// Top-level routing (owner 2026-10-09 — every page group is its own tab):
-/// - **Shell** — one branch per [ShellTab], each with its own stack: the
-///   four bottom-nav tabs, the top bar's ⏳ / 🔔 / 👤 pages, and every
-///   เพิ่มเติม card. Bottom nav + `+` on every page (pages hide them in
-///   edit mode via ShellChrome). A link to another tab's page switches to
-///   that tab (`openPage`); back walks the tab history (`MainShell`).
-/// - Detail routes are siblings of their list, not children — opened from
-///   another tab, the page lands alone, so back returns to where the user
-///   came from instead of the list.
-/// - **Outside the shell** — `/auth/*` and `/dev/*`.
-///
-/// [versionCubit] is the app version gate: while it says this build is too
-/// old, every route but `/dev/*` goes to the blocking update page; the
-/// first check holds the splash.
 GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
   return GoRouter(
     initialLocation: '/',
@@ -99,8 +75,6 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
       final goingToDev = loc.startsWith('/dev');
 
       if (goingToDev) return null;
-      // Too old to use (version gate) — before anything else, signed in
-      // or not.
       final gate = versionGateRedirect(
         state.uri.path,
         blocked: versionCubit?.state.blocked ?? false,
@@ -116,22 +90,12 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
     },
     routes: [
       StatefulShellRoute(
-        // Same as `.indexedStack` but fades the selected tab in.
         navigatorContainerBuilder: (context, navigationShell, children) =>
             FadeBranchContainer(
               currentIndex: navigationShell.currentIndex,
               children: children,
             ),
         builder: (context, state, navigationShell) {
-          // BlocBuilder is essential here: when state transitions
-          // AuthInitial → AuthAuthenticated, the router redirect returns
-          // null (no nav change), so without a Bloc subscription the builder
-          // would not re-run and the splash would stay on screen.
-          //
-          // Signed in only: on AuthInitial → unauthenticated the redirect to
-          // /auth/login lands a frame later — building the shell for that
-          // frame started the tabs' loads (the inbox) without a token; their
-          // 401s came back to closed cubits (QA S1, 2026-10-11).
           final shell = BlocBuilder<AuthCubit, AuthState>(
             builder: (context, auth) {
               if (!auth.isAuthenticated) return const SplashPage();
@@ -139,8 +103,8 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
             },
           );
           if (versionCubit == null) return shell;
-          // The first version check holds the splash too (it times out
-          // fast), so an outdated build never flashes the app first.
+          // The first version check holds the splash too (it times out fast),
+          // so an outdated build never flashes the app first.
           return BlocBuilder<AppVersionCubit, AppVersionState>(
             bloc: versionCubit,
             buildWhen: (a, b) =>
@@ -152,17 +116,14 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
                 : shell,
           );
         },
-        // In [ShellTab] order — branch index == `ShellTab.index`.
         branches: [
           for (final tab in ShellTab.values)
             StatefulShellBranch(
               routes: _tabRoutes(tab),
-              // The + colour follows pushes / pops in every tab.
               observers: [QuickCreateRouteObserver(), PagePopObserver()],
             ),
         ],
       ),
-      // The version gate's wall — reached only by the redirect above.
       GoRoute(
         path: updateRequiredPath,
         name: 'update-required',
@@ -183,12 +144,6 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
         name: 'dev-hub',
         builder: (context, state) => const HubIndexScreen(),
         routes: [
-          // The portal's menus and pages (lib/hub):
-          //   /dev/ui                      → the UI levels (cards)
-          //   /dev/ui/<level>              → a level's pages (cards)
-          //   /dev/ui/<level>/<slug>       → one UI page
-          //   /dev/<api|labs|debug>        → that section's pages (cards)
-          //   /dev/<api|labs|debug>/<slug> → one page
           GoRoute(
             path: 'ui/:level',
             name: 'hub-ui-level',
@@ -243,7 +198,6 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
   );
 }
 
-/// The routes of one tab's branch; its first route is the tab's root.
 List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
   ShellTab.home => [
     GoRoute(
@@ -251,11 +205,6 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
       name: 'home',
       builder: (context, state) => const HomePage(),
       routes: [
-        // Dashboard drill-down ("เงินไปไหน" → one category in one month).
-        // Stays in the dashboard stack with its own list cubit so the
-        // transactions tab keeps its filters.
-        // ?category=<id> | ?uncategorized=true, &month=YYYY-MM,
-        // &type=income|expense (default expense).
         GoRoute(
           path: 'browse',
           name: 'dashboard-browse',
@@ -268,9 +217,6 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
               ),
               child: TransactionsListPage(
                 initialCategoryId: p['category'],
-                // The slice's label IS the category's name (the link carries it
-                // as &title=), and the dashboard's slices are expense — so the
-                // chip needs no categories cache or first-row lookup.
                 initialCategoryName: p['category'] == null ? null : p['title'],
                 initialCategoryType: p['category'] == null
                     ? null
@@ -295,7 +241,6 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
       name: 'transactions',
       builder: (context, state) => const TransactionsListPage(),
     ),
-    // Create and edit both open the quick create sheet — no form routes.
     GoRoute(
       path: '/transactions/:id',
       name: 'transaction-detail',
@@ -312,8 +257,6 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
     GoRoute(
       path: '/accounts/new',
       name: 'account-new',
-      // One page for create / view / edit (EditModeMixin hides the nav
-      // itself in edit mode).
       builder: (context, state) => const AccountDetailPage(),
     ),
     GoRoute(
@@ -327,8 +270,6 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
       builder: (context, state) =>
           AccountDetailPage(accountId: state.pathParameters['id']!),
     ),
-    // Shared-wallet members (spec §14) — the wallet page, opened on its
-    // member actions sheet (links / notifications keep working).
     GoRoute(
       path: '/accounts/:id/members',
       name: 'account-members',
@@ -338,7 +279,6 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
       ),
     ),
   ],
-  // เพิ่มเติม — the card hub alone; each card opens its own tab.
   ShellTab.more => [
     GoRoute(
       path: '/more',
@@ -346,7 +286,6 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
       builder: (context, state) => const MorePage(),
     ),
   ],
-  // Pending transactions (รอยืนยัน): drafts list + jot-several page.
   ShellTab.pending => [
     GoRoute(
       path: '/pending',
@@ -356,14 +295,12 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
         GoRoute(
           path: 'new',
           name: 'pending-new',
-          // A whole-page form: hides the nav (app rule: forms are edit mode).
           builder: (context, state) =>
               const ShellChromeHider(child: PendingBatchAddPage()),
         ),
       ],
     ),
   ],
-  // Notifications (Phase 1b.2).
   ShellTab.notifications => [
     GoRoute(
       path: '/notifications',
@@ -395,8 +332,6 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
           builder: (context, state) =>
               const ShellChromeHider(child: ChangePasswordPage()),
         ),
-        // Same page as /notifications/settings, kept in this tab's stack
-        // so settings doesn't jump to the inbox tab.
         GoRoute(
           path: 'notifications',
           name: 'settings-notifications',
@@ -404,14 +339,12 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
         ),
       ],
     ),
-    // ที่เก็บถาวร — the archive hub, opened from the settings home.
     GoRoute(
       path: '/archived',
       name: 'archived',
       builder: (context, state) => const ArchivedPage(),
     ),
   ],
-  // Projects (Phase 1b.2)
   ShellTab.projects => [
     GoRoute(
       path: '/projects',
@@ -421,7 +354,6 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
     GoRoute(
       path: '/projects/new',
       name: 'project-new',
-      // Forms hide the nav themselves (EditModeMixin).
       builder: (context, state) => const ProjectDetailPage(),
     ),
     GoRoute(
@@ -433,7 +365,6 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
     GoRoute(
       path: '/projects/:id/edit',
       name: 'project-edit',
-      // Info is edited in place — open the detail in edit mode.
       builder: (context, state) => ProjectDetailPage(
         id: state.pathParameters['id']!,
         startEditing: true,
@@ -446,7 +377,6 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
           ProjectMembersPage(projectId: state.pathParameters['id']!),
     ),
   ],
-  // Contacts (Phase 1b.1)
   ShellTab.contacts => [
     GoRoute(
       path: '/contacts',
@@ -456,8 +386,6 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
     GoRoute(
       path: '/contacts/new',
       name: 'contact-new',
-      // Plain create → the detail page in edit mode. `extra` with a
-      // linkRequestId = inbox accept flow → ContactFormPage.
       builder: (context, state) {
         final extra = state.extra;
         if (extra is Map && extra['linkRequestId'] != null) {
@@ -481,8 +409,6 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
     GoRoute(
       path: '/contacts/:id/edit',
       name: 'contact-edit',
-      // Plain edit → detail page opened in edit mode. `extra` with a
-      // linkRequestId = link-existing flow → ContactFormPage.
       builder: (context, state) {
         final extra = state.extra;
         final id = state.pathParameters['id']!;
@@ -498,15 +424,12 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
       },
     ),
   ],
-  // Budgets (Phase 1c)
   ShellTab.budgets => [
     GoRoute(
       path: '/budgets',
       name: 'budgets',
       builder: (context, state) => const BudgetsListPage(),
     ),
-    // One page for create / view / edit (EditModeMixin hides the nav
-    // itself in edit mode).
     GoRoute(
       path: '/budgets/new',
       name: 'budget-new',
@@ -525,16 +448,11 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
           BudgetDetailPage(id: state.pathParameters['id']!, startEditing: true),
     ),
   ],
-  // Recurring + upcoming items (owner 2026-10-13). The settings page pops
-  // a RecurringSettingsResult; the recurring page pops whether it changed.
   ShellTab.recurring => [
     GoRoute(
       path: '/recurring',
       name: 'recurring',
-      // ?tab=upcoming opens on the upcoming items (quick create's
-      // "รายการล่วงหน้า ›", the dashboard's coming-up cards).
       builder: (context, state) => RecurringHomePage(
-        // The calendar replaced the "upcoming items" tab.
         initialTab: switch (state.uri.queryParameters['tab']) {
           'upcoming' || 'calendar' => RecurringHomeTab.calendar,
           'reminder' => RecurringHomeTab.reminder,
@@ -545,8 +463,6 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
     GoRoute(
       path: '/recurring/new',
       name: 'recurring-new',
-      // ?kind= &type= &amount= &category=<id> &name= &account=<id> prefill
-      // the form (the link picker's "+ สร้างรายการประจำใหม่จากรายการนี้").
       builder: (context, state) => RecurringDetailPage(
         preset: RecurringPreset.fromQuery(state.uri.queryParameters),
       ),
@@ -558,7 +474,6 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
           RecurringDetailPage(id: state.pathParameters['id']!),
     ),
     GoRoute(
-      // Straight into edit mode (✏️ no longer opens a read-only view).
       path: '/recurring/:id/settings',
       name: 'recurring-settings',
       builder: (context, state) => RecurringDetailPage(
@@ -567,14 +482,12 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
       ),
     ),
   ],
-  // Saving goals (Phase 1c)
   ShellTab.savingGoals => [
     GoRoute(
       path: '/saving-goals',
       name: 'saving-goals',
       builder: (context, state) => const SavingGoalsListPage(),
     ),
-    // One page for create / view / edit.
     GoRoute(
       path: '/saving-goals/new',
       name: 'saving-goal-new',
@@ -595,7 +508,6 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
       ),
     ),
   ],
-  // Personal debts (bidirectional)
   ShellTab.debts => [
     GoRoute(
       path: '/personal-debts',
@@ -605,22 +517,17 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
     GoRoute(
       path: '/personal-debts/people/:key',
       name: 'personal-debt-person',
-      // key = c:<contact id> / n:<name> (URL-encoded); `extra` = the name
-      // the opener already shows (the top bar before the load).
       builder: (context, state) => DebtPersonPage(
         personKey: state.pathParameters['key']!,
         name: state.extra is String ? state.extra as String : null,
       ),
     ),
-    // An entry = the transaction detail page in debt mode (also a
-    // ledger-only entry, which has no transaction).
     GoRoute(
       path: '/personal-debts/entries/:id',
       name: 'personal-debt-entry',
       builder: (context, state) =>
           DebtEntryDetailPage(entryId: state.pathParameters['id']!),
     ),
-    // Older links (notification deep links) carry the entry id here.
     GoRoute(
       path: '/personal-debts/:id',
       name: 'personal-debt-entry-legacy',
@@ -634,9 +541,6 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
       name: 'categories',
       builder: (context, state) => const CategoriesPage(),
     ),
-    // Create / edit a category: one editable-detail page (bottom nav + FAB
-    // visible in view mode; edit mode hides them via ShellChrome).
-    // See product/phase2/inline-edit-ux.md.
     GoRoute(
       path: '/categories/new',
       name: 'category-new',
@@ -650,8 +554,6 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
           CategoryDetailPage(editingId: state.pathParameters['id']),
     ),
   ],
-  // Tags are managed inline on one page (name + icon only), so there's no
-  // separate create/edit route.
   ShellTab.tags => [
     GoRoute(
       path: '/tags',
@@ -677,8 +579,6 @@ class _StreamToListenable extends ChangeNotifier {
   }
 }
 
-/// The hub page for [group]/[slug] (a UI level name or an api | labs | debug
-/// section name), else the portal index.
 Widget _hubPage(BuildContext context, String group, String slug) {
   final page = hubPageFor(group, slug);
   if (page == null) return const HubIndexScreen();

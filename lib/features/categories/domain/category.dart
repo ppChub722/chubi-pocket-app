@@ -36,24 +36,16 @@ class Category extends Equatable {
   final bool isSystem;
   final int sortOrder;
 
-  /// API v2: OPENING_IN / OPENING_OUT / ADJUST_IN / ADJUST_OUT /
-  /// TRANSFER_IN / TRANSFER_OUT / DEBT_PAID / DEBT_RECEIVED; null for a
-  /// normal category (and for legacy rows without the field).
   final String? systemKind;
 
-  /// `active` | `archived`.
   final String status;
 
-  /// 1 = root (server-computed; the tree helpers still drive the list).
   final int depth;
 
-  /// Ancestors root -> parent (empty for a root): the breadcrumb.
   final List<CategoryPathItem> path;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  /// This month's total (sub-categories included, the user's share) and its
-  /// transaction count; 0 when the server omits them (write answers carry 0).
   final num monthSpent;
   final int monthCount;
 
@@ -176,7 +168,6 @@ class Category extends Equatable {
   ];
 }
 
-/// One breadcrumb step of [Category.path].
 class CategoryPathItem extends Equatable {
   const CategoryPathItem({required this.id, required this.name, this.iconCode});
 
@@ -192,16 +183,12 @@ class CategoryPathItem extends Equatable {
   final String id;
   final String name;
 
-  /// The step's own icon (`icon_code` of the path item); null = none set.
   final IconCode? iconCode;
 
   @override
   List<Object?> get props => [id, name, iconCode];
 }
 
-/// `GET /categories/{id}` / `PUT /categories/{id}`: a [Category] plus the
-/// page's counts and the fee flag. Extends [Category] so it can sit in the
-/// cubit's list as-is.
 class CategoryDetail extends Category {
   const CategoryDetail({
     required super.id,
@@ -241,8 +228,6 @@ class CategoryDetail extends Category {
     );
   }
 
-  /// Wraps a plain [Category] (e.g. a fresh create response: no children,
-  /// no usage, not the fee category).
   factory CategoryDetail.fromCategory(
     Category c, {
     String? parentName,
@@ -280,7 +265,6 @@ class CategoryDetail extends Category {
   final int childCount;
   final int transactionCount;
 
-  /// Budgets deleted along with this category.
   final int budgetCount;
   final bool isFeeCategory;
 
@@ -304,7 +288,6 @@ class CategoryDetail extends Category {
   ];
 }
 
-/// A category as another row embeds it (`CategoryRef`).
 class CategoryRef extends Equatable {
   const CategoryRef({
     required this.id,

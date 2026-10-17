@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../ui.dart';
 
-/// How a board row is recorded in my own book.
 enum EventResolveMode { asTransaction, asDebt }
 
-/// An entity value of a pick row (an account, a category): the chip words
-/// and look, plus [ref] — an opaque handle the wrapper maps back to its model.
 @immutable
 class ResolvePickValue {
   const ResolvePickValue({
@@ -22,15 +19,12 @@ class ResolvePickValue {
   final Object? ref;
 }
 
-/// What a pick callback resolves: null = dismissed (keep the value),
-/// [ResolvePickResult.value] null = cleared.
 @immutable
 class ResolvePickResult {
   const ResolvePickResult(this.value);
   final ResolvePickValue? value;
 }
 
-/// What [EventResolveSheet] hands to `onSubmit`.
 @immutable
 class EventResolveResult {
   const EventResolveResult({
@@ -46,7 +40,6 @@ class EventResolveResult {
   final ResolvePickValue? category;
 }
 
-/// The words of [EventResolveSheet].
 class EventResolveLabels {
   const EventResolveLabels({
     required this.title,
@@ -78,16 +71,10 @@ class EventResolveLabels {
   final String asTransaction;
   final String asDebt;
 
-  /// "You owe X" / "X owes you".
   final String debtRow;
   final String debtHint;
 }
 
-/// "ลงบัญชีส่วนตัว" — copy a board row into my own book. PRESENTATIONAL:
-/// [amount] / [shareAmount] (shown when "my share only" is on), words as
-/// [labels], the pick rows via [onPickAccount] / [onPickCategory] (the wrapper
-/// opens its pickers), the save via [onSubmit] (true = saved, the sheet pops
-/// true; false = stay open). Resolves true when something was recorded.
 Future<bool> showEventResolveSheet(
   BuildContext context, {
   required EventResolveLabels labels,
@@ -137,12 +124,9 @@ class EventResolveSheet extends StatefulWidget {
   final double amount;
   final String currencySymbol;
 
-  /// Non-null = the row has a "my share only" switch; the amount then shows
-  /// this value while it is on.
   final double? shareAmount;
   final String? shareHint;
 
-  /// Split rows: choose between a transaction and a debt.
   final bool showModeTabs;
   final Future<ResolvePickResult?> Function(ResolvePickValue? current)
   onPickAccount;

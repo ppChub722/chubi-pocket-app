@@ -18,25 +18,17 @@ class SettleSheetData {
     this.initialAmount,
   });
 
-  /// True = money comes in (income hero); false = money goes out (expense).
   final bool isReceive;
 
-  /// What is still owed. May be negative for an overpaid debt (nothing can be
-  /// settled then; the amount field starts at 0).
   final double outstanding;
 
-  /// Currency symbol.
   final String symbol;
 
-  /// Shown as the description hint: left blank, the new record takes it.
   final String? description;
 
-  /// Pre-fills the amount (clamped to 0..[outstanding]); null = all of it.
   final double? initialAmount;
 }
 
-/// What [SettleSheet] resolves: the amount, the day, the chosen wallet (null =
-/// none) and the optional description / note (null = left blank).
 @immutable
 class SettleResult {
   const SettleResult({
@@ -54,7 +46,6 @@ class SettleResult {
   final String? note;
 }
 
-/// The words of [SettleSheet] — the caller passes its localised strings.
 class SettleSheetLabels {
   const SettleSheetLabels({
     required this.title,
@@ -72,27 +63,20 @@ class SettleSheetLabels {
   final String title;
   final String confirm;
 
-  /// Label above the amount ("Outstanding").
   final String amountLabel;
   final String amountRequired;
 
-  /// Over the outstanding; given the formatted outstanding.
   final String Function(String outstanding) amountOver;
 
-  /// Quick fills.
   final String all;
   final String half;
   final String noteLabel;
 
-  /// Description hint when the data carries none.
   final String descriptionHint;
 
-  /// The date pill's text ("Today", "12 Oct", ...).
   final String Function(DateTime date) formatDate;
 }
 
-/// Builds the wallet card + its picker: the selected wallet (null = none) and
-/// a callback to change it.
 typedef SettleWalletField =
     Widget Function(
       BuildContext context,
@@ -100,16 +84,6 @@ typedef SettleWalletField =
       ValueChanged<Account?> onChanged,
     );
 
-/// The "settle" sheet (receive / pay back): a hero card (amount <=
-/// outstanding, description, date), "all / half" quick fills, a wallet slot
-/// and an optional note.
-///
-/// Presentational: data in ([data], [initialAccount]), a [SettleResult] out,
-/// words as [labels]. The wallet card + its picker belong to the accounts
-/// feature, so the caller supplies them as [walletField]. [onConfirm] runs the
-/// real call INSIDE the sheet (the saving overlay shows meanwhile): null =
-/// done, the sheet closes with the result; a message = failed, the sheet
-/// stays open and shows it. Resolves null when dismissed.
 Future<SettleResult?> showSettleSheet(
   BuildContext context, {
   required SettleSheetData data,
@@ -128,7 +102,6 @@ Future<SettleResult?> showSettleSheet(
   ),
 );
 
-/// The body of [showSettleSheet].
 class SettleSheet extends StatefulWidget {
   const SettleSheet({
     required this.data,
@@ -163,12 +136,10 @@ class _SettleSheetState extends State<SettleSheet> {
   final _description = TextEditingController();
   final _note = TextEditingController();
 
-  /// null = no wallet (a floating transaction).
   late Account? _account = widget.initialAccount;
   DateTime _date = DateTime.now();
   bool _saving = false;
 
-  /// Set by a failed confirm, shown under the amount.
   String? _amountError;
 
   @override
@@ -189,7 +160,6 @@ class _SettleSheetState extends State<SettleSheet> {
     if (r is AppDatePicked) setState(() => _date = r.date);
   }
 
-  /// Amount within (0, outstanding]; null = fine.
   String? _amountProblem() {
     final n = AmountInput.parse(_amount.text);
     final out = widget.data.outstanding;
@@ -212,7 +182,6 @@ class _SettleSheetState extends State<SettleSheet> {
       amount: AmountInput.parse(_amount.text)!,
       date: _date,
       account: _account,
-      // Left blank -> the caller / server uses the debt's description.
       description: opt(_description),
       note: opt(_note),
     );
@@ -247,7 +216,6 @@ class _SettleSheetState extends State<SettleSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           TxHeroCard(
-            // Money in for a debt owed to me, out for one I owe.
             type: data.isReceive
                 ? TransactionType.income
                 : TransactionType.expense,
@@ -255,7 +223,6 @@ class _SettleSheetState extends State<SettleSheet> {
             amountLabel: labels.amountLabel,
             amountError: _amountError,
             title: _description,
-            // Left blank, the new row takes the debt's own description.
             titleHint: data.description ?? labels.descriptionHint,
             dateLabel: labels.formatDate(_date),
             onPickDate: _pickDate,
@@ -272,7 +239,6 @@ class _SettleSheetState extends State<SettleSheet> {
               ),
             ],
           ),
-          // Headless group (plain on the sheet): wallet + note.
           SectionCard(
             children: [
               widget.walletField(

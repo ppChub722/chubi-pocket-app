@@ -6,9 +6,6 @@ import '../../domain/category.dart';
 import '../../domain/category_tree.dart';
 import '../category_label.dart';
 
-/// A server [CategoryPathItem] list (root -> ... -> last) as a [ChipPath],
-/// each step with its OWN icon + colour from the item's `icon_code` — no
-/// category list needed.
 Widget categoryPathItemsChipPath(
   BuildContext context,
   List<CategoryPathItem> items,
@@ -26,10 +23,6 @@ Widget categoryPathItemsChipPath(
   );
 }
 
-/// A category (+ its ancestors root -> parent) as a [ChipPath] value for
-/// `DetailRow.pick(valueChip:)` — every segment has its OWN icon + colour.
-/// Ancestors come from [Category.path]; their icons are looked up in [all]
-/// (falling back to the root's icon when a level has none).
 Widget categoryChipPath(
   BuildContext context,
   Category category, {

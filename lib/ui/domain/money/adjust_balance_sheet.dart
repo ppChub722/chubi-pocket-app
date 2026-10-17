@@ -2,16 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../ui.dart';
 
-/// What [showAdjustBalanceFormSheet] resolves to: the new balance + description
-/// + note (null when blank).
 typedef AdjustBalanceSheetResult = ({
   double balance,
   String? description,
   String? note,
 });
 
-/// The words of [AdjustBalanceSheet] — the caller passes its localised
-/// strings (the kit never reads the app's l10n).
+/// The words of [AdjustBalanceSheet] — the caller passes its localised strings
+/// (the kit never reads the app's l10n).
 class AdjustBalanceStrings {
   const AdjustBalanceStrings({
     required this.title,
@@ -28,10 +26,8 @@ class AdjustBalanceStrings {
   final String title;
   final String primaryLabel;
 
-  /// "Current balance" line in the card.
   final String currentLabel;
 
-  /// The label over the big field (already the debt wording for credit).
   final String newLabel;
   final String diffLabel;
   final String descriptionLabel;
@@ -40,24 +36,9 @@ class AdjustBalanceStrings {
   /// Caption while nothing would change.
   final String noChange;
 
-  /// Caption with the signed difference ("+฿100") filled in.
   final String Function(String diff) willCreate;
 }
 
-/// "Adjust balance" bottom sheet in the quick-create look: one tinted card
-/// (wallet · current balance · the big in-card new balance · live
-/// difference), then description + note as compact label-left rows and one
-/// save button. Resolves the new balance + description + note, or null on
-/// cancel; the caller makes the API call.
-///
-/// [isCredit] (card / pay-later) keeps debt as a negative [balance], so the
-/// field asks for the outstanding amount and the result is negated. The
-/// in-card amount has no ± control: a balance below zero (overdrawn
-/// account, overpaid card) is prefilled with its "-" and can be typed with
-/// a leading "-" (`allowNegative`; the only amount field that accepts it).
-///
-/// Plain values in, plain result out: [name], [balance], [symbol], [tint]
-/// (null = the theme's primary).
 Future<AdjustBalanceSheetResult?> showAdjustBalanceFormSheet(
   BuildContext context, {
   required String name,
@@ -101,9 +82,6 @@ class AdjustBalanceSheet extends StatefulWidget {
   final Color? tint;
   final bool isCredit;
 
-  /// "Set the balance" rather than "adjust it": a blank field, no current /
-  /// difference lines, no description / note, and any parsed amount saves
-  /// (turning a wallet's balance tracking back on asks for it once).
   final bool setOnly;
 
   @override
@@ -121,7 +99,6 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
   void initState() {
     super.initState();
     final b = widget.balance;
-    // Credit → the field shows the debt (positive while owing).
     final shown = _isCredit ? -b : b;
     _controller = TextEditingController(
       text: widget.setOnly ? '' : AmountInput.format(shown),
@@ -141,7 +118,6 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
     return v.isEmpty ? null : v;
   }
 
-  /// The balance the field describes; null while it doesn't parse.
   double? get _newBalance {
     final v = AmountInput.parse(_controller.text);
     if (v == null) return null;
@@ -221,7 +197,6 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
                 AppInput.card(
                   controller: _controller,
                   type: AppInputType.amount,
-                  // A balance can be negative (overdrawn, overpaid card).
                   allowNegative: true,
                   autofocus: true,
                   style: bigAmount,
@@ -273,7 +248,6 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
-            // Inline caption — no banner.
             Text(
               canAdjust ? s.willCreate(diffText) : s.noChange,
               style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
@@ -286,7 +260,6 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
   }
 }
 
-/// `label ..... value` inside the card.
 class _CardLine extends StatelessWidget {
   const _CardLine({required this.label, required this.value});
   final String label;
@@ -311,7 +284,6 @@ class _CardLine extends StatelessWidget {
   }
 }
 
-/// A compact row: the label on the left, a dense field on the right.
 class _FieldRow extends StatelessWidget {
   const _FieldRow({required this.label, required this.child});
   final String label;

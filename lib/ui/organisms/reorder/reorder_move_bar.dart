@@ -1,3 +1,4 @@
+import '../../atoms/app_icon_button.dart';
 import 'package:flutter/material.dart';
 
 import '../../tokens/app/app_icons.dart';
@@ -6,20 +7,6 @@ import '../../tokens/app_spacing.dart';
 import '../../atoms/ui_config.dart';
 import 'reorder_controller.dart';
 
-/// The floating ← ↑ ↓ → bar of reorder mode, shown while a row is
-/// selected (owner 2026-10-11). Put it right above the page's
-/// [ModeActionBar]:
-///
-/// ```dart
-/// bottomNavigationBar: Column(mainAxisSize: MainAxisSize.min, children: [
-///   ReorderMoveBar(controller: c),
-///   ModeActionBar(...),
-/// ]),
-/// ```
-///
-/// ↑ ↓ move one visible slot (across parents, keeping the depth); ← / →
-/// outdent / indent (trees only — a flat list shows ↑ ↓). A move that
-/// isn't possible is dimmed. Each press is one undo step.
 class ReorderMoveBar extends StatelessWidget {
   const ReorderMoveBar({required this.controller, super.key});
 
@@ -53,9 +40,9 @@ class ReorderMoveBar extends StatelessWidget {
       String tooltip,
       bool enabled,
       VoidCallback onTap,
-    ) => IconButton(
+    ) => AppIconButton.flat(
       tooltip: tooltip,
-      icon: Icon(icon),
+      icon: icon,
       onPressed: enabled ? onTap : null,
     );
     return Padding(

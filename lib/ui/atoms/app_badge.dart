@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../tokens/tone.dart';
 
-/// Small rectangular label — roles, "ไม่มีกระเป๋า", counts. Quieter than a
-/// status [AppChip] (no dot, tighter radius, a counter-sized label).
 class AppBadge extends StatelessWidget {
   const AppBadge({
     required this.label,

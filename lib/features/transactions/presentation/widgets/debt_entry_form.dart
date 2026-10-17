@@ -20,9 +20,6 @@ import 'account_picker_sheet.dart';
 import 'debt_close_picker_sheet.dart';
 import 'pick_chip_rows.dart';
 
-/// Who a debt entry is with: the person's key (`c:<contact>` / `n:<name>`),
-/// how they show, and their balance before this entry (null = not known
-/// yet; a new person = 0).
 class DebtPick {
   const DebtPick({
     required this.key,
@@ -35,20 +32,14 @@ class DebtPick {
   final EmbeddedPerson person;
   final double? net;
 
-  /// A new typed name: its spelling as typed (`person_name`).
   final String? typedName;
 
   DebtPick withNet(double? n) =>
       DebtPick(key: key, person: person, net: n, typedName: typedName);
 }
 
-/// The fields of quick create's DEBT MODE (owner 2026-10-12): Paid /
-/// Received, amount, description, date, the person, a wallet or none (no
-/// wallet = ledger only), tags (only with a wallet), note, entries to label
-/// paid in the same call.
 class DebtEntryController extends ChangeNotifier {
   DebtEntryController({DebtPick? person}) : _person = person {
-    // Typing changes the result line and the close guard.
     amount.addListener(notifyListeners);
     description.addListener(notifyListeners);
   }
@@ -59,12 +50,8 @@ class DebtEntryController extends ChangeNotifier {
   final note = TextEditingController();
   DateTime date = DateTime.now();
 
-  /// Also write the entry as a transaction (it counts in income / expense;
-  /// the wallet is optional). Off = ledger only: no wallet, no tags, both
-  /// hidden (owner 2026-10-17). What was picked stays while it is off.
   bool createTransaction = true;
 
-  /// The wallet of the transaction; null = no wallet.
   Account? account;
   final Set<String> tagIds = {};
   final Map<String, Tag> knownTags = {};
@@ -75,7 +62,6 @@ class DebtEntryController extends ChangeNotifier {
 
   double get amountValue => AmountInput.parse(amount.text) ?? 0;
 
-  /// The person's balance after this entry: paid = they owe me more.
   double? get netAfter {
     final n = _person?.net;
     if (n == null) return null;
@@ -151,13 +137,6 @@ class DebtEntryController extends ChangeNotifier {
   }
 }
 
-/// Quick create's debt-mode body: the SAME EntryCard (Paid / Received in
-/// place of the type, the PERSON chip row in place of the category, the
-/// wallet row with "ไม่ผูก"), the result line under the amount, tags only
-/// with a wallet, the compact note and the collapsible "mark entries paid".
-/// Calls: the people list once (the chip row; the picker loads everyone
-/// once more when opened), and the person's open entries only when the
-/// mark-paid section opens.
 class DebtEntryForm extends StatefulWidget {
   const DebtEntryForm({
     required this.controller,
@@ -187,15 +166,12 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     try {
       final page = await context.read<PersonalDebtsRepository>().listPeople();
       if (!mounted) return;
-      // A preset person: their balance for the result line.
       final p = _c.person;
       if (p != null && p.net == null) {
         final known = page.items.where((x) => x.key == p.key).firstOrNull;
         _c.setPerson(p.withNet(known?.net ?? 0));
       }
     } catch (_) {
-      // The picker still works (it loads its own list); only the result
-      // line has no balance to start from.
     }
   }
 
@@ -243,8 +219,6 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     locale: Localizations.localeOf(context).languageCode,
   );
 
-  /// "หลังบันทึก: แม่ติดคุณ ฿200" — instant feedback while typing (the BE
-  /// returns the real balance on save).
   Widget? _resultLine(AppLocalizations l, String symbol) {
     final p = _c.person;
     final after = _c.netAfter;
@@ -259,8 +233,6 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     return AppText(l.debtResultAfter(result), role: AppTextRole.caption);
   }
 
-  /// The person: a two-line card (a caption over the name), picked in the full
-  /// picker — no suggested people.
   Widget _personCard(AppLocalizations l) {
     final p = _c.person;
     return PickCard(
@@ -281,7 +253,6 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     );
   }
 
-  /// The wallet card ("ไม่ผูก" = none picked; the picker has it to clear).
   Widget _walletCard(AppLocalizations l) => WalletPickCard(
     account: _c.account,
     label: l.transactionFormAccountLabel,
@@ -292,9 +263,6 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     onTap: _pickAccount,
   );
 
-  /// Money reads left → right: I paid = [wallet] → [person]; they paid me =
-  /// [person] → [wallet]. The arrow flips Paid / Received. Ledger only: just
-  /// the person.
   Widget _flow(AppLocalizations l) {
     final paid = _c.direction == DebtEntryDirection.paid;
     if (!_c.createTransaction) return FlowCards(from: _personCard(l));
@@ -321,7 +289,6 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     if (ids != null && mounted) _c.setMarkPaidIds(ids);
   }
 
-  /// "สร้างรายการด้วย" — the switch under the note.
   Widget _createTxRow(AppLocalizations l) {
     final theme = Theme.of(context);
     return InkWell(
@@ -361,9 +328,6 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     );
   }
 
-  /// "ปิดหนี้" — which of the person's open entries to label paid with this
-  /// one. Same pattern as ผูกกับ: a dashed "+" chip → a picker → one chip
-  /// that says how many (✕ clears). Only a mark; sent on บันทึก.
   Widget _closeRow(AppLocalizations l) {
     final n = _c.markPaidIds.length;
     return DraftFieldRow(
@@ -429,7 +393,6 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
               flowRow: _flow(l),
             ),
             const SizedBox(height: HeroSpacing.after),
-            // Tags ride on the transaction: only while one is written.
             if (_c.createTransaction) ...[
               TagChipRow(
                 selected: _c.tagIds,
@@ -459,9 +422,6 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
   }
 }
 
-/// "กับใคร" — the debt person picker: everyone with a debt (open first,
-/// search), "+ เพิ่มชื่อ “…”" for a new typed name, and "เลือกจากผู้ติดต่อ".
-/// Loads the people once when it opens.
 Future<DebtPick?> showDebtPersonPicker(
   BuildContext context, {
   DebtPick? selected,

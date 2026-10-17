@@ -34,16 +34,11 @@ class LinkOccurrence {
   final DateTime date;
   final int daysUntil;
 
-  /// upcoming | pending | not_created.
   final String status;
 
-  /// Null = not known yet (a เตือนจ่าย waiting for its amount).
   final double? amount;
 }
 
-/// One row of `GET /recurring?for_type=`: an ACTIVE setting a transaction of
-/// that type can link to, as the BE ranked it. [setting] carries the name,
-/// icon, rule and category (the recurring model, read as is).
 class LinkCandidate {
   const LinkCandidate({
     required this.setting,
@@ -54,15 +49,11 @@ class LinkCandidate {
   final Recurring setting;
   final LinkOccurrence occurrence;
 
-  /// The BE's guess for the hints sent (same category / amount within ±5%);
-  /// likely rows come first in the answer.
   final bool likely;
 
-  /// A เตือนจ่าย still waiting for an amount.
   bool get isReminder => occurrence.amount == null;
 }
 
-/// `POST /recurring-items/:id/link` — the answer's amount question.
 class LinkResult {
   const LinkResult({
     required this.transaction,
@@ -79,9 +70,6 @@ class LinkResult {
   final Map<String, double> balances;
 }
 
-/// The link picker's calls (openapi tag Recurring): the candidates of a
-/// transaction type, the link itself and the "update the amount" answer.
-/// A separate class so the recurring pages' repository stays untouched.
 class RecurringLinkRepository {
   RecurringLinkRepository({required ApiClient client}) : _client = client;
 
@@ -98,10 +86,6 @@ class RecurringLinkRepository {
     }
   }
 
-  /// `listRecurring?for_type=` — ONE call, in the BE's order (likely rows
-  /// first). [categoryId] / [amount] are the picker hints of the transaction
-  /// (when known). Settings with no occurrence now (`current_occurrence`
-  /// null) can't take a link and are left out.
   Future<List<LinkCandidate>> candidates(
     TransactionType type, {
     String? categoryId,
@@ -129,8 +113,6 @@ class RecurringLinkRepository {
     ];
   });
 
-  /// `linkRecurringItem`: the transaction becomes the occurrence's saved
-  /// record. 409 ITEM_ALREADY_LINKED / 400 (type differs) → [ApiException].
   Future<LinkResult> link(String itemId, String transactionId) => _call((
     dio,
   ) async {
@@ -150,8 +132,6 @@ class RecurringLinkRepository {
     );
   });
 
-  /// `unlinkRecurringItem`: the occurrence is open again; the transaction is
-  /// untouched. 400 when it has no linked transaction → [ApiException].
   Future<RecurringItem> unlink(String itemId) => _call((dio) async {
     final res = await dio.post<Map<String, dynamic>>(
       '/recurring-items/$itemId/unlink',
@@ -159,8 +139,6 @@ class RecurringLinkRepository {
     return RecurringItem.fromJson(res.data!['item'] as Map<String, dynamic>);
   });
 
-  /// "อัปเดต": `PUT /recurring/:id {amount}` (scope upcoming) — the one
-  /// call, no separate amount route.
   Future<void> updateAmount(String recurringId, double amount) =>
       _call((dio) async {
         await dio.put<Map<String, dynamic>>(

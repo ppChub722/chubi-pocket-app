@@ -51,9 +51,6 @@ import '../features/preferences/presentation/cubit/theme_mode_cubit.dart';
 import '../l10n/gen/app_localizations.dart';
 import '../ui/ui.dart';
 
-/// Root widget. Owns the long-lived singletons (token storage, API client,
-/// auth repo + cubit) and rebuilds [MaterialApp.router] when theme / locale
-/// preferences change.
 class ChubiPocketApp extends StatefulWidget {
   const ChubiPocketApp({required this.prefs, super.key});
 
@@ -111,8 +108,6 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
       tokenStorage: _tokenStorage,
       apiClient: _apiClient,
     );
-    // App version gate: checked on cold start and every resume; a 426 on
-    // any request (onOutdated) blocks at once.
     _versionCubit = AppVersionCubit(
       repository: AppVersionRepository(client: _apiClient),
       currentBuild: _apiClient.appBuild,
@@ -121,7 +116,6 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     );
     _lifecycle = AppLifecycleListener(onResume: _versionCubit.check);
     _router = buildAppRouter(_authCubit, versionCubit: _versionCubit);
-    // The dev hub's Network page labels each call with the page it came from.
     _router.routerDelegate.addListener(
       () => NetworkRecorder.instance.noteRoute(
         _router.routerDelegate.currentConfiguration.uri.path,
@@ -129,7 +123,6 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     );
     _versionCubit.check();
 
-    // Resolve cold-start auth state.
     _authCubit.init();
   }
 
@@ -187,8 +180,6 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
         providers: [
           BlocProvider<AuthCubit>.value(value: _authCubit),
           BlocProvider<ConnectivityCubit>(create: (_) => ConnectivityCubit()),
-          // Server reachability (offline mode): learned from every API call, polls
-          // /health while down, tells the kit via ConnectionScope.
           BlocProvider<ConnectionCubit>(
             create: (ctx) => ConnectionCubit(
               client: _apiClient,
@@ -221,9 +212,6 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                 TransactionsCubit(repository: _transactionsRepository),
           ),
           BlocProvider<UnreadBadgeCubit>(
-            // Polls only while signed in, and starts ONCE: here when a session
-            // is already there, otherwise from the auth listener below at
-            // login (a poll before login only 401s).
             create: (ctx) {
               final cubit = UnreadBadgeCubit(
                 repository: _notificationsRepository,
@@ -244,7 +232,6 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
           BlocProvider<BudgetsCubit>(
             create: (_) => BudgetsCubit(repository: _budgetsRepository),
           ),
-          // App-scoped so the เพิ่มเติม hub can show live figures too.
           BlocProvider<DashboardCubit>(
             create: (_) => DashboardCubit(repository: _dashboardRepository),
           ),
@@ -262,19 +249,10 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
             final theme = ThemeRegistry.byId(themeId);
             final font = FontRegistry.byId(fontId);
 
-            // Auth-driven state lifecycle: when AuthCubit transitions
-            // from authenticated to not, OR from one identity to another,
-            // wipe every per-user cubit so the previous user's data
-            // doesn't bleed across sessions. UI-only cubits (theme,
-            // locale, font, connectivity) are not Clearable and survive.
             return BlocListener<AuthCubit, AuthState>(
               listenWhen: _authIdentityChanged,
               listener: (ctx, state) {
                 _clearPerUserCubits(ctx);
-                // After clearing on login, kick the badge poller. Done
-                // here (instead of in the new cubit's create:) because
-                // the existing instance is reused — clear() called
-                // stop(), so we need to start() again.
                 if (state is AuthAuthenticated) {
                   ctx.read<UnreadBadgeCubit>().start();
                 }
@@ -309,12 +287,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                     value: ThemeBuilder.systemBarsStyle(
                       Theme.of(context).scaffoldBackgroundColor,
                     ),
-                    // A keyboard height left over from leaving the app
-                    // with it open is dropped here, for every page and
-                    // sheet below.
                     child: KeyboardInsetsGuard(
-                      // Offline mode: ConnectionScope + banners for every
-                      // page and sheet below.
                       child: ConnectionShell(
                         child: child ?? const SizedBox.shrink(),
                       ),
@@ -329,11 +302,6 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     );
   }
 
-  /// Fires the listener iff the user-identity dimension of [AuthState]
-  /// actually changed: log-in (un-auth → auth) or log-out (auth → un-auth)
-  /// or auth-as-different-user (auth A → auth B). Loading / failure
-  /// transitions that wrap the same identity are ignored — those keep
-  /// the cubits hot.
   bool _authIdentityChanged(AuthState prev, AuthState curr) {
     final prevId = _identityOf(prev);
     final currId = _identityOf(curr);
@@ -351,9 +319,6 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     return null; // AuthInitial / AuthUnauthenticated / failure-of-unauth
   }
 
-  /// Calls [Clearable.clear] on every per-user cubit registered in the
-  /// MultiBlocProvider above. Order doesn't matter — each cubit just
-  /// emits its initial state.
   void _clearPerUserCubits(BuildContext ctx) {
     ctx.read<AccountsCubit>().clear();
     ctx.read<CategoriesCubit>().clear();

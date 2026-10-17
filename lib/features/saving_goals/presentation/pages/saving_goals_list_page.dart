@@ -12,16 +12,6 @@ import '../../domain/saving_goal.dart';
 import '../cubit/saving_goals_cubit.dart';
 import '../widgets/saving_goal_texts.dart';
 
-/// `/saving-goals` (reference §2, owner 2026-10-17):
-///
-///   summary card: all savings now · "เดือนนี้ขาดอีก ฿x" · "🐷 ยังไม่จัดสรร ฿x ›"
-///   hidden search row: [สถานะ: กำลังออม ▾]
-///   เดือนนี้ยังขาด · rows ("ขาด ฿x")   /   เดือนนี้ครบแล้ว ✓ · rows
-///   dashed "+ เพิ่มเป้าหมาย"
-///
-/// Open = ONE call (`GET /saving-goals?status=`); the status chip re-opens it
-/// and pull-to-refresh / show-again reload it. Every number is the BE's;
-/// adding a saving is the shell's bottom + (ออม mode).
 class SavingGoalsListPage extends StatefulWidget {
   const SavingGoalsListPage({super.key});
 
@@ -41,7 +31,6 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
   final _search = TextEditingController();
   final _toolbar = ToolbarToggleState.of('saving_goals');
 
-  /// The API has no search param: the loaded goals are filtered by name here.
   String _query = '';
 
   @override
@@ -67,7 +56,6 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
       body: TabSwitchBody(
         child: MultiBlocListener(
           listeners: [
-            // A transaction write or a saving made elsewhere: reload once.
             BlocListener<TransactionsCubit, TransactionsState>(
               listenWhen: (a, b) =>
                   a.revision != b.revision ||
@@ -78,7 +66,6 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
               listenWhen: (a, b) => a.staleTick != b.staleTick,
               listener: (c, _) => c.read<SavingGoalsCubit>().load(),
             ),
-            // A failed reload keeps the rows on screen and says so.
             BlocListener<SavingGoalsCubit, SavingGoalsState>(
               listenWhen: (a, b) =>
                   a.status != b.status &&
@@ -110,7 +97,6 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
                   title: l.savingGoalsEmptyTitle,
                   message: l.savingGoalsEmptyMessage,
                 ),
-                // Full-width children: the card and the rows pad themselves.
                 sidePadding: 0,
                 topInset: 0,
                 children: _children(context, l, state, cubit),
@@ -145,8 +131,6 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
       ],
       amount: s.savedTotal,
       symbol: symbol,
-      // The month plan bar: "ออมแล้ว ฿saved / ฿plan" (the BE's two totals;
-      // the fraction is presentation).
       bar: s.monthPlanTotal > 0
           ? ProgressRow(
               value: s.monthSavedTotal / s.monthPlanTotal,
@@ -220,8 +204,6 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
       for (final g in state.goals)
         if (q.isEmpty || g.name.toLowerCase().contains(q)) g,
     ];
-    // The BE's order, split by what it says about this month. Goals with
-    // no target sit in their own group (the BE's `group: ongoing`).
     final ongoing = [
       for (final g in goals)
         if (g.isOngoing) g,
@@ -257,7 +239,6 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
     ];
   }
 
-  /// A goal with no month figure that has nothing left to do this month.
   static bool _isDone(SavingGoal g) =>
       g.status == SavingStatus.reached || g.isCompleted;
 
@@ -285,8 +266,6 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
     String money(double v) => moneyString(context, v, symbol: symbol);
     final badge = savingGoalEtaBadge(context, l, g);
     final target = g.targetAmount;
-    // No target (ออมต่อเนื่อง): no bar, the saved amount on the right and
-    // what went in this month below.
     if (target == null) {
       return SavingGoalRow(
         key: ValueKey(g.id),

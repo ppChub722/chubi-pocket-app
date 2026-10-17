@@ -2913,7 +2913,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionFormSave => 'Save';
 
   @override
-  String get transactionFormAccountNone => 'No wallet';
+  String get transactionFormAccountNone => 'Unspecified wallet';
 
   @override
   String get transactionFormAccountPickerTitle => 'Pick a wallet';
@@ -4162,7 +4162,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get txSplitNoContact => 'No contact';
+  String get txSplitNoContact => 'Unspecified contact';
 
   @override
   String get txSplitNoContactHint => 'Keep the name, still editable';
@@ -4502,7 +4502,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickModeDebt => 'Debt';
 
   @override
-  String get debtNoWallet => 'No wallet';
+  String get debtNoWallet => 'Unspecified wallet';
 
   @override
   String get debtPickPerson => 'Pick a person';
@@ -4556,13 +4556,25 @@ class AppLocalizationsEn extends AppLocalizations {
       'Off = only noted in the debt book, not counted in income or expenses';
 
   @override
-  String get txFilterNoWallet => 'No wallet';
+  String get txFilterNoWallet => 'Unspecified wallet';
 
   @override
-  String get txFilterNoCategory => 'No category';
+  String get txFilterNoCategory => 'Unspecified category';
 
   @override
-  String get txFilterNoTag => 'No tag';
+  String get txFilterNoTag => 'Unspecified tag';
+
+  @override
+  String get txSummaryNet => 'Net';
+
+  @override
+  String get txFilterAmount => 'Amount';
+
+  @override
+  String get txFilterAmountMin => 'Min';
+
+  @override
+  String get txFilterAmountMax => 'Max';
 
   @override
   String get txTitleHintExpense => 'What did you pay for?';
@@ -6642,7 +6654,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fpGoalsAutoFrom => 'Take from';
 
   @override
-  String get fpGoalsNoWallet => 'No wallet';
+  String get fpGoalsNoWallet => 'Unspecified wallet';
 
   @override
   String get fpGoalsChartActual => 'Saved';

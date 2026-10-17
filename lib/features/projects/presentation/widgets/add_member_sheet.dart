@@ -9,11 +9,6 @@ import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
 
-/// "เชิญสมาชิก" — `POST /projects/:id/members`. With an email the matching
-/// app user gets an invite; without one it's a member without an account
-/// (can be linked later). "เลือกจากผู้ติดต่อ" fills name + email. Returns
-/// the added name + the write's patch, or null when dismissed. Thin wrapper
-/// over the kit's [AddMemberSheet]: the POST + error snackbar live here.
 Future<({String name, EventPatch patch})?> showAddMemberSheet(
   BuildContext context, {
   required String projectId,
@@ -39,8 +34,6 @@ Future<({String name, EventPatch patch})?> showAddMemberSheet(
     },
     onSubmit: (name, email) async {
       try {
-        // New members start as members; the owner can make them view-only
-        // from the members page (contract §6b).
         patch = await repo.addMember(
           projectId,
           displayName: name,

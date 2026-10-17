@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../ui.dart';
 
-/// A person who can be invited to a wallet, as plain values: a contact
-/// linked to an app account. [id] is the caller's own key; [iconCode] is the
-/// linked user's effective icon.
 @immutable
 class WalletInviteCandidate {
   const WalletInviteCandidate({
@@ -32,15 +29,11 @@ class WalletInviteStrings {
   final String title;
   final String searchHint;
 
-  /// The caption over the list.
   final String hint;
 
-  /// The caption when there is nobody to invite.
   final String empty;
 }
 
-/// "Invite to this wallet": pick one of [candidates] (a list the caller has
-/// already filtered). Resolves the picked candidate, or null when dismissed.
 Future<WalletInviteCandidate?> showWalletInviteSelectSheet(
   BuildContext context, {
   required List<WalletInviteCandidate> candidates,
@@ -56,9 +49,6 @@ Future<WalletInviteCandidate?> showWalletInviteSelectSheet(
   );
 }
 
-/// The sheet body on the kit [PickerSheet], searchable by name / email once
-/// there are more than 8. Stateless: a live caller (cubit-backed) rebuilds it
-/// with new [candidates] / [loading] / [error] and handles [onPick] itself.
 class WalletInviteSheet extends StatelessWidget {
   const WalletInviteSheet({
     required this.candidates,
@@ -74,7 +64,6 @@ class WalletInviteSheet extends StatelessWidget {
   final WalletInviteStrings strings;
   final ValueChanged<WalletInviteCandidate> onPick;
 
-  /// Still fetching and nothing to show yet.
   final bool loading;
   final Object? error;
   final VoidCallback? onRetry;
@@ -121,7 +110,6 @@ class WalletInviteSheet extends StatelessWidget {
                 children: [
                   for (final c in shown)
                     PickerRow(
-                      // Every one here is linked: "(avatar)link name".
                       leading: PersonMark(
                         name: c.name,
                         level: PersonLevel.linked,

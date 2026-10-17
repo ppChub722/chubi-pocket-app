@@ -6,18 +6,6 @@ import '../../tokens/app_spacing.dart';
 import '../money/money_text.dart';
 import 'progress_tone.dart';
 
-/// The footer of a progress entity's `HeaderCard` (a budget / goal hero; the
-/// mockup's `.hero-foot`):
-///
-///   [caption]                    "ใช้ไปแล้ว"
-///   ฿3,120                       the big [amount] (tone colour unless neutral)
-///   [subCaption]                 "จาก ฿8,000 · เหลือ ฿4,880"
-///   ▓▓▓▓▓▓▒▒▒░░░░░░░░░░░░        thick bar: [value] + [expected]
-///   ● ใช้แล้ว 39%    ● คาดว่าจะใช้ +฿720     the legend
-///
-/// [legendUsed] / [legendExpected] are the caller's strings (the second dot
-/// is the lighter shade; leave it null when there is no [expected]). [color]
-/// is the bar colour (the entity's tint for [ProgressTone.neutral]).
 class ProgressHeroFooter extends StatelessWidget {
   const ProgressHeroFooter({
     required this.amount,
@@ -32,7 +20,6 @@ class ProgressHeroFooter extends StatelessWidget {
     super.key,
   }) : skeleton = false;
 
-  /// A loading placeholder with the same slots.
   const ProgressHeroFooter.skeleton({super.key})
     : amount = 0,
       value = 0,
@@ -45,7 +32,6 @@ class ProgressHeroFooter extends StatelessWidget {
       legendExpected = null,
       skeleton = true;
 
-  /// The big figure (money).
   final num amount;
   final String? caption;
   final String? subCaption;
@@ -53,7 +39,6 @@ class ProgressHeroFooter extends StatelessWidget {
   final double? expected;
   final ProgressTone tone;
 
-  /// The bar colour for [ProgressTone.neutral] (the entity's tint).
   final Color? color;
   final String? legendUsed;
   final String? legendExpected;

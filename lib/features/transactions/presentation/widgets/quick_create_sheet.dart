@@ -49,56 +49,6 @@ import 'event_pick.dart';
 import 'recurring_link.dart';
 import 'tx_summary_title.dart';
 
-/// The `+` quick create (owner design 2026-10-08). A near-full-height sheet
-/// — never a new page:
-///
-///   hero (type · amount · ค่าอะไร · date) · โน้ต · category + wallet cards
-///   · tags (+ แท็กใหม่) · หารกับ… · เพิ่มเข้าอีเวนต์ — all shown, no toggle
-///
-/// Drag the handle / title row down to close. Closing asks first only when
-/// there's something worth keeping (an amount or a description; an edit:
-/// any change). Switching type keeps everything; the category is
-/// remembered per type.
-///
-/// The fields are the shared [DraftForm] — the same one "เพิ่มร่าง" and
-/// "แก้ร่าง" use. Save sits pinned above the keyboard. The title never
-/// changes while scrolling (owner 2026-10-11) — except a NEW transaction's: once
-/// the hero's amount has scrolled out of view (typing with the keyboard
-/// up), the title row shows amount · category instead; tap it to scroll back
-/// (owner 2026-10-11, "like before").
-///
-/// Defaults: the last wallet used (else the first) and today.
-/// "เพิ่มเข้าอีเวนต์" files the bill into a new event or an existing one
-/// (POST /projects/quick or /projects/:id/bills). "บันทึกร่าง" parks it in
-/// รอยืนยัน instead.
-///
-/// With [draft] the same sheet edits a pending draft (title "แก้ร่าง"):
-/// "บันทึกร่าง" saves it back, "ยืนยันรายการนี้" submits it, "ทิ้ง" removes
-/// it; the event tile is hidden (drafts don't go to events).
-///
-/// A saved transaction isn't edited here — its detail page edits it in
-/// place.
-///
-/// With [project] it's event mode — a row on that project's board (no
-/// wallet or category; payer, description, note, tags, member splits; see
-/// [DraftEvent]). [projectRow] edits that row (its type and payer are
-/// fixed). Saves through the project API.
-///
-/// [account] presets the wallet of a new transaction (adding from a
-/// wallet's page) instead of the last-used one; [type] opens a new one on
-/// that type (a wallet's ⇄ โอน → a transfer from it). [category] presets a
-/// new transaction's category (and its type: expense / income) — the +
-/// over a category's page; [tag] presets one tag — the + over a tag's page.
-///
-/// [preset] = the same per-page default the shell's + uses
-/// ([QuickCreatePreset]: mode + wallet / category / tag / person); its
-/// fields fill in where [account] / [category] / [tag] are not given. A
-/// page's own button opens quick create with it, e.g. the debts person
-/// page: `showQuickCreateSheet(context, preset: QuickCreatePreset.debt(person: p))`.
-///
-/// One footer button of [showEntrySheet]: [onPressed] gets the edited body
-/// and does the ONE call; true = saved (the sheet closes), false = it
-/// failed (the sheet stays, typed input kept — the caller says why).
 class EntrySheetAction {
   const EntrySheetAction({
     required this.label,
@@ -109,11 +59,9 @@ class EntrySheetAction {
   final String label;
   final Future<bool> Function(PendingDraft draft) onPressed;
 
-  /// The main button (filled); the other one is outlined.
   final bool primary;
 }
 
-/// The settings of [showEntrySheet] (call that, not [showQuickCreateSheet]).
 class EntrySheetConfig {
   const EntrySheetConfig({
     required this.title,
@@ -128,14 +76,6 @@ class EntrySheetConfig {
   final Future<bool> Function()? onDelete;
 }
 
-/// Edit ONE item in the quick-form look (owner 2026-10-13: an upcoming /
-/// produced recurring item, a pending draft): the EntryCard (type · date ·
-/// description · amount · wallet · category), tags, note — any date. The
-/// caller owns the save: 1–2 [actions] (the last is the main button, e.g.
-/// [บันทึก], or [รอยืนยัน] [บันทึกเลย]) each get the edited body. [onDelete]
-/// adds the 🗑 (true = done, closes). The pickers come from the form options
-/// (one call; the EntryCard skeleton shows until they land). Returns true
-/// when an action (or delete) went through.
 Future<bool> showEntrySheet(
   BuildContext context, {
   required String title,
@@ -155,13 +95,6 @@ Future<bool> showEntrySheet(
   );
 }
 
-/// Debt mode (owner 2026-10-12): a debt preset opens it with the person;
-/// the mode chips at the top switch a new entry between รายการ / หนี้.
-/// [onDebtSaved] gets the write response of a saved debt entry (the debts
-/// pages patch from it — no re-fetch). [onEventSaved] likewise gets an
-/// event row's write answer ([EventPatch]: the board, totals, tags).
-///
-/// Returns true when something was saved.
 Future<bool> showQuickCreateSheet(
   BuildContext context, {
   QuickCreatePreset? preset,
@@ -185,16 +118,10 @@ Future<bool> showQuickCreateSheet(
   account ??= preset?.account;
   category ??= preset?.category;
   tag ??= preset?.tag;
-  // A new transaction AND a draft edit read their pickers from ONE call
-  // (form options, one per open: fresh balances). Event rows still use the
-  // app-wide caches.
   final fromOptions = project == null;
   TxFormOptionsCubit? options;
   if (fromOptions) {
     options = TxFormOptionsCubit(context.read<TransactionsRepository>());
-    // The sheet opens at once. A draft shows the EntryCard skeleton until
-    // the options are here, then prefills from them (a failure falls back
-    // to the draft's own resolved refs, the sheet shows retry).
     unawaited(options.load());
   } else {
     context.read<AccountsCubit>().loadIfNeeded();
@@ -211,12 +138,9 @@ Future<bool> showQuickCreateSheet(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    // Over the whole shell, wherever it's opened from: inside a tab it
-    // would sit under the floating nav (the tab body runs on beneath it).
+    // Over the whole shell, wherever it's opened from: inside a tab it would
+    // sit under the floating nav (the tab body runs on beneath it).
     useRootNavigator: true,
-    // The route's drag-to-dismiss would skip the "discard?" question —
-    // the sheet drags itself instead (see _onDragEnd); ✕, the barrier and
-    // back all go through PopScope.
     enableDrag: false,
     builder: (sheetContext) {
       final sheet = _QuickCreateSheet(
@@ -258,10 +182,6 @@ Future<bool> showQuickCreateSheet(
   return saved ?? false;
 }
 
-// ── Remembered defaults ───────────────────────────────────────────────
-
-// The last wallet used: [StorageKeys.lastAccountId].
-
 enum _CloseChoice { draft, keepEditing, discard }
 
 class _QuickCreateSheet extends StatefulWidget {
@@ -287,49 +207,36 @@ class _QuickCreateSheet extends StatefulWidget {
   });
   final SharedPreferences prefs;
 
-  /// Preset wallet for a new transaction (else the last-used one).
   final Account? account;
 
-  /// A transfer's destination to start on (a card's ชำระบัตร).
   final Account? initialToAccount;
 
-  /// A new transaction's type to start on (else expense).
   final TransactionType? initialType;
 
-  /// A new transaction's preset category (its type follows).
   final Category? initialCategory;
 
-  /// A new transaction's preset tag.
   final Tag? initialTag;
 
-  /// รายการ or หนี้ to open in (a new entry only).
   final QuickCreateMode initialMode;
 
-  /// Debt mode's preset person.
   final DebtPick? debtPerson;
   final ValueChanged<DebtEntryWriteResult>? onDebtSaved;
 
-  /// ออม mode: the write answer of a saved saving entry.
   final ValueChanged<SavingWriteResult>? onSavingSaved;
 
-  /// ออม mode's preset target goal (null = spare).
   final String? savingGoalId;
   final ValueChanged<EventPatch>? onEventSaved;
 
-  /// [showEntrySheet]: edit one item, the caller saves.
   final EntrySheetConfig? entry;
 
-  /// A new entry's amount (e.g. "บันทึกรับเงิน" from what they paid).
   final double? initialAmount;
   final DebtEntryDirection? initialDebtDirection;
 
   /// Editing this pending draft instead of creating.
   final PendingTransaction? draft;
 
-  /// Event mode: a row on this project's board.
   final ProjectView? project;
 
-  /// Event mode, editing this row.
   final ProjectTxTree? projectRow;
 
   @override
@@ -341,33 +248,25 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
   EventTarget? _event;
 
-  /// The รายการประจำ pick: held until the transaction exists, then linked.
   final _link = RecurringLinkHandle();
 
   /// The event pick, unless it's a transfer (kept for switching back).
   EventTarget? get _activeEvent => typeCanJoinEvent(_c.type) ? _event : null;
   bool _saving = false;
 
-  /// The hero card key: the shell watches it to swap the title row for the
-  /// amount · category summary once the amount scrolls away.
   final _heroKey = GlobalKey();
 
   bool get _editingDraft => widget.draft != null;
 
-  /// A pending 🐷 saving draft: the ออม form, prefilled, confirmed from here.
   bool get _isSavingDraft => widget.draft?.isSaving ?? false;
 
-  /// [showEntrySheet]: one item, the caller's actions save it.
   bool get _isEntry => widget.entry != null;
 
-  /// A draft or an entry: prefilled from a body, its baseline decides dirty.
   bool get _draftLike => _editingDraft || _isEntry;
 
   bool get _isEvent => widget.project != null;
   bool get _editingRow => widget.projectRow != null;
 
-  /// Event mode: the fields as first shown, and the project's tags (from
-  /// the loaded rows first, then the full list from the server).
   String? _eventBaseline;
   List<String> _eventTags = const [];
   late final List<String> _pastDescriptions = _mostUsed([
@@ -380,13 +279,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   /// (today, expense) for a draft without them don't count as edits.
   PendingDraft? _draftBaseline;
 
-  /// Worth asking before closing (owner 2026-10-10): an edit asks when
-  /// anything changed; a new entry only once it has an amount or a
-  /// description — anything less closes quietly.
   bool get _dirty => _isEvent
       ? (_editingRow ? _c.eventSnapshot() != _eventBaseline : _hasKeyData)
       : _draftLike
-      // Not prefilled yet (the skeleton): nothing to lose.
       ? _draftBaseline != null &&
             _c.toDraft(keepIncomplete: true) != _draftBaseline
       : _hasKeyData;
@@ -394,11 +289,10 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   bool get _hasKeyData =>
       _c.amountValue > 0 || _c.description.text.trim().isNotEmpty;
 
-  /// A new entry with nothing in it — its save buttons are off, and a save
-  /// that slips through just closes (never an empty draft).
+  /// A new entry with nothing in it — its save buttons are off, and a save that
+  /// slips through just closes (never an empty draft).
   bool get _isEmpty => !_draftLike && !_c.hasContent && _event == null;
 
-  /// Distinct values, most frequent first.
   static List<String> _mostUsed(Iterable<String> values) {
     final counts = <String, int>{};
     for (final v in values) {
@@ -427,7 +321,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         .catchError((_) {}); // keep the local list
   }
 
-  /// Event mode "บันทึก": create or update the project row.
   Future<void> _saveEvent() async {
     final l = AppLocalizations.of(context)!;
     final view = widget.project!;
@@ -464,9 +357,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         if (s.memberId != null && s.amountValue > 0)
           ProjectSplitInput(memberId: s.memberId!, amount: s.amountValue),
     ];
-    // My OWN bill made from my transaction (the BE sends source_tx only to
-    // its owner): ask whether the tx changes too (owner 2026-10-13: linked
-    // by prompt, not sync). Another member's edit just saves (BE notifies).
     var alsoUpdateLink = false;
     if (widget.projectRow?.parent.sourceTx != null) {
       final choice = await showLinkedPrompt(
@@ -481,8 +371,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
     setState(() => _saving = true);
     try {
-      // Bills take EVENT tags by id (owner 2026-10-12): a name the event
-      // doesn't have yet becomes an event tag first.
       final tagIds = <String>[];
       for (final name in _c.tagNames) {
         tagIds.add(
@@ -560,17 +448,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
     if (_isEvent) _initEvent();
     if (_draftLike) _prefillDraftWhenReady();
-    // Typing / picking rebuilds the sheet (summary bar, close guard). A
-    // switch to transfer keeps the event pick and splits, just unused, so
-    // switching back finds them (owner 2026-10-10).
     _c.addListener(() {
       if (mounted) setState(() {});
     });
   }
 
-  /// A draft fills the form from the form options: at once when they're
-  /// here (or failed: the draft's own resolved refs), else as soon as they
-  /// land — the EntryCard skeleton shows until then.
   void _prefillDraftWhenReady() {
     final opts = maybeTxFormOptions(context, watch: false);
     if (opts == null || !opts.state.isLoading) {
@@ -584,7 +466,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           _prefillDraft();
           setState(() {});
         })
-        // Closed before answering (the sheet went away).
         .catchError((Object _) {});
   }
 
@@ -609,8 +490,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
     final p = widget.draft;
     if (p != null) {
-      // The pickers' options (one call), plus what the draft itself carries
-      // resolved, so an archived wallet / category still shows.
       final options = maybeTxFormOptions(context, watch: false)?.state.options;
       final accounts = [
         ...?options?.accountList,
@@ -642,15 +521,12 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  /// "บันทึกร่าง": park it in รอยืนยัน (new) or save the edits back.
   Future<void> _saveDraft() async {
     final l = AppLocalizations.of(context)!;
     if (_isEmpty) {
       Navigator.of(context).pop(false);
       return;
     }
-    // A draft keeps half-filled splits for later — no question, no balance
-    // check (confirming needs them whole).
     if (!mounted) return;
     final pending = context.read<PendingCubit>();
     final navigator = Navigator.of(context);
@@ -674,7 +550,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  /// Draft mode "ยืนยันรายการนี้": save the edits, then submit just this one.
   Future<void> _submitDraft() async {
     final l = AppLocalizations.of(context)!;
     final problem = _problem(l);
@@ -713,9 +588,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  // ── Saving draft (🐷 pending) ─────────────────────────────────────
-
-  /// The saving form as first shown — its baseline decides dirty.
   String? _savBaseline;
 
   String _savSnapshot() => [
@@ -737,12 +609,10 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     if (ra != null && !accounts.any((a) => a.id == ra.id)) {
       accounts.add(ra.toAccount());
     }
-    // The ออม form lists the app-wide wallets (with their savings).
     _sav.account = [
       ...context.read<AccountsCubit>().state.accounts,
       ...accounts,
     ].where((a) => a.id == d.accountId).firstOrNull;
-    // Not null: the sheet's skeleton / dirty gates look at it.
     _draftBaseline = const PendingDraft(isSaving: true);
     _savBaseline = _savSnapshot();
   }
@@ -756,7 +626,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     note: _sav.note.text.trim().isEmpty ? null : _sav.note.text.trim(),
   );
 
-  /// Saving draft "บันทึกร่าง": keep the edits in รอยืนยัน.
   Future<void> _saveSavingDraft() async {
     final l = AppLocalizations.of(context)!;
     final pending = context.read<PendingCubit>();
@@ -774,7 +643,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  /// Saving draft "ยืนยันรายการนี้": save the edits, then submit this one.
   Future<void> _submitSavingDraft() async {
     final l = AppLocalizations.of(context)!;
     final s = _sav;
@@ -815,14 +683,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  /// Draft mode "ลบ": deletes the whole draft.
-  /// [showEntrySheet]'s main action (the last primary one, else the last).
   EntrySheetAction _entryAction({required bool primary}) {
     final actions = widget.entry!.actions;
     return actions.lastWhere((a) => a.primary, orElse: () => actions.last);
   }
 
-  /// The other action of a two-button entry sheet, if any.
   EntrySheetAction? get _entrySecondary {
     final actions = widget.entry?.actions ?? const [];
     if (actions.length < 2) return null;
@@ -830,7 +695,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     return actions.firstWhere((a) => !identical(a, main));
   }
 
-  /// Runs a caller's action with the edited body; closes on success.
   Future<void> _runEntry(EntrySheetAction action) async {
     final l = AppLocalizations.of(context)!;
     if (_c.amountValue <= 0) {
@@ -899,10 +763,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     super.dispose();
   }
 
-  // ── Debt mode ─────────────────────────────────────────────────────
-
-  /// รายการ / หนี้ — only a new plain entry switches (not a draft or an
-  /// event row).
   late QuickCreateMode _mode = _isSavingDraft
       ? QuickCreateMode.saving
       : _canSwitchMode
@@ -932,7 +792,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   bool get _isDebt => _mode == QuickCreateMode.debt;
   bool get _isSaving => _mode == QuickCreateMode.saving;
 
-  /// (amount, description, note) of a mode's form — saving has one text, its note.
   (TextEditingController, TextEditingController, TextEditingController?)
   _fieldsOf(QuickCreateMode m) => switch (m) {
     QuickCreateMode.debt => (_debt.amount, _debt.description, _debt.note),
@@ -957,7 +816,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  /// Switching keeps what was typed: amount, description, note, date.
   void _switchMode(QuickCreateMode m) {
     if (m == _mode) return;
     final from = _fieldsOf(_mode);
@@ -984,8 +842,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     ),
   );
 
-  /// Debt mode "บันทึก": ONE call (the entry + its wallet tx + the paid
-  /// labels); everything shown is patched from the answer.
   Future<void> _saveDebt() async {
     final l = AppLocalizations.of(context)!;
     final d = _debt;
@@ -1015,8 +871,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         direction: d.direction,
         amount: d.amountValue,
         date: d.date,
-        // Ledger only: no wallet, no tags. Else a transaction, with or
-        // without a wallet.
         accountId: d.createTransaction ? d.account?.id : null,
         createTransaction: d.createTransaction,
         description: text(d.description),
@@ -1028,11 +882,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       accounts.patchBalances(r.accountBalances);
       final tx = r.transaction;
       if (tx != null) txCubit.patchRow(tx, afterWrite: true);
-      // Home's debts tile.
       dashboard.markStale();
       widget.onDebtSaved?.call(r);
-      // Every live debts cubit (people list, an open person page) patches
-      // itself, whichever page opened the sheet.
       DebtBook.entrySaved(r);
       navigator.pop(true);
       showAppSnackBarOn(messenger, l.debtEntrySaved, tone: Tone.success);
@@ -1043,8 +894,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  /// ออม mode "บันทึก": ONE call; the touched wallets' savings are patched
-  /// from the answer (no wallet balance moves — it is a notebook entry).
   Future<void> _saveSaving() async {
     final l = AppLocalizations.of(context)!;
     final s = _sav;
@@ -1087,16 +936,12 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  /// Wallet default: the one used last, else the first — re-evaluated until
-  /// the user picks one, so a cold cache doesn't leave it empty.
   Account? _defaultAccount(List<Account> accounts, {TxFormOptions? options}) {
     final preset = widget.account;
     if (preset != null) {
-      // The cached row when there is one (fresher balance).
       return accounts.where((a) => a.id == preset.id).firstOrNull ?? preset;
     }
     if (accounts.isEmpty) return null;
-    // The server's default wallet (form options) — no local "last used".
     final fromServer = options?.defaultAccount;
     if (fromServer != null) return fromServer;
     final last = widget.prefs.getString(StorageKeys.lastAccountId);
@@ -1109,8 +954,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       await widget.prefs.setString(StorageKeys.lastAccountId, acc.id);
     }
   }
-
-  // ── Recurring link ────────────────────────────────────────────────
 
   void _onLinkChanged() {
     if (mounted) setState(() {});
@@ -1130,9 +973,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     ),
   );
 
-  /// Right after the create: the link call for the new [txId] (one extra
-  /// call), then the amount question as a dialog. Returns a warning text when
-  /// the link failed (the transaction is saved either way).
   Future<String?> _linkAfterCreate(String? txId) async {
     if (txId == null || _link.candidateFor(_c.type) == null) return null;
     String? warn;
@@ -1146,8 +986,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     );
     return warn;
   }
-
-  // ── Event ─────────────────────────────────────────────────────────
 
   Future<void> _pickEvent() async {
     final picked = await showEventTargetSheet(
@@ -1177,12 +1015,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         : '${names.join(', ')} · $date';
   }
 
-  // ── Close / save ──────────────────────────────────────────────────
-
-  /// Closing with something worth keeping ([_dirty]). One look in every
-  /// mode (owner 2026-10-10): a short title, one line of context, labelled
-  /// buttons. A new entry: [เก็บเป็นร่าง] (plain transactions only) ·
-  /// [แก้ต่อ] · [ยกเลิกรายการนี้]. An edit: [แก้ต่อ] · [ยกเลิกการแก้ไข].
   Future<void> _confirmClose() async {
     final l = AppLocalizations.of(context)!;
     final editing = _draftLike || _editingRow;
@@ -1216,7 +1048,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  /// Asks about half-filled split rows before saving ([confirmIncompleteSplits]).
   Future<bool> _confirmIncompleteSplits() =>
       confirmIncompleteSplits(context, _c);
 
@@ -1239,7 +1070,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           .where((s) => s.isComplete)
           .fold<double>(0, (a, s) => a + (s.owedAmount ?? 0));
       if (splitTotal > _c.amountValue + 0.005) return l.txSplitExceeds;
-      // ฉัน + the people must make the amount exactly (owner 2026-10-11).
       if (!_c.splitsBalanced) return l.txSplitUnbalanced;
     }
     if (_activeEvent != null && _c.account == null) {
@@ -1288,9 +1118,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     String? newTxId;
     try {
       if (event == null) {
-        // ONE call (API v2): tags + splits ride in the create body, and the
-        // answer carries the wallets' new balances — patched in place, no
-        // GET /accounts after a save.
         final saved = await txCubit.add(
           type: type,
           accountId: account?.id,
@@ -1305,7 +1132,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         );
         accounts.patchBalances(saved.accountBalances);
         newTxId = saved.rows.firstOrNull?.id;
-        // A date after today: an upcoming item, not a transaction.
         if (saved.isUpcoming) savedAsUpcoming = true;
       } else {
         final body = <String, dynamic>{
@@ -1327,7 +1153,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
             project.id,
             newTransaction: body,
           ),
-          // Only a saved row leaves an event (the detail page).
           RemoveFromEvent() => throw StateError('nothing to remove from'),
         };
         final txId = result.transactionId;
@@ -1340,15 +1165,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           }
         }
         await TransactionsCubit.bookChanged();
-        // The events list picks up a new event / bill — in place, no page.
         unawaited(projectsCubit.load());
-        // The answer carries the new bill's wallet balance: patched in place.
         accounts.patchBalances(result.accountBalances);
       }
       warn ??= await _linkAfterCreate(newTxId);
       await _remember();
-      // Stay where the user is: close + snackbar, never a tab switch or a
-      // page push — an event bill too (owner 2026-10-10).
       navigator.pop(true);
       showAppSnackBarOn(
         messenger,
@@ -1369,18 +1190,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  // ── Title-row summary ─────────────────────────────────────────────
-
-  /// Only a new transaction swaps its title for the amount.
   bool get _summaryTitle => !_draftLike && !_isEvent;
-
-  // ── Build ─────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    // A new plain transaction reads wallets from the form options (one
-    // call); the other modes from the app-wide cache.
     final opts = maybeTxFormOptions(context);
     final optState = opts?.state;
     final options = optState?.options;
@@ -1399,7 +1213,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           : _editingDraft
           ? l.pendingEditTitle
           : l.transactionFormTitleNew,
-      // Only a new transaction swaps its title for the amount · category.
       summaryBuilder: _summaryTitle && !_isDebt && !_isSaving
           ? (scrollToTop) => TxSummaryTitle(
               type: _c.type,
@@ -1424,13 +1237,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           ? _sav.hasKeyData
           : _dirty,
       onCloseBlocked: _confirmClose,
-      // Event rows: one button — drafts are for one-off rows.
       saveLabel: _isEntry
           ? _entryAction(primary: true).label
           : _isEvent
           ? l.transactionFormSave
           : (_editingDraft ? l.pendingSubmitThis : l.quickSave),
-      // Debt entries have no drafts.
       draftLabel: _isEntry
           ? _entrySecondary?.label
           : _isEvent || _isDebt || (_isSaving && !_isSavingDraft)
@@ -1471,26 +1282,15 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                 padding: const EdgeInsets.only(top: AppSpacing.xl),
                 child: ErrorView(error: optState.error!, onRetry: opts.load),
               )
-            // A draft's first load: the EntryCard's skeleton until it's
-            // prefilled (a new transaction shows the real card at once, so
-            // typing can start; only its chip rows wait).
             : _draftLike && _draftBaseline == null
             ? const EntryCardSkeleton()
             : DraftForm(
                 heroKey: _heroKey,
-                // The pending drafts layout: chip rows, collapsible
-                // หารกับ / อีเวนต์.
                 chipLayout: _draftLike,
-                // The entry card (wallet · category chip rows inside it),
-                // tags outside: new transactions and drafts alike.
                 chipRows: true,
-                // A date after today → "รายการล่วงหน้า · จะเข้ารอยืนยัน…"
-                // (owner 2026-10-13). No link here: leaving the sheet would
-                // drop what's typed.
                 upcomingHint: !_draftLike && !_isEvent,
                 controller: _c,
                 defaultAccount: _defaultAccount(accounts, options: options),
-                // A saved project row keeps its type.
                 typeLocked: _editingRow,
                 event: _isEvent
                     ? DraftEvent(
@@ -1501,10 +1301,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                       )
                     : null,
                 eventPending: _activeEvent != null,
-                // The one "แบ่งรายการ" section, open (the heading
-                // collapses it). Drafts keep their own event; here
-                // the อีเวนต์ row only exists when creating, for a
-                // type that can join one ([typeCanJoinEvent]).
                 recurringSlot: _recurringSlot(l),
                 eventSlot: !_draftLike && !_isEvent && typeCanJoinEvent(_c.type)
                     ? SplitEventSlot(
@@ -1520,7 +1316,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     );
   }
 
-  /// The รายการประจำ row — a new transaction only (not a draft / event row).
   SplitRecurringSlot? _recurringSlot(AppLocalizations l) {
     if (_draftLike || _isEvent) return null;
     return _link.slot(
@@ -1533,11 +1328,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     );
   }
 
-  /// The mode chips on top (a new entry only), then the mode's body: the
-  /// debt form, or [txBody].
   Widget _withModes(AppLocalizations l, Widget Function() txBody) {
     if (_isSavingDraft) {
-      // A saving draft: the ออม form only, no mode chips.
       return _draftBaseline == null
           ? const EntryCardSkeleton()
           : SavingEntryForm(controller: _sav, heroKey: _heroKey);

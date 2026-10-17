@@ -2,20 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_spacing.dart';
 
-/// Where a [MilestoneStep] stands.
 enum MilestoneState {
-  /// Reached — a filled disc.
   done,
 
-  /// The next one to reach — a ringed disc in the accent.
   next,
 
-  /// Not yet — a quiet outline.
   todo,
 }
 
-/// One step of a [MilestoneRow]: a [glyph] ("✓", "75", "🏁") in a disc and a
-/// [label] under it ("25%", "฿60,000").
 class MilestoneStep {
   const MilestoneStep({
     required this.label,
@@ -28,18 +22,13 @@ class MilestoneStep {
   final String glyph;
 }
 
-/// Milestones of a goal (25 / 50 / 75 / 100 %): n equal steps side by side,
-/// each a disc with a glyph and a caption — done = filled [color], next =
-/// ringed, todo = grey. Plain strings in; the caller works out the states.
 class MilestoneRow extends StatelessWidget {
   const MilestoneRow({required this.steps, this.color, super.key});
 
   final List<MilestoneStep> steps;
 
-  /// The accent (defaults to the primary colour).
   final Color? color;
 
-  /// Disc diameter.
   static const double disc = 28;
 
   @override

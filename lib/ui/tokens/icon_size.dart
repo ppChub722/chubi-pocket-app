@@ -1,14 +1,3 @@
-/// The icon sizes — one scale for every icon in the app (owner 2026-10-12).
-/// Features never write a number: `AppIcon(icon, size: AppIconSize.md)`.
-///
-/// | token | px | for |
-/// |---|---|---|
-/// | [xs] | 12 | inside a mini chip / badge, a trailing hint |
-/// | [sm] | 16 | inside a chip, a caption line |
-/// | [md] | 20 | a row's secondary icon, a button icon |
-/// | [lg] | 24 | the standard icon (Material default), list-row leading |
-/// | [xl] | 32 | a feature icon, an empty-state glyph beside text |
-/// | [hero] | 56 | an empty / error screen's big glyph |
 class AppIconSize {
   const AppIconSize._();
 

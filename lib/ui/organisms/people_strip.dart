@@ -8,10 +8,8 @@ import '../tokens/app/app_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 
-/// The colour of a [PeopleStripMember.caption].
 enum PeopleTone { neutral, positive, negative }
 
-/// One member card of a [PeopleStrip].
 class PeopleStripMember {
   const PeopleStripMember({
     required this.avatar,
@@ -27,13 +25,10 @@ class PeopleStripMember {
   /// A muted line above [caption] ("paid 120"); never toned.
   final String? lead;
 
-  /// e.g. "owes 120" / "is owed 80".
   final String? caption;
   final PeopleTone tone;
 }
 
-/// A headed, horizontally scrolling strip of member cards with a dashed
-/// "+ invite" card at the end. Shared by events and wallets.
 class PeopleStrip extends StatelessWidget {
   const PeopleStrip({
     required this.title,
@@ -51,19 +46,17 @@ class PeopleStrip extends StatelessWidget {
   final String title;
   final String? description;
 
-  /// A text action at the end of the title row ("Manage ›"); null = none.
   final String? actionLabel;
   final VoidCallback? onAction;
   final List<PeopleStripMember> members;
 
-  /// Null = no invite card.
   final VoidCallback? onInvite;
   final String inviteLabel;
   final ValueChanged<int>? onMemberTap;
   final bool first;
 
-  static const _cardWidth = 104.0;
-  static const _cardHeight = 128.0;
+  static const _cardWidth = 92.0;
+  static const _cardHeight = 100.0;
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +125,7 @@ class _MemberCard extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.sm),
+            padding: const EdgeInsets.all(AppSpacing.xs),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

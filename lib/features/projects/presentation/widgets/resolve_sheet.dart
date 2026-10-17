@@ -20,10 +20,6 @@ import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
 import '../../domain/project.dart';
 
-/// "ลงบัญชีส่วนตัว" — copy a board row into my own book. Opens the kit's
-/// [EventResolveSheet]; this wrapper maps the row + l10n into it, opens the
-/// account / category pickers and does the repository calls. True when
-/// something was recorded.
 Future<bool> showResolveSheet(
   BuildContext context, {
   required ProjectTransaction tx,
@@ -46,8 +42,6 @@ Future<bool> showResolveSheet(
   final share = tx.amount - childrenTotal;
   final hasShare = isParent && childrenTotal > 0;
 
-  /// Parent: same direction as the row. Split: debtor pays (expense),
-  /// payer gets paid back (income).
   final txType = isParent
       ? (tx.type == 'expense'
             ? TransactionType.expense
@@ -135,7 +129,6 @@ Future<bool> showResolveSheet(
             accountId: account.id,
             amount: amount,
             date: tx.date,
-            // Same fields both sides (migration 51): what-for → what-for.
             description: tx.description,
             note: tx.note,
             categoryId: category?.id,
@@ -144,8 +137,6 @@ Future<bool> showResolveSheet(
           accounts.patchBalances(created.accountBalances);
           await TransactionsCubit.bookChanged();
         } else {
-          // One signed person ledger (debts 0.3.1-10): I owe them = they
-          // paid for me (received); they owe me = I paid for them (paid).
           await debtsRepo.createEntry(
             debtPersonKey(name: name),
             direction: iAmDebtor

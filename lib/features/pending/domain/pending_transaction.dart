@@ -4,8 +4,6 @@ import '../../../ui/ui.dart';
 import '../../transactions/domain/refs.dart';
 import '../../transactions/domain/transaction_type.dart';
 
-/// Where a draft came from. Only [manual] exists today; notifications, OCR
-/// and chat add theirs later (unknown values fall back to [other]).
 enum PendingSource {
   manual('manual'),
   splitPaid('split_paid'),
@@ -13,8 +11,6 @@ enum PendingSource {
   projectUpdate('project_update'),
   ocr('ocr'),
   chat('chat'),
-  // Made from a recurring item / a one-off upcoming item when it fell due
-  // (owner 2026-10-13); [PendingTransaction.recurringRef] says which.
   recurring('recurring'),
   upcoming('upcoming'),
   other('');
@@ -31,12 +27,9 @@ enum PendingSource {
 
   bool get isRecurring => this == recurring || this == upcoming;
 
-  /// The server's `by_source.manual` bucket (typed or chat) — what the
-  /// "manual" filter chip counts.
   bool get inManualBucket => this == manual || this == chat;
 }
 
-/// What submitting does.
 enum PendingKind {
   create('create'),
   settleDebt('settle_debt'),
@@ -52,7 +45,6 @@ enum PendingKind {
       PendingKind.values.firstWhere((v) => v.wire == s, orElse: () => create);
 }
 
-/// A draft transaction — the POST /transactions body, every field optional.
 class PendingDraft extends Equatable {
   const PendingDraft({
     this.type,
@@ -70,29 +62,23 @@ class PendingDraft extends Equatable {
     this.isSaving = false,
   });
 
-  /// Null for a saving draft (its wire type is `saving`, see [isSaving]).
   final TransactionType? type;
   final double? amount;
   final String? accountId;
   final String? categoryId;
 
-  /// YYYY-MM-DD.
   final String? date;
   final String? description;
   final String? note;
   final String? transferToAccountId;
   final List<String> tagIds;
 
-  /// `{person_name, contact_id?, owed_amount}` rows, as POST /transactions.
   final List<Map<String, dynamic>> splits;
 
-  /// The event this draft will join on confirm (`project_id`, nullable).
   final String? projectId;
 
-  /// Saving draft: the goal it goes into (null = spare).
   final String? goalId;
 
-  /// The draft's wire `type` is `saving`.
   final bool isSaving;
 
   factory PendingDraft.fromJson(Map<String, dynamic> json) {
@@ -163,7 +149,6 @@ class PendingError extends Equatable {
   List<Object?> get props => [code, message];
 }
 
-/// `TagRef`: a tag as a draft row shows it.
 class TagRef extends Equatable {
   const TagRef({required this.id, required this.name, this.iconCode});
 
@@ -183,7 +168,6 @@ class TagRef extends Equatable {
   List<Object?> get props => [id, name, iconCode];
 }
 
-/// `SavingGoalRef`: the goal a saving draft goes into.
 class SavingGoalRef extends Equatable {
   const SavingGoalRef({required this.id, required this.name, this.iconCode});
 
@@ -203,7 +187,6 @@ class SavingGoalRef extends Equatable {
   List<Object?> get props => [id, name, iconCode];
 }
 
-/// One split of a draft with its person resolved (same order as the draft's).
 class ResolvedSplit extends Equatable {
   const ResolvedSplit({required this.person, required this.owedAmount});
 
@@ -222,7 +205,7 @@ class ResolvedSplit extends Equatable {
 }
 
 /// `DraftResolved`: the draft's ids resolved so a row renders without other
-/// calls. A dangling id is null here and named in [missing].
+/// calls.
 class DraftResolved extends Equatable {
   const DraftResolved({
     this.account,
@@ -242,10 +225,8 @@ class DraftResolved extends Equatable {
   final EventRef? project;
   final List<ResolvedSplit> splits;
 
-  /// Saving draft: its goal (null = spare).
   final SavingGoalRef? goal;
 
-  /// `account_id`, `category_id`, `tag_ids` … the draft points at but are gone.
   final List<String> missing;
 
   static T? _obj<T>(Object? v, T Function(Map<String, dynamic>) f) =>
@@ -302,32 +283,24 @@ class PendingTransaction extends Equatable {
   final PendingDraft draft;
   final DateTime createdAt;
 
-  /// The draft's wallet / category / tags / event, ready to draw.
   final DraftResolved resolved;
   final String? targetDebtId;
   final String? targetTransactionId;
 
-  /// Why the last submit failed; cleared when the draft is edited.
   final PendingError? lastError;
 
-  /// What the draft is based on (display only).
   final Map<String, dynamic>? sourceRef;
 
-  /// What the draft still lacks (`amount|type|date|wallet|wallet_to|
-  /// category`; empty = ready). Null when the server didn't say (old API).
   final List<String>? needsInput;
 
-  /// False while a hard key is missing: confirming it directly would fail,
-  /// so the list opens the draft sheet instead. Absent = true.
+  /// False while a hard key is missing: confirming it directly would fail, so
+  /// the list opens the draft sheet instead.
   final bool canConfirm;
 
-  /// The server says the draft still lacks [key] (false when it didn't say).
   bool needs(String key) => needsInput?.contains(key) ?? false;
 
-  /// A saving draft (kind or wire type `saving`).
   bool get isSaving => kind == PendingKind.saving || draft.isSaving;
 
-  /// The recurring / upcoming item it came from ("🔁 Netflix · 3/12").
   RecurringItemLink? get recurringRef {
     final ref = sourceRef;
     return source.isRecurring && ref != null && ref['item_id'] is String
@@ -380,8 +353,6 @@ class PendingTransaction extends Equatable {
   ];
 }
 
-/// `GET /pending-transactions` `summary`: the page's numbers, computed by
-/// the server over ALL the user's drafts.
 class PendingSummary extends Equatable {
   const PendingSummary({
     required this.count,
@@ -402,17 +373,14 @@ class PendingSummary extends Equatable {
   final int needsInputCount;
   final int readyCount;
 
-  /// `by_source`.
   final int recurring;
   final int manual;
   final int otherPeople;
   final int slip;
   final int other;
 
-  /// Everything outside the manual bucket.
   int get notManual => count - manual;
 
-  /// Null-safe: the map under a write answer's `summary`, or null.
   static PendingSummary? maybe(Object? json) => json is Map
       ? PendingSummary.fromJson(json.cast<String, dynamic>())
       : null;
@@ -452,23 +420,18 @@ class PendingSummary extends Equatable {
   ];
 }
 
-/// The list call's answer: the drafts and (new API) their summary.
 class PendingList {
   const PendingList({required this.items, this.summary});
   final List<PendingTransaction> items;
   final PendingSummary? summary;
 }
 
-/// The update call's answer: the replaced draft and the summary.
 class PendingUpdated {
   const PendingUpdated({required this.draft, this.summary});
   final PendingTransaction draft;
   final PendingSummary? summary;
 }
 
-/// One submit call's outcome: ids that went through, why the rest didn't
-/// (with their updated drafts), the wallets' balances afterwards and the
-/// pending-drafts badge.
 class PendingSubmitResult {
   const PendingSubmitResult({
     required this.submitted,
@@ -481,14 +444,11 @@ class PendingSubmitResult {
   final List<String> submitted;
   final Map<String, PendingError> failed;
 
-  /// The failed drafts with `last_error` set; absent when the draft is gone.
   final Map<String, PendingTransaction> failedDrafts;
 
-  /// {account id: balance after}, for `AccountsCubit.patchBalances`.
   final Map<String, double> accountBalances;
   final int? pendingDrafts;
 
-  /// The page's numbers after this call (same shape as the list's).
   final PendingSummary? summary;
 
   factory PendingSubmitResult.fromJson(Map<String, dynamic> json) {
@@ -524,7 +484,6 @@ class PendingSubmitResult {
   }
 }
 
-/// `DiscardResult`: what a discard removed and how many drafts remain.
 class DiscardResult {
   const DiscardResult({
     required this.discarded,
@@ -536,7 +495,6 @@ class DiscardResult {
   final List<String> skipped;
   final int remainingCount;
 
-  /// The page's numbers after the discard.
   final PendingSummary? summary;
 
   factory DiscardResult.fromJson(Map<String, dynamic> json) => DiscardResult(

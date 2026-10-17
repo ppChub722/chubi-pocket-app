@@ -1,17 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// The app's one source of UI icons, named by **meaning**, not by glyph.
-/// Change a glyph here and every screen that shows that concept follows.
-///
-/// Rules:
-/// - New UI code uses `AppIcons.x`, never `Icons.x` directly.
-/// - One meaning → one glyph. If two things need different glyphs they get
-///   two names (e.g. [debt] vs [bank], [category] vs [iconPicker]).
-/// - User-chosen icons (icon maker art) are NOT here — see `IconRegistry`.
-///
-/// Browse them live at `/dev/widgets` → ไอคอน.
 abstract final class AppIcons {
-  // ── Tabs / chrome ────────────────────────────────────────────────────
   static const dashboard = Icons.dashboard_outlined;
   static const dashboardActive = Icons.dashboard;
   static const transactions = Icons.list_alt_outlined;
@@ -28,9 +17,9 @@ abstract final class AppIcons {
   static const markAllRead = Icons.done_all;
   static const profile = Icons.person_outline;
 
-  // ── Features ─────────────────────────────────────────────────────────
   static const category = Icons.category_outlined;
   static const tag = Icons.sell_outlined;
+  static const amount = Icons.payments_outlined;
   static const contact = Icons.contacts_outlined;
   static const project = Icons.groups_outlined;
   static const debt = Icons.handshake_outlined;
@@ -38,15 +27,12 @@ abstract final class AppIcons {
   static const savingGoal = Icons.flag_outlined;
   // Saving txs (goals v2): a record of its own, never a real tx.
   static const savingDeposit = Icons.savings; // ออม
-  // The quick create "ออม" mode (owner 2026-10-17: 🐷 / savings is the
-  // budget's icon; temporary, until the icon overhaul).
   static const quickSaving = Icons.inventory_2_outlined;
   static const savingWithdraw = Icons.keyboard_return; // ถอนออม
   static const savingAllocate = Icons.shuffle; // จัดสรร
   static const goalClose = Icons.flag; // ปิดเป้าหมาย
   static const scheduled = Icons.schedule_outlined;
 
-  /// A recurring item (🔁): TxRow's marker, the recurring rows.
   static const recurring = Icons.repeat;
   static const member = Icons.person_outline;
   static const inviteMember = Icons.person_add_alt_1_outlined;
@@ -55,13 +41,11 @@ abstract final class AppIcons {
   static const settle = Icons.price_check;
   static const history = Icons.history;
 
-  // ── Money / account kinds ────────────────────────────────────────────
   static const bank = Icons.account_balance_outlined;
   static const cash = Icons.payments_outlined;
   static const eWallet = Icons.qr_code_2_outlined;
   static const creditCard = Icons.credit_card_outlined;
   static const payLater = Icons.access_time_outlined;
-  // A wallet number of kind "other" (spec 15 §5) — not a bank / PromptPay / card.
   static const accountNumber = Icons.pin_outlined;
   static const income = Icons.add;
   static const expense = Icons.remove;
@@ -75,7 +59,6 @@ abstract final class AppIcons {
   static const note = Icons.sticky_note_2_outlined;
   static const split = Icons.call_split;
 
-  /// Worked out for you (the split's ฉัน on "อัตโนมัติ").
   static const auto = Icons.auto_mode;
   static const link = Icons.link;
   static const unlink = Icons.link_off;
@@ -83,7 +66,6 @@ abstract final class AppIcons {
   static const trendDown = Icons.arrow_downward;
   static const trendFlat = Icons.remove;
 
-  // ── Preferences / account ────────────────────────────────────────────
   static const language = Icons.language_outlined;
   static const font = Icons.text_fields_outlined;
   static const lightMode = Icons.light_mode_outlined;
@@ -91,7 +73,6 @@ abstract final class AppIcons {
   static const systemMode = Icons.smartphone_outlined;
   static const email = Icons.mail_outline;
 
-  // ── Actions ──────────────────────────────────────────────────────────
   static const add = Icons.add;
   static const edit = Icons.edit_outlined;
   static const editBadge = Icons.edit; // small filled pencil on avatars
@@ -115,10 +96,8 @@ abstract final class AppIcons {
   static const iconPicker = Icons.interests_outlined;
   static const colorPicker = Icons.palette_outlined;
 
-  /// Settings → money format (how amounts mark income / expense).
   static const moneyStyle = Icons.exposure_outlined;
 
-  /// Settings → decimals (satang / cents of amounts).
   static const moneyDecimals = Icons.pin_outlined;
   static const eyedropper = Icons.colorize_outlined;
   static const useDefaultIcon = Icons.hide_image_outlined;
@@ -126,7 +105,6 @@ abstract final class AppIcons {
   static const resume = Icons.play_circle_outline;
   static const stop = Icons.stop_circle_outlined;
 
-  // ── Disclosure / selection ───────────────────────────────────────────
   static const chevronRight = Icons.chevron_right;
   static const chevronLeft = Icons.chevron_left;
   static const dropdown = Icons.arrow_drop_down;
@@ -136,11 +114,9 @@ abstract final class AppIcons {
   static const none = Icons.block;
   static const lock = Icons.lock_outline;
 
-  // ── Visibility ───────────────────────────────────────────────────────
   static const visible = Icons.visibility_outlined;
   static const hidden = Icons.visibility_off_outlined;
 
-  // ── Feedback / states ────────────────────────────────────────────────
   static const success = Icons.check_circle_outline;
   static const error = Icons.error_outline;
   static const warning = Icons.warning_amber_outlined;
@@ -149,8 +125,6 @@ abstract final class AppIcons {
   static const serverDown = Icons.cloud_off_outlined;
   static const empty = Icons.inbox_outlined;
 
-  /// Every icon above, grouped, for the `/dev/widgets` icon gallery.
-  /// **Add new icons here too** (same file, so it stays in sync).
   static const Map<String, Map<String, IconData>> catalog = {
     'Tabs / chrome': {
       'dashboard': dashboard,
@@ -171,6 +145,7 @@ abstract final class AppIcons {
     'Features': {
       'category': category,
       'tag': tag,
+      'amount': amount,
       'contact': contact,
       'project': project,
       'debt': debt,

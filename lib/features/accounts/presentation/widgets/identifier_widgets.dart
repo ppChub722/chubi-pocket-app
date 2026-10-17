@@ -7,11 +7,6 @@ import '../../domain/account_identifier.dart';
 import '../../domain/payment_provider.dart';
 import 'bank_picker_sheet.dart';
 
-/// Wallet numbers (spec 15 §5) — the rows on the wallet page, read-only in
-/// view mode and edited inline in edit mode like the splits section
-/// (owner 2026-10-11): `[kind · bank ▾] [number] ✕`. Feature widgets, not
-/// shared UI kit.
-
 String identifierKindLabel(AppLocalizations l, IdentifierKind k) => switch (k) {
   IdentifierKind.bankAccount => l.identifierKindBankAccount,
   IdentifierKind.promptPay => l.identifierKindPromptPay,
@@ -26,7 +21,6 @@ IconData identifierKindIcon(IdentifierKind k) => switch (k) {
   IdentifierKind.other => AppIcons.accountNumber,
 };
 
-/// Kinds that belong to a bank (account number, card issuer).
 bool identifierHasBank(IdentifierKind k) =>
     k == IdentifierKind.bankAccount || k == IdentifierKind.card;
 
@@ -37,8 +31,6 @@ PaymentProvider? _bankOf(
     ? null
     : providers.where((p) => p.code == id.bankCode).firstOrNull;
 
-/// The leading mark: the bank's [BankMark] when known, else the kind's
-/// icon.
 Widget _mark(
   BuildContext context,
   AccountIdentifier id,
@@ -54,14 +46,12 @@ Widget _mark(
   );
 }
 
-/// "เลขบัญชี · KBANK" — the row label for a wallet number.
 String identifierKindLine(
   BuildContext context,
   AccountIdentifier id,
   List<PaymentProvider> providers,
 ) => _kindLine(context, id, providers);
 
-/// "เลขบัญชี · KBANK".
 String _kindLine(
   BuildContext context,
   AccountIdentifier id,
@@ -79,9 +69,6 @@ String _kindLine(
   ].join(' · ');
 }
 
-/// One wallet number, read-only: kind (+ bank) on the left, the number on
-/// the right — "•••• 2780" while money is hidden (the app-wide 👁).
-/// [onTap] / [onDelete] are kept for older callers (gallery).
 class IdentifierRow extends StatelessWidget {
   const IdentifierRow({
     required this.identifier,
@@ -128,11 +115,6 @@ class IdentifierRow extends StatelessWidget {
   }
 }
 
-/// One wallet number in edit mode: `[kind · bank ▾] [number] ✕`. The chip
-/// opens [showIdentifierKindSheet]; the number is typed in place,
-/// as plain digits ([IdentifierInputFormatter]).
-/// Its validator runs with the page's form (an empty row is dropped on
-/// save, not an error).
 class IdentifierEditRow extends StatefulWidget {
   const IdentifierEditRow({
     required this.identifier,
@@ -146,7 +128,6 @@ class IdentifierEditRow extends StatefulWidget {
   final AccountIdentifier identifier;
   final List<PaymentProvider> providers;
 
-  /// A new kind / bank / number.
   final ValueChanged<AccountIdentifier> onChanged;
   final VoidCallback onRemove;
   final bool autofocus;
@@ -166,7 +147,6 @@ class _IdentifierEditRowState extends State<IdentifierEditRow> {
   @override
   void didUpdateWidget(covariant IdentifierEditRow old) {
     super.didUpdateWidget(old);
-    // Compare values, not text (undo, a removed row above, a new kind).
     if (AccountIdentifier.normalize(_number.text) != widget.identifier.value ||
         old.identifier.kind != widget.identifier.kind) {
       _number.text = _display(widget.identifier);
@@ -186,7 +166,6 @@ class _IdentifierEditRowState extends State<IdentifierEditRow> {
       providers: widget.providers,
     );
     if (next == null || !mounted) return;
-    // A shorter kind (card = 4 digits) trims what's there.
     final value = IdentifierInputFormatter.clip(next.kind, next.value);
     widget.onChanged(
       AccountIdentifier(kind: next.kind, value: value, bankCode: next.bankCode),
@@ -195,7 +174,7 @@ class _IdentifierEditRowState extends State<IdentifierEditRow> {
 
   String? _validate(String? v, AppLocalizations l) {
     final norm = AccountIdentifier.normalize(v ?? '');
-    if (norm.isEmpty) return null; // dropped on save
+    if (norm.isEmpty) return null;
     switch (widget.identifier.kind) {
       case IdentifierKind.promptPay when norm.length != 10 && norm.length != 13:
         return l.identifierPromptPayLength;
@@ -215,7 +194,6 @@ class _IdentifierEditRowState extends State<IdentifierEditRow> {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final id = widget.identifier;
-    // A kit row: [kind chip] [number field] [close].
     return ListRow(
       leading: AppChip(
         label: _kindLine(context, id, widget.providers),
@@ -227,8 +205,6 @@ class _IdentifierEditRowState extends State<IdentifierEditRow> {
         controller: _number,
         autofocus: widget.autofocus,
         dense: true,
-        // No `type: reference`: it is digits-only, but a number may hold
-        // `x` (hidden digits) and the "other" kind is alphanumeric.
         keyboardType: id.kind == IdentifierKind.other
             ? TextInputType.visiblePassword
             : TextInputType.number,
@@ -264,12 +240,6 @@ class _IdentifierEditRowState extends State<IdentifierEditRow> {
   };
 }
 
-/// Keeps a wallet number to plain digits (and `x` for digits a slip hid) as
-/// it's typed — no grouping, no dashes:
-/// - เลขบัญชี: max 15
-/// - พร้อมเพย์: max 13
-/// - บัตร: the last 4 digits only
-/// - อื่น ๆ: max 32
 class IdentifierInputFormatter extends TextInputFormatter {
   IdentifierInputFormatter(this.kind);
 
@@ -282,8 +252,6 @@ class IdentifierInputFormatter extends TextInputFormatter {
     IdentifierKind.other => 32,
   };
 
-  /// [value] (normalized) cut to what [kind] holds — a card keeps its last
-  /// four.
   static String clip(IdentifierKind kind, String value) {
     final max = maxLength(kind);
     if (value.length <= max) return value;
@@ -311,9 +279,6 @@ class IdentifierInputFormatter extends TextInputFormatter {
   }
 }
 
-/// The edit row's chip sheet — the kit's [showIdentifierKindSelectSheet]; this
-/// wrapper maps the kinds / banks / l10n in and the result back. Returns the
-/// identifier with the new kind / bank, or null when dismissed.
 Future<AccountIdentifier?> showIdentifierKindSheet(
   BuildContext context, {
   required AccountIdentifier identifier,
@@ -349,9 +314,6 @@ Future<AccountIdentifier?> showIdentifierKindSheet(
   );
 }
 
-/// The numbers section's title-row action ([SectionCard.trailing]): the
-/// app-wide 👁 (the same toggle that hides money). Hidden ([show] false) it
-/// keeps the toggle's height, so the title row doesn't jump.
 class IdentifiersVisibility extends StatelessWidget {
   const IdentifiersVisibility({this.show = true, super.key});
 

@@ -4,7 +4,6 @@ import '../atoms/app_divider.dart';
 import '../tokens/app_spacing.dart';
 import 'app_sheet.dart';
 
-/// One row of [showActionSheet].
 class SheetAction<T> {
   const SheetAction({
     required this.value,
@@ -19,19 +18,12 @@ class SheetAction<T> {
   final String label;
   final IconData icon;
 
-  /// Why it's disabled, or what it does.
   final String? subtitle;
 
-  /// Red — delete, remove, leave.
   final bool destructive;
   final bool enabled;
 }
 
-/// The app's "what do you want to do with this?" sheet: an optional
-/// [header] (what was tapped — [ActionSheetHeader]) over a list of
-/// [actions]. Resolves the picked action's value, or null on dismiss.
-///
-/// For picking one value of many use `showOptionSheet` instead.
 Future<T?> showActionSheet<T>(
   BuildContext context, {
   required List<SheetAction<T>> actions,
@@ -55,8 +47,6 @@ Future<T?> showActionSheet<T>(
   );
 }
 
-/// The tapped thing at the top of an action sheet: leading (avatar /
-/// icon) · title + subtitle · trailing (amount, pill).
 class ActionSheetHeader extends StatelessWidget {
   const ActionSheetHeader({
     required this.title,

@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../tokens/typography.dart';
 
-/// Text in one of the seven roles ([AppTextRole]) — the only way features
-/// write words (owner 2026-10-12). [color], [weight] and the layout options
-/// tune a role without leaving it.
 class AppText extends StatelessWidget {
   const AppText(
     this.text, {
@@ -24,8 +21,6 @@ class AppText extends StatelessWidget {
   final Color? color;
   final FontWeight? weight;
 
-  /// Slanted (a note, a muted aside). The Thai font has no true italic:
-  /// Flutter slants it synthetically.
   final bool italic;
   final int? maxLines;
   final TextOverflow? overflow;

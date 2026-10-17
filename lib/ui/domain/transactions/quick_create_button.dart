@@ -6,11 +6,6 @@ import '../../tokens/app/quick_create_mode.dart';
 import '../../tokens/app_durations.dart';
 import '../../tokens/icon_size.dart';
 
-/// The shell's centre `+` (owner 2026-10-12): a big filled circle wrapped in
-/// a page-coloured ring, so it reads as punched through the bottom bar. Its
-/// fill is the [mode]'s colour ([QuickCreateModeColors]) — the mode the
-/// quick create will open in on the page on screen — and a change of mode
-/// (tab switch, push, pop) cross-fades over [AppDurations.fast].
 class QuickCreateButton extends StatelessWidget {
   const QuickCreateButton({
     required this.onPressed,
@@ -23,7 +18,6 @@ class QuickCreateButton extends StatelessWidget {
   final VoidCallback onPressed;
   final QuickCreateMode mode;
 
-  /// Outer diameter, ring included.
   final double size;
   final String? tooltip;
 

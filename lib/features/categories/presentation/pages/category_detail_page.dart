@@ -21,15 +21,6 @@ import '../widgets/category_chip_path.dart';
 import '../widgets/category_picker_sheet.dart';
 import '../widgets/category_preview_card.dart';
 
-/// One screen, two modes (view ⇄ edit) for a single category — the
-/// reference detail page for the whole app (`ux-overhaul-plan.md` §1.5).
-///
-/// Every field is the same widget in both modes (only its border and
-/// editability change), so nothing reflows. Discrete controls (type chips
-/// on create, the report switch, parent picker) stay live in view mode and
-/// enter edit mode on use; long-pressing a text field or the icon enters
-/// edit mode on it. Lifecycle (undo, discard, nav hiding) is
-/// [EditModeMixin].
 class CategoryDetailPage extends StatefulWidget {
   const CategoryDetailPage({
     this.editingId,
@@ -38,8 +29,6 @@ class CategoryDetailPage extends StatefulWidget {
     super.key,
   });
 
-  /// `/categories/new?type=income` — create on the list tab's type (QA F3).
-  /// Anything but `income` starts on expense.
   CategoryDetailPage.create({String? type, Key? key})
     : this(
         initialType: type == CategoryType.income.toJson()
@@ -50,13 +39,8 @@ class CategoryDetailPage extends StatefulWidget {
 
   final String? editingId;
 
-  /// Create only: the type to start with (a picker for income opens the
-  /// create page on income).
   final CategoryType? initialType;
 
-  /// Create pushed over a picker (Navigator, not the router): saving pops
-  /// with the new [Category] instead of becoming its view, so the page
-  /// underneath stays (QA F5).
   final bool popOnCreate;
 
   bool get isCreate => editingId == null;
@@ -65,7 +49,6 @@ class CategoryDetailPage extends StatefulWidget {
   State<CategoryDetailPage> createState() => _CategoryDetailPageState();
 }
 
-/// Which text field a typing burst belongs to (undo grouping).
 enum _TextField { name, description, note }
 
 class _CategoryDetailPageState extends State<CategoryDetailPage>
@@ -78,45 +61,29 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   final _descriptionFocus = FocusNode();
   final _noteFocus = FocusNode();
 
-  /// The persisted category — Save `copyWith`s onto it to keep id /
-  /// sortOrder / isSystem. Null while creating, or until the cubit's list
-  /// has it (opened before the list loaded).
   Category? _persisted;
   bool _notFound = false;
 
-  /// Create until the first save — then this page becomes the saved
-  /// category's view in place.
   bool get _isCreate => widget.isCreate && _persisted == null;
 
-  /// The one `GET /categories/:id` of this page: counts + the fee flag
-  /// (preference `fee_category_id`, spec 15 §7: fee drafts from bank slips
-  /// get it). Null while creating or until the call lands.
   CategoryDetail? _detail;
   bool _feeBusy = false;
 
-  /// This month's total / count: from the list row, then the detail GET.
-  /// Write answers carry 0, so they never overwrite these.
   num _monthSpent = 0;
   int _monthCount = 0;
 
-  /// The parent just chosen in the picker (its row from the picker's own
-  /// list call) and its root -> itself chain.
   Category? _pickedParent;
   var _pickedParentChain = const <CategoryPathItem>[];
 
-  /// A server field error on the name (duplicate sibling, 422), tied to the
-  /// name + parent it answered for so editing either clears it.
   String? _nameServerError;
   String? _nameServerErrorFor;
 
   static String _nameKey(String name, String? parentId) =>
       '${parentId ?? ''}|${name.trim()}';
 
-  /// The report switch while its instant save is in flight (view mode).
   bool? _includeOverride;
   bool _includeBusy = false;
 
-  /// A save error in words: the depth limit in Thai, else the server's.
   String _errorText(ApiException e, AppLocalizations l) =>
       e.code == 'MAX_DEPTH_EXCEEDED' ? l.categoryErrorMaxDepth : e.message;
 
@@ -138,9 +105,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
             ? const _CategoryDraft()
             : _CategoryDraft.fromCategory(_persisted!),
       );
-      // Opened before the list loaded (a deep link, a cold tab): load it
-      // and take the row when it arrives ([_syncFromCubit]) — not-found
-      // only once a loaded list really lacks it.
       if (_persisted == null) {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           if (!mounted) return;
@@ -153,8 +117,8 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     if (!widget.isCreate) _loadDetail();
   }
 
-  /// The cubit's list changed (first load, pull-to-refresh, an edit
-  /// elsewhere): rebase on the fresh row unless an edit is in progress.
+  /// The cubit's list changed (first load, pull-to-refresh, an edit elsewhere):
+  /// rebase on the fresh row unless an edit is in progress.
   void _syncFromCubit(CategoriesState state) {
     final id = _persisted?.id ?? widget.editingId;
     if (id == null) return;
@@ -163,8 +127,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       if (c.id == id) fresh = c;
     }
     if (fresh == null) {
-      // Never had it, and the list is in: it doesn't exist. (A row that
-      // vanishes later — deleted here — keeps its last view while leaving.)
+      // Never had it, and the list is in: it doesn't exist.
       if (_persisted == null &&
           !_notFound &&
           state.status == CategoriesStatus.loaded) {
@@ -179,9 +142,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     resetDraft(_CategoryDraft.fromCategory(fresh));
   }
 
-  /// The page's one read: `GET /categories/:id` (counts, fee flag, path).
-  /// The cubit patches the list row from it; a row the list lacks (a deep
-  /// link) is taken from it directly.
   Future<void> _loadDetail() async {
     final cubit = context.read<CategoriesCubit>();
     try {
@@ -205,9 +165,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     }
   }
 
-  /// Applies at once (a user preference, not part of the category's
-  /// draft). On: this category; off: none. One at a time — turning it on
-  /// here moves it off any other.
   Future<void> _setFeeCategory(bool on) async {
     final id = _persisted?.id;
     if (id == null) return;
@@ -219,7 +176,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       );
       if (!mounted) return;
       context.read<AuthCubit>().updateUser(me);
-      // Patch the flag locally; no re-read.
       setState(() => _detail = _detail?.withFee(on));
     } on ApiException {
       if (mounted) {
@@ -244,8 +200,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     _noteFocus.dispose();
     super.dispose();
   }
-
-  // ── EditModeMixin hooks ─────────────────────────────────────────────
 
   @override
   bool get leaveOnCancel => _isCreate;
@@ -274,8 +228,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       if (mounted) _openIconMaker();
     });
   }
-
-  // ── Save / delete ───────────────────────────────────────────────────
 
   Future<void> _save() async {
     commitTextSession();
@@ -319,9 +271,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           Navigator.of(context).pop(created);
           return;
         }
-        // Become the saved category right here — edit → view in place, as
-        // contacts do. `replace` only fixes the URL: same page key, so no
-        // transition and this state is kept.
         setState(() {
           _persisted = created;
           _detail = CategoryDetail.fromCategory(created);
@@ -336,7 +285,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           clearParent: w.parentId == null,
           iconCode: w.iconCode,
           description: description.isEmpty ? null : description,
-          // Emptied = cleared: the update sends an explicit null.
           clearDescription: description.isEmpty,
           note: note.isEmpty ? null : note,
           clearNote: note.isEmpty,
@@ -372,14 +320,10 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     commitSaved(working.trimmed());
   }
 
-  /// Always a real delete. The confirm spells out the fallout (fetched
-  /// loaded): children move up, transactions become uncategorised, budgets
-  /// on this category are deleted with it.
   Future<void> _delete() async {
     final l = AppLocalizations.of(context)!;
     final c = _persisted!;
     final cubit = context.read<CategoriesCubit>();
-    // The counts come from the detail loaded on open: no extra call.
     final txCount = _detail?.transactionCount ?? 0;
     final budgetCount = _detail?.budgetCount ?? 0;
     final ok = await showConfirmDialog(
@@ -413,8 +357,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     }
   }
 
-  // ── Derived display ─────────────────────────────────────────────────
-
   Category _previewCategory() => Category(
     id: _persisted?.id ?? 'preview',
     name: working.name,
@@ -424,8 +366,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     includeInReport: working.includeInReport,
   );
 
-  /// Every level shows its own icon (owner 2026-10-11); a row with none yet
-  /// falls back to its L1 ancestor's, as the list does.
   IconCode? _resolvedDisplayIconCode() {
     if (working.iconCode != null || working.parentId == null) {
       return working.iconCode;
@@ -435,9 +375,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     return parent == null ? null : CategoryTree.resolveIconCode(parent, all);
   }
 
-  /// The parent shown in the row, root -> parent, from SERVER paths only:
-  /// the detail's `path` while the parent is unchanged, the picked row's own
-  /// path + itself after a pick. Null = no parent (or not known yet).
   List<CategoryPathItem>? _parentChain() {
     final id = working.parentId;
     if (id == null) return null;
@@ -466,7 +403,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       ),
     );
     if (!mounted || result is! IconMakerSelected) return;
-    // Any level edits its whole icon — glyph and colours.
     applyChange(working.copyWith(iconCode: result.iconCode));
   }
 
@@ -480,9 +416,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     final exclude = _persisted == null
         ? <String>{}
         : CategoryReorderLogic.subtreeIds(_persisted!.id, all).toSet();
-    // This row and everything under it must stay within 3 levels (QA F4):
-    // a parent at level d (1-based) needs d + height ≤ 3, so only levels up
-    // to 3 − height are offered. A 3-level subtree can only be top-level.
     final height = _persisted == null
         ? 1
         : CategoryReorderLogic.subtreeHeight(_persisted!.id, all);
@@ -501,7 +434,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       allowNone: true,
       noneLabel: l.categoryFormParentNone,
       title: l.categoryFormParentLabel,
-      // The picker counts levels from 0.
       maxDepth: deepestParent < 1 ? 0 : deepestParent - 1,
       excludeIds: exclude,
     );
@@ -525,8 +457,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     }
   }
 
-  // ── Build ───────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -537,7 +467,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           : Scaffold(
               extendBodyBehindAppBar: true,
               appBar: AppTopBar(title: l.categoriesTitle, showBack: true),
-              // Skeleton → error + retry → not found (AsyncStateView).
               body: BlocBuilder<CategoriesCubit, CategoriesState>(
                 builder: (context, state) => AsyncStateView.fallback(
                   loading: !_notFound && state.error == null,
@@ -555,8 +484,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   }
 
   Widget _page(AppLocalizations l) {
-    // The + presets this category (and its type) while this page is on
-    // screen.
     return QuickCreatePresetScope(
       preset: QuickCreatePreset(category: _persisted),
       child: editScope(_scaffold(l)),
@@ -565,7 +492,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
 
   Widget _scaffold(AppLocalizations l) {
     return Scaffold(
-      // The bar floats over the list; its first item is padded below it.
       extendBodyBehindAppBar: true,
       appBar: AppTopBar(
         title: _title(l),
@@ -574,8 +500,8 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         onBack: handleBack,
       ),
       body: BlocBuilder<CategoriesCubit, CategoriesState>(
-        // This context sits inside the Scaffold body, so it sees the bar
-        // height in its top padding.
+        // This context sits inside the Scaffold body, so it sees the bar height
+        // in its top padding.
         builder: (context, state) => Form(
           key: _formKey,
           child: _body(
@@ -590,16 +516,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     );
   }
 
-  /// Titles never change with the mode (owner, QA T1): the saved name in
-  /// view and edit alike (not the one being typed).
   String _title(AppLocalizations l) {
     if (_isCreate) return l.categoryFormTitleNew;
     final name = _persisted?.name ?? '';
     return name.isEmpty ? l.categoriesTitle : name;
   }
 
-  /// Instant save of the report switch in view mode (a live toggle): one
-  /// update with only that field changed; reverts with a snackbar on failure.
   Future<void> _setIncludeLive(bool v) async {
     final row = _persisted;
     if (row == null || _includeBusy) return;
@@ -629,7 +551,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     }
   }
 
-  /// "ต.ค. ใช้ไป · 12 รายการ ›" — the month name from the device locale.
   String _monthLabel(AppLocalizations l, bool income) {
     final month = DateFormat.MMM(
       Localizations.localeOf(context).toString(),
@@ -639,8 +560,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         : l.categoryMonthSpentLabel(month, _monthCount);
   }
 
-  /// The category's transactions this month (the dashboard drill-down route;
-  /// `type` tells income from expense).
   VoidCallback? _openMonthTransactions() {
     final c = _persisted;
     if (c == null) return null;
@@ -669,7 +588,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     final chain = _parentChain();
     final canDelete = !_isCreate && !(_persisted?.isSystem ?? true);
     return DetailLayout(
-      // Pull = the page's one read (`GET /categories/:id`); off in create.
       onRefresh: _isCreate ? null : _loadDetail,
       physics: const AlwaysScrollableScrollPhysics(),
       topInset: topInset + AppSpacing.lg,
@@ -679,7 +597,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         rows: [
           InfoRow(
             label: l.categoryFormParentLabel,
-            // Parent = its path as chips, from the detail's server `path`.
             valueChip: chain == null
                 ? null
                 : categoryPathItemsChipPath(context, chain),
@@ -687,7 +604,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
                 ? (breadcrumb ?? l.categoryFormParentNone)
                 : null,
             showChevron: true,
-            // View mode: enter edit, then open the picker.
             onTap: () {
               if (!editing) enterEdit();
               _openParentPicker(all);
@@ -705,13 +621,11 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
             value: editing
                 ? working.includeInReport
                 : (_includeOverride ?? working.includeInReport),
-            // Edit / create edit the draft (no request); view saves at once.
             submits: !editing,
             onChanged: editing
                 ? (v) => applyChange(working.copyWith(includeInReport: v))
                 : (_persisted == null || _includeBusy ? null : _setIncludeLive),
           ),
-          // Expense categories only, and only once saved (needs an id).
           if (_persisted != null && working.type == CategoryType.expense)
             SettingToggleRow(
               label: l.categoryFeeSwitchLabel,
@@ -769,7 +683,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     final Widget typeChip = _isCreate
         ? OptionMenuAnchor<CategoryType>(
             selected: working.type,
-            // Changing the type clears the parent (it belongs to the type).
             onSelected: (t) =>
                 applyChange(working.copyWith(type: t, clearParent: true)),
             options: [
@@ -866,7 +779,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     final name = v?.trim() ?? '';
     if (name.isEmpty) return l.categoryFormNameRequired;
     if (name.length > TextLimits.name) return l.categoryFormNameTooLong;
-    // Duplicate sibling: the server decides (422 CATEGORY_NAME_DUPLICATE).
     if (_nameServerError != null &&
         _nameServerErrorFor == _nameKey(name, working.parentId)) {
       return _nameServerError;
@@ -874,10 +786,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     return null;
   }
 }
-
-// ────────────────────────────────────────────────────────────────────
-// Immutable editing snapshot — drives dirty-check + undo history.
-// ────────────────────────────────────────────────────────────────────
 
 class _CategoryDraft {
   const _CategoryDraft({
@@ -908,7 +816,6 @@ class _CategoryDraft {
     includeInReport: c.includeInReport,
   );
 
-  /// What the server stores (text trimmed) — the post-save baseline.
   _CategoryDraft trimmed() => copyWith(
     name: name.trim(),
     description: description.trim(),

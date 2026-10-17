@@ -5,17 +5,6 @@ import 'package:flutter/rendering.dart';
 import 'tab_nav.dart';
 import '../../ui/ui.dart';
 
-/// Tab-switch container for the shell: keeps every branch alive in an
-/// [IndexedStack] (state + scroll preserved) and runs a fade / slide each
-/// time the selected tab changes.
-///
-/// A tab root's switch is animated by the page, not here — that would move
-/// the top bar too (owner 2026-10-09: the bar must stay put across tabs).
-/// The container publishes a [TabSwitchScope]: [TabSwitchBody] (used by
-/// tab-root bodies) fades the page under the bar, and `AppTopBar` uses it
-/// to slide its left group in / out when one tab has it and the other
-/// doesn't. Only a tab that lands on a page with no [TabSwitchBody] (a
-/// detail page — history restore, an `openPage` jump) is faded whole here.
 class FadeBranchContainer extends StatefulWidget {
   const FadeBranchContainer({
     required this.currentIndex,
@@ -43,11 +32,8 @@ class _FadeBranchContainerState extends State<FadeBranchContainer>
   );
   int? _previous;
 
-  /// What each branch's visible top bar shows — written by the bars.
   final Map<int, Object?> _topBars = {};
 
-  /// Branches whose visible page animates the switch itself
-  /// ([TabSwitchBody]) — re-claimed on every switch.
   final Set<int> _claimed = {};
 
   @override
@@ -80,11 +66,6 @@ class _FadeBranchContainerState extends State<FadeBranchContainer>
         index: widget.currentIndex,
         children: [
           for (var i = 0; i < widget.children.length; i++)
-            // Inactive branches stay mounted but out of the semantics tree,
-            // out of hero flights (every branch's top bar uses the same hero
-            // tags, and a root push would see them all) and with tickers
-            // off — no hidden animations, and their pages stop claiming the
-            // back gesture (AppPageTransitionsBuilder).
             TickerMode(
               enabled: i == widget.currentIndex,
               child: ExcludeSemantics(
@@ -105,7 +86,6 @@ class _FadeBranchContainerState extends State<FadeBranchContainer>
   }
 }
 
-/// The shell's tab-switch state, for widgets inside a branch.
 class TabSwitchScope extends InheritedWidget {
   const TabSwitchScope._({
     required this.animation,
@@ -121,29 +101,21 @@ class TabSwitchScope extends InheritedWidget {
   final Animation<double> animation;
   final int current;
 
-  /// The tab before the latest switch (null before the first one).
   final int? previous;
 
   final Map<int, Object?> _topBars;
   final Set<int> _claimed;
 
-  /// Null outside the shell (tests, dev previews).
   static TabSwitchScope? maybeOf(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<TabSwitchScope>();
 
-  /// The branch [context] lives in, or null outside the shell.
   static int? branchOf(BuildContext context) =>
       context.getInheritedWidgetOfExactType<_BranchIndex>()?.index;
 
-  /// What branch [branch]'s visible top bar last showed (opaque to us).
   Object? topBarOf(int branch) => _topBars[branch];
 
-  /// A branch's visible top bar records what it shows. No rebuild — read
-  /// on the next switch.
   void reportTopBar(int branch, Object? state) => _topBars[branch] = state;
 
-  /// The visible page of [branch] animates the switch itself — the
-  /// container leaves that tab alone. No rebuild.
   void claimSwitch(int branch) => _claimed.add(branch);
 
   @override
@@ -163,8 +135,6 @@ class _BranchIndex extends InheritedWidget {
 }
 
 /// Fades its branch in on a switch unless the visible page [claimed] it.
-/// Decided at paint time, after the arriving page has built and claimed —
-/// so a tab root never fades its top bar, and a detail page never snaps.
 class _UnclaimedFade extends SingleChildRenderObjectWidget {
   const _UnclaimedFade({
     required this.animation,
@@ -211,7 +181,6 @@ class _RenderUnclaimedFade extends RenderProxyBox {
     super.detach();
   }
 
-  // It may push an opacity layer on any frame of a switch.
   @override
   bool get alwaysNeedsCompositing => child != null;
 
@@ -232,9 +201,6 @@ class _RenderUnclaimedFade extends RenderProxyBox {
   }
 }
 
-/// How far (px) the visible tab body trails the finger during a sideways
-/// swipe on a tab root — a small fake "the page is moving" cue before the
-/// switch (owner 2026-10-09). Provided by `MainShell`; sits at 0 otherwise.
 class TabSwipeNudge extends InheritedWidget {
   const TabSwipeNudge({required this.offset, required super.child, super.key});
 
@@ -247,38 +213,27 @@ class TabSwipeNudge extends InheritedWidget {
   bool updateShouldNotify(TabSwipeNudge old) => offset != old.offset;
 }
 
-/// Fades / slides [child] in when the shell switches tabs, and follows the
-/// [TabSwipeNudge] mid-swipe. Wrap a page's body with it — never the
-/// Scaffold, so the top bar stays still. Outside the shell (tests, dev
-/// previews) it's a no-op.
 class TabSwitchBody extends StatelessWidget {
   const TabSwitchBody({required this.child, super.key});
 
   final Widget child;
 
-  /// Entry slide, as a fraction of the body's width.
   static const _enterShift = 0.06;
 
   @override
   Widget build(BuildContext context) {
     final scope = TabSwitchScope.maybeOf(context);
     if (scope == null) return child;
-    // The page on top of its tab animates the switch — the container
-    // keeps its hands off (it fades only pages without one).
+    // The page on top of its tab animates the switch — the container keeps its
+    // hands off (it fades only pages without one).
     final branch = TabSwitchScope.branchOf(context);
     if (branch != null && (ModalRoute.isCurrentOf(context) ?? true)) {
       scope.claimSwitch(branch);
     }
-    // Reduced motion (system setting): a plain fade — no slide, no nudge.
     if (MediaQuery.disableAnimationsOf(context)) {
       return FadeTransition(opacity: scope.animation, child: child);
     }
     final previous = scope.previous;
-    // Tabs sit in rows (ShellRow), so within one the new body comes in
-    // from the side it lies on — a tab to the right slides in from the
-    // right, whether it was swiped to, tapped or backed into. Across rows
-    // (a เพิ่มเติม card from the hub, a ⏳ 🔔 👤 chip) there's no side: it
-    // just fades.
     final from = previous == null
         ? 0.0
         : ShellTab.values[previous].sideOf(ShellTab.values[scope.current]) *

@@ -18,9 +18,6 @@ class DateFormatter {
   static String time(DateTime date, {String locale = 'en_US'}) =>
       DateFormat.jm(locale).format(date);
 
-  /// Human date for lists and headers: [today] / [yesterday] labels, then
-  /// "17 ก.ย." within the current year, "17 ก.ย. 2025" otherwise.
-  /// Pass localized labels (`l.commonToday`, `l.commonYesterday`).
   static String friendly(
     DateTime date, {
     required String today,
@@ -39,7 +36,6 @@ class DateFormatter {
         : DateFormat.yMMMd(locale).format(d);
   }
 
-  /// Parses an API `YYYY-MM-DD` date string; null when malformed.
   static DateTime? parseDay(String? ymd) =>
       ymd == null ? null : DateTime.tryParse(ymd);
 }

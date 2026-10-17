@@ -1,15 +1,3 @@
-/// The mini QR printed on Thai bank transfer slips (the Bank of Thailand
-/// slip-verification payload), e.g.
-/// `0041000600000101030140220<20-char ref>5102TH9104<crc>`:
-///
-/// | tag | holds |
-/// |---|---|
-/// | `00` | nested: `00` API id (`000001`) · `01` sending bank code · `02` transaction ref |
-/// | `51` | country (`TH`) |
-/// | `91` | CRC-16/CCITT-FALSE of everything up to and including `9104` |
-///
-/// The transaction ref is what tells two slips apart — the same transfer
-/// saved twice has the same ref (0.3.1).
 class SlipQr {
   const SlipQr({
     required this.raw,
@@ -24,20 +12,15 @@ class SlipQr {
   final String transRef;
   final String? apiId;
 
-  /// Sending bank, 3 digits (e.g. `004` KBank, `014` SCB).
   final String? bankCode;
   final String? country;
 
-  /// The payload's own checksum matched. A bad one still gives a ref —
-  /// the lab shows it so real slips can tell us whether to be strict.
   final bool crcValid;
 
-  /// Null when [payload] isn't a slip QR (a PromptPay QR, a URL, …).
   static SlipQr? tryParse(String payload) {
     final top = _tlv(payload);
     if (top == null) return null;
     final inner = top['00'];
-    // PromptPay QRs start `000201` — tag 00 is a 2-char version there.
     if (inner == null || inner.length <= 2) return null;
     final sub = _tlv(inner);
     final ref = sub?['02'];
@@ -60,7 +43,6 @@ class SlipQr {
     );
   }
 
-  /// `id(2) len(2) value` repeated to the end, or null if it doesn't fit.
   static Map<String, String>? _tlv(String s) {
     final out = <String, String>{};
     var i = 0;
@@ -75,7 +57,6 @@ class SlipQr {
     return out.isEmpty ? null : out;
   }
 
-  /// CRC-16/CCITT-FALSE (poly 0x1021, init 0xFFFF), 4 hex digits.
   static String crc16(String s) {
     var crc = 0xFFFF;
     for (final b in s.codeUnits) {

@@ -1,7 +1,5 @@
 import '../../../l10n/gen/app_localizations.dart';
 
-/// Currencies the app offers (register, profile, accounts, debts). One list
-/// so every picker shows the same set in the same order.
 abstract final class Currencies {
   static const codes = ['THB', 'USD', 'EUR', 'GBP', 'JPY'];
 

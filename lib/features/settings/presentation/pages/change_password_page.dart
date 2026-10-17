@@ -8,12 +8,6 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/data/auth_repository.dart';
 
-/// `/settings/password` — a create-style form page on the detail template
-/// (like the other create / edit pages): ONE headless box of three password
-/// fields (label above the underline, eye at the right), the helper under the
-/// new one, field errors for a wrong current password / a mismatch, a banner
-/// for a failed call. Edit mode from the start: ✕ + ยกเลิก · บันทึก, the
-/// saving overlay and the discard guard come from [EditModeMixin].
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
 
@@ -46,7 +40,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
     super.dispose();
   }
 
-  /// A form: ยกเลิก / ✕ leave the page (no view mode to fall back to).
   @override
   bool get leaveOnCancel => true;
 
@@ -97,7 +90,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
           _currentFieldError = l.changePasswordCurrentWrong;
         }
       });
-      // Anything but a wrong current password: the app's error snackbar.
       if (_currentFieldError == null) {
         final m = pageMessenger;
         m != null ? showErrorSnackBarOn(m, e) : showErrorSnackBar(context, e);
@@ -112,7 +104,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
     final editing = isEditing;
     return editScope(
       Scaffold(
-        // A form = edit mode: ✕ + ยกเลิก · บันทึก, no nav.
         appBar: AppTopBar(
           title: l.changePasswordTitle,
           showBack: true,
@@ -122,7 +113,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
         extendBodyBehindAppBar: true,
         body: Form(
           key: _formKey,
-          // Builder: the floating bar's height is only visible inside the body.
           child: Builder(
             builder: (context) => DetailPageBody(
               topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
@@ -186,7 +176,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
     );
   }
 
-  /// The form-field look: label above the underline, the eye at the right.
   Widget _passwordField({
     required TextEditingController controller,
     required String label,

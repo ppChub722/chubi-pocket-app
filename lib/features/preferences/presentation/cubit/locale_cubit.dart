@@ -8,7 +8,6 @@ const List<Locale> supportedLocales = [Locale('th'), Locale('en')];
 
 const Locale defaultLocale = Locale('th');
 
-/// Holds the active [Locale] and persists it. Defaults to Thai per design lock.
 class LocaleCubit extends Cubit<Locale> {
   LocaleCubit(this._prefs) : super(_load(_prefs));
 

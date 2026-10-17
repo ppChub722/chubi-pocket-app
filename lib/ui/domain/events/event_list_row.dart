@@ -7,20 +7,6 @@ import '../icons/icon_display.dart';
 import '../icons/icon_type.dart';
 import '../money/money_text.dart';
 
-/// One event in the events list (0.4.0 reference §5): a hairline row, not a
-/// boxed card.
-///
-///   (icon)  name                                   +฿8,250
-///           10 ต.ค. · ใช้ไป ฿3,589 · ส่วนฉัน ฿3,589   รอรับ
-///
-/// - [subtitle]: ONE muted line (dates · spent · my share), built by the
-///   caller from the BE's numbers.
-/// - [amount] + [tone] + [caption]: my position in the event at the right —
-///   `MoneyTone.income` + "รอรับ" (green, +), `MoneyTone.expense` + "รอจ่าย"
-///   (red, −); a plain `0` with no caption when I'm even.
-/// - [dimmed]: the ended / archived look (faded; still opens).
-///
-/// Every word comes in as a string: the feature supplies the Thai.
 class EventListRow extends StatelessWidget {
   const EventListRow({
     required this.name,
@@ -35,7 +21,6 @@ class EventListRow extends StatelessWidget {
     super.key,
   });
 
-  /// The leading icon's size.
   static const double iconSize = 40;
 
   final String name;

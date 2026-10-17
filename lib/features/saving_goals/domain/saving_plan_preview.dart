@@ -1,9 +1,3 @@
-/// The edit form's live line "ออมแล้ว ฿X · เหลือ ฿Y → ต้องออม ฿Z/เดือน".
-///
-/// Instant feedback while typing only (like the split remainder): the BE
-/// recomputes every figure on save and the view mode shows ITS numbers. Same
-/// rule as the BE: months = days to the deadline / 30.44 (at least 1), rounded
-/// up to the baht; null without a deadline, past it, or when nothing is left.
 class SavingPlanPreview {
   const SavingPlanPreview({required this.remaining, this.neededMonthly});
 

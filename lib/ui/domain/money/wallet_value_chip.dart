@@ -7,8 +7,6 @@ import '../../tokens/chip_size.dart';
 import '../icons/icon_code.dart';
 import '../icons/icon_registry.dart';
 
-/// A wallet as a display chip (no tap) for `DetailRow.pick(valueChip:)` —
-/// `[icon] name` in the wallet's own colour, same recipe as the category chip.
 Widget walletValueChip(
   BuildContext context, {
   required String name,

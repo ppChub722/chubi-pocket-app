@@ -6,9 +6,6 @@ import '../cubit/app_version_cubit.dart';
 import '../pages/update_required_page.dart';
 import '../../../../ui/ui.dart';
 
-/// "มีเวอร์ชันใหม่" — a strip over every screen (next to the offline
-/// banner) while a newer build is out but this one still works. Closing
-/// it keeps it away for a day.
 class UpdateBanner extends StatelessWidget {
   const UpdateBanner({super.key});
 
@@ -31,7 +28,6 @@ class UpdateBanner extends StatelessWidget {
   }
 }
 
-/// The strip itself (gallery, tests).
 class UpdateBannerStrip extends StatelessWidget {
   const UpdateBannerStrip({
     required this.onUpdate,

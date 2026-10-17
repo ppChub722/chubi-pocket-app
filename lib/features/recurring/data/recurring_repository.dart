@@ -11,7 +11,6 @@ import '../domain/recurring.dart';
 import '../domain/recurring_item.dart';
 import '../domain/recurring_summary.dart';
 
-/// The recurring list + its filter counts (`listRecurring`, one call).
 class RecurringList {
   const RecurringList({
     this.items = const [],
@@ -23,10 +22,8 @@ class RecurringList {
 
   final List<Recurring> items;
 
-  /// The summary card's numbers (`summary`); null when absent.
   final RecurringSummary? summary;
 
-  /// {current, archived, all} → n.
   final Map<String, int> counts;
   final int page;
   final int totalPages;
@@ -34,15 +31,11 @@ class RecurringList {
   bool get hasMore => page < totalPages;
 }
 
-/// `/recurring` + `/recurring-items` (openapi tag Recurring). Every write
-/// returns the new state; the due check runs inside every recurring read, so
-/// a pull-to-refresh is a recheck.
 class RecurringRepository {
   RecurringRepository({required ApiClient client}) : _client = client;
 
   final ApiClient _client;
 
-  /// The app-wide instance (provided in app.dart).
   static RecurringRepository of(BuildContext context) =>
       context.read<RecurringRepository>();
 
@@ -54,9 +47,6 @@ class RecurringRepository {
     }
   }
 
-  // ── Recurrings ──────────────────────────────────────────────────────
-
-  /// `listRecurring`.
   Future<RecurringList> list({
     RecurringFilter filter = RecurringFilter.current,
     int page = 1,
@@ -89,9 +79,6 @@ class RecurringRepository {
     );
   });
 
-  /// `getRecurring`: the setting + its first produced items.
-  ///
-  /// [deletePreview] adds what a delete touches (`include=delete_preview`).
   Future<RecurringDetail> get(String id, {bool deletePreview = false}) =>
       _call((dio) async {
         final res = await dio.get<Map<String, dynamic>>(
@@ -103,7 +90,6 @@ class RecurringRepository {
         return RecurringDetail.fromJson(res.data!);
       });
 
-  /// `createRecurring`.
   Future<RecurringDetail> create(RecurringWrite write) => _call((dio) async {
     final res = await dio.post<Map<String, dynamic>>(
       '/recurring',
@@ -112,9 +98,6 @@ class RecurringRepository {
     return RecurringDetail.fromJson(res.data!);
   });
 
-  /// `updateRecurring`: a rule / start / end change rebuilds the upcoming
-  /// items; [scope] (upcoming | all) says which items take the field changes;
-  /// [alsoUpdateLink] (with all) changes their drafts / transactions too.
   Future<RecurringDetail> update(
     String id,
     RecurringWrite write, {
@@ -132,7 +115,6 @@ class RecurringRepository {
     return RecurringDetail.fromJson(res.data!);
   });
 
-  /// `duplicateRecurring`: a new ACTIVE copy starting today → its page.
   Future<RecurringDetail> duplicate(String id) => _call((dio) async {
     final res = await dio.post<Map<String, dynamic>>(
       '/recurring/$id/duplicate',
@@ -140,7 +122,6 @@ class RecurringRepository {
     return RecurringDetail.fromJson(res.data!);
   });
 
-  /// `deleteRecurring` → the wallet balances it moved.
   Future<Map<String, double>> delete(
     String id, {
     required bool deleteLinkedTxs,
@@ -152,9 +133,6 @@ class RecurringRepository {
     return ItemWriteResult.fromJson(res.data ?? const {}).balances;
   });
 
-  /// `pauseRecurring` / `resumeRecurring` / `archiveRecurring` /
-  /// `restoreRecurring` / `extendRecurring`.
-  /// One literal path per op (the hub's endpoint scan reads them).
   Future<RecurringDetail> action(String id, RecurringAction action) =>
       _call((dio) async {
         final res = await switch (action) {
@@ -177,8 +155,6 @@ class RecurringRepository {
         return RecurringDetail.fromJson(res.data!);
       });
 
-  /// `extendRecurring` with the new end (`{kind: date|count, date|count}`);
-  /// null `end` = a setting with no end (the BE writes one more block).
   Future<RecurringDetail> extend(String id, {Map<String, dynamic>? end}) =>
       _call((dio) async {
         final res = await dio.post<Map<String, dynamic>>(
@@ -188,9 +164,6 @@ class RecurringRepository {
         return RecurringDetail.fromJson(res.data!);
       });
 
-  // ── Items ───────────────────────────────────────────────────────────
-
-  /// `listRecurringRuleItems`: one recurring's produced or upcoming items.
   Future<ItemPage> items(
     String recurringId, {
     required bool upcoming,
@@ -206,8 +179,6 @@ class RecurringRepository {
     return ItemPage.fromJson(res.data);
   });
 
-  /// `listRecurringItems?month=`: the calendar — every item dated in [month]
-  /// (YYYY-MM), every status, oldest first, one page of up to 100.
   Future<ItemPage> calendar(DateTime month) => _call((dio) async {
     final mm = month.month.toString().padLeft(2, '0');
     final res = await dio.get<Map<String, dynamic>>(
@@ -217,8 +188,6 @@ class RecurringRepository {
     return ItemPage.fromJson(res.data);
   });
 
-  /// `updateRecurringItem` for ONE occurrence: a new [date] and / or
-  /// [amount] (scope this). The date / amount stay as they are when null.
   Future<ItemWriteResult> editOccurrence(
     String id, {
     DateTime? date,
@@ -235,8 +204,6 @@ class RecurringRepository {
     return ItemWriteResult.fromJson(res.data!);
   });
 
-  /// `createRecurringItem`: a manual item on a recurring (or a one-off when
-  /// [recurringId] is null).
   Future<ItemWriteResult> addItem(String? recurringId, PendingDraft values) =>
       _call((dio) async {
         final res = await dio.post<Map<String, dynamic>>(
@@ -246,7 +213,6 @@ class RecurringRepository {
         return ItemWriteResult.fromJson(res.data!);
       });
 
-  /// `updateRecurringItem`.
   Future<ItemWriteResult> updateItem(
     String id,
     PendingDraft values, {
@@ -264,7 +230,6 @@ class RecurringRepository {
     return ItemWriteResult.fromJson(res.data!);
   });
 
-  /// `deleteRecurringItem`.
   Future<ItemWriteResult> deleteItem(
     String id, {
     required bool deleteLinkedTx,
@@ -276,8 +241,6 @@ class RecurringRepository {
     return ItemWriteResult.fromJson(res.data ?? {'id': id});
   });
 
-  /// `createFromRecurringItem`: "สร้างใหม่" → a pending draft or a real tx;
-  /// [values] may change any field incl. the date (after today = upcoming).
   Future<ItemWriteResult> createFromItem(
     String id,
     ItemTarget target, {
@@ -293,7 +256,6 @@ class RecurringRepository {
     return ItemWriteResult.fromJson(res.data!);
   });
 
-  /// `archiveRecurringItem` / `restoreRecurringItem`.
   Future<ItemWriteResult> setItemArchived(
     String id, {
     required bool archived,
@@ -304,7 +266,6 @@ class RecurringRepository {
     return ItemWriteResult.fromJson(res.data!);
   });
 
-  /// `batchRecurringItems`: one call for the selected items.
   Future<ItemWriteResult> batch(
     List<String> ids,
     ItemBatchAction action, {
@@ -324,8 +285,6 @@ class RecurringRepository {
   });
 }
 
-/// The one-call lifecycle moves of a recurring.
 enum RecurringAction { pause, resume, archive, restore, extend }
 
-/// The batch moves on selected items.
 enum ItemBatchAction { create, archive, restore, delete }

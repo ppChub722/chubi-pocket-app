@@ -2835,7 +2835,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get transactionFormSave => 'บันทึก';
 
   @override
-  String get transactionFormAccountNone => 'ไม่ผูกกระเป๋า';
+  String get transactionFormAccountNone => 'ไม่ระบุกระเป๋า';
 
   @override
   String get transactionFormAccountPickerTitle => 'เลือกกระเป๋า';
@@ -4061,7 +4061,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get txSplitNoContact => 'ไม่ผูกผู้ติดต่อ';
+  String get txSplitNoContact => 'ไม่ระบุผู้ติดต่อ';
 
   @override
   String get txSplitNoContactHint => 'ใช้ชื่อเดิม พิมพ์แก้ได้';
@@ -4394,7 +4394,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get quickModeDebt => 'หนี้';
 
   @override
-  String get debtNoWallet => 'ไม่ผูก';
+  String get debtNoWallet => 'ไม่ระบุกระเป๋า';
 
   @override
   String get debtPickPerson => 'เลือกคน';
@@ -4448,13 +4448,25 @@ class AppLocalizationsTh extends AppLocalizations {
       'ปิด = จดในสมุดหนี้อย่างเดียว ไม่นับในรายรับรายจ่าย';
 
   @override
-  String get txFilterNoWallet => 'ไม่มีกระเป๋า';
+  String get txFilterNoWallet => 'ไม่ระบุกระเป๋า';
 
   @override
-  String get txFilterNoCategory => 'ไม่มีหมวด';
+  String get txFilterNoCategory => 'ไม่ระบุหมวด';
 
   @override
-  String get txFilterNoTag => 'ไม่มีแท็ก';
+  String get txFilterNoTag => 'ไม่ระบุแท็ก';
+
+  @override
+  String get txSummaryNet => 'สุทธิ';
+
+  @override
+  String get txFilterAmount => 'จำนวนเงิน';
+
+  @override
+  String get txFilterAmountMin => 'ต่ำสุด';
+
+  @override
+  String get txFilterAmountMax => 'สูงสุด';
 
   @override
   String get txTitleHintExpense => 'จ่ายค่าอะไร?';
@@ -6485,7 +6497,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpGoalsAutoFrom => 'กันเงินจาก';
 
   @override
-  String get fpGoalsNoWallet => 'ไม่มีกระเป๋า';
+  String get fpGoalsNoWallet => 'ไม่ระบุกระเป๋า';
 
   @override
   String get fpGoalsChartActual => 'ออมจริง';

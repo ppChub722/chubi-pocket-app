@@ -4,8 +4,6 @@ import '../../atoms/app_chip.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';
 
-/// One thing that feeds a budget / goal: a category, a tag, a wallet — or a
-/// "kind" of money (normal · event · recurring ahead · pending).
 class SourceChipItem {
   const SourceChipItem(
     this.label, {
@@ -17,13 +15,10 @@ class SourceChipItem {
   final String label;
   final IconData? icon;
 
-  /// An entity's own colour (a category's tint); wins over [tone].
   final Color? color;
   final AppChipTone tone;
 }
 
-/// A small soft pill naming a source (the mockup's `.src`): mini size, a
-/// quiet tint. [color] (an entity's colour) wins over [tone].
 class SourceChip extends StatelessWidget {
   const SourceChip(
     this.label, {
@@ -53,9 +48,6 @@ class SourceChip extends StatelessWidget {
   );
 }
 
-/// What feeds a budget as a wrapping row of [SourceChip]s, e.g. the
-/// categories / tags / wallets it counts. At most [maxVisible] show; the rest
-/// fold into one "+n" chip ([overflowLabel] builds its text, default "+n").
 class SourceChips extends StatelessWidget {
   const SourceChips({
     required this.items,
@@ -67,7 +59,6 @@ class SourceChips extends StatelessWidget {
   final List<SourceChipItem> items;
   final int maxVisible;
 
-  /// The folded chip's text from how many are hidden.
   final String Function(int hidden)? overflowLabel;
 
   @override

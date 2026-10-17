@@ -6,8 +6,6 @@ import 'account_type.dart';
 import 'wallet_member.dart';
 import '../../../ui/ui.dart';
 
-/// What the wallet is to my net worth — computed in the BE from the type
-/// (credit_card / pay_later = liability); drives the colour group.
 enum WalletGroup {
   asset,
   liability;
@@ -16,7 +14,6 @@ enum WalletGroup {
       s == 'liability' ? WalletGroup.liability : WalletGroup.asset;
 }
 
-/// A wallet's lifecycle state.
 enum AccountStatus {
   active,
   archived,
@@ -29,9 +26,6 @@ enum AccountStatus {
   };
 }
 
-/// One account — a place where money lives. Cash wallet, bank account, e-wallet,
-/// credit card, or pay-later service. User-facing surfaces call this a
-/// **wallet** (spec §14 naming rule); code and API keep `account`.
 class Account extends Equatable {
   const Account({
     required this.id,
@@ -75,17 +69,10 @@ class Account extends Equatable {
   final String? note;
   final double balance;
 
-  /// "ติดตามยอดเงิน" (owner 2026-10-12): off → no balance is shown anywhere
-  /// (list / pickers / hero), no ปรับยอด, and the wallet is left out of the
-  /// totals. [balance] is still the running sum — hide it, don't trust it.
   final bool trackBalance;
 
-  /// The caller's own savings held in this wallet (goals v2); null when the
-  /// BE sent none.
   final WalletSavings? savings;
 
-  /// This month's cash in / out on the wallet (user timezone; transfers and
-  /// opening / adjustment rows are left out).
   final double monthIn;
   final double monthOut;
 
@@ -93,13 +80,12 @@ class Account extends Equatable {
   final DateTime? dueDateNext;
   final int? daysUntilDue;
 
-  /// A card with a limit: what is owed / the limit, rounded, not clamped (BE).
   final int? creditUsedPct;
 
-  /// A card with a limit: limit − owed, floored at 0 (BE; null without a limit).
+  /// A card with a limit: limit − owed, floored at 0 (BE; null without a
+  /// limit).
   final double? creditAvailable;
 
-  /// Whether any UI may show [balance] (and the credit figures built on it).
   bool get showsBalance => trackBalance;
 
   /// Read-only: the user's currency, set by the BE (never sent on writes).
@@ -109,25 +95,19 @@ class Account extends Equatable {
 
   final double? creditLimit;
 
-  /// Day of month, 31 = the last day.
   final int? statementDate;
   final int? paymentDueDate;
   final double? minimumPayment;
 
-  /// Active members (always including the caller), the caller's own report
-  /// scope, and `is_shared` = more than one active member.
   final List<WalletMember> members;
   final WalletReportScope? myReportScope;
   final bool isShared;
 
-  /// Numbers this wallet is known by on bank slips (spec 15 §5) — the
-  /// owner edits them; slip import matches against them.
   final List<AccountIdentifier> identifiers;
 
   final AccountStatus status;
   final int sortOrder;
 
-  /// The caller's role here, and whether they may edit it (= the owner).
   final WalletRole myRole;
   final bool canEdit;
 
@@ -136,36 +116,25 @@ class Account extends Equatable {
 
   final WalletGroup? _group;
 
-  /// The BE's colour group (asset / liability). Rows built client-side
-  /// (previews, samples) derive it from the type.
   WalletGroup get group =>
       _group ?? (type.isCredit ? WalletGroup.liability : WalletGroup.asset);
 
-  /// A wallet whose kind is what I owe (credit card / pay later).
   bool get isLiability => group == WalletGroup.liability;
 
   bool get isArchived => status == AccountStatus.archived;
 
-  /// The group's theme colour (have = cool, owe = warm).
   Color colorOf(BuildContext context) {
     final palette = Theme.of(context).extension<AppColors>()!;
     return isLiability ? palette.walletLiability : palette.walletAsset;
   }
 
-  /// Active members other than the caller (BE `is_me`) — for the "other
-  /// members" avatar stack on cards / detail (spec B2: exclude self).
   List<WalletMember> get otherMembers => members.where((m) => !m.isMe).toList();
 
-  /// A card / pay-later's used credit — what's owed on it. A positive
-  /// balance (overpaid) uses none; 0 for other types.
   double get creditUsed =>
       isLiability && trackBalance && balance < 0 ? -balance : 0;
 
-  /// Money I owe through this wallet: a card's used credit, or a wallet
-  /// that isn't credit gone below zero (overdrawn). 0 otherwise.
   double get debt => balance < 0 ? -balance : 0;
 
-  /// Money I have in it — any positive balance (an overpaid card too).
   double get asset => balance > 0 ? balance : 0;
 
   Account copyWith({
@@ -291,12 +260,10 @@ class Account extends Equatable {
     );
   }
 
-  /// `CreateAccountRequest` — no `currency`: the BE sets the user's own.
   Map<String, dynamic> toCreateJson() {
     return <String, dynamic>{
       'name': name,
       'type': type.toJson(),
-      // Off: no opening balance (the BE ignores one).
       'track_balance': trackBalance,
       if (trackBalance) 'balance': balance,
       if (iconCode != null) 'icon_code': iconCode!.toJson(),
@@ -313,9 +280,6 @@ class Account extends Equatable {
     };
   }
 
-  /// `UpdateAccountRequest` — no `currency` or `status`. [currentBalance]
-  /// only goes with `track_balance: true` (turning tracking back on: the BE
-  /// books the adjustment when it differs; without the flag it is a 400).
   Map<String, dynamic> toUpdateJson({double? currentBalance}) {
     return <String, dynamic>{
       'name': name,
@@ -332,7 +296,6 @@ class Account extends Equatable {
         'payment_due_date': paymentDueDate,
         'minimum_payment': minimumPayment,
       },
-      // The whole list — the BE replaces the stored one ([] clears it).
       'identifiers': [for (final i in identifiers) i.toJson()],
     };
   }
@@ -374,8 +337,6 @@ class Account extends Equatable {
   ];
 }
 
-/// One slice of a wallet's saved money: a goal, or the spare (unassigned)
-/// savings.
 class WalletSavingsBucket extends Equatable {
   const WalletSavingsBucket({
     required this.isGoal,
@@ -385,7 +346,6 @@ class WalletSavingsBucket extends Equatable {
     this.iconCode,
   });
 
-  /// `goal` (has an [id]) or `spare`.
   final bool isGoal;
   final String? id;
   final String name;
@@ -407,8 +367,6 @@ class WalletSavingsBucket extends Equatable {
   List<Object?> get props => [isGoal, id, name, iconCode, amount];
 }
 
-/// The caller's own savings in one wallet (`Account.savings`). A warning
-/// only — [savedExceedsBalance] blocks nothing.
 class WalletSavings extends Equatable {
   const WalletSavings({
     required this.balance,
@@ -424,13 +382,11 @@ class WalletSavings extends Equatable {
   final double saved;
   final double spare;
 
-  /// Null when the wallet doesn't track its balance.
   final double? available;
   final bool savedExceedsBalance;
   final double overBy;
   final List<WalletSavingsBucket> buckets;
 
-  /// Nothing saved here — the section stays hidden.
   bool get isEmpty => saved == 0 && buckets.isEmpty;
 
   factory WalletSavings.fromJson(Map<String, dynamic> json) {
@@ -461,7 +417,6 @@ class WalletSavings extends Equatable {
   ];
 }
 
-/// Income / expense of one wallet over a period (`include=summary`).
 class AccountSummary extends Equatable {
   const AccountSummary({
     required this.from,
@@ -499,8 +454,6 @@ class AccountSummary extends Equatable {
   ];
 }
 
-/// `GET /accounts/:id?include=summary,members` — the wallet plus this
-/// period's summary and the whole members history (pending / left too).
 class AccountDetail extends Equatable {
   const AccountDetail({
     required this.account,
@@ -538,7 +491,6 @@ class AccountDetail extends Equatable {
   List<Object?> get props => [account, summary, membersHistory];
 }
 
-/// One type's slice of [AccountTotals].
 class AccountTypeTotal extends Equatable {
   const AccountTypeTotal({
     required this.type,
@@ -554,9 +506,6 @@ class AccountTypeTotal extends Equatable {
   List<Object?> get props => [type, count, balance];
 }
 
-/// The accounts page's summary card, computed by the BE over the wallets in
-/// the user's currency. [liabilities] and [creditUsed] are positive numbers
-/// owed; [net] = [assets] − [liabilities].
 class AccountTotals extends Equatable {
   const AccountTotals({
     this.assets = 0,
@@ -588,28 +537,20 @@ class AccountTotals extends Equatable {
   final double creditLimit;
   final int sharedCount;
 
-  /// Signed sum of the shared wallets' balances, in the user's currency.
   final double sharedBalance;
 
-  /// Wallets in another (legacy) currency — left out of the sums.
   final int otherCurrencyCount;
 
-  /// Wallets with "ติดตามยอดเงิน" off — left out of every sum.
   final int untrackedCount;
 
-  /// The กระเป๋าตังค์ tile (the non-credit wallets), the หนี้บัตร tile and
-  /// its used % of the cards' limits; what is earmarked as savings and what
-  /// is really spendable (BE, no client sums).
   final double cashTotal;
   final double cardDebt;
   final int cardUsedPct;
   final double savedTotal;
   final double availableTotal;
 
-  /// The กระเป๋าตังค์ tile caption: each non-credit type's % of [cashTotal].
   final List<CashSplitShare> cashSplit;
 
-  /// Credit left on the cards (limit − used), for the หนี้บัตร caption.
   final double cardRemaining;
 
   factory AccountTotals.fromJson(Map<String, dynamic> json) {
@@ -672,7 +613,6 @@ class AccountTotals extends Equatable {
   ];
 }
 
-/// `GET /accounts` (and the reorder response).
 class AccountList {
   const AccountList({
     required this.data,
@@ -685,7 +625,6 @@ class AccountList {
   final int total;
   final AccountTotals totals;
 
-  /// Archived wallets the caller has (whatever `status` was asked for).
   final int archivedCount;
 
   factory AccountList.fromJson(Map<String, dynamic> json) => AccountList(
@@ -701,8 +640,6 @@ class AccountList {
   );
 }
 
-/// A members action's response: the wallet and the whole members history.
-/// [account] is null when the caller just left (then [members] is empty).
 class MembersResult {
   const MembersResult({required this.account, required this.members});
 
@@ -720,8 +657,6 @@ class MembersResult {
   );
 }
 
-/// `POST /accounts/:id/adjust-balance`: the wallet, the adjustment row's id
-/// and the post-write balances of every wallet touched.
 class AdjustBalanceResult {
   const AdjustBalanceResult({
     required this.account,
@@ -746,7 +681,6 @@ class AdjustBalanceResult {
   }
 }
 
-/// One type's share of the cash tile (`totals.cash_split`).
 class CashSplitShare extends Equatable {
   const CashSplitShare({required this.type, required this.pct});
 
@@ -757,8 +691,6 @@ class CashSplitShare extends Equatable {
   List<Object?> get props => [type, pct];
 }
 
-/// What deleting a wallet does (`delete_preview` before, `deleted` after):
-/// the confirm dialog prints these as the BE sends them.
 class AccountDeletePreview extends Equatable {
   const AccountDeletePreview({
     this.transactions = 0,
@@ -781,17 +713,13 @@ class AccountDeletePreview extends Equatable {
     );
   }
 
-  /// Rows that stay in the books with no wallet.
   final int transactions;
   final int transfers;
 
-  /// Opening-balance / adjustment rows: deleted with the wallet.
   final int systemRowsDeleted;
 
-  /// Recurring settings that lose the wallet (they keep running).
   final int recurring;
 
-  /// Goal money moved through this wallet: kept, unlinked from any wallet.
   final int savingEntries;
   final double savingAmount;
 

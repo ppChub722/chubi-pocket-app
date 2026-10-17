@@ -5,8 +5,6 @@ import '../../organisms/picker_sheet.dart';
 import '../../tokens/app_spacing.dart';
 import '../money/money_text.dart';
 
-/// One recurring in [RecurringPickerSheet]: [leading] · [title] / [subtitle]
-/// · the [amount], or a [trailingLabel] where there is none yet ("รอยอด").
 class RecurringPickRow {
   const RecurringPickRow({
     required this.id,
@@ -29,8 +27,8 @@ class RecurringPickRow {
   final String? trailingLabel;
 }
 
-/// A titled group of [RecurringPickRow]s (as the BE / the wrapper grouped
-/// them; the sheet never regroups or reorders).
+/// A titled group of [RecurringPickRow]s (as the BE / the wrapper grouped them;
+/// the sheet never regroups or reorders).
 class RecurringPickGroup {
   const RecurringPickGroup({required this.title, required this.rows});
 
@@ -38,8 +36,6 @@ class RecurringPickGroup {
   final List<RecurringPickRow> rows;
 }
 
-/// What [RecurringPickerSheet] resolves: a recurring ([RecurringPicked]) or
-/// "create a new one from this transaction" ([RecurringCreateNew]).
 sealed class RecurringPickChoice {
   const RecurringPickChoice();
 }
@@ -54,12 +50,6 @@ class RecurringCreateNew extends RecurringPickChoice {
   const RecurringCreateNew();
 }
 
-/// THE recurring picker (0.4.0) — a PRESENTATIONAL organism on the kit
-/// [PickerSheet] shell: title + ✕, a compact search (a client filter on
-/// title / subtitle), the [groups] with their headers, the selected row
-/// highlighted (never a ✓) and a pinned "+ สร้าง…" footer. Data, words and
-/// callbacks come in; the feature wrapper loads the list and maps its model.
-/// While [loading] it shows skeleton rows, with an [error] the retry.
 class RecurringPickerSheet extends StatelessWidget {
   const RecurringPickerSheet({
     required this.title,
@@ -82,7 +72,6 @@ class RecurringPickerSheet extends StatelessWidget {
   final String? selectedId;
   final String createLabel;
 
-  /// Nothing to list (or the search found nothing).
   final String emptyText;
   final bool loading;
   final Object? error;

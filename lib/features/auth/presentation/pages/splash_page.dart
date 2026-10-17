@@ -6,14 +6,6 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../cubit/auth_cubit.dart';
 
-/// Cold-launch screen: `AuthCubit.init()` resolves the stored token while we
-/// show the logo ([BrandLogo]) + spinner, picking up where the native launch
-/// screen left off (same background, logo on the same spot). Router
-/// redirect logic handles the actual navigation away from `/` once state
-/// settles.
-///
-/// Min display duration is enforced (~600 ms) to avoid the splash flashing on
-/// fast token-validation responses.
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
@@ -24,8 +16,6 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage> {
   static const _minDisplay = Duration(milliseconds: 600);
 
-  /// e.g. "v0.1.0 (2)" — set once package_info resolves. Helps testers
-  /// report exactly which build they're on.
   String _version = '';
 
   @override
@@ -42,7 +32,6 @@ class _SplashPageState extends State<SplashPage> {
         setState(() => _version = 'v${info.version} (${info.buildNumber})');
       }
     } catch (_) {
-      // Non-fatal — the splash just won't show a version.
     }
   }
 
@@ -55,9 +44,6 @@ class _SplashPageState extends State<SplashPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // No SafeArea: the native launch screen centres the logo in the whole
-    // window, so it's centred in the whole screen here too — the two equal
-    // flex slots around it keep it on that exact spot.
     return Scaffold(
       body: Stack(
         children: [
@@ -66,12 +52,6 @@ class _SplashPageState extends State<SplashPage> {
               const Spacer(),
               const BrandLogo(),
               Expanded(
-                // Cold start offline: couldn't reach the server → the ONE
-                // full-screen error + retry (the stored token is kept; the
-                // app's offline banner stays out of the way until auth
-                // resolves). Pull, Retry, or the connection coming back
-                // (PullToRefresh follows ConnectionScope) all re-run the
-                // check; otherwise the spinner.
                 child: BlocBuilder<AuthCubit, AuthState>(
                   builder: (context, state) {
                     final error = state is AuthInitial
@@ -112,7 +92,6 @@ class _SplashPageState extends State<SplashPage> {
               ),
             ],
           ),
-          // Build identifier, bottom-centered — testers quote this.
           Positioned(
             left: 0,
             right: 0,

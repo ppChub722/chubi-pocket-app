@@ -4,23 +4,14 @@ import '../../tokens/app/app_icons.dart';
 import '../icons/icon_code.dart';
 import '../../atoms/user_avatar.dart';
 
-/// Who a person is to me — the three looks of a person everywhere (owner
-/// 2026-10-11: splits, debts, contact picker rows).
 enum PersonLevel {
-  /// A name typed in, no contact: the generic person icon.
   name,
 
-  /// One of my contacts, not linked to an app account: the contact's own
-  /// icon / avatar.
   contact,
 
-  /// A contact linked to an app user: the icon that user set (the
-  /// contact's effective icon) + the 🔗 mark.
   linked,
 }
 
-/// The one 🔗 "linked to an app account" mark: the link icon in primary,
-/// one fixed size whatever the avatar beside it (owner 2026-10-11).
 class PersonLinkBadge extends StatelessWidget {
   const PersonLinkBadge({this.size = defaultSize, super.key});
 
@@ -36,13 +27,6 @@ class PersonLinkBadge extends StatelessWidget {
   );
 }
 
-/// A person's leading mark at [level] — `👤` · `(avatar)` · `(avatar)🔗`.
-/// The 🔗 is [PersonLinkBadge], right after the avatar at its fixed size —
-/// "(ม)🔗 มาตาก" — on chips, rows and headers alike.
-///
-/// [reserveLinkSlot]: in a list of people, unlinked marks keep the 🔗's
-/// space empty so every name starts at the same x (owner 2026-10-11). Off
-/// for a mark standing alone (a chip — it would only widen it).
 class PersonMark extends StatelessWidget {
   const PersonMark({
     required this.name,
@@ -53,9 +37,6 @@ class PersonMark extends StatelessWidget {
     super.key,
   });
 
-  /// The 🔗's footprint after a [size] mark: gap + [PersonLinkBadge] — what
-  /// [reserveLinkSlot] keeps empty. For a row that builds its own mark (a
-  /// typed name's 👤 in an avatar-wide box).
   static double linkSlotWidth(double size) =>
       _gap(size) + PersonLinkBadge.defaultSize;
 
@@ -64,7 +45,6 @@ class PersonMark extends StatelessWidget {
   final String name;
   final PersonLevel level;
 
-  /// The contact's (linked: the user's) icon; unused for [PersonLevel.name].
   final IconCode? iconCode;
   final double size;
   final bool reserveLinkSlot;

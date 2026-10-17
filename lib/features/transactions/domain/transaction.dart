@@ -6,10 +6,6 @@ import 'refs.dart';
 import 'transaction_type.dart';
 import '../../../ui/ui.dart';
 
-/// Denormalized author of a shared-wallet row — API §14 pinned
-/// `created_by` shape: `{ user_id, display_name, icon_code }`. Present
-/// on rows returned for shared wallets so other members can render
-/// "who logged this" without a users lookup.
 class TransactionAuthor extends Equatable {
   const TransactionAuthor({
     required this.userId,
@@ -35,10 +31,8 @@ class TransactionAuthor extends Equatable {
   List<Object?> get props => [userId, displayName, iconCode];
 }
 
-/// Tag ref enriched with color + icon so the FE can render chips
-/// inline without consulting the tags cache. Mirrors the BE
-/// `EmbeddedTag` (id / name / icon_code) on every transaction
-/// response.
+/// Tag ref enriched with color + icon so the FE can render chips inline without
+/// consulting the tags cache.
 class EmbeddedTag extends Equatable {
   const EmbeddedTag({required this.id, required this.name, this.iconCode});
   final String id;
@@ -55,21 +49,12 @@ class EmbeddedTag extends Equatable {
     );
   }
 
-  /// As a [Tag], for the shared tag widgets (`tagAppChip`, `tagColor`).
   Tag get asTag => Tag(id: id, name: name, iconCode: iconCode);
 
   @override
   List<Object?> get props => [id, name, iconCode];
 }
 
-/// One transaction row — mirror of `TransactionDetail` from
-/// [`design/spec/04-transactions.md §3.2`](../../../../../chubi-pocket-docs/design/spec/04-transactions.md)
-/// trimmed to fields the FE actually reads.
-///
-/// Phase 1a constraints (BE deferred):
-/// - `splits` not surfaced (BE `ErrSplitsNotSupportedYet` → 1b)
-/// - `project_id` not editable (auto-managed; 1b)
-/// - `scheduled_transaction_id` not surfaced (1c)
 class Transaction extends Equatable {
   const Transaction({
     required this.id,
@@ -108,107 +93,56 @@ class Transaction extends Equatable {
   final String? accountId;
   final TransactionType type;
 
-  /// Always positive — direction encoded in [type] (or in the
-  /// embedded category for transfers per spec §2.1).
   final double amount;
 
-  /// Calendar date in the user's timezone, `YYYY-MM-DD`.
   final String date;
 
-  /// Optional for [TransactionType.expense] / [TransactionType.income];
-  /// auto-assigned system category for [TransactionType.transfer].
   final String? categoryId;
 
-  /// Full embedded refs (API v2): the wallet / category with their own icon,
-  /// type and system kind, so no lookup against the accounts / categories
-  /// caches. `account` is null on a no-wallet row, `category` on an
-  /// uncategorised one. On a shared-wallet row `category` is the author's.
   final AccountRef? account;
   final EmbeddedCategory? category;
 
-  /// Tags attached to this transaction. Ordered by name (BE-side), and
-  /// always present (empty list, never null) — the BE serializes the
-  /// field even when no tags are attached.
   final List<EmbeddedTag> tags;
 
   final String? description;
   final String? note;
 
-  /// Auto-managed project link (spec §04): set only on rows that mirror
-  /// a project via claim / split-resolve / quick create. `null` on bare
-  /// personal rows; the quick-create picker's eligibility filter keys on
-  /// this (spec §10/4.24: eligible = `project_id IS NULL`).
   final String? projectId;
 
-  /// Set on both rows of a transfer. Used to identify pair members.
   final String? transferGroupId;
 
-  /// Set when this row IS a debt entry's wallet side (one record with the
-  /// entry: editing / deleting either changes both) — tx detail opens it in
-  /// debt mode (owner 2026-10-12). Replaces `is_repayment` /
-  /// `source_personal_debt_id`.
   final DebtLink? counterparty;
 
-  /// The wallet side of a debt entry ([counterparty]).
   bool get isDebtEntry => counterparty != null;
 
-  /// Set when this row is in an event: the board bill it belongs to.
   final EventBillLink? eventBill;
 
-  /// Set when this row came from a recurring / an upcoming item.
   final RecurringItemLink? recurringItem;
 
-  /// Linked to another record whose money the app asks about at save /
-  /// delete (owner 2026-10-13: an event bill made from it, or its recurring
-  /// item).
   bool get hasPromptedLink =>
       (eventBill?.linked ?? false) || recurringItem != null;
 
-  /// The other side of a transfer row (null on every other row); its
-  /// `isOut` is for THIS row.
   final TransferPeer? transferPeer;
 
-  /// Row currency (3 letters).
   final String? currency;
 
   bool get hasSplits => splitCount > 0;
 
-  /// Shared-wallet row surface (API §14 pinned contract). All absent on
-  /// personal-wallet rows:
-  /// - [createdBy] — the row's author (any member may have logged it).
-  /// - [isLocked] — true for the caller's own rows after they left the
-  ///   wallet (spec §14/2.3): read-only for them, full form disabled.
-  /// - [canEditCategory] — false when the row belongs to another member
-  ///   (spec §14/2.2: only the author edits `category_id`). Defaults to
-  ///   true when the field is absent (personal rows).
   final TransactionAuthor? createdBy;
   final bool isLocked;
   final bool canEditCategory;
 
-  /// When the row was recorded / last changed (server time, local here).
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  /// Debt rows this transaction made in its owner's book ("หารกับ N คน").
   final int splitCount;
 
-  /// Those debt rows — GET /:id only, and only the caller's own (empty for
-  /// another member's row on a shared wallet, while [splitCount] shows).
   final List<TxSplit> splits;
 
-  /// `{id, name}` of [projectId]'s project — the detail page's event card.
   final EventRef? project;
 
-  /// My part of an expense / income — what reports count (the total minus
-  /// what others owe / get, or my event share). Null on transfers, and
-  /// from a BE that doesn't send it yet (then the FE works it out).
   final double? myShare;
 
-  /// BE capability flags — null while the BE doesn't send them (then the
-  /// FE's own rules decide; see tx_rules.dart):
-  /// - [canSplit]: the row can carry personal splits at all;
-  /// - [canEditSplits]: [canSplit] and I'm its author → the split editor;
-  /// - [canJoinEvent]: may go into / move to an event.
   final bool? canSplit;
   final bool? canEditSplits;
   final bool? canJoinEvent;
@@ -218,16 +152,12 @@ class Transaction extends Equatable {
   bool get isTransferIn =>
       type == TransactionType.transfer && !_isTransferOutRow;
 
-  /// The peer's direction when the BE sent it (API v2), else the row's
-  /// system category kind.
   bool get _isTransferOutRow =>
       transferPeer?.isOut ?? (category?.isTransferOut ?? false);
 
-  /// Signed effect on the row's account balance. Positive = credit.
   double get signedAmount {
     if (type == TransactionType.income) return amount;
     if (type == TransactionType.expense) return -amount;
-    // transfer
     return isTransferIn ? amount : -amount;
   }
 
@@ -413,9 +343,6 @@ class Transaction extends Equatable {
   ];
 }
 
-/// `POST` / `PUT /transactions` result (API v2): the written rows (a transfer
-/// = both, OUT first) and the wallets' balances after the write, for
-/// `AccountsCubit.patchBalances`.
 class TransactionWriteResult {
   const TransactionWriteResult({
     required this.rows,
@@ -423,7 +350,6 @@ class TransactionWriteResult {
     this.upcoming,
   });
 
-  /// One row (expense / income); balances unknown.
   TransactionWriteResult.single(Transaction tx)
     : rows = [tx],
       accountBalances = const {},
@@ -431,19 +357,14 @@ class TransactionWriteResult {
 
   final List<Transaction> rows;
 
-  /// {account id: balance after the write}.
   final Map<String, double> accountBalances;
 
-  /// A date after today (owner 2026-10-13): the write made / moved it to a
-  /// one-off UPCOMING item instead (`rows` is then empty). The raw item —
-  /// the recurring feature owns its model.
   final Map<String, dynamic>? upcoming;
 
   bool get isUpcoming => upcoming != null;
 
   bool get isTransfer => rows.length > 1;
 
-  /// The only row, or the OUT row of a transfer (the BE sends it first).
   Transaction get primary => rows.first;
 
   factory TransactionWriteResult.fromJson(Map<String, dynamic> json) =>
@@ -461,7 +382,6 @@ class TransactionWriteResult {
 
 typedef TransactionMutationResult = TransactionWriteResult;
 
-/// `DELETE /transactions/:id` result: the id and the wallets' balances.
 class DeleteTransactionResult {
   const DeleteTransactionResult({
     required this.id,
@@ -473,7 +393,6 @@ class DeleteTransactionResult {
   final String id;
   final Map<String, double> accountBalances;
 
-  /// The linked item deleted along (`also_delete_link=true`), if any.
   final String? recurringItemId;
   final String? billId;
 
@@ -486,8 +405,6 @@ class DeleteTransactionResult {
       );
 }
 
-/// One debt row a transaction's split made (GET /transactions/:id). The
-/// person comes embedded with its live name and icon ([EmbeddedPerson]).
 class TxSplit extends Equatable {
   const TxSplit({
     required this.debtId,
@@ -503,17 +420,13 @@ class TxSplit extends Equatable {
   final double amount;
   final double settledAmount;
 
-  /// open · settled · cancelled.
   final String status;
 
-  /// owed_to_me (they pay me back) vs i_owe (I pay them).
   final bool owedToMe;
 
   String get personName => person.name;
   String? get contactId => person.contactId;
 
-  /// amount − repaid. Negative = overpaid (repayments don't limit edits,
-  /// owner 2026-10-10).
   double get outstanding => amount - settledAmount;
 
   bool get isOverpaid => outstanding < -0.005;

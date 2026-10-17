@@ -4,15 +4,6 @@ import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/app/app_colors.dart';
 
-/// Red full-width row at the bottom of a page for the destructive action —
-/// "ลบหมวดหมู่นี้", "เก็บกระเป๋านี้ถาวร". Since the top bar carries no page
-/// actions (owner rule 2026-10-09), delete / archive live here: shown only
-/// in edit mode on pages that have one (a page with no in-place edit, e.g.
-/// transaction detail, shows it always). The caller still confirms via
-/// `showConfirmDialog` in [onTap].
-///
-/// [caution] = the amber one, same shape — เก็บถาวร (restorable) next to
-/// the red ลบ (owner 2026-10-11, the การจัดการ block).
 class DangerRow extends StatelessWidget {
   const DangerRow({
     required this.icon,
@@ -25,7 +16,6 @@ class DangerRow extends StatelessWidget {
     super.key,
   });
 
-  /// A small muted line under the label: what the action does.
   final String? consequence;
 
   /// The primary colour, same shape: a harmless action that ends something
@@ -38,7 +28,6 @@ class DangerRow extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  /// Null = disabled (e.g. while saving).
   final VoidCallback? onTap;
   final EdgeInsetsGeometry padding;
 

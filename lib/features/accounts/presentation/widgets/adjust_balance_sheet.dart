@@ -5,12 +5,6 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/account.dart';
 
-/// "ปรับยอด" bottom sheet (spec §2.5). The sheet itself is the kit's
-/// [showAdjustBalanceFormSheet]; this wrapper maps the [Account] + l10n into
-/// its plain params. Resolves the new balance + description + note (null
-/// when blank), or null on cancel; the caller makes the API call
-/// (`POST /v1/accounts/:id/adjust-balance`). The difference is booked as an
-/// "ปรับยอด" transaction dated today.
 Future<AdjustBalanceInput?> showAdjustBalanceSheet(
   BuildContext context,
   Account account,
@@ -42,13 +36,8 @@ Future<AdjustBalanceInput?> showAdjustBalanceSheet(
   );
 }
 
-/// What the ปรับยอด sheet resolves to.
 typedef AdjustBalanceInput = AdjustBalanceSheetResult;
 
-/// Turning "ติดตามยอดเงิน" back on: asks the wallet's balance once (the same
-/// sheet, in its set-only form — no current / difference lines). Resolves the
-/// balance as the BE stores it (a credit wallet's debt negative), or null on
-/// cancel; the caller sends it as `current_balance` in the same update.
 Future<double?> showSetBalanceSheet(
   BuildContext context,
   Account account,

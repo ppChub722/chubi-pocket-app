@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../tokens/app_spacing.dart';
 import '../domain/money/money_text.dart';
 
-/// One labelled amount in a [SummaryStats] row.
 class SummaryStat {
   const SummaryStat({
     required this.label,
@@ -16,11 +15,6 @@ class SummaryStat {
   final MoneyTone tone;
 }
 
-/// Row of labelled amounts — income · expense · net (dashboard summary,
-/// account summary, filter summary strip, project totals).
-///
-/// [compact] renders a single-line strip ("รายจ่าย ฿x · รายรับ ฿y …")
-/// for the top of filtered lists.
 class SummaryStats extends StatelessWidget {
   const SummaryStats({required this.stats, this.compact = false, super.key});
 

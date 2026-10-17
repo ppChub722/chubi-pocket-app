@@ -17,19 +17,6 @@ import '../../domain/contact.dart';
 import '../../../transactions/presentation/save_failure.dart';
 import '../cubit/contacts_cubit.dart';
 
-/// `/contacts/new`, `/contacts/:id` (+ `/edit`) — one page, view ⇄ edit
-/// (0.4.0 reference §8). The page opens with ONE call (`GET /contacts/:id
-/// ?include=unlinked_names`) and shows what the BE returns; every write
-/// answers with the contact and patches the page (no re-GET).
-///
-/// View: a people hero (link state chip, 💸 + ✏️, avatar + name +
-/// description, no money) → one box of facts → "เชื่อมบัญชี" → note → meta.
-/// Edit is its own form: the hero's name / description / icon, one box of
-/// ชื่อเล่น / อีเมล / เบอร์โทร, the "แสดงชื่อเล่น" setting, the note and the
-/// end zone (archive / delete). Linked contacts follow their account: what
-/// can't be edited (name, email, icon) is hidden in edit mode.
-///
-/// The link-request accept flows keep `ContactFormPage`.
 class ContactDetailPage extends StatefulWidget {
   const ContactDetailPage({
     this.id,
@@ -38,14 +25,12 @@ class ContactDetailPage extends StatefulWidget {
     super.key,
   });
 
-  /// Null = create.
   final String? id;
 
-  /// `/contacts/:id/edit` opens straight in edit mode.
   final bool startEditing;
 
-  /// Create only, pushed over a picker: saving pops with the new [Contact]
-  /// (the picker picks it) instead of turning into its page.
+  /// Create only, pushed over a picker: saving pops with the new [Contact] (the
+  /// picker picks it) instead of turning into its page.
   final bool popOnCreate;
 
   bool get isCreate => id == null;
@@ -66,16 +51,11 @@ class _ContactDetailPageState extends State<ContactDetailPage>
   bool _loading = false;
   ApiException? _error;
 
-  /// Split names still free to wire to this contact: from the detail GET
-  /// (include=unlinked_names), trimmed locally after an absorb.
   List<UnlinkedName> _unlinked = const [];
 
-  /// The BE's totals for the badge (names / records still free to wire).
   int _unlinkedNames = 0;
   int _unlinkedRecords = 0;
 
-  /// View-mode title: the resolved name (the edit field edits the stored
-  /// display_name).
   final _viewName = TextEditingController();
 
   @override
@@ -97,8 +77,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     super.dispose();
   }
 
-  /// The page's one load. The first one shows the skeleton / error; a later
-  /// one (pull-to-refresh) keeps the data on screen — a failure is a message.
   Future<void> _load({bool enterEdit = false}) async {
     final first = _contact == null;
     if (first) {
@@ -142,7 +120,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     _viewName.text = c.name;
   }
 
-  /// A write response replaces the page's contact (no re-GET).
   void _patch(Contact c) {
     setState(() => _setContact(c));
     resetDraft(_ContactDraft.from(c));
@@ -150,12 +127,8 @@ class _ContactDetailPageState extends State<ContactDetailPage>
 
   bool get _linked => _contact?.isLinked ?? false;
 
-  /// The contact's id — the route's, or the one just created here (create
-  /// turns into the saved contact in place, see [_save]).
   String? get _id => _contact?.id ?? widget.id;
   bool get _isCreate => _id == null;
-
-  // ── EditModeMixin hooks ─────────────────────────────────────────────
 
   @override
   bool get leaveOnCancel => _isCreate;
@@ -183,11 +156,8 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     _Field.note => working.copyWith(note: v),
   });
 
-  /// View mode: long-press a value → edit mode with that field focused.
   VoidCallback _enterOn(_Field f) =>
       () => enterEdit(focus: _focus[f]);
-
-  // ── Save / delete ───────────────────────────────────────────────────
 
   Future<void> _save() async {
     commitTextSession();
@@ -216,10 +186,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           Navigator.of(context).pop(created);
           return;
         }
-        // Become the saved contact right here — edit → view in place, like
-        // any other save. (A route swap flashed view mode, slid a new page
-        // in and showed a loading skeleton first.) `replace` only fixes the
-        // URL: same page key, so no transition and this state is kept.
         setState(() {
           _setContact(created);
           _unlinked = const [];
@@ -230,11 +196,9 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         context.replace('/contacts/${created.id}');
         return;
       }
-      // Empty strings clear a field (the API keeps omitted ones as-is).
       final updated = await cubit.update(
         _contact!.id,
         displayName: _linked ? null : w.name,
-        // '' clears the nickname (explicit null on the wire).
         nickname: w.nickname,
         showNickname: w.showNickname,
         email: _linked ? null : w.email,
@@ -257,7 +221,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
   Future<void> _delete() async {
     final l = AppLocalizations.of(context)!;
     final c = _contact!;
-    // ONE call on this button: the contact with the delete preview.
     setSaving(true);
     final ContactDeletePreview? preview;
     try {
@@ -273,7 +236,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     }
     if (!mounted) return;
     setSaving(false);
-    // What the BE says is touched, printed as sent.
     final parts = preview == null
         ? const <String>[]
         : [
@@ -324,10 +286,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     applyChange(working.copyWith(iconCode: result.iconCode));
   }
 
-  // ── Actions ─────────────────────────────────────────────────────────
-
-  /// Runs a write that answers with the contact and patches the page from
-  /// it (no re-GET).
   Future<void> _run(Future<Contact> Function() action, {String? done}) async {
     try {
       final c = await action();
@@ -358,8 +316,8 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     final l = AppLocalizations.of(context)!;
     try {
       final c = await context.read<ContactsCubit>().requestLink(_contact!.id);
-      // Same toast on hit and miss — never reveals whether the email
-      // belongs to a user.
+      // Same toast on hit and miss — never reveals whether the email belongs to
+      // a user.
       if (!mounted) return;
       showAppSnackBar(context, l.contactLinkRequested);
       _patch(c);
@@ -368,7 +326,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     }
   }
 
-  /// Archive asks first (it leaves the pickers); restore just does it.
   Future<void> _toggleArchive() async {
     final l = AppLocalizations.of(context)!;
     final cubit = context.read<ContactsCubit>();
@@ -385,8 +342,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     await _run(() => c.isArchived ? cubit.restore(c.id) : cubit.archive(c.id));
   }
 
-  /// "จับคู่ชื่อในรายการหาร": the sheet of typed split names; saving absorbs
-  /// the picked ones and the answer patches the page.
   Future<void> _openWireNames() async {
     final l = AppLocalizations.of(context)!;
     final contact = _contact!;
@@ -424,13 +379,9 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         tone: Tone.success,
       );
     }
-    // Absorb answered: patch the contact; the badge totals are the BE's, so
-    // the page's one call re-runs (the data stays on screen).
     _patch(res.contact);
     unawaited(_load());
   }
-
-  // ── Build ───────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -440,8 +391,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       return Scaffold(
         appBar: AppTopBar(title: l.moreContacts, showBack: true),
         extendBodyBehindAppBar: true,
-        // Skeleton → error + retry → not found (AsyncStateView); the template
-        // skeleton clears the transparent top bar itself.
         body: AsyncStateView.fallback(
           loading: _loading,
           error: _error,
@@ -455,7 +404,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       );
     }
 
-    // The + opens debt mode with this contact (once saved).
     return QuickCreatePresetScope(
       preset: _isCreate
           ? QuickCreatePreset.none
@@ -469,7 +417,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
               ),
             ),
       child: editScope(
-        // A save / delete in flight dims the page and blocks input.
         SavingOverlay(
           saving: isSaving,
           child: Scaffold(
@@ -483,11 +430,8 @@ class _ContactDetailPageState extends State<ContactDetailPage>
             extendBodyBehindAppBar: true,
             body: Form(
               key: _formKey,
-              // Builder: its context sees the floating bar's height.
               child: Builder(
                 builder: (context) => DetailLayout(
-                  // Pull = the page's one load call; off in create and while
-                  // editing (a reload resets the draft).
                   onRefresh: _isCreate ? null : _refresh,
                   refreshEnabled: !isEditing,
                   topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
@@ -526,7 +470,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     );
   }
 
-  /// "🔗 เชื่อมกับ @user แล้ว" / "ยังไม่เชื่อมกับผู้ใช้ในแอป".
   String _linkLabel(AppLocalizations l, Contact c) {
     final u = c.linkedUser;
     if (u == null) return l.fpContactsNotLinked;
@@ -536,10 +479,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     );
   }
 
-  // ── View ────────────────────────────────────────────────────────────
-
-  /// The people hero: link state chip (+ archived), 💸 + ✏️, avatar, name,
-  /// description. No money on the card.
   Widget _viewHero(AppLocalizations l) {
     final c = _contact!;
     return HeroCard(
@@ -570,7 +509,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         ),
       ],
       onEdit: enterEdit,
-      // Linked: the account's icon wins (and isn't editable here).
       icon: GestureDetector(
         onLongPress: _linked
             ? null
@@ -603,7 +541,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     );
   }
 
-  /// ONE box: ชื่อเล่น / อีเมล / เบอร์โทร — empty rows hidden, none = no box.
   Widget? _viewInfo(AppLocalizations l) {
     final c = _contact!;
     InfoRow? row(String label, String? value, _Field f) =>
@@ -618,8 +555,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     return rows.isEmpty ? null : InfoBox(rows: rows);
   }
 
-  /// เชื่อมบัญชี: send a request (email set, not linked) or unlink; match the
-  /// typed split names.
   Widget _linkSection(AppLocalizations l) {
     final c = _contact!;
     final hasEmail = c.email?.isNotEmpty ?? false;
@@ -688,10 +623,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     );
   }
 
-  // ── Edit / create ───────────────────────────────────────────────────
-
-  /// Edit mode is its own form: the card keeps the icon, the name (not for a
-  /// linked contact — it follows the account) and the description.
   Widget _editHero(AppLocalizations l) {
     final c = _contact;
     final w = working;
@@ -736,7 +667,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     );
   }
 
-  /// ONE box: ชื่อเล่น, อีเมล (not for a linked contact), เบอร์โทร.
   Widget _editInfo(AppLocalizations l) {
     Widget field(
       _Field f,
@@ -790,7 +720,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     );
   }
 
-  /// "แสดงชื่อเล่น" — part of the form (saved with it), edit mode only.
   Widget _editSettings(AppLocalizations l) => SettingsSection(
     title: l.settingsTitle,
     description: l.fpContactsSettingsDesc,
@@ -804,7 +733,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     ],
   );
 
-  /// เก็บถาวร (flips to กู้คืน) and ลบ — the existing confirm dialogs.
   Widget _endZone(AppLocalizations l) {
     final c = _contact!;
     return EndZone(

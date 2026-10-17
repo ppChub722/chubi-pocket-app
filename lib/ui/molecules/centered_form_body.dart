@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_spacing.dart';
 
-/// The body of a centred, narrow form page (the auth pages: sign in, register):
-/// safe-area, vertically centred when short, scrolls when tall (keyboard), the
-/// form capped at [maxWidth] and centred on wide screens.
 class CenteredFormBody extends StatelessWidget {
   const CenteredFormBody({
     required this.child,
@@ -20,8 +17,6 @@ class CenteredFormBody extends StatelessWidget {
   final Widget child;
   final double maxWidth;
 
-  /// false = no top safe-area inset (the page already has an app bar / its own
-  /// top spacing, e.g. register).
   final bool safeTop;
   final EdgeInsetsGeometry padding;
 

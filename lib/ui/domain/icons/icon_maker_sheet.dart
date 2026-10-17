@@ -7,50 +7,31 @@ import 'packs/pack_registry.dart';
 import '../../atoms/dashed_rect_border.dart';
 import '../../ui.dart';
 
-/// Return type from [showIconMakerSheet].
 sealed class IconMakerResult {
   const IconMakerResult();
 }
 
-/// User confirmed a selection.
 class IconMakerSelected extends IconMakerResult {
   const IconMakerSelected(this.iconCode);
   final IconCode iconCode;
 }
 
-/// User tapped "Remove" — only emitted when [showIconMakerSheet.removeLabel]
-/// is provided (i.e. on an edit form where clearing the icon is allowed).
 class IconMakerRemoved extends IconMakerResult {
   const IconMakerRemoved();
 }
 
-/// Opens the icon maker as a bottom sheet (mobile) or dialog (≥ 600 dp).
-///
-/// Returns [IconMakerSelected], [IconMakerRemoved], or `null` (dismissed).
 Future<IconMakerResult?> showIconMakerSheet({
   required BuildContext context,
   required IconType type,
   IconCode? initial,
   Widget? previewSubtitle,
   Widget Function(IconCode)? previewBuilder,
-  // Sheet heading — name the thing ("ไอคอนกระเป๋า") or the bulk job
-  // ("เปลี่ยนสี 3 แท็ก"). Defaults to the localized "ไอคอน".
   String? title,
-  // Kept for call-site compatibility; not used in the new tap-to-focus UI.
   String? iconSectionLabel,
   String? colorSectionLabel,
   String? useThisLabel,
-  // Non-null enables "ใช้ไอคอนเริ่มต้นของแอป" in the ⋯ menu (returns
-  // [IconMakerRemoved]). The menu shows the localized label.
   String? removeLabel,
   bool showColorSection = true,
-  // Granular section visibility. Defaults keep the full editor (no change
-  // for existing callers). Set these for single-attribute pickers, e.g.
-  // bulk recolour (showIconPicker: false) or bulk re-icon (showColorPicker:
-  // false), and hide bg/border for icon-tint types like tags.
-  // Layer visibility — which of the three elements (icon / background /
-  // border) the user can edit. Any non-empty combination works; hidden
-  // layers keep their current value in the result. See [IconMakerLayers].
   bool showIcon = true,
   bool showBackground = true,
   bool showBorder = true,
@@ -98,8 +79,8 @@ Future<IconMakerResult?> showIconMakerSheet({
       ),
     );
   }
-  // Fixed height (not content-sized) so switching tabs / layers never makes
-  // the sheet jump. Root navigator → it covers the shell's nav + FAB.
+  // Fixed height (not content-sized) so switching tabs / layers never makes the
+  // sheet jump.
   return showModalBottomSheet<IconMakerResult>(
     context: context,
     isScrollControlled: true,
@@ -111,9 +92,6 @@ Future<IconMakerResult?> showIconMakerSheet({
   );
 }
 
-/// The seven layer combinations of [showIconMakerSheet] — pass
-/// `layers.icon / .background / .border` as `showIcon / showBackground /
-/// showBorder`.
 enum IconMakerLayers {
   all(icon: true, background: true, border: true),
   iconBackground(icon: true, background: true, border: false),
@@ -134,11 +112,8 @@ enum IconMakerLayers {
   final bool border;
 }
 
-// ─── Enums ────────────────────────────────────────────────────────────────────
-
 enum _Role { icon, background, border }
 
-/// Snapshot of every mutable state that the undo stack rolls back.
 class _Snapshot {
   const _Snapshot({
     required this.iconId,
@@ -159,10 +134,7 @@ class _Snapshot {
   final String? shape;
 }
 
-/// The two pickers inside the sheet.
 enum _Tab { style, color }
-
-// ─── Sheet widget ─────────────────────────────────────────────────────────────
 
 class _Sheet extends StatefulWidget {
   const _Sheet({
@@ -195,7 +167,6 @@ class _Sheet extends StatefulWidget {
   final bool showIconPicker;
   final bool showColorPicker;
 
-  /// True only in the full editor (every section visible).
   bool get isFull =>
       showIcon &&
       showBackground &&
@@ -203,7 +174,6 @@ class _Sheet extends StatefulWidget {
       showIconPicker &&
       showColorPicker;
 
-  /// Editable layers, in display order.
   List<_Role> get roles => [
     if (showIcon) _Role.icon,
     if (showBackground) _Role.background,
@@ -215,7 +185,6 @@ class _Sheet extends StatefulWidget {
 }
 
 class _SheetState extends State<_Sheet> {
-  // Current icon_code fields
   String? _iconId;
   late List<String> _iconColors;
   String? _bgId;
@@ -224,11 +193,8 @@ class _SheetState extends State<_Sheet> {
   late List<String> _borderColors;
   String? _shape; // IconShape name; null = circle
 
-  // Last non-null asset per layer — "ไม่มี" hides a layer but remembers it,
-  // so picking a shape with no background brings the old one back.
   final Map<_Role, String> _lastIds = {};
 
-  // UI state
   _Tab _tab = _Tab.style;
   String _query = '';
   String? _packFilter; // null = all packs
@@ -238,22 +204,14 @@ class _SheetState extends State<_Sheet> {
   final FocusNode _hexFocus = FocusNode();
   bool _hexInvalid = false;
 
-  // Picker focus state
   _Role? _focusedRole; // which element the colour picker edits
   int _focusedSlotIndex = 0;
 
-  // Recent custom hex picks — persists across sheet opens within the app session.
   static final List<String> _recentColors = [];
 
-  // Undo history — last N snapshots before any colour/asset change.
-  // Capped at [_undoLimit]; oldest entries dropped when the cap is reached.
-  // Reset every time the sheet opens.
   final List<_Snapshot> _undoStack = [];
   static const int _undoLimit = 10;
 
-  // ── Picker palette ───────────────────────────────────────────────────────
-  // Row 1 — theme-derived: 6 specs that resolve through the active AppColors.
-  // The picker draws a small 🎨 badge over each to mark them as theme-tracking.
   static const _themeRowSpecs = <String>[
     '@presetThemeColor1',
     '@presetThemeColor2',
@@ -263,7 +221,6 @@ class _SheetState extends State<_Sheet> {
     '@presetThemeColorBorder',
   ];
 
-  // Row 2 — common: fixed hex literals. 2 brand colours + 4 universal.
   static const _commonRowSpecs = <String>[
     '#00A389', // brand teal
     '#F06292', // brand pink (placeholder)
@@ -272,8 +229,6 @@ class _SheetState extends State<_Sheet> {
     '#EF4444', // red
     '#0EA5E9', // sky blue
   ];
-
-  // ── Helpers ──────────────────────────────────────────────────────────────
 
   List<IconPackItem> _allItems(_Role role) => widget.packs
       .expand(
@@ -304,17 +259,10 @@ class _SheetState extends State<_Sheet> {
     _Role.border => _borderColors,
   };
 
-  /// True if the focused slot's current spec equals [spec] (case-insensitive).
-  /// Used to draw the ✓ on theme/common swatches.
   bool _isCurrentSlotSpec(List<String> colors, String spec) =>
       _focusedSlotIndex < colors.length &&
       colors[_focusedSlotIndex].toLowerCase() == spec.toLowerCase();
 
-  /// Colours to render [item] with: one entry per slot the item needs, taken
-  /// from the role's chosen colours by index, falling back to the item's own
-  /// default for any slot the user hasn't set. Pure — reading state, never
-  /// mutating it. This is the single rule the left side uses for everything
-  /// (previews, tiles, dots) so selecting an asset never has to touch colours.
   List<String> _reflectColors(_Role role, IconPackItem item) {
     final chosen = _colorsFor(role);
     return [
@@ -323,8 +271,6 @@ class _SheetState extends State<_Sheet> {
     ];
   }
 
-  /// Effective colours for the role's *currently selected* asset (empty when
-  /// the asset is "none"). Used by [_current] for the live preview and save.
   List<String> _effectiveColors(_Role role) {
     final id = switch (role) {
       _Role.icon => _iconId,
@@ -354,9 +300,6 @@ class _SheetState extends State<_Sheet> {
     _Role.border => l.iconMakerRoleBorder,
   };
 
-  // ── Undo ─────────────────────────────────────────────────────────────────
-
-  /// Capture the current state before any mutation. Cap at [_undoLimit].
   void _pushSnapshot() {
     _undoStack.add(
       _Snapshot(
@@ -372,7 +315,6 @@ class _SheetState extends State<_Sheet> {
     if (_undoStack.length > _undoLimit) _undoStack.removeAt(0);
   }
 
-  /// Pop the last snapshot and apply it. No-op if the stack is empty.
   void _undo() {
     if (_undoStack.isEmpty) return;
     final s = _undoStack.removeLast();
@@ -397,18 +339,13 @@ class _SheetState extends State<_Sheet> {
     shape: _shape,
   );
 
-  // ── Initialisation ───────────────────────────────────────────────────────
-
   @override
   void initState() {
     super.initState();
     _init(widget.initial);
-    // Both picker halves are shown side by side, so start focused on the
-    // first editable layer — the split picker then shows its assets + colors.
     _focusedRole = widget.roles.first;
     _focusedSlotIndex = 0;
     if (!widget.showIconPicker) _tab = _Tab.color;
-    // Short screens: once the picker scrolls, the preview shrinks to one size.
     _scroll.addListener(() {
       final compact = _scroll.offset > 24;
       if (compact != _compactPreview) setState(() => _compactPreview = compact);
@@ -427,28 +364,20 @@ class _SheetState extends State<_Sheet> {
     final allIcons = _allItems(_Role.icon);
     final allBgs = _allItems(_Role.background);
 
-    // Left = asset ids. A brand-new sheet (ic == null) picks a default icon +
-    // background; an existing code keeps its ids exactly, including `null`.
     final firstIconId = allIcons.firstOrNull?.id ?? 'category';
     _iconId = ic == null ? firstIconId : ic.icon;
-    // No default bg when the bg layer isn't editable (tags: icon + colour
-    // only) — it would be invisible yet win as the code's accent colour.
+    // No default bg when the bg layer isn't editable (tags: icon + colour only)
+    // — it would be invisible yet win as the code's accent colour.
     _bgId = ic == null
         ? (widget.showBackground ? allBgs.firstOrNull?.id : null)
         : ic.background;
     _borderId = ic?.border;
     _shape = ic?.shape;
 
-    // Right = chosen colours, by slot index. Start from the saved code only;
-    // any slot left empty renders with the asset's own default (see
-    // [_reflectColors]), so each asset shows its native palette until the
-    // user actually picks a colour for that slot.
     _iconColors = List.of(ic?.iconColors ?? const <String>[]);
     _bgColors = List.of(ic?.bgColors ?? const <String>[]);
     _borderColors = List.of(ic?.borderColors ?? const <String>[]);
   }
-
-  // ── Interactions ─────────────────────────────────────────────────────────
 
   void _openAssetPicker(_Role role) {
     setState(() {
@@ -457,12 +386,8 @@ class _SheetState extends State<_Sheet> {
     });
   }
 
-  /// Selecting an asset only changes which asset is used — it never touches
-  /// the role's colour array. The chosen colours stay put; any slot the new
-  /// asset adds beyond them falls back to that asset's default at render time
-  /// (see [_reflectColors]). "ไม่มี" ([newId] == null) hides the layer but
-  /// keeps its colours (and [_lastIds] remembers the asset), so picking any
-  /// asset again brings the previous look back.
+  /// Selecting an asset only changes which asset is used — it never touches the
+  /// role's colour array.
   void _selectAsset(_Role role, String? newId) {
     _pushSnapshot();
     setState(() {
@@ -476,22 +401,14 @@ class _SheetState extends State<_Sheet> {
         case _Role.border:
           _borderId = newId;
       }
-      // Keep the focused slot in range for the new asset.
       final slots = _effectiveColors(role).length;
       if (_focusedSlotIndex >= slots) _focusedSlotIndex = 0;
     });
   }
 
-  /// Apply a colour spec (hex literal or `@presetTheme*` token) to the
-  /// currently focused slot. [isCustom] is true only for hex picked via
-  /// the custom-hex dialog; those land in the `Recent` strip. Theme/common
-  /// swatch taps don't pollute Recent.
   void _applyColor(String spec, {required bool isCustom}) {
     final role = _focusedRole;
     if (role == null) return;
-    // Work from the effective list (chosen colours padded to the asset's slot
-    // count), set the focused slot, then store it back — so a never-touched
-    // slot is persisted with its default + the new pick.
     final colors = _effectiveColors(role);
     if (_focusedSlotIndex >= colors.length) return;
     _pushSnapshot();
@@ -507,9 +424,6 @@ class _SheetState extends State<_Sheet> {
   }
 
   Future<void> _pickCustomHex() async {
-    // Seed the dialog with the resolved hex of the focused slot — even if
-    // the slot currently holds a `@presetTheme*` token, the user sees the
-    // colour they're editing.
     final palette = Theme.of(context).extension<AppColors>()!;
     final eff = _focusedRole != null
         ? _effectiveColors(_focusedRole!)
@@ -526,13 +440,6 @@ class _SheetState extends State<_Sheet> {
     }
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
-  //
-  // Layout (product/phase2/ux-overhaul-plan.md §3.5, mockup v7):
-  //   header (title + ⋯) · preview 72/40/24 · layer switcher (≥2 layers)
-  //   · tabs รูปแบบ|สี (only when both pickers allowed) · scrolling body
-  //   · ModeActionBar (ยกเลิก · ↶ · ใช้รูปนี้)
-
   _Role get _role => _focusedRole ?? widget.roles.first;
 
   String? _assetId(_Role role) => switch (role) {
@@ -541,7 +448,6 @@ class _SheetState extends State<_Sheet> {
     _Role.border => _borderId,
   };
 
-  /// Which picker is showing — forced when the caller allows only one.
   _Tab get _activeTab => !widget.showIconPicker
       ? _Tab.color
       : (!widget.showColorPicker ? _Tab.style : _tab);
@@ -611,8 +517,6 @@ class _SheetState extends State<_Sheet> {
     );
   }
 
-  // ── Header + preview ─────────────────────────────────────────────────────
-
   Widget _buildHeader(BuildContext context, AppLocalizations l) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -674,8 +578,6 @@ class _SheetState extends State<_Sheet> {
     if (widget.previewBuilder != null) {
       main = widget.previewBuilder!(code);
     } else {
-      // 72 header · 40 list row · 24 chip — collapses to one size once the
-      // picker scrolls (short screens).
       final sizes = _compactPreview ? const [44.0] : const [72.0, 40.0, 24.0];
       main = Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -705,8 +607,6 @@ class _SheetState extends State<_Sheet> {
       ),
     );
   }
-
-  // ── Layer switcher ────────────────────────────────────────────────────────
 
   Widget _buildLayerSwitcher(BuildContext context, AppLocalizations l) {
     final scheme = Theme.of(context).colorScheme;
@@ -780,7 +680,6 @@ class _SheetState extends State<_Sheet> {
     );
   }
 
-  /// Tiny render of one layer alone (layer switcher dots).
   Widget _layerMini(_Role role, double size) {
     final code = _current;
     return switch (role) {
@@ -807,8 +706,6 @@ class _SheetState extends State<_Sheet> {
     };
   }
 
-  /// A glyph-only code on an auto-contrast disc, so an icon tinted like the
-  /// sheet surface (e.g. white "on icon") never disappears in a tile.
   Widget _onContrast(IconCode glyph, double size) {
     final palette = Theme.of(context).extension<AppColors>()!;
     final fg = glyph.iconColors.isNotEmpty
@@ -826,7 +723,6 @@ class _SheetState extends State<_Sheet> {
     );
   }
 
-  /// A neutral tile background guaranteed to contrast with [fg] (WCAG ratio).
   Color _contrastTileBg(Color fg) {
     const dark = Color(0xFF1F2430);
     const light = Color(0xFFEFF2F7);
@@ -840,8 +736,6 @@ class _SheetState extends State<_Sheet> {
 
     return ratio(fg, dark) >= ratio(fg, light) ? dark : light;
   }
-
-  // ── Style tab ─────────────────────────────────────────────────────────────
 
   Widget _section(String text) => Padding(
     padding: const EdgeInsets.only(top: AppSpacing.md, bottom: AppSpacing.sm),
@@ -866,7 +760,6 @@ class _SheetState extends State<_Sheet> {
         ),
       );
     }
-    // Pack chips only when there's more than one pack (base + DLC).
     if (widget.packs.length > 1) {
       children.add(
         Padding(
@@ -892,7 +785,6 @@ class _SheetState extends State<_Sheet> {
     }
 
     if (role == _Role.background) {
-      // Background = shape × pattern.
       children.add(_section(l.iconMakerShape));
       children.add(
         _grid([
@@ -942,7 +834,6 @@ class _SheetState extends State<_Sheet> {
       final currentId = _assetId(role);
       children.add(
         _grid([
-          // "ไม่มี" first — hides the layer, remembers its look.
           if (!filtering && _packFilter == null)
             _StyleTile(
               selected: currentId == null,
@@ -971,8 +862,6 @@ class _SheetState extends State<_Sheet> {
     );
   }
 
-  /// Picking a shape with no background brings back the last one (or the
-  /// first available) — a shape alone has nothing to show.
   void _selectShape(IconShape s) {
     _pushSnapshot();
     setState(() {
@@ -983,8 +872,6 @@ class _SheetState extends State<_Sheet> {
     });
   }
 
-  /// Tile = the whole icon with this item swapped in, in the colours the user
-  /// has chosen, so they see the result before tapping.
   Widget _tilePreview(_Role role, IconPackItem item) {
     final colors = _reflectColors(role, item);
     var code = switch (role) {
@@ -1007,7 +894,6 @@ class _SheetState extends State<_Sheet> {
     return IconCodeWidget(iconCode: code, size: 40);
   }
 
-  /// 6-column grid; row height follows the column width.
   Widget _grid(List<Widget> tiles, {bool withLabels = false}) {
     return LayoutBuilder(
       builder: (context, c) {
@@ -1029,8 +915,6 @@ class _SheetState extends State<_Sheet> {
       },
     );
   }
-
-  // ── Colour tab ────────────────────────────────────────────────────────────
 
   String _hexOf(String spec) {
     final c = resolveColor(spec, Theme.of(context).extension<AppColors>()!);
@@ -1074,8 +958,6 @@ class _SheetState extends State<_Sheet> {
     );
   }
 
-  /// Top row: the current art's colour slots (tap = choose which to edit,
-  /// hex under each) | hex field for the focused slot + reset-to-default.
   Widget _buildSlotRow(
     BuildContext context,
     AppLocalizations l,
@@ -1168,12 +1050,12 @@ class _SheetState extends State<_Sheet> {
               },
             ),
           ),
-          IconButton(
+          AppIconButton.flat(
             tooltip: l.iconMakerResetSlot,
             onPressed: def == null || _hexOf(def) == current
                 ? null
                 : () => _applyColor(def, isCustom: false),
-            icon: const Icon(AppIcons.reset),
+            icon: AppIcons.reset,
           ),
         ],
       );
@@ -1191,7 +1073,6 @@ class _SheetState extends State<_Sheet> {
     );
   }
 
-  /// Applies a typed/pasted hex to the focused slot (also lands in Recent).
   void _commitHex(String current) {
     final raw = _hexCtl.text.trim().toUpperCase();
     final v = raw.startsWith('#') ? raw : '#$raw';
@@ -1260,10 +1141,6 @@ class _SheetState extends State<_Sheet> {
     );
   }
 
-  // ── Actions ───────────────────────────────────────────────────────────────
-
-  /// Reset every element back to the type's defaults (first icon + its default
-  /// colours, default background, no border, circle). Undoable.
   void _resetToDefault() {
     _pushSnapshot();
     setState(() {
@@ -1274,10 +1151,6 @@ class _SheetState extends State<_Sheet> {
   }
 }
 
-// ─── Colour wheel dialog ──────────────────────────────────────────────────────
-
-/// Popup HSV wheel + hex field (flutter_colorpicker). Returns the picked
-/// colour, or null if cancelled.
 Future<Color?> _showColorWheelDialog(BuildContext context, Color seed) {
   final l = AppLocalizations.of(context)!;
   var selected = seed;
@@ -1316,10 +1189,6 @@ Future<Color?> _showColorWheelDialog(BuildContext context, Color seed) {
   );
 }
 
-// ─── Small helper widgets ─────────────────────────────────────────────────────
-
-/// A filled colour circle with a hairline outline (light colours on light
-/// surfaces stay visible).
 class _Dot extends StatelessWidget {
   const _Dot({required this.spec, required this.size});
 
@@ -1344,7 +1213,6 @@ class _Dot extends StatelessWidget {
   }
 }
 
-/// Placeholder for a not-yet-used "เลือกเอง" (recent) slot.
 class _EmptySwatch extends StatelessWidget {
   const _EmptySwatch();
 
@@ -1365,8 +1233,6 @@ class _EmptySwatch extends StatelessWidget {
   }
 }
 
-/// One style-grid cell: ring-highlighted when selected, colour-slot dots
-/// (or a caption) underneath. No dots = colours can't be changed.
 class _StyleTile extends StatelessWidget {
   const _StyleTile({
     required this.selected,

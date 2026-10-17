@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Categorical series colours for charts — a fixed order, assigned by
-/// position and never cycled. Past [categorical].length series, fold the
-/// rest into "อื่นๆ" and paint it [other].
-///
-/// Light/dark are separate validated steps of the same hues (CVD-safe on
-/// adjacent pairs), not a brightness flip. Series colours mark identity
-/// only — labels and amounts stay in text colours, and every chart pairs
-/// them with a legend so colour is never the only cue.
+/// Categorical series colours for charts — a fixed order, assigned by position
+/// and never cycled.
 class ChartPalette {
   const ChartPalette._();
 
@@ -27,7 +21,6 @@ class ChartPalette {
   static List<Color> categorical(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark ? _dark : _light;
 
-  /// Neutral for the folded "อื่นๆ" slice.
   static Color other(BuildContext context) =>
       Theme.of(context).colorScheme.outline;
 }

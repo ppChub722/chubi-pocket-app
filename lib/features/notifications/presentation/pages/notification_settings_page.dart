@@ -10,11 +10,6 @@ import '../../data/notifications_repository.dart';
 import '../../domain/notification.dart';
 import '../cubit/notification_settings_cubit.dart';
 
-/// `/notifications/settings` (§7, contract §5): per type one 3-state control
-/// ปิด / แจ้ง / อัตโนมัติ (2-state where nothing can be automated). Auto runs
-/// the type's action on arrival; the wallet it records into shows inline under
-/// the type that is on auto. Invites / requests are always on. A change saves
-/// at once (one call) and flips back on failure.
 class NotificationSettingsPage extends StatelessWidget {
   const NotificationSettingsPage({super.key});
 
@@ -39,7 +34,6 @@ class _Body extends StatelessWidget {
       appBar: AppTopBar(title: l.notifSettingsTitle, showBack: true),
       extendBodyBehindAppBar: true,
       body: BlocConsumer<NotificationSettingsCubit, SettingsState>(
-        // Save failures only — a failed first load is the ErrorView below.
         listenWhen: (a, b) =>
             a.error != b.error && b.error != null && b.settings != null,
         listener: (ctx, state) => showAppSnackBar(
@@ -53,8 +47,6 @@ class _Body extends StatelessWidget {
         builder: (ctx, state) {
           final s = state.settings;
           if (s == null) {
-            // The template's first load: skeleton → error + retry (pull,
-            // offline and slow loads included).
             final failed = state.status == SettingsStatus.error;
             return AsyncStateView.fallback(
               loading: !failed,
@@ -65,9 +57,6 @@ class _Body extends StatelessWidget {
           }
           final cubit = ctx.read<NotificationSettingsCubit>();
 
-          /// One type: its label (+ what "auto" does) and the control, plus —
-          /// only while it is on auto and records into a wallet — the wallet
-          /// row inline.
           List<Widget> typeRow(
             NotificationType t,
             String label, {
@@ -104,8 +93,6 @@ class _Body extends StatelessWidget {
             ];
           }
 
-          // The cache only feeds the picker; the row's name comes from the
-          // settings reply (`default_account`).
           final accounts = ctx.watch<AccountsCubit>().state.accounts;
           final receiving = s.defaultAccount;
           final selectedAccount = accounts
@@ -142,7 +129,6 @@ class _Body extends StatelessWidget {
 
           return DetailPageBody(
             onRefresh: ctx.read<NotificationSettingsCubit>().load,
-            // Clear the floating top bar and nav.
             topInset: MediaQuery.paddingOf(ctx).top + AppSpacing.lg,
             bottomInset: AppSpacing.huge + MediaQuery.paddingOf(ctx).bottom,
             hero: SectionCard(
@@ -171,7 +157,6 @@ class _Body extends StatelessWidget {
                     helper: l.notifAutoAddDebt,
                     canAuto: true,
                   ),
-                  // Off by default: auto = my debt follows each change.
                   ...typeRow(
                     NotificationType.splitChanged,
                     l.notifTypeSplitChanged,

@@ -5,12 +5,6 @@ import '../../../core/network/api_exception.dart';
 import '../../auth/domain/user.dart';
 import '../../../ui/ui.dart';
 
-/// `PUT /v1/users/me` — partial update of profile fields (the currency is
-/// a relabel: no conversion, owner 2026-10-15).
-///
-/// `GET /v1/users/me` is owned by [AuthRepository] (used at cold-start to
-/// validate the stored token); putting the writer here keeps user-profile
-/// edits separate from auth identity flow.
 class UsersRepository {
   UsersRepository({required ApiClient client}) : _client = client;
 
@@ -51,8 +45,6 @@ class UsersRepository {
     }
   }
 
-  /// `GET /v1/users/me` — the profile with its server preferences (the
-  /// login answer has none).
   Future<User> getMe() async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>('/users/me');
@@ -62,8 +54,6 @@ class UsersRepository {
     }
   }
 
-  /// Sets the money style preference (`money_style`: plus_minus,
-  /// plus_minus_plain, parentheses, parentheses_plain, color_only).
   Future<User> setMoneyStyle(String style) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(
@@ -93,8 +83,6 @@ class UsersRepository {
     }
   }
 
-  /// Sets (or clears, [categoryId] null) the fee category preference —
-  /// the BE checks it is one of the user's expense categories.
   Future<User> setFeeCategory(String? categoryId) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(

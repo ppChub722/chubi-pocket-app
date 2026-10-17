@@ -13,7 +13,6 @@ class AppVersionRepository {
   Future<AppVersionInfo> fetch() async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>('/app/version');
-      // Bare body (no data envelope).
       return AppVersionInfo.fromJson(res.data ?? const <String, dynamic>{});
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);

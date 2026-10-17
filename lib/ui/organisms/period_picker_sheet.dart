@@ -6,13 +6,8 @@ import '../tokens/app_spacing.dart';
 import 'app_date_range_picker.dart';
 import 'app_sheet.dart';
 
-/// The units a period is picked in.
 enum PeriodUnit { day, week, month, year, all, custom }
 
-/// What [PeriodPickerSheet] picked: a [unit] anchored on [start] (the day, or
-/// any day of the week / month / year), plus [end] for a custom range.
-/// Model-agnostic on purpose — the feature wrapper maps it to / from its own
-/// period type.
 @immutable
 class PeriodPick {
   const PeriodPick(this.unit, this.start, [this.end]);
@@ -38,7 +33,6 @@ class PeriodPickerLabels {
 
   final String title;
 
-  /// "any day picks its whole week".
   final String weekHint;
   final String day;
   final String week;
@@ -57,12 +51,6 @@ class PeriodPickerLabels {
   };
 }
 
-/// THE period sheet — the REFERENCE for "sheets are organisms" (owner
-/// 2026-10-12): a PRESENTATIONAL organism — data in ([current], [last]),
-/// result out (resolves a [PeriodPick]), words as [labels], and nothing
-/// imported from features / cubits / repositories. The feature keeps a thin
-/// wrapper that maps its own model and l10n to these. Resolves null when
-/// dismissed.
 Future<PeriodPick?> showPeriodPickerSheet(
   BuildContext context, {
   required PeriodPick current,
@@ -87,10 +75,6 @@ Future<PeriodPick?> showPeriodPickerSheet(
   ),
 );
 
-/// The unit chips, then a picker that follows the unit: day / week → a
-/// calendar (a week: any day picks its whole week), month → the month grid,
-/// year → a year grid, all → at once, custom → the range picker. Nothing
-/// past [last] (default today).
 class PeriodPickerSheet extends StatefulWidget {
   const PeriodPickerSheet({
     required this.current,
@@ -119,8 +103,8 @@ class _PeriodPickerSheetState extends State<PeriodPickerSheet> {
     return DateTime(l.year, l.month, l.day);
   }
 
-  /// Where the pickers open: the current pick's start (today for "all"),
-  /// never past [_last].
+  /// Where the pickers open: the current pick's start (today for "all"), never
+  /// past [_last].
   DateTime get _anchor {
     final p = widget.current;
     final d = p.unit == PeriodUnit.all ? _last : p.start;
@@ -210,7 +194,6 @@ class _PeriodPickerSheetState extends State<PeriodPickerSheet> {
                 label: widget.labels.of(u),
                 selected: u == _unit,
                 onTap: () {
-                  // Picking custom / all again still acts.
                   if (u != _unit ||
                       u == PeriodUnit.custom ||
                       u == PeriodUnit.all) {

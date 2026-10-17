@@ -7,8 +7,6 @@ import 'budget_period.dart';
 
 double _money(Object? v) => (v as num?)?.toDouble() ?? 0;
 
-/// Where a budget is in its life: `upcoming` starts after today, `ended` =
-/// closed (ปิดงบ) or past its end.
 enum BudgetState {
   upcoming,
   active,
@@ -21,7 +19,6 @@ enum BudgetState {
   );
 }
 
-/// The list filter (`status` of `listBudgets`).
 enum BudgetFilter {
   active,
   ended,
@@ -30,7 +27,6 @@ enum BudgetFilter {
   String toJson() => name;
 }
 
-/// The health tile of the list (`health` of `listBudgets`); [all] = no param.
 enum BudgetHealth {
   all,
   normal,
@@ -40,7 +36,6 @@ enum BudgetHealth {
   String? toJson() => this == BudgetHealth.all ? null : name;
 }
 
-/// The list sort (`sort` of `listBudgets`).
 enum BudgetSort {
   risk,
   alphabetical,
@@ -53,11 +48,9 @@ enum BudgetSort {
   };
 }
 
-/// A recurring budget's period length: every [interval] [freq]s.
 class BudgetRule extends Equatable {
   const BudgetRule({required this.freq, this.interval = 1});
 
-  /// `daily` | `weekly` | `monthly` | `yearly`.
   final String freq;
   final int interval;
 
@@ -72,7 +65,6 @@ class BudgetRule extends Equatable {
   List<Object?> get props => [freq, interval];
 }
 
-/// Where a budget stops (`RecurrenceEnd`): none | date | count (periods).
 class BudgetEnd extends Equatable {
   const BudgetEnd.none() : kind = 'none', date = null, count = null;
   const BudgetEnd.onDate(DateTime this.date) : kind = 'date', count = null;
@@ -98,7 +90,6 @@ class BudgetEnd extends Equatable {
   List<Object?> get props => [kind, date, count];
 }
 
-/// One category a budget counts, with its sub-categories or not.
 class BudgetScopeCategory extends Equatable {
   const BudgetScopeCategory({
     required this.category,
@@ -120,8 +111,6 @@ class BudgetScopeCategory extends Equatable {
   List<Object?> get props => [category, includeChildren];
 }
 
-/// What a budget counts: every expense, or a row that matches ANY of the
-/// listed categories / tag NAMES / wallets.
 class BudgetScope extends Equatable {
   const BudgetScope({
     this.all = false,
@@ -151,7 +140,6 @@ class BudgetScope extends Equatable {
     ],
   );
 
-  /// The request shape (`BudgetScopeInput`).
   Map<String, dynamic> toInputJson() => {
     'all': all,
     'categories': [
@@ -166,7 +154,6 @@ class BudgetScope extends Equatable {
   List<Object?> get props => [all, categories, tags, wallets];
 }
 
-/// What the BE lets the caller do with this budget right now.
 class BudgetActions extends Equatable {
   const BudgetActions({
     this.edit = true,
@@ -191,9 +178,6 @@ class BudgetActions extends Equatable {
   List<Object?> get props => [edit, close, archive, restore];
 }
 
-/// A budget — a NAMED personal tracker (spec 08 v2) — with the one
-/// [period] it is shown at (the list: the current one; an ended budget: the
-/// last). Everything is computed by the BE.
 class Budget extends Equatable {
   const Budget({
     required this.id,
@@ -222,14 +206,11 @@ class Budget extends Equatable {
   final String? note;
   final IconCode? iconCode;
 
-  /// The base amount per period.
   final double amount;
 
-  /// Null = ไม่เตือน.
   final int? warnPct;
   final BudgetScope scope;
 
-  /// "งบระยะยาว".
   final bool recurring;
   final BudgetRule? rule;
   final DateTime startDate;
@@ -241,10 +222,8 @@ class Budget extends Equatable {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  /// One range with no end: open until ปิดงบ.
   bool get openEnded => !recurring && end.kind == 'none';
 
-  /// A fixed range (not recurring) that ends by itself.
   bool get oneOff => !recurring && end.kind == 'date';
 
   bool get isArchived => state == BudgetState.archived;
@@ -301,7 +280,6 @@ class Budget extends Equatable {
   ];
 }
 
-/// The list header: the counts the chips and the hero show.
 class BudgetListSummary extends Equatable {
   const BudgetListSummary({
     this.activeCount = 0,
@@ -327,15 +305,12 @@ class BudgetListSummary extends Equatable {
   final int endedCount;
   final int archivedCount;
 
-  /// Active budgets at their current period: the plain sum of the amounts.
   final double totalLimit;
   final double totalUsed;
 
-  /// limit - used (negative when over).
   final double totalRemaining;
   final int usedPct;
 
-  /// The health tiles: all = ok + near + over.
   final int countAll;
   final int countOk;
   final int countNear;
@@ -382,7 +357,6 @@ class BudgetListSummary extends Equatable {
   ];
 }
 
-/// `listBudgets`: the summary + each budget at its current period.
 class BudgetList extends Equatable {
   const BudgetList({
     this.summary = const BudgetListSummary(),

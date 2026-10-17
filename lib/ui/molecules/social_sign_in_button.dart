@@ -5,8 +5,6 @@ import '../atoms/app_chip.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/chip_size.dart';
 
-/// "Continue with Google": a large outlined, full-width button. [onPressed]
-/// null = not wired yet → disabled with a [comingSoonLabel] badge at its end.
 class SocialSignInButton extends StatelessWidget {
   const SocialSignInButton({
     required this.label,
@@ -18,7 +16,6 @@ class SocialSignInButton extends StatelessWidget {
 
   final String label;
 
-  /// The "coming soon" badge shown while [onPressed] is null.
   final String? comingSoonLabel;
   final VoidCallback? onPressed;
   final bool loading;

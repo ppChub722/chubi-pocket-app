@@ -6,15 +6,11 @@ import '../domain/saving_entry.dart';
 import '../domain/saving_goal.dart';
 import '../domain/saving_goals_overview.dart';
 
-/// Thin Dio wrapper for the saving goals v2 API. Pure data layer: it turns
-/// [DioException] into [ApiException] and parses JSON; state lives in the
-/// cubits.
 class SavingGoalsRepository {
   SavingGoalsRepository({required ApiClient client}) : _client = client;
 
   final ApiClient _client;
 
-  /// The id the detail endpoint uses for the "ยังไม่จัดสรร" bucket.
   static const spareId = 'spare';
 
   Future<T> _guard<T>(Future<T> Function() run) async {
@@ -25,8 +21,6 @@ class SavingGoalsRepository {
     }
   }
 
-  /// `GET /saving-goals?status=` — the whole list page (summary + spare +
-  /// goals) in one call.
   Future<SavingGoalsOverview> list({
     String status = 'active',
     String sort = 'created',
@@ -38,7 +32,6 @@ class SavingGoalsRepository {
     return SavingGoalsOverview.fromJson(res.data!);
   });
 
-  /// `GET /saving-goals/{id}` (or `spare`) — the whole goal page in one call.
   Future<SavingGoalDetail> detail(String id, {bool deletePreview = false}) =>
       _guard(() async {
         final res = await _client.dio.get<Map<String, dynamic>>(
@@ -48,7 +41,6 @@ class SavingGoalsRepository {
         return SavingGoalDetail.fromJson(res.data!);
       });
 
-  /// `GET /saving-entries` — one page of a bucket entries (newest first).
   Future<SavingEntryPage> entries({
     required String bucketId,
     required int page,
@@ -63,7 +55,6 @@ class SavingGoalsRepository {
     return SavingEntryPage.fromJson(res.data!);
   });
 
-  /// `POST /saving-goals` — name, target, deadline, icon, description, note.
   Future<SavingGoalDetail> create(SavingGoal draft) => _guard(() async {
     final res = await _client.dio.post<Map<String, dynamic>>(
       '/saving-goals',
@@ -72,7 +63,6 @@ class SavingGoalsRepository {
     return SavingGoalDetail.fromJson(res.data!);
   });
 
-  /// `PUT /saving-goals/{id}`.
   Future<SavingGoalDetail> update(SavingGoal goal) => _guard(() async {
     final res = await _client.dio.put<Map<String, dynamic>>(
       '/saving-goals/${goal.id}',
@@ -81,11 +71,9 @@ class SavingGoalsRepository {
     return SavingGoalDetail.fromJson(res.data!);
   });
 
-  /// `DELETE /saving-goals/{id}`.
   Future<void> delete(String id) =>
       _guard(() => _client.dio.delete<void>('/saving-goals/$id'));
 
-  /// `POST /saving-goals/{id}/archive` / `/restore`.
   Future<SavingGoalDetail> archive(String id) => _guard(() async {
     final res = await _client.dio.post<Map<String, dynamic>>(
       '/saving-goals/$id/archive',
@@ -100,9 +88,6 @@ class SavingGoalsRepository {
     return SavingGoalDetail.fromJson(res.data!);
   });
 
-  /// `PUT /saving-goals/{id}/auto-save` (or `spare`) — creates / replaces the
-  /// auto-saving: [amount] on [day] of each month, from [accountId] or no
-  /// wallet. Answers the goal page / the spare page.
   Future<SavingGoalDetail> setAutoSave(
     String id, {
     required double amount,
@@ -116,7 +101,6 @@ class SavingGoalsRepository {
     return SavingGoalDetail.fromJson(res.data!);
   });
 
-  /// `DELETE /saving-goals/{id}/auto-save` (or `spare`) — turns it off.
   Future<SavingGoalDetail> clearAutoSave(String id) => _guard(() async {
     final res = await _client.dio.delete<Map<String, dynamic>>(
       '/saving-goals/$id/auto-save',
@@ -124,8 +108,6 @@ class SavingGoalsRepository {
     return SavingGoalDetail.fromJson(res.data!);
   });
 
-  /// `POST /saving-goals/{id}/close` —`toWallets` false = into spare, true =
-  /// each part back to its own wallet.
   Future<SavingWriteResult> close(String id, {required bool toWallets}) =>
       _guard(() async {
         final res = await _client.dio.post<Map<String, dynamic>>(
@@ -135,9 +117,6 @@ class SavingGoalsRepository {
         return SavingWriteResult.fromJson(res.data!);
       });
 
-  /// `POST /saving-entries` — ONE call per button: save / withdraw / move.
-  /// [goalId] null = the spare bucket. [splits] only when the user edited the
-  /// automatic wallet split.
   Future<SavingWriteResult> addEntry({
     required SavingEntryKind kind,
     required double amount,
@@ -166,7 +145,6 @@ class SavingGoalsRepository {
     return SavingWriteResult.fromJson(res.data!);
   });
 
-  /// `PUT /saving-entries/{id}`.
   Future<SavingWriteResult> updateEntry(
     String id, {
     required double amount,
@@ -180,7 +158,6 @@ class SavingGoalsRepository {
     return SavingWriteResult.fromJson(res.data!);
   });
 
-  /// `DELETE /saving-entries/{id}`.
   Future<SavingWriteResult> deleteEntry(String id) => _guard(() async {
     final res = await _client.dio.delete<Map<String, dynamic>>(
       '/saving-entries/$id',

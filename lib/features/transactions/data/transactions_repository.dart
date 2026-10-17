@@ -7,7 +7,6 @@ import '../domain/transaction.dart';
 import '../domain/transaction_type.dart';
 import '../domain/transactions_summary.dart';
 
-/// Pagination block returned alongside a list response (spec §3.2).
 class TransactionsPage {
   const TransactionsPage({
     required this.transactions,
@@ -24,15 +23,11 @@ class TransactionsPage {
   final int total;
   final int totalPages;
 
-  /// Income / expense / net of the WHOLE filtered set (every page) — the
-  /// list's summary card. Null when the server doesn't send it.
   final ListTotals? totals;
 
   bool get hasMore => page < totalPages;
 }
 
-/// One day of a list response's `daily` (the card's bars): the day's income
-/// and expense (transfers left out), `date` as `YYYY-MM-DD`.
 class DailyFlow {
   const DailyFlow({
     required this.date,
@@ -51,8 +46,6 @@ class DailyFlow {
   final double expense;
 }
 
-/// `totals` of a list response: what the rows matching the filters add up
-/// to, transfers left out of both sides.
 class ListTotals {
   const ListTotals({
     required this.income,
@@ -63,8 +56,6 @@ class ListTotals {
     this.daily = const [],
   });
 
-  /// The whole list response: its `totals` plus the top-level
-  /// `avg_daily_spend` and `daily` (the card's bars).
   static ListTotals? fromResponse(Map<String, dynamic> res) {
     final base = fromJson(res['totals']);
     if (base == null) return null;
@@ -99,21 +90,16 @@ class ListTotals {
   final double net;
   final int count;
 
-  /// Average daily spend over the range (BE; null when not sent).
   final double? avgDailySpend;
 
-  /// One entry per day of the range, in date order (BE).
   final List<DailyFlow> daily;
 }
 
-/// `/v1/transactions/*` endpoints.
 class TransactionsRepository {
   TransactionsRepository({required ApiClient client}) : _client = client;
 
   final ApiClient _client;
 
-  /// `GET /v1/transactions`. All filters are optional; default sort is
-  /// date_desc per spec §3.2. Default `perPage` is 20 (BE default).
   Future<TransactionsPage> list({
     String? accountId,
     String? categoryId,
@@ -125,11 +111,12 @@ class TransactionsRepository {
     List<String> tagIds = const [],
     bool includeChildren = false,
     bool uncategorized = false,
-    // The multi-select filters (OR inside a group, AND between groups).
     List<String> accountIds = const [],
     List<String> categoryIds = const [],
     Set<TransactionType> types = const {},
     bool noTags = false,
+    double? amountMin,
+    double? amountMax,
     int page = 1,
     int perPage = 20,
     String sort = 'date_desc',
@@ -150,6 +137,8 @@ class TransactionsRepository {
           if (q != null && q.isNotEmpty) 'q': q,
           if (tagIds.isNotEmpty) 'tag_id': tagIds,
           if (noTags) 'no_tags': 'true',
+          'amount_min': ?amountMin?.toString(),
+          'amount_max': ?amountMax?.toString(),
           if (includeChildren) 'include_children': 'true',
           if (uncategorized) 'uncategorized': 'true',
           'page': page.toString(),
@@ -183,21 +172,6 @@ class TransactionsRepository {
     }
   }
 
-  /// `PUT /v1/transactions/:id/splits` — the WHOLE new split list
-  /// (replace): a saved split as `{debt_id, owed_amount}`, a new person as
-  /// at create; one left out is removed, `[]` removes them all. Author only,
-  /// expense / income only. Returns the row with its new `splits`.
-  ///
-  /// A saved split WITHOUT a contact may also carry a new `person_name`
-  /// (renamed in place) and / or `contact_id` (linked in place) — its debt
-  /// and repayments stay. One WITH a contact can't change who it is.
-  /// Omitted or unchanged fields leave the person as is.
-  ///
-  /// Refusals: 400 CONTACT_NOT_FOUND ·
-  /// 409 CONTACT_ARCHIVED · 403 SPLITS_AUTHOR_ONLY · 400
-  /// SPLITS_EXCEED_AMOUNT · 400 SPLITS_ON_TRANSFER · 400 VALIDATION_ERROR ·
-  /// 400 SYSTEM_TRANSACTION_IMMUTABLE. Repayments never limit an edit: a
-  /// repaid person removed stays at 0 (overpaid) — contract v2.
   Future<Transaction> updateSplits(
     String id,
     List<Map<String, dynamic>> splits,
@@ -213,13 +187,6 @@ class TransactionsRepository {
     }
   }
 
-  /// `POST /v1/transactions` (API v2). One call creates the row with its
-  /// tags and splits; returns `{rows, account_balances}` (a transfer returns
-  /// both rows, OUT first; its tags go on the OUT row).
-  ///
-  /// For transfers, [transferToAccountId] must be set and differ from
-  /// [accountId]; both accounts must share the same currency in
-  /// Phase 1 (BE rejects with `TRANSFER_CURRENCY_MISMATCH` otherwise).
   Future<TransactionMutationResult> create({
     required TransactionType type,
     String? accountId,
@@ -257,15 +224,6 @@ class TransactionsRepository {
     }
   }
 
-  /// `PUT /v1/transactions/:id`. Per spec §3.4, editable fields are
-  /// `amount`, `date`, `category_id`, `description`, `note`. For transfers
-  /// the BE cascades the change to the paired row + re-balances both accounts
-  /// atomically and returns a [TransferResult] envelope.
-  ///
-  /// `category_id`, `description` and `note` use presence semantics: pass
-  /// `null` and set `clearCategory` / `clearDescription` / `clearNote` to
-  /// true to send an explicit `null` (clears the column); leave the arg
-  /// null + flag false to omit the field (leaves the column unchanged).
   Future<TransactionMutationResult> update({
     required String id,
     double? amount,
@@ -284,10 +242,7 @@ class TransactionsRepository {
   }) async {
     try {
       final body = <String, dynamic>{'amount': ?amount, 'date': ?date};
-      // A row linked to an event bill / a recurring item: the app asked
-      // (owner 2026-10-13) — true = the other side gets the change too.
       if (alsoUpdateLink != null) body['also_update_link'] = alsoUpdateLink;
-      // Present = REPLACES the tag set (`[]` clears); omitted = unchanged.
       if (tagIds != null) body['tag_ids'] = tagIds;
       if (categoryId != null) {
         body['category_id'] = categoryId;
@@ -322,11 +277,6 @@ class TransactionsRepository {
     }
   }
 
-  /// `DELETE /v1/transactions/:id`. For transfers the paired row is also
-  /// deleted and both balances reverse. Returns `{id, account_balances}`.
-  /// [alsoDeleteLink] (owner 2026-10-13): a row linked to an event bill or a
-  /// recurring item takes that item with it when true; the answer then names
-  /// it (`bill_id` / `recurring_item_id`).
   Future<DeleteTransactionResult> delete(
     String id, {
     bool? alsoDeleteLink,
@@ -342,8 +292,6 @@ class TransactionsRepository {
     }
   }
 
-  /// `PUT /v1/transactions/:id/tags` — REPLACES the tag set (`[]` clears).
-  /// Returns the full row.
   Future<Transaction> setTags(String id, List<String> tagIds) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(
@@ -356,9 +304,6 @@ class TransactionsRepository {
     }
   }
 
-  /// `GET /v1/transactions/form-options` — wallets (+ default), categories,
-  /// tags, active events and the fee category in ONE call; the pickers of
-  /// quick create, the draft editors and the filter sheet read from it.
   Future<TxFormOptions> formOptions() async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(
@@ -370,10 +315,6 @@ class TransactionsRepository {
     }
   }
 
-  /// `GET /v1/transactions/summary`. Global summary across the user's
-  /// own book — date range required, optional filters. Summary
-  /// respects the `include_in_report` rule the same way per-account
-  /// summaries do (spec §03/§2.7 + §05/§4.14c).
   Future<TransactionsSummary> summary({
     required String from,
     required String to,
@@ -398,11 +339,6 @@ class TransactionsRepository {
     }
   }
 
-  /// `GET /v1/accounts/:id/summary`. The accounts module owns this
-  /// endpoint (it joins against transactions and resolves the user's
-  /// system Transfer IN/OUT categories). Per-account summaries DO
-  /// count transfers in their income / expense aggregates per spec
-  /// §03/§2.7 — that's intentional, transfers move the balance.
   Future<TransactionsSummary> summaryForAccount({
     required String accountId,
     String? from,

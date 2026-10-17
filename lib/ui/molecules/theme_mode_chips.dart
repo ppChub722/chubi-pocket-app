@@ -4,11 +4,6 @@ import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/app_chip.dart';
 
-/// Light / dark / system as three icon chips — ☀️ สว่าง · 🌙 มืด · 📱 ระบบ.
-/// The current mode is highlighted (never a ✓).
-///
-/// Labels come from the caller (localised); the widget only knows the three
-/// [ThemeMode]s and their icons.
 class ThemeModeChips extends StatelessWidget {
   const ThemeModeChips({
     required this.selected,

@@ -1,11 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Paints a dashed rectangular border around its child. Use it where M3's
-/// solid `BorderSide` doesn't cut it — typically "placeholder" / "add-new"
-/// affordances that need to read as visually distinct from real content.
-///
-/// Flutter has no first-party dashed border, so this implementation walks
-/// each side and emits short [Paint] segments at the configured cadence.
 class DashedRectBorder extends StatelessWidget {
   const DashedRectBorder({
     required this.child,
@@ -61,9 +55,6 @@ class _DashedRectPainter extends CustomPainter {
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke;
 
-    // Use PathMetric to walk the rounded rect path and draw equal-length
-    // dashes regardless of corner curvature. This keeps dashes evenly spaced
-    // around corners — naive per-side drawing would visibly skip them.
     final rect = Offset.zero & size;
     final path = Path()..addRRect(RRect.fromRectAndRadius(rect, radius));
 

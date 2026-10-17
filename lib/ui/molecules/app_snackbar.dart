@@ -6,13 +6,8 @@ import '../tokens/app_spacing.dart';
 import '../tokens/tone.dart';
 import 'app_message.dart';
 
-/// Shows a floating snackbar, replacing any current one (so rapid actions
-/// don't queue a backlog). [tone] adds a leading status icon.
-///
-/// From inside a sheet or a dialog ([PopupRoute] — every [showAppSheet] /
-/// quick create / picker) a snackbar would land on the page's Scaffold,
-/// UNDER the sheet and its barrier — invisible (QA run-3 S1). There the
-/// message shows as a toast on top of the sheet instead ([_SheetToast]).
+/// Shows a floating snackbar, replacing any current one (so rapid actions don't
+/// queue a backlog).
 void showAppSnackBar(
   BuildContext context,
   String message, {
@@ -39,9 +34,6 @@ void showAppSnackBar(
   );
 }
 
-/// [showAppSnackBar] on a messenger captured up front — for calls after an
-/// `await` / pop, when the original context may already be gone. Now the one
-/// message design ([AppMessage]); kept as the app-wide entry point.
 void showAppSnackBarOn(
   ScaffoldMessengerState messenger,
   String message, {
@@ -56,9 +48,6 @@ void showAppSnackBarOn(
   onAction: onAction,
 );
 
-/// The snackbar's look as an overlay entry, at the top of the screen (clear
-/// of a sheet's pinned buttons and the keyboard), above the sheet that
-/// raised it. One at a time; tap to dismiss; gone after a few seconds.
 class _SheetToast extends StatefulWidget {
   const _SheetToast({
     required this.message,

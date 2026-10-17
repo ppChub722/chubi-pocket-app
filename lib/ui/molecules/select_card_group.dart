@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 
-/// One option of a [SelectCardGroup].
 class SelectCardOption<T> {
   const SelectCardOption({
     required this.value,
@@ -17,28 +16,10 @@ class SelectCardOption<T> {
   final String label;
   final IconData? icon;
 
-  /// This option's accent when selected (expense red / income green, a
-  /// wallet type's group colour). Defaults to the primary colour.
   final Color? color;
   final String? description;
 }
 
-/// Big choice cards for a mutually exclusive, high-stakes choice at the top
-/// of a form ("ฉันติดเขา / เขาติดฉัน", expense / income). Bigger and more
-/// explicit than a segmented button.
-///
-/// Default: one row, side by side (icon left of the label). [columns] wraps
-/// the options into a grid of that many per row — each card stacks its icon
-/// above the label, and a short last row stretches to fill (5 options at
-/// `columns: 3` → 3 + 2, e.g. the wallet type picker).
-///
-/// ONE selected look (owner's final call, 2026-10-12): a 2-px border in the
-/// option's tone and a faint wash of it — a gradient from the top-left to the
-/// bottom-right, the same family as the tinted hero / card surface, with NO
-/// watermark glyph — and the label and icon in the tone (darkened in light
-/// mode until they read, ≥ 4.5 : 1). No glow, no check badge (the app's no-✓
-/// rule). Unselected = a plain outlined card. Picked but read-only
-/// (`onChanged` null) = the same, dimmed.
 class SelectCardGroup<T> extends StatelessWidget {
   const SelectCardGroup({
     required this.options,
@@ -51,13 +32,10 @@ class SelectCardGroup<T> extends StatelessWidget {
   final List<SelectCardOption<T>> options;
   final T selected;
 
-  /// null → read-only (e.g. type locked after create).
   final ValueChanged<T>? onChanged;
 
-  /// Cards per row; null = all options in one row.
   final int? columns;
 
-  /// The selected wash's opacity, top-left → bottom-right.
   static const washFrom = 0.18;
   static const washTo = 0.06;
 
@@ -88,7 +66,6 @@ class SelectCardGroup<T> extends StatelessWidget {
     List<SelectCardOption<T>> items, {
     required bool stacked,
   }) {
-    // Equal-height cards within a row, whatever the label length.
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -102,7 +79,6 @@ class SelectCardGroup<T> extends StatelessWidget {
     );
   }
 
-  /// [accent] darkened (or lightened, in dark mode) until it reads on [bg].
   static Color readable(Color accent, Color bg) {
     var hsl = HSLColor.fromColor(accent);
     final lighten = bg.computeLuminance() < 0.4;
@@ -131,10 +107,7 @@ class SelectCardGroup<T> extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final active = o.value == selected;
     final accent = o.color ?? scheme.primary;
-    // Picked but read-only: the same look, dimmed.
     final dim = onChanged == null ? 0.55 : 1.0;
-    // The wash is a few % of the tone over the surface: that is what the
-    // text has to read on.
     final washed = Color.alphaBlend(
       accent.withValues(alpha: washFrom),
       scheme.surfaceContainerLow,
@@ -158,7 +131,6 @@ class SelectCardGroup<T> extends StatelessWidget {
               color: scheme.onSurfaceVariant,
             ),
           );
-    // The icon sits in a disc: a wash of the tone once picked.
     final disc = stacked ? 44.0 : 36.0;
     final iconDisc = o.icon == null
         ? null
@@ -217,7 +189,6 @@ class SelectCardGroup<T> extends StatelessWidget {
       duration: _motion,
       decoration: BoxDecoration(
         color: active ? null : scheme.surfaceContainerLow,
-        // The hero / tinted-card wash: top-left → bottom-right, no watermark.
         gradient: active
             ? LinearGradient(
                 begin: Alignment.topLeft,

@@ -10,17 +10,6 @@ import '../../domain/form_options.dart';
 import '../../domain/transaction_type.dart';
 import '../tx_list_filters.dart';
 
-/// The transactions list's filters, in a side sheet from the right (owner
-/// 2026-10-10) — the thin wrapper of the kit's [TxFilterSheet]: it loads the
-/// form's options (one call, as the sheet opens), maps them and [TxFilters]
-/// to the organism's plain data + l10n words, and maps the result back. The
-/// period and the sort live on the page (its pill and ⇅) — the sheet carries
-/// them through untouched.
-///
-/// Resolves the new filters, or null when closed without applying. ล้าง
-/// goes back to [base] (how the list opened — a wallet's list keeps its
-/// wallet) but keeps the page's period and sort; [walletLocked] hides the
-/// wallet section (a wallet's own list).
 Future<TxFilters?> showTxFilterSheet(
   BuildContext context, {
   required TxFilters current,
@@ -30,13 +19,11 @@ Future<TxFilters?> showTxFilterSheet(
 }) async {
   final l = AppLocalizations.of(context)!;
   final palette = Theme.of(context).extension<AppColors>()!;
-  // What the sheet's load found — to map the picked ids back to models.
   var loaded = const TxFormOptions();
   Future<TxFilterOptions> load() async {
     try {
       loaded = await repository.formOptions();
     } catch (_) {
-      // The rows stay empty; the type chips and apply still work.
     }
     return _filterOptions(l, palette, loaded);
   }
@@ -57,14 +44,15 @@ Future<TxFilters?> showTxFilterSheet(
       walletTitle: l.transactionsFilterAccount,
       categoryTitle: l.transactionsFilterCategory,
       tagTitle: l.transactionsFilterTag,
+      amountTitle: l.txFilterAmount,
+      amountMin: l.txFilterAmountMin,
+      amountMax: l.txFilterAmountMax,
       expense: l.transactionTypeExpense,
       income: l.transactionTypeIncome,
       transfer: l.transactionTypeTransfer,
       noWallet: l.txFilterNoWallet,
       uncategorized: l.txFilterNoCategory,
       noTag: l.txFilterNoTag,
-      // The pickers behind "more": the same ones the create form opens, here
-      // with several picks.
       walletPicker: AccountPickerLabels(
         title: l.transactionsFilterAccount,
         none: l.txFilterNoWallet,
@@ -94,8 +82,6 @@ Future<TxFilters?> showTxFilterSheet(
     ),
   );
   if (picked == null) return null;
-  // The picked ids back to models: what the page already holds, then what
-  // the sheet's load found (a drill-down opens with just an id and a name).
   final categories = {
     for (final c in current.categories) c.id: c,
     for (final c in loaded.categoryList) c.id: c,
@@ -125,6 +111,7 @@ Future<TxFilters?> showTxFilterSheet(
         if (tags[id] != null) tags[id]!,
     ],
     noTags: picked.noTags,
+    amount: (min: picked.amountMin, max: picked.amountMax),
   );
 }
 
@@ -136,10 +123,10 @@ TxFilterSelection _selectionOf(TxFilters f) => TxFilterSelection(
   uncategorized: f.uncategorized,
   tagIds: [for (final t in f.tags) t.id],
   noTags: f.noTags,
+  amountMin: f.amountMin,
+  amountMax: f.amountMax,
 );
 
-/// The form options as the organism's pick rows: active non-system
-/// categories in display order, tags by usage.
 TxFilterOptions _filterOptions(
   AppLocalizations l,
   AppColors palette,
@@ -162,7 +149,6 @@ TxFilterOptions _filterOptions(
         TxFilterOption(
           id: c.id,
           label: categoryDisplayName(l, c),
-          // The category's own icon (sub-categories too).
           icon: IconRegistry.get(c.iconCode?.icon, fallback: AppIcons.category),
           color: c.iconCode.tintFor(palette),
           subtitle: c.type == CategoryType.income
@@ -193,7 +179,6 @@ TxFilterOptions _filterOptions(
   ],
 );
 
-/// Labels the list and the sheet share.
 String txTypeLabel(AppLocalizations l, TransactionType? t) => switch (t) {
   null => l.transactionsListFilterAll,
   TransactionType.expense => l.transactionTypeExpense,

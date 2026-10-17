@@ -2,22 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../tokens/avatar_metrics.dart';
 
-/// A round badge on the bottom-right corner of an avatar / icon circle — the
-/// edit pencil, the 🔗 link mark, a type glyph, a ✓ (owner 2026-10-12): a
-/// filled circle with a glyph inside and a thin halo in the page colour, the
-/// same look everywhere (it is the pencil of `EditableCircle`).
-///
-/// ```dart
-/// CornerBadge(size: 40, icon: AppIcons.link, child: UserAvatar(…, size: 40))
-/// ```
-///
-/// The badge scales with the avatar ([size], via [AvatarMetrics]) and is left
-/// out below [AvatarMetrics.minCornerBadgeAvatar] (40): on a smaller avatar it
-/// would cover a third of it. [essential] keeps a badge that carries state (a
-/// ✓ that marks a row) on a smaller avatar too.
-///
-/// The footprint is always [size] × [size] — showing or hiding the badge never
-/// reflows the layout.
 class CornerBadge extends StatelessWidget {
   const CornerBadge({
     required this.child,
@@ -31,24 +15,18 @@ class CornerBadge extends StatelessWidget {
     super.key,
   });
 
-  /// The avatar / icon circle.
   final Widget child;
 
-  /// The avatar's diameter (what the badge scales with).
   final double size;
   final IconData icon;
 
-  /// The badge fill; defaults to the theme's primary.
   final Color? color;
 
-  /// The glyph colour; defaults to `onPrimary`.
   final Color? iconColor;
   final String? tooltip;
 
-  /// false = no badge (e.g. an unmarked row); the footprint stays.
   final bool show;
 
-  /// Show it even under the minimum avatar size (a state marker).
   final bool essential;
 
   @override

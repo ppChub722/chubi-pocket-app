@@ -1,18 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../tokens/avatar_metrics.dart';
 import 'icon_code.dart';
 import 'icon_code_widget.dart';
 import 'icon_type.dart';
 
-/// Universal icon display widget used on every screen.
-///
-/// Resolution order:
-///   1. [imageUrl] set → NetworkImage (with [_iconWidget] as error fallback)
-///   2. [iconCode] set → [IconCodeWidget] (self-inferring style)
-///   3. Neither set   → theme-derived default circle for [type]
-///
-/// Only [account] and [userProfile] types will ever have an [imageUrl] in
-/// practice; other types always fall through to step 2 or 3.
 class IconDisplay extends StatelessWidget {
   const IconDisplay({
     required this.type,
@@ -46,8 +38,6 @@ class IconDisplay extends StatelessWidget {
 
   Widget _iconWidget(BuildContext context) {
     if (iconCode != null) {
-      // Apply per-type display rules — tag strips bg + border at render time
-      // even though the saved code keeps them.
       return IconCodeWidget(
         iconCode: type.applyDisplayRules(iconCode!),
         size: size,
@@ -55,6 +45,21 @@ class IconDisplay extends StatelessWidget {
       );
     }
     final scheme = Theme.of(context).colorScheme;
+    // A tag never has a disc (see applyDisplayRules): no code → the bare glyph
+    // in the primary colour, like a tag with an icon.
+    if (type == IconType.tag) {
+      return SizedBox(
+        width: size,
+        height: size,
+        child: Center(
+          child: Icon(
+            type.fallbackIcon,
+            size: AvatarMetrics.glyph(size) * 1.12,
+            color: scheme.primary,
+          ),
+        ),
+      );
+    }
     return Container(
       width: size,
       height: size,

@@ -3,21 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../ui.dart';
 
-/// How [SplitEventSection] / [EventRow] lay out.
-///
-/// - [compact]: the QUICK forms (quick create, pending add / edit) — a
-///   one-line green header with a chevron, rows like the Note row
-///   ([DraftFieldRow]: muted label in a 72 px column, value to the right).
-/// - [full]: the transaction detail — a [CollapsibleSection] (title + one-line
-///   description, always open) with [DetailRow]s.
 enum SplitEventVariant { compact, full }
 
-/// A labelled row of a quick form — โน้ต, แบ่งยอด, อีเวนต์: the label in a
-/// fixed column on the left ([labelWidthOf]) so every field lines up at the
-/// same x. The column is as wide as the widest label of any such row (so no
-/// label ever wraps, in any language or text size). [dense]: the value is a
-/// chip, not an input: the row centres label and value vertically, so a value
-/// that wraps onto a second line still sits in the middle of the row.
 class DraftFieldRow extends StatelessWidget {
   const DraftFieldRow({
     required this.label,
@@ -30,11 +17,8 @@ class DraftFieldRow extends StatelessWidget {
   final Widget child;
   final bool dense;
 
-  /// Narrowest the label column gets.
   static const minLabelWidth = 72.0;
 
-  /// The labels of every row that shares the column (the widest sets its
-  /// width). Add a row's label here when it joins a form.
   static List<String> _labels(AppLocalizations l) => [
     l.commonNote,
     l.txSplitRowLabel,
@@ -44,8 +28,8 @@ class DraftFieldRow extends StatelessWidget {
     l.debtCloseLabel,
   ];
 
-  /// The label column's width: the widest shared label at the current font
-  /// and text scale, never below [minLabelWidth].
+  /// The label column's width: the widest shared label at the current font and
+  /// text scale, never below [minLabelWidth].
   static double labelWidthOf(BuildContext context) {
     final style = Theme.of(context).textTheme.labelLarge;
     final scaler = MediaQuery.textScalerOf(context);
@@ -61,7 +45,6 @@ class DraftFieldRow extends StatelessWidget {
       if (p.width > widest) widest = p.width;
       p.dispose();
     }
-    // A little air before the value.
     return widest.ceilToDouble() + AppSpacing.xs;
   }
 
@@ -75,7 +58,6 @@ class DraftFieldRow extends StatelessWidget {
         SizedBox(
           width: labelWidthOf(context),
           child: Padding(
-            // An input's row: the label lines up with its first line.
             padding: EdgeInsets.only(top: dense ? 0 : 10),
             child: Text(
               label,
@@ -93,9 +75,8 @@ class DraftFieldRow extends StatelessWidget {
   }
 }
 
-/// View mode: a long-press anywhere on a link row enters edit mode on it (the
-/// chips' own taps still work: a tap is theirs, only a long-press is ours).
-Widget longPressRow(Widget row, VoidCallback? onLongPress) => onLongPress == null
+Widget longPressRow(Widget row, VoidCallback? onLongPress) =>
+    onLongPress == null
     ? row
     : GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -103,11 +84,6 @@ Widget longPressRow(Widget row, VoidCallback? onLongPress) => onLongPress == nul
         child: row,
       );
 
-/// The event row of the section: what [SplitEventSection] needs to draw
-/// "อีเวนต์ [🎉 name ✕]" — the name (null = none), a tap (open the picker,
-/// or the event itself in view) and a ✕. [editing] false = view mode: the
-/// chips are plain (a filled one opens the event), nothing is changed here;
-/// [locked] = shown but not changeable (a plain chip, no tap, no ✕).
 class SplitEventSlot {
   const SplitEventSlot({
     this.name,
@@ -124,19 +100,9 @@ class SplitEventSlot {
   final bool locked;
   final bool editing;
 
-  /// View mode: a long-press on the row enters edit mode on this field.
   final VoidCallback? onLongPress;
 }
 
-/// The อีเวนต์ row of a transaction form's sections — "อีเวนต์  [🎉 name ✕]",
-/// the same in quick create, the drafts and the detail page. The event is an
-/// entity chip (event icon, people colour, name); empty with a [onTap] it is
-/// the add chip "+ เพิ่มอีเวนต์" that opens the picker. Tapping the chip opens
-/// the picker (or, in view, the event). [onClear] adds ✕. [locked]: a plain
-/// chip without ✕ / tap (a row that can't change its event; no 🔒 — a solid
-/// line already says "not editable"). Edit mode: a chip is dashed (changeable),
-/// a chosen one also has the thin line inside. Empty and nothing to tap:
-/// "ไม่ได้เลือก", muted.
 class EventRow extends StatelessWidget {
   const EventRow({
     required this.name,
@@ -166,8 +132,6 @@ class EventRow extends StatelessWidget {
       if (onTap == null || locked) {
         return DetailPlaceholder(l.quickEventNone);
       }
-      // Empty and changeable: the dashed "+" chip, in view mode too (it says
-      // there is something to add; a long-press there enters edit mode).
       return AppChip(
         icon: AppIcons.add,
         label: l.quickEventAdd,
@@ -229,12 +193,6 @@ class EventRow extends StatelessWidget {
   }
 }
 
-/// The รายการประจำ row of the section (0.4.0): the recurring this transaction
-/// is linked to — [name] (null = none), [periodLabel] ("งวด 16 ต.ค."), a tap
-/// (open the picker, or the recurring in view), an optional ✕ ([onClear] —
-/// only where the BE can unlink), [locked] (shown, not changeable), [editing]
-/// (false = view mode, see [SplitEventSlot]) and [ask]: an inline question
-/// shown under the row (an [AskCard]).
 class SplitRecurringSlot {
   const SplitRecurringSlot({
     this.name,
@@ -257,9 +215,6 @@ class SplitRecurringSlot {
   final Widget? ask;
 }
 
-/// The รายการประจำ row — "รายการประจำ  [🔁 name · งวด 16 ต.ค. ✕]"; empty with
-/// a tap it is the add chip "+ เลือกรายการประจำ"; nothing to tap: "ไม่ได้เลือก".
-/// [variant] as [EventRow]; the [SplitRecurringSlot.ask] card sits under it.
 class RecurringLinkRow extends StatelessWidget {
   const RecurringLinkRow({
     required this.slot,
@@ -358,27 +313,6 @@ class RecurringLinkRow extends StatelessWidget {
   }
 }
 
-/// THE split + event block of a transaction, built once and used by quick
-/// create, the pending drafts ("เพิ่มร่าง" + "แก้ร่าง") and the transaction
-/// detail. [variant] picks the look (see [SplitEventVariant]):
-///
-///   full                                              compact
-///   แบ่งรายการ  (green heading)                       แบ่งรายการ            ⌄
-///   แบ่งยอดให้คนอื่น หรือใส่ในอีเวนต์                  แบ่งยอด  [+ เพิ่มคน]
-///   แบ่งยอด            [+ เพิ่มคน]                    (the people)
-///   อีเวนต์                  [🎉 ทริป ✕]              อีเวนต์  [🎉 ทริป ✕]
-///
-/// No separators inside it. [splits] is the "แบ่งยอด" row (built by the
-/// caller: the feature's split editor, or a read-only list); [event] the
-/// อีเวนต์ row. Either may be null.
-///
-/// [collapsible]: the heading toggles it (pending: closed by default, quick
-/// create: open by default); closed, [summary] ("แบ่ง 2 คน · ทริปเชียงใหม่",
-/// or "ไม่ได้ตั้ง") shows under the title (full) / at the end of the heading
-/// line (compact). The transaction detail is never collapsible.
-///
-/// [helper]: a small muted line under the event row (compact only: "this
-/// split will live in the event …").
 class SplitEventSection extends StatefulWidget {
   const SplitEventSection({
     this.splits,
@@ -396,13 +330,11 @@ class SplitEventSection extends StatefulWidget {
   final Widget? splits;
   final SplitEventSlot? event;
 
-  /// The รายการประจำ row (0.4.0), after the event; null = no such row.
   final SplitRecurringSlot? recurring;
   final String? summary;
   final bool collapsible;
   final bool initiallyOpen;
 
-  /// No band above (the first section of a page).
   final bool first;
   final SplitEventVariant variant;
   final String? helper;

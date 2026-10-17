@@ -9,12 +9,6 @@ import '../../data/transactions_repository.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 
-/// State for [TransactionsCubit].
-///
-/// One cache for the user's whole book; consumers filter via
-/// [TransactionsCubit.forAccount] etc. Pagination metadata is kept on
-/// the state so [loadMore] can ask for the next page without callers
-/// tracking it.
 class TransactionsState extends Equatable {
   const TransactionsState({
     this.transactions = const [],
@@ -32,22 +26,15 @@ class TransactionsState extends Equatable {
   final ApiException? error;
   String? get errorMessage => error?.message;
 
-  /// Last-loaded page index. 0 = nothing loaded yet.
   final int page;
   final int totalPages;
 
-  /// Bumped by every successful write (add / update / tags / remove) —
-  /// never by loads. Screens that aggregate the book (dashboard) listen
-  /// for it to know their totals went stale.
+  /// Bumped by every successful write (add / update / tags / remove) — never by
+  /// loads.
   final int revision;
 
-  /// A [TransactionsCubit.loadMore] page fetch is in flight. Separate from
-  /// [status] so a filter refetch / pull-to-refresh (status `loading`)
-  /// doesn't read as "loading the next page".
   final bool loadingMore;
 
-  /// What the whole filtered set adds up to (every page) — the summary
-  /// card. Null when the server doesn't send it.
   final ListTotals? totals;
 
   bool get hasMore => page > 0 && page < totalPages;
@@ -91,22 +78,6 @@ class TransactionsState extends Equatable {
 
 enum TransactionsStatus { initial, loading, loaded, error }
 
-/// Backing store for transaction screens. Mutations round-trip through
-/// the API and are reflected via **surgical updates** — single-row
-/// mutations replace one row in state; transfer mutations replace two
-/// (matched by id). No full reload after a write.
-///
-/// A row only lands in the list when it matches the list's filters, at
-/// its sorted place (owner 2026-10-10: a new expense showed under a
-/// รายรับ filter; a back-dated one opened a new day at the top). When a
-/// filter can't be judged here (search, tags, sub-categories) the list
-/// re-fetches instead.
-///
-/// Several lists can be alive at once — the app's own, a wallet's รายการ
-/// tab, the dashboard drill-down — each with its own cubit. A write
-/// through any of them refreshes the others ([_live]); a write made
-/// elsewhere (pending submit, debt settle, adjust balance) calls
-/// [bookChanged].
 class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
   TransactionsCubit({required TransactionsRepository repository})
     : _repo = repository,
@@ -116,12 +87,8 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
 
   final TransactionsRepository _repo;
 
-  /// Every transactions list that's alive right now.
   static final Set<TransactionsCubit> _live = {};
 
-  /// The book changed outside these cubits (a server-side write: pending
-  /// submit, debt settle, copy-to-book, adjust balance, …) — every live
-  /// list re-fetches, keeping its own filters and sort.
   static Future<void> bookChanged() =>
       Future.wait([for (final c in _live.toList()) c.refresh()]);
 
@@ -138,15 +105,10 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     emit(const TransactionsState());
   }
 
-  /// Last-used filter / sort, reused by [loadMore].
   _ListQuery _last = const _ListQuery();
 
-  /// Bumped per [load]; a response for an older load is dropped (search
-  /// typing fires loads faster than they return).
   int _seq = 0;
 
-  /// Fetches page 1 with the supplied filters, replacing the cache.
-  /// Use this when the user changes filter / sort.
   Future<void> load({
     String? accountId,
     String? categoryId,
@@ -162,6 +124,8 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     List<String> categoryIds = const [],
     Set<TransactionType> types = const {},
     bool noTags = false,
+    double? amountMin,
+    double? amountMax,
     String sort = 'date_desc',
     int perPage = 20,
   }) async {
@@ -180,12 +144,13 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
       categoryIds: categoryIds,
       types: types,
       noTags: noTags,
+      amountMin: amountMin,
+      amountMax: amountMax,
       sort: sort,
       perPage: perPage,
     );
     final seq = ++_seq;
 
-    // A refetch supersedes any in-flight page (its response is dropped).
     emit(
       state.copyWith(
         status: TransactionsStatus.loading,
@@ -217,11 +182,6 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     }
   }
 
-  /// Re-fetches page 1 with the **current** filters and sort — after a
-  /// write the list should show, without resetting what the user picked
-  /// (a bare [load] means all-time, no filters, while the chips still say
-  /// "เดือนนี้"). Quiet: the rows stay on screen while it runs, and a
-  /// failure keeps them. Does nothing before the first load.
   Future<void> refresh() async {
     if (isClosed || state.status == TransactionsStatus.initial) return;
     final seq = ++_seq;
@@ -241,7 +201,6 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
         ),
       );
     } catch (_) {
-      // Keep what's on screen; the next pull / load tries again.
     }
   }
 
@@ -261,14 +220,13 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
         categoryIds: f.categoryIds,
         types: f.types,
         noTags: f.noTags,
+        amountMin: f.amountMin,
+        amountMax: f.amountMax,
         page: page,
         perPage: f.perPage,
         sort: f.sort,
       );
 
-  /// Loads page 1 only when nothing's loaded yet. Page entry points
-  /// (e.g. transactions list, account detail) call this from initState
-  /// without paying for a refetch on every navigation.
   Future<void> loadIfNeeded({
     String? accountId,
     String? from,
@@ -281,7 +239,6 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     return load(accountId: accountId, from: from, to: to);
   }
 
-  /// Appends the next page using the last-used filters/sort.
   Future<void> loadMore() async {
     if (!state.hasMore) return;
     if (state.loadingMore || state.status == TransactionsStatus.loading) {
@@ -313,10 +270,6 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     }
   }
 
-  /// Creates a transaction (or transfer pair) in ONE call — tags and splits
-  /// ride in the body (API v2). The returned rows go into the cache where the
-  /// list's filters put them; the result's `accountBalances` are for
-  /// [AccountsCubit.patchBalances]. Re-throws [ApiException].
   Future<TransactionWriteResult> add({
     required TransactionType type,
     String? accountId,
@@ -341,13 +294,10 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
       tagIds: tagIds,
       splits: splits,
     );
-    // Only where the list's filters and sort put it (see [_place]).
     _emitWrite(state.copyWith(transactions: _place(result.rows)));
     return result;
   }
 
-  /// Edits a transaction in ONE call. [tagIds] (when not null) replaces the
-  /// tag set. Returns the rows + balances after the write.
   Future<TransactionWriteResult> updateTransaction({
     required String id,
     double? amount,
@@ -380,19 +330,14 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
       tagIds: tagIds,
       alsoUpdateLink: alsoUpdateLink,
     );
-    // Moved to a future date: it's an upcoming item now, not a transaction.
     if (result.isUpcoming) {
       dropRow(id);
       return result;
     }
-    // An edit can move the row (new date / amount) or take it out of the
-    // filters (new type / wallet / category).
     _emitWrite(state.copyWith(transactions: _place(result.rows)));
     return result;
   }
 
-  /// Replaces the tags of [transactionId] with [tagIds] (one `PUT`); the
-  /// row in the response goes into the cache.
   Future<void> setTags({
     required String transactionId,
     required List<String> tagIds,
@@ -405,14 +350,9 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
       if (same) return;
     }
     final fresh = await _repo.setTags(transactionId, tagIds);
-    // Tags can take it in / out of a tag filter.
     _emitWrite(state.copyWith(transactions: _place([fresh])));
   }
 
-  /// Deletes a transaction. For transfers, the BE cascades to the paired
-  /// row; we drop both from the cache by `transfer_group_id`. Returns the
-  /// wallets' balances after the delete. [alsoDeleteLink]: see
-  /// [TransactionsRepository.delete].
   Future<DeleteTransactionResult> remove(
     String id, {
     bool? alsoDeleteLink,
@@ -437,9 +377,6 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     return result;
   }
 
-  /// A row the server deleted through another record (a debt entry's wallet
-  /// side goes with the entry): out of the cache — no call — and the other
-  /// live lists re-read.
   void dropRow(String id) {
     if (isClosed) return;
     _emitWrite(
@@ -449,8 +386,6 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     );
   }
 
-  // ── Read helpers ──────────────────────────────────────────────────
-
   Transaction? byId(String id) {
     for (final t in state.transactions) {
       if (t.id == id) return t;
@@ -458,14 +393,6 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     return null;
   }
 
-  /// Re-fetches one row in place (the detail page's pull to refresh, its
-  /// split people) — a full [load] would re-run the list's filters, which
-  /// may not include this row. Re-throws [ApiException].
-  ///
-  /// A read: a plain emit, no [refresh] — that would put page 1's list rows
-  /// (no `splits`) straight back over the row just fetched. [afterWrite]:
-  /// the row changed on the server (its splits were saved), so this goes
-  /// the write path and the other lists re-fetch too.
   Future<Transaction> refreshOne(String id, {bool afterWrite = false}) async {
     final fresh = await _repo.get(id);
     if (isClosed) return fresh;
@@ -473,17 +400,11 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     return fresh;
   }
 
-  /// Puts a row the server just returned (a write response, a read) into the
-  /// cache without another call: replaced in place when this list holds it,
-  /// otherwise placed only if the list's filters want it. [afterWrite]: the
-  /// row changed on the server, so the other live lists re-fetch too.
   void patchRow(Transaction fresh, {bool afterWrite = false}) {
     if (isClosed) return;
     final id = fresh.id;
     final known = state.transactions.any((t) => t.id == id);
     final next = state.copyWith(
-      // A row this list doesn't hold (opened from elsewhere) is placed
-      // only if the list's filters want it.
       transactions: known
           ? _patch(state.transactions, [fresh])
           : _place([fresh]),
@@ -495,30 +416,18 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     }
   }
 
-  /// Server returns transactions in date_desc order; this is just a
-  /// view filter, not a re-sort.
   List<Transaction> forAccount(String accountId) =>
       state.transactions.where((t) => t.accountId == accountId).toList();
 
-  // ── Internal ──────────────────────────────────────────────────────
-
-  /// Emits a post-write state and bumps [TransactionsState.revision]; the
-  /// other live lists re-fetch (a create from the + sheet shows up in the
-  /// wallet's รายการ tab too). A list whose filters [_place] can't judge
-  /// re-fetches itself.
   void _emitWrite(TransactionsState next) {
     emit(next.copyWith(revision: state.revision + 1));
-    // Totals (summary card) and filters this list can't judge need the
-    // server.
+    // Totals (summary card) and filters this list can't judge need the server.
     if (!_last.judgeable || state.totals != null) unawaited(refresh());
     for (final other in _live.toList()) {
       if (other != this) unawaited(other.refresh());
     }
   }
 
-  /// [state]'s rows with [rows] put where this list's filters and sort
-  /// want them: an old copy is dropped; a row the filters exclude stays
-  /// out; one sorting past the last loaded row waits for its page.
   List<Transaction> _place(List<Transaction> incoming) {
     final rows = _keepSplits(incoming);
     final ids = {for (final r in rows) r.id};
@@ -539,9 +448,6 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     return out;
   }
 
-  /// [incoming] with the cached rows' `splits` carried over: list rows and
-  /// write results come without the people (only GET /:id has them), so a
-  /// row whose split_count didn't change keeps the ones already fetched.
   List<Transaction> _keepSplits(List<Transaction> incoming) {
     final cached = {
       for (final t in state.transactions)
@@ -558,8 +464,6 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     ];
   }
 
-  /// Replaces existing rows whose id matches one of [updates]; rows
-  /// not in [updates] are preserved as-is. Order preserved.
   List<Transaction> _patch(
     List<Transaction> existing,
     List<Transaction> updates,
@@ -573,7 +477,6 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
   }
 }
 
-/// The filters + sort of the last [TransactionsCubit.load].
 class _ListQuery {
   const _ListQuery({
     this.accountId,
@@ -590,6 +493,8 @@ class _ListQuery {
     this.categoryIds = const [],
     this.types = const {},
     this.noTags = false,
+    this.amountMin,
+    this.amountMax,
     this.sort = 'date_desc',
     this.perPage = 20,
   });
@@ -605,24 +510,22 @@ class _ListQuery {
   final bool includeChildren;
   final bool uncategorized;
 
-  /// The multi-select filters: OR inside a group (wallets / categories / tags
-  /// with their "none" flags, types), AND between groups.
   final List<String> accountIds;
   final List<String> categoryIds;
   final Set<TransactionType> types;
   final bool noTags;
+
+  final double? amountMin;
+  final double? amountMax;
   final String sort;
   final int perPage;
 
-  /// Whether [matches] can tell, here, if a row belongs: a search, tags
-  /// or "with sub-categories" need the server.
   bool get judgeable =>
       (q == null || q!.trim().isEmpty) &&
       tagIds.isEmpty &&
       !noTags &&
       !(includeChildren && (categoryId != null || categoryIds.isNotEmpty));
 
-  /// [t] passes this query's filters (only meaningful when [judgeable]).
   bool matches(Transaction t) {
     final day = t.date.length >= 10 ? t.date.substring(0, 10) : t.date;
     final wallets = [?accountId, ...accountIds];
@@ -643,12 +546,11 @@ class _ListQuery {
     if (kinds.isNotEmpty && !kinds.contains(t.type)) return false;
     if (from != null && day.compareTo(from!) < 0) return false;
     if (to != null && day.compareTo(to!) > 0) return false;
+    if (amountMin != null && t.amount < amountMin!) return false;
+    if (amountMax != null && t.amount > amountMax!) return false;
     return true;
   }
 
-  /// < 0 when [a] comes before [b] in this query's sort. A new row goes
-  /// first among equals for the newest-first / largest-first sorts (it's
-  /// the latest of its day) and last for the oldest-first ones.
   int compare(Transaction a, Transaction b) {
     final byDate = a.date.compareTo(b.date);
     final byAmount = a.amount.compareTo(b.amount);

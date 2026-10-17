@@ -1,3 +1,4 @@
+import 'app_hero_card.dart';
 import 'package:flutter/material.dart';
 
 import '../atoms/app_button.dart';
@@ -10,12 +11,8 @@ import '../tokens/app/app_colors.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 
-/// The colour family of a [SummaryTile] (income-green, warning-amber, ...).
 enum SummaryTileTone { neutral, green, amber, red, orange }
 
-/// One tile of a [ListSummaryCard]: a small label over a bold value, tinted
-/// by [tone]. With [onTap] it is a filter; [selected] rings it in primary
-/// (tap-again-to-clear is the page's logic).
 @immutable
 class SummaryTile {
   const SummaryTile({
@@ -34,14 +31,11 @@ class SummaryTile {
   final bool selected;
   final VoidCallback? onTap;
 
-  /// A small line under the value.
   final String? caption;
 
-  /// A widget in place of the [caption] text (a month stepper + "· net").
   final Widget? captionWidget;
 }
 
-/// A full-width primary button at the bottom of a [ListSummaryCard].
 @immutable
 class SummaryCta {
   const SummaryCta({required this.label, required this.onTap, this.icon});
@@ -51,20 +45,6 @@ class SummaryCta {
   final VoidCallback? onTap;
 }
 
-/// The ONE summary card at the top of a list page (owner 2026-10-17):
-///
-///   caption                              [actions]  (CardActionButtons, 👁)
-///   main number  + small [mainSuffix]
-///   [bar]  (ProgressRow: value / marker / tone + left / right captions)
-///   [infoLine]
-///   [alert]  amber, tappable
-///   [tiles]  2-4 equal tiles in ONE row (filters; [SummaryTile.selected] rings)
-///   [cta]    big full-width primary button
-///
-/// Every part is optional. Words come from the caller. [actions] are the
-/// standard top-right slot (`CardActionButton`s, the list's
-/// `ToolbarToggleButton`); [showMoneyToggle] adds the 👁 before them.
-/// [style] tints the card like a hero (default plain).
 class ListSummaryCard extends StatelessWidget {
   const ListSummaryCard({
     this.caption,
@@ -76,6 +56,7 @@ class ListSummaryCard extends StatelessWidget {
     this.symbol,
     this.mainTone = MoneyTone.plain,
     this.mainSuffix,
+    this.mainLabel,
     this.bar,
     this.chart,
     this.alert,
@@ -84,7 +65,12 @@ class ListSummaryCard extends StatelessWidget {
     this.onInfoTap,
     this.tiles = const [],
     this.cta,
+    this.expanded,
     this.style = const HeroStyle.plain(),
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: AppSpacing.md,
+      vertical: AppSpacing.sm,
+    ),
     this.margin = const EdgeInsets.fromLTRB(
       AppSpacing.lg,
       AppSpacing.sm,
@@ -96,49 +82,82 @@ class ListSummaryCard extends StatelessWidget {
 
   final String? caption;
 
-  /// A widget in place of the [caption] text (a month stepper + "· net").
   final Widget? captionWidget;
   final List<Widget> actions;
   final bool showMoneyToggle;
 
-  /// The big number as a widget, or [amount] (+ [symbol], [mainTone]).
   final Widget? main;
   final num? amount;
   final String? symbol;
   final MoneyTone mainTone;
 
-  /// Small text after the big number ("of 19,000").
   final String? mainSuffix;
 
-  /// The progress bar with its captions.
+  final String? mainLabel;
+
   final ProgressRow? bar;
 
-  /// A chart under the big number (`DailyBars`).
   final Widget? chart;
 
-  /// The amber alert line; tappable with [onAlertTap].
   final String? alert;
   final VoidCallback? onAlertTap;
 
-  /// A free line under the bar.
   final Widget? infoLine;
 
-  /// Makes the [infoLine] tappable (a link to another page).
   final VoidCallback? onInfoTap;
   final List<SummaryTile> tiles;
   final SummaryCta? cta;
+
+  final ValueNotifier<bool>? expanded;
   final HeroStyle style;
+
+  final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry margin;
 
   @override
   Widget build(BuildContext context) {
+    final fold = expanded;
+    return AppHeroCard(
+      style: style,
+      margin: margin,
+      padding: padding,
+      expanded: [_body(context, true)],
+      folded: fold == null ? null : [_body(context, false)],
+      open: fold,
+    );
+  }
+
+  Widget _mainLabel(BuildContext context) => Text(
+    mainLabel!,
+    maxLines: 1,
+    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
+      fontWeight: FontWeight.w700,
+    ),
+  );
+
+  Widget _labelled(BuildContext context, Widget? number) => Flexible(
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        _mainLabel(context),
+        const SizedBox(width: AppSpacing.sm),
+        if (number != null) Flexible(child: number),
+      ],
+    ),
+  );
+
+  Widget _body(BuildContext context, bool open) {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     final hasTop =
         caption != null ||
         captionWidget != null ||
         actions.isNotEmpty ||
-        showMoneyToggle;
+        showMoneyToggle ||
+        expanded != null;
     final big =
         main ??
         (amount == null
@@ -151,42 +170,84 @@ class ListSummaryCard extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
               ));
+    final topRow = hasTop
+        ? Row(
+            children: [
+              Expanded(
+                child: captionWidget != null
+                    ? Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: captionWidget,
+                      )
+                    : caption == null
+                    ? const SizedBox.shrink()
+                    : Text(
+                        caption!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.labelLarge?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+              ),
+              if (showMoneyToggle) const MoneyVisibilityToggle(),
+              for (final a in actions) ...[
+                const SizedBox(width: AppSpacing.xs),
+                a,
+              ],
+              // The fold sits in the same spot folded or open, so a second tap
+              // never has to chase it.
+              if (expanded != null) ...[
+                const SizedBox(width: AppSpacing.xs),
+                const AppHeroFoldButton(key: ValueKey('summaryFold')),
+              ],
+            ],
+          )
+        : null;
+    if (expanded != null && !open) {
+      final number =
+          main ??
+          (amount == null
+              ? null
+              : MoneyText(
+                  amount!,
+                  symbol: symbol,
+                  tone: mainTone,
+                  style: textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ));
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ?topRow,
+          if (topRow != null) const SizedBox(height: AppSpacing.xs),
+          Row(
+            children: [
+              if (mainLabel != null)
+                _labelled(context, number)
+              else if (number != null)
+                Flexible(child: number),
+            ],
+          ),
+        ],
+      );
+    }
     const gap = SizedBox(height: AppSpacing.md);
     const small = SizedBox(height: AppSpacing.sm);
     final children = <Widget>[
-      if (hasTop)
-        Row(
-          children: [
-            Expanded(
-              child: captionWidget != null
-                  ? Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      child: captionWidget,
-                    )
-                  : caption == null
-                  ? const SizedBox.shrink()
-                  : Text(
-                      caption!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.labelLarge?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-            ),
-            if (showMoneyToggle) const MoneyVisibilityToggle(),
-            for (final a in actions) ...[
-              const SizedBox(width: AppSpacing.xs),
-              a,
-            ],
-          ],
-        ),
+      ?topRow,
+      if (topRow != null && big != null) const SizedBox(height: AppSpacing.xs),
       if (big != null)
         Row(
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
-            Flexible(child: big),
+            if (mainLabel != null)
+              _labelled(context, big)
+            else
+              Flexible(child: big),
             if (mainSuffix != null) ...[
               const SizedBox(width: AppSpacing.sm),
               Flexible(
@@ -202,19 +263,19 @@ class ListSummaryCard extends StatelessWidget {
             ],
           ],
         ),
-      if (chart != null) ...[small, chart!],
-      if (bar != null) ...[small, bar!],
-      if (infoLine != null) ...[
+      if (open && chart != null) ...[small, chart!],
+      if (open && bar != null) ...[small, bar!],
+      if (open && infoLine != null) ...[
         small,
         onInfoTap == null
             ? infoLine!
             : InkWell(onTap: onInfoTap, child: infoLine!),
       ],
-      if (alert != null) ...[
+      if (open && alert != null) ...[
         small,
         _AlertLine(text: alert!, onTap: onAlertTap),
       ],
-      if (tiles.isNotEmpty) ...[
+      if (open && tiles.isNotEmpty) ...[
         gap,
         IntrinsicHeight(
           child: Row(
@@ -228,7 +289,7 @@ class ListSummaryCard extends StatelessWidget {
           ),
         ),
       ],
-      if (cta != null) ...[
+      if (open && cta != null) ...[
         gap,
         AppButton(
           label: cta!.label,
@@ -239,17 +300,10 @@ class ListSummaryCard extends StatelessWidget {
         ),
       ],
     ];
-    return HeroSurface(
-      style: style,
-      margin: margin,
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: children,
-        ),
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: children,
     );
   }
 }
@@ -297,8 +351,6 @@ class _AlertLine extends StatelessWidget {
   }
 }
 
-/// One [SummaryTile] drawn — the list card uses it, and a hero card's tiles
-/// row (`HeroCard.tiles`) takes the same widget.
 class SummaryTileView extends StatelessWidget {
   const SummaryTileView({required this.tile, super.key});
 

@@ -5,7 +5,6 @@ import '../../categories/domain/category.dart';
 import '../../tags/domain/tag.dart';
 import 'refs.dart';
 
-/// A wallet in `GET /transactions/form-options`: the ref plus its balance.
 class AccountOption extends Equatable {
   const AccountOption({
     required this.ref,
@@ -18,7 +17,6 @@ class AccountOption extends Equatable {
   final AccountRef ref;
   final double balance;
 
-  /// Off: the balance is not shown (see [Account.trackBalance]).
   final bool trackBalance;
   final int sortOrder;
   final bool isDefault;
@@ -38,8 +36,6 @@ class AccountOption extends Equatable {
   List<Object?> get props => [ref, balance, sortOrder, isDefault, trackBalance];
 }
 
-/// A category in the form options: flat, in display order (the FE builds the
-/// tree from `parent_id`). Active, non-system categories only.
 class CategoryOption extends Equatable {
   const CategoryOption({
     required this.ref,
@@ -66,9 +62,6 @@ class CategoryOption extends Equatable {
   List<Object?> get props => [ref, sortOrder, depth, parentName];
 }
 
-/// `GET /transactions/form-options`: everything the create / edit pickers
-/// need, in one call. Contacts are not in it (the split editor loads them
-/// when it opens).
 class TxFormOptions extends Equatable {
   const TxFormOptions({
     this.accounts = const [],

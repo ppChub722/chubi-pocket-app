@@ -4,25 +4,8 @@ import '../tokens/app_durations.dart';
 import '../tokens/app_spacing.dart';
 import 'hero_style.dart';
 
-/// A detail page's hero in one row (owner 2026-10-11), pinned right under
-/// the floating top bar once the hero has scrolled away:
-///
-/// ```
-/// [ ← │ หมวดหมู่ › อาหาร ]                   [⏳][🔔][👤]
-/// ┌──────────────────────────────────────────────────┐
-/// │ [leading]  title (one line, ellipsis)  [trailing]│
-/// └──────────────────────────────────────────────────┘
-/// ```
-///
-/// Slots: [leading] (an icon / a small chip), [title] (one line, the first
-/// thing to give way), [trailing] (an amount / a small chip). Detail pages
-/// only — never quick create. Let [CompactHeroScope] place it and decide
-/// when it shows.
-///
-/// Comes and goes with a short slide + fade (none with animations off);
-/// while hidden it ignores taps.
-class CompactHeroBar extends StatelessWidget {
-  const CompactHeroBar({
+class AppCompactHeroCard extends StatelessWidget {
+  const AppCompactHeroCard({
     required this.title,
     this.leading,
     this.trailing,
@@ -32,22 +15,16 @@ class CompactHeroBar extends StatelessWidget {
     super.key,
   });
 
-  /// The look of the hero this bar stands in for — the SAME [HeroStyle] the
-  /// hero card was built with, so the bar mirrors it (tint, border, glyph) and
-  /// can never drift. Plain = the neutral pill.
   final HeroStyle style;
 
   final Widget? leading;
 
-  /// Styled as titleSmall bold, one line, ellipsis, by default.
   final Widget title;
   final Widget? trailing;
   final bool visible;
 
-  /// e.g. scroll back to the hero.
   final VoidCallback? onTap;
 
-  /// The bar's height (text scaling can grow it).
   static const double height = 44;
 
   @override
@@ -86,7 +63,6 @@ class CompactHeroBar extends StatelessWidget {
       ),
     );
     final radius = BorderRadius.circular(height / 2);
-    // Floating pill: a shadow under the hero's own surface (tinted / plain).
     final bar = Material(
       color: scheme.surface,
       elevation: 1.5,
@@ -117,21 +93,8 @@ class CompactHeroBar extends StatelessWidget {
   }
 }
 
-/// Puts a [CompactHeroBar] over a detail page's scrolling body, right under
-/// the floating top bar, and shows it while the hero (the widget carrying
-/// [heroKey]) is scrolled away under that line — hidden again once any of
-/// the hero is back below it.
-///
-/// ```dart
-/// body: CompactHeroScope(
-///   heroKey: _heroKey,
-///   bar: CompactHeroBar(leading: …, title: Text(name), trailing: …),
-///   child: ListView(children: [HeaderCard(key: _heroKey, …), …]),
-/// ),
-/// ```
-///
-/// It listens to the [child]'s own scroll (depth 0); a hero that's been
-/// built away (a lazy list scrolled far) counts as away.
+typedef CompactHeroBar = AppCompactHeroCard;
+
 class CompactHeroScope extends StatefulWidget {
   const CompactHeroScope({
     required this.heroKey,
@@ -143,15 +106,10 @@ class CompactHeroScope extends StatefulWidget {
 
   final GlobalKey heroKey;
 
-  /// Its [CompactHeroBar.visible] is set here.
   final CompactHeroBar bar;
 
-  /// The page's scrollable.
   final Widget child;
 
-  /// Where the bar sits, from this widget's top. Null = under the floating
-  /// top bar (`MediaQuery.paddingOf(context).top`, as on a page with
-  /// `extendBodyBehindAppBar`).
   final double? top;
 
   @override
@@ -161,7 +119,6 @@ class CompactHeroScope extends StatefulWidget {
 class _CompactHeroScopeState extends State<CompactHeroScope> {
   bool _away = false;
 
-  /// The latest scroll offset, while a check waits for the frame's end.
   double? _pending;
 
   double get _line => widget.top ?? MediaQuery.paddingOf(context).top;
@@ -175,8 +132,6 @@ class _CompactHeroScopeState extends State<CompactHeroScope> {
     } else {
       return false;
     }
-    // Measured after the frame: metrics notifications come mid-layout,
-    // when a lazy list may be dropping the hero.
     final waiting = _pending != null;
     _pending = pixels;
     if (!waiting) {
@@ -194,7 +149,6 @@ class _CompactHeroScopeState extends State<CompactHeroScope> {
     if (me == null || !me.attached) return;
     final hero =
         widget.heroKey.currentContext?.findRenderObject() as RenderBox?;
-    // Built away (a lazy list scrolled far) = away.
     final away = hero == null || !hero.attached
         ? pixels > 0
         : hero.localToGlobal(Offset(0, hero.size.height), ancestor: me).dy <=
@@ -217,7 +171,6 @@ class _CompactHeroScopeState extends State<CompactHeroScope> {
           right: AppSpacing.md,
           child: CompactHeroBar(
             key: bar.key,
-            // The hero's own style, so the bar is a small hero card.
             style: bar.style,
             leading: bar.leading,
             title: bar.title,

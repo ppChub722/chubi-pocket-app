@@ -12,9 +12,6 @@ int _i(Object? v) => (v as num?)?.toInt() ?? 0;
 IconCode? _icon(Object? v) =>
     v is Map<String, dynamic> ? IconCode.fromJson(v) : null;
 
-/// `GET /v1/dashboard` (contract §4). Month-scoped blocks ([summary],
-/// [previous], [topCategories], [trend]) follow [month]; the rest is a
-/// "right now" snapshot.
 class Dashboard extends Equatable {
   const Dashboard({
     required this.month,
@@ -35,20 +32,16 @@ class Dashboard extends Equatable {
     this.badges = const DashboardBadges(),
   });
 
-  /// First day of the selected month.
   final DateTime month;
   final DateTime today;
   final NetWorth netWorth;
   final PeriodTotals summary;
 
-  /// The month before [month] — for the "vs last month" hint.
   final PeriodTotals previous;
   final List<CategorySlice> topCategories;
 
-  /// Expense outside [topCategories] ("อื่นๆ").
   final double otherExpense;
 
-  /// Oldest → newest, ending at [month].
   final List<TrendPoint> trend;
   final UpcomingBlock upcoming;
   final BudgetsTile budgets;
@@ -56,10 +49,8 @@ class Dashboard extends Equatable {
   final GoalsTile savingGoals;
   final List<Transaction> recent;
 
-  /// Drafts waiting (first 5, resolved) + the total.
   final PendingBlock pending;
 
-  /// Notifications to answer / read (first 10) + the total.
   final AttentionBlock attention;
   final DashboardBadges badges;
 
@@ -111,7 +102,6 @@ class Dashboard extends Equatable {
   ];
 }
 
-/// `pending` of the dashboard: [total] drafts, the first few as [items].
 class PendingBlock extends Equatable {
   const PendingBlock({this.total = 0, this.items = const []});
 
@@ -130,8 +120,6 @@ class PendingBlock extends Equatable {
   List<Object?> get props => [total, items];
 }
 
-/// `attention` of the dashboard: notifications still unread or awaiting an
-/// answer — [total] can run past the [items] shown.
 class AttentionBlock extends Equatable {
   const AttentionBlock({this.total = 0, this.items = const []});
 
@@ -150,7 +138,6 @@ class AttentionBlock extends Equatable {
   List<Object?> get props => [total, items];
 }
 
-/// `badges`: the bell and the drafts counts.
 class DashboardBadges extends Equatable {
   const DashboardBadges({this.unreadNotifications = 0, this.pendingDrafts = 0});
 
@@ -178,7 +165,6 @@ class NetWorth extends Equatable {
   final double total;
   final double assets;
 
-  /// Positive number (what's owed on cards / overdrafts).
   final double liabilities;
   final int accountsCount;
 
@@ -217,8 +203,6 @@ class PeriodTotals extends Equatable {
   List<Object?> get props => [income, expense, net, count];
 }
 
-/// One top expense category (`top_categories[]`): the category ref (null =
-/// uncategorised), its expense and row count.
 class CategorySlice extends Equatable {
   const CategorySlice({
     required this.category,
@@ -285,15 +269,12 @@ class UpcomingItem extends Equatable {
 
   final UpcomingKind kind;
 
-  /// The upcoming recurring item's id, or the account id for
-  /// [UpcomingKind.cardDue].
   final String id;
   final String name;
   final TransactionType type;
   final double amount;
   final DateTime dueDate;
 
-  /// Negative when [overdue].
   final int daysUntil;
   final bool overdue;
   final IconCode? iconCode;

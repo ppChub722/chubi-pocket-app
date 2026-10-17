@@ -4,13 +4,11 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../domain/pending_transaction.dart';
 
-/// `/v1/pending-transactions` — drafts waiting to be confirmed.
 class PendingRepository {
   PendingRepository({required ApiClient client}) : _client = client;
 
   final ApiClient _client;
 
-  /// The page's one call: drafts + the server's `summary`.
   Future<PendingList> list() async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(
@@ -28,8 +26,6 @@ class PendingRepository {
     }
   }
 
-  /// Adds one or many manual drafts (all or nothing); answers the new drafts
-  /// and the server's `summary` over the whole list.
   Future<PendingList> create(List<PendingDraft> drafts) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
@@ -52,8 +48,6 @@ class PendingRepository {
     }
   }
 
-  /// Replaces the draft (clears its last submit error); answers the draft and
-  /// the server's `summary` (a sibling key of the draft's own fields).
   Future<PendingUpdated> update(String id, PendingDraft draft) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(
@@ -69,7 +63,6 @@ class PendingRepository {
     }
   }
 
-  /// Discards one draft.
   Future<DiscardResult> delete(String id) async {
     try {
       final res = await _client.dio.delete<Map<String, dynamic>>(
@@ -81,8 +74,6 @@ class PendingRepository {
     }
   }
 
-  /// Discards many in one call (the API takes 1..100 ids; a longer list goes
-  /// in chunks).
   Future<DiscardResult> discard(List<String> ids) async {
     try {
       final discarded = <String>[];
@@ -112,7 +103,6 @@ class PendingRepository {
     }
   }
 
-  /// Each draft independently — see [PendingSubmitResult].
   Future<PendingSubmitResult> submit(List<String> ids) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
@@ -125,8 +115,6 @@ class PendingRepository {
     }
   }
 
-  /// "Confirm everything ready" — one call; the server picks the drafts
-  /// whose `needs_input` is empty. Answers like [submit].
   Future<PendingSubmitResult> submitReady() async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
@@ -138,7 +126,6 @@ class PendingRepository {
     }
   }
 
-  /// Confirms one draft (same answer as [submit] with that id).
   Future<PendingSubmitResult> submitOne(String id) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(

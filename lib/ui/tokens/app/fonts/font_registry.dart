@@ -1,15 +1,8 @@
 import 'app_font.dart';
 
-/// Central registry of all fonts available in the app.
-///
-/// Adding a new font:
-///   1. Append an [AppFont] entry here.
-///   2. Set `supportedLanguages` — this is mandatory.
-///   3. The picker, preloader and fallback logic pick it up automatically.
 class FontRegistry {
   const FontRegistry._();
 
-  // ── English fonts (3) ────────────────────────────────────────────────────
   static const AppFont inter = AppFont(
     id: 'Inter',
     family: 'Inter',
@@ -31,7 +24,6 @@ class FontRegistry {
     previewSample: 'The quick brown fox 1,234',
   );
 
-  // ── Thai fonts (2) ───────────────────────────────────────────────────────
   static const AppFont ibmPlexSansThai = AppFont(
     id: 'IBM Plex Sans Thai',
     family: 'IBM Plex Sans Thai',
@@ -46,7 +38,6 @@ class FontRegistry {
     previewSample: 'สวัสดี นักกีฬา ชมพู่ ๑,๒๓๔',
   );
 
-  // ── Aggregate ────────────────────────────────────────────────────────────
   static const List<AppFont> all = [
     inter,
     nunito,
@@ -55,8 +46,6 @@ class FontRegistry {
     mitr,
   ];
 
-  /// Per-language defaults — used when the app first launches and when the
-  /// current font does not support a newly-selected locale.
   static const Map<String, String> defaultsByLanguage = {
     'en': 'Inter',
     'th': 'IBM Plex Sans Thai',

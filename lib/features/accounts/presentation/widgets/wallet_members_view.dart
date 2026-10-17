@@ -12,28 +12,6 @@ import '../cubit/accounts_cubit.dart';
 import '../wallet_errors.dart';
 import 'wallet_invite_picker.dart';
 
-/// A wallet's members (spec §14 / B4) — the wallet page's สมาชิก tab
-/// (`/accounts/:id/members` opens it there):
-///
-/// - Active members: avatar · name (คุณ) · role pill; a pending invite
-///   carries "รอตอบรับ". ⋯ holds what the viewer may do to that member.
-/// - "+ เชิญจากผู้ติดต่อ" (owner; no email invite since 2026-10-11): pick
-///   one of my contacts linked to an app account ([showWalletInvitePicker]);
-///   the FIRST invite on a personal wallet asks first — sharing exposes the
-///   wallet's whole history (spec §14/4).
-/// - History: members who left (dimmed, joined / left dates) —
-///   membership is append-only (spec §14/2.4).
-/// - Leave (self), remove / transfer ownership (owner — spec §14/2.5).
-///
-/// The members list comes from the wallet page's single detail call
-/// (`members_history`); each action's response ([MembersResult]) goes back
-/// to the page through `onResult` — nothing is refetched.
-
-/// The invite flow (owner): pick a linked contact ([showWalletInvitePicker],
-/// [members] still in the wallet hidden), confirm the FIRST invite on a
-/// personal wallet (spec §14/4 — sharing exposes its history), send. The
-/// response ([MembersResult]) is handed to [onResult]. Returns whether an
-/// invite went out. Used by the สมาชิก tab and the wallet page's "invite" row.
 Future<bool> inviteWalletMember(
   BuildContext context, {
   required Account account,
@@ -41,7 +19,6 @@ Future<bool> inviteWalletMember(
   required void Function(MembersResult) onResult,
 }) async {
   final l = AppLocalizations.of(context)!;
-  // Hidden: everyone in the wallet or already invited.
   final contact = await showWalletInvitePicker(
     context,
     excludeUserIds: {
@@ -52,8 +29,6 @@ Future<bool> inviteWalletMember(
   if (contact == null || !context.mounted) return false;
   final name = contact.name;
 
-  // Conversion warning: gate the FIRST invite on a currently-personal
-  // wallet. Adding to an already-shared wallet skips the warning.
   if (!account.isShared) {
     final ok = await showConfirmDialog(
       context,
@@ -98,17 +73,13 @@ class WalletMembersView extends StatelessWidget {
 
   final Account account;
 
-  /// The whole membership (`members_history`): active, pending, left.
   final List<WalletMember> members;
 
-  /// A members action's response — the page patches itself from it.
   final void Function(MembersResult) onResult;
   final Future<void> Function() onRefresh;
 
-  /// Around the list (the tab's insets).
   final EdgeInsetsGeometry padding;
 
-  /// Only the owner invites / removes / transfers (the BE checks too).
   bool get _isOwner => account.canEdit;
 
   @override
@@ -170,8 +141,6 @@ class WalletMembersView extends StatelessWidget {
     );
   }
 
-  // ─── Member actions ──────────────────────────────────────────────────
-
   Future<void> _onLeave(
     BuildContext context,
     AppLocalizations l,
@@ -189,8 +158,6 @@ class WalletMembersView extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
     final router = GoRouter.of(context);
     try {
-      // Leaving returns {account: null}: the cubit drops the wallet from the
-      // list, and its page with it — straight back to the wallets list.
       final r = await cubit.removeMember(
         accountId: account.id,
         memberId: me.id,
@@ -198,8 +165,6 @@ class WalletMembersView extends StatelessWidget {
       onResult(r);
       router.go('/accounts');
     } on ApiException catch (e) {
-      // OWNER_MUST_TRANSFER lands here when the owner tries to leave a
-      // still-shared wallet (spec §14/2.5).
       showAppSnackBarOn(messenger, walletErrorMessage(l, e), tone: Tone.danger);
     }
   }
@@ -257,11 +222,8 @@ class WalletMembersView extends StatelessWidget {
   }
 }
 
-// ─── Rows & sheets ─────────────────────────────────────────────────────
-
 enum _MemberAction { transferOwnership, remove, leave }
 
-/// `[avatar]  name (คุณ)            [role] ⋯` · joined / left dates.
 class _MemberRow extends StatelessWidget {
   const _MemberRow({
     required this.member,
@@ -285,8 +247,6 @@ class _MemberRow extends StatelessWidget {
     final locale = Localizations.localeOf(context).toLanguageTag();
 
     final canLeave = isSelf && !member.hasLeft && onLeave != null;
-    // v1 rule (API §14): the owner may remove anyone but themselves (they
-    // leave via a transfer).
     final canRemove =
         viewerIsOwner && !isSelf && !member.hasLeft && onRemove != null;
     final canTransfer =

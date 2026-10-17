@@ -1,15 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// A single shimmer rectangle — building block for per-row skeletons.
-///
-/// Usage:
-/// ```dart
-/// const SkeletonBox(width: 80, height: 16, borderRadius: 4)
-/// ```
-///
-/// Animation is a horizontal gradient sweep, 1.2 s loop, per design-sheet
-/// §8.5. Color tokens come from `surface-container-high` (high-contrast
-/// against the page surface).
 class SkeletonBox extends StatefulWidget {
   const SkeletonBox({
     super.key,
@@ -59,7 +49,6 @@ class _SkeletonBoxState extends State<SkeletonBox>
     return AnimatedBuilder(
       animation: _ctrl,
       builder: (context, _) {
-        // Map progress 0..1 → gradient origin sweeping left to right.
         final t = _ctrl.value;
         return Container(
           width: widget.width,

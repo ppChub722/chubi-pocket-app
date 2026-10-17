@@ -5,18 +5,6 @@ import '../../../features/accounts/domain/account.dart';
 import '../../../features/accounts/domain/account_type.dart';
 import '../../ui.dart';
 
-/// Renders one wallet (account) in the grid.
-///
-/// The account's [iconCode] accent drives the card wash, border and
-/// balance text — styled like the เพิ่มเติม hub cards. [horizontal] is the
-/// list-row form (the reorder list, the icon maker's preview); the grid
-/// uses the vertical card. A card's credit bar is its used credit — an
-/// overpaid card shows none ([Account.creditUsedPct]).
-///
-/// Shared wallets (spec §14, [Account.isShared]) additionally show a
-/// small chain-link badge overlaid on the icon's corner (the user's own
-/// icon/logo stays) and an avatar stack of the OTHER active members
-/// (self excluded, max 3 then "+N").
 class AccountCard extends StatelessWidget {
   const AccountCard({
     required this.account,
@@ -48,14 +36,6 @@ class AccountCard extends StatelessWidget {
   }
 }
 
-/// The wallet-card look on its own: soft accent wash from the top-left,
-/// hairline accent border, big faded type glyph in the bottom-right corner
-/// (same language as the เพิ่มเติม hub cards). Shared by the grid
-/// [AccountCard] and the wallet detail page's hero header, so both read as
-/// the same object.
-/// The wallet's hero look as one [HeroStyle]: the wallet colour as a wash, a soft
-/// border and the account type's glyph. The wallet hero AND its compact bar
-/// are built from it, so the bar mirrors the card.
 HeroStyle accountHeroStyle(
   BuildContext context,
   Account account, {
@@ -89,7 +69,6 @@ class AccountCardSurface extends StatelessWidget {
   final bool showGlyph;
   final double glyphSize;
 
-  /// Card margin; null = the theme default (grid spacing).
   final EdgeInsetsGeometry? margin;
 
   @override
@@ -243,7 +222,6 @@ class _VerticalLayout extends StatelessWidget {
         ],
         if (utilization != null) ...[
           const SizedBox(height: AppSpacing.xs),
-          // Bar beside its percent (one line, keeps the card's height).
           Row(
             children: [
               Expanded(
@@ -263,9 +241,6 @@ class _VerticalLayout extends StatelessWidget {
   }
 }
 
-/// The wallet's icon in an [EditableCircle] (pencil badge while [onTap] is
-/// set), with the shared-wallet badge when [Account.isShared]. Constant
-/// footprint either way, so toggling [onTap] never reflows.
 class AccountIconCircle extends StatelessWidget {
   const AccountIconCircle({
     required this.account,
@@ -304,9 +279,6 @@ class AccountIconCircle extends StatelessWidget {
   }
 }
 
-/// Overlays a small chain-link badge on the bottom-right corner of a
-/// wallet icon — marks a shared wallet without replacing the user's
-/// own icon_code / logo (spec B2).
 class SharedWalletIconBadge extends StatelessWidget {
   const SharedWalletIconBadge({
     required this.size,
@@ -327,15 +299,12 @@ class SharedWalletIconBadge extends StatelessWidget {
       color: scheme.primaryContainer,
       iconColor: scheme.onPrimaryContainer,
       tooltip: l.walletSharedLabel,
-      // Shared is state, not decoration: kept on small icons too.
       essential: true,
       child: child,
     );
   }
 }
 
-/// Avatar stack of the wallet's OTHER active members — the viewer is
-/// excluded so the stack answers "who am I sharing this with".
 class OtherMembersStack extends StatelessWidget {
   const OtherMembersStack({required this.account, this.size = 18, super.key});
 
@@ -350,17 +319,14 @@ class OtherMembersStack extends StatelessWidget {
   }
 }
 
-/// A wallet's balance text colour (owner 2026-10-11): what you owe — a
-/// credit-type wallet — in the liability token; otherwise the wallet's own
-/// icon colour (the card wash keeps that colour either way).
 Color accountBalanceColor(BuildContext context, Account account) {
   if (account.isLiability) return account.colorOf(context);
   final palette = Theme.of(context).extension<AppColors>()!;
   return account.iconCode.tintFor(palette);
 }
 
-/// The balance to show: a zero is a plain 0 — `-0.0` (a new card) would
-/// read "-฿0.00".
+/// The balance to show: a zero is a plain 0 — `-0.0` (a new card) would read
+/// "-฿0.00".
 double accountDisplayBalance(Account account) =>
     account.balance == 0 ? 0 : account.balance;
 

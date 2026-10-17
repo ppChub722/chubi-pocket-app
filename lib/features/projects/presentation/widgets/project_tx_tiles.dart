@@ -26,8 +26,6 @@ String projectTxDateLabel(BuildContext context, String ymd) {
   );
 }
 
-/// Type bubble for a project row (expense / income), on the kit's
-/// [IconTile].
 Widget projectTxIcon(
   BuildContext context,
   ProjectTransaction tx, {
@@ -42,17 +40,12 @@ Widget projectTxIcon(
   );
 }
 
-/// A member's [PersonMark] level: linked to an app account, else a typed
-/// name (with or without an icon of its own).
+/// A member's [PersonMark] level: linked to an app account, else a typed name
+/// (with or without an icon of its own).
 PersonLevel projectMemberLevel(ProjectMember m) => m.isLinked
     ? PersonLevel.linked
     : (m.iconCode != null ? PersonLevel.contact : PersonLevel.name);
 
-/// One board row + its split children, on the kit's [EventBillRow]. Tap the
-/// tick to tick ("I've settled this") — when it's yours to settle, the
-/// "record in my book" sheet comes first. Tap the row for the action sheet
-/// (unmark / record / edit / delete). Ticked rows fade; locked rows are
-/// inert. A tag chip opens its menu ("ดูบิลที่ติดแท็กนี้").
 class ProjectTxTreeTile extends StatelessWidget {
   const ProjectTxTreeTile({
     required this.tree,
@@ -71,17 +64,13 @@ class ProjectTxTreeTile extends StatelessWidget {
   /// Reload the page (a write whose response can't patch it yet).
   final Future<void> Function() onChanged;
 
-  /// A write's patch: the page applies it (null → [onChanged]).
   final ValueChanged<EventPatch>? onPatch;
 
-  /// "ดูบิลที่ติดแท็กนี้": the รายการ tab filtered by this tag (null = no
-  /// tag menu).
   final ValueChanged<BoardTag>? onShowTag;
 
   /// "+ เพิ่มเข้าแท็กของฉัน" (only on tags I don't have yet).
   final ValueChanged<BoardTag>? onAddTagToMine;
 
-  /// A brief tint: the bill a link opened the page on (`?bill=`).
   final bool highlighted;
 
   @override
@@ -137,7 +126,6 @@ class ProjectTxTreeTile extends StatelessWidget {
       payerName: l.fpEventsPaidBy(payer.displayName),
       payerLevel: projectMemberLevel(payer),
       payerIconCode: payer.iconCode,
-      // The day is the group's heading; line 2 = payer · split count.
       summary: tree.children.isEmpty
           ? null
           : l.fpEventsSplitCount(tree.children.length),
@@ -177,7 +165,6 @@ class ProjectTxTreeTile extends StatelessWidget {
     );
   }
 
-  /// Mine to settle: payer of a parent row, or debtor / creditor of a split.
   bool _canResolve(ProjectTransaction tx, {required bool isParent}) {
     final my = view.me?.id;
     if (my == null) return false;
@@ -228,8 +215,8 @@ class ProjectTxTreeTile extends StatelessWidget {
     return ok;
   }
 
-  /// The write's patch to the page (no reload); a reload without a page
-  /// handler (the hub demo).
+  /// The write's patch to the page (no reload); a reload without a page handler
+  /// (the hub demo).
   Future<void> _apply(EventPatch p) async {
     final apply = onPatch;
     if (apply != null) {
@@ -239,7 +226,6 @@ class ProjectTxTreeTile extends StatelessWidget {
     }
   }
 
-  /// One call; the PUT returns the patch.
   Future<void> _mark(
     BuildContext context,
     ProjectTransaction tx,
@@ -290,8 +276,6 @@ class ProjectTxTreeTile extends StatelessWidget {
         ),
       ),
       actions: [
-        // The personal transaction this bill was made from (only its
-        // owner gets it from the BE).
         if (tx.sourceTx case final src?)
           SheetAction(
             value: 'source',
@@ -312,8 +296,8 @@ class ProjectTxTreeTile extends StatelessWidget {
             label: l.projectTxResolve,
             subtitle: l.projectTxResolveHint,
           ),
-        // Edit / delete follow the BE's row lock (viewers, inactive
-        // members, cancelled / archived events).
+        // Edit / delete follow the BE's row lock (viewers, inactive members,
+        // cancelled / archived events).
         if (isParent && !tx.locked) ...[
           SheetAction(
             value: 'edit',
@@ -338,7 +322,6 @@ class ProjectTxTreeTile extends StatelessWidget {
       case 'resolve':
         await _resolve(context, tx, isParent: isParent);
       case 'edit':
-        // Quick create hands back the write's patch (no reload).
         final patch = onPatch;
         final saved = await showQuickCreateSheet(
           context,

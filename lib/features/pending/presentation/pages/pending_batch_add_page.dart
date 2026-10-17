@@ -13,13 +13,6 @@ import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../../transactions/presentation/widgets/draft_form.dart';
 import '../cubit/pending_cubit.dart';
 
-/// `/pending/new` — jot several drafts at once (owner design 2026-10-08).
-/// Every row is the [DraftForm] in its chip layout — the same as "แก้ร่าง"
-/// (the hero — type, amount, description, date — then a wallet chip row
-/// above a category chip row, tags, the note, and a collapsible
-/// "หารกับ / อีเวนต์"); a row only needs an amount.
-/// "เก็บเป็นร่าง" parks them in รอยืนยัน (half-filled splits stay for later);
-/// "ยืนยันเลยทั้งหมด" also submits, and then every split must balance.
 class PendingBatchAddPage extends StatefulWidget {
   const PendingBatchAddPage({super.key});
 
@@ -64,7 +57,6 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
   void _removeRow(int i) {
     final removed = _rows.removeAt(i);
     setState(() {});
-    // After this frame — the row's form is still listening until it unmounts.
     WidgetsBinding.instance.addPostFrameCallback((_) => removed.dispose());
   }
 
@@ -78,7 +70,6 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
       showAppSnackBar(context, l.quickAmountRequired, tone: Tone.warning);
       return;
     }
-    // Confirming needs the splits whole and balanced (a draft doesn't).
     if (submit && rows.any((r) => !r.splitsBalanced)) {
       showAppSnackBar(context, l.txSplitUnbalanced, tone: Tone.danger);
       return;
@@ -116,7 +107,6 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final n = _filled.length;
-    // A save in flight dims the page and blocks input.
     return SavingOverlay(
       saving: _saving,
       child: Scaffold(
@@ -128,7 +118,6 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
         extendBodyBehindAppBar: true,
         body: Column(
           children: [
-            // Clear the floating top bar (read inside the body to see it).
             Builder(
               builder: (context) =>
                   SizedBox(height: MediaQuery.paddingOf(context).top),
@@ -168,7 +157,6 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
                 ],
               ),
             ),
-            // The text button below brings its own bottom space.
             PinnedBar(
               bottomGap: AppSpacing.sm,
               keyboardGap: 0,
@@ -200,8 +188,6 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
   }
 }
 
-/// One draft in the list: the chip-layout form in a card, a big ✕ to drop
-/// the row (only when there are several).
 class _RowCard extends StatelessWidget {
   const _RowCard({
     required this.controller,
@@ -238,8 +224,6 @@ class _RowCard extends StatelessWidget {
             compact: true,
             autofocus: autofocus,
             chipLayout: true,
-            // A row with an amount but no wallet / category is an incomplete
-            // draft: outline what's still missing.
             missing: {
               if (controller.amountValue > 0) ...[
                 if (controller.account == null) EntryField.wallet,

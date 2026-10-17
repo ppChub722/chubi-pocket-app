@@ -26,27 +26,21 @@ class ProjectsState extends Equatable {
 
   final List<Project> projects;
 
-  /// The summary card's numbers (BE `summary`, the same whatever the
-  /// filter); null before the first load.
   final ProjectListSummary? summary;
   final ProjectsStatus status;
   final ApiException? error;
   String? get errorMessage => error?.message;
   final String statusFilter;
 
-  /// The last page loaded (0 = none yet) and the server's page count.
   final int page;
   final int totalPages;
 
-  /// The next page is in flight.
   final bool loadingMore;
 
-  /// Server-side filters: name search, MY tags (any), sort.
   final String query;
   final List<String> tagIds;
   final ProjectSort sort;
 
-  /// The filters narrow the list (an empty result is "no match").
   bool get filtered =>
       statusFilter != 'active' || query.trim().isNotEmpty || tagIds.isNotEmpty;
 
@@ -97,8 +91,6 @@ class ProjectsState extends Equatable {
   ];
 }
 
-/// Projects store backed by [ProjectsRepository]: the events list (paged)
-/// and the event picker's source.
 class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
   ProjectsCubit({required ProjectsRepository repository})
     : _repo = repository,
@@ -110,9 +102,7 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
   void clear() => emit(const ProjectsState());
 
   /// Loads only when there is nothing usable cached: never loaded, failed, or
-  /// narrowed to another status (the event picker lists the ACTIVE ones). The
-  /// picker calls this on every open — it must not cost a GET /projects each
-  /// time; creating an event refreshes the list itself.
+  /// narrowed to another status (the event picker lists the ACTIVE ones).
   Future<void> loadIfNeeded() async {
     final usable =
         state.status == ProjectsStatus.loaded && state.statusFilter == 'active';
@@ -120,7 +110,6 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     await load();
   }
 
-  /// The first page (again), optionally with other filters (null = keep).
   Future<void> load({
     String? statusFilter,
     String? query,
@@ -141,7 +130,6 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     final asked = state;
     try {
       final p = await _list(asked);
-      // A newer load (other filters) owns the state now.
       if (!_same(state, asked)) return;
       emit(
         state.copyWith(
@@ -162,8 +150,6 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     }
   }
 
-  /// The next page, appended. A failure keeps the rows and rethrows (the
-  /// page shows a message).
   Future<void> loadMore() async {
     if (!state.hasMore ||
         state.loadingMore ||
@@ -193,9 +179,6 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     }
   }
 
-  /// ONE call: the tile's filter goes to the BE as `status` (active /
-  /// completed / cancelled / archived / all, and the derived unsettled /
-  /// receivable / ended that match the summary counts).
   Future<ProjectPage> _list(ProjectsState s, {int page = 1}) => _repo.list(
     status: s.statusFilter,
     q: s.query,
@@ -213,8 +196,6 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
   static bool _sameIds(List<String> a, List<String> b) =>
       a.length == b.length && a.every(b.contains);
 
-  /// One call (plan, dates, my tags) → the new event (first in the list).
-  /// [startDate] / [endDate] are `YYYY-MM-DD`.
   Future<Project> create({
     required String name,
     String? description,
@@ -239,11 +220,6 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     return d.project;
   }
 
-  /// Quick create from bills (spec §10/4.24, API §10 "Quick create"):
-  /// one atomic call — project + auto-added members + auto-claimed board
-  /// rows for the new bill and every ticked past bill. Re-throws
-  /// [ApiException] so the page can map `TX_NOT_FOUND` /
-  /// `TX_ALREADY_IN_PROJECT` / `VALIDATION_ERROR` to friendly copy.
   Future<QuickCreateResult> quickCreate({
     required String name,
     required Map<String, dynamic> newTransaction,
@@ -258,10 +234,6 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     return result;
   }
 
-  /// `plannedAmount` / `clearPlannedAmount` follow the repository's
-  /// presence semantics (spec §10/4.23 — set a number to enable the
-  /// plan display, explicit null to hide it); dates the same way
-  /// (`YYYY-MM-DD`). [tagIds] = MY tags. Returns the event page's patch.
   Future<EventPatch> update(
     String id, {
     String? name,
@@ -296,22 +268,18 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     return p;
   }
 
-  /// `POST /projects/:id/archive` (owner): the list drops it (or shows it
-  /// archived under another filter); returns the event page's patch.
   Future<EventPatch> archive(String id) async {
     final p = await _repo.archive(id);
     patch(p.project);
     return p;
   }
 
-  /// `POST /projects/:id/restore` (owner): back to active.
   Future<EventPatch> restore(String id) async {
     final p = await _repo.restore(id);
     patch(p.project);
     return p;
   }
 
-  /// Returns the wallets the deleted transactions moved.
   Future<Map<String, double>> delete(
     String id, {
     bool deleteLinkedTxs = false,
@@ -321,14 +289,8 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     return balances;
   }
 
-  /// Puts the server's copy of [p] in the list (a write on the event page),
-  /// so going back needs no reload. Unknown ids are left out (another
-  /// filter / page); a status change out of the current filter drops it.
   void patch(Project p) {
     if (!state.projects.any((x) => x.id == p.id)) return;
-    // A stored-status tile drops a row whose status left it; the derived
-    // tiles (unsettled / receivable / ended) are the server's: the row stays
-    // until the next load.
     final f = state.statusFilter;
     const stored = {'active', 'completed', 'cancelled', 'archived'};
     if (stored.contains(f) && p.status.wire != f) return remove(p.id);
@@ -342,7 +304,6 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     );
   }
 
-  /// Drops [id] from the list (deleted / left).
   void remove(String id) => emit(
     state.copyWith(projects: state.projects.where((p) => p.id != id).toList()),
   );

@@ -4,30 +4,18 @@ import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import 'picker_sheet.dart';
 
-/// Which occurrences of a series an edit applies to — Google Calendar style
-/// (owner 2026-10-13: recurring items; any series later).
 enum EditScope {
-  /// Only the one being edited.
   thisOne,
 
-  /// This one and every one after it.
   following,
 
-  /// Every one before today (already made).
   past,
 
-  /// Every one still to come.
   upcoming,
 
-  /// The whole series.
   all,
 }
 
-/// "Apply to…" — a central popover: a small muted [title], then one row per
-/// entry of [options] (its order is the order shown; pass only the scopes
-/// that apply, e.g. upcoming / all for a rule change). The [selected] row
-/// is highlighted, never ✓. Resolves the picked scope, or null when
-/// dismissed. Labels come in, so any series can use it.
 Future<EditScope?> showEditScopeChoice(
   BuildContext context, {
   required String title,
@@ -46,8 +34,6 @@ Future<EditScope?> showEditScopeChoice(
   );
 }
 
-/// The popover [showEditScopeChoice] shows — public so the hub can draw it
-/// inline.
 class EditScopeChoice extends StatelessWidget {
   const EditScopeChoice({
     required this.title,
@@ -62,7 +48,6 @@ class EditScopeChoice extends StatelessWidget {
   final EditScope? selected;
   final ValueChanged<EditScope> onPicked;
 
-  /// As wide as the anchored popovers.
   static const double maxWidth = 304;
 
   @override

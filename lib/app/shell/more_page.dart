@@ -10,13 +10,8 @@ import '../../core/network/api_client.dart';
 import '../../features/me_counts/cubit/me_counts_cubit.dart';
 import '../../features/me_counts/data/me_counts_repository.dart';
 
-/// `/more` — the เพิ่มเติม hub: every feature without a nav slot, as big
-/// cards grouped by purpose. Each card opens the feature's own tab
-/// ([ShellTab]); back at that tab's root returns here.
-///
-/// Card subtitles show a live count when one is known — all from ONE
-/// `GET /me/counts` per open / pull-to-refresh — and fall back to the
-/// static description otherwise.
+/// `/more` — the เพิ่มเติม hub: every feature without a nav slot, as big cards
+/// grouped by purpose.
 class MorePage extends StatelessWidget {
   const MorePage({
     super.key,
@@ -28,10 +23,8 @@ class MorePage extends StatelessWidget {
   /// Tests: a ready cubit instead of the one built from [ApiClient].
   final MeCountsCubit? counts;
 
-  /// Tests: which modules are on; the app uses [ShellTab.enabled].
   final bool Function(ShellTab)? isOn;
 
-  /// Tests: replaces the shell's top bar.
   final PreferredSizeWidget? topBar;
 
   @override
@@ -59,7 +52,6 @@ class _MoreView extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final c = context.watch<MeCountsCubit>().state.counts;
     String? count(int? n) => n == null || n == 0 ? null : l.moreLiveCount(n);
-    // One colour per group, from the active theme (ModuleColors).
     final groupColors = ModuleColors.of(context);
     _MoreEntry entry(ShellTab tab) => switch (tab) {
       ShellTab.categories => _MoreEntry(
@@ -123,15 +115,10 @@ class _MoreView extends StatelessWidget {
       ),
       _ => throw ArgumentError('$tab has no เพิ่มเติม card'),
     };
-    // Cards come from the เพิ่มเติม rows (ShellRow), so the hub, the swipe
-    // order and the module switches (AppModules) always agree. A section
-    // with every module off is left out.
     List<_MoreEntry> cards(ShellRow row) => [
       for (final tab in row.all)
         if (isOn(tab)) entry(tab),
     ];
-    // The main menu: the nav + top-bar pages (no ShellRow — they have their
-    // own swipe rows), opened through openPage.
     final main = <_MoreEntry>[
       _MoreEntry(
         AppIcons.dashboard,
@@ -188,8 +175,6 @@ class _MoreView extends StatelessWidget {
       (l.moreGroupMain, primary, main),
     ].where((g) => g.$3.isNotEmpty).toList();
 
-    // No title chip on the hub. Builder: the top inset must be read inside
-    // the scaffold body.
     return TabRootScaffold(
       topBar: topBar,
       body: Builder(
@@ -197,7 +182,6 @@ class _MoreView extends StatelessWidget {
           onRefresh: context.read<MeCountsCubit>().load,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            // Top: the body sits under the transparent top bar.
             padding: EdgeInsets.fromLTRB(
               AppSpacing.lg,
               MediaQuery.paddingOf(context).top + AppSpacing.xs,
@@ -223,7 +207,6 @@ class _MoreView extends StatelessWidget {
                         title: e.title,
                         subtitle: e.subtitle,
                         color: tint,
-                        // Its own tab, opened fresh at its root (owner 2026-10-09).
                         onTap: () => e.main
                             ? openPage(context, e.route)
                             : context.go(e.route),
@@ -253,6 +236,5 @@ class _MoreEntry {
   final String subtitle;
   final String route;
 
-  /// A main-menu entry (nav / top-bar page): opened through [openPage].
   final bool main;
 }

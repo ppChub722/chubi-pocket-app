@@ -6,11 +6,6 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/notification.dart';
 
-/// Thin wrapper over [NotificationTileView] (maps model + l10n).
-/// One inbox row (§7): sender avatar with a type badge, the sentence, time,
-/// ● when unread. Swipe left to hide (handled by the page). Pending
-/// invites / link requests get big Accept / Decline buttons (decline asks
-/// first); once accepted the row says so and stays tappable.
 class NotificationTile extends StatelessWidget {
   const NotificationTile({
     required this.notification,
@@ -24,18 +19,14 @@ class NotificationTile extends StatelessWidget {
   final AppNotification notification;
   final ValueChanged<AppNotification> onTap;
 
-  /// Pending `contact_link_request` / `account_invite` only.
   final ValueChanged<String> onAccept;
   final ValueChanged<String> onReject;
 
   /// A hidden (dismissed) row: shown without answer buttons.
   final bool hidden;
 
-  /// Whether [n] still shows its answer buttons — the BE decides (the
-  /// dashboard's "ต้องจัดการ" lists these).
   static bool awaitsAnswer(AppNotification n) => n.awaitsAnswer;
 
-  /// Requests need an answer (accept / reject, with a confirm on reject).
   bool get _isRequest =>
       notification.type == NotificationType.contactLinkRequest ||
       notification.type == NotificationType.accountInvite ||
@@ -45,8 +36,6 @@ class NotificationTile extends StatelessWidget {
       notification.type == NotificationType.recurringDue ||
       notification.type == NotificationType.recurringEnding;
 
-  /// Types that carry an action (request or one-tap, contract §5): once
-  /// taken — or auto-run on arrival — the row says "ทำแล้ว".
   bool get _hasAction => switch (notification.type) {
     NotificationType.splitCreated ||
     NotificationType.splitChanged ||
@@ -70,7 +59,6 @@ class NotificationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final n = notification;
-    // The recurring notices come from the app itself, not a person.
     final actor =
         n.actor?.displayName ??
         (_isRecurring ? l.moreRecurring : l.notificationsSomeone);
@@ -111,8 +99,6 @@ class NotificationTile extends StatelessWidget {
     );
   }
 
-  /// Answer buttons: while the BE says the row waits, plus the one-tap
-  /// "open pending" on an unread recurring_due notice.
   bool _shows(AppNotification n) =>
       n.awaitsAnswer || (n.type == NotificationType.recurringDue && n.isUnread);
 
@@ -170,8 +156,6 @@ class NotificationTile extends StatelessWidget {
   };
 }
 
-/// split_changed: "Poom แก้ยอดหาร Dinner: ฿150 → ฿120" / "Poom เอาคุณออกจาก
-/// การหาร Dinner".
 String _splitChangeTitle(
   BuildContext context,
   AppLocalizations l,

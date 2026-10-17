@@ -4,13 +4,11 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../domain/archived_hub.dart';
 
-/// `GET /me/archived` + each kind's own restore call.
 class ArchivedRepository {
   ArchivedRepository({required ApiClient client}) : _client = client;
 
   final ApiClient _client;
 
-  /// `getMyArchived` — the whole hub in one call.
   Future<ArchivedHub> fetch() async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>('/me/archived');
@@ -20,10 +18,6 @@ class ArchivedRepository {
     }
   }
 
-  /// One restore call: `restoreAccount` / `restoreBudget` /
-  /// `restoreSavingGoal` / `restoreProject` / `restoreContact` /
-  /// `restoreRecurring`. One literal path per kind (the hub's endpoint scan
-  /// reads them).
   Future<void> restore(ArchivedKind kind, String id) async {
     try {
       final dio = _client.dio;

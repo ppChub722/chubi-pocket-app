@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../ui.dart';
 
-/// One kind in [showIdentifierKindSelectSheet] (account / PromptPay / card /
-/// other). [id] is the caller's own key; [hasBank] kinds go on to the bank
-/// step.
 @immutable
 class IdentifierKindOption {
   const IdentifierKindOption({
@@ -21,8 +18,8 @@ class IdentifierKindOption {
 }
 
 /// What the kind sheet resolves to: the picked [kindId] and its [bankCode]
-/// (null for kinds without a bank; a dismissed bank step keeps the bank as
-/// it was).
+/// (null for kinds without a bank; a dismissed bank step keeps the bank as it
+/// was).
 @immutable
 class IdentifierKindChoice {
   const IdentifierKindChoice(this.kindId, this.bankCode);
@@ -30,7 +27,6 @@ class IdentifierKindChoice {
   final String? bankCode;
 }
 
-/// The words of the kind sheet.
 class IdentifierKindStrings {
   const IdentifierKindStrings({
     required this.title,
@@ -40,18 +36,11 @@ class IdentifierKindStrings {
 
   final String title;
 
-  /// The bank row's title (also the bank sheet's title).
   final String bankLabel;
 
-  /// The bank row's subtitle while no bank is set (also the bank sheet's
-  /// "none" row).
   final String bankNoneLabel;
 }
 
-/// The edit row's chip sheet (kit [PickerSheet]): the kind, the current one
-/// ([currentKindId]) highlighted (no check) and, for a kind with a bank, its
-/// bank row (the bank sheet over [banks]). Resolves the picked kind + bank,
-/// or null when dismissed.
 Future<IdentifierKindChoice?> showIdentifierKindSelectSheet(
   BuildContext context, {
   required List<IdentifierKindOption> kinds,
@@ -104,7 +93,6 @@ class _KindSheet extends StatelessWidget {
     Navigator.of(context).pop(
       IdentifierKindChoice(
         kind.id,
-        // Dismissed: the bank stays as it was.
         pick == null ? currentBankCode : pick.code,
       ),
     );
@@ -131,7 +119,6 @@ class _KindSheet extends StatelessWidget {
                   title: k.label,
                   selected: k.id == currentKindId,
                   onTap: () {
-                    // With a bank: on to its bank; the others are done.
                     if (k.hasBank && k.id != currentKindId) {
                       _pickBank(context, k);
                       return;

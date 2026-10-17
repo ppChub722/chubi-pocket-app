@@ -18,6 +18,13 @@ class _ListSummaryCardDemo extends StatefulWidget {
 class _ListSummaryCardDemoState extends State<_ListSummaryCardDemo> {
   String? _filter;
   int _ctaTaps = 0;
+  final _fold = ToolbarToggleState.local(open: true);
+
+  @override
+  void dispose() {
+    _fold.dispose();
+    super.dispose();
+  }
 
   /// Tap again to clear — the page's logic, not the card's.
   void _pick(String f) => setState(() => _filter = _filter == f ? null : f);
@@ -112,6 +119,35 @@ class _ListSummaryCardDemoState extends State<_ListSummaryCardDemo> {
                   selected: _filter == t.$1,
                   onTap: () => _pick(t.$1),
                 ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'Foldable: ⌄ in the top row + a labelled number',
+          note:
+              'expanded: the ⌄ / ⌃ ends the top row, the same spot open or '
+              'folded; folded = a compact two-row bar (same padding). '
+              'mainLabel puts "Net" right before the big number, flush left.',
+          child: ListSummaryCard(
+            margin: _noMargin,
+            expanded: _fold,
+            captionWidget: const Text('‹ Oct 2026 ›'),
+            actions: [_search()],
+            amount: 12340,
+            symbol: '฿',
+            mainLabel: 'Net',
+            mainTone: MoneyTone.signed,
+            tiles: const [
+              SummaryTile(
+                label: 'Income',
+                value: '฿30,540',
+                tone: SummaryTileTone.green,
+              ),
+              SummaryTile(
+                label: 'Expense',
+                value: '฿18,200',
+                tone: SummaryTileTone.red,
+              ),
             ],
           ),
         ),

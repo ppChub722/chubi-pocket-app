@@ -12,10 +12,6 @@ import '../../tokens/app/app_icons.dart';
 import '../../tokens/app/currencies.dart';
 import '../money/money_style.dart';
 
-/// The app's Thai: fills the generic kit's [UiConfig] from the app
-/// localisation and maps [ApiException] to the three failure descriptions
-/// (no connection / server / unexpected). Installed once, in the app's
-/// `MaterialApp.builder`, so every page, sheet and dialog sees it.
 class AppUiConfig extends StatelessWidget {
   const AppUiConfig({required this.child, super.key});
 
@@ -72,8 +68,6 @@ class AppUiConfig extends StatelessWidget {
   }
 }
 
-/// The signed-in user's money style (preference `money_style`), or the
-/// legacy +/− in colour when nobody is signed in / there is no [AuthCubit].
 MoneyStyle _userMoneyStyle(BuildContext context) {
   try {
     final (style, decimals) = context.select<AuthCubit, (String?, String?)>(
@@ -96,7 +90,6 @@ class _AppErrors extends UiErrors {
   @override
   UiErrorInfo describe(Object error) {
     final e = error is ApiException ? error : null;
-    // A TimeoutException comes from the templates' "still loading" safety net.
     final network =
         error is TimeoutException ||
         (e != null &&
@@ -116,8 +109,6 @@ class _AppErrors extends UiErrors {
         message: l.errorServerMessage,
       );
     }
-    // THE place the BE's error codes get their words (owner 2026-10-17):
-    // pages show `describe(e).message`, never the BE's own (English) text.
     final known = switch (e?.code) {
       'INVALID_CREDENTIALS' => l.authLoginInvalidCredentials,
       'WRONG_PASSWORD' => l.changePasswordCurrentWrong,
@@ -136,7 +127,6 @@ class _AppErrors extends UiErrors {
     );
   }
 
-  // Rebuilt with the localisation, so a language switch re-describes.
   @override
   bool operator ==(Object other) => other is _AppErrors && other.l == l;
 
@@ -144,8 +134,6 @@ class _AppErrors extends UiErrors {
   int get hashCode => l.hashCode;
 }
 
-/// The signed-in user's currency symbol (from /me), or the kit default
-/// when nobody is signed in / there is no [AuthCubit] (tests, hub).
 String _userCurrencySymbol(BuildContext context) {
   const fallback = UiStrings();
   try {

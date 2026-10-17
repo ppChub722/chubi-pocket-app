@@ -22,23 +22,11 @@ import '../cubit/saving_goal_cubit.dart';
 import '../cubit/saving_goals_cubit.dart';
 import '../widgets/saving_goal_texts.dart';
 
-/// One saving goal — create (`/saving-goals/new`, [id] null), view
-/// (`/saving-goals/:id`), in-place edit ([startEditing]) — and the
-/// "ยังไม่จัดสรร" bucket (`/saving-goals/spare`, view only).
-///
-/// View (reference §2): hero card (status · icon + description · ออมแล้ว ·
-/// bar · three month tiles) → ออม / ถอน / ย้าย → swipe tabs [ภาพรวม]
-/// [รายการออม]. Edit / create is its own form (no tabs). Open = ONE call
-/// (`GET /saving-goals/{id}`); every button = ONE call whose answer replaces
-/// the state. Every number is the BE's; the only client figure is the edit
-/// form's live "ต้องออม/เดือน" while typing.
 class SavingGoalDetailPage extends StatefulWidget {
   const SavingGoalDetailPage({this.id, this.startEditing = false, super.key});
 
-  /// Null = create.
   final String? id;
 
-  /// Open an existing goal in edit mode.
   final bool startEditing;
 
   bool get isCreate => id == null;
@@ -47,12 +35,10 @@ class SavingGoalDetailPage extends StatefulWidget {
   State<SavingGoalDetailPage> createState() => _SavingGoalDetailPageState();
 }
 
-/// Which text field a typing burst belongs to (undo grouping).
 enum _Field { name, target, description, note }
 
 enum _GoalTab { overview, entries }
 
-/// The day an auto-saving starts on when the toggle is switched on.
 const int _defaultAutoSaveDay = 25;
 
 class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
@@ -69,10 +55,8 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   SavingGoalCubit? _cubit;
   _GoalTab _tab = _GoalTab.overview;
 
-  /// The goal the draft was last rebased on (arrival / refresh).
   SavingGoal? _seededFrom;
 
-  /// [SavingGoalDetailPage.startEditing] before the goal arrived.
   bool _pendingEdit = false;
 
   @override
@@ -105,8 +89,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     super.dispose();
   }
 
-  /// The goal arrived or changed — rebase the draft (a no-op mid-edit) and
-  /// honour a pending [SavingGoalDetailPage.startEditing].
   void _onState(BuildContext context, SavingPageState state) {
     final g = state.detail?.goal;
     if (g == null || g == _seededFrom) return;
@@ -117,8 +99,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       enterEdit();
     }
   }
-
-  // ── EditModeMixin hooks ─────────────────────────────────────────────
 
   @override
   bool get leaveOnCancel => widget.isCreate;
@@ -143,8 +123,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         _Field.note => working.copyWith(note: v),
       });
 
-  // ── Pickers ─────────────────────────────────────────────────────────
-
   Future<void> _openIconMaker() async {
     final l = AppLocalizations.of(context)!;
     final result = await showIconMakerSheet(
@@ -168,7 +146,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     });
   }
 
-  /// Future dates only — but an existing past deadline stays pickable.
   Future<void> _pickDeadline() async {
     final now = DateTime.now();
     final current = working.deadline;
@@ -189,9 +166,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     }
   }
 
-  // ── Writes ──────────────────────────────────────────────────────────
-
-  /// Tells the list (and through it Home) that savings changed.
   void _listChanged() =>
       context.read<SavingGoalsCubit>().markStale(silent: true);
 
@@ -204,7 +178,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final draft = SavingGoal(
       id: goal?.id ?? 'draft',
       name: w.name.trim(),
-      // Empty = no target (ออมต่อเนื่อง); on update null clears it.
       targetAmount: AmountInput.parse(w.target),
       currency: goal?.currency ?? '',
       deadline: w.deadline == null ? null : _isoDate(w.deadline!),
@@ -233,13 +206,11 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       leavePage();
       return;
     }
-    // The server's copy becomes the baseline.
     final saved = _cubit!.state.detail?.goal;
     _seededFrom = saved;
     commitSaved(saved == null ? w.trimmed() : _GoalDraft.from(saved));
   }
 
-  /// A message through the page's own messenger (above the save bar).
   void _snack(String message, {Tone tone = Tone.neutral}) {
     final m = pageMessenger;
     if (m != null) {
@@ -249,8 +220,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     }
   }
 
-  /// Runs a write; shows the message on failure (a known code can bring its
-  /// own words), keeps the page as is.
   Future<bool> _run(
     Future<void> Function() write, {
     String? Function(ApiException)? message,
@@ -270,8 +239,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     return true;
   }
 
-  /// เก็บถาวร — also while the goal holds money (0.4.0-1): the money stays in
-  /// the goal but counts in no total until it is restored.
   Future<void> _archive(SavingGoal g) async {
     final l = AppLocalizations.of(context)!;
     final held = g.savedAmount;
@@ -299,7 +266,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
 
   Future<void> _delete() async {
     final l = AppLocalizations.of(context)!;
-    // ONE call on this button: the goal page with the delete preview.
     setSaving(true);
     final SavingDeletePreview? preview;
     try {
@@ -368,13 +334,11 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           _cubit!.closeGoal(toWallets: choice == CloseGoalChoice.backToWallets),
     );
     if (!ok || !mounted) return;
-    // The goal is closed: leave edit mode on the answer's copy.
     final closed = _cubit!.state.detail?.goal;
     _seededFrom = closed;
     if (closed != null) commitSaved(_GoalDraft.from(closed));
   }
 
-  /// Tap an entry → confirm → delete (one call; the answer is the new page).
   Future<void> _deleteEntry(SavingEntry e) async {
     final l = AppLocalizations.of(context)!;
     final ok = await showConfirmDialog(
@@ -394,10 +358,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     return '${d.year}-$m-$day';
   }
 
-  // ── Auto-saving ─────────────────────────────────────────────────────
-
-  /// ON = ONE PUT with the plan's amount (ask when there is none), OFF = ONE
-  /// DELETE; the answer is the new page.
   Future<void> _toggleAuto(SavingGoalDetail d, bool on) async {
     if (!on) {
       await _run(_cubit!.clearAutoSave);
@@ -419,7 +379,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     () => _cubit!.setAutoSave(amount: amount, day: day, accountId: accountId),
   );
 
-  /// The sheet: amount · day · wallet ("ไม่มีกระเป๋า" is a source).
   Future<void> _editAuto(SavingGoalDetail d) async {
     final l = AppLocalizations.of(context)!;
     final auto = d.autoSave;
@@ -465,9 +424,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     await _setAuto(amount: r.amount, day: r.day, accountId: r.accountId);
   }
 
-  // ── Money moves ─────────────────────────────────────────────────────
-
-  /// What the buttons act on: the goal, or the spare bucket.
   ({String name, double amount}) _bucket(
     AppLocalizations l,
     SavingGoalDetail d,
@@ -478,10 +434,8 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         : (name: l.sgv2SpareName, amount: d.spare?.amount ?? 0);
   }
 
-  /// The row standing for money saved with no wallet (it has no id).
   static const _noWalletId = '';
 
-  /// The split to send: the wallet-less part goes as `wallet_id: null`.
   List<SavingSplit> _splitsOf(List<SavingMoveSplit> parts) => [
     for (final p in parts)
       SavingSplit(
@@ -490,8 +444,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       ),
   ];
 
-  /// Largest-first split of [amount] over the wallets that hold the money
-  /// (instant feedback while typing; the BE recomputes when no split is sent).
   List<SavingSplitRow> _splitRows(
     AppLocalizations l,
     List<SavingWalletShare> wallets,
@@ -571,8 +523,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
 
   Future<void> _move(SavingGoalDetail d) async {
     final l = AppLocalizations.of(context)!;
-    // Where to? The spare bucket (from a goal) or another goal — ONE list
-    // call on demand.
     final overview = await context.read<SavingGoalsRepository>().list();
     if (!mounted) return;
     final fromId = d.goal?.id;
@@ -615,7 +565,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
   }
 
-  /// The quick-create sheet in ออม mode, this goal (or the spare) preselected.
   Future<void> _addSaving(SavingGoalDetail d) async {
     final saved = await showQuickCreateSheet(
       context,
@@ -629,16 +578,12 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     }
   }
 
-  // ── Build ───────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     if (widget.isCreate) return _page(l, null, null);
     return MultiBlocListener(
       listeners: [
-        // A transaction write / a saving written elsewhere (the + sheet,
-        // a pending draft): this page's figures moved — one reload.
         BlocListener<TransactionsCubit, TransactionsState>(
           listenWhen: _bookMoved,
           listener: (_, _) => _reloadQuietly(),
@@ -653,7 +598,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         child: BlocConsumer<SavingGoalCubit, SavingPageState>(
           listener: (context, state) {
             _onState(context, state);
-            // A failed refresh keeps the page on screen and says so.
             if (state.status == SavingPageStatus.error &&
                 state.detail != null) {
               _snack(
@@ -702,7 +646,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   Widget _page(AppLocalizations l, SavingGoalDetail? d, SavingPageState? s) {
     final goal = d?.goal;
     final spare = d != null && d.isSpare;
-    // The spare bucket has no edit mode.
     final editing = isEditing && !spare;
     if (editing) _tab = _GoalTab.overview;
     final page = editScope(
@@ -730,8 +673,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
             : null,
       ),
     );
-    // The shell's centre + adds savings into THIS goal (or the spare) while
-    // it is on screen.
     if (d == null) return page;
     return QuickCreatePresetScope(
       preset: goal == null
@@ -740,8 +681,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       child: page,
     );
   }
-
-  // ── View mode ───────────────────────────────────────────────────────
 
   Widget _viewBody(AppLocalizations l, SavingGoalDetail d, SavingPageState s) {
     final goal = d.goal;
@@ -783,8 +722,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
   }
 
-  /// Row A–E of the goal card: status · icon + description · ออมแล้ว ·
-  /// bar with 25 / 50 / 75 ticks · the month's three tiles.
   Widget _goalHero(
     AppLocalizations l,
     SavingGoal g,
@@ -870,9 +807,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
   }
 
-  /// A goal with no target (ออมต่อเนื่อง, 0.4.0-1): the chip, icon +
-  /// description, ออมแล้ว — no target, %, bar, due date or behind — and two
-  /// tiles: saved this month and the auto-saving amount.
   Widget _ongoingHero(
     AppLocalizations l,
     SavingGoal g,
@@ -931,7 +865,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
   }
 
-  /// The "ยังไม่จัดสรร" card: icon + hint, the amount. Nothing to edit.
   Widget _spareHero(
     AppLocalizations l,
     SavingGoalDetail d,
@@ -951,8 +884,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
   }
 
-  /// ออม / ถอน / ย้าย under the card (the BE's `actions` flags; ถอน and ย้าย
-  /// only while something is saved) — or กู้คืน for a closed / archived goal.
   Widget? _actionBar(AppLocalizations l, SavingGoalDetail d) {
     final g = d.goal;
     final saved = g?.savedAmount ?? d.spare?.amount ?? 0;
@@ -997,9 +928,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     return items.isEmpty ? null : ActionBar(actions: items);
   }
 
-  /// ภาพรวม: การตั้งค่า (auto-saving) → the cumulative chart (two or more
-  /// entries) → บันทึก → meta. Pull-to-refresh + the page dots come from the
-  /// list template.
   Widget _overviewTab(
     AppLocalizations l,
     SavingGoalDetail d,
@@ -1043,9 +971,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
   }
 
-  /// การตั้งค่า / ระบบออมให้อัตโนมัติ: the toggle (ON = one PUT, OFF = one
-  /// DELETE) and, while it is on, the row that edits amount / day / wallet.
-  /// Null for a closed or archived goal (the BE refuses it).
   Widget? _settings(AppLocalizations l, SavingGoalDetail d, String symbol) {
     final g = d.goal;
     if (g != null && g.state != SavingGoalState.active) return null;
@@ -1071,8 +996,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
   }
 
-  /// The cumulative line from the BE's history, only with two or more
-  /// entries. (No plan line: the BE sends none yet.)
   Widget? _chart(
     AppLocalizations l,
     SavingGoalDetail d,
@@ -1101,7 +1024,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
   }
 
-  /// รายการออม: ออม / ถอน / ย้าย history, newest first, paged.
   Widget _entriesTab(
     AppLocalizations l,
     SavingGoalDetail d,
@@ -1158,12 +1080,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     SavingEntryKind.move => l.sgv2KindMove,
   };
 
-  // ── Edit / create mode ──────────────────────────────────────────────
-
-  /// Edit is its own form (reference §0): icon / name / description and the
-  /// target in the card — no status, saved amount or bar — then ONE box (due
-  /// date + the live "ต้องออม/เดือน" line), the auto-saving setting, the note
-  /// and the end zone (existing goals).
   Widget _editBody(AppLocalizations l, SavingGoalDetail? d, BuildContext ctx) {
     final goal = d?.goal;
     final symbol = context.readUserCurrencySymbol;
@@ -1172,7 +1088,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final barInset = MediaQuery.paddingOf(ctx).top;
     final bottom = AppSpacing.huge + MediaQuery.paddingOf(ctx).bottom;
     return DetailLayout(
-      // Edit mode: no refresh while the form is open (the view has it).
       onRefresh: null,
       topInset: barInset + AppSpacing.lg,
       bottomInset: bottom,
@@ -1216,7 +1131,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           symbol: symbol,
           helper: l.savingGoalFormTargetOptionalHint,
           onChanged: (v) => _onText(_Field.target, v),
-          // Optional (0.4.0-1): empty = no target; a given one must be > 0.
           validator: (v) {
             if (v == null || v.trim().isEmpty) return null;
             final n = AmountInput.parse(v);
@@ -1254,8 +1168,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
   }
 
-  /// The due date + the live line "ออมแล้ว ฿X · เหลือ ฿Y → ต้องออม ฿Z/เดือน"
-  /// (instant feedback while typing; the BE recomputes on save).
   Widget _editInfo(AppLocalizations l, SavingGoal? goal, String symbol) {
     final locale = Localizations.localeOf(context).toLanguageTag();
     String money(double v) => moneyString(context, v, symbol: symbol);
@@ -1268,7 +1180,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       deadline: deadline,
     );
     final needed = plan.neededMonthly;
-    // No target (ออมต่อเนื่อง): no due date and no "ต้องออม/เดือน" line.
     if (target == null) return const SizedBox.shrink();
     return InfoBox(
       rows: [
@@ -1288,17 +1199,12 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
   }
 
-  /// The auto-saving toggle stays live in edit mode (it is its own call, not
-  /// part of the draft). Hidden while creating and for a closed goal.
   Widget? _editSettings(
     AppLocalizations l,
     SavingGoalDetail d,
     String symbol,
   ) => _settings(l, d, symbol);
 
-  /// ปิดเป้าหมาย / เก็บถาวร / ลบ — each shown only when it can apply.
-  /// Archiving a goal that holds money is fine (0.4.0-1): the line says the
-  /// money stops counting until the goal is restored.
   Widget? _endZone(AppLocalizations l, SavingGoalDetail d, SavingGoal g) {
     final a = g.actions;
     final holds = g.savedAmount > 0;
@@ -1337,10 +1243,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   }
 }
 
-// ────────────────────────────────────────────────────────────────────
-// Immutable editing snapshot — drives dirty-check + undo history.
-// ────────────────────────────────────────────────────────────────────
-
 class _GoalDraft {
   const _GoalDraft({
     this.name = '',
@@ -1362,14 +1264,12 @@ class _GoalDraft {
 
   final String name;
 
-  /// Formatted text, as in the field.
   final String target;
   final DateTime? deadline;
   final IconCode? iconCode;
   final String description;
   final String note;
 
-  /// What the server stores (text trimmed) — the post-save fallback baseline.
   _GoalDraft trimmed() => copyWith(
     name: name.trim(),
     description: description.trim(),

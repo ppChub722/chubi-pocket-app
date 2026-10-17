@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../atoms/app_button.dart';
-import '../atoms/app_chip.dart';
 import '../atoms/app_icon_button.dart';
 import '../atoms/select_check.dart';
 import '../atoms/app_input.dart';
@@ -13,18 +12,6 @@ import '../molecules/error_view.dart';
 import '../atoms/skeletons.dart';
 import '../atoms/add_tile.dart';
 
-/// The shell every picker sheet shares (owner 2026-10-10) — open it with
-/// `showAppSheetCustom`:
-///
-///   title                                   ✕
-///   [🔍 ค้นหา…]                  (optional, chip height, filters live)
-///   rows…            ([PickerRow]: selected = a highlight tint, no ✓)
-///   ＋ สร้างใหม่ / buttons       ([footer], pinned under the rows)
-///
-/// [builder] gets the search text and returns the body; while [loading]
-/// with nothing to show yet it's row skeletons, [error] an error with
-/// [onRetry]. The keyboard is handled here (content must not pad for it
-/// again). The event sheet uses it; the other pickers move to it next.
 class PickerSheet extends StatefulWidget {
   const PickerSheet({
     required this.title,
@@ -48,24 +35,16 @@ class PickerSheet extends StatefulWidget {
   final bool searchable;
   final String? searchHint;
 
-  /// The search text, when the picker needs it (clear it after a create
-  /// that used it); the sheet follows its changes.
   final TextEditingController? searchController;
 
-  /// Open with the keyboard up, typing into the search.
   final bool searchAutofocus;
 
-  /// The search is closed until an icon-only chip beside ✕ opens it (and
-  /// closing it clears the text) — for a picker whose options are few, so the
-  /// field doesn't take the top of the sheet.
   final bool searchToggle;
 
-  /// Still fetching and nothing to show yet → skeleton rows.
   final bool loading;
   final Object? error;
   final VoidCallback? onRetry;
 
-  /// Pinned under the scrolling body (a create row, a confirm button).
   final Widget? footer;
 
   @override
@@ -128,7 +107,6 @@ class _PickerSheetState extends State<PickerSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // The standard header: title + ✕ (no big custom title).
           Padding(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.lg,
@@ -149,14 +127,11 @@ class _PickerSheetState extends State<PickerSheet> {
                 if (widget.searchable && widget.searchToggle)
                   Padding(
                     padding: const EdgeInsets.only(right: AppSpacing.xs),
-                    child: AppChip(
-                      label: '',
+                    child: AppIconButton(
                       icon: AppIcons.search,
                       tooltip: widget.searchHint ?? strings.search,
                       selected: _searchOpen,
-                      dashed: true,
-                      inset: _searchOpen,
-                      onTap: _toggleSearch,
+                      onPressed: _toggleSearch,
                     ),
                   ),
                 AppIconButton.close(
@@ -187,8 +162,6 @@ class _PickerSheetState extends State<PickerSheet> {
         ],
       ),
     );
-    // The keyboard is handled right here — below this, viewInsets read
-    // zero (no double gap above it).
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: MediaQuery.removeViewInsets(
@@ -200,16 +173,6 @@ class _PickerSheetState extends State<PickerSheet> {
   }
 }
 
-/// One row of a [PickerSheet]: [leading] · [title] / [subtitle] ·
-/// [trailing]. [selected] = a highlight tint behind the row (owner rule for
-/// every picker: never a ✓). [indent] shifts it right (a tree's levels).
-/// [titleStyle] merges into the title (a font name in its font); a null
-/// [onTap] = disabled, faded.
-///
-/// Multi-select (add several bills / members at once): give every row
-/// [checked] (true / false) — a square [SelectCheck] leads the row and a
-/// checked row gets the same highlight tint; put a [PickerConfirmBar]
-/// ("เพิ่ม (n)") in the sheet's footer.
 class PickerRow extends StatelessWidget {
   const PickerRow({
     required this.title,
@@ -225,31 +188,22 @@ class PickerRow extends StatelessWidget {
     super.key,
   });
 
-  /// Multi-select mode: null = a single-select row; true / false = the
-  /// row's check (it also tints like [selected]).
   final bool? checked;
 
-  /// Every row's height (an [IconButton] ▾ fits inside it).
   static const double rowHeight = 56;
 
   final String title;
 
-  /// After the text (a tree's ▾ / ▴, a count).
   final Widget? trailing;
 
-  /// A › at the end (the row opens something further: a bank row). Ignored
-  /// when [trailing] is set.
   final bool chevron;
   final double indent;
   final String? subtitle;
   final Widget? leading;
   final bool selected;
 
-  /// Null = disabled: the row fades and ignores taps.
   final VoidCallback? onTap;
 
-  /// Merged into the title's style (colour / weight for [selected] still
-  /// win).
   final TextStyle? titleStyle;
 
   @override
@@ -263,8 +217,6 @@ class PickerRow extends StatelessWidget {
           : Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        // One height for every row, with or without a ▾ / subtitle (QA
-        // F6: 48 vs 56 before).
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: rowHeight),
           child: Padding(
@@ -340,10 +292,6 @@ class PickerRow extends StatelessWidget {
   }
 }
 
-/// The confirm button pinned under a multi-select picker: one full-width
-/// primary button, e.g. "เพิ่ม (3)" — the caller builds the label with the
-/// count; [onPressed] null (nothing checked) = disabled. Put it in
-/// [PickerSheet.footer].
 class PickerConfirmBar extends StatelessWidget {
   const PickerConfirmBar({
     required this.label,
@@ -355,7 +303,6 @@ class PickerConfirmBar extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
 
-  /// The confirm itself calls the server (off while offline).
   final bool submits;
 
   @override
@@ -378,28 +325,21 @@ class PickerConfirmBar extends StatelessWidget {
   }
 }
 
-/// "＋ สร้าง…" — the row that adds a new one at the end of a picker.
 class PickerCreateRow extends StatelessWidget {
   const PickerCreateRow({required this.label, required this.onTap, super.key});
 
   final String label;
 
-  /// Null = disabled (dimmed, ignores taps) — e.g. while saving.
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    // "+ add" is a dashed outline, like every "add something" in the app.
     final row = Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.sm,
       ),
-      child: AddTile(
-        label: label,
-        onTap: onTap,
-        variant: AddTileVariant.row,
-      ),
+      child: AddTile(label: label, onTap: onTap, variant: AddTileVariant.row),
     );
     return onTap == null ? Opacity(opacity: 0.38, child: row) : row;
   }

@@ -4,42 +4,22 @@ import '../tokens/app_spacing.dart';
 import 'app_spinner.dart';
 import 'connection_scope.dart';
 
-/// Visual weight of an [AppButton].
 enum AppButtonVariant {
-  /// Filled brand colour — the one main action on a screen.
   primary,
 
-  /// Filled tonal — secondary actions that still deserve weight.
   tonal,
 
-  /// Outlined — cancel / neutral alternatives.
   outlined,
 
-  /// Text only — low-emphasis actions (inline links, "view all").
   text,
 
-  /// Filled error colour — confirm a destructive action.
   destructive,
 
-  /// Outlined error colour — a destructive entry point (logout, delete row).
   destructiveOutlined,
 }
 
-/// Button heights. Both meet the 40dp+ touch-target rule; [large] is the
-/// full-width form / bottom-bar size.
 enum AppButtonSize { regular, large }
 
-/// The one button the app uses. Wraps the Material buttons so every screen
-/// gets the same heights, icon spacing, loading state and destructive
-/// styling without restating `styleFrom` each time.
-///
-/// - [loading] swaps the label for a spinner and disables the button.
-/// - [expand] stretches to the parent width (form / sheet footers).
-/// - `onPressed: null` renders the disabled state.
-/// - [submits] marks a button that sends something to the server (save,
-///   submit, sign in, delete …): it disables itself while the app is offline
-///   ([ConnectionScope]) — the banner says why — and typed input is left
-///   alone. Pages never check the connection themselves.
 class AppButton extends StatelessWidget {
   const AppButton({
     required this.label,
@@ -61,13 +41,10 @@ class AppButton extends StatelessWidget {
   final bool loading;
   final bool expand;
 
-  /// Sends to the server: disabled while offline (see the class doc).
   final bool submits;
 
   double get _height => size == AppButtonSize.large ? 48 : 40;
 
-  /// Whether the button takes taps right now ([onPressed] set, not
-  /// [loading], and not a [submits] button while offline).
   bool isEnabled(BuildContext context) =>
       onPressed != null &&
       !loading &&
@@ -142,7 +119,12 @@ class AppButton extends StatelessWidget {
     }
     // One line always: a long label ends in "…" instead of wrapping.
     if (icon == null) {
-      return Text(label, maxLines: 1, softWrap: false, overflow: TextOverflow.ellipsis);
+      return Text(
+        label,
+        maxLines: 1,
+        softWrap: false,
+        overflow: TextOverflow.ellipsis,
+      );
     }
     return Row(
       mainAxisSize: MainAxisSize.min,

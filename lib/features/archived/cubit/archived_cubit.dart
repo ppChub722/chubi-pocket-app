@@ -13,19 +13,16 @@ class ArchivedState extends Equatable {
     this.busy = const {},
   });
 
-  /// Last good payload — kept while reloading / on a failed refresh.
   final ArchivedHub? hub;
   final bool loading;
   final ApiException? error;
 
-  /// Ids whose restore is in flight.
   final Set<String> busy;
 
   @override
   List<Object?> get props => [hub, loading, error, busy];
 }
 
-/// One `GET /me/archived` per [load]; one call per restore.
 class ArchivedCubit extends Cubit<ArchivedState> {
   ArchivedCubit({required ArchivedRepository repository})
     : _repo = repository,
@@ -51,8 +48,6 @@ class ArchivedCubit extends Cubit<ArchivedState> {
     }
   }
 
-  /// Restores one row; it leaves the list from the write's success (no
-  /// re-fetch). Returns the failure, or null.
   Future<ApiException?> restore(ArchivedKind kind, String id) async {
     if (state.busy.contains(id)) return null;
     emit(

@@ -4,22 +4,6 @@ import '../../molecules/progress_row.dart';
 import '../../tokens/app_spacing.dart';
 import '../money/money_text.dart';
 
-/// One line of a breakdown ("by source", "by sub-category", a goal's
-/// "wallet · share"; the mockup's `.brk`):
-///
-///   [leading] label  count caption                        ฿2,460
-///   ▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-///
-/// - [leading]: an icon tile, a `SourceChip`, anything small.
-/// - [caption]: the muted count after the label ("18 รายการ").
-/// - amount: [amount] (money) or [amountText] (a caller string); with
-///   [expected] true it is muted and prefixed "+" — "still to come" (a
-///   recurring item ahead, an unconfirmed draft).
-/// - the mini bar: [value] = this row's share of the whole (0..1), drawn
-///   solid; with [expected] true it is drawn as the lighter striped segment
-///   instead. [color] is the bar colour (the entity's tint). No [value] = no
-///   bar (a plain "icon · name · amount" row).
-/// - [onTap].
 class BreakdownRow extends StatelessWidget {
   const BreakdownRow({
     required this.label,
@@ -40,10 +24,8 @@ class BreakdownRow extends StatelessWidget {
   final num? amount;
   final String? amountText;
 
-  /// "Still to come": muted amount with a "+", striped bar.
   final bool expected;
 
-  /// Share of the whole, 0..1 (null = no bar).
   final double? value;
   final Color? color;
   final VoidCallback? onTap;

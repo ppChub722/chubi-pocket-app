@@ -6,15 +6,6 @@ import '../money/net_balance.dart';
 import 'person_mark.dart';
 import 'person_row.dart';
 
-/// The debts people row (owner 2026-10-12) — on the people list and in the
-/// person picker:
-///
-///   (ม)🔗  มาตาก                              ฿1,200.00
-///          ค้าง 2 รายการ                         ติดคุณ
-///
-/// [PersonMark] (40, 🔗 slot kept so names line up) · name · [subtitle] ·
-/// a [NetBalance] (row size) at the end. [selected] = the picker's highlight
-/// tint (never a ✓). Same height as [PersonRow] / [ListRow].
 class PersonBalanceRow extends StatelessWidget {
   const PersonBalanceRow({
     required this.name,
@@ -33,29 +24,23 @@ class PersonBalanceRow extends StatelessWidget {
     super.key,
   });
 
-  /// The subtitle in the warning colour ("ค้าง 45 วัน", over 30 days).
   final bool subtitleWarn;
 
-  /// false: only the coloured amount at the end, no side caption.
   final bool showCaption;
 
   final String name;
   final PersonLevel level;
 
-  /// The contact's (linked: the user's) icon; unused for a typed name.
   final IconCode? iconCode;
 
-  /// One muted line under the name ("ค้าง 2 รายการ").
   final String? subtitle;
 
-  /// The signed net: + = they owe me, − = I owe them (see [NetBalance]).
   final num net;
   final String owedToMeLabel;
   final String iOweLabel;
   final String settledLabel;
   final String currencySymbol;
 
-  /// The picker's current pick: a primary tint over the row.
   final bool selected;
   final VoidCallback? onTap;
 

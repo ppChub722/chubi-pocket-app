@@ -8,7 +8,6 @@ import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/app_chip.dart';
 
-/// A quick-fill chip under an [AmountInput] ("ทั้งหมด", "ครึ่งหนึ่ง").
 class AmountQuickFill {
   const AmountQuickFill({required this.label, required this.amount});
 
@@ -16,23 +15,13 @@ class AmountQuickFill {
   final double amount;
 }
 
-/// Large money input — the hero field of transaction / debt / settle forms.
-/// Big digits, currency symbol prefix, decimal-only keyboard, thousands
-/// separators inserted while typing ("1,234,567.89"), optional quick-fill
-/// chips.
-///
-/// The controller holds the *formatted* text — read the value with
-/// [AmountInput.parse], write one with [AmountInput.format].
 class AmountInput extends StatelessWidget {
-  /// Parses formatted field text ("1,234.50") → 1234.5; null if empty/bad.
   static double? parse(String? text) {
     final raw = (text ?? '').replaceAll(',', '').trim();
     if (raw.isEmpty) return null;
     return double.tryParse(raw);
   }
 
-  /// Formats a number for the field: thousands separators, decimals only
-  /// when needed (500 → "500", 1234.5 → "1,234.50").
   static String format(num amount) {
     final whole = amount == amount.roundToDouble();
     return NumberFormat(whole ? '#,##0' : '#,##0.00', 'en_US').format(amount);
@@ -61,11 +50,8 @@ class AmountInput extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final List<AmountQuickFill> quickFills;
 
-  /// Digit colour (e.g. expense red / income green); defaults to onSurface.
   final Color? accent;
 
-  /// Shows a ± chip before the currency that flips the sign (a balance
-  /// below zero). [parse] reads the sign back.
   final bool allowNegative;
 
   void _toggleSign() {

@@ -1,3 +1,4 @@
+import 'app_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -9,76 +10,27 @@ import 'ui_config.dart';
 
 enum _Kind { field, card, inline, title, search }
 
-/// Where an in-card / title field's NAME label sits (owner 2026-10-12): [left]
-/// of the underline (entity heroes) or [above] it (the transaction hero /
-/// EntryCard two-column layout).
 enum AppInputLabelPlacement { left, above }
 
-/// The GEOMETRY of an in-card / title field, fixed by tokens — not by the
-/// value's font (owner 2026-10-12: "both are AppInput, so they are the same
-/// height; labels use the same token, so they line up"). A sized field is:
-/// a label row of [labelRow] (when it has a label, placement above), then a
-/// value row of at least [valueRow], the value's text BASELINE at
-/// [valueBaseline] from the row's top, and the underline right under the row.
-/// Two sized fields side by side therefore share their label top, their
-/// baseline and their underline y — whatever their text styles (a big amount
-/// vs a normal description), empty or filled, focused, TH / EN, text scale.
-/// A field without a size keeps the old, font-driven geometry. Pick the SAME
-/// size for fields that sit side by side.
 enum AppInputSize {
-  /// Normal text (about 16-18 px) alone in a card.
   regular(valueRow: 34, valueBaseline: 24),
 
-  /// A hero's name (about 20-22 px).
   title(valueRow: 44, valueBaseline: 32),
 
-  /// A hero's big value (the amount, about 28 px) and whatever sits beside it.
-  hero(valueRow: 52, valueBaseline: 38);
+  hero(valueRow: 48, valueBaseline: 38);
 
   const AppInputSize({required this.valueRow, required this.valueBaseline});
 
-  /// Minimum height of the value row (grows for a multi-line value).
   final double valueRow;
 
-  /// Distance from the value row's top to the text baseline.
   final double valueBaseline;
 
-  /// The label row's height (one line of the row-label role).
   static const double labelRow = 24;
 
-  /// A token scaled with the user's text scale.
   static double scaled(BuildContext context, double v) =>
       MediaQuery.textScalerOf(context).scale(v).roundToDouble();
 }
 
-/// THE text input (owner 2026-10-12: one input for the whole app). Replaces
-/// the old AppTextField, InlineField, InlineTitleField, AppSearchBar and every
-/// raw `TextField` / `TextFormField` in the features.
-///
-/// The rule: **anything editable has a frame; the only exception is editing
-/// inside a card, which is an underline.**
-///
-/// - `AppInput(...)` — the FIELD: ONE outlined frame, no fill, the label
-///   (optional) notched on the border. States: empty (muted outline + faint
-///   placeholder) · focused (primary) · filled (neutral) · error (red + the
-///   message) · disabled (dimmed) · locked 🔒 ([locked]: no frame). [dense] =
-///   the in-row size. Forms, detail pages in edit mode, split rows, chat.
-/// - `AppInput.card(...)` — IN-CARD: an underline, no frame, no label; for
-///   editing inside a card (a hero's title / amount, the quick-create card).
-/// - `AppInput.inline(...)` — a detail page's value: plain text in view
-///   (long-press → [onEnterEdit]; an empty field shows [viewHint]), the dense
-///   Field in edit. The editable-text indent rule: an editable value's text is
-///   indented by the frame's padding in view AND edit (so the frame appears
-///   around it without anything moving and its left edge lines up with the
-///   title); a read-only value has no frame and is flush with the title.
-/// - `AppInput.title(...)` — a hero's name: plain text in view, underlined in
-///   edit, the same height both ways.
-/// - `AppInput.search(...)` — the grey capsule with a leading 🔍 and a ✕ once
-///   there is text; owns its controller when none is given.
-///
-/// Data TYPES ([AppInputType]: amount, number, percent, reference) layer on
-/// the Field and the in-card look. Strings (hint, tooltip, view hint) are
-/// always parameters — this atom never reads the app's localisation.
 class AppInput extends StatefulWidget {
   const AppInput({
     this.controller,
@@ -141,12 +93,6 @@ class AppInput extends StatefulWidget {
        clearTooltip = null,
        padding = null;
 
-  /// IN-CARD field: an underline, no frame, no label — for editing inside a
-  /// card (hero title / amount, the quick-create / draft card's "what for?"
-  /// and ฿). Types layer on it too: `type: AppInputType.amount` is the hero
-  /// amount (pass a big [style]). [underline] false = plain text until it is
-  /// focused or in error; [symbolScale] sizes the amount symbol relative to the
-  /// digits; [hideHintOnFocus] drops the faint "0" while typing.
   const AppInput.card({
     this.controller,
     this.focusNode,
@@ -208,7 +154,6 @@ class AppInput extends StatefulWidget {
        clearTooltip = null,
        padding = null;
 
-  /// See the class doc.
   const AppInput.inline({
     required this.editing,
     required TextEditingController this.controller,
@@ -270,7 +215,6 @@ class AppInput extends StatefulWidget {
        clearTooltip = null,
        padding = null;
 
-  /// See the class doc.
   const AppInput.title({
     required this.editing,
     required TextEditingController this.controller,
@@ -332,9 +276,6 @@ class AppInput extends StatefulWidget {
        clearTooltip = null,
        padding = null;
 
-  /// See the class doc. [hint] is what the field says when empty;
-  /// [clearTooltip] is the ✕'s tooltip; [padding] the space around the
-  /// capsule.
   const AppInput.search({
     required this.onChanged,
     this.controller,
@@ -406,18 +347,13 @@ class AppInput extends StatefulWidget {
   final FocusNode? focusNode;
   final String? label;
 
-  /// In-card / title only: where [label] sits, and (left only) a fixed label
-  /// column width so several fields' underlines start at the same x.
   final AppInputLabelPlacement labelPlacement;
   final double? labelWidth;
 
-  /// In-card / title only: the token geometry (see [AppInputSize]); null =
-  /// the font-driven legacy geometry.
   final AppInputSize? size;
   final String? hint;
   final String? helper;
 
-  /// Server-side error for this field (e.g. "username taken").
   final String? errorText;
   final IconData? prefixIcon;
 
@@ -434,14 +370,12 @@ class AppInput extends StatefulWidget {
   final int maxLines;
   final int? maxLength;
 
-  /// Show the "n / max" counter (hidden by default).
   final bool showCounter;
   final FormFieldValidator<String>? validator;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final VoidCallback? onTap;
 
-  /// A tap outside the field while it has focus (commit on blur).
   final TapRegionCallback? onTapOutside;
   final bool enabled;
   final bool readOnly;
@@ -450,73 +384,51 @@ class AppInput extends StatefulWidget {
   final bool locked;
   final bool autofocus;
 
-  /// A password field: ● ● ● with a show / hide toggle.
   final bool obscurable;
   final Iterable<String>? autofillHints;
   final List<TextInputFormatter>? inputFormatters;
 
-  /// null = numbers right, text left.
   final TextAlign? textAlign;
 
-  /// Overrides the text style (a hero's big amount, a bold name).
   final TextStyle? style;
 
-  /// The in-row size of the Field.
   final bool dense;
 
-  /// The data type layered on the look ([AppInputType]).
   final AppInputType type;
 
-  /// Percent: decimal places allowed (default 2); reference: allow letters.
   final int? decimals;
   final bool allowLetters;
 
-  /// [AppInputType.amount]: accept a leading "-" (an adjust-balance field);
-  /// every other amount stays positive-only.
   final bool allowNegative;
 
-  /// [AppInputType.amount]'s symbol; null = [UiStrings.currencySymbol].
   final String? currencySymbol;
 
-  /// A minimum width for the field (an intrinsic-width amount).
   final double? minWidth;
   final EdgeInsetsGeometry? contentPadding;
 
-  /// Overrides the idle outline colour (an invalid value in red).
   final Color? borderColor;
 
-  /// The focused outline / underline colour (default: the primary).
   final Color? focusColor;
 
-  /// The caret colour (default: the theme's).
   final Color? cursorColor;
 
-  /// Overrides the hint style (default: [style] at 40 %).
   final TextStyle? hintStyle;
   final bool? showCursor;
   final bool? enableInteractiveSelection;
 
-  /// In-card: false = plain text, no underline until focused / in error.
   final bool underline;
 
-  /// In-card amount: the symbol's size relative to the digits (hero ฿ = 0.7).
   final double symbolScale;
 
-  /// Drop the placeholder while focused.
   final bool hideHintOnFocus;
 
-  /// inline / title: false = view mode (read-only, long-press to edit).
   final bool editing;
   final VoidCallback? onEnterEdit;
 
-  /// inline: what an empty field says in view mode when it can be edited
-  /// ("long-press to edit").
   final String? viewHint;
 
-  /// search: the ✕'s tooltip.
   final String? clearTooltip;
 
-  /// search: space around the capsule.
   final EdgeInsetsGeometry? padding;
 
   @override
@@ -526,8 +438,6 @@ class AppInput extends StatefulWidget {
 class _AppInputState extends State<AppInput> {
   TextEditingController? _own;
 
-  /// AppInput.inline with [AppInput.obscurable]: the text is hidden until the
-  /// eye is pressed.
   bool _inlineObscured = true;
 
   TextEditingController? get _controller =>
@@ -559,10 +469,6 @@ class _AppInputState extends State<AppInput> {
     _Kind.search => _buildSearch(context),
   };
 
-  /// An in-card / title field's NAME label ("ชื่อ", "คำอธิบาย", "จำนวนเงิน"):
-  /// the row-label text role, left of the underline or above it; the hint
-  /// stays the friendly placeholder. Shown only when [label] is given (the
-  /// caller passes it in create / edit, null in view).
   Widget _withLabel(BuildContext context, Widget field) {
     final w = widget;
     final label = w.label;
@@ -599,7 +505,6 @@ class _AppInputState extends State<AppInput> {
       );
     }
     return Row(
-      // A sized field's value baseline is fixed: the label sits on it.
       crossAxisAlignment: size == null
           ? CrossAxisAlignment.center
           : CrossAxisAlignment.baseline,
@@ -681,17 +586,11 @@ class _AppInputState extends State<AppInput> {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final editing = w.editing;
-    // The EDITABLE-TEXT INDENT rule (owner 2026-10-12): an editable value's
-    // text is indented by the frame's padding in view AND edit mode, so the
-    // frame appears around it without anything moving and the frame's left
-    // edge lines up with the title; a read-only value (nothing to enter) has
-    // no frame and its text is flush with the title.
     final flush = !editing && w.onEnterEdit == null;
     final field = TextFormField(
       controller: w.controller,
       focusNode: w.focusNode,
       readOnly: !editing,
-      // Grows up to [maxLines] — an empty field is one line, not a box.
       minLines: 1,
       maxLines: w.maxLines,
       maxLength: w.maxLength,
@@ -705,14 +604,10 @@ class _AppInputState extends State<AppInput> {
         helperMaxLines: 3,
         errorText: w.errorText,
         errorMaxLines: 3,
-        // The eye, INSIDE the frame at the right end.
         suffixIcon: w.obscurable && editing
-            ? IconButton(
-                tooltip: null,
-                icon: Icon(
-                  _inlineObscured ? AppIcons.visible : AppIcons.hidden,
-                  size: 20,
-                ),
+            ? AppIconButton.flat(
+                icon: _inlineObscured ? AppIcons.visible : AppIcons.hidden,
+                iconSize: AppIconButton.glyphSmall,
                 onPressed: () =>
                     setState(() => _inlineObscured = !_inlineObscured),
               )
@@ -779,7 +674,6 @@ class _AppInputState extends State<AppInput> {
         hintStyle: textStyle?.copyWith(
           color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
         ),
-        // A sized title draws its own underline under the fixed value row.
         enabledBorder: sz == null
             ? _underline(editing ? scheme.outline : Colors.transparent)
             : InputBorder.none,
@@ -837,7 +731,6 @@ class _AppInputState extends State<AppInput> {
     );
   }
 
-  /// The search CAPSULE: a grey pill, one height (40), on lists and in sheets.
   Widget _buildSearch(BuildContext context) {
     final w = widget;
     final scheme = Theme.of(context).colorScheme;
@@ -856,8 +749,8 @@ class _AppInputState extends State<AppInput> {
           controller: controller,
           autofocus: w.autofocus,
           textInputAction: TextInputAction.search,
-          // Fills the 40-high box (without this the grey capsule only wraps
-          // its text, ~34 high).
+          // Fills the 40-high box (without this the grey capsule only wraps its
+          // text, ~34 high).
           expands: true,
           minLines: null,
           maxLines: null,
@@ -875,10 +768,11 @@ class _AppInputState extends State<AppInput> {
             ),
             suffixIcon: value.text.isEmpty
                 ? null
-                : IconButton(
+                : AppIconButton.flat(
                     tooltip:
                         w.clearTooltip ?? UiConfig.stringsOf(context).clear,
-                    icon: const Icon(AppIcons.close, size: 18),
+                    icon: AppIcons.close,
+                    iconSize: AppIconButton.glyphXs,
                     onPressed: () {
                       controller.clear();
                       w.onChanged?.call('');

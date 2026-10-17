@@ -5,16 +5,6 @@ import '../../molecules/progress_row.dart';
 import '../../tokens/app_spacing.dart';
 import '../money/money_text.dart';
 
-/// One bar of an event ranking — who paid, top tags, a member's share
-/// (replaces the summary tab's private `_barRow`):
-///
-///   (lead)  label                                   ฿1,200
-///           ▓▓▓▓▓▓▓▓▓▓░░░░░░░░
-///
-/// [leading]: the avatar / icon (a [PersonMark], an icon tile, 28).
-/// [share]: this row's ratio of the total (0–1) as a thin [ProgressRow] in
-/// [color] (default primary). [amount] with [tone] (plain by default; signed
-/// for a net position — + = they're owed). [onTap] / [dimmed] as [ListRow].
 class PositionRow extends StatelessWidget {
   const PositionRow({
     required this.label,
@@ -29,7 +19,6 @@ class PositionRow extends StatelessWidget {
     super.key,
   });
 
-  /// The share bar's thickness.
   static const double barHeight = 6;
 
   final String label;

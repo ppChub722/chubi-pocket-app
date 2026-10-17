@@ -7,7 +7,6 @@ import '../../organisms/app_sheet.dart';
 import '../../organisms/picker_sheet.dart';
 import '../../tokens/app_spacing.dart';
 
-/// One wallet of [showAccountMultiPicker], as plain display data.
 @immutable
 class AccountMultiPickItem {
   const AccountMultiPickItem({
@@ -21,11 +20,9 @@ class AccountMultiPickItem {
   final String name;
   final IconData icon;
 
-  /// The balance, already formatted. null = none shown (an untracked wallet).
   final String? balance;
 }
 
-/// The words of the multi wallet picker (the caller's localised strings).
 class AccountMultiPickerLabels {
   const AccountMultiPickerLabels({
     required this.title,
@@ -38,16 +35,11 @@ class AccountMultiPickerLabels {
   final String title;
   final String searchHint;
 
-  /// The confirm button, built from the picked count.
   final String Function(int count) confirm;
   final String empty;
   final String noMatch;
 }
 
-/// Pick several wallets - a PRESENTATIONAL organism on [PickerSheet]: rows
-/// with a square check and the highlight tint (no tick mark). Resolves the
-/// picked ids (in pick order, empty allowed) on confirm, null when
-/// dismissed. Search shows with more than 8 wallets.
 Future<List<String>?> showAccountMultiPicker(
   BuildContext context, {
   required List<AccountMultiPickItem> wallets,
@@ -64,7 +56,6 @@ Future<List<String>?> showAccountMultiPicker(
   );
 }
 
-/// The sheet body of [showAccountMultiPicker]; pops the picked ids.
 class AccountMultiPickerSheet extends StatefulWidget {
   const AccountMultiPickerSheet({
     required this.wallets,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../atoms/app_input.dart';
+import 'app_hero_card.dart';
 import '../atoms/app_input_type.dart';
 import '../atoms/ui_config.dart';
 import '../molecules/card_action_button.dart';
@@ -12,35 +13,6 @@ import '../tokens/app/app_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 
-/// The detail-page hero card (owner 2026-10-17, reference "Chubi Page
-/// Reference" §0): ONE API for the same rows, in the same order, on every
-/// detail page.
-///
-/// ```
-/// A  [chips…]                              [links] [🔍] [✏️]   ← top row
-/// B  (icon)  description (≤ 2 lines)            people: name + fact
-/// C  small label
-///    ฿5,100  / target                          ← the main number, full width
-/// D  ▓▓▓▓▓▒▒▒░░░░  pace tick / 25-50-75 ticks / split
-///    caption left                  caption right
-/// E  [tile] [tile] [tile]                      ← 2–4 tappable tiles
-/// F  ⚠ amber alert line
-/// G  embedded tool (the debt summary message)
-///    settings summary line
-/// ```
-///
-/// Rows that are null / empty are skipped (A collapses when it has nothing).
-/// The name is NOT in the card (it is in the top bar); only people pages
-/// pass [name] + [fact].
-///
-/// **Edit variant** ([editing] true): the same card, but A shows only the
-/// editable [chips] (dropdowns — the page passes them), no action slot; B is
-/// the [icon] (the page wraps it in an `EditableCircle` with ✎) beside the
-/// underlined [name] and [description] inputs; C is the outlined
-/// [amountField] (only when the number is user-set); D–G and the settings
-/// line are hidden.
-///
-/// The ✏️ is a [CardActionButton] — the same 40 px slot as the list cards.
 class HeroCard extends StatelessWidget {
   const HeroCard({
     required this.style,
@@ -60,62 +32,57 @@ class HeroCard extends StatelessWidget {
     this.alert,
     this.embedded,
     this.settingsLine,
+    this.topNote,
+    this.middle = const [],
+    this.footer,
+    this.actionsWhileEditing = false,
+    this.padding = const EdgeInsets.all(HeroSpacing.padding),
     this.onTap,
     super.key,
   });
 
   final HeroStyle style;
 
-  /// Edit variant (see above).
   final bool editing;
 
-  /// Row A, left: status ▾ → type → period / date / ref (`AppChip`s; in edit
-  /// mode only the editable ones, as dropdown chips).
   final List<Widget> chips;
 
-  /// Row A, right, first: page links (🪪 contact …) — `CardActionButton`s.
   final List<Widget> links;
 
-  /// Row A, right, after the links: the 🔍 `ToolbarToggleButton`.
   final Widget? search;
 
-  /// Far right: shows the ✏️ (view mode). Null hides it.
   final VoidCallback? onEdit;
 
-  /// Row B: the entity's icon (40 in view; the page passes the 44 editable
-  /// circle in edit).
   final Widget? icon;
 
-  /// People pages (view) show the name + a short [fact] instead of a bare
-  /// description; edit mode: the underlined name input.
   final Widget? name;
   final Widget? fact;
 
-  /// Row B: the description (`HeroDescription`, which is the underlined input
-  /// in edit mode).
   final Widget? description;
 
-  /// Row C (view): a [HeroNumber].
   final Widget? number;
 
-  /// Row C (edit): a [HeroAmountField] — only when the number is user-set.
   final Widget? amountField;
 
-  /// Row D: a [HeroBar].
   final Widget? bar;
 
-  /// Row E: 2–4 tiles, equal width (`SummaryTile`s from the list summary
-  /// card, or any tile widget).
   final List<Widget> tiles;
 
-  /// Row F: a [HeroAlert].
   final Widget? alert;
 
-  /// Row G: an embedded tool.
   final Widget? embedded;
 
-  /// The bottom line: a small summary of the settings ("นับ: … · เตือนที่ 80%").
   final Widget? settingsLine;
+
+  final Widget? topNote;
+
+  final List<Widget?> middle;
+
+  final Widget? footer;
+
+  final bool actionsWhileEditing;
+
+  final EdgeInsetsGeometry padding;
   final VoidCallback? onTap;
 
   @override
@@ -128,7 +95,7 @@ class HeroCard extends StatelessWidget {
             onTap: onEdit,
           )
         : null;
-    final actions = editing
+    final actions = editing && !actionsWhileEditing
         ? const <Widget>[]
         : <Widget>[...links, ?search, ?edit];
     final topRow = chips.isNotEmpty || actions.isNotEmpty
@@ -175,7 +142,9 @@ class HeroCard extends StatelessWidget {
 
     final rows = <Widget?>[
       topRow,
+      topNote,
       identity,
+      ...middle,
       if (editing) amountField else number,
       if (!editing) bar,
       if (!editing && tiles.isNotEmpty)
@@ -193,18 +162,17 @@ class HeroCard extends StatelessWidget {
       if (!editing) alert,
       if (!editing) embedded,
       if (!editing) settingsLine,
+      footer,
     ];
-    return HeroSurface(
+    return AppHeroCard(
       style: style,
       onTap: onTap,
-      child: HeroContent(rows: rows),
+      padding: padding,
+      expanded: rows,
     );
   }
 }
 
-/// Hero row C: a small label, then the big number on its own full-width row
-/// (never beside the icon), in a semantic colour, with an optional muted
-/// "/ target · 65%" after it.
 class HeroNumber extends StatelessWidget {
   const HeroNumber({
     required this.label,
@@ -215,19 +183,14 @@ class HeroNumber extends StatelessWidget {
     super.key,
   });
 
-  /// "ใช้ไป", "ออมแล้ว", "ยังใช้ได้".
   final String label;
 
-  /// The number — a `MoneyText` (or any text widget); it is styled big here.
   final Widget value;
 
-  /// Semantic colour (income green / expense red / the entity tint).
   final Color? color;
 
-  /// "/ ฿80,000 · 65%".
   final String? target;
 
-  /// Makes the label a link ("ต.ค. ใช้ไป · 12 รายการ ›").
   final VoidCallback? onLabelTap;
 
   @override
@@ -280,9 +243,6 @@ class HeroNumber extends StatelessWidget {
   }
 }
 
-/// Hero row C in EDIT mode: the outlined amount field on the tint (no white
-/// box) — only for a number the user sets (a budget limit, a goal target, a
-/// recurring amount, an event's planned budget).
 class HeroAmountField extends StatelessWidget {
   const HeroAmountField({
     required this.controller,
@@ -300,10 +260,8 @@ class HeroAmountField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
 
-  /// A muted line under the field ("What you intend to spend").
   final String? helper;
 
-  /// Outline colour (the hero's tint); null = the theme's.
   final Color? accent;
   final String? symbol;
   final FocusNode? focusNode;
@@ -327,9 +285,6 @@ class HeroAmountField extends StatelessWidget {
   );
 }
 
-/// Hero row D: ONE bar with a caption line under it. Variants: a plain /
-/// pace-tick bar (`marker`), a 25-50-75 bar (`ticks`), a split bar
-/// ([HeroBar.split], two parts), each with a left and a right caption.
 class HeroBar extends StatelessWidget {
   const HeroBar({
     required this.value,
@@ -344,8 +299,6 @@ class HeroBar extends StatelessWidget {
     super.key,
   }) : parts = null;
 
-  /// A bar split in parts, each (ratio of the whole, colour) — wallet
-  /// "ใช้ได้ / ออมไว้", an event's paid / unpaid.
   const HeroBar.split({
     required List<(double, Color)> this.parts,
     this.left,
@@ -367,7 +320,6 @@ class HeroBar extends StatelessWidget {
   final Color? overColor;
   final List<(double, Color)>? parts;
 
-  /// Caption under the bar, left / right.
   final String? left;
   final String? right;
   final double height;
@@ -404,6 +356,7 @@ class HeroBar extends StatelessWidget {
             child: ColoredBox(
               color: scheme.surfaceContainerHighest,
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   for (final (ratio, c) in split)
                     if (ratio > 0)
@@ -414,7 +367,6 @@ class HeroBar extends StatelessWidget {
                         ),
                         child: ColoredBox(color: c),
                       ),
-                  // The unfilled rest of the track.
                   Expanded(
                     flex: ((1 - used) * 1000).round().clamp(0, 1000),
                     child: const SizedBox.shrink(),
@@ -430,14 +382,14 @@ class HeroBar extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                    left ?? '',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  child: _Legend(
+                    text: left ?? '',
+                    dot: split.first.$2,
                     style: caption,
                   ),
                 ),
-                if (right != null) Text(right!, style: caption),
+                if (right != null)
+                  _Legend(text: right!, dot: split.last.$2, style: caption),
               ],
             ),
           ),
@@ -446,9 +398,35 @@ class HeroBar extends StatelessWidget {
   }
 }
 
-/// A small "label ... value" line on a hero (the embedded slot): a muted
-/// [label] at the left, the [value] (a `MoneyText`, any text widget) at the
-/// right — an extra fact that is not worth a tile ("รายรับรวม +฿500").
+class _Legend extends StatelessWidget {
+  const _Legend({required this.text, required this.dot, required this.style});
+
+  final String text;
+  final Color dot;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
+      ),
+      const SizedBox(width: AppSpacing.xs),
+      Flexible(
+        child: Text(
+          text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: style,
+        ),
+      ),
+    ],
+  );
+}
+
 class HeroValueLine extends StatelessWidget {
   const HeroValueLine({required this.label, required this.value, super.key});
 
@@ -479,8 +457,6 @@ class HeroValueLine extends StatelessWidget {
   }
 }
 
-/// Hero row F: ONE amber line for something to act on (a due date, "รอใส่ยอด",
-/// "ค้างเกิน 30 วัน"). Tappable when [onTap] is given.
 class HeroAlert extends StatelessWidget {
   const HeroAlert({
     required this.text,

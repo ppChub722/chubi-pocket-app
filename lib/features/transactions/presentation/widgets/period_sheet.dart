@@ -4,10 +4,6 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../tx_list_filters.dart';
 
-/// "ช่วงเวลา" — pick a [TxPeriod] in the kit's [PeriodPickerSheet] (the
-/// transactions list's period pill). Only the thin wrapper: it maps
-/// [TxPeriod] ⇄ [PeriodPick] and supplies the l10n words. Null when
-/// dismissed.
 Future<TxPeriod?> showPeriodSheet(
   BuildContext context, {
   required TxPeriod current,
@@ -39,7 +35,6 @@ Future<TxPeriod?> showPeriodSheet(
   };
 }
 
-/// A period unit's short name — "วัน", "สัปดาห์", …
 String txPeriodUnitLabel(AppLocalizations l, TxPeriodKind k) => switch (k) {
   TxPeriodKind.day => l.txPeriodDay,
   TxPeriodKind.week => l.txPeriodWeek,

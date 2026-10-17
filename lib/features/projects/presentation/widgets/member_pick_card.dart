@@ -4,9 +4,6 @@ import '../../../../ui/ui.dart';
 import '../../domain/project.dart';
 import 'project_common.dart';
 
-/// Thin wrapper over [ProjectMemberPickCard]. A project member as a [PickCard] — the payer of a project row ("จ่ายโดย"),
-/// with their avatar. Nothing picked → the dashed empty card. Use
-/// [showMemberPicker] for the picker itself.
 class MemberPickCard extends StatelessWidget {
   const MemberPickCard({
     required this.member,
@@ -21,10 +18,8 @@ class MemberPickCard extends StatelessWidget {
   final String label;
   final String? placeholder;
 
-  /// Error border + message (a save tried with nobody picked).
   final String? errorText;
 
-  /// Null = fixed (e.g. the payer of a saved row).
   final VoidCallback? onTap;
 
   @override
@@ -38,7 +33,6 @@ class MemberPickCard extends StatelessWidget {
   );
 }
 
-/// Pick one of [members] (avatar + name). Null when dismissed.
 Future<String?> showMemberPicker(
   BuildContext context, {
   required String title,

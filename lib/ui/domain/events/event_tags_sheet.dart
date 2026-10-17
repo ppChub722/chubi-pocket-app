@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../ui.dart';
 
-/// One event tag row of [EventTagsSheet].
 @immutable
 class EventTagItem {
   const EventTagItem({
@@ -17,14 +16,11 @@ class EventTagItem {
   final String name;
   final IconCode? iconCode;
 
-  /// "5 บิล · มีในแท็กของฉันแล้ว" — built by the caller from the BE's data.
   final String? subtitle;
 
-  /// false = already in my tags (the ⋯ menu's import is disabled).
   final bool canImport;
 }
 
-/// The words of [EventTagsSheet].
 class EventTagsLabels {
   const EventTagsLabels({
     required this.title,
@@ -60,7 +56,6 @@ class EventTagsLabels {
   final String save;
   final String restyleTitle;
 
-  /// `Delete "name"?` — the tag's name goes in.
   final String Function(String name) deleteTitle;
   final String deleteBody;
   final String deleteConfirm;
@@ -69,15 +64,6 @@ class EventTagsLabels {
 
 enum _TagAction { rename, restyle, importOne, delete }
 
-/// "จัดการแท็กอีเวนต์" (0.4.0 reference §5, "Other"): the event's tags, shared
-/// by every member — one row each (icon, name, a caption), a ⋯ menu per row
-/// (rename · icon / colour · import to my tags · delete) and "+ add" / "import
-/// all" under the list.
-///
-/// PRESENTATIONAL: the words as [labels], the data as [tags]; every write is a
-/// callback (the feature calls the BE and passes the answered list back in).
-/// The small name / icon / delete-confirm steps open from here. [busy] dims
-/// the sheet while a call runs.
 class EventTagsSheet extends StatelessWidget {
   const EventTagsSheet({
     required this.tags,
@@ -242,7 +228,6 @@ class EventTagsSheet extends StatelessWidget {
   }
 }
 
-/// The name step of add / rename: one field, Cancel · Save.
 class _NameSheet extends StatefulWidget {
   const _NameSheet({
     required this.title,

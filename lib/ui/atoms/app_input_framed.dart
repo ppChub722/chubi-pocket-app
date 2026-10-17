@@ -8,13 +8,6 @@ import 'app_input_type.dart';
 import 'input_formatters.dart';
 import 'ui_config.dart';
 
-/// The framed Field (internal to [AppInput]; use `AppInput(...)`).
-///
-/// ONE outlined frame, no fill of any kind; the label (optional) is notched on
-/// the border. States: empty = muted outline + faint placeholder; focused =
-/// primary 2-px outline; filled = neutral outline; error = red outline + the
-/// message under it; disabled = the whole field dimmed; locked 🔒 = no frame,
-/// plain text. The same for [dense] and every [AppInputType].
 class FramedInput extends StatefulWidget {
   const FramedInput({
     this.controller,
@@ -72,34 +65,21 @@ class FramedInput extends StatefulWidget {
     super.key,
   });
 
-  /// Percent: decimal places allowed (default 2; 0 = integers only).
   final int? decimals;
 
-  /// Reference: also letters and `-` `.` `/` (a free-form identifier).
   final bool allowLetters;
 
-  /// In-card only: false = plain text with no underline (a view mode that
-  /// looks like text until it is focused / in error).
   final bool underline;
 
-  /// The amount symbol's size relative to the digits (a hero's ฿ at 0.7),
-  /// baseline-aligned with them.
   final double symbolScale;
 
-  /// Drop the placeholder while the field has focus (a hero's faint "0").
   final bool hideHintOnFocus;
 
-  /// In-card only (see `AppInputSize`): the value row's minimum height and
-  /// where the text baseline sits in it — both already text-scaled. null =
-  /// the font-driven geometry.
   final double? valueRow;
   final double? valueBaseline;
 
-  /// The focused outline / underline colour (a type-colour accent); null =
-  /// the primary.
   final Color? focusColor;
 
-  /// The placeholder style; null = the text style at 40 %.
   final TextStyle? hintStyle;
 
   final TextEditingController? controller;
@@ -128,8 +108,8 @@ class FramedInput extends StatefulWidget {
   final bool enabled;
   final bool readOnly;
 
-  /// Read-only AND locked 🔒: no frame, plain text + the lock (a field the
-  /// user may not change).
+  /// Read-only AND locked 🔒: no frame, plain text + the lock (a field the user
+  /// may not change).
   final bool locked;
   final bool autofocus;
   final bool obscurable;
@@ -138,23 +118,17 @@ class FramedInput extends StatefulWidget {
   final TextAlign? textAlign;
   final TextStyle? style;
 
-  /// The in-row size (a detail page's edit mode, a split row).
   final bool dense;
 
-  /// IN-CARD: editing inside a card (a hero, the quick-create / draft card):
-  /// an underline, no frame, no label.
   final bool inCard;
   final AppInputType type;
 
-  /// [AppInputType.amount]: accept a leading "-".
   final bool allowNegative;
 
-  /// [AppInputType.amount]'s symbol; null = the app's ([UiStrings.currencySymbol]).
   final String? currencySymbol;
   final double? minWidth;
   final EdgeInsetsGeometry? contentPadding;
 
-  /// Overrides the idle outline colour.
   final Color? borderColor;
   final Color? cursorColor;
   final bool? showCursor;
@@ -231,7 +205,6 @@ class _FramedInputState extends State<FramedInput> {
     final text = Theme.of(context).textTheme;
     final style = w.style ?? text.bodyLarge;
 
-    // Locked: plain text + 🔒, no frame.
     if (w.locked) return _locked(context, style);
 
     final symbol = w.type == AppInputType.amount
@@ -339,11 +312,7 @@ class _FramedInputState extends State<FramedInput> {
           ),
         );
 
-        // Symbol / prefix / suffix around the text. Numbers hug their symbol
-        // and sit at the right; text fills the frame.
         final affixStyle = style?.copyWith(
-          // The symbol / affixes follow the text's own colour (a red expense,
-          // a green income); the theme text colour when it has none.
           color: w.enabled
               ? (style.color ?? scheme.onSurface)
               : scheme.onSurface.withValues(alpha: 0.4),
@@ -403,7 +372,6 @@ class _FramedInputState extends State<FramedInput> {
             },
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              // The symbol sits on the digits' baseline (a smaller ฿).
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
@@ -419,9 +387,6 @@ class _FramedInputState extends State<FramedInput> {
             ),
           );
         } else {
-          // The text field takes ALL the space the affixes leave (a Flexible
-          // affix would split it with the field and park the eye / suffix in
-          // the middle); text affixes are width-capped below instead.
           content = Row(
             children: [
               ...lead,
@@ -437,8 +402,6 @@ class _FramedInputState extends State<FramedInput> {
           baseStyle: style,
           decoration: InputDecoration(
             labelText: w.inCard ? null : w.label,
-            // Notched on the border in EVERY state, so an empty field shows
-            // its placeholder as well.
             floatingLabelBehavior: FloatingLabelBehavior.always,
             floatingLabelStyle: TextStyle(
               color: hasError
@@ -461,7 +424,8 @@ class _FramedInputState extends State<FramedInput> {
             contentPadding:
                 w.contentPadding ??
                 (w.inCard
-                    ? const EdgeInsets.symmetric(vertical: AppSpacing.xs)
+                    // No bottom inset: the underline sits right under the text.
+                    ? const EdgeInsets.only(top: AppSpacing.xs)
                     : EdgeInsets.symmetric(
                         horizontal: AppSpacing.md,
                         vertical: w.dense ? 10 : 14,
@@ -495,7 +459,6 @@ class _FramedInputState extends State<FramedInput> {
             child: decorator,
           );
         }
-        // Disabled: the WHOLE field dimmed (frame, label and text).
         return w.enabled ? decorator : Opacity(opacity: 0.38, child: decorator);
       },
     );

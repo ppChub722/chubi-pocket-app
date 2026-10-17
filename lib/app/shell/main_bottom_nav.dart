@@ -7,25 +7,6 @@ import 'package:flutter/services.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/ui.dart';
 
-/// Floating rounded-rect bottom navigation:
-///
-/// `( [Dashboard] [Transactions] [ + ] [Accounts] [☰ More] )`
-///
-/// Four tab destinations (Dashboard=0 / Transactions=1 / Accounts=2 /
-/// More=3) switch the [StatefulNavigationShell] branch on tap. Every tab is
-/// an icon over a small label; the selected one's whole block is tinted
-/// (owner 2026-10-09: the expanding capsule shifted the bar).
-/// The centre `+` is an oversized button centred on the bar (it pokes out
-/// above and below, ringed in the page colour) and opens the
-/// quick create; it wears [addMode]'s colour (the kit's [QuickCreateButton]). More is a real tab whose root is the card hub
-/// (`/more`) — Projects / Categories / Tags / etc. stack inside it.
-///
-/// **Swipe along the bar = switch tab** (owner 2026-10-10), on every tab —
-/// a content swipe may belong to the page (the dashboard's month). The
-/// highlight follows the finger; on release it lands on the nearest slot,
-/// or the next one in a fling's direction, with a haptic. Taps still work:
-/// the drag only wins once the finger travels, so a drag that starts on the
-/// `+` scrubs too while a tap on it opens quick create.
 class MainBottomNav extends StatefulWidget {
   const MainBottomNav({
     required this.currentIndex,
@@ -37,40 +18,28 @@ class MainBottomNav extends StatefulWidget {
     super.key,
   });
 
-  /// The mode the + opens in on the page on screen — its colour.
   final QuickCreateMode addMode;
 
-  /// Branch index of the active tab (Dashboard=0, Transactions=1,
-  /// Accounts=2). Any other tab (a เพิ่มเติม card, ⏳ 🔔 👤) lights no slot.
   final int currentIndex;
 
-  /// True only on the เพิ่มเติม hub itself — its cards' tabs don't light
-  /// it (owner 2026-10-09).
   final bool moreSelected;
 
-  /// Called with the target branch index (0, 1, or 2).
   final ValueChanged<int> onTabSelected;
   final VoidCallback onAddPressed;
   final VoidCallback onMorePressed;
 
-  /// Bar height, and the `+` button's outer size (ring included) — larger
-  /// than the bar so it pokes out evenly above and below, centred on it.
+  /// Bar height, and the `+` button's outer size (ring included) — larger than
+  /// the bar so it pokes out evenly above and below, centred on it.
   static const double _barHeight = 64;
 
-  /// The selected tab's highlight corner. Must stay ≤ its half-height
-  /// (`_barHeight / 2 - _tabInset`) or it clamps to a pill.
   static const double _radius = 24;
 
-  /// Gap between the bar's edge and a tab's highlight, on every side.
   static const double _tabInset = 6;
 
-  /// The bar's corner = highlight + gap, so the two curves look the same
-  /// (owner 2026-10-09: an equal radius made the outer one read tighter).
   static const double _barRadius = _radius + _tabInset;
   static const double _tabGap = 2;
   static const double _addSize = 76;
 
-  /// Frosted-glass blur behind the bar.
   static const double _blur = 16;
 
   @override
@@ -78,10 +47,8 @@ class MainBottomNav extends StatefulWidget {
 }
 
 class _MainBottomNavState extends State<MainBottomNav> {
-  /// A release this fast (px/s) moves on to the next slot that way.
   static const _minFlingVelocity = 300.0;
 
-  /// The tab row's width (bar minus its side padding), from layout.
   double _rowWidth = 0;
 
   /// The highlight's left edge while a finger drags it; null otherwise.
@@ -89,18 +56,12 @@ class _MainBottomNavState extends State<MainBottomNav> {
   double _dragFrom = 0;
   double _dragDx = 0;
 
-  /// Where a released drag landed, shown until the parent catches up.
   int? _landing;
 
-  /// The slot the highlight showed at last build (−1: riding a drag with
-  /// no slot lit), null while hidden — tells a slot-to-slot slide from a
-  /// grow-in after a slotless tab.
   int? _shownSlot;
 
-  /// The slot the highlight last sat in — where it shrinks away / waits.
   int _parkedSlot = 0;
 
-  /// 0 dashboard · 1 transactions · 2 wallets · 3 more; null = none.
   int? get _selectedSlot => widget.moreSelected
       ? 3
       : widget.currentIndex >= 0 && widget.currentIndex <= 2
@@ -118,11 +79,9 @@ class _MainBottomNavState extends State<MainBottomNav> {
 
   double get _tabWidth => (_rowWidth - MainBottomNav._addSize) / 4;
 
-  /// Left edge of slot [s] in the row (slots 2 and 3 sit past the `+`).
   double _slotLeft(int s) =>
       s * _tabWidth + (s >= 2 ? MainBottomNav._addSize : 0);
 
-  /// Where a highlight at [left] sits, in slots (fractional between two).
   double _slotAt(double left) {
     for (var s = 0; s < 3; s++) {
       final a = _slotLeft(s);
@@ -133,11 +92,9 @@ class _MainBottomNavState extends State<MainBottomNav> {
   }
 
   void _onDragStart(DragStartDetails d) {
-    // Row coordinates: the bar pads the row by (inset − gap) each side.
     final x =
         d.localPosition.dx - (MainBottomNav._tabInset - MainBottomNav._tabGap);
     final slot = _selectedSlot;
-    // From the lit slot; with none lit (another tab), from under the finger.
     _dragFrom = slot != null ? _slotLeft(slot) : x - _tabWidth / 2;
     _dragDx = 0;
     setState(() => _dragLeft = _clampLeft(_dragFrom));
@@ -181,8 +138,6 @@ class _MainBottomNavState extends State<MainBottomNav> {
     final scheme = Theme.of(context).colorScheme;
     final still = MediaQuery.disableAnimationsOf(context);
     final dragLeft = _dragLeft;
-    // Mid-drag the slot under the highlight lights up; then the landing
-    // slot until the tab switch arrives.
     final lit = dragLeft != null
         ? _slotAt(dragLeft).round()
         : _landing ?? _selectedSlot;
@@ -197,23 +152,16 @@ class _MainBottomNavState extends State<MainBottomNav> {
         ),
         child: GestureDetector(
           behavior: HitTestBehavior.translucent,
-          // Count from touch-down so the highlight stays under the finger
-          // (no slop lag).
           dragStartBehavior: DragStartBehavior.down,
           onHorizontalDragStart: _onDragStart,
           onHorizontalDragUpdate: _onDragUpdate,
           onHorizontalDragEnd: _onDragEnd,
           onHorizontalDragCancel: _onDragCancel,
-          // The whole `+` sits inside this box (bar centred in it), so the
-          // part sticking out of the bar is still tappable.
           child: SizedBox(
             height: MainBottomNav._addSize,
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Frosted glass (owner 2026-10-10: see-through): the page
-                // scrolls on underneath, blurred. No elevation — a shadow
-                // would show through the tint as a dark smudge.
                 ClipRRect(
                   borderRadius: BorderRadius.circular(MainBottomNav._barRadius),
                   child: BackdropFilter(
@@ -234,8 +182,6 @@ class _MainBottomNavState extends State<MainBottomNav> {
                       child: SizedBox(
                         height: MainBottomNav._barHeight,
                         child: Padding(
-                          // + each tab's own [_tabGap] = [_tabInset] at the
-                          // ends.
                           padding: const EdgeInsets.symmetric(
                             horizontal:
                                 MainBottomNav._tabInset - MainBottomNav._tabGap,
@@ -245,9 +191,6 @@ class _MainBottomNavState extends State<MainBottomNav> {
                               _rowWidth = box.maxWidth;
                               final slot = _landing ?? _selectedSlot;
                               final shown = dragLeft != null || slot != null;
-                              // Back from a slotless tab: grow in at the
-                              // new slot — nothing was shown in between,
-                              // so no slide across from the old one.
                               final appearing =
                                   shown &&
                                   _shownSlot == null &&
@@ -257,12 +200,11 @@ class _MainBottomNavState extends State<MainBottomNav> {
                               return Stack(
                                 children: [
                                   _SlidingHighlight(
-                                    // Hidden: shrinks away where it was.
                                     left: dragLeft ?? _slotLeft(_parkedSlot),
                                     width: _tabWidth,
                                     visible: shown,
-                                    // Pinned to the finger; slides slot to
-                                    // slot otherwise.
+                                    // Pinned to the finger; slides slot to slot
+                                    // otherwise.
                                     slide: dragLeft == null && !appearing,
                                     still: still,
                                   ),
@@ -309,7 +251,6 @@ class _MainBottomNavState extends State<MainBottomNav> {
           still: still,
           onTap: () => widget.onTabSelected(1),
         ),
-        // Room for the `+` stacked on top.
         const SizedBox(width: MainBottomNav._addSize),
         _NavItem(
           icon: AppIcons.wallet,
@@ -332,11 +273,6 @@ class _MainBottomNavState extends State<MainBottomNav> {
   }
 }
 
-/// The selected tab's tint — one block that slides between tab slots
-/// (crossing under the `+`) instead of each tab fading its own, and rides
-/// the finger during a bar swipe. On a tab with no slot it shrinks away
-/// into its slot's centre (and grows back out of the slot it returns to;
-/// owner 2026-10-10). Instant under reduced motion ([still]).
 class _SlidingHighlight extends StatelessWidget {
   const _SlidingHighlight({
     required this.left,
@@ -346,10 +282,8 @@ class _SlidingHighlight extends StatelessWidget {
     required this.still,
   });
 
-  /// The slot's left edge in the tab row (gap not yet applied).
   final double left;
 
-  /// One tab slot's width.
   final double width;
   final bool visible;
 
@@ -390,10 +324,6 @@ class _SlidingHighlight extends StatelessWidget {
   }
 }
 
-/// Single tab — icon over a small label, always both. The tint behind the
-/// selected one is [_SlidingHighlight]; here [selected] only recolours
-/// (animated, instant when [still]) and bolds the label. Nothing changes
-/// width, so the bar never shifts when switching tabs.
 class _NavItem extends StatelessWidget {
   const _NavItem({
     required this.icon,
@@ -429,8 +359,6 @@ class _NavItem extends StatelessWidget {
             horizontal: MainBottomNav._tabGap,
             vertical: MainBottomNav._tabInset,
           ),
-          // No ink ripple (owner 2026-10-09) — the sliding highlight is the
-          // tap feedback.
           child: GestureDetector(
             onTap: onTap,
             behavior: HitTestBehavior.opaque,

@@ -25,10 +25,6 @@ import '../../domain/pending_transaction.dart';
 import '../cubit/pending_cubit.dart';
 import '../pending_errors.dart';
 
-/// `/pending` — รอยืนยัน (owner design 2026-10-08). Drafts waiting to be
-/// confirmed: not transactions yet, not in any total. Tap one to edit it
-/// in the `+` sheet; tick several and submit them together — each goes
-/// through on its own, the ones that fail stay here with the reason.
 class PendingPage extends StatefulWidget {
   const PendingPage({super.key});
 
@@ -50,8 +46,6 @@ class _PendingPageState extends State<PendingPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<PendingCubit>().load();
-      // Rows draw from each draft's `resolved`; these lists are only for the
-      // edit sheet a row opens.
       context.read<AccountsCubit>().loadIfNeeded();
       context.read<CategoriesCubit>().loadIfNeeded();
       context.read<TagsCubit>().loadIfNeeded();
@@ -65,10 +59,6 @@ class _PendingPageState extends State<PendingPage> {
         _Filter.others => all.where((p) => !p.source.inManualBucket).toList(),
       };
 
-  /// Confirms the ticked drafts that can go. A draft the server says can't
-  /// be confirmed yet (`can_confirm` false) is never sent: alone, it opens
-  /// the draft sheet to fill what is missing; among others it is skipped
-  /// and counted as not done.
   Future<void> _submitSelected() async {
     final byId = {
       for (final p in context.read<PendingCubit>().state.items) p.id: p,
@@ -100,8 +90,8 @@ class _PendingPageState extends State<PendingPage> {
       final r = await pending.submit(ids);
       if (r.submitted.isNotEmpty) {
         accounts.patchBalances(r.accountBalances);
-        // A saving draft makes no transaction row: the goals list and the
-        // Home block go stale; the transaction lists re-fetch as before.
+        // A saving draft makes no transaction row: the goals list and the Home
+        // block go stale; the transaction lists re-fetch as before.
         goals.markStale();
         dashboard.markStale();
         await TransactionsCubit.bookChanged();
@@ -131,8 +121,6 @@ class _PendingPageState extends State<PendingPage> {
     }
   }
 
-  /// The ticked drafts among [visible] (owner 2026-10-10: no per-card trash
-  /// — tick first, then 🗑 in the top row).
   Future<void> _discardSelected(List<PendingTransaction> visible) async {
     final ids = [
       for (final p in visible)
@@ -163,30 +151,26 @@ class _PendingPageState extends State<PendingPage> {
     final state = context.watch<PendingCubit>().state;
     final all = state.items;
     final visible = _visible(all);
-    // Counts are the server's summary from the last answer, as it is.
     final summary = state.summary;
     final manual = summary?.manual ?? 0;
     final others = summary?.notManual ?? 0;
     final total = summary?.count ?? 0;
     final pickedVisible = visible.where((p) => _selected.contains(p.id)).length;
     final result = _lastResult;
-    // UI only for now — the slip scan itself isn't wired yet. Phone only:
-    // no button at all on web (ML Kit has no web build).
     final canImportSlip = SlipQrReader.isSupported;
     void importSlip() {}
 
     return Scaffold(
       appBar: AppTopBar(title: l.pendingTitle),
       extendBodyBehindAppBar: true,
-      // UI only for now — typing a draft in words isn't wired yet.
       floatingActionButton: ChatDial(
         hint: l.pendingChatHint,
         tooltip: l.pendingTypeIt,
         sendTooltip: l.pendingChatSend,
         closeTooltip: l.pendingChatClose,
       ),
-      // One button, only while something is ticked — it takes the shell
-      // nav's place instead of stacking on it.
+      // One button, only while something is ticked — it takes the shell nav's
+      // place instead of stacking on it.
       bottomNavigationBar: _selected.isEmpty
           ? null
           : ShellChromeHider(
@@ -200,8 +184,8 @@ class _PendingPageState extends State<PendingPage> {
                 ),
               ),
             ),
-      // Pinned rows clear the floating bar; the list below them must not
-      // add the bar height again.
+      // Pinned rows clear the floating bar; the list below them must not add
+      // the bar height again.
       body: TabSwitchBody(
         child: ListPageBody(
           header: [
@@ -240,9 +224,6 @@ class _PendingPageState extends State<PendingPage> {
                         _Filter.others => l.pendingFilterOthers(others),
                       },
                       selected: _filter == f,
-                      // Ticks the new filter hides are dropped, so
-                      // "ยืนยันที่เลือก (n)" counts and sends only
-                      // what's on screen (owner 2026-10-10).
                       onTap: () => setState(() {
                         _filter = f;
                         final shown = _visible(all).map((p) => p.id);
@@ -272,11 +253,8 @@ class _PendingPageState extends State<PendingPage> {
           error: state.error,
           isEmpty: visible.isEmpty,
           onRetry: context.read<PendingCubit>().load,
-          // Rows are full-bleed (they pad themselves); the template's
-          // bottomInset clears the floating chat button.
           topInset: 0,
           sidePadding: 0,
-          // A hairline between rows (the default indent = a TxRow's text).
           rowDividers: true,
           empty: EmptyView(
             icon: AppIcons.empty,
@@ -304,7 +282,6 @@ class _PendingPageState extends State<PendingPage> {
           ),
           children: [
             ..._rows(context, visible),
-            // "เพิ่มร่าง" closes the list.
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.lg,
@@ -324,14 +301,10 @@ class _PendingPageState extends State<PendingPage> {
     );
   }
 
-  /// A tap opens the draft in the `+` sheet (a 🐷 saving draft in its ออม
-  /// form); confirming happens from the sheet.
   Future<void> _open(PendingTransaction p) async {
     await showQuickCreateSheet(context, draft: p);
   }
 
-  /// Rows under day headers (the draft's date; undated first) — the same
-  /// grouping as the transaction list, newest day first.
   List<Widget> _rows(BuildContext context, List<PendingTransaction> visible) {
     final l = AppLocalizations.of(context)!;
     final days = <String, List<PendingTransaction>>{};
@@ -339,7 +312,6 @@ class _PendingPageState extends State<PendingPage> {
       days.putIfAbsent(p.draft.date ?? '', () => []).add(p);
     }
     final keys = days.keys.toList()..sort((a, b) => b.compareTo(a));
-    // '' (no date) sorts last descending; show it first.
     if (keys.remove('')) keys.insert(0, '');
     final out = <Widget>[];
     for (final k in keys) {
@@ -377,10 +349,6 @@ class _PendingPageState extends State<PendingPage> {
   }
 }
 
-/// One draft, as the shared [TxRow] (same as the transaction list): the
-/// source as a mini chip on line 2, a checkbox first, and why it can't go
-/// yet (last submit error, or a field it still needs) under it. The date is
-/// in the day-group header, not here.
 class _PendingCard extends StatelessWidget {
   const _PendingCard({
     required this.item,
@@ -408,12 +376,10 @@ class _PendingCard extends StatelessWidget {
       );
     }
     final d = item.draft;
-    // Everything below comes from the draft's own `resolved` — no joins.
     final r = item.resolved;
     final category = r.category;
     final wallet = r.account;
     final toWallet = r.transferToAccount;
-    // The draft's own title ("what for") first, else its category.
     final description = d.description?.trim() ?? '';
     final categoryName = category == null
         ? null
@@ -422,8 +388,8 @@ class _PendingCard extends StatelessWidget {
         ? description
         : categoryName ?? l.pendingUntitled;
     final rowTags = r.tags;
-    // Why it can't go yet: the server's `needs_input` (old API: the draft's
-    // own gaps).
+    // Why it can't go yet: the server's `needs_input` (old API: the draft's own
+    // gaps).
     final needs = item.needsInput;
     final warn = item.lastError != null
         ? pendingErrorText(l, item.lastError!)
@@ -443,7 +409,6 @@ class _PendingCard extends StatelessWidget {
       TransactionType.income => MoneyTone.income,
       _ => MoneyTone.plain,
     };
-    // A sub-category carries its own icon, so no parent lookup.
     final Widget leading = category != null
         ? IconDisplay(
             type: IconType.category,
@@ -484,7 +449,6 @@ class _PendingCard extends StatelessWidget {
             ),
       source: AppChip(
         label: _sourceLabel(l, item),
-        // From a recurring item: 🔁 + its name · n/N (owner 2026-10-13).
         icon: item.source == PendingSource.recurring
             ? AppIcons.recurring
             : null,

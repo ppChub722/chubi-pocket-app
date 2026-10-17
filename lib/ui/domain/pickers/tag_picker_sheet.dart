@@ -16,9 +16,6 @@ import '../icons/color_token.dart';
 import '../icons/icon_code.dart';
 import '../icons/icon_registry.dart';
 
-/// One tag of [showTagPicker] — plain values, no feature model. [name] is
-/// the label to show (the caller substitutes a placeholder for an empty
-/// one); [iconCode] gives the chip its icon and its one colour.
 @immutable
 class TagPickerItem {
   const TagPickerItem({required this.id, required this.name, this.iconCode});
@@ -28,8 +25,6 @@ class TagPickerItem {
   final IconCode? iconCode;
 }
 
-/// What the tag list currently holds — pushed by the caller as it loads /
-/// changes (a tag created from the sheet shows up here).
 @immutable
 class TagPickerData {
   const TagPickerData({
@@ -40,15 +35,13 @@ class TagPickerData {
 
   final List<TagPickerItem> items;
 
-  /// Still fetching and nothing to show yet.
   final bool loading;
 
-  /// Failed with nothing to show.
   final Object? error;
 }
 
-/// The words of the tag picker — the caller passes its localised strings
-/// (the kit never reads the app's l10n).
+/// The words of the tag picker — the caller passes its localised strings (the
+/// kit never reads the app's l10n).
 class TagPickerLabels {
   const TagPickerLabels({
     required this.title,
@@ -65,41 +58,25 @@ class TagPickerLabels {
   final String title;
   final String searchHint;
 
-  /// The confirm button.
   final String ok;
 
   /// The create row without a typed name; also the name sheet's title.
   final String addTag;
 
-  /// The create row with a typed name.
   final String Function(String name) createNamed;
 
-  /// No tags and no creating (the filter).
   final String empty;
   final String noMatch;
 
-  /// The name sheet's save button and field hint.
   final String nameSave;
   final String nameHint;
 }
 
-/// The colour of a tag chip — its icon tint; no colour -> the theme primary.
 Color _tagColor(IconCode? code, AppColors palette) =>
     (code?.iconColors.isNotEmpty ?? false)
     ? resolveColor(code!.iconColors.first, palette)
     : palette.primary;
 
-/// THE tag picker — a PRESENTATIONAL organism on [PickerSheet]: search,
-/// several tags at once (chips), and a create row without leaving (the name
-/// is what's in the search box, or asked for via a small name sheet).
-/// Resolves the picked ids on OK, null when dismissed.
-///
-/// - [data]: the tag list, live (a [ValueListenable] the caller keeps
-///   updated; a created tag appears in it).
-/// - [onCreate]: creates (or finds) a tag by name and returns its id, null
-///   when it failed (the caller tells the user). Null [onCreate] / false
-///   [allowCreate] = no create row (the filter).
-/// - [onRetry]: shown with a load error.
 Future<Set<String>?> showTagPicker(
   BuildContext context, {
   required ValueListenable<TagPickerData> data,
@@ -120,8 +97,6 @@ Future<Set<String>?> showTagPicker(
   );
 }
 
-/// Asks for a new tag's name (a small sheet with one field). Trimmed;
-/// null when dismissed or blank.
 Future<String?> showNewTagNameSheet(
   BuildContext context, {
   required String title,
@@ -142,9 +117,6 @@ Future<String?> showNewTagNameSheet(
   return n.isEmpty ? null : n;
 }
 
-/// The name sheet owns its controller: the sheet's future resolves on pop,
-/// while the field is still on screen animating out — a controller the
-/// caller disposed right then crashed (owner bug 2026-10-10).
 class _NewTagNameSheet extends StatefulWidget {
   const _NewTagNameSheet({
     required this.title,
@@ -189,7 +161,6 @@ class _NewTagNameSheetState extends State<_NewTagNameSheet> {
   }
 }
 
-/// The sheet body of [showTagPicker]; pops the picked ids.
 class TagPickerSheet extends StatefulWidget {
   const TagPickerSheet({
     required this.data,
@@ -262,7 +233,7 @@ class _TagPickerSheetState extends State<TagPickerSheet> {
             AppSpacing.md,
           ),
           child: AppButton(
-            label: l.ok,
+            label: _picked.isEmpty ? l.ok : '${l.ok} (${_picked.length})',
             expand: true,
             onPressed: () => Navigator.pop(context, _picked),
           ),
@@ -298,10 +269,7 @@ class _TagPickerSheetState extends State<TagPickerSheet> {
                           ),
                           color: _tagColor(t.iconCode, palette),
                           selected: _picked.contains(t.id),
-                          // Every option can be tapped: dashed; a picked one
-                          // also has the thin line inside.
-                          dashed: true,
-                          inset: _picked.contains(t.id),
+                          dashed: !_picked.contains(t.id),
                           onTap: () => setState(() {
                             if (!_picked.remove(t.id)) _picked.add(t.id);
                           }),
@@ -309,10 +277,8 @@ class _TagPickerSheetState extends State<TagPickerSheet> {
                     ],
                   ),
                 )
-              // Nothing to pick and nothing to make here (the filter).
               else if (!allowCreate)
                 EmptyView.compact(message: q.isEmpty ? l.empty : l.noMatch),
-              // Typed a name that isn't there -> make it, right here.
               if (allowCreate && !exact)
                 PickerCreateRow(
                   label: typed.isEmpty ? l.addTag : l.createNamed(typed),

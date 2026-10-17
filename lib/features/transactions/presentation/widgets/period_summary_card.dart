@@ -6,11 +6,9 @@ import '../../../../ui/ui.dart';
 import '../../data/transactions_repository.dart';
 import '../../domain/transactions_summary.dart';
 
-/// Period window for [PeriodSummaryCard].
 enum SummaryPeriod { week, month, year, all }
 
 extension SummaryPeriodRange on SummaryPeriod {
-  /// Inclusive `YYYY-MM-DD` range for this period, relative to [now].
   ({String from, String to}) rangeFrom(DateTime now) {
     String fmt(DateTime d) =>
         '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -28,16 +26,11 @@ extension SummaryPeriodRange on SummaryPeriod {
         from: fmt(DateTime(now.year, 1, 1)),
         to: fmt(DateTime(now.year, 12, 31)),
       ),
-      // The summary API needs a range; a far-past start = "everything".
       SummaryPeriod.all => (from: '1970-01-01', to: fmt(today)),
     };
   }
 }
 
-/// "สรุป" card — period chips (สัปดาห์ / เดือน / ปี / ทั้งหมด) + income ·
-/// expense · net + transaction count. One widget for the dashboard
-/// (all wallets) and account detail ([accountId]). Fetches on its own via
-/// [TransactionsRepository.summary]; amounts respect the 👁 toggle.
 class PeriodSummaryCard extends StatefulWidget {
   const PeriodSummaryCard({
     this.accountId,
@@ -46,11 +39,9 @@ class PeriodSummaryCard extends StatefulWidget {
     super.key,
   });
 
-  /// Limit to one wallet; null = everything the user can see.
   final String? accountId;
   final SummaryPeriod initial;
 
-  /// Defaults to the localized "สรุป".
   final String? title;
 
   @override

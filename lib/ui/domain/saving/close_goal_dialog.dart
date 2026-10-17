@@ -5,31 +5,14 @@ import '../../atoms/app_card.dart';
 import '../../tokens/app_spacing.dart';
 import '../money/money_text.dart';
 
-/// Where a closed goal's money goes.
 enum CloseGoalChoice {
-  /// Into "ยังไม่จัดสรร" — stays saved, in its wallets.
   toSpare,
 
-  /// Back to the wallets it came from (each part to its own wallet).
   backToWallets,
 }
 
-/// One line of the "if it goes back" list.
 typedef CloseGoalReturn = ({String wallet, double amount});
 
-/// The close-goal dialog (goals v2 frame 3):
-///
-///   ปิดเป้าหมาย "ทริปญี่ปุ่น"
-///   เงินออม ฿52,000 จะไปที่ไหน?
-///   ┌ ถ้ากลับกระเป๋า ──────────┐
-///   │ กสิกร         +฿40,000   │
-///   │ ไทยพาณิชย์    +฿12,000   │
-///   └──────────────────────────┘
-///   [เข้ายังไม่จัดสรร]  [กลับกระเป๋า]  [ยกเลิก]
-///
-/// Every word is a param. [returns] is the per-wallet list the "back to
-/// wallets" option would credit (empty = box left out). Resolves the
-/// [CloseGoalChoice], or null for cancel / back / barrier (nothing happens).
 Future<CloseGoalChoice?> showCloseGoalDialog(
   BuildContext context, {
   required String title,
@@ -56,7 +39,6 @@ Future<CloseGoalChoice?> showCloseGoalDialog(
   );
 }
 
-/// The dialog itself (exposed for the hub and tests).
 class CloseGoalDialog extends StatelessWidget {
   const CloseGoalDialog({
     required this.title,

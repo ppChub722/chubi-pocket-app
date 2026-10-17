@@ -7,7 +7,6 @@ import '../tokens/app_spacing.dart';
 import '../tokens/chip_size.dart';
 import '../tokens/icon_size.dart';
 
-/// One step of a [ChipPath]: an entity's name with its OWN icon + colour.
 class ChipPathSegment {
   const ChipPathSegment({required this.label, this.icon, this.color});
 
@@ -16,14 +15,6 @@ class ChipPathSegment {
   final Color? color;
 }
 
-/// A nested entity as a path of display chips — `[Food & Drinks] › [Food
-/// Delivery]` (a category L1 › L2 › L3, owner 2026-10-12): every segment is its
-/// own chip (chip 28) with its own icon + colour, joined by `›`. Too long for
-/// the row → it scrolls sideways, parked on the LAST segment (the one that
-/// matters); each chip also ellipsises its own label.
-///
-/// The value of a [DetailRow.pick] (`valueChip: ChipPath(...)`) wherever a
-/// category is shown in a row. One segment = just that entity's chip.
 class ChipPath extends StatelessWidget {
   const ChipPath({required this.segments, super.key});
 

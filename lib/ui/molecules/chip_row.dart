@@ -7,18 +7,9 @@ import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/app_chip.dart';
 
-/// A chip row's order, fixed once the lists it ranks have loaded (option B,
-/// owner 2026-10-10): tapping a chip highlights it in place — nothing jumps
-/// to the front. One picked elsewhere ("เพิ่มเติม") that isn't in the row
-/// joins at the end, and stays. Keep one per row for the screen's life
-/// (in a State).
 class ChipOrder {
   List<String>? _frozen;
 
-  /// [rank] is the order as of now — kept from the first call where
-  /// [ready] (until then it's re-ranked every build, so a cold cache
-  /// doesn't freeze an empty row). [picked] ids missing from it are added
-  /// at the end.
   List<String> ids({
     required bool ready,
     required List<String> Function() rank,
@@ -33,18 +24,6 @@ class ChipOrder {
   }
 }
 
-/// `[icon]  [chip] [chip] … [⋯ เพิ่มเติม]` — one pick row of a form or a
-/// filter: a muted leading [icon] says what the row is (no label), the
-/// chips scroll sideways, and [onMore] adds "เพิ่มเติม" at the end (the
-/// full picker). The transaction form's หมวด / แท็ก rows, the filter
-/// sheet's ประเภท / กระเป๋า / หมวด / แท็ก rows. Under a section title
-/// that carries the icon (the filter sheet), [icon] is null and the chips
-/// start flush left.
-///
-/// [maxLines] (the filter sheet, owner 2026-10-11): the chips WRAP instead
-/// of scrolling, onto at most that many lines; past it they're cut and the
-/// last line ends with "เพิ่มเติม" (needs [onMore]). Null = one line that
-/// scrolls sideways (the forms).
 class ChipRow extends StatelessWidget {
   const ChipRow({
     required this.chips,
@@ -54,30 +33,25 @@ class ChipRow extends StatelessWidget {
     this.moreLabel,
     this.moreFirst = false,
     this.maxLines,
+    this.moreOnlyWhenCut = false,
     super.key,
   }) : assert(maxLines == null || maxLines > 0),
        assert(!moreFirst || maxLines == null, 'moreFirst scrolls, never wraps');
 
+  final bool moreOnlyWhenCut;
+
   /// Null = no leading icon (a titled section shows it instead).
   final IconData? icon;
 
-  /// A small muted text before the chips (a filter row's name, "Event tags");
-  /// shown after [icon] when both are given.
   final String? label;
   final List<Widget> chips;
 
-  /// Null = no "เพิ่มเติม" (a view-only row).
   final VoidCallback? onMore;
 
-  /// The "เพิ่มเติม" text — required with [onMore].
   final String? moreLabel;
 
-  /// The pick chip leads the row instead of ending it, and shows dashed — "no
-  /// choice made, tap to choose" (the pending form's เลือกกระเป๋า / เลือกหมวด,
-  /// [moreLabel] is its text). One scrolling line only.
   final bool moreFirst;
 
-  /// Null = one scrolling line; else wrap, cut past this many lines.
   final int? maxLines;
 
   @override
@@ -123,6 +97,7 @@ class ChipRow extends StatelessWidget {
               ? _LimitedWrap(
                   maxLines: lines,
                   hasTrailing: more != null,
+                  moreOnlyWhenCut: moreOnlyWhenCut,
                   children: [...chips, ?more],
                 )
               : SingleChildScrollView(
@@ -147,31 +122,32 @@ class ChipRow extends StatelessWidget {
   }
 }
 
-/// [ChipRow.maxLines]: the chips wrap onto at most [maxLines] lines with
-/// the last child (the "เพิ่มเติม" chip, when [hasTrailing]) at the very
-/// end. Chips that don't fit are left out — the trailing chip takes their
-/// place on the last line — so a long list never grows the section past
-/// [maxLines]. Every child is laid out; only the shown ones paint and take
-/// taps.
 class _LimitedWrap extends MultiChildRenderObjectWidget {
   const _LimitedWrap({
     required this.maxLines,
     required this.hasTrailing,
+    required this.moreOnlyWhenCut,
     required super.children,
   });
 
   final int maxLines;
   final bool hasTrailing;
+  final bool moreOnlyWhenCut;
 
   @override
   _RenderLimitedWrap createRenderObject(BuildContext context) =>
-      _RenderLimitedWrap(maxLines: maxLines, hasTrailing: hasTrailing);
+      _RenderLimitedWrap(
+        maxLines: maxLines,
+        hasTrailing: hasTrailing,
+        moreOnlyWhenCut: moreOnlyWhenCut,
+      );
 
   @override
   void updateRenderObject(BuildContext context, _RenderLimitedWrap r) {
     r
       ..maxLines = maxLines
-      ..hasTrailing = hasTrailing;
+      ..hasTrailing = hasTrailing
+      ..moreOnlyWhenCut = moreOnlyWhenCut;
   }
 }
 
@@ -183,9 +159,20 @@ class _RenderLimitedWrap extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, _WrapData>,
         RenderBoxContainerDefaultsMixin<RenderBox, _WrapData> {
-  _RenderLimitedWrap({required int maxLines, required bool hasTrailing})
-    : _maxLines = maxLines,
-      _hasTrailing = hasTrailing;
+  _RenderLimitedWrap({
+    required int maxLines,
+    required bool hasTrailing,
+    required bool moreOnlyWhenCut,
+  }) : _maxLines = maxLines,
+       _hasTrailing = hasTrailing,
+       _moreOnlyWhenCut = moreOnlyWhenCut;
+
+  bool _moreOnlyWhenCut;
+  set moreOnlyWhenCut(bool v) {
+    if (v == _moreOnlyWhenCut) return;
+    _moreOnlyWhenCut = v;
+    markNeedsLayout();
+  }
 
   static const _gap = AppSpacing.xs;
 
@@ -208,7 +195,6 @@ class _RenderLimitedWrap extends RenderBox
     if (child.parentData is! _WrapData) child.parentData = _WrapData();
   }
 
-  /// Greedy lines of item indexes, each item [widths]-wide, in [max].
   static List<List<int>> _lines(List<double> widths, double max) {
     final lines = <List<int>>[];
     var x = 0.0;
@@ -234,10 +220,12 @@ class _RenderLimitedWrap extends RenderBox
     }
     final widths = [for (final c in kids) c.size.width];
     var lines = _lines(widths, max);
-    if (lines.length > _maxLines) {
-      // Cut: the first [maxLines] lines of chips, then the trailing chip
-      // at the end of the last one — dropping chips from its end until it
-      // fits.
+    final withoutTrailing = _hasTrailing && _moreOnlyWhenCut
+        ? _lines(widths.sublist(0, widths.length - 1), max)
+        : null;
+    if (withoutTrailing != null && withoutTrailing.length <= _maxLines) {
+      lines = withoutTrailing;
+    } else if (lines.length > _maxLines) {
       final trailing = _hasTrailing ? kids.length - 1 : null;
       lines = [
         for (final line in lines.take(_maxLines))

@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-/// `GET /me/counts` — the header badges and the เพิ่มเติม hub figures.
 class MeCounts extends Equatable {
   const MeCounts({
     this.unreadNotifications = 0,
@@ -65,7 +64,6 @@ class MeCounts extends Equatable {
   final double budgetUtilizationPct;
   final int recurringActive;
 
-  /// Upcoming recurring items dated within the next 14 days.
   final int recurringUpcoming;
 
   @override

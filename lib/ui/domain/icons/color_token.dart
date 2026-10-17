@@ -2,24 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../tokens/app/app_colors.dart';
 
-/// Resolves a colour spec against the active [AppColors] palette.
-///
-/// A spec is one of:
-/// - **Hex literal** — `#FF0000`, `#00A389` → returned as-is.
-/// - **Theme token** — `@presetThemeColor1`, `@presetThemeColor2`,
-///   `@presetThemeColor3`, `@presetThemeColorContainer`,
-///   `@presetThemeColorOnIcon`, `@presetThemeColorBorder`.
-///   Tokens accept optional shade modifiers: `Darker` / `Lighter` and an
-///   optional amount in percent (default 20). Examples:
-///     `@presetThemeColor1Darker`     → primary mixed with black 20%
-///     `@presetThemeColor1Lighter40`  → primary mixed with white 40%
-///
-/// Token names are flat and visual (not Material role names) so the picker
-/// UI can show them as `1`, `2`, `3` to the user. Internally each maps to
-/// a slot on [AppColors].
-///
-/// User-saved [IconCode]s may contain either form. Tokens make a saved
-/// code "follow the active theme"; hex pins it.
 Color resolveColor(String spec, AppColors palette) {
   if (spec.isEmpty) return palette.primary;
   if (spec.startsWith('#')) return _parseHex(spec) ?? palette.primary;
@@ -27,7 +9,6 @@ Color resolveColor(String spec, AppColors palette) {
   return palette.primary;
 }
 
-/// Whether [spec] is a theme token (vs a hex literal).
 bool isThemeToken(String spec) => spec.startsWith('@');
 
 Color? _parseHex(String hex) {

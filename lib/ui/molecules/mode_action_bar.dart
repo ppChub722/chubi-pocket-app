@@ -1,19 +1,10 @@
+import '../atoms/app_icon_button.dart';
 import 'package:flutter/material.dart';
 
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/app_button.dart';
 
-/// Bottom bar shown while a page is in edit / reorder mode or is a form —
-/// Cancel · Undo · Save. Replaces the shell's bottom nav + FAB (the page
-/// calls `ShellChrome.hide()` on entry) so it's the only bar on screen.
-///
-/// Domain-agnostic: the page owns its staged state, undo stack and dirty
-/// flag and passes labels + callbacks.
-/// - Undo is a compact tonal icon button that scales in when [canUndo].
-///   Omit [onUndo] for screens without undo (plain forms).
-/// - Save is disabled while [canSave] is false; [saving] shows a spinner.
-/// - Wraps in [SafeArea] — drop straight into `Scaffold.bottomNavigationBar`.
 class ModeActionBar extends StatelessWidget {
   const ModeActionBar({
     required this.canSave,
@@ -66,16 +57,16 @@ class ModeActionBar extends StatelessWidget {
                 transitionBuilder: (child, anim) =>
                     ScaleTransition(scale: anim, child: child),
                 child: canUndo && !saving
-                    ? IconButton.filledTonal(
+                    ? AppIconButton(
                         key: const ValueKey('undo-on'),
                         tooltip: undoTooltip,
                         onPressed: onUndo,
-                        icon: const Icon(AppIcons.undo),
+                        icon: AppIcons.undo,
                       )
                     : const SizedBox(
                         key: ValueKey('undo-off'),
-                        width: 40,
-                        height: 40,
+                        width: AppIconButton.sizeBar,
+                        height: AppIconButton.sizeBar,
                       ),
               ),
             ],

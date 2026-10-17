@@ -14,21 +14,6 @@ import '../widgets/tag_chip.dart';
 
 enum _SortBy { name, usage, color, icon }
 
-/// Tags — one page, no detail (`ux-overhaul-plan.md` §5). The library list
-/// shared with categories / contacts (owner 2026-10-10): [ListRow]s (icon ·
-/// name · description · ×usage) with a dashed "+ เพิ่มแท็ก" tile at the end.
-///
-/// View: search, then [สี▾][ไอคอน▾] … [⇅ sort▾](✏️); long-press a row or ✏️
-/// into edit. Edit: a batch editor over *all* tags (rename, recolour,
-/// re-icon, delete, add) with a [SelectCheck] per row; deletes are staged
-/// until บันทึก. Search keeps working (the colour/icon filters don't),
-/// under four rules:
-/// search keeps working (the colour/icon filters don't), under four rules:
-///  1. Save validates every row, including filtered-out ones — a hidden
-///     invalid row clears the filters and scrolls to it.
-///  2. Rows changed or added this session always stay visible.
-///  3. Filtering a selected row out deselects it; "select all" = visible.
-///  4. No re-sorting while editing.
 class TagsPage extends StatefulWidget {
   const TagsPage({super.key});
 
@@ -44,9 +29,6 @@ class _TagsPageState extends State<TagsPage>
   final Set<String> _filterIcons = {};
   _SortBy _sort = _SortBy.name;
 
-  /// After a save the view shows exactly the saved ids (in order), ignoring
-  /// search/filter, so what you just edited doesn't vanish. Cleared when
-  /// search/filter/sort changes or on refresh.
   List<String>? _stickyIds;
 
   final Set<String> _selected = {};
@@ -77,8 +59,6 @@ class _TagsPageState extends State<TagsPage>
     super.dispose();
   }
 
-  // ── EditModeMixin hooks ─────────────────────────────────────────────
-
   @override
   void onDraftRestored() {
     for (final d in working.items) {
@@ -93,8 +73,6 @@ class _TagsPageState extends State<TagsPage>
     super.cancelEdit();
   }
 
-  // ── Helpers ─────────────────────────────────────────────────────────
-
   TextEditingController _controllerFor(_TagDraft d) => _controllers.putIfAbsent(
     d.key,
     () => TextEditingController(text: d.name),
@@ -106,11 +84,8 @@ class _TagsPageState extends State<TagsPage>
       (c?.iconColors.isNotEmpty ?? false) ? c!.iconColors.first : null;
   static String? _iconOf(IconCode? c) => c?.icon;
 
-  /// Bulk actions show in edit mode always, dimmed until ≥1 is selected.
   bool get _canBulk => _selected.isNotEmpty && !isSaving;
 
-  /// Colour / icon filters are view-only — edit mode ignores them (and
-  /// shows no filter chips); they're back as they were on exit.
   bool get _hasFilter =>
       _query.trim().isNotEmpty ||
       (!isEditing && (_filterColors.isNotEmpty || _filterIcons.isNotEmpty));
@@ -153,7 +128,6 @@ class _TagsPageState extends State<TagsPage>
     return list;
   }
 
-  /// View mode rows.
   List<Tag> _viewTags(List<Tag> all) {
     if (_stickyIds != null) {
       final byId = {for (final t in all) t.id: t};
@@ -165,8 +139,6 @@ class _TagsPageState extends State<TagsPage>
     return _sorted(all).where((t) => _matches(t.name, t.iconCode)).toList();
   }
 
-  /// Edit mode rows — filter matches plus anything touched this session
-  /// (rule 2), in the order they entered edit mode (rule 4).
   List<_TagDraft> _visibleDrafts() {
     final orig = {for (final d in original.items) d.key: d};
     return [
@@ -175,7 +147,6 @@ class _TagsPageState extends State<TagsPage>
     ];
   }
 
-  /// Search/filter/sort changed.
   void _onFilterChanged(VoidCallback change) {
     setState(() {
       change();
@@ -195,9 +166,6 @@ class _TagsPageState extends State<TagsPage>
     _filterIcons.clear();
   }
 
-  // ── Edit lifecycle ──────────────────────────────────────────────────
-
-  /// Enter edit over all tags, in the current sort order.
   void _beginEdit({String? focusKey}) {
     if (!isEditing) {
       final all = _sorted(context.read<TagsCubit>().state.tags);
@@ -274,8 +242,6 @@ class _TagsPageState extends State<TagsPage>
     );
   }
 
-  // ── Bulk (selected rows) ────────────────────────────────────────────
-
   Future<void> _bulkColor() async {
     final l = AppLocalizations.of(context)!;
     final result = await showIconMakerSheet(
@@ -342,8 +308,6 @@ class _TagsPageState extends State<TagsPage>
     );
   }
 
-  /// Staged — the rows go now, the server delete happens on บันทึก (ยกเลิก /
-  /// ↶ bring them back), so the confirm says so.
   Future<void> _bulkDelete() async {
     final l = AppLocalizations.of(context)!;
     final ok = await showConfirmDialog(
@@ -361,8 +325,6 @@ class _TagsPageState extends State<TagsPage>
     );
     setState(_selected.clear);
   }
-
-  // ── Save ────────────────────────────────────────────────────────────
 
   String? _validateName(AppLocalizations l, String key, String? v) {
     final name = v?.trim() ?? '';
@@ -390,7 +352,6 @@ class _TagsPageState extends State<TagsPage>
     commitTextSession();
     final l = AppLocalizations.of(context)!;
 
-    // Rule 1: validate every row, not just the mounted ones.
     final invalid = working.items
         .where((d) => _validateName(l, d.key, d.name) != null)
         .firstOrNull;
@@ -415,28 +376,25 @@ class _TagsPageState extends State<TagsPage>
     final cubit = context.read<TagsCubit>();
     FocusScope.of(context).unfocus();
     setSaving(true);
-    // What has reached the server — a failure part-way rebases the draft on
-    // it, so a retry doesn't delete / create / update twice.
-    final removed = <String>{};
-    final createdIds = <String, String>{}; // draft key → new server id
-    final updated = <String>{}; // draft keys
+    final List<Tag> createdTags;
+    final createdDrafts = <_TagDraft>[];
     try {
       final keptIds = {
         for (final d in working.items)
           if (d.serverId != null) d.serverId!,
       };
-      for (final o in original.items) {
-        if (o.serverId != null && !keptIds.contains(o.serverId)) {
-          await cubit.remove(o.serverId!);
-          removed.add(o.serverId!);
-        }
-      }
+      final delete = [
+        for (final o in original.items)
+          if (o.serverId != null && !keptIds.contains(o.serverId)) o.serverId!,
+      ];
       final origById = {for (final o in original.items) o.serverId: o};
+      final create = <Tag>[];
+      final update = <Tag>[];
       for (final d in working.items) {
         final name = d.name.trim();
         // Update is a full replace: the description / note the page doesn't
-        // show (tags are name-only for now) ride along unchanged, or they
-        // would be wiped.
+        // show (tags are name-only for now) ride along unchanged, or they would
+        // be wiped.
         final tag = Tag(
           id: d.serverId ?? 'draft',
           name: name,
@@ -445,19 +403,22 @@ class _TagsPageState extends State<TagsPage>
           note: d.note.isEmpty ? null : d.note,
         );
         if (d.serverId == null) {
-          final created = await cubit.add(tag);
-          createdIds[d.key] = created.id;
+          create.add(tag);
+          createdDrafts.add(d);
         } else {
           final orig = origById[d.serverId]!;
           if (orig.name != name || orig.iconCode != d.iconCode) {
-            await cubit.update(tag);
-            updated.add(d.key);
+            update.add(tag);
           }
         }
       }
+      createdTags = await cubit.saveBatch(
+        create: create,
+        update: update,
+        delete: delete,
+      );
     } on ApiException catch (e) {
       if (!mounted) return;
-      _rebaseOnSaved(removed, createdIds, updated);
       setSaving(false);
       showAppSnackBar(context, e.message, tone: Tone.danger);
       return;
@@ -465,53 +426,24 @@ class _TagsPageState extends State<TagsPage>
     if (!mounted) return;
     HapticFeedback.mediumImpact();
     _selected.clear();
-    final saved = _withCreated(createdIds);
+    final saved = _withCreated({
+      for (final (i, d) in createdDrafts.indexed) d.key: createdTags[i].id,
+    });
     commitSaved(saved);
     setState(() => _stickyIds = [for (final d in saved.items) d.serverId!]);
   }
 
-  /// [working] with the server ids of the rows created so far.
   _TagsDraft _withCreated(Map<String, String> createdIds) => working.map(
     (d) => createdIds[d.key] == null ? d : d.withServerId(createdIds[d.key]!),
   );
-
-  /// A save failed part-way: the baseline becomes what the server now has
-  /// (minus the removed, plus the created / updated rows) and the edit keeps
-  /// going on top of it — created rows carry their new ids — so the retry
-  /// only sends what's left.
-  void _rebaseOnSaved(
-    Set<String> removed,
-    Map<String, String> createdIds,
-    Set<String> updated,
-  ) {
-    if (removed.isEmpty && createdIds.isEmpty && updated.isEmpty) return;
-    final next = _withCreated(createdIds);
-    final nextByKey = {for (final d in next.items) d.key: d};
-    rebaseEdit(
-      original: _TagsDraft([
-        for (final o in original.items)
-          if (!removed.contains(o.serverId))
-            updated.contains(o.key) ? nextByKey[o.key]! : o,
-        for (final d in next.items)
-          if (createdIds.containsKey(d.key)) d,
-      ]),
-      working: next,
-    );
-  }
-
-  // ── Build ───────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return editScope(
       Scaffold(
-        // The bar floats over the body; the pinned column below starts with a
-        // spacer of its height.
         extendBodyBehindAppBar: true,
         appBar: AppTopBar(
-          // The title never changes with the mode (owner, QA T1) — the
-          // action bar says it's edit mode.
           title: l.tagsTitle,
           showBack: true,
           editing: isEditing,
@@ -520,22 +452,18 @@ class _TagsPageState extends State<TagsPage>
         body: TabSwitchBody(
           child: BlocBuilder<TagsCubit, TagsState>(
             builder: (context, state) {
-              // Only the FIRST load shows the skeleton: a reload keeps the
-              // rows (the template swaps its body for the skeleton, which
-              // kills a pull-to-refresh).
               final loading =
                   (state.status == TagsStatus.initial ||
                       state.status == TagsStatus.loading) &&
                   state.tags.isEmpty;
-              // Edit mode shows its drafts even before the first tag.
               final isEmpty = !isEditing && state.tags.isEmpty;
               final visible = isEditing ? _visibleDrafts() : null;
               return ListPageBody(
                 loading: loading,
                 error: state.tags.isEmpty ? state.error : null,
                 isEmpty: isEmpty,
-                // Pull to refresh reloads in view mode only; a reload
-                // under a batch edit would fight the drafts.
+                // Pull to refresh reloads in view mode only; a reload under a
+                // batch edit would fight the drafts.
                 refreshEnabled: !isEditing,
                 onRetry: isEditing
                     ? () async {}
@@ -549,7 +477,6 @@ class _TagsPageState extends State<TagsPage>
                   message: l.tagsEmptyMessage,
                   cta: AddTile(label: l.tagsAddNew, onTap: _addTag),
                 ),
-                // Rows run edge to edge; the footer pads itself.
                 sidePadding: 0,
                 topInset: 0,
                 header: loading || isEmpty
@@ -581,9 +508,6 @@ class _TagsPageState extends State<TagsPage>
     _SortBy.icon => l.tagFormIconLabel,
   };
 
-  // View: [สี▾][ไอคอน▾] … [⇅ เรียง▾](✏️) — the library-list bar (as on
-  // contacts / categories): filters left, sort right, then the way into
-  // batch edit.
   Widget _viewBar(AppLocalizations l, List<Tag> tags) {
     final codes = tags.map((t) => t.iconCode);
     final colors = {for (final c in codes) ?_colorOf(c)}.toList()..sort();
@@ -610,17 +534,17 @@ class _TagsPageState extends State<TagsPage>
               onTap: toggle,
             ),
           ),
-          // Batch edit (the top bar carries no page actions; long-pressing
-          // a row works too) — the app's round ✏️.
           const SizedBox(width: AppSpacing.sm),
-          AppIconButton.edit(tooltip: l.commonEdit, onPressed: _beginEdit),
+          AppIconButton.edit(
+            tooltip: l.commonEdit,
+            size: ChipSize.chip.height,
+            onPressed: _beginEdit,
+          ),
         ],
       ),
     );
   }
 
-  // Edit: [☐ n/N] [สี][ไอคอน][ลบ] — actions on the selection, dimmed until
-  // something is selected. No filters (search only).
   Widget _editBar(AppLocalizations l, List<_TagDraft> visible) {
     return ListToolbar(
       searchController: _searchController,
@@ -811,13 +735,6 @@ class _TagsPageState extends State<TagsPage>
   }
 }
 
-// ────────────────────────────────────────────────────────────────────
-// Layout pieces
-// ────────────────────────────────────────────────────────────────────
-
-/// Hairline-separated rows + a footer (the add tile / no-match line). Not
-/// lazy: every row stays mounted, so the form validates all visible rows
-/// and `ensureVisible` can reach them.
 class _RowList extends StatelessWidget {
   const _RowList({
     required this.rows,
@@ -828,7 +745,6 @@ class _RowList extends StatelessWidget {
   final List<Widget> rows;
   final Widget footer;
 
-  /// The list insets the template hands to its `builder`.
   final EdgeInsets padding;
 
   @override
@@ -858,8 +774,6 @@ class _RowList extends StatelessWidget {
   }
 }
 
-/// Hairline-separated [rows] then the padded [footer]: the children of a
-/// view-mode `ListPageBody`.
 List<Widget> _rowsWithFooter({
   required List<Widget> rows,
   required Widget footer,
@@ -879,10 +793,6 @@ List<Widget> _rowsWithFooter({
   ),
 ];
 
-// ────────────────────────────────────────────────────────────────────
-// Editing snapshot — the whole list is one draft (undo / dirty).
-// ────────────────────────────────────────────────────────────────────
-
 class _TagsDraft {
   const _TagsDraft(this.items);
 
@@ -900,9 +810,6 @@ class _TagsDraft {
   int get hashCode => Object.hashAll(items);
 }
 
-/// One tag being edited. [description] / [note] aren't shown or edited
-/// (tags are name-only for now, owner 2026-10-10); they're carried so
-/// the full-replace update sends them back unchanged.
 class _TagDraft {
   const _TagDraft({
     required this.key,
@@ -918,11 +825,9 @@ class _TagDraft {
   final String name;
   final IconCode? iconCode;
 
-  /// '' = none.
   final String description;
   final String note;
 
-  /// Created on the server (a save that failed part-way keeps editing).
   _TagDraft withServerId(String id) => _TagDraft(
     key: key,
     serverId: id,

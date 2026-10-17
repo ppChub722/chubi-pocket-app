@@ -8,10 +8,6 @@ import '../../domain/category_tree.dart';
 import '../category_label.dart';
 import '../cubit/categories_cubit.dart';
 
-/// A category as a [PickCard]: once picked, the card takes the category's
-/// own icon and colour (inherited from its top-level parent, as on the
-/// categories page) with the parent path underneath. Nothing picked → the
-/// dashed empty card. Opening the picker is the caller's [onTap].
 class CategoryPickCard extends StatelessWidget {
   const CategoryPickCard({
     required this.category,
@@ -31,11 +27,9 @@ class CategoryPickCard extends StatelessWidget {
   final VoidCallback? onTap;
   final String? errorText;
 
-  /// See [PickCard.editable] / [PickCard.onLongPress].
   final bool editable;
   final VoidCallback? onLongPress;
 
-  /// [PickCard.dense], with a smaller icon — two cards on one row.
   final bool dense;
 
   double get _icon => dense ? 32 : 40;

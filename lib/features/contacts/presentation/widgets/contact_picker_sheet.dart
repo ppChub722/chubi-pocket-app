@@ -9,32 +9,20 @@ import '../cubit/contacts_cubit.dart';
 import '../pages/contact_detail_page.dart';
 import '../../domain/contact.dart';
 
-/// Result of [showContactPickerSheet]. `null` = dismissed.
 sealed class ContactPickResult {
   const ContactPickResult();
 }
 
-/// A saved contact was picked — send its id (e.g. `counterparty_contact_id`).
 class ContactPicked extends ContactPickResult {
   const ContactPicked(this.contact);
   final Contact contact;
 }
 
-/// A free-text name (someone not in the contact book).
 class ContactNameTyped extends ContactPickResult {
   const ContactNameTyped(this.name);
   final String name;
 }
 
-/// "กับใคร" — thin wrapper over the ui organism `ContactPickerSheet`: search
-/// the user's active contacts, or (when [allowFreeText]) a typed name for
-/// someone not in the book — "ใช้ชื่อนี้" as it is, or "＋ บันทึกเป็นผู้ติดต่อ"
-/// (made, then picked). The current one is highlighted (no ✓). Used by debts,
-/// bill splits and project members. [allowCreate] adds "สร้างผู้ติดต่อใหม่":
-/// the create page is pushed over the sheet (like a category over its picker);
-/// saving there picks the new contact, back returns here. Contacts come from
-/// [ContactsCubit], so a failed load shows an error with retry, not "no
-/// contacts". Here: Contact -> ui rows, l10n -> labels, create via the cubit.
 Future<ContactPickResult?> showContactPickerSheet(
   BuildContext context, {
   String? selectedContactId,
@@ -44,8 +32,6 @@ Future<ContactPickResult?> showContactPickerSheet(
   String? unlinkAs,
 }) async {
   final contacts = context.read<ContactsCubit>()..loadIfNeeded();
-  // A contact made inside the sheet (save-as / create page) — resolved to the
-  // model when the sheet answers with its id.
   Contact? made;
   final outcome = await ui.showContactPicker(
     context,
@@ -80,7 +66,6 @@ Future<ContactPickResult?> showContactPickerSheet(
             state.status == ContactsStatus.initial,
         error: state.status == ContactsStatus.error ? state.error : null,
         onRetry: cubit.load,
-        // "＋ บันทึกเป็นผู้ติดต่อ": make the typed name a contact, then pick it.
         onSaveAsContact: (name) async {
           try {
             final c = await cubit.create(displayName: name);
@@ -97,8 +82,6 @@ Future<ContactPickResult?> showContactPickerSheet(
             return null;
           }
         },
-        // The create page, pushed over the sheet. Saving there pops with the
-        // new contact -> pick it; back (nothing saved) returns to the picker.
         onCreate: () async {
           final created = await Navigator.of(ctx, rootNavigator: true).push(
             MaterialPageRoute<Contact>(
@@ -127,7 +110,6 @@ ContactPickResult? _resolve(ContactsCubit cubit, String id, Contact? made) {
 }
 
 ui.ContactPickerRow _rowOf(Contact c) {
-  // Description (who they are) wins over email — as on the contacts list.
   final description = c.description?.trim() ?? '';
   final email = c.email ?? '';
   return ui.ContactPickerRow(

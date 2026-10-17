@@ -6,15 +6,9 @@ import '../../categories/domain/category.dart';
 import '../../categories/domain/category_type.dart';
 import '../../../ui/ui.dart';
 
-/// Shared embedded refs of API v2 (spec: AccountRef / EmbeddedCategory / EventRef /
-/// EmbeddedPerson / TransferPeer / WalletBalance). Every row that points at a
-/// wallet, category, event or person carries the display data itself, so the
-/// FE never joins against the accounts / categories / contacts caches.
-
 IconCode? _icon(Object? v) =>
     v is Map<String, dynamic> ? IconCode.fromJson(v) : null;
 
-/// `AccountRef`: a wallet as shown on a row. No balance.
 class AccountRef extends Equatable {
   const AccountRef({
     required this.id,
@@ -33,7 +27,6 @@ class AccountRef extends Equatable {
   final String? logoUrl;
   final AccountType type;
 
-  /// `asset` | `liability` (computed by the BE).
   final String group;
   final String currency;
   final bool archived;
@@ -51,7 +44,6 @@ class AccountRef extends Equatable {
     archived: (json['archived'] as bool?) ?? false,
   );
 
-  /// As a (balance-less) [Account], for pickers and prefill that take one.
   Account toAccount({double balance = 0}) => Account(
     id: id,
     name: name,
@@ -74,8 +66,6 @@ class AccountRef extends Equatable {
   ];
 }
 
-/// `EmbeddedCategory`: a category as shown on a row. A sub-category carries its
-/// own icon. `systemKind` is set on system categories only.
 class EmbeddedCategory extends Equatable {
   const EmbeddedCategory({
     required this.id,
@@ -93,8 +83,6 @@ class EmbeddedCategory extends Equatable {
   final IconCode? iconCode;
   final bool isSystem;
 
-  /// OPENING_IN · OPENING_OUT · ADJUST_IN · ADJUST_OUT · TRANSFER_IN ·
-  /// TRANSFER_OUT · DEBT_PAID · DEBT_RECEIVED, or null.
   final String? systemKind;
   final String? parentId;
 
@@ -116,7 +104,6 @@ class EmbeddedCategory extends Equatable {
         parentId: json['parent_id'] as String?,
       );
 
-  /// As a [Category], for the shared label / icon helpers.
   Category toCategory({int sortOrder = 0}) => Category(
     id: id,
     name: name,
@@ -139,11 +126,6 @@ class EmbeddedCategory extends Equatable {
   ];
 }
 
-/// `EventRef`: an event (project) as shown on a row.
-/// `recurring_item`: a transaction produced by a recurring (or a one-off
-/// upcoming item that came due) — tx detail "🔁 Netflix · 3/12 ›". The link
-/// works like an event bill's: no sync, the app asks at save / delete
-/// (owner 2026-10-13).
 class RecurringItemLink extends Equatable {
   const RecurringItemLink({
     required this.itemId,
@@ -156,7 +138,6 @@ class RecurringItemLink extends Equatable {
 
   final String itemId;
 
-  /// Null = a one-off upcoming item (no recurring parent).
   final String? recurringId;
   final String? recurringName;
   final IconCode? recurringIconCode;
@@ -176,7 +157,6 @@ class RecurringItemLink extends Equatable {
     );
   }
 
-  /// "Netflix · 3/12" — [fallback] names a one-off upcoming item.
   String label(String fallback) => [
     recurringName ?? fallback,
     if (seq != null && total != null) '$seq/$total',
@@ -193,11 +173,6 @@ class RecurringItemLink extends Equatable {
   ];
 }
 
-/// `EventBillLink`: on a transaction that is in an event (owner 2026-10-12)
-/// — tx detail "อยู่ในอีเวนต์ … ›" opens [billId] on [event]'s board.
-/// [linked] = the bill was made from this transaction: the money (amount ·
-/// date · payer · wallet) is shared, an edit on either side changes both;
-/// false = my personal copy of my share.
 class EventBillLink extends Equatable {
   const EventBillLink({
     required this.event,
@@ -243,9 +218,6 @@ class EventRef extends Equatable {
   List<Object?> get props => [id, name, iconCode, status];
 }
 
-/// `EmbeddedPerson`: a person on a split / debt, name already resolved live by the
-/// BE (nickname → linked profile name → contact name → snapshot). The FE
-/// draws the person icon when [contactId] is null.
 class EmbeddedPerson extends Equatable {
   const EmbeddedPerson({
     required this.name,
@@ -273,7 +245,6 @@ class EmbeddedPerson extends Equatable {
   List<Object?> get props => [name, contactId, iconCode, linked, linkedUserId];
 }
 
-/// `TransferPeer`: the other side of a transfer row. [isOut] is for THIS row.
 class TransferPeer extends Equatable {
   const TransferPeer({
     required this.id,
@@ -295,7 +266,6 @@ class TransferPeer extends Equatable {
   List<Object?> get props => [id, isOut, account];
 }
 
-/// `WalletBalance`: a wallet's balance after a write.
 class WalletBalance extends Equatable {
   const WalletBalance({required this.accountId, required this.balance});
 
@@ -307,8 +277,6 @@ class WalletBalance extends Equatable {
     balance: (json['balance'] as num).toDouble(),
   );
 
-  /// `account_balances` of a write response → {account id: balance}, for
-  /// `AccountsCubit.patchBalances`.
   static Map<String, double> mapOf(Object? json) => {
     if (json is List)
       for (final b in json.cast<Map<String, dynamic>>())

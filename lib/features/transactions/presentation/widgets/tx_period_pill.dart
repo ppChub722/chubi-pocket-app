@@ -5,11 +5,6 @@ import '../../../../ui/ui.dart';
 import '../tx_list_filters.dart';
 import 'period_sheet.dart';
 
-/// The transactions list's date filter — one pill (owner 2026-10-10):
-/// ‹ › step one unit (a day, a week, a month, a year); the label opens the
-/// period sheet ([showPeriodSheet]: unit + a picker that follows it).
-/// ทั้งหมด / a custom range have no neighbours, so no arrows. Forward
-/// stops at the period holding today.
 class TxPeriodPill extends StatelessWidget {
   const TxPeriodPill({
     required this.period,
@@ -31,7 +26,6 @@ class TxPeriodPill extends StatelessWidget {
       prevTooltip: l.txPeriodPrev,
       nextTooltip: l.txPeriodNext,
       onPrev: prev == null ? null : () => onChanged(prev),
-      // ›dimmed at today's period; both null (no neighbours) hides them.
       onNext: prev != null && next != null ? () => onChanged(next) : null,
       onTap: () async {
         final picked = await showPeriodSheet(context, current: p);

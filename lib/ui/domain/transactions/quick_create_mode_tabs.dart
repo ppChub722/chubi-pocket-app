@@ -4,11 +4,6 @@ import '../../molecules/app_tab_bar.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/app/quick_create_mode.dart';
 
-/// The quick create's mode switch at the very top of the sheet (owner
-/// 2026-10-17): `รายการ · หนี้ · ออม` as the app's underline tabs, each with
-/// its icon, in its mode's colour ([QuickCreateModeColors] — the same colour
-/// as the shell's + — so the selected tab matches the button that opened it).
-/// Tap only: the pages don't swipe (the three forms hold typed input).
 class QuickCreateModeTabs extends StatelessWidget {
   const QuickCreateModeTabs({
     required this.mode,
@@ -19,10 +14,8 @@ class QuickCreateModeTabs extends StatelessWidget {
 
   final QuickCreateMode mode;
 
-  /// One label per mode, e.g. `{tx: 'รายการ', debt: 'หนี้'}`.
   final Map<QuickCreateMode, String> labels;
 
-  /// Null = read-only (the mode is fixed: editing an existing entry).
   final ValueChanged<QuickCreateMode>? onChanged;
 
   static IconData iconOf(QuickCreateMode m) => switch (m) {

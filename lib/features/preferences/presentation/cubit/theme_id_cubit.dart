@@ -4,10 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/storage_keys.dart';
 import '../../../../ui/ui.dart';
 
-/// Holds the active theme id (e.g. `mint`, `sweet`) and persists it.
-///
-/// This is the canonical source of truth for which theme the app renders.
-/// Phase 1+ will sync the value to `user_preferences.theme_id` on the server.
 class ThemeIdCubit extends Cubit<String> {
   ThemeIdCubit(this._prefs)
     : super(

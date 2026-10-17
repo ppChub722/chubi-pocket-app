@@ -2,7 +2,6 @@ import 'package:equatable/equatable.dart';
 
 import 'recurring.dart';
 
-/// One kind's totals over the ACTIVE settings (API `RecurringKindTotals`).
 class KindTotals extends Equatable {
   const KindTotals({this.count = 0, this.monthly = 0, this.yearly = 0});
 
@@ -23,10 +22,6 @@ class KindTotals extends Equatable {
   List<Object?> get props => [count, monthly, yearly];
 }
 
-/// The recurring list's summary card data — every number is the BE's
-/// (`GET /recurring` top-level `summary`): what is still to pay in the next
-/// 30 days (known amounts only), how many occurrences wait for an amount, the
-/// per-month equivalents and the per-kind totals.
 class RecurringSummary extends Equatable {
   const RecurringSummary({
     this.monthPay = 0,

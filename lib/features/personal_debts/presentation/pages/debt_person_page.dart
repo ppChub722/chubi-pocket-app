@@ -22,21 +22,11 @@ import '../cubit/debt_people_cubit.dart';
 import '../cubit/debt_person_cubit.dart';
 import '../debt_wiring.dart';
 
-/// `/personal-debts/people/:key` — a STATEMENT with one person (reference
-/// §4): the hero (name · age, the side pill + the amount, the editable
-/// summary message while a balance is open), then the entries grouped by
-/// debt cycle — "ที่มาของยอด · ตั้งแต่เคลียร์ครบ `date`" (the current cycle),
-/// and behind "รอบก่อนหน้านี้ ›" the earlier ones. No tabs, no buttons under
-/// the card; the shell's + opens debt mode preset to this person. Open = 1
-/// call; the earlier cycles = 1 call on the fold's first open; search /
-/// filter / sort / next page = 1 call each.
 class DebtPersonPage extends StatelessWidget {
   const DebtPersonPage({required this.personKey, this.name, super.key});
 
-  /// `c:<contact id>` / `n:<name>` (decoded).
   final String personKey;
 
-  /// The name the opener already knows (the top bar before the load).
   final String? name;
 
   @override
@@ -75,8 +65,6 @@ class _PersonViewState extends State<_PersonView> {
   String _name(DebtPersonState s) =>
       s.balance?.person.name ?? widget.name ?? '';
 
-  /// The person for quick create's preset — known from the key before the
-  /// load lands (a contact id / the typed name).
   EmbeddedPerson _person(DebtPersonState s) {
     final p = s.balance?.person;
     if (p != null) return p;
@@ -87,8 +75,6 @@ class _PersonViewState extends State<_PersonView> {
     );
   }
 
-  /// The shell's + opens this preset. A saved entry reaches the page through
-  /// [DebtBook] (the balance patches, the page call re-runs).
   QuickCreatePreset _preset(DebtPersonState s) => QuickCreatePreset.debt(
     person: _person(s),
     debtDirection: debtDirectionFor(s.balance?.net),
@@ -112,8 +98,6 @@ class _PersonViewState extends State<_PersonView> {
   Future<void> _share(String text) =>
       SharePlus.instance.share(ShareParams(text: text));
 
-  /// A typed name joins a contact (absorb); the page moves to the contact's
-  /// key.
   Future<void> _linkToContact() async {
     final l = AppLocalizations.of(context)!;
     final name = _name(_cubit.state);
@@ -181,7 +165,6 @@ class _PersonViewState extends State<_PersonView> {
     );
   }
 
-  /// Scrolls with the list: the hero, the link row, the hidden toolbar.
   List<Widget> _header(BuildContext context, DebtPersonState s) {
     final l = AppLocalizations.of(context)!;
     final q = s.query;
@@ -235,14 +218,12 @@ class _PersonViewState extends State<_PersonView> {
     ];
   }
 
-  /// The statement: the current cycle, then the earlier ones behind a fold.
   List<Widget> _statement(BuildContext context, DebtPersonState s) {
     final l = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).languageCode;
     final q = s.query;
     final cleared = s.balance!.clearedAt;
     return [
-      // The current cycle: where the balance comes from.
       if (s.current.items.isNotEmpty || s.counts.current > 0)
         SectionHeader(
           title: cleared == null
@@ -258,7 +239,6 @@ class _PersonViewState extends State<_PersonView> {
         EmptyView.compact(
           message: q.isFiltered ? l.debtsEntriesNoMatch : l.debtsTimelineEmpty,
         ),
-      // The earlier cycles, behind the fold.
       if (s.counts.earlier > 0)
         if (!s.earlier.opened)
           DetailRow(
@@ -320,7 +300,6 @@ class _PersonViewState extends State<_PersonView> {
         settledLabel: l.debtsEven,
         currencySymbol: symbol,
       ),
-      // Only while a balance is open.
       embedded: side == NetSide.even || s.message.text.isEmpty
           ? null
           : DebtSummaryMessageBox(
@@ -334,7 +313,6 @@ class _PersonViewState extends State<_PersonView> {
     );
   }
 
-  /// One cycle's rows (a skeleton / retry while the list has none yet).
   List<Widget> _rows(
     BuildContext context,
     DebtPersonState s,
@@ -395,7 +373,6 @@ class _PersonViewState extends State<_PersonView> {
     );
   }
 
-  /// A filter chip with the central popover (few short options).
   Widget _optionChip<T>({
     required String label,
     required T value,

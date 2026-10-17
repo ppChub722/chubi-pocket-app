@@ -4,9 +4,6 @@ import '../../debug/secret_tap.dart';
 import '../../tokens/app_spacing.dart';
 import 'brand_logo.dart';
 
-/// Logo · app name · tagline (the auth pages' header). [onSecretUnlock]: the
-/// hidden dev entrance — tap the logo 5×. [compact]: a smaller logo and no
-/// tagline (register).
 class BrandHeader extends StatelessWidget {
   const BrandHeader({
     required this.name,

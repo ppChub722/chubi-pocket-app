@@ -4,12 +4,8 @@ import '../tokens/app/app_colors.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 
-/// Where a [DailyBar]'s day sits relative to today.
 enum DailyBarKind { past, today, future }
 
-/// One day of a [DailyBars] chart: [value] (the day's spend, ≥ 0 — the bar
-/// is drawn relative to the tallest one) and its [kind]. [semanticLabel]
-/// names the day for screen readers / tooltips.
 @immutable
 class DailyBar {
   const DailyBar({
@@ -23,13 +19,6 @@ class DailyBar {
   final String? semanticLabel;
 }
 
-/// A row of thin day bars (a month's daily spend) with a caption line under
-/// it: [startLabel] · [centerLabel] · [endLabel]. Past days are tinted, today
-/// is solid, future days are an empty stub. [onTap] gets the tapped bar's
-/// index (e.g. "that day's rows").
-///
-/// Generic: the caller passes numbers and words; the bars' heights are
-/// relative to the largest [DailyBar.value].
 class DailyBars extends StatelessWidget {
   const DailyBars({
     required this.bars,

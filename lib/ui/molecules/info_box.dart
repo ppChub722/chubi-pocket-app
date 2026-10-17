@@ -4,9 +4,6 @@ import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 import 'detail_rows.dart';
 
-/// ONE box of facts (the [SectionCard] look, no heading): a list of
-/// [InfoRow]s. Pages never choose between a one-line and a stacked row — each
-/// [InfoRow] decides by itself.
 class InfoBox extends StatelessWidget {
   const InfoBox({required this.rows, this.first = false, super.key});
 
@@ -18,12 +15,6 @@ class InfoBox extends StatelessWidget {
       SectionCard(first: first, children: rows);
 }
 
-/// A label + value fact. A short text value sits on ONE row (label left,
-/// value right); a value that does not fit the row's width wraps to the
-/// STACKED look (label above, value below) by itself.
-///
-/// Give ONE of [value] (text, measured), [valueWidget], [valueChip] or
-/// [valueChips] (kept on the row, right-aligned, as in `DetailRow.pick`).
 class InfoRow extends StatelessWidget {
   const InfoRow({
     required this.label,
@@ -46,9 +37,6 @@ class InfoRow extends StatelessWidget {
   final VoidCallback? onLongPress;
   final bool showChevron;
 
-  /// Whether [value] fits on the row of width [width] (the whole row,
-  /// including its side padding): the value gets at most half the inner width
-  /// and the label must fit in what is left.
   @visibleForTesting
   static bool fitsOneRow({
     required BuildContext context,

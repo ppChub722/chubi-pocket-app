@@ -12,8 +12,6 @@ import '../icons/icon_display.dart';
 import '../icons/icon_type.dart';
 import 'category_picker_sheet.dart';
 
-/// One picked category of [showCategoryMultiPicker]: the row's id and
-/// whether its subcategories count too.
 typedef CategoryMultiPick = ({String id, bool includeChildren});
 
 /// The words of the multi category picker - the caller passes its localised
@@ -31,24 +29,13 @@ class CategoryMultiPickerLabels {
   final String title;
   final String searchHint;
 
-  /// The switch on a picked row ("include subcategories").
   final String includeChildren;
 
-  /// The confirm button, built from the picked count.
   final String Function(int count) confirm;
   final String empty;
   final String noMatch;
 }
 
-/// Pick several categories from the tree - a PRESENTATIONAL organism on
-/// [PickerSheet] with the same rows / expand / search as
-/// [showCategoryPicker]. Picked rows are highlighted (square check + tint);
-/// a picked row that has subcategories shows an "include subcategories"
-/// switch. Resolves the picked list on confirm (empty is allowed), null when
-/// dismissed.
-///
-/// - [initial]: already picked; their ancestors open on start.
-/// - [maxDepth]: deepest level (0-based) shown and selectable.
 Future<List<CategoryMultiPick>?> showCategoryMultiPicker(
   BuildContext context, {
   required List<CategoryPickerRow> rows,
@@ -69,7 +56,6 @@ Future<List<CategoryMultiPick>?> showCategoryMultiPicker(
   );
 }
 
-/// The sheet body of [showCategoryMultiPicker]; pops the picked list.
 class CategoryMultiPickerSheet extends StatefulWidget {
   const CategoryMultiPickerSheet({
     required this.rows,
@@ -85,8 +71,6 @@ class CategoryMultiPickerSheet extends StatefulWidget {
   final List<CategoryMultiPick> initial;
   final int maxDepth;
 
-  /// false = a picked row has no "include subcategories" switch (the caller
-  /// always includes them, e.g. the list filter).
   final bool showIncludeChildren;
 
   @override
@@ -97,7 +81,6 @@ class CategoryMultiPickerSheet extends StatefulWidget {
 class _CategoryMultiPickerSheetState extends State<CategoryMultiPickerSheet> {
   final Set<String> _expanded = <String>{};
 
-  /// id -> includeChildren, in pick order.
   late final Map<String, bool> _picked = {
     for (final p in widget.initial) p.id: p.includeChildren,
   };
@@ -132,6 +115,7 @@ class _CategoryMultiPickerSheetState extends State<CategoryMultiPickerSheet> {
     return PickerSheet(
       title: l.title,
       searchable: true,
+      searchToggle: true,
       searchHint: l.searchHint,
       footer: PickerConfirmBar(
         label: l.confirm(_picked.length),

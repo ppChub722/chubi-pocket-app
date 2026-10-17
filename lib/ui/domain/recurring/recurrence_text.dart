@@ -6,21 +6,6 @@ import 'recurrence_rule.dart';
 
 const _sep = ' · ';
 
-/// A [RecurrenceRule] in words (Google Calendar style):
-///
-/// - daily: "ทุกวัน" / "ทุก 2 วัน"
-/// - weekly: "ทุกวันจันทร์" / "ทุกวันจันทร์และพุธ" /
-///   "ทุก 2 สัปดาห์ · วันจันทร์"
-/// - monthly by day: "ทุกวันที่ 3" / "ทุกวันสุดท้ายของเดือน" /
-///   "ทุก 3 เดือน · วันที่ 3"
-/// - monthly by weekday: "ทุกวันจันทร์ที่ 2 ของเดือน" /
-///   "ทุกวันศุกร์สุดท้ายของเดือน" / "ทุก 2 เดือน · วันจันทร์ที่ 2"
-/// - yearly: "ทุกปี 3 ต.ค." / "ทุก 2 ปี · 3 ต.ค."
-/// - hand-picked dates: "กำหนดเอง 5 วัน"
-///
-/// [showEnd] appends the end ("· 12 ครั้ง" / "· ถึง 3 ต.ค. 2027"; nothing
-/// for never). [seq] + [total] (both set) append the progress "· 4/12".
-/// [localeCode] null = the localizations' locale.
 String recurrenceLabel(
   AppLocalizations l,
   RecurrenceRule rule, {
@@ -101,7 +86,6 @@ String _monthly(AppLocalizations l, RecurrenceRule rule, int n) {
   }
 }
 
-/// The select key the English ordinal strings switch on.
 String _ordinal(int nth) => switch (nth) {
   1 => 'first',
   2 => 'second',
@@ -120,7 +104,6 @@ String _weekdayName(AppLocalizations l, int isoWeekday) => switch (isoWeekday) {
   _ => l.recurWeekday7,
 };
 
-/// "จันทร์" · "จันทร์และพุธ" · "จันทร์ พุธ และศุกร์".
 String _joinNames(AppLocalizations l, List<String> names) {
   if (names.length == 1) return names.single;
   if (names.length == 2) return l.recurWeekdayPair(names[0], names[1]);
@@ -130,9 +113,6 @@ String _joinNames(AppLocalizations l, List<String> names) {
   );
 }
 
-/// A [RecurrenceRule] as one ellipsised line — [recurrenceLabel] (see it
-/// for the wording, [seq] / [total] progress and [showEnd]). [style] null =
-/// `bodySmall` in the muted meta colour.
 class RecurrenceText extends StatelessWidget {
   const RecurrenceText({
     required this.rule,

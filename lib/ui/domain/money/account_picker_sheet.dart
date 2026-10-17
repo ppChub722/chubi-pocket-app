@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../ui.dart';
 
-/// One wallet the picker offers, as plain display data.
 @immutable
 class WalletPickItem {
   const WalletPickItem({
@@ -19,39 +18,28 @@ class WalletPickItem {
   final String name;
   final IconData icon;
 
-  /// The card's tint (null = the app primary).
   final Color? color;
 
-  /// A line under the name (the wallet's type).
   final String? subtitle;
 
-  /// The balance, already formatted.
   final String? balance;
 
-  /// A richer card than the default one (the feature's own wallet card): it
-  /// gets the tap callback. null = the default card built from the fields
-  /// above.
   final Widget Function(BuildContext context, VoidCallback onTap)? cardBuilder;
 }
 
-/// What [AccountPickerSheet] picked.
 sealed class AccountPick {
   const AccountPick();
 }
 
-/// One of the listed wallets.
 class AccountPickWallet extends AccountPick {
   const AccountPickWallet(this.id);
   final String id;
 }
 
-/// "No wallet".
 class AccountPickNone extends AccountPick {
   const AccountPickNone();
 }
 
-/// The words of [AccountPickerSheet] — the caller passes its localised
-/// strings.
 class AccountPickerLabels {
   const AccountPickerLabels({
     required this.title,
@@ -62,24 +50,13 @@ class AccountPickerLabels {
 
   final String title;
 
-  /// The "no wallet" tile.
   final String none;
 
-  /// The "＋ add wallet" row.
   final String create;
 
-  /// Shown when no wallet matches / there are none.
   final String empty;
 }
 
-/// Pick one wallet — a PRESENTATIONAL organism on the kit [PickerSheet]: a
-/// card grid of [wallets], the current pick ([selectedId]) highlighted with a
-/// [SelectableFrame] (a tint + ring, no ✓), search only with more than 8.
-/// Data, words and callbacks in, an [AccountPick] out; nothing imported from
-/// features. [allowNone] adds a "no wallet" tile first. [onCreate] (when set)
-/// adds "＋ add wallet": it runs the caller's create flow over the sheet and
-/// resolves the new wallet's id (picked and closed) or null (back to the
-/// picker). Resolves null when dismissed.
 Future<AccountPick?> showAccountPickSheet(
   BuildContext context, {
   required List<WalletPickItem> wallets,
@@ -148,7 +125,11 @@ class AccountPickerSheet extends StatelessWidget {
           for (final a in visible)
             SelectableFrame(
               selected: a.id == selectedId,
-              child: _walletTile(context, a, () => onPicked(AccountPickWallet(a.id))),
+              child: _walletTile(
+                context,
+                a,
+                () => onPicked(AccountPickWallet(a.id)),
+              ),
             ),
         ];
         return Padding(
@@ -172,14 +153,10 @@ class AccountPickerSheet extends StatelessWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    // Same columns as the wallets page.
                     crossAxisCount:
                         MediaQuery.sizeOf(context).shortestSide >= 600 ? 3 : 2,
                     mainAxisSpacing: AppSpacing.xs,
                     crossAxisSpacing: AppSpacing.xs,
-                    // Fixed height: a vertical wallet card (icon · name ·
-                    // type · balance + optional credit bar) + the selection
-                    // ring.
                     mainAxisExtent: 156,
                   ),
                   children: tiles,
@@ -223,7 +200,6 @@ Widget _walletTile(BuildContext context, WalletPickItem a, VoidCallback tap) {
   );
 }
 
-/// "No wallet" — same footprint as a wallet card, quiet styling.
 class _NoneTile extends StatelessWidget {
   const _NoneTile({required this.label, required this.onTap});
 
@@ -258,14 +234,8 @@ class _NoneTile extends StatelessWidget {
   }
 }
 
-/// What [showAccountMultiPickSheet] picked: the wallets ticked and whether
-/// "no wallet" is ticked too.
 typedef AccountMultiPick = ({Set<String> ids, bool none});
 
-/// Pick several wallets (owner 2026-10-17: the list filter) — the same card
-/// grid as [showAccountPickSheet], a tap toggles a card, "no wallet" is a
-/// card of its own, a confirm bar under the grid says how many. Resolves the
-/// ticked set on confirm, null when dismissed.
 Future<AccountMultiPick?> showAccountMultiPickSheet(
   BuildContext context, {
   required List<WalletPickItem> wallets,
@@ -305,7 +275,8 @@ class AccountCardsMultiPickerSheet extends StatefulWidget {
       _AccountCardsMultiPickerSheetState();
 }
 
-class _AccountCardsMultiPickerSheetState extends State<AccountCardsMultiPickerSheet> {
+class _AccountCardsMultiPickerSheetState
+    extends State<AccountCardsMultiPickerSheet> {
   late final Set<String> _ids = {...widget.selectedIds};
   late bool _none = widget.noneSelected;
 
@@ -356,8 +327,9 @@ class _AccountCardsMultiPickerSheetState extends State<AccountCardsMultiPickerSh
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount:
-                  MediaQuery.sizeOf(context).shortestSide >= 600 ? 3 : 2,
+              crossAxisCount: MediaQuery.sizeOf(context).shortestSide >= 600
+                  ? 3
+                  : 2,
               mainAxisSpacing: AppSpacing.xs,
               crossAxisSpacing: AppSpacing.xs,
               mainAxisExtent: 156,

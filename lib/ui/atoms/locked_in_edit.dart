@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Dims and disables [child] while a page is in edit mode.
-///
-/// App rule: in edit mode, everything that isn't part of the edit (summary
-/// cards, transaction lists, action sections, status pills) fades back and
-/// stops taking input, so the user's focus stays on the fields being edited.
 class LockedInEdit extends StatelessWidget {
   const LockedInEdit({required this.locked, required this.child, super.key});
 

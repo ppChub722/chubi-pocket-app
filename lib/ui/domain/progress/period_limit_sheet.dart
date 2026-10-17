@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../ui.dart';
 
-/// What [showPeriodLimitSheet] resolves: [amount] null = back to the base
-/// amount ("คืนเป็นค่าเดิม"); [note] null = no note.
 @immutable
 class PeriodLimitResult {
   const PeriodLimitResult({required this.amount, required this.note});
@@ -12,11 +10,6 @@ class PeriodLimitResult {
   final String? note;
 }
 
-/// The sheet that edits ONE period's own limit (+ note): an amount field, a
-/// "back to the base amount" chip (only when the period differs from the
-/// base), a note. Cancel · Save through [FormSheet]; closing a changed form
-/// asks to discard. Words are params (no l10n in the kit's domain pieces
-/// beyond what the page passes).
 Future<PeriodLimitResult?> showPeriodLimitSheet(
   BuildContext context, {
   required String title,
@@ -82,7 +75,6 @@ class _PeriodLimitSheetState extends State<_PeriodLimitSheet> {
   );
   late final _note = TextEditingController(text: widget.note ?? '');
 
-  /// "Back to the base amount" was tapped.
   bool _useBase = false;
 
   @override

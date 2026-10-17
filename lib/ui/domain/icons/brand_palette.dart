@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// One colour swatch in the shared brand palette.
 class BrandSwatch {
   const BrandSwatch._(this.id, this.color);
 
@@ -13,10 +12,6 @@ class BrandSwatch {
   }
 }
 
-/// 12-colour palette shared across accounts, categories, tags, and projects.
-///
-/// Replaces the three identical `AccountColor`, `CategoryColor`, `TagColor`
-/// classes. One palette to maintain — one place to add a swatch.
 class BrandPalette {
   BrandPalette._();
 

@@ -20,11 +20,8 @@ class BudgetsState extends Equatable {
     this.health = BudgetHealth.all,
   });
 
-  /// The name search (applied locally to [budgets]: `listBudgets` has no
-  /// search param).
   final String query;
 
-  /// [budgets] whose name contains [query] (case-insensitive).
   List<Budget> get visible {
     final q = query.trim().toLowerCase();
     if (q.isEmpty) return budgets;
@@ -34,13 +31,11 @@ class BudgetsState extends Equatable {
     ];
   }
 
-  /// Each budget at its current period (the BE's `listBudgets`).
   final List<Budget> budgets;
   final BudgetListSummary summary;
   final BudgetFilter filter;
   final BudgetSort sort;
 
-  /// The summary tile picked (a server filter of `data`).
   final BudgetHealth health;
   final BudgetsStatus status;
   final ApiException? error;
@@ -83,10 +78,6 @@ class BudgetsState extends Equatable {
 
 enum BudgetsStatus { initial, loading, loaded, error }
 
-/// The budgets LIST page's state (spec 08 v2): one call per open, per filter
-/// chip and per sort. Pages for one budget hold their own state from the
-/// repository; a write there calls [markStale], a transaction write too
-/// ([markStale] reloads once after a short pause, like the dashboard).
 class BudgetsCubit extends Cubit<BudgetsState> with Clearable {
   BudgetsCubit({required BudgetsRepository repository})
     : _repo = repository,
@@ -95,7 +86,6 @@ class BudgetsCubit extends Cubit<BudgetsState> with Clearable {
   final BudgetsRepository _repo;
   Timer? _stale;
 
-  /// Bumped per [load] and on [clear]; a stale response is dropped.
   int _request = 0;
 
   @override
@@ -111,8 +101,6 @@ class BudgetsCubit extends Cubit<BudgetsState> with Clearable {
     return super.close();
   }
 
-  /// A budget or a transaction changed: reload once, shortly (only when the
-  /// list was ever opened).
   void markStale() {
     if (state.status == BudgetsStatus.initial) return;
     _stale?.cancel();
@@ -149,7 +137,6 @@ class BudgetsCubit extends Cubit<BudgetsState> with Clearable {
     }
   }
 
-  /// A chip: show another list (1 call; the old rows go at once).
   Future<void> setFilter(BudgetFilter filter) {
     if (filter == state.filter) return Future.value();
     emit(
@@ -162,15 +149,12 @@ class BudgetsCubit extends Cubit<BudgetsState> with Clearable {
     return load();
   }
 
-  /// A summary tile: narrows `data` by health (1 call). The same tile again
-  /// clears it.
   Future<void> setHealth(BudgetHealth health) {
     final next = health == state.health ? BudgetHealth.all : health;
     emit(state.copyWith(health: next));
     return load();
   }
 
-  /// The search box: filters the loaded rows by name, no call.
   void search(String query) {
     if (query == state.query) return;
     emit(state.copyWith(query: query));

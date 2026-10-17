@@ -4,11 +4,6 @@ import '../tokens/app/app_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 
-/// Rounded-square multi-select check (owner 2026-10-10: checkboxes are
-/// square, not round) — the app's selection mark in edit mode (grid
-/// cells, rows) and for "select all" above them, so both look the same.
-///
-/// [value]: `true` ✓ · `false` empty · `null` partial (−, select-all only).
 class SelectCheck extends StatelessWidget {
   const SelectCheck({
     required this.value,
@@ -58,9 +53,6 @@ class SelectCheck extends StatelessWidget {
   }
 }
 
-/// "[☐ 2/5]" — select / deselect everything shown, with how many are
-/// picked out of how many. No "เลือกทั้งหมด" label (owner 2026-10-10: the
-/// box + count says it); the same control on every multi-select list.
 class SelectAllCount extends StatelessWidget {
   const SelectAllCount({
     required this.selected,
@@ -73,7 +65,6 @@ class SelectAllCount extends StatelessWidget {
   final int selected;
   final int total;
 
-  /// Null (or nothing to pick) disables it.
   final VoidCallback? onTap;
   final String? tooltip;
 

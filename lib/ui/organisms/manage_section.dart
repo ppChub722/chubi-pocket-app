@@ -5,8 +5,6 @@ import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../molecules/danger_row.dart';
 
-/// An extra, neutral button of a [ManageSection] (ปิดงบ, close goal): the
-/// primary colour, above the archive / delete ones.
 class ManageAction {
   const ManageAction({
     required this.label,
@@ -18,27 +16,11 @@ class ManageAction {
   final String label;
   final IconData icon;
 
-  /// Null = disabled (saving).
   final VoidCallback? onTap;
 
-  /// Sends to the server: disabled while offline (default true).
   final bool submits;
 }
 
-/// The archive / delete buttons of a detail page, EDIT MODE ONLY, at the bottom
-/// before the record info (owner 2026-10-12: NOT a section — no heading, no
-/// grouped box, just the buttons): เก็บถาวร in amber, ลบ in red, the same
-/// shape. Pass only what the entity has — archive only where it supports it.
-///
-/// ```dart
-/// if (editing)
-///   ManageSection(
-///     archiveLabel: l.budgetArchive, onArchive: isSaving ? null : _archive,
-///     deleteLabel: l.budgetDelete,   onDelete: isSaving ? null : _delete,
-///   ),
-/// ```
-/// Each action's callback null = that button is disabled (saving); leave
-/// its LABEL null to leave the button out.
 class ManageSection extends StatelessWidget {
   const ManageSection({
     this.archiveLabel,
@@ -60,11 +42,9 @@ class ManageSection extends StatelessWidget {
   final String? deleteLabel;
   final VoidCallback? onDelete;
 
-  /// A small muted line under the archive / delete label: what it does.
   final String? archiveConsequence;
   final String? deleteConsequence;
 
-  /// Neutral buttons above archive / delete (ปิดงบ).
   final List<ManageAction> extraActions;
   final bool first;
 

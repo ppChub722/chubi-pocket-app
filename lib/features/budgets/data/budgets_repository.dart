@@ -8,15 +8,11 @@ import '../domain/budget.dart';
 import '../domain/budget_detail.dart';
 import '../domain/budget_period.dart';
 
-/// `/budgets` (openapi tag Budgets, spec 08 v2). Every write answers with the
-/// budget page ([BudgetDetail]), so a page takes the new state from the
-/// response and never re-fetches.
 class BudgetsRepository {
   BudgetsRepository({required ApiClient client}) : _client = client;
 
   final ApiClient _client;
 
-  /// The app-wide instance (provided in app.dart).
   static BudgetsRepository of(BuildContext context) =>
       context.read<BudgetsRepository>();
 
@@ -28,7 +24,6 @@ class BudgetsRepository {
     }
   }
 
-  /// `listBudgets`: the summary + each budget at its current period.
   Future<BudgetList> list({
     BudgetFilter filter = BudgetFilter.active,
     BudgetSort sort = BudgetSort.risk,
@@ -45,7 +40,6 @@ class BudgetsRepository {
     return BudgetList.fromJson(res.data!);
   });
 
-  /// `getBudget`: the whole page at [periodId] (default the current period).
   Future<BudgetDetail> get(
     String id, {
     String? periodId,
@@ -61,7 +55,6 @@ class BudgetsRepository {
     return BudgetDetail.fromJson(res.data!);
   });
 
-  /// `createBudget`.
   Future<BudgetDetail> create(BudgetWrite write) => _call((dio) async {
     final res = await dio.post<Map<String, dynamic>>(
       '/budgets',
@@ -70,8 +63,6 @@ class BudgetsRepository {
     return BudgetDetail.fromJson(res.data!);
   });
 
-  /// `updateBudget`: the setup. [apply] (`following` | `all`) is the "ใช้กับ
-  /// รอบไหน" answer on a recurring budget.
   Future<BudgetDetail> update(String id, BudgetWrite write, {String? apply}) =>
       _call((dio) async {
         final res = await dio.put<Map<String, dynamic>>(
@@ -81,8 +72,6 @@ class BudgetsRepository {
         return BudgetDetail.fromJson(res.data!);
       });
 
-  /// `updateBudgetPeriod` ("เฉพาะรอบนี้"): [amount] null = back to the base
-  /// amount. The page comes back at that period.
   Future<BudgetDetail> updatePeriod(
     String id,
     String periodId, {
@@ -96,7 +85,6 @@ class BudgetsRepository {
     return BudgetDetail.fromJson(res.data!);
   });
 
-  /// `listBudgetPeriods`: newest first.
   Future<BudgetPeriodPage> periods(String id, {int page = 1}) =>
       _call((dio) async {
         final res = await dio.get<Map<String, dynamic>>(
@@ -106,7 +94,6 @@ class BudgetsRepository {
         return BudgetPeriodPage.fromJson(res.data);
       });
 
-  /// `listBudgetItems`: everything counted in a period.
   Future<BudgetItemPage> items(
     String id, {
     String? periodId,
@@ -124,25 +111,21 @@ class BudgetsRepository {
     return BudgetItemPage.fromJson(res.data);
   });
 
-  /// `closeBudget` (ปิดงบ).
   Future<BudgetDetail> close(String id) => _call((dio) async {
     final res = await dio.post<Map<String, dynamic>>('/budgets/$id/close');
     return BudgetDetail.fromJson(res.data!);
   });
 
-  /// `archiveBudget`.
   Future<BudgetDetail> archive(String id) => _call((dio) async {
     final res = await dio.post<Map<String, dynamic>>('/budgets/$id/archive');
     return BudgetDetail.fromJson(res.data!);
   });
 
-  /// `restoreBudget`.
   Future<BudgetDetail> restore(String id) => _call((dio) async {
     final res = await dio.post<Map<String, dynamic>>('/budgets/$id/restore');
     return BudgetDetail.fromJson(res.data!);
   });
 
-  /// `deleteBudget` (hard).
   Future<void> delete(String id) => _call((dio) async {
     await dio.delete<Map<String, dynamic>>('/budgets/$id');
   });

@@ -6,10 +6,6 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/project.dart';
 
-// ────────────────────────────────────────────────────────────────────
-// Status
-// ────────────────────────────────────────────────────────────────────
-
 String projectStatusLabel(AppLocalizations l, ProjectStatus s) => switch (s) {
   ProjectStatus.active => l.projectStatusActive,
   ProjectStatus.completed => l.projectStatusCompleted,
@@ -17,7 +13,6 @@ String projectStatusLabel(AppLocalizations l, ProjectStatus s) => switch (s) {
   ProjectStatus.archived => l.projectStatusArchived,
 };
 
-/// A status's chip tone (use with `AppChip(selected: true, dot: true)`).
 AppChipTone projectStatusTone(ProjectStatus s) => switch (s) {
   ProjectStatus.active => AppChipTone.primary,
   ProjectStatus.completed => AppChipTone.success,
@@ -25,7 +20,6 @@ AppChipTone projectStatusTone(ProjectStatus s) => switch (s) {
   ProjectStatus.archived => AppChipTone.neutral,
 };
 
-/// The "locked" banner text for a status, or null when nothing is locked.
 String? projectLockMessage(AppLocalizations l, ProjectStatus s) => switch (s) {
   ProjectStatus.active => null,
   ProjectStatus.completed => l.projectLockedCompleted,
@@ -33,12 +27,6 @@ String? projectLockMessage(AppLocalizations l, ProjectStatus s) => switch (s) {
   ProjectStatus.archived => l.projectLockedArchived,
 };
 
-// ────────────────────────────────────────────────────────────────────
-// Dates
-// ────────────────────────────────────────────────────────────────────
-
-/// "12 ต.ค. – 15 ต.ค." from the API's optional `YYYY-MM-DD` start / end
-/// (the year only when it isn't this year); null when neither is set.
 String? projectDateRange(BuildContext context, String? start, String? end) {
   final s = DateFormatter.parseDay(start);
   final e = DateFormatter.parseDay(end);
@@ -54,24 +42,13 @@ String? projectDateRange(BuildContext context, String? start, String? end) {
   return s != null ? fmt(s) : '– ${fmt(e!)}';
 }
 
-/// A picked day as the API's `YYYY-MM-DD`.
 String projectDay(DateTime d) =>
     '${d.year.toString().padLeft(4, '0')}-'
     '${d.month.toString().padLeft(2, '0')}-'
     '${d.day.toString().padLeft(2, '0')}';
 
-// ────────────────────────────────────────────────────────────────────
-// Members
-// ────────────────────────────────────────────────────────────────────
-
-/// A member's icon, else their initial: maps [ProjectMember] onto the kit's
-/// [ProjectMemberAvatar].
 Widget memberAvatar(ProjectMember m, {double size = 32}) =>
     ProjectMemberAvatar(name: m.displayName, iconCode: m.iconCode, size: size);
-
-// ────────────────────────────────────────────────────────────────────
-// Everything the detail tabs share, computed once per load.
-// ────────────────────────────────────────────────────────────────────
 
 class ProjectView {
   ProjectView({
@@ -85,7 +62,6 @@ class ProjectView {
     this.totalPages = 1,
   }) : trees = buildProjectTxTree(txs);
 
-  /// From the page's one "open" call.
   factory ProjectView.of(ProjectDetail d, {required String? currentUserId}) =>
       ProjectView(
         project: d.project,
@@ -117,9 +93,6 @@ class ProjectView {
     totalPages: totalPages ?? this.totalPages,
   );
 
-  /// A write's [EventPatch] applied: the event, summary, members and tags
-  /// replaced; the changed bill (with its splits) put in place of its old
-  /// copy, or first when new; a removed bill dropped.
   ProjectView apply(EventPatch p) {
     var rows = txs;
     final removed = p.removedRowId;
@@ -134,19 +107,15 @@ class ProjectView {
     return _copy(
       project: p.project,
       members: p.members,
-      // A tag renamed / restyled / deleted shows on the rows at once.
       txs: [for (final t in rows) t.withTagsFrom(p.tags)],
       summary: p.summary,
       eventTags: p.tags,
     );
   }
 
-  /// The event's tags replaced (an import: `mine` flags changed), the
-  /// rows' tag flags with them.
   ProjectView withEventTags(List<BoardTag> tags) =>
       _copy(eventTags: tags, txs: [for (final t in txs) t.withTagsFrom(tags)]);
 
-  /// The next board page appended.
   ProjectView withMore(List<ProjectTransaction> more, {required int page}) {
     final seen = {for (final t in txs) t.id};
     return _copy(
@@ -164,7 +133,6 @@ class ProjectView {
       if (t.id != id && t.parentProjectTransactionId != id) t,
   ];
 
-  /// Clamps [at] (an index in the old list) to [rows].
   static int _parentIndex(List<ProjectTransaction> rows, int at) =>
       at > rows.length ? rows.length : at;
 
@@ -174,16 +142,13 @@ class ProjectView {
   final List<ProjectTxTree> trees;
   final ProjectSummary? summary;
 
-  /// The event's tags (shared by the members), with ids.
   final List<BoardTag> eventTags;
   final String? currentUserId;
 
-  /// The board's paging (the detail call brings the first page).
   final int page;
   final int totalPages;
   bool get hasMoreRows => page < totalPages;
 
-  /// Server flag (falls back to the owner id for an older payload).
   bool get isOwner =>
       project.isOwner ||
       (currentUserId != null && project.ownerUserId == currentUserId);
@@ -198,7 +163,6 @@ class ProjectView {
     return null;
   }
 
-  /// The BE decides (active event, I'm an active owner / contributor).
   bool get canAddTx => project.canAddBill;
 
   /// Cancelled / archived → rows can't be edited, deleted or ticked.
@@ -207,15 +171,11 @@ class ProjectView {
   List<ProjectMember> get currentMembers =>
       members.where((m) => m.status != MemberStatus.left).toList();
 
-  /// The event tags' ids for [names] (quick create's picks); names with no
-  /// event tag yet are left out — create them first
-  /// (`ProjectsRepository.createEventTag`).
   List<String> tagIdsFor(Iterable<String> names) {
     final byName = {for (final t in eventTags) t.name.toLowerCase(): t.id};
     return [for (final n in names) ?byName[n.trim().toLowerCase()]];
   }
 
-  /// The event tag called [name], if any.
   BoardTag? eventTag(String name) {
     final n = name.trim().toLowerCase();
     for (final t in eventTags) {
@@ -224,8 +184,6 @@ class ProjectView {
     return null;
   }
 
-  /// The payer / debtor of [tx]: the embedded `transaction_member` when the
-  /// server sent it, else the members-list lookup.
   ProjectMember memberOf(ProjectTransaction tx) {
     final r = tx.transactionMember;
     if (r == null) return member(tx.transactionMemberId);

@@ -1,22 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// The three sizes of the one chip, [AppChip] (owner 2026-10-11) — everything
-/// (icon, text, padding, gap, avatar, count badge) scales with the size:
-///
-/// - [mini] 20 — chips that ride on a dense list row next to text (a
-///   transaction / pending row: wallet, source, tags; a scheduled card's
-///   label). Display only, never the only tap target.
-/// - [chip] 28 — display chips (status, type, label, tag) inside cards,
-///   detail sections, member / debt rows and the compact hero bar.
-/// - [control] 32 — anything the user operates (filter / pick / choice /
-///   action chips, form chip rows, theme chips, removable filters) and every
-///   chip in a hero's top row (owner 2026-10-17: 40 was too tall for a
-///   form's rows; 32 keeps the tap area, which [AppChip] widens by itself).
-///   The default.
+abstract final class ChipHeight {
+  static const double mini = 20;
+  static const double chip = 28;
+  static const double control = 36;
+}
+
 enum ChipSize {
-  /// Dense list-row chips.
   mini(
-    height: 20,
+    height: ChipHeight.mini,
     padding: 6,
     gap: 3,
     icon: 11,
@@ -26,9 +18,8 @@ enum ChipSize {
     badgePad: 3,
   ),
 
-  /// Display chips in cards, rows and detail sections.
   chip(
-    height: 28,
+    height: ChipHeight.chip,
     padding: 10,
     gap: 4,
     icon: 14,
@@ -38,9 +29,8 @@ enum ChipSize {
     badgePad: 4,
   ),
 
-  /// Controls, and every chip in a hero's top row.
   control(
-    height: 32,
+    height: ChipHeight.control,
     padding: 12,
     gap: 5,
     icon: 16,
@@ -61,27 +51,21 @@ enum ChipSize {
     this.badgePad = 5,
   });
 
-  /// Minimum height (text scaling can grow it).
   final double height;
 
-  /// Side padding.
   final double padding;
 
-  /// Space between icon / dot and label.
   final double gap;
   final double icon;
   final double dot;
 
-  /// The leading avatar / logo box.
   final double leading;
 
-  /// [AppChip] count badge: its number size and side padding; its height is
-  /// [icon] + 2.
   final double badgeText;
   final double badgePad;
 
-  /// The label's text style — colour is the chip's own; every chip uses
-  /// the same weight ([chipWeight]) so a selection never changes its width.
+  /// The label's text style — colour is the chip's own; every chip uses the
+  /// same weight ([chipWeight]) so a selection never changes its width.
   TextStyle? textStyle(BuildContext context) {
     final t = Theme.of(context).textTheme;
     return switch (this) {
@@ -91,6 +75,5 @@ enum ChipSize {
     };
   }
 
-  /// The one label weight of a chip.
   static const FontWeight chipWeight = FontWeight.w600;
 }

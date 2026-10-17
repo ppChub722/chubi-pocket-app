@@ -8,17 +8,6 @@ import '../money/money_text.dart';
 import '../people/person_mark.dart';
 import 'event_card.dart';
 
-/// Wraps one of [EventBillRow]'s tag chips — e.g. in an `OptionMenuAnchor`
-/// so the tag opens a popover anchored to itself:
-///
-/// ```dart
-/// tagAnchorBuilder: (context, i, chip) => OptionMenuAnchor(
-///   options: …, onSelected: …,
-///   builder: (context, toggle) => chip(toggle),
-/// ),
-/// ```
-///
-/// [chip] builds the tag's mini chip with the given tap.
 typedef EventTagAnchorBuilder =
     Widget Function(
       BuildContext context,
@@ -26,31 +15,8 @@ typedef EventTagAnchorBuilder =
       Widget Function(VoidCallback? onTap) chip,
     );
 
-/// The fade of a marked (resolved) or locked bill row.
 const double _fadedOpacity = 0.55;
 
-/// One bill on an event's board (owner 2026-10-12), same geometry as a
-/// [TxRow] (`TxRow` height, no children):
-///
-///   [☐] (icon)  title [tag] [tag]                            −฿540
-///               (payer) payer · date · summary  🔗
-///     ↳ [☐] (p) name  ติด ฿120                                 ฿120
-///
-/// - The leading tick is the resolve STATE ([marked]) in the square
-///   [SelectCheck] look; [onTickTap] null = inert. A marked row fades.
-/// - [leading]: an optional type glyph after the tick.
-/// - [title]: decided by the caller (description ?? tags ?? "—").
-/// - [tags]: the event's tags as mini chips, each its own tap target:
-///   [onTagTap] gets the CHIP's context, or [tagAnchorBuilder] wraps each
-///   chip (a popover anchor) — the builder wins when both are set.
-/// - Line 2: the payer's mini [PersonMark] + [payerName], then [caption]
-///   (the date) and [summary] (the split summary); [linked] adds 🔗 (the
-///   bill is in my book).
-/// - [amount] with [tone] (signed by default: the caller signs it by type).
-/// - [locked]: inert and faded — no tap anywhere (tick, tags, row).
-/// - [children]: the split lines ([EventBillChildRow]) under the row.
-/// - [highlighted]: the bill a link pointed at (tx detail "อยู่ในอีเวนต์ ›"):
-///   a brief primary tint that fades out, played when it turns on.
 class EventBillRow extends StatelessWidget {
   const EventBillRow({
     required this.title,
@@ -99,7 +65,6 @@ class EventBillRow extends StatelessWidget {
   final List<Widget> children;
   final bool highlighted;
 
-  /// The most of line 1 the tag chips may take (the title keeps the rest).
   static const double tagsMaxShare = 0.6;
 
   Widget _tag(BuildContext context, int i) {
@@ -133,8 +98,6 @@ class EventBillRow extends StatelessWidget {
     ].join(' · ');
     final hasLine2 = line2Text.isNotEmpty || linked;
 
-    // The tags take what they need, up to [tagsMaxShare] of the line; the
-    // title ellipsises in the rest. More tags than fit clip at the edge.
     final line1 = LayoutBuilder(
       builder: (context, box) => Row(
         children: [
@@ -253,9 +216,6 @@ class EventBillRow extends StatelessWidget {
   }
 }
 
-/// [EventBillRow.highlighted]: a primary tint behind [child] that holds a
-/// moment, then fades out — replayed each time [on] turns true. Instant
-/// (nothing) under reduced motion.
 class _Flash extends StatefulWidget {
   const _Flash({required this.on, required this.child});
 
@@ -307,7 +267,6 @@ class _FlashState extends State<_Flash> with SingleTickerProviderStateMixin {
     return AnimatedBuilder(
       animation: _c,
       builder: (context, child) {
-        // Holds for the first third, then fades.
         final t = _c.value;
         final alpha = !_c.isAnimating
             ? 0.0
@@ -324,13 +283,6 @@ class _FlashState extends State<_Flash> with SingleTickerProviderStateMixin {
   }
 }
 
-/// One split line under an [EventBillRow], indented:
-///
-///     [☐] (p) name  ติด ฿120                                  ฿120
-///
-/// Its own resolve tick ([marked], [onTickTap] null = inert); the row fades
-/// when marked. [caption] is a muted note after the name (what they owe).
-/// [locked]: inert and faded, like the bill row.
 class EventBillChildRow extends StatelessWidget {
   const EventBillChildRow({
     required this.name,
@@ -348,7 +300,6 @@ class EventBillChildRow extends StatelessWidget {
     super.key,
   });
 
-  /// How far the line sits right of its bill row's content.
   static const double indent = AppSpacing.xxl;
 
   final String name;

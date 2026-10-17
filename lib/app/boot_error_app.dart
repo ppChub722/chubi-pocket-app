@@ -4,13 +4,6 @@ import 'package:flutter/services.dart';
 import '../core/logger/app_logger.dart';
 import '../ui/ui.dart';
 
-/// Shown instead of the real app when boot fails BEFORE `runApp` could
-/// mount [ChubiPocketApp] — the case that used to be an infinite white
-/// screen. Wired by the `runZonedGuarded` boot guard in `main.dart`.
-///
-/// Deliberately NOT localized through ARB: l10n / prefs / fonts may be
-/// part of what failed, so this screen depends on nothing but Material.
-/// Copy is bilingual inline instead.
 class BootErrorApp extends StatelessWidget {
   const BootErrorApp({required this.error, this.stackTrace, super.key});
 

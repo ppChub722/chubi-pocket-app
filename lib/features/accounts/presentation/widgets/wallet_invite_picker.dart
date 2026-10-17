@@ -6,12 +6,6 @@ import '../../../../ui/ui.dart';
 import '../../../contacts/domain/contact.dart';
 import '../../../contacts/presentation/cubit/contacts_cubit.dart';
 
-/// "เชิญเข้ากระเป๋านี้" (owner 2026-10-11) — the wallet invite picks a
-/// CONTACT, never an email: only active contacts linked to an app account
-/// (`linked_user_id` set), minus the people already in the wallet or
-/// invited ([excludeUserIds]). The sheet is the kit's [WalletInviteSheet];
-/// this wrapper reads the contacts cubit and maps contacts / l10n into its
-/// plain params. Null when dismissed.
 Future<Contact?> showWalletInvitePicker(
   BuildContext context, {
   required Set<String> excludeUserIds,

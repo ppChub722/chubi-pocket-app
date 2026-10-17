@@ -73,11 +73,6 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
     }
   }
 
-  /// Loads once (or again after a failure) — pickers call it. A list left
-  /// on archived only (the contacts page's filter) widens to all, so the
-  /// active ones are there to pick.
-  ///
-  /// [keepFilter]: the contacts page itself — leave its status filter alone.
   Future<void> loadIfNeeded({bool keepFilter = false}) async {
     if (!keepFilter && state.statusFilter == 'archived') {
       return load(statusFilter: 'all');
@@ -108,7 +103,6 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
       note: note,
       iconCode: iconCode,
     );
-    // Only into a list whose status filter takes it (a new one is active).
     if (_fits(res.contact)) {
       emit(state.copyWith(contacts: [res.contact, ...state.contacts]));
     }
@@ -141,9 +135,6 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
     return updated;
   }
 
-  // Every write returns the contact from the response (the page patches its
-  // own copy from it) and patches the list — no re-GET.
-
   Future<Contact> archive(String id) async {
     final updated = await _repo.archive(id);
     _replace(updated);
@@ -168,19 +159,14 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
     return updated;
   }
 
-  /// `GET /contacts/unlinked-names` — create-sheet suggestions only.
   Future<List<UnlinkedName>> unlinkedNames() => _repo.unlinkedNames();
 
-  /// `POST /contacts/:id/absorb` — wires every personal_debts row whose
-  /// typed name (case-insensitive exact) is in [names] to the contact.
-  /// Returns the contact + the count wired.
   Future<AbsorbResult> absorb(String contactId, List<String> names) async {
     final res = await _repo.absorb(contactId, names);
     _replace(res.contact);
     return res;
   }
 
-  /// Post-accept "create a contact for the sender" — patches the list.
   Future<LinkRequestResult> createLinkedFromRequest(
     String notificationId, {
     String? phone,
@@ -197,7 +183,6 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
     return res;
   }
 
-  /// Post-accept "link my existing contact" — patches the list.
   Future<LinkRequestResult> linkExistingFromRequest(
     String notificationId,
     String contactId, {
@@ -226,16 +211,12 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
     return res;
   }
 
-  /// Does [c] belong in the list under its status filter?
   bool _fits(Contact c) => switch (state.statusFilter) {
     'archived' => c.isArchived,
     'all' => true,
     _ => !c.isArchived,
   };
 
-  /// [c] in place — or out, when it no longer fits the status filter
-  /// (archived under ใช้งาน, restored under เก็บถาวร) — or in at the top
-  /// when it now fits a list it wasn't in (restored under ใช้งาน).
   void _replace(Contact c) {
     final known = state.contacts.any((e) => e.id == c.id);
     emit(

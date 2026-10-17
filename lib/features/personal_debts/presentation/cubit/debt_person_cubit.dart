@@ -9,7 +9,6 @@ import '../../domain/debt_ledger.dart';
 import 'debt_book.dart';
 import 'debt_people_cubit.dart';
 
-/// One cycle's list of entries (the current cycle, or the earlier ones).
 class DebtEntryList extends Equatable {
   const DebtEntryList({
     this.status = DebtLoadStatus.initial,
@@ -59,12 +58,6 @@ class DebtEntryList extends Equatable {
   ];
 }
 
-/// The person page (`/personal-debts/people/:key`), page-scoped: a statement
-/// grouped by debt cycle. Open = 1 call (person + net + counts + the summary
-/// message + the first page of the CURRENT cycle); the earlier cycles = 1
-/// call on the first open of the fold; search / filter / sort / next page =
-/// 1 call each. A write patches the balance from its response and re-runs
-/// the page call (the summary message is BE-built).
 class DebtPersonState extends Equatable {
   const DebtPersonState({
     required this.personKey,
@@ -81,12 +74,10 @@ class DebtPersonState extends Equatable {
   final String personKey;
   final DebtLoadStatus status;
 
-  /// The person + net (null until the first load lands).
   final PersonBalance? balance;
   final DebtCounts counts;
   final DebtSummaryMessage message;
 
-  /// Search / filter / sort of the statement (both cycles).
   final DebtEntryQuery query;
   final DebtEntryList current;
   final DebtEntryList earlier;
@@ -96,7 +87,6 @@ class DebtPersonState extends Equatable {
       balance == null &&
       (status == DebtLoadStatus.initial || status == DebtLoadStatus.loading);
 
-  /// Anything on the statement can load more.
   bool get hasMore =>
       current.hasMore ||
       (earlier.status == DebtLoadStatus.loaded && earlier.hasMore);
@@ -167,9 +157,6 @@ class DebtPersonCubit extends Cubit<DebtPersonState> with DebtBookListener {
 
   int _bump(DebtCycle c) => _gen[c] = _gen[c]! + 1;
 
-  /// An entry was saved elsewhere (the shell's +): the balance follows the
-  /// response at once, then the page call re-runs (the message and the cycle
-  /// groups are the server's).
   @override
   void onEntrySaved(DebtEntryWriteResult r) {
     if (r.balance.key != _key || isClosed) return;
@@ -178,11 +165,6 @@ class DebtPersonCubit extends Cubit<DebtPersonState> with DebtBookListener {
     load();
   }
 
-  /// Open / pull-to-refresh / retry / after a write: the page in ONE call.
-  /// The current cycle comes embedded when the statement shows its default
-  /// view; with a search / filter active that list re-runs its own query
-  /// after. The earlier cycles reload only once their fold has been opened.
-  /// Rows already on screen stay while it runs (and after a failure).
   Future<void> load() async {
     _timer?.cancel();
     final gen = ++_loadGen;
@@ -224,15 +206,12 @@ class DebtPersonCubit extends Cubit<DebtPersonState> with DebtBookListener {
     }
   }
 
-  /// The "รอบก่อนหน้านี้" fold's first open loads the earlier cycles (once).
   Future<void> openEarlier() async {
     if (!state.earlier.opened) await _loadList(DebtCycle.earlier);
   }
 
-  /// The earlier cycles' own retry.
   Future<void> retryEarlier() => _loadList(DebtCycle.earlier);
 
-  /// Typing in the search: one call per cycle shown, once the typing pauses.
   void search(String q) {
     if (q == state.query.q) return;
     emit(state.copyWith(query: state.query.copyWith(q: q)));
@@ -240,7 +219,6 @@ class DebtPersonCubit extends Cubit<DebtPersonState> with DebtBookListener {
     _timer = Timer(debounce, _reloadLists);
   }
 
-  /// Direction / sort chips: one call with the new query.
   void setQuery(DebtEntryQuery query) {
     if (query == state.query) return;
     emit(state.copyWith(query: query));
@@ -305,8 +283,6 @@ class DebtPersonCubit extends Cubit<DebtPersonState> with DebtBookListener {
     }
   }
 
-  /// Scrolling near the end: the next page of the current cycle, then of the
-  /// earlier ones (once opened).
   Future<void> loadMore() async {
     if (state.current.hasMore) return _loadMore(DebtCycle.current);
     if (state.earlier.status == DebtLoadStatus.loaded &&
@@ -367,9 +343,6 @@ class DebtPersonCubit extends Cubit<DebtPersonState> with DebtBookListener {
     }
   }
 
-  /// The "จ่ายแล้ว" label (1 call): the row and the balance patch from the
-  /// response, then the page call re-runs (the message lists open entries).
-  /// Throws the [ApiException] so the page can show it.
   Future<void> setPaid(String entryId, bool paid) async {
     final res = await _repo.setPaid(entryId, paid);
     if (isClosed) return;
@@ -391,8 +364,6 @@ class DebtPersonCubit extends Cubit<DebtPersonState> with DebtBookListener {
     unawaited(load());
   }
 
-  /// A write elsewhere (tx detail) returned this person's balance: the hero
-  /// follows it at once. The statement reloads on the next open / pull.
   void applyBalance(PersonBalance b) {
     if (b.key != _key) return;
     emit(state.copyWith(balance: b));

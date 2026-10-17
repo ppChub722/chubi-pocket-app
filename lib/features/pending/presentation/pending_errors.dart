@@ -1,8 +1,6 @@
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/pending_transaction.dart';
 
-/// A submit failure in words the user can act on; unknown codes fall back
-/// to the server's message.
 String pendingErrorText(AppLocalizations l, PendingError e) => switch (e.code) {
   'MISSING_TYPE' => l.pendingErrMissingType,
   'MISSING_AMOUNT' => l.pendingErrMissingAmount,

@@ -15,26 +15,6 @@ import '../../domain/category_tree.dart';
 import '../../domain/category_type.dart';
 import '../cubit/categories_cubit.dart';
 
-/// Categories management.
-///
-/// **Browse mode** — the library list shared with tags / contacts (owner
-/// 2026-10-10):
-/// - Expense / income tabs; swipe sideways to switch ([AppTabPager] —
-///   the content follows the finger).
-/// - Search, then [สี▾][ไอคอน▾] … (✏️) — ✏️ enters reorder mode (owner
-///   2026-10-11: on a list page ✏️ = the list's edit mode).
-/// - [ListRow]s on the tree's indent: icon · name · description, then
-///   "ซ่อนจากรายงาน" and ▾/▴ (parents only — toggles collapse).
-/// - Tap row → the category's detail page. Long-press → reorder mode with
-///   that row selected (no drag starts from that press).
-/// - A dashed "+ เพิ่มหมวดหมู่" tile ends the list (also the empty CTA),
-///   creating on the tab's type.
-///
-/// **Reorder mode** — the kit's [ReorderController] / [ReorderListScope]:
-/// ⠿ handles drag at once with smart sideways depth; tap a row → the
-/// ← ↑ ↓ → bar; ยกเลิก / ↶ / บันทึก at the bottom; back = cancel. Entering
-/// keeps the layout where it is: the search + filter rows keep their space
-/// (a hint shows there) and the expand state is untouched.
 class CategoriesPage extends StatefulWidget {
   const CategoriesPage({super.key});
 
@@ -43,40 +23,29 @@ class CategoriesPage extends StatefulWidget {
 }
 
 class _CategoriesPageState extends State<CategoriesPage> {
-  /// Non-null while reordering.
   ReorderController? _reorder;
   bool _savingReorder = false;
 
-  /// Which type's tree the list is showing — toggled by the top tab bar.
   CategoryType _listType = CategoryType.expense;
 
-  /// Shell chrome controller — lets reorder mode hide the shell's bottom
-  /// nav so the [ModeActionBar] replaces it instead of stacking under
-  /// it. Grabbed in [didChangeDependencies].
   ShellChromeController? _shellChrome;
 
-  /// Parent ids whose children are hidden. Shared with the reorder
-  /// controller, so collapse choices carry over between the modes.
   final Set<String> _collapsedIds = <String>{};
 
-  /// The tabs, in bar order — one [AppTabPager] page each.
   static const _types = [CategoryType.expense, CategoryType.income];
   late final PageController _pages = PageController(
     initialPage: _types.indexOf(_listType),
   );
 
-  /// One per tab: both pages are built side by side, and a controller
-  /// can't drive two lists. The same list (and offset) serves both modes.
+  /// One per tab: both pages are built side by side, and a controller can't
+  /// drive two lists.
   final Map<CategoryType, ScrollController> _scrollControllers = {
     for (final t in _types) t: ScrollController(),
   };
 
-  /// Browse-mode search. Non-empty → the tree shows only matches plus
-  /// their ancestors (auto-expanded) and long-press reorder is off.
   final _search = TextEditingController();
   String _query = '';
 
-  /// Browse-mode colour / icon filters (the filter row under the search).
   final Set<String> _filterColors = {};
   final Set<String> _filterIcons = {};
 
@@ -87,7 +56,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
       _filterColors.isNotEmpty ||
       _filterIcons.isNotEmpty;
 
-  /// A row's colour key: its accent slot (bg first, else the glyph tint).
   static String? _colorOf(IconCode? c) {
     if (c == null) return null;
     if (c.bgColors.isNotEmpty) return c.bgColors.first;
@@ -98,27 +66,21 @@ class _CategoriesPageState extends State<CategoriesPage> {
     if (t == _listType) return;
     setState(() {
       _listType = t;
-      // The other tab has its own colours / icons.
       _filterColors.clear();
       _filterIcons.clear();
     });
-    // The move bar belongs to a row on the tab being left.
     _reorder?.select(null);
   }
 
   @override
   void initState() {
     super.initState();
-    // Cold-start fetch — idempotent, safe to re-enter the page.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<CategoriesCubit>().loadIfNeeded();
     });
   }
 
-  /// Ids to show while searching / filtering: every match plus all its
-  /// ancestors, so results keep their place in the tree. Null = showing
-  /// everything.
   Set<String>? _visibleIds(List<Category> users) {
     if (!_filtering) return null;
     final q = _query.trim().toLowerCase();
@@ -149,7 +111,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
   @override
   void dispose() {
-    // Safety net: leaving while reordering restores the shell's nav.
     if (_reordering) _shellChrome?.show();
     _reorder?.dispose();
     for (final c in _scrollControllers.values) {
@@ -160,13 +121,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
     super.dispose();
   }
 
-  // ── Mode lifecycle ──────────────────────────────────────────────────
-
-  /// [select] — the long-pressed row, selected on entry so its ← ↑ ↓ →
-  /// bar is right there.
   void _enterReorder(List<Category> all, {String? select}) {
     HapticFeedback.lightImpact();
-    _shellChrome?.hide(); // the action bar replaces the shell nav
+    _shellChrome?.hide();
     final c = ReorderController(
       items: CategoryReorderLogic.toOutline(all, types: _types),
       maxDepth: CategoryTree.maxDepth,
@@ -176,9 +133,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
     _keepOffset(() => _reorder = c);
   }
 
-  /// Switches mode without moving the list under the finger (QA F1): the
-  /// rows come back at the same offset. The list's [PageStorageKey]
-  /// restores it; this puts it back if that didn't.
   void _keepOffset(VoidCallback change) {
     final sc = _scrollControllers[_listType]!;
     final offset = sc.hasClients ? sc.offset : null;
@@ -194,8 +148,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
   void _onReorderChanged() => setState(() {});
 
-  /// ยกเลิก, ← and system back in reorder mode — one behaviour (owner
-  /// 2026-10-10): drop the staged order, no prompt; nothing while saving.
   void _backInReorder() {
     if (!_savingReorder) _exitReorder();
   }
@@ -207,7 +159,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
       _reorder = null;
       _savingReorder = false;
     });
-    // After the frame: the scopes stop listening first.
     WidgetsBinding.instance.addPostFrameCallback((_) => c?.dispose());
   }
 
@@ -249,8 +200,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
     });
   }
 
-  // ── Build ──────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -268,27 +217,19 @@ class _CategoriesPageState extends State<CategoriesPage> {
               if (!didPop && _reordering) _backInReorder();
             },
             child: Scaffold(
-              // The bar floats over the body; the pinned column below starts
-              // with a spacer of its height.
               extendBodyBehindAppBar: true,
               appBar: AppTopBar(
-                // The title never changes with the mode (owner, QA T1) — the
-                // action bar and the hint say it's reorder mode.
                 title: l.categoriesTitle,
                 showBack: true,
                 editing: _reordering,
                 onBack: _reordering ? _backInReorder : null,
               ),
               body: TabSwitchBody(
-                // Swipe sideways = the other tab, following the finger (off
-                // while reordering — a sideways drag there picks a level).
                 child: TabbedListPageBody<CategoryType>(
                   controller: _pages,
                   selected: _listType,
                   onChanged: _setListType,
                   swipeEnabled: !_reordering,
-                  // Search + filters sit under the tab bar and stay put while
-                  // swiping (an empty tab has nothing to search or filter).
                   headerBelowTabs: true,
                   header: typeUsers.isEmpty
                       ? const []
@@ -314,8 +255,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
                   ),
                 ),
               ),
-              // Browse: the shell's nav shows through. Reorder: the move bar
-              // (while a row is selected) over this bar replaces it.
               bottomNavigationBar: reorder == null
                   ? null
                   : Column(
@@ -342,9 +281,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
     );
   }
 
-  /// Search + `[สี▾][ไอคอน▾] … (✏️)`. In reorder mode they keep their
-  /// space (invisible, so nothing under the finger moves — QA F1) and a
-  /// hint takes it.
   Widget _header(
     AppLocalizations l,
     List<Category> typeUsers,
@@ -377,9 +313,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
     );
   }
 
-  /// `[สี▾][ไอคอน▾] … (✏️)` — filters left, the list's edit mode right
-  /// (the top bar carries no page actions; add is the dashed tile ending
-  /// the list).
   Widget _filterRow(
     AppLocalizations l,
     List<Category> typeUsers,
@@ -466,7 +399,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
         onPressed: typeUsers.length < 2
             ? null
             : () {
-                // Reorder shows the whole tree — drop search / filters.
                 _search.clear();
                 _query = '';
                 _filterColors.clear();
@@ -477,8 +409,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
     );
   }
 
-  /// One tab: a [ListPageBody] (own loading / error / empty / refresh). The
-  /// search + filters sit pinned under the tab bar when the tab has rows.
   Widget _tab(
     AppLocalizations l,
     CategoriesState state,
@@ -490,8 +420,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
     final noMatch = typeUsers.isNotEmpty && visible != null && visible.isEmpty;
     final byId = {for (final c in typeUsers) c.id: c};
     return ListPageBody(
-      // Only the FIRST load shows the skeleton: a reload keeps the rows (the
-      // template swaps its body for the skeleton, which kills a pull).
       loading:
           (state.status == CategoriesStatus.initial ||
               state.status == CategoriesStatus.loading) &&
@@ -518,7 +446,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
                       onTap: () => _add(l, type),
                     ),
             ),
-      // Rows are full-bleed (they pad themselves).
       sidePadding: 0,
       builder: (context, padding) => ReorderListScope(
         controller: _reorder,
@@ -539,8 +466,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
           collapsedIds: _collapsedIds,
           scrollController: _scrollControllers[type]!,
           padding: padding,
-          // Long-press enters the mode (not while searching / filtering —
-          // the tree isn't whole then); it never starts a drag.
+          // Long-press enters the mode (not while searching / filtering — the
+          // tree isn't whole then); it never starts a drag.
           onLongPress: visible != null || typeUsers.length < 2
               ? null
               : (id) => _enterReorder(all, select: id),
@@ -552,7 +479,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
     );
   }
 
-  /// Create on [type] — the tab the add tile is on (QA F3).
   void _add(AppLocalizations l, CategoryType type) {
     if (!context.read<CategoriesCubit>().canAddMore) {
       showAppSnackBar(context, l.categoriesLimitReached, tone: Tone.warning);
@@ -561,11 +487,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
     context.push('/categories/new?type=${type.toJson()}');
   }
 }
-
-// ────────────────────────────────────────────────────────────────────
-// List body — one ListView for both modes (so its offset survives the
-// switch): browse walks the tree, reorder walks the controller's outline.
-// ────────────────────────────────────────────────────────────────────
 
 class _ListBody extends StatelessWidget {
   const _ListBody({
@@ -582,25 +503,19 @@ class _ListBody extends StatelessWidget {
     this.onAdd,
   });
 
-  /// This tab's user categories.
   final List<Category> users;
   final CategoryType type;
 
-  /// Non-null while reordering.
   final ReorderController? reorder;
 
-  /// Search result ids (matches + ancestors); null = show everything.
   final Set<String>? visibleIds;
   final Set<String> collapsedIds;
   final ScrollController scrollController;
 
-  /// The template's scroll padding (clearance for the floating bars).
   final EdgeInsets padding;
   final void Function(String id)? onLongPress;
   final void Function(String id) onToggleCollapse;
 
-  /// The dashed "+ เพิ่มหมวดหมู่" tile after the last row (add lives in
-  /// the body, not the top bar). Null hides it (reorder mode).
   final String addLabel;
   final VoidCallback? onAdd;
 
@@ -608,13 +523,11 @@ class _ListBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final rows = reorder == null ? _treeRows() : _outlineRows(reorder!);
     return ListView(
-      // Restores the offset when the mode switch rebuilds the list.
       key: PageStorageKey('categories-list-${type.name}'),
       controller: scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       padding: padding,
       children: [
-        // Hairline-separated, as on the other library lists.
         for (final (i, row) in rows.indexed) ...[
           if (i > 0) const AppDivider.row(),
           row,
@@ -633,8 +546,6 @@ class _ListBody extends StatelessWidget {
     );
   }
 
-  /// Browse: the tree by sort order, collapsed parents closed, search
-  /// results forced open.
   List<Widget> _treeRows() {
     List<Category> childrenOf(String? id) =>
         users.where((c) => c.parentId == id).toList()
@@ -666,7 +577,6 @@ class _ListBody extends StatelessWidget {
     return out;
   }
 
-  /// Reorder: the staged outline's visible rows for this tab.
   List<Widget> _outlineRows(ReorderController c) {
     final byId = {for (final cat in users) cat.id: cat};
     return [
@@ -694,7 +604,6 @@ class _ListBody extends StatelessWidget {
       id: c.id,
       child: _RowContent(
         category: c,
-        // Every level shows its own icon (owner 2026-10-11).
         iconCode: CategoryTree.resolveIconCode(c, users),
         depth: depth,
         reorderMode: reordering,
@@ -709,10 +618,6 @@ class _ListBody extends StatelessWidget {
   }
 }
 
-/// One category on the list — [ListRow] on the tree's indent: icon ·
-/// name · description, then "ซ่อนจากรายงาน" and ▾/▴ (parents only).
-/// In reorder mode the tap belongs to the [ReorderRow] (select); ▾/▴
-/// keeps working.
 class _RowContent extends StatelessWidget {
   const _RowContent({
     required this.category,

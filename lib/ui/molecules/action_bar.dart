@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../atoms/app_button.dart';
 import '../tokens/app_spacing.dart';
 
-/// One action of an [ActionBar]: an icon and a short label.
 class ActionBarItem {
   const ActionBarItem({
     required this.label,
@@ -16,21 +15,13 @@ class ActionBarItem {
   final String label;
   final IconData? icon;
 
-  /// null = disabled (dimmed).
   final VoidCallback? onPressed;
 
-  /// The one emphasised action (filled); the rest are tonal.
   final bool primary;
 
-  /// The action sends to the server (save, delete, create …): disabled while
-  /// the app is offline ([AppButton.submits]). Default false.
   final bool submits;
 }
 
-/// The actions under a hero (owner 2026-10-12): 1–4 EQUAL-width buttons in one
-/// row, control height 40, icon + label — e.g. a wallet's
-/// `[⟳ ปรับยอด] [+ รายการ] [⇄ โอน]`. Labels stay short; a longer one is
-/// ellipsised, never wraps.
 class ActionBar extends StatelessWidget {
   const ActionBar({
     required this.actions,

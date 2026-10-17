@@ -5,7 +5,6 @@ import '../molecules/stepper_pill.dart';
 import '../tokens/app/app_colors.dart';
 import '../tokens/app_spacing.dart';
 
-/// The meaning of a dot on a [MonthCalendar] day.
 enum CalendarDot {
   income,
   expense,
@@ -23,14 +22,6 @@ enum CalendarDot {
   }
 }
 
-/// A month grid (Mon–Sun) with coloured dots under the days that have
-/// something, a selected day and the `‹ ตุลาคม 2026 ›` stepper above it.
-/// Generic: the page feeds the data in — [dots] maps a day of the month to
-/// the colours of its dots (at most three are drawn); [selected] / [onSelect]
-/// pick a day; [onMonthChanged] gets the first day of the new month.
-///
-/// Nothing is fetched or computed here; the weekday initials follow the
-/// ambient locale.
 class MonthCalendar extends StatelessWidget {
   const MonthCalendar({
     required this.month,
@@ -42,18 +33,14 @@ class MonthCalendar extends StatelessWidget {
     super.key,
   });
 
-  /// Any day of the shown month.
   final DateTime month;
   final ValueChanged<DateTime> onMonthChanged;
 
-  /// Day of the month (1-31) → the kinds of its dots.
   final Map<int, List<CalendarDot>> dots;
 
-  /// The picked day (ignored when it is not in [month]).
   final DateTime? selected;
   final ValueChanged<DateTime>? onSelect;
 
-  /// Marked with an outline; null = no mark.
   final DateTime? today;
 
   static const _maxDots = 3;
@@ -68,11 +55,9 @@ class MonthCalendar extends StatelessWidget {
     final locale = Localizations.localeOf(context).toLanguageTag();
     final first = DateTime(month.year, month.month);
     final days = DateUtils.getDaysInMonth(month.year, month.month);
-    // Monday = 1: the blanks before the 1st.
     final lead = first.weekday - 1;
     final cells = lead + days;
     final rows = (cells / 7).ceil();
-    // A known Monday for the weekday initials.
     final monday = DateTime(2024, 1, 1);
     final initials = [
       for (var i = 0; i < 7; i++)

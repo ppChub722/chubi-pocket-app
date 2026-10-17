@@ -3,22 +3,15 @@ import 'package:flutter/material.dart';
 import '../tokens/tone.dart';
 import 'app_message.dart';
 
-/// Which state the [ConnectionBanner] shows.
 enum ConnectionBannerState {
-  /// Cannot reach the server; retrying by itself. Stays until it is back.
+  /// Cannot reach the server; retrying by itself.
   offline,
 
-  /// A retry is running right now.
   reconnecting,
 
-  /// Back — a short "connected again" message.
   backOnline,
 }
 
-/// The persistent server-connection banner at the top of every page (owner
-/// 2026-10-12): an [AppMessage] banner that never auto-dismisses while the
-/// connection is down — "can't reach the server · trying again…" with a retry
-/// button, then a short "connected again". The strings are the page's / app's.
 class ConnectionBanner extends StatelessWidget {
   const ConnectionBanner({
     required this.state,
@@ -36,7 +29,6 @@ class ConnectionBanner extends StatelessWidget {
   final String backText;
   final String retryLabel;
 
-  /// Retry now (the offline state's action).
   final VoidCallback? onRetry;
 
   @override

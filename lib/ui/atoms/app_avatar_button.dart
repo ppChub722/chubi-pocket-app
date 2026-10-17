@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// The profile chip: an avatar in the same frame as the [AppIconButton] chips
-/// beside it — a neutral surface ring, or the bottom nav's active look
-/// (primary container + primary ring) while [active] (the page it opens is on
-/// screen). The ring, shadow and ripple follow the avatar's own shape
-/// ([outline]: circle, squircle, leaf, …).
 class AppAvatarButton extends StatelessWidget {
   const AppAvatarButton({
     required this.child,
@@ -16,11 +11,9 @@ class AppAvatarButton extends StatelessWidget {
     super.key,
   });
 
-  /// The avatar (about 32 inside the 40 frame).
   final Widget child;
   final VoidCallback? onTap;
 
-  /// The frame's corners; null = a circle.
   final BorderRadius? outline;
   final bool active;
   final String? tooltip;

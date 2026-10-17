@@ -12,10 +12,6 @@ import '../icons/icon_code.dart';
 import '../icons/icon_display.dart';
 import '../icons/icon_type.dart';
 
-/// One category row of [showCategoryPicker] — plain values, no feature
-/// model. The caller passes only the rows that may be shown (already
-/// filtered by type / system / excluded) and the [iconCode] to draw (already
-/// resolved, e.g. inherited from the L1 parent).
 @immutable
 class CategoryPickerRow {
   const CategoryPickerRow({
@@ -33,8 +29,8 @@ class CategoryPickerRow {
   final IconCode? iconCode;
 }
 
-/// The words of the category picker — the caller passes its localised
-/// strings (the kit never reads the app's l10n).
+/// The words of the category picker — the caller passes its localised strings
+/// (the kit never reads the app's l10n).
 class CategoryPickerLabels {
   const CategoryPickerLabels({
     required this.title,
@@ -48,46 +44,28 @@ class CategoryPickerLabels {
   final String title;
   final String searchHint;
 
-  /// The "None" row (clear / top-level).
   final String none;
 
-  /// The create row under the tree (only with `onCreate`).
   final String addNew;
 
-  /// No rows at all.
   final String empty;
 
-  /// A search with no match.
   final String noMatch;
 }
 
-/// What [showCategoryPicker] resolves (null = dismissed).
 sealed class CategoryPickerChoice {
   const CategoryPickerChoice();
 }
 
-/// A row was picked.
 class CategoryPickerPicked extends CategoryPickerChoice {
   const CategoryPickerPicked(this.id);
   final String id;
 }
 
-/// The None row was picked.
 class CategoryPickerNone extends CategoryPickerChoice {
   const CategoryPickerNone();
 }
 
-/// THE category-tree picker — a PRESENTATIONAL organism on [PickerSheet]:
-/// header + close, a search that keeps the tree (a match's parents open
-/// around it), the picked row highlighted (no tick). Tap a row to pick it;
-/// the chevron — only on rows with children — opens / closes a level.
-///
-/// - [maxDepth]: deepest level (0-based) shown and selectable.
-/// - [selectedId]: highlighted; its ancestors open and it scrolls into view.
-/// - [allowNone]: a None row (cleared) first.
-/// - [onCreate]: when set, a create row under the tree; it runs the caller's
-///   create flow and returns the new row's id (null = nothing created, the
-///   picker stays), which is then picked and closes the sheet.
 Future<CategoryPickerChoice?> showCategoryPicker(
   BuildContext context, {
   required List<CategoryPickerRow> rows,
@@ -110,8 +88,6 @@ Future<CategoryPickerChoice?> showCategoryPicker(
   );
 }
 
-/// The sheet body of [showCategoryPicker]; pops a
-/// [CategoryPickerChoice].
 class CategoryPickerSheet extends StatefulWidget {
   const CategoryPickerSheet({
     required this.rows,
@@ -135,17 +111,13 @@ class CategoryPickerSheet extends StatefulWidget {
 }
 
 class _CategoryPickerSheetState extends State<CategoryPickerSheet> {
-  /// Ids whose subtree is currently expanded.
   final Set<String> _expanded = <String>{};
 
-  /// The picked row — scrolled into view on open.
   final _selectedKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
-    // A deep pick opens down to its level: expand every ancestor, then
-    // bring the row into view.
     final byId = {for (final c in widget.rows) c.id: c};
     var parentId = byId[widget.selectedId]?.parentId;
     while (parentId != null && _expanded.add(parentId)) {
@@ -173,6 +145,7 @@ class _CategoryPickerSheetState extends State<CategoryPickerSheet> {
     return PickerSheet(
       title: l.title,
       searchable: true,
+      searchToggle: true,
       searchHint: l.searchHint,
       footer: widget.onCreate != null
           ? PickerCreateRow(label: l.addNew, onTap: _create)
@@ -195,8 +168,6 @@ class _CategoryPickerSheetState extends State<CategoryPickerSheet> {
       return d;
     }
 
-    // Searching: the matches (within reach) and every parent above them,
-    // opened — so a match always shows where it sits.
     Set<String>? visible;
     final forced = <String>{};
     if (query.isNotEmpty) {
@@ -259,7 +230,6 @@ class _CategoryPickerSheetState extends State<CategoryPickerSheet> {
     if (visible != null && !visible.contains(category.id)) return;
     final children = pool.where((c) => c.parentId == category.id).toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    // Children past [maxDepth] are neither shown nor expandable.
     final canDescend = depth < widget.maxDepth;
     final hasChildren = children.isNotEmpty && canDescend;
     final isExpanded =
@@ -279,8 +249,8 @@ class _CategoryPickerSheetState extends State<CategoryPickerSheet> {
         selected: picked,
         onTap: () =>
             Navigator.of(context).pop(CategoryPickerPicked(category.id)),
-        // The chevron only where there's a level to open (a right chevron
-        // would mean "go somewhere else" in this app).
+        // The chevron only where there's a level to open (a right chevron would
+        // mean "go somewhere else" in this app).
         trailing: hasChildren
             ? AppIconButton.flat(
                 icon: isExpanded ? AppIcons.collapse : AppIcons.expand,

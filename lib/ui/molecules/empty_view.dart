@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_spacing.dart';
 
-/// Shown when an async call succeeds but returns zero rows.
-///
-/// Per design-sheet §8.5: centered, vertical stack — 64 dp icon, headline
-/// title, body message, optional CTA.
 class EmptyView extends StatelessWidget {
   const EmptyView({
     super.key,
@@ -15,8 +11,6 @@ class EmptyView extends StatelessWidget {
     this.cta,
   }) : compact = false;
 
-  /// A small empty line (no icon, no title): a muted caption centred in its
-  /// space — an empty section inside a page.
   const EmptyView.compact({super.key, required this.message})
     : icon = Icons.inbox_outlined,
       title = '',

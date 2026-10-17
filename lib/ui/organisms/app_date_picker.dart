@@ -5,30 +5,19 @@ import '../atoms/ui_config.dart';
 import '../tokens/app_spacing.dart';
 import 'app_sheet.dart';
 
-/// What [showAppDatePicker] resolves with (null = dismissed).
 sealed class AppDateResult {
   const AppDateResult();
 }
 
-/// A day was picked.
 class AppDatePicked extends AppDateResult {
   const AppDatePicked(this.date);
   final DateTime date;
 }
 
-/// The "clear" button was pressed (only when `clearable`).
 class AppDateCleared extends AppDateResult {
   const AppDateCleared();
 }
 
-/// THE date picker (owner 2026-10-12): a bottom sheet with a calendar —
-/// tapping a day picks it at once — plus "today" and, when [clearable], "clear".
-/// Replaces every raw Material `showDatePicker`.
-///
-/// ```dart
-/// final r = await showAppDatePicker(context, initial: d, first: …, last: …);
-/// if (r is AppDatePicked) setState(() => d = r.date);
-/// ```
 Future<AppDateResult?> showAppDatePicker(
   BuildContext context, {
   required DateTime initial,
@@ -52,8 +41,6 @@ Future<AppDateResult?> showAppDatePicker(
   );
 }
 
-/// The picker's body (the calendar and its buttons) — [showAppDatePicker]
-/// puts it in a sheet; [onResult] gets the pick.
 class AppDatePickerSheet extends StatelessWidget {
   const AppDatePickerSheet({
     required this.initial,

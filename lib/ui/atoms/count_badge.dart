@@ -1,24 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// THE count badge (owner 2026-10-12): a red pill with a page-colour ring,
-/// "99+" past 99, nothing at 0. It floats off the top-right corner of what it
-/// counts — an icon button's circle, a tab's label — about half of it outside
-/// ([CountBadge.floating] places it); it never sits over the icon or text.
-///
-/// Used by [AppIconButton] and [AppTabBar]. Not [AppBadge] (an inline label)
-/// and not [CornerBadge] (the avatar's bottom-right mark).
 class CountBadge extends StatelessWidget {
   const CountBadge({required this.count, super.key});
 
-  /// The pill's height (it grows wider for 2–3 digits).
   static const double size = 18;
 
   final int count;
 
   /// [child] with the badge hanging off its top-right corner, anchored to the
-  /// CHILD'S own bounds (never the parent's width). [count] 0 = just [child].
-  /// [offset] is where the badge's top-right sits relative to the child's
-  /// corner (a tab's label wants it a bit further out than a round button).
+  /// CHILD'S own bounds (never the parent's width).
   static Widget floating({
     required Widget child,
     required int count,
@@ -51,7 +41,6 @@ class CountBadge extends StatelessWidget {
         decoration: BoxDecoration(
           color: scheme.error,
           borderRadius: BorderRadius.circular(size),
-          // The page-colour ring: the badge reads on any background.
           border: Border.all(
             color: Theme.of(context).scaffoldBackgroundColor,
             width: 2,

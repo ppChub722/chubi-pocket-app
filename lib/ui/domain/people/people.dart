@@ -6,8 +6,6 @@ import '../icons/icon_code.dart';
 import '../../atoms/add_tile.dart';
 import '../../atoms/user_avatar.dart';
 
-/// Minimal person shape for avatar widgets — map wallet members, project
-/// members, contacts into this so one widget serves them all.
 class PersonRef {
   const PersonRef({
     required this.name,
@@ -20,11 +18,9 @@ class PersonRef {
   final String name;
   final IconCode? iconCode;
 
-  /// Under-name line in [MemberStrip] ("คุณ", "รอตอบรับ").
   final String? caption;
   final bool isOwner;
 
-  /// Renders faded (invited, not yet joined).
   final bool pending;
 }
 
@@ -96,9 +92,6 @@ class AvatarStack extends StatelessWidget {
   }
 }
 
-/// Horizontally scrolling member row: avatar + name (+ caption) per person,
-/// 👑 for the owner, faded pending members, and a dashed "+ เชิญ" circle at
-/// the end when [onInvite] is set.
 class MemberStrip extends StatelessWidget {
   const MemberStrip({
     required this.members,
@@ -113,7 +106,6 @@ class MemberStrip extends StatelessWidget {
   final ValueChanged<int>? onMemberTap;
   final VoidCallback? onInvite;
 
-  /// Defaults to the localized "เชิญ".
   final String? inviteLabel;
   final double avatarSize;
 

@@ -2,8 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// One x-axis group of a [PairedBarChart] — two values side by side
-/// (e.g. income vs expense for a month).
 class BarPair {
   const BarPair({required this.label, required this.a, required this.b});
 
@@ -12,13 +10,6 @@ class BarPair {
   final double b;
 }
 
-/// Small grouped bar chart: per group two thin bars (colour [colorA] /
-/// [colorB]) on one shared zero baseline, rounded at the data end, 2px
-/// apart. No y-axis — it's a glance at the shape; exact values come from
-/// tapping a group ([onSelect]) and showing them elsewhere.
-///
-/// The [selected] group stays full-strength, the others fade back so
-/// the pick reads clearly. Pair it with a legend for [colorA] / [colorB].
 class PairedBarChart extends StatelessWidget {
   const PairedBarChart({
     required this.groups,
@@ -36,7 +27,6 @@ class PairedBarChart extends StatelessWidget {
   final int? selected;
   final ValueChanged<int>? onSelect;
 
-  /// Plot height, excluding the label row.
   final double height;
 
   @override
@@ -54,7 +44,6 @@ class PairedBarChart extends StatelessWidget {
       children: [
         for (var i = 0; i < groups.length; i++)
           Expanded(
-            // The whole column is the hit target, not just the bars.
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: onSelect == null ? null : () => onSelect!(i),
@@ -106,7 +95,6 @@ class _PairPainter extends CustomPainter {
     required this.baseline,
   });
 
-  /// 0..1 of the chart's max.
   final double a;
   final double b;
   final Color colorA;

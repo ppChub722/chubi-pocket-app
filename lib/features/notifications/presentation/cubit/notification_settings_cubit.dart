@@ -58,8 +58,6 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
     }
   }
 
-  /// One type to [mode] — ONE call carrying only the list(s) that change
-  /// (off = muted, auto cleared; notify = neither; auto = auto, not muted).
   Future<void> setMode(NotificationType t, NotifyMode mode) {
     final s = state.settings;
     if (s == null || s.modeOf(t) == mode) return Future.value();
@@ -73,9 +71,6 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
     );
   }
 
-  /// Optimistic: the switch flips at once; a failed save flips it back and
-  /// sets [SettingsState.error] (the page shows "เปลี่ยนกลับแล้ว"; muting a
-  /// non-mutable type comes back as `TYPE_NOT_MUTABLE`).
   Future<void> update({
     Set<String>? mutedTypes,
     Set<String>? autoTypes,

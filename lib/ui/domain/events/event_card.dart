@@ -13,23 +13,18 @@ import '../icons/icon_registry.dart';
 import '../icons/icon_type.dart';
 import '../money/money_text.dart';
 
-/// A tag as the events pieces show it: a name and its icon (null = the
-/// generic tag glyph in primary). Plain data — the feature maps its own tag
-/// (a user tag, an event tag) into it.
 class EventTagRef {
   const EventTagRef(this.name, {this.iconCode});
 
   final String name;
   final IconCode? iconCode;
 
-  /// The tag's one colour: its icon colour (tags never show a bg), else
-  /// the entity tint ([IconCodeTint.tintFor]), else primary.
+  /// The tag's one colour: its icon colour (tags never show a bg), else the
+  /// entity tint ([IconCodeTint.tintFor]), else primary.
   Color colorOf(AppColors palette) => (iconCode?.iconColors.isNotEmpty ?? false)
       ? resolveColor(iconCode!.iconColors.first, palette)
       : iconCode.tintFor(palette);
 
-  /// The tag as a mini [AppChip] (dense list rows): `[icon] name` in its
-  /// colour. [onTap] null = display only.
   Widget chip(BuildContext context, {VoidCallback? onTap, double? maxWidth}) {
     final palette = Theme.of(context).extension<AppColors>()!;
     return AppChip(
@@ -44,25 +39,6 @@ class EventTagRef {
   }
 }
 
-/// One event in the events list (owner 2026-10-12, replaces the page's
-/// private `_ProjectCard`). A hairline-separated row, not a boxed card:
-///
-///   (icon)  name                                   [● status]
-///           description
-///           [tag] [tag]
-///           meta caption                              +฿120
-///           ▓▓▓▓▓▓▓▓░░░░░░  plan label         trailing
-///
-/// - [iconCode]: the event's icon ([IconDisplay], project fallback).
-/// - [statusLabel] / [statusTone] / [statusDot]: the status as a mini chip.
-/// - [tags]: the user's own tags on the event, as mini chips.
-/// - [meta]: one caption line ("4 คน · 1–5 ต.ค.").
-/// - [progress] (ratio, >1 = over plan) + [progressLabel] /
-///   [progressTrailing]: the plan bar; null = no plan.
-/// - [myNet]: my position, a signed amount (+ = I'm owed); null = hidden.
-/// - [dimmed]: the locked / archived look (faded; still opens).
-///
-/// Every word comes in as a string: the feature supplies the Thai.
 class EventCard extends StatelessWidget {
   const EventCard({
     required this.name,
@@ -83,7 +59,6 @@ class EventCard extends StatelessWidget {
     super.key,
   });
 
-  /// The leading icon's size.
   static const double iconSize = 40;
 
   final String name;

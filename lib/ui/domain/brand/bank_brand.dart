@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Third-party brand colours of the Thai banks, by BOT bank code. These are
-/// the banks' own colours — legitimately outside the theme tokens.
 abstract final class BankBrand {
   static const Map<String, Color> _brand = {
     '002': Color(0xFF1E4598), // BBL
@@ -29,8 +27,6 @@ abstract final class BankBrand {
     Color(0xFF00897B),
   ];
 
-  /// The brand colour of the bank with [code]; unknown banks get a stable
-  /// colour derived from the code.
   static Color of(String code) =>
       _brand[code] ??
       _fallback[code.codeUnits.fold(0, (a, b) => a + b) % _fallback.length];

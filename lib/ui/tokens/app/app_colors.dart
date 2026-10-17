@@ -68,13 +68,8 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color error;
   final Color onError;
 
-  /// Wallet type groups (owner 2026-10-11) — read them through
-  /// `AccountType.colorOf`, the one place that maps a type to its group.
-  /// What you have (cash / bank / e-wallet): a cool tone.
   final Color walletAsset;
 
-  /// What you owe (credit card / pay later): a warm red-orange, kept
-  /// apart from [expense].
   final Color walletLiability;
 
   ColorScheme toColorScheme() {

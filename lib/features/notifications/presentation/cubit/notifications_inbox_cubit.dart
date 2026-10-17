@@ -8,15 +8,12 @@ import '../../domain/notification.dart';
 
 enum InboxStatus { initial, loading, loaded, error }
 
-/// The inbox's filter tiles (ทั้งหมด / ต้องตอบ / ยังไม่อ่าน / ซ่อนไว้). Each
-/// maps to the list call's own query parameters.
 enum InboxFilter {
   all,
   needsAnswer,
   unread,
   hidden;
 
-  /// Query for `GET /notifications` (one call per filter).
   ({String? read, String? dismissed, String? awaitsAnswer}) get query =>
       switch (this) {
         InboxFilter.all => (read: null, dismissed: null, awaitsAnswer: null),
@@ -53,7 +50,6 @@ class InboxState extends Equatable {
   final List<AppNotification> notifications;
   final int unreadCount;
 
-  /// The card's numbers over all rows, as the last load returned them.
   final InboxSummary summary;
   final InboxStatus status;
   final ApiException? error;
@@ -100,8 +96,6 @@ class InboxState extends Equatable {
   ];
 }
 
-/// Inbox cubit. Owns the page-1-loaded list. Every write patches the rows
-/// held and takes the card's numbers from its answer — never a re-fetch.
 class NotificationsInboxCubit extends Cubit<InboxState> {
   NotificationsInboxCubit({
     required NotificationsRepository repository,
@@ -111,13 +105,8 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
 
   final NotificationsRepository _repo;
 
-  /// Called with the fresh unread count whenever a load or a write returns
-  /// one — lets the owner patch the app-wide bell badge without a poll.
   final ValueChanged<int>? onUnreadChanged;
 
-  /// Every await here can outlive the page that owns this cubit (the home
-  /// tab, the inbox) — a reply landing after close is dropped, not thrown
-  /// ("Cannot emit new states after calling close", QA S1 2026-10-11).
   @override
   void emit(InboxState state) {
     if (!isClosed) super.emit(state);
@@ -136,8 +125,6 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
     );
   }
 
-  /// The page's one `GET /notifications`. Rows already on screen stay while
-  /// it runs and when it fails (the error rides in [InboxState.error]).
   Future<void> load({InboxFilter? filter}) async {
     final f = filter ?? state.filter;
     emit(
@@ -171,7 +158,6 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
     }
   }
 
-  /// Re-fetch keeping the current filter.
   Future<void> reload() => load();
 
   Future<void> loadMore() async {
@@ -205,9 +191,6 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
 
   Future<void> markActioned(String id) => _write(() => _repo.markActioned(id));
 
-  /// Hides a row (swipe). The row leaves the list at once; the card's
-  /// numbers come from the answer (no re-fetch). A failed call puts the row
-  /// back where it was.
   Future<bool> hide(String id) async {
     final at = state.notifications.indexWhere((n) => n.id == id);
     final row = at < 0 ? null : state.notifications[at];
@@ -230,9 +213,6 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
     }
   }
 
-  /// Un-hides a row (the snackbar's undo, the ซ่อนไว้ tile's กู้คืน). In the
-  /// hidden view the row leaves; anywhere else the restored row (from the
-  /// answer) goes back in its place by date.
   Future<bool> restore(String id) async {
     try {
       final r = await _repo.restore(id);
@@ -252,11 +232,8 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
     }
   }
 
-  /// The one-tap rows' "skip" just hides the row.
   Future<void> markDismissed(String id) => hide(id);
 
-  /// Marks everything read: the rows on screen flip to read, the numbers
-  /// come from the answer.
   Future<void> markReadAll() async {
     try {
       final r = await _repo.markReadAll();
@@ -288,10 +265,6 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
     }
   }
 
-  /// Takes the answer of a write made elsewhere (an invite / link-request
-  /// accept or reject): the row in its new state (a dismissed one leaves
-  /// unless the hidden view is open), the badges and the card's numbers.
-  /// No re-fetch.
   void applyAnswer(NotificationActionResult r) {
     final keep =
         !r.notification.isDismissed || state.filter == InboxFilter.hidden;
@@ -306,9 +279,6 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
     _apply(r.badges, r.summary);
   }
 
-  /// An answer that carries only the card's numbers (an event invite
-  /// accept / reject, `inbox_summary`): that row turns done, the numbers come
-  /// from the answer — no re-fetch.
   void applyInboxSummary(String id, InboxSummary summary) {
     final now = DateTime.now().toUtc();
     emit(
@@ -324,8 +294,6 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
     onUnreadChanged?.call(summary.unread);
   }
 
-  /// One write: the reply carries the row in its new state, the fresh
-  /// badges and the card's numbers.
   Future<void> _write(Future<NotificationActionResult> Function() call) async {
     try {
       final r = await call();
@@ -343,7 +311,6 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
     }
   }
 
-  /// Takes the numbers a write's answer carries.
   void _apply(Badges badges, InboxSummary summary) {
     emit(
       state.copyWith(unreadCount: badges.unreadNotifications, summary: summary),

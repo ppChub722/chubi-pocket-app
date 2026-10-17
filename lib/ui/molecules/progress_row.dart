@@ -2,17 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_spacing.dart';
 
-/// Progress bar + caption — budgets, saving goals, debt repayment, credit
-/// utilisation, project plan vs actual.
-///
-/// [value] is a ratio (0–1); above 1 the bar fills and turns [overColor]
-/// (defaults to the error colour) to flag over-budget / over-limit.
-///
-/// [expected] (budgets, owner 2026-10-13): a further ratio drawn AFTER the
-/// used part as a lighter striped segment in the same colour ("what the pace
-/// says is still coming"). Both are unclamped inputs; the bar clamps the
-/// TOTAL at 100 % (the segment is cut where the track ends), and the caption
-/// % is the caller's string, so it can say "122%".
 class ProgressRow extends StatelessWidget {
   const ProgressRow({
     required this.value,
@@ -29,28 +18,19 @@ class ProgressRow extends StatelessWidget {
 
   final double value;
 
-  /// The extra, not-yet-spent ratio drawn after [value] (null / 0 = none).
   final double? expected;
 
-  /// Left caption under the bar ("คืนแล้ว ฿300 จาก ฿500").
   final String? label;
 
-  /// Right caption under the bar ("60%", "เหลือ ฿200").
   final String? trailing;
   final Color? color;
   final Color? overColor;
   final double height;
 
-  /// A thin tick across the bar at this ratio (0..1) — where spending "should"
-  /// be today (a budget's pace, owner 2026-10-16). null = none.
   final double? marker;
 
-  /// Thin white ticks at these ratios (0..1): a goal's 25 / 50 / 75 % (owner
-  /// 2026-10-17). Empty = none.
   final List<double> ticks;
 
-  /// The bar's two fractions of the track, both clamped to 0..1: where the
-  /// used part ends, and where used + expected ends (the total, clamped).
   static (double used, double total) segments(double value, double? expected) {
     final used = value.clamp(0, 1).toDouble();
     final total = (value + (expected ?? 0)).clamp(used, 1).toDouble();
@@ -153,7 +133,6 @@ class ProgressRow extends StatelessWidget {
   }
 }
 
-/// A lighter fill with diagonal stripes — the "expected" segment.
 class _StripePainter extends CustomPainter {
   const _StripePainter(this.color);
 
@@ -184,7 +163,6 @@ class _StripePainter extends CustomPainter {
   bool shouldRepaint(_StripePainter old) => old.color != color;
 }
 
-/// The pace tick: a 2px line across the full bar height at [at] of the track.
 class _MarkerPainter extends CustomPainter {
   const _MarkerPainter(this.at, this.color);
 
@@ -204,7 +182,6 @@ class _MarkerPainter extends CustomPainter {
   bool shouldRepaint(_MarkerPainter old) => old.at != at || old.color != color;
 }
 
-/// Thin vertical ticks at [at] ratios of the track.
 class _TicksPainter extends CustomPainter {
   const _TicksPainter(this.at, this.color);
 

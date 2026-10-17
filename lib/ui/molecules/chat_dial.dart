@@ -7,13 +7,6 @@ import '../tokens/app/app_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 
-/// Speed-dial that opens into a chat-style input — a floating button that,
-/// when tapped, grows into a one-line text field with ✕ and send. For
-/// jotting things down in words ("กาแฟ 65") instead of filling a form.
-///
-/// Put it in `Scaffold.floatingActionButton`; it rides above the keyboard
-/// and any bottom bar. [onSend] null = display only (nothing happens on
-/// send yet).
 class ChatDial extends StatefulWidget {
   const ChatDial({
     required this.hint,
@@ -25,14 +18,12 @@ class ChatDial extends StatefulWidget {
     super.key,
   });
 
-  /// Placeholder in the open field ("เช่น กาแฟ 65").
   final String hint;
   final String? tooltip;
   final String? sendTooltip;
   final String? closeTooltip;
   final ValueChanged<String>? onSend;
 
-  /// Width of the open field; null = the screen width minus the gutters.
   final double? openWidth;
 
   @override
@@ -93,7 +84,6 @@ class _ChatDialState extends State<ChatDial> {
                           autofocus: true,
                           textInputAction: TextInputAction.send,
                           onSubmitted: (_) => _send(),
-                          // Chat: plain text in the pill, no underline.
                           underline: false,
                           hint: widget.hint,
                         ),

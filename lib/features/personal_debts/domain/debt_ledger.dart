@@ -7,12 +7,6 @@ import 'debt_direction.dart';
 export 'debt_direction.dart';
 export 'debt_link.dart';
 
-/// The person ledger (0.3.1-10, owner 2026-10-12; spec tag "Debts"): every
-/// debt record is one ENTRY with a person, a fixed direction (paid /
-/// received) and a positive amount. Net per person = Σ paid − Σ received;
-/// the BE computes every number, the FE only shows it.
-
-/// Net per person: > 0 they owe me (ติดคุณ), < 0 I owe them (คุณติด).
 enum NetSide {
   owedToMe,
   iOwe,
@@ -22,11 +16,9 @@ enum NetSide {
       ? NetSide.owedToMe
       : (net < -0.005 ? NetSide.iOwe : NetSide.even);
 
-  /// The people-list filter value (`side=`).
   String get wire => this == NetSide.owedToMe ? 'owed_to_me' : 'i_owe';
 }
 
-/// `Page`: `{page, per_page, total, total_pages}`.
 class DebtPaging extends Equatable {
   const DebtPaging({
     this.page = 1,
@@ -68,26 +60,20 @@ class PersonBalance extends Equatable {
     this.daysOutstanding,
   });
 
-  /// `c:<contact id>` or `n:<lower-cased typed name>`.
   final String key;
   final EmbeddedPerson person;
 
-  /// Σ paid − Σ received.
   final double net;
 
-  /// Entries not labelled paid.
   final int openCount;
   final int entryCount;
 
-  /// The latest entry date (null with no entries).
   final DateTime? lastActivityAt;
 
-  /// The CYCLE boundary: the last entry after which the balance was 0 (null
-  /// = it never was). Entries after it are the current cycle.
+  /// The CYCLE boundary: the last entry after which the balance was 0 (null =
+  /// it never was).
   final DateTime? clearedAt;
 
-  /// Age in days of the oldest unpaid entry of the current cycle (null =
-  /// none) — the BE's number, shown as "ค้าง N วัน".
   final int? daysOutstanding;
 
   NetSide get side => NetSide.of(net);
@@ -121,8 +107,6 @@ class PersonBalance extends Equatable {
   ];
 }
 
-/// `DebtTotals`: the people list header, the Home tile and the More tile
-/// (one rule). They ignore the list's search / side / "ทั้งหมด" / paging.
 class DebtTotals extends Equatable {
   const DebtTotals({
     this.owedToMe = 0,
@@ -134,21 +118,16 @@ class DebtTotals extends Equatable {
     this.over30DaysPeople = 0,
   });
 
-  /// Σ net of the people with net > 0.
   final double owedToMe;
 
-  /// Σ |net| of the people with net < 0.
   final double iOwe;
   final double net;
 
-  /// People with something open.
   final int openCount;
 
-  /// People with net > 0 / net < 0 (the tiles' "N คน").
   final int owedToMePeople;
   final int iOwePeople;
 
-  /// People whose oldest open entry (current cycle) is over 30 days old.
   final int over30DaysPeople;
 
   factory DebtTotals.fromJson(Map<String, dynamic>? json) => json == null
@@ -175,7 +154,6 @@ class DebtTotals extends Equatable {
   ];
 }
 
-/// `DebtPeopleList` (`GET /personal-debts/people`).
 class DebtPeoplePage extends Equatable {
   const DebtPeoplePage({
     required this.items,
@@ -197,14 +175,9 @@ class DebtPeoplePage extends Equatable {
   List<Object?> get props => [items, totals, paging];
 }
 
-/// `DebtSource`: where a split-sourced entry came from. Such an entry edits
-/// only description / note / paid.
 class DebtEntrySource extends Equatable {
   const DebtEntrySource({required this.kind, this.id, this.title});
 
-  /// `transaction` (a split on my bill: [id] = that tx) · `event` (an event
-  /// board: [id] = the event) · `partner` (another user's split on me: no
-  /// [id], [title] = their name).
   final String kind;
   final String? id;
   final String? title;
@@ -220,13 +193,11 @@ class DebtEntrySource extends Equatable {
   List<Object?> get props => [kind, id, title];
 }
 
-/// `DebtEntryTx`: the wallet transaction of an entry (light ref for rows).
 class DebtEntryTransaction extends Equatable {
   const DebtEntryTransaction({required this.id, this.account});
 
   final String id;
 
-  /// Null only for an old floating repayment.
   final AccountRef? account;
 
   factory DebtEntryTransaction.fromJson(Map<String, dynamic> json) =>
@@ -241,7 +212,6 @@ class DebtEntryTransaction extends Equatable {
   List<Object?> get props => [id, account];
 }
 
-/// `DebtEntry`: one ledger entry with a person.
 class DebtEntry extends Equatable {
   const DebtEntry({
     required this.id,
@@ -261,15 +231,11 @@ class DebtEntry extends Equatable {
 
   final String id;
 
-  /// Only in a person's entry lists: true = after the cycle boundary
-  /// (`cleared_at`), false = an earlier cycle; null elsewhere.
   final bool? inCurrentCycle;
 
-  /// The person's key.
   final String? key;
   final DebtEntryDirection direction;
 
-  /// Always positive; [direction] says which way.
   final double amount;
   final DateTime? date;
   final String? description;
@@ -278,10 +244,8 @@ class DebtEntry extends Equatable {
   /// The "จ่ายแล้ว" label: it never changes any number.
   final bool paid;
 
-  /// Null = a manual entry (fully editable).
   final DebtEntrySource? source;
 
-  /// Null = ledger-only (no wallet).
   final DebtEntryTransaction? transaction;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -331,8 +295,6 @@ class DebtEntry extends Equatable {
   ];
 }
 
-/// `DebtEntryList` (`GET …/people/{key}/entries`), and the first page
-/// embedded in the person page.
 class DebtEntriesPage extends Equatable {
   const DebtEntriesPage({required this.items, required this.paging});
 
@@ -349,8 +311,6 @@ class DebtEntriesPage extends Equatable {
   List<Object?> get props => [items, paging];
 }
 
-/// `DebtPersonPage` (`GET /personal-debts/people/{key}`): the balance, the
-/// counts and the first page of the timeline, in one call.
 class DebtPersonDetail extends Equatable {
   const DebtPersonDetail({
     required this.balance,
@@ -361,11 +321,9 @@ class DebtPersonDetail extends Equatable {
 
   final PersonBalance balance;
 
-  /// The first page of the asked cycle (the current one by default).
   final DebtEntriesPage entries;
   final DebtCounts counts;
 
-  /// The text to send the person (BE-built, current cycle).
   final DebtSummaryMessage message;
 
   factory DebtPersonDetail.fromJson(Map<String, dynamic> json) =>
@@ -380,9 +338,6 @@ class DebtPersonDetail extends Equatable {
   List<Object?> get props => [balance, entries, counts, message];
 }
 
-/// `counts` of the person page: all entries, wallet-money entries, and the
-/// current / earlier cycle split (the "รอบก่อนหน้านี้" fold shows when
-/// [earlier] > 0).
 class DebtCounts extends Equatable {
   const DebtCounts({
     this.entries = 0,
@@ -409,14 +364,11 @@ class DebtCounts extends Equatable {
   List<Object?> get props => [entries, money, current, earlier];
 }
 
-/// `DebtSummaryMessage`: the BE-built text to send a person (current-cycle
-/// entries, both directions) — the person page's message box.
 class DebtSummaryMessage extends Equatable {
   const DebtSummaryMessage({this.text = '', this.entries = 0, this.net = 0});
 
   final String text;
 
-  /// Entries listed in [text].
   final int entries;
   final double net;
 
@@ -433,8 +385,6 @@ class DebtSummaryMessage extends Equatable {
   List<Object?> get props => [text, entries, net];
 }
 
-/// The people list's sort (`sort=`): the longest outstanding first (default),
-/// the biggest amount, or the latest activity.
 enum DebtPeopleSort {
   oldest('oldest'),
   amount('amount'),
@@ -444,8 +394,6 @@ enum DebtPeopleSort {
   final String wire;
 }
 
-/// Which debt cycle a person's entries come from (`cycle=`): the current one
-/// (after the balance last hit 0) or the earlier ones.
 enum DebtCycle {
   current('current'),
   earlier('earlier');
@@ -454,9 +402,6 @@ enum DebtCycle {
   final String wire;
 }
 
-/// `DebtEntryDetail` (`GET /personal-debts/{id}`): the tx detail page in
-/// debt mode — the entry, the person's balance and the linked transaction
-/// as a full row (null = ledger-only).
 class DebtEntryDetail extends Equatable {
   const DebtEntryDetail({
     required this.entry,
@@ -481,8 +426,6 @@ class DebtEntryDetail extends Equatable {
   List<Object?> get props => [entry, balance, transaction];
 }
 
-/// `DebtEntryWriteResult`: every debt write (create, update, the paid label,
-/// accepting a split) returns the final state.
 class DebtEntryWriteResult extends Equatable {
   const DebtEntryWriteResult({
     required this.entry,
@@ -494,17 +437,12 @@ class DebtEntryWriteResult extends Equatable {
 
   final DebtEntry entry;
 
-  /// The person's new balance.
   final PersonBalance balance;
 
-  /// Set only when an edit moved the entry to another person (the old
-  /// person's new balance).
   final PersonBalance? previousBalance;
 
-  /// The linked transaction, full row (null = ledger-only).
   final Transaction? transaction;
 
-  /// {wallet id: balance} for every wallet the write touched.
   final Map<String, double> accountBalances;
 
   factory DebtEntryWriteResult.fromJson(Map<String, dynamic> json) =>
@@ -528,7 +466,6 @@ class DebtEntryWriteResult extends Equatable {
   ];
 }
 
-/// `DebtEntryDeleteResult`: the entry is gone, with its wallet transaction.
 class DebtEntryDeleteResult extends Equatable {
   const DebtEntryDeleteResult({
     required this.id,
@@ -539,7 +476,6 @@ class DebtEntryDeleteResult extends Equatable {
 
   final String id;
 
-  /// The linked transaction deleted with it (null = ledger-only).
   final String? transactionId;
   final PersonBalance balance;
   final Map<String, double> accountBalances;
@@ -556,7 +492,6 @@ class DebtEntryDeleteResult extends Equatable {
   List<Object?> get props => [id, transactionId, balance, accountBalances];
 }
 
-/// `DebtSplitChangeResult` ("อัปเดตตาม" on a split_changed).
 class DebtSplitChangeResult extends Equatable {
   const DebtSplitChangeResult({
     required this.deleted,
@@ -564,10 +499,8 @@ class DebtSplitChangeResult extends Equatable {
     this.entry,
   });
 
-  /// true = the split was removed and my entry is gone.
   final bool deleted;
 
-  /// My entry with the new amount (null when [deleted]).
   final DebtEntry? entry;
   final PersonBalance balance;
 
@@ -582,7 +515,6 @@ class DebtSplitChangeResult extends Equatable {
   List<Object?> get props => [deleted, entry, balance];
 }
 
-/// The timeline's sort orders (`sort=`).
 enum DebtEntrySort {
   dateDesc('date_desc'),
   dateAsc('date_asc'),
@@ -593,7 +525,6 @@ enum DebtEntrySort {
   final String wire;
 }
 
-/// Search / filter / sort of one person's entries.
 class DebtEntryQuery extends Equatable {
   const DebtEntryQuery({
     this.q = '',
@@ -607,11 +538,9 @@ class DebtEntryQuery extends Equatable {
   final DebtEntrySort sort;
   final DebtEntryDirection? direction;
 
-  /// The "จ่ายแล้ว" label filter (`paid=false` = the mark-paid list).
   final bool? paid;
   final String? accountId;
 
-  /// Search / filter / sort differ from the default view.
   bool get isFiltered =>
       q.trim().isNotEmpty ||
       sort != DebtEntrySort.dateDesc ||
@@ -648,13 +577,10 @@ class DebtEntryQuery extends Equatable {
   List<Object?> get props => [q, sort, direction, paid, accountId];
 }
 
-/// The person key for a contact / a typed name (what the BE groups by; it
-/// always returns `n:` keys lower-cased and trimmed).
 String debtPersonKey({String? contactId, String? name}) => contactId != null
     ? 'c:$contactId'
     : 'n:${(name ?? '').trim().toLowerCase()}';
 
-/// `yyyy-MM-dd` for the API's `Date` fields.
 String debtDateWire(DateTime d) =>
     '${d.year.toString().padLeft(4, '0')}-'
     '${d.month.toString().padLeft(2, '0')}-'

@@ -5110,7 +5110,7 @@ abstract class AppLocalizations {
   /// No description provided for @transactionFormAccountNone.
   ///
   /// In en, this message translates to:
-  /// **'No wallet'**
+  /// **'Unspecified wallet'**
   String get transactionFormAccountNone;
 
   /// No description provided for @transactionFormAccountPickerTitle.
@@ -7276,7 +7276,7 @@ abstract class AppLocalizations {
   /// No description provided for @txSplitNoContact.
   ///
   /// In en, this message translates to:
-  /// **'No contact'**
+  /// **'Unspecified contact'**
   String get txSplitNoContact;
 
   /// No description provided for @txSplitNoContactHint.
@@ -7876,7 +7876,7 @@ abstract class AppLocalizations {
   /// No description provided for @debtNoWallet.
   ///
   /// In en, this message translates to:
-  /// **'No wallet'**
+  /// **'Unspecified wallet'**
   String get debtNoWallet;
 
   /// No description provided for @debtPickPerson.
@@ -7966,20 +7966,44 @@ abstract class AppLocalizations {
   /// No description provided for @txFilterNoWallet.
   ///
   /// In en, this message translates to:
-  /// **'No wallet'**
+  /// **'Unspecified wallet'**
   String get txFilterNoWallet;
 
   /// No description provided for @txFilterNoCategory.
   ///
   /// In en, this message translates to:
-  /// **'No category'**
+  /// **'Unspecified category'**
   String get txFilterNoCategory;
 
   /// No description provided for @txFilterNoTag.
   ///
   /// In en, this message translates to:
-  /// **'No tag'**
+  /// **'Unspecified tag'**
   String get txFilterNoTag;
+
+  /// No description provided for @txSummaryNet.
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get txSummaryNet;
+
+  /// No description provided for @txFilterAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get txFilterAmount;
+
+  /// No description provided for @txFilterAmountMin.
+  ///
+  /// In en, this message translates to:
+  /// **'Min'**
+  String get txFilterAmountMin;
+
+  /// No description provided for @txFilterAmountMax.
+  ///
+  /// In en, this message translates to:
+  /// **'Max'**
+  String get txFilterAmountMax;
 
   /// No description provided for @txTitleHintExpense.
   ///
@@ -11279,7 +11303,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpGoalsNoWallet.
   ///
   /// In en, this message translates to:
-  /// **'No wallet'**
+  /// **'Unspecified wallet'**
   String get fpGoalsNoWallet;
 
   /// No description provided for @fpGoalsChartActual.

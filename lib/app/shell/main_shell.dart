@@ -13,29 +13,9 @@ import 'shell_chrome.dart';
 import 'tab_nav.dart';
 import '../../ui/ui.dart';
 
-/// App chrome shared by every tab-layer screen.
-///
-/// The shell owns only the floating bottom nav (with its centred `+`
-/// quick-create button), shown on **every** page. Top bars belong to the
-/// pages: tab roots use [TabRootScaffold] (transparent bar, content scrolls
-/// under it), deeper pages bring their own [Scaffold] + back button — so
-/// pushing a page never changes the shell's layout mid-transition.
-/// Every page group is its own tab ([ShellTab]); only the four nav tabs
-/// light a slot — เพิ่มเติม only on the hub itself, the hub's cards and the
-/// ⏳ / 🔔 / 👤 pages none.
-///
-/// **Back between tabs** (owner 2026-10-09): the shell remembers the tabs
-/// visited, so back on a tab's root returns to the previous one — see
-/// [_MainShellState._onBackAtRoot].
-///
-/// A page can also **take over the bottom chrome** via [ShellChrome]: when
-/// it calls [ShellChromeController.hide] (e.g. categories' reorder mode),
-/// the nav slides away so the page's own contextual action bar replaces it
-/// instead of stacking under it.
 class MainShell extends StatefulWidget {
   const MainShell({required this.navigationShell, super.key});
 
-  /// The branched navigation tree managed by [StatefulShellRoute].
   final StatefulNavigationShell navigationShell;
 
   @override
@@ -46,8 +26,6 @@ class _MainShellState extends State<MainShell>
     with SingleTickerProviderStateMixin {
   final ShellChromeController _chrome = ShellChromeController();
 
-  /// Pages that preset the centre +'s quick create (a wallet's page →
-  /// that wallet) and colour it by mode.
   late final QuickCreateContext _quickCreate = QuickCreateContext()
     ..currentBranch = widget.navigationShell.currentIndex;
 
@@ -57,18 +35,13 @@ class _MainShellState extends State<MainShell>
 
   void _goBranch(int i) => widget.navigationShell.goBranch(
     i,
-    // Re-tapping the active tab pops to the branch root, matching the
-    // behaviour users expect from native bottom nav.
     initialLocation: i == widget.navigationShell.currentIndex,
   );
 
-  /// Tabs visited before the current one, most recent last. Each appears
-  /// once (revisiting moves it to the end) and never the current tab, so
-  /// back can't ping-pong between two tabs forever.
   final List<int> _history = [];
 
-  /// The tab a back is heading to — arriving there records nothing, so
-  /// back never builds a "forward" trail.
+  /// The tab a back is heading to — arriving there records nothing, so back
+  /// never builds a "forward" trail.
   int? _backTo;
 
   @override
@@ -96,35 +69,20 @@ class _MainShellState extends State<MainShell>
     super.dispose();
   }
 
-  /// A fling this fast (px/s) sideways moves to the neighbouring tab.
   static const _minFlingVelocity = 300.0;
 
-  /// Furthest (px) the tab body trails the finger mid-swipe.
   static const _maxNudge = 24.0;
 
-  /// The tab body's mid-swipe offset (px), read by [TabSwitchBody].
   late final AnimationController _nudge = AnimationController.unbounded(
     vsync: this,
   );
 
-  /// Whether the drag in progress may switch tabs.
   bool _swiping = false;
   double _dragDx = 0;
 
-  /// Owner 2026-10-17: the shell swipe only exists on the roots of the 4
-  /// bottom tabs and the 3 top tabs (pending, notifications, profile /
-  /// settings). The เพิ่มเติม cards' pages (budgets, goals, categories …)
-  /// have none.
   static bool _swipesBetweenTabs(ShellTab tab) =>
       tab.row == ShellRow.nav || tab.row == ShellRow.top;
 
-  /// Swipe between the tabs of the nav / top row ([ShellRow] — the nav and
-  /// the top bar's chips; owner 2026-10-09/10, narrowed 2026-10-17) —
-  /// only on a tab's root page (nothing pushed in that tab) and not while
-  /// a page has taken over the bottom chrome (edit / reorder). Anything
-  /// inside that wants a sideways drag — an in-page tab pager, a horizontal
-  /// chip row, swipe-to-dismiss — is deeper in the gesture arena and wins,
-  /// so this only fires where nothing else claims the gesture.
   void _onDragStart(DragStartDetails _) {
     final shell = widget.navigationShell;
     final branchNav = shell.route.branches[shell.currentIndex].navigatorKey;
@@ -136,11 +94,8 @@ class _MainShellState extends State<MainShell>
     if (_swiping) _nudge.stop();
   }
 
-  /// The body trails the finger, damped so it only ever moves a little —
-  /// half as far toward an end with no tab past it. Not when the page takes
-  /// the swipe itself (the dashboard's month): moving the whole tab would
-  /// read as a tab switch — the page gives its own feedback instead. Not
-  /// at all under reduced motion.
+  /// The body trails the finger, damped so it only ever moves a little — half
+  /// as far toward an end with no tab past it.
   void _onDragUpdate(DragUpdateDetails d) {
     if (!_swiping) return;
     _dragDx += d.primaryDelta ?? 0;
@@ -158,7 +113,6 @@ class _MainShellState extends State<MainShell>
     _swiping = false;
     final v = d.primaryVelocity ?? 0;
     if (v.abs() < _minFlingVelocity) return _settle();
-    // The page first (the dashboard's month); the tab once it's at its end.
     if (_pageSwipes(v)) {
       HapticFeedback.selectionClick();
       _swipeHandlers[_current]!.onSwipe(v < 0 ? 1 : -1);
@@ -166,16 +120,13 @@ class _MainShellState extends State<MainShell>
     }
     final next = _neighbour(v);
     if (next == null) return _settle();
-    // The new tab brings its own entry slide (TabSwitchBody).
     _nudge.value = 0;
     HapticFeedback.selectionClick();
     _goBranch(next);
   }
 
-  /// Tab roots that use the sideways swipe themselves ([ShellSwipeScope]).
   final Map<ShellTab, ShellSwipeHandler> _swipeHandlers = {};
 
-  /// Whether the current tab's page takes a swipe toward [dx]'s sign.
   bool _pageSwipes(double dx) =>
       _swipeHandlers[_current]?.canSwipe(dx < 0 ? 1 : -1) ?? false;
 
@@ -191,18 +142,10 @@ class _MainShellState extends State<MainShell>
     curve: AppDurations.chromeCurve,
   );
 
-  /// The tab a swipe toward [dx]'s sign lands on, or null past either end
-  /// of the row. Swipe left (negative) → the tab to the right.
   int? _neighbour(double dx) => _current.beside(dx < 0 ? 1 : -1)?.index;
 
   bool _askingExit = false;
 
-  /// Back with nothing left to pop in the tab (pushed pages and sheets pop
-  /// before this is reached; the top bar's ← lands here too):
-  /// 1. the previous tab in the history, as it was left;
-  /// 2. none — a เพิ่มเติม card's tab → the hub; any other tab → the
-  ///    dashboard;
-  /// 3. the dashboard → "ปิดแอป?" (owner 2026-10-09).
   Future<void> _onBackAtRoot() async {
     final ShellTab? fallback = _current.inMore
         ? ShellTab.more
@@ -230,17 +173,11 @@ class _MainShellState extends State<MainShell>
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      // The shell is the root navigator's only page, so a back that reaches
-      // it would close the app — handle it instead.
+      // The shell is the root navigator's only page, so a back that reaches it
+      // would close the app — handle it instead.
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        // go_router sends system back to a tab's navigator only when it can
-        // pop — a tab's ROOT page never got asked, so its PopScope (reorder
-        // / edit mode: "leave the mode first") was skipped and the shell
-        // switched tabs with the page still in its mode, the nav hidden.
-        // Ask the current tab first; only a page that lets go falls
-        // through to the shell's back.
         final shell = widget.navigationShell;
         final tab = shell.route.branches[shell.currentIndex].navigatorKey;
         if (await tab.currentState?.maybePop() ?? false) return;
@@ -259,11 +196,7 @@ class _MainShellState extends State<MainShell>
     );
   }
 
-  /// The + : the quick create with the on-screen page's preset (read fresh
-  /// at the tap).
   void _openQuickCreate(BuildContext context) {
-    // A debt preset opens debt mode; a saved entry reaches the debts pages
-    // through DebtBook (no callback needed here).
     showQuickCreateSheet(
       context,
       preset: _quickCreate.active() ?? QuickCreatePreset.none,
@@ -274,10 +207,6 @@ class _MainShellState extends State<MainShell>
     return ShellChrome(
       controller: _chrome,
       child: Scaffold(
-        // Pages run on under the floating nav (owner 2026-10-10: no solid
-        // strip behind it). Scaffold folds the nav's height into
-        // `MediaQuery.paddingOf(context).bottom` — scrollables pad their
-        // last item with it, like the top bar's height at the top.
         extendBody: true,
         body: _NavClearance(
           child: GestureDetector(
@@ -289,8 +218,6 @@ class _MainShellState extends State<MainShell>
             child: TabSwipeNudge(offset: _nudge, child: widget.navigationShell),
           ),
         ),
-        // Only the nav rebuilds when a page toggles the controller — the
-        // branch content underneath is untouched.
         bottomNavigationBar: ListenableBuilder(
           listenable: _chrome,
           builder: (context, _) => _animatedNav(context),
@@ -300,8 +227,8 @@ class _MainShellState extends State<MainShell>
   }
 
   /// The nav slides down / back up instead of popping, so the body resizes
-  /// smoothly when a form or edit mode takes over the bottom (instantly
-  /// under reduced motion).
+  /// smoothly when a form or edit mode takes over the bottom (instantly under
+  /// reduced motion).
   Widget _animatedNav(BuildContext context) {
     final hidden = _chrome.hidden;
     return AnimatedSwitcher(
@@ -325,11 +252,7 @@ class _MainShellState extends State<MainShell>
                 moreSelected:
                     widget.navigationShell.currentIndex == _moreBranch,
                 onTabSelected: _goBranch,
-                // The + wears the mode it will open in on this page.
                 addMode: _quickCreate.preset.mode,
-                // Quick create event-from-bills lives INSIDE the + sheet
-                // (spec §10/4.24). Preset by the page on screen, if it
-                // offers one.
                 onAddPressed: () => _openQuickCreate(context),
                 onMorePressed: () => _goBranch(_moreBranch),
               ),
@@ -338,9 +261,8 @@ class _MainShellState extends State<MainShell>
   }
 }
 
-/// `extendBody` only grows `MediaQuery.padding.bottom` by the nav's height;
-/// a page's FAB is placed by `viewPadding`, so it would sit under the nav.
-/// Grow `viewPadding` the same way — FABs float above the nav again.
+/// `extendBody` only grows `MediaQuery.padding.bottom` by the nav's height; a
+/// page's FAB is placed by `viewPadding`, so it would sit under the nav.
 class _NavClearance extends StatelessWidget {
   const _NavClearance({required this.child});
 

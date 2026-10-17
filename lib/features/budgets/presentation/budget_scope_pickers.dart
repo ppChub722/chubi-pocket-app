@@ -9,9 +9,6 @@ import '../../categories/domain/category_type.dart';
 import '../../transactions/domain/refs.dart';
 import '../domain/budget.dart';
 
-// Thin wrappers: app models + l10n → the kit's multi pickers.
-
-/// Pick the expense categories a budget counts (each with "รวมหมวดย่อย").
 Future<List<BudgetScopeCategory>?> showBudgetCategoriesPicker(
   BuildContext context, {
   required List<Category> all,
@@ -66,7 +63,6 @@ Future<List<BudgetScopeCategory>?> showBudgetCategoriesPicker(
   ];
 }
 
-/// Pick the wallets a budget counts; resolves their ids.
 Future<List<String>?> showBudgetWalletsPicker(
   BuildContext context, {
   required List<Account> all,
@@ -96,8 +92,6 @@ Future<List<String>?> showBudgetWalletsPicker(
   );
 }
 
-/// The picked wallet ids as refs: from the wallets list, else the refs the
-/// budget already had (a wallet archived since).
 List<AccountRef> budgetWalletRefs(
   List<Account> all,
   List<String> ids,

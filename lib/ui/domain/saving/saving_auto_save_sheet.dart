@@ -9,8 +9,6 @@ import '../../molecules/detail_rows.dart';
 import '../../organisms/app_sheet.dart';
 import '../../tokens/app_spacing.dart';
 
-/// The wallet an auto-saving takes from: [id] null = no wallet ("ไม่มีกระเป๋า"
-/// is a valid source — money saved outside the app).
 class SavingAutoSaveWallet {
   const SavingAutoSaveWallet({required this.label, this.id});
 
@@ -18,16 +16,8 @@ class SavingAutoSaveWallet {
   final String label;
 }
 
-/// What [showSavingAutoSaveSheet] resolves to.
 typedef SavingAutoSaveResult = ({double amount, int day, String? accountId});
 
-/// The auto-saving sheet (reference §2): amount · day of the month · the
-/// wallet it comes from. Every word is a param (no l10n here).
-///
-/// The wallet pick belongs to the app (its accounts, its picker): the sheet
-/// calls [onPickWallet] and shows what it returns — null keeps the current
-/// choice. Save is disabled until the amount is above zero. Resolves the
-/// values, or null when dismissed.
 Future<SavingAutoSaveResult?> showSavingAutoSaveSheet(
   BuildContext context, {
   required String title,
@@ -56,7 +46,6 @@ Future<SavingAutoSaveResult?> showSavingAutoSaveSheet(
   ),
 );
 
-/// The body of [showSavingAutoSaveSheet] (exposed for the hub and tests).
 class SavingAutoSaveSheet extends StatefulWidget {
   const SavingAutoSaveSheet({
     required this.title,

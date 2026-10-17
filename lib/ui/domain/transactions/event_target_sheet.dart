@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 
 import '../../ui.dart';
 
-/// One event the sheet can pick, as plain display data.
 @immutable
 class EventTargetItem {
   const EventTargetItem({
@@ -16,36 +15,29 @@ class EventTargetItem {
   final String id;
   final String name;
 
-  /// null = the event icon.
   final IconData? icon;
 
-  /// A line under the name ("4 people · 12 Oct – 15 Oct").
   final String? subtitle;
 }
 
-/// What [EventTargetSheet] picked.
 sealed class EventTargetPick {
   const EventTargetPick();
 }
 
-/// One of the listed events.
 class EventPickExisting extends EventTargetPick {
   const EventPickExisting(this.id);
   final String id;
 }
 
-/// A new event with this name.
 class EventPickNew extends EventTargetPick {
   const EventPickNew(this.name);
   final String name;
 }
 
-/// Out of the event it is in.
 class EventPickRemove extends EventTargetPick {
   const EventPickRemove();
 }
 
-/// The words of [EventTargetSheet] — the caller passes its localised strings.
 class EventTargetSheetLabels {
   const EventTargetSheetLabels({
     required this.title,
@@ -60,32 +52,20 @@ class EventTargetSheetLabels {
 
   final String title;
 
-  /// The section of the listed events.
   final String openTitle;
 
-  /// The create section's title.
   final String newTitle;
 
-  /// The "＋ new event" row.
   final String newRow;
   final String nameHint;
 
-  /// The note under the name field.
   final String membersInfo;
 
-  /// The "take it out of the event" row.
   final String remove;
 
-  /// The create button's text for the typed name.
   final String Function(String name) createNamed;
 }
 
-/// "Add to event" — a PRESENTATIONAL organism on the kit [PickerSheet]: the
-/// listed [items] (the caller filters them: open events, not the current
-/// one), a create section (name prefilled with [suggestedName]), and — when
-/// [hasCurrent] — a remove row. Data, words and states in, an
-/// [EventTargetPick] out; nothing imported from cubits / repositories.
-/// Resolves null when dismissed.
 Future<EventTargetPick?> showEventTargetPickSheet(
   BuildContext context, {
   required List<EventTargetItem> items,
@@ -109,8 +89,6 @@ Future<EventTargetPick?> showEventTargetPickSheet(
   ),
 );
 
-/// The sheet itself — see [showEventTargetPickSheet]. [loading] / [error]
-/// (+ [onRetry]) are the list's states while it isn't there yet.
 class EventTargetSheet extends StatefulWidget {
   const EventTargetSheet({
     required this.items,
@@ -131,13 +109,10 @@ class EventTargetSheet extends StatefulWidget {
   final ValueChanged<EventTargetPick> onPicked;
   final String suggestedName;
 
-  /// The event picked so far (highlighted).
   final String? selectedId;
 
-  /// The row is in an event now — offers [EventPickRemove].
   final bool hasCurrent;
 
-  /// false leaves the create section out.
   final bool allowCreate;
   final bool loading;
   final Object? error;
@@ -151,7 +126,6 @@ class _EventTargetSheetState extends State<EventTargetSheet> {
   late final _name = TextEditingController(text: widget.suggestedName);
   bool _creating = false;
 
-  /// Show the counter only this close to the limit.
   static const _counterFrom = TextLimits.name - 20;
 
   @override
@@ -173,7 +147,6 @@ class _EventTargetSheetState extends State<EventTargetSheet> {
     final active = widget.items;
     final loading = widget.loading && active.isEmpty;
     final error = active.isEmpty ? widget.error : null;
-    // Nothing to pick from → open on the create section (when there is one).
     final creating =
         widget.allowCreate && (_creating || (!loading && active.isEmpty));
     final name = _name.text.trim();
@@ -256,7 +229,6 @@ class _EventTargetSheetState extends State<EventTargetSheet> {
                               LengthLimitingTextInputFormatter(TextLimits.name),
                             ],
                           ),
-                          // The counter only near the limit.
                           if (_name.text.length >= _counterFrom)
                             Align(
                               alignment: Alignment.centerRight,

@@ -6,11 +6,8 @@ import '../../atoms/skeleton_box.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/tone.dart';
 
-/// Where [SavingHistoryChart] draws things inside its box — pure maths, so
-/// the mapping is testable without painting.
-///
-/// X: slot `i` of [slots] spreads evenly between the plot's left and right
-/// edge. Y: 0 at the bottom, `max(target, every value)` at the top.
+/// Where [SavingHistoryChart] draws things inside its box — pure maths, so the
+/// mapping is testable without painting.
 class SavingChartGeometry {
   SavingChartGeometry({
     required this.size,
@@ -19,8 +16,6 @@ class SavingChartGeometry {
     this.padding = const EdgeInsets.fromLTRB(8, 16, 8, 22),
   });
 
-  /// Builds the geometry for a series set: [slots] is the number of month
-  /// positions (at least the points of actual + projection, at least 1).
   factory SavingChartGeometry.forSeries({
     required Size size,
     required List<double> actual,
@@ -64,25 +59,6 @@ class SavingChartGeometry {
   Offset point(int slot, double value) => Offset(x(slot), y(value));
 }
 
-/// Saving history of one goal (goals v2 mockup frame 2): the cumulative
-/// saved amount per month, where the CURRENT pace leads, and what it would
-/// take to make the deadline.
-///
-/// - [actual]: cumulative saved at each past month (solid, tone colour).
-/// - [projection]: the months AFTER the last actual one at the real pace
-///   (dashed, same colour, faded) — joins the last actual point.
-/// - [showNeeded]: a dotted straight line from the last actual point to the
-///   final slot at [target] — the pace the deadline needs.
-/// - [target]: a dashed horizontal line (warning colour), labelled
-///   [targetLabel] ("เป้า 80").
-/// - [monthLabels]: one per slot (thinned to fit); slots =
-///   `max(monthLabels.length, actual + projection)`.
-/// - [tone] / [color]: the series colour (the goal's own, or warning when
-///   behind).
-///
-/// Optional [caption] above and [actualLegend] / [neededLegend] under, as
-/// plain strings. Everything is drawn by a `CustomPainter`; an empty series
-/// draws only the baseline and target. `.skeleton` is the loading state.
 class SavingHistoryChart extends StatelessWidget {
   const SavingHistoryChart({
     required this.actual,
@@ -126,14 +102,11 @@ class SavingHistoryChart extends StatelessWidget {
   final String? targetLabel;
   final Tone tone;
 
-  /// Overrides [tone] (the goal's own colour).
   final Color? color;
   final String? caption;
   final String? actualLegend;
   final String? neededLegend;
 
-  /// The cumulative plan line, one per slot of [actual] (null = no plan that
-  /// month). Drawn dashed in the muted colour; nothing when all are null.
   final List<double?> plan;
   final String? planLegend;
   final double height;
@@ -276,7 +249,6 @@ class _SavingPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
-    // Baseline + target.
     canvas.drawLine(
       Offset(g.plot.left, g.plot.bottom),
       Offset(g.plot.right, g.plot.bottom),
@@ -307,7 +279,6 @@ class _SavingPainter extends CustomPainter {
       }
     }
 
-    // Plan (dashed, muted): runs of consecutive non-null points.
     var run = <Offset>[];
     void flushPlan() {
       if (run.length > 1) {
@@ -333,7 +304,6 @@ class _SavingPainter extends CustomPainter {
     }
     flushPlan();
 
-    // Actual (solid).
     final pts = [for (final (i, v) in actual.indexed) g.point(i, v)];
     if (pts.length > 1) {
       canvas.drawPath(
@@ -344,7 +314,6 @@ class _SavingPainter extends CustomPainter {
       );
     }
 
-    // Projection (dashed, joined to the last actual point).
     if (projection.isNotEmpty) {
       final proj = [
         if (pts.isNotEmpty) pts.last,
@@ -363,7 +332,6 @@ class _SavingPainter extends CustomPainter {
       }
     }
 
-    // Needed pace: last actual point → target at the last slot (dotted).
     if (showNeeded && target > 0 && pts.isNotEmpty) {
       _dashed(
         canvas,
@@ -378,7 +346,6 @@ class _SavingPainter extends CustomPainter {
       );
     }
 
-    // "Now" dot.
     if (pts.isNotEmpty) {
       canvas.drawCircle(
         pts.last,

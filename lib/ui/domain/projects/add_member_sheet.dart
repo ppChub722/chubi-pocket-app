@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../ui.dart';
 
-/// The words of [AddMemberSheet].
 class AddMemberLabels {
   const AddMemberLabels({
     required this.title,
@@ -23,7 +22,6 @@ class AddMemberLabels {
   final String emailHint;
 }
 
-/// A name + email pair (from the contact picker).
 @immutable
 class AddMemberFill {
   const AddMemberFill({required this.name, this.email});
@@ -31,10 +29,6 @@ class AddMemberFill {
   final String? email;
 }
 
-/// "เชิญสมาชิก" form. PRESENTATIONAL: words as [labels], the contacts picker
-/// via [onFromContacts] (null = dismissed), the save via [onSubmit] (true =
-/// saved, the sheet pops the name; false = stay open). Resolves the added
-/// name, or null when dismissed.
 Future<String?> showAddMemberFormSheet(
   BuildContext context, {
   required AddMemberLabels labels,
@@ -125,7 +119,6 @@ class _AddMemberSheetState extends State<AddMemberSheet> {
               onPressed: _saving ? null : _fromContacts,
             ),
             SectionCard(
-              // Framed fields: one per cell, no hairlines.
               fields: true,
               dividers: false,
               children: [

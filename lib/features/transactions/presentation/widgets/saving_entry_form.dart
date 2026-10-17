@@ -15,10 +15,6 @@ import '../../domain/transaction_type.dart';
 import '../cubit/tx_form_options_cubit.dart';
 import 'account_picker_sheet.dart';
 
-/// The fields of quick create's ออม MODE (goals v2): an amount, the wallet it
-/// comes from, where it goes (the spare bucket or a goal), a date and a note.
-/// Saving is a notebook entry, never a transaction: the wallet balance does
-/// not move.
 class SavingEntryController extends ChangeNotifier {
   SavingEntryController({this.goalId}) {
     amount.addListener(notifyListeners);
@@ -29,21 +25,16 @@ class SavingEntryController extends ChangeNotifier {
   final note = TextEditingController();
   DateTime date = DateTime.now();
 
-  /// The wallet the money comes from (required to save).
   Account? account;
 
-  /// The target goal; null = "ยังไม่จัดสรร" (spare).
   String? goalId;
 
   double get amountValue => AmountInput.parse(amount.text) ?? 0;
 
   bool get hasKeyData => amountValue > 0 || note.text.trim().isNotEmpty;
 
-  /// What the picked wallet still has free to save (null = not tracked /
-  /// unknown).
   double? get available => account?.savings?.available;
 
-  /// More than is free: a red, non-blocking warning (a notebook, not a bank).
   double get overBy {
     final a = available;
     if (a == null) return 0;
@@ -74,11 +65,6 @@ class SavingEntryController extends ChangeNotifier {
   }
 }
 
-/// Quick create's ออม-mode body: the SAME EntryCard (an "ออม" badge in the
-/// planning colour in place of the type chips, a note line in place of the
-/// description), the from-wallet chip row, the goal row ("+ เลือกเป้าหมาย", or
-/// the chosen goal; ยังไม่จัดสรร = none chosen, picked in the card picker).
-/// Calls: the goals list once.
 class SavingEntryForm extends StatefulWidget {
   const SavingEntryForm({
     required this.controller,
@@ -98,8 +84,6 @@ class SavingEntryForm extends StatefulWidget {
 class _SavingEntryFormState extends State<SavingEntryForm> {
   SavingEntryController get _c => widget.controller;
 
-  /// The user's goals + the spare pool (the goal chips and the picker), null
-  /// while loading.
   SavingGoalsOverview? _overview;
   List<SavingGoal>? get _goals => _overview?.goals;
 
@@ -114,7 +98,6 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
       final o = await context.read<SavingGoalsRepository>().list();
       if (mounted) setState(() => _overview = o);
     } catch (_) {
-      // Saving to ยังไม่จัดสรร still works; no goal chips.
       if (mounted) setState(() => _overview = const SavingGoalsOverview());
     }
   }
@@ -129,7 +112,6 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
       accounts: accounts,
       selected: _c.account,
       title: l.transactionFormAccountLabel,
-      // Saving needs no wallet: money kept outside the app goes to the goal.
       allowNone: true,
     );
     if (!mounted || r == null) return;
@@ -153,7 +135,6 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
     locale: Localizations.localeOf(context).languageCode,
   );
 
-  /// "ว่าง ฿21,500" under the amount; red "เกินที่ว่าง …" when over (still allowed).
   Widget? _availableLine(AppLocalizations l, String symbol) {
     final a = _c.available;
     if (a == null) return null;
@@ -172,8 +153,6 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
     );
   }
 
-  /// The wallet it comes from — optional (money kept outside the app counts
-  /// for the goal only).
   Widget _walletCard(AppLocalizations l) => WalletPickCard(
     account: _c.account,
     label: l.transactionFormAccountLabel,
@@ -185,8 +164,7 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
   );
 
   /// Where it goes: the chosen goal, else ยังไม่จัดสรร (the spare pool, which
-  /// is a real choice, so it reads as picked). Picked in the card picker — no
-  /// suggested goals.
+  /// is a real choice, so it reads as picked).
   Widget _goalCard(AppLocalizations l) {
     final palette = Theme.of(context).extension<AppColors>()!;
     SavingGoal? chosen;
@@ -212,7 +190,6 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
     );
   }
 
-  /// The card picker: ยังไม่จัดสรร first, then the goals.
   Future<void> _pickGoal() async {
     final l = AppLocalizations.of(context)!;
     final symbol = debtCurrencySymbol(context);
@@ -270,7 +247,6 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
         children: [
           EntryCard(
             key: widget.heroKey,
-            // Saving has no income / expense: the badge replaces the chips.
             type: TransactionType.income,
             typeBadge: AppChip(
               label: l.quickModeSaving,

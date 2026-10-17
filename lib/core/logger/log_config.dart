@@ -2,19 +2,6 @@ import 'package:flutter/foundation.dart';
 
 import 'log_entry.dart';
 
-/// Application environment. Set at build time via dart-define:
-///
-///   flutter run --dart-define=APP_ENV=staging
-///
-/// Default resolution (when no dart-define is given) follows the Flutter
-/// build mode:
-///   debug   → local
-///   profile → staging
-///   release → prod
-///
-/// Three values mirror the BE plan's three lifecycle phases (closed
-/// beta / wider beta / production — see
-/// chubi-pocket-docs/engineering/logging-plan.md §Phase strategy).
 enum AppEnv {
   local,
   staging,
@@ -24,7 +11,6 @@ enum AppEnv {
 
   static AppEnv? _cached;
 
-  /// Resolve once per process. Subsequent calls return the cached value.
   static AppEnv resolve() {
     final cached = _cached;
     if (cached != null) return cached;
@@ -39,7 +25,6 @@ enum AppEnv {
       case 'production':
         resolved = AppEnv.prod;
       default:
-        // No explicit override → derive from build mode.
         if (kDebugMode) {
           resolved = AppEnv.local;
         } else if (kProfileMode) {
@@ -54,18 +39,7 @@ enum AppEnv {
 }
 
 /// Logger tunables resolved per environment, with per-knob dart-define
-/// overrides for fine-tuning without changing env. Pattern matches the
-/// BE plan: "Switching phase = edit `.env` + restart. No code changes."
-///
-/// Defaults align with logging-plan.md §Phase strategy:
-///   local   → minLevel=debug, logBodies=true,  fileSink=true
-///   staging → minLevel=info,  logBodies=false, fileSink=true
-///   prod    → minLevel=warn,  logBodies=false, fileSink=true
-///
-/// Per-knob dart-defines (override defaults; same value for any env):
-///   --dart-define=LOG_LEVEL=debug|info|warn|error|critical
-///   --dart-define=LOG_BODIES=true|false
-///   --dart-define=LOG_FILE=true|false
+/// overrides for fine-tuning without changing env.
 class LogConfig {
   const LogConfig({
     required this.env,
@@ -79,9 +53,6 @@ class LogConfig {
   final bool logBodies;
   final bool fileSink;
 
-  /// Build the active config from the current process env + dart-defines.
-  /// Cached on AppLogger after first init; the values are immutable for
-  /// the lifetime of the process.
   factory LogConfig.fromEnv() {
     final env = AppEnv.resolve();
 

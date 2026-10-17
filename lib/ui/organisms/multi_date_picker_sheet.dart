@@ -1,23 +1,12 @@
+import '../atoms/app_icon_button.dart';
 import 'package:flutter/material.dart';
 
 import '../atoms/app_button.dart';
 import '../atoms/app_chip.dart';
-import '../atoms/app_icon.dart';
 import '../atoms/ui_config.dart';
 import '../tokens/app_spacing.dart';
 import 'app_sheet.dart';
 
-/// Opens [MultiDatePickerSheet] in the app's bottom sheet and resolves with
-/// the confirmed dates (day-only, normalised to y / m / d), or null when
-/// dismissed. Every word is the caller's ([title], [confirmLabel]); month and
-/// weekday names follow the locale.
-///
-/// ```dart
-/// final days = await showMultiDatePicker(context,
-///     initial: picked, first: today, last: today.add(…≤ 2 years),
-///     title: 'Pick the dates', confirmLabel: (n) => 'Use $n dates');
-/// if (days != null) setState(() => picked = days);
-/// ```
 Future<Set<DateTime>?> showMultiDatePicker(
   BuildContext context, {
   required Set<DateTime> initial,
@@ -41,21 +30,6 @@ Future<Set<DateTime>?> showMultiDatePicker(
   );
 }
 
-/// A calendar where you pick SEVERAL days (a custom recurrence's hand-picked
-/// dates) — the same look as [AppDateRangePickerSheet]:
-///
-/// - ‹ month › navigation, kept inside [first] … [last];
-/// - tap a day to toggle it; a picked day is highlighted (filled), never
-///   ticked; days outside the bounds are dimmed and ignore taps;
-/// - the picked days, in order, as removable chips under the calendar (a
-///   tap anywhere on a chip drops it);
-/// - a footer: Clear (with something picked) and the confirm, labelled by
-///   [confirmLabel] with the count and off while nothing is picked.
-///
-/// Builds its own [AppSheetScaffold] — open it with [showMultiDatePicker]
-/// (or [showAppSheetCustom]); to show it inline, give it a bounded height.
-/// Dates are day-only: [initial] is normalised to y / m / d and days outside
-/// the bounds are dropped. The caller keeps the span sensible (≤ 2 years).
 class MultiDatePickerSheet extends StatefulWidget {
   const MultiDatePickerSheet({
     required this.initial,
@@ -70,20 +44,15 @@ class MultiDatePickerSheet extends StatefulWidget {
 
   final Set<DateTime> initial;
 
-  /// The earliest pickable day (inclusive).
   final DateTime first;
 
-  /// The latest pickable day (inclusive).
   final DateTime last;
   final String title;
 
-  /// The confirm button's label for the picked count ("Use 3 dates").
   final String Function(int count) confirmLabel;
 
-  /// Every change of the picked set (toggle, chip ✕, clear).
   final ValueChanged<Set<DateTime>>? onChanged;
 
-  /// The confirm: the picked days, normalised.
   final ValueChanged<Set<DateTime>> onConfirm;
 
   @override
@@ -188,10 +157,10 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
             child: Row(
               children: [
-                IconButton(
+                AppIconButton.flat(
                   tooltip: strings.monthPrev,
                   onPressed: _canPrev ? () => _shift(-1) : null,
-                  icon: const AppIcon(Icons.chevron_left),
+                  icon: Icons.chevron_left,
                 ),
                 Expanded(
                   child: Text(
@@ -200,10 +169,10 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
                     style: text.titleMedium,
                   ),
                 ),
-                IconButton(
+                AppIconButton.flat(
                   tooltip: strings.monthNext,
                   onPressed: _canNext ? () => _shift(1) : null,
-                  icon: const AppIcon(Icons.chevron_right),
+                  icon: Icons.chevron_right,
                 ),
               ],
             ),

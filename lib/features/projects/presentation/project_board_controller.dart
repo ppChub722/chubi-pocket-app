@@ -5,7 +5,6 @@ import '../data/projects_repository.dart';
 import '../domain/project.dart';
 import 'widgets/project_common.dart';
 
-/// The bills' sort (BE `sort` of `GET /projects/:id/transactions`).
 enum BoardSort { newest, oldest, amount }
 
 extension BoardSortWire on BoardSort {
@@ -16,13 +15,6 @@ extension BoardSortWire on BoardSort {
   };
 }
 
-/// Logic only (no widgets): the event page's bills filter — search, event
-/// tag, "mine", sort — and the server rows it brings.
-///
-/// Unfiltered, the page shows the board its one open call brought (more
-/// pages through the page); any filter runs ONE call on
-/// `GET /projects/:id/transactions` and its rows replace the list (the payer
-/// filter is `payer_member_id`, server side). A failed call keeps the rows on screen and sets [error].
 class ProjectBoardController extends ChangeNotifier {
   ProjectBoardController({required this.repository, required this.projectId});
 
@@ -35,12 +27,9 @@ class ProjectBoardController extends ChangeNotifier {
   String? tagId;
   bool mine = false;
 
-  /// A project member id; narrows the visible bills client-side.
   String? payerId;
   BoardSort sort = BoardSort.newest;
 
-  /// The server's filtered rows (flat) while a server filter is on; null =
-  /// the page's own board.
   List<ProjectTransaction>? rows;
   bool hasMore = false;
   bool loading = false;
@@ -49,7 +38,6 @@ class ProjectBoardController extends ChangeNotifier {
 
   int _page = 0;
 
-  /// Bumped on every new query: a late answer for an older one is dropped.
   int _seq = 0;
   bool _disposed = false;
 
@@ -60,7 +48,6 @@ class ProjectBoardController extends ChangeNotifier {
       payerId != null ||
       sort != BoardSort.newest;
 
-  /// Anything narrows or reorders the bills (the 🔍's red dot).
   bool get filtered => serverFiltered;
 
   @override
@@ -74,7 +61,6 @@ class ProjectBoardController extends ChangeNotifier {
     super.dispose();
   }
 
-  /// Runs the filter as it is now: one call, or back to the page's board.
   Future<void> reload() async {
     final seq = ++_seq;
     if (!serverFiltered) {
@@ -103,8 +89,6 @@ class ProjectBoardController extends ChangeNotifier {
 
   static const Object _keep = Object();
 
-  /// A filter change, then the one call. [tagId] / [payerId]: omit = keep,
-  /// null = clear.
   Future<void> change({
     String? query,
     Object? tagId = _keep,
@@ -135,8 +119,6 @@ class ProjectBoardController extends ChangeNotifier {
     return got;
   }
 
-  /// The next filtered page (appended); the page's own board pages itself.
-  /// Rethrows so the page can say it failed.
   Future<void> loadMore() async {
     if (rows == null || !hasMore || loadingMore) return;
     final seq = _seq;
@@ -154,10 +136,6 @@ class ProjectBoardController extends ChangeNotifier {
     }
   }
 
-  /// A write on the page: keep the filtered rows in step — every row the
-  /// write changed swapped for its new copy; rows the page had and no
-  /// longer has (a removed bill / split) drop out; rows only in the
-  /// filtered results stay.
   void viewChanged(ProjectView before, ProjectView after) {
     final current = rows;
     if (current == null) return;
@@ -170,7 +148,6 @@ class ProjectBoardController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// The bills to show: the filtered rows (or the page's board) as trees.
   List<ProjectTxTree> trees(ProjectView view) =>
       rows == null ? view.trees : buildProjectTxTree(rows!);
 }

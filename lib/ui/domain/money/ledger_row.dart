@@ -11,34 +11,12 @@ import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';
 import 'money_text.dart';
 
-/// Which way a [LedgerRow]'s money went, seen from me.
 enum LedgerDirection {
-  /// I paid out to / for them (lend, repay what I owe, a split I paid): ↗,
-  /// the expense colour.
   paid,
 
-  /// It came to me from them (borrow, they repay me, a split they paid): ↙,
-  /// the income colour.
   received,
 }
 
-/// One debt ledger entry (owner 2026-10-12, debts rework) — the person
-/// page's timeline / payment-history row. Same geometry as the transaction
-/// row (`TxRow`: height, paddings, text slots), so ledger and tx lists look
-/// alike:
-///
-///   (↗)  title                                        ฿500.00
-///        12 ต.ค. [wallet] [จ่ายแล้ว] · source
-///
-/// - [direction] picks the leading arrow and the colour (paid = expense,
-///   received = income); [amount] is always shown positive.
-/// - line 2: [dateLabel] · the wallet as a mini chip ([walletLabel] +
-///   [walletIcon]) · [paidLabel] as a mini chip · [sourceLabel] (the split
-///   transaction / event it came from). The mini chips ride on the text line
-///   without making it taller.
-///
-/// Never shows a category. Strings come from the caller (the title is
-/// `description ?? a fallback` there).
 class LedgerRow extends StatelessWidget {
   const LedgerRow({
     required this.direction,
@@ -55,33 +33,24 @@ class LedgerRow extends StatelessWidget {
     super.key,
   });
 
-  /// Statement mode (the person page): the amount carries a sign — `+` for
-  /// a debt added ([LedgerDirection.paid], normal colour), `−` for a
-  /// repayment ([LedgerDirection.received], income colour).
   final bool signed;
 
   final LedgerDirection direction;
 
-  /// Shown as its magnitude; [direction] carries the way.
   final num amount;
   final String title;
   final String dateLabel;
 
-  /// The wallet that moved the money — null = a pure ledger entry, no chip.
   final String? walletLabel;
 
-  /// The wallet's icon, inside the chip.
   final Widget? walletIcon;
 
-  /// The "paid" label chip ("จ่ายแล้ว") — null = not labelled.
   final String? paidLabel;
 
-  /// Where the entry came from (a split's transaction / event title).
   final String? sourceLabel;
   final String currencySymbol;
   final VoidCallback? onTap;
 
-  /// The leading tile's size — the transaction row's.
   static const double leadingSize = 36;
 
   @override
@@ -93,7 +62,6 @@ class LedgerRow extends StatelessWidget {
     final color = paid ? palette.expense : palette.income;
     final small = textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
 
-    // ↗ / ↙ from the one forward arrow; the round tile doesn't show the turn.
     final leading = Transform.rotate(
       angle: paid ? -math.pi / 4 : math.pi * 3 / 4,
       child: IconTile(
@@ -118,8 +86,6 @@ class LedgerRow extends StatelessWidget {
       ),
     );
 
-    // Three groups share a tight line (date · chips · source), each shrinking
-    // (ellipsis) only when the line is full.
     final hasChips = walletLabel != null || paidLabel != null;
     final line2 = Row(
       children: [
@@ -212,10 +178,6 @@ class LedgerRow extends StatelessWidget {
   }
 }
 
-/// Puts a mini chip (20) on a text line without making the line taller: it
-/// takes no height in the layout and is painted centred on the line (a hair
-/// into the gap above and the padding below), so the row keeps the
-/// transaction row's height.
 class _OnLine extends StatelessWidget {
   const _OnLine({required this.child});
 

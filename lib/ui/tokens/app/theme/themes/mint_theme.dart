@@ -14,7 +14,6 @@ final mintTheme = AppTheme(
   nameKey: 'theme_mint',
   isPremium: false,
   previewSwatch: const [_mintPrimary, _deepTeal, Color(0xFFF7F8FA)],
-  // Feature groups — cool family: emerald · sky · indigo.
   lightModules: const ModuleColors(
     library: Color(0xFF10B981),
     people: Color(0xFF0EA5E9),

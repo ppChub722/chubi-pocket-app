@@ -5,10 +5,8 @@ import '../molecules/danger_row.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 
-/// Severity of an [EndZoneAction], in display order.
 enum EndZoneKind { close, archive, delete }
 
-/// One button of an [EndZone].
 class EndZoneAction {
   const EndZoneAction({
     required this.kind,
@@ -22,22 +20,15 @@ class EndZoneAction {
   final EndZoneKind kind;
   final String label;
 
-  /// One muted line under the label: what happens.
   final String? consequence;
 
-  /// Null = disabled (saving).
   final VoidCallback? onTap;
 
-  /// Sends to the server: disabled while offline (default true).
   final bool submits;
 
-  /// Overrides the kind's icon (a neutral "ทำสำเนา" under [EndZoneKind.close]).
   final IconData? icon;
 }
 
-/// The end of a detail page: close (primary) → archive (amber) → delete
-/// (red), stacked, each full width with its consequence line. Pass only the
-/// actions the entity has; they are always shown in severity order.
 class EndZone extends StatelessWidget {
   const EndZone({required this.actions, this.first = false, super.key})
     : assert(actions.length > 0, 'EndZone needs at least one action');

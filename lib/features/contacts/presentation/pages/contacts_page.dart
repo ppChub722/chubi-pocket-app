@@ -9,20 +9,6 @@ import '../../../../ui/ui.dart';
 import '../../domain/contact.dart';
 import '../cubit/contacts_cubit.dart';
 
-/// `/contacts` (owner 2026-10-10) — the library list look shared with
-/// categories and tags:
-///
-///   [🔍 ค้นหา…                    ]
-///   [สถานะ: ใช้งาน ▾] [การผูก: ทั้งหมด ▾]      [⇅ ใช้ล่าสุด ▾]
-///   (avatar) name · description · email               🔗
-///   … dashed "+ เพิ่มผู้ติดต่อ" at the end
-///
-/// Search filters the loaded list instantly while typing (thin-FE exception:
-/// a server `search` would be one call per keystroke). Status
-/// (ใช้งาน / เก็บถาวร / ทั้งหมด) loads from the server — archived ones
-/// live here, dimmed, not on a page of their own. การผูก (ทั้งหมด /
-/// ผูกแล้ว / ยังไม่ผูก) filters client-side on top of it. Sort is
-/// client-side: ใช้ล่าสุด (the server's order), ชื่อ ก→ฮ, ชื่อ ฮ→ก.
 class ContactsPage extends StatefulWidget {
   const ContactsPage({super.key});
 
@@ -32,7 +18,6 @@ class ContactsPage extends StatefulWidget {
 
 enum _ContactSort { recent, nameAsc, nameDesc }
 
-/// The การผูก filter — linked to an app account or not.
 enum _LinkFilter { all, linked, unlinked }
 
 class _ContactsPageState extends State<ContactsPage> {
@@ -97,12 +82,8 @@ class _ContactsPageState extends State<ContactsPage> {
     _LinkFilter.unlinked => l.contactsLinkUnlinked,
   };
 
-  /// What an empty list says under the current search / status / การผูก —
-  /// the first-run state, or a no-match variant.
   EmptyView _empty(AppLocalizations l, ContactsState state) {
     final statusFilter = state.statusFilter;
-    // A filter (เก็บถาวร / ทั้งหมด) with no rows is a no-match, not "add
-    // your first contact".
     if (state.contacts.isEmpty && statusFilter == 'active') {
       return EmptyView(
         icon: AppIcons.contact,
@@ -135,8 +116,8 @@ class _ContactsPageState extends State<ContactsPage> {
             l.contactsArchivedEmptyMessage,
           )
         : (AppIcons.contact, l.contactsNoMatch, '');
-    // A new contact is active and unlinked — only offer it where it would
-    // show up.
+    // A new contact is active and unlinked — only offer it where it would show
+    // up.
     final canAdd = statusFilter != 'archived' && _link != _LinkFilter.linked;
     return EmptyView(
       icon: icon,
@@ -162,8 +143,8 @@ class _ContactsPageState extends State<ContactsPage> {
           builder: (ctx, state) {
             final shown = _filter(state.contacts);
             return ListPageBody(
-              // Only the FIRST load shows the skeleton: a reload keeps the
-              // rows (a skeleton would kill a pull-to-refresh).
+              // Only the FIRST load shows the skeleton: a reload keeps the rows
+              // (a skeleton would kill a pull-to-refresh).
               loading:
                   (state.status == ContactsStatus.initial ||
                       state.status == ContactsStatus.loading) &&
@@ -172,12 +153,9 @@ class _ContactsPageState extends State<ContactsPage> {
               isEmpty: shown.isEmpty,
               onRetry: ctx.read<ContactsCubit>().load,
               empty: _empty(l, state),
-              // Rows run edge to edge; the header items pad themselves.
               sidePadding: 0,
               topInset: 0,
               header: [
-                // Search + filters left, the sort right — as on the
-                // transactions list. Add is the dashed tile at the end.
                 ListToolbar(
                   searchController: _searchController,
                   searchHint: l.contactsSearchHint,
@@ -236,7 +214,6 @@ class _ContactsPageState extends State<ContactsPage> {
                   _ContactRow(contact: shown[i]),
                   if (i < shown.length - 1) const AppDivider.row(),
                 ],
-                // The dashed add tile at the end.
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
                     AppSpacing.lg,
@@ -255,16 +232,12 @@ class _ContactsPageState extends State<ContactsPage> {
   }
 }
 
-/// A contact on the list: avatar · name · "description · email" (one line)
-/// · 🔗 when linked. Archived ones are dimmed.
 class _ContactRow extends StatelessWidget {
   const _ContactRow({required this.contact});
   final Contact contact;
 
   @override
   Widget build(BuildContext context) {
-    // "description · email", either alone, or nothing — never the phone
-    // (owner 2026-10-10; search still matches it).
     final sub = [
       contact.description?.trim() ?? '',
       contact.email?.trim() ?? '',

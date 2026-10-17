@@ -1,21 +1,11 @@
+import '../atoms/app_icon_button.dart';
 import 'package:flutter/material.dart';
 
 import '../atoms/app_button.dart';
-import '../atoms/app_icon.dart';
 import '../atoms/ui_config.dart';
 import '../tokens/app_spacing.dart';
 import 'app_sheet.dart';
 
-/// THE date RANGE picker (owner 2026-10-12): the same bottom sheet look as
-/// [showAppDatePicker] — a month calendar; tap a day to start, tap another to
-/// end (tap again to start over) — and a save button. Replaces the raw
-/// Material `showDateRangePicker`. Resolves with null when dismissed.
-///
-/// ```dart
-/// final r = await showAppDateRangePicker(context, first: …, last: …,
-///     initial: DateTimeRange(start: a, end: b));
-/// if (r != null) setState(() => range = r);
-/// ```
 Future<DateTimeRange?> showAppDateRangePicker(
   BuildContext context, {
   DateTimeRange? initial,
@@ -39,14 +29,12 @@ Future<DateTimeRange?> showAppDateRangePicker(
   );
 }
 
-/// An optional shortcut chip above the calendar ("This week" …).
 class AppDateRangePreset {
   const AppDateRangePreset(this.label, this.range);
   final String label;
   final DateTimeRange range;
 }
 
-/// The picker's body — [showAppDateRangePicker] puts it in a sheet.
 class AppDateRangePickerSheet extends StatefulWidget {
   const AppDateRangePickerSheet({
     required this.first,
@@ -160,10 +148,10 @@ class _AppDateRangePickerSheetState extends State<AppDateRangePickerSheet> {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
           child: Row(
             children: [
-              IconButton(
+              AppIconButton.flat(
                 tooltip: strings.periodPrev,
                 onPressed: _canPrev ? () => _shift(-1) : null,
-                icon: const AppIcon(Icons.chevron_left),
+                icon: Icons.chevron_left,
               ),
               Expanded(
                 child: Text(
@@ -172,10 +160,10 @@ class _AppDateRangePickerSheetState extends State<AppDateRangePickerSheet> {
                   style: text.titleMedium,
                 ),
               ),
-              IconButton(
+              AppIconButton.flat(
                 tooltip: strings.periodNext,
                 onPressed: _canNext ? () => _shift(1) : null,
-                icon: const AppIcon(Icons.chevron_right),
+                icon: Icons.chevron_right,
               ),
             ],
           ),

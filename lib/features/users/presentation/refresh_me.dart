@@ -5,8 +5,6 @@ import '../../../core/network/api_exception.dart';
 import '../../auth/presentation/cubit/auth_cubit.dart';
 import '../data/users_repository.dart';
 
-/// Pull-to-refresh of the profile pages: re-reads `GET /users/me` and hands it
-/// to [AuthCubit]. A failed refresh keeps what is on screen.
 Future<void> refreshMe(BuildContext context) async {
   final users = context.read<UsersRepository>();
   final auth = context.read<AuthCubit>();

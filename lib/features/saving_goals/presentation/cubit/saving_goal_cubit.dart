@@ -39,12 +39,6 @@ class SavingPageState extends Equatable {
   List<Object?> get props => [status, detail, error, loadingMore];
 }
 
-/// One goal page (or the spare bucket when [id] is
-/// [SavingGoalsRepository.spareId]). Open = ONE call; every button = ONE
-/// call, and its answer (`goal_page` / `spare_page`) replaces the page.
-///
-/// Write methods re-throw [ApiException] so the page can show the message and
-/// keep the typed input.
 class SavingGoalCubit extends Cubit<SavingPageState> {
   SavingGoalCubit({required SavingGoalsRepository repository, required this.id})
     : _repo = repository,
@@ -56,7 +50,6 @@ class SavingGoalCubit extends Cubit<SavingPageState> {
   bool get isSpare => id == SavingGoalsRepository.spareId;
 
   Future<void> load() async {
-    // Keep what is on screen during a reload (pull-to-refresh).
     emit(
       state.copyWith(
         status: state.detail == null ? SavingPageStatus.loading : null,
@@ -99,7 +92,6 @@ class SavingGoalCubit extends Cubit<SavingPageState> {
     }
   }
 
-  /// The write answered the page it was made from: show it, no re-read.
   void _apply(SavingWriteResult r) {
     final p = r.page;
     if (p != null) {
@@ -107,7 +99,6 @@ class SavingGoalCubit extends Cubit<SavingPageState> {
     }
   }
 
-  /// Save / withdraw / move from this bucket.
   Future<SavingWriteResult> addEntry({
     required SavingEntryKind kind,
     required double amount,
@@ -145,7 +136,6 @@ class SavingGoalCubit extends Cubit<SavingPageState> {
     return r;
   }
 
-  /// ONE call; the answer (the goal / spare page) is the new state.
   Future<void> setAutoSave({
     required double amount,
     required int day,
@@ -165,7 +155,6 @@ class SavingGoalCubit extends Cubit<SavingPageState> {
     _show(d);
   }
 
-  /// An auto-save answer is the whole page: show it.
   void _show(SavingGoalDetail d) =>
       emit(state.copyWith(status: SavingPageStatus.loaded, detail: d));
 

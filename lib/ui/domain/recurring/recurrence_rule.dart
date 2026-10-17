@@ -1,27 +1,13 @@
 import 'package:flutter/foundation.dart';
 
-/// How often a [RecurrenceRule] repeats.
-///
-/// [dates] = hand-picked dates ("กำหนดเอง"): the rule is just
-/// [RecurrenceRule.dates], [RecurrenceRule.interval] is ignored.
 enum RecurrenceFreq { daily, weekly, monthly, yearly, dates }
 
-/// Which day of the month a monthly rule lands on.
 enum RecurrenceMonthlyMode {
-  /// A day number ([RecurrenceMonthly.day]; 31 = the last day).
   day,
 
-  /// The Nth weekday ([RecurrenceMonthly.nth] + [RecurrenceMonthly.weekday]).
   weekday,
 }
 
-/// The monthly part of a [RecurrenceRule] (Google Calendar's "Monthly on
-/// day 3" vs "Monthly on the second Monday").
-///
-/// - [RecurrenceMonthlyMode.day]: [day] 1..31, 31 = the last day of the
-///   month (any month length). Null = the start date's day.
-/// - [RecurrenceMonthlyMode.weekday]: [nth] 1..5 or -1 = the last one, and
-///   [weekday] ISO 1 = Monday .. 7 = Sunday. Null = from the start date.
 @immutable
 class RecurrenceMonthly {
   const RecurrenceMonthly({
@@ -31,23 +17,19 @@ class RecurrenceMonthly {
     this.weekday,
   });
 
-  /// "Every month on day [day]" (31 = last day).
   const RecurrenceMonthly.onDay(int this.day)
     : mode = RecurrenceMonthlyMode.day,
       nth = null,
       weekday = null;
 
-  /// "Every month on the [nth] [weekday]" ([nth] -1 = the last one).
   const RecurrenceMonthly.onWeekday({
     required int this.nth,
     required int this.weekday,
   }) : mode = RecurrenceMonthlyMode.weekday,
        day = null;
 
-  /// The day number meaning "the last day of the month".
   static const lastDay = 31;
 
-  /// The [nth] meaning "the last such weekday of the month".
   static const lastWeek = -1;
 
   final RecurrenceMonthlyMode mode;
@@ -71,12 +53,6 @@ class RecurrenceMonthly {
       'RecurrenceMonthly($mode, day: $day, nth: $nth, weekday: $weekday)';
 }
 
-/// When a [RecurrenceRule] stops: [RecurrenceEnd.never],
-/// [RecurrenceEnd.onDate] (last possible date, inclusive) or
-/// [RecurrenceEnd.afterCount] (that many occurrences in total).
-///
-/// A plain value class with a [kind]: switch on [kind], read [date] /
-/// [count] for the matching kind (null otherwise).
 @immutable
 class RecurrenceEnd {
   const RecurrenceEnd.never()
@@ -94,10 +70,8 @@ class RecurrenceEnd {
 
   final RecurrenceEndKind kind;
 
-  /// Set for [RecurrenceEndKind.onDate] (date only; the time is ignored).
   final DateTime? date;
 
-  /// Set for [RecurrenceEndKind.afterCount].
   final int? count;
 
   @override
@@ -118,24 +92,8 @@ class RecurrenceEnd {
   };
 }
 
-/// The kind of a [RecurrenceEnd].
 enum RecurrenceEndKind { never, onDate, afterCount }
 
-/// A recurrence rule (Google Calendar style) — the generator part of a
-/// recurring item. Plain data: the recurring feature maps the API JSON into
-/// it, the "custom repeat" sheet returns it, [RecurrenceText] /
-/// `recurrenceLabel` render it. Value equality, so a sheet can tell whether
-/// anything changed.
-///
-/// - [freq] + [interval]: every [interval] days / weeks / months / years
-///   (ignored for [RecurrenceFreq.dates]).
-/// - [weekdays] (weekly): ISO 1 = Monday .. 7 = Sunday; empty = the
-///   [start] date's weekday.
-/// - [monthly] (monthly): see [RecurrenceMonthly]; null = the [start]
-///   date's day number.
-/// - yearly: the month + day of [start].
-/// - [dates] ([RecurrenceFreq.dates]): the hand-picked dates.
-/// - [start]: the first possible date; [end]: when it stops.
 @immutable
 class RecurrenceRule {
   const RecurrenceRule({

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/app_button.dart';
 
-/// One button of [showChoiceDialog].
 class DialogChoice<T> {
   const DialogChoice({
     required this.value,
@@ -14,15 +13,9 @@ class DialogChoice<T> {
   final T value;
   final String label;
 
-  /// primary = the suggested way out · destructive = loses something.
   final AppButtonVariant variant;
 }
 
-/// A dialog with more than two ways out ("keep as draft · keep editing ·
-/// discard"). Buttons stack full-width in the given order. Resolves the
-/// picked value, or null when dismissed (back / barrier).
-///
-/// Two ways out (confirm / cancel) → `showConfirmDialog`.
 Future<T?> showChoiceDialog<T>(
   BuildContext context, {
   required String title,

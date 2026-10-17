@@ -9,28 +9,8 @@ import 'icon_code.dart';
 import 'icon_registry.dart';
 import 'icon_shape.dart';
 
-/// Controls which visual layers [IconCodeWidget] renders.
-///
-/// Use [full] in detail views, forms, and profile headers where every
-/// layer should appear at full fidelity.
-/// Use [compact] in list rows and small avatars — border is suppressed
-/// even when the [IconCode] has one set, keeping dense UIs uncluttered.
 enum IconDisplayMode { full, compact }
 
-/// Renders an [IconCode] as a fixed-diameter widget.
-///
-/// Type-unaware — resolves colour specs (hex literals or `@presetTheme*`
-/// tokens) through the active [AppColors] palette so theme tokens follow
-/// the active theme.
-///
-/// | IconCode state              | Renders                                   |
-/// |-----------------------------|-------------------------------------------|
-/// | `iconCode == null`          | fallback circle + fallback icon           |
-/// | `background != null`        | named background circle + icon glyph      |
-/// | `background == null`        | icon glyph only (no circle)               |
-/// | `borderColors` non-empty    | solid border ring (dashed = approximated) |
-/// | `superGradientA` / `radialGlow` / `stripedPatternDi` | gradient fill |
-/// | `rainbow`                   | ROYGBIV sweep                             |
 class IconCodeWidget extends StatelessWidget {
   const IconCodeWidget({
     required this.iconCode,
@@ -52,7 +32,6 @@ class IconCodeWidget extends StatelessWidget {
     final palette = Theme.of(context).extension<AppColors>()!;
     final ic = iconCode;
 
-    // null iconCode → "no data" fallback circle + fallback glyph.
     if (ic == null) {
       return Container(
         width: size,
@@ -66,11 +45,8 @@ class IconCodeWidget extends StatelessWidget {
       );
     }
 
-    // Background + border follow the code's shape (null = circle).
     final radius = IconShape.fromId(ic.shape).radius(size);
 
-    // An explicit `icon == null` means "no icon" — render no glyph at all
-    // (the bg/border, if any, still show). This is distinct from a null code.
     final hasIcon = ic.icon != null;
     final hasBg = ic.background != null;
     final iconColor = ic.iconColors.isNotEmpty
@@ -93,8 +69,6 @@ class IconCodeWidget extends StatelessWidget {
       (size - 2 * frame) * 0.86,
     );
 
-    // null background → glyph only (no fill). A border, if set, still renders
-    // as a ring around the glyph — it doesn't depend on the bg.
     if (!hasBg) {
       final border = _buildBorder(ic, palette);
       if (border == null) {
@@ -176,8 +150,6 @@ class IconCodeWidget extends StatelessWidget {
         ),
         border: border,
       ),
-      // Preset backgrounds — no user-controlled colors.
-      // True textures (patterns, illustrations) are deferred; placeholder color used for now.
       'snowflake' => BoxDecoration(
         borderRadius: radius,
         color: const Color(0xFFDBEAFE),
@@ -193,7 +165,6 @@ class IconCodeWidget extends StatelessWidget {
         color: const Color(0xFF15803D),
         border: border,
       ),
-      // 'solid' or any unrecognised id → use bgColors[0]
       _ => BoxDecoration(
         borderRadius: radius,
         color: colors.isNotEmpty ? c(0) : fallbackColor,

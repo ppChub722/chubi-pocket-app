@@ -1,22 +1,11 @@
 import 'category.dart';
 import '../../../ui/ui.dart';
 
-/// Helpers for navigating the category tree built from a flat list of
-/// [Category] rows linked by `parent_id`.
-///
-/// Pure functions — no state, no Bloc dependency. The cubit and forms
-/// pass their `state` (or filtered subset) and ask questions about
-/// depth, the L1 root, sibling names and breadcrumb paths.
 class CategoryTree {
   CategoryTree._();
 
-  /// Maximum nesting depth — root is depth 1, root's child is depth 2,
-  /// grandchild is depth 3. Spec §4.4 caps at 3.
   static const int maxDepth = 3;
 
-  /// Returns the depth of [category] within [all]. Walks up `parent_id`
-  /// links; returns 1 for a root, 2 for a child, 3 for a grandchild.
-  /// Returns [maxDepth] + 1 if the chain is somehow longer (corrupt data).
   static int depthOf(Category category, List<Category> all) {
     var current = category;
     var depth = 1;
@@ -30,9 +19,6 @@ class CategoryTree {
     return depth;
   }
 
-  /// Returns the L1 ancestor of [category] — i.e. the root of [category]'s
-  /// branch. For an L1 category this is itself; for L2/L3 it walks up the
-  /// `parent_id` chain until it finds a node with no parent.
   static Category rootOf(Category category, List<Category> all) {
     var current = category;
     while (current.parentId != null) {
@@ -43,15 +29,10 @@ class CategoryTree {
     return current;
   }
 
-  /// IconCode to display: every level shows its OWN icon, glyph and colour
-  /// (owner 2026-10-11, spec 05 §4.14b). Only a row with no icon at all
-  /// falls back to its L1 ancestor's.
   static IconCode? resolveIconCode(Category category, List<Category> all) {
     return category.iconCode ?? rootOf(category, all).iconCode;
   }
 
-  /// Renders an ancestor-path breadcrumb for a category, e.g.
-  /// `"Food & Drinks › Groceries"`. Returns empty string for top-level.
   static String breadcrumb(Category category, List<Category> all) {
     final names = <String>[];
     var current = category;
@@ -66,8 +47,6 @@ class CategoryTree {
 
   /// True when adding a sibling with [name] under [parentId] / [type] would
   /// collide with an existing active category (case-insensitive).
-  /// Excludes [excludeId] from the comparison so editing without renaming
-  /// doesn't trigger the collision check.
   static bool hasSiblingWithName({
     required String name,
     required String? parentId,

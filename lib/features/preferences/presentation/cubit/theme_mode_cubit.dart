@@ -4,9 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/constants/storage_keys.dart';
 
-/// Holds the active [ThemeMode] (light / dark / system) and persists it.
-///
-/// Orthogonal to [ThemeIdCubit]: each themeId can render in any [ThemeMode].
 class ThemeModeCubit extends Cubit<ThemeMode> {
   ThemeModeCubit(this._prefs) : super(_load(_prefs));
 

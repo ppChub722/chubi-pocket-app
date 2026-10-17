@@ -4,7 +4,6 @@ import '../../accounts/domain/account.dart';
 import 'saving_entry.dart';
 import 'saving_goal.dart';
 
-/// Header numbers of the list (BE-computed; the same as Home / More).
 class SavingSummary extends Equatable {
   const SavingSummary({
     this.saved = 0,
@@ -23,18 +22,13 @@ class SavingSummary extends Equatable {
   final double spare;
   final String currency;
 
-  /// Every saving now, wallet-less money included (= [saved]).
   final double savedTotal;
 
-  /// Σ the active goals' month_short.
   final double monthShortTotal;
 
-  /// Σ the listed goals' month_plan (the card bar's whole) and what is
-  /// already saved toward it this month.
   final double monthPlanTotal;
   final double monthSavedTotal;
 
-  /// The spare bucket ("ยังไม่จัดสรร").
   final double unallocated;
 
   factory SavingSummary.fromJson(Map<String, dynamic> json) => SavingSummary(
@@ -63,7 +57,6 @@ class SavingSummary extends Equatable {
   ];
 }
 
-/// The "ยังไม่จัดสรร" bucket: money saved but not in a goal.
 class SavingSpare extends Equatable {
   const SavingSpare({this.amount = 0, this.byWallet = const []});
 
@@ -82,7 +75,6 @@ class SavingSpare extends Equatable {
   List<Object?> get props => [amount, byWallet];
 }
 
-/// `GET /saving-goals`: the whole list page in one object.
 class SavingGoalsOverview extends Equatable {
   const SavingGoalsOverview({
     this.summary = const SavingSummary(),
@@ -112,7 +104,6 @@ class SavingGoalsOverview extends Equatable {
   List<Object?> get props => [summary, spare, goals];
 }
 
-/// One point of the history chart: the balance at the end of a month.
 class SavingHistoryPoint extends Equatable {
   const SavingHistoryPoint({
     required this.month,
@@ -137,8 +128,6 @@ class SavingHistoryPoint extends Equatable {
   List<Object?> get props => [month, cumulative, plan];
 }
 
-/// `delete_preview` of GET /saving-goals/:id: a goal is deletable only while
-/// it holds no money ([canDelete], the BE's word).
 class SavingDeletePreview extends Equatable {
   const SavingDeletePreview({
     required this.entries,
@@ -160,8 +149,6 @@ class SavingDeletePreview extends Equatable {
   List<Object?> get props => [entries, savedAmount, canDelete];
 }
 
-/// A goal page, or the spare bucket's page (`GET /saving-goals/spare`): then
-/// [goal] is null and [spare] is set.
 class SavingGoalDetail extends Equatable {
   const SavingGoalDetail({
     this.goal,
@@ -178,16 +165,13 @@ class SavingGoalDetail extends Equatable {
   final List<SavingWalletShare> byWallet;
   final List<SavingHistoryPoint> history;
 
-  /// The spare page's auto-saving (a goal page carries it on the goal).
   final SavingAutoSave? spareAutoSave;
   final SavingEntryPage entries;
 
-  /// Only with include=delete_preview, else null.
   final SavingDeletePreview? deletePreview;
 
   bool get isSpare => goal == null;
 
-  /// This page's auto-saving (null = off), goal or spare.
   SavingAutoSave? get autoSave => goal?.autoSave ?? spareAutoSave;
 
   factory SavingGoalDetail.fromJson(Map<String, dynamic> json) {
@@ -249,9 +233,8 @@ class SavingGoalDetail extends Equatable {
   ];
 }
 
-/// What a saving write answers: every goal it touched, the spare bucket and
-/// the entries it wrote — the page patches from it and never re-fetches.
-/// (Each touched wallet's savings go to the wallet page's own cubit.)
+/// What a saving write answers: every goal it touched, the spare bucket and the
+/// entries it wrote — the page patches from it and never re-fetches.
 class SavingWriteResult extends Equatable {
   const SavingWriteResult({
     this.entries = const [],
@@ -265,12 +248,8 @@ class SavingWriteResult extends Equatable {
   final List<SavingGoal> goals;
   final SavingSpare spare;
 
-  /// The page the action was made from (`goal_page` or `spare_page`): the
-  /// new state of the page the user is on, so a button is ONE call.
   final SavingGoalDetail? page;
 
-  /// Each touched wallet's new savings (by wallet id) — the wallet pages and
-  /// pickers patch from it.
   final Map<String, WalletSavings> walletSavings;
 
   factory SavingWriteResult.fromJson(Map<String, dynamic> json) =>

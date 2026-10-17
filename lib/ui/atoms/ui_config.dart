@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// The words and error descriptions the generic kit needs (owner 2026-10-12:
-/// generic pieces never read the app's localisation). The app supplies the
-/// real ones once, at its root, with [UiConfig] (see `AppUiConfig` in
-/// `ui/domain/l10n/`); a generic piece reads them with [UiConfig.of]. With no
-/// provider (a test, a future host app) the English defaults below apply.
 @immutable
 class UiStrings {
   const UiStrings({
@@ -51,10 +46,8 @@ class UiStrings {
 
   final String close;
 
-  /// The paging footer of a list when the next page failed.
   final String loadMoreFailed;
 
-  /// The multi-date picker's line while nothing is picked.
   final String pickDatesHint;
   final String cancel;
   final String save;
@@ -62,16 +55,13 @@ class UiStrings {
   final String search;
   final String retry;
 
-  /// The small field-name labels of an entity hero in create / edit mode.
   final String fieldName;
   final String fieldDescription;
   final String clear;
   final String edit;
 
-  /// The view-mode hint of an empty, editable field.
   final String longPressToEdit;
 
-  /// The dirty-close question of a form ("Discard your changes?").
   final String discardTitle;
   final String discardMessage;
   final String discardConfirm;
@@ -81,7 +71,6 @@ class UiStrings {
   final String monthPrev;
   final String monthNext;
 
-  /// The user's single currency symbol (the amount input's prefix).
   final String currencySymbol;
   final String pickDate;
   final String today;
@@ -91,22 +80,17 @@ class UiStrings {
   final String yearNext;
   final String thisMonth;
 
-  /// Day-of-month picker: "not set", "last day", and "{day} of every month".
   final String dayNone;
   final String dayLast;
 
-  /// The same, short enough for a grid cell.
   final String dayLastShort;
   final String Function(int day) dayEveryMonth;
 
-  /// A detail page's manage section (archive / delete).
   final String manageTitle;
 
-  /// Record info lines at the bottom of a detail page.
   final String recordCreated;
   final String recordUpdated;
 
-  /// Reorder bar buttons.
   final String reorderOutdent;
   final String reorderMoveUp;
   final String reorderMoveDown;
@@ -115,7 +99,6 @@ class UiStrings {
   static String _dayEveryMonth(int d) => '$d of every month';
 }
 
-/// How a failure reads to the user: an icon, a headline, a sentence.
 @immutable
 class UiErrorInfo {
   const UiErrorInfo({
@@ -129,9 +112,6 @@ class UiErrorInfo {
   final String message;
 }
 
-/// Turns any error object into [UiErrorInfo]. The app maps its own exception
-/// type (network / server / unknown); the default describes everything as
-/// unexpected.
 abstract class UiErrors {
   const UiErrors();
 
@@ -149,7 +129,6 @@ class _DefaultErrors extends UiErrors {
   );
 }
 
-/// Provides [UiStrings] and [UiErrors] to everything below it.
 class UiConfig extends InheritedWidget {
   const UiConfig({
     required this.strings,
@@ -170,7 +149,6 @@ class UiConfig extends InheritedWidget {
   static UiConfig of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<UiConfig>() ?? _defaults;
 
-  /// Shorthand for `UiConfig.of(context).strings`.
   static UiStrings stringsOf(BuildContext context) => of(context).strings;
 
   @override

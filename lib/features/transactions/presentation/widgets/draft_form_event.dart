@@ -1,12 +1,5 @@
 part of 'draft_form.dart';
 
-/// What [DraftForm]'s event mode needs about the project. A project row has
-/// no wallet or category — it has a payer, a description, a note, tags and
-/// splits between members, in the project's currency:
-///
-///   [TxHeroCard]: [ จ่าย | รับ ] · amount · คำอธิบาย (tap → pick one
-///     used before, or type a new one) · date
-///   [ จ่ายโดย 👤 ] · note · tags · หารกับสมาชิก
 class DraftEvent {
   const DraftEvent({
     required this.members,
@@ -15,16 +8,12 @@ class DraftEvent {
     this.tags = const [],
   });
 
-  /// Current members — the payer and split choices.
   final List<ProjectMember> members;
 
-  /// The project's currency symbol.
   final String symbol;
 
-  /// Descriptions already used on this project, most used first.
   final List<String> pastDescriptions;
 
-  /// Tags already used on this project, most used first.
   final List<String> tags;
 }
 
@@ -50,7 +39,6 @@ class _EventForm extends StatelessWidget {
   final bool readOnly;
   final VoidCallback onPickDate;
 
-  /// On the hero — see [DraftForm.heroKey].
   final GlobalKey? heroKey;
 
   ProjectMember? _member(String? id) =>
@@ -91,7 +79,6 @@ class _EventForm extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // The hero's "what for" line is the row's คำอธิบาย here.
             TxHeroCard(
               key: heroKey,
               type: c.type,
@@ -140,15 +127,12 @@ class _EventForm extends StatelessWidget {
   }
 }
 
-/// Tags of a project row: the project's tags as chips (tap to toggle) and
-/// "+ แท็กใหม่" to start using a new one.
 class _EventTags extends StatelessWidget {
   const _EventTags({required this.controller, required this.known});
   final DraftFormController controller;
   final List<String> known;
 
   Future<void> _addNew(BuildContext context) async {
-    // The shared name sheet (it owns its controller — see askNewTagName).
     final n = await askNewTagName(context, maxLength: 40);
     if (n == null) return;
     final picked = controller.tagNames.any(
@@ -160,7 +144,6 @@ class _EventTags extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    // The project's tags plus any new ones on this row.
     final all = [
       ...known,
       for (final t in controller.tagNames)
@@ -184,8 +167,6 @@ class _EventTags extends StatelessWidget {
               for (final t in all)
                 tagAppChip(
                   context,
-                  // Project tags are plain names — borrow the look of the
-                  // user's own tag of the same name, if any.
                   mine
                           .where((m) => m.name.toLowerCase() == t.toLowerCase())
                           .firstOrNull ??
@@ -206,8 +187,6 @@ class _EventTags extends StatelessWidget {
   }
 }
 
-/// "หารกับ" for a project row: who owes the payer how much; the payer keeps
-/// the rest. "หารเท่ากัน" fills everyone in.
 class _MemberSplits extends StatelessWidget {
   const _MemberSplits({
     required this.controller,
@@ -325,9 +304,6 @@ class _MemberSplits extends StatelessWidget {
   }
 }
 
-/// คำอธิบาย: type a new one, or pick one used before in this project
-/// (filtered as you type). Returns the text, or null when dismissed. Only the
-/// wrapper — the sheet is the kit's [showDescriptionPickerSheet].
 Future<String?> _showDescriptionPicker(
   BuildContext context, {
   required String current,
@@ -344,7 +320,6 @@ Future<String?> _showDescriptionPicker(
       pastHeading: l.projectTxDescriptionPast,
       useLabel: l.projectTxDescriptionUse,
     ),
-    // Same navigator as the quick create sheet it opens from.
     useRootNavigator: false,
   );
 }

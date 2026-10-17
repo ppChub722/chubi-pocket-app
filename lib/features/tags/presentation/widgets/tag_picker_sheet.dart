@@ -7,16 +7,6 @@ import '../../../../ui/ui.dart';
 import '../../domain/tag.dart';
 import '../cubit/tags_cubit.dart';
 
-/// Pick tags — a THIN WRAPPER over the presentational organism
-/// `showTagPicker` (lib/ui/domain/pickers): feeds it the [TagsCubit] list
-/// (live) + l10n strings, and creates tags through the cubit. Search,
-/// several at once (chips), and "＋ แท็กใหม่" without leaving (the name is
-/// what's in the search box, or asked for). No tags and no creating (the
-/// filter): an empty line. Resolves the new selection on ตกลง, null when
-/// dismissed.
-///
-/// Reusable: the quick-create form's "⋯ เพิ่มเติม", and later the
-/// transactions list's tag filter ([allowCreate] false there).
 Future<Set<String>?> showTagPickerSheet(
   BuildContext context, {
   required Set<String> selected,
@@ -39,7 +29,6 @@ Future<Set<String>?> showTagPickerSheet(
     error: s.status == TagsStatus.error && s.tags.isEmpty ? s.error : null,
   );
 
-  // The sheet follows the cubit while it is open.
   final data = ValueNotifier(dataOf(cubit.state));
   final sub = cubit.stream.listen((s) => data.value = dataOf(s));
   try {
@@ -68,8 +57,6 @@ Future<Set<String>?> showTagPickerSheet(
   }
 }
 
-/// Creates a tag named [name] — or, when one by that name exists (any
-/// case), returns that one. Null (with a snackbar) when it fails.
 Future<Tag?> createOrFindTag(BuildContext context, String name) async {
   final l = AppLocalizations.of(context)!;
   final cubit = context.read<TagsCubit>();
@@ -88,8 +75,6 @@ Future<Tag?> createOrFindTag(BuildContext context, String name) async {
   }
 }
 
-/// Asks for a new tag's name (a small sheet with one field). Trimmed;
-/// null when dismissed or blank.
 Future<String?> askNewTagName(
   BuildContext context, {
   int maxLength = TextLimits.tagName,

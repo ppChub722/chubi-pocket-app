@@ -8,21 +8,15 @@ import 'budget_period.dart';
 double _money(Object? v) => (v as num?)?.toDouble() ?? 0;
 double? _moneyOrNull(Object? v) => (v as num?)?.toDouble();
 
-/// Where a counted amount comes from.
 enum BudgetSource {
-  /// My transaction.
   normal,
 
-  /// My transaction linked to a recurring item.
   recurring,
 
-  /// My share of an event bill (ONE "อีเวนต์" label).
   event,
 
-  /// A recurring item not made yet (expected).
   upcoming,
 
-  /// A pending draft (expected).
   pending;
 
   static BudgetSource fromJson(String? v) => BudgetSource.values.firstWhere(
@@ -33,7 +27,6 @@ enum BudgetSource {
   String toJson() => name;
 }
 
-/// Why a counted row counts in the budget (first match; `item.reason`).
 enum BudgetReason {
   all,
   category,
@@ -54,7 +47,6 @@ enum BudgetReason {
   };
 }
 
-/// The period dashboard ("ภาพรวม"); a figure that doesn't apply is null.
 class BudgetForecast extends Equatable {
   const BudgetForecast({
     this.elapsedDays,
@@ -75,11 +67,8 @@ class BudgetForecast extends Equatable {
     this.pacePct,
   });
 
-  /// limit − used (this period).
   final double? available;
 
-  /// Where the current period ends at the current pace (= [forecastEnd]);
-  /// null when open-ended or not current.
   final double? projectedEnd;
 
   /// Days left in the current period, today included; null otherwise.
@@ -142,7 +131,6 @@ class BudgetForecast extends Equatable {
   ];
 }
 
-/// One row of "แยกตามที่มา".
 class BudgetSourceRow extends Equatable {
   const BudgetSourceRow({
     required this.source,
@@ -153,7 +141,6 @@ class BudgetSourceRow extends Equatable {
 
   final BudgetSource source;
 
-  /// `counts_as: expected` (upcoming / pending) — not in the %.
   final bool expected;
   final int count;
   final double amount;
@@ -170,7 +157,6 @@ class BudgetSourceRow extends Equatable {
   List<Object?> get props => [source, expected, count, amount];
 }
 
-/// One row of "แยกตามหมวด" (used only).
 class BudgetCategoryRow extends Equatable {
   const BudgetCategoryRow({
     required this.amount,
@@ -178,11 +164,9 @@ class BudgetCategoryRow extends Equatable {
     this.category,
   });
 
-  /// Null = no category (e.g. an event bill not made from my transaction).
   final EmbeddedCategory? category;
   final double amount;
 
-  /// Share of used.
   final int pct;
 
   factory BudgetCategoryRow.fromJson(Map<String, dynamic> json) =>
@@ -200,7 +184,6 @@ class BudgetCategoryRow extends Equatable {
   List<Object?> get props => [category, amount, pct];
 }
 
-/// One thing counted in a period.
 class BudgetItem extends Equatable {
   const BudgetItem({
     required this.kind,
@@ -220,18 +203,14 @@ class BudgetItem extends Equatable {
     this.reason = BudgetReason.none,
   });
 
-  /// Why this row counts in the budget.
   final BudgetReason reason;
 
-  /// `transaction` | `event_bill` | `recurring_item` | `pending` — what [id]
-  /// points at.
   final String kind;
   final String id;
   final BudgetSource source;
   final bool expected;
   final DateTime? date;
 
-  /// My share.
   final double amount;
   final String? description;
   final EmbeddedCategory? category;
@@ -289,7 +268,6 @@ class BudgetItem extends Equatable {
   ];
 }
 
-/// A page of counted items (expected first, then used newest first).
 class BudgetItemPage extends Equatable {
   const BudgetItemPage({
     this.items = const [],
@@ -318,7 +296,6 @@ class BudgetItemPage extends Equatable {
     );
   }
 
-  /// This page followed by [next].
   BudgetItemPage append(BudgetItemPage next) => BudgetItemPage(
     items: [...items, ...next.items],
     page: next.page,
@@ -330,8 +307,6 @@ class BudgetItemPage extends Equatable {
   List<Object?> get props => [items, page, totalPages, total];
 }
 
-/// `getBudget` (and every write): the budget page in one call, at the period
-/// `budget.period`.
 class BudgetDetail extends Equatable {
   const BudgetDetail({
     required this.budget,
@@ -348,11 +323,9 @@ class BudgetDetail extends Equatable {
   final List<BudgetSourceRow> bySource;
   final List<BudgetCategoryRow> byCategory;
 
-  /// The 6 newest periods (recurring); `hasMore` → `listBudgetPeriods`.
   final BudgetPeriodPage periods;
   final BudgetItemPage items;
 
-  /// Only with include=delete_preview, else null.
   final BudgetDeletePreview? deletePreview;
 
   BudgetDetail copyWith({
@@ -368,10 +341,6 @@ class BudgetDetail extends Equatable {
     items: items ?? this.items,
   );
 
-  /// The page after `updateBudgetPeriod` answered with [next] — the budget
-  /// page AT THE EDITED PERIOD. The current period's answer replaces this
-  /// page; an older period's answer only patches that period's row (the page
-  /// keeps showing the current one).
   BudgetDetail afterPeriodWrite(BudgetDetail next) {
     if (next.budget.period.id == budget.period.id) return next;
     return copyWith(periods: periods.replace(next.budget.period));
@@ -414,7 +383,7 @@ class BudgetDetail extends Equatable {
 }
 
 /// `delete_preview` of GET /budgets/:id — what a delete removes (transactions
-/// are never touched). Printed as sent.
+/// are never touched).
 class BudgetDeletePreview extends Equatable {
   const BudgetDeletePreview({
     required this.periods,
@@ -439,7 +408,6 @@ class BudgetDeletePreview extends Equatable {
   List<Object?> get props => [periods, overriddenPeriods, categories, wallets];
 }
 
-/// The body of `createBudget` / `updateBudget` (setup, "ตั้งค่า").
 class BudgetWrite {
   const BudgetWrite({
     required this.name,
@@ -461,7 +429,6 @@ class BudgetWrite {
   final Object? iconCode;
   final double amount;
 
-  /// Null = ไม่เตือน.
   final int? warnPct;
   final BudgetScope scope;
   final bool recurring;

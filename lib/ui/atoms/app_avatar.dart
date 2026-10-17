@@ -2,26 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../tokens/avatar_metrics.dart';
 
-/// The one round avatar: initials on a name-hashed colour, a tinted initial,
-/// a glyph, or a custom label (the "+3" overflow of a stack). Features never
-/// build a `CircleAvatar`.
-///
-/// ```dart
-/// AppAvatar(name: 'Aom Chan')                         // "AC" on a hashed colour
-/// AppAvatar.tinted(name: 'Bee', color: c, size: 28)    // soft tint, coloured B
-/// AppAvatar.icon(AppIcons.person, size: 40)            // a glyph on a neutral disc
-/// AppAvatar.label('+3', size: 32)                      // neutral disc, text
-/// ```
+/// The one round avatar: initials on a name-hashed colour, a tinted initial, a
+/// glyph, or a custom label (the "+3" overflow of a stack).
 class AppAvatar extends StatelessWidget {
-  /// Initials (first letters of the first two words) in white on a colour
-  /// hashed from [name]. An empty name falls back to a neutral person glyph.
   const AppAvatar({required this.name, this.size = 40, super.key})
     : _mode = _Mode.initials,
       _glyph = null,
       _color = null,
       _text = null;
 
-  /// The first letter of [name] in [color], on a 28% tint of it.
   const AppAvatar.tinted({
     required this.name,
     required Color color,
@@ -32,8 +21,6 @@ class AppAvatar extends StatelessWidget {
        _color = color,
        _text = null;
 
-  /// The first letter of [name] on a solid brand [color] (a bank's colour),
-  /// the letter in white or black — whichever reads on that colour.
   const AppAvatar.brand({
     required this.name,
     required Color color,
@@ -44,7 +31,6 @@ class AppAvatar extends StatelessWidget {
        _color = color,
        _text = null;
 
-  /// A glyph on a neutral disc.
   const AppAvatar.icon(IconData glyph, {this.size = 40, super.key})
     : name = '',
       _mode = _Mode.glyph,
@@ -67,7 +53,6 @@ class AppAvatar extends StatelessWidget {
   final Color? _color;
   final String? _text;
 
-  /// 12-colour palette (design-sheet §3.4) for the initials fallback.
   static const List<Color> hashPalette = [
     Color(0xFFE57373),
     Color(0xFFF06292),
@@ -191,8 +176,6 @@ class AppAvatar extends StatelessWidget {
     return '$first$second'.toUpperCase();
   }
 
-  /// The colour [name]'s initials avatar is drawn on (a soft tint of it backs a
-  /// person's name in a split row).
   static Color colorFor(String name) => _colorFor(name);
 
   static Color _colorFor(String name) {

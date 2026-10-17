@@ -1,3 +1,5 @@
+import '../tokens/chip_size.dart';
+import '../atoms/app_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -7,27 +9,8 @@ import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import 'month_picker.dart';
 
-/// The unit a period [StepperPill] steps by.
 enum StepperUnit { week, month, year }
 
-/// `‹  label ▾  ›` — THE period / step control (owner 2026-10-12: one pill, no
-/// separate month pill): the top bar's chip look, sized to its content.
-///
-/// - `StepperPill(label: …)` — any period (a day, a custom range, "ทั้งหมด"):
-///   ‹ › call [onPrev] / [onNext]; a null one is shown dimmed, both null hides
-///   them (a period with no neighbours); tapping the label calls [onTap] (the
-///   ▾ shows when it is set).
-/// - `StepperPill.month(value, onChanged, first, last)` — a month: the label is
-///   "ตุลาคม 2026", ‹ › step a month and stop at [first] / [last], tapping the
-///   label opens [showMonthPicker].
-/// - `StepperPill.period(unit, value, …)` — the same for a week (Mon–Sun) or a
-///   year (budgets' period navigator); a tap does nothing unless [onTap] is
-///   given.
-///
-/// One look for all: the ‹ › are plain icons, dimmed when they cannot step.
-///
-/// It HUGS its content (a min-size row); a parent that forces its width (a
-/// stretched Column) stretches it — centre it (`Center` / a loose `Align`).
 class StepperPill extends StatelessWidget {
   const StepperPill({
     required this.label,
@@ -36,6 +19,7 @@ class StepperPill extends StatelessWidget {
     this.onTap,
     this.prevTooltip,
     this.nextTooltip,
+    this.size,
     super.key,
   }) : _unit = null,
        _value = null,
@@ -43,13 +27,13 @@ class StepperPill extends StatelessWidget {
        _first = null,
        _last = null;
 
-  /// A month: [value] is any day of it.
   const StepperPill.month({
     required DateTime value,
     required ValueChanged<DateTime> onChanged,
     DateTime? first,
     DateTime? last,
     this.onTap,
+    this.size,
     super.key,
   }) : _unit = StepperUnit.month,
        _value = value,
@@ -62,8 +46,6 @@ class StepperPill extends StatelessWidget {
        prevTooltip = null,
        nextTooltip = null;
 
-  /// A week / month / year: [value] is any day of it; [onChanged] gets the
-  /// period's first day (a week starts on Monday).
   const StepperPill.period({
     required StepperUnit unit,
     required DateTime value,
@@ -71,6 +53,7 @@ class StepperPill extends StatelessWidget {
     DateTime? first,
     DateTime? last,
     this.onTap,
+    this.size,
     super.key,
   }) : _unit = unit,
        _value = value,
@@ -90,20 +73,20 @@ class StepperPill extends StatelessWidget {
   final String? prevTooltip;
   final String? nextTooltip;
 
+  final ChipSize? size;
+
   final StepperUnit? _unit;
   final DateTime? _value;
   final ValueChanged<DateTime>? _onValue;
   final DateTime? _first;
   final DateTime? _last;
 
-  /// First day of [d]'s period of [unit].
   static DateTime startOf(StepperUnit unit, DateTime d) => switch (unit) {
     StepperUnit.week => DateTime(d.year, d.month, d.day - (d.weekday - 1)),
     StepperUnit.month => DateTime(d.year, d.month),
     StepperUnit.year => DateTime(d.year),
   };
 
-  /// [start] moved by [n] periods.
   static DateTime shift(StepperUnit unit, DateTime start, int n) =>
       switch (unit) {
         StepperUnit.week => DateTime(
@@ -186,16 +169,18 @@ class StepperPill extends StatelessWidget {
   }) {
     final scheme = Theme.of(context).colorScheme;
     final arrows = onPrev != null || onNext != null;
+    final chipSize = size ?? ChipSizeScope.of(context) ?? ChipSize.control;
+    final height = chipSize.height;
 
     Widget step(IconData icon, String? tooltip, VoidCallback? onStep) {
       final button = InkResponse(
         onTap: onStep,
         radius: 20,
         child: SizedBox.square(
-          dimension: 36,
+          dimension: height,
           child: Icon(
             icon,
-            size: 20,
+            size: chipSize.icon + 4,
             color: onStep == null
                 ? scheme.onSurface.withValues(alpha: 0.38)
                 : scheme.onSurface,
@@ -210,10 +195,11 @@ class StepperPill extends StatelessWidget {
     Widget labelButton = InkWell(
       borderRadius: BorderRadius.circular(AppRadius.md),
       onTap: onTap,
-      child: Padding(
+      child: Container(
+        constraints: BoxConstraints(minHeight: height),
+        alignment: Alignment.center,
         padding: EdgeInsets.symmetric(
           horizontal: arrows ? AppSpacing.xs : AppSpacing.md,
-          vertical: AppSpacing.sm,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -229,7 +215,11 @@ class StepperPill extends StatelessWidget {
               ),
             ),
             if (onTap != null)
-              Icon(AppIcons.dropdown, size: 20, color: scheme.onSurfaceVariant),
+              Icon(
+                AppIcons.dropdown,
+                size: chipSize.icon + 4,
+                color: scheme.onSurfaceVariant,
+              ),
           ],
         ),
       ),

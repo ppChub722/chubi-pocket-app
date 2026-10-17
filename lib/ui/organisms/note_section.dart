@@ -6,10 +6,7 @@ import '../molecules/detail_text_field.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 
-/// The note section: ITS OWN box (never merged into another). View mode: a
-/// note icon, the [label] and the [text] — or the muted [hint] when empty;
-/// long-press → [onLongPress] (enter edit). Edit mode: [editField] if given,
-/// else a labelled [DetailTextField] on [controller].
+/// The note section: ITS OWN box (never merged into another).
 class NoteSection extends StatelessWidget {
   const NoteSection({
     required this.label,
@@ -30,17 +27,13 @@ class NoteSection extends StatelessWidget {
   final String label;
   final bool editing;
 
-  /// View mode: the note.
   final String? text;
 
-  /// View mode, empty: e.g. "Long-press to edit".
   final String? hint;
   final VoidCallback? onLongPress;
 
-  /// Edit mode: the page's controller (used when [editField] is null).
   final TextEditingController? controller;
 
-  /// Edit mode: the page's own field slot.
   final Widget? editField;
   final int? maxLength;
   final bool first;

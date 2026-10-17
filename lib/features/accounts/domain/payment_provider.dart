@@ -1,8 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-/// Who money moves through — banks now, e-wallets / card issuers later
-/// (BE `payment_providers`, `GET /v1/payment-providers`). [code] is in
-/// [scheme]'s system: "bot" = the Bank of Thailand's 3-digit bank code.
 class PaymentProvider extends Equatable {
   const PaymentProvider({
     required this.kind,
@@ -22,10 +19,8 @@ class PaymentProvider extends Equatable {
 
   bool get isBank => kind == 'bank';
 
-  /// The name for [languageCode] ("th" → Thai, else English).
   String name(String languageCode) => languageCode == 'th' ? nameTh : nameEn;
 
-  /// Short label for rows: "KBANK", else the full name.
   String label(String languageCode) => shortName ?? name(languageCode);
 
   factory PaymentProvider.fromJson(Map<String, dynamic> json) =>

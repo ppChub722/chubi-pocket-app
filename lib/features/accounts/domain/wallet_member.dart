@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../../ui/ui.dart';
 
-/// A membership role on a wallet (`account_members.role`).
 enum WalletRole { owner, member }
 
 extension WalletRoleWire on WalletRole {
@@ -11,8 +10,6 @@ extension WalletRoleWire on WalletRole {
       s == 'owner' ? WalletRole.owner : WalletRole.member;
 }
 
-/// Per-member report visibility (spec §14/5). `none` is the default once
-/// a wallet becomes shared; each member can flip their own back.
 enum WalletReportScope { none, own, all }
 
 extension WalletReportScopeWire on WalletReportScope {
@@ -39,8 +36,6 @@ extension WalletReportScopeWire on WalletReportScope {
   }
 }
 
-/// A membership row's state: invited and not yet answered, in the wallet,
-/// or gone (rows are append-only).
 enum WalletMemberStatus { pending, active, left }
 
 extension WalletMemberStatusWire on WalletMemberStatus {
@@ -51,10 +46,6 @@ extension WalletMemberStatusWire on WalletMemberStatus {
   };
 }
 
-/// One wallet member — `AccountMember` (the active embed on an Account:
-/// no status / left_at) or `AccountMemberHistory` (the members tab: also
-/// pending invites and past members). `name` is resolved by the BE and
-/// `is_me` marks the caller's own row.
 class WalletMember extends Equatable {
   const WalletMember({
     required this.id,
@@ -75,17 +66,13 @@ class WalletMember extends Equatable {
   final IconCode? iconCode;
   final WalletMemberStatus status;
 
-  /// ISO timestamp strings straight off the wire; rendered date-only.
   final String? joinedAt;
   final String? leftAt;
 
-  /// The caller's own row.
   final bool isMe;
 
-  /// Alias of [name].
   String get displayName => name;
 
-  /// Invite sent, not yet accepted.
   bool get pending => status == WalletMemberStatus.pending;
   bool get isActive => status == WalletMemberStatus.active;
   bool get hasLeft => status == WalletMemberStatus.left;
@@ -100,7 +87,6 @@ class WalletMember extends Equatable {
       iconCode: json['icon_code'] != null
           ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
-      // The active embed has no status: it is active by definition.
       status: WalletMemberStatusWire.parse(json['status'] as String?),
       joinedAt: json['joined_at'] as String?,
       leftAt: json['left_at'] as String?,

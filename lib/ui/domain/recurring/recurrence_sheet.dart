@@ -17,21 +17,6 @@ import '../../tokens/typography.dart';
 import 'recurrence_rule.dart';
 import 'recurrence_text.dart';
 
-/// Opens the "custom repeat" sheet (Google Calendar's "Custom…"): a
-/// [RecurrenceEditor] under a title, Cancel · OK pinned at the bottom.
-/// Resolves the edited rule on OK, null on Cancel / dismiss.
-///
-/// [simple]: only "every N day | week | month | year" and the end (budget
-/// periods) — see [RecurrenceEditor.simple].
-///
-/// A [RecurrenceFreq.dates] rule is not edited here — it starts as a
-/// monthly rule (hand-picked dates have their own picker,
-/// `showMultiDatePicker`).
-///
-/// ```dart
-/// final r = await showRecurrenceSheet(context, initial: rule);
-/// if (r != null) setState(() => rule = r);
-/// ```
 Future<RecurrenceRule?> showRecurrenceSheet(
   BuildContext context, {
   required RecurrenceRule initial,
@@ -96,24 +81,6 @@ class _RecurrenceSheetState extends State<_RecurrenceSheet> {
   }
 }
 
-/// The body of [showRecurrenceSheet] — edits a [RecurrenceRule] in place,
-/// Google Calendar style, and reports every change through [onChanged]:
-///
-/// - a live summary on top ([recurrenceLabel] with the end);
-/// - "every [N] [day | week | month | year]" — the interval (1..99) and the
-///   unit chips;
-/// - weekly: the 7 weekday toggles (ISO 1 = Monday .. 7 = Sunday, in the
-///   locale's week order), at least one stays on (default = the start
-///   date's weekday);
-/// - monthly: on day D (31 = the last day of the month) or on the Nth
-///   weekday (the start date's; its 5th = the last one);
-/// - yearly: the start date's month + day (nothing to pick);
-/// - ends: never · on a date (start .. start + 2 years) · after N times
-///   (1..999).
-///
-/// [initial] is read once (give a new key to reset it); a
-/// [RecurrenceFreq.dates] rule starts as monthly ([normalize]). The rule's
-/// [RecurrenceRule.start] is never changed here.
 class RecurrenceEditor extends StatefulWidget {
   const RecurrenceEditor({
     required this.initial,
@@ -124,19 +91,12 @@ class RecurrenceEditor extends StatefulWidget {
 
   final RecurrenceRule initial;
 
-  /// Only "every N [day|week|month|year]" and the end: no weekday toggles, no
-  /// monthly day / Nth-weekday choice (a budget period). The rule it reports
-  /// has no weekdays and no monthly part.
   final bool simple;
 
-  /// Every edit, with the whole rule.
   final ValueChanged<RecurrenceRule> onChanged;
 
-  /// The longest end date: this long after the start.
   static const endSpanYears = 2;
 
-  /// The rule the editor starts from: hand-picked dates become monthly, the
-  /// interval at least 1.
   static RecurrenceRule normalize(RecurrenceRule r) {
     final dates = r.freq == RecurrenceFreq.dates;
     return r.copyWith(
@@ -447,8 +407,6 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
   }
 }
 
-/// The select key the English ordinal strings switch on (as in
-/// [recurrenceLabel]).
 String _ordinal(int nth) => switch (nth) {
   1 => 'first',
   2 => 'second',

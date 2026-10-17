@@ -10,9 +10,6 @@ import 'debt_book.dart';
 
 enum DebtLoadStatus { initial, loading, loaded, error }
 
-/// The people list (`/personal-debts`), page-scoped: open = 1 call, search /
-/// filter / next page = 1 call each, all on the server. Writes elsewhere
-/// patch a row with [applyBalance] (no re-fetch).
 class DebtPeopleState extends Equatable {
   const DebtPeopleState({
     this.status = DebtLoadStatus.initial,
@@ -34,24 +31,19 @@ class DebtPeopleState extends Equatable {
   final DebtPaging paging;
   final String q;
 
-  /// "ทั้งหมด": settled people too.
   final bool all;
 
-  /// The list order (ค้างนานสุด by default).
   final DebtPeopleSort sort;
 
-  /// The summary-box filter (ติดคุณ / คุณติด); null = both.
   final NetSide? side;
   final bool loadingMore;
   final ApiException? error;
 
-  /// The last load-more failed (the list stays; the footer offers a retry).
   final ApiException? moreError;
 
   bool get hasMore => paging.hasMore;
   bool get isFiltered => q.trim().isNotEmpty || side != null;
 
-  /// First load only: later reloads keep the rows on screen.
   bool get firstLoad =>
       items.isEmpty &&
       (status == DebtLoadStatus.initial || status == DebtLoadStatus.loading);
@@ -121,7 +113,6 @@ class DebtPeopleCubit extends Cubit<DebtPeopleState> with DebtBookListener {
   /// search / filter.
   int _generation = 0;
 
-  /// Page 1 with the current search / filters (open, pull-to-refresh, retry).
   Future<void> load() async {
     _searchTimer?.cancel();
     final gen = ++_generation;
@@ -161,7 +152,6 @@ class DebtPeopleCubit extends Cubit<DebtPeopleState> with DebtBookListener {
     }
   }
 
-  /// Typing in the search: one call once the typing pauses.
   void search(String q) {
     if (q == state.q) return;
     emit(state.copyWith(q: q));
@@ -175,14 +165,12 @@ class DebtPeopleCubit extends Cubit<DebtPeopleState> with DebtBookListener {
     load();
   }
 
-  /// The sort chip: one call with the new order.
   void setSort(DebtPeopleSort sort) {
     if (sort == state.sort) return;
     emit(state.copyWith(sort: sort));
     load();
   }
 
-  /// Tap a summary box: filter to that side; tap it again: both.
   void toggleSide(NetSide side) {
     if (state.side == side) {
       emit(state.copyWith(clearSide: true));
@@ -230,9 +218,6 @@ class DebtPeopleCubit extends Cubit<DebtPeopleState> with DebtBookListener {
     }
   }
 
-  /// A write's `person_balance`: patch that person's row in place. A new
-  /// person, or one who no longer matches the filter, waits for the next
-  /// load (the list is the server's view).
   void applyBalance(PersonBalance b) {
     final i = state.items.indexWhere((p) => p.key == b.key);
     if (i < 0) return;
@@ -240,9 +225,6 @@ class DebtPeopleCubit extends Cubit<DebtPeopleState> with DebtBookListener {
     emit(state.copyWith(items: next));
   }
 
-  /// An entry was saved elsewhere (the shell's +): the person's row follows
-  /// its balance at once; the list reloads for the totals and for a new
-  /// person (the list is the server's view). Only once the list has loaded.
   @override
   void onEntrySaved(DebtEntryWriteResult r) {
     if (isClosed || state.status == DebtLoadStatus.initial) return;

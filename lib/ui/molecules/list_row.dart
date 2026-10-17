@@ -4,18 +4,6 @@ import '../tokens/app/app_colors.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/select_check.dart';
 
-/// One row of a library list — categories, tags, contacts (owner
-/// 2026-10-10, option A), on hairline-separated rows:
-///
-///   [☐] (icon)  name                        trailing info
-///               one-line description
-///
-/// [leading] is the icon circle (IconDisplay / UserAvatar, 40); [subtitle]
-/// one line; [trailing] the row's info (×usage, 🔗, ▾/▴, pills). [indent]
-/// shifts it right (a tree's levels); [dimmed] fades it (archived);
-/// [checked] non-null shows a [SelectCheck] first (batch-edit mode) and
-/// tints the row when true; [body] replaces the title + subtitle (an
-/// inline name field in batch edit). No ListTile.
 class ListRow extends StatelessWidget {
   const ListRow({
     this.title,
@@ -38,7 +26,6 @@ class ListRow extends StatelessWidget {
   final Widget? leading;
   final String? subtitle;
 
-  /// The subtitle in the warning colour, semibold ("ค้าง 45 วัน").
   final bool subtitleWarn;
   final Widget? trailing;
   final VoidCallback? onTap;
@@ -46,7 +33,6 @@ class ListRow extends StatelessWidget {
   final double indent;
   final bool dimmed;
 
-  /// Batch-edit mode: the row's check (null = not selecting).
   final bool? checked;
   final VoidCallback? onCheck;
 

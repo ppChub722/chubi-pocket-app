@@ -8,18 +8,15 @@ import '../../molecules/list_row.dart';
 import '../../organisms/app_sheet.dart';
 import '../../templates/form_sheet.dart';
 
-/// One typed name of [WireNamesSheet] — plain values, not a model.
 @immutable
 class WireNameRow {
   const WireNameRow({required this.name, required this.subtitle});
 
   final String name;
 
-  /// e.g. "in 3 splits".
   final String subtitle;
 }
 
-/// The words of [WireNamesSheet] — passed localised by the caller.
 class WireNamesLabels {
   const WireNamesLabels({
     required this.title,
@@ -30,17 +27,12 @@ class WireNamesLabels {
 
   final String title;
 
-  /// The caption above the search.
   final String body;
   final String searchHint;
 
-  /// The primary button for [n] checked names.
   final String Function(int n) saveLabel;
 }
 
-/// Opens [WireNamesSheet]. [onSave] gets the checked names and returns what
-/// the sheet answers with (it closes), or null when saving failed (the sheet
-/// stays; the caller says why). Dismissed = null.
 Future<T?> showWireNamesSheet<T>(
   BuildContext context, {
   required WireNamesLabels labels,
@@ -51,9 +43,6 @@ Future<T?> showWireNamesSheet<T>(
   builder: (_) => WireNamesSheet<T>(labels: labels, rows: rows, onSave: onSave),
 );
 
-/// "Match names" — a [FormSheet] with a caption, a search and checkable name
-/// rows; the primary button wires the checked ones. Presentational: rows and
-/// words in, the save outcome out through [onSave].
 class WireNamesSheet<T> extends StatefulWidget {
   const WireNamesSheet({
     required this.labels,

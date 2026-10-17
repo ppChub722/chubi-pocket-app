@@ -4,17 +4,6 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/transaction_type.dart';
 
-/// The transaction's [CompactHeroBar] (owner 2026-10-11) — the detail page
-/// pins it under the top bar once the hero has scrolled away, view and
-/// edit alike:
-///
-///   ข้าวมันไก่ · [🍜 อาหาร]                          ฿1,250
-///
-/// The title is the description, else the category's name, else the type
-/// (title = description ?? category). A small category chip in its icon and
-/// colour follows the description after a "·" — never beside a title that
-/// already is the category, and none for a transfer. The amount stays in
-/// the type's colour. [onTap] = back to the hero.
 CompactHeroBar txCompactHeroBar(
   BuildContext context, {
   required TransactionType type,
@@ -36,8 +25,8 @@ CompactHeroBar txCompactHeroBar(
   };
   final text = description.trim();
   final category = type == TransactionType.transfer ? null : categoryName;
-  // The category is the title only when there's no description; then the
-  // chip would just repeat it.
+  // The category is the title only when there's no description; then the chip
+  // would just repeat it.
   final title = text.isNotEmpty ? text : (category ?? typeLabel);
   final showChip = text.isNotEmpty && category != null;
   return CompactHeroBar(
@@ -45,13 +34,11 @@ CompactHeroBar txCompactHeroBar(
     onTap: onTap,
     title: Row(
       children: [
-        // The description gives way first, then the chip.
         Flexible(
           child: Text(
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            // No description: the category / type stands in, italic + muted.
             style: text.isNotEmpty
                 ? null
                 : theme.textTheme.titleSmall?.copyWith(

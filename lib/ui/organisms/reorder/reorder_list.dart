@@ -9,25 +9,6 @@ import '../../tokens/app_spacing.dart';
 import 'reorder_controller.dart';
 import 'reorder_outline.dart';
 
-/// Reorder mode for a list or a tree (owner 2026-10-11). Wrap the page's
-/// scroll view in a [ReorderListScope] and each row in a [ReorderRow]:
-///
-/// - every row gets a ⠿ handle; touching it drags **at once** — the proxy
-///   lifts from exactly where the row is (no jump), the row dims in place;
-/// - sideways while dragging picks the level, counted from where the row
-///   was picked up: ±1 per [ReorderListScope.levelStep], changing only
-///   after a deliberate move past the threshold held briefly. Only valid
-///   levels show (the line never goes red); a light haptic on each change;
-///   [ReorderListScope.dropLabel] names the parent at the line;
-/// - holding over a collapsed parent ~0.6 s opens it; near the top /
-///   bottom edge the list scrolls;
-/// - tap a row → it's selected (tinted) and a [ReorderMoveBar] moves it;
-///   tap it again, or empty space, to deselect.
-///
-/// The page keeps building its own rows from
-/// [ReorderController.visible] (so the scroll view — and its offset — is
-/// the same one in browse mode, where [ReorderListScope.controller] is
-/// null and nothing changes).
 class ReorderListScope extends StatefulWidget {
   const ReorderListScope({
     required this.child,
@@ -40,43 +21,31 @@ class ReorderListScope extends StatefulWidget {
     super.key,
   });
 
-  /// The scroll view whose rows are [ReorderRow]s.
   final Widget child;
 
-  /// Drives the edge auto-scroll; the one [child] uses.
   final ScrollController scrollController;
 
-  /// Null = not reordering: the rows are plain.
   final ReorderController? controller;
 
-  /// One level of indent — the rows' indent step (where the drop line
-  /// starts for a level).
   final double indentStep;
 
-  /// How far sideways a drag moves to change level by one (~32 dp, owner
-  /// 2026-10-11).
   final double levelStep;
 
-  /// Where level 1 starts (the rows' side padding).
   final double indentBase;
 
-  /// The drop line's label for a parent id (null = top level). Null hides
-  /// the label (a flat list).
   final String Function(String? parentId)? dropLabel;
 
   @override
   State<ReorderListScope> createState() => _ReorderListScopeState();
 }
 
-/// How far past a level boundary (in levels) a drag must go, and for how
-/// long it must stay there, before the level changes.
+/// How far past a level boundary (in levels) a drag must go, and for how long
+/// it must stay there, before the level changes.
 const double _levelThreshold = 0.75;
 const Duration _levelHold = Duration(milliseconds: 150);
 
-/// Hover this long on a collapsed parent to open it.
 const Duration _expandHold = Duration(milliseconds: 600);
 
-/// Edge band that auto-scrolls while dragging, and its top speed per tick.
 const double _scrollBand = 72;
 const double _scrollMaxStep = 10;
 
@@ -99,23 +68,18 @@ class _Drag {
   /// The outline without the dragged block; drops index into it.
   final List<OutlineItem> rest;
 
-  /// The block's own spot in [rest] (dropping there = in place).
   final int home;
   final int height;
   final int startLevel;
 
-  /// Pointer x the sideways level is measured from (moves when the level
-  /// is clamped, so coming back is immediate).
   double originX;
 
-  /// The level the sideways position asks for.
   int lateral;
   int? pending;
   Timer? pendingTimer;
 
   Offset? pointer;
 
-  /// The current target: index in [rest] and level.
   int? k;
   int? level;
 }
@@ -139,7 +103,6 @@ class _ReorderListScopeState extends State<ReorderListScope> {
   Timer? _expandTimer;
   String? _hoverId;
 
-  /// Where the last handle touch went down — a drag's sideways origin.
   Offset? _lastPointerDown;
 
   ReorderController? get _c => widget.controller;
@@ -179,8 +142,6 @@ class _ReorderListScopeState extends State<ReorderListScope> {
     _seenMoves = c.moves;
     _seenSelected = c.selectedId;
     setState(() => _version++);
-    // Keep the selected row on screen after a move, and once the move bar
-    // has made room after selecting.
     if ((moved || newlySelected) && c.selectedId != null && _drag == null) {
       final id = c.selectedId!;
       WidgetsBinding.instance.addPostFrameCallback((_) => _reveal(id));
@@ -213,15 +174,12 @@ class _ReorderListScopeState extends State<ReorderListScope> {
     );
   }
 
-  // ── Rows ────────────────────────────────────────────────────────────
-
   void _register(String id, BuildContext row) => _rows[id] = row;
 
   void _unregister(String id, BuildContext row) {
     if (_rows[id] == row) _rows.remove(id);
   }
 
-  /// The row's rect in this scope's coordinates (null when not laid out).
   Rect? _rectOf(String id, RenderBox scope) {
     final row = _rows[id];
     if (row == null || !row.mounted) return null;
@@ -229,8 +187,6 @@ class _ReorderListScopeState extends State<ReorderListScope> {
     if (box == null || !box.attached || !box.hasSize) return null;
     return box.localToGlobal(Offset.zero, ancestor: scope) & box.size;
   }
-
-  // ── Drag ────────────────────────────────────────────────────────────
 
   void _startDrag(String id, Offset pointer) {
     final c = _c;
@@ -288,8 +244,6 @@ class _ReorderListScopeState extends State<ReorderListScope> {
     }
   }
 
-  /// Sideways → level, with hysteresis: a level change needs the pointer
-  /// [_levelThreshold] levels past the current one for [_levelHold].
   void _updateLateral(double x) {
     final d = _drag!;
     final maxDepth = _c!.maxDepth;
@@ -299,8 +253,6 @@ class _ReorderListScopeState extends State<ReorderListScope> {
     if (raw >= d.lateral + _levelThreshold) want = d.lateral + 1;
     if (raw <= d.lateral - _levelThreshold) want = d.lateral - 1;
     if (want != null && (want < 1 || want > maxDepth)) {
-      // Past the outermost / innermost level: slide the origin along so
-      // turning back acts at once.
       final edge = want < 1 ? 1 - 0.5 : maxDepth + 0.5;
       d.originX = x - (edge - d.startLevel) * step;
       want = null;
@@ -321,9 +273,6 @@ class _ReorderListScopeState extends State<ReorderListScope> {
     });
   }
 
-  /// Where the block would land for the current pointer: the gap between
-  /// the visible rows around it, and the level (the sideways level clamped
-  /// to what's valid there). An invalid gap keeps the last target.
   void _retarget() {
     final d = _drag;
     final c = _c;
@@ -335,8 +284,6 @@ class _ReorderListScopeState extends State<ReorderListScope> {
 
     final rows = c.visible(section: d.section);
     final rects = [for (final r in rows) _rectOf(r.id, scope)];
-    // Rows above the first laid-out one are above the pointer; below the
-    // last, below it.
     final first = rects.indexWhere((r) => r != null);
     if (first < 0) return;
     final last = rects.lastIndexWhere((r) => r != null);
@@ -371,7 +318,6 @@ class _ReorderListScopeState extends State<ReorderListScope> {
     if (range == null) return;
     final level = d.lateral.clamp(range.$1, range.$2);
     if (level != d.lateral) {
-      // What you see is the level: re-measure sideways from here.
       d.lateral = level;
       d.originX = pointer.dx - (level - d.startLevel) * widget.levelStep;
       d.pending = null;
@@ -381,7 +327,6 @@ class _ReorderListScopeState extends State<ReorderListScope> {
     d.k = k;
     d.level = level;
 
-    // The line: at the block's own top in place, else at the gap.
     double? lineY;
     if (inPlace) {
       lineY = _rectOf(d.id, scope)?.top;
@@ -438,7 +383,6 @@ class _ReorderListScopeState extends State<ReorderListScope> {
     _scrollStep = 0;
   }
 
-  /// Holding over a collapsed parent opens it.
   void _hoverExpand(Offset pointer) {
     final d = _drag;
     final c = _c;
@@ -475,19 +419,14 @@ class _ReorderListScopeState extends State<ReorderListScope> {
     });
   }
 
-  // ── Build ───────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final c = _c;
-    // The same shape in both modes, so the scroll view underneath (and its
-    // offset) survives entering / leaving the mode.
     return _ScopeData(
       state: this,
       version: _version,
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
-        // Empty space deselects (a row's own tap wins over this one).
         onTap: c == null ? null : () => c.select(null),
         child: Stack(
           children: [
@@ -529,7 +468,6 @@ class _ScopeData extends InheritedWidget {
   bool updateShouldNotify(_ScopeData old) => old.version != version;
 }
 
-/// The drop line + its parent label ("ใต้ Food & Drinks").
 class _DropIndicator extends StatelessWidget {
   const _DropIndicator({
     required this.line,
@@ -596,12 +534,6 @@ class _DropIndicator extends StatelessWidget {
   }
 }
 
-/// One row in reorder mode: tap = select (tinted), a ⠿ handle at the end
-/// drags at once, dimmed while its block is being dragged. Outside reorder
-/// mode (no controller on the scope) it's just [child].
-///
-/// [child] should not handle taps itself while reordering (pass the row a
-/// null onTap); its own buttons (▾ / ▴) keep working.
 class ReorderRow extends StatefulWidget {
   const ReorderRow({required this.id, required this.child, super.key});
 
@@ -665,7 +597,6 @@ class _ReorderRowState extends State<ReorderRow> {
         final handle = Draggable<String>(
           data: widget.id,
           maxSimultaneousDrags: busy ? 0 : 1,
-          // The proxy lifts from exactly where the row is.
           dragAnchorStrategy: (draggable, handleContext, position) {
             final box = this.context.findRenderObject() as RenderBox;
             return box.globalToLocal(position);
@@ -712,7 +643,6 @@ class _ReorderRowState extends State<ReorderRow> {
   }
 }
 
-/// The ⠿ handle — a full touch target at the end of the row.
 class _Handle extends StatelessWidget {
   const _Handle({required this.active});
 
@@ -732,7 +662,6 @@ class _Handle extends StatelessWidget {
   }
 }
 
-/// The row lifted under the finger while dragging.
 class _Proxy extends StatelessWidget {
   const _Proxy({required this.width, required this.child});
 

@@ -105,17 +105,12 @@ class ThemeBuilder {
     );
   }
 
-  /// Status / nav bar icons contrast with the [background] that actually
-  /// shows behind them — not the top bar's colour: [AppTopBar] is
-  /// transparent, which Flutter reads as "dark" → white icons on our light
-  /// background. Light background → dark icons, dark → light.
   static SystemUiOverlayStyle systemBarsStyle(Color background) {
     final bg = ThemeData.estimateBrightnessForColor(background);
     final icons = bg == Brightness.light ? Brightness.dark : Brightness.light;
     return SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: icons,
-      // iOS names the bar's background, not its icons.
       statusBarBrightness: bg,
       systemNavigationBarColor: Colors.transparent,
       systemNavigationBarIconBrightness: icons,

@@ -5,7 +5,6 @@ import '../tokens/app_spacing.dart';
 import 'app_sheet.dart';
 import 'picker_sheet.dart';
 
-/// One choice in [showOptionSheet].
 class SheetOption<T> {
   const SheetOption({
     required this.value,
@@ -24,23 +23,13 @@ class SheetOption<T> {
   final Widget? leading;
   final bool enabled;
 
-  /// Per-option label style (e.g. render a font name in that font).
   final TextStyle? labelStyle;
 
-  /// A destructive choice (remove, leave): its label in the error colour.
   final bool destructive;
 
-  /// Picking it sends to the server (delete, archive, a save choice): the row
-  /// is disabled while the app is offline ([ConnectionScope]), in popovers and
-  /// option sheets alike. Default false.
   final bool submits;
 }
 
-/// Single-select list sheet — language, font, currency, status, sort, …
-/// Resolves the picked value, or null on dismiss. On the kit [PickerSheet]
-/// shell (owner 2026-10-11): title + ✕, [searchable] adds the compact
-/// search (long lists: currencies, banks), rows are [PickerRow]s and the
-/// selected one is highlighted — never a ✓.
 Future<T?> showOptionSheet<T>(
   BuildContext context, {
   required String title,

@@ -3,18 +3,6 @@ import 'package:flutter/services.dart';
 
 import 'reorder_outline.dart';
 
-/// State of one reorder-mode session (owner 2026-10-11): the staged
-/// outline, the selected row, undo (one step per move / drop), and which
-/// rows are collapsed. Pages build it on entering the mode from their
-/// current order and read [items] back on save.
-///
-/// [collapsed] is the page's own set (passed in, not copied), so expand /
-/// collapse choices carry over between browse and reorder mode. Entering
-/// never collapses anything.
-///
-/// Every move goes through [ReorderOutline]; one that changes nothing
-/// (e.g. dropped where it was picked up) is not a step and doesn't mark
-/// the order dirty.
 class ReorderController extends ChangeNotifier {
   ReorderController({
     required List<OutlineItem> items,
@@ -25,7 +13,6 @@ class ReorderController extends ChangeNotifier {
        _original = List.unmodifiable(items),
        collapsed = collapsed ?? <String>{};
 
-  /// 1 = a flat list (↑ ↓ and drag only).
   final int maxDepth;
   final int undoLimit;
   final Set<String> collapsed;
@@ -35,8 +22,6 @@ class ReorderController extends ChangeNotifier {
   final List<List<OutlineItem>> _undo = [];
   String? _selectedId;
 
-  /// Bumped by every move, so listeners can tell a move (keep the
-  /// selection in view) from a selection / collapse change.
   int _moves = 0;
 
   List<OutlineItem> get items => _items;
@@ -45,7 +30,6 @@ class ReorderController extends ChangeNotifier {
   bool get isTree => maxDepth > 1;
   bool get canUndo => _undo.isNotEmpty;
 
-  /// The staged order differs from the one the mode started with.
   bool get dirty => !listEquals(_items, _original);
 
   int indexOf(String id) => _items.indexWhere((r) => r.id == id);
@@ -62,13 +46,9 @@ class ReorderController extends ChangeNotifier {
 
   bool isCollapsed(String id) => collapsed.contains(id);
 
-  /// The rows on screen in [section], in order.
   List<OutlineItem> visible({Object? section}) =>
       ReorderOutline.visible(_items, collapsed, section: section);
 
-  // ── Selection ───────────────────────────────────────────────────────
-
-  /// Tap a row: select it; the same row again deselects.
   void tapRow(String id) => select(_selectedId == id ? null : id);
 
   void select(String? id) {
@@ -77,11 +57,8 @@ class ReorderController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Collapse ────────────────────────────────────────────────────────
-
   void toggleCollapsed(String id) {
     if (!collapsed.remove(id)) collapsed.add(id);
-    // A selection that just went out of sight is dropped.
     final sel = _selectedId == null ? -1 : indexOf(_selectedId!);
     if (sel >= 0 && !ReorderOutline.isVisible(_items, sel, collapsed)) {
       _selectedId = null;
@@ -92,8 +69,6 @@ class ReorderController extends ChangeNotifier {
   void expand(String id) {
     if (collapsed.remove(id)) notifyListeners();
   }
-
-  // ── The ← ↑ ↓ → controls (on the selected row) ──────────────────────
 
   int get _sel => _selectedId == null ? -1 : indexOf(_selectedId!);
 
@@ -132,10 +107,8 @@ class ReorderController extends ChangeNotifier {
   void outdent() => _apply(_outdentResult());
   void indent() => _apply(_indentResult());
 
-  // ── Drag and drop ───────────────────────────────────────────────────
-
   /// Drops the block of [id] at index [k] of the outline without it, on
-  /// [level]. Returns whether anything changed.
+  /// [level].
   bool drop(String id, int k, int level) {
     final i = indexOf(id);
     if (i < 0) return false;
@@ -151,8 +124,6 @@ class ReorderController extends ChangeNotifier {
       haptic: false,
     );
   }
-
-  // ── Undo ────────────────────────────────────────────────────────────
 
   void undo() {
     if (_undo.isEmpty) return;
@@ -174,7 +145,6 @@ class ReorderController extends ChangeNotifier {
     return true;
   }
 
-  /// After → under a collapsed sibling: open the way to the selection.
   void _revealSelected() {
     final i = _sel;
     if (i < 0) return;

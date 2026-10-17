@@ -17,8 +17,6 @@ class AppTheme {
     this.darkModules,
   });
 
-  /// Feature-group colours (the เพิ่มเติม hub's sections). Null → the
-  /// theme's primary for every group (see [ModuleColors.of]).
   final ModuleColors? lightModules;
   final ModuleColors? darkModules;
 

@@ -1,3 +1,4 @@
+import '../atoms/app_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -8,13 +9,8 @@ import '../atoms/ui_config.dart';
 import '../atoms/app_button.dart';
 import '../organisms/app_sheet.dart';
 
-/// First day of [d]'s month — every month value here is normalised to it.
 DateTime _monthOf(DateTime d) => DateTime(d.year, d.month);
 
-/// Opens the month picker sheet — a year switcher (‹ 2026 ›) over a 4×3
-/// month grid, plus a "เดือนนี้" shortcut. Months outside [first] / [last]
-/// are disabled; [selected] is highlighted. Returns the picked month (first
-/// day), or null when dismissed.
 Future<DateTime?> showMonthPicker(
   BuildContext context, {
   required DateTime selected,
@@ -33,8 +29,6 @@ Future<DateTime?> showMonthPicker(
   );
 }
 
-/// The month picker's body — year switcher, 4×3 month grid and the
-/// "เดือนนี้" shortcut — for embedding outside [showMonthPicker].
 class MonthPickerGrid extends StatefulWidget {
   const MonthPickerGrid({
     required this.selected,
@@ -73,11 +67,12 @@ class _MonthPickerGridState extends State<MonthPickerGrid> {
     final now = DateTime.now();
     final thisMonth = DateTime(now.year, now.month);
 
-    Widget yearStep(IconData icon, String tooltip, int to) => IconButton(
-      icon: Icon(icon),
-      tooltip: tooltip,
-      onPressed: _yearAllowed(to) ? () => setState(() => _year = to) : null,
-    );
+    Widget yearStep(IconData icon, String tooltip, int to) =>
+        AppIconButton.flat(
+          icon: icon,
+          tooltip: tooltip,
+          onPressed: _yearAllowed(to) ? () => setState(() => _year = to) : null,
+        );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(

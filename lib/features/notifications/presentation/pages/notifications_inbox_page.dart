@@ -14,15 +14,6 @@ import '../cubit/unread_badge_cubit.dart';
 import '../notification_actions.dart';
 import '../widgets/notification_tile.dart';
 
-/// `/notifications` — the inbox page.
-///
-/// A summary card on top ("ต้องตอบ n เรื่อง · ยังไม่อ่าน n") whose four tiles
-/// ทั้งหมด / ต้องตอบ / ยังไม่อ่าน / ซ่อนไว้ are the filters (tap again to
-/// clear); its action slot holds ✓✓ อ่านทั้งหมด and ⚙️ ตั้งค่า. Each filter is
-/// ONE `GET /notifications`. Taps and the tiles' accept / reject buttons go
-/// through [NotificationActions] (shared with the dashboard's "ต้องจัดการ").
-/// Swipe left hides a row (undo in the snackbar); the ซ่อนไว้ tile lists the
-/// hidden rows with กู้คืน.
 class NotificationsInboxPage extends StatelessWidget {
   const NotificationsInboxPage({super.key});
 
@@ -31,7 +22,6 @@ class NotificationsInboxPage extends StatelessWidget {
     return BlocProvider(
       create: (ctx) => NotificationsInboxCubit(
         repository: ctx.read<NotificationsRepository>(),
-        // Loads and writes already return the count: patch the bell, no poll.
         onUnreadChanged: ctx.read<UnreadBadgeCubit>().setCount,
       )..load(),
       child: const _InboxScaffold(),
@@ -47,13 +37,11 @@ class _InboxScaffold extends StatefulWidget {
 }
 
 class _InboxScaffoldState extends State<_InboxScaffold> {
-  /// The cubit has no in-flight flag: one next-page call at a time, here.
   bool _loadingMore = false;
 
   Future<void> _loadMore() async {
     if (_loadingMore) return;
     _loadingMore = true;
-    // Fired from a scroll notification, possibly mid-layout: repaint after it.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() {});
     });
@@ -71,14 +59,25 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
     );
   }
 
-  /// A tile tap: select it, or clear it back to ทั้งหมด (no call when the
-  /// filter does not change).
   void _pick(InboxFilter f) {
     final cubit = context.read<NotificationsInboxCubit>();
-    final next = cubit.state.filter == f ? InboxFilter.all : f;
-    if (next == cubit.state.filter) return;
-    cubit.load(filter: next);
+    if (f == cubit.state.filter) return;
+    cubit.load(filter: f);
   }
+
+  String _filterLabel(AppLocalizations l, InboxFilter f) => switch (f) {
+    InboxFilter.all => l.notifTileAll,
+    InboxFilter.needsAnswer => l.notifTileNeedsAnswer,
+    InboxFilter.unread => l.notifTileUnread,
+    InboxFilter.hidden => l.notifTileHidden,
+  };
+
+  int _filterCount(InboxSummary s, InboxFilter f) => switch (f) {
+    InboxFilter.all => s.all,
+    InboxFilter.needsAnswer => s.needsAnswer,
+    InboxFilter.unread => s.unread,
+    InboxFilter.hidden => s.dismissed,
+  };
 
   Future<void> _hide(AppNotification n) async {
     final l = AppLocalizations.of(context)!;
@@ -94,49 +93,48 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
     );
   }
 
-  Widget _card(BuildContext ctx, AppLocalizations l, InboxState state) {
+  Widget _topRow(BuildContext ctx, AppLocalizations l, InboxState state) {
     final cubit = ctx.read<NotificationsInboxCubit>();
     final s = state.summary;
-    SummaryTile tile(
-      InboxFilter f,
-      String label,
-      String value, {
-      SummaryTileTone tone = SummaryTileTone.neutral,
-    }) => SummaryTile(
-      label: label,
-      value: value,
-      tone: tone,
-      selected: state.filter == f,
-      onTap: () => _pick(f),
-    );
-    return ListSummaryCard(
-      caption: l.notifCardCaption,
-      showMoneyToggle: false,
-      actions: [
-        CardActionButton(
-          icon: AppIcons.markAllRead,
-          tooltip: l.notifReadAllTooltip,
-          onTap: s.unread > 0 ? cubit.markReadAll : null,
-        ),
-        CardActionButton(
-          icon: AppIcons.settings,
-          tooltip: l.notifSettingsTooltip,
-          onTap: () => openPage(ctx, '/notifications/settings'),
-        ),
-      ],
-      main: AppText(l.notifCardMain(s.needsAnswer), role: AppTextRole.title),
-      mainSuffix: l.notifCardUnread(s.unread),
-      tiles: [
-        tile(InboxFilter.all, l.notifTileAll, '${s.all}'),
-        tile(
-          InboxFilter.needsAnswer,
-          l.notifTileNeedsAnswer,
-          '${s.needsAnswer}',
-          tone: SummaryTileTone.amber,
-        ),
-        tile(InboxFilter.unread, l.notifTileUnread, '${s.unread}'),
-        tile(InboxFilter.hidden, l.notifTileHidden, '${s.dismissed}'),
-      ],
+    String label(InboxFilter f) =>
+        '${_filterLabel(l, f)} · ${_filterCount(s, f)}';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        AppSpacing.sm,
+      ),
+      child: Row(
+        children: [
+          OptionMenuAnchor<InboxFilter>(
+            selected: state.filter,
+            options: [
+              for (final f in InboxFilter.values)
+                SheetOption(value: f, label: label(f)),
+            ],
+            onSelected: _pick,
+            builder: (context, toggle) => AppChip(
+              label: label(state.filter),
+              selected: state.filter != InboxFilter.all,
+              trailing: AppChipTrailing.dropdown,
+              onTap: toggle,
+            ),
+          ),
+          const Spacer(),
+          CardActionButton(
+            icon: AppIcons.markAllRead,
+            tooltip: l.notifReadAllTooltip,
+            onTap: s.unread > 0 ? cubit.markReadAll : null,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          CardActionButton(
+            icon: AppIcons.settings,
+            tooltip: l.notifSettingsTooltip,
+            onTap: () => openPage(ctx, '/notifications/settings'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -169,13 +167,10 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
     return Scaffold(
       appBar: AppTopBar(title: l.notificationsTitle),
       extendBodyBehindAppBar: true,
-      // ListPageBody clears the floating bar itself (the card starts below it).
       body: TabSwitchBody(
         child: BlocConsumer<NotificationsInboxCubit, InboxState>(
           listenWhen: (a, b) => a.error != b.error,
           listener: (ctx, state) {
-            // A failed row action, or a failed reload with rows on screen
-            // (a failed first load is the template's full-page error).
             if (state.error != null &&
                 (state.status != InboxStatus.error ||
                     state.notifications.isNotEmpty)) {
@@ -247,7 +242,6 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
               );
             }
             return ListPageBody(
-              // Rows on screen stay while it reloads or when a reload fails.
               loading:
                   (state.status == InboxStatus.initial ||
                       state.status == InboxStatus.loading) &&
@@ -260,13 +254,11 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
               isEmpty: visible.isEmpty,
               onRetry: cubit.reload,
               empty: _empty(l, state.filter),
-              header: [_card(ctx, l, state)],
-              // Rows run edge to edge.
+              header: [_topRow(ctx, l, state)],
               topInset: 0,
               sidePadding: 0,
               bottomInset: AppSpacing.huge,
               rowDividers: true,
-              // Text starts past the 40 px avatar: 16 + 40 + 12.
               rowDividerIndent: 68,
               hasMore: state.hasMore,
               loadingMore: _loadingMore,

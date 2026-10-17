@@ -8,8 +8,8 @@ import '../../../../ui/ui.dart';
 import '../../domain/app_version_info.dart';
 import '../cubit/app_version_cubit.dart';
 
-/// Opens the new build's download page outside the app; a snackbar when
-/// it can't.
+/// Opens the new build's download page outside the app; a snackbar when it
+/// can't.
 Future<void> openAppDownload(BuildContext context, String url) async {
   final l = AppLocalizations.of(context)!;
   final uri = Uri.tryParse(url);
@@ -24,10 +24,6 @@ Future<void> openAppDownload(BuildContext context, String url) async {
   }
 }
 
-/// `/update-required` — the version gate's wall (owner 2026-10-10): this
-/// build is below the server's minimum. Logo, why, and one way out: the
-/// download. Nothing gets past it; back closes the app. The router keeps
-/// every route but `/dev/*` here while the gate is shut.
 class UpdateRequiredPage extends StatelessWidget {
   const UpdateRequiredPage({super.key});
 
@@ -38,7 +34,6 @@ class UpdateRequiredPage extends StatelessWidget {
   }
 }
 
-/// The page's look, from plain values (gallery, tests).
 class UpdateRequiredView extends StatelessWidget {
   const UpdateRequiredView({
     required this.info,
@@ -49,10 +44,8 @@ class UpdateRequiredView extends StatelessWidget {
 
   final AppVersionInfo info;
 
-  /// This app's build, when known.
   final int? currentBuild;
 
-  /// Back closes the app (the real gate). False for a preview (gallery).
   final bool exitOnBack;
 
   @override
@@ -66,7 +59,6 @@ class UpdateRequiredView extends StatelessWidget {
     final hasLink = info.downloadUrl.isNotEmpty;
     return PopScope(
       canPop: !exitOnBack,
-      // No way past it — back leaves the app.
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) SystemNavigator.pop();
       },

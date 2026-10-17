@@ -3,7 +3,6 @@ import '../../transactions/domain/refs.dart';
 import '../../transactions/domain/transaction.dart';
 import '../../../ui/ui.dart';
 
-/// Project lifecycle states.
 enum ProjectStatus { active, completed, cancelled, archived }
 
 extension ProjectStatusWire on ProjectStatus {
@@ -94,8 +93,6 @@ double _money(Object? v) => (v as num?)?.toDouble() ?? 0;
 List<Map<String, dynamic>> _list(Object? json) =>
     ((json as List?) ?? const []).cast<Map<String, dynamic>>();
 
-/// An event (API `Event`), page-ready: the list row and the detail header.
-/// Single currency: every amount is in the user's currency.
 class Project extends Equatable {
   const Project({
     required this.id,
@@ -135,31 +132,22 @@ class Project extends Equatable {
   final String? description;
   final String? note;
 
-  /// `YYYY-MM-DD`, both optional.
   final String? startDate;
   final String? endDate;
   final ProjectStatus status;
   final int membersCount;
   final IconCode? iconCode;
 
-  /// Spec §10/4.23 — one nullable plan-vs-actual total ("ตั้งงบไว้").
-  /// NULL = the plan UI is hidden entirely. Display-only, never a
-  /// constraint.
   final double? plannedAmount;
 
   final double totalExpense;
   final double totalIncome;
 
-  /// My position: paid − share (> 0 = the others owe me; 0 = no part).
   final double myNet;
 
-  /// What I paid on the expense bills / my part of them (BE `my_paid`,
-  /// `my_share`).
   final double myPaid;
   final double myShare;
 
-  /// [myNet] split by sign, both >= 0 (BE `my_receivable` = the others owe
-  /// me, `my_payable` = I owe).
   final double myReceivable;
   final double myPayable;
 
@@ -167,16 +155,13 @@ class Project extends Equatable {
   /// negative when over); null without a plan.
   final double? remaining;
 
-  /// MY personal tags on the event (private to me).
   final List<EmbeddedTag> tags;
 
   final String? myMemberId;
   final MemberRole? myRole;
 
-  /// Server flags (thin FE: the BE decides who may do what).
   final bool isOwner;
 
-  /// Not active: bills and tags are read-only (API `is_locked`).
   final bool readOnly;
   final bool canAddBill;
   final bool canEdit;
@@ -190,7 +175,6 @@ class Project extends Equatable {
 
   bool get isActive => status == ProjectStatus.active;
 
-  /// Someone owes me or I owe someone (the BE's own split of my net).
   bool get isUnsettled => myReceivable > 0 || myPayable > 0;
 
   /// Cancelled / archived: rows can't be edited, deleted or ticked.
@@ -269,8 +253,6 @@ class Project extends Equatable {
   ];
 }
 
-/// An event member (API `EventMember`): linked (an app user) or a typed
-/// name.
 class ProjectMember extends Equatable {
   const ProjectMember({
     required this.id,
@@ -287,7 +269,6 @@ class ProjectMember extends Equatable {
   final String projectId;
   final String? userId;
 
-  /// Live profile name for an app user, else the typed name.
   final String displayName;
   final MemberRole role;
   final MemberStatus status;
@@ -328,7 +309,6 @@ class ProjectMember extends Equatable {
   ];
 }
 
-/// `MemberRef` embedded on board rows and positions: the payer / debtor.
 class ProjectMemberRef extends Equatable {
   const ProjectMemberRef({
     required this.id,
@@ -359,8 +339,6 @@ class ProjectMemberRef extends Equatable {
   List<Object?> get props => [id, userId, name, iconCode, isMe];
 }
 
-/// An event-scoped tag (API `EventTagRef` / `EventTag`): shared by the
-/// members, usable only inside its event.
 class BoardTag extends Equatable {
   const BoardTag({
     required this.id,
@@ -374,10 +352,8 @@ class BoardTag extends Equatable {
   final String name;
   final IconCode? iconCode;
 
-  /// I have a personal tag with this name: hide "+ เพิ่มเข้าแท็กของฉัน".
   final bool mine;
 
-  /// Bills carrying it (`EventTag` only).
   final int count;
 
   factory BoardTag.fromJson(Map<String, dynamic> json) => BoardTag(
@@ -392,8 +368,6 @@ class BoardTag extends Equatable {
   List<Object?> get props => [id, name, iconCode, mine, count];
 }
 
-/// The personal transaction a linked bill was made from (API
-/// `BoardSourceTx`, only for that transaction's owner).
 class BoardSourceTx extends Equatable {
   const BoardSourceTx({required this.id, this.description, this.accountName});
 
@@ -417,10 +391,6 @@ class BoardSourceTx extends Equatable {
   List<Object?> get props => [id, description, accountName];
 }
 
-/// One board row: a bill (parent, API `BoardRow`) or one of its splits
-/// (child, API `BoardSplit`, which inherits the parent's type / date).
-/// The app keeps them flat — parents followed by their children — and
-/// [buildProjectTxTree] groups them.
 class ProjectTransaction extends Equatable {
   const ProjectTransaction({
     required this.id,
@@ -448,47 +418,34 @@ class ProjectTransaction extends Equatable {
   final String id;
   final String projectId;
 
-  /// Embedded payer / debtor.
   final ProjectMemberRef? transactionMember;
 
-  /// null for parent rows; set on split-child rows.
   final String? parentProjectTransactionId;
 
-  /// Whose money moved on the project board (the actor / payer for parent
-  /// rows, the debtor for split-child rows).
   final String transactionMemberId;
   final String recordUserId;
   final String type; // expense | income
 
-  /// Empty from the events API (single currency: the user's).
   final String currency;
   final double amount;
   final String date;
   final String? description;
   final String? note;
 
-  /// The event tags' names (= [tagRefs]' names).
   final List<String> tags;
 
-  /// The event tags on the bill (children carry none).
   final List<BoardTag> tagRefs;
 
-  /// project_member ids who have flagged this row resolved on the board.
   final List<String> marks;
   final bool myMark;
 
-  /// My part of the bill (payer: amount − others' splits; split member: my
-  /// split; else 0).
   final double myShare;
 
   /// I can't edit it (event not active / I'm a viewer).
   final bool locked;
 
-  /// Made from a member's personal transaction: amount / date / payer are
-  /// shared with it.
   final bool linked;
 
-  /// That personal transaction, only when it's mine.
   final BoardSourceTx? sourceTx;
 
   bool get isParent => parentProjectTransactionId == null;
@@ -532,7 +489,6 @@ class ProjectTransaction extends Equatable {
     );
   }
 
-  /// One split (API `BoardSplit`) of [parent].
   factory ProjectTransaction.split(
     Map<String, dynamic> json,
     ProjectTransaction parent,
@@ -555,8 +511,6 @@ class ProjectTransaction extends Equatable {
     );
   }
 
-  /// The same row with its tags taken from [tags] (by id): renamed /
-  /// restyled / `mine`-flagged ones refreshed, deleted ones dropped.
   ProjectTransaction withTagsFrom(List<BoardTag> tags) {
     if (tagRefs.isEmpty) return this;
     final byId = {for (final t in tags) t.id: t};
@@ -589,8 +543,6 @@ class ProjectTransaction extends Equatable {
     );
   }
 
-  /// A `BoardRow` with its nested `children`, flat: the bill then its
-  /// splits.
   static List<ProjectTransaction> flatten(Map<String, dynamic> json) {
     final parent = ProjectTransaction.fromJson(json);
     return [
@@ -625,7 +577,6 @@ class ProjectTransaction extends Equatable {
   ];
 }
 
-/// One entry in the create/update transaction split list.
 class ProjectSplitInput extends Equatable {
   const ProjectSplitInput({required this.memberId, required this.amount});
   final String memberId;
@@ -637,28 +588,20 @@ class ProjectSplitInput extends Equatable {
   List<Object?> get props => [memberId, amount];
 }
 
-/// FE-side accordion model. The repository returns a flat list (parents
-/// followed by their children); [buildProjectTxTree] groups children under
-/// their parent for display.
 class ProjectTxTree extends Equatable {
   const ProjectTxTree({required this.parent, required this.children});
   final ProjectTransaction parent;
   final List<ProjectTransaction> children;
 
-  /// Sum of children's amounts. Useful for "post-split" display on parent.
   double get childrenTotal =>
       children.fold<double>(0, (acc, c) => acc + c.amount);
 
-  /// Parent's own share = parent.amount - sum(children.amount).
   double get parentShare => parent.amount - childrenTotal;
 
   @override
   List<Object?> get props => [parent, children];
 }
 
-/// Builds an accordion tree from a flat list of project transactions. Any
-/// child whose parent is not in [flat] is dropped (defensive — should not
-/// happen with the BE pagination contract, but keeps the UI from crashing).
 List<ProjectTxTree> buildProjectTxTree(List<ProjectTransaction> flat) {
   final parents = <ProjectTransaction>[];
   final byParent = <String, List<ProjectTransaction>>{};
@@ -675,7 +618,6 @@ List<ProjectTxTree> buildProjectTxTree(List<ProjectTransaction> flat) {
   ];
 }
 
-/// The event summary (API `EventSummary`): every figure from the BE.
 class ProjectSummary extends Equatable {
   const ProjectSummary({
     required this.projectId,
@@ -699,22 +641,17 @@ class ProjectSummary extends Equatable {
   final int transactionCount;
   final int memberCount;
 
-  /// Plan-vs-actual trio: null without a plan. `remaining` may be negative —
-  /// the FE flips the label ("เกินงบ X"), never shows a raw negative.
+  /// Plan-vs-actual trio: null without a plan.
   final double? plannedAmount;
   final double? spentNet;
   final double? remaining;
 
-  /// Caller's standing: null when the caller isn't a member. net > 0 = the
-  /// others owe me.
   final double? myPaid;
   final double? myShare;
   final double? myNet;
 
-  /// Who paid: every member's standing, paid desc (API `members`).
   final List<ProjectMemberPosition> positions;
 
-  /// Top 5 expense totals by event tag (API `by_tag`; untagged = no tag).
   final List<ProjectTagTotal> byTag;
 
   bool get hasPlan => plannedAmount != null;
@@ -765,8 +702,6 @@ class ProjectSummary extends Equatable {
   ];
 }
 
-/// One member's standing (API `EventPosition`): paid = expense bills they
-/// paid; net = paid − share (> 0: the others owe them).
 class ProjectMemberPosition extends Equatable {
   const ProjectMemberPosition({
     required this.memberId,
@@ -788,7 +723,6 @@ class ProjectMemberPosition extends Equatable {
   final double share;
   final double net;
 
-  /// [net] split by sign, both >= 0 (BE `receivable` / `payable`).
   final double receivable;
   final double payable;
 
@@ -821,8 +755,6 @@ class ProjectMemberPosition extends Equatable {
   ];
 }
 
-/// Expense total for one event tag (API `EventTagTotal`); no tag =
-/// untagged.
 class ProjectTagTotal extends Equatable {
   const ProjectTagTotal({
     required this.total,
@@ -834,7 +766,6 @@ class ProjectTagTotal extends Equatable {
   final BoardTag? tag;
   final double total;
 
-  /// My share of those bills.
   final double share;
   final int count;
 
@@ -859,8 +790,6 @@ List<ProjectTransaction> _board(Object? rows) => [
   for (final r in _list(rows)) ...ProjectTransaction.flatten(r),
 ];
 
-/// What deleting an event removes (`GET /projects/:id/detail?include=
-/// delete_preview`): the confirm dialog's numbers.
 class EventDeletePreview {
   const EventDeletePreview({
     this.bills = 0,
@@ -878,12 +807,9 @@ class EventDeletePreview {
   final int bills;
   final int members;
 
-  /// My own book records linked to the event (delete_linked_txs).
   final int linkedTxCount;
 }
 
-/// Everything the event page shows (API `EventDetail`, the one "open"
-/// call).
 class ProjectDetail {
   const ProjectDetail({
     required this.project,
@@ -896,20 +822,16 @@ class ProjectDetail {
     this.deletePreview,
   });
 
-  /// Only with `include=delete_preview`, else null.
   final EventDeletePreview? deletePreview;
 
   final Project project;
   final List<ProjectMember> members;
 
-  /// Board rows, flat: parents followed by their split children.
   final List<ProjectTransaction> transactions;
   final ProjectSummary summary;
 
-  /// The event's tags (shared by the members).
   final List<BoardTag> tags;
 
-  /// The board's paging.
   final int page;
   final int totalPages;
 
@@ -940,8 +862,8 @@ class ProjectDetail {
   }
 }
 
-/// What every event write returns (API `EventPatch`): the final state to
-/// patch the page from — never a re-fetch.
+/// What every event write returns (API `EventPatch`): the final state to patch
+/// the page from — never a re-fetch.
 class EventPatch {
   const EventPatch({
     required this.project,
@@ -958,14 +880,10 @@ class EventPatch {
   final List<ProjectMember> members;
   final List<BoardTag> tags;
 
-  /// The bill the write created / changed, flat (bill + its splits); empty
-  /// when none.
   final List<ProjectTransaction> row;
 
-  /// A bill that left the board.
   final String? removedRowId;
 
-  /// {account id: balance} for wallets a linked transaction moved.
   final Map<String, double> accountBalances;
 
   factory EventPatch.fromJson(Map<String, dynamic> json) {
@@ -990,14 +908,10 @@ class EventPatch {
     );
   }
 
-  /// `AddBillsResult.rows`: every bill the call added, flat.
   static List<ProjectTransaction> rowsOf(Map<String, dynamic> json) =>
       _board(json['rows']);
 }
 
-/// `GET /projects` `summary` (API `EventList.summary`): the list card's
-/// numbers over my events, the same whatever the list filter. The totals
-/// are over the ACTIVE events; every figure comes from the BE.
 class ProjectListSummary extends Equatable {
   const ProjectListSummary({
     this.myShareTotal = 0,
@@ -1012,7 +926,6 @@ class ProjectListSummary extends Equatable {
   final double paidTotal;
   final double receivableTotal;
 
-  /// The three filter tiles' counts.
   final int active;
   final int unsettled;
   final int ended;
@@ -1041,7 +954,6 @@ class ProjectListSummary extends Equatable {
   ];
 }
 
-/// One page of `GET /projects` (API `EventList`).
 class ProjectPage {
   const ProjectPage({
     required this.projects,
@@ -1054,13 +966,11 @@ class ProjectPage {
   final int page;
   final int totalPages;
 
-  /// The summary card's numbers (null from an older server).
   final ProjectListSummary? summary;
 
   bool get hasMore => page < totalPages;
 }
 
-/// The list's sort (API `sort`).
 enum ProjectSort { updatedDesc, startDateDesc, nameAsc }
 
 extension ProjectSortWire on ProjectSort {

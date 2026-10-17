@@ -8,8 +8,6 @@ import '../../notifications/domain/notification.dart' show InboxSummary;
 import '../domain/project.dart';
 import '../../../ui/ui.dart';
 
-/// `POST /v1/projects/quick` / `POST /v1/projects/:id/bills` result: the
-/// event, the new bill's personal transaction and the wallets it moved.
 class QuickCreateResult {
   const QuickCreateResult({
     required this.project,
@@ -21,21 +19,15 @@ class QuickCreateResult {
 
   final Project project;
 
-  /// Bills the call added.
   final int linkedCount;
 
-  /// The new bill's personal transaction (null when only existing ones
-  /// were pulled in).
   final String? transactionId;
 
-  /// {account id: balance after the write} (API `account_balances`).
   final Map<String, double> accountBalances;
 
-  /// The event page's patch (bills added to an existing event).
   final EventPatch? patch;
 }
 
-/// An event-tag write's answer (API `EventTagWriteResult`).
 class EventTagWrite {
   const EventTagWrite({required this.patch, required this.tag});
 
@@ -43,19 +35,14 @@ class EventTagWrite {
   final BoardTag tag;
 }
 
-/// `POST /projects/:id/tags/import` result.
 class EventTagImportResult {
   const EventTagImportResult({required this.created, required this.tags});
 
-  /// My new personal tags.
   final List<EmbeddedTag> created;
 
-  /// The event's tags, `mine` updated.
   final List<BoardTag> tags;
 }
 
-/// Thin Dio wrapper around `/v1/projects` (API tag "Events"). Every write
-/// returns an [EventPatch] the page applies — no re-fetch.
 class ProjectsRepository {
   ProjectsRepository({required ApiClient client}) : _client = client;
   final ApiClient _client;
@@ -71,11 +58,6 @@ class ProjectsRepository {
   Future<EventPatch> _patch(Future<Response<Map<String, dynamic>>> request) =>
       _call(() async => EventPatch.fromJson((await request).data!));
 
-  // --- Events ---
-
-  /// One page of my events. [status]: active (default) / completed /
-  /// cancelled / archived / all; [q] searches the name; [tagIds] = MY
-  /// personal tags (any of them).
   Future<ProjectPage> list({
     String? status,
     String? q,
@@ -113,11 +95,6 @@ class ProjectsRepository {
     return Project.fromJson(res.data!);
   });
 
-  /// The event page in one call: event, summary, members, tags and the
-  /// board's first page.
-  ///
-  /// [deletePreview] adds what a delete removes (`include=delete_preview`,
-  /// the delete confirm's numbers).
   Future<ProjectDetail> detail(
     String id, {
     int perPage = 50,
@@ -133,8 +110,6 @@ class ProjectsRepository {
     return ProjectDetail.fromJson(res.data!);
   });
 
-  /// One call (plan, dates and my tags included) → the new event's detail.
-  /// [startDate] / [endDate] are `YYYY-MM-DD`.
   Future<ProjectDetail> create({
     required String name,
     String? description,
@@ -161,10 +136,6 @@ class ProjectsRepository {
     return ProjectDetail.fromJson(res.data!);
   });
 
-  /// Partial update. [description] / [note]: null = unchanged, `''` =
-  /// clear. [plannedAmount] / [startDate] / [endDate]: a value sets it,
-  /// [clearPlannedAmount] / [clearStartDate] / [clearEndDate] send an
-  /// explicit null (clear). [tagIds] = MY personal tags (any member).
   Future<EventPatch> update(
     String id, {
     String? name,
@@ -205,13 +176,6 @@ class ProjectsRepository {
     ),
   );
 
-  /// `POST /v1/projects/quick` — atomic: create the event + auto-add
-  /// members + board bills from the new transaction ([newTransaction], the
-  /// exact `POST /v1/transactions` body) and / or saved rows
-  /// ([transactionIds]; [move] takes them out of another event).
-  ///
-  /// Errors: `400 VALIDATION_ERROR` (a transfer), `404 TX_NOT_FOUND`,
-  /// `409 TX_ALREADY_IN_PROJECT`, `422 TX_NOT_BILLABLE`.
   Future<QuickCreateResult> quickCreate({
     required String name,
     Map<String, dynamic>? newTransaction,
@@ -238,8 +202,6 @@ class ProjectsRepository {
     );
   });
 
-  /// `POST /v1/projects/:id/bills` — a new bill and / or saved rows pulled
-  /// into an existing event (`AddBillsResult`: the patch + the new rows).
   Future<QuickCreateResult> addBills(
     String projectId, {
     Map<String, dynamic>? newTransaction,
@@ -264,8 +226,6 @@ class ProjectsRepository {
     );
   });
 
-  /// `DELETE /v1/projects/:id/bills/:transaction_id` — takes a saved row
-  /// back out of the event (it stays in the book).
   Future<void> removeBill(String projectId, String transactionId) =>
       _call(() async {
         await _client.dio.delete<dynamic>(
@@ -273,9 +233,6 @@ class ProjectsRepository {
         );
       });
 
-  /// Deletes the event and its bills; [deleteLinkedTxs] also deletes MY
-  /// personal transactions linked to them (else they stay, unlinked).
-  /// Returns the wallets those deletions moved ({account id: balance}).
   Future<Map<String, double>> delete(
     String id, {
     bool deleteLinkedTxs = false,
@@ -292,8 +249,6 @@ class ProjectsRepository {
         : const <String, double>{};
   });
 
-  /// `POST /projects/link-requests/:notification_id/accept` — the answer to
-  /// an event invite (the inbox's ตอบรับ). The notification becomes actioned.
   Future<InboxSummary> acceptInvite(String notificationId) => _call(() async {
     final res = await _client.dio.post<Map<String, dynamic>>(
       '/projects/link-requests/$notificationId/accept',
@@ -303,7 +258,6 @@ class ProjectsRepository {
     );
   });
 
-  /// `POST /projects/link-requests/:notification_id/reject` — ปฏิเสธ.
   Future<InboxSummary> rejectInvite(String notificationId) => _call(() async {
     final res = await _client.dio.post<Map<String, dynamic>>(
       '/projects/link-requests/$notificationId/reject',
@@ -325,8 +279,6 @@ class ProjectsRepository {
         ),
       );
 
-  // --- Members ---
-
   Future<List<ProjectMember>> listMembers(String projectId) => _call(() async {
     final res = await _client.dio.get<Map<String, dynamic>>(
       '/projects/$projectId/members',
@@ -337,8 +289,6 @@ class ProjectsRepository {
     ];
   });
 
-  /// By email (+ [displayName]) or a typed person ([displayName] +
-  /// [adHoc]); bad input → 400.
   Future<EventPatch> addMember(
     String projectId, {
     String? email,
@@ -374,11 +324,6 @@ class ProjectsRepository {
     ),
   );
 
-  // --- Board ---
-
-  /// A board page (bills with their splits, flat). Filters: [type]
-  /// (expense / income), [mine], [q], [tagId]; [sort]: date_desc (default) /
-  /// date_asc / amount_desc / amount_asc.
   Future<List<ProjectTransaction>> listTransactions(
     String projectId, {
     int page = 1,
@@ -409,9 +354,6 @@ class ProjectsRepository {
     ];
   });
 
-  /// A board bill (no wallet). [tagIds] = this event's tags. [tags] /
-  /// [currency] are ignored (the API takes tag ids; single currency) — kept
-  /// until quick create moves to [tagIds].
   Future<EventPatch> createTransaction(
     String projectId, {
     required String transactionMemberId,
@@ -440,12 +382,6 @@ class ProjectsRepository {
     ),
   );
 
-  /// `splits` semantics: pass `null` to leave existing children untouched;
-  /// pass a list (possibly empty) to full-replace children. [tagIds]: null =
-  /// unchanged. [tags] (names) is ignored, see [createTransaction].
-  /// [alsoUpdateLink]: my OWN linked bill — also change my transaction
-  /// (amount / date; the app asks at save). Ignored for anyone else (the
-  /// owner gets "อัปเดตตาม").
   Future<EventPatch> updateTransaction(
     String projectId,
     String ptId, {
@@ -478,8 +414,6 @@ class ProjectsRepository {
     ),
   );
 
-  /// `POST /v1/projects/:id/project-transactions/:pt_id/copy` — copy my
-  /// share of a bill into my own book. Returns the personal transaction id.
   Future<String> copyToPersonal(String projectId, String ptId) =>
       _call(() async {
         final res = await _client.dio.post<Map<String, dynamic>>(
@@ -491,8 +425,6 @@ class ProjectsRepository {
             : res.data!['transaction_id'] as String;
       });
 
-  /// Tick / untick a bill (or split) as resolved for me. Idempotent;
-  /// independent of the personal-book resolve.
   Future<EventPatch> toggleMark(String projectId, String ptId, bool marked) =>
       _patch(
         _client.dio.put<Map<String, dynamic>>(
@@ -501,9 +433,6 @@ class ProjectsRepository {
         ),
       );
 
-  // --- Event tags ---
-
-  /// The event's tags (shared by the members), with ids.
   Future<List<BoardTag>> eventTags(String projectId) => _call(() async {
     final res = await _client.dio.get<Map<String, dynamic>>(
       '/projects/$projectId/tags',
@@ -514,12 +443,10 @@ class ProjectsRepository {
     ];
   });
 
-  /// The event tags' names (quick create's suggestions).
   Future<List<String>> listTags(String projectId) async => [
     for (final t in await eventTags(projectId)) t.name,
   ];
 
-  /// A new event tag → the tag (+ the patch).
   Future<BoardTag> createEventTag(
     String projectId,
     String name, {
@@ -527,8 +454,6 @@ class ProjectsRepository {
   }) async =>
       (await writeEventTag(projectId, name: name, iconCode: iconCode)).tag;
 
-  /// `POST /projects/:id/tags` (create) or `PUT /projects/:id/tags/:tag_id`
-  /// (rename / restyle, [tagId] given): the patch (tags updated) + the tag.
   Future<EventTagWrite> writeEventTag(
     String projectId, {
     String? tagId,
@@ -554,23 +479,20 @@ class ProjectsRepository {
     );
   });
 
-  /// Hard delete; the tag comes off every bill. Answers the patch.
   Future<EventPatch> deleteEventTag(String projectId, String tagId) => _patch(
     _client.dio.delete<Map<String, dynamic>>(
       '/projects/$projectId/tags/$tagId',
     ),
   );
 
-  /// `POST /projects/:id/archive` (owner): hidden, not counted, read-only.
   Future<EventPatch> archive(String id) =>
       _patch(_client.dio.post<Map<String, dynamic>>('/projects/$id/archive'));
 
-  /// `POST /projects/:id/restore` (owner): back to active.
   Future<EventPatch> restore(String id) =>
       _patch(_client.dio.post<Map<String, dynamic>>('/projects/$id/restore'));
 
-  /// Copies event tags into MY personal set ([tagIds] empty = every one I
-  /// don't have yet).
+  /// Copies event tags into MY personal set ([tagIds] empty = every one I don't
+  /// have yet).
   Future<EventTagImportResult> importTags(
     String projectId, {
     List<String> tagIds = const [],

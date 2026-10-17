@@ -9,15 +9,6 @@ import '../../features/transactions/domain/refs.dart';
 import '../../ui/ui.dart';
 import 'fade_branch_container.dart';
 
-/// What the shell's centre + opens over the page on screen (owner
-/// 2026-10-12: quick create = ONE sheet with a per-page default): the
-/// [mode], and what to preset in it. A page that offers nothing gets
-/// [QuickCreatePreset.none] — tx mode, nothing preset. The + takes its
-/// colour from [mode] ([QuickCreateModeColors]); pages never pass a colour.
-///
-/// Per page (one [QuickCreatePresetScope] line each): wallet detail →
-/// [account]; category detail → [category]; debts list → debt mode; debt
-/// person page / contact detail → debt mode + [person].
 class QuickCreatePreset {
   const QuickCreatePreset({
     this.mode = QuickCreateMode.tx,
@@ -29,8 +20,6 @@ class QuickCreatePreset {
     this.debtDirection,
   });
 
-  /// Saving mode (ออม), optionally with the goal selected (a goal page);
-  /// null = into the spare pool.
   const QuickCreatePreset.saving({this.goalId})
     : mode = QuickCreateMode.saving,
       account = null,
@@ -39,8 +28,6 @@ class QuickCreatePreset {
       person = null,
       debtDirection = null;
 
-  /// Debt mode, optionally with the person and the direction to start on
-  /// (null = the form's default).
   const QuickCreatePreset.debt({this.person, this.debtDirection})
     : mode = QuickCreateMode.debt,
       account = null,
@@ -48,7 +35,6 @@ class QuickCreatePreset {
       tag = null,
       goalId = null;
 
-  /// Tx mode, nothing preset.
   static const none = QuickCreatePreset();
 
   final QuickCreateMode mode;
@@ -56,13 +42,10 @@ class QuickCreatePreset {
   final Category? category;
   final Tag? tag;
 
-  /// Debt mode's person.
   final EmbeddedPerson? person;
 
-  /// Saving mode's goal (null = spare).
   final String? goalId;
 
-  /// Debt mode's starting direction.
   final DebtEntryDirection? debtDirection;
 
   @override
@@ -88,16 +71,6 @@ class QuickCreatePreset {
   );
 }
 
-/// The shell's list of pages that offer a [QuickCreatePreset] — one per
-/// mounted [QuickCreatePresetScope]. The page on screen is the newest one
-/// whose route is the top of its tab and whose tab is the visible one
-/// ([currentBranch]); a page underneath another, or in a tab left behind,
-/// offers nothing.
-///
-/// [preset] is kept current for the + colour: it is re-read after every
-/// change that can move it — a scope added / removed / changed, a tab switch
-/// ([currentBranch]), a push / pop in any tab ([QuickCreateRouteObserver]) —
-/// once the frame has settled, and listeners hear only real changes.
 class QuickCreateContext extends ChangeNotifier {
   QuickCreateContext() {
     QuickCreateRouteObserver.changes.addListener(refresh);
@@ -109,10 +82,8 @@ class QuickCreateContext extends ChangeNotifier {
   bool _scheduled = false;
   bool _disposed = false;
 
-  /// The preset of the page on screen (as of the last settled frame).
   QuickCreatePreset get preset => _preset;
 
-  /// The shell's visible tab (branch index).
   int? get currentBranch => _currentBranch;
   set currentBranch(int? i) {
     if (i == _currentBranch) return;
@@ -130,8 +101,6 @@ class QuickCreateContext extends ChangeNotifier {
     refresh();
   }
 
-  /// The preset of the page on screen right now, or null (a plain quick
-  /// create).
   QuickCreatePreset? active() {
     for (final e in _entries.reversed) {
       if (e.isShowing()) return e.preset;
@@ -139,8 +108,6 @@ class QuickCreateContext extends ChangeNotifier {
     return null;
   }
 
-  /// Re-read [preset] once the current frame is done (routes and tabs have
-  /// settled by then).
   void refresh() {
     if (_scheduled || _disposed) return;
     _scheduled = true;
@@ -170,13 +137,9 @@ class _Entry {
   final bool Function() isShowing;
 }
 
-/// Tells [QuickCreateContext] that a tab's stack changed (push / pop /
-/// replace / remove), so the + colour follows. One per tab navigator (an
-/// observer serves one navigator); they share [changes].
 class QuickCreateRouteObserver extends NavigatorObserver {
   static final _Changes _changes = _Changes();
 
-  /// Fires on any push / pop in any tab.
   static Listenable get changes => _changes;
 
   void _changed() => _changes.ping();
@@ -202,7 +165,6 @@ class _Changes extends ChangeNotifier {
   void ping() => notifyListeners();
 }
 
-/// Hands the shell's [QuickCreateContext] down to the tabs' pages.
 class QuickCreateContextScope extends InheritedWidget {
   const QuickCreateContextScope({
     required this.registry,
@@ -221,10 +183,6 @@ class QuickCreateContextScope extends InheritedWidget {
       registry != old.registry;
 }
 
-/// Wrap a page's body: while this page is on screen, the shell's + opens
-/// the quick create with [preset] (and wears its mode's colour). Mounted =
-/// registered; disposed = gone. Outside the shell (a root-navigator page)
-/// it does nothing.
 class QuickCreatePresetScope extends StatefulWidget {
   const QuickCreatePresetScope({
     required this.preset,
@@ -243,7 +201,6 @@ class _QuickCreatePresetScopeState extends State<QuickCreatePresetScope> {
   QuickCreateContext? _registry;
   late final _Entry _entry = _Entry(widget.preset, _isShowing);
 
-  /// The top page of its tab, in the tab that's showing.
   bool _isShowing() {
     if (!mounted || !(ModalRoute.of(context)?.isCurrent ?? false)) {
       return false;

@@ -8,7 +8,6 @@ import '../../tokens/app_spacing.dart';
 import '../icons/icon_code.dart';
 import 'person_mark.dart';
 
-/// One contact row of [ContactPickerSheet] — plain values, not a model.
 @immutable
 class ContactPickerRow {
   const ContactPickerRow({
@@ -24,32 +23,26 @@ class ContactPickerRow {
   final String name;
   final String? subtitle;
 
-  /// Linked to an app account (shows the link mark).
   final bool linked;
   final IconCode? iconCode;
 
-  /// Extra searchable text (nickname, description, email, phone...).
   final List<String> keywords;
 }
 
-/// What [showContactPicker] answers. `null` = dismissed.
 sealed class ContactPickerOutcome {
   const ContactPickerOutcome();
 }
 
-/// A listed contact was picked.
 class ContactPickerRowPicked extends ContactPickerOutcome {
   const ContactPickerRowPicked(this.id);
   final String id;
 }
 
-/// A free-text name (someone not in the book).
 class ContactPickerNameTyped extends ContactPickerOutcome {
   const ContactPickerNameTyped(this.name);
   final String name;
 }
 
-/// The words of [ContactPickerSheet] — passed localised by the caller.
 class ContactPickerLabels {
   const ContactPickerLabels({
     required this.title,
@@ -65,22 +58,18 @@ class ContactPickerLabels {
 
   final String title;
 
-  /// Null: no search hint (contacts only, no free text).
   final String? searchHint;
   final String createNew;
   final String saveAsContact;
 
-  /// "Use NAME" for a typed name.
   final String Function(String name) useName;
   final String useNameHint;
   final String noContact;
   final String noContactHint;
 
-  /// Shown when there are no contacts at all.
   final String empty;
 }
 
-/// Everything [ContactPickerSheet] draws and calls.
 class ContactPickerSheetData {
   const ContactPickerSheetData({
     required this.labels,
@@ -102,23 +91,16 @@ class ContactPickerSheetData {
   final bool allowFreeText;
   final bool allowCreate;
 
-  /// Set: a "no contact" row on top answering [ContactPickerNameTyped] with
-  /// this name.
   final String? unlinkAs;
   final bool loading;
   final Object? error;
   final VoidCallback? onRetry;
 
-  /// Makes the typed name a contact and returns its id (null = failed; the
-  /// caller says so). The sheet then answers [ContactPickerRowPicked].
   final Future<String?> Function(String name)? onSaveAsContact;
 
-  /// Runs the create flow over the sheet; returns the new id or null.
   final Future<String?> Function()? onCreate;
 }
 
-/// Opens [ContactPickerSheet]. [data] runs inside the sheet's build, so a
-/// caller that watches its cubit there gets live rows / loading / error.
 Future<ContactPickerOutcome?> showContactPicker(
   BuildContext context, {
   required ContactPickerSheetData Function(BuildContext sheetContext) data,
@@ -128,9 +110,6 @@ Future<ContactPickerOutcome?> showContactPicker(
       Builder(builder: (ctx) => ContactPickerSheet(data: data(ctx))),
 );
 
-/// "Who with" — the kit [PickerSheet] over contact rows: search, the current
-/// one highlighted, "use this name" / "save as contact" for a typed name, and
-/// an optional create row. Presentational: rows and words in, the pick out.
 class ContactPickerSheet extends StatefulWidget {
   const ContactPickerSheet({required this.data, super.key});
 
@@ -140,9 +119,6 @@ class ContactPickerSheet extends StatefulWidget {
   State<ContactPickerSheet> createState() => _ContactPickerSheetState();
 }
 
-/// The leading of a typed-name row: the person mark's first level in the
-/// avatars' 36 column + the link slot, so its text lines up with the contact
-/// rows.
 Widget _typedNameLeading(String name) => Row(
   mainAxisSize: MainAxisSize.min,
   children: [
@@ -234,8 +210,6 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
                         ContactPickerNameTyped(d.unlinkAs!),
                       ),
                     ),
-                  // Someone not in the book: their name as it is, or saved as
-                  // a contact first.
                   if (offerName) ...[
                     PickerRow(
                       leading: _typedNameLeading(typed),

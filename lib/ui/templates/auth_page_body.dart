@@ -3,24 +3,6 @@ import 'package:flutter/material.dart';
 import '../molecules/centered_form_body.dart';
 import '../tokens/app_spacing.dart';
 
-/// The Auth template's body (owner 2026-10-12): sign in and register are the
-/// same skeleton, built only from kit pieces —
-///
-///   [brand]          logo · name · tagline
-///   [groups]         the form: SectionCards of framed AppInputs (or bare
-///                    inputs), spaced by the template
-///   [submit]         the large primary button
-///   [alternatives]   "or" divider + social sign-in
-///   [switchLink]     the text button to the other page
-///   [footer]         language + theme controls
-///
-/// A failed attempt is the app-wide error snackbar (`showErrorSnackBar`), the
-/// same as every other page — not a banner in the form (owner 2026-10-17).
-///
-/// The page keeps state, validation, the API call and navigation; no padding,
-/// colour or raw widget. The template owns the safe area, centring, scroll,
-/// the width cap and the autofill group + form. [compact] tightens the header
-/// gap (register).
 class AuthPageBody extends StatelessWidget {
   const AuthPageBody({
     required this.brand,
@@ -46,7 +28,6 @@ class AuthPageBody extends StatelessWidget {
   final AutovalidateMode? autovalidateMode;
   final bool compact;
 
-  /// A floating top bar sits over the page (register): start below it.
   final bool clearTopBar;
 
   @override

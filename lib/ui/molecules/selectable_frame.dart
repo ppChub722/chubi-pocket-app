@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_radius.dart';
 
-/// Selection ring around any card/tile: when [selected], draws a primary
-/// outline (outside the child, so the child's own border stays) plus a
-/// soft tint. The app's "this one is picked" look — card grids in pickers,
-/// popover items, swatches.
 class SelectableFrame extends StatelessWidget {
   const SelectableFrame({
     required this.selected,
@@ -19,13 +15,10 @@ class SelectableFrame extends StatelessWidget {
   final bool selected;
   final Widget child;
 
-  /// Corner radius of the child; the ring follows it at [gap] distance.
   final double radius;
 
-  /// Ring colour; defaults to the primary colour.
   final Color? color;
 
-  /// Space between the child and the ring.
   final double gap;
 
   @override

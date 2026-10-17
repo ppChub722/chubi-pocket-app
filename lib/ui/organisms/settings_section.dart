@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/app_chip.dart';
 import '../atoms/app_switch.dart';
 import '../atoms/connection_scope.dart';
 import '../molecules/detail_rows.dart';
 
-/// A headed settings group: [title] (the caller's string, e.g. "Settings"), a
-/// one-line [description], then the rows ([SettingToggleRow] /
-/// [SettingSummaryRow]) in one box.
 class SettingsSection extends StatelessWidget {
   const SettingsSection({
     required this.title,
@@ -30,9 +28,6 @@ class SettingsSection extends StatelessWidget {
   );
 }
 
-/// A live switch row: [label] with its [caption] under it, the switch at the
-/// end. [onChanged] null = disabled. A toggle that sends to the server
-/// ([submits], default true) is also disabled while offline.
 class SettingToggleRow extends StatelessWidget {
   const SettingToggleRow({
     required this.label,
@@ -63,7 +58,67 @@ class SettingToggleRow extends StatelessWidget {
   }
 }
 
-/// A row that opens its setting: [label] left, the current [summary] right, ›.
+class SettingDropdownRow extends StatelessWidget {
+  const SettingDropdownRow({
+    required this.label,
+    required this.value,
+    required this.onTap,
+    this.helper,
+    this.leading,
+    super.key,
+  });
+
+  final String label;
+  final String value;
+  final VoidCallback? onTap;
+  final String? helper;
+  final Widget? leading;
+
+  @override
+  Widget build(BuildContext context) => DetailRow(
+    leading: leading,
+    label: label,
+    helper: helper,
+    onTap: onTap,
+    trailing: AppChip(
+      label: value,
+      tone: AppChipTone.primary,
+      selected: true,
+      trailing: AppChipTrailing.dropdown,
+      dashed: onTap != null,
+      onTap: onTap,
+    ),
+  );
+}
+
+class SettingSwitchViewRow extends StatelessWidget {
+  const SettingSwitchViewRow({
+    required this.label,
+    required this.value,
+    this.onLongPress,
+    this.caption,
+    super.key,
+  });
+
+  final String label;
+  final String? caption;
+  final bool value;
+  final VoidCallback? onLongPress;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    onLongPress: onLongPress,
+    child: DetailRow(
+      label: label,
+      helper: caption,
+      trailing: IgnorePointer(
+        child: AppSwitch(value: value, onChanged: (_) {}, semanticLabel: label),
+      ),
+    ),
+  );
+}
+
 class SettingSummaryRow extends StatelessWidget {
   const SettingSummaryRow({
     required this.label,
@@ -77,7 +132,6 @@ class SettingSummaryRow extends StatelessWidget {
   final String? summary;
   final VoidCallback? onTap;
 
-  /// A field error under the label (e.g. "pick at least one"), error colour.
   final String? error;
 
   @override

@@ -3,8 +3,6 @@ import 'package:equatable/equatable.dart';
 import '../../../ui/ui.dart';
 import 'saving_goal.dart';
 
-/// ออม (wallet → spare / goal) · ถอนออม (→ back to the wallet) · จัดสรร
-/// (spare → goal, goal ↔ goal).
 enum SavingEntryKind {
   save,
   withdraw,
@@ -21,9 +19,6 @@ enum SavingEntryKind {
 
 enum SavingEndpointType { wallet, spare, goal }
 
-/// One end of a saving entry (`SavingBucketRef`): a wallet, the spare bucket
-/// or a goal. [name] is null for spare (the app's label) and for a deleted
-/// goal.
 class SavingEndpoint extends Equatable {
   const SavingEndpoint({required this.type, this.id, this.name, this.iconCode});
 
@@ -50,9 +45,6 @@ class SavingEndpoint extends Equatable {
   List<Object?> get props => [type, id, name, iconCode];
 }
 
-/// A saving entry row: ONE wallet, from → to, an amount. Lives in its own
-/// table; never a real transaction. A multi-wallet action = several entries
-/// sharing a [groupId].
 class SavingEntry extends Equatable {
   const SavingEntry({
     required this.id,
@@ -74,16 +66,13 @@ class SavingEntry extends Equatable {
   final String date; // ISO YYYY-MM-DD
   final double amount;
 
-  /// Null = saved with no wallet (money outside the app).
   final SavingWalletRef? wallet;
   final SavingEndpoint from;
   final SavingEndpoint to;
   final String? note;
 
-  /// manual | recurring | pending.
   final String source;
 
-  /// The recurring setting that made it (when [source] is recurring).
   final String? recurringName;
 
   bool get fromRecurring => source == 'recurring';
@@ -127,7 +116,6 @@ class SavingEntry extends Equatable {
   ];
 }
 
-/// One page of entries (`SavingEntryList`: `data` + `pagination`).
 class SavingEntryPage extends Equatable {
   const SavingEntryPage({
     this.items = const [],
@@ -157,7 +145,6 @@ class SavingEntryPage extends Equatable {
   List<Object?> get props => [items, page, totalPages];
 }
 
-/// How much of a bucket (goal / spare) sits in one wallet.
 class SavingWalletShare extends Equatable {
   const SavingWalletShare({
     this.wallet,
@@ -165,7 +152,6 @@ class SavingWalletShare extends Equatable {
     this.sharePct = 0,
   });
 
-  /// Null = saved with no wallet (money outside the app).
   final SavingWalletRef? wallet;
   final double amount;
   final double sharePct;
@@ -185,11 +171,9 @@ class SavingWalletShare extends Equatable {
   List<Object?> get props => [wallet, amount, sharePct];
 }
 
-/// A wallet's chosen part of a withdraw / move (sent only when edited).
 class SavingSplit extends Equatable {
   const SavingSplit({this.walletId, required this.amount});
 
-  /// Null = the wallet-less part ("ไม่มีกระเป๋า"); always sent explicitly.
   final String? walletId;
   final double amount;
 

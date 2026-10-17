@@ -3,7 +3,6 @@ import '../../../ui/ui.dart';
 
 enum ContactStatus { active, archived }
 
-/// `LinkedUser` — the app account a contact is linked to (live profile).
 class LinkedUser extends Equatable {
   const LinkedUser({
     required this.id,
@@ -16,7 +15,6 @@ class LinkedUser extends Equatable {
   final String id;
   final String displayName;
 
-  /// The @handle, when the BE sends it (not in the OpenAPI schema yet).
   final String? username;
   final String? email;
   final IconCode? iconCode;
@@ -35,8 +33,6 @@ class LinkedUser extends Equatable {
   List<Object?> get props => [id, displayName, username, email, iconCode];
 }
 
-/// `Contact` (API v2). [name], [email] and [iconCode] are RESOLVED by the BE
-/// (nickname → linked profile → own); the client never re-resolves them.
 class Contact extends Equatable {
   const Contact({
     required this.id,
@@ -58,26 +54,19 @@ class Contact extends Equatable {
 
   final String id;
 
-  /// Resolved name: the nickname when set and [showNickname], else the linked
-  /// user's live profile name, else [displayName].
   final String name;
 
-  /// My own label for them. Null when unset.
   final String? nickname;
 
-  /// Use [nickname] as [name]; only matters when a nickname is set.
   final bool showNickname;
 
-  /// The contact's own stored name (what the edit field edits).
   final String displayName;
 
-  /// Resolved: the linked user's email when linked, else the contact's own.
   final String? email;
   final String? phone;
   final String? description;
   final String? note;
 
-  /// Resolved: the linked user's icon when linked, else the contact's own.
   final IconCode? iconCode;
   final LinkedUser? linkedUser;
   final ContactStatus status;
@@ -152,10 +141,6 @@ class UnlinkedName extends Equatable {
   List<Object?> get props => [name, count];
 }
 
-/// `ContactDetail` — a [Contact] plus the unlinked split names
-/// (`?include=unlinked_names`).
-/// `delete_preview` of GET /contacts/:id — what a delete touches (records keep
-/// the name as text). The FE prints it; no client counting.
 class ContactDeletePreview extends Equatable {
   const ContactDeletePreview({
     required this.debtRecords,
@@ -189,12 +174,9 @@ class ContactDetail extends Equatable {
   final Contact contact;
   final List<UnlinkedName> unlinkedNames;
 
-  /// The BE's `unlinked_total` — names and records still free to wire (the
-  /// "จับคู่ชื่อในรายการหาร" badge; no client sums).
   final int unlinkedNameCount;
   final int unlinkedRecordCount;
 
-  /// Only with include=delete_preview, else null.
   final ContactDeletePreview? deletePreview;
 
   factory ContactDetail.fromJson(Map<String, dynamic> json) => ContactDetail(
@@ -224,7 +206,6 @@ class ContactDetail extends Equatable {
   ];
 }
 
-/// `{contact, absorbed_count}` — absorb and create.
 class AbsorbResult extends Equatable {
   const AbsorbResult({required this.contact, required this.absorbedCount});
   final Contact contact;
@@ -239,7 +220,6 @@ class AbsorbResult extends Equatable {
   List<Object?> get props => [contact, absorbedCount];
 }
 
-/// `{id, splits_restored}`.
 class DeleteContactResult extends Equatable {
   const DeleteContactResult({required this.id, required this.splitsRestored});
   final String id;
@@ -255,9 +235,6 @@ class DeleteContactResult extends Equatable {
   List<Object?> get props => [id, splitsRestored];
 }
 
-/// Public-profile slice the BE returns for the inbox tap-flow prefill.
-/// Backed by `GET /v1/contacts/link-requests/:id/sender-profile`.
-/// [contactId] = the caller's contact that already links to this sender.
 class SenderProfile extends Equatable {
   const SenderProfile({
     required this.id,

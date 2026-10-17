@@ -7,12 +7,6 @@ import '../../../../ui/ui.dart';
 import '../cubit/auth_cubit.dart';
 import '../widgets/auth_widgets.dart';
 
-/// Login form. Generic 401 message on bad credentials (no field-level reveal —
-/// security pattern). On success, [AuthCubit] flips to [AuthAuthenticated] and
-/// the router redirects to `/`.
-///
-/// Built from the kit only: the page is `AuthPageBody` + framed `AppInput`s +
-/// buttons; this file holds state, validation, the API call and navigation.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -25,8 +19,8 @@ class _LoginPageState extends State<LoginPage> {
   final _identifierCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
 
-  /// Both auth pages read the one [AuthCubit]: a failed login must not show
-  /// on the register page, nor a failed sign-up here on the way back.
+  /// Both auth pages read the one [AuthCubit]: a failed login must not show on
+  /// the register page, nor a failed sign-up here on the way back.
   Future<void> _openRegister() async {
     // The error snackbar lives app-wide: it must not follow to register.
     ScaffoldMessenger.of(context).hideCurrentSnackBar();

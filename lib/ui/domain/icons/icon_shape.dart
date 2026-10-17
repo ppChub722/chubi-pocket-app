@@ -2,9 +2,6 @@ import 'package:flutter/painting.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
 
-/// Outline of an icon's background (and the border that follows it).
-/// Stored as `IconCode.shape` by [name]; `null` / unknown = [circle], so
-/// every icon saved before shapes existed keeps rendering as a circle.
 enum IconShape {
   circle,
   squircle,
@@ -13,11 +10,9 @@ enum IconShape {
   leaf,
   drop;
 
-  /// Parses a stored id; anything unknown falls back to [circle].
   static IconShape fromId(String? id) =>
       values.firstWhere((s) => s.name == id, orElse: () => circle);
 
-  /// Corner radii for a [size]×[size] box.
   BorderRadius radius(double size) {
     Radius r(double f) => Radius.circular(size * f);
     return switch (this) {

@@ -8,10 +8,6 @@ import '../../../../core/constants/storage_keys.dart';
 import 'locale_cubit.dart';
 import '../../../../ui/ui.dart';
 
-/// Holds the active font id (e.g. `Inter`, `IBM Plex Sans Thai`) and persists it.
-///
-/// Auto-fallback: when [LocaleCubit] emits a locale that the current font does
-/// not support, switches to the default font for that locale.
 class FontIdCubit extends Cubit<String> {
   FontIdCubit(this._prefs, LocaleCubit localeCubit)
     : super(

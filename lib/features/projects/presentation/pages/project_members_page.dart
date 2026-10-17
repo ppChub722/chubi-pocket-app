@@ -15,9 +15,6 @@ import '../widgets/add_member_sheet.dart';
 import '../cubit/projects_cubit.dart';
 import '../widgets/project_common.dart';
 
-/// `/projects/:id/members` (§12b): members / waiting / left groups, owner
-/// pill, "+ เชิญสมาชิก" (owner), member sheet (remove · make owner), and
-/// "ออกจากโปรเจกต์" for non-owners (the BE won't let the owner leave).
 class ProjectMembersPage extends StatefulWidget {
   const ProjectMembersPage({required this.projectId, super.key});
   final String projectId;
@@ -98,7 +95,6 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
         subtitle: m.isLinked ? l.projectMemberLinked : l.projectMemberAdHoc,
       ),
       actions: [
-        // Viewer = read-only (contract §6b); toggles back to member.
         SheetAction(
           value: 'role',
           icon: m.role == MemberRole.viewer ? AppIcons.edit : AppIcons.visible,
@@ -187,7 +183,6 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
     }
   }
 
-  /// A write's patch: the members and the event in place (no reload).
   void _apply(EventPatch p) {
     context.read<ProjectsCubit>().patch(p.project);
     setState(() {
@@ -239,8 +234,6 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
       ),
     ].where((g) => g.$3.isNotEmpty).toList();
     final amMember = _members.any((m) => m.userId == _uid);
-    // Builder: the floating bar's height is only in the body's MediaQuery,
-    // not this State's context.
     final body = Builder(
       builder: (context) => ListPageBody(
         loading: _loading,
@@ -280,7 +273,6 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
                       selected: true,
                       size: ChipSize.chip,
                     ),
-                    // Owner manages everyone but themself.
                     onTap: _isOwner && readOnly == false && !m.isOwner
                         ? () => _memberActions(m)
                         : null,
@@ -311,7 +303,6 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
       appBar: AppTopBar(
         title: l.projectMembersTitle,
         showBack: true,
-        // The parent is this project, not the project list.
         parent: p == null
             ? null
             : TopBarCrumb(

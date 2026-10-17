@@ -32,23 +32,6 @@ enum _Field { name, description, note, planned }
 
 enum _DeleteChoice { notYet, keepTxs, withTxs }
 
-/// `/projects/new` (create), `/projects/:id` (view) and its edit mode — the
-/// 0.4.0 event page (reference §5): ONE page, no tabs.
-///
-/// View: hero card (status ▾ + dates, 🔍 / ✏️, icon + description, the total
-/// spent, the planned-budget bar only when one is set, my share / what I'm
-/// owed or owe tiles, the income line when there is income) → my tags →
-/// member strip (who paid / who owes) → note → the bills (a filter row behind
-/// the 🔍, the event-tag filter chips, grouped by day).
-///
-/// Edit / create is its own form (owner only): status ▾, icon + name +
-/// description, the planned budget, my tags, the dates, "จัดการแท็กอีเวนต์",
-/// the note, then the end zone (archive / delete). The totals, members and
-/// bills are hidden there.
-///
-/// Every figure is the BE's (`GET /projects/:id/detail`, then each write's
-/// patch). One load fills the page; pull-to-refresh runs it again and a
-/// failed refresh keeps what is on screen.
 class ProjectDetailPage extends StatefulWidget {
   const ProjectDetailPage({
     this.id,
@@ -57,12 +40,9 @@ class ProjectDetailPage extends StatefulWidget {
     super.key,
   });
 
-  /// Null = create a new event.
   final String? id;
   final bool startEditing;
 
-  /// A bill to show (tx detail's "อยู่ในอีเวนต์ … ›"): scrolled to and
-  /// highlighted. Null = read `?bill=` from the route.
   final String? initialBillId;
 
   bool get isCreate => id == null;
@@ -78,7 +58,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   final _focus = {for (final f in _Field.values) f: FocusNode()};
   final _scroll = ScrollController();
 
-  /// The 🔍 in the hero: shows / hides the bills' filter row.
   final _toolbarOpen = ToolbarToggleState.local();
   final _billSearch = TextEditingController();
   Timer? _debounce;
@@ -87,12 +66,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   ProjectView? _view;
   ApiException? _error;
 
-  /// The next board page is in flight / its load failed (stop asking until
-  /// the user scrolls again).
   bool _loadingMore = false;
   bool _moreFailed = false;
 
-  /// The bill to scroll to once (`?bill=`).
   String? _focusBill;
   bool _focusRead = false;
   final _focusKey = GlobalKey();
@@ -128,7 +104,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     _focusBill = widget.initialBillId ?? _routeBill();
   }
 
-  /// `?bill=` on this page's route; null outside a router (tests).
   String? _routeBill() {
     try {
       return GoRouterState.of(context).uri.queryParameters['bill'];
@@ -153,12 +128,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     super.dispose();
   }
 
-  // ── Load ────────────────────────────────────────────────────────────
-
-  /// The page's one "open" call (also pull-to-refresh and the reload after
-  /// a write whose response can't patch the page yet). A failure keeps what
-  /// is on screen and shows a banner; before the first load it is the
-  /// error + retry view.
+  /// The page's one "open" call (also pull-to-refresh and the reload after a
+  /// write whose response can't patch the page yet).
   Future<void> _load({bool enterEdit = false}) async {
     try {
       final repo = context.read<ProjectsRepository>();
@@ -172,19 +143,15 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       _show(ProjectView.of(detail, currentUserId: user?.id));
       if (enterEdit && _view!.isOwner) this.enterEdit();
     } catch (e, st) {
-      // ANY failure (a parse error too) lands in the error banner / view.
       if (mounted) setState(() => _error = ApiException.from(e, st));
     }
   }
 
-  /// Pull-to-refresh: the open call again (and the filtered bills when a
-  /// filter is on, since they came from another call).
   Future<void> _refresh() async {
     await _load();
     if (mounted && (_board?.serverFiltered ?? false)) await _board!.reload();
   }
 
-  /// Puts [view] on screen (a load, or a write's response patched in).
   void _show(ProjectView view) {
     final before = _view;
     setState(() {
@@ -195,8 +162,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     resetDraft(_Draft.from(view.project));
   }
 
-  /// A write's [EventPatch]: the page and the events list patched in place
-  /// (no reload).
   void _applyPatch(EventPatch p) {
     final v = _view;
     if (v == null || !mounted) return;
@@ -207,7 +172,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     final board = _board;
     if (board == null) return;
     board.viewChanged(v, next);
-    // The tag I was filtering by is gone (deleted in the manager).
     final picked = board.tagId;
     if (picked != null && !p.tags.any((t) => t.id == picked)) {
       board.change(tagId: null);
@@ -215,8 +179,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       board.reload();
     }
   }
-
-  // ── EditModeMixin hooks ─────────────────────────────────────────────
 
   @override
   bool get leaveOnCancel => _isCreate;
@@ -241,7 +203,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     _Field.planned => working.copyWith(planned: v),
   });
 
-  /// Only the owner edits the event (the BE checks too); create is mine.
   bool get _isOwner => _isCreate || (_view?.isOwner ?? false);
 
   VoidCallback? _enterOn(FocusNode focus) =>
@@ -255,8 +216,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       tone: Tone.danger,
     );
   }
-
-  // ── Save / archive / delete ─────────────────────────────────────────
 
   Future<void> _save() async {
     commitTextSession();
@@ -275,7 +234,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     try {
       if (_isCreate) {
         String? opt(String s) => s.trim().isEmpty ? null : s.trim();
-        // One call: plan, dates and my tags included.
         final created = await context.read<ProjectsCubit>().create(
           name: w.name.trim(),
           description: opt(w.description),
@@ -296,25 +254,20 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       final updated = await context.read<ProjectsCubit>().update(
         widget.id!,
         name: w.name.trim(),
-        // '' clears (migration 51).
         description: w.description.trim(),
         note: w.note.trim(),
         startDate: s == null ? null : projectDay(s),
         endDate: e == null ? null : projectDay(e),
-        // A date taken away → explicit null clears it.
         clearStartDate: s == null && original.startDate != null,
         clearEndDate: e == null && original.endDate != null,
         iconCode: w.iconCode,
         plannedAmount: planned,
-        // Blanked an existing plan → explicit null hides it (§10/4.23).
         clearPlannedAmount: planned == null && hadPlan,
-        // MY tags on the event, only when I changed them.
         tagIds: setEquals(w.tagIds, original.tagIds) ? null : w.tagIds.toList(),
       );
       if (!mounted) return;
       HapticFeedback.mediumImpact();
       commitSaved(w);
-      // The PUT returns the patch (event + summary): no reload.
       _show(_view!.apply(updated));
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -323,7 +276,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     }
   }
 
-  /// เก็บถาวร: hidden, not counted, read-only; `POST /projects/:id/archive`.
   Future<void> _archive() async {
     final l = AppLocalizations.of(context)!;
     final ok = await showConfirmDialog(
@@ -348,7 +300,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     }
   }
 
-  /// กู้คืน: an archived event back to active; `POST /projects/:id/restore`.
   Future<void> _restore() async {
     final l = AppLocalizations.of(context)!;
     setSaving(true);
@@ -368,7 +319,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   Future<void> _delete() async {
     final l = AppLocalizations.of(context)!;
     final p = _view!.project;
-    // ONE call on this button: what the delete removes (the BE's numbers).
     EventDeletePreview? preview;
     try {
       preview = (await context.read<ProjectsRepository>().detail(
@@ -384,8 +334,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     final numbers = preview == null
         ? null
         : l.fpM5bEventDeleteNumbers(preview.bills, preview.members);
-    // ยังก่อน · ยืนยัน ไม่ลบรายการ · ยืนยันและลบ [x] รายการ (owner
-    // 2026-10-13); without linked transactions: ยังก่อน · ยืนยันลบ.
     final choice = await showChoiceDialog<_DeleteChoice>(
       context,
       title: l.projectDeleteTitle(p.name),
@@ -423,8 +371,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         p.id,
         deleteLinkedTxs: withTxs,
       );
-      // My book lost transactions: wallets from the answer, the lists
-      // refresh themselves.
       accounts.patchBalances(balances);
       if (withTxs) await TransactionsCubit.bookChanged();
       if (!mounted) return;
@@ -438,8 +384,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     }
   }
 
-  // ── Edit-mode pickers ───────────────────────────────────────────────
-
   Future<void> _openIconMaker() async {
     final l = AppLocalizations.of(context)!;
     final r = await showIconMakerSheet(
@@ -452,7 +396,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     applyChange(working.copyWith(iconCode: r.iconCode));
   }
 
-  /// Start – end in ONE range picker; both optional (✕ on the chip clears).
   Future<void> _pickRange() async {
     final l = AppLocalizations.of(context)!;
     final w = working;
@@ -470,9 +413,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   void _clearRange() =>
       applyChange(working.copyWith(startDate: () => null, endDate: () => null));
 
-  /// MY personal tags on the event (private to me; any member sets theirs).
-  /// Edit / create: the draft's, saved with the form. View: one PUT right
-  /// away, its patch applied.
   Future<void> _pickMyTags() async {
     final l = AppLocalizations.of(context)!;
     final editing = isEditing;
@@ -500,7 +440,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     }
   }
 
-  /// "จัดการแท็กอีเวนต์": the shared bill tags, every member may edit.
   Future<void> _manageTags() async {
     final v = _view;
     if (v == null) return;
@@ -512,7 +451,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       tags: v.eventTags,
       onPatch: _applyPatch,
       onImported: (r) {
-        // My personal set may have grown: the pickers need to see it.
         if (r.created.isNotEmpty) unawaited(tags.load());
         if (mounted) {
           showAppSnackBar(
@@ -527,8 +465,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       },
     );
   }
-
-  // ── Status / members / bills ────────────────────────────────────────
 
   Future<void> _changeStatus(ProjectStatus next) async {
     final l = AppLocalizations.of(context)!;
@@ -578,7 +514,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     );
   }
 
-  /// Quick create in event mode hands back the write's patch.
   Future<void> _addTx() async {
     final view = _view;
     if (view == null) return;
@@ -596,7 +531,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     });
   }
 
-  /// Near the end of the page: the next page of bills.
   void _onScroll() {
     if (!_scroll.hasClients || _loadingMore || _moreFailed) return;
     final pos = _scroll.position;
@@ -656,8 +590,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     });
   }
 
-  // ── Build ───────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -666,7 +598,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       return Scaffold(
         appBar: AppTopBar(title: l.navProjects, showBack: true),
         extendBodyBehindAppBar: true,
-        // Builder: the bar height is only in the body's MediaQuery.
         body: Builder(
           builder: (context) => Padding(
             padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
@@ -696,7 +627,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         extendBodyBehindAppBar: true,
         body: Form(
           key: _formKey,
-          // Builder: the bar height is only in the body's MediaQuery.
           child: Builder(
             builder: (context) {
               final barInset = MediaQuery.paddingOf(context).top;
@@ -718,8 +648,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     return page;
   }
 
-  // ── View mode ───────────────────────────────────────────────────────
-
   Widget _viewBody(
     AppLocalizations l,
     ProjectView v,
@@ -727,7 +655,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     double bottom,
   ) {
     final p = v.project;
-    // A refresh that failed keeps the data on screen with a banner.
     final banner = _error == null
         ? null
         : Padding(
@@ -781,8 +708,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   EventTagRef _myTagRef(EmbeddedTag t) =>
       EventTagRef(t.name, iconCode: t.iconCode);
 
-  /// "แท็กของฉัน": my personal tags on the event, the same row in view and
-  /// edit; ＋ opens the existing tag picker.
   Widget _tagRow(
     AppLocalizations l,
     List<EventTagRef> tags, {
@@ -851,8 +776,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       ),
       bar: planned == null ? null : _budgetBar(l, v, planned, tint),
       tiles: [
-        // "ส่วนของฉัน" filters the bills to the ones I'm in (the BE's
-        // `mine`); tap again clears.
         SummaryTileView(
           tile: SummaryTile(
             label: l.fpEventsMyShare,
@@ -882,8 +805,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     );
   }
 
-  /// Row D, only when a budget is set: used of planned, what is left (or
-  /// over). The numbers are the BE's; the fraction is just the bar's fill.
   Widget _budgetBar(
     AppLocalizations l,
     ProjectView v,
@@ -906,8 +827,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     );
   }
 
-  /// "สมาชิก · ใครจ่าย / ใครค้าง": one card per member (what they paid, and
-  /// what they are owed / owe), ＋ เชิญ at the end.
   Widget _people(AppLocalizations l, ProjectView v) {
     final positions = {
       for (final pos in v.summary?.positions ?? const <ProjectMemberPosition>[])
@@ -960,8 +879,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     );
   }
 
-  /// The bills: the filter row behind the hero's 🔍, the event-tag chips,
-  /// then the bills grouped by day.
   Widget _records(AppLocalizations l, ProjectView v) {
     final board = _board!;
     final trees = board.trees(v);
@@ -987,8 +904,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       );
     }
 
-    // Groups of consecutive bills on the same day (a sort by amount is one
-    // flat group).
     final groups = <(String?, List<ProjectTxTree>)>[];
     for (final t in trees) {
       final day = byDate ? t.parent.date : null;
@@ -1103,8 +1018,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     );
   }
 
-  /// "+ เพิ่มเข้าแท็กของฉัน" on a bill's tag: one call, the tags come back
-  /// with `mine` updated.
   Future<void> _importOne(String tagId) async {
     final l = AppLocalizations.of(context)!;
     final tags = context.read<TagsCubit>();
@@ -1126,10 +1039,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     }
   }
 
-  // ── Edit / create mode ──────────────────────────────────────────────
-
-  /// MY tags as the draft has them: a tag from my set, else the one the
-  /// event already carried.
   List<EventTagRef> _draftTags(Set<String> ids) {
     final mine = context.read<TagsCubit>();
     final known = {
@@ -1165,7 +1074,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
           );
     final archived = p?.status == ProjectStatus.archived;
     return DetailLayout(
-      // Edit mode: no refresh while the form is open (the view has it).
       onRefresh: null,
       topInset: barInset + AppSpacing.lg,
       bottomInset: bottom,
@@ -1234,7 +1142,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
           ),
         ],
       ),
-      // The shared bill tags live on the event: only once it exists.
       settings: v == null
           ? null
           : SettingsSection(
@@ -1302,7 +1209,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   }
 }
 
-/// The edit form's fields (immutable: the mixin diffs it for dirty / undo).
 class _Draft {
   const _Draft({
     this.name = '',
@@ -1332,13 +1238,11 @@ class _Draft {
   final String description;
   final String note;
 
-  /// Formatted, as in the field; empty = no plan.
   final String planned;
   final DateTime? startDate;
   final DateTime? endDate;
   final IconCode? iconCode;
 
-  /// MY personal tags on the event.
   final Set<String> tagIds;
 
   _Draft copyWith({

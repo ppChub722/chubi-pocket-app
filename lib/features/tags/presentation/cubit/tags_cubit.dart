@@ -6,8 +6,6 @@ import '../../../../core/network/api_exception.dart';
 import '../../data/tags_repository.dart';
 import '../../domain/tag.dart';
 
-/// State for [TagsCubit]. See [CategoriesState] for rationale on the
-/// single-class-with-enum-status shape.
 class TagsState extends Equatable {
   const TagsState({
     this.tags = const [],
@@ -39,14 +37,6 @@ class TagsState extends Equatable {
 
 enum TagsStatus { initial, loading, loaded, error }
 
-/// Tags store backed by [TagsRepository].
-///
-/// Tags are flat (no parent/child) and hard-deleted (junction rows
-/// cascade per spec §4.11). New users start empty — the `+` action
-/// is the discoverability path.
-///
-/// Mutators round-trip through the API and re-throw [ApiException]
-/// on failure so the form page can show a snackbar.
 class TagsCubit extends Cubit<TagsState> with Clearable {
   TagsCubit({required TagsRepository repository})
     : _repo = repository,
@@ -86,6 +76,20 @@ class TagsCubit extends Cubit<TagsState> with Clearable {
     final created = await _repo.create(draft);
     emit(state.copyWith(tags: [...state.tags, created]));
     return created;
+  }
+
+  Future<List<Tag>> saveBatch({
+    List<Tag> create = const [],
+    List<Tag> update = const [],
+    List<String> delete = const [],
+  }) async {
+    final res = await _repo.batch(
+      create: create,
+      update: update,
+      delete: delete,
+    );
+    emit(state.copyWith(tags: res.data, status: TagsStatus.loaded));
+    return res.created;
   }
 
   Future<void> update(Tag tag) async {

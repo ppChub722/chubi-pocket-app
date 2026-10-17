@@ -12,12 +12,6 @@ import '../tokens/chip_size.dart';
 import 'divided_rows.dart';
 import 'header_card.dart';
 
-// Page-shaped skeletons (owner 2026-10-12): the loading state mirrors the REAL
-// layout — same slots, paddings and line heights (the bars are laid out over
-// invisible text of the real style, SkeletonText) — so nothing jumps when the
-// data arrives. The templates compose these; a page never draws its own.
-
-/// A list row at the transaction row geometry: icon · two lines · amount.
 class ListRowSkeleton extends StatelessWidget {
   const ListRowSkeleton({super.key});
 
@@ -51,7 +45,6 @@ class ListRowSkeleton extends StatelessWidget {
   }
 }
 
-/// A day / section header row (a group break — gets the band above it).
 class DayHeaderSkeleton extends StatelessWidget implements ListBreak {
   const DayHeaderSkeleton({super.key});
 
@@ -74,7 +67,6 @@ class DayHeaderSkeleton extends StatelessWidget implements ListBreak {
   }
 }
 
-/// The search capsule + the filter / sort chip row (the ListToolbar shape).
 class ListToolbarSkeleton extends StatelessWidget {
   const ListToolbarSkeleton({super.key});
 
@@ -105,15 +97,6 @@ class ListToolbarSkeleton extends StatelessWidget {
   }
 }
 
-/// What a list page looks like on its first load — `ListPageBody.skeletonShape`
-/// (the template builds the [ListPageSkeleton]; a page never draws its own):
-///
-/// - default: [rows] list rows (grouped by day when the list has row
-///   dividers);
-/// - [ListSkeletonShape.grid]: a cards grid (wallets) — an optional summary
-///   block of [headerHeight] on top, an optional sort row (a chip at the
-///   right), then two rows of [gridColumns] cards of [gridItemExtent], all
-///   inset by [AppSpacing.lg] like the real cards.
 class ListSkeletonShape {
   const ListSkeletonShape({this.rows = 6})
     : headerHeight = 0,
@@ -137,11 +120,6 @@ class ListSkeletonShape {
   bool get isGrid => gridColumns > 0;
 }
 
-/// The body of a list page while it loads for the first time: [toolbar] (when
-/// the page has one and doesn't render it itself), then rows. [grouped] draws
-/// [days] day groups (header · rows) with the SAME hairlines / band the real
-/// grouped list has; otherwise [rows] plain rows. [shape] = a grid page (see
-/// [ListSkeletonShape.grid]) instead of rows.
 class ListPageSkeleton extends StatelessWidget {
   const ListPageSkeleton({
     this.toolbar = false,
@@ -238,8 +216,6 @@ class ListPageSkeleton extends StatelessWidget {
   }
 }
 
-/// The hero at the real HeaderCard geometry: a status-chip row, the icon, the
-/// name and a description line.
 class HeroSkeleton extends StatelessWidget {
   const HeroSkeleton({this.chips = true, this.description = true, super.key});
 
@@ -268,7 +244,6 @@ class HeroSkeleton extends StatelessWidget {
   }
 }
 
-/// The tag chip strip under the hero.
 class TagsStripSkeleton extends StatelessWidget {
   const TagsStripSkeleton({super.key});
 
@@ -285,7 +260,6 @@ class TagsStripSkeleton extends StatelessWidget {
   }
 }
 
-/// A DetailRow at its real padding: icon slot · label · value.
 class DetailRowSkeleton extends StatelessWidget {
   const DetailRowSkeleton({this.icon = false, super.key});
 
@@ -310,8 +284,6 @@ class DetailRowSkeleton extends StatelessWidget {
   }
 }
 
-/// A grouped section: [heading] (a title + description line above the box, like
-/// SectionCard) and [rows] rows in the filled container.
 class SectionSkeleton extends StatelessWidget {
   const SectionSkeleton({
     this.rows = 3,
@@ -367,9 +339,6 @@ class SectionSkeleton extends StatelessWidget {
   }
 }
 
-/// A detail page while it loads: hero → [tags] strip → the ONE heading-less box
-/// ([rows] rows) → one headed section per entry of [sections] (its row count).
-/// Same paddings as DetailPageBody.
 class DetailPageSkeleton extends StatelessWidget {
   const DetailPageSkeleton({
     this.tags = false,
@@ -383,7 +352,6 @@ class DetailPageSkeleton extends StatelessWidget {
   final int rows;
   final List<int> sections;
 
-  /// Space above the hero; null = clear the floating top bar.
   final double? topInset;
 
   @override
@@ -419,11 +387,6 @@ TextStyle? _labelLarge(TextTheme t) => t.labelLarge;
 TextStyle? _labelBold(TextTheme t) =>
     t.titleMedium?.copyWith(fontWeight: FontWeight.bold);
 
-/// The slot heights of a dashboard's first-load skeleton: one block per real
-/// card, each height INCLUDING the margin / section header the real card
-/// carries. The defaults are a generic dashboard; a page passes the heights its
-/// own cards really have (Home keeps a geometry test on them) to
-/// `DashboardPageBody.skeletonShape`.
 class DashboardSkeletonShape {
   const DashboardSkeletonShape({
     this.snapshots = const [110],
@@ -433,26 +396,17 @@ class DashboardSkeletonShape {
     this.tilesHeight = 176,
   });
 
-  /// Heights of the "right now" blocks.
   final List<double> snapshots;
 
-  /// The month / period stepper bar.
   final bool period;
 
-  /// Heights of the KPI cards.
   final List<double> kpis;
 
-  /// Heights of the chart cards.
   final List<double> charts;
 
-  /// Height of the tiles grid; 0 = none.
   final double tilesHeight;
 }
 
-/// A dashboard while it loads: the SAME slot order and gaps as
-/// `DashboardPageBody` (snapshot → gap → period bar → gap → KPI cards → charts →
-/// gap → tiles), each slot a block of the height the real card has
-/// ([shape]). The template builds it; pages only pass the shape.
 class DashboardPageSkeleton extends StatelessWidget {
   const DashboardPageSkeleton({
     this.shape = const DashboardSkeletonShape(),
@@ -463,10 +417,8 @@ class DashboardPageSkeleton extends StatelessWidget {
   final DashboardSkeletonShape shape;
   final EdgeInsets padding;
 
-  /// The period bar's height (a `StepperPill.month`).
   static const double periodHeight = 36;
 
-  // A card slot: its height INCLUDES any margin the real card carries.
   Widget _block(double h) => SkeletonBox(height: h, borderRadius: 16);
 
   @override

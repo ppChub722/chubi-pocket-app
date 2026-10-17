@@ -8,14 +8,6 @@ import '../atoms/app_divider.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/ui_config.dart';
 
-/// Opens a full-height panel that slides in from the **right** over a
-/// scrim — for settings of the screen behind it (the transactions list's
-/// filters, owner 2026-10-10). About [widthFactor] of a phone's width,
-/// capped at [maxWidth] on wide screens. Tap the scrim, swipe the panel
-/// right, ✕ or back to close; resolves what the panel pops with.
-///
-/// Lay the panel out with [SideSheetScaffold] (title · scrolling body ·
-/// pinned footer).
 Future<T?> showSideSheet<T>(
   BuildContext context, {
   required WidgetBuilder builder,
@@ -49,8 +41,6 @@ Future<T?> showSideSheet<T>(
   );
 }
 
-/// The panel: pinned to the right edge, full height, follows a rightward
-/// drag and closes past a third of its width (or on a fling).
 class _SideSheetPanel extends StatefulWidget {
   const _SideSheetPanel({
     required this.widthFactor,
@@ -106,8 +96,6 @@ class _SideSheetPanelState extends State<_SideSheetPanel> {
   }
 }
 
-/// A side sheet's layout: title row with ✕, the [body] scrolling, the
-/// [footer] (actions) pinned at the bottom clear of the gesture bar.
 class SideSheetScaffold extends StatelessWidget {
   const SideSheetScaffold({
     required this.title,
@@ -172,8 +160,6 @@ class SideSheetScaffold extends StatelessWidget {
   }
 }
 
-/// A titled block inside a side sheet's body ("ประเภท", "กระเป๋า", …),
-/// [icon] in front of the title; rendered through [SectionCard].
 class SideSheetSection extends StatelessWidget {
   const SideSheetSection({
     required this.title,
@@ -196,8 +182,6 @@ class SideSheetSection extends StatelessWidget {
         AppSpacing.lg,
         0,
       ),
-      // The grouped section look: green heading above, the content in the
-      // filled rounded container.
       child: SectionCard(
         first: true,
         title: title,

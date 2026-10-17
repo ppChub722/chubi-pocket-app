@@ -13,12 +13,6 @@ import '../../domain/project.dart';
 import '../cubit/projects_cubit.dart';
 import '../widgets/project_common.dart';
 
-/// `/projects` — the events list (0.4.0 reference §5): ONE summary card (my
-/// share in the active events, what I paid → what I'm owed, three tiles that
-/// ARE the status filter), a hidden search + sort toolbar behind the card's
-/// 🔍, hairline [EventListRow]s and a dashed "+ สร้างอีเวนต์" tile. Every
-/// number comes from the BE (`GET /projects` rows + `summary`); search,
-/// filters and sort run on the server (paged).
 class ProjectsPage extends StatefulWidget {
   const ProjectsPage({super.key});
 
@@ -32,7 +26,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
   Timer? _debounce;
   final _scroll = ScrollController();
 
-  /// A page-fill load failed: stop asking until the user scrolls / reloads.
   bool _fillFailed = false;
 
   @override
@@ -53,7 +46,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
     super.dispose();
   }
 
-  /// One call per pause in typing.
   void _onSearch(String v) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 350), () {
@@ -74,10 +66,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
     await cubit.load(tagIds: picked.toList());
   }
 
-  // The event page patches the list from its writes: no reload on return.
   void _open(Project p) => context.push('/projects/${p.id}');
 
-  /// Fired from a scroll notification (maybe mid-layout): run after it.
   void _loadMore() {
     final cubit = context.read<ProjectsCubit>();
     final l = AppLocalizations.of(context)!;
@@ -93,8 +83,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
     });
   }
 
-  /// A page that fits the screen never scrolls, so nothing asks for the
-  /// next one: after each update, ask until the list overflows.
+  /// A page that fits the screen never scrolls, so nothing asks for the next
+  /// one: after each update, ask until the list overflows.
   void _fillScreen() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _fillFailed || !_scroll.hasClients) return;
@@ -116,7 +106,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
     ProjectSort.nameAsc => l.projectsSortName,
   };
 
-  /// The row's subtitle: dates · spent · my share (all BE numbers).
   String _subtitle(AppLocalizations l, Project p) => [
     ?projectDateRange(context, p.startDate, p.endDate),
     l.fpEventsRowSpent(moneyString(context, p.totalExpense)),
@@ -140,8 +129,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
     );
   }
 
-  /// The three tiles ARE the status filter: tap = filter, tap the ringed one
-  /// again = back to the default (กำลังทำ).
   List<SummaryTile> _tiles(
     AppLocalizations l,
     ProjectsState state,
@@ -250,16 +237,13 @@ class _ProjectsPageState extends State<ProjectsPage> {
             final cubit = ctx.read<ProjectsCubit>();
             if (state.status == ProjectsStatus.loading) _fillFailed = false;
             _fillScreen();
-            // The skeleton only while nothing is on screen (first load).
             final firstLoad =
                 state.projects.isEmpty &&
                 (state.status == ProjectsStatus.initial ||
                     state.status == ProjectsStatus.loading);
             final create = AddTile(label: l.fpEventsCreate, onTap: _create);
             return ListPageBody(
-              // [summary card → toolbar] pinned, then hairline rows.
               header: [
-                // A refresh that failed keeps the data on screen.
                 if (state.error != null && state.projects.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(
@@ -284,8 +268,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
               error: state.projects.isEmpty ? state.error : null,
               isEmpty: state.projects.isEmpty,
               onRetry: cubit.load,
-              // Nothing at all → create; filtered / searched to nothing →
-              // the no-match view (create there too).
               empty: state.filtered
                   ? EmptyView(
                       icon: AppIcons.project,
@@ -300,7 +282,6 @@ class _ProjectsPageState extends State<ProjectsPage> {
                       cta: create,
                     ),
               topInset: AppSpacing.xs,
-              // Hairline rows, edge to edge (list rows aren't boxed).
               sidePadding: 0,
               rowDividers: true,
               controller: _scroll,

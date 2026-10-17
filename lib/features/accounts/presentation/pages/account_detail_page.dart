@@ -31,26 +31,9 @@ import '../widgets/adjust_balance_sheet.dart';
 import '../widgets/identifier_widgets.dart';
 import '../widgets/wallet_members_view.dart';
 import '../widgets/wallet_compact_hero.dart';
-import '../widgets/wallet_savings_section.dart';
 
-/// The wallet page's tabs.
 enum AccountDetailTab { overview, transactions }
 
-/// One wallet — create (`/accounts/new`), view (`/accounts/:id`) and edit
-/// in place (§10; owner 2026-10-10):
-///
-///   hero: [type][🔗 แชร์ n คน]                 ✏️ (owner)
-///         icon · name / description · balance · credit "เหลือ x จาก y"
-///   [ปรับยอด] [+ รายการ] [⇄ โอน]       (every member; view mode)
-///   ภาพรวม · รายการ · สมาชิก         (pinned once the hero scrolls away;
-///                                     its name + balance go up to the bar)
-///
-/// ภาพรวม: info → the slip numbers → my report scope (live) → archive (edit
-/// mode, owner). รายการ: the wallet's own list, this month to start.
-/// สมาชิก (shared, or the owner — to invite): members and their actions
-/// (`/accounts/:id/members` opens here). ✏️ (owner only — the BE checks
-/// too) edits in place; the hero is the live preview. Create mode is the
-/// hero + ภาพรวม with the opening balance, no tabs.
 class AccountDetailPage extends StatefulWidget {
   const AccountDetailPage({
     this.accountId,
@@ -60,20 +43,12 @@ class AccountDetailPage extends StatefulWidget {
     super.key,
   });
 
-  /// Null = create a new wallet.
   final String? accountId;
 
-  /// Open the member actions sheet once the members are loaded (the
-  /// `/accounts/:id/members` link).
   final bool openMembers;
 
-  /// Create pushed over a picker (Navigator, not the router): saving pops
-  /// with the new [Account] instead of becoming its view, so the page
-  /// underneath stays (QA W2).
   final bool popOnCreate;
 
-  /// Overrides what the wallet bar's "เพิ่มเงินออม" does (default: quick create
-  /// in ออม mode on this wallet).
   final VoidCallback? onAddSaving;
 
   bool get isCreate => accountId == null;
@@ -82,11 +57,6 @@ class AccountDetailPage extends StatefulWidget {
   State<AccountDetailPage> createState() => _AccountDetailPageState();
 }
 
-/// One call on open — `GET /accounts/:id?include=summary,members` (any
-/// status, archived included) — fills the wallet and its members history.
-/// The wallet itself comes from the cubit's list when it is there (so
-/// balance patches show live), else from that call. "Not found" only when
-/// the call says so; writes patch [_detail] from their responses.
 class _AccountDetailPageState extends State<AccountDetailPage> {
   AccountDetail? _detail;
   ApiException? _error;
@@ -109,7 +79,6 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
     });
     try {
       final detail = await cubit.getDetail(widget.accountId!);
-      // Keep the list's row as fresh as this read.
       cubit.patch(detail.account);
       if (!mounted) return;
       setState(() {
@@ -125,15 +94,12 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
     }
   }
 
-  /// A write returned the wallet: keep the page's copy in step (the cubit
-  /// patched its list already).
   void _onAccount(Account account) {
     final d = _detail;
     if (d == null) return;
     setState(() => _detail = d.copyWith(account: account));
   }
 
-  /// A members action's response: the wallet + the whole members list.
   void _onMembers(MembersResult r) {
     final d = _detail;
     if (d == null) return;
@@ -184,7 +150,6 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
   }
 }
 
-/// Which text field a typing burst belongs to (undo grouping).
 enum _Field {
   name,
   description,
@@ -208,31 +173,22 @@ class _AccountDetailView extends StatefulWidget {
     this.onAddSaving,
   });
 
-  /// See [AccountDetailPage.popOnCreate].
   final bool popOnCreate;
 
-  /// The persisted wallet (fresh from the cubit on every rebuild); null
-  /// while creating.
+  /// The persisted wallet (fresh from the cubit on every rebuild); null while
+  /// creating.
   final Account? account;
 
-  /// The whole membership (`members_history`: active, pending, left); null
-  /// until the page's detail call lands.
   final List<WalletMember>? members;
 
-  /// Open the member actions sheet once the members are loaded (the
-  /// `/accounts/:id/members` link).
   final bool openMembers;
 
-  /// A write returned the wallet — the page keeps its copy in step.
   final void Function(Account)? onAccount;
 
-  /// A members action returned the wallet + members list.
   final void Function(MembersResult)? onMembers;
 
-  /// Pull-to-refresh: the page's one detail call again.
   final Future<void> Function()? onRefresh;
 
-  /// See [AccountDetailPage.onAddSaving].
   final VoidCallback? onAddSaving;
 
   bool get isCreate => account == null;
@@ -256,12 +212,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   final _descriptionFocus = FocusNode();
   final _noteFocus = FocusNode();
 
-  /// Create: the user's currency; edit: the wallet's own (not editable —
-  /// multi-currency is Phase 2).
   late final String _currency;
   bool _scopeBusy = false;
 
-  /// Banks for the numbers section (names + the sheet's picker).
   List<PaymentProvider> _providers = const [];
 
   bool get _isCreate => widget.isCreate;
@@ -285,7 +238,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         .then((p) {
           if (mounted) setState(() => _providers = p);
         })
-        // Names fall back to the bank code; the picker shows "not set".
         .catchError((Object _) {});
   }
 
@@ -293,8 +245,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   void didUpdateWidget(covariant _AccountDetailView oldWidget) {
     super.didUpdateWidget(oldWidget);
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeOpenMembers());
-    // The cubit row changed (save, adjust, refresh) — rebase the view; an
-    // in-progress edit is left alone (resetDraft no-ops while editing).
     final a = widget.account;
     if (a != null && a != oldWidget.account) {
       final next = _AccountDraft.from(a);
@@ -333,11 +283,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     return (c != null && Currencies.codes.contains(c)) ? c : 'THB';
   }
 
-  /// Only the owner edits / archives (the BE says so: `can_edit`; it checks
-  /// too). A wallet being created is the caller's own.
   bool get _isOwner => widget.account?.canEdit ?? true;
-
-  // ── EditModeMixin hooks ─────────────────────────────────────────────
 
   @override
   bool get leaveOnCancel => _isCreate;
@@ -371,7 +317,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         _Field.minPayment => working.copyWith(minPayment: v),
       });
 
-  /// Long-press entry into edit mode on a field — owner only.
   VoidCallback? _enterOn(FocusNode focus) =>
       _isOwner ? () => enterEdit(focus: focus) : null;
 
@@ -382,10 +327,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     });
   }
 
-  // ── Derived display ─────────────────────────────────────────────────
-
-  /// The wallet as the draft describes it — drives the header (live
-  /// preview) and the icon maker's preview card.
   Account _preview(AppLocalizations l) {
     final w = working;
     final base = widget.account;
@@ -395,7 +336,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       id: base?.id ?? 'preview',
       name: w.name.trim().isEmpty ? l.commonName : w.name,
       type: w.type,
-      // Create: the opening balance (credit = debt, stored negative).
       balance: base?.balance ?? _openingBalance(w.type, opening),
       currency: _currency,
       iconCode: w.iconCode,
@@ -409,13 +349,10 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       status: base?.status ?? AccountStatus.active,
       canEdit: base?.canEdit ?? true,
       myRole: base?.myRole ?? WalletRole.owner,
-      // Edit: the saved state (the switch applies on save); create: live.
       trackBalance: base?.trackBalance ?? w.trackBalance,
     );
   }
 
-  /// A leftover `own` on a wallet that is no longer shared reads as `all`
-  /// — `own` isn't offered there (one member: "own" = "all").
   WalletReportScope _effectiveScope(Account a) {
     final s = a.myReportScope ?? WalletReportScope.none;
     if (!a.isShared && s == WalletReportScope.own) return WalletReportScope.all;
@@ -427,8 +364,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     WalletReportScope.own => l.walletReportScopeOwn,
     WalletReportScope.all => l.walletReportScopeAll,
   };
-
-  // ── Actions ─────────────────────────────────────────────────────────
 
   Future<void> _openIconMaker() async {
     final l = AppLocalizations.of(context)!;
@@ -463,8 +398,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final dueDay = isCredit ? int.tryParse(w.dueDay.trim()) : null;
     final minPayment = isCredit ? AmountInput.parse(w.minPayment) : null;
 
-    // Edit: tracking turned back on asks the balance ONCE, before saving; it
-    // goes in the same update call. Cancelling the sheet cancels the save.
     double? currentBalance;
     final prev = widget.account;
     if (prev != null && !prev.trackBalance && w.trackBalance) {
@@ -480,8 +413,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         final opening = w.trackBalance
             ? (AmountInput.parse(w.opening) ?? 0)
             : 0.0;
-        // Server assigns the id (toCreateJson omits it) and books a
-        // non-zero opening balance as an Opening Balance transaction.
         created = await cubit.add(
           Account(
             id: 'draft',
@@ -504,7 +435,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         final p = widget.account!;
         // Not copyWith: it treats null as "keep", so a cleared field would
         // silently survive — the BE's presence-tracked update DTO needs the
-        // explicit nulls. Balance only moves through ปรับยอด (spec §2.4).
+        // explicit nulls.
         final updated = await cubit.update(
           Account(
             id: p.id,
@@ -527,7 +458,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
           ),
           currentBalance: currentBalance,
         );
-        // A balance given = an adjustment was booked: the lists catch up.
         if (currentBalance != null) await TransactionsCubit.bookChanged();
         widget.onAccount?.call(updated);
       }
@@ -546,9 +476,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       return;
     }
     if (created != null) {
-      // Become the saved wallet right here — edit → view in place, as
-      // categories / contacts do. `replace` keeps the page key (no
-      // transition, this state stays); the route now carries the id.
       commitSaved(_AccountDraft.from(created));
       context.replace('/accounts/${created.id}');
       return;
@@ -556,13 +483,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     commitSaved(working.trimmed());
   }
 
-  /// A credit wallet's opening amount is debt, stored negative. Zero stays
-  /// a plain 0 — `-0.0` would show as "-฿0.00".
   static double _openingBalance(AccountType type, double opening) =>
       opening == 0 ? 0 : (type.isCredit ? -opening : opening);
 
-  /// Archive (owner, edit mode). A wallet that still has other members
-  /// can't be archived (BE 409) — say so up front instead of failing.
   Future<void> _archive() async {
     final l = AppLocalizations.of(context)!;
     final a = widget.account!;
@@ -578,7 +501,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       destructive: true,
     );
     if (!ok || !mounted) return;
-    // Captured up front: the row leaves the cubit, so this page unmounts.
     final cubit = context.read<AccountsCubit>();
     final router = GoRouter.of(context);
     final messenger = ScaffoldMessenger.of(context);
@@ -594,9 +516,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     }
   }
 
-  /// Delete (owner, edit mode): ONE call for the numbers, the confirm prints
-  /// them as the BE sent them, then ONE call deletes. A wallet with other
-  /// members can't be deleted (the BE answers no preview).
   Future<void> _delete() async {
     final l = AppLocalizations.of(context)!;
     final a = widget.account!;
@@ -658,11 +577,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         description: result.description,
         note: result.note,
       );
-      // The cubit patched the wallet + every touched balance already.
       widget.onAccount?.call(outcome.account);
-      // The wallet's own list and the app's list both re-fetch, each
-      // keeping its filters (a bare load narrowed the global one to this
-      // wallet with no chip saying so).
       await TransactionsCubit.bookChanged();
       if (!mounted) return;
       showAppSnackBar(
@@ -679,7 +594,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     }
   }
 
-  /// Report scope — the caller's own membership, applied immediately.
   Future<void> _setScope(Account a, WalletReportScope scope) async {
     if (scope == _effectiveScope(a)) return;
     final l = AppLocalizations.of(context)!;
@@ -688,9 +602,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     try {
       final updated = await cubit.setReportScope(accountId: a.id, scope: scope);
       widget.onAccount?.call(updated);
-      if (mounted) {
-        showAppSnackBar(context, l.walletReportScopeSaved, tone: Tone.success);
-      }
     } on ApiException catch (e) {
       if (mounted) {
         showAppSnackBar(context, walletErrorMessage(l, e), tone: Tone.danger);
@@ -700,15 +611,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     }
   }
 
-  /// Pull-to-refresh: the page's one detail call again.
   Future<void> _refresh() async => widget.onRefresh?.call();
 
-  // ── Tabs ─────────────────────────────────────────────────────────────
-
-  /// ภาพรวม · รายการ · สมาชิก — swipe or tap. สมาชิก only with someone else
-  /// in the wallet (active > 1, or an invite pending — owner 2026-10-11);
-  /// alone, ภาพรวม's สมาชิก section offers the invite.
-  /// The hero (the compact bar watches it) and the page's outer scroll.
   final _heroKey = GlobalKey();
   final _outerScroll = ScrollController();
 
@@ -731,13 +635,10 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     AccountDetailTab.transactions,
   ];
 
-  /// The month tiles filter the รายการ tab by type (null = all); a second
-  /// tap on the same tile clears it.
   final _txType = ValueNotifier<TransactionType?>(null);
 
   bool _membersOpened = false;
 
-  /// The members link: the sheet opens once, as soon as the members are here.
   void _maybeOpenMembers() {
     final a = widget.account;
     if (!mounted || _membersOpened || !widget.openMembers) return;
@@ -757,18 +658,14 @@ class _AccountDetailViewState extends State<_AccountDetailView>
 
   void _goTab(AccountDetailTab t) => setState(() => _tab = t);
 
-  // ── Build ───────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final a = widget.account;
     final tabs = _tabs;
-    // Edit mode is its own form (no tabs).
     if (isEditing || !tabs.contains(_tab)) _tab = AccountDetailTab.overview;
     final page = editScope(
       Scaffold(
-        // The bar floats over the page; the hero is padded below it.
         extendBodyBehindAppBar: true,
         appBar: AppTopBar(
           title: _title(l),
@@ -778,8 +675,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         ),
         body: Form(
           key: _formKey,
-          // Builder: this context sits inside the Scaffold body, so it sees
-          // the bar height in its top padding.
+          // Builder: this context sits inside the Scaffold body, so it sees the
+          // bar height in its top padding.
           child: Builder(
             builder: (context) {
               final barInset = MediaQuery.paddingOf(context).top;
@@ -796,8 +693,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       ),
     );
     if (a == null) return page;
-    // The shell's centre + opens the quick create on this wallet while
-    // this page is on screen, any tab (owner 2026-10-11).
     return QuickCreatePresetScope(
       preset: QuickCreatePreset(account: a),
       child: page,
@@ -809,16 +704,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     AccountDetailTab.transactions => l.accountDetailTransactionsTitle,
   };
 
-  /// Titles never change with the mode (owner, QA T1): the wallet's name in
-  /// view and edit alike — the action bar shows it's edit mode.
   String _title(AppLocalizations l) =>
       _isCreate ? l.accountFormTitle : widget.account!.name;
 
-  // ── View mode ───────────────────────────────────────────────────────
-
-  /// hero → actions → swipe tabs [ภาพรวม · รายการ (· สมาชิก when shared)].
-  /// The hero (+ actions) scrolls away; the tab bar pins under the top bar;
-  /// the kit's compact bar floats under it once the hero is gone.
   Widget _viewBody(
     AppLocalizations l,
     Account a,
@@ -849,7 +737,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
               ),
             ),
             if (actions != null) SliverToBoxAdapter(child: actions),
-            // 16 from the hero to the tabs (HeroSpacing.after).
             const SliverToBoxAdapter(
               child: SizedBox(height: HeroSpacing.after),
             ),
@@ -876,8 +763,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             onChanged: _goTab,
             builder: (context, t) => switch (t) {
               AccountDetailTab.overview => _overviewTab(l, a, bottom),
-              // The full list — search, filters, paging — on its own cubit,
-              // so the global one isn't narrowed.
               AccountDetailTab.transactions => BlocProvider(
                 create: (ctx) => TransactionsCubit(
                   repository: ctx.read<TransactionsRepository>(),
@@ -886,6 +771,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                   embedded: true,
                   lockedAccount: a,
                   typeFilter: _txType,
+                  headerTiles: () => _monthTiles(l, a),
                 ),
               ),
             },
@@ -895,8 +781,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     );
   }
 
-  /// ภาพรวม: info (one box) → การตั้งค่า → สมาชิก → บันทึก → meta, then the
-  /// page dots at the end of the content.
   Widget _overviewTab(AppLocalizations l, Account a, double bottom) {
     return PullToRefresh(
       onRefresh: _refresh,
@@ -929,28 +813,38 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     );
   }
 
-  /// The facts box, then — when something is saved here — the savings by
-  /// goal + spare (owner: the wallet page shows saved per goal).
-  Widget? _overviewInfo(AppLocalizations l, Account a) {
-    final info = _infoBox(l, a);
-    if (!WalletSavingsSection.shows(a)) return info;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ?info,
-        if (info != null) const SizedBox(height: HeroSpacing.after),
-        WalletSavingsSection(account: a, first: true),
-      ],
-    );
-  }
+  Widget? _overviewInfo(AppLocalizations l, Account a) => _infoBox(l, a);
 
-  /// A tab's list padding under the pinned tab bar.
   EdgeInsets _tabInsets(double bottom) =>
       EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, bottom);
 
-  /// The wallet's hero card (reference §6): type · reference · shared chips,
-  /// icon + description, the balance (a card: the debt), the split / limit
-  /// bar, the month's in / out tiles (a card: the due-date alert).
+  List<Widget> _monthTiles(AppLocalizations l, Account a) {
+    if (a.isLiability || !a.trackBalance) return const [];
+    final symbol = context.readUserCurrencySymbol;
+    final locale = Localizations.localeOf(context).languageCode;
+    final month = DateFormat.MMM(locale).format(DateTime.now());
+    return [
+      SummaryTileView(
+        tile: SummaryTile(
+          label: l.fpWalletMonthIn(month),
+          value: '+${moneyString(context, a.monthIn, symbol: symbol)}',
+          tone: SummaryTileTone.green,
+          selected: _txType.value == TransactionType.income,
+          onTap: () => _toggleTxType(TransactionType.income),
+        ),
+      ),
+      SummaryTileView(
+        tile: SummaryTile(
+          label: l.fpWalletMonthOut(month),
+          value: '−${moneyString(context, a.monthOut, symbol: symbol)}',
+          tone: SummaryTileTone.red,
+          selected: _txType.value == TransactionType.expense,
+          onTap: () => _toggleTxType(TransactionType.expense),
+        ),
+      ),
+    ];
+  }
+
   Widget _viewHero(AppLocalizations l, Account a) {
     final palette = Theme.of(context).extension<AppColors>()!;
     final accent = a.iconCode.tintFor(palette, fallback: a.colorOf(context));
@@ -958,7 +852,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final locale = Localizations.localeOf(context).languageCode;
     final ref = a.identifiers.isEmpty ? null : a.identifiers.first;
     final members = a.members.where((m) => m.isActive).length;
-    final month = DateFormat.MMM(locale).format(DateTime.now());
     final savings = a.savings;
     final due = a.dueDateNext;
     return HeroCard(
@@ -985,6 +878,13 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         size: 40,
         onLongPress: _isOwner ? _enterEditThenOpenMaker : null,
       ),
+      name: HeroNameInput(
+        editing: false,
+        controller: _nameController,
+        maxLength: TextLimits.name,
+        maxLines: 2,
+        onEnterEdit: _isOwner ? _enterOn(_nameFocus) : null,
+      ),
       description: HeroDescription(
         controller: _descriptionController,
         editing: false,
@@ -1006,28 +906,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             )
           : AppText(l.walletTrackOffHero, role: AppTextRole.caption),
       bar: _heroBar(l, a, accent, symbol, savings),
-      tiles: a.isLiability || !a.trackBalance
-          ? const []
-          : [
-              SummaryTileView(
-                tile: SummaryTile(
-                  label: l.fpWalletMonthIn(month),
-                  value: '+${moneyString(context, a.monthIn, symbol: symbol)}',
-                  tone: SummaryTileTone.green,
-                  selected: _txType.value == TransactionType.income,
-                  onTap: () => _toggleTxType(TransactionType.income),
-                ),
-              ),
-              SummaryTileView(
-                tile: SummaryTile(
-                  label: l.fpWalletMonthOut(month),
-                  value: '−${moneyString(context, a.monthOut, symbol: symbol)}',
-                  tone: SummaryTileTone.red,
-                  selected: _txType.value == TransactionType.expense,
-                  onTap: () => _toggleTxType(TransactionType.expense),
-                ),
-              ),
-            ],
       alert: a.isLiability && due != null && a.daysUntilDue != null
           ? HeroAlert(
               text: l.fpWalletDueAlert(
@@ -1039,7 +917,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     );
   }
 
-  /// Row D: a card's used-of-limit bar, or a wallet's ใช้ได้ / ออมไว้ split.
   Widget? _heroBar(
     AppLocalizations l,
     Account a,
@@ -1082,9 +959,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     );
   }
 
-  /// Under the card: a bank-like wallet gets ปรับยอด + ออม, a card gets
-  /// ชำระบัตร + ปรับยอด. รายการ / โอน are the bottom +'s job. Null with
-  /// fewer than two actions (a wallet that doesn't track its balance).
   Widget? _actionBar(AppLocalizations l, Account a) {
     if (!a.trackBalance) return null;
     final adjust = ActionBarItem(
@@ -1131,8 +1005,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     );
   }
 
-  /// ภาพรวม's one box of facts: the reference numbers (slips), a card's
-  /// limit / due day / statement day / minimum. Null when there is nothing.
   Widget? _infoBox(AppLocalizations l, Account a) {
     final symbol = context.readUserCurrencySymbol;
     final hidden = isMoneyHidden(context);
@@ -1173,8 +1045,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     );
   }
 
-  /// การตั้งค่า: ติดตามยอดเงิน (a live switch is edit-only for now: turning
-  /// it back on asks the balance on save) and ในรายงานของฉัน (live).
   Widget _settingsSection(AppLocalizations l, Account a) {
     return SettingsSection(
       title: l.settingsTitle,
@@ -1183,18 +1053,23 @@ class _AccountDetailViewState extends State<_AccountDetailView>
           : l.fpWalletSettingsDesc,
       children: [
         if (!a.isLiability)
-          SettingSummaryRow(
+          SettingSwitchViewRow(
             label: l.walletTrackLabel,
-            summary: a.trackBalance ? null : l.fpWalletTrackOff,
-            onTap: _isOwner ? enterEdit : null,
+            caption: l.walletTrackHelper,
+            value: a.trackBalance,
+            onLongPress: _isOwner
+                ? () => enterEdit(
+                    then: () => applyChange(
+                      working.copyWith(trackBalance: !working.trackBalance),
+                    ),
+                  )
+                : null,
           ),
         _scopeRow(l, a),
       ],
     );
   }
 
-  /// The caller's report scope — live, applies immediately (not part of
-  /// the edit).
   Widget _scopeRow(AppLocalizations l, Account a) {
     final scope = _effectiveScope(a);
     return OptionMenuAnchor<WalletReportScope>(
@@ -1202,7 +1077,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       options: [
         for (final s in [
           WalletReportScope.none,
-          // "own" only means something with more than one member.
           if (a.isShared) WalletReportScope.own,
           WalletReportScope.all,
         ])
@@ -1211,16 +1085,14 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       onSelected: (picked) {
         if (mounted) _setScope(a, picked);
       },
-      builder: (context, toggle) => SettingSummaryRow(
+      builder: (context, toggle) => SettingDropdownRow(
         label: l.walletReportScopeTitle,
-        summary: _scopeLabel(l, scope),
+        value: _scopeLabel(l, scope),
         onTap: _scopeBusy ? null : toggle,
       ),
     );
   }
 
-  /// สมาชิก as the events' member strip: me (owner crown) + the others, and
-  /// a ＋ เชิญ card for the owner.
   Widget? _peopleStrip(AppLocalizations l, Account a) {
     final members = [for (final m in a.members) m, ..._pendingInvites];
     final solo = !_hasMembersTab(a);
@@ -1249,8 +1121,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     );
   }
 
-  /// A member card → the member actions (role / remove / leave / history)
-  /// in a sheet; an action closes it and the page patches from its answer.
   Future<void> _openMembers(Account a) async {
     final members = widget.members;
     if (members == null) return;
@@ -1276,12 +1146,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     );
   }
 
-  // ── Edit / create mode ──────────────────────────────────────────────
-
-  /// Edit mode is its own form (reference §0): the card keeps only the
-  /// editable bits (type ▾, icon, name, description, and the opening balance
-  /// while creating); then ONE box of numbers / card terms, the settings, the
-  /// note and the end zone.
   Widget _editBody(
     AppLocalizations l,
     Account? a,
@@ -1355,9 +1219,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             maxLength: TextLimits.description,
             onChanged: (v) => _onText(_Field.description, v),
           ),
-          // Create: the opening balance is typed here, positive for every
-          // type (a card: what is owed); the balance can't be edited later —
-          // ปรับยอด moves it.
+          // Create: the opening balance is typed here, positive for every type
+          // (a card: what is owed); the balance can't be edited later — ปรับยอด
+          // moves it.
           amountField: _isCreate && w.trackBalance
               ? HeroAmountField(
                   controller: _openingController,
@@ -1417,8 +1281,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     );
   }
 
-  /// A card's terms (limit, statement + due day, minimum) in ONE box; null
-  /// for the other types.
   Widget? _creditBox(AppLocalizations l) {
     if (!working.type.isCredit) return null;
     return SectionCard(
@@ -1428,7 +1290,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     );
   }
 
-  /// ติดตามยอดเงิน (owner) + ในรายงานของฉัน (existing wallet, live).
   Widget? _editSettings(AppLocalizations l, Account? a) {
     final children = <Widget>[
       if (_isOwner)
@@ -1451,8 +1312,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     );
   }
 
-  /// A card's terms box, then the reference numbers (slips) — both headed
-  /// boxes, in the info slot.
   Widget? _editInfo(AppLocalizations l) {
     final credit = _creditBox(l);
     final numbers = _identifiersSection(l, first: false);
@@ -1469,22 +1328,13 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     );
   }
 
-  /// The สมาชิก tab (and the avatar row) only once there's someone else:
-  /// more than one active member, or an invite pending.
   bool _hasMembersTab(Account a) => a.isShared || _pendingInvites.isNotEmpty;
 
-  /// Invites sent and not yet answered (from the members history).
   List<WalletMember> get _pendingInvites => [
     for (final m in widget.members ?? const <WalletMember>[])
       if (m.pending) m,
   ];
 
-  /// The wallet's numbers (spec 15 §5) — what bank slips are matched
-  /// against; edited like the splits section (owner 2026-10-11):
-  /// - title row: "+ เพิ่มเลข" (edit), the app-wide 👁 (view)
-  /// - edit: `[kind · bank ▾] [number] ✕` rows, typed in place
-  /// - view: the list; long-press the section → edit mode (owner)
-  /// Non-owners only see a list that has something in it.
   Widget? _identifiersSection(AppLocalizations l, {required bool first}) {
     final editing = isEditing;
     final owner = _isOwner;
@@ -1503,11 +1353,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
               selected: true,
               onTap: _addIdentifier,
             )
-          // 👁 — the same switch as the money privacy toggle.
           : IdentifiersVisibility(show: list.isNotEmpty),
       children: [
         if (list.isEmpty)
-          // Tap: enter edit and add the first number.
           InkWell(
             onTap: () {
               if (!editing) enterEdit();
@@ -1543,11 +1391,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     return GestureDetector(onLongPress: enterEdit, child: section);
   }
 
-  /// The row just added — its number field takes the focus.
   int? _focusIdentifier;
 
-  /// "+ เพิ่มเลข": an empty account-number row at the end, focused. Left
-  /// empty, it's dropped on save.
   void _addIdentifier() {
     final list = working.identifiers;
     _focusIdentifier = list.length;
@@ -1564,7 +1409,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     );
   }
 
-  /// Kind / bank changes are one undo step each; typing groups per row.
   void _changeIdentifier(int index, AccountIdentifier next) {
     final list = working.identifiers;
     final current = list[index];
@@ -1580,12 +1424,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     working.copyWith(identifiers: [...working.identifiers]..removeAt(index)),
   );
 
-  /// Card / pay-later billing: read-only rows in view mode (unset ones
-  /// hidden), inputs in edit mode.
   List<Widget> _creditRows(AppLocalizations l, String symbol) {
     final w = working;
     if (!isEditing) {
-      // The limit is in the hero's bar ("เหลือ x จาก y") — not again here.
       final statementDay = int.tryParse(w.statementDay);
       final dueDay = int.tryParse(w.dueDay);
       final minPayment = AmountInput.parse(w.minPayment);
@@ -1655,8 +1496,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         controller: _minPaymentController,
         field: _Field.minPayment,
       ),
-      // A warning, not a block: the minimum can't sensibly exceed the
-      // limit, but the user knows their card.
+      // A warning, not a block: the minimum can't sensibly exceed the limit,
+      // but the user knows their card.
       if (_minOverLimit(w))
         Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -1673,16 +1514,12 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     ];
   }
 
-  /// ขั้นต่ำ > วงเงิน (both set).
   static bool _minOverLimit(_AccountDraft w) {
     final limit = AmountInput.parse(w.creditLimit);
     final min = AmountInput.parse(w.minPayment);
     return limit != null && min != null && min > limit;
   }
 
-  /// A billing day as a picker row (`label  value ›`) that opens the kit's
-  /// day-of-month grid (1–30, วันสุดท้ายของเดือน = 31, ไม่ระบุ) — no typing,
-  /// nothing to validate. The draft keeps the day as text.
   Widget _dayRow({
     required String title,
     required String value,
@@ -1710,8 +1547,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   }
 }
 
-/// The tab bar, pinned once the hero has scrolled away (the scroll view
-/// sits below the top bar, so it pins right under it).
+/// The tab bar, pinned once the hero has scrolled away (the scroll view sits
+/// below the top bar, so it pins right under it).
 class _PinnedTabBar extends SliverPersistentHeaderDelegate {
   _PinnedTabBar({required this.background, required this.child});
 
@@ -1745,11 +1582,6 @@ class _PinnedTabBar extends SliverPersistentHeaderDelegate {
   bool shouldRebuild(_PinnedTabBar old) => true;
 }
 
-// ────────────────────────────────────────────────────────────────────
-// Immutable editing snapshot — drives dirty-check + undo history. Money /
-// day fields hold the field text (formatted), parsed on save.
-// ────────────────────────────────────────────────────────────────────
-
 class _AccountDraft {
   const _AccountDraft({
     this.name = '',
@@ -1772,7 +1604,6 @@ class _AccountDraft {
   final String description;
   final String note;
 
-  /// Create only — the opening balance (credit: the debt; may be negative).
   final String opening;
   final String creditLimit;
   final String statementDay;
@@ -1780,7 +1611,6 @@ class _AccountDraft {
   final String minPayment;
   final List<AccountIdentifier> identifiers;
 
-  /// "ติดตามยอดเงิน" ([Account.trackBalance]).
   final bool trackBalance;
 
   factory _AccountDraft.from(Account a) => _AccountDraft(
@@ -1801,8 +1631,6 @@ class _AccountDraft {
     trackBalance: a.trackBalance,
   );
 
-  /// What the server stores (text trimmed) — the post-save baseline.
-  /// The numbers to save: rows left empty dropped, repeats once.
   List<AccountIdentifier> get cleanIdentifiers => [
     ...{
       for (final i in identifiers)

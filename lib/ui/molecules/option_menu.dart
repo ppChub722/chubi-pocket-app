@@ -11,15 +11,6 @@ import '../atoms/app_avatar.dart';
 import 'selectable_frame.dart';
 import '../organisms/option_sheet.dart';
 
-/// Popovers — menus anchored to the widget that opened them.
-///
-/// **Rule:** short, non-searchable choices (≤ ~7 options: status, type,
-/// sort, colour) → popover. Long or searchable lists (currency, contacts,
-/// accounts) → `showOptionSheet` bottom sheet.
-///
-/// Every anchor takes a `builder(context, toggle)`: render your trigger
-/// (an [AppChip] with ▾, a button…) and call `toggle` on tap.
-
 typedef PopoverTriggerBuilder =
     Widget Function(BuildContext context, VoidCallback toggle);
 
@@ -39,8 +30,6 @@ MenuStyle _menuStyle(BuildContext context) {
 
 void _toggle(MenuController c) => c.isOpen ? c.close() : c.open();
 
-/// The optional small, muted header at the top of a popover ("Save how?") —
-/// the question the options answer. Not tappable.
 class _PopoverTitle extends StatelessWidget {
   const _PopoverTitle(this.title, {this.padding});
 
@@ -68,9 +57,6 @@ class _PopoverTitle extends StatelessWidget {
   }
 }
 
-/// One popover row. Selected rows get the highlight ring (primary outline +
-/// tint, inset from the menu edge) instead of a ✓ — same language as
-/// `SelectableFrame`.
 class _PopoverItem extends StatelessWidget {
   const _PopoverItem({
     required this.option,
@@ -87,7 +73,6 @@ class _PopoverItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    // A [SheetOption.submits] row is off while the app is offline.
     final enabled =
         option.enabled &&
         !(option.submits && ConnectionScope.isOffline(context));
@@ -139,10 +124,6 @@ class _PopoverItem extends StatelessWidget {
   }
 }
 
-/// Single-select popover. Picking an option closes it and calls
-/// [onSelected]; the current [selected] option is ring-highlighted. An
-/// optional [title] heads the list with a small muted line (the question the
-/// options answer: "Save how?").
 class OptionMenuAnchor<T> extends StatelessWidget {
   const OptionMenuAnchor({
     required this.options,
@@ -158,15 +139,12 @@ class OptionMenuAnchor<T> extends StatelessWidget {
   final ValueChanged<T> onSelected;
   final PopoverTriggerBuilder builder;
 
-  /// A small muted header above the options; null = none.
   final String? title;
 
   @override
   Widget build(BuildContext context) {
     return MenuAnchor(
       style: _menuStyle(context),
-      // The tap that closes the popover must not also hit what lies
-      // underneath (QA S2: a row opened while closing the filter).
       consumeOutsideTap: true,
       alignmentOffset: const Offset(0, AppSpacing.xs),
       menuChildren: [
@@ -184,15 +162,11 @@ class OptionMenuAnchor<T> extends StatelessWidget {
   }
 }
 
-/// "ล้าง" row at the bottom of every multi-select popover (option lists
-/// and swatch grids) — same look everywhere. Hidden by the caller when
-/// nothing is selected.
 class PopoverClearItem extends StatelessWidget {
   const PopoverClearItem({required this.onPressed, this.label, super.key});
 
   final VoidCallback onPressed;
 
-  /// Defaults to the localized "ล้าง".
   final String? label;
 
   @override
@@ -212,9 +186,6 @@ class PopoverClearItem extends StatelessWidget {
   }
 }
 
-/// Multi-select popover. Selected rows are ring-highlighted; it stays open
-/// while toggling and reports the whole new selection via [onChanged].
-/// A "ล้าง" row appears once something is selected ([showClear]).
 class MultiOptionMenuAnchor<T> extends StatelessWidget {
   const MultiOptionMenuAnchor({
     required this.options,
@@ -233,18 +204,14 @@ class MultiOptionMenuAnchor<T> extends StatelessWidget {
   final PopoverTriggerBuilder builder;
   final bool showClear;
 
-  /// A small muted header above the options; null = none.
   final String? title;
 
-  /// Overrides the localized "ล้าง".
   final String? clearLabel;
 
   @override
   Widget build(BuildContext context) {
     return MenuAnchor(
       style: _menuStyle(context),
-      // The tap that closes the popover must not also hit what lies
-      // underneath (QA S2: a row opened while closing the filter).
       consumeOutsideTap: true,
       alignmentOffset: const Offset(0, AppSpacing.xs),
       menuChildren: [
@@ -272,10 +239,6 @@ class MultiOptionMenuAnchor<T> extends StatelessWidget {
   }
 }
 
-/// Popover with arbitrary content (colour grid, icon grid, mini form).
-/// [contentBuilder] gets a `close` callback; the content stays open until
-/// it calls it or the user taps outside. Rebuild-safe: content should read
-/// state from the parent, which rebuilds the anchor.
 class PopoverAnchor extends StatelessWidget {
   const PopoverAnchor({
     required this.builder,
@@ -290,15 +253,12 @@ class PopoverAnchor extends StatelessWidget {
   contentBuilder;
   final double maxWidth;
 
-  /// A small muted header above the content; null = none.
   final String? title;
 
   @override
   Widget build(BuildContext context) {
     return MenuAnchor(
       style: _menuStyle(context),
-      // The tap that closes the popover must not also hit what lies
-      // underneath (QA S2: a row opened while closing the filter).
       consumeOutsideTap: true,
       alignmentOffset: const Offset(0, AppSpacing.xs),
       menuChildren: [
@@ -338,9 +298,6 @@ class PopoverAnchor extends StatelessWidget {
   }
 }
 
-/// Colour-swatch grid for [PopoverAnchor] — multi-select circles,
-/// ring-highlighted when picked, with the same "ล้าง" row as
-/// [MultiOptionMenuAnchor] once something is selected ([onClear]).
 class ColorSwatchGrid extends StatelessWidget {
   const ColorSwatchGrid({
     required this.colors,
@@ -355,10 +312,8 @@ class ColorSwatchGrid extends StatelessWidget {
   final List<Color> colors;
   final Set<int> selected;
 
-  /// Called with the tapped colour's index.
   final ValueChanged<int> onToggle;
 
-  /// Clears the selection; null hides the "ล้าง" row.
   final VoidCallback? onClear;
   final String? clearLabel;
   final double size;
@@ -406,9 +361,6 @@ class ColorSwatchGrid extends StatelessWidget {
   }
 }
 
-/// Icon-swatch grid for [PopoverAnchor] — the [ColorSwatchGrid] of glyphs
-/// (an icon filter): multi-select circles by icon id, ring-highlighted when
-/// picked, + the same "ล้าง" row once something is selected ([onClear]).
 class IconSwatchGrid extends StatelessWidget {
   const IconSwatchGrid({
     required this.glyphs,
@@ -421,16 +373,13 @@ class IconSwatchGrid extends StatelessWidget {
     super.key,
   });
 
-  /// Icon ids ([IconRegistry] keys).
   final List<String> glyphs;
   final Set<String> selected;
   final ValueChanged<String> onToggle;
 
-  /// Clears the selection; null hides the "ล้าง" row.
   final VoidCallback? onClear;
   final String? clearLabel;
 
-  /// Shown for an id the registry doesn't know.
   final IconData fallback;
   final double size;
 

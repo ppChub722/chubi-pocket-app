@@ -4,9 +4,6 @@ import '../atoms/app_card.dart';
 import '../atoms/icon_tile.dart';
 import '../tokens/app_spacing.dart';
 
-/// A grid of [TileCard]s that sits inside a scrolling page: fixed card height,
-/// the column count follows the width (2 on phones, 3–4 on wide screens) so
-/// the cards never balloon into empty slabs. The More page's groups.
 class CardGrid extends StatelessWidget {
   const CardGrid({
     required this.children,
@@ -17,10 +14,8 @@ class CardGrid extends StatelessWidget {
 
   final List<Widget> children;
 
-  /// The widest a card may get (decides the column count).
   final double maxCrossAxisExtent;
 
-  /// Every card's height.
   final double mainAxisExtent;
 
   @override
@@ -38,9 +33,6 @@ class CardGrid extends StatelessWidget {
   );
 }
 
-/// One tile of a [CardGrid]: a card washed in the group's [color] with a faded
-/// corner glyph, a solid rounded [IconTile], the title and a subtitle (the
-/// More page's entries).
 class TileCard extends StatelessWidget {
   const TileCard({
     required this.icon,
@@ -55,7 +47,6 @@ class TileCard extends StatelessWidget {
   final String title;
   final String? subtitle;
 
-  /// The group colour.
   final Color color;
   final VoidCallback? onTap;
 

@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../ui.dart';
 
-/// One bank in [showBankSelectSheet]: plain values, no app model. [name] is
-/// the display name (already in the UI language); [nameTh] / [nameEn] /
-/// [shortName] / [code] are what the search matches.
 @immutable
 class BankPickerItem {
   const BankPickerItem({
@@ -15,7 +12,6 @@ class BankPickerItem {
     this.shortName,
   });
 
-  /// The BOT bank code ("004") — also picks the brand colour.
   final String code;
   final String name;
   final String nameTh;
@@ -23,8 +19,6 @@ class BankPickerItem {
   final String? shortName;
 }
 
-/// What the bank sheet resolves to — null (dismissed) is not a pick;
-/// [code] null = "none".
 @immutable
 class BankPickerChoice {
   const BankPickerChoice(this.code);
@@ -41,15 +35,10 @@ class BankPickerStrings {
 
   final String title;
 
-  /// The top "no bank" row (shown only when `allowNone`).
   final String noneLabel;
   final String? searchHint;
 }
 
-/// A bank on the kit [PickerSheet]: [banks] in the order given (the caller
-/// ranks them), each row leading with its [BankBrandMark]. Searchable over
-/// name / English name / short name / code. [allowNone] adds the "none" row
-/// on top. The current one ([selectedCode]) is highlighted, no ✓.
 Future<BankPickerChoice?> showBankSelectSheet(
   BuildContext context, {
   required List<BankPickerItem> banks,
@@ -109,9 +98,6 @@ Future<BankPickerChoice?> showBankSelectSheet(
   );
 }
 
-/// A bank's mark: the kit brand avatar in the bank's colour, lettered from
-/// its short code ("KBANK", "SCB"). The colour comes from [BankBrand] (BOT
-/// code); unknown banks get a stable colour from their code.
 class BankBrandMark extends StatelessWidget {
   const BankBrandMark({
     required this.code,
@@ -126,8 +112,6 @@ class BankBrandMark extends StatelessWidget {
   final String nameEn;
   final double size;
 
-  /// The short name, else the English name's initials ("Bangkok Bank" →
-  /// "BB"), else the code.
   String get _letters {
     final s = shortName?.trim() ?? '';
     if (s.isNotEmpty) return s;

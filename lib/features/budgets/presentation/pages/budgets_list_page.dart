@@ -12,10 +12,6 @@ import '../../domain/budget_period.dart';
 import '../budget_labels.dart';
 import '../cubit/budgets_cubit.dart';
 
-/// `/budgets` — every budget at its CURRENT period (spec 08 v2): a header with
-/// the counts, the chips active / ended / archived, then one hairline row per
-/// budget. Open = one call; a chip or the sort = one call; a transaction
-/// write marks it stale (one reload).
 class BudgetsListPage extends StatefulWidget {
   const BudgetsListPage({super.key});
 
@@ -41,7 +37,6 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
     });
   }
 
-  /// A budget page / the create page returns: the list may have changed.
   Future<void> _open(Future<Object?> Function() push) async {
     await push();
     if (mounted) context.read<BudgetsCubit>().load();
@@ -55,8 +50,6 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
       extendBodyBehindAppBar: true,
       body: TabSwitchBody(
         child: BlocListener<TransactionsCubit, TransactionsState>(
-          // A write bumps revision; a book-wide refresh (pending submit, debt
-          // settle, + sheet) only swaps the rows.
           listenWhen: (a, b) =>
               a.revision != b.revision ||
               !identical(a.transactions, b.transactions),
@@ -77,7 +70,6 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
     final searching = state.query.trim().isNotEmpty;
     final toggleButton = ToolbarToggleButton(
       state: _toolbar,
-      // A search text, or another status / sort than the default.
       filtered:
           searching ||
           state.filter != BudgetFilter.active ||
@@ -85,7 +77,6 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
       tooltip: l.bgSearchHint,
     );
     return ListPageBody(
-      // Only the FIRST load shows the skeleton: a reload keeps the rows.
       loading:
           (state.status == BudgetsStatus.initial ||
               state.status == BudgetsStatus.loading) &&
@@ -178,8 +169,6 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
     );
   }
 
-  /// The summary card: every number is the BE's (`summary`); the 4 health
-  /// tiles are the server filter of the list (tap again to clear).
   Widget _summary(
     BuildContext context,
     AppLocalizations l,

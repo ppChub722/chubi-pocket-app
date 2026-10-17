@@ -10,13 +10,10 @@ import '../money/money_text.dart';
 
 /// The kind of a saving tx (goals v2): its own record, never a real tx.
 enum SavingTxKind {
-  /// ออม — wallet → spare / goal.
   deposit,
 
-  /// ถอนออม — spare / goal → back to its wallet.
   withdraw,
 
-  /// จัดสรร — spare → goal, goal ↔ goal (the wallet travels with it).
   allocate;
 
   IconData get icon => switch (this) {
@@ -26,23 +23,6 @@ enum SavingTxKind {
   };
 }
 
-/// One row of the saving-tx list (a goal's history) and the pending list's
-/// 🐷 draft — the same two-line geometry as `TxRow`:
-///
-///   (kind glyph)  title [source chip]                    +฿4,000
-///                 [wallet chip] → bucket
-///
-/// - Line 2 by [kind]: deposit `[wallet] → [to]` · withdraw `[from] →
-///   [wallet]` · allocate `[wallet] [from] → [to]`. [from] / [to] are the
-///   bucket names (a goal, "ยังไม่จัดสรร").
-/// - [source]: a mini chip after the title ("ประจำ").
-/// - Amount: deposit / allocate `+` in the accent, withdraw `−` muted.
-/// - [draft] (the pending list): the wallet chip moves up after the title,
-///   line 2 holds [draftChips] (e.g. "ออม", "ประจำ") and [to], the glyph tile
-///   is outlined; the row is faded a little more than a normal one. Row
-///   height is the same as a normal row (geometry-tested).
-/// - [select] leads the row (pending selection); [dimmed] fades it
-///   (archived).
 class SavingTxRow extends StatelessWidget {
   const SavingTxRow({
     required this.kind,
@@ -66,29 +46,22 @@ class SavingTxRow extends StatelessWidget {
   final SavingTxKind kind;
   final String title;
 
-  /// The magnitude (always positive); the sign comes from [kind].
   final num amount;
   final String? walletLabel;
   final Widget? walletIcon;
 
-  /// "5 ต.ค." — leads line 2 (goal pages show when each entry happened).
   final String? date;
 
-  /// Bucket the money leaves (withdraw, allocate).
   final String? from;
 
-  /// Bucket the money enters (deposit, allocate).
   final String? to;
 
-  /// A mini chip after the title ("ประจำ").
   final Widget? source;
   final bool draft;
 
-  /// Draft only: mini chips leading line 2 (kind / source).
   final List<Widget> draftChips;
   final Widget? select;
 
-  /// The deposit / allocate colour (defaults to the income colour).
   final Color? accent;
   final bool dimmed;
   final VoidCallback? onTap;

@@ -5,10 +5,6 @@ import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/tone.dart';
 
-/// A small stat card (the budget mockup's `.tile`): a muted [caption], a big
-/// [value] (a string, or any widget — a `MoneyText`), an optional muted
-/// [subCaption], with a soft tint + border for [Tone.warning] / [Tone.danger]
-/// (any other tone = a plain tile). Put them in a [StatGrid].
 class StatTile extends StatelessWidget {
   const StatTile({
     required this.caption,
@@ -25,10 +21,8 @@ class StatTile extends StatelessWidget {
 
   final String caption;
 
-  /// The figure as text ("19 ต.ค.", "฿165").
   final String? value;
 
-  /// The figure as a widget — wins over [value].
   final Widget? valueWidget;
   final String? subCaption;
   final Tone tone;
@@ -89,8 +83,6 @@ class StatTile extends StatelessWidget {
   }
 }
 
-/// A grid of [StatTile]s, [columns] wide (default 2), each row as tall as its
-/// tallest tile. A short last row leaves its empty cells empty.
 class StatGrid extends StatelessWidget {
   const StatGrid({
     required this.children,

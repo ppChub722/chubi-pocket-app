@@ -18,6 +18,7 @@ class _DetailSectionsDemo extends StatefulWidget {
 class _DetailSectionsDemoState extends State<_DetailSectionsDemo> {
   bool _a = true;
   bool _b = false;
+  String _scope = 'Whole wallet';
   bool _noteEditing = false;
   final _note = TextEditingController(text: 'Shared with the team.');
 
@@ -85,6 +86,45 @@ class _DetailSectionsDemoState extends State<_DetailSectionsDemo> {
                   label: 'Repeat',
                   summary: 'Every month',
                   onTap: noop,
+                ),
+              ],
+            ),
+          ),
+          HubDemo(
+            title: 'SettingDropdownRow · SettingSwitchViewRow',
+            note:
+                'A dropdown row shows its value as a dashed ▾ chip (never a ›: '
+                'tapping opens a menu, not a page) — wrap it in an '
+                'OptionMenuAnchor. The view-mode switch only SHOWS the setting; '
+                'long-press enters edit, where it is live.',
+            child: SettingsSection(
+              first: true,
+              title: 'Settings',
+              description: 'Counts in totals and reports.',
+              children: [
+                SettingSwitchViewRow(
+                  label: 'Track balance',
+                  caption: 'Turn off to skip the balance.',
+                  value: _a,
+                  onLongPress: () => setState(() => _a = !_a),
+                ),
+                OptionMenuAnchor<String>(
+                  selected: _scope,
+                  options: [
+                    for (final s in const ['None', 'Mine', 'Whole wallet'])
+                      SheetOption(value: s, label: s),
+                  ],
+                  onSelected: (s) => setState(() => _scope = s),
+                  builder: (context, toggle) => SettingDropdownRow(
+                    label: 'In my report',
+                    value: _scope,
+                    onTap: toggle,
+                  ),
+                ),
+                const SettingDropdownRow(
+                  label: 'Busy (inert)',
+                  value: 'Whole wallet',
+                  onTap: null,
                 ),
               ],
             ),

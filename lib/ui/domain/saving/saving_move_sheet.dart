@@ -11,8 +11,6 @@ import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';
 import '../money/money_text.dart';
 
-/// One end of a move (the "from" / "to" card): a small caption, a name, a
-/// sub line (the balance).
 class SavingMoveEnd {
   const SavingMoveEnd({
     required this.caption,
@@ -21,18 +19,14 @@ class SavingMoveEnd {
     this.leading,
   });
 
-  /// "จาก" / "ไป".
   final String caption;
   final String name;
 
-  /// e.g. the bucket's current amount, or the wallets' names.
   final String? subtitle;
 
-  /// A glyph before the name.
   final Widget? leading;
 }
 
-/// One wallet row of the split: how much of the move comes from / goes to it.
 class SavingSplitRow {
   const SavingSplitRow({
     required this.walletId,
@@ -45,34 +39,14 @@ class SavingSplitRow {
   final String walletId;
   final String name;
 
-  /// The proposed part (the caller's largest-first auto split).
   final double amount;
 
-  /// "มี ฿40,000" — what the wallet can give (move) / holds (withdraw).
   final String? availableText;
   final Widget? leading;
 }
 
-/// What the sheet returns: the user's final split.
 typedef SavingMoveSplit = ({String walletId, double amount});
 
-/// The move sheet (goals v2 frame 5), also used for ถอน (the "to" card is the
-/// wallet(s)):
-///
-///   title
-///   [จาก card] → [ไป card]
-///   amount
-///   แบ่งตามกระเป๋า (อัตโนมัติ)                      [✏️ แก้ไข]
-///   (icon) wallet · มี ฿x                              ฿part
-///   รวม ฿x ✓ …
-///   [ ย้าย ]
-///
-/// The caller computes the split (largest-first across wallets); the sheet
-/// only edits and checks `sum == amount`. [autoSplit] (optional) re-proposes
-/// the split when the amount changes and the rows have not been edited by
-/// hand. Every word is a param. Resolves the rows with a non-zero part, or
-/// null when dismissed. Save is disabled until the amount is > 0 and the
-/// parts add up to it.
 Future<List<SavingMoveSplit>?> showSavingMoveSheet(
   BuildContext context, {
   required String title,
@@ -109,7 +83,6 @@ Future<List<SavingMoveSplit>?> showSavingMoveSheet(
   );
 }
 
-/// The body of [showSavingMoveSheet] (exposed for the hub and tests).
 class SavingMoveSheet extends StatefulWidget {
   const SavingMoveSheet({
     required this.title,

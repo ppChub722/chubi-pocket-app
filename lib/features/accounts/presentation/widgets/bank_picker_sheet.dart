@@ -4,18 +4,13 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/payment_provider.dart';
 
-/// What [showBankPicker] resolves to — `null` = dismissed. [bank] null =
-/// ไม่ระบุ.
 class BankPick {
   const BankPick(this.bank);
   final PaymentProvider? bank;
 }
 
-/// The big five, in this order, ahead of the rest (owner 2026-10-11):
-/// กสิกร · ไทยพาณิชย์ · กรุงเทพ · กรุงไทย · กรุงศรี (BOT codes).
 const _majorBankCodes = ['004', '014', '002', '006', '025'];
 
-/// A provider as the kit's plain bank row, named in [lang].
 BankPickerItem bankPickerItemOf(PaymentProvider p, String lang) =>
     BankPickerItem(
       code: p.code,
@@ -25,8 +20,6 @@ BankPickerItem bankPickerItemOf(PaymentProvider p, String lang) =>
       shortName: p.shortName,
     );
 
-/// The banks among [providers], the major ones first then by name, as the kit's
-/// plain rows.
 List<BankPickerItem> rankedBankItems(
   List<PaymentProvider> providers,
   String lang,
@@ -44,10 +37,6 @@ List<BankPickerItem> rankedBankItems(
   return [for (final b in banks) bankPickerItemOf(b, lang)];
 }
 
-/// "ธนาคาร" — the banks among [providers] on the kit bank sheet
-/// ([showBankSelectSheet]): the major banks first, then the rest by name.
-/// [allowNone] adds "ไม่ระบุ" on top. The current one ([selectedCode]) is
-/// highlighted, no ✓. This wrapper ranks + maps the models and l10n.
 Future<BankPick?> showBankPicker(
   BuildContext context, {
   required List<PaymentProvider> providers,
@@ -75,7 +64,6 @@ Future<BankPick?> showBankPicker(
   );
 }
 
-/// A bank's mark: the kit's [BankBrandMark] for a [PaymentProvider].
 class BankMark extends StatelessWidget {
   const BankMark({required this.provider, this.size = 36, super.key});
 

@@ -27,30 +27,11 @@ import '../budget_labels.dart';
 import '../budget_scope_pickers.dart';
 import '../cubit/budgets_cubit.dart';
 
-/// `/budgets/new`, `/budgets/:id` (+ `/edit`) — ONE page for a budget of any
-/// kind (spec 08 v2; reference "งบประมาณ"): view ⇄ edit in place
-/// ([EditModeMixin]).
-///
-/// VIEW: the hero card (period chips, remaining, the bar with the pace tick,
-/// the forecast tiles) → การตั้งค่า (what it counts · warn level · repeat)
-/// → บันทึก → then, for a recurring budget, the swipe tabs [รายการในรอบนี้]
-/// [ทุกรอบ] (a one-off / open-ended budget has its items right below). A row
-/// of รายการ says why it counts; a row of ทุกรอบ edits that period's limit.
-///
-/// EDIT / CREATE: its own form — the hero keeps icon, name, description and
-/// the limit; start / end; the settings with their pickers; บันทึก; the end
-/// zone (ปิดงบ · เก็บถาวร · ลบ). The bar, tiles and items are hidden.
-///
-/// Open = ONE call (`getBudget`); every write answers with the page, so the
-/// page takes the new state from the response. A transaction write reloads
-/// it once.
 class BudgetDetailPage extends StatefulWidget {
   const BudgetDetailPage({this.id, this.startEditing = false, super.key});
 
-  /// Null = create.
   final String? id;
 
-  /// `/budgets/:id/edit` opens straight in edit mode.
   final bool startEditing;
 
   bool get isCreate => id == null;
@@ -61,7 +42,6 @@ class BudgetDetailPage extends StatefulWidget {
 
 enum _Tab { items, periods }
 
-/// Which text field a typing burst belongs to (undo grouping).
 enum _Field { name, description, amount, note }
 
 class _BudgetDetailPageState extends State<BudgetDetailPage>
@@ -75,22 +55,17 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
   BudgetDetail? _detail;
   bool _loading = false;
 
-  /// The first load failed (nothing on screen yet).
   ApiException? _error;
 
-  /// A reload failed with the page on screen: the data stays, a banner says
-  /// why.
   ApiException? _refreshError;
   _Tab _tab = _Tab.items;
 
-  /// All periods, once "ดูรอบก่อนหน้าทั้งหมด" was tapped.
   BudgetPeriodPage? _allPeriods;
   bool _itemsBusy = false;
   Object? _itemsError;
   bool _periodsBusy = false;
   Object? _periodsError;
 
-  /// Save was tried with nothing to count.
   bool _scopeMissing = false;
 
   BudgetsRepository get _repo => BudgetsRepository.of(context);
@@ -122,11 +97,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     super.dispose();
   }
 
-  // ── Loading ─────────────────────────────────────────────────────────
-
-  /// `getBudget` — the page's ONE call (open, pull-to-refresh, a transaction
-  /// write). A reload while editing keeps the draft; a failed reload keeps
-  /// the data.
   Future<void> _load({bool first = false}) async {
     if (_detail == null) {
       setState(() {
@@ -217,8 +187,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     }
   }
 
-  // ── EditModeMixin hooks ─────────────────────────────────────────────
-
   @override
   bool get leaveOnCancel => widget.isCreate;
 
@@ -241,13 +209,10 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     _Field.note => working.copyWith(note: v),
   });
 
-  /// A picker / switch in view mode starts editing first.
   void _change(BudgetDraft next) {
     if (!isEditing) enterEdit();
     applyChange(next);
   }
-
-  // ── Pickers ─────────────────────────────────────────────────────────
 
   Future<void> _pickIcon() async {
     final l = AppLocalizations.of(context)!;
@@ -330,8 +295,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     _change(working.copyWith(start: picked.date));
   }
 
-  /// A recurring budget: every N day | week | month | year + the end (the
-  /// kit sheet, simple mode).
   Future<void> _pickRule() async {
     final r = await showRecurrenceSheet(
       context,
@@ -342,7 +305,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     _change(working.withKitRule(r));
   }
 
-  /// A one-off budget's end: none (open until ปิดงบ) or a date.
   Future<void> _pickEnd() async {
     if (working.recurring) return _pickRule();
     final l = AppLocalizations.of(context)!;
@@ -368,9 +330,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     _change(working.copyWith(end: BudgetEnd.onDate(picked.date)));
   }
 
-  /// A row of ทุกรอบ: that period's own limit (+ note). Answer = the budget
-  /// page at that period — the current period's answer replaces the page,
-  /// an older one only patches its row.
   Future<void> _editPeriod(BudgetPeriod p) async {
     final d = _detail;
     if (d == null || !d.budget.actions.edit || isSaving) return;
@@ -412,8 +371,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       showAppSnackBarOn(pageMessenger!, e.message, tone: Tone.danger);
     }
   }
-
-  // ── Save / lifecycle ────────────────────────────────────────────────
 
   Future<void> _save() async {
     commitTextSession();
@@ -465,8 +422,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     }
   }
 
-  /// A lifecycle call (close / archive / restore): the page takes the
-  /// returned state.
   Future<void> _run(Future<BudgetDetail> Function() call) async {
     setSaving(true);
     try {
@@ -509,7 +464,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
 
   Future<void> _delete(Budget b) async {
     final l = AppLocalizations.of(context)!;
-    // ONE call on this button: the budget with the delete preview.
     setSaving(true);
     final BudgetDeletePreview? preview;
     try {
@@ -554,8 +508,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     leavePage();
   }
 
-  // ── Build ───────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -580,7 +532,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       listenWhen: (a, c) =>
           a.revision != c.revision ||
           !identical(a.transactions, c.transactions),
-      // A transaction write: this page's figures moved — one reload.
       listener: (_, _) {
         if (!widget.isCreate && !isSaving) _load();
       },
@@ -621,7 +572,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
   }
 
-  /// The + presets the budget's category when it counts exactly one.
   QuickCreatePreset _preset() {
     final b = _budget;
     if (b == null || b.scope.categories.length != 1 || b.scope.all) {
@@ -634,8 +584,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     }
     return c == null ? QuickCreatePreset.none : QuickCreatePreset(category: c);
   }
-
-  // ── View mode ───────────────────────────────────────────────────────
 
   Widget _viewBody(
     BuildContext context,
@@ -662,7 +610,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         ? null
         : AppMessage(tone: Tone.danger, message: _refreshError!.message);
 
-    // A one-off / open-ended budget: no periods — its items sit right below.
     if (!b.recurring) {
       return DetailLayout(
         topInset: barInset + AppSpacing.lg,
@@ -717,7 +664,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
   }
 
-  /// The hero, one line, once it has scrolled away: icon · name · remaining.
   CompactHeroBar _compactBar(BudgetDetail d) {
     final b = d.budget;
     final p = b.period;
@@ -744,9 +690,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
   }
 
-  /// The budget's hero card (reference "งบประมาณ"): period chips,
-  /// icon + description, the remaining (over → "เกิน"), the bar with the pace
-  /// tick, the forecast tiles. Every number is the BE's.
   Widget _viewHero(AppLocalizations l, BudgetDetail d) {
     final b = d.budget;
     final p = b.period;
@@ -830,7 +773,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
   }
 
-  /// The forecast tiles — the BE's `forecast` numbers, none computed here.
   List<Widget> _tiles(AppLocalizations l, BudgetDetail d) {
     final f = d.forecast;
     Widget tile(String label, String value, [SummaryTileTone? tone]) =>
@@ -856,7 +798,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         ),
       if (f.daysLeft != null)
         tile(l.fpBudgetsTileDaysLabel, l.fpBudgetsDaysValue(f.daysLeft!)),
-      // An open-ended budget has no period end: its own two figures.
       if (f.avgMonthly != null)
         tile(l.bgTileAvgMonthly, budgetRowMoney(context, f.avgMonthly!)),
       if (f.thisMonth != null)
@@ -864,10 +805,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     ].take(4).toList();
   }
 
-  // ── Tabs ────────────────────────────────────────────────────────────
-
-  /// รายการในรอบนี้: what the budget counts in the period, grouped by day,
-  /// each row says why it counts. Pull-to-refresh = the page's one load.
   Widget _itemsTab(AppLocalizations l, BudgetDetail d, List<String> meta) {
     return ListPageBody(
       loading: false,
@@ -896,7 +833,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
   }
 
-  /// ทุกรอบ: one row per period; tapping edits that period's limit.
   Widget _periodsTab(AppLocalizations l, BudgetDetail d) {
     final b = d.budget;
     final periods = _allPeriods?.periods ?? d.periods.periods;
@@ -944,8 +880,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
   }
 
-  /// One badge per period row: this period · set for this period only ·
-  /// its status.
   Widget? _periodBadge(AppLocalizations l, Budget b, BudgetPeriod x) {
     if (x.isCurrent) {
       return AppChip(label: l.bgPeriodNow, size: ChipSize.mini, selected: true);
@@ -961,7 +895,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     return budgetStatusChip(l, b, period: x, size: ChipSize.mini);
   }
 
-  /// The counted items, a day header before each new day.
   List<Widget> _itemRows(AppLocalizations l, BudgetDetail d) {
     final out = <Widget>[];
     DateTime? last;
@@ -1021,10 +954,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
   }
 
-  // ── Settings (view + edit) ──────────────────────────────────────────
-
-  /// การตั้งค่า — what the budget counts, when it warns, whether it repeats.
-  /// View: summary rows (they start editing); edit: the pickers.
   Widget _settings(AppLocalizations l, {required bool editing}) {
     final w = working;
     final scope = budgetScopeSummary(
@@ -1095,9 +1024,9 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
             onSelected: (p) => _change(
               p == 0 ? w.copyWith(clearWarn: true) : w.copyWith(warnPct: p),
             ),
-            builder: (context, toggle) => SettingSummaryRow(
+            builder: (context, toggle) => SettingDropdownRow(
               label: l.fpBudgetsWarnAt,
-              summary: warn,
+              value: warn,
               onTap: toggle,
             ),
           )
@@ -1116,7 +1045,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
               ? (v) => _change(
                   w.copyWith(
                     recurring: v,
-                    // A one-off keeps no count end.
                     end: !v && w.end.kind == 'count'
                         ? const BudgetEnd.none()
                         : w.end,
@@ -1128,10 +1056,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
   }
 
-  // ── Edit / create mode ──────────────────────────────────────────────
-
-  /// Edit mode is its own form: the card keeps icon, name, description and
-  /// the limit; then start / end, the settings, the note and the end zone.
   Widget _editBody(
     BuildContext context,
     AppLocalizations l,
@@ -1246,8 +1170,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
   }
 
-  /// ปิดงบ (when it can close) → เก็บถาวร / กู้คืน → ลบ, each with its
-  /// consequence; a confirm dialog guards every one.
   Widget _endZone(AppLocalizations l, Budget b) {
     final canArchive = b.isArchived ? b.actions.restore : b.actions.archive;
     return EndZone(

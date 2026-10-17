@@ -9,7 +9,6 @@ import '../../categories/domain/category_type.dart';
 import '../../tags/domain/tag.dart';
 import '../domain/transaction_type.dart';
 
-/// A category belongs to one type — does [c] fit [type]? (null = any.)
 bool categoryFitsType(Category c, TransactionType? type) => switch (type) {
   null => true,
   TransactionType.income => c.type == CategoryType.income,
@@ -17,25 +16,18 @@ bool categoryFitsType(Category c, TransactionType? type) => switch (type) {
   TransactionType.transfer => false,
 };
 
-/// The unit a transactions list period is measured in.
 enum TxPeriodKind { day, week, month, year, all, custom }
 
-/// The list's period — what the pill on top shows and steps (owner
-/// 2026-10-10). [start] is the day, or the first day of the week (Monday)
-/// / month / year; a custom range runs [start]..[end].
 @immutable
 class TxPeriod {
   const TxPeriod._(this.kind, this.start, [this.end]);
 
-  /// One day.
   factory TxPeriod.day(DateTime day) =>
       TxPeriod._(TxPeriodKind.day, DateTime(day.year, day.month, day.day));
 
-  /// The month holding [day].
   factory TxPeriod.month(DateTime day) =>
       TxPeriod._(TxPeriodKind.month, DateTime(day.year, day.month));
 
-  /// The Monday-to-Sunday week holding [day].
   factory TxPeriod.week(DateTime day) {
     final d = DateTime(day.year, day.month, day.day);
     return TxPeriod._(
@@ -44,21 +36,17 @@ class TxPeriod {
     );
   }
 
-  /// The year holding [day].
   factory TxPeriod.year(DateTime day) =>
       TxPeriod._(TxPeriodKind.year, DateTime(day.year));
 
-  /// Everything.
   static final all = TxPeriod._(TxPeriodKind.all, DateTime(0));
 
-  /// [from]..[to], both days included.
   factory TxPeriod.custom(DateTime from, DateTime to) => TxPeriod._(
     TxPeriodKind.custom,
     DateTime(from.year, from.month, from.day),
     DateTime(to.year, to.month, to.day),
   );
 
-  /// The [kind] period holding [day] (custom / all aren't anchored).
   factory TxPeriod.of(TxPeriodKind kind, DateTime day) => switch (kind) {
     TxPeriodKind.day => TxPeriod.day(day),
     TxPeriodKind.month => TxPeriod.month(day),
@@ -72,7 +60,6 @@ class TxPeriod {
   final DateTime start;
   final DateTime? end;
 
-  /// The last day included (null = open: [TxPeriodKind.all]).
   DateTime? get last => switch (kind) {
     TxPeriodKind.day => start,
     TxPeriodKind.month => DateTime(start.year, start.month + 1, 0),
@@ -82,13 +69,10 @@ class TxPeriod {
     TxPeriodKind.all => null,
   };
 
-  /// `from` / `to` for the API (`YYYY-MM-DD`; nulls = open).
   ({String? from, String? to}) get bounds => kind == TxPeriodKind.all
       ? (from: null, to: null)
       : (from: _ymd(start), to: _ymd(last!));
 
-  /// The neighbouring period [dir] steps away (−1 back, +1 forward), or
-  /// null for one with no neighbours (ทั้งหมด, a custom range).
   TxPeriod? step(int dir) => switch (kind) {
     TxPeriodKind.day => TxPeriod.day(
       DateTime(start.year, start.month, start.day + dir),
@@ -101,13 +85,11 @@ class TxPeriod {
     TxPeriodKind.all || TxPeriodKind.custom => null,
   };
 
-  /// Forward stops at the period holding today (nothing's ahead of it).
   bool canStepForward(DateTime today) {
     final next = step(1);
     return next != null && !next.start.isAfter(today);
   }
 
-  /// The pill's text.
   String label(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).toLanguageTag();
@@ -137,9 +119,6 @@ class TxPeriod {
   int get hashCode => Object.hash(kind, start, end);
 }
 
-/// Everything the filter sheet sets (search stays in the page's field).
-/// Every group takes SEVERAL values: OR-ed inside the group (wallet KBank OR
-/// cash OR no wallet), AND-ed between groups; an empty group = no filter.
 @immutable
 class TxFilters {
   const TxFilters({
@@ -151,6 +130,8 @@ class TxFilters {
     this.uncategorized = false,
     this.tags = const [],
     this.noTags = false,
+    this.amountMin,
+    this.amountMax,
     this.sort = 'date_desc',
   });
 
@@ -161,13 +142,15 @@ class TxFilters {
   final List<Account> wallets;
   final bool noWallet;
 
-  /// Categories (each with its sub-categories), and/or [uncategorized].
   final List<Category> categories;
   final bool uncategorized;
 
   /// Tags, and/or [noTags] (rows without any).
   final List<Tag> tags;
   final bool noTags;
+
+  final double? amountMin;
+  final double? amountMax;
   final String sort;
 
   TxFilters copyWith({
@@ -179,6 +162,7 @@ class TxFilters {
     bool? uncategorized,
     List<Tag>? tags,
     bool? noTags,
+    ({double? min, double? max})? amount,
     String? sort,
   }) => TxFilters(
     period: period ?? this.period,
@@ -189,6 +173,8 @@ class TxFilters {
     uncategorized: uncategorized ?? this.uncategorized,
     tags: tags ?? this.tags,
     noTags: noTags ?? this.noTags,
+    amountMin: amount == null ? amountMin : amount.min,
+    amountMax: amount == null ? amountMax : amount.max,
     sort: sort ?? this.sort,
   );
 
@@ -196,12 +182,13 @@ class TxFilters {
     for (final x in xs) id(x),
   };
 
-  /// The same filters, ignoring the period (the pill owns it).
   bool sameFiltersAs(TxFilters o) =>
       setEquals(o.types, types) &&
       o.noWallet == noWallet &&
       o.uncategorized == uncategorized &&
       o.noTags == noTags &&
+      o.amountMin == amountMin &&
+      o.amountMax == amountMax &&
       o.sort == sort &&
       setEquals(
         _ids(o.wallets, (a) => (a as Account).id),
@@ -216,8 +203,6 @@ class TxFilters {
         _ids(tags, (t) => (t as Tag).id),
       );
 
-  /// How many values are on beyond how the page opened [base] (what the
-  /// "ตัวกรอง" button counts).
   int activeCount(TxFilters base) {
     int extra(Set<Object> now, Set<Object> was) =>
         now.where((x) => !was.contains(x)).length;
@@ -232,10 +217,12 @@ class TxFilters {
           {for (final c in base.categories) c.id},
         ) +
         (uncategorized && !base.uncategorized ? 1 : 0) +
-        extra(
-          {for (final t in tags) t.id},
-          {for (final t in base.tags) t.id},
-        ) +
-        (noTags && !base.noTags ? 1 : 0);
+        extra({for (final t in tags) t.id}, {for (final t in base.tags) t.id}) +
+        (noTags && !base.noTags ? 1 : 0) +
+        ((amountMin != null || amountMax != null) &&
+                base.amountMin == null &&
+                base.amountMax == null
+            ? 1
+            : 0);
   }
 }
