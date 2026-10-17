@@ -1108,6 +1108,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   Future<void> _pickRecurring() => _link.choose(
     context,
     type: _c.type,
+    categoryId: _c.isTransfer ? null : _c.category?.id,
+    amount: _c.amountValue > 0 ? _c.amountValue : null,
     createRoute: recurringCreateRoute(
       type: _c.type,
       amount: _c.amountValue,

@@ -6326,6 +6326,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get archivedRestore => 'Restore';
 
   @override
+  String archivedSecondaryBalance(String amount) {
+    return 'Left $amount';
+  }
+
+  @override
+  String archivedSecondaryLimit(String amount) {
+    return 'Limit $amount';
+  }
+
+  @override
+  String archivedSecondaryTarget(String amount) {
+    return 'Goal $amount';
+  }
+
+  @override
+  String archivedSecondaryPlanned(String amount) {
+    return 'Budget $amount';
+  }
+
+  @override
+  String archivedSecondaryAmount(String amount) {
+    return 'Amount $amount';
+  }
+
+  @override
   String archivedRestored(String name) {
     return 'Restored $name';
   }
@@ -6345,6 +6370,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recurringPickerTitle => 'Link to a recurring';
+
+  @override
+  String get recurringPickerGroupLikely => 'Likely';
 
   @override
   String get recurringPickerGroupRecurring => 'Recurring';

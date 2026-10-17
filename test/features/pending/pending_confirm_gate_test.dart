@@ -124,6 +124,49 @@ class _Repo extends Fake implements PendingRepository {
   int submitReadyCalls = 0;
   final submitOneCalls = <String>[];
   Map<String, dynamic>? nextAnswer;
+  final created = <PendingDraft>[];
+  final updated = <String>[];
+
+  /// `POST /pending-transactions` answers {data, summary}.
+  @override
+  Future<PendingList> create(List<PendingDraft> drafts) async {
+    created.addAll(drafts);
+    final fresh = [
+      for (var i = 0; i < drafts.length; i++)
+        PendingTransaction.fromJson(draftJson('n${created.length}-$i')),
+    ];
+    rows = [...fresh, ...rows];
+    return PendingList(
+      items: fresh,
+      summary: PendingSummary.fromJson(
+        summaryJson(
+          count: rows.length,
+          manual: rows.length,
+          ready: 1,
+          needs: 4,
+        ),
+      ),
+    );
+  }
+
+  /// `PUT /pending-transactions/:id` answers the draft plus `summary`.
+  @override
+  Future<PendingUpdated> update(String id, PendingDraft draft) async {
+    updated.add(id);
+    return PendingUpdated(
+      draft: PendingTransaction.fromJson(
+        draftJson(id, description: 'edited', needsInput: []),
+      ),
+      summary: PendingSummary.fromJson(
+        summaryJson(
+          count: rows.length,
+          manual: rows.length,
+          ready: 2,
+          needs: 0,
+        ),
+      ),
+    );
+  }
 
   @override
   Future<PendingList> list() async {
@@ -202,6 +245,32 @@ void main() {
   });
 
   group('cubit', () {
+    test('create and update take the summary from their answers', () async {
+      final repo = _Repo([
+        PendingTransaction.fromJson(draftJson('p1')),
+      ], summary: summaryJson(count: 1, manual: 1, ready: 0, needs: 1));
+      final cubit = PendingCubit(repository: repo);
+      await cubit.load();
+      expect(cubit.state.summary?.needsInputCount, 1);
+
+      await cubit.add(const [PendingDraft(amount: 50)]);
+      expect(cubit.state.items, hasLength(2));
+      // The chips are the create answer's numbers, not a count of rows.
+      expect(cubit.state.summary?.count, 2);
+      expect(cubit.state.summary?.readyCount, 1);
+      expect(cubit.state.summary?.needsInputCount, 4);
+
+      await cubit.updateDraft('p1', const PendingDraft(amount: 60));
+      expect(
+        cubit.state.items.firstWhere((p) => p.id == 'p1').draft.description,
+        'edited',
+      );
+      expect(cubit.state.summary?.readyCount, 2);
+      expect(cubit.state.summary?.needsInputCount, 0);
+      expect(repo.listCalls, 1);
+      await cubit.close();
+    });
+
     test('a write answer carries the summary; no second list call', () async {
       final repo = _Repo([
         PendingTransaction.fromJson(draftJson('p1')),

@@ -1,6 +1,10 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:chubi_pocket/core/network/api_exception.dart';
+import 'package:chubi_pocket/features/accounts/data/accounts_repository.dart';
+import 'package:chubi_pocket/features/accounts/domain/account.dart';
+import 'package:chubi_pocket/features/accounts/presentation/cubit/accounts_cubit.dart';
 import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:chubi_pocket/features/contacts/data/contacts_repository.dart';
 import 'package:chubi_pocket/features/notifications/data/notifications_repository.dart';
 import 'package:chubi_pocket/features/notifications/domain/notification.dart';
 import 'package:chubi_pocket/features/notifications/presentation/cubit/unread_badge_cubit.dart';
@@ -268,6 +272,62 @@ class _Projects extends Fake implements ProjectsRepository {
       calls.add('reject:$notificationId');
 }
 
+/// Invite / link-request answers carry the inbox `summary`.
+class _Accounts extends Fake implements AccountsRepository {
+  final calls = <String>[];
+
+  @override
+  Future<AcceptedInvite> acceptInvite(String notificationId) async {
+    calls.add('accept:$notificationId');
+    return AcceptedInvite(
+      account: Account.fromJson({
+        'id': 'a1',
+        'name': 'Rent',
+        'type': 'bank',
+        'group': 'asset',
+        'balance': 0.0,
+        'currency': 'THB',
+        'icon_code': {'icon': 'bank', 'color': 'blue'},
+        'status': 'active',
+        'sort_order': 1,
+        'my_role': 'member',
+        'can_edit': true,
+        'is_shared': true,
+        'track_balance': true,
+      }),
+      answer: NotificationActionResult(
+        notification: AppNotification.fromJson({
+          ..._allTypes()[7],
+          'state': 'actioned',
+          'awaits_answer': false,
+        }),
+        badges: const Badges(unreadNotifications: 4, pendingDrafts: 0),
+        summary: const InboxSummary(all: 10, needsAnswer: 2, unread: 4),
+      ),
+    );
+  }
+}
+
+class _Contacts extends Fake implements ContactsRepository {
+  final calls = <String>[];
+
+  @override
+  Future<LinkRequestResult> rejectLinkRequest(String notificationId) async {
+    calls.add('reject:$notificationId');
+    return LinkRequestResult.fromJson({
+      'contact': null,
+      'notification': {
+        ..._allTypes()[6],
+        'state': 'dismissed',
+        'awaits_answer': false,
+        'dismissed_at': '2026-10-16T10:00:00Z',
+      },
+      'badges': {'unread_notifications': 3, 'pending_drafts': 0},
+      'summary': {'all': 9, 'needs_answer': 2, 'unread': 3, 'dismissed': 1},
+    });
+  }
+}
+
 class _Recurring extends Fake implements RecurringRepository {
   final calls = <String>[];
 
@@ -283,11 +343,15 @@ void main() {
   late _Repo repo;
   late _Projects projects;
   late _Recurring recurring;
+  late _Accounts accounts;
+  late _Contacts contacts;
 
   setUp(() {
     repo = _Repo();
     projects = _Projects();
     recurring = _Recurring();
+    accounts = _Accounts();
+    contacts = _Contacts();
   });
 
   Future<void> pump(WidgetTester t) async {
@@ -306,9 +370,14 @@ void main() {
           RepositoryProvider<NotificationsRepository>.value(value: repo),
           RepositoryProvider<ProjectsRepository>.value(value: projects),
           RepositoryProvider<RecurringRepository>.value(value: recurring),
+          RepositoryProvider<AccountsRepository>.value(value: accounts),
+          RepositoryProvider<ContactsRepository>.value(value: contacts),
         ],
         child: MultiBlocProvider(
           providers: [
+            BlocProvider<AccountsCubit>(
+              create: (_) => AccountsCubit(repository: accounts),
+            ),
             BlocProvider<AuthCubit>.value(value: auth),
             BlocProvider<PendingCubit>.value(value: pending),
             BlocProvider<UnreadBadgeCubit>.value(value: unread),
@@ -488,6 +557,42 @@ void main() {
     await t.pump();
     await t.pump();
     expect(projects.calls, ['accept:n5', 'reject:n5']);
+  });
+
+  testWidgets('wallet invite: Accept takes the answer, NO re-fetch', (t) async {
+    repo.rows = [_allTypes()[7]];
+    await pump(t);
+    expect(repo.lists, hasLength(1));
+    await t.tap(find.text('Accept'));
+    await t.pump();
+    await t.pump();
+    expect(accounts.calls, ['accept:n8']);
+    // The card follows the answer's summary; the list was not asked again.
+    expect(repo.lists, hasLength(1));
+    expect(tileValue('Needs answer', '2'), findsOneWidget);
+    expect(tileValue('Unread', '4'), findsOneWidget);
+  });
+
+  testWidgets('link request: Reject takes the answer, the row leaves, no '
+      're-fetch', (t) async {
+    repo.rows = [_allTypes()[6]];
+    await pump(t);
+    await t.tap(find.text('Reject'));
+    await t.pump();
+    await t.pump();
+    await t.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Reject'),
+      ),
+    );
+    await t.pump();
+    await t.pump();
+    expect(contacts.calls, ['reject:n7']);
+    expect(repo.lists, hasLength(1));
+    expect(find.byType(NotificationTileView), findsNothing);
+    expect(tileValue('All', '9'), findsOneWidget);
+    expect(tileValue('Hidden', '1'), findsOneWidget);
   });
 
   testWidgets('recurring_ending: Extend calls /extend, Let it end = actioned', (

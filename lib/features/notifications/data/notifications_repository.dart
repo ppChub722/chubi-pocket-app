@@ -167,15 +167,7 @@ class NotificationsRepository {
   Future<NotificationActionResult> _post(String path) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(path);
-      return NotificationActionResult(
-        notification: AppNotification.fromJson(
-          res.data!['notification'] as Map<String, dynamic>,
-        ),
-        badges: Badges.fromJson(res.data!['badges'] as Map<String, dynamic>),
-        summary: InboxSummary.fromJson(
-          res.data!['summary'] as Map<String, dynamic>?,
-        ),
-      );
+      return NotificationActionResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }

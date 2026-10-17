@@ -292,9 +292,9 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
   }
 
   /// Accept a wallet invite: the joined wallet joins the list.
-  Future<Account> acceptInvite(String notificationId) async {
+  Future<AcceptedInvite> acceptInvite(String notificationId) async {
     final joined = await _repo.acceptInvite(notificationId);
-    upsert(joined);
+    upsert(joined.account);
     return joined;
   }
 

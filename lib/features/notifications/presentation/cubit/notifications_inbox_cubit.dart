@@ -288,6 +288,24 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
     }
   }
 
+  /// Takes the answer of a write made elsewhere (an invite / link-request
+  /// accept or reject): the row in its new state (a dismissed one leaves
+  /// unless the hidden view is open), the badges and the card's numbers.
+  /// No re-fetch.
+  void applyAnswer(NotificationActionResult r) {
+    final keep =
+        !r.notification.isDismissed || state.filter == InboxFilter.hidden;
+    emit(
+      state.copyWith(
+        notifications: [
+          for (final n in state.notifications)
+            if (n.id != r.notification.id) n else if (keep) r.notification,
+        ],
+      ),
+    );
+    _apply(r.badges, r.summary);
+  }
+
   /// One write: the reply carries the row in its new state, the fresh
   /// badges and the card's numbers.
   Future<void> _write(Future<NotificationActionResult> Function() call) async {

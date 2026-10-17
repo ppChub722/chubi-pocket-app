@@ -94,10 +94,14 @@ class RecurringLinkHandle extends ChangeNotifier {
     BuildContext context, {
     required TransactionType type,
     required String createRoute,
+    String? categoryId,
+    double? amount,
   }) async {
     final picked = await showRecurringLinkPicker(
       context,
       type: type,
+      categoryId: categoryId,
+      amount: amount,
       selectedItemId: candidateFor(type)?.occurrence.itemId,
       createRoute: createRoute,
       repository: repository,
@@ -156,6 +160,30 @@ class RecurringLinkHandle extends ChangeNotifier {
     return tx;
   }
 
+  /// Detail page: the ✕ of a saved link — ONE `unlinkRecurringItem` call
+  /// (the occurrence is open again, the transaction untouched). On success
+  /// [onUnlinked] runs (the page patches its cached row); a failure goes to
+  /// [error]. Returns whether it worked.
+  Future<bool> unlinkNow(
+    BuildContext context,
+    String itemId, {
+    required VoidCallback onUnlinked,
+    required void Function(String message) error,
+  }) async {
+    final repo = _repo(context);
+    _set(busy: true);
+    try {
+      await repo.unlink(itemId);
+      _set(busy: false);
+      onUnlinked();
+      return true;
+    } on ApiException catch (e) {
+      _set(busy: false);
+      error(e.message);
+      return false;
+    }
+  }
+
   /// The answer to the amount question: "อัปเดต" = ONE `PUT /recurring/:id
   /// {amount}`; "ไม่ต้อง" = nothing. Either way the link stays.
   Future<void> answer(
@@ -185,8 +213,8 @@ class RecurringLinkHandle extends ChangeNotifier {
 
   /// The row's slot. [linkedName] = the saved transaction's own link (shown
   /// as the chip, [onOpenLinked] opens it); otherwise the chosen candidate.
-  /// There is no ✕: the BE has no unlink call (a draft's pick is dropped with
-  /// [onClear], which the caller passes only before the transaction exists).
+  /// The ✕: on a saved link [onUnlink] (the unlink call); on a draft's pick
+  /// [onClear] (local, only before the transaction exists).
   SplitRecurringSlot slot(
     BuildContext context, {
     required TransactionType type,
@@ -196,6 +224,7 @@ class RecurringLinkHandle extends ChangeNotifier {
     String? linkedName,
     VoidCallback? onOpenLinked,
     VoidCallback? onClear,
+    VoidCallback? onUnlink,
     bool locked = false,
   }) {
     final l = AppLocalizations.of(context)!;
@@ -223,7 +252,7 @@ class RecurringLinkHandle extends ChangeNotifier {
           ? null
           : recurringPeriodLabel(l, c.occurrence.date),
       onTap: saved ? onOpenLinked : (_busy ? null : onTap),
-      onClear: c != null && !saved ? onClear : null,
+      onClear: saved ? (_busy ? null : onUnlink) : (c != null ? onClear : null),
       locked: locked,
       ask: ask,
     );
@@ -265,6 +294,8 @@ Future<LinkCandidate?> showRecurringLinkPicker(
   required TransactionType type,
   required String createRoute,
   String? selectedItemId,
+  String? categoryId,
+  double? amount,
   RecurringLinkRepository? repository,
 }) async {
   final repo = repository ?? RecurringLinkRepository.of(context);
@@ -275,6 +306,8 @@ Future<LinkCandidate?> showRecurringLinkPicker(
       type: type,
       repository: repo,
       selectedItemId: selectedItemId,
+      categoryId: categoryId,
+      amount: amount,
     ),
   );
   if (r is LinkCandidate) return r;
@@ -289,11 +322,15 @@ class _RecurringLinkSheet extends StatefulWidget {
     required this.type,
     required this.repository,
     this.selectedItemId,
+    this.categoryId,
+    this.amount,
   });
 
   final TransactionType type;
   final RecurringLinkRepository repository;
   final String? selectedItemId;
+  final String? categoryId;
+  final double? amount;
 
   @override
   State<_RecurringLinkSheet> createState() => _RecurringLinkSheetState();
@@ -312,7 +349,11 @@ class _RecurringLinkSheetState extends State<_RecurringLinkSheet> {
   Future<void> _load() async {
     setState(() => _error = null);
     try {
-      final rows = await widget.repository.candidates(widget.type);
+      final rows = await widget.repository.candidates(
+        widget.type,
+        categoryId: widget.categoryId,
+        amount: widget.amount,
+      );
       if (mounted) setState(() => _rows = rows);
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e);
@@ -361,19 +402,28 @@ class _RecurringLinkSheetState extends State<_RecurringLinkSheet> {
       error: _error,
       onRetry: _load,
       selectedId: widget.selectedItemId,
+      // The BE's order, grouped as it came: a row sits in exactly one group
+      // (likely rows leave their normal one); no client-side ranking.
       groups: [
+        RecurringPickGroup(
+          title: l.recurringPickerGroupLikely,
+          rows: [
+            for (final c in rows)
+              if (c.likely) _row(l, c),
+          ],
+        ),
         RecurringPickGroup(
           title: l.recurringPickerGroupRecurring,
           rows: [
             for (final c in rows)
-              if (!c.isReminder) _row(l, c),
+              if (!c.likely && !c.isReminder) _row(l, c),
           ],
         ),
         RecurringPickGroup(
           title: l.recurringPickerGroupReminders,
           rows: [
             for (final c in rows)
-              if (c.isReminder) _row(l, c),
+              if (!c.likely && c.isReminder) _row(l, c),
           ],
         ),
       ],

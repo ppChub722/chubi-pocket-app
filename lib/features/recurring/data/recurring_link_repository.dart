@@ -9,6 +9,7 @@ import '../../transactions/domain/transaction.dart';
 import '../../transactions/domain/transaction_type.dart';
 import '../domain/recurrence_rule.dart';
 import '../domain/recurring.dart';
+import '../domain/recurring_item.dart';
 
 /// The present period's occurrence of a [LinkCandidate]
 /// (`RecurringOccurrence`): what a transaction would link to.
@@ -44,10 +45,18 @@ class LinkOccurrence {
 /// that type can link to, as the BE ranked it. [setting] carries the name,
 /// icon, rule and category (the recurring model, read as is).
 class LinkCandidate {
-  const LinkCandidate({required this.setting, required this.occurrence});
+  const LinkCandidate({
+    required this.setting,
+    required this.occurrence,
+    this.likely = false,
+  });
 
   final Recurring setting;
   final LinkOccurrence occurrence;
+
+  /// The BE's guess for the hints sent (same category / amount within ±5%);
+  /// likely rows come first in the answer.
+  final bool likely;
 
   /// A เตือนจ่าย still waiting for an amount.
   bool get isReminder => occurrence.amount == null;
@@ -89,26 +98,36 @@ class RecurringLinkRepository {
     }
   }
 
-  /// `listRecurring?for_type=` — ONE call, in the BE's order. Settings with
-  /// no occurrence now (`current_occurrence` null) can't take a link and are
-  /// left out.
-  Future<List<LinkCandidate>> candidates(TransactionType type) =>
-      _call((dio) async {
-        final res = await dio.get<Map<String, dynamic>>(
-          '/recurring',
-          queryParameters: {'for_type': type.toJson(), 'per_page': 100},
-        );
-        return [
-          for (final e in (res.data!['data'] as List?) ?? const [])
-            if ((e as Map<String, dynamic>)['current_occurrence'] is Map)
-              LinkCandidate(
-                setting: Recurring.fromJson(e),
-                occurrence: LinkOccurrence.fromJson(
-                  e['current_occurrence'] as Map<String, dynamic>,
-                ),
-              ),
-        ];
-      });
+  /// `listRecurring?for_type=` — ONE call, in the BE's order (likely rows
+  /// first). [categoryId] / [amount] are the picker hints of the transaction
+  /// (when known). Settings with no occurrence now (`current_occurrence`
+  /// null) can't take a link and are left out.
+  Future<List<LinkCandidate>> candidates(
+    TransactionType type, {
+    String? categoryId,
+    double? amount,
+  }) => _call((dio) async {
+    final res = await dio.get<Map<String, dynamic>>(
+      '/recurring',
+      queryParameters: {
+        'for_type': type.toJson(),
+        'category_id': ?categoryId,
+        if (amount != null && amount > 0) 'amount': amount,
+        'per_page': 100,
+      },
+    );
+    return [
+      for (final e in (res.data!['data'] as List?) ?? const [])
+        if ((e as Map<String, dynamic>)['current_occurrence'] is Map)
+          LinkCandidate(
+            likely: e['likely'] == true,
+            setting: Recurring.fromJson(e),
+            occurrence: LinkOccurrence.fromJson(
+              e['current_occurrence'] as Map<String, dynamic>,
+            ),
+          ),
+    ];
+  });
 
   /// `linkRecurringItem`: the transaction becomes the occurrence's saved
   /// record. 409 ITEM_ALREADY_LINKED / 400 (type differs) → [ApiException].
@@ -129,6 +148,15 @@ class RecurringLinkRepository {
       transactionAmount: (body['transaction_amount'] as num?)?.toDouble() ?? 0,
       balances: WalletBalance.mapOf(body['account_balances']),
     );
+  });
+
+  /// `unlinkRecurringItem`: the occurrence is open again; the transaction is
+  /// untouched. 400 when it has no linked transaction → [ApiException].
+  Future<RecurringItem> unlink(String itemId) => _call((dio) async {
+    final res = await dio.post<Map<String, dynamic>>(
+      '/recurring-items/$itemId/unlink',
+    );
+    return RecurringItem.fromJson(res.data!['item'] as Map<String, dynamic>);
   });
 
   /// "อัปเดต": `PUT /recurring/:id {amount}` (scope upcoming) — the one

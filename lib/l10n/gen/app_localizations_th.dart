@@ -6177,6 +6177,31 @@ class AppLocalizationsTh extends AppLocalizations {
   String get archivedRestore => 'กู้คืน';
 
   @override
+  String archivedSecondaryBalance(String amount) {
+    return 'คงเหลือ $amount';
+  }
+
+  @override
+  String archivedSecondaryLimit(String amount) {
+    return 'วงเงิน $amount';
+  }
+
+  @override
+  String archivedSecondaryTarget(String amount) {
+    return 'เป้าหมาย $amount';
+  }
+
+  @override
+  String archivedSecondaryPlanned(String amount) {
+    return 'งบ $amount';
+  }
+
+  @override
+  String archivedSecondaryAmount(String amount) {
+    return 'ยอด $amount';
+  }
+
+  @override
   String archivedRestored(String name) {
     return 'กู้คืน $name แล้ว';
   }
@@ -6196,6 +6221,9 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get recurringPickerTitle => 'ผูกกับรายการประจำ';
+
+  @override
+  String get recurringPickerGroupLikely => 'น่าจะใช่';
 
   @override
   String get recurringPickerGroupRecurring => 'รายการประจำ';

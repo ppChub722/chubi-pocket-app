@@ -9,11 +9,18 @@ import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Map<String, dynamic> _item(String id, String name) => {
+Map<String, dynamic> _item(
+  String id,
+  String name, {
+  bool? canRestore,
+  Map<String, dynamic>? secondary,
+}) => {
   'id': id,
   'name': name,
   'icon_code': null,
   'archived_at': '2026-10-01T08:30:00Z',
+  'can_restore': ?canRestore,
+  'secondary': secondary,
 };
 
 Map<String, dynamic> _group(List<Map<String, dynamic>> items) => {
@@ -33,7 +40,9 @@ final _json = {
 };
 
 class _Fake extends Fake implements ArchivedRepository {
-  _Fake({this.failLoad = false});
+  _Fake({this.failLoad = false, Map<String, dynamic>? json})
+    : json = json ?? _json;
+  final Map<String, dynamic> json;
   bool failLoad;
   int fetches = 0;
   final restores = <String>[];
@@ -44,7 +53,7 @@ class _Fake extends Fake implements ArchivedRepository {
     if (failLoad) {
       throw const ApiException(code: 'X', message: 'boom', statusCode: 500);
     }
-    return ArchivedHub.fromJson(_json);
+    return ArchivedHub.fromJson(json);
   }
 
   @override
@@ -91,6 +100,56 @@ void main() {
     expect(find.textContaining('เก็บถาวรเมื่อ'), findsNWidgets(6));
     expect(find.text('กู้คืน'), findsNWidgets(6));
     expect(repo.fetches, 1);
+  });
+
+  testWidgets('can_restore false hides กู้คืน; secondary line shows', (
+    t,
+  ) async {
+    final repo = _Fake(
+      json: {
+        ..._json,
+        'total': 4,
+        'wallets': _group([
+          _item(
+            'w1',
+            'บัญชีร่วม',
+            canRestore: false,
+            secondary: {'kind': 'balance', 'amount': 1250.5},
+          ),
+        ]),
+        'budgets': _group([
+          _item(
+            'b1',
+            'งบกาแฟ',
+            canRestore: true,
+            secondary: {'kind': 'limit', 'amount': 3000},
+          ),
+        ]),
+        'goals': _group([
+          _item('g1', 'ซื้อรถ', secondary: {'kind': 'target', 'amount': 4000}),
+        ]),
+        'events': _group([]),
+        'contacts': _group([_item('c1', 'พี่บี')]),
+        'recurring': _group([]),
+      },
+    );
+    await pump(t, repo);
+    // Owner-only wallet: no restore chip; the others (and an absent flag) keep it.
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('archived-wallets-w1')),
+        matching: find.text('กู้คืน'),
+      ),
+      findsNothing,
+    );
+    expect(find.text('กู้คืน'), findsNWidgets(3));
+    // Money in the user's currency, no .00 on whole amounts.
+    expect(find.textContaining('คงเหลือ ฿1,250.50'), findsOneWidget);
+    expect(find.textContaining('วงเงิน ฿3,000 ·'), findsOneWidget);
+    expect(find.textContaining('เป้าหมาย ฿4,000 ·'), findsOneWidget);
+    // A contact has no secondary line: only the archived date.
+    expect(find.text('พี่บี'), findsOneWidget);
+    expect(find.textContaining('฿', findRichText: true), findsNWidgets(3));
   });
 
   testWidgets('restore = one call, the row leaves, no re-fetch', (t) async {

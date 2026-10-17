@@ -10801,6 +10801,36 @@ abstract class AppLocalizations {
   /// **'Restore'**
   String get archivedRestore;
 
+  /// No description provided for @archivedSecondaryBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Left {amount}'**
+  String archivedSecondaryBalance(String amount);
+
+  /// No description provided for @archivedSecondaryLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit {amount}'**
+  String archivedSecondaryLimit(String amount);
+
+  /// No description provided for @archivedSecondaryTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal {amount}'**
+  String archivedSecondaryTarget(String amount);
+
+  /// No description provided for @archivedSecondaryPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget {amount}'**
+  String archivedSecondaryPlanned(String amount);
+
+  /// No description provided for @archivedSecondaryAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount {amount}'**
+  String archivedSecondaryAmount(String amount);
+
   /// No description provided for @archivedRestored.
   ///
   /// In en, this message translates to:
@@ -10836,6 +10866,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Link to a recurring'**
   String get recurringPickerTitle;
+
+  /// No description provided for @recurringPickerGroupLikely.
+  ///
+  /// In en, this message translates to:
+  /// **'Likely'**
+  String get recurringPickerGroupLikely;
 
   /// No description provided for @recurringPickerGroupRecurring.
   ///

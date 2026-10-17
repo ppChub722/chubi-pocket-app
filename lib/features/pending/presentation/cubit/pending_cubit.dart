@@ -99,19 +99,22 @@ class PendingCubit extends Cubit<PendingState> with Clearable {
   }
 
   Future<List<PendingTransaction>> add(List<PendingDraft> drafts) async {
-    final created = await _repo.create(drafts);
-    emit(state.copyWith(items: [...created, ...state.items]));
-    return created;
+    final r = await _repo.create(drafts);
+    emit(
+      state.copyWith(items: [...r.items, ...state.items], summary: r.summary),
+    );
+    return r.items;
   }
 
   Future<PendingTransaction> updateDraft(String id, PendingDraft draft) async {
-    final updated = await _repo.update(id, draft);
+    final r = await _repo.update(id, draft);
     emit(
       state.copyWith(
-        items: [for (final p in state.items) p.id == id ? updated : p],
+        items: [for (final p in state.items) p.id == id ? r.draft : p],
+        summary: r.summary,
       ),
     );
-    return updated;
+    return r.draft;
   }
 
   Future<void> discard(String id) async {

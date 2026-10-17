@@ -459,6 +459,13 @@ class PendingList {
   final PendingSummary? summary;
 }
 
+/// The update call's answer: the replaced draft and the summary.
+class PendingUpdated {
+  const PendingUpdated({required this.draft, this.summary});
+  final PendingTransaction draft;
+  final PendingSummary? summary;
+}
+
 /// One submit call's outcome: ids that went through, why the rest didn't
 /// (with their updated drafts), the wallets' balances afterwards and the
 /// pending-drafts badge.

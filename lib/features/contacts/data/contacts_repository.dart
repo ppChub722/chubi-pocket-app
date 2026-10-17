@@ -13,10 +13,21 @@ class LinkRequestResult {
     required this.contact,
     required this.notification,
     required this.badges,
+    this.summary = const InboxSummary(),
   });
   final Contact? contact;
   final AppNotification notification;
   final Map<String, dynamic> badges;
+
+  /// The inbox card's numbers after the action.
+  final InboxSummary summary;
+
+  /// The notification in its new state + badges + numbers, for the inbox.
+  NotificationActionResult get answer => NotificationActionResult(
+    notification: notification,
+    badges: Badges.fromJson(badges),
+    summary: summary,
+  );
 
   factory LinkRequestResult.fromJson(Map<String, dynamic> json) =>
       LinkRequestResult(
@@ -27,6 +38,9 @@ class LinkRequestResult {
           json['notification'] as Map<String, dynamic>,
         ),
         badges: (json['badges'] as Map<String, dynamic>?) ?? const {},
+        summary: InboxSummary.fromJson(
+          (json['summary'] as Map?)?.cast<String, dynamic>(),
+        ),
       );
 }
 

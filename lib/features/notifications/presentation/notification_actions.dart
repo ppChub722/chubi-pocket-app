@@ -119,8 +119,7 @@ Future<void> _onAcceptLinkRequest(BuildContext ctx, String id) async {
   final inboxCubit = ctx.read<NotificationsInboxCubit>();
   final messenger = ScaffoldMessenger.of(ctx);
   try {
-    await repo.acceptLinkRequest(id);
-    await _reload(inboxCubit);
+    inboxCubit.applyAnswer((await repo.acceptLinkRequest(id)).answer);
   } on ApiException catch (e) {
     _showError(messenger, e);
   }
@@ -134,8 +133,7 @@ Future<void> _onRejectLinkRequest(BuildContext ctx, String id) async {
   final inboxCubit = ctx.read<NotificationsInboxCubit>();
   final messenger = ScaffoldMessenger.of(ctx);
   try {
-    await repo.rejectLinkRequest(id);
-    await _reload(inboxCubit);
+    inboxCubit.applyAnswer((await repo.rejectLinkRequest(id)).answer);
   } on ApiException catch (e) {
     _showError(messenger, e);
   }
@@ -191,8 +189,9 @@ Future<void> _onApplySplitChange(BuildContext ctx, AppNotification n) async {
   }
 }
 
-/// "ตอบรับ" on project_invite: `POST /projects/link-requests/:id/accept`,
-/// then the page's re-fetch (the row turns "ทำแล้ว") and the event opens.
+/// "ตอบรับ" on project_invite: `POST /projects/link-requests/:id/accept`.
+/// NOTE: the project invite answers return the event (no inbox `summary`),
+/// so this one keeps the page's re-fetch (the row turns "ทำแล้ว") and the event opens.
 Future<void> _onAcceptProjectInvite(BuildContext ctx, AppNotification n) async {
   final repo = ctx.read<ProjectsRepository>();
   final inboxCubit = ctx.read<NotificationsInboxCubit>();
@@ -330,18 +329,15 @@ Future<void> _onUpdateCopy(BuildContext ctx, AppNotification n) async {
 }
 
 /// Shared-wallet invite accept (spec §14/4). Joins the wallet (membership
-/// row activates), then refreshes the list and the accounts cache so the
-/// wallet appears in the list immediately.
+/// row activates); the wallet joins the accounts cache and the inbox takes
+/// the answer (no re-fetch).
 Future<void> _onAcceptWalletInvite(BuildContext ctx, String id) async {
   final l = AppLocalizations.of(ctx)!;
-  final repo = ctx.read<AccountsRepository>();
   final accountsCubit = ctx.read<AccountsCubit>();
   final inboxCubit = ctx.read<NotificationsInboxCubit>();
   final messenger = ScaffoldMessenger.of(ctx);
   try {
-    await repo.acceptInvite(id);
-    await _reload(inboxCubit);
-    await accountsCubit.load();
+    inboxCubit.applyAnswer((await accountsCubit.acceptInvite(id)).answer);
   } on ApiException catch (e) {
     showAppSnackBarOn(messenger, walletErrorMessage(l, e), tone: Tone.danger);
   }
@@ -355,8 +351,7 @@ Future<void> _onRejectWalletInvite(BuildContext ctx, String id) async {
   final inboxCubit = ctx.read<NotificationsInboxCubit>();
   final messenger = ScaffoldMessenger.of(ctx);
   try {
-    await repo.rejectInvite(id);
-    await _reload(inboxCubit);
+    inboxCubit.applyAnswer(await repo.rejectInvite(id));
   } on ApiException catch (e) {
     showAppSnackBarOn(messenger, walletErrorMessage(l, e), tone: Tone.danger);
   }

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
+import '../../notifications/domain/notification.dart';
 import '../domain/account.dart';
 import '../domain/payment_provider.dart';
 import '../domain/wallet_member.dart';
@@ -254,22 +255,34 @@ class AccountsRepository {
   }
 
   /// Accept a wallet invite from its notification. Returns the wallet that
-  /// was joined (the notification + badges in the body are not parsed here).
-  Future<Account> acceptInvite(String notificationId) {
+  /// was joined plus the notification / badges / inbox summary answer.
+  Future<AcceptedInvite> acceptInvite(String notificationId) {
     return _guard(() async {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/accounts/invites/$notificationId/accept',
       );
-      return Account.fromJson(res.data!['account'] as Map<String, dynamic>);
+      return AcceptedInvite(
+        account: Account.fromJson(res.data!['account'] as Map<String, dynamic>),
+        answer: NotificationActionResult.fromJson(res.data!),
+      );
     });
   }
 
   /// Reject a wallet invite from its notification (silent to the sender).
-  Future<void> rejectInvite(String notificationId) {
+  Future<NotificationActionResult> rejectInvite(String notificationId) {
     return _guard(() async {
-      await _client.dio.post<dynamic>(
+      final res = await _client.dio.post<Map<String, dynamic>>(
         '/accounts/invites/$notificationId/reject',
       );
+      return NotificationActionResult.fromJson(res.data!);
     });
   }
+}
+
+/// `POST /accounts/invites/:id/accept` answer: the wallet joined and the
+/// inbox answer (row, badges, summary).
+class AcceptedInvite {
+  const AcceptedInvite({required this.account, required this.answer});
+  final Account account;
+  final NotificationActionResult answer;
 }

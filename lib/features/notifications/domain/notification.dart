@@ -244,6 +244,19 @@ class NotificationActionResult {
   final AppNotification notification;
   final Badges badges;
   final InboxSummary summary;
+
+  factory NotificationActionResult.fromJson(Map<String, dynamic> json) =>
+      NotificationActionResult(
+        notification: AppNotification.fromJson(
+          json['notification'] as Map<String, dynamic>,
+        ),
+        badges: Badges.fromJson(
+          (json['badges'] as Map?)?.cast<String, dynamic>() ?? const {},
+        ),
+        summary: InboxSummary.fromJson(
+          (json['summary'] as Map?)?.cast<String, dynamic>(),
+        ),
+      );
 }
 
 /// `POST /notifications/read-all` and `DELETE /notifications/:id` answers:

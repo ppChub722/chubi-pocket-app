@@ -1,6 +1,7 @@
 import 'package:chubi_pocket/core/network/api_exception.dart';
 import 'package:chubi_pocket/features/recurring/data/recurring_link_repository.dart';
 import 'package:chubi_pocket/features/recurring/domain/recurring.dart';
+import 'package:chubi_pocket/features/recurring/domain/recurring_item.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/recurring_link.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
@@ -37,15 +38,34 @@ Map<String, dynamic> _setting(
   },
 };
 
-LinkCandidate _candidate(String id, String name, {double? amount}) {
+LinkCandidate _candidate(
+  String id,
+  String name, {
+  double? amount,
+  bool likely = false,
+}) {
   final j = _setting(id, name, amount: amount);
   return LinkCandidate(
+    likely: likely,
     setting: Recurring.fromJson(j),
     occurrence: LinkOccurrence.fromJson(
       j['current_occurrence'] as Map<String, dynamic>,
     ),
   );
 }
+
+/// `unlinkRecurringItem` answer: the occurrence, open again.
+Map<String, dynamic> _openItem(String id) => {
+  'id': id,
+  'seq': 2,
+  'total': 12,
+  'date': '2026-10-16',
+  'days_until': 0,
+  'type': 'expense',
+  'amount': 3023,
+  'status': 'not_created',
+  'tags': <dynamic>[],
+};
 
 class _FakeRepo implements RecurringLinkRepository {
   _FakeRepo({
@@ -64,10 +84,27 @@ class _FakeRepo implements RecurringLinkRepository {
   final links = <String>[];
   final puts = <(String, double)>[];
   TransactionType? askedType;
+  String? askedCategory;
+  double? askedAmount;
+  final unlinks = <String>[];
+  ApiException? unlinkError;
 
   @override
-  Future<List<LinkCandidate>> candidates(TransactionType type) async {
+  Future<RecurringItem> unlink(String itemId) async {
+    unlinks.add(itemId);
+    if (unlinkError != null) throw unlinkError!;
+    return RecurringItem.fromJson(_openItem(itemId));
+  }
+
+  @override
+  Future<List<LinkCandidate>> candidates(
+    TransactionType type, {
+    String? categoryId,
+    double? amount,
+  }) async {
     askedType = type;
+    askedCategory = categoryId;
+    askedAmount = amount;
     if (loadError != null) throw loadError!;
     return rows;
   }
@@ -242,6 +279,144 @@ void main() {
     expect(r, isNull);
     expect(messages, ['งวดนี้ผูกไปแล้ว (หรือรายการนี้ผูกอยู่แล้ว)']);
     expect(find.byType(AskCard), findsNothing);
+  });
+
+  testWidgets('likely rows form the FIRST group and leave their own group', (
+    t,
+  ) async {
+    final repo = _FakeRepo(
+      rows: [
+        _candidate('1', 'รถ', amount: 3023, likely: true),
+        _candidate('2', 'ค่าน้ำ'),
+        _candidate('3', 'ค่าไฟ', amount: 900),
+      ],
+    );
+    final handle = RecurringLinkHandle(repository: repo);
+    addTearDown(handle.dispose);
+    await t.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: [sweetTheme.lightColors]),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('th'),
+        builder: (context, child) => AppUiConfig(child: child!),
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => handle.choose(
+                context,
+                type: TransactionType.expense,
+                createRoute: '/recurring/new',
+                categoryId: 'cat-1',
+                amount: 3100,
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await t.tap(find.text('open'));
+    await t.pumpAndSettle();
+    // The hints went out with the one call.
+    expect(repo.askedCategory, 'cat-1');
+    expect(repo.askedAmount, 3100);
+    final likely = t.getTopLeft(find.text('น่าจะใช่')).dy;
+    final recurring = t.getTopLeft(find.text('รายการประจำ').first).dy;
+    final reminders = t.getTopLeft(find.text('เตือนจ่าย')).dy;
+    final car = t.getTopLeft(find.text('รถ')).dy;
+    final power = t.getTopLeft(find.text('ค่าไฟ')).dy;
+    final water = t.getTopLeft(find.text('ค่าน้ำ')).dy;
+    expect(likely < car && car < recurring, isTrue);
+    expect(recurring < power && power < reminders, isTrue);
+    expect(reminders < water, isTrue);
+    // One row, one place.
+    expect(find.text('รถ'), findsOneWidget);
+  });
+
+  testWidgets('saved link ✕: ONE unlink call, then the row callback', (
+    t,
+  ) async {
+    final repo = _FakeRepo();
+    final handle = RecurringLinkHandle(repository: repo);
+    addTearDown(handle.dispose);
+    var unlinked = 0;
+    await t.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: [sweetTheme.lightColors]),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('th'),
+        builder: (context, child) => AppUiConfig(child: child!),
+        home: Scaffold(
+          body: ListenableBuilder(
+            listenable: handle,
+            builder: (context, _) => SplitEventSection(
+              first: true,
+              variant: SplitEventVariant.compact,
+              recurring: handle.slot(
+                context,
+                type: TransactionType.expense,
+                linkedName: 'รถ',
+                onUnlink: () => handle.unlinkNow(
+                  context,
+                  'item-1',
+                  onUnlinked: () => unlinked++,
+                  error: messages.add,
+                ),
+                error: messages.add,
+                done: messages.add,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    messages.clear();
+    await t.tap(find.byIcon(AppIcons.close).first);
+    await t.pumpAndSettle();
+    expect(repo.unlinks, ['item-1']);
+    expect(unlinked, 1);
+    expect(messages, isEmpty);
+  });
+
+  testWidgets('unlink failure: message, row callback not run', (t) async {
+    final repo = _FakeRepo()
+      ..unlinkError = const ApiException(
+        code: 'VALIDATION_ERROR',
+        message: 'no linked transaction',
+        statusCode: 400,
+      );
+    final handle = RecurringLinkHandle(repository: repo);
+    addTearDown(handle.dispose);
+    var unlinked = 0;
+    await t.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: [sweetTheme.lightColors]),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('th'),
+        builder: (context, child) => AppUiConfig(child: child!),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => handle.unlinkNow(
+                context,
+                'item-1',
+                onUnlinked: () => unlinked++,
+                error: messages.add,
+              ),
+              child: const Text('go'),
+            ),
+          ),
+        ),
+      ),
+    );
+    messages.clear();
+    await t.tap(find.text('go'));
+    await t.pumpAndSettle();
+    expect(unlinked, 0);
+    expect(messages, ['no linked transaction']);
   });
 
   test('a pick of another type is not offered for this one', () {

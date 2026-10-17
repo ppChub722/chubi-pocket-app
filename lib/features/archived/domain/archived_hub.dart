@@ -32,6 +32,8 @@ class ArchivedItem {
     required this.name,
     required this.archivedAt,
     this.iconCode,
+    this.canRestore = true,
+    this.secondary,
   });
 
   factory ArchivedItem.fromJson(Map<String, dynamic> json) {
@@ -43,6 +45,8 @@ class ArchivedItem {
       archivedAt: DateTime.tryParse(
         json['archived_at'] as String? ?? '',
       )?.toLocal(),
+      canRestore: json['can_restore'] != false,
+      secondary: ArchivedSecondary.maybe(json['secondary']),
     );
   }
 
@@ -52,6 +56,38 @@ class ArchivedItem {
 
   /// The row's last change (when it was archived).
   final DateTime? archivedAt;
+
+  /// Whether the caller may restore it (wallets and events: owner only);
+  /// absent = true.
+  final bool canRestore;
+
+  /// The row's second line as data (null for contacts).
+  final ArchivedSecondary? secondary;
+}
+
+/// What the second line shows: wallet balance / budget limit / goal target /
+/// event planned amount / recurring amount.
+enum ArchivedSecondaryKind { balance, limit, target, planned, amount }
+
+/// `secondary {kind, amount}` of an archived row.
+class ArchivedSecondary {
+  const ArchivedSecondary({required this.kind, required this.amount});
+
+  final ArchivedSecondaryKind kind;
+  final double amount;
+
+  /// Null when absent, malformed or without an amount (nothing to show).
+  static ArchivedSecondary? maybe(Object? json) {
+    if (json is! Map) return null;
+    final amount = json['amount'];
+    if (amount is! num) return null;
+    for (final k in ArchivedSecondaryKind.values) {
+      if (k.name == json['kind']) {
+        return ArchivedSecondary(kind: k, amount: amount.toDouble());
+      }
+    }
+    return null;
+  }
 }
 
 /// The archive hub: every kind's rows, one call.

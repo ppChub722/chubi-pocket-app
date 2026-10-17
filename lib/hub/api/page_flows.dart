@@ -122,6 +122,12 @@ const List<PageFlow> pageFlows = [
         note: 'binds this tx to the period occurrence',
       ),
     ]),
+    FlowStep.action('Row "รายการประจำ" chip ✕ (ผูกกับ)', [
+      FlowCall(
+        'unlinkRecurringItem',
+        note: 'occurrence open again; the tx is untouched',
+      ),
+    ]),
     FlowStep.action('Ask "อัปเดตยอดรายการประจำ" → อัปเดต', [
       FlowCall('updateRecurring', note: 'amount only'),
     ]),

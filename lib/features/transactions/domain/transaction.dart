@@ -334,6 +334,7 @@ class Transaction extends Equatable {
     DebtLink? counterparty,
     EventBillLink? eventBill,
     RecurringItemLink? recurringItem,
+    bool clearRecurringItem = false,
     TransferPeer? transferPeer,
     String? currency,
     double? myShare,
@@ -365,7 +366,9 @@ class Transaction extends Equatable {
       project: project ?? this.project,
       counterparty: counterparty ?? this.counterparty,
       eventBill: eventBill ?? this.eventBill,
-      recurringItem: recurringItem ?? this.recurringItem,
+      recurringItem: clearRecurringItem
+          ? null
+          : (recurringItem ?? this.recurringItem),
       transferPeer: transferPeer ?? this.transferPeer,
       currency: currency ?? this.currency,
       myShare: myShare ?? this.myShare,

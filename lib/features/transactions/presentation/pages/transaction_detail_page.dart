@@ -312,6 +312,8 @@ class _LoadedState extends State<_Loaded>
     final picked = await _link.choose(
       context,
       type: tx.type,
+      categoryId: tx.type == TransactionType.transfer ? null : tx.categoryId,
+      amount: tx.amount > 0 ? tx.amount : null,
       createRoute: recurringCreateRoute(
         type: tx.type,
         amount: tx.amount,
@@ -334,6 +336,22 @@ class _LoadedState extends State<_Loaded>
     );
     // A failed link leaves nothing chosen.
     if (linked == null) _link.clear();
+  }
+
+  /// The ✕ of the saved link: one unlink call, then the cached row loses its
+  /// recurring (no refetch).
+  Future<void> _unlinkRecurring(String itemId) async {
+    final cubit = context.read<TransactionsCubit>();
+    final cached = widget.tx;
+    await _link.unlinkNow(
+      context,
+      itemId,
+      onUnlinked: () => cubit.patchRow(
+        cached.copyWith(clearRecurringItem: true),
+        afterWrite: true,
+      ),
+      error: _say,
+    );
   }
 
   /// The row the form edits and the transfer's other wallet, both from the
@@ -700,8 +718,8 @@ class _LoadedState extends State<_Loaded>
     }
 
     // The รายการประจำ row of the "ผูกกับ" section (0.4.0): a linked row shows
-    // its recurring (tap opens it; the BE has no unlink, so no ✕); a row I
-    // can edit shows the add chip, which links at once.
+    // its recurring (tap opens it; ✕ unlinks, one call); a row I can edit
+    // shows the add chip, which links at once.
     final recurringItem = tx.recurringItem;
     final SplitRecurringSlot? recurringSlot = recurringItem == null && !canEdit
         ? null
@@ -716,6 +734,9 @@ class _LoadedState extends State<_Loaded>
                   : '/recurring/${recurringItem!.recurringId}',
             ),
             onTap: canEdit ? _linkRecurring : null,
+            onUnlink: canEdit && recurringItem != null
+                ? () => _unlinkRecurring(recurringItem.itemId)
+                : null,
             error: _say,
             done: (m) => _say(m, tone: Tone.success),
           );

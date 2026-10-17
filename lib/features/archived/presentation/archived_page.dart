@@ -7,6 +7,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
+import '../../budgets/presentation/budget_labels.dart' show budgetRowMoney;
 import '../cubit/archived_cubit.dart';
 import '../data/archived_repository.dart';
 import '../domain/archived_hub.dart';
@@ -63,6 +64,35 @@ class _ArchivedView extends StatelessWidget {
     ArchivedKind.contacts => AppIcons.contact,
     ArchivedKind.recurring => AppIcons.recurring,
   };
+
+  /// "คงเหลือ ฿x" — the second line, from the BE's `secondary`.
+  String? _secondary(BuildContext context, AppLocalizations l, ArchivedItem i) {
+    final s = i.secondary;
+    if (s == null) return null;
+    final amount = budgetRowMoney(context, s.amount);
+    return switch (s.kind) {
+      ArchivedSecondaryKind.balance => l.archivedSecondaryBalance(amount),
+      ArchivedSecondaryKind.limit => l.archivedSecondaryLimit(amount),
+      ArchivedSecondaryKind.target => l.archivedSecondaryTarget(amount),
+      ArchivedSecondaryKind.planned => l.archivedSecondaryPlanned(amount),
+      ArchivedSecondaryKind.amount => l.archivedSecondaryAmount(amount),
+    };
+  }
+
+  /// "คงเหลือ ฿x · เก็บถาวรเมื่อ …"; null when there is neither.
+  String? _helper(
+    BuildContext context,
+    AppLocalizations l,
+    String locale,
+    ArchivedItem i,
+  ) {
+    final parts = [
+      ?_secondary(context, l, i),
+      if (i.archivedAt != null)
+        l.archivedOn(DateFormatter.medium(i.archivedAt!, locale: locale)),
+    ];
+    return parts.isEmpty ? null : parts.join(' · ');
+  }
 
   Future<void> _restore(
     BuildContext context,
@@ -124,25 +154,20 @@ class _ArchivedView extends StatelessWidget {
                           ),
                         ),
                         label: item.name,
-                        helper: item.archivedAt == null
-                            ? null
-                            : l.archivedOn(
-                                DateFormatter.medium(
-                                  item.archivedAt!,
-                                  locale: locale,
-                                ),
-                              ),
+                        helper: _helper(context, l, locale, item),
                         onTap: () =>
                             openPage(context, kind.detailPath(item.id)),
-                        trailing: AppChip(
-                          label: l.archivedRestore,
-                          icon: AppIcons.unarchive,
-                          tone: AppChipTone.primary,
-                          selected: true,
-                          onTap: state.busy.contains(item.id)
-                              ? null
-                              : () => _restore(context, kind, item),
-                        ),
+                        trailing: item.canRestore
+                            ? AppChip(
+                                label: l.archivedRestore,
+                                icon: AppIcons.unarchive,
+                                tone: AppChipTone.primary,
+                                selected: true,
+                                onTap: state.busy.contains(item.id)
+                                    ? null
+                                    : () => _restore(context, kind, item),
+                              )
+                            : null,
                       ),
                   ],
                 ),
