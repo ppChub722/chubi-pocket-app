@@ -385,7 +385,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       amount: p.amount,
       baseAmount: p.baseAmount,
       overridden: p.overridden,
-      resetLabel: l.fpBudgetsPeriodReset(moneyString(context, p.baseAmount)),
+      resetLabel: l.fpBudgetsPeriodReset(budgetRowMoney(context, p.baseAmount)),
       note: p.note,
     );
     if (!mounted || r == null) return;
@@ -796,14 +796,14 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         label: over ? l.fpBudgetsOverLabel : l.fpBudgetsLeftLabel,
         value: MoneyText(over ? p.overBy : p.remaining, symbol: symbol),
         color: accent,
-        target: l.fpBudgetsLimitTarget(moneyString(context, p.amount)),
+        target: l.fpBudgetsLimitTarget(budgetRowMoney(context, p.amount)),
       ),
       bar: HeroBar(
         value: p.usedRatio,
         expected: p.expected > 0 ? p.expectedRatio : null,
         marker: f.pacePct == null ? null : f.pacePct! / 100,
         color: accent,
-        left: l.fpBudgetsUsedCaption(moneyString(context, p.used)),
+        left: l.fpBudgetsUsedCaption(budgetRowMoney(context, p.used)),
         right: f.pacePct == null ? null : l.fpBudgetsPaceCaption(f.pacePct!),
       ),
       tiles: _tiles(l, d),
@@ -825,22 +825,22 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       if (f.dailyAllowance != null)
         tile(
           l.fpBudgetsTileDaily,
-          moneyString(context, f.dailyAllowance!),
+          budgetRowMoney(context, f.dailyAllowance!),
           SummaryTileTone.green,
         ),
       if (f.projectedEnd != null)
         tile(
           l.fpBudgetsTileProjected,
-          moneyString(context, f.projectedEnd!),
+          budgetRowMoney(context, f.projectedEnd!),
           (f.forecastOverBy ?? 0) > 0 ? SummaryTileTone.amber : null,
         ),
       if (f.daysLeft != null)
         tile(l.fpBudgetsTileDaysLabel, l.fpBudgetsDaysValue(f.daysLeft!)),
       // An open-ended budget has no period end: its own two figures.
       if (f.avgMonthly != null)
-        tile(l.bgTileAvgMonthly, moneyString(context, f.avgMonthly!)),
+        tile(l.bgTileAvgMonthly, budgetRowMoney(context, f.avgMonthly!)),
       if (f.thisMonth != null)
-        tile(l.bgTileThisMonth, moneyString(context, f.thisMonth!)),
+        tile(l.bgTileThisMonth, budgetRowMoney(context, f.thisMonth!)),
     ].take(4).toList();
   }
 
@@ -911,11 +911,11 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
                 ? d.forecast.pacePct! / 100
                 : null,
             label: l.bgRowUsed(
-              moneyString(context, x.used),
-              moneyString(context, x.amount),
+              budgetRowMoney(context, x.used),
+              budgetRowMoney(context, x.amount),
             ),
             struckLabel: x.overridden && x.amount != x.baseAmount
-                ? moneyString(context, x.baseAmount)
+                ? budgetRowMoney(context, x.baseAmount)
                 : null,
             percentText: '${x.pct}%',
             onTap: b.actions.edit ? () => _editPeriod(x) : null,
