@@ -1943,5 +1943,13 @@
   "fpWalletInviteLabel": "เชิญ",
   "fpWalletTrackOff": "ปิดอยู่",
   "fpWalletOwnerCaption": "เจ้าของ",
-  "fpWalletMemberCaption": "สมาชิก"
+  "fpWalletMemberCaption": "สมาชิก",
+  "fpContactsNotLinked": "ยังไม่เชื่อมกับผู้ใช้ในแอป",
+  "fpContactsLinkedWith": "เชื่อมกับ {user} แล้ว",
+  "@fpContactsLinkedWith": { "placeholders": { "user": { "type": "String" } } },
+  "fpContactsSettingsDesc": "ชื่อที่ใช้แสดงคนนี้ทั้งแอป",
+  "fpContactsLinkSection": "เชื่อมบัญชี",
+  "fpContactsLinkSectionDesc": "เชื่อมกับผู้ใช้ในแอป และจับคู่ชื่อในรายการหาร",
+  "fpContactsArchiveConsequence": "ซ่อนจากลิสต์และตัวเลือกคน หนี้ไม่เปลี่ยน",
+  "fpContactsDeleteConsequence": "รายการเก่าเหลือแค่ชื่อ ยอดไม่เปลี่ยน"
 }

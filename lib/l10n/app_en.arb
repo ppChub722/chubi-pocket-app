@@ -2192,5 +2192,13 @@
   "fpWalletInviteLabel": "Invite",
   "fpWalletTrackOff": "Off",
   "fpWalletOwnerCaption": "Owner",
-  "fpWalletMemberCaption": "Member"
+  "fpWalletMemberCaption": "Member",
+  "fpContactsNotLinked": "Not linked to an app user",
+  "fpContactsLinkedWith": "Linked with {user}",
+  "@fpContactsLinkedWith": { "placeholders": { "user": { "type": "String" } } },
+  "fpContactsSettingsDesc": "The name used for this person across the app",
+  "fpContactsLinkSection": "Link account",
+  "fpContactsLinkSectionDesc": "Link to an app user and match names in splits",
+  "fpContactsArchiveConsequence": "Hidden from the list and person pickers; debts unchanged",
+  "fpContactsDeleteConsequence": "Old records keep just the name; amounts unchanged"
 }

@@ -8,18 +8,23 @@ class LinkedUser extends Equatable {
   const LinkedUser({
     required this.id,
     required this.displayName,
+    this.username,
     this.email,
     this.iconCode,
   });
 
   final String id;
   final String displayName;
+
+  /// The @handle, when the BE sends it (not in the OpenAPI schema yet).
+  final String? username;
   final String? email;
   final IconCode? iconCode;
 
   factory LinkedUser.fromJson(Map<String, dynamic> json) => LinkedUser(
     id: json['id'] as String,
     displayName: json['display_name'] as String,
+    username: json['username'] as String?,
     email: json['email'] as String?,
     iconCode: json['icon_code'] != null
         ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
@@ -27,7 +32,7 @@ class LinkedUser extends Equatable {
   );
 
   @override
-  List<Object?> get props => [id, displayName, email, iconCode];
+  List<Object?> get props => [id, displayName, username, email, iconCode];
 }
 
 /// `Contact` (API v2). [name], [email] and [iconCode] are RESOLVED by the BE

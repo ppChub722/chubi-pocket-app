@@ -6118,4 +6118,30 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpWalletMemberCaption => 'สมาชิก';
+
+  @override
+  String get fpContactsNotLinked => 'ยังไม่เชื่อมกับผู้ใช้ในแอป';
+
+  @override
+  String fpContactsLinkedWith(String user) {
+    return 'เชื่อมกับ $user แล้ว';
+  }
+
+  @override
+  String get fpContactsSettingsDesc => 'ชื่อที่ใช้แสดงคนนี้ทั้งแอป';
+
+  @override
+  String get fpContactsLinkSection => 'เชื่อมบัญชี';
+
+  @override
+  String get fpContactsLinkSectionDesc =>
+      'เชื่อมกับผู้ใช้ในแอป และจับคู่ชื่อในรายการหาร';
+
+  @override
+  String get fpContactsArchiveConsequence =>
+      'ซ่อนจากลิสต์และตัวเลือกคน หนี้ไม่เปลี่ยน';
+
+  @override
+  String get fpContactsDeleteConsequence =>
+      'รายการเก่าเหลือแค่ชื่อ ยอดไม่เปลี่ยน';
 }
