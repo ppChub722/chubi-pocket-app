@@ -1230,7 +1230,7 @@ class _DraftFormState extends State<DraftForm> {
             compact: compact,
             // "แบ่งยอด" — the row label; going into an event the people
             // become the event's (the helper says so).
-            label: l.txSplitRowLabel,
+            label: widget.chipLayout ? l.txSplitRowLabel : l.txSplitPeopleLabel,
             helper: compact ? null : helper,
             totalAmount: _c.splitCap,
             overText: _c.eventOthers > 0 ? l.txSplitExceedsShare : null,

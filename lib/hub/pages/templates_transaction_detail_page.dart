@@ -346,7 +346,7 @@ class _SampleState extends State<_Sample> {
                   vertical: AppSpacing.md,
                 ),
                 child: Text(
-                  l.txSplitRowLabel,
+                  l.txSplitPeopleLabel,
                   style: detailLabelStyle(context),
                 ),
               ),

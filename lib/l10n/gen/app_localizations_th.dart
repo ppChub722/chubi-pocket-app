@@ -4236,6 +4236,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txSplitRowLabel => 'แบ่งยอด';
 
   @override
+  String get txSplitPeopleLabel => 'แบ่งกับคน';
+
+  @override
   String get quickEventAdd => 'เพิ่มอีเวนต์';
 
   @override

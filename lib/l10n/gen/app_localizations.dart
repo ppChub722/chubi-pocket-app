@@ -7585,6 +7585,12 @@ abstract class AppLocalizations {
   /// **'Split'**
   String get txSplitRowLabel;
 
+  /// No description provided for @txSplitPeopleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Split with people'**
+  String get txSplitPeopleLabel;
+
   /// No description provided for @quickEventAdd.
   ///
   /// In en, this message translates to:

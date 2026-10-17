@@ -644,7 +644,7 @@ class _LoadedState extends State<_Loaded>
             horizontal: AppSpacing.lg,
             vertical: AppSpacing.md,
           ),
-          child: Text(l.txSplitRowLabel, style: detailLabelStyle(context)),
+          child: Text(l.txSplitPeopleLabel, style: detailLabelStyle(context)),
         ),
         ...rows,
       ],
@@ -660,7 +660,7 @@ class _LoadedState extends State<_Loaded>
       splitsReadOnly = hasSplits && !canEditSplits
           ? DetailRow(
               leading: const AppIcon(AppIcons.lock),
-              label: l.txSplitRowLabel,
+              label: l.txSplitPeopleLabel,
               helper: splitCount > 0
                   ? l.txDetailSplitEditElsewhere(splitCount)
                   : l.txSplitEditOnDebts,

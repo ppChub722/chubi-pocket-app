@@ -4340,6 +4340,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txSplitRowLabel => 'Split';
 
   @override
+  String get txSplitPeopleLabel => 'Split with people';
+
+  @override
   String get quickEventAdd => 'Add event';
 
   @override
