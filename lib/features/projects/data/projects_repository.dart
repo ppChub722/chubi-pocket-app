@@ -4,6 +4,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../transactions/domain/refs.dart';
 import '../../transactions/domain/transaction.dart';
+import '../../notifications/domain/notification.dart' show InboxSummary;
 import '../domain/project.dart';
 import '../../../ui/ui.dart';
 
@@ -272,16 +273,22 @@ class ProjectsRepository {
 
   /// `POST /projects/link-requests/:notification_id/accept` — the answer to
   /// an event invite (the inbox's ตอบรับ). The notification becomes actioned.
-  Future<void> acceptInvite(String notificationId) => _call(() async {
-    await _client.dio.post<dynamic>(
+  Future<InboxSummary> acceptInvite(String notificationId) => _call(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
       '/projects/link-requests/$notificationId/accept',
+    );
+    return InboxSummary.fromJson(
+      (res.data?['inbox_summary'] as Map?)?.cast<String, dynamic>(),
     );
   });
 
   /// `POST /projects/link-requests/:notification_id/reject` — ปฏิเสธ.
-  Future<void> rejectInvite(String notificationId) => _call(() async {
-    await _client.dio.post<dynamic>(
+  Future<InboxSummary> rejectInvite(String notificationId) => _call(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
       '/projects/link-requests/$notificationId/reject',
+    );
+    return InboxSummary.fromJson(
+      (res.data?['inbox_summary'] as Map?)?.cast<String, dynamic>(),
     );
   });
 

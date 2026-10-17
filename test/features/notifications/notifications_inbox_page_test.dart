@@ -264,12 +264,16 @@ class _Projects extends Fake implements ProjectsRepository {
   final calls = <String>[];
 
   @override
-  Future<void> acceptInvite(String notificationId) async =>
-      calls.add('accept:$notificationId');
+  Future<InboxSummary> acceptInvite(String notificationId) async {
+    calls.add('accept:$notificationId');
+    return const InboxSummary(all: 1, needsAnswer: 0, unread: 0);
+  }
 
   @override
-  Future<void> rejectInvite(String notificationId) async =>
-      calls.add('reject:$notificationId');
+  Future<InboxSummary> rejectInvite(String notificationId) async {
+    calls.add('reject:$notificationId');
+    return const InboxSummary(all: 1, needsAnswer: 0, unread: 0);
+  }
 }
 
 /// Invite / link-request answers carry the inbox `summary`.
@@ -531,18 +535,25 @@ void main() {
     expect(repo.writes, ['restore:h1']);
   });
 
-  testWidgets('project_invite: Accept / Reject hit the event routes', (
+  testWidgets(
+    'project_invite: Accept / Reject hit the event routes, no re-fetch',
+    (t) async {
+      repo.rows = [_allTypes()[4]];
+      await pump(t);
+      await t.tap(find.text('Accept'));
+      await t.pump();
+      await t.pump();
+      expect(projects.calls, ['accept:n5']);
+      // The answer carries `inbox_summary`: the list was not asked again.
+      expect(repo.lists, hasLength(1));
+    },
+  );
+
+  testWidgets('project_invite: Reject asks first, then one call, no re-fetch', (
     t,
   ) async {
     repo.rows = [_allTypes()[4]];
     await pump(t);
-    await t.tap(find.text('Accept'));
-    await t.pump();
-    await t.pump();
-    expect(projects.calls, ['accept:n5']);
-    // The answer is followed by the page's one re-fetch.
-    expect(repo.lists, hasLength(2));
-
     await t.tap(find.text('Reject'));
     await t.pump();
     await t.pump();
@@ -556,7 +567,8 @@ void main() {
     );
     await t.pump();
     await t.pump();
-    expect(projects.calls, ['accept:n5', 'reject:n5']);
+    expect(projects.calls, ['reject:n5']);
+    expect(repo.lists, hasLength(1));
   });
 
   testWidgets('wallet invite: Accept takes the answer, NO re-fetch', (t) async {

@@ -201,6 +201,22 @@ class AppNotification extends Equatable {
     );
   }
 
+  /// Local flip after an answer that carries only the inbox numbers (an event
+  /// invite accept / reject): the row is done and no longer waits.
+  AppNotification asActioned(DateTime at) => AppNotification(
+    id: id,
+    type: type,
+    payload: payload,
+    createdAt: createdAt,
+    state: NotificationState.actioned,
+    awaitsAnswer: false,
+    actor: actor,
+    deepLink: deepLink,
+    readAt: readAt ?? at,
+    actionedAt: at,
+    dismissedAt: dismissedAt,
+  );
+
   /// Local flip for bulk "mark all read" (the BE has already done it).
   AppNotification asRead(DateTime at) => AppNotification(
     id: id,

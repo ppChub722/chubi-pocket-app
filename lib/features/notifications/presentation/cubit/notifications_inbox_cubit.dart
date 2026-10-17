@@ -306,6 +306,24 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
     _apply(r.badges, r.summary);
   }
 
+  /// An answer that carries only the card's numbers (an event invite
+  /// accept / reject, `inbox_summary`): that row turns done, the numbers come
+  /// from the answer — no re-fetch.
+  void applyInboxSummary(String id, InboxSummary summary) {
+    final now = DateTime.now().toUtc();
+    emit(
+      state.copyWith(
+        notifications: [
+          for (final n in state.notifications)
+            if (n.id == id) n.asActioned(now) else n,
+        ],
+        unreadCount: summary.unread,
+        summary: summary,
+      ),
+    );
+    onUnreadChanged?.call(summary.unread);
+  }
+
   /// One write: the reply carries the row in its new state, the fresh
   /// badges and the card's numbers.
   Future<void> _write(Future<NotificationActionResult> Function() call) async {

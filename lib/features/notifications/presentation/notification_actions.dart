@@ -190,15 +190,14 @@ Future<void> _onApplySplitChange(BuildContext ctx, AppNotification n) async {
 }
 
 /// "ตอบรับ" on project_invite: `POST /projects/link-requests/:id/accept`.
-/// NOTE: the project invite answers return the event (no inbox `summary`),
-/// so this one keeps the page's re-fetch (the row turns "ทำแล้ว") and the event opens.
+/// The answer carries `inbox_summary`: the row turns done, no re-fetch.
 Future<void> _onAcceptProjectInvite(BuildContext ctx, AppNotification n) async {
   final repo = ctx.read<ProjectsRepository>();
   final inboxCubit = ctx.read<NotificationsInboxCubit>();
   final messenger = ScaffoldMessenger.of(ctx);
   try {
-    await repo.acceptInvite(n.id);
-    await _reload(inboxCubit);
+    final summary = await repo.acceptInvite(n.id);
+    inboxCubit.applyInboxSummary(n.id, summary);
   } on ApiException catch (e) {
     _showError(messenger, e);
   }
@@ -210,8 +209,8 @@ Future<void> _onRejectProjectInvite(BuildContext ctx, String id) async {
   final inboxCubit = ctx.read<NotificationsInboxCubit>();
   final messenger = ScaffoldMessenger.of(ctx);
   try {
-    await repo.rejectInvite(id);
-    await _reload(inboxCubit);
+    final summary = await repo.rejectInvite(id);
+    inboxCubit.applyInboxSummary(id, summary);
   } on ApiException catch (e) {
     _showError(messenger, e);
   }
