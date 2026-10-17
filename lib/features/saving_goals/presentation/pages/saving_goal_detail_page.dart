@@ -222,7 +222,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, e.message, tone: Tone.danger);
+      _snack(e.message, tone: Tone.danger);
       return;
     }
     if (!mounted) return;
@@ -238,6 +238,16 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     commitSaved(saved == null ? w.trimmed() : _GoalDraft.from(saved));
   }
 
+  /// A message through the page's own messenger (above the save bar).
+  void _snack(String message, {Tone tone = Tone.neutral}) {
+    final m = pageMessenger;
+    if (m != null) {
+      showAppSnackBarOn(m, message, tone: tone);
+    } else if (mounted) {
+      showAppSnackBar(context, message, tone: tone);
+    }
+  }
+
   /// Runs a write; shows the message on failure (a known code can bring its
   /// own words), keeps the page as is.
   Future<bool> _run(
@@ -250,11 +260,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     } on ApiException catch (e) {
       if (mounted) {
         setSaving(false);
-        showAppSnackBar(
-          context,
-          message?.call(e) ?? e.message,
-          tone: Tone.danger,
-        );
+        _snack(message?.call(e) ?? e.message, tone: Tone.danger);
       }
       return false;
     }
@@ -620,8 +626,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
             // A failed refresh keeps the page on screen and says so.
             if (state.status == SavingPageStatus.error &&
                 state.detail != null) {
-              showAppSnackBar(
-                context,
+              _snack(
                 AppLocalizations.of(context)!.fpGoalsRefreshFailed,
                 tone: Tone.danger,
               );
@@ -1212,11 +1217,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           onTap: isSaving
               ? null
               : holds
-              ? () => showAppSnackBar(
-                  context,
-                  l.fpGoalsArchiveHasSavings,
-                  tone: Tone.warning,
-                )
+              ? () => _snack(l.fpGoalsArchiveHasSavings, tone: Tone.warning)
               : _archive,
         ),
       if (a.delete)
