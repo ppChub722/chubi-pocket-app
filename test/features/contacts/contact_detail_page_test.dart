@@ -64,6 +64,7 @@ Map<String, dynamic> _prodContact() => {
   'last_used_at': '2026-10-10T08:00:00Z',
   'created_at': '2026-10-01T08:00:00Z',
   'updated_at': '2026-10-11T08:00:00Z',
+  'unlinked_total': {'names': 1, 'records': 2},
   'unlinked_names': [
     {'name': 'Cooper', 'count': 2},
   ],

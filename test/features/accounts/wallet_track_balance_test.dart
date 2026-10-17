@@ -231,7 +231,5 @@ void main() {
     });
     expect(a.showsBalance, isFalse);
     expect(a.creditUsed, 0);
-    expect(a.creditUtilization, isNull);
-    expect(a.creditAvailable, isNull);
   });
 }

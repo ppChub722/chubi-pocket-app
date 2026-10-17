@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -68,6 +70,10 @@ class _ContactDetailPageState extends State<ContactDetailPage>
   /// (include=unlinked_names), trimmed locally after an absorb.
   List<UnlinkedName> _unlinked = const [];
 
+  /// The BE's totals for the badge (names / records still free to wire).
+  int _unlinkedNames = 0;
+  int _unlinkedRecords = 0;
+
   /// View-mode title: the resolved name (the edit field edits the stored
   /// display_name).
   final _viewName = TextEditingController();
@@ -108,6 +114,8 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       setState(() {
         _setContact(c);
         _unlinked = d.unlinkedNames;
+        _unlinkedNames = d.unlinkedNameCount;
+        _unlinkedRecords = d.unlinkedRecordCount;
         _loading = false;
         _error = null;
       });
@@ -215,6 +223,8 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         setState(() {
           _setContact(created);
           _unlinked = const [];
+          _unlinkedNames = 0;
+          _unlinkedRecords = 0;
         });
         commitSaved(_ContactDraft.from(created));
         context.replace('/contacts/${created.id}');
@@ -388,15 +398,10 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         tone: Tone.success,
       );
     }
-    // Absorb answered: drop the wired names from the list, patch the contact.
-    final gone = {for (final n in picked) n.toLowerCase()};
-    setState(
-      () => _unlinked = [
-        for (final u in _unlinked)
-          if (!gone.contains(u.name.toLowerCase())) u,
-      ],
-    );
+    // Absorb answered: patch the contact; the badge totals are the BE's, so
+    // the page's one call re-runs (the data stays on screen).
     _patch(res.contact);
+    unawaited(_load());
   }
 
   // ── Build ───────────────────────────────────────────────────────────
@@ -592,8 +597,8 @@ class _ContactDetailPageState extends State<ContactDetailPage>
   Widget _linkSection(AppLocalizations l) {
     final c = _contact!;
     final hasEmail = c.email?.isNotEmpty ?? false;
-    final splits = _unlinked.fold<int>(0, (a, n) => a + n.count);
-    final hasNames = _unlinked.isNotEmpty;
+
+    final hasNames = _unlinkedNames > 0;
     return SectionCard(
       title: l.fpContactsLinkSection,
       description: l.fpContactsLinkSectionDesc,
@@ -618,7 +623,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           leading: const AppIcon(AppIcons.split),
           label: l.contactWireTitle,
           helper: hasNames
-              ? l.contactWireHint(_unlinked.length, splits)
+              ? l.contactWireHint(_unlinkedNames, _unlinkedRecords)
               : l.contactWireNone,
           showChevron: hasNames,
           onTap: hasNames ? _openWireNames : null,

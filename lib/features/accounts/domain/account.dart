@@ -64,6 +64,8 @@ class Account extends Equatable {
     this.monthOut = 0,
     this.dueDateNext,
     this.daysUntilDue,
+    this.creditUsedPct,
+    this.creditAvailable,
   }) : _group = group;
 
   final String id;
@@ -90,6 +92,12 @@ class Account extends Equatable {
   /// A card's next due date and the days left (null without a due day).
   final DateTime? dueDateNext;
   final int? daysUntilDue;
+
+  /// A card with a limit: what is owed / the limit, rounded, not clamped (BE).
+  final int? creditUsedPct;
+
+  /// A card with a limit: limit − owed, floored at 0 (BE; null without a limit).
+  final double? creditAvailable;
 
   /// Whether any UI may show [balance] (and the credit figures built on it).
   bool get showsBalance => trackBalance;
@@ -153,26 +161,6 @@ class Account extends Equatable {
   double get creditUsed =>
       isLiability && trackBalance && balance < 0 ? -balance : 0;
 
-  /// Credit left to spend: limit − [creditUsed] (null without a limit).
-  /// Overpaid → the whole limit (the overpaid part is money of mine, not
-  /// credit).
-  double? get creditAvailable {
-    final limit = creditLimit;
-    if (!isLiability || !trackBalance || limit == null || limit <= 0) {
-      return null;
-    }
-    return limit - creditUsed;
-  }
-
-  /// [creditUsed] / limit, 0..1 (null: not credit, or no limit).
-  double? get creditUtilization {
-    final limit = creditLimit;
-    if (!isLiability || !trackBalance || limit == null || limit <= 0) {
-      return null;
-    }
-    return (creditUsed / limit).clamp(0.0, 1.0);
-  }
-
   /// Money I owe through this wallet: a card's used credit, or a wallet
   /// that isn't credit gone below zero (overdrawn). 0 otherwise.
   double get debt => balance < 0 ? -balance : 0;
@@ -211,6 +199,8 @@ class Account extends Equatable {
     double? monthOut,
     DateTime? dueDateNext,
     int? daysUntilDue,
+    int? creditUsedPct,
+    double? creditAvailable,
   }) {
     return Account(
       id: id ?? this.id,
@@ -243,6 +233,8 @@ class Account extends Equatable {
       monthOut: monthOut ?? this.monthOut,
       dueDateNext: dueDateNext ?? this.dueDateNext,
       daysUntilDue: daysUntilDue ?? this.daysUntilDue,
+      creditUsedPct: creditUsedPct ?? this.creditUsedPct,
+      creditAvailable: creditAvailable ?? this.creditAvailable,
     );
   }
 
@@ -294,6 +286,8 @@ class Account extends Equatable {
       monthOut: (json['month_out'] as num?)?.toDouble() ?? 0,
       dueDateNext: DateTime.tryParse(json['due_date_next'] as String? ?? ''),
       daysUntilDue: (json['days_until_due'] as num?)?.toInt(),
+      creditUsedPct: (json['credit_used_pct'] as num?)?.toInt(),
+      creditAvailable: (json['credit_available'] as num?)?.toDouble(),
     );
   }
 
@@ -375,6 +369,8 @@ class Account extends Equatable {
     monthOut,
     dueDateNext,
     daysUntilDue,
+    creditUsedPct,
+    creditAvailable,
   ];
 }
 

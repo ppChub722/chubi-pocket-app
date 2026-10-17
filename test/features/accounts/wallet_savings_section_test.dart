@@ -185,6 +185,8 @@ void main() {
       'is_shared': false,
       'track_balance': true,
       'credit_limit': 50000.0,
+      'credit_used_pct': 8,
+      'credit_available': 46142.0,
       'payment_due_date': 25,
       'due_date_next': '2026-10-25',
       'days_until_due': 8,

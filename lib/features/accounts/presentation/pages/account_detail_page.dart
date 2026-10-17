@@ -998,14 +998,14 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     WalletSavings? savings,
   ) {
     if (!a.showsBalance) return null;
-    final utilization = a.creditUtilization;
+    final usedPct = a.creditUsedPct;
     final left = a.creditAvailable;
-    if (utilization != null && left != null) {
+    if (usedPct != null && left != null) {
       return HeroBar(
-        value: utilization,
+        value: (usedPct / 100).clamp(0.0, 1.0),
         color: accent,
         left: l.fpWalletCardUsed(
-          (utilization * 100).round(),
+          usedPct,
           moneyString(context, a.creditLimit!, symbol: symbol),
         ),
         right: l.fpWalletCardLeft(moneyString(context, left, symbol: symbol)),

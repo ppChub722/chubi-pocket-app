@@ -155,13 +155,27 @@ class UnlinkedName extends Equatable {
 /// `ContactDetail` — a [Contact] plus the unlinked split names
 /// (`?include=unlinked_names`).
 class ContactDetail extends Equatable {
-  const ContactDetail({required this.contact, this.unlinkedNames = const []});
+  const ContactDetail({
+    required this.contact,
+    this.unlinkedNames = const [],
+    this.unlinkedNameCount = 0,
+    this.unlinkedRecordCount = 0,
+  });
 
   final Contact contact;
   final List<UnlinkedName> unlinkedNames;
 
+  /// The BE's `unlinked_total` — names and records still free to wire (the
+  /// "จับคู่ชื่อในรายการหาร" badge; no client sums).
+  final int unlinkedNameCount;
+  final int unlinkedRecordCount;
+
   factory ContactDetail.fromJson(Map<String, dynamic> json) => ContactDetail(
     contact: Contact.fromJson(json),
+    unlinkedNameCount:
+        ((json['unlinked_total'] as Map?)?['names'] as num?)?.toInt() ?? 0,
+    unlinkedRecordCount:
+        ((json['unlinked_total'] as Map?)?['records'] as num?)?.toInt() ?? 0,
     unlinkedNames: ((json['unlinked_names'] as List?) ?? const [])
         .cast<Map<String, dynamic>>()
         .map(UnlinkedName.fromJson)
@@ -169,7 +183,12 @@ class ContactDetail extends Equatable {
   );
 
   @override
-  List<Object?> get props => [contact, unlinkedNames];
+  List<Object?> get props => [
+    contact,
+    unlinkedNames,
+    unlinkedNameCount,
+    unlinkedRecordCount,
+  ];
 }
 
 /// `{contact, absorbed_count}` — absorb and create.
