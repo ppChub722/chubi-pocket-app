@@ -149,6 +149,7 @@ export 'domain/progress/progress_hero_footer.dart';
 export 'domain/progress/progress_summary.dart';
 export 'domain/progress/breakdown_row.dart';
 export 'domain/progress/source_chips.dart';
+export 'domain/progress/period_limit_sheet.dart';
 export 'molecules/stat_grid.dart';
 export 'molecules/scope_prompt.dart';
 export 'domain/money/settle_sheet.dart';

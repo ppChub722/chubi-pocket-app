@@ -4,9 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../core/utils/user_currency.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../categories/domain/category.dart';
@@ -23,21 +24,24 @@ import '../../domain/budget_detail.dart';
 import '../../domain/budget_period.dart';
 import '../budget_draft.dart';
 import '../budget_labels.dart';
-import '../budget_period_sheet.dart';
 import '../budget_scope_pickers.dart';
-import '../budget_view_sections.dart';
 import '../cubit/budgets_cubit.dart';
 
 /// `/budgets/new`, `/budgets/:id` (+ `/edit`) — ONE page for a budget of any
-/// kind (spec 08 v2): view ⇄ edit in place ([EditModeMixin]).
+/// kind (spec 08 v2; reference "งบประมาณ"): view ⇄ edit in place
+/// ([EditModeMixin]).
 ///
-/// - a RECURRING budget has the tabs [รอบงบ] (the period shown: dashboard,
-///   by source / category, the period list, the counted items; "เฉพาะรอบนี้"
-///   edits that period alone) and [ตั้งค่า] (the setup);
-/// - a one-off / open-ended budget is ONE page: the setup box, the dashboard,
-///   the items; open-ended ones end with "ปิดงบ".
+/// VIEW: the hero card (period chips, remaining, the bar with the pace tick,
+/// the forecast tiles) → การตั้งค่า (what it counts · warn level · repeat)
+/// → บันทึก → then, for a recurring budget, the swipe tabs [รายการในรอบนี้]
+/// [ทุกรอบ] (a one-off / open-ended budget has its items right below). A row
+/// of รายการ says why it counts; a row of ทุกรอบ edits that period's limit.
 ///
-/// Open = one call (`getBudget`); every write answers with the page, so the
+/// EDIT / CREATE: its own form — the hero keeps icon, name, description and
+/// the limit; start / end; the settings with their pickers; บันทึก; the end
+/// zone (ปิดงบ · เก็บถาวร · ลบ). The bar, tiles and items are hidden.
+///
+/// Open = ONE call (`getBudget`); every write answers with the page, so the
 /// page takes the new state from the response. A transaction write reloads
 /// it once.
 class BudgetDetailPage extends StatefulWidget {
@@ -55,7 +59,7 @@ class BudgetDetailPage extends StatefulWidget {
   State<BudgetDetailPage> createState() => _BudgetDetailPageState();
 }
 
-enum _Tab { periods, setup }
+enum _Tab { items, periods }
 
 /// Which text field a typing burst belongs to (undo grouping).
 enum _Field { name, description, amount, note }
@@ -70,22 +74,28 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
 
   BudgetDetail? _detail;
   bool _loading = false;
-  Object? _error;
-  _Tab _tab = _Tab.periods;
 
-  /// The period shown (null = the current one).
-  String? _periodId;
+  /// The first load failed (nothing on screen yet).
+  ApiException? _error;
+
+  /// A reload failed with the page on screen: the data stays, a banner says
+  /// why.
+  ApiException? _refreshError;
+  _Tab _tab = _Tab.items;
 
   /// All periods, once "ดูรอบก่อนหน้าทั้งหมด" was tapped.
   BudgetPeriodPage? _allPeriods;
-  bool _moreBusy = false;
-  Object? _moreError;
+  bool _itemsBusy = false;
+  Object? _itemsError;
+  bool _periodsBusy = false;
+  Object? _periodsError;
 
   /// Save was tried with nothing to count.
   bool _scopeMissing = false;
 
   BudgetsRepository get _repo => BudgetsRepository.of(context);
   Budget? get _budget => _detail?.budget;
+  bool get _canEdit => _budget?.actions.edit ?? true;
 
   @override
   void initState() {
@@ -114,40 +124,37 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
 
   // ── Loading ─────────────────────────────────────────────────────────
 
-  /// `getBudget` at [periodId] (null = current). A reload while editing keeps
-  /// the draft.
-  Future<void> _load({String? periodId, bool first = false}) async {
-    final keep = !first && _detail != null;
-    if (!keep) {
+  /// `getBudget` — the page's ONE call (open, pull-to-refresh, a transaction
+  /// write). A reload while editing keeps the draft; a failed reload keeps
+  /// the data.
+  Future<void> _load({bool first = false}) async {
+    if (_detail == null) {
       setState(() {
         _loading = true;
         _error = null;
       });
     }
     try {
-      final d = await _repo.get(widget.id!, periodId: periodId);
+      final d = await _repo.get(widget.id!);
       if (!mounted) return;
       setState(() {
         _detail = d;
-        _periodId = periodId;
         _error = null;
+        _refreshError = null;
         _allPeriods = null;
       });
       if (!isEditing) resetDraft(BudgetDraft.from(d.budget));
-      if (first && widget.startEditing && d.budget.actions.edit) {
-        _enterSetup();
-      }
+      if (first && widget.startEditing && d.budget.actions.edit) enterEdit();
     } catch (e, st) {
       if (!mounted) return;
-      if (_detail == null) {
-        setState(() => _error = ApiException.from(e, st));
-      } else {
-        showAppSnackBarOn(
-          pageMessenger!,
-          ApiException.from(e, st).message,
-          tone: Tone.danger,
-        );
-      }
+      final err = ApiException.from(e, st);
+      setState(() {
+        if (_detail == null) {
+          _error = err;
+        } else {
+          _refreshError = err;
+        }
+      });
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -156,7 +163,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
   void _afterWrite(BudgetDetail d) {
     setState(() {
       _detail = d;
-      _periodId = null;
       _allPeriods = null;
     });
     context.read<BudgetsCubit>().markStale();
@@ -165,10 +171,10 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
 
   Future<void> _loadMoreItems() async {
     final d = _detail;
-    if (d == null || !d.items.hasMore || _moreBusy) return;
+    if (d == null || !d.items.hasMore || _itemsBusy) return;
     setState(() {
-      _moreBusy = true;
-      _moreError = null;
+      _itemsBusy = true;
+      _itemsError = null;
     });
     try {
       final next = await _repo.items(
@@ -180,18 +186,18 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         setState(() => _detail = d.copyWith(items: d.items.append(next)));
       }
     } catch (e, st) {
-      if (mounted) setState(() => _moreError = ApiException.from(e, st));
+      if (mounted) setState(() => _itemsError = ApiException.from(e, st));
     } finally {
-      if (mounted) setState(() => _moreBusy = false);
+      if (mounted) setState(() => _itemsBusy = false);
     }
   }
 
   Future<void> _loadAllPeriods() async {
     final d = _detail;
-    if (d == null || _moreBusy) return;
+    if (d == null || _periodsBusy) return;
     setState(() {
-      _moreBusy = true;
-      _moreError = null;
+      _periodsBusy = true;
+      _periodsError = null;
     });
     try {
       final current = _allPeriods;
@@ -205,9 +211,9 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         );
       }
     } catch (e, st) {
-      if (mounted) setState(() => _moreError = ApiException.from(e, st));
+      if (mounted) setState(() => _periodsError = ApiException.from(e, st));
     } finally {
-      if (mounted) setState(() => _moreBusy = false);
+      if (mounted) setState(() => _periodsBusy = false);
     }
   }
 
@@ -237,14 +243,8 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
 
   /// A picker / switch in view mode starts editing first.
   void _change(BudgetDraft next) {
-    if (!isEditing) _enterSetup();
+    if (!isEditing) enterEdit();
     applyChange(next);
-  }
-
-  /// Editing happens on the setup (a recurring budget's ตั้งค่า tab).
-  void _enterSetup({FocusNode? focus}) {
-    if (working.recurring) setState(() => _tab = _Tab.setup);
-    enterEdit(focus: focus);
   }
 
   // ── Pickers ─────────────────────────────────────────────────────────
@@ -368,23 +368,41 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     _change(working.copyWith(end: BudgetEnd.onDate(picked.date)));
   }
 
-  /// "แก้เฉพาะรอบนี้": the shown period's own amount / note.
-  Future<void> _editPeriod() async {
+  /// A row of ทุกรอบ: that period's own limit (+ note). Answer = the budget
+  /// page at that period — the current period's answer replaces the page,
+  /// an older one only patches its row.
+  Future<void> _editPeriod(BudgetPeriod p) async {
     final d = _detail;
-    if (d == null || !d.budget.actions.edit) return;
-    final r = await showBudgetPeriodSheet(context, period: d.budget.period);
+    if (d == null || !d.budget.actions.edit || isSaving) return;
+    final l = AppLocalizations.of(context)!;
+    final r = await showPeriodLimitSheet(
+      context,
+      title: l.bgPeriodEditTitle,
+      amountLabel: l.bgPeriodAmountField,
+      noteLabel: l.commonNote,
+      saveLabel: l.commonSave,
+      symbol: context.readUserCurrencySymbol,
+      amount: p.amount,
+      baseAmount: p.baseAmount,
+      overridden: p.overridden,
+      resetLabel: l.fpBudgetsPeriodReset(moneyString(context, p.baseAmount)),
+      note: p.note,
+    );
     if (!mounted || r == null) return;
     setSaving(true);
     try {
       final next = await _repo.updatePeriod(
         d.budget.id,
-        d.budget.period.id,
+        p.id,
         amount: r.amount,
         note: r.note,
       );
       if (!mounted) return;
       HapticFeedback.mediumImpact();
-      setState(() => _detail = next);
+      setState(() {
+        _detail = (_detail ?? d).afterPeriodWrite(next);
+        _allPeriods = _allPeriods?.replace(next.budget.period);
+      });
       context.read<BudgetsCubit>().markStale();
       context.read<DashboardCubit>().markStale();
       setSaving(false);
@@ -544,7 +562,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
           !identical(a.transactions, c.transactions),
       // A transaction write: this page's figures moved — one reload.
       listener: (_, _) {
-        if (!widget.isCreate && !isSaving) _load(periodId: _periodId);
+        if (!widget.isCreate && !isSaving) _load();
       },
       child: QuickCreatePresetScope(
         preset: _preset(),
@@ -562,7 +580,17 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
             ),
             body: Form(
               key: _formKey,
-              child: Builder(builder: (context) => _body(context, l, b)),
+              child: Builder(
+                builder: (context) {
+                  final barInset = MediaQuery.paddingOf(context).top;
+                  final bottom =
+                      AppSpacing.huge + MediaQuery.paddingOf(context).bottom;
+                  final d = _detail;
+                  return (d == null || isEditing)
+                      ? _editBody(context, l, b, barInset, bottom)
+                      : _viewBody(context, l, d, barInset, bottom);
+                },
+              ),
             ),
             bottomNavigationBar: isEditing
                 ? editActionBar(onSave: _save)
@@ -587,293 +615,456 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     return c == null ? QuickCreatePreset.none : QuickCreatePreset(category: c);
   }
 
-  Widget _body(BuildContext context, AppLocalizations l, Budget? b) {
-    final editing = isEditing;
-    final recurring = working.recurring;
-    final showTabs = recurring && !widget.isCreate;
-    final setupTab = !showTabs || _tab == _Tab.setup || editing;
-    final detail = _detail;
-    return DetailPageBody(
-      onRefresh: widget.isCreate ? null : () => _load(periodId: _periodId),
-      topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
-      bottomInset: AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
-      hero: _hero(l, b),
-      tabBar: showTabs && !editing
-          ? AppTabBar<_Tab>(
-              selected: _tab,
-              onChanged: (t) => setState(() => _tab = t),
-              tabs: [
-                AppTab(value: _Tab.periods, label: l.bgTabPeriods),
-                AppTab(value: _Tab.setup, label: l.bgTabSetup),
-              ],
-            )
-          : null,
-      sections: [
-        if (detail != null && !setupTab || (detail != null && !recurring))
-          ...budgetViewSections(
-            context,
-            detail: detail,
-            allPeriods: _allPeriods,
-            editingLocked: editing,
-            moreBusy: _moreBusy,
-            moreError: _moreError,
-            onEditPeriod: _editPeriod,
-            onOpenPeriod: (p) => _load(periodId: p.id),
-            onMoreItems: _loadMoreItems,
-            onMorePeriods: _loadAllPeriods,
-          ),
-        if (setupTab) ..._setupSections(l),
+  // ── View mode ───────────────────────────────────────────────────────
+
+  Widget _viewBody(
+    BuildContext context,
+    AppLocalizations l,
+    BudgetDetail d,
+    double barInset,
+    double bottom,
+  ) {
+    final b = d.budget;
+    final settings = _settings(l, editing: false);
+    final note = NoteSection(
+      label: l.commonNote,
+      editing: false,
+      text: b.note,
+      hint: l.commonLongPressToEdit,
+      onLongPress: _canEdit ? () => enterEdit(focus: _noteFocus) : null,
+    );
+    final meta = detailMetaLines(
+      context,
+      createdAt: b.createdAt,
+      updatedAt: b.updatedAt,
+    );
+    final banner = _refreshError == null
+        ? null
+        : AppMessage(tone: Tone.danger, message: _refreshError!.message);
+
+    // A one-off / open-ended budget: no periods — its items sit right below.
+    if (!b.recurring) {
+      return DetailLayout(
+        topInset: barInset + AppSpacing.lg,
+        bottomInset: bottom,
+        onRefresh: _load,
+        hero: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (banner != null) ...[
+              banner,
+              const SizedBox(height: HeroSpacing.after),
+            ],
+            _viewHero(l, d),
+          ],
+        ),
+        settings: settings,
+        note: note,
+        records: SectionCard(
+          title: l.fpBudgetsTabItems,
+          children: [
+            if (d.items.items.isEmpty)
+              EmptyView.compact(message: l.bgItemsEmpty)
+            else
+              ..._itemRows(l, d),
+            if (d.items.hasMore)
+              DetailRow.pick(
+                label: l.bgItemsMore,
+                emptyText: l.quickEventNone,
+                error: _itemsError == null ? null : '$_itemsError',
+                onTap: _itemsBusy ? null : _loadMoreItems,
+              ),
+          ],
+        ),
+        metaLines: meta,
+      );
+    }
+
+    return TabbedDetailBody<_Tab>(
+      hero: _viewHero(l, d),
+      belowHero: [?banner, settings, note],
+      tabs: [
+        AppTab(value: _Tab.items, label: l.fpBudgetsTabItems),
+        AppTab(value: _Tab.periods, label: l.fpBudgetsTabPeriods),
       ],
-      manage: _manage(l, b),
-      metaLines: b == null
-          ? const []
-          : detailMetaLines(
-              context,
-              createdAt: b.createdAt,
-              updatedAt: b.updatedAt,
-            ),
+      selected: _tab,
+      onChanged: (t) => setState(() => _tab = t),
+      compactBar: _compactBar(d),
+      tabBuilder: (context, t) => switch (t) {
+        _Tab.items => _itemsTab(l, d, meta),
+        _Tab.periods => _periodsTab(l, d),
+      },
     );
   }
 
-  // ── Hero ────────────────────────────────────────────────────────────
+  /// The hero, one line, once it has scrolled away: icon · name · remaining.
+  CompactHeroBar _compactBar(BudgetDetail d) {
+    final b = d.budget;
+    final p = b.period;
+    final over = p.overBy > 0;
+    return CompactHeroBar(
+      style: HeroStyle.tinted(
+        color: budgetTint(context, b),
+        glyph: AppIcons.budget,
+      ),
+      leading: IconDisplay(
+        type: IconType.category,
+        size: 28,
+        iconCode: b.iconCode,
+      ),
+      title: AppText(b.name, role: AppTextRole.title),
+      trailing: MoneyText(
+        over ? p.overBy : p.remaining,
+        symbol: context.readUserCurrencySymbol,
+        style: AppTypography.of(
+          context,
+          AppTextRole.money,
+        )?.copyWith(color: budgetToneColor(context, b, p)),
+      ),
+    );
+  }
 
-  Widget _hero(AppLocalizations l, Budget? b) {
-    final editing = isEditing;
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final period = b?.period;
-    final accent = (b != null && period != null)
-        ? budgetToneColor(context, b, period)
-        : working.iconCode.tintFor(palette);
-    return HeaderCard(
-      accent: accent,
-      glyph: AppIcons.budget,
-      onEdit: (editing || (b != null && !b.actions.edit)) ? null : _enterSetup,
-      topRow: [
-        if (b != null) ...[
-          if (b.recurring && b.rule != null)
-            AppChip(
-              label: l.bgChipRecurring(budgetRuleLabel(l, b.rule!)),
-              tone: AppChipTone.neutral,
-              selected: true,
-            ),
-          if (period != null)
-            AppChip(
-              label: budgetRange(context, period.start, period.end),
-              icon: AppIcons.date,
-              tone: AppChipTone.neutral,
-              selected: true,
-            ),
-          if (b.openEnded)
-            AppChip(
-              label: l.bgRowOpenEnded,
-              tone: AppChipTone.neutral,
-              selected: true,
-            ),
-          if (period != null && period.overridden)
-            AppChip(
-              label: l.bgPeriodOverridden,
-              tone: AppChipTone.info,
-              selected: true,
-            ),
-          ?budgetStatusChip(l, b),
-        ],
+  /// The budget's hero card (reference "งบประมาณ"): period chips,
+  /// icon + description, the remaining (over → "เกิน"), the bar with the pace
+  /// tick, the forecast tiles. Every number is the BE's.
+  Widget _viewHero(AppLocalizations l, BudgetDetail d) {
+    final b = d.budget;
+    final p = b.period;
+    final f = d.forecast;
+    final symbol = context.readUserCurrencySymbol;
+    final accent = budgetToneColor(context, b, p);
+    final over = p.overBy > 0;
+    final range = budgetRange(context, p.start, p.end);
+    final status = b.state == BudgetState.active
+        ? null
+        : budgetStatusChip(l, b);
+    return HeroCard(
+      style: HeroStyle.tinted(
+        color: budgetTint(context, b),
+        glyph: AppIcons.budget,
+      ),
+      chips: [
+        ?status,
+        if (b.recurring && b.rule != null)
+          AppChip(
+            label: l.bgChipRecurring(budgetRuleLabel(l, b.rule!)),
+            selected: true,
+          ),
+        AppChip(
+          label: f.elapsedDays != null && f.totalDays != null
+              ? l.fpBudgetsRangeDay(range, f.elapsedDays!, f.totalDays!)
+              : range,
+          icon: AppIcons.date,
+          selected: true,
+        ),
+        if (b.openEnded) AppChip(label: l.bgRowOpenEnded, selected: true),
+        if (p.overridden)
+          AppChip(
+            label: l.bgPeriodOverridden,
+            tone: AppChipTone.info,
+            selected: true,
+          ),
       ],
-      leading: EditableCircle(
-        size: 52,
-        onTap: editing ? _pickIcon : null,
-        onLongPress: editing
-            ? null
-            : () {
-                _enterSetup();
-                _pickIcon();
-              },
+      onEdit: _canEdit ? enterEdit : null,
+      icon: EditableCircle(
+        size: 40,
+        onLongPress: _canEdit
+            ? () {
+                enterEdit();
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) _pickIcon();
+                });
+              }
+            : null,
         child: IconDisplay(
           type: IconType.category,
-          size: 52,
-          iconCode: working.iconCode,
+          size: 40,
+          iconCode: b.iconCode,
         ),
-      ),
-      title: HeroNameInput(
-        editing: editing,
-        controller: _ctrl[_Field.name]!,
-        focusNode: _nameFocus,
-        hint: l.commonName,
-        maxLength: TextLimits.name,
-        onEnterEdit: () => _enterSetup(focus: _nameFocus),
-        onChanged: (v) => _onText(_Field.name, v),
-        validator: (v) =>
-            (v == null || v.trim().isEmpty) ? l.bgNameRequired : null,
       ),
       description: HeroDescription(
         controller: _ctrl[_Field.description]!,
-        editing: editing,
+        editing: false,
+        focusNode: _descriptionFocus,
         hint: l.commonDescription,
         maxLength: TextLimits.description,
-        focusNode: _descriptionFocus,
-        onEnterEdit: () => _enterSetup(focus: _descriptionFocus),
-        onChanged: (v) => _onText(_Field.description, v),
+        onEnterEdit: _canEdit
+            ? () => enterEdit(focus: _descriptionFocus)
+            : null,
       ),
-      footer: (b == null || period == null)
-          ? null
-          : budgetHeroStats(context, b, period),
+      number: HeroNumber(
+        label: over ? l.fpBudgetsOverLabel : l.fpBudgetsLeftLabel,
+        value: MoneyText(over ? p.overBy : p.remaining, symbol: symbol),
+        color: accent,
+        target: l.fpBudgetsLimitTarget(moneyString(context, p.amount)),
+      ),
+      bar: HeroBar(
+        value: p.usedRatio,
+        expected: p.expected > 0 ? p.expectedRatio : null,
+        marker: f.pacePct == null ? null : f.pacePct! / 100,
+        color: accent,
+        left: l.fpBudgetsUsedCaption(moneyString(context, p.used)),
+        right: f.pacePct == null ? null : l.fpBudgetsPaceCaption(f.pacePct!),
+      ),
+      tiles: _tiles(l, d),
     );
   }
 
-  // ── Setup sections ──────────────────────────────────────────────────
-
-  List<Widget? Function(bool)> _setupSections(AppLocalizations l) {
-    final editing = isEditing;
-    final w = working;
+  /// The forecast tiles — the BE's `forecast` numbers, none computed here.
+  List<Widget> _tiles(AppLocalizations l, BudgetDetail d) {
+    final f = d.forecast;
+    Widget tile(String label, String value, [SummaryTileTone? tone]) =>
+        SummaryTileView(
+          tile: SummaryTile(
+            label: label,
+            value: value,
+            tone: tone ?? SummaryTileTone.neutral,
+          ),
+        );
     return [
-      // Headless: merged into the page's top box.
-      (first) => SectionCard(
-        first: first,
+      if (f.dailyAllowance != null)
+        tile(
+          l.fpBudgetsTileDaily,
+          moneyString(context, f.dailyAllowance!),
+          SummaryTileTone.green,
+        ),
+      if (f.projectedEnd != null)
+        tile(
+          l.fpBudgetsTileProjected,
+          moneyString(context, f.projectedEnd!),
+          (f.forecastOverBy ?? 0) > 0 ? SummaryTileTone.amber : null,
+        ),
+      if (f.daysLeft != null)
+        tile(l.fpBudgetsTileDaysLabel, l.fpBudgetsDaysValue(f.daysLeft!)),
+      // An open-ended budget has no period end: its own two figures.
+      if (f.avgMonthly != null)
+        tile(l.bgTileAvgMonthly, moneyString(context, f.avgMonthly!)),
+      if (f.thisMonth != null)
+        tile(l.bgTileThisMonth, moneyString(context, f.thisMonth!)),
+    ].take(4).toList();
+  }
+
+  // ── Tabs ────────────────────────────────────────────────────────────
+
+  /// รายการในรอบนี้: what the budget counts in the period, grouped by day,
+  /// each row says why it counts. Pull-to-refresh = the page's one load.
+  Widget _itemsTab(AppLocalizations l, BudgetDetail d, List<String> meta) {
+    return ListPageBody(
+      loading: false,
+      error: null,
+      isEmpty: d.items.items.isEmpty,
+      onRetry: _load,
+      empty: EmptyView.compact(message: l.bgItemsEmpty),
+      rowDividers: true,
+      topInset: 0,
+      loadingMore: _itemsBusy,
+      loadMoreError: _itemsError,
+      onRetryMore: _loadMoreItems,
+      footer: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (editing)
-            DetailStacked(
-              label: w.recurring
-                  ? l.budgetFormAmountLabel
-                  : l.bgFieldAmountOnce,
-              child: AmountInput(
-                controller: _ctrl[_Field.amount]!,
-                currencySymbol: context.readUserCurrencySymbol,
-                onChanged: (v) => _onText(_Field.amount, v),
-                validator: (v) {
-                  final n = AmountInput.parse(v);
-                  return (n == null || n <= 0)
-                      ? l.budgetFormAmountInvalid
-                      : null;
-                },
-              ),
-            )
-          else
-            DetailRow(
-              label: w.recurring
-                  ? l.budgetFormAmountLabel
-                  : l.bgFieldAmountOnce,
-              onLongPress: _enterSetup,
-              trailing: MoneyText(AmountInput.parse(w.amount) ?? 0),
+          if (d.items.hasMore)
+            AppButton(
+              label: l.bgItemsMore,
+              variant: AppButtonVariant.outlined,
+              onPressed: _itemsBusy ? null : _loadMoreItems,
             ),
-          DetailRow(
-            label: l.bgFieldRecurring,
-            helper: l.bgFieldRecurringHint,
-            trailing: AppSwitch(
-              value: w.recurring,
-              semanticLabel: l.bgFieldRecurring,
-              onChanged: (v) => _change(
-                w.copyWith(
-                  recurring: v,
-                  // A one-off keeps no count end.
-                  end: !v && w.end.kind == 'count'
-                      ? const BudgetEnd.none()
-                      : w.end,
-                ),
-              ),
-            ),
-          ),
-          DetailStacked(
-            label: l.commonNote,
-            onLongPress: editing ? null : _enterSetup,
-            child: AppInput.inline(
-              editing: editing,
-              controller: _ctrl[_Field.note]!,
-              focusNode: _noteFocus,
-              maxLines: 3,
-              maxLength: TextLimits.note,
-              viewHint: l.commonLongPressToEdit,
-              onEnterEdit: () => _enterSetup(focus: _noteFocus),
-              onChanged: (v) => _onText(_Field.note, v),
-            ),
-          ),
+          DetailMeta(lines: meta),
         ],
       ),
-      (first) => SectionCard(
-        first: first,
-        title: l.bgSectionScope,
-        description: l.bgScopeDescription,
-        children: [
-          DetailRow(
-            label: l.bgScopeAll,
-            trailing: AppSwitch(
-              value: w.allScope,
-              semanticLabel: l.bgScopeAll,
-              onChanged: (v) {
-                setState(() => _scopeMissing = false);
-                _change(w.copyWith(allScope: v));
-              },
+      children: _itemRows(l, d),
+    );
+  }
+
+  /// ทุกรอบ: one row per period; tapping edits that period's limit.
+  Widget _periodsTab(AppLocalizations l, BudgetDetail d) {
+    final b = d.budget;
+    final periods = _allPeriods?.periods ?? d.periods.periods;
+    final more = _allPeriods?.hasMore ?? d.periods.hasMore;
+    return ListPageBody(
+      loading: false,
+      error: null,
+      isEmpty: periods.isEmpty,
+      onRetry: _load,
+      empty: EmptyView.compact(message: l.fpBudgetsTabPeriods),
+      rowDividers: true,
+      topInset: 0,
+      loadingMore: _periodsBusy,
+      loadMoreError: _periodsError,
+      onRetryMore: _loadAllPeriods,
+      footer: more
+          ? AppButton(
+              label: l.bgPeriodsAll,
+              variant: AppButtonVariant.outlined,
+              onPressed: _periodsBusy ? null : _loadAllPeriods,
+            )
+          : null,
+      children: [
+        for (final x in periods)
+          ProgressCard.compact(
+            title: budgetPeriodTitle(context, b, x),
+            badge: _periodBadge(l, b, x),
+            value: x.usedRatio,
+            expected: x.expected > 0 ? x.expectedRatio : null,
+            tone: budgetRowTone(x),
+            paceMarker: x.isCurrent && d.forecast.pacePct != null
+                ? d.forecast.pacePct! / 100
+                : null,
+            label: l.bgRowUsed(
+              moneyString(context, x.used),
+              moneyString(context, x.amount),
             ),
+            struckLabel: x.overridden && x.amount != x.baseAmount
+                ? moneyString(context, x.baseAmount)
+                : null,
+            percentText: '${x.pct}%',
+            onTap: b.actions.edit ? () => _editPeriod(x) : null,
+          ),
+      ],
+    );
+  }
+
+  /// One badge per period row: this period · set for this period only ·
+  /// its status.
+  Widget? _periodBadge(AppLocalizations l, Budget b, BudgetPeriod x) {
+    if (x.isCurrent) {
+      return AppChip(label: l.bgPeriodNow, size: ChipSize.mini, selected: true);
+    }
+    if (x.overridden) {
+      return AppChip(
+        label: l.bgPeriodOverridden,
+        size: ChipSize.mini,
+        selected: true,
+        tone: AppChipTone.info,
+      );
+    }
+    return budgetStatusChip(l, b, period: x, size: ChipSize.mini);
+  }
+
+  /// The counted items, a day header before each new day.
+  List<Widget> _itemRows(AppLocalizations l, BudgetDetail d) {
+    final out = <Widget>[];
+    DateTime? last;
+    for (final i in d.items.items) {
+      final date = i.date;
+      if (date != null && date != last) {
+        out.add(DateGroupHeader(label: budgetDate(context, date)));
+        last = date;
+      }
+      out.add(_itemRow(l, d.budget, i));
+    }
+    return out;
+  }
+
+  Widget _itemRow(AppLocalizations l, Budget b, BudgetItem i) {
+    final title = (i.description ?? '').isNotEmpty
+        ? i.description!
+        : (i.category?.name ?? i.event?.name ?? '—');
+    final reason = budgetReasonText(l, b, i);
+    return TxRow(
+      leading: IconDisplay(
+        type: IconType.category,
+        size: 36,
+        iconCode: i.category?.iconCode ?? i.event?.iconCode,
+      ),
+      title: title,
+      amount: -i.amount,
+      walletLabel: i.account?.name,
+      walletIcon: i.account == null
+          ? null
+          : IconDisplay(
+              type: IconType.account,
+              size: 14,
+              iconCode: i.account!.iconCode,
+            ),
+      source: AppChip(
+        label: i.event != null && i.source == BudgetSource.event
+            ? '${l.bgSourceEvent} ${i.event!.name}'
+            : budgetSourceLabel(l, i.source),
+        size: ChipSize.mini,
+        tone: AppChipTone.neutral,
+      ),
+      category: i.category != null && i.category!.name != title
+          ? i.category!.name
+          : null,
+      meta: [?reason],
+      recurring: i.recurringItemId != null,
+      progress: i.recurringSeq == null
+          ? null
+          : (i.recurringTotal == null
+                ? '${i.recurringSeq}'
+                : '${i.recurringSeq}/${i.recurringTotal}'),
+      dimmed: i.expected,
+      onTap: i.kind == 'transaction'
+          ? () => openPage(context, '/transactions/${i.id}')
+          : null,
+    );
+  }
+
+  // ── Settings (view + edit) ──────────────────────────────────────────
+
+  /// การตั้งค่า — what the budget counts, when it warns, whether it repeats.
+  /// View: summary rows (they start editing); edit: the pickers.
+  Widget _settings(AppLocalizations l, {required bool editing}) {
+    final w = working;
+    final scope = budgetScopeSummary(
+      l,
+      all: w.allScope,
+      categories: w.categories,
+      tags: w.tags,
+      wallets: w.wallets,
+    );
+    final warn = w.warnPct == null ? l.bgWarnOff : l.bgWarnPct(w.warnPct!);
+    return SettingsSection(
+      title: l.settingsTitle,
+      description: l.fpBudgetsSettingsDesc,
+      children: [
+        if (!editing)
+          SettingSummaryRow(
+            label: l.fpBudgetsCountsWhat,
+            summary: scope ?? l.quickEventNone,
+            onTap: _canEdit ? enterEdit : null,
+          )
+        else ...[
+          SettingToggleRow(
+            label: l.bgScopeAll,
+            value: w.allScope,
+            submits: false,
+            onChanged: (v) {
+              setState(() => _scopeMissing = false);
+              _change(w.copyWith(allScope: v));
+            },
           ),
           if (!w.allScope) ...[
-            DetailRow.pick(
+            SettingSummaryRow(
               label: l.bgScopeCategories,
-              valueChips: [
-                for (final c in w.categories)
-                  _scopeChip(
-                    c.includeChildren
-                        ? '${c.category.name} ${l.bgScopeChildren}'
-                        : c.category.name,
-                    c.category.iconCode,
-                    AppIcons.category,
-                  ),
-              ],
-              emptyText: l.quickEventNone,
+              summary: w.categories.isEmpty
+                  ? l.quickEventNone
+                  : budgetScopeSummary(
+                      l,
+                      all: false,
+                      categories: w.categories,
+                      tags: const [],
+                      wallets: const [],
+                    ),
               onTap: _pickCategories,
             ),
-            DetailRow.pick(
+            SettingSummaryRow(
               label: l.bgScopeTags,
-              helper: w.tags.isEmpty ? null : l.bgScopeTagsHint,
-              valueChips: [
-                for (final t in w.tags) _scopeChip(t, null, AppIcons.tag),
-              ],
-              emptyText: l.quickEventNone,
+              summary: w.tags.isEmpty ? l.quickEventNone : w.tags.join(', '),
               onTap: _pickTags,
             ),
-            DetailRow.pick(
+            SettingSummaryRow(
               label: l.bgScopeWallets,
-              valueChips: [
-                for (final x in w.wallets)
-                  _scopeChip(x.name, x.iconCode, AppIcons.wallet),
-              ],
-              emptyText: l.quickEventNone,
+              summary: w.wallets.isEmpty
+                  ? l.quickEventNone
+                  : w.wallets.map((x) => x.name).join(', '),
               error: _scopeMissing && w.scopeEmpty ? l.bgScopeRequired : null,
               onTap: _pickWallets,
             ),
           ],
         ],
-      ),
-      (first) => SectionCard(
-        first: first,
-        title: l.bgSectionPeriod,
-        children: [
-          if (w.recurring)
-            DetailRow.pick(
-              label: l.bgFieldRepeat,
-              value: budgetRuleLabel(l, w.rule),
-              emptyText: l.quickEventNone,
-              onTap: _pickRule,
-            ),
-          DetailRow.pick(
-            label: l.bgFieldStart,
-            value: budgetDate(context, w.start),
-            emptyText: l.quickEventNone,
-            onTap: _pickStart,
-          ),
-          DetailRow.pick(
-            label: l.bgFieldEnd,
-            value: switch (w.end.kind) {
-              'date' => budgetDate(context, w.end.date!),
-              'count' => l.bgEndPeriods(w.end.count ?? 0),
-              _ => l.bgEndNone,
-            },
-            emptyText: l.quickEventNone,
-            onTap: _pickEnd,
-          ),
-        ],
-      ),
-      (first) => SectionCard(
-        first: first,
-        title: l.bgSectionWarn,
-        children: [
+        if (editing)
           OptionMenuAnchor<int>(
             selected: w.warnPct ?? 0,
             options: [
@@ -884,56 +1075,186 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
             onSelected: (p) => _change(
               p == 0 ? w.copyWith(clearWarn: true) : w.copyWith(warnPct: p),
             ),
-            builder: (context, toggle) => DetailRow.pick(
-              label: l.bgFieldWarn,
-              helper: l.bgWarnHint,
-              value: w.warnPct == null ? l.bgWarnOff : l.bgWarnPct(w.warnPct!),
-              emptyText: l.quickEventNone,
+            builder: (context, toggle) => SettingSummaryRow(
+              label: l.fpBudgetsWarnAt,
+              summary: warn,
               onTap: toggle,
             ),
+          )
+        else
+          SettingSummaryRow(
+            label: l.fpBudgetsWarnAt,
+            summary: warn,
+            onTap: _canEdit ? enterEdit : null,
           ),
-        ],
-      ),
-    ];
-  }
-
-  // ── Manage ──────────────────────────────────────────────────────────
-
-  /// One counted thing as a chip: its icon + colour.
-  Widget _scopeChip(String label, IconCode? code, IconData fallback) {
-    final palette = Theme.of(context).extension<AppColors>()!;
-    return AppChip(
-      label: label,
-      icon: IconRegistry.get(code?.icon, fallback: fallback),
-      color: code.tintFor(palette),
-      size: ChipSize.chip,
-      maxWidth: 200,
+        SettingToggleRow(
+          label: l.fpBudgetsRepeat,
+          caption: l.fpBudgetsRepeatCaption,
+          value: w.recurring,
+          submits: false,
+          onChanged: _canEdit
+              ? (v) => _change(
+                  w.copyWith(
+                    recurring: v,
+                    // A one-off keeps no count end.
+                    end: !v && w.end.kind == 'count'
+                        ? const BudgetEnd.none()
+                        : w.end,
+                  ),
+                )
+              : null,
+        ),
+      ],
     );
   }
 
-  Widget? _manage(AppLocalizations l, Budget? b) {
-    if (b == null) return null;
-    final editing = isEditing;
-    final close = !editing && b.actions.close;
-    if (!close && !editing) return null;
-    return ManageSection(
-      extraActions: [
-        if (close)
-          ManageAction(
+  // ── Edit / create mode ──────────────────────────────────────────────
+
+  /// Edit mode is its own form: the card keeps icon, name, description and
+  /// the limit; then start / end, the settings, the note and the end zone.
+  Widget _editBody(
+    BuildContext context,
+    AppLocalizations l,
+    Budget? b,
+    double barInset,
+    double bottom,
+  ) {
+    final w = working;
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final accent = w.iconCode.tintFor(palette);
+    return DetailLayout(
+      topInset: barInset + AppSpacing.lg,
+      bottomInset: bottom,
+      onRefresh: widget.isCreate ? null : _load,
+      hero: HeroCard(
+        style: HeroStyle.tinted(color: accent, glyph: AppIcons.budget),
+        editing: true,
+        chips: [
+          if (w.recurring)
+            AppChip(
+              label: l.bgChipRecurring(budgetRuleLabel(l, w.rule)),
+              selected: true,
+              trailing: AppChipTrailing.dropdown,
+              onTap: _pickRule,
+            ),
+        ],
+        icon: EditableCircle(
+          size: 44,
+          onTap: _pickIcon,
+          child: IconDisplay(
+            type: IconType.category,
+            size: 44,
+            iconCode: w.iconCode,
+          ),
+        ),
+        name: HeroNameInput(
+          editing: true,
+          controller: _ctrl[_Field.name]!,
+          focusNode: _nameFocus,
+          hint: l.commonName,
+          maxLength: TextLimits.name,
+          onChanged: (v) => _onText(_Field.name, v),
+          validator: (v) =>
+              (v == null || v.trim().isEmpty) ? l.bgNameRequired : null,
+        ),
+        description: HeroDescription(
+          controller: _ctrl[_Field.description]!,
+          editing: true,
+          hint: l.commonDescription,
+          maxLength: TextLimits.description,
+          focusNode: _descriptionFocus,
+          onChanged: (v) => _onText(_Field.description, v),
+        ),
+        amountField: HeroAmountField(
+          controller: _ctrl[_Field.amount]!,
+          label: l.fpBudgetsLimitLabel,
+          accent: accent,
+          symbol: context.readUserCurrencySymbol,
+          onChanged: (v) => _onText(_Field.amount, v),
+          validator: (v) {
+            final n = AmountInput.parse(v);
+            return (n == null || n <= 0) ? l.budgetFormAmountInvalid : null;
+          },
+        ),
+      ),
+      info: InfoBox(
+        rows: [
+          InfoRow(
+            label: l.bgFieldStart,
+            value: budgetDate(context, w.start),
+            showChevron: true,
+            onTap: _pickStart,
+          ),
+          InfoRow(
+            label: l.bgFieldEnd,
+            value: switch (w.end.kind) {
+              'date' => budgetDate(context, w.end.date!),
+              'count' => l.bgEndPeriods(w.end.count ?? 0),
+              _ => l.bgEndNone,
+            },
+            showChevron: true,
+            onTap: _pickEnd,
+          ),
+        ],
+      ),
+      settings: _settings(l, editing: true),
+      note: NoteSection(
+        label: l.commonNote,
+        editing: true,
+        controller: _ctrl[_Field.note]!,
+        maxLength: TextLimits.note,
+        editField: DetailStacked(
+          label: l.commonNote,
+          child: AppInput.inline(
+            editing: true,
+            controller: _ctrl[_Field.note]!,
+            focusNode: _noteFocus,
+            maxLines: 3,
+            maxLength: TextLimits.note,
+            onChanged: (v) => _onText(_Field.note, v),
+          ),
+        ),
+      ),
+      endZone: b == null ? null : _endZone(l, b),
+      metaLines: b == null
+          ? const []
+          : detailMetaLines(
+              context,
+              createdAt: b.createdAt,
+              updatedAt: b.updatedAt,
+            ),
+    );
+  }
+
+  /// ปิดงบ (when it can close) → เก็บถาวร / กู้คืน → ลบ, each with its
+  /// consequence; a confirm dialog guards every one.
+  Widget _endZone(AppLocalizations l, Budget b) {
+    final canArchive = b.isArchived ? b.actions.restore : b.actions.archive;
+    return EndZone(
+      actions: [
+        if (b.actions.close)
+          EndZoneAction(
+            kind: EndZoneKind.close,
             label: l.bgClose,
-            icon: AppIcons.close,
+            consequence: l.fpBudgetsCloseConsequence,
             onTap: isSaving ? null : () => _close(b),
           ),
+        if (canArchive)
+          EndZoneAction(
+            kind: EndZoneKind.archive,
+            label: b.isArchived ? l.bgRestore : l.budgetDetailArchive,
+            consequence: b.isArchived
+                ? l.fpBudgetsRestoreConsequence
+                : l.fpBudgetsArchiveConsequence,
+            onTap: isSaving ? null : () => _archive(b),
+          ),
+        EndZoneAction(
+          kind: EndZoneKind.delete,
+          label: l.budgetDeleteThis,
+          consequence: l.fpBudgetsDeleteConsequence,
+          onTap: isSaving ? null : () => _delete(b),
+        ),
       ],
-      archiveLabel: editing
-          ? (b.isArchived ? l.bgRestore : l.budgetDetailArchive)
-          : null,
-      onArchive:
-          !editing || isSaving || !(b.actions.archive || b.actions.restore)
-          ? null
-          : () => _archive(b),
-      deleteLabel: editing ? l.budgetDeleteThis : null,
-      onDelete: !editing || isSaving ? null : () => _delete(b),
     );
   }
 }

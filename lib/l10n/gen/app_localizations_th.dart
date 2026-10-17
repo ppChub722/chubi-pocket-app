@@ -6118,4 +6118,114 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpWalletMemberCaption => 'สมาชิก';
+
+  @override
+  String fpBudgetsRangeDay(String range, int elapsed, int total) {
+    return '$range · วันที่ $elapsed/$total';
+  }
+
+  @override
+  String get fpBudgetsLeftLabel => 'ยังใช้ได้';
+
+  @override
+  String get fpBudgetsOverLabel => 'เกิน';
+
+  @override
+  String fpBudgetsLimitTarget(String amount) {
+    return '/ $amount';
+  }
+
+  @override
+  String fpBudgetsUsedCaption(String amount) {
+    return 'ใช้ไป $amount';
+  }
+
+  @override
+  String fpBudgetsPaceCaption(int pct) {
+    return 'ควรใช้ถึงวันนี้ $pct%';
+  }
+
+  @override
+  String get fpBudgetsTileDaily => 'ใช้ได้วันละ';
+
+  @override
+  String get fpBudgetsTileProjected => 'คาดสิ้นรอบ';
+
+  @override
+  String get fpBudgetsTileDaysLabel => 'เหลืออีก';
+
+  @override
+  String fpBudgetsDaysValue(int count) {
+    return '$count วัน';
+  }
+
+  @override
+  String get fpBudgetsSettingsDesc => 'งบนี้นับอะไร และเตือนเมื่อไหร่';
+
+  @override
+  String get fpBudgetsCountsWhat => 'นับอะไรบ้าง';
+
+  @override
+  String get fpBudgetsWarnAt => 'เตือนเมื่อใช้ถึง';
+
+  @override
+  String get fpBudgetsRepeat => 'ทำซ้ำทุกรอบ';
+
+  @override
+  String get fpBudgetsRepeatCaption => 'แต่ละรอบแก้เพดานแยกได้';
+
+  @override
+  String get fpBudgetsTabItems => 'รายการในรอบนี้';
+
+  @override
+  String get fpBudgetsTabPeriods => 'ทุกรอบ';
+
+  @override
+  String get fpBudgetsLimitLabel => 'เพดานงบ';
+
+  @override
+  String get fpBudgetsReasonAll => 'นับเพราะ: ทุกรายจ่าย';
+
+  @override
+  String fpBudgetsReasonCategory(String name) {
+    return 'นับเพราะ: หมวด $name';
+  }
+
+  @override
+  String fpBudgetsReasonSubCategory(String name) {
+    return 'นับเพราะ: หมวดย่อยของ $name';
+  }
+
+  @override
+  String get fpBudgetsReasonSubCategoryAny =>
+      'นับเพราะ: เป็นหมวดย่อยของหมวดที่นับ';
+
+  @override
+  String fpBudgetsReasonTag(String name) {
+    return 'นับเพราะ: แท็ก $name';
+  }
+
+  @override
+  String fpBudgetsReasonWallet(String name) {
+    return 'นับเพราะ: กระเป๋า $name';
+  }
+
+  @override
+  String fpBudgetsPeriodReset(String amount) {
+    return 'คืนเป็นค่าเดิม ($amount)';
+  }
+
+  @override
+  String get fpBudgetsCloseConsequence =>
+      'จบงบนี้ ไม่สร้างรอบใหม่ รอบเก่ายังดูได้';
+
+  @override
+  String get fpBudgetsArchiveConsequence => 'ซ่อนไว้ ไม่นับในยอด กู้คืนได้';
+
+  @override
+  String get fpBudgetsRestoreConsequence =>
+      'กลับมาอยู่ในรายการและนับในยอดอีกครั้ง';
+
+  @override
+  String get fpBudgetsDeleteConsequence => 'ลบถาวร ทุกรอบ';
 }

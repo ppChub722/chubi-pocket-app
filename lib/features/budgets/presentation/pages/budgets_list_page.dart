@@ -10,7 +10,6 @@ import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../domain/budget.dart';
 import '../../domain/budget_period.dart';
 import '../budget_labels.dart';
-import '../budget_summary_card.dart';
 import '../cubit/budgets_cubit.dart';
 
 /// `/budgets` — every budget at its CURRENT period (spec 08 v2): a header with
@@ -99,21 +98,19 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
       rowDividerIndent: 72,
       header: [
         if (active && s.activeCount > 0)
-          BudgetSummaryCard(
-            summary: s,
-            health: state.health,
-            onHealth: cubit.setHealth,
-            action: toggleButton,
-          )
+          _summary(context, l, state, toggleButton)
         else
-          BudgetCompactCard(
-            label: switch (state.filter) {
+          ListSummaryCard(
+            caption: switch (state.filter) {
               BudgetFilter.active => l.bgFilterActive,
               BudgetFilter.ended => '${l.bgFilterEnded} · ${s.endedCount}',
               BudgetFilter.archived =>
                 '${l.bgFilterArchived} · ${s.archivedCount}',
             },
-            action: toggleButton,
+            style: HeroStyle.tinted(
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            actions: [toggleButton],
           ),
         ListToolbar(
           collapse: _toolbar,
@@ -181,6 +178,59 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
     );
   }
 
+  /// The summary card: every number is the BE's (`summary`); the 4 health
+  /// tiles are the server filter of the list (tap again to clear).
+  Widget _summary(
+    BuildContext context,
+    AppLocalizations l,
+    BudgetsState state,
+    Widget toggleButton,
+  ) {
+    final s = state.summary;
+    final cubit = context.read<BudgetsCubit>();
+    SummaryTile tile(
+      BudgetHealth h,
+      String label,
+      int count,
+      SummaryTileTone tone,
+    ) => SummaryTile(
+      label: label,
+      value: '$count',
+      tone: tone,
+      selected: state.health == h,
+      onTap: () => cubit.setHealth(h),
+    );
+    return ListSummaryCard(
+      caption: l.bgSummaryUsedCaption,
+      style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
+      actions: [toggleButton],
+      amount: s.totalUsed,
+      mainSuffix: l.bgHeroOfLimit(budgetRowMoney(context, s.totalLimit)),
+      bar: ProgressRow(
+        value: s.totalLimit <= 0 ? 0.0 : s.totalUsed / s.totalLimit,
+        color: ProgressTone.normal.resolve(context),
+        label: l.bgSummaryRemaining(budgetRowMoney(context, s.totalRemaining)),
+        trailing: '${s.usedPct}%',
+      ),
+      tiles: [
+        tile(
+          BudgetHealth.all,
+          l.bgTileAll,
+          s.countAll,
+          SummaryTileTone.neutral,
+        ),
+        tile(BudgetHealth.normal, l.bgTileOk, s.countOk, SummaryTileTone.green),
+        tile(
+          BudgetHealth.near,
+          l.bgStatWarn,
+          s.countNear,
+          SummaryTileTone.amber,
+        ),
+        tile(BudgetHealth.over, l.bgStatOver, s.countOver, SummaryTileTone.red),
+      ],
+    );
+  }
+
   static String _statusLabel(AppLocalizations l, BudgetFilter f) => switch (f) {
     BudgetFilter.active => l.bgFilterActive,
     BudgetFilter.ended => l.bgFilterEnded,
@@ -195,9 +245,6 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
 
   Widget _row(BuildContext context, AppLocalizations l, Budget b) {
     final x = b.period;
-    final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final small = Theme.of(context).textTheme.bodySmall;
     final over = x.overBy > 0;
     final status = x.status == BudgetStatus.pace
         ? null
@@ -213,11 +260,9 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
       alignWithTitle: true,
       badge: status == null && !pace
           ? null
-          : Row(
-              mainAxisSize: MainAxisSize.min,
+          : ProgressBadges(
               children: [
                 ?status,
-                if (status != null && pace) const SizedBox(width: 4),
                 if (pace)
                   StatusChip.tone(
                     label: l.bgStatusPace,
@@ -226,25 +271,10 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
                   ),
               ],
             ),
-      trailing: Text.rich(
-        TextSpan(
-          children: [
-            TextSpan(
-              text: '${over ? l.bgRowOverAmount : l.bgRowLeft} ',
-              style: small?.copyWith(
-                color: over ? palette.error : scheme.onSurfaceVariant,
-              ),
-            ),
-            TextSpan(
-              text: budgetRowMoney(context, over ? x.overBy : x.remaining),
-              style: small?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: over ? palette.error : scheme.onSurface,
-              ),
-            ),
-          ],
-        ),
-        maxLines: 1,
+      trailing: ProgressRemainder(
+        label: over ? l.bgRowOverAmount : l.bgRowLeft,
+        amount: budgetRowMoney(context, over ? x.overBy : x.remaining),
+        over: over,
       ),
       value: x.usedRatio,
       expected: x.expected > 0 ? x.expectedRatio : null,

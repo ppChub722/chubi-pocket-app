@@ -33,6 +33,27 @@ enum BudgetSource {
   String toJson() => name;
 }
 
+/// Why a counted row counts in the budget (first match; `item.reason`).
+enum BudgetReason {
+  all,
+  category,
+  subCategory,
+  tag,
+  wallet,
+
+  /// Nothing matched (never for a counted row).
+  none;
+
+  static BudgetReason fromJson(String? v) => switch (v) {
+    'all' => BudgetReason.all,
+    'category' => BudgetReason.category,
+    'sub_category' => BudgetReason.subCategory,
+    'tag' => BudgetReason.tag,
+    'wallet' => BudgetReason.wallet,
+    _ => BudgetReason.none,
+  };
+}
+
 /// The period dashboard ("ภาพรวม"); a figure that doesn't apply is null.
 class BudgetForecast extends Equatable {
   const BudgetForecast({
@@ -48,7 +69,25 @@ class BudgetForecast extends Equatable {
     this.thisMonth,
     this.historyAvg,
     this.historyCount = 0,
+    this.available,
+    this.projectedEnd,
+    this.daysLeft,
+    this.pacePct,
   });
+
+  /// limit − used (this period).
+  final double? available;
+
+  /// Where the current period ends at the current pace (= [forecastEnd]);
+  /// null when open-ended or not current.
+  final double? projectedEnd;
+
+  /// Days left in the current period, today included; null otherwise.
+  final int? daysLeft;
+
+  /// How much of the period has elapsed (0–100) — the pace tick; null
+  /// otherwise.
+  final int? pacePct;
 
   final int? elapsedDays;
   final int? totalDays;
@@ -76,10 +115,18 @@ class BudgetForecast extends Equatable {
     thisMonth: _moneyOrNull(json?['this_month']),
     historyAvg: _moneyOrNull(json?['history_avg']),
     historyCount: (json?['history_count'] as num?)?.toInt() ?? 0,
+    available: _moneyOrNull(json?['available']),
+    projectedEnd: _moneyOrNull(json?['projected_end']),
+    daysLeft: (json?['days_left'] as num?)?.toInt(),
+    pacePct: (json?['pace_pct'] as num?)?.toInt(),
   );
 
   @override
   List<Object?> get props => [
+    available,
+    projectedEnd,
+    daysLeft,
+    pacePct,
     elapsedDays,
     totalDays,
     dailyAllowance,
@@ -170,7 +217,11 @@ class BudgetItem extends Equatable {
     this.recurringItemId,
     this.recurringSeq,
     this.recurringTotal,
+    this.reason = BudgetReason.none,
   });
+
+  /// Why this row counts in the budget.
+  final BudgetReason reason;
 
   /// `transaction` | `event_bill` | `recurring_item` | `pending` — what [id]
   /// points at.
@@ -214,11 +265,13 @@ class BudgetItem extends Equatable {
       recurringItemId: recurring?['item_id'] as String?,
       recurringSeq: (recurring?['seq'] as num?)?.toInt(),
       recurringTotal: (recurring?['total'] as num?)?.toInt(),
+      reason: BudgetReason.fromJson(json['reason'] as String?),
     );
   }
 
   @override
   List<Object?> get props => [
+    reason,
     kind,
     id,
     source,
@@ -310,6 +363,15 @@ class BudgetDetail extends Equatable {
     periods: periods ?? this.periods,
     items: items ?? this.items,
   );
+
+  /// The page after `updateBudgetPeriod` answered with [next] — the budget
+  /// page AT THE EDITED PERIOD. The current period's answer replaces this
+  /// page; an older period's answer only patches that period's row (the page
+  /// keeps showing the current one).
+  BudgetDetail afterPeriodWrite(BudgetDetail next) {
+    if (next.budget.period.id == budget.period.id) return next;
+    return copyWith(periods: periods.replace(next.budget.period));
+  }
 
   factory BudgetDetail.fromJson(Map<String, dynamic> json) => BudgetDetail(
     budget: Budget.fromJson(json['budget'] as Map<String, dynamic>),

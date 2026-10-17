@@ -916,6 +916,8 @@ final List<HubPage> hubPages = [
     covers: [
       'ProgressTone',
       'ProgressCard',
+      'ProgressRemainder',
+      'ProgressBadges',
       'ProgressHeroFooter',
       'ProgressSummary',
       'BreakdownRow',
@@ -938,6 +940,8 @@ final List<HubPage> hubPages = [
       'SourceChipItem',
       'showScopePrompt',
       'walletValueChip',
+      'showPeriodLimitSheet',
+      'PeriodLimitResult',
     ],
     builder: buildBudgetsPage,
   ),
