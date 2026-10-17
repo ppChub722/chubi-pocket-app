@@ -134,9 +134,16 @@ class _Repo extends Fake implements PendingRepository {
     );
   }
 
+  /// What the BE answers after taking [ids] out: the summary over the rest.
+  Map<String, dynamic> _summaryAfter(List<String> ids) {
+    final left = rows.where((p) => !ids.contains(p.id)).length;
+    return summaryJson(count: left, manual: left, ready: left, needs: 0);
+  }
+
   PendingSubmitResult _answer(List<String> ids) => PendingSubmitResult.fromJson(
     nextAnswer ??
         {
+          'summary': _summaryAfter(ids),
           'submitted': [
             for (final id in ids) {'id': id},
           ],
@@ -195,7 +202,7 @@ void main() {
   });
 
   group('cubit', () {
-    test('load keeps the summary; a local change drops it', () async {
+    test('a write answer carries the summary; no second list call', () async {
       final repo = _Repo([
         PendingTransaction.fromJson(draftJson('p1')),
         PendingTransaction.fromJson(draftJson('p2')),
@@ -205,8 +212,11 @@ void main() {
       expect(cubit.state.summary?.readyCount, 2);
       await cubit.submitOne('p1');
       expect(cubit.state.items.map((e) => e.id), ['p2']);
-      expect(cubit.state.summary, isNull);
+      // The numbers are the answer's, not the old load's, not row counts.
+      expect(cubit.state.summary?.count, 1);
+      expect(cubit.state.summary?.readyCount, 1);
       expect(repo.submitOneCalls, ['p1']);
+      expect(repo.listCalls, 1);
       await cubit.close();
     });
 
@@ -429,6 +439,9 @@ void main() {
         ['p1'],
       ]);
       expect(pending.state.items.map((e) => e.id), ['p3']);
+      // The numbers came with the submit answer; the list is not re-read.
+      expect(repo.listCalls, 1);
+      expect(pending.state.summary?.count, 1);
     });
   });
 }

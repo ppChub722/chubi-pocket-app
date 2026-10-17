@@ -161,6 +161,132 @@ class EventRow extends StatelessWidget {
   }
 }
 
+/// The รายการประจำ row of the section (0.4.0): the recurring this transaction
+/// is linked to — [name] (null = none), [periodLabel] ("งวด 16 ต.ค."), a tap
+/// (open the picker, or the recurring in view), an optional ✕ ([onClear] —
+/// only where the BE can unlink), the lock, and [ask]: an inline question
+/// shown under the row (an [AskCard]).
+class SplitRecurringSlot {
+  const SplitRecurringSlot({
+    this.name,
+    this.periodLabel,
+    this.onTap,
+    this.onClear,
+    this.locked = false,
+    this.ask,
+  });
+
+  final String? name;
+  final String? periodLabel;
+  final VoidCallback? onTap;
+  final VoidCallback? onClear;
+  final bool locked;
+  final Widget? ask;
+}
+
+/// The รายการประจำ row — "รายการประจำ  [🔁 name · งวด 16 ต.ค. ✕]"; empty with
+/// a tap it is the add chip "+ เลือกรายการประจำ"; nothing to tap: "ไม่ได้เลือก".
+/// [variant] as [EventRow]; the [SplitRecurringSlot.ask] card sits under it.
+class RecurringLinkRow extends StatelessWidget {
+  const RecurringLinkRow({
+    required this.slot,
+    this.variant = SplitEventVariant.full,
+    super.key,
+  });
+
+  final SplitRecurringSlot slot;
+  final SplitEventVariant variant;
+
+  bool get _compact => variant == SplitEventVariant.compact;
+
+  Widget _value(BuildContext context, AppLocalizations l) {
+    final n = slot.name;
+    if (n == null) {
+      if (slot.onTap == null || slot.locked) {
+        return DetailPlaceholder(l.quickEventNone);
+      }
+      return AppChip(
+        icon: AppIcons.add,
+        label: l.txRecurringPick,
+        tone: AppChipTone.primary,
+        selected: true,
+        dashed: _compact,
+        size: _compact ? ChipSize.chip : ChipSize.control,
+        onTap: slot.onTap,
+      );
+    }
+    final removable = !slot.locked && slot.onClear != null;
+    final period = slot.periodLabel;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: LayoutBuilder(
+            builder: (context, c) => AppChip(
+              icon: AppIcons.recurring,
+              color: ModuleColors.of(context).planning,
+              label: period == null ? n : '$n · $period',
+              size: ChipSize.chip,
+              maxWidth: c.maxWidth.isFinite ? c.maxWidth : null,
+              onTap: slot.locked ? null : slot.onTap,
+              trailing: removable
+                  ? AppChipTrailing.remove
+                  : AppChipTrailing.none,
+              onRemove: removable ? slot.onClear : null,
+              tooltip: removable ? l.txRecurringUnlink : null,
+            ),
+          ),
+        ),
+        if (slot.locked) ...[
+          const SizedBox(width: AppSpacing.xs),
+          const AppIcon(AppIcons.lock),
+        ],
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final value = _value(context, l);
+    final row = _compact
+        ? DraftFieldRow(
+            label: l.txRecurringRowLabel,
+            dense: true,
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: value,
+            ),
+          )
+        : DetailRow(
+            label: l.txRecurringRowLabel,
+            trailing: Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: value,
+            ),
+          );
+    final ask = slot.ask;
+    if (ask == null) return row;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        row,
+        Padding(
+          padding: _compact
+              ? const EdgeInsets.only(top: AppSpacing.xs)
+              : const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  0,
+                  AppSpacing.lg,
+                  AppSpacing.md,
+                ),
+          child: ask,
+        ),
+      ],
+    );
+  }
+}
+
 /// THE split + event block of a transaction, built once and used by quick
 /// create, the pending drafts ("เพิ่มร่าง" + "แก้ร่าง") and the transaction
 /// detail. [variant] picks the look (see [SplitEventVariant]):
@@ -186,6 +312,7 @@ class SplitEventSection extends StatefulWidget {
   const SplitEventSection({
     this.splits,
     this.event,
+    this.recurring,
     this.summary,
     this.collapsible = false,
     this.initiallyOpen = true,
@@ -197,6 +324,9 @@ class SplitEventSection extends StatefulWidget {
 
   final Widget? splits;
   final SplitEventSlot? event;
+
+  /// The รายการประจำ row (0.4.0), after the event; null = no such row.
+  final SplitRecurringSlot? recurring;
   final String? summary;
   final bool collapsible;
   final bool initiallyOpen;
@@ -238,6 +368,8 @@ class _SplitEventSectionState extends State<SplitEventSection> {
                   onClear: e.onClear,
                   locked: e.locked,
                 ),
+              if (widget.recurring != null)
+                RecurringLinkRow(slot: widget.recurring!),
             ],
           ),
         ],
@@ -302,6 +434,13 @@ class _SplitEventSectionState extends State<SplitEventSection> {
               onTap: e.onTap,
               onClear: e.onClear,
               locked: e.locked,
+              variant: SplitEventVariant.compact,
+            ),
+          ],
+          if (widget.recurring != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            RecurringLinkRow(
+              slot: widget.recurring!,
               variant: SplitEventVariant.compact,
             ),
           ],

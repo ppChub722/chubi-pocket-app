@@ -24,6 +24,24 @@ class DefaultWalletRef extends Equatable {
   List<Object?> get props => [id, name, iconCode];
 }
 
+/// `/users/me` `notification_summary`: the settings tile's numbers (mutable
+/// types not muted, types running automatically).
+class NotificationSummary extends Equatable {
+  const NotificationSummary({required this.on, required this.auto});
+
+  factory NotificationSummary.fromJson(Map<String, dynamic> json) =>
+      NotificationSummary(
+        on: (json['on'] as num?)?.toInt() ?? 0,
+        auto: (json['auto'] as num?)?.toInt() ?? 0,
+      );
+
+  final int on;
+  final int auto;
+
+  @override
+  List<Object?> get props => [on, auto];
+}
+
 /// Authenticated user — the subset of fields surfaced in the Phase 0 UI.
 class User extends Equatable {
   const User({
@@ -36,6 +54,7 @@ class User extends Equatable {
     this.feeCategoryId,
     this.defaultAccount,
     this.autoCopyOwnEventBills = false,
+    this.notificationSummary,
     this.createdAt,
     this.updatedAt,
   });
@@ -61,6 +80,9 @@ class User extends Equatable {
   /// `auto_copy_own_event_bills`: a bill I record in an event also lands in my
   /// own book (set on the event settings, not here).
   final bool autoCopyOwnEventBills;
+
+  /// The settings tile's numbers; null when the answer has none (login).
+  final NotificationSummary? notificationSummary;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -87,6 +109,11 @@ class User extends Equatable {
           : null,
       autoCopyOwnEventBills:
           (json['auto_copy_own_event_bills'] as bool?) ?? false,
+      notificationSummary: json['notification_summary'] is Map
+          ? NotificationSummary.fromJson(
+              (json['notification_summary'] as Map).cast<String, dynamic>(),
+            )
+          : null,
     );
   }
 
@@ -110,6 +137,7 @@ class User extends Equatable {
       updatedAt: updatedAt,
       defaultAccount: defaultAccount,
       autoCopyOwnEventBills: autoCopyOwnEventBills,
+      notificationSummary: notificationSummary,
       feeCategoryId: clearFeeCategory
           ? null
           : (feeCategoryId ?? this.feeCategoryId),
@@ -127,6 +155,7 @@ class User extends Equatable {
     feeCategoryId,
     defaultAccount,
     autoCopyOwnEventBills,
+    notificationSummary,
     createdAt,
     updatedAt,
   ];

@@ -57,6 +57,7 @@ import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/settings/presentation/pages/change_password_page.dart';
 import '../../features/settings/presentation/pages/edit_profile_page.dart';
+import '../../features/archived/presentation/archived_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 
 /// Builds and returns the app's [GoRouter].
@@ -403,6 +404,12 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
           builder: (context, state) => const NotificationSettingsPage(),
         ),
       ],
+    ),
+    // ที่เก็บถาวร — the archive hub, opened from the settings home.
+    GoRoute(
+      path: '/archived',
+      name: 'archived',
+      builder: (context, state) => const ArchivedPage(),
     ),
   ],
   // Projects (Phase 1b.2)

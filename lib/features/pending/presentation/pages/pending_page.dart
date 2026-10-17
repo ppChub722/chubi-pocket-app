@@ -163,13 +163,11 @@ class _PendingPageState extends State<PendingPage> {
     final state = context.watch<PendingCubit>().state;
     final all = state.items;
     final visible = _visible(all);
-    // Counts come from the server's summary; after a local change (no
-    // summary until the next load) they follow the rows on screen.
+    // Counts are the server's summary from the last answer, as it is.
     final summary = state.summary;
-    final manual =
-        summary?.manual ?? all.where((p) => p.source.inManualBucket).length;
-    final others = summary?.notManual ?? all.length - manual;
-    final total = summary?.count ?? all.length;
+    final manual = summary?.manual ?? 0;
+    final others = summary?.notManual ?? 0;
+    final total = summary?.count ?? 0;
     final pickedVisible = visible.where((p) => _selected.contains(p.id)).length;
     final result = _lastResult;
     // UI only for now — the slip scan itself isn't wired yet. Phone only:

@@ -127,7 +127,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
       main: AppText(l.notifCardMain(s.needsAnswer), role: AppTextRole.title),
       mainSuffix: l.notifCardUnread(s.unread),
       tiles: [
-        tile(InboxFilter.all, l.notifTileAll, '${state.allTotal ?? '—'}'),
+        tile(InboxFilter.all, l.notifTileAll, '${s.all}'),
         tile(
           InboxFilter.needsAnswer,
           l.notifTileNeedsAnswer,
@@ -187,12 +187,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
             final hiddenView = state.filter == InboxFilter.hidden;
             final visible = [
               for (final n in state.notifications)
-                if (hiddenView
-                    ? n.isDismissed
-                    : (!n.isDismissed &&
-                          (state.filter != InboxFilter.needsAnswer ||
-                              n.awaitsAnswer)))
-                  n,
+                if (hiddenView ? n.isDismissed : !n.isDismissed) n,
             ];
             final rows = <Widget>[];
             String? lastDay;

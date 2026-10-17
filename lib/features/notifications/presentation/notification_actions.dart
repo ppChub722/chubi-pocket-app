@@ -218,8 +218,38 @@ Future<void> _onRejectProjectInvite(BuildContext ctx, String id) async {
   }
 }
 
+/// The `end` body of "ต่ออีก": the SAME length again, from the notice's own
+/// payload (`end {kind, date|count}`, `start_date`) — no extra GET.
+/// count → ×2; date → end + (end − start), or +1 year without a start;
+/// no end (or no data) → null, nothing is sent.
+Map<String, dynamic>? extendedEnd(Map<String, dynamic> payload) {
+  final end = payload['end'];
+  if (end is! Map) return null;
+  switch (end['kind']) {
+    case 'count':
+      final c = end['count'];
+      return c is num && c > 0
+          ? {'kind': 'count', 'count': c.toInt() * 2}
+          : null;
+    case 'date':
+      final e = DateTime.tryParse('${end['date']}');
+      if (e == null) return null;
+      final s = DateTime.tryParse('${payload['start_date']}');
+      final span = s == null ? null : e.difference(s);
+      final next = span == null || span.inDays <= 0
+          ? DateTime(e.year + 1, e.month, e.day)
+          : DateTime.utc(e.year, e.month, e.day + span.inDays);
+      String two(int v) => v.toString().padLeft(2, '0');
+      return {
+        'kind': 'date',
+        'date': '${next.year}-${two(next.month)}-${two(next.day)}',
+      };
+  }
+  return null;
+}
+
 /// "ต่ออีก" on recurring_ending: `POST /recurring/:id/extend`, then the
-/// notice is marked actioned by the BE's re-arm (the page re-fetches).
+/// BE marks the notice actioned, so the page only re-fetches.
 Future<void> _onExtendRecurring(BuildContext ctx, AppNotification n) async {
   final id = n.payload['recurring_id'] as String?;
   if (id == null) return;
@@ -227,7 +257,7 @@ Future<void> _onExtendRecurring(BuildContext ctx, AppNotification n) async {
   final inboxCubit = ctx.read<NotificationsInboxCubit>();
   final messenger = ScaffoldMessenger.of(ctx);
   try {
-    await repo.action(id, RecurringAction.extend);
+    await repo.extend(id, end: extendedEnd(n.payload));
     await _reload(inboxCubit);
   } on ApiException catch (e) {
     _showError(messenger, e);

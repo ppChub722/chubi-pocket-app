@@ -16,15 +16,12 @@ class PendingRepository {
       final res = await _client.dio.get<Map<String, dynamic>>(
         '/pending-transactions',
       );
-      final summary = res.data!['summary'];
       return PendingList(
         items: ((res.data!['data'] as List?) ?? const [])
             .cast<Map<String, dynamic>>()
             .map(PendingTransaction.fromJson)
             .toList(),
-        summary: summary is Map
-            ? PendingSummary.fromJson(summary.cast<String, dynamic>())
-            : null,
+        summary: PendingSummary.maybe(res.data!['summary']),
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
@@ -83,6 +80,7 @@ class PendingRepository {
       final discarded = <String>[];
       final skipped = <String>[];
       var remaining = 0;
+      PendingSummary? summary;
       for (var i = 0; i < ids.length; i += 100) {
         final end = i + 100 > ids.length ? ids.length : i + 100;
         final res = await _client.dio.post<Map<String, dynamic>>(
@@ -93,11 +91,13 @@ class PendingRepository {
         discarded.addAll(r.discarded);
         skipped.addAll(r.skipped);
         remaining = r.remainingCount;
+        summary = r.summary;
       }
       return DiscardResult(
         discarded: discarded,
         skipped: skipped,
         remainingCount: remaining,
+        summary: summary,
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);

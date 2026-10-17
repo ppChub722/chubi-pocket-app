@@ -48,7 +48,6 @@ class InboxState extends Equatable {
     this.page = 0,
     this.totalPages = 0,
     this.filter = InboxFilter.all,
-    this.allTotal,
   });
 
   final List<AppNotification> notifications;
@@ -63,9 +62,6 @@ class InboxState extends Equatable {
   final int totalPages;
   final InboxFilter filter;
 
-  /// Rows of the unfiltered list (null until the first unfiltered load).
-  final int? allTotal;
-
   bool get hasMore => page > 0 && page < totalPages;
 
   InboxState copyWith({
@@ -77,7 +73,6 @@ class InboxState extends Equatable {
     int? page,
     int? totalPages,
     InboxFilter? filter,
-    int? allTotal,
     bool clearError = false,
   }) {
     return InboxState(
@@ -89,7 +84,6 @@ class InboxState extends Equatable {
       page: page ?? this.page,
       totalPages: totalPages ?? this.totalPages,
       filter: filter ?? this.filter,
-      allTotal: allTotal ?? this.allTotal,
     );
   }
 
@@ -103,13 +97,11 @@ class InboxState extends Equatable {
     page,
     totalPages,
     filter,
-    allTotal,
   ];
 }
 
-/// Inbox cubit. Owns the page-1-loaded list. Row writes patch the row from
-/// the write's reply; the ones that move the card's numbers (hide, restore,
-/// read-all) re-fetch the page's one `GET /notifications`.
+/// Inbox cubit. Owns the page-1-loaded list. Every write patches the rows
+/// held and takes the card's numbers from its answer — never a re-fetch.
 class NotificationsInboxCubit extends Cubit<InboxState> {
   NotificationsInboxCubit({
     required NotificationsRepository repository,
@@ -164,7 +156,6 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
           notifications: p.notifications,
           unreadCount: p.unreadCount,
           summary: p.summary,
-          allTotal: f == InboxFilter.all ? p.total : null,
           status: InboxStatus.loaded,
           page: p.page,
           totalPages: p.totalPages,
@@ -214,10 +205,12 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
 
   Future<void> markActioned(String id) => _write(() => _repo.markActioned(id));
 
-  /// Hides a row (swipe). The row leaves the list at once; the call is
-  /// followed by the page's re-fetch so the card's numbers follow. A failed
-  /// call brings the row back through the re-fetch.
+  /// Hides a row (swipe). The row leaves the list at once; the card's
+  /// numbers come from the answer (no re-fetch). A failed call puts the row
+  /// back where it was.
   Future<bool> hide(String id) async {
+    final at = state.notifications.indexWhere((n) => n.id == id);
+    final row = at < 0 ? null : state.notifications[at];
     emit(
       state.copyWith(
         notifications: state.notifications.where((n) => n.id != id).toList(),
@@ -225,22 +218,33 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
     );
     try {
       final r = await _repo.markDismissed(id);
-      onUnreadChanged?.call(r.badges.unreadNotifications);
-      await reload();
+      _apply(r.badges, r.summary);
       return true;
     } on ApiException catch (e) {
-      emit(state.copyWith(error: e));
-      await reload();
+      final rows = [...state.notifications];
+      if (row != null && !rows.any((n) => n.id == id)) {
+        rows.insert(at.clamp(0, rows.length), row);
+      }
+      emit(state.copyWith(notifications: rows, error: e));
       return false;
     }
   }
 
-  /// Un-hides a row (the snackbar's undo, the ซ่อนไว้ tile's กู้คืน).
+  /// Un-hides a row (the snackbar's undo, the ซ่อนไว้ tile's กู้คืน). In the
+  /// hidden view the row leaves; anywhere else the restored row (from the
+  /// answer) goes back in its place by date.
   Future<bool> restore(String id) async {
     try {
       final r = await _repo.restore(id);
-      onUnreadChanged?.call(r.badges.unreadNotifications);
-      await reload();
+      final rows = state.notifications.where((n) => n.id != id).toList();
+      if (state.filter != InboxFilter.hidden) {
+        final i = rows.indexWhere(
+          (n) => n.createdAt.isBefore(r.notification.createdAt),
+        );
+        rows.insert(i < 0 ? rows.length : i, r.notification);
+      }
+      emit(state.copyWith(notifications: rows));
+      _apply(r.badges, r.summary);
       return true;
     } on ApiException catch (e) {
       emit(state.copyWith(error: e));
@@ -251,11 +255,20 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
   /// The one-tap rows' "skip" just hides the row.
   Future<void> markDismissed(String id) => hide(id);
 
+  /// Marks everything read: the rows on screen flip to read, the numbers
+  /// come from the answer.
   Future<void> markReadAll() async {
     try {
-      final badges = await _repo.markReadAll();
-      onUnreadChanged?.call(badges.unreadNotifications);
-      await reload();
+      final r = await _repo.markReadAll();
+      final now = DateTime.now().toUtc();
+      emit(
+        state.copyWith(
+          notifications: [
+            for (final n in state.notifications) n.isUnread ? n.asRead(now) : n,
+          ],
+        ),
+      );
+      _apply(r.badges, r.summary);
     } on ApiException catch (e) {
       emit(state.copyWith(error: e));
     }
@@ -263,20 +276,20 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
 
   Future<void> delete(String id) async {
     try {
-      final badges = await _repo.delete(id);
+      final r = await _repo.delete(id);
       emit(
         state.copyWith(
           notifications: state.notifications.where((n) => n.id != id).toList(),
-          unreadCount: badges.unreadNotifications,
         ),
       );
-      onUnreadChanged?.call(badges.unreadNotifications);
+      _apply(r.badges, r.summary);
     } on ApiException catch (e) {
       emit(state.copyWith(error: e));
     }
   }
 
-  /// One write: the reply carries the row in its new state + fresh badges.
+  /// One write: the reply carries the row in its new state, the fresh
+  /// badges and the card's numbers.
   Future<void> _write(Future<NotificationActionResult> Function() call) async {
     try {
       final r = await call();
@@ -286,17 +299,19 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
             for (final n in state.notifications)
               if (n.id == r.notification.id) r.notification else n,
           ],
-          unreadCount: r.badges.unreadNotifications,
-          summary: InboxSummary(
-            needsAnswer: state.summary.needsAnswer,
-            unread: r.badges.unreadNotifications,
-            dismissed: state.summary.dismissed,
-          ),
         ),
       );
-      onUnreadChanged?.call(r.badges.unreadNotifications);
+      _apply(r.badges, r.summary);
     } on ApiException catch (e) {
       emit(state.copyWith(error: e));
     }
+  }
+
+  /// Takes the numbers a write's answer carries.
+  void _apply(Badges badges, InboxSummary summary) {
+    emit(
+      state.copyWith(unreadCount: badges.unreadNotifications, summary: summary),
+    );
+    onUnreadChanged?.call(badges.unreadNotifications);
   }
 }

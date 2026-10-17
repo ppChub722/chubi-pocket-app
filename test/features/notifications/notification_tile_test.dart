@@ -77,7 +77,6 @@ void main() {
       'muted_types': ['split_changed'],
       'auto_types': <String>[],
       'default_account': {'id': 'a1', 'name': 'KBank', 'icon_code': null},
-      'auto_resolve_own_in_projects': true,
       'updated_at': '2026-10-10T00:00:00Z',
     });
     expect(s.defaultAccount?.id, 'a1');

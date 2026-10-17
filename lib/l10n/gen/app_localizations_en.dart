@@ -1466,6 +1466,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'What you get and what happens automatically';
 
   @override
+  String settingsNotificationsSummary(int on, int auto) {
+    return '$on on · $auto automatic';
+  }
+
+  @override
   String get settingsDefaultCurrencyHint =>
       'Used when you create wallets and debts';
 
@@ -6290,4 +6295,105 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notifActionOpenPending => 'Open pending ›';
+
+  @override
+  String get archivedGroupWallets => 'Wallets';
+
+  @override
+  String get archivedGroupBudgets => 'Budgets';
+
+  @override
+  String get archivedGroupGoals => 'Goals';
+
+  @override
+  String get archivedGroupEvents => 'Events';
+
+  @override
+  String get archivedGroupContacts => 'Contacts';
+
+  @override
+  String get archivedGroupRecurring => 'Recurring';
+
+  @override
+  String archivedOn(String date) {
+    return 'Archived $date';
+  }
+
+  @override
+  String get archivedRestore => 'Restore';
+
+  @override
+  String archivedRestored(String name) {
+    return 'Restored $name';
+  }
+
+  @override
+  String get archivedEmpty => 'Nothing archived';
+
+  @override
+  String get archivedEmptyMessage =>
+      'Archived items show here. Restore them any time.';
+
+  @override
+  String get txRecurringPick => 'Pick a recurring';
+
+  @override
+  String get txRecurringUnlink => 'Unlink';
+
+  @override
+  String get recurringPickerTitle => 'Link to a recurring';
+
+  @override
+  String get recurringPickerGroupRecurring => 'Recurring';
+
+  @override
+  String get recurringPickerGroupReminders => 'Payment reminders';
+
+  @override
+  String get recurringPickerAwaitingAmount => 'Amount pending';
+
+  @override
+  String get recurringPickerCreate =>
+      'Create a recurring from this transaction';
+
+  @override
+  String get recurringPickerEmpty => 'No recurring to link to';
+
+  @override
+  String recurringPickerPeriod(String date) {
+    return 'Period $date';
+  }
+
+  @override
+  String get recurringPickerStatusUpcoming => 'not yet due';
+
+  @override
+  String get recurringPickerStatusPending => 'awaiting confirmation';
+
+  @override
+  String get recurringPickerStatusNotCreated => 'not paid yet';
+
+  @override
+  String get recurringPickerStatusReminder => 'enter the amount';
+
+  @override
+  String recurringLinkAskAmount(String rule, String tx) {
+    return 'The amount differs from the recurring ($rule → $tx). Update the recurring\'s amount too?';
+  }
+
+  @override
+  String get recurringLinkAskNo => 'No';
+
+  @override
+  String get recurringLinkAskYes => 'Update';
+
+  @override
+  String get recurringLinked => 'Linked to the recurring';
+
+  @override
+  String get recurringLinkedAmountUpdated => 'Recurring amount updated';
+
+  @override
+  String get recurringLinkAlreadyLinked =>
+      'That period is already linked (or this transaction is linked already)';
 }

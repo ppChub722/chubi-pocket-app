@@ -103,25 +103,25 @@ class NotificationsRepository {
   Future<NotificationActionResult> markDismissed(String id) =>
       _post('/notifications/$id/dismiss');
 
-  /// Marks everything read; returns the fresh badges.
-  Future<Badges> markReadAll() async {
+  /// Marks everything read; returns the fresh badges + card numbers.
+  Future<InboxCounts> markReadAll() async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/notifications/read-all',
       );
-      return Badges.fromJson(res.data!['badges'] as Map<String, dynamic>);
+      return InboxCounts.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
-  /// Hard delete; returns the fresh badges.
-  Future<Badges> delete(String id) async {
+  /// Hard delete; returns the fresh badges + card numbers.
+  Future<InboxCounts> delete(String id) async {
     try {
       final res = await _client.dio.delete<Map<String, dynamic>>(
         '/notifications/$id',
       );
-      return Badges.fromJson(res.data!['badges'] as Map<String, dynamic>);
+      return InboxCounts.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
@@ -172,6 +172,9 @@ class NotificationsRepository {
           res.data!['notification'] as Map<String, dynamic>,
         ),
         badges: Badges.fromJson(res.data!['badges'] as Map<String, dynamic>),
+        summary: InboxSummary.fromJson(
+          res.data!['summary'] as Map<String, dynamic>?,
+        ),
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);

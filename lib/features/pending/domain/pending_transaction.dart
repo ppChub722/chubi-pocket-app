@@ -412,6 +412,11 @@ class PendingSummary extends Equatable {
   /// Everything outside the manual bucket.
   int get notManual => count - manual;
 
+  /// Null-safe: the map under a write answer's `summary`, or null.
+  static PendingSummary? maybe(Object? json) => json is Map
+      ? PendingSummary.fromJson(json.cast<String, dynamic>())
+      : null;
+
   factory PendingSummary.fromJson(Map<String, dynamic> json) {
     int i(Object? v) => (v as num?)?.toInt() ?? 0;
     double d(Object? v) => (v as num?)?.toDouble() ?? 0;
@@ -464,6 +469,7 @@ class PendingSubmitResult {
     this.failedDrafts = const {},
     this.accountBalances = const {},
     this.pendingDrafts,
+    this.summary,
   });
   final List<String> submitted;
   final Map<String, PendingError> failed;
@@ -474,6 +480,9 @@ class PendingSubmitResult {
   /// {account id: balance after}, for `AccountsCubit.patchBalances`.
   final Map<String, double> accountBalances;
   final int? pendingDrafts;
+
+  /// The page's numbers after this call (same shape as the list's).
+  final PendingSummary? summary;
 
   factory PendingSubmitResult.fromJson(Map<String, dynamic> json) {
     final failed = ((json['failed'] as List?) ?? const [])
@@ -503,6 +512,7 @@ class PendingSubmitResult {
       pendingDrafts: badges is Map
           ? (badges['pending_drafts'] as num?)?.toInt()
           : null,
+      summary: PendingSummary.maybe(json['summary']),
     );
   }
 }
@@ -513,14 +523,19 @@ class DiscardResult {
     required this.discarded,
     required this.skipped,
     required this.remainingCount,
+    this.summary,
   });
   final List<String> discarded;
   final List<String> skipped;
   final int remainingCount;
 
+  /// The page's numbers after the discard.
+  final PendingSummary? summary;
+
   factory DiscardResult.fromJson(Map<String, dynamic> json) => DiscardResult(
     discarded: ((json['discarded'] as List?) ?? const []).cast<String>(),
     skipped: ((json['skipped'] as List?) ?? const []).cast<String>(),
     remainingCount: (json['remaining_count'] as num?)?.toInt() ?? 0,
+    summary: PendingSummary.maybe(json['summary']),
   );
 }

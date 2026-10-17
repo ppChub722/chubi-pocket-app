@@ -34,6 +34,7 @@ import '../save_failure.dart';
 import '../widgets/draft_form.dart';
 import 'debt_entry_detail_page.dart';
 import '../widgets/event_pick.dart';
+import '../widgets/recurring_link.dart';
 import '../widgets/tx_compact_hero.dart';
 
 /// `/transactions/:id` (§9) — the quick-create form's own layout, in the
@@ -163,6 +164,9 @@ class _LoadedState extends State<_Loaded>
   /// once the hero has scrolled under the top bar — view and edit; the
   /// title itself never changes, owner 2026-10-11).
   final _scroll = ScrollController();
+
+  /// The รายการประจำ row: links right away (one call), never on บันทึก.
+  final _link = RecurringLinkHandle();
   final _heroKey = GlobalKey();
 
   /// Edit mode: the event picked on the card, applied on บันทึก after the
@@ -230,6 +234,7 @@ class _LoadedState extends State<_Loaded>
   @override
   void initState() {
     super.initState();
+    _link.addListener(_onLinkChanged);
     _prefill();
     initDraft(_c.toDraft());
     _c.addListener(_onFormChanged);
@@ -286,7 +291,49 @@ class _LoadedState extends State<_Loaded>
   void dispose() {
     _c.dispose();
     _scroll.dispose();
+    _link.dispose();
     super.dispose();
+  }
+
+  // ── Recurring link ────────────────────────────────────────────────
+
+  void _onLinkChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _say(String message, {Tone tone = Tone.danger}) {
+    if (mounted) showAppSnackBar(context, message, tone: tone);
+  }
+
+  /// Picks a recurring and links this row to it at once: one call, the
+  /// answer's row goes into the cache (no refetch).
+  Future<void> _linkRecurring() async {
+    final tx = _edited;
+    final picked = await _link.choose(
+      context,
+      type: tx.type,
+      createRoute: recurringCreateRoute(
+        type: tx.type,
+        amount: tx.amount,
+        categoryId: tx.categoryId,
+        accountId: tx.accountId,
+        name: tx.description,
+      ),
+    );
+    if (picked == null || !mounted) return;
+    final cubit = context.read<TransactionsCubit>();
+    final accounts = context.read<AccountsCubit>();
+    final linked = await _link.linkNow(
+      context,
+      tx.id,
+      onLinked: (fresh, balances) {
+        cubit.patchRow(fresh, afterWrite: true);
+        accounts.patchBalances(balances);
+      },
+      error: _say,
+    );
+    // A failed link leaves nothing chosen.
+    if (linked == null) _link.clear();
   }
 
   /// The row the form edits and the transfer's other wallet, both from the
@@ -652,6 +699,27 @@ class _LoadedState extends State<_Loaded>
           : null;
     }
 
+    // The รายการประจำ row of the "ผูกกับ" section (0.4.0): a linked row shows
+    // its recurring (tap opens it; the BE has no unlink, so no ✕); a row I
+    // can edit shows the add chip, which links at once.
+    final recurringItem = tx.recurringItem;
+    final SplitRecurringSlot? recurringSlot = recurringItem == null && !canEdit
+        ? null
+        : _link.slot(
+            context,
+            type: _edited.type,
+            linkedName: recurringItem?.label(l.quickUpcomingHintTitle),
+            onOpenLinked: () => openPage(
+              context,
+              recurringItem?.recurringId == null
+                  ? '/recurring?tab=upcoming'
+                  : '/recurring/${recurringItem!.recurringId}',
+            ),
+            onTap: canEdit ? _linkRecurring : null,
+            error: _say,
+            done: (m) => _say(m, tone: Tone.success),
+          );
+
     // The very bottom: small muted record info, one item per line (owner
     // 2026-10-10).
     final metaLines = [
@@ -741,6 +809,7 @@ class _LoadedState extends State<_Loaded>
                             : null,
                         splitsReadOnly: splitsReadOnly,
                         eventSlot: eventSlot,
+                        recurringSlot: recurringSlot,
                         // Moving into an event: the splits go with it
                         // (titled so).
                         eventPending:
@@ -749,29 +818,7 @@ class _LoadedState extends State<_Loaded>
                       ),
                     ],
                   ),
-                  sections: [
-                    // "🔁 Netflix · 3/12" — the recurring it came from
-                    // (owner 2026-10-13), next to the event row.
-                    if (tx.recurringItem case final item?)
-                      (first) => SectionCard(
-                        first: first,
-                        children: [
-                          DetailRow(
-                            icon: AppIcons.recurring,
-                            label: l.txRecurringRowLabel,
-                            helper: item.label(l.quickUpcomingHintTitle),
-                            // A one-off upcoming item has no recurring: its
-                            // list instead.
-                            onTap: () => openPage(
-                              context,
-                              item.recurringId == null
-                                  ? '/recurring?tab=upcoming'
-                                  : '/recurring/${item.recurringId}',
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
+                  sections: const [],
                   // Delete: edit mode, or a repayment's only action in view.
                   manage: (editing && canEdit) || isRepayment
                       ? ManageSection(

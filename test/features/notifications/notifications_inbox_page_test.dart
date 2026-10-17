@@ -4,6 +4,7 @@ import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:chubi_pocket/features/notifications/data/notifications_repository.dart';
 import 'package:chubi_pocket/features/notifications/domain/notification.dart';
 import 'package:chubi_pocket/features/notifications/presentation/cubit/unread_badge_cubit.dart';
+import 'package:chubi_pocket/features/notifications/presentation/notification_actions.dart';
 import 'package:chubi_pocket/features/notifications/presentation/pages/notifications_inbox_page.dart';
 import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.dart';
 import 'package:chubi_pocket/features/projects/data/projects_repository.dart';
@@ -142,7 +143,13 @@ List<Map<String, dynamic>> _allTypes() => [
     'recurring_ending',
     awaits: true,
     system: true,
-    payload: {'recurring_id': 'r1', 'name': 'iPhone', 'left': 2},
+    payload: {
+      'recurring_id': 'r1',
+      'name': 'iPhone',
+      'left': 2,
+      'start_date': '2026-01-01',
+      'end': {'kind': 'count', 'count': 10},
+    },
     deepLink: '/recurring/r1',
   ),
 ];
@@ -187,18 +194,33 @@ class _Repo extends Fake implements NotificationsRepository {
       perPage: 20,
       total: data.length,
       totalPages: 1,
-      summary: InboxSummary.fromJson({
-        'needs_answer': 3,
-        'unread': 5,
-        'dismissed': hidden.length,
-      }),
+      summary: _summary(),
     );
   }
 
-  NotificationActionResult _result(String id) => NotificationActionResult(
-    notification: AppNotification.fromJson(_row(id, 'project_added')),
-    badges: const Badges(unreadNotifications: 4, pendingDrafts: 0),
-  );
+  /// The card's numbers as the BE computes them over the rows it holds:
+  /// all = not hidden; needs_answer stays 3, unread 5 until a write moves it.
+  InboxSummary _summary() => InboxSummary.fromJson({
+    'all': rows.length,
+    'needs_answer': 3,
+    'unread': unread,
+    'dismissed': hidden.length,
+  });
+
+  int unread = 5;
+
+  NotificationActionResult _result(String id, {String state = 'read'}) =>
+      NotificationActionResult(
+        notification: AppNotification.fromJson({
+          ...[...rows, ...hidden].firstWhere(
+            (r) => r['id'] == id,
+            orElse: () => _row(id, 'project_added'),
+          ),
+          'state': state,
+        }),
+        badges: Badges(unreadNotifications: unread, pendingDrafts: 0),
+        summary: _summary(),
+      );
 
   @override
   Future<NotificationActionResult> markDismissed(String id) async {
@@ -206,7 +228,7 @@ class _Repo extends Fake implements NotificationsRepository {
     // The BE now answers the row as hidden.
     final i = rows.indexWhere((r) => r['id'] == id);
     if (i >= 0) hidden.add(rows.removeAt(i));
-    return _result(id);
+    return _result(id, state: 'dismissed');
   }
 
   @override
@@ -214,7 +236,7 @@ class _Repo extends Fake implements NotificationsRepository {
     writes.add('restore:$id');
     final i = hidden.indexWhere((r) => r['id'] == id);
     if (i >= 0) rows.add(hidden.removeAt(i));
-    return _result(id);
+    return _result(id, state: 'unread');
   }
 
   @override
@@ -224,9 +246,13 @@ class _Repo extends Fake implements NotificationsRepository {
   }
 
   @override
-  Future<Badges> markReadAll() async {
+  Future<InboxCounts> markReadAll() async {
     writes.add('read-all');
-    return const Badges(unreadNotifications: 0, pendingDrafts: 0);
+    unread = 0;
+    return InboxCounts(
+      badges: const Badges(unreadNotifications: 0, pendingDrafts: 0),
+      summary: _summary(),
+    );
   }
 }
 
@@ -246,13 +272,14 @@ class _Recurring extends Fake implements RecurringRepository {
   final calls = <String>[];
 
   @override
-  Future<RecurringDetail> action(String id, RecurringAction action) async {
-    calls.add('${action.name}:$id');
+  Future<RecurringDetail> extend(String id, {Map<String, dynamic>? end}) async {
+    calls.add('extend:$id:$end');
     throw const ApiException(code: 'STOP', message: 'stop here');
   }
 }
 
 void main() {
+  extendedEndTests();
   late _Repo repo;
   late _Projects projects;
   late _Recurring recurring;
@@ -381,9 +408,11 @@ void main() {
     await t.pump();
 
     expect(repo.writes, ['dismiss:n6']);
-    // Hide = one POST, then the page's one re-fetch.
-    expect(repo.lists, hasLength(2));
-    expect(find.text('Hidden'), findsWidgets);
+    // Hide = one POST; the card follows the answer, no re-fetch.
+    expect(repo.lists, hasLength(1));
+    expect(find.text('Bee added you to Dinner party'), findsNothing);
+    expect(tileValue('All', '0'), findsOneWidget);
+    expect(tileValue('Hidden', '1'), findsOneWidget);
     expect(find.text('Undo'), findsOneWidget);
 
     await t.pump(const Duration(milliseconds: 500));
@@ -391,6 +420,24 @@ void main() {
     await t.pump();
     await t.pump();
     expect(repo.writes, ['dismiss:n6', 'restore:n6']);
+    // Undo puts the row back from the answer; still no re-fetch.
+    expect(repo.lists, hasLength(1));
+    expect(find.text('Bee added you to Dinner party'), findsOneWidget);
+    expect(tileValue('All', '1'), findsOneWidget);
+    expect(tileValue('Hidden', '0'), findsOneWidget);
+  });
+
+  testWidgets('mark all read flips the rows and takes the numbers from the '
+      'answer', (t) async {
+    await pump(t);
+    expect(tileValue('Unread', '5'), findsOneWidget);
+    await t.tap(find.bySemanticsLabel('Mark all as read'));
+    await t.pump();
+    await t.pump();
+    expect(repo.writes, ['read-all']);
+    expect(repo.lists, hasLength(1));
+    expect(tileValue('Unread', '0'), findsOneWidget);
+    expect(find.byType(NotificationTileView), findsNWidgets(10));
   });
 
   testWidgets('the Hidden tile lists hidden rows with Restore', (t) async {
@@ -451,7 +498,7 @@ void main() {
     await t.tap(find.text('Extend'));
     await t.pump();
     await t.pump();
-    expect(recurring.calls, ['extend:r1']);
+    expect(recurring.calls, ['extend:r1:{kind: count, count: 20}']);
 
     await t.tap(find.text('Let it end'));
     await t.pump();
@@ -483,5 +530,38 @@ void main() {
     await t.pump();
     await t.pump();
     expect(find.byType(NotificationTileView), findsNWidgets(10));
+  });
+}
+
+void extendedEndTests() {
+  test('extendedEnd: the same length again, from the payload only', () {
+    expect(
+      extendedEnd({
+        'end': {'kind': 'count', 'count': 6},
+      }),
+      {'kind': 'count', 'count': 12},
+    );
+    // 2026-01-01 → 2026-07-01 is 181 days: the new end adds the same span.
+    expect(
+      extendedEnd({
+        'start_date': '2026-01-01',
+        'end': {'kind': 'date', 'date': '2026-07-01'},
+      }),
+      {'kind': 'date', 'date': '2026-12-29'},
+    );
+    // No start in the payload: +1 year.
+    expect(
+      extendedEnd({
+        'end': {'kind': 'date', 'date': '2026-07-01'},
+      }),
+      {'kind': 'date', 'date': '2027-07-01'},
+    );
+    expect(
+      extendedEnd({
+        'end': {'kind': 'none'},
+      }),
+      isNull,
+    );
+    expect(extendedEnd({'name': 'x'}), isNull);
   });
 }

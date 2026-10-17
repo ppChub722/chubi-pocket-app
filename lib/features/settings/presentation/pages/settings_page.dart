@@ -73,7 +73,12 @@ class SettingsPage extends StatelessWidget {
                     DetailRow(
                       leading: const AppIcon(AppIcons.notifications),
                       label: l.settingsNotifications,
-                      helper: l.settingsNotificationsHint,
+                      helper: user.notificationSummary == null
+                          ? l.settingsNotificationsHint
+                          : l.settingsNotificationsSummary(
+                              user.notificationSummary!.on,
+                              user.notificationSummary!.auto,
+                            ),
                       showChevron: true,
                       onTap: () => context.push('/settings/notifications'),
                     ),

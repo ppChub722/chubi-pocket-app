@@ -2690,6 +2690,12 @@ abstract class AppLocalizations {
   /// **'What you get and what happens automatically'**
   String get settingsNotificationsHint;
 
+  /// No description provided for @settingsNotificationsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{on} on · {auto} automatic'**
+  String settingsNotificationsSummary(int on, int auto);
+
   /// No description provided for @settingsDefaultCurrencyHint.
   ///
   /// In en, this message translates to:
@@ -10740,6 +10746,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open pending ›'**
   String get notifActionOpenPending;
+
+  /// No description provided for @archivedGroupWallets.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallets'**
+  String get archivedGroupWallets;
+
+  /// No description provided for @archivedGroupBudgets.
+  ///
+  /// In en, this message translates to:
+  /// **'Budgets'**
+  String get archivedGroupBudgets;
+
+  /// No description provided for @archivedGroupGoals.
+  ///
+  /// In en, this message translates to:
+  /// **'Goals'**
+  String get archivedGroupGoals;
+
+  /// No description provided for @archivedGroupEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Events'**
+  String get archivedGroupEvents;
+
+  /// No description provided for @archivedGroupContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts'**
+  String get archivedGroupContacts;
+
+  /// No description provided for @archivedGroupRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring'**
+  String get archivedGroupRecurring;
+
+  /// No description provided for @archivedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived {date}'**
+  String archivedOn(String date);
+
+  /// No description provided for @archivedRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get archivedRestore;
+
+  /// No description provided for @archivedRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored {name}'**
+  String archivedRestored(String name);
+
+  /// No description provided for @archivedEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing archived'**
+  String get archivedEmpty;
+
+  /// No description provided for @archivedEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived items show here. Restore them any time.'**
+  String get archivedEmptyMessage;
+
+  /// No description provided for @txRecurringPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a recurring'**
+  String get txRecurringPick;
+
+  /// No description provided for @txRecurringUnlink.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink'**
+  String get txRecurringUnlink;
+
+  /// No description provided for @recurringPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Link to a recurring'**
+  String get recurringPickerTitle;
+
+  /// No description provided for @recurringPickerGroupRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring'**
+  String get recurringPickerGroupRecurring;
+
+  /// No description provided for @recurringPickerGroupReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment reminders'**
+  String get recurringPickerGroupReminders;
+
+  /// No description provided for @recurringPickerAwaitingAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount pending'**
+  String get recurringPickerAwaitingAmount;
+
+  /// No description provided for @recurringPickerCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a recurring from this transaction'**
+  String get recurringPickerCreate;
+
+  /// No description provided for @recurringPickerEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No recurring to link to'**
+  String get recurringPickerEmpty;
+
+  /// No description provided for @recurringPickerPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Period {date}'**
+  String recurringPickerPeriod(String date);
+
+  /// No description provided for @recurringPickerStatusUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'not yet due'**
+  String get recurringPickerStatusUpcoming;
+
+  /// No description provided for @recurringPickerStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'awaiting confirmation'**
+  String get recurringPickerStatusPending;
+
+  /// No description provided for @recurringPickerStatusNotCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'not paid yet'**
+  String get recurringPickerStatusNotCreated;
+
+  /// No description provided for @recurringPickerStatusReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'enter the amount'**
+  String get recurringPickerStatusReminder;
+
+  /// No description provided for @recurringLinkAskAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'The amount differs from the recurring ({rule} → {tx}). Update the recurring\'s amount too?'**
+  String recurringLinkAskAmount(String rule, String tx);
+
+  /// No description provided for @recurringLinkAskNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get recurringLinkAskNo;
+
+  /// No description provided for @recurringLinkAskYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get recurringLinkAskYes;
+
+  /// No description provided for @recurringLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked to the recurring'**
+  String get recurringLinked;
+
+  /// No description provided for @recurringLinkedAmountUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring amount updated'**
+  String get recurringLinkedAmountUpdated;
+
+  /// No description provided for @recurringLinkAlreadyLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'That period is already linked (or this transaction is linked already)'**
+  String get recurringLinkAlreadyLinked;
 }
 
 class _AppLocalizationsDelegate

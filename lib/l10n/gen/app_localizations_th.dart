@@ -1444,6 +1444,11 @@ class AppLocalizationsTh extends AppLocalizations {
       'เรื่องที่อยากรับ และสิ่งที่ทำให้อัตโนมัติ';
 
   @override
+  String settingsNotificationsSummary(int on, int auto) {
+    return 'เปิด $on เรื่อง · อัตโนมัติ $auto เรื่อง';
+  }
+
+  @override
   String get settingsDefaultCurrencyHint =>
       'ใช้เป็นค่าเริ่มต้นตอนสร้างกระเป๋าและหนี้';
 
@@ -6141,4 +6146,104 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get notifActionOpenPending => 'เปิดรอยืนยัน ›';
+
+  @override
+  String get archivedGroupWallets => 'กระเป๋า';
+
+  @override
+  String get archivedGroupBudgets => 'งบประมาณ';
+
+  @override
+  String get archivedGroupGoals => 'เป้าหมาย';
+
+  @override
+  String get archivedGroupEvents => 'อีเวนต์';
+
+  @override
+  String get archivedGroupContacts => 'ผู้ติดต่อ';
+
+  @override
+  String get archivedGroupRecurring => 'รายการประจำ';
+
+  @override
+  String archivedOn(String date) {
+    return 'เก็บถาวรเมื่อ $date';
+  }
+
+  @override
+  String get archivedRestore => 'กู้คืน';
+
+  @override
+  String archivedRestored(String name) {
+    return 'กู้คืน $name แล้ว';
+  }
+
+  @override
+  String get archivedEmpty => 'ไม่มีที่เก็บถาวร';
+
+  @override
+  String get archivedEmptyMessage =>
+      'สิ่งที่เก็บถาวรไว้จะแสดงที่นี่ กู้คืนได้ทุกเมื่อ';
+
+  @override
+  String get txRecurringPick => 'เลือกรายการประจำ';
+
+  @override
+  String get txRecurringUnlink => 'เลิกผูก';
+
+  @override
+  String get recurringPickerTitle => 'ผูกกับรายการประจำ';
+
+  @override
+  String get recurringPickerGroupRecurring => 'รายการประจำ';
+
+  @override
+  String get recurringPickerGroupReminders => 'เตือนจ่าย';
+
+  @override
+  String get recurringPickerAwaitingAmount => 'รอยอด';
+
+  @override
+  String get recurringPickerCreate => 'สร้างรายการประจำใหม่จากรายการนี้';
+
+  @override
+  String get recurringPickerEmpty => 'ยังไม่มีรายการประจำให้ผูก';
+
+  @override
+  String recurringPickerPeriod(String date) {
+    return 'งวด $date';
+  }
+
+  @override
+  String get recurringPickerStatusUpcoming => 'ยังไม่ถึง';
+
+  @override
+  String get recurringPickerStatusPending => 'รอยืนยัน';
+
+  @override
+  String get recurringPickerStatusNotCreated => 'ยังไม่จ่าย';
+
+  @override
+  String get recurringPickerStatusReminder => 'รอใส่ยอด';
+
+  @override
+  String recurringLinkAskAmount(String rule, String tx) {
+    return 'ยอดไม่ตรงกับที่ตั้งไว้ ($rule → $tx) อัปเดตยอดรายการประจำด้วยไหม?';
+  }
+
+  @override
+  String get recurringLinkAskNo => 'ไม่ต้อง';
+
+  @override
+  String get recurringLinkAskYes => 'อัปเดต';
+
+  @override
+  String get recurringLinked => 'ผูกกับรายการประจำแล้ว';
+
+  @override
+  String get recurringLinkedAmountUpdated => 'อัปเดตยอดรายการประจำแล้ว';
+
+  @override
+  String get recurringLinkAlreadyLinked =>
+      'งวดนี้ผูกไปแล้ว (หรือรายการนี้ผูกอยู่แล้ว)';
 }

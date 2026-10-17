@@ -65,6 +65,7 @@ Map<String, dynamic> _meJson({
   'status': 'active',
   'default_account': defaultAccount,
   'auto_copy_own_event_bills': true,
+  'notification_summary': {'on': 9, 'auto': 2},
   'preferences': {
     'timezone': null,
     'theme': null,
@@ -168,6 +169,11 @@ void main() {
       expect(u.autoCopyOwnEventBills, isTrue);
       final none = User.fromJson(_meJson(defaultAccount: null));
       expect(none.defaultAccount, isNull);
+      expect(u.notificationSummary?.on, 9);
+      expect(u.notificationSummary?.auto, 2);
+      final bare = Map<String, dynamic>.of(_meJson())
+        ..remove('notification_summary');
+      expect(User.fromJson(bare).notificationSummary, isNull);
     },
   );
 
@@ -182,6 +188,8 @@ void main() {
     }
     expect(find.text('Main wallet'), findsOneWidget);
     expect(find.text('Doraemon'), findsOneWidget);
+    // The notifications row shows the server's numbers.
+    expect(find.text('9 on · 2 automatic'), findsOneWidget);
     expect(find.text('Archive'), findsOneWidget);
     expect(find.text('Export CSV'), findsOneWidget);
     expect(find.text('0.4'), findsOneWidget);

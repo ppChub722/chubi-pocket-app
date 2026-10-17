@@ -40,7 +40,6 @@ class _Repo extends Fake implements NotificationsRepository {
       'muted_types': ['split_changed', 'recurring_ending'],
       'auto_types': ['project_tx_changed'],
       'default_account': null,
-      'auto_resolve_own_in_projects': false,
       'updated_at': '2026-10-17T08:00:00Z',
     });
   }

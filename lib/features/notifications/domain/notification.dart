@@ -87,27 +87,32 @@ enum NotificationState {
   );
 }
 
-/// The inbox card's numbers (`GET /notifications` `summary`): over ALL the
-/// user's notifications, the same whatever the list filter.
+/// The inbox card's numbers (`GET /notifications` `summary`, and every
+/// write's answer): over ALL the user's notifications, the same whatever
+/// the list filter.
 class InboxSummary extends Equatable {
   const InboxSummary({
+    this.all = 0,
     this.needsAnswer = 0,
     this.unread = 0,
     this.dismissed = 0,
   });
 
+  /// Everything not dismissed (the ทั้งหมด tile).
+  final int all;
   final int needsAnswer;
   final int unread;
   final int dismissed;
 
   factory InboxSummary.fromJson(Map<String, dynamic>? json) => InboxSummary(
+    all: (json?['all'] as num?)?.toInt() ?? 0,
     needsAnswer: (json?['needs_answer'] as num?)?.toInt() ?? 0,
     unread: (json?['unread'] as num?)?.toInt() ?? 0,
     dismissed: (json?['dismissed'] as num?)?.toInt() ?? 0,
   );
 
   @override
-  List<Object?> get props => [needsAnswer, unread, dismissed];
+  List<Object?> get props => [all, needsAnswer, unread, dismissed];
 }
 
 /// App-wide counters returned by every notification write (API `Badges`).
@@ -227,16 +232,36 @@ class AppNotification extends Equatable {
   ];
 }
 
-/// A write's reply (read / actioned / dismiss): the row in its new state +
-/// the fresh badges.
+/// A write's reply (read / actioned / dismiss / restore): the row in its new
+/// state + the fresh badges + the inbox card's numbers.
 class NotificationActionResult {
   const NotificationActionResult({
     required this.notification,
     required this.badges,
+    this.summary = const InboxSummary(),
   });
 
   final AppNotification notification;
   final Badges badges;
+  final InboxSummary summary;
+}
+
+/// `POST /notifications/read-all` and `DELETE /notifications/:id` answers:
+/// the fresh badges + the inbox card's numbers.
+class InboxCounts {
+  const InboxCounts({required this.badges, required this.summary});
+
+  final Badges badges;
+  final InboxSummary summary;
+
+  factory InboxCounts.fromJson(Map<String, dynamic> json) => InboxCounts(
+    badges: Badges.fromJson(
+      (json['badges'] as Map?)?.cast<String, dynamic>() ?? const {},
+    ),
+    summary: InboxSummary.fromJson(
+      (json['summary'] as Map?)?.cast<String, dynamic>(),
+    ),
+  );
 }
 
 DateTime? _parseDate(Object? raw) {
