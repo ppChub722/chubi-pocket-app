@@ -34,8 +34,12 @@ class NetBalance extends StatelessWidget {
     required this.settledLabel,
     this.size = NetBalanceSize.row,
     this.currencySymbol = '฿',
+    this.showCaption = true,
     super.key,
   });
+
+  /// false: the amount alone (its colour says the side) — the people list.
+  final bool showCaption;
 
   /// The signed net: + = they owe me, − = I owe them.
   final num amount;
@@ -89,13 +93,14 @@ class NetBalance extends StatelessWidget {
           textAlign: textAlign,
           style: amountStyle,
         ),
-        Text(
-          owedToMe ? owedToMeLabel : iOweLabel,
-          textAlign: textAlign,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: captionStyle,
-        ),
+        if (showCaption)
+          Text(
+            owedToMe ? owedToMeLabel : iOweLabel,
+            textAlign: textAlign,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: captionStyle,
+          ),
       ],
     );
   }

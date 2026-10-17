@@ -817,7 +817,7 @@ final List<HubPage> hubPages = [
     slug: 'debts',
     title: 'Debts',
     summary:
-        'People + balance rows, the net balance (row / hero), the debts summary card, the ledger row.',
+        'People + balance rows, the net balance (row / hero), the debt hero pieces (amount line, age, net line, message box), the ledger row.',
     generic: false,
     usedBy: 'Debts list, debt person page, quick create debt mode',
     covers: [
@@ -825,7 +825,10 @@ final List<HubPage> hubPages = [
       'PersonBalanceRow',
       'NetBalance',
       'NetBalanceSize',
-      'DebtSummaryCard',
+      'DebtAmountLine',
+      'DebtAgeText',
+      'DebtNetLine',
+      'DebtSummaryMessageBox',
       'LedgerRow',
       'LedgerDirection',
     ],
