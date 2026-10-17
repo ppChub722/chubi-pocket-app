@@ -262,8 +262,8 @@ class _MainShellState extends State<MainShell>
   /// The + : the quick create with the on-screen page's preset (read fresh
   /// at the tap).
   void _openQuickCreate(BuildContext context) {
-    // A debt preset only colours the + until debt mode lands in the
-    // sheet (TODO(debt-mode) in showQuickCreateSheet).
+    // A debt preset opens debt mode; a saved entry reaches the debts pages
+    // through DebtBook (no callback needed here).
     showQuickCreateSheet(
       context,
       preset: _quickCreate.active() ?? QuickCreatePreset.none,

@@ -8,9 +8,6 @@ import '../../tokens/app_spacing.dart';
 /// EntryCard (owner 2026-10-12): `[รายการ] [หนี้]`. Each chip takes its
 /// mode's colour from [QuickCreateModeColors] — the same colour as the
 /// shell's + — so the selected one matches the button that opened it.
-///
-/// TODO(debt-mode): not in the sheet yet — debt mode waits on the BE's
-/// person-entry API. Until then the + opens tx mode on every page.
 class QuickCreateModeChips extends StatelessWidget {
   const QuickCreateModeChips({
     required this.mode,

@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
-import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
@@ -14,9 +13,12 @@ import '../../domain/project.dart';
 import '../cubit/projects_cubit.dart';
 import '../widgets/project_common.dart';
 
-/// `/projects` — the events list (§12a): search, status, my tags and sort
-/// all run on the server (paged); hairline [EventCard] rows and a dashed
-/// "+ สร้างใหม่" tile at the end (§1.2 — no top-bar add).
+/// `/projects` — the events list (0.4.0 reference §5): ONE summary card (my
+/// share in the active events, what I paid → what I'm owed, three tiles that
+/// ARE the status filter), a hidden search + sort toolbar behind the card's
+/// 🔍, hairline [EventListRow]s and a dashed "+ สร้างอีเวนต์" tile. Every
+/// number comes from the BE (`GET /projects` rows + `summary`); search,
+/// filters and sort run on the server (paged).
 class ProjectsPage extends StatefulWidget {
   const ProjectsPage({super.key});
 
@@ -26,6 +28,7 @@ class ProjectsPage extends StatefulWidget {
 
 class _ProjectsPageState extends State<ProjectsPage> {
   final _search = TextEditingController();
+  final _toolbarOpen = ToolbarToggleState.of('events');
   Timer? _debounce;
   final _scroll = ScrollController();
 
@@ -107,52 +110,137 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
   void _create() => context.push('/projects/new');
 
-  /// The user's currency (one per user; events are in it).
-  String get _symbol => context.readUserCurrencySymbol;
+  String _sortLabel(AppLocalizations l, ProjectSort s) => switch (s) {
+    ProjectSort.updatedDesc => l.fpEventsSortRecent,
+    ProjectSort.startDateDesc => l.eventStartDateLabel,
+    ProjectSort.nameAsc => l.projectsSortName,
+  };
 
-  Widget _row(AppLocalizations l, Project p, String symbol) {
-    final planned = p.plannedAmount;
-    final member = p.myMemberId != null;
-    return EventCard(
+  /// The row's subtitle: dates · spent · my share (all BE numbers).
+  String _subtitle(AppLocalizations l, Project p) => [
+    ?projectDateRange(context, p.startDate, p.endDate),
+    l.fpEventsRowSpent(moneyString(context, p.totalExpense)),
+    l.fpEventsRowShare(moneyString(context, p.myShare)),
+  ].join(' · ');
+
+  Widget _row(AppLocalizations l, Project p) {
+    final owed = p.myReceivable > 0;
+    final owe = p.myPayable > 0;
+    return EventListRow(
       name: p.name,
       iconCode: p.iconCode,
-      description: p.description,
-      tags: [for (final t in p.tags) EventTagRef(t.name, iconCode: t.iconCode)],
-      statusLabel: projectStatusLabel(l, p.status),
-      statusTone: projectStatusTone(p.status),
-      meta: [
-        l.projectsMembersCount(p.membersCount),
-        ?projectDateRange(context, p.startDate, p.endDate),
-      ].join(' · '),
-      // Spent vs the plan (expense − income, the summary's spent_net).
-      progress: planned == null || planned <= 0
-          ? null
-          : (p.totalExpense - p.totalIncome) / planned,
-      progressLabel: planned == null
-          ? null
-          : l.projectMetaPlanned(moneyString(context, planned, symbol: symbol)),
-      myNet: member ? p.myNet : null,
-      symbol: symbol,
-      dimmed: p.isLocked,
+      subtitle: _subtitle(l, p),
+      amount: owed ? p.myReceivable : (owe ? p.myPayable : 0),
+      tone: owed
+          ? MoneyTone.income
+          : (owe ? MoneyTone.expense : MoneyTone.plain),
+      caption: owed ? l.fpEventsOwed : (owe ? l.fpEventsOwe : null),
+      dimmed: p.status != ProjectStatus.active,
       onTap: () => _open(p),
+    );
+  }
+
+  /// The three tiles ARE the status filter: tap = filter, tap the ringed one
+  /// again = back to the default (กำลังทำ).
+  List<SummaryTile> _tiles(
+    AppLocalizations l,
+    ProjectsState state,
+    ProjectListSummary s,
+  ) {
+    void pick(String f) => context.read<ProjectsCubit>().load(
+      statusFilter: state.statusFilter == f ? 'active' : f,
+    );
+    return [
+      SummaryTile(
+        label: l.fpEventsTileActive,
+        value: '${s.active}',
+        tone: SummaryTileTone.green,
+        selected: state.statusFilter == 'active',
+        onTap: () => pick('active'),
+      ),
+      SummaryTile(
+        label: l.fpEventsTileUnsettled,
+        value: '${s.unsettled}',
+        tone: SummaryTileTone.amber,
+        selected: state.statusFilter == 'unsettled',
+        onTap: () => pick('unsettled'),
+      ),
+      SummaryTile(
+        label: l.fpEventsTileEnded,
+        value: '${s.ended}',
+        selected: state.statusFilter == 'ended',
+        onTap: () => pick('ended'),
+      ),
+    ];
+  }
+
+  Widget _summary(AppLocalizations l, ProjectsState state) {
+    final s = state.summary ?? const ProjectListSummary();
+    return ListSummaryCard(
+      caption: l.fpEventsSummaryCaption,
+      style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
+      actions: [
+        ListenableBuilder(
+          listenable: _search,
+          builder: (context, _) => ToolbarToggleButton(
+            state: _toolbarOpen,
+            filtered:
+                _search.text.isNotEmpty ||
+                state.tagIds.isNotEmpty ||
+                state.sort != ProjectSort.updatedDesc,
+            tooltip: l.commonSearch,
+          ),
+        ),
+      ],
+      amount: s.myShareTotal,
+      infoLine: AppText(
+        l.fpEventsPaidLine(
+          moneyString(context, s.paidTotal),
+          moneyString(context, s.receivableTotal),
+        ),
+        role: AppTextRole.caption,
+      ),
+      tiles: _tiles(l, state, s),
+    );
+  }
+
+  Widget _toolbar(AppLocalizations l, ProjectsState state) {
+    final cubit = context.read<ProjectsCubit>();
+    return ListToolbar(
+      collapse: _toolbarOpen,
+      searchController: _search,
+      searchHint: l.projectsSearchHint,
+      onSearchChanged: _onSearch,
+      chips: [
+        AppChip(
+          label: l.transactionFormTagsLabel,
+          icon: AppIcons.tag,
+          selected: state.tagIds.isNotEmpty,
+          count: state.tagIds.length,
+          trailing: AppChipTrailing.dropdown,
+          onTap: () => _pickTags(state),
+        ),
+      ],
+      trailing: OptionMenuAnchor<ProjectSort>(
+        selected: state.sort,
+        onSelected: (s) => cubit.load(sort: s),
+        options: [
+          for (final s in ProjectSort.values)
+            SheetOption(value: s, label: _sortLabel(l, s)),
+        ],
+        builder: (context, toggle) => AppChip(
+          label: _sortLabel(l, state.sort),
+          icon: AppIcons.sort,
+          trailing: AppChipTrailing.dropdown,
+          onTap: toggle,
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final statusLabels = <String, String>{
-      'active': l.projectStatusActive,
-      'completed': l.projectStatusCompleted,
-      'cancelled': l.projectStatusCancelled,
-      'archived': l.projectStatusArchived,
-      'all': l.projectsStatusAll,
-    };
-    final sortLabels = <ProjectSort, String>{
-      ProjectSort.updatedDesc: l.projectsSortRecent,
-      ProjectSort.startDateDesc: l.eventStartDateLabel,
-      ProjectSort.nameAsc: l.projectsSortName,
-    };
     return Scaffold(
       appBar: AppTopBar(title: l.navProjects, showBack: true),
       extendBodyBehindAppBar: true,
@@ -167,54 +255,30 @@ class _ProjectsPageState extends State<ProjectsPage> {
                 state.projects.isEmpty &&
                 (state.status == ProjectsStatus.initial ||
                     state.status == ProjectsStatus.loading);
-            final create = AddTile(label: l.projectsCreateNew, onTap: _create);
+            final create = AddTile(label: l.fpEventsCreate, onTap: _create);
             return ListPageBody(
+              // [summary card → toolbar] pinned, then hairline rows.
               header: [
-                ListToolbar(
-                  searchController: _search,
-                  searchHint: l.projectsSearchHint,
-                  onSearchChanged: _onSearch,
-                  chips: [
-                    OptionMenuAnchor<String>(
-                      selected: state.statusFilter,
-                      onSelected: (v) => cubit.load(statusFilter: v),
-                      options: [
-                        for (final e in statusLabels.entries)
-                          SheetOption(value: e.key, label: e.value),
+                // A refresh that failed keeps the data on screen.
+                if (state.error != null && state.projects.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.sm,
+                    ),
+                    child: AppMessage(
+                      message: l.fpEventsLoadFailed,
+                      tone: Tone.warning,
+                      actions: [
+                        AppMessageAction(
+                          label: l.commonRetry,
+                          onPressed: cubit.load,
+                        ),
                       ],
-                      builder: (context, toggle) => AppChip(
-                        label:
-                            '${l.projectsStatusLabel}: '
-                            '${statusLabels[state.statusFilter]}',
-                        selected: state.statusFilter != 'active',
-                        trailing: AppChipTrailing.dropdown,
-                        onTap: toggle,
-                      ),
-                    ),
-                    AppChip(
-                      label: l.transactionFormTagsLabel,
-                      icon: AppIcons.tag,
-                      selected: state.tagIds.isNotEmpty,
-                      count: state.tagIds.length,
-                      trailing: AppChipTrailing.dropdown,
-                      onTap: () => _pickTags(state),
-                    ),
-                  ],
-                  trailing: OptionMenuAnchor<ProjectSort>(
-                    selected: state.sort,
-                    onSelected: (s) => cubit.load(sort: s),
-                    options: [
-                      for (final e in sortLabels.entries)
-                        SheetOption(value: e.key, label: e.value),
-                    ],
-                    builder: (context, toggle) => AppChip(
-                      label: sortLabels[state.sort]!,
-                      icon: AppIcons.sort,
-                      trailing: AppChipTrailing.dropdown,
-                      onTap: toggle,
                     ),
                   ),
-                ),
+                _summary(l, state),
+                _toolbar(l, state),
               ],
               loading: firstLoad,
               error: state.projects.isEmpty ? state.error : null,
@@ -244,7 +308,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
               loadingMore: state.loadingMore,
               onLoadMore: _loadMore,
               children: [
-                for (final p in state.projects) _row(l, p, _symbol),
+                for (final p in state.projects) _row(l, p),
                 Padding(
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   child: create,

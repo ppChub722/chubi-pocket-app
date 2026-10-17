@@ -29,14 +29,24 @@ class _Repo extends Fake implements ContactsRepository {
   Map<String, dynamic>? body;
   bool networkDown = false;
   int calls = 0;
+  int previewCalls = 0;
 
   @override
-  Future<ContactDetail> get(String id) async {
+  Future<ContactDetail> get(String id, {bool deletePreview = false}) async {
+    if (deletePreview) previewCalls++;
     calls++;
     if (networkDown) {
       throw const ApiException(code: 'NETWORK_ERROR', message: 'no connection');
     }
-    return ContactDetail.fromJson(body!);
+    return ContactDetail.fromJson({
+      ...body!,
+      if (deletePreview)
+        'delete_preview': {
+          'debt_records': 3,
+          'event_members': 2,
+          'linked': true,
+        },
+    });
   }
 }
 
@@ -64,6 +74,8 @@ Map<String, dynamic> _prodContact() => {
   'last_used_at': '2026-10-10T08:00:00Z',
   'created_at': '2026-10-01T08:00:00Z',
   'updated_at': '2026-10-11T08:00:00Z',
+  'unlinked_total': {'names': 1, 'records': 2},
+  'delete_preview': null,
   'unlinked_names': [
     {'name': 'Cooper', 'count': 2},
   ],
@@ -113,7 +125,8 @@ void main() {
             builder: (context, child) => AppUiConfig(
               child: QuickCreateContextScope(registry: registry, child: child!),
             ),
-            home: const ContactDetailPage(id: 'c1'),
+            // The shell's Scaffold: where the page's snackbars land.
+            home: const Scaffold(body: ContactDetailPage(id: 'c1')),
           ),
         ),
       ),
@@ -166,5 +179,114 @@ void main() {
     await pump(t);
     expect(find.byType(ErrorView), findsOneWidget);
     expect(find.byType(DetailPageSkeleton), findsNothing);
+  });
+
+  testWidgets('view: link chip, 💸 next to ✏️, info rows, link section, no '
+      '"show nickname" setting', (t) async {
+    await pump(t);
+    // A: the link state chip; B: name + description.
+    expect(find.text('Linked with @lee'), findsOneWidget);
+    expect(find.text('Flatmate'), findsOneWidget);
+    expect(find.byIcon(AppIcons.debt), findsOneWidget);
+    expect(find.byIcon(AppIcons.edit), findsOneWidget);
+    // Info: set rows only (phone is null, so no row).
+    expect(find.text('Nickname'), findsOneWidget);
+    expect(find.text('Coop'), findsOneWidget);
+    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('lee@example.com'), findsOneWidget);
+    expect(find.text('Phone'), findsNothing);
+    // The nickname switch is an edit-mode setting only.
+    expect(find.text('Show nickname'), findsNothing);
+    expect(find.byType(EndZone), findsNothing);
+    // Link section: linked → unlink + match names with the BE's counts.
+    expect(find.text('Link account'), findsOneWidget);
+    expect(find.text('Unlink'), findsOneWidget);
+    expect(find.text('Send link request'), findsNothing);
+    expect(
+      find.text('1 names · 2 splits not linked to a contact'),
+      findsOneWidget,
+    );
+    // The old "debts with this person" row is gone (it is the 💸 button).
+    expect(find.text('Debts with this person'), findsNothing);
+  });
+
+  testWidgets('unlinked contact with an email offers a link request', (
+    t,
+  ) async {
+    repo.body = {..._prodContact(), 'linked_user': null};
+    await pump(t);
+    expect(find.text('Not linked to an app user'), findsOneWidget);
+    expect(find.text('Send link request'), findsOneWidget);
+    expect(find.text('Unlink'), findsNothing);
+  });
+
+  testWidgets('unlinked contact without an email hides the request row', (
+    t,
+  ) async {
+    repo.body = {..._prodContact(), 'linked_user': null, 'email': null};
+    await pump(t);
+    expect(find.text('Send link request'), findsNothing);
+    expect(find.text('Match names in splits'), findsOneWidget);
+  });
+
+  testWidgets('edit mode: its own form, fields + setting + end zone; the '
+      'link section is hidden', (t) async {
+    repo.body = {..._prodContact(), 'linked_user': null};
+    await pump(t);
+    await t.tap(find.byIcon(AppIcons.edit));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 300));
+    expect(find.byType(DetailTextField), findsNWidgets(3));
+    expect(find.text('Show nickname'), findsOneWidget);
+    expect(find.byType(EndZone), findsOneWidget);
+    expect(find.text('Archive'), findsOneWidget);
+    expect(find.text('Delete this contact'), findsOneWidget);
+    expect(find.text('Link account'), findsNothing);
+    expect(find.text('Send link request'), findsNothing);
+    expect(find.byIcon(AppIcons.debt), findsNothing);
+  });
+
+  testWidgets('delete: ONE preview call, the confirm prints the BE numbers', (
+    t,
+  ) async {
+    t.view.physicalSize = const Size(800, 3000);
+    t.view.devicePixelRatio = 1;
+    addTearDown(t.view.reset);
+    await pump(t);
+    await t.tap(find.byIcon(AppIcons.edit));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 300));
+    await t.tap(find.text('Delete this contact'));
+    await t.pumpAndSettle();
+    expect(repo.previewCalls, 1);
+    expect(
+      find.textContaining('3 debt records keep only the name'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Member of 2 events'), findsOneWidget);
+    expect(find.textContaining('Linked to an account'), findsOneWidget);
+  });
+
+  testWidgets('edit mode of a linked contact hides the email (it follows the '
+      'account)', (t) async {
+    await pump(t);
+    await t.tap(find.byIcon(AppIcons.edit));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 300));
+    expect(find.byType(DetailTextField), findsNWidgets(2));
+    expect(find.text('Email'), findsNothing);
+  });
+
+  testWidgets('a failed pull-to-refresh keeps the contact on screen', (
+    t,
+  ) async {
+    await pump(t);
+    repo.networkDown = true;
+    await t.widget<PullToRefresh>(find.byType(PullToRefresh)).onRefresh();
+    await t.pump();
+    expect(find.byType(ErrorView), findsNothing);
+    expect(find.text('Linked with @lee'), findsOneWidget);
+    expect(find.text('lee@example.com'), findsOneWidget);
+    expect(repo.calls, 2);
   });
 }

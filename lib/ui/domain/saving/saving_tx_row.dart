@@ -50,6 +50,7 @@ class SavingTxRow extends StatelessWidget {
     required this.amount,
     this.walletLabel,
     this.walletIcon,
+    this.date,
     this.from,
     this.to,
     this.source,
@@ -69,6 +70,9 @@ class SavingTxRow extends StatelessWidget {
   final num amount;
   final String? walletLabel;
   final Widget? walletIcon;
+
+  /// "5 ต.ค." — leads line 2 (goal pages show when each entry happened).
+  final String? date;
 
   /// Bucket the money leaves (withdraw, allocate).
   final String? from;
@@ -132,6 +136,7 @@ class SavingTxRow extends StatelessWidget {
     )..layout()).height;
 
     final line2 = <Widget>[
+      if (date != null && !draft) ...[Text(date!, style: small), gap],
       if (draft) ...[
         for (final c in draftChips) ...[Flexible(child: c), gap],
         bucket(to),

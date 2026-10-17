@@ -5,6 +5,7 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/user_currency.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
+import '../../transactions/domain/refs.dart';
 import '../domain/budget.dart';
 import '../domain/budget_detail.dart';
 import '../domain/budget_period.dart';
@@ -161,6 +162,60 @@ String budgetRowMoney(BuildContext context, num amount) {
     symbol: symbol,
     decimalDigits: whole ? 0 : null,
   );
+}
+
+/// What the budget counts, in one line ("Buffet + sub · Tags: เที่ยว"); null
+/// when nothing is picked. [all] = "Every expense".
+String? budgetScopeSummary(
+  AppLocalizations l, {
+  required bool all,
+  required List<BudgetScopeCategory> categories,
+  required List<String> tags,
+  required List<AccountRef> wallets,
+}) {
+  if (all) return l.bgScopeAll;
+  final parts = [
+    if (categories.isNotEmpty)
+      categories
+          .map(
+            (c) => c.includeChildren
+                ? '${c.category.name} ${l.bgScopeChildren}'
+                : c.category.name,
+          )
+          .join(', '),
+    if (tags.isNotEmpty) '${l.bgScopeTags}: ${tags.join(', ')}',
+    if (wallets.isNotEmpty)
+      '${l.bgScopeWallets}: ${wallets.map((w) => w.name).join(', ')}',
+  ];
+  return parts.isEmpty ? null : parts.join(' · ');
+}
+
+/// Why a counted row counts ("Counted because: category Buffet"), from the
+/// BE's `reason`; null when it has none.
+String? budgetReasonText(AppLocalizations l, Budget b, BudgetItem i) {
+  switch (i.reason) {
+    case BudgetReason.all:
+      return l.fpBudgetsReasonAll;
+    case BudgetReason.category:
+      final c = i.category?.name;
+      return c == null ? null : l.fpBudgetsReasonCategory(c);
+    case BudgetReason.subCategory:
+      final parent = i.category?.parentId;
+      final scope = b.scope.categories
+          .where((s) => s.category.id == parent)
+          .firstOrNull;
+      return scope == null
+          ? l.fpBudgetsReasonSubCategoryAny
+          : l.fpBudgetsReasonSubCategory(scope.category.name);
+    case BudgetReason.tag:
+      final tag = i.tags.where(b.scope.tags.contains).firstOrNull;
+      return tag == null ? null : l.fpBudgetsReasonTag(tag);
+    case BudgetReason.wallet:
+      final w = i.account?.name;
+      return w == null ? null : l.fpBudgetsReasonWallet(w);
+    case BudgetReason.none:
+      return null;
+  }
 }
 
 /// "รายปี · เหลือ 77 วัน": the period kind and the days left.

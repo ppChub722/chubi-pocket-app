@@ -54,6 +54,7 @@ class ListPageBody extends StatefulWidget {
     this.children = const [],
     this.builder,
     this.header = const [],
+    this.scrollHeader = const [],
     this.skeletonShape = const ListSkeletonShape(),
     this.hasMore = false,
     this.loadingMore = false,
@@ -93,6 +94,11 @@ class ListPageBody extends StatefulWidget {
   /// where the others do. The system inset is added on top.
   static const double floatingBarClearance = 96;
   final List<Widget> header;
+
+  /// Widgets at the TOP of the scrolling list, before [children], never
+  /// divided, [AppSpacing.md] apart (a hero card, a toolbar): the debt person page's statement
+  /// scrolls its hero away with the rows.
+  final List<Widget> scrollHeader;
 
   /// The first-load skeleton's shape (see [ListSkeletonShape]).
   final ListSkeletonShape skeletonShape;
@@ -206,6 +212,10 @@ class _ListPageBodyState extends State<ListPageBody> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: padding,
                 children: [
+                  for (final h in w.scrollHeader) ...[
+                    h,
+                    const SizedBox(height: AppSpacing.md),
+                  ],
                   ...(w.rowDividers
                       ? dividedRows(
                           context,

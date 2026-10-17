@@ -9,6 +9,17 @@ import '../../domain/saving_goals_overview.dart';
 
 enum SavingGoalsStatus { initial, loading, loaded, error }
 
+/// `GET /saving-goals?sort=` (BE default: created).
+enum SavingGoalsSort {
+  created,
+  deadline,
+  progress,
+  remaining,
+  byName;
+
+  String get query => this == byName ? 'name' : name;
+}
+
 /// The list page's filter chips.
 enum SavingGoalsFilter {
   active,
@@ -22,6 +33,7 @@ class SavingGoalsState extends Equatable {
   const SavingGoalsState({
     this.overview = const SavingGoalsOverview(),
     this.filter = SavingGoalsFilter.active,
+    this.sort = SavingGoalsSort.created,
     this.status = SavingGoalsStatus.initial,
     this.error,
     this.staleTick = 0,
@@ -29,6 +41,7 @@ class SavingGoalsState extends Equatable {
 
   final SavingGoalsOverview overview;
   final SavingGoalsFilter filter;
+  final SavingGoalsSort sort;
   final SavingGoalsStatus status;
   final ApiException? error;
 
@@ -41,6 +54,7 @@ class SavingGoalsState extends Equatable {
   SavingGoalsState copyWith({
     SavingGoalsOverview? overview,
     SavingGoalsFilter? filter,
+    SavingGoalsSort? sort,
     SavingGoalsStatus? status,
     ApiException? error,
     int? staleTick,
@@ -48,13 +62,14 @@ class SavingGoalsState extends Equatable {
   }) => SavingGoalsState(
     overview: overview ?? this.overview,
     filter: filter ?? this.filter,
+    sort: sort ?? this.sort,
     status: status ?? this.status,
     error: clearError ? null : (error ?? this.error),
     staleTick: staleTick ?? this.staleTick,
   );
 
   @override
-  List<Object?> get props => [overview, filter, status, error, staleTick];
+  List<Object?> get props => [overview, filter, sort, status, error, staleTick];
 }
 
 /// The list page's state: ONE call per open (`GET /saving-goals?status=`).
@@ -92,11 +107,19 @@ class SavingGoalsCubit extends Cubit<SavingGoalsState> with Clearable {
     return load();
   }
 
+  Future<void> setSort(SavingGoalsSort sort) {
+    emit(state.copyWith(sort: sort));
+    return load();
+  }
+
   Future<void> load() async {
     _stale = false;
     emit(state.copyWith(status: SavingGoalsStatus.loading, clearError: true));
     try {
-      final overview = await _repo.list(status: state.filter.query);
+      final overview = await _repo.list(
+        status: state.filter.query,
+        sort: state.sort.query,
+      );
       emit(
         state.copyWith(
           overview: overview,

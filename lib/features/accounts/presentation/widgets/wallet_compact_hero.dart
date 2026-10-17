@@ -3,7 +3,6 @@ import '../../../../core/utils/user_currency.dart';
 
 import '../../../../ui/ui.dart';
 import '../../domain/account.dart';
-import 'account_card.dart';
 
 /// The wallet page's [CompactHeroBar] (owner 2026-10-11): `(icon) name
 /// balance` — the balance in the wallet's balance colour (the liability

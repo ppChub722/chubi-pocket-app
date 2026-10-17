@@ -1,70 +1,88 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/saving_goal.dart';
 
 // Wording only: maps the BE's numbers / states to Thai strings and kit chips.
-// No layout, no styling (the rows / pages hand these to kit pieces).
+// No layout, no styling (the pages hand these to kit pieces).
 
-/// "฿52,000 จาก ฿80,000 · ครบ 15 มี.ค. 2027" (or "· ไม่มีกำหนด").
-String savingGoalDueLine(
+/// The one status chip of a goal's hero: closed / archived / reached /
+/// behind / on track — or none. "ช้า N เดือน" never shows with 0 months.
+Widget? savingGoalStatusChip(AppLocalizations l, SavingGoal g) {
+  if (g.isArchived) {
+    return StatusChip(label: l.sgv2FilterArchived, kind: StatusKind.archived);
+  }
+  if (g.isCompleted) {
+    return StatusChip(label: l.fpGoalsClosed, kind: StatusKind.done);
+  }
+  return switch (g.status) {
+    SavingStatus.reached => StatusChip(
+      label: l.fpGoalsReached,
+      kind: StatusKind.done,
+    ),
+    SavingStatus.behind => StatusChip(
+      label: (g.behindMonths ?? 0) > 0
+          ? l.sgv2PaceLate(g.behindMonths!)
+          : l.fpGoalsBehind,
+      kind: StatusKind.warning,
+    ),
+    SavingStatus.onTrack => StatusChip(
+      label: l.sgv2PaceOnTrack,
+      kind: StatusKind.active,
+    ),
+    SavingStatus.none => null,
+  };
+}
+
+/// The ETA badge of a list row: "ถึงเป้า ส.ค. 2029 · ช้า 2 เดือน" (amber when
+/// behind) / "ถึงเป้า มี.ค. 2027" / "ถึงเป้าแล้ว". Null with nothing to say.
+({String label, Tone tone})? savingGoalEtaBadge(
   BuildContext context,
   AppLocalizations l,
   SavingGoal g,
-  String symbol,
 ) {
-  final locale = Localizations.localeOf(context).toLanguageTag();
-  final progress = l.savingGoalProgressLine(
-    moneyString(context, g.savedAmount, symbol: symbol),
-    moneyString(context, g.targetAmount, symbol: symbol),
-  );
-  final d = g.deadline == null ? null : DateTime.tryParse(g.deadline!);
-  final due = d == null
-      ? l.sgv2NoDeadline
-      : l.sgv2DueOn(DateFormatter.medium(d, locale: locale));
-  return '$progress · $due';
-}
-
-/// "ต้องออม ฿5,500/เดือน · ออมจริง ฿4,000" — null without a pace to show.
-String? savingGoalPaceLine(AppLocalizations l, SavingGoal g, String symbol) {
-  final needed = g.neededMonthly;
-  final pace = g.paceMonthly;
-  if (pace == null) return null;
-  String m(double v) => '$symbol${AmountInput.format(v)}';
-  return l.sgv2PaceLine(needed == null ? '-' : m(needed), m(pace));
-}
-
-/// The one status chip a goal row shows: reached / late / on track — or none.
-Widget? savingGoalStatusChip(AppLocalizations l, SavingGoal g) {
   if (g.isArchived) {
-    return StatusChip(
-      label: l.sgv2FilterArchived,
-      kind: StatusKind.archived,
-      size: ChipSize.mini,
-    );
+    return (label: l.sgv2FilterArchived, tone: Tone.neutral);
   }
-  if (g.isCompleted || g.pace == SavingPace.reached) {
-    return StatusChip(
-      label: l.savingGoalCompletedLabel,
-      kind: StatusKind.done,
-      size: ChipSize.mini,
-    );
+  if (g.isCompleted) return (label: l.fpGoalsClosed, tone: Tone.success);
+  if (g.status == SavingStatus.reached) {
+    return (label: l.savingGoalCompletedLabel, tone: Tone.success);
   }
-  return switch (g.pace) {
-    SavingPace.late => StatusChip(
-      label: g.lateMonths == null
-          ? l.sgv2PaceLate(0)
-          : l.sgv2PaceLate(g.lateMonths!),
-      kind: StatusKind.warning,
-      size: ChipSize.mini,
+  final locale = Localizations.localeOf(context).toLanguageTag();
+  final eta = g.etaDate == null ? null : DateTime.tryParse(g.etaDate!);
+  final month = eta == null ? null : DateFormat.yMMM(locale).format(eta);
+  final months = g.behindMonths ?? 0;
+  return switch (g.status) {
+    SavingStatus.behind when month != null && months > 0 => (
+      label: l.fpGoalsEtaBehind(month, months),
+      tone: Tone.warning,
     ),
-    SavingPace.onTrack => StatusChip(
-      label: l.sgv2PaceOnTrack,
-      kind: StatusKind.active,
-      size: ChipSize.mini,
+    SavingStatus.behind when month != null => (
+      label: l.fpGoalsEtaOn(month),
+      tone: Tone.warning,
     ),
-    SavingPace.reached || SavingPace.none => null,
+    SavingStatus.behind => (
+      label: months > 0 ? l.sgv2PaceLate(months) : l.fpGoalsBehind,
+      tone: Tone.warning,
+    ),
+    SavingStatus.onTrack when month != null => (
+      label: l.fpGoalsEtaOn(month),
+      tone: Tone.success,
+    ),
+    _ => null,
   };
 }
+
+/// "วันที่ 25 ของทุกเดือน · ฿5,500 จาก โดราเอมอน" (or "จาก ไม่มีกระเป๋า").
+String savingAutoSaveCaption(
+  BuildContext context,
+  AppLocalizations l,
+  SavingAutoSave a,
+  String symbol,
+) => l.fpGoalsAutoCaption(
+  dayOfMonthLabel(context, a.day),
+  moneyString(context, a.amount, symbol: symbol),
+  a.wallet?.name ?? l.fpGoalsNoWallet,
+);

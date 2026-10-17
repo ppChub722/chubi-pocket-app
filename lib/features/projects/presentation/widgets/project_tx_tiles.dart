@@ -26,23 +26,20 @@ String projectTxDateLabel(BuildContext context, String ymd) {
   );
 }
 
-/// Type bubble for a project row (expense / income).
-class ProjectTxIcon extends StatelessWidget {
-  const ProjectTxIcon({required this.tx, this.size = 36, super.key});
-
-  final ProjectTransaction tx;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final isExpense = tx.type == 'expense';
-    return IconTile(
-      icon: isExpense ? AppIcons.expense : AppIcons.income,
-      color: isExpense ? palette.expense : palette.income,
-      size: size,
-    );
-  }
+/// Type bubble for a project row (expense / income), on the kit's
+/// [IconTile].
+Widget projectTxIcon(
+  BuildContext context,
+  ProjectTransaction tx, {
+  double size = 36,
+}) {
+  final palette = Theme.of(context).extension<AppColors>()!;
+  final isExpense = tx.type == 'expense';
+  return IconTile(
+    icon: isExpense ? AppIcons.expense : AppIcons.income,
+    color: isExpense ? palette.expense : palette.income,
+    size: size,
+  );
 }
 
 /// A member's [PersonMark] level: linked to an app account, else a typed
@@ -137,10 +134,13 @@ class ProjectTxTreeTile extends StatelessWidget {
             },
       linked: parent.linked,
       highlighted: highlighted,
-      payerName: payer.displayName,
+      payerName: l.fpEventsPaidBy(payer.displayName),
       payerLevel: projectMemberLevel(payer),
       payerIconCode: payer.iconCode,
-      caption: projectTxDateLabel(context, parent.date),
+      // The day is the group's heading; line 2 = payer · split count.
+      summary: tree.children.isEmpty
+          ? null
+          : l.fpEventsSplitCount(tree.children.length),
       onTap: () => _actions(context, parent, isParent: true),
       children: [
         for (final c in tree.children)
@@ -276,7 +276,7 @@ class ProjectTxTreeTile extends StatelessWidget {
     final action = await showActionSheet<String>(
       context,
       header: ActionSheetHeader(
-        leading: ProjectTxIcon(tx: tx),
+        leading: projectTxIcon(context, tx),
         title: tx.description ?? tx.tags.firstOrNull ?? '—',
         subtitle: [
           view.memberOf(tx).displayName,

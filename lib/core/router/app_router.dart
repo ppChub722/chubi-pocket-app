@@ -36,14 +36,13 @@ import '../../features/pending/presentation/pages/pending_page.dart';
 import '../../features/personal_debts/presentation/pages/debt_person_page.dart';
 import '../../features/personal_debts/presentation/pages/personal_debts_page.dart';
 import '../../features/projects/presentation/pages/project_detail_page.dart';
-import '../../features/projects/presentation/pages/project_form_page.dart';
 import '../../features/projects/presentation/pages/project_members_page.dart';
 import '../../features/projects/presentation/pages/projects_page.dart';
 import '../../features/saving_goals/presentation/pages/saving_goal_detail_page.dart';
 import '../../features/saving_goals/presentation/pages/saving_goals_list_page.dart';
 import '../../features/recurring/presentation/pages/recurring_home_page.dart';
-import '../../features/recurring/presentation/pages/recurring_page.dart';
-import '../../features/recurring/presentation/pages/recurring_settings_page.dart';
+import '../../features/recurring/presentation/pages/recurring_detail_page.dart';
+import '../../features/recurring/presentation/recurring_draft.dart';
 import '../../features/tags/presentation/pages/tags_page.dart';
 import '../../features/transactions/presentation/pages/debt_entry_detail_page.dart';
 import '../../features/transactions/presentation/pages/transaction_detail_page.dart';
@@ -329,13 +328,13 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
           AccountDetailPage(accountId: state.pathParameters['id']!),
     ),
     // Shared-wallet members (spec §14) — the wallet page, opened on its
-    // สมาชิก tab (links / notifications keep working).
+    // member actions sheet (links / notifications keep working).
     GoRoute(
       path: '/accounts/:id/members',
       name: 'account-members',
       builder: (context, state) => AccountDetailPage(
         accountId: state.pathParameters['id']!,
-        initialTab: AccountDetailTab.members,
+        openMembers: true,
       ),
     ),
   ],
@@ -423,7 +422,7 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
       path: '/projects/new',
       name: 'project-new',
       // Forms hide the nav themselves (EditModeMixin).
-      builder: (context, state) => const ProjectFormPage(),
+      builder: (context, state) => const ProjectDetailPage(),
     ),
     GoRoute(
       path: '/projects/:id',
@@ -535,32 +534,37 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
       // ?tab=upcoming opens on the upcoming items (quick create's
       // "รายการล่วงหน้า ›", the dashboard's coming-up cards).
       builder: (context, state) => RecurringHomePage(
-        initialTab: state.uri.queryParameters['tab'] == 'upcoming'
-            ? RecurringHomeTab.upcoming
-            : RecurringHomeTab.recurring,
+        // The calendar replaced the "upcoming items" tab.
+        initialTab: switch (state.uri.queryParameters['tab']) {
+          'upcoming' || 'calendar' => RecurringHomeTab.calendar,
+          'reminder' => RecurringHomeTab.reminder,
+          _ => RecurringHomeTab.recurring,
+        },
       ),
     ),
     GoRoute(
       path: '/recurring/new',
       name: 'recurring-new',
-      // ?type=saving&goal=<id>[&account=<id>] → a saving (ออม) recurring.
-      builder: (context, state) => RecurringSettingsPage(
-        saving: state.uri.queryParameters['type'] == 'saving',
-        goalId: state.uri.queryParameters['goal'],
-        accountId: state.uri.queryParameters['account'],
+      // ?kind= &type= &amount= &category=<id> &name= &account=<id> prefill
+      // the form (the link picker's "+ สร้างรายการประจำใหม่จากรายการนี้").
+      builder: (context, state) => RecurringDetailPage(
+        preset: RecurringPreset.fromQuery(state.uri.queryParameters),
       ),
     ),
     GoRoute(
       path: '/recurring/:id',
       name: 'recurring-detail',
       builder: (context, state) =>
-          RecurringPage(id: state.pathParameters['id']!),
+          RecurringDetailPage(id: state.pathParameters['id']!),
     ),
     GoRoute(
+      // Straight into edit mode (✏️ no longer opens a read-only view).
       path: '/recurring/:id/settings',
       name: 'recurring-settings',
-      builder: (context, state) =>
-          RecurringSettingsPage(id: state.pathParameters['id']!),
+      builder: (context, state) => RecurringDetailPage(
+        id: state.pathParameters['id']!,
+        startEditing: true,
+      ),
     ),
   ],
   // Saving goals (Phase 1c)

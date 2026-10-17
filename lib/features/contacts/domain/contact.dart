@@ -8,18 +8,23 @@ class LinkedUser extends Equatable {
   const LinkedUser({
     required this.id,
     required this.displayName,
+    this.username,
     this.email,
     this.iconCode,
   });
 
   final String id;
   final String displayName;
+
+  /// The @handle, when the BE sends it (not in the OpenAPI schema yet).
+  final String? username;
   final String? email;
   final IconCode? iconCode;
 
   factory LinkedUser.fromJson(Map<String, dynamic> json) => LinkedUser(
     id: json['id'] as String,
     displayName: json['display_name'] as String,
+    username: json['username'] as String?,
     email: json['email'] as String?,
     iconCode: json['icon_code'] != null
         ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
@@ -27,7 +32,7 @@ class LinkedUser extends Equatable {
   );
 
   @override
-  List<Object?> get props => [id, displayName, email, iconCode];
+  List<Object?> get props => [id, displayName, username, email, iconCode];
 }
 
 /// `Contact` (API v2). [name], [email] and [iconCode] are RESOLVED by the BE
@@ -149,14 +154,60 @@ class UnlinkedName extends Equatable {
 
 /// `ContactDetail` — a [Contact] plus the unlinked split names
 /// (`?include=unlinked_names`).
+/// `delete_preview` of GET /contacts/:id — what a delete touches (records keep
+/// the name as text). The FE prints it; no client counting.
+class ContactDeletePreview extends Equatable {
+  const ContactDeletePreview({
+    required this.debtRecords,
+    required this.eventMembers,
+    required this.linked,
+  });
+  final int debtRecords;
+  final int eventMembers;
+  final bool linked;
+
+  factory ContactDeletePreview.fromJson(Map<String, dynamic> json) =>
+      ContactDeletePreview(
+        debtRecords: (json['debt_records'] as num?)?.toInt() ?? 0,
+        eventMembers: (json['event_members'] as num?)?.toInt() ?? 0,
+        linked: json['linked'] as bool? ?? false,
+      );
+
+  @override
+  List<Object?> get props => [debtRecords, eventMembers, linked];
+}
+
 class ContactDetail extends Equatable {
-  const ContactDetail({required this.contact, this.unlinkedNames = const []});
+  const ContactDetail({
+    required this.contact,
+    this.unlinkedNames = const [],
+    this.unlinkedNameCount = 0,
+    this.unlinkedRecordCount = 0,
+    this.deletePreview,
+  });
 
   final Contact contact;
   final List<UnlinkedName> unlinkedNames;
 
+  /// The BE's `unlinked_total` — names and records still free to wire (the
+  /// "จับคู่ชื่อในรายการหาร" badge; no client sums).
+  final int unlinkedNameCount;
+  final int unlinkedRecordCount;
+
+  /// Only with include=delete_preview, else null.
+  final ContactDeletePreview? deletePreview;
+
   factory ContactDetail.fromJson(Map<String, dynamic> json) => ContactDetail(
     contact: Contact.fromJson(json),
+    unlinkedNameCount:
+        ((json['unlinked_total'] as Map?)?['names'] as num?)?.toInt() ?? 0,
+    unlinkedRecordCount:
+        ((json['unlinked_total'] as Map?)?['records'] as num?)?.toInt() ?? 0,
+    deletePreview: json['delete_preview'] is Map<String, dynamic>
+        ? ContactDeletePreview.fromJson(
+            json['delete_preview'] as Map<String, dynamic>,
+          )
+        : null,
     unlinkedNames: ((json['unlinked_names'] as List?) ?? const [])
         .cast<Map<String, dynamic>>()
         .map(UnlinkedName.fromJson)
@@ -164,7 +215,13 @@ class ContactDetail extends Equatable {
   );
 
   @override
-  List<Object?> get props => [contact, unlinkedNames];
+  List<Object?> get props => [
+    contact,
+    unlinkedNames,
+    unlinkedNameCount,
+    unlinkedRecordCount,
+    deletePreview,
+  ];
 }
 
 /// `{contact, absorbed_count}` — absorb and create.

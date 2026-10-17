@@ -69,6 +69,7 @@ class SettingSummaryRow extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.summary,
+    this.error,
     super.key,
   });
 
@@ -76,10 +77,14 @@ class SettingSummaryRow extends StatelessWidget {
   final String? summary;
   final VoidCallback? onTap;
 
+  /// A field error under the label (e.g. "pick at least one"), error colour.
+  final String? error;
+
   @override
   Widget build(BuildContext context) => DetailRow(
     label: label,
     onTap: onTap,
+    error: error,
     showChevron: true,
     trailing: summary == null
         ? null

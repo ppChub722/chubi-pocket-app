@@ -59,6 +59,7 @@ class _DebtRepo extends Fake implements PersonalDebtsRepository {
     String? q,
     bool all = false,
     NetSide? side,
+    DebtPeopleSort sort = DebtPeopleSort.oldest,
   }) async => const DebtPeoplePage(
     items: [_mom],
     totals: DebtTotals(owedToMe: 200, net: 200, openCount: 1),

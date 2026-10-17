@@ -83,4 +83,30 @@ void main() {
     ]);
     expect(v.txs.last.tagRefs.single.mine, isTrue);
   });
+
+  test('a deleted event tag comes off the rows; a renamed one is renamed', () {
+    final renamed = _view().withEventTags([
+      const BoardTag(id: 't1', name: 'Meals'),
+    ]);
+    expect(renamed.txs.last.tagRefs.single.name, 'Meals');
+    expect(renamed.txs.last.tags, ['Meals']);
+    final gone = _view().withEventTags(const []);
+    expect(gone.txs.last.tagRefs, isEmpty);
+  });
+
+  test('0.4.0 numbers: my split, remaining, positions, list summary', () {
+    final d = ProjectDetail.fromJson(detailJson());
+    expect(d.project.myPaid, 1000);
+    expect(d.project.myShare, 750);
+    expect(d.project.myReceivable, 250);
+    expect(d.project.myPayable, 0);
+    expect(d.project.remaining, 8250);
+    expect(d.summary.positions.last.payable, 250);
+    expect(d.summary.positions.first.receivable, 250);
+    final s = ProjectListSummary.fromJson(listSummaryJson());
+    expect(s.myShareTotal, 14289);
+    expect(s.paidTotal, 22539);
+    expect(s.receivableTotal, 8250);
+    expect((s.active, s.unsettled, s.ended), (2, 1, 5));
+  });
 }

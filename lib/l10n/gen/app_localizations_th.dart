@@ -6009,6 +6009,697 @@ class AppLocalizationsTh extends AppLocalizations {
   String get bgRowOneOff => 'ครั้งเดียว';
 
   @override
+  String get fpWalletsTileCash => 'กระเป๋าตังค์';
+
+  @override
+  String fpWalletsSavedLine(String saved, String available) {
+    return 'ออมไว้ $saved · ใช้ได้จริง $available';
+  }
+
+  @override
+  String get fpWalletsSortByType => 'ตามประเภท';
+
+  @override
+  String get fpWalletsReorderChip => 'จัดลำดับ';
+
+  @override
+  String get fpWalletBalanceLabel => 'ยอดในกระเป๋า';
+
+  @override
+  String fpWalletMonthIn(String month) {
+    return '$month · เงินเข้า';
+  }
+
+  @override
+  String fpWalletMonthOut(String month) {
+    return '$month · เงินออก';
+  }
+
+  @override
+  String fpWalletAvailableLegend(String amount) {
+    return 'ใช้ได้ $amount';
+  }
+
+  @override
+  String fpWalletSavedLegend(String amount) {
+    return 'ออมไว้ $amount';
+  }
+
+  @override
+  String fpWalletCardUsed(int pct, String limit) {
+    return 'ใช้ $pct% ของวงเงิน $limit';
+  }
+
+  @override
+  String fpWalletCardLeft(String amount) {
+    return 'เหลือ $amount';
+  }
+
+  @override
+  String fpWalletDueAlert(String date, int days) {
+    return 'ครบกำหนดชำระ $date · อีก $days วัน';
+  }
+
+  @override
+  String get fpWalletPayCard => 'ชำระบัตร';
+
+  @override
+  String get fpWalletSave => 'ออม';
+
+  @override
+  String get fpWalletSettingsDesc => 'กระเป๋านี้นับในยอดและรายงานอย่างไร';
+
+  @override
+  String get fpWalletCardSettingsDesc => 'บัตรนี้นับในรายงานอย่างไร';
+
+  @override
+  String get fpWalletArchiveConsequence =>
+      'ไม่นับในยอดใดเลย แก้ไม่ได้ กู้คืนได้';
+
+  @override
+  String get fpWalletRefLabel => 'เลขอ้างอิง';
+
+  @override
+  String get fpWalletRefHint => 'ใช้จับคู่ตอนสแกนสลิป';
+
+  @override
+  String get fpWalletInviteLabel => 'เชิญ';
+
+  @override
+  String get fpWalletTrackOff => 'ปิดอยู่';
+
+  @override
+  String get fpWalletOwnerCaption => 'เจ้าของ';
+
+  @override
+  String get fpWalletMemberCaption => 'สมาชิก';
+
+  @override
+  String get fpTxNetCaption => 'สุทธิ';
+
+  @override
+  String fpTxAvgDaily(String amount) {
+    return 'จ่ายเฉลี่ย $amount/วัน';
+  }
+
+  @override
+  String get fpWalletDeleteLabel => 'ลบกระเป๋านี้';
+
+  @override
+  String get fpWalletDeleteConsequence =>
+      'ดูก่อนว่ามีอะไรผูกอยู่ · เงินออมยังอยู่ แค่หลุดจากกระเป๋า';
+
+  @override
+  String get fpWalletDeleteTitle => 'ลบกระเป๋านี้?';
+
+  @override
+  String fpWalletDeleteBody(
+    int transactions,
+    int transfers,
+    int system,
+    int recurring,
+    int savings,
+    String amount,
+  ) {
+    return 'รายการ $transactions รายการยังอยู่แต่ไม่มีกระเป๋า (โอน $transfers) · รายการเปิดยอด/ปรับยอด $system รายการถูกลบ · รายการประจำ $recurring ยังทำงานต่อ · เงินออม $savings รายการ ($amount) ยังอยู่แต่หลุดจากกระเป๋า';
+  }
+
+  @override
+  String get fpWalletDeleted => 'ลบกระเป๋าแล้ว';
+
+  @override
+  String get fpContactsNotLinked => 'ยังไม่เชื่อมกับผู้ใช้ในแอป';
+
+  @override
+  String fpContactsLinkedWith(String user) {
+    return 'เชื่อมกับ $user แล้ว';
+  }
+
+  @override
+  String get fpContactsSettingsDesc => 'ชื่อที่ใช้แสดงคนนี้ทั้งแอป';
+
+  @override
+  String get fpContactsLinkSection => 'เชื่อมบัญชี';
+
+  @override
+  String get fpContactsLinkSectionDesc =>
+      'เชื่อมกับผู้ใช้ในแอป และจับคู่ชื่อในรายการหาร';
+
+  @override
+  String get fpContactsArchiveConsequence =>
+      'ซ่อนจากลิสต์และตัวเลือกคน หนี้ไม่เปลี่ยน';
+
+  @override
+  String get fpContactsDeleteConsequence =>
+      'รายการเก่าเหลือแค่ชื่อ ยอดไม่เปลี่ยน';
+
+  @override
+  String get fpDebtsTotalCaption => 'ยอดค้างทั้งหมด';
+
+  @override
+  String fpDebtsOwedToMeTile(int count) {
+    return 'รอรับ · $count คน';
+  }
+
+  @override
+  String fpDebtsIOweTile(int count) {
+    return 'รอจ่าย · $count คน';
+  }
+
+  @override
+  String fpDebtsOver30(int count) {
+    return 'ค้างเกิน 30 วัน $count คน';
+  }
+
+  @override
+  String fpDebtsDaysOutstanding(int count) {
+    return 'ค้าง $count วัน';
+  }
+
+  @override
+  String get fpDebtsIncludeCleared => 'รวมคนที่เคลียร์แล้ว';
+
+  @override
+  String get fpDebtsSortOldest => 'ค้างนานสุด';
+
+  @override
+  String get fpDebtsSortAmount => 'ยอดมากสุด';
+
+  @override
+  String get fpDebtsSortRecent => 'ล่าสุด';
+
+  @override
+  String get fpDebtsMessageLabel => 'ข้อความสรุปยอด · แก้ได้ก่อนส่ง';
+
+  @override
+  String get fpDebtsCopy => 'คัดลอก';
+
+  @override
+  String get fpDebtsShare => 'แชร์';
+
+  @override
+  String get fpDebtsCopied => 'คัดลอกข้อความแล้ว';
+
+  @override
+  String get fpDebtsCycleHeader => 'ที่มาของยอด';
+
+  @override
+  String fpDebtsCycleHeaderSince(String date) {
+    return 'ที่มาของยอด · ตั้งแต่เคลียร์ครบ $date';
+  }
+
+  @override
+  String get fpDebtsEarlierHeader => 'รอบก่อน · เคลียร์ครบแล้ว';
+
+  @override
+  String get fpDebtsEarlierLink => 'รอบก่อนหน้านี้';
+
+  @override
+  String fpBudgetsRangeDay(String range, int elapsed, int total) {
+    return '$range · วันที่ $elapsed/$total';
+  }
+
+  @override
+  String get fpBudgetsLeftLabel => 'ยังใช้ได้';
+
+  @override
+  String get fpBudgetsOverLabel => 'เกิน';
+
+  @override
+  String fpBudgetsLimitTarget(String amount) {
+    return '/ $amount';
+  }
+
+  @override
+  String fpBudgetsUsedCaption(String amount) {
+    return 'ใช้ไป $amount';
+  }
+
+  @override
+  String fpBudgetsPaceCaption(int pct) {
+    return 'ควรใช้ถึงวันนี้ $pct%';
+  }
+
+  @override
+  String get fpBudgetsTileDaily => 'ใช้ได้วันละ';
+
+  @override
+  String get fpBudgetsTileProjected => 'คาดสิ้นรอบ';
+
+  @override
+  String get fpBudgetsTileDaysLabel => 'เหลืออีก';
+
+  @override
+  String fpBudgetsDaysValue(int count) {
+    return '$count วัน';
+  }
+
+  @override
+  String get fpBudgetsSettingsDesc => 'งบนี้นับอะไร และเตือนเมื่อไหร่';
+
+  @override
+  String get fpBudgetsCountsWhat => 'นับอะไรบ้าง';
+
+  @override
+  String get fpBudgetsWarnAt => 'เตือนเมื่อใช้ถึง';
+
+  @override
+  String get fpBudgetsRepeat => 'ทำซ้ำทุกรอบ';
+
+  @override
+  String get fpBudgetsRepeatCaption => 'แต่ละรอบแก้เพดานแยกได้';
+
+  @override
+  String get fpBudgetsTabItems => 'รายการในรอบนี้';
+
+  @override
+  String get fpBudgetsTabPeriods => 'ทุกรอบ';
+
+  @override
+  String get fpBudgetsLimitLabel => 'เพดานงบ';
+
+  @override
+  String get fpBudgetsReasonAll => 'นับเพราะ: ทุกรายจ่าย';
+
+  @override
+  String fpBudgetsReasonCategory(String name) {
+    return 'นับเพราะ: หมวด $name';
+  }
+
+  @override
+  String fpBudgetsReasonSubCategory(String name) {
+    return 'นับเพราะ: หมวดย่อยของ $name';
+  }
+
+  @override
+  String get fpBudgetsReasonSubCategoryAny =>
+      'นับเพราะ: เป็นหมวดย่อยของหมวดที่นับ';
+
+  @override
+  String fpBudgetsReasonTag(String name) {
+    return 'นับเพราะ: แท็ก $name';
+  }
+
+  @override
+  String fpBudgetsReasonWallet(String name) {
+    return 'นับเพราะ: กระเป๋า $name';
+  }
+
+  @override
+  String fpBudgetsPeriodReset(String amount) {
+    return 'คืนเป็นค่าเดิม ($amount)';
+  }
+
+  @override
+  String get fpBudgetsCloseConsequence =>
+      'จบงบนี้ ไม่สร้างรอบใหม่ รอบเก่ายังดูได้';
+
+  @override
+  String get fpBudgetsArchiveConsequence => 'ซ่อนไว้ ไม่นับในยอด กู้คืนได้';
+
+  @override
+  String get fpBudgetsRestoreConsequence =>
+      'กลับมาอยู่ในรายการและนับในยอดอีกครั้ง';
+
+  @override
+  String get fpBudgetsDeleteConsequence => 'ลบถาวร ทุกรอบ';
+
+  @override
+  String get fpGoalsListCaption => 'เงินออมทั้งหมดตอนนี้';
+
+  @override
+  String fpGoalsMonthShortLine(String amount) {
+    return 'เดือนนี้ขาดอีก $amount';
+  }
+
+  @override
+  String fpGoalsSpareLine(String amount) {
+    return '🐷 ยังไม่จัดสรร $amount ›';
+  }
+
+  @override
+  String fpGoalsStatusChip(String status) {
+    return 'สถานะ: $status';
+  }
+
+  @override
+  String get fpGoalsGroupShort => 'เดือนนี้ยังขาด';
+
+  @override
+  String get fpGoalsGroupDone => 'เดือนนี้ครบแล้ว ✓';
+
+  @override
+  String get fpGoalsGroupNoPlan => 'ยังไม่มีแผนรายเดือน';
+
+  @override
+  String fpGoalsRowShort(String amount) {
+    return 'ขาด $amount';
+  }
+
+  @override
+  String fpGoalsEtaOn(String date) {
+    return 'ถึงเป้า $date';
+  }
+
+  @override
+  String fpGoalsEtaBehind(String date, int n) {
+    return 'ถึงเป้า $date · ช้า $n เดือน';
+  }
+
+  @override
+  String get fpGoalsBehind => 'ช้ากว่าแผน';
+
+  @override
+  String get fpGoalsReached => 'ครบแล้ว';
+
+  @override
+  String get fpGoalsClosed => 'ปิดแล้ว';
+
+  @override
+  String get fpGoalsSavedLabel => 'ออมแล้ว';
+
+  @override
+  String fpGoalsTargetSuffix(String target, int pct) {
+    return '/ $target · $pct%';
+  }
+
+  @override
+  String fpGoalsDaysLeft(int count) {
+    return 'อีก $count วัน';
+  }
+
+  @override
+  String get fpGoalsTileShort => 'เดือนนี้ขาด';
+
+  @override
+  String get fpGoalsTileSaved => 'เดือนนี้ออมแล้ว';
+
+  @override
+  String get fpGoalsTileNeeded => 'ต้องออม/เดือน';
+
+  @override
+  String get fpGoalsActionSave => 'ออม';
+
+  @override
+  String get fpGoalsActionRestore => 'กู้คืน';
+
+  @override
+  String get fpGoalsSettingsDesc => 'ระบบออมให้อัตโนมัติ';
+
+  @override
+  String fpGoalsAutoCaption(String day, String amount, String wallet) {
+    return '$day · $amount จาก $wallet';
+  }
+
+  @override
+  String get fpGoalsAutoOffHint =>
+      'เปิดเพื่อให้ระบบสร้างรายการออมให้ยืนยันทุกเดือน';
+
+  @override
+  String get fpGoalsAutoEdit => 'แก้จำนวน วัน และกระเป๋า';
+
+  @override
+  String get fpGoalsAutoSheetTitle => 'ออมอัตโนมัติ';
+
+  @override
+  String get fpGoalsAutoDay => 'วันที่ออมของทุกเดือน';
+
+  @override
+  String get fpGoalsAutoFrom => 'กันเงินจาก';
+
+  @override
+  String get fpGoalsNoWallet => 'ไม่มีกระเป๋า';
+
+  @override
+  String get fpGoalsChartActual => 'ออมจริง';
+
+  @override
+  String get fpGoalsAutoTag => 'อัตโนมัติ';
+
+  @override
+  String fpGoalsPlanLeft(String saved, String left) {
+    return 'ออมแล้ว $saved · เหลือ $left';
+  }
+
+  @override
+  String fpGoalsPlanNeeded(String amount) {
+    return 'ต้องออม $amount/เดือน';
+  }
+
+  @override
+  String get fpGoalsCloseConsequence =>
+      'ย้ายเงินไป “ยังไม่จัดสรร” หรือคืนกระเป๋าเดิม';
+
+  @override
+  String get fpGoalsArchiveConsequence => 'ซ่อนไว้ ไม่นับในยอด กู้คืนได้';
+
+  @override
+  String get fpGoalsArchiveNeedsClose => 'ปิดเป้าหมายก่อน';
+
+  @override
+  String get fpGoalsArchiveHasSavings => 'ปิดเป้าหมายก่อนจึงจะเก็บถาวรได้';
+
+  @override
+  String get fpGoalsDeleteConsequence => 'ลบถาวร พร้อมประวัติการออม';
+
+  @override
+  String get fpGoalsArchiveConfirmBody =>
+      'ซ่อนเป้าหมายนี้ ไม่นับในยอด กู้คืนได้ภายหลัง';
+
+  @override
+  String get fpGoalsDeleteConfirmBody =>
+      'ลบเป้าหมายนี้ถาวร พร้อมประวัติการออมของเป้าหมาย';
+
+  @override
+  String get fpGoalsRefreshFailed => 'รีเฟรชไม่สำเร็จ แสดงข้อมูลล่าสุดที่มี';
+
+  @override
+  String get fpEventsSummaryCaption => 'event ที่กำลังทำ · ส่วนของฉัน';
+
+  @override
+  String fpEventsPaidLine(String paid, String receivable) {
+    return 'ฉันจ่ายไป $paid → รอรับ $receivable';
+  }
+
+  @override
+  String get fpEventsTileActive => 'กำลังทำ';
+
+  @override
+  String get fpEventsTileUnsettled => 'ยังเคลียร์ไม่หมด';
+
+  @override
+  String get fpEventsTileEnded => 'จบแล้ว';
+
+  @override
+  String get fpEventsSortRecent => 'ล่าสุดก่อน';
+
+  @override
+  String get fpEventsSortOldest => 'เก่าสุดก่อน';
+
+  @override
+  String get fpEventsSortAmount => 'ยอดมากสุดก่อน';
+
+  @override
+  String get fpEventsCreate => 'สร้างอีเวนต์';
+
+  @override
+  String fpEventsRowSpent(String amount) {
+    return 'ใช้ไป $amount';
+  }
+
+  @override
+  String fpEventsRowShare(String amount) {
+    return 'ส่วนฉัน $amount';
+  }
+
+  @override
+  String get fpEventsOwed => 'รอรับ';
+
+  @override
+  String get fpEventsOwe => 'รอจ่าย';
+
+  @override
+  String get fpEventsSpentTotal => 'ใช้ไปรวม';
+
+  @override
+  String fpEventsBudgetUsed(String spent, String planned) {
+    return 'ใช้ไป $spent จากงบ $planned';
+  }
+
+  @override
+  String fpEventsBudgetLeft(String amount) {
+    return 'เหลือ $amount';
+  }
+
+  @override
+  String fpEventsBudgetOver(String amount) {
+    return 'เกินงบ $amount';
+  }
+
+  @override
+  String get fpEventsMyShare => 'ส่วนของฉัน';
+
+  @override
+  String get fpEventsIncomeTotal => 'รายรับรวม';
+
+  @override
+  String get fpEventsMyTags => 'แท็กของฉัน';
+
+  @override
+  String get fpEventsTagPick => 'เลือก';
+
+  @override
+  String get fpEventsMembersTitle => 'สมาชิก · ใครจ่าย / ใครค้าง';
+
+  @override
+  String get fpEventsManage => 'จัดการ ›';
+
+  @override
+  String fpEventsMemberPaid(String amount) {
+    return 'จ่าย $amount';
+  }
+
+  @override
+  String fpEventsMemberOwed(String amount) {
+    return 'รอรับ $amount';
+  }
+
+  @override
+  String fpEventsMemberOwe(String amount) {
+    return 'รอจ่าย $amount';
+  }
+
+  @override
+  String get fpEventsInvite => 'เชิญ';
+
+  @override
+  String get fpEventsBillsSearchHint => 'ค้นหารายการในอีเวนต์';
+
+  @override
+  String get fpEventsPayerFilter => 'คนจ่าย';
+
+  @override
+  String get fpEventsPayerAll => 'ทุกคน';
+
+  @override
+  String get fpEventsTagsFilterLabel => 'แท็กอีเวนต์';
+
+  @override
+  String get fpEventsTagAll => 'ทั้งหมด';
+
+  @override
+  String fpEventsSplitCount(int count) {
+    return 'หาร $count คน';
+  }
+
+  @override
+  String fpEventsPaidBy(String name) {
+    return '$name จ่าย';
+  }
+
+  @override
+  String get fpEventsBudgetLabel => 'ตั้งงบไว้ (ไม่บังคับ)';
+
+  @override
+  String get fpEventsBudgetHelper =>
+      'ยอดที่ตั้งใจจะใช้ · ล้างค่าเพื่อไม่แสดงแผน';
+
+  @override
+  String get fpEventsDatesLabel => 'วันเริ่ม – สิ้นสุด';
+
+  @override
+  String get fpEventsSettingsDesc =>
+      'แท็กของบิลในอีเวนต์นี้ ใช้ร่วมกับสมาชิกทุกคน';
+
+  @override
+  String get fpEventsManageTags => 'จัดการแท็กอีเวนต์';
+
+  @override
+  String fpEventsTagsCount(int count) {
+    return '$count แท็ก';
+  }
+
+  @override
+  String get fpEventsArchiveConsequence => 'ซ่อนไว้ ไม่นับในยอด กู้คืนได้';
+
+  @override
+  String get fpEventsDeleteConsequence => 'เลือกได้ว่าจะลบบิลในอีเวนต์ด้วยไหม';
+
+  @override
+  String get fpEventsRestore => 'กู้คืนอีเวนต์';
+
+  @override
+  String get fpEventsRestoreConsequence => 'กลับมาเป็นกำลังดำเนินการ';
+
+  @override
+  String get fpEventsArchived => 'เก็บถาวรแล้ว';
+
+  @override
+  String get fpEventsRestored => 'กู้คืนแล้ว';
+
+  @override
+  String get fpEventsArchiveConfirmTitle => 'เก็บถาวรอีเวนต์นี้?';
+
+  @override
+  String get fpEventsArchiveConfirmBody =>
+      'ซ่อนไว้ ไม่นับในยอด และแก้ไขไม่ได้ กู้คืนได้ทุกเมื่อ';
+
+  @override
+  String get fpEventsTagsTitle => 'แท็กอีเวนต์ · ใช้ร่วมกับสมาชิก';
+
+  @override
+  String get fpEventsTagAdd => 'เพิ่มแท็กอีเวนต์';
+
+  @override
+  String get fpEventsTagsImportAll => 'นำเข้าทั้งหมดไปแท็กของฉัน';
+
+  @override
+  String get fpEventsTagRename => 'เปลี่ยนชื่อ';
+
+  @override
+  String get fpEventsTagRestyle => 'เปลี่ยนไอคอน/สี';
+
+  @override
+  String get fpEventsTagImportOne => 'นำเข้าแท็กของฉัน';
+
+  @override
+  String get fpEventsTagNameLabel => 'ชื่อแท็ก';
+
+  @override
+  String get fpEventsTagNameRequired => 'ใส่ชื่อแท็ก';
+
+  @override
+  String get fpEventsTagNewTitle => 'แท็กอีเวนต์ใหม่';
+
+  @override
+  String get fpEventsTagRenameTitle => 'เปลี่ยนชื่อแท็ก';
+
+  @override
+  String get fpEventsTagIconTitle => 'ไอคอนแท็ก';
+
+  @override
+  String fpEventsTagDeleteTitle(String name) {
+    return 'ลบแท็ก $name?';
+  }
+
+  @override
+  String get fpEventsTagDeleteBody => 'บิลที่ใช้แท็กนี้จะหลุดแท็ก';
+
+  @override
+  String get fpEventsTagsEmpty => 'ยังไม่มีแท็กอีเวนต์';
+
+  @override
+  String fpEventsTagBills(int count) {
+    return '$count บิล';
+  }
+
+  @override
+  String get fpEventsTagInMine => 'มีในแท็กของฉันแล้ว';
+
+  @override
+  String get fpEventsLoadFailed => 'โหลดใหม่ไม่ได้ · แสดงข้อมูลล่าสุด';
+
+  @override
   String get categoryDeleteConsequence => 'ลบถาวร · รายการในหมวดนี้จะไม่มีหมวด';
 
   @override
@@ -6277,4 +6968,289 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get recurringLinkAlreadyLinked =>
       'งวดนี้ผูกไปแล้ว (หรือรายการนี้ผูกอยู่แล้ว)';
+
+  @override
+  String get fpRecurringTabReminder => 'เตือนจ่าย';
+
+  @override
+  String get fpRecurringTabCalendar => 'ปฏิทิน';
+
+  @override
+  String get fpRecurringListCaption => '30 วันข้างหน้า ต้องจ่าย';
+
+  @override
+  String fpRecurringAwaitingAlert(int n) {
+    return 'รอใส่ยอด $n รายการ';
+  }
+
+  @override
+  String fpRecurringMonthLine(String pay, String receive) {
+    return 'ต่อเดือน จ่าย $pay · รับ $receive';
+  }
+
+  @override
+  String get fpRecurringPausedGroup => 'หยุดไว้';
+
+  @override
+  String get fpRecurringGroupDue => 'ถึงแล้ว · อยู่ใน pending';
+
+  @override
+  String get fpRecurringGroupComing => 'จะถึง';
+
+  @override
+  String get fpRecurringAwaitingAmount => 'รอยอด';
+
+  @override
+  String get fpRecurringAddReminder => 'เพิ่มเตือนจ่าย';
+
+  @override
+  String get fpRecurringKindSubscription => 'ค่าสมาชิก';
+
+  @override
+  String get fpRecurringKindInstallment => 'ผ่อนชำระ';
+
+  @override
+  String get fpRecurringKindIncome => 'รายรับ';
+
+  @override
+  String get fpRecurringKindReminder => 'เตือนจ่าย';
+
+  @override
+  String get fpRecurringRefreshFailed =>
+      'รีเฟรชไม่สำเร็จ แสดงข้อมูลล่าสุดที่มี';
+
+  @override
+  String get fpRecurringCalendarNone => 'ไม่มีรายการในวันนี้';
+
+  @override
+  String get fpRecurringPerRound => 'ต่อครั้ง';
+
+  @override
+  String get fpRecurringAwaitingValue => 'รอใส่ยอด';
+
+  @override
+  String get fpRecurringTileYearly => 'ปีละ';
+
+  @override
+  String get fpRecurringTileSaved => 'บันทึกแล้ว';
+
+  @override
+  String get fpRecurringTilePending => 'รอยืนยัน';
+
+  @override
+  String get fpRecurringTileInstallment => 'งวด';
+
+  @override
+  String fpRecurringCountUnit(int n) {
+    return '$n งวด';
+  }
+
+  @override
+  String fpRecurringAlertAwaiting(String due) {
+    return 'รอใส่ยอด · $due';
+  }
+
+  @override
+  String get fpRecurringInfoSpan => 'เริ่ม – สิ้นสุด';
+
+  @override
+  String fpRecurringNextInline(String date, String due) {
+    return 'ถัดไป $date ($due)';
+  }
+
+  @override
+  String get fpRecurringTrialUntil => 'ทดลองฟรีถึง';
+
+  @override
+  String get fpRecurringTabPast => 'งวดที่ผ่านมา';
+
+  @override
+  String get fpRecurringTabUpcoming => 'ล่วงหน้า';
+
+  @override
+  String fpRecurringNextTitle(String due) {
+    return 'งวดถัดไป · $due';
+  }
+
+  @override
+  String get fpRecurringNextCaption => 'จะขึ้นร่างใน pending วันนั้น';
+
+  @override
+  String get fpRecurringEditedChip => 'แก้แล้ว';
+
+  @override
+  String get fpRecurringActEditAmount => 'แก้ยอด';
+
+  @override
+  String get fpRecurringActMove => 'เลื่อนวัน';
+
+  @override
+  String get fpRecurringActSkip => 'ข้าม';
+
+  @override
+  String get fpRecurringActEnterAmount => 'ใส่ยอด';
+
+  @override
+  String fpRecurringThenTitle(int n) {
+    return 'ล่วงหน้าทั้งหมด $n งวด';
+  }
+
+  @override
+  String get fpRecurringMoreDates => 'เพิ่มเติม ›';
+
+  @override
+  String fpRecurringChipEdited(String date, String amount) {
+    return '$date · $amount';
+  }
+
+  @override
+  String fpRecurringChipSkipped(String date) {
+    return '$date · ข้าม';
+  }
+
+  @override
+  String get fpRecurringOccEditTitle => 'แก้ไขงวดนี้';
+
+  @override
+  String get fpRecurringOccMoveTitle => 'เลื่อนงวดนี้';
+
+  @override
+  String get fpRecurringOccEnterTitle => 'ใส่ยอด';
+
+  @override
+  String get fpRecurringOccDate => 'วันที่';
+
+  @override
+  String get fpRecurringOccAmount => 'ยอดเงิน';
+
+  @override
+  String get fpRecurringSkipTitle => 'ข้ามงวดนี้?';
+
+  @override
+  String get fpRecurringSkipBody =>
+      'งวดนี้จะไม่ขึ้นร่างใน pending กู้คืนได้ภายหลัง';
+
+  @override
+  String get fpRecurringAmountLabel => 'จำนวนเงิน / งวด';
+
+  @override
+  String get fpRecurringAmountOptional => 'จำนวนเงิน / งวด (ไม่บังคับ)';
+
+  @override
+  String get fpRecurringReminderHint =>
+      'ไม่ต้องใส่ยอดก็ได้ ถึงวันให้ใส่ยอดจริงในร่าง';
+
+  @override
+  String get fpRecurringFieldCount => 'จำนวนงวด';
+
+  @override
+  String fpRecurringCountValue(int n) {
+    return '$n งวด';
+  }
+
+  @override
+  String get fpRecurringCountRequired => 'ผ่อนชำระต้องระบุจำนวนงวด';
+
+  @override
+  String get fpRecurringFieldMode => 'แบบ';
+
+  @override
+  String get fpRecurringFieldPayFrom => 'จ่ายจาก';
+
+  @override
+  String get fpRecurringFieldIntoWallet => 'เข้ากระเป๋า';
+
+  @override
+  String get fpRecurringFieldFromWallet => 'จากกระเป๋า';
+
+  @override
+  String get fpRecurringSelectDone => 'เสร็จ';
+
+  @override
+  String get fpRecurringArchiveConsequence =>
+      'หยุดสร้างงวดใหม่ ซ่อนไว้ กู้คืนได้';
+
+  @override
+  String get fpRecurringRestoreConsequence => 'กลับมาใช้งานและสร้างงวดใหม่ต่อ';
+
+  @override
+  String get fpRecurringDeleteConsequence =>
+      'ลบรายการประจำนี้ พร้อมงวดที่ยังไม่บันทึก';
+
+  @override
+  String get fpRecurringDuplicate => 'ทำสำเนา';
+
+  @override
+  String get fpRecurringDuplicateConsequence =>
+      'สร้างรายการประจำใหม่ที่เหมือนกัน เริ่มวันนี้';
+
+  @override
+  String fpM5ContactDeleteDebts(int n) {
+    return 'รายการหนี้ $n รายการ จะเหลือแค่ชื่อ';
+  }
+
+  @override
+  String fpM5ContactDeleteMembers(int n) {
+    return 'เป็นสมาชิกอีเวนต์ $n งาน';
+  }
+
+  @override
+  String get fpM5ContactDeleteLinked => 'เชื่อมบัญชีอยู่ จะถูกตัดการเชื่อมต่อ';
+
+  @override
+  String fpM5BudgetDeleteBody(
+    int periods,
+    int overridden,
+    int categories,
+    int wallets,
+  ) {
+    return 'ลบถาวร $periods รอบ (ปรับเอง $overridden รอบ) · $categories หมวด · $wallets กระเป๋า · รายการธุรกรรมไม่ได้รับผลกระทบ';
+  }
+
+  @override
+  String fpM5GoalDeleteBody(int n) {
+    return 'ลบเป้าหมายนี้ถาวร รายการออม $n รายการจะไม่ผูกกับเป้าหมายอีก';
+  }
+
+  @override
+  String get fpM5GoalsSortTooltip => 'เรียงลำดับ';
+
+  @override
+  String get fpM5GoalsSortCreated => 'เรียงตามสร้าง';
+
+  @override
+  String get fpM5GoalsSortDeadline => 'ใกล้ถึงก่อน';
+
+  @override
+  String get fpM5GoalsSortProgress => 'ความคืบหน้า';
+
+  @override
+  String get fpM5GoalsSortRemaining => 'ที่เหลือ';
+
+  @override
+  String get fpM5GoalsSortName => 'ชื่อ';
+
+  @override
+  String fpM5GoalsMonthSaved(String saved, String plan) {
+    return 'ออมแล้ว $saved / $plan';
+  }
+
+  @override
+  String get fpM5GoalsChartPlan => 'ตามแผน';
+
+  @override
+  String get fpM5bRecurringPerMonth => 'ต่อเดือน';
+
+  @override
+  String get fpM5bRecurringAmountPerTime => 'จำนวนต่อครั้ง';
+
+  @override
+  String fpM5bRecurringDeleteNumbers(int items, int drafts, int linked) {
+    return 'จะลบ $items งวด ร่างที่รออยู่ $drafts รายการ และเกี่ยวข้องกับรายการที่บันทึกแล้ว $linked รายการ';
+  }
+
+  @override
+  String fpM5bEventDeleteNumbers(int bills, int members) {
+    return 'จะลบบิล $bills รายการ และสมาชิก $members คน';
+  }
 }

@@ -21,6 +21,7 @@ import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../home/presentation/cubit/dashboard_cubit.dart';
 import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
+import '../../../personal_debts/presentation/cubit/debt_book.dart';
 import '../../../projects/data/projects_repository.dart';
 import '../../../projects/domain/project.dart';
 import '../../../projects/presentation/cubit/projects_cubit.dart';
@@ -171,6 +172,7 @@ Future<bool> showQuickCreateSheet(
   ProjectView? project,
   ProjectTxTree? projectRow,
   Account? account,
+  Account? toAccount,
   TransactionType? type,
   Category? category,
   Tag? tag,
@@ -223,6 +225,7 @@ Future<bool> showQuickCreateSheet(
         project: project,
         projectRow: projectRow,
         account: account,
+        initialToAccount: toAccount,
         initialType: type,
         initialCategory: category,
         initialTag: tag,
@@ -242,7 +245,7 @@ Future<bool> showQuickCreateSheet(
         onEventSaved: onEventSaved,
         entry: entry,
         initialAmount: amount,
-        initialDebtDirection: debtDirection,
+        initialDebtDirection: debtDirection ?? preset?.debtDirection,
       );
       if (options == null) return sheet;
       return BlocProvider<TxFormOptionsCubit>.value(
@@ -268,6 +271,7 @@ class _QuickCreateSheet extends StatefulWidget {
     this.project,
     this.projectRow,
     this.account,
+    this.initialToAccount,
     this.initialType,
     this.initialCategory,
     this.initialTag,
@@ -285,6 +289,9 @@ class _QuickCreateSheet extends StatefulWidget {
 
   /// Preset wallet for a new transaction (else the last-used one).
   final Account? account;
+
+  /// A transfer's destination to start on (a card's ชำระบัตร).
+  final Account? initialToAccount;
 
   /// A new transaction's type to start on (else expense).
   final TransactionType? initialType;
@@ -527,6 +534,12 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     _link.addListener(_onLinkChanged);
     final type = widget.initialType;
     if (type != null) _c.setType(type);
+    final toAccount = widget.initialToAccount;
+    if (toAccount != null) {
+      _c
+        ..setType(TransactionType.transfer)
+        ..setToAccount(toAccount);
+    }
     if (widget.initialAmount != null && widget.draft == null) {
       _c.amount.text = _amountText(widget.initialAmount);
     }
@@ -1019,6 +1032,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       // Home's debts tile.
       dashboard.markStale();
       widget.onDebtSaved?.call(r);
+      // Every live debts cubit (people list, an open person page) patches
+      // itself, whichever page opened the sheet.
+      DebtBook.entrySaved(r);
       navigator.pop(true);
       showAppSnackBarOn(messenger, l.debtEntrySaved, tone: Tone.success);
     } on ApiException catch (e) {

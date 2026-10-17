@@ -35,6 +35,14 @@ class QuickCreateResult {
   final EventPatch? patch;
 }
 
+/// An event-tag write's answer (API `EventTagWriteResult`).
+class EventTagWrite {
+  const EventTagWrite({required this.patch, required this.tag});
+
+  final EventPatch patch;
+  final BoardTag tag;
+}
+
 /// `POST /projects/:id/tags/import` result.
 class EventTagImportResult {
   const EventTagImportResult({required this.created, required this.tags});
@@ -89,10 +97,14 @@ class ProjectsRepository {
     );
     final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
     final pag = res.data!['pagination'] as Map<String, dynamic>?;
+    final summary = res.data!['summary'];
     return ProjectPage(
       projects: data.map(Project.fromJson).toList(),
       page: (pag?['page'] as num?)?.toInt() ?? page,
       totalPages: (pag?['total_pages'] as num?)?.toInt() ?? page,
+      summary: summary is Map<String, dynamic>
+          ? ProjectListSummary.fromJson(summary)
+          : null,
     );
   });
 
@@ -103,14 +115,23 @@ class ProjectsRepository {
 
   /// The event page in one call: event, summary, members, tags and the
   /// board's first page.
-  Future<ProjectDetail> detail(String id, {int perPage = 50}) =>
-      _call(() async {
-        final res = await _client.dio.get<Map<String, dynamic>>(
-          '/projects/$id/detail',
-          queryParameters: <String, dynamic>{'per_page': perPage.toString()},
-        );
-        return ProjectDetail.fromJson(res.data!);
-      });
+  ///
+  /// [deletePreview] adds what a delete removes (`include=delete_preview`,
+  /// the delete confirm's numbers).
+  Future<ProjectDetail> detail(
+    String id, {
+    int perPage = 50,
+    bool deletePreview = false,
+  }) => _call(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>(
+      '/projects/$id/detail',
+      queryParameters: <String, dynamic>{
+        'per_page': perPage.toString(),
+        if (deletePreview) 'include': 'delete_preview',
+      },
+    );
+    return ProjectDetail.fromJson(res.data!);
+  });
 
   /// One call (plan, dates and my tags included) → the new event's detail.
   /// [startDate] / [endDate] are `YYYY-MM-DD`.
@@ -367,6 +388,7 @@ class ProjectsRepository {
     String? q,
     String? tagId,
     String? sort,
+    String? payerMemberId,
   }) => _call(() async {
     final res = await _client.dio.get<Map<String, dynamic>>(
       '/projects/$projectId/transactions',
@@ -377,6 +399,7 @@ class ProjectsRepository {
         if (mine) 'mine': 'true',
         if (q != null && q.trim().isNotEmpty) 'q': q.trim(),
         'tag_id': ?tagId,
+        'payer_member_id': ?payerMemberId,
         'sort': ?sort,
       },
     );
@@ -501,16 +524,50 @@ class ProjectsRepository {
     String projectId,
     String name, {
     IconCode? iconCode,
+  }) async =>
+      (await writeEventTag(projectId, name: name, iconCode: iconCode)).tag;
+
+  /// `POST /projects/:id/tags` (create) or `PUT /projects/:id/tags/:tag_id`
+  /// (rename / restyle, [tagId] given): the patch (tags updated) + the tag.
+  Future<EventTagWrite> writeEventTag(
+    String projectId, {
+    String? tagId,
+    required String name,
+    IconCode? iconCode,
   }) => _call(() async {
-    final res = await _client.dio.post<Map<String, dynamic>>(
-      '/projects/$projectId/tags',
-      data: <String, dynamic>{
-        'name': name,
-        if (iconCode != null) 'icon_code': iconCode.toJson(),
-      },
+    final body = <String, dynamic>{
+      'name': name,
+      if (iconCode != null) 'icon_code': iconCode.toJson(),
+    };
+    final res = tagId == null
+        ? await _client.dio.post<Map<String, dynamic>>(
+            '/projects/$projectId/tags',
+            data: body,
+          )
+        : await _client.dio.put<Map<String, dynamic>>(
+            '/projects/$projectId/tags/$tagId',
+            data: body,
+          );
+    return EventTagWrite(
+      patch: EventPatch.fromJson(res.data!),
+      tag: BoardTag.fromJson(res.data!['tag'] as Map<String, dynamic>),
     );
-    return BoardTag.fromJson(res.data!['tag'] as Map<String, dynamic>);
   });
+
+  /// Hard delete; the tag comes off every bill. Answers the patch.
+  Future<EventPatch> deleteEventTag(String projectId, String tagId) => _patch(
+    _client.dio.delete<Map<String, dynamic>>(
+      '/projects/$projectId/tags/$tagId',
+    ),
+  );
+
+  /// `POST /projects/:id/archive` (owner): hidden, not counted, read-only.
+  Future<EventPatch> archive(String id) =>
+      _patch(_client.dio.post<Map<String, dynamic>>('/projects/$id/archive'));
+
+  /// `POST /projects/:id/restore` (owner): back to active.
+  Future<EventPatch> restore(String id) =>
+      _patch(_client.dio.post<Map<String, dynamic>>('/projects/$id/restore'));
 
   /// Copies event tags into MY personal set ([tagIds] empty = every one I
   /// don't have yet).

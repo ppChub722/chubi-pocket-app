@@ -6,7 +6,6 @@ import 'package:chubi_pocket/features/accounts/domain/account.dart';
 import 'package:chubi_pocket/features/accounts/domain/payment_provider.dart';
 import 'package:chubi_pocket/features/accounts/presentation/cubit/accounts_cubit.dart';
 import 'package:chubi_pocket/features/accounts/presentation/pages/account_detail_page.dart';
-import 'package:chubi_pocket/features/accounts/presentation/widgets/account_card.dart';
 import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:chubi_pocket/features/notifications/presentation/cubit/unread_badge_cubit.dart';
 import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.dart';
@@ -36,6 +35,20 @@ class _Repo extends Fake implements AccountsRepository {
   @override
   Future<AccountDetail> getDetail(String id) =>
       Completer<AccountDetail>().future;
+
+  int previews = 0;
+
+  @override
+  Future<AccountDeletePreview?> deletePreview(String id) async {
+    previews++;
+    return AccountDeletePreview.fromJson({
+      'transactions': 12,
+      'transfers': 2,
+      'system_rows_deleted': 1,
+      'recurring': 3,
+      'saving_entries': {'count': 4, 'amount': 800.0},
+    });
+  }
 
   @override
   Future<Account> create(Account draft) async {
@@ -164,8 +177,9 @@ void main() {
     expect(find.textContaining('1,234.50'), findsNothing);
     expect(find.text('Balance not tracked'), findsOneWidget);
     expect(find.text('Adjust balance'), findsNothing);
-    // Transfers stay.
-    expect(find.text('Transfer'), findsOneWidget);
+    // รายการ / โอน moved to the bottom + (reference §6): no action bar at all
+    // on an untracked wallet.
+    expect(find.text('Transfer'), findsNothing);
   });
 
   testWidgets('hero: tracked shows the balance and the ปรับยอด action', (
@@ -210,6 +224,21 @@ void main() {
     expect(repo.updates.single['current_balance'], 500);
   });
 
+  testWidgets('edit: ลบ asks the BE for the numbers once, then confirms', (
+    t,
+  ) async {
+    await pump(t, wallet: _wallet());
+    await t.tap(find.byTooltip('Edit'));
+    await t.pump(const Duration(milliseconds: 300));
+    await t.ensureVisible(find.text('Delete this wallet'));
+    await t.tap(find.text('Delete this wallet'));
+    await t.pump(const Duration(milliseconds: 300));
+    expect(repo.previews, 1);
+    expect(find.text('Delete this wallet?'), findsOneWidget);
+    expect(find.textContaining('12 transactions stay'), findsOneWidget);
+    expect(find.textContaining('3 recurring settings'), findsOneWidget);
+  });
+
   testWidgets('edit: on → off just saves track_balance:false', (t) async {
     await pump(t, wallet: _wallet());
     await t.tap(find.byTooltip('Edit'));
@@ -231,7 +260,5 @@ void main() {
     });
     expect(a.showsBalance, isFalse);
     expect(a.creditUsed, 0);
-    expect(a.creditUtilization, isNull);
-    expect(a.creditAvailable, isNull);
   });
 }

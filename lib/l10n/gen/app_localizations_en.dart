@@ -6154,6 +6154,717 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bgRowOneOff => 'One-off';
 
   @override
+  String get fpWalletsTileCash => 'Wallets';
+
+  @override
+  String fpWalletsSavedLine(String saved, String available) {
+    return 'Saved $saved · really available $available';
+  }
+
+  @override
+  String get fpWalletsSortByType => 'By type';
+
+  @override
+  String get fpWalletsReorderChip => 'Reorder';
+
+  @override
+  String get fpWalletBalanceLabel => 'In the wallet';
+
+  @override
+  String fpWalletMonthIn(String month) {
+    return '$month · in';
+  }
+
+  @override
+  String fpWalletMonthOut(String month) {
+    return '$month · out';
+  }
+
+  @override
+  String fpWalletAvailableLegend(String amount) {
+    return 'Available $amount';
+  }
+
+  @override
+  String fpWalletSavedLegend(String amount) {
+    return 'Saved $amount';
+  }
+
+  @override
+  String fpWalletCardUsed(int pct, String limit) {
+    return 'Used $pct% of the $limit limit';
+  }
+
+  @override
+  String fpWalletCardLeft(String amount) {
+    return '$amount left';
+  }
+
+  @override
+  String fpWalletDueAlert(String date, int days) {
+    return 'Payment due $date · in $days days';
+  }
+
+  @override
+  String get fpWalletPayCard => 'Pay card';
+
+  @override
+  String get fpWalletSave => 'Save';
+
+  @override
+  String get fpWalletSettingsDesc =>
+      'How this wallet counts in totals and reports';
+
+  @override
+  String get fpWalletCardSettingsDesc => 'How this card counts in reports';
+
+  @override
+  String get fpWalletArchiveConsequence =>
+      'Counted nowhere, read-only, restorable';
+
+  @override
+  String get fpWalletRefLabel => 'Reference numbers';
+
+  @override
+  String get fpWalletRefHint => 'Used to match slips when scanning';
+
+  @override
+  String get fpWalletInviteLabel => 'Invite';
+
+  @override
+  String get fpWalletTrackOff => 'Off';
+
+  @override
+  String get fpWalletOwnerCaption => 'Owner';
+
+  @override
+  String get fpWalletMemberCaption => 'Member';
+
+  @override
+  String get fpTxNetCaption => 'Net';
+
+  @override
+  String fpTxAvgDaily(String amount) {
+    return 'Avg spend $amount/day';
+  }
+
+  @override
+  String get fpWalletDeleteLabel => 'Delete this wallet';
+
+  @override
+  String get fpWalletDeleteConsequence =>
+      'See what is attached first · saved money stays, just unlinked from the wallet';
+
+  @override
+  String get fpWalletDeleteTitle => 'Delete this wallet?';
+
+  @override
+  String fpWalletDeleteBody(
+    int transactions,
+    int transfers,
+    int system,
+    int recurring,
+    int savings,
+    String amount,
+  ) {
+    return '$transactions transactions stay with no wallet ($transfers transfers) · $system opening / adjustment rows are deleted · $recurring recurring settings keep running · $savings saving entries ($amount) stay, unlinked from the wallet';
+  }
+
+  @override
+  String get fpWalletDeleted => 'Wallet deleted';
+
+  @override
+  String get fpContactsNotLinked => 'Not linked to an app user';
+
+  @override
+  String fpContactsLinkedWith(String user) {
+    return 'Linked with $user';
+  }
+
+  @override
+  String get fpContactsSettingsDesc =>
+      'The name used for this person across the app';
+
+  @override
+  String get fpContactsLinkSection => 'Link account';
+
+  @override
+  String get fpContactsLinkSectionDesc =>
+      'Link to an app user and match names in splits';
+
+  @override
+  String get fpContactsArchiveConsequence =>
+      'Hidden from the list and person pickers; debts unchanged';
+
+  @override
+  String get fpContactsDeleteConsequence =>
+      'Old records keep just the name; amounts unchanged';
+
+  @override
+  String get fpDebtsTotalCaption => 'Total outstanding';
+
+  @override
+  String fpDebtsOwedToMeTile(int count) {
+    return 'To receive · $count people';
+  }
+
+  @override
+  String fpDebtsIOweTile(int count) {
+    return 'To pay · $count people';
+  }
+
+  @override
+  String fpDebtsOver30(int count) {
+    return 'Over 30 days: $count people';
+  }
+
+  @override
+  String fpDebtsDaysOutstanding(int count) {
+    return 'Outstanding $count days';
+  }
+
+  @override
+  String get fpDebtsIncludeCleared => 'Show cleared';
+
+  @override
+  String get fpDebtsSortOldest => 'Longest owed';
+
+  @override
+  String get fpDebtsSortAmount => 'Largest';
+
+  @override
+  String get fpDebtsSortRecent => 'Latest';
+
+  @override
+  String get fpDebtsMessageLabel => 'Summary message · editable before sending';
+
+  @override
+  String get fpDebtsCopy => 'Copy';
+
+  @override
+  String get fpDebtsShare => 'Share';
+
+  @override
+  String get fpDebtsCopied => 'Message copied';
+
+  @override
+  String get fpDebtsCycleHeader => 'Where the balance comes from';
+
+  @override
+  String fpDebtsCycleHeaderSince(String date) {
+    return 'Where the balance comes from · since cleared $date';
+  }
+
+  @override
+  String get fpDebtsEarlierHeader => 'Earlier cycle · cleared';
+
+  @override
+  String get fpDebtsEarlierLink => 'Earlier cycles';
+
+  @override
+  String fpBudgetsRangeDay(String range, int elapsed, int total) {
+    return '$range · day $elapsed/$total';
+  }
+
+  @override
+  String get fpBudgetsLeftLabel => 'Still available';
+
+  @override
+  String get fpBudgetsOverLabel => 'Over budget';
+
+  @override
+  String fpBudgetsLimitTarget(String amount) {
+    return '/ $amount';
+  }
+
+  @override
+  String fpBudgetsUsedCaption(String amount) {
+    return 'Used $amount';
+  }
+
+  @override
+  String fpBudgetsPaceCaption(int pct) {
+    return 'Should be at $pct% by today';
+  }
+
+  @override
+  String get fpBudgetsTileDaily => 'Can spend per day';
+
+  @override
+  String get fpBudgetsTileProjected => 'Forecast at the end';
+
+  @override
+  String get fpBudgetsTileDaysLabel => 'Left';
+
+  @override
+  String fpBudgetsDaysValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fpBudgetsSettingsDesc =>
+      'What this budget counts, and when it warns';
+
+  @override
+  String get fpBudgetsCountsWhat => 'What it counts';
+
+  @override
+  String get fpBudgetsWarnAt => 'Warn at';
+
+  @override
+  String get fpBudgetsRepeat => 'Repeat every period';
+
+  @override
+  String get fpBudgetsRepeatCaption =>
+      'Each period\'s limit can be edited on its own';
+
+  @override
+  String get fpBudgetsTabItems => 'This period';
+
+  @override
+  String get fpBudgetsTabPeriods => 'All periods';
+
+  @override
+  String get fpBudgetsLimitLabel => 'Budget limit';
+
+  @override
+  String get fpBudgetsReasonAll => 'Counted because: every expense';
+
+  @override
+  String fpBudgetsReasonCategory(String name) {
+    return 'Counted because: category $name';
+  }
+
+  @override
+  String fpBudgetsReasonSubCategory(String name) {
+    return 'Counted because: sub-category of $name';
+  }
+
+  @override
+  String get fpBudgetsReasonSubCategoryAny =>
+      'Counted because: sub-category of a counted category';
+
+  @override
+  String fpBudgetsReasonTag(String name) {
+    return 'Counted because: tag $name';
+  }
+
+  @override
+  String fpBudgetsReasonWallet(String name) {
+    return 'Counted because: wallet $name';
+  }
+
+  @override
+  String fpBudgetsPeriodReset(String amount) {
+    return 'Back to the base amount ($amount)';
+  }
+
+  @override
+  String get fpBudgetsCloseConsequence =>
+      'Ends this budget, no new periods, old ones stay visible';
+
+  @override
+  String get fpBudgetsArchiveConsequence =>
+      'Hidden, not counted in totals, restorable';
+
+  @override
+  String get fpBudgetsRestoreConsequence =>
+      'Back in the list and counted again';
+
+  @override
+  String get fpBudgetsDeleteConsequence => 'Deleted for good, every period';
+
+  @override
+  String get fpGoalsListCaption => 'Total savings now';
+
+  @override
+  String fpGoalsMonthShortLine(String amount) {
+    return 'Still short this month $amount';
+  }
+
+  @override
+  String fpGoalsSpareLine(String amount) {
+    return '🐷 Not allocated $amount ›';
+  }
+
+  @override
+  String fpGoalsStatusChip(String status) {
+    return 'Status: $status';
+  }
+
+  @override
+  String get fpGoalsGroupShort => 'Still short this month';
+
+  @override
+  String get fpGoalsGroupDone => 'Done this month ✓';
+
+  @override
+  String get fpGoalsGroupNoPlan => 'No monthly plan yet';
+
+  @override
+  String fpGoalsRowShort(String amount) {
+    return 'Short $amount';
+  }
+
+  @override
+  String fpGoalsEtaOn(String date) {
+    return 'Goal $date';
+  }
+
+  @override
+  String fpGoalsEtaBehind(String date, int n) {
+    return 'Goal $date · $n months late';
+  }
+
+  @override
+  String get fpGoalsBehind => 'Behind plan';
+
+  @override
+  String get fpGoalsReached => 'Reached';
+
+  @override
+  String get fpGoalsClosed => 'Closed';
+
+  @override
+  String get fpGoalsSavedLabel => 'Saved';
+
+  @override
+  String fpGoalsTargetSuffix(String target, int pct) {
+    return '/ $target · $pct%';
+  }
+
+  @override
+  String fpGoalsDaysLeft(int count) {
+    return '$count days left';
+  }
+
+  @override
+  String get fpGoalsTileShort => 'Short this month';
+
+  @override
+  String get fpGoalsTileSaved => 'Saved this month';
+
+  @override
+  String get fpGoalsTileNeeded => 'Needed / month';
+
+  @override
+  String get fpGoalsActionSave => 'Save';
+
+  @override
+  String get fpGoalsActionRestore => 'Restore';
+
+  @override
+  String get fpGoalsSettingsDesc => 'Save automatically';
+
+  @override
+  String fpGoalsAutoCaption(String day, String amount, String wallet) {
+    return '$day · $amount from $wallet';
+  }
+
+  @override
+  String get fpGoalsAutoOffHint =>
+      'Turn on to get a saving to confirm every month';
+
+  @override
+  String get fpGoalsAutoEdit => 'Edit amount, day and wallet';
+
+  @override
+  String get fpGoalsAutoSheetTitle => 'Auto-saving';
+
+  @override
+  String get fpGoalsAutoDay => 'Day of the month';
+
+  @override
+  String get fpGoalsAutoFrom => 'Take from';
+
+  @override
+  String get fpGoalsNoWallet => 'No wallet';
+
+  @override
+  String get fpGoalsChartActual => 'Saved';
+
+  @override
+  String get fpGoalsAutoTag => 'Auto';
+
+  @override
+  String fpGoalsPlanLeft(String saved, String left) {
+    return 'Saved $saved · $left to go';
+  }
+
+  @override
+  String fpGoalsPlanNeeded(String amount) {
+    return 'Save $amount/month';
+  }
+
+  @override
+  String get fpGoalsCloseConsequence =>
+      'Move the money to “Not allocated” or back to its wallets';
+
+  @override
+  String get fpGoalsArchiveConsequence =>
+      'Hidden, not counted, can be restored';
+
+  @override
+  String get fpGoalsArchiveNeedsClose => 'Close the goal first';
+
+  @override
+  String get fpGoalsArchiveHasSavings => 'Close the goal before archiving it';
+
+  @override
+  String get fpGoalsDeleteConsequence =>
+      'Deleted for good, with its saving history';
+
+  @override
+  String get fpGoalsArchiveConfirmBody =>
+      'Hide this goal. It is not counted and can be restored later.';
+
+  @override
+  String get fpGoalsDeleteConfirmBody =>
+      'Delete this goal for good, with its saving history.';
+
+  @override
+  String get fpGoalsRefreshFailed => 'Refresh failed, showing the latest data';
+
+  @override
+  String get fpEventsSummaryCaption => 'Active events · my share';
+
+  @override
+  String fpEventsPaidLine(String paid, String receivable) {
+    return 'I paid $paid → owed $receivable';
+  }
+
+  @override
+  String get fpEventsTileActive => 'Active';
+
+  @override
+  String get fpEventsTileUnsettled => 'Not settled';
+
+  @override
+  String get fpEventsTileEnded => 'Ended';
+
+  @override
+  String get fpEventsSortRecent => 'Latest first';
+
+  @override
+  String get fpEventsSortOldest => 'Oldest first';
+
+  @override
+  String get fpEventsSortAmount => 'Biggest first';
+
+  @override
+  String get fpEventsCreate => 'Create event';
+
+  @override
+  String fpEventsRowSpent(String amount) {
+    return 'Spent $amount';
+  }
+
+  @override
+  String fpEventsRowShare(String amount) {
+    return 'My share $amount';
+  }
+
+  @override
+  String get fpEventsOwed => 'Owed to me';
+
+  @override
+  String get fpEventsOwe => 'I owe';
+
+  @override
+  String get fpEventsSpentTotal => 'Total spent';
+
+  @override
+  String fpEventsBudgetUsed(String spent, String planned) {
+    return 'Spent $spent of $planned budget';
+  }
+
+  @override
+  String fpEventsBudgetLeft(String amount) {
+    return '$amount left';
+  }
+
+  @override
+  String fpEventsBudgetOver(String amount) {
+    return 'Over by $amount';
+  }
+
+  @override
+  String get fpEventsMyShare => 'My share';
+
+  @override
+  String get fpEventsIncomeTotal => 'Total income';
+
+  @override
+  String get fpEventsMyTags => 'My tags';
+
+  @override
+  String get fpEventsTagPick => 'Pick';
+
+  @override
+  String get fpEventsMembersTitle => 'Members · who paid / who owes';
+
+  @override
+  String get fpEventsManage => 'Manage ›';
+
+  @override
+  String fpEventsMemberPaid(String amount) {
+    return 'Paid $amount';
+  }
+
+  @override
+  String fpEventsMemberOwed(String amount) {
+    return 'Owed $amount';
+  }
+
+  @override
+  String fpEventsMemberOwe(String amount) {
+    return 'Owes $amount';
+  }
+
+  @override
+  String get fpEventsInvite => 'Invite';
+
+  @override
+  String get fpEventsBillsSearchHint => 'Search bills in this event';
+
+  @override
+  String get fpEventsPayerFilter => 'Paid by';
+
+  @override
+  String get fpEventsPayerAll => 'Everyone';
+
+  @override
+  String get fpEventsTagsFilterLabel => 'Event tags';
+
+  @override
+  String get fpEventsTagAll => 'All';
+
+  @override
+  String fpEventsSplitCount(int count) {
+    return 'Split $count';
+  }
+
+  @override
+  String fpEventsPaidBy(String name) {
+    return '$name paid';
+  }
+
+  @override
+  String get fpEventsBudgetLabel => 'Planned budget (optional)';
+
+  @override
+  String get fpEventsBudgetHelper =>
+      'What you intend to spend · clear to hide the plan';
+
+  @override
+  String get fpEventsDatesLabel => 'Start – end';
+
+  @override
+  String get fpEventsSettingsDesc =>
+      'Bill tags in this event, shared with every member';
+
+  @override
+  String get fpEventsManageTags => 'Manage event tags';
+
+  @override
+  String fpEventsTagsCount(int count) {
+    return '$count tags';
+  }
+
+  @override
+  String get fpEventsArchiveConsequence =>
+      'Hidden, not counted, can be restored';
+
+  @override
+  String get fpEventsDeleteConsequence => 'You choose whether its bills go too';
+
+  @override
+  String get fpEventsRestore => 'Restore event';
+
+  @override
+  String get fpEventsRestoreConsequence => 'Back to in progress';
+
+  @override
+  String get fpEventsArchived => 'Event archived';
+
+  @override
+  String get fpEventsRestored => 'Event restored';
+
+  @override
+  String get fpEventsArchiveConfirmTitle => 'Archive this event?';
+
+  @override
+  String get fpEventsArchiveConfirmBody =>
+      'Hidden, not counted and read-only. You can restore it any time.';
+
+  @override
+  String get fpEventsTagsTitle => 'Event tags · shared with members';
+
+  @override
+  String get fpEventsTagAdd => 'Add event tag';
+
+  @override
+  String get fpEventsTagsImportAll => 'Import all to my tags';
+
+  @override
+  String get fpEventsTagRename => 'Rename';
+
+  @override
+  String get fpEventsTagRestyle => 'Change icon / colour';
+
+  @override
+  String get fpEventsTagImportOne => 'Import to my tags';
+
+  @override
+  String get fpEventsTagNameLabel => 'Tag name';
+
+  @override
+  String get fpEventsTagNameRequired => 'Enter a tag name';
+
+  @override
+  String get fpEventsTagNewTitle => 'New event tag';
+
+  @override
+  String get fpEventsTagRenameTitle => 'Rename tag';
+
+  @override
+  String get fpEventsTagIconTitle => 'Tag icon';
+
+  @override
+  String fpEventsTagDeleteTitle(String name) {
+    return 'Delete tag $name?';
+  }
+
+  @override
+  String get fpEventsTagDeleteBody => 'Bills using it lose the tag.';
+
+  @override
+  String get fpEventsTagsEmpty => 'No event tags yet';
+
+  @override
+  String fpEventsTagBills(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bills',
+      one: '1 bill',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fpEventsTagInMine => 'In my tags already';
+
+  @override
+  String get fpEventsLoadFailed => 'Couldn\'t refresh · showing the last data';
+
+  @override
   String get categoryDeleteConsequence =>
       'Deleted for good · its transactions will have no category';
 
@@ -6427,4 +7138,292 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get recurringLinkAlreadyLinked =>
       'That period is already linked (or this transaction is linked already)';
+
+  @override
+  String get fpRecurringTabReminder => 'Reminders';
+
+  @override
+  String get fpRecurringTabCalendar => 'Calendar';
+
+  @override
+  String get fpRecurringListCaption => 'Next 30 days to pay';
+
+  @override
+  String fpRecurringAwaitingAlert(int n) {
+    return '$n waiting for an amount';
+  }
+
+  @override
+  String fpRecurringMonthLine(String pay, String receive) {
+    return 'Per month: pay $pay · receive $receive';
+  }
+
+  @override
+  String get fpRecurringPausedGroup => 'Paused';
+
+  @override
+  String get fpRecurringGroupDue => 'Due · in pending';
+
+  @override
+  String get fpRecurringGroupComing => 'Coming up';
+
+  @override
+  String get fpRecurringAwaitingAmount => 'No amount yet';
+
+  @override
+  String get fpRecurringAddReminder => 'Add a reminder';
+
+  @override
+  String get fpRecurringKindSubscription => 'Subscription';
+
+  @override
+  String get fpRecurringKindInstallment => 'Installment';
+
+  @override
+  String get fpRecurringKindIncome => 'Income';
+
+  @override
+  String get fpRecurringKindReminder => 'Reminder';
+
+  @override
+  String get fpRecurringRefreshFailed =>
+      'Refresh failed, showing the latest data';
+
+  @override
+  String get fpRecurringCalendarNone => 'Nothing on this day';
+
+  @override
+  String get fpRecurringPerRound => 'Each time';
+
+  @override
+  String get fpRecurringAwaitingValue => 'Enter amount';
+
+  @override
+  String get fpRecurringTileYearly => 'Per year';
+
+  @override
+  String get fpRecurringTileSaved => 'Saved';
+
+  @override
+  String get fpRecurringTilePending => 'To confirm';
+
+  @override
+  String get fpRecurringTileInstallment => 'Installment';
+
+  @override
+  String fpRecurringCountUnit(int n) {
+    return '$n times';
+  }
+
+  @override
+  String fpRecurringAlertAwaiting(String due) {
+    return 'Enter the amount · $due';
+  }
+
+  @override
+  String get fpRecurringInfoSpan => 'Start – end';
+
+  @override
+  String fpRecurringNextInline(String date, String due) {
+    return 'next $date ($due)';
+  }
+
+  @override
+  String get fpRecurringTrialUntil => 'Free trial until';
+
+  @override
+  String get fpRecurringTabPast => 'Past';
+
+  @override
+  String get fpRecurringTabUpcoming => 'Upcoming';
+
+  @override
+  String fpRecurringNextTitle(String due) {
+    return 'Next · $due';
+  }
+
+  @override
+  String get fpRecurringNextCaption => 'Becomes a draft in pending on that day';
+
+  @override
+  String get fpRecurringEditedChip => 'Edited';
+
+  @override
+  String get fpRecurringActEditAmount => 'Edit amount';
+
+  @override
+  String get fpRecurringActMove => 'Move date';
+
+  @override
+  String get fpRecurringActSkip => 'Skip';
+
+  @override
+  String get fpRecurringActEnterAmount => 'Enter amount';
+
+  @override
+  String fpRecurringThenTitle(int n) {
+    return '$n upcoming in total';
+  }
+
+  @override
+  String get fpRecurringMoreDates => 'More ›';
+
+  @override
+  String fpRecurringChipEdited(String date, String amount) {
+    return '$date · $amount';
+  }
+
+  @override
+  String fpRecurringChipSkipped(String date) {
+    return '$date · skipped';
+  }
+
+  @override
+  String get fpRecurringOccEditTitle => 'Edit this occurrence';
+
+  @override
+  String get fpRecurringOccMoveTitle => 'Move this occurrence';
+
+  @override
+  String get fpRecurringOccEnterTitle => 'Enter the amount';
+
+  @override
+  String get fpRecurringOccDate => 'Date';
+
+  @override
+  String get fpRecurringOccAmount => 'Amount';
+
+  @override
+  String get fpRecurringSkipTitle => 'Skip this occurrence?';
+
+  @override
+  String get fpRecurringSkipBody =>
+      'It will not become a draft in pending. You can restore it later.';
+
+  @override
+  String get fpRecurringAmountLabel => 'Amount / time';
+
+  @override
+  String get fpRecurringAmountOptional => 'Amount / time (optional)';
+
+  @override
+  String get fpRecurringReminderHint =>
+      'No amount needed. On the day, enter the real amount in the draft.';
+
+  @override
+  String get fpRecurringFieldCount => 'Number of payments';
+
+  @override
+  String fpRecurringCountValue(int n) {
+    return '$n payments';
+  }
+
+  @override
+  String get fpRecurringCountRequired =>
+      'An installment needs a number of payments';
+
+  @override
+  String get fpRecurringFieldMode => 'Type';
+
+  @override
+  String get fpRecurringFieldPayFrom => 'Pay from';
+
+  @override
+  String get fpRecurringFieldIntoWallet => 'Into wallet';
+
+  @override
+  String get fpRecurringFieldFromWallet => 'From wallet';
+
+  @override
+  String get fpRecurringSelectDone => 'Done';
+
+  @override
+  String get fpRecurringArchiveConsequence =>
+      'Stops making new occurrences. Hidden, can be restored.';
+
+  @override
+  String get fpRecurringRestoreConsequence =>
+      'Active again, making occurrences';
+
+  @override
+  String get fpRecurringDeleteConsequence =>
+      'Deletes this recurring with its unsaved occurrences';
+
+  @override
+  String get fpRecurringDuplicate => 'Duplicate';
+
+  @override
+  String get fpRecurringDuplicateConsequence =>
+      'Creates the same recurring, starting today';
+
+  @override
+  String fpM5ContactDeleteDebts(int n) {
+    return '$n debt records keep only the name';
+  }
+
+  @override
+  String fpM5ContactDeleteMembers(int n) {
+    return 'Member of $n events';
+  }
+
+  @override
+  String get fpM5ContactDeleteLinked =>
+      'Linked to an account, the link is removed';
+
+  @override
+  String fpM5BudgetDeleteBody(
+    int periods,
+    int overridden,
+    int categories,
+    int wallets,
+  ) {
+    return 'Deletes $periods periods ($overridden adjusted) · $categories categories · $wallets wallets. Transactions are not affected.';
+  }
+
+  @override
+  String fpM5GoalDeleteBody(int n) {
+    return 'Deletes this goal for good. $n saving entries stay, detached from it.';
+  }
+
+  @override
+  String get fpM5GoalsSortTooltip => 'Sort';
+
+  @override
+  String get fpM5GoalsSortCreated => 'By created';
+
+  @override
+  String get fpM5GoalsSortDeadline => 'Nearest deadline';
+
+  @override
+  String get fpM5GoalsSortProgress => 'Progress';
+
+  @override
+  String get fpM5GoalsSortRemaining => 'Remaining';
+
+  @override
+  String get fpM5GoalsSortName => 'Name';
+
+  @override
+  String fpM5GoalsMonthSaved(String saved, String plan) {
+    return 'Saved $saved / $plan';
+  }
+
+  @override
+  String get fpM5GoalsChartPlan => 'On plan';
+
+  @override
+  String get fpM5bRecurringPerMonth => 'Per month';
+
+  @override
+  String get fpM5bRecurringAmountPerTime => 'Amount each time';
+
+  @override
+  String fpM5bRecurringDeleteNumbers(int items, int drafts, int linked) {
+    return 'This deletes $items occurrences, $drafts waiting drafts and touches $linked saved records.';
+  }
+
+  @override
+  String fpM5bEventDeleteNumbers(int bills, int members) {
+    return 'This deletes $bills bills and $members members.';
+  }
 }

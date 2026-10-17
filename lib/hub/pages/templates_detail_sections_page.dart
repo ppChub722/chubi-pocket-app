@@ -97,11 +97,14 @@ class _DetailSectionsDemoState extends State<_DetailSectionsDemo> {
               description: 'Who shares this.',
               inviteLabel: 'Invite',
               onInvite: noop,
+              actionLabel: 'Manage ›',
+              onAction: noop,
               onMemberTap: (_) {},
               members: const [
                 PeopleStripMember(
                   avatar: AppAvatar(name: 'Aom Chan'),
                   name: 'Aom',
+                  lead: 'paid 200',
                   caption: 'is owed 80',
                   tone: PeopleTone.positive,
                 ),

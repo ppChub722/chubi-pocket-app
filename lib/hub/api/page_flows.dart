@@ -340,7 +340,11 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Button "บันทึก" (edit)', [
       FlowCall('updateContact', note: 'incl. nickname / show_nickname'),
     ]),
-    FlowStep.action('Button "ลบ"', [FlowCall('deleteContact')]),
+    // fe-pages M5: delete preview first, then the delete after the confirm.
+    FlowStep.action('Button "ลบ"', [
+      FlowCall('getContact', note: 'include=delete_preview: the confirm text'),
+      FlowCall('deleteContact'),
+    ]),
     FlowStep.action('Button "เก็บถาวร"', [FlowCall('archiveContact')]),
     FlowStep.action('Button "กู้คืน"', [FlowCall('restoreContact')]),
     FlowStep.action('Button "ขอลิงก์"', [FlowCall('requestContactLink')]),
@@ -465,7 +469,10 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Button "บันทึก" (edit event) / status / my tags', [
       FlowCall('updateProject'),
     ]),
-    FlowStep.action('Button "ลบอีเวนต์นี้"', [FlowCall('deleteProject')]),
+    FlowStep.action('Button "ลบอีเวนต์นี้"', [
+      FlowCall('getProjectDetail', note: '?include=delete_preview'),
+    ]),
+    FlowStep.action('Delete dialog "ยืนยัน"', [FlowCall('deleteProject')]),
     FlowStep.action('Button "เชิญสมาชิก"', [FlowCall('addProjectMember')]),
     FlowStep.action('Tick a bill / split', [
       FlowCall('markProjectTransaction'),
@@ -514,12 +521,18 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Button "ปิดงบ"', [FlowCall('closeBudget')]),
     FlowStep.action('Button "เก็บถาวร"', [FlowCall('archiveBudget')]),
     FlowStep.action('Button "กู้คืน"', [FlowCall('restoreBudget')]),
-    FlowStep.action('Button "ลบ"', [FlowCall('deleteBudget')]),
+    // fe-pages M5: delete preview first, then the delete after the confirm.
+    FlowStep.action('Button "ลบ"', [
+      FlowCall('getBudget', note: 'include=delete_preview: the confirm text'),
+      FlowCall('deleteBudget'),
+    ]),
   ]),
 
   // ── Saving goals ────────────────────────────────────────────────────────────
   PageFlow('goals-list', 'Saving goals and the spare pool.', [
-    FlowStep.open([FlowCall('listSavingGoals')]),
+    FlowStep.open([FlowCall('listSavingGoals', note: 'sort=')]),
+    // fe-pages M5: the sort chip re-opens the list with sort=.
+    FlowStep.action('Sort chip', [FlowCall('listSavingGoals')]),
     FlowStep.action('Spare opened', [
       FlowCall('getSavingSpare', note: 'saved but not yet in a goal'),
     ]),
@@ -535,25 +548,29 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Delete an entry', [FlowCall('deleteSavingEntry')]),
     FlowStep.action('Button "บันทึก"', [FlowCall('updateSavingGoal')]),
     FlowStep.action('Button "ปิดเป้าหมาย"', [FlowCall('closeSavingGoal')]),
-    FlowStep.action('Button "ลบ"', [FlowCall('deleteSavingGoal')]),
+    // fe-pages M5: delete preview first (can_delete), then the delete.
+    FlowStep.action('Button "ลบ"', [
+      FlowCall('getSavingGoal', note: 'include=delete_preview'),
+      FlowCall('deleteSavingGoal'),
+    ]),
     FlowStep.action('Button "เก็บถาวร"', [FlowCall('archiveSavingGoal')]),
     FlowStep.action('Button "กู้คืน"', [FlowCall('restoreSavingGoal')]),
   ]),
 
   // ── Recurring + upcoming items (owner 2026-10-13) ───────────────────────────
-  PageFlow('recurring-home', 'Recurring settings and the upcoming items.', [
-    FlowStep.open([FlowCall('listRecurring', note: 'the shown tab only')]),
-    FlowStep.action('Tab "รายการล่วงหน้า" (lazy)', [
-      FlowCall('listRecurringItems'),
-    ]),
-    FlowStep.action('Filter chips', [FlowCall('listRecurring')]),
-    FlowStep.action('Item popover', [
-      FlowCall('createFromRecurringItem', note: 'item → a pending draft'),
-      FlowCall('archiveRecurringItem'),
-      FlowCall('restoreRecurringItem'),
-      FlowCall('deleteRecurringItem'),
-    ]),
-  ]),
+  PageFlow(
+    'recurring-home',
+    'Recurring settings, reminders and the calendar.',
+    [
+      FlowStep.open([
+        FlowCall('listRecurring', note: 'both list tabs + the summary card'),
+      ]),
+      FlowStep.action('Tab "ปฏิทิน" (lazy) / month stepper', [
+        FlowCall('listRecurringItems', note: '?month=YYYY-MM'),
+      ]),
+      FlowStep.action('Search / status chip', [FlowCall('listRecurring')]),
+    ],
+  ),
   PageFlow(
     'recurring-detail',
     'One recurring: what it made and what is next.',
@@ -580,6 +597,19 @@ const List<PageFlow> pageFlows = [
       ]),
     ],
   ),
+  // fe-pages: the 0.4.0 recurring pages (view ⇄ edit is ONE page now).
+  PageFlow('recurring-occurrence', 'One occurrence of a recurring.', [
+    FlowStep.action('แก้ยอด / ใส่ยอด / เลื่อนวัน', [
+      FlowCall('updateRecurringItem', note: '{date, amount}, scope this'),
+    ]),
+    FlowStep.action('ข้าม / กู้คืน', [
+      FlowCall('archiveRecurringItem'),
+      FlowCall('restoreRecurringItem'),
+    ]),
+  ]),
+  PageFlow('recurring-duplicate', 'Copy a recurring (edit mode end zone).', [
+    FlowStep.action('Button "ทำสำเนา"', [FlowCall('duplicateRecurring')]),
+  ]),
   PageFlow('recurring-settings', 'Create or edit a recurring.', [
     FlowStep.open([FlowCall('getRecurring', note: 'edit only')]),
     FlowStep.action('Button "บันทึก"', [
@@ -590,7 +620,10 @@ const List<PageFlow> pageFlows = [
       FlowCall('archiveRecurring'),
       FlowCall('restoreRecurring'),
     ]),
-    FlowStep.action('Button "ลบ"', [FlowCall('deleteRecurring')]),
+    FlowStep.action('Button "ลบ"', [
+      FlowCall('getRecurring', note: '?include=delete_preview'),
+    ]),
+    FlowStep.action('Delete dialog "ยืนยัน"', [FlowCall('deleteRecurring')]),
   ]),
 
   // ── Debts ───────────────────────────────────────────────────────────────────

@@ -20,6 +20,7 @@ class PersonalDebtsRepository {
     String? q,
     bool all = false,
     NetSide? side,
+    DebtPeopleSort sort = DebtPeopleSort.oldest,
   }) async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(
@@ -30,6 +31,7 @@ class PersonalDebtsRepository {
           if (q != null && q.trim().isNotEmpty) 'q': q.trim(),
           if (all) 'all': 'true',
           if (side != null && side != NetSide.even) 'side': side.wire,
+          'sort': sort.wire,
         },
       );
       return DebtPeoplePage.fromJson(res.data!);
@@ -39,12 +41,20 @@ class PersonalDebtsRepository {
   }
 
   /// `GET /personal-debts/people/{key}`: the person page in one call (person,
-  /// net, counts, the first timeline page). Works for typed names too.
-  Future<DebtPersonDetail> person(String key, {int perPage = 30}) async {
+  /// net, counts, the summary message, the first page of [cycle]'s entries —
+  /// the current cycle by default). Works for typed names too.
+  Future<DebtPersonDetail> person(
+    String key, {
+    int perPage = 30,
+    DebtCycle cycle = DebtCycle.current,
+  }) async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(
         '/personal-debts/people/${Uri.encodeComponent(key)}',
-        queryParameters: <String, dynamic>{'per_page': perPage.toString()},
+        queryParameters: <String, dynamic>{
+          'per_page': perPage.toString(),
+          'cycle': cycle.wire,
+        },
       );
       return DebtPersonDetail.fromJson(res.data!);
     } on DioException catch (e) {
@@ -59,12 +69,14 @@ class PersonalDebtsRepository {
     DebtEntryQuery query = const DebtEntryQuery(),
     int page = 1,
     int perPage = 30,
+    DebtCycle? cycle,
   }) async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(
         '/personal-debts/people/${Uri.encodeComponent(key)}/entries',
         queryParameters: <String, dynamic>{
           ...query.toQuery(),
+          'cycle': ?cycle?.wire,
           'page': page.toString(),
           'per_page': perPage.toString(),
         },

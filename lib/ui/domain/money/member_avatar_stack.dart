@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../domain/wallet_member.dart';
-import '../../../../ui/ui.dart';
+import '../../../features/accounts/domain/wallet_member.dart';
+import '../../ui.dart';
 
 /// An overlapping avatar stack for wallet members — max [maxVisible]
 /// avatars, then a "+N" overflow bubble (spec B2). A thin wrapper over the

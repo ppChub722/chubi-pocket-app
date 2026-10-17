@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../ui/ui.dart';
 import '../../domain/account.dart';
-import 'account_card.dart';
 
 /// A wallet as a [PickCard], dressed like the wallet cards on the wallets
 /// page once picked: the wallet's colour wash, its icon (+ the shared-wallet

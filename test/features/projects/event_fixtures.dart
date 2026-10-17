@@ -14,12 +14,11 @@ Map<String, dynamic> eventJson({
   String status = 'active',
   double? planned = 10000,
   double myNet = 250,
+  double totalIncome = 0,
   List<Map<String, dynamic>> tags = const [],
-  int linkedTxCount = 0,
 }) => {
   'id': id,
   'owner_user_id': 'u-me',
-  'linked_tx_count': linkedTxCount,
   'name': name,
   'icon_code': null,
   'description': 'Long weekend',
@@ -30,8 +29,14 @@ Map<String, dynamic> eventJson({
   'planned_amount': planned,
   'members_count': 2,
   'total_expense': 1750,
-  'total_income': 0,
+  'total_income': totalIncome,
   'my_net': myNet,
+  // 0.4.0: the BE splits my net by sign and says what is left of the plan.
+  'my_paid': 1000,
+  'my_share': 750,
+  'my_receivable': myNet > 0 ? myNet : 0,
+  'my_payable': myNet < 0 ? -myNet : 0,
+  'remaining': planned == null ? null : planned - 1750 + totalIncome,
   'tags': tags,
   'my_member_id': 'm-me',
   'my_role': 'owner',
@@ -105,6 +110,8 @@ Map<String, dynamic> summaryJson({double totalExpense = 1750}) => {
     'paid': 1000,
     'share': 750,
     'net': 250,
+    'receivable': 250,
+    'payable': 0,
   },
   'members': [
     {
@@ -112,12 +119,16 @@ Map<String, dynamic> summaryJson({double totalExpense = 1750}) => {
       'paid': 1000,
       'share': 750,
       'net': 250,
+      'receivable': 250,
+      'payable': 0,
     },
     {
       'member': memberRef('m-lee', 'Lee'),
       'paid': 750,
       'share': 1000,
       'net': -250,
+      'receivable': 0,
+      'payable': 250,
     },
   ],
   'by_tag': [
@@ -149,11 +160,9 @@ List<Map<String, dynamic>> membersJson() => [
 
 Map<String, dynamic> detailJson({
   List<Map<String, dynamic>>? rows,
-  int linkedTxCount = 0,
   int totalPages = 1,
 }) => {
   'event': eventJson(
-    linkedTxCount: linkedTxCount,
     tags: [
       {'id': 'pt1', 'name': 'Trips', 'icon_code': null},
     ],
@@ -186,6 +195,14 @@ Map<String, dynamic> detailJson({
       'total_pages': totalPages,
     },
   },
+};
+
+/// `GET /projects` `summary` (BE EventList.summary).
+Map<String, dynamic> listSummaryJson() => {
+  'my_share_total': 14289,
+  'paid_total': 22539,
+  'receivable_total': 8250,
+  'counts': {'active': 2, 'unsettled': 1, 'ended': 5},
 };
 
 Map<String, dynamic> patchJson({

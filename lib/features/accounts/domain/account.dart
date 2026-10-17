@@ -60,6 +60,12 @@ class Account extends Equatable {
     this.canEdit = true,
     this.trackBalance = true,
     this.savings,
+    this.monthIn = 0,
+    this.monthOut = 0,
+    this.dueDateNext,
+    this.daysUntilDue,
+    this.creditUsedPct,
+    this.creditAvailable,
   }) : _group = group;
 
   final String id;
@@ -77,6 +83,21 @@ class Account extends Equatable {
   /// The caller's own savings held in this wallet (goals v2); null when the
   /// BE sent none.
   final WalletSavings? savings;
+
+  /// This month's cash in / out on the wallet (user timezone; transfers and
+  /// opening / adjustment rows are left out).
+  final double monthIn;
+  final double monthOut;
+
+  /// A card's next due date and the days left (null without a due day).
+  final DateTime? dueDateNext;
+  final int? daysUntilDue;
+
+  /// A card with a limit: what is owed / the limit, rounded, not clamped (BE).
+  final int? creditUsedPct;
+
+  /// A card with a limit: limit − owed, floored at 0 (BE; null without a limit).
+  final double? creditAvailable;
 
   /// Whether any UI may show [balance] (and the credit figures built on it).
   bool get showsBalance => trackBalance;
@@ -140,26 +161,6 @@ class Account extends Equatable {
   double get creditUsed =>
       isLiability && trackBalance && balance < 0 ? -balance : 0;
 
-  /// Credit left to spend: limit − [creditUsed] (null without a limit).
-  /// Overpaid → the whole limit (the overpaid part is money of mine, not
-  /// credit).
-  double? get creditAvailable {
-    final limit = creditLimit;
-    if (!isLiability || !trackBalance || limit == null || limit <= 0) {
-      return null;
-    }
-    return limit - creditUsed;
-  }
-
-  /// [creditUsed] / limit, 0..1 (null: not credit, or no limit).
-  double? get creditUtilization {
-    final limit = creditLimit;
-    if (!isLiability || !trackBalance || limit == null || limit <= 0) {
-      return null;
-    }
-    return (creditUsed / limit).clamp(0.0, 1.0);
-  }
-
   /// Money I owe through this wallet: a card's used credit, or a wallet
   /// that isn't credit gone below zero (overdrawn). 0 otherwise.
   double get debt => balance < 0 ? -balance : 0;
@@ -194,6 +195,12 @@ class Account extends Equatable {
     bool? canEdit,
     bool? trackBalance,
     WalletSavings? savings,
+    double? monthIn,
+    double? monthOut,
+    DateTime? dueDateNext,
+    int? daysUntilDue,
+    int? creditUsedPct,
+    double? creditAvailable,
   }) {
     return Account(
       id: id ?? this.id,
@@ -222,6 +229,12 @@ class Account extends Equatable {
       canEdit: canEdit ?? this.canEdit,
       trackBalance: trackBalance ?? this.trackBalance,
       savings: savings ?? this.savings,
+      monthIn: monthIn ?? this.monthIn,
+      monthOut: monthOut ?? this.monthOut,
+      dueDateNext: dueDateNext ?? this.dueDateNext,
+      daysUntilDue: daysUntilDue ?? this.daysUntilDue,
+      creditUsedPct: creditUsedPct ?? this.creditUsedPct,
+      creditAvailable: creditAvailable ?? this.creditAvailable,
     );
   }
 
@@ -269,6 +282,12 @@ class Account extends Equatable {
       savings: json['savings'] is Map<String, dynamic>
           ? WalletSavings.fromJson(json['savings'] as Map<String, dynamic>)
           : null,
+      monthIn: (json['month_in'] as num?)?.toDouble() ?? 0,
+      monthOut: (json['month_out'] as num?)?.toDouble() ?? 0,
+      dueDateNext: DateTime.tryParse(json['due_date_next'] as String? ?? ''),
+      daysUntilDue: (json['days_until_due'] as num?)?.toInt(),
+      creditUsedPct: (json['credit_used_pct'] as num?)?.toInt(),
+      creditAvailable: (json['credit_available'] as num?)?.toDouble(),
     );
   }
 
@@ -346,6 +365,12 @@ class Account extends Equatable {
     canEdit,
     trackBalance,
     savings,
+    monthIn,
+    monthOut,
+    dueDateNext,
+    daysUntilDue,
+    creditUsedPct,
+    creditAvailable,
   ];
 }
 
@@ -545,6 +570,13 @@ class AccountTotals extends Equatable {
     this.sharedBalance = 0,
     this.otherCurrencyCount = 0,
     this.untrackedCount = 0,
+    this.cashTotal = 0,
+    this.cardDebt = 0,
+    this.cardUsedPct = 0,
+    this.savedTotal = 0,
+    this.availableTotal = 0,
+    this.cashSplit = const [],
+    this.cardRemaining = 0,
   });
 
   final double assets;
@@ -564,6 +596,21 @@ class AccountTotals extends Equatable {
 
   /// Wallets with "ติดตามยอดเงิน" off — left out of every sum.
   final int untrackedCount;
+
+  /// The กระเป๋าตังค์ tile (the non-credit wallets), the หนี้บัตร tile and
+  /// its used % of the cards' limits; what is earmarked as savings and what
+  /// is really spendable (BE, no client sums).
+  final double cashTotal;
+  final double cardDebt;
+  final int cardUsedPct;
+  final double savedTotal;
+  final double availableTotal;
+
+  /// The กระเป๋าตังค์ tile caption: each non-credit type's % of [cashTotal].
+  final List<CashSplitShare> cashSplit;
+
+  /// Credit left on the cards (limit − used), for the หนี้บัตร caption.
+  final double cardRemaining;
 
   factory AccountTotals.fromJson(Map<String, dynamic> json) {
     double n(String k) => (json[k] as num?)?.toDouble() ?? 0;
@@ -586,6 +633,19 @@ class AccountTotals extends Equatable {
       sharedBalance: n('shared_balance'),
       otherCurrencyCount: (json['other_currency_count'] as num?)?.toInt() ?? 0,
       untrackedCount: (json['untracked_count'] as num?)?.toInt() ?? 0,
+      cashTotal: n('cash_total'),
+      cardDebt: n('card_debt'),
+      cardUsedPct: (json['card_used_pct'] as num?)?.toInt() ?? 0,
+      savedTotal: n('saved_total'),
+      availableTotal: n('available_total'),
+      cashSplit: [
+        for (final s in (json['cash_split'] as List? ?? const []))
+          CashSplitShare(
+            type: AccountType.fromJson((s as Map)['type'] as String),
+            pct: (s['pct'] as num?)?.toInt() ?? 0,
+          ),
+      ],
+      cardRemaining: n('card_remaining'),
     );
   }
 
@@ -602,6 +662,13 @@ class AccountTotals extends Equatable {
     sharedBalance,
     otherCurrencyCount,
     untrackedCount,
+    cashTotal,
+    cardDebt,
+    cardUsedPct,
+    savedTotal,
+    availableTotal,
+    cashSplit,
+    cardRemaining,
   ];
 }
 
@@ -677,4 +744,64 @@ class AdjustBalanceResult {
       },
     );
   }
+}
+
+/// One type's share of the cash tile (`totals.cash_split`).
+class CashSplitShare extends Equatable {
+  const CashSplitShare({required this.type, required this.pct});
+
+  final AccountType type;
+  final int pct;
+
+  @override
+  List<Object?> get props => [type, pct];
+}
+
+/// What deleting a wallet does (`delete_preview` before, `deleted` after):
+/// the confirm dialog prints these as the BE sends them.
+class AccountDeletePreview extends Equatable {
+  const AccountDeletePreview({
+    this.transactions = 0,
+    this.transfers = 0,
+    this.systemRowsDeleted = 0,
+    this.recurring = 0,
+    this.savingEntries = 0,
+    this.savingAmount = 0,
+  });
+
+  factory AccountDeletePreview.fromJson(Map<String, dynamic> json) {
+    final s = json['saving_entries'];
+    return AccountDeletePreview(
+      transactions: (json['transactions'] as num?)?.toInt() ?? 0,
+      transfers: (json['transfers'] as num?)?.toInt() ?? 0,
+      systemRowsDeleted: (json['system_rows_deleted'] as num?)?.toInt() ?? 0,
+      recurring: (json['recurring'] as num?)?.toInt() ?? 0,
+      savingEntries: s is Map ? (s['count'] as num?)?.toInt() ?? 0 : 0,
+      savingAmount: s is Map ? (s['amount'] as num?)?.toDouble() ?? 0 : 0,
+    );
+  }
+
+  /// Rows that stay in the books with no wallet.
+  final int transactions;
+  final int transfers;
+
+  /// Opening-balance / adjustment rows: deleted with the wallet.
+  final int systemRowsDeleted;
+
+  /// Recurring settings that lose the wallet (they keep running).
+  final int recurring;
+
+  /// Goal money moved through this wallet: kept, unlinked from any wallet.
+  final int savingEntries;
+  final double savingAmount;
+
+  @override
+  List<Object?> get props => [
+    transactions,
+    transfers,
+    systemRowsDeleted,
+    recurring,
+    savingEntries,
+    savingAmount,
+  ];
 }

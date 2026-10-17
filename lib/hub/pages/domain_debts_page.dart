@@ -5,7 +5,7 @@ import '../hub_kit.dart';
 import '../hub_playground.dart';
 
 /// `/dev/domain/debts` — the debts rework pieces: PersonRow,
-/// PersonBalanceRow, NetBalance, DebtSummaryCard and LedgerRow. Sample data
+/// PersonBalanceRow, NetBalance, the debt hero pieces and LedgerRow. Sample data
 /// is Thai (what the debts pages pass from l10n).
 Widget buildDebtsPage(BuildContext context) => const _DebtsPage();
 
@@ -22,7 +22,6 @@ class _DebtsPage extends StatefulWidget {
 
 class _DebtsPageState extends State<_DebtsPage> {
   String? _picked = 'มาตาก';
-  String? _filter;
   String _last = '—';
 
   void _note(String s) => setState(() => _last = s);
@@ -230,37 +229,127 @@ class _DebtsPageState extends State<_DebtsPage> {
             currencySymbol: v<String>('currencySymbol'),
           ),
         ),
-        // ---- DebtSummaryCard ----
+        // ---- DebtAmountLine / DebtAgeText / DebtNetLine ----
         HubDemo(
-          title: 'DebtSummaryCard',
+          title: 'DebtAmountLine + DebtAgeText',
           note:
-              'The people list summary: the signed net + the 👁 toggle, then '
-              'two tappable totals. A tap filters the list; the active box is '
-              'ringed in its colour (tap again to clear here).',
-          child: DebtSummaryCard(
-            owedToMe: 3000,
-            iOwe: 1750,
-            netLabel: 'ยอดสุทธิ',
-            owedToMeLabel: _owedToMe,
-            iOweLabel: _iOwe,
-            owedToMeSelected: _filter == 'owed',
-            iOweSelected: _filter == 'owe',
-            onOwedToMeTap: () =>
-                setState(() => _filter = _filter == 'owed' ? null : 'owed'),
-            onIOweTap: () =>
-                setState(() => _filter = _filter == 'owe' ? null : 'owe'),
+              'The debt person hero\'s row C: a pill chip (รอรับ green / '
+              'รอจ่าย red) + the amount on ONE line; settled = the muted '
+              'word alone. DebtAgeText is the "ค้าง N วัน" fact line, amber '
+              'when warn.',
+          child: const HubRow(
+            cells: [
+              HubCell(
+                caption: '+1189.67',
+                child: DebtAmountLine(
+                  net: 1189.67,
+                  owedToMeLabel: 'รอรับ',
+                  iOweLabel: 'รอจ่าย',
+                  settledLabel: _settled,
+                ),
+              ),
+              HubCell(
+                caption: '-450.5',
+                child: DebtAmountLine(
+                  net: -450.5,
+                  owedToMeLabel: 'รอรับ',
+                  iOweLabel: 'รอจ่าย',
+                  settledLabel: _settled,
+                ),
+              ),
+              HubCell(
+                caption: '0',
+                child: DebtAmountLine(
+                  net: 0,
+                  owedToMeLabel: 'รอรับ',
+                  iOweLabel: 'รอจ่าย',
+                  settledLabel: _settled,
+                ),
+              ),
+              HubCell(caption: 'age', child: DebtAgeText('ค้าง 6 วัน')),
+              HubCell(
+                caption: 'age warn',
+                child: DebtAgeText('ค้าง 45 วัน', warn: true),
+              ),
+            ],
           ),
         ),
         HubDemo(
-          title: 'DebtSummaryCard — I owe more, display only',
-          note: 'No tap callbacks: the boxes are display only.',
-          child: const DebtSummaryCard(
-            owedToMe: 500,
-            iOwe: 2200,
-            netLabel: 'ยอดสุทธิ',
-            owedToMeLabel: _owedToMe,
-            iOweLabel: _iOwe,
+          title: 'DebtNetLine',
+          note: 'The list card\'s net line (only when both sides are open).',
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DebtNetLine(label: 'สุทธิ', net: 1250),
+              DebtNetLine(label: 'สุทธิ', net: -300),
+            ],
           ),
+        ),
+        // ---- DebtSummaryMessageBox ----
+        HubDemo(
+          title: 'DebtSummaryMessageBox',
+          note:
+              'The hero\'s embedded tool: the BE-built message in an editable '
+              'multiline field (edits are local, one-off) + two equal buttons. '
+              'The callbacks get the text as it is now.',
+          child: DebtSummaryMessageBox(
+            text:
+                'สรุปยอดกับ test\n• 10 ต.ค. ค่าไรก็ได้ +฿667.67\n'
+                '• 11 ต.ค. Gaming +฿522.00\nรวม test ติดคุณ ฿1,189.67',
+            label: 'ข้อความสรุปยอด · แก้ได้ก่อนส่ง',
+            copyLabel: 'คัดลอก',
+            shareLabel: 'แชร์',
+            onCopy: (t) => _note('copy ${t.length} chars'),
+            onShare: (t) => _note('share ${t.length} chars'),
+          ),
+        ),
+        HubDemo(
+          title: 'PersonBalanceRow — people list',
+          note:
+              'The 0.4.0 list row: showCaption false = only the amount, '
+              'coloured by side; the subtitle is "ค้าง N วัน" and subtitleWarn '
+              'turns it amber when over 30 days.',
+          child: _list([
+            for (final (name, level, net, sub, warn) in const [
+              ('มาตาก', PersonLevel.linked, 1189.67, 'ค้าง 45 วัน', true),
+              ('บี', PersonLevel.contact, -450.5, 'ค้าง 20 วัน', false),
+              ('ลี', PersonLevel.name, 0, null, false),
+            ])
+              PersonBalanceRow(
+                name: name,
+                level: level,
+                net: net,
+                subtitle: sub,
+                subtitleWarn: warn,
+                showCaption: false,
+                owedToMeLabel: _owedToMe,
+                iOweLabel: _iOwe,
+                settledLabel: _settled,
+                onTap: () => _note('PersonBalanceRow $name'),
+              ),
+          ]),
+        ),
+        HubDemo(
+          title: 'LedgerRow — statement (signed)',
+          note:
+              'signed: + a debt added (normal colour), − a repayment '
+              '(income colour). The person page uses it.',
+          child: _list([
+            const LedgerRow(
+              direction: LedgerDirection.paid,
+              amount: 522,
+              title: 'Gaming',
+              dateLabel: '11 ต.ค.',
+              signed: true,
+            ),
+            const LedgerRow(
+              direction: LedgerDirection.received,
+              amount: 200,
+              title: 'รับคืน',
+              dateLabel: '5 ต.ค.',
+              signed: true,
+            ),
+          ]),
         ),
         // ---- LedgerRow ----
         HubDemo(

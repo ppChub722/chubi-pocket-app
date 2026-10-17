@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../tokens/app/app_colors.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/select_check.dart';
 
@@ -21,6 +22,7 @@ class ListRow extends StatelessWidget {
     this.body,
     this.leading,
     this.subtitle,
+    this.subtitleWarn = false,
     this.trailing,
     this.onTap,
     this.onLongPress,
@@ -35,6 +37,9 @@ class ListRow extends StatelessWidget {
   final Widget? body;
   final Widget? leading;
   final String? subtitle;
+
+  /// The subtitle in the warning colour, semibold ("ค้าง 45 วัน").
+  final bool subtitleWarn;
   final Widget? trailing;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
@@ -95,7 +100,12 @@ class ListRow extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
+                              color: subtitleWarn
+                                  ? Theme.of(
+                                      context,
+                                    ).extension<AppColors>()!.warning
+                                  : scheme.onSurfaceVariant,
+                              fontWeight: subtitleWarn ? FontWeight.w600 : null,
                             ),
                           ),
                       ],

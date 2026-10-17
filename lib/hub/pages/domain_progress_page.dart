@@ -140,10 +140,24 @@ class _ProgressPage extends StatelessWidget {
                 fallbackIcon: Icons.shopping_bag_outlined,
                 value: 1.22,
                 tone: ProgressTone.danger,
-                badge: const StatusChip(
-                  label: 'เกินงบ',
-                  kind: StatusKind.over,
-                  size: ChipSize.mini,
+                badge: const ProgressBadges(
+                  children: [
+                    StatusChip(
+                      label: 'เกินงบ',
+                      kind: StatusKind.over,
+                      size: ChipSize.mini,
+                    ),
+                    StatusChip(
+                      label: 'ตามเพซจะเกิน',
+                      kind: StatusKind.warning,
+                      size: ChipSize.mini,
+                    ),
+                  ],
+                ),
+                trailing: const ProgressRemainder(
+                  label: 'เกิน',
+                  amount: '฿860',
+                  over: true,
                 ),
                 label: 'ใช้ ฿4,860 จาก ฿4,000',
                 overLabel: 'เกิน ฿860',

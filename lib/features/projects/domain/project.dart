@@ -112,6 +112,11 @@ class Project extends Equatable {
     this.totalExpense = 0,
     this.totalIncome = 0,
     this.myNet = 0,
+    this.myPaid = 0,
+    this.myShare = 0,
+    this.myReceivable = 0,
+    this.myPayable = 0,
+    this.remaining,
     this.tags = const [],
     this.myMemberId,
     this.myRole,
@@ -120,7 +125,6 @@ class Project extends Equatable {
     this.canAddBill = false,
     this.canEdit = false,
     this.canManageMembers = false,
-    this.linkedTxCount = 0,
     this.createdAt,
     this.updatedAt,
   });
@@ -149,6 +153,20 @@ class Project extends Equatable {
   /// My position: paid − share (> 0 = the others owe me; 0 = no part).
   final double myNet;
 
+  /// What I paid on the expense bills / my part of them (BE `my_paid`,
+  /// `my_share`).
+  final double myPaid;
+  final double myShare;
+
+  /// [myNet] split by sign, both >= 0 (BE `my_receivable` = the others owe
+  /// me, `my_payable` = I owe).
+  final double myReceivable;
+  final double myPayable;
+
+  /// Planned budget left (BE `remaining` = planned − (expense − income),
+  /// negative when over); null without a plan.
+  final double? remaining;
+
   /// MY personal tags on the event (private to me).
   final List<EmbeddedTag> tags;
 
@@ -164,10 +182,6 @@ class Project extends Equatable {
   final bool canEdit;
   final bool canManageMembers;
 
-  /// My personal transactions linked to its bills (the delete confirm's
-  /// "ยืนยันและลบ [x] รายการ").
-  final int linkedTxCount;
-
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -175,6 +189,9 @@ class Project extends Equatable {
       v is String ? DateTime.tryParse(v)?.toLocal() : null;
 
   bool get isActive => status == ProjectStatus.active;
+
+  /// Someone owes me or I owe someone (the BE's own split of my net).
+  bool get isUnsettled => myReceivable > 0 || myPayable > 0;
 
   /// Cancelled / archived: rows can't be edited, deleted or ticked.
   bool get isLocked =>
@@ -198,6 +215,11 @@ class Project extends Equatable {
       totalExpense: _money(json['total_expense']),
       totalIncome: _money(json['total_income']),
       myNet: _money(json['my_net']),
+      myPaid: _money(json['my_paid']),
+      myShare: _money(json['my_share']),
+      myReceivable: _money(json['my_receivable']),
+      myPayable: _money(json['my_payable']),
+      remaining: (json['remaining'] as num?)?.toDouble(),
       tags: [for (final t in _list(json['tags'])) EmbeddedTag.fromJson(t)],
       myMemberId: json['my_member_id'] as String?,
       myRole: json['my_role'] == null
@@ -208,7 +230,6 @@ class Project extends Equatable {
       canAddBill: json['can_add_bill'] == true,
       canEdit: json['can_edit'] == true,
       canManageMembers: json['can_manage_members'] == true,
-      linkedTxCount: (json['linked_tx_count'] as num?)?.toInt() ?? 0,
       createdAt: _date(json['created_at']),
       updatedAt: _date(json['updated_at']),
     );
@@ -230,6 +251,11 @@ class Project extends Equatable {
     totalExpense,
     totalIncome,
     myNet,
+    myPaid,
+    myShare,
+    myReceivable,
+    myPayable,
+    remaining,
     tags,
     myMemberId,
     myRole,
@@ -238,7 +264,6 @@ class Project extends Equatable {
     canAddBill,
     canEdit,
     canManageMembers,
-    linkedTxCount,
     createdAt,
     updatedAt,
   ];
@@ -530,10 +555,16 @@ class ProjectTransaction extends Equatable {
     );
   }
 
-  /// The same row with its tags' `mine` flags taken from [tags] (by id).
+  /// The same row with its tags taken from [tags] (by id): renamed /
+  /// restyled / `mine`-flagged ones refreshed, deleted ones dropped.
   ProjectTransaction withTagsFrom(List<BoardTag> tags) {
     if (tagRefs.isEmpty) return this;
     final byId = {for (final t in tags) t.id: t};
+    final fresh = [
+      for (final t in tagRefs)
+        if (byId[t.id] case final f?)
+          BoardTag(id: t.id, name: f.name, iconCode: f.iconCode, mine: f.mine),
+    ];
     return ProjectTransaction(
       id: id,
       projectId: projectId,
@@ -547,18 +578,8 @@ class ProjectTransaction extends Equatable {
       date: date,
       description: description,
       note: note,
-      tags: this.tags,
-      tagRefs: [
-        for (final t in tagRefs)
-          byId[t.id] == null
-              ? t
-              : BoardTag(
-                  id: t.id,
-                  name: t.name,
-                  iconCode: t.iconCode,
-                  mine: byId[t.id]!.mine,
-                ),
-      ],
+      tags: [for (final t in fresh) t.name],
+      tagRefs: fresh,
       marks: marks,
       myMark: myMark,
       myShare: myShare,
@@ -753,6 +774,8 @@ class ProjectMemberPosition extends Equatable {
     required this.paid,
     required this.share,
     required this.net,
+    this.receivable = 0,
+    this.payable = 0,
     this.userId,
     this.iconCode,
   });
@@ -765,6 +788,10 @@ class ProjectMemberPosition extends Equatable {
   final double share;
   final double net;
 
+  /// [net] split by sign, both >= 0 (BE `receivable` / `payable`).
+  final double receivable;
+  final double payable;
+
   factory ProjectMemberPosition.fromJson(Map<String, dynamic> json) {
     final m = ProjectMemberRef.tryParse(json['member']);
     return ProjectMemberPosition(
@@ -775,6 +802,8 @@ class ProjectMemberPosition extends Equatable {
       paid: _money(json['paid']),
       share: _money(json['share']),
       net: _money(json['net']),
+      receivable: _money(json['receivable']),
+      payable: _money(json['payable']),
     );
   }
 
@@ -787,6 +816,8 @@ class ProjectMemberPosition extends Equatable {
     paid,
     share,
     net,
+    receivable,
+    payable,
   ];
 }
 
@@ -828,6 +859,29 @@ List<ProjectTransaction> _board(Object? rows) => [
   for (final r in _list(rows)) ...ProjectTransaction.flatten(r),
 ];
 
+/// What deleting an event removes (`GET /projects/:id/detail?include=
+/// delete_preview`): the confirm dialog's numbers.
+class EventDeletePreview {
+  const EventDeletePreview({
+    this.bills = 0,
+    this.members = 0,
+    this.linkedTxCount = 0,
+  });
+
+  factory EventDeletePreview.fromJson(Map<String, dynamic> json) =>
+      EventDeletePreview(
+        bills: (json['bills'] as num?)?.toInt() ?? 0,
+        members: (json['members'] as num?)?.toInt() ?? 0,
+        linkedTxCount: (json['linked_tx_count'] as num?)?.toInt() ?? 0,
+      );
+
+  final int bills;
+  final int members;
+
+  /// My own book records linked to the event (delete_linked_txs).
+  final int linkedTxCount;
+}
+
 /// Everything the event page shows (API `EventDetail`, the one "open"
 /// call).
 class ProjectDetail {
@@ -839,7 +893,11 @@ class ProjectDetail {
     this.tags = const [],
     this.page = 1,
     this.totalPages = 1,
+    this.deletePreview,
   });
+
+  /// Only with `include=delete_preview`, else null.
+  final EventDeletePreview? deletePreview;
 
   final Project project;
   final List<ProjectMember> members;
@@ -873,6 +931,11 @@ class ProjectDetail {
       tags: [for (final t in _list(json['tags'])) BoardTag.fromJson(t)],
       page: (pag?['page'] as num?)?.toInt() ?? 1,
       totalPages: (pag?['total_pages'] as num?)?.toInt() ?? 1,
+      deletePreview: json['delete_preview'] is Map<String, dynamic>
+          ? EventDeletePreview.fromJson(
+              json['delete_preview'] as Map<String, dynamic>,
+            )
+          : null,
     );
   }
 }
@@ -932,17 +995,67 @@ class EventPatch {
       _board(json['rows']);
 }
 
+/// `GET /projects` `summary` (API `EventList.summary`): the list card's
+/// numbers over my events, the same whatever the list filter. The totals
+/// are over the ACTIVE events; every figure comes from the BE.
+class ProjectListSummary extends Equatable {
+  const ProjectListSummary({
+    this.myShareTotal = 0,
+    this.paidTotal = 0,
+    this.receivableTotal = 0,
+    this.active = 0,
+    this.unsettled = 0,
+    this.ended = 0,
+  });
+
+  final double myShareTotal;
+  final double paidTotal;
+  final double receivableTotal;
+
+  /// The three filter tiles' counts.
+  final int active;
+  final int unsettled;
+  final int ended;
+
+  factory ProjectListSummary.fromJson(Map<String, dynamic> json) {
+    final c = json['counts'];
+    int n(String k) => c is Map ? (c[k] as num?)?.toInt() ?? 0 : 0;
+    return ProjectListSummary(
+      myShareTotal: _money(json['my_share_total']),
+      paidTotal: _money(json['paid_total']),
+      receivableTotal: _money(json['receivable_total']),
+      active: n('active'),
+      unsettled: n('unsettled'),
+      ended: n('ended'),
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    myShareTotal,
+    paidTotal,
+    receivableTotal,
+    active,
+    unsettled,
+    ended,
+  ];
+}
+
 /// One page of `GET /projects` (API `EventList`).
 class ProjectPage {
   const ProjectPage({
     required this.projects,
     required this.page,
     required this.totalPages,
+    this.summary,
   });
 
   final List<Project> projects;
   final int page;
   final int totalPages;
+
+  /// The summary card's numbers (null from an older server).
+  final ProjectListSummary? summary;
 
   bool get hasMore => page < totalPages;
 }

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../../l10n/gen/app_localizations.dart';
-import '../../domain/account.dart';
-import '../../domain/account_type.dart';
-import 'member_avatar_stack.dart';
-import '../../../../ui/ui.dart';
+import '../../../l10n/gen/app_localizations.dart';
+import '../../../features/accounts/domain/account.dart';
+import '../../../features/accounts/domain/account_type.dart';
+import '../../ui.dart';
 
 /// Renders one wallet (account) in the grid.
 ///
@@ -12,7 +11,7 @@ import '../../../../ui/ui.dart';
 /// balance text — styled like the เพิ่มเติม hub cards. [horizontal] is the
 /// list-row form (the reorder list, the icon maker's preview); the grid
 /// uses the vertical card. A card's credit bar is its used credit — an
-/// overpaid card shows none ([Account.creditUtilization]).
+/// overpaid card shows none ([Account.creditUsedPct]).
 ///
 /// Shared wallets (spec §14, [Account.isShared]) additionally show a
 /// small chain-link badge overlaid on the icon's corner (the user's own
@@ -168,17 +167,17 @@ class _HorizontalLayout extends StatelessWidget {
                   AppTextRole.money,
                 )?.copyWith(color: accountBalanceColor(context, account)),
               ),
-            if (account.creditUtilization != null) ...[
+            if (account.creditUsedPct != null) ...[
               const SizedBox(height: AppSpacing.xs),
               SizedBox(
                 width: 100,
                 child: ProgressRow(
-                  value: account.creditUtilization!,
+                  value: (account.creditUsedPct! / 100).clamp(0.0, 1.0),
                   color: accent,
                   height: 4,
-                  label: AppLocalizations.of(context)!.accountCreditUsedPercent(
-                    (account.creditUtilization! * 100).round(),
-                  ),
+                  label: AppLocalizations.of(
+                    context,
+                  )!.accountCreditUsedPercent(account.creditUsedPct!),
                 ),
               ),
             ],
@@ -199,7 +198,9 @@ class _VerticalLayout extends StatelessWidget {
     final palette = Theme.of(context).extension<AppColors>()!;
     final accent = account.iconCode.tintFor(palette);
     final desc = account.description?.trim();
-    final utilization = account.creditUtilization;
+    final utilization = account.creditUsedPct == null
+        ? null
+        : (account.creditUsedPct! / 100).clamp(0.0, 1.0);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.max,
@@ -253,10 +254,7 @@ class _VerticalLayout extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
-              AppText(
-                '${(utilization * 100).round()}%',
-                role: AppTextRole.caption,
-              ),
+              AppText('${account.creditUsedPct}%', role: AppTextRole.caption),
             ],
           ),
         ],

@@ -106,6 +106,10 @@ class _HeroCardPageState extends State<_HeroCardPage> {
               _DemoTile('ต้องออม/เดือน', '฿5,500'),
             ],
             alert: HeroAlert(text: 'เดือนนี้ยังขาดอีก ฿2,500', onTap: () {}),
+            embedded: const HeroValueLine(
+              label: 'รายรับรวม',
+              value: MoneyText(500, tone: MoneyTone.income),
+            ),
           ),
         ),
         HubDemo(
@@ -218,7 +222,10 @@ class _HeroCardPageState extends State<_HeroCardPage> {
               info: const Text('info'),
               settings: const Text('settings'),
               note: const Text('note'),
-              records: const Text('records'),
+              // Several pieces in the records slot: DetailRecords spaces them.
+              records: const DetailRecords(
+                children: [Text('filter row'), Text('records')],
+              ),
               metaLines: const ['บันทึกเมื่อ …'],
             ),
           ),

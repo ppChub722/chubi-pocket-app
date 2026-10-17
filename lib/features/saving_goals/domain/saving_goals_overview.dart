@@ -11,6 +11,11 @@ class SavingSummary extends Equatable {
     this.inGoals = 0,
     this.spare = 0,
     this.currency = '',
+    this.savedTotal = 0,
+    this.monthShortTotal = 0,
+    this.monthPlanTotal = 0,
+    this.monthSavedTotal = 0,
+    this.unallocated = 0,
   });
 
   final double saved;
@@ -18,15 +23,44 @@ class SavingSummary extends Equatable {
   final double spare;
   final String currency;
 
+  /// Every saving now, wallet-less money included (= [saved]).
+  final double savedTotal;
+
+  /// Σ the active goals' month_short.
+  final double monthShortTotal;
+
+  /// Σ the listed goals' month_plan (the card bar's whole) and what is
+  /// already saved toward it this month.
+  final double monthPlanTotal;
+  final double monthSavedTotal;
+
+  /// The spare bucket ("ยังไม่จัดสรร").
+  final double unallocated;
+
   factory SavingSummary.fromJson(Map<String, dynamic> json) => SavingSummary(
     saved: (json['saved'] as num?)?.toDouble() ?? 0,
     inGoals: (json['in_goals'] as num?)?.toDouble() ?? 0,
     spare: (json['spare'] as num?)?.toDouble() ?? 0,
     currency: json['currency'] as String? ?? '',
+    savedTotal: (json['saved_total'] as num?)?.toDouble() ?? 0,
+    monthShortTotal: (json['month_short_total'] as num?)?.toDouble() ?? 0,
+    monthPlanTotal: (json['month_plan_total'] as num?)?.toDouble() ?? 0,
+    monthSavedTotal: (json['month_saved_total'] as num?)?.toDouble() ?? 0,
+    unallocated: (json['unallocated'] as num?)?.toDouble() ?? 0,
   );
 
   @override
-  List<Object?> get props => [saved, inGoals, spare, currency];
+  List<Object?> get props => [
+    saved,
+    inGoals,
+    spare,
+    currency,
+    savedTotal,
+    monthShortTotal,
+    monthPlanTotal,
+    monthSavedTotal,
+    unallocated,
+  ];
 }
 
 /// The "ยังไม่จัดสรร" bucket: money saved but not in a goal.
@@ -80,47 +114,50 @@ class SavingGoalsOverview extends Equatable {
 
 /// One point of the history chart: the balance at the end of a month.
 class SavingHistoryPoint extends Equatable {
-  const SavingHistoryPoint({required this.month, required this.cumulative});
+  const SavingHistoryPoint({
+    required this.month,
+    required this.cumulative,
+    this.plan,
+  });
 
   final String month; // YYYY-MM
   final double cumulative;
+
+  /// The cumulative plan line (null without a plan; always null on the spare).
+  final double? plan;
 
   factory SavingHistoryPoint.fromJson(Map<String, dynamic> json) =>
       SavingHistoryPoint(
         month: json['month'] as String,
         cumulative: (json['cumulative'] as num).toDouble(),
+        plan: (json['plan'] as num?)?.toDouble(),
       );
 
   @override
-  List<Object?> get props => [month, cumulative];
+  List<Object?> get props => [month, cumulative, plan];
 }
 
-/// An active recurring ออม into this bucket.
-class SavingAutoSave extends Equatable {
-  const SavingAutoSave({
-    required this.recurringId,
-    required this.name,
-    required this.amount,
-    this.nextDate,
+/// `delete_preview` of GET /saving-goals/:id: a goal is deletable only while
+/// it holds no money ([canDelete], the BE's word).
+class SavingDeletePreview extends Equatable {
+  const SavingDeletePreview({
+    required this.entries,
+    required this.savedAmount,
+    required this.canDelete,
   });
+  final int entries;
+  final double savedAmount;
+  final bool canDelete;
 
-  final String recurringId;
-  final String name;
-  final double amount;
-  final String? nextDate;
-
-  factory SavingAutoSave.fromJson(Map<String, dynamic> json) {
-    final r = (json['recurring'] as Map).cast<String, dynamic>();
-    return SavingAutoSave(
-      recurringId: r['id'] as String,
-      name: r['name'] as String? ?? '',
-      amount: (json['amount'] as num?)?.toDouble() ?? 0,
-      nextDate: json['next_date'] as String?,
-    );
-  }
+  factory SavingDeletePreview.fromJson(Map<String, dynamic> json) =>
+      SavingDeletePreview(
+        entries: (json['entries'] as num?)?.toInt() ?? 0,
+        savedAmount: (json['saved_amount'] as num?)?.toDouble() ?? 0,
+        canDelete: json['can_delete'] as bool? ?? false,
+      );
 
   @override
-  List<Object?> get props => [recurringId, name, amount, nextDate];
+  List<Object?> get props => [entries, savedAmount, canDelete];
 }
 
 /// A goal page, or the spare bucket's page (`GET /saving-goals/spare`): then
@@ -131,18 +168,27 @@ class SavingGoalDetail extends Equatable {
     this.spare,
     this.byWallet = const [],
     this.history = const [],
-    this.autoSave = const [],
+    this.spareAutoSave,
     this.entries = const SavingEntryPage(),
+    this.deletePreview,
   });
 
   final SavingGoal? goal;
   final SavingSpare? spare;
   final List<SavingWalletShare> byWallet;
   final List<SavingHistoryPoint> history;
-  final List<SavingAutoSave> autoSave;
+
+  /// The spare page's auto-saving (a goal page carries it on the goal).
+  final SavingAutoSave? spareAutoSave;
   final SavingEntryPage entries;
 
+  /// Only with include=delete_preview, else null.
+  final SavingDeletePreview? deletePreview;
+
   bool get isSpare => goal == null;
+
+  /// This page's auto-saving (null = off), goal or spare.
+  SavingAutoSave? get autoSave => goal?.autoSave ?? spareAutoSave;
 
   factory SavingGoalDetail.fromJson(Map<String, dynamic> json) {
     final goal = json['goal'] is Map
@@ -164,15 +210,21 @@ class SavingGoalDetail extends Equatable {
         for (final p in (json['history'] as List? ?? const []))
           SavingHistoryPoint.fromJson((p as Map).cast<String, dynamic>()),
       ],
-      autoSave: [
-        for (final a in (json['auto_save'] as List? ?? const []))
-          SavingAutoSave.fromJson((a as Map).cast<String, dynamic>()),
-      ],
+      spareAutoSave: goal == null && json['auto_save'] is Map
+          ? SavingAutoSave.fromJson(
+              (json['auto_save'] as Map).cast<String, dynamic>(),
+            )
+          : null,
       entries: json['entries'] is Map
           ? SavingEntryPage.fromJson(
               (json['entries'] as Map).cast<String, dynamic>(),
             )
           : const SavingEntryPage(),
+      deletePreview: json['delete_preview'] is Map
+          ? SavingDeletePreview.fromJson(
+              (json['delete_preview'] as Map).cast<String, dynamic>(),
+            )
+          : null,
     );
   }
 
@@ -181,7 +233,7 @@ class SavingGoalDetail extends Equatable {
     spare: spare,
     byWallet: byWallet,
     history: history,
-    autoSave: autoSave,
+    spareAutoSave: spareAutoSave,
     entries: entries ?? this.entries,
   );
 
@@ -191,8 +243,9 @@ class SavingGoalDetail extends Equatable {
     spare,
     byWallet,
     history,
-    autoSave,
+    spareAutoSave,
     entries,
+    deletePreview,
   ];
 }
 

@@ -6,6 +6,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../ui/ui.dart';
 import '../../pending/domain/pending_transaction.dart';
+import '../domain/recurrence_rule.dart' show ymd;
 import '../domain/recurring.dart';
 import '../domain/recurring_item.dart';
 import '../domain/recurring_summary.dart';
@@ -89,10 +90,18 @@ class RecurringRepository {
   });
 
   /// `getRecurring`: the setting + its first produced items.
-  Future<RecurringDetail> get(String id) => _call((dio) async {
-    final res = await dio.get<Map<String, dynamic>>('/recurring/$id');
-    return RecurringDetail.fromJson(res.data!);
-  });
+  ///
+  /// [deletePreview] adds what a delete touches (`include=delete_preview`).
+  Future<RecurringDetail> get(String id, {bool deletePreview = false}) =>
+      _call((dio) async {
+        final res = await dio.get<Map<String, dynamic>>(
+          '/recurring/$id',
+          queryParameters: deletePreview
+              ? const {'include': 'delete_preview'}
+              : null,
+        );
+        return RecurringDetail.fromJson(res.data!);
+      });
 
   /// `createRecurring`.
   Future<RecurringDetail> create(RecurringWrite write) => _call((dio) async {
@@ -115,10 +124,18 @@ class RecurringRepository {
     final res = await dio.put<Map<String, dynamic>>(
       '/recurring/$id',
       data: {
-        ...write.toJson(),
+        ...write.toJson(forUpdate: true),
         'scope': scope.toJson(),
         'also_update_link': alsoUpdateLink,
       },
+    );
+    return RecurringDetail.fromJson(res.data!);
+  });
+
+  /// `duplicateRecurring`: a new ACTIVE copy starting today → its page.
+  Future<RecurringDetail> duplicate(String id) => _call((dio) async {
+    final res = await dio.post<Map<String, dynamic>>(
+      '/recurring/$id/duplicate',
     );
     return RecurringDetail.fromJson(res.data!);
   });
@@ -189,13 +206,33 @@ class RecurringRepository {
     return ItemPage.fromJson(res.data);
   });
 
-  /// `listRecurringItems`: every upcoming item (one-off + 🔁).
-  Future<ItemPage> upcoming({int page = 1}) => _call((dio) async {
+  /// `listRecurringItems?month=`: the calendar — every item dated in [month]
+  /// (YYYY-MM), every status, oldest first, one page of up to 100.
+  Future<ItemPage> calendar(DateTime month) => _call((dio) async {
+    final mm = month.month.toString().padLeft(2, '0');
     final res = await dio.get<Map<String, dynamic>>(
       '/recurring-items',
-      queryParameters: {'status': 'upcoming', 'kind': 'all', 'page': page},
+      queryParameters: {'month': '${month.year}-$mm'},
     );
     return ItemPage.fromJson(res.data);
+  });
+
+  /// `updateRecurringItem` for ONE occurrence: a new [date] and / or
+  /// [amount] (scope this). The date / amount stay as they are when null.
+  Future<ItemWriteResult> editOccurrence(
+    String id, {
+    DateTime? date,
+    double? amount,
+  }) => _call((dio) async {
+    final res = await dio.put<Map<String, dynamic>>(
+      '/recurring-items/$id',
+      data: {
+        'date': ?(date == null ? null : ymd(date)),
+        'amount': ?amount,
+        'scope': 'this',
+      },
+    );
+    return ItemWriteResult.fromJson(res.data!);
   });
 
   /// `createRecurringItem`: a manual item on a recurring (or a one-off when

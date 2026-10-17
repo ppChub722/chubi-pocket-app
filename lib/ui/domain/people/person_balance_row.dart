@@ -27,9 +27,17 @@ class PersonBalanceRow extends StatelessWidget {
     this.subtitle,
     this.currencySymbol = '฿',
     this.selected = false,
+    this.subtitleWarn = false,
+    this.showCaption = true,
     this.onTap,
     super.key,
   });
+
+  /// The subtitle in the warning colour ("ค้าง 45 วัน", over 30 days).
+  final bool subtitleWarn;
+
+  /// false: only the coloured amount at the end, no side caption.
+  final bool showCaption;
 
   final String name;
   final PersonLevel level;
@@ -70,7 +78,9 @@ class PersonBalanceRow extends StatelessWidget {
           ),
           title: name,
           subtitle: subtitle,
+          subtitleWarn: subtitleWarn,
           trailing: NetBalance(
+            showCaption: showCaption,
             amount: net,
             owedToMeLabel: owedToMeLabel,
             iOweLabel: iOweLabel,

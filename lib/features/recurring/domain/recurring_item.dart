@@ -39,7 +39,7 @@ class RecurringItem extends Equatable {
     required this.id,
     required this.date,
     required this.type,
-    required this.amount,
+    this.amount,
     required this.state,
     this.recurring,
     this.seq,
@@ -48,8 +48,6 @@ class RecurringItem extends Equatable {
     this.account,
     this.toAccount,
     this.category,
-    this.isSaving = false,
-    this.goal,
     this.tags = const [],
     this.description,
     this.note,
@@ -70,14 +68,12 @@ class RecurringItem extends Equatable {
   /// Negative = in the past.
   final int daysUntil;
   final TransactionType type;
-  final double amount;
+
+  /// null = not known yet (a reminder).
+  final double? amount;
   final AccountRef? account;
   final AccountRef? toAccount;
   final EmbeddedCategory? category;
-
-  /// ออม 🐷: a saving item (type `saving`) into [goal] (null = spare).
-  final bool isSaving;
-  final SavingGoalRef? goal;
   final List<TagRef> tags;
   final String? description;
   final String? note;
@@ -103,7 +99,11 @@ class RecurringItem extends Equatable {
   }
 
   /// Signed for display (expense negative).
-  double get signedAmount => type == TransactionType.expense ? -amount : amount;
+  double? get signedAmount {
+    final a = amount;
+    if (a == null) return null;
+    return type == TransactionType.expense ? -a : a;
+  }
 
   factory RecurringItem.fromJson(Map<String, dynamic> json) => RecurringItem(
     id: json['id'] as String,
@@ -114,14 +114,8 @@ class RecurringItem extends Equatable {
     total: (json['total'] as num?)?.toInt(),
     date: parseYmd(json['date'] as String?) ?? DateTime.now(),
     daysUntil: (json['days_until'] as num?)?.toInt() ?? 0,
-    type: (json['type'] as String?) == 'saving'
-        ? TransactionType.expense
-        : TransactionType.fromJson((json['type'] as String?) ?? 'expense'),
-    isSaving: json['type'] == 'saving',
-    goal: json['goal'] is Map<String, dynamic>
-        ? SavingGoalRef.fromJson(json['goal'] as Map<String, dynamic>)
-        : null,
-    amount: (json['amount'] as num?)?.toDouble() ?? 0,
+    type: TransactionType.fromJson((json['type'] as String?) ?? 'expense'),
+    amount: (json['amount'] as num?)?.toDouble(),
     account: json['account'] is Map<String, dynamic>
         ? AccountRef.fromJson(json['account'] as Map<String, dynamic>)
         : null,
@@ -146,9 +140,7 @@ class RecurringItem extends Equatable {
 
   /// The item as a tx-shaped draft (what the entry sheet edits).
   PendingDraft toDraft() => PendingDraft(
-    type: isSaving ? null : type,
-    isSaving: isSaving,
-    goalId: goal?.id,
+    type: type,
     amount: amount,
     accountId: account?.id,
     transferToAccountId: toAccount?.id,
@@ -172,8 +164,6 @@ class RecurringItem extends Equatable {
     account,
     toAccount,
     category,
-    isSaving,
-    goal,
     tags,
     description,
     note,
@@ -200,8 +190,7 @@ enum ItemTarget {
 
 /// The `RecurringFields` body of an item write (+ its date), from a draft.
 Map<String, dynamic> itemFieldsJson(PendingDraft d) => <String, dynamic>{
-  'type': ?(d.isSaving ? 'saving' : d.type?.toJson()),
-  if (d.isSaving) 'goal_id': d.goalId,
+  'type': ?d.type?.toJson(),
   'amount': ?d.amount,
   'account_id': d.accountId,
   'to_account_id': d.transferToAccountId,
@@ -251,7 +240,9 @@ class RecurringDetail extends Equatable {
   const RecurringDetail({
     required this.recurring,
     this.produced = const ItemPage(),
+    this.upcoming = const ItemPage(),
     this.balances = const {},
+    this.deletePreview,
   });
 
   factory RecurringDetail.fromJson(Map<String, dynamic> json) =>
@@ -260,10 +251,22 @@ class RecurringDetail extends Equatable {
           json['recurring'] as Map<String, dynamic>,
         ),
         produced: ItemPage.fromJson(json['items'] as Map<String, dynamic>?),
+        upcoming: ItemPage.fromJson(json['upcoming'] as Map<String, dynamic>?),
         balances: WalletBalance.mapOf(json['account_balances']),
+        deletePreview: json['delete_preview'] is Map<String, dynamic>
+            ? RecurringDeletePreview.fromJson(
+                json['delete_preview'] as Map<String, dynamic>,
+              )
+            : null,
       );
 
   final Recurring recurring;
+
+  /// The first page of the upcoming items (soonest first).
+  final ItemPage upcoming;
+
+  /// Only with `include=delete_preview`, else null.
+  final RecurringDeletePreview? deletePreview;
 
   /// Produced items (status ≠ upcoming), newest first — the first page.
   final ItemPage produced;
@@ -272,7 +275,36 @@ class RecurringDetail extends Equatable {
   final Map<String, double> balances;
 
   @override
-  List<Object?> get props => [recurring, produced, balances];
+  List<Object?> get props => [
+    recurring,
+    produced,
+    upcoming,
+    balances,
+    deletePreview,
+  ];
+}
+
+/// What deleting a recurring touches (`?include=delete_preview`).
+class RecurringDeletePreview extends Equatable {
+  const RecurringDeletePreview({
+    this.items = 0,
+    this.linkedTransactions = 0,
+    this.pendingDrafts = 0,
+  });
+
+  factory RecurringDeletePreview.fromJson(Map<String, dynamic> json) =>
+      RecurringDeletePreview(
+        items: (json['items'] as num?)?.toInt() ?? 0,
+        linkedTransactions: (json['linked_transactions'] as num?)?.toInt() ?? 0,
+        pendingDrafts: (json['pending_drafts'] as num?)?.toInt() ?? 0,
+      );
+
+  final int items;
+  final int linkedTransactions;
+  final int pendingDrafts;
+
+  @override
+  List<Object?> get props => [items, linkedTransactions, pendingDrafts];
 }
 
 /// What an item write changed: the items it returned / removed + the wallet
@@ -282,6 +314,7 @@ class ItemWriteResult extends Equatable {
     this.items = const [],
     this.deletedIds = const [],
     this.balances = const {},
+    this.setting,
   });
 
   /// Any of `RecurringItemWriteResult` / `RecurringItemsWriteResult` /
@@ -301,11 +334,18 @@ class ItemWriteResult extends Equatable {
       if (json['id'] is String) json['id'] as String,
     ],
     balances: WalletBalance.mapOf(json['account_balances']),
+    setting: json['setting'] is Map<String, dynamic>
+        ? Recurring.fromJson(json['setting'] as Map<String, dynamic>)
+        : null,
   );
 
   final List<RecurringItem> items;
   final List<String> deletedIds;
   final Map<String, double> balances;
+
+  /// The owning setting after the write; null when the items belong to no /
+  /// several settings (the page then re-runs its one call).
+  final Recurring? setting;
 
   /// [list] with this write applied: changed items replaced, deleted dropped
   /// (new items are not inserted: the caller decides where they go).
@@ -318,5 +358,5 @@ class ItemWriteResult extends Equatable {
   }
 
   @override
-  List<Object?> get props => [items, deletedIds, balances];
+  List<Object?> get props => [items, deletedIds, balances, setting];
 }

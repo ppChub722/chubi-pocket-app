@@ -119,14 +119,43 @@ class AccountsRepository {
     });
   }
 
-  /// `DELETE /v1/accounts/:id` — soft delete (status → archived); returns
-  /// the archived wallet. `409 ACCOUNT_HAS_MEMBERS` while others are in it.
+  /// `POST /v1/accounts/:id/archive` — archive (hidden, ignored by every
+  /// calculation, read-only, restorable); returns the archived wallet.
+  /// `409 ACCOUNT_HAS_MEMBERS` while others are in it.
   Future<Account> archive(String id) {
+    return _guard(() async {
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        '/accounts/$id/archive',
+      );
+      return Account.fromJson(res.data!);
+    });
+  }
+
+  /// `GET /v1/accounts/:id?include=delete_preview` — what a delete would do
+  /// (the confirm dialog). Null when the caller can't delete it.
+  Future<AccountDeletePreview?> deletePreview(String id) {
+    return _guard(() async {
+      final res = await _client.dio.get<Map<String, dynamic>>(
+        '/accounts/$id',
+        queryParameters: const {'include': 'delete_preview'},
+      );
+      final p = res.data!['delete_preview'];
+      return p is Map<String, dynamic>
+          ? AccountDeletePreview.fromJson(p)
+          : null;
+    });
+  }
+
+  /// `DELETE /v1/accounts/:id` — a HARD delete (owner, no other members);
+  /// answers what was done.
+  Future<AccountDeletePreview> delete(String id) {
     return _guard(() async {
       final res = await _client.dio.delete<Map<String, dynamic>>(
         '/accounts/$id',
       );
-      return Account.fromJson(res.data!);
+      return AccountDeletePreview.fromJson(
+        (res.data!['deleted'] as Map).cast<String, dynamic>(),
+      );
     });
   }
 

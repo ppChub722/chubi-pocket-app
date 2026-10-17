@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/personal_debts_repository.dart';
 import '../../domain/debt_ledger.dart';
+import 'debt_book.dart';
 
 enum DebtLoadStatus { initial, loading, loaded, error }
 
@@ -20,6 +21,7 @@ class DebtPeopleState extends Equatable {
     this.paging = const DebtPaging(),
     this.q = '',
     this.all = false,
+    this.sort = DebtPeopleSort.oldest,
     this.side,
     this.loadingMore = false,
     this.error,
@@ -34,6 +36,9 @@ class DebtPeopleState extends Equatable {
 
   /// "ทั้งหมด": settled people too.
   final bool all;
+
+  /// The list order (ค้างนานสุด by default).
+  final DebtPeopleSort sort;
 
   /// The summary-box filter (ติดคุณ / คุณติด); null = both.
   final NetSide? side;
@@ -58,6 +63,7 @@ class DebtPeopleState extends Equatable {
     DebtPaging? paging,
     String? q,
     bool? all,
+    DebtPeopleSort? sort,
     NetSide? side,
     bool clearSide = false,
     bool? loadingMore,
@@ -72,6 +78,7 @@ class DebtPeopleState extends Equatable {
     paging: paging ?? this.paging,
     q: q ?? this.q,
     all: all ?? this.all,
+    sort: sort ?? this.sort,
     side: clearSide ? null : (side ?? this.side),
     loadingMore: loadingMore ?? this.loadingMore,
     error: clearError ? null : (error ?? this.error),
@@ -86,6 +93,7 @@ class DebtPeopleState extends Equatable {
     paging,
     q,
     all,
+    sort,
     side,
     loadingMore,
     error,
@@ -93,13 +101,15 @@ class DebtPeopleState extends Equatable {
   ];
 }
 
-class DebtPeopleCubit extends Cubit<DebtPeopleState> {
+class DebtPeopleCubit extends Cubit<DebtPeopleState> with DebtBookListener {
   DebtPeopleCubit({
     required PersonalDebtsRepository repository,
     this.perPage = 30,
     this.debounce = const Duration(milliseconds: 300),
   }) : _repo = repository,
-       super(const DebtPeopleState());
+       super(const DebtPeopleState()) {
+    DebtBook.attach(this);
+  }
 
   final PersonalDebtsRepository _repo;
   final int perPage;
@@ -128,6 +138,7 @@ class DebtPeopleCubit extends Cubit<DebtPeopleState> {
         perPage: perPage,
         q: state.q,
         all: state.all,
+        sort: state.sort,
         side: state.side,
       );
       if (gen != _generation || isClosed) return;
@@ -164,6 +175,13 @@ class DebtPeopleCubit extends Cubit<DebtPeopleState> {
     load();
   }
 
+  /// The sort chip: one call with the new order.
+  void setSort(DebtPeopleSort sort) {
+    if (sort == state.sort) return;
+    emit(state.copyWith(sort: sort));
+    load();
+  }
+
   /// Tap a summary box: filter to that side; tap it again: both.
   void toggleSide(NetSide side) {
     if (state.side == side) {
@@ -187,6 +205,7 @@ class DebtPeopleCubit extends Cubit<DebtPeopleState> {
         perPage: perPage,
         q: s.q,
         all: s.all,
+        sort: s.sort,
         side: s.side,
       );
       if (gen != _generation || isClosed) return;
@@ -221,8 +240,19 @@ class DebtPeopleCubit extends Cubit<DebtPeopleState> {
     emit(state.copyWith(items: next));
   }
 
+  /// An entry was saved elsewhere (the shell's +): the person's row follows
+  /// its balance at once; the list reloads for the totals and for a new
+  /// person (the list is the server's view). Only once the list has loaded.
+  @override
+  void onEntrySaved(DebtEntryWriteResult r) {
+    if (isClosed || state.status == DebtLoadStatus.initial) return;
+    applyBalance(r.balance);
+    load();
+  }
+
   @override
   Future<void> close() {
+    DebtBook.detach(this);
     _searchTimer?.cancel();
     return super.close();
   }

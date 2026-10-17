@@ -10501,6 +10501,1147 @@ abstract class AppLocalizations {
   /// **'One-off'**
   String get bgRowOneOff;
 
+  /// No description provided for @fpWalletsTileCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallets'**
+  String get fpWalletsTileCash;
+
+  /// No description provided for @fpWalletsSavedLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {saved} · really available {available}'**
+  String fpWalletsSavedLine(String saved, String available);
+
+  /// No description provided for @fpWalletsSortByType.
+  ///
+  /// In en, this message translates to:
+  /// **'By type'**
+  String get fpWalletsSortByType;
+
+  /// No description provided for @fpWalletsReorderChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder'**
+  String get fpWalletsReorderChip;
+
+  /// No description provided for @fpWalletBalanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'In the wallet'**
+  String get fpWalletBalanceLabel;
+
+  /// No description provided for @fpWalletMonthIn.
+  ///
+  /// In en, this message translates to:
+  /// **'{month} · in'**
+  String fpWalletMonthIn(String month);
+
+  /// No description provided for @fpWalletMonthOut.
+  ///
+  /// In en, this message translates to:
+  /// **'{month} · out'**
+  String fpWalletMonthOut(String month);
+
+  /// No description provided for @fpWalletAvailableLegend.
+  ///
+  /// In en, this message translates to:
+  /// **'Available {amount}'**
+  String fpWalletAvailableLegend(String amount);
+
+  /// No description provided for @fpWalletSavedLegend.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {amount}'**
+  String fpWalletSavedLegend(String amount);
+
+  /// No description provided for @fpWalletCardUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Used {pct}% of the {limit} limit'**
+  String fpWalletCardUsed(int pct, String limit);
+
+  /// No description provided for @fpWalletCardLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} left'**
+  String fpWalletCardLeft(String amount);
+
+  /// No description provided for @fpWalletDueAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment due {date} · in {days} days'**
+  String fpWalletDueAlert(String date, int days);
+
+  /// No description provided for @fpWalletPayCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay card'**
+  String get fpWalletPayCard;
+
+  /// No description provided for @fpWalletSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get fpWalletSave;
+
+  /// No description provided for @fpWalletSettingsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'How this wallet counts in totals and reports'**
+  String get fpWalletSettingsDesc;
+
+  /// No description provided for @fpWalletCardSettingsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'How this card counts in reports'**
+  String get fpWalletCardSettingsDesc;
+
+  /// No description provided for @fpWalletArchiveConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted nowhere, read-only, restorable'**
+  String get fpWalletArchiveConsequence;
+
+  /// No description provided for @fpWalletRefLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference numbers'**
+  String get fpWalletRefLabel;
+
+  /// No description provided for @fpWalletRefHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Used to match slips when scanning'**
+  String get fpWalletRefHint;
+
+  /// No description provided for @fpWalletInviteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite'**
+  String get fpWalletInviteLabel;
+
+  /// No description provided for @fpWalletTrackOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get fpWalletTrackOff;
+
+  /// No description provided for @fpWalletOwnerCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get fpWalletOwnerCaption;
+
+  /// No description provided for @fpWalletMemberCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Member'**
+  String get fpWalletMemberCaption;
+
+  /// No description provided for @fpTxNetCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get fpTxNetCaption;
+
+  /// No description provided for @fpTxAvgDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg spend {amount}/day'**
+  String fpTxAvgDaily(String amount);
+
+  /// No description provided for @fpWalletDeleteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this wallet'**
+  String get fpWalletDeleteLabel;
+
+  /// No description provided for @fpWalletDeleteConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'See what is attached first · saved money stays, just unlinked from the wallet'**
+  String get fpWalletDeleteConsequence;
+
+  /// No description provided for @fpWalletDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this wallet?'**
+  String get fpWalletDeleteTitle;
+
+  /// No description provided for @fpWalletDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{transactions} transactions stay with no wallet ({transfers} transfers) · {system} opening / adjustment rows are deleted · {recurring} recurring settings keep running · {savings} saving entries ({amount}) stay, unlinked from the wallet'**
+  String fpWalletDeleteBody(
+    int transactions,
+    int transfers,
+    int system,
+    int recurring,
+    int savings,
+    String amount,
+  );
+
+  /// No description provided for @fpWalletDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet deleted'**
+  String get fpWalletDeleted;
+
+  /// No description provided for @fpContactsNotLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Not linked to an app user'**
+  String get fpContactsNotLinked;
+
+  /// No description provided for @fpContactsLinkedWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked with {user}'**
+  String fpContactsLinkedWith(String user);
+
+  /// No description provided for @fpContactsSettingsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'The name used for this person across the app'**
+  String get fpContactsSettingsDesc;
+
+  /// No description provided for @fpContactsLinkSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Link account'**
+  String get fpContactsLinkSection;
+
+  /// No description provided for @fpContactsLinkSectionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Link to an app user and match names in splits'**
+  String get fpContactsLinkSectionDesc;
+
+  /// No description provided for @fpContactsArchiveConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden from the list and person pickers; debts unchanged'**
+  String get fpContactsArchiveConsequence;
+
+  /// No description provided for @fpContactsDeleteConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Old records keep just the name; amounts unchanged'**
+  String get fpContactsDeleteConsequence;
+
+  /// No description provided for @fpDebtsTotalCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Total outstanding'**
+  String get fpDebtsTotalCaption;
+
+  /// No description provided for @fpDebtsOwedToMeTile.
+  ///
+  /// In en, this message translates to:
+  /// **'To receive · {count} people'**
+  String fpDebtsOwedToMeTile(int count);
+
+  /// No description provided for @fpDebtsIOweTile.
+  ///
+  /// In en, this message translates to:
+  /// **'To pay · {count} people'**
+  String fpDebtsIOweTile(int count);
+
+  /// No description provided for @fpDebtsOver30.
+  ///
+  /// In en, this message translates to:
+  /// **'Over 30 days: {count} people'**
+  String fpDebtsOver30(int count);
+
+  /// No description provided for @fpDebtsDaysOutstanding.
+  ///
+  /// In en, this message translates to:
+  /// **'Outstanding {count} days'**
+  String fpDebtsDaysOutstanding(int count);
+
+  /// No description provided for @fpDebtsIncludeCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Show cleared'**
+  String get fpDebtsIncludeCleared;
+
+  /// No description provided for @fpDebtsSortOldest.
+  ///
+  /// In en, this message translates to:
+  /// **'Longest owed'**
+  String get fpDebtsSortOldest;
+
+  /// No description provided for @fpDebtsSortAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Largest'**
+  String get fpDebtsSortAmount;
+
+  /// No description provided for @fpDebtsSortRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest'**
+  String get fpDebtsSortRecent;
+
+  /// No description provided for @fpDebtsMessageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary message · editable before sending'**
+  String get fpDebtsMessageLabel;
+
+  /// No description provided for @fpDebtsCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get fpDebtsCopy;
+
+  /// No description provided for @fpDebtsShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get fpDebtsShare;
+
+  /// No description provided for @fpDebtsCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Message copied'**
+  String get fpDebtsCopied;
+
+  /// No description provided for @fpDebtsCycleHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Where the balance comes from'**
+  String get fpDebtsCycleHeader;
+
+  /// No description provided for @fpDebtsCycleHeaderSince.
+  ///
+  /// In en, this message translates to:
+  /// **'Where the balance comes from · since cleared {date}'**
+  String fpDebtsCycleHeaderSince(String date);
+
+  /// No description provided for @fpDebtsEarlierHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier cycle · cleared'**
+  String get fpDebtsEarlierHeader;
+
+  /// No description provided for @fpDebtsEarlierLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier cycles'**
+  String get fpDebtsEarlierLink;
+
+  /// No description provided for @fpBudgetsRangeDay.
+  ///
+  /// In en, this message translates to:
+  /// **'{range} · day {elapsed}/{total}'**
+  String fpBudgetsRangeDay(String range, int elapsed, int total);
+
+  /// No description provided for @fpBudgetsLeftLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Still available'**
+  String get fpBudgetsLeftLabel;
+
+  /// No description provided for @fpBudgetsOverLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Over budget'**
+  String get fpBudgetsOverLabel;
+
+  /// No description provided for @fpBudgetsLimitTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'/ {amount}'**
+  String fpBudgetsLimitTarget(String amount);
+
+  /// No description provided for @fpBudgetsUsedCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Used {amount}'**
+  String fpBudgetsUsedCaption(String amount);
+
+  /// No description provided for @fpBudgetsPaceCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Should be at {pct}% by today'**
+  String fpBudgetsPaceCaption(int pct);
+
+  /// No description provided for @fpBudgetsTileDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Can spend per day'**
+  String get fpBudgetsTileDaily;
+
+  /// No description provided for @fpBudgetsTileProjected.
+  ///
+  /// In en, this message translates to:
+  /// **'Forecast at the end'**
+  String get fpBudgetsTileProjected;
+
+  /// No description provided for @fpBudgetsTileDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get fpBudgetsTileDaysLabel;
+
+  /// No description provided for @fpBudgetsDaysValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day} other{{count} days}}'**
+  String fpBudgetsDaysValue(int count);
+
+  /// No description provided for @fpBudgetsSettingsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'What this budget counts, and when it warns'**
+  String get fpBudgetsSettingsDesc;
+
+  /// No description provided for @fpBudgetsCountsWhat.
+  ///
+  /// In en, this message translates to:
+  /// **'What it counts'**
+  String get fpBudgetsCountsWhat;
+
+  /// No description provided for @fpBudgetsWarnAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Warn at'**
+  String get fpBudgetsWarnAt;
+
+  /// No description provided for @fpBudgetsRepeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat every period'**
+  String get fpBudgetsRepeat;
+
+  /// No description provided for @fpBudgetsRepeatCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Each period\'s limit can be edited on its own'**
+  String get fpBudgetsRepeatCaption;
+
+  /// No description provided for @fpBudgetsTabItems.
+  ///
+  /// In en, this message translates to:
+  /// **'This period'**
+  String get fpBudgetsTabItems;
+
+  /// No description provided for @fpBudgetsTabPeriods.
+  ///
+  /// In en, this message translates to:
+  /// **'All periods'**
+  String get fpBudgetsTabPeriods;
+
+  /// No description provided for @fpBudgetsLimitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget limit'**
+  String get fpBudgetsLimitLabel;
+
+  /// No description provided for @fpBudgetsReasonAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted because: every expense'**
+  String get fpBudgetsReasonAll;
+
+  /// No description provided for @fpBudgetsReasonCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted because: category {name}'**
+  String fpBudgetsReasonCategory(String name);
+
+  /// No description provided for @fpBudgetsReasonSubCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted because: sub-category of {name}'**
+  String fpBudgetsReasonSubCategory(String name);
+
+  /// No description provided for @fpBudgetsReasonSubCategoryAny.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted because: sub-category of a counted category'**
+  String get fpBudgetsReasonSubCategoryAny;
+
+  /// No description provided for @fpBudgetsReasonTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted because: tag {name}'**
+  String fpBudgetsReasonTag(String name);
+
+  /// No description provided for @fpBudgetsReasonWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted because: wallet {name}'**
+  String fpBudgetsReasonWallet(String name);
+
+  /// No description provided for @fpBudgetsPeriodReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the base amount ({amount})'**
+  String fpBudgetsPeriodReset(String amount);
+
+  /// No description provided for @fpBudgetsCloseConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends this budget, no new periods, old ones stay visible'**
+  String get fpBudgetsCloseConsequence;
+
+  /// No description provided for @fpBudgetsArchiveConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden, not counted in totals, restorable'**
+  String get fpBudgetsArchiveConsequence;
+
+  /// No description provided for @fpBudgetsRestoreConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Back in the list and counted again'**
+  String get fpBudgetsRestoreConsequence;
+
+  /// No description provided for @fpBudgetsDeleteConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted for good, every period'**
+  String get fpBudgetsDeleteConsequence;
+
+  /// No description provided for @fpGoalsListCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Total savings now'**
+  String get fpGoalsListCaption;
+
+  /// No description provided for @fpGoalsMonthShortLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Still short this month {amount}'**
+  String fpGoalsMonthShortLine(String amount);
+
+  /// No description provided for @fpGoalsSpareLine.
+  ///
+  /// In en, this message translates to:
+  /// **'🐷 Not allocated {amount} ›'**
+  String fpGoalsSpareLine(String amount);
+
+  /// No description provided for @fpGoalsStatusChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Status: {status}'**
+  String fpGoalsStatusChip(String status);
+
+  /// No description provided for @fpGoalsGroupShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Still short this month'**
+  String get fpGoalsGroupShort;
+
+  /// No description provided for @fpGoalsGroupDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done this month ✓'**
+  String get fpGoalsGroupDone;
+
+  /// No description provided for @fpGoalsGroupNoPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'No monthly plan yet'**
+  String get fpGoalsGroupNoPlan;
+
+  /// No description provided for @fpGoalsRowShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Short {amount}'**
+  String fpGoalsRowShort(String amount);
+
+  /// No description provided for @fpGoalsEtaOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal {date}'**
+  String fpGoalsEtaOn(String date);
+
+  /// No description provided for @fpGoalsEtaBehind.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal {date} · {n} months late'**
+  String fpGoalsEtaBehind(String date, int n);
+
+  /// No description provided for @fpGoalsBehind.
+  ///
+  /// In en, this message translates to:
+  /// **'Behind plan'**
+  String get fpGoalsBehind;
+
+  /// No description provided for @fpGoalsReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Reached'**
+  String get fpGoalsReached;
+
+  /// No description provided for @fpGoalsClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get fpGoalsClosed;
+
+  /// No description provided for @fpGoalsSavedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get fpGoalsSavedLabel;
+
+  /// No description provided for @fpGoalsTargetSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'/ {target} · {pct}%'**
+  String fpGoalsTargetSuffix(String target, int pct);
+
+  /// No description provided for @fpGoalsDaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} days left'**
+  String fpGoalsDaysLeft(int count);
+
+  /// No description provided for @fpGoalsTileShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Short this month'**
+  String get fpGoalsTileShort;
+
+  /// No description provided for @fpGoalsTileSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved this month'**
+  String get fpGoalsTileSaved;
+
+  /// No description provided for @fpGoalsTileNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Needed / month'**
+  String get fpGoalsTileNeeded;
+
+  /// No description provided for @fpGoalsActionSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get fpGoalsActionSave;
+
+  /// No description provided for @fpGoalsActionRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get fpGoalsActionRestore;
+
+  /// No description provided for @fpGoalsSettingsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Save automatically'**
+  String get fpGoalsSettingsDesc;
+
+  /// No description provided for @fpGoalsAutoCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'{day} · {amount} from {wallet}'**
+  String fpGoalsAutoCaption(String day, String amount, String wallet);
+
+  /// No description provided for @fpGoalsAutoOffHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on to get a saving to confirm every month'**
+  String get fpGoalsAutoOffHint;
+
+  /// No description provided for @fpGoalsAutoEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit amount, day and wallet'**
+  String get fpGoalsAutoEdit;
+
+  /// No description provided for @fpGoalsAutoSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-saving'**
+  String get fpGoalsAutoSheetTitle;
+
+  /// No description provided for @fpGoalsAutoDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day of the month'**
+  String get fpGoalsAutoDay;
+
+  /// No description provided for @fpGoalsAutoFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Take from'**
+  String get fpGoalsAutoFrom;
+
+  /// No description provided for @fpGoalsNoWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'No wallet'**
+  String get fpGoalsNoWallet;
+
+  /// No description provided for @fpGoalsChartActual.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get fpGoalsChartActual;
+
+  /// No description provided for @fpGoalsAutoTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get fpGoalsAutoTag;
+
+  /// No description provided for @fpGoalsPlanLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {saved} · {left} to go'**
+  String fpGoalsPlanLeft(String saved, String left);
+
+  /// No description provided for @fpGoalsPlanNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Save {amount}/month'**
+  String fpGoalsPlanNeeded(String amount);
+
+  /// No description provided for @fpGoalsCloseConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the money to “Not allocated” or back to its wallets'**
+  String get fpGoalsCloseConsequence;
+
+  /// No description provided for @fpGoalsArchiveConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden, not counted, can be restored'**
+  String get fpGoalsArchiveConsequence;
+
+  /// No description provided for @fpGoalsArchiveNeedsClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close the goal first'**
+  String get fpGoalsArchiveNeedsClose;
+
+  /// No description provided for @fpGoalsArchiveHasSavings.
+  ///
+  /// In en, this message translates to:
+  /// **'Close the goal before archiving it'**
+  String get fpGoalsArchiveHasSavings;
+
+  /// No description provided for @fpGoalsDeleteConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted for good, with its saving history'**
+  String get fpGoalsDeleteConsequence;
+
+  /// No description provided for @fpGoalsArchiveConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide this goal. It is not counted and can be restored later.'**
+  String get fpGoalsArchiveConfirmBody;
+
+  /// No description provided for @fpGoalsDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this goal for good, with its saving history.'**
+  String get fpGoalsDeleteConfirmBody;
+
+  /// No description provided for @fpGoalsRefreshFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh failed, showing the latest data'**
+  String get fpGoalsRefreshFailed;
+
+  /// No description provided for @fpEventsSummaryCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Active events · my share'**
+  String get fpEventsSummaryCaption;
+
+  /// No description provided for @fpEventsPaidLine.
+  ///
+  /// In en, this message translates to:
+  /// **'I paid {paid} → owed {receivable}'**
+  String fpEventsPaidLine(String paid, String receivable);
+
+  /// No description provided for @fpEventsTileActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get fpEventsTileActive;
+
+  /// No description provided for @fpEventsTileUnsettled.
+  ///
+  /// In en, this message translates to:
+  /// **'Not settled'**
+  String get fpEventsTileUnsettled;
+
+  /// No description provided for @fpEventsTileEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'Ended'**
+  String get fpEventsTileEnded;
+
+  /// No description provided for @fpEventsSortRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest first'**
+  String get fpEventsSortRecent;
+
+  /// No description provided for @fpEventsSortOldest.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest first'**
+  String get fpEventsSortOldest;
+
+  /// No description provided for @fpEventsSortAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Biggest first'**
+  String get fpEventsSortAmount;
+
+  /// No description provided for @fpEventsCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create event'**
+  String get fpEventsCreate;
+
+  /// No description provided for @fpEventsRowSpent.
+  ///
+  /// In en, this message translates to:
+  /// **'Spent {amount}'**
+  String fpEventsRowSpent(String amount);
+
+  /// No description provided for @fpEventsRowShare.
+  ///
+  /// In en, this message translates to:
+  /// **'My share {amount}'**
+  String fpEventsRowShare(String amount);
+
+  /// No description provided for @fpEventsOwed.
+  ///
+  /// In en, this message translates to:
+  /// **'Owed to me'**
+  String get fpEventsOwed;
+
+  /// No description provided for @fpEventsOwe.
+  ///
+  /// In en, this message translates to:
+  /// **'I owe'**
+  String get fpEventsOwe;
+
+  /// No description provided for @fpEventsSpentTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total spent'**
+  String get fpEventsSpentTotal;
+
+  /// No description provided for @fpEventsBudgetUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Spent {spent} of {planned} budget'**
+  String fpEventsBudgetUsed(String spent, String planned);
+
+  /// No description provided for @fpEventsBudgetLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} left'**
+  String fpEventsBudgetLeft(String amount);
+
+  /// No description provided for @fpEventsBudgetOver.
+  ///
+  /// In en, this message translates to:
+  /// **'Over by {amount}'**
+  String fpEventsBudgetOver(String amount);
+
+  /// No description provided for @fpEventsMyShare.
+  ///
+  /// In en, this message translates to:
+  /// **'My share'**
+  String get fpEventsMyShare;
+
+  /// No description provided for @fpEventsIncomeTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total income'**
+  String get fpEventsIncomeTotal;
+
+  /// No description provided for @fpEventsMyTags.
+  ///
+  /// In en, this message translates to:
+  /// **'My tags'**
+  String get fpEventsMyTags;
+
+  /// No description provided for @fpEventsTagPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick'**
+  String get fpEventsTagPick;
+
+  /// No description provided for @fpEventsMembersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Members · who paid / who owes'**
+  String get fpEventsMembersTitle;
+
+  /// No description provided for @fpEventsManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage ›'**
+  String get fpEventsManage;
+
+  /// No description provided for @fpEventsMemberPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid {amount}'**
+  String fpEventsMemberPaid(String amount);
+
+  /// No description provided for @fpEventsMemberOwed.
+  ///
+  /// In en, this message translates to:
+  /// **'Owed {amount}'**
+  String fpEventsMemberOwed(String amount);
+
+  /// No description provided for @fpEventsMemberOwe.
+  ///
+  /// In en, this message translates to:
+  /// **'Owes {amount}'**
+  String fpEventsMemberOwe(String amount);
+
+  /// No description provided for @fpEventsInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite'**
+  String get fpEventsInvite;
+
+  /// No description provided for @fpEventsBillsSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search bills in this event'**
+  String get fpEventsBillsSearchHint;
+
+  /// No description provided for @fpEventsPayerFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid by'**
+  String get fpEventsPayerFilter;
+
+  /// No description provided for @fpEventsPayerAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone'**
+  String get fpEventsPayerAll;
+
+  /// No description provided for @fpEventsTagsFilterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Event tags'**
+  String get fpEventsTagsFilterLabel;
+
+  /// No description provided for @fpEventsTagAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get fpEventsTagAll;
+
+  /// No description provided for @fpEventsSplitCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Split {count}'**
+  String fpEventsSplitCount(int count);
+
+  /// No description provided for @fpEventsPaidBy.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} paid'**
+  String fpEventsPaidBy(String name);
+
+  /// No description provided for @fpEventsBudgetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned budget (optional)'**
+  String get fpEventsBudgetLabel;
+
+  /// No description provided for @fpEventsBudgetHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'What you intend to spend · clear to hide the plan'**
+  String get fpEventsBudgetHelper;
+
+  /// No description provided for @fpEventsDatesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Start – end'**
+  String get fpEventsDatesLabel;
+
+  /// No description provided for @fpEventsSettingsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill tags in this event, shared with every member'**
+  String get fpEventsSettingsDesc;
+
+  /// No description provided for @fpEventsManageTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage event tags'**
+  String get fpEventsManageTags;
+
+  /// No description provided for @fpEventsTagsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} tags'**
+  String fpEventsTagsCount(int count);
+
+  /// No description provided for @fpEventsArchiveConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden, not counted, can be restored'**
+  String get fpEventsArchiveConsequence;
+
+  /// No description provided for @fpEventsDeleteConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'You choose whether its bills go too'**
+  String get fpEventsDeleteConsequence;
+
+  /// No description provided for @fpEventsRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore event'**
+  String get fpEventsRestore;
+
+  /// No description provided for @fpEventsRestoreConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to in progress'**
+  String get fpEventsRestoreConsequence;
+
+  /// No description provided for @fpEventsArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Event archived'**
+  String get fpEventsArchived;
+
+  /// No description provided for @fpEventsRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Event restored'**
+  String get fpEventsRestored;
+
+  /// No description provided for @fpEventsArchiveConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive this event?'**
+  String get fpEventsArchiveConfirmTitle;
+
+  /// No description provided for @fpEventsArchiveConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden, not counted and read-only. You can restore it any time.'**
+  String get fpEventsArchiveConfirmBody;
+
+  /// No description provided for @fpEventsTagsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Event tags · shared with members'**
+  String get fpEventsTagsTitle;
+
+  /// No description provided for @fpEventsTagAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add event tag'**
+  String get fpEventsTagAdd;
+
+  /// No description provided for @fpEventsTagsImportAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Import all to my tags'**
+  String get fpEventsTagsImportAll;
+
+  /// No description provided for @fpEventsTagRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get fpEventsTagRename;
+
+  /// No description provided for @fpEventsTagRestyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change icon / colour'**
+  String get fpEventsTagRestyle;
+
+  /// No description provided for @fpEventsTagImportOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Import to my tags'**
+  String get fpEventsTagImportOne;
+
+  /// No description provided for @fpEventsTagNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag name'**
+  String get fpEventsTagNameLabel;
+
+  /// No description provided for @fpEventsTagNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a tag name'**
+  String get fpEventsTagNameRequired;
+
+  /// No description provided for @fpEventsTagNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New event tag'**
+  String get fpEventsTagNewTitle;
+
+  /// No description provided for @fpEventsTagRenameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename tag'**
+  String get fpEventsTagRenameTitle;
+
+  /// No description provided for @fpEventsTagIconTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag icon'**
+  String get fpEventsTagIconTitle;
+
+  /// No description provided for @fpEventsTagDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete tag {name}?'**
+  String fpEventsTagDeleteTitle(String name);
+
+  /// No description provided for @fpEventsTagDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Bills using it lose the tag.'**
+  String get fpEventsTagDeleteBody;
+
+  /// No description provided for @fpEventsTagsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No event tags yet'**
+  String get fpEventsTagsEmpty;
+
+  /// No description provided for @fpEventsTagBills.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 bill} other{{count} bills}}'**
+  String fpEventsTagBills(int count);
+
+  /// No description provided for @fpEventsTagInMine.
+  ///
+  /// In en, this message translates to:
+  /// **'In my tags already'**
+  String get fpEventsTagInMine;
+
+  /// No description provided for @fpEventsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t refresh · showing the last data'**
+  String get fpEventsLoadFailed;
+
   /// No description provided for @categoryDeleteConsequence.
   ///
   /// In en, this message translates to:
@@ -10968,6 +12109,491 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'That period is already linked (or this transaction is linked already)'**
   String get recurringLinkAlreadyLinked;
+
+  /// No description provided for @fpRecurringTabReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get fpRecurringTabReminder;
+
+  /// No description provided for @fpRecurringTabCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar'**
+  String get fpRecurringTabCalendar;
+
+  /// No description provided for @fpRecurringListCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Next 30 days to pay'**
+  String get fpRecurringListCaption;
+
+  /// No description provided for @fpRecurringAwaitingAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} waiting for an amount'**
+  String fpRecurringAwaitingAlert(int n);
+
+  /// No description provided for @fpRecurringMonthLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Per month: pay {pay} · receive {receive}'**
+  String fpRecurringMonthLine(String pay, String receive);
+
+  /// No description provided for @fpRecurringPausedGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get fpRecurringPausedGroup;
+
+  /// No description provided for @fpRecurringGroupDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Due · in pending'**
+  String get fpRecurringGroupDue;
+
+  /// No description provided for @fpRecurringGroupComing.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up'**
+  String get fpRecurringGroupComing;
+
+  /// No description provided for @fpRecurringAwaitingAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'No amount yet'**
+  String get fpRecurringAwaitingAmount;
+
+  /// No description provided for @fpRecurringAddReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a reminder'**
+  String get fpRecurringAddReminder;
+
+  /// No description provided for @fpRecurringKindSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription'**
+  String get fpRecurringKindSubscription;
+
+  /// No description provided for @fpRecurringKindInstallment.
+  ///
+  /// In en, this message translates to:
+  /// **'Installment'**
+  String get fpRecurringKindInstallment;
+
+  /// No description provided for @fpRecurringKindIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get fpRecurringKindIncome;
+
+  /// No description provided for @fpRecurringKindReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder'**
+  String get fpRecurringKindReminder;
+
+  /// No description provided for @fpRecurringRefreshFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh failed, showing the latest data'**
+  String get fpRecurringRefreshFailed;
+
+  /// No description provided for @fpRecurringCalendarNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing on this day'**
+  String get fpRecurringCalendarNone;
+
+  /// No description provided for @fpRecurringPerRound.
+  ///
+  /// In en, this message translates to:
+  /// **'Each time'**
+  String get fpRecurringPerRound;
+
+  /// No description provided for @fpRecurringAwaitingValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter amount'**
+  String get fpRecurringAwaitingValue;
+
+  /// No description provided for @fpRecurringTileYearly.
+  ///
+  /// In en, this message translates to:
+  /// **'Per year'**
+  String get fpRecurringTileYearly;
+
+  /// No description provided for @fpRecurringTileSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get fpRecurringTileSaved;
+
+  /// No description provided for @fpRecurringTilePending.
+  ///
+  /// In en, this message translates to:
+  /// **'To confirm'**
+  String get fpRecurringTilePending;
+
+  /// No description provided for @fpRecurringTileInstallment.
+  ///
+  /// In en, this message translates to:
+  /// **'Installment'**
+  String get fpRecurringTileInstallment;
+
+  /// No description provided for @fpRecurringCountUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} times'**
+  String fpRecurringCountUnit(int n);
+
+  /// No description provided for @fpRecurringAlertAwaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the amount · {due}'**
+  String fpRecurringAlertAwaiting(String due);
+
+  /// No description provided for @fpRecurringInfoSpan.
+  ///
+  /// In en, this message translates to:
+  /// **'Start – end'**
+  String get fpRecurringInfoSpan;
+
+  /// No description provided for @fpRecurringNextInline.
+  ///
+  /// In en, this message translates to:
+  /// **'next {date} ({due})'**
+  String fpRecurringNextInline(String date, String due);
+
+  /// No description provided for @fpRecurringTrialUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Free trial until'**
+  String get fpRecurringTrialUntil;
+
+  /// No description provided for @fpRecurringTabPast.
+  ///
+  /// In en, this message translates to:
+  /// **'Past'**
+  String get fpRecurringTabPast;
+
+  /// No description provided for @fpRecurringTabUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get fpRecurringTabUpcoming;
+
+  /// No description provided for @fpRecurringNextTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Next · {due}'**
+  String fpRecurringNextTitle(String due);
+
+  /// No description provided for @fpRecurringNextCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Becomes a draft in pending on that day'**
+  String get fpRecurringNextCaption;
+
+  /// No description provided for @fpRecurringEditedChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edited'**
+  String get fpRecurringEditedChip;
+
+  /// No description provided for @fpRecurringActEditAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit amount'**
+  String get fpRecurringActEditAmount;
+
+  /// No description provided for @fpRecurringActMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Move date'**
+  String get fpRecurringActMove;
+
+  /// No description provided for @fpRecurringActSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get fpRecurringActSkip;
+
+  /// No description provided for @fpRecurringActEnterAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter amount'**
+  String get fpRecurringActEnterAmount;
+
+  /// No description provided for @fpRecurringThenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} upcoming in total'**
+  String fpRecurringThenTitle(int n);
+
+  /// No description provided for @fpRecurringMoreDates.
+  ///
+  /// In en, this message translates to:
+  /// **'More ›'**
+  String get fpRecurringMoreDates;
+
+  /// No description provided for @fpRecurringChipEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'{date} · {amount}'**
+  String fpRecurringChipEdited(String date, String amount);
+
+  /// No description provided for @fpRecurringChipSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'{date} · skipped'**
+  String fpRecurringChipSkipped(String date);
+
+  /// No description provided for @fpRecurringOccEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit this occurrence'**
+  String get fpRecurringOccEditTitle;
+
+  /// No description provided for @fpRecurringOccMoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move this occurrence'**
+  String get fpRecurringOccMoveTitle;
+
+  /// No description provided for @fpRecurringOccEnterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the amount'**
+  String get fpRecurringOccEnterTitle;
+
+  /// No description provided for @fpRecurringOccDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get fpRecurringOccDate;
+
+  /// No description provided for @fpRecurringOccAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get fpRecurringOccAmount;
+
+  /// No description provided for @fpRecurringSkipTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip this occurrence?'**
+  String get fpRecurringSkipTitle;
+
+  /// No description provided for @fpRecurringSkipBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It will not become a draft in pending. You can restore it later.'**
+  String get fpRecurringSkipBody;
+
+  /// No description provided for @fpRecurringAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount / time'**
+  String get fpRecurringAmountLabel;
+
+  /// No description provided for @fpRecurringAmountOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount / time (optional)'**
+  String get fpRecurringAmountOptional;
+
+  /// No description provided for @fpRecurringReminderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'No amount needed. On the day, enter the real amount in the draft.'**
+  String get fpRecurringReminderHint;
+
+  /// No description provided for @fpRecurringFieldCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of payments'**
+  String get fpRecurringFieldCount;
+
+  /// No description provided for @fpRecurringCountValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} payments'**
+  String fpRecurringCountValue(int n);
+
+  /// No description provided for @fpRecurringCountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'An installment needs a number of payments'**
+  String get fpRecurringCountRequired;
+
+  /// No description provided for @fpRecurringFieldMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get fpRecurringFieldMode;
+
+  /// No description provided for @fpRecurringFieldPayFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay from'**
+  String get fpRecurringFieldPayFrom;
+
+  /// No description provided for @fpRecurringFieldIntoWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Into wallet'**
+  String get fpRecurringFieldIntoWallet;
+
+  /// No description provided for @fpRecurringFieldFromWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'From wallet'**
+  String get fpRecurringFieldFromWallet;
+
+  /// No description provided for @fpRecurringSelectDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get fpRecurringSelectDone;
+
+  /// No description provided for @fpRecurringArchiveConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Stops making new occurrences. Hidden, can be restored.'**
+  String get fpRecurringArchiveConsequence;
+
+  /// No description provided for @fpRecurringRestoreConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Active again, making occurrences'**
+  String get fpRecurringRestoreConsequence;
+
+  /// No description provided for @fpRecurringDeleteConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletes this recurring with its unsaved occurrences'**
+  String get fpRecurringDeleteConsequence;
+
+  /// No description provided for @fpRecurringDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate'**
+  String get fpRecurringDuplicate;
+
+  /// No description provided for @fpRecurringDuplicateConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Creates the same recurring, starting today'**
+  String get fpRecurringDuplicateConsequence;
+
+  /// No description provided for @fpM5ContactDeleteDebts.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} debt records keep only the name'**
+  String fpM5ContactDeleteDebts(int n);
+
+  /// No description provided for @fpM5ContactDeleteMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Member of {n} events'**
+  String fpM5ContactDeleteMembers(int n);
+
+  /// No description provided for @fpM5ContactDeleteLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked to an account, the link is removed'**
+  String get fpM5ContactDeleteLinked;
+
+  /// No description provided for @fpM5BudgetDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletes {periods} periods ({overridden} adjusted) · {categories} categories · {wallets} wallets. Transactions are not affected.'**
+  String fpM5BudgetDeleteBody(
+    int periods,
+    int overridden,
+    int categories,
+    int wallets,
+  );
+
+  /// No description provided for @fpM5GoalDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletes this goal for good. {n} saving entries stay, detached from it.'**
+  String fpM5GoalDeleteBody(int n);
+
+  /// No description provided for @fpM5GoalsSortTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get fpM5GoalsSortTooltip;
+
+  /// No description provided for @fpM5GoalsSortCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'By created'**
+  String get fpM5GoalsSortCreated;
+
+  /// No description provided for @fpM5GoalsSortDeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearest deadline'**
+  String get fpM5GoalsSortDeadline;
+
+  /// No description provided for @fpM5GoalsSortProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get fpM5GoalsSortProgress;
+
+  /// No description provided for @fpM5GoalsSortRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining'**
+  String get fpM5GoalsSortRemaining;
+
+  /// No description provided for @fpM5GoalsSortName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get fpM5GoalsSortName;
+
+  /// No description provided for @fpM5GoalsMonthSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {saved} / {plan}'**
+  String fpM5GoalsMonthSaved(String saved, String plan);
+
+  /// No description provided for @fpM5GoalsChartPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'On plan'**
+  String get fpM5GoalsChartPlan;
+
+  /// No description provided for @fpM5bRecurringPerMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Per month'**
+  String get fpM5bRecurringPerMonth;
+
+  /// No description provided for @fpM5bRecurringAmountPerTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount each time'**
+  String get fpM5bRecurringAmountPerTime;
+
+  /// No description provided for @fpM5bRecurringDeleteNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'This deletes {items} occurrences, {drafts} waiting drafts and touches {linked} saved records.'**
+  String fpM5bRecurringDeleteNumbers(int items, int drafts, int linked);
+
+  /// No description provided for @fpM5bEventDeleteNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'This deletes {bills} bills and {members} members.'**
+  String fpM5bEventDeleteNumbers(int bills, int members);
 }
 
 class _AppLocalizationsDelegate

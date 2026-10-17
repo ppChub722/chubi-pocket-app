@@ -110,15 +110,19 @@ class DetailLayout extends StatelessWidget {
 
 /// The detail slots in their fixed order, spaced [HeroSpacing.after] apart —
 /// everything [DetailLayout] shows between the hero and the meta. Use it
-/// directly inside a tab (the overview tab: info, settings, people, note).
-/// Null slots are skipped; each slot is preceded by the one gap (also above
-/// the first, i.e. the gap under the hero).
+/// directly inside a tab (the overview tab: info, settings, chart, people,
+/// note). Null slots are skipped; each slot is preceded by the one gap (also
+/// above the first, i.e. the gap under the hero).
+///
+/// [chart] (a `ChartSection`) sits right after the settings — a view-only
+/// overview slot; edit mode (`DetailLayout`) hides computed data.
 class DetailSections extends StatelessWidget {
   const DetailSections({
     this.tags,
     this.actions,
     this.info,
     this.settings,
+    this.chart,
     this.people,
     this.note,
     this.records,
@@ -130,6 +134,7 @@ class DetailSections extends StatelessWidget {
   final Widget? actions;
   final Widget? info;
   final Widget? settings;
+  final Widget? chart;
   final Widget? people;
   final Widget? note;
   final Widget? records;
@@ -142,6 +147,7 @@ class DetailSections extends StatelessWidget {
       ?actions,
       ?info,
       ?settings,
+      ?chart,
       ?people,
       ?note,
       ?records,
@@ -154,6 +160,31 @@ class DetailSections extends StatelessWidget {
         for (final s in slots) ...[
           const SizedBox(height: HeroSpacing.after),
           s,
+        ],
+      ],
+    );
+  }
+}
+
+/// The `records` slot's content when it is more than one piece (a filter row,
+/// chips, grouped record boxes, an add tile): the pieces in a column, one
+/// [gap] apart. Null entries are skipped.
+class DetailRecords extends StatelessWidget {
+  const DetailRecords({required this.children, this.gap = 12, super.key});
+
+  final List<Widget?> children;
+  final double gap;
+
+  @override
+  Widget build(BuildContext context) {
+    final shown = [for (final c in children) ?c];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final (i, c) in shown.indexed) ...[
+          if (i > 0) SizedBox(height: gap),
+          c,
         ],
       ],
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/app_button.dart';
 import '../atoms/dashed_rect_border.dart';
 import '../molecules/detail_rows.dart';
 import '../tokens/app/app_colors.dart';
@@ -15,12 +16,16 @@ class PeopleStripMember {
   const PeopleStripMember({
     required this.avatar,
     required this.name,
+    this.lead,
     this.caption,
     this.tone = PeopleTone.neutral,
   });
 
   final Widget avatar;
   final String name;
+
+  /// A muted line above [caption] ("paid 120"); never toned.
+  final String? lead;
 
   /// e.g. "owes 120" / "is owed 80".
   final String? caption;
@@ -37,12 +42,18 @@ class PeopleStrip extends StatelessWidget {
     required this.inviteLabel,
     this.description,
     this.onMemberTap,
+    this.actionLabel,
+    this.onAction,
     this.first = false,
     super.key,
   });
 
   final String title;
   final String? description;
+
+  /// A text action at the end of the title row ("Manage ›"); null = none.
+  final String? actionLabel;
+  final VoidCallback? onAction;
   final List<PeopleStripMember> members;
 
   /// Null = no invite card.
@@ -52,7 +63,7 @@ class PeopleStrip extends StatelessWidget {
   final bool first;
 
   static const _cardWidth = 104.0;
-  static const _cardHeight = 116.0;
+  static const _cardHeight = 128.0;
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +74,13 @@ class PeopleStrip extends StatelessWidget {
           first: first,
           title: title,
           description: description,
+          trailing: actionLabel == null || onAction == null
+              ? null
+              : AppButton(
+                  label: actionLabel!,
+                  variant: AppButtonVariant.text,
+                  onPressed: onAction,
+                ),
           children: const [],
         ),
         SizedBox(
@@ -126,6 +144,15 @@ class _MemberCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: text.labelLarge,
                 ),
+                if (member.lead != null)
+                  Text(
+                    member.lead!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: text.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
                 if (member.caption != null)
                   Text(
                     member.caption!,

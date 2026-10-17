@@ -54,6 +54,13 @@ Widget _mark(
   );
 }
 
+/// "เลขบัญชี · KBANK" — the row label for a wallet number.
+String identifierKindLine(
+  BuildContext context,
+  AccountIdentifier id,
+  List<PaymentProvider> providers,
+) => _kindLine(context, id, providers);
+
 /// "เลขบัญชี · KBANK".
 String _kindLine(
   BuildContext context,

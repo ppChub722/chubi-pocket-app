@@ -60,7 +60,7 @@ class SavingEntry extends Equatable {
     required this.kind,
     required this.date,
     required this.amount,
-    required this.wallet,
+    this.wallet,
     required this.from,
     required this.to,
     this.note,
@@ -73,7 +73,9 @@ class SavingEntry extends Equatable {
   final SavingEntryKind kind;
   final String date; // ISO YYYY-MM-DD
   final double amount;
-  final SavingWalletRef wallet;
+
+  /// Null = saved with no wallet (money outside the app).
+  final SavingWalletRef? wallet;
   final SavingEndpoint from;
   final SavingEndpoint to;
   final String? note;
@@ -94,9 +96,11 @@ class SavingEntry extends Equatable {
       kind: SavingEntryKind.fromJson(json['kind'] as String?),
       date: json['date'] as String,
       amount: (json['amount'] as num).toDouble(),
-      wallet: SavingWalletRef.fromJson(
-        (json['wallet'] as Map).cast<String, dynamic>(),
-      ),
+      wallet: json['wallet'] is Map
+          ? SavingWalletRef.fromJson(
+              (json['wallet'] as Map).cast<String, dynamic>(),
+            )
+          : null,
       from: SavingEndpoint.fromJson(
         (json['from'] as Map).cast<String, dynamic>(),
       ),
@@ -156,20 +160,23 @@ class SavingEntryPage extends Equatable {
 /// How much of a bucket (goal / spare) sits in one wallet.
 class SavingWalletShare extends Equatable {
   const SavingWalletShare({
-    required this.wallet,
+    this.wallet,
     required this.amount,
     this.sharePct = 0,
   });
 
-  final SavingWalletRef wallet;
+  /// Null = saved with no wallet (money outside the app).
+  final SavingWalletRef? wallet;
   final double amount;
   final double sharePct;
 
   factory SavingWalletShare.fromJson(Map<String, dynamic> json) =>
       SavingWalletShare(
-        wallet: SavingWalletRef.fromJson(
-          (json['wallet'] as Map).cast<String, dynamic>(),
-        ),
+        wallet: json['wallet'] is Map
+            ? SavingWalletRef.fromJson(
+                (json['wallet'] as Map).cast<String, dynamic>(),
+              )
+            : null,
         amount: (json['amount'] as num).toDouble(),
         sharePct: (json['share_pct'] as num?)?.toDouble() ?? 0,
       );
@@ -180,9 +187,10 @@ class SavingWalletShare extends Equatable {
 
 /// A wallet's chosen part of a withdraw / move (sent only when edited).
 class SavingSplit extends Equatable {
-  const SavingSplit({required this.walletId, required this.amount});
+  const SavingSplit({this.walletId, required this.amount});
 
-  final String walletId;
+  /// Null = the wallet-less part ("ไม่มีกระเป๋า"); always sent explicitly.
+  final String? walletId;
   final double amount;
 
   Map<String, dynamic> toJson() => {'wallet_id': walletId, 'amount': amount};

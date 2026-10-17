@@ -27,6 +27,7 @@ class AddTile extends StatelessWidget {
     this.variant = AddTileVariant.card,
     this.icon = AppIcons.add,
     this.circleSize = 48,
+    this.inList = false,
     super.key,
   });
 
@@ -38,8 +39,26 @@ class AddTile extends StatelessWidget {
   /// Diameter for [AddTileVariant.circle] — match the avatars beside it.
   final double circleSize;
 
+  /// The tile that ends a full-width list ([ListPageBody] with no side
+  /// padding): inset like the rows and spaced from the last one.
+  final bool inList;
+
   @override
   Widget build(BuildContext context) {
+    final tile = _tile(context);
+    if (!inList) return tile;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        0,
+      ),
+      child: tile,
+    );
+  }
+
+  Widget _tile(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final color = onTap == null ? scheme.outline : scheme.primary;
     final labelStyle = Theme.of(

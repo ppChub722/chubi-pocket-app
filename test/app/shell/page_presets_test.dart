@@ -47,11 +47,15 @@ class _DebtsRepo extends Fake implements PersonalDebtsRepository {
     String? q,
     bool all = false,
     NetSide? side,
+    DebtPeopleSort sort = DebtPeopleSort.oldest,
   }) => Completer<DebtPeoplePage>().future;
 
   @override
-  Future<DebtPersonDetail> person(String key, {int perPage = 30}) =>
-      Completer<DebtPersonDetail>().future;
+  Future<DebtPersonDetail> person(
+    String key, {
+    int perPage = 30,
+    DebtCycle cycle = DebtCycle.current,
+  }) => Completer<DebtPersonDetail>().future;
 }
 
 class _Contacts extends MockCubit<ContactsState> implements ContactsCubit {}

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,9 +17,17 @@ import '../../domain/contact.dart';
 import '../../../transactions/presentation/save_failure.dart';
 import '../cubit/contacts_cubit.dart';
 
-/// `/contacts/new`, `/contacts/:id` (+ `/edit`) — one page, view ⇄ edit,
-/// category style (`ux-overhaul-plan.md` §6). Linked contacts lock name,
-/// email and icon (they follow the linked user's account).
+/// `/contacts/new`, `/contacts/:id` (+ `/edit`) — one page, view ⇄ edit
+/// (0.4.0 reference §8). The page opens with ONE call (`GET /contacts/:id
+/// ?include=unlinked_names`) and shows what the BE returns; every write
+/// answers with the contact and patches the page (no re-GET).
+///
+/// View: a people hero (link state chip, 💸 + ✏️, avatar + name +
+/// description, no money) → one box of facts → "เชื่อมบัญชี" → note → meta.
+/// Edit is its own form: the hero's name / description / icon, one box of
+/// ชื่อเล่น / อีเมล / เบอร์โทร, the "แสดงชื่อเล่น" setting, the note and the
+/// end zone (archive / delete). Linked contacts follow their account: what
+/// can't be edited (name, email, icon) is hidden in edit mode.
 ///
 /// The link-request accept flows keep `ContactFormPage`.
 class ContactDetailPage extends StatefulWidget {
@@ -60,6 +70,10 @@ class _ContactDetailPageState extends State<ContactDetailPage>
   /// (include=unlinked_names), trimmed locally after an absorb.
   List<UnlinkedName> _unlinked = const [];
 
+  /// The BE's totals for the badge (names / records still free to wire).
+  int _unlinkedNames = 0;
+  int _unlinkedRecords = 0;
+
   /// View-mode title: the resolved name (the edit field edits the stored
   /// display_name).
   final _viewName = TextEditingController();
@@ -83,11 +97,16 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     super.dispose();
   }
 
+  /// The page's one load. The first one shows the skeleton / error; a later
+  /// one (pull-to-refresh) keeps the data on screen — a failure is a message.
   Future<void> _load({bool enterEdit = false}) async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    final first = _contact == null;
+    if (first) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final d = await context.read<ContactsRepository>().get(_id!);
       if (!mounted) return;
@@ -95,18 +114,28 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       setState(() {
         _setContact(c);
         _unlinked = d.unlinkedNames;
+        _unlinkedNames = d.unlinkedNameCount;
+        _unlinkedRecords = d.unlinkedRecordCount;
         _loading = false;
+        _error = null;
       });
       resetDraft(_ContactDraft.from(c));
       if (enterEdit) this.enterEdit();
     } catch (e, st) {
       if (!mounted) return;
-      setState(() {
-        _error = ApiException.from(e, st);
-        _loading = false;
-      });
+      final err = ApiException.from(e, st);
+      if (first) {
+        setState(() {
+          _error = err;
+          _loading = false;
+        });
+      } else {
+        showAppSnackBar(context, err.message, tone: Tone.danger);
+      }
     }
   }
+
+  Future<void> _refresh() => _load();
 
   void _setContact(Contact c) {
     _contact = c;
@@ -154,6 +183,10 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     _Field.note => working.copyWith(note: v),
   });
 
+  /// View mode: long-press a value → edit mode with that field focused.
+  VoidCallback _enterOn(_Field f) =>
+      () => enterEdit(focus: _focus[f]);
+
   // ── Save / delete ───────────────────────────────────────────────────
 
   Future<void> _save() async {
@@ -190,6 +223,8 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         setState(() {
           _setContact(created);
           _unlinked = const [];
+          _unlinkedNames = 0;
+          _unlinkedRecords = 0;
         });
         commitSaved(_ContactDraft.from(created));
         context.replace('/contacts/${created.id}');
@@ -222,10 +257,36 @@ class _ContactDetailPageState extends State<ContactDetailPage>
   Future<void> _delete() async {
     final l = AppLocalizations.of(context)!;
     final c = _contact!;
+    // ONE call on this button: the contact with the delete preview.
+    setSaving(true);
+    final ContactDeletePreview? preview;
+    try {
+      preview = (await context.read<ContactsRepository>().get(
+        c.id,
+        deletePreview: true,
+      )).deletePreview;
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setSaving(false);
+      showSaveFailure(context, e, retry: _delete);
+      return;
+    }
+    if (!mounted) return;
+    setSaving(false);
+    // What the BE says is touched, printed as sent.
+    final parts = preview == null
+        ? const <String>[]
+        : [
+            if (preview.debtRecords > 0)
+              l.fpM5ContactDeleteDebts(preview.debtRecords),
+            if (preview.eventMembers > 0)
+              l.fpM5ContactDeleteMembers(preview.eventMembers),
+            if (preview.linked) l.fpM5ContactDeleteLinked,
+          ];
     final ok = await showConfirmDialog(
       context,
       title: l.contactDeleteTitle(c.name),
-      message: l.contactDeleteBody,
+      message: parts.isEmpty ? l.contactDeleteBody : parts.join(' · '),
       confirmLabel: l.commonDelete,
       destructive: true,
     );
@@ -263,7 +324,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     applyChange(working.copyWith(iconCode: result.iconCode));
   }
 
-  // ── Actions (view mode only — dimmed while editing) ────────────────
+  // ── Actions ─────────────────────────────────────────────────────────
 
   /// Runs a write that answers with the contact and patches the page from
   /// it (no re-GET).
@@ -324,6 +385,51 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     await _run(() => c.isArchived ? cubit.restore(c.id) : cubit.archive(c.id));
   }
 
+  /// "จับคู่ชื่อในรายการหาร": the sheet of typed split names; saving absorbs
+  /// the picked ones and the answer patches the page.
+  Future<void> _openWireNames() async {
+    final l = AppLocalizations.of(context)!;
+    final contact = _contact!;
+    final wired = await showWireNamesSheet<(AbsorbResult, Set<String>)>(
+      context,
+      labels: WireNamesLabels(
+        title: l.contactWireSheetTitle(contact.name),
+        body: l.contactWireSheetBody,
+        searchHint: l.contactWireSearch,
+        saveLabel: l.contactWireSave,
+      ),
+      rows: [
+        for (final n in _unlinked)
+          WireNameRow(name: n.name, subtitle: l.contactWireCount(n.count)),
+      ],
+      onSave: (picked) async {
+        try {
+          final res = await context.read<ContactsCubit>().absorb(
+            contact.id,
+            picked.toList(),
+          );
+          return (res, picked);
+        } on ApiException catch (e) {
+          if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+          return null;
+        }
+      },
+    );
+    if (!mounted || wired == null) return;
+    final (res, picked) = wired;
+    if (res.absorbedCount > 0) {
+      showAppSnackBar(
+        context,
+        l.contactWireDone(res.absorbedCount, res.contact.name),
+        tone: Tone.success,
+      );
+    }
+    // Absorb answered: patch the contact; the badge totals are the BE's, so
+    // the page's one call re-runs (the data stays on screen).
+    _patch(res.contact);
+    unawaited(_load());
+  }
+
   // ── Build ───────────────────────────────────────────────────────────
 
   @override
@@ -349,7 +455,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       );
     }
 
-    // A save / delete in flight dims the page and blocks input.
     // The + opens debt mode with this contact (once saved).
     return QuickCreatePresetScope(
       preset: _isCreate
@@ -364,12 +469,12 @@ class _ContactDetailPageState extends State<ContactDetailPage>
               ),
             ),
       child: editScope(
+        // A save / delete in flight dims the page and blocks input.
         SavingOverlay(
           saving: isSaving,
           child: Scaffold(
             appBar: AppTopBar(
-              // Edit mode keeps the page's title (owner QA T1) — the action bar
-              // shows the mode.
+              // Titles never change with the mode — the action bar shows it.
               title: _isCreate ? l.contactTitleNew : _contact!.name,
               showBack: true,
               editing: isEditing,
@@ -380,31 +485,20 @@ class _ContactDetailPageState extends State<ContactDetailPage>
               key: _formKey,
               // Builder: its context sees the floating bar's height.
               child: Builder(
-                // Pull = the page's one load call; the body turns it off while
-                // editing (a reload resets the draft) and in create.
-                builder: (context) => DetailPageBody(
-                  onRefresh: _isCreate ? null : _load,
-                  physics: const AlwaysScrollableScrollPhysics(),
+                builder: (context) => DetailLayout(
+                  // Pull = the page's one load call; off in create and while
+                  // editing (a reload resets the draft).
+                  onRefresh: _isCreate ? null : _refresh,
+                  refreshEnabled: !isEditing,
                   topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
                   bottomInset:
                       AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
-                  hero: _header(l),
-                  sections: [
-                    (first) => _fields(l, first: first),
-                    (first) => _isCreate ? null : _actions(l, first: first),
-                  ],
-                  // Archive (amber) · delete (red) live at the bottom in edit
-                  // mode (no top-bar actions); archive flips to restore.
-                  manage: isEditing && !_isCreate
-                      ? ManageSection(
-                          archiveLabel: _contact!.isArchived
-                              ? l.contactRestore
-                              : l.contactArchive,
-                          onArchive: isSaving ? null : _toggleArchive,
-                          deleteLabel: l.contactDeleteThis,
-                          onDelete: isSaving ? null : _delete,
-                        )
-                      : null,
+                  hero: isEditing ? _editHero(l) : _viewHero(l),
+                  info: isEditing ? _editInfo(l) : _viewInfo(l),
+                  settings: isEditing ? _editSettings(l) : null,
+                  people: isEditing || _isCreate ? null : _linkSection(l),
+                  note: _note(l),
+                  endZone: isEditing && !_isCreate ? _endZone(l) : null,
                   metaLines: _isCreate
                       ? const []
                       : detailMetaLines(
@@ -424,345 +518,313 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     );
   }
 
-  Widget _header(AppLocalizations l) {
-    final editing = isEditing;
-    final c = _contact;
-    final iconEditable = editing && !_linked;
+  HeroStyle _heroStyle(String name, IconCode? icon) {
     final palette = Theme.of(context).extension<AppColors>()!;
-    return HeaderCard(
+    return HeroStyle.tinted(
+      color: icon.tintFor(palette, avatarName: name),
       glyph: AppIcons.contact,
-      // The contact's own icon colour (the linked user's while linked).
-      accent: (_linked ? c!.iconCode : working.iconCode).tintFor(
-        palette,
-        avatarName: c != null && !editing ? c.name : working.name,
-      ),
-      onEdit: editing ? null : enterEdit,
-      // Status chips in the top row (rule 2) — except "linked", which sits in
-      // the subtitle under the name (contact exception, owner 2026-10-12). With
-      // no chip the row collapses: ✏️ level with the name.
-      topRow: [
-        if (c != null && c.isArchived)
+    );
+  }
+
+  /// "🔗 เชื่อมกับ @user แล้ว" / "ยังไม่เชื่อมกับผู้ใช้ในแอป".
+  String _linkLabel(AppLocalizations l, Contact c) {
+    final u = c.linkedUser;
+    if (u == null) return l.fpContactsNotLinked;
+    final handle = u.username;
+    return l.fpContactsLinkedWith(
+      handle == null || handle.isEmpty ? u.displayName : '@$handle',
+    );
+  }
+
+  // ── View ────────────────────────────────────────────────────────────
+
+  /// The people hero: link state chip (+ archived), 💸 + ✏️, avatar, name,
+  /// description. No money on the card.
+  Widget _viewHero(AppLocalizations l) {
+    final c = _contact!;
+    return HeroCard(
+      style: _heroStyle(c.name, c.iconCode),
+      chips: [
+        if (c.isArchived)
           AppChip(
             label: l.contactArchivedBadge,
             icon: AppIcons.archive,
             tone: AppChipTone.warning,
             selected: true,
           ),
-      ],
-      // avatar → 🔗 → name (owner 2026-10-11): the badge sits outside the
-      // circle, so the editable avatar keeps its shape.
-      leading: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          EditableCircle(
-            size: 52,
-            onTap: iconEditable ? _openIconMaker : null,
-            onLongPress: editing || _linked
-                ? null
-                : () {
-                    enterEdit();
-                    WidgetsBinding.instance.addPostFrameCallback(
-                      (_) => _openIconMaker(),
-                    );
-                  },
-            // Linked: the account's icon wins (and isn't editable here).
-            child: PersonMark(
-              name: c != null && !editing ? c.name : working.name,
-              level: PersonLevel.contact,
-              iconCode: _linked ? c!.iconCode : working.iconCode,
-              size: 52,
-            ),
-          ),
-          if (_linked) ...[
-            const SizedBox(width: AppSpacing.xs),
-            const PersonLinkBadge(),
-          ],
-        ],
-      ),
-      // Edit: the stored name. View (and linked): the resolved name.
-      title: HeroNameInput(
-        key: ValueKey(editing && !_linked),
-        editing: editing && !_linked,
-        controller: editing && !_linked ? _ctrl[_Field.name]! : _viewName,
-        focusNode: _focus[_Field.name],
-        hint: l.contactNameHint,
-        maxLength: TextLimits.name,
-        onEnterEdit: _linked
-            ? null
-            : () => enterEdit(focus: _focus[_Field.name]),
-        onChanged: (v) => _onText(_Field.name, v),
-        validator: (v) {
-          final s = v?.trim() ?? '';
-          if (s.isEmpty) return l.contactNameRequired;
-          if (s.length > TextLimits.name) return l.contactNameTooLong;
-          return null;
-        },
-      ),
-      // The contact's own description (not the linked account's), so it stays
-      // editable when linked.
-      description: HeroDescription(
-        controller: _ctrl[_Field.description]!,
-        editing: editing,
-        hint: l.contactDescriptionHint,
-        maxLength: TextLimits.description,
-        focusNode: _focus[_Field.description],
-        onEnterEdit: () => enterEdit(focus: _focus[_Field.description]),
-        onChanged: (v) => _onText(_Field.description, v),
-      ),
-      // Linked: the chip under the name (replaces the old "Contact" line);
-      // unlinked: no subtitle.
-      subtitle: c != null && c.isLinked
-          ? Align(
-              alignment: Alignment.centerLeft,
-              child: AppChip(
-                label: l.contactLinked,
-                icon: AppIcons.link,
-                tone: AppChipTone.success,
-                selected: true,
-                size: ChipSize.chip,
-              ),
-            )
-          : null,
-    );
-  }
-
-  Widget _fields(AppLocalizations l, {required bool first}) {
-    final editing = isEditing;
-    Widget field(
-      _Field f,
-      String label, {
-      String? hint,
-      bool locked = false,
-      bool placeholderWhenEmpty = false,
-      int maxLines = 1,
-      int? maxLength,
-      TextInputType? keyboard,
-      FormFieldValidator<String>? validator,
-    }) {
-      // ONE field implementation for every detail page (DetailTextField):
-      // view + nothing set = the one-row "not set" placeholder.
-      return DetailTextField(
-        label: label,
-        controller: _ctrl[f]!,
-        editing: editing,
-        focusNode: _focus[f],
-        locked: locked,
-        placeholderWhenEmpty: placeholderWhenEmpty,
-        notSetLabel: l.contactFieldNotSet,
-        maxLines: maxLines,
-        maxLength: maxLength,
-        keyboardType: keyboard,
-        // Edit mode: say what goes here and that it's optional (the
-        // name, in the header, is the only required one).
-        hint: hint,
-        viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
-        onEnterEdit: () => enterEdit(focus: _focus[f]),
-        onChanged: (v) => _onText(f, v),
-        validator: validator,
-      );
-    }
-
-    final email = field(
-      _Field.email,
-      l.contactEmailLabel,
-      hint: l.contactEmailHint,
-      locked: _linked,
-      placeholderWhenEmpty: true,
-      maxLength: TextLimits.email,
-      keyboard: TextInputType.emailAddress,
-      validator: (v) {
-        final s = v?.trim() ?? '';
-        if (s.isEmpty) return null;
-        return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(s)
-            ? null
-            : l.contactEmailInvalid;
-      },
-    );
-    final nicknameEmpty = working.nickname.trim().isEmpty;
-    return SectionCard(
-      first: first,
-      children: [
-        // My own label: editable even when the name is locked (linked).
-        field(
-          _Field.nickname,
-          l.contactNicknameLabel,
-          hint: l.contactNicknameHint,
-          placeholderWhenEmpty: true,
-          maxLength: TextLimits.name,
-        ),
-        // On / off per contact; nothing to switch while there is no nickname.
-        DetailRow(
-          label: l.contactShowNicknameLabel,
-          helper: l.contactShowNicknameHelper,
-          trailing: AppSwitch(
-            value: working.showNickname,
-            onChanged: nicknameEmpty
-                ? null
-                : (v) => applyChange(working.copyWith(showNickname: v)),
-          ),
-        ),
-        // Linked: the email follows the linked account — a 🔒 row (rule
-        // 10), with the "why" under it while editing.
-        if (_linked)
-          DetailRow(
-            label: l.contactEmailLabel,
-            locked: true,
-            helper: editing ? l.contactLinkedLockedHint : null,
-            trailing: _ctrl[_Field.email]!.text.isEmpty
-                ? DetailPlaceholder(l.contactFieldNotSet)
-                : AppText(_ctrl[_Field.email]!.text),
-          )
-        else
-          email,
-        field(
-          _Field.phone,
-          l.contactPhoneLabel,
-          hint: l.contactPhoneHint,
-          placeholderWhenEmpty: true,
-          maxLength: TextLimits.phone,
-          keyboard: TextInputType.phone,
-        ),
-        field(
-          _Field.note,
-          l.commonNote,
-          hint: l.contactNoteHint,
-          maxLines: 3,
-          maxLength: TextLimits.note,
+        AppChip(
+          label: _linkLabel(l, c),
+          icon: c.isLinked ? AppIcons.link : null,
+          tone: c.isLinked ? AppChipTone.success : AppChipTone.neutral,
+          selected: c.isLinked,
         ),
       ],
-    );
-  }
-
-  /// Absorb answered: patch the contact, drop the wired names from the list.
-  void _onWired(AbsorbResult res, Set<String> names) {
-    final gone = {for (final n in names) n.toLowerCase()};
-    setState(
-      () => _unlinked = [
-        for (final u in _unlinked)
-          if (!gone.contains(u.name.toLowerCase())) u,
-      ],
-    );
-    _patch(res.contact);
-  }
-
-  Widget _actions(AppLocalizations l, {required bool first}) {
-    final c = _contact!;
-    final hasEmail = c.email?.isNotEmpty ?? false;
-    return SectionCard(
-      first: first,
-      title: l.contactSectionActions,
-      description: l.contactActionsSectionDescription,
-      locked: isEditing,
-      children: [
-        if (c.isLinked)
-          DetailRow(
-            leading: const AppIcon(AppIcons.link),
-            label: l.contactLinkTitle,
-            helper: l.contactLinkLinked,
-            trailing: AppButton(
-              label: l.contactUnlink,
-              variant: AppButtonVariant.text,
-              submits: true,
-              onPressed: _unlink,
-            ),
-          )
-        else
-          DetailRow(
-            leading: const AppIcon(AppIcons.send),
-            label: l.contactLinkRequest,
-            helper: hasEmail
-                ? l.contactLinkRequestHint
-                : l.contactLinkNeedsEmail,
-            showChevron: hasEmail,
-            onTap: hasEmail ? _requestLink : null,
-          ),
-        _WireNamesRow(contact: c, names: _unlinked, onWired: _onWired),
-        DetailRow(
-          leading: const AppIcon(AppIcons.debt),
-          label: l.contactDebts,
-          showChevron: true,
+      links: [
+        CardActionButton(
+          icon: AppIcons.debt,
+          tooltip: l.contactDebts,
           onTap: () => openPage(
             context,
             '/personal-debts/people/${Uri.encodeComponent('c:${c.id}')}',
           ),
         ),
       ],
+      onEdit: enterEdit,
+      // Linked: the account's icon wins (and isn't editable here).
+      icon: GestureDetector(
+        onLongPress: _linked
+            ? null
+            : () {
+                enterEdit();
+                WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => _openIconMaker(),
+                );
+              },
+        child: PersonMark(
+          name: c.name,
+          level: c.isLinked ? PersonLevel.linked : PersonLevel.contact,
+          iconCode: c.iconCode,
+          size: 40,
+        ),
+      ),
+      name: HeroNameInput(
+        editing: false,
+        controller: _viewName,
+        maxLength: TextLimits.name,
+        onEnterEdit: _linked ? null : _enterOn(_Field.name),
+      ),
+      description: HeroDescription(
+        controller: _ctrl[_Field.description]!,
+        editing: false,
+        hint: l.contactDescriptionHint,
+        maxLength: TextLimits.description,
+        onEnterEdit: _enterOn(_Field.description),
+      ),
     );
   }
-}
 
-// ────────────────────────────────────────────────────────────────────
-// "จับคู่ชื่อในรายการหาร" — typed split names not yet tied to a contact.
-// ────────────────────────────────────────────────────────────────────
+  /// ONE box: ชื่อเล่น / อีเมล / เบอร์โทร — empty rows hidden, none = no box.
+  Widget? _viewInfo(AppLocalizations l) {
+    final c = _contact!;
+    InfoRow? row(String label, String? value, _Field f) =>
+        value == null || value.trim().isEmpty
+        ? null
+        : InfoRow(label: label, value: value, onLongPress: _enterOn(f));
+    final rows = <InfoRow>[
+      ?row(l.contactNicknameLabel, c.nickname, _Field.nickname),
+      ?row(l.contactEmailLabel, c.email, _Field.email),
+      ?row(l.contactPhoneLabel, c.phone, _Field.phone),
+    ];
+    return rows.isEmpty ? null : InfoBox(rows: rows);
+  }
 
-class _WireNamesRow extends StatelessWidget {
-  const _WireNamesRow({
-    required this.contact,
-    required this.names,
-    required this.onWired,
-  });
+  /// เชื่อมบัญชี: send a request (email set, not linked) or unlink; match the
+  /// typed split names.
+  Widget _linkSection(AppLocalizations l) {
+    final c = _contact!;
+    final hasEmail = c.email?.isNotEmpty ?? false;
 
-  final Contact contact;
-  final List<UnlinkedName> names;
-  final void Function(AbsorbResult res, Set<String> names) onWired;
-
-  Future<void> _open(BuildContext context) async {
-    final l = AppLocalizations.of(context)!;
-    final wired = await showWireNamesSheet<(AbsorbResult, Set<String>)>(
-      context,
-      labels: WireNamesLabels(
-        title: l.contactWireSheetTitle(contact.name),
-        body: l.contactWireSheetBody,
-        searchHint: l.contactWireSearch,
-        saveLabel: l.contactWireSave,
-      ),
-      rows: [
-        for (final n in names)
-          WireNameRow(name: n.name, subtitle: l.contactWireCount(n.count)),
+    final hasNames = _unlinkedNames > 0;
+    return SectionCard(
+      title: l.fpContactsLinkSection,
+      description: l.fpContactsLinkSectionDesc,
+      children: [
+        if (c.isLinked)
+          DetailRow(
+            leading: const AppIcon(AppIcons.link),
+            label: l.contactUnlink,
+            helper: l.contactLinkLinked,
+            showChevron: true,
+            onTap: _unlink,
+          )
+        else if (hasEmail)
+          DetailRow(
+            leading: const AppIcon(AppIcons.send),
+            label: l.contactLinkRequest,
+            helper: l.contactLinkRequestHint,
+            showChevron: true,
+            onTap: _requestLink,
+          ),
+        DetailRow(
+          leading: const AppIcon(AppIcons.split),
+          label: l.contactWireTitle,
+          helper: hasNames
+              ? l.contactWireHint(_unlinkedNames, _unlinkedRecords)
+              : l.contactWireNone,
+          showChevron: hasNames,
+          onTap: hasNames ? _openWireNames : null,
+        ),
       ],
-      onSave: (picked) async {
-        try {
-          final res = await context.read<ContactsCubit>().absorb(
-            contact.id,
-            picked.toList(),
-          );
-          return (res, picked);
-        } on ApiException catch (e) {
-          if (context.mounted) {
-            showAppSnackBar(context, e.message, tone: Tone.danger);
-          }
-          return null;
-        }
-      },
     );
-    if (!context.mounted || wired == null) return;
-    final (res, picked) = wired;
-    if (res.absorbedCount > 0) {
-      showAppSnackBar(
-        context,
-        l.contactWireDone(res.absorbedCount, res.contact.name),
-        tone: Tone.success,
+  }
+
+  Widget _note(AppLocalizations l) {
+    if (!isEditing) {
+      return NoteSection(
+        label: l.commonNote,
+        editing: false,
+        text: _contact!.note,
+        hint: l.commonLongPressToEdit,
+        onLongPress: _enterOn(_Field.note),
       );
     }
-    onWired(res, picked);
+    return NoteSection(
+      label: l.commonNote,
+      editing: true,
+      controller: _ctrl[_Field.note]!,
+      maxLength: TextLimits.note,
+      editField: DetailStacked(
+        label: l.commonNote,
+        child: AppInput.inline(
+          editing: true,
+          controller: _ctrl[_Field.note]!,
+          focusNode: _focus[_Field.note],
+          maxLines: 3,
+          maxLength: TextLimits.note,
+          hint: l.contactNoteHint,
+          onChanged: (v) => _onText(_Field.note, v),
+        ),
+      ),
+    );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final splits = names.fold<int>(0, (a, n) => a + n.count);
-    final has = names.isNotEmpty;
-    return DetailRow(
-      leading: const AppIcon(AppIcons.split),
-      label: l.contactWireTitle,
-      helper: has ? l.contactWireHint(names.length, splits) : l.contactWireNone,
-      showChevron: has,
-      onTap: has ? () => _open(context) : null,
+  // ── Edit / create ───────────────────────────────────────────────────
+
+  /// Edit mode is its own form: the card keeps the icon, the name (not for a
+  /// linked contact — it follows the account) and the description.
+  Widget _editHero(AppLocalizations l) {
+    final c = _contact;
+    final w = working;
+    final name = c != null && _linked ? c.name : w.name;
+    return HeroCard(
+      style: _heroStyle(name, _linked ? c!.iconCode : w.iconCode),
+      editing: true,
+      icon: EditableCircle(
+        size: 44,
+        onTap: _linked ? null : _openIconMaker,
+        child: PersonMark(
+          name: name,
+          level: PersonLevel.contact,
+          iconCode: _linked ? c!.iconCode : w.iconCode,
+          size: 44,
+        ),
+      ),
+      name: _linked
+          ? null
+          : HeroNameInput(
+              editing: true,
+              controller: _ctrl[_Field.name]!,
+              focusNode: _focus[_Field.name],
+              hint: l.contactNameHint,
+              maxLength: TextLimits.name,
+              onChanged: (v) => _onText(_Field.name, v),
+              validator: (v) {
+                final s = v?.trim() ?? '';
+                if (s.isEmpty) return l.contactNameRequired;
+                if (s.length > TextLimits.name) return l.contactNameTooLong;
+                return null;
+              },
+            ),
+      description: HeroDescription(
+        controller: _ctrl[_Field.description]!,
+        editing: true,
+        hint: l.contactDescriptionHint,
+        maxLength: TextLimits.description,
+        focusNode: _focus[_Field.description],
+        onChanged: (v) => _onText(_Field.description, v),
+      ),
+    );
+  }
+
+  /// ONE box: ชื่อเล่น, อีเมล (not for a linked contact), เบอร์โทร.
+  Widget _editInfo(AppLocalizations l) {
+    Widget field(
+      _Field f,
+      String label, {
+      required String hint,
+      required int maxLength,
+      TextInputType? keyboard,
+      FormFieldValidator<String>? validator,
+    }) => DetailTextField(
+      label: label,
+      controller: _ctrl[f]!,
+      editing: true,
+      focusNode: _focus[f],
+      hint: hint,
+      maxLength: maxLength,
+      keyboardType: keyboard,
+      onChanged: (v) => _onText(f, v),
+      validator: validator,
+    );
+    return SectionCard(
+      children: [
+        field(
+          _Field.nickname,
+          l.contactNicknameLabel,
+          hint: l.contactNicknameHint,
+          maxLength: TextLimits.name,
+        ),
+        if (!_linked)
+          field(
+            _Field.email,
+            l.contactEmailLabel,
+            hint: l.contactEmailHint,
+            maxLength: TextLimits.email,
+            keyboard: TextInputType.emailAddress,
+            validator: (v) {
+              final s = v?.trim() ?? '';
+              if (s.isEmpty) return null;
+              return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(s)
+                  ? null
+                  : l.contactEmailInvalid;
+            },
+          ),
+        field(
+          _Field.phone,
+          l.contactPhoneLabel,
+          hint: l.contactPhoneHint,
+          maxLength: TextLimits.phone,
+          keyboard: TextInputType.phone,
+        ),
+      ],
+    );
+  }
+
+  /// "แสดงชื่อเล่น" — part of the form (saved with it), edit mode only.
+  Widget _editSettings(AppLocalizations l) => SettingsSection(
+    title: l.settingsTitle,
+    description: l.fpContactsSettingsDesc,
+    children: [
+      SettingToggleRow(
+        label: l.contactShowNicknameLabel,
+        value: working.showNickname,
+        submits: false,
+        onChanged: (v) => applyChange(working.copyWith(showNickname: v)),
+      ),
+    ],
+  );
+
+  /// เก็บถาวร (flips to กู้คืน) and ลบ — the existing confirm dialogs.
+  Widget _endZone(AppLocalizations l) {
+    final c = _contact!;
+    return EndZone(
+      actions: [
+        EndZoneAction(
+          kind: EndZoneKind.archive,
+          label: c.isArchived ? l.contactRestore : l.contactArchive,
+          consequence: c.isArchived ? null : l.fpContactsArchiveConsequence,
+          onTap: isSaving ? null : _toggleArchive,
+        ),
+        EndZoneAction(
+          kind: EndZoneKind.delete,
+          label: l.contactDeleteThis,
+          consequence: l.fpContactsDeleteConsequence,
+          onTap: isSaving ? null : _delete,
+        ),
+      ],
     );
   }
 }
-
-// ────────────────────────────────────────────────────────────────────
 
 class _ContactDraft {
   const _ContactDraft({

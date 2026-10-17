@@ -50,9 +50,15 @@ class LedgerRow extends StatelessWidget {
     this.paidLabel,
     this.sourceLabel,
     this.currencySymbol = '฿',
+    this.signed = false,
     this.onTap,
     super.key,
   });
+
+  /// Statement mode (the person page): the amount carries a sign — `+` for
+  /// a debt added ([LedgerDirection.paid], normal colour), `−` for a
+  /// repayment ([LedgerDirection.received], income colour).
+  final bool signed;
 
   final LedgerDirection direction;
 
@@ -179,14 +185,26 @@ class LedgerRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
-            MoneyText(
-              amount.abs(),
-              symbol: currencySymbol,
-              style: textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: color,
+            if (signed)
+              Text(
+                '${paid ? '+' : '−'}'
+                '${moneyString(context, amount.abs(), symbol: currencySymbol)}',
+                maxLines: 1,
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: paid ? scheme.onSurface : palette.income,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              )
+            else
+              MoneyText(
+                amount.abs(),
+                symbol: currencySymbol,
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
               ),
-            ),
           ],
         ),
       ),
