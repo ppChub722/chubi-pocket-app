@@ -6100,6 +6100,31 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
+  String get fpWalletDeleteLabel => 'ลบกระเป๋านี้';
+
+  @override
+  String get fpWalletDeleteConsequence =>
+      'ดูก่อนว่ามีอะไรผูกอยู่ · เงินออมยังอยู่ แค่หลุดจากกระเป๋า';
+
+  @override
+  String get fpWalletDeleteTitle => 'ลบกระเป๋านี้?';
+
+  @override
+  String fpWalletDeleteBody(
+    int transactions,
+    int transfers,
+    int system,
+    int recurring,
+    int savings,
+    String amount,
+  ) {
+    return 'รายการ $transactions รายการยังอยู่แต่ไม่มีกระเป๋า (โอน $transfers) · รายการเปิดยอด/ปรับยอด $system รายการถูกลบ · รายการประจำ $recurring ยังทำงานต่อ · เงินออม $savings รายการ ($amount) ยังอยู่แต่หลุดจากกระเป๋า';
+  }
+
+  @override
+  String get fpWalletDeleted => 'ลบกระเป๋าแล้ว';
+
+  @override
   String get fpContactsNotLinked => 'ยังไม่เชื่อมกับผู้ใช้ในแอป';
 
   @override

@@ -10645,6 +10645,43 @@ abstract class AppLocalizations {
   /// **'Avg spend {amount}/day'**
   String fpTxAvgDaily(String amount);
 
+  /// No description provided for @fpWalletDeleteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this wallet'**
+  String get fpWalletDeleteLabel;
+
+  /// No description provided for @fpWalletDeleteConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'See what is attached first · saved money stays, just unlinked from the wallet'**
+  String get fpWalletDeleteConsequence;
+
+  /// No description provided for @fpWalletDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this wallet?'**
+  String get fpWalletDeleteTitle;
+
+  /// No description provided for @fpWalletDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{transactions} transactions stay with no wallet ({transfers} transfers) · {system} opening / adjustment rows are deleted · {recurring} recurring settings keep running · {savings} saving entries ({amount}) stay, unlinked from the wallet'**
+  String fpWalletDeleteBody(
+    int transactions,
+    int transfers,
+    int system,
+    int recurring,
+    int savings,
+    String amount,
+  );
+
+  /// No description provided for @fpWalletDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet deleted'**
+  String get fpWalletDeleted;
+
   /// No description provided for @fpContactsNotLinked.
   ///
   /// In en, this message translates to:

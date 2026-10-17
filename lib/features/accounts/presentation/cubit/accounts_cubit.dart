@@ -192,6 +192,28 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     return archived;
   }
 
+  /// The confirm dialog's numbers (`include=delete_preview`); null when the
+  /// caller can't delete this wallet.
+  Future<AccountDeletePreview?> deletePreview(String id) =>
+      _repo.deletePreview(id);
+
+  /// Hard delete (owner, no other members): the wallet leaves the list (and
+  /// the archived count when it was archived). Returns what was done.
+  Future<AccountDeletePreview> deleteForever(String id) async {
+    final wasArchived = state.accounts.every((a) => a.id != id);
+    final done = await _repo.delete(id);
+    emit(
+      state.copyWith(
+        accounts: state.accounts.where((a) => a.id != id).toList(),
+        archivedCount: wasArchived && state.archivedCount > 0
+            ? state.archivedCount - 1
+            : state.archivedCount,
+        totalsStale: true,
+      ),
+    );
+    return done;
+  }
+
   /// Manual balance adjustment (spec §2.5): patches the wallet and every
   /// balance the write touched. Returns the result so the caller can show a
   /// "View" snackbar that links to the new transaction.

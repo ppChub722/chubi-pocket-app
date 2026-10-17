@@ -36,6 +36,20 @@ class _Repo extends Fake implements AccountsRepository {
   Future<AccountDetail> getDetail(String id) =>
       Completer<AccountDetail>().future;
 
+  int previews = 0;
+
+  @override
+  Future<AccountDeletePreview?> deletePreview(String id) async {
+    previews++;
+    return AccountDeletePreview.fromJson({
+      'transactions': 12,
+      'transfers': 2,
+      'system_rows_deleted': 1,
+      'recurring': 3,
+      'saving_entries': {'count': 4, 'amount': 800.0},
+    });
+  }
+
   @override
   Future<Account> create(Account draft) async {
     creates.add(draft.toCreateJson());
@@ -208,6 +222,21 @@ void main() {
     expect(repo.updates, hasLength(1));
     expect(repo.updates.single['track_balance'], true);
     expect(repo.updates.single['current_balance'], 500);
+  });
+
+  testWidgets('edit: ลบ asks the BE for the numbers once, then confirms', (
+    t,
+  ) async {
+    await pump(t, wallet: _wallet());
+    await t.tap(find.byTooltip('Edit'));
+    await t.pump(const Duration(milliseconds: 300));
+    await t.ensureVisible(find.text('Delete this wallet'));
+    await t.tap(find.text('Delete this wallet'));
+    await t.pump(const Duration(milliseconds: 300));
+    expect(repo.previews, 1);
+    expect(find.text('Delete this wallet?'), findsOneWidget);
+    expect(find.textContaining('12 transactions stay'), findsOneWidget);
+    expect(find.textContaining('3 recurring settings'), findsOneWidget);
   });
 
   testWidgets('edit: on → off just saves track_balance:false', (t) async {

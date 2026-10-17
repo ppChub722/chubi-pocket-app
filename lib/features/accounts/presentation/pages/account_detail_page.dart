@@ -594,6 +594,56 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     }
   }
 
+  /// Delete (owner, edit mode): ONE call for the numbers, the confirm prints
+  /// them as the BE sent them, then ONE call deletes. A wallet with other
+  /// members can't be deleted (the BE answers no preview).
+  Future<void> _delete() async {
+    final l = AppLocalizations.of(context)!;
+    final a = widget.account!;
+    final cubit = context.read<AccountsCubit>();
+    final AccountDeletePreview? preview;
+    try {
+      preview = await cubit.deletePreview(a.id);
+    } on ApiException catch (e) {
+      if (mounted) {
+        showAppSnackBar(context, walletErrorMessage(l, e), tone: Tone.danger);
+      }
+      return;
+    }
+    if (!mounted) return;
+    if (preview == null) {
+      showAppSnackBar(context, l.accountArchiveHasMembers, tone: Tone.warning);
+      return;
+    }
+    final ok = await showConfirmDialog(
+      context,
+      title: l.fpWalletDeleteTitle,
+      message: l.fpWalletDeleteBody(
+        preview.transactions,
+        preview.transfers,
+        preview.systemRowsDeleted,
+        preview.recurring,
+        preview.savingEntries,
+        moneyString(context, preview.savingAmount),
+      ),
+      confirmLabel: l.commonDelete,
+      destructive: true,
+    );
+    if (!ok || !mounted) return;
+    final router = GoRouter.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    setSaving(true);
+    try {
+      await cubit.deleteForever(a.id);
+      showAppSnackBarOn(messenger, l.fpWalletDeleted, tone: Tone.success);
+      router.go('/accounts');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setSaving(false);
+      showAppSnackBar(context, walletErrorMessage(l, e), tone: Tone.danger);
+    }
+  }
+
   Future<void> _adjustBalance() async {
     final l = AppLocalizations.of(context)!;
     final a = widget.account!;
@@ -1348,6 +1398,12 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                   label: l.accountDetailArchive,
                   consequence: l.fpWalletArchiveConsequence,
                   onTap: isSaving ? null : _archive,
+                ),
+                EndZoneAction(
+                  kind: EndZoneKind.delete,
+                  label: l.fpWalletDeleteLabel,
+                  consequence: l.fpWalletDeleteConsequence,
+                  onTap: isSaving ? null : _delete,
                 ),
               ],
             ),

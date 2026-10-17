@@ -756,3 +756,52 @@ class CashSplitShare extends Equatable {
   @override
   List<Object?> get props => [type, pct];
 }
+
+/// What deleting a wallet does (`delete_preview` before, `deleted` after):
+/// the confirm dialog prints these as the BE sends them.
+class AccountDeletePreview extends Equatable {
+  const AccountDeletePreview({
+    this.transactions = 0,
+    this.transfers = 0,
+    this.systemRowsDeleted = 0,
+    this.recurring = 0,
+    this.savingEntries = 0,
+    this.savingAmount = 0,
+  });
+
+  factory AccountDeletePreview.fromJson(Map<String, dynamic> json) {
+    final s = json['saving_entries'];
+    return AccountDeletePreview(
+      transactions: (json['transactions'] as num?)?.toInt() ?? 0,
+      transfers: (json['transfers'] as num?)?.toInt() ?? 0,
+      systemRowsDeleted: (json['system_rows_deleted'] as num?)?.toInt() ?? 0,
+      recurring: (json['recurring'] as num?)?.toInt() ?? 0,
+      savingEntries: s is Map ? (s['count'] as num?)?.toInt() ?? 0 : 0,
+      savingAmount: s is Map ? (s['amount'] as num?)?.toDouble() ?? 0 : 0,
+    );
+  }
+
+  /// Rows that stay in the books with no wallet.
+  final int transactions;
+  final int transfers;
+
+  /// Opening-balance / adjustment rows: deleted with the wallet.
+  final int systemRowsDeleted;
+
+  /// Recurring settings that lose the wallet (they keep running).
+  final int recurring;
+
+  /// Goal money moved through this wallet: kept, unlinked from any wallet.
+  final int savingEntries;
+  final double savingAmount;
+
+  @override
+  List<Object?> get props => [
+    transactions,
+    transfers,
+    systemRowsDeleted,
+    recurring,
+    savingEntries,
+    savingAmount,
+  ];
+}

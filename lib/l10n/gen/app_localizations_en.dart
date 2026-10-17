@@ -6246,6 +6246,31 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get fpWalletDeleteLabel => 'Delete this wallet';
+
+  @override
+  String get fpWalletDeleteConsequence =>
+      'See what is attached first · saved money stays, just unlinked from the wallet';
+
+  @override
+  String get fpWalletDeleteTitle => 'Delete this wallet?';
+
+  @override
+  String fpWalletDeleteBody(
+    int transactions,
+    int transfers,
+    int system,
+    int recurring,
+    int savings,
+    String amount,
+  ) {
+    return '$transactions transactions stay with no wallet ($transfers transfers) · $system opening / adjustment rows are deleted · $recurring recurring settings keep running · $savings saving entries ($amount) stay, unlinked from the wallet';
+  }
+
+  @override
+  String get fpWalletDeleted => 'Wallet deleted';
+
+  @override
   String get fpContactsNotLinked => 'Not linked to an app user';
 
   @override
