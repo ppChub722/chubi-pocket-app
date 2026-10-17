@@ -115,13 +115,17 @@ void main() {
     expect(ConnectionScope.isOffline(pageContext), isFalse);
   });
 
-  testWidgets('offline: banner on top, its inset removed from the page', (
+  testWidgets('offline: the banner floats over the page, which stays put', (
     t,
   ) async {
     await pump(t);
+    final rowTop = t.getTopLeft(find.text('row')).dy;
     await emit(t, _offline);
     expect(find.text(offlineText), findsOneWidget);
-    expect(pageTop(), 0);
+    // Owner 2026-10-17: the banner floats — the page keeps its inset and
+    // its place (nothing pushed down, no strip behind the banner).
+    expect(pageTop(), 24);
+    expect(t.getTopLeft(find.text('row')).dy, rowTop);
     expect(ConnectionScope.isOffline(pageContext), isTrue);
     // A running app never swaps to a full-screen error: the page stays.
     expect(find.text('row'), findsOneWidget);

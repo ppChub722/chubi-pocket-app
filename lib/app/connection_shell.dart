@@ -11,10 +11,9 @@ import '../ui/ui.dart';
 ///
 /// - [ConnectionScope] from [ConnectionCubit], so the kit disables submits,
 ///   errors no-data pages at once and reloads pages when the server is back;
-/// - the [OfflineBanner] on top (offline + Retry, then a short "connected
-///   again"), with the [UpdateBanner] under it;
-/// - while the banner shows it holds the status-bar inset, so the page below
-///   gets its top padding removed (no double gap).
+/// - the [OfflineBanner] floating on top of the page (offline + Retry, then a
+///   short "connected again"): no strip behind it, the page keeps its place
+///   and its own top inset; the [UpdateBanner] sits above the page.
 ///
 /// Cold start (auth still resolving, the splash on screen) has no banner: the
 /// splash's own full-screen error + retry says it, and it retries by itself
@@ -31,24 +30,28 @@ class ConnectionShell extends StatelessWidget {
     );
     return BlocBuilder<ConnectionCubit, ServerConnectionState>(
       builder: (context, conn) {
-        final banner = !coldStart && OfflineBanner.visible(conn);
         return ConnectionScope(
           offline: conn.isOffline,
           reconnects: conn.reconnects,
-          child: Column(
+          // The offline banner FLOATS over the page (owner 2026-10-17): no
+          // strip behind it and the page never moves down.
+          child: Stack(
             children: [
+              Column(
+                children: [
+                  const UpdateBanner(),
+                  Expanded(child: child),
+                ],
+              ),
               // Always in the tree (a child appearing above would remount
               // every page below); it just reads as online on cold start.
-              OfflineBanner(
-                state: coldStart ? const ServerConnectionState() : conn,
-                onRetry: context.read<ConnectionCubit>().retryNow,
-              ),
-              const UpdateBanner(),
-              Expanded(
-                child: MediaQuery.removePadding(
-                  context: context,
-                  removeTop: banner,
-                  child: child,
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: OfflineBanner(
+                  state: coldStart ? const ServerConnectionState() : conn,
+                  onRetry: context.read<ConnectionCubit>().retryNow,
                 ),
               ),
             ],
