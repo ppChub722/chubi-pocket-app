@@ -340,6 +340,7 @@ class BudgetDetail extends Equatable {
     this.byCategory = const [],
     this.periods = const BudgetPeriodPage(),
     this.items = const BudgetItemPage(),
+    this.deletePreview,
   });
 
   final Budget budget;
@@ -350,6 +351,9 @@ class BudgetDetail extends Equatable {
   /// The 6 newest periods (recurring); `hasMore` → `listBudgetPeriods`.
   final BudgetPeriodPage periods;
   final BudgetItemPage items;
+
+  /// Only with include=delete_preview, else null.
+  final BudgetDeletePreview? deletePreview;
 
   BudgetDetail copyWith({
     Budget? budget,
@@ -390,6 +394,11 @@ class BudgetDetail extends Equatable {
       json['periods'] as Map<String, dynamic>?,
     ),
     items: BudgetItemPage.fromJson(json['items'] as Map<String, dynamic>?),
+    deletePreview: json['delete_preview'] is Map<String, dynamic>
+        ? BudgetDeletePreview.fromJson(
+            json['delete_preview'] as Map<String, dynamic>,
+          )
+        : null,
   );
 
   @override
@@ -400,7 +409,34 @@ class BudgetDetail extends Equatable {
     byCategory,
     periods,
     items,
+    deletePreview,
   ];
+}
+
+/// `delete_preview` of GET /budgets/:id — what a delete removes (transactions
+/// are never touched). Printed as sent.
+class BudgetDeletePreview extends Equatable {
+  const BudgetDeletePreview({
+    required this.periods,
+    required this.overriddenPeriods,
+    required this.categories,
+    required this.wallets,
+  });
+  final int periods;
+  final int overriddenPeriods;
+  final int categories;
+  final int wallets;
+
+  factory BudgetDeletePreview.fromJson(Map<String, dynamic> json) =>
+      BudgetDeletePreview(
+        periods: (json['periods'] as num?)?.toInt() ?? 0,
+        overriddenPeriods: (json['overridden_periods'] as num?)?.toInt() ?? 0,
+        categories: (json['categories'] as num?)?.toInt() ?? 0,
+        wallets: (json['wallets'] as num?)?.toInt() ?? 0,
+      );
+
+  @override
+  List<Object?> get props => [periods, overriddenPeriods, categories, wallets];
 }
 
 /// The body of `createBudget` / `updateBudget` (setup, "ตั้งค่า").

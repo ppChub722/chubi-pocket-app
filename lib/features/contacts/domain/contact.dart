@@ -154,12 +154,36 @@ class UnlinkedName extends Equatable {
 
 /// `ContactDetail` — a [Contact] plus the unlinked split names
 /// (`?include=unlinked_names`).
+/// `delete_preview` of GET /contacts/:id — what a delete touches (records keep
+/// the name as text). The FE prints it; no client counting.
+class ContactDeletePreview extends Equatable {
+  const ContactDeletePreview({
+    required this.debtRecords,
+    required this.eventMembers,
+    required this.linked,
+  });
+  final int debtRecords;
+  final int eventMembers;
+  final bool linked;
+
+  factory ContactDeletePreview.fromJson(Map<String, dynamic> json) =>
+      ContactDeletePreview(
+        debtRecords: (json['debt_records'] as num?)?.toInt() ?? 0,
+        eventMembers: (json['event_members'] as num?)?.toInt() ?? 0,
+        linked: json['linked'] as bool? ?? false,
+      );
+
+  @override
+  List<Object?> get props => [debtRecords, eventMembers, linked];
+}
+
 class ContactDetail extends Equatable {
   const ContactDetail({
     required this.contact,
     this.unlinkedNames = const [],
     this.unlinkedNameCount = 0,
     this.unlinkedRecordCount = 0,
+    this.deletePreview,
   });
 
   final Contact contact;
@@ -170,12 +194,20 @@ class ContactDetail extends Equatable {
   final int unlinkedNameCount;
   final int unlinkedRecordCount;
 
+  /// Only with include=delete_preview, else null.
+  final ContactDeletePreview? deletePreview;
+
   factory ContactDetail.fromJson(Map<String, dynamic> json) => ContactDetail(
     contact: Contact.fromJson(json),
     unlinkedNameCount:
         ((json['unlinked_total'] as Map?)?['names'] as num?)?.toInt() ?? 0,
     unlinkedRecordCount:
         ((json['unlinked_total'] as Map?)?['records'] as num?)?.toInt() ?? 0,
+    deletePreview: json['delete_preview'] is Map<String, dynamic>
+        ? ContactDeletePreview.fromJson(
+            json['delete_preview'] as Map<String, dynamic>,
+          )
+        : null,
     unlinkedNames: ((json['unlinked_names'] as List?) ?? const [])
         .cast<Map<String, dynamic>>()
         .map(UnlinkedName.fromJson)
@@ -188,6 +220,7 @@ class ContactDetail extends Equatable {
     unlinkedNames,
     unlinkedNameCount,
     unlinkedRecordCount,
+    deletePreview,
   ];
 }
 

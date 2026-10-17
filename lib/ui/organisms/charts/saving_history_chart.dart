@@ -96,6 +96,8 @@ class SavingHistoryChart extends StatelessWidget {
     this.caption,
     this.actualLegend,
     this.neededLegend,
+    this.plan = const [],
+    this.planLegend,
     this.height = 135,
     super.key,
   }) : _skeleton = false;
@@ -112,6 +114,8 @@ class SavingHistoryChart extends StatelessWidget {
       caption = null,
       actualLegend = null,
       neededLegend = null,
+      plan = const [],
+      planLegend = null,
       _skeleton = true;
 
   final List<double> actual;
@@ -127,6 +131,11 @@ class SavingHistoryChart extends StatelessWidget {
   final String? caption;
   final String? actualLegend;
   final String? neededLegend;
+
+  /// The cumulative plan line, one per slot of [actual] (null = no plan that
+  /// month). Drawn dashed in the muted colour; nothing when all are null.
+  final List<double?> plan;
+  final String? planLegend;
   final double height;
   final bool _skeleton;
 
@@ -171,6 +180,8 @@ class SavingHistoryChart extends StatelessWidget {
               projection: projection,
               target: target,
               showNeeded: showNeeded,
+              plan: plan,
+              planColor: scheme.onSurfaceVariant,
               labels: monthLabels,
               targetLabel: targetLabel,
               seriesColor: series,
@@ -181,7 +192,9 @@ class SavingHistoryChart extends StatelessWidget {
             ),
           ),
         ),
-        if (actualLegend != null || neededLegend != null) ...[
+        if (actualLegend != null ||
+            neededLegend != null ||
+            (planLegend != null && plan.any((v) => v != null))) ...[
           const SizedBox(height: AppSpacing.xs),
           Wrap(
             spacing: AppSpacing.md,
@@ -189,6 +202,8 @@ class SavingHistoryChart extends StatelessWidget {
             children: [
               if (actualLegend != null) legend(series, actualLegend!),
               if (neededLegend != null) legend(needed, neededLegend!),
+              if (planLegend != null && plan.any((v) => v != null))
+                legend(scheme.onSurfaceVariant, planLegend!),
             ],
           ),
         ],
@@ -203,6 +218,8 @@ class _SavingPainter extends CustomPainter {
     required this.projection,
     required this.target,
     required this.showNeeded,
+    required this.plan,
+    required this.planColor,
     required this.labels,
     required this.targetLabel,
     required this.seriesColor,
@@ -216,6 +233,8 @@ class _SavingPainter extends CustomPainter {
   final List<double> projection;
   final double target;
   final bool showNeeded;
+  final List<double?> plan;
+  final Color planColor;
   final List<String> labels;
   final String? targetLabel;
   final Color seriesColor;
@@ -287,6 +306,32 @@ class _SavingPainter extends CustomPainter {
         );
       }
     }
+
+    // Plan (dashed, muted): runs of consecutive non-null points.
+    var run = <Offset>[];
+    void flushPlan() {
+      if (run.length > 1) {
+        _dashed(
+          canvas,
+          Path()..addPolygon(run, false),
+          line
+            ..color = planColor
+            ..strokeWidth = 1.5,
+          3,
+          3,
+        );
+      }
+      run = <Offset>[];
+    }
+
+    for (final (i, v) in plan.indexed) {
+      if (v == null) {
+        flushPlan();
+      } else {
+        run.add(g.point(i, v));
+      }
+    }
+    flushPlan();
 
     // Actual (solid).
     final pts = [for (final (i, v) in actual.indexed) g.point(i, v)];
@@ -362,6 +407,7 @@ class _SavingPainter extends CustomPainter {
       o.projection != projection ||
       o.target != target ||
       o.showNeeded != showNeeded ||
+      o.plan != plan ||
       o.labels != labels ||
       o.seriesColor != seriesColor ||
       o.targetColor != targetColor;

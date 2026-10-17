@@ -292,10 +292,34 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
 
   Future<void> _delete() async {
     final l = AppLocalizations.of(context)!;
+    // ONE call on this button: the goal page with the delete preview.
+    setSaving(true);
+    final SavingDeletePreview? preview;
+    try {
+      preview = (await context.read<SavingGoalsRepository>().detail(
+        _cubit!.id,
+        deletePreview: true,
+      )).deletePreview;
+    } on ApiException catch (e) {
+      if (mounted) {
+        setSaving(false);
+        _snack(e.message, tone: Tone.danger);
+      }
+      return;
+    }
+    if (!mounted) return;
+    setSaving(false);
+    // A goal holding money cannot be deleted: say so, no confirm.
+    if (preview != null && !preview.canDelete) {
+      _snack(l.fpGoalsArchiveNeedsClose, tone: Tone.warning);
+      return;
+    }
     final ok = await showConfirmDialog(
       context,
       title: l.savingGoalDeleteConfirmTitle,
-      message: l.fpGoalsDeleteConfirmBody,
+      message: preview == null
+          ? l.fpGoalsDeleteConfirmBody
+          : l.fpM5GoalDeleteBody(preview.entries),
       confirmLabel: l.savingGoalDeleteConfirmAction,
       destructive: true,
     );
@@ -450,15 +474,14 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   /// The row standing for money saved with no wallet (it has no id).
   static const _noWalletId = '';
 
-  /// The split to send, only when every part is a real wallet: a move that
-  /// touches no-wallet money leaves the split to the BE (it auto-splits).
-  List<SavingSplit>? _splitsOf(List<SavingMoveSplit> parts) =>
-      parts.any((p) => p.walletId == _noWalletId)
-      ? null
-      : [
-          for (final p in parts)
-            SavingSplit(walletId: p.walletId, amount: p.amount),
-        ];
+  /// The split to send: the wallet-less part goes as `wallet_id: null`.
+  List<SavingSplit> _splitsOf(List<SavingMoveSplit> parts) => [
+    for (final p in parts)
+      SavingSplit(
+        walletId: p.walletId == _noWalletId ? null : p.walletId,
+        amount: p.amount,
+      ),
+  ];
 
   /// Largest-first split of [amount] over the wallets that hold the money
   /// (instant feedback while typing; the BE recomputes when no split is sent).
@@ -1002,6 +1025,8 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
                 moneyString(context, g.targetAmount, symbol: symbol),
               ),
         actualLegend: l.fpGoalsChartActual,
+        plan: [for (final p in d.history) p.plan],
+        planLegend: l.fpM5GoalsChartPlan,
       ),
     );
   }

@@ -46,10 +46,17 @@ class BudgetsRepository {
   });
 
   /// `getBudget`: the whole page at [periodId] (default the current period).
-  Future<BudgetDetail> get(String id, {String? periodId}) => _call((dio) async {
+  Future<BudgetDetail> get(
+    String id, {
+    String? periodId,
+    bool deletePreview = false,
+  }) => _call((dio) async {
     final res = await dio.get<Map<String, dynamic>>(
       '/budgets/$id',
-      queryParameters: {'period_id': ?periodId},
+      queryParameters: {
+        'period_id': ?periodId,
+        if (deletePreview) 'include': 'delete_preview',
+      },
     );
     return BudgetDetail.fromJson(res.data!);
   });

@@ -509,10 +509,30 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
 
   Future<void> _delete(Budget b) async {
     final l = AppLocalizations.of(context)!;
+    // ONE call on this button: the budget with the delete preview.
+    setSaving(true);
+    final BudgetDeletePreview? preview;
+    try {
+      preview = (await _repo.get(b.id, deletePreview: true)).deletePreview;
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setSaving(false);
+      showAppSnackBarOn(pageMessenger!, e.message, tone: Tone.danger);
+      return;
+    }
+    if (!mounted) return;
+    setSaving(false);
     final ok = await showConfirmDialog(
       context,
       title: l.budgetDeleteConfirmTitle,
-      message: l.budgetDeleteConfirmBody,
+      message: preview == null
+          ? l.budgetDeleteConfirmBody
+          : l.fpM5BudgetDeleteBody(
+              preview.periods,
+              preview.overriddenPeriods,
+              preview.categories,
+              preview.wallets,
+            ),
       confirmLabel: l.budgetDeleteConfirmAction,
       destructive: true,
     );

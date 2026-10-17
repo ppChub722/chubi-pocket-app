@@ -13,6 +13,8 @@ class SavingSummary extends Equatable {
     this.currency = '',
     this.savedTotal = 0,
     this.monthShortTotal = 0,
+    this.monthPlanTotal = 0,
+    this.monthSavedTotal = 0,
     this.unallocated = 0,
   });
 
@@ -27,6 +29,11 @@ class SavingSummary extends Equatable {
   /// Σ the active goals' month_short.
   final double monthShortTotal;
 
+  /// Σ the listed goals' month_plan (the card bar's whole) and what is
+  /// already saved toward it this month.
+  final double monthPlanTotal;
+  final double monthSavedTotal;
+
   /// The spare bucket ("ยังไม่จัดสรร").
   final double unallocated;
 
@@ -37,6 +44,8 @@ class SavingSummary extends Equatable {
     currency: json['currency'] as String? ?? '',
     savedTotal: (json['saved_total'] as num?)?.toDouble() ?? 0,
     monthShortTotal: (json['month_short_total'] as num?)?.toDouble() ?? 0,
+    monthPlanTotal: (json['month_plan_total'] as num?)?.toDouble() ?? 0,
+    monthSavedTotal: (json['month_saved_total'] as num?)?.toDouble() ?? 0,
     unallocated: (json['unallocated'] as num?)?.toDouble() ?? 0,
   );
 
@@ -48,6 +57,8 @@ class SavingSummary extends Equatable {
     currency,
     savedTotal,
     monthShortTotal,
+    monthPlanTotal,
+    monthSavedTotal,
     unallocated,
   ];
 }
@@ -103,19 +114,50 @@ class SavingGoalsOverview extends Equatable {
 
 /// One point of the history chart: the balance at the end of a month.
 class SavingHistoryPoint extends Equatable {
-  const SavingHistoryPoint({required this.month, required this.cumulative});
+  const SavingHistoryPoint({
+    required this.month,
+    required this.cumulative,
+    this.plan,
+  });
 
   final String month; // YYYY-MM
   final double cumulative;
+
+  /// The cumulative plan line (null without a plan; always null on the spare).
+  final double? plan;
 
   factory SavingHistoryPoint.fromJson(Map<String, dynamic> json) =>
       SavingHistoryPoint(
         month: json['month'] as String,
         cumulative: (json['cumulative'] as num).toDouble(),
+        plan: (json['plan'] as num?)?.toDouble(),
       );
 
   @override
-  List<Object?> get props => [month, cumulative];
+  List<Object?> get props => [month, cumulative, plan];
+}
+
+/// `delete_preview` of GET /saving-goals/:id: a goal is deletable only while
+/// it holds no money ([canDelete], the BE's word).
+class SavingDeletePreview extends Equatable {
+  const SavingDeletePreview({
+    required this.entries,
+    required this.savedAmount,
+    required this.canDelete,
+  });
+  final int entries;
+  final double savedAmount;
+  final bool canDelete;
+
+  factory SavingDeletePreview.fromJson(Map<String, dynamic> json) =>
+      SavingDeletePreview(
+        entries: (json['entries'] as num?)?.toInt() ?? 0,
+        savedAmount: (json['saved_amount'] as num?)?.toDouble() ?? 0,
+        canDelete: json['can_delete'] as bool? ?? false,
+      );
+
+  @override
+  List<Object?> get props => [entries, savedAmount, canDelete];
 }
 
 /// A goal page, or the spare bucket's page (`GET /saving-goals/spare`): then
@@ -128,6 +170,7 @@ class SavingGoalDetail extends Equatable {
     this.history = const [],
     this.spareAutoSave,
     this.entries = const SavingEntryPage(),
+    this.deletePreview,
   });
 
   final SavingGoal? goal;
@@ -138,6 +181,9 @@ class SavingGoalDetail extends Equatable {
   /// The spare page's auto-saving (a goal page carries it on the goal).
   final SavingAutoSave? spareAutoSave;
   final SavingEntryPage entries;
+
+  /// Only with include=delete_preview, else null.
+  final SavingDeletePreview? deletePreview;
 
   bool get isSpare => goal == null;
 
@@ -174,6 +220,11 @@ class SavingGoalDetail extends Equatable {
               (json['entries'] as Map).cast<String, dynamic>(),
             )
           : const SavingEntryPage(),
+      deletePreview: json['delete_preview'] is Map
+          ? SavingDeletePreview.fromJson(
+              (json['delete_preview'] as Map).cast<String, dynamic>(),
+            )
+          : null,
     );
   }
 
@@ -194,6 +245,7 @@ class SavingGoalDetail extends Equatable {
     history,
     spareAutoSave,
     entries,
+    deletePreview,
   ];
 }
 

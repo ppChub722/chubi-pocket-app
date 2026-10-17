@@ -257,10 +257,36 @@ class _ContactDetailPageState extends State<ContactDetailPage>
   Future<void> _delete() async {
     final l = AppLocalizations.of(context)!;
     final c = _contact!;
+    // ONE call on this button: the contact with the delete preview.
+    setSaving(true);
+    final ContactDeletePreview? preview;
+    try {
+      preview = (await context.read<ContactsRepository>().get(
+        c.id,
+        deletePreview: true,
+      )).deletePreview;
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setSaving(false);
+      showSaveFailure(context, e, retry: _delete);
+      return;
+    }
+    if (!mounted) return;
+    setSaving(false);
+    // What the BE says is touched, printed as sent.
+    final parts = preview == null
+        ? const <String>[]
+        : [
+            if (preview.debtRecords > 0)
+              l.fpM5ContactDeleteDebts(preview.debtRecords),
+            if (preview.eventMembers > 0)
+              l.fpM5ContactDeleteMembers(preview.eventMembers),
+            if (preview.linked) l.fpM5ContactDeleteLinked,
+          ];
     final ok = await showConfirmDialog(
       context,
       title: l.contactDeleteTitle(c.name),
-      message: l.contactDeleteBody,
+      message: parts.isEmpty ? l.contactDeleteBody : parts.join(' · '),
       confirmLabel: l.commonDelete,
       destructive: true,
     );
