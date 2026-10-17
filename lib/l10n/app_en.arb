@@ -2161,5 +2161,10 @@
   "bgStatusFieldLabel": "Status",
   "bgRowLeft": "Left",
   "bgRowOverAmount": "Over",
-  "bgRowOneOff": "One-off"
+  "bgRowOneOff": "One-off",
+  "categoryDeleteConsequence": "Deleted for good · its transactions will have no category",
+  "categoryMonthSpentLabel": "{month} spent · {count} transactions ›",
+  "@categoryMonthSpentLabel": { "placeholders": { "month": { "type": "String" }, "count": { "type": "int" } } },
+  "categoryMonthEarnedLabel": "{month} received · {count} transactions ›",
+  "@categoryMonthEarnedLabel": { "placeholders": { "month": { "type": "String" }, "count": { "type": "int" } } }
 }

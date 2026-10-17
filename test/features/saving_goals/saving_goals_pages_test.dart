@@ -166,7 +166,9 @@ void main() {
       expect(t.getTopLeft(card).dy, lessThan(t.getTopLeft(toolbar).dy));
       // The toolbar is hidden until the card's search button is tapped.
       expect(find.byType(TextField), findsNothing);
-      await t.tap(find.descendant(of: card, matching: find.byIcon(AppIcons.search)));
+      await t.tap(
+        find.descendant(of: card, matching: find.byIcon(AppIcons.search)),
+      );
       await t.pumpAndSettle();
       // Search field is there; the FIRST row is "not allocated", then the goal.
       expect(find.text('Search goals'), findsWidgets);

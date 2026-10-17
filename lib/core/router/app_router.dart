@@ -13,6 +13,7 @@ import '../../app/shell/tab_nav.dart';
 import '../../hub/hub_index_screen.dart';
 import '../../hub/hub_page_frame.dart';
 import '../../hub/hub_registry.dart';
+import '../../ui/organisms/page_pop_observer.dart';
 import '../../app/shell/fade_branch_container.dart';
 import '../../features/app_version/presentation/cubit/app_version_cubit.dart';
 import '../../features/app_version/presentation/pages/update_required_page.dart';
@@ -86,6 +87,7 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
   return GoRouter(
     initialLocation: '/',
     debugLogDiagnostics: kDebugMode,
+    observers: [PagePopObserver()],
     refreshListenable: Listenable.merge([
       _StreamToListenable(authCubit.stream),
       if (versionCubit != null) _StreamToListenable(versionCubit.stream),
@@ -156,7 +158,7 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
             StatefulShellBranch(
               routes: _tabRoutes(tab),
               // The + colour follows pushes / pops in every tab.
-              observers: [QuickCreateRouteObserver()],
+              observers: [QuickCreateRouteObserver(), PagePopObserver()],
             ),
         ],
       ),

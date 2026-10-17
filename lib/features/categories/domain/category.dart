@@ -21,6 +21,8 @@ class Category extends Equatable {
     this.path = const [],
     this.createdAt,
     this.updatedAt,
+    this.monthSpent = 0,
+    this.monthCount = 0,
   });
 
   final String id;
@@ -50,6 +52,11 @@ class Category extends Equatable {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+  /// This month's total (sub-categories included, the user's share) and its
+  /// transaction count; 0 when the server omits them (write answers carry 0).
+  final num monthSpent;
+  final int monthCount;
+
   factory Category.fromJson(Map<String, dynamic> json) {
     return Category(
       id: json['id'] as String,
@@ -73,6 +80,8 @@ class Category extends Equatable {
       ],
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
       updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? ''),
+      monthSpent: (json['month_spent'] as num?) ?? 0,
+      monthCount: (json['month_count'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -119,6 +128,8 @@ class Category extends Equatable {
     List<CategoryPathItem>? path,
     DateTime? createdAt,
     DateTime? updatedAt,
+    num? monthSpent,
+    int? monthCount,
   }) {
     return Category(
       id: id ?? this.id,
@@ -137,6 +148,8 @@ class Category extends Equatable {
       path: path ?? this.path,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      monthSpent: monthSpent ?? this.monthSpent,
+      monthCount: monthCount ?? this.monthCount,
     );
   }
 
@@ -158,6 +171,8 @@ class Category extends Equatable {
     path,
     createdAt,
     updatedAt,
+    monthSpent,
+    monthCount,
   ];
 }
 
@@ -196,6 +211,8 @@ class CategoryDetail extends Category {
     super.path,
     super.createdAt,
     super.updatedAt,
+    super.monthSpent,
+    super.monthCount,
     this.parentName,
     this.childCount = 0,
     this.transactionCount = 0,
@@ -241,6 +258,8 @@ class CategoryDetail extends Category {
     path: c.path,
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
+    monthSpent: c.monthSpent,
+    monthCount: c.monthCount,
     parentName: parentName,
     childCount: childCount,
     transactionCount: transactionCount,

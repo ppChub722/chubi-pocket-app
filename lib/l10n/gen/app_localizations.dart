@@ -10542,6 +10542,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'One-off'**
   String get bgRowOneOff;
+
+  /// No description provided for @categoryDeleteConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted for good · its transactions will have no category'**
+  String get categoryDeleteConsequence;
+
+  /// No description provided for @categoryMonthSpentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{month} spent · {count} transactions ›'**
+  String categoryMonthSpentLabel(String month, int count);
+
+  /// No description provided for @categoryMonthEarnedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{month} received · {count} transactions ›'**
+  String categoryMonthEarnedLabel(String month, int count);
 }
 
 class _AppLocalizationsDelegate

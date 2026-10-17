@@ -594,6 +594,7 @@ final List<HubPage> hubPages = [
     covers: [
       'AsyncStateView',
       'PullToRefresh',
+      'PagePopObserver',
       'CoinDropIndicator',
       'SavingOverlay',
     ],

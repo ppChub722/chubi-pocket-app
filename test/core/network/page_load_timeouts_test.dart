@@ -46,6 +46,7 @@ void main() {
       dio: Dio()..httpClientAdapter = adapter,
       baseUrl: 'http://test',
       appBuild: () async => '1',
+      timezone: () async => 'Asia/Bangkok',
     );
   });
 
@@ -54,6 +55,11 @@ void main() {
     final o = adapter.seen.single;
     expect(o.connectTimeout, ApiClient.pageLoadConnectTimeout);
     expect(o.receiveTimeout, ApiClient.pageLoadReceiveTimeout);
+  });
+
+  test('every request carries X-Timezone (the device IANA name)', () async {
+    await client.dio.get<dynamic>('/categories');
+    expect(adapter.seen.single.headers['X-Timezone'], 'Asia/Bangkok');
   });
 
   test('POST keeps the 10 s connect / 15 s receive defaults', () async {

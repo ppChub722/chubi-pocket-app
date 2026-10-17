@@ -126,6 +126,7 @@ export 'molecules/progress_row.dart';
 export 'organisms/saving_overlay.dart';
 export 'molecules/loading_view.dart';
 export 'organisms/pull_to_refresh.dart';
+export 'organisms/page_pop_observer.dart';
 export 'atoms/skeletons.dart';
 export 'atoms/connection_scope.dart';
 

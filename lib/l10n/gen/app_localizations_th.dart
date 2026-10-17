@@ -6032,4 +6032,17 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get bgRowOneOff => 'ครั้งเดียว';
+
+  @override
+  String get categoryDeleteConsequence => 'ลบถาวร · รายการในหมวดนี้จะไม่มีหมวด';
+
+  @override
+  String categoryMonthSpentLabel(String month, int count) {
+    return '$month ใช้ไป · $count รายการ ›';
+  }
+
+  @override
+  String categoryMonthEarnedLabel(String month, int count) {
+    return '$month ได้รับ · $count รายการ ›';
+  }
 }

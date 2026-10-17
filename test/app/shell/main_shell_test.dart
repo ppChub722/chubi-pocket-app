@@ -450,26 +450,29 @@ void main() {
     expect(find.text('tab a').hitTestable(), findsOneWidget);
   });
 
-  testWidgets('swipe only on the bottom / top tab roots, never on a เพิ่มเติม card page', (t) async {
-    // The nav ends at เพิ่มเติม.
-    await pump(t, at: '/d');
-    await swipe(t, find.text('tab d').hitTestable(), -300);
-    expect(find.text('tab d').hitTestable(), findsOneWidget);
-    // The top bar's row: ⏳ ↔ 🔔 ↔ 👤.
-    await pump(t, at: '/notifications');
-    await swipe(t, find.text('tab notifications').hitTestable(), -300);
-    expect(find.text('tab settings').hitTestable(), findsOneWidget);
-    await swipe(t, find.text('tab settings').hitTestable(), -300);
-    expect(find.text('tab settings').hitTestable(), findsOneWidget);
-    // Owner 2026-10-17: the เพิ่มเติม cards' pages have no shell swipe.
-    await pump(t, at: '/projects');
-    await swipe(t, find.text('tab projects').hitTestable(), 300);
-    expect(find.text('tab projects').hitTestable(), findsOneWidget);
-    // (nor the last card of a section)
-    await pump(t, at: '/recurring');
-    await swipe(t, find.text('tab recurring').hitTestable(), 300);
-    expect(find.text('tab recurring').hitTestable(), findsOneWidget);
-  });
+  testWidgets(
+    'swipe only on the bottom / top tab roots, never on a เพิ่มเติม card page',
+    (t) async {
+      // The nav ends at เพิ่มเติม.
+      await pump(t, at: '/d');
+      await swipe(t, find.text('tab d').hitTestable(), -300);
+      expect(find.text('tab d').hitTestable(), findsOneWidget);
+      // The top bar's row: ⏳ ↔ 🔔 ↔ 👤.
+      await pump(t, at: '/notifications');
+      await swipe(t, find.text('tab notifications').hitTestable(), -300);
+      expect(find.text('tab settings').hitTestable(), findsOneWidget);
+      await swipe(t, find.text('tab settings').hitTestable(), -300);
+      expect(find.text('tab settings').hitTestable(), findsOneWidget);
+      // Owner 2026-10-17: the เพิ่มเติม cards' pages have no shell swipe.
+      await pump(t, at: '/projects');
+      await swipe(t, find.text('tab projects').hitTestable(), 300);
+      expect(find.text('tab projects').hitTestable(), findsOneWidget);
+      // (nor the last card of a section)
+      await pump(t, at: '/recurring');
+      await swipe(t, find.text('tab recurring').hitTestable(), 300);
+      expect(find.text('tab recurring').hitTestable(), findsOneWidget);
+    },
+  );
   testWidgets('another tab\'s page opens in its own tab; back returns', (
     t,
   ) async {

@@ -6177,4 +6177,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bgRowOneOff => 'One-off';
+
+  @override
+  String get categoryDeleteConsequence =>
+      'Deleted for good · its transactions will have no category';
+
+  @override
+  String categoryMonthSpentLabel(String month, int count) {
+    return '$month spent · $count transactions ›';
+  }
+
+  @override
+  String categoryMonthEarnedLabel(String month, int count) {
+    return '$month received · $count transactions ›';
+  }
 }

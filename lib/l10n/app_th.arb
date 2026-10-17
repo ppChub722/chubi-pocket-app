@@ -1920,5 +1920,8 @@
   "bgStatusFieldLabel": "สถานะ",
   "bgRowLeft": "เหลือ",
   "bgRowOverAmount": "เกิน",
-  "bgRowOneOff": "ครั้งเดียว"
+  "bgRowOneOff": "ครั้งเดียว",
+  "categoryDeleteConsequence": "ลบถาวร · รายการในหมวดนี้จะไม่มีหมวด",
+  "categoryMonthSpentLabel": "{month} ใช้ไป · {count} รายการ ›",
+  "categoryMonthEarnedLabel": "{month} ได้รับ · {count} รายการ ›"
 }

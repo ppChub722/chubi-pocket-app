@@ -272,8 +272,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
                   SheetOption(value: f, label: _statusLabel(l, f)),
               ],
               builder: (context, toggle) => AppChip(
-                label:
-                    '${l.recurringStatusLabel}: ${_statusLabel(l, _filter)}',
+                label: '${l.recurringStatusLabel}: ${_statusLabel(l, _filter)}',
                 selected: _filter != RecurringFilter.current,
                 trailing: AppChipTrailing.dropdown,
                 onTap: toggle,
