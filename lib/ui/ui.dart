@@ -28,6 +28,7 @@ export 'organisms/description_picker_sheet.dart';
 export 'organisms/collapsible_section.dart';
 export 'organisms/list_summary_card.dart';
 export 'molecules/page_dots.dart';
+export 'molecules/daily_bars.dart';
 export 'atoms/app_avatar_button.dart';
 export 'atoms/bulk_delete_button.dart';
 

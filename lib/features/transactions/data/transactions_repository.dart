@@ -31,6 +31,26 @@ class TransactionsPage {
   bool get hasMore => page < totalPages;
 }
 
+/// One day of a list response's `daily` (the card's bars): the day's income
+/// and expense (transfers left out), `date` as `YYYY-MM-DD`.
+class DailyFlow {
+  const DailyFlow({
+    required this.date,
+    required this.income,
+    required this.expense,
+  });
+
+  factory DailyFlow.fromJson(Map<String, dynamic> json) => DailyFlow(
+    date: json['date'] as String,
+    income: (json['income'] as num?)?.toDouble() ?? 0,
+    expense: (json['expense'] as num?)?.toDouble() ?? 0,
+  );
+
+  final String date;
+  final double income;
+  final double expense;
+}
+
 /// `totals` of a list response: what the rows matching the filters add up
 /// to, transfers left out of both sides.
 class ListTotals {
@@ -39,7 +59,27 @@ class ListTotals {
     required this.expense,
     required this.net,
     this.count = 0,
+    this.avgDailySpend,
+    this.daily = const [],
   });
+
+  /// The whole list response: its `totals` plus the top-level
+  /// `avg_daily_spend` and `daily` (the card's bars).
+  static ListTotals? fromResponse(Map<String, dynamic> res) {
+    final base = fromJson(res['totals']);
+    if (base == null) return null;
+    return ListTotals(
+      income: base.income,
+      expense: base.expense,
+      net: base.net,
+      count: base.count,
+      avgDailySpend: (res['avg_daily_spend'] as num?)?.toDouble(),
+      daily: [
+        for (final d in (res['daily'] as List? ?? const []))
+          DailyFlow.fromJson((d as Map).cast<String, dynamic>()),
+      ],
+    );
+  }
 
   static ListTotals? fromJson(Object? json) {
     if (json is! Map) return null;
@@ -58,6 +98,12 @@ class ListTotals {
   final double expense;
   final double net;
   final int count;
+
+  /// Average daily spend over the range (BE; null when not sent).
+  final double? avgDailySpend;
+
+  /// One entry per day of the range, in date order (BE).
+  final List<DailyFlow> daily;
 }
 
 /// `/v1/transactions/*` endpoints.
@@ -110,7 +156,7 @@ class TransactionsRepository {
         perPage: pag['per_page'] as int,
         total: pag['total'] as int,
         totalPages: pag['total_pages'] as int,
-        totals: ListTotals.fromJson(res.data!['totals']),
+        totals: ListTotals.fromResponse(res.data!),
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);

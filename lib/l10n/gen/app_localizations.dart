@@ -10680,6 +10680,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Member'**
   String get fpWalletMemberCaption;
+
+  /// No description provided for @fpTxNetCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get fpTxNetCaption;
+
+  /// No description provided for @fpTxAvgDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg spend {amount}/day'**
+  String fpTxAvgDaily(String amount);
 }
 
 class _AppLocalizationsDelegate

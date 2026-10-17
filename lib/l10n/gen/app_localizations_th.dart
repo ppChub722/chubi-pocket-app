@@ -6118,4 +6118,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpWalletMemberCaption => 'สมาชิก';
+
+  @override
+  String get fpTxNetCaption => 'สุทธิ';
+
+  @override
+  String fpTxAvgDaily(String amount) {
+    return 'จ่ายเฉลี่ย $amount/วัน';
+  }
 }

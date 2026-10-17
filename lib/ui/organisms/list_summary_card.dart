@@ -25,6 +25,7 @@ class SummaryTile {
     this.selected = false,
     this.onTap,
     this.caption,
+    this.captionWidget,
   });
 
   final String label;
@@ -35,6 +36,9 @@ class SummaryTile {
 
   /// A small line under the value.
   final String? caption;
+
+  /// A widget in place of the [caption] text (a month stepper + "· net").
+  final Widget? captionWidget;
 }
 
 /// A full-width primary button at the bottom of a [ListSummaryCard].
@@ -64,6 +68,7 @@ class SummaryCta {
 class ListSummaryCard extends StatelessWidget {
   const ListSummaryCard({
     this.caption,
+    this.captionWidget,
     this.actions = const [],
     this.showMoneyToggle = true,
     this.main,
@@ -72,6 +77,7 @@ class ListSummaryCard extends StatelessWidget {
     this.mainTone = MoneyTone.plain,
     this.mainSuffix,
     this.bar,
+    this.chart,
     this.alert,
     this.onAlertTap,
     this.infoLine,
@@ -88,6 +94,9 @@ class ListSummaryCard extends StatelessWidget {
   }) : assert(main == null || amount == null, 'main OR amount');
 
   final String? caption;
+
+  /// A widget in place of the [caption] text (a month stepper + "· net").
+  final Widget? captionWidget;
   final List<Widget> actions;
   final bool showMoneyToggle;
 
@@ -102,6 +111,9 @@ class ListSummaryCard extends StatelessWidget {
 
   /// The progress bar with its captions.
   final ProgressRow? bar;
+
+  /// A chart under the big number (`DailyBars`).
+  final Widget? chart;
 
   /// The amber alert line; tappable with [onAlertTap].
   final String? alert;
@@ -118,7 +130,11 @@ class ListSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    final hasTop = caption != null || actions.isNotEmpty || showMoneyToggle;
+    final hasTop =
+        caption != null ||
+        captionWidget != null ||
+        actions.isNotEmpty ||
+        showMoneyToggle;
     final big =
         main ??
         (amount == null
@@ -138,7 +154,12 @@ class ListSummaryCard extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: caption == null
+              child: captionWidget != null
+                  ? Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: captionWidget,
+                    )
+                  : caption == null
                   ? const SizedBox.shrink()
                   : Text(
                       caption!,
@@ -177,6 +198,7 @@ class ListSummaryCard extends StatelessWidget {
             ],
           ],
         ),
+      if (chart != null) ...[small, chart!],
       if (bar != null) ...[small, bar!],
       if (infoLine != null) ...[small, infoLine!],
       if (alert != null) ...[

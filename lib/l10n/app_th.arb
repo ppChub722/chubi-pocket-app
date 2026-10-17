@@ -1943,5 +1943,7 @@
   "fpWalletInviteLabel": "เชิญ",
   "fpWalletTrackOff": "ปิดอยู่",
   "fpWalletOwnerCaption": "เจ้าของ",
-  "fpWalletMemberCaption": "สมาชิก"
+  "fpWalletMemberCaption": "สมาชิก",
+  "fpTxNetCaption": "สุทธิ",
+  "fpTxAvgDaily": "จ่ายเฉลี่ย {amount}/วัน"
 }

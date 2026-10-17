@@ -70,6 +70,52 @@ class _ListSummaryCardDemoState extends State<_ListSummaryCardDemo> {
           ),
         ),
         HubDemo(
+          title:
+              'Transactions-like: month caption + net + daily bars + 2 tiles',
+          note:
+              'captionWidget (a month stepper), the big signed net, a '
+              'DailyBars chart (past tinted, today solid, future a stub; tap '
+              'a bar = that day), then the income / expense filter tiles.',
+          child: ListSummaryCard(
+            margin: _noMargin,
+            captionWidget: const Text('‹ Oct 2026 › · Net'),
+            actions: [_search()],
+            amount: 12340,
+            symbol: '฿',
+            mainTone: MoneyTone.signed,
+            chart: DailyBars(
+              startLabel: '1 Oct',
+              centerLabel: 'Avg ฿1,138 / day',
+              endLabel: '31 Oct',
+              onTap: (_) {},
+              bars: [
+                for (var i = 0; i < 31; i++)
+                  DailyBar(
+                    value: [30, 55, 20, 80, 35, 25, 60, 15][i % 8].toDouble(),
+                    kind: i < 15
+                        ? DailyBarKind.past
+                        : i == 15
+                        ? DailyBarKind.today
+                        : DailyBarKind.future,
+                  ),
+              ],
+            ),
+            tiles: [
+              for (final t in [
+                ('Income', '฿30,540', SummaryTileTone.green),
+                ('Expense', '฿18,200', SummaryTileTone.red),
+              ])
+                SummaryTile(
+                  label: t.$1,
+                  value: t.$2,
+                  tone: t.$3,
+                  selected: _filter == t.$1,
+                  onTap: () => _pick(t.$1),
+                ),
+            ],
+          ),
+        ),
+        HubDemo(
           title: 'Goals-like: bar + info line',
           child: ListSummaryCard(
             margin: _noMargin,

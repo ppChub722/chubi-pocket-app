@@ -6264,4 +6264,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpWalletMemberCaption => 'Member';
+
+  @override
+  String get fpTxNetCaption => 'Net';
+
+  @override
+  String fpTxAvgDaily(String amount) {
+    return 'Avg spend $amount/day';
+  }
 }

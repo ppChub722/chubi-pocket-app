@@ -2192,5 +2192,8 @@
   "fpWalletInviteLabel": "Invite",
   "fpWalletTrackOff": "Off",
   "fpWalletOwnerCaption": "Owner",
-  "fpWalletMemberCaption": "Member"
+  "fpWalletMemberCaption": "Member",
+  "fpTxNetCaption": "Net",
+  "fpTxAvgDaily": "Avg spend {amount}/day",
+  "@fpTxAvgDaily": { "placeholders": { "amount": { "type": "String" } } }
 }

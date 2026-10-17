@@ -102,6 +102,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
   String _q = '';
   Timer? _debounce;
   final _search = TextEditingController();
+  final _toolbarOpen = ToolbarToggleState.of('transactions');
   Map<ShellTab, ShellSwipeHandler>? _swipeHandlers;
 
   /// The transactions tab's own root — the only place the sideways swipe
@@ -316,12 +317,20 @@ class _TransactionsListPageState extends State<TransactionsListPage>
                 state.transactions.isEmpty);
         final chips = _activeChips(l, state);
         final header = <Widget>[
-          const SizedBox(height: AppSpacing.sm),
-          Center(child: _periodPill()),
-          if (state.totals case final t?) _totals(l, t),
-          // Search (the whole width) + [ตัวกรอง •n] … [⇅ ใหม่สุด ▾] as ONE
-          // block (owner 2026-10-10 / 2026-10-12).
+          // The page's card (month ‹ ›, net, daily bars, รายรับ / รายจ่าย
+          // tiles); a wallet's embedded list keeps just the pill — its in /
+          // out are the wallet card's tiles.
+          if (widget.embedded) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Center(child: _periodPill()),
+          ] else if (state.totals case final t?)
+            _summary(l, t, chips.length)
+          else
+            const SizedBox(height: AppSpacing.sm),
+          // Hidden behind the card's 🔍 (embedded: always there): search +
+          // the filter sheet chip … sort, ONE block.
           ListToolbar(
+            collapse: widget.embedded ? null : _toolbarOpen,
             searchKey: const ValueKey('tx-search'),
             searchController: _search,
             onSearchChanged: _onSearch,
@@ -430,38 +439,87 @@ class _TransactionsListPageState extends State<TransactionsListPage>
     );
   }
 
-  /// รายรับ · รายจ่าย · คงเหลือ of the whole filtered set (every page — the
-  /// server's `totals`), transfers left out.
-  Widget _totals(AppLocalizations l, ListTotals totals) => Padding(
-    padding: const EdgeInsets.fromLTRB(
-      AppSpacing.lg,
-      AppSpacing.sm,
-      AppSpacing.lg,
-      AppSpacing.xs,
-    ),
-    child: AppCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: SummaryStats(
-        stats: [
-          SummaryStat(
-            label: l.homeIncome,
-            amount: totals.income,
-            tone: MoneyTone.income,
-          ),
-          SummaryStat(
-            label: l.homeExpense,
-            amount: -totals.expense,
-            tone: MoneyTone.expense,
-          ),
-          SummaryStat(
-            label: l.homeLeftOver,
-            amount: totals.net,
-            tone: totals.net < 0 ? MoneyTone.expense : MoneyTone.income,
-          ),
+  /// The ONE summary card (reference §7): the month stepper, the net (big,
+  /// signed), the daily bars (BE `daily` — tap a bar = that day), and the
+  /// income / expense tiles as type filters (tap again clears). All numbers
+  /// are the server's.
+  Widget _summary(AppLocalizations l, ListTotals t, int activeFilters) {
+    final locale = Localizations.localeOf(context).languageCode;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final days = <DateTime?>[
+      for (final d in t.daily) DateFormatter.parseDay(d.date),
+    ];
+    DailyBarKind kindOf(DateTime? d) => d == null || d.isBefore(today)
+        ? DailyBarKind.past
+        : d.isAtSameMomentAs(today)
+        ? DailyBarKind.today
+        : DailyBarKind.future;
+    String dayLabel(DateTime? d) =>
+        d == null ? '' : DateFormatter.short(d, locale: locale);
+    void toggle(TransactionType type) => _apply(
+      _f.copyWith(
+        type: _f.type == type ? null : type,
+        clearType: _f.type == type,
+      ),
+    );
+    return ListSummaryCard(
+      captionWidget: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(child: _periodPill()),
+          const SizedBox(width: AppSpacing.xs),
+          AppText('· ${l.fpTxNetCaption}', role: AppTextRole.caption),
         ],
       ),
-    ),
-  );
+      actions: [
+        ToolbarToggleButton(
+          state: _toolbarOpen,
+          filtered: activeFilters > 0 || _q.isNotEmpty,
+          tooltip: l.commonSearch,
+        ),
+      ],
+      amount: t.net,
+      mainTone: MoneyTone.signed,
+      chart: t.daily.isEmpty
+          ? null
+          : DailyBars(
+              bars: [
+                for (final (i, d) in t.daily.indexed)
+                  DailyBar(
+                    value: d.expense,
+                    kind: kindOf(days[i]),
+                    semanticLabel: dayLabel(days[i]),
+                  ),
+              ],
+              startLabel: dayLabel(days.first),
+              centerLabel: t.avgDailySpend == null
+                  ? null
+                  : l.fpTxAvgDaily(moneyString(context, t.avgDailySpend!)),
+              endLabel: dayLabel(days.last),
+              onTap: (i) {
+                final d = days[i];
+                if (d != null) _apply(_f.copyWith(period: TxPeriod.day(d)));
+              },
+            ),
+      tiles: [
+        SummaryTile(
+          label: l.homeIncome,
+          value: moneyString(context, t.income),
+          tone: SummaryTileTone.green,
+          selected: _f.type == TransactionType.income,
+          onTap: () => toggle(TransactionType.income),
+        ),
+        SummaryTile(
+          label: l.homeExpense,
+          value: moneyString(context, t.expense),
+          tone: SummaryTileTone.red,
+          selected: _f.type == TransactionType.expense,
+          onTap: () => toggle(TransactionType.expense),
+        ),
+      ],
+    );
+  }
 
   /// The page's date filter: ‹ › step, the label opens the period sheet.
   Widget _periodPill() => TxPeriodPill(
