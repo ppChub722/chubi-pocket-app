@@ -155,47 +155,58 @@ class ProgressCard extends StatelessWidget {
     final tinted = tone != ProgressTone.neutral && tone != ProgressTone.normal;
     final small = text.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
 
-    final header = Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        if (hasTile) ...[
-          leading ??
-              IconCodeWidget(
-                iconCode: iconCode,
-                size: _tile,
-                displayMode: IconDisplayMode.compact,
-                fallbackIcon: fallbackIcon ?? Icons.savings_outlined,
-                fallbackColor: tint,
-              ),
-          const SizedBox(width: AppSpacing.md),
-        ],
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: text.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              if (caption != null)
+    final header = LayoutBuilder(
+      builder: (context, box) => Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (hasTile) ...[
+            leading ??
+                IconCodeWidget(
+                  iconCode: iconCode,
+                  size: _tile,
+                  displayMode: IconDisplayMode.compact,
+                  fallbackIcon: fallbackIcon ?? Icons.savings_outlined,
+                  fallbackColor: tint,
+                ),
+            const SizedBox(width: AppSpacing.md),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 Text(
-                  caption!,
+                  title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: small,
+                  style: text.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
                 ),
-            ],
+                if (caption != null)
+                  Text(
+                    caption!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: small,
+                  ),
+              ],
+            ),
           ),
-        ),
-        if (badge != null) ...[const SizedBox(width: AppSpacing.sm), badge!],
-        if (trailing != null) ...[
-          const SizedBox(width: AppSpacing.sm),
-          trailing!,
+          if (badge != null) ...[
+            const SizedBox(width: AppSpacing.sm),
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: box.maxWidth * 0.35),
+              child: badge!,
+            ),
+          ],
+          if (trailing != null) ...[
+            const SizedBox(width: AppSpacing.sm),
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: box.maxWidth * 0.45),
+              child: trailing!,
+            ),
+          ],
         ],
-      ],
+      ),
     );
 
     final hasFooter =
@@ -407,7 +418,7 @@ class ProgressBadges extends StatelessWidget {
     children: [
       for (final (i, c) in children.indexed) ...[
         if (i > 0) const SizedBox(width: AppSpacing.xs),
-        c,
+        Flexible(child: c),
       ],
     ],
   );

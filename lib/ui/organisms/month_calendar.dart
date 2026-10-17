@@ -123,9 +123,9 @@ class MonthCalendar extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      for (final c in colors)
+                      for (final (i, c) in colors.indexed)
                         Container(
-                          key: ValueKey('calendarDot:$day'),
+                          key: i == 0 ? ValueKey('calendarDot:$day') : null,
                           width: 5,
                           height: 5,
                           margin: const EdgeInsets.symmetric(horizontal: 1),
