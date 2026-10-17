@@ -492,19 +492,19 @@ const List<PageFlow> pageFlows = [
   ]),
 
   // ── Recurring + upcoming items (owner 2026-10-13) ───────────────────────────
-  PageFlow('recurring-home', 'Recurring settings and the upcoming items.', [
-    FlowStep.open([FlowCall('listRecurring', note: 'the shown tab only')]),
-    FlowStep.action('Tab "รายการล่วงหน้า" (lazy)', [
-      FlowCall('listRecurringItems'),
-    ]),
-    FlowStep.action('Filter chips', [FlowCall('listRecurring')]),
-    FlowStep.action('Item popover', [
-      FlowCall('createFromRecurringItem', note: 'item → a pending draft'),
-      FlowCall('archiveRecurringItem'),
-      FlowCall('restoreRecurringItem'),
-      FlowCall('deleteRecurringItem'),
-    ]),
-  ]),
+  PageFlow(
+    'recurring-home',
+    'Recurring settings, reminders and the calendar.',
+    [
+      FlowStep.open([
+        FlowCall('listRecurring', note: 'both list tabs + the summary card'),
+      ]),
+      FlowStep.action('Tab "ปฏิทิน" (lazy) / month stepper', [
+        FlowCall('listRecurringItems', note: '?month=YYYY-MM'),
+      ]),
+      FlowStep.action('Search / status chip', [FlowCall('listRecurring')]),
+    ],
+  ),
   PageFlow(
     'recurring-detail',
     'One recurring: what it made and what is next.',
@@ -531,6 +531,19 @@ const List<PageFlow> pageFlows = [
       ]),
     ],
   ),
+  // fe-pages: the 0.4.0 recurring pages (view ⇄ edit is ONE page now).
+  PageFlow('recurring-occurrence', 'One occurrence of a recurring.', [
+    FlowStep.action('แก้ยอด / ใส่ยอด / เลื่อนวัน', [
+      FlowCall('updateRecurringItem', note: '{date, amount}, scope this'),
+    ]),
+    FlowStep.action('ข้าม / กู้คืน', [
+      FlowCall('archiveRecurringItem'),
+      FlowCall('restoreRecurringItem'),
+    ]),
+  ]),
+  PageFlow('recurring-duplicate', 'Copy a recurring (edit mode end zone).', [
+    FlowStep.action('Button "ทำสำเนา"', [FlowCall('duplicateRecurring')]),
+  ]),
   PageFlow('recurring-settings', 'Create or edit a recurring.', [
     FlowStep.open([FlowCall('getRecurring', note: 'edit only')]),
     FlowStep.action('Button "บันทึก"', [
