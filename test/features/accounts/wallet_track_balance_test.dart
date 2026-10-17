@@ -6,7 +6,6 @@ import 'package:chubi_pocket/features/accounts/domain/account.dart';
 import 'package:chubi_pocket/features/accounts/domain/payment_provider.dart';
 import 'package:chubi_pocket/features/accounts/presentation/cubit/accounts_cubit.dart';
 import 'package:chubi_pocket/features/accounts/presentation/pages/account_detail_page.dart';
-import 'package:chubi_pocket/features/accounts/presentation/widgets/account_card.dart';
 import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:chubi_pocket/features/notifications/presentation/cubit/unread_badge_cubit.dart';
 import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.dart';

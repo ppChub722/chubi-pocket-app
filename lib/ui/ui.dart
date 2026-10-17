@@ -197,6 +197,8 @@ export 'domain/people/wallet_invite_sheet.dart';
 export 'domain/money/identifier_kind_sheet.dart';
 export 'domain/brand/bank_picker_sheet.dart';
 export 'domain/money/adjust_balance_sheet.dart';
+export 'domain/money/wallet_card.dart';
+export 'domain/money/member_avatar_stack.dart';
 export 'atoms/editable_circle.dart';
 export 'debug/secret_tap.dart';
 export 'atoms/user_avatar.dart';

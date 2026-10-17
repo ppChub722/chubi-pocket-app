@@ -13,7 +13,6 @@ import '../../../../ui/ui.dart';
 import '../../domain/account.dart';
 import '../../domain/account_type.dart';
 import '../cubit/accounts_cubit.dart';
-import '../widgets/account_card.dart';
 
 /// How the wallets list is ordered — client-side; [custom] is the user's
 /// own order (the only one that can be rearranged).

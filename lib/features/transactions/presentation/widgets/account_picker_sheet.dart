@@ -4,7 +4,6 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/pages/account_detail_page.dart';
-import '../../../accounts/presentation/widgets/account_card.dart';
 
 /// Result returned by [showAccountPickerSheet]. Distinct from `null`
 /// (user dismissed) — [AccountPickerCleared] means "ไม่ระบุกระเป๋า".

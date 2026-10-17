@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../features/accounts/domain/account.dart';
 import '../../features/accounts/domain/account_type.dart';
-import '../../features/accounts/presentation/widgets/account_card.dart';
 import '../../features/transactions/domain/transaction_type.dart';
 import '../../features/accounts/presentation/widgets/wallet_compact_hero.dart';
 import '../../features/transactions/presentation/widgets/tx_compact_hero.dart';

@@ -60,6 +60,10 @@ class Account extends Equatable {
     this.canEdit = true,
     this.trackBalance = true,
     this.savings,
+    this.monthIn = 0,
+    this.monthOut = 0,
+    this.dueDateNext,
+    this.daysUntilDue,
   }) : _group = group;
 
   final String id;
@@ -77,6 +81,15 @@ class Account extends Equatable {
   /// The caller's own savings held in this wallet (goals v2); null when the
   /// BE sent none.
   final WalletSavings? savings;
+
+  /// This month's cash in / out on the wallet (user timezone; transfers and
+  /// opening / adjustment rows are left out).
+  final double monthIn;
+  final double monthOut;
+
+  /// A card's next due date and the days left (null without a due day).
+  final DateTime? dueDateNext;
+  final int? daysUntilDue;
 
   /// Whether any UI may show [balance] (and the credit figures built on it).
   bool get showsBalance => trackBalance;
@@ -194,6 +207,10 @@ class Account extends Equatable {
     bool? canEdit,
     bool? trackBalance,
     WalletSavings? savings,
+    double? monthIn,
+    double? monthOut,
+    DateTime? dueDateNext,
+    int? daysUntilDue,
   }) {
     return Account(
       id: id ?? this.id,
@@ -222,6 +239,10 @@ class Account extends Equatable {
       canEdit: canEdit ?? this.canEdit,
       trackBalance: trackBalance ?? this.trackBalance,
       savings: savings ?? this.savings,
+      monthIn: monthIn ?? this.monthIn,
+      monthOut: monthOut ?? this.monthOut,
+      dueDateNext: dueDateNext ?? this.dueDateNext,
+      daysUntilDue: daysUntilDue ?? this.daysUntilDue,
     );
   }
 
@@ -269,6 +290,10 @@ class Account extends Equatable {
       savings: json['savings'] is Map<String, dynamic>
           ? WalletSavings.fromJson(json['savings'] as Map<String, dynamic>)
           : null,
+      monthIn: (json['month_in'] as num?)?.toDouble() ?? 0,
+      monthOut: (json['month_out'] as num?)?.toDouble() ?? 0,
+      dueDateNext: DateTime.tryParse(json['due_date_next'] as String? ?? ''),
+      daysUntilDue: (json['days_until_due'] as num?)?.toInt(),
     );
   }
 
@@ -346,6 +371,10 @@ class Account extends Equatable {
     canEdit,
     trackBalance,
     savings,
+    monthIn,
+    monthOut,
+    dueDateNext,
+    daysUntilDue,
   ];
 }
 
@@ -545,6 +574,11 @@ class AccountTotals extends Equatable {
     this.sharedBalance = 0,
     this.otherCurrencyCount = 0,
     this.untrackedCount = 0,
+    this.cashTotal = 0,
+    this.cardDebt = 0,
+    this.cardUsedPct = 0,
+    this.savedTotal = 0,
+    this.availableTotal = 0,
   });
 
   final double assets;
@@ -564,6 +598,15 @@ class AccountTotals extends Equatable {
 
   /// Wallets with "ติดตามยอดเงิน" off — left out of every sum.
   final int untrackedCount;
+
+  /// The กระเป๋าตังค์ tile (the non-credit wallets), the หนี้บัตร tile and
+  /// its used % of the cards' limits; what is earmarked as savings and what
+  /// is really spendable (BE, no client sums).
+  final double cashTotal;
+  final double cardDebt;
+  final int cardUsedPct;
+  final double savedTotal;
+  final double availableTotal;
 
   factory AccountTotals.fromJson(Map<String, dynamic> json) {
     double n(String k) => (json[k] as num?)?.toDouble() ?? 0;
@@ -586,6 +629,11 @@ class AccountTotals extends Equatable {
       sharedBalance: n('shared_balance'),
       otherCurrencyCount: (json['other_currency_count'] as num?)?.toInt() ?? 0,
       untrackedCount: (json['untracked_count'] as num?)?.toInt() ?? 0,
+      cashTotal: n('cash_total'),
+      cardDebt: n('card_debt'),
+      cardUsedPct: (json['card_used_pct'] as num?)?.toInt() ?? 0,
+      savedTotal: n('saved_total'),
+      availableTotal: n('available_total'),
     );
   }
 
@@ -602,6 +650,11 @@ class AccountTotals extends Equatable {
     sharedBalance,
     otherCurrencyCount,
     untrackedCount,
+    cashTotal,
+    cardDebt,
+    cardUsedPct,
+    savedTotal,
+    availableTotal,
   ];
 }
 

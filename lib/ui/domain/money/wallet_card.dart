@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../../l10n/gen/app_localizations.dart';
-import '../../domain/account.dart';
-import '../../domain/account_type.dart';
-import 'member_avatar_stack.dart';
-import '../../../../ui/ui.dart';
+import '../../../l10n/gen/app_localizations.dart';
+import '../../../features/accounts/domain/account.dart';
+import '../../../features/accounts/domain/account_type.dart';
+import '../../ui.dart';
 
 /// Renders one wallet (account) in the grid.
 ///
