@@ -10,15 +10,19 @@ class PendingRepository {
 
   final ApiClient _client;
 
-  Future<List<PendingTransaction>> list() async {
+  /// The page's one call: drafts + the server's `summary`.
+  Future<PendingList> list() async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(
         '/pending-transactions',
       );
-      return ((res.data!['data'] as List?) ?? const [])
-          .cast<Map<String, dynamic>>()
-          .map(PendingTransaction.fromJson)
-          .toList();
+      return PendingList(
+        items: ((res.data!['data'] as List?) ?? const [])
+            .cast<Map<String, dynamic>>()
+            .map(PendingTransaction.fromJson)
+            .toList(),
+        summary: PendingSummary.maybe(res.data!['summary']),
+      );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
@@ -76,6 +80,7 @@ class PendingRepository {
       final discarded = <String>[];
       final skipped = <String>[];
       var remaining = 0;
+      PendingSummary? summary;
       for (var i = 0; i < ids.length; i += 100) {
         final end = i + 100 > ids.length ? ids.length : i + 100;
         final res = await _client.dio.post<Map<String, dynamic>>(
@@ -86,11 +91,13 @@ class PendingRepository {
         discarded.addAll(r.discarded);
         skipped.addAll(r.skipped);
         remaining = r.remainingCount;
+        summary = r.summary;
       }
       return DiscardResult(
         discarded: discarded,
         skipped: skipped,
         remainingCount: remaining,
+        summary: summary,
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
@@ -103,6 +110,31 @@ class PendingRepository {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/pending-transactions/submit',
         data: <String, dynamic>{'ids': ids},
+      );
+      return PendingSubmitResult.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// "Confirm everything ready" — one call; the server picks the drafts
+  /// whose `needs_input` is empty. Answers like [submit].
+  Future<PendingSubmitResult> submitReady() async {
+    try {
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        '/pending-transactions/submit-ready',
+      );
+      return PendingSubmitResult.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// Confirms one draft (same answer as [submit] with that id).
+  Future<PendingSubmitResult> submitOne(String id) async {
+    try {
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        '/pending-transactions/$id/submit',
       );
       return PendingSubmitResult.fromJson(res.data!);
     } on DioException catch (e) {

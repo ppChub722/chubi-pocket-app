@@ -10,10 +10,11 @@ import '../../data/notifications_repository.dart';
 import '../../domain/notification.dart';
 import '../cubit/notification_settings_cubit.dart';
 
-/// `/notifications/settings` (§7, contract §5): per type, receive it and —
-/// where it carries an action — run that action automatically on arrival
-/// (muted = auto ignored). Invites / requests are always on. Switches save
-/// immediately and flip back on failure.
+/// `/notifications/settings` (§7, contract §5): per type one 3-state control
+/// ปิด / แจ้ง / อัตโนมัติ (2-state where nothing can be automated). Auto runs
+/// the type's action on arrival; the wallet it records into shows inline under
+/// the type that is on auto. Invites / requests are always on. A change saves
+/// at once (one call) and flips back on failure.
 class NotificationSettingsPage extends StatelessWidget {
   const NotificationSettingsPage({super.key});
 
@@ -43,7 +44,7 @@ class _Body extends StatelessWidget {
             a.error != b.error && b.error != null && b.settings != null,
         listener: (ctx, state) => showAppSnackBar(
           ctx,
-          // A type that can't be muted says so; the switch is already back.
+          // A type that can't be muted says so; the control is already back.
           state.error?.code == 'TYPE_NOT_MUTABLE'
               ? state.error!.message
               : l.notifSettingsSaveFailed,
@@ -64,54 +65,42 @@ class _Body extends StatelessWidget {
           }
           final cubit = ctx.read<NotificationSettingsCubit>();
 
-          final muted = s.mutedTypes;
-          final auto = s.autoTypes;
-          Set<String> toggled(Set<String> set, String v, bool add) =>
-              add ? {...set, v} : (set.toSet()..remove(v));
-
-          /// One type, as rows: "receive" switch, plus — when it has an action
-          /// — an indented "do it automatically" switch. Muted → the auto
-          /// switch is disabled (and ignored by the server) but keeps its
-          /// value for when the type is turned back on.
+          /// One type: its label (+ what "auto" does) and the control, plus —
+          /// only while it is on auto and records into a wallet — the wallet
+          /// row inline.
           List<Widget> typeRow(
             NotificationType t,
             String label, {
-            String? autoLabel,
-            Widget? extra,
+            String? helper,
+            bool canAuto = false,
+            Widget? walletRow,
           }) {
-            final on = !s.isMuted(t);
+            final mode = s.modeOf(t);
             return [
-              DetailRow(
-                label: label,
-                trailing: AppSwitch(
-                  value: on,
-                  onChanged: (v) =>
-                      cubit.update(mutedTypes: toggled(muted, t.wire, !v)),
+              DetailRow(label: label, helper: helper),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  0,
+                  AppSpacing.lg,
+                  AppSpacing.sm,
                 ),
-                onTap: () =>
-                    cubit.update(mutedTypes: toggled(muted, t.wire, on)),
-              ),
-              if (autoLabel != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: AppSpacing.xl),
-                  child: DetailRow(
-                    label: autoLabel,
-                    trailing: AppSwitch(
-                      value: s.isAuto(t),
-                      onChanged: on
-                          ? (v) => cubit.update(
-                              autoTypes: toggled(auto, t.wire, v),
-                            )
-                          : null,
-                    ),
-                    onTap: on
-                        ? () => cubit.update(
-                            autoTypes: toggled(auto, t.wire, !s.isAuto(t)),
-                          )
-                        : null,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: SegmentedChoice<NotifyMode>(
+                    key: ValueKey('mode-${t.wire}'),
+                    selected: mode,
+                    onChanged: (m) => cubit.setMode(t, m),
+                    segments: [
+                      ChoiceSegment(NotifyMode.off, l.notifStateOff),
+                      ChoiceSegment(NotifyMode.notify, l.notifStateNotify),
+                      if (canAuto)
+                        ChoiceSegment(NotifyMode.auto, l.notifStateAuto),
+                    ],
                   ),
                 ),
-              ?extra,
+              ),
+              if (mode == NotifyMode.auto && walletRow != null) walletRow,
             ];
           }
 
@@ -122,9 +111,34 @@ class _Body extends StatelessWidget {
           final selectedAccount = accounts
               .where((a) => a.id == receiving?.id)
               .firstOrNull;
-          final paidAuto =
-              !s.isMuted(NotificationType.splitPaid) &&
-              s.isAuto(NotificationType.splitPaid);
+          final walletRow = DetailRow(
+            key: const ValueKey('auto-wallet'),
+            leading: const AppIcon(AppIcons.bank),
+            label: l.notifDefaultAccount,
+            trailing: Text(receiving?.name ?? l.notifDefaultAccountNone),
+            showChevron: true,
+            onTap: () async {
+              final r = await showAccountPickerSheet(
+                context: ctx,
+                accounts: accounts,
+                selected: selectedAccount,
+                title: l.notifDefaultAccount,
+                // "None" = record it without a wallet.
+                allowNone: true,
+              );
+              if (r is AccountPickerSelected) {
+                cubit.update(
+                  defaultAccount: DefaultAccountRef(
+                    id: r.account.id,
+                    name: r.account.name,
+                    iconCode: r.account.iconCode,
+                  ),
+                );
+              } else if (r is AccountPickerCleared) {
+                cubit.update(clearDefaultAccount: true);
+              }
+            },
+          );
 
           return DetailPageBody(
             onRefresh: ctx.read<NotificationSettingsCubit>().load,
@@ -140,7 +154,7 @@ class _Body extends StatelessWidget {
                     horizontal: AppSpacing.lg,
                   ),
                   child: AppText(
-                    l.notifSettingsAutoHint,
+                    l.notifSettingsLegend,
                     role: AppTextRole.caption,
                   ),
                 ),
@@ -154,51 +168,15 @@ class _Body extends StatelessWidget {
                   ...typeRow(
                     NotificationType.splitCreated,
                     l.notifTypeSplitCreated,
-                    autoLabel: l.notifAutoAddDebt,
+                    helper: l.notifAutoAddDebt,
+                    canAuto: true,
                   ),
                   // Off by default: auto = my debt follows each change.
                   ...typeRow(
                     NotificationType.splitChanged,
                     l.notifTypeSplitChanged,
-                    autoLabel: l.notifAutoApplySplitChange,
-                  ),
-                  ...typeRow(
-                    NotificationType.splitPaid,
-                    l.notifTypeSplitPaid,
-                    autoLabel: l.notifAutoRecordPayment,
-                    extra: LockedInEdit(
-                      // The wallet only matters while auto-record is on.
-                      locked: !paidAuto,
-                      child: DetailRow(
-                        leading: const AppIcon(AppIcons.bank),
-                        label: l.notifDefaultAccount,
-                        trailing: Text(
-                          receiving?.name ?? l.notifDefaultAccountNone,
-                        ),
-                        showChevron: true,
-                        onTap: () async {
-                          final r = await showAccountPickerSheet(
-                            context: ctx,
-                            accounts: accounts,
-                            selected: selectedAccount,
-                            title: l.notifDefaultAccount,
-                            // "None" = record it without a wallet.
-                            allowNone: true,
-                          );
-                          if (r is AccountPickerSelected) {
-                            cubit.update(
-                              defaultAccount: DefaultAccountRef(
-                                id: r.account.id,
-                                name: r.account.name,
-                                iconCode: r.account.iconCode,
-                              ),
-                            );
-                          } else if (r is AccountPickerCleared) {
-                            cubit.update(clearDefaultAccount: true);
-                          }
-                        },
-                      ),
-                    ),
+                    helper: l.notifAutoApplySplitChange,
+                    canAuto: true,
                   ),
                 ],
               ),
@@ -209,30 +187,35 @@ class _Body extends StatelessWidget {
                   ...typeRow(
                     NotificationType.projectTxRecordedForYou,
                     l.notifTypeProjectTxForYou,
-                    autoLabel: l.notifAutoCopyToBook,
+                    helper: l.notifAutoCopyToBook,
+                    canAuto: true,
+                    walletRow: walletRow,
                   ),
                   ...typeRow(
                     NotificationType.projectTxChanged,
                     l.notifTypeProjectTxChanged,
-                    autoLabel: l.notifAutoUpdateCopy,
+                    helper: l.notifAutoUpdateCopy,
+                    canAuto: true,
                   ),
                   ...typeRow(
                     NotificationType.projectAdded,
                     l.notifTypeProjectAdded,
                   ),
-                  // Not a notification — I recorded it myself. Lives with
-                  // the project types rather than a second "โปรเจกต์"
-                  // section.
-                  DetailRow(
-                    label: l.notifAutoResolveProject,
-                    trailing: AppSwitch(
-                      value: s.autoResolveOwnInProjects,
-                      onChanged: (v) =>
-                          cubit.update(autoResolveOwnInProjects: v),
-                    ),
-                    onTap: () => cubit.update(
-                      autoResolveOwnInProjects: !s.autoResolveOwnInProjects,
-                    ),
+                ],
+              ),
+              (first) => SectionCard(
+                first: first,
+                title: l.notifGroupRecurring,
+                children: [
+                  ...typeRow(
+                    NotificationType.recurringDue,
+                    l.notifTypeRecurringDue,
+                    helper: l.notifTypeRecurringDueHint,
+                  ),
+                  ...typeRow(
+                    NotificationType.recurringEnding,
+                    l.notifTypeRecurringEnding,
+                    helper: l.notifTypeRecurringEndingHint,
                   ),
                 ],
               ),
@@ -242,6 +225,7 @@ class _Body extends StatelessWidget {
                 children: [
                   DetailRow(
                     label: l.notifGroupRequests,
+                    helper: l.notifTypeRequestsHint,
                     trailing: AppChip(
                       label: l.notifTypeAlwaysOn,
                       icon: AppIcons.lock,

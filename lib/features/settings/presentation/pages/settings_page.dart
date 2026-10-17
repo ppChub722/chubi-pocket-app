@@ -5,22 +5,27 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
+import '../../../../app/shell/tab_nav.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
+import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../auth/domain/user.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
-import '../../../users/presentation/refresh_me.dart';
 import '../../../auth/presentation/widgets/auth_widgets.dart'
     show kLanguageNames;
 import '../../../preferences/presentation/cubit/font_id_cubit.dart';
 import '../../../preferences/presentation/cubit/locale_cubit.dart';
 import '../../../preferences/presentation/cubit/theme_id_cubit.dart';
 import '../../../preferences/presentation/cubit/theme_mode_cubit.dart';
+import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
+import '../../../users/data/users_repository.dart';
+import '../../../users/presentation/refresh_me.dart';
 
-/// `/settings` (its own tab, opened by the 👤 chip): profile card (→ the profile
-/// page: password, locked currency) → การแจ้งเตือน →
-/// การตั้งค่าส่วนตัว (theme cards, mode, language & font sheets) →
-/// เกี่ยวกับ → ออกจากระบบ.
+/// `/settings` (its own tab, opened by the 👤 chip): profile card (→ the
+/// profile page) → แอป (theme, appearance, language, font) → เงิน (currency,
+/// main wallet) → การแจ้งเตือน → ข้อมูล (archive, CSV export) → เกี่ยวกับ →
+/// ออกจากระบบ. Opens with the auth cubit's `GET /users/me`; pull = that call.
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
@@ -38,39 +43,42 @@ class SettingsPage extends StatelessWidget {
             final inset = MediaQuery.paddingOf(context);
             return DetailPageBody(
               onRefresh: () => refreshMe(context),
+              physics: const AlwaysScrollableScrollPhysics(),
               // Clear the floating top bar.
               topInset: inset.top + AppSpacing.sm,
               bottomInset: AppSpacing.huge + inset.bottom,
-              hero: HeaderCard(
-                // The avatar's own colour (icon colour, else the initials colour).
-                accent: user.iconCode.tintFor(
-                  Theme.of(context).extension<AppColors>()!,
-                  avatarName: user.displayName,
-                ),
-                leading: UserAvatar(
-                  displayName: user.displayName,
-                  iconCode: user.iconCode,
-                  size: 52,
-                ),
-                title: Text(user.displayName),
-                subtitle: Text(
-                  [
-                    '@${user.username}',
-                    if (user.email?.isNotEmpty ?? false) user.email!,
-                  ].join(' · '),
-                ),
-                trailing: const AppIcon(AppIcons.chevronRight),
-                onTap: () => context.push('/settings/profile'),
-              ),
+              hero: _profileCard(context, user),
               sections: [
                 (first) => SectionCard(
                   first: first,
-                  title: l.settingsNotifications,
+                  title: l.settingsSectionApp,
+                  children: const [
+                    _ThemeRow(),
+                    _ThemeModeRow(),
+                    _LanguageRow(),
+                    _FontRow(),
+                  ],
+                ),
+                (first) => SectionCard(
+                  first: first,
+                  title: l.settingsSectionMoney,
+                  children: [
+                    _CurrencyRow(user: user),
+                    _MainWalletRow(user: user),
+                  ],
+                ),
+                (first) => SectionCard(
+                  first: first,
                   children: [
                     DetailRow(
                       leading: const AppIcon(AppIcons.notifications),
                       label: l.settingsNotifications,
-                      helper: l.settingsNotificationsHint,
+                      helper: user.notificationSummary == null
+                          ? l.settingsNotificationsHint
+                          : l.settingsNotificationsSummary(
+                              user.notificationSummary!.on,
+                              user.notificationSummary!.auto,
+                            ),
                       showChevron: true,
                       onTap: () => context.push('/settings/notifications'),
                     ),
@@ -78,12 +86,23 @@ class SettingsPage extends StatelessWidget {
                 ),
                 (first) => SectionCard(
                   first: first,
-                  title: l.settingsSectionPreferences,
-                  children: const [
-                    _ThemeCards(),
-                    _ThemeModeRow(),
-                    _LanguageRow(),
-                    _FontRow(),
+                  title: l.settingsSectionData,
+                  children: [
+                    DetailRow(
+                      leading: const AppIcon(AppIcons.archive),
+                      label: l.settingsArchived,
+                      helper: l.settingsArchivedHint,
+                      showChevron: true,
+                      onTap: () => openPage(context, '/archived'),
+                    ),
+                    LockedInEdit(
+                      locked: true,
+                      child: DetailRow(
+                        leading: const AppIcon(AppIcons.share),
+                        label: l.settingsExportCsv,
+                        trailing: AppBadge(label: l.settingsComingIn04),
+                      ),
+                    ),
                   ],
                 ),
                 (first) => SectionCard(
@@ -101,6 +120,30 @@ class SettingsPage extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+
+  /// The profile card: avatar · name · @username · email, › the profile page.
+  Widget _profileCard(BuildContext context, User user) {
+    final tint = user.iconCode.tintFor(
+      Theme.of(context).extension<AppColors>()!,
+      avatarName: user.displayName,
+    );
+    return HeroCard(
+      style: HeroStyle.tinted(color: tint, glyph: AppIcons.profile),
+      icon: UserAvatar(
+        displayName: user.displayName,
+        iconCode: user.iconCode,
+        size: 40,
+      ),
+      name: Text(user.displayName),
+      fact: Text(
+        [
+          '@${user.username}',
+          if (user.email?.isNotEmpty ?? false) user.email!,
+        ].join(' · '),
+      ),
+      onTap: () => context.push('/settings/profile'),
     );
   }
 
@@ -125,9 +168,9 @@ User? _userOf(AuthState state) {
   return null;
 }
 
-/// Themes as colour-swatch cards with their translated names.
-class _ThemeCards extends StatelessWidget {
-  const _ThemeCards();
+/// Theme as ONE row: its swatches + name, › a sheet of the themes.
+class _ThemeRow extends StatelessWidget {
+  const _ThemeRow();
 
   static String _name(AppLocalizations l, AppTheme t) => switch (t.id) {
     'mint' => l.settingsThemeMint,
@@ -135,56 +178,53 @@ class _ThemeCards extends StatelessWidget {
     _ => t.id,
   };
 
+  static Widget _swatches(AppTheme t) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      for (final c in t.previewSwatch.take(2))
+        Icon(Icons.circle, size: AppSpacing.lg, color: c),
+    ],
+  );
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final selected = context.watch<ThemeIdCubit>().state;
-    return DetailStacked(
+    final current = ThemeRegistry.all
+        .where((t) => t.id == selected)
+        .firstOrNull;
+    return DetailRow(
+      leading: const AppIcon(AppIcons.colorPicker),
       label: l.settingsTheme,
-      child: Row(
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          for (final t in ThemeRegistry.all) ...[
-            Expanded(
-              child: SelectableFrame(
-                selected: t.id == selected,
-                radius: AppRadius.md,
-                child: AppCard(
-                  style: AppCardStyle.bordered,
-                  onTap: () => context.read<ThemeIdCubit>().set(t.id),
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          for (final c in t.previewSwatch.take(4))
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                right: AppSpacing.xs,
-                              ),
-                              child: Icon(
-                                Icons.circle,
-                                size: AppSpacing.lg,
-                                color: c,
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        _name(l, t),
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            if (t != ThemeRegistry.all.last)
-              const SizedBox(width: AppSpacing.sm),
+          if (current != null) ...[
+            _swatches(current),
+            const SizedBox(width: AppSpacing.xs),
+            Text(_name(l, current)),
           ],
         ],
       ),
+      showChevron: true,
+      onTap: () async {
+        final picked = await showOptionSheet<String>(
+          context,
+          title: l.settingsTheme,
+          selected: selected,
+          options: [
+            for (final t in ThemeRegistry.all)
+              SheetOption(
+                value: t.id,
+                label: _name(l, t),
+                leading: _swatches(t),
+              ),
+          ],
+        );
+        if (picked != null && context.mounted) {
+          context.read<ThemeIdCubit>().set(picked);
+        }
+      },
     );
   }
 }
@@ -314,6 +354,138 @@ class _VersionRowState extends State<_VersionRow> {
       onTap: () {
         if (_counter.register()) context.push('/dev');
       },
+    );
+  }
+}
+
+/// Currency: a label, never converted. Pick → the "not converted" dialog →
+/// ONE `PUT /users/me`.
+class _CurrencyRow extends StatefulWidget {
+  const _CurrencyRow({required this.user});
+
+  final User user;
+
+  @override
+  State<_CurrencyRow> createState() => _CurrencyRowState();
+}
+
+class _CurrencyRowState extends State<_CurrencyRow> {
+  bool _busy = false;
+
+  Future<void> _change(String code) async {
+    if (code == widget.user.currency || _busy) return;
+    final l = AppLocalizations.of(context)!;
+    final ok = await showConfirmDialog(
+      context,
+      title: l.profileCurrencyChangeTitle,
+      message: l.profileCurrencyChangeMessage,
+      confirmLabel: l.profileCurrencyChangeConfirm,
+    );
+    if (!ok || !mounted) return;
+    final auth = context.read<AuthCubit>();
+    final users = context.read<UsersRepository>();
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    try {
+      auth.updateUser(await users.updateMe(currency: code));
+    } on ApiException catch (e) {
+      if (mounted) showAppSnackBarOn(messenger, e.message, tone: Tone.danger);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final value = widget.user.currency;
+    return OptionMenuAnchor<String>(
+      selected: value,
+      onSelected: _change,
+      options: [
+        for (final c in Currencies.codes)
+          SheetOption(
+            value: c,
+            label: '$c · ${Currencies.nameOf(l, c)}',
+            leading: SizedBox(
+              width: 24,
+              child: Text(Currencies.symbolOf(c), textAlign: TextAlign.center),
+            ),
+          ),
+      ],
+      builder: (context, toggle) => DetailRow(
+        leading: const AppIcon(AppIcons.currency),
+        label: l.profileCurrencyLabel,
+        helper: l.settingsCurrencyHint,
+        trailing: Text('${Currencies.symbolOf(value)} $value'),
+        showChevron: true,
+        onTap: _busy ? null : toggle,
+      ),
+    );
+  }
+}
+
+/// Main wallet (`default_account`): the default when recording. Pick → ONE
+/// `PUT /users/me` with `default_account_id`.
+class _MainWalletRow extends StatefulWidget {
+  const _MainWalletRow({required this.user});
+
+  final User user;
+
+  @override
+  State<_MainWalletRow> createState() => _MainWalletRowState();
+}
+
+class _MainWalletRowState extends State<_MainWalletRow> {
+  bool _busy = false;
+
+  Future<void> _pick() async {
+    if (_busy) return;
+    final l = AppLocalizations.of(context)!;
+    final accounts = context.read<AccountsCubit>();
+    final users = context.read<UsersRepository>();
+    final auth = context.read<AuthCubit>();
+    final messenger = ScaffoldMessenger.of(context);
+    await accounts.loadIfNeeded();
+    if (!mounted) return;
+    final all = accounts.state.accounts;
+    final currentId = widget.user.defaultAccount?.id;
+    final r = await showAccountPickerSheet(
+      context: context,
+      accounts: all,
+      selected: all.where((a) => a.id == currentId).firstOrNull,
+      title: l.settingsMainWallet,
+      allowNone: true,
+    );
+    if (r == null || !mounted) return;
+    final newId = r is AccountPickerSelected ? r.account.id : null;
+    if (newId == currentId) return;
+    setState(() => _busy = true);
+    try {
+      auth.updateUser(
+        await users.updateMe(
+          defaultAccountId: newId,
+          clearDefaultAccount: newId == null,
+        ),
+      );
+    } on ApiException catch (e) {
+      if (mounted) showAppSnackBarOn(messenger, e.message, tone: Tone.danger);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final wallet = widget.user.defaultAccount;
+    return DetailRow(
+      leading: const AppIcon(AppIcons.wallet),
+      label: l.settingsMainWallet,
+      helper: l.settingsMainWalletHint,
+      trailing: Text(wallet?.name ?? l.settingsMainWalletNone),
+      showChevron: true,
+      onTap: _busy ? null : _pick,
     );
   }
 }

@@ -1,6 +1,47 @@
 import 'package:equatable/equatable.dart';
 import '../../../ui/ui.dart';
 
+/// The default wallet as `/users/me` returns it (`default_account`).
+class DefaultWalletRef extends Equatable {
+  const DefaultWalletRef({required this.id, required this.name, this.iconCode});
+
+  factory DefaultWalletRef.fromJson(Map<String, dynamic> json) =>
+      DefaultWalletRef(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        iconCode: json['icon_code'] is Map
+            ? IconCode.fromJson(
+                (json['icon_code'] as Map).cast<String, dynamic>(),
+              )
+            : null,
+      );
+
+  final String id;
+  final String name;
+  final IconCode? iconCode;
+
+  @override
+  List<Object?> get props => [id, name, iconCode];
+}
+
+/// `/users/me` `notification_summary`: the settings tile's numbers (mutable
+/// types not muted, types running automatically).
+class NotificationSummary extends Equatable {
+  const NotificationSummary({required this.on, required this.auto});
+
+  factory NotificationSummary.fromJson(Map<String, dynamic> json) =>
+      NotificationSummary(
+        on: (json['on'] as num?)?.toInt() ?? 0,
+        auto: (json['auto'] as num?)?.toInt() ?? 0,
+      );
+
+  final int on;
+  final int auto;
+
+  @override
+  List<Object?> get props => [on, auto];
+}
+
 /// Authenticated user — the subset of fields surfaced in the Phase 0 UI.
 class User extends Equatable {
   const User({
@@ -11,6 +52,9 @@ class User extends Equatable {
     this.email,
     this.iconCode,
     this.feeCategoryId,
+    this.defaultAccount,
+    this.autoCopyOwnEventBills = false,
+    this.notificationSummary,
     this.createdAt,
     this.updatedAt,
   });
@@ -19,7 +63,8 @@ class User extends Equatable {
   final String username;
   final String displayName;
 
-  /// The user's one currency: a label, never converted; editable on the profile.
+  /// The user's one currency: a label, never converted; editable on the
+  /// settings home.
   final String currency;
   final String? email;
   final IconCode? iconCode;
@@ -28,6 +73,16 @@ class User extends Equatable {
   /// fee drafts from bank slips get. Only on `GET`/`PUT /users/me` —
   /// login answers without preferences, so it may be stale until then.
   final String? feeCategoryId;
+
+  /// The default wallet (`default_account`; null = none).
+  final DefaultWalletRef? defaultAccount;
+
+  /// `auto_copy_own_event_bills`: a bill I record in an event also lands in my
+  /// own book (set on the event settings, not here).
+  final bool autoCopyOwnEventBills;
+
+  /// The settings tile's numbers; null when the answer has none (login).
+  final NotificationSummary? notificationSummary;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -47,6 +102,18 @@ class User extends Equatable {
         {'fee_category_id': final String id} => id,
         _ => null,
       },
+      defaultAccount: json['default_account'] is Map
+          ? DefaultWalletRef.fromJson(
+              (json['default_account'] as Map).cast<String, dynamic>(),
+            )
+          : null,
+      autoCopyOwnEventBills:
+          (json['auto_copy_own_event_bills'] as bool?) ?? false,
+      notificationSummary: json['notification_summary'] is Map
+          ? NotificationSummary.fromJson(
+              (json['notification_summary'] as Map).cast<String, dynamic>(),
+            )
+          : null,
     );
   }
 
@@ -68,6 +135,9 @@ class User extends Equatable {
       iconCode: clearIconCode ? null : (iconCode ?? this.iconCode),
       createdAt: createdAt,
       updatedAt: updatedAt,
+      defaultAccount: defaultAccount,
+      autoCopyOwnEventBills: autoCopyOwnEventBills,
+      notificationSummary: notificationSummary,
       feeCategoryId: clearFeeCategory
           ? null
           : (feeCategoryId ?? this.feeCategoryId),
@@ -83,6 +153,9 @@ class User extends Equatable {
     email,
     iconCode,
     feeCategoryId,
+    defaultAccount,
+    autoCopyOwnEventBills,
+    notificationSummary,
     createdAt,
     updatedAt,
   ];

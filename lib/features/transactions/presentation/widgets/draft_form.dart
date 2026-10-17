@@ -604,6 +604,7 @@ class DraftForm extends StatefulWidget {
     this.onEdit,
     this.eventPending = false,
     this.eventSlot,
+    this.recurringSlot,
     this.splitsReadOnly,
     this.splitsCollapsible = false,
     this.splitsInitiallyOpen = true,
@@ -683,6 +684,9 @@ class DraftForm extends StatefulWidget {
   /// event row (the drafts' layout keeps the draft's own, [DraftFormController
   /// .projectId]).
   final SplitEventSlot? eventSlot;
+
+  /// The รายการประจำ row of the same section (0.4.0); null = no such row.
+  final SplitRecurringSlot? recurringSlot;
 
   /// The "แบ่งยอด" row when the people can't be edited here (view mode, or
   /// another member's row): a read-only list / the lock note.
@@ -1128,9 +1132,14 @@ class _DraftFormState extends State<DraftForm> {
           hint: l.txNoteAddHint,
         ),
       ),
-      if (!isTransfer) ...[
+      if (!isTransfer || widget.recurringSlot != null) ...[
         gap,
-        ?_splitEventSection(l, editing: true, first: true),
+        ?_splitEventSection(
+          l,
+          editing: true,
+          first: true,
+          transfer: isTransfer,
+        ),
       ],
     ];
   }
@@ -1196,11 +1205,12 @@ class _DraftFormState extends State<DraftForm> {
 
   /// The one "แบ่งรายการ" section (owner 2026-10-12): the "แบ่งยอด" row (the
   /// split editor, or [DraftForm.splitsReadOnly]) and the อีเวนต์ row. Null
-  /// when there is nothing to show (a transfer never gets one).
+  /// when there is nothing to show (a transfer only gets the recurring row).
   Widget? _splitEventSection(
     AppLocalizations l, {
     required bool editing,
     bool first = false,
+    bool transfer = false,
   }) {
     final canEdit = editing && widget.allowSplits;
     // The quick forms (quick create + the drafts) get the compact look; the
@@ -1212,7 +1222,9 @@ class _DraftFormState extends State<DraftForm> {
         : _c.savedInEvent
         ? l.txSplitFromMyShare
         : null;
-    final splits = canEdit
+    final splits = transfer
+        ? null
+        : canEdit
         ? SplitsSection(
             embedded: true,
             compact: compact,
@@ -1231,14 +1243,21 @@ class _DraftFormState extends State<DraftForm> {
           )
         : widget.splitsReadOnly;
     // The drafts' layout keeps its event on the controller.
-    final slot = widget.chipLayout ? _draftEventSlot() : widget.eventSlot;
-    if (splits == null && slot == null) return null;
+    final slot = transfer
+        ? null
+        : widget.chipLayout
+        ? _draftEventSlot()
+        : widget.eventSlot;
+    if (splits == null && slot == null && widget.recurringSlot == null) {
+      return null;
+    }
     return SplitEventSection(
       first: first,
       variant: compact ? SplitEventVariant.compact : SplitEventVariant.full,
       helper: compact && canEdit ? helper : null,
       splits: splits,
       event: slot,
+      recurring: widget.recurringSlot,
       // The drafts collapse it, closed; quick create, open.
       collapsible: widget.chipLayout || widget.splitsCollapsible,
       initiallyOpen: !widget.chipLayout && widget.splitsInitiallyOpen,
@@ -1251,7 +1270,11 @@ class _DraftFormState extends State<DraftForm> {
     final people = _c.splits
         .where((s) => s.personName.trim().isNotEmpty || (s.owedAmount ?? 0) > 0)
         .length;
-    final parts = [if (people > 0) l.draftExtrasSplits(people), ?slot?.name];
+    final parts = [
+      if (people > 0) l.draftExtrasSplits(people),
+      ?slot?.name,
+      ?widget.recurringSlot?.name,
+    ];
     return parts.isEmpty ? null : parts.join(' · ');
   }
 
@@ -1356,7 +1379,7 @@ class _DraftFormState extends State<DraftForm> {
         const SizedBox(height: HeroSpacing.after),
       ],
       if (first.isNotEmpty) SectionCard(first: true, children: first),
-      if (!isTransfer) ?_splitEventSection(l, editing: editing),
+      ?_splitEventSection(l, editing: editing, transfer: isTransfer),
     ];
   }
 }

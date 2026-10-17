@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../storage/secure_token_storage.dart';
@@ -46,9 +47,11 @@ class ApiClient {
     Dio? dio,
     String? baseUrl,
     Future<String?> Function()? appBuild,
+    Future<String?> Function()? timezone,
   }) : _tokenStorage = tokenStorage,
        _dio = dio ?? Dio(),
-       _appBuild = (appBuild ?? _platformBuild)() {
+       _appBuild = (appBuild ?? _platformBuild)(),
+       _timezone = (timezone ?? _platformTimezone)() {
     _dio.options
       ..baseUrl = baseUrl ?? _devBaseUrl()
       ..connectTimeout = const Duration(seconds: 10)
@@ -91,6 +94,11 @@ class ApiClient {
   /// This app's build number (resolved once) — sent as `X-App-Build`.
   final Future<String?> _appBuild;
 
+  /// The device's IANA timezone (resolved once) — sent as `X-Timezone` so the
+  /// BE computes "today" / "this month" in the user's own zone (owner
+  /// 2026-10-17). Null when unknown: the BE falls back to the stored one.
+  final Future<String?> _timezone;
+
   Dio get dio => _dio;
 
   /// This app's build number as an int, or null when unknown.
@@ -107,6 +115,14 @@ class ApiClient {
 
   Stream<void> get onUnreachable => _unreachableController.stream;
   Stream<void> get onReachable => _reachableController.stream;
+
+  static Future<String?> _platformTimezone() async {
+    try {
+      return (await FlutterTimezone.getLocalTimezone()).identifier;
+    } catch (_) {
+      return null; // no header — the BE uses the user's stored timezone
+    }
+  }
 
   static Future<String?> _platformBuild() async {
     try {
@@ -150,6 +166,10 @@ class ApiClient {
       final build = await _appBuild;
       if (build != null && build.isNotEmpty) {
         options.headers['X-App-Build'] = build;
+      }
+      final tz = await _timezone;
+      if (tz != null && tz.isNotEmpty) {
+        options.headers['X-Timezone'] = tz;
       }
       handler.next(options);
     },

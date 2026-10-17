@@ -160,6 +160,17 @@ class RecurringRepository {
         return RecurringDetail.fromJson(res.data!);
       });
 
+  /// `extendRecurring` with the new end (`{kind: date|count, date|count}`);
+  /// null `end` = a setting with no end (the BE writes one more block).
+  Future<RecurringDetail> extend(String id, {Map<String, dynamic>? end}) =>
+      _call((dio) async {
+        final res = await dio.post<Map<String, dynamic>>(
+          '/recurring/$id/extend',
+          data: end == null ? null : <String, dynamic>{'end': end},
+        );
+        return RecurringDetail.fromJson(res.data!);
+      });
+
   // ── Items ───────────────────────────────────────────────────────────
 
   /// `listRecurringRuleItems`: one recurring's produced or upcoming items.

@@ -17,6 +17,7 @@ class NotificationTile extends StatelessWidget {
     required this.onTap,
     required this.onAccept,
     required this.onReject,
+    this.hidden = false,
     super.key,
   });
 
@@ -27,6 +28,9 @@ class NotificationTile extends StatelessWidget {
   final ValueChanged<String> onAccept;
   final ValueChanged<String> onReject;
 
+  /// A hidden (dismissed) row: shown without answer buttons.
+  final bool hidden;
+
   /// Whether [n] still shows its answer buttons — the BE decides (the
   /// dashboard's "ต้องจัดการ" lists these).
   static bool awaitsAnswer(AppNotification n) => n.awaitsAnswer;
@@ -34,7 +38,8 @@ class NotificationTile extends StatelessWidget {
   /// Requests need an answer (accept / reject, with a confirm on reject).
   bool get _isRequest =>
       notification.type == NotificationType.contactLinkRequest ||
-      notification.type == NotificationType.accountInvite;
+      notification.type == NotificationType.accountInvite ||
+      notification.type == NotificationType.projectInvite;
 
   bool get _isRecurring =>
       notification.type == NotificationType.recurringDue ||
@@ -45,18 +50,19 @@ class NotificationTile extends StatelessWidget {
   bool get _hasAction => switch (notification.type) {
     NotificationType.splitCreated ||
     NotificationType.splitChanged ||
-    NotificationType.splitPaid ||
     NotificationType.projectTxRecordedForYou ||
-    NotificationType.projectTxChanged => true,
+    NotificationType.projectTxChanged ||
+    NotificationType.recurringEnding => true,
     _ => false,
   };
 
   String _actionLabel(AppLocalizations l) => switch (notification.type) {
     NotificationType.splitCreated => l.notifActionAddDebt,
-    NotificationType.splitPaid => l.notifActionRecordReceipt,
     NotificationType.projectTxRecordedForYou => l.notifActionCopyToBook,
     NotificationType.projectTxChanged => l.notifActionUpdateCopy,
     NotificationType.splitChanged => l.notifActionUpdateCopy,
+    NotificationType.recurringEnding => l.notifActionExtend,
+    NotificationType.recurringDue => l.notifActionOpenPending,
     _ => l.notificationAccept,
   };
 
@@ -81,12 +87,17 @@ class NotificationTile extends StatelessWidget {
       amountText: _amount(context),
       typeIcon: _iconFor(n.type),
       unread: n.isUnread,
-      pending: n.awaitsAnswer,
+      system: n.actor == null && _isRecurring,
+      pending: !hidden && _shows(n),
       acceptedLabel: accepted
           ? (_isRequest ? l.notifAccepted : l.notifActionDone)
           : null,
       acceptLabel: _actionLabel(l),
-      rejectLabel: _isRequest ? l.notificationReject : l.notifActionSkip,
+      rejectLabel: switch (n.type) {
+        NotificationType.recurringDue => null,
+        NotificationType.recurringEnding => l.notifActionLetEnd,
+        _ => _isRequest ? l.notificationReject : l.notifActionSkip,
+      },
       rejectConfirm: _isRequest
           ? NotificationRejectConfirm(
               title: l.notifRejectTitle,
@@ -100,6 +111,11 @@ class NotificationTile extends StatelessWidget {
     );
   }
 
+  /// Answer buttons: while the BE says the row waits, plus the one-tap
+  /// "open pending" on an unread recurring_due notice.
+  bool _shows(AppNotification n) =>
+      n.awaitsAnswer || (n.type == NotificationType.recurringDue && n.isUnread);
+
   String? _amount(BuildContext context) {
     final a = notification.payload['amount'];
     if (a is! num) return null;
@@ -108,9 +124,7 @@ class NotificationTile extends StatelessWidget {
 
   static IconData _iconFor(NotificationType t) => switch (t) {
     NotificationType.splitCreated ||
-    NotificationType.splitChanged ||
-    NotificationType.splitPaid ||
-    NotificationType.splitReceived => AppIcons.split,
+    NotificationType.splitChanged => AppIcons.split,
     NotificationType.projectTxRecordedForYou ||
     NotificationType.projectTxChanged ||
     NotificationType.projectInvite ||
@@ -130,8 +144,6 @@ class NotificationTile extends StatelessWidget {
   ) => switch (n.type) {
     NotificationType.splitCreated => l.notifSplitCreated(actor),
     NotificationType.splitChanged => _splitChangeTitle(context, l, n),
-    NotificationType.splitPaid => l.notifSplitPaid(actor),
-    NotificationType.splitReceived => l.notifSplitReceived(actor),
     NotificationType.projectTxRecordedForYou => l.notifProjectTxForYou(actor),
     NotificationType.projectTxChanged => l.notifProjectTxChanged(actor),
     NotificationType.projectInvite => l.notifProjectInvite(

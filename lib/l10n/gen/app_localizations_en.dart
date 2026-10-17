@@ -1466,6 +1466,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'What you get and what happens automatically';
 
   @override
+  String settingsNotificationsSummary(int on, int auto) {
+    return '$on on · $auto automatic';
+  }
+
+  @override
   String get settingsDefaultCurrencyHint =>
       'Used when you create wallets and debts';
 
@@ -1477,12 +1482,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationsTitle => 'Notifications';
-
-  @override
-  String get notificationsTabAll => 'All';
-
-  @override
-  String get notificationsTabUnread => 'Unread';
 
   @override
   String get notificationsMarkAllRead => 'Mark all as read';
@@ -1503,16 +1502,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String notifSplitCreated(String actor) {
     return '$actor split a bill with you';
-  }
-
-  @override
-  String notifSplitPaid(String actor) {
-    return '$actor paid back their share';
-  }
-
-  @override
-  String notifSplitReceived(String actor) {
-    return '$actor confirmed your payment';
   }
 
   @override
@@ -1569,9 +1558,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifTypeSplitCreated => 'Someone splits a bill with me';
 
   @override
-  String get notifTypeSplitPaid => 'Someone pays back their share';
-
-  @override
   String get notifTypeProjectTxForYou =>
       'An event transaction is recorded for me';
 
@@ -1585,14 +1571,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifTypeProjectAdded => 'Added to an event';
 
   @override
-  String get notifSettingsAutoHint =>
-      '\"Auto\" = the button is pressed for you as soon as the notification arrives. Turn a type off and nothing happens for it. Invites and requests stay on — they need an answer.';
-
-  @override
   String get notifAutoAddDebt => 'Auto: add to my debts';
-
-  @override
-  String get notifAutoRecordPayment => 'Auto: record the receipt';
 
   @override
   String get notifAutoCopyToBook => 'Auto: add to my book';
@@ -1601,14 +1580,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifAutoUpdateCopy => 'Auto: update my copy to match';
 
   @override
-  String get notifAutoResolveProject =>
-      'Also add event rows I paid to my own book';
-
-  @override
-  String get notifActionAddDebt => 'Add to my debts';
-
-  @override
-  String get notifActionRecordReceipt => 'Record receipt';
+  String get notifActionAddDebt => 'Add to my payables';
 
   @override
   String get notifActionCopyToBook => 'Add to my book';
@@ -6863,4 +6835,251 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpEventsLoadFailed => 'Couldn\'t refresh · showing the last data';
+
+  @override
+  String get categoryDeleteConsequence =>
+      'Deleted for good · its transactions will have no category';
+
+  @override
+  String categoryMonthSpentLabel(String month, int count) {
+    return '$month spent · $count transactions ›';
+  }
+
+  @override
+  String categoryMonthEarnedLabel(String month, int count) {
+    return '$month received · $count transactions ›';
+  }
+
+  @override
+  String get notifSettingsLegend =>
+      'Off: no notice · Notify: a notice with a one-tap button · Auto: done for you, then you are told what was done';
+
+  @override
+  String get notifStateOff => 'Off';
+
+  @override
+  String get notifStateNotify => 'Notify';
+
+  @override
+  String get notifStateAuto => 'Auto';
+
+  @override
+  String get notifGroupRecurring => 'Recurring';
+
+  @override
+  String get notifTypeRecurringDue => 'Recurring items are due';
+
+  @override
+  String get notifTypeRecurringDueHint =>
+      'Drafts always wait in Pending · Off = no notice';
+
+  @override
+  String get notifTypeRecurringEnding => 'A recurring is about to end';
+
+  @override
+  String get notifTypeRecurringEndingHint => 'A few items left · extend it?';
+
+  @override
+  String get notifTypeRequestsHint =>
+      'Needs an answer, so it can\'t be turned off';
+
+  @override
+  String get settingsSectionApp => 'App';
+
+  @override
+  String get settingsSectionMoney => 'Money';
+
+  @override
+  String get settingsSectionData => 'Data';
+
+  @override
+  String get settingsCurrencyHint =>
+      'Changes the label only, amounts are not converted';
+
+  @override
+  String get settingsMainWallet => 'Main wallet';
+
+  @override
+  String get settingsMainWalletHint => 'Used as the default when recording';
+
+  @override
+  String get settingsMainWalletNone => 'Not set';
+
+  @override
+  String get settingsArchived => 'Archive';
+
+  @override
+  String get settingsArchivedHint =>
+      'Wallets, budgets, goals, events, contacts';
+
+  @override
+  String get settingsExportCsv => 'Export CSV';
+
+  @override
+  String get settingsComingIn04 => '0.4';
+
+  @override
+  String get profileSectionSecurity => 'Security';
+
+  @override
+  String get settingsSaveFailed => 'Could not save, try again';
+
+  @override
+  String get notifTileAll => 'All';
+
+  @override
+  String get notifTileNeedsAnswer => 'Needs answer';
+
+  @override
+  String get notifTileUnread => 'Unread';
+
+  @override
+  String get notifTileHidden => 'Hidden';
+
+  @override
+  String get notifCardCaption => 'Needs answer';
+
+  @override
+  String notifCardMain(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      zero: 'Nothing',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notifCardUnread(int count) {
+    return '· unread $count';
+  }
+
+  @override
+  String get notifReadAllTooltip => 'Mark all as read';
+
+  @override
+  String get notifSettingsTooltip => 'Notification settings';
+
+  @override
+  String get notifRestore => 'Restore';
+
+  @override
+  String get notifUndo => 'Undo';
+
+  @override
+  String get notifEmptyNeedsAnswer => 'Nothing waiting for an answer';
+
+  @override
+  String get notifEmptyHidden => 'No hidden notifications';
+
+  @override
+  String get notifActionExtend => 'Extend';
+
+  @override
+  String get notifActionLetEnd => 'Let it end';
+
+  @override
+  String get notifActionOpenPending => 'Open pending ›';
+
+  @override
+  String get archivedGroupWallets => 'Wallets';
+
+  @override
+  String get archivedGroupBudgets => 'Budgets';
+
+  @override
+  String get archivedGroupGoals => 'Goals';
+
+  @override
+  String get archivedGroupEvents => 'Events';
+
+  @override
+  String get archivedGroupContacts => 'Contacts';
+
+  @override
+  String get archivedGroupRecurring => 'Recurring';
+
+  @override
+  String archivedOn(String date) {
+    return 'Archived $date';
+  }
+
+  @override
+  String get archivedRestore => 'Restore';
+
+  @override
+  String archivedRestored(String name) {
+    return 'Restored $name';
+  }
+
+  @override
+  String get archivedEmpty => 'Nothing archived';
+
+  @override
+  String get archivedEmptyMessage =>
+      'Archived items show here. Restore them any time.';
+
+  @override
+  String get txRecurringPick => 'Pick a recurring';
+
+  @override
+  String get txRecurringUnlink => 'Unlink';
+
+  @override
+  String get recurringPickerTitle => 'Link to a recurring';
+
+  @override
+  String get recurringPickerGroupRecurring => 'Recurring';
+
+  @override
+  String get recurringPickerGroupReminders => 'Payment reminders';
+
+  @override
+  String get recurringPickerAwaitingAmount => 'Amount pending';
+
+  @override
+  String get recurringPickerCreate =>
+      'Create a recurring from this transaction';
+
+  @override
+  String get recurringPickerEmpty => 'No recurring to link to';
+
+  @override
+  String recurringPickerPeriod(String date) {
+    return 'Period $date';
+  }
+
+  @override
+  String get recurringPickerStatusUpcoming => 'not yet due';
+
+  @override
+  String get recurringPickerStatusPending => 'awaiting confirmation';
+
+  @override
+  String get recurringPickerStatusNotCreated => 'not paid yet';
+
+  @override
+  String get recurringPickerStatusReminder => 'enter the amount';
+
+  @override
+  String recurringLinkAskAmount(String rule, String tx) {
+    return 'The amount differs from the recurring ($rule → $tx). Update the recurring\'s amount too?';
+  }
+
+  @override
+  String get recurringLinkAskNo => 'No';
+
+  @override
+  String get recurringLinkAskYes => 'Update';
+
+  @override
+  String get recurringLinked => 'Linked to the recurring';
+
+  @override
+  String get recurringLinkedAmountUpdated => 'Recurring amount updated';
+
+  @override
+  String get recurringLinkAlreadyLinked =>
+      'That period is already linked (or this transaction is linked already)';
 }

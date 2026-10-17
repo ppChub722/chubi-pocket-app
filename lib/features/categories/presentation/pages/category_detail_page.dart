@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -92,6 +94,28 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   CategoryDetail? _detail;
   bool _feeBusy = false;
 
+  /// This month's total / count: from the list row, then the detail GET.
+  /// Write answers carry 0, so they never overwrite these.
+  num _monthSpent = 0;
+  int _monthCount = 0;
+
+  /// The parent just chosen in the picker (its row from the picker's own
+  /// list call) and its root -> itself chain.
+  Category? _pickedParent;
+  var _pickedParentChain = const <CategoryPathItem>[];
+
+  /// A server field error on the name (duplicate sibling, 422), tied to the
+  /// name + parent it answered for so editing either clears it.
+  String? _nameServerError;
+  String? _nameServerErrorFor;
+
+  static String _nameKey(String name, String? parentId) =>
+      '${parentId ?? ''}|${name.trim()}';
+
+  /// The report switch while its instant save is in flight (view mode).
+  bool? _includeOverride;
+  bool _includeBusy = false;
+
   /// A save error in words: the depth limit in Thai, else the server's.
   String _errorText(ApiException e, AppLocalizations l) =>
       e.code == 'MAX_DEPTH_EXCEEDED' ? l.categoryErrorMaxDepth : e.message;
@@ -107,6 +131,8 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     } else {
       final cubit = context.read<CategoriesCubit>();
       _persisted = cubit.byId(widget.editingId!);
+      _monthSpent = _persisted?.monthSpent ?? 0;
+      _monthCount = _persisted?.monthCount ?? 0;
       initDraft(
         _persisted == null
             ? const _CategoryDraft()
@@ -163,6 +189,8 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       if (!mounted) return;
       setState(() {
         _detail = d;
+        _monthSpent = d.monthSpent;
+        _monthCount = d.monthCount;
         _notFound = false;
       });
       if (_persisted == null) {
@@ -330,6 +358,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
+      if (e.code == 'CATEGORY_NAME_DUPLICATE' || e.code == 'DUPLICATE_NAME') {
+        _nameServerError = l.categoryFormNameDuplicate;
+        _nameServerErrorFor = _nameKey(w.name, w.parentId);
+        _formKey.currentState?.validate();
+        return;
+      }
       showAppSnackBarOn(pageMessenger!, _errorText(e, l), tone: Tone.danger);
       return;
     }
@@ -401,37 +435,24 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     return parent == null ? null : CategoryTree.resolveIconCode(parent, all);
   }
 
-  /// The chosen parent from the list, or null (none / not loaded).
-  Category? _parentCategory(List<Category> all) {
+  /// The parent shown in the row, root -> parent, from SERVER paths only:
+  /// the detail's `path` while the parent is unchanged, the picked row's own
+  /// path + itself after a pick. Null = no parent (or not known yet).
+  List<CategoryPathItem>? _parentChain() {
     final id = working.parentId;
     if (id == null) return null;
-    for (final c in all) {
-      if (c.id == id) return c;
+    final row = _detail ?? _persisted;
+    if (row != null && row.parentId == id && row.path.isNotEmpty) {
+      return row.path;
     }
-    return null;
+    return _pickedParent?.id == id ? _pickedParentChain : null;
   }
 
-  String? _parentBreadcrumb(List<Category> all) {
-    if (working.parentId == null) return null;
-    // Unchanged parent: the row's own server path.
-    final row = _persisted;
-    if (row != null &&
-        row.parentId == working.parentId &&
-        row.path.isNotEmpty) {
-      return row.path.map((p) => p.name).join(' › ');
-    }
-    final parent = all.firstWhere(
-      (c) => c.id == working.parentId,
-      orElse: _previewCategory,
-    );
-    final ancestors = CategoryTree.breadcrumb(parent, all);
-    return ancestors.isEmpty ? parent.name : '$ancestors › ${parent.name}';
-  }
+  String? _parentBreadcrumb() => _parentChain()?.map((p) => p.name).join(' › ');
 
   Future<void> _openIconMaker() async {
     final l = AppLocalizations.of(context)!;
-    final all = context.read<CategoriesCubit>().state.categories;
-    final breadcrumb = _parentBreadcrumb(all);
+    final breadcrumb = _parentBreadcrumb();
     final result = await showIconMakerSheet(
       context: context,
       type: IconType.category,
@@ -486,7 +507,19 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     );
     if (!mounted || result == null) return;
     if (result is CategoryPickerSelected) {
-      applyChange(working.copyWith(parentId: result.category.id));
+      final picked = result.category;
+      setState(() {
+        _pickedParent = picked;
+        _pickedParentChain = [
+          ...picked.path,
+          CategoryPathItem(
+            id: picked.id,
+            name: picked.name,
+            iconCode: CategoryTree.resolveIconCode(picked, all),
+          ),
+        ];
+      });
+      applyChange(working.copyWith(parentId: picked.id));
     } else if (result is CategoryPickerCleared) {
       applyChange(working.copyWith(clearParent: true));
     }
@@ -565,8 +598,66 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     return name.isEmpty ? l.categoriesTitle : name;
   }
 
-  /// [topInset] / [bottomInset] clear the transparent top bar and the
-  /// floating nav (read from a context inside the Scaffold body).
+  /// Instant save of the report switch in view mode (a live toggle): one
+  /// update with only that field changed; reverts with a snackbar on failure.
+  Future<void> _setIncludeLive(bool v) async {
+    final row = _persisted;
+    if (row == null || _includeBusy) return;
+    final l = AppLocalizations.of(context)!;
+    final cubit = context.read<CategoriesCubit>();
+    setState(() {
+      _includeOverride = v;
+      _includeBusy = true;
+    });
+    try {
+      final saved = await cubit.update(row.copyWith(includeInReport: v));
+      if (!mounted) return;
+      _persisted = saved;
+      _detail = saved.withFee(_detail?.isFeeCategory ?? saved.isFeeCategory);
+      resetDraft(_CategoryDraft.fromCategory(saved));
+    } on ApiException catch (e) {
+      if (mounted) {
+        showAppSnackBarOn(pageMessenger!, _errorText(e, l), tone: Tone.danger);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _includeOverride = null;
+          _includeBusy = false;
+        });
+      }
+    }
+  }
+
+  /// "ต.ค. ใช้ไป · 12 รายการ ›" — the month name from the device locale.
+  String _monthLabel(AppLocalizations l, bool income) {
+    final month = DateFormat.MMM(
+      Localizations.localeOf(context).toString(),
+    ).format(DateTime.now());
+    return income
+        ? l.categoryMonthEarnedLabel(month, _monthCount)
+        : l.categoryMonthSpentLabel(month, _monthCount);
+  }
+
+  /// The category's transactions this month (the dashboard drill-down route;
+  /// `type` tells income from expense).
+  VoidCallback? _openMonthTransactions() {
+    final c = _persisted;
+    if (c == null) return null;
+    final now = DateTime.now();
+    final month = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+    final q = Uri(
+      path: '/browse',
+      queryParameters: {
+        'category': c.id,
+        'title': c.name,
+        'month': month,
+        'type': c.type.name,
+      },
+    );
+    return () => openPage(context, q.toString());
+  }
+
   Widget _body(
     AppLocalizations l,
     List<Category> all, {
@@ -574,128 +665,88 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     required double bottomInset,
   }) {
     final editing = isEditing;
-    final preview = _previewCategory();
-    final breadcrumb = _parentBreadcrumb(all);
+    final breadcrumb = _parentBreadcrumb();
+    final chain = _parentChain();
     final canDelete = !_isCreate && !(_persisted?.isSystem ?? true);
-    return DetailPageBody(
+    return DetailLayout(
       // Pull = the page's one read (`GET /categories/:id`); off in create.
       onRefresh: _isCreate ? null : _loadDetail,
       physics: const AlwaysScrollableScrollPhysics(),
       topInset: topInset + AppSpacing.lg,
       bottomInset: AppSpacing.huge + bottomInset,
-      hero: _Header(
-        category: preview,
-        editing: editing,
-        isIncome: working.type == CategoryType.income,
-        onEdit: editing ? null : enterEdit,
-        nameField: HeroNameInput(
-          editing: editing,
-          controller: _nameController,
-          focusNode: _nameFocus,
-          hint: l.commonName,
-          maxLength: TextLimits.name,
-          onEnterEdit: () => enterEdit(focus: _nameFocus),
-          onChanged: (v) => _onText(_TextField.name, v),
-          validator: (v) => _validateName(v, all),
-        ),
-        // maxLength caps the input, so no length validator.
-        descriptionField: HeroDescription(
-          controller: _descriptionController,
-          editing: editing,
-          focusNode: _descriptionFocus,
-          hint: l.commonDescription,
-          maxLength: TextLimits.description,
-          onEnterEdit: () => enterEdit(focus: _descriptionFocus),
-          onChanged: (v) => _onText(_TextField.description, v),
-        ),
-        onIconTap: _openIconMaker,
-        onIconLongPress: _enterEditThenOpenMaker,
+      hero: _hero(l, all, editing),
+      info: InfoBox(
+        rows: [
+          InfoRow(
+            label: l.categoryFormParentLabel,
+            // Parent = its path as chips, from the detail's server `path`.
+            valueChip: chain == null
+                ? null
+                : categoryPathItemsChipPath(context, chain),
+            value: chain == null
+                ? (breadcrumb ?? l.categoryFormParentNone)
+                : null,
+            showChevron: true,
+            // View mode: enter edit, then open the picker.
+            onTap: () {
+              if (!editing) enterEdit();
+              _openParentPicker(all);
+            },
+          ),
+        ],
       ),
-      sections: [
-        // 1 — where it sits. Create also picks the type here (fixed once
-        // saved, spec §3.4 — the hero's chip shows it after that).
-        (first) => SectionCard(
-          first: first,
-          children: [
-            if (_isCreate)
-              DetailRow(
-                label: l.categoryFormTypeLabel,
-                helper: l.categoryFormTypeImmutableHelper,
-                trailing: _typeChoice(l),
-              ),
-            // The parent picker — the row opens the category picker.
-            DetailRow.pick(
-              label: l.categoryFormParentLabel,
-              // Parent = its ancestor path as chips; the text breadcrumb
-              // stays the fallback while the parent isn't in the list.
-              value: _parentCategory(all) == null ? breadcrumb : null,
-              valueChip: _parentCategory(all) == null
-                  ? null
-                  : categoryChipPath(context, _parentCategory(all)!, all: all),
-              emptyText: l.categoryFormParentNone,
-              // View mode: enter edit, then open the picker (an empty parent
-              // is the placeholder — tapping it starts adding one).
-              onTap: () {
-                if (!editing) enterEdit();
-                _openParentPicker(all);
-              },
+      settings: SettingsSection(
+        title: l.categorySectionSettings,
+        description: l.categorySettingsSectionDescription,
+        children: [
+          SettingToggleRow(
+            label: l.categoryFormIncludeInReportLabel,
+            caption: l.categoryFormIncludeInReportHelper,
+            value: editing
+                ? working.includeInReport
+                : (_includeOverride ?? working.includeInReport),
+            // Edit / create edit the draft (no request); view saves at once.
+            submits: !editing,
+            onChanged: editing
+                ? (v) => applyChange(working.copyWith(includeInReport: v))
+                : (_persisted == null || _includeBusy ? null : _setIncludeLive),
+          ),
+          // Expense categories only, and only once saved (needs an id).
+          if (_persisted != null && working.type == CategoryType.expense)
+            SettingToggleRow(
+              label: l.categoryFeeSwitchLabel,
+              caption: l.categoryFeeSwitchHelper,
+              value: _detail?.isFeeCategory ?? false,
+              onChanged: _feeBusy ? null : _setFeeCategory,
             ),
-          ],
+        ],
+      ),
+      note: NoteSection(
+        label: l.commonNote,
+        editing: editing,
+        text: working.note,
+        hint: l.commonLongPressToEdit,
+        onLongPress: () => enterEdit(focus: _noteFocus),
+        editField: DetailTextField(
+          label: l.commonNote,
+          controller: _noteController,
+          editing: true,
+          focusNode: _noteFocus,
+          maxLines: 3,
+          maxLength: TextLimits.note,
+          onChanged: (v) => _onText(_TextField.note, v),
         ),
-        // 2 — the note always shows, empty or not (owner rule), with the
-        // long-press hint in view mode. (The description is in the hero.)
-        (first) => SectionCard(
-          first: first,
-          children: [
-            DetailStacked(
-              label: l.commonNote,
-              child: AppInput.inline(
-                editing: editing,
-                controller: _noteController,
-                focusNode: _noteFocus,
-                maxLines: 3,
-                maxLength: TextLimits.note,
-                viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
-                onEnterEdit: () => enterEdit(focus: _noteFocus),
-                onChanged: (v) => _onText(_TextField.note, v),
-              ),
-            ),
-          ],
-        ),
-        // 3 — การตั้งค่า.
-        (first) => SectionCard(
-          first: first,
-          title: l.categorySectionSettings,
-          description: l.categorySettingsSectionDescription,
-          children: [
-            DetailRow(
-              label: l.categoryFormIncludeInReportLabel,
-              helper: l.categoryFormIncludeInReportHelper,
-              trailing: AppSwitch(
-                value: working.includeInReport,
-                onChanged: (v) =>
-                    applyChange(working.copyWith(includeInReport: v)),
-              ),
-            ),
-            // Expense categories only, and only once saved (needs an id).
-            if (_persisted != null && working.type == CategoryType.expense)
-              DetailRow(
-                label: l.categoryFeeSwitchLabel,
-                helper: l.categoryFeeSwitchHelper,
-                trailing: AppSwitch(
-                  value: _detail?.isFeeCategory ?? false,
-                  onChanged: _feeBusy ? null : _setFeeCategory,
+      ),
+      endZone: editing && canDelete
+          ? EndZone(
+              actions: [
+                EndZoneAction(
+                  kind: EndZoneKind.delete,
+                  label: l.categoryDelete,
+                  consequence: l.categoryDeleteConsequence,
+                  onTap: isSaving ? null : _delete,
                 ),
-              ),
-          ],
-        ),
-      ],
-      // การจัดการ — edit mode only, last section (system rows can't be
-      // deleted).
-      manage: editing && canDelete
-          ? ManageSection(
-              deleteLabel: l.categoryDelete,
-              onDelete: isSaving ? null : _delete,
+              ],
             )
           : null,
       metaLines: _isCreate
@@ -708,126 +759,119 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     );
   }
 
-  String? _validateName(String? v, List<Category> all) {
+  Widget _hero(AppLocalizations l, List<Category> all, bool editing) {
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final isIncome = working.type == CategoryType.income;
+    final typeColor = isIncome ? palette.income : palette.expense;
+    final iconCode = _resolvedDisplayIconCode();
+    final typeLabel = isIncome ? l.categoryTypeIncome : l.categoryTypeExpense;
+    final typeIcon = isIncome ? AppIcons.income : AppIcons.expense;
+    final Widget typeChip = _isCreate
+        ? OptionMenuAnchor<CategoryType>(
+            selected: working.type,
+            // Changing the type clears the parent (it belongs to the type).
+            onSelected: (t) =>
+                applyChange(working.copyWith(type: t, clearParent: true)),
+            options: [
+              SheetOption(
+                value: CategoryType.expense,
+                label: l.categoryTypeExpense,
+              ),
+              SheetOption(
+                value: CategoryType.income,
+                label: l.categoryTypeIncome,
+              ),
+            ],
+            builder: (context, toggle) => AppChip(
+              label: typeLabel,
+              icon: typeIcon,
+              color: typeColor,
+              selected: true,
+              trailing: AppChipTrailing.dropdown,
+              onTap: toggle,
+            ),
+          )
+        : AppChip(
+            label: typeLabel,
+            icon: typeIcon,
+            color: typeColor,
+            selected: true,
+          );
+    final style = HeroStyle.tinted(
+      color: iconCode.tintFor(palette, fallback: typeColor),
+      glyph: AppIcons.category,
+    );
+    final description = HeroDescription(
+      controller: _descriptionController,
+      editing: editing,
+      focusNode: _descriptionFocus,
+      hint: l.commonDescription,
+      maxLength: TextLimits.description,
+      onEnterEdit: () => enterEdit(focus: _descriptionFocus),
+      onChanged: (v) => _onText(_TextField.description, v),
+    );
+    if (editing) {
+      return HeroCard(
+        style: style,
+        editing: true,
+        chips: [typeChip],
+        icon: EditableCircle(
+          size: 44,
+          onTap: _openIconMaker,
+          child: IconDisplay(
+            type: IconType.category,
+            size: 44,
+            iconCode: iconCode,
+          ),
+        ),
+        name: HeroNameInput(
+          editing: true,
+          controller: _nameController,
+          focusNode: _nameFocus,
+          hint: l.commonName,
+          maxLength: TextLimits.name,
+          onChanged: (v) => _onText(_TextField.name, v),
+          validator: _validateName,
+        ),
+        description: description,
+      );
+    }
+    return HeroCard(
+      style: style,
+      chips: [typeChip],
+      onEdit: enterEdit,
+      icon: EditableCircle(
+        size: 40,
+        onLongPress: _enterEditThenOpenMaker,
+        child: IconDisplay(
+          type: IconType.category,
+          size: 40,
+          iconCode: iconCode,
+        ),
+      ),
+      description: description,
+      number: _persisted == null
+          ? null
+          : HeroNumber(
+              label: _monthLabel(l, isIncome),
+              onLabelTap: _openMonthTransactions(),
+              color: typeColor,
+              value: MoneyText(_monthSpent),
+            ),
+    );
+  }
+
+  String? _validateName(String? v) {
     final l = AppLocalizations.of(context)!;
     final name = v?.trim() ?? '';
     if (name.isEmpty) return l.categoryFormNameRequired;
     if (name.length > TextLimits.name) return l.categoryFormNameTooLong;
-    if (CategoryTree.hasSiblingWithName(
-      name: name,
-      parentId: working.parentId,
-      type: working.type,
-      all: all,
-      excludeId: _persisted?.id,
-    )) {
-      return l.categoryFormNameDuplicate;
+    // Duplicate sibling: the server decides (422 CATEGORY_NAME_DUPLICATE).
+    if (_nameServerError != null &&
+        _nameServerErrorFor == _nameKey(name, working.parentId)) {
+      return _nameServerError;
     }
     return null;
-  }
-
-  /// Create only: the expense / income [AppChip] pair (changing it
-  /// clears the parent). Once saved the type is the hero's chip.
-  Widget _typeChoice(AppLocalizations l) {
-    Widget pill(CategoryType t, String label) => AppChip(
-      label: label,
-      color: t == CategoryType.income
-          ? Theme.of(context).extension<AppColors>()!.income
-          : Theme.of(context).extension<AppColors>()!.expense,
-      selected: working.type == t,
-      onTap: () => applyChange(working.copyWith(type: t, clearParent: true)),
-    );
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        pill(CategoryType.expense, l.categoryTypeExpense),
-        const SizedBox(width: AppSpacing.sm),
-        pill(CategoryType.income, l.categoryTypeIncome),
-      ],
-    );
-  }
-}
-
-// ────────────────────────────────────────────────────────────────────
-// Hero — kit [HeaderCard] with its top row (owner 2026-10-11) and the
-// category's accent border:
-//
-//   [− รายจ่าย]                                    ✏️
-//   (icon)  name
-//           (the parent path lives in the หมวดหลัก row, not here)
-//
-// View mode: ✏️ → edit; long-press the icon → edit + maker. Edit mode:
-// tap the icon → maker.
-// ────────────────────────────────────────────────────────────────────
-
-class _Header extends StatelessWidget {
-  const _Header({
-    required this.category,
-    required this.editing,
-    required this.isIncome,
-    required this.nameField,
-    required this.descriptionField,
-    required this.onIconTap,
-    required this.onIconLongPress,
-    this.onEdit,
-  });
-
-  final Category category;
-  final bool editing;
-  final bool isIncome;
-  final Widget nameField;
-  final Widget descriptionField;
-  final VoidCallback onIconTap;
-  final VoidCallback onIconLongPress;
-
-  /// The ✏️ chip (view mode → edit); null while editing.
-  final VoidCallback? onEdit;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final hidden = !category.includeInReport;
-    return HeaderCard(
-      accent: category.iconCode.tintFor(
-        palette,
-        fallback: isIncome ? palette.income : palette.expense,
-      ),
-      glyph: AppIcons.category,
-      onEdit: onEdit,
-      // The row keeps its height without ✏️ (edit mode), so nothing below
-      // moves.
-      topRow: [
-        AppChip(
-          label: isIncome ? l.categoryTypeIncome : l.categoryTypeExpense,
-          icon: isIncome ? AppIcons.income : AppIcons.expense,
-          color: isIncome
-              ? Theme.of(context).extension<AppColors>()!.income
-              : Theme.of(context).extension<AppColors>()!.expense,
-          selected: true,
-        ),
-        if (hidden)
-          AppChip(
-            label: l.categoryHiddenFromReport,
-            icon: AppIcons.hidden,
-            tone: AppChipTone.neutral,
-            selected: true,
-          ),
-      ],
-      // EditableCircle keeps a constant footprint with or without onTap,
-      // so the name column never shifts between modes.
-      leading: EditableCircle(
-        size: 44,
-        onTap: editing ? onIconTap : null,
-        onLongPress: editing ? null : onIconLongPress,
-        child: IconDisplay(
-          type: IconType.category,
-          size: 44,
-          iconCode: category.iconCode,
-        ),
-      ),
-      title: nameField,
-      description: descriptionField,
-    );
   }
 }
 

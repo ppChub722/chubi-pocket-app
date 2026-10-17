@@ -46,6 +46,7 @@ import 'debt_entry_form.dart';
 import 'saving_entry_form.dart';
 import 'draft_form.dart';
 import 'event_pick.dart';
+import 'recurring_link.dart';
 import 'tx_summary_title.dart';
 
 /// The `+` quick create (owner design 2026-10-08). A near-full-height sheet
@@ -340,6 +341,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
   EventTarget? _event;
 
+  /// The รายการประจำ pick: held until the transaction exists, then linked.
+  final _link = RecurringLinkHandle();
+
   /// The event pick, unless it's a transfer (kept for switching back).
   EventTarget? get _activeEvent => typeCanJoinEvent(_c.type) ? _event : null;
   bool _saving = false;
@@ -527,6 +531,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   @override
   void initState() {
     super.initState();
+    _link.addListener(_onLinkChanged);
     final type = widget.initialType;
     if (type != null) _c.setType(type);
     final toAccount = widget.initialToAccount;
@@ -688,7 +693,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     setState(() => _saving = true);
     try {
       await pending.updateDraft(id, _c.toDraft());
-      final result = await pending.submit([id]);
+      final result = await pending.submitOne(id);
       final failed = result.failed[id];
       if (failed != null) {
         if (!mounted) return;
@@ -793,7 +798,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     setState(() => _saving = true);
     try {
       await pending.updateDraft(id, _savingDraft());
-      final result = await pending.submit([id]);
+      final result = await pending.submitOne(id);
       final failed = result.failed[id];
       if (failed != null) {
         if (!mounted) return;
@@ -892,6 +897,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   @override
   void dispose() {
     _c.dispose();
+    _link.dispose();
     _debt.dispose();
     _sav.dispose();
     super.dispose();
@@ -1109,6 +1115,41 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
+  // ── Recurring link ────────────────────────────────────────────────
+
+  void _onLinkChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _pickRecurring() => _link.choose(
+    context,
+    type: _c.type,
+    createRoute: recurringCreateRoute(
+      type: _c.type,
+      amount: _c.amountValue,
+      categoryId: _c.isTransfer ? null : _c.category?.id,
+      accountId: _c.account?.id,
+      name: _c.description.text,
+    ),
+  );
+
+  /// Right after the create: the link call for the new [txId] (one extra
+  /// call), then the amount question as a dialog. Returns a warning text when
+  /// the link failed (the transaction is saved either way).
+  Future<String?> _linkAfterCreate(String? txId) async {
+    if (txId == null || _link.candidateFor(_c.type) == null) return null;
+    String? warn;
+    final r = await _link.link(context, txId, error: (m) => warn = m);
+    if (r == null || !mounted) return warn;
+    await askRecurringAmountAfterCreate(
+      context,
+      _link,
+      error: (m) => warn = m,
+      done: (_) {},
+    );
+    return warn;
+  }
+
   // ── Event ─────────────────────────────────────────────────────────
 
   Future<void> _pickEvent() async {
@@ -1247,6 +1288,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     setState(() => _saving = true);
     String? warn;
     var savedAsUpcoming = false;
+    String? newTxId;
     try {
       if (event == null) {
         // ONE call (API v2): tags + splits ride in the create body, and the
@@ -1265,6 +1307,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           splits: splits.isEmpty ? null : splits,
         );
         accounts.patchBalances(saved.accountBalances);
+        newTxId = saved.rows.firstOrNull?.id;
         // A date after today: an upcoming item, not a transaction.
         if (saved.isUpcoming) savedAsUpcoming = true;
       } else {
@@ -1291,6 +1334,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           RemoveFromEvent() => throw StateError('nothing to remove from'),
         };
         final txId = result.transactionId;
+        newTxId = txId;
         if (txId != null && tagIds.isNotEmpty) {
           try {
             await txRepo.setTags(txId, tagIds);
@@ -1304,6 +1348,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         // The answer carries the new bill's wallet balance: patched in place.
         accounts.patchBalances(result.accountBalances);
       }
+      warn ??= await _linkAfterCreate(newTxId);
       await _remember();
       // Stay where the user is: close + snackbar, never a tab switch or a
       // page push — an event bill too (owner 2026-10-10).
@@ -1464,6 +1509,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                 // the อีเวนต์ row only exists when creating, for a
                 // type that can join one ([typeCanJoinEvent]).
                 splitsCollapsible: !_draftLike && !_isEvent,
+                recurringSlot: _recurringSlot(l),
                 eventSlot: !_draftLike && !_isEvent && typeCanJoinEvent(_c.type)
                     ? SplitEventSlot(
                         name: eventTargetName(l, _event),
@@ -1475,6 +1521,19 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                     : null,
               ),
       ),
+    );
+  }
+
+  /// The รายการประจำ row — a new transaction only (not a draft / event row).
+  SplitRecurringSlot? _recurringSlot(AppLocalizations l) {
+    if (_draftLike || _isEvent) return null;
+    return _link.slot(
+      context,
+      type: _c.type,
+      onTap: _pickRecurring,
+      onClear: _link.clear,
+      error: _toast,
+      done: _toast,
     );
   }
 

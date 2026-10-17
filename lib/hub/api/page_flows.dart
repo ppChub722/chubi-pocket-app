@@ -116,6 +116,15 @@ const List<PageFlow> pageFlows = [
         note: 'refs, tags, event, transfer twin, splits with persons',
       ),
     ]),
+    FlowStep.action('Row "รายการประจำ" picked (ผูกกับ)', [
+      FlowCall(
+        'linkRecurringItem',
+        note: 'binds this tx to the period occurrence',
+      ),
+    ]),
+    FlowStep.action('Ask "อัปเดตยอดรายการประจำ" → อัปเดต', [
+      FlowCall('updateRecurring', note: 'amount only'),
+    ]),
     FlowStep.action('Button "บันทึก" (edit)', [
       FlowCall(
         'updateTransaction',
@@ -157,6 +166,19 @@ const List<PageFlow> pageFlows = [
       today:
           '3 calls on first open (GET /accounts, /categories, /tags), then cached',
     ),
+    FlowStep.action('Recurring picker opened (ผูกกับ)', [
+      FlowCall(
+        'listRecurring',
+        note:
+            'for_type = the draft type; active settings with their current occurrence',
+      ),
+    ]),
+    FlowStep.action('After create with a recurring picked', [
+      FlowCall(
+        'linkRecurringItem',
+        note: 'one extra call right after the tx exists',
+      ),
+    ]),
     FlowStep.action('Button "บันทึก"', [
       FlowCall(
         'createTransaction',
@@ -227,6 +249,12 @@ const List<PageFlow> pageFlows = [
         note: 'returns rows + wallet balances + badges',
       ),
     ]),
+    FlowStep.action('Button "ยืนยันทั้งหมดที่พร้อม"', [
+      FlowCall('submitReadyPending', note: 'every draft with no needs_input'),
+    ]),
+    FlowStep.action('Sheet "ยืนยัน" (one draft)', [
+      FlowCall('submitOnePending', note: 'returns rows + balances + badges'),
+    ]),
     FlowStep.action('Add drafts → "บันทึก"', [FlowCall('createPending')]),
     FlowStep.action('Edit a draft → "บันทึก"', [FlowCall('updatePending')]),
     FlowStep.action('Discard one draft', [FlowCall('deletePending')]),
@@ -262,6 +290,9 @@ const List<PageFlow> pageFlows = [
     ]),
     FlowStep.action('Button "บันทึก" (edit)', [FlowCall('updateAccount')]),
     FlowStep.action('Button "เก็บถาวร"', [FlowCall('archiveAccount')]),
+    FlowStep.action('Button "ลบ"', [
+      FlowCall('deleteAccount', note: 'real delete; owner only'),
+    ]),
     FlowStep.action('Button "กู้คืน"', [FlowCall('restoreAccount')]),
     FlowStep.action('Button "ปรับยอด"', [FlowCall('adjustAccountBalance')]),
     FlowStep.action('Add an identifier', [FlowCall('addAccountIdentifier')]),
@@ -317,6 +348,9 @@ const List<PageFlow> pageFlows = [
       FlowCall('markNotificationActioned'),
     ]),
     FlowStep.action('Swipe an item', [FlowCall('dismissNotification')]),
+    FlowStep.action('Undo / กู้คืน a hidden item', [
+      FlowCall('restoreNotification'),
+    ]),
     FlowStep.action('Button "อ่านทั้งหมด"', [FlowCall('readAllNotifications')]),
     FlowStep.action('Button "ลบ"', [FlowCall('deleteNotification')]),
     FlowStep.action('Link request opened', [FlowCall('getLinkRequestSender')]),
@@ -382,6 +416,15 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Button "ปิดบัญชี"', [FlowCall('deactivateMe')]),
     FlowStep.action('Button "เปิดบัญชีอีกครั้ง"', [FlowCall('reactivateMe')]),
     FlowStep.action('Icon packs opened (lazy)', [FlowCall('listMyPacks')]),
+  ]),
+  PageFlow('archived', 'The archived hub (ที่เก็บถาวร) and its restores.', [
+    FlowStep.open([FlowCall('getMyArchived', note: 'every kind, one call')]),
+    FlowStep.action('กู้คืน (wallet)', [FlowCall('restoreAccount')]),
+    FlowStep.action('กู้คืน (budget)', [FlowCall('restoreBudget')]),
+    FlowStep.action('กู้คืน (goal)', [FlowCall('restoreSavingGoal')]),
+    FlowStep.action('กู้คืน (event)', [FlowCall('restoreProject')]),
+    FlowStep.action('กู้คืน (contact)', [FlowCall('restoreContact')]),
+    FlowStep.action('กู้คืน (recurring)', [FlowCall('restoreRecurring')]),
   ]),
   PageFlow('auth', 'Sign in, register, sign out, app version.', [
     FlowStep.open([FlowCall('getAppVersion', note: 'boot / resume')]),

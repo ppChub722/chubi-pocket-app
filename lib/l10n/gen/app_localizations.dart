@@ -2690,6 +2690,12 @@ abstract class AppLocalizations {
   /// **'What you get and what happens automatically'**
   String get settingsNotificationsHint;
 
+  /// No description provided for @settingsNotificationsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{on} on · {auto} automatic'**
+  String settingsNotificationsSummary(int on, int auto);
+
   /// No description provided for @settingsDefaultCurrencyHint.
   ///
   /// In en, this message translates to:
@@ -2713,18 +2719,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Notifications'**
   String get notificationsTitle;
-
-  /// No description provided for @notificationsTabAll.
-  ///
-  /// In en, this message translates to:
-  /// **'All'**
-  String get notificationsTabAll;
-
-  /// No description provided for @notificationsTabUnread.
-  ///
-  /// In en, this message translates to:
-  /// **'Unread'**
-  String get notificationsTabUnread;
 
   /// No description provided for @notificationsMarkAllRead.
   ///
@@ -2761,18 +2755,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{actor} split a bill with you'**
   String notifSplitCreated(String actor);
-
-  /// No description provided for @notifSplitPaid.
-  ///
-  /// In en, this message translates to:
-  /// **'{actor} paid back their share'**
-  String notifSplitPaid(String actor);
-
-  /// No description provided for @notifSplitReceived.
-  ///
-  /// In en, this message translates to:
-  /// **'{actor} confirmed your payment'**
-  String notifSplitReceived(String actor);
 
   /// No description provided for @notifProjectTxForYou.
   ///
@@ -2864,12 +2846,6 @@ abstract class AppLocalizations {
   /// **'Someone splits a bill with me'**
   String get notifTypeSplitCreated;
 
-  /// No description provided for @notifTypeSplitPaid.
-  ///
-  /// In en, this message translates to:
-  /// **'Someone pays back their share'**
-  String get notifTypeSplitPaid;
-
   /// No description provided for @notifTypeProjectTxForYou.
   ///
   /// In en, this message translates to:
@@ -2894,23 +2870,11 @@ abstract class AppLocalizations {
   /// **'Added to an event'**
   String get notifTypeProjectAdded;
 
-  /// No description provided for @notifSettingsAutoHint.
-  ///
-  /// In en, this message translates to:
-  /// **'\"Auto\" = the button is pressed for you as soon as the notification arrives. Turn a type off and nothing happens for it. Invites and requests stay on — they need an answer.'**
-  String get notifSettingsAutoHint;
-
   /// No description provided for @notifAutoAddDebt.
   ///
   /// In en, this message translates to:
   /// **'Auto: add to my debts'**
   String get notifAutoAddDebt;
-
-  /// No description provided for @notifAutoRecordPayment.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto: record the receipt'**
-  String get notifAutoRecordPayment;
 
   /// No description provided for @notifAutoCopyToBook.
   ///
@@ -2924,23 +2888,11 @@ abstract class AppLocalizations {
   /// **'Auto: update my copy to match'**
   String get notifAutoUpdateCopy;
 
-  /// No description provided for @notifAutoResolveProject.
-  ///
-  /// In en, this message translates to:
-  /// **'Also add event rows I paid to my own book'**
-  String get notifAutoResolveProject;
-
   /// No description provided for @notifActionAddDebt.
   ///
   /// In en, this message translates to:
-  /// **'Add to my debts'**
+  /// **'Add to my payables'**
   String get notifActionAddDebt;
-
-  /// No description provided for @notifActionRecordReceipt.
-  ///
-  /// In en, this message translates to:
-  /// **'Record receipt'**
-  String get notifActionRecordReceipt;
 
   /// No description provided for @notifActionCopyToBook.
   ///
@@ -11646,6 +11598,438 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t refresh · showing the last data'**
   String get fpEventsLoadFailed;
+
+  /// No description provided for @categoryDeleteConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted for good · its transactions will have no category'**
+  String get categoryDeleteConsequence;
+
+  /// No description provided for @categoryMonthSpentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{month} spent · {count} transactions ›'**
+  String categoryMonthSpentLabel(String month, int count);
+
+  /// No description provided for @categoryMonthEarnedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{month} received · {count} transactions ›'**
+  String categoryMonthEarnedLabel(String month, int count);
+
+  /// No description provided for @notifSettingsLegend.
+  ///
+  /// In en, this message translates to:
+  /// **'Off: no notice · Notify: a notice with a one-tap button · Auto: done for you, then you are told what was done'**
+  String get notifSettingsLegend;
+
+  /// No description provided for @notifStateOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get notifStateOff;
+
+  /// No description provided for @notifStateNotify.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify'**
+  String get notifStateNotify;
+
+  /// No description provided for @notifStateAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get notifStateAuto;
+
+  /// No description provided for @notifGroupRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring'**
+  String get notifGroupRecurring;
+
+  /// No description provided for @notifTypeRecurringDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring items are due'**
+  String get notifTypeRecurringDue;
+
+  /// No description provided for @notifTypeRecurringDueHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drafts always wait in Pending · Off = no notice'**
+  String get notifTypeRecurringDueHint;
+
+  /// No description provided for @notifTypeRecurringEnding.
+  ///
+  /// In en, this message translates to:
+  /// **'A recurring is about to end'**
+  String get notifTypeRecurringEnding;
+
+  /// No description provided for @notifTypeRecurringEndingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A few items left · extend it?'**
+  String get notifTypeRecurringEndingHint;
+
+  /// No description provided for @notifTypeRequestsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs an answer, so it can\'t be turned off'**
+  String get notifTypeRequestsHint;
+
+  /// No description provided for @settingsSectionApp.
+  ///
+  /// In en, this message translates to:
+  /// **'App'**
+  String get settingsSectionApp;
+
+  /// No description provided for @settingsSectionMoney.
+  ///
+  /// In en, this message translates to:
+  /// **'Money'**
+  String get settingsSectionMoney;
+
+  /// No description provided for @settingsSectionData.
+  ///
+  /// In en, this message translates to:
+  /// **'Data'**
+  String get settingsSectionData;
+
+  /// No description provided for @settingsCurrencyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes the label only, amounts are not converted'**
+  String get settingsCurrencyHint;
+
+  /// No description provided for @settingsMainWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Main wallet'**
+  String get settingsMainWallet;
+
+  /// No description provided for @settingsMainWalletHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Used as the default when recording'**
+  String get settingsMainWalletHint;
+
+  /// No description provided for @settingsMainWalletNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get settingsMainWalletNone;
+
+  /// No description provided for @settingsArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get settingsArchived;
+
+  /// No description provided for @settingsArchivedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallets, budgets, goals, events, contacts'**
+  String get settingsArchivedHint;
+
+  /// No description provided for @settingsExportCsv.
+  ///
+  /// In en, this message translates to:
+  /// **'Export CSV'**
+  String get settingsExportCsv;
+
+  /// No description provided for @settingsComingIn04.
+  ///
+  /// In en, this message translates to:
+  /// **'0.4'**
+  String get settingsComingIn04;
+
+  /// No description provided for @profileSectionSecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get profileSectionSecurity;
+
+  /// No description provided for @settingsSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save, try again'**
+  String get settingsSaveFailed;
+
+  /// No description provided for @notifTileAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get notifTileAll;
+
+  /// No description provided for @notifTileNeedsAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs answer'**
+  String get notifTileNeedsAnswer;
+
+  /// No description provided for @notifTileUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get notifTileUnread;
+
+  /// No description provided for @notifTileHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get notifTileHidden;
+
+  /// No description provided for @notifCardCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs answer'**
+  String get notifCardCaption;
+
+  /// No description provided for @notifCardMain.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing} other{{count} items}}'**
+  String notifCardMain(int count);
+
+  /// No description provided for @notifCardUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'· unread {count}'**
+  String notifCardUnread(int count);
+
+  /// No description provided for @notifReadAllTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as read'**
+  String get notifReadAllTooltip;
+
+  /// No description provided for @notifSettingsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification settings'**
+  String get notifSettingsTooltip;
+
+  /// No description provided for @notifRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get notifRestore;
+
+  /// No description provided for @notifUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get notifUndo;
+
+  /// No description provided for @notifEmptyNeedsAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing waiting for an answer'**
+  String get notifEmptyNeedsAnswer;
+
+  /// No description provided for @notifEmptyHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'No hidden notifications'**
+  String get notifEmptyHidden;
+
+  /// No description provided for @notifActionExtend.
+  ///
+  /// In en, this message translates to:
+  /// **'Extend'**
+  String get notifActionExtend;
+
+  /// No description provided for @notifActionLetEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Let it end'**
+  String get notifActionLetEnd;
+
+  /// No description provided for @notifActionOpenPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Open pending ›'**
+  String get notifActionOpenPending;
+
+  /// No description provided for @archivedGroupWallets.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallets'**
+  String get archivedGroupWallets;
+
+  /// No description provided for @archivedGroupBudgets.
+  ///
+  /// In en, this message translates to:
+  /// **'Budgets'**
+  String get archivedGroupBudgets;
+
+  /// No description provided for @archivedGroupGoals.
+  ///
+  /// In en, this message translates to:
+  /// **'Goals'**
+  String get archivedGroupGoals;
+
+  /// No description provided for @archivedGroupEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Events'**
+  String get archivedGroupEvents;
+
+  /// No description provided for @archivedGroupContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts'**
+  String get archivedGroupContacts;
+
+  /// No description provided for @archivedGroupRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring'**
+  String get archivedGroupRecurring;
+
+  /// No description provided for @archivedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived {date}'**
+  String archivedOn(String date);
+
+  /// No description provided for @archivedRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get archivedRestore;
+
+  /// No description provided for @archivedRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored {name}'**
+  String archivedRestored(String name);
+
+  /// No description provided for @archivedEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing archived'**
+  String get archivedEmpty;
+
+  /// No description provided for @archivedEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived items show here. Restore them any time.'**
+  String get archivedEmptyMessage;
+
+  /// No description provided for @txRecurringPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a recurring'**
+  String get txRecurringPick;
+
+  /// No description provided for @txRecurringUnlink.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink'**
+  String get txRecurringUnlink;
+
+  /// No description provided for @recurringPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Link to a recurring'**
+  String get recurringPickerTitle;
+
+  /// No description provided for @recurringPickerGroupRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring'**
+  String get recurringPickerGroupRecurring;
+
+  /// No description provided for @recurringPickerGroupReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment reminders'**
+  String get recurringPickerGroupReminders;
+
+  /// No description provided for @recurringPickerAwaitingAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount pending'**
+  String get recurringPickerAwaitingAmount;
+
+  /// No description provided for @recurringPickerCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a recurring from this transaction'**
+  String get recurringPickerCreate;
+
+  /// No description provided for @recurringPickerEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No recurring to link to'**
+  String get recurringPickerEmpty;
+
+  /// No description provided for @recurringPickerPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Period {date}'**
+  String recurringPickerPeriod(String date);
+
+  /// No description provided for @recurringPickerStatusUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'not yet due'**
+  String get recurringPickerStatusUpcoming;
+
+  /// No description provided for @recurringPickerStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'awaiting confirmation'**
+  String get recurringPickerStatusPending;
+
+  /// No description provided for @recurringPickerStatusNotCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'not paid yet'**
+  String get recurringPickerStatusNotCreated;
+
+  /// No description provided for @recurringPickerStatusReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'enter the amount'**
+  String get recurringPickerStatusReminder;
+
+  /// No description provided for @recurringLinkAskAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'The amount differs from the recurring ({rule} → {tx}). Update the recurring\'s amount too?'**
+  String recurringLinkAskAmount(String rule, String tx);
+
+  /// No description provided for @recurringLinkAskNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get recurringLinkAskNo;
+
+  /// No description provided for @recurringLinkAskYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get recurringLinkAskYes;
+
+  /// No description provided for @recurringLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked to the recurring'**
+  String get recurringLinked;
+
+  /// No description provided for @recurringLinkedAmountUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring amount updated'**
+  String get recurringLinkedAmountUpdated;
+
+  /// No description provided for @recurringLinkAlreadyLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'That period is already linked (or this transaction is linked already)'**
+  String get recurringLinkAlreadyLinked;
 }
 
 class _AppLocalizationsDelegate

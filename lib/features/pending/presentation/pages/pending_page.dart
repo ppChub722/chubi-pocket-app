@@ -61,13 +61,34 @@ class _PendingPageState extends State<PendingPage> {
   List<PendingTransaction> _visible(List<PendingTransaction> all) =>
       switch (_filter) {
         _Filter.all => all,
-        _Filter.manual => all.where((p) => p.source.isManual).toList(),
-        _Filter.others => all.where((p) => !p.source.isManual).toList(),
+        _Filter.manual => all.where((p) => p.source.inManualBucket).toList(),
+        _Filter.others => all.where((p) => !p.source.inManualBucket).toList(),
       };
 
-  Future<void> _submitSelected() => _submit(_selected.toList());
+  /// Confirms the ticked drafts that can go. A draft the server says can't
+  /// be confirmed yet (`can_confirm` false) is never sent: alone, it opens
+  /// the draft sheet to fill what is missing; among others it is skipped
+  /// and counted as not done.
+  Future<void> _submitSelected() async {
+    final byId = {
+      for (final p in context.read<PendingCubit>().state.items) p.id: p,
+    };
+    final blocked = [
+      for (final id in _selected)
+        if (byId[id] != null && !byId[id]!.canConfirm) byId[id]!,
+    ];
+    final ready = [
+      for (final id in _selected)
+        if (byId[id]?.canConfirm ?? true) id,
+    ];
+    if (ready.isEmpty && blocked.isNotEmpty) {
+      await _open(blocked.first);
+      return;
+    }
+    await _submit(ready, skipped: blocked.length);
+  }
 
-  Future<void> _submit(List<String> ids) async {
+  Future<void> _submit(List<String> ids, {int skipped = 0}) async {
     final l = AppLocalizations.of(context)!;
     final pending = context.read<PendingCubit>();
     final accounts = context.read<AccountsCubit>();
@@ -89,7 +110,10 @@ class _PendingPageState extends State<PendingPage> {
       setState(() {
         _submitting = false;
         _selected.removeAll(r.submitted);
-        _lastResult = (done: r.submitted.length, failed: r.failed.length);
+        _lastResult = (
+          done: r.submitted.length,
+          failed: r.failed.length + skipped,
+        );
       });
       if (r.submitted.isNotEmpty) {
         showAppSnackBarOn(
@@ -139,8 +163,11 @@ class _PendingPageState extends State<PendingPage> {
     final state = context.watch<PendingCubit>().state;
     final all = state.items;
     final visible = _visible(all);
-    final manual = all.where((p) => p.source.isManual).length;
-    final others = all.length - manual;
+    // Counts are the server's summary from the last answer, as it is.
+    final summary = state.summary;
+    final manual = summary?.manual ?? 0;
+    final others = summary?.notManual ?? 0;
+    final total = summary?.count ?? 0;
     final pickedVisible = visible.where((p) => _selected.contains(p.id)).length;
     final result = _lastResult;
     // UI only for now — the slip scan itself isn't wired yet. Phone only:
@@ -208,7 +235,7 @@ class _PendingPageState extends State<PendingPage> {
                     AppChip(
                       trailing: AppChipTrailing.dropdown,
                       label: switch (f) {
-                        _Filter.all => l.pendingFilterAll(all.length),
+                        _Filter.all => l.pendingFilterAll(total),
                         _Filter.manual => l.pendingFilterManual(manual),
                         _Filter.others => l.pendingFilterOthers(others),
                       },
@@ -395,8 +422,17 @@ class _PendingCard extends StatelessWidget {
         ? description
         : categoryName ?? l.pendingUntitled;
     final rowTags = r.tags;
+    // Why it can't go yet: the server's `needs_input` (old API: the draft's
+    // own gaps).
+    final needs = item.needsInput;
     final warn = item.lastError != null
         ? pendingErrorText(l, item.lastError!)
+        : needs != null
+        ? (item.needs('type')
+              ? l.pendingErrMissingType
+              : item.needs('amount')
+              ? l.pendingErrMissingAmount
+              : null)
         : d.type == null
         ? l.pendingErrMissingType
         : (d.amount ?? 0) <= 0
@@ -516,11 +552,12 @@ class PendingSavingRow extends StatelessWidget {
     final wallet = item.resolved.account;
     final bucket = item.resolved.goal?.name ?? l.sgv2Spare;
     final note = d.note?.trim() ?? '';
+    final needs = item.needsInput;
     final warn = item.lastError != null
         ? pendingErrorText(l, item.lastError!)
-        : wallet == null
+        : (needs != null ? item.needs('wallet') : wallet == null)
         ? l.pendingSavingNoWallet
-        : (d.amount ?? 0) <= 0
+        : (needs != null ? item.needs('amount') : (d.amount ?? 0) <= 0)
         ? l.pendingErrMissingAmount
         : null;
     final recurring = item.recurringRef;

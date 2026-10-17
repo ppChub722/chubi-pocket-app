@@ -13,6 +13,7 @@ import '../../app/shell/tab_nav.dart';
 import '../../hub/hub_index_screen.dart';
 import '../../hub/hub_page_frame.dart';
 import '../../hub/hub_registry.dart';
+import '../../ui/organisms/page_pop_observer.dart';
 import '../../app/shell/fade_branch_container.dart';
 import '../../features/app_version/presentation/cubit/app_version_cubit.dart';
 import '../../features/app_version/presentation/pages/update_required_page.dart';
@@ -55,6 +56,7 @@ import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/settings/presentation/pages/change_password_page.dart';
 import '../../features/settings/presentation/pages/edit_profile_page.dart';
+import '../../features/archived/presentation/archived_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 
 /// Builds and returns the app's [GoRouter].
@@ -85,6 +87,7 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
   return GoRouter(
     initialLocation: '/',
     debugLogDiagnostics: kDebugMode,
+    observers: [PagePopObserver()],
     refreshListenable: Listenable.merge([
       _StreamToListenable(authCubit.stream),
       if (versionCubit != null) _StreamToListenable(versionCubit.stream),
@@ -155,7 +158,7 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
             StatefulShellBranch(
               routes: _tabRoutes(tab),
               // The + colour follows pushes / pops in every tab.
-              observers: [QuickCreateRouteObserver()],
+              observers: [QuickCreateRouteObserver(), PagePopObserver()],
             ),
         ],
       ),
@@ -251,7 +254,8 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
         // Dashboard drill-down ("เงินไปไหน" → one category in one month).
         // Stays in the dashboard stack with its own list cubit so the
         // transactions tab keeps its filters.
-        // ?category=<id> | ?uncategorized=true, &month=YYYY-MM.
+        // ?category=<id> | ?uncategorized=true, &month=YYYY-MM,
+        // &type=income|expense (default expense).
         GoRoute(
           path: 'browse',
           name: 'dashboard-browse',
@@ -270,7 +274,9 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
                 initialCategoryName: p['category'] == null ? null : p['title'],
                 initialCategoryType: p['category'] == null
                     ? null
-                    : CategoryType.expense,
+                    : (p['type'] == 'income'
+                          ? CategoryType.income
+                          : CategoryType.expense),
                 initialUncategorized: p['uncategorized'] == 'true',
                 initialMonth: month == null
                     ? null
@@ -397,6 +403,12 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
           builder: (context, state) => const NotificationSettingsPage(),
         ),
       ],
+    ),
+    // ที่เก็บถาวร — the archive hub, opened from the settings home.
+    GoRoute(
+      path: '/archived',
+      name: 'archived',
+      builder: (context, state) => const ArchivedPage(),
     ),
   ],
   // Projects (Phase 1b.2)

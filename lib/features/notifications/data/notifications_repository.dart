@@ -12,6 +12,7 @@ class NotificationsPage {
     required this.perPage,
     required this.total,
     required this.totalPages,
+    this.summary = const InboxSummary(),
   });
 
   final List<AppNotification> notifications;
@@ -20,6 +21,9 @@ class NotificationsPage {
   final int perPage;
   final int total;
   final int totalPages;
+
+  /// The card numbers, over all rows (not narrowed by the filter).
+  final InboxSummary summary;
 
   bool get hasMore => page < totalPages;
 }
@@ -33,6 +37,8 @@ class NotificationsRepository {
   Future<NotificationsPage> list({
     String? read,
     String? actioned,
+    String? dismissed,
+    String? awaitsAnswer,
     String? type,
     String? from,
     String? to,
@@ -45,6 +51,8 @@ class NotificationsRepository {
         queryParameters: <String, dynamic>{
           'read': ?read,
           'actioned': ?actioned,
+          'dismissed': ?dismissed,
+          'awaits_answer': ?awaitsAnswer,
           'type': ?type,
           'from': ?from,
           'to': ?to,
@@ -61,6 +69,9 @@ class NotificationsRepository {
         perPage: pag['per_page'] as int,
         total: pag['total'] as int,
         totalPages: pag['total_pages'] as int,
+        summary: InboxSummary.fromJson(
+          res.data!['summary'] as Map<String, dynamic>?,
+        ),
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
@@ -85,28 +96,32 @@ class NotificationsRepository {
   Future<NotificationActionResult> markActioned(String id) =>
       _post('/notifications/$id/actioned');
 
+  /// Un-hides a dismissed row (`POST /notifications/:id/restore`).
+  Future<NotificationActionResult> restore(String id) =>
+      _post('/notifications/$id/restore');
+
   Future<NotificationActionResult> markDismissed(String id) =>
       _post('/notifications/$id/dismiss');
 
-  /// Marks everything read; returns the fresh badges.
-  Future<Badges> markReadAll() async {
+  /// Marks everything read; returns the fresh badges + card numbers.
+  Future<InboxCounts> markReadAll() async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/notifications/read-all',
       );
-      return Badges.fromJson(res.data!['badges'] as Map<String, dynamic>);
+      return InboxCounts.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
-  /// Hard delete; returns the fresh badges.
-  Future<Badges> delete(String id) async {
+  /// Hard delete; returns the fresh badges + card numbers.
+  Future<InboxCounts> delete(String id) async {
     try {
       final res = await _client.dio.delete<Map<String, dynamic>>(
         '/notifications/$id',
       );
-      return Badges.fromJson(res.data!['badges'] as Map<String, dynamic>);
+      return InboxCounts.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
@@ -129,7 +144,6 @@ class NotificationsRepository {
     Set<String>? autoTypes,
     String? defaultAccountId,
     bool clearDefaultAccount = false,
-    bool? autoResolveOwnInProjects,
   }) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(
@@ -137,7 +151,6 @@ class NotificationsRepository {
         data: <String, dynamic>{
           if (mutedTypes != null) 'muted_types': mutedTypes.toList(),
           if (autoTypes != null) 'auto_types': autoTypes.toList(),
-          'auto_resolve_own_in_projects': ?autoResolveOwnInProjects,
           // Explicit null clears it (contract §5).
           if (clearDefaultAccount)
             'default_account_id': null
@@ -159,6 +172,9 @@ class NotificationsRepository {
           res.data!['notification'] as Map<String, dynamic>,
         ),
         badges: Badges.fromJson(res.data!['badges'] as Map<String, dynamic>),
+        summary: InboxSummary.fromJson(
+          res.data!['summary'] as Map<String, dynamic>?,
+        ),
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);

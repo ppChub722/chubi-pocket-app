@@ -50,6 +50,7 @@ enum ShellTab {
     'pending': pending,
     'notifications': notifications,
     'settings': settings,
+    'archived': settings,
     'projects': projects,
     'contacts': contacts,
     'budgets': budgets,

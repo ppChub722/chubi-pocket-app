@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../atoms/connection_scope.dart';
+import 'page_pop_observer.dart';
 import '../tokens/app_durations.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app/app_colors.dart';
@@ -65,16 +66,52 @@ class _PullToRefreshState extends State<PullToRefresh>
   /// The reconnect count last seen — a change means the connection came back.
   int? _reconnects;
 
+  /// Refresh on show (owner 2026-10-17): the page re-runs its ONE page call,
+  /// silently (no pull animation; the page keeps its data and swaps it when
+  /// the answer arrives), whenever it becomes visible again — its shell tab
+  /// is switched back to, or the page opened on top of it is popped.
+  bool? _tabActive;
+  bool? _routeCurrent;
+  int _popsWhenCovered = 0;
+  bool _showRefreshing = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final now = ConnectionScope.reconnectsOf(context);
     final before = _reconnects;
     _reconnects = now;
-    if (before != null && now != before && widget.enabled) {
-      // Back online: re-open the page — the same load a pull would run.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && widget.enabled) widget.onRefresh();
+    var reopen = before != null && now != before;
+
+    final active = TickerMode.valuesOf(context).enabled;
+    final current = ModalRoute.of(context)?.isCurrent ?? true;
+    // A tab brought back to the front.
+    if (_tabActive == false && active) reopen = true;
+    // A PAGE above this one was popped (not a sheet, dialog or menu).
+    if (_routeCurrent != false && !current) {
+      _popsWhenCovered = PagePopObserver.generation;
+    }
+    if (_routeCurrent == false &&
+        current &&
+        PagePopObserver.generation != _popsWhenCovered) {
+      reopen = true;
+    }
+    _tabActive = active;
+    _routeCurrent = current;
+
+    if (reopen && widget.enabled) {
+      // Back online / shown again: re-open the page — the same load a pull
+      // would run.
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted || !widget.enabled || _showRefreshing) return;
+        _showRefreshing = true;
+        try {
+          await widget.onRefresh();
+        } catch (_) {
+          // The page's own load keeps its data and shows its error state.
+        } finally {
+          _showRefreshing = false;
+        }
       });
     }
   }

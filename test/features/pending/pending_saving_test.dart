@@ -64,7 +64,7 @@ class _Repo implements PendingRepository {
   List<String>? submitted;
 
   @override
-  Future<List<PendingTransaction>> list() async => rows;
+  Future<PendingList> list() async => PendingList(items: rows);
 
   @override
   Future<PendingSubmitResult> submit(List<String> ids) async {

@@ -400,6 +400,72 @@ class _RecurringPage extends StatelessWidget {
             );
           },
         ),
+        HubDemo(
+          title: 'RecurringPickerSheet — link a transaction to a recurring',
+          note:
+              'A presentational organism on the PickerSheet shell: groups '
+              '(recurring, then payment reminders with no amount yet), a '
+              'client search, selection = highlight, a pinned create row. '
+              'Opens live with sample rows; the feature wrapper loads the BE '
+              'list (GET /recurring?for_type=).',
+          child: AppButton(
+            label: 'Open the recurring picker',
+            variant: AppButtonVariant.outlined,
+            onPressed: () => showAppSheetCustom<RecurringPickChoice>(
+              context,
+              builder: (ctx) => RecurringPickerSheet(
+                title: 'Link to a recurring',
+                selectedId: 'a',
+                createLabel: 'Create a recurring from this transaction',
+                emptyText: 'No recurring to link to',
+                onPicked: (_) => Navigator.of(ctx).pop(),
+                onCreate: () => Navigator.of(ctx).pop(),
+                groups: const [
+                  RecurringPickGroup(
+                    title: 'Recurring',
+                    rows: [
+                      RecurringPickRow(
+                        id: 'a',
+                        title: 'Car loan',
+                        subtitle: 'Every 16th · Period 16 Oct not paid yet',
+                        leading: AppIcon(AppIcons.recurring),
+                        amount: 3023,
+                        tone: MoneyTone.expense,
+                      ),
+                    ],
+                  ),
+                  RecurringPickGroup(
+                    title: 'Payment reminders',
+                    rows: [
+                      RecurringPickRow(
+                        id: 'b',
+                        title: 'Water bill',
+                        subtitle: 'Every 15th · Period 15 Oct enter the amount',
+                        leading: AppIcon(AppIcons.notifications),
+                        trailingLabel: 'Amount pending',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        HubDemo(
+          title: 'AskCard — an inline question under a row',
+          note:
+              'The link\'s "update the recurring amount too?": message + '
+              'No / Yes. busy disables both while the answer\'s call runs.',
+          child: AskCard(
+            message:
+                'The amount differs from the recurring (฿3,023 → ฿3,100). '
+                'Update the recurring\'s amount too?',
+            noLabel: 'No',
+            yesLabel: 'Update',
+            onNo: () {},
+            onYes: () {},
+          ),
+        ),
       ],
     );
   }

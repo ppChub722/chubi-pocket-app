@@ -1,0 +1,4 @@
+lib/features/accounts/presentation/pages/account_detail_page.dart	1
+lib/features/home/presentation/pages/home_page.dart	1
+lib/features/projects/presentation/pages/project_form_page.dart	1
+lib/features/settings/presentation/pages/change_password_page.dart	1

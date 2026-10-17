@@ -14,17 +14,22 @@ class PendingState extends Equatable {
     this.status = PendingStatus.initial,
     this.error,
     this.knownTotal,
+    this.summary,
   });
 
   final List<PendingTransaction> items;
 
-  /// The drafts total told by the dashboard before the list itself is
-  /// loaded (the top-bar badge needs the number, not the rows). Dropped by
-  /// any other emit — the loaded list is the truth.
+  /// The server's numbers from the last answer (load, submit, discard); the
+  /// chips read them as they are, never counted from the rows.
+  final PendingSummary? summary;
+
   final PendingStatus status;
   final ApiException? error;
   String? get errorMessage => error?.message;
 
+  /// The drafts total told by the dashboard before the list itself is
+  /// loaded (the top-bar badge needs the number, not the rows). Dropped by
+  /// any other emit — the loaded list is the truth.
   final int? knownTotal;
 
   int get count => knownTotal != null && knownTotal! > items.length
@@ -35,14 +40,16 @@ class PendingState extends Equatable {
     List<PendingTransaction>? items,
     PendingStatus? status,
     ApiException? error,
+    PendingSummary? summary,
   }) => PendingState(
     items: items ?? this.items,
     status: status ?? this.status,
     error: error,
+    summary: summary ?? this.summary,
   );
 
   @override
-  List<Object?> get props => [items, status, error, knownTotal];
+  List<Object?> get props => [items, status, error, knownTotal, summary];
 }
 
 /// App-scoped drafts cache — the top-bar badge, the dashboard block and the
@@ -73,8 +80,14 @@ class PendingCubit extends Cubit<PendingState> with Clearable {
   Future<void> load() async {
     emit(state.copyWith(status: PendingStatus.loading));
     try {
-      final items = await _repo.list();
-      emit(PendingState(items: items, status: PendingStatus.loaded));
+      final r = await _repo.list();
+      emit(
+        PendingState(
+          items: r.items,
+          status: PendingStatus.loaded,
+          summary: r.summary,
+        ),
+      );
     } catch (e, st) {
       emit(
         state.copyWith(
@@ -103,18 +116,19 @@ class PendingCubit extends Cubit<PendingState> with Clearable {
 
   Future<void> discard(String id) async {
     final r = await _repo.delete(id);
-    _drop({id, ...r.discarded, ...r.skipped});
+    _drop({id, ...r.discarded, ...r.skipped}, r.summary);
   }
 
   /// One call for [ids]; they leave the list.
   Future<void> discardMany(List<String> ids) async {
     final r = await _repo.discard(ids);
-    _drop({...r.discarded, ...r.skipped});
+    _drop({...r.discarded, ...r.skipped}, r.summary);
   }
 
-  void _drop(Set<String> ids) => emit(
+  void _drop(Set<String> ids, PendingSummary? summary) => emit(
     state.copyWith(
       items: state.items.where((p) => !ids.contains(p.id)).toList(),
+      summary: summary,
     ),
   );
 
@@ -122,8 +136,18 @@ class PendingCubit extends Cubit<PendingState> with Clearable {
   /// ones are replaced by the server's copy (with its reason; dropped when
   /// the server no longer has it). The caller patches wallets from
   /// `accountBalances` and calls `TransactionsCubit.bookChanged()`.
-  Future<PendingSubmitResult> submit(List<String> ids) async {
-    final result = await _repo.submit(ids);
+  Future<PendingSubmitResult> submit(List<String> ids) async =>
+      _applySubmit(await _repo.submit(ids));
+
+  /// "Confirm everything ready" — one call, applied like [submit].
+  Future<PendingSubmitResult> submitReady() async =>
+      _applySubmit(await _repo.submitReady());
+
+  /// One draft through `POST /:id/submit`.
+  Future<PendingSubmitResult> submitOne(String id) async =>
+      _applySubmit(await _repo.submitOne(id));
+
+  PendingSubmitResult _applySubmit(PendingSubmitResult result) {
     final done = result.submitted.toSet();
     final gone = {
       for (final id in result.failed.keys)
@@ -136,6 +160,7 @@ class PendingCubit extends Cubit<PendingState> with Clearable {
             if (!done.contains(p.id) && !gone.contains(p.id))
               result.failedDrafts[p.id] ?? p,
         ],
+        summary: result.summary,
       ),
     );
     return result;

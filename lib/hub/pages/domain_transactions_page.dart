@@ -681,6 +681,13 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                     variant: variant,
                     collapsible: variant == SplitEventVariant.compact,
                     event: slot,
+                    recurring: label == 'with event'
+                        ? const SplitRecurringSlot(
+                            name: 'Car loan',
+                            periodLabel: 'Period 16 Oct',
+                            onTap: _noop,
+                          )
+                        : const SplitRecurringSlot(onTap: _noop),
                     splits: _splitSample(variant, people),
                     helper: people
                         ? 'This split will live in the event.'
