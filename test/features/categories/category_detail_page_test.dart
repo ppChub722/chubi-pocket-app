@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:bloc_test/bloc_test.dart';
 import 'package:chubi_pocket/app/shell/quick_create_context.dart';
 import 'package:chubi_pocket/core/network/api_exception.dart';
@@ -15,6 +13,7 @@ import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Auth extends MockCubit<AuthState> implements AuthCubit {}
@@ -40,7 +39,7 @@ void main() {
   late _Categories categories;
   late QuickCreateContext registry;
 
-  Future<void> pump(WidgetTester t, Widget page) async {
+  Future<void> pump(WidgetTester t, Widget page, {GoRouter? router}) async {
     registry = QuickCreateContext();
     addTearDown(registry.dispose);
     final auth = _Auth();
@@ -57,15 +56,32 @@ void main() {
           BlocProvider<UnreadBadgeCubit>.value(value: unread),
           BlocProvider<CategoriesCubit>.value(value: categories),
         ],
-        child: MaterialApp(
-          theme: ThemeData(extensions: [sweetTheme.lightColors]),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en'),
-          builder: (context, child) => AppUiConfig(
-            child: QuickCreateContextScope(registry: registry, child: child!),
-          ),
-          home: page,
+        child: Builder(
+          builder: (context) {
+            final theme = ThemeData(extensions: [sweetTheme.lightColors]);
+            Widget wrap(BuildContext context, Widget? child) => AppUiConfig(
+              child: QuickCreateContextScope(registry: registry, child: child!),
+            );
+            return router == null
+                ? MaterialApp(
+                    theme: theme,
+                    localizationsDelegates:
+                        AppLocalizations.localizationsDelegates,
+                    supportedLocales: AppLocalizations.supportedLocales,
+                    locale: const Locale('en'),
+                    builder: wrap,
+                    home: page,
+                  )
+                : MaterialApp.router(
+                    theme: theme,
+                    localizationsDelegates:
+                        AppLocalizations.localizationsDelegates,
+                    supportedLocales: AppLocalizations.supportedLocales,
+                    locale: const Locale('en'),
+                    builder: wrap,
+                    routerConfig: router,
+                  );
+          },
         ),
       ),
     );
@@ -73,18 +89,42 @@ void main() {
     await t.pump(const Duration(milliseconds: 100));
   }
 
-  void arrange({Future<CategoryDetail> Function()? detail}) {
-    final row = Category.fromJson(_prodJson);
+  void arrange({
+    Future<CategoryDetail> Function()? detail,
+    Map<String, dynamic>? json,
+  }) {
+    final row = Category.fromJson(json ?? _prodJson);
     when(() => categories.state).thenReturn(
       CategoriesState(categories: [row], status: CategoriesStatus.loaded),
     );
-    when(() => categories.byId('cat1')).thenReturn(row);
+    when(() => categories.byId(row.id)).thenReturn(row);
     when(() => categories.loadIfNeeded()).thenAnswer((_) async {});
     when(() => categories.canAddMore).thenReturn(true);
     when(() => categories.fetchDetail(any())).thenAnswer(
-      (_) => (detail ?? () async => CategoryDetail.fromJson(_prodJson))(),
+      (_) =>
+          (detail ?? () async => CategoryDetail.fromJson(json ?? _prodJson))(),
     );
   }
+
+  /// A child row whose parent is NOT in the cubit's list; the detail
+  /// carries the whole path.
+  final childJson = <String, dynamic>{
+    'id': 'cat2',
+    'name': 'Lunch',
+    'type': 'expense',
+    'parent_id': 'p2',
+    'include_in_report': true,
+    'month_spent': 0,
+    'month_count': 0,
+    'path': [
+      {
+        'id': 'p1',
+        'name': 'Eating Out',
+        'icon_code': {'icon': 'food', 'color': 'orange'},
+      },
+      {'id': 'p2', 'name': 'Restaurants'},
+    ],
+  };
 
   setUpAll(() => registerFallbackValue(Category.fromJson(_prodJson)));
   setUp(() => categories = _Categories());
@@ -171,5 +211,98 @@ void main() {
     expect(find.byType(HeroCard), findsOneWidget);
     // Figures from the list row still show.
     expect(find.textContaining('12 transactions'), findsOneWidget);
+  });
+
+  testWidgets('parent chip comes from the detail path, not the list', (
+    t,
+  ) async {
+    // The list holds only the child row — no parent rows at all.
+    arrange(json: childJson);
+    await pump(t, const CategoryDetailPage(editingId: 'cat2'));
+    expect(find.byType(ChipPath), findsOneWidget);
+    final chip = t.widget<ChipPath>(find.byType(ChipPath));
+    expect(chip.segments.map((s) => s.label), ['Eating Out', 'Restaurants']);
+    expect(chip.segments.first.icon, isNotNull);
+  });
+
+  testWidgets('a server 422 duplicate shows on the name field', (t) async {
+    arrange();
+    when(() => categories.update(any())).thenThrow(
+      const ApiException(
+        code: 'CATEGORY_NAME_DUPLICATE',
+        message: 'duplicate',
+        statusCode: 422,
+        details: {'field': 'name'},
+      ),
+    );
+    await pump(t, const CategoryDetailPage(editingId: 'cat1'));
+    await t.tap(find.byType(CardActionButton));
+    await t.pump(const Duration(milliseconds: 300));
+    // No client-side check: nothing shown before the server answers.
+    const dup = 'Another category at this level already uses this name';
+    await t.enterText(find.byType(TextFormField).first, 'Drinks');
+    await t.pump();
+    expect(find.text(dup), findsNothing);
+    await t.tap(find.text('Save'));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 100));
+    verify(() => categories.update(any())).called(1);
+    expect(find.text(dup), findsOneWidget);
+    expect(find.text('duplicate'), findsNothing);
+  });
+
+  testWidgets('the old 400 DUPLICATE_NAME maps the same way', (t) async {
+    arrange();
+    when(() => categories.update(any())).thenThrow(
+      const ApiException(
+        code: 'DUPLICATE_NAME',
+        message: 'dup',
+        statusCode: 400,
+      ),
+    );
+    await pump(t, const CategoryDetailPage(editingId: 'cat1'));
+    await t.tap(find.byType(CardActionButton));
+    await t.pump(const Duration(milliseconds: 300));
+    await t.enterText(find.byType(TextFormField).first, 'Drinks');
+    await t.pump();
+    await t.tap(find.text('Save'));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 100));
+    expect(
+      find.text('Another category at this level already uses this name'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('an income category label opens browse with type=income', (
+    t,
+  ) async {
+    final income = {..._prodJson, 'id': 'inc1', 'type': 'income'};
+    arrange(json: income);
+    Uri? opened;
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => const CategoryDetailPage(editingId: 'inc1'),
+        ),
+        GoRoute(
+          path: '/browse',
+          builder: (_, state) {
+            opened = state.uri;
+            return const Scaffold(body: Text('browse'));
+          },
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await pump(t, const SizedBox(), router: router);
+    final number = t.widget<HeroNumber>(find.byType(HeroNumber));
+    expect(number.onLabelTap, isNotNull);
+    number.onLabelTap!();
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 400));
+    expect(opened?.queryParameters['type'], 'income');
+    expect(opened?.queryParameters['category'], 'inc1');
   });
 }

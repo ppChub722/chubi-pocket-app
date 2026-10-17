@@ -32,10 +32,11 @@ Widget buildOthersPage(BuildContext context) {
     DateTime? actionedAt,
     String actor = 'Aom Chan',
     bool? awaitsAnswer,
+    bool system = false,
   }) => AppNotification(
     id: type.wire,
     type: type,
-    actor: NotificationActor(userId: 'x', displayName: actor),
+    actor: system ? null : NotificationActor(userId: 'x', displayName: actor),
     payload: payload,
     createdAt: now,
     state: actionedAt != null
@@ -125,12 +126,38 @@ Widget buildOthersPage(BuildContext context) {
           ),
           HubUse(
             wide: true,
-            label: 'NotificationTile — one-tap: record the receipt (paid)',
+            label: 'NotificationTile — system notice: extend / let it end',
             page: 'Notifications inbox',
             child: notifCard(
               notif(
-                NotificationType.splitPaid,
-                payload: const {'amount': 450, 'currency': 'THB'},
+                NotificationType.recurringEnding,
+                system: true,
+                payload: const {'name': 'iPhone', 'left': 2},
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label:
+                'NotificationTile — system notice: one button (open pending)',
+            page: 'Notifications inbox',
+            child: notifCard(
+              notif(
+                NotificationType.recurringDue,
+                system: true,
+                awaitsAnswer: false,
+                payload: const {'count': 3},
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'NotificationTile — event invite: Accept / Decline',
+            page: 'Notifications inbox',
+            child: notifCard(
+              notif(
+                NotificationType.projectInvite,
+                payload: const {'project_name': 'Chiang Mai trip'},
               ),
             ),
           ),
@@ -187,9 +214,9 @@ Widget buildOthersPage(BuildContext context) {
             page: 'Notifications inbox',
             child: notifCard(
               notif(
-                NotificationType.splitReceived,
+                NotificationType.projectAdded,
                 readAt: now,
-                payload: const {'amount': 450, 'currency': 'THB'},
+                payload: const {'project_name': 'Chiang Mai trip'},
               ),
             ),
           ),

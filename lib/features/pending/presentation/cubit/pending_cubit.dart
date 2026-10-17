@@ -14,9 +14,14 @@ class PendingState extends Equatable {
     this.status = PendingStatus.initial,
     this.error,
     this.knownTotal,
+    this.summary,
   });
 
   final List<PendingTransaction> items;
+
+  /// The server's numbers from the last load; dropped by any local change
+  /// (the rows then no longer match it) until the next load.
+  final PendingSummary? summary;
 
   /// The drafts total told by the dashboard before the list itself is
   /// loaded (the top-bar badge needs the number, not the rows). Dropped by
@@ -35,14 +40,16 @@ class PendingState extends Equatable {
     List<PendingTransaction>? items,
     PendingStatus? status,
     ApiException? error,
+    bool keepSummary = false,
   }) => PendingState(
     items: items ?? this.items,
     status: status ?? this.status,
     error: error,
+    summary: keepSummary ? summary : null,
   );
 
   @override
-  List<Object?> get props => [items, status, error, knownTotal];
+  List<Object?> get props => [items, status, error, knownTotal, summary];
 }
 
 /// App-scoped drafts cache — the top-bar badge, the dashboard block and the
@@ -71,10 +78,16 @@ class PendingCubit extends Cubit<PendingState> with Clearable {
   }
 
   Future<void> load() async {
-    emit(state.copyWith(status: PendingStatus.loading));
+    emit(state.copyWith(status: PendingStatus.loading, keepSummary: true));
     try {
-      final items = await _repo.list();
-      emit(PendingState(items: items, status: PendingStatus.loaded));
+      final r = await _repo.list();
+      emit(
+        PendingState(
+          items: r.items,
+          status: PendingStatus.loaded,
+          summary: r.summary,
+        ),
+      );
     } catch (e, st) {
       emit(
         state.copyWith(
@@ -122,8 +135,18 @@ class PendingCubit extends Cubit<PendingState> with Clearable {
   /// ones are replaced by the server's copy (with its reason; dropped when
   /// the server no longer has it). The caller patches wallets from
   /// `accountBalances` and calls `TransactionsCubit.bookChanged()`.
-  Future<PendingSubmitResult> submit(List<String> ids) async {
-    final result = await _repo.submit(ids);
+  Future<PendingSubmitResult> submit(List<String> ids) async =>
+      _applySubmit(await _repo.submit(ids));
+
+  /// "Confirm everything ready" — one call, applied like [submit].
+  Future<PendingSubmitResult> submitReady() async =>
+      _applySubmit(await _repo.submitReady());
+
+  /// One draft through `POST /:id/submit`.
+  Future<PendingSubmitResult> submitOne(String id) async =>
+      _applySubmit(await _repo.submitOne(id));
+
+  PendingSubmitResult _applySubmit(PendingSubmitResult result) {
     final done = result.submitted.toSet();
     final gone = {
       for (final id in result.failed.keys)

@@ -2714,18 +2714,6 @@ abstract class AppLocalizations {
   /// **'Notifications'**
   String get notificationsTitle;
 
-  /// No description provided for @notificationsTabAll.
-  ///
-  /// In en, this message translates to:
-  /// **'All'**
-  String get notificationsTabAll;
-
-  /// No description provided for @notificationsTabUnread.
-  ///
-  /// In en, this message translates to:
-  /// **'Unread'**
-  String get notificationsTabUnread;
-
   /// No description provided for @notificationsMarkAllRead.
   ///
   /// In en, this message translates to:
@@ -2761,18 +2749,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{actor} split a bill with you'**
   String notifSplitCreated(String actor);
-
-  /// No description provided for @notifSplitPaid.
-  ///
-  /// In en, this message translates to:
-  /// **'{actor} paid back their share'**
-  String notifSplitPaid(String actor);
-
-  /// No description provided for @notifSplitReceived.
-  ///
-  /// In en, this message translates to:
-  /// **'{actor} confirmed your payment'**
-  String notifSplitReceived(String actor);
 
   /// No description provided for @notifProjectTxForYou.
   ///
@@ -2864,12 +2840,6 @@ abstract class AppLocalizations {
   /// **'Someone splits a bill with me'**
   String get notifTypeSplitCreated;
 
-  /// No description provided for @notifTypeSplitPaid.
-  ///
-  /// In en, this message translates to:
-  /// **'Someone pays back their share'**
-  String get notifTypeSplitPaid;
-
   /// No description provided for @notifTypeProjectTxForYou.
   ///
   /// In en, this message translates to:
@@ -2894,23 +2864,11 @@ abstract class AppLocalizations {
   /// **'Added to an event'**
   String get notifTypeProjectAdded;
 
-  /// No description provided for @notifSettingsAutoHint.
-  ///
-  /// In en, this message translates to:
-  /// **'\"Auto\" = the button is pressed for you as soon as the notification arrives. Turn a type off and nothing happens for it. Invites and requests stay on — they need an answer.'**
-  String get notifSettingsAutoHint;
-
   /// No description provided for @notifAutoAddDebt.
   ///
   /// In en, this message translates to:
   /// **'Auto: add to my debts'**
   String get notifAutoAddDebt;
-
-  /// No description provided for @notifAutoRecordPayment.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto: record the receipt'**
-  String get notifAutoRecordPayment;
 
   /// No description provided for @notifAutoCopyToBook.
   ///
@@ -2924,23 +2882,11 @@ abstract class AppLocalizations {
   /// **'Auto: update my copy to match'**
   String get notifAutoUpdateCopy;
 
-  /// No description provided for @notifAutoResolveProject.
-  ///
-  /// In en, this message translates to:
-  /// **'Also add event rows I paid to my own book'**
-  String get notifAutoResolveProject;
-
   /// No description provided for @notifActionAddDebt.
   ///
   /// In en, this message translates to:
-  /// **'Add to my debts'**
+  /// **'Add to my payables'**
   String get notifActionAddDebt;
-
-  /// No description provided for @notifActionRecordReceipt.
-  ///
-  /// In en, this message translates to:
-  /// **'Record receipt'**
-  String get notifActionRecordReceipt;
 
   /// No description provided for @notifActionCopyToBook.
   ///
@@ -10560,6 +10506,240 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{month} received · {count} transactions ›'**
   String categoryMonthEarnedLabel(String month, int count);
+
+  /// No description provided for @notifSettingsLegend.
+  ///
+  /// In en, this message translates to:
+  /// **'Off: no notice · Notify: a notice with a one-tap button · Auto: done for you, then you are told what was done'**
+  String get notifSettingsLegend;
+
+  /// No description provided for @notifStateOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get notifStateOff;
+
+  /// No description provided for @notifStateNotify.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify'**
+  String get notifStateNotify;
+
+  /// No description provided for @notifStateAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get notifStateAuto;
+
+  /// No description provided for @notifGroupRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring'**
+  String get notifGroupRecurring;
+
+  /// No description provided for @notifTypeRecurringDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring items are due'**
+  String get notifTypeRecurringDue;
+
+  /// No description provided for @notifTypeRecurringDueHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drafts always wait in Pending · Off = no notice'**
+  String get notifTypeRecurringDueHint;
+
+  /// No description provided for @notifTypeRecurringEnding.
+  ///
+  /// In en, this message translates to:
+  /// **'A recurring is about to end'**
+  String get notifTypeRecurringEnding;
+
+  /// No description provided for @notifTypeRecurringEndingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A few items left · extend it?'**
+  String get notifTypeRecurringEndingHint;
+
+  /// No description provided for @notifTypeRequestsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs an answer, so it can\'t be turned off'**
+  String get notifTypeRequestsHint;
+
+  /// No description provided for @settingsSectionApp.
+  ///
+  /// In en, this message translates to:
+  /// **'App'**
+  String get settingsSectionApp;
+
+  /// No description provided for @settingsSectionMoney.
+  ///
+  /// In en, this message translates to:
+  /// **'Money'**
+  String get settingsSectionMoney;
+
+  /// No description provided for @settingsSectionData.
+  ///
+  /// In en, this message translates to:
+  /// **'Data'**
+  String get settingsSectionData;
+
+  /// No description provided for @settingsCurrencyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes the label only, amounts are not converted'**
+  String get settingsCurrencyHint;
+
+  /// No description provided for @settingsMainWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Main wallet'**
+  String get settingsMainWallet;
+
+  /// No description provided for @settingsMainWalletHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Used as the default when recording'**
+  String get settingsMainWalletHint;
+
+  /// No description provided for @settingsMainWalletNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get settingsMainWalletNone;
+
+  /// No description provided for @settingsArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get settingsArchived;
+
+  /// No description provided for @settingsArchivedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallets, budgets, goals, events, contacts'**
+  String get settingsArchivedHint;
+
+  /// No description provided for @settingsExportCsv.
+  ///
+  /// In en, this message translates to:
+  /// **'Export CSV'**
+  String get settingsExportCsv;
+
+  /// No description provided for @settingsComingIn04.
+  ///
+  /// In en, this message translates to:
+  /// **'0.4'**
+  String get settingsComingIn04;
+
+  /// No description provided for @profileSectionSecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get profileSectionSecurity;
+
+  /// No description provided for @settingsSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save, try again'**
+  String get settingsSaveFailed;
+
+  /// No description provided for @notifTileAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get notifTileAll;
+
+  /// No description provided for @notifTileNeedsAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs answer'**
+  String get notifTileNeedsAnswer;
+
+  /// No description provided for @notifTileUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get notifTileUnread;
+
+  /// No description provided for @notifTileHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get notifTileHidden;
+
+  /// No description provided for @notifCardCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs answer'**
+  String get notifCardCaption;
+
+  /// No description provided for @notifCardMain.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing} other{{count} items}}'**
+  String notifCardMain(int count);
+
+  /// No description provided for @notifCardUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'· unread {count}'**
+  String notifCardUnread(int count);
+
+  /// No description provided for @notifReadAllTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as read'**
+  String get notifReadAllTooltip;
+
+  /// No description provided for @notifSettingsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification settings'**
+  String get notifSettingsTooltip;
+
+  /// No description provided for @notifRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get notifRestore;
+
+  /// No description provided for @notifUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get notifUndo;
+
+  /// No description provided for @notifEmptyNeedsAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing waiting for an answer'**
+  String get notifEmptyNeedsAnswer;
+
+  /// No description provided for @notifEmptyHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'No hidden notifications'**
+  String get notifEmptyHidden;
+
+  /// No description provided for @notifActionExtend.
+  ///
+  /// In en, this message translates to:
+  /// **'Extend'**
+  String get notifActionExtend;
+
+  /// No description provided for @notifActionLetEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Let it end'**
+  String get notifActionLetEnd;
+
+  /// No description provided for @notifActionOpenPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Open pending ›'**
+  String get notifActionOpenPending;
 }
 
 class _AppLocalizationsDelegate

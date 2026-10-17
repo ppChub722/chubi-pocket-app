@@ -270,6 +270,21 @@ class ProjectsRepository {
         : const <String, double>{};
   });
 
+  /// `POST /projects/link-requests/:notification_id/accept` — the answer to
+  /// an event invite (the inbox's ตอบรับ). The notification becomes actioned.
+  Future<void> acceptInvite(String notificationId) => _call(() async {
+    await _client.dio.post<dynamic>(
+      '/projects/link-requests/$notificationId/accept',
+    );
+  });
+
+  /// `POST /projects/link-requests/:notification_id/reject` — ปฏิเสธ.
+  Future<void> rejectInvite(String notificationId) => _call(() async {
+    await _client.dio.post<dynamic>(
+      '/projects/link-requests/$notificationId/reject',
+    );
+  });
+
   Future<void> leave(String id) => _call(() async {
     await _client.dio.post<dynamic>('/projects/$id/leave');
   });

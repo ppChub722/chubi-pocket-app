@@ -1457,12 +1457,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notificationsTitle => 'การแจ้งเตือน';
 
   @override
-  String get notificationsTabAll => 'ทั้งหมด';
-
-  @override
-  String get notificationsTabUnread => 'ยังไม่อ่าน';
-
-  @override
   String get notificationsMarkAllRead => 'อ่านทั้งหมดแล้ว';
 
   @override
@@ -1481,16 +1475,6 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String notifSplitCreated(String actor) {
     return '$actor หารบิลกับคุณ';
-  }
-
-  @override
-  String notifSplitPaid(String actor) {
-    return '$actor จ่ายส่วนของเขาแล้ว';
-  }
-
-  @override
-  String notifSplitReceived(String actor) {
-    return '$actor ยืนยันว่าได้รับเงินแล้ว';
   }
 
   @override
@@ -1547,9 +1531,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifTypeSplitCreated => 'มีคนหารบิลกับฉัน';
 
   @override
-  String get notifTypeSplitPaid => 'มีคนจ่ายส่วนของเขาคืน';
-
-  @override
   String get notifTypeProjectTxForYou => 'มีคนบันทึกรายการอีเวนต์ให้ฉัน';
 
   @override
@@ -1562,14 +1543,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifTypeProjectAdded => 'ถูกเพิ่มเข้าอีเวนต์';
 
   @override
-  String get notifSettingsAutoHint =>
-      '\"อัตโนมัติ\" = พอแจ้งเตือนมาถึง ระบบกดปุ่มให้เลย · ปิดรับแจ้งเตือนประเภทไหน ประเภทนั้นจะไม่ทำอะไรเลย · คำเชิญและคำขอปิดไม่ได้ เพราะต้องตอบ';
-
-  @override
   String get notifAutoAddDebt => 'อัตโนมัติ: เพิ่มเข้าหนี้ของฉัน';
-
-  @override
-  String get notifAutoRecordPayment => 'อัตโนมัติ: บันทึกรับเงิน';
 
   @override
   String get notifAutoCopyToBook => 'อัตโนมัติ: บันทึกเข้าบัญชีส่วนตัว';
@@ -1578,14 +1552,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifAutoUpdateCopy => 'อัตโนมัติ: อัปเดตรายการส่วนตัวตาม';
 
   @override
-  String get notifAutoResolveProject =>
-      'บันทึกรายการที่ฉันจ่ายเองลงบัญชีส่วนตัวด้วย';
-
-  @override
-  String get notifActionAddDebt => 'เพิ่มเข้าหนี้ของฉัน';
-
-  @override
-  String get notifActionRecordReceipt => 'บันทึกรับเงิน';
+  String get notifActionAddDebt => 'เพิ่มเข้ารอจ่ายของฉัน';
 
   @override
   String get notifActionCopyToBook => 'บันทึกเข้าบัญชีส่วนตัว';
@@ -2446,10 +2413,10 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get notifSplitChangeUpdated => 'อัปเดตหนี้ตามแล้ว';
+  String get notifSplitChangeUpdated => 'อัปเดตรายการรอจ่ายตามแล้ว';
 
   @override
-  String get notifSplitChangeDeleted => 'ลบหนี้นี้ออกแล้ว';
+  String get notifSplitChangeDeleted => 'ลบรายการรอจ่ายนี้ออกแล้ว';
 
   @override
   String get notifSplitChangeZeroed =>
@@ -2462,7 +2429,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifSplitChangeStale => 'อัปเดตไม่ได้แล้ว — มีการแก้ใหม่กว่านี้';
 
   @override
-  String get notifSplitChangeGone => 'หนี้นี้ถูกลบไปแล้ว';
+  String get notifSplitChangeGone => 'รายการรอจ่ายนี้ถูกลบไปแล้ว';
 
   @override
   String txSplitStatusOverpaidToThem(String amount) {
@@ -6045,4 +6012,133 @@ class AppLocalizationsTh extends AppLocalizations {
   String categoryMonthEarnedLabel(String month, int count) {
     return '$month ได้รับ · $count รายการ ›';
   }
+
+  @override
+  String get notifSettingsLegend =>
+      'ปิด ไม่บอก · แจ้ง แจ้งเตือนพร้อมปุ่มกดทำทันที · อัตโนมัติ ระบบทำให้เลย แล้วแจ้งว่าทำอะไรไป';
+
+  @override
+  String get notifStateOff => 'ปิด';
+
+  @override
+  String get notifStateNotify => 'แจ้ง';
+
+  @override
+  String get notifStateAuto => 'อัตโนมัติ';
+
+  @override
+  String get notifGroupRecurring => 'รายการประจำ';
+
+  @override
+  String get notifTypeRecurringDue => 'รายการประจำถึงกำหนด';
+
+  @override
+  String get notifTypeRecurringDueHint =>
+      'ร่างขึ้นใน รอยืนยัน เสมอ · ปิด = ไม่แจ้ง';
+
+  @override
+  String get notifTypeRecurringEnding => 'รายการประจำใกล้จบ';
+
+  @override
+  String get notifTypeRecurringEndingHint => 'เหลือไม่กี่งวด · ต่ออีกไหม';
+
+  @override
+  String get notifTypeRequestsHint => 'ต้องตอบ เลยปิดไม่ได้';
+
+  @override
+  String get settingsSectionApp => 'แอป';
+
+  @override
+  String get settingsSectionMoney => 'เงิน';
+
+  @override
+  String get settingsSectionData => 'ข้อมูล';
+
+  @override
+  String get settingsCurrencyHint => 'เปลี่ยนแค่ป้าย ไม่แปลงยอด';
+
+  @override
+  String get settingsMainWallet => 'กระเป๋าหลัก';
+
+  @override
+  String get settingsMainWalletHint => 'ใช้เป็นค่าเริ่มต้นตอนบันทึก';
+
+  @override
+  String get settingsMainWalletNone => 'ยังไม่ตั้ง';
+
+  @override
+  String get settingsArchived => 'ที่เก็บถาวร';
+
+  @override
+  String get settingsArchivedHint => 'กระเป๋า งบ เป้าหมาย event ผู้ติดต่อ';
+
+  @override
+  String get settingsExportCsv => 'ส่งออก CSV';
+
+  @override
+  String get settingsComingIn04 => '0.4';
+
+  @override
+  String get profileSectionSecurity => 'ความปลอดภัย';
+
+  @override
+  String get settingsSaveFailed => 'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง';
+
+  @override
+  String get notifTileAll => 'ทั้งหมด';
+
+  @override
+  String get notifTileNeedsAnswer => 'ต้องตอบ';
+
+  @override
+  String get notifTileUnread => 'ยังไม่อ่าน';
+
+  @override
+  String get notifTileHidden => 'ซ่อนไว้';
+
+  @override
+  String get notifCardCaption => 'ต้องตอบ';
+
+  @override
+  String notifCardMain(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count เรื่อง',
+      zero: 'ไม่มี',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notifCardUnread(int count) {
+    return '· ยังไม่อ่าน $count';
+  }
+
+  @override
+  String get notifReadAllTooltip => 'อ่านทั้งหมดแล้ว';
+
+  @override
+  String get notifSettingsTooltip => 'ตั้งค่าการแจ้งเตือน';
+
+  @override
+  String get notifRestore => 'กู้คืน';
+
+  @override
+  String get notifUndo => 'เลิกทำ';
+
+  @override
+  String get notifEmptyNeedsAnswer => 'ไม่มีเรื่องที่ต้องตอบ';
+
+  @override
+  String get notifEmptyHidden => 'ไม่มีการแจ้งเตือนที่ซ่อนไว้';
+
+  @override
+  String get notifActionExtend => 'ต่ออีก';
+
+  @override
+  String get notifActionLetEnd => 'ปล่อยให้จบ';
+
+  @override
+  String get notifActionOpenPending => 'เปิดรอยืนยัน ›';
 }

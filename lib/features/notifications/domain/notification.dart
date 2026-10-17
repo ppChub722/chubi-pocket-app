@@ -4,8 +4,7 @@ import '../../../ui/ui.dart';
 
 /// Notification trigger types — mirror of [`design/spec/13-notifications.md
 /// §2`](../../../../../chubi-pocket-docs/design/spec/13-notifications.md).
-/// Phase 1b ships 7 of these. `personal_debt_cancelled` is deferred to
-/// Phase 2 per spec §2.7.
+/// `split_paid` / `split_received` are retired (they arrive as unknown).
 enum NotificationType {
   splitCreated('split_created'),
 
@@ -13,8 +12,6 @@ enum NotificationType {
   /// contract 2026-10-10). Pending, one action "อัปเดตตาม" — unless a newer
   /// change superseded it (payload.superseded).
   splitChanged('split_changed'),
-  splitPaid('split_paid'),
-  splitReceived('split_received'),
   projectTxRecordedForYou('project_tx_recorded_for_you'),
   projectTxChanged('project_tx_changed'),
   projectInvite('project_invite'),
@@ -88,6 +85,29 @@ enum NotificationState {
     (v) => v.name == s,
     orElse: () => NotificationState.unread,
   );
+}
+
+/// The inbox card's numbers (`GET /notifications` `summary`): over ALL the
+/// user's notifications, the same whatever the list filter.
+class InboxSummary extends Equatable {
+  const InboxSummary({
+    this.needsAnswer = 0,
+    this.unread = 0,
+    this.dismissed = 0,
+  });
+
+  final int needsAnswer;
+  final int unread;
+  final int dismissed;
+
+  factory InboxSummary.fromJson(Map<String, dynamic>? json) => InboxSummary(
+    needsAnswer: (json?['needs_answer'] as num?)?.toInt() ?? 0,
+    unread: (json?['unread'] as num?)?.toInt() ?? 0,
+    dismissed: (json?['dismissed'] as num?)?.toInt() ?? 0,
+  );
+
+  @override
+  List<Object?> get props => [needsAnswer, unread, dismissed];
 }
 
 /// App-wide counters returned by every notification write (API `Badges`).
@@ -255,6 +275,9 @@ class DefaultAccountRef extends Equatable {
   List<Object?> get props => [id, name, iconCode];
 }
 
+/// How a type reaches me (the settings page's 3-state control).
+enum NotifyMode { off, notify, auto }
+
 /// Per-user notification switches (contract §5). For each type the
 /// recipient picks: receive it (not in [mutedTypes]) and run its action
 /// automatically on arrival ([autoTypes]). A muted type ignores its auto
@@ -264,7 +287,6 @@ class NotificationSettings extends Equatable {
     this.mutedTypes = const {},
     this.autoTypes = const {},
     this.defaultAccount,
-    this.autoResolveOwnInProjects = false,
   });
 
   final Set<String> mutedTypes;
@@ -273,11 +295,13 @@ class NotificationSettings extends Equatable {
   /// Wallet the "record receipt" auto-action uses; null = no wallet.
   final DefaultAccountRef? defaultAccount;
 
-  /// Rows I record myself in a project → my personal copy too.
-  final bool autoResolveOwnInProjects;
-
   bool isMuted(NotificationType t) => mutedTypes.contains(t.wire);
   bool isAuto(NotificationType t) => autoTypes.contains(t.wire);
+
+  /// The one state the page shows for a type: off (muted) > auto > notify.
+  NotifyMode modeOf(NotificationType t) => isMuted(t)
+      ? NotifyMode.off
+      : (isAuto(t) ? NotifyMode.auto : NotifyMode.notify);
 
   factory NotificationSettings.fromJson(Map<String, dynamic> json) {
     Set<String> set(String k) => {
@@ -291,8 +315,6 @@ class NotificationSettings extends Equatable {
               (json['default_account'] as Map).cast<String, dynamic>(),
             )
           : null,
-      autoResolveOwnInProjects:
-          json['auto_resolve_own_in_projects'] as bool? ?? false,
     );
   }
 
@@ -301,7 +323,6 @@ class NotificationSettings extends Equatable {
     Set<String>? autoTypes,
     DefaultAccountRef? defaultAccount,
     bool clearDefaultAccount = false,
-    bool? autoResolveOwnInProjects,
   }) {
     return NotificationSettings(
       mutedTypes: mutedTypes ?? this.mutedTypes,
@@ -309,16 +330,9 @@ class NotificationSettings extends Equatable {
       defaultAccount: clearDefaultAccount
           ? null
           : (defaultAccount ?? this.defaultAccount),
-      autoResolveOwnInProjects:
-          autoResolveOwnInProjects ?? this.autoResolveOwnInProjects,
     );
   }
 
   @override
-  List<Object?> get props => [
-    mutedTypes,
-    autoTypes,
-    defaultAccount,
-    autoResolveOwnInProjects,
-  ];
+  List<Object?> get props => [mutedTypes, autoTypes, defaultAccount];
 }

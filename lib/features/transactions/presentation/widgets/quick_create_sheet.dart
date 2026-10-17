@@ -675,7 +675,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     setState(() => _saving = true);
     try {
       await pending.updateDraft(id, _c.toDraft());
-      final result = await pending.submit([id]);
+      final result = await pending.submitOne(id);
       final failed = result.failed[id];
       if (failed != null) {
         if (!mounted) return;
@@ -780,7 +780,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     setState(() => _saving = true);
     try {
       await pending.updateDraft(id, _savingDraft());
-      final result = await pending.submit([id]);
+      final result = await pending.submitOne(id);
       final failed = result.failed[id];
       if (failed != null) {
         if (!mounted) return;

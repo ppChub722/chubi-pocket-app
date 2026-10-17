@@ -15,11 +15,9 @@ import '../../contacts/domain/contact.dart';
 import '../../contacts/presentation/cubit/contacts_cubit.dart';
 import '../../personal_debts/data/personal_debts_repository.dart';
 import '../../home/presentation/cubit/dashboard_cubit.dart';
-import '../../personal_debts/domain/debt_ledger.dart';
 import '../../personal_debts/presentation/debt_wiring.dart';
-import '../../transactions/presentation/widgets/quick_create_sheet.dart';
-import '../../../app/shell/quick_create_context.dart';
 import '../../projects/data/projects_repository.dart';
+import '../../recurring/data/recurring_repository.dart';
 import '../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../domain/notification.dart';
 import 'cubit/notifications_inbox_cubit.dart';
@@ -60,6 +58,14 @@ abstract final class NotificationActions {
       }
       return;
     }
+    if (n.type == NotificationType.projectInvite) {
+      if (!n.isActioned) return; // buttons are the action
+      final projectId = n.payload['project_id'] as String?;
+      if (projectId != null && projectId.isNotEmpty) {
+        openPage(ctx, '/projects/$projectId');
+      }
+      return;
+    }
     // Default: informational types — mark read + follow deep link.
     if (n.isUnread) {
       ctx.read<NotificationsInboxCubit>().markRead(n.id);
@@ -75,10 +81,12 @@ abstract final class NotificationActions {
       switch (n.type) {
         NotificationType.accountInvite => _onAcceptWalletInvite(ctx, n.id),
         NotificationType.splitCreated => _onAcceptSplit(ctx, n.id),
-        NotificationType.splitPaid => _onRecordReceipt(ctx, n),
         NotificationType.projectTxRecordedForYou => _onCopyToBook(ctx, n),
         NotificationType.projectTxChanged => _onUpdateCopy(ctx, n),
         NotificationType.splitChanged => _onApplySplitChange(ctx, n),
+        NotificationType.projectInvite => _onAcceptProjectInvite(ctx, n),
+        NotificationType.recurringEnding => _onExtendRecurring(ctx, n),
+        NotificationType.recurringDue => _onOpenPending(ctx, n),
         _ => _onAcceptLinkRequest(ctx, n.id),
       };
 
@@ -87,14 +95,17 @@ abstract final class NotificationActions {
       switch (n.type) {
         NotificationType.accountInvite => _onRejectWalletInvite(ctx, n.id),
         NotificationType.contactLinkRequest => _onRejectLinkRequest(ctx, n.id),
+        NotificationType.projectInvite => _onRejectProjectInvite(ctx, n.id),
+        // "ปล่อยให้จบ": nothing to do but mark the notice answered.
+        NotificationType.recurringEnding =>
+          ctx.read<NotificationsInboxCubit>().markActioned(n.id),
         // One-tap actions: "skip" just hides the row.
         _ => ctx.read<NotificationsInboxCubit>().markDismissed(n.id),
       };
 }
 
-/// Reloads [cubit] keeping its All / Unread filter.
-Future<void> _reload(NotificationsInboxCubit cubit) =>
-    cubit.load(unreadOnly: cubit.state.filterUnreadOnly);
+/// The page's one re-fetch, keeping its filter.
+Future<void> _reload(NotificationsInboxCubit cubit) => cubit.reload();
 
 void _showError(ScaffoldMessengerState messenger, ApiException e) =>
     showAppSnackBarOn(messenger, e.message, tone: Tone.danger);
@@ -180,27 +191,55 @@ Future<void> _onApplySplitChange(BuildContext ctx, AppNotification n) async {
   }
 }
 
-/// "บันทึกรับเงิน" on split_paid — quick create in DEBT MODE with that
-/// person, Received, pre-filled with what they paid (owner 2026-10-12: the
-/// one debt form). Saved → the row is actioned.
-Future<void> _onRecordReceipt(BuildContext ctx, AppNotification n) async {
-  final debtId = n.payload['recipient_debt_id'] as String?;
-  if (debtId == null) return;
+/// "ตอบรับ" on project_invite: `POST /projects/link-requests/:id/accept`,
+/// then the page's re-fetch (the row turns "ทำแล้ว") and the event opens.
+Future<void> _onAcceptProjectInvite(BuildContext ctx, AppNotification n) async {
+  final repo = ctx.read<ProjectsRepository>();
   final inboxCubit = ctx.read<NotificationsInboxCubit>();
   final messenger = ScaffoldMessenger.of(ctx);
   try {
-    final detail = await ctx.read<PersonalDebtsRepository>().getEntry(debtId);
-    if (!ctx.mounted) return;
-    final saved = await showQuickCreateSheet(
-      ctx,
-      preset: QuickCreatePreset.debt(person: detail.balance.person),
-      debtDirection: DebtEntryDirection.received,
-      amount: (n.payload['amount'] as num?)?.toDouble(),
-    );
-    if (saved) await inboxCubit.markActioned(n.id);
+    await repo.acceptInvite(n.id);
+    await _reload(inboxCubit);
   } on ApiException catch (e) {
     _showError(messenger, e);
   }
+}
+
+/// "ปฏิเสธ" on project_invite: `POST /projects/link-requests/:id/reject`.
+Future<void> _onRejectProjectInvite(BuildContext ctx, String id) async {
+  final repo = ctx.read<ProjectsRepository>();
+  final inboxCubit = ctx.read<NotificationsInboxCubit>();
+  final messenger = ScaffoldMessenger.of(ctx);
+  try {
+    await repo.rejectInvite(id);
+    await _reload(inboxCubit);
+  } on ApiException catch (e) {
+    _showError(messenger, e);
+  }
+}
+
+/// "ต่ออีก" on recurring_ending: `POST /recurring/:id/extend`, then the
+/// notice is marked actioned by the BE's re-arm (the page re-fetches).
+Future<void> _onExtendRecurring(BuildContext ctx, AppNotification n) async {
+  final id = n.payload['recurring_id'] as String?;
+  if (id == null) return;
+  final repo = ctx.read<RecurringRepository>();
+  final inboxCubit = ctx.read<NotificationsInboxCubit>();
+  final messenger = ScaffoldMessenger.of(ctx);
+  try {
+    await repo.action(id, RecurringAction.extend);
+    await _reload(inboxCubit);
+  } on ApiException catch (e) {
+    _showError(messenger, e);
+  }
+}
+
+/// "เปิดรอยืนยัน" on recurring_due: read + open the pending page.
+Future<void> _onOpenPending(BuildContext ctx, AppNotification n) async {
+  if (n.isUnread) {
+    unawaited(ctx.read<NotificationsInboxCubit>().markRead(n.id));
+  }
+  openPage(ctx, '/pending');
 }
 
 /// "บันทึกเข้าบัญชีส่วนตัว" on project_tx_recorded_for_you — a floating copy

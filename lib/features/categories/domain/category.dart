@@ -178,16 +178,25 @@ class Category extends Equatable {
 
 /// One breadcrumb step of [Category.path].
 class CategoryPathItem extends Equatable {
-  const CategoryPathItem({required this.id, required this.name});
+  const CategoryPathItem({required this.id, required this.name, this.iconCode});
 
   factory CategoryPathItem.fromJson(Map<String, dynamic> json) =>
-      CategoryPathItem(id: json['id'] as String, name: json['name'] as String);
+      CategoryPathItem(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        iconCode: json['icon_code'] is Map<String, dynamic>
+            ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+            : null,
+      );
 
   final String id;
   final String name;
 
+  /// The step's own icon (`icon_code` of the path item); null = none set.
+  final IconCode? iconCode;
+
   @override
-  List<Object?> get props => [id, name];
+  List<Object?> get props => [id, name, iconCode];
 }
 
 /// `GET /categories/{id}` / `PUT /categories/{id}`: a [Category] plus the

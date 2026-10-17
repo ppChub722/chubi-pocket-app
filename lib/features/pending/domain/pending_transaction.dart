@@ -30,6 +30,10 @@ enum PendingSource {
   bool get isManual => this == manual;
 
   bool get isRecurring => this == recurring || this == upcoming;
+
+  /// The server's `by_source.manual` bucket (typed or chat) — what the
+  /// "manual" filter chip counts.
+  bool get inManualBucket => this == manual || this == chat;
 }
 
 /// What submitting does.
@@ -288,6 +292,8 @@ class PendingTransaction extends Equatable {
     this.targetTransactionId,
     this.lastError,
     this.sourceRef,
+    this.needsInput,
+    this.canConfirm = true,
   });
 
   final String id;
@@ -306,6 +312,17 @@ class PendingTransaction extends Equatable {
 
   /// What the draft is based on (display only).
   final Map<String, dynamic>? sourceRef;
+
+  /// What the draft still lacks (`amount|type|date|wallet|wallet_to|
+  /// category`; empty = ready). Null when the server didn't say (old API).
+  final List<String>? needsInput;
+
+  /// False while a hard key is missing: confirming it directly would fail,
+  /// so the list opens the draft sheet instead. Absent = true.
+  final bool canConfirm;
+
+  /// The server says the draft still lacks [key] (false when it didn't say).
+  bool needs(String key) => needsInput?.contains(key) ?? false;
 
   /// A saving draft (kind or wire type `saving`).
   bool get isSaving => kind == PendingKind.saving || draft.isSaving;
@@ -339,6 +356,10 @@ class PendingTransaction extends Equatable {
           ? PendingError.fromJson(err.cast<String, dynamic>())
           : null,
       sourceRef: ref is Map ? ref.cast<String, dynamic>() : null,
+      needsInput: json['needs_input'] is List
+          ? (json['needs_input'] as List).whereType<String>().toList()
+          : null,
+      canConfirm: json['can_confirm'] as bool? ?? true,
     );
   }
 
@@ -354,7 +375,83 @@ class PendingTransaction extends Equatable {
     targetTransactionId,
     lastError,
     sourceRef,
+    needsInput,
+    canConfirm,
   ];
+}
+
+/// `GET /pending-transactions` `summary`: the page's numbers, computed by
+/// the server over ALL the user's drafts.
+class PendingSummary extends Equatable {
+  const PendingSummary({
+    required this.count,
+    this.expenseTotal = 0,
+    this.incomeTotal = 0,
+    this.needsInputCount = 0,
+    this.readyCount = 0,
+    this.recurring = 0,
+    this.manual = 0,
+    this.otherPeople = 0,
+    this.slip = 0,
+    this.other = 0,
+  });
+
+  final int count;
+  final double expenseTotal;
+  final double incomeTotal;
+  final int needsInputCount;
+  final int readyCount;
+
+  /// `by_source`.
+  final int recurring;
+  final int manual;
+  final int otherPeople;
+  final int slip;
+  final int other;
+
+  /// Everything outside the manual bucket.
+  int get notManual => count - manual;
+
+  factory PendingSummary.fromJson(Map<String, dynamic> json) {
+    int i(Object? v) => (v as num?)?.toInt() ?? 0;
+    double d(Object? v) => (v as num?)?.toDouble() ?? 0;
+    final by = json['by_source'] is Map
+        ? (json['by_source'] as Map).cast<String, dynamic>()
+        : const <String, dynamic>{};
+    return PendingSummary(
+      count: i(json['count']),
+      expenseTotal: d(json['expense_total']),
+      incomeTotal: d(json['income_total']),
+      needsInputCount: i(json['needs_input_count']),
+      readyCount: i(json['ready_count']),
+      recurring: i(by['recurring']),
+      manual: i(by['manual']),
+      otherPeople: i(by['other_people']),
+      slip: i(by['slip']),
+      other: i(by['other']),
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    count,
+    expenseTotal,
+    incomeTotal,
+    needsInputCount,
+    readyCount,
+    recurring,
+    manual,
+    otherPeople,
+    slip,
+    other,
+  ];
+}
+
+/// The list call's answer: the drafts and (new API) their summary.
+class PendingList {
+  const PendingList({required this.items, this.summary});
+  final List<PendingTransaction> items;
+  final PendingSummary? summary;
 }
 
 /// One submit call's outcome: ids that went through, why the rest didn't

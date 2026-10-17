@@ -372,6 +372,8 @@ final List<HubPage> hubPages = [
       'ThousandsInputFormatter',
       'RangeInputFormatter',
       'ThemeModeChips',
+      'SegmentedChoice',
+      'ChoiceSegment',
       'ChatDial',
     ],
     builder: buildPickersInputsPage,

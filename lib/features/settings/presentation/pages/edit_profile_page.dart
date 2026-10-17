@@ -12,11 +12,13 @@ import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../users/data/users_repository.dart';
 import '../../../users/presentation/refresh_me.dart';
 
-/// `/settings/profile` — the profile detail page, on the same template as the
-/// contact page: hero (avatar · name · @username, tinted with the avatar's
-/// colour), ONE headless box (display name · username 🔒 · email · currency),
-/// an Account section (change password) and the meta. Opens in view mode; ✏️ /
-/// long-press edits.
+/// `/settings/profile` — the profile detail page on the 0.4.0 detail template:
+/// hero (avatar · name · @username, tinted with the avatar's colour), ONE box
+/// with the email, a ความปลอดภัย section (username locked, change password ›)
+/// and the meta. Opens in view mode with the auth cubit's `GET /users/me`
+/// (pull = that call); ✏️ / long-press edits. Edit mode shows only avatar,
+/// display name and email (username and password are hidden). The currency
+/// lives on the settings home.
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
 
@@ -90,16 +92,6 @@ class _EditProfilePageState extends State<EditProfilePage>
     final email = w.email.trim();
     final emailChanged = email.isNotEmpty && email != o.email;
     final iconChanged = w.iconCode != o.iconCode;
-    final currencyChanged = w.currency != o.currency;
-    if (currencyChanged) {
-      final ok = await showConfirmDialog(
-        context,
-        title: l.profileCurrencyChangeTitle,
-        message: l.profileCurrencyChangeMessage,
-        confirmLabel: l.profileCurrencyChangeConfirm,
-      );
-      if (!ok || !mounted) return;
-    }
     final auth = context.read<AuthCubit>();
     FocusScope.of(context).unfocus();
     setSaving(true);
@@ -110,7 +102,6 @@ class _EditProfilePageState extends State<EditProfilePage>
         email: emailChanged ? email : null,
         iconCode: iconChanged ? w.iconCode : null,
         clearIconCode: iconChanged && w.iconCode == null,
-        currency: currencyChanged ? w.currency : null,
       );
       auth.updateUser(updated);
       if (!mounted) return;
@@ -137,7 +128,6 @@ class _EditProfilePageState extends State<EditProfilePage>
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final w = working;
     final editing = isEditing;
     // A refresh (pull) while viewing re-reads the profile into the page.
     return BlocListener<AuthCubit, AuthState>(
@@ -161,125 +151,73 @@ class _EditProfilePageState extends State<EditProfilePage>
             key: _formKey,
             // Builder: the floating bar's height is only visible inside the body.
             child: Builder(
-              builder: (context) => DetailPageBody(
+              builder: (context) => DetailLayout(
                 onRefresh: () => refreshMe(context),
+                physics: const AlwaysScrollableScrollPhysics(),
                 topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
                 bottomInset:
                     AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
-                hero: HeaderCard(
-                  accent: w.iconCode.tintFor(
-                    Theme.of(context).extension<AppColors>()!,
-                    avatarName: _shownName,
-                  ),
-                  onEdit: editing ? null : enterEdit,
-                  leading: EditableCircle(
-                    size: 64,
-                    onTap: editing ? _pickAvatar : null,
-                    child: UserAvatar(
-                      displayName: _shownName,
-                      iconCode: w.iconCode,
-                      size: 64,
-                    ),
-                  ),
-                  title: Text(_shownName),
-                  subtitle: Text('@${_user.username}'),
-                ),
-                sections: [
-                  // ONE headless box, like the contact page.
-                  (first) => SectionCard(
-                    first: first,
-                    children: [
-                      DetailTextField(
-                        label: l.editProfileDisplayNameLabel,
-                        controller: _nameCtrl,
-                        editing: editing,
-                        maxLength: TextLimits.name,
-                        viewHint: l.commonLongPressToEdit,
-                        onEnterEdit: () => enterEdit(),
-                        onChanged: (v) => applyTextChange(
-                          _Field.name,
-                          working.copyWith(name: v),
-                        ),
-                        validator: (v) {
-                          final s = v?.trim() ?? '';
-                          if (s.isEmpty) return l.commonRequired;
-                          if (s.length > 100) {
-                            return l.authRegisterDisplayNameTooLong;
-                          }
-                          return null;
-                        },
-                      ),
-                      DetailRow(
-                        leading: const AppIcon(AppIcons.lock),
-                        label: l.editProfileUsernameLabel,
-                        locked: true,
-                        trailing: Text('@${_user.username}'),
-                      ),
-                      // Right under the username; its own page (navigating away
-                      // mid-edit would drop the edits, so inert while editing).
-                      DetailRow(
-                        leading: const AppIcon(AppIcons.lock),
-                        label: l.settingsChangePassword,
-                        showChevron: true,
-                        onTap: editing
-                            ? null
-                            : () => context.push('/settings/password'),
-                      ),
-                      // The same field as the contact page's email row
-                      // (DetailTextField): one row "not set" when empty.
-                      DetailTextField(
-                        label: l.editProfileEmailLabel,
-                        controller: _emailCtrl,
-                        editing: editing,
-                        placeholderWhenEmpty: true,
-                        notSetLabel: l.contactFieldNotSet,
-                        maxLength: TextLimits.email,
-                        keyboardType: TextInputType.emailAddress,
-                        viewHint: l.commonLongPressToEdit,
-                        onEnterEdit: () => enterEdit(),
-                        onChanged: (v) {
-                          if (_emailError != null) {
-                            setState(() => _emailError = null);
-                          }
-                          applyTextChange(
-                            _Field.email,
-                            working.copyWith(email: v),
-                          );
-                        },
-                        validator: (v) {
-                          if (_emailError != null) return _emailError;
-                          final s = v?.trim() ?? '';
-                          // Once set, the email can't go back to empty.
-                          if (s.isEmpty) {
-                            return original.email.isEmpty
-                                ? null
-                                : l.profileEmailCannotClear;
-                          }
-                          return RegExp(
-                                r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                              ).hasMatch(s)
+                hero: _hero(l, editing),
+                info: SectionCard(
+                  children: [
+                    // The same field as the contact page's email row: one row
+                    // "not set" when empty.
+                    DetailTextField(
+                      label: l.editProfileEmailLabel,
+                      controller: _emailCtrl,
+                      editing: editing,
+                      placeholderWhenEmpty: true,
+                      notSetLabel: l.contactFieldNotSet,
+                      maxLength: TextLimits.email,
+                      keyboardType: TextInputType.emailAddress,
+                      viewHint: l.commonLongPressToEdit,
+                      onEnterEdit: () => enterEdit(),
+                      onChanged: (v) {
+                        if (_emailError != null) {
+                          setState(() => _emailError = null);
+                        }
+                        applyTextChange(
+                          _Field.email,
+                          working.copyWith(email: v),
+                        );
+                      },
+                      validator: (v) {
+                        if (_emailError != null) return _emailError;
+                        final s = v?.trim() ?? '';
+                        // Once set, the email can't go back to empty.
+                        if (s.isEmpty) {
+                          return original.email.isEmpty
                               ? null
-                              : l.editProfileEmailInvalid;
-                        },
+                              : l.profileEmailCannotClear;
+                        }
+                        return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(s)
+                            ? null
+                            : l.editProfileEmailInvalid;
+                      },
+                    ),
+                  ],
+                ),
+                // Edit mode hides the locked username and the password row.
+                settings: editing
+                    ? null
+                    : SettingsSection(
+                        title: l.profileSectionSecurity,
+                        children: [
+                          DetailRow(
+                            leading: const AppIcon(AppIcons.lock),
+                            label: l.editProfileUsernameLabel,
+                            helper: l.profileUsernameLocked,
+                            locked: true,
+                            trailing: Text('@${_user.username}'),
+                          ),
+                          DetailRow(
+                            leading: const AppIcon(AppIcons.lock),
+                            label: l.settingsChangePassword,
+                            showChevron: true,
+                            onTap: () => context.push('/settings/password'),
+                          ),
+                        ],
                       ),
-                      editing
-                          ? CurrencyTile(
-                              value: w.currency,
-                              label: l.profileCurrencyLabel,
-                              onChanged: (c) =>
-                                  applyChange(working.copyWith(currency: c)),
-                            )
-                          : DetailRow(
-                              leading: const AppIcon(AppIcons.currency),
-                              label: l.profileCurrencyLabel,
-                              trailing: Text(
-                                '${Currencies.symbolOf(_user.currency)}  '
-                                '${_user.currency}',
-                              ),
-                            ),
-                    ],
-                  ),
-                ],
                 metaLines: detailMetaLines(
                   context,
                   createdAt: _user.createdAt,
@@ -293,38 +231,86 @@ class _EditProfilePageState extends State<EditProfilePage>
       ),
     );
   }
+
+  Widget _hero(AppLocalizations l, bool editing) {
+    final w = working;
+    final style = HeroStyle.tinted(
+      color: w.iconCode.tintFor(
+        Theme.of(context).extension<AppColors>()!,
+        avatarName: _shownName,
+      ),
+      glyph: AppIcons.profile,
+    );
+    if (editing) {
+      return HeroCard(
+        style: style,
+        editing: true,
+        icon: EditableCircle(
+          size: 44,
+          onTap: _pickAvatar,
+          child: UserAvatar(
+            displayName: _shownName,
+            iconCode: w.iconCode,
+            size: 44,
+          ),
+        ),
+        name: HeroNameInput(
+          editing: true,
+          controller: _nameCtrl,
+          hint: l.editProfileDisplayNameLabel,
+          maxLength: TextLimits.name,
+          onChanged: (v) =>
+              applyTextChange(_Field.name, working.copyWith(name: v)),
+          validator: (v) {
+            final s = v?.trim() ?? '';
+            if (s.isEmpty) return l.commonRequired;
+            if (s.length > TextLimits.name) {
+              return l.authRegisterDisplayNameTooLong;
+            }
+            return null;
+          },
+        ),
+      );
+    }
+    return HeroCard(
+      style: style,
+      onEdit: enterEdit,
+      icon: EditableCircle(
+        size: 40,
+        onLongPress: () => enterEdit(),
+        child: UserAvatar(
+          displayName: _shownName,
+          iconCode: w.iconCode,
+          size: 40,
+        ),
+      ),
+      name: Text(_shownName),
+      fact: Text('@${_user.username}'),
+    );
+  }
 }
 
 class _ProfileDraft {
-  const _ProfileDraft({
-    required this.name,
-    required this.email,
-    required this.currency,
-    this.iconCode,
-  });
+  const _ProfileDraft({required this.name, required this.email, this.iconCode});
 
   factory _ProfileDraft.from(User u) => _ProfileDraft(
     name: u.displayName,
     email: u.email ?? '',
-    currency: u.currency,
     iconCode: u.iconCode,
   );
 
   final String name;
   final String email;
-  final String currency;
   final IconCode? iconCode;
 
   _ProfileDraft copyWith({
     String? name,
     String? email,
-    String? currency,
     IconCode? iconCode,
     bool clearIcon = false,
   }) => _ProfileDraft(
     name: name ?? this.name,
     email: email ?? this.email,
-    currency: currency ?? this.currency,
     iconCode: clearIcon ? null : (iconCode ?? this.iconCode),
   );
 
@@ -333,9 +319,8 @@ class _ProfileDraft {
       other is _ProfileDraft &&
       other.name == name &&
       other.email == email &&
-      other.currency == currency &&
       other.iconCode == iconCode;
 
   @override
-  int get hashCode => Object.hash(name, email, currency, iconCode);
+  int get hashCode => Object.hash(name, email, iconCode);
 }

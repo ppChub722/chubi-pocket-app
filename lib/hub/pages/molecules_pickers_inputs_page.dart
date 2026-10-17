@@ -47,6 +47,9 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
   // ThemeModeChips
   ThemeMode _mode = ThemeMode.system;
 
+  // SegmentedChoice
+  String _notify = 'notify';
+
   // ChatDial
   String? _sent;
 
@@ -608,6 +611,21 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
             lightLabel: 'Light',
             darkLabel: 'Dark',
             systemLabel: 'System',
+          ),
+        ),
+        HubDemo(
+          title: 'SegmentedChoice',
+          note:
+              'Pick one of 2-4 short options (notification settings: off / '
+              'notify / auto). The chosen one is highlighted.',
+          child: SegmentedChoice<String>(
+            selected: _notify,
+            onChanged: (v) => setState(() => _notify = v),
+            segments: const [
+              ChoiceSegment('off', 'Off'),
+              ChoiceSegment('notify', 'Notify'),
+              ChoiceSegment('auto', 'Auto'),
+            ],
           ),
         ),
         HubDemo(

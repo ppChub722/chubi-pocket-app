@@ -4,6 +4,7 @@ import '../../atoms/app_button.dart';
 import '../../atoms/app_chip.dart';
 import '../../atoms/app_text.dart';
 import '../../atoms/corner_badge.dart';
+import '../../atoms/icon_tile.dart';
 import '../../atoms/user_avatar.dart';
 import '../../molecules/confirm_dialog.dart';
 import '../../molecules/list_row.dart';
@@ -38,7 +39,8 @@ class NotificationTileView extends StatelessWidget {
     required this.timeText,
     required this.typeIcon,
     required this.acceptLabel,
-    required this.rejectLabel,
+    this.rejectLabel,
+    this.system = false,
     this.actorIconCode,
     this.amountText,
     this.unread = false,
@@ -68,7 +70,12 @@ class NotificationTileView extends StatelessWidget {
   /// Non-null = answered: the success chip with this label.
   final String? acceptedLabel;
   final String acceptLabel;
-  final String rejectLabel;
+
+  /// null = one full-width action (no second button).
+  final String? rejectLabel;
+
+  /// A notice from the app itself: [typeIcon] in a circle, no avatar.
+  final bool system;
   final NotificationRejectConfirm? rejectConfirm;
   final VoidCallback? onTap;
   final VoidCallback? onAccept;
@@ -97,15 +104,17 @@ class NotificationTileView extends StatelessWidget {
         children: [
           ListRow(
             onTap: onTap,
-            leading: CornerBadge(
-              size: _avatar,
-              icon: typeIcon,
-              child: UserAvatar(
-                displayName: actorName,
-                iconCode: actorIconCode,
-                size: _avatar,
-              ),
-            ),
+            leading: system
+                ? IconTile(icon: typeIcon, color: scheme.primary, size: _avatar)
+                : CornerBadge(
+                    size: _avatar,
+                    icon: typeIcon,
+                    child: UserAvatar(
+                      displayName: actorName,
+                      iconCode: actorIconCode,
+                      size: _avatar,
+                    ),
+                  ),
             body: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -153,15 +162,17 @@ class NotificationTileView extends StatelessWidget {
                       onPressed: onAccept,
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: AppButton(
-                      label: rejectLabel,
-                      variant: AppButtonVariant.outlined,
-                      submits: true,
-                      onPressed: () => _reject(context),
+                  if (rejectLabel != null) ...[
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: AppButton(
+                        label: rejectLabel!,
+                        variant: AppButtonVariant.outlined,
+                        submits: true,
+                        onPressed: () => _reject(context),
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

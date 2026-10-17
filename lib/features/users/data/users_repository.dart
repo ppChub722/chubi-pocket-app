@@ -22,8 +22,15 @@ class UsersRepository {
     IconCode? iconCode,
     bool clearIconCode = false,
     String? currency,
+    String? defaultAccountId,
+    bool clearDefaultAccount = false,
   }) async {
     final body = <String, dynamic>{};
+    if (clearDefaultAccount) {
+      body['default_account_id'] = null;
+    } else if (defaultAccountId != null) {
+      body['default_account_id'] = defaultAccountId;
+    }
     if (displayName != null) body['display_name'] = displayName;
     if (email != null) body['email'] = email;
     if (currency != null) body['currency'] = currency;

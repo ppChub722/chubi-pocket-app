@@ -69,6 +69,7 @@ export 'molecules/connection_banner.dart';
 export 'molecules/social_sign_in_button.dart';
 export 'molecules/card_grid.dart';
 export 'molecules/segmented_bar.dart';
+export 'molecules/segmented_choice.dart';
 export 'tokens/chip_size.dart';
 export 'atoms/app_badge.dart';
 export 'tokens/tone.dart';

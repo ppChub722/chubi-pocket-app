@@ -58,6 +58,21 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
     }
   }
 
+  /// One type to [mode] — ONE call carrying only the list(s) that change
+  /// (off = muted, auto cleared; notify = neither; auto = auto, not muted).
+  Future<void> setMode(NotificationType t, NotifyMode mode) {
+    final s = state.settings;
+    if (s == null || s.modeOf(t) == mode) return Future.value();
+    Set<String> with_(Set<String> set, bool on) =>
+        on ? {...set, t.wire} : (set.toSet()..remove(t.wire));
+    final muted = with_(s.mutedTypes, mode == NotifyMode.off);
+    final auto = with_(s.autoTypes, mode == NotifyMode.auto);
+    return update(
+      mutedTypes: s.isMuted(t) == (mode == NotifyMode.off) ? null : muted,
+      autoTypes: s.isAuto(t) == (mode == NotifyMode.auto) ? null : auto,
+    );
+  }
+
   /// Optimistic: the switch flips at once; a failed save flips it back and
   /// sets [SettingsState.error] (the page shows "เปลี่ยนกลับแล้ว"; muting a
   /// non-mutable type comes back as `TYPE_NOT_MUTABLE`).
@@ -66,7 +81,6 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
     Set<String>? autoTypes,
     DefaultAccountRef? defaultAccount,
     bool clearDefaultAccount = false,
-    bool? autoResolveOwnInProjects,
   }) async {
     final before = state.settings;
     if (before == null) return;
@@ -77,7 +91,6 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
           autoTypes: autoTypes,
           defaultAccount: defaultAccount,
           clearDefaultAccount: clearDefaultAccount,
-          autoResolveOwnInProjects: autoResolveOwnInProjects,
         ),
         status: SettingsStatus.saving,
         clearError: true,
@@ -89,7 +102,6 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
         autoTypes: autoTypes,
         defaultAccountId: defaultAccount?.id,
         clearDefaultAccount: clearDefaultAccount,
-        autoResolveOwnInProjects: autoResolveOwnInProjects,
       );
       emit(state.copyWith(settings: updated, status: SettingsStatus.loaded));
     } on ApiException catch (e) {

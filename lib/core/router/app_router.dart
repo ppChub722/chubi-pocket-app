@@ -254,7 +254,8 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
         // Dashboard drill-down ("เงินไปไหน" → one category in one month).
         // Stays in the dashboard stack with its own list cubit so the
         // transactions tab keeps its filters.
-        // ?category=<id> | ?uncategorized=true, &month=YYYY-MM.
+        // ?category=<id> | ?uncategorized=true, &month=YYYY-MM,
+        // &type=income|expense (default expense).
         GoRoute(
           path: 'browse',
           name: 'dashboard-browse',
@@ -273,7 +274,9 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
                 initialCategoryName: p['category'] == null ? null : p['title'],
                 initialCategoryType: p['category'] == null
                     ? null
-                    : CategoryType.expense,
+                    : (p['type'] == 'income'
+                          ? CategoryType.income
+                          : CategoryType.expense),
                 initialUncategorized: p['uncategorized'] == 'true',
                 initialMonth: month == null
                     ? null

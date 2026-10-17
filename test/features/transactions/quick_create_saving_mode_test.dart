@@ -277,7 +277,7 @@ void main() {
       expect(find.text('ทริปญี่ปุ่น'), findsOneWidget);
       expect(find.text('150'), findsOneWidget);
       expect(find.text('monthly'), findsOneWidget);
-      verifyNever(() => pending.submit(any()));
+      verifyNever(() => pending.submitOne(any()));
     });
 
     testWidgets('"confirm" saves the edits, then submits this draft', (
@@ -287,7 +287,7 @@ void main() {
       when(
         () => pending.updateDraft(any(), any()),
       ).thenAnswer((_) async => draft());
-      when(() => pending.submit(any())).thenAnswer(
+      when(() => pending.submitOne(any())).thenAnswer(
         (_) async => const PendingSubmitResult(submitted: ['p1'], failed: {}),
       );
       await t.enterText(amountField(t), '200');
@@ -302,7 +302,7 @@ void main() {
       expect(sent.goalId, 'g1');
       expect(sent.accountId, 'w1');
       expect(sent.date, '2026-10-13');
-      verify(() => pending.submit(['p1'])).called(1);
+      verify(() => pending.submitOne('p1')).called(1);
       verify(() => goals.markStale()).called(1);
       verify(() => dashboard.markStale()).called(1);
       expect(find.byType(QuickCreateSheetShell), findsNothing);

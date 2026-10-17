@@ -99,6 +99,19 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   num _monthSpent = 0;
   int _monthCount = 0;
 
+  /// The parent just chosen in the picker (its row from the picker's own
+  /// list call) and its root -> itself chain.
+  Category? _pickedParent;
+  var _pickedParentChain = const <CategoryPathItem>[];
+
+  /// A server field error on the name (duplicate sibling, 422), tied to the
+  /// name + parent it answered for so editing either clears it.
+  String? _nameServerError;
+  String? _nameServerErrorFor;
+
+  static String _nameKey(String name, String? parentId) =>
+      '${parentId ?? ''}|${name.trim()}';
+
   /// The report switch while its instant save is in flight (view mode).
   bool? _includeOverride;
   bool _includeBusy = false;
@@ -345,6 +358,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
+      if (e.code == 'CATEGORY_NAME_DUPLICATE' || e.code == 'DUPLICATE_NAME') {
+        _nameServerError = l.categoryFormNameDuplicate;
+        _nameServerErrorFor = _nameKey(w.name, w.parentId);
+        _formKey.currentState?.validate();
+        return;
+      }
       showAppSnackBarOn(pageMessenger!, _errorText(e, l), tone: Tone.danger);
       return;
     }
@@ -416,37 +435,24 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     return parent == null ? null : CategoryTree.resolveIconCode(parent, all);
   }
 
-  /// The chosen parent from the list, or null (none / not loaded).
-  Category? _parentCategory(List<Category> all) {
+  /// The parent shown in the row, root -> parent, from SERVER paths only:
+  /// the detail's `path` while the parent is unchanged, the picked row's own
+  /// path + itself after a pick. Null = no parent (or not known yet).
+  List<CategoryPathItem>? _parentChain() {
     final id = working.parentId;
     if (id == null) return null;
-    for (final c in all) {
-      if (c.id == id) return c;
+    final row = _detail ?? _persisted;
+    if (row != null && row.parentId == id && row.path.isNotEmpty) {
+      return row.path;
     }
-    return null;
+    return _pickedParent?.id == id ? _pickedParentChain : null;
   }
 
-  String? _parentBreadcrumb(List<Category> all) {
-    if (working.parentId == null) return null;
-    // Unchanged parent: the row's own server path.
-    final row = _persisted;
-    if (row != null &&
-        row.parentId == working.parentId &&
-        row.path.isNotEmpty) {
-      return row.path.map((p) => p.name).join(' › ');
-    }
-    final parent = all.firstWhere(
-      (c) => c.id == working.parentId,
-      orElse: _previewCategory,
-    );
-    final ancestors = CategoryTree.breadcrumb(parent, all);
-    return ancestors.isEmpty ? parent.name : '$ancestors › ${parent.name}';
-  }
+  String? _parentBreadcrumb() => _parentChain()?.map((p) => p.name).join(' › ');
 
   Future<void> _openIconMaker() async {
     final l = AppLocalizations.of(context)!;
-    final all = context.read<CategoriesCubit>().state.categories;
-    final breadcrumb = _parentBreadcrumb(all);
+    final breadcrumb = _parentBreadcrumb();
     final result = await showIconMakerSheet(
       context: context,
       type: IconType.category,
@@ -501,7 +507,19 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     );
     if (!mounted || result == null) return;
     if (result is CategoryPickerSelected) {
-      applyChange(working.copyWith(parentId: result.category.id));
+      final picked = result.category;
+      setState(() {
+        _pickedParent = picked;
+        _pickedParentChain = [
+          ...picked.path,
+          CategoryPathItem(
+            id: picked.id,
+            name: picked.name,
+            iconCode: CategoryTree.resolveIconCode(picked, all),
+          ),
+        ];
+      });
+      applyChange(working.copyWith(parentId: picked.id));
     } else if (result is CategoryPickerCleared) {
       applyChange(working.copyWith(clearParent: true));
     }
@@ -621,16 +639,21 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         : l.categoryMonthSpentLabel(month, _monthCount);
   }
 
-  /// The category's transactions this month (the dashboard drill-down route,
-  /// which is expense-only — income has no link yet).
+  /// The category's transactions this month (the dashboard drill-down route;
+  /// `type` tells income from expense).
   VoidCallback? _openMonthTransactions() {
     final c = _persisted;
-    if (c == null || c.type != CategoryType.expense) return null;
+    if (c == null) return null;
     final now = DateTime.now();
     final month = '${now.year}-${now.month.toString().padLeft(2, '0')}';
     final q = Uri(
       path: '/browse',
-      queryParameters: {'category': c.id, 'title': c.name, 'month': month},
+      queryParameters: {
+        'category': c.id,
+        'title': c.name,
+        'month': month,
+        'type': c.type.name,
+      },
     );
     return () => openPage(context, q.toString());
   }
@@ -642,8 +665,8 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     required double bottomInset,
   }) {
     final editing = isEditing;
-    final breadcrumb = _parentBreadcrumb(all);
-    final parent = _parentCategory(all);
+    final breadcrumb = _parentBreadcrumb();
+    final chain = _parentChain();
     final canDelete = !_isCreate && !(_persisted?.isSystem ?? true);
     return DetailLayout(
       // Pull = the page's one read (`GET /categories/:id`); off in create.
@@ -656,12 +679,11 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         rows: [
           InfoRow(
             label: l.categoryFormParentLabel,
-            // Parent = its ancestor path as chips; the text breadcrumb stays
-            // the fallback while the parent isn't in the list.
-            valueChip: parent == null
+            // Parent = its path as chips, from the detail's server `path`.
+            valueChip: chain == null
                 ? null
-                : categoryChipPath(context, parent, all: all),
-            value: parent == null
+                : categoryPathItemsChipPath(context, chain),
+            value: chain == null
                 ? (breadcrumb ?? l.categoryFormParentNone)
                 : null,
             showChevron: true,
@@ -809,7 +831,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           hint: l.commonName,
           maxLength: TextLimits.name,
           onChanged: (v) => _onText(_TextField.name, v),
-          validator: (v) => _validateName(v, all),
+          validator: _validateName,
         ),
         description: description,
       );
@@ -839,19 +861,15 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     );
   }
 
-  String? _validateName(String? v, List<Category> all) {
+  String? _validateName(String? v) {
     final l = AppLocalizations.of(context)!;
     final name = v?.trim() ?? '';
     if (name.isEmpty) return l.categoryFormNameRequired;
     if (name.length > TextLimits.name) return l.categoryFormNameTooLong;
-    if (CategoryTree.hasSiblingWithName(
-      name: name,
-      parentId: working.parentId,
-      type: working.type,
-      all: all,
-      excludeId: _persisted?.id,
-    )) {
-      return l.categoryFormNameDuplicate;
+    // Duplicate sibling: the server decides (422 CATEGORY_NAME_DUPLICATE).
+    if (_nameServerError != null &&
+        _nameServerErrorFor == _nameKey(name, working.parentId)) {
+      return _nameServerError;
     }
     return null;
   }
