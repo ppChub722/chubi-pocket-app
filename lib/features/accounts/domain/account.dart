@@ -579,6 +579,8 @@ class AccountTotals extends Equatable {
     this.cardUsedPct = 0,
     this.savedTotal = 0,
     this.availableTotal = 0,
+    this.cashSplit = const [],
+    this.cardRemaining = 0,
   });
 
   final double assets;
@@ -608,6 +610,12 @@ class AccountTotals extends Equatable {
   final double savedTotal;
   final double availableTotal;
 
+  /// The กระเป๋าตังค์ tile caption: each non-credit type's % of [cashTotal].
+  final List<CashSplitShare> cashSplit;
+
+  /// Credit left on the cards (limit − used), for the หนี้บัตร caption.
+  final double cardRemaining;
+
   factory AccountTotals.fromJson(Map<String, dynamic> json) {
     double n(String k) => (json[k] as num?)?.toDouble() ?? 0;
     return AccountTotals(
@@ -634,6 +642,14 @@ class AccountTotals extends Equatable {
       cardUsedPct: (json['card_used_pct'] as num?)?.toInt() ?? 0,
       savedTotal: n('saved_total'),
       availableTotal: n('available_total'),
+      cashSplit: [
+        for (final s in (json['cash_split'] as List? ?? const []))
+          CashSplitShare(
+            type: AccountType.fromJson((s as Map)['type'] as String),
+            pct: (s['pct'] as num?)?.toInt() ?? 0,
+          ),
+      ],
+      cardRemaining: n('card_remaining'),
     );
   }
 
@@ -655,6 +671,8 @@ class AccountTotals extends Equatable {
     cardUsedPct,
     savedTotal,
     availableTotal,
+    cashSplit,
+    cardRemaining,
   ];
 }
 
@@ -730,4 +748,15 @@ class AdjustBalanceResult {
       },
     );
   }
+}
+
+/// One type's share of the cash tile (`totals.cash_split`).
+class CashSplitShare extends Equatable {
+  const CashSplitShare({required this.type, required this.pct});
+
+  final AccountType type;
+  final int pct;
+
+  @override
+  List<Object?> get props => [type, pct];
 }

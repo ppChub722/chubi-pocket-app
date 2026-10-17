@@ -23,12 +23,18 @@ class _Auth extends MockCubit<AuthState> implements AuthCubit {}
 
 class _Repo extends Fake implements AccountsRepository {}
 
-Account _wallet(String id, String name, int order) => Account.fromJson({
+Account _wallet(
+  String id,
+  String name,
+  int order, {
+  String type = 'bank',
+  double balance = 100,
+}) => Account.fromJson({
   'id': id,
   'name': name,
-  'type': 'bank',
-  'group': 'asset',
-  'balance': 100.0,
+  'type': type,
+  'group': type == 'credit_card' ? 'liability' : 'asset',
+  'balance': balance,
   'currency': 'THB',
   'icon_code': {'icon': 'bank', 'color': 'blue'},
   'status': 'active',
@@ -42,17 +48,18 @@ Account _wallet(String id, String name, int order) => Account.fromJson({
 void main() {
   setUp(ToolbarToggleState.resetAll);
 
-  Future<void> pump(WidgetTester t) async {
+  Future<void> pump(WidgetTester t, {AccountsState? state}) async {
     t.view.physicalSize = const Size(400, 1400);
     t.view.devicePixelRatio = 1;
     addTearDown(t.view.reset);
     final cubit = AccountsCubit(repository: _Repo());
     addTearDown(cubit.close);
     cubit.emit(
-      AccountsState(
-        accounts: [_wallet('w1', 'KBank', 0), _wallet('w2', 'Cash', 1)],
-        status: AccountsStatus.loaded,
-      ),
+      state ??
+          AccountsState(
+            accounts: [_wallet('w1', 'KBank', 0), _wallet('w2', 'Cash', 1)],
+            status: AccountsStatus.loaded,
+          ),
     );
     final auth = _Auth();
     final pending = _Pending();
@@ -118,11 +125,67 @@ void main() {
     expect(find.byType(AccountCard), findsOneWidget);
   });
 
+  testWidgets('summary card: net, BE tiles as filters, saved line, groups', (
+    t,
+  ) async {
+    final totals = AccountTotals.fromJson({
+      'assets': 1987947,
+      'liabilities': 3858,
+      'net': 1984089,
+      'total': 1984089,
+      'cash_total': 1987947,
+      'card_debt': 3858,
+      'card_used_pct': 8,
+      'card_remaining': 46142,
+      'credit_used': 3858,
+      'credit_limit': 50000,
+      'saved_total': 20000,
+      'available_total': 1967947,
+      'cash_split': [
+        {'type': 'bank', 'pct': 100},
+        {'type': 'cash', 'pct': 0},
+      ],
+      'by_type': [
+        {'type': 'bank', 'count': 1, 'balance': 1987647},
+        {'type': 'cash', 'count': 1, 'balance': 300},
+        {'type': 'credit_card', 'count': 1, 'balance': -3858},
+      ],
+    });
+    await pump(
+      t,
+      state: AccountsState(
+        accounts: [
+          _wallet('w1', 'KBank', 0, balance: 1987647),
+          _wallet('w2', 'Cash', 1, type: 'cash', balance: 300),
+          _wallet('w3', 'Visa', 2, type: 'credit_card', balance: -3858),
+        ],
+        totals: totals,
+        status: AccountsStatus.loaded,
+      ),
+    );
+    expect(find.byType(ListSummaryCard), findsOneWidget);
+    expect(find.textContaining('Bank 100%'), findsOneWidget);
+    expect(find.textContaining('8%'), findsWidgets);
+    expect(find.textContaining('Saved'), findsOneWidget);
+    // One header per type, the default order.
+    expect(find.byType(SectionHeader), findsNWidgets(3));
+    expect(find.byType(AccountCard), findsNWidgets(3));
+
+    // The card tile filters to the card wallets; tapping again clears.
+    await t.tap(find.byKey(const ValueKey('summaryTile:Card debt')));
+    await t.pumpAndSettle();
+    expect(find.byType(AccountCard), findsOneWidget);
+    expect(find.text('Visa'), findsOneWidget);
+    await t.tap(find.byKey(const ValueKey('summaryTile:Card debt')));
+    await t.pumpAndSettle();
+    expect(find.byType(AccountCard), findsNWidgets(3));
+  });
+
   testWidgets('a non-default sort puts the dot on the hidden 🔍', (t) async {
     await pump(t);
     await t.tap(find.byType(ToolbarToggleButton));
     await t.pumpAndSettle();
-    await t.tap(find.widgetWithText(AppChip, 'My order'));
+    await t.tap(find.widgetWithText(AppChip, 'By type'));
     await t.pumpAndSettle();
     await t.tap(find.text('Name').last);
     await t.pumpAndSettle();

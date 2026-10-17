@@ -1920,5 +1920,9 @@
   "bgStatusFieldLabel": "สถานะ",
   "bgRowLeft": "เหลือ",
   "bgRowOverAmount": "เกิน",
-  "bgRowOneOff": "ครั้งเดียว"
+  "bgRowOneOff": "ครั้งเดียว",
+  "fpWalletsTileCash": "กระเป๋าตังค์",
+  "fpWalletsSavedLine": "ออมไว้ {saved} · ใช้ได้จริง {available}",
+  "fpWalletsSortByType": "ตามประเภท",
+  "fpWalletsReorderChip": "จัดลำดับ"
 }

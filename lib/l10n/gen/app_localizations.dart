@@ -10542,6 +10542,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'One-off'**
   String get bgRowOneOff;
+
+  /// No description provided for @fpWalletsTileCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallets'**
+  String get fpWalletsTileCash;
+
+  /// No description provided for @fpWalletsSavedLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {saved} · really available {available}'**
+  String fpWalletsSavedLine(String saved, String available);
+
+  /// No description provided for @fpWalletsSortByType.
+  ///
+  /// In en, this message translates to:
+  /// **'By type'**
+  String get fpWalletsSortByType;
+
+  /// No description provided for @fpWalletsReorderChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder'**
+  String get fpWalletsReorderChip;
 }
 
 class _AppLocalizationsDelegate

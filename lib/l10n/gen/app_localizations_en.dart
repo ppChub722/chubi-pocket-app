@@ -6177,4 +6177,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bgRowOneOff => 'One-off';
+
+  @override
+  String get fpWalletsTileCash => 'Wallets';
+
+  @override
+  String fpWalletsSavedLine(String saved, String available) {
+    return 'Saved $saved · really available $available';
+  }
+
+  @override
+  String get fpWalletsSortByType => 'By type';
+
+  @override
+  String get fpWalletsReorderChip => 'Reorder';
 }

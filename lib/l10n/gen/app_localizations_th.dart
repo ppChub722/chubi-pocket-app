@@ -6032,4 +6032,18 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get bgRowOneOff => 'ครั้งเดียว';
+
+  @override
+  String get fpWalletsTileCash => 'กระเป๋าตังค์';
+
+  @override
+  String fpWalletsSavedLine(String saved, String available) {
+    return 'ออมไว้ $saved · ใช้ได้จริง $available';
+  }
+
+  @override
+  String get fpWalletsSortByType => 'ตามประเภท';
+
+  @override
+  String get fpWalletsReorderChip => 'จัดลำดับ';
 }

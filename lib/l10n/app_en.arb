@@ -2161,5 +2161,10 @@
   "bgStatusFieldLabel": "Status",
   "bgRowLeft": "Left",
   "bgRowOverAmount": "Over",
-  "bgRowOneOff": "One-off"
+  "bgRowOneOff": "One-off",
+  "fpWalletsTileCash": "Wallets",
+  "fpWalletsSavedLine": "Saved {saved} · really available {available}",
+  "@fpWalletsSavedLine": { "placeholders": { "saved": { "type": "String" }, "available": { "type": "String" } } },
+  "fpWalletsSortByType": "By type",
+  "fpWalletsReorderChip": "Reorder"
 }
