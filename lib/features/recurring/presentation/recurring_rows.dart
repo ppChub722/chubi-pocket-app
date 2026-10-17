@@ -4,18 +4,34 @@ import '../../../core/utils/date_formatter.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
 import '../../transactions/domain/transaction_type.dart';
-import '../../pending/domain/pending_transaction.dart';
 import '../domain/recurring.dart';
 import '../domain/recurring_item.dart';
 
 // Thin wrappers: models → the kit's TxRow (no styling here).
 
-/// One recurring setting in the management list: icon · name · wallet chip |
-/// amount; line 2 = category · rule · next due (· n/N).
+/// The kind's label ("ค่าสมาชิก", "ผ่อนชำระ", "รายรับ", "เตือนจ่าย").
+String recurringKindLabel(AppLocalizations l, RecurringKind k) => switch (k) {
+  RecurringKind.subscription => l.fpRecurringKindSubscription,
+  RecurringKind.installment => l.fpRecurringKindInstallment,
+  RecurringKind.income => l.fpRecurringKindIncome,
+  RecurringKind.reminder => l.fpRecurringKindReminder,
+};
+
+/// One recurring setting in a list: icon · name · wallet chip | amount (or
+/// "รอยอด" while a reminder has none); line 2 = next due · rule (· n/N).
 class RecurringRow extends StatelessWidget {
-  const RecurringRow({required this.recurring, this.onTap, super.key});
+  const RecurringRow({
+    required this.recurring,
+    this.amount,
+    this.onTap,
+    super.key,
+  });
 
   final Recurring recurring;
+
+  /// The amount to show; defaults to the setting's own. A reminder tab passes
+  /// the next occurrence's.
+  final double? amount;
   final VoidCallback? onTap;
 
   @override
@@ -23,17 +39,18 @@ class RecurringRow extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final r = recurring;
     final next = r.nextDate;
+    final shown = amount ?? r.amount;
+    final known = shown != null && shown > 0;
     return TxRow(
-      leading: r.isSaving
-          ? savingLeading(context)
-          : IconDisplay(
-              type: IconType.category,
-              size: 36,
-              iconCode: r.iconCode ?? r.category?.iconCode,
-            ),
+      leading: IconDisplay(
+        type: IconType.category,
+        size: 36,
+        iconCode: r.iconCode ?? r.category?.iconCode,
+      ),
       title: r.name,
-      amount: signedOf(r.type, r.amount, saving: r.isSaving),
-      tone: toneOf(r.type, saving: r.isSaving),
+      amount: known ? signedOf(r.type, shown) : 0,
+      amountText: known ? null : l.fpRecurringAwaitingAmount,
+      tone: toneOf(r.type),
       walletLabel: r.account?.name,
       walletIcon: r.account == null
           ? null
@@ -43,7 +60,7 @@ class RecurringRow extends StatelessWidget {
               iconCode: r.account!.iconCode,
             ),
       statusChip: _status(l, r),
-      dimmed: r.status == RecurringStatus.archived,
+      dimmed: r.status != RecurringStatus.active,
       recurring: true,
       progress: r.progressTotal == null
           ? null
@@ -51,10 +68,7 @@ class RecurringRow extends StatelessWidget {
       metaLeading: next == null
           ? null
           : DueText(date: next, daysUntil: r.daysUntil, withDate: false),
-      meta: [
-        if (r.isSaving) savingTargetLabel(l, r.goal),
-        recurrenceLabel(l, r.rule),
-      ],
+      meta: [recurrenceLabel(l, r.rule)],
       onTap: onTap,
     );
   }
@@ -88,12 +102,13 @@ class RecurringItemRow extends StatelessWidget {
     this.showState = true,
     this.select,
     this.onTap,
+    this.onLongPress,
     super.key,
   });
 
   final RecurringItem item;
 
-  /// Name the recurring it came from (the all-upcoming list).
+  /// Name the recurring it came from (a mixed list).
   final bool showParent;
   final bool showState;
 
@@ -101,25 +116,29 @@ class RecurringItemRow extends StatelessWidget {
   final Widget? select;
   final VoidCallback? onTap;
 
+  /// Enters bulk-select (long-press).
+  final VoidCallback? onLongPress;
+
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final i = item;
     final parent = showParent ? i.recurring?.name : null;
     final title = i.title;
     final progress = i.seq == null
         ? null
         : (i.total == null ? '${i.seq}' : '${i.seq}/${i.total}');
-    return TxRow(
-      leading: i.isSaving
-          ? savingLeading(context)
-          : IconDisplay(
-              type: IconType.category,
-              size: 36,
-              iconCode: i.category?.iconCode ?? i.recurring?.iconCode,
-            ),
+    final known = i.amount != null && i.amount! > 0;
+    final row = TxRow(
+      leading: IconDisplay(
+        type: IconType.category,
+        size: 36,
+        iconCode: i.category?.iconCode ?? i.recurring?.iconCode,
+      ),
       title: title.isEmpty ? (i.category?.name ?? '—') : title,
-      amount: signedOf(i.type, i.amount, saving: i.isSaving),
-      tone: toneOf(i.type, saving: i.isSaving),
+      amount: known ? signedOf(i.type, i.amount!) : 0,
+      amountText: known ? null : l.fpRecurringAwaitingAmount,
+      tone: toneOf(i.type),
       walletLabel: i.account?.name,
       walletIcon: i.account == null
           ? null
@@ -137,36 +156,26 @@ class RecurringItemRow extends StatelessWidget {
       progress: progress,
       category: [
         if (parent != null && parent != title) parent,
-        if (i.isSaving)
-          savingTargetLabel(AppLocalizations.of(context)!, i.goal)
-        else if (i.category != null && i.category!.name != title)
-          i.category!.name,
+        if (i.category != null && i.category!.name != title) i.category!.name,
       ].join(' · '),
       select: select,
       onTap: onTap,
     );
+    if (onLongPress == null) return row;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: onLongPress,
+      child: row,
+    );
   }
 }
 
-/// Expense shows negative, income positive, a transfer / ออม unsigned.
-num signedOf(TransactionType type, double amount, {bool saving = false}) =>
-    !saving && type == TransactionType.expense ? -amount : amount;
+/// Expense shows negative, income positive, a transfer unsigned.
+num signedOf(TransactionType type, double amount) =>
+    type == TransactionType.expense ? -amount : amount;
 
-MoneyTone toneOf(TransactionType type, {bool saving = false}) =>
-    saving || type == TransactionType.transfer
-    ? MoneyTone.plain
-    : MoneyTone.signed;
-
-/// The 🐷 tile of an ออม row.
-Widget savingLeading(BuildContext context) => IconTile(
-  icon: AppIcons.savingDeposit,
-  color: Theme.of(context).colorScheme.primary,
-  size: 36,
-);
-
-/// "→ เป้าหมาย X" / "→ ยังไม่จัดสรร".
-String savingTargetLabel(AppLocalizations l, SavingGoalRef? goal) =>
-    '→ ${goal?.name ?? l.savingEntrySpare}';
+MoneyTone toneOf(TransactionType type) =>
+    type == TransactionType.transfer ? MoneyTone.plain : MoneyTone.signed;
 
 /// Items of one day, in list order.
 class ItemDateGroup {

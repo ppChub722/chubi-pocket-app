@@ -7082,4 +7082,221 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get recurringLinkAlreadyLinked =>
       'That period is already linked (or this transaction is linked already)';
+
+  @override
+  String get fpRecurringTabReminder => 'Reminders';
+
+  @override
+  String get fpRecurringTabCalendar => 'Calendar';
+
+  @override
+  String get fpRecurringListCaption => 'Next 30 days to pay';
+
+  @override
+  String fpRecurringAwaitingAlert(int n) {
+    return '$n waiting for an amount';
+  }
+
+  @override
+  String fpRecurringMonthLine(String pay, String receive) {
+    return 'Per month: pay $pay · receive $receive';
+  }
+
+  @override
+  String get fpRecurringPausedGroup => 'Paused';
+
+  @override
+  String get fpRecurringGroupDue => 'Due · in pending';
+
+  @override
+  String get fpRecurringGroupComing => 'Coming up';
+
+  @override
+  String get fpRecurringAwaitingAmount => 'No amount yet';
+
+  @override
+  String get fpRecurringAddReminder => 'Add a reminder';
+
+  @override
+  String get fpRecurringKindSubscription => 'Subscription';
+
+  @override
+  String get fpRecurringKindInstallment => 'Installment';
+
+  @override
+  String get fpRecurringKindIncome => 'Income';
+
+  @override
+  String get fpRecurringKindReminder => 'Reminder';
+
+  @override
+  String get fpRecurringRefreshFailed =>
+      'Refresh failed, showing the latest data';
+
+  @override
+  String get fpRecurringCalendarNone => 'Nothing on this day';
+
+  @override
+  String get fpRecurringPerRound => 'Each time';
+
+  @override
+  String get fpRecurringAwaitingValue => 'Enter amount';
+
+  @override
+  String get fpRecurringTileYearly => 'Per year';
+
+  @override
+  String get fpRecurringTileSaved => 'Saved';
+
+  @override
+  String get fpRecurringTilePending => 'To confirm';
+
+  @override
+  String get fpRecurringTileInstallment => 'Installment';
+
+  @override
+  String fpRecurringCountUnit(int n) {
+    return '$n times';
+  }
+
+  @override
+  String fpRecurringAlertAwaiting(String due) {
+    return 'Enter the amount · $due';
+  }
+
+  @override
+  String get fpRecurringInfoSpan => 'Start – end';
+
+  @override
+  String fpRecurringNextInline(String date, String due) {
+    return 'next $date ($due)';
+  }
+
+  @override
+  String get fpRecurringTrialUntil => 'Free trial until';
+
+  @override
+  String get fpRecurringTabPast => 'Past';
+
+  @override
+  String get fpRecurringTabUpcoming => 'Upcoming';
+
+  @override
+  String fpRecurringNextTitle(String due) {
+    return 'Next · $due';
+  }
+
+  @override
+  String get fpRecurringNextCaption => 'Becomes a draft in pending on that day';
+
+  @override
+  String get fpRecurringEditedChip => 'Edited';
+
+  @override
+  String get fpRecurringActEditAmount => 'Edit amount';
+
+  @override
+  String get fpRecurringActMove => 'Move date';
+
+  @override
+  String get fpRecurringActSkip => 'Skip';
+
+  @override
+  String get fpRecurringActEnterAmount => 'Enter amount';
+
+  @override
+  String fpRecurringThenTitle(int n) {
+    return '$n upcoming in total';
+  }
+
+  @override
+  String get fpRecurringMoreDates => 'More ›';
+
+  @override
+  String fpRecurringChipEdited(String date, String amount) {
+    return '$date · $amount';
+  }
+
+  @override
+  String fpRecurringChipSkipped(String date) {
+    return '$date · skipped';
+  }
+
+  @override
+  String get fpRecurringOccEditTitle => 'Edit this occurrence';
+
+  @override
+  String get fpRecurringOccMoveTitle => 'Move this occurrence';
+
+  @override
+  String get fpRecurringOccEnterTitle => 'Enter the amount';
+
+  @override
+  String get fpRecurringOccDate => 'Date';
+
+  @override
+  String get fpRecurringOccAmount => 'Amount';
+
+  @override
+  String get fpRecurringSkipTitle => 'Skip this occurrence?';
+
+  @override
+  String get fpRecurringSkipBody =>
+      'It will not become a draft in pending. You can restore it later.';
+
+  @override
+  String get fpRecurringAmountLabel => 'Amount / time';
+
+  @override
+  String get fpRecurringAmountOptional => 'Amount / time (optional)';
+
+  @override
+  String get fpRecurringReminderHint =>
+      'No amount needed. On the day, enter the real amount in the draft.';
+
+  @override
+  String get fpRecurringFieldCount => 'Number of payments';
+
+  @override
+  String fpRecurringCountValue(int n) {
+    return '$n payments';
+  }
+
+  @override
+  String get fpRecurringCountRequired =>
+      'An installment needs a number of payments';
+
+  @override
+  String get fpRecurringFieldMode => 'Type';
+
+  @override
+  String get fpRecurringFieldPayFrom => 'Pay from';
+
+  @override
+  String get fpRecurringFieldIntoWallet => 'Into wallet';
+
+  @override
+  String get fpRecurringFieldFromWallet => 'From wallet';
+
+  @override
+  String get fpRecurringSelectDone => 'Done';
+
+  @override
+  String get fpRecurringArchiveConsequence =>
+      'Stops making new occurrences. Hidden, can be restored.';
+
+  @override
+  String get fpRecurringRestoreConsequence =>
+      'Active again, making occurrences';
+
+  @override
+  String get fpRecurringDeleteConsequence =>
+      'Deletes this recurring with its unsaved occurrences';
+
+  @override
+  String get fpRecurringDuplicate => 'Duplicate';
+
+  @override
+  String get fpRecurringDuplicateConsequence =>
+      'Creates the same recurring, starting today';
 }

@@ -6912,4 +6912,219 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get recurringLinkAlreadyLinked =>
       'งวดนี้ผูกไปแล้ว (หรือรายการนี้ผูกอยู่แล้ว)';
+
+  @override
+  String get fpRecurringTabReminder => 'เตือนจ่าย';
+
+  @override
+  String get fpRecurringTabCalendar => 'ปฏิทิน';
+
+  @override
+  String get fpRecurringListCaption => '30 วันข้างหน้า ต้องจ่าย';
+
+  @override
+  String fpRecurringAwaitingAlert(int n) {
+    return 'รอใส่ยอด $n รายการ';
+  }
+
+  @override
+  String fpRecurringMonthLine(String pay, String receive) {
+    return 'ต่อเดือน จ่าย $pay · รับ $receive';
+  }
+
+  @override
+  String get fpRecurringPausedGroup => 'หยุดไว้';
+
+  @override
+  String get fpRecurringGroupDue => 'ถึงแล้ว · อยู่ใน pending';
+
+  @override
+  String get fpRecurringGroupComing => 'จะถึง';
+
+  @override
+  String get fpRecurringAwaitingAmount => 'รอยอด';
+
+  @override
+  String get fpRecurringAddReminder => 'เพิ่มเตือนจ่าย';
+
+  @override
+  String get fpRecurringKindSubscription => 'ค่าสมาชิก';
+
+  @override
+  String get fpRecurringKindInstallment => 'ผ่อนชำระ';
+
+  @override
+  String get fpRecurringKindIncome => 'รายรับ';
+
+  @override
+  String get fpRecurringKindReminder => 'เตือนจ่าย';
+
+  @override
+  String get fpRecurringRefreshFailed =>
+      'รีเฟรชไม่สำเร็จ แสดงข้อมูลล่าสุดที่มี';
+
+  @override
+  String get fpRecurringCalendarNone => 'ไม่มีรายการในวันนี้';
+
+  @override
+  String get fpRecurringPerRound => 'ต่อครั้ง';
+
+  @override
+  String get fpRecurringAwaitingValue => 'รอใส่ยอด';
+
+  @override
+  String get fpRecurringTileYearly => 'ปีละ';
+
+  @override
+  String get fpRecurringTileSaved => 'บันทึกแล้ว';
+
+  @override
+  String get fpRecurringTilePending => 'รอยืนยัน';
+
+  @override
+  String get fpRecurringTileInstallment => 'งวด';
+
+  @override
+  String fpRecurringCountUnit(int n) {
+    return '$n งวด';
+  }
+
+  @override
+  String fpRecurringAlertAwaiting(String due) {
+    return 'รอใส่ยอด · $due';
+  }
+
+  @override
+  String get fpRecurringInfoSpan => 'เริ่ม – สิ้นสุด';
+
+  @override
+  String fpRecurringNextInline(String date, String due) {
+    return 'ถัดไป $date ($due)';
+  }
+
+  @override
+  String get fpRecurringTrialUntil => 'ทดลองฟรีถึง';
+
+  @override
+  String get fpRecurringTabPast => 'งวดที่ผ่านมา';
+
+  @override
+  String get fpRecurringTabUpcoming => 'ล่วงหน้า';
+
+  @override
+  String fpRecurringNextTitle(String due) {
+    return 'งวดถัดไป · $due';
+  }
+
+  @override
+  String get fpRecurringNextCaption => 'จะขึ้นร่างใน pending วันนั้น';
+
+  @override
+  String get fpRecurringEditedChip => 'แก้แล้ว';
+
+  @override
+  String get fpRecurringActEditAmount => 'แก้ยอด';
+
+  @override
+  String get fpRecurringActMove => 'เลื่อนวัน';
+
+  @override
+  String get fpRecurringActSkip => 'ข้าม';
+
+  @override
+  String get fpRecurringActEnterAmount => 'ใส่ยอด';
+
+  @override
+  String fpRecurringThenTitle(int n) {
+    return 'ล่วงหน้าทั้งหมด $n งวด';
+  }
+
+  @override
+  String get fpRecurringMoreDates => 'เพิ่มเติม ›';
+
+  @override
+  String fpRecurringChipEdited(String date, String amount) {
+    return '$date · $amount';
+  }
+
+  @override
+  String fpRecurringChipSkipped(String date) {
+    return '$date · ข้าม';
+  }
+
+  @override
+  String get fpRecurringOccEditTitle => 'แก้ไขงวดนี้';
+
+  @override
+  String get fpRecurringOccMoveTitle => 'เลื่อนงวดนี้';
+
+  @override
+  String get fpRecurringOccEnterTitle => 'ใส่ยอด';
+
+  @override
+  String get fpRecurringOccDate => 'วันที่';
+
+  @override
+  String get fpRecurringOccAmount => 'ยอดเงิน';
+
+  @override
+  String get fpRecurringSkipTitle => 'ข้ามงวดนี้?';
+
+  @override
+  String get fpRecurringSkipBody =>
+      'งวดนี้จะไม่ขึ้นร่างใน pending กู้คืนได้ภายหลัง';
+
+  @override
+  String get fpRecurringAmountLabel => 'จำนวนเงิน / งวด';
+
+  @override
+  String get fpRecurringAmountOptional => 'จำนวนเงิน / งวด (ไม่บังคับ)';
+
+  @override
+  String get fpRecurringReminderHint =>
+      'ไม่ต้องใส่ยอดก็ได้ ถึงวันให้ใส่ยอดจริงในร่าง';
+
+  @override
+  String get fpRecurringFieldCount => 'จำนวนงวด';
+
+  @override
+  String fpRecurringCountValue(int n) {
+    return '$n งวด';
+  }
+
+  @override
+  String get fpRecurringCountRequired => 'ผ่อนชำระต้องระบุจำนวนงวด';
+
+  @override
+  String get fpRecurringFieldMode => 'แบบ';
+
+  @override
+  String get fpRecurringFieldPayFrom => 'จ่ายจาก';
+
+  @override
+  String get fpRecurringFieldIntoWallet => 'เข้ากระเป๋า';
+
+  @override
+  String get fpRecurringFieldFromWallet => 'จากกระเป๋า';
+
+  @override
+  String get fpRecurringSelectDone => 'เสร็จ';
+
+  @override
+  String get fpRecurringArchiveConsequence =>
+      'หยุดสร้างงวดใหม่ ซ่อนไว้ กู้คืนได้';
+
+  @override
+  String get fpRecurringRestoreConsequence => 'กลับมาใช้งานและสร้างงวดใหม่ต่อ';
+
+  @override
+  String get fpRecurringDeleteConsequence =>
+      'ลบรายการประจำนี้ พร้อมงวดที่ยังไม่บันทึก';
+
+  @override
+  String get fpRecurringDuplicate => 'ทำสำเนา';
+
+  @override
+  String get fpRecurringDuplicateConsequence =>
+      'สร้างรายการประจำใหม่ที่เหมือนกัน เริ่มวันนี้';
 }

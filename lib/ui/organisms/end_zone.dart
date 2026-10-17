@@ -16,6 +16,7 @@ class EndZoneAction {
     required this.onTap,
     this.consequence,
     this.submits = true,
+    this.icon,
   });
 
   final EndZoneKind kind;
@@ -29,6 +30,9 @@ class EndZoneAction {
 
   /// Sends to the server: disabled while offline (default true).
   final bool submits;
+
+  /// Overrides the kind's icon (a neutral "ทำสำเนา" under [EndZoneKind.close]).
+  final IconData? icon;
 }
 
 /// The end of a detail page: close (primary) → archive (amber) → delete
@@ -52,11 +56,13 @@ class EndZone extends StatelessWidget {
         children: [
           for (final (i, a) in sorted.indexed)
             DangerRow(
-              icon: switch (a.kind) {
-                EndZoneKind.close => AppIcons.check,
-                EndZoneKind.archive => AppIcons.archive,
-                EndZoneKind.delete => AppIcons.delete,
-              },
+              icon:
+                  a.icon ??
+                  switch (a.kind) {
+                    EndZoneKind.close => AppIcons.check,
+                    EndZoneKind.archive => AppIcons.archive,
+                    EndZoneKind.delete => AppIcons.delete,
+                  },
               label: a.label,
               consequence: a.consequence,
               neutral: a.kind == EndZoneKind.close,

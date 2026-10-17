@@ -56,12 +56,16 @@ class TxRow extends StatelessWidget {
     this.linked = false,
     this.statusChip,
     this.dimmed = false,
+    this.amountText,
     super.key,
   });
 
   final Widget leading;
   final String title;
   final num amount;
+
+  /// Words in place of the amount ("รอยอด": no amount yet), muted.
+  final String? amountText;
   final MoneyTone tone;
 
   /// The wallet's name — null = no wallet chip (the page is one wallet's).
@@ -255,13 +259,21 @@ class TxRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
-            MoneyText(
-              amount,
-              tone: tone,
-              style: textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
+            if (amountText != null)
+              Text(
+                amountText!,
+                style: textTheme.titleSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              )
+            else
+              MoneyText(
+                amount,
+                tone: tone,
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
           ],
         ),
       ),
