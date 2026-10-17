@@ -28,6 +28,8 @@ class _LoginPageState extends State<LoginPage> {
   /// Both auth pages read the one [AuthCubit]: a failed login must not show
   /// on the register page, nor a failed sign-up here on the way back.
   Future<void> _openRegister() async {
+    // The error snackbar lives app-wide: it must not follow to register.
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     final auth = context.read<AuthCubit>()..acknowledgeFailure();
     await context.push('/auth/register');
     if (mounted) auth.acknowledgeFailure();
@@ -52,71 +54,68 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
-      body: BlocBuilder<AuthCubit, AuthState>(
-        builder: (context, state) {
-          final isSubmitting = state is AuthLoading;
-          final failure = state is AuthFailure ? state : null;
-          return AuthPageBody(
-            formKey: _formKey,
-            brand: const AuthBrandHeader(),
-            banner: failure == null
-                ? null
-                : AppMessage(
-                    tone: Tone.danger,
-                    message: UiConfig.of(
-                      context,
-                    ).errors.describe(failure.error).message,
-                    onClose: () =>
-                        context.read<AuthCubit>().acknowledgeFailure(),
-                  ),
-            groups: [
-              AppInput(
-                controller: _identifierCtrl,
-                enabled: !isSubmitting,
-                label: l.authLoginIdentifierLabel,
-                prefixIcon: AppIcons.profile,
-                keyboardType: TextInputType.emailAddress,
-                autofillHints: const [
-                  AutofillHints.username,
-                  AutofillHints.email,
-                ],
-                textInputAction: TextInputAction.next,
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? l.commonRequired : null,
-              ),
-              AppInput(
-                controller: _passwordCtrl,
-                enabled: !isSubmitting,
-                label: l.authLoginPasswordLabel,
-                prefixIcon: AppIcons.lock,
-                obscurable: true,
-                autofillHints: const [AutofillHints.password],
-                textInputAction: TextInputAction.done,
-                onSubmitted: (_) => _submit(),
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? l.commonRequired : null,
-              ),
-            ],
-            submit: AppButton(
-              label: l.authLoginSubmit,
-              submits: true,
-              onPressed: isSubmitting ? null : _submit,
-              loading: isSubmitting,
-              size: AppButtonSize.large,
-              expand: true,
-            ),
-            // TODO(google-sign-in): wire once POST /auth/google exists
-            // (contract §12).
-            alternatives: const [AuthOrDivider(), GoogleSignInButton()],
-            switchLink: AppButton(
-              label: l.authLoginGoToRegister,
-              variant: AppButtonVariant.text,
-              expand: true,
-              onPressed: isSubmitting ? null : _openRegister,
-            ),
-            footer: const AuthPrefsBar(),
-          );
+      body: BlocListener<AuthCubit, AuthState>(
+        listenWhen: (_, s) => s is AuthFailure,
+        listener: (context, s) {
+          if (ModalRoute.of(context)?.isCurrent ?? true) {
+            showErrorSnackBar(context, (s as AuthFailure).error);
+          }
         },
+        child: BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, state) {
+            final isSubmitting = state is AuthLoading;
+            return AuthPageBody(
+              formKey: _formKey,
+              brand: const AuthBrandHeader(),
+              groups: [
+                AppInput(
+                  controller: _identifierCtrl,
+                  enabled: !isSubmitting,
+                  label: l.authLoginIdentifierLabel,
+                  prefixIcon: AppIcons.profile,
+                  keyboardType: TextInputType.emailAddress,
+                  autofillHints: const [
+                    AutofillHints.username,
+                    AutofillHints.email,
+                  ],
+                  textInputAction: TextInputAction.next,
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? l.commonRequired : null,
+                ),
+                AppInput(
+                  controller: _passwordCtrl,
+                  enabled: !isSubmitting,
+                  label: l.authLoginPasswordLabel,
+                  prefixIcon: AppIcons.lock,
+                  obscurable: true,
+                  autofillHints: const [AutofillHints.password],
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _submit(),
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? l.commonRequired : null,
+                ),
+              ],
+              submit: AppButton(
+                label: l.authLoginSubmit,
+                submits: true,
+                onPressed: isSubmitting ? null : _submit,
+                loading: isSubmitting,
+                size: AppButtonSize.large,
+                expand: true,
+              ),
+              // TODO(google-sign-in): wire once POST /auth/google exists
+              // (contract §12).
+              alternatives: const [AuthOrDivider(), GoogleSignInButton()],
+              switchLink: AppButton(
+                label: l.authLoginGoToRegister,
+                variant: AppButtonVariant.text,
+                expand: true,
+                onPressed: isSubmitting ? null : _openRegister,
+              ),
+              footer: const AuthPrefsBar(),
+            );
+          },
+        ),
       ),
     );
   }

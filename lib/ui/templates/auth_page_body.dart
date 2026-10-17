@@ -7,13 +7,15 @@ import '../tokens/app_spacing.dart';
 /// same skeleton, built only from kit pieces —
 ///
 ///   [brand]          logo · name · tagline
-///   [banner]         an AppMessage for a failed attempt
 ///   [groups]         the form: SectionCards of framed AppInputs (or bare
 ///                    inputs), spaced by the template
 ///   [submit]         the large primary button
 ///   [alternatives]   "or" divider + social sign-in
 ///   [switchLink]     the text button to the other page
 ///   [footer]         language + theme controls
+///
+/// A failed attempt is the app-wide error snackbar (`showErrorSnackBar`), the
+/// same as every other page — not a banner in the form (owner 2026-10-17).
 ///
 /// The page keeps state, validation, the API call and navigation; no padding,
 /// colour or raw widget. The template owns the safe area, centring, scroll,
@@ -24,7 +26,6 @@ class AuthPageBody extends StatelessWidget {
     required this.brand,
     required this.groups,
     required this.submit,
-    this.banner,
     this.alternatives = const [],
     this.switchLink,
     this.footer,
@@ -36,7 +37,6 @@ class AuthPageBody extends StatelessWidget {
   });
 
   final Widget brand;
-  final Widget? banner;
   final List<Widget> groups;
   final Widget submit;
   final List<Widget> alternatives;
@@ -71,10 +71,6 @@ class AuthPageBody extends StatelessWidget {
             children: [
               brand,
               SizedBox(height: gap),
-              if (banner != null) ...[
-                banner!,
-                const SizedBox(height: AppSpacing.md),
-              ],
               for (final (i, g) in groups.indexed) ...[
                 if (i > 0) const SizedBox(height: AppSpacing.md),
                 g,

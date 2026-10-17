@@ -26,3 +26,20 @@ void showErrorSnackBar(
     onAction: onRetry,
   );
 }
+
+/// [showErrorSnackBar] through a page's own [messenger] (edit-mode pages: it
+/// floats above their save bar).
+void showErrorSnackBarOn(
+  ScaffoldMessengerState messenger,
+  Object error, {
+  VoidCallback? onRetry,
+}) {
+  final context = messenger.context;
+  showAppSnackBarOn(
+    messenger,
+    ErrorView.titleFor(context, error),
+    tone: Tone.danger,
+    actionLabel: onRetry == null ? null : UiConfig.stringsOf(context).retry,
+    onAction: onRetry,
+  );
+}

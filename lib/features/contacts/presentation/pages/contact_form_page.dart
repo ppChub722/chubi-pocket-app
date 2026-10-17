@@ -59,7 +59,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
   final _note = TextEditingController();
 
   bool _loading = false;
-  String? _error;
 
   /// The contact being linked (link-existing), once loaded.
   Contact? _existing;
@@ -96,7 +95,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
       _description.text = c.description ?? '';
       _note.text = c.note ?? '';
     } on ApiException catch (e) {
-      _error = e.message;
+      if (mounted) showErrorSnackBar(context, e);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -104,16 +103,15 @@ class _ContactFormPageState extends State<ContactFormPage> {
 
   Future<void> _submit() async {
     if (_name.text.trim().isEmpty) {
-      setState(
-        () => _error = AppLocalizations.of(context)!.contactNameRequired,
+      showAppSnackBar(
+        context,
+        AppLocalizations.of(context)!.contactNameRequired,
+        tone: Tone.danger,
       );
       return;
     }
     final cubit = context.read<ContactsCubit>();
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    setState(() => _loading = true);
     final phone = _phone.text.trim().isEmpty ? null : _phone.text.trim();
     final description = _description.text.trim().isEmpty
         ? null
@@ -143,7 +141,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
         if (id != null) context.pushReplacement('/contacts/$id');
       }
     } on ApiException catch (e) {
-      _error = e.message;
+      if (mounted) showErrorSnackBar(context, e);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -186,10 +184,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
                     : l.contactLinkBannerNew(name2),
               ),
               const SizedBox(height: AppSpacing.md),
-              if (_error != null) ...[
-                AppMessage(tone: Tone.danger, message: _error!),
-                const SizedBox(height: AppSpacing.md),
-              ],
               SectionCard(
                 first: true,
                 children: [

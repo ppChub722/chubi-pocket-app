@@ -76,153 +76,151 @@ class _RegisterPageState extends State<RegisterPage> {
         onBack: _toLogin,
       ),
       extendBodyBehindAppBar: true,
-      body: BlocBuilder<AuthCubit, AuthState>(
-        builder: (context, state) {
-          final isSubmitting = state is AuthLoading;
-          final failure = state is AuthFailure ? state : null;
-          return AuthPageBody(
-            compact: true,
-            clearTopBar: true,
-            formKey: _formKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            brand: const AuthBrandHeader(compact: true),
-            banner: failure == null
-                ? null
-                : AppMessage(
-                    tone: Tone.danger,
-                    message: UiConfig.of(
-                      context,
-                    ).errors.describe(failure.error).message,
-                    onClose: () =>
-                        context.read<AuthCubit>().acknowledgeFailure(),
-                  ),
-            groups: [
-              SectionCard(
-                first: true,
-                fields: true,
-                dividers: false,
-                title: l.authRegisterSectionAccount,
-                children: [
-                  AppInput(
-                    controller: _usernameCtrl,
-                    enabled: !isSubmitting,
-                    label: l.authRegisterUsernameLabel,
-                    helper: l.authRegisterUsernameHint,
-                    prefixIcon: AppIcons.profile,
-                    errorText: _fieldErrorFor(l, 'username', failure),
-                    autofillHints: const [AutofillHints.newUsername],
-                    inputFormatters: [_lowercase],
-                    textInputAction: TextInputAction.next,
-                    validator: (v) {
-                      final s = v?.trim() ?? '';
-                      if (s.isEmpty) return l.commonRequired;
-                      if (!_usernameRegex.hasMatch(s)) {
-                        return l.authRegisterUsernameInvalid;
-                      }
-                      return null;
-                    },
-                  ),
-                  AppInput(
-                    controller: _passwordCtrl,
-                    enabled: !isSubmitting,
-                    label: l.authRegisterPasswordLabel,
-                    helper: l.authRegisterPasswordHint,
-                    prefixIcon: AppIcons.lock,
-                    obscurable: true,
-                    autofillHints: const [AutofillHints.newPassword],
-                    textInputAction: TextInputAction.next,
-                    validator: (v) {
-                      if (v == null || v.length < 8) {
-                        return l.authRegisterPasswordTooShort;
-                      }
-                      if (v.length > 128) {
-                        return l.authRegisterPasswordTooLong;
-                      }
-                      return null;
-                    },
-                  ),
-                  AppInput(
-                    controller: _confirmCtrl,
-                    enabled: !isSubmitting,
-                    label: l.authRegisterConfirmLabel,
-                    prefixIcon: AppIcons.lock,
-                    obscurable: true,
-                    textInputAction: TextInputAction.next,
-                    validator: (v) => v != _passwordCtrl.text
-                        ? l.authRegisterConfirmMismatch
-                        : null,
-                  ),
-                ],
-              ),
-              SectionCard(
-                fields: true,
-                dividers: false,
-                title: l.authRegisterSectionProfile,
-                children: [
-                  AppInput(
-                    controller: _displayNameCtrl,
-                    enabled: !isSubmitting,
-                    label: l.authRegisterDisplayNameLabel,
-                    prefixIcon: AppIcons.profile,
-                    autofillHints: const [AutofillHints.name],
-                    textInputAction: TextInputAction.next,
-                    validator: (v) {
-                      final s = v?.trim() ?? '';
-                      if (s.isEmpty) return l.commonRequired;
-                      if (s.length > 100) {
-                        return l.authRegisterDisplayNameTooLong;
-                      }
-                      return null;
-                    },
-                  ),
-                  AppInput(
-                    controller: _emailCtrl,
-                    enabled: !isSubmitting,
-                    label: l.authRegisterEmailLabel,
-                    helper: l.authRegisterEmailHint,
-                    prefixIcon: AppIcons.email,
-                    keyboardType: TextInputType.emailAddress,
-                    autofillHints: const [AutofillHints.email],
-                    errorText: _fieldErrorFor(l, 'email', failure),
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (_) => _submit(),
-                    validator: (v) {
-                      final s = v?.trim() ?? '';
-                      if (s.isEmpty) return null;
-                      return _emailRegex.hasMatch(s)
-                          ? null
-                          : l.editProfileEmailInvalid;
-                    },
-                  ),
-                  CurrencyTile(
-                    value: _currency,
-                    label: l.authRegisterCurrencyLabel,
-                    onChanged: isSubmitting
-                        ? null
-                        : (c) => setState(() => _currency = c),
-                  ),
-                ],
-              ),
-            ],
-            submit: AppButton(
-              label: l.authRegisterSubmit,
-              submits: true,
-              onPressed: isSubmitting ? null : _submit,
-              loading: isSubmitting,
-              size: AppButtonSize.large,
-              expand: true,
-            ),
-            // TODO(google-sign-in): same flow as login — the BE creates the
-            // account on first sign-in.
-            alternatives: const [AuthOrDivider(), GoogleSignInButton()],
-            switchLink: AppButton(
-              label: l.authRegisterGoToLogin,
-              variant: AppButtonVariant.text,
-              expand: true,
-              onPressed: isSubmitting ? null : _toLogin,
-            ),
-          );
+      body: BlocListener<AuthCubit, AuthState>(
+        listenWhen: (_, s) => s is AuthFailure,
+        listener: (context, s) {
+          if (ModalRoute.of(context)?.isCurrent ?? true) {
+            showErrorSnackBar(context, (s as AuthFailure).error);
+          }
         },
+        child: BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, state) {
+            final isSubmitting = state is AuthLoading;
+            final failure = state is AuthFailure ? state : null;
+            return AuthPageBody(
+              compact: true,
+              clearTopBar: true,
+              formKey: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              brand: const AuthBrandHeader(compact: true),
+              groups: [
+                SectionCard(
+                  first: true,
+                  fields: true,
+                  dividers: false,
+                  title: l.authRegisterSectionAccount,
+                  children: [
+                    AppInput(
+                      controller: _usernameCtrl,
+                      enabled: !isSubmitting,
+                      label: l.authRegisterUsernameLabel,
+                      helper: l.authRegisterUsernameHint,
+                      prefixIcon: AppIcons.profile,
+                      errorText: _fieldErrorFor(l, 'username', failure),
+                      autofillHints: const [AutofillHints.newUsername],
+                      inputFormatters: [_lowercase],
+                      textInputAction: TextInputAction.next,
+                      validator: (v) {
+                        final s = v?.trim() ?? '';
+                        if (s.isEmpty) return l.commonRequired;
+                        if (!_usernameRegex.hasMatch(s)) {
+                          return l.authRegisterUsernameInvalid;
+                        }
+                        return null;
+                      },
+                    ),
+                    AppInput(
+                      controller: _passwordCtrl,
+                      enabled: !isSubmitting,
+                      label: l.authRegisterPasswordLabel,
+                      helper: l.authRegisterPasswordHint,
+                      prefixIcon: AppIcons.lock,
+                      obscurable: true,
+                      autofillHints: const [AutofillHints.newPassword],
+                      textInputAction: TextInputAction.next,
+                      validator: (v) {
+                        if (v == null || v.length < 8) {
+                          return l.authRegisterPasswordTooShort;
+                        }
+                        if (v.length > 128) {
+                          return l.authRegisterPasswordTooLong;
+                        }
+                        return null;
+                      },
+                    ),
+                    AppInput(
+                      controller: _confirmCtrl,
+                      enabled: !isSubmitting,
+                      label: l.authRegisterConfirmLabel,
+                      prefixIcon: AppIcons.lock,
+                      obscurable: true,
+                      textInputAction: TextInputAction.next,
+                      validator: (v) => v != _passwordCtrl.text
+                          ? l.authRegisterConfirmMismatch
+                          : null,
+                    ),
+                  ],
+                ),
+                SectionCard(
+                  fields: true,
+                  dividers: false,
+                  title: l.authRegisterSectionProfile,
+                  children: [
+                    AppInput(
+                      controller: _displayNameCtrl,
+                      enabled: !isSubmitting,
+                      label: l.authRegisterDisplayNameLabel,
+                      prefixIcon: AppIcons.profile,
+                      autofillHints: const [AutofillHints.name],
+                      textInputAction: TextInputAction.next,
+                      validator: (v) {
+                        final s = v?.trim() ?? '';
+                        if (s.isEmpty) return l.commonRequired;
+                        if (s.length > 100) {
+                          return l.authRegisterDisplayNameTooLong;
+                        }
+                        return null;
+                      },
+                    ),
+                    AppInput(
+                      controller: _emailCtrl,
+                      enabled: !isSubmitting,
+                      label: l.authRegisterEmailLabel,
+                      helper: l.authRegisterEmailHint,
+                      prefixIcon: AppIcons.email,
+                      keyboardType: TextInputType.emailAddress,
+                      autofillHints: const [AutofillHints.email],
+                      errorText: _fieldErrorFor(l, 'email', failure),
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _submit(),
+                      validator: (v) {
+                        final s = v?.trim() ?? '';
+                        if (s.isEmpty) return null;
+                        return _emailRegex.hasMatch(s)
+                            ? null
+                            : l.editProfileEmailInvalid;
+                      },
+                    ),
+                    CurrencyTile(
+                      value: _currency,
+                      label: l.authRegisterCurrencyLabel,
+                      onChanged: isSubmitting
+                          ? null
+                          : (c) => setState(() => _currency = c),
+                    ),
+                  ],
+                ),
+              ],
+              submit: AppButton(
+                label: l.authRegisterSubmit,
+                submits: true,
+                onPressed: isSubmitting ? null : _submit,
+                loading: isSubmitting,
+                size: AppButtonSize.large,
+                expand: true,
+              ),
+              // TODO(google-sign-in): same flow as login — the BE creates the
+              // account on first sign-in.
+              alternatives: const [AuthOrDivider(), GoogleSignInButton()],
+              switchLink: AppButton(
+                label: l.authRegisterGoToLogin,
+                variant: AppButtonVariant.text,
+                expand: true,
+                onPressed: isSubmitting ? null : _toLogin,
+              ),
+            );
+          },
+        ),
       ),
     );
   }

@@ -22,7 +22,6 @@ class _AuthTemplateState extends State<_AuthTemplate> {
   final _pw = TextEditingController();
   final _user = TextEditingController();
   final _email = TextEditingController();
-  bool _error = false;
   bool _dark = false;
   String _lang = 'en';
 
@@ -67,13 +66,6 @@ class _AuthTemplateState extends State<_AuthTemplate> {
       name: 'chubiPocket',
       tagline: 'Know where your money goes',
     ),
-    banner: _error
-        ? AppMessage(
-            tone: Tone.danger,
-            message: 'Wrong username or password',
-            onClose: () => setState(() => _error = false),
-          )
-        : null,
     groups: [
       AppInput(
         controller: _id,
@@ -185,7 +177,8 @@ class _AuthTemplateState extends State<_AuthTemplate> {
             HubUse(
               wide: true,
               label:
-                  'Sign in — brand, banner (toggle below), two framed inputs, '
+                  'Sign in — brand, two framed inputs (a failed attempt = the '
+                  'error snackbar, below), '
                   'primary, "or" + Google, switch link, language / theme',
               page: 'LoginPage (AuthPageBody)',
               child: Column(
@@ -195,9 +188,12 @@ class _AuthTemplateState extends State<_AuthTemplate> {
                     spacing: AppSpacing.xs,
                     children: [
                       AppChip(
-                        label: 'Failed attempt banner',
-                        selected: _error,
-                        onTap: () => setState(() => _error = !_error),
+                        label: 'Failed attempt (error snackbar)',
+                        onTap: () => showAppSnackBar(
+                          context,
+                          'Wrong username or password',
+                          tone: Tone.danger,
+                        ),
                       ),
                     ],
                   ),

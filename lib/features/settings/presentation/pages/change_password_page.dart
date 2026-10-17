@@ -30,7 +30,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
   final _newCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
 
-  ApiException? _error;
   String? _currentFieldError;
 
   @override
@@ -76,10 +75,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
     final w = working;
     FocusScope.of(context).unfocus();
     setSaving(true);
-    setState(() {
-      _error = null;
-      _currentFieldError = null;
-    });
+    setState(() => _currentFieldError = null);
     try {
       await repo.changePassword(
         currentPassword: w.current,
@@ -99,10 +95,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
       setState(() {
         if (e.code == 'WRONG_PASSWORD' || e.statusCode == 401) {
           _currentFieldError = l.changePasswordCurrentWrong;
-        } else {
-          _error = e;
         }
       });
+      // Anything but a wrong current password: the app's error snackbar.
+      if (_currentFieldError == null) {
+        final m = pageMessenger;
+        m != null ? showErrorSnackBarOn(m, e) : showErrorSnackBar(context, e);
+      }
       if (_currentFieldError != null) _formKey.currentState?.validate();
     }
   }
@@ -129,14 +128,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
               topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
               bottomInset:
                   AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
-              hero: _error == null
-                  ? null
-                  : AppMessage(
-                      tone: Tone.danger,
-                      message: UiConfig.of(
-                        context,
-                      ).errors.describe(_error!).message,
-                    ),
               sections: [
                 (first) => SectionCard(
                   first: first,

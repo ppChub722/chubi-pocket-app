@@ -179,13 +179,26 @@ void main() {
     statusCode: 401,
   );
 
-  testWidgets('a wrong login: the words come from the central errors', (
-    t,
-  ) async {
+  testWidgets('a wrong login: the error snackbar, words from the central '
+      'errors — no banner in the form', (t) async {
     await pump(t, const LoginPage());
     await failLogin(t, wrong);
-    expect(find.text('Username or password incorrect'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(SnackBar),
+        matching: find.text('Username or password incorrect'),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Invalid credentials'), findsNothing);
+    // No banner in the form (the snackbar is built from AppMessage too).
+    expect(
+      find.descendant(
+        of: find.byType(AuthPageBody),
+        matching: find.byType(AppMessage),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('an unknown code never shows the BE text', (t) async {
@@ -199,8 +212,12 @@ void main() {
       ),
     );
     expect(find.text('raw english'), findsNothing);
+    // The app-wide error snackbar, as on every other page.
     expect(
-      find.text('Something we did not expect happened. Please try again.'),
+      find.descendant(
+        of: find.byType(SnackBar),
+        matching: find.text('Unexpected error'),
+      ),
       findsOneWidget,
     );
   });
@@ -212,6 +229,13 @@ void main() {
     await t.pump();
     expect(auth.state, isNot(isA<AuthFailure>()));
     expect(find.text('Invalid credentials'), findsNothing);
-    expect(find.text('Username or password incorrect'), findsNothing);
+    // No banner in the form (the snackbar is built from AppMessage too).
+    expect(
+      find.descendant(
+        of: find.byType(AuthPageBody),
+        matching: find.byType(AppMessage),
+      ),
+      findsNothing,
+    );
   });
 }

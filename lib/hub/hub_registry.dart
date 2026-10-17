@@ -431,6 +431,7 @@ final List<HubPage> hubPages = [
       'showAppSnackBar',
       'showAppSnackBarOn',
       'showErrorSnackBar',
+      'showErrorSnackBarOn',
       'showConfirmDialog',
       'showChoiceDialog',
       'DialogChoice',

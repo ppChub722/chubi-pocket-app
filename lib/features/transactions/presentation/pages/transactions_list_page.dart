@@ -409,6 +409,9 @@ class _TransactionsListPageState extends State<TransactionsListPage>
           sidePadding: 0,
           rowDividers: true,
           topInset: 0,
+          // Embedded in a tab under the wallet's pinned tab bar: the page
+          // already cleared the top bar.
+          clearTopBar: !widget.embedded,
           children: state.transactions.isEmpty
               ? const []
               : _rows(
