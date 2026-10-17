@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -53,6 +54,7 @@ class TransactionsListPage extends StatefulWidget {
     this.title,
     this.embedded = false,
     this.lockedAccount,
+    this.typeFilter,
     super.key,
   });
 
@@ -63,6 +65,10 @@ class TransactionsListPage extends StatefulWidget {
   /// Pinned to this wallet: no wallet filter, everything added from here
   /// presets it, and the list ends in an add tile.
   final Account? lockedAccount;
+
+  /// A type filter owned by the opener (a wallet hero's in / out tiles): the
+  /// list follows it; null = all. Embedded use only.
+  final ValueListenable<TransactionType?>? typeFilter;
 
   final String? initialCategoryId;
 
@@ -106,6 +112,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
   @override
   void initState() {
     super.initState();
+    widget.typeFilter?.addListener(_onTypeFilter);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       var f = _f;
@@ -138,6 +145,13 @@ class _TransactionsListPageState extends State<TransactionsListPage>
     });
   }
 
+  /// The opener's type tile changed (income / expense / none).
+  void _onTypeFilter() {
+    final t = widget.typeFilter?.value;
+    if (!mounted || t == _f.type) return;
+    _apply(_f.copyWith(type: t, clearType: t == null));
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -149,6 +163,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
 
   @override
   void dispose() {
+    widget.typeFilter?.removeListener(_onTypeFilter);
     if (_swipeHandlers?[ShellTab.transactions] == this) {
       _swipeHandlers!.remove(ShellTab.transactions);
     }

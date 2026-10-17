@@ -323,13 +323,13 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
           AccountDetailPage(accountId: state.pathParameters['id']!),
     ),
     // Shared-wallet members (spec §14) — the wallet page, opened on its
-    // สมาชิก tab (links / notifications keep working).
+    // member actions sheet (links / notifications keep working).
     GoRoute(
       path: '/accounts/:id/members',
       name: 'account-members',
       builder: (context, state) => AccountDetailPage(
         accountId: state.pathParameters['id']!,
-        initialTab: AccountDetailTab.members,
+        openMembers: true,
       ),
     ),
   ],

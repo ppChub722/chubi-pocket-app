@@ -34,7 +34,7 @@ import '../widgets/wallet_compact_hero.dart';
 import '../widgets/wallet_savings_section.dart';
 
 /// The wallet page's tabs.
-enum AccountDetailTab { overview, transactions, members }
+enum AccountDetailTab { overview, transactions }
 
 /// One wallet — create (`/accounts/new`), view (`/accounts/:id`) and edit
 /// in place (§10; owner 2026-10-10):
@@ -54,7 +54,7 @@ enum AccountDetailTab { overview, transactions, members }
 class AccountDetailPage extends StatefulWidget {
   const AccountDetailPage({
     this.accountId,
-    this.initialTab = AccountDetailTab.overview,
+    this.openMembers = false,
     this.popOnCreate = false,
     this.onAddSaving,
     super.key,
@@ -62,7 +62,10 @@ class AccountDetailPage extends StatefulWidget {
 
   /// Null = create a new wallet.
   final String? accountId;
-  final AccountDetailTab initialTab;
+
+  /// Open the member actions sheet once the members are loaded (the
+  /// `/accounts/:id/members` link).
+  final bool openMembers;
 
   /// Create pushed over a picker (Navigator, not the router): saving pops
   /// with the new [Account] instead of becoming its view, so the page
@@ -154,7 +157,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
           return _AccountDetailView(
             account: account,
             members: _detail?.membersHistory,
-            initialTab: widget.initialTab,
+            openMembers: widget.openMembers,
             onAccount: _onAccount,
             onMembers: _onMembers,
             onRefresh: _fetch,
@@ -197,7 +200,7 @@ class _AccountDetailView extends StatefulWidget {
   const _AccountDetailView({
     required this.account,
     this.members,
-    this.initialTab = AccountDetailTab.overview,
+    this.openMembers = false,
     this.popOnCreate = false,
     this.onAccount,
     this.onMembers,
@@ -215,7 +218,10 @@ class _AccountDetailView extends StatefulWidget {
   /// The whole membership (`members_history`: active, pending, left); null
   /// until the page's detail call lands.
   final List<WalletMember>? members;
-  final AccountDetailTab initialTab;
+
+  /// Open the member actions sheet once the members are loaded (the
+  /// `/accounts/:id/members` link).
+  final bool openMembers;
 
   /// A write returned the wallet — the page keeps its copy in step.
   final void Function(Account)? onAccount;
@@ -269,10 +275,10 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       initDraft(const _AccountDraft(), editing: true);
     } else {
       initDraft(_AccountDraft.from(a));
-      _tab = widget.initialTab;
-      _pages = PageController(initialPage: _tabs.indexOf(_tab).clamp(0, 2));
     }
     onDraftRestored();
+    _txType.addListener(_onTxType);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeOpenMembers());
     context
         .read<AccountsRepository>()
         .paymentProviders()
@@ -286,6 +292,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   @override
   void didUpdateWidget(covariant _AccountDetailView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeOpenMembers());
     // The cubit row changed (save, adjust, refresh) — rebase the view; an
     // in-progress edit is left alone (resetDraft no-ops while editing).
     final a = widget.account;
@@ -297,6 +304,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
 
   @override
   void dispose() {
+    _txType
+      ..removeListener(_onTxType)
+      ..dispose();
     for (final c in [
       _nameController,
       _descriptionController,
@@ -663,15 +673,37 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     );
   }
 
-  late PageController _pages = PageController();
+  final PageController _pages = PageController();
   AccountDetailTab _tab = AccountDetailTab.overview;
 
-  List<AccountDetailTab> get _tabs => [
+  List<AccountDetailTab> get _tabs => const [
     AccountDetailTab.overview,
     AccountDetailTab.transactions,
-    if (widget.account case final a? when _hasMembersTab(a))
-      AccountDetailTab.members,
   ];
+
+  /// The month tiles filter the รายการ tab by type (null = all); a second
+  /// tap on the same tile clears it.
+  final _txType = ValueNotifier<TransactionType?>(null);
+
+  bool _membersOpened = false;
+
+  /// The members link: the sheet opens once, as soon as the members are here.
+  void _maybeOpenMembers() {
+    final a = widget.account;
+    if (!mounted || _membersOpened || !widget.openMembers) return;
+    if (a == null || widget.members == null) return;
+    _membersOpened = true;
+    _openMembers(a);
+  }
+
+  void _onTxType() {
+    if (mounted) setState(() {});
+  }
+
+  void _toggleTxType(TransactionType t) {
+    _txType.value = _txType.value == t ? null : t;
+    if (_txType.value != null) _goTab(AccountDetailTab.transactions);
+  }
 
   void _goTab(AccountDetailTab t) => setState(() => _tab = t);
 
@@ -725,7 +757,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   String _tabLabel(AppLocalizations l, AccountDetailTab t) => switch (t) {
     AccountDetailTab.overview => l.accountDetailTabOverview,
     AccountDetailTab.transactions => l.accountDetailTransactionsTitle,
-    AccountDetailTab.members => l.walletMembersTitle,
   };
 
   /// Titles never change with the mode (owner, QA T1): the wallet's name in
@@ -801,18 +832,12 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                 create: (ctx) => TransactionsCubit(
                   repository: ctx.read<TransactionsRepository>(),
                 ),
-                child: TransactionsListPage(embedded: true, lockedAccount: a),
+                child: TransactionsListPage(
+                  embedded: true,
+                  lockedAccount: a,
+                  typeFilter: _txType,
+                ),
               ),
-              AccountDetailTab.members =>
-                widget.members == null
-                    ? ListPageSkeleton(rows: 3, padding: _tabInsets(bottom))
-                    : WalletMembersView(
-                        account: a,
-                        members: widget.members!,
-                        onResult: (r) => widget.onMembers?.call(r),
-                        onRefresh: _refresh,
-                        padding: _tabInsets(bottom),
-                      ),
             },
           ),
         ),
@@ -939,7 +964,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                   label: l.fpWalletMonthIn(month),
                   value: '+${moneyString(context, a.monthIn, symbol: symbol)}',
                   tone: SummaryTileTone.green,
-                  onTap: () => _goTab(AccountDetailTab.transactions),
+                  selected: _txType.value == TransactionType.income,
+                  onTap: () => _toggleTxType(TransactionType.income),
                 ),
               ),
               SummaryTileView(
@@ -947,7 +973,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                   label: l.fpWalletMonthOut(month),
                   value: '−${moneyString(context, a.monthOut, symbol: symbol)}',
                   tone: SummaryTileTone.red,
-                  onTap: () => _goTab(AccountDetailTab.transactions),
+                  selected: _txType.value == TransactionType.expense,
+                  onTap: () => _toggleTxType(TransactionType.expense),
                 ),
               ),
             ],
@@ -1168,9 +1195,34 @@ class _AccountDetailViewState extends State<_AccountDetailView>
               onResult: (r) => widget.onMembers?.call(r),
             )
           : null,
-      onMemberTap: _hasMembersTab(a)
-          ? (_) => _goTab(AccountDetailTab.members)
-          : null,
+      onMemberTap: widget.members == null ? null : (_) => _openMembers(a),
+    );
+  }
+
+  /// A member card → the member actions (role / remove / leave / history)
+  /// in a sheet; an action closes it and the page patches from its answer.
+  Future<void> _openMembers(Account a) async {
+    final members = widget.members;
+    if (members == null) return;
+    final cubit = context.read<AccountsCubit>();
+    await showAppSheetCustom<void>(
+      context,
+      builder: (sheetContext) => BlocProvider<AccountsCubit>.value(
+        value: cubit,
+        child: SizedBox(
+          height: MediaQuery.sizeOf(sheetContext).height * 0.7,
+          child: WalletMembersView(
+            account: a,
+            members: members,
+            onRefresh: _refresh,
+            padding: _tabInsets(AppSpacing.lg),
+            onResult: (r) {
+              widget.onMembers?.call(r);
+              Navigator.of(sheetContext).pop();
+            },
+          ),
+        ),
+      ),
     );
   }
 
