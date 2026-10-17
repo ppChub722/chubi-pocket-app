@@ -368,13 +368,28 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   Future<void> _delete() async {
     final l = AppLocalizations.of(context)!;
     final p = _view!.project;
-    final linked = p.linkedTxCount;
+    // ONE call on this button: what the delete removes (the BE's numbers).
+    EventDeletePreview? preview;
+    try {
+      preview = (await context.read<ProjectsRepository>().detail(
+        p.id,
+        deletePreview: true,
+      )).deletePreview;
+    } on ApiException catch (e) {
+      if (mounted) _showError(e);
+      return;
+    }
+    if (!mounted) return;
+    final linked = preview?.linkedTxCount ?? 0;
+    final numbers = preview == null
+        ? null
+        : l.fpM5bEventDeleteNumbers(preview.bills, preview.members);
     // ยังก่อน · ยืนยัน ไม่ลบรายการ · ยืนยันและลบ [x] รายการ (owner
     // 2026-10-13); without linked transactions: ยังก่อน · ยืนยันลบ.
     final choice = await showChoiceDialog<_DeleteChoice>(
       context,
       title: l.projectDeleteTitle(p.name),
-      message: linked > 0 ? l.eventDeleteBody : null,
+      message: linked > 0 ? [?numbers, l.eventDeleteBody].join('\n') : numbers,
       choices: [
         DialogChoice(
           value: _DeleteChoice.notYet,

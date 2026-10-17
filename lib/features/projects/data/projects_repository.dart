@@ -114,14 +114,23 @@ class ProjectsRepository {
 
   /// The event page in one call: event, summary, members, tags and the
   /// board's first page.
-  Future<ProjectDetail> detail(String id, {int perPage = 50}) =>
-      _call(() async {
-        final res = await _client.dio.get<Map<String, dynamic>>(
-          '/projects/$id/detail',
-          queryParameters: <String, dynamic>{'per_page': perPage.toString()},
-        );
-        return ProjectDetail.fromJson(res.data!);
-      });
+  ///
+  /// [deletePreview] adds what a delete removes (`include=delete_preview`,
+  /// the delete confirm's numbers).
+  Future<ProjectDetail> detail(
+    String id, {
+    int perPage = 50,
+    bool deletePreview = false,
+  }) => _call(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>(
+      '/projects/$id/detail',
+      queryParameters: <String, dynamic>{
+        'per_page': perPage.toString(),
+        if (deletePreview) 'include': 'delete_preview',
+      },
+    );
+    return ProjectDetail.fromJson(res.data!);
+  });
 
   /// One call (plan, dates and my tags included) → the new event's detail.
   /// [startDate] / [endDate] are `YYYY-MM-DD`.
@@ -372,6 +381,7 @@ class ProjectsRepository {
     String? q,
     String? tagId,
     String? sort,
+    String? payerMemberId,
   }) => _call(() async {
     final res = await _client.dio.get<Map<String, dynamic>>(
       '/projects/$projectId/transactions',
@@ -382,6 +392,7 @@ class ProjectsRepository {
         if (mine) 'mine': 'true',
         if (q != null && q.trim().isNotEmpty) 'q': q.trim(),
         'tag_id': ?tagId,
+        'payer_member_id': ?payerMemberId,
         'sort': ?sort,
       },
     );

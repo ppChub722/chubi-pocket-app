@@ -21,10 +21,8 @@ extension BoardSortWire on BoardSort {
 ///
 /// Unfiltered, the page shows the board its one open call brought (more
 /// pages through the page); any filter runs ONE call on
-/// `GET /projects/:id/transactions` and its rows replace the list. The payer
-/// filter has no BE parameter yet: it narrows the rows already on screen by
-/// the payer the BE sent on each (a presentation filter, nothing computed).
-/// A failed call keeps the rows on screen and sets [error].
+/// `GET /projects/:id/transactions` and its rows replace the list (the payer
+/// filter is `payer_member_id`, server side). A failed call keeps the rows on screen and sets [error].
 class ProjectBoardController extends ChangeNotifier {
   ProjectBoardController({required this.repository, required this.projectId});
 
@@ -56,10 +54,14 @@ class ProjectBoardController extends ChangeNotifier {
   bool _disposed = false;
 
   bool get serverFiltered =>
-      query.isNotEmpty || tagId != null || mine || sort != BoardSort.newest;
+      query.isNotEmpty ||
+      tagId != null ||
+      mine ||
+      payerId != null ||
+      sort != BoardSort.newest;
 
   /// Anything narrows or reorders the bills (the 🔍's red dot).
-  bool get filtered => serverFiltered || payerId != null;
+  bool get filtered => serverFiltered;
 
   @override
   void notifyListeners() {
@@ -126,6 +128,7 @@ class ProjectBoardController extends ChangeNotifier {
       mine: mine,
       q: query,
       tagId: tagId,
+      payerMemberId: payerId,
       sort: sort.wire,
     );
     hasMore = got.where((t) => t.isParent).length >= perPage;
@@ -167,15 +170,7 @@ class ProjectBoardController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// The bills to show: the filtered rows (or the page's board) as trees,
-  /// narrowed by the payer when one is picked.
-  List<ProjectTxTree> trees(ProjectView view) {
-    final base = rows == null ? view.trees : buildProjectTxTree(rows!);
-    final payer = payerId;
-    if (payer == null) return base;
-    return [
-      for (final t in base)
-        if (view.memberOf(t.parent).id == payer) t,
-    ];
-  }
+  /// The bills to show: the filtered rows (or the page's board) as trees.
+  List<ProjectTxTree> trees(ProjectView view) =>
+      rows == null ? view.trees : buildProjectTxTree(rows!);
 }

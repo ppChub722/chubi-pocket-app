@@ -16,11 +16,9 @@ Map<String, dynamic> eventJson({
   double myNet = 250,
   double totalIncome = 0,
   List<Map<String, dynamic>> tags = const [],
-  int linkedTxCount = 0,
 }) => {
   'id': id,
   'owner_user_id': 'u-me',
-  'linked_tx_count': linkedTxCount,
   'name': name,
   'icon_code': null,
   'description': 'Long weekend',
@@ -162,11 +160,9 @@ List<Map<String, dynamic>> membersJson() => [
 
 Map<String, dynamic> detailJson({
   List<Map<String, dynamic>>? rows,
-  int linkedTxCount = 0,
   int totalPages = 1,
 }) => {
   'event': eventJson(
-    linkedTxCount: linkedTxCount,
     tags: [
       {'id': 'pt1', 'name': 'Trips', 'icon_code': null},
     ],
