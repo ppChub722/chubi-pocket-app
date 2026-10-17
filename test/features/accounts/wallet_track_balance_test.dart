@@ -163,8 +163,9 @@ void main() {
     expect(find.textContaining('1,234.50'), findsNothing);
     expect(find.text('Balance not tracked'), findsOneWidget);
     expect(find.text('Adjust balance'), findsNothing);
-    // Transfers stay.
-    expect(find.text('Transfer'), findsOneWidget);
+    // รายการ / โอน moved to the bottom + (reference §6): no action bar at all
+    // on an untracked wallet.
+    expect(find.text('Transfer'), findsNothing);
   });
 
   testWidgets('hero: tracked shows the balance and the ปรับยอด action', (

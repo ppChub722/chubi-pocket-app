@@ -582,7 +582,13 @@ final List<HubPage> hubPages = [
     summary:
         'The card on top of every list page: caption + action slot, big number, bar, info line, alert, 2-4 filter tiles, optional big button.',
     usedBy: 'budgets, goals, scheduled, wallets, events (adopting)',
-    covers: ['ListSummaryCard', 'SummaryTile', 'SummaryTileTone', 'SummaryCta'],
+    covers: [
+      'ListSummaryCard',
+      'SummaryTile',
+      'SummaryTileView',
+      'SummaryTileTone',
+      'SummaryCta',
+    ],
     builder: buildListSummaryCardPage,
   ),
   const HubPage(

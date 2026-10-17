@@ -191,7 +191,7 @@ class ListSummaryCard extends StatelessWidget {
             children: [
               for (var i = 0; i < tiles.length; i++) ...[
                 if (i > 0) const SizedBox(width: AppSpacing.sm),
-                Expanded(child: _Tile(tile: tiles[i])),
+                Expanded(child: SummaryTileView(tile: tiles[i])),
               ],
             ],
           ),
@@ -266,8 +266,10 @@ class _AlertLine extends StatelessWidget {
   }
 }
 
-class _Tile extends StatelessWidget {
-  const _Tile({required this.tile});
+/// One [SummaryTile] drawn — the list card uses it, and a hero card's tiles
+/// row (`HeroCard.tiles`) takes the same widget.
+class SummaryTileView extends StatelessWidget {
+  const SummaryTileView({required this.tile, super.key});
 
   final SummaryTile tile;
 

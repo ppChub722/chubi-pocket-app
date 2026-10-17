@@ -6046,4 +6046,76 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpWalletsReorderChip => 'จัดลำดับ';
+
+  @override
+  String get fpWalletBalanceLabel => 'ยอดในกระเป๋า';
+
+  @override
+  String fpWalletMonthIn(String month) {
+    return '$month · เงินเข้า';
+  }
+
+  @override
+  String fpWalletMonthOut(String month) {
+    return '$month · เงินออก';
+  }
+
+  @override
+  String fpWalletAvailableLegend(String amount) {
+    return 'ใช้ได้ $amount';
+  }
+
+  @override
+  String fpWalletSavedLegend(String amount) {
+    return 'ออมไว้ $amount';
+  }
+
+  @override
+  String fpWalletCardUsed(int pct, String limit) {
+    return 'ใช้ $pct% ของวงเงิน $limit';
+  }
+
+  @override
+  String fpWalletCardLeft(String amount) {
+    return 'เหลือ $amount';
+  }
+
+  @override
+  String fpWalletDueAlert(String date, int days) {
+    return 'ครบกำหนดชำระ $date · อีก $days วัน';
+  }
+
+  @override
+  String get fpWalletPayCard => 'ชำระบัตร';
+
+  @override
+  String get fpWalletSave => 'ออม';
+
+  @override
+  String get fpWalletSettingsDesc => 'กระเป๋านี้นับในยอดและรายงานอย่างไร';
+
+  @override
+  String get fpWalletCardSettingsDesc => 'บัตรนี้นับในรายงานอย่างไร';
+
+  @override
+  String get fpWalletArchiveConsequence =>
+      'ไม่นับในยอดใดเลย แก้ไม่ได้ กู้คืนได้';
+
+  @override
+  String get fpWalletRefLabel => 'เลขอ้างอิง';
+
+  @override
+  String get fpWalletRefHint => 'ใช้จับคู่ตอนสแกนสลิป';
+
+  @override
+  String get fpWalletInviteLabel => 'เชิญ';
+
+  @override
+  String get fpWalletTrackOff => 'ปิดอยู่';
+
+  @override
+  String get fpWalletOwnerCaption => 'เจ้าของ';
+
+  @override
+  String get fpWalletMemberCaption => 'สมาชิก';
 }

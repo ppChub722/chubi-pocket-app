@@ -171,6 +171,7 @@ Future<bool> showQuickCreateSheet(
   ProjectView? project,
   ProjectTxTree? projectRow,
   Account? account,
+  Account? toAccount,
   TransactionType? type,
   Category? category,
   Tag? tag,
@@ -223,6 +224,7 @@ Future<bool> showQuickCreateSheet(
         project: project,
         projectRow: projectRow,
         account: account,
+        initialToAccount: toAccount,
         initialType: type,
         initialCategory: category,
         initialTag: tag,
@@ -268,6 +270,7 @@ class _QuickCreateSheet extends StatefulWidget {
     this.project,
     this.projectRow,
     this.account,
+    this.initialToAccount,
     this.initialType,
     this.initialCategory,
     this.initialTag,
@@ -285,6 +288,9 @@ class _QuickCreateSheet extends StatefulWidget {
 
   /// Preset wallet for a new transaction (else the last-used one).
   final Account? account;
+
+  /// A transfer's destination to start on (a card's ชำระบัตร).
+  final Account? initialToAccount;
 
   /// A new transaction's type to start on (else expense).
   final TransactionType? initialType;
@@ -523,6 +529,12 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     super.initState();
     final type = widget.initialType;
     if (type != null) _c.setType(type);
+    final toAccount = widget.initialToAccount;
+    if (toAccount != null) {
+      _c
+        ..setType(TransactionType.transfer)
+        ..setToAccount(toAccount);
+    }
     if (widget.initialAmount != null && widget.draft == null) {
       _c.amount.text = _amountText(widget.initialAmount);
     }

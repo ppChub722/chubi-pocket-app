@@ -6191,4 +6191,77 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpWalletsReorderChip => 'Reorder';
+
+  @override
+  String get fpWalletBalanceLabel => 'In the wallet';
+
+  @override
+  String fpWalletMonthIn(String month) {
+    return '$month · in';
+  }
+
+  @override
+  String fpWalletMonthOut(String month) {
+    return '$month · out';
+  }
+
+  @override
+  String fpWalletAvailableLegend(String amount) {
+    return 'Available $amount';
+  }
+
+  @override
+  String fpWalletSavedLegend(String amount) {
+    return 'Saved $amount';
+  }
+
+  @override
+  String fpWalletCardUsed(int pct, String limit) {
+    return 'Used $pct% of the $limit limit';
+  }
+
+  @override
+  String fpWalletCardLeft(String amount) {
+    return '$amount left';
+  }
+
+  @override
+  String fpWalletDueAlert(String date, int days) {
+    return 'Payment due $date · in $days days';
+  }
+
+  @override
+  String get fpWalletPayCard => 'Pay card';
+
+  @override
+  String get fpWalletSave => 'Save';
+
+  @override
+  String get fpWalletSettingsDesc =>
+      'How this wallet counts in totals and reports';
+
+  @override
+  String get fpWalletCardSettingsDesc => 'How this card counts in reports';
+
+  @override
+  String get fpWalletArchiveConsequence =>
+      'Counted nowhere, read-only, restorable';
+
+  @override
+  String get fpWalletRefLabel => 'Reference numbers';
+
+  @override
+  String get fpWalletRefHint => 'Used to match slips when scanning';
+
+  @override
+  String get fpWalletInviteLabel => 'Invite';
+
+  @override
+  String get fpWalletTrackOff => 'Off';
+
+  @override
+  String get fpWalletOwnerCaption => 'Owner';
+
+  @override
+  String get fpWalletMemberCaption => 'Member';
 }

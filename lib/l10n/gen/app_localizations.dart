@@ -10566,6 +10566,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reorder'**
   String get fpWalletsReorderChip;
+
+  /// No description provided for @fpWalletBalanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'In the wallet'**
+  String get fpWalletBalanceLabel;
+
+  /// No description provided for @fpWalletMonthIn.
+  ///
+  /// In en, this message translates to:
+  /// **'{month} · in'**
+  String fpWalletMonthIn(String month);
+
+  /// No description provided for @fpWalletMonthOut.
+  ///
+  /// In en, this message translates to:
+  /// **'{month} · out'**
+  String fpWalletMonthOut(String month);
+
+  /// No description provided for @fpWalletAvailableLegend.
+  ///
+  /// In en, this message translates to:
+  /// **'Available {amount}'**
+  String fpWalletAvailableLegend(String amount);
+
+  /// No description provided for @fpWalletSavedLegend.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {amount}'**
+  String fpWalletSavedLegend(String amount);
+
+  /// No description provided for @fpWalletCardUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Used {pct}% of the {limit} limit'**
+  String fpWalletCardUsed(int pct, String limit);
+
+  /// No description provided for @fpWalletCardLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} left'**
+  String fpWalletCardLeft(String amount);
+
+  /// No description provided for @fpWalletDueAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment due {date} · in {days} days'**
+  String fpWalletDueAlert(String date, int days);
+
+  /// No description provided for @fpWalletPayCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay card'**
+  String get fpWalletPayCard;
+
+  /// No description provided for @fpWalletSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get fpWalletSave;
+
+  /// No description provided for @fpWalletSettingsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'How this wallet counts in totals and reports'**
+  String get fpWalletSettingsDesc;
+
+  /// No description provided for @fpWalletCardSettingsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'How this card counts in reports'**
+  String get fpWalletCardSettingsDesc;
+
+  /// No description provided for @fpWalletArchiveConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted nowhere, read-only, restorable'**
+  String get fpWalletArchiveConsequence;
+
+  /// No description provided for @fpWalletRefLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference numbers'**
+  String get fpWalletRefLabel;
+
+  /// No description provided for @fpWalletRefHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Used to match slips when scanning'**
+  String get fpWalletRefHint;
+
+  /// No description provided for @fpWalletInviteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite'**
+  String get fpWalletInviteLabel;
+
+  /// No description provided for @fpWalletTrackOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get fpWalletTrackOff;
+
+  /// No description provided for @fpWalletOwnerCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get fpWalletOwnerCaption;
+
+  /// No description provided for @fpWalletMemberCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Member'**
+  String get fpWalletMemberCaption;
 }
 
 class _AppLocalizationsDelegate

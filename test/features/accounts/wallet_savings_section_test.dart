@@ -156,6 +156,49 @@ void main() {
     expect(_wallet(track: false).savings!.available, isNull);
   });
 
+  testWidgets('hero (bank): balance, split legend, month tiles, actions', (
+    t,
+  ) async {
+    await pump(t, _wallet().copyWith(monthIn: 400, monthOut: 200));
+    expect(find.text('In the wallet'), findsOneWidget);
+    expect(find.text('Available ฿200.00'), findsOneWidget);
+    expect(find.text('Saved ฿800.00'), findsOneWidget);
+    expect(find.byType(SummaryTileView), findsNWidgets(2));
+    expect(find.text('Adjust balance'), findsOneWidget);
+    expect(find.text('Save'), findsOneWidget);
+    expect(find.text('Pay card'), findsNothing);
+  });
+
+  testWidgets('hero (card): debt, limit bar, due alert, pay card', (t) async {
+    final card = Account.fromJson({
+      'id': 'c1',
+      'name': 'Visa',
+      'type': 'credit_card',
+      'group': 'liability',
+      'balance': -3858.0,
+      'currency': 'THB',
+      'icon_code': {'icon': 'credit_card', 'color': 'orange'},
+      'status': 'active',
+      'sort_order': 0,
+      'my_role': 'owner',
+      'can_edit': true,
+      'is_shared': false,
+      'track_balance': true,
+      'credit_limit': 50000.0,
+      'payment_due_date': 25,
+      'due_date_next': '2026-10-25',
+      'days_until_due': 8,
+    });
+    await pump(t, card);
+    expect(find.text('Card debt'), findsWidgets);
+    expect(find.textContaining('Used 8% of the'), findsOneWidget);
+    expect(find.textContaining('left'), findsWidgets);
+    expect(find.textContaining('in 8 days'), findsOneWidget);
+    expect(find.text('Pay card'), findsOneWidget);
+    // No month tiles on a card.
+    expect(find.byType(SummaryTileView), findsNothing);
+  });
+
   testWidgets('shows balance, saved, available and the buckets', (t) async {
     await pump(t, _wallet());
     expect(find.text('Savings'), findsOneWidget);
