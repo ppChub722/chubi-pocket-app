@@ -338,7 +338,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     try {
       final p = await context.read<ProjectsCubit>().archive(widget.id!);
       if (!mounted) return;
-      showAppSnackBar(context, l.fpEventsArchived, tone: Tone.success);
+      showAppSnackBarOn(pageMessenger!, l.fpEventsArchived, tone: Tone.success);
       _applyPatch(p);
       commitSaved(_Draft.from(p.project));
     } on ApiException catch (e) {
@@ -355,7 +355,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     try {
       final p = await context.read<ProjectsCubit>().restore(widget.id!);
       if (!mounted) return;
-      showAppSnackBar(context, l.fpEventsRestored, tone: Tone.success);
+      showAppSnackBarOn(pageMessenger!, l.fpEventsRestored, tone: Tone.success);
       _applyPatch(p);
       commitSaved(_Draft.from(p.project));
     } on ApiException catch (e) {
