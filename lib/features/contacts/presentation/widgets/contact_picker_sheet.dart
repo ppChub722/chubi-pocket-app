@@ -165,7 +165,7 @@ Future<ContactPickResult?> showContactPickerSheet(
       );
     },
   );
-  await debtsSub?.cancel();
+  unawaited(debtsSub?.cancel());
   debts.dispose();
   return switch (outcome) {
     null => null,

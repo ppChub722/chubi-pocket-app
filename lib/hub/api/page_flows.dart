@@ -279,6 +279,23 @@ const List<PageFlow> pageFlows = [
       FlowCall('parseText', note: 'stub until 0.3.2'),
     ]),
   ]),
+  PageFlow('app-start', 'The shared datasets kept on the device.', [
+    FlowStep.open([
+      FlowCall(
+        'postSync',
+        note: 'only the datasets whose version moved; none when nothing did',
+      ),
+    ]),
+    FlowStep.action('Back to the app after 5+ minutes', [
+      FlowCall('postSync', note: 'every dataset, behind a loading screen'),
+    ]),
+    FlowStep.action('Pull to refresh (screen or sheet)', [
+      FlowCall('postSync', note: 'the datasets that screen reads'),
+    ]),
+    FlowStep.action('After any write', [
+      FlowCall('postSync', note: 'only when the X-Sync-Versions header moved'),
+    ]),
+  ]),
   PageFlow('wallets-list', 'All wallets with totals.', [
     FlowStep.open([FlowCall('listAccounts', note: 'wallets + totals')]),
     FlowStep.action('Button "เพิ่มกระเป๋า"', [FlowCall('createAccount')]),

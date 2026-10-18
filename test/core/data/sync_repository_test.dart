@@ -215,11 +215,13 @@ void main() {
     () async {
       final adapter = _Adapter(
         (o) => (
-          201,
+          o.method == 'POST' ? 201 : 200,
           {},
-          {
-            'x-sync-versions': ['accounts=1-2.20261018;tags=3-4'],
-          },
+          o.method == 'POST'
+              ? {
+                  'x-sync-versions': ['accounts=1-2.20261018;tags=3-4'],
+                }
+              : <String, List<String>>{},
         ),
       );
       final client = _client(adapter);

@@ -57,7 +57,7 @@ class _SyncPageState extends State<SyncPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Sync')),
       body: ListenableBuilder(
-        listenable: coordinator,
+        listenable: coordinator.changes,
         builder: (context, _) {
           final held = coordinator.held;
           final versions = coordinator.versions;

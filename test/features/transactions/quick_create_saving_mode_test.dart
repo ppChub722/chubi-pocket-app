@@ -23,6 +23,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../../shared/fake_sync.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../saving_goals/saving_goal_parse_test.dart' show prodGoal, prodList;
@@ -166,6 +168,7 @@ void main() {
             BlocProvider<CategoriesCubit>.value(value: categories),
             BlocProvider<TagsCubit>.value(value: tags),
             BlocProvider<TransactionsCubit>.value(value: txs),
+            FakeTxFormOptions().provider,
             BlocProvider<DashboardCubit>.value(value: dashboard),
             BlocProvider<AuthCubit>.value(value: auth),
             BlocProvider<SavingGoalsCubit>.value(value: goals),

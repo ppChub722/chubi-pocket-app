@@ -103,6 +103,7 @@ void main() {
         child: MultiBlocProvider(
           providers: [
             BlocProvider<AccountsCubit>.value(value: cubit),
+            providersCubitProvider(),
             BlocProvider<AuthCubit>.value(value: auth),
             BlocProvider<PendingCubit>.value(value: pending),
             BlocProvider<UnreadBadgeCubit>.value(value: unread),

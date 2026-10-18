@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -123,6 +125,6 @@ Future<AccountPickerResult?> showAccountPickerSheet({
       ),
     };
   } finally {
-    await feed?.dispose();
+    unawaited(feed?.dispose());
   }
 }

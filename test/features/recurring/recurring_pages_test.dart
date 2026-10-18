@@ -12,6 +12,7 @@ import 'package:chubi_pocket/features/recurring/domain/recurrence_rule.dart';
 import 'package:chubi_pocket/features/recurring/domain/recurring.dart';
 import 'package:chubi_pocket/features/recurring/domain/recurring_item.dart';
 import 'package:chubi_pocket/features/recurring/domain/recurring_summary.dart';
+import 'package:chubi_pocket/features/recurring/presentation/cubit/recurring_directory_cubit.dart';
 import 'package:chubi_pocket/features/recurring/presentation/pages/recurring_detail_page.dart';
 import 'package:chubi_pocket/features/recurring/presentation/pages/recurring_home_page.dart';
 import 'package:chubi_pocket/features/recurring/presentation/recurring_draft.dart';
@@ -23,6 +24,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../../shared/fake_sync.dart';
 
 class _Auth extends MockCubit<AuthState> implements AuthCubit {}
 
@@ -63,7 +66,6 @@ class _Repo extends Fake implements RecurringRepository {
     if (networkDown) throw _down;
   }
 
-  @override
   @override
   Future<ItemPage> calendar(DateTime month) async {
     _hit('calendar:${month.year}-${month.month}');
@@ -327,7 +329,11 @@ void main() {
 
   tearDown(() => registry.dispose());
 
-  Future<void> pump(WidgetTester t, Widget page) async {
+  Future<void> pump(
+    WidgetTester t,
+    Widget page, {
+    RecurringDirectoryCubit? directory,
+  }) async {
     // A tall phone: the detail's pinned tab bar sits under hero + info + note.
     t.view.physicalSize = const Size(800, 2600);
     t.view.devicePixelRatio = 1;
@@ -361,6 +367,9 @@ void main() {
             BlocProvider<CategoriesCubit>.value(value: categories),
             BlocProvider<TagsCubit>.value(value: tags),
             BlocProvider<DashboardCubit>.value(value: dashboard),
+            recurringDirectoryProvider(
+              directory ?? recurringDirectoryWith(repo.listData, repo.summary),
+            ),
           ],
           child: MaterialApp(
             theme: ThemeData(
@@ -477,9 +486,9 @@ void main() {
   });
 
   group('list page', () {
-    testWidgets('opens with ONE call; the card is the BE\'s', (t) async {
+    testWidgets('opens with no request; the card is the BE\'s', (t) async {
       await pump(t, const RecurringHomePage());
-      expect(repo.calls, ['list:current']);
+      expect(repo.calls, isEmpty);
       expect(find.text('Netflix'), findsOneWidget);
       // The reminder lives on its own tab.
       expect(find.text('Water bill'), findsNothing);
@@ -526,41 +535,36 @@ void main() {
         ),
       ];
       await pump(t, const RecurringHomePage());
-      expect(repo.calls, ['list:current']);
+      expect(repo.calls, isEmpty);
       await t.tap(find.text('Calendar'));
       await t.pumpAndSettle();
-      expect(repo.calls, ['list:current', 'calendar:${now.year}-${now.month}']);
+      expect(repo.calls, ['calendar:${now.year}-${now.month}']);
       expect(find.byType(MonthCalendar), findsOneWidget);
       // Today is picked: its item is listed under the grid.
       expect(find.byKey(ValueKey('calendarDot:${now.day}')), findsOneWidget);
       expect(find.text('Netflix'), findsWidgets);
     });
 
-    testWidgets('search sends q to the BE (one call per change)', (t) async {
+    testWidgets('search filters on the device, no request', (t) async {
       await pump(t, const RecurringHomePage());
       await t.tap(find.byType(ToolbarToggleButton));
       await t.pumpAndSettle();
       await t.enterText(find.byType(TextField), 'netf');
       await t.pump();
-      await t.pump(const Duration(milliseconds: 100));
-      expect(repo.queries, ['', 'netf']);
       expect(find.text('Netflix'), findsOneWidget);
+      await t.enterText(find.byType(TextField), 'zzz');
+      await t.pump();
+      expect(find.text('Netflix'), findsNothing);
+      expect(repo.calls, isEmpty);
     });
 
-    testWidgets('a failed reload keeps the rows and says so', (t) async {
-      await pump(t, const RecurringHomePage());
-      await t.tap(find.byType(ToolbarToggleButton));
-      await t.pumpAndSettle();
-      repo.networkDown = true;
-      await t.enterText(find.byType(TextField), 'netf');
-      await t.pump();
+    testWidgets('a failed sync keeps the rows on screen', (t) async {
+      final directory = recurringDirectoryWith(repo.listData, repo.summary);
+      await pump(t, const RecurringHomePage(), directory: directory);
+      directory.syncFailed(_down);
       await t.pump(const Duration(milliseconds: 100));
       expect(find.byType(ErrorView), findsNothing);
       expect(find.text('Netflix'), findsOneWidget);
-      expect(
-        find.text('Refresh failed, showing the latest data'),
-        findsOneWidget,
-      );
     });
 
     testWidgets('?tab=upcoming opens on the calendar', (t) async {
@@ -568,7 +572,6 @@ void main() {
         t,
         const RecurringHomePage(initialTab: RecurringHomeTab.calendar),
       );
-      expect(repo.calls.first, 'list:current');
       expect(repo.calls.any((c) => c.startsWith('calendar:')), isTrue);
       expect(find.byType(MonthCalendar), findsOneWidget);
     });
@@ -584,13 +587,17 @@ void main() {
       expect(find.text('Netflix'), findsOneWidget);
     });
 
-    testWidgets('network down → error + retry', (t) async {
-      repo.networkDown = true;
-      await pump(t, const RecurringHomePage());
+    testWidgets('network down → error + retry; the sync landing fills it', (
+      t,
+    ) async {
+      final directory = RecurringDirectoryCubit(coordinator: testCoordinator());
+      await pump(t, const RecurringHomePage(), directory: directory);
+      directory.syncFailed(_down);
+      await t.pump(const Duration(milliseconds: 100));
       expect(find.byType(ErrorView), findsOneWidget);
-      repo.networkDown = false;
       await t.tap(find.text('Retry'));
       await t.pump();
+      directory.applySync({'data': repo.listData, 'summary': repo.summary});
       await t.pump(const Duration(milliseconds: 100));
       expect(find.text('Netflix'), findsOneWidget);
     });

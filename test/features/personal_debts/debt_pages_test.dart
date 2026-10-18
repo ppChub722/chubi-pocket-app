@@ -316,10 +316,11 @@ void main() {
     testWidgets('a failed load → full-page error; the sync landing fills it', (
       t,
     ) async {
+      await pump(t, const PersonalDebtsPage(), people: false);
       directory.syncFailed(
         const ApiException(code: 'INTERNAL', message: 'boom', statusCode: 500),
       );
-      await pump(t, const PersonalDebtsPage(), people: false);
+      await t.pump(const Duration(milliseconds: 100));
       expect(find.byType(ErrorView), findsOneWidget);
       expect(find.byType(PersonBalanceRow), findsNothing);
       directory.applySync(_peopleBody());

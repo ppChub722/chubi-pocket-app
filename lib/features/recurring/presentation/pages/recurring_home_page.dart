@@ -71,7 +71,9 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   }
 
   RecurringList? _listOf(RecurringDirectoryState s) {
-    if (s.status != RecurringDirectoryStatus.loaded) return null;
+    if (s.status != RecurringDirectoryStatus.loaded && s.rules.isEmpty) {
+      return null;
+    }
     final needle = _query.trim().toLowerCase();
     return RecurringList(
       items: [

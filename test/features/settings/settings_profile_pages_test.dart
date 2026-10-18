@@ -1,4 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:chubi_pocket/core/data/sync_coordinator.dart';
 import 'package:chubi_pocket/app/shell/shell_chrome.dart';
 import 'package:chubi_pocket/core/network/api_exception.dart';
 import 'package:chubi_pocket/features/accounts/data/accounts_repository.dart';
@@ -115,7 +116,10 @@ void main() {
     t.view.devicePixelRatio = 1;
     addTearDown(t.view.reset);
     final locale = LocaleCubit(prefs);
-    final accounts = AccountsCubit(repository: _AccountsRepo(), coordinator: testCoordinator());
+    final accounts = AccountsCubit(
+      repository: _AccountsRepo(),
+      coordinator: testCoordinator(),
+    );
     addTearDown(accounts.close);
     addTearDown(auth.close);
     accounts.emit(
@@ -147,7 +151,11 @@ void main() {
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('en'),
-            builder: (context, child) => AppUiConfig(child: child!),
+            builder: (context, child) =>
+                RepositoryProvider<SyncCoordinator>.value(
+                  value: testCoordinator(),
+                  child: AppUiConfig(child: child!),
+                ),
             home: Scaffold(
               body: ShellChrome(
                 controller: ShellChromeController(),

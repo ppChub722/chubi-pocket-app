@@ -1,4 +1,3 @@
-import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:chubi_pocket/features/accounts/presentation/cubit/accounts_cubit.dart';
@@ -6,7 +5,6 @@ import 'package:chubi_pocket/features/categories/presentation/cubit/categories_c
 import 'package:chubi_pocket/features/pending/domain/pending_transaction.dart';
 import 'package:chubi_pocket/features/tags/presentation/cubit/tags_cubit.dart';
 import 'package:chubi_pocket/features/transactions/data/transactions_repository.dart';
-import 'package:chubi_pocket/features/transactions/domain/form_options.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
 import 'package:chubi_pocket/features/transactions/presentation/cubit/transactions_cubit.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/quick_create_sheet.dart';
@@ -17,6 +15,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../../shared/fake_sync.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _Accounts extends MockCubit<AccountsState> implements AccountsCubit {}
@@ -28,16 +28,14 @@ class _Tags extends MockCubit<TagsState> implements TagsCubit {}
 
 class _Txs extends MockCubit<TransactionsState> implements TransactionsCubit {}
 
-class _Repo extends Fake implements TransactionsRepository {
-  final options = Completer<TxFormOptions>();
-
-}
+class _Repo extends Fake implements TransactionsRepository {}
 
 /// The edit-one-item sheet (owner 2026-10-13: an upcoming / produced
 /// recurring item, a draft): the quick-form look prefilled from a body, the
 /// skeleton until the pickers' options land, and the CALLER'S actions save.
 void main() {
   late _Repo repo;
+  late FakeTxFormOptions opts;
   late List<String> calls;
   late List<PendingDraft> bodies;
   late bool succeed;
@@ -46,6 +44,7 @@ void main() {
   Future<void> open(WidgetTester t, {bool withDelete = false}) async {
     SharedPreferences.setMockInitialValues({});
     repo = _Repo();
+    opts = FakeTxFormOptions(landed: false);
     calls = [];
     bodies = [];
     succeed = true;
@@ -79,6 +78,7 @@ void main() {
             BlocProvider<CategoriesCubit>.value(value: categories),
             BlocProvider<TagsCubit>.value(value: tags),
             BlocProvider<TransactionsCubit>.value(value: txs),
+            opts.provider,
           ],
           child: MaterialApp(
             theme: ThemeData(extensions: [sweetTheme.lightColors]),
@@ -123,7 +123,7 @@ void main() {
   }
 
   Future<void> land(WidgetTester t) async {
-    repo.options.complete(const TxFormOptions());
+    opts.land();
     await t.pump();
     await t.pump(const Duration(milliseconds: 400));
   }

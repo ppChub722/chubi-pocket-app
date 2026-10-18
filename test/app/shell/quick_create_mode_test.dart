@@ -23,6 +23,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../../shared/fake_sync.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _Accounts extends MockCubit<AccountsState> implements AccountsCubit {}
@@ -171,6 +173,7 @@ void main() {
             BlocProvider<CategoriesCubit>.value(value: categories),
             BlocProvider<TagsCubit>.value(value: tags),
             BlocProvider<TransactionsCubit>.value(value: txs),
+            FakeTxFormOptions().provider,
             BlocProvider<PendingCubit>.value(value: pending),
             BlocProvider<UnreadBadgeCubit>.value(value: unread),
             BlocProvider<AuthCubit>.value(value: auth),

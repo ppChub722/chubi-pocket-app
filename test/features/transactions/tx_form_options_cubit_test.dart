@@ -115,6 +115,8 @@ void main() {
       ]);
     });
 
+    Future<void> settle() => Future<void>.delayed(Duration.zero);
+
     void fillAll() {
       accounts.applySync({
         'data': [
@@ -145,22 +147,28 @@ void main() {
       expect(cubit.state.isLoading, isTrue);
     });
 
-    test('options appear once everything is loaded and follow the caches', () {
-      fillAll();
-      final o = cubit.state.options!;
-      expect(cubit.state.status, TxFormOptionsStatus.loaded);
-      expect(o.accountList.map((a) => a.id), ['a1', 'a2']);
-      expect(o.defaultAccountId, 'a2');
-      expect(o.feeCategoryId, 'c9');
-      expect(o.categories.map((c) => c.ref.id), ['c1', 'c2']);
-      expect(o.tags.single.name, 'trip');
+    test(
+      'options appear once everything is loaded and follow the caches',
+      () async {
+        fillAll();
+        await settle();
+        final o = cubit.state.options!;
+        expect(cubit.state.status, TxFormOptionsStatus.loaded);
+        expect(o.accountList.map((a) => a.id), ['a1', 'a2']);
+        expect(o.defaultAccountId, 'a2');
+        expect(o.feeCategoryId, 'c9');
+        expect(o.categories.map((c) => c.ref.id), ['c1', 'c2']);
+        expect(o.tags.single.name, 'trip');
 
-      accounts.patchBalances({'a1': 7});
-      expect(cubit.state.options!.accountList.first.balance, 7);
-    });
+        accounts.patchBalances({'a1': 7});
+        await settle();
+        expect(cubit.state.options!.accountList.first.balance, 7);
+      },
+    );
 
-    test('a failing cache with nothing loaded yet shows its error', () {
+    test('a failing cache with nothing loaded yet shows its error', () async {
       accounts.syncFailed(const ApiException(code: 'NETWORK', message: 'down'));
+      await settle();
       expect(cubit.state.status, TxFormOptionsStatus.error);
       expect(cubit.state.error?.code, 'NETWORK');
       expect(cubit.state.options, isNull);

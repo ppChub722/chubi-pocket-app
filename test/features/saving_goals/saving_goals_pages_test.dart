@@ -711,7 +711,11 @@ void main() {
     expect(repo.detailCalls, 2);
     final ctx = t.element(find.byType(SavingGoalDetailPage));
     final goals = ctx.read<SavingGoalsCubit>();
-    goals.emit(goals.state.copyWith(overview: const SavingGoalsOverview()));
+    goals.emit(
+      goals.state.copyWith(
+        overview: const SavingGoalsOverview(summary: SavingSummary(saved: 1)),
+      ),
+    );
     await t.pump();
     await t.pump(const Duration(milliseconds: 100));
     expect(repo.detailCalls, 3);

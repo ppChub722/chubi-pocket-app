@@ -14,7 +14,6 @@ import '../core/data/sync_changes.dart';
 import '../core/data/sync_repository.dart';
 import '../core/data/sync_store.dart';
 import 'refresh/app_refresh.dart';
-import 'refresh/resume_overlay.dart';
 import '../core/network/api_client.dart';
 import '../core/network/connectivity_cubit.dart';
 import '../core/network/connection_cubit.dart';
@@ -372,8 +371,10 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                       Theme.of(context).scaffoldBackgroundColor,
                     ),
                     child: KeyboardInsetsGuard(
-                      child: ResumeOverlay(
-                        busy: _appRefresh.busy,
+                      child: ValueListenableBuilder<bool>(
+                        valueListenable: _appRefresh.busy,
+                        builder: (context, busy, shell) =>
+                            SavingOverlay(saving: busy, child: shell!),
                         child: ConnectionShell(
                           child: RefreshScope(
                             registry: _refreshRegistry,

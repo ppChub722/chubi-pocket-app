@@ -1,14 +1,17 @@
 import 'package:chubi_pocket/core/network/api_exception.dart';
 import 'package:chubi_pocket/features/recurring/data/recurring_link_repository.dart';
-import 'package:chubi_pocket/features/recurring/domain/recurring.dart';
 import 'package:chubi_pocket/features/recurring/domain/recurring_item.dart';
+import 'package:chubi_pocket/features/recurring/presentation/cubit/recurring_directory_cubit.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/recurring_link.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../../shared/fake_sync.dart';
 
 /// The รายการประจำ row of the "ผูกกับ" section: the picker (groups, search,
 /// failing load), the link call and the amount question.
@@ -38,22 +41,6 @@ Map<String, dynamic> _setting(
   },
 };
 
-LinkCandidate _candidate(
-  String id,
-  String name, {
-  double? amount,
-  bool likely = false,
-}) {
-  final j = _setting(id, name, amount: amount);
-  return LinkCandidate(
-    likely: likely,
-    setting: Recurring.fromJson(j),
-    occurrence: LinkOccurrence.fromJson(
-      j['current_occurrence'] as Map<String, dynamic>,
-    ),
-  );
-}
-
 /// `unlinkRecurringItem` answer: the occurrence, open again.
 Map<String, dynamic> _openItem(String id) => {
   'id': id,
@@ -75,7 +62,7 @@ class _FakeRepo implements RecurringLinkRepository {
     this.differs,
   });
 
-  final List<LinkCandidate> rows;
+  final List<Map<String, dynamic>> rows;
   final ApiException? loadError;
   final ApiException? linkError;
 
@@ -83,9 +70,6 @@ class _FakeRepo implements RecurringLinkRepository {
   final (double, double)? differs;
   final links = <String>[];
   final puts = <(String, double)>[];
-  TransactionType? askedType;
-  String? askedCategory;
-  double? askedAmount;
   final unlinks = <String>[];
   ApiException? unlinkError;
 
@@ -96,7 +80,6 @@ class _FakeRepo implements RecurringLinkRepository {
     return RecurringItem.fromJson(_openItem(itemId));
   }
 
-  @override
   @override
   Future<LinkResult> link(String itemId, String transactionId) async {
     links.add('$itemId<-$transactionId');
@@ -114,6 +97,21 @@ class _FakeRepo implements RecurringLinkRepository {
       puts.add((recurringId, amount));
 }
 
+const _category = {'id': 'cat-1', 'name': 'Car', 'type': 'expense'};
+
+/// The directory the picker reads: the fake's rows as the sync would land
+/// them, or a failed sync.
+final _directories = Expando<RecurringDirectoryCubit>();
+
+RecurringDirectoryCubit _directory(_FakeRepo repo) {
+  final held = _directories[repo];
+  if (held != null) return held;
+  final directory = RecurringDirectoryCubit(coordinator: testCoordinator());
+  // A failing sync lands after the sheet opens (opening retries a failed one).
+  if (repo.loadError == null) directory.applySync({'data': repo.rows});
+  return _directories[repo] = directory;
+}
+
 void main() {
   final messages = <String>[];
 
@@ -127,7 +125,11 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('th'),
-        builder: (context, child) => AppUiConfig(child: child!),
+        builder: (context, child) =>
+            BlocProvider<RecurringDirectoryCubit>.value(
+              value: _directory(repo),
+              child: AppUiConfig(child: child!),
+            ),
         home: Scaffold(
           body: ListenableBuilder(
             listenable: handle,
@@ -156,7 +158,7 @@ void main() {
     return handle;
   }
 
-  final rows = [_candidate('1', 'รถ', amount: 3023), _candidate('2', 'ค่าน้ำ')];
+  final rows = [_setting('1', 'รถ', amount: 3023), _setting('2', 'ค่าน้ำ')];
 
   Future<void> pickCar(WidgetTester t, RecurringLinkHandle h) async {
     await t.tap(find.text('เลือกรายการประจำ'));
@@ -181,7 +183,6 @@ void main() {
     expect(find.text('เลือกรายการประจำ'), findsOneWidget);
     await t.tap(find.text('เลือกรายการประจำ'));
     await t.pumpAndSettle();
-    expect(repo.askedType, TransactionType.expense);
     expect(find.text('ผูกกับรายการประจำ'), findsOneWidget);
     // Groups from the BE answer: recurring, then the reminders (no amount).
     expect(find.text('เตือนจ่าย'), findsOneWidget);
@@ -209,6 +210,10 @@ void main() {
     );
     await pump(t, repo);
     await t.tap(find.text('เลือกรายการประจำ'));
+    // The open starts a load: a skeleton, which never settles.
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 400));
+    _directory(repo).syncFailed(repo.loadError!);
     await t.pumpAndSettle();
     expect(find.byType(ErrorView), findsOneWidget);
     expect(find.text('รถ'), findsNothing);
@@ -276,9 +281,9 @@ void main() {
   ) async {
     final repo = _FakeRepo(
       rows: [
-        _candidate('1', 'รถ', amount: 3023, likely: true),
-        _candidate('2', 'ค่าน้ำ'),
-        _candidate('3', 'ค่าไฟ', amount: 900),
+        {..._setting('1', 'รถ', amount: 3023), 'category': _category},
+        _setting('2', 'ค่าน้ำ'),
+        _setting('3', 'ค่าไฟ', amount: 900),
       ],
     );
     final handle = RecurringLinkHandle(repository: repo);
@@ -289,7 +294,11 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('th'),
-        builder: (context, child) => AppUiConfig(child: child!),
+        builder: (context, child) =>
+            BlocProvider<RecurringDirectoryCubit>.value(
+              value: _directory(repo),
+              child: AppUiConfig(child: child!),
+            ),
         home: Builder(
           builder: (context) => Scaffold(
             body: TextButton(
@@ -308,9 +317,7 @@ void main() {
     );
     await t.tap(find.text('open'));
     await t.pumpAndSettle();
-    // The hints went out with the one call.
-    expect(repo.askedCategory, 'cat-1');
-    expect(repo.askedAmount, 3100);
+    // The hints (category, amount) pick the likely ones on the device.
     final likely = t.getTopLeft(find.text('น่าจะใช่')).dy;
     final recurring = t.getTopLeft(find.text('รายการประจำ').first).dy;
     final reminders = t.getTopLeft(find.text('เตือนจ่าย')).dy;
@@ -337,7 +344,11 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('th'),
-        builder: (context, child) => AppUiConfig(child: child!),
+        builder: (context, child) =>
+            BlocProvider<RecurringDirectoryCubit>.value(
+              value: _directory(repo),
+              child: AppUiConfig(child: child!),
+            ),
         home: Scaffold(
           body: ListenableBuilder(
             listenable: handle,
@@ -386,7 +397,11 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('th'),
-        builder: (context, child) => AppUiConfig(child: child!),
+        builder: (context, child) =>
+            BlocProvider<RecurringDirectoryCubit>.value(
+              value: _directory(repo),
+              child: AppUiConfig(child: child!),
+            ),
         home: Scaffold(
           body: Builder(
             builder: (context) => TextButton(

@@ -28,6 +28,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../shared/fake_sync.dart';
+
 class _Auth extends MockCubit<AuthState> implements AuthCubit {}
 
 class _Pending extends MockCubit<PendingState> implements PendingCubit {}
@@ -118,6 +120,8 @@ void main() {
         child: MultiBlocProvider(
           providers: [
             BlocProvider<AccountsCubit>.value(value: accounts),
+            providersCubitProvider(),
+            debtDirectoryProvider(),
             BlocProvider<AuthCubit>.value(value: auth),
             BlocProvider<PendingCubit>.value(value: pending),
             BlocProvider<UnreadBadgeCubit>.value(value: unread),

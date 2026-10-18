@@ -1,4 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:chubi_pocket/core/data/sync_coordinator.dart';
 import 'package:chubi_pocket/ui/tokens/app/app_icons.dart';
 import 'package:chubi_pocket/ui/atoms/app_icon_button.dart';
 import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
@@ -12,6 +13,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../shared/fake_sync.dart';
 
 class _Tags extends MockCubit<TagsState> implements TagsCubit {}
 
@@ -45,9 +48,12 @@ void main() {
       ),
     );
     await t.pumpWidget(
-      tags == null
-          ? app
-          : BlocProvider<TagsCubit>.value(value: tags, child: app),
+      RepositoryProvider<SyncCoordinator>.value(
+        value: testCoordinator(),
+        child: tags == null
+            ? app
+            : BlocProvider<TagsCubit>.value(value: tags, child: app),
+      ),
     );
     await t.tap(find.text('open'));
     await t.pumpAndSettle();

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
+import 'package:chubi_pocket/core/data/data_changes.dart' as changes;
 import 'package:chubi_pocket/app/shell/quick_create_context.dart';
 import 'package:chubi_pocket/core/network/api_exception.dart';
 import 'package:chubi_pocket/features/accounts/presentation/cubit/accounts_cubit.dart';
@@ -19,7 +20,6 @@ import 'package:chubi_pocket/features/home/presentation/cubit/dashboard_cubit.da
 import 'package:chubi_pocket/features/notifications/presentation/cubit/unread_badge_cubit.dart';
 import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.dart';
 import 'package:chubi_pocket/features/tags/presentation/cubit/tags_cubit.dart';
-import 'package:chubi_pocket/features/transactions/domain/transaction.dart';
 import 'package:chubi_pocket/features/transactions/presentation/cubit/transactions_cubit.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:chubi_pocket/ui/ui.dart';
@@ -604,19 +604,14 @@ void main() {
       expect(find.byType(ErrorView), findsNothing);
     });
 
-    testWidgets('a transaction write refreshes the spent figures', (t) async {
+    testWidgets('a change of the budgets key refreshes the spent figures', (
+      t,
+    ) async {
       await pump(t, const BudgetsListPage());
       expect(repo.calls, ['list:active:risk']);
-      // A write bumps the revision.
-      txBook.add(const TransactionsState(revision: 1));
-      await t.pump(const Duration(milliseconds: 500));
+      await changes.DataChanges.instance.changed({changes.DataTable.budgets});
       await t.pump();
       expect(repo.calls, ['list:active:risk', 'list:active:risk']);
-      // A book-wide refresh (pending submit, debt settle) swaps the rows.
-      txBook.add(TransactionsState(revision: 1, transactions: <Transaction>[]));
-      await t.pump(const Duration(milliseconds: 500));
-      await t.pump();
-      expect(repo.calls.length, 3);
     });
 
     Future<void> openToolbar(WidgetTester t) async {

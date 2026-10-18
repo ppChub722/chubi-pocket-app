@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -69,7 +71,7 @@ Future<List<BudgetScopeCategory>?> showBudgetCategoriesPicker(
         (id: s.category.id, includeChildren: s.includeChildren),
     ],
   );
-  await feed?.dispose();
+  unawaited(feed?.dispose());
   if (picks == null) return null;
   final byId = {for (final c in pool) c.id: c};
   final known = {for (final s in selected) s.category.id: s.category};
@@ -133,7 +135,7 @@ Future<List<String>?> showBudgetWalletsPicker(
     ),
     initial: selected,
   );
-  await feed?.dispose();
+  unawaited(feed?.dispose());
   return picked;
 }
 

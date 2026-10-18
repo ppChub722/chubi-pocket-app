@@ -17,6 +17,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../shared/fake_sync.dart';
+
 class _Accounts extends MockCubit<AccountsState> implements AccountsCubit {}
 
 class _Categories extends MockCubit<CategoriesState>
@@ -72,6 +74,7 @@ void main() {
           BlocProvider<ContactsCubit>.value(value: contacts),
           BlocProvider<TagsCubit>.value(value: tags),
           BlocProvider<TransactionsCubit>.value(value: txs),
+          projectDirectoryProvider(),
           BlocProvider<ProjectsCubit>.value(value: projects),
         ],
         child: MaterialApp(

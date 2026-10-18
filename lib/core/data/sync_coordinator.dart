@@ -35,7 +35,7 @@ class SyncRound {
 /// The one place the app asks the server what changed. Every cache attaches
 /// to its dataset, gets what the device holds at once, and gets the new body
 /// whenever a sync brings one.
-class SyncCoordinator extends ChangeNotifier {
+class SyncCoordinator {
   SyncCoordinator({
     required SyncRepository repository,
     required SyncStore store,
@@ -54,6 +54,7 @@ class SyncCoordinator extends ChangeNotifier {
   final _entries = <SyncSet, SyncEntry>{};
   final _versions = <String, String>{};
   final _rounds = <SyncRound>[];
+  final _changes = _Changes();
 
   /// Page-data keys whose version moved; the caches that hold them reload.
   void Function(Set<SyncKey> keys)? onPageDataChanged;
@@ -69,6 +70,9 @@ class SyncCoordinator extends ChangeNotifier {
 
   final _debounced = <SyncSet>{};
   Timer? _timer;
+
+  /// Fires when the held data, versions or rounds change (the debug page listens).
+  Listenable get changes => _changes;
 
   String? get userId => _userId;
   List<SyncRound> get rounds => List.unmodifiable(_rounds);
@@ -117,7 +121,7 @@ class SyncCoordinator extends ChangeNotifier {
       _entries[e.key] = e.value;
       _applySafely(e.key, e.value.body);
     }
-    notifyListeners();
+    _changes.ping();
   }
 
   /// Hydrate, then bring everything up to date in the background.
@@ -139,7 +143,7 @@ class SyncCoordinator extends ChangeNotifier {
     _reset();
     _userId = null;
     if (old != null) await _store.clear(old);
-    notifyListeners();
+    _changes.ping();
   }
 
   void _reset() {
@@ -242,7 +246,7 @@ class SyncCoordinator extends ChangeNotifier {
   void _remember(SyncRound round) {
     _rounds.add(round);
     if (_rounds.length > _roundsKept) _rounds.removeAt(0);
-    notifyListeners();
+    _changes.ping();
   }
 
   void _applySafely(SyncSet set, Map<String, dynamic> body) {
@@ -279,7 +283,7 @@ class SyncCoordinator extends ChangeNotifier {
     }
     if (staleSets.isNotEmpty) _scheduleSync(staleSets);
     if (changedKeys.isNotEmpty) onPageDataChanged?.call(changedKeys);
-    notifyListeners();
+    _changes.ping();
   }
 
   void _scheduleSync(Set<SyncSet> sets) {
@@ -292,9 +296,12 @@ class SyncCoordinator extends ChangeNotifier {
     });
   }
 
-  @override
   void dispose() {
     _timer?.cancel();
-    super.dispose();
+    _changes.dispose();
   }
+}
+
+class _Changes extends ChangeNotifier {
+  void ping() => notifyListeners();
 }

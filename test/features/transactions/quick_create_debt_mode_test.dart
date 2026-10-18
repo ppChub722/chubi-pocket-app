@@ -7,6 +7,7 @@ import 'package:chubi_pocket/features/categories/presentation/cubit/categories_c
 import 'package:chubi_pocket/features/home/presentation/cubit/dashboard_cubit.dart';
 import 'package:chubi_pocket/features/personal_debts/data/personal_debts_repository.dart';
 import 'package:chubi_pocket/features/personal_debts/domain/debt_ledger.dart';
+import 'package:chubi_pocket/features/personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import 'package:chubi_pocket/features/tags/presentation/cubit/tags_cubit.dart';
 import 'package:chubi_pocket/features/transactions/data/transactions_repository.dart';
 import 'package:chubi_pocket/features/transactions/domain/refs.dart';
@@ -21,6 +22,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../../shared/fake_sync.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _Accounts extends MockCubit<AccountsState> implements AccountsCubit {}
@@ -120,6 +123,8 @@ void main() {
             BlocProvider<CategoriesCubit>.value(value: categories),
             BlocProvider<TagsCubit>.value(value: tags),
             BlocProvider<TransactionsCubit>.value(value: txs),
+            FakeTxFormOptions().provider,
+            debtDirectoryProvider(_directoryWithMom()),
             BlocProvider<DashboardCubit>.value(value: dashboard),
             BlocProvider<AuthCubit>.value(value: auth),
           ],
@@ -267,4 +272,22 @@ void main() {
     await t.pumpAndSettle();
     expect(find.byType(DraftForm), findsOneWidget);
   });
+}
+
+DebtDirectoryCubit _directoryWithMom() {
+  final directory = DebtDirectoryCubit(coordinator: testCoordinator());
+  directory.applySync({
+    'data': [
+      {
+        'key': 'n:mom',
+        'person': {'name': 'Mom'},
+        'net': 200,
+        'open_count': 1,
+        'entry_count': 1,
+      },
+    ],
+    'totals': <String, dynamic>{},
+    'pagination': {'page': 1, 'per_page': 1, 'total': 1, 'total_pages': 1},
+  });
+  return directory;
 }
