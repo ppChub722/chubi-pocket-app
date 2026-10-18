@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/shell/tab_nav.dart';
@@ -6,6 +7,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../recurring/data/recurring_link_repository.dart';
+import '../../../recurring/presentation/cubit/recurring_directory_cubit.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 
@@ -93,7 +95,6 @@ class RecurringLinkHandle extends ChangeNotifier {
       amount: amount,
       selectedItemId: candidateFor(type)?.occurrence.itemId,
       createRoute: createRoute,
-      repository: repository,
     );
     if (picked != null) _set(candidate: picked);
     return picked;
@@ -268,15 +269,12 @@ Future<LinkCandidate?> showRecurringLinkPicker(
   String? selectedItemId,
   String? categoryId,
   double? amount,
-  RecurringLinkRepository? repository,
 }) async {
-  final repo = repository ?? RecurringLinkRepository.of(context);
   final r = await showAppSheetCustom<Object>(
     context,
     useRootNavigator: false,
     builder: (_) => _RecurringLinkSheet(
       type: type,
-      repository: repo,
       selectedItemId: selectedItemId,
       categoryId: categoryId,
       amount: amount,
@@ -292,14 +290,12 @@ Future<LinkCandidate?> showRecurringLinkPicker(
 class _RecurringLinkSheet extends StatefulWidget {
   const _RecurringLinkSheet({
     required this.type,
-    required this.repository,
     this.selectedItemId,
     this.categoryId,
     this.amount,
   });
 
   final TransactionType type;
-  final RecurringLinkRepository repository;
   final String? selectedItemId;
   final String? categoryId;
   final double? amount;
@@ -309,27 +305,12 @@ class _RecurringLinkSheet extends StatefulWidget {
 }
 
 class _RecurringLinkSheetState extends State<_RecurringLinkSheet> {
-  List<LinkCandidate>? _rows;
-  Object? _error;
-
   @override
   void initState() {
     super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    setState(() => _error = null);
-    try {
-      final rows = await widget.repository.candidates(
-        widget.type,
-        categoryId: widget.categoryId,
-        amount: widget.amount,
-      );
-      if (mounted) setState(() => _rows = rows);
-    } on ApiException catch (e) {
-      if (mounted) setState(() => _error = e);
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<RecurringDirectoryCubit>().loadIfNeeded();
+    });
   }
 
   RecurringPickRow _row(AppLocalizations l, LinkCandidate c) {
@@ -367,42 +348,52 @@ class _RecurringLinkSheetState extends State<_RecurringLinkSheet> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final rows = _rows ?? const <LinkCandidate>[];
-    return RecurringPickerSheet(
-      title: l.recurringPickerTitle,
-      loading: _rows == null && _error == null,
-      error: _error,
-      onRetry: _load,
-      selectedId: widget.selectedItemId,
-      groups: [
-        RecurringPickGroup(
-          title: l.recurringPickerGroupLikely,
-          rows: [
-            for (final c in rows)
-              if (c.likely) _row(l, c),
-          ],
-        ),
-        RecurringPickGroup(
-          title: l.recurringPickerGroupRecurring,
-          rows: [
-            for (final c in rows)
-              if (!c.likely && !c.isReminder) _row(l, c),
-          ],
-        ),
-        RecurringPickGroup(
-          title: l.recurringPickerGroupReminders,
-          rows: [
-            for (final c in rows)
-              if (!c.likely && c.isReminder) _row(l, c),
-          ],
-        ),
-      ],
-      createLabel: l.recurringPickerCreate,
-      emptyText: l.recurringPickerEmpty,
-      onPicked: (id) => Navigator.of(
-        context,
-      ).pop(rows.firstWhere((c) => c.occurrence.itemId == id)),
-      onCreate: () => Navigator.of(context).pop(const RecurringCreateNew()),
+    final directory = context.watch<RecurringDirectoryCubit>();
+    final loaded = directory.state.status == RecurringDirectoryStatus.loaded;
+    final rows = directory.candidates(
+      widget.type,
+      categoryId: widget.categoryId,
+      amount: widget.amount,
+    );
+    return SheetRefreshScope(
+      onRefresh: directory.load,
+      child: RecurringPickerSheet(
+        title: l.recurringPickerTitle,
+        loading:
+            !loaded && directory.state.status != RecurringDirectoryStatus.error,
+        error: !loaded ? directory.state.error : null,
+        onRetry: directory.load,
+        selectedId: widget.selectedItemId,
+        groups: [
+          RecurringPickGroup(
+            title: l.recurringPickerGroupLikely,
+            rows: [
+              for (final c in rows)
+                if (c.likely) _row(l, c),
+            ],
+          ),
+          RecurringPickGroup(
+            title: l.recurringPickerGroupRecurring,
+            rows: [
+              for (final c in rows)
+                if (!c.likely && !c.isReminder) _row(l, c),
+            ],
+          ),
+          RecurringPickGroup(
+            title: l.recurringPickerGroupReminders,
+            rows: [
+              for (final c in rows)
+                if (!c.likely && c.isReminder) _row(l, c),
+            ],
+          ),
+        ],
+        createLabel: l.recurringPickerCreate,
+        emptyText: l.recurringPickerEmpty,
+        onPicked: (id) => Navigator.of(
+          context,
+        ).pop(rows.firstWhere((c) => c.occurrence.itemId == id)),
+        onCreate: () => Navigator.of(context).pop(const RecurringCreateNew()),
+      ),
     );
   }
 }

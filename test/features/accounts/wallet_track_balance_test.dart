@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:chubi_pocket/features/accounts/data/accounts_repository.dart';
 import 'package:chubi_pocket/features/accounts/domain/account.dart';
-import 'package:chubi_pocket/features/accounts/domain/payment_provider.dart';
 import 'package:chubi_pocket/features/accounts/presentation/cubit/accounts_cubit.dart';
 import 'package:chubi_pocket/features/accounts/presentation/pages/account_detail_page.dart';
 import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
@@ -15,6 +14,7 @@ import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../shared/fake_sync.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Pending extends MockCubit<PendingState> implements PendingCubit {}
@@ -29,9 +29,6 @@ class _Repo extends Fake implements AccountsRepository {
   final updates = <Map<String, dynamic>>[];
 
   @override
-  Future<List<PaymentProvider>> paymentProviders() =>
-      Completer<List<PaymentProvider>>().future;
-
   @override
   Future<AccountDetail> getDetail(String id) =>
       Completer<AccountDetail>().future;
@@ -98,7 +95,7 @@ void main() {
     t.view.devicePixelRatio = 1;
     addTearDown(t.view.reset);
     repo = _Repo();
-    final cubit = AccountsCubit(repository: repo);
+    final cubit = AccountsCubit(repository: repo, coordinator: testCoordinator());
     addTearDown(cubit.close);
     if (wallet != null) {
       cubit.emit(

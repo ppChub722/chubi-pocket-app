@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/category_label.dart';
 import '../../../tags/presentation/widgets/tag_chip.dart';
-import '../../data/transactions_repository.dart';
+import '../cubit/tx_form_options_cubit.dart';
 import '../../domain/form_options.dart';
 import '../../domain/transaction_type.dart';
 import '../tx_list_filters.dart';
@@ -14,16 +15,17 @@ Future<TxFilters?> showTxFilterSheet(
   BuildContext context, {
   required TxFilters current,
   required TxFilters base,
-  required TransactionsRepository repository,
   bool walletLocked = false,
 }) async {
   final l = AppLocalizations.of(context)!;
   final palette = Theme.of(context).extension<AppColors>()!;
   var loaded = const TxFormOptions();
   Future<TxFilterOptions> load() async {
+    final cubit = context.read<TxFormOptionsCubit>();
     try {
-      loaded = await repository.formOptions();
+      await cubit.loadIfNeeded();
     } catch (_) {}
+    loaded = cubit.state.options ?? loaded;
     return _filterOptions(l, palette, loaded);
   }
 

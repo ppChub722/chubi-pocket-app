@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../atoms/connection_scope.dart';
+import '../atoms/refresh_registry.dart';
 import 'page_pop_observer.dart';
 import '../tokens/app_durations.dart';
 import '../tokens/app/app_icons.dart';
@@ -49,10 +50,20 @@ class _PullToRefreshState extends State<PullToRefresh>
   bool? _routeCurrent;
   int _popsWhenCovered = 0;
   bool _showRefreshing = false;
+  RefreshRegistry? _registry;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _registry?.unregister(this);
+    _registry = RefreshScope.maybeOf(context)
+      ?..register(
+        this,
+        route: ModalRoute.of(context),
+        isActive: () =>
+            mounted && widget.enabled && TickerMode.valuesOf(context).enabled,
+        run: () => widget.onRefresh(),
+      );
     final now = ConnectionScope.reconnectsOf(context);
     final before = _reconnects;
     _reconnects = now;
@@ -90,6 +101,7 @@ class _PullToRefreshState extends State<PullToRefresh>
 
   @override
   void dispose() {
+    _registry?.unregister(this);
     _drop.dispose();
     _exit.dispose();
     super.dispose();

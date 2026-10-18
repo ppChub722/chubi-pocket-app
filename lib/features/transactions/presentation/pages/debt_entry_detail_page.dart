@@ -12,7 +12,6 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../../home/presentation/cubit/dashboard_cubit.dart';
 import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
@@ -387,7 +386,6 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     final repo = context.read<PersonalDebtsRepository>();
     final accounts = context.read<AccountsCubit>();
     final txCubit = context.read<TransactionsCubit>();
-    final dashboard = context.read<DashboardCubit>();
     final oldTxId = widget.detail.transaction?.id;
     setSaving(true);
     try {
@@ -399,7 +397,6 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       } else if (oldTxId != null) {
         txCubit.dropRow(oldTxId);
       }
-      dashboard.markStale();
       if (!mounted) return;
       HapticFeedback.mediumImpact();
       commitSaved(working);
@@ -430,7 +427,6 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     final repo = context.read<PersonalDebtsRepository>();
     final accounts = context.read<AccountsCubit>();
     final txCubit = context.read<TransactionsCubit>();
-    final dashboard = context.read<DashboardCubit>();
     final router = GoRouter.maybeOf(context);
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
@@ -441,7 +437,6 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       accounts.patchBalances(r.accountBalances);
       final txId = r.transactionId;
       if (txId != null) txCubit.dropRow(txId);
-      dashboard.markStale();
       showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
       if (router == null) {
         navigator.maybePop();

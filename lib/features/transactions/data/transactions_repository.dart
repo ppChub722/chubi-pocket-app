@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
-import '../domain/form_options.dart';
 import '../domain/transaction.dart';
 import '../domain/transaction_type.dart';
 import '../domain/transactions_summary.dart';
@@ -299,17 +298,6 @@ class TransactionsRepository {
         data: <String, dynamic>{'tag_ids': tagIds},
       );
       return Transaction.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
-
-  Future<TxFormOptions> formOptions() async {
-    try {
-      final res = await _client.dio.get<Map<String, dynamic>>(
-        '/transactions/form-options',
-      );
-      return TxFormOptions.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }

@@ -5,7 +5,6 @@ import 'package:chubi_pocket/app/shell/quick_create_context.dart';
 import 'package:chubi_pocket/features/accounts/data/accounts_repository.dart';
 import 'package:chubi_pocket/features/accounts/domain/account.dart';
 import 'package:chubi_pocket/features/accounts/domain/account_type.dart';
-import 'package:chubi_pocket/features/accounts/domain/payment_provider.dart';
 import 'package:chubi_pocket/features/accounts/presentation/cubit/accounts_cubit.dart';
 import 'package:chubi_pocket/features/accounts/presentation/pages/account_detail_page.dart';
 import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
@@ -41,15 +40,6 @@ class _Categories extends MockCubit<CategoriesState>
 /// The debts pages' one open call never answers (the preset is set before).
 class _DebtsRepo extends Fake implements PersonalDebtsRepository {
   @override
-  Future<DebtPeoplePage> listPeople({
-    int page = 1,
-    int perPage = 30,
-    String? q,
-    bool all = false,
-    NetSide? side,
-    DebtPeopleSort sort = DebtPeopleSort.oldest,
-  }) => Completer<DebtPeoplePage>().future;
-
   @override
   Future<DebtPersonDetail> person(
     String key, {
@@ -64,9 +54,6 @@ class _Accounts extends MockCubit<AccountsState> implements AccountsCubit {}
 
 /// Payment providers never answer (names fall back) — not under test.
 class _AccountsRepo extends Fake implements AccountsRepository {
-  @override
-  Future<List<PaymentProvider>> paymentProviders() =>
-      Completer<List<PaymentProvider>>().future;
 }
 
 const _wallet = Account(

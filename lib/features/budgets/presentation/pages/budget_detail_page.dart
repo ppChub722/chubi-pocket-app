@@ -13,7 +13,6 @@ import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
-import '../../../home/presentation/cubit/dashboard_cubit.dart';
 import '../../../recurring/domain/recurrence_rule.dart' show today;
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
@@ -25,7 +24,6 @@ import '../../domain/budget_period.dart';
 import '../budget_draft.dart';
 import '../budget_labels.dart';
 import '../budget_scope_pickers.dart';
-import '../cubit/budgets_cubit.dart';
 
 class BudgetDetailPage extends StatefulWidget {
   const BudgetDetailPage({this.id, this.startEditing = false, super.key});
@@ -135,8 +133,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       _detail = d;
       _allPeriods = null;
     });
-    context.read<BudgetsCubit>().markStale();
-    context.read<DashboardCubit>().markStale();
   }
 
   Future<void> _loadMoreItems() async {
@@ -362,8 +358,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         _detail = (_detail ?? d).afterPeriodWrite(next);
         _allPeriods = _allPeriods?.replace(next.budget.period);
       });
-      context.read<BudgetsCubit>().markStale();
-      context.read<DashboardCubit>().markStale();
       setSaving(false);
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -406,8 +400,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
           : await _repo.update(b.id, write, apply: apply);
       if (!mounted) return;
       HapticFeedback.mediumImpact();
-      context.read<BudgetsCubit>().markStale();
-      context.read<DashboardCubit>().markStale();
       if (widget.isCreate) {
         commitSaved(working);
         leavePage();
@@ -501,8 +493,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       return;
     }
     if (!mounted) return;
-    context.read<BudgetsCubit>().markStale();
-    context.read<DashboardCubit>().markStale();
     // Pop without the discard prompt — the budget is gone.
     commitSaved(working);
     leavePage();

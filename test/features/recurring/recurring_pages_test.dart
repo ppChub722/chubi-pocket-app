@@ -64,20 +64,6 @@ class _Repo extends Fake implements RecurringRepository {
   }
 
   @override
-  Future<RecurringList> list({
-    RecurringFilter filter = RecurringFilter.current,
-    int page = 1,
-    String q = '',
-  }) async {
-    queries.add(q);
-    _hit('list:${filter.name}');
-    return RecurringList(
-      items: [for (final j in listData) Recurring.fromJson(j)],
-      counts: const {'current': 2, 'archived': 0, 'all': 2},
-      summary: RecurringSummary.fromJson(summary),
-    );
-  }
-
   @override
   Future<ItemPage> calendar(DateTime month) async {
     _hit('calendar:${month.year}-${month.month}');

@@ -6,6 +6,7 @@ import '../../atoms/app_chip.dart';
 import '../../atoms/app_input.dart';
 import '../../molecules/empty_view.dart';
 import '../../organisms/app_sheet.dart';
+import '../../atoms/live_items.dart';
 import '../../organisms/picker_sheet.dart';
 import '../../templates/form_sheet.dart';
 import '../../tokens/app/app_colors.dart';
@@ -84,15 +85,19 @@ Future<Set<String>?> showTagPicker(
   required Set<String> selected,
   Future<String?> Function(String name)? onCreate,
   VoidCallback? onRetry,
+  Future<void> Function()? onRefresh,
 }) {
   return showAppSheetCustom<Set<String>>(
     context,
-    builder: (_) => TagPickerSheet(
-      data: data,
-      labels: labels,
-      selected: selected,
-      onCreate: onCreate,
-      onRetry: onRetry,
+    builder: (_) => SheetRefreshScope(
+      onRefresh: onRefresh,
+      child: TagPickerSheet(
+        data: data,
+        labels: labels,
+        selected: selected,
+        onCreate: onCreate,
+        onRetry: onRetry,
+      ),
     ),
   );
 }

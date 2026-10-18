@@ -178,7 +178,7 @@ class _ContactsPageState extends State<ContactsPage> {
                     OptionMenuAnchor<String>(
                       selected: state.statusFilter,
                       onSelected: (v) =>
-                          ctx.read<ContactsCubit>().load(statusFilter: v),
+                          ctx.read<ContactsCubit>().setStatusFilter(v),
                       options: [
                         for (final e in statusLabels.entries)
                           SheetOption(value: e.key, label: e.value),

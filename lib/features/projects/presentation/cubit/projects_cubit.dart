@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bloc/clearable_cubit.dart';
+import '../../../../core/data/data_changes.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
@@ -91,10 +92,15 @@ class ProjectsState extends Equatable {
   ];
 }
 
-class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
+class ProjectsCubit extends Cubit<ProjectsState>
+    with Clearable, RefreshOnDataChange<ProjectsState> {
   ProjectsCubit({required ProjectsRepository repository})
     : _repo = repository,
-      super(const ProjectsState());
+      super(const ProjectsState()) {
+    refreshOn({DataTable.projects}, () async {
+      if (state.status != ProjectsStatus.initial) await load(silent: true);
+    });
+  }
 
   final ProjectsRepository _repo;
 
@@ -115,10 +121,13 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     String? query,
     List<String>? tagIds,
     ProjectSort? sort,
+    bool silent = false,
   }) async {
     emit(
       state.copyWith(
-        status: ProjectsStatus.loading,
+        status: silent && state.status == ProjectsStatus.loaded
+            ? null
+            : ProjectsStatus.loading,
         statusFilter: statusFilter,
         query: query,
         tagIds: tagIds,

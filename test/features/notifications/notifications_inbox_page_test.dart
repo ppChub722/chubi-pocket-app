@@ -20,6 +20,7 @@ import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../shared/fake_sync.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Auth extends MockCubit<AuthState> implements AuthCubit {}
@@ -380,7 +381,7 @@ void main() {
         child: MultiBlocProvider(
           providers: [
             BlocProvider<AccountsCubit>(
-              create: (_) => AccountsCubit(repository: accounts),
+              create: (_) => AccountsCubit(repository: accounts, coordinator: testCoordinator()),
             ),
             BlocProvider<AuthCubit>.value(value: auth),
             BlocProvider<PendingCubit>.value(value: pending),

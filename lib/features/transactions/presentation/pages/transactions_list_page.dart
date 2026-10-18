@@ -201,7 +201,6 @@ class _TransactionsListPageState extends State<TransactionsListPage>
       context,
       current: _f,
       base: _base,
-      repository: context.read<TransactionsRepository>(),
       walletLocked: widget.lockedAccount != null,
     );
     if (f != null && mounted) _apply(f);

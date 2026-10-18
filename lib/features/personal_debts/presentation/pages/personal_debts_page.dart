@@ -7,7 +7,7 @@ import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
-import '../../data/personal_debts_repository.dart';
+import '../cubit/debt_directory_cubit.dart';
 import '../../domain/debt_ledger.dart';
 import '../cubit/debt_people_cubit.dart';
 import '../debt_wiring.dart';
@@ -18,8 +18,7 @@ class PersonalDebtsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (context) =>
-        DebtPeopleCubit(repository: context.read<PersonalDebtsRepository>())
-          ..load(),
+        DebtPeopleCubit(directory: context.read<DebtDirectoryCubit>())..start(),
     child: const _PeopleView(),
   );
 }

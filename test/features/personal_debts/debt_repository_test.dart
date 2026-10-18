@@ -94,30 +94,13 @@ void main() {
   Map<String, dynamic> sent() =>
       (http.last!.data as Map).cast<String, dynamic>();
 
-  test('people: query params; totals + rows parsed', () async {
+  test('people: totals + rows parsed', () async {
     http.body = {
       'data': [_person],
       'totals': {'owed_to_me': 200, 'i_owe': 0, 'net': 200, 'open_count': 1},
       'pagination': {'page': 1, 'per_page': 30, 'total': 1, 'total_pages': 1},
     };
-    final p = await repo.listPeople(
-      q: ' mo ',
-      all: true,
-      side: NetSide.iOwe,
-      sort: DebtPeopleSort.amount,
-    );
-    expect(http.last!.path, '/personal-debts/people');
-    expect(http.last!.queryParameters, {
-      'page': '1',
-      'per_page': '30',
-      'q': 'mo',
-      'all': 'true',
-      'side': 'i_owe',
-      'sort': 'amount',
-    });
-    // The default order is the BE's: longest outstanding first.
-    await repo.listPeople();
-    expect(http.last!.queryParameters['sort'], 'oldest');
+    final p = DebtPeoplePage.fromJson(http.body as Map<String, dynamic>);
     expect(p.items.single.key, 'n:mom');
     expect(p.items.single.entryCount, 3);
     expect(p.totals.openCount, 1);

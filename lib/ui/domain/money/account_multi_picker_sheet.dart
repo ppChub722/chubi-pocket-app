@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import '../../atoms/live_items.dart';
 
 import '../../atoms/app_icon.dart';
 import '../../molecules/detail_rows.dart';
@@ -45,13 +48,22 @@ Future<List<String>?> showAccountMultiPicker(
   required List<AccountMultiPickItem> wallets,
   required AccountMultiPickerLabels labels,
   List<String> initial = const [],
+  ValueListenable<List<AccountMultiPickItem>>? live,
+  Future<void> Function()? onRefresh,
 }) {
   return showAppSheetCustom<List<String>>(
     context,
-    builder: (_) => AccountMultiPickerSheet(
-      wallets: wallets,
-      labels: labels,
-      initial: initial,
+    builder: (_) => SheetRefreshScope(
+      onRefresh: onRefresh,
+      child: LiveItems<List<AccountMultiPickItem>>(
+        initial: wallets,
+        live: live,
+        builder: (_, items) => AccountMultiPickerSheet(
+          wallets: items,
+          labels: labels,
+          initial: initial,
+        ),
+      ),
     ),
   );
 }

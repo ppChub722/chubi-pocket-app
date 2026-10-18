@@ -7,10 +7,9 @@ import 'package:intl/intl.dart';
 
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/tab_root_scaffold.dart';
+import '../../../../core/data/sync_coordinator.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
-import '../../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../../budgets/presentation/cubit/budgets_cubit.dart';
 import '../../../notifications/data/notifications_repository.dart';
 import '../../../notifications/domain/notification.dart';
 import '../../../notifications/presentation/cubit/notifications_inbox_cubit.dart';
@@ -19,9 +18,7 @@ import '../../../notifications/presentation/notification_actions.dart';
 import '../../../notifications/presentation/widgets/notification_tile.dart';
 import '../../../pending/domain/pending_transaction.dart';
 import '../../../pending/presentation/cubit/pending_cubit.dart';
-import '../../../saving_goals/presentation/cubit/saving_goals_cubit.dart';
 import '../../../transactions/domain/transaction_type.dart';
-import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../../transactions/presentation/widgets/transaction_tile.dart';
 import '../../domain/dashboard.dart';
@@ -104,25 +101,8 @@ class _HomeView extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     return MultiBlocListener(
       listeners: [
-        BlocListener<TransactionsCubit, TransactionsState>(
-          listenWhen: (a, b) => a.revision != b.revision,
-          listener: (c, _) => c.read<DashboardCubit>().markStale(),
-        ),
-        BlocListener<AccountsCubit, AccountsState>(
-          listenWhen: (a, b) =>
-              b.status == AccountsStatus.loaded && a.accounts != b.accounts,
-          listener: (c, _) => c.read<DashboardCubit>().markStale(),
-        ),
-        BlocListener<BudgetsCubit, BudgetsState>(
-          listenWhen: (a, b) => a.budgets != b.budgets,
-          listener: (c, _) => c.read<DashboardCubit>().markStale(),
-        ),
-        BlocListener<SavingGoalsCubit, SavingGoalsState>(
-          listenWhen: (a, b) => a.goals != b.goals,
-          listener: (c, _) => c.read<DashboardCubit>().markStale(),
-        ),
         BlocListener<UnreadBadgeCubit, int>(
-          listener: (c, _) => c.read<DashboardCubit>().markStale(),
+          listener: (c, _) => c.read<DashboardCubit>().load(silent: true),
         ),
         BlocListener<DashboardCubit, DashboardState>(
           listenWhen: (a, b) => b.data != null && a.data != b.data,
@@ -157,7 +137,10 @@ class _HomeView extends StatelessWidget {
                 state.status == DashboardStatus.loading,
             error: state.error,
             isEmpty: d == null,
-            onRetry: cubit.load,
+            onRetry: () => Future.wait([
+              cubit.load(),
+              context.read<SyncCoordinator>().sync(),
+            ]),
             refreshing: state.status == DashboardStatus.loading,
             skeletonShape: HomePage.skeletonShape,
             // Stale data + a failed load → the banner, not a snackbar.

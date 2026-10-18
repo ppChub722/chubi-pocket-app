@@ -63,10 +63,6 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
               listener: (c, _) => c.read<SavingGoalsCubit>().load(),
             ),
             BlocListener<SavingGoalsCubit, SavingGoalsState>(
-              listenWhen: (a, b) => a.staleTick != b.staleTick,
-              listener: (c, _) => c.read<SavingGoalsCubit>().load(),
-            ),
-            BlocListener<SavingGoalsCubit, SavingGoalsState>(
               listenWhen: (a, b) =>
                   a.status != b.status &&
                   b.status == SavingGoalsStatus.error &&

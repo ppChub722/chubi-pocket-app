@@ -44,27 +44,6 @@ class ContactsRepository {
   ContactsRepository({required ApiClient client}) : _client = client;
   final ApiClient _client;
 
-  Future<List<Contact>> list({
-    String? status,
-    bool? linked,
-    String? search,
-  }) async {
-    try {
-      final res = await _client.dio.get<Map<String, dynamic>>(
-        '/contacts',
-        queryParameters: <String, dynamic>{
-          'status': ?status,
-          'linked': ?linked?.toString(),
-          'search': ?search,
-        },
-      );
-      final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
-      return data.map(Contact.fromJson).toList();
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
-
   Future<ContactDetail> get(String id, {bool deletePreview = false}) async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(

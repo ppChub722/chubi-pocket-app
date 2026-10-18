@@ -9,16 +9,6 @@ class TagsRepository {
 
   final ApiClient _client;
 
-  Future<List<Tag>> list() async {
-    try {
-      final res = await _client.dio.get<Map<String, dynamic>>('/tags');
-      final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
-      return data.map(Tag.fromJson).toList();
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
-
   Future<Tag> create(Tag draft) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(

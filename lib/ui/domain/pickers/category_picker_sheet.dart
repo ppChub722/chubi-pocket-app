@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import '../../atoms/live_items.dart';
 
 import '../../atoms/app_icon.dart';
 import '../../atoms/app_icon_button.dart';
@@ -74,16 +77,25 @@ Future<CategoryPickerChoice?> showCategoryPicker(
   bool allowNone = true,
   int maxDepth = 2,
   Future<String?> Function()? onCreate,
+  ValueListenable<List<CategoryPickerRow>>? live,
+  Future<void> Function()? onRefresh,
 }) {
   return showAppSheetCustom<CategoryPickerChoice>(
     context,
-    builder: (_) => CategoryPickerSheet(
-      rows: rows,
-      labels: labels,
-      selectedId: selectedId,
-      allowNone: allowNone,
-      maxDepth: maxDepth,
-      onCreate: onCreate,
+    builder: (_) => SheetRefreshScope(
+      onRefresh: onRefresh,
+      child: LiveItems<List<CategoryPickerRow>>(
+        initial: rows,
+        live: live,
+        builder: (_, items) => CategoryPickerSheet(
+          rows: items,
+          labels: labels,
+          selectedId: selectedId,
+          allowNone: allowNone,
+          maxDepth: maxDepth,
+          onCreate: onCreate,
+        ),
+      ),
     ),
   );
 }

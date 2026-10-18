@@ -1,3 +1,4 @@
+import 'package:chubi_pocket/core/data/data_changes.dart';
 import 'package:chubi_pocket/features/transactions/data/transactions_repository.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
@@ -215,14 +216,14 @@ void main() {
   });
 
   test(
-    'bookChanged refreshes every live list, each with its filters',
+    'a transactions change refreshes every live list, each with its filters',
     () async {
       final other = TransactionsCubit(repository: repo);
       addTearDown(other.close);
       await cubit.load(type: TransactionType.income);
       await other.load(type: TransactionType.expense);
       repo.calls.clear();
-      await TransactionsCubit.bookChanged();
+      await DataChanges.instance.changed({DataTable.transactions});
       expect(
         repo.calls.map((c) => c.type),
         containsAll([TransactionType.income, TransactionType.expense]),

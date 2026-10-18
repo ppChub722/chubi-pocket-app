@@ -9,7 +9,6 @@ import 'package:chubi_pocket/features/personal_debts/data/personal_debts_reposit
 import 'package:chubi_pocket/features/personal_debts/domain/debt_ledger.dart';
 import 'package:chubi_pocket/features/tags/presentation/cubit/tags_cubit.dart';
 import 'package:chubi_pocket/features/transactions/data/transactions_repository.dart';
-import 'package:chubi_pocket/features/transactions/domain/form_options.dart';
 import 'package:chubi_pocket/features/transactions/domain/refs.dart';
 import 'package:chubi_pocket/features/transactions/presentation/cubit/transactions_cubit.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/draft_form.dart';
@@ -37,36 +36,13 @@ class _Dashboard extends MockCubit<DashboardState> implements DashboardCubit {}
 
 class _Auth extends MockCubit<AuthState> implements AuthCubit {}
 
-class _TxRepo extends Fake implements TransactionsRepository {
-  @override
-  Future<TxFormOptions> formOptions() async => const TxFormOptions();
-}
-
-const _mom = PersonBalance(
-  key: 'n:mom',
-  person: EmbeddedPerson(name: 'Mom'),
-  net: 200,
-  openCount: 1,
-);
+class _TxRepo extends Fake implements TransactionsRepository {}
 
 /// The debts API as the BE answers it; records the one create call.
 class _DebtRepo extends Fake implements PersonalDebtsRepository {
   final created = <Map<String, Object?>>[];
 
   @override
-  Future<DebtPeoplePage> listPeople({
-    int page = 1,
-    int perPage = 30,
-    String? q,
-    bool all = false,
-    NetSide? side,
-    DebtPeopleSort sort = DebtPeopleSort.oldest,
-  }) async => const DebtPeoplePage(
-    items: [_mom],
-    totals: DebtTotals(owedToMe: 200, net: 200, openCount: 1),
-    paging: DebtPaging(total: 1),
-  );
-
   @override
   Future<DebtEntryWriteResult> createEntry(
     String key, {
@@ -238,7 +214,6 @@ void main() {
     expect(call['tag_ids'], isEmpty);
     expect(saved?.balance.net, 300);
     expect(find.byType(QuickCreateSheetShell), findsNothing);
-    verify(() => dashboard.markStale()).called(1);
   });
 
   testWidgets('switch off = ledger only: no wallet row, no tags, nothing of '

@@ -21,6 +21,7 @@ import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../shared/fake_sync.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -114,7 +115,7 @@ void main() {
     t.view.devicePixelRatio = 1;
     addTearDown(t.view.reset);
     final locale = LocaleCubit(prefs);
-    final accounts = AccountsCubit(repository: _AccountsRepo());
+    final accounts = AccountsCubit(repository: _AccountsRepo(), coordinator: testCoordinator());
     addTearDown(accounts.close);
     addTearDown(auth.close);
     accounts.emit(

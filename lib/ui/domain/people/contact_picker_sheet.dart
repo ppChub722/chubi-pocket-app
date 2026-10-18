@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import '../../molecules/detail_rows.dart';
 import '../../molecules/empty_view.dart';
 import '../../organisms/app_sheet.dart';
+import '../../atoms/live_items.dart';
 import '../../organisms/picker_sheet.dart';
 import '../../tokens/app_spacing.dart';
 import '../icons/icon_code.dart';
@@ -134,14 +135,18 @@ Future<ContactPickerOutcome?> showContactPicker(
   BuildContext context, {
   required ContactPickerSheetData Function(BuildContext sheetContext) data,
   Listenable? refresh,
+  Future<void> Function()? onRefresh,
 }) => showAppSheetCustom<ContactPickerOutcome>(
   context,
-  builder: (_) => refresh == null
-      ? Builder(builder: (ctx) => ContactPickerSheet(data: data(ctx)))
-      : ListenableBuilder(
-          listenable: refresh,
-          builder: (ctx, _) => ContactPickerSheet(data: data(ctx)),
-        ),
+  builder: (_) => SheetRefreshScope(
+    onRefresh: onRefresh,
+    child: refresh == null
+        ? Builder(builder: (ctx) => ContactPickerSheet(data: data(ctx)))
+        : ListenableBuilder(
+            listenable: refresh,
+            builder: (ctx, _) => ContactPickerSheet(data: data(ctx)),
+          ),
+  ),
 );
 
 class ContactPickerSheet extends StatefulWidget {

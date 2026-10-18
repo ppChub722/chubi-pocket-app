@@ -166,9 +166,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     }
   }
 
-  void _listChanged() =>
-      context.read<SavingGoalsCubit>().markStale(silent: true);
-
   Future<void> _save(SavingGoal? goal) async {
     commitTextSession();
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -201,7 +198,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     }
     if (!mounted) return;
     HapticFeedback.mediumImpact();
-    _listChanged();
     if (widget.isCreate) {
       leavePage();
       return;
@@ -235,7 +231,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       return false;
     }
     if (mounted) setSaving(false);
-    _listChanged();
     return true;
   }
 
@@ -573,7 +568,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           : QuickCreatePreset.saving(goalId: d.goal!.id),
     );
     if (saved && mounted) {
-      _listChanged();
       await _cubit!.load();
     }
   }
@@ -589,7 +583,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           listener: (_, _) => _reloadQuietly(),
         ),
         BlocListener<SavingGoalsCubit, SavingGoalsState>(
-          listenWhen: (a, b) => a.staleTick != b.staleTick,
+          listenWhen: (a, b) => a.overview != b.overview,
           listener: (_, _) => _reloadQuietly(),
         ),
       ],

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
+import 'package:chubi_pocket/core/data/data_changes.dart';
 import 'package:chubi_pocket/app/shell/quick_create_context.dart';
 import 'package:chubi_pocket/core/network/api_exception.dart';
 import 'package:chubi_pocket/features/auth/domain/user.dart';
@@ -16,7 +17,7 @@ import 'package:chubi_pocket/features/saving_goals/presentation/pages/saving_goa
 import 'package:chubi_pocket/features/transactions/presentation/cubit/transactions_cubit.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:chubi_pocket/ui/ui.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide DataTable;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -401,8 +402,7 @@ void main() {
     await t.pump();
     await t.pump(const Duration(milliseconds: 100));
     expect(repo.listCalls, 2);
-    final ctx = t.element(find.byType(SavingGoalsListPage));
-    ctx.read<SavingGoalsCubit>().markStale();
+    await DataChanges.instance.changed({DataTable.savingGoals});
     await t.pump();
     await t.pump(const Duration(milliseconds: 100));
     expect(repo.listCalls, 3);
@@ -710,7 +710,8 @@ void main() {
     await t.pump(const Duration(milliseconds: 100));
     expect(repo.detailCalls, 2);
     final ctx = t.element(find.byType(SavingGoalDetailPage));
-    ctx.read<SavingGoalsCubit>().markStale();
+    final goals = ctx.read<SavingGoalsCubit>();
+    goals.emit(goals.state.copyWith(overview: const SavingGoalsOverview()));
     await t.pump();
     await t.pump(const Duration(milliseconds: 100));
     expect(repo.detailCalls, 3);

@@ -2,6 +2,9 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bloc/clearable_cubit.dart';
+import '../../../../core/data/sync_backed.dart';
+import '../../../../core/data/sync_coordinator.dart';
+import '../../../../core/data/sync_set.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/categories_repository.dart';
 import '../../domain/category.dart';
@@ -39,12 +42,49 @@ class CategoriesState extends Equatable {
 
 enum CategoriesStatus { initial, loading, loaded, error }
 
-class CategoriesCubit extends Cubit<CategoriesState> with Clearable {
-  CategoriesCubit({required CategoriesRepository repository})
-    : _repo = repository,
-      super(const CategoriesState());
+class CategoriesCubit extends Cubit<CategoriesState>
+    with Clearable, SyncBacked<CategoriesState> {
+  CategoriesCubit({
+    required CategoriesRepository repository,
+    required SyncCoordinator coordinator,
+  }) : _repo = repository,
+       syncCoordinator = coordinator,
+       super(const CategoriesState()) {
+    bindSync();
+  }
 
   final CategoriesRepository _repo;
+
+  @override
+  final SyncCoordinator syncCoordinator;
+
+  @override
+  SyncSet get syncSet => SyncSet.categories;
+
+  @override
+  bool get syncLoading => state.status == CategoriesStatus.loading;
+
+  @override
+  void markSyncLoading() =>
+      emit(state.copyWith(status: CategoriesStatus.loading, clearError: true));
+
+  @override
+  void syncFailed(ApiException error) =>
+      emit(state.copyWith(status: CategoriesStatus.error, error: error));
+
+  @override
+  void applySync(Map<String, dynamic> body) {
+    emit(
+      state.copyWith(
+        categories: [
+          for (final c in (body['data'] as List? ?? const []))
+            Category.fromJson(c as Map<String, dynamic>),
+        ],
+        status: CategoriesStatus.loaded,
+        clearError: true,
+      ),
+    );
+  }
 
   @override
   void clear() => emit(const CategoriesState());
@@ -59,26 +99,7 @@ class CategoriesCubit extends Cubit<CategoriesState> with Clearable {
     return load();
   }
 
-  Future<void> load() async {
-    emit(state.copyWith(status: CategoriesStatus.loading, clearError: true));
-    try {
-      final list = await _repo.list(includeSystem: true);
-      emit(
-        state.copyWith(
-          categories: list,
-          status: CategoriesStatus.loaded,
-          clearError: true,
-        ),
-      );
-    } catch (e, st) {
-      emit(
-        state.copyWith(
-          status: CategoriesStatus.error,
-          error: ApiException.from(e, st),
-        ),
-      );
-    }
-  }
+  Future<void> load() => loadSynced();
 
   List<Category> get userCategories =>
       state.categories.where((c) => !c.isSystem).toList();

@@ -2,6 +2,9 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bloc/clearable_cubit.dart';
+import '../../../../core/data/sync_backed.dart';
+import '../../../../core/data/sync_coordinator.dart';
+import '../../../../core/data/sync_set.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/accounts_repository.dart';
 import '../../domain/account.dart';
@@ -10,20 +13,23 @@ import '../../domain/wallet_member.dart';
 class AccountsState extends Equatable {
   const AccountsState({
     this.accounts = const [],
+    this.archivedAccounts = const [],
     this.totals = const AccountTotals(),
     this.archivedCount = 0,
-    this.totalsStale = false,
     this.status = AccountsStatus.initial,
     this.error,
   });
 
+  /// The active wallets, in the caller's order (what the whole app reads).
   final List<Account> accounts;
+
+  final List<Account> archivedAccounts;
+
+  List<Account> get allAccounts => [...accounts, ...archivedAccounts];
 
   final AccountTotals totals;
 
   final int archivedCount;
-
-  final bool totalsStale;
 
   final AccountsStatus status;
   final ApiException? error;
@@ -31,18 +37,18 @@ class AccountsState extends Equatable {
 
   AccountsState copyWith({
     List<Account>? accounts,
+    List<Account>? archivedAccounts,
     AccountTotals? totals,
     int? archivedCount,
-    bool? totalsStale,
     AccountsStatus? status,
     ApiException? error,
     bool clearError = false,
   }) {
     return AccountsState(
       accounts: accounts ?? this.accounts,
+      archivedAccounts: archivedAccounts ?? this.archivedAccounts,
       totals: totals ?? this.totals,
       archivedCount: archivedCount ?? this.archivedCount,
-      totalsStale: totalsStale ?? this.totalsStale,
       status: status ?? this.status,
       error: clearError ? null : (error ?? this.error),
     );
@@ -51,9 +57,9 @@ class AccountsState extends Equatable {
   @override
   List<Object?> get props => [
     accounts,
+    archivedAccounts,
     totals,
     archivedCount,
-    totalsStale,
     status,
     error,
   ];
@@ -61,12 +67,56 @@ class AccountsState extends Equatable {
 
 enum AccountsStatus { initial, loading, loaded, error }
 
-class AccountsCubit extends Cubit<AccountsState> with Clearable {
-  AccountsCubit({required AccountsRepository repository})
-    : _repo = repository,
-      super(const AccountsState());
+class AccountsCubit extends Cubit<AccountsState>
+    with Clearable, SyncBacked<AccountsState> {
+  AccountsCubit({
+    required AccountsRepository repository,
+    required SyncCoordinator coordinator,
+  }) : _repo = repository,
+       syncCoordinator = coordinator,
+       super(const AccountsState()) {
+    bindSync();
+  }
 
   final AccountsRepository _repo;
+
+  @override
+  final SyncCoordinator syncCoordinator;
+
+  @override
+  SyncSet get syncSet => SyncSet.accounts;
+
+  @override
+  bool get syncLoading => state.status == AccountsStatus.loading;
+
+  @override
+  void markSyncLoading() =>
+      emit(state.copyWith(status: AccountsStatus.loading, clearError: true));
+
+  @override
+  void syncFailed(ApiException error) =>
+      emit(state.copyWith(status: AccountsStatus.error, error: error));
+
+  @override
+  void applySync(Map<String, dynamic> body) {
+    final list = AccountList.fromJson(body);
+    emit(
+      state.copyWith(
+        accounts: [
+          for (final a in list.data)
+            if (!a.isArchived) a,
+        ],
+        archivedAccounts: [
+          for (final a in list.data)
+            if (a.isArchived) a,
+        ],
+        totals: list.totals,
+        archivedCount: list.archivedCount,
+        status: AccountsStatus.loaded,
+        clearError: true,
+      ),
+    );
+  }
 
   @override
   void clear() => emit(const AccountsState());
@@ -79,61 +129,23 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     return load();
   }
 
-  /// Re-reads the list once if a write left the totals behind (the accounts
-  /// page does this when it opens), without the loading state.
-  Future<void> refreshIfStale() async {
-    if (!state.totalsStale || state.status != AccountsStatus.loaded) return;
-    try {
-      final list = await _repo.list();
-      emit(_fromList(list));
-    } catch (_) {}
-  }
-
-  AccountsState _fromList(AccountList list) => state.copyWith(
-    accounts: list.data,
-    totals: list.totals,
-    archivedCount: list.archivedCount,
-    totalsStale: false,
-    status: AccountsStatus.loaded,
-    clearError: true,
-  );
-
-  Future<void> load() async {
-    emit(state.copyWith(status: AccountsStatus.loading, clearError: true));
-    try {
-      emit(_fromList(await _repo.list()));
-    } catch (e, st) {
-      emit(
-        state.copyWith(
-          status: AccountsStatus.error,
-          error: ApiException.from(e, st),
-        ),
-      );
-    }
-  }
+  Future<void> load() => loadSynced();
 
   Future<Account> add(Account draft) async {
     final created = await _repo.create(draft);
-    emit(
-      state.copyWith(accounts: [...state.accounts, created], totalsStale: true),
-    );
+    emit(state.copyWith(accounts: [...state.accounts, created]));
     return created;
   }
 
   Future<Account> update(Account account, {double? currentBalance}) async {
-    final before = state.accounts.where((a) => a.id == account.id).firstOrNull;
     final updated = await _repo.update(account, currentBalance: currentBalance);
     _replace(updated);
-    if (before != null && before.trackBalance != updated.trackBalance) {
-      emit(state.copyWith(totalsStale: true));
-    }
     return updated;
   }
 
   Future<AccountDetail> getDetail(String id) => _repo.getDetail(id);
 
-  Future<List<Account>> listArchived() async =>
-      (await _repo.list(status: 'archived')).data;
+  List<Account> get archived => state.archivedAccounts;
 
   Future<Account> restore(String id) async {
     final restored = await _repo.restore(id);
@@ -145,8 +157,11 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     emit(
       state.copyWith(
         accounts: list,
+        archivedAccounts: [
+          for (final a in state.archivedAccounts)
+            if (a.id != restored.id) a,
+        ],
         archivedCount: state.archivedCount > 0 ? state.archivedCount - 1 : 0,
-        totalsStale: true,
       ),
     );
     return restored;
@@ -157,8 +172,8 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     emit(
       state.copyWith(
         accounts: state.accounts.where((a) => a.id != id).toList(),
+        archivedAccounts: [...state.archivedAccounts, archived],
         archivedCount: state.archivedCount + 1,
-        totalsStale: true,
       ),
     );
     return archived;
@@ -175,10 +190,12 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     emit(
       state.copyWith(
         accounts: state.accounts.where((a) => a.id != id).toList(),
+        archivedAccounts: state.archivedAccounts
+            .where((a) => a.id != id)
+            .toList(),
         archivedCount: wasArchived && state.archivedCount > 0
             ? state.archivedCount - 1
             : state.archivedCount,
-        totalsStale: true,
       ),
     );
     return done;
@@ -262,7 +279,6 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
       emit(
         state.copyWith(
           accounts: state.accounts.where((a) => a.id != accountId).toList(),
-          totalsStale: true,
         ),
       );
     } else {
@@ -303,9 +319,7 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
       _replace(account);
       return;
     }
-    emit(
-      state.copyWith(accounts: [...state.accounts, account], totalsStale: true),
-    );
+    emit(state.copyWith(accounts: [...state.accounts, account]));
   }
 
   void patchBalance({required String accountId, required double newBalance}) {
@@ -338,13 +352,20 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
             else
               a,
         ],
-        totalsStale: true,
       ),
     );
   }
 
   Future<void> saveOrder(List<Account> ordered) async {
     final fresh = await _repo.reorder([for (final a in ordered) a.id]);
-    emit(_fromList(fresh));
+    emit(
+      state.copyWith(
+        accounts: fresh.data,
+        totals: fresh.totals,
+        archivedCount: fresh.archivedCount,
+        status: AccountsStatus.loaded,
+        clearError: true,
+      ),
+    );
   }
 }

@@ -1,15 +1,18 @@
 import 'dart:async';
 
+import 'package:chubi_pocket/core/data/data_changes.dart';
 import 'package:chubi_pocket/core/network/api_client.dart';
 import 'package:chubi_pocket/core/network/api_exception.dart';
 import 'package:chubi_pocket/features/personal_debts/data/personal_debts_repository.dart';
 import 'package:chubi_pocket/features/personal_debts/domain/debt_ledger.dart';
-import 'package:chubi_pocket/features/personal_debts/presentation/cubit/debt_book.dart';
+import 'package:chubi_pocket/features/personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import 'package:chubi_pocket/features/personal_debts/presentation/cubit/debt_people_cubit.dart';
 import 'package:chubi_pocket/features/personal_debts/presentation/cubit/debt_person_cubit.dart';
 import 'package:chubi_pocket/features/personal_debts/presentation/debt_wiring.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../../shared/fake_sync.dart';
 
 class _MockClient extends Mock implements ApiClient {}
 
@@ -28,41 +31,6 @@ class _FakeRepo extends PersonalDebtsRepository {
       failNext = null;
       throw f;
     }
-  }
-
-  @override
-  Future<DebtPeoplePage> listPeople({
-    int page = 1,
-    int perPage = 30,
-    String? q,
-    bool all = false,
-    NetSide? side,
-    DebtPeopleSort sort = DebtPeopleSort.oldest,
-  }) async {
-    calls.add(
-      'people p$page q=${q ?? ''} all=$all side=${side?.wire} sort=${sort.wire}',
-    );
-    await _maybe();
-    return DebtPeoplePage.fromJson({
-      'data': [
-        _personJson('c:c$page', 'แม่ $page', 200),
-        _personJson('n:bank$page', 'Bank $page', -50),
-      ],
-      'totals': {
-        'owed_to_me': 200,
-        'i_owe': 50,
-        'net': 150,
-        'owed_to_me_people': 3,
-        'i_owe_people': 2,
-        'over_30_days_people': 1,
-      },
-      'pagination': {
-        'page': page,
-        'per_page': perPage,
-        'total': 4,
-        'total_pages': 2,
-      },
-    });
   }
 
   @override
@@ -245,101 +213,78 @@ void main() {
     });
   });
 
-  group('DebtPeopleCubit', () {
-    test('open = 1 call; load more appends page 2', () async {
-      final repo = _FakeRepo();
-      final c = DebtPeopleCubit(repository: repo);
-      await c.load();
+  group('DebtPeopleCubit (derived from the directory)', () {
+    DebtDirectoryCubit directory() {
+      final d = DebtDirectoryCubit(coordinator: testCoordinator());
+      d.applySync({
+        'data': [
+          _personJson('c:c1', 'แม่', 200),
+          _personJson('n:bank1', 'Bank', -50),
+          {
+            ..._personJson('n:old', 'Old friend', 0),
+            'open_count': 0,
+            'days_outstanding': null,
+          },
+        ],
+        'totals': <String, dynamic>{},
+        'pagination': {'page': 1, 'per_page': 3, 'total': 3, 'total_pages': 1},
+      });
+      return d;
+    }
+
+    test('it lists who is open and totals everyone, with no request', () async {
+      final dir = directory();
+      final c = DebtPeopleCubit(directory: dir);
       expect(c.state.status, DebtLoadStatus.loaded);
       expect(c.state.items.map((p) => p.key), ['c:c1', 'n:bank1']);
-      expect(c.state.totals.net, 150);
-      expect(c.state.hasMore, isTrue);
-      await c.loadMore();
-      expect(c.state.items, hasLength(4));
+      expect(c.state.totals.owedToMe, 200);
+      expect(c.state.totals.iOwe, 50);
       expect(c.state.hasMore, isFalse);
-      expect(repo.calls, [
-        'people p1 q= all=false side=null sort=oldest',
-        'people p2 q= all=false side=null sort=oldest',
-      ]);
+      await c.loadMore();
       await c.close();
+      await dir.close();
     });
 
-    test('search is debounced into one call', () async {
-      final repo = _FakeRepo();
-      final c = DebtPeopleCubit(repository: repo, debounce: Duration.zero);
-      c.search('แ');
-      c.search('แม่');
-      await Future<void>.delayed(const Duration(milliseconds: 10));
-      expect(repo.calls, ['people p1 q=แม่ all=false side=null sort=oldest']);
-      await c.close();
-    });
-
-    test('side toggles on / off; ทั้งหมด sends all', () async {
-      final repo = _FakeRepo();
-      final c = DebtPeopleCubit(repository: repo);
-      c.toggleSide(NetSide.owedToMe);
-      await Future<void>.delayed(Duration.zero);
-      c.toggleSide(NetSide.owedToMe);
-      await Future<void>.delayed(Duration.zero);
+    test('search, all, side and sort apply at once', () async {
+      final dir = directory();
+      final c = DebtPeopleCubit(directory: dir);
+      c.search('bank');
+      expect(c.state.items.map((p) => p.key), ['n:bank1']);
+      c.search('');
       c.showAll(true);
-      await Future<void>.delayed(Duration.zero);
-      expect(repo.calls, [
-        'people p1 q= all=false side=owed_to_me sort=oldest',
-        'people p1 q= all=false side=null sort=oldest',
-        'people p1 q= all=true side=null sort=oldest',
-      ]);
+      expect(c.state.items.map((p) => p.key), contains('n:old'));
+      c.showAll(false);
+      c.toggleSide(NetSide.owedToMe);
+      expect(c.state.items.map((p) => p.key), ['c:c1']);
+      c.toggleSide(NetSide.owedToMe);
+      expect(c.state.side, isNull);
+      c.setSort(DebtPeopleSort.amount);
+      expect(c.state.items.first.key, 'c:c1');
       await c.close();
+      await dir.close();
     });
 
-    test('a failed first load → error; a stale response is dropped', () async {
-      final repo = _FakeRepo()
-        ..failNext = const ApiException(
-          code: 'INTERNAL',
-          message: 'down',
-          statusCode: 500,
-        );
-      final c = DebtPeopleCubit(repository: repo);
-      await c.load();
+    test('the directory status and error come through', () async {
+      final dir = DebtDirectoryCubit(coordinator: testCoordinator());
+      final c = DebtPeopleCubit(directory: dir);
+      expect(c.state.status, DebtLoadStatus.initial);
+      dir.syncFailed(const ApiException(code: 'INTERNAL', message: 'down'));
+      await Future<void>.delayed(Duration.zero);
       expect(c.state.status, DebtLoadStatus.error);
       expect(c.state.error!.message, 'down');
-
-      // An older search answers after a newer one: it's dropped.
-      final slow = Completer<void>();
-      repo.gate = slow;
-      c.search('old');
-      final first = c.load();
-      repo.gate = null;
-      c.search('new');
-      await c.load();
-      expect(c.state.status, DebtLoadStatus.loaded);
-      final before = c.state;
-      slow.complete();
-      await first;
-      expect(c.state, before);
-      expect(c.state.q, 'new');
       await c.close();
+      await dir.close();
     });
 
-    test('the sort is one call and rides along load more', () async {
-      final repo = _FakeRepo();
-      final c = DebtPeopleCubit(repository: repo);
-      c.setSort(DebtPeopleSort.recent);
+    test('a balance a write returned patches the person at once', () async {
+      final dir = directory();
+      final c = DebtPeopleCubit(directory: dir);
+      dir.applyBalance(PersonBalance.fromJson(_personJson('c:c1', 'แม่', 0)));
       await Future<void>.delayed(Duration.zero);
-      await c.loadMore();
-      expect(repo.calls, [
-        'people p1 q= all=false side=null sort=recent',
-        'people p2 q= all=false side=null sort=recent',
-      ]);
-      expect(c.state.totals.over30DaysPeople, 1);
+      expect(dir.byKey('c:c1')!.net, 0);
+      expect(c.state.totals.owedToMe, 0);
       await c.close();
-    });
-
-    test('applyBalance patches the row in place', () async {
-      final c = DebtPeopleCubit(repository: _FakeRepo());
-      await c.load();
-      c.applyBalance(PersonBalance.fromJson(_personJson('c:c1', 'แม่', 0)));
-      expect(c.state.items.first.net, 0);
-      await c.close();
+      await dir.close();
     });
   });
 
@@ -428,78 +373,29 @@ void main() {
       },
     );
 
-    DebtEntryWriteResult saved(String id, String date, {int openCount = 3}) =>
-        DebtEntryWriteResult.fromJson({
-          'entry': {..._entryJson(id, 'received', 50), 'date': date},
-          'person_balance': {
-            ..._personJson('c:1', 'แม่', 150),
-            'open_count': openCount,
-          },
-          'previous_person_balance': null,
-          'transaction': null,
-          'account_balances': <Object>[],
-        });
-
-    test('a saved entry: the hero follows at once, the page call re-runs '
-        '(the message is the BE\'s)', () async {
-      final repo = _FakeRepo();
-      final c = DebtPersonCubit(repository: repo, personKey: 'c:1');
-      await c.load();
-      final gate = repo.gate = Completer<void>();
-      c.onEntrySaved(saved('new', '2026-10-13'));
-      // The page call is still in flight: the hero already follows.
-      expect(c.state.balance!.net, 150);
-      gate.complete();
-      await Future<void>.delayed(Duration.zero);
-      expect(repo.calls, ['person c:1 current', 'person c:1 current']);
-      await c.close();
-    });
-
-    test('DebtBook.entrySaved reaches the people list and the open person '
-        'page', () async {
-      final repo = _FakeRepo();
-      final people = DebtPeopleCubit(repository: repo);
-      final person = DebtPersonCubit(repository: repo, personKey: 'c:1');
-      await people.load();
-      await person.load();
-      repo.calls.clear();
-      final gate = repo.gate = Completer<void>();
-      DebtBook.entrySaved(saved('new', '2026-10-13'));
-      // Person page: balance patched + 1 page call. People list: row patched
-      // + 1 reload (totals and new people come from the server).
-      expect(person.state.balance!.net, 150);
-      gate.complete();
-      await Future<void>.delayed(Duration.zero);
-      expect(
-        repo.calls,
-        unorderedEquals([
-          'people p1 q= all=false side=null sort=oldest',
-          'person c:1 current',
-        ]),
-      );
-      await people.close();
-      await person.close();
-      // Closed cubits are detached: no call, no throw.
-      DebtBook.entrySaved(saved('later', '2026-10-14'));
-      expect(repo.calls.length, 2);
-    });
+    test(
+      'a debts change re-runs the page call without a loading flash',
+      () async {
+        final repo = _FakeRepo();
+        final c = DebtPersonCubit(repository: repo, personKey: 'c:1');
+        await c.load();
+        repo.calls.clear();
+        final states = <DebtLoadStatus>[];
+        final sub = c.stream.listen((s) => states.add(s.status));
+        await DataChanges.instance.changed({DataTable.debts});
+        await Future<void>.delayed(Duration.zero);
+        expect(repo.calls, ['person c:1 current']);
+        expect(states, everyElement(DebtLoadStatus.loaded));
+        await sub.cancel();
+        await c.close();
+      },
+    );
 
     test('debtDirectionFor: the balance picks the + direction', () {
       expect(debtDirectionFor(120), DebtEntryDirection.received);
       expect(debtDirectionFor(-40), DebtEntryDirection.paid);
       expect(debtDirectionFor(0), isNull);
       expect(debtDirectionFor(null), isNull);
-    });
-
-    test('a saved entry for another person is ignored', () async {
-      final repo = _FakeRepo();
-      final c = DebtPersonCubit(repository: repo, personKey: 'n:x');
-      await c.load();
-      final before = c.state;
-      c.onEntrySaved(saved('new', '2026-10-13'));
-      expect(c.state, before);
-      expect(repo.calls, ['person n:x current']);
-      await c.close();
     });
 
     test(

@@ -7,7 +7,7 @@ import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
-import '../../../personal_debts/data/personal_debts_repository.dart';
+import '../../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
 import '../../../tags/domain/tag.dart';
@@ -162,15 +162,15 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
   }
 
   Future<void> _loadPeople() async {
+    final directory = context.read<DebtDirectoryCubit>();
     try {
-      final page = await context.read<PersonalDebtsRepository>().listPeople();
-      if (!mounted) return;
-      final p = _c.person;
-      if (p != null && p.net == null) {
-        final known = page.items.where((x) => x.key == p.key).firstOrNull;
-        _c.setPerson(p.withNet(known?.net ?? 0));
-      }
+      await directory.loadIfNeeded();
     } catch (_) {}
+    if (!mounted) return;
+    final p = _c.person;
+    if (p != null && p.net == null) {
+      _c.setPerson(p.withNet(directory.byKey(p.key)?.net ?? 0));
+    }
   }
 
   Future<void> _pickPerson() async {
@@ -427,28 +427,18 @@ Future<DebtPick?> showDebtPersonPicker(
   DebtPick? selected,
 }) async {
   final l = AppLocalizations.of(context)!;
-  final people = context.read<PersonalDebtsRepository>().listPeople(
-    all: true,
-    perPage: 100,
-  );
+  final directory = context.read<DebtDirectoryCubit>();
   final key = selected?.key;
   final r = await showContactPickerSheet(
     context,
     mode: ContactPickerMode.debts,
-    people: people,
     allowCreate: true,
     title: l.debtPersonPickerTitle,
     selectedContactId: key == null
         ? null
         : (key.startsWith('c:') ? key.substring(2) : key),
   );
-  Future<PersonBalance?> known(String key) async {
-    try {
-      return (await people).items.where((p) => p.key == key).firstOrNull;
-    } catch (_) {
-      return null; // no list: a new person (balance 0)
-    }
-  }
+  PersonBalance? known(String key) => directory.byKey(key);
 
   switch (r) {
     case null:
@@ -464,11 +454,11 @@ Future<DebtPick?> showDebtPersonPicker(
           linked: contact.isLinked,
           linkedUserId: contact.linkedUser?.id,
         ),
-        net: (await known(key))?.net ?? 0,
+        net: known(key)?.net ?? 0,
       );
     case ContactNamePicked(:final name):
       final key = debtPersonKey(name: name);
-      final p = await known(key);
+      final p = known(key);
       return DebtPick(
         key: key,
         person: p?.person ?? EmbeddedPerson(name: name),
@@ -476,7 +466,7 @@ Future<DebtPick?> showDebtPersonPicker(
       );
     case ContactNameTyped(:final name):
       final key = debtPersonKey(name: name);
-      final p = await known(key);
+      final p = known(key);
       return DebtPick(
         key: key,
         person: p?.person ?? EmbeddedPerson(name: name),

@@ -16,7 +16,6 @@ import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../transactions/data/transactions_repository.dart';
 import '../../../transactions/domain/transaction_type.dart';
-import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
 import '../../domain/project.dart';
 
@@ -135,7 +134,6 @@ Future<bool> showResolveSheet(
             sourceProjectTransactionId: tx.id,
           );
           accounts.patchBalances(created.accountBalances);
-          await TransactionsCubit.bookChanged();
         } else {
           await debtsRepo.createEntry(
             debtPersonKey(name: name),

@@ -21,7 +21,6 @@ import '../../../accounts/presentation/wallet_errors.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../projects/data/projects_repository.dart';
-import '../../../projects/presentation/cubit/projects_cubit.dart';
 import '../../../pending/domain/pending_transaction.dart';
 import '../../domain/refs.dart';
 import '../../domain/transaction.dart';
@@ -479,7 +478,6 @@ class _LoadedState extends State<_Loaded>
     final messenger = ScaffoldMessenger.of(context);
     final back = ShellBackScope.maybeOf(context);
     final projects = context.read<ProjectsRepository>();
-    final projectsCubit = context.read<ProjectsCubit>();
     final txCubit = context.read<TransactionsCubit>();
     final accountsCubit = context.read<AccountsCubit>();
     try {
@@ -527,7 +525,6 @@ class _LoadedState extends State<_Loaded>
           return;
         }
         _eventChange = null;
-        unawaited(projectsCubit.load());
         try {
           await txCubit.refreshOne(_edited.id, afterWrite: true);
         } on ApiException {

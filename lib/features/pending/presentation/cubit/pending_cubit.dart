@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bloc/clearable_cubit.dart';
+import '../../../../core/data/data_changes.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/pending_repository.dart';
 import '../../domain/pending_transaction.dart';
@@ -49,10 +50,15 @@ class PendingState extends Equatable {
   List<Object?> get props => [items, status, error, knownTotal, summary];
 }
 
-class PendingCubit extends Cubit<PendingState> with Clearable {
+class PendingCubit extends Cubit<PendingState>
+    with Clearable, RefreshOnDataChange<PendingState> {
   PendingCubit({required PendingRepository repository})
     : _repo = repository,
-      super(const PendingState());
+      super(const PendingState()) {
+    refreshOn({DataTable.pending}, () async {
+      if (state.status != PendingStatus.initial) await load(silent: true);
+    });
+  }
 
   final PendingRepository _repo;
 
@@ -71,8 +77,10 @@ class PendingCubit extends Cubit<PendingState> with Clearable {
     emit(PendingState(knownTotal: total));
   }
 
-  Future<void> load() async {
-    emit(state.copyWith(status: PendingStatus.loading));
+  Future<void> load({bool silent = false}) async {
+    if (!silent || state.status != PendingStatus.loaded) {
+      emit(state.copyWith(status: PendingStatus.loading));
+    }
     try {
       final r = await _repo.list();
       emit(

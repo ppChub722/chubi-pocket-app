@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
@@ -19,13 +21,13 @@ import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../../transactions/domain/transaction_type.dart';
 import '../../../transactions/presentation/pages/transactions_list_page.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
-import '../../data/accounts_repository.dart';
 import '../../domain/account.dart';
 import '../../domain/account_identifier.dart';
 import '../../domain/payment_provider.dart';
 import '../../domain/account_type.dart';
 import '../../domain/wallet_member.dart';
 import '../cubit/accounts_cubit.dart';
+import '../cubit/providers_cubit.dart';
 import '../wallet_errors.dart';
 import '../widgets/adjust_balance_sheet.dart';
 import '../widgets/identifier_widgets.dart';
@@ -216,6 +218,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   bool _scopeBusy = false;
 
   List<PaymentProvider> _providers = const [];
+  StreamSubscription<ProvidersState>? _providersSub;
 
   bool get _isCreate => widget.isCreate;
 
@@ -232,13 +235,12 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     onDraftRestored();
     _txType.addListener(_onTxType);
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeOpenMembers());
-    context
-        .read<AccountsRepository>()
-        .paymentProviders()
-        .then((p) {
-          if (mounted) setState(() => _providers = p);
-        })
-        .catchError((Object _) {});
+    final providers = context.read<ProvidersCubit>();
+    _providers = providers.state.providers;
+    _providersSub = providers.stream.listen((s) {
+      if (mounted) setState(() => _providers = s.providers);
+    });
+    unawaited(providers.loadIfNeeded());
   }
 
   @override
@@ -254,6 +256,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
 
   @override
   void dispose() {
+    _providersSub?.cancel();
     _txType
       ..removeListener(_onTxType)
       ..dispose();
@@ -458,7 +461,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
           ),
           currentBalance: currentBalance,
         );
-        if (currentBalance != null) await TransactionsCubit.bookChanged();
         widget.onAccount?.call(updated);
       }
     } on ApiException catch (e) {
@@ -578,7 +580,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         note: result.note,
       );
       widget.onAccount?.call(outcome.account);
-      await TransactionsCubit.bookChanged();
       if (!mounted) return;
       showAppSnackBar(
         context,

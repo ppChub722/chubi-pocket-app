@@ -26,7 +26,6 @@ import '../../domain/recurring_item.dart';
 import '../recurring_draft.dart';
 import '../recurring_item_actions.dart';
 import '../recurring_rows.dart';
-import '../recurring_writes.dart';
 
 enum _Tab { past, upcoming }
 
@@ -255,7 +254,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       accounts.patchBalances(r.balances);
       if (!mounted) return;
       HapticFeedback.mediumImpact();
-      markRecurringChanged(context);
       _applyItems(r);
     } on ApiException catch (e) {
       if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
@@ -394,7 +392,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       accounts.patchBalances(r.balances);
       HapticFeedback.mediumImpact();
       if (!mounted) return;
-      markRecurringChanged(context);
       _applyItems(r);
       setState(() {
         _selected.clear();
@@ -414,7 +411,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       if (!mounted) return;
       _changed = true;
       HapticFeedback.mediumImpact();
-      markRecurringChanged(context);
       _take(d);
     } on ApiException catch (e) {
       if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
@@ -824,7 +820,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       accounts.patchBalances(d.balances);
       if (!mounted) return;
       HapticFeedback.mediumImpact();
-      markRecurringChanged(context);
       _changed = true;
       if (widget.isCreate) {
         commitSaved(working);
@@ -845,7 +840,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     try {
       final d = await call();
       if (!mounted) return;
-      markRecurringChanged(context);
       _changed = true;
       _take(d);
       commitSaved(RecurringDraft.from(d.recurring));
@@ -880,7 +874,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     try {
       final d = await _repo.duplicate(r.id);
       if (!mounted) return;
-      markRecurringChanged(context);
       _changed = true;
       commitSaved(working);
       context.pushReplacement('/recurring/${d.recurring.id}');
@@ -946,7 +939,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       return;
     }
     if (!mounted) return;
-    markRecurringChanged(context);
     _changed = true;
     // Pop without the discard prompt — it is gone.
     commitSaved(working);

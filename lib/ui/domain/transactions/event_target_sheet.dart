@@ -75,17 +75,21 @@ Future<EventTargetPick?> showEventTargetPickSheet(
   bool hasCurrent = false,
   bool allowCreate = true,
   bool useRootNavigator = true,
+  Future<void> Function()? onRefresh,
 }) => showAppSheetCustom<EventTargetPick>(
   context,
   useRootNavigator: useRootNavigator,
-  builder: (ctx) => EventTargetSheet(
-    items: items,
-    labels: labels,
-    suggestedName: suggestedName,
-    selectedId: selectedId,
-    hasCurrent: hasCurrent,
-    allowCreate: allowCreate,
-    onPicked: (p) => Navigator.of(ctx).pop(p),
+  builder: (ctx) => SheetRefreshScope(
+    onRefresh: onRefresh,
+    child: EventTargetSheet(
+      items: items,
+      labels: labels,
+      suggestedName: suggestedName,
+      selectedId: selectedId,
+      hasCurrent: hasCurrent,
+      allowCreate: allowCreate,
+      onPicked: (p) => Navigator.of(ctx).pop(p),
+    ),
   ),
 );
 

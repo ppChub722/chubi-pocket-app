@@ -13,6 +13,7 @@ import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../shared/fake_sync.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Pending extends MockCubit<PendingState> implements PendingCubit {}
@@ -52,7 +53,7 @@ void main() {
     t.view.physicalSize = const Size(400, 1400);
     t.view.devicePixelRatio = 1;
     addTearDown(t.view.reset);
-    final cubit = AccountsCubit(repository: _Repo());
+    final cubit = AccountsCubit(repository: _Repo(), coordinator: testCoordinator());
     addTearDown(cubit.close);
     cubit.emit(
       state ??

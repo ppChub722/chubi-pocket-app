@@ -6,7 +6,6 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../transactions/domain/refs.dart';
 import '../../transactions/domain/transaction.dart';
-import '../../transactions/domain/transaction_type.dart';
 import '../domain/recurrence_rule.dart';
 import '../domain/recurring.dart';
 import '../domain/recurring_item.dart';
@@ -85,33 +84,6 @@ class RecurringLinkRepository {
       throw ApiException.fromDioException(e);
     }
   }
-
-  Future<List<LinkCandidate>> candidates(
-    TransactionType type, {
-    String? categoryId,
-    double? amount,
-  }) => _call((dio) async {
-    final res = await dio.get<Map<String, dynamic>>(
-      '/recurring',
-      queryParameters: {
-        'for_type': type.toJson(),
-        'category_id': ?categoryId,
-        if (amount != null && amount > 0) 'amount': amount,
-        'per_page': 100,
-      },
-    );
-    return [
-      for (final e in (res.data!['data'] as List?) ?? const [])
-        if ((e as Map<String, dynamic>)['current_occurrence'] is Map)
-          LinkCandidate(
-            likely: e['likely'] == true,
-            setting: Recurring.fromJson(e),
-            occurrence: LinkOccurrence.fromJson(
-              e['current_occurrence'] as Map<String, dynamic>,
-            ),
-          ),
-    ];
-  });
 
   Future<LinkResult> link(String itemId, String transactionId) => _call((
     dio,

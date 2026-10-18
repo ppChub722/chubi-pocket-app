@@ -14,7 +14,6 @@ import 'package:chubi_pocket/features/saving_goals/domain/saving_goals_overview.
 import 'package:chubi_pocket/features/saving_goals/presentation/cubit/saving_goals_cubit.dart';
 import 'package:chubi_pocket/features/tags/presentation/cubit/tags_cubit.dart';
 import 'package:chubi_pocket/features/transactions/data/transactions_repository.dart';
-import 'package:chubi_pocket/features/transactions/domain/form_options.dart';
 import 'package:chubi_pocket/features/transactions/presentation/cubit/transactions_cubit.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/quick_create_sheet.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
@@ -46,8 +45,6 @@ class _Pending extends MockCubit<PendingState> implements PendingCubit {}
 class _Goals extends MockCubit<SavingGoalsState> implements SavingGoalsCubit {}
 
 class _TxRepo extends Fake implements TransactionsRepository {
-  @override
-  Future<TxFormOptions> formOptions() async => const TxFormOptions();
 }
 
 /// The saving API; records the one write.
@@ -253,8 +250,6 @@ void main() {
     expect(savings.writes.single['amount'], 500);
     expect(savings.writes.single['goal_id'], 'g1');
     expect(savings.writes.single['wallet_id'], 'w1');
-    verify(() => dashboard.markStale()).called(1);
-    verify(() => goals.markStale()).called(1);
     expect(find.byType(QuickCreateSheetShell), findsNothing);
   });
 
@@ -321,8 +316,6 @@ void main() {
       expect(sent.accountId, 'w1');
       expect(sent.date, '2026-10-13');
       verify(() => pending.submitOne('p1')).called(1);
-      verify(() => goals.markStale()).called(1);
-      verify(() => dashboard.markStale()).called(1);
       expect(find.byType(QuickCreateSheetShell), findsNothing);
     });
   });

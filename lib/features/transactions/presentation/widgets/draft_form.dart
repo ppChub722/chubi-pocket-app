@@ -23,7 +23,7 @@ import '../../domain/transaction_type.dart';
 import '../../../projects/domain/project.dart';
 import '../../../projects/presentation/widgets/member_pick_card.dart';
 import '../../../projects/presentation/widgets/project_common.dart';
-import '../../../projects/presentation/cubit/projects_cubit.dart';
+import '../../../projects/presentation/cubit/project_directory_cubit.dart';
 import '../cubit/tx_form_options_cubit.dart';
 import 'account_picker_sheet.dart';
 import 'event_pick.dart';
@@ -1126,7 +1126,7 @@ class _DraftFormState extends State<DraftForm> {
         : opts != null
         ? opts.state.options?.events.where((e) => e.id == id).firstOrNull?.name
         : context
-              .watch<ProjectsCubit>()
+              .watch<ProjectDirectoryCubit>()
               .state
               .projects
               .where((p) => p.id == id)

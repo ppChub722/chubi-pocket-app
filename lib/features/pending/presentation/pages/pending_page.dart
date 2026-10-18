@@ -11,14 +11,11 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../../home/presentation/cubit/dashboard_cubit.dart';
 import '../../../categories/presentation/category_label.dart';
-import '../../../saving_goals/presentation/cubit/saving_goals_cubit.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../../tags/presentation/widgets/tag_chip.dart';
 import '../../../transactions/domain/transaction_type.dart';
-import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../data/slip_qr_reader.dart';
 import '../../domain/pending_transaction.dart';
@@ -82,8 +79,6 @@ class _PendingPageState extends State<PendingPage> {
     final l = AppLocalizations.of(context)!;
     final pending = context.read<PendingCubit>();
     final accounts = context.read<AccountsCubit>();
-    final goals = context.read<SavingGoalsCubit>();
-    final dashboard = context.read<DashboardCubit>();
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _submitting = true);
     try {
@@ -92,9 +87,6 @@ class _PendingPageState extends State<PendingPage> {
         accounts.patchBalances(r.accountBalances);
         // A saving draft makes no transaction row: the goals list and the Home
         // block go stale; the transaction lists re-fetch as before.
-        goals.markStale();
-        dashboard.markStale();
-        await TransactionsCubit.bookChanged();
       }
       if (!mounted) return;
       setState(() {

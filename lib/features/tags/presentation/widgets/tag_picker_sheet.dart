@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/data/sync_refresh.dart';
+import '../../../../core/data/sync_set.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -51,6 +53,7 @@ Future<Set<String>?> showTagPickerSheet(
           ? (name) async => (await createOrFindTag(context, name))?.id
           : null,
       onRetry: cubit.load,
+      onRefresh: syncRefreshOf(context, const {SyncSet.tags}),
     );
   } finally {
     await sub.cancel();

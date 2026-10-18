@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../ui.dart';
@@ -64,15 +65,24 @@ Future<AccountPick?> showAccountPickSheet(
   String? selectedId,
   bool allowNone = false,
   Future<String?> Function()? onCreate,
+  ValueListenable<List<WalletPickItem>>? live,
+  Future<void> Function()? onRefresh,
 }) => showAppSheetCustom<AccountPick>(
   context,
-  builder: (ctx) => AccountPickerSheet(
-    wallets: wallets,
-    labels: labels,
-    selectedId: selectedId,
-    allowNone: allowNone,
-    onCreate: onCreate,
-    onPicked: (p) => Navigator.of(ctx).pop(p),
+  builder: (ctx) => SheetRefreshScope(
+    onRefresh: onRefresh,
+    child: LiveItems<List<WalletPickItem>>(
+      initial: wallets,
+      live: live,
+      builder: (_, items) => AccountPickerSheet(
+        wallets: items,
+        labels: labels,
+        selectedId: selectedId,
+        allowNone: allowNone,
+        onCreate: onCreate,
+        onPicked: (p) => Navigator.of(ctx).pop(p),
+      ),
+    ),
   ),
 );
 
@@ -244,14 +254,23 @@ Future<AccountMultiPick?> showAccountMultiPickSheet(
   required String Function(int count) confirm,
   Set<String> selectedIds = const {},
   bool noneSelected = false,
+  ValueListenable<List<WalletPickItem>>? live,
+  Future<void> Function()? onRefresh,
 }) => showAppSheetCustom<AccountMultiPick>(
   context,
-  builder: (ctx) => AccountCardsMultiPickerSheet(
-    wallets: wallets,
-    labels: labels,
-    confirm: confirm,
-    selectedIds: selectedIds,
-    noneSelected: noneSelected,
+  builder: (ctx) => SheetRefreshScope(
+    onRefresh: onRefresh,
+    child: LiveItems<List<WalletPickItem>>(
+      initial: wallets,
+      live: live,
+      builder: (_, items) => AccountCardsMultiPickerSheet(
+        wallets: items,
+        labels: labels,
+        confirm: confirm,
+        selectedIds: selectedIds,
+        noneSelected: noneSelected,
+      ),
+    ),
   ),
 );
 

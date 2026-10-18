@@ -97,18 +97,6 @@ class _FakeRepo implements RecurringLinkRepository {
   }
 
   @override
-  Future<List<LinkCandidate>> candidates(
-    TransactionType type, {
-    String? categoryId,
-    double? amount,
-  }) async {
-    askedType = type;
-    askedCategory = categoryId;
-    askedAmount = amount;
-    if (loadError != null) throw loadError!;
-    return rows;
-  }
-
   @override
   Future<LinkResult> link(String itemId, String transactionId) async {
     links.add('$itemId<-$transactionId');

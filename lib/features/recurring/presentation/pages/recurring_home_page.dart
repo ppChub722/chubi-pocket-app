@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
@@ -12,6 +15,7 @@ import '../../data/recurring_repository.dart';
 import '../../domain/recurrence_rule.dart' show today;
 import '../../domain/recurring.dart';
 import '../../domain/recurring_item.dart';
+import '../cubit/recurring_directory_cubit.dart';
 import '../recurring_rows.dart';
 
 enum RecurringHomeTab { recurring, reminder, calendar }
@@ -36,11 +40,10 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
 
   final _search = TextEditingController();
   final _toolbar = ToolbarToggleState.of('recurring');
-  int _listSeq = 0;
   String _query = '';
   RecurringFilter _filter = RecurringFilter.current;
   RecurringList? _list;
-  Object? _listError;
+  ApiException? _listError;
 
   late DateTime _month = DateTime(today().year, today().month);
   late DateTime _day = today();
@@ -55,7 +58,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _loadList();
+      unawaited(context.read<RecurringDirectoryCubit>().loadIfNeeded());
       if (_tab == RecurringHomeTab.calendar) _loadCalendar();
     });
   }
@@ -67,28 +70,28 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     super.dispose();
   }
 
-  Future<void> _loadList() async {
-    final seq = ++_listSeq;
-    try {
-      final list = await _repo.list(filter: _filter, q: _query);
-      if (!mounted || seq != _listSeq) return;
-      setState(() {
-        _list = list;
-        _listError = null;
-      });
-    } catch (e, st) {
-      if (!mounted || seq != _listSeq) return;
-      final err = ApiException.from(e, st);
-      if (_list == null) {
-        setState(() => _listError = err);
-      } else {
-        showAppSnackBar(
-          context,
-          AppLocalizations.of(context)!.fpRecurringRefreshFailed,
-          tone: Tone.danger,
-        );
-      }
-    }
+  RecurringList? _listOf(RecurringDirectoryState s) {
+    if (s.status != RecurringDirectoryStatus.loaded) return null;
+    final needle = _query.trim().toLowerCase();
+    return RecurringList(
+      items: [
+        for (final r in s.rules)
+          if (switch (_filter) {
+                RecurringFilter.current => r.status != RecurringStatus.archived,
+                RecurringFilter.archived =>
+                  r.status == RecurringStatus.archived,
+                RecurringFilter.all => true,
+              } &&
+              (needle.isEmpty || r.name.toLowerCase().contains(needle)))
+            r,
+      ],
+      counts: {
+        'current': s.currentCount,
+        'archived': s.archivedCount,
+        'all': s.rules.length,
+      },
+      summary: s.summary,
+    );
   }
 
   Future<void> _loadCalendar() async {
@@ -115,10 +118,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     }
   }
 
-  void _setQuery(String v) {
-    _query = v;
-    _loadList();
-  }
+  void _setQuery(String v) => setState(() => _query = v);
 
   bool get _filtered =>
       _search.text.trim().isNotEmpty || _filter != RecurringFilter.current;
@@ -132,7 +132,6 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   void _setFilter(RecurringFilter f) {
     if (f == _filter) return;
     setState(() => _filter = f);
-    _loadList();
   }
 
   void _onMonth(DateTime m) {
@@ -162,6 +161,11 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final dir = context.watch<RecurringDirectoryCubit>().state;
+    _list = _listOf(dir);
+    _listError = _list == null && dir.status == RecurringDirectoryStatus.error
+        ? dir.error
+        : null;
     final summary = _list?.summary;
     return Scaffold(
       appBar: AppTopBar(title: l.recurringTitle, showBack: true),
@@ -284,7 +288,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
       loading: list == null && _listError == null,
       error: list == null ? _listError : null,
       isEmpty: rows.isEmpty,
-      onRetry: _loadList,
+      onRetry: context.read<RecurringDirectoryCubit>().load,
       rowDividers: true,
       topInset: AppSpacing.sm,
       header: [_toolbarRow(l)],

@@ -13,7 +13,6 @@ import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.d
 import 'package:chubi_pocket/features/pending/presentation/pages/pending_page.dart';
 import 'package:chubi_pocket/features/tags/presentation/cubit/tags_cubit.dart';
 import 'package:chubi_pocket/features/transactions/data/transactions_repository.dart';
-import 'package:chubi_pocket/features/transactions/domain/form_options.dart';
 import 'package:chubi_pocket/features/transactions/domain/refs.dart';
 import 'package:chubi_pocket/features/transactions/presentation/cubit/transactions_cubit.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
@@ -42,8 +41,6 @@ class _Unread extends MockCubit<int> implements UnreadBadgeCubit {}
 class _Auth extends MockCubit<AuthState> implements AuthCubit {}
 
 class _Repo extends Fake implements TransactionsRepository {
-  @override
-  Future<TxFormOptions> formOptions() async => const TxFormOptions();
 }
 
 const _wallet = Account(

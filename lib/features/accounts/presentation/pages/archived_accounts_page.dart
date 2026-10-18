@@ -16,22 +16,9 @@ class ArchivedAccountsPage extends StatefulWidget {
 }
 
 class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
-  late Future<List<Account>> _future = _fetch();
   final Set<String> _busy = {};
 
-  /// Restored here: hidden from the list without a refetch.
-  final Set<String> _restored = {};
-
-  Future<List<Account>> _fetch() =>
-      context.read<AccountsCubit>().listArchived();
-
-  Future<void> _refresh() async {
-    final f = _fetch();
-    setState(() => _future = f);
-    try {
-      await f;
-    } catch (_) {}
-  }
+  Future<void> _refresh() => context.read<AccountsCubit>().load();
 
   Future<void> _restore(Account a) async {
     final l = AppLocalizations.of(context)!;
@@ -40,7 +27,6 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
       await context.read<AccountsCubit>().restore(a.id);
       if (!mounted) return;
       showAppSnackBar(context, l.accountRestored(a.name), tone: Tone.success);
-      setState(() => _restored.add(a.id));
     } on ApiException catch (e) {
       if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
     } finally {
@@ -54,18 +40,12 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
     return Scaffold(
       appBar: AppTopBar(title: l.accountsArchivedTitle, showBack: true),
       extendBodyBehindAppBar: true,
-      body: FutureBuilder<List<Account>>(
-        future: _future,
-        builder: (context, snap) {
-          final list = [
-            for (final a in snap.data ?? const <Account>[])
-              if (!_restored.contains(a.id)) a,
-          ];
+      body: BlocBuilder<AccountsCubit, AccountsState>(
+        builder: (context, state) {
+          final list = state.archivedAccounts;
           return ListPageBody(
-            loading: snap.connectionState != ConnectionState.done,
-            error: snap.hasError
-                ? ApiException.from(snap.error!, snap.stackTrace)
-                : null,
+            loading: state.status == AccountsStatus.loading && list.isEmpty,
+            error: state.status == AccountsStatus.error ? state.error : null,
             isEmpty: list.isEmpty,
             onRetry: _refresh,
             sidePadding: 0,
