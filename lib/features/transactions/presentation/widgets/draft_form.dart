@@ -585,7 +585,6 @@ class _DraftFormState extends State<DraftForm> {
   final _noteFocus = FocusNode();
 
   final _categoryOrders = <TransactionType, ChipOrder>{};
-  final _walletOrder = ChipOrder();
 
   DraftFormController get _c => widget.controller;
 
@@ -628,7 +627,7 @@ class _DraftFormState extends State<DraftForm> {
       excludeId: to
           ? _c.account?.id
           : (_c.isTransfer ? _c.toAccount?.id : null),
-      title: to ? l.quickTo : l.transactionFormAccountLabel,
+      title: to ? l.quickTo : null,
       allowNone: !_c.isTransfer && !to,
       allowCreate: true,
     );
@@ -847,11 +846,7 @@ class _DraftFormState extends State<DraftForm> {
                     : (_c.type == TransactionType.income
                           ? l.txTitleHintIncome
                           : l.txTitleHintExpense),
-                flowRow: isTransfer ? _transferFlow(l) : null,
-                walletRow: isTransfer
-                    ? null
-                    : _entryWalletRow(l, isTransfer: false),
-                categoryRow: isTransfer ? null : _entryCategoryRow(l),
+                flowRow: isTransfer ? _transferFlow(l) : _entryCards(l),
               )
             else
               TransactionHeroCard(
@@ -935,17 +930,37 @@ class _DraftFormState extends State<DraftForm> {
     );
   }
 
-  Widget _entryWalletRow(AppLocalizations l, {required bool isTransfer}) =>
-      WalletChipRow(
-        selectedId: _c.account?.id,
-        onPick: isTransfer
-            ? _c.setAccount
-            : (a) => _c.setAccount(_c.account?.id == a.id ? null : a),
-        onMore: _pickAccount,
-        order: _walletOrder,
-        pickLabel: isTransfer ? l.draftPickWalletFrom : l.quickPickWallet,
-        excludeId: isTransfer ? _c.toAccount?.id : null,
-      );
+  Widget _entryCards(AppLocalizations l) {
+    final locked = widget.categoryLockedHint != null;
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+        Expanded(
+          child: CategoryPickCard(
+            category: _c.category,
+            label: l.transactionFormCategoryLabel,
+            placeholder: l.transactionFormCategoryNone,
+            dense: true,
+            editable: !locked,
+            onTap: locked ? null : _pickCategory,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: WalletPickCard(
+            account: _c.account,
+            label: l.transactionFormAccountLabel,
+            placeholder: l.transactionFormAccountNone,
+            dense: true,
+            editable: true,
+            onTap: () => _pickAccount(),
+          ),
+        ),
+      ],
+      ),
+    );
+  }
 
   Widget _transferFlow(AppLocalizations l) => FlowCards(
     from: WalletPickCard(
@@ -953,7 +968,6 @@ class _DraftFormState extends State<DraftForm> {
       label: l.quickFrom,
       placeholder: l.quickPickWallet,
       dense: true,
-      twoLine: true,
       editable: true,
       onTap: () => _pickAccount(),
     ),
@@ -962,21 +976,11 @@ class _DraftFormState extends State<DraftForm> {
       label: l.quickTo,
       placeholder: l.quickPickWallet,
       dense: true,
-      twoLine: true,
       editable: true,
       onTap: () => _pickAccount(to: true),
     ),
     swapTooltip: l.quickSwap,
     onSwap: _c.swapAccounts,
-  );
-
-  Widget _entryCategoryRow(AppLocalizations l) => CategoryChipRow(
-    type: _c.type,
-    selected: _c.category,
-    onPick: _c.setCategory,
-    onMore: _pickCategory,
-    order: _categoryOrders.putIfAbsent(_c.type, ChipOrder.new),
-    pickLabel: l.draftPickCategory,
   );
 
   List<Widget> _chipBody(AppLocalizations l, {required bool isTransfer}) {
@@ -1087,7 +1091,7 @@ class _DraftFormState extends State<DraftForm> {
             embedded: true,
             compact: compact,
             label: widget.chipLayout ? l.txSplitRowLabel : l.txSplitPeopleLabel,
-            helper: compact ? null : helper,
+            helper: helper,
             totalAmount: _c.splitCap,
             overText: _c.eventOthers > 0 ? l.txSplitExceedsShare : null,
             drafts: _c.splits,
@@ -1109,7 +1113,6 @@ class _DraftFormState extends State<DraftForm> {
     return SplitEventSection(
       first: first,
       variant: compact ? SplitEventVariant.compact : SplitEventVariant.full,
-      helper: compact && canEdit ? helper : null,
       splits: splits,
       event: slot,
       recurring: widget.recurringSlot,

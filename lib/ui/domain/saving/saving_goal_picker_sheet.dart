@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../atoms/dashed_rect_border.dart';
 import '../../organisms/app_sheet.dart';
+import '../../organisms/picker_sheet.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 
@@ -35,10 +36,11 @@ Future<SavingGoalChoice?> showSavingGoalPickerSheet(
   required List<SavingGoalPick> items,
   required String? selectedId,
 }) {
-  return showAppSheet<SavingGoalChoice>(
+  return showAppSheetCustom<SavingGoalChoice>(
     context,
-    title: title,
-    builder: (ctx) => LayoutBuilder(
+    builder: (ctx) => PickerSheet(
+      title: title,
+      builder: (_, _) => LayoutBuilder(
       builder: (context, box) {
         // Two columns inside the side padding (the card width must be taken
         // AFTER it, or the second card wraps onto its own line).
@@ -51,23 +53,36 @@ Future<SavingGoalChoice?> showSavingGoalPickerSheet(
             AppSpacing.lg,
             AppSpacing.lg,
           ),
-          child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              for (final g in items)
-                SizedBox(
-                  width: w,
-                  child: SavingGoalCard(
-                    pick: g,
-                    selected: g.id == selectedId,
-                    onTap: () => Navigator.of(ctx).pop((id: g.id)),
+              for (var i = 0; i < items.length; i += 2) ...[
+                if (i > 0) const SizedBox(height: AppSpacing.sm),
+                // Both cards in a row take the taller one's height.
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final g in items.skip(i).take(2)) ...[
+                        if (g != items[i]) const SizedBox(width: AppSpacing.sm),
+                        SizedBox(
+                          width: w,
+                          child: SavingGoalCard(
+                            pick: g,
+                            selected: g.id == selectedId,
+                            onTap: () => Navigator.of(ctx).pop((id: g.id)),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
+              ],
             ],
           ),
         );
       },
+      ),
     ),
   );
 }
@@ -99,8 +114,8 @@ class SavingGoalCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: radius,
         side: selected
-            ? BorderSide.none
-            : BorderSide(color: scheme.outlineVariant),
+            ? BorderSide(color: pick.color, width: 1.5)
+            : BorderSide.none,
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -182,27 +197,13 @@ class SavingGoalCard extends StatelessWidget {
                 ],
               ),
             ),
-            if (selected)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: Padding(
-                    padding: const EdgeInsets.all(3),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppRadius.md - 3),
-                        border: Border.all(color: pick.color),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
       ),
     );
-    if (selected) {
+    if (!selected) {
       card = DashedRectBorder(
-        color: pick.color,
+        color: scheme.outlineVariant,
         strokeWidth: 1,
         dashLength: 4,
         gapLength: 3,

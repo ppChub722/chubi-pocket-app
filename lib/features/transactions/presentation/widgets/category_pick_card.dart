@@ -40,7 +40,7 @@ class CategoryPickCard extends StatelessWidget {
     final all = context.watch<CategoriesCubit>().state.categories;
     final c = category;
     final iconCode = c == null ? null : CategoryTree.resolveIconCode(c, all);
-    final path = c == null ? '' : CategoryTree.breadcrumb(c, all);
+    final description = c?.description?.trim() ?? '';
     return PickCard(
       reserveSubtitle: true,
       label: label,
@@ -55,7 +55,7 @@ class CategoryPickCard extends StatelessWidget {
               size: _icon,
               iconCode: iconCode,
             ),
-      subtitle: path.isEmpty ? null : Text(path),
+      subtitle: description.isEmpty ? null : Text(description),
       accent: iconCode.tintFor(palette),
       onTap: onTap,
       editable: editable,

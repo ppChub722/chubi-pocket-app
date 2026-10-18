@@ -102,7 +102,6 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
   }
 
   Future<void> _pickAccount() async {
-    final l = AppLocalizations.of(context)!;
     final accounts =
         maybeTxFormOptions(context, watch: false)?.state.options?.accountList ??
         context.read<AccountsCubit>().state.accounts;
@@ -110,8 +109,8 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
       context: context,
       accounts: accounts,
       selected: _c.account,
-      title: l.transactionFormAccountLabel,
       allowNone: true,
+      allowCreate: true,
     );
     if (!mounted || r == null) return;
     _c.setAccount(r is AccountPickerSelected ? r.account : null);
@@ -157,7 +156,6 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
     label: l.transactionFormAccountLabel,
     placeholder: l.quickPickWallet,
     dense: true,
-    twoLine: true,
     editable: true,
     onTap: _pickAccount,
   );
@@ -170,9 +168,20 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
     for (final g in _goals ?? const <SavingGoal>[]) {
       if (g.id == _c.goalId) chosen = g;
     }
+    final symbol = debtCurrencySymbol(context);
+    String money(double v) => moneyString(context, v, symbol: symbol);
+    final target = chosen?.targetAmount;
+    final spare = _overview?.spare.amount;
+    final status = chosen == null
+        ? (spare == null ? null : money(spare))
+        : target == null
+        ? money(chosen.savedAmount)
+        : '${money(chosen.savedAmount)} / ${money(target)}';
     return PickCard(
       label: l.savingEntryGoalLabel,
       value: chosen?.name ?? l.savingEntrySpare,
+      reserveSubtitle: true,
+      subtitle: status == null ? null : Text(status),
       dense: true,
       editable: true,
       accent: chosen == null
@@ -220,14 +229,9 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
             color: g.iconCode.tintFor(palette),
             amountText: money(g.savedAmount),
             targetText: g.targetAmount == null ? null : money(g.targetAmount!),
-            progress: g.targetAmount == null || g.targetAmount == 0
+            caption: g.description?.trim().isEmpty ?? true
                 ? null
-                : g.savedAmount / g.targetAmount!,
-            caption: (g.monthShort ?? 0) > 0
-                ? l.fpGoalsMonthShortLine(money(g.monthShort!))
-                : (g.status == SavingStatus.behind && (g.behindMonths ?? 0) > 0)
-                ? l.sgv2PaceLate(g.behindMonths!)
-                : null,
+                : g.description!.trim(),
           ),
       ],
     );

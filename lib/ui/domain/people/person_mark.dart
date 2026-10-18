@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../tokens/app/app_icons.dart';
 import '../icons/icon_code.dart';
+import '../../atoms/dashed_rect_border.dart';
 import '../../atoms/user_avatar.dart';
 
 enum PersonLevel { name, contact, linked }
@@ -28,6 +29,7 @@ class PersonMark extends StatelessWidget {
     this.iconCode,
     this.size = 20,
     this.reserveLinkSlot = false,
+    this.tappable = false,
     super.key,
   });
 
@@ -43,11 +45,37 @@ class PersonMark extends StatelessWidget {
   final double size;
   final bool reserveLinkSlot;
 
+  /// Draws the name-level icon inside a dashed ring so it reads as pressable.
+  final bool tappable;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final Widget plain = Icon(
+      AppIcons.profile,
+      size: size,
+      color: scheme.onSurfaceVariant,
+    );
     final Widget mark = level == PersonLevel.name
-        ? Icon(AppIcons.profile, size: size, color: scheme.onSurfaceVariant)
+        ? tappable
+              ? SizedBox.square(
+                  dimension: size,
+                  child: DashedRectBorder(
+                    color: scheme.primary,
+                    strokeWidth: 1.2,
+                    dashLength: 4,
+                    gapLength: 3,
+                    borderRadius: Radius.circular(size / 2),
+                    child: Center(
+                      child: Icon(
+                        AppIcons.profile,
+                        size: size * 0.6,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                )
+              : plain
         : UserAvatar(
             displayName: name.isEmpty ? '?' : name,
             iconCode: iconCode,

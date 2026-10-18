@@ -2,8 +2,23 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_radius.dart';
 import '../tokens/color_contrast.dart';
+import 'dashed_rect_border.dart';
 
 enum AppCardStyle { plain, bordered, accent, tinted, flat }
+
+/// Tells the [AppCard]s below it that they are options of a picker: the chosen
+/// one gets one solid line, the others a dashed one.
+class AppCardPick extends InheritedWidget {
+  const AppCardPick({required this.chosen, required super.child, super.key});
+
+  final bool chosen;
+
+  static AppCardPick? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<AppCardPick>();
+
+  @override
+  bool updateShouldNotify(AppCardPick old) => chosen != old.chosen;
+}
 
 class AppCard extends StatelessWidget {
   const AppCard({
@@ -77,9 +92,13 @@ class AppCard extends StatelessWidget {
           AppCardStyle.accent => 1.5,
           _ => 1.0,
         };
-    if (selected) {
+    final pick = AppCardPick.maybeOf(context);
+    final dashed = pick != null && !pick.chosen;
+    if (selected || (pick?.chosen ?? false)) {
       border = scheme.primary;
       width = 1.5;
+    } else if (dashed) {
+      border = Colors.transparent;
     }
 
     Widget body = padding == null
@@ -124,16 +143,26 @@ class AppCard extends StatelessWidget {
       );
     }
 
-    return Card(
+    final corners = radius ?? BorderRadius.circular(AppRadius.lg);
+    final card = Card(
       margin: margin,
       clipBehavior: Clip.antiAlias,
       elevation: style == AppCardStyle.flat ? 0 : null,
       color: fill,
       shape: RoundedRectangleBorder(
-        borderRadius: radius ?? BorderRadius.circular(AppRadius.lg),
+        borderRadius: corners,
         side: BorderSide(color: border, width: width),
       ),
       child: body,
+    );
+    if (!dashed) return card;
+    return DashedRectBorder(
+      color: scheme.outlineVariant,
+      strokeWidth: 1,
+      dashLength: 4,
+      gapLength: 3,
+      borderRadius: corners.topLeft,
+      child: card,
     );
   }
 }

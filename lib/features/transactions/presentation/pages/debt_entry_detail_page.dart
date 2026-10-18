@@ -307,7 +307,6 @@ class _DebtEntryViewState extends State<_DebtEntryView>
   }
 
   Future<void> _pickAccount() async {
-    final l = AppLocalizations.of(context)!;
     final accounts =
         maybeTxFormOptions(context, watch: false)?.state.options?.accountList ??
         context.read<AccountsCubit>().state.accounts;
@@ -315,7 +314,6 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       context: context,
       accounts: accounts,
       selected: _c.account,
-      title: l.transactionFormAccountLabel,
       allowNone: true,
     );
     if (!mounted || r == null) return;
@@ -494,6 +492,12 @@ class _DebtEntryViewState extends State<_DebtEntryView>
               value: p?.person.name,
               placeholder: l.debtPickPerson,
               dense: true,
+              reserveSubtitle: true,
+              subtitle: debtNetSubtitle(
+                context,
+                l,
+                isEditing ? p?.net : widget.detail.balance.net,
+              ),
               leading: p == null
                   ? const PickCardEmptyIcon(AppIcons.contact, size: 32)
                   : PersonMark(

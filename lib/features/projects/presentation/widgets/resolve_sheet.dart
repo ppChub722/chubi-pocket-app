@@ -84,7 +84,6 @@ Future<bool> showResolveSheet(
         context: context,
         accounts: accounts.state.accounts,
         selected: current?.ref as Account?,
-        title: l.debtSettleAccount,
       );
       if (r is! AccountPickerSelected || !context.mounted) return null;
       final a = r.account;

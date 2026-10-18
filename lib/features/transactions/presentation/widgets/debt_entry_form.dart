@@ -37,6 +37,27 @@ class DebtPick {
       DebtPick(key: key, person: person, net: n, typedName: typedName);
 }
 
+/// The person card's third line: what is open with them right now.
+Widget? debtNetSubtitle(
+  BuildContext context,
+  AppLocalizations l,
+  double? net,
+) {
+  if (net == null) return null;
+  final money = moneyString(
+    context,
+    net.abs(),
+    symbol: debtCurrencySymbol(context),
+  );
+  return Text(
+    net > 0.004
+        ? '${l.debtsOwedToMe} $money'
+        : net < -0.004
+        ? '${l.debtsIOwe} $money'
+        : l.debtSettledLabel,
+  );
+}
+
 class DebtEntryController extends ChangeNotifier {
   DebtEntryController({DebtPick? person}) : _person = person {
     amount.addListener(notifyListeners);
@@ -179,7 +200,6 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
   }
 
   Future<void> _pickAccount() async {
-    final l = AppLocalizations.of(context)!;
     final accounts =
         maybeTxFormOptions(context, watch: false)?.state.options?.accountList ??
         context.read<AccountsCubit>().state.accounts;
@@ -187,7 +207,6 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
       context: context,
       accounts: accounts,
       selected: _c.account,
-      title: l.transactionFormAccountLabel,
       allowNone: true,
       allowCreate: true,
     );
@@ -239,6 +258,8 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
       placeholder: l.debtPickPerson,
       dense: true,
       editable: true,
+      reserveSubtitle: true,
+      subtitle: debtNetSubtitle(context, l, p?.net),
       leading: p == null
           ? const PickCardEmptyIcon(AppIcons.contact, size: 32)
           : PersonMark(
@@ -256,7 +277,6 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     label: l.transactionFormAccountLabel,
     placeholder: l.quickPickWallet,
     dense: true,
-    twoLine: true,
     editable: true,
     onTap: _pickAccount,
   );

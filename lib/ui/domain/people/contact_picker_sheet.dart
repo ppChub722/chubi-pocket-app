@@ -274,7 +274,14 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
                       ),
                       title: c.name,
                       subtitle: c.subtitle,
-                      trailing: c.trailing,
+                      trailing: c.trailing == null
+                          ? null
+                          : Padding(
+                              padding: const EdgeInsetsDirectional.only(
+                                end: AppSpacing.lg - AppSpacing.xs,
+                              ),
+                              child: c.trailing,
+                            ),
                       selected: c.id == d.selectedId,
                       onTap: () =>
                           Navigator.pop(context, ContactPickerRowPicked(c.id)),

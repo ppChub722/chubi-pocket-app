@@ -433,7 +433,7 @@ class _SplitEventSectionState extends State<SplitEventSection> {
             widget.splits!,
           ],
           if (e != null) ...[
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: AppSpacing.sm),
             EventRow(
               name: e.name,
               onTap: e.onTap,
@@ -445,7 +445,7 @@ class _SplitEventSectionState extends State<SplitEventSection> {
             ),
           ],
           if (widget.recurring != null) ...[
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: AppSpacing.sm),
             RecurringLinkRow(
               slot: widget.recurring!,
               variant: SplitEventVariant.compact,

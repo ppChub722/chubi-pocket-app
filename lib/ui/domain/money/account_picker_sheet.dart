@@ -126,16 +126,16 @@ class AccountPickerSheet extends StatelessWidget {
             : wallets.where((a) => a.name.toLowerCase().contains(q)).toList();
         final tiles = <Widget>[
           if (allowNone && q.isEmpty)
-            SelectableFrame(
-              selected: selectedId == null,
+            AppCardPick(
+              chosen: selectedId == null,
               child: _NoneTile(
                 label: labels.none,
                 onTap: () => onPicked(const AccountPickNone()),
               ),
             ),
           for (final a in visible)
-            SelectableFrame(
-              selected: a.id == selectedId,
+            AppCardPick(
+              chosen: a.id == selectedId,
               child: _walletTile(
                 context,
                 a,
@@ -323,16 +323,16 @@ class _AccountCardsMultiPickerSheetState
                   .toList();
         final tiles = <Widget>[
           if (q.isEmpty)
-            SelectableFrame(
-              selected: _none,
+            AppCardPick(
+              chosen: _none,
               child: _NoneTile(
                 label: widget.labels.none,
                 onTap: () => setState(() => _none = !_none),
               ),
             ),
           for (final a in visible)
-            SelectableFrame(
-              selected: _ids.contains(a.id),
+            AppCardPick(
+              chosen: _ids.contains(a.id),
               child: _walletTile(context, a, () => _toggle(a.id)),
             ),
         ];

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/app_spacing.dart';
+import '../tokens/chip_size.dart';
 import 'app_spinner.dart';
 import 'connection_scope.dart';
 
@@ -18,7 +19,19 @@ enum AppButtonVariant {
   destructiveOutlined,
 }
 
-enum AppButtonSize { regular, large }
+/// [mini], [chip] and [control] match the chip heights, padding, icon and label
+/// style of the same-named `ChipSize`.
+enum AppButtonSize {
+  mini(ChipSize.mini),
+  chip(ChipSize.chip),
+  control(ChipSize.control),
+  regular(null),
+  large(null);
+
+  const AppButtonSize(this.chipSize);
+
+  final ChipSize? chipSize;
+}
 
 class AppButton extends StatelessWidget {
   const AppButton({
@@ -43,7 +56,9 @@ class AppButton extends StatelessWidget {
 
   final bool submits;
 
-  double get _height => size == AppButtonSize.large ? 48 : 40;
+  double _height(BuildContext context) =>
+      size.chipSize?.heightOf(context) ??
+      (size == AppButtonSize.large ? 48 : 40);
 
   bool isEnabled(BuildContext context) =>
       onPressed != null &&
@@ -55,21 +70,45 @@ class AppButton extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final enabled = isEnabled(context);
     final callback = enabled ? onPressed : null;
-    final minSize = Size(expand ? double.infinity : 0, _height);
-    const padding = EdgeInsets.symmetric(horizontal: AppSpacing.lg);
+    final chip = size.chipSize;
+    final minSize = Size(expand ? double.infinity : 0, _height(context));
+    final padding = EdgeInsets.symmetric(
+      horizontal: chip?.padding ?? AppSpacing.lg,
+    );
+    final textStyle = chip
+        ?.textStyle(context)
+        ?.copyWith(fontWeight: ChipSize.chipWeight);
+    final tapTarget = chip == null ? null : MaterialTapTargetSize.shrinkWrap;
+    final OutlinedBorder? shape = chip == null ? null : const StadiumBorder();
+    // Desktop's compact density would shave 8 off the height we set here.
+    final density = chip == null ? null : VisualDensity.standard;
 
     final Widget button;
     switch (variant) {
       case AppButtonVariant.primary:
         button = FilledButton(
           onPressed: callback,
-          style: FilledButton.styleFrom(minimumSize: minSize, padding: padding),
+          style: FilledButton.styleFrom(
+            minimumSize: minSize,
+            padding: padding,
+            textStyle: textStyle,
+            tapTargetSize: tapTarget,
+            shape: shape,
+            visualDensity: density,
+          ),
           child: _content(scheme.onPrimary),
         );
       case AppButtonVariant.tonal:
         button = FilledButton.tonal(
           onPressed: callback,
-          style: FilledButton.styleFrom(minimumSize: minSize, padding: padding),
+          style: FilledButton.styleFrom(
+            minimumSize: minSize,
+            padding: padding,
+            textStyle: textStyle,
+            tapTargetSize: tapTarget,
+            shape: shape,
+            visualDensity: density,
+          ),
           child: _content(scheme.onSecondaryContainer),
         );
       case AppButtonVariant.outlined:
@@ -78,13 +117,24 @@ class AppButton extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             minimumSize: minSize,
             padding: padding,
+            textStyle: textStyle,
+            tapTargetSize: tapTarget,
+            shape: shape,
+            visualDensity: density,
           ),
           child: _content(scheme.primary),
         );
       case AppButtonVariant.text:
         button = TextButton(
           onPressed: callback,
-          style: TextButton.styleFrom(minimumSize: minSize, padding: padding),
+          style: TextButton.styleFrom(
+            minimumSize: minSize,
+            padding: padding,
+            textStyle: textStyle,
+            tapTargetSize: tapTarget,
+            shape: shape,
+            visualDensity: density,
+          ),
           child: _content(scheme.primary),
         );
       case AppButtonVariant.destructive:
@@ -93,6 +143,10 @@ class AppButton extends StatelessWidget {
           style: FilledButton.styleFrom(
             minimumSize: minSize,
             padding: padding,
+            textStyle: textStyle,
+            tapTargetSize: tapTarget,
+            shape: shape,
+            visualDensity: density,
             backgroundColor: scheme.error,
             foregroundColor: scheme.onError,
           ),
@@ -104,6 +158,10 @@ class AppButton extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             minimumSize: minSize,
             padding: padding,
+            textStyle: textStyle,
+            tapTargetSize: tapTarget,
+            shape: shape,
+            visualDensity: density,
             foregroundColor: scheme.error,
             side: BorderSide(color: scheme.error),
           ),
@@ -117,6 +175,7 @@ class AppButton extends StatelessWidget {
     if (loading) {
       return AppSpinner(size: AppSpinnerSize.small, color: spinnerColor);
     }
+    final chip = size.chipSize;
     // One line always: a long label ends in "…" instead of wrapping.
     if (icon == null) {
       return Text(
@@ -129,8 +188,8 @@ class AppButton extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 18),
-        const SizedBox(width: AppSpacing.sm),
+        Icon(icon, size: chip?.icon ?? 18),
+        SizedBox(width: chip?.gap ?? AppSpacing.sm),
         Flexible(
           child: Text(
             label,

@@ -13,7 +13,6 @@ class WalletPickCard extends StatelessWidget {
     this.dense = false,
     this.editable = false,
     this.onLongPress,
-    this.twoLine = false,
     super.key,
   });
 
@@ -25,8 +24,6 @@ class WalletPickCard extends StatelessWidget {
 
   final bool editable;
   final VoidCallback? onLongPress;
-
-  final bool twoLine;
 
   final bool dense;
 
@@ -48,12 +45,12 @@ class WalletPickCard extends StatelessWidget {
       if (a.isShared) icon = SharedWalletIconBadge(size: _icon, child: icon);
     }
     return PickCard(
-      reserveSubtitle: !twoLine,
+      reserveSubtitle: true,
       label: label,
       value: a?.name,
       placeholder: placeholder,
       leading: icon ?? PickCardEmptyIcon(AppIcons.noWallet, size: _icon),
-      subtitle: twoLine || a == null || !a.showsBalance
+      subtitle: a == null || !a.showsBalance
           ? null
           : MoneyText(
               a.balance,

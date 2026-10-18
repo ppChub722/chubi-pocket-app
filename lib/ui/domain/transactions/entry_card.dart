@@ -122,7 +122,10 @@ class EntryCard extends StatelessWidget {
           if (flowRow != null)
             _slot(
               context,
-              SizedBox(height: twoRows, child: flowRow),
+              ConstrainedBox(
+                constraints: BoxConstraints(minHeight: twoRows),
+                child: flowRow,
+              ),
               flagged: walletMissing,
             ),
           if (walletRow != null)

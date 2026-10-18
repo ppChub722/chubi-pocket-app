@@ -481,7 +481,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         (to ? working.toAccountId : working.accountId) ?? '',
       ),
       excludeId: to ? working.accountId : working.toAccountId,
-      title: to ? l.recurringFieldToWallet : l.recurringFieldWallet,
+      title: to ? l.recurringFieldToWallet : null,
     );
     if (!mounted || r is! AccountPickerSelected) return;
     setState(() => _walletMissing = false);

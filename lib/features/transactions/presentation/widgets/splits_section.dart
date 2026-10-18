@@ -229,14 +229,12 @@ class _SplitsSectionState extends State<SplitsSection> {
     final sectioned = widget.embedded && !widget.compact;
     const chipSize = ChipSize.control;
     final pillChildren = <Widget>[
-      AppChip(
+      AppButton(
         icon: AppIcons.add,
         label: l.txSplitAddPerson,
-        tone: AppChipTone.primary,
-        selected: true,
-        dashed: true,
-        size: chipSize,
-        onTap: _addPerson,
+        variant: AppButtonVariant.outlined,
+        size: AppButtonSize.control,
+        onPressed: _addPerson,
       ),
       if (!widget.embedded || widget.drafts.isNotEmpty) ...[
         const SizedBox(width: AppSpacing.xs),
@@ -605,6 +603,7 @@ class _DraftRowState extends State<_DraftRow> {
       iconCode: person?.iconCode,
       size: SplitRow.avatarSize,
       reserveLinkSlot: true,
+      tappable: true,
     );
     final Widget name = level == PersonLevel.name
         ? SplitRowName.input(

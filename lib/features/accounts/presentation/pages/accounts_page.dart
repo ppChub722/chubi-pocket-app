@@ -298,7 +298,7 @@ class _AccountsPageState extends State<AccountsPage> {
         AppSpacing.lg,
         AppSpacing.sm,
         AppSpacing.lg,
-        AppSpacing.xs,
+        AppSpacing.md,
       ),
       open: _summaryOpen,
       header: HeroHeader(
