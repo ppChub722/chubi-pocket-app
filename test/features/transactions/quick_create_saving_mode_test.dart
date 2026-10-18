@@ -253,8 +253,6 @@ void main() {
     expect(savings.writes.single['amount'], 500);
     expect(savings.writes.single['goal_id'], 'g1');
     expect(savings.writes.single['wallet_id'], 'w1');
-    verify(() => dashboard.markStale()).called(1);
-    verify(() => goals.markStale()).called(1);
     expect(find.byType(QuickCreateSheetShell), findsNothing);
   });
 
@@ -321,8 +319,6 @@ void main() {
       expect(sent.accountId, 'w1');
       expect(sent.date, '2026-10-13');
       verify(() => pending.submitOne('p1')).called(1);
-      verify(() => goals.markStale()).called(1);
-      verify(() => dashboard.markStale()).called(1);
       expect(find.byType(QuickCreateSheetShell), findsNothing);
     });
   });

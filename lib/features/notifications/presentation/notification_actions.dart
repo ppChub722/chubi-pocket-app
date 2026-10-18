@@ -14,7 +14,6 @@ import '../../contacts/data/contacts_repository.dart';
 import '../../contacts/domain/contact.dart';
 import '../../contacts/presentation/cubit/contacts_cubit.dart';
 import '../../personal_debts/data/personal_debts_repository.dart';
-import '../../home/presentation/cubit/dashboard_cubit.dart';
 import '../../personal_debts/presentation/debt_wiring.dart';
 import '../../projects/data/projects_repository.dart';
 import '../../recurring/data/recurring_repository.dart';
@@ -112,13 +111,11 @@ Future<void> _onRejectLinkRequest(BuildContext ctx, String id) async {
 
 Future<void> _onAcceptSplit(BuildContext ctx, String id) async {
   final repo = ctx.read<PersonalDebtsRepository>();
-  final dashboard = ctx.read<DashboardCubit>();
   final inboxCubit = ctx.read<NotificationsInboxCubit>();
   final messenger = ScaffoldMessenger.of(ctx);
   try {
     final result = await repo.acceptSplit(id);
     await _reload(inboxCubit);
-    dashboard.markStale();
     if (ctx.mounted) openPage(ctx, debtPersonPath(result.balance.key));
   } on ApiException catch (e) {
     _showError(messenger, e);
@@ -128,13 +125,11 @@ Future<void> _onAcceptSplit(BuildContext ctx, String id) async {
 Future<void> _onApplySplitChange(BuildContext ctx, AppNotification n) async {
   final l = AppLocalizations.of(ctx)!;
   final repo = ctx.read<PersonalDebtsRepository>();
-  final dashboard = ctx.read<DashboardCubit>();
   final inboxCubit = ctx.read<NotificationsInboxCubit>();
   final messenger = ScaffoldMessenger.of(ctx);
   try {
     final result = await repo.applySplit(n.id);
     await _reload(inboxCubit);
-    dashboard.markStale();
     showAppSnackBarOn(
       messenger,
       result.deleted ? l.notifSplitChangeDeleted : l.notifSplitChangeUpdated,
@@ -235,7 +230,6 @@ Future<void> _onCopyToBook(BuildContext ctx, AppNotification n) async {
       ptId,
     );
     await inboxCubit.markActioned(n.id);
-    unawaited(TransactionsCubit.bookChanged());
     if (ctx.mounted) openPage(ctx, '/transactions/$txId');
   } on ApiException catch (e) {
     _showError(messenger, e);
@@ -261,7 +255,6 @@ Future<void> _onUpdateCopy(BuildContext ctx, AppNotification n) async {
     );
     await inboxCubit.markActioned(n.id);
     accountsCubit.patchBalances(result.accountBalances);
-    unawaited(TransactionsCubit.bookChanged());
     showAppSnackBarOn(
       messenger,
       result.isUpcoming ? l.txMovedToUpcoming : l.notifCopyUpdated,

@@ -13,7 +13,6 @@ import '../data/recurring_repository.dart';
 import '../domain/recurrence_rule.dart';
 import '../domain/recurring.dart';
 import '../domain/recurring_item.dart';
-import 'recurring_writes.dart';
 
 enum ItemMenuAction {
   edit,
@@ -145,7 +144,6 @@ class _RecurringItemActionsState extends State<RecurringItemActions> {
       final result = await run(repo);
       accounts.patchBalances(result.balances);
       HapticFeedback.mediumImpact();
-      if (mounted) markRecurringChanged(context);
       widget.onChanged(result);
     } on ApiException catch (e) {
       if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
@@ -184,7 +182,6 @@ Future<bool> _sheetWrite(
     final result = await run(repo);
     accounts.patchBalances(result.balances);
     HapticFeedback.mediumImpact();
-    if (context.mounted) markRecurringChanged(context);
     onChanged(result);
     return true;
   } on ApiException catch (e) {

@@ -2,6 +2,9 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bloc/clearable_cubit.dart';
+import '../../../../core/data/sync_backed.dart';
+import '../../../../core/data/sync_coordinator.dart';
+import '../../../../core/data/sync_set.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/contacts_repository.dart';
 import '../../domain/contact.dart';
@@ -11,13 +14,26 @@ enum ContactsStatus { initial, loading, loaded, error }
 
 class ContactsState extends Equatable {
   const ContactsState({
-    this.contacts = const [],
+    List<Contact> contacts = const [],
     this.status = ContactsStatus.initial,
     this.error,
     this.statusFilter = 'active',
-  });
+  }) : allContacts = contacts;
 
-  final List<Contact> contacts;
+  /// Every contact, whatever its status, in the server's order.
+  final List<Contact> allContacts;
+
+  /// The contacts the status filter lets through.
+  List<Contact> get contacts => [
+    for (final c in allContacts)
+      if (switch (statusFilter) {
+        'archived' => c.isArchived,
+        'all' => true,
+        _ => !c.isArchived,
+      })
+        c,
+  ];
+
   final ContactsStatus status;
   final ApiException? error;
   String? get errorMessage => error?.message;
@@ -31,7 +47,7 @@ class ContactsState extends Equatable {
     bool clearError = false,
   }) {
     return ContactsState(
-      contacts: contacts ?? this.contacts,
+      contacts: contacts ?? allContacts,
       status: status ?? this.status,
       error: clearError ? null : (error ?? this.error),
       statusFilter: statusFilter ?? this.statusFilter,
@@ -39,43 +55,65 @@ class ContactsState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [contacts, status, error, statusFilter];
+  List<Object?> get props => [allContacts, status, error, statusFilter];
 }
 
-class ContactsCubit extends Cubit<ContactsState> with Clearable {
-  ContactsCubit({required ContactsRepository repository})
-    : _repo = repository,
-      super(const ContactsState());
+class ContactsCubit extends Cubit<ContactsState>
+    with Clearable, SyncBacked<ContactsState> {
+  ContactsCubit({
+    required ContactsRepository repository,
+    required SyncCoordinator coordinator,
+  }) : _repo = repository,
+       syncCoordinator = coordinator,
+       super(const ContactsState()) {
+    bindSync();
+  }
 
   final ContactsRepository _repo;
 
   @override
-  void clear() => emit(const ContactsState());
+  final SyncCoordinator syncCoordinator;
 
-  Future<void> load({String? statusFilter}) async {
+  @override
+  SyncSet get syncSet => SyncSet.contacts;
+
+  @override
+  bool get syncLoading => state.status == ContactsStatus.loading;
+
+  @override
+  void markSyncLoading() =>
+      emit(state.copyWith(status: ContactsStatus.loading, clearError: true));
+
+  @override
+  void syncFailed(ApiException error) =>
+      emit(state.copyWith(status: ContactsStatus.error, error: error));
+
+  @override
+  void applySync(Map<String, dynamic> body) {
     emit(
       state.copyWith(
-        status: ContactsStatus.loading,
-        statusFilter: statusFilter,
+        contacts: [
+          for (final c in (body['data'] as List? ?? const []))
+            Contact.fromJson(c as Map<String, dynamic>),
+        ],
+        status: ContactsStatus.loaded,
         clearError: true,
       ),
     );
-    try {
-      final list = await _repo.list(status: state.statusFilter);
-      emit(state.copyWith(contacts: list, status: ContactsStatus.loaded));
-    } catch (e, st) {
-      emit(
-        state.copyWith(
-          status: ContactsStatus.error,
-          error: ApiException.from(e, st),
-        ),
-      );
-    }
   }
+
+  @override
+  void clear() => emit(const ContactsState());
+
+  /// The filter works on the contacts the device holds; nothing is fetched.
+  void setStatusFilter(String statusFilter) =>
+      emit(state.copyWith(statusFilter: statusFilter));
+
+  Future<void> load() => loadSynced();
 
   Future<void> loadIfNeeded({bool keepFilter = false}) async {
     if (!keepFilter && state.statusFilter == 'archived') {
-      return load(statusFilter: 'all');
+      setStatusFilter('all');
     }
     if (state.status == ContactsStatus.initial ||
         state.status == ContactsStatus.error) {
@@ -103,9 +141,7 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
       note: note,
       iconCode: iconCode,
     );
-    if (_fits(res.contact)) {
-      emit(state.copyWith(contacts: [res.contact, ...state.contacts]));
-    }
+    emit(state.copyWith(contacts: [res.contact, ...state.allContacts]));
     return res.contact;
   }
 
@@ -205,26 +241,20 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
     final res = await _repo.delete(id);
     emit(
       state.copyWith(
-        contacts: state.contacts.where((c) => c.id != id).toList(),
+        contacts: state.allContacts.where((c) => c.id != id).toList(),
       ),
     );
     return res;
   }
 
-  bool _fits(Contact c) => switch (state.statusFilter) {
-    'archived' => c.isArchived,
-    'all' => true,
-    _ => !c.isArchived,
-  };
-
   void _replace(Contact c) {
-    final known = state.contacts.any((e) => e.id == c.id);
+    final known = state.allContacts.any((e) => e.id == c.id);
     emit(
       state.copyWith(
         contacts: [
-          if (!known && _fits(c)) c,
-          for (final existing in state.contacts)
-            if (existing.id != c.id) existing else if (_fits(c)) c,
+          if (!known) c,
+          for (final existing in state.allContacts)
+            if (existing.id == c.id) c else existing,
         ],
       ),
     );

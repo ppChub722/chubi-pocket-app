@@ -63,17 +63,13 @@ class _AccountsPageState extends State<AccountsPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final cubit = context.read<AccountsCubit>();
-      cubit.loadIfNeeded().then((_) => cubit.refreshIfStale());
+      unawaited(context.read<AccountsCubit>().loadIfNeeded());
     });
   }
 
   Future<void> _refresh() => context.read<AccountsCubit>().load();
 
-  Future<void> _open(Future<Object?> Function() push) async {
-    await push();
-    if (mounted) unawaited(context.read<AccountsCubit>().refreshIfStale());
-  }
+  Future<void> _open(Future<Object?> Function() push) => push();
 
   String _sortLabel(AppLocalizations l, _WalletSort s) => switch (s) {
     _WalletSort.custom => l.accountsSortCustom,

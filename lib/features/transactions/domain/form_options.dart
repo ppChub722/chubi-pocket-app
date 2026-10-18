@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../accounts/domain/account.dart';
 import '../../categories/domain/category.dart';
+import '../../projects/domain/project.dart';
 import '../../tags/domain/tag.dart';
 import 'refs.dart';
 
@@ -91,6 +92,53 @@ class TxFormOptions extends Equatable {
     return null;
   }
 
+  /// The form options built from the caches the app already holds: active wallets in the
+  /// caller's order, the user's own categories as a tree walk (depth 1..3), tags as cached,
+  /// and the events a bill can go to.
+  factory TxFormOptions.fromCaches({
+    required List<Account> accounts,
+    required List<Category> categories,
+    required List<Tag> tags,
+    required List<Project> events,
+    String? defaultAccountId,
+    String? feeCategoryId,
+  }) {
+    return TxFormOptions(
+      accounts: [
+        for (final a in accounts)
+          if (!a.isArchived)
+            AccountOption(
+              ref: AccountRef(
+                id: a.id,
+                name: a.name,
+                iconCode: a.iconCode,
+                logoUrl: a.logoUrl,
+                type: a.type,
+                group: a.isLiability ? 'liability' : 'asset',
+                currency: a.currency,
+              ),
+              balance: a.balance,
+              sortOrder: a.sortOrder,
+              isDefault: a.id == defaultAccountId,
+              trackBalance: a.trackBalance,
+            ),
+      ],
+      defaultAccountId: defaultAccountId,
+      categories: _categoryTree(categories),
+      tags: tags,
+      events: [
+        for (final p in events)
+          EventRef(
+            id: p.id,
+            name: p.name,
+            iconCode: p.iconCode,
+            status: p.status.wire,
+          ),
+      ],
+      feeCategoryId: feeCategoryId,
+    );
+  }
+
   factory TxFormOptions.fromJson(Map<String, dynamic> json) {
     List<Map<String, dynamic>> list(String k) =>
         ((json[k] as List?) ?? const []).cast<Map<String, dynamic>>();
@@ -113,4 +161,61 @@ class TxFormOptions extends Equatable {
     events,
     feeCategoryId,
   ];
+}
+
+List<CategoryOption> _categoryTree(List<Category> all) {
+  final mine = [
+    for (final c in all)
+      if (!c.isSystem) c,
+  ];
+  int order(Category a, Category b) {
+    final t = a.type.name.compareTo(b.type.name);
+    if (t != 0) return t;
+    final s = a.sortOrder.compareTo(b.sortOrder);
+    if (s != 0) return s;
+    final created = (a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0))
+        .compareTo(b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0));
+    return created != 0 ? created : a.id.compareTo(b.id);
+  }
+
+  mine.sort(order);
+  final ids = {for (final c in mine) c.id};
+  final children = <String, List<Category>>{};
+  final roots = <Category>[];
+  for (final c in mine) {
+    final p = c.parentId;
+    if (p != null && ids.contains(p)) {
+      (children[p] ??= []).add(c);
+    } else {
+      roots.add(c);
+    }
+  }
+  final out = <CategoryOption>[];
+  void walk(Category c, int depth, String? parentName) {
+    if (depth > 3) return;
+    out.add(
+      CategoryOption(
+        ref: EmbeddedCategory(
+          id: c.id,
+          name: c.name,
+          type: c.type,
+          iconCode: c.iconCode,
+          isSystem: c.isSystem,
+          systemKind: c.systemKind,
+          parentId: c.parentId,
+        ),
+        sortOrder: c.sortOrder,
+        depth: depth,
+        parentName: parentName,
+      ),
+    );
+    for (final child in children[c.id] ?? const <Category>[]) {
+      walk(child, depth + 1, c.name);
+    }
+  }
+
+  for (final r in roots) {
+    walk(r, 1, null);
+  }
+  return out;
 }

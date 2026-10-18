@@ -19,6 +19,7 @@ import 'pages/api_pages.dart';
 import 'debug/logs_page.dart';
 import 'debug/cache_page.dart';
 import 'debug/network_page.dart';
+import 'debug/sync_page.dart';
 import 'pages/templates_form_sheet_page.dart';
 import 'pages/domain_bottom_bar_page.dart';
 import 'pages/domain_debts_page.dart';
@@ -1291,6 +1292,15 @@ final List<HubPage> hubPages = [
         'What the app holds in memory: each store with its status and item count; reload or clear one.',
     generic: false,
     screen: (_) => const CachePage(),
+  ),
+  HubPage(
+    level: HubLevel.debug,
+    slug: 'sync',
+    title: 'Sync',
+    summary:
+        'Each shared dataset: the version the app holds against the one the server reports, the page-data versions and the last 50 sync rounds; sync now or clear the saved copy.',
+    generic: false,
+    screen: (_) => const SyncPage(),
   ),
 ];
 

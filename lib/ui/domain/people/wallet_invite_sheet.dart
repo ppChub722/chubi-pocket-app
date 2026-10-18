@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../ui.dart';
@@ -38,13 +39,22 @@ Future<WalletInviteCandidate?> showWalletInviteSelectSheet(
   BuildContext context, {
   required List<WalletInviteCandidate> candidates,
   required WalletInviteStrings strings,
+  ValueListenable<List<WalletInviteCandidate>>? live,
+  Future<void> Function()? onRefresh,
 }) {
   return showAppSheetCustom<WalletInviteCandidate>(
     context,
-    builder: (ctx) => WalletInviteSheet(
-      candidates: candidates,
-      strings: strings,
-      onPick: (c) => Navigator.of(ctx).pop(c),
+    builder: (ctx) => SheetRefreshScope(
+      onRefresh: onRefresh,
+      child: LiveItems<List<WalletInviteCandidate>>(
+        initial: candidates,
+        live: live,
+        builder: (_, items) => WalletInviteSheet(
+          candidates: items,
+          strings: strings,
+          onPick: (c) => Navigator.of(ctx).pop(c),
+        ),
+      ),
     ),
   );
 }

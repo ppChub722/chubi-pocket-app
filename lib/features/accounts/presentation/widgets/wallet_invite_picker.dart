@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/data/sync_refresh.dart';
+import '../../../../core/data/sync_set.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../contacts/domain/contact.dart';
@@ -11,7 +13,10 @@ Future<Contact?> showWalletInvitePicker(
   required Set<String> excludeUserIds,
 }) => showAppSheetCustom<Contact>(
   context,
-  builder: (_) => _WalletInvitePicker(excludeUserIds: excludeUserIds),
+  builder: (_) => SheetRefreshScope(
+    onRefresh: syncRefreshOf(context, const {SyncSet.contacts}),
+    child: _WalletInvitePicker(excludeUserIds: excludeUserIds),
+  ),
 );
 
 class _WalletInvitePicker extends StatefulWidget {

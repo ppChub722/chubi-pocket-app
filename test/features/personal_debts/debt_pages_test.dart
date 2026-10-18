@@ -1,5 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:chubi_pocket/app/shell/quick_create_context.dart';
+import 'package:chubi_pocket/core/data/data_changes.dart' as changes;
 import 'package:chubi_pocket/core/network/api_client.dart';
 import 'package:chubi_pocket/core/network/api_exception.dart';
 import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
@@ -8,7 +9,7 @@ import 'package:chubi_pocket/features/notifications/presentation/cubit/unread_ba
 import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.dart';
 import 'package:chubi_pocket/features/personal_debts/data/personal_debts_repository.dart';
 import 'package:chubi_pocket/features/personal_debts/domain/debt_ledger.dart';
-import 'package:chubi_pocket/features/personal_debts/presentation/cubit/debt_book.dart';
+import 'package:chubi_pocket/features/personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import 'package:chubi_pocket/features/personal_debts/presentation/cubit/debt_people_cubit.dart';
 import 'package:chubi_pocket/features/personal_debts/presentation/cubit/debt_person_cubit.dart';
 import 'package:chubi_pocket/features/personal_debts/presentation/pages/debt_person_page.dart';
@@ -20,6 +21,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../../shared/fake_sync.dart';
 
 class _Auth extends MockCubit<AuthState> implements AuthCubit {}
 
@@ -36,42 +39,7 @@ class _Repo extends PersonalDebtsRepository {
   _Repo() : super(client: _Client());
 
   final calls = <String>[];
-  Object? failPeople;
   Object? failPerson;
-
-  @override
-  Future<DebtPeoplePage> listPeople({
-    int page = 1,
-    int perPage = 30,
-    String? q,
-    bool all = false,
-    NetSide? side,
-    DebtPeopleSort sort = DebtPeopleSort.oldest,
-  }) async {
-    calls.add('people all=$all side=${side?.wire} sort=${sort.wire}');
-    final f = failPeople;
-    if (f != null) {
-      failPeople = null;
-      throw f;
-    }
-    return DebtPeoplePage.fromJson({
-      'data': [
-        _person('c:c1', 'Mom', 200, contactId: 'c1', days: 45),
-        _person('n:bank', 'Bank', -50, days: 6),
-        _person('n:gone', 'Gone', 0),
-      ],
-      'totals': {
-        'owed_to_me': 200,
-        'i_owe': 50,
-        'net': 150,
-        'open_count': 2,
-        'owed_to_me_people': 1,
-        'i_owe_people': 1,
-        'over_30_days_people': 1,
-      },
-      'pagination': {'page': 1, 'per_page': 30, 'total': 3, 'total_pages': 1},
-    });
-  }
 
   /// The net the person page answers with (0 = a settled person).
   num personNet = 200;
@@ -151,6 +119,16 @@ Map<String, dynamic> _person(
   'last_activity_at': '2026-10-12',
 };
 
+Map<String, dynamic> _peopleBody() => {
+  'data': [
+    _person('c:c1', 'Mom', 200, contactId: 'c1', days: 45),
+    _person('n:bank', 'Bank', -50, days: 6),
+    _person('n:gone', 'Gone', 0),
+  ],
+  'totals': <String, dynamic>{},
+  'pagination': {'page': 1, 'per_page': 3, 'total': 3, 'total_pages': 1},
+};
+
 Map<String, dynamic> _entry(
   String id,
   String dir,
@@ -190,8 +168,10 @@ Map<String, dynamic> _entry(
 void main() {
   late _Repo repo;
   late QuickCreateContext registry;
+  late DebtDirectoryCubit directory;
 
-  Future<void> pump(WidgetTester t, Widget page) async {
+  Future<void> pump(WidgetTester t, Widget page, {bool people = true}) async {
+    if (people) directory.applySync(_peopleBody());
     // A phone in portrait: the error view's retry sits low on the page.
     t.view.physicalSize = const Size(400, 900);
     t.view.devicePixelRatio = 1;
@@ -215,6 +195,7 @@ void main() {
             BlocProvider<PendingCubit>.value(value: pending),
             BlocProvider<UnreadBadgeCubit>.value(value: unread),
             BlocProvider<ContactsCubit>.value(value: contacts),
+            BlocProvider<DebtDirectoryCubit>.value(value: directory),
           ],
           child: MaterialApp(
             theme: ThemeData(extensions: [sweetTheme.lightColors]),
@@ -235,6 +216,8 @@ void main() {
 
   setUp(() {
     repo = _Repo();
+    directory = DebtDirectoryCubit(coordinator: testCoordinator());
+    addTearDown(directory.close);
     ToolbarToggleState.resetAll();
   });
 
@@ -270,7 +253,6 @@ void main() {
       t,
     ) async {
       await pump(t, const PersonalDebtsPage());
-      expect(repo.calls, ['people all=false side=null sort=oldest']);
       expect(find.text('Total outstanding'), findsOneWidget);
       // The tiles carry the BE's people counts + amounts.
       expect(find.text('To receive · 1 people'), findsOneWidget);
@@ -292,63 +274,64 @@ void main() {
       expect(registry.preset.mode, QuickCreateMode.debt);
     });
 
-    testWidgets('a tile filters by side (1 call); tap again clears', (t) async {
+    testWidgets('a tile filters by side at once; tap again clears', (t) async {
       await pump(t, const PersonalDebtsPage());
       await t.tap(find.text('To receive · 1 people'));
-      await t.pump(const Duration(milliseconds: 100));
-      expect(repo.calls.last, 'people all=false side=owed_to_me sort=oldest');
+      await t.pump();
+      expect(find.byType(PersonBalanceRow), findsOneWidget);
+      expect(find.text('Mom'), findsOneWidget);
       await t.tap(find.text('To receive · 1 people'));
-      await t.pump(const Duration(milliseconds: 100));
-      expect(repo.calls.last, 'people all=false side=null sort=oldest');
+      await t.pump();
+      expect(find.byType(PersonBalanceRow), findsNWidgets(3));
     });
 
-    testWidgets('"Show cleared" = 1 call with all=true', (t) async {
+    testWidgets('"Show cleared" turns all on, with no request', (t) async {
       await pump(t, const PersonalDebtsPage());
       await t.tap(find.byType(ToolbarToggleButton));
       await t.pumpAndSettle();
       await t.tap(find.widgetWithText(AppChip, 'Show cleared'));
-      await t.pump(const Duration(milliseconds: 100));
-      expect(repo.calls.last, 'people all=true side=null sort=oldest');
+      await t.pump();
+      final cubit = t
+          .element(find.byType(ListPageBody))
+          .read<DebtPeopleCubit>();
+      expect(cubit.state.all, isTrue);
+      expect(repo.calls, isEmpty);
     });
 
-    testWidgets('the sort chip sends sort= (1 call)', (t) async {
+    testWidgets('the sort chip sorts on the device', (t) async {
       await pump(t, const PersonalDebtsPage());
       await t.tap(find.byType(ToolbarToggleButton));
       await t.pumpAndSettle();
       await t.tap(find.text('Longest owed'));
       await t.pumpAndSettle();
       await t.tap(find.text('Largest'));
-      await t.pump(const Duration(milliseconds: 100));
-      expect(repo.calls.last, 'people all=false side=null sort=amount');
+      await t.pump();
+      final cubit = t
+          .element(find.byType(ListPageBody))
+          .read<DebtPeopleCubit>();
+      expect(cubit.state.sort, DebtPeopleSort.amount);
+      expect(repo.calls, isEmpty);
     });
 
-    testWidgets('a failed load → full-page error; retry loads', (t) async {
-      repo.failPeople = const ApiException(
-        code: 'INTERNAL',
-        message: 'boom',
-        statusCode: 500,
+    testWidgets('a failed load → full-page error; the sync landing fills it', (
+      t,
+    ) async {
+      directory.syncFailed(
+        const ApiException(code: 'INTERNAL', message: 'boom', statusCode: 500),
       );
-      await pump(t, const PersonalDebtsPage());
+      await pump(t, const PersonalDebtsPage(), people: false);
       expect(find.byType(ErrorView), findsOneWidget);
       expect(find.byType(PersonBalanceRow), findsNothing);
-      await t.tap(
-        find.descendant(
-          of: find.byType(ErrorView),
-          matching: find.byWidgetPredicate((w) => w is ButtonStyleButton),
-        ),
-      );
+      directory.applySync(_peopleBody());
       await t.pump(const Duration(milliseconds: 100));
       expect(find.byType(PersonBalanceRow), findsNWidgets(3));
     });
 
     testWidgets('a failed reload keeps the rows on screen', (t) async {
       await pump(t, const PersonalDebtsPage());
-      repo.failPeople = const ApiException(
-        code: 'INTERNAL',
-        message: 'boom',
-        statusCode: 500,
+      directory.syncFailed(
+        const ApiException(code: 'INTERNAL', message: 'boom', statusCode: 500),
       );
-      await t.element(find.byType(ListPageBody)).read<DebtPeopleCubit>().load();
       await t.pump(const Duration(milliseconds: 100));
       expect(find.byType(ErrorView), findsNothing);
       expect(find.byType(PersonBalanceRow), findsNWidgets(3));
@@ -430,17 +413,9 @@ void main() {
       expect(registry.active()?.person?.contactId, 'c1');
     });
 
-    testWidgets('a saved debt (DebtBook) re-runs the page call', (t) async {
+    testWidgets('a debts change re-runs the page call', (t) async {
       await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
-      DebtBook.entrySaved(
-        DebtEntryWriteResult.fromJson({
-          'entry': _entry('e9', 'paid', 10, 'New'),
-          'person_balance': _person('c:c1', 'Mom', 210, contactId: 'c1'),
-          'previous_person_balance': null,
-          'transaction': null,
-          'account_balances': <Object>[],
-        }),
-      );
+      await changes.DataChanges.instance.changed({changes.DataTable.debts});
       await t.pump(const Duration(milliseconds: 100));
       expect(repo.calls, [
         'person c:c1 cycle=current',

@@ -5,6 +5,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/bloc/clearable_cubit.dart';
 import '../../features/accounts/presentation/cubit/accounts_cubit.dart';
+import '../../features/accounts/presentation/cubit/providers_cubit.dart';
+import '../../features/personal_debts/presentation/cubit/debt_directory_cubit.dart';
+import '../../features/projects/presentation/cubit/project_directory_cubit.dart';
+import '../../features/recurring/presentation/cubit/recurring_directory_cubit.dart';
+import '../../features/transactions/presentation/cubit/form_defaults_cubit.dart';
 import '../../features/budgets/presentation/cubit/budgets_cubit.dart';
 import '../../features/categories/presentation/cubit/categories_cubit.dart';
 import '../../features/contacts/presentation/cubit/contacts_cubit.dart';
@@ -94,6 +99,41 @@ class _CachePageState extends State<CachePage> {
         status: (s) => s.status.name,
         count: (s) => s.tags.length,
         load: (c) => c.load(),
+      ),
+      list<DebtDirectoryCubit, DebtDirectoryState>(
+        name: 'Debt people',
+        what: 'everyone with a debt entry, settled included (shared dataset)',
+        status: (s) => s.status.name,
+        count: (s) => s.people.length,
+        load: (c) => c.load(),
+      ),
+      list<ProjectDirectoryCubit, ProjectDirectoryState>(
+        name: 'Event directory',
+        what: 'every event the pickers choose from (shared dataset)',
+        status: (s) => s.status.name,
+        count: (s) => s.projects.length,
+        load: (c) => c.load(),
+      ),
+      list<RecurringDirectoryCubit, RecurringDirectoryState>(
+        name: 'Recurring directory',
+        what: 'every recurring setting (shared dataset)',
+        status: (s) => s.status.name,
+        count: (s) => s.rules.length,
+        load: (c) => c.load(),
+      ),
+      list<FormDefaultsCubit, FormDefaultsState>(
+        name: 'Form defaults',
+        what: 'the default wallet and fee category (shared dataset)',
+        status: (s) => s.status.name,
+        count: (s) => s.status == FormDefaultsStatus.loaded ? 1 : 0,
+        load: (c) => c.loadIfNeeded(),
+      ),
+      list<ProvidersCubit, ProvidersState>(
+        name: 'Payment providers',
+        what: 'banks and e-wallets (shared dataset)',
+        status: (s) => s.status.name,
+        count: (s) => s.providers.length,
+        load: (c) => c.loadIfNeeded(),
       ),
       list<TransactionsCubit, TransactionsState>(
         name: 'Transactions',

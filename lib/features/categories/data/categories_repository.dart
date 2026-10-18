@@ -9,27 +9,6 @@ class CategoriesRepository {
 
   final ApiClient _client;
 
-  Future<List<Category>> list({
-    String? type,
-    String status = 'active',
-    bool includeSystem = false,
-  }) async {
-    try {
-      final res = await _client.dio.get<Map<String, dynamic>>(
-        '/categories',
-        queryParameters: <String, dynamic>{
-          'type': ?type,
-          'status': status,
-          'include_system': includeSystem.toString(),
-        },
-      );
-      final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
-      return data.map(Category.fromJson).toList();
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
-
   Future<Category> create(Category draft) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(

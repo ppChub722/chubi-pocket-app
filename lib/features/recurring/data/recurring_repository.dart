@@ -47,38 +47,6 @@ class RecurringRepository {
     }
   }
 
-  Future<RecurringList> list({
-    RecurringFilter filter = RecurringFilter.current,
-    int page = 1,
-    String q = '',
-  }) => _call((dio) async {
-    final res = await dio.get<Map<String, dynamic>>(
-      '/recurring',
-      queryParameters: {
-        'status': filter.toJson(),
-        'page': page,
-        if (q.trim().isNotEmpty) 'q': q.trim(),
-      },
-    );
-    final body = res.data!;
-    final counts = body['counts'];
-    final p = body['pagination'] as Map<String, dynamic>?;
-    return RecurringList(
-      items: [
-        for (final e in (body['data'] as List?) ?? const [])
-          Recurring.fromJson(e as Map<String, dynamic>),
-      ],
-      counts: {
-        if (counts is Map<String, dynamic>)
-          for (final e in counts.entries)
-            e.key: (e.value as num?)?.toInt() ?? 0,
-      },
-      page: (p?['page'] as num?)?.toInt() ?? 1,
-      totalPages: (p?['total_pages'] as num?)?.toInt() ?? 1,
-      summary: RecurringSummary.fromJson(body['summary']),
-    );
-  });
-
   Future<RecurringDetail> get(String id, {bool deletePreview = false}) =>
       _call((dio) async {
         final res = await dio.get<Map<String, dynamic>>(

@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bloc/clearable_cubit.dart';
+import '../../../../core/data/data_changes.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/saving_goals_repository.dart';
 import '../../domain/saving_goal.dart';
@@ -34,7 +35,6 @@ class SavingGoalsState extends Equatable {
     this.sort = SavingGoalsSort.created,
     this.status = SavingGoalsStatus.initial,
     this.error,
-    this.staleTick = 0,
   });
 
   final SavingGoalsOverview overview;
@@ -42,8 +42,6 @@ class SavingGoalsState extends Equatable {
   final SavingGoalsSort sort;
   final SavingGoalsStatus status;
   final ApiException? error;
-
-  final int staleTick;
 
   List<SavingGoal> get goals => overview.goals;
 
@@ -53,7 +51,6 @@ class SavingGoalsState extends Equatable {
     SavingGoalsSort? sort,
     SavingGoalsStatus? status,
     ApiException? error,
-    int? staleTick,
     bool clearError = false,
   }) => SavingGoalsState(
     overview: overview ?? this.overview,
@@ -61,32 +58,30 @@ class SavingGoalsState extends Equatable {
     sort: sort ?? this.sort,
     status: status ?? this.status,
     error: clearError ? null : (error ?? this.error),
-    staleTick: staleTick ?? this.staleTick,
   );
 
   @override
-  List<Object?> get props => [overview, filter, sort, status, error, staleTick];
+  List<Object?> get props => [overview, filter, sort, status, error];
 }
 
-class SavingGoalsCubit extends Cubit<SavingGoalsState> with Clearable {
+class SavingGoalsCubit extends Cubit<SavingGoalsState>
+    with Clearable, RefreshOnDataChange<SavingGoalsState> {
   SavingGoalsCubit({required SavingGoalsRepository repository})
     : _repo = repository,
-      super(const SavingGoalsState());
+      super(const SavingGoalsState()) {
+    refreshOn({DataTable.savingGoals}, () async {
+      if (state.status != SavingGoalsStatus.initial) await load(silent: true);
+    });
+  }
 
   final SavingGoalsRepository _repo;
-  bool _stale = false;
 
   @override
   void clear() => emit(const SavingGoalsState());
 
-  void markStale({bool silent = false}) {
-    _stale = true;
-    if (!silent) emit(state.copyWith(staleTick: state.staleTick + 1));
-  }
-
   Future<void> loadIfNeeded() {
-    final fresh = state.status == SavingGoalsStatus.loaded && !_stale;
-    if (fresh || state.status == SavingGoalsStatus.loading) {
+    if (state.status == SavingGoalsStatus.loaded ||
+        state.status == SavingGoalsStatus.loading) {
       return Future.value();
     }
     return load();
@@ -102,9 +97,10 @@ class SavingGoalsCubit extends Cubit<SavingGoalsState> with Clearable {
     return load();
   }
 
-  Future<void> load() async {
-    _stale = false;
-    emit(state.copyWith(status: SavingGoalsStatus.loading, clearError: true));
+  Future<void> load({bool silent = false}) async {
+    if (!silent || state.status != SavingGoalsStatus.loaded) {
+      emit(state.copyWith(status: SavingGoalsStatus.loading, clearError: true));
+    }
     try {
       final overview = await _repo.list(
         status: state.filter.query,

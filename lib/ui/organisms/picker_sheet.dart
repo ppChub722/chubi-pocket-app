@@ -11,6 +11,8 @@ import '../atoms/ui_config.dart';
 import '../molecules/error_view.dart';
 import '../atoms/skeletons.dart';
 import '../atoms/add_tile.dart';
+import '../atoms/live_items.dart';
+import 'pull_to_refresh.dart';
 
 class PickerSheet extends StatefulWidget {
   const PickerSheet({
@@ -26,6 +28,7 @@ class PickerSheet extends StatefulWidget {
     this.onRetry,
     this.footer,
     this.header,
+    this.onRefresh,
     super.key,
   });
 
@@ -50,6 +53,9 @@ class PickerSheet extends StatefulWidget {
 
   /// Under the search, above the list, not scrolling with it (filter chips).
   final Widget? header;
+
+  /// Pull-to-refresh of the list; falls back to the sheet's [SheetRefreshScope].
+  final Future<void> Function()? onRefresh;
 
   @override
   State<PickerSheet> createState() => _PickerSheetState();
@@ -84,6 +90,22 @@ class _PickerSheetState extends State<PickerSheet> {
   void _follow() {
     final t = widget.searchController!.text;
     if (t != _query) setState(() => _query = t);
+  }
+
+  Widget _scrolling(BuildContext context, Widget body) {
+    final refresh = widget.onRefresh ?? SheetRefreshScope.of(context);
+    if (refresh == null) return SingleChildScrollView(child: body);
+    return MediaQuery.removePadding(
+      context: context,
+      removeTop: true,
+      child: PullToRefresh(
+        onRefresh: refresh,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: body,
+        ),
+      ),
+    );
   }
 
   @override
@@ -171,7 +193,7 @@ class _PickerSheetState extends State<PickerSheet> {
               ),
               child: widget.header,
             ),
-          Flexible(child: SingleChildScrollView(child: body)),
+          Flexible(child: _scrolling(context, body)),
           ?widget.footer,
         ],
       ),

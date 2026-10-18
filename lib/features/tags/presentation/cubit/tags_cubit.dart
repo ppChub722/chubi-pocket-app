@@ -2,6 +2,9 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bloc/clearable_cubit.dart';
+import '../../../../core/data/sync_backed.dart';
+import '../../../../core/data/sync_coordinator.dart';
+import '../../../../core/data/sync_set.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/tags_repository.dart';
 import '../../domain/tag.dart';
@@ -37,12 +40,48 @@ class TagsState extends Equatable {
 
 enum TagsStatus { initial, loading, loaded, error }
 
-class TagsCubit extends Cubit<TagsState> with Clearable {
-  TagsCubit({required TagsRepository repository})
-    : _repo = repository,
-      super(const TagsState());
+class TagsCubit extends Cubit<TagsState> with Clearable, SyncBacked<TagsState> {
+  TagsCubit({
+    required TagsRepository repository,
+    required SyncCoordinator coordinator,
+  }) : _repo = repository,
+       syncCoordinator = coordinator,
+       super(const TagsState()) {
+    bindSync();
+  }
 
   final TagsRepository _repo;
+
+  @override
+  final SyncCoordinator syncCoordinator;
+
+  @override
+  SyncSet get syncSet => SyncSet.tags;
+
+  @override
+  bool get syncLoading => state.status == TagsStatus.loading;
+
+  @override
+  void markSyncLoading() =>
+      emit(state.copyWith(status: TagsStatus.loading, clearError: true));
+
+  @override
+  void syncFailed(ApiException error) =>
+      emit(state.copyWith(status: TagsStatus.error, error: error));
+
+  @override
+  void applySync(Map<String, dynamic> body) {
+    emit(
+      state.copyWith(
+        tags: [
+          for (final t in (body['data'] as List? ?? const []))
+            Tag.fromJson(t as Map<String, dynamic>),
+        ],
+        status: TagsStatus.loaded,
+        clearError: true,
+      ),
+    );
+  }
 
   @override
   void clear() => emit(const TagsState());
@@ -55,22 +94,7 @@ class TagsCubit extends Cubit<TagsState> with Clearable {
     return load();
   }
 
-  Future<void> load() async {
-    emit(state.copyWith(status: TagsStatus.loading, clearError: true));
-    try {
-      final list = await _repo.list();
-      emit(
-        state.copyWith(tags: list, status: TagsStatus.loaded, clearError: true),
-      );
-    } catch (e, st) {
-      emit(
-        state.copyWith(
-          status: TagsStatus.error,
-          error: ApiException.from(e, st),
-        ),
-      );
-    }
-  }
+  Future<void> load() => loadSynced();
 
   Future<Tag> add(Tag draft) async {
     final created = await _repo.create(draft);

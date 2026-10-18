@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,6 +8,13 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'shell/keyboard_insets_guard.dart';
+import '../core/data/data_changes.dart';
+import '../core/data/sync_coordinator.dart';
+import '../core/data/sync_changes.dart';
+import '../core/data/sync_repository.dart';
+import '../core/data/sync_store.dart';
+import 'refresh/app_refresh.dart';
+import 'refresh/resume_overlay.dart';
 import '../core/network/api_client.dart';
 import '../core/network/connectivity_cubit.dart';
 import '../core/network/connection_cubit.dart';
@@ -15,6 +24,7 @@ import '../core/storage/secure_token_storage.dart';
 import '../ui/tokens/app/theme/theme_builder.dart';
 import '../features/accounts/data/accounts_repository.dart';
 import '../features/accounts/presentation/cubit/accounts_cubit.dart';
+import '../features/accounts/presentation/cubit/providers_cubit.dart';
 import '../features/app_version/data/app_version_repository.dart';
 import '../features/app_version/presentation/cubit/app_version_cubit.dart';
 import 'connection_shell.dart';
@@ -33,14 +43,19 @@ import '../features/home/presentation/cubit/dashboard_cubit.dart';
 import '../features/notifications/data/notifications_repository.dart';
 import '../features/notifications/presentation/cubit/unread_badge_cubit.dart';
 import '../features/personal_debts/data/personal_debts_repository.dart';
+import '../features/personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import '../features/projects/data/projects_repository.dart';
+import '../features/projects/presentation/cubit/project_directory_cubit.dart';
 import '../features/projects/presentation/cubit/projects_cubit.dart';
 import '../features/saving_goals/data/saving_goals_repository.dart';
 import '../features/saving_goals/presentation/cubit/saving_goals_cubit.dart';
 import '../features/recurring/data/recurring_repository.dart';
+import '../features/recurring/presentation/cubit/recurring_directory_cubit.dart';
 import '../features/tags/data/tags_repository.dart';
 import '../features/tags/presentation/cubit/tags_cubit.dart';
 import '../features/transactions/data/transactions_repository.dart';
+import '../features/transactions/presentation/cubit/form_defaults_cubit.dart';
+import '../features/transactions/presentation/cubit/tx_form_options_cubit.dart';
 import '../features/transactions/presentation/cubit/transactions_cubit.dart';
 import '../features/users/data/users_repository.dart';
 import '../features/preferences/presentation/cubit/font_id_cubit.dart';
@@ -78,6 +93,9 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
   late final RecurringRepository _recurringRepository;
   late final DashboardRepository _dashboardRepository;
   late final PendingRepository _pendingRepository;
+  late final SyncCoordinator _syncCoordinator;
+  late final RefreshRegistry _refreshRegistry;
+  late final AppRefresh _appRefresh;
   late final AuthCubit _authCubit;
   late final AppVersionCubit _versionCubit;
   late final AppLifecycleListener _lifecycle;
@@ -103,6 +121,22 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     _recurringRepository = RecurringRepository(client: _apiClient);
     _dashboardRepository = DashboardRepository(client: _apiClient);
     _pendingRepository = PendingRepository(client: _apiClient);
+    _syncCoordinator = SyncCoordinator(
+      repository: SyncRepository(client: _apiClient),
+      store: SyncStore(),
+    );
+    _refreshRegistry = RefreshRegistry();
+    _appRefresh = AppRefresh(
+      coordinator: _syncCoordinator,
+      registry: _refreshRegistry,
+    );
+    _apiClient.onSyncVersions = _syncCoordinator.onVersions;
+    _apiClient.onWriteWithoutVersions = (method, path, payload) =>
+        DataChanges.instance.changed(tablesForWrite(method, path, payload));
+    _syncCoordinator.onPageDataChanged = (keys) =>
+        DataChanges.instance.changed(tablesForSync(keys: keys));
+    _syncCoordinator.onDatasetsChanged = (sets) =>
+        DataChanges.instance.changed(tablesForSync(sets: sets));
     _authCubit = AuthCubit(
       repository: _authRepository,
       tokenStorage: _tokenStorage,
@@ -114,7 +148,17 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
       outdated: _apiClient.onOutdated,
       prefs: widget.prefs,
     );
-    _lifecycle = AppLifecycleListener(onResume: _versionCubit.check);
+    _lifecycle = AppLifecycleListener(
+      onHide: _appRefresh.onHidden,
+      onResume: () {
+        _versionCubit.check();
+        unawaited(
+          _appRefresh.onResumed(
+            signedIn: _authCubit.state is AuthAuthenticated,
+          ),
+        );
+      },
+    );
     _router = buildAppRouter(_authCubit, versionCubit: _versionCubit);
     _router.routerDelegate.addListener(
       () => NetworkRecorder.instance.noteRoute(
@@ -131,6 +175,8 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     _lifecycle.dispose();
     _versionCubit.close();
     _authCubit.close();
+    _appRefresh.dispose();
+    _syncCoordinator.dispose();
     _apiClient.dispose();
     super.dispose();
   }
@@ -140,6 +186,8 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider<ApiClient>.value(value: _apiClient),
+        RepositoryProvider<SyncCoordinator>.value(value: _syncCoordinator),
+        RepositoryProvider<AppRefresh>.value(value: _appRefresh),
         RepositoryProvider<SecureTokenStorage>.value(value: _tokenStorage),
         RepositoryProvider<AuthRepository>.value(value: _authRepository),
         RepositoryProvider<UsersRepository>.value(value: _usersRepository),
@@ -199,13 +247,22 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
             create: (ctx) => FontIdCubit(widget.prefs, ctx.read<LocaleCubit>()),
           ),
           BlocProvider<AccountsCubit>(
-            create: (_) => AccountsCubit(repository: _accountsRepository),
+            create: (_) => AccountsCubit(
+              repository: _accountsRepository,
+              coordinator: _syncCoordinator,
+            ),
           ),
           BlocProvider<CategoriesCubit>(
-            create: (_) => CategoriesCubit(repository: _categoriesRepository),
+            create: (_) => CategoriesCubit(
+              repository: _categoriesRepository,
+              coordinator: _syncCoordinator,
+            ),
           ),
           BlocProvider<TagsCubit>(
-            create: (_) => TagsCubit(repository: _tagsRepository),
+            create: (_) => TagsCubit(
+              repository: _tagsRepository,
+              coordinator: _syncCoordinator,
+            ),
           ),
           BlocProvider<TransactionsCubit>(
             create: (_) =>
@@ -221,7 +278,10 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
             },
           ),
           BlocProvider<ContactsCubit>(
-            create: (_) => ContactsCubit(repository: _contactsRepository),
+            create: (_) => ContactsCubit(
+              repository: _contactsRepository,
+              coordinator: _syncCoordinator,
+            ),
           ),
           BlocProvider<ProjectsCubit>(
             create: (_) => ProjectsCubit(repository: _projectsRepository),
@@ -238,6 +298,31 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
           BlocProvider<PendingCubit>(
             create: (_) => PendingCubit(repository: _pendingRepository),
           ),
+          BlocProvider<ProvidersCubit>(
+            create: (_) => ProvidersCubit(coordinator: _syncCoordinator),
+          ),
+          BlocProvider<DebtDirectoryCubit>(
+            create: (_) => DebtDirectoryCubit(coordinator: _syncCoordinator),
+          ),
+          BlocProvider<ProjectDirectoryCubit>(
+            create: (_) => ProjectDirectoryCubit(coordinator: _syncCoordinator),
+          ),
+          BlocProvider<RecurringDirectoryCubit>(
+            create: (_) =>
+                RecurringDirectoryCubit(coordinator: _syncCoordinator),
+          ),
+          BlocProvider<FormDefaultsCubit>(
+            create: (_) => FormDefaultsCubit(coordinator: _syncCoordinator),
+          ),
+          BlocProvider<TxFormOptionsCubit>(
+            create: (ctx) => TxFormOptionsCubit(
+              accounts: ctx.read<AccountsCubit>(),
+              categories: ctx.read<CategoriesCubit>(),
+              tags: ctx.read<TagsCubit>(),
+              projects: ctx.read<ProjectDirectoryCubit>(),
+              defaults: ctx.read<FormDefaultsCubit>(),
+            ),
+          ),
         ],
         child: Builder(
           builder: (context) {
@@ -253,6 +338,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
               listenWhen: _authIdentityChanged,
               listener: (ctx, state) {
                 _clearPerUserCubits(ctx);
+                _restartSync(state);
                 if (state is AuthAuthenticated) {
                   ctx.read<UnreadBadgeCubit>().start();
                 }
@@ -288,8 +374,14 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                       Theme.of(context).scaffoldBackgroundColor,
                     ),
                     child: KeyboardInsetsGuard(
-                      child: ConnectionShell(
-                        child: child ?? const SizedBox.shrink(),
+                      child: ResumeOverlay(
+                        busy: _appRefresh.busy,
+                        child: ConnectionShell(
+                          child: RefreshScope(
+                            registry: _refreshRegistry,
+                            child: child ?? const SizedBox.shrink(),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -319,6 +411,13 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     return null; // AuthInitial / AuthUnauthenticated / failure-of-unauth
   }
 
+  Future<void> _restartSync(AuthState state) async {
+    await _syncCoordinator.clear();
+    if (state is AuthAuthenticated) {
+      unawaited(_appRefresh.start(state.user.id));
+    }
+  }
+
   void _clearPerUserCubits(BuildContext ctx) {
     ctx.read<AccountsCubit>().clear();
     ctx.read<CategoriesCubit>().clear();
@@ -331,5 +430,10 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     ctx.read<DashboardCubit>().clear();
     ctx.read<PendingCubit>().clear();
     ctx.read<UnreadBadgeCubit>().clear();
+    ctx.read<ProvidersCubit>().clear();
+    ctx.read<DebtDirectoryCubit>().clear();
+    ctx.read<ProjectDirectoryCubit>().clear();
+    ctx.read<RecurringDirectoryCubit>().clear();
+    ctx.read<FormDefaultsCubit>().clear();
   }
 }

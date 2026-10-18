@@ -4,7 +4,6 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../notifications/domain/notification.dart';
 import '../domain/account.dart';
-import '../domain/payment_provider.dart';
 import '../domain/wallet_member.dart';
 
 class AccountsRepository {
@@ -12,39 +11,12 @@ class AccountsRepository {
 
   final ApiClient _client;
 
-  Future<List<PaymentProvider>>? _providers;
-
-  Future<List<PaymentProvider>> paymentProviders() {
-    return _providers ??= () async {
-      try {
-        final res = await _client.dio.get<Map<String, dynamic>>(
-          '/payment-providers',
-        );
-        final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
-        return data.map(PaymentProvider.fromJson).toList();
-      } on DioException catch (e) {
-        _providers = null;
-        throw ApiException.fromDioException(e);
-      }
-    }();
-  }
-
   Future<T> _guard<T>(Future<T> Function() call) async {
     try {
       return await call();
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
-  }
-
-  Future<AccountList> list({String status = 'active', String? type}) {
-    return _guard(() async {
-      final res = await _client.dio.get<Map<String, dynamic>>(
-        '/accounts',
-        queryParameters: <String, dynamic>{'status': status, 'type': ?type},
-      );
-      return AccountList.fromJson(res.data!);
-    });
   }
 
   Future<AccountDetail> getDetail(String id) {

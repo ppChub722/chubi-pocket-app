@@ -15,6 +15,7 @@ import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../shared/fake_sync.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -84,7 +85,7 @@ void main() {
     addTearDown(t.view.reset);
     opened.clear();
     final repo = _Repo();
-    final cubit = AccountsCubit(repository: repo);
+    final cubit = AccountsCubit(repository: repo, coordinator: testCoordinator());
     addTearDown(cubit.close);
     cubit.emit(
       AccountsState(accounts: [wallet], status: AccountsStatus.loaded),

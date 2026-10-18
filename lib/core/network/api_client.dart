@@ -50,6 +50,7 @@ class ApiClient {
     _dio.interceptors.add(_unauthorizedNotifier());
     _dio.interceptors.add(_outdatedNotifier());
     _dio.interceptors.add(_reachability());
+    _dio.interceptors.add(_syncVersionsReader());
   }
 
   final Dio _dio;
@@ -67,6 +68,14 @@ class ApiClient {
   final Future<String?> _appBuild;
 
   final Future<String?> _timezone;
+
+  /// Gets the `X-Sync-Versions` of every response that carries one (successful writes).
+  void Function(Map<String, String> versions)? onSyncVersions;
+
+  /// A successful write answered without versions, from a backend that does not stamp them yet.
+  void Function(String method, String path, Object? payload)?
+  onWriteWithoutVersions;
+  bool _backendStampsWrites = false;
 
   Dio get dio => _dio;
 
@@ -161,6 +170,29 @@ class ApiClient {
       e.type == DioExceptionType.receiveTimeout ||
       (e.type == DioExceptionType.unknown && e.error is! FormatException);
 
+  Interceptor _syncVersionsReader() => InterceptorsWrapper(
+    onResponse: (response, handler) {
+      final raw = response.headers.value(syncVersionsHeader);
+      final versions = raw == null ? null : parseSyncVersions(raw);
+      final options = response.requestOptions;
+      if (versions != null && versions.isNotEmpty) {
+        _backendStampsWrites = true;
+        onSyncVersions?.call(versions);
+      } else if (options.path == '/sync') {
+        _backendStampsWrites = true;
+      } else if (!_backendStampsWrites &&
+          options.method.toUpperCase() != 'GET' &&
+          (response.statusCode ?? 0) ~/ 100 == 2) {
+        onWriteWithoutVersions?.call(
+          options.method,
+          options.path,
+          options.data,
+        );
+      }
+      handler.next(response);
+    },
+  );
+
   Interceptor _outdatedNotifier() => InterceptorsWrapper(
     onError: (e, handler) {
       final data = e.response?.data;
@@ -184,4 +216,17 @@ class ApiClient {
     await _reachableController.close();
     _dio.close(force: true);
   }
+}
+
+const syncVersionsHeader = 'x-sync-versions';
+
+/// `name=version;name=version` → map; a malformed pair is skipped.
+Map<String, String> parseSyncVersions(String raw) {
+  final out = <String, String>{};
+  for (final pair in raw.split(';')) {
+    final i = pair.indexOf('=');
+    if (i <= 0) continue;
+    out[pair.substring(0, i).trim()] = pair.substring(i + 1).trim();
+  }
+  return out;
 }

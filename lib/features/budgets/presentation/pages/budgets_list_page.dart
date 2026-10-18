@@ -6,7 +6,6 @@ import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
-import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../domain/budget.dart';
 import '../../domain/budget_period.dart';
 import '../budget_labels.dart';
@@ -49,14 +48,8 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
       appBar: AppTopBar(title: l.budgetsTitle, showBack: true),
       extendBodyBehindAppBar: true,
       body: TabSwitchBody(
-        child: BlocListener<TransactionsCubit, TransactionsState>(
-          listenWhen: (a, b) =>
-              a.revision != b.revision ||
-              !identical(a.transactions, b.transactions),
-          listener: (c, _) => c.read<BudgetsCubit>().markStale(),
-          child: BlocBuilder<BudgetsCubit, BudgetsState>(
-            builder: (context, state) => _body(context, l, state),
-          ),
+        child: BlocBuilder<BudgetsCubit, BudgetsState>(
+          builder: (context, state) => _body(context, l, state),
         ),
       ),
     );

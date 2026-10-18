@@ -1,4 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../core/bloc/cubit_feed.dart';
+import '../../../core/data/sync_refresh.dart';
+import '../../../core/data/sync_set.dart';
+import '../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../categories/presentation/cubit/categories_cubit.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
@@ -19,18 +26,36 @@ Future<List<BudgetScopeCategory>?> showBudgetCategoriesPicker(
     for (final c in all)
       if (!c.isSystem && c.type == CategoryType.expense) c,
   ];
-  final picks = await showCategoryMultiPicker(
-    context,
-    rows: [
-      for (final c in pool)
+  List<CategoryPickerRow> rowsOf(List<Category> source) => [
+    for (final c in source)
+      if (!c.isSystem && c.type == CategoryType.expense)
         CategoryPickerRow(
           id: c.id,
           name: c.name,
           parentId: c.parentId,
           sortOrder: c.sortOrder,
-          iconCode: CategoryTree.resolveIconCode(c, all),
+          iconCode: CategoryTree.resolveIconCode(c, source),
         ),
-    ],
+  ];
+  CategoriesCubit? cache;
+  try {
+    cache = context.read<CategoriesCubit>();
+  } catch (_) {
+    cache = null; // no cache here (a test, the hub): the list as given
+  }
+  final feed = cache == null
+      ? null
+      : CubitFeed<CategoriesState, List<CategoryPickerRow>>(
+          cache,
+          (s) => rowsOf(s.categories),
+        );
+  final picks = await showCategoryMultiPicker(
+    context,
+    rows: rowsOf(all),
+    live: feed?.listenable,
+    onRefresh: cache == null
+        ? null
+        : syncRefreshOf(context, const {SyncSet.categories}),
     labels: CategoryMultiPickerLabels(
       title: l.multiPickCategoriesTitle,
       searchHint: l.multiPickSearch,
@@ -44,6 +69,7 @@ Future<List<BudgetScopeCategory>?> showBudgetCategoriesPicker(
         (id: s.category.id, includeChildren: s.includeChildren),
     ],
   );
+  await feed?.dispose();
   if (picks == null) return null;
   final byId = {for (final c in pool) c.id: c};
   final known = {for (final s in selected) s.category.id: s.category};
@@ -67,20 +93,37 @@ Future<List<String>?> showBudgetWalletsPicker(
   BuildContext context, {
   required List<Account> all,
   required List<String> selected,
-}) {
+}) async {
   final l = AppLocalizations.of(context)!;
-  return showAccountMultiPicker(
+  List<AccountMultiPickItem> itemsOf(List<Account> source) => [
+    for (final a in source)
+      if (!a.isArchived || selected.contains(a.id))
+        AccountMultiPickItem(
+          id: a.id,
+          name: a.name,
+          icon: IconRegistry.get(a.iconCode?.icon, fallback: AppIcons.wallet),
+          balance: a.showsBalance ? moneyString(context, a.balance) : null,
+        ),
+  ];
+  AccountsCubit? cache;
+  try {
+    cache = context.read<AccountsCubit>();
+  } catch (_) {
+    cache = null; // no cache here (a test, the hub): the list as given
+  }
+  final feed = cache == null
+      ? null
+      : CubitFeed<AccountsState, List<AccountMultiPickItem>>(
+          cache,
+          (s) => itemsOf(s.allAccounts),
+        );
+  final picked = await showAccountMultiPicker(
     context,
-    wallets: [
-      for (final a in all)
-        if (!a.isArchived || selected.contains(a.id))
-          AccountMultiPickItem(
-            id: a.id,
-            name: a.name,
-            icon: IconRegistry.get(a.iconCode?.icon, fallback: AppIcons.wallet),
-            balance: a.showsBalance ? moneyString(context, a.balance) : null,
-          ),
-    ],
+    wallets: itemsOf(all),
+    live: feed?.listenable,
+    onRefresh: cache == null
+        ? null
+        : syncRefreshOf(context, const {SyncSet.accounts}),
     labels: AccountMultiPickerLabels(
       title: l.multiPickWalletsTitle,
       searchHint: l.multiPickSearch,
@@ -90,6 +133,8 @@ Future<List<String>?> showBudgetWalletsPicker(
     ),
     initial: selected,
   );
+  await feed?.dispose();
+  return picked;
 }
 
 List<AccountRef> budgetWalletRefs(

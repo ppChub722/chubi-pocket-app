@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import '../../atoms/live_items.dart';
 
 import '../../atoms/app_icon_button.dart';
 import '../../atoms/app_switch.dart';
@@ -43,15 +46,24 @@ Future<List<CategoryMultiPick>?> showCategoryMultiPicker(
   List<CategoryMultiPick> initial = const [],
   int maxDepth = 2,
   bool showIncludeChildren = true,
+  ValueListenable<List<CategoryPickerRow>>? live,
+  Future<void> Function()? onRefresh,
 }) {
   return showAppSheetCustom<List<CategoryMultiPick>>(
     context,
-    builder: (_) => CategoryMultiPickerSheet(
-      rows: rows,
-      labels: labels,
-      initial: initial,
-      maxDepth: maxDepth,
-      showIncludeChildren: showIncludeChildren,
+    builder: (_) => SheetRefreshScope(
+      onRefresh: onRefresh,
+      child: LiveItems<List<CategoryPickerRow>>(
+        initial: rows,
+        live: live,
+        builder: (_, items) => CategoryMultiPickerSheet(
+          rows: items,
+          labels: labels,
+          initial: initial,
+          maxDepth: maxDepth,
+          showIncludeChildren: showIncludeChildren,
+        ),
+      ),
     ),
   );
 }

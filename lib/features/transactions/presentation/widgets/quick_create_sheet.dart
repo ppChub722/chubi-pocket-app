@@ -18,13 +18,11 @@ import '../../../accounts/presentation/wallet_errors.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
-import '../../../home/presentation/cubit/dashboard_cubit.dart';
 import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
-import '../../../personal_debts/presentation/cubit/debt_book.dart';
+import '../../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import '../../../projects/data/projects_repository.dart';
 import '../../../projects/domain/project.dart';
-import '../../../projects/presentation/cubit/projects_cubit.dart';
 import '../../../projects/presentation/widgets/project_common.dart';
 import '../../../pending/domain/pending_transaction.dart';
 import '../../../pending/presentation/cubit/pending_cubit.dart';
@@ -41,7 +39,6 @@ import '../transaction_edit.dart';
 import '../../../saving_goals/data/saving_goals_repository.dart';
 import '../../../saving_goals/domain/saving_entry.dart';
 import '../../../saving_goals/domain/saving_goals_overview.dart';
-import '../../../saving_goals/presentation/cubit/saving_goals_cubit.dart';
 import 'debt_entry_form.dart';
 import 'saving_entry_form.dart';
 import 'draft_form.dart';
@@ -121,17 +118,14 @@ Future<bool> showQuickCreateSheet(
   final fromOptions = project == null;
   TxFormOptionsCubit? options;
   if (fromOptions) {
-    options = TxFormOptionsCubit(context.read<TransactionsRepository>());
-    unawaited(options.load());
+    options = context.read<TxFormOptionsCubit>();
+    unawaited(options.loadIfNeeded());
   } else {
     context.read<AccountsCubit>().loadIfNeeded();
     context.read<CategoriesCubit>().loadIfNeeded();
     context.read<TagsCubit>().loadIfNeeded();
   }
-  if (!context.mounted) {
-    unawaited(options?.close());
-    return false;
-  }
+  if (!context.mounted) return false;
   final prefs = await SharedPreferences.getInstance();
   if (!context.mounted) return false;
   final saved = await showModalBottomSheet<bool>(
@@ -178,7 +172,6 @@ Future<bool> showQuickCreateSheet(
       );
     },
   );
-  unawaited(options?.close());
   return saved ?? false;
 }
 
@@ -577,7 +570,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         return;
       }
       accounts.patchBalances(result.accountBalances);
-      await TransactionsCubit.bookChanged();
       await _remember();
       navigator.pop(true);
       showAppSnackBarOn(messenger, l.quickSaved, tone: Tone.success);
@@ -654,8 +646,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
     final pending = context.read<PendingCubit>();
     final accounts = context.read<AccountsCubit>();
-    final goals = context.read<SavingGoalsCubit>();
-    final dashboard = context.read<DashboardCubit>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final id = widget.draft!.id;
@@ -671,9 +661,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         return;
       }
       accounts.patchBalances(result.accountBalances);
-      goals.markStale();
-      dashboard.markStale();
-      await TransactionsCubit.bookChanged();
       navigator.pop(true);
       showAppSnackBarOn(messenger, l.savingEntrySaved, tone: Tone.success);
     } on ApiException catch (e) {
@@ -859,7 +846,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final repo = context.read<PersonalDebtsRepository>();
     final accounts = context.read<AccountsCubit>();
     final txCubit = context.read<TransactionsCubit>();
-    final dashboard = context.read<DashboardCubit>();
+    final debtDirectory = context.read<DebtDirectoryCubit>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     String? text(TextEditingController c) =>
@@ -882,9 +869,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       accounts.patchBalances(r.accountBalances);
       final tx = r.transaction;
       if (tx != null) txCubit.patchRow(tx, afterWrite: true);
-      dashboard.markStale();
       widget.onDebtSaved?.call(r);
-      DebtBook.entrySaved(r);
+      debtDirectory.applyBalance(r.balance);
       navigator.pop(true);
       showAppSnackBarOn(messenger, l.debtEntrySaved, tone: Tone.success);
     } on ApiException catch (e) {
@@ -905,8 +891,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
     final repo = context.read<SavingGoalsRepository>();
     final accounts = context.read<AccountsCubit>();
-    final goals = context.read<SavingGoalsCubit>();
-    final dashboard = context.read<DashboardCubit>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final d = s.date;
@@ -924,8 +908,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         note: note.isEmpty ? null : note,
       );
       accounts.patchSavings(r.walletSavings);
-      goals.markStale();
-      dashboard.markStale();
       widget.onSavingSaved?.call(r);
       navigator.pop(true);
       showAppSnackBarOn(messenger, l.savingEntrySaved, tone: Tone.success);
@@ -1096,7 +1078,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final accounts = context.read<AccountsCubit>();
     final projects = context.read<ProjectsRepository>();
     final txRepo = context.read<TransactionsRepository>();
-    final projectsCubit = context.read<ProjectsCubit>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final splits = _c.isTransfer
@@ -1164,8 +1145,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
             warn = l.txSavedTagsFailed;
           }
         }
-        await TransactionsCubit.bookChanged();
-        unawaited(projectsCubit.load());
         accounts.patchBalances(result.accountBalances);
       }
       warn ??= await _linkAfterCreate(newTxId);

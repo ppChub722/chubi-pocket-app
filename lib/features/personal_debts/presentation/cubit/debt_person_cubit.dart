@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/data/data_changes.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/personal_debts_repository.dart';
 import '../../domain/debt_ledger.dart';
-import 'debt_book.dart';
 import 'debt_people_cubit.dart';
 
 class DebtEntryList extends Equatable {
@@ -134,7 +134,8 @@ class DebtPersonState extends Equatable {
   ];
 }
 
-class DebtPersonCubit extends Cubit<DebtPersonState> with DebtBookListener {
+class DebtPersonCubit extends Cubit<DebtPersonState>
+    with RefreshOnDataChange<DebtPersonState> {
   DebtPersonCubit({
     required PersonalDebtsRepository repository,
     required String personKey,
@@ -142,7 +143,9 @@ class DebtPersonCubit extends Cubit<DebtPersonState> with DebtBookListener {
     this.debounce = const Duration(milliseconds: 300),
   }) : _repo = repository,
        super(DebtPersonState(personKey: personKey)) {
-    DebtBook.attach(this);
+    refreshOn({DataTable.debts}, () async {
+      if (state.status == DebtLoadStatus.loaded) await load(silent: true);
+    });
   }
 
   final PersonalDebtsRepository _repo;
@@ -157,19 +160,13 @@ class DebtPersonCubit extends Cubit<DebtPersonState> with DebtBookListener {
 
   int _bump(DebtCycle c) => _gen[c] = _gen[c]! + 1;
 
-  @override
-  void onEntrySaved(DebtEntryWriteResult r) {
-    if (r.balance.key != _key || isClosed) return;
-    if (state.status == DebtLoadStatus.initial) return;
-    emit(state.copyWith(balance: r.balance));
-    load();
-  }
-
-  Future<void> load() async {
+  Future<void> load({bool silent = false}) async {
     _timer?.cancel();
     final gen = ++_loadGen;
     final curGen = _bump(DebtCycle.current);
-    emit(state.copyWith(status: DebtLoadStatus.loading, clearError: true));
+    if (!silent || state.status != DebtLoadStatus.loaded) {
+      emit(state.copyWith(status: DebtLoadStatus.loading, clearError: true));
+    }
     try {
       final d = await _repo.person(_key, perPage: perPage);
       if (isClosed || gen != _loadGen) return;
@@ -371,7 +368,6 @@ class DebtPersonCubit extends Cubit<DebtPersonState> with DebtBookListener {
 
   @override
   Future<void> close() {
-    DebtBook.detach(this);
     _timer?.cancel();
     return super.close();
   }

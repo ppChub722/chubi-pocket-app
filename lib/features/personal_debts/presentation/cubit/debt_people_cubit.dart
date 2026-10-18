@@ -4,9 +4,9 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../data/personal_debts_repository.dart';
+import '../../domain/debt_directory.dart';
 import '../../domain/debt_ledger.dart';
-import 'debt_book.dart';
+import 'debt_directory_cubit.dart';
 
 enum DebtLoadStatus { initial, loading, loaded, error }
 
@@ -93,149 +93,88 @@ class DebtPeopleState extends Equatable {
   ];
 }
 
-class DebtPeopleCubit extends Cubit<DebtPeopleState> with DebtBookListener {
-  DebtPeopleCubit({
-    required PersonalDebtsRepository repository,
-    this.perPage = 30,
-    this.debounce = const Duration(milliseconds: 300),
-  }) : _repo = repository,
-       super(const DebtPeopleState()) {
-    DebtBook.attach(this);
+/// The debts list page: the directory the app already holds, filtered, sorted
+/// and totalled on the device with the backend's own rules. No request of its own.
+class DebtPeopleCubit extends Cubit<DebtPeopleState> {
+  DebtPeopleCubit({required DebtDirectoryCubit directory})
+    : _directory = directory,
+      super(const DebtPeopleState()) {
+    _sub = directory.stream.listen((_) => _derive());
+    _derive();
   }
 
-  final PersonalDebtsRepository _repo;
-  final int perPage;
-  final Duration debounce;
+  final DebtDirectoryCubit _directory;
+  late final StreamSubscription<DebtDirectoryState> _sub;
 
-  Timer? _searchTimer;
-
-  /// Bumped per page-1 request: an older response never overwrites a newer
-  /// search / filter.
-  int _generation = 0;
-
-  Future<void> load() async {
-    _searchTimer?.cancel();
-    final gen = ++_generation;
+  void _derive({
+    String? q,
+    bool? all,
+    DebtPeopleSort? sort,
+    NetSide? side,
+    bool clearSide = false,
+  }) {
+    if (isClosed) return;
+    final d = _directory.state;
+    final next = state.copyWith(
+      q: q,
+      all: all,
+      sort: sort,
+      side: side,
+      clearSide: clearSide,
+    );
+    final items = filterPeople(
+      d.people,
+      q: next.q,
+      all: next.all,
+      side: next.side,
+      sort: next.sort,
+    );
     emit(
-      state.copyWith(
-        status: DebtLoadStatus.loading,
-        loadingMore: false,
-        clearError: true,
-        clearMoreError: true,
+      next.copyWith(
+        status: switch (d.status) {
+          DebtDirectoryStatus.initial => DebtLoadStatus.initial,
+          DebtDirectoryStatus.loading => DebtLoadStatus.loading,
+          DebtDirectoryStatus.loaded => DebtLoadStatus.loaded,
+          DebtDirectoryStatus.error => DebtLoadStatus.error,
+        },
+        items: items,
+        totals: d.totals,
+        paging: DebtPaging(
+          perPage: items.isEmpty ? 1 : items.length,
+          total: items.length,
+        ),
+        error: d.error,
+        clearError: d.error == null,
       ),
     );
-    try {
-      final page = await _repo.listPeople(
-        perPage: perPage,
-        q: state.q,
-        all: state.all,
-        sort: state.sort,
-        side: state.side,
-      );
-      if (gen != _generation || isClosed) return;
-      emit(
-        state.copyWith(
-          status: DebtLoadStatus.loaded,
-          items: page.items,
-          totals: page.totals,
-          paging: page.paging,
-        ),
-      );
-    } catch (e, st) {
-      if (gen != _generation || isClosed) return;
-      emit(
-        state.copyWith(
-          status: DebtLoadStatus.error,
-          error: ApiException.from(e, st),
-        ),
-      );
-    }
   }
 
+  /// Opens the page: syncs only if the app holds no debts yet.
+  Future<void> start() => _directory.loadIfNeeded();
+
+  /// Retry / pull-to-refresh.
+  Future<void> load() => _directory.load();
+
   void search(String q) {
-    if (q == state.q) return;
-    emit(state.copyWith(q: q));
-    _searchTimer?.cancel();
-    _searchTimer = Timer(debounce, load);
+    if (q != state.q) _derive(q: q);
   }
 
   void showAll(bool all) {
-    if (all == state.all) return;
-    emit(state.copyWith(all: all));
-    load();
+    if (all != state.all) _derive(all: all);
   }
 
   void setSort(DebtPeopleSort sort) {
-    if (sort == state.sort) return;
-    emit(state.copyWith(sort: sort));
-    load();
+    if (sort != state.sort) _derive(sort: sort);
   }
 
-  void toggleSide(NetSide side) {
-    if (state.side == side) {
-      emit(state.copyWith(clearSide: true));
-    } else {
-      emit(state.copyWith(side: side));
-    }
-    load();
-  }
+  void toggleSide(NetSide side) =>
+      state.side == side ? _derive(clearSide: true) : _derive(side: side);
 
-  Future<void> loadMore() async {
-    final s = state;
-    if (!s.hasMore || s.loadingMore || s.status != DebtLoadStatus.loaded) {
-      return;
-    }
-    final gen = _generation;
-    emit(s.copyWith(loadingMore: true, clearMoreError: true));
-    try {
-      final page = await _repo.listPeople(
-        page: s.paging.page + 1,
-        perPage: perPage,
-        q: s.q,
-        all: s.all,
-        sort: s.sort,
-        side: s.side,
-      );
-      if (gen != _generation || isClosed) return;
-      final seen = {for (final p in state.items) p.key};
-      emit(
-        state.copyWith(
-          loadingMore: false,
-          items: [
-            ...state.items,
-            for (final p in page.items)
-              if (!seen.contains(p.key)) p,
-          ],
-          totals: page.totals,
-          paging: page.paging,
-        ),
-      );
-    } catch (e, st) {
-      if (gen != _generation || isClosed) return;
-      emit(
-        state.copyWith(loadingMore: false, moreError: ApiException.from(e, st)),
-      );
-    }
-  }
-
-  void applyBalance(PersonBalance b) {
-    final i = state.items.indexWhere((p) => p.key == b.key);
-    if (i < 0) return;
-    final next = [...state.items]..[i] = b;
-    emit(state.copyWith(items: next));
-  }
-
-  @override
-  void onEntrySaved(DebtEntryWriteResult r) {
-    if (isClosed || state.status == DebtLoadStatus.initial) return;
-    applyBalance(r.balance);
-    load();
-  }
+  Future<void> loadMore() async {}
 
   @override
   Future<void> close() {
-    DebtBook.detach(this);
-    _searchTimer?.cancel();
+    _sub.cancel();
     return super.close();
   }
 }

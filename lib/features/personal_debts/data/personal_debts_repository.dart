@@ -8,32 +8,6 @@ class PersonalDebtsRepository {
   PersonalDebtsRepository({required ApiClient client}) : _client = client;
   final ApiClient _client;
 
-  Future<DebtPeoplePage> listPeople({
-    int page = 1,
-    int perPage = 30,
-    String? q,
-    bool all = false,
-    NetSide? side,
-    DebtPeopleSort sort = DebtPeopleSort.oldest,
-  }) async {
-    try {
-      final res = await _client.dio.get<Map<String, dynamic>>(
-        '/personal-debts/people',
-        queryParameters: <String, dynamic>{
-          'page': page.toString(),
-          'per_page': perPage.toString(),
-          if (q != null && q.trim().isNotEmpty) 'q': q.trim(),
-          if (all) 'all': 'true',
-          if (side != null && side != NetSide.even) 'side': side.wire,
-          'sort': sort.wire,
-        },
-      );
-      return DebtPeoplePage.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
-
   Future<DebtPersonDetail> person(
     String key, {
     int perPage = 30,

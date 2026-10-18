@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bloc/clearable_cubit.dart';
+import '../../../../core/data/data_changes.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/dashboard_repository.dart';
 import '../../domain/dashboard.dart';
@@ -32,16 +33,20 @@ class DashboardState extends Equatable {
   List<Object?> get props => [status, data, month, error];
 }
 
-class DashboardCubit extends Cubit<DashboardState> with Clearable {
+class DashboardCubit extends Cubit<DashboardState>
+    with Clearable, RefreshOnDataChange<DashboardState> {
   DashboardCubit({required DashboardRepository repository})
     : _repo = repository,
-      super(const DashboardState());
+      super(const DashboardState()) {
+    refreshOn({DataTable.dashboard}, () async {
+      if (state.status != DashboardStatus.initial) await load(silent: true);
+    });
+  }
 
   final DashboardRepository _repo;
 
   @override
   void clear() {
-    _stale?.cancel();
     _seq++;
     emit(const DashboardState());
   }
@@ -50,31 +55,20 @@ class DashboardCubit extends Cubit<DashboardState> with Clearable {
     if (state.status == DashboardStatus.initial) await load();
   }
 
-  Timer? _stale;
-
   int _seq = 0;
 
-  void markStale() {
-    _stale?.cancel();
-    _stale = Timer(const Duration(milliseconds: 400), load);
-  }
-
-  @override
-  Future<void> close() {
-    _stale?.cancel();
-    return super.close();
-  }
-
-  Future<void> load() async {
+  Future<void> load({bool silent = false}) async {
     final month = state.month;
     final seq = ++_seq;
-    emit(
-      DashboardState(
-        status: DashboardStatus.loading,
-        data: state.data,
-        month: month,
-      ),
-    );
+    if (!silent || state.data == null) {
+      emit(
+        DashboardState(
+          status: DashboardStatus.loading,
+          data: state.data,
+          month: month,
+        ),
+      );
+    }
     try {
       final data = await _repo.get(month: month);
       if (isClosed || seq != _seq) return;

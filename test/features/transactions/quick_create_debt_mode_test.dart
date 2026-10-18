@@ -238,7 +238,6 @@ void main() {
     expect(call['tag_ids'], isEmpty);
     expect(saved?.balance.net, 300);
     expect(find.byType(QuickCreateSheetShell), findsNothing);
-    verify(() => dashboard.markStale()).called(1);
   });
 
   testWidgets('switch off = ledger only: no wallet row, no tags, nothing of '

@@ -328,7 +328,6 @@ void main() {
     expect(u.description, isNull);
     expect(u.key, isNull);
     verify(() => accounts.patchBalances({'a1': 750})).called(1);
-    verify(() => dashboard.markStale()).called(1);
   });
 
   testWidgets('delete names the wallet tx too, then takes both', (t) async {

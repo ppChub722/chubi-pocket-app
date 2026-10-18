@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bloc/clearable_cubit.dart';
+import '../../../../core/data/data_changes.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/budgets_repository.dart';
 import '../../domain/budget.dart';
@@ -78,39 +79,31 @@ class BudgetsState extends Equatable {
 
 enum BudgetsStatus { initial, loading, loaded, error }
 
-class BudgetsCubit extends Cubit<BudgetsState> with Clearable {
+class BudgetsCubit extends Cubit<BudgetsState>
+    with Clearable, RefreshOnDataChange<BudgetsState> {
   BudgetsCubit({required BudgetsRepository repository})
     : _repo = repository,
-      super(const BudgetsState());
+      super(const BudgetsState()) {
+    refreshOn({DataTable.budgets}, () async {
+      if (state.status != BudgetsStatus.initial) await load(silent: true);
+    });
+  }
 
   final BudgetsRepository _repo;
-  Timer? _stale;
 
   int _request = 0;
 
   @override
   void clear() {
-    _stale?.cancel();
     _request++;
     emit(const BudgetsState());
   }
 
-  @override
-  Future<void> close() {
-    _stale?.cancel();
-    return super.close();
-  }
-
-  void markStale() {
-    if (state.status == BudgetsStatus.initial) return;
-    _stale?.cancel();
-    _stale = Timer(const Duration(milliseconds: 400), load);
-  }
-
-  Future<void> load() async {
-    _stale?.cancel();
+  Future<void> load({bool silent = false}) async {
     final request = ++_request;
-    emit(state.copyWith(status: BudgetsStatus.loading, clearError: true));
+    if (!silent || state.status != BudgetsStatus.loaded) {
+      emit(state.copyWith(status: BudgetsStatus.loading, clearError: true));
+    }
     try {
       final list = await _repo.list(
         filter: state.filter,

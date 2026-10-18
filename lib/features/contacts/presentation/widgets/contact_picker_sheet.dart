@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -5,7 +7,9 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart' as ui;
 import '../../../../ui/ui.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../personal_debts/data/personal_debts_repository.dart';
+import '../../../../core/data/sync_refresh.dart';
+import '../../../../core/data/sync_set.dart';
+import '../../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
 import '../cubit/contacts_cubit.dart';
@@ -60,27 +64,27 @@ Future<ContactPickResult?> showContactPickerSheet(
   String? unlinkAs,
   ContactPickerMode mode = ContactPickerMode.contacts,
   int initialFilter = 0,
-  Future<DebtPeoplePage>? people,
 }) async {
   final contacts = context.read<ContactsCubit>()..loadIfNeeded();
   final debts = ValueNotifier<List<PersonBalance>>(const []);
-  Future<DebtPeoplePage>? source = people;
-  if (source == null) {
-    try {
-      source = context.read<PersonalDebtsRepository>().listPeople(
-        all: true,
-        perPage: 100,
-      );
-    } catch (_) {
-      source = null; // no debts here (a test, the hub): contacts only
-    }
+  StreamSubscription<DebtDirectoryState>? debtsSub;
+  try {
+    final directory = context.read<DebtDirectoryCubit>();
+    debts.value = directory.state.people;
+    debtsSub = directory.stream.listen((s) => debts.value = s.people);
+    unawaited(directory.loadIfNeeded());
+  } catch (_) {
+    // no debts here (a test, the hub): contacts only
   }
-  source?.then((p) => debts.value = p.items, onError: (_) {});
   Contact? made;
   final names = <String, String>{};
   final outcome = await ui.showContactPicker(
     context,
     refresh: debts,
+    onRefresh: syncRefreshOf(context, const {
+      SyncSet.contacts,
+      SyncSet.debtPeople,
+    }),
     data: (ctx) {
       final l = AppLocalizations.of(ctx)!;
       final cubit = ctx.read<ContactsCubit>();
@@ -181,6 +185,7 @@ Future<ContactPickResult?> showContactPickerSheet(
       );
     },
   );
+  await debtsSub?.cancel();
   debts.dispose();
   return switch (outcome) {
     null => null,

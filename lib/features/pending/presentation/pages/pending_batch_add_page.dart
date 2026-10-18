@@ -9,7 +9,6 @@ import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
-import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../../transactions/presentation/widgets/draft_form.dart';
 import '../cubit/pending_cubit.dart';
 
@@ -89,7 +88,6 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
         final r = await pending.submit([for (final p in created) p.id]);
         if (r.submitted.isNotEmpty) {
           accounts.patchBalances(r.accountBalances);
-          await TransactionsCubit.bookChanged();
         }
         msg = l.pendingResult(r.submitted.length, r.failed.length);
         if (r.failed.isNotEmpty) tone = Tone.warning;

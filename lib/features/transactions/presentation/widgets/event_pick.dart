@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/data/sync_refresh.dart';
+import '../../../../core/data/sync_set.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -7,7 +9,7 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../projects/data/projects_repository.dart';
 import '../../../projects/domain/project.dart';
-import '../../../projects/presentation/cubit/projects_cubit.dart';
+import '../../../projects/presentation/cubit/project_directory_cubit.dart';
 import '../../domain/refs.dart';
 import '../cubit/tx_form_options_cubit.dart';
 
@@ -127,7 +129,7 @@ class _EventTargetLoaderState extends State<_EventTargetLoader> {
       if (opts != null) {
         opts.loadIfNeeded();
       } else {
-        context.read<ProjectsCubit>().loadIfNeeded();
+        context.read<ProjectDirectoryCubit>().loadIfNeeded();
       }
     });
   }
@@ -152,9 +154,11 @@ class _EventTargetLoaderState extends State<_EventTargetLoader> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final opts = maybeTxFormOptions(context);
-    final state = opts == null ? context.watch<ProjectsCubit>().state : null;
+    final state = opts == null
+        ? context.watch<ProjectDirectoryCubit>().state
+        : null;
     final projects = opts == null
-        ? state!.projects
+        ? state!.formEvents
         : [
             for (final e in opts.state.options?.events ?? const <EventRef>[])
               Project(
@@ -169,44 +173,49 @@ class _EventTargetLoaderState extends State<_EventTargetLoader> {
         .where((p) => p.isActive && p.id != widget.currentProjectId)
         .toList();
     final loading = opts == null
-        ? state!.status == ProjectsStatus.loading && active.isEmpty
+        ? state!.status == ProjectDirectoryStatus.loading && active.isEmpty
         : opts.state.isLoading;
     final loadError = opts == null
-        ? (state!.status == ProjectsStatus.error && active.isEmpty
+        ? (state!.status == ProjectDirectoryStatus.error && active.isEmpty
               ? state.error
               : null)
         : (opts.state.status == TxFormOptionsStatus.error && active.isEmpty
               ? opts.state.error
               : null);
-    return EventTargetSheet(
-      items: [
-        for (final p in active)
-          EventTargetItem(id: p.id, name: p.name, subtitle: _subtitle(l, p)),
-      ],
-      labels: EventTargetSheetLabels(
-        title: l.quickAddToEvent,
-        openTitle: l.quickEventOpenTitle,
-        newTitle: l.quickEventNew,
-        newRow: l.quickEventNewRow,
-        nameHint: l.quickEventNameLabel,
-        membersInfo: l.quickEventMembersInfo,
-        remove: l.txEventRemove,
-        createNamed: l.quickEventCreateNamed,
-      ),
-      suggestedName: widget.suggestedName,
-      selectedId: widget.selectedProjectId,
-      hasCurrent: widget.currentProjectId != null,
-      allowCreate: widget.allowCreate,
-      loading: loading,
-      error: loadError,
-      onRetry: opts == null ? context.read<ProjectsCubit>().load : opts.load,
-      onPicked: (pick) => Navigator.of(context).pop(switch (pick) {
-        EventPickNew(:final name) => NewEventTarget(name),
-        EventPickRemove() => const RemoveFromEvent(),
-        EventPickExisting(:final id) => ExistingEventTarget(
-          active.firstWhere((p) => p.id == id),
+    return SheetRefreshScope(
+      onRefresh: syncRefreshOf(context, const {SyncSet.projects}),
+      child: EventTargetSheet(
+        items: [
+          for (final p in active)
+            EventTargetItem(id: p.id, name: p.name, subtitle: _subtitle(l, p)),
+        ],
+        labels: EventTargetSheetLabels(
+          title: l.quickAddToEvent,
+          openTitle: l.quickEventOpenTitle,
+          newTitle: l.quickEventNew,
+          newRow: l.quickEventNewRow,
+          nameHint: l.quickEventNameLabel,
+          membersInfo: l.quickEventMembersInfo,
+          remove: l.txEventRemove,
+          createNamed: l.quickEventCreateNamed,
         ),
-      }),
+        suggestedName: widget.suggestedName,
+        selectedId: widget.selectedProjectId,
+        hasCurrent: widget.currentProjectId != null,
+        allowCreate: widget.allowCreate,
+        loading: loading,
+        error: loadError,
+        onRetry: opts == null
+            ? context.read<ProjectDirectoryCubit>().load
+            : opts.load,
+        onPicked: (pick) => Navigator.of(context).pop(switch (pick) {
+          EventPickNew(:final name) => NewEventTarget(name),
+          EventPickRemove() => const RemoveFromEvent(),
+          EventPickExisting(:final id) => ExistingEventTarget(
+            active.firstWhere((p) => p.id == id),
+          ),
+        }),
+      ),
     );
   }
 }

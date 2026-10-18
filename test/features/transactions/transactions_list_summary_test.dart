@@ -57,6 +57,8 @@ class _Repo extends Fake implements TransactionsRepository {
     List<String> categoryIds = const [],
     Set<TransactionType> types = const {},
     bool noTags = false,
+    double? amountMin,
+    double? amountMax,
     int page = 1,
     int perPage = 20,
     String sort = 'date_desc',

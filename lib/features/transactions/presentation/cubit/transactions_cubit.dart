@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bloc/clearable_cubit.dart';
+import '../../../../core/data/data_changes.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/transactions_repository.dart';
 import '../../domain/transaction.dart';
@@ -78,19 +79,18 @@ class TransactionsState extends Equatable {
 
 enum TransactionsStatus { initial, loading, loaded, error }
 
-class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
+class TransactionsCubit extends Cubit<TransactionsState>
+    with Clearable, RefreshOnDataChange<TransactionsState> {
   TransactionsCubit({required TransactionsRepository repository})
     : _repo = repository,
       super(const TransactionsState()) {
     _live.add(this);
+    refreshOn({DataTable.transactions}, refresh);
   }
 
   final TransactionsRepository _repo;
 
   static final Set<TransactionsCubit> _live = {};
-
-  static Future<void> bookChanged() =>
-      Future.wait([for (final c in _live.toList()) c.refresh()]);
 
   @override
   Future<void> close() {

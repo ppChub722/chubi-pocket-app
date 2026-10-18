@@ -16,7 +16,6 @@ import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
 import '../../../transactions/domain/transaction.dart' show EmbeddedTag;
-import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
@@ -372,7 +371,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         deleteLinkedTxs: withTxs,
       );
       accounts.patchBalances(balances);
-      if (withTxs) await TransactionsCubit.bookChanged();
       if (!mounted) return;
       showAppSnackBar(context, l.projectDeleted, tone: Tone.success);
       commitSaved(working);
