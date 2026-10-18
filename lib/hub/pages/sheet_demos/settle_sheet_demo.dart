@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../features/accounts/domain/account.dart';
 import '../../../features/accounts/domain/account_type.dart';
-import '../../../features/accounts/presentation/widgets/wallet_pick_card.dart';
 import '../../../ui/ui.dart';
 
 /// Demo of [showSettleSheet] for the hub: buttons that open it with sample

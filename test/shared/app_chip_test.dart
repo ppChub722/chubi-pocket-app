@@ -58,28 +58,33 @@ void main() {
   ];
 
   for (final size in ChipSize.values) {
-    testWidgets('every variant is ${size.height} high at ${size.name}', (
-      t,
-    ) async {
-      final keys = <Key>[];
-      final chips = [
-        for (final (i, c) in variants(size).indexed)
-          KeyedSubtree(key: Key('v$i'), child: c),
-      ];
-      keys.addAll(chips.map((c) => c.key!));
-      await pump(
-        t,
-        Wrap(
-          spacing: 4,
-          runSpacing: 4,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: chips,
-        ),
-      );
-      for (final k in keys) {
-        expect(t.getSize(find.byKey(k)).height, size.height, reason: '$k');
-      }
-    });
+    testWidgets(
+      'every variant is ${ControlSizes.fallback.heightOf(size)} high at ${size.name}',
+      (t) async {
+        final keys = <Key>[];
+        final chips = [
+          for (final (i, c) in variants(size).indexed)
+            KeyedSubtree(key: Key('v$i'), child: c),
+        ];
+        keys.addAll(chips.map((c) => c.key!));
+        await pump(
+          t,
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: chips,
+          ),
+        );
+        for (final k in keys) {
+          expect(
+            t.getSize(find.byKey(k)).height,
+            ControlSizes.fallback.heightOf(size),
+            reason: '$k',
+          );
+        }
+      },
+    );
   }
 
   testWidgets('selected tints border + fill in its colour; unselected grey', (
@@ -182,7 +187,12 @@ void main() {
         mainAxisSize: MainAxisSize.min,
         children: [
           AppChip(label: 'Groceries', dashed: true),
-          AppChip(label: 'Groceries', dashed: true, selected: true, inset: true),
+          AppChip(
+            label: 'Groceries',
+            dashed: true,
+            selected: true,
+            inset: true,
+          ),
         ],
       ),
     );
@@ -203,7 +213,7 @@ void main() {
     await t.tapAt(box.topCenter - const Offset(0, 12));
     expect(taps, 1);
     // The layout is untouched.
-    expect(box.height, ChipSize.chip.height);
+    expect(box.height, ControlSizes.fallback.chip);
   });
 
   testWidgets('a display chip has no extended target', (t) async {
@@ -226,7 +236,10 @@ void main() {
 
   testWidgets('dashed draws a dashed outline, same height', (t) async {
     await pump(t, const AppChip(label: 'เลือกกระเป๋า', dashed: true));
-    expect(t.getSize(find.byType(AppChip)).height, ChipSize.control.height);
+    expect(
+      t.getSize(find.byType(AppChip)).height,
+      ControlSizes.fallback.control,
+    );
     expect(find.byType(DashedRectBorder), findsOneWidget);
   });
 

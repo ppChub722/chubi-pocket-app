@@ -31,8 +31,7 @@ class _SplashPageState extends State<SplashPage> {
       if (mounted) {
         setState(() => _version = 'v${info.version} (${info.buildNumber})');
       }
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   Future<void> _kickoff() async {

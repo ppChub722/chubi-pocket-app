@@ -1,3 +1,4 @@
+import '../../tokens/hero_metrics.dart';
 import 'package:flutter/material.dart';
 
 import '../../atoms/app_input.dart';
@@ -16,12 +17,13 @@ class EntryCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final control = ChipSize.control.height;
+    final control = ChipSize.control.heightOf(context);
+    final hero = HeroMetrics.of(context);
     final label = editing
         ? AppInputSize.scaled(context, AppInputSize.labelRow)
         : 0.0;
     final value = AppInputSize.scaled(context, AppInputSize.hero.valueRow);
-    const top = HeroSpacing.controlHeight;
+    final top = control;
     Widget pill({double? width, double height = 0}) => SkeletonBox(
       width: width,
       height: height == 0 ? control : height,
@@ -30,7 +32,8 @@ class EntryCardSkeleton extends StatelessWidget {
     return HeroSurface(
       style: const HeroStyle.plain(),
       child: HeroContent(
-        padding: HeroSpacing.tight,
+        padding: hero.padding,
+        rowGap: hero.gap,
         rows: [
           Row(
             children: [
@@ -62,7 +65,7 @@ class EntryCardSkeleton extends StatelessWidget {
             Column(
               children: [
                 for (var i = 0; i < rows; i++) ...[
-                  if (i > 0) const SizedBox(height: HeroSpacing.itemGap),
+                  if (i > 0) SizedBox(height: hero.itemGap),
                   pill(),
                 ],
               ],

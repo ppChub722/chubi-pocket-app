@@ -1,10 +1,10 @@
+import '../tokens/hero_metrics.dart';
 import 'package:flutter/material.dart';
 
 import '../atoms/list_break.dart';
 import '../atoms/skeleton_box.dart';
 import '../atoms/skeletons.dart';
 import '../molecules/detail_rows.dart';
-import '../molecules/hero_shell.dart';
 import '../molecules/hero_style.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
@@ -140,7 +140,7 @@ class ListPageSkeleton extends StatelessWidget {
   final double rowDividerIndent;
   final ListSkeletonShape? shape;
 
-  Widget _grid(ListSkeletonShape s) {
+  Widget _grid(BuildContext context, ListSkeletonShape s) {
     const inset = EdgeInsets.symmetric(horizontal: AppSpacing.lg);
     return Padding(
       padding: inset,
@@ -156,8 +156,8 @@ class ListPageSkeleton extends StatelessWidget {
               alignment: AlignmentDirectional.centerEnd,
               child: SkeletonBox(
                 width: 120,
-                height: ChipSize.chip.height,
-                borderRadius: ChipSize.chip.height / 2,
+                height: ChipSize.chip.heightOf(context),
+                borderRadius: ChipSize.chip.heightOf(context) / 2,
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -190,7 +190,7 @@ class ListPageSkeleton extends StatelessWidget {
       return ListView(
         physics: const NeverScrollableScrollPhysics(),
         padding: padding,
-        children: [if (toolbar) const ListToolbarSkeleton(), _grid(s)],
+        children: [if (toolbar) const ListToolbarSkeleton(), _grid(context, s)],
       );
     }
     final rows = s?.rows ?? this.rows;
@@ -230,7 +230,7 @@ class HeroSkeleton extends StatelessWidget {
           ? [
               SkeletonBox(
                 width: 84,
-                height: ChipSize.control.height,
+                height: ChipSize.control.heightOf(context),
                 borderRadius: 20,
               ),
             ]
@@ -252,7 +252,11 @@ class TagsStripSkeleton extends StatelessWidget {
     return Row(
       children: [
         for (final w in const [64.0, 84.0, 56.0]) ...[
-          SkeletonBox(width: w, height: ChipSize.chip.height, borderRadius: 14),
+          SkeletonBox(
+            width: w,
+            height: ChipSize.chip.heightOf(context),
+            borderRadius: 14,
+          ),
           const SizedBox(width: AppSpacing.xs),
         ],
       ],
@@ -367,7 +371,7 @@ class DetailPageSkeleton extends StatelessWidget {
       ),
       children: [
         const HeroSkeleton(),
-        const SizedBox(height: HeroSpacing.after),
+        SizedBox(height: HeroMetrics.of(context).after),
         if (tags) ...const [
           TagsStripSkeleton(),
           SizedBox(height: AppSpacing.md),

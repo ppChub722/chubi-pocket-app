@@ -51,7 +51,7 @@ void main() {
     );
     final edit = find.byType(CardActionButton);
     expect(edit, findsOneWidget);
-    expect(t.getSize(edit).width, CardActionButton.size);
+    expect(t.getSize(edit).width, ControlSizes.fallback.control);
     await t.tap(edit);
     expect(tapped, isTrue);
   });

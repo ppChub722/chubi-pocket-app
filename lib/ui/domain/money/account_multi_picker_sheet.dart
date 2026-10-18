@@ -86,6 +86,7 @@ class _AccountMultiPickerSheetState extends State<AccountMultiPickerSheet> {
     return PickerSheet(
       title: l.title,
       searchable: widget.wallets.length > 8,
+      searchToggle: true,
       searchHint: l.searchHint,
       footer: PickerConfirmBar(
         label: l.confirm(_picked.length),

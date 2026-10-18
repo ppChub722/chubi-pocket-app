@@ -52,8 +52,7 @@ class AuthRepository {
   Future<void> logout() async {
     try {
       await _client.dio.post<void>('/auth/logout');
-    } on DioException catch (_) {
-    }
+    } on DioException catch (_) {}
   }
 
   Future<void> changePassword({

@@ -101,7 +101,12 @@ class _PersonViewState extends State<_PersonView> {
   Future<void> _linkToContact() async {
     final l = AppLocalizations.of(context)!;
     final name = _name(_cubit.state);
-    final picked = await showContactPickerSheet(context, allowFreeText: false);
+    // Linking a name to a contact: opens on the contacts tab.
+    final picked = await showContactPickerSheet(
+      context,
+      allowFreeText: false,
+      initialFilter: ContactPickerTabs.contactsContacts,
+    );
     if (picked is! ContactPicked || !mounted) return;
     final contact = picked.contact;
     setState(() => _linking = true);

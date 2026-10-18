@@ -56,7 +56,8 @@ Widget buildChipPage(BuildContext context) => Column(
           for (final t in AppChipTone.values) (t.name, t),
         ]),
         PlayChoice<ChipSize>('size', [
-          for (final s in ChipSize.values) ('${s.name} ${s.height.round()}', s),
+          for (final s in ChipSize.values)
+            ('${s.name} ${ControlSizes.fallback.heightOf(s).round()}', s),
         ], initial: ChipSize.control),
         PlayChoice<AppChipTrailing>('trailing', [
           for (final t in AppChipTrailing.values) (t.name, t),
@@ -119,7 +120,7 @@ class _SizeMatrix extends StatelessWidget {
           SizedBox(
             width: 64,
             child: Text(
-              '$name ${s.height.round()}',
+              '$name ${s.heightOf(context).round()}',
               style: textTheme.labelSmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),

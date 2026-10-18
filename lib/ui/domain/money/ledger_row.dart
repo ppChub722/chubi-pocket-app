@@ -11,11 +11,7 @@ import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';
 import 'money_text.dart';
 
-enum LedgerDirection {
-  paid,
-
-  received,
-}
+enum LedgerDirection { paid, received }
 
 class LedgerRow extends StatelessWidget {
   const LedgerRow({

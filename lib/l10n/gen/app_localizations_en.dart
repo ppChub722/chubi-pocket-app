@@ -4232,6 +4232,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactPickerEmptyPlain => 'No contacts yet';
 
   @override
+  String get contactPickerFilterAll => 'All';
+
+  @override
+  String get contactPickerFilterContacts => 'Contacts';
+
+  @override
+  String get contactPickerFilterNotInContacts => 'Not in contacts';
+
+  @override
+  String get contactPickerFilterOwing => 'Owing';
+
+  @override
+  String get contactPickerFilterNoDebt => 'No debt';
+
+  @override
+  String get contactPickerNoMatch => 'No one matches';
+
+  @override
+  String get contactPickerTypeName => 'New name';
+
+  @override
   String get txSplitNameHint => 'Name';
 
   @override
@@ -4593,9 +4614,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get savingEntryGoalLabel => 'Saving goal';
-
-  @override
-  String get savingEntryWalletOptional => 'Pick a wallet (optional)';
 
   @override
   String get debtEntrySaved => 'Debt saved';

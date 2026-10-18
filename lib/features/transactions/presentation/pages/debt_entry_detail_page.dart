@@ -12,7 +12,6 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../../accounts/presentation/widgets/wallet_pick_card.dart';
 import '../../../home/presentation/cubit/dashboard_cubit.dart';
 import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';

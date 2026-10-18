@@ -200,8 +200,7 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
           clearError: true,
         ),
       );
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   Future<TransactionsPage> _fetch(_ListQuery f, {required int page}) =>

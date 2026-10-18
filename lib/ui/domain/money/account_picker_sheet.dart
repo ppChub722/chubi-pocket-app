@@ -105,6 +105,7 @@ class AccountPickerSheet extends StatelessWidget {
     return PickerSheet(
       title: labels.title,
       searchable: wallets.length > 8,
+      searchToggle: true,
       footer: onCreate != null
           ? PickerCreateRow(label: labels.create, onTap: () => _create(context))
           : null,

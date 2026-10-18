@@ -1,8 +1,8 @@
+import '../tokens/hero_metrics.dart';
 import 'package:flutter/material.dart';
 
 import '../molecules/detail_meta.dart';
 import '../molecules/detail_rows.dart';
-import '../molecules/hero_shell.dart';
 import '../organisms/pull_to_refresh.dart';
 import '../tokens/app_spacing.dart';
 import 'edit_mode_scope.dart';
@@ -90,7 +90,10 @@ class DetailPageBody extends StatelessWidget {
         bottomInset,
       ),
       children: [
-        if (hero != null) ...[hero!, const SizedBox(height: HeroSpacing.after)],
+        if (hero != null) ...[
+          hero!,
+          SizedBox(height: HeroMetrics.of(context).after),
+        ],
         if (tabBar != null) ...[tabBar!, const SizedBox(height: AppSpacing.md)],
         if (tags != null) ...[tags!, const SizedBox(height: AppSpacing.md)],
         ...buildSections(),

@@ -153,6 +153,7 @@ class _EventTargetSheetState extends State<EventTargetSheet> {
     return PickerSheet(
       title: l.title,
       searchable: active.length > 8,
+      searchToggle: true,
       loading: loading,
       error: error,
       onRetry: widget.onRetry,

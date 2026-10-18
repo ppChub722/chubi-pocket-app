@@ -1,7 +1,7 @@
+import '../tokens/hero_metrics.dart';
 import 'package:flutter/material.dart';
 
 import '../molecules/detail_meta.dart';
-import '../molecules/hero_shell.dart';
 import '../organisms/pull_to_refresh.dart';
 import '../tokens/app_spacing.dart';
 import 'edit_mode_scope.dart';
@@ -125,7 +125,7 @@ class DetailSections extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         for (final s in slots) ...[
-          const SizedBox(height: HeroSpacing.after),
+          SizedBox(height: HeroMetrics.of(context).after),
           s,
         ],
       ],

@@ -38,6 +38,7 @@ import 'pages/atoms_switch_check_divider_page.dart';
 import 'pages/molecules_bars_page.dart';
 import 'pages/molecules_rows_page.dart';
 import 'pages/organisms_reorder_charts_page.dart';
+import 'pages/organisms_app_hero_card_page.dart';
 import 'pages/organisms_hero_card_page.dart';
 import 'pages/organisms_section_hero_page.dart';
 import 'pages/templates_detail_page.dart';
@@ -516,18 +517,40 @@ final List<HubPage> hubPages = [
     summary:
         'The 0.4.0 detail hero: rows A–G, edit variant, and the DetailLayout slot order.',
     usedBy: 'every detail page (0.4.0)',
-    covers: [
-      'HeroCard',
-      'HeroNumber',
-      'HeroAmountField',
-      'HeroBar',
-      'HeroAlert',
-      'HeroValueLine',
-      'DetailLayout',
-      'DetailSections',
-      'DetailRecords',
-    ],
+    covers: ['HeroCard', 'DetailLayout', 'DetailSections', 'DetailRecords'],
     builder: buildHeroCardPage,
+  ),
+  const HubPage(
+    level: HubLevel.organisms,
+    slug: 'app-hero-card',
+    title: 'App hero card',
+    summary:
+        'THE hero: header · content · footer, view / edit / create, expanded / folded, and every piece a page builds its hero from.',
+    usedBy: 'transactions (list, detail, quick create), wallets (list, detail)',
+    covers: [
+      'AppHeroCard',
+      'AppHeroScope',
+      'AppHeroFoldButton',
+      'HeroCardMode',
+      'HeroHeader',
+      'HeroIdentity',
+      'HeroCaption',
+      'HeroNote',
+      'HeroNumber',
+      'HeroFields',
+      'HeroTiles',
+      'SummaryTileView',
+      'HeroBar',
+      'HeroValueLine',
+      'HeroAlert',
+      'HeroAmountField',
+      'StatusAmountLine',
+      'AmountText',
+      'MessageShareBox',
+      'HeroMetrics',
+      'ControlSizes',
+    ],
+    builder: buildAppHeroCardPage,
   ),
   const HubPage(
     level: HubLevel.organisms,

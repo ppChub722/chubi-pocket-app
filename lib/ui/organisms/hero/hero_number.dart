@@ -1,0 +1,104 @@
+import 'package:flutter/material.dart';
+
+import '../../tokens/app_spacing.dart';
+
+/// Where a [HeroNumber]'s label goes.
+enum HeroNumberLayout {
+  /// A small label above the number (detail pages).
+  stacked,
+
+  /// A bold label right before the number, on its baseline (a list summary:
+  /// "สุทธิ ฿1,234").
+  inline,
+}
+
+/// The big number of a hero: [value] (a money text, or any text) styled big
+/// in [color], an optional muted [target] ("/ ฿80,000 · 65%") after it.
+/// [small]: the folded card's size.
+class HeroNumber extends StatelessWidget {
+  const HeroNumber({
+    required this.value,
+    this.label,
+    this.color,
+    this.target,
+    this.onLabelTap,
+    this.layout = HeroNumberLayout.stacked,
+    this.small = false,
+    super.key,
+  });
+
+  final Widget value;
+  final String? label;
+  final Color? color;
+  final String? target;
+
+  /// Makes the label a link ("ต.ค. ใช้ไป · 12 รายการ ›").
+  final VoidCallback? onLabelTap;
+  final HeroNumberLayout layout;
+  final bool small;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final inline = layout == HeroNumberLayout.inline;
+    final big = (small ? text.titleLarge : text.headlineMedium)?.copyWith(
+      fontWeight: inline ? FontWeight.w800 : FontWeight.w700,
+      color: color,
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
+    Widget? labelText;
+    if (label != null) {
+      labelText = Text(
+        label!,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: inline
+            ? text.titleMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              )
+            : text.labelLarge?.copyWith(color: scheme.onSurfaceVariant),
+      );
+      if (onLabelTap != null) {
+        labelText = GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onLabelTap,
+          child: labelText,
+        );
+      }
+    }
+    final number = Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        if (inline && labelText != null) ...[
+          labelText,
+          const SizedBox(width: AppSpacing.sm),
+        ],
+        Flexible(
+          child: DefaultTextStyle.merge(style: big, child: value),
+        ),
+        if (target != null) ...[
+          SizedBox(width: inline ? AppSpacing.sm : AppSpacing.xs),
+          Flexible(
+            child: Text(
+              target!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: (inline ? text.bodyMedium : text.bodySmall)?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+    if (inline || labelText == null) return number;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [labelText, number],
+    );
+  }
+}

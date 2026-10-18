@@ -166,10 +166,22 @@ void main() {
     final a = TxFilters(period: p, wallets: [acc('a')]);
     expect(a.sameFiltersAs(TxFilters(period: p, wallets: [acc('a')])), isTrue);
     expect(a.sameFiltersAs(TxFilters(period: p, wallets: [acc('b')])), isFalse);
-    expect(a.sameFiltersAs(TxFilters(period: p, wallets: [acc('a')], noWallet: true)), isFalse);
+    expect(
+      a.sameFiltersAs(
+        TxFilters(period: p, wallets: [acc('a')], noWallet: true),
+      ),
+      isFalse,
+    );
     // "no wallet" next to a pick: two values on, one more than the base.
     final base = TxFilters(period: p);
-    expect(TxFilters(period: p, wallets: [acc('a')], noWallet: true).activeCount(base), 2);
+    expect(
+      TxFilters(
+        period: p,
+        wallets: [acc('a')],
+        noWallet: true,
+      ).activeCount(base),
+      2,
+    );
   });
 
   // ── Totals ────────────────────────────────────────────────────────

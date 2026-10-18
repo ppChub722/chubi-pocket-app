@@ -188,7 +188,6 @@ class AppLogger {
       }
       await current.writeAsString('', mode: FileMode.write);
       _bytes = 0;
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 }

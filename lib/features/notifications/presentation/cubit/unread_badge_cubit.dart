@@ -75,8 +75,7 @@ class UnreadBadgeCubit extends Cubit<int>
     try {
       final n = await _repo.unreadCount();
       if (!isClosed && n != state) emit(n);
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   @override

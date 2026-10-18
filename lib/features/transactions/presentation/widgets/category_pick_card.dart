@@ -3,10 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
-import '../../domain/category.dart';
-import '../../domain/category_tree.dart';
-import '../category_label.dart';
-import '../cubit/categories_cubit.dart';
+import '../../../categories/domain/category.dart';
+import '../../../categories/domain/category_tree.dart';
+import '../../../categories/presentation/category_label.dart';
+import '../../../categories/presentation/cubit/categories_cubit.dart';
 
 class CategoryPickCard extends StatelessWidget {
   const CategoryPickCard({

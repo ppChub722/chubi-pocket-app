@@ -1,10 +1,10 @@
+import '../../organisms/hero/status_amount_line.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/utils/currency_formatter.dart';
 import '../../atoms/app_chip.dart';
 import '../../tokens/app/app_colors.dart';
 import '../../tokens/app_spacing.dart';
-import '../../tokens/chip_size.dart';
 import 'money_text.dart';
 
 class DebtAmountLine extends StatelessWidget {
@@ -38,27 +38,11 @@ class DebtAmountLine extends StatelessWidget {
       );
     }
     final owedToMe = net > 0;
-    final color = owedToMe ? palette.income : palette.expense;
-    return Row(
-      children: [
-        AppChip(
-          label: owedToMe ? owedToMeLabel : iOweLabel,
-          tone: owedToMe ? AppChipTone.success : AppChipTone.danger,
-          selected: true,
-          size: ChipSize.mini,
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Flexible(
-          child: MoneyText(
-            net.abs(),
-            symbol: currencySymbol,
-            style: text.headlineMedium?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
+    return StatusAmountLine(
+      status: owedToMe ? owedToMeLabel : iOweLabel,
+      tone: owedToMe ? AppChipTone.success : AppChipTone.danger,
+      color: owedToMe ? palette.income : palette.expense,
+      amount: MoneyText(net.abs(), symbol: currencySymbol),
     );
   }
 }

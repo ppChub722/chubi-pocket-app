@@ -1,11 +1,1 @@
-enum AppInputType {
-  text,
-
-  amount,
-
-  number,
-
-  percent,
-
-  reference,
-}
+enum AppInputType { text, amount, number, percent, reference }

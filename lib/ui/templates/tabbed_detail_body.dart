@@ -1,9 +1,9 @@
+import '../tokens/hero_metrics.dart';
 import 'package:flutter/material.dart';
 
 import '../atoms/locked_in_edit.dart';
 import '../molecules/app_tab_bar.dart';
 import '../molecules/compact_hero_bar.dart';
-import '../molecules/hero_shell.dart';
 import '../molecules/pinned_tab_bar.dart';
 import '../tokens/app_durations.dart';
 import '../tokens/app_spacing.dart';
@@ -94,7 +94,9 @@ class _TabbedDetailBodyState<T> extends State<TabbedDetailBody<T>> {
           ),
         ),
         if (!w.editing) ...[
-          const SliverToBoxAdapter(child: SizedBox(height: HeroSpacing.after)),
+          SliverToBoxAdapter(
+            child: SizedBox(height: HeroMetrics.of(context).after),
+          ),
           SliverPersistentHeader(
             pinned: true,
             delegate: PinnedTabBarDelegate(

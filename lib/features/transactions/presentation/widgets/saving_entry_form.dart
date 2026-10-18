@@ -6,7 +6,6 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../../accounts/presentation/widgets/wallet_pick_card.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
 import '../../../saving_goals/data/saving_goals_repository.dart';
 import '../../../saving_goals/domain/saving_goal.dart';
@@ -156,7 +155,7 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
   Widget _walletCard(AppLocalizations l) => WalletPickCard(
     account: _c.account,
     label: l.transactionFormAccountLabel,
-    placeholder: l.savingEntryWalletOptional,
+    placeholder: l.quickPickWallet,
     dense: true,
     twoLine: true,
     editable: true,

@@ -13,8 +13,6 @@ class CardActionButton extends StatelessWidget {
     super.key,
   });
 
-  static const double size = AppIconButton.sizeHero;
-
   final IconData icon;
   final VoidCallback? onTap;
   final String? tooltip;

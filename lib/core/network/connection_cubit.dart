@@ -6,15 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'api_client.dart';
 
-enum ConnectionStatus {
-  online,
-
-  offline,
-
-  reconnecting,
-
-  backOnline,
-}
+enum ConnectionStatus { online, offline, reconnecting, backOnline }
 
 class ServerConnectionState extends Equatable {
   const ServerConnectionState({
@@ -140,8 +132,7 @@ class ConnectionCubit extends Cubit<ServerConnectionState> {
         _goOnline();
         return;
       }
-    } catch (_) {
-    }
+    } catch (_) {}
     if (isClosed || !state.isOffline) return;
     emit(
       ServerConnectionState(

@@ -2,13 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_spacing.dart';
 
-enum MilestoneState {
-  done,
-
-  next,
-
-  todo,
-}
+enum MilestoneState { done, next, todo }
 
 class MilestoneStep {
   const MilestoneStep({

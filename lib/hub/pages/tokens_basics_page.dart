@@ -207,13 +207,13 @@ Widget buildSizesPage(BuildContext context) {
         title: 'ChipSize — the three chip sizes',
         note:
             'mini 20 · dense list rows. chip 28 · display chips in cards, '
-            'rows and detail sections. control 40 · anything the user '
-            'operates, and every chip in a hero’s top row. One control height (40) across the app: control chips, ✏️ / top-bar buttons, the search capsule, top-bar pills, hero controls, dense inputs.',
+            'rows and detail sections. control 36 · anything the user '
+            'operates, and every chip in a hero’s top row. One control height (36, from ControlSizes in the theme) across the app: control chips, ✏️ / top-bar buttons, the search capsule, top-bar pills, hero controls, dense inputs.',
         child: HubRow(
           cells: [
             for (final s in ChipSize.values)
               HubCell(
-                caption: '${s.name} · ${s.height.toInt()}',
+                caption: '${s.name} · ${s.heightOf(context).toInt()}',
                 child: AppChip(label: 'Label', icon: AppIcons.tag, size: s),
               ),
           ],

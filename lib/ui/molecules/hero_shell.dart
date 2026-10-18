@@ -1,39 +1,29 @@
 import 'package:flutter/material.dart';
 
-import '../tokens/app_spacing.dart';
 import '../tokens/chip_size.dart';
+import '../tokens/hero_metrics.dart';
 
-abstract final class HeroSpacing {
-  static const double padding = AppSpacing.lg;
-
-  static const EdgeInsets tight = EdgeInsets.all(AppSpacing.md);
-
-  static const double rowGap = AppSpacing.md;
-
-  static const double itemGap = AppSpacing.sm;
-
-  static const double controlHeight = ChipHeight.control;
-
-  static const double after = AppSpacing.lg;
-}
-
+/// A hero card's inside: the theme's inset ([HeroMetrics.padding]) all round,
+/// [rows] stacked [HeroMetrics.gap] apart (null rows skipped; a [HeroRow]
+/// sets its own gap).
 class HeroContent extends StatelessWidget {
-  const HeroContent({
-    required this.rows,
-    this.padding = const EdgeInsets.all(HeroSpacing.padding),
-    this.rowGap = HeroSpacing.rowGap,
-    super.key,
-  });
+  const HeroContent({required this.rows, this.padding, this.rowGap, super.key});
 
   final List<Widget?> rows;
-  final EdgeInsetsGeometry padding;
-  final double rowGap;
+
+  /// Null = [HeroMetrics.padding].
+  final EdgeInsetsGeometry? padding;
+
+  /// Null = [HeroMetrics.gap].
+  final double? rowGap;
 
   @override
   Widget build(BuildContext context) {
+    final metrics = HeroMetrics.of(context);
+    final gap = rowGap ?? metrics.gap;
     final shown = rows.whereType<Widget>().toList();
     return Padding(
-      padding: padding,
+      padding: padding ?? metrics.padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -42,11 +32,13 @@ class HeroContent extends StatelessWidget {
             if (i > 0)
               SizedBox(
                 height:
-                    (r is HeroRow ? r.gapBefore : null) ??
-                    (shown[i - 1] is HeroRow
-                        ? (shown[i - 1] as HeroRow).gapAfter
+                    (r is HeroSpacedRow
+                        ? (r as HeroSpacedRow).gapBefore
                         : null) ??
-                    rowGap,
+                    (shown[i - 1] is HeroSpacedRow
+                        ? (shown[i - 1] as HeroSpacedRow).gapAfter
+                        : null) ??
+                    gap,
               ),
             r,
           ],
@@ -56,7 +48,17 @@ class HeroContent extends StatelessWidget {
   }
 }
 
-class HeroRow extends StatelessWidget {
+/// A hero row that sets its own gap above / below (null = the card's).
+abstract interface class HeroSpacedRow {
+  double? get gapBefore;
+  double? get gapAfter;
+}
+
+/// A row of a hero card with its own gap: [gapBefore] / [gapAfter] replace
+/// the card's gap on that side (null = the card's). For a row that already
+/// carries air inside it — a fixed-height input row — so the space you see
+/// matches the card's inset instead of adding to it.
+class HeroRow extends StatelessWidget implements HeroSpacedRow {
   const HeroRow({
     required this.child,
     this.gapBefore,
@@ -65,13 +67,18 @@ class HeroRow extends StatelessWidget {
   });
 
   final Widget child;
+  @override
   final double? gapBefore;
+  @override
   final double? gapAfter;
 
   @override
   Widget build(BuildContext context) => child;
 }
 
+/// A hero's row of controls: [leading] from the left (wrapping), [trailing]
+/// on the right, [HeroMetrics.itemGap] between them, at least the theme's
+/// control height tall so it doesn't jump when a control comes or goes.
 class HeroTopRow extends StatelessWidget {
   const HeroTopRow({
     this.leading = const [],
@@ -84,22 +91,20 @@ class HeroTopRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final gap = HeroMetrics.of(context).itemGap;
     return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: HeroSpacing.controlHeight),
+      constraints: BoxConstraints(minHeight: ControlSizes.of(context).control),
       child: Row(
         children: [
           Expanded(
             child: Wrap(
-              spacing: HeroSpacing.itemGap,
-              runSpacing: HeroSpacing.itemGap,
+              spacing: gap,
+              runSpacing: gap,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: leading,
             ),
           ),
-          for (final t in trailing) ...[
-            const SizedBox(width: HeroSpacing.itemGap),
-            t,
-          ],
+          for (final t in trailing) ...[SizedBox(width: gap), t],
         ],
       ),
     );

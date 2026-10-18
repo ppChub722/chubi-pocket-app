@@ -1,7 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:chubi_pocket/core/network/api_exception.dart';
 import 'package:chubi_pocket/features/accounts/presentation/cubit/accounts_cubit.dart';
-import 'package:chubi_pocket/features/accounts/presentation/widgets/wallet_pick_card.dart';
 import 'package:chubi_pocket/features/auth/domain/user.dart';
 import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:chubi_pocket/features/categories/presentation/cubit/categories_cubit.dart';

@@ -3,17 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/color_contrast.dart';
 
-enum AppCardStyle {
-  plain,
-
-  bordered,
-
-  accent,
-
-  tinted,
-
-  flat,
-}
+enum AppCardStyle { plain, bordered, accent, tinted, flat }
 
 class AppCard extends StatelessWidget {
   const AppCard({
@@ -97,7 +87,10 @@ class AppCard extends StatelessWidget {
         : Padding(padding: padding!, child: child);
 
     if (style == AppCardStyle.tinted && glyph != null) {
+      // passthrough: a card given a fixed height keeps its content laid out in
+      // that height (centred by the child), glyph or not.
       body = Stack(
+        fit: StackFit.passthrough,
         children: [
           Positioned(
             right: -glyphSize * 0.16,

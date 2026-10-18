@@ -86,8 +86,7 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     try {
       final list = await _repo.list();
       emit(_fromList(list));
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   AccountsState _fromList(AccountList list) => state.copyWith(

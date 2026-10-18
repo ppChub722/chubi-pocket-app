@@ -6,7 +6,6 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../../accounts/presentation/widgets/wallet_pick_card.dart';
 import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
 import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
@@ -171,8 +170,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
         final known = page.items.where((x) => x.key == p.key).firstOrNull;
         _c.setPerson(p.withNet(known?.net ?? 0));
       }
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   Future<void> _pickPerson() async {
@@ -392,7 +390,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
                   : l.debtTitleHintReceived,
               flowRow: _flow(l),
             ),
-            const SizedBox(height: HeroSpacing.after),
+            SizedBox(height: HeroMetrics.of(context).after),
             if (_c.createTransaction) ...[
               TagChipRow(
                 selected: _c.tagIds,
@@ -422,128 +420,68 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
   }
 }
 
+/// "กับใคร": the contact picker in debt mode — every contact and every name
+/// from the debts at once, each with its balance; a new name can be typed.
 Future<DebtPick?> showDebtPersonPicker(
   BuildContext context, {
   DebtPick? selected,
 }) async {
-  final repo = context.read<PersonalDebtsRepository>();
   final l = AppLocalizations.of(context)!;
-  final symbol = debtCurrencySymbol(context);
-  final search = TextEditingController();
-  final people = repo.listPeople(all: true, perPage: 100);
-  try {
-    final r = await showAppSheetCustom<Object>(
-      context,
-      builder: (ctx) => FutureBuilder<DebtPeoplePage>(
-        future: people,
-        builder: (ctx, snap) => PickerSheet(
-          title: l.debtPersonPickerTitle,
-          searchable: true,
-          searchHint: l.debtsSearchHint,
-          searchController: search,
-          searchAutofocus: true,
-          loading: snap.connectionState != ConnectionState.done,
-          error: snap.error,
-          footer: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ListenableBuilder(
-                listenable: search,
-                builder: (ctx, _) {
-                  final typed = search.text.trim();
-                  final all = snap.data?.items ?? const <PersonBalance>[];
-                  final exists = all.any(
-                    (p) => p.person.name.toLowerCase() == typed.toLowerCase(),
-                  );
-                  if (typed.isEmpty || exists) return const SizedBox.shrink();
-                  return PickerCreateRow(
-                    label: l.debtPersonAddTyped(typed),
-                    onTap: () => Navigator.of(ctx).pop(
-                      DebtPick(
-                        key: debtPersonKey(name: typed),
-                        person: EmbeddedPerson(name: typed),
-                        net:
-                            all
-                                .where(
-                                  (p) => p.key == debtPersonKey(name: typed),
-                                )
-                                .firstOrNull
-                                ?.net ??
-                            0,
-                        typedName: typed,
-                      ),
-                    ),
-                  );
-                },
-              ),
-              PickerCreateRow(
-                label: l.debtPersonFromContacts,
-                onTap: () => Navigator.of(ctx).pop(const _FromContacts()),
-              ),
-            ],
-          ),
-          builder: (ctx, query) {
-            final all = snap.data?.items ?? const <PersonBalance>[];
-            final rows = query.isEmpty
-                ? all
-                : all
-                      .where((p) => p.person.name.toLowerCase().contains(query))
-                      .toList();
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (final p in rows)
-                  PersonBalanceRow(
-                    name: p.person.name,
-                    level: debtPersonLevel(p.person),
-                    iconCode: p.person.iconCode,
-                    net: p.net,
-                    subtitle: l.debtsOpenCount(p.openCount),
-                    owedToMeLabel: l.debtsOwedToMe,
-                    iOweLabel: l.debtsIOwe,
-                    settledLabel: l.debtSettledLabel,
-                    currencySymbol: symbol,
-                    selected: p.key == selected?.key,
-                    onTap: () => Navigator.of(
-                      ctx,
-                    ).pop(DebtPick(key: p.key, person: p.person, net: p.net)),
-                  ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-    if (r is DebtPick) return r;
-    if (r is _FromContacts && context.mounted) {
-      final c = await showContactPickerSheet(context, allowFreeText: false);
-      if (c is! ContactPicked) return null;
-      final key = debtPersonKey(contactId: c.contact.id);
-      PersonBalance? known;
-      try {
-        known = (await people).items.where((p) => p.key == key).firstOrNull;
-      } catch (_) {
-        known = null; // no list: a new person (balance 0)
-      }
+  final people = context.read<PersonalDebtsRepository>().listPeople(
+    all: true,
+    perPage: 100,
+  );
+  final key = selected?.key;
+  final r = await showContactPickerSheet(
+    context,
+    mode: ContactPickerMode.debts,
+    people: people,
+    allowCreate: true,
+    title: l.debtPersonPickerTitle,
+    selectedContactId: key == null
+        ? null
+        : (key.startsWith('c:') ? key.substring(2) : key),
+  );
+  Future<PersonBalance?> known(String key) async {
+    try {
+      return (await people).items.where((p) => p.key == key).firstOrNull;
+    } catch (_) {
+      return null; // no list: a new person (balance 0)
+    }
+  }
+
+  switch (r) {
+    case null:
+      return null;
+    case ContactPicked(:final contact):
+      final key = debtPersonKey(contactId: contact.id);
       return DebtPick(
         key: key,
         person: EmbeddedPerson(
-          name: c.contact.name,
-          contactId: c.contact.id,
-          iconCode: c.contact.iconCode,
-          linked: c.contact.isLinked,
-          linkedUserId: c.contact.linkedUser?.id,
+          name: contact.name,
+          contactId: contact.id,
+          iconCode: contact.iconCode,
+          linked: contact.isLinked,
+          linkedUserId: contact.linkedUser?.id,
         ),
-        net: known?.net ?? 0,
+        net: (await known(key))?.net ?? 0,
       );
-    }
-    return null;
-  } finally {
-    search.dispose();
+    case ContactNamePicked(:final name):
+      final key = debtPersonKey(name: name);
+      final p = await known(key);
+      return DebtPick(
+        key: key,
+        person: p?.person ?? EmbeddedPerson(name: name),
+        net: p?.net ?? 0,
+      );
+    case ContactNameTyped(:final name):
+      final key = debtPersonKey(name: name);
+      final p = await known(key);
+      return DebtPick(
+        key: key,
+        person: p?.person ?? EmbeddedPerson(name: name),
+        net: p?.net ?? 0,
+        typedName: name,
+      );
   }
-}
-
-class _FromContacts {
-  const _FromContacts();
 }

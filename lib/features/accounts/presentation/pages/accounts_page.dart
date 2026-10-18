@@ -294,37 +294,61 @@ class _AccountsPageState extends State<AccountsPage> {
     AccountsState state,
   ) {
     final t = state.totals;
-    return ListSummaryCard(
-      expanded: _summaryOpen,
-      caption:
-          '${l.accountsSummaryNet} · '
-          '${l.accountsSummaryWalletCount(state.accounts.length)}'
-          '${t.sharedCount > 0 ? ' ${l.accountsSummarySharedCount(t.sharedCount)}' : ''}',
+    final net = MoneyText(t.net == 0 ? 0 : t.net);
+    final tiles = _tiles(context, l, state);
+    return AppHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
-      actions: [
-        ListenableBuilder(
-          listenable: _search,
-          builder: (context, _) => ToolbarToggleButton(
-            state: _toolbarOpen,
-            filtered:
-                _search.text.isNotEmpty ||
-                _sort != _WalletSort.custom ||
-                _tile != null,
-            tooltip: l.commonSearch,
+      margin: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.xs,
+      ),
+      open: _summaryOpen,
+      header: HeroHeader(
+        leading: [
+          HeroCaption(
+            '${l.accountsSummaryNet} · '
+            '${l.accountsSummaryWalletCount(state.accounts.length)}'
+            '${t.sharedCount > 0 ? ' ${l.accountsSummarySharedCount(t.sharedCount)}' : ''}',
           ),
-        ),
-      ],
-      amount: t.net == 0 ? 0 : t.net,
-      tiles: _tiles(context, l, state),
-      infoLine: t.savedTotal > 0
-          ? Text(
+        ],
+        actions: [
+          const MoneyVisibilityToggle(),
+          ListenableBuilder(
+            listenable: _search,
+            builder: (context, _) => ToolbarToggleButton(
+              state: _toolbarOpen,
+              filtered:
+                  _search.text.isNotEmpty ||
+                  _sort != _WalletSort.custom ||
+                  _tile != null,
+              tooltip: l.commonSearch,
+            ),
+          ),
+        ],
+      ),
+      content: [
+        HeroNumber(value: net, layout: HeroNumberLayout.inline),
+        if (t.savedTotal > 0)
+          HeroNote(
+            child: Text(
               l.fpWalletsSavedLine(
                 _money(context, t.savedTotal),
                 _money(context, t.availableTotal),
               ),
-              style: Theme.of(context).textTheme.bodySmall,
-            )
-          : null,
+            ),
+          ),
+      ],
+      folded: [
+        HeroNumber(value: net, layout: HeroNumberLayout.inline, small: true),
+      ],
+      footer: [
+        if (tiles.isNotEmpty)
+          HeroTiles(
+            children: [for (final tile in tiles) SummaryTileView(tile: tile)],
+          ),
+      ],
     );
   }
 

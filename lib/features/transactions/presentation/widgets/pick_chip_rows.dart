@@ -138,7 +138,7 @@ class CategoryChipRow extends StatelessWidget {
                     onTap: onMore,
                   ),
           ...leading,
-          if (loading) ..._skeletonChips(),
+          if (loading) ..._skeletonChips(context),
           for (final c in [
             for (final id in ids)
               if (pickLabel == null || id != sel?.id) ?usable[id],
@@ -207,7 +207,7 @@ class TagChipRow extends StatelessWidget {
         maxLines: maxLines,
         chips: [
           ...leading,
-          if (loading) ..._skeletonChips(),
+          if (loading) ..._skeletonChips(context),
           for (final id in selected)
             if (byId[id] ?? known[id] case final t?)
               tagAppChip(
@@ -321,7 +321,7 @@ class WalletChipRow extends StatelessWidget {
                     onTap: onMore,
                   ),
           ...leading,
-          if (loading) ..._skeletonChips(),
+          if (loading) ..._skeletonChips(context),
           for (final a in [
             for (final id in ids)
               if (pickLabel == null || id != sel) ?byId[id],
@@ -362,9 +362,12 @@ class _EnsureLoadedState extends State<_EnsureLoaded> {
   Widget build(BuildContext context) => widget.child;
 }
 
-List<Widget> _skeletonChips({ChipSize size = ChipSize.control}) => [
+List<Widget> _skeletonChips(
+  BuildContext context, {
+  ChipSize size = ChipSize.control,
+}) => [
   for (final w in const [72.0, 56.0, 64.0])
-    SkeletonBox(width: w, height: size.height, borderRadius: 999),
+    SkeletonBox(width: w, height: size.heightOf(context), borderRadius: 999),
 ];
 
 List<String> _topUp(List<String> first, List<String> rest, int max) {

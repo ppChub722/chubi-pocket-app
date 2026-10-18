@@ -5,11 +5,7 @@ import '../../atoms/app_card.dart';
 import '../../tokens/app_spacing.dart';
 import '../money/money_text.dart';
 
-enum CloseGoalChoice {
-  toSpare,
-
-  backToWallets,
-}
+enum CloseGoalChoice { toSpare, backToWallets }
 
 typedef CloseGoalReturn = ({String wallet, double amount});
 

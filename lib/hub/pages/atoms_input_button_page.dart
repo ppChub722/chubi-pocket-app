@@ -127,11 +127,7 @@ class _ButtonPageState extends State<_ButtonPage> {
             children: [
               HubCell(
                 caption: 'hero 32',
-                child: AppIconButton.edit(
-                  size: AppIconButton.sizeHero,
-                  tooltip: 'Edit',
-                  onPressed: () {},
-                ),
+                child: AppIconButton.edit(tooltip: 'Edit', onPressed: () {}),
               ),
               HubCell(
                 caption: 'list 36',

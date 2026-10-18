@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../ui/ui.dart';
-import '../../domain/account.dart';
+import '../../ui.dart';
+import '../../../features/accounts/domain/account.dart';
 
 class WalletPickCard extends StatelessWidget {
   const WalletPickCard({

@@ -1,3 +1,4 @@
+import '../tokens/hero_metrics.dart';
 import 'package:flutter/material.dart';
 
 import '../tokens/app_spacing.dart';
@@ -94,11 +95,11 @@ class HeaderCard extends StatelessWidget {
               ),
             ),
             if (edit != null && top == null) ...[
-              const SizedBox(width: HeroSpacing.itemGap),
+              SizedBox(width: HeroMetrics.of(context).itemGap),
               edit,
             ],
             if (trailing != null) ...[
-              const SizedBox(width: HeroSpacing.itemGap),
+              SizedBox(width: HeroMetrics.of(context).itemGap),
               trailing!,
             ],
           ],

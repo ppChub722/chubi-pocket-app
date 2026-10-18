@@ -7,7 +7,6 @@ import '../../features/accounts/domain/payment_provider.dart';
 import '../../features/accounts/domain/wallet_member.dart';
 import '../../features/accounts/presentation/widgets/bank_picker_sheet.dart';
 import '../../features/accounts/presentation/widgets/identifier_widgets.dart';
-import '../../features/accounts/presentation/widgets/wallet_pick_card.dart';
 import '../../ui/ui.dart';
 import '../hub_playground.dart';
 

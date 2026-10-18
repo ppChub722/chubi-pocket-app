@@ -287,24 +287,24 @@ class ItemWriteResult extends Equatable {
     this.setting,
   });
 
-  factory ItemWriteResult.fromJson(
-    Map<String, dynamic> json,
-  ) => ItemWriteResult(
-    items: [
-      for (final e in (json['items'] as List?) ?? const [])
-        RecurringItem.fromJson(e as Map<String, dynamic>),
-      if (json['item'] is Map<String, dynamic>)
-        RecurringItem.fromJson(json['item'] as Map<String, dynamic>),
-    ],
-    deletedIds: [
-      for (final e in (json['deleted_ids'] as List?) ?? const []) e as String,
-      if (json['id'] is String) json['id'] as String,
-    ],
-    balances: WalletBalance.mapOf(json['account_balances']),
-    setting: json['setting'] is Map<String, dynamic>
-        ? Recurring.fromJson(json['setting'] as Map<String, dynamic>)
-        : null,
-  );
+  factory ItemWriteResult.fromJson(Map<String, dynamic> json) =>
+      ItemWriteResult(
+        items: [
+          for (final e in (json['items'] as List?) ?? const [])
+            RecurringItem.fromJson(e as Map<String, dynamic>),
+          if (json['item'] is Map<String, dynamic>)
+            RecurringItem.fromJson(json['item'] as Map<String, dynamic>),
+        ],
+        deletedIds: [
+          for (final e in (json['deleted_ids'] as List?) ?? const [])
+            e as String,
+          if (json['id'] is String) json['id'] as String,
+        ],
+        balances: WalletBalance.mapOf(json['account_balances']),
+        setting: json['setting'] is Map<String, dynamic>
+            ? Recurring.fromJson(json['setting'] as Map<String, dynamic>)
+            : null,
+      );
 
   final List<RecurringItem> items;
   final List<String> deletedIds;

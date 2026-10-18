@@ -63,10 +63,9 @@ class ModeActionBar extends StatelessWidget {
                         onPressed: onUndo,
                         icon: AppIcons.undo,
                       )
-                    : const SizedBox(
-                        key: ValueKey('undo-off'),
-                        width: AppIconButton.sizeBar,
-                        height: AppIconButton.sizeBar,
+                    : SizedBox.square(
+                        key: const ValueKey('undo-off'),
+                        dimension: AppIconButton.resolveSize(context),
                       ),
               ),
             ],

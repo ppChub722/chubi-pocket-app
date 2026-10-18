@@ -97,11 +97,7 @@ void main() {
   testWidgets('tag row: loads the tags', (t) async {
     await pump(
       t,
-      TagChipRow(
-        selected: const {},
-        onRemove: (_) {},
-        onMore: () {},
-      ),
+      TagChipRow(selected: const {}, onRemove: (_) {}, onMore: () {}),
     );
     await t.pump();
     verify(() => tags.loadIfNeeded()).called(1);

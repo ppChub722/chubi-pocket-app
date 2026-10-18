@@ -1,3 +1,5 @@
+import '../../chip_size.dart';
+import '../../hero_metrics.dart';
 import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -27,7 +29,12 @@ class ThemeBuilder {
       scaffoldBackgroundColor: colors.background,
       canvasColor: colors.background,
       textTheme: textTheme,
-      extensions: [colors, ?theme.modulesFor(brightness)],
+      extensions: [
+        colors,
+        const ControlSizes(),
+        const HeroMetrics(),
+        ?theme.modulesFor(brightness),
+      ],
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: AppPageTransitionsBuilder(),

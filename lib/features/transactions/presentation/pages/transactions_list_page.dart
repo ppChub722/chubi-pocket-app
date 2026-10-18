@@ -369,58 +369,84 @@ class _TransactionsListPageState extends State<TransactionsListPage>
         _f.types.length == 1 && _f.types.contains(type);
     void toggle(TransactionType type) =>
         _apply(_f.copyWith(types: only(type) ? const {} : {type}));
-    return ListSummaryCard(
-      expanded: _summaryOpen,
-      padding: HeroSpacing.tight,
-      captionWidget: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [Flexible(child: _periodPill())],
+    final net = MoneyText(t.net, tone: MoneyTone.signed);
+    return AppHeroCard(
+      style: const HeroStyle.plain(),
+      margin: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.xs,
       ),
-      actions: [
-        ToolbarToggleButton(
-          state: _toolbarOpen,
-          filtered: activeFilters > 0 || _q.isNotEmpty,
-          tooltip: l.commonSearch,
+      open: _summaryOpen,
+      header: HeroHeader(
+        leading: [_periodPill()],
+        actions: [
+          const MoneyVisibilityToggle(),
+          ToolbarToggleButton(
+            state: _toolbarOpen,
+            filtered: activeFilters > 0 || _q.isNotEmpty,
+            tooltip: l.commonSearch,
+          ),
+        ],
+      ),
+      content: [
+        HeroNumber(
+          label: l.txSummaryNet,
+          value: net,
+          layout: HeroNumberLayout.inline,
+        ),
+        if (t.daily.isNotEmpty)
+          DailyBars(
+            bars: [
+              for (final (i, d) in t.daily.indexed)
+                DailyBar(
+                  value: d.expense,
+                  kind: kindOf(days[i]),
+                  semanticLabel: dayLabel(days[i]),
+                ),
+            ],
+            startLabel: dayLabel(days.first),
+            centerLabel: t.avgDailySpend == null
+                ? null
+                : l.fpTxAvgDaily(moneyString(context, t.avgDailySpend!)),
+            endLabel: dayLabel(days.last),
+            onTap: (i) {
+              final d = days[i];
+              if (d != null) _apply(_f.copyWith(period: TxPeriod.day(d)));
+            },
+          ),
+      ],
+      folded: [
+        HeroNumber(
+          label: l.txSummaryNet,
+          value: net,
+          layout: HeroNumberLayout.inline,
+          small: true,
         ),
       ],
-      amount: t.net,
-      mainLabel: l.txSummaryNet,
-      mainTone: MoneyTone.signed,
-      chart: t.daily.isEmpty
-          ? null
-          : DailyBars(
-              bars: [
-                for (final (i, d) in t.daily.indexed)
-                  DailyBar(
-                    value: d.expense,
-                    kind: kindOf(days[i]),
-                    semanticLabel: dayLabel(days[i]),
-                  ),
-              ],
-              startLabel: dayLabel(days.first),
-              centerLabel: t.avgDailySpend == null
-                  ? null
-                  : l.fpTxAvgDaily(moneyString(context, t.avgDailySpend!)),
-              endLabel: dayLabel(days.last),
-              onTap: (i) {
-                final d = days[i];
-                if (d != null) _apply(_f.copyWith(period: TxPeriod.day(d)));
-              },
+      footer: [
+        HeroTiles(
+          children: [
+            SummaryTileView(
+              tile: SummaryTile(
+                label: l.homeIncome,
+                value: moneyString(context, t.income),
+                tone: SummaryTileTone.green,
+                selected: only(TransactionType.income),
+                onTap: () => toggle(TransactionType.income),
+              ),
             ),
-      tiles: [
-        SummaryTile(
-          label: l.homeIncome,
-          value: moneyString(context, t.income),
-          tone: SummaryTileTone.green,
-          selected: only(TransactionType.income),
-          onTap: () => toggle(TransactionType.income),
-        ),
-        SummaryTile(
-          label: l.homeExpense,
-          value: moneyString(context, t.expense),
-          tone: SummaryTileTone.red,
-          selected: only(TransactionType.expense),
-          onTap: () => toggle(TransactionType.expense),
+            SummaryTileView(
+              tile: SummaryTile(
+                label: l.homeExpense,
+                value: moneyString(context, t.expense),
+                tone: SummaryTileTone.red,
+                selected: only(TransactionType.expense),
+                onTap: () => toggle(TransactionType.expense),
+              ),
+            ),
+          ],
         ),
       ],
     );

@@ -2,13 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'module_colors.dart';
 
-enum QuickCreateMode {
-  tx,
-
-  debt,
-
-  saving,
-}
+enum QuickCreateMode { tx, debt, saving }
 
 abstract final class QuickCreateModeColors {
   static Color of(BuildContext context, QuickCreateMode mode) => switch (mode) {

@@ -29,8 +29,15 @@ Future<({String name, EventPatch patch})?> showAddMemberSheet(
     ),
     onFromContacts: () async {
       final r = await showContactPickerSheet(context, allowFreeText: false);
-      if (r is! ContactPicked) return null;
-      return AddMemberFill(name: r.contact.name, email: r.contact.email);
+      return switch (r) {
+        ContactPicked(:final contact) => AddMemberFill(
+          name: contact.name,
+          email: contact.email,
+        ),
+        // A name that isn't a contact: an ad-hoc member by that name.
+        ContactNamePicked(:final name) => AddMemberFill(name: name),
+        _ => null,
+      };
     },
     onSubmit: (name, email) async {
       try {

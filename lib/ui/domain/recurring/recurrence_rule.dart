@@ -2,11 +2,7 @@ import 'package:flutter/foundation.dart';
 
 enum RecurrenceFreq { daily, weekly, monthly, yearly, dates }
 
-enum RecurrenceMonthlyMode {
-  day,
-
-  weekday,
-}
+enum RecurrenceMonthlyMode { day, weekday }
 
 @immutable
 class RecurrenceMonthly {

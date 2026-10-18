@@ -212,7 +212,10 @@ void main() {
     expect(find.widgetWithText(AppChip, 'รายรับ'), findsOneWidget);
     expect(find.text('รายจ่าย'), findsNothing);
     expect(find.byIcon(AppIcons.lock), findsNothing);
-    expect(t.widget<AppChip>(find.widgetWithText(AppChip, 'รายรับ')).dashed, isFalse);
+    expect(
+      t.widget<AppChip>(find.widgetWithText(AppChip, 'รายรับ')).dashed,
+      isFalse,
+    );
   });
 
   testWidgets('description and amount underlines share one bottom line', (

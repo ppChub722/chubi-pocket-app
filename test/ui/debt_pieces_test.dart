@@ -311,7 +311,7 @@ void main() {
       );
       expect(
         t.getSize(find.byType(AppChip)).height,
-        closeTo(ChipSize.chip.height, 1),
+        closeTo(ControlSizes.fallback.chip, 1),
       );
     });
   });

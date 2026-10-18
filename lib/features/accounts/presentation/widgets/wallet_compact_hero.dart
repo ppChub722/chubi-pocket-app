@@ -4,12 +4,12 @@ import '../../../../core/utils/user_currency.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/account.dart';
 
-CompactHeroBar walletCompactHero(
+AppCompactHeroCard walletCompactHero(
   BuildContext context,
   Account account, {
   VoidCallback? onTap,
 }) {
-  return CompactHeroBar(
+  return AppCompactHeroCard(
     style: accountHeroStyle(context, account),
     leading: AccountIconCircle(account: account, size: 28),
     title: AppText(account.name, role: AppTextRole.title),

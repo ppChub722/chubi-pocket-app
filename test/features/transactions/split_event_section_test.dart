@@ -34,7 +34,10 @@ void main() {
       ),
     );
     expect(find.text('ผูกกับ'), findsOneWidget);
-    expect(find.text('แบ่งยอด ใส่ในอีเวนต์ หรือผูกกับรายการประจำ'), findsOneWidget);
+    expect(
+      find.text('แบ่งยอด ใส่ในอีเวนต์ หรือผูกกับรายการประจำ'),
+      findsOneWidget,
+    );
     expect(find.text('แบ่งยอด'), findsOneWidget);
     expect(find.text('อีเวนต์'), findsOneWidget);
     // The faint placeholder when no event is set.
@@ -62,12 +65,18 @@ void main() {
     );
     expect(find.text('แบ่ง 2 คน · ทริป'), findsOneWidget);
     expect(find.text('อีเวนต์'), findsNothing);
-    expect(find.text('แบ่งยอด ใส่ในอีเวนต์ หรือผูกกับรายการประจำ'), findsNothing);
+    expect(
+      find.text('แบ่งยอด ใส่ในอีเวนต์ หรือผูกกับรายการประจำ'),
+      findsNothing,
+    );
 
     await t.tap(find.text('ผูกกับ'));
     await t.pump();
     expect(find.text('อีเวนต์'), findsOneWidget);
-    expect(find.text('แบ่งยอด ใส่ในอีเวนต์ หรือผูกกับรายการประจำ'), findsOneWidget);
+    expect(
+      find.text('แบ่งยอด ใส่ในอีเวนต์ หรือผูกกับรายการประจำ'),
+      findsOneWidget,
+    );
 
     await t.tap(find.text('ผูกกับ'));
     await t.pump();
@@ -142,7 +151,10 @@ void _compactTests() {
   testWidgets('no description line; labels align with the note row', (t) async {
     await pump(t, section(const SplitEventSlot(onTap: _noop)));
     expect(find.text('ผูกกับ'), findsOneWidget);
-    expect(find.text('แบ่งยอด ใส่ในอีเวนต์ หรือผูกกับรายการประจำ'), findsNothing);
+    expect(
+      find.text('แบ่งยอด ใส่ในอีเวนต์ หรือผูกกับรายการประจำ'),
+      findsNothing,
+    );
     expect(find.text('helper line'), findsOneWidget);
     final note = t.getTopLeft(find.text('โน้ต')).dx;
     expect(t.getTopLeft(find.text('อีเวนต์')).dx, note);

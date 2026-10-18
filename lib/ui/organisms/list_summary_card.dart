@@ -1,49 +1,15 @@
-import 'app_hero_card.dart';
+import '../atoms/app_card.dart';
+import 'hero/app_hero_card.dart';
+import 'hero/summary_tile.dart';
 import 'package:flutter/material.dart';
 
 import '../atoms/app_button.dart';
-import '../atoms/app_card.dart';
 import '../domain/money/money_text.dart';
 import '../molecules/hero_style.dart';
 import '../molecules/progress_row.dart';
-import '../molecules/selectable_frame.dart';
 import '../tokens/app/app_colors.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
-
-enum SummaryTileTone { neutral, green, amber, red, orange }
-
-@immutable
-class SummaryTile {
-  const SummaryTile({
-    required this.label,
-    required this.value,
-    this.tone = SummaryTileTone.neutral,
-    this.selected = false,
-    this.onTap,
-    this.caption,
-    this.captionWidget,
-  });
-
-  final String label;
-  final String value;
-  final SummaryTileTone tone;
-  final bool selected;
-  final VoidCallback? onTap;
-
-  final String? caption;
-
-  final Widget? captionWidget;
-}
-
-@immutable
-class SummaryCta {
-  const SummaryCta({required this.label, required this.onTap, this.icon});
-
-  final String label;
-  final IconData? icon;
-  final VoidCallback? onTap;
-}
 
 class ListSummaryCard extends StatelessWidget {
   const ListSummaryCard({
@@ -121,7 +87,7 @@ class ListSummaryCard extends StatelessWidget {
       style: style,
       margin: margin,
       padding: padding,
-      expanded: [_body(context, true)],
+      content: [_body(context, true)],
       folded: fold == null ? null : [_body(context, false)],
       open: fold,
     );
@@ -345,82 +311,6 @@ class _AlertLine extends StatelessWidget {
             if (onTap != null)
               Icon(Icons.chevron_right, size: 18, color: color),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class SummaryTileView extends StatelessWidget {
-  const SummaryTileView({required this.tile, super.key});
-
-  final SummaryTile tile;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final color = switch (tile.tone) {
-      SummaryTileTone.neutral => scheme.onSurfaceVariant,
-      SummaryTileTone.green => palette.income,
-      SummaryTileTone.amber => palette.warning,
-      SummaryTileTone.red => palette.expense,
-      SummaryTileTone.orange => Colors.deepOrange,
-    };
-    final valueColor = tile.tone == SummaryTileTone.neutral
-        ? scheme.onSurface
-        : color;
-    return Semantics(
-      button: tile.onTap != null,
-      selected: tile.selected,
-      child: SelectableFrame(
-        selected: tile.selected,
-        radius: AppRadius.md,
-        gap: 2,
-        child: AppCard(
-          key: ValueKey('summaryTile:${tile.label}'),
-          style: AppCardStyle.tinted,
-          color: color,
-          radius: BorderRadius.circular(AppRadius.md),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm,
-            vertical: AppSpacing.md,
-          ),
-          onTap: tile.onTap,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                tile.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: textTheme.labelMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                tile.value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: textTheme.titleMedium?.copyWith(
-                  color: valueColor,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              if (tile.caption != null)
-                Text(
-                  tile.caption!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-            ],
-          ),
         ),
       ),
     );

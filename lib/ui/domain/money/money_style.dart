@@ -1,12 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum MoneySign {
-  plusMinus,
-
-  parentheses,
-
-  none,
-}
+enum MoneySign { plusMinus, parentheses, none }
 
 enum MoneyDecimals {
   always,

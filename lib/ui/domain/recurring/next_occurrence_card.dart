@@ -122,13 +122,7 @@ class NextOccurrenceCard extends StatelessWidget {
   }
 }
 
-enum OccurrenceDateKind {
-  normal,
-
-  edited,
-
-  skipped,
-}
+enum OccurrenceDateKind { normal, edited, skipped }
 
 @immutable
 class OccurrenceDate {
@@ -214,13 +208,13 @@ class _Struck extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     return InkWell(
       onTap: date.onTap,
-      borderRadius: BorderRadius.circular(ChipSize.chip.height),
+      borderRadius: BorderRadius.circular(ChipSize.chip.heightOf(context)),
       child: Container(
-        height: ChipSize.chip.height,
+        height: ChipSize.chip.heightOf(context),
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(ChipSize.chip.height),
+          borderRadius: BorderRadius.circular(ChipSize.chip.heightOf(context)),
           border: Border.all(color: scheme.outlineVariant),
         ),
         child: Text(

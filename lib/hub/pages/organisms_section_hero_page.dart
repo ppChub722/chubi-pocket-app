@@ -726,7 +726,7 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
                     style: big?.copyWith(color: palette.primary),
                   ),
                 ),
-                const SizedBox(height: HeroSpacing.after),
+                SizedBox(height: HeroMetrics.of(context).after),
                 SectionCard(
                   first: true,
                   children: [

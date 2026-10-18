@@ -85,6 +85,5 @@ Future<void> _setHighRefreshRate() async {
   if (defaultTargetPlatform != TargetPlatform.android) return;
   try {
     await FlutterDisplayMode.setHighRefreshRate();
-  } catch (_) {
-  }
+  } catch (_) {}
 }

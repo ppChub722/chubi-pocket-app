@@ -368,9 +368,13 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
     _set(_f.copyWith(tagIds: r.toList()));
   }
 
-  static List<Widget> _skeletonChips() => [
+  List<Widget> _skeletonChips() => [
     for (final w in const [72.0, 56.0, 64.0])
-      SkeletonBox(width: w, height: ChipSize.chip.height, borderRadius: 999),
+      SkeletonBox(
+        width: w,
+        height: ChipSize.chip.heightOf(context),
+        borderRadius: 999,
+      ),
   ];
 
   AppChip _chip({

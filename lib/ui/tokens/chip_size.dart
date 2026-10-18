@@ -1,14 +1,49 @@
+import 'dart:ui' show lerpDouble;
+
 import 'package:flutter/material.dart';
 
-abstract final class ChipHeight {
-  static const double mini = 20;
-  static const double chip = 28;
-  static const double control = 36;
+/// The three control heights (mini / chip / control) as a theme value — the
+/// one source for chips, round icon buttons, stepper pills and a hero's
+/// header. A theme sets its own; [fallback] when it doesn't.
+class ControlSizes extends ThemeExtension<ControlSizes> {
+  const ControlSizes({this.mini = 20, this.chip = 28, this.control = 36});
+
+  final double mini;
+  final double chip;
+  final double control;
+
+  static const ControlSizes fallback = ControlSizes();
+
+  static ControlSizes of(BuildContext context) =>
+      Theme.of(context).extension<ControlSizes>() ?? fallback;
+
+  double heightOf(ChipSize size) => switch (size) {
+    ChipSize.mini => mini,
+    ChipSize.chip => chip,
+    ChipSize.control => control,
+  };
+
+  @override
+  ControlSizes copyWith({double? mini, double? chip, double? control}) =>
+      ControlSizes(
+        mini: mini ?? this.mini,
+        chip: chip ?? this.chip,
+        control: control ?? this.control,
+      );
+
+  @override
+  ControlSizes lerp(ControlSizes? other, double t) {
+    if (other == null) return this;
+    return ControlSizes(
+      mini: lerpDouble(mini, other.mini, t)!,
+      chip: lerpDouble(chip, other.chip, t)!,
+      control: lerpDouble(control, other.control, t)!,
+    );
+  }
 }
 
 enum ChipSize {
   mini(
-    height: ChipHeight.mini,
     padding: 6,
     gap: 3,
     icon: 11,
@@ -19,7 +54,6 @@ enum ChipSize {
   ),
 
   chip(
-    height: ChipHeight.chip,
     padding: 10,
     gap: 4,
     icon: 14,
@@ -30,7 +64,6 @@ enum ChipSize {
   ),
 
   control(
-    height: ChipHeight.control,
     padding: 12,
     gap: 5,
     icon: 16,
@@ -41,7 +74,6 @@ enum ChipSize {
   );
 
   const ChipSize({
-    required this.height,
     required this.padding,
     required this.gap,
     required this.icon,
@@ -51,7 +83,9 @@ enum ChipSize {
     this.badgePad = 5,
   });
 
-  final double height;
+  /// The height of this size in the current theme ([ControlSizes]).
+  double heightOf(BuildContext context) =>
+      ControlSizes.of(context).heightOf(this);
 
   final double padding;
 

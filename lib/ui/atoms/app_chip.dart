@@ -42,15 +42,7 @@ enum AppChipTone {
   }
 }
 
-enum AppChipTrailing {
-  none,
-
-  dropdown,
-
-  remove,
-
-  count,
-}
+enum AppChipTrailing { none, dropdown, remove, count }
 
 class AppChip extends StatelessWidget {
   const AppChip({
@@ -163,6 +155,7 @@ class AppChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = _size ?? ChipSizeScope.of(context) ?? ChipSize.control;
+    final height = size.heightOf(context);
     final scheme = Theme.of(context).colorScheme;
     final tint = color ?? (tone ?? AppChipTone.primary).resolve(context);
     final solid = fill;
@@ -211,10 +204,10 @@ class AppChip extends StatelessWidget {
         removeOnly
             ? InkResponse(
                 onTap: enabled ? onRemove : null,
-                radius: size.height / 2,
+                radius: height / 2,
                 child: SizedBox(
                   width: iconSize + 8,
-                  height: size.height,
+                  height: height,
                   child: Center(
                     child: Icon(AppIcons.close, size: iconSize, color: fg),
                   ),
@@ -224,7 +217,7 @@ class AppChip extends StatelessWidget {
             ? Icon(AppIcons.close, size: iconSize, color: fg)
             : InkResponse(
                 onTap: enabled ? onRemove : null,
-                radius: size.height / 2,
+                radius: height / 2,
                 child: Icon(AppIcons.close, size: iconSize, color: fg),
               ),
       AppChipTrailing.count =>
@@ -244,11 +237,11 @@ class AppChip extends StatelessWidget {
     );
 
     final iconOnly = label.isEmpty && lead != null && tail == null;
-    final sidePad = iconOnly ? (size.height - size.icon) / 2 : size.padding;
+    final sidePad = iconOnly ? (height - size.icon) / 2 : size.padding;
     final borderColor = solid ?? (selected ? tint : scheme.outlineVariant);
     final ringed = dashed && inset && selected;
     final Widget content = ConstrainedBox(
-      constraints: BoxConstraints(minHeight: size.height),
+      constraints: BoxConstraints(minHeight: height),
       child: Padding(
         padding: EdgeInsets.only(
           left: sidePad,
@@ -257,7 +250,7 @@ class AppChip extends StatelessWidget {
           right: tail == null || iconOnly
               ? sidePad
               : trailing == AppChipTrailing.count
-              ? (size.height - (size.icon + 2)) / 2
+              ? (height - (size.icon + 2)) / 2
               : removeOnly
               ? sidePad - AppSpacing.xs - 4
               : sidePad - AppSpacing.xs,
@@ -315,7 +308,7 @@ class AppChip extends StatelessWidget {
         strokeWidth: selected && !ringed ? 1.5 : 1,
         dashLength: 4,
         gapLength: 3,
-        borderRadius: Radius.circular(size.height / 2),
+        borderRadius: Radius.circular(height / 2),
         child: chip,
       );
     }
@@ -339,7 +332,7 @@ class AppChip extends StatelessWidget {
         child: out,
       );
     }
-    if (tap != null && size.height < minTapHeight) {
+    if (tap != null && height < minTapHeight) {
       out = _ExpandedHit(minHeight: minTapHeight, child: out);
     }
     return out;

@@ -42,6 +42,7 @@ Future<T?> showOptionSheet<T>(
     builder: (_) => PickerSheet(
       title: title,
       searchable: searchable,
+      searchToggle: true,
       builder: (context, query) {
         final offline = ConnectionScope.isOffline(context);
         final visible = query.isEmpty

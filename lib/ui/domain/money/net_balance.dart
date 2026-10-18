@@ -4,11 +4,7 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../tokens/app/app_colors.dart';
 import 'money_text.dart';
 
-enum NetBalanceSize {
-  row,
-
-  hero,
-}
+enum NetBalanceSize { row, hero }
 
 class NetBalance extends StatelessWidget {
   const NetBalance({

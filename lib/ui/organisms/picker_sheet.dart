@@ -25,6 +25,7 @@ class PickerSheet extends StatefulWidget {
     this.error,
     this.onRetry,
     this.footer,
+    this.header,
     super.key,
   });
 
@@ -46,6 +47,9 @@ class PickerSheet extends StatefulWidget {
   final VoidCallback? onRetry;
 
   final Widget? footer;
+
+  /// Under the search, above the list, not scrolling with it (filter chips).
+  final Widget? header;
 
   @override
   State<PickerSheet> createState() => _PickerSheetState();
@@ -156,6 +160,16 @@ class _PickerSheetState extends State<PickerSheet> {
                 padding: EdgeInsets.zero,
                 onChanged: (v) => setState(() => _query = v),
               ),
+            ),
+          if (widget.header != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.sm,
+              ),
+              child: widget.header,
             ),
           Flexible(child: SingleChildScrollView(child: body)),
           ?widget.footer,

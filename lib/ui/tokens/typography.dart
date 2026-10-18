@@ -1,20 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum AppTextRole {
-  display,
-
-  title,
-
-  section,
-
-  label,
-
-  body,
-
-  caption,
-
-  money,
-}
+enum AppTextRole { display, title, section, label, body, caption, money }
 
 abstract final class AppTypography {
   static TextStyle? of(BuildContext context, AppTextRole role) {

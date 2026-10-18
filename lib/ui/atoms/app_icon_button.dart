@@ -6,33 +6,20 @@ import '../tokens/chip_size.dart';
 import 'app_icon.dart';
 import 'count_badge.dart';
 
-enum IconChipActivity {
-  none,
-
-  progress,
-
-  done,
-}
+enum IconChipActivity { none, progress, done }
 
 class AppIconButton extends StatelessWidget {
-  static const double sizeHero = sizeControl;
-
-  static const double sizeList = sizeControl;
-
-  static const double sizeBar = sizeControl;
-
-  static const double sizeMini = ChipHeight.mini;
-  static const double sizeChip = ChipHeight.chip;
-  static const double sizeControl = ChipHeight.control;
-
   static const double targetFlat = 48;
   static const double targetDense = 40;
   static const double glyphFlat = 24;
   static const double glyphSmall = 20;
   static const double glyphXs = 18;
 
+  /// [size] if given, else the enclosing [ChipSizeScope]'s height, else the
+  /// theme's control height ([ControlSizes]) — so a round button is always
+  /// level with the chips of its row.
   static double resolveSize(BuildContext context, [double? size]) =>
-      size ?? ChipSizeScope.of(context)?.height ?? sizeControl;
+      size ?? (ChipSizeScope.of(context) ?? ChipSize.control).heightOf(context);
 
   const AppIconButton({
     required this.icon,

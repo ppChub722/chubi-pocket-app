@@ -5,13 +5,7 @@ import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import 'dashed_rect_border.dart';
 
-enum AddTileVariant {
-  card,
-
-  row,
-
-  circle,
-}
+enum AddTileVariant { card, row, circle }
 
 class AddTile extends StatelessWidget {
   const AddTile({

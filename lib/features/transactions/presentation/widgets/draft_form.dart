@@ -8,12 +8,11 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../../accounts/presentation/widgets/wallet_pick_card.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../categories/presentation/category_label.dart';
-import '../../../categories/presentation/widgets/category_pick_card.dart';
+import 'category_pick_card.dart';
 import '../../../categories/presentation/widgets/category_picker_sheet.dart';
 import '../../../pending/domain/pending_transaction.dart';
 import '../../../tags/domain/tag.dart';
@@ -891,7 +890,7 @@ class _DraftFormState extends State<DraftForm> {
             if (entryLayout)
               ..._chipBody(l, isTransfer: isTransfer)
             else ...[
-              const SizedBox(height: HeroSpacing.after),
+              SizedBox(height: HeroMetrics.of(context).after),
               if (!widget.cardsInHero)
                 longPressable(_cardsRow(l, isTransfer: isTransfer)),
               if (editing) ...[
@@ -983,7 +982,7 @@ class _DraftFormState extends State<DraftForm> {
   List<Widget> _chipBody(AppLocalizations l, {required bool isTransfer}) {
     const gap = SizedBox(height: AppSpacing.sm);
     return [
-      const SizedBox(height: HeroSpacing.after),
+      SizedBox(height: HeroMetrics.of(context).after),
       TagChipRow(
         selected: _c.tagIds,
         onRemove: _c.toggleTag,
@@ -1200,7 +1199,7 @@ class _DraftFormState extends State<DraftForm> {
     return [
       if (tags.isNotEmpty) ...[
         ...tags,
-        const SizedBox(height: HeroSpacing.after),
+        SizedBox(height: HeroMetrics.of(context).after),
       ],
       ?note,
       ?_splitEventSection(l, editing: editing, transfer: isTransfer),

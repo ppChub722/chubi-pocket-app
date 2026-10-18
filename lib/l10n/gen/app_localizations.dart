@@ -7405,6 +7405,48 @@ abstract class AppLocalizations {
   /// **'No contacts yet'**
   String get contactPickerEmptyPlain;
 
+  /// No description provided for @contactPickerFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get contactPickerFilterAll;
+
+  /// No description provided for @contactPickerFilterContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts'**
+  String get contactPickerFilterContacts;
+
+  /// No description provided for @contactPickerFilterNotInContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Not in contacts'**
+  String get contactPickerFilterNotInContacts;
+
+  /// No description provided for @contactPickerFilterOwing.
+  ///
+  /// In en, this message translates to:
+  /// **'Owing'**
+  String get contactPickerFilterOwing;
+
+  /// No description provided for @contactPickerFilterNoDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'No debt'**
+  String get contactPickerFilterNoDebt;
+
+  /// No description provided for @contactPickerNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No one matches'**
+  String get contactPickerNoMatch;
+
+  /// No description provided for @contactPickerTypeName.
+  ///
+  /// In en, this message translates to:
+  /// **'New name'**
+  String get contactPickerTypeName;
+
   /// No description provided for @txSplitNameHint.
   ///
   /// In en, this message translates to:
@@ -8040,12 +8082,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saving goal'**
   String get savingEntryGoalLabel;
-
-  /// No description provided for @savingEntryWalletOptional.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick a wallet (optional)'**
-  String get savingEntryWalletOptional;
 
   /// No description provided for @debtEntrySaved.
   ///

@@ -23,8 +23,7 @@ Future<TxFilters?> showTxFilterSheet(
   Future<TxFilterOptions> load() async {
     try {
       loaded = await repository.formOptions();
-    } catch (_) {
-    }
+    } catch (_) {}
     return _filterOptions(l, palette, loaded);
   }
 

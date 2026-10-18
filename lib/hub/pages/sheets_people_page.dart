@@ -11,11 +11,40 @@ const _contacts = [
     id: 'c1',
     name: 'Mata',
     subtitle: 'Flatmate',
-    linked: true,
+    level: PersonLevel.linked,
     keywords: ['mata@example.com'],
   ),
   ContactPickerRow(id: 'c2', name: 'Nok', subtitle: 'nok@example.com'),
   ContactPickerRow(id: 'c3', name: 'Pim'),
+];
+
+/// Every level, with balances and tags — the debt mode's stand-in.
+final _people = [
+  const ContactPickerRow(
+    id: 'c1',
+    name: 'Mata',
+    level: PersonLevel.linked,
+    subtitle: 'Owes 2 entries',
+    trailing: Text('+฿1,232'),
+    tags: {'owing'},
+  ),
+  const ContactPickerRow(
+    id: 'n:jo',
+    name: 'Jo',
+    level: PersonLevel.name,
+    subtitle: 'Owes 1 entry',
+    trailing: Text('-฿300'),
+    tags: {'owing'},
+  ),
+  const ContactPickerRow(id: 'c2', name: 'Nok', subtitle: 'nok@example.com'),
+  const ContactPickerRow(id: 'n:pam', name: 'Pam', level: PersonLevel.name),
+];
+
+List<ContactPickerFilter> _debtTabs() => [
+  ContactPickerFilter('All', (_) => true),
+  ContactPickerFilter('Owing', (r) => r.tags.contains('owing')),
+  ContactPickerFilter('No debt', (r) => !r.tags.contains('owing')),
+  ContactPickerFilter('Not in contacts', (r) => r.level == PersonLevel.name),
 ];
 
 ContactPickerLabels _labels({bool free = true}) => ContactPickerLabels(
@@ -47,6 +76,7 @@ class _SheetsPeoplePageState extends State<_SheetsPeoplePage> {
     bool loading = false,
     Object? error,
     String? unlinkAs,
+    List<ContactPickerFilter> filters = const [],
   }) async {
     final r = await showContactPicker(
       context,
@@ -57,6 +87,7 @@ class _SheetsPeoplePageState extends State<_SheetsPeoplePage> {
         allowFreeText: free,
         allowCreate: create,
         unlinkAs: unlinkAs,
+        filters: filters,
         loading: loading,
         error: error,
         onRetry: () {},
@@ -115,6 +146,11 @@ class _SheetsPeoplePageState extends State<_SheetsPeoplePage> {
             runSpacing: AppSpacing.sm,
             children: [
               AppButton(label: 'Open', onPressed: _pick),
+              AppButton(
+                label: 'Tabs + balances (debt mode)',
+                variant: AppButtonVariant.outlined,
+                onPressed: () => _pick(rows: _people, filters: _debtTabs()),
+              ),
               AppButton(
                 label: 'With create row',
                 variant: AppButtonVariant.outlined,

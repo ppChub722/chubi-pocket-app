@@ -89,6 +89,11 @@ class EntryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isTransfer = type == TransactionType.transfer;
     final walletMissing = missing.contains(EntryField.wallet);
+    // The from → to cards stand where the wallet + category chip rows stand:
+    // exactly as tall as those two rows, so switching the type (or the tab)
+    // never moves the card.
+    final gap = HeroMetrics.of(context).itemGap;
+    final twoRows = ChipSize.control.heightOf(context) * 2 + gap;
     return TxHeroCard(
       type: type,
       onTypeChanged: onTypeChanged,
@@ -114,15 +119,20 @@ class EntryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (flowRow != null) _slot(context, flowRow!, flagged: walletMissing),
+          if (flowRow != null)
+            _slot(
+              context,
+              SizedBox(height: twoRows, child: flowRow),
+              flagged: walletMissing,
+            ),
           if (walletRow != null)
             _slot(context, walletRow!, flagged: walletMissing),
           if (isTransfer && toWalletRow != null) ...[
-            if (walletRow != null) const SizedBox(height: HeroSpacing.itemGap),
+            if (walletRow != null) SizedBox(height: gap),
             _slot(context, toWalletRow!, flagged: walletMissing),
           ],
           if (!isTransfer && categoryRow != null) ...[
-            if (walletRow != null) const SizedBox(height: HeroSpacing.itemGap),
+            if (walletRow != null) SizedBox(height: gap),
             _slot(
               context,
               categoryRow!,

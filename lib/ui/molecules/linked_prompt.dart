@@ -3,11 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../atoms/app_button.dart';
 import 'choice_dialog.dart';
 
-enum LinkedChoice {
-  thisSideOnly,
-
-  bothSides,
-}
+enum LinkedChoice { thisSideOnly, bothSides }
 
 Future<LinkedChoice?> showLinkedPrompt(
   BuildContext context, {

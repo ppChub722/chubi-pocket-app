@@ -183,7 +183,7 @@ class _SplitsSectionState extends State<SplitsSection> {
             linked: contact.isLinked,
           ),
         );
-      case ContactNameTyped(:final name):
+      case ContactNameTyped(:final name) || ContactNamePicked(:final name):
         d.setPerson(name.trim());
     }
   }

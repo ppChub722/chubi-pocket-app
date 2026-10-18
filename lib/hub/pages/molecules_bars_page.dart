@@ -321,7 +321,7 @@ class _BarsPageState extends State<_BarsPage> {
                         ),
                         AppIconButton(
                           icon: AppIcons.edit,
-                          size: HeroSpacing.controlHeight,
+                          size: ControlSizes.of(context).control,
                           onPressed: () {},
                         ),
                       ],
@@ -547,7 +547,7 @@ class _BarsPageState extends State<_BarsPage> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: HeroSpacing.after),
+                      SizedBox(height: HeroMetrics.of(context).after),
                       SectionCard(
                         first: true,
                         children: [
@@ -949,7 +949,7 @@ class _BarsPageState extends State<_BarsPage> {
                       if (v<bool>('editButton'))
                         AppIconButton(
                           icon: AppIcons.edit,
-                          size: HeroSpacing.controlHeight,
+                          size: ControlSizes.of(context).control,
                           onPressed: () {},
                         ),
                     ],

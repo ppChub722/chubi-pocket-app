@@ -73,6 +73,7 @@ class WalletInviteSheet extends StatelessWidget {
     return PickerSheet(
       title: strings.title,
       searchable: candidates.length > 8,
+      searchToggle: true,
       searchHint: strings.searchHint,
       loading: loading,
       error: error,

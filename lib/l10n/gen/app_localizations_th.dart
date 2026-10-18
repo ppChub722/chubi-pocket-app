@@ -4131,6 +4131,27 @@ class AppLocalizationsTh extends AppLocalizations {
   String get contactPickerEmptyPlain => 'ยังไม่มีผู้ติดต่อ';
 
   @override
+  String get contactPickerFilterAll => 'ทั้งหมด';
+
+  @override
+  String get contactPickerFilterContacts => 'ผู้ติดต่อ';
+
+  @override
+  String get contactPickerFilterNotInContacts => 'ไม่อยู่ในผู้ติดต่อ';
+
+  @override
+  String get contactPickerFilterOwing => 'มีหนี้';
+
+  @override
+  String get contactPickerFilterNoDebt => 'ไม่มีหนี้';
+
+  @override
+  String get contactPickerNoMatch => 'ไม่พบชื่อที่ตรงกัน';
+
+  @override
+  String get contactPickerTypeName => 'ชื่อใหม่';
+
+  @override
   String get txSplitNameHint => 'ชื่อ';
 
   @override
@@ -4485,9 +4506,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get savingEntryGoalLabel => 'เป้าหมายการออม';
-
-  @override
-  String get savingEntryWalletOptional => 'เลือกกระเป๋า (ไม่บังคับ)';
 
   @override
   String get debtEntrySaved => 'บันทึกหนี้แล้ว';

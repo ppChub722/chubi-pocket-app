@@ -1,3 +1,4 @@
+import '../tokens/hero_metrics.dart';
 import 'package:flutter/material.dart';
 
 import '../tokens/app_durations.dart';
@@ -25,17 +26,16 @@ class AppCompactHeroCard extends StatelessWidget {
 
   final VoidCallback? onTap;
 
-  static const double height = 44;
-
   @override
   Widget build(BuildContext context) {
+    final height = HeroMetrics.of(context).compactHeight;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final duration = MediaQuery.disableAnimationsOf(context)
         ? Duration.zero
         : AppDurations.chrome;
     final content = ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: height),
+      constraints: BoxConstraints(minHeight: height),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         child: Row(

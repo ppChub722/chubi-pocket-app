@@ -251,99 +251,43 @@ class TxHeroCard extends StatelessWidget {
             style: textTheme.bodySmall?.copyWith(color: scheme.error),
           );
 
-    final List<Widget?> middle = !inline
-        ? const []
-        : [
-            HeroRow(
-              gapBefore: 0,
-              gapAfter: 0,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  LayoutBuilder(
-                    builder: (context, box) => Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Stack(
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (!showTitle)
-                                  Expanded(
-                                    child: amountField(align: TextAlign.end),
-                                  )
-                                else
-                                  Expanded(
-                                    child: Align(
-                                      alignment:
-                                          AlignmentDirectional.bottomStart,
-                                      child:
-                                          !editing && title.text.trim().isEmpty
-                                          ? (titlePlaceholder == null
-                                                ? const SizedBox.shrink()
-                                                : longPressable(
-                                                    Padding(
-                                                      padding:
-                                                          const EdgeInsets.symmetric(
-                                                            vertical:
-                                                                AppSpacing.xs,
-                                                          ),
-                                                      child: Text(
-                                                        titlePlaceholder!,
-                                                        maxLines: 2,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: titleStyle?.copyWith(
-                                                          fontStyle:
-                                                              FontStyle.italic,
-                                                          color: scheme
-                                                              .onSurfaceVariant,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    titleFocus,
-                                                  ))
-                                          : titleField(maxLines: 2),
-                                    ),
-                                  ),
-                                if (showTitle)
-                                  SizedBox(
-                                    width: box.maxWidth * 0.48,
-                                    child: amountField(align: TextAlign.end),
-                                  ),
-                              ],
-                            ),
-                            if (editing && amountFocus != null)
-                              Positioned(
-                                top: 0,
-                                bottom: 0,
-                                right: 0,
-                                width: showTitle
-                                    ? box.maxWidth * 0.48
-                                    : box.maxWidth,
-                                child: GestureDetector(
-                                  behavior: HitTestBehavior.translucent,
-                                  onTap: amountFocus!.requestFocus,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
+    final titleCell = !showTitle
+        ? null
+        : !editing && title.text.trim().isEmpty
+        ? (titlePlaceholder == null
+              ? const SizedBox.shrink()
+              : longPressable(
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xs,
+                    ),
+                    child: Text(
+                      titlePlaceholder!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: titleStyle?.copyWith(
+                        fontStyle: FontStyle.italic,
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
-                  ?amountErrorText,
-                ],
-              ),
-            ),
-            if (amountNote != null)
-              Align(
-                alignment: AlignmentDirectional.centerEnd,
-                child: amountNote,
-              ),
-          ];
+                  titleFocus,
+                ))
+        : titleField(maxLines: 2);
+    final List<Widget?> inlineRows = [
+      if (dateNote != null)
+        HeroNote(alignment: AlignmentDirectional.centerEnd, child: dateNote!),
+      HeroFields(
+        start: titleCell,
+        end: amountField(align: TextAlign.end),
+        onEndAreaTap: editing && amountFocus != null
+            ? amountFocus!.requestFocus
+            : null,
+        below: [?amountErrorText],
+      ),
+      if (amountNote != null)
+        HeroNote(alignment: AlignmentDirectional.centerEnd, child: amountNote!),
+    ];
     final List<Widget?> stacked = [
       Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -368,7 +312,7 @@ class TxHeroCard extends StatelessWidget {
             children: [
               if (titleLeading != null) ...[
                 titleLeading!,
-                const SizedBox(width: HeroSpacing.itemGap),
+                SizedBox(width: HeroMetrics.of(context).itemGap),
               ],
               Expanded(child: titleField()),
             ],
@@ -381,27 +325,26 @@ class TxHeroCard extends StatelessWidget {
 
     // An [accentColor] (the saving mode's planning purple) washes the whole
     // card, not just the amount, so it never reads as green income.
-    return HeroCard(
+    return AppHeroCard(
       style: accentColor != null
           ? HeroStyle.tinted(color: accentColor!)
           : txHeroStyle(context, type),
-      padding: HeroSpacing.tight,
-      chips: chips,
-      links: inline ? [datePill] : const [],
-      onEdit: onEdit,
-      actionsWhileEditing: true,
-      topNote: inline && dateNote != null
-          ? Align(alignment: AlignmentDirectional.centerEnd, child: dateNote)
-          : null,
-      middle: inline ? middle : stacked,
+      mode: editing ? HeroCardMode.edit : HeroCardMode.view,
+      header: HeroHeader(
+        leading: chips,
+        actions: inline ? [datePill] : const [],
+        onEdit: onEdit,
+      ),
+      content: inline ? inlineRows : stacked,
       // A little air under the amount / description line, whose underline
-      // now sits right under the text.
-      footer: inline && footer != null
-          ? Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.sm),
-              child: footer,
-            )
-          : null,
+      // sits right under the text.
+      footer: [
+        if (inline && footer != null)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            child: footer,
+          ),
+      ],
     );
   }
 }

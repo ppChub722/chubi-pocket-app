@@ -4,17 +4,7 @@ import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import 'picker_sheet.dart';
 
-enum EditScope {
-  thisOne,
-
-  following,
-
-  past,
-
-  upcoming,
-
-  all,
-}
+enum EditScope { thisOne, following, past, upcoming, all }
 
 Future<EditScope?> showEditScopeChoice(
   BuildContext context, {

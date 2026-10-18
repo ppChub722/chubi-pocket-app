@@ -537,7 +537,7 @@ class _TagsPageState extends State<TagsPage>
           const SizedBox(width: AppSpacing.sm),
           AppIconButton.edit(
             tooltip: l.commonEdit,
-            size: ChipSize.chip.height,
+            size: ChipSize.chip.heightOf(context),
             onPressed: _beginEdit,
           ),
         ],

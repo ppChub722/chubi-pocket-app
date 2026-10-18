@@ -84,6 +84,7 @@ class RecurringPickerSheet extends StatelessWidget {
     return PickerSheet(
       title: title,
       searchable: true,
+      searchToggle: true,
       searchHint: searchHint,
       loading: loading,
       error: error,

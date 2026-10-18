@@ -4,7 +4,7 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/transaction_type.dart';
 
-CompactHeroBar txCompactHeroBar(
+AppCompactHeroCard txCompactHeroBar(
   BuildContext context, {
   required TransactionType type,
   required String description,
@@ -29,7 +29,7 @@ CompactHeroBar txCompactHeroBar(
   // would just repeat it.
   final title = text.isNotEmpty ? text : (category ?? typeLabel);
   final showChip = text.isNotEmpty && category != null;
-  return CompactHeroBar(
+  return AppCompactHeroCard(
     style: txHeroStyle(context, type),
     onTap: onTap,
     title: Row(

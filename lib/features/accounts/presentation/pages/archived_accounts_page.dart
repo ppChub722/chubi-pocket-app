@@ -30,8 +30,7 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
     setState(() => _future = f);
     try {
       await f;
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   Future<void> _restore(Account a) async {

@@ -4,13 +4,7 @@ import '../../tokens/app/app_icons.dart';
 import '../icons/icon_code.dart';
 import '../../atoms/user_avatar.dart';
 
-enum PersonLevel {
-  name,
-
-  contact,
-
-  linked,
-}
+enum PersonLevel { name, contact, linked }
 
 class PersonLinkBadge extends StatelessWidget {
   const PersonLinkBadge({this.size = defaultSize, super.key});

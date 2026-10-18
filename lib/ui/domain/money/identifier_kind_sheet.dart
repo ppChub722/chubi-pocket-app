@@ -91,10 +91,7 @@ class _KindSheet extends StatelessWidget {
     );
     if (!context.mounted) return;
     Navigator.of(context).pop(
-      IdentifierKindChoice(
-        kind.id,
-        pick == null ? currentBankCode : pick.code,
-      ),
+      IdentifierKindChoice(kind.id, pick == null ? currentBankCode : pick.code),
     );
   }
 

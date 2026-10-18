@@ -620,7 +620,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
           children: [
             if (banner != null) ...[
               banner,
-              const SizedBox(height: HeroSpacing.after),
+              SizedBox(height: HeroMetrics.of(context).after),
             ],
             _viewHero(l, d),
           ],

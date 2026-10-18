@@ -170,7 +170,7 @@ class StepperPill extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final arrows = onPrev != null || onNext != null;
     final chipSize = size ?? ChipSizeScope.of(context) ?? ChipSize.control;
-    final height = chipSize.height;
+    final height = chipSize.heightOf(context);
 
     Widget step(IconData icon, String? tooltip, VoidCallback? onStep) {
       final button = InkResponse(

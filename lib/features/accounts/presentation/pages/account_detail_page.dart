@@ -737,8 +737,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
               ),
             ),
             if (actions != null) SliverToBoxAdapter(child: actions),
-            const SliverToBoxAdapter(
-              child: SizedBox(height: HeroSpacing.after),
+            SliverToBoxAdapter(
+              child: SizedBox(height: HeroMetrics.of(context).after),
             ),
             SliverPersistentHeader(
               pinned: true,
@@ -854,66 +854,72 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final members = a.members.where((m) => m.isActive).length;
     final savings = a.savings;
     final due = a.dueDateNext;
-    return HeroCard(
+    final bar = _heroBar(l, a, accent, symbol, savings);
+    return AppHeroCard(
       style: accountHeroStyle(context, a),
-      chips: [
-        AppChip(
-          label: accountTypeLabel(context, a.type),
-          icon: a.type.icon,
-          color: a.colorOf(context),
-          selected: true,
-        ),
-        if (ref != null) AppChip(label: ref.masked),
-        if (a.isShared)
+      header: HeroHeader(
+        leading: [
           AppChip(
-            label: l.accountSharedWith(members),
-            icon: AppIcons.link,
-            color: accent,
+            label: accountTypeLabel(context, a.type),
+            icon: a.type.icon,
+            color: a.colorOf(context),
             selected: true,
           ),
+          if (ref != null) AppChip(label: ref.masked),
+          if (a.isShared)
+            AppChip(
+              label: l.accountSharedWith(members),
+              icon: AppIcons.link,
+              color: accent,
+              selected: true,
+            ),
+        ],
+        onEdit: _isOwner ? enterEdit : null,
+      ),
+      content: [
+        HeroIdentity(
+          icon: AccountIconCircle(
+            account: a,
+            size: 40,
+            onLongPress: _isOwner ? _enterEditThenOpenMaker : null,
+          ),
+          name: HeroNameInput(
+            editing: false,
+            controller: _nameController,
+            maxLength: TextLimits.name,
+            maxLines: 2,
+            onEnterEdit: _isOwner ? _enterOn(_nameFocus) : null,
+          ),
+          description: HeroDescription(
+            controller: _descriptionController,
+            editing: false,
+            focusNode: _descriptionFocus,
+            hint: l.accountFormDescriptionExample,
+            maxLength: TextLimits.description,
+            onEnterEdit: _enterOn(_descriptionFocus),
+          ),
+        ),
+        a.showsBalance
+            ? HeroNumber(
+                label: a.isLiability
+                    ? l.accountsSummaryCardDebt
+                    : l.fpWalletBalanceLabel,
+                value: MoneyText(
+                  a.isLiability ? a.creditUsed : accountDisplayBalance(a),
+                  symbol: symbol,
+                ),
+                color: accountBalanceColor(context, a),
+              )
+            : AppText(l.walletTrackOffHero, role: AppTextRole.caption),
+        bar,
+        if (a.isLiability && due != null && a.daysUntilDue != null)
+          HeroAlert(
+            text: l.fpWalletDueAlert(
+              DateFormatter.short(due, locale: locale),
+              a.daysUntilDue!,
+            ),
+          ),
       ],
-      onEdit: _isOwner ? enterEdit : null,
-      icon: AccountIconCircle(
-        account: a,
-        size: 40,
-        onLongPress: _isOwner ? _enterEditThenOpenMaker : null,
-      ),
-      name: HeroNameInput(
-        editing: false,
-        controller: _nameController,
-        maxLength: TextLimits.name,
-        maxLines: 2,
-        onEnterEdit: _isOwner ? _enterOn(_nameFocus) : null,
-      ),
-      description: HeroDescription(
-        controller: _descriptionController,
-        editing: false,
-        focusNode: _descriptionFocus,
-        hint: l.accountFormDescriptionExample,
-        maxLength: TextLimits.description,
-        onEnterEdit: _enterOn(_descriptionFocus),
-      ),
-      number: a.showsBalance
-          ? HeroNumber(
-              label: a.isLiability
-                  ? l.accountsSummaryCardDebt
-                  : l.fpWalletBalanceLabel,
-              value: MoneyText(
-                a.isLiability ? a.creditUsed : accountDisplayBalance(a),
-                symbol: symbol,
-              ),
-              color: accountBalanceColor(context, a),
-            )
-          : AppText(l.walletTrackOffHero, role: AppTextRole.caption),
-      bar: _heroBar(l, a, accent, symbol, savings),
-      alert: a.isLiability && due != null && a.daysUntilDue != null
-          ? HeroAlert(
-              text: l.fpWalletDueAlert(
-                DateFormatter.short(due, locale: locale),
-                a.daysUntilDue!,
-              ),
-            )
-          : null,
     );
   }
 
@@ -1164,73 +1170,78 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       bottomInset: bottom,
       hero: KeyedSubtree(
         key: _heroKey,
-        child: HeroCard(
+        child: AppHeroCard(
           style: accountHeroStyle(context, preview),
-          editing: true,
-          chips: [
-            OptionMenuAnchor<AccountType>(
-              selected: w.type,
-              onSelected: (t) => applyChange(w.copyWith(type: t)),
-              options: [
-                for (final t in AccountType.values)
-                  SheetOption(
-                    value: t,
-                    label: accountTypeLabel(context, t),
-                    leading: AppIcon(t.icon),
-                  ),
-              ],
-              builder: (context, toggle) => AppChip(
-                label: accountTypeLabel(context, w.type),
-                icon: w.type.icon,
-                color: w.type.colorOf(context),
-                selected: true,
-                trailing: AppChipTrailing.dropdown,
-                onTap: toggle,
+          mode: _isCreate ? HeroCardMode.create : HeroCardMode.edit,
+          header: HeroHeader(
+            leading: [
+              OptionMenuAnchor<AccountType>(
+                selected: w.type,
+                onSelected: (t) => applyChange(w.copyWith(type: t)),
+                options: [
+                  for (final t in AccountType.values)
+                    SheetOption(
+                      value: t,
+                      label: accountTypeLabel(context, t),
+                      leading: AppIcon(t.icon),
+                    ),
+                ],
+                builder: (context, toggle) => AppChip(
+                  label: accountTypeLabel(context, w.type),
+                  icon: w.type.icon,
+                  color: w.type.colorOf(context),
+                  selected: true,
+                  trailing: AppChipTrailing.dropdown,
+                  onTap: toggle,
+                ),
+              ),
+            ],
+          ),
+          content: [
+            HeroIdentity(
+              icon: AccountIconCircle(
+                account: preview,
+                size: 44,
+                onTap: _openIconMaker,
+              ),
+              name: HeroNameInput(
+                editing: true,
+                controller: _nameController,
+                focusNode: _nameFocus,
+                hint: l.accountFormNameExample,
+                maxLength: TextLimits.name,
+                maxLines: 2,
+                onChanged: (v) => _onText(_Field.name, v),
+                validator: (v) {
+                  final name = v?.trim() ?? '';
+                  if (name.isEmpty) return l.accountFormNameRequired;
+                  if (name.length > TextLimits.name) {
+                    return l.accountFormNameTooLong;
+                  }
+                  return null;
+                },
+              ),
+              description: HeroDescription(
+                controller: _descriptionController,
+                editing: true,
+                focusNode: _descriptionFocus,
+                hint: l.accountFormDescriptionExample,
+                maxLength: TextLimits.description,
+                onChanged: (v) => _onText(_Field.description, v),
               ),
             ),
+            // Create: the opening balance is typed here, positive for every type
+            // (a card: what is owed); the balance can't be edited later — ปรับยอด
+            // moves it.
+            if (_isCreate && w.trackBalance)
+              HeroAmountField(
+                controller: _openingController,
+                label: l.accountFormBalanceLabel,
+                accent: accent,
+                symbol: context.readUserCurrencySymbol,
+                onChanged: (v) => _onText(_Field.opening, v),
+              ),
           ],
-          icon: AccountIconCircle(
-            account: preview,
-            size: 44,
-            onTap: _openIconMaker,
-          ),
-          name: HeroNameInput(
-            editing: true,
-            controller: _nameController,
-            focusNode: _nameFocus,
-            hint: l.accountFormNameExample,
-            maxLength: TextLimits.name,
-            maxLines: 2,
-            onChanged: (v) => _onText(_Field.name, v),
-            validator: (v) {
-              final name = v?.trim() ?? '';
-              if (name.isEmpty) return l.accountFormNameRequired;
-              if (name.length > TextLimits.name) {
-                return l.accountFormNameTooLong;
-              }
-              return null;
-            },
-          ),
-          description: HeroDescription(
-            controller: _descriptionController,
-            editing: true,
-            focusNode: _descriptionFocus,
-            hint: l.accountFormDescriptionExample,
-            maxLength: TextLimits.description,
-            onChanged: (v) => _onText(_Field.description, v),
-          ),
-          // Create: the opening balance is typed here, positive for every type
-          // (a card: what is owed); the balance can't be edited later — ปรับยอด
-          // moves it.
-          amountField: _isCreate && w.trackBalance
-              ? HeroAmountField(
-                  controller: _openingController,
-                  label: l.accountFormBalanceLabel,
-                  accent: accent,
-                  symbol: context.readUserCurrencySymbol,
-                  onChanged: (v) => _onText(_Field.opening, v),
-                )
-              : null,
         ),
       ),
       info: _editInfo(l),
@@ -1321,7 +1332,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       children: [
         credit,
         if (numbers != null) ...[
-          const SizedBox(height: HeroSpacing.after),
+          SizedBox(height: HeroMetrics.of(context).after),
           numbers,
         ],
       ],

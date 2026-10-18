@@ -157,7 +157,10 @@ class PickCard extends StatelessWidget {
     }
     if (editable && !hasError) {
       final line = tint ?? scheme.outline;
+      // passthrough: under a fixed height (a flow row) the card fills it like
+      // the lines drawn over it, instead of hugging its content.
       return Stack(
+        fit: StackFit.passthrough,
         children: [
           card,
           Positioned.fill(

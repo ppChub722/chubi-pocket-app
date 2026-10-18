@@ -5,17 +5,9 @@ import '../tokens/app_spacing.dart';
 import '../tokens/avatar_metrics.dart';
 import 'corner_badge.dart';
 
-enum IconTileShape {
-  circle,
+enum IconTileShape { circle, rounded }
 
-  rounded,
-}
-
-enum IconTileStyle {
-  soft,
-
-  solid,
-}
+enum IconTileStyle { soft, solid }
 
 class IconTile extends StatelessWidget {
   const IconTile({

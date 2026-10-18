@@ -12,7 +12,6 @@ import 'package:chubi_pocket/features/transactions/presentation/widgets/draft_fo
 import 'package:chubi_pocket/features/transactions/presentation/widgets/splits_section.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:chubi_pocket/ui/ui.dart';
-import 'package:chubi_pocket/features/accounts/presentation/widgets/wallet_pick_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';

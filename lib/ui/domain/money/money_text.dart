@@ -1,3 +1,4 @@
+import '../../atoms/amount_text.dart';
 import '../../atoms/app_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,15 +11,7 @@ import '../../../features/preferences/presentation/cubit/money_visibility_cubit.
 import '../../../l10n/gen/app_localizations.dart';
 import 'money_style.dart';
 
-enum MoneyTone {
-  plain,
-
-  income,
-
-  expense,
-
-  signed,
-}
+enum MoneyTone { plain, income, expense, signed }
 
 class MoneyText extends StatelessWidget {
   const MoneyText(
@@ -72,17 +65,7 @@ class MoneyText extends StatelessWidget {
         : negative == null
         ? formatted
         : money.apply(formatted, negative: negative);
-    final base = style ?? DefaultTextStyle.of(context).style;
-    return Text(
-      text,
-      textAlign: textAlign,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: base.copyWith(
-        color: color ?? base.color,
-        fontFeatures: const [FontFeature.tabularFigures()],
-      ),
-    );
+    return AmountText(text, color: color, style: style, textAlign: textAlign);
   }
 }
 

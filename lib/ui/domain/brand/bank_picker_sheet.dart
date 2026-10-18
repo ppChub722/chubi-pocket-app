@@ -51,6 +51,7 @@ Future<BankPickerChoice?> showBankSelectSheet(
     builder: (_) => PickerSheet(
       title: strings.title,
       searchable: true,
+      searchToggle: true,
       searchHint: strings.searchHint,
       builder: (context, query) {
         bool hit(BankPickerItem p) =>
