@@ -270,51 +270,57 @@ class _PersonViewState extends State<_PersonView> {
       NetSide.even => const HeroStyle.plain(),
     };
     final days = b.daysOutstanding;
-    return HeroCard(
+    return AppHeroCard(
       style: style,
-      links: [
-        if (b.person.contactId != null)
-          CardActionButton(
-            icon: AppIcons.contact,
-            tooltip: l.debtsPersonOpenContact,
-            onTap: () => openPage(context, '/contacts/${b.person.contactId}'),
-          ),
-      ],
-      search: ListenableBuilder(
-        listenable: _search,
-        builder: (context, _) => ToolbarToggleButton(
-          state: _toolbar,
-          filtered: _search.text.isNotEmpty || s.query.isFiltered,
-          tooltip: l.commonSearch,
-        ),
-      ),
-      icon: PersonMark(
-        name: b.person.name,
-        level: debtPersonLevel(b.person),
-        iconCode: b.person.iconCode,
-        size: 40,
-      ),
-      name: Text(b.person.name),
-      fact: days == null
-          ? null
-          : DebtAgeText(l.fpDebtsDaysOutstanding(days), warn: days > 30),
-      number: DebtAmountLine(
-        net: b.net,
-        owedToMeLabel: l.debtsOwedToMe,
-        iOweLabel: l.debtsIOwe,
-        settledLabel: l.debtsEven,
-        currencySymbol: symbol,
-      ),
-      embedded: side == NetSide.even || s.message.text.isEmpty
-          ? null
-          : DebtSummaryMessageBox(
-              text: s.message.text,
-              label: l.fpDebtsMessageLabel,
-              copyLabel: l.fpDebtsCopy,
-              shareLabel: l.fpDebtsShare,
-              onCopy: _copy,
-              onShare: _share,
+      header: HeroHeader(
+        actions: [
+          if (b.person.contactId != null)
+            CardActionButton(
+              icon: AppIcons.contact,
+              tooltip: l.debtsPersonOpenContact,
+              onTap: () => openPage(context, '/contacts/${b.person.contactId}'),
             ),
+          ListenableBuilder(
+            listenable: _search,
+            builder: (context, _) => ToolbarToggleButton(
+              state: _toolbar,
+              filtered: _search.text.isNotEmpty || s.query.isFiltered,
+              tooltip: l.commonSearch,
+            ),
+          ),
+        ],
+      ),
+      content: [
+        HeroIdentity(
+          icon: PersonMark(
+            name: b.person.name,
+            level: debtPersonLevel(b.person),
+            iconCode: b.person.iconCode,
+            size: 40,
+          ),
+          name: Text(b.person.name),
+          fact: days == null
+              ? null
+              : DebtAgeText(l.fpDebtsDaysOutstanding(days), warn: days > 30),
+        ),
+        DebtAmountLine(
+          net: b.net,
+          owedToMeLabel: l.debtsOwedToMe,
+          iOweLabel: l.debtsIOwe,
+          settledLabel: l.debtsEven,
+          currencySymbol: symbol,
+        ),
+        side == NetSide.even || s.message.text.isEmpty
+            ? null
+            : DebtSummaryMessageBox(
+                text: s.message.text,
+                label: l.fpDebtsMessageLabel,
+                copyLabel: l.fpDebtsCopy,
+                shareLabel: l.fpDebtsShare,
+                onCopy: _copy,
+                onShare: _share,
+              ),
+      ],
     );
   }
 

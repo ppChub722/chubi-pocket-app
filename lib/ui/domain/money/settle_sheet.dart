@@ -215,7 +215,7 @@ class _SettleSheetState extends State<SettleSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TxHeroCard(
+          TransactionHeroCard(
             type: data.isReceive
                 ? TransactionType.income
                 : TransactionType.expense,

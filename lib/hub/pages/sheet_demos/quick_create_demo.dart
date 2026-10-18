@@ -126,7 +126,7 @@ class _DemoSheetState extends State<_DemoSheet> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TxHeroCard(
+          TransactionHeroCard(
             key: _heroKey,
             type: _type,
             amount: _amount,

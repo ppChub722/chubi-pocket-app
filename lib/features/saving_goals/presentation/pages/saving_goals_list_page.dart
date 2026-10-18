@@ -116,38 +116,51 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
     final s = state.overview.summary;
     final symbol = context.readUserCurrencySymbol;
     String money(double v) => moneyString(context, v, symbol: symbol);
-    return ListSummaryCard(
-      caption: l.fpGoalsListCaption,
+    return AppHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
-      actions: [
-        ToolbarToggleButton(
-          state: _toolbar,
-          filtered:
-              _query.isNotEmpty ||
-              state.filter != SavingGoalsFilter.active ||
-              state.sort != SavingGoalsSort.created,
-          tooltip: l.commonSearch,
-        ),
-      ],
-      amount: s.savedTotal,
-      symbol: symbol,
-      bar: s.monthPlanTotal > 0
-          ? ProgressRow(
-              value: s.monthSavedTotal / s.monthPlanTotal,
-              trailing: l.fpM5GoalsMonthSaved(
-                money(s.monthSavedTotal),
-                money(s.monthPlanTotal),
-              ),
-            )
-          : null,
-      alert: s.monthShortTotal > 0
-          ? l.fpGoalsMonthShortLine(money(s.monthShortTotal))
-          : null,
-      infoLine: AppText(
-        l.fpGoalsSpareLine(money(s.unallocated)),
-        role: AppTextRole.caption,
+      margin: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.xs,
       ),
-      onInfoTap: () => context.push('/saving-goals/spare'),
+      header: HeroHeader(
+        leading: [HeroCaption(l.fpGoalsListCaption)],
+        actions: [
+          const MoneyVisibilityToggle(),
+          ToolbarToggleButton(
+            state: _toolbar,
+            filtered:
+                _query.isNotEmpty ||
+                state.filter != SavingGoalsFilter.active ||
+                state.sort != SavingGoalsSort.created,
+            tooltip: l.commonSearch,
+          ),
+        ],
+      ),
+      content: [
+        HeroNumber(
+          value: MoneyText(s.savedTotal, symbol: symbol),
+          layout: HeroNumberLayout.inline,
+        ),
+        if (s.monthPlanTotal > 0)
+          ProgressRow(
+            value: s.monthSavedTotal / s.monthPlanTotal,
+            trailing: l.fpM5GoalsMonthSaved(
+              money(s.monthSavedTotal),
+              money(s.monthPlanTotal),
+            ),
+          ),
+        HeroNote(
+          onTap: () => context.push('/saving-goals/spare'),
+          child: AppText(
+            l.fpGoalsSpareLine(money(s.unallocated)),
+            role: AppTextRole.caption,
+          ),
+        ),
+        if (s.monthShortTotal > 0)
+          HeroAlert(text: l.fpGoalsMonthShortLine(money(s.monthShortTotal))),
+      ],
     );
   }
 

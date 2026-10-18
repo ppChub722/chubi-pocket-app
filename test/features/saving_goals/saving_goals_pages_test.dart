@@ -253,10 +253,10 @@ void main() {
     expect(find.text('Total savings now'), findsOneWidget);
     expect(find.textContaining('60,500'), findsOneWidget);
     expect(
-      find.textContaining('Still short this month \$2,500.00'),
+      find.textContaining('Still short this month \$2,500'),
       findsOneWidget,
     );
-    expect(find.textContaining('Not allocated \$8,500.00'), findsOneWidget);
+    expect(find.textContaining('Not allocated \$8,500'), findsOneWidget);
     // Groups, in the BE's order.
     final short = find.widgetWithText(SectionHeader, 'Still short this month');
     final done = find.widgetWithText(SectionHeader, 'Done this month ✓');
@@ -265,8 +265,8 @@ void main() {
     expect(t.getTopLeft(short).dy, lessThan(t.getTopLeft(done).dy));
     // A row: name, "Short ฿x", "saved / target", the ETA badge.
     expect(find.text('ทริปญี่ปุ่น'), findsOneWidget);
-    expect(find.text('Short \$2,500.00'), findsOneWidget);
-    expect(find.textContaining('\$52,000.00 / \$80,000.00'), findsWidgets);
+    expect(find.text('Short \$2,500'), findsOneWidget);
+    expect(find.textContaining('\$52,000 / \$80,000'), findsWidgets);
     expect(find.text('Goal May 2027 · 2 months late'), findsOneWidget);
     // Done group: a tick, a plain ETA badge (on track).
     expect(find.text('✓'), findsOneWidget);
@@ -292,13 +292,13 @@ void main() {
     );
     expect(t.widget<SavingGoalRow>(row).value, isNull);
     expect(
-      find.descendant(of: row, matching: find.text('\$45,000.00')),
+      find.descendant(of: row, matching: find.text('\$45,000')),
       findsOneWidget,
     );
     expect(
       find.descendant(
         of: row,
-        matching: find.text('Ongoing · this month +\$2,000.00'),
+        matching: find.text('Ongoing · this month +\$2,000'),
       ),
       findsOneWidget,
     );
@@ -421,17 +421,17 @@ void main() {
     expect(find.text('2 months late'), findsOneWidget);
     expect(find.widgetWithText(HeroNumber, 'Saved'), findsOneWidget);
     expect(find.textContaining('52,000'), findsWidgets);
-    expect(find.text('/ \$80,000.00 · 65%'), findsOneWidget);
+    expect(find.text('/ \$80,000 · 65%'), findsOneWidget);
     expect(find.text('Due Mar 15, 2027'), findsOneWidget);
     expect(find.text('153 days left'), findsOneWidget);
     // The three month tiles come from the BE (month_short / month_saved /
     // needed_monthly).
     expect(find.text('Short this month'), findsOneWidget);
-    expect(find.text('\$2,500.00'), findsOneWidget);
+    expect(find.text('\$2,500'), findsOneWidget);
     expect(find.text('Saved this month'), findsOneWidget);
-    expect(find.text('\$3,000.00'), findsOneWidget);
+    expect(find.text('\$3,000'), findsOneWidget);
     expect(find.text('Needed / month'), findsOneWidget);
-    expect(find.text('\$5,600.00'), findsOneWidget);
+    expect(find.text('\$5,600'), findsOneWidget);
     // The action bar follows the BE's flags.
     expect(find.widgetWithText(ActionBar, 'Save'), findsOneWidget);
     expect(find.text('Withdraw'), findsOneWidget);
@@ -510,7 +510,7 @@ void main() {
     t,
   ) async {
     await pump(t, const SavingGoalsListPage());
-    expect(find.text('Saved \$3,000.00 / \$5,500.00'), findsOneWidget);
+    expect(find.text('Saved \$3,000 / \$5,500'), findsOneWidget);
   });
 
   testWidgets('detail edit: delete with money held says close first', (
@@ -566,15 +566,13 @@ void main() {
     expect(find.text('Target amount'), findsOneWidget);
     expect(find.text('Mar 15, 2027'), findsOneWidget);
     expect(find.textContaining('to go'), findsOneWidget);
-    expect(find.text('Save \$5,600.00/month'), findsOneWidget);
+    expect(find.text('Save \$5,600/month'), findsOneWidget);
     // End zone: close + archive — no delete (flag off). Archiving a goal
     // that holds money is fine (0.4.0-1): the line says what stops counting.
     expect(find.text('Close goal'), findsOneWidget);
     expect(find.text('Archive'), findsOneWidget);
     expect(
-      find.text(
-        'Hidden · \$52,000.00 not counted in savings · can be restored',
-      ),
+      find.text('Hidden · \$52,000 not counted in savings · can be restored'),
       findsOneWidget,
     );
     expect(find.text('Close the goal first'), findsNothing);
@@ -582,7 +580,7 @@ void main() {
     await t.ensureVisible(find.text('Archive'));
     await t.tap(find.text('Archive'));
     await t.pumpAndSettle();
-    expect(find.textContaining('The \$52,000.00 saved in it'), findsOneWidget);
+    expect(find.textContaining('The \$52,000 saved in it'), findsOneWidget);
     await t.tap(find.widgetWithText(AppButton, 'Archive'));
     await t.pumpAndSettle();
     expect(repo.writes, ['POST g1 archive']);
@@ -620,9 +618,9 @@ void main() {
     expect(find.textContaining('months late'), findsNothing);
     expect(find.text('Short this month'), findsNothing);
     // This month saved + the auto-saving amount.
-    expect(find.text('\$2,000.00'), findsWidgets);
+    expect(find.text('\$2,000'), findsWidgets);
     expect(find.text('Auto-saving'), findsWidgets);
-    expect(find.text('\$2,000.00/mo'), findsOneWidget);
+    expect(find.text('\$2,000/mo'), findsOneWidget);
   });
 
   testWidgets('detail edit: the target is optional (empty = ongoing)', (
@@ -673,7 +671,7 @@ void main() {
   testWidgets('detail: a failed refresh keeps the page on screen', (t) async {
     await pump(t, const SavingGoalDetailPage(id: 'g1'));
     repo.networkDown = true;
-    final ctx = t.element(find.byType(HeroCard));
+    final ctx = t.element(find.byType(AppHeroCard));
     await ctx.read<SavingGoalCubit>().load();
     await t.pump();
     await t.pump(const Duration(milliseconds: 100));

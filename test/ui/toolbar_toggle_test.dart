@@ -41,10 +41,15 @@ void main() {
       MaterialApp(
         theme: ThemeData(extensions: [colors]),
         home: Scaffold(
-          body: HeaderCard(
-            leading: const SizedBox(width: 40, height: 40),
-            title: const Text('Name'),
-            onEdit: () => tapped = true,
+          body: AppHeroCard(
+            style: const HeroStyle.plain(),
+            header: HeroHeader(onEdit: () => tapped = true),
+            content: [
+              HeroIdentity(
+                icon: const SizedBox(width: 40, height: 40),
+                name: const Text('Name'),
+              ),
+            ],
           ),
         ),
       ),

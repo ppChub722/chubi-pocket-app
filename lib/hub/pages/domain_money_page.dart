@@ -112,6 +112,24 @@ class _MoneyPageState extends State<_MoneyPage> {
           ),
         ),
         HubDemo(
+          title: 'MoneyDecimals — formatMoneyWith',
+          note:
+              'The user picks the decimals in settings: always, never, or '
+              'auto (only when there is a fraction).',
+          child: HubRow(
+            cells: [
+              for (final d in MoneyDecimals.values)
+                HubCell(
+                  caption: d.name,
+                  child: Text(
+                    '${formatMoneyWith(MoneyStyle(decimals: d), 1000, symbol: '฿')}'
+                    ' · ${formatMoneyWith(MoneyStyle(decimals: d), 99.5, symbol: '฿')}',
+                  ),
+                ),
+            ],
+          ),
+        ),
+        HubDemo(
           title: 'MoneyText — hidden (privacy) vs shown',
           note:
               'kMoneyPrivacyEnabled is a const false right now, so amounts '

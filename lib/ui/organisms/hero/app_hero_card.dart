@@ -6,24 +6,11 @@ import '../../molecules/hero_style.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/hero_metrics.dart';
 
-/// What the hero is doing: showing a record, editing it, or creating one.
-/// The pieces inside read it from [AppHeroScope] (the ✏️ only shows in
-/// [view], a name turns into its input in [edit] / [create]).
+/// Pieces inside read it from [AppHeroScope].
 enum HeroCardMode { view, edit, create }
 
-/// THE hero card (owner 2026-10-18): one surface, one inset, three parts.
-///
-///   [header]   context + controls ([HeroHeader]: chips left, actions right;
-///              the card adds ✏️ and ⌃ itself)
-///   [content]  what the page shows — hub pieces only, laid out by the page
-///   [footer]   what the user can do next (tiles, actions) — hub pieces only
-///
-/// Versions: [content] alone = it can't fold; [folded] alone = it can't
-/// expand (a floating pill); both = it folds, [open] says which shows. The
-/// folded version is [header] + [folded] (no footer). One version is drawn
-/// at a time, both in the same inset, so nothing moves when it toggles.
-///
-/// Spacing comes from the theme ([HeroMetrics]); a page never pads it.
+/// Header + content + footer on one surface and inset. Content alone can't
+/// fold, folded alone can't expand; both fold, driven by [open].
 class AppHeroCard extends StatelessWidget {
   const AppHeroCard({
     required this.style,
@@ -34,7 +21,6 @@ class AppHeroCard extends StatelessWidget {
     this.folded,
     this.open,
     this.margin = EdgeInsets.zero,
-    this.padding,
     this.onTap,
     super.key,
   }) : assert(
@@ -55,9 +41,6 @@ class AppHeroCard extends StatelessWidget {
   final ValueNotifier<bool>? open;
   final EdgeInsetsGeometry margin;
 
-  /// Null = [HeroMetrics.padding]. Only for a card that hasn't moved to the
-  /// theme's inset yet.
-  final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
 
   bool get _foldable => content != null && folded != null;
@@ -89,10 +72,7 @@ class AppHeroCard extends StatelessWidget {
     style: style,
     margin: margin,
     onTap: onTap,
-    child: HeroContent(
-      padding: padding,
-      rows: [header, ...content!, ...footer],
-    ),
+    child: HeroContent(rows: [header, ...content!, ...footer]),
   );
 
   Widget _pill(BuildContext context) {
@@ -110,7 +90,7 @@ class AppHeroCard extends StatelessWidget {
           radius: radius,
           glyphSize: 56,
           onTap: onTap,
-          child: HeroContent(padding: padding, rows: [header, ...folded!]),
+          child: HeroContent(rows: [header, ...folded!]),
         ),
       ),
     );

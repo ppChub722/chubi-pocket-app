@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../atoms/locked_in_edit.dart';
 import '../molecules/app_tab_bar.dart';
-import '../molecules/compact_hero_bar.dart';
+import '../molecules/app_compact_hero_card.dart';
 import '../molecules/pinned_tab_bar.dart';
 import '../tokens/app_durations.dart';
 import '../tokens/app_spacing.dart';
@@ -31,7 +31,7 @@ class TabbedDetailBody<T> extends StatefulWidget {
 
   final Widget Function(BuildContext context, T tab) tabBuilder;
 
-  final CompactHeroBar? compactBar;
+  final AppCompactHeroCard? compactBar;
   final bool editing;
 
   final bool showPageDots;
@@ -139,7 +139,7 @@ class _TabbedDetailBodyState<T> extends State<TabbedDetailBody<T>> {
             : CompactHeroScope(
                 heroKey: _heroKey,
                 top: w.editing ? 0 : PinnedTabBarDelegate.height,
-                bar: CompactHeroBar(
+                bar: AppCompactHeroCard(
                   key: bar.key,
                   style: bar.style,
                   leading: bar.leading,

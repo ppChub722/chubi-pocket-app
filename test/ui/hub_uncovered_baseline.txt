@@ -3,7 +3,6 @@ AvatarMetrics
 Currencies
 EditModeMixin
 FontRegistry
-HeroSpacing
 IconCode
 IconCodeWidget
 IconDisplay

@@ -350,18 +350,6 @@ abstract class AppLocalizations {
   /// **'Search contacts or type a name'**
   String get contactPickerSearchHint;
 
-  /// No description provided for @contactPickerUseName.
-  ///
-  /// In en, this message translates to:
-  /// **'Use \"{name}\"'**
-  String contactPickerUseName(String name);
-
-  /// No description provided for @contactPickerUseNameHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Not saved as a contact'**
-  String get contactPickerUseNameHint;
-
   /// No description provided for @contactPickerEmpty.
   ///
   /// In en, this message translates to:
@@ -7027,17 +7015,7 @@ abstract class AppLocalizations {
   /// **'No tag matches'**
   String get tagPickerNoMatch;
 
-  /// No description provided for @contactPickerSaveAsContact.
-  ///
-  /// In en, this message translates to:
-  /// **'Save as a contact'**
-  String get contactPickerSaveAsContact;
 
-  /// No description provided for @contactPickerSaveFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Couldn\'t save the contact'**
-  String get contactPickerSaveFailed;
 
   /// No description provided for @contactsSortRecent.
   ///
@@ -7932,18 +7910,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'With whom?'**
   String get debtPersonPickerTitle;
-
-  /// No description provided for @debtPersonAddTyped.
-  ///
-  /// In en, this message translates to:
-  /// **'Add “{name}”'**
-  String debtPersonAddTyped(Object name);
-
-  /// No description provided for @debtPersonFromContacts.
-  ///
-  /// In en, this message translates to:
-  /// **'From contacts'**
-  String get debtPersonFromContacts;
 
   /// No description provided for @debtSettledLabel.
   ///

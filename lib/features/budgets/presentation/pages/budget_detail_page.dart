@@ -664,11 +664,11 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
   }
 
-  CompactHeroBar _compactBar(BudgetDetail d) {
+  AppCompactHeroCard _compactBar(BudgetDetail d) {
     final b = d.budget;
     final p = b.period;
     final over = p.overBy > 0;
-    return CompactHeroBar(
+    return AppCompactHeroCard(
       style: HeroStyle.tinted(
         color: budgetTint(context, b),
         glyph: AppIcons.budget,
@@ -701,75 +701,84 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     final status = b.state == BudgetState.active
         ? null
         : budgetStatusChip(l, b);
-    return HeroCard(
+    return AppHeroCard(
       style: HeroStyle.tinted(
         color: budgetTint(context, b),
         glyph: AppIcons.budget,
       ),
-      chips: [
-        ?status,
-        if (b.recurring && b.rule != null)
+      header: HeroHeader(
+        leading: [
+          ?status,
+          if (b.recurring && b.rule != null)
+            AppChip(
+              label: l.bgChipRecurring(budgetRuleLabel(l, b.rule!)),
+              selected: true,
+            ),
           AppChip(
-            label: l.bgChipRecurring(budgetRuleLabel(l, b.rule!)),
+            label: f.elapsedDays != null && f.totalDays != null
+                ? l.fpBudgetsRangeDay(range, f.elapsedDays!, f.totalDays!)
+                : range,
+            icon: AppIcons.date,
             selected: true,
           ),
-        AppChip(
-          label: f.elapsedDays != null && f.totalDays != null
-              ? l.fpBudgetsRangeDay(range, f.elapsedDays!, f.totalDays!)
-              : range,
-          icon: AppIcons.date,
-          selected: true,
+          if (b.openEnded) AppChip(label: l.bgRowOpenEnded, selected: true),
+          if (p.overridden)
+            AppChip(
+              label: l.bgPeriodOverridden,
+              tone: AppChipTone.info,
+              selected: true,
+            ),
+        ],
+        onEdit: _canEdit ? enterEdit : null,
+      ),
+      content: [
+        HeroIdentity(
+          icon: EditableCircle(
+            size: 40,
+            onLongPress: _canEdit
+                ? () {
+                    enterEdit();
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) _pickIcon();
+                    });
+                  }
+                : null,
+            child: IconDisplay(
+              type: IconType.category,
+              size: 40,
+              iconCode: b.iconCode,
+            ),
+          ),
+          description: HeroDescription(
+            controller: _ctrl[_Field.description]!,
+            editing: false,
+            focusNode: _descriptionFocus,
+            hint: l.commonDescription,
+            maxLength: TextLimits.description,
+            onEnterEdit: _canEdit
+                ? () => enterEdit(focus: _descriptionFocus)
+                : null,
+          ),
         ),
-        if (b.openEnded) AppChip(label: l.bgRowOpenEnded, selected: true),
-        if (p.overridden)
-          AppChip(
-            label: l.bgPeriodOverridden,
-            tone: AppChipTone.info,
-            selected: true,
-          ),
+        HeroNumber(
+          label: over ? l.fpBudgetsOverLabel : l.fpBudgetsLeftLabel,
+          value: MoneyText(over ? p.overBy : p.remaining, symbol: symbol),
+          color: accent,
+          target: l.fpBudgetsLimitTarget(budgetRowMoney(context, p.amount)),
+        ),
+        HeroBar(
+          value: p.usedRatio,
+          expected: p.expected > 0 ? p.expectedRatio : null,
+          marker: f.pacePct == null ? null : f.pacePct! / 100,
+          color: accent,
+          left: l.fpBudgetsUsedCaption(budgetRowMoney(context, p.used)),
+          right: f.pacePct == null ? null : l.fpBudgetsPaceCaption(f.pacePct!),
+        ),
       ],
-      onEdit: _canEdit ? enterEdit : null,
-      icon: EditableCircle(
-        size: 40,
-        onLongPress: _canEdit
-            ? () {
-                enterEdit();
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) _pickIcon();
-                });
-              }
-            : null,
-        child: IconDisplay(
-          type: IconType.category,
-          size: 40,
-          iconCode: b.iconCode,
-        ),
-      ),
-      description: HeroDescription(
-        controller: _ctrl[_Field.description]!,
-        editing: false,
-        focusNode: _descriptionFocus,
-        hint: l.commonDescription,
-        maxLength: TextLimits.description,
-        onEnterEdit: _canEdit
-            ? () => enterEdit(focus: _descriptionFocus)
-            : null,
-      ),
-      number: HeroNumber(
-        label: over ? l.fpBudgetsOverLabel : l.fpBudgetsLeftLabel,
-        value: MoneyText(over ? p.overBy : p.remaining, symbol: symbol),
-        color: accent,
-        target: l.fpBudgetsLimitTarget(budgetRowMoney(context, p.amount)),
-      ),
-      bar: HeroBar(
-        value: p.usedRatio,
-        expected: p.expected > 0 ? p.expectedRatio : null,
-        marker: f.pacePct == null ? null : f.pacePct! / 100,
-        color: accent,
-        left: l.fpBudgetsUsedCaption(budgetRowMoney(context, p.used)),
-        right: f.pacePct == null ? null : l.fpBudgetsPaceCaption(f.pacePct!),
-      ),
-      tiles: _tiles(l, d),
+      footer: [
+        for (final List<Widget> tiles in [_tiles(l, d)])
+          if (tiles.isNotEmpty) HeroTiles(children: tiles),
+      ],
     );
   }
 
@@ -1070,56 +1079,62 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       topInset: barInset + AppSpacing.lg,
       bottomInset: bottom,
       onRefresh: widget.isCreate ? null : _load,
-      hero: HeroCard(
+      hero: AppHeroCard(
         style: HeroStyle.tinted(color: accent, glyph: AppIcons.budget),
-        editing: true,
-        chips: [
-          if (w.recurring)
-            AppChip(
-              label: l.bgChipRecurring(budgetRuleLabel(l, w.rule)),
-              selected: true,
-              trailing: AppChipTrailing.dropdown,
-              onTap: _pickRule,
+        mode: HeroCardMode.edit,
+        header: HeroHeader(
+          leading: [
+            if (w.recurring)
+              AppChip(
+                label: l.bgChipRecurring(budgetRuleLabel(l, w.rule)),
+                selected: true,
+                trailing: AppChipTrailing.dropdown,
+                onTap: _pickRule,
+              ),
+          ],
+        ),
+        content: [
+          HeroIdentity(
+            icon: EditableCircle(
+              size: 44,
+              onTap: _pickIcon,
+              child: IconDisplay(
+                type: IconType.category,
+                size: 44,
+                iconCode: w.iconCode,
+              ),
             ),
-        ],
-        icon: EditableCircle(
-          size: 44,
-          onTap: _pickIcon,
-          child: IconDisplay(
-            type: IconType.category,
-            size: 44,
-            iconCode: w.iconCode,
+            name: HeroNameInput(
+              editing: true,
+              controller: _ctrl[_Field.name]!,
+              focusNode: _nameFocus,
+              hint: l.commonName,
+              maxLength: TextLimits.name,
+              onChanged: (v) => _onText(_Field.name, v),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? l.bgNameRequired : null,
+            ),
+            description: HeroDescription(
+              controller: _ctrl[_Field.description]!,
+              editing: true,
+              hint: l.commonDescription,
+              maxLength: TextLimits.description,
+              focusNode: _descriptionFocus,
+              onChanged: (v) => _onText(_Field.description, v),
+            ),
           ),
-        ),
-        name: HeroNameInput(
-          editing: true,
-          controller: _ctrl[_Field.name]!,
-          focusNode: _nameFocus,
-          hint: l.commonName,
-          maxLength: TextLimits.name,
-          onChanged: (v) => _onText(_Field.name, v),
-          validator: (v) =>
-              (v == null || v.trim().isEmpty) ? l.bgNameRequired : null,
-        ),
-        description: HeroDescription(
-          controller: _ctrl[_Field.description]!,
-          editing: true,
-          hint: l.commonDescription,
-          maxLength: TextLimits.description,
-          focusNode: _descriptionFocus,
-          onChanged: (v) => _onText(_Field.description, v),
-        ),
-        amountField: HeroAmountField(
-          controller: _ctrl[_Field.amount]!,
-          label: l.fpBudgetsLimitLabel,
-          accent: accent,
-          symbol: context.readUserCurrencySymbol,
-          onChanged: (v) => _onText(_Field.amount, v),
-          validator: (v) {
-            final n = AmountInput.parse(v);
-            return (n == null || n <= 0) ? l.budgetFormAmountInvalid : null;
-          },
-        ),
+          HeroAmountField(
+            controller: _ctrl[_Field.amount]!,
+            label: l.fpBudgetsLimitLabel,
+            accent: accent,
+            symbol: context.readUserCurrencySymbol,
+            onChanged: (v) => _onText(_Field.amount, v),
+            validator: (v) {
+              final n = AmountInput.parse(v);
+              return (n == null || n <= 0) ? l.budgetFormAmountInvalid : null;
+            },
+          ),
+        ],
       ),
       info: InfoBox(
         rows: [

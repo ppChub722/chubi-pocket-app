@@ -244,7 +244,7 @@ void main() {
     ) async {
       await pump(t, const PersonalDebtsPage());
       final toggle = find.descendant(
-        of: find.byType(ListSummaryCard),
+        of: find.byType(AppHeroCard),
         matching: find.byType(ToolbarToggleButton),
       );
       expect(toggle, findsOneWidget);
@@ -275,8 +275,8 @@ void main() {
       // The tiles carry the BE's people counts + amounts.
       expect(find.text('To receive · 1 people'), findsOneWidget);
       expect(find.text('To pay · 1 people'), findsOneWidget);
-      expect(find.text('฿200.00'), findsWidgets);
-      expect(find.text('฿50.00'), findsWidgets);
+      expect(find.text('฿200'), findsWidgets);
+      expect(find.text('฿50'), findsWidgets);
       // Both sides open → the BE's net line; the amber alert.
       expect(find.byType(DebtNetLine), findsOneWidget);
       expect(find.text('Over 30 days: 1 people'), findsOneWidget);
@@ -362,11 +362,11 @@ void main() {
       await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
       expect(repo.calls, ['person c:c1 cycle=current']);
       // The hero: name, age, side pill + amount, the BE-built message.
-      expect(find.byType(HeroCard), findsOneWidget);
+      expect(find.byType(AppHeroCard), findsOneWidget);
       expect(find.text('Outstanding 6 days'), findsOneWidget);
       expect(find.byType(DebtAmountLine), findsOneWidget);
       expect(find.text('To receive'), findsOneWidget);
-      expect(find.text('฿200.00'), findsOneWidget);
+      expect(find.text('฿200'), findsOneWidget);
       expect(find.byType(DebtSummaryMessageBox), findsOneWidget);
       expect(find.textContaining('Summary with Mom'), findsOneWidget);
       // No tabs, no buttons under the card.
@@ -466,7 +466,7 @@ void main() {
         message: 'boom',
         statusCode: 500,
       );
-      await t.element(find.byType(HeroCard)).read<DebtPersonCubit>().load();
+      await t.element(find.byType(AppHeroCard)).read<DebtPersonCubit>().load();
       await t.pump(const Duration(milliseconds: 100));
       expect(find.byType(ErrorView), findsNothing);
       expect(find.byType(LedgerRow), findsNWidgets(2));

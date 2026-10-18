@@ -93,8 +93,6 @@ class AppCompactHeroCard extends StatelessWidget {
   }
 }
 
-typedef CompactHeroBar = AppCompactHeroCard;
-
 class CompactHeroScope extends StatefulWidget {
   const CompactHeroScope({
     required this.heroKey,
@@ -106,7 +104,7 @@ class CompactHeroScope extends StatefulWidget {
 
   final GlobalKey heroKey;
 
-  final CompactHeroBar bar;
+  final AppCompactHeroCard bar;
 
   final Widget child;
 
@@ -169,7 +167,7 @@ class _CompactHeroScopeState extends State<CompactHeroScope> {
           top: _line + AppSpacing.xs,
           left: AppSpacing.md,
           right: AppSpacing.md,
-          child: CompactHeroBar(
+          child: AppCompactHeroCard(
             key: bar.key,
             style: bar.style,
             leading: bar.leading,

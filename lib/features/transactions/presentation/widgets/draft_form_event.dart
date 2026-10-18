@@ -79,7 +79,7 @@ class _EventForm extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            TxHeroCard(
+            TransactionHeroCard(
               key: heroKey,
               type: c.type,
               allowTransfer: false,

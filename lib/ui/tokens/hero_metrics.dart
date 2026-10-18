@@ -5,9 +5,6 @@ import 'package:flutter/material.dart';
 import 'app_radius.dart';
 import 'app_spacing.dart';
 
-/// A hero card's spacing as a theme value: the inset, the gap between its
-/// rows (header · content · footer alike), the gap between controls in a
-/// row, the space after the card, and the folded / compact shapes.
 class HeroMetrics extends ThemeExtension<HeroMetrics> {
   const HeroMetrics({
     this.padding = const EdgeInsets.all(AppSpacing.md),

@@ -336,11 +336,11 @@ class _TransactionsPageState extends State<_TransactionsPage> {
           ),
         ),
         HubDemo(
-          title: 'TxHeroCard — type switch, editing',
+          title: 'TransactionHeroCard — type switch, editing',
           note:
               'Inline layout (a transaction). Tap a chip or swipe the card to '
               'change type; the border and amount follow the type colour.',
-          child: TxHeroCard(
+          child: TransactionHeroCard(
             type: _type,
             amount: _amount,
             title: _title,
@@ -476,11 +476,11 @@ class _TransactionsPageState extends State<_TransactionsPage> {
           ),
         ),
         HubDemo(
-          title: 'TxHeroCard — expense / income / transfer',
+          title: 'TransactionHeroCard — expense / income / transfer',
           child: Column(
             children: [
               for (final t in TransactionType.values) ...[
-                TxHeroCard(
+                TransactionHeroCard(
                   type: t,
                   amount: _amount,
                   title: _title,
@@ -496,11 +496,12 @@ class _TransactionsPageState extends State<_TransactionsPage> {
           ),
         ),
         HubDemo(
-          title: 'TxHeroCard — view mode, amount note, empty title, stacked',
+          title:
+              'TransactionHeroCard — view mode, amount note, empty title, stacked',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TxHeroCard(
+              TransactionHeroCard(
                 type: TransactionType.expense,
                 amount: _amount,
                 title: _title,
@@ -510,7 +511,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 onEdit: () => _note('hero: edit tapped'),
               ),
               const SizedBox(height: AppSpacing.md),
-              TxHeroCard(
+              TransactionHeroCard(
                 type: TransactionType.income,
                 amount: _amount,
                 title: _empty,
@@ -519,7 +520,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 editing: false,
               ),
               const SizedBox(height: AppSpacing.md),
-              TxHeroCard(
+              TransactionHeroCard(
                 type: TransactionType.expense,
                 amount: _amount,
                 title: _title,
@@ -532,7 +533,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              TxHeroCard(
+              TransactionHeroCard(
                 type: TransactionType.expense,
                 amount: _amount,
                 title: _title,

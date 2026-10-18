@@ -208,7 +208,7 @@ void main() {
           throw const ApiException(code: 'NETWORK', message: 'offline'),
     );
     await pump(t, const CategoryDetailPage(editingId: 'cat1'));
-    expect(find.byType(HeroCard), findsOneWidget);
+    expect(find.byType(AppHeroCard), findsOneWidget);
     // Figures from the list row still show.
     expect(find.textContaining('12 transactions'), findsOneWidget);
   });

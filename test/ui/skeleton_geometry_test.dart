@@ -49,21 +49,29 @@ void main() {
     expect(skel, closeTo(real, 1));
   });
 
-  testWidgets('hero: skeleton = real HeaderCard (chips · name · description)', (
-    t,
-  ) async {
-    final real = await height(
-      t,
-      HeaderCard(
-        topRow: [AppChip(label: 'Status', selected: true, onTap: () {})],
-        leading: const SizedBox(width: 52, height: 52),
-        title: const Text('Name'),
-        description: const Text('Description', maxLines: 1),
-      ),
-    );
-    final skel = await height(t, const HeroSkeleton());
-    expect(skel, closeTo(real, 2));
-  });
+  testWidgets(
+    'hero: skeleton = real AppHeroCard (chips · name · description)',
+    (t) async {
+      final real = await height(
+        t,
+        AppHeroCard(
+          style: const HeroStyle.plain(),
+          header: HeroHeader(
+            leading: [AppChip(label: 'Status', selected: true, onTap: () {})],
+          ),
+          content: [
+            HeroIdentity(
+              icon: const SizedBox(width: 52, height: 52),
+              name: const Text('Name'),
+              description: const Text('Description', maxLines: 1),
+            ),
+          ],
+        ),
+      );
+      final skel = await height(t, const HeroSkeleton());
+      expect(skel, closeTo(real, 2));
+    },
+  );
 
   testWidgets('headed section: skeleton = real SectionCard', (t) async {
     final real = await height(

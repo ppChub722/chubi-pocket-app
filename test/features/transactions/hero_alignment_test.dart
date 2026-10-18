@@ -39,7 +39,7 @@ void main() {
             }
             final key = GlobalKey();
             final card = switch (which) {
-              _Which.hero => TxHeroCard(
+              _Which.hero => TransactionHeroCard(
                 type: TransactionType.expense,
                 amount: amount,
                 title: title,
@@ -88,7 +88,9 @@ void main() {
             if (state == _State.focusAmount) amountFocus.requestFocus();
             await t.pumpAndSettle();
 
-            final l = AppLocalizations.of(t.element(find.byType(TxHeroCard)))!;
+            final l = AppLocalizations.of(
+              t.element(find.byType(TransactionHeroCard)),
+            )!;
             // 1. the two NAME labels share one top.
             final descTop = t.getTopLeft(find.text(l.commonDescription)).dy;
             final amountTop = t
@@ -107,10 +109,10 @@ void main() {
             }))!;
             final data = (await t.runAsync(() => image.toByteData()))!;
             final scheme = Theme.of(
-              t.element(find.byType(TxHeroCard)),
+              t.element(find.byType(TransactionHeroCard)),
             ).colorScheme;
             final accent = txTypeColor(
-              t.element(find.byType(TxHeroCard)),
+              t.element(find.byType(TransactionHeroCard)),
               TransactionType.expense,
             );
             Color idle() =>

@@ -128,21 +128,25 @@ class SettingsPage extends StatelessWidget {
       Theme.of(context).extension<AppColors>()!,
       avatarName: user.displayName,
     );
-    return HeroCard(
+    return AppHeroCard(
       style: HeroStyle.tinted(color: tint, glyph: AppIcons.profile),
-      icon: UserAvatar(
-        displayName: user.displayName,
-        iconCode: user.iconCode,
-        size: 40,
-      ),
-      name: Text(user.displayName),
-      fact: Text(
-        [
-          '@${user.username}',
-          if (user.email?.isNotEmpty ?? false) user.email!,
-        ].join(' · '),
-      ),
       onTap: () => context.push('/settings/profile'),
+      content: [
+        HeroIdentity(
+          icon: UserAvatar(
+            displayName: user.displayName,
+            iconCode: user.iconCode,
+            size: 40,
+          ),
+          name: Text(user.displayName),
+          fact: Text(
+            [
+              '@${user.username}',
+              if (user.email?.isNotEmpty ?? false) user.email!,
+            ].join(' · '),
+          ),
+        ),
+      ],
     );
   }
 

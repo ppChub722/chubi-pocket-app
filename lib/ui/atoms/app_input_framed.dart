@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart' show OverflowBoxFit;
 
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
@@ -197,6 +198,32 @@ class _FramedInputState extends State<FramedInput> {
       widget.type == AppInputType.amount ||
       widget.type == AppInputType.number ||
       widget.type == AppInputType.percent;
+
+  Widget _valueRow(Widget content) {
+    final row = Baseline(
+      baseline: widget.valueBaseline!,
+      baselineType: TextBaseline.alphabetic,
+      child: content,
+    );
+    if (!_numeric) {
+      return ConstrainedBox(
+        constraints: BoxConstraints(minHeight: widget.valueRow!),
+        child: row,
+      );
+    }
+    // Figures have no descenders: a big number's line height may hang below
+    // the row, but never pushes its underline below the neighbour's.
+    return SizedBox(
+      height: widget.valueRow,
+      child: OverflowBox(
+        alignment: AlignmentDirectional.topStart,
+        minHeight: 0,
+        maxHeight: double.infinity,
+        fit: OverflowBoxFit.deferToChild,
+        child: row,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -439,14 +466,7 @@ class _FramedInputState extends State<FramedInput> {
           ),
           child: w.valueRow == null || w.valueBaseline == null
               ? content
-              : ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: w.valueRow!),
-                  child: Baseline(
-                    baseline: w.valueBaseline!,
-                    baselineType: TextBaseline.alphabetic,
-                    child: content,
-                  ),
-                ),
+              : _valueRow(content),
         );
         decorator = GestureDetector(
           behavior: HitTestBehavior.translucent,

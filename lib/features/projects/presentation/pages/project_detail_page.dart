@@ -750,58 +750,75 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     final range = projectDateRange(context, p.startDate, p.endDate);
     final planned = p.plannedAmount;
     final owe = p.myPayable > 0;
-    return HeroCard(
+    return AppHeroCard(
       style: HeroStyle.tinted(color: tint, glyph: AppIcons.project),
-      chips: [
-        _statusChip(l, p.status),
-        if (range != null) AppChip(label: range, icon: AppIcons.date),
-      ],
-      search: ToolbarToggleButton(
-        state: _toolbarOpen,
-        filtered: board.filtered,
-        tooltip: l.commonSearch,
+      header: HeroHeader(
+        leading: [
+          _statusChip(l, p.status),
+          if (range != null) AppChip(label: range, icon: AppIcons.date),
+        ],
+        actions: [
+          ToolbarToggleButton(
+            state: _toolbarOpen,
+            filtered: board.filtered,
+            tooltip: l.commonSearch,
+          ),
+        ],
+        onEdit: v.isOwner ? enterEdit : null,
       ),
-      onEdit: v.isOwner ? enterEdit : null,
-      icon: IconDisplay(type: IconType.project, size: 40, iconCode: p.iconCode),
-      description: HeroDescription(
-        controller: _ctrl[_Field.description]!,
-        editing: false,
-        hint: l.commonDescription,
-        onEnterEdit: _enterOn(_focus[_Field.description]!),
-      ),
-      number: HeroNumber(
-        label: l.fpEventsSpentTotal,
-        value: MoneyText(p.totalExpense),
-        color: tint,
-      ),
-      bar: planned == null ? null : _budgetBar(l, v, planned, tint),
-      tiles: [
-        SummaryTileView(
-          tile: SummaryTile(
-            label: l.fpEventsMyShare,
-            value: moneyString(context, p.myShare),
-            selected: board.mine,
-            onTap: () => board.change(mine: !board.mine),
+      content: [
+        HeroIdentity(
+          icon: IconDisplay(
+            type: IconType.project,
+            size: 40,
+            iconCode: p.iconCode,
+          ),
+          description: HeroDescription(
+            controller: _ctrl[_Field.description]!,
+            editing: false,
+            hint: l.commonDescription,
+            onEnterEdit: _enterOn(_focus[_Field.description]!),
           ),
         ),
-        SummaryTileView(
-          tile: SummaryTile(
-            label: owe ? l.fpEventsOwe : l.fpEventsOwed,
-            value: moneyString(context, owe ? p.myPayable : p.myReceivable),
-            tone: owe
-                ? SummaryTileTone.red
-                : (p.myReceivable > 0
-                      ? SummaryTileTone.green
-                      : SummaryTileTone.neutral),
-          ),
+        HeroNumber(
+          label: l.fpEventsSpentTotal,
+          value: MoneyText(p.totalExpense),
+          color: tint,
         ),
+        planned == null ? null : _budgetBar(l, v, planned, tint),
+        p.totalIncome > 0
+            ? HeroValueLine(
+                label: l.fpEventsIncomeTotal,
+                value: MoneyText(p.totalIncome, tone: MoneyTone.income),
+              )
+            : null,
       ],
-      embedded: p.totalIncome > 0
-          ? HeroValueLine(
-              label: l.fpEventsIncomeTotal,
-              value: MoneyText(p.totalIncome, tone: MoneyTone.income),
-            )
-          : null,
+      footer: [
+        for (final List<Widget> tiles in [
+          [
+            SummaryTileView(
+              tile: SummaryTile(
+                label: l.fpEventsMyShare,
+                value: moneyString(context, p.myShare),
+                selected: board.mine,
+                onTap: () => board.change(mine: !board.mine),
+              ),
+            ),
+            SummaryTileView(
+              tile: SummaryTile(
+                label: owe ? l.fpEventsOwe : l.fpEventsOwed,
+                value: moneyString(context, owe ? p.myPayable : p.myReceivable),
+                tone: owe
+                    ? SummaryTileTone.red
+                    : (p.myReceivable > 0
+                          ? SummaryTileTone.green
+                          : SummaryTileTone.neutral),
+              ),
+            ),
+          ],
+        ])
+          if (tiles.isNotEmpty) HeroTiles(children: tiles),
+      ],
     );
   }
 
@@ -1077,49 +1094,53 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       onRefresh: null,
       topInset: barInset + AppSpacing.lg,
       bottomInset: bottom,
-      hero: HeroCard(
+      hero: AppHeroCard(
         style: HeroStyle.tinted(color: tint, glyph: AppIcons.project),
-        editing: true,
-        chips: [if (p != null) _statusChip(l, p.status)],
-        icon: EditableCircle(
-          size: 44,
-          onTap: _openIconMaker,
-          child: IconDisplay(
-            type: IconType.project,
-            size: 44,
-            iconCode: w.iconCode,
+        mode: HeroCardMode.edit,
+        header: HeroHeader(leading: [if (p != null) _statusChip(l, p.status)]),
+        content: [
+          HeroIdentity(
+            icon: EditableCircle(
+              size: 44,
+              onTap: _openIconMaker,
+              child: IconDisplay(
+                type: IconType.project,
+                size: 44,
+                iconCode: w.iconCode,
+              ),
+            ),
+            name: HeroNameInput(
+              editing: true,
+              controller: _ctrl[_Field.name]!,
+              focusNode: _focus[_Field.name],
+              hint: l.commonName,
+              maxLength: TextLimits.name,
+              onChanged: (t) => _onText(_Field.name, t),
+              validator: (t) =>
+                  (t?.trim().isEmpty ?? true) ? l.projectNameRequired : null,
+            ),
+            description: HeroDescription(
+              controller: _ctrl[_Field.description]!,
+              editing: true,
+              hint: l.commonDescription,
+              maxLength: TextLimits.description,
+              focusNode: _focus[_Field.description],
+              onChanged: (t) => _onText(_Field.description, t),
+            ),
           ),
-        ),
-        name: HeroNameInput(
-          editing: true,
-          controller: _ctrl[_Field.name]!,
-          focusNode: _focus[_Field.name],
-          hint: l.commonName,
-          maxLength: TextLimits.name,
-          onChanged: (t) => _onText(_Field.name, t),
-          validator: (t) =>
-              (t?.trim().isEmpty ?? true) ? l.projectNameRequired : null,
-        ),
-        description: HeroDescription(
-          controller: _ctrl[_Field.description]!,
-          editing: true,
-          hint: l.commonDescription,
-          maxLength: TextLimits.description,
-          focusNode: _focus[_Field.description],
-          onChanged: (t) => _onText(_Field.description, t),
-        ),
-        amountField: HeroAmountField(
-          controller: _ctrl[_Field.planned]!,
-          label: l.fpEventsBudgetLabel,
-          helper: l.fpEventsBudgetHelper,
-          accent: tint,
-          onChanged: (t) => _onText(_Field.planned, t),
-          validator: (t) {
-            if (t == null || t.trim().isEmpty) return null;
-            final n = AmountInput.parse(t);
-            return (n == null || n <= 0) ? l.projectFormPlannedInvalid : null;
-          },
-        ),
+          HeroAmountField(
+            controller: _ctrl[_Field.planned]!,
+            label: l.fpEventsBudgetLabel,
+            helper: l.fpEventsBudgetHelper,
+            accent: tint,
+            onChanged: (t) => _onText(_Field.planned, t),
+            validator: (t) {
+              if (t == null || t.trim().isEmpty) return null;
+              final n = AmountInput.parse(t);
+              return (n == null || n <= 0) ? l.projectFormPlannedInvalid : null;
+            },
+          ),
+        ],
       ),
       tags: _tagRow(l, _draftTags(w.tagIds), editing: true),
       info: InfoBox(

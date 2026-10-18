@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart' as ui;
 import '../../../../ui/ui.dart';
-import '../../../../core/network/api_exception.dart';
 import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
@@ -107,9 +106,6 @@ Future<ContactPickResult?> showContactPickerSheet(
               ? l.debtsSearchHint
               : (allowFreeText ? l.contactPickerSearchHint : null),
           createNew: l.contactPickerCreateNew,
-          saveAsContact: l.contactPickerSaveAsContact,
-          useName: isDebts ? l.debtPersonAddTyped : l.contactPickerUseName,
-          useNameHint: l.contactPickerUseNameHint,
           noContact: l.txSplitNoContact,
           noContactHint: l.txSplitNoContactHint,
           empty: allowFreeText
@@ -153,22 +149,6 @@ Future<ContactPickResult?> showContactPickerSheet(
             state.status == ContactsStatus.initial,
         error: state.status == ContactsStatus.error ? state.error : null,
         onRetry: cubit.load,
-        onSaveAsContact: (name) async {
-          try {
-            final c = await cubit.create(displayName: name);
-            made = c;
-            return c.id;
-          } on ApiException catch (e) {
-            if (ctx.mounted) {
-              showAppSnackBar(
-                ctx,
-                e.message.isEmpty ? l.contactPickerSaveFailed : e.message,
-                tone: Tone.danger,
-              );
-            }
-            return null;
-          }
-        },
         onCreate: () async {
           final created = await Navigator.of(ctx, rootNavigator: true).push(
             MaterialPageRoute<Contact>(

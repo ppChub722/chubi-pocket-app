@@ -28,12 +28,14 @@ void main() {
       size: size,
       onTap: () {},
     ),
-    AppChip(
-      label: 'กระเป๋า',
-      trailing: AppChipTrailing.remove,
-      onRemove: onRemove ?? () {},
-      size: size,
-    ),
+    // A ✕ chip is never mini (too small to tap).
+    if (size != ChipSize.mini)
+      AppChip(
+        label: 'กระเป๋า',
+        trailing: AppChipTrailing.remove,
+        onRemove: onRemove ?? () {},
+        size: size,
+      ),
     AppChip(
       label: 'โอนเงิน',
       icon: AppIcons.transfer,

@@ -94,7 +94,7 @@ class EntryCard extends StatelessWidget {
     // never moves the card.
     final gap = HeroMetrics.of(context).itemGap;
     final twoRows = ChipSize.control.heightOf(context) * 2 + gap;
-    return TxHeroCard(
+    return TransactionHeroCard(
       type: type,
       onTypeChanged: onTypeChanged,
       amount: amount,

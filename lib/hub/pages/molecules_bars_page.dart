@@ -279,10 +279,10 @@ class _BarsPageState extends State<_BarsPage> {
               ),
             ),
             HubUse(
-              label: 'Hero — transaction (TxHeroCard)',
+              label: 'Hero — transaction (TransactionHeroCard)',
               page: 'Transaction detail, quick create',
               wide: true,
-              child: TxHeroCard(
+              child: TransactionHeroCard(
                 type: TransactionType.expense,
                 amount: _heroAmount,
                 title: _heroTitle,
@@ -349,44 +349,57 @@ class _BarsPageState extends State<_BarsPage> {
               label: 'Hero — category (tinted, type colour)',
               page: 'Category detail',
               wide: true,
-              child: HeaderCard(
-                accent: scheme.error,
-                glyph: AppIcons.category,
-                topRow: const [
-                  AppChip(
-                    label: 'Expense',
-                    icon: AppIcons.expense,
-                    tone: AppChipTone.danger,
-                    selected: true,
+              child: AppHeroCard(
+                style: HeroStyle.tinted(
+                  color: scheme.error,
+                  glyph: AppIcons.category,
+                ),
+                header: HeroHeader(
+                  leading: const [
+                    AppChip(
+                      label: 'Expense',
+                      icon: AppIcons.expense,
+                      tone: AppChipTone.danger,
+                      selected: true,
+                    ),
+                  ],
+                  onEdit: () {},
+                ),
+                content: [
+                  HeroIdentity(
+                    icon: const IconDisplay(type: IconType.category, size: 52),
+                    name: const Text('Food'),
+                    fact: const Text('Category'),
                   ),
                 ],
-                onEdit: () {},
-                leading: const IconDisplay(type: IconType.category, size: 52),
-                title: const Text('Food'),
-                subtitle: const Text('Category'),
               ),
             ),
             HubUse(
               label: 'Hero — contact, linked (the chip sits under the name)',
               page: 'Contact detail',
               wide: true,
-              child: HeaderCard(
-                accent: scheme.primary,
-                glyph: AppIcons.contact,
-                topRow: const [],
-                onEdit: () {},
-                leading: const UserAvatar(displayName: 'Bee', size: 52),
-                title: const Text('Bee'),
-                subtitle: const Align(
-                  alignment: Alignment.centerLeft,
-                  child: AppChip(
-                    label: 'Linked',
-                    icon: AppIcons.link,
-                    tone: AppChipTone.success,
-                    selected: true,
-                    size: ChipSize.chip,
-                  ),
+              child: AppHeroCard(
+                style: HeroStyle.tinted(
+                  color: scheme.primary,
+                  glyph: AppIcons.contact,
                 ),
+                header: HeroHeader(leading: const [], onEdit: () {}),
+                content: [
+                  HeroIdentity(
+                    icon: const UserAvatar(displayName: 'Bee', size: 52),
+                    name: const Text('Bee'),
+                    fact: const Align(
+                      alignment: Alignment.centerLeft,
+                      child: AppChip(
+                        label: 'Linked',
+                        icon: AppIcons.link,
+                        tone: AppChipTone.success,
+                        selected: true,
+                        size: ChipSize.chip,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             HubUse(
@@ -395,39 +408,52 @@ class _BarsPageState extends State<_BarsPage> {
                   'with the title',
               page: 'Contact detail (unlinked contact)',
               wide: true,
-              child: HeaderCard(
-                accent: scheme.primary,
-                glyph: AppIcons.contact,
-                topRow: const [],
-                onEdit: () {},
-                leading: const UserAvatar(displayName: 'Lee', size: 52),
-                title: const Text('Lee'),
+              child: AppHeroCard(
+                style: HeroStyle.tinted(
+                  color: scheme.primary,
+                  glyph: AppIcons.contact,
+                ),
+                header: HeroHeader(leading: const [], onEdit: () {}),
+                content: [
+                  HeroIdentity(
+                    icon: const UserAvatar(displayName: 'Lee', size: 52),
+                    name: const Text('Lee'),
+                  ),
+                ],
               ),
             ),
             HubUse(
               label: 'Hero — top row with no actions, chips wrapping',
               page: 'Entity detail pages in view mode',
               wide: true,
-              child: HeaderCard(
-                accent: scheme.primary,
-                glyph: AppIcons.budget,
-                topRow: [
-                  for (final n in const [
-                    'Type',
-                    'Category',
-                    'Shared',
-                    'Recurring',
-                    'Linked',
-                    'Archived',
-                  ])
-                    AppChip(label: n, selected: true),
+              child: AppHeroCard(
+                style: HeroStyle.tinted(
+                  color: scheme.primary,
+                  glyph: AppIcons.budget,
+                ),
+                header: HeroHeader(
+                  leading: [
+                    for (final n in const [
+                      'Type',
+                      'Category',
+                      'Shared',
+                      'Recurring',
+                      'Linked',
+                      'Archived',
+                    ])
+                      AppChip(label: n, selected: true),
+                  ],
+                ),
+                content: [
+                  HeroIdentity(
+                    icon: const IconDisplay(type: IconType.category, size: 44),
+                    name: const Text('Chips wrap, the row keeps 32'),
+                  ),
                 ],
-                leading: const IconDisplay(type: IconType.category, size: 44),
-                title: const Text('Chips wrap, the row keeps 32'),
               ),
             ),
             HubUse(
-              label: 'CompactHeroBar — transaction (txCompactHeroBar)',
+              label: 'AppCompactHeroCard — transaction (txCompactHeroBar)',
               page: 'Transaction detail',
               wide: true,
               child: Column(
@@ -454,13 +480,13 @@ class _BarsPageState extends State<_BarsPage> {
               ),
             ),
             HubUse(
-              label: 'CompactHeroBar — wallet (walletCompactHero)',
+              label: 'AppCompactHeroCard — wallet (walletCompactHero)',
               page: 'Account detail',
               wide: true,
               child: walletCompactHero(context, _wallet, onTap: () {}),
             ),
             HubUse(
-              label: 'CompactHeroBar — wallet, balance not tracked',
+              label: 'AppCompactHeroCard — wallet, balance not tracked',
               page: 'Account detail',
               wide: true,
               child: walletCompactHero(
@@ -470,10 +496,10 @@ class _BarsPageState extends State<_BarsPage> {
               ),
             ),
             HubUse(
-              label: 'CompactHeroBar — tinted entity hero',
+              label: 'AppCompactHeroCard — tinted entity hero',
               page: 'Category / contact / event detail',
               wide: true,
-              child: CompactHeroBar(
+              child: AppCompactHeroCard(
                 style: HeroStyle.tinted(
                   color: scheme.error,
                   glyph: AppIcons.category,
@@ -490,10 +516,10 @@ class _BarsPageState extends State<_BarsPage> {
               ),
             ),
             HubUse(
-              label: 'CompactHeroBar — plain, long title',
+              label: 'AppCompactHeroCard — plain, long title',
               page: 'Detail pages without an entity colour',
               wide: true,
-              child: CompactHeroBar(
+              child: AppCompactHeroCard(
                 leading: IconTile(
                   icon: AppIcons.wallet,
                   color: scheme.primary,
@@ -522,7 +548,7 @@ class _BarsPageState extends State<_BarsPage> {
                 child: CompactHeroScope(
                   heroKey: _heroKey,
                   top: 0,
-                  bar: CompactHeroBar(
+                  bar: AppCompactHeroCard(
                     style: _heroStyle,
                     leading: const AppChip(label: 'Expense', selected: true),
                     title: const Text('Chicken rice'),
@@ -962,9 +988,9 @@ class _BarsPageState extends State<_BarsPage> {
             );
           },
         ),
-        // ---- CompactHeroBar ----
+        // ---- AppCompactHeroCard ----
         HubPlayground(
-          title: 'CompactHeroBar',
+          title: 'AppCompactHeroCard',
           note:
               'The hero squeezed into one pill. style is the SAME HeroStyle as '
               'the hero it stands in for: plain, or tinted (colour + optional '
@@ -983,7 +1009,7 @@ class _BarsPageState extends State<_BarsPage> {
             const PlayBool('visible', initialValue: true),
             const PlayBool('onTap', initialValue: true),
           ],
-          builder: (context, v) => CompactHeroBar(
+          builder: (context, v) => AppCompactHeroCard(
             style: v<String>('style') == 'plain'
                 ? const HeroStyle.plain()
                 : HeroStyle.tinted(

@@ -41,6 +41,12 @@ const _groups = [
   ),
 ];
 
+/// An [AppIconButton] keeps a faded ✓ for its "done" state; only count the rest.
+Iterable<Element> rowChecks() => find
+    .byIcon(Icons.check)
+    .evaluate()
+    .where((e) => e.findAncestorWidgetOfExactType<AppIconButton>() == null);
+
 void main() {
   RecurringPickerSheet sheet({
     String? selected,
@@ -92,11 +98,13 @@ void main() {
     await t.pumpWidget(host(sheet(selected: 'a')));
     final rows = t.widgetList<PickerRow>(find.byType(PickerRow)).toList();
     expect(rows.where((r) => r.selected).map((r) => r.title), ['Car loan']);
-    expect(find.byIcon(Icons.check), findsNothing);
+    expect(rowChecks(), isEmpty);
   });
 
   testWidgets('search filters by title and drops empty groups', (t) async {
     await t.pumpWidget(host(sheet()));
+    await t.tap(find.byIcon(AppIcons.search));
+    await t.pump();
     await t.enterText(find.byType(TextField), 'net');
     await t.pump();
     expect(find.text('Netflix'), findsOneWidget);

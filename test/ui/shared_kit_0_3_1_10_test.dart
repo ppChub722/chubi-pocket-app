@@ -97,7 +97,7 @@ void main() {
         ],
         hero: const SizedBox(height: 120, child: Text('hero')),
         belowHero: const [Text('the button')],
-        compactBar: const CompactHeroBar(title: Text('compact')),
+        compactBar: const AppCompactHeroCard(title: Text('compact')),
         tabBuilder: (context, t) {
           topPaddingSeen?.add(MediaQuery.paddingOf(context).top);
           return ListPageBody(

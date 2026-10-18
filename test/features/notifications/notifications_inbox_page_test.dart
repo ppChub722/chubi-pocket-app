@@ -401,10 +401,33 @@ void main() {
     await t.pump();
   }
 
-  Finder tile(String label) => find.byKey(ValueKey('summaryTile:$label'));
+  // The filter is one dropdown chip; its menu lists "<filter> · <count>".
+  Future<void> toggleFilterMenu(WidgetTester t) async {
+    await t.tap(
+      find
+          .byWidgetPredicate(
+            (w) => w is AppChip && w.trailing == AppChipTrailing.dropdown,
+          )
+          .first,
+    );
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 300));
+  }
 
-  Finder tileValue(String label, String value) =>
-      find.descendant(of: tile(label), matching: find.text(value));
+  Future<void> pickFilter(WidgetTester t, String label) async {
+    await toggleFilterMenu(t);
+    await t.tap(find.textContaining('$label · ').last);
+    await t.pump();
+    await t.pump();
+  }
+
+  Future<void> expectCounts(WidgetTester t, Map<String, int> counts) async {
+    await toggleFilterMenu(t);
+    for (final MapEntry(:key, :value) in counts.entries) {
+      expect(find.text('$key · $value'), findsWidgets, reason: key);
+    }
+    await toggleFilterMenu(t);
+  }
 
   testWidgets('opens with ONE call and shows the card numbers', (t) async {
     await pump(t);
@@ -412,10 +435,12 @@ void main() {
     expect(repo.lists.single.read, isNull);
     expect(repo.lists.single.dismissed, isNull);
     // needs_answer 3, unread 5, hidden 0 — straight from `summary`.
-    expect(tileValue('Needs answer', '3'), findsOneWidget);
-    expect(tileValue('Unread', '5'), findsOneWidget);
-    expect(tileValue('Hidden', '0'), findsOneWidget);
-    expect(tileValue('All', '10'), findsOneWidget);
+    await expectCounts(t, {
+      'Needs answer': 3,
+      'Unread': 5,
+      'Hidden': 0,
+      'All': 10,
+    });
   });
 
   testWidgets('every notification type renders as one tile', (t) async {
@@ -434,30 +459,25 @@ void main() {
     expect(find.text('Notification settings'), findsNothing);
   });
 
-  testWidgets('each filter tile is one call; tapping again clears', (t) async {
+  testWidgets('each filter is one call; the same one again is none', (t) async {
     await pump(t);
 
-    await t.tap(tile('Unread'));
-    await t.pump();
-    await t.pump();
+    await pickFilter(t, 'Unread');
     expect(repo.lists, hasLength(2));
     expect(repo.lists.last.read, 'false');
 
-    await t.tap(tile('Unread')); // clear → all
-    await t.pump();
-    await t.pump();
+    await pickFilter(t, 'Unread');
+    expect(repo.lists, hasLength(2));
+
+    await pickFilter(t, 'All');
     expect(repo.lists, hasLength(3));
     expect(repo.lists.last.read, isNull);
 
-    await t.tap(tile('Needs answer'));
-    await t.pump();
-    await t.pump();
+    await pickFilter(t, 'Needs answer');
     expect(repo.lists, hasLength(4));
     expect(repo.lists.last.awaitsAnswer, 'true');
 
-    await t.tap(tile('Hidden'));
-    await t.pump();
-    await t.pump();
+    await pickFilter(t, 'Hidden');
     expect(repo.lists, hasLength(5));
     expect(repo.lists.last.dismissed, 'true');
   });
@@ -484,9 +504,8 @@ void main() {
     // Hide = one POST; the card follows the answer, no re-fetch.
     expect(repo.lists, hasLength(1));
     expect(find.text('Bee added you to Dinner party'), findsNothing);
-    expect(tileValue('All', '0'), findsOneWidget);
-    expect(tileValue('Hidden', '1'), findsOneWidget);
     expect(find.text('Undo'), findsOneWidget);
+    await expectCounts(t, {'All': 0, 'Hidden': 1});
 
     await t.pump(const Duration(milliseconds: 500));
     await t.tap(find.text('Undo'));
@@ -496,24 +515,23 @@ void main() {
     // Undo puts the row back from the answer; still no re-fetch.
     expect(repo.lists, hasLength(1));
     expect(find.text('Bee added you to Dinner party'), findsOneWidget);
-    expect(tileValue('All', '1'), findsOneWidget);
-    expect(tileValue('Hidden', '0'), findsOneWidget);
+    await expectCounts(t, {'All': 1, 'Hidden': 0});
   });
 
   testWidgets('mark all read flips the rows and takes the numbers from the '
       'answer', (t) async {
     await pump(t);
-    expect(tileValue('Unread', '5'), findsOneWidget);
-    await t.tap(find.bySemanticsLabel('Mark all as read'));
+    await expectCounts(t, {'Unread': 5});
+    await t.tap(find.byTooltip('Mark all as read'));
     await t.pump();
     await t.pump();
     expect(repo.writes, ['read-all']);
     expect(repo.lists, hasLength(1));
-    expect(tileValue('Unread', '0'), findsOneWidget);
     expect(find.byType(NotificationTileView), findsNWidgets(10));
+    await expectCounts(t, {'Unread': 0});
   });
 
-  testWidgets('the Hidden tile lists hidden rows with Restore', (t) async {
+  testWidgets('the Hidden filter lists hidden rows with Restore', (t) async {
     repo.hidden = [
       _row(
         'h1',
@@ -523,9 +541,7 @@ void main() {
       ),
     ];
     await pump(t);
-    await t.tap(tile('Hidden'));
-    await t.pump();
-    await t.pump();
+    await pickFilter(t, 'Hidden');
     expect(find.text('Bee added you to Dinner party'), findsOneWidget);
     expect(find.byType(Dismissible), findsNothing);
 
@@ -581,8 +597,7 @@ void main() {
     expect(accounts.calls, ['accept:n8']);
     // The card follows the answer's summary; the list was not asked again.
     expect(repo.lists, hasLength(1));
-    expect(tileValue('Needs answer', '2'), findsOneWidget);
-    expect(tileValue('Unread', '4'), findsOneWidget);
+    await expectCounts(t, {'Needs answer': 2, 'Unread': 4});
   });
 
   testWidgets('link request: Reject takes the answer, the row leaves, no '
@@ -603,8 +618,7 @@ void main() {
     expect(contacts.calls, ['reject:n7']);
     expect(repo.lists, hasLength(1));
     expect(find.byType(NotificationTileView), findsNothing);
-    expect(tileValue('All', '9'), findsOneWidget);
-    expect(tileValue('Hidden', '1'), findsOneWidget);
+    await expectCounts(t, {'All': 9, 'Hidden': 1});
   });
 
   testWidgets('recurring_ending: Extend calls /extend, Let it end = actioned', (
@@ -628,9 +642,7 @@ void main() {
     expect(find.byType(NotificationTileView), findsNWidgets(10));
 
     repo.down = true;
-    await t.tap(tile('Unread'));
-    await t.pump();
-    await t.pump();
+    await pickFilter(t, 'Unread');
     expect(repo.lists, hasLength(2));
     expect(find.byType(NotificationTileView), findsNWidgets(10));
     expect(find.text('no net'), findsOneWidget);

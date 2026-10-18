@@ -117,7 +117,7 @@ class _ButtonPageState extends State<_ButtonPage> {
         HubDemo(
           title: 'Edit ✏️ — AppIconButton.edit',
           note:
-              "The round ✏️. Hero top row (32, level with the chips: HeaderCard, "
+              "The round ✏️. Hero top row (32, level with the chips: AppHeroCard, "
               "the transaction hero, the wallet hero) and a list header's "
               "\"enter edit / reorder mode\" (36: wallets, categories, tags). "
               "Null onPressed dims it.",

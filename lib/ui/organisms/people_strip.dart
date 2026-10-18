@@ -76,23 +76,31 @@ class PeopleStrip extends StatelessWidget {
                 ),
           children: const [],
         ),
-        SizedBox(
-          height: _cardHeight,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              for (final (i, m) in members.indexed) ...[
-                if (i > 0) const SizedBox(width: AppSpacing.sm),
-                _MemberCard(
-                  member: m,
-                  onTap: onMemberTap == null ? null : () => onMemberTap!(i),
-                ),
-              ],
-              if (onInvite != null) ...[
-                if (members.isNotEmpty) const SizedBox(width: AppSpacing.sm),
-                _InviteCard(label: inviteLabel, onTap: onInvite!),
-              ],
-            ],
+        // At least [_cardHeight]; taller when a card has more lines, all
+        // cards the same height.
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: _cardHeight),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final (i, m) in members.indexed) ...[
+                    if (i > 0) const SizedBox(width: AppSpacing.sm),
+                    _MemberCard(
+                      member: m,
+                      onTap: onMemberTap == null ? null : () => onMemberTap!(i),
+                    ),
+                  ],
+                  if (onInvite != null) ...[
+                    if (members.isNotEmpty)
+                      const SizedBox(width: AppSpacing.sm),
+                    _InviteCard(label: inviteLabel, onTap: onInvite!),
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
       ],

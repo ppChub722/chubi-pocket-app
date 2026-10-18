@@ -481,63 +481,69 @@ class _ContactDetailPageState extends State<ContactDetailPage>
 
   Widget _viewHero(AppLocalizations l) {
     final c = _contact!;
-    return HeroCard(
+    return AppHeroCard(
       style: _heroStyle(c.name, c.iconCode),
-      chips: [
-        if (c.isArchived)
+      header: HeroHeader(
+        leading: [
+          if (c.isArchived)
+            AppChip(
+              label: l.contactArchivedBadge,
+              icon: AppIcons.archive,
+              tone: AppChipTone.warning,
+              selected: true,
+            ),
           AppChip(
-            label: l.contactArchivedBadge,
-            icon: AppIcons.archive,
-            tone: AppChipTone.warning,
-            selected: true,
+            label: _linkLabel(l, c),
+            icon: c.isLinked ? AppIcons.link : null,
+            tone: c.isLinked ? AppChipTone.success : AppChipTone.neutral,
+            selected: c.isLinked,
           ),
-        AppChip(
-          label: _linkLabel(l, c),
-          icon: c.isLinked ? AppIcons.link : null,
-          tone: c.isLinked ? AppChipTone.success : AppChipTone.neutral,
-          selected: c.isLinked,
+        ],
+        actions: [
+          CardActionButton(
+            icon: AppIcons.debt,
+            tooltip: l.contactDebts,
+            onTap: () => openPage(
+              context,
+              '/personal-debts/people/${Uri.encodeComponent('c:${c.id}')}',
+            ),
+          ),
+        ],
+        onEdit: enterEdit,
+      ),
+      content: [
+        HeroIdentity(
+          icon: GestureDetector(
+            onLongPress: _linked
+                ? null
+                : () {
+                    enterEdit();
+                    WidgetsBinding.instance.addPostFrameCallback(
+                      (_) => _openIconMaker(),
+                    );
+                  },
+            child: PersonMark(
+              name: c.name,
+              level: c.isLinked ? PersonLevel.linked : PersonLevel.contact,
+              iconCode: c.iconCode,
+              size: 40,
+            ),
+          ),
+          name: HeroNameInput(
+            editing: false,
+            controller: _viewName,
+            maxLength: TextLimits.name,
+            onEnterEdit: _linked ? null : _enterOn(_Field.name),
+          ),
+          description: HeroDescription(
+            controller: _ctrl[_Field.description]!,
+            editing: false,
+            hint: l.contactDescriptionHint,
+            maxLength: TextLimits.description,
+            onEnterEdit: _enterOn(_Field.description),
+          ),
         ),
       ],
-      links: [
-        CardActionButton(
-          icon: AppIcons.debt,
-          tooltip: l.contactDebts,
-          onTap: () => openPage(
-            context,
-            '/personal-debts/people/${Uri.encodeComponent('c:${c.id}')}',
-          ),
-        ),
-      ],
-      onEdit: enterEdit,
-      icon: GestureDetector(
-        onLongPress: _linked
-            ? null
-            : () {
-                enterEdit();
-                WidgetsBinding.instance.addPostFrameCallback(
-                  (_) => _openIconMaker(),
-                );
-              },
-        child: PersonMark(
-          name: c.name,
-          level: c.isLinked ? PersonLevel.linked : PersonLevel.contact,
-          iconCode: c.iconCode,
-          size: 40,
-        ),
-      ),
-      name: HeroNameInput(
-        editing: false,
-        controller: _viewName,
-        maxLength: TextLimits.name,
-        onEnterEdit: _linked ? null : _enterOn(_Field.name),
-      ),
-      description: HeroDescription(
-        controller: _ctrl[_Field.description]!,
-        editing: false,
-        hint: l.contactDescriptionHint,
-        maxLength: TextLimits.description,
-        onEnterEdit: _enterOn(_Field.description),
-      ),
     );
   }
 
@@ -627,43 +633,47 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     final c = _contact;
     final w = working;
     final name = c != null && _linked ? c.name : w.name;
-    return HeroCard(
+    return AppHeroCard(
       style: _heroStyle(name, _linked ? c!.iconCode : w.iconCode),
-      editing: true,
-      icon: EditableCircle(
-        size: 44,
-        onTap: _linked ? null : _openIconMaker,
-        child: PersonMark(
-          name: name,
-          level: PersonLevel.contact,
-          iconCode: _linked ? c!.iconCode : w.iconCode,
-          size: 44,
-        ),
-      ),
-      name: _linked
-          ? null
-          : HeroNameInput(
-              editing: true,
-              controller: _ctrl[_Field.name]!,
-              focusNode: _focus[_Field.name],
-              hint: l.contactNameHint,
-              maxLength: TextLimits.name,
-              onChanged: (v) => _onText(_Field.name, v),
-              validator: (v) {
-                final s = v?.trim() ?? '';
-                if (s.isEmpty) return l.contactNameRequired;
-                if (s.length > TextLimits.name) return l.contactNameTooLong;
-                return null;
-              },
+      mode: HeroCardMode.edit,
+      content: [
+        HeroIdentity(
+          icon: EditableCircle(
+            size: 44,
+            onTap: _linked ? null : _openIconMaker,
+            child: PersonMark(
+              name: name,
+              level: PersonLevel.contact,
+              iconCode: _linked ? c!.iconCode : w.iconCode,
+              size: 44,
             ),
-      description: HeroDescription(
-        controller: _ctrl[_Field.description]!,
-        editing: true,
-        hint: l.contactDescriptionHint,
-        maxLength: TextLimits.description,
-        focusNode: _focus[_Field.description],
-        onChanged: (v) => _onText(_Field.description, v),
-      ),
+          ),
+          name: _linked
+              ? null
+              : HeroNameInput(
+                  editing: true,
+                  controller: _ctrl[_Field.name]!,
+                  focusNode: _focus[_Field.name],
+                  hint: l.contactNameHint,
+                  maxLength: TextLimits.name,
+                  onChanged: (v) => _onText(_Field.name, v),
+                  validator: (v) {
+                    final s = v?.trim() ?? '';
+                    if (s.isEmpty) return l.contactNameRequired;
+                    if (s.length > TextLimits.name) return l.contactNameTooLong;
+                    return null;
+                  },
+                ),
+          description: HeroDescription(
+            controller: _ctrl[_Field.description]!,
+            editing: true,
+            hint: l.contactDescriptionHint,
+            maxLength: TextLimits.description,
+            focusNode: _focus[_Field.description],
+            onChanged: (v) => _onText(_Field.description, v),
+          ),
+        ),
+      ],
     );
   }
 

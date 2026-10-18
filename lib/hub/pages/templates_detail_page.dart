@@ -80,39 +80,47 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
           AppChip(label: '#work', size: ChipSize.mini),
         ],
       ),
-      hero: HeaderCard(
-        accent: scheme.primary,
-        glyph: AppIcons.category,
-        topRow: _chips
-            ? const [
-                AppChip(
-                  label: 'Expense',
-                  icon: AppIcons.expense,
-                  tone: AppChipTone.danger,
-                  selected: true,
-                ),
-                AppChip(
-                  label: 'Hidden from report',
-                  tone: AppChipTone.neutral,
-                  selected: true,
-                ),
-              ]
-            : const [],
-        onEdit: editing ? null : _enter,
-        leading: const IconDisplay(type: IconType.category, size: 52),
-        title: HeroNameInput(
-          editing: editing,
-          controller: _name,
-          hint: 'Name',
-          onEnterEdit: enter,
+      hero: AppHeroCard(
+        style: HeroStyle.tinted(
+          color: scheme.primary,
+          glyph: AppIcons.category,
         ),
-        description: HeroDescription(
-          controller: _description,
-          editing: editing,
-          hint: 'Description',
-          onEnterEdit: enter,
+        header: HeroHeader(
+          leading: _chips
+              ? const [
+                  AppChip(
+                    label: 'Expense',
+                    icon: AppIcons.expense,
+                    tone: AppChipTone.danger,
+                    selected: true,
+                  ),
+                  AppChip(
+                    label: 'Hidden from report',
+                    tone: AppChipTone.neutral,
+                    selected: true,
+                  ),
+                ]
+              : const [],
+          onEdit: editing ? null : _enter,
         ),
-        subtitle: const Text('Category'),
+        content: [
+          HeroIdentity(
+            icon: const IconDisplay(type: IconType.category, size: 52),
+            name: HeroNameInput(
+              editing: editing,
+              controller: _name,
+              hint: 'Name',
+              onEnterEdit: enter,
+            ),
+            fact: const Text('Category'),
+            description: HeroDescription(
+              controller: _description,
+              editing: editing,
+              hint: 'Description',
+              onEnterEdit: enter,
+            ),
+          ),
+        ],
       ),
       sections: [
         (first) => SectionCard(
@@ -207,11 +215,15 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
 
     // Static variants: the same skeleton in the shapes the real pages use.
     Widget contactPage() => DetailPageBody(
-      hero: HeaderCard(
-        topRow: const [],
-        onEdit: () {},
-        leading: const UserAvatar(displayName: 'Lee', size: 52),
-        title: const Text('Lee'),
+      hero: AppHeroCard(
+        style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
+        header: HeroHeader(leading: const [], onEdit: () {}),
+        content: [
+          HeroIdentity(
+            icon: const UserAvatar(displayName: 'Lee', size: 52),
+            name: const Text('Lee'),
+          ),
+        ],
       ),
       sections: [
         (first) => SectionCard(
@@ -256,20 +268,28 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
         selected: 0,
         onChanged: (_) {},
       ),
-      hero: HeaderCard(
-        accent: Theme.of(context).extension<AppColors>()!.success,
-        topRow: const [
-          AppChip(
-            label: 'Goal reached',
-            icon: AppIcons.success,
-            tone: AppChipTone.success,
-            selected: true,
+      hero: AppHeroCard(
+        style: HeroStyle.tinted(
+          color: Theme.of(context).extension<AppColors>()!.success,
+        ),
+        header: HeroHeader(
+          leading: const [
+            AppChip(
+              label: 'Goal reached',
+              icon: AppIcons.success,
+              tone: AppChipTone.success,
+              selected: true,
+            ),
+          ],
+          onEdit: () {},
+        ),
+        content: [
+          HeroIdentity(
+            icon: const IconDisplay(type: IconType.account, size: 44),
+            name: const Text('Japan trip'),
           ),
         ],
-        onEdit: () {},
-        leading: const IconDisplay(type: IconType.account, size: 44),
-        title: const Text('Japan trip'),
-        footer: const ProgressRow(value: 1, trailing: '100%'),
+        footer: [const ProgressRow(value: 1, trailing: '100%')],
       ),
       sections: [
         (first) => SectionCard(
@@ -411,10 +431,17 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
             DetailPageBody(
               topInset: v<double>('topInset'),
               bottomInset: v<double>('bottomInset'),
-              hero: const HeaderCard(
-                leading: IconDisplay(type: IconType.category, size: 52),
-                title: Text('Food'),
-                subtitle: Text('Category'),
+              hero: AppHeroCard(
+                style: HeroStyle.tinted(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                content: [
+                  HeroIdentity(
+                    icon: IconDisplay(type: IconType.category, size: 52),
+                    name: Text('Food'),
+                    fact: Text('Category'),
+                  ),
+                ],
               ),
               sections: [
                 for (var i = 0; i < v<double>('sections').round(); i++)

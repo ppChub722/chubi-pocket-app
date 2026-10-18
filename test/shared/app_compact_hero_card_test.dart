@@ -14,7 +14,7 @@ void main() {
               body: CompactHeroScope(
                 heroKey: heroKey,
                 top: 0,
-                bar: const CompactHeroBar(
+                bar: const AppCompactHeroCard(
                   leading: Icon(Icons.wallet),
                   title: Text('compact'),
                   trailing: Text('฿1'),
@@ -37,7 +37,7 @@ void main() {
       );
 
   bool shown(WidgetTester t) =>
-      t.widget<CompactHeroBar>(find.byType(CompactHeroBar)).visible;
+      t.widget<AppCompactHeroCard>(find.byType(AppCompactHeroCard)).visible;
 
   testWidgets('hidden at the top, shown once the hero scrolls away', (t) async {
     await pump(t);
@@ -104,7 +104,10 @@ void _heroStyleTests() {
             body: CompactHeroScope(
               heroKey: heroKey,
               top: 0,
-              bar: const CompactHeroBar(style: style, title: Text('compact')),
+              bar: const AppCompactHeroCard(
+                style: style,
+                title: Text('compact'),
+              ),
               child: ListView(
                 children: [
                   SizedBox(
@@ -120,7 +123,7 @@ void _heroStyleTests() {
           ),
         ),
       );
-      final bar = t.widget<CompactHeroBar>(find.byType(CompactHeroBar));
+      final bar = t.widget<AppCompactHeroCard>(find.byType(AppCompactHeroCard));
       expect(bar.style, style);
       final surface = t.widget<HeroSurface>(find.byType(HeroSurface));
       expect(surface.style, style);

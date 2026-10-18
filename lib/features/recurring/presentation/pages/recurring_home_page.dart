@@ -206,32 +206,47 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     final s = _list?.summary;
     final symbol = context.readUserCurrencySymbol;
     String money(num v) => moneyString(context, v, symbol: symbol);
-    return ListSummaryCard(
-      caption: l.fpRecurringListCaption,
+    return AppHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
-      actions: [
-        if (_tab != RecurringHomeTab.calendar)
-          ListenableBuilder(
-            listenable: _search,
-            builder: (context, _) => ToolbarToggleButton(
-              state: _toolbar,
-              filtered: _filtered,
-              tooltip: l.recurringSearchHint,
+      margin: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.xs,
+      ),
+      header: HeroHeader(
+        leading: [HeroCaption(l.fpRecurringListCaption)],
+        actions: [
+          const MoneyVisibilityToggle(),
+          if (_tab != RecurringHomeTab.calendar)
+            ListenableBuilder(
+              listenable: _search,
+              builder: (context, _) => ToolbarToggleButton(
+                state: _toolbar,
+                filtered: _filtered,
+                tooltip: l.recurringSearchHint,
+              ),
             ),
-          ),
-      ],
-      amount: s?.due30dTotal ?? 0,
-      symbol: symbol,
-      alert: (s?.awaitingAmountCount ?? 0) > 0
-          ? l.fpRecurringAwaitingAlert(s!.awaitingAmountCount)
-          : null,
-      onAlertTap: () => _goTab(RecurringHomeTab.reminder),
-      infoLine: s == null
-          ? null
-          : AppText(
+        ],
+      ),
+      content: [
+        HeroNumber(
+          value: MoneyText(s?.due30dTotal ?? 0, symbol: symbol),
+          layout: HeroNumberLayout.inline,
+        ),
+        if (s != null)
+          HeroNote(
+            child: AppText(
               l.fpRecurringMonthLine(money(s.monthPay), money(s.monthReceive)),
               role: AppTextRole.caption,
             ),
+          ),
+        if ((s?.awaitingAmountCount ?? 0) > 0)
+          HeroAlert(
+            text: l.fpRecurringAwaitingAlert(s!.awaitingAmountCount),
+            onTap: () => _goTab(RecurringHomeTab.reminder),
+          ),
+      ],
     );
   }
 

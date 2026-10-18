@@ -10,7 +10,9 @@ import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/chip_size.dart';
 import 'divided_rows.dart';
-import 'header_card.dart';
+import 'hero/app_hero_card.dart';
+import 'hero/hero_header.dart';
+import 'hero/hero_identity.dart';
 
 class ListRowSkeleton extends StatelessWidget {
   const ListRowSkeleton({super.key});
@@ -224,22 +226,28 @@ class HeroSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HeaderCard(
-      heroStyle: const HeroStyle.plain(),
-      topRow: chips
-          ? [
-              SkeletonBox(
-                width: 84,
-                height: ChipSize.control.heightOf(context),
-                borderRadius: 20,
-              ),
-            ]
+    return AppHeroCard(
+      style: const HeroStyle.plain(),
+      header: chips
+          ? HeroHeader(
+              leading: [
+                SkeletonBox(
+                  width: 84,
+                  height: ChipSize.control.heightOf(context),
+                  borderRadius: 20,
+                ),
+              ],
+            )
           : null,
-      leading: const SkeletonCircle(size: 52),
-      title: const SkeletonText(style: _titleMedium, width: 150),
-      description: description
-          ? const SkeletonText(style: _bodySmall, width: 220)
-          : null,
+      content: [
+        HeroIdentity(
+          icon: const SkeletonCircle(size: 52),
+          name: const SkeletonText(style: _titleMedium, width: 150),
+          description: description
+              ? const SkeletonText(style: _bodySmall, width: 220)
+              : null,
+        ),
+      ],
     );
   }
 }

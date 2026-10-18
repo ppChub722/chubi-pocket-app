@@ -203,7 +203,22 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                 color: _green,
                 layout: HeroNumberLayout.inline,
               ),
-              const HeroBar(value: 0.4, left: 'Avg ฿270 / day'),
+              DailyBars(
+                bars: [
+                  for (final (i, v) in [120, 300, 80, 0, 560, 210, 90].indexed)
+                    DailyBar(
+                      value: v.toDouble(),
+                      kind: i < 5
+                          ? DailyBarKind.past
+                          : i == 5
+                          ? DailyBarKind.today
+                          : DailyBarKind.future,
+                    ),
+                ],
+                startLabel: '1 Oct',
+                centerLabel: 'Avg ฿270 / day',
+                endLabel: '7 Oct',
+              ),
             ],
             folded: [
               HeroNumber(

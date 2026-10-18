@@ -16,7 +16,6 @@ class BulkDeleteButton extends StatelessWidget {
     return AppIconButton(
       icon: AppIcons.delete,
       destructive: true,
-      size: 32,
       tooltip: tooltip,
       onPressed: ConnectionScope.isOffline(context) ? null : onPressed,
     );

@@ -2,13 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../molecules/hero_shell.dart';
 
-/// Two fields on one hero row — [start] (a description) and [end] (an
-/// amount, [endFraction] of the width, flush right). No [start] = [end]
-/// takes the whole row. The inputs carry their own air (a fixed value row),
-/// so the row adds no gap above / below by default.
-///
-/// [onEndAreaTap]: the whole end cell is its tap target (focus the amount),
-/// not just the digits. [below] goes under the row (an error line).
+/// The inputs have a fixed-height value row with air of its own, so this row
+/// adds no gap above or below.
 class HeroFields extends StatelessWidget implements HeroSpacedRow {
   const HeroFields({
     required this.end,

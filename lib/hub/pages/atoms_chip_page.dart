@@ -169,13 +169,14 @@ class _SizeMatrix extends StatelessWidget {
                 trailing: AppChipTrailing.dropdown,
                 onTap: () {},
               ),
-              AppChip(
-                label: 'Removable',
-                size: s,
-                selected: selected,
-                trailing: AppChipTrailing.remove,
-                onRemove: () {},
-              ),
+              if (s != ChipSize.mini)
+                AppChip(
+                  label: 'Removable',
+                  size: s,
+                  selected: selected,
+                  trailing: AppChipTrailing.remove,
+                  onRemove: () {},
+                ),
               AppChip(label: 'Editable', size: s, dashed: true),
               AppChip(
                 label: 'Count',

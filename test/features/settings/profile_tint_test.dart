@@ -15,7 +15,7 @@ void main() {
     }
   });
 
-  testWidgets('HeaderCard draws the avatar colour as its hero surface', (
+  testWidgets('AppHeroCard draws the avatar colour as its hero surface', (
     t,
   ) async {
     const name = 'QA Lead';
@@ -24,10 +24,14 @@ void main() {
       MaterialApp(
         theme: ThemeData(extensions: [palette]),
         home: Scaffold(
-          body: HeaderCard(
-            accent: tint,
-            leading: const UserAvatar(displayName: name, size: 52),
-            title: const Text(name),
+          body: AppHeroCard(
+            style: HeroStyle.tinted(color: tint),
+            content: [
+              HeroIdentity(
+                icon: const UserAvatar(displayName: name, size: 52),
+                name: const Text(name),
+              ),
+            ],
           ),
         ),
       ),

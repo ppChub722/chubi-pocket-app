@@ -143,10 +143,10 @@ void main() {
       findsNothing,
     );
     expect(find.text('กู้คืน'), findsNWidgets(3));
-    // Money in the user's currency, no .00 on whole amounts.
+    // No signed-in user: the default money style (always 2 decimals).
     expect(find.textContaining('คงเหลือ ฿1,250.50'), findsOneWidget);
-    expect(find.textContaining('วงเงิน ฿3,000 ·'), findsOneWidget);
-    expect(find.textContaining('เป้าหมาย ฿4,000 ·'), findsOneWidget);
+    expect(find.textContaining('วงเงิน ฿3,000.00 ·'), findsOneWidget);
+    expect(find.textContaining('เป้าหมาย ฿4,000.00 ·'), findsOneWidget);
     // A contact has no secondary line: only the archived date.
     expect(find.text('พี่บี'), findsOneWidget);
     expect(find.textContaining('฿', findRichText: true), findsNWidgets(3));

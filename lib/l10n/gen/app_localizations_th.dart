@@ -135,14 +135,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get contactPickerSearchHint => 'ค้นหาผู้ติดต่อ หรือพิมพ์ชื่อ';
 
   @override
-  String contactPickerUseName(String name) {
-    return 'ใช้ชื่อ \"$name\"';
-  }
-
-  @override
-  String get contactPickerUseNameHint => 'ไม่บันทึกเป็นผู้ติดต่อ';
-
-  @override
   String get contactPickerEmpty => 'ยังไม่มีผู้ติดต่อ — พิมพ์ชื่อด้านบนได้เลย';
 
   @override
@@ -3916,11 +3908,7 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get tagPickerNoMatch => 'ไม่พบแท็กที่ตรงกัน';
 
-  @override
-  String get contactPickerSaveAsContact => 'บันทึกเป็นผู้ติดต่อ';
 
-  @override
-  String get contactPickerSaveFailed => 'บันทึกผู้ติดต่อไม่สำเร็จ';
 
   @override
   String get contactsSortRecent => 'ใช้ล่าสุด';
@@ -4422,14 +4410,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get debtPersonPickerTitle => 'กับใคร';
-
-  @override
-  String debtPersonAddTyped(Object name) {
-    return 'เพิ่มชื่อ “$name”';
-  }
-
-  @override
-  String get debtPersonFromContacts => 'เลือกจากผู้ติดต่อ';
 
   @override
   String get debtSettledLabel => 'หายกัน';

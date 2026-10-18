@@ -68,9 +68,6 @@ class ContactPickerLabels {
   const ContactPickerLabels({
     required this.title,
     required this.createNew,
-    required this.saveAsContact,
-    required this.useName,
-    required this.useNameHint,
     required this.noContact,
     required this.noContactHint,
     required this.empty,
@@ -83,10 +80,7 @@ class ContactPickerLabels {
 
   final String? searchHint;
   final String createNew;
-  final String saveAsContact;
 
-  final String Function(String name) useName;
-  final String useNameHint;
   final String noContact;
   final String noContactHint;
 
@@ -111,7 +105,6 @@ class ContactPickerSheetData {
     this.loading = false,
     this.error,
     this.onRetry,
-    this.onSaveAsContact,
     this.onCreate,
     this.filters = const [],
     this.initialFilter = 0,
@@ -127,8 +120,6 @@ class ContactPickerSheetData {
   final bool loading;
   final Object? error;
   final VoidCallback? onRetry;
-
-  final Future<String?> Function(String name)? onSaveAsContact;
 
   final Future<String?> Function()? onCreate;
 
@@ -178,7 +169,6 @@ Widget _typedNameLeading(String name) => Row(
 class _ContactPickerSheetState extends State<ContactPickerSheet> {
   final _search = TextEditingController();
   final _newName = TextEditingController();
-  bool _saving = false;
   late int _filter = widget.data.filters.isEmpty
       ? 0
       : widget.data.initialFilter.clamp(0, widget.data.filters.length - 1);
@@ -188,18 +178,6 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
     _search.dispose();
     _newName.dispose();
     super.dispose();
-  }
-
-  Future<void> _saveAsContact(String name) async {
-    final navigator = Navigator.of(context);
-    setState(() => _saving = true);
-    final id = await widget.data.onSaveAsContact!(name);
-    if (!mounted) return;
-    if (id == null) {
-      setState(() => _saving = false);
-      return;
-    }
-    navigator.pop(ContactPickerRowPicked(id));
   }
 
   Future<void> _create() async {
@@ -240,7 +218,6 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
               ],
             ),
       builder: (context, lower) {
-        final typed = _search.text.trim();
         final shown = d.filters.isEmpty
             ? all
             : all.where(d.filters[_filter].test).toList();
@@ -254,38 +231,22 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
                         c.keywords.any((k) => k.toLowerCase().contains(lower)),
                   )
                   .toList();
-        final exact = all.any((c) => c.name.toLowerCase() == lower);
-        final offerName = d.allowFreeText && typed.isNotEmpty && !exact;
         final offerType = d.allowFreeText && l.typeName != null;
         return Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (d.unlinkAs != null || offerName || offerType || hits.isNotEmpty)
+            if (d.unlinkAs != null || offerType || hits.isNotEmpty)
               SectionCard(
                 first: true,
                 children: [
-                  if (offerType) ...[
+                  if (offerType)
                     _NewNameRow(
                       controller: _newName,
                       hint: l.typeName!,
                       onSubmit: (name) =>
                           Navigator.pop(context, ContactPickerNameTyped(name)),
                     ),
-                    ListenableBuilder(
-                      listenable: _newName,
-                      builder: (context, _) {
-                        final name = _newName.text.trim();
-                        if (name.isEmpty || d.onSaveAsContact == null) {
-                          return const SizedBox.shrink();
-                        }
-                        return PickerCreateRow(
-                          label: l.saveAsContact,
-                          onTap: _saving ? null : () => _saveAsContact(name),
-                        );
-                      },
-                    ),
-                  ],
                   if (d.unlinkAs != null)
                     PickerRow(
                       leading: _typedNameLeading(d.unlinkAs!),
@@ -297,21 +258,6 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
                         ContactPickerNameTyped(d.unlinkAs!),
                       ),
                     ),
-                  if (offerName) ...[
-                    PickerRow(
-                      leading: _typedNameLeading(typed),
-                      title: l.useName(typed),
-                      subtitle: l.useNameHint,
-                      onTap: () =>
-                          Navigator.pop(context, ContactPickerNameTyped(typed)),
-                    ),
-                    PickerCreateRow(
-                      label: l.saveAsContact,
-                      onTap: _saving || d.onSaveAsContact == null
-                          ? null
-                          : () => _saveAsContact(typed),
-                    ),
-                  ],
                   for (final c in hits)
                     PickerRow(
                       leading: PersonMark(
@@ -330,9 +276,9 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
                     ),
                 ],
               ),
-            if (all.isEmpty && !offerName)
+            if (all.isEmpty)
               EmptyView.compact(message: l.empty)
-            else if (hits.isEmpty && !offerName && d.unlinkAs == null)
+            else if (hits.isEmpty && d.unlinkAs == null)
               EmptyView.compact(message: l.noMatch ?? l.empty),
             const SizedBox(height: AppSpacing.md),
           ],

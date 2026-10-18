@@ -505,7 +505,7 @@ void main() {
 
     testWidgets('card → tabs → rows, three swipe tabs', (t) async {
       await pump(t, const RecurringHomePage());
-      final cardY = t.getTopLeft(find.byType(ListSummaryCard)).dy;
+      final cardY = t.getTopLeft(find.byType(AppHeroCard)).dy;
       final tabsY = t.getTopLeft(find.byType(AppTabBar<RecurringHomeTab>)).dy;
       final rowY = t.getTopLeft(find.text('Netflix')).dy;
       expect(cardY, lessThan(tabsY));

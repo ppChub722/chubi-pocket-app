@@ -596,7 +596,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                       ),
                       const SizedBox(height: AppSpacing.md),
                     ],
-                    TxHeroCard(
+                    TransactionHeroCard(
                       key: _heroKey,
                       debt: true,
                       inline: true,

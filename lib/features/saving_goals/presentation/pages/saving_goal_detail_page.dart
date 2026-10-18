@@ -697,7 +697,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           ? _spareHero(l, d, style, symbol)
           : _goalHero(l, goal, style, accent, symbol),
       belowHero: [?_actionBar(l, d)],
-      compactBar: CompactHeroBar(
+      compactBar: AppCompactHeroCard(
         style: style,
         leading: IconCodeWidget(
           iconCode: goal?.iconCode,
@@ -736,74 +736,85 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final short = g.monthShort;
     final target = g.targetAmount;
     if (target == null) return _ongoingHero(l, g, style, accent, symbol);
-    return HeroCard(
+    return AppHeroCard(
       style: style,
-      chips: [?savingGoalStatusChip(l, g)],
-      onEdit: enterEdit,
-      icon: EditableCircle(
-        size: 40,
-        onLongPress: _enterEditThenOpenMaker,
-        child: IconCodeWidget(
-          iconCode: g.iconCode,
-          size: 40,
-          fallbackIcon: AppIcons.savingGoal,
-          fallbackColor: accent,
+      header: HeroHeader(
+        leading: [?savingGoalStatusChip(l, g)],
+        onEdit: enterEdit,
+      ),
+      content: [
+        HeroIdentity(
+          icon: EditableCircle(
+            size: 40,
+            onLongPress: _enterEditThenOpenMaker,
+            child: IconCodeWidget(
+              iconCode: g.iconCode,
+              size: 40,
+              fallbackIcon: AppIcons.savingGoal,
+              fallbackColor: accent,
+            ),
+          ),
+          description: HeroDescription(
+            controller: _descriptionCtrl,
+            editing: false,
+            hint: l.commonDescription,
+            maxLength: TextLimits.description,
+            focusNode: _descriptionFocus,
+            onEnterEdit: () => enterEdit(focus: _descriptionFocus),
+          ),
         ),
-      ),
-      description: HeroDescription(
-        controller: _descriptionCtrl,
-        editing: false,
-        hint: l.commonDescription,
-        maxLength: TextLimits.description,
-        focusNode: _descriptionFocus,
-        onEnterEdit: () => enterEdit(focus: _descriptionFocus),
-      ),
-      number: HeroNumber(
-        label: l.fpGoalsSavedLabel,
-        value: MoneyText(g.savedAmount, symbol: symbol),
-        color: accent,
-        target: l.fpGoalsTargetSuffix(
-          money(target),
-          (g.progressPct ?? 0).round(),
+        HeroNumber(
+          label: l.fpGoalsSavedLabel,
+          value: MoneyText(g.savedAmount, symbol: symbol),
+          color: accent,
+          target: l.fpGoalsTargetSuffix(
+            money(target),
+            (g.progressPct ?? 0).round(),
+          ),
         ),
-      ),
-      bar: HeroBar(
-        value: (g.progressPct ?? 0) / 100,
-        color: accent,
-        ticks: const [0.25, 0.5, 0.75],
-        left: due == null
-            ? l.sgv2NoDeadline
-            : l.sgv2DueOn(DateFormatter.medium(due, locale: locale)),
-        right: days != null && days > 0 ? l.fpGoalsDaysLeft(days) : null,
-      ),
-      tiles: g.state != SavingGoalState.active
-          ? const []
-          : [
-              SummaryTileView(
-                tile: SummaryTile(
-                  label: l.fpGoalsTileShort,
-                  value: short == null ? '—' : money(short),
-                  tone: (short ?? 0) > 0
-                      ? SummaryTileTone.amber
-                      : SummaryTileTone.green,
-                ),
-              ),
-              SummaryTileView(
-                tile: SummaryTile(
-                  label: l.fpGoalsTileSaved,
-                  value: money(g.monthSaved),
-                  onTap: () => setState(() => _tab = _GoalTab.entries),
-                ),
-              ),
-              SummaryTileView(
-                tile: SummaryTile(
-                  label: l.fpGoalsTileNeeded,
-                  value: g.neededMonthly == null
-                      ? '—'
-                      : money(g.neededMonthly!),
-                ),
-              ),
-            ],
+        HeroBar(
+          value: (g.progressPct ?? 0) / 100,
+          color: accent,
+          ticks: const [0.25, 0.5, 0.75],
+          left: due == null
+              ? l.sgv2NoDeadline
+              : l.sgv2DueOn(DateFormatter.medium(due, locale: locale)),
+          right: days != null && days > 0 ? l.fpGoalsDaysLeft(days) : null,
+        ),
+      ],
+      footer: [
+        for (final List<Widget> tiles in [
+          g.state != SavingGoalState.active
+              ? const []
+              : [
+                  SummaryTileView(
+                    tile: SummaryTile(
+                      label: l.fpGoalsTileShort,
+                      value: short == null ? '—' : money(short),
+                      tone: (short ?? 0) > 0
+                          ? SummaryTileTone.amber
+                          : SummaryTileTone.green,
+                    ),
+                  ),
+                  SummaryTileView(
+                    tile: SummaryTile(
+                      label: l.fpGoalsTileSaved,
+                      value: money(g.monthSaved),
+                      onTap: () => setState(() => _tab = _GoalTab.entries),
+                    ),
+                  ),
+                  SummaryTileView(
+                    tile: SummaryTile(
+                      label: l.fpGoalsTileNeeded,
+                      value: g.neededMonthly == null
+                          ? '—'
+                          : money(g.neededMonthly!),
+                    ),
+                  ),
+                ],
+        ])
+          if (tiles.isNotEmpty) HeroTiles(children: tiles),
+      ],
     );
   }
 
@@ -816,52 +827,63 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   ) {
     String money(double v) => moneyString(context, v, symbol: symbol);
     final auto = g.autoSave;
-    return HeroCard(
+    return AppHeroCard(
       style: style,
-      chips: [?savingGoalStatusChip(l, g)],
-      onEdit: enterEdit,
-      icon: EditableCircle(
-        size: 40,
-        onLongPress: _enterEditThenOpenMaker,
-        child: IconCodeWidget(
-          iconCode: g.iconCode,
-          size: 40,
-          fallbackIcon: AppIcons.savingGoal,
-          fallbackColor: accent,
+      header: HeroHeader(
+        leading: [?savingGoalStatusChip(l, g)],
+        onEdit: enterEdit,
+      ),
+      content: [
+        HeroIdentity(
+          icon: EditableCircle(
+            size: 40,
+            onLongPress: _enterEditThenOpenMaker,
+            child: IconCodeWidget(
+              iconCode: g.iconCode,
+              size: 40,
+              fallbackIcon: AppIcons.savingGoal,
+              fallbackColor: accent,
+            ),
+          ),
+          description: HeroDescription(
+            controller: _descriptionCtrl,
+            editing: false,
+            hint: l.commonDescription,
+            maxLength: TextLimits.description,
+            focusNode: _descriptionFocus,
+            onEnterEdit: () => enterEdit(focus: _descriptionFocus),
+          ),
         ),
-      ),
-      description: HeroDescription(
-        controller: _descriptionCtrl,
-        editing: false,
-        hint: l.commonDescription,
-        maxLength: TextLimits.description,
-        focusNode: _descriptionFocus,
-        onEnterEdit: () => enterEdit(focus: _descriptionFocus),
-      ),
-      number: HeroNumber(
-        label: l.fpGoalsSavedLabel,
-        value: MoneyText(g.savedAmount, symbol: symbol),
-        color: accent,
-      ),
-      tiles: g.state != SavingGoalState.active
-          ? const []
-          : [
-              SummaryTileView(
-                tile: SummaryTile(
-                  label: l.fpGoalsTileSaved,
-                  value: money(g.monthSaved),
-                  onTap: () => setState(() => _tab = _GoalTab.entries),
-                ),
-              ),
-              SummaryTileView(
-                tile: SummaryTile(
-                  label: l.fpGoalsTileAuto,
-                  value: auto == null
-                      ? '—'
-                      : l.fpGoalsPerMonth(money(auto.amount)),
-                ),
-              ),
-            ],
+        HeroNumber(
+          label: l.fpGoalsSavedLabel,
+          value: MoneyText(g.savedAmount, symbol: symbol),
+          color: accent,
+        ),
+      ],
+      footer: [
+        for (final List<Widget> tiles in [
+          g.state != SavingGoalState.active
+              ? const []
+              : [
+                  SummaryTileView(
+                    tile: SummaryTile(
+                      label: l.fpGoalsTileSaved,
+                      value: money(g.monthSaved),
+                      onTap: () => setState(() => _tab = _GoalTab.entries),
+                    ),
+                  ),
+                  SummaryTileView(
+                    tile: SummaryTile(
+                      label: l.fpGoalsTileAuto,
+                      value: auto == null
+                          ? '—'
+                          : l.fpGoalsPerMonth(money(auto.amount)),
+                    ),
+                  ),
+                ],
+        ])
+          if (tiles.isNotEmpty) HeroTiles(children: tiles),
+      ],
     );
   }
 
@@ -872,15 +894,19 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     String symbol,
   ) {
     final color = Theme.of(context).colorScheme.primary;
-    return HeroCard(
+    return AppHeroCard(
       style: style,
-      icon: IconTile(icon: AppIcons.savingGoal, color: color, size: 40),
-      description: AppText(l.sgv2SpareHint, role: AppTextRole.caption),
-      number: HeroNumber(
-        label: l.sgv2Spare,
-        value: MoneyText(d.spare?.amount ?? 0, symbol: symbol),
-        color: color,
-      ),
+      content: [
+        HeroIdentity(
+          icon: IconTile(icon: AppIcons.savingGoal, color: color, size: 40),
+          description: AppText(l.sgv2SpareHint, role: AppTextRole.caption),
+        ),
+        HeroNumber(
+          label: l.sgv2Spare,
+          value: MoneyText(d.spare?.amount ?? 0, symbol: symbol),
+          color: color,
+        ),
+      ],
     );
   }
 
@@ -1091,52 +1117,58 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       onRefresh: null,
       topInset: barInset + AppSpacing.lg,
       bottomInset: bottom,
-      hero: HeroCard(
+      hero: AppHeroCard(
         style: HeroStyle.tinted(color: accent, glyph: AppIcons.savingGoal),
-        editing: true,
-        icon: EditableCircle(
-          size: 44,
-          onTap: _openIconMaker,
-          child: IconCodeWidget(
-            iconCode: working.iconCode,
-            size: 44,
-            fallbackIcon: AppIcons.savingGoal,
-            fallbackColor: accent,
+        mode: HeroCardMode.edit,
+        content: [
+          HeroIdentity(
+            icon: EditableCircle(
+              size: 44,
+              onTap: _openIconMaker,
+              child: IconCodeWidget(
+                iconCode: working.iconCode,
+                size: 44,
+                fallbackIcon: AppIcons.savingGoal,
+                fallbackColor: accent,
+              ),
+            ),
+            name: HeroNameInput(
+              editing: true,
+              controller: _nameCtrl,
+              focusNode: _nameFocus,
+              hint: l.commonName,
+              maxLength: TextLimits.name,
+              maxLines: 2,
+              onChanged: (v) => _onText(_Field.name, v),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? l.savingGoalFormNameRequired
+                  : null,
+            ),
+            description: HeroDescription(
+              controller: _descriptionCtrl,
+              editing: true,
+              hint: l.commonDescription,
+              maxLength: TextLimits.description,
+              focusNode: _descriptionFocus,
+              onChanged: (v) => _onText(_Field.description, v),
+            ),
           ),
-        ),
-        name: HeroNameInput(
-          editing: true,
-          controller: _nameCtrl,
-          focusNode: _nameFocus,
-          hint: l.commonName,
-          maxLength: TextLimits.name,
-          maxLines: 2,
-          onChanged: (v) => _onText(_Field.name, v),
-          validator: (v) => (v == null || v.trim().isEmpty)
-              ? l.savingGoalFormNameRequired
-              : null,
-        ),
-        description: HeroDescription(
-          controller: _descriptionCtrl,
-          editing: true,
-          hint: l.commonDescription,
-          maxLength: TextLimits.description,
-          focusNode: _descriptionFocus,
-          onChanged: (v) => _onText(_Field.description, v),
-        ),
-        amountField: HeroAmountField(
-          controller: _targetCtrl,
-          label: l.savingGoalFormTargetLabel,
-          accent: accent,
-          symbol: symbol,
-          helper: l.savingGoalFormTargetOptionalHint,
-          onChanged: (v) => _onText(_Field.target, v),
-          validator: (v) {
-            if (v == null || v.trim().isEmpty) return null;
-            final n = AmountInput.parse(v);
-            return (n == null || n <= 0) ? l.savingGoalFormTargetInvalid : null;
-          },
-        ),
+          HeroAmountField(
+            controller: _targetCtrl,
+            label: l.savingGoalFormTargetLabel,
+            accent: accent,
+            symbol: symbol,
+            helper: l.savingGoalFormTargetOptionalHint,
+            onChanged: (v) => _onText(_Field.target, v),
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) return null;
+              final n = AmountInput.parse(v);
+              return (n == null || n <= 0)
+                  ? l.savingGoalFormTargetInvalid
+                  : null;
+            },
+          ),
+        ],
       ),
       info: _editInfo(l, goal, symbol),
       settings: d == null ? null : _editSettings(l, d, symbol),

@@ -91,17 +91,28 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
         if (active && s.activeCount > 0)
           _summary(context, l, state, toggleButton)
         else
-          ListSummaryCard(
-            caption: switch (state.filter) {
-              BudgetFilter.active => l.bgFilterActive,
-              BudgetFilter.ended => '${l.bgFilterEnded} · ${s.endedCount}',
-              BudgetFilter.archived =>
-                '${l.bgFilterArchived} · ${s.archivedCount}',
-            },
+          AppHeroCard(
             style: HeroStyle.tinted(
               color: Theme.of(context).colorScheme.primary,
             ),
-            actions: [toggleButton],
+            margin: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.sm,
+              AppSpacing.lg,
+              AppSpacing.xs,
+            ),
+            header: HeroHeader(
+              leading: [
+                HeroCaption(switch (state.filter) {
+                  BudgetFilter.active => l.bgFilterActive,
+                  BudgetFilter.ended => '${l.bgFilterEnded} · ${s.endedCount}',
+                  BudgetFilter.archived =>
+                    '${l.bgFilterArchived} · ${s.archivedCount}',
+                }),
+              ],
+              actions: [const MoneyVisibilityToggle(), toggleButton],
+            ),
+            content: const [],
           ),
         ListToolbar(
           collapse: _toolbar,
@@ -189,33 +200,65 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
       selected: state.health == h,
       onTap: () => cubit.setHealth(h),
     );
-    return ListSummaryCard(
-      caption: l.bgSummaryUsedCaption,
+    return AppHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
-      actions: [toggleButton],
-      amount: s.totalUsed,
-      mainSuffix: l.bgHeroOfLimit(budgetRowMoney(context, s.totalLimit)),
-      bar: ProgressRow(
-        value: s.totalLimit <= 0 ? 0.0 : s.totalUsed / s.totalLimit,
-        color: ProgressTone.normal.resolve(context),
-        label: l.bgSummaryRemaining(budgetRowMoney(context, s.totalRemaining)),
-        trailing: '${s.usedPct}%',
+      margin: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.xs,
       ),
-      tiles: [
-        tile(
-          BudgetHealth.all,
-          l.bgTileAll,
-          s.countAll,
-          SummaryTileTone.neutral,
+      header: HeroHeader(
+        leading: [HeroCaption(l.bgSummaryUsedCaption)],
+        actions: [const MoneyVisibilityToggle(), toggleButton],
+      ),
+      content: [
+        HeroNumber(
+          value: MoneyText(s.totalUsed),
+          target: l.bgHeroOfLimit(budgetRowMoney(context, s.totalLimit)),
+          layout: HeroNumberLayout.inline,
         ),
-        tile(BudgetHealth.normal, l.bgTileOk, s.countOk, SummaryTileTone.green),
-        tile(
-          BudgetHealth.near,
-          l.bgStatWarn,
-          s.countNear,
-          SummaryTileTone.amber,
+        ProgressRow(
+          value: s.totalLimit <= 0 ? 0.0 : s.totalUsed / s.totalLimit,
+          color: ProgressTone.normal.resolve(context),
+          label: l.bgSummaryRemaining(
+            budgetRowMoney(context, s.totalRemaining),
+          ),
+          trailing: '${s.usedPct}%',
         ),
-        tile(BudgetHealth.over, l.bgStatOver, s.countOver, SummaryTileTone.red),
+      ],
+      footer: [
+        HeroTiles(
+          children: [
+            for (final t in [
+              tile(
+                BudgetHealth.all,
+                l.bgTileAll,
+                s.countAll,
+                SummaryTileTone.neutral,
+              ),
+              tile(
+                BudgetHealth.normal,
+                l.bgTileOk,
+                s.countOk,
+                SummaryTileTone.green,
+              ),
+              tile(
+                BudgetHealth.near,
+                l.bgStatWarn,
+                s.countNear,
+                SummaryTileTone.amber,
+              ),
+              tile(
+                BudgetHealth.over,
+                l.bgStatOver,
+                s.countOver,
+                SummaryTileTone.red,
+              ),
+            ])
+              SummaryTileView(tile: t),
+          ],
+        ),
       ],
     );
   }

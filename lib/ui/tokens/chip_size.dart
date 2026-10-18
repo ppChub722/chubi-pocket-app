@@ -2,9 +2,7 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 
-/// The three control heights (mini / chip / control) as a theme value — the
-/// one source for chips, round icon buttons, stepper pills and a hero's
-/// header. A theme sets its own; [fallback] when it doesn't.
+/// The one source of control heights for chips, round buttons and pills.
 class ControlSizes extends ThemeExtension<ControlSizes> {
   const ControlSizes({this.mini = 20, this.chip = 28, this.control = 36});
 
@@ -83,7 +81,6 @@ enum ChipSize {
     this.badgePad = 5,
   });
 
-  /// The height of this size in the current theme ([ControlSizes]).
   double heightOf(BuildContext context) =>
       ControlSizes.of(context).heightOf(this);
 

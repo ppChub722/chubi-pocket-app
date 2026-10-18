@@ -854,7 +854,7 @@ class _DraftFormState extends State<DraftForm> {
                 categoryRow: isTransfer ? null : _entryCategoryRow(l),
               )
             else
-              TxHeroCard(
+              TransactionHeroCard(
                 key: widget.heroKey,
                 type: _c.type,
                 onTypeChanged: widget.typeLocked ? null : _c.setType,

@@ -135,14 +135,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactPickerSearchHint => 'Search contacts or type a name';
 
   @override
-  String contactPickerUseName(String name) {
-    return 'Use \"$name\"';
-  }
-
-  @override
-  String get contactPickerUseNameHint => 'Not saved as a contact';
-
-  @override
   String get contactPickerEmpty => 'No contacts yet — type a name above';
 
   @override
@@ -4015,11 +4007,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get tagPickerNoMatch => 'No tag matches';
 
-  @override
-  String get contactPickerSaveAsContact => 'Save as a contact';
 
-  @override
-  String get contactPickerSaveFailed => 'Couldn\'t save the contact';
 
   @override
   String get contactsSortRecent => 'Recently used';
@@ -4530,14 +4518,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get debtPersonPickerTitle => 'With whom?';
-
-  @override
-  String debtPersonAddTyped(Object name) {
-    return 'Add “$name”';
-  }
-
-  @override
-  String get debtPersonFromContacts => 'From contacts';
 
   @override
   String get debtSettledLabel => 'All square';

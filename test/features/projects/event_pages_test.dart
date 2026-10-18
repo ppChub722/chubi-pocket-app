@@ -252,17 +252,17 @@ void main() {
     ) async {
       await pump(t, const ProjectsPage());
       expect(repo.calls, ['list q= page=1']);
-      expect(find.text('฿14,289.00'), findsOneWidget);
-      expect(find.text('I paid ฿22,539.00 → owed ฿8,250.00'), findsOneWidget);
+      expect(find.text('฿14,289'), findsOneWidget);
+      expect(find.text('I paid ฿22,539 → owed ฿8,250'), findsOneWidget);
       // The three tiles carry the BE counts.
       expect(find.text('2'), findsOneWidget);
       expect(find.text('1'), findsOneWidget);
       expect(find.text('5'), findsOneWidget);
       expect(find.byType(EventListRow), findsNWidgets(3));
       // Right side: owed (green) / owe (red) / even.
-      expect(find.text('+฿250.00'), findsOneWidget);
+      expect(find.text('+฿250'), findsOneWidget);
       expect(find.text('Owed to me'), findsOneWidget);
-      expect(find.text('−฿100.00'), findsOneWidget);
+      expect(find.text('−฿100'), findsOneWidget);
       expect(find.text('I owe'), findsOneWidget);
     });
 
@@ -346,8 +346,8 @@ void main() {
       expect(find.byType(ErrorView), findsNothing);
       // Hero: total spent, the budget bar (a plan is set), the tiles.
       expect(find.text('Total spent'), findsOneWidget);
-      expect(find.text('Spent ฿1,750.00 of ฿10,000.00 budget'), findsOneWidget);
-      expect(find.text('฿8,250.00 left'), findsOneWidget);
+      expect(find.text('Spent ฿1,750 of ฿10,000 budget'), findsOneWidget);
+      expect(find.text('฿8,250 left'), findsOneWidget);
       expect(find.text('My share'), findsOneWidget);
       expect(find.text('Owed to me'), findsOneWidget);
       // No income → no income line.
@@ -360,9 +360,9 @@ void main() {
       expect(find.text('Food'), findsWidgets);
       // The member strip: paid + owed / owes per member.
       expect(find.byType(PeopleStrip), findsOneWidget);
-      expect(find.text('Paid ฿1,000.00'), findsOneWidget);
-      expect(find.text('Owed ฿250.00'), findsOneWidget);
-      expect(find.text('Owes ฿250.00'), findsOneWidget);
+      expect(find.text('Paid ฿1,000'), findsOneWidget);
+      expect(find.text('Owed ฿250'), findsOneWidget);
+      expect(find.text('Owes ฿250'), findsOneWidget);
       // The bills, no tabs.
       expect(find.byType(EventBillRow), findsNWidgets(2));
     });

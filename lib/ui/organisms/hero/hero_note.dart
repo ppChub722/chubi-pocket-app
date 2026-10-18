@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// A small text in a hero's header ("สุทธิ · 4 กระเป๋า"), one line, muted.
 class HeroCaption extends StatelessWidget {
   const HeroCaption(this.text, {super.key});
 
@@ -17,9 +16,6 @@ class HeroCaption extends StatelessWidget {
   );
 }
 
-/// A short line in a hero's content — an info line, a note under a field
-/// ("ส่วนของคุณ …"), a hint by the date — in small text, at [alignment];
-/// tappable with [onTap] (a link to another page).
 class HeroNote extends StatelessWidget {
   const HeroNote({
     required this.child,

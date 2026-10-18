@@ -163,31 +163,53 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
   Widget _summary(AppLocalizations l, ProjectsState state) {
     final s = state.summary ?? const ProjectListSummary();
-    return ListSummaryCard(
-      caption: l.fpEventsSummaryCaption,
+    return AppHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
-      actions: [
-        ListenableBuilder(
-          listenable: _search,
-          builder: (context, _) => ToolbarToggleButton(
-            state: _toolbarOpen,
-            filtered:
-                _search.text.isNotEmpty ||
-                state.tagIds.isNotEmpty ||
-                state.sort != ProjectSort.updatedDesc,
-            tooltip: l.commonSearch,
+      margin: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.xs,
+      ),
+      header: HeroHeader(
+        leading: [HeroCaption(l.fpEventsSummaryCaption)],
+        actions: [
+          const MoneyVisibilityToggle(),
+          ListenableBuilder(
+            listenable: _search,
+            builder: (context, _) => ToolbarToggleButton(
+              state: _toolbarOpen,
+              filtered:
+                  _search.text.isNotEmpty ||
+                  state.tagIds.isNotEmpty ||
+                  state.sort != ProjectSort.updatedDesc,
+              tooltip: l.commonSearch,
+            ),
+          ),
+        ],
+      ),
+      content: [
+        HeroNumber(
+          value: MoneyText(s.myShareTotal),
+          layout: HeroNumberLayout.inline,
+        ),
+        HeroNote(
+          child: AppText(
+            l.fpEventsPaidLine(
+              moneyString(context, s.paidTotal),
+              moneyString(context, s.receivableTotal),
+            ),
+            role: AppTextRole.caption,
           ),
         ),
       ],
-      amount: s.myShareTotal,
-      infoLine: AppText(
-        l.fpEventsPaidLine(
-          moneyString(context, s.paidTotal),
-          moneyString(context, s.receivableTotal),
+      footer: [
+        HeroTiles(
+          children: [
+            for (final t in _tiles(l, state, s)) SummaryTileView(tile: t),
+          ],
         ),
-        role: AppTextRole.caption,
-      ),
-      tiles: _tiles(l, state, s),
+      ],
     );
   }
 

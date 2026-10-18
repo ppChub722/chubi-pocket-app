@@ -1055,9 +1055,9 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     );
   }
 
-  CompactHeroBar _compactBar(Recurring r) {
+  AppCompactHeroCard _compactBar(Recurring r) {
     final amount = r.amount;
-    return CompactHeroBar(
+    return AppCompactHeroCard(
       style: _style(r),
       leading: IconDisplay(
         type: IconType.category,
@@ -1122,96 +1122,107 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             tone: tone ?? SummaryTileTone.neutral,
           ),
         );
-    return HeroCard(
+    return AppHeroCard(
       style: _style(r),
-      chips: [
-        if (r.actions.pause || r.actions.resume)
-          OptionMenuAnchor<RecurringAction>(
-            options: [
-              if (r.actions.pause)
-                SheetOption(
-                  value: RecurringAction.pause,
-                  label: l.recurringPause,
-                  leading: const AppIcon(AppIcons.pause),
-                ),
-              if (r.actions.resume)
-                SheetOption(
-                  value: RecurringAction.resume,
-                  label: l.recurringResume,
-                  leading: const AppIcon(AppIcons.resume),
-                ),
-            ],
-            onSelected: _action,
-            builder: (context, toggle) => _statusChip(l, r, onTap: toggle),
-          )
-        else
-          _statusChip(l, r),
-        AppChip(
-          label: recurringKindLabel(l, r.kind),
-          selected: true,
-          tone: AppChipTone.neutral,
-        ),
-      ],
-      onEdit: enterEdit,
-      icon: EditableCircle(
-        size: 40,
-        onLongPress: () {
-          enterEdit();
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) _pickIcon();
-          });
-        },
-        child: IconDisplay(
-          type: IconType.category,
-          size: 40,
-          iconCode: r.iconCode ?? r.category?.iconCode,
-        ),
-      ),
-      description: HeroDescription(
-        controller: _ctrl[_Field.description]!,
-        editing: false,
-        focusNode: _descriptionFocus,
-        hint: l.commonDescription,
-        maxLength: TextLimits.description,
-        onEnterEdit: () => enterEdit(focus: _descriptionFocus),
-      ),
-      number: HeroNumber(
-        label: l.fpM5bRecurringPerMonth,
-        value: monthly != null && monthly > 0
-            ? MoneyText(
-                signedOf(r.type, monthly),
-                tone: toneOf(r.type),
-                symbol: symbol,
-              )
-            : Text(l.fpRecurringAwaitingValue),
-      ),
-      tiles: [
-        if (installment)
-          tile(
-            l.fpRecurringTileInstallment,
-            r.progressTotal == null
-                ? '${r.progressDone}'
-                : '${r.progressDone}/${r.progressTotal}',
-          )
-        else
-          tile(
-            l.fpRecurringTileYearly,
-            moneyString(context, r.yearlyCost, symbol: symbol),
-          ),
-        tile(l.fpRecurringTileSaved, l.fpRecurringCountUnit(r.savedCount)),
-        tile(
-          l.fpRecurringTilePending,
-          l.fpRecurringCountUnit(r.pendingCount),
-          r.pendingCount > 0 ? SummaryTileTone.amber : null,
-        ),
-      ],
-      alert: !known && next != null
-          ? HeroAlert(
-              text: l.fpRecurringAlertAwaiting(
-                dueLabel(l, date: next, daysUntil: r.daysUntil),
-              ),
+      header: HeroHeader(
+        leading: [
+          if (r.actions.pause || r.actions.resume)
+            OptionMenuAnchor<RecurringAction>(
+              options: [
+                if (r.actions.pause)
+                  SheetOption(
+                    value: RecurringAction.pause,
+                    label: l.recurringPause,
+                    leading: const AppIcon(AppIcons.pause),
+                  ),
+                if (r.actions.resume)
+                  SheetOption(
+                    value: RecurringAction.resume,
+                    label: l.recurringResume,
+                    leading: const AppIcon(AppIcons.resume),
+                  ),
+              ],
+              onSelected: _action,
+              builder: (context, toggle) => _statusChip(l, r, onTap: toggle),
             )
-          : null,
+          else
+            _statusChip(l, r),
+          AppChip(
+            label: recurringKindLabel(l, r.kind),
+            selected: true,
+            tone: AppChipTone.neutral,
+          ),
+        ],
+        onEdit: enterEdit,
+      ),
+      content: [
+        HeroIdentity(
+          icon: EditableCircle(
+            size: 40,
+            onLongPress: () {
+              enterEdit();
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) _pickIcon();
+              });
+            },
+            child: IconDisplay(
+              type: IconType.category,
+              size: 40,
+              iconCode: r.iconCode ?? r.category?.iconCode,
+            ),
+          ),
+          description: HeroDescription(
+            controller: _ctrl[_Field.description]!,
+            editing: false,
+            focusNode: _descriptionFocus,
+            hint: l.commonDescription,
+            maxLength: TextLimits.description,
+            onEnterEdit: () => enterEdit(focus: _descriptionFocus),
+          ),
+        ),
+        HeroNumber(
+          label: l.fpM5bRecurringPerMonth,
+          value: monthly != null && monthly > 0
+              ? MoneyText(
+                  signedOf(r.type, monthly),
+                  tone: toneOf(r.type),
+                  symbol: symbol,
+                )
+              : Text(l.fpRecurringAwaitingValue),
+        ),
+        !known && next != null
+            ? HeroAlert(
+                text: l.fpRecurringAlertAwaiting(
+                  dueLabel(l, date: next, daysUntil: r.daysUntil),
+                ),
+              )
+            : null,
+      ],
+      footer: [
+        for (final List<Widget> tiles in [
+          [
+            if (installment)
+              tile(
+                l.fpRecurringTileInstallment,
+                r.progressTotal == null
+                    ? '${r.progressDone}'
+                    : '${r.progressDone}/${r.progressTotal}',
+              )
+            else
+              tile(
+                l.fpRecurringTileYearly,
+                moneyString(context, r.yearlyCost, symbol: symbol),
+              ),
+            tile(l.fpRecurringTileSaved, l.fpRecurringCountUnit(r.savedCount)),
+            tile(
+              l.fpRecurringTilePending,
+              l.fpRecurringCountUnit(r.pendingCount),
+              r.pendingCount > 0 ? SummaryTileTone.amber : null,
+            ),
+          ],
+        ])
+          if (tiles.isNotEmpty) HeroTiles(children: tiles),
+      ],
     );
   }
 
@@ -1582,58 +1593,65 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       topInset: barInset + AppSpacing.lg,
       bottomInset: bottom,
       onRefresh: widget.isCreate ? null : _load,
-      hero: HeroCard(
+      hero: AppHeroCard(
         style: HeroStyle.tinted(color: accent, glyph: AppIcons.scheduled),
-        editing: true,
-        chips: [
-          for (final k in RecurringKind.values)
-            AppChip(
-              label: recurringKindLabel(l, k),
-              selected: w.kind == k,
-              onTap: () => _change(w.withKind(k)),
+        mode: HeroCardMode.edit,
+        header: HeroHeader(
+          leading: [
+            for (final k in RecurringKind.values)
+              AppChip(
+                label: recurringKindLabel(l, k),
+                selected: w.kind == k,
+                onTap: () => _change(w.withKind(k)),
+              ),
+          ],
+        ),
+        content: [
+          HeroIdentity(
+            icon: EditableCircle(
+              size: 44,
+              onTap: _pickIcon,
+              child: IconDisplay(
+                type: IconType.category,
+                size: 44,
+                iconCode: w.iconCode,
+              ),
             ),
-        ],
-        icon: EditableCircle(
-          size: 44,
-          onTap: _pickIcon,
-          child: IconDisplay(
-            type: IconType.category,
-            size: 44,
-            iconCode: w.iconCode,
+            name: HeroNameInput(
+              editing: true,
+              controller: _ctrl[_Field.name]!,
+              focusNode: _nameFocus,
+              hint: l.commonName,
+              maxLength: TextLimits.name,
+              onChanged: (v) => _onText(_Field.name, v),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? l.recurringNameRequired
+                  : null,
+            ),
+            description: HeroDescription(
+              controller: _ctrl[_Field.description]!,
+              editing: true,
+              hint: l.commonDescription,
+              maxLength: TextLimits.description,
+              focusNode: _descriptionFocus,
+              onChanged: (v) => _onText(_Field.description, v),
+            ),
           ),
-        ),
-        name: HeroNameInput(
-          editing: true,
-          controller: _ctrl[_Field.name]!,
-          focusNode: _nameFocus,
-          hint: l.commonName,
-          maxLength: TextLimits.name,
-          onChanged: (v) => _onText(_Field.name, v),
-          validator: (v) =>
-              (v == null || v.trim().isEmpty) ? l.recurringNameRequired : null,
-        ),
-        description: HeroDescription(
-          controller: _ctrl[_Field.description]!,
-          editing: true,
-          hint: l.commonDescription,
-          maxLength: TextLimits.description,
-          focusNode: _descriptionFocus,
-          onChanged: (v) => _onText(_Field.description, v),
-        ),
-        amountField: HeroAmountField(
-          controller: _ctrl[_Field.amount]!,
-          label: w.amountOptional
-              ? l.fpRecurringAmountOptional
-              : l.fpRecurringAmountLabel,
-          accent: accent,
-          symbol: context.readUserCurrencySymbol,
-          onChanged: (v) => _onText(_Field.amount, v),
-          validator: (v) {
-            final n = AmountInput.parse(v);
-            if (w.amountOptional && (v ?? '').trim().isEmpty) return null;
-            return (n == null || n <= 0) ? l.recurringAmountInvalid : null;
-          },
-        ),
+          HeroAmountField(
+            controller: _ctrl[_Field.amount]!,
+            label: w.amountOptional
+                ? l.fpRecurringAmountOptional
+                : l.fpRecurringAmountLabel,
+            accent: accent,
+            symbol: context.readUserCurrencySymbol,
+            onChanged: (v) => _onText(_Field.amount, v),
+            validator: (v) {
+              final n = AmountInput.parse(v);
+              if (w.amountOptional && (v ?? '').trim().isEmpty) return null;
+              return (n == null || n <= 0) ? l.recurringAmountInvalid : null;
+            },
+          ),
+        ],
       ),
       tags: TagRow(
         tags: [

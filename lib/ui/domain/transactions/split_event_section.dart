@@ -75,7 +75,7 @@ class DraftFieldRow extends StatelessWidget {
   }
 }
 
-Widget longPressRow(Widget row, VoidCallback? onLongPress) =>
+Widget _longPressRow(Widget row, VoidCallback? onLongPress) =>
     onLongPress == null
     ? row
     : GestureDetector(
@@ -189,7 +189,7 @@ class EventRow extends StatelessWidget {
               child: value,
             ),
           );
-    return longPressRow(row, onLongPress);
+    return _longPressRow(row, onLongPress);
   }
 }
 
@@ -292,11 +292,11 @@ class RecurringLinkRow extends StatelessWidget {
             ),
           );
     final ask = slot.ask;
-    if (ask == null) return longPressRow(row, slot.onLongPress);
+    if (ask == null) return _longPressRow(row, slot.onLongPress);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        longPressRow(row, slot.onLongPress),
+        _longPressRow(row, slot.onLongPress),
         Padding(
           padding: _compact
               ? const EdgeInsets.only(top: AppSpacing.xs)

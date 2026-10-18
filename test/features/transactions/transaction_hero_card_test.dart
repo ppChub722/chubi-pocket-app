@@ -26,6 +26,7 @@ void main() {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('th'),
+      builder: (context, child) => AppUiConfig(child: child!),
       home: Scaffold(
         body: Padding(padding: const EdgeInsets.all(16), child: card),
       ),
@@ -39,7 +40,7 @@ void main() {
     await pump(
       t,
       StatefulBuilder(
-        builder: (context, setState) => TxHeroCard(
+        builder: (context, setState) => TransactionHeroCard(
           type: type,
           onTypeChanged: (v) => setState(() => type = v),
           amount: amount,
@@ -48,7 +49,7 @@ void main() {
         ),
       ),
     );
-    final card = find.byType(TxHeroCard);
+    final card = find.byType(TransactionHeroCard);
     await t.fling(card, const Offset(-300, 0), 1500);
     await t.pumpAndSettle();
     expect(type, TransactionType.expense);
@@ -63,7 +64,7 @@ void main() {
     TransactionType? picked;
     await pump(
       t,
-      TxHeroCard(
+      TransactionHeroCard(
         type: TransactionType.expense,
         allowTransfer: false,
         onTypeChanged: (v) => picked = v,
@@ -83,7 +84,7 @@ void main() {
   testWidgets('a locked type shows only its own chip', (t) async {
     await pump(
       t,
-      TxHeroCard(
+      TransactionHeroCard(
         type: TransactionType.income,
         amount: amount,
         title: note,
@@ -92,7 +93,11 @@ void main() {
     );
     expect(find.widgetWithText(AppChip, 'รายรับ'), findsOneWidget);
     expect(find.text('รายจ่าย'), findsNothing);
-    await t.fling(find.byType(TxHeroCard), const Offset(-300, 0), 1500);
+    await t.fling(
+      find.byType(TransactionHeroCard),
+      const Offset(-300, 0),
+      1500,
+    );
     await t.pumpAndSettle();
     expect(t.takeException(), isNull);
   });
@@ -107,7 +112,7 @@ void main() {
     note.text = 'ข้าวมันไก่';
     await pump(
       t,
-      TxHeroCard(
+      TransactionHeroCard(
         type: TransactionType.expense,
         amount: amount,
         title: note,
@@ -134,7 +139,7 @@ void main() {
     amount.text = '182';
     await pump(
       t,
-      TxHeroCard(
+      TransactionHeroCard(
         type: TransactionType.expense,
         amount: amount,
         title: note,
@@ -176,7 +181,7 @@ void main() {
     note.text = List.filled(12, 'ข้าวมันไก่').join(' ');
     await pump(
       t,
-      TxHeroCard(
+      TransactionHeroCard(
         type: TransactionType.expense,
         amount: amount,
         title: note,
@@ -201,7 +206,7 @@ void main() {
   ) async {
     await pump(
       t,
-      TxHeroCard(
+      TransactionHeroCard(
         type: TransactionType.income,
         amount: amount,
         title: note,
@@ -228,7 +233,7 @@ void main() {
       t,
       RepaintBoundary(
         key: key,
-        child: TxHeroCard(
+        child: TransactionHeroCard(
           type: TransactionType.expense,
           amount: amount,
           title: note,
@@ -251,7 +256,7 @@ void main() {
     });
     final data = (await t.runAsync(() => image!.toByteData()))!;
     final outline = Theme.of(
-      t.element(find.byType(TxHeroCard)),
+      t.element(find.byType(TransactionHeroCard)),
     ).colorScheme.outline;
     int lowestUnderline(Finder field) {
       final r = t.getRect(field);

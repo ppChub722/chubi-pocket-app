@@ -3,16 +3,14 @@ import 'package:flutter/material.dart';
 import '../../tokens/app_spacing.dart';
 import 'app_hero_card.dart';
 
-/// Who / what the hero is about: [icon] beside [name] (+ a short [fact],
-/// people pages) and [description]. In edit / create mode the page passes the
-/// editable versions (an `EditableCircle`, the name and description inputs)
-/// and the row aligns them to the top.
+/// In edit mode the inputs are taller than the icon, so the row aligns to the top.
 class HeroIdentity extends StatelessWidget {
   const HeroIdentity({
     this.icon,
     this.name,
     this.fact,
     this.description,
+    this.trailing,
     super.key,
   });
 
@@ -20,6 +18,7 @@ class HeroIdentity extends StatelessWidget {
   final Widget? name;
   final Widget? fact;
   final Widget? description;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +55,10 @@ class HeroIdentity extends StatelessWidget {
               ],
             ),
           ),
+        if (trailing != null) ...[
+          const SizedBox(width: AppSpacing.sm),
+          trailing!,
+        ],
       ],
     );
   }

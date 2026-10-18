@@ -201,27 +201,33 @@ class _ProgressPage extends StatelessWidget {
           ),
         ),
         HubDemo(
-          title: 'ProgressHeroFooter — the HeaderCard footer',
-          child: HeaderCard(
-            leading: const IconTile(
-              icon: Icons.restaurant,
-              color: Colors.orange,
-            ),
-            title: const Text('อาหาร'),
-            accent: Colors.orange,
-            footer: const Padding(
-              padding: EdgeInsets.only(top: AppSpacing.md),
-              child: ProgressHeroFooter(
-                caption: 'ใช้ไปแล้ว',
-                amount: 3120,
-                subCaption: 'จาก ฿8,000 · เหลือ ฿4,880',
-                value: 0.39,
-                expected: 0.09,
-                color: Colors.orange,
-                legendUsed: 'ใช้แล้ว 39%',
-                legendExpected: 'คาดว่าจะใช้ +฿720',
+          title: 'ProgressHeroFooter — the AppHeroCard footer',
+          child: AppHeroCard(
+            style: HeroStyle.tinted(color: Colors.orange),
+            content: [
+              HeroIdentity(
+                icon: const IconTile(
+                  icon: Icons.restaurant,
+                  color: Colors.orange,
+                ),
+                name: const Text('อาหาร'),
               ),
-            ),
+            ],
+            footer: [
+              const Padding(
+                padding: EdgeInsets.only(top: AppSpacing.md),
+                child: ProgressHeroFooter(
+                  caption: 'ใช้ไปแล้ว',
+                  amount: 3120,
+                  subCaption: 'จาก ฿8,000 · เหลือ ฿4,880',
+                  value: 0.39,
+                  expected: 0.09,
+                  color: Colors.orange,
+                  legendUsed: 'ใช้แล้ว 39%',
+                  legendExpected: 'คาดว่าจะใช้ +฿720',
+                ),
+              ),
+            ],
           ),
         ),
         HubDemo(

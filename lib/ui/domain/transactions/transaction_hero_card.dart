@@ -4,8 +4,8 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../ui.dart';
 import '../../../features/transactions/domain/transaction_type.dart';
 
-class TxHeroCard extends StatelessWidget {
-  const TxHeroCard({
+class TransactionHeroCard extends StatelessWidget {
+  const TransactionHeroCard({
     required this.type,
     required this.amount,
     required this.title,

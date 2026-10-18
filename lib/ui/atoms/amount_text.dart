@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// An amount already formatted ([text]): one line, tabular figures, in
-/// [color] when given (else the style's). The app's money adapter decides
-/// the text and colour (currency, sign, hidden); this only draws it.
 class AmountText extends StatelessWidget {
   const AmountText(
     this.text, {

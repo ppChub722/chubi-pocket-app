@@ -8,10 +8,7 @@ import '../../tokens/app/app_icons.dart';
 import '../../tokens/chip_size.dart';
 import 'app_hero_card.dart';
 
-/// An [AppHeroCard]'s header: [leading] (chips, a period pill) on the left,
-/// [actions] (links, 🔍, 👁) on the right, then what the card adds by
-/// itself — the ✏️ ([onEdit], view mode only) and the ⌄ / ⌃ (when the card
-/// can fold). Everything in it is control-sized and one height.
+/// Adds the ✏️ (view mode) and the fold button (when the card folds) itself.
 class HeroHeader extends StatelessWidget {
   const HeroHeader({
     this.leading = const [],
@@ -24,7 +21,6 @@ class HeroHeader extends StatelessWidget {
   final List<Widget> leading;
   final List<Widget> actions;
 
-  /// Shows the ✏️ in view mode. Null = no ✏️.
   final VoidCallback? onEdit;
   final String? editTooltip;
 

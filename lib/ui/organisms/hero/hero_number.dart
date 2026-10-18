@@ -2,19 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../tokens/app_spacing.dart';
 
-/// Where a [HeroNumber]'s label goes.
-enum HeroNumberLayout {
-  /// A small label above the number (detail pages).
-  stacked,
+enum HeroNumberLayout { stacked, inline }
 
-  /// A bold label right before the number, on its baseline (a list summary:
-  /// "สุทธิ ฿1,234").
-  inline,
-}
-
-/// The big number of a hero: [value] (a money text, or any text) styled big
-/// in [color], an optional muted [target] ("/ ฿80,000 · 65%") after it.
-/// [small]: the folded card's size.
 class HeroNumber extends StatelessWidget {
   const HeroNumber({
     required this.value,
@@ -32,7 +21,6 @@ class HeroNumber extends StatelessWidget {
   final Color? color;
   final String? target;
 
-  /// Makes the label a link ("ต.ค. ใช้ไป · 12 รายการ ›").
   final VoidCallback? onLabelTap;
   final HeroNumberLayout layout;
   final bool small;

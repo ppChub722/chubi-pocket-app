@@ -78,47 +78,71 @@ class _PeopleViewState extends State<_PeopleView> {
               rowDividerIndent: 72,
               topInset: AppSpacing.sm,
               header: [
-                ListSummaryCard(
-                  caption: l.fpDebtsTotalCaption,
-                  actions: [
-                    ListenableBuilder(
-                      listenable: _search,
-                      builder: (context, _) => ToolbarToggleButton(
-                        state: _toolbar,
-                        filtered:
-                            _search.text.isNotEmpty ||
-                            s.all ||
-                            s.sort != DebtPeopleSort.oldest,
-                        tooltip: l.commonSearch,
+                AppHeroCard(
+                  style: const HeroStyle.plain(),
+                  margin: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.sm,
+                    AppSpacing.lg,
+                    AppSpacing.xs,
+                  ),
+                  header: HeroHeader(
+                    leading: [HeroCaption(l.fpDebtsTotalCaption)],
+                    actions: [
+                      const MoneyVisibilityToggle(),
+                      ListenableBuilder(
+                        listenable: _search,
+                        builder: (context, _) => ToolbarToggleButton(
+                          state: _toolbar,
+                          filtered:
+                              _search.text.isNotEmpty ||
+                              s.all ||
+                              s.sort != DebtPeopleSort.oldest,
+                          tooltip: l.commonSearch,
+                        ),
                       ),
-                    ),
-                  ],
-                  tiles: [
-                    SummaryTile(
-                      label: l.fpDebtsOwedToMeTile(s.totals.owedToMePeople),
-                      value: moneyString(context, s.totals.owedToMe),
-                      tone: SummaryTileTone.green,
-                      selected: s.side == NetSide.owedToMe,
-                      onTap: () => cubit.toggleSide(NetSide.owedToMe),
-                    ),
-                    SummaryTile(
-                      label: l.fpDebtsIOweTile(s.totals.iOwePeople),
-                      value: moneyString(context, s.totals.iOwe),
-                      tone: SummaryTileTone.red,
-                      selected: s.side == NetSide.iOwe,
-                      onTap: () => cubit.toggleSide(NetSide.iOwe),
-                    ),
-                  ],
-                  infoLine: s.totals.owedToMe > 0 && s.totals.iOwe > 0
-                      ? DebtNetLine(
+                    ],
+                  ),
+                  content: [
+                    if (s.totals.owedToMe > 0 && s.totals.iOwe > 0)
+                      HeroNote(
+                        child: DebtNetLine(
                           label: l.debtsNet,
                           net: s.totals.net,
                           currencySymbol: symbol,
-                        )
-                      : null,
-                  alert: s.totals.over30DaysPeople > 0
-                      ? l.fpDebtsOver30(s.totals.over30DaysPeople)
-                      : null,
+                        ),
+                      ),
+                    if (s.totals.over30DaysPeople > 0)
+                      HeroAlert(
+                        text: l.fpDebtsOver30(s.totals.over30DaysPeople),
+                      ),
+                  ],
+                  footer: [
+                    HeroTiles(
+                      children: [
+                        SummaryTileView(
+                          tile: SummaryTile(
+                            label: l.fpDebtsOwedToMeTile(
+                              s.totals.owedToMePeople,
+                            ),
+                            value: moneyString(context, s.totals.owedToMe),
+                            tone: SummaryTileTone.green,
+                            selected: s.side == NetSide.owedToMe,
+                            onTap: () => cubit.toggleSide(NetSide.owedToMe),
+                          ),
+                        ),
+                        SummaryTileView(
+                          tile: SummaryTile(
+                            label: l.fpDebtsIOweTile(s.totals.iOwePeople),
+                            value: moneyString(context, s.totals.iOwe),
+                            tone: SummaryTileTone.red,
+                            selected: s.side == NetSide.iOwe,
+                            onTap: () => cubit.toggleSide(NetSide.iOwe),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
                 ListToolbar(
                   collapse: _toolbar,

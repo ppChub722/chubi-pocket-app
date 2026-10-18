@@ -4,8 +4,8 @@ import '../tokens/chip_size.dart';
 import '../tokens/hero_metrics.dart';
 
 /// A hero card's inside: the theme's inset ([HeroMetrics.padding]) all round,
-/// [rows] stacked [HeroMetrics.gap] apart (null rows skipped; a [HeroRow]
-/// sets its own gap).
+/// [rows] stacked [HeroMetrics.gap] apart (null rows skipped; a
+/// [HeroSpacedRow] sets its own gap).
 class HeroContent extends StatelessWidget {
   const HeroContent({required this.rows, this.padding, this.rowGap, super.key});
 
@@ -52,28 +52,6 @@ class HeroContent extends StatelessWidget {
 abstract interface class HeroSpacedRow {
   double? get gapBefore;
   double? get gapAfter;
-}
-
-/// A row of a hero card with its own gap: [gapBefore] / [gapAfter] replace
-/// the card's gap on that side (null = the card's). For a row that already
-/// carries air inside it — a fixed-height input row — so the space you see
-/// matches the card's inset instead of adding to it.
-class HeroRow extends StatelessWidget implements HeroSpacedRow {
-  const HeroRow({
-    required this.child,
-    this.gapBefore,
-    this.gapAfter,
-    super.key,
-  });
-
-  final Widget child;
-  @override
-  final double? gapBefore;
-  @override
-  final double? gapAfter;
-
-  @override
-  Widget build(BuildContext context) => child;
 }
 
 /// A hero's row of controls: [leading] from the left (wrapping), [trailing]

@@ -210,7 +210,9 @@ void main() {
   }
 
   Future<void> editAmountAndSave(WidgetTester t, String amount) async {
-    final hero = t.widget<TxHeroCard>(find.byType(TxHeroCard));
+    final hero = t.widget<TransactionHeroCard>(
+      find.byType(TransactionHeroCard),
+    );
     hero.onEdit!();
     await settle(t);
     await t.enterText(
@@ -273,19 +275,25 @@ void main() {
   });
 
   Future<void> tapDelete(WidgetTester t) async {
-    final hero = t.widget<TxHeroCard>(find.byType(TxHeroCard));
+    final hero = t.widget<TransactionHeroCard>(
+      find.byType(TransactionHeroCard),
+    );
     hero.onEdit!();
     await settle(t);
-    // The list builds lazily: scroll the page down to the delete button.
+    // The list builds lazily: scroll the page down to the delete button,
+    // then on past the bottom bar that overlaps the end of the list.
+    final page = find
+        .byWidgetPredicate(
+          (w) => w is Scrollable && w.axisDirection == AxisDirection.down,
+        )
+        .first;
     await t.scrollUntilVisible(
       find.text('Delete this transaction'),
       200,
-      scrollable: find
-          .byWidgetPredicate(
-            (w) => w is Scrollable && w.axisDirection == AxisDirection.down,
-          )
-          .first,
+      scrollable: page,
     );
+    await t.drag(page, const Offset(0, -400));
+    await settle(t);
     await t.tap(find.text('Delete this transaction'));
     await settle(t);
   }

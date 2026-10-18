@@ -815,7 +815,7 @@ class _LoadedState extends State<_Loaded>
     );
   }
 
-  CompactHeroBar _compactBar(BuildContext context) {
+  AppCompactHeroCard _compactBar(BuildContext context) {
     final category = _c.isTransfer ? null : _c.category;
     return txCompactHeroBar(
       context,

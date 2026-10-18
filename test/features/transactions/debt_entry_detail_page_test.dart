@@ -250,7 +250,9 @@ void main() {
       'balance now', (t) async {
     await pump(t, const DebtEntryDetailPage(entryId: 'e1'));
     expect(repo.gets, 1);
-    final hero = t.widget<TxHeroCard>(find.byType(TxHeroCard));
+    final hero = t.widget<TransactionHeroCard>(
+      find.byType(TransactionHeroCard),
+    );
     expect(hero.debt, isTrue);
     // The type chip (and the paid-label row).
     expect(find.text('Paid'), findsWidgets);
@@ -279,7 +281,7 @@ void main() {
   testWidgets('switch off → ONE PUT: create_transaction false, no wallet or '
       'tags sent', (t) async {
     await pump(t, const DebtEntryDetailPage(entryId: 'e1'));
-    t.widget<TxHeroCard>(find.byType(TxHeroCard)).onEdit!();
+    t.widget<TransactionHeroCard>(find.byType(TransactionHeroCard)).onEdit!();
     await settle(t);
     await t.ensureVisible(find.text('Also create a transaction'));
     await settle(t);
@@ -303,13 +305,15 @@ void main() {
     await t.tap(find.text('Retry'));
     await t.pump();
     await t.pump(const Duration(milliseconds: 100));
-    expect(find.byType(TxHeroCard), findsOneWidget);
+    expect(find.byType(TransactionHeroCard), findsOneWidget);
   });
 
   testWidgets('edit the amount → ONE PUT with only the amount; caches '
       'patched from the answer', (t) async {
     await pump(t, const DebtEntryDetailPage(entryId: 'e1'));
-    final hero = t.widget<TxHeroCard>(find.byType(TxHeroCard));
+    final hero = t.widget<TransactionHeroCard>(
+      find.byType(TransactionHeroCard),
+    );
     hero.onEdit!();
     await settle(t);
     await t.enterText(
@@ -333,7 +337,7 @@ void main() {
 
   testWidgets('delete names the wallet tx too, then takes both', (t) async {
     await pump(t, const DebtEntryDetailPage(entryId: 'e1'));
-    t.widget<TxHeroCard>(find.byType(TxHeroCard)).onEdit!();
+    t.widget<TransactionHeroCard>(find.byType(TransactionHeroCard)).onEdit!();
     await settle(t);
     await t.scrollUntilVisible(
       find.text('Delete this entry'),
@@ -385,7 +389,7 @@ void main() {
       await pump(t, const TransactionDetailPage(transactionId: 't1'));
       expect(find.text('Trip'), findsWidgets);
       expect(find.byType(LinkedFieldHint), findsNothing);
-      t.widget<TxHeroCard>(find.byType(TxHeroCard)).onEdit!();
+      t.widget<TransactionHeroCard>(find.byType(TransactionHeroCard)).onEdit!();
       await settle(t);
       expect(find.byType(LinkedFieldHint), findsNothing);
       expect(find.text('Trip'), findsWidgets);

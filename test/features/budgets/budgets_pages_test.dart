@@ -633,8 +633,9 @@ void main() {
       expect(card, findsOneWidget);
       final screen = t.view.physicalSize.width / t.view.devicePixelRatio;
       final r = t.getRect(label);
-      expect(r.left, AppSpacing.lg * 2);
-      expect(screen - r.right, greaterThanOrEqualTo(AppSpacing.lg * 2));
+      final inset = AppSpacing.lg + HeroMetrics.fallback.padding.left;
+      expect(r.left, inset);
+      expect(screen - r.right, greaterThanOrEqualTo(inset));
       expect(find.textContaining('฿7,980', findRichText: true), findsWidgets);
       expect(find.textContaining('of ฿12,000'), findsOneWidget);
       expect(find.text('฿4,020 left in total'), findsOneWidget);
@@ -780,7 +781,7 @@ void main() {
     ) async {
       await pump(t, const BudgetDetailPage(id: 'b1'));
       expect(repo.calls, ['get:b1']);
-      expect(find.byType(HeroCard), findsOneWidget);
+      expect(find.byType(AppHeroCard), findsOneWidget);
       expect(find.text('Still available'), findsOneWidget);
       expect(find.textContaining('฿4,880', findRichText: true), findsWidgets);
       expect(find.text('/ ฿8,000'), findsOneWidget);

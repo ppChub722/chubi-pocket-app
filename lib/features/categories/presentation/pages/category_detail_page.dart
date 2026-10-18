@@ -724,53 +724,60 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       onChanged: (v) => _onText(_TextField.description, v),
     );
     if (editing) {
-      return HeroCard(
+      return AppHeroCard(
         style: style,
-        editing: true,
-        chips: [typeChip],
-        icon: EditableCircle(
-          size: 44,
-          onTap: _openIconMaker,
-          child: IconDisplay(
-            type: IconType.category,
-            size: 44,
-            iconCode: iconCode,
+        mode: HeroCardMode.edit,
+        header: HeroHeader(leading: [typeChip]),
+        content: [
+          HeroIdentity(
+            icon: EditableCircle(
+              size: 44,
+              onTap: _openIconMaker,
+              child: IconDisplay(
+                type: IconType.category,
+                size: 44,
+                iconCode: iconCode,
+              ),
+            ),
+            name: HeroNameInput(
+              editing: true,
+              controller: _nameController,
+              focusNode: _nameFocus,
+              hint: l.commonName,
+              maxLength: TextLimits.name,
+              onChanged: (v) => _onText(_TextField.name, v),
+              validator: _validateName,
+            ),
+            description: description,
           ),
-        ),
-        name: HeroNameInput(
-          editing: true,
-          controller: _nameController,
-          focusNode: _nameFocus,
-          hint: l.commonName,
-          maxLength: TextLimits.name,
-          onChanged: (v) => _onText(_TextField.name, v),
-          validator: _validateName,
-        ),
-        description: description,
+        ],
       );
     }
-    return HeroCard(
+    return AppHeroCard(
       style: style,
-      chips: [typeChip],
-      onEdit: enterEdit,
-      icon: EditableCircle(
-        size: 40,
-        onLongPress: _enterEditThenOpenMaker,
-        child: IconDisplay(
-          type: IconType.category,
-          size: 40,
-          iconCode: iconCode,
-        ),
-      ),
-      description: description,
-      number: _persisted == null
-          ? null
-          : HeroNumber(
-              label: _monthLabel(l, isIncome),
-              onLabelTap: _openMonthTransactions(),
-              color: typeColor,
-              value: MoneyText(_monthSpent),
+      header: HeroHeader(leading: [typeChip], onEdit: enterEdit),
+      content: [
+        HeroIdentity(
+          icon: EditableCircle(
+            size: 40,
+            onLongPress: _enterEditThenOpenMaker,
+            child: IconDisplay(
+              type: IconType.category,
+              size: 40,
+              iconCode: iconCode,
             ),
+          ),
+          description: description,
+        ),
+        _persisted == null
+            ? null
+            : HeroNumber(
+                label: _monthLabel(l, isIncome),
+                onLabelTap: _openMonthTransactions(),
+                color: typeColor,
+                value: MoneyText(_monthSpent),
+              ),
+      ],
     );
   }
 

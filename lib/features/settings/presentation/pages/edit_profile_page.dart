@@ -227,50 +227,58 @@ class _EditProfilePageState extends State<EditProfilePage>
       glyph: AppIcons.profile,
     );
     if (editing) {
-      return HeroCard(
+      return AppHeroCard(
         style: style,
-        editing: true,
-        icon: EditableCircle(
-          size: 44,
-          onTap: _pickAvatar,
-          child: UserAvatar(
-            displayName: _shownName,
-            iconCode: w.iconCode,
-            size: 44,
+        mode: HeroCardMode.edit,
+        content: [
+          HeroIdentity(
+            icon: EditableCircle(
+              size: 44,
+              onTap: _pickAvatar,
+              child: UserAvatar(
+                displayName: _shownName,
+                iconCode: w.iconCode,
+                size: 44,
+              ),
+            ),
+            name: HeroNameInput(
+              editing: true,
+              controller: _nameCtrl,
+              hint: l.editProfileDisplayNameLabel,
+              maxLength: TextLimits.name,
+              onChanged: (v) =>
+                  applyTextChange(_Field.name, working.copyWith(name: v)),
+              validator: (v) {
+                final s = v?.trim() ?? '';
+                if (s.isEmpty) return l.commonRequired;
+                if (s.length > TextLimits.name) {
+                  return l.authRegisterDisplayNameTooLong;
+                }
+                return null;
+              },
+            ),
           ),
-        ),
-        name: HeroNameInput(
-          editing: true,
-          controller: _nameCtrl,
-          hint: l.editProfileDisplayNameLabel,
-          maxLength: TextLimits.name,
-          onChanged: (v) =>
-              applyTextChange(_Field.name, working.copyWith(name: v)),
-          validator: (v) {
-            final s = v?.trim() ?? '';
-            if (s.isEmpty) return l.commonRequired;
-            if (s.length > TextLimits.name) {
-              return l.authRegisterDisplayNameTooLong;
-            }
-            return null;
-          },
-        ),
+        ],
       );
     }
-    return HeroCard(
+    return AppHeroCard(
       style: style,
-      onEdit: enterEdit,
-      icon: EditableCircle(
-        size: 40,
-        onLongPress: () => enterEdit(),
-        child: UserAvatar(
-          displayName: _shownName,
-          iconCode: w.iconCode,
-          size: 40,
+      header: HeroHeader(onEdit: enterEdit),
+      content: [
+        HeroIdentity(
+          icon: EditableCircle(
+            size: 40,
+            onLongPress: () => enterEdit(),
+            child: UserAvatar(
+              displayName: _shownName,
+              iconCode: w.iconCode,
+              size: 40,
+            ),
+          ),
+          name: Text(_shownName),
+          fact: Text('@${_user.username}'),
         ),
-      ),
-      name: Text(_shownName),
-      fact: Text('@${_user.username}'),
+      ],
     );
   }
 }

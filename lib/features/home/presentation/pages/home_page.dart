@@ -305,45 +305,33 @@ class _NetWorthCard extends StatelessWidget {
     final muted = textTheme.bodySmall?.copyWith(
       color: Theme.of(context).colorScheme.onSurfaceVariant,
     );
-    return AppCard(
-      style: AppCardStyle.tinted,
-      color: palette.primary,
-      glyph: AppIcons.wallet,
-      glyphSize: 132,
-      margin: EdgeInsets.zero,
+    return AppHeroCard(
+      style: HeroStyle.tinted(color: palette.primary, glyph: AppIcons.wallet),
       onTap: () => context.go('/accounts'),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l.homeNetWorthLabel, style: textTheme.labelLarge),
-            MoneyText(
-              netWorth.total,
-              style: textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: palette.primary,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Row(
-              children: [
-                Text('${l.homeAssets} ', style: muted),
-                MoneyText(netWorth.assets, style: muted),
-                if (netWorth.liabilities > 0) ...[
-                  Text('  ·  ${l.homeLiabilities} ', style: muted),
-                  MoneyText(netWorth.liabilities, style: muted),
-                ],
-                const Spacer(),
-                Text(
-                  l.homeNetWorthAccountCount(netWorth.accountsCount),
-                  style: muted,
-                ),
-              ],
-            ),
-          ],
+      content: [
+        HeroNumber(
+          label: l.homeNetWorthLabel,
+          value: MoneyText(netWorth.total),
+          color: palette.primary,
         ),
-      ),
+        HeroNote(
+          child: Row(
+            children: [
+              Text('${l.homeAssets} ', style: muted),
+              MoneyText(netWorth.assets, style: muted),
+              if (netWorth.liabilities > 0) ...[
+                Text('  ·  ${l.homeLiabilities} ', style: muted),
+                MoneyText(netWorth.liabilities, style: muted),
+              ],
+              const Spacer(),
+              Text(
+                l.homeNetWorthAccountCount(netWorth.accountsCount),
+                style: muted,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

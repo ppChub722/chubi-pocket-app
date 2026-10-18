@@ -4,9 +4,6 @@ import '../atoms/app_button.dart';
 import '../atoms/app_input.dart';
 import '../tokens/app_spacing.dart';
 
-/// A message the user can edit before sending it on: a [label], the text in
-/// a multi-line input, then copy / share buttons that get the edited text.
-/// A new [text] from the caller replaces the input's unless already equal.
 class MessageShareBox extends StatefulWidget {
   const MessageShareBox({
     required this.text,

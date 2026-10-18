@@ -38,7 +38,7 @@ Map<String, dynamic> _answer() => {
 };
 
 class _Repo extends Fake implements TransactionsRepository {
-  final queries = <({TransactionType? type, String? from, String? to})>[];
+  final queries = <({Set<TransactionType> types, String? from, String? to})>[];
   bool fail = false;
 
   @override
@@ -57,11 +57,13 @@ class _Repo extends Fake implements TransactionsRepository {
     List<String> categoryIds = const [],
     Set<TransactionType> types = const {},
     bool noTags = false,
+    double? amountMin,
+    double? amountMax,
     int page = 1,
     int perPage = 20,
     String sort = 'date_desc',
   }) async {
-    queries.add((type: type, from: from, to: to));
+    queries.add((types: types, from: from, to: to));
     if (fail) {
       throw const ApiException(code: 'X', message: 'boom', statusCode: 500);
     }
@@ -140,7 +142,7 @@ void main() {
   ) async {
     repo = _Repo();
     await pump(t);
-    expect(find.byType(ListSummaryCard), findsOneWidget);
+    expect(find.byType(AppHeroCard), findsOneWidget);
     expect(find.byType(DailyBars), findsOneWidget);
     expect(find.textContaining('Avg spend'), findsOneWidget);
     expect(find.byType(SummaryTileView), findsNWidgets(2));
@@ -160,10 +162,10 @@ void main() {
     await t.tap(find.byKey(const ValueKey('summaryTile:Expense')));
     await t.pump(const Duration(milliseconds: 200));
     expect(repo.queries.length, before + 1);
-    expect(repo.queries.last.type, TransactionType.expense);
+    expect(repo.queries.last.types, {TransactionType.expense});
     await t.tap(find.byKey(const ValueKey('summaryTile:Expense')));
     await t.pump(const Duration(milliseconds: 200));
-    expect(repo.queries.last.type, isNull);
+    expect(repo.queries.last.types, isEmpty);
   });
 
   testWidgets('a bar opens that day', (t) async {
@@ -182,7 +184,7 @@ void main() {
   testWidgets('a failed first load → the page error, no card', (t) async {
     repo = _Repo()..fail = true;
     await pump(t);
-    expect(find.byType(ListSummaryCard), findsNothing);
+    expect(find.byType(AppHeroCard), findsNothing);
     expect(find.text('Retry'), findsWidgets);
   });
 }

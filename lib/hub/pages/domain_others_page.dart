@@ -530,18 +530,24 @@ Widget buildOthersPage(BuildContext context) {
       HubPlayground(
         title: 'Profile card (settings) — tint = avatar colour',
         note:
-            'The settings profile card is a HeaderCard tinted with the '
+            'The settings profile card is a AppHeroCard tinted with the '
             'avatar\'s own colour: the icon colour, else the initials colour '
             '(IconCode.tintFor with avatarName). Three users, three tints.',
         controls: const [],
         builder: (context, v) {
           final palette = Theme.of(context).extension<AppColors>()!;
-          Widget card(String name) => HeaderCard(
-            accent: null.tintFor(palette, avatarName: name),
-            leading: UserAvatar(displayName: name, size: 52),
-            title: Text(name),
-            subtitle: Text('@${name.toLowerCase().replaceAll(' ', '')}'),
-            trailing: const AppIcon(AppIcons.chevronRight),
+          Widget card(String name) => AppHeroCard(
+            style: HeroStyle.tinted(
+              color: null.tintFor(palette, avatarName: name),
+            ),
+            content: [
+              HeroIdentity(
+                icon: UserAvatar(displayName: name, size: 52),
+                name: Text(name),
+                fact: Text('@${name.toLowerCase().replaceAll(' ', '')}'),
+                trailing: const AppIcon(AppIcons.chevronRight),
+              ),
+            ],
           );
           return Column(
             children: [

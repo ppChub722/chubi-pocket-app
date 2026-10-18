@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../ui/ui.dart';
 import '../hub_playground.dart';
 
-/// `/dev/organisms/section-hero` — HeaderCard, the detail-page sections
+/// `/dev/organisms/section-hero` — AppHeroCard, the detail-page sections
 /// (SectionCard / ManageSection / DetailMeta), LockedInEdit and SummaryStats.
 /// (ProgressRow lives on molecules/feedback, IconTile on atoms/badge-avatar.)
 ///
@@ -88,130 +88,169 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
       children: [
         HubInApp(
           note:
-              'HeaderCard — the real combinations (full width: the hero is '
+              'AppHeroCard — the real combinations (full width: the hero is '
               'always the width of the page).',
           uses: [
             HubUse(
               wide: true,
               label: 'chips + adjust action + pencil + money footer',
               page: 'Account detail, Budget detail',
-              child: HeaderCard(
-                accent: palette.expense,
-                topRow: [
-                  AppChip(
-                    label: 'Expense',
-                    icon: AppIcons.expense,
-                    color: palette.expense,
-                    selected: true,
+              child: AppHeroCard(
+                style: HeroStyle.tinted(color: palette.expense),
+                header: HeroHeader(
+                  leading: [
+                    AppChip(
+                      label: 'Expense',
+                      icon: AppIcons.expense,
+                      color: palette.expense,
+                      selected: true,
+                    ),
+                    chips(),
+                  ],
+                  actions: [
+                    AppChip(
+                      icon: AppIcons.reset,
+                      label: 'Adjust',
+                      tone: AppChipTone.primary,
+                      selected: true,
+                      onTap: noop,
+                    ),
+                  ],
+                  onEdit: noop,
+                ),
+                content: [
+                  HeroIdentity(
+                    icon: const IconDisplay(type: IconType.category, size: 52),
+                    name: const Text('Food'),
+                    fact: const Text('Food › Main meals'),
                   ),
-                  chips(),
                 ],
-                topActions: [
-                  AppChip(
-                    icon: AppIcons.reset,
-                    label: 'Adjust',
-                    tone: AppChipTone.primary,
-                    selected: true,
-                    onTap: noop,
-                  ),
-                ],
-                onEdit: noop,
-                leading: const IconDisplay(type: IconType.category, size: 52),
-                title: const Text('Food'),
-                subtitle: const Text('Food › Main meals'),
-                footer: MoneyText(6200, style: big),
+                footer: [MoneyText(6200, style: big)],
               ),
             ),
             HubUse(
               wide: true,
               label: 'no chips — the row collapses, pencil level with title',
               page: 'Contact detail',
-              child: HeaderCard(
-                topRow: const [],
-                onEdit: noop,
-                leading: const UserAvatar(displayName: 'Lee', size: 52),
-                title: const Text('Lee'),
+              child: AppHeroCard(
+                style: HeroStyle.tinted(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                header: HeroHeader(leading: const [], onEdit: noop),
+                content: [
+                  HeroIdentity(
+                    icon: const UserAvatar(displayName: 'Lee', size: 52),
+                    name: const Text('Lee'),
+                  ),
+                ],
               ),
             ),
             HubUse(
               wide: true,
               label: 'onTap — the whole card is tappable',
               page: 'Debt person page',
-              child: HeaderCard(
+              child: AppHeroCard(
+                style: HeroStyle.tinted(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 onTap: noop,
-                leading: const IconDisplay(type: IconType.account, size: 44),
-                title: const Text('Primary (default), tappable'),
+                content: [
+                  HeroIdentity(
+                    icon: const IconDisplay(type: IconType.account, size: 44),
+                    name: const Text('Primary (default), tappable'),
+                  ),
+                ],
               ),
             ),
             HubUse(
               wide: true,
               label: 'success accent + goal-reached chip + progress footer',
               page: 'Saving goal detail',
-              child: HeaderCard(
-                accent: palette.success,
-                topRow: const [
-                  AppChip(
-                    label: 'Goal reached',
-                    icon: AppIcons.success,
-                    tone: AppChipTone.success,
-                    selected: true,
-                  ),
-                ],
-                onEdit: noop,
-                leading: const IconDisplay(type: IconType.account, size: 44),
-                title: const Text('Japan trip'),
-                footer: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    MoneyText(
-                      30000,
-                      style: big?.copyWith(color: palette.success),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    ProgressRow(
-                      value: 1,
-                      color: palette.success,
-                      trailing: '100%',
+              child: AppHeroCard(
+                style: HeroStyle.tinted(color: palette.success),
+                header: HeroHeader(
+                  leading: const [
+                    AppChip(
+                      label: 'Goal reached',
+                      icon: AppIcons.success,
+                      tone: AppChipTone.success,
+                      selected: true,
                     ),
                   ],
+                  onEdit: noop,
                 ),
+                content: [
+                  HeroIdentity(
+                    icon: const IconDisplay(type: IconType.account, size: 44),
+                    name: const Text('Japan trip'),
+                  ),
+                ],
+                footer: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      MoneyText(
+                        30000,
+                        style: big?.copyWith(color: palette.success),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      ProgressRow(
+                        value: 1,
+                        color: palette.success,
+                        trailing: '100%',
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
             HubUse(
               wide: true,
               label: 'error accent + trailing status pill',
               page: 'Scheduled transaction detail (overdue)',
-              child: HeaderCard(
-                accent: scheme.error,
-                leading: const IconDisplay(type: IconType.account, size: 44),
-                title: const Text('Overdue'),
-                subtitle: const Text('accent: scheme.error'),
-                trailing: const AppChip(
-                  label: 'Late',
-                  tone: AppChipTone.danger,
-                  selected: true,
-                ),
+              child: AppHeroCard(
+                style: HeroStyle.tinted(color: scheme.error),
+                content: [
+                  HeroIdentity(
+                    icon: const IconDisplay(type: IconType.account, size: 44),
+                    name: const Text('Overdue'),
+                    fact: const Text('accent: scheme.error'),
+                    trailing: const AppChip(
+                      label: 'Late',
+                      tone: AppChipTone.danger,
+                      selected: true,
+                    ),
+                  ),
+                ],
               ),
             ),
             HubUse(
               wide: true,
               label: 'watermark glyph + income accent',
               page: 'Category detail',
-              child: HeaderCard(
-                accent: palette.income,
-                glyph: AppIcons.category,
-                topRow: [
-                  AppChip(
-                    label: 'Income',
-                    icon: AppIcons.income,
-                    color: palette.income,
-                    selected: true,
+              child: AppHeroCard(
+                style: HeroStyle.tinted(
+                  color: palette.income,
+                  glyph: AppIcons.category,
+                ),
+                header: HeroHeader(
+                  leading: [
+                    AppChip(
+                      label: 'Income',
+                      icon: AppIcons.income,
+                      color: palette.income,
+                      selected: true,
+                    ),
+                  ],
+                  onEdit: noop,
+                ),
+                content: [
+                  HeroIdentity(
+                    icon: const IconDisplay(type: IconType.category, size: 52),
+                    name: const Text('Salary'),
+                    fact: const Text('Category'),
                   ),
                 ],
-                onEdit: noop,
-                leading: const IconDisplay(type: IconType.category, size: 52),
-                title: const Text('Salary'),
-                subtitle: const Text('Category'),
               ),
             ),
             HubUse(
@@ -219,52 +258,65 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
               label:
                   'Name · description (muted, max 2 lines, ellipsis) · status chip '
                   '— the description is hidden when empty',
-              page: 'Every detail page (HeaderCard.description)',
-              child: HeaderCard(
-                accent: palette.primary,
-                glyph: AppIcons.contact,
-                leading: const IconDisplay(type: IconType.category, size: 44),
-                title: const Text('Lee'),
-                description: HeroDescription(
-                  controller: TextEditingController(
-                    text:
-                        'Flatmate in Bangkok; shares the electricity bill and '
-                        'the internet, pays on the 5th of each month.',
+              page: 'Every detail page (AppHeroCard)',
+              child: AppHeroCard(
+                style: HeroStyle.tinted(
+                  color: palette.primary,
+                  glyph: AppIcons.contact,
+                ),
+                content: [
+                  HeroIdentity(
+                    icon: const IconDisplay(type: IconType.category, size: 44),
+                    name: const Text('Lee'),
+                    fact: const AppChip(
+                      label: 'Linked',
+                      tone: AppChipTone.success,
+                      selected: true,
+                      size: ChipSize.chip,
+                    ),
+                    description: HeroDescription(
+                      controller: TextEditingController(
+                        text:
+                            'Flatmate in Bangkok; shares the electricity bill and '
+                            'the internet, pays on the 5th of each month.',
+                      ),
+                      editing: false,
+                      hint: 'Description',
+                    ),
                   ),
-                  editing: false,
-                  hint: 'Description',
-                ),
-                subtitle: const AppChip(
-                  label: 'Linked',
-                  tone: AppChipTone.success,
-                  selected: true,
-                  size: ChipSize.chip,
-                ),
+                ],
               ),
             ),
             HubUse(
               wide: true,
               label: 'HeroStyle.plain — no wash, no watermark',
-              page: 'An option (HeaderCard.heroStyle)',
-              child: const HeaderCard(
-                heroStyle: HeroStyle.plain(),
-                leading: IconDisplay(type: IconType.account, size: 44),
-                title: Text('Plain hero'),
+              page: 'An option (AppHeroCard)',
+              child: AppHeroCard(
+                style: HeroStyle.plain(),
+                content: [
+                  HeroIdentity(
+                    icon: IconDisplay(type: IconType.account, size: 44),
+                    name: Text('Plain hero'),
+                  ),
+                ],
               ),
             ),
             HubUse(
               wide: true,
               label: 'HeroStyle.tinted, soft border',
               page: 'Transaction detail, Account detail',
-              child: HeaderCard(
-                heroStyle: HeroStyle.tinted(
+              child: AppHeroCard(
+                style: HeroStyle.tinted(
                   color: palette.expense,
                   glyph: AppIcons.budget,
                   strongBorder: false,
                 ),
-                accent: palette.expense,
-                leading: const IconDisplay(type: IconType.category, size: 44),
-                title: const Text('Soft border'),
+                content: [
+                  HeroIdentity(
+                    icon: const IconDisplay(type: IconType.category, size: 44),
+                    name: const Text('Soft border'),
+                  ),
+                ],
               ),
             ),
             for (final (label, code) in [
@@ -285,11 +337,20 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
                 wide: true,
                 label: label,
                 page: 'Every hero / tinted card — IconCode.tintFor',
-                child: HeaderCard(
-                  accent: code.tintFor(palette, fallback: palette.income),
-                  glyph: AppIcons.category,
-                  leading: const IconDisplay(type: IconType.category, size: 44),
-                  title: const Text('Tinted by the icon'),
+                child: AppHeroCard(
+                  style: HeroStyle.tinted(
+                    color: code.tintFor(palette, fallback: palette.income),
+                    glyph: AppIcons.category,
+                  ),
+                  content: [
+                    HeroIdentity(
+                      icon: const IconDisplay(
+                        type: IconType.category,
+                        size: 44,
+                      ),
+                      name: const Text('Tinted by the icon'),
+                    ),
+                  ],
                 ),
               ),
           ],
@@ -467,12 +528,10 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
           ],
         ),
         HubPlayground(
-          title: 'HeaderCard',
+          title: 'AppHeroCard',
           note:
               'The bordered card at the top of every detail page. Every option '
-              'HeaderCard has: topRow (chips, or none = the row collapses), '
-              'topActions, onEdit (the pencil), accent, glyph, heroStyle, '
-              'onTap, trailing, footer.',
+              'AppHeroCard: a header (chips + actions, ✏️ added by the card), the content rows and an optional footer.',
           controls: [
             PlayChoice<bool>('topRow', const [
               ('chips', true),
@@ -509,58 +568,64 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
               ),
               _ => null,
             };
-            return HeaderCard(
-              accent: accent,
-              glyph: glyph,
-              heroStyle: style,
-              topRow: v<bool>('topRow')
-                  ? [
-                      AppChip(
-                        label: 'Expense',
-                        icon: AppIcons.expense,
-                        color: palette.expense,
-                        selected: true,
-                      ),
-                      chips(),
-                    ]
-                  : const [],
-              topActions: v<bool>('topActions')
-                  ? [
-                      AppChip(
-                        icon: AppIcons.reset,
-                        label: 'Adjust',
-                        tone: AppChipTone.primary,
-                        selected: true,
-                        onTap: noop,
-                      ),
-                    ]
-                  : const [],
-              onEdit: v<bool>('onEdit') ? noop : null,
+            return AppHeroCard(
+              style: style ?? HeroStyle.tinted(color: accent, glyph: glyph),
               onTap: v<bool>('onTap') ? noop : null,
-              trailing: v<bool>('trailing')
-                  ? const AppChip(
-                      label: 'Late',
-                      tone: AppChipTone.danger,
-                      selected: true,
-                    )
-                  : null,
-              leading: const IconDisplay(type: IconType.category, size: 52),
-              title: const Text('Food'),
-              subtitle: const Text('Food › Main meals'),
-              footer: v<bool>('footer')
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        MoneyText(6200, style: big),
-                        const SizedBox(height: AppSpacing.sm),
-                        const ProgressRow(
-                          value: 0.62,
-                          label: 'of ฿10,000',
-                          trailing: '62%',
+              header: HeroHeader(
+                leading: v<bool>('topRow')
+                    ? [
+                        AppChip(
+                          label: 'Expense',
+                          icon: AppIcons.expense,
+                          color: palette.expense,
+                          selected: true,
                         ),
-                      ],
-                    )
-                  : null,
+                        chips(),
+                      ]
+                    : const [],
+                actions: v<bool>('topActions')
+                    ? [
+                        AppChip(
+                          icon: AppIcons.reset,
+                          label: 'Adjust',
+                          tone: AppChipTone.primary,
+                          selected: true,
+                          onTap: noop,
+                        ),
+                      ]
+                    : const [],
+                onEdit: v<bool>('onEdit') ? noop : null,
+              ),
+              content: [
+                HeroIdentity(
+                  icon: const IconDisplay(type: IconType.category, size: 52),
+                  name: const Text('Food'),
+                  fact: const Text('Food › Main meals'),
+                  trailing: v<bool>('trailing')
+                      ? const AppChip(
+                          label: 'Late',
+                          tone: AppChipTone.danger,
+                          selected: true,
+                        )
+                      : null,
+                ),
+              ],
+              footer: [
+                v<bool>('footer')
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          MoneyText(6200, style: big),
+                          const SizedBox(height: AppSpacing.sm),
+                          const ProgressRow(
+                            value: 0.62,
+                            label: 'of ฿10,000',
+                            trailing: '62%',
+                          ),
+                        ],
+                      )
+                    : null,
+              ],
             );
           },
         ),
@@ -698,33 +763,44 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                HeaderCard(
-                  accent: palette.primary,
-                  topRow: const [
-                    AppChip(
-                      label: 'Active',
-                      dot: true,
-                      tone: AppChipTone.success,
-                      selected: true,
+                AppHeroCard(
+                  style: HeroStyle.tinted(color: palette.primary),
+                  header: HeroHeader(
+                    leading: const [
+                      AppChip(
+                        label: 'Active',
+                        dot: true,
+                        tone: AppChipTone.success,
+                        selected: true,
+                      ),
+                    ],
+                    onEdit: enter,
+                  ),
+                  content: [
+                    HeroIdentity(
+                      icon: EditableCircle(
+                        size: 52,
+                        onTap: editing ? () {} : null,
+                        child: const IconDisplay(
+                          type: IconType.project,
+                          size: 52,
+                        ),
+                      ),
+                      name: AppInput.title(
+                        editing: editing,
+                        controller: _name,
+                        hint: 'Name',
+                        onEnterEdit: enter,
+                      ),
+                      fact: const Text('Travel'),
                     ),
                   ],
-                  onEdit: enter,
-                  leading: EditableCircle(
-                    size: 52,
-                    onTap: editing ? () {} : null,
-                    child: const IconDisplay(type: IconType.project, size: 52),
-                  ),
-                  title: AppInput.title(
-                    editing: editing,
-                    controller: _name,
-                    hint: 'Name',
-                    onEnterEdit: enter,
-                  ),
-                  subtitle: const Text('Travel'),
-                  footer: MoneyText(
-                    12450,
-                    style: big?.copyWith(color: palette.primary),
-                  ),
+                  footer: [
+                    MoneyText(
+                      12450,
+                      style: big?.copyWith(color: palette.primary),
+                    ),
+                  ],
                 ),
                 SizedBox(height: HeroMetrics.of(context).after),
                 SectionCard(

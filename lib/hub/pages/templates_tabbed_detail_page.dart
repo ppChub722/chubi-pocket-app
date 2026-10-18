@@ -84,7 +84,7 @@ class _TabbedDetailDemoState extends State<_TabbedDetailDemo> {
         HubDemo(
           title: 'TabbedDetailBody — the debts person page shape',
           note:
-              'Hero (a HeaderCard) → belowHero (the page’s ONE primary '
+              'Hero (a AppHeroCard) → belowHero (the page’s ONE primary '
               'button, an optional DetailRow section) → the tab bar pins '
               'under the top bar → each tab is a ListPageBody (toolbar, '
               'hairlines, paging with the retry row, pull-to-refresh), built '
@@ -124,10 +124,17 @@ class _TabbedDetailDemoState extends State<_TabbedDetailDemo> {
                     AppTab(value: _Tab.ledger, label: 'Entries'),
                     AppTab(value: _Tab.history, label: 'Payments'),
                   ],
-                  hero: const HeaderCard(
-                    leading: SizedBox(width: 52, height: 52),
-                    title: Text('Mom'),
-                    subtitle: Text('Linked contact'),
+                  hero: AppHeroCard(
+                    style: HeroStyle.tinted(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    content: [
+                      HeroIdentity(
+                        icon: SizedBox(width: 52, height: 52),
+                        name: Text('Mom'),
+                        fact: Text('Linked contact'),
+                      ),
+                    ],
                   ),
                   belowHero: [
                     AppButton(
@@ -137,7 +144,7 @@ class _TabbedDetailDemoState extends State<_TabbedDetailDemo> {
                       onPressed: () {},
                     ),
                   ],
-                  compactBar: const CompactHeroBar(title: Text('Mom')),
+                  compactBar: const AppCompactHeroCard(title: Text('Mom')),
                   tabBuilder: (context, t) => switch (t) {
                     _Tab.ledger => _rows('Entry', _shown),
                     _Tab.history => _rows('Payment', 3),

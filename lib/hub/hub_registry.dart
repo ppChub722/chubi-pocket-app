@@ -7,7 +7,6 @@ import 'pages/tokens_basics_page.dart';
 import 'pages/tokens_colors_type_icons_page.dart';
 import 'pages/molecules_feedback_page.dart';
 import 'pages/organisms_collapsible_section_page.dart';
-import 'pages/organisms_list_summary_card_page.dart';
 import 'pages/organisms_sheets_page.dart';
 import 'pages/organisms_states_page.dart';
 import 'pages/molecules_pickers_inputs_page.dart';
@@ -466,8 +465,9 @@ final List<HubPage> hubPages = [
       'ModeActionBar',
       'PinnedBar',
       'HeroContent',
+      'HeroSpacedRow',
       'HeroTopRow',
-      'CompactHeroBar',
+      'AppCompactHeroCard',
       'CompactHeroScope',
       'HeroStyle',
       'HeroSurface',
@@ -496,7 +496,6 @@ final List<HubPage> hubPages = [
         'Hero card (tinted), archive / delete buttons, record info, locked rows, summary stats.',
     usedBy: '32 files',
     covers: [
-      'HeaderCard',
       'ManageSection',
       'ManageAction',
       'DetailMeta',
@@ -517,7 +516,7 @@ final List<HubPage> hubPages = [
     summary:
         'The 0.4.0 detail hero: rows A–G, edit variant, and the DetailLayout slot order.',
     usedBy: 'every detail page (0.4.0)',
-    covers: ['HeroCard', 'DetailLayout', 'DetailSections', 'DetailRecords'],
+    covers: ['DetailLayout', 'DetailSections', 'DetailRecords'],
     builder: buildHeroCardPage,
   ),
   const HubPage(
@@ -537,9 +536,15 @@ final List<HubPage> hubPages = [
       'HeroCaption',
       'HeroNote',
       'HeroNumber',
+      'HeroNumberLayout',
       'HeroFields',
       'HeroTiles',
       'SummaryTileView',
+      'SummaryTile',
+      'SummaryTileTone',
+      'DailyBars',
+      'DailyBar',
+      'DailyBarKind',
       'HeroBar',
       'HeroValueLine',
       'HeroAlert',
@@ -602,25 +607,6 @@ final List<HubPage> hubPages = [
     usedBy: 'split block, debt history',
     covers: ['CollapsibleSection'],
     builder: buildCollapsibleSectionPage,
-  ),
-  const HubPage(
-    level: HubLevel.organisms,
-    slug: 'list-summary-card',
-    title: 'List summary card',
-    summary:
-        'The card on top of every list page: caption + action slot, big number, bar, info line, alert, 2-4 filter tiles, optional big button.',
-    usedBy: 'budgets, goals, scheduled, wallets, events (adopting)',
-    covers: [
-      'ListSummaryCard',
-      'SummaryTile',
-      'SummaryTileView',
-      'DailyBars',
-      'DailyBar',
-      'DailyBarKind',
-      'SummaryTileTone',
-      'SummaryCta',
-    ],
-    builder: buildListSummaryCardPage,
   ),
   const HubPage(
     level: HubLevel.organisms,
@@ -798,6 +784,8 @@ final List<HubPage> hubPages = [
       'MoneyStyle',
       'MoneySign',
       'MoneyStyleScope',
+      'MoneyDecimals',
+      'formatMoneyWith',
       'signedMoneyString',
       'MoneyTone',
       'MoneyVisibilityToggle',
@@ -1064,7 +1052,7 @@ final List<HubPage> hubPages = [
     usedBy: '~20 files',
     covers: [
       'TxRow',
-      'TxHeroCard',
+      'TransactionHeroCard',
       'txHeroStyle',
       'txTypeChip',
       'txTypeColor',
@@ -1108,6 +1096,7 @@ final List<HubPage> hubPages = [
       'accountDisplayBalance',
       'accountHeroStyle',
       'accountTypeLabel',
+      'WalletPickCard',
     ],
     builder: buildPeopleAccountsPage,
   ),
@@ -1204,6 +1193,7 @@ final List<HubPage> hubPages = [
       'ContactPickerOutcome',
       'ContactPickerRowPicked',
       'ContactPickerNameTyped',
+      'ContactPickerFilter',
       'WireNamesSheet',
       'showWireNamesSheet',
       'WireNameRow',

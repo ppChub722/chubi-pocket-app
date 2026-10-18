@@ -1,5 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:chubi_pocket/ui/tokens/app/app_icons.dart';
+import 'package:chubi_pocket/ui/atoms/app_icon_button.dart';
 import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/features/categories/domain/category.dart';
 import 'package:chubi_pocket/features/categories/domain/category_type.dart';
@@ -15,6 +16,12 @@ import 'package:mocktail/mocktail.dart';
 class _Tags extends MockCubit<TagsState> implements TagsCubit {}
 
 /// The pickers on the kit PickerSheet (brief 12).
+/// An [AppIconButton] keeps a faded ✓ for its "done" state; only count the rest.
+Iterable<Element> rowChecks() => find
+    .byIcon(AppIcons.check)
+    .evaluate()
+    .where((e) => e.findAncestorWidgetOfExactType<AppIconButton>() == null);
+
 void main() {
   Future<void> open(
     WidgetTester t,
@@ -67,7 +74,7 @@ void main() {
       // One parent → one ▾; no › chevrons, no ✓.
       expect(find.byIcon(AppIcons.expand), findsOneWidget);
       expect(find.byIcon(AppIcons.chevronRight), findsNothing);
-      expect(find.byIcon(AppIcons.check), findsNothing);
+      expect(rowChecks(), isEmpty);
       expect(find.text('ข้าวมันไก่'), findsNothing);
       await t.tap(find.byIcon(AppIcons.expand));
       await t.pumpAndSettle();
@@ -77,6 +84,8 @@ void main() {
 
     testWidgets('a search match shows inside its opened parent', (t) async {
       await open(t, show);
+      await t.tap(find.byIcon(AppIcons.search));
+      await t.pumpAndSettle();
       await t.enterText(find.byType(TextField), 'ข้าว');
       await t.pumpAndSettle();
       expect(find.text('ข้าวมันไก่'), findsOneWidget);

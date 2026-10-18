@@ -163,12 +163,12 @@ void main() {
         status: AccountsStatus.loaded,
       ),
     );
-    expect(find.byType(ListSummaryCard), findsOneWidget);
+    expect(find.byType(AppHeroCard), findsOneWidget);
     expect(find.textContaining('Bank 100%'), findsOneWidget);
     expect(find.textContaining('8%'), findsWidgets);
     expect(find.textContaining('Saved'), findsOneWidget);
-    // One header per type, the default order.
-    expect(find.byType(SectionHeader), findsNWidgets(3));
+    // The default order is the user's own: one flat grid, no type headers.
+    expect(find.byType(SectionHeader), findsNothing);
     expect(find.byType(AccountCard), findsNWidgets(3));
 
     // The card tile filters to the card wallets; tapping again clears.
@@ -185,7 +185,7 @@ void main() {
     await pump(t);
     await t.tap(find.byType(ToolbarToggleButton));
     await t.pumpAndSettle();
-    await t.tap(find.widgetWithText(AppChip, 'By type'));
+    await t.tap(find.widgetWithText(AppChip, 'My order'));
     await t.pumpAndSettle();
     await t.tap(find.text('Name').last);
     await t.pumpAndSettle();

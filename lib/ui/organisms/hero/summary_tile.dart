@@ -31,15 +31,6 @@ class SummaryTile {
   final Widget? captionWidget;
 }
 
-@immutable
-class SummaryCta {
-  const SummaryCta({required this.label, required this.onTap, this.icon});
-
-  final String label;
-  final IconData? icon;
-  final VoidCallback? onTap;
-}
-
 /// A summary tile as a widget — a hero's footer tile (list pages: one
 /// filter each, [SummaryTile.selected] rings it).
 class SummaryTileView extends StatelessWidget {

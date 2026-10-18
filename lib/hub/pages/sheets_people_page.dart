@@ -51,9 +51,6 @@ ContactPickerLabels _labels({bool free = true}) => ContactPickerLabels(
   title: 'Who with',
   searchHint: free ? 'Search or type a name' : null,
   createNew: 'New contact',
-  saveAsContact: 'Save as contact',
-  useName: (n) => 'Use "$n"',
-  useNameHint: 'Just the name, not a contact',
   noContact: 'No contact',
   noContactHint: 'Keep it as a typed name',
   empty: free ? 'No contacts yet - type a name' : 'No contacts yet',
@@ -91,10 +88,6 @@ class _SheetsPeoplePageState extends State<_SheetsPeoplePage> {
         loading: loading,
         error: error,
         onRetry: () {},
-        onSaveAsContact: (name) async {
-          await Future<void>.delayed(const Duration(milliseconds: 600));
-          return 'new-$name';
-        },
         onCreate: () async => 'created',
       ),
     );

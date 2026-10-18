@@ -76,13 +76,10 @@ Account _wallet({
 });
 
 void main() {
-  final opened = <String>[];
-
   Future<void> pump(WidgetTester t, Account wallet) async {
     t.view.physicalSize = const Size(800, 2400);
     t.view.devicePixelRatio = 1;
     addTearDown(t.view.reset);
-    opened.clear();
     final repo = _Repo();
     final cubit = AccountsCubit(repository: repo);
     addTearDown(cubit.close);
@@ -100,20 +97,6 @@ void main() {
         GoRoute(
           path: '/',
           builder: (_, _) => AccountDetailPage(accountId: wallet.id),
-        ),
-        GoRoute(
-          path: '/saving-goals',
-          builder: (_, _) {
-            opened.add('/saving-goals');
-            return const Scaffold(body: Text('goals-list'));
-          },
-        ),
-        GoRoute(
-          path: '/saving-goals/:id',
-          builder: (_, s) {
-            opened.add('/saving-goals/${s.pathParameters['id']}');
-            return const Scaffold(body: Text('goal-page'));
-          },
         ),
       ],
     );
@@ -156,14 +139,11 @@ void main() {
     expect(_wallet(track: false).savings!.available, isNull);
   });
 
-  testWidgets('hero (bank): balance, split legend, month tiles, actions', (
-    t,
-  ) async {
+  testWidgets('hero (bank): balance, split legend, actions', (t) async {
     await pump(t, _wallet().copyWith(monthIn: 400, monthOut: 200));
     expect(find.text('In the wallet'), findsOneWidget);
-    expect(find.text('Available ฿200.00'), findsOneWidget);
-    expect(find.text('Saved ฿800.00'), findsOneWidget);
-    expect(find.byType(SummaryTileView), findsNWidgets(2));
+    expect(find.text('Available ฿200'), findsOneWidget);
+    expect(find.text('Saved ฿800'), findsOneWidget);
     expect(find.text('Adjust balance'), findsOneWidget);
     expect(find.text('Save'), findsOneWidget);
     expect(find.text('Pay card'), findsNothing);
@@ -197,72 +177,5 @@ void main() {
     expect(find.textContaining('left'), findsWidgets);
     expect(find.textContaining('in 8 days'), findsOneWidget);
     expect(find.text('Pay card'), findsOneWidget);
-    // No month tiles on a card.
-    expect(find.byType(SummaryTileView), findsNothing);
-  });
-
-  testWidgets('shows balance, saved, available and the buckets', (t) async {
-    await pump(t, _wallet());
-    expect(find.text('Savings'), findsOneWidget);
-    expect(find.text('Real balance'), findsOneWidget);
-    expect(find.text('Saved'), findsOneWidget);
-    expect(find.text('Available to spend'), findsOneWidget);
-    expect(find.text('Japan trip'), findsOneWidget);
-    expect(find.text('Spare'), findsOneWidget);
-    expect(find.textContaining('600.00'), findsOneWidget);
-    expect(find.textContaining('Saved more than'), findsNothing);
-  });
-
-  testWidgets('saved over the balance shows the red warning', (t) async {
-    await pump(t, _wallet(savings: _savings(exceeds: true)));
-    expect(
-      find.textContaining('Saved more than the real balance'),
-      findsOneWidget,
-    );
-    expect(find.textContaining('300.00'), findsWidgets);
-  });
-
-  testWidgets('hidden when nothing is saved', (t) async {
-    await pump(t, _wallet(withSavings: false));
-    expect(find.text('Savings'), findsNothing);
-    await pump(
-      t,
-      _wallet(
-        savings: {
-          'balance': 1000.0,
-          'saved': 0.0,
-          'spare': 0.0,
-          'available': 1000.0,
-          'saved_exceeds_balance': false,
-          'over_by': 0.0,
-          'buckets': <Map<String, dynamic>>[],
-        },
-      ),
-    );
-    expect(find.text('Savings'), findsNothing);
-  });
-
-  testWidgets('untracked wallet: buckets only, no balance / available', (
-    t,
-  ) async {
-    await pump(t, _wallet(track: false));
-    expect(find.text('Savings'), findsOneWidget);
-    expect(find.text('Japan trip'), findsOneWidget);
-    expect(find.text('Real balance'), findsNothing);
-    expect(find.text('Available to spend'), findsNothing);
-  });
-
-  testWidgets('a goal bucket opens that goal', (t) async {
-    await pump(t, _wallet());
-    await t.tap(find.text('Japan trip'));
-    await t.pumpAndSettle();
-    expect(opened, ['/saving-goals/g1']);
-  });
-
-  testWidgets('the spare bucket opens the goals list', (t) async {
-    await pump(t, _wallet());
-    await t.tap(find.text('Spare'));
-    await t.pumpAndSettle();
-    expect(opened, ['/saving-goals']);
   });
 }

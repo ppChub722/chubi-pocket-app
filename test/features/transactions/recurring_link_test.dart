@@ -199,8 +199,10 @@ void main() {
     expect(find.text('เตือนจ่าย'), findsOneWidget);
     expect(find.text('รอยอด'), findsOneWidget);
     expect(find.text('สร้างรายการประจำใหม่จากรายการนี้'), findsOneWidget);
-    // Search filters on the loaded list.
-    await t.enterText(find.byType(TextField), 'น้ำ');
+    // Search (behind the sheet's 🔍) filters on the loaded list.
+    await t.tap(find.byIcon(AppIcons.search).last);
+    await t.pumpAndSettle();
+    await t.enterText(find.byType(TextField).last, 'น้ำ');
     await t.pump();
     expect(find.text('รถ'), findsNothing);
     expect(find.text('ค่าน้ำ'), findsOneWidget);
