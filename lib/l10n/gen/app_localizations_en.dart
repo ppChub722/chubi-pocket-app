@@ -4007,8 +4007,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get tagPickerNoMatch => 'No tag matches';
 
-
-
   @override
   String get contactsSortRecent => 'Recently used';
 

@@ -3908,8 +3908,6 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get tagPickerNoMatch => 'ไม่พบแท็กที่ตรงกัน';
 
-
-
   @override
   String get contactsSortRecent => 'ใช้ล่าสุด';
 

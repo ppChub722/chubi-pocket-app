@@ -7015,8 +7015,6 @@ abstract class AppLocalizations {
   /// **'No tag matches'**
   String get tagPickerNoMatch;
 
-
-
   /// No description provided for @contactsSortRecent.
   ///
   /// In en, this message translates to:
