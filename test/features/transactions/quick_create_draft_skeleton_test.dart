@@ -31,8 +31,6 @@ class _Txs extends MockCubit<TransactionsState> implements TransactionsCubit {}
 class _Repo extends Fake implements TransactionsRepository {
   final options = Completer<TxFormOptions>();
 
-  @override
-  Future<TxFormOptions> formOptions() => options.future;
 }
 
 /// A pending draft as the BE sends it.

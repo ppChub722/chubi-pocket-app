@@ -131,8 +131,6 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
       registry: _refreshRegistry,
     );
     _apiClient.onSyncVersions = _syncCoordinator.onVersions;
-    _apiClient.onWriteWithoutVersions = (method, path, payload) =>
-        DataChanges.instance.changed(tablesForWrite(method, path, payload));
     _syncCoordinator.onPageDataChanged = (keys) =>
         DataChanges.instance.changed(tablesForSync(keys: keys));
     _syncCoordinator.onDatasetsChanged = (sets) =>

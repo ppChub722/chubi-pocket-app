@@ -38,8 +38,6 @@ class _Dashboard extends MockCubit<DashboardState> implements DashboardCubit {}
 class _Auth extends MockCubit<AuthState> implements AuthCubit {}
 
 class _TxRepo extends Fake implements TransactionsRepository {
-  @override
-  Future<TxFormOptions> formOptions() async => const TxFormOptions();
 }
 
 const _mom = PersonBalance(

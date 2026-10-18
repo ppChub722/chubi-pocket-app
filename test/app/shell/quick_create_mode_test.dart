@@ -42,8 +42,6 @@ class _Unread extends MockCubit<int> implements UnreadBadgeCubit {}
 class _Auth extends MockCubit<AuthState> implements AuthCubit {}
 
 class _Repo extends Fake implements TransactionsRepository {
-  @override
-  Future<TxFormOptions> formOptions() async => const TxFormOptions();
 }
 
 const _wallet = Account(

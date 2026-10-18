@@ -41,8 +41,6 @@ class _Goals extends MockCubit<SavingGoalsState> implements SavingGoalsCubit {}
 class _Unread extends MockCubit<int> implements UnreadBadgeCubit {}
 
 class _TxRepo extends Fake implements TransactionsRepository {
-  @override
-  Future<TxFormOptions> formOptions() async => const TxFormOptions();
 }
 
 const _wallet = {

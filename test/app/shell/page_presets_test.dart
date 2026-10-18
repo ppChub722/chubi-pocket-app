@@ -41,15 +41,6 @@ class _Categories extends MockCubit<CategoriesState>
 /// The debts pages' one open call never answers (the preset is set before).
 class _DebtsRepo extends Fake implements PersonalDebtsRepository {
   @override
-  Future<DebtPeoplePage> listPeople({
-    int page = 1,
-    int perPage = 30,
-    String? q,
-    bool all = false,
-    NetSide? side,
-    DebtPeopleSort sort = DebtPeopleSort.oldest,
-  }) => Completer<DebtPeoplePage>().future;
-
   @override
   Future<DebtPersonDetail> person(
     String key, {
@@ -64,9 +55,6 @@ class _Accounts extends MockCubit<AccountsState> implements AccountsCubit {}
 
 /// Payment providers never answer (names fall back) — not under test.
 class _AccountsRepo extends Fake implements AccountsRepository {
-  @override
-  Future<List<PaymentProvider>> paymentProviders() =>
-      Completer<List<PaymentProvider>>().future;
 }
 
 const _wallet = Account(

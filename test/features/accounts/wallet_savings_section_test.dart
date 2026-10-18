@@ -27,9 +27,6 @@ class _Auth extends MockCubit<AuthState> implements AuthCubit {}
 
 class _Repo extends Fake implements AccountsRepository {
   @override
-  Future<List<PaymentProvider>> paymentProviders() =>
-      Completer<List<PaymentProvider>>().future;
-
   @override
   Future<AccountDetail> getDetail(String id) =>
       Completer<AccountDetail>().future;

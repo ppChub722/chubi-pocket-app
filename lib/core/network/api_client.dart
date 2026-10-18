@@ -72,11 +72,6 @@ class ApiClient {
   /// Gets the `X-Sync-Versions` of every response that carries one (successful writes).
   void Function(Map<String, String> versions)? onSyncVersions;
 
-  /// A successful write answered without versions, from a backend that does not stamp them yet.
-  void Function(String method, String path, Object? payload)?
-  onWriteWithoutVersions;
-  bool _backendStampsWrites = false;
-
   Dio get dio => _dio;
 
   Future<int?> appBuild() async => int.tryParse(await _appBuild ?? '');
@@ -174,20 +169,8 @@ class ApiClient {
     onResponse: (response, handler) {
       final raw = response.headers.value(syncVersionsHeader);
       final versions = raw == null ? null : parseSyncVersions(raw);
-      final options = response.requestOptions;
       if (versions != null && versions.isNotEmpty) {
-        _backendStampsWrites = true;
         onSyncVersions?.call(versions);
-      } else if (options.path == '/sync') {
-        _backendStampsWrites = true;
-      } else if (!_backendStampsWrites &&
-          options.method.toUpperCase() != 'GET' &&
-          (response.statusCode ?? 0) ~/ 100 == 2) {
-        onWriteWithoutVersions?.call(
-          options.method,
-          options.path,
-          options.data,
-        );
       }
       handler.next(response);
     },

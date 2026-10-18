@@ -46,8 +46,6 @@ class _Pending extends MockCubit<PendingState> implements PendingCubit {}
 class _Goals extends MockCubit<SavingGoalsState> implements SavingGoalsCubit {}
 
 class _TxRepo extends Fake implements TransactionsRepository {
-  @override
-  Future<TxFormOptions> formOptions() async => const TxFormOptions();
 }
 
 /// The saving API; records the one write.
