@@ -1187,6 +1187,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             focusNode: _focus[_Field.note],
             maxLines: 3,
             maxLength: TextLimits.note,
+            hint: l.projectNoteHint,
             onChanged: (t) => _onText(_Field.note, t),
           ),
         ),

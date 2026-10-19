@@ -11,7 +11,8 @@ class HeroTiles extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gap = HeroMetrics.of(context).itemGap;
+    // Tiles sit as far apart as they sit from the card's edge.
+    final gap = HeroMetrics.of(context).padding.left;
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,

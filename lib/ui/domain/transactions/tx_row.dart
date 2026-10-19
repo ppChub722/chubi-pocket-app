@@ -94,10 +94,10 @@ class TxRow extends StatelessWidget {
     final line2 = Text.rich(
       TextSpan(
         children: [
-          if (parts.isNotEmpty) TextSpan(text: parts.join(' · ')),
+          if (parts.isNotEmpty) TextSpan(text: parts.join(' | ')),
           for (final (i, t) in tags.indexed) ...[
             TextSpan(
-              text: i == 0 && parts.isEmpty ? '' : (i == 0 ? ' · ' : ' '),
+              text: i == 0 && parts.isEmpty ? '' : (i == 0 ? ' | ' : ' '),
             ),
             t,
           ],
@@ -194,7 +194,7 @@ class TxRow extends StatelessWidget {
                           ],
                           if (metaLeading != null) ...[
                             Flexible(child: metaLeading!),
-                            if (hasLine2) Text(' · ', style: small),
+                            if (hasLine2) Text(' | ', style: small),
                           ],
                           if (hasLine2) Flexible(child: line2),
                           ...glyphs,

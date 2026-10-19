@@ -109,7 +109,7 @@ class _EventTagsManagerState extends State<_EventTagsManager> {
             subtitle: [
               l.fpEventsTagBills(t.count),
               if (t.mine) l.fpEventsTagInMine,
-            ].join(' · '),
+            ].join(' | '),
             canImport: !t.mine,
           ),
       ],

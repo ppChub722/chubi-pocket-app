@@ -51,7 +51,7 @@ class _HeroCardPageState extends State<_HeroCardPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         HubDemo(
-          title: 'Detail hero — category (A chips · slot ✏️ · B · C number)',
+          title: 'Detail hero — category (A chips | slot ✏️ | B | C number)',
           note:
               'Name lives in the top bar; the card shows icon + description. '
               'C: label link + the big number in a semantic colour.',
@@ -74,7 +74,7 @@ class _HeroCardPageState extends State<_HeroCardPage> {
                 description: desc('Fresh food and drinks'),
               ),
               HeroNumber(
-                label: 'ต.ค. ใช้ไป · 12 รายการ ›',
+                label: 'ต.ค. ใช้ไป | 12 รายการ ›',
                 onLabelTap: () {},
                 color: palette.expense,
                 value: const MoneyText(5100, hideable: false),
@@ -83,7 +83,7 @@ class _HeroCardPageState extends State<_HeroCardPage> {
           ),
         ),
         HubDemo(
-          title: 'Detail hero — goal (D 25-50-75 ticks · E tiles · F alert)',
+          title: 'Detail hero — goal (D 25-50-75 ticks | E tiles | F alert)',
           note:
               'Links → 🔍 → ✏️ in the slot. The bar has 25/50/75 ticks; three '
               'tappable tiles; one amber alert line.',
@@ -98,7 +98,7 @@ class _HeroCardPageState extends State<_HeroCardPage> {
               HeroIdentity(icon: avatar, description: desc('7 days in Tokyo')),
               const HeroNumber(
                 label: 'ออมแล้ว',
-                target: '/ ฿80,000 · 65%',
+                target: '/ ฿80,000 | 65%',
                 value: MoneyText(52000, hideable: false),
               ),
               HeroBar(
@@ -152,7 +152,7 @@ class _HeroCardPageState extends State<_HeroCardPage> {
                     left: 'ใช้ ฿2,000',
                     right: '20%',
                   ),
-                  desc('นับ: อาหาร · เตือนที่ 80%'),
+                  desc('นับ: อาหาร | เตือนที่ 80%'),
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -194,7 +194,7 @@ class _HeroCardPageState extends State<_HeroCardPage> {
               HeroIdentity(
                 icon: avatar,
                 name: const Text('Mint'),
-                fact: const Text('3 รายการค้าง · ล่าสุด 5 ต.ค.'),
+                fact: const Text('3 รายการค้าง | ล่าสุด 5 ต.ค.'),
               ),
               HeroNumber(
                 label: 'รอรับ',

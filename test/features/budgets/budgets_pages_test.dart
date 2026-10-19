@@ -623,7 +623,7 @@ void main() {
       t,
     ) async {
       await pump(t, const BudgetsListPage());
-      final label = find.text('Current period · total used');
+      final label = find.text('Current period | total used');
       final card = find.ancestor(of: label, matching: find.byType(AppCard));
       expect(card, findsOneWidget);
       final screen = t.view.physicalSize.width / t.view.devicePixelRatio;
@@ -712,7 +712,7 @@ void main() {
       await pump(t, const BudgetsListPage());
       expect(find.textContaining('฿4,880', findRichText: true), findsOneWidget);
       expect(find.textContaining('฿860', findRichText: true), findsOneWidget);
-      expect(find.text('Monthly · 24 days left'), findsNWidgets(2));
+      expect(find.text('Monthly | 24 days left'), findsNWidgets(2));
       expect(find.text('Used ฿3,120 of ฿8,000'), findsOneWidget);
       expect(find.text('On pace to exceed'), findsOneWidget);
       expect(find.text('Over'), findsOneWidget);
@@ -1019,7 +1019,7 @@ void main() {
       // The BE's preview, printed as sent.
       expect(
         find.textContaining(
-          'Deletes 6 periods (2 adjusted) · 3 categories · 1 wallets',
+          'Deletes 6 periods (2 adjusted) | 3 categories | 1 wallets',
         ),
         findsOneWidget,
       );

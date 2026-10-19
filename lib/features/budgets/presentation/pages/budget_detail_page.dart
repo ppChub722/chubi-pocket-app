@@ -984,36 +984,71 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
             },
           ),
           if (!w.allScope) ...[
+            // Icons + a count, not names: a long list never gets cut to "…";
+            // the names are in the tooltip and the picker.
             SettingSummaryRow(
               label: l.bgScopeCategories,
-              summary: w.categories.isEmpty
-                  ? l.quickEventNone
-                  : budgetScopeSummary(
-                      l,
-                      all: false,
-                      categories: w.categories,
-                      tags: const [],
-                      wallets: const [],
+              summary: l.quickEventNone,
+              trailing: w.categories.isEmpty
+                  ? null
+                  : IconStackCount(
+                      count: w.categories.length,
+                      tooltip: budgetScopeSummary(
+                        l,
+                        all: false,
+                        categories: w.categories,
+                        tags: const [],
+                        wallets: const [],
+                      ),
+                      icons: [
+                        for (final c in w.categories)
+                          IconDisplay(
+                            type: IconType.category,
+                            size: 24,
+                            iconCode: c.category.iconCode,
+                          ),
+                      ],
                     ),
               onTap: _pickCategories,
             ),
             SettingSummaryRow(
               label: l.bgScopeTags,
-              summary: w.tags.isEmpty ? l.quickEventNone : w.tags.join(', '),
+              summary: l.quickEventNone,
+              trailing: w.tags.isEmpty
+                  ? null
+                  : IconStackCount(
+                      count: w.tags.length,
+                      tooltip: w.tags.join(', '),
+                      icons: const [AppIcon(AppIcons.tag, size: 18)],
+                    ),
               onTap: _pickTags,
             ),
             SettingSummaryRow(
               label: l.bgScopeWallets,
-              summary: w.wallets.isEmpty
-                  ? l.quickEventNone
-                  : w.wallets.map((x) => x.name).join(', '),
+              summary: l.quickEventNone,
+              trailing: w.wallets.isEmpty
+                  ? null
+                  : IconStackCount(
+                      count: w.wallets.length,
+                      tooltip: w.wallets.map((x) => x.name).join(', '),
+                      icons: [
+                        for (final a in w.wallets)
+                          IconDisplay(
+                            type: IconType.account,
+                            size: 24,
+                            iconCode: a.iconCode,
+                          ),
+                      ],
+                    ),
               error: _scopeMissing && w.scopeEmpty ? l.bgScopeRequired : null,
               onTap: _pickWallets,
             ),
           ],
         ],
         if (editing)
-          OptionMenuAnchor<int>(
+          SettingMenuRow<int>(
+            label: l.fpBudgetsWarnAt,
+            value: warn,
             selected: w.warnPct ?? 0,
             options: [
               for (final p in const [70, 80, 90, 95])
@@ -1023,10 +1058,18 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
             onSelected: (p) => _change(
               p == 0 ? w.copyWith(clearWarn: true) : w.copyWith(warnPct: p),
             ),
-            builder: (context, toggle) => SettingDropdownRow(
-              label: l.fpBudgetsWarnAt,
-              value: warn,
-              onTap: toggle,
+            // Any whole percent the backend takes (1–100).
+            custom: SettingMenuCustom<int>(
+              hint: l.commonCustomValue,
+              suffix: '%',
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(3),
+              ],
+              parse: (t) {
+                final n = int.tryParse(t);
+                return n == null || n < 1 ? null : n.clamp(1, 100);
+              },
             ),
           )
         else
@@ -1160,6 +1203,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
             focusNode: _noteFocus,
             maxLines: 3,
             maxLength: TextLimits.note,
+            hint: l.bgNoteHint,
             onChanged: (v) => _onText(_Field.note, v),
           ),
         ),

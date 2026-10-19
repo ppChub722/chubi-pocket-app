@@ -20,7 +20,7 @@ Widget buildSheetsTransactionsPage(BuildContext context) => Column(
       title: 'QuickCreateSheetShell — the + sheet\'s frame',
       note:
           'Drag handle + drag-to-dismiss, the title row that swaps to the '
-          'amount · category summary once the hero scrolls away, the discard '
+          'amount | category summary once the hero scrolls away, the discard '
           'guard, the scrolling body slot, the pinned save / draft / submit '
           'bar and the saving overlay. The wrapper puts the DraftForm in the '
           'body and keeps every save path.',

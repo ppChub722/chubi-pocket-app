@@ -177,7 +177,7 @@ void main() {
       expect(find.text('12 ต.ค.'), findsOneWidget);
       expect(find.widgetWithText(AppChip, 'กสิกร'), findsOneWidget);
       expect(find.widgetWithText(AppChip, 'จ่ายแล้ว'), findsOneWidget);
-      expect(find.text(' · ทริป'), findsOneWidget);
+      expect(find.text(' | ทริป'), findsOneWidget);
       expect(find.text('฿500.00'), findsOneWidget);
       expect(colorOf(t, '฿500.00'), colors.expense);
       expect(t.widget<IconTile>(find.byType(IconTile)).color, colors.expense);

@@ -492,7 +492,7 @@ Widget buildOthersPage(BuildContext context) {
         ),
       ),
       HubPlayground(
-        title: 'ProjectTxIcon · ProjectMemberAvatar',
+        title: 'ProjectTxIcon | ProjectMemberAvatar',
         note:
             'ProjectTxIcon: tx type and size. ProjectMemberAvatar: the member '
             '(own icon or an initial) and size.',
@@ -561,7 +561,7 @@ Widget buildOthersPage(BuildContext context) {
         },
       ),
       HubPlayground(
-        title: 'BrandLogo · AuthBrandHeader · GoogleSignInButton',
+        title: 'BrandLogo | AuthBrandHeader | GoogleSignInButton',
         note:
             'BrandLogo: size. AuthBrandHeader: compact. GoogleSignInButton: '
             'onPressed (null = dimmed "coming soon") and loading.',

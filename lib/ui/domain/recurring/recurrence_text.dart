@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'recurrence_rule.dart';
 
-const _sep = ' · ';
+const _sep = ' | ';
 
 String recurrenceLabel(
   AppLocalizations l,

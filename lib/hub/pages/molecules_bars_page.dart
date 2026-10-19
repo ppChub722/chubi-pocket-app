@@ -1279,7 +1279,7 @@ class _BarsPageState extends State<_BarsPage> {
         ),
         // ---- Offline: submits ----
         HubDemo(
-          title: 'Offline — ActionBarItem(submits) · SheetOption(submits)',
+          title: 'Offline — ActionBarItem(submits) | SheetOption(submits)',
           note:
               'Actions that send to the server pass submits: true and disable '
               'themselves while the app is offline (ConnectionScope): an '

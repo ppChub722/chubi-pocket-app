@@ -84,6 +84,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonSearch => 'Search';
 
   @override
+  String get commonCustomValue => 'Custom';
+
+  @override
   String get uiPickDate => 'Pick a date';
 
   @override
@@ -639,10 +642,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactNameHint => 'Name (required)';
 
   @override
-  String get contactEmailHint => 'Optional · name@example.com';
+  String get contactEmailHint => 'Optional | name@example.com';
 
   @override
-  String get contactPhoneHint => 'Optional · 081-234-5678';
+  String get contactPhoneHint => 'Optional | 081-234-5678';
 
   @override
   String get contactNameRequired => 'Name is required';
@@ -660,10 +663,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactPhoneLabel => 'Phone';
 
   @override
-  String get contactDescriptionHint => 'Optional · e.g. a work friend';
+  String get contactDescriptionHint => 'Optional | e.g. a work friend';
 
   @override
-  String get contactNoteHint => 'Optional · e.g. prefers PromptPay';
+  String get contactNoteHint => 'Optional | e.g. prefers PromptPay';
 
   @override
   String get contactLinkedBadge => 'Linked to an app account';
@@ -718,7 +721,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String contactWireHint(int names, int splits) {
-    return '$names names · $splits splits not linked to a contact';
+    return '$names names | $splits splits not linked to a contact';
   }
 
   @override
@@ -1248,7 +1251,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String projectResolveShareHint(String full, String share) {
-    return 'Full $full · my share $share';
+    return 'Full $full | my share $share';
   }
 
   @override
@@ -1302,7 +1305,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String projectMyPosition(String paid, String share) {
-    return 'Me: paid $paid · my share $share';
+    return 'Me: paid $paid | my share $share';
   }
 
   @override
@@ -1463,7 +1466,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String settingsNotificationsSummary(int on, int auto) {
-    return '$on on · $auto automatic';
+    return '$on on | $auto automatic';
   }
 
   @override
@@ -1524,7 +1527,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifUnknown => 'Notification';
 
   @override
-  String get notifAccepted => 'Accepted · tap to open';
+  String get notifAccepted => 'Accepted | tap to open';
 
   @override
   String get notifRejectTitle => 'Decline this request?';
@@ -1588,7 +1591,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifActionSkip => 'Skip';
 
   @override
-  String get notifActionDone => 'Done · tap to open';
+  String get notifActionDone => 'Done | tap to open';
 
   @override
   String notifProjectAdded(String actor, String project) {
@@ -1888,11 +1891,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountsSummaryAssets => 'Money on hand';
 
   @override
-  String get accountsSummaryDebt => 'Debt (cards · overdrawn)';
+  String get accountsSummaryDebt => 'Debt (cards | overdrawn)';
 
   @override
   String accountsSummaryCreditUsed(int pct, String left) {
-    return 'Credit used $pct% · $left left';
+    return 'Credit used $pct% | $left left';
   }
 
   @override
@@ -2000,7 +2003,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String moreLiveDebts(String owed, String owe) {
-    return 'Owed to you $owed · you owe $owe';
+    return 'Owed to you $owed | you owe $owe';
   }
 
   @override
@@ -2159,7 +2162,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get transactionDeleteConsequence =>
-      'Deleted for good · the wallet balance goes back to before it was saved';
+      'Deleted for good | the wallet balance goes back to before it was saved';
 
   @override
   String get categoriesReorderEnter => 'Reorder';
@@ -2432,10 +2435,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtOverpaid => 'Overpaid';
 
   @override
-  String get debtOverpaidIOwe => 'Overpaid · I owe them back';
+  String get debtOverpaidIOwe => 'Overpaid | I owe them back';
 
   @override
-  String get debtOverpaidTheyOwe => 'Overpaid · they owe me back';
+  String get debtOverpaidTheyOwe => 'Overpaid | they owe me back';
 
   @override
   String get debtOverpaidCantSettle =>
@@ -2489,12 +2492,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String txSplitStatusOverpaidToThem(String amount) {
-    return 'Overpaid $amount · you owe it back';
+    return 'Overpaid $amount | you owe it back';
   }
 
   @override
   String txSplitStatusOverpaidByMe(String amount) {
-    return 'Overpaid $amount · they owe it back';
+    return 'Overpaid $amount | they owe it back';
   }
 
   @override
@@ -2556,7 +2559,7 @@ class AppLocalizationsEn extends AppLocalizations {
       other: '$count people',
       one: '1 person',
     );
-    return '$_temp0 · edit on the debts page';
+    return '$_temp0 | edit on the debts page';
   }
 
   @override
@@ -2574,7 +2577,28 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get txNoteAddHint => 'Add a note...';
+  String get txNoteAddHint => 'e.g. where, with whom, or anything to remember';
+
+  @override
+  String get bgNoteHint =>
+      'e.g. why this limit, or what you want to spend less on';
+
+  @override
+  String get projectNoteHint =>
+      'e.g. where you stay, group rules, or the account to pay into';
+
+  @override
+  String get recurringNoteHint =>
+      'e.g. contract number, billing day, or how you pay';
+
+  @override
+  String get fpGoalsNoteHint => 'e.g. what it is for, or how you plan to save';
+
+  @override
+  String get categoryNoteHint => 'e.g. which spending belongs here';
+
+  @override
+  String get debtNoteHint => 'e.g. what it was for, or when it is due back';
 
   @override
   String get quickEventNone => 'None';
@@ -2722,7 +2746,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String pendingResult(int done, int failed) {
-    return 'Saved $done · $failed left';
+    return 'Saved $done | $failed left';
   }
 
   @override
@@ -2807,7 +2831,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pendingRemoveRow => 'Remove this row';
 
   @override
-  String get pendingSavedAsDraft => 'Saved as a draft · it\'s in Pending';
+  String get pendingSavedAsDraft => 'Saved as a draft | it\'s in Pending';
 
   @override
   String get pendingSaveDraft => 'Save draft';
@@ -3442,7 +3466,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String projectPlannedLine(String planned, String remaining) {
-    return 'Planned $planned · $remaining left';
+    return 'Planned $planned | $remaining left';
   }
 
   @override
@@ -3672,7 +3696,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get transactionsSearchHint =>
-      'Search description · note · category · wallet';
+      'Search description | note | category | wallet';
 
   @override
   String get savingGoalAllocationAuto => 'Auto';
@@ -3772,7 +3796,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categoryFeeSwitchHelper =>
-      'Fees from bank slips go here · one category at a time';
+      'Fees from bank slips go here | one category at a time';
 
   @override
   String get categoryFeeSwitchFailed => 'Couldn’t set the fee category';
@@ -3813,7 +3837,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String appUpdateBuildLine(int current, int required) {
-    return 'This is build $current · $required or newer is needed';
+    return 'This is build $current | $required or newer is needed';
   }
 
   @override
@@ -3951,7 +3975,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String accountSharedWith(int count) {
-    return 'Shared · $count';
+    return 'Shared | $count';
   }
 
   @override
@@ -4370,7 +4394,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactNicknameLabel => 'Nickname';
 
   @override
-  String get contactNicknameHint => 'Optional · e.g. Mum';
+  String get contactNicknameHint => 'Optional | e.g. Mum';
 
   @override
   String get contactShowNicknameLabel => 'Show nickname';
@@ -4403,7 +4427,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileEmailCannotClear => 'Once set, the email can\'t be removed';
 
   @override
-  String get connectionOffline => 'Can\'t reach the server · trying again…';
+  String get connectionOffline => 'Can\'t reach the server | trying again…';
 
   @override
   String get connectionReconnecting => 'Reconnecting…';
@@ -4681,7 +4705,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventDeleteBody =>
-      'Every bill in the event is deleted · your transactions linked to it can stay or be deleted too';
+      'Every bill in the event is deleted | your transactions linked to it can stay or be deleted too';
 
   @override
   String get eventDeleteKeepTxs => 'Delete, keep my transactions';
@@ -4923,8 +4947,8 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Custom · $count dates',
-      one: 'Custom · 1 date',
+      other: 'Custom | $count dates',
+      one: 'Custom | 1 date',
       zero: 'Custom',
     );
     return '$_temp0';
@@ -5179,7 +5203,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String recurringUpcomingSummary(String name, String amount, String rule) {
-    return '$name $amount · $rule';
+    return '$name $amount | $rule';
   }
 
   @override
@@ -5187,8 +5211,8 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count more · tap to see them all',
-      one: '1 more · tap to see it',
+      other: '$count more | tap to see them all',
+      one: '1 more | tap to see it',
     );
     return '$_temp0';
   }
@@ -5229,6 +5253,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recurringItemRestore => 'Restore';
+
+  @override
+  String get recurringItemStatusTitle => 'Status';
+
+  @override
+  String get recurringItemStatusDescription =>
+      'Where this item stands and what you can do next.';
+
+  @override
+  String recurringItemStatusUpcoming(Object date) {
+    return 'Goes to drafts on $date';
+  }
+
+  @override
+  String get recurringItemStatusNotCreated =>
+      'Its date has passed, but nothing was recorded';
+
+  @override
+  String get recurringItemStatusPending => 'Waiting in drafts';
+
+  @override
+  String get recurringItemStatusDone => 'Recorded as a transaction';
+
+  @override
+  String get recurringItemStatusArchived => 'Archived, it will not be created';
 
   @override
   String get recurringDeleteLinkedTitle => 'Delete the real transaction too?';
@@ -5458,7 +5507,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String sgv2PaceLine(String needed, String pace) {
-    return 'Need $needed/mo · saving $pace';
+    return 'Need $needed/mo | saving $pace';
   }
 
   @override
@@ -5827,7 +5876,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bgSourceEvent => 'Event';
 
   @override
-  String get bgSourceUpcoming => 'Recurring · upcoming';
+  String get bgSourceUpcoming => 'Recurring | upcoming';
 
   @override
   String get bgSourcePending => 'Pending';
@@ -6070,7 +6119,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String recurringSavingNameGoal(String goal) {
-    return 'Saving · $goal';
+    return 'Saving | $goal';
   }
 
   @override
@@ -6197,7 +6246,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountsNoMatch => 'No matching wallets';
 
   @override
-  String get bgSummaryUsedCaption => 'Current period · total used';
+  String get bgSummaryUsedCaption => 'Current period | total used';
 
   @override
   String bgSummaryRemaining(String amount) {
@@ -6227,7 +6276,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpWalletsSavedLine(String saved, String available) {
-    return 'Saved $saved · really available $available';
+    return 'Saved $saved | really available $available';
+  }
+
+  @override
+  String get fpWalletsTileAvailable => 'Available';
+
+  @override
+  String get fpWalletsSaveStart => 'Start saving';
+
+  @override
+  String get fpWalletsNoCardDebt => 'No card debt';
+
+  @override
+  String fpWalletsCreditUsedPct(int pct) {
+    return '$pct% of limit used';
+  }
+
+  @override
+  String fpWalletsSharedTooltip(int count) {
+    return '$count shared';
   }
 
   @override
@@ -6241,12 +6309,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpWalletMonthIn(String month) {
-    return '$month · in';
+    return '$month | in';
   }
 
   @override
   String fpWalletMonthOut(String month) {
-    return '$month · out';
+    return '$month | out';
   }
 
   @override
@@ -6271,7 +6339,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpWalletDueAlert(String date, int days) {
-    return 'Payment due $date · in $days days';
+    return 'Payment due $date | in $days days';
   }
 
   @override
@@ -6319,7 +6387,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpWalletDeleteConsequence =>
-      'See what is attached first · saved money stays, just unlinked from the wallet';
+      'See what is attached first | saved money stays, just unlinked from the wallet';
 
   @override
   String get fpWalletDeleteTitle => 'Delete this wallet?';
@@ -6333,7 +6401,7 @@ class AppLocalizationsEn extends AppLocalizations {
     int savings,
     String amount,
   ) {
-    return '$transactions transactions stay with no wallet ($transfers transfers) · $system opening / adjustment rows are deleted · $recurring recurring settings keep running · $savings saving entries ($amount) stay, unlinked from the wallet';
+    return '$transactions transactions stay with no wallet ($transfers transfers) | $system opening / adjustment rows are deleted | $recurring recurring settings keep running | $savings saving entries ($amount) stay, unlinked from the wallet';
   }
 
   @override
@@ -6371,12 +6439,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpDebtsOwedToMeTile(int count) {
-    return 'To receive · $count people';
+    return 'To receive | $count people';
   }
 
   @override
   String fpDebtsIOweTile(int count) {
-    return 'To pay · $count people';
+    return 'To pay | $count people';
   }
 
   @override
@@ -6402,7 +6470,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fpDebtsSortRecent => 'Latest';
 
   @override
-  String get fpDebtsMessageLabel => 'Summary message · editable before sending';
+  String get fpDebtsMessageLabel => 'Summary message | editable before sending';
 
   @override
   String get fpDebtsCopy => 'Copy';
@@ -6418,18 +6486,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpDebtsCycleHeaderSince(String date) {
-    return 'Where the balance comes from · since cleared $date';
+    return 'Where the balance comes from | since cleared $date';
   }
 
   @override
-  String get fpDebtsEarlierHeader => 'Earlier cycle · cleared';
+  String get fpDebtsEarlierHeader => 'Earlier cycle | cleared';
 
   @override
   String get fpDebtsEarlierLink => 'Earlier cycles';
 
   @override
   String fpBudgetsRangeDay(String range, int elapsed, int total) {
-    return '$range · day $elapsed/$total';
+    return '$range | day $elapsed/$total';
   }
 
   @override
@@ -6585,7 +6653,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpGoalsEtaBehind(String date, int n) {
-    return 'Goal $date · $n months late';
+    return 'Goal $date | $n months late';
   }
 
   @override
@@ -6602,7 +6670,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpGoalsTargetSuffix(String target, int pct) {
-    return '/ $target · $pct%';
+    return '/ $target | $pct%';
   }
 
   @override
@@ -6630,7 +6698,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpGoalsAutoCaption(String day, String amount, String wallet) {
-    return '$day · $amount from $wallet';
+    return '$day | $amount from $wallet';
   }
 
   @override
@@ -6660,7 +6728,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpGoalsPlanLeft(String saved, String left) {
-    return 'Saved $saved · $left to go';
+    return 'Saved $saved | $left to go';
   }
 
   @override
@@ -6696,7 +6764,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpGoalsOngoingRow(String amount) {
-    return 'Ongoing · this month $amount';
+    return 'Ongoing | this month $amount';
   }
 
   @override
@@ -6709,7 +6777,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpGoalsArchiveConsequenceMoney(String amount) {
-    return 'Hidden · $amount not counted in savings · can be restored';
+    return 'Hidden | $amount not counted in savings | can be restored';
   }
 
   @override
@@ -6725,7 +6793,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fpGoalsRefreshFailed => 'Refresh failed, showing the latest data';
 
   @override
-  String get fpEventsSummaryCaption => 'Active events · my share';
+  String get fpEventsSummaryCaption => 'Active events | my share';
 
   @override
   String fpEventsPaidLine(String paid, String receivable) {
@@ -6800,7 +6868,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fpEventsTagPick => 'Pick';
 
   @override
-  String get fpEventsMembersTitle => 'Members · who paid / who owes';
+  String get fpEventsMembersTitle => 'Members | who paid / who owes';
 
   @override
   String get fpEventsManage => 'Manage ›';
@@ -6853,7 +6921,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpEventsBudgetHelper =>
-      'What you intend to spend · clear to hide the plan';
+      'What you intend to spend | clear to hide the plan';
 
   @override
   String get fpEventsDatesLabel => 'Start – end';
@@ -6897,7 +6965,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Hidden, not counted and read-only. You can restore it any time.';
 
   @override
-  String get fpEventsTagsTitle => 'Event tags · shared with members';
+  String get fpEventsTagsTitle => 'Event tags | shared with members';
 
   @override
   String get fpEventsTagAdd => 'Add event tag';
@@ -6955,25 +7023,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fpEventsTagInMine => 'In my tags already';
 
   @override
-  String get fpEventsLoadFailed => 'Couldn\'t refresh · showing the last data';
+  String get fpEventsLoadFailed => 'Couldn\'t refresh | showing the last data';
 
   @override
   String get categoryDeleteConsequence =>
-      'Deleted for good · its transactions will have no category';
+      'Deleted for good | its transactions will have no category';
 
   @override
   String categoryMonthSpentLabel(String month, int count) {
-    return '$month spent · $count transactions ›';
+    return '$month spent | $count transactions ›';
   }
 
   @override
   String categoryMonthEarnedLabel(String month, int count) {
-    return '$month received · $count transactions ›';
+    return '$month received | $count transactions ›';
   }
 
   @override
   String get notifSettingsLegend =>
-      'Off: no notice · Notify: a notice with a one-tap button · Auto: done for you, then you are told what was done';
+      'Off: no notice | Notify: a notice with a one-tap button | Auto: done for you, then you are told what was done';
 
   @override
   String get notifStateOff => 'Off';
@@ -6992,13 +7060,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notifTypeRecurringDueHint =>
-      'Drafts always wait in Pending · Off = no notice';
+      'Drafts always wait in Pending | Off = no notice';
 
   @override
   String get notifTypeRecurringEnding => 'A recurring is about to end';
 
   @override
-  String get notifTypeRecurringEndingHint => 'A few items left · extend it?';
+  String get notifTypeRecurringEndingHint => 'A few items left | extend it?';
 
   @override
   String get notifTypeRequestsHint =>
@@ -7103,7 +7171,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String notifCardUnread(int count) {
-    return '· unread $count';
+    return '| unread $count';
   }
 
   @override
@@ -7278,14 +7346,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpRecurringMonthLine(String pay, String receive) {
-    return 'Per month: pay $pay · receive $receive';
+    return 'Per month: pay $pay | receive $receive';
   }
 
   @override
   String get fpRecurringPausedGroup => 'Paused';
 
   @override
-  String get fpRecurringGroupDue => 'Due · in pending';
+  String get fpRecurringGroupDue => 'Due | in pending';
 
   @override
   String get fpRecurringGroupComing => 'Coming up';
@@ -7340,7 +7408,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpRecurringAlertAwaiting(String due) {
-    return 'Enter the amount · $due';
+    return 'Enter the amount | $due';
   }
 
   @override
@@ -7362,7 +7430,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpRecurringNextTitle(String due) {
-    return 'Next · $due';
+    return 'Next | $due';
   }
 
   @override
@@ -7393,12 +7461,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpRecurringChipEdited(String date, String amount) {
-    return '$date · $amount';
+    return '$date | $amount';
   }
 
   @override
   String fpRecurringChipSkipped(String date) {
-    return '$date · skipped';
+    return '$date | skipped';
   }
 
   @override
@@ -7500,7 +7568,7 @@ class AppLocalizationsEn extends AppLocalizations {
     int categories,
     int wallets,
   ) {
-    return 'Deletes $periods periods ($overridden adjusted) · $categories categories · $wallets wallets. Transactions are not affected.';
+    return 'Deletes $periods periods ($overridden adjusted) | $categories categories | $wallets wallets. Transactions are not affected.';
   }
 
   @override

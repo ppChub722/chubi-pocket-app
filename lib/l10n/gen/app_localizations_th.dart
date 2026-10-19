@@ -84,6 +84,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get commonSearch => 'ค้นหา';
 
   @override
+  String get commonCustomValue => 'ใส่เอง';
+
+  @override
   String get uiPickDate => 'เลือกวันที่';
 
   @override
@@ -633,10 +636,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get contactNameHint => 'ชื่อ (จำเป็น)';
 
   @override
-  String get contactEmailHint => 'ไม่บังคับ · name@example.com';
+  String get contactEmailHint => 'ไม่บังคับ | name@example.com';
 
   @override
-  String get contactPhoneHint => 'ไม่บังคับ · 081-234-5678';
+  String get contactPhoneHint => 'ไม่บังคับ | 081-234-5678';
 
   @override
   String get contactNameRequired => 'ต้องใส่ชื่อ';
@@ -654,10 +657,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get contactPhoneLabel => 'เบอร์โทร';
 
   @override
-  String get contactDescriptionHint => 'ไม่บังคับ · เช่น เพื่อนที่ทำงาน';
+  String get contactDescriptionHint => 'ไม่บังคับ | เช่น เพื่อนที่ทำงาน';
 
   @override
-  String get contactNoteHint => 'ไม่บังคับ · เช่น ชอบให้โอนผ่านพร้อมเพย์';
+  String get contactNoteHint => 'ไม่บังคับ | เช่น ชอบให้โอนผ่านพร้อมเพย์';
 
   @override
   String get contactLinkedBadge => 'เชื่อมกับบัญชีผู้ใช้';
@@ -711,7 +714,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String contactWireHint(int names, int splits) {
-    return '$names ชื่อ · $splits รายการ ที่ยังไม่ผูกผู้ติดต่อ';
+    return '$names ชื่อ | $splits รายการ ที่ยังไม่ผูกผู้ติดต่อ';
   }
 
   @override
@@ -1112,7 +1115,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get projectDeleteBody =>
-      'ลบได้เฉพาะอีเวนต์ที่ยังไม่มีรายการ · ถ้ามีรายการแล้ว ให้เปลี่ยนสถานะเป็นเก็บถาวรแทน';
+      'ลบได้เฉพาะอีเวนต์ที่ยังไม่มีรายการ | ถ้ามีรายการแล้ว ให้เปลี่ยนสถานะเป็นเก็บถาวรแทน';
 
   @override
   String get projectDeleted => 'ลบอีเวนต์แล้ว';
@@ -1225,7 +1228,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String projectResolveShareHint(String full, String share) {
-    return 'เต็ม $full · ส่วนของฉัน $share';
+    return 'เต็ม $full | ส่วนของฉัน $share';
   }
 
   @override
@@ -1279,7 +1282,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String projectMyPosition(String paid, String share) {
-    return 'ของฉัน: จ่ายไป $paid · ส่วนของฉัน $share';
+    return 'ของฉัน: จ่ายไป $paid | ส่วนของฉัน $share';
   }
 
   @override
@@ -1351,7 +1354,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get projectAddMemberEmailHint =>
-      'ใส่อีเมลเพื่อเชิญผู้ใช้ในแอป · เว้นว่าง = สมาชิกที่ไม่มีบัญชี';
+      'ใส่อีเมลเพื่อเชิญผู้ใช้ในแอป | เว้นว่าง = สมาชิกที่ไม่มีบัญชี';
 
   @override
   String get projectAddMemberFromContacts => 'เลือกจากผู้ติดต่อ';
@@ -1404,7 +1407,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get projectTxSplitsHint =>
-      'แต่ละคนติดคนจ่ายเท่าไร · คนจ่ายรับส่วนที่เหลือ';
+      'แต่ละคนติดคนจ่ายเท่าไร | คนจ่ายรับส่วนที่เหลือ';
 
   @override
   String get projectTxAddSplit => 'เพิ่มการหาร';
@@ -1440,7 +1443,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String settingsNotificationsSummary(int on, int auto) {
-    return 'เปิด $on เรื่อง · อัตโนมัติ $auto เรื่อง';
+    return 'เปิด $on เรื่อง | อัตโนมัติ $auto เรื่อง';
   }
 
   @override
@@ -1501,7 +1504,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifUnknown => 'การแจ้งเตือน';
 
   @override
-  String get notifAccepted => 'ตอบรับแล้ว · แตะเพื่อเปิด';
+  String get notifAccepted => 'ตอบรับแล้ว | แตะเพื่อเปิด';
 
   @override
   String get notifRejectTitle => 'ปฏิเสธคำขอนี้?';
@@ -1564,7 +1567,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifActionSkip => 'ข้าม';
 
   @override
-  String get notifActionDone => 'ทำแล้ว · แตะเพื่อเปิด';
+  String get notifActionDone => 'ทำแล้ว | แตะเพื่อเปิด';
 
   @override
   String notifProjectAdded(String actor, String project) {
@@ -1837,7 +1840,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get authRegisterSectionProfile => 'เกี่ยวกับคุณ';
 
   @override
-  String get authRegisterUsernameHint => 'a-z 0-9 _ - · 3–50 ตัว';
+  String get authRegisterUsernameHint => 'a-z 0-9 _ - | 3–50 ตัว';
 
   @override
   String get authRegisterPasswordHint => 'อย่างน้อย 8 ตัวอักษร';
@@ -1858,11 +1861,11 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountsSummaryAssets => 'เงินที่มี';
 
   @override
-  String get accountsSummaryDebt => 'หนี้ (บัตร · ติดลบ)';
+  String get accountsSummaryDebt => 'หนี้ (บัตร | ติดลบ)';
 
   @override
   String accountsSummaryCreditUsed(int pct, String left) {
-    return 'ใช้วงเงิน $pct% · เหลือ $left';
+    return 'ใช้วงเงิน $pct% | เหลือ $left';
   }
 
   @override
@@ -1968,7 +1971,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String moreLiveDebts(String owed, String owe) {
-    return 'รอรับ $owed · รอจ่าย $owe';
+    return 'รอรับ $owed | รอจ่าย $owe';
   }
 
   @override
@@ -2112,7 +2115,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get transactionDeleteConsequence =>
-      'ลบถาวร · ยอดในกระเป๋ากลับเป็นเหมือนก่อนบันทึก';
+      'ลบถาวร | ยอดในกระเป๋ากลับเป็นเหมือนก่อนบันทึก';
 
   @override
   String get categoriesReorderEnter => 'จัดลำดับ';
@@ -2381,10 +2384,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtOverpaid => 'จ่ายเกิน';
 
   @override
-  String get debtOverpaidIOwe => 'จ่ายเกินมา · ฉันต้องคืนเขา';
+  String get debtOverpaidIOwe => 'จ่ายเกินมา | ฉันต้องคืนเขา';
 
   @override
-  String get debtOverpaidTheyOwe => 'จ่ายเกินไป · เขาต้องคืนฉัน';
+  String get debtOverpaidTheyOwe => 'จ่ายเกินไป | เขาต้องคืนฉัน';
 
   @override
   String get debtOverpaidCantSettle =>
@@ -2437,12 +2440,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String txSplitStatusOverpaidToThem(String amount) {
-    return 'จ่ายเกิน $amount · ต้องคืนให้เขา';
+    return 'จ่ายเกิน $amount | ต้องคืนให้เขา';
   }
 
   @override
   String txSplitStatusOverpaidByMe(String amount) {
-    return 'จ่ายเกิน $amount · เขาต้องคืน';
+    return 'จ่ายเกิน $amount | เขาต้องคืน';
   }
 
   @override
@@ -2498,7 +2501,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String txDetailSplitEditElsewhere(int count) {
-    return '$count คน · แก้ได้ที่หน้าหนี้';
+    return '$count คน | แก้ได้ที่หน้าหนี้';
   }
 
   @override
@@ -2516,7 +2519,25 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get txNoteAddHint => 'เพิ่มโน้ต...';
+  String get txNoteAddHint => 'เช่น ซื้อที่ไหน กับใคร หรือรายละเอียดที่อยากจำ';
+
+  @override
+  String get bgNoteHint => 'เช่น ทำไมตั้งเพดานนี้ หรืออยากลดรายจ่ายอะไร';
+
+  @override
+  String get projectNoteHint => 'เช่น ที่พัก ข้อตกลงในกลุ่ม หรือบัญชีสำหรับโอน';
+
+  @override
+  String get recurringNoteHint => 'เช่น เลขที่สัญญา รอบตัดบัตร หรือวิธีจ่าย';
+
+  @override
+  String get fpGoalsNoteHint => 'เช่น ออมไว้ทำอะไร หรือแผนที่จะออม';
+
+  @override
+  String get categoryNoteHint => 'เช่น รายการแบบไหนควรอยู่หมวดนี้';
+
+  @override
+  String get debtNoteHint => 'เช่น ยืมไปทำอะไร หรือนัดคืนเมื่อไร';
 
   @override
   String get quickEventNone => 'ไม่ได้เลือก';
@@ -2664,7 +2685,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String pendingResult(int done, int failed) {
-    return 'บันทึกแล้ว $done · ค้าง $failed';
+    return 'บันทึกแล้ว $done | ค้าง $failed';
   }
 
   @override
@@ -2736,7 +2757,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get pendingRemoveRow => 'ลบแถวนี้';
 
   @override
-  String get pendingSavedAsDraft => 'เก็บเป็นร่างแล้ว · อยู่ในรอยืนยัน';
+  String get pendingSavedAsDraft => 'เก็บเป็นร่างแล้ว | อยู่ในรอยืนยัน';
 
   @override
   String get pendingSaveDraft => 'บันทึกร่าง';
@@ -3356,7 +3377,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String projectPlannedLine(String planned, String remaining) {
-    return 'ตั้งงบไว้ $planned · เหลือ $remaining';
+    return 'ตั้งงบไว้ $planned | เหลือ $remaining';
   }
 
   @override
@@ -3576,7 +3597,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get transactionsSearchHint => 'ค้นหาคำอธิบาย · โน้ต · หมวด · กระเป๋า';
+  String get transactionsSearchHint => 'ค้นหาคำอธิบาย | โน้ต | หมวด | กระเป๋า';
 
   @override
   String get savingGoalAllocationAuto => 'อัตโนมัติ';
@@ -3676,7 +3697,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get categoryFeeSwitchHelper =>
-      'ค่าธรรมเนียมจากสลิปจะเข้าหมวดนี้ · ได้ทีละหมวด';
+      'ค่าธรรมเนียมจากสลิปจะเข้าหมวดนี้ | ได้ทีละหมวด';
 
   @override
   String get categoryFeeSwitchFailed => 'ตั้งหมวดค่าธรรมเนียมไม่สำเร็จ';
@@ -3717,7 +3738,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String appUpdateBuildLine(int current, int required) {
-    return 'เวอร์ชันนี้ build $current · ต้องการ $required ขึ้นไป';
+    return 'เวอร์ชันนี้ build $current | ต้องการ $required ขึ้นไป';
   }
 
   @override
@@ -4265,7 +4286,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get contactNicknameLabel => 'ชื่อเล่น';
 
   @override
-  String get contactNicknameHint => 'ไม่บังคับ · เช่น แม่';
+  String get contactNicknameHint => 'ไม่บังคับ | เช่น แม่';
 
   @override
   String get contactShowNicknameLabel => 'แสดงชื่อเล่น';
@@ -4296,7 +4317,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get profileEmailCannotClear => 'อีเมลที่ตั้งแล้วลบออกไม่ได้';
 
   @override
-  String get connectionOffline => 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ · กำลังลองใหม่…';
+  String get connectionOffline => 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ | กำลังลองใหม่…';
 
   @override
   String get connectionReconnecting => 'กำลังเชื่อมต่อ…';
@@ -4573,7 +4594,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get eventDeleteBody =>
-      'บิลทั้งหมดในอีเวนต์จะถูกลบ · รายการในบัญชีของคุณที่ผูกกับอีเวนต์นี้ เลือกได้ว่าจะเก็บไว้หรือลบด้วย';
+      'บิลทั้งหมดในอีเวนต์จะถูกลบ | รายการในบัญชีของคุณที่ผูกกับอีเวนต์นี้ เลือกได้ว่าจะเก็บไว้หรือลบด้วย';
 
   @override
   String get eventDeleteKeepTxs => 'ยืนยัน ไม่ลบรายการ';
@@ -5048,7 +5069,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String recurringUpcomingSummary(String name, String amount, String rule) {
-    return '$name $amount · $rule';
+    return '$name $amount | $rule';
   }
 
   @override
@@ -5056,7 +5077,7 @@ class AppLocalizationsTh extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'อีก $count รายการ · แตะเพื่อดูทั้งหมด',
+      other: 'อีก $count รายการ | แตะเพื่อดูทั้งหมด',
     );
     return '$_temp0';
   }
@@ -5097,6 +5118,31 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get recurringItemRestore => 'กู้คืน';
+
+  @override
+  String get recurringItemStatusTitle => 'สถานะ';
+
+  @override
+  String get recurringItemStatusDescription =>
+      'รายการนี้อยู่ขั้นไหน และทำอะไรต่อได้';
+
+  @override
+  String recurringItemStatusUpcoming(Object date) {
+    return 'จะเข้ารอยืนยันวันที่ $date';
+  }
+
+  @override
+  String get recurringItemStatusNotCreated =>
+      'ถึงวันแล้ว แต่ยังไม่มีรายการจริง';
+
+  @override
+  String get recurringItemStatusPending => 'อยู่ในรายการรอยืนยัน';
+
+  @override
+  String get recurringItemStatusDone => 'บันทึกเป็นรายการจริงแล้ว';
+
+  @override
+  String get recurringItemStatusArchived => 'เก็บถาวรไว้ จะไม่ถูกสร้าง';
 
   @override
   String get recurringDeleteLinkedTitle => 'ลบรายการจริงด้วยไหม';
@@ -5319,7 +5365,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String sgv2PaceLine(String needed, String pace) {
-    return 'ต้องออม $needed/เดือน · ออมจริง $pace';
+    return 'ต้องออม $needed/เดือน | ออมจริง $pace';
   }
 
   @override
@@ -5687,7 +5733,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get bgSourceEvent => 'อีเวนต์';
 
   @override
-  String get bgSourceUpcoming => 'รายการประจำ · ล่วงหน้า';
+  String get bgSourceUpcoming => 'รายการประจำ | ล่วงหน้า';
 
   @override
   String get bgSourcePending => 'รอยืนยัน';
@@ -5924,7 +5970,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String recurringSavingNameGoal(String goal) {
-    return 'ออม · $goal';
+    return 'ออม | $goal';
   }
 
   @override
@@ -6051,7 +6097,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountsNoMatch => 'ไม่พบกระเป๋าที่ค้นหา';
 
   @override
-  String get bgSummaryUsedCaption => 'รอบปัจจุบัน · ใช้ไปรวม';
+  String get bgSummaryUsedCaption => 'รอบปัจจุบัน | ใช้ไปรวม';
 
   @override
   String bgSummaryRemaining(String amount) {
@@ -6081,7 +6127,26 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpWalletsSavedLine(String saved, String available) {
-    return 'ออมไว้ $saved · ใช้ได้จริง $available';
+    return 'ออมไว้ $saved | ใช้ได้จริง $available';
+  }
+
+  @override
+  String get fpWalletsTileAvailable => 'ใช้ได้จริง';
+
+  @override
+  String get fpWalletsSaveStart => 'เริ่มออม';
+
+  @override
+  String get fpWalletsNoCardDebt => 'ไม่มีหนี้บัตร';
+
+  @override
+  String fpWalletsCreditUsedPct(int pct) {
+    return 'ใช้วงเงิน $pct%';
+  }
+
+  @override
+  String fpWalletsSharedTooltip(int count) {
+    return 'กระเป๋าร่วม $count';
   }
 
   @override
@@ -6095,12 +6160,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpWalletMonthIn(String month) {
-    return '$month · เงินเข้า';
+    return '$month | เงินเข้า';
   }
 
   @override
   String fpWalletMonthOut(String month) {
-    return '$month · เงินออก';
+    return '$month | เงินออก';
   }
 
   @override
@@ -6125,7 +6190,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpWalletDueAlert(String date, int days) {
-    return 'ครบกำหนดชำระ $date · อีก $days วัน';
+    return 'ครบกำหนดชำระ $date | อีก $days วัน';
   }
 
   @override
@@ -6172,7 +6237,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpWalletDeleteConsequence =>
-      'ดูก่อนว่ามีอะไรผูกอยู่ · เงินออมยังอยู่ แค่หลุดจากกระเป๋า';
+      'ดูก่อนว่ามีอะไรผูกอยู่ | เงินออมยังอยู่ แค่หลุดจากกระเป๋า';
 
   @override
   String get fpWalletDeleteTitle => 'ลบกระเป๋านี้?';
@@ -6186,7 +6251,7 @@ class AppLocalizationsTh extends AppLocalizations {
     int savings,
     String amount,
   ) {
-    return 'รายการ $transactions รายการยังอยู่แต่ไม่มีกระเป๋า (โอน $transfers) · รายการเปิดยอด/ปรับยอด $system รายการถูกลบ · รายการประจำ $recurring ยังทำงานต่อ · เงินออม $savings รายการ ($amount) ยังอยู่แต่หลุดจากกระเป๋า';
+    return 'รายการ $transactions รายการยังอยู่แต่ไม่มีกระเป๋า (โอน $transfers) | รายการเปิดยอด/ปรับยอด $system รายการถูกลบ | รายการประจำ $recurring ยังทำงานต่อ | เงินออม $savings รายการ ($amount) ยังอยู่แต่หลุดจากกระเป๋า';
   }
 
   @override
@@ -6223,12 +6288,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpDebtsOwedToMeTile(int count) {
-    return 'รอรับ · $count คน';
+    return 'รอรับ | $count คน';
   }
 
   @override
   String fpDebtsIOweTile(int count) {
-    return 'รอจ่าย · $count คน';
+    return 'รอจ่าย | $count คน';
   }
 
   @override
@@ -6254,7 +6319,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpDebtsSortRecent => 'ล่าสุด';
 
   @override
-  String get fpDebtsMessageLabel => 'ข้อความสรุปยอด · แก้ได้ก่อนส่ง';
+  String get fpDebtsMessageLabel => 'ข้อความสรุปยอด | แก้ได้ก่อนส่ง';
 
   @override
   String get fpDebtsCopy => 'คัดลอก';
@@ -6270,18 +6335,18 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpDebtsCycleHeaderSince(String date) {
-    return 'ที่มาของยอด · ตั้งแต่เคลียร์ครบ $date';
+    return 'ที่มาของยอด | ตั้งแต่เคลียร์ครบ $date';
   }
 
   @override
-  String get fpDebtsEarlierHeader => 'รอบก่อน · เคลียร์ครบแล้ว';
+  String get fpDebtsEarlierHeader => 'รอบก่อน | เคลียร์ครบแล้ว';
 
   @override
   String get fpDebtsEarlierLink => 'รอบก่อนหน้านี้';
 
   @override
   String fpBudgetsRangeDay(String range, int elapsed, int total) {
-    return '$range · วันที่ $elapsed/$total';
+    return '$range | วันที่ $elapsed/$total';
   }
 
   @override
@@ -6428,7 +6493,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpGoalsEtaBehind(String date, int n) {
-    return 'ถึงเป้า $date · ช้า $n เดือน';
+    return 'ถึงเป้า $date | ช้า $n เดือน';
   }
 
   @override
@@ -6445,7 +6510,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpGoalsTargetSuffix(String target, int pct) {
-    return '/ $target · $pct%';
+    return '/ $target | $pct%';
   }
 
   @override
@@ -6473,7 +6538,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpGoalsAutoCaption(String day, String amount, String wallet) {
-    return '$day · $amount จาก $wallet';
+    return '$day | $amount จาก $wallet';
   }
 
   @override
@@ -6503,7 +6568,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpGoalsPlanLeft(String saved, String left) {
-    return 'ออมแล้ว $saved · เหลือ $left';
+    return 'ออมแล้ว $saved | เหลือ $left';
   }
 
   @override
@@ -6537,7 +6602,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpGoalsOngoingRow(String amount) {
-    return 'ออมต่อเนื่อง · เดือนนี้ $amount';
+    return 'ออมต่อเนื่อง | เดือนนี้ $amount';
   }
 
   @override
@@ -6550,7 +6615,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpGoalsArchiveConsequenceMoney(String amount) {
-    return 'ซ่อนไว้ · เงิน $amount ไม่นับในยอดออม · กู้คืนได้';
+    return 'ซ่อนไว้ | เงิน $amount ไม่นับในยอดออม | กู้คืนได้';
   }
 
   @override
@@ -6566,7 +6631,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpGoalsRefreshFailed => 'รีเฟรชไม่สำเร็จ แสดงข้อมูลล่าสุดที่มี';
 
   @override
-  String get fpEventsSummaryCaption => 'event ที่กำลังทำ · ส่วนของฉัน';
+  String get fpEventsSummaryCaption => 'event ที่กำลังทำ | ส่วนของฉัน';
 
   @override
   String fpEventsPaidLine(String paid, String receivable) {
@@ -6641,7 +6706,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpEventsTagPick => 'เลือก';
 
   @override
-  String get fpEventsMembersTitle => 'สมาชิก · ใครจ่าย / ใครค้าง';
+  String get fpEventsMembersTitle => 'สมาชิก | ใครจ่าย / ใครค้าง';
 
   @override
   String get fpEventsManage => 'จัดการ ›';
@@ -6694,7 +6759,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpEventsBudgetHelper =>
-      'ยอดที่ตั้งใจจะใช้ · ล้างค่าเพื่อไม่แสดงแผน';
+      'ยอดที่ตั้งใจจะใช้ | ล้างค่าเพื่อไม่แสดงแผน';
 
   @override
   String get fpEventsDatesLabel => 'วันเริ่ม – สิ้นสุด';
@@ -6737,7 +6802,7 @@ class AppLocalizationsTh extends AppLocalizations {
       'ซ่อนไว้ ไม่นับในยอด และแก้ไขไม่ได้ กู้คืนได้ทุกเมื่อ';
 
   @override
-  String get fpEventsTagsTitle => 'แท็กอีเวนต์ · ใช้ร่วมกับสมาชิก';
+  String get fpEventsTagsTitle => 'แท็กอีเวนต์ | ใช้ร่วมกับสมาชิก';
 
   @override
   String get fpEventsTagAdd => 'เพิ่มแท็กอีเวนต์';
@@ -6789,24 +6854,24 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpEventsTagInMine => 'มีในแท็กของฉันแล้ว';
 
   @override
-  String get fpEventsLoadFailed => 'โหลดใหม่ไม่ได้ · แสดงข้อมูลล่าสุด';
+  String get fpEventsLoadFailed => 'โหลดใหม่ไม่ได้ | แสดงข้อมูลล่าสุด';
 
   @override
-  String get categoryDeleteConsequence => 'ลบถาวร · รายการในหมวดนี้จะไม่มีหมวด';
+  String get categoryDeleteConsequence => 'ลบถาวร | รายการในหมวดนี้จะไม่มีหมวด';
 
   @override
   String categoryMonthSpentLabel(String month, int count) {
-    return '$month ใช้ไป · $count รายการ ›';
+    return '$month ใช้ไป | $count รายการ ›';
   }
 
   @override
   String categoryMonthEarnedLabel(String month, int count) {
-    return '$month ได้รับ · $count รายการ ›';
+    return '$month ได้รับ | $count รายการ ›';
   }
 
   @override
   String get notifSettingsLegend =>
-      'ปิด ไม่บอก · แจ้ง แจ้งเตือนพร้อมปุ่มกดทำทันที · อัตโนมัติ ระบบทำให้เลย แล้วแจ้งว่าทำอะไรไป';
+      'ปิด ไม่บอก | แจ้ง แจ้งเตือนพร้อมปุ่มกดทำทันที | อัตโนมัติ ระบบทำให้เลย แล้วแจ้งว่าทำอะไรไป';
 
   @override
   String get notifStateOff => 'ปิด';
@@ -6825,13 +6890,13 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get notifTypeRecurringDueHint =>
-      'ร่างขึ้นใน รอยืนยัน เสมอ · ปิด = ไม่แจ้ง';
+      'ร่างขึ้นใน รอยืนยัน เสมอ | ปิด = ไม่แจ้ง';
 
   @override
   String get notifTypeRecurringEnding => 'รายการประจำใกล้จบ';
 
   @override
-  String get notifTypeRecurringEndingHint => 'เหลือไม่กี่งวด · ต่ออีกไหม';
+  String get notifTypeRecurringEndingHint => 'เหลือไม่กี่งวด | ต่ออีกไหม';
 
   @override
   String get notifTypeRequestsHint => 'ต้องตอบ เลยปิดไม่ได้';
@@ -6933,7 +6998,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String notifCardUnread(int count) {
-    return '· ยังไม่อ่าน $count';
+    return '| ยังไม่อ่าน $count';
   }
 
   @override
@@ -7107,14 +7172,14 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpRecurringMonthLine(String pay, String receive) {
-    return 'ต่อเดือน จ่าย $pay · รับ $receive';
+    return 'ต่อเดือน จ่าย $pay | รับ $receive';
   }
 
   @override
   String get fpRecurringPausedGroup => 'หยุดไว้';
 
   @override
-  String get fpRecurringGroupDue => 'ถึงแล้ว · อยู่ใน pending';
+  String get fpRecurringGroupDue => 'ถึงแล้ว | อยู่ใน pending';
 
   @override
   String get fpRecurringGroupComing => 'จะถึง';
@@ -7169,7 +7234,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpRecurringAlertAwaiting(String due) {
-    return 'รอใส่ยอด · $due';
+    return 'รอใส่ยอด | $due';
   }
 
   @override
@@ -7191,7 +7256,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpRecurringNextTitle(String due) {
-    return 'งวดถัดไป · $due';
+    return 'งวดถัดไป | $due';
   }
 
   @override
@@ -7222,12 +7287,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpRecurringChipEdited(String date, String amount) {
-    return '$date · $amount';
+    return '$date | $amount';
   }
 
   @override
   String fpRecurringChipSkipped(String date) {
-    return '$date · ข้าม';
+    return '$date | ข้าม';
   }
 
   @override
@@ -7326,7 +7391,7 @@ class AppLocalizationsTh extends AppLocalizations {
     int categories,
     int wallets,
   ) {
-    return 'ลบถาวร $periods รอบ (ปรับเอง $overridden รอบ) · $categories หมวด · $wallets กระเป๋า · รายการธุรกรรมไม่ได้รับผลกระทบ';
+    return 'ลบถาวร $periods รอบ (ปรับเอง $overridden รอบ) | $categories หมวด | $wallets กระเป๋า | รายการธุรกรรมไม่ได้รับผลกระทบ';
   }
 
   @override

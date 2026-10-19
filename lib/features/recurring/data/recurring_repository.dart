@@ -156,6 +156,11 @@ class RecurringRepository {
     return ItemPage.fromJson(res.data);
   });
 
+  Future<RecurringItem> getItem(String id) => _call((dio) async {
+    final res = await dio.get<Map<String, dynamic>>('/recurring-items/$id');
+    return RecurringItem.fromJson(res.data!);
+  });
+
   Future<ItemWriteResult> editOccurrence(
     String id, {
     DateTime? date,

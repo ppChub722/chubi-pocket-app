@@ -255,10 +255,10 @@ class _SavingPageState extends State<_SavingPage> {
           child: box(const SavingHistoryChart.skeleton()),
         ),
         HubDemo(
-          title: 'SavingTxRow — deposit · withdraw · allocate',
+          title: 'SavingTxRow — deposit | withdraw | allocate',
           note:
-              'The saving-tx record (never a real tx): kind glyph · title · '
-              'source chip · line 2 "wallet → bucket" or "bucket → wallet" · '
+              'The saving-tx record (never a real tx): kind glyph | title | '
+              'source chip | line 2 "wallet → bucket" or "bucket → wallet" | '
               'signed amount (accent + / muted −). Same row height as TxRow.',
           child: AppCard(
             padding: EdgeInsets.zero,
@@ -281,7 +281,7 @@ class _SavingPageState extends State<_SavingPage> {
                 ),
                 SavingTxRow(
                   kind: SavingTxKind.withdraw,
-                  title: 'Withdraw · hotel deposit',
+                  title: 'Withdraw | hotel deposit',
                   from: 'Japan trip',
                   walletLabel: 'SCB',
                   amount: 3000,
@@ -333,10 +333,10 @@ class _SavingPageState extends State<_SavingPage> {
           ),
         ),
         HubDemo(
-          title: 'SavingGoalRow — behind · on track · reached · archived',
+          title: 'SavingGoalRow — behind | on track | reached | archived',
           note:
-              'A goals-list row (reference §2): icon · name · "ขาด ฿x" / ✓ · '
-              'thick bar in the goal colour · "saved / target" · ETA badge '
+              'A goals-list row (reference §2): icon | name | "ขาด ฿x" / ✓ | '
+              'thick bar in the goal colour | "saved / target" | ETA badge '
               '(amber when behind, green on track / reached). No buttons; tap '
               'opens the goal. Every word is a param.',
           child: AppCard(
@@ -349,7 +349,7 @@ class _SavingPageState extends State<_SavingPage> {
                   amountText: '฿60,000 / ฿200,000',
                   trailing: 'Short ฿2,500',
                   trailingTone: Tone.warning,
-                  badge: 'Goal Aug 2029 · 2 months late',
+                  badge: 'Goal Aug 2029 | 2 months late',
                   badgeTone: Tone.warning,
                   onTap: () {},
                 ),
@@ -377,7 +377,7 @@ class _SavingPageState extends State<_SavingPage> {
         HubDemo(
           title: 'showSavingAutoSaveSheet',
           note:
-              'The auto-saving sheet: amount · day of the month · the wallet '
+              'The auto-saving sheet: amount | day of the month | the wallet '
               '(the app owns the wallet picker — "no wallet" is a valid '
               'source). Save is disabled until the amount is above zero. '
               'Resolves (amount, day, accountId) or null.',
@@ -436,7 +436,7 @@ class _SavingPageState extends State<_SavingPage> {
           ),
         ),
         HubDemo(
-          title: 'showSavingMoveSheet · showCloseGoalDialog',
+          title: 'showSavingMoveSheet | showCloseGoalDialog',
           note:
               'Move: from → to cards, amount, the caller\'s auto split per '
               'wallet (editable behind ✏️), a sum check, save disabled until '

@@ -241,7 +241,7 @@ class _ContactRow extends StatelessWidget {
     final sub = [
       contact.description?.trim() ?? '',
       contact.email?.trim() ?? '',
-    ].where((s) => s.isNotEmpty).join(' · ');
+    ].where((s) => s.isNotEmpty).join(' | ');
     return ListRow(
       leading: PersonMark(
         name: contact.name,

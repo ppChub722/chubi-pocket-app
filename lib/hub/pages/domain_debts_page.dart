@@ -92,8 +92,8 @@ class _DebtsPageState extends State<_DebtsPage> {
         HubDemo(
           title: 'PersonBalanceRow',
           note:
-              'The debts people row (list + picker): PersonMark · name · sub '
-              'line · NetBalance (row). Tap to pick: selected = the highlight '
+              'The debts people row (list + picker): PersonMark | name | sub '
+              'line | NetBalance (row). Tap to pick: selected = the highlight '
               'tint, never a ✓. Same height as PersonRow / ListRow.',
           child: _list([
             for (final (name, level, net, sub) in const [
@@ -296,7 +296,7 @@ class _DebtsPageState extends State<_DebtsPage> {
             text:
                 'สรุปยอดกับ test\n• 10 ต.ค. ค่าไรก็ได้ +฿667.67\n'
                 '• 11 ต.ค. Gaming +฿522.00\nรวม test ติดคุณ ฿1,189.67',
-            label: 'ข้อความสรุปยอด · แก้ได้ก่อนส่ง',
+            label: 'ข้อความสรุปยอด | แก้ได้ก่อนส่ง',
             copyLabel: 'คัดลอก',
             shareLabel: 'แชร์',
             onCopy: (t) => _note('copy ${t.length} chars'),
@@ -357,7 +357,7 @@ class _DebtsPageState extends State<_DebtsPage> {
           note:
               'One debt entry, by direction: paid ↗ (expense colour) / '
               'received ↙ (income colour); the amount is always positive. '
-              'Line 2: date · wallet mini chip · paid mini chip · source. '
+              'Line 2: date | wallet mini chip | paid mini chip | source. '
               'Never a category. TxRow geometry.',
           child: _list([
             LedgerRow(

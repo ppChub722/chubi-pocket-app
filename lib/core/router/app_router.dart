@@ -42,6 +42,7 @@ import '../../features/saving_goals/presentation/pages/saving_goal_detail_page.d
 import '../../features/saving_goals/presentation/pages/saving_goals_list_page.dart';
 import '../../features/recurring/presentation/pages/recurring_home_page.dart';
 import '../../features/recurring/presentation/pages/recurring_detail_page.dart';
+import '../../features/recurring/presentation/pages/recurring_item_page.dart';
 import '../../features/recurring/presentation/recurring_draft.dart';
 import '../../features/tags/presentation/pages/tags_page.dart';
 import '../../features/transactions/presentation/pages/debt_entry_detail_page.dart';
@@ -466,6 +467,12 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
       builder: (context, state) => RecurringDetailPage(
         preset: RecurringPreset.fromQuery(state.uri.queryParameters),
       ),
+    ),
+    GoRoute(
+      path: '/recurring/items/:id',
+      name: 'recurring-item',
+      builder: (context, state) =>
+          RecurringItemPage(itemId: state.pathParameters['id']!),
     ),
     GoRoute(
       path: '/recurring/:id',

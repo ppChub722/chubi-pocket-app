@@ -653,7 +653,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                       editing: true,
                       maxLines: 5,
                       maxLength: TextLimits.note,
-                      hint: l.txNoteAddHint,
+                      hint: l.debtNoteHint,
                     ),
                   ),
                   if (!_sourced)

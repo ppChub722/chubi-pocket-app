@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// Every name in a split row starts at the same x: "my share", a typed
 /// (framed) name and a contact's highlighted name (owner 2026-10-12).
 void main() {
-  testWidgets('me · typed · contact · linked names share one text x', (
+  testWidgets('me | typed | contact | linked names share one text x', (
     t,
   ) async {
     final c = TextEditingController(text: 'Mali');

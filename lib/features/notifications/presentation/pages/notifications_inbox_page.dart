@@ -97,7 +97,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
     final cubit = ctx.read<NotificationsInboxCubit>();
     final s = state.summary;
     String label(InboxFilter f) =>
-        '${_filterLabel(l, f)} · ${_filterCount(s, f)}';
+        '${_filterLabel(l, f)} | ${_filterCount(s, f)}';
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.md,

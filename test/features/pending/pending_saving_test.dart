@@ -94,7 +94,7 @@ void main() {
     expect(p.draft.amount, 4000);
     expect(p.resolved.goal?.name, 'Japan trip');
     expect(p.resolved.account?.name, 'KBank');
-    expect(p.recurringRef?.label('x'), 'Save monthly · 2/12');
+    expect(p.recurringRef?.label('x'), 'Save monthly | 2/12');
     expect(p.draft.toJson()['type'], 'saving');
     final spare = PendingTransaction.fromJson(_saving('p2', goal: false));
     expect(spare.draft.goalId, isNull);
@@ -134,7 +134,7 @@ void main() {
     expect(find.byIcon(AppIcons.savingDeposit), findsWidgets);
     expect(find.text('Japan trip'), findsWidgets);
     expect(find.text('KBank'), findsOneWidget);
-    expect(find.text('Save monthly · 2/12'), findsOneWidget);
+    expect(find.text('Save monthly | 2/12'), findsOneWidget);
   });
 
   testWidgets('row: spare label and a missing-wallet problem', (t) async {

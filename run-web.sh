@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Run chubiPocket in Chrome at phone size, pointed at the live VPS backend.
-# Usage: ./run-web.sh            (phone size 412x915)
-#        ./run-web.sh 390 844    (custom width height)
-#        PORT=8080 ./run-web.sh  (another port; default 5173)
+# Run chubiPocket in Chrome at phone size.
+# Usage: ./run-web.sh              (phone size 412x915, live VPS backend)
+#        ./run-web.sh local        (backend on this PC, localhost:8080)
+#        ./run-web.sh 390 844      (custom width height; also after `local`)
+#        PORT=5174 ./run-web.sh    (another port; default 5173)
 #
 # Why not `-d chrome --web-browser-flag=--window-size=W,H`:
 #  - flutter splits that flag's value on commas, so Chrome got "915" as a URL
@@ -15,6 +16,16 @@
 # size: a still-open window on this profile keeps its original size.
 set -euo pipefail
 cd "$(dirname "$0")"
+
+API="https://chubipocket-api.ppforge.dev/api/v1"
+if [[ "${1:-}" == "local" ]]; then
+  API="http://localhost:8080/api/v1"
+  shift
+  if ! curl -sf -o /dev/null http://localhost:8080/health; then
+    echo "Local backend not answering on :8080 — run ../chubi-pocket-be/scripts/redeploy.ps1 first." >&2
+    exit 1
+  fi
+fi
 
 W="${1:-412}"
 H="${2:-915}"
@@ -47,4 +58,4 @@ command -v cygpath >/dev/null && PROFILE="$(cygpath -w "$PROFILE")"
 ) &
 
 exec ./.fvm/flutter_sdk/bin/flutter run -d web-server --web-port="$PORT" \
-  --dart-define=API_BASE_URL=https://chubipocket-api.ppforge.dev/api/v1
+  --dart-define=API_BASE_URL="$API"

@@ -191,14 +191,14 @@ void main() {
   ) async {
     await pump(t, const SettingsPage());
     expect(find.text('ppOnd'), findsOneWidget);
-    expect(find.text('@ppond · ppond@example.com'), findsOneWidget);
+    expect(find.text('@ppond | ppond@example.com'), findsOneWidget);
     for (final s in ['App', 'Money', 'Data', 'About']) {
       expect(find.text(s), findsOneWidget, reason: s);
     }
     expect(find.text('Main wallet'), findsOneWidget);
     expect(find.text('Doraemon'), findsOneWidget);
     // The notifications row shows the server's numbers.
-    expect(find.text('9 on · 2 automatic'), findsOneWidget);
+    expect(find.text('9 on | 2 automatic'), findsOneWidget);
     expect(find.text('Archive'), findsOneWidget);
     expect(find.text('Export CSV'), findsOneWidget);
     expect(find.text('0.4'), findsOneWidget);

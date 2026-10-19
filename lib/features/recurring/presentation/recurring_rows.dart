@@ -145,7 +145,7 @@ class RecurringItemRow extends StatelessWidget {
       category: [
         if (parent != null && parent != title) parent,
         if (i.category != null && i.category!.name != title) i.category!.name,
-      ].join(' · '),
+      ].join(' | '),
       select: select,
       onTap: onTap,
     );

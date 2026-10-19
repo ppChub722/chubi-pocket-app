@@ -1179,6 +1179,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
             focusNode: _noteFocus,
             maxLines: 3,
             maxLength: TextLimits.note,
+            hint: l.fpGoalsNoteHint,
             onChanged: (v) => _onText(_Field.note, v),
           ),
         ),

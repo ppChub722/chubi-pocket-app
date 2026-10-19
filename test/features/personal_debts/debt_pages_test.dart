@@ -255,8 +255,8 @@ void main() {
       await pump(t, const PersonalDebtsPage());
       expect(find.text('Total outstanding'), findsOneWidget);
       // The tiles carry the BE's people counts + amounts.
-      expect(find.text('To receive · 1 people'), findsOneWidget);
-      expect(find.text('To pay · 1 people'), findsOneWidget);
+      expect(find.text('To receive | 1 people'), findsOneWidget);
+      expect(find.text('To pay | 1 people'), findsOneWidget);
       expect(find.text('฿200'), findsWidgets);
       expect(find.text('฿50'), findsWidgets);
       // Both sides open → the BE's net line; the amber alert.
@@ -276,11 +276,11 @@ void main() {
 
     testWidgets('a tile filters by side at once; tap again clears', (t) async {
       await pump(t, const PersonalDebtsPage());
-      await t.tap(find.text('To receive · 1 people'));
+      await t.tap(find.text('To receive | 1 people'));
       await t.pump();
       expect(find.byType(PersonBalanceRow), findsOneWidget);
       expect(find.text('Mom'), findsOneWidget);
-      await t.tap(find.text('To receive · 1 people'));
+      await t.tap(find.text('To receive | 1 people'));
       await t.pump();
       expect(find.byType(PersonBalanceRow), findsNWidgets(3));
     });
@@ -358,7 +358,7 @@ void main() {
       expect(find.text('Add entry'), findsNothing);
       // The statement: a cycle header, the entries, the earlier fold.
       expect(
-        find.textContaining('Where the balance comes from · since cleared'),
+        find.textContaining('Where the balance comes from | since cleared'),
         findsOneWidget,
       );
       expect(find.byType(LedgerRow), findsNWidgets(2));
@@ -378,7 +378,7 @@ void main() {
         'person c:c1 cycle=current',
         'entries cycle=earlier q=',
       ]);
-      expect(find.text('Earlier cycle · cleared'), findsOneWidget);
+      expect(find.text('Earlier cycle | cleared'), findsOneWidget);
       expect(find.text('Old repayment'), findsOneWidget);
       expect(find.text('Earlier cycles'), findsNothing);
     });

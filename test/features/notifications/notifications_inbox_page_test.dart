@@ -417,7 +417,7 @@ void main() {
 
   Future<void> pickFilter(WidgetTester t, String label) async {
     await toggleFilterMenu(t);
-    await t.tap(find.textContaining('$label · ').last);
+    await t.tap(find.textContaining('$label | ').last);
     await t.pump();
     await t.pump();
   }
@@ -425,7 +425,7 @@ void main() {
   Future<void> expectCounts(WidgetTester t, Map<String, int> counts) async {
     await toggleFilterMenu(t);
     for (final MapEntry(:key, :value) in counts.entries) {
-      expect(find.text('$key · $value'), findsWidgets, reason: key);
+      expect(find.text('$key | $value'), findsWidgets, reason: key);
     }
     await toggleFilterMenu(t);
   }

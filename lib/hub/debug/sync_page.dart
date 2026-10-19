@@ -135,9 +135,9 @@ class _SyncPageState extends State<SyncPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${r.at.toIso8601String().substring(11, 19)} · '
+                          '${r.at.toIso8601String().substring(11, 19)} | '
                           '${r.duration.inMilliseconds} ms'
-                          '${r.fromFallback ? ' · fallback (no /sync)' : ''}',
+                          '${r.fromFallback ? ' | fallback (no /sync)' : ''}',
                           style: text.titleSmall,
                         ),
                         const SizedBox(height: 2),

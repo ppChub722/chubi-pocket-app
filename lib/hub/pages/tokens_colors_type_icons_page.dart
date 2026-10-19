@@ -81,7 +81,7 @@ Widget buildColorsPage(BuildContext context) {
       ),
       HubDemo(
         title: 'Module groups',
-        note: 'คลัง · คน · วางแผน — one set per theme.',
+        note: 'คลัง | คน | วางแผน — one set per theme.',
         child: HubRow(
           cells: [
             swatch('library', module.library, Colors.white),
@@ -115,11 +115,11 @@ Widget buildColorsPage(BuildContext context) {
 Widget buildTypographyPage(BuildContext context) {
   const samples = <(AppTextRole, String)>[
     (AppTextRole.display, '฿1,250.00'),
-    (AppTextRole.title, 'ข้าวมันไก่ · Chicken rice'),
-    (AppTextRole.section, 'สมาชิก · Members'),
-    (AppTextRole.label, 'วันที่ · Date'),
-    (AppTextRole.body, 'บัญชีรับเงินเดือน ใช้จ่ายประจำ · Salary account'),
-    (AppTextRole.caption, 'สร้างเมื่อ 12 ต.ค. · Created 12 Oct'),
+    (AppTextRole.title, 'ข้าวมันไก่ | Chicken rice'),
+    (AppTextRole.section, 'สมาชิก | Members'),
+    (AppTextRole.label, 'วันที่ | Date'),
+    (AppTextRole.body, 'บัญชีรับเงินเดือน ใช้จ่ายประจำ | Salary account'),
+    (AppTextRole.caption, 'สร้างเมื่อ 12 ต.ค. | Created 12 Oct'),
     (AppTextRole.money, '฿96,248.33'),
   ];
   return Column(

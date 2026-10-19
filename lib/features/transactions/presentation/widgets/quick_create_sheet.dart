@@ -993,8 +993,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       locale: Localizations.localeOf(context).toLanguageTag(),
     );
     return names.isEmpty
-        ? '${l.quickEventDefaultName} · $date'
-        : '${names.join(', ')} · $date';
+        ? '${l.quickEventDefaultName} | $date'
+        : '${names.join(', ')} | $date';
   }
 
   Future<void> _confirmClose() async {

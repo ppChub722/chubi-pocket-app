@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
@@ -159,6 +160,11 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   }
 
   void _open(String path) => openPage(context, path);
+
+  Future<void> _openItem(RecurringItem i) async {
+    await context.push('/recurring/items/${i.id}');
+    if (mounted) _loadCalendar();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -457,9 +463,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
             RecurringItemRow(
               item: i,
               showParent: true,
-              onTap: i.recurring == null
-                  ? null
-                  : () => _open('/recurring/${i.recurring!.id}'),
+              onTap: () => _openItem(i),
             ),
       ],
     );

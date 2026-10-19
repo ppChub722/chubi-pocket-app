@@ -146,7 +146,7 @@ void main() {
     expect(find.text('ต้น'), findsWidgets);
   });
 
-  testWidgets('three looks: 👤 · avatar · avatar + 🔗', (t) async {
+  testWidgets('three looks: 👤 | avatar | avatar + 🔗', (t) async {
     await pump(t);
     final marks = t.widgetList<PersonMark>(find.byType(PersonMark)).toList();
     expect(marks.map((m) => m.level), [

@@ -519,7 +519,7 @@ void main() {
       expect(find.text('Water bill'), findsOneWidget);
       expect(find.text('No amount yet'), findsOneWidget);
       // Due already → its own group.
-      expect(find.text('Due · in pending'), findsOneWidget);
+      expect(find.text('Due | in pending'), findsOneWidget);
     });
 
     testWidgets('the calendar loads its month the first time it shows', (

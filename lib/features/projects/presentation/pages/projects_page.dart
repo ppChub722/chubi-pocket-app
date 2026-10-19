@@ -110,7 +110,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
     ?projectDateRange(context, p.startDate, p.endDate),
     l.fpEventsRowSpent(moneyString(context, p.totalExpense)),
     l.fpEventsRowShare(moneyString(context, p.myShare)),
-  ].join(' · ');
+  ].join(' | ');
 
   Widget _row(AppLocalizations l, Project p) {
     final owed = p.myReceivable > 0;

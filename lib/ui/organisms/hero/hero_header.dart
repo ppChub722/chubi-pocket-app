@@ -39,9 +39,33 @@ class HeroHeader extends StatelessWidget {
     final fold = scope != null && scope.canFold
         ? const AppHeroFoldButton(key: ValueKey('heroFold'))
         : null;
+    if (fold == null) {
+      return ChipSizeScope(
+        size: ChipSize.control,
+        child: HeroTopRow(leading: leading, trailing: [...actions, ?edit]),
+      );
+    }
+    // The fold chevron sits small in the card's corner (half in the card
+    // padding), so it doesn't read as another round action button.
     return ChipSizeScope(
       size: ChipSize.control,
-      child: HeroTopRow(leading: leading, trailing: [...actions, ?edit, ?fold]),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          HeroTopRow(
+            leading: leading,
+            trailing: [
+              ...actions,
+              ?edit,
+              const SizedBox(width: _foldReserve),
+            ],
+          ),
+          PositionedDirectional(top: -_foldTuck, end: -_foldTuck, child: fold),
+        ],
+      ),
     );
   }
+
+  static const double _foldTuck = 10;
+  static const double _foldReserve = AppHeroFoldButton.size - _foldTuck - 4;
 }

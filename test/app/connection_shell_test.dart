@@ -104,7 +104,7 @@ void main() {
 
   double pageTop() => MediaQuery.paddingOf(pageContext).top;
 
-  const offlineText = "Can't reach the server · trying again…";
+  const offlineText = "Can't reach the server | trying again…";
 
   testWidgets('online: no banner, the page keeps its status-bar inset', (
     t,

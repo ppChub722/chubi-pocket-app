@@ -41,7 +41,7 @@ class _FormSheetPageState extends State<_FormSheetPage> {
         HubDemo(
           title: 'FormSheet',
           note:
-              'A bottom sheet that edits something and ends with Cancel · '
+              'A bottom sheet that edits something and ends with Cancel | '
               'Save. It owns the chrome, the pinned footer, the dim + spinner '
               'while saving (back and buttons disabled), and the '
               '“Discard your changes?” question when a changed form is '
@@ -83,16 +83,16 @@ class _FormSheetPageState extends State<_FormSheetPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppText(
-                '· Open it with showAppSheetCustom; return FormSheet from the builder.',
+                '| Open it with showAppSheetCustom; return FormSheet from the builder.',
               ),
               AppText(
-                '· Primary disabled until the form is valid; dirty = anything changed.',
+                '| Primary disabled until the form is valid; dirty = anything changed.',
               ),
               AppText(
-                '· Saving: set `saving`, call the API, on failure set it back and showErrorSnackBar(retry).',
+                '| Saving: set `saving`, call the API, on failure set it back and showErrorSnackBar(retry).',
               ),
               AppText(
-                '· Never add viewInsets padding inside — the sheet already handles the keyboard.',
+                '| Never add viewInsets padding inside — the sheet already handles the keyboard.',
               ),
             ],
           ),

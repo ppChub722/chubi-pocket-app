@@ -49,6 +49,8 @@ class RecurringItem extends Equatable {
     this.transaction,
     this.edited = false,
     this.manual = false,
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
@@ -75,6 +77,8 @@ class RecurringItem extends Equatable {
   final BoardSourceTx? transaction;
   final bool edited;
   final bool manual;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   bool get linked => pendingId != null || transaction != null;
 
@@ -121,6 +125,12 @@ class RecurringItem extends Equatable {
     transaction: BoardSourceTx.tryParse(json['transaction']),
     edited: json['edited'] == true,
     manual: json['manual'] == true,
+    createdAt: DateTime.tryParse(
+      (json['created_at'] as String?) ?? '',
+    )?.toLocal(),
+    updatedAt: DateTime.tryParse(
+      (json['updated_at'] as String?) ?? '',
+    )?.toLocal(),
   );
 
   PendingDraft toDraft() => PendingDraft(
@@ -156,6 +166,8 @@ class RecurringItem extends Equatable {
     transaction,
     edited,
     manual,
+    createdAt,
+    updatedAt,
   ];
 }
 

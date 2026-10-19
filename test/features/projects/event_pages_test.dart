@@ -331,7 +331,7 @@ void main() {
       expect(find.byType(EventListRow), findsNWidgets(3));
       expect(find.byType(ErrorView), findsNothing);
       expect(
-        find.text('Couldn\'t refresh · showing the last data'),
+        find.text('Couldn\'t refresh | showing the last data'),
         findsOneWidget,
       );
     });
@@ -499,7 +499,7 @@ void main() {
       await t.tap(find.text('Manage event tags'));
       await t.pumpAndSettle();
       expect(find.byType(EventTagsSheet), findsOneWidget);
-      expect(find.text('Event tags · shared with members'), findsOneWidget);
+      expect(find.text('Event tags | shared with members'), findsOneWidget);
       expect(find.text('Add event tag'), findsOneWidget);
     });
 

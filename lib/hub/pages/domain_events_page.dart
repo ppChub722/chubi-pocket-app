@@ -63,7 +63,7 @@ class _EventsPageState extends State<_EventsPage> {
                 iconCode: _trip,
                 statusLabel: 'กำลังดำเนินการ',
                 statusTone: AppChipTone.success,
-                meta: '4 คน · 1–5 ต.ค.',
+                meta: '4 คน | 1–5 ต.ค.',
                 myNet: 1250,
                 tags: const [_travel, _stay],
                 onTap: () => _tapped('card: active'),
@@ -75,7 +75,7 @@ class _EventsPageState extends State<_EventsPage> {
                 description: 'หารค่าอาหาร เครื่องดื่ม และสถานที่',
                 statusLabel: 'วางแผน',
                 statusTone: AppChipTone.info,
-                meta: '8 คน · 31 ธ.ค.',
+                meta: '8 คน | 31 ธ.ค.',
                 progress: 0.62,
                 progressLabel: 'ใช้ไป ฿6,200 จาก ฿10,000',
                 progressTrailing: '62%',
@@ -88,7 +88,7 @@ class _EventsPageState extends State<_EventsPage> {
                 iconCode: _work,
                 statusLabel: 'เกินงบ',
                 statusTone: AppChipTone.danger,
-                meta: '3 คน · 12–13 ก.ย.',
+                meta: '3 คน | 12–13 ก.ย.',
                 progress: 1.18,
                 progressLabel: 'ใช้ไป ฿11,800 จาก ฿10,000',
                 progressTrailing: '118%',
@@ -100,7 +100,7 @@ class _EventsPageState extends State<_EventsPage> {
               EventCard(
                 name: 'ทริปภูเก็ต (ปิดแล้ว)',
                 statusLabel: 'ปิดแล้ว',
-                meta: '5 คน · 2–4 ส.ค.',
+                meta: '5 คน | 2–4 ส.ค.',
                 myNet: 300,
                 dimmed: true,
                 onTap: () => _tapped('card: locked'),
@@ -111,7 +111,7 @@ class _EventsPageState extends State<_EventsPage> {
         HubDemo(
           title: 'EventListRow — the 0.4.0 events list row',
           note:
-              'Icon, name, ONE muted line (dates · spent · my share) and my '
+              'Icon, name, ONE muted line (dates | spent | my share) and my '
               'position at the right: รอรับ (green, +) / รอจ่าย (red, −) with '
               'a small caption, a plain ฿0 when even. dimmed = ended / '
               'archived. The list page puts these on hairlines.',
@@ -121,7 +121,7 @@ class _EventsPageState extends State<_EventsPage> {
               EventListRow(
                 name: 'ทริปญี่ปุ่น',
                 iconCode: _trip,
-                subtitle: '1–9 พ.ย. · ใช้ไป ฿42,800 · ส่วนฉัน ฿10,700',
+                subtitle: '1–9 พ.ย. | ใช้ไป ฿42,800 | ส่วนฉัน ฿10,700',
                 amount: 8250,
                 tone: MoneyTone.income,
                 caption: 'รอรับ',
@@ -131,7 +131,7 @@ class _EventsPageState extends State<_EventsPage> {
               EventListRow(
                 name: 'งานสัมมนา',
                 iconCode: _work,
-                subtitle: '12–13 ก.ย. · ใช้ไป ฿11,800 · ส่วนฉัน ฿3,000',
+                subtitle: '12–13 ก.ย. | ใช้ไป ฿11,800 | ส่วนฉัน ฿3,000',
                 amount: 420,
                 tone: MoneyTone.expense,
                 caption: 'รอจ่าย',
@@ -141,13 +141,13 @@ class _EventsPageState extends State<_EventsPage> {
               EventListRow(
                 name: 'ปาร์ตี้ปีใหม่',
                 iconCode: _party,
-                subtitle: '10 ต.ค. · ใช้ไป ฿3,589 · ส่วนฉัน ฿3,589',
+                subtitle: '10 ต.ค. | ใช้ไป ฿3,589 | ส่วนฉัน ฿3,589',
                 onTap: () => _tapped('row: even'),
               ),
               const AppDivider.row(),
               const EventListRow(
                 name: 'ทริปภูเก็ต',
-                subtitle: '2–4 ส.ค. · ใช้ไป ฿9,000 · ส่วนฉัน ฿3,000',
+                subtitle: '2–4 ส.ค. | ใช้ไป ฿9,000 | ส่วนฉัน ฿3,000',
                 dimmed: true,
               ),
             ],
@@ -157,8 +157,8 @@ class _EventsPageState extends State<_EventsPage> {
           title: 'EventTagsSheet — จัดการแท็กอีเวนต์',
           note:
               'Presentational: every write is a callback (here: a log line). '
-              'Rows with a ⋯ menu (rename · icon / colour · import to my tags '
-              '· delete), "+ add", "import all". The name / icon / delete '
+              'Rows with a ⋯ menu (rename | icon / colour | import to my tags '
+              '| delete), "+ add", "import all". The name / icon / delete '
               'steps open from the sheet.',
           child: AppButton(
             label: 'เปิดชีต',
@@ -170,14 +170,14 @@ class _EventsPageState extends State<_EventsPage> {
                   EventTagItem(
                     id: 't1',
                     name: 'อาหาร',
-                    subtitle: '5 บิล · มีในแท็กของฉันแล้ว',
+                    subtitle: '5 บิล | มีในแท็กของฉันแล้ว',
                     canImport: false,
                   ),
                   EventTagItem(id: 't2', name: 'ที่พัก', subtitle: '2 บิล'),
                   EventTagItem(id: 't3', name: 'เดินทาง', subtitle: '0 บิล'),
                 ],
                 labels: const EventTagsLabels(
-                  title: 'แท็กอีเวนต์ · ใช้ร่วมกับสมาชิก',
+                  title: 'แท็กอีเวนต์ | ใช้ร่วมกับสมาชิก',
                   add: 'เพิ่มแท็กอีเวนต์',
                   importAll: 'นำเข้าทั้งหมดไปแท็กของฉัน',
                   rename: 'เปลี่ยนชื่อ',
@@ -212,7 +212,7 @@ class _EventsPageState extends State<_EventsPage> {
               '(SelectCheck look, not a selection); a marked row fades. '
               'Event tags ride on line 1 as mini chips, each its own tap '
               '(onTagTap gets the chip context, or tagAnchorBuilder wraps it '
-              'in a popover anchor). Line 2 = payer mark + name · date · '
+              'in a popover anchor). Line 2 = payer mark + name | date | '
               'summary, 🔗 when linked to my book. locked = inert + faded.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -397,7 +397,7 @@ class _EventsPageState extends State<_EventsPage> {
               for (final t in AppChipTone.values) (t.name, t),
             ], initial: AppChipTone.success),
             const PlayBool('statusDot', initialValue: true),
-            const PlayText('meta', initialValue: '4 คน · 1–5 ต.ค.'),
+            const PlayText('meta', initialValue: '4 คน | 1–5 ต.ค.'),
             const PlayNum('tags', min: 0, max: 3, initialValue: 1),
             const PlayBool('icon', initialValue: true),
             const PlayNum(

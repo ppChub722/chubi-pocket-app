@@ -153,17 +153,17 @@ Widget buildPeopleAccountsPage(BuildContext context) {
         uses: [
           // ── PersonMark: levels, sizes, slot, chips ──
           HubUse(
-            label: 'PersonMark · name — a typed name',
+            label: 'PersonMark | name — a typed name',
             page: 'Transaction detail splits',
             child: mark('ลี', PersonLevel.name),
           ),
           HubUse(
-            label: 'PersonMark · contact — own avatar',
+            label: 'PersonMark | contact — own avatar',
             page: 'Contact picker, Contact detail',
             child: mark('บี', PersonLevel.contact),
           ),
           HubUse(
-            label: 'PersonMark · linked — avatar + link badge',
+            label: 'PersonMark | linked — avatar + link badge',
             page: 'Contact picker, Contact detail',
             child: mark('ต้น', PersonLevel.linked),
           ),
@@ -244,7 +244,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
           ),
           HubUse(
             wide: true,
-            label: 'PersonMark in a chip — name · contact · linked',
+            label: 'PersonMark in a chip — name | contact | linked',
             page: 'Split / payer chips',
             child: const Wrap(
               spacing: AppSpacing.sm,
@@ -498,7 +498,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
             page: 'Transaction / debt / scheduled draft forms',
             child: WalletPickCard(
               account: shared,
-              label: 'Wallet · shared',
+              label: 'Wallet | shared',
               placeholder: 'Choose a wallet',
               onTap: () {},
             ),
@@ -509,7 +509,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
             page: 'Transaction / debt / scheduled draft forms',
             child: WalletPickCard(
               account: null,
-              label: 'Wallet · empty',
+              label: 'Wallet | empty',
               placeholder: 'Choose a wallet',
               onTap: () {},
             ),
@@ -520,7 +520,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
             page: 'Transaction draft form (save pressed)',
             child: WalletPickCard(
               account: null,
-              label: 'Wallet · error',
+              label: 'Wallet | error',
               placeholder: 'Choose a wallet',
               errorText: 'Required',
               onTap: () {},
@@ -672,7 +672,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
         ),
       ),
       HubPlayground(
-        title: 'AvatarStack · MemberStrip',
+        title: 'AvatarStack | MemberStrip',
         note:
             'AvatarStack: maxVisible and size. MemberStrip: avatarSize and '
             'onInvite (the dashed invite circle).',
@@ -776,7 +776,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
         ),
       ),
       HubPlayground(
-        title: 'BankMark · IdentifierRow',
+        title: 'BankMark | IdentifierRow',
         note:
             'BankMark: provider and size. IdentifierRow: kind, hidden, '
             'onDelete.',

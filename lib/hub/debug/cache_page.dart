@@ -269,7 +269,7 @@ class _CachePageState extends State<CachePage> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${e.count} · ${e.what}',
+                            '${e.count} | ${e.what}',
                             style: text.bodySmall?.copyWith(
                               color: scheme.onSurfaceVariant,
                             ),

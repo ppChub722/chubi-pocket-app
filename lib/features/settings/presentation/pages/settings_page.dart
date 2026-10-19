@@ -143,7 +143,7 @@ class SettingsPage extends StatelessWidget {
             [
               '@${user.username}',
               if (user.email?.isNotEmpty ?? false) user.email!,
-            ].join(' · '),
+            ].join(' | '),
           ),
         ),
       ],
@@ -404,7 +404,7 @@ class _CurrencyRowState extends State<_CurrencyRow> {
         for (final c in Currencies.codes)
           SheetOption(
             value: c,
-            label: '$c · ${Currencies.nameOf(l, c)}',
+            label: '$c | ${Currencies.nameOf(l, c)}',
             leading: SizedBox(
               width: 24,
               child: Text(Currencies.symbolOf(c), textAlign: TextAlign.center),
@@ -461,7 +461,7 @@ class _MoneyStyleRowState extends State<_MoneyStyleRow> {
       final s = current.copyWith(sign: sign);
       final income = moneyString(context, 1000);
       final expense = moneyString(context, 540);
-      return '${s.apply(income, negative: false)} · '
+      return '${s.apply(income, negative: false)} | '
           '${s.apply(expense, negative: true)}';
     }
 
@@ -529,7 +529,7 @@ class _MoneyDecimalsRowState extends State<_MoneyDecimalsRow> {
     final symbol = UiConfig.stringsOf(context).currencySymbol;
     String example(MoneyDecimals d) {
       final s = MoneyStyle(decimals: d);
-      return '${formatMoneyWith(s, 1000, symbol: symbol)} · '
+      return '${formatMoneyWith(s, 1000, symbol: symbol)} | '
           '${formatMoneyWith(s, 99.5, symbol: symbol)}';
     }
 

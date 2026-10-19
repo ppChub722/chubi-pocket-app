@@ -184,7 +184,7 @@ class _AccountsPageState extends State<AccountsPage> {
               isEmpty: accounts.isEmpty,
               onRetry: _refresh,
               skeletonShape: ListSkeletonShape.grid(
-                headerHeight: 168,
+                headerHeight: 192,
                 sortRow: true,
                 gridColumns: cols,
                 gridItemExtent: _cardExtent,
@@ -243,42 +243,43 @@ class _AccountsPageState extends State<AccountsPage> {
   String _money(BuildContext context, double v) =>
       moneyString(context, v == 0 ? 0 : v);
 
-  /// The two filter tiles — only with a card / pay-later wallet (without one
-  /// the cash tile would repeat the net).
+  /// Always all three, zeros included: ฿0 saved and ฿0 card debt are worth
+  /// seeing. available + saved − card debt = the net above them.
   List<SummaryTile> _tiles(
     BuildContext context,
     AppLocalizations l,
     AccountsState state,
   ) {
     final t = state.totals;
+    // Filtering by kind only means something when there are card wallets.
     final hasCards = t.byType.any((b) => b.type.isCredit && b.count > 0);
-    if (!hasCards) return const [];
-    final split = t.cashSplit.isEmpty
-        ? null
-        : t.cashSplit
-              .map((s) => '${accountTypeLabel(context, s.type)} ${s.pct}%')
-              .join(' · ');
+    final noDebt = t.cardDebt.abs() < 0.005;
     void toggle(_WalletTile v) => setState(() => _tile = _tile == v ? null : v);
     return [
       SummaryTile(
-        label: l.fpWalletsTileCash,
-        value: _money(context, t.cashTotal),
+        label: l.fpWalletsTileAvailable,
+        value: _money(context, t.availableTotal),
         tone: SummaryTileTone.green,
         selected: _tile == _WalletTile.cash,
-        onTap: () => toggle(_WalletTile.cash),
-        caption: split,
+        onTap: hasCards ? () => toggle(_WalletTile.cash) : null,
+      ),
+      SummaryTile(
+        label: l.walletSavingsSaved,
+        value: _money(context, t.savedTotal),
+        tone: SummaryTileTone.planning,
+        caption: t.savedTotal > 0 ? null : l.fpWalletsSaveStart,
+        onTap: () => _open(() => context.push('/saving-goals')),
       ),
       SummaryTile(
         label: l.accountsSummaryCardDebt,
         value: _money(context, t.cardDebt),
-        tone: SummaryTileTone.orange,
+        tone: noDebt ? SummaryTileTone.green : SummaryTileTone.orange,
         selected: _tile == _WalletTile.card,
-        onTap: () => toggle(_WalletTile.card),
-        caption: t.creditLimit > 0
-            ? l.accountsSummaryCreditUsed(
-                t.cardUsedPct,
-                _money(context, t.cardRemaining),
-              )
+        onTap: hasCards ? () => toggle(_WalletTile.card) : null,
+        caption: noDebt
+            ? l.fpWalletsNoCardDebt
+            : t.creditLimit > 0
+            ? l.fpWalletsCreditUsedPct(t.cardUsedPct)
             : null,
       ),
     ];
@@ -303,11 +304,19 @@ class _AccountsPageState extends State<AccountsPage> {
       open: _summaryOpen,
       header: HeroHeader(
         leading: [
-          HeroCaption(
-            '${l.accountsSummaryNet} · '
-            '${l.accountsSummaryWalletCount(state.accounts.length)}'
-            '${t.sharedCount > 0 ? ' ${l.accountsSummarySharedCount(t.sharedCount)}' : ''}',
+          HeroCaption(l.accountsSummaryNet),
+          const HeroCaption('|'),
+          _CountMark(
+            icon: AppIcons.wallet,
+            count: state.accounts.length,
+            label: l.accountsSummaryWalletCount(state.accounts.length),
           ),
+          if (t.sharedCount > 0)
+            _CountMark(
+              icon: AppIcons.link,
+              count: t.sharedCount,
+              label: l.fpWalletsSharedTooltip(t.sharedCount),
+            ),
         ],
         actions: [
           const MoneyVisibilityToggle(),
@@ -324,26 +333,14 @@ class _AccountsPageState extends State<AccountsPage> {
           ),
         ],
       ),
-      content: [
-        HeroNumber(value: net, layout: HeroNumberLayout.inline),
-        if (t.savedTotal > 0)
-          HeroNote(
-            child: Text(
-              l.fpWalletsSavedLine(
-                _money(context, t.savedTotal),
-                _money(context, t.availableTotal),
-              ),
-            ),
-          ),
-      ],
+      content: [HeroNumber(value: net, layout: HeroNumberLayout.inline)],
       folded: [
         HeroNumber(value: net, layout: HeroNumberLayout.inline, small: true),
       ],
       footer: [
-        if (tiles.isNotEmpty)
-          HeroTiles(
-            children: [for (final tile in tiles) SummaryTileView(tile: tile)],
-          ),
+        HeroTiles(
+          children: [for (final tile in tiles) SummaryTileView(tile: tile)],
+        ),
       ],
     );
   }
@@ -528,6 +525,45 @@ class _AccountsPageState extends State<AccountsPage> {
           onSave: () => _saveOrder(accounts),
         ),
       ],
+    );
+  }
+}
+
+/// An icon with a count beside it in the hero's caption line (👛 3, 🔗 1);
+/// [label] is what it means, for the tooltip and screen readers.
+class _CountMark extends StatelessWidget {
+  const _CountMark({
+    required this.icon,
+    required this.count,
+    required this.label,
+  });
+
+  final IconData icon;
+  final int count;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        label: label,
+        excludeSemantics: true,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppIcon(icon, size: AppIconSize.sm, color: color),
+            const SizedBox(width: AppSpacing.xxs),
+            Text(
+              '$count',
+              style: Theme.of(
+                context,
+              ).textTheme.labelLarge?.copyWith(color: color),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

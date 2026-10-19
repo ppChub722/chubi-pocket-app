@@ -60,7 +60,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
       title: delete
           ? 'Delete the linked item too?'
           : 'Update the other side too?',
-      message: 'This transaction is linked to "Netflix · 3/12".',
+      message: 'This transaction is linked to "Netflix | 3/12".',
       cancelLabel: 'Not now',
       thisSideLabel: delete ? 'Delete this side only' : 'Save this side only',
       bothSidesLabel: delete ? 'Delete both' : 'Save and update the other side',

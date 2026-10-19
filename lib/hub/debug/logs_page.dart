@@ -126,9 +126,9 @@ class _LogsViewerScreenState extends State<LogsViewerScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  '${config.env.wire.toUpperCase()} · '
-                  'min=${config.minLevel.wire} · '
-                  'bodies=${config.logBodies} · '
+                  '${config.env.wire.toUpperCase()} | '
+                  'min=${config.minLevel.wire} | '
+                  'bodies=${config.logBodies} | '
                   'file=${config.fileSink}'
                   '${_filePath != null ? "\n${_filePath!}" : ""}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(

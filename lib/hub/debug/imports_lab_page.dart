@@ -164,7 +164,7 @@ class _LabCard extends StatelessWidget {
                         if (ex.elapsed != null)
                           '${ex.elapsed!.inMilliseconds} ms',
                         ?ex.error,
-                      ].join(' · '),
+                      ].join(' | '),
                       style: textTheme.labelMedium,
                     ),
                   ),

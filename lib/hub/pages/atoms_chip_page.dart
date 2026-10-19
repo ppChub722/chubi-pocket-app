@@ -41,7 +41,7 @@ Widget buildChipPage(BuildContext context) => Column(
     const HubSubheading(
       'In the app',
       note:
-          'The three sizes (mini 20 · chip 28 · control 32) × every trailing, '
+          'The three sizes (mini 20 | chip 28 | control 32) × every trailing, '
           'unselected and selected.',
     ),
     const _SizeMatrix(),

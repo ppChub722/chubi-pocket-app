@@ -19,7 +19,7 @@ void main() {
         'focus-left',
         'focus-right',
       ]) {
-        testWidgets('${size.name} · ×$scale · $state', (t) async {
+        testWidgets('${size.name} | ×$scale | $state', (t) async {
           final left = TextEditingController();
           final right = TextEditingController();
           final leftFocus = FocusNode();

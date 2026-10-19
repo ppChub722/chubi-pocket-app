@@ -250,7 +250,7 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
           for (final (i, (title, description, list)) in groups.indexed)
             SectionCard(
               first: i == 0,
-              title: '$title · ${list.length}',
+              title: '$title | ${list.length}',
               description: description,
               children: [
                 for (final m in list)

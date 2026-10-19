@@ -13,7 +13,7 @@ void main() {
     'source_ref': ref,
   };
 
-  test('a recurring item: 🔁 Netflix · 3/12', () {
+  test('a recurring item: 🔁 Netflix | 3/12', () {
     final p = PendingTransaction.fromJson(
       row('recurring', {
         'item_id': 'i3',
@@ -25,7 +25,7 @@ void main() {
     expect(p.source, PendingSource.recurring);
     expect(p.source.isManual, isFalse);
     expect(p.recurringRef?.recurringId, 'r1');
-    expect(p.recurringRef?.label('Recurring'), 'Netflix · 3/12');
+    expect(p.recurringRef?.label('Recurring'), 'Netflix | 3/12');
   });
 
   test('a one-off upcoming item: no recurring, the fallback name', () {

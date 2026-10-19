@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../atoms/app_card.dart';
-import '../../molecules/selectable_frame.dart';
 import '../../tokens/app/app_colors.dart';
+import '../../tokens/app/module_colors.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 
-enum SummaryTileTone { neutral, green, amber, red, orange }
+enum SummaryTileTone { neutral, green, amber, red, orange, planning }
 
 @immutable
 class SummaryTile {
@@ -49,6 +49,7 @@ class SummaryTileView extends StatelessWidget {
       SummaryTileTone.amber => palette.warning,
       SummaryTileTone.red => palette.expense,
       SummaryTileTone.orange => Colors.deepOrange,
+      SummaryTileTone.planning => ModuleColors.of(context).planning,
     };
     final valueColor = tile.tone == SummaryTileTone.neutral
         ? scheme.onSurface
@@ -56,53 +57,55 @@ class SummaryTileView extends StatelessWidget {
     return Semantics(
       button: tile.onTap != null,
       selected: tile.selected,
-      child: SelectableFrame(
+      // Selected = the card's own edge turns primary; no ring around it, so
+      // the tile keeps the same edges and gaps whether chosen or not.
+      child: AppCard(
+        key: ValueKey('summaryTile:${tile.label}'),
+        style: AppCardStyle.tinted,
+        color: color,
         selected: tile.selected,
-        radius: AppRadius.md,
-        gap: 2,
-        child: AppCard(
-          key: ValueKey('summaryTile:${tile.label}'),
-          style: AppCardStyle.tinted,
-          color: color,
-          radius: BorderRadius.circular(AppRadius.md),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm,
-            vertical: AppSpacing.md,
-          ),
-          onTap: tile.onTap,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                tile.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: textTheme.labelMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
+        radius: BorderRadius.circular(AppRadius.md),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.md,
+        ),
+        onTap: tile.onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              tile.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.labelMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
               ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            // A long amount shrinks to fit a narrow tile instead of "…".
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
                 tile.value,
                 maxLines: 1,
-                overflow: TextOverflow.ellipsis,
                 style: textTheme.titleMedium?.copyWith(
                   color: valueColor,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              if (tile.caption != null)
-                Text(
-                  tile.caption!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
+            ),
+            if (tile.caption != null)
+              Text(
+                tile.caption!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );

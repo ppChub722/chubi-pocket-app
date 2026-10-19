@@ -303,7 +303,7 @@ class _NetWorthCard extends StatelessWidget {
               Text('${l.homeAssets} ', style: muted),
               MoneyText(netWorth.assets, style: muted),
               if (netWorth.liabilities > 0) ...[
-                Text('  ·  ${l.homeLiabilities} ', style: muted),
+                Text('  |  ${l.homeLiabilities} ', style: muted),
                 MoneyText(netWorth.liabilities, style: muted),
               ],
               const Spacer(),
@@ -427,7 +427,7 @@ class _UpcomingCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.sm),
         onTap: () => openPage(
           context,
-          isCard ? '/accounts/${item.id}' : '/recurring?tab=upcoming',
+          isCard ? '/accounts/${item.id}' : '/recurring/items/${item.id}',
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1048,7 +1048,7 @@ class _DraftsCard extends StatelessWidget {
           ],
           Text(
             total > 2
-                ? '${l.pendingBlockMore(total - 2)} · ${l.pendingNotCounted}'
+                ? '${l.pendingBlockMore(total - 2)} | ${l.pendingNotCounted}'
                 : l.pendingNotCounted,
             style: textTheme.labelSmall?.copyWith(
               color: scheme.onSurfaceVariant,

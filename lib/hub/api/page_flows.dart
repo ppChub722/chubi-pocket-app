@@ -643,6 +643,18 @@ const List<PageFlow> pageFlows = [
       FlowCall('unlinkRecurringItem'),
     ]),
   ]),
+  PageFlow('recurring-item', 'One recurring item: view, edit, act on it.', [
+    FlowStep.open([FlowCall('getRecurringItem')]),
+    FlowStep.action('Button "บันทึก"', [FlowCall('updateRecurringItem')]),
+    FlowStep.action('ส่งเข้ารอยืนยันเลย / สร้างใหม่', [
+      FlowCall('createFromRecurringItem'),
+    ]),
+    FlowStep.action('เก็บถาวร / กู้คืน', [
+      FlowCall('archiveRecurringItem'),
+      FlowCall('restoreRecurringItem'),
+    ]),
+    FlowStep.action('Button "ลบรายการนี้"', [FlowCall('deleteRecurringItem')]),
+  ]),
   PageFlow('recurring-duplicate', 'Copy a recurring (edit mode end zone).', [
     FlowStep.action('Button "ทำสำเนา"', [FlowCall('duplicateRecurring')]),
   ]),

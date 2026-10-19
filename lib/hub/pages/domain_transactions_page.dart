@@ -353,7 +353,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
         HubDemo(
           title: 'EntryCard — quick create / pending drafts',
           note:
-              'ONE card for what you fill in first: type · date, description · '
+              'ONE card for what you fill in first: type | date, description | '
               'amount, the wallet chip row and the category chip row (a '
               'transfer: from / to wallet rows, no category). The tags row sits '
               'outside, right below. The first chip of a row is the pick chip: dashed '
@@ -528,7 +528,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 inline: true,
                 onTypeChanged: (_) {},
                 amountNote: Text(
-                  'Your share ฿625 · others owe ฿625',
+                  'Your share ฿625 | others owe ฿625',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
@@ -548,7 +548,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
           ),
         ),
         HubDemo(
-          title: 'txTypeChip · categoryAppChip · tagAppChip',
+          title: 'txTypeChip | categoryAppChip | tagAppChip',
           note: 'Chip builders — one tap target each, control height.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -708,7 +708,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                     'with event',
                     false,
                     const SplitEventSlot(
-                      name: 'Trip · 12 Oct',
+                      name: 'Trip | 12 Oct',
                       onTap: _noop,
                       onClear: _noop,
                     ),
@@ -716,7 +716,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   (
                     'locked event',
                     false,
-                    const SplitEventSlot(name: 'Trip · 12 Oct', locked: true),
+                    const SplitEventSlot(name: 'Trip | 12 Oct', locked: true),
                   ),
                 ]) ...[
                   Text(label, style: Theme.of(context).textTheme.bodySmall),

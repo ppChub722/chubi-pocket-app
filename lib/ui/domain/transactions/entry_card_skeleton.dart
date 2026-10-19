@@ -37,6 +37,7 @@ class EntryCardSkeleton extends StatelessWidget {
         rows: [
           Row(children: [pill(width: 168), const Spacer(), pill(width: 96)]),
           HeroFields(
+            gapBefore: editing ? AppSpacing.sm : 0,
             start: SizedBox(
               height: field,
               child: const Column(
@@ -63,7 +64,7 @@ class EntryCardSkeleton extends StatelessWidget {
           ),
           if (rows > 0)
             Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.sm),
+              padding: const EdgeInsets.only(top: AppSpacing.md),
               child: Column(
                 children: [
                   for (var i = 0; i < rows; i++) ...[

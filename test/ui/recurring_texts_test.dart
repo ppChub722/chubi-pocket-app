@@ -43,11 +43,11 @@ void main() {
     test('with the short date (year only when not this year)', () {
       expect(
         thDue(DateTime(2026, 11, 3), withDate: true),
-        'อีก 21 วัน · 3 พ.ย.',
+        'อีก 21 วัน | 3 พ.ย.',
       );
       expect(
         thDue(DateTime(2027, 1, 2), withDate: true),
-        startsWith('อีก 81 วัน · 2 ม.ค.'),
+        startsWith('อีก 81 วัน | 2 ม.ค.'),
       );
     });
 
@@ -61,7 +61,7 @@ void main() {
       expect(d(DateTime(2026, 10, 11)), '2 days overdue');
       expect(
         dueLabel(en, date: DateTime(2026, 11, 3), today: today),
-        'in 21 days · Nov 3',
+        'in 21 days | Nov 3',
       );
     });
   });
@@ -101,7 +101,7 @@ void main() {
       );
       expect(
         t(r(RecurrenceFreq.weekly, interval: 2, weekdays: {1})),
-        'ทุก 2 สัปดาห์ · วันจันทร์',
+        'ทุก 2 สัปดาห์ | วันจันทร์',
       );
       expect(t(r(RecurrenceFreq.monthly)), 'ทุกวันที่ 3');
       expect(
@@ -115,7 +115,7 @@ void main() {
       );
       expect(
         t(r(RecurrenceFreq.monthly, interval: 3)),
-        'ทุก 3 เดือน · วันที่ 3',
+        'ทุก 3 เดือน | วันที่ 3',
       );
       expect(
         t(
@@ -146,10 +146,10 @@ void main() {
             monthly: const RecurrenceMonthly.onWeekday(nth: 2, weekday: 1),
           ),
         ),
-        'ทุก 2 เดือน · วันจันทร์ที่ 2',
+        'ทุก 2 เดือน | วันจันทร์ที่ 2',
       );
       expect(t(r(RecurrenceFreq.yearly)), 'ทุกปี 3 ต.ค.');
-      expect(t(r(RecurrenceFreq.yearly, interval: 2)), 'ทุก 2 ปี · 3 ต.ค.');
+      expect(t(r(RecurrenceFreq.yearly, interval: 2)), 'ทุก 2 ปี | 3 ต.ค.');
       expect(
         t(
           r(
@@ -169,11 +169,11 @@ void main() {
       );
       expect(
         recurrenceLabel(th, monthly, seq: 4, total: 12),
-        'ทุกวันที่ 3 · 4/12',
+        'ทุกวันที่ 3 | 4/12',
       );
       expect(
         recurrenceLabel(th, monthly, showEnd: true),
-        'ทุกวันที่ 3 · 12 ครั้ง',
+        'ทุกวันที่ 3 | 12 ครั้ง',
       );
       expect(
         recurrenceLabel(
@@ -184,7 +184,7 @@ void main() {
           ),
           showEnd: true,
         ),
-        startsWith('ทุกวันที่ 3 · ถึง 3 ต.ค.'),
+        startsWith('ทุกวันที่ 3 | ถึง 3 ต.ค.'),
       );
       // never → no suffix; only seq (no total) → no progress.
       expect(
@@ -204,7 +204,7 @@ void main() {
       );
       expect(
         t(r(RecurrenceFreq.weekly, interval: 2, weekdays: {1, 3})),
-        'Every 2 weeks · Monday and Wednesday',
+        'Every 2 weeks | Monday and Wednesday',
       );
       expect(t(r(RecurrenceFreq.monthly)), 'Monthly on day 3');
       expect(
@@ -228,7 +228,7 @@ void main() {
       expect(t(r(RecurrenceFreq.yearly)), 'Every year on Oct 3');
       expect(
         t(r(RecurrenceFreq.dates, dates: [start, start])),
-        'Custom · 2 dates',
+        'Custom | 2 dates',
       );
       expect(
         recurrenceLabel(
@@ -238,7 +238,7 @@ void main() {
           seq: 4,
           total: 12,
         ),
-        'Monthly on day 3 · 12 times · 4/12',
+        'Monthly on day 3 | 12 times | 4/12',
       );
     });
   });
@@ -306,7 +306,7 @@ void main() {
       Color? colorOf(String prefix) =>
           t.widget<Text>(find.textContaining(prefix).first).style?.color;
       final texts = t.widgetList<Text>(find.byType(Text)).toList();
-      expect(texts[0].data, 'เลยกำหนด 2 วัน · 11 ต.ค.');
+      expect(texts[0].data, 'เลยกำหนด 2 วัน | 11 ต.ค.');
       expect(texts[0].style?.color, danger);
       expect(colorOf('อีก 3 วัน'), isNot(danger));
       expect(texts[2].style?.color, isNot(danger));
@@ -324,7 +324,7 @@ void main() {
           total: 12,
         ),
       );
-      expect(find.text('ทุกวันที่ 3 · 4/12'), findsOneWidget);
+      expect(find.text('ทุกวันที่ 3 | 4/12'), findsOneWidget);
     });
 
     testWidgets('hub page builds, playground opens, no layout errors', (
@@ -361,7 +361,7 @@ void main() {
         ),
       );
       await t.pump(const Duration(milliseconds: 100));
-      const title = 'Customize · RecurrenceText';
+      const title = 'Customize | RecurrenceText';
       await t.ensureVisible(find.text(title));
       await t.tap(find.text(title));
       await t.pumpAndSettle();

@@ -124,6 +124,89 @@ class _PopoverItem extends StatelessWidget {
   }
 }
 
+/// A dropdown's "type your own value" entry: the menu's last row, drawn as an
+/// empty input box so it reads as "you can type here". Choosing it calls
+/// [onChoose]; the trigger then turns into a real field (see SettingMenuRow).
+class OptionMenuCustom {
+  const OptionMenuCustom({
+    required this.hint,
+    required this.onChoose,
+    this.suffix,
+    this.selectedLabel,
+  });
+
+  final String hint;
+  final String? suffix;
+  final VoidCallback onChoose;
+
+  /// The current value when it is none of the options (e.g. "85%"): shown in
+  /// the box, marked chosen.
+  final String? selectedLabel;
+}
+
+class _PopoverCustomItem extends StatelessWidget {
+  const _PopoverCustomItem(this.custom);
+
+  final OptionMenuCustom custom;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme.bodyMedium;
+    final chosen = custom.selectedLabel;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs + 2,
+        vertical: 2,
+      ),
+      child: MenuItemButton(
+        onPressed: custom.onChoose,
+        style: ButtonStyle(
+          minimumSize: const WidgetStatePropertyAll(Size(140, 44)),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+          ),
+        ),
+        child: Container(
+          constraints: const BoxConstraints(minWidth: 112, minHeight: 36),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          decoration: BoxDecoration(
+            color: scheme.surface,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(
+              color: chosen != null ? scheme.primary : scheme.outline,
+              width: chosen != null ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                chosen ?? custom.hint,
+                style: chosen != null
+                    ? text?.copyWith(
+                        color: scheme.primary,
+                        fontWeight: FontWeight.w600,
+                      )
+                    : text?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+              if (chosen == null && custom.suffix != null) ...[
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  custom.suffix!,
+                  style: text?.copyWith(color: scheme.onSurfaceVariant),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class OptionMenuAnchor<T> extends StatelessWidget {
   const OptionMenuAnchor({
     required this.options,
@@ -131,6 +214,7 @@ class OptionMenuAnchor<T> extends StatelessWidget {
     required this.builder,
     this.selected,
     this.title,
+    this.custom,
     super.key,
   });
 
@@ -141,8 +225,12 @@ class OptionMenuAnchor<T> extends StatelessWidget {
 
   final String? title;
 
+  /// Ends the menu with a "type your own" box.
+  final OptionMenuCustom? custom;
+
   @override
   Widget build(BuildContext context) {
+    final custom = this.custom;
     return MenuAnchor(
       style: _menuStyle(context),
       consumeOutsideTap: true,
@@ -155,6 +243,10 @@ class OptionMenuAnchor<T> extends StatelessWidget {
             selected: o.value == selected,
             onPressed: () => onSelected(o.value),
           ),
+        if (custom != null) ...[
+          const AppDivider(height: AppSpacing.sm),
+          _PopoverCustomItem(custom),
+        ],
       ],
       builder: (context, controller, _) =>
           builder(context, () => _toggle(controller)),

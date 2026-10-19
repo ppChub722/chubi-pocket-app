@@ -123,7 +123,7 @@ class _MoneyPageState extends State<_MoneyPage> {
                   caption: d.name,
                   child: Text(
                     '${formatMoneyWith(MoneyStyle(decimals: d), 1000, symbol: '฿')}'
-                    ' · ${formatMoneyWith(MoneyStyle(decimals: d), 99.5, symbol: '฿')}',
+                    ' | ${formatMoneyWith(MoneyStyle(decimals: d), 99.5, symbol: '฿')}',
                   ),
                 ),
             ],

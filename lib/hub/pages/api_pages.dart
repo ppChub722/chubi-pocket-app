@@ -272,8 +272,8 @@ class _CoverageCard extends StatelessWidget {
           ],
           const SizedBox(height: AppSpacing.sm),
           _Muted(
-            '${flows.length} pages · $overOpen over the '
-            '1-call-on-open target · $breaking endpoints marked breaking',
+            '${flows.length} pages | $overOpen over the '
+            '1-call-on-open target | $breaking endpoints marked breaking',
           ),
         ],
       ),
@@ -505,7 +505,7 @@ class _EndpointDetail extends StatelessWidget {
           if (e.summary != null)
             Text(e.summary!, style: Theme.of(context).textTheme.titleSmall),
           Text(
-            '${e.method} ${e.path} · ${e.module}',
+            '${e.method} ${e.path} | ${e.module}',
             style: _mono(context, size: 12),
           ),
           if (e.breaking != null && e.breaking!.isNotEmpty) ...[

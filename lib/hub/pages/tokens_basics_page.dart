@@ -35,7 +35,7 @@ Widget buildSpacingPage(BuildContext context) {
                     SizedBox(
                       width: 72,
                       child: AppText(
-                        '$name · ${v.toInt()}',
+                        '$name | ${v.toInt()}',
                         role: AppTextRole.caption,
                       ),
                     ),
@@ -104,7 +104,7 @@ Widget buildRadiusDurationPage(BuildContext context) {
           cells: [
             for (final (name, r) in radii)
               HubCell(
-                caption: '$name · ${r.toInt()}',
+                caption: '$name | ${r.toInt()}',
                 child: Container(
                   width: 64,
                   height: 40,
@@ -166,7 +166,7 @@ class _DurationBarState extends State<_DurationBar> {
             SizedBox(
               width: 110,
               child: AppText(
-                '${widget.name} · ${widget.duration.inMilliseconds} ms',
+                '${widget.name} | ${widget.duration.inMilliseconds} ms',
                 role: AppTextRole.caption,
               ),
             ),
@@ -206,14 +206,14 @@ Widget buildSizesPage(BuildContext context) {
       HubDemo(
         title: 'ChipSize — the three chip sizes',
         note:
-            'mini 20 · dense list rows. chip 28 · display chips in cards, '
-            'rows and detail sections. control 36 · anything the user '
+            'mini 20 | dense list rows. chip 28 | display chips in cards, '
+            'rows and detail sections. control 36 | anything the user '
             'operates, and every chip in a hero’s top row. One control height (36, from ControlSizes in the theme) across the app: control chips, ✏️ / top-bar buttons, the search capsule, top-bar pills, hero controls, dense inputs.',
         child: HubRow(
           cells: [
             for (final s in ChipSize.values)
               HubCell(
-                caption: '${s.name} · ${s.heightOf(context).toInt()}',
+                caption: '${s.name} | ${s.heightOf(context).toInt()}',
                 child: AppChip(label: 'Label', icon: AppIcons.tag, size: s),
               ),
           ],
@@ -221,7 +221,7 @@ Widget buildSizesPage(BuildContext context) {
       ),
       HubDemo(
         title: 'AppIconSize',
-        note: 'xs 12 · sm 16 · md 20 · lg 24 · xl 32 · hero 56.',
+        note: 'xs 12 | sm 16 | md 20 | lg 24 | xl 32 | hero 56.',
         child: HubRow(
           cells: [
             for (final (name, v) in <(String, double)>[
@@ -233,7 +233,7 @@ Widget buildSizesPage(BuildContext context) {
               ('hero', AppIconSize.hero),
             ])
               HubCell(
-                caption: '$name · ${v.toInt()}',
+                caption: '$name | ${v.toInt()}',
                 child: AppIcon(AppIcons.wallet, size: v, color: scheme.primary),
               ),
           ],

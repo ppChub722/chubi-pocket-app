@@ -66,7 +66,7 @@ String _kindLine(
       bank.label(lang)
     else if (identifierHasBank(id.kind))
       ?id.bankCode,
-  ].join(' · ');
+  ].join(' | ');
 }
 
 class IdentifierRow extends StatelessWidget {

@@ -89,19 +89,19 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
   ];
 
   static const _selectSpecs = [
-    _SelectSpec('Row · expense picked', 0, true, null, 2),
-    _SelectSpec('Row · income picked', 1, true, null, 2),
-    _SelectSpec('Row · transfer picked (neutral)', 2, true, null, 2, from: 2),
-    _SelectSpec('Row · primary picked', 3, true, null, 2, from: 2),
+    _SelectSpec('Row | expense picked', 0, true, null, 2),
+    _SelectSpec('Row | income picked', 1, true, null, 2),
+    _SelectSpec('Row | transfer picked (neutral)', 2, true, null, 2, from: 2),
+    _SelectSpec('Row | primary picked', 3, true, null, 2, from: 2),
     _SelectSpec(
-      'Columns · expense / income / transfer / primary',
+      'Columns | expense / income / transfer / primary',
       2,
       true,
       2,
       4,
     ),
     _SelectSpec('Disabled + picked (read-only)', 0, false, null, 2),
-    _SelectSpec('Disabled + picked · columns', 3, false, 2, 4),
+    _SelectSpec('Disabled + picked | columns', 3, false, 2, 4),
   ];
 
   Widget _selectPair(_SelectSpec spec) => SelectCardGroup<int>(
@@ -133,7 +133,7 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                '3 lines — empty · picked · error',
+                '3 lines — empty | picked | error',
                 style: Theme.of(context).textTheme.labelMedium,
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -165,7 +165,7 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
-                '2 lines (plain) — empty · picked · error',
+                '2 lines (plain) — empty | picked | error',
                 style: Theme.of(context).textTheme.labelMedium,
               ),
               const SizedBox(height: AppSpacing.xs),

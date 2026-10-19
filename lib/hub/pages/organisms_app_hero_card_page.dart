@@ -109,7 +109,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
           label: 'Spent',
           value: const Text('฿5,100'),
           color: _red,
-          target: '/ ฿8,000 · 64%',
+          target: '/ ฿8,000 | 64%',
         ),
       if (!editing) HeroBar(value: 0.64, color: _red, left: '12 days left'),
       if (!editing && v<bool>('alert'))
@@ -162,7 +162,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
         HubPlayground(
           title: 'AppHeroCard',
           note:
-              'header · content · footer. The card adds ✏️ (view only) and '
+              'header | content | footer. The card adds ✏️ (view only) and '
               '⌄ / ⌃ (both versions) to the header itself; spacing comes '
               'from HeroMetrics in the theme.',
           controls: [
@@ -235,7 +235,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
         HubDemo(
           title: 'Entry — two fields on one row',
           note:
-              'content: HeroFields (description · amount, fixed-height '
+              'content: HeroFields (description | amount, fixed-height '
               'inputs, no extra gap). footer: two pick cards.',
           child: AppHeroCard(
             style: HeroStyle.tinted(color: _red),
@@ -360,7 +360,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               HubCell(
-                caption: 'HeroNumber · stacked',
+                caption: 'HeroNumber | stacked',
                 child: HeroNumber(
                   label: 'Spent',
                   value: const Text('฿5,100'),
@@ -369,7 +369,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                 ),
               ),
               HubCell(
-                caption: 'HeroNumber · inline',
+                caption: 'HeroNumber | inline',
                 child: HeroNumber(
                   label: 'Net',
                   value: const Text('+฿4,190'),
@@ -379,7 +379,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                 ),
               ),
               HubCell(
-                caption: 'HeroNumber · inline · small',
+                caption: 'HeroNumber | inline | small',
                 child: HeroNumber(
                   label: 'Net',
                   value: const Text('+฿4,190'),
@@ -389,7 +389,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                 ),
               ),
               HubCell(
-                caption: 'HeroBar · split',
+                caption: 'HeroBar | split',
                 child: HeroBar.split(
                   parts: [(0.5, _green), (0.3, _red)],
                   left: 'Paid',
@@ -409,14 +409,14 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
               ),
               const HubCell(
                 caption: 'HeroCaption',
-                child: HeroCaption('Net · 4 wallets · 1 shared'),
+                child: HeroCaption('Net | 4 wallets | 1 shared'),
               ),
               HubCell(
                 caption: 'HeroNote',
                 child: HeroNote(
                   alignment: AlignmentDirectional.centerEnd,
                   onTap: () {},
-                  child: const Text('Your share ฿600 · others owe ฿650'),
+                  child: const Text('Your share ฿600 | others owe ฿650'),
                 ),
               ),
               HubCell(
@@ -443,8 +443,8 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
               HubCell(
                 caption: 'MessageShareBox',
                 child: MessageShareBox(
-                  text: 'Summary with Chalee · 17 Oct you paid +1,232',
-                  label: 'Summary message · edit before sending',
+                  text: 'Summary with Chalee | 17 Oct you paid +1,232',
+                  label: 'Summary message | edit before sending',
                   copyLabel: 'Copy',
                   shareLabel: 'Share',
                   onCopy: (_) {},

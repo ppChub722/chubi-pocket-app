@@ -278,6 +278,9 @@ class TransactionHeroCard extends StatelessWidget {
       if (dateNote != null)
         HeroNote(alignment: AlignmentDirectional.centerEnd, child: dateNote!),
       HeroFields(
+        // With labels above the inputs, give the labels the same air under
+        // the chips as the other rows get (the label row adds ~4 itself).
+        gapBefore: editing ? AppSpacing.sm : 0,
         start: titleCell,
         end: amountField(align: TextAlign.end),
         onEndAreaTap: editing && amountFocus != null
@@ -341,7 +344,7 @@ class TransactionHeroCard extends StatelessWidget {
       footer: [
         if (inline && footer != null)
           Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            padding: const EdgeInsets.only(top: AppSpacing.md),
             child: footer,
           ),
       ],

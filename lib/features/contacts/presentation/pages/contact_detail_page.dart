@@ -248,7 +248,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     final ok = await showConfirmDialog(
       context,
       title: l.contactDeleteTitle(c.name),
-      message: parts.isEmpty ? l.contactDeleteBody : parts.join(' · '),
+      message: parts.isEmpty ? l.contactDeleteBody : parts.join(' | '),
       confirmLabel: l.commonDelete,
       destructive: true,
     );

@@ -54,7 +54,7 @@ class _BlocksPageState extends State<_BlocksPage> {
           note:
               '2–4 EQUAL-width buttons in one row under a hero: control height '
               '40, icon + short label; one can be primary (filled), the rest '
-              'tonal. Used by the wallet (adjust balance · add transaction · '
+              'tonal. Used by the wallet (adjust balance | add transaction | '
               'transfer).',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -93,7 +93,7 @@ class _BlocksPageState extends State<_BlocksPage> {
           note:
               'The select-mode bar at the top of a list: [☐ n/N] the select-all, '
               'the bulk actions (dimmed until something is selected), the red '
-              'trash at the end. Not ModeActionBar (the bottom Cancel · Save). '
+              'trash at the end. Not ModeActionBar (the bottom Cancel | Save). '
               'Used by tags (edit), pending, and every multi-select list.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -307,7 +307,7 @@ class _ScrimPhone extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '${dark ? 'dark' : 'light'} · ${detail ? 'detail' : 'list'}',
+                '${dark ? 'dark' : 'light'} | ${detail ? 'detail' : 'list'}',
                 style: Theme.of(context).textTheme.labelMedium,
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -339,7 +339,7 @@ class _ScrimPhone extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  detail ? 'ชื่อที่แสดง · row $i' : 'row $i',
+                                  detail ? 'ชื่อที่แสดง | row $i' : 'row $i',
                                 ),
                               ),
                           ],

@@ -38,10 +38,10 @@ void main() {
     await t.pump();
   }
 
-  testWidgets('description · category chip, amount on the right', (t) async {
+  testWidgets('description | category chip, amount on the right', (t) async {
     await pump(t, description: 'ข้าวมันไก่', category: 'อาหาร');
     expect(find.text('ข้าวมันไก่'), findsOneWidget);
-    expect(find.text('·'), findsOneWidget);
+    expect(find.text('|'), findsOneWidget);
     expect(find.widgetWithText(AppChip, 'อาหาร'), findsOneWidget);
     // No type chip.
     expect(find.text('รายจ่าย'), findsNothing);
@@ -50,7 +50,7 @@ void main() {
   testWidgets('no description: the category is the title, no chip', (t) async {
     await pump(t, description: '  ', category: 'อาหาร');
     expect(find.text('อาหาร'), findsOneWidget);
-    expect(find.text('·'), findsNothing);
+    expect(find.text('|'), findsNothing);
     expect(find.byType(AppChip), findsNothing);
   });
 

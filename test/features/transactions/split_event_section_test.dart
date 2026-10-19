@@ -58,12 +58,12 @@ void main() {
         first: true,
         collapsible: true,
         initiallyOpen: false,
-        summary: 'แบ่ง 2 คน · ทริป',
+        summary: 'แบ่ง 2 คน | ทริป',
         splits: splits,
         event: SplitEventSlot(name: 'ทริป'),
       ),
     );
-    expect(find.text('แบ่ง 2 คน · ทริป'), findsOneWidget);
+    expect(find.text('แบ่ง 2 คน | ทริป'), findsOneWidget);
     expect(find.text('อีเวนต์'), findsNothing);
     expect(
       find.text('แบ่งยอด ใส่ในอีเวนต์ หรือผูกกับรายการประจำ'),

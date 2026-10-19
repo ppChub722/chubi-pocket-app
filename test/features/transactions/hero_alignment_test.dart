@@ -20,7 +20,7 @@ void main() {
     for (final lang in const ['th', 'en']) {
       for (final scale in const [1.0, 1.3]) {
         for (final state in _State.values) {
-          testWidgets('${which.name} · $lang · ×$scale · ${state.name}', (
+          testWidgets('${which.name} | $lang | ×$scale | ${state.name}', (
             t,
           ) async {
             final amount = TextEditingController();

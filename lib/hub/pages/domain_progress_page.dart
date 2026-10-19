@@ -111,14 +111,14 @@ class _ProgressPage extends StatelessWidget {
                   )
                 : ProgressCard(
                     title: 'อาหาร',
-                    caption: 'รายเดือน · 1–31 ต.ค. · เหลือ 24 วัน',
+                    caption: 'รายเดือน | 1–31 ต.ค. | เหลือ 24 วัน',
                     iconCode: v<bool>('icon') ? entity : null,
                     fallbackIcon: v<bool>('icon') ? Icons.restaurant : null,
                     value: used,
                     expected: exp,
                     tone: tone,
                     badge: badge,
-                    label: 'ใช้ ฿3,120 จาก ฿8,000 · คาด +฿720',
+                    label: 'ใช้ ฿3,120 จาก ฿8,000 | คาด +฿720',
                     overLabel: v<bool>('overLabel') ? 'เกินงบ ฿860' : null,
                     percentText: '${(used * 100).round()}%',
                     dimmed: v<bool>('dimmed'),
@@ -136,7 +136,7 @@ class _ProgressPage extends StatelessWidget {
             children: [
               ProgressCard(
                 title: 'ช้อปปิ้งออนไลน์',
-                caption: 'รายเดือน · 1–31 ต.ค.',
+                caption: 'รายเดือน | 1–31 ต.ค.',
                 fallbackIcon: Icons.shopping_bag_outlined,
                 value: 1.22,
                 tone: ProgressTone.danger,
@@ -193,7 +193,7 @@ class _ProgressPage extends StatelessWidget {
                 expected: 0.08,
                 label: 'ใช้แล้ว',
                 percentText: '62%',
-                footnote: 'เหลือ ฿7,600 · เกิน 1 งบ',
+                footnote: 'เหลือ ฿7,600 | เกิน 1 งบ',
               ),
               const SizedBox(height: AppSpacing.lg),
               const ProgressSummary.skeleton(),
@@ -219,7 +219,7 @@ class _ProgressPage extends StatelessWidget {
                 child: ProgressHeroFooter(
                   caption: 'ใช้ไปแล้ว',
                   amount: 3120,
-                  subCaption: 'จาก ฿8,000 · เหลือ ฿4,880',
+                  subCaption: 'จาก ฿8,000 | เหลือ ฿4,880',
                   value: 0.39,
                   expected: 0.09,
                   color: Colors.orange,
@@ -257,7 +257,7 @@ class _ProgressPage extends StatelessWidget {
                 color: Colors.orange,
               ),
               const BreakdownRow(
-                label: 'รายการประจำ · ล่วงหน้า',
+                label: 'รายการประจำ | ล่วงหน้า',
                 caption: '1 รายการ',
                 amount: 450,
                 expected: true,

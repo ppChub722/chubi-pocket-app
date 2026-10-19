@@ -37,7 +37,7 @@ class SummaryStats extends StatelessWidget {
                     horizontal: AppSpacing.sm,
                   ),
                   child: Text(
-                    '·',
+                    '|',
                     style: textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),

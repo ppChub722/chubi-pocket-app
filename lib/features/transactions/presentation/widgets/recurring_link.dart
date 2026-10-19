@@ -327,7 +327,7 @@ class _RecurringLinkSheetState extends State<_RecurringLinkSheet> {
       id: o.itemId,
       title: s.name,
       subtitle:
-          '${recurrenceLabel(l, s.rule)} · ${recurringPeriodLabel(l, o.date)} $status',
+          '${recurrenceLabel(l, s.rule)} | ${recurringPeriodLabel(l, o.date)} $status',
       leading: c.isReminder
           ? const AppIcon(AppIcons.notifications)
           : IconDisplay(

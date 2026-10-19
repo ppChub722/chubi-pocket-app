@@ -147,7 +147,7 @@ class _EventTargetLoaderState extends State<_EventTargetLoader> {
       if (p.membersCount > 0) l.walletMembersCount(p.membersCount),
       if (from != null && to != null && from != to) '$from – $to' else ?from,
     ];
-    return parts.isEmpty ? null : parts.join(' · ');
+    return parts.isEmpty ? null : parts.join(' | ');
   }
 
   @override

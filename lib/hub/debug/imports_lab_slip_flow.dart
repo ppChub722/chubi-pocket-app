@@ -184,7 +184,7 @@ class _SlipFlowCardState extends State<_SlipFlowCard> {
               _Step(
                 n: 3,
                 title:
-                    'Result — ${_new.length} new · ${_seen.length} already scanned',
+                    'Result — ${_new.length} new | ${_seen.length} already scanned',
               ),
               for (final f in sent ?? const <String>[])
                 _FileLine(
@@ -222,7 +222,7 @@ class _SlipFlowCardState extends State<_SlipFlowCard> {
                     ),
                   ),
                   subtitle: Text(
-                    'HTTP ${u.exchange.status ?? '—'} · '
+                    'HTTP ${u.exchange.status ?? '—'} | '
                     '${u.exchange.elapsed?.inMilliseconds ?? '—'} ms',
                   ),
                   children: [
@@ -342,7 +342,7 @@ class _Status extends StatelessWidget {
                 'HTTP ${exchange.status ?? '—'}',
                 if (elapsed != null) '${elapsed.inMilliseconds} ms',
                 ?exchange.error,
-              ].join(' · '),
+              ].join(' | '),
               style: Theme.of(context).textTheme.labelMedium,
             ),
           ),

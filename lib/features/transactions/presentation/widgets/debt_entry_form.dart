@@ -37,24 +37,34 @@ class DebtPick {
       DebtPick(key: key, person: person, net: n, typedName: typedName);
 }
 
-/// The person card's third line: what is open with them right now.
+/// The person card's third line: what is open with them right now, the amount
+/// coloured like the debts page (green = owed to me, red = I owe).
 Widget? debtNetSubtitle(
   BuildContext context,
   AppLocalizations l,
   double? net,
 ) {
   if (net == null) return null;
+  if (net.abs() <= 0.004) return Text(l.debtSettledLabel);
+  final owedToMe = net > 0;
+  final palette = Theme.of(context).extension<AppColors>()!;
   final money = moneyString(
     context,
     net.abs(),
     symbol: debtCurrencySymbol(context),
   );
-  return Text(
-    net > 0.004
-        ? '${l.debtsOwedToMe} $money'
-        : net < -0.004
-        ? '${l.debtsIOwe} $money'
-        : l.debtSettledLabel,
+  return Text.rich(
+    TextSpan(
+      text: '${owedToMe ? l.debtsOwedToMe : l.debtsIOwe} ',
+      children: [
+        TextSpan(
+          text: money,
+          style: AppTypography.of(context, AppTextRole.money)?.copyWith(
+            color: owedToMe ? palette.income : palette.expense,
+          ),
+        ),
+      ],
+    ),
   );
 }
 
@@ -427,7 +437,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
                 controller: _c.note,
                 maxLines: 5,
                 maxLength: TextLimits.note,
-                hint: l.txNoteAddHint,
+                hint: l.debtNoteHint,
               ),
             ),
             gap,

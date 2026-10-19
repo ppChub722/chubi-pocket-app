@@ -248,6 +248,12 @@ abstract class AppLocalizations {
   /// **'Search'**
   String get commonSearch;
 
+  /// No description provided for @commonCustomValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get commonCustomValue;
+
   /// No description provided for @uiPickDate.
   ///
   /// In en, this message translates to:
@@ -1277,13 +1283,13 @@ abstract class AppLocalizations {
   /// No description provided for @contactEmailHint.
   ///
   /// In en, this message translates to:
-  /// **'Optional · name@example.com'**
+  /// **'Optional | name@example.com'**
   String get contactEmailHint;
 
   /// No description provided for @contactPhoneHint.
   ///
   /// In en, this message translates to:
-  /// **'Optional · 081-234-5678'**
+  /// **'Optional | 081-234-5678'**
   String get contactPhoneHint;
 
   /// No description provided for @contactNameRequired.
@@ -1319,13 +1325,13 @@ abstract class AppLocalizations {
   /// No description provided for @contactDescriptionHint.
   ///
   /// In en, this message translates to:
-  /// **'Optional · e.g. a work friend'**
+  /// **'Optional | e.g. a work friend'**
   String get contactDescriptionHint;
 
   /// No description provided for @contactNoteHint.
   ///
   /// In en, this message translates to:
-  /// **'Optional · e.g. prefers PromptPay'**
+  /// **'Optional | e.g. prefers PromptPay'**
   String get contactNoteHint;
 
   /// No description provided for @contactLinkedBadge.
@@ -1421,7 +1427,7 @@ abstract class AppLocalizations {
   /// No description provided for @contactWireHint.
   ///
   /// In en, this message translates to:
-  /// **'{names} names · {splits} splits not linked to a contact'**
+  /// **'{names} names | {splits} splits not linked to a contact'**
   String contactWireHint(int names, int splits);
 
   /// No description provided for @contactWireNone.
@@ -2309,7 +2315,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectResolveShareHint.
   ///
   /// In en, this message translates to:
-  /// **'Full {full} · my share {share}'**
+  /// **'Full {full} | my share {share}'**
   String projectResolveShareHint(String full, String share);
 
   /// No description provided for @projectResolveAmount.
@@ -2411,7 +2417,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectMyPosition.
   ///
   /// In en, this message translates to:
-  /// **'Me: paid {paid} · my share {share}'**
+  /// **'Me: paid {paid} | my share {share}'**
   String projectMyPosition(String paid, String share);
 
   /// No description provided for @projectMyNet.
@@ -2687,7 +2693,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsNotificationsSummary.
   ///
   /// In en, this message translates to:
-  /// **'{on} on · {auto} automatic'**
+  /// **'{on} on | {auto} automatic'**
   String settingsNotificationsSummary(int on, int auto);
 
   /// No description provided for @settingsDefaultCurrencyHint.
@@ -2783,7 +2789,7 @@ abstract class AppLocalizations {
   /// No description provided for @notifAccepted.
   ///
   /// In en, this message translates to:
-  /// **'Accepted · tap to open'**
+  /// **'Accepted | tap to open'**
   String get notifAccepted;
 
   /// No description provided for @notifRejectTitle.
@@ -2909,7 +2915,7 @@ abstract class AppLocalizations {
   /// No description provided for @notifActionDone.
   ///
   /// In en, this message translates to:
-  /// **'Done · tap to open'**
+  /// **'Done | tap to open'**
   String get notifActionDone;
 
   /// No description provided for @notifProjectAdded.
@@ -3401,13 +3407,13 @@ abstract class AppLocalizations {
   /// No description provided for @accountsSummaryDebt.
   ///
   /// In en, this message translates to:
-  /// **'Debt (cards · overdrawn)'**
+  /// **'Debt (cards | overdrawn)'**
   String get accountsSummaryDebt;
 
   /// No description provided for @accountsSummaryCreditUsed.
   ///
   /// In en, this message translates to:
-  /// **'Credit used {pct}% · {left} left'**
+  /// **'Credit used {pct}% | {left} left'**
   String accountsSummaryCreditUsed(int pct, String left);
 
   /// No description provided for @accountsSummaryWalletCount.
@@ -3575,7 +3581,7 @@ abstract class AppLocalizations {
   /// No description provided for @moreLiveDebts.
   ///
   /// In en, this message translates to:
-  /// **'Owed to you {owed} · you owe {owe}'**
+  /// **'Owed to you {owed} | you owe {owe}'**
   String moreLiveDebts(String owed, String owe);
 
   /// No description provided for @moreLiveDueSoon.
@@ -3821,7 +3827,7 @@ abstract class AppLocalizations {
   /// No description provided for @transactionDeleteConsequence.
   ///
   /// In en, this message translates to:
-  /// **'Deleted for good · the wallet balance goes back to before it was saved'**
+  /// **'Deleted for good | the wallet balance goes back to before it was saved'**
   String get transactionDeleteConsequence;
 
   /// No description provided for @categoriesReorderEnter.
@@ -4331,13 +4337,13 @@ abstract class AppLocalizations {
   /// No description provided for @debtOverpaidIOwe.
   ///
   /// In en, this message translates to:
-  /// **'Overpaid · I owe them back'**
+  /// **'Overpaid | I owe them back'**
   String get debtOverpaidIOwe;
 
   /// No description provided for @debtOverpaidTheyOwe.
   ///
   /// In en, this message translates to:
-  /// **'Overpaid · they owe me back'**
+  /// **'Overpaid | they owe me back'**
   String get debtOverpaidTheyOwe;
 
   /// No description provided for @debtOverpaidCantSettle.
@@ -4420,13 +4426,13 @@ abstract class AppLocalizations {
   /// No description provided for @txSplitStatusOverpaidToThem.
   ///
   /// In en, this message translates to:
-  /// **'Overpaid {amount} · you owe it back'**
+  /// **'Overpaid {amount} | you owe it back'**
   String txSplitStatusOverpaidToThem(String amount);
 
   /// No description provided for @txSplitStatusOverpaidByMe.
   ///
   /// In en, this message translates to:
-  /// **'Overpaid {amount} · they owe it back'**
+  /// **'Overpaid {amount} | they owe it back'**
   String txSplitStatusOverpaidByMe(String amount);
 
   /// No description provided for @txSplitRepaidSoFar.
@@ -4510,7 +4516,7 @@ abstract class AppLocalizations {
   /// No description provided for @txDetailSplitEditElsewhere.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{1 person} other{{count} people}} · edit on the debts page'**
+  /// **'{count, plural, =1{1 person} other{{count} people}} | edit on the debts page'**
   String txDetailSplitEditElsewhere(int count);
 
   /// No description provided for @txDetailCreatedAt.
@@ -4540,8 +4546,44 @@ abstract class AppLocalizations {
   /// No description provided for @txNoteAddHint.
   ///
   /// In en, this message translates to:
-  /// **'Add a note...'**
+  /// **'e.g. where, with whom, or anything to remember'**
   String get txNoteAddHint;
+
+  /// No description provided for @bgNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. why this limit, or what you want to spend less on'**
+  String get bgNoteHint;
+
+  /// No description provided for @projectNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. where you stay, group rules, or the account to pay into'**
+  String get projectNoteHint;
+
+  /// No description provided for @recurringNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. contract number, billing day, or how you pay'**
+  String get recurringNoteHint;
+
+  /// No description provided for @fpGoalsNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. what it is for, or how you plan to save'**
+  String get fpGoalsNoteHint;
+
+  /// No description provided for @categoryNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. which spending belongs here'**
+  String get categoryNoteHint;
+
+  /// No description provided for @debtNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. what it was for, or when it is due back'**
+  String get debtNoteHint;
 
   /// No description provided for @quickEventNone.
   ///
@@ -4810,7 +4852,7 @@ abstract class AppLocalizations {
   /// No description provided for @pendingResult.
   ///
   /// In en, this message translates to:
-  /// **'Saved {done} · {failed} left'**
+  /// **'Saved {done} | {failed} left'**
   String pendingResult(int done, int failed);
 
   /// No description provided for @pendingEmptyTitle.
@@ -4930,7 +4972,7 @@ abstract class AppLocalizations {
   /// No description provided for @pendingSavedAsDraft.
   ///
   /// In en, this message translates to:
-  /// **'Saved as a draft · it\'s in Pending'**
+  /// **'Saved as a draft | it\'s in Pending'**
   String get pendingSavedAsDraft;
 
   /// No description provided for @pendingSaveDraft.
@@ -6046,7 +6088,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectPlannedLine.
   ///
   /// In en, this message translates to:
-  /// **'Planned {planned} · {remaining} left'**
+  /// **'Planned {planned} | {remaining} left'**
   String projectPlannedLine(String planned, String remaining);
 
   /// No description provided for @projectPlannedOverLine.
@@ -6400,7 +6442,7 @@ abstract class AppLocalizations {
   /// No description provided for @transactionsSearchHint.
   ///
   /// In en, this message translates to:
-  /// **'Search description · note · category · wallet'**
+  /// **'Search description | note | category | wallet'**
   String get transactionsSearchHint;
 
   /// No description provided for @savingGoalAllocationAuto.
@@ -6592,7 +6634,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryFeeSwitchHelper.
   ///
   /// In en, this message translates to:
-  /// **'Fees from bank slips go here · one category at a time'**
+  /// **'Fees from bank slips go here | one category at a time'**
   String get categoryFeeSwitchHelper;
 
   /// No description provided for @categoryFeeSwitchFailed.
@@ -6670,7 +6712,7 @@ abstract class AppLocalizations {
   /// No description provided for @appUpdateBuildLine.
   ///
   /// In en, this message translates to:
-  /// **'This is build {current} · {required} or newer is needed'**
+  /// **'This is build {current} | {required} or newer is needed'**
   String appUpdateBuildLine(int current, int required);
 
   /// No description provided for @appUpdateAvailable.
@@ -6916,7 +6958,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountSharedWith.
   ///
   /// In en, this message translates to:
-  /// **'Shared · {count}'**
+  /// **'Shared | {count}'**
   String accountSharedWith(int count);
 
   /// No description provided for @accountDayNone.
@@ -7648,7 +7690,7 @@ abstract class AppLocalizations {
   /// No description provided for @contactNicknameHint.
   ///
   /// In en, this message translates to:
-  /// **'Optional · e.g. Mum'**
+  /// **'Optional | e.g. Mum'**
   String get contactNicknameHint;
 
   /// No description provided for @contactShowNicknameLabel.
@@ -7696,7 +7738,7 @@ abstract class AppLocalizations {
   /// No description provided for @connectionOffline.
   ///
   /// In en, this message translates to:
-  /// **'Can\'t reach the server · trying again…'**
+  /// **'Can\'t reach the server | trying again…'**
   String get connectionOffline;
 
   /// No description provided for @connectionReconnecting.
@@ -8188,7 +8230,7 @@ abstract class AppLocalizations {
   /// No description provided for @eventDeleteBody.
   ///
   /// In en, this message translates to:
-  /// **'Every bill in the event is deleted · your transactions linked to it can stay or be deleted too'**
+  /// **'Every bill in the event is deleted | your transactions linked to it can stay or be deleted too'**
   String get eventDeleteBody;
 
   /// No description provided for @eventDeleteKeepTxs.
@@ -8488,7 +8530,7 @@ abstract class AppLocalizations {
   /// No description provided for @recurCustomDates.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =0{Custom} =1{Custom · 1 date} other{Custom · {count} dates}}'**
+  /// **'{count, plural, =0{Custom} =1{Custom | 1 date} other{Custom | {count} dates}}'**
   String recurCustomDates(int count);
 
   /// No description provided for @recurEndCount.
@@ -8890,13 +8932,13 @@ abstract class AppLocalizations {
   /// No description provided for @recurringUpcomingSummary.
   ///
   /// In en, this message translates to:
-  /// **'{name} {amount} · {rule}'**
+  /// **'{name} {amount} | {rule}'**
   String recurringUpcomingSummary(String name, String amount, String rule);
 
   /// No description provided for @recurringUpcomingCount.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{1 more · tap to see it} other{{count} more · tap to see them all}}'**
+  /// **'{count, plural, =1{1 more | tap to see it} other{{count} more | tap to see them all}}'**
   String recurringUpcomingCount(int count);
 
   /// No description provided for @recurringSelectAll.
@@ -8970,6 +9012,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Restore'**
   String get recurringItemRestore;
+
+  /// No description provided for @recurringItemStatusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get recurringItemStatusTitle;
+
+  /// No description provided for @recurringItemStatusDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Where this item stands and what you can do next.'**
+  String get recurringItemStatusDescription;
+
+  /// No description provided for @recurringItemStatusUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Goes to drafts on {date}'**
+  String recurringItemStatusUpcoming(Object date);
+
+  /// No description provided for @recurringItemStatusNotCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Its date has passed, but nothing was recorded'**
+  String get recurringItemStatusNotCreated;
+
+  /// No description provided for @recurringItemStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting in drafts'**
+  String get recurringItemStatusPending;
+
+  /// No description provided for @recurringItemStatusDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded as a transaction'**
+  String get recurringItemStatusDone;
+
+  /// No description provided for @recurringItemStatusArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived, it will not be created'**
+  String get recurringItemStatusArchived;
 
   /// No description provided for @recurringDeleteLinkedTitle.
   ///
@@ -9292,7 +9376,7 @@ abstract class AppLocalizations {
   /// No description provided for @sgv2PaceLine.
   ///
   /// In en, this message translates to:
-  /// **'Need {needed}/mo · saving {pace}'**
+  /// **'Need {needed}/mo | saving {pace}'**
   String sgv2PaceLine(String needed, String pace);
 
   /// No description provided for @sgv2DueOn.
@@ -9916,7 +10000,7 @@ abstract class AppLocalizations {
   /// No description provided for @bgSourceUpcoming.
   ///
   /// In en, this message translates to:
-  /// **'Recurring · upcoming'**
+  /// **'Recurring | upcoming'**
   String get bgSourceUpcoming;
 
   /// No description provided for @bgSourcePending.
@@ -10354,7 +10438,7 @@ abstract class AppLocalizations {
   /// No description provided for @recurringSavingNameGoal.
   ///
   /// In en, this message translates to:
-  /// **'Saving · {goal}'**
+  /// **'Saving | {goal}'**
   String recurringSavingNameGoal(String goal);
 
   /// No description provided for @sgv2MoveTitle.
@@ -10588,7 +10672,7 @@ abstract class AppLocalizations {
   /// No description provided for @bgSummaryUsedCaption.
   ///
   /// In en, this message translates to:
-  /// **'Current period · total used'**
+  /// **'Current period | total used'**
   String get bgSummaryUsedCaption;
 
   /// No description provided for @bgSummaryRemaining.
@@ -10642,8 +10726,38 @@ abstract class AppLocalizations {
   /// No description provided for @fpWalletsSavedLine.
   ///
   /// In en, this message translates to:
-  /// **'Saved {saved} · really available {available}'**
+  /// **'Saved {saved} | really available {available}'**
   String fpWalletsSavedLine(String saved, String available);
+
+  /// No description provided for @fpWalletsTileAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get fpWalletsTileAvailable;
+
+  /// No description provided for @fpWalletsSaveStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start saving'**
+  String get fpWalletsSaveStart;
+
+  /// No description provided for @fpWalletsNoCardDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'No card debt'**
+  String get fpWalletsNoCardDebt;
+
+  /// No description provided for @fpWalletsCreditUsedPct.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}% of limit used'**
+  String fpWalletsCreditUsedPct(int pct);
+
+  /// No description provided for @fpWalletsSharedTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} shared'**
+  String fpWalletsSharedTooltip(int count);
 
   /// No description provided for @fpWalletsSortByType.
   ///
@@ -10666,13 +10780,13 @@ abstract class AppLocalizations {
   /// No description provided for @fpWalletMonthIn.
   ///
   /// In en, this message translates to:
-  /// **'{month} · in'**
+  /// **'{month} | in'**
   String fpWalletMonthIn(String month);
 
   /// No description provided for @fpWalletMonthOut.
   ///
   /// In en, this message translates to:
-  /// **'{month} · out'**
+  /// **'{month} | out'**
   String fpWalletMonthOut(String month);
 
   /// No description provided for @fpWalletAvailableLegend.
@@ -10702,7 +10816,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpWalletDueAlert.
   ///
   /// In en, this message translates to:
-  /// **'Payment due {date} · in {days} days'**
+  /// **'Payment due {date} | in {days} days'**
   String fpWalletDueAlert(String date, int days);
 
   /// No description provided for @fpWalletPayCard.
@@ -10786,7 +10900,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpWalletDeleteConsequence.
   ///
   /// In en, this message translates to:
-  /// **'See what is attached first · saved money stays, just unlinked from the wallet'**
+  /// **'See what is attached first | saved money stays, just unlinked from the wallet'**
   String get fpWalletDeleteConsequence;
 
   /// No description provided for @fpWalletDeleteTitle.
@@ -10798,7 +10912,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpWalletDeleteBody.
   ///
   /// In en, this message translates to:
-  /// **'{transactions} transactions stay with no wallet ({transfers} transfers) · {system} opening / adjustment rows are deleted · {recurring} recurring settings keep running · {savings} saving entries ({amount}) stay, unlinked from the wallet'**
+  /// **'{transactions} transactions stay with no wallet ({transfers} transfers) | {system} opening / adjustment rows are deleted | {recurring} recurring settings keep running | {savings} saving entries ({amount}) stay, unlinked from the wallet'**
   String fpWalletDeleteBody(
     int transactions,
     int transfers,
@@ -10865,13 +10979,13 @@ abstract class AppLocalizations {
   /// No description provided for @fpDebtsOwedToMeTile.
   ///
   /// In en, this message translates to:
-  /// **'To receive · {count} people'**
+  /// **'To receive | {count} people'**
   String fpDebtsOwedToMeTile(int count);
 
   /// No description provided for @fpDebtsIOweTile.
   ///
   /// In en, this message translates to:
-  /// **'To pay · {count} people'**
+  /// **'To pay | {count} people'**
   String fpDebtsIOweTile(int count);
 
   /// No description provided for @fpDebtsOver30.
@@ -10913,7 +11027,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpDebtsMessageLabel.
   ///
   /// In en, this message translates to:
-  /// **'Summary message · editable before sending'**
+  /// **'Summary message | editable before sending'**
   String get fpDebtsMessageLabel;
 
   /// No description provided for @fpDebtsCopy.
@@ -10943,13 +11057,13 @@ abstract class AppLocalizations {
   /// No description provided for @fpDebtsCycleHeaderSince.
   ///
   /// In en, this message translates to:
-  /// **'Where the balance comes from · since cleared {date}'**
+  /// **'Where the balance comes from | since cleared {date}'**
   String fpDebtsCycleHeaderSince(String date);
 
   /// No description provided for @fpDebtsEarlierHeader.
   ///
   /// In en, this message translates to:
-  /// **'Earlier cycle · cleared'**
+  /// **'Earlier cycle | cleared'**
   String get fpDebtsEarlierHeader;
 
   /// No description provided for @fpDebtsEarlierLink.
@@ -10961,7 +11075,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpBudgetsRangeDay.
   ///
   /// In en, this message translates to:
-  /// **'{range} · day {elapsed}/{total}'**
+  /// **'{range} | day {elapsed}/{total}'**
   String fpBudgetsRangeDay(String range, int elapsed, int total);
 
   /// No description provided for @fpBudgetsLeftLabel.
@@ -11189,7 +11303,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpGoalsEtaBehind.
   ///
   /// In en, this message translates to:
-  /// **'Goal {date} · {n} months late'**
+  /// **'Goal {date} | {n} months late'**
   String fpGoalsEtaBehind(String date, int n);
 
   /// No description provided for @fpGoalsBehind.
@@ -11219,7 +11333,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpGoalsTargetSuffix.
   ///
   /// In en, this message translates to:
-  /// **'/ {target} · {pct}%'**
+  /// **'/ {target} | {pct}%'**
   String fpGoalsTargetSuffix(String target, int pct);
 
   /// No description provided for @fpGoalsDaysLeft.
@@ -11267,7 +11381,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpGoalsAutoCaption.
   ///
   /// In en, this message translates to:
-  /// **'{day} · {amount} from {wallet}'**
+  /// **'{day} | {amount} from {wallet}'**
   String fpGoalsAutoCaption(String day, String amount, String wallet);
 
   /// No description provided for @fpGoalsAutoOffHint.
@@ -11321,7 +11435,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpGoalsPlanLeft.
   ///
   /// In en, this message translates to:
-  /// **'Saved {saved} · {left} to go'**
+  /// **'Saved {saved} | {left} to go'**
   String fpGoalsPlanLeft(String saved, String left);
 
   /// No description provided for @fpGoalsPlanNeeded.
@@ -11375,7 +11489,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpGoalsOngoingRow.
   ///
   /// In en, this message translates to:
-  /// **'Ongoing · this month {amount}'**
+  /// **'Ongoing | this month {amount}'**
   String fpGoalsOngoingRow(String amount);
 
   /// No description provided for @fpGoalsTileAuto.
@@ -11393,7 +11507,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpGoalsArchiveConsequenceMoney.
   ///
   /// In en, this message translates to:
-  /// **'Hidden · {amount} not counted in savings · can be restored'**
+  /// **'Hidden | {amount} not counted in savings | can be restored'**
   String fpGoalsArchiveConsequenceMoney(String amount);
 
   /// No description provided for @fpGoalsArchiveConfirmBodyMoney.
@@ -11417,7 +11531,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpEventsSummaryCaption.
   ///
   /// In en, this message translates to:
-  /// **'Active events · my share'**
+  /// **'Active events | my share'**
   String get fpEventsSummaryCaption;
 
   /// No description provided for @fpEventsPaidLine.
@@ -11543,7 +11657,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpEventsMembersTitle.
   ///
   /// In en, this message translates to:
-  /// **'Members · who paid / who owes'**
+  /// **'Members | who paid / who owes'**
   String get fpEventsMembersTitle;
 
   /// No description provided for @fpEventsManage.
@@ -11627,7 +11741,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpEventsBudgetHelper.
   ///
   /// In en, this message translates to:
-  /// **'What you intend to spend · clear to hide the plan'**
+  /// **'What you intend to spend | clear to hide the plan'**
   String get fpEventsBudgetHelper;
 
   /// No description provided for @fpEventsDatesLabel.
@@ -11705,7 +11819,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpEventsTagsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Event tags · shared with members'**
+  /// **'Event tags | shared with members'**
   String get fpEventsTagsTitle;
 
   /// No description provided for @fpEventsTagAdd.
@@ -11801,31 +11915,31 @@ abstract class AppLocalizations {
   /// No description provided for @fpEventsLoadFailed.
   ///
   /// In en, this message translates to:
-  /// **'Couldn\'t refresh · showing the last data'**
+  /// **'Couldn\'t refresh | showing the last data'**
   String get fpEventsLoadFailed;
 
   /// No description provided for @categoryDeleteConsequence.
   ///
   /// In en, this message translates to:
-  /// **'Deleted for good · its transactions will have no category'**
+  /// **'Deleted for good | its transactions will have no category'**
   String get categoryDeleteConsequence;
 
   /// No description provided for @categoryMonthSpentLabel.
   ///
   /// In en, this message translates to:
-  /// **'{month} spent · {count} transactions ›'**
+  /// **'{month} spent | {count} transactions ›'**
   String categoryMonthSpentLabel(String month, int count);
 
   /// No description provided for @categoryMonthEarnedLabel.
   ///
   /// In en, this message translates to:
-  /// **'{month} received · {count} transactions ›'**
+  /// **'{month} received | {count} transactions ›'**
   String categoryMonthEarnedLabel(String month, int count);
 
   /// No description provided for @notifSettingsLegend.
   ///
   /// In en, this message translates to:
-  /// **'Off: no notice · Notify: a notice with a one-tap button · Auto: done for you, then you are told what was done'**
+  /// **'Off: no notice | Notify: a notice with a one-tap button | Auto: done for you, then you are told what was done'**
   String get notifSettingsLegend;
 
   /// No description provided for @notifStateOff.
@@ -11861,7 +11975,7 @@ abstract class AppLocalizations {
   /// No description provided for @notifTypeRecurringDueHint.
   ///
   /// In en, this message translates to:
-  /// **'Drafts always wait in Pending · Off = no notice'**
+  /// **'Drafts always wait in Pending | Off = no notice'**
   String get notifTypeRecurringDueHint;
 
   /// No description provided for @notifTypeRecurringEnding.
@@ -11873,7 +11987,7 @@ abstract class AppLocalizations {
   /// No description provided for @notifTypeRecurringEndingHint.
   ///
   /// In en, this message translates to:
-  /// **'A few items left · extend it?'**
+  /// **'A few items left | extend it?'**
   String get notifTypeRecurringEndingHint;
 
   /// No description provided for @notifTypeRequestsHint.
@@ -12059,7 +12173,7 @@ abstract class AppLocalizations {
   /// No description provided for @notifCardUnread.
   ///
   /// In en, this message translates to:
-  /// **'· unread {count}'**
+  /// **'| unread {count}'**
   String notifCardUnread(int count);
 
   /// No description provided for @notifReadAllTooltip.
@@ -12359,7 +12473,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpRecurringMonthLine.
   ///
   /// In en, this message translates to:
-  /// **'Per month: pay {pay} · receive {receive}'**
+  /// **'Per month: pay {pay} | receive {receive}'**
   String fpRecurringMonthLine(String pay, String receive);
 
   /// No description provided for @fpRecurringPausedGroup.
@@ -12371,7 +12485,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpRecurringGroupDue.
   ///
   /// In en, this message translates to:
-  /// **'Due · in pending'**
+  /// **'Due | in pending'**
   String get fpRecurringGroupDue;
 
   /// No description provided for @fpRecurringGroupComing.
@@ -12473,7 +12587,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpRecurringAlertAwaiting.
   ///
   /// In en, this message translates to:
-  /// **'Enter the amount · {due}'**
+  /// **'Enter the amount | {due}'**
   String fpRecurringAlertAwaiting(String due);
 
   /// No description provided for @fpRecurringInfoSpan.
@@ -12509,7 +12623,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpRecurringNextTitle.
   ///
   /// In en, this message translates to:
-  /// **'Next · {due}'**
+  /// **'Next | {due}'**
   String fpRecurringNextTitle(String due);
 
   /// No description provided for @fpRecurringNextCaption.
@@ -12563,13 +12677,13 @@ abstract class AppLocalizations {
   /// No description provided for @fpRecurringChipEdited.
   ///
   /// In en, this message translates to:
-  /// **'{date} · {amount}'**
+  /// **'{date} | {amount}'**
   String fpRecurringChipEdited(String date, String amount);
 
   /// No description provided for @fpRecurringChipSkipped.
   ///
   /// In en, this message translates to:
-  /// **'{date} · skipped'**
+  /// **'{date} | skipped'**
   String fpRecurringChipSkipped(String date);
 
   /// No description provided for @fpRecurringOccEditTitle.
@@ -12731,7 +12845,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpM5BudgetDeleteBody.
   ///
   /// In en, this message translates to:
-  /// **'Deletes {periods} periods ({overridden} adjusted) · {categories} categories · {wallets} wallets. Transactions are not affected.'**
+  /// **'Deletes {periods} periods ({overridden} adjusted) | {categories} categories | {wallets} wallets. Transactions are not affected.'**
   String fpM5BudgetDeleteBody(
     int periods,
     int overridden,

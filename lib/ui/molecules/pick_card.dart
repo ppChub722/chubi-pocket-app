@@ -118,26 +118,33 @@ class PickCard extends StatelessWidget {
                             ),
                     ),
                     if (reserveSubtitle || (!empty && subtitle != null))
-                      if (hasError)
-                        Text(
-                          errorText!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: textTheme.bodySmall?.copyWith(
-                            color: scheme.error,
-                          ),
-                        )
-                      else if (!empty && subtitle != null)
-                        DefaultTextStyle.merge(
-                          style: textTheme.bodySmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          child: subtitle!,
-                        )
-                      else
-                        Text(' ', style: textTheme.bodySmall),
+                      // Always one money line tall, whatever it holds (a
+                      // balance, a description, nothing), so cards side by
+                      // side, with or without an arrow between, match.
+                      Stack(
+                        alignment: AlignmentDirectional.centerStart,
+                        children: [
+                          Text(' ', style: textTheme.titleMedium),
+                          if (hasError)
+                            Text(
+                              errorText!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: textTheme.bodySmall?.copyWith(
+                                color: scheme.error,
+                              ),
+                            )
+                          else if (!empty && subtitle != null)
+                            DefaultTextStyle.merge(
+                              style: textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              child: subtitle!,
+                            ),
+                        ],
+                      ),
                   ],
                 ),
               ),

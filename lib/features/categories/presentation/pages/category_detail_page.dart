@@ -648,6 +648,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           focusNode: _noteFocus,
           maxLines: 3,
           maxLength: TextLimits.note,
+          hint: l.categoryNoteHint,
           onChanged: (v) => _onText(_TextField.note, v),
         ),
       ),

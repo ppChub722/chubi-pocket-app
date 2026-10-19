@@ -318,7 +318,7 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
               wide: true,
               label:
                   'paging — the next page failed: LoadMoreErrorRow (could not '
-                  'load more · Retry); the loaded rows stay, scrolling stops '
+                  'load more | Retry); the loaded rows stay, scrolling stops '
                   'asking until Retry',
               page: 'Transactions, debts, event bills',
               child: framed(

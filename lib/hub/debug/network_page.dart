@@ -65,7 +65,7 @@ class _NetworkPageState extends State<NetworkPage> {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Network · ${_rec.length}'),
+        title: Text('Network | ${_rec.length}'),
         actions: [
           TextButton(onPressed: _rec.clear, child: const Text('Clear')),
         ],
@@ -205,11 +205,11 @@ class _CallList extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '${_time(c.startedAt)} · '
+                        '${_time(c.startedAt)} | '
                         '${c.durationMs == null ? '—' : '${c.durationMs} ms'}'
-                        ' · ${_bytes(c.responseBytes)} · '
+                        ' | ${_bytes(c.responseBytes)} | '
                         '${c.trigger == NetworkTrigger.open ? 'open' : 'action'}'
-                        '${c.page.isEmpty ? '' : ' · ${c.page}'}',
+                        '${c.page.isEmpty ? '' : ' | ${c.page}'}',
                         style: text.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),
@@ -336,8 +336,8 @@ class _EndpointSummary extends StatelessWidget {
                     ),
                     Text(
                       'avg ${a.timed == 0 ? '—' : '${a.totalMs ~/ a.timed} ms'}'
-                      ' · ${a.failed} failed · ${a.open} on open / '
-                      '${a.count - a.open} by action · '
+                      ' | ${a.failed} failed | ${a.open} on open / '
+                      '${a.count - a.open} by action | '
                       '${a.pages.length} page${a.pages.length == 1 ? '' : 's'}',
                       style: text.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,

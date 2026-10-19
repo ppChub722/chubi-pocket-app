@@ -98,9 +98,9 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
               leading: [
                 HeroCaption(switch (state.filter) {
                   BudgetFilter.active => l.bgFilterActive,
-                  BudgetFilter.ended => '${l.bgFilterEnded} · ${s.endedCount}',
+                  BudgetFilter.ended => '${l.bgFilterEnded} | ${s.endedCount}',
                   BudgetFilter.archived =>
-                    '${l.bgFilterArchived} · ${s.archivedCount}',
+                    '${l.bgFilterArchived} | ${s.archivedCount}',
                 }),
               ],
               actions: [const MoneyVisibilityToggle(), toggleButton],

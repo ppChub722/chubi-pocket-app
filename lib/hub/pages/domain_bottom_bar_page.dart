@@ -64,7 +64,7 @@ class _BottomBarPageState extends State<_BottomBarPage> {
         HubDemo(
           title: 'QuickCreateButton — every mode',
           note:
-              'tx = the theme primary · debt = ModuleColors.people · saving = ModuleColors.planning. '
+              'tx = the theme primary | debt = ModuleColors.people | saving = ModuleColors.planning. '
               'Per page: Home / More / tx list / wallets / categories / tags '
               'lists and pending → tx; a wallet → tx + that wallet; a '
               'category → tx + that category; debts list → debt; a debt '

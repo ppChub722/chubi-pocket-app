@@ -60,8 +60,8 @@ class _RecurringPage extends StatelessWidget {
           title: 'OccurrenceStateChip — where a produced item stands',
           note:
               'Derived from its link (owner 2026-10-13): no link + date ahead '
-              '= upcoming · date came, nothing made = not created · a draft = '
-              'pending · a real tx = done · archived = "don\'t want it". One '
+              '= upcoming | date came, nothing made = not created | a draft = '
+              'pending | a real tx = done | archived = "don\'t want it". One '
               'tone per state (StatusChip).',
           child: Wrap(
             spacing: AppSpacing.xs,
@@ -96,7 +96,7 @@ class _RecurringPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               NextOccurrenceCard(
-                title: 'งวดถัดไป · อีก 30 วัน',
+                title: 'งวดถัดไป | อีก 30 วัน',
                 caption: 'จะขึ้นร่างใน pending วันนั้น',
                 amount: const MoneyText(-3023),
                 actions: [
@@ -107,7 +107,7 @@ class _RecurringPage extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.md),
               NextOccurrenceCard(
-                title: 'งวดถัดไป · อีก 5 วัน',
+                title: 'งวดถัดไป | อีก 5 วัน',
                 amount: const Text('รอใส่ยอด'),
                 actions: [
                   NextOccurrenceAction(
@@ -121,15 +121,15 @@ class _RecurringPage extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.md),
               OccurrenceDates(
-                title: 'ต่อจากนั้น · อีก 11 งวด',
+                title: 'ต่อจากนั้น | อีก 11 งวด',
                 dates: const [
                   OccurrenceDate(label: '16 ธ.ค.'),
                   OccurrenceDate(
-                    label: '16 ม.ค. · ฿3,500',
+                    label: '16 ม.ค. | ฿3,500',
                     kind: OccurrenceDateKind.edited,
                   ),
                   OccurrenceDate(
-                    label: '16 ก.พ. · ข้าม',
+                    label: '16 ก.พ. | ข้าม',
                     kind: OccurrenceDateKind.skipped,
                   ),
                   OccurrenceDate(label: '16 มี.ค.'),
@@ -263,28 +263,28 @@ class _RecurringPage extends StatelessWidget {
             cells: [
               recurCell('daily', rule(RecurrenceFreq.daily)),
               recurCell(
-                'daily · interval 2',
+                'daily | interval 2',
                 rule(RecurrenceFreq.daily, interval: 2),
               ),
               recurCell(
-                'weekly · Mon',
+                'weekly | Mon',
                 rule(RecurrenceFreq.weekly, weekdays: const {1}),
               ),
               recurCell(
-                'weekly · Mon + Wed',
+                'weekly | Mon + Wed',
                 rule(RecurrenceFreq.weekly, weekdays: const {1, 3}),
               ),
               recurCell(
-                'weekly · Mon + Wed + Fri',
+                'weekly | Mon + Wed + Fri',
                 rule(RecurrenceFreq.weekly, weekdays: const {1, 3, 5}),
               ),
               recurCell(
-                'weekly · interval 2 · Mon',
+                'weekly | interval 2 | Mon',
                 rule(RecurrenceFreq.weekly, interval: 2, weekdays: const {1}),
               ),
-              recurCell('monthly · day 3', rule(RecurrenceFreq.monthly)),
+              recurCell('monthly | day 3', rule(RecurrenceFreq.monthly)),
               recurCell(
-                'monthly · last day',
+                'monthly | last day',
                 rule(
                   RecurrenceFreq.monthly,
                   monthly: const RecurrenceMonthly.onDay(
@@ -293,11 +293,11 @@ class _RecurringPage extends StatelessWidget {
                 ),
               ),
               recurCell(
-                'monthly · interval 3 · day 3',
+                'monthly | interval 3 | day 3',
                 rule(RecurrenceFreq.monthly, interval: 3),
               ),
               recurCell(
-                'monthly · 2nd Monday',
+                'monthly | 2nd Monday',
                 rule(
                   RecurrenceFreq.monthly,
                   monthly: const RecurrenceMonthly.onWeekday(
@@ -307,7 +307,7 @@ class _RecurringPage extends StatelessWidget {
                 ),
               ),
               recurCell(
-                'monthly · last Friday',
+                'monthly | last Friday',
                 rule(
                   RecurrenceFreq.monthly,
                   monthly: const RecurrenceMonthly.onWeekday(
@@ -318,11 +318,11 @@ class _RecurringPage extends StatelessWidget {
               ),
               recurCell('yearly', rule(RecurrenceFreq.yearly)),
               recurCell(
-                'yearly · interval 2',
+                'yearly | interval 2',
                 rule(RecurrenceFreq.yearly, interval: 2),
               ),
               recurCell(
-                'dates · 5 picked',
+                'dates | 5 picked',
                 rule(
                   RecurrenceFreq.dates,
                   dates: [for (var i = 0; i < 5; i++) inDays(i * 7)],
@@ -334,19 +334,19 @@ class _RecurringPage extends StatelessWidget {
         HubDemo(
           title: 'RecurrenceText — progress and end',
           note:
-              'seq + total (both set) append "· 4/12" (installments). '
+              'seq + total (both set) append "| 4/12" (installments). '
               'showEnd appends the end: after n times / until a date; '
               'never adds nothing.',
           child: HubRow(
             cells: [
               recurCell(
-                'seq 4 · total 12',
+                'seq 4 | total 12',
                 rule(RecurrenceFreq.monthly),
                 seq: 4,
                 total: 12,
               ),
               HubCell(
-                caption: 'showEnd · afterCount 12',
+                caption: 'showEnd | afterCount 12',
                 child: RecurrenceText(
                   rule: rule(
                     RecurrenceFreq.monthly,
@@ -356,7 +356,7 @@ class _RecurringPage extends StatelessWidget {
                 ),
               ),
               HubCell(
-                caption: 'showEnd · onDate',
+                caption: 'showEnd | onDate',
                 child: RecurrenceText(
                   rule: rule(
                     RecurrenceFreq.weekly,
@@ -401,11 +401,11 @@ class _RecurringPage extends StatelessWidget {
           child: HubRow(
             cells: [
               editorCell(
-                'weekly · Mon + Wed + Fri',
+                'weekly | Mon + Wed + Fri',
                 rule(RecurrenceFreq.weekly, weekdays: const {1, 3, 5}),
               ),
               editorCell(
-                'monthly · day 31',
+                'monthly | day 31',
                 rule(
                   RecurrenceFreq.monthly,
                   monthly: const RecurrenceMonthly.onDay(
@@ -414,7 +414,7 @@ class _RecurringPage extends StatelessWidget {
                 ),
               ),
               editorCell(
-                'monthly · 2nd Tuesday',
+                'monthly | 2nd Tuesday',
                 rule(
                   RecurrenceFreq.monthly,
                   monthly: const RecurrenceMonthly.onWeekday(
@@ -424,7 +424,7 @@ class _RecurringPage extends StatelessWidget {
                 ),
               ),
               editorCell(
-                'monthly · ends after 12',
+                'monthly | ends after 12',
                 rule(
                   RecurrenceFreq.monthly,
                   end: const RecurrenceEnd.afterCount(12),
@@ -436,7 +436,7 @@ class _RecurringPage extends StatelessWidget {
         HubDemo(
           title: 'showRecurrenceSheet — the custom repeat sheet',
           note:
-              'The editor in the app sheet with Cancel · OK. Resolves the '
+              'The editor in the app sheet with Cancel | OK. Resolves the '
               'edited rule on OK, null on Cancel / dismiss. The last result '
               'is shown under the button.',
           child: _RecurrenceSheetDemo(
@@ -562,7 +562,7 @@ class _RecurringPage extends StatelessWidget {
                       RecurringPickRow(
                         id: 'a',
                         title: 'Car loan',
-                        subtitle: 'Every 16th · Period 16 Oct not paid yet',
+                        subtitle: 'Every 16th | Period 16 Oct not paid yet',
                         leading: AppIcon(AppIcons.recurring),
                         amount: 3023,
                         tone: MoneyTone.expense,
@@ -575,7 +575,7 @@ class _RecurringPage extends StatelessWidget {
                       RecurringPickRow(
                         id: 'b',
                         title: 'Water bill',
-                        subtitle: 'Every 15th · Period 15 Oct enter the amount',
+                        subtitle: 'Every 15th | Period 15 Oct enter the amount',
                         leading: AppIcon(AppIcons.notifications),
                         trailingLabel: 'Amount pending',
                       ),
@@ -641,7 +641,7 @@ class _RecurrenceSheetDemoState extends State<_RecurrenceSheetDemo> {
         ),
         const SizedBox(height: AppSpacing.sm),
         AppText(
-          '$_last · ${recurrenceLabel(l, _rule, showEnd: true)}',
+          '$_last | ${recurrenceLabel(l, _rule, showEnd: true)}',
           role: AppTextRole.caption,
         ),
       ],

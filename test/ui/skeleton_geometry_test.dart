@@ -50,7 +50,7 @@ void main() {
   });
 
   testWidgets(
-    'hero: skeleton = real AppHeroCard (chips · name · description)',
+    'hero: skeleton = real AppHeroCard (chips | name | description)',
     (t) async {
       final real = await height(
         t,

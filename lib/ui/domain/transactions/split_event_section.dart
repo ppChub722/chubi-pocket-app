@@ -253,7 +253,7 @@ class RecurringLinkRow extends StatelessWidget {
             builder: (context, c) => AppChip(
               icon: AppIcons.recurring,
               color: ModuleColors.of(context).planning,
-              label: period == null ? n : '$n · $period',
+              label: period == null ? n : '$n | $period',
               selected: changeable,
               dashed: changeable,
               inset: changeable,

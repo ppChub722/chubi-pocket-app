@@ -95,7 +95,7 @@ class EventBillRow extends StatelessWidget {
       if (payer.isNotEmpty) payer,
       if (caption?.isNotEmpty ?? false) caption!,
       if (summary?.isNotEmpty ?? false) summary!,
-    ].join(' · ');
+    ].join(' | ');
     final hasLine2 = line2Text.isNotEmpty || linked;
 
     final line1 = LayoutBuilder(

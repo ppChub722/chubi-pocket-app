@@ -95,7 +95,7 @@ Future<BankPickerChoice?> showBankSelectSheet(
                             nameEn: b.nameEn,
                           ),
                           title: b.name,
-                          subtitle: [?b.shortName, b.code].join(' · '),
+                          subtitle: [?b.shortName, b.code].join(' | '),
                           selected: b.code == selectedCode,
                           onTap: () =>
                               Navigator.pop(context, BankPickerChoice(b.code)),

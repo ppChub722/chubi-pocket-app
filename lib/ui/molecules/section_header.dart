@@ -57,7 +57,7 @@ class SectionHeader extends StatelessWidget implements ListBreak {
           if (count != null) ...[
             const SizedBox(width: AppSpacing.xs),
             Text(
-              '· $count',
+              '| $count',
               style: textTheme.titleMedium?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),

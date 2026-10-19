@@ -198,7 +198,7 @@ void main() {
     // Picking fills the row with "name · งวด date".
     await t.tap(find.text('ค่าน้ำ'));
     await t.pumpAndSettle();
-    expect(find.textContaining('ค่าน้ำ · งวด'), findsOneWidget);
+    expect(find.textContaining('ค่าน้ำ | งวด'), findsOneWidget);
     expect(find.text('เลือกรายการประจำ'), findsNothing);
   });
 
@@ -233,7 +233,7 @@ void main() {
     await t.pump();
     expect(repo.puts, isEmpty);
     expect(find.byType(AskCard), findsNothing);
-    expect(find.textContaining('รถ · งวด'), findsOneWidget);
+    expect(find.textContaining('รถ | งวด'), findsOneWidget);
   });
 
   testWidgets('amount differs: อัปเดต = one PUT with the tx amount', (t) async {
@@ -246,7 +246,7 @@ void main() {
     expect(repo.puts, [('1', 3100.0)]);
     expect(messages, ['อัปเดตยอดรายการประจำแล้ว']);
     expect(find.byType(AskCard), findsNothing);
-    expect(find.textContaining('รถ · งวด'), findsOneWidget);
+    expect(find.textContaining('รถ | งวด'), findsOneWidget);
   });
 
   testWidgets('same amount: no question', (t) async {

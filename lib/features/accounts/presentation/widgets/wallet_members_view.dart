@@ -283,7 +283,7 @@ class _MemberRow extends StatelessWidget {
         size: 40,
       ),
       label: isSelf ? '${member.name} (${l.walletMemberYou})' : member.name,
-      helper: dates.isEmpty ? null : dates.join(' · '),
+      helper: dates.isEmpty ? null : dates.join(' | '),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

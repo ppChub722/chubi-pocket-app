@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../atoms/live_items.dart';
 
 import '../../atoms/app_icon_button.dart';
-import '../../atoms/app_switch.dart';
+import '../../atoms/select_check.dart';
 import '../../molecules/detail_rows.dart';
 import '../../molecules/empty_view.dart';
 import '../../organisms/app_sheet.dart';
@@ -107,15 +107,90 @@ class _CategoryMultiPickerSheetState extends State<CategoryMultiPickerSheet> {
         parentId = byId[parentId]?.parentId;
       }
     }
+    // A parent that includes its sub-categories covers them: no separate ticks.
+    for (final e in [..._picked.entries]) {
+      if (e.value) _descendants(e.key).forEach(_picked.remove);
+    }
+    _collapse();
+  }
+
+  // "Include sub-categories" and the sub-categories' ticks are one thing:
+  // on = every sub-category ticked (stored as the parent with includeChildren,
+  // which also takes in ones added later), off = none of them; ticking them
+  // all turns it on, unticking one turns it off.
+
+  Iterable<String> _descendants(String id) sync* {
+    for (final c in widget.rows) {
+      if (c.parentId == id) {
+        yield c.id;
+        yield* _descendants(c.id);
+      }
+    }
+  }
+
+  /// The ticked ancestor whose "include sub-categories" covers [id], if any.
+  String? _coveringAncestor(String id) {
+    final byId = {for (final c in widget.rows) c.id: c};
+    var p = byId[id]?.parentId;
+    while (p != null) {
+      if (_picked[p] == true) return p;
+      p = byId[p]?.parentId;
+    }
+    return null;
+  }
+
+  bool _shownTicked(String id) =>
+      _picked.containsKey(id) || _coveringAncestor(id) != null;
+
+  /// A ticked parent whose sub-categories are all ticked one by one becomes
+  /// "include sub-categories".
+  void _collapse() {
+    if (!widget.showIncludeChildren) return;
+    var changed = true;
+    while (changed) {
+      changed = false;
+      for (final e in [..._picked.entries]) {
+        if (e.value) continue;
+        final subs = _descendants(e.key).toList();
+        if (subs.isEmpty || !subs.every(_picked.containsKey)) continue;
+        _picked[e.key] = true;
+        subs.forEach(_picked.remove);
+        changed = true;
+      }
+    }
   }
 
   void _toggle(String id) => setState(() {
+    final cover = _coveringAncestor(id);
+    if (cover != null) {
+      // Unticking one sub-category of an "all included" parent: the parent
+      // keeps the others, ticked one by one.
+      final out = {id, ..._descendants(id)};
+      _picked[cover] = false;
+      for (final d in _descendants(cover)) {
+        if (!out.contains(d)) _picked[d] = false;
+      }
+      return;
+    }
     if (_picked.containsKey(id)) {
       _picked.remove(id);
     } else {
       _picked[id] = false;
     }
+    _collapse();
   });
+
+  void _setInclude(String id, bool on) => setState(() {
+    _picked[id] = on;
+    _descendants(id).forEach(_picked.remove);
+  });
+
+  int get _shownCount =>
+      _picked.length +
+      [
+        for (final e in _picked.entries)
+          if (e.value) _descendants(e.key).length,
+      ].fold(0, (a, b) => a + b);
 
   List<CategoryMultiPick> _result() => [
     for (final e in _picked.entries) (id: e.key, includeChildren: e.value),
@@ -130,7 +205,7 @@ class _CategoryMultiPickerSheetState extends State<CategoryMultiPickerSheet> {
       searchToggle: true,
       searchHint: l.searchHint,
       footer: PickerConfirmBar(
-        label: l.confirm(_picked.length),
+        label: l.confirm(_shownCount),
         onPressed: () => Navigator.of(context).pop(_result()),
       ),
       builder: _body,
@@ -208,7 +283,7 @@ class _CategoryMultiPickerSheetState extends State<CategoryMultiPickerSheet> {
     final hasChildren = children.isNotEmpty && depth < widget.maxDepth;
     final isExpanded =
         forced.contains(category.id) || _expanded.contains(category.id);
-    final picked = _picked.containsKey(category.id);
+    final picked = _shownTicked(category.id);
     final theme = Theme.of(context);
 
     Widget? trailing;
@@ -216,18 +291,30 @@ class _CategoryMultiPickerSheetState extends State<CategoryMultiPickerSheet> {
       trailing = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (picked && widget.showIncludeChildren) ...[
-            Text(
-              widget.labels.includeChildren,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+          if (_picked.containsKey(category.id) &&
+              widget.showIncludeChildren) ...[
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => _setInclude(category.id, !_picked[category.id]!),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    widget.labels.includeChildren,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  SelectCheck(
+                    key: ValueKey('include-${category.id}'),
+                    value: _picked[category.id]!,
+                    tooltip: widget.labels.includeChildren,
+                    onTap: () =>
+                        _setInclude(category.id, !_picked[category.id]!),
+                  ),
+                ],
               ),
-            ),
-            AppSwitch(
-              key: ValueKey('include-${category.id}'),
-              value: _picked[category.id]!,
-              semanticLabel: widget.labels.includeChildren,
-              onChanged: (v) => setState(() => _picked[category.id] = v),
             ),
           ],
           AppIconButton.flat(

@@ -102,7 +102,7 @@ class _MoreView extends StatelessWidget {
         l.moreSavingGoals,
         c == null || c.goals == 0
             ? l.moreSavingGoalsDesc
-            : '${c.goalsProgressPct.round()}% · ${l.homeGoalsCount(c.goals)}',
+            : '${c.goalsProgressPct.round()}% | ${l.homeGoalsCount(c.goals)}',
         '/saving-goals',
       ),
       ShellTab.recurring => _MoreEntry(

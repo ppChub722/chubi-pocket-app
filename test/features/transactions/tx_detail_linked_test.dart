@@ -226,10 +226,10 @@ void main() {
     await settle(t);
   }
 
-  testWidgets('the recurring row: "Netflix · 3/12"', (t) async {
+  testWidgets('the recurring row: "Netflix | 3/12"', (t) async {
     await pump(t);
     expect(find.text('Recurring'), findsOneWidget);
-    expect(find.text('Netflix · 3/12'), findsOneWidget);
+    expect(find.text('Netflix | 3/12'), findsOneWidget);
   });
 
   testWidgets('saving a linked row asks first; "Not now" sends nothing', (

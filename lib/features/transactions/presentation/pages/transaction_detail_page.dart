@@ -175,7 +175,7 @@ class _LoadedState extends State<_Loaded>
       context,
       suggestedName:
           '${description.isEmpty ? l.quickEventDefaultName : description}'
-          ' · $date',
+          ' | $date',
       currentProjectId: current,
       selectedProjectId: switch (_eventChange) {
         ExistingEventTarget(:final project) => project.id,
@@ -766,7 +766,8 @@ class _LoadedState extends State<_Loaded>
                         typeLocked: true,
                         cardsInHero: true,
                         allowSplits: canEditSplits,
-                        upcomingHint: editing,
+                        upcomingHint:
+                            editing && tx.type != TransactionType.transfer,
                         onUpcomingHintTap: () =>
                             openPage(context, '/recurring?tab=upcoming'),
                         editing: editing,

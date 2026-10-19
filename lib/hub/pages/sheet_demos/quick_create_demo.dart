@@ -103,8 +103,8 @@ class _DemoSheetState extends State<_DemoSheet> {
           ? (scrollToTop) => GestureDetector(
               onTap: scrollToTop,
               child: Text(
-                '${_type.name} · ${_amount.text.isEmpty ? '0' : _amount.text}'
-                ' · Food',
+                '${_type.name} | ${_amount.text.isEmpty ? '0' : _amount.text}'
+                ' | Food',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             )

@@ -27,7 +27,7 @@ class _ToolbarToggleDemoState extends State<ToolbarToggleDemo> {
   @override
   Widget build(BuildContext context) {
     return HubDemo(
-      title: 'CardActionButton · ToolbarToggleButton · ListToolbar(collapse)',
+      title: 'CardActionButton | ToolbarToggleButton | ListToolbar(collapse)',
       note:
           'The card has ONE standard top-right action slot. List pages put the '
           '🔍 here; it shows / hides the toolbar under the card (hidden by '

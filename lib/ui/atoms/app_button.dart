@@ -38,6 +38,7 @@ class AppButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.trailingIcon,
     this.variant = AppButtonVariant.primary,
     this.size = AppButtonSize.regular,
     this.loading = false,
@@ -49,6 +50,9 @@ class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
+
+  /// After the label, e.g. ▾ on a button that opens a menu.
+  final IconData? trailingIcon;
   final AppButtonVariant variant;
   final AppButtonSize size;
   final bool loading;
@@ -176,28 +180,25 @@ class AppButton extends StatelessWidget {
       return AppSpinner(size: AppSpinnerSize.small, color: spinnerColor);
     }
     final chip = size.chipSize;
+    final iconSize = chip?.icon ?? 18;
+    final gap = chip?.gap ?? AppSpacing.sm;
     // One line always: a long label ends in "…" instead of wrapping.
-    if (icon == null) {
-      return Text(
-        label,
-        maxLines: 1,
-        softWrap: false,
-        overflow: TextOverflow.ellipsis,
-      );
-    }
+    final text = Text(
+      label,
+      maxLines: 1,
+      softWrap: false,
+      overflow: TextOverflow.ellipsis,
+    );
+    if (icon == null && trailingIcon == null) return text;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: chip?.icon ?? 18),
-        SizedBox(width: chip?.gap ?? AppSpacing.sm),
-        Flexible(
-          child: Text(
-            label,
-            maxLines: 1,
-            softWrap: false,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
+        if (icon != null) ...[Icon(icon, size: iconSize), SizedBox(width: gap)],
+        Flexible(child: text),
+        if (trailingIcon != null) ...[
+          SizedBox(width: gap),
+          Icon(trailingIcon, size: iconSize + 4),
+        ],
       ],
     );
   }

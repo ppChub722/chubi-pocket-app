@@ -525,7 +525,7 @@ final List<HubPage> hubPages = [
     slug: 'app-hero-card',
     title: 'App hero card',
     summary:
-        'THE hero: header · content · footer, view / edit / create, expanded / folded, and every piece a page builds its hero from.',
+        'THE hero: header | content | footer, view / edit / create, expanded / folded, and every piece a page builds its hero from.',
     usedBy: 'transactions (list, detail, quick create), wallets (list, detail)',
     covers: [
       'AppHeroCard',

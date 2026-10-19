@@ -103,7 +103,7 @@ class _ApiDocLoaderState extends State<ApiDocLoader> {
             children: [
               Expanded(
                 child: Text(
-                  '${doc.title} · v${doc.version}',
+                  '${doc.title} | v${doc.version}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),

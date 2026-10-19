@@ -85,7 +85,7 @@ class _ArchivedView extends StatelessWidget {
       if (i.archivedAt != null)
         l.archivedOn(DateFormatter.medium(i.archivedAt!, locale: locale)),
     ];
-    return parts.isEmpty ? null : parts.join(' · ');
+    return parts.isEmpty ? null : parts.join(' | ');
   }
 
   Future<void> _restore(

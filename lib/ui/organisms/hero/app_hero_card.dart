@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_icon_button.dart';
 import '../../molecules/hero_shell.dart';
 import '../../molecules/hero_style.dart';
 import '../../tokens/app/app_icons.dart';
@@ -140,11 +139,23 @@ class AppHeroFoldButton extends StatelessWidget {
     final scope = AppHeroScope.maybeOf(context);
     if (scope == null || !scope.canFold) return const SizedBox.shrink();
     return Semantics(
+      button: true,
       expanded: scope.open,
-      child: AppIconButton.bare(
-        icon: scope.open ? AppIcons.collapse : AppIcons.expand,
-        onPressed: scope.toggle,
+      child: InkResponse(
+        onTap: scope.toggle,
+        radius: size / 2,
+        child: SizedBox.square(
+          dimension: size,
+          child: Icon(
+            scope.open ? AppIcons.collapse : AppIcons.expand,
+            size: 18,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
       ),
     );
   }
+
+  /// The tap box; [HeroHeader] tucks it into the card's corner padding.
+  static const double size = 36;
 }

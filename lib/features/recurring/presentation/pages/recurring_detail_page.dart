@@ -1271,7 +1271,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           _date(next),
           dueLabel(l, date: next, daysUntil: r?.daysUntil),
         ),
-    ].join(' · ');
+    ].join(' | ');
     return InfoBox(
       rows: [
         InfoRow(
@@ -1361,7 +1361,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           if (rule.freq != RecurrenceFreq.dates)
             InfoRow(
               label: l.fpRecurringInfoSpan,
-              value: '${_date(rule.start)} · ${_endText(l, rule.end)}',
+              value: '${_date(rule.start)} | ${_endText(l, rule.end)}',
             ),
           if (w.trialUntil != null)
             InfoRow(
@@ -1685,6 +1685,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             focusNode: _noteFocus,
             maxLines: 3,
             maxLength: TextLimits.note,
+            hint: l.recurringNoteHint,
             onChanged: (v) => _onText(_Field.note, v),
           ),
         ),

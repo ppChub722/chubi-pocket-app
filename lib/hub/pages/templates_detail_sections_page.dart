@@ -91,7 +91,7 @@ class _DetailSectionsDemoState extends State<_DetailSectionsDemo> {
             ),
           ),
           HubDemo(
-            title: 'SettingDropdownRow · SettingSwitchViewRow',
+            title: 'SettingDropdownRow | SettingSwitchViewRow',
             note:
                 'A dropdown row shows its value as a dashed ▾ chip (never a ›: '
                 'tapping opens a menu, not a page) — wrap it in an '

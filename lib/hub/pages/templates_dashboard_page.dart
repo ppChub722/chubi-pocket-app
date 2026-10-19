@@ -130,7 +130,7 @@ class _DashboardTemplateState extends State<_DashboardTemplate> {
             ),
             const SizedBox(width: AppSpacing.lg),
             const Expanded(
-              child: Text('Where it went: Food · Transport · Home'),
+              child: Text('Where it went: Food | Transport | Home'),
             ),
           ],
         ),

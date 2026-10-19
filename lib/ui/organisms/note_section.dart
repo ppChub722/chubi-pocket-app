@@ -44,15 +44,19 @@ class NoteSection extends StatelessWidget {
     final empty = text == null || text!.trim().isEmpty;
     final Widget child;
     if (editing) {
-      child =
-          editField ??
-          DetailTextField(
-            label: label,
-            controller: controller!,
-            editing: true,
-            maxLines: 5,
-            maxLength: maxLength,
-          );
+      // The same 📝 as in view mode, whatever field the page passes.
+      child = DetailLeadingScope(
+        leading: const AppIcon(AppIcons.note),
+        child:
+            editField ??
+            DetailTextField(
+              label: label,
+              controller: controller!,
+              editing: true,
+              maxLines: 5,
+              maxLength: maxLength,
+            ),
+      );
     } else {
       final row = Padding(
         padding: const EdgeInsets.symmetric(

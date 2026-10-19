@@ -111,7 +111,7 @@ class LedgerRow extends StatelessWidget {
         if (sourceLabel != null && sourceLabel!.isNotEmpty)
           Flexible(
             child: Text(
-              ' · ${sourceLabel!}',
+              ' | ${sourceLabel!}',
               style: small,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

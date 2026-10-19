@@ -164,7 +164,7 @@ class _SheetsPageState extends State<_SheetsPage> {
               ))
                 PickerRow(
                   title: b,
-                  subtitle: '฿240 · 12 Oct',
+                  subtitle: '฿240 | 12 Oct',
                   checked: picked.contains(b),
                   onTap: () => setSheet(
                     () => picked.contains(b) ? picked.remove(b) : picked.add(b),
@@ -484,7 +484,7 @@ class _SheetsPageState extends State<_SheetsPage> {
           ),
         ),
         HubDemo(
-          title: 'Picker rows — chevron · destructive · disabled create',
+          title: 'Picker rows — chevron | destructive | disabled create',
           note:
               'PickerRow(chevron: true) opens something further (a bank row); '
               'SheetOption(destructive: true) shows its label in the error '

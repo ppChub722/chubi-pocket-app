@@ -98,7 +98,7 @@ class _ButtonPageState extends State<_ButtonPage> {
         HubDemo(
           title: 'AppIconButton — activity',
           note:
-              'none · progress (a bar overlaid under the icon) · done (the icon '
+              'none | progress (a bar overlaid under the icon) | done (the icon '
               'at ~0.3 with a ✓ on top). The icon and the button size never move. '
               'Tap to cycle; the count badge (3) floats outside the circle, '
               'top-right, and hides while a job runs.',
@@ -141,7 +141,7 @@ class _ButtonPageState extends State<_ButtonPage> {
           ),
         ),
         HubDemo(
-          title: 'Edit-mode bar — Cancel · Save',
+          title: 'Edit-mode bar — Cancel | Save',
           note:
               'The two big buttons of the bottom bar in edit / reorder mode or '
               'a form (ModeActionBar, Molecules → Bars, adds Undo): an '
@@ -184,7 +184,7 @@ class _ButtonPageState extends State<_ButtonPage> {
             runSpacing: AppSpacing.md,
             children: [
               HubCell(
-                caption: 'inbox · normal',
+                caption: 'inbox | normal',
                 child: AppIconButton(
                   icon: AppIcons.pending,
                   badgeCount: 3,
@@ -193,7 +193,7 @@ class _ButtonPageState extends State<_ButtonPage> {
                 ),
               ),
               HubCell(
-                caption: 'inbox · current',
+                caption: 'inbox | current',
                 child: AppIconButton(
                   icon: AppIcons.pending,
                   badgeCount: 3,
@@ -203,7 +203,7 @@ class _ButtonPageState extends State<_ButtonPage> {
                 ),
               ),
               HubCell(
-                caption: 'bell · normal',
+                caption: 'bell | normal',
                 child: AppIconButton(
                   icon: AppIcons.notifications,
                   badgeCount: 12,
@@ -212,7 +212,7 @@ class _ButtonPageState extends State<_ButtonPage> {
                 ),
               ),
               HubCell(
-                caption: 'bell · current',
+                caption: 'bell | current',
                 child: AppIconButton(
                   icon: AppIcons.notifications,
                   selected: true,
@@ -221,7 +221,7 @@ class _ButtonPageState extends State<_ButtonPage> {
                 ),
               ),
               HubCell(
-                caption: 'profile · normal',
+                caption: 'profile | normal',
                 child: AppAvatarButton(
                   tooltip: 'Profile',
                   onTap: () {},
@@ -229,7 +229,7 @@ class _ButtonPageState extends State<_ButtonPage> {
                 ),
               ),
               HubCell(
-                caption: 'profile · current',
+                caption: 'profile | current',
                 child: AppAvatarButton(
                   tooltip: 'Profile',
                   active: true,
@@ -315,7 +315,7 @@ class _ButtonPageState extends State<_ButtonPage> {
           ),
         ),
         HubDemo(
-          title: 'Flat icon buttons — close · clear · more · back · flat',
+          title: 'Flat icon buttons — close | clear | more | back | flat',
           note:
               'No chip: a plain 48 dp tap target. ✕ close (PickerSheet, '
               'SideSheet, the quick-create header, update banner, chat dial); '

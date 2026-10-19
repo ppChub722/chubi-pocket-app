@@ -416,6 +416,7 @@ class DetailStacked extends StatelessWidget {
     required this.label,
     required this.child,
     this.onLongPress,
+    this.leading,
     super.key,
   });
 
@@ -424,21 +425,41 @@ class DetailStacked extends StatelessWidget {
 
   final VoidCallback? onLongPress;
 
+  /// An icon left of the label and field; null = the [DetailLeadingScope]'s.
+  final Widget? leading;
+
   @override
   Widget build(BuildContext context) {
+    final lead = leading ?? DetailLeadingScope.of(context);
+    final stack = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: detailLabelStyle(context)),
+        const SizedBox(height: AppSpacing.xs),
+        child,
+      ],
+    );
     final block = Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.md,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: detailLabelStyle(context)),
-          const SizedBox(height: AppSpacing.xs),
-          child,
-        ],
-      ),
+      child: lead == null
+          ? stack
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                IconTheme.merge(
+                  data: IconThemeData(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    size: 22,
+                  ),
+                  child: lead,
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(child: stack),
+              ],
+            ),
     );
     if (onLongPress == null) return block;
     return GestureDetector(
@@ -454,3 +475,22 @@ TextStyle? detailLabelStyle(BuildContext context) =>
       fontWeight: FontWeight.bold,
       color: Theme.of(context).colorScheme.onSurface,
     );
+
+/// Gives the [DetailStacked] rows under it a leading icon, so a section can
+/// show the same icon in edit mode as in view (the note's 📝) whatever field
+/// a page passes it.
+class DetailLeadingScope extends InheritedWidget {
+  const DetailLeadingScope({
+    required this.leading,
+    required super.child,
+    super.key,
+  });
+
+  final Widget leading;
+
+  static Widget? of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<DetailLeadingScope>()?.leading;
+
+  @override
+  bool updateShouldNotify(DetailLeadingScope old) => leading != old.leading;
+}

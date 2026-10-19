@@ -268,7 +268,7 @@ class ProjectTxTreeTile extends StatelessWidget {
           view.memberOf(tx).displayName,
           projectTxDateLabel(context, tx.date),
           if (tx.note?.isNotEmpty ?? false) tx.note!,
-        ].join(' · '),
+        ].join(' | '),
         trailing: MoneyText(
           tx.type == 'expense' ? -tx.amount : tx.amount,
           symbol: context.readUserCurrencySymbol,

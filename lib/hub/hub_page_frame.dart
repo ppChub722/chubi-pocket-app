@@ -84,7 +84,7 @@ class _Body extends StatelessWidget {
               AppChip(
                 label: page.phase == 0
                     ? 'planned'
-                    : 'planned · phase ${page.phase}',
+                    : 'planned | phase ${page.phase}',
                 size: ChipSize.chip,
               ),
           ],

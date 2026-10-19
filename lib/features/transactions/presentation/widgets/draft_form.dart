@@ -640,7 +640,7 @@ class _DraftFormState extends State<DraftForm> {
   }
 
   Widget? _upcomingNote(BuildContext context) {
-    if (!widget.upcomingHint || _c.isTransfer || !isAfterToday(_c.date)) {
+    if (!widget.upcomingHint || !isAfterToday(_c.date)) {
       return null;
     }
     final l = AppLocalizations.of(context)!;
@@ -936,28 +936,29 @@ class _DraftFormState extends State<DraftForm> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-        Expanded(
-          child: CategoryPickCard(
-            category: _c.category,
-            label: l.transactionFormCategoryLabel,
-            placeholder: l.transactionFormCategoryNone,
-            dense: true,
-            editable: !locked,
-            onTap: locked ? null : _pickCategory,
+          Expanded(
+            child: CategoryPickCard(
+              category: _c.category,
+              label: l.transactionFormCategoryLabel,
+              placeholder: l.transactionFormCategoryNone,
+              dense: true,
+              editable: !locked,
+              onTap: locked ? null : _pickCategory,
+            ),
           ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: WalletPickCard(
-            account: _c.account,
-            label: l.transactionFormAccountLabel,
-            placeholder: l.transactionFormAccountNone,
-            dense: true,
-            editable: true,
-            onTap: () => _pickAccount(),
+          // As far apart as the cards sit from the hero's edge.
+          SizedBox(width: HeroMetrics.of(context).padding.left),
+          Expanded(
+            child: WalletPickCard(
+              account: _c.account,
+              label: l.transactionFormAccountLabel,
+              placeholder: l.transactionFormAccountNone,
+              dense: true,
+              editable: true,
+              onTap: () => _pickAccount(),
+            ),
           ),
-        ),
-      ],
+        ],
       ),
     );
   }
@@ -1056,7 +1057,7 @@ class _DraftFormState extends State<DraftForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(child: _categoryCard(l)),
-          const SizedBox(width: AppSpacing.sm),
+          SizedBox(width: HeroMetrics.of(context).padding.left),
           Expanded(
             child: _walletCard(
               account: _c.account,
@@ -1330,7 +1331,7 @@ class _ShareLine extends StatelessWidget {
         const SizedBox(width: AppSpacing.xs),
         Flexible(
           child: Text(
-            '· ${type == TransactionType.income ? l.txShareYouOweOthers(othersText) : l.txShareOthersOweYou(othersText)}',
+            '| ${type == TransactionType.income ? l.txShareYouOweOthers(othersText) : l.txShareOthersOweYou(othersText)}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: textTheme.bodySmall?.copyWith(

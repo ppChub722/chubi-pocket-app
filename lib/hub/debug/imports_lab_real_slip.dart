@@ -277,7 +277,7 @@ class _SlipResult extends StatelessWidget {
                   'psm ${ocr['psm']}',
                   'scale ${ocr['scale']}',
                   '${width.toInt()}×${height.toInt()}',
-                ].join(' · '),
+                ].join(' | '),
                 style: textTheme.labelMedium,
               ),
             ),
@@ -416,7 +416,7 @@ class _QrLine extends StatelessWidget {
       _ when run.qrError != null => (false, 'QR error: ${run.qrError}'),
       _ when slip != null => (
         true,
-        'QR ✓ ref ${slip.transRef} · bank ${slip.bankCode ?? '—'} · '
+        'QR ✓ ref ${slip.transRef} | bank ${slip.bankCode ?? '—'} | '
             'CRC ${slip.crcValid ? 'ok' : 'MISMATCH'}',
       ),
       _ when raws.isNotEmpty => (

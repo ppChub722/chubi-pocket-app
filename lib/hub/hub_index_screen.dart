@@ -56,7 +56,7 @@ enum HubSection {
 
   /// The small count on the card.
   String get count => switch (this) {
-    HubSection.api => '${pages.length} views · ${pageFlows.length} app pages',
+    HubSection.api => '${pages.length} views | ${pageFlows.length} app pages',
     _ => '${pages.length} ${pages.length == 1 ? 'page' : 'pages'}',
   };
 

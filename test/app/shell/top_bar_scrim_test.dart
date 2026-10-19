@@ -69,7 +69,7 @@ void main() {
 
   for (final brightness in Brightness.values) {
     for (final kind in const ['list', 'detail']) {
-      testWidgets('scrim on a $kind page · ${brightness.name}', (t) async {
+      testWidgets('scrim on a $kind page | ${brightness.name}', (t) async {
         var taps = 0;
         final rows = [
           for (var i = 0; i < 30; i++)

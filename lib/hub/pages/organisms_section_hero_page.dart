@@ -256,7 +256,7 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
             HubUse(
               wide: true,
               label:
-                  'Name · description (muted, max 2 lines, ellipsis) · status chip '
+                  'Name | description (muted, max 2 lines, ellipsis) | status chip '
                   '— the description is hidden when empty',
               page: 'Every detail page (AppHeroCard)',
               child: AppHeroCard(
@@ -722,7 +722,7 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
         HubPlayground(
           title: 'SummaryStats',
           note:
-              'Labelled amounts in a row (income · expense · net). compact = '
+              'Labelled amounts in a row (income | expense | net). compact = '
               'a single-line strip for the top of filtered lists. count = how '
               'many SummaryStat items.',
           controls: [

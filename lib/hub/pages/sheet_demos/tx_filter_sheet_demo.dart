@@ -137,10 +137,10 @@ class _TxFilterSheetDemoState extends State<_TxFilterSheetDemo> {
       () => _result = r == null
           ? 'dismissed'
           : 'types ${r.types.map((t) => t.name).toList()} '
-                '· wallets ${r.walletIds}${r.noWallet ? ' + none' : ''} '
-                '· categories ${r.categoryIds}${r.uncategorized ? ' + none' : ''} '
-                '· tags ${r.tagIds}${r.noTags ? ' + none' : ''} '
-                '· amount ${r.amountMin ?? '…'} – ${r.amountMax ?? '…'}',
+                '| wallets ${r.walletIds}${r.noWallet ? ' + none' : ''} '
+                '| categories ${r.categoryIds}${r.uncategorized ? ' + none' : ''} '
+                '| tags ${r.tagIds}${r.noTags ? ' + none' : ''} '
+                '| amount ${r.amountMin ?? '…'} – ${r.amountMax ?? '…'}',
     );
   }
 

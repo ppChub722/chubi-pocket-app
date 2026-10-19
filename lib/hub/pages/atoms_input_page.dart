@@ -40,8 +40,8 @@ class _InputPageState extends State<_InputPage> {
           note:
               'THE Field: anything editable has a frame — one outlined box, no '
               'fill, the label (optional) notched on the border. empty = muted '
-              'outline + faint placeholder · focused = primary · filled = '
-              'neutral · error = red + message · disabled = dimmed · locked 🔒 '
+              'outline + faint placeholder | focused = primary | filled = '
+              'neutral | error = red + message | disabled = dimmed | locked 🔒 '
               '= no frame.',
           uses: [
             const HubUse(
@@ -179,7 +179,7 @@ class _InputPageState extends State<_InputPage> {
           ],
         ),
         HubInApp(
-          title: 'In a card · view ⇄ edit · search',
+          title: 'In a card | view ⇄ edit | search',
           columns: 1,
           note:
               'The one exception to "a frame": editing INSIDE a card is an '
@@ -218,7 +218,7 @@ class _InputPageState extends State<_InputPage> {
             ),
             HubUse(
               label: 'Token geometry — AppInputSize, side by side',
-              page: 'Tx hero + EntryCard (description · amount), entity heroes',
+              page: 'Tx hero + EntryCard (description | amount), entity heroes',
               wide: true,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

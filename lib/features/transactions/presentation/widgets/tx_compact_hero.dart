@@ -52,7 +52,7 @@ AppCompactHeroCard txCompactHeroBar(
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
             child: Text(
-              '·',
+              '|',
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: theme.colorScheme.onSurfaceVariant,

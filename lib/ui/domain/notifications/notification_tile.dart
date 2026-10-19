@@ -113,7 +113,7 @@ class NotificationTileView extends StatelessWidget {
                   weight: unread ? FontWeight.w600 : FontWeight.w400,
                 ),
                 AppText(
-                  [timeText, ?amountText].join(' · '),
+                  [timeText, ?amountText].join(' | '),
                   role: AppTextRole.caption,
                 ),
                 if (acceptedLabel != null) ...[

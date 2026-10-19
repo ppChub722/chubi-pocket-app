@@ -203,7 +203,7 @@ void main() {
     expect(find.text('Unlink'), findsOneWidget);
     expect(find.text('Send link request'), findsNothing);
     expect(
-      find.text('1 names · 2 splits not linked to a contact'),
+      find.text('1 names | 2 splits not linked to a contact'),
       findsOneWidget,
     );
     // The old "debts with this person" row is gone (it is the 💸 button).

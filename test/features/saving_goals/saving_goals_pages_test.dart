@@ -268,13 +268,13 @@ void main() {
     expect(find.text('ทริปญี่ปุ่น'), findsOneWidget);
     expect(find.text('Short \$2,500'), findsOneWidget);
     expect(find.textContaining('\$52,000 / \$80,000'), findsWidgets);
-    expect(find.text('Goal May 2027 · 2 months late'), findsOneWidget);
+    expect(find.text('Goal May 2027 | 2 months late'), findsOneWidget);
     // Done group: a tick, a plain ETA badge (on track).
     expect(find.text('✓'), findsOneWidget);
     expect(find.text('Goal May 2027'), findsNWidgets(2));
     // "0 months late" never shows.
     expect(find.textContaining('0 months late'), findsNothing);
-    expect(find.text('Goal May 2027 · 0 months late'), findsNothing);
+    expect(find.text('Goal May 2027 | 0 months late'), findsNothing);
     expect(find.text('Add saving goal'), findsOneWidget);
   });
 
@@ -299,7 +299,7 @@ void main() {
     expect(
       find.descendant(
         of: row,
-        matching: find.text('Ongoing · this month +\$2,000'),
+        matching: find.text('Ongoing | this month +\$2,000'),
       ),
       findsOneWidget,
     );
@@ -421,7 +421,7 @@ void main() {
     expect(find.text('2 months late'), findsOneWidget);
     expect(find.widgetWithText(HeroNumber, 'Saved'), findsOneWidget);
     expect(find.textContaining('52,000'), findsWidgets);
-    expect(find.text('/ \$80,000 · 65%'), findsOneWidget);
+    expect(find.text('/ \$80,000 | 65%'), findsOneWidget);
     expect(find.text('Due Mar 15, 2027'), findsOneWidget);
     expect(find.text('153 days left'), findsOneWidget);
     // The three month tiles come from the BE (month_short / month_saved /
@@ -572,7 +572,7 @@ void main() {
     expect(find.text('Close goal'), findsOneWidget);
     expect(find.text('Archive'), findsOneWidget);
     expect(
-      find.text('Hidden · \$52,000 not counted in savings · can be restored'),
+      find.text('Hidden | \$52,000 not counted in savings | can be restored'),
       findsOneWidget,
     );
     expect(find.text('Close the goal first'), findsNothing);

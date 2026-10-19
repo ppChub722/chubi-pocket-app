@@ -22,7 +22,7 @@ const _events = [
   EventTargetItem(
     id: 'e1',
     name: 'Chiang Mai trip',
-    subtitle: '4 people · 12 Oct – 15 Oct',
+    subtitle: '4 people | 12 Oct – 15 Oct',
   ),
   EventTargetItem(id: 'e2', name: 'Office party', subtitle: '12 people'),
   EventTargetItem(id: 'e3', name: 'Birthday dinner'),

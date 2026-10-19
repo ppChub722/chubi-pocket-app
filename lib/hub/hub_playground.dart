@@ -86,7 +86,7 @@ class _HubPlaygroundState extends State<HubPlayground> {
             ),
             expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
             leading: const Icon(Icons.tune),
-            title: Text('Customize · ${widget.title}', style: text.titleSmall),
+            title: Text('Customize | ${widget.title}', style: text.titleSmall),
             subtitle: Text(
               'Live instance + controls, for fully custom tweaks',
               style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),

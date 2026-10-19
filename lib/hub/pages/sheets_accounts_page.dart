@@ -117,7 +117,7 @@ class _SheetsAccountsPageState extends State<_SheetsAccountsPage> {
     _say(
       r == null
           ? 'dismissed'
-          : 'balance ${r.balance} · description ${r.description} · note ${r.note}',
+          : 'balance ${r.balance} | description ${r.description} | note ${r.note}',
     );
   }
 
@@ -148,7 +148,7 @@ class _SheetsAccountsPageState extends State<_SheetsAccountsPage> {
         bankNoneLabel: 'Not specified',
       ),
     );
-    _say(r == null ? 'dismissed' : 'kind ${r.kindId} · bank ${r.bankCode}');
+    _say(r == null ? 'dismissed' : 'kind ${r.kindId} | bank ${r.bankCode}');
   }
 
   Future<void> _invite(List<WalletInviteCandidate> list) async {

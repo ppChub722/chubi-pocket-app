@@ -8,7 +8,7 @@ Widget buildCollapsibleSectionPage(BuildContext context) => Column(
   crossAxisAlignment: CrossAxisAlignment.stretch,
   children: [
     HubDemo(
-      title: 'Open · with a hint (the แบ่งรายการ block)',
+      title: 'Open | with a hint (the แบ่งรายการ block)',
       note:
           'Rendered through SectionCard (the grouped look): heading + hint above, '
           'the rows in the filled rounded container with 2 px gaps, the '
@@ -18,11 +18,11 @@ Widget buildCollapsibleSectionPage(BuildContext context) => Column(
       child: CollapsibleSection(
         title: 'Split',
         hint: 'Split the amount with others, or put it in an event',
-        children: _rows(['Split · 2 people', 'Event · Trip']),
+        children: _rows(['Split | 2 people', 'Event | Trip']),
       ),
     ),
     HubDemo(
-      title: 'Closed · with a summary',
+      title: 'Closed | with a summary',
       note:
           'Closed, the caption says what is inside. Used by pending drafts '
           '(closed by default) and the debts person history.',
@@ -30,8 +30,8 @@ Widget buildCollapsibleSectionPage(BuildContext context) => Column(
         title: 'Split',
         initiallyOpen: false,
         hint: 'Split the amount with others, or put it in an event',
-        summary: '2 people · Trip',
-        children: _rows(['Split · 2 people', 'Event · Trip']),
+        summary: '2 people | Trip',
+        children: _rows(['Split | 2 people', 'Event | Trip']),
       ),
     ),
     HubDemo(
@@ -42,7 +42,7 @@ Widget buildCollapsibleSectionPage(BuildContext context) => Column(
         summary: '5 payments',
         initiallyOpen: false,
         trailing: AppChip(label: 'Filter', size: ChipSize.chip, onTap: () {}),
-        children: _rows(['12 Oct · 500', '5 Oct · 300']),
+        children: _rows(['12 Oct | 500', '5 Oct | 300']),
       ),
     ),
     HubDemo(
@@ -51,7 +51,7 @@ Widget buildCollapsibleSectionPage(BuildContext context) => Column(
       child: CollapsibleSection(
         title: 'Details',
         collapsible: false,
-        children: _rows(['Wallet · Savings', 'Category · Food']),
+        children: _rows(['Wallet | Savings', 'Category | Food']),
       ),
     ),
   ],

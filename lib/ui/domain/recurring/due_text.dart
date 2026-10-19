@@ -26,7 +26,7 @@ String dueLabel(
   final short = date.year == now.year
       ? DateFormat.MMMd(locale).format(date)
       : DateFormat.yMMMd(locale).format(date);
-  return '$rel · $short';
+  return '$rel | $short';
 }
 
 int _daysBetween(DateTime from, DateTime to) => DateTime.utc(

@@ -106,7 +106,7 @@ Widget buildBadgeAvatarPage(BuildContext context) {
             ),
           ),
           HubUse(
-            label: 'IconTile — circle · soft',
+            label: 'IconTile — circle | soft',
             page: 'List rows',
             child: wrap([
               for (final (_, c) in colors())
@@ -114,7 +114,7 @@ Widget buildBadgeAvatarPage(BuildContext context) {
             ]),
           ),
           HubUse(
-            label: 'IconTile — rounded · solid',
+            label: 'IconTile — rounded | solid',
             page: 'More hub, dashboard tiles',
             child: wrap([
               for (final (_, c) in colors())
@@ -214,7 +214,7 @@ Widget buildBadgeAvatarPage(BuildContext context) {
             'The frame thickness and the frame-to-glyph padding scale with the '
             'size (AvatarMetrics): the smaller the avatar, the larger the '
             'glyph relative to it. Every framed avatar uses the ladder '
-            '20 · 24 · 32 · 40 · 48 · 64.',
+            '20 | 24 | 32 | 40 | 48 | 64.',
       ),
       const _Ladder(),
       Padding(
@@ -442,12 +442,12 @@ class _Ladder extends StatelessWidget {
           (s) => UserAvatar(displayName: 'Bee', iconCode: framed, size: s),
         ),
         row(
-          'IconTile — circle · soft',
+          'IconTile — circle | soft',
           (s) =>
               IconTile(icon: AppIcons.income, color: scheme.primary, size: s),
         ),
         row(
-          'IconTile — rounded · solid',
+          'IconTile — rounded | solid',
           (s) => IconTile(
             icon: AppIcons.budget,
             color: scheme.tertiary,

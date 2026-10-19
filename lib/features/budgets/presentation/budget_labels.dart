@@ -161,7 +161,7 @@ String? budgetScopeSummary(
     if (wallets.isNotEmpty)
       '${l.bgScopeWallets}: ${wallets.map((w) => w.name).join(', ')}',
   ];
-  return parts.isEmpty ? null : parts.join(' · ');
+  return parts.isEmpty ? null : parts.join(' | ');
 }
 
 /// Why a counted row counts ("Counted because: category Buffet"), from the BE's
@@ -200,5 +200,5 @@ String budgetRowCaption(BuildContext context, AppLocalizations l, Budget b) {
   return [
     kind,
     if (left != null && b.state == BudgetState.active) l.bgRowDaysLeft(left),
-  ].join(' · ');
+  ].join(' | ');
 }

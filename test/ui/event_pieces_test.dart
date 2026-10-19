@@ -38,7 +38,7 @@ void main() {
             description: 'หารค่าที่พัก',
             statusLabel: 'กำลังดำเนินการ',
             statusTone: AppChipTone.success,
-            meta: '4 คน · 1–5 ต.ค.',
+            meta: '4 คน | 1–5 ต.ค.',
             tags: const [EventTagRef('อาหาร')],
             progress: 0.5,
             progressLabel: 'ใช้ไป ฿500 จาก ฿1,000',
@@ -51,7 +51,7 @@ void main() {
         'ทริป',
         'หารค่าที่พัก',
         'กำลังดำเนินการ',
-        '4 คน · 1–5 ต.ค.',
+        '4 คน | 1–5 ต.ค.',
         'อาหาร',
         'ใช้ไป ฿500 จาก ฿1,000',
       ]) {
@@ -117,7 +117,7 @@ void main() {
         ),
       );
       expect(find.text('ค่าที่พัก'), findsOneWidget);
-      expect(find.text('มาตาก · วันนี้ · หาร 4'), findsOneWidget);
+      expect(find.text('มาตาก | วันนี้ | หาร 4'), findsOneWidget);
       expect(find.byType(PersonMark), findsOneWidget);
       expect(textColor(t, '−฿3,600.00'), colors.expense);
 
@@ -409,7 +409,7 @@ void main() {
       ),
     );
     await t.pump(const Duration(milliseconds: 100));
-    for (final title in ['Customize · EventCard', 'Customize · EventBillRow']) {
+    for (final title in ['Customize | EventCard', 'Customize | EventBillRow']) {
       await t.ensureVisible(find.text(title));
       await t.tap(find.text(title));
       await t.pumpAndSettle();

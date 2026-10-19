@@ -19,6 +19,7 @@ export 'organisms/period_picker_sheet.dart';
 export 'organisms/description_picker_sheet.dart';
 export 'organisms/collapsible_section.dart';
 export 'organisms/month_calendar.dart';
+export 'molecules/icon_stack_count.dart';
 export 'molecules/page_dots.dart';
 export 'molecules/daily_bars.dart';
 export 'atoms/app_avatar_button.dart';

@@ -160,7 +160,7 @@ class RecurringItemLink extends Equatable {
   String label(String fallback) => [
     recurringName ?? fallback,
     if (seq != null && total != null) '$seq/$total',
-  ].join(' · ');
+  ].join(' | ');
 
   @override
   List<Object?> get props => [

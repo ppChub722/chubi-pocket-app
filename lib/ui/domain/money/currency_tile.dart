@@ -24,7 +24,7 @@ class CurrencyTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final display =
-        '${Currencies.symbolOf(value)}  $value · ${Currencies.nameOf(l, value)}';
+        '${Currencies.symbolOf(value)}  $value | ${Currencies.nameOf(l, value)}';
     final tileLabel = label ?? l.commonCurrency;
     if (onChanged == null) {
       return DetailRow.pick(
@@ -43,7 +43,7 @@ class CurrencyTile extends StatelessWidget {
         for (final c in Currencies.codes)
           SheetOption(
             value: c,
-            label: '$c · ${Currencies.nameOf(l, c)}',
+            label: '$c | ${Currencies.nameOf(l, c)}',
             leading: SizedBox(
               width: 24,
               child: Text(Currencies.symbolOf(c), textAlign: TextAlign.center),
