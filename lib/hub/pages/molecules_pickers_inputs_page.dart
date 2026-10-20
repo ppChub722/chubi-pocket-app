@@ -36,6 +36,8 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
   // Day of month
   int? _day = 15;
   int? _gridDay;
+  int _yearMonth = 2;
+  int _yearDay = 14;
 
   // AmountInput
   final _plain = TextEditingController(text: '1,250');
@@ -120,6 +122,45 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
         const HubSubheading(
           'In the app',
           note: 'The real presets and where they are used.',
+        ),
+        HubDemo(
+          title: 'PickFrame: a group picked as a whole',
+          note:
+              'Edit mode of a list picked in a sheet (a budget\'s categories, '
+              'wallets, tags): one dashed frame, chips with a normal line and no '
+              '✕, a tap anywhere opens the picker. Empty: a "+ choose" prompt.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PickFrame(
+                onTap: () {},
+                child: LimitedChipWrap(
+                  onMore: () {},
+                  chips: [
+                    for (final n in const [
+                      'Food & Drinks',
+                      'Groceries',
+                      'Food Delivery',
+                      'Convenience Store',
+                      'Buffet',
+                      'Dining',
+                      'Cafe',
+                    ])
+                      AppChip(
+                        label: n,
+                        icon: AppIcons.category,
+                        size: ChipSize.chip,
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              PickFrame(
+                onTap: () {},
+                child: const PickFramePrompt('Choose wallets'),
+              ),
+            ],
+          ),
         ),
         HubDemo(
           title: 'PickCard — one height per variant',
@@ -550,6 +591,40 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
           ),
         ),
         HubDemo(
+          title: 'MonthOfYearGrid + DayOfMonthGrid(days:, padding:)',
+          note:
+              'A day of the year with no year: the 12 months, then only the '
+              "days that month has (no 'Last' cell when days < 31). "
+              'padding: EdgeInsets.zero drops the sheet inset when the grid '
+              'sits inside an already padded editor (the repeat sheet).',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              MonthOfYearGrid(
+                selected: _yearMonth,
+                onPicked: (m) => setState(() {
+                  _yearMonth = m;
+                  final days = DateTime(2001, m + 1, 0).day;
+                  if (_yearDay > days) _yearDay = days;
+                }),
+              ),
+              gap,
+              DayOfMonthGrid(
+                days: DateTime(2001, _yearMonth + 1, 0).day,
+                selected: _yearDay,
+                allowNone: false,
+                padding: EdgeInsets.zero,
+                onPicked: (d) => setState(() => _yearDay = d ?? _yearDay),
+              ),
+              gap,
+              AppText(
+                'Picked: day $_yearDay of month $_yearMonth',
+                role: AppTextRole.caption,
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
           title: 'AmountInput + AmountQuickFill + ThousandsInputFormatter',
           note:
               'The big amount field: thousands grouping as you type, '
@@ -617,14 +692,33 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
           title: 'SegmentedChoice',
           note:
               'Pick one of 2-4 short options (notification settings: off / '
-              'notify / auto). The chosen one is highlighted.',
-          child: SegmentedChoice<String>(
-            selected: _notify,
-            onChanged: (v) => setState(() => _notify = v),
-            segments: const [
-              ChoiceSegment('off', 'Off'),
-              ChoiceSegment('notify', 'Notify'),
-              ChoiceSegment('auto', 'Auto'),
+              'notify / auto). The chosen one is highlighted. expand: full '
+              'width with equal segments, a page\'s top tabs (the recurring '
+              'list\'s ภาพรวม | ปฏิทิน).',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SegmentedChoice<String>(
+                selected: _notify,
+                onChanged: (v) => setState(() => _notify = v),
+                segments: const [
+                  ChoiceSegment('off', 'Off'),
+                  ChoiceSegment('notify', 'Notify'),
+                  ChoiceSegment('auto', 'Auto'),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              SegmentedChoice<String>(
+                expand: true,
+                selected: _notify == 'off' ? 'overview' : 'calendar',
+                onChanged: (v) => setState(
+                  () => _notify = v == 'overview' ? 'off' : 'notify',
+                ),
+                segments: const [
+                  ChoiceSegment('overview', 'ภาพรวม'),
+                  ChoiceSegment('calendar', 'ปฏิทิน'),
+                ],
+              ),
             ],
           ),
         ),

@@ -1,6 +1,4 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-
 
 import '../../ui.dart';
 
@@ -25,91 +23,6 @@ class BankPickerItem {
 class BankPickerChoice {
   const BankPickerChoice(this.code);
   final String? code;
-}
-
-/// The words of the bank sheet (the kit never reads the app's l10n).
-class BankPickerStrings {
-  const BankPickerStrings({
-    required this.title,
-    required this.noneLabel,
-    this.searchHint,
-  });
-
-  final String title;
-
-  final String noneLabel;
-  final String? searchHint;
-}
-
-Future<BankPickerChoice?> showBankSelectSheet(
-  BuildContext context, {
-  required List<BankPickerItem> banks,
-  required BankPickerStrings strings,
-  String? selectedCode,
-  bool allowNone = true,
-  ValueListenable<List<BankPickerItem>>? live,
-  Future<void> Function()? onRefresh,
-}) {
-  return showAppSheetCustom<BankPickerChoice>(
-    context,
-    builder: (_) => SheetRefreshScope(
-      onRefresh: onRefresh,
-      child: LiveItems<List<BankPickerItem>>(
-        initial: banks,
-        live: live,
-        builder: (_, banks) => PickerSheet(
-          title: strings.title,
-          searchable: true,
-          searchToggle: true,
-          searchHint: strings.searchHint,
-          builder: (context, query) {
-            bool hit(BankPickerItem p) =>
-                p.nameTh.toLowerCase().contains(query) ||
-                p.nameEn.toLowerCase().contains(query) ||
-                (p.shortName?.toLowerCase().contains(query) ?? false) ||
-                p.code.contains(query);
-            final shown = query.isEmpty ? banks : banks.where(hit).toList();
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if ((allowNone && query.isEmpty) || shown.isNotEmpty)
-                  SectionCard(
-                    first: true,
-                    children: [
-                      if (allowNone && query.isEmpty)
-                        PickerRow(
-                          leading: const AppIcon(AppIcons.bank),
-                          title: strings.noneLabel,
-                          selected: selectedCode == null,
-                          onTap: () => Navigator.pop(
-                            context,
-                            const BankPickerChoice(null),
-                          ),
-                        ),
-                      for (final b in shown)
-                        PickerRow(
-                          leading: BankBrandMark(
-                            code: b.code,
-                            shortName: b.shortName,
-                            nameEn: b.nameEn,
-                          ),
-                          title: b.name,
-                          subtitle: [?b.shortName, b.code].join(' | '),
-                          selected: b.code == selectedCode,
-                          onTap: () =>
-                              Navigator.pop(context, BankPickerChoice(b.code)),
-                        ),
-                    ],
-                  ),
-                const SizedBox(height: AppSpacing.md),
-              ],
-            );
-          },
-        ),
-      ),
-    ),
-  );
 }
 
 class BankBrandMark extends StatelessWidget {

@@ -562,7 +562,11 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Spare opened', [
       FlowCall('getSavingSpare', note: 'saved but not yet in a goal'),
     ]),
-    FlowStep.action('Button "เพิ่มเป้าหมาย"', [FlowCall('createSavingGoal')]),
+    FlowStep.action('Button "เพิ่มเป้าหมาย" → "บันทึก"', [
+      FlowCall('createSavingGoal'),
+      FlowCall('createSavingEntry', note: 'the starting amount, when set'),
+      FlowCall('setGoalAutoSaves', note: 'the auto-saves, when on'),
+    ]),
   ]),
   PageFlow('goals-detail', 'One saving goal and its saving entries.', [
     FlowStep.open([FlowCall('getSavingGoal')]),
@@ -572,19 +576,23 @@ const List<PageFlow> pageFlows = [
     ]),
     FlowStep.action('Edit an entry', [FlowCall('updateSavingEntry')]),
     FlowStep.action('Delete an entry', [FlowCall('deleteSavingEntry')]),
-    FlowStep.action('Button "บันทึก"', [FlowCall('updateSavingGoal')]),
+    FlowStep.action('Button "บันทึก"', [
+      FlowCall('updateSavingGoal'),
+      FlowCall('setGoalAutoSaves', note: 'only when the auto-saves changed'),
+    ]),
     FlowStep.action('Button "ปิดเป้าหมาย"', [FlowCall('closeSavingGoal')]),
     // fe-pages M5: delete preview first (can_delete), then the delete.
     FlowStep.action('Button "ลบ"', [
       FlowCall('getSavingGoal', note: 'include=delete_preview'),
       FlowCall('deleteSavingGoal'),
     ]),
-    // fe-pages: the auto-save switch and its sheet (a goal and the spare pool).
+    // The spare pool's auto-save switch and sheet; a goal's go with "บันทึก".
     FlowStep.action('ออมอัตโนมัติ: switch / edit', [
       FlowCall('setGoalAutoSave'),
       FlowCall('clearGoalAutoSave'),
       FlowCall('setSpareAutoSave'),
       FlowCall('clearSpareAutoSave'),
+      FlowCall('setSpareAutoSaves', note: 'the spare pool, the whole set'),
     ]),
     FlowStep.action('Button "เก็บถาวร"', [FlowCall('archiveSavingGoal')]),
     FlowStep.action('Button "กู้คืน"', [FlowCall('restoreSavingGoal')]),
@@ -608,53 +616,81 @@ const List<PageFlow> pageFlows = [
     'recurring-detail',
     'One recurring: what it made and what is next.',
     [
-      FlowStep.open([FlowCall('getRecurring')]),
-      FlowStep.action('Tab "ล่วงหน้า" (lazy) + scroll', [
-        FlowCall('listRecurringRuleItems'),
+      FlowStep.open([
+        FlowCall('getRecurring', note: 'hero + stats + first history page'),
+      ]),
+      FlowStep.action('Tab "ประวัติ" scroll', [
+        FlowCall('listRecurringRuleItems', note: 'tab=produced&page='),
+      ]),
+      FlowStep.action('Tab "ล่วงหน้า": ดูปีถัดไป / ไปที่เดือน', [
+        FlowCall(
+          'listRecurringRuleItems',
+          note: 'tab=upcoming&from=&months=12 (no end) or page= (with an end)',
+        ),
+      ]),
+      FlowStep.action('Hero: แก้ยอด / ใส่ยอด / เลื่อนวัน', [
+        FlowCall('updateRecurringOccurrence', note: '{amount} or {date}'),
+      ]),
+      FlowStep.action('Hero: ข้าม', [FlowCall('skipRecurringOccurrence')]),
+      FlowStep.action('Old BE row (no slot): ข้าม / กู้คืน', [
+        FlowCall('archiveRecurringItem'),
+        FlowCall('restoreRecurringItem'),
       ]),
       FlowStep.action('Status chip พัก / ทำต่อ', [
         FlowCall('pauseRecurring'),
         FlowCall('resumeRecurring'),
       ]),
       FlowStep.action('Button "ต่ออีก"', [FlowCall('extendRecurring')]),
-      FlowStep.action('Selection toolbar', [FlowCall('batchRecurringItems')]),
-      FlowStep.action('Item popover', [
-        FlowCall('createFromRecurringItem', note: 'item → a pending draft'),
-        FlowCall('archiveRecurringItem'),
-        FlowCall('restoreRecurringItem'),
-        FlowCall('deleteRecurringItem'),
+    ],
+  ),
+  PageFlow(
+    'recurring-occurrence',
+    'One occurrence: the quick create sheet (แก้เฉพาะงวดนี้) and the '
+        'ต้องจัดการ row buttons. By rule + slot (C3); an old BE row by id.',
+    [
+      FlowStep.open([
+        FlowCall(
+          'listRecurringItems',
+          note: 'home card: ?month=&status=all&rule_id=, then by slot',
+        ),
+        FlowCall('getRecurringItem', note: 'a stored row by id'),
       ]),
-      FlowStep.action('Item entry sheet "บันทึก"', [
-        FlowCall('updateRecurringItem'),
-        FlowCall('createRecurringItem'),
+      FlowStep.action('Button "บันทึก"', [
+        FlowCall('updateRecurringOccurrence', note: 'only the changed fields'),
+        FlowCall('updateRecurringItem', note: 'old BE, by id'),
+      ]),
+      FlowStep.action('Button "ยืนยัน"', [
+        FlowCall('confirmRecurringOccurrence'),
+      ]),
+      FlowStep.action('Chip "ข้าม" / "ยกเลิกการข้าม"', [
+        FlowCall('skipRecurringOccurrence'),
+        FlowCall('restoreRecurringOccurrence'),
+      ]),
+      FlowStep.action('Chip "จ่ายแล้ว" / "ยกเลิกจ่ายแล้ว"', [
+        FlowCall('markRecurringOccurrencePaid'),
+        FlowCall('unmarkRecurringOccurrencePaid'),
+      ]),
+      FlowStep.action('Chip "ผูกกับรายการที่มีอยู่"', [
+        FlowCall('listTransactions', note: '±45 days, same type'),
+        FlowCall(
+          'linkRecurringOccurrence',
+          note: 'replace: true after "สลับ?"',
+        ),
+      ]),
+      FlowStep.action('ยืนยัน / จ่ายแล้ว / ข้ามทั้งหมด (one rule)', [
+        FlowCall('confirmRecurringOccurrencesReady'),
+        FlowCall('markRecurringOccurrencesPaidReady'),
+        FlowCall('skipRecurringOccurrencesReady'),
+      ]),
+      FlowStep.action('Quick create / tx detail: pick the occurrence', [
+        FlowCall(
+          'listRecurringOccurrences',
+          note: '?tx_date=&past=3&upcoming=3 → suggested_slot',
+        ),
+        FlowCall('unlinkRecurringOccurrence'),
       ]),
     ],
   ),
-  // fe-pages: the 0.4.0 recurring pages (view ⇄ edit is ONE page now).
-  PageFlow('recurring-occurrence', 'One occurrence of a recurring.', [
-    FlowStep.action('แก้ยอด / ใส่ยอด / เลื่อนวัน', [
-      FlowCall('updateRecurringItem', note: '{date, amount}, scope this'),
-    ]),
-    FlowStep.action('ข้าม / กู้คืน', [
-      FlowCall('archiveRecurringItem'),
-      FlowCall('restoreRecurringItem'),
-    ]),
-    FlowStep.action('Unlink from a transaction', [
-      FlowCall('unlinkRecurringItem'),
-    ]),
-  ]),
-  PageFlow('recurring-item', 'One recurring item: view, edit, act on it.', [
-    FlowStep.open([FlowCall('getRecurringItem')]),
-    FlowStep.action('Button "บันทึก"', [FlowCall('updateRecurringItem')]),
-    FlowStep.action('ส่งเข้ารอยืนยันเลย / สร้างใหม่', [
-      FlowCall('createFromRecurringItem'),
-    ]),
-    FlowStep.action('เก็บถาวร / กู้คืน', [
-      FlowCall('archiveRecurringItem'),
-      FlowCall('restoreRecurringItem'),
-    ]),
-    FlowStep.action('Button "ลบรายการนี้"', [FlowCall('deleteRecurringItem')]),
-  ]),
   PageFlow('recurring-duplicate', 'Copy a recurring (edit mode end zone).', [
     FlowStep.action('Button "ทำสำเนา"', [FlowCall('duplicateRecurring')]),
   ]),

@@ -65,10 +65,17 @@ class TransactionTile extends StatelessWidget {
         ? resolveColor(walletCode!.iconColors.first, palette)
         : null;
 
+    final day = DateFormatter.parseDay(tx.date);
+    final now = DateTime.now();
+    final upcoming =
+        day != null && day.isAfter(DateTime(now.year, now.month, now.day));
+
     return TxRow(
       leading: leading,
       title: title,
       amount: tx.signedAmount,
+      dimmed: upcoming,
+      statusChip: upcoming ? DueText(date: day, withDate: false) : null,
       walletLabel: showAccount
           ? (tx.account?.name ?? l.transactionFormAccountNone)
           : null,

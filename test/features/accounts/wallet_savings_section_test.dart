@@ -78,7 +78,10 @@ void main() {
     t.view.devicePixelRatio = 1;
     addTearDown(t.view.reset);
     final repo = _Repo();
-    final cubit = AccountsCubit(repository: repo, coordinator: testCoordinator());
+    final cubit = AccountsCubit(
+      repository: repo,
+      coordinator: testCoordinator(),
+    );
     addTearDown(cubit.close);
     cubit.emit(
       AccountsState(accounts: [wallet], status: AccountsStatus.loaded),
@@ -140,8 +143,12 @@ void main() {
   testWidgets('hero (bank): balance, split legend, actions', (t) async {
     await pump(t, _wallet().copyWith(monthIn: 400, monthOut: 200));
     expect(find.text('In the wallet'), findsOneWidget);
-    expect(find.text('Available ฿200'), findsOneWidget);
-    expect(find.text('Saved ฿800'), findsOneWidget);
+    // The split bar's facts: a label and its amount (the 200 is also the
+    // spare bucket's amount in the overview below).
+    expect(find.text('Available'), findsOneWidget);
+    expect(find.text('Saved'), findsOneWidget);
+    expect(find.text('฿800'), findsOneWidget);
+    expect(find.text('฿200'), findsWidgets);
     expect(find.text('Adjust balance'), findsOneWidget);
     expect(find.text('Save'), findsOneWidget);
     expect(find.text('Pay card'), findsNothing);
@@ -170,9 +177,9 @@ void main() {
       'days_until_due': 8,
     });
     await pump(t, card);
-    expect(find.text('Card debt'), findsWidgets);
-    expect(find.textContaining('Used 8% of the'), findsOneWidget);
-    expect(find.textContaining('left'), findsWidgets);
+    expect(find.text('Used on the card'), findsOneWidget);
+    expect(find.text('Used 8%'), findsOneWidget);
+    expect(find.textContaining('Available of the'), findsOneWidget);
     expect(find.textContaining('in 8 days'), findsOneWidget);
     expect(find.text('Pay card'), findsOneWidget);
   });

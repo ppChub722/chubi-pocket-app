@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../atoms/app_card.dart';
 import '../tokens/color_contrast.dart';
+import '../tokens/hero_colors.dart';
 
 @immutable
 class HeroStyle {
@@ -57,7 +58,12 @@ class HeroSurface extends StatelessWidget {
   final EdgeInsetsGeometry margin;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => HeroColorScope(
+    colors: HeroColors.from(Theme.of(context), style.color),
+    child: _card(context),
+  );
+
+  Widget _card(BuildContext context) {
     final color = style.color;
     if (color == null) {
       return AppCard(

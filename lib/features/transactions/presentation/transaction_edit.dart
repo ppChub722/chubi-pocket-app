@@ -7,10 +7,49 @@ import '../../../core/network/api_exception.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
 import '../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../domain/refs.dart';
 import '../domain/transaction.dart';
+import '../domain/transaction_type.dart';
 import '../data/transactions_repository.dart';
 import 'cubit/transactions_cubit.dart';
 import 'widgets/draft_form.dart';
+
+/// A plain income / expense of mine edits in the quick create sheet. Splits,
+/// an event bill, a debt entry, a transfer, a system or locked row, another
+/// member's row: its detail page.
+bool txEditsInSheet(Transaction t) =>
+    t.type != TransactionType.transfer &&
+    !t.isDebtEntry &&
+    !t.isLocked &&
+    t.canEditCategory &&
+    !(t.category?.isSystem ?? false) &&
+    t.splitCount == 0 &&
+    t.projectId == null &&
+    t.eventBill == null;
+
+/// Deleting a tx linked to a recurring occurrence: true = also skip the
+/// occurrence, false = the tx only (the occurrence is due again), null =
+/// cancelled.
+Future<bool?> askDeleteRecurringTx(
+  BuildContext context,
+  RecurringItemLink link,
+) {
+  final l = AppLocalizations.of(context)!;
+  return showChoiceDialog<bool?>(
+    context,
+    title: l.txDeleteRecurringTitle,
+    message: l.txDeleteRecurringBody(link.label(l.transactionTypeExpense)),
+    choices: [
+      DialogChoice(value: false, label: l.txDeleteRecurringOnly),
+      DialogChoice(
+        value: true,
+        label: l.txDeleteRecurringSkip,
+        variant: AppButtonVariant.destructive,
+      ),
+      DialogChoice(value: null, label: l.commonCancel),
+    ],
+  );
+}
 
 /// The rule the server would reject first; null = ready to save.
 String? transactionEditProblem(
@@ -139,10 +178,6 @@ Future<TransactionEditOutcome> saveTransactionEdit(
     tagIds: c.tagIds.toList(),
     alsoUpdateLink: alsoUpdateLink,
   );
-  if (result.isUpcoming) {
-    accounts.patchBalances(result.accountBalances);
-    return const TransactionEditOutcome(movedToUpcoming: true);
-  }
   accounts.patchBalances(result.accountBalances);
   if (!lowering && splitsChanged) {
     final row = await putSplits();
@@ -152,12 +187,10 @@ Future<TransactionEditOutcome> saveTransactionEdit(
 }
 
 class TransactionEditOutcome {
-  const TransactionEditOutcome({this.warning, this.movedToUpcoming = false});
+  const TransactionEditOutcome({this.warning});
 
   /// Shown instead of "saved" (none today).
   final String? warning;
-
-  final bool movedToUpcoming;
 }
 
 String _ymd(DateTime d) =>

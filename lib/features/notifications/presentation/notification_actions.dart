@@ -67,7 +67,7 @@ abstract final class NotificationActions {
         NotificationType.splitChanged => _onApplySplitChange(ctx, n),
         NotificationType.projectInvite => _onAcceptProjectInvite(ctx, n),
         NotificationType.recurringEnding => _onExtendRecurring(ctx, n),
-        NotificationType.recurringDue => _onOpenPending(ctx, n),
+        NotificationType.recurringDue => _onOpenDue(ctx, n),
         _ => _onAcceptLinkRequest(ctx, n.id),
       };
 
@@ -211,11 +211,13 @@ Future<void> _onExtendRecurring(BuildContext ctx, AppNotification n) async {
   }
 }
 
-Future<void> _onOpenPending(BuildContext ctx, AppNotification n) async {
+/// The due notice's button: its deep link (ต้องจัดการ on the recurring page).
+Future<void> _onOpenDue(BuildContext ctx, AppNotification n) async {
   if (n.isUnread) {
     unawaited(ctx.read<NotificationsInboxCubit>().markRead(n.id));
   }
-  openPage(ctx, '/pending');
+  final link = n.deepLink;
+  openPage(ctx, link == null || link.isEmpty ? '/recurring?focus=due' : link);
 }
 
 Future<void> _onCopyToBook(BuildContext ctx, AppNotification n) async {
@@ -255,11 +257,7 @@ Future<void> _onUpdateCopy(BuildContext ctx, AppNotification n) async {
     );
     await inboxCubit.markActioned(n.id);
     accountsCubit.patchBalances(result.accountBalances);
-    showAppSnackBarOn(
-      messenger,
-      result.isUpcoming ? l.txMovedToUpcoming : l.notifCopyUpdated,
-      tone: Tone.success,
-    );
+    showAppSnackBarOn(messenger, l.notifCopyUpdated, tone: Tone.success);
   } on ApiException catch (e) {
     _showError(messenger, e);
   }

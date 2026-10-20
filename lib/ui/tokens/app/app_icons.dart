@@ -23,7 +23,7 @@ abstract final class AppIcons {
   static const contact = Icons.contacts_outlined;
   static const project = Icons.groups_outlined;
   static const debt = Icons.handshake_outlined;
-  static const budget = Icons.savings_outlined;
+  static const budget = Icons.donut_large;
   static const savingGoal = Icons.flag_outlined;
   // Saving txs (goals v2): a record of its own, never a real tx.
   static const savingDeposit = Icons.savings; // ออม
@@ -65,6 +65,20 @@ abstract final class AppIcons {
   static const trendUp = Icons.arrow_upward;
   static const trendDown = Icons.arrow_downward;
   static const trendFlat = Icons.remove;
+
+  // Hero fact labels (HeroFact.icon).
+  static const savings = Icons.savings_outlined;
+  static const receipt = Icons.receipt_long_outlined;
+  static const trendingUp = Icons.trending_up;
+  static const pie = Icons.pie_chart_outline;
+  static const layers = Icons.layers_outlined;
+  static const coin = Icons.monetization_on_outlined;
+  static const hourglass = Icons.hourglass_empty;
+  static const target = Icons.track_changes;
+
+  // A month's money in / out (HeroFlowRow).
+  static const flowIn = Icons.south_west;
+  static const flowOut = Icons.north_east;
 
   static const language = Icons.language_outlined;
   static const font = Icons.text_fields_outlined;
@@ -186,6 +200,18 @@ abstract final class AppIcons {
       'trendUp': trendUp,
       'trendDown': trendDown,
       'trendFlat': trendFlat,
+    },
+    'Hero facts': {
+      'savings': savings,
+      'receipt': receipt,
+      'trendingUp': trendingUp,
+      'pie': pie,
+      'layers': layers,
+      'coin': coin,
+      'hourglass': hourglass,
+      'target': target,
+      'flowIn': flowIn,
+      'flowOut': flowOut,
     },
     'Preferences / account': {
       'language': language,

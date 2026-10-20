@@ -19,14 +19,31 @@ class LinkOccurrence {
     required this.daysUntil,
     required this.status,
     this.amount,
+    this.ruleId,
+    this.slot,
+    this.linkedTxId,
   });
 
   factory LinkOccurrence.fromJson(Map<String, dynamic> json) => LinkOccurrence(
-    itemId: json['item_id'] as String,
+    itemId:
+        json['item_id'] as String? ?? 'slot:${json['rule_id']}:${json['slot']}',
     date: parseYmd(json['date'] as String?) ?? DateTime.now(),
     daysUntil: (json['days_until'] as num?)?.toInt() ?? 0,
     status: (json['status'] as String?) ?? 'upcoming',
     amount: (json['amount'] as num?)?.toDouble(),
+    ruleId: json['rule_id'] as String?,
+    slot: json['slot'] as String?,
+  );
+
+  factory LinkOccurrence.ofItem(RecurringItem i) => LinkOccurrence(
+    itemId: i.id,
+    date: i.date,
+    daysUntil: i.daysUntil,
+    status: i.state.name,
+    amount: i.amount,
+    ruleId: i.ruleId,
+    slot: i.slot,
+    linkedTxId: i.transaction?.id,
   );
 
   final String itemId;
@@ -36,6 +53,15 @@ class LinkOccurrence {
   final String status;
 
   final double? amount;
+
+  /// Set from the occurrence picker: linking goes by rule + slot.
+  final String? ruleId;
+  final String? slot;
+
+  /// The tx this occurrence is already linked to.
+  final String? linkedTxId;
+
+  bool get bySlot => ruleId != null && slot != null;
 }
 
 class LinkCandidate {
@@ -43,12 +69,16 @@ class LinkCandidate {
     required this.setting,
     required this.occurrence,
     this.likely = false,
+    this.replace = false,
   });
 
   final Recurring setting;
   final LinkOccurrence occurrence;
 
   final bool likely;
+
+  /// The owner already said "สลับ": linking replaces the occurrence's tx.
+  final bool replace;
 
   bool get isReminder => occurrence.amount == null;
 }
@@ -60,9 +90,13 @@ class LinkResult {
     required this.ruleAmount,
     required this.transactionAmount,
     this.balances = const {},
+    this.item,
   });
 
   final Transaction? transaction;
+
+  /// The linked occurrence as it is now.
+  final RecurringItem? item;
   final bool amountDiffers;
   final double? ruleAmount;
   final double transactionAmount;
@@ -85,12 +119,14 @@ class RecurringLinkRepository {
     }
   }
 
-  Future<LinkResult> link(String itemId, String transactionId) => _call((
-    dio,
-  ) async {
+  Future<LinkResult> _link(
+    String path,
+    String transactionId,
+    bool replace,
+  ) => _call((dio) async {
     final res = await dio.post<Map<String, dynamic>>(
-      '/recurring-items/$itemId/link',
-      data: {'transaction_id': transactionId},
+      path,
+      data: {'transaction_id': transactionId, if (replace) 'replace': true},
     );
     final body = res.data!;
     return LinkResult(
@@ -101,15 +137,43 @@ class RecurringLinkRepository {
       ruleAmount: (body['rule_amount'] as num?)?.toDouble(),
       transactionAmount: (body['transaction_amount'] as num?)?.toDouble() ?? 0,
       balances: WalletBalance.mapOf(body['account_balances']),
+      item: body['item'] is Map<String, dynamic>
+          ? RecurringItem.fromJson(body['item'] as Map<String, dynamic>)
+          : null,
     );
   });
 
-  Future<RecurringItem> unlink(String itemId) => _call((dio) async {
-    final res = await dio.post<Map<String, dynamic>>(
-      '/recurring-items/$itemId/unlink',
-    );
-    return RecurringItem.fromJson(res.data!['item'] as Map<String, dynamic>);
+  /// [replace]: the occurrence's tx (or this tx's other occurrence) lets go
+  /// in the same call; without it a taken side answers 409.
+  Future<LinkResult> link(
+    String itemId,
+    String transactionId, {
+    bool replace = false,
+  }) => _link('/recurring-items/$itemId/link', transactionId, replace);
+
+  Future<LinkResult> linkOccurrence(
+    String ruleId,
+    String slot,
+    String transactionId, {
+    bool replace = false,
+  }) => _link(
+    '/recurring/$ruleId/occurrences/$slot/link',
+    transactionId,
+    replace,
+  );
+
+  Future<RecurringItem?> _unlink(String path) => _call((dio) async {
+    final res = await dio.post<Map<String, dynamic>>(path);
+    final item = res.data?['item'];
+    return item is Map<String, dynamic> ? RecurringItem.fromJson(item) : null;
   });
+
+  Future<RecurringItem?> unlink(String itemId) =>
+      _unlink('/recurring-items/$itemId/unlink');
+
+  /// The occurrence goes back to ค้าง / ยังไม่ถึง; the tx stays.
+  Future<RecurringItem?> unlinkOccurrence(String ruleId, String slot) =>
+      _unlink('/recurring/$ruleId/occurrences/$slot/unlink');
 
   Future<void> updateAmount(String recurringId, double amount) =>
       _call((dio) async {

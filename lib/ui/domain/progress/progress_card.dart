@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../atoms/skeleton_box.dart';
 import '../../molecules/progress_row.dart';
 import '../../tokens/app/app_colors.dart';
+import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_spacing.dart';
 import '../icons/icon_code.dart';
 import '../icons/icon_code_widget.dart';
@@ -27,6 +28,7 @@ class ProgressCard extends StatelessWidget {
     this.dimmed = false,
     this.trailing,
     this.paceMarker,
+    this.paceBubble,
     this.alignWithTitle = false,
     super.key,
   }) : compact = false,
@@ -48,6 +50,7 @@ class ProgressCard extends StatelessWidget {
     this.dimmed = false,
     this.trailing,
     this.paceMarker,
+    this.paceBubble,
     this.alignWithTitle = false,
     super.key,
   }) : iconCode = null,
@@ -76,6 +79,7 @@ class ProgressCard extends StatelessWidget {
        percentText = null,
        trailing = null,
        paceMarker = null,
+       paceBubble = null,
        alignWithTitle = false,
        onTap = null,
        dimmed = false,
@@ -103,6 +107,9 @@ class ProgressCard extends StatelessWidget {
   final Widget? trailing;
 
   final double? paceMarker;
+
+  /// Shown over the [paceMarker] all the time ("plan to date ฿1,300").
+  final String? paceBubble;
 
   final bool alignWithTitle;
   final bool compact;
@@ -133,7 +140,7 @@ class ProgressCard extends StatelessWidget {
                   iconCode: iconCode,
                   size: _tile,
                   displayMode: IconDisplayMode.compact,
-                  fallbackIcon: fallbackIcon ?? Icons.savings_outlined,
+                  fallbackIcon: fallbackIcon ?? AppIcons.budget,
                   fallbackColor: tint,
                 ),
             const SizedBox(width: AppSpacing.md),
@@ -270,6 +277,7 @@ class ProgressCard extends StatelessWidget {
                   overColor: color,
                   height: compact ? 6 : 8,
                   marker: paceMarker,
+                  markerBubble: paceBubble,
                 ),
                 footer,
               ],

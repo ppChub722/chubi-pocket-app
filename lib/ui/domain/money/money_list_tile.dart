@@ -127,9 +127,12 @@ class DateGroupHeader extends StatelessWidget implements ListBreak {
     final style = Theme.of(
       context,
     ).textTheme.labelLarge?.copyWith(color: scheme.onSurfaceVariant);
+    // Over a card of rows the label lines up with a card title (md in from
+    // the edge); the total stays over the rows' amounts.
+    final carded = CardedListBreak.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
+      padding: EdgeInsetsDirectional.fromSTEB(
+        carded ? AppSpacing.md : AppSpacing.lg,
         AppSpacing.md,
         AppSpacing.lg,
         AppSpacing.xs,

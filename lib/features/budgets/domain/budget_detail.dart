@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../ui/ui.dart';
 import '../../recurring/domain/recurrence_rule.dart' show parseYmd, ymd;
 import '../../transactions/domain/refs.dart';
 import 'budget.dart';
@@ -17,14 +18,20 @@ enum BudgetSource {
 
   upcoming,
 
-  pending;
+  pending,
 
-  static BudgetSource fromJson(String? v) => BudgetSource.values.firstWhere(
-    (s) => s.name == v,
-    orElse: () => BudgetSource.normal,
-  );
+  /// A transaction dated after today: counts as expected until its day.
+  futureTx;
 
-  String toJson() => name;
+  static BudgetSource fromJson(String? v) => switch (v) {
+    'future_tx' => BudgetSource.futureTx,
+    _ => BudgetSource.values.firstWhere(
+      (s) => s.name == v,
+      orElse: () => BudgetSource.normal,
+    ),
+  };
+
+  String toJson() => this == futureTx ? 'future_tx' : name;
 }
 
 enum BudgetReason {
@@ -196,10 +203,13 @@ class BudgetItem extends Equatable {
     this.category,
     this.account,
     this.tags = const [],
+    this.tagIcons = const {},
     this.event,
     this.recurringItemId,
     this.recurringSeq,
     this.recurringTotal,
+    this.ruleId,
+    this.slot,
     this.reason = BudgetReason.none,
   });
 
@@ -216,10 +226,19 @@ class BudgetItem extends Equatable {
   final EmbeddedCategory? category;
   final AccountRef? account;
   final List<String> tags;
+
+  /// The icon of each of the user's own tags by name (from `tag_refs`); a name
+  /// that is not one of theirs (an event tag) has no entry.
+  final Map<String, IconCode> tagIcons;
   final EventRef? event;
+  /// The stored occurrence; null while it is only computed.
   final String? recurringItemId;
   final int? recurringSeq;
   final int? recurringTotal;
+
+  /// A recurring occurrence's address: its setting and its original date.
+  final String? ruleId;
+  final String? slot;
 
   factory BudgetItem.fromJson(Map<String, dynamic> json) {
     final recurring = json['recurring'] as Map<String, dynamic>?;
@@ -238,12 +257,23 @@ class BudgetItem extends Equatable {
           ? AccountRef.fromJson(json['account'] as Map<String, dynamic>)
           : null,
       tags: [for (final t in (json['tags'] as List?) ?? const []) t as String],
+      tagIcons: {
+        for (final r in (json['tag_refs'] as List?) ?? const [])
+          if (r is Map<String, dynamic> &&
+              r['name'] is String &&
+              r['icon_code'] is Map<String, dynamic>)
+            r['name'] as String: IconCode.fromJson(
+              r['icon_code'] as Map<String, dynamic>,
+            ),
+      },
       event: json['event'] is Map<String, dynamic>
           ? EventRef.fromJson(json['event'] as Map<String, dynamic>)
           : null,
       recurringItemId: recurring?['item_id'] as String?,
       recurringSeq: (recurring?['seq'] as num?)?.toInt(),
       recurringTotal: (recurring?['total'] as num?)?.toInt(),
+      ruleId: json['rule_id'] as String?,
+      slot: json['slot'] as String?,
       reason: BudgetReason.fromJson(json['reason'] as String?),
     );
   }
@@ -261,10 +291,13 @@ class BudgetItem extends Equatable {
     category,
     account,
     tags,
+    tagIcons,
     event,
     recurringItemId,
     recurringSeq,
     recurringTotal,
+    ruleId,
+    slot,
   ];
 }
 

@@ -1,4 +1,5 @@
+DELETE /recurring-items/{id}
 GET /projects/{id}/summary
-GET /recurring-items/{id}
 GET /transactions/summary
 POST /projects/{id}/members/{member_id}/request-link
+POST /recurring-items

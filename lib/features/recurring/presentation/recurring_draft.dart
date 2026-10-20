@@ -52,6 +52,7 @@ class RecurringDraft {
     this.categoryId,
     this.tagIds = const {},
     this.trialUntil,
+    this.autoCreate = false,
   });
 
   factory RecurringDraft.blank({
@@ -106,6 +107,7 @@ class RecurringDraft {
     categoryId: r.category?.id,
     tagIds: {for (final t in r.tags) t.id},
     trialUntil: r.trialUntil,
+    autoCreate: r.autoCreate,
   );
 
   final RecurringKind kind;
@@ -122,10 +124,17 @@ class RecurringDraft {
   final Set<String> tagIds;
 
   final DateTime? trialUntil;
+  final bool autoCreate;
 
   bool get isTransfer => type == TransactionType.transfer;
 
   bool get amountOptional => kind == RecurringKind.reminder;
+
+  /// บันทึกอัตโนมัติ needs a fixed amount and the wallet(s).
+  bool get canAutoCreate {
+    final a = AmountInput.parse(amount);
+    return a != null && a > 0 && walletOk;
+  }
 
   RecurringDraft withKind(RecurringKind k) {
     if (k == kind) return this;
@@ -156,15 +165,15 @@ class RecurringDraft {
       categoryId: nextType == type ? categoryId : null,
       tagIds: tagIds,
       trialUntil: k == RecurringKind.subscription ? trialUntil : null,
+      autoCreate: autoCreate,
     );
   }
 
-  bool valuesDiffer(RecurringDraft o) =>
-      description.trim() != o.description.trim() ||
+  /// What a rule edit can carry over to its recorded tx (R20): never the
+  /// date or the amount.
+  bool txFieldsDiffer(RecurringDraft o) =>
+      name.trim() != o.name.trim() ||
       note.trim() != o.note.trim() ||
-      AmountInput.parse(amount) != AmountInput.parse(o.amount) ||
-      kind != o.kind ||
-      type != o.type ||
       accountId != o.accountId ||
       toAccountId != o.toAccountId ||
       categoryId != o.categoryId ||
@@ -196,6 +205,7 @@ class RecurringDraft {
       categoryId: isTransfer ? null : categoryId,
       tagIds: tagIds.toList(),
       rule: rule,
+      autoCreate: autoCreate && canAutoCreate,
     );
   }
 
@@ -216,6 +226,7 @@ class RecurringDraft {
     Set<String>? tagIds,
     DateTime? trialUntil,
     bool clearTrial = false,
+    bool? autoCreate,
   }) => RecurringDraft(
     kind: kind ?? this.kind,
     rule: rule ?? this.rule,
@@ -230,6 +241,7 @@ class RecurringDraft {
     categoryId: clearCategory ? null : (categoryId ?? this.categoryId),
     tagIds: tagIds ?? this.tagIds,
     trialUntil: clearTrial ? null : (trialUntil ?? this.trialUntil),
+    autoCreate: autoCreate ?? this.autoCreate,
   );
 
   @override
@@ -247,6 +259,7 @@ class RecurringDraft {
       other.toAccountId == toAccountId &&
       other.categoryId == categoryId &&
       other.trialUntil == trialUntil &&
+      other.autoCreate == autoCreate &&
       setEquals(other.tagIds, tagIds);
 
   @override
@@ -263,6 +276,7 @@ class RecurringDraft {
     toAccountId,
     categoryId,
     trialUntil,
+    autoCreate,
     Object.hashAllUnordered(tagIds),
   );
 }

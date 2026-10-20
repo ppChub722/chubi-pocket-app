@@ -32,6 +32,7 @@ class ListPageBody extends StatefulWidget {
     this.refreshEnabled = true,
     this.clearTopBar = true,
     this.rowDividers = false,
+    this.rowCards = false,
     this.rowDividerIndent = defaultRowDividerIndent,
     this.rowGap = 0,
     this.topInset = AppSpacing.md,
@@ -78,6 +79,10 @@ class ListPageBody extends StatefulWidget {
   final bool clearTopBar;
 
   final bool rowDividers;
+
+  /// The rows between breaks (date headers) sit in one card each (see
+  /// cardedRows); wins over [rowDividers].
+  final bool rowCards;
   final double rowDividerIndent;
 
   final double rowGap;
@@ -133,7 +138,7 @@ class _ListPageBodyState extends State<ListPageBody> {
       onRetry: w.onRetry,
       empty: w.empty,
       skeleton: ListPageSkeleton(
-        grouped: w.rowDividers,
+        grouped: w.rowDividers || w.rowCards,
         rowDividerIndent: w.rowDividerIndent,
         shape: w.skeletonShape,
         padding: padding,
@@ -153,7 +158,9 @@ class _ListPageBodyState extends State<ListPageBody> {
                     h,
                     const SizedBox(height: AppSpacing.md),
                   ],
-                  ...(w.rowDividers
+                  ...(w.rowCards
+                      ? cardedRows(w.children)
+                      : w.rowDividers
                       ? dividedRows(
                           context,
                           w.children,

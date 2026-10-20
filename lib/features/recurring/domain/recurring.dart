@@ -32,14 +32,6 @@ enum RecurringKind {
       this == income ? TransactionType.income : TransactionType.expense;
 }
 
-enum RecurringFilter {
-  current,
-  archived,
-  all;
-
-  String toJson() => name;
-}
-
 class RecurringActions extends Equatable {
   const RecurringActions({
     this.pause = false,
@@ -107,18 +99,30 @@ class CurrentOccurrence extends Equatable {
     required this.daysUntil,
     required this.status,
     this.amount,
+    this.slot,
   });
 
-  factory CurrentOccurrence.fromJson(Map<String, dynamic> json) =>
-      CurrentOccurrence(
-        itemId: json['item_id'] as String,
-        date: parseYmd(json['date'] as String?) ?? DateTime.now(),
-        daysUntil: (json['days_until'] as num?)?.toInt() ?? 0,
-        amount: (json['amount'] as num?)?.toDouble(),
-        status: OccurrenceState.parse(json['status'] as String?),
-      );
+  /// A computed occurrence has no row: its id is `slot:{rule}:{slot}`, the
+  /// same key as RecurringItem.id.
+  factory CurrentOccurrence.fromJson(
+    Map<String, dynamic> json, {
+    required String ruleId,
+  }) {
+    final slot = json['slot'] as String?;
+    return CurrentOccurrence(
+      itemId: json['item_id'] as String? ?? 'slot:$ruleId:$slot',
+      slot: slot,
+      date: parseYmd(json['date'] as String?) ?? DateTime.now(),
+      daysUntil: (json['days_until'] as num?)?.toInt() ?? 0,
+      amount: (json['amount'] as num?)?.toDouble(),
+      status: OccurrenceState.parse(json['status'] as String?),
+    );
+  }
 
   final String itemId;
+
+  /// The original date ("YYYY-MM-DD"); null from an old BE.
+  final String? slot;
   final DateTime date;
   final int daysUntil;
 
@@ -126,7 +130,82 @@ class CurrentOccurrence extends Equatable {
   final OccurrenceState status;
 
   @override
-  List<Object?> get props => [itemId, date, daysUntil, amount, status];
+  List<Object?> get props => [itemId, slot, date, daysUntil, amount, status];
+}
+
+/// One occurrence of an installment rule's chain (the BE sends it for rules
+/// with an end and ≤ 60 occurrences).
+class ChainSlot extends Equatable {
+  const ChainSlot({required this.slot, required this.state});
+
+  factory ChainSlot.fromJson(Map<String, dynamic> json) => ChainSlot(
+    slot: parseYmd(json['slot'] as String?) ?? DateTime.now(),
+    state: OccurrenceState.parse(json['status'] as String?),
+  );
+
+  final DateTime slot;
+  final OccurrenceState state;
+
+  @override
+  List<Object?> get props => [slot, state];
+}
+
+/// What the detail hero shows: totals of the recorded occurrences (those with
+/// a tx; `paid` without a tx has no amount).
+class RecurringStats extends Equatable {
+  const RecurringStats({
+    this.paidCount = 0,
+    this.paidTotal = 0,
+    this.remainingTotal,
+    this.lastPeriod,
+    this.avgAmount,
+    this.lastAmount,
+    this.maxAmount,
+    this.series = const [],
+  });
+
+  factory RecurringStats.fromJson(Map<String, dynamic> json) => RecurringStats(
+    paidCount: (json['paid_count'] as num?)?.toInt() ?? 0,
+    paidTotal: (json['paid_total'] as num?)?.toDouble() ?? 0,
+    remainingTotal: (json['remaining_total'] as num?)?.toDouble(),
+    lastPeriod: parseYmd(json['last_period'] as String?),
+    avgAmount: (json['avg_amount'] as num?)?.toDouble(),
+    lastAmount: (json['last_amount'] as num?)?.toDouble(),
+    maxAmount: (json['max_amount'] as num?)?.toDouble(),
+    series: [
+      for (final s in (json['series'] as List?) ?? const [])
+        (
+          slot: parseYmd((s as Map<String, dynamic>)['slot'] as String?) ??
+              DateTime.now(),
+          amount: (s['amount'] as num?)?.toDouble() ?? 0,
+        ),
+    ],
+  );
+
+  final int paidCount;
+  final double paidTotal;
+
+  /// Only for rules with an end.
+  final double? remainingTotal;
+  final DateTime? lastPeriod;
+  final double? avgAmount;
+  final double? lastAmount;
+  final double? maxAmount;
+
+  /// Recorded occurrences by slot, oldest first (newest 24).
+  final List<({DateTime slot, double amount})> series;
+
+  @override
+  List<Object?> get props => [
+    paidCount,
+    paidTotal,
+    remainingTotal,
+    lastPeriod,
+    avgAmount,
+    lastAmount,
+    maxAmount,
+    series,
+  ];
 }
 
 class Recurring extends Equatable {
@@ -160,6 +239,10 @@ class Recurring extends Equatable {
     this.counts = const RecurringCounts(),
     this.editedAny = false,
     this.actions = const RecurringActions(),
+    this.avgAmount,
+    this.chain,
+    this.recordedTxCount = 0,
+    this.autoCreate = false,
     this.createdAt,
     this.updatedAt,
   });
@@ -202,10 +285,30 @@ class Recurring extends Equatable {
 
   final bool editedAny;
   final RecurringActions actions;
+
+  /// Average of the recorded amounts, else the rule amount.
+  final double? avgAmount;
+  final List<ChainSlot>? chain;
+
+  /// Occurrences recorded as a tx: a rule edit asks whether to update them.
+  final int recordedTxCount;
+
+  /// บันทึกอัตโนมัติ: each occurrence becomes a tx on its day, no tap.
+  final bool autoCreate;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
   bool get hasAmount => amount != null && amount! > 0;
+
+  static const _types = {'expense', 'income', 'transfer'};
+
+  /// Null for a rule the app has no type for (the BE's `saving`), so one
+  /// such rule doesn't break a whole list.
+  static Recurring? tryParse(Object? json) =>
+      json is Map<String, dynamic> &&
+          _types.contains((json['type'] as String?) ?? 'expense')
+      ? Recurring.fromJson(json)
+      : null;
 
   factory Recurring.fromJson(Map<String, dynamic> json) {
     final progress = json['progress'] as Map<String, dynamic>?;
@@ -248,6 +351,7 @@ class Recurring extends Equatable {
       currentOccurrence: json['current_occurrence'] is Map<String, dynamic>
           ? CurrentOccurrence.fromJson(
               json['current_occurrence'] as Map<String, dynamic>,
+              ruleId: json['id'] as String,
             )
           : null,
       nextDate: parseYmd(json['next_date'] as String?),
@@ -260,6 +364,15 @@ class Recurring extends Equatable {
       actions: RecurringActions.fromJson(
         json['actions'] as Map<String, dynamic>?,
       ),
+      avgAmount: (json['avg_amount'] as num?)?.toDouble(),
+      chain: json['chain'] is List
+          ? [
+              for (final c in json['chain'] as List)
+                ChainSlot.fromJson(c as Map<String, dynamic>),
+            ]
+          : null,
+      recordedTxCount: (json['recorded_tx_count'] as num?)?.toInt() ?? 0,
+      autoCreate: json['auto_create'] == true,
       createdAt: DateTime.tryParse((json['created_at'] as String?) ?? ''),
       updatedAt: DateTime.tryParse((json['updated_at'] as String?) ?? ''),
     );
@@ -296,6 +409,10 @@ class Recurring extends Equatable {
     counts,
     editedAny,
     actions,
+    avgAmount,
+    chain,
+    recordedTxCount,
+    autoCreate,
     createdAt,
     updatedAt,
   ];
@@ -316,6 +433,7 @@ class RecurringWrite extends Equatable {
     this.toAccountId,
     this.categoryId,
     this.tagIds = const [],
+    this.autoCreate = false,
   });
 
   final String name;
@@ -333,6 +451,7 @@ class RecurringWrite extends Equatable {
   final String? categoryId;
   final List<String> tagIds;
   final RecurrenceRule rule;
+  final bool autoCreate;
 
   Map<String, dynamic> toJson({bool forUpdate = false}) => <String, dynamic>{
     'name': name,
@@ -346,6 +465,7 @@ class RecurringWrite extends Equatable {
     'to_account_id': type == TransactionType.transfer ? toAccountId : null,
     'category_id': type == TransactionType.transfer ? null : categoryId,
     'tag_ids': tagIds,
+    'auto_create': autoCreate,
     if (kind == RecurringKind.subscription && trialUntil != null)
       'trial_until': ymd(trialUntil!)
     else if (forUpdate)
@@ -368,5 +488,6 @@ class RecurringWrite extends Equatable {
     categoryId,
     tagIds,
     rule,
+    autoCreate,
   ];
 }

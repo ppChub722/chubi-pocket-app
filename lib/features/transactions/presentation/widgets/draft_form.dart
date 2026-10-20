@@ -8,12 +8,13 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../accounts/presentation/widgets/account_picker.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../categories/presentation/category_label.dart';
 import 'category_pick_card.dart';
-import '../../../categories/presentation/widgets/category_picker_sheet.dart';
+import '../../../categories/presentation/widgets/category_picker.dart';
 import '../../../pending/domain/pending_transaction.dart';
 import '../../../tags/domain/tag.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
@@ -22,14 +23,15 @@ import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../../../projects/domain/project.dart';
 import '../../../projects/presentation/widgets/member_pick_card.dart';
+import '../../../projects/presentation/widgets/member_picker.dart';
 import '../../../projects/presentation/widgets/project_common.dart';
 import '../../../projects/presentation/cubit/project_directory_cubit.dart';
 import '../cubit/tx_form_options_cubit.dart';
-import 'account_picker_sheet.dart';
 import 'event_pick.dart';
+import 'event_picker.dart';
 import 'pick_chip_rows.dart';
 import 'splits_section.dart';
-import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
+import '../../../tags/presentation/widgets/tag_picker.dart';
 
 part 'draft_form_event.dart';
 
@@ -503,8 +505,6 @@ class DraftForm extends StatefulWidget {
     this.extra,
     this.typeLocked = false,
     this.allowSplits = true,
-    this.upcomingHint = false,
-    this.onUpcomingHintTap,
     this.categoryLockedHint,
     this.readOnly = false,
     this.editing = true,
@@ -538,10 +538,6 @@ class DraftForm extends StatefulWidget {
 
   final bool typeLocked;
   final bool allowSplits;
-
-  final bool upcomingHint;
-
-  final VoidCallback? onUpcomingHintTap;
 
   /// Non-null → the category card can't be changed; this says why.
   final String? categoryLockedHint;
@@ -597,22 +593,25 @@ class _DraftFormState extends State<DraftForm> {
   }
 
   Future<void> _pickCategory() async {
-    final r = await showCategoryPickerSheet(
-      context: context,
+    final r = await CategoryPicker.one(
+      context,
       categories:
           maybeTxFormOptions(
             context,
             watch: false,
           )?.state.options?.categoryList ??
           context.read<CategoriesCubit>().state.categories,
-      type: _c.type == TransactionType.income
-          ? CategoryType.income
-          : CategoryType.expense,
-      selected: _c.category,
+      types: {
+        _c.type == TransactionType.income
+            ? CategoryType.income
+            : CategoryType.expense,
+      },
+      selectedId: _c.category?.id,
+      allowNone: true,
       allowCreate: true,
     );
     if (!mounted || r == null) return;
-    _c.setCategory(r is CategoryPickerSelected ? r.category : null);
+    _c.setCategory(r is CategoryPicked ? r.category : null);
   }
 
   Future<void> _pickAccount({bool to = false}) async {
@@ -620,46 +619,28 @@ class _DraftFormState extends State<DraftForm> {
     final accounts =
         maybeTxFormOptions(context, watch: false)?.state.options?.accountList ??
         context.read<AccountsCubit>().state.accounts;
-    final r = await showAccountPickerSheet(
-      context: context,
+    final r = await AccountPicker.one(
+      context,
       accounts: accounts,
-      selected: to ? _c.toAccount : _c.account,
-      excludeId: to
-          ? _c.account?.id
-          : (_c.isTransfer ? _c.toAccount?.id : null),
+      selectedId: (to ? _c.toAccount : _c.account)?.id,
+      excludeIds: {
+        ?(to ? _c.account?.id : (_c.isTransfer ? _c.toAccount?.id : null)),
+      },
       title: to ? l.quickTo : null,
       allowNone: !_c.isTransfer && !to,
       allowCreate: true,
     );
     if (!mounted || r == null) return;
     if (to) {
-      if (r is AccountPickerSelected) _c.setToAccount(r.account);
+      if (r is AccountPicked) _c.setToAccount(r.account);
     } else {
-      _c.setAccount(r is AccountPickerSelected ? r.account : null);
+      _c.setAccount(r is AccountPicked ? r.account : null);
     }
-  }
-
-  Widget? _upcomingNote(BuildContext context) {
-    if (!widget.upcomingHint || !isAfterToday(_c.date)) {
-      return null;
-    }
-    final l = AppLocalizations.of(context)!;
-    return HintLine(
-      icon: AppIcons.scheduled,
-      linkLabel: l.quickUpcomingHintTitle,
-      text: l.quickUpcomingHintText(
-        DateFormatter.medium(
-          _c.date,
-          locale: Localizations.localeOf(context).toLanguageTag(),
-        ),
-      ),
-      onTap: widget.onUpcomingHintTap,
-    );
   }
 
   Future<void> _moreTags() async {
-    final next = await showTagPickerSheet(context, selected: _c.tagIds);
-    if (next != null && mounted) _c.setTagIds(next);
+    final next = await TagPicker.many(context, selected: _c.tagIds);
+    if (next != null && mounted) _c.setTagIds(next.ids);
   }
 
   Future<void> _pickDate() async {
@@ -830,7 +811,6 @@ class _DraftFormState extends State<DraftForm> {
                 amount: _c.amount,
                 title: _c.description,
                 dateLabel: _dayLabel(context, _c.date),
-                dateNote: _upcomingNote(context),
                 onPickDate: _pickDate,
                 autofocus: widget.autofocus && !widget.readOnly,
                 compact: widget.compact,
@@ -859,7 +839,6 @@ class _DraftFormState extends State<DraftForm> {
                     ? _titlePlaceholder(l)
                     : null,
                 dateLabel: _dayLabel(context, _c.date),
-                dateNote: _upcomingNote(context),
                 onPickDate: _pickDate,
                 editing: editing,
                 autofocus: widget.autofocus && !widget.readOnly,
@@ -1149,9 +1128,8 @@ class _DraftFormState extends State<DraftForm> {
   }
 
   Future<void> _pickDraftEvent() async {
-    final r = await showEventTargetSheet(
+    final r = await EventPicker.one(
       context,
-      suggestedName: '',
       selectedProjectId: _c.projectId,
       allowCreate: false,
     );
@@ -1218,27 +1196,10 @@ class TxTagStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 5),
-          child: AppIcon(
-            AppIcons.tag,
-            size: AppIconSize.md,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
-            children: [
-              for (final t in tags) tagAppChip(context, t, size: ChipSize.chip),
-            ],
-          ),
-        ),
+    return IconChipStrip(
+      icon: AppIcons.tag,
+      chips: [
+        for (final t in tags) tagAppChip(context, t, size: ChipSize.chip),
       ],
     );
   }

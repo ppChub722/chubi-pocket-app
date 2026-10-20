@@ -30,11 +30,15 @@ class MonthCalendar extends StatelessWidget {
     this.selected,
     this.onSelect,
     this.today,
+    this.showStepper = true,
     super.key,
   });
 
   final DateTime month;
   final ValueChanged<DateTime> onMonthChanged;
+
+  /// False when the page's own month stepper drives it (a hero above).
+  final bool showStepper;
 
   final Map<int, List<CalendarDot>> dots;
 
@@ -133,10 +137,12 @@ class MonthCalendar extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Center(
-          child: StepperPill.month(value: month, onChanged: onMonthChanged),
-        ),
-        const SizedBox(height: AppSpacing.sm),
+        if (showStepper) ...[
+          Center(
+            child: StepperPill.month(value: month, onChanged: onMonthChanged),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+        ],
         Row(
           children: [
             for (final i in initials)

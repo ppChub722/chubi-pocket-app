@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../atoms/dashed_rect_border.dart';
-import '../../organisms/app_sheet.dart';
-import '../../organisms/picker_sheet.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 
@@ -26,65 +24,6 @@ class SavingGoalPick {
   final String? targetText;
   final double? progress;
   final String? caption;
-}
-
-typedef SavingGoalChoice = ({String? id});
-
-Future<SavingGoalChoice?> showSavingGoalPickerSheet(
-  BuildContext context, {
-  required String title,
-  required List<SavingGoalPick> items,
-  required String? selectedId,
-}) {
-  return showAppSheetCustom<SavingGoalChoice>(
-    context,
-    builder: (ctx) => PickerSheet(
-      title: title,
-      builder: (_, _) => LayoutBuilder(
-      builder: (context, box) {
-        // Two columns inside the side padding (the card width must be taken
-        // AFTER it, or the second card wraps onto its own line).
-        final w = ((box.maxWidth - AppSpacing.lg * 2 - AppSpacing.sm) / 2)
-            .floorToDouble();
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.xs,
-            AppSpacing.lg,
-            AppSpacing.lg,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (var i = 0; i < items.length; i += 2) ...[
-                if (i > 0) const SizedBox(height: AppSpacing.sm),
-                // Both cards in a row take the taller one's height.
-                IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final g in items.skip(i).take(2)) ...[
-                        if (g != items[i]) const SizedBox(width: AppSpacing.sm),
-                        SizedBox(
-                          width: w,
-                          child: SavingGoalCard(
-                            pick: g,
-                            selected: g.id == selectedId,
-                            onTap: () => Navigator.of(ctx).pop((id: g.id)),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-        );
-      },
-      ),
-    ),
-  );
 }
 
 class SavingGoalCard extends StatelessWidget {

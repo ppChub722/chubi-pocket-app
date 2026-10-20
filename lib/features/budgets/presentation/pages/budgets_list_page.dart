@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
+import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/budget.dart';
@@ -77,9 +78,8 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
       error: state.budgets.isEmpty ? state.error : null,
       isEmpty: rows.isEmpty,
       onRetry: cubit.load,
-      rowDividers: true,
+      rowCards: true,
       topInset: AppSpacing.sm,
-      rowDividerIndent: 72,
       header: [
         if (active && s.activeCount > 0)
           _summary(context, l, state, toggleButton)
@@ -95,15 +95,8 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
               AppSpacing.xs,
             ),
             header: HeroHeader(
-              leading: [
-                HeroCaption(switch (state.filter) {
-                  BudgetFilter.active => l.bgFilterActive,
-                  BudgetFilter.ended => '${l.bgFilterEnded} | ${s.endedCount}',
-                  BudgetFilter.archived =>
-                    '${l.bgFilterArchived} | ${s.archivedCount}',
-                }),
-              ],
-              actions: [const MoneyVisibilityToggle(), toggleButton],
+              leading: [HeroModuleTile(AppIcons.budget)],
+              actions: [toggleButton],
             ),
             content: const [],
           ),
@@ -162,14 +155,57 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
                     )
                   : null,
             ),
-      children: [
-        for (final b in rows) _row(context, l, b),
-        if (active)
-          AddTile(
-            label: l.budgetsAddNew,
-            onTap: () => _open(() => context.push<Object?>('/budgets/new')),
-          ),
-      ],
+      footer: active
+          ? Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.md),
+              child: AddTile(
+                label: l.budgetsAddNew,
+                onTap: () => _open(() => context.push<Object?>('/budgets/new')),
+              ),
+            )
+          : null,
+      children: [for (final b in rows) _row(context, l, b)],
+    );
+  }
+
+  /// Total used against the plan to date of the budgets that have a plan (one
+  /// with no end date has none); over the total limit ([overBy] > 0) it reads
+  /// "over".
+  Widget _summaryChip(
+    BuildContext context,
+    AppLocalizations l,
+    BudgetsState state,
+    double overBy,
+  ) {
+    if (overBy > 0) {
+      return StatusChip(
+        label: l.bgStatusOverBy(budgetRowMoney(context, overBy)),
+        kind: StatusKind.over,
+        emphasis: true,
+      );
+    }
+    final now = DateTime.now();
+    var plan = 0.0;
+    var used = 0.0;
+    for (final b in state.budgets) {
+      if (b.state != BudgetState.active) continue;
+      final x = b.period;
+      final pace = budgetPaceFraction(x.start, x.end, now);
+      if (pace == null) continue;
+      plan += x.amount * pace;
+      used += x.used;
+    }
+    if (used > plan) {
+      return StatusChip(
+        label: l.bgStatusAhead(budgetRowMoney(context, used - plan)),
+        kind: StatusKind.warning,
+        emphasis: true,
+      );
+    }
+    return StatusChip.tone(
+      label: l.bgStatusOnPlan,
+      tone: AppChipTone.primary,
+      emphasis: true,
     );
   }
 
@@ -181,14 +217,16 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
   ) {
     final s = state.summary;
     final cubit = context.read<BudgetsCubit>();
-    SummaryTile tile(
+    final overBy = s.totalRemaining < 0 ? -s.totalRemaining : 0.0;
+    final over = overBy > 0;
+    HeroFilter filter(
       BudgetHealth h,
       String label,
-      int count,
-      SummaryTileTone tone,
-    ) => SummaryTile(
+      int count, [
+      AppChipTone? tone,
+    ]) => HeroFilter(
       label: label,
-      value: '$count',
+      count: count,
       tone: tone,
       selected: state.health == h,
       onTap: () => cubit.setHealth(h),
@@ -202,54 +240,68 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
         AppSpacing.xs,
       ),
       header: HeroHeader(
-        leading: [HeroCaption(l.bgSummaryUsedCaption)],
-        actions: [const MoneyVisibilityToggle(), toggleButton],
+        leading: [
+          HeroModuleTile(AppIcons.budget),
+          _summaryChip(context, l, state, overBy),
+        ],
+        actions: [toggleButton],
       ),
       content: [
-        HeroNumber(
-          value: MoneyText(s.totalUsed),
-          target: l.bgHeroOfLimit(budgetRowMoney(context, s.totalLimit)),
-          layout: HeroNumberLayout.inline,
-        ),
-        ProgressRow(
-          value: s.totalLimit <= 0 ? 0.0 : s.totalUsed / s.totalLimit,
-          color: ProgressTone.normal.resolve(context),
-          label: l.bgSummaryRemaining(
-            budgetRowMoney(context, s.totalRemaining),
+        HeroRingRow(
+          ring: (size) => HeroRing(
+            size: size,
+            stroke: 14,
+            value: s.totalLimit <= 0 ? 0.0 : s.totalUsed / s.totalLimit,
+            color: over
+                ? ProgressTone.danger.resolve(
+                    context,
+                    entityTint: Theme.of(context).colorScheme.primary,
+                  )
+                : null,
+            label: over ? l.fpBudgetsOverLabel : l.bgRingTotalLeft,
+            amount: MoneyText(
+              over ? overBy : s.totalRemaining,
+              symbol: context.readUserCurrencySymbol,
+            ),
+            target: l.bgRingOf(budgetRowMoney(context, s.totalLimit)),
           ),
-          trailing: '${s.usedPct}%',
+          facts: [
+            HeroFact(
+              l.bgFactUsedTotal,
+              budgetRowMoney(context, s.totalUsed),
+              icon: AppIcons.receipt,
+            ),
+            HeroFact(l.bgFactUsedPct, '${s.usedPct}%', icon: AppIcons.pie),
+            HeroFact(
+              l.bgFactBudgetCount,
+              l.bgCountBudgets(s.activeCount),
+              icon: AppIcons.layers,
+            ),
+          ],
         ),
       ],
       footer: [
-        HeroTiles(
-          children: [
-            for (final t in [
-              tile(
-                BudgetHealth.all,
-                l.bgTileAll,
-                s.countAll,
-                SummaryTileTone.neutral,
-              ),
-              tile(
-                BudgetHealth.normal,
-                l.bgTileOk,
-                s.countOk,
-                SummaryTileTone.green,
-              ),
-              tile(
-                BudgetHealth.near,
-                l.bgStatWarn,
-                s.countNear,
-                SummaryTileTone.amber,
-              ),
-              tile(
-                BudgetHealth.over,
-                l.bgStatOver,
-                s.countOver,
-                SummaryTileTone.red,
-              ),
-            ])
-              SummaryTileView(tile: t),
+        HeroFilterChips(
+          filters: [
+            filter(BudgetHealth.all, l.bgTileAll, s.countAll),
+            filter(
+              BudgetHealth.normal,
+              l.bgTileOk,
+              s.countOk,
+              AppChipTone.success,
+            ),
+            filter(
+              BudgetHealth.near,
+              l.bgStatWarn,
+              s.countNear,
+              AppChipTone.warning,
+            ),
+            filter(
+              BudgetHealth.over,
+              l.bgStatOver,
+              s.countOver,
+              AppChipTone.danger,
+            ),
           ],
         ),
       ],
@@ -277,6 +329,7 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
     final pace =
         b.state == BudgetState.active &&
         (x.onPaceToExceed || x.status == BudgetStatus.pace);
+    final paceFraction = budgetPaceFraction(x.start, x.end, DateTime.now());
     return ProgressCard(
       title: b.name,
       iconCode: b.iconCode,
@@ -304,7 +357,10 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
       value: x.usedRatio,
       expected: x.expected > 0 ? x.expectedRatio : null,
       tone: budgetRowTone(x),
-      paceMarker: budgetPaceFraction(x.start, x.end, DateTime.now()),
+      paceMarker: paceFraction,
+      paceBubble: paceFraction == null
+          ? null
+          : l.bgPaceBubble(budgetRowMoney(context, x.amount * paceFraction)),
       label: l.bgRowUsed(
         budgetRowMoney(context, x.used),
         budgetRowMoney(context, x.amount),

@@ -42,9 +42,11 @@ class UiStrings {
     this.reorderIndent = 'Move in a level',
     this.loadMoreFailed = "Couldn't load more",
     this.pickDatesHint = 'Tap the days to pick them',
+    this.more = 'More',
   });
 
   final String close;
+  final String more;
 
   final String loadMoreFailed;
 

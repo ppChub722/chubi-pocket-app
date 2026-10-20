@@ -265,7 +265,7 @@ void main() {
     expect(d.history.last.cumulative, 52000);
     // The auto-saving lives on the goal now (no list on the page).
     expect(d.autoSave!.amount, 5500);
-    expect(d.spareAutoSave, isNull);
+    expect(d.spareAutoSaves, isEmpty);
     expect(d.entries.items.first.kind, SavingEntryKind.save);
     expect(d.entries.items.first.fromRecurring, isTrue);
     expect(d.entries.items.first.to.type, SavingEndpointType.goal);
@@ -295,7 +295,7 @@ void main() {
     expect(d.isSpare, isTrue);
     expect(d.spare!.amount, 8500);
     expect(d.byWallet.single.wallet!.name, 'กสิกร');
-    expect(d.spareAutoSave!.day, 25);
+    expect(d.spareAutoSaves.single.day, 25);
     expect(d.autoSave!.wallet, isNull);
     expect(SavingGoalDetail.fromJson(prodSpareDetail()).autoSave, isNull);
   });

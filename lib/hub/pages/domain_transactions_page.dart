@@ -1,21 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../features/accounts/presentation/cubit/accounts_cubit.dart';
 import '../../features/categories/domain/category.dart';
 import '../../features/categories/domain/category_type.dart';
-import '../../features/categories/presentation/cubit/categories_cubit.dart';
 import '../../features/categories/presentation/widgets/category_chip.dart';
-import '../../features/categories/presentation/widgets/category_picker_sheet.dart';
-import '../../features/contacts/presentation/widgets/contact_picker_sheet.dart';
 import '../../features/tags/domain/tag.dart';
 import '../../features/tags/presentation/widgets/tag_chip.dart';
-import '../../features/tags/presentation/widgets/tag_picker_sheet.dart';
 import '../../features/transactions/domain/transaction.dart';
 import '../../features/transactions/domain/transaction_type.dart';
-import '../../features/transactions/presentation/widgets/account_picker_sheet.dart';
 import '../../features/transactions/presentation/widgets/draft_form.dart';
-import '../../features/transactions/presentation/widgets/event_pick.dart';
 import '../../features/transactions/presentation/widgets/period_summary_card.dart';
 import '../../features/transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../features/transactions/presentation/widgets/transaction_tile.dart';
@@ -140,8 +132,6 @@ class _TransactionsPageState extends State<_TransactionsPage> {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<AppColors>()!;
     final allCats = const [_catFood, _catSalary];
-    final accounts = context.read<AccountsCubit>().state.accounts;
-    final categories = context.read<CategoriesCubit>().state.categories;
     final sample = Transaction(
       id: 'demo',
       accountId: 'a',
@@ -166,6 +156,15 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 title: 'ข้าวมันไก่',
                 amount: -540,
                 category: 'อาหาร',
+              ),
+              const AppDivider(),
+              TxRow(
+                leading: _leading(AppIcons.expense, palette.expense),
+                title:
+                    'ค่าไฟฟ้า ประจำเดือน ต.ค. 2026 บ้านเชียงใหม่ (titleMaxLines: 2)',
+                titleMaxLines: 2,
+                amount: -1240,
+                category: 'ค่าน้ำค่าไฟ',
               ),
               const AppDivider(),
               TxRow(
@@ -781,8 +780,10 @@ class _TransactionsPageState extends State<_TransactionsPage> {
           child: const PeriodSummaryCard(),
         ),
         HubDemo(
-          title: 'Pickers and quick create',
-          note: 'Live data: these open against the real app cubits.',
+          title: 'Quick create',
+          note:
+              'Live data: opens against the real app cubits. The pickers are '
+              'on the entity pickers page.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -790,60 +791,6 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 spacing: AppSpacing.md,
                 runSpacing: AppSpacing.md,
                 children: [
-                  AppButton(
-                    label: 'showAccountPickerSheet',
-                    variant: AppButtonVariant.outlined,
-                    onPressed: () async {
-                      final r = await showAccountPickerSheet(
-                        context: context,
-                        accounts: accounts,
-                        allowNone: true,
-                      );
-                      _note('account: ${r.runtimeType}');
-                    },
-                  ),
-                  AppButton(
-                    label: 'showCategoryPickerSheet',
-                    variant: AppButtonVariant.outlined,
-                    onPressed: () async {
-                      final r = await showCategoryPickerSheet(
-                        context: context,
-                        categories: categories,
-                        type: CategoryType.expense,
-                      );
-                      _note('category: ${r.runtimeType}');
-                    },
-                  ),
-                  AppButton(
-                    label: 'showTagPickerSheet',
-                    variant: AppButtonVariant.outlined,
-                    onPressed: () async {
-                      final r = await showTagPickerSheet(
-                        context,
-                        selected: const {},
-                      );
-                      _note('tags: ${r?.length}');
-                    },
-                  ),
-                  AppButton(
-                    label: 'showContactPickerSheet',
-                    variant: AppButtonVariant.outlined,
-                    onPressed: () async {
-                      final r = await showContactPickerSheet(context);
-                      _note('contact: ${r.runtimeType}');
-                    },
-                  ),
-                  AppButton(
-                    label: 'showEventTargetSheet',
-                    variant: AppButtonVariant.outlined,
-                    onPressed: () async {
-                      final r = await showEventTargetSheet(
-                        context,
-                        suggestedName: 'ทริป',
-                      );
-                      _note('event: ${r.runtimeType}');
-                    },
-                  ),
                   AppButton(
                     label: 'showQuickCreateSheet',
                     onPressed: () async {

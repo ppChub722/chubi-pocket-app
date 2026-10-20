@@ -66,6 +66,7 @@ class AppChip extends StatelessWidget {
     this.maxWidth,
     this.fill,
     this.onFill,
+    this.bold = false,
     super.key,
   }) : assert(
          trailing != AppChipTrailing.remove || onRemove != null,
@@ -114,6 +115,10 @@ class AppChip extends StatelessWidget {
 
   final Color? fill;
   final Color? onFill;
+
+  /// A bolder label for a chip that is the headline of its row (a hero's
+  /// summary status).
+  final bool bold;
 
   static Color readableOn(Color bg, [Color? preferred]) {
     double ratio(Color a, Color b) {
@@ -232,7 +237,11 @@ class AppChip extends StatelessWidget {
           .textStyle(context)
           ?.copyWith(
             color: fg,
-            fontWeight: solid != null ? FontWeight.w500 : ChipSize.chipWeight,
+            fontWeight: bold
+                ? FontWeight.w700
+                : solid != null
+                ? FontWeight.w500
+                : ChipSize.chipWeight,
           ),
     );
 

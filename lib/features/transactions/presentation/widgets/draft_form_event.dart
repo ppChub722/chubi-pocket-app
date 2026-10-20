@@ -46,15 +46,15 @@ class _EventForm extends StatelessWidget {
 
   Future<void> _pickPayer(BuildContext context) async {
     final l = AppLocalizations.of(context)!;
-    final id = await showMemberPicker(
+    final m = await EventMemberPicker.one(
       context,
       title: controller.type == TransactionType.income
           ? l.projectTxReceivedBy
           : l.projectTxPaidBy,
       members: event.members,
-      selected: controller.payerId,
+      selectedId: controller.payerId,
     );
-    if (id != null) controller.setPayer(id);
+    if (m != null) controller.setPayer(m.id);
   }
 
   Future<void> _pickDescription(BuildContext context) async {
@@ -212,13 +212,13 @@ class _MemberSplits extends StatelessWidget {
     final used = {for (final s in c.memberSplits) s.memberId};
 
     Future<void> pickMember(MemberSplitDraft s) async {
-      final id = await showMemberPicker(
+      final m = await EventMemberPicker.one(
         context,
         title: l.projectTxSplitMember,
         members: others,
-        selected: s.memberId,
+        selectedId: s.memberId,
       );
-      if (id != null) c.setSplitMember(s, id);
+      if (m != null) c.setSplitMember(s, m.id);
     }
 
     return SectionCard(

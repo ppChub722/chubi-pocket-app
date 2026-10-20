@@ -126,6 +126,54 @@ class _BarsPageState extends State<_BarsPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // ---- In the app ----
+        HubDemo(
+          title: 'LimitedChipWrap: at most 2 lines, then "+N"',
+          note:
+              'Chips that don\'t fit in maxLines fold into one "+N" chip (a '
+              'budget\'s scope rows). Nothing extra shows when all of them fit. '
+              'expandable (view mode): "+N" opens the row and its ⌃ folds it '
+              'back; with onMore (edit mode) "+N" opens the picker instead.',
+          child: LimitedChipWrap(
+            expandable: true,
+            chips: [
+              for (var i = 1; i <= 12; i++)
+                AppChip(
+                  label: 'Chip $i',
+                  icon: AppIcons.tag,
+                  size: ChipSize.chip,
+                ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'OptionMenuAnchor with a custom entry',
+          note:
+              'custom: OptionMenuCustom ends the menu with an empty input box. '
+              'SettingMenuRow turns its value into a field when it is chosen.',
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: OptionMenuAnchor<int>(
+              options: [
+                SheetOption(value: 80, label: '80%'),
+                SheetOption(value: 90, label: '90%'),
+              ],
+              selected: 80,
+              onSelected: (_) {},
+              custom: OptionMenuCustom(
+                hint: 'Custom',
+                suffix: '%',
+                onChoose: () {},
+              ),
+              builder: (context, toggle) => AppButton(
+                label: '80%',
+                variant: AppButtonVariant.outlined,
+                size: AppButtonSize.control,
+                trailingIcon: AppIcons.dropdown,
+                onPressed: toggle,
+              ),
+            ),
+          ),
+        ),
         HubInApp(
           columns: 2,
           note:

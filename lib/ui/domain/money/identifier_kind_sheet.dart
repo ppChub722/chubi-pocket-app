@@ -41,12 +41,20 @@ class IdentifierKindStrings {
   final String bankNoneLabel;
 }
 
+/// The app's bank picker for the bank step; null = dismissed.
+typedef PickBank =
+    Future<BankPickerChoice?> Function(
+      BuildContext context,
+      String? currentCode,
+    );
+
 Future<IdentifierKindChoice?> showIdentifierKindSelectSheet(
   BuildContext context, {
   required List<IdentifierKindOption> kinds,
   required String currentKindId,
   required List<BankPickerItem> banks,
   required IdentifierKindStrings strings,
+  required PickBank pickBank,
   String? currentBankCode,
 }) {
   return showAppSheetCustom<IdentifierKindChoice>(
@@ -56,6 +64,7 @@ Future<IdentifierKindChoice?> showIdentifierKindSelectSheet(
       currentKindId: currentKindId,
       banks: banks,
       strings: strings,
+      pickBank: pickBank,
       currentBankCode: currentBankCode,
     ),
   );
@@ -67,28 +76,24 @@ class _KindSheet extends StatelessWidget {
     required this.currentKindId,
     required this.banks,
     required this.strings,
+    required this.pickBank,
     required this.currentBankCode,
   });
 
   final List<IdentifierKindOption> kinds;
   final String currentKindId;
+
+  /// Only to show the current bank on its row.
   final List<BankPickerItem> banks;
   final IdentifierKindStrings strings;
+  final PickBank pickBank;
   final String? currentBankCode;
 
   Future<void> _pickBank(
     BuildContext context,
     IdentifierKindOption kind,
   ) async {
-    final pick = await showBankSelectSheet(
-      context,
-      banks: banks,
-      selectedCode: currentBankCode,
-      strings: BankPickerStrings(
-        title: strings.bankLabel,
-        noneLabel: strings.bankNoneLabel,
-      ),
-    );
+    final pick = await pickBank(context, currentBankCode);
     if (!context.mounted) return;
     Navigator.of(context).pop(
       IdentifierKindChoice(kind.id, pick == null ? currentBankCode : pick.code),

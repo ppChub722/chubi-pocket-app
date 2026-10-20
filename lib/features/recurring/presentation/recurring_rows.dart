@@ -5,7 +5,6 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
 import '../../transactions/domain/transaction_type.dart';
 import '../domain/recurring.dart';
-import '../domain/recurring_item.dart';
 
 String recurringKindLabel(AppLocalizations l, RecurringKind k) => switch (k) {
   RecurringKind.subscription => l.fpRecurringKindSubscription,
@@ -86,76 +85,29 @@ class RecurringRow extends StatelessWidget {
   };
 }
 
-class RecurringItemRow extends StatelessWidget {
-  const RecurringItemRow({
-    required this.item,
-    this.showParent = false,
-    this.showState = true,
-    this.select,
-    this.onTap,
-    this.onLongPress,
-    super.key,
-  });
-
-  final RecurringItem item;
-
-  final bool showParent;
-  final bool showState;
-
-  final Widget? select;
-  final VoidCallback? onTap;
-
-  final VoidCallback? onLongPress;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final i = item;
-    final parent = showParent ? i.recurring?.name : null;
-    final title = i.title;
-    final progress = i.seq == null
-        ? null
-        : (i.total == null ? '${i.seq}' : '${i.seq}/${i.total}');
-    final known = i.amount != null && i.amount! > 0;
-    final row = TxRow(
-      leading: IconDisplay(
-        type: IconType.category,
-        size: 36,
-        iconCode: i.category?.iconCode ?? i.recurring?.iconCode,
-      ),
-      title: title.isEmpty ? (i.category?.name ?? '—') : title,
-      amount: known ? signedOf(i.type, i.amount!) : 0,
-      amountText: known ? null : l.fpRecurringAwaitingAmount,
-      tone: toneOf(i.type),
-      walletLabel: i.account?.name,
-      walletIcon: i.account == null
-          ? null
-          : IconDisplay(
-              type: IconType.account,
-              size: 14,
-              iconCode: i.account!.iconCode,
-            ),
-      statusChip: showState
-          ? OccurrenceStateChip(state: i.state, size: ChipSize.mini)
-          : null,
-      dimmed: i.state == OccurrenceState.archived,
-      recurring: i.recurring != null,
-      linked: i.linked,
-      progress: progress,
-      category: [
-        if (parent != null && parent != title) parent,
-        if (i.category != null && i.category!.name != title) i.category!.name,
-      ].join(' | '),
-      select: select,
-      onTap: onTap,
-    );
-    if (onLongPress == null) return row;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onLongPress: onLongPress,
-      child: row,
-    );
-  }
+/// A rule with an end, one dot per occurrence (the BE's `chain`, else from
+/// its progress), the next one marked; null for a rule with no end.
+List<ChainDot>? endChainDots(Recurring r) {
+  ChainDot dot(OccurrenceState s) => switch (s) {
+    OccurrenceState.done || OccurrenceState.paid => ChainDot.paid,
+    OccurrenceState.notCreated || OccurrenceState.pending => ChainDot.wait,
+    OccurrenceState.archived => ChainDot.skipped,
+    OccurrenceState.upcoming => ChainDot.future,
+  };
+  final chain = r.chain;
+  final total = r.progressTotal;
+  final dots = chain != null && chain.isNotEmpty
+      ? [for (final c in chain) dot(c.state)]
+      : total != null && total > 0
+      ? [
+          for (var i = 0; i < total; i++)
+            i < r.progressDone ? ChainDot.paid : ChainDot.future,
+        ]
+      : null;
+  if (dots == null) return null;
+  final next = dots.indexOf(ChainDot.future);
+  if (next >= 0) dots[next] = ChainDot.current;
+  return dots;
 }
 
 num signedOf(TransactionType type, double amount) =>
@@ -163,25 +115,6 @@ num signedOf(TransactionType type, double amount) =>
 
 MoneyTone toneOf(TransactionType type) =>
     type == TransactionType.transfer ? MoneyTone.plain : MoneyTone.signed;
-
-class ItemDateGroup {
-  const ItemDateGroup(this.date, this.items);
-
-  final DateTime date;
-  final List<RecurringItem> items;
-}
-
-List<ItemDateGroup> groupItemsByDate(List<RecurringItem> items) {
-  final out = <ItemDateGroup>[];
-  for (final i in items) {
-    if (out.isNotEmpty && out.last.date == i.date) {
-      out.last.items.add(i);
-    } else {
-      out.add(ItemDateGroup(i.date, [i]));
-    }
-  }
-  return out;
-}
 
 String itemDateLabel(BuildContext context, DateTime date) {
   final l = AppLocalizations.of(context)!;

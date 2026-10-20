@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../recurring/data/recurring_link_repository.dart';
-import '../../../recurring/presentation/cubit/recurring_directory_cubit.dart';
+import '../../../recurring/presentation/widgets/recurring_picker.dart';
+import '../../domain/refs.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 
@@ -26,8 +25,31 @@ class RecurringAmountAsk {
 String recurringPeriodLabel(AppLocalizations l, DateTime date) =>
     l.recurringPickerPeriod(DateFormat.MMMd(l.localeName).format(date));
 
+bool _alreadyLinked(ApiException e) =>
+    e.code == 'ITEM_ALREADY_LINKED' || e.code == 'ALREADY_LINKED';
+
 String recurringLinkError(AppLocalizations l, ApiException e) =>
-    e.code == 'ITEM_ALREADY_LINKED' ? l.recurringLinkAlreadyLinked : e.message;
+    _alreadyLinked(e) ? l.recurringLinkAlreadyLinked : e.message;
+
+/// A 409 on link: the occurrence holds another tx (its `details.transaction`)
+/// or this tx is on another occurrence. True = link with `replace`.
+Future<bool> askSwapLink(BuildContext context, ApiException e) {
+  final l = AppLocalizations.of(context)!;
+  final tx = e.details?['transaction'];
+  final name = tx is Map ? tx['description'] as String? : null;
+  return showConfirmDialog(
+    context,
+    title: l.recurringLinkSwapTitle,
+    message: tx is Map
+        ? l.recurringLinkSwapBody(
+            name == null || name.trim().isEmpty
+                ? moneyString(context, (tx['amount'] as num?)?.toDouble() ?? 0)
+                : name,
+          )
+        : l.recurringLinkMoveBody,
+    confirmLabel: l.recurringLinkSwapYes,
+  );
+}
 
 String recurringCreateRoute({
   required TransactionType type,
@@ -81,20 +103,30 @@ class RecurringLinkHandle extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// [txId] / [txDate]: the tx being linked (an edit), so the picker can
+  /// put its date's occurrence first and not call its own one "taken".
   Future<LinkCandidate?> choose(
     BuildContext context, {
     required TransactionType type,
     required String createRoute,
     String? categoryId,
     double? amount,
+    DateTime? txDate,
+    String? txId,
+    String? linkedRuleId,
+    String? linkedItemId,
   }) async {
-    final picked = await showRecurringLinkPicker(
+    final chosen = candidateFor(type);
+    final picked = await RecurringPicker.one(
       context,
       type: type,
       categoryId: categoryId,
       amount: amount,
-      selectedItemId: candidateFor(type)?.occurrence.itemId,
+      selectedRuleId: chosen?.setting.id ?? linkedRuleId,
+      selectedItemId: chosen?.occurrence.itemId ?? linkedItemId,
       createRoute: createRoute,
+      txDate: txDate,
+      txId: txId,
     );
     if (picked != null) _set(candidate: picked);
     return picked;
@@ -103,10 +135,22 @@ class RecurringLinkHandle extends ChangeNotifier {
   RecurringLinkRepository _repo(BuildContext context) =>
       repository ?? RecurringLinkRepository.of(context);
 
+  Future<LinkResult> _linkCall(
+    RecurringLinkRepository repo,
+    LinkOccurrence o,
+    String txId,
+    bool replace,
+  ) => o.bySlot
+      ? repo.linkOccurrence(o.ruleId!, o.slot!, txId, replace: replace)
+      : repo.link(o.itemId, txId, replace: replace);
+
+  /// [replace]: the tx is moving off its own old occurrence, no need to ask.
+  /// Otherwise a taken side asks "สลับ?" before linking with replace.
   Future<LinkResult?> link(
     BuildContext context,
     String txId, {
     required void Function(String message) error,
+    bool replace = false,
   }) async {
     final c = _candidate;
     if (c == null) return null;
@@ -114,7 +158,20 @@ class RecurringLinkHandle extends ChangeNotifier {
     final repo = _repo(context);
     _set(busy: true);
     try {
-      final r = await repo.link(c.occurrence.itemId, txId);
+      LinkResult r;
+      try {
+        r = await _linkCall(repo, c.occurrence, txId, replace || c.replace);
+      } on ApiException catch (e) {
+        if (e.statusCode != 409 ||
+            !_alreadyLinked(e) ||
+            replace ||
+            c.replace ||
+            !context.mounted ||
+            !await askSwapLink(context, e)) {
+          rethrow;
+        }
+        r = await _linkCall(repo, c.occurrence, txId, true);
+      }
       _set(
         busy: false,
         ask: r.amountDiffers && r.ruleAmount != null
@@ -139,8 +196,9 @@ class RecurringLinkHandle extends ChangeNotifier {
     required void Function(Transaction fresh, Map<String, double> balances)
     onLinked,
     required void Function(String message) error,
+    bool replace = false,
   }) async {
-    final r = await link(context, txId, error: error);
+    final r = await link(context, txId, error: error, replace: replace);
     final tx = r?.transaction;
     if (r != null && tx != null) onLinked(tx, r.balances);
     return tx;
@@ -148,14 +206,20 @@ class RecurringLinkHandle extends ChangeNotifier {
 
   Future<bool> unlinkNow(
     BuildContext context,
-    String itemId, {
+    RecurringItemLink link, {
     required VoidCallback onUnlinked,
     required void Function(String message) error,
   }) async {
     final repo = _repo(context);
+    final ruleId = link.recurringId;
+    final slot = link.slot;
     _set(busy: true);
     try {
-      await repo.unlink(itemId);
+      if (ruleId != null && slot != null) {
+        await repo.unlinkOccurrence(ruleId, slot);
+      } else {
+        await repo.unlink(link.itemId);
+      }
       _set(busy: false);
       onUnlinked();
       return true;
@@ -260,140 +324,4 @@ Future<void> askRecurringAmountAfterCreate(
   );
   if (!context.mounted) return;
   await handle.answer(context, update: yes, error: error, done: done);
-}
-
-Future<LinkCandidate?> showRecurringLinkPicker(
-  BuildContext context, {
-  required TransactionType type,
-  required String createRoute,
-  String? selectedItemId,
-  String? categoryId,
-  double? amount,
-}) async {
-  final r = await showAppSheetCustom<Object>(
-    context,
-    useRootNavigator: false,
-    builder: (_) => _RecurringLinkSheet(
-      type: type,
-      selectedItemId: selectedItemId,
-      categoryId: categoryId,
-      amount: amount,
-    ),
-  );
-  if (r is LinkCandidate) return r;
-  if (r is RecurringCreateNew && context.mounted) {
-    openPage(context, createRoute);
-  }
-  return null;
-}
-
-class _RecurringLinkSheet extends StatefulWidget {
-  const _RecurringLinkSheet({
-    required this.type,
-    this.selectedItemId,
-    this.categoryId,
-    this.amount,
-  });
-
-  final TransactionType type;
-  final String? selectedItemId;
-  final String? categoryId;
-  final double? amount;
-
-  @override
-  State<_RecurringLinkSheet> createState() => _RecurringLinkSheetState();
-}
-
-class _RecurringLinkSheetState extends State<_RecurringLinkSheet> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<RecurringDirectoryCubit>().loadIfNeeded();
-    });
-  }
-
-  RecurringPickRow _row(AppLocalizations l, LinkCandidate c) {
-    final s = c.setting;
-    final o = c.occurrence;
-    final status = c.isReminder
-        ? l.recurringPickerStatusReminder
-        : switch (o.status) {
-            'pending' => l.recurringPickerStatusPending,
-            'not_created' => l.recurringPickerStatusNotCreated,
-            _ => l.recurringPickerStatusUpcoming,
-          };
-    return RecurringPickRow(
-      id: o.itemId,
-      title: s.name,
-      subtitle:
-          '${recurrenceLabel(l, s.rule)} | ${recurringPeriodLabel(l, o.date)} $status',
-      leading: c.isReminder
-          ? const AppIcon(AppIcons.notifications)
-          : IconDisplay(
-              type: IconType.category,
-              size: 36,
-              iconCode: s.iconCode ?? s.category?.iconCode,
-            ),
-      amount: o.amount,
-      tone: switch (s.type) {
-        TransactionType.expense => MoneyTone.expense,
-        TransactionType.income => MoneyTone.income,
-        _ => MoneyTone.plain,
-      },
-      trailingLabel: c.isReminder ? l.recurringPickerAwaitingAmount : null,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final directory = context.watch<RecurringDirectoryCubit>();
-    final loaded = directory.state.status == RecurringDirectoryStatus.loaded;
-    final rows = directory.candidates(
-      widget.type,
-      categoryId: widget.categoryId,
-      amount: widget.amount,
-    );
-    return SheetRefreshScope(
-      onRefresh: directory.load,
-      child: RecurringPickerSheet(
-        title: l.recurringPickerTitle,
-        loading:
-            !loaded && directory.state.status != RecurringDirectoryStatus.error,
-        error: !loaded ? directory.state.error : null,
-        onRetry: directory.load,
-        selectedId: widget.selectedItemId,
-        groups: [
-          RecurringPickGroup(
-            title: l.recurringPickerGroupLikely,
-            rows: [
-              for (final c in rows)
-                if (c.likely) _row(l, c),
-            ],
-          ),
-          RecurringPickGroup(
-            title: l.recurringPickerGroupRecurring,
-            rows: [
-              for (final c in rows)
-                if (!c.likely && !c.isReminder) _row(l, c),
-            ],
-          ),
-          RecurringPickGroup(
-            title: l.recurringPickerGroupReminders,
-            rows: [
-              for (final c in rows)
-                if (!c.likely && c.isReminder) _row(l, c),
-            ],
-          ),
-        ],
-        createLabel: l.recurringPickerCreate,
-        emptyText: l.recurringPickerEmpty,
-        onPicked: (id) => Navigator.of(
-          context,
-        ).pop(rows.firstWhere((c) => c.occurrence.itemId == id)),
-        onCreate: () => Navigator.of(context).pop(const RecurringCreateNew()),
-      ),
-    );
-  }
 }

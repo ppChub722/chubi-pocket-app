@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
@@ -9,6 +10,7 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../domain/saving_goal.dart';
+import '../../domain/saving_goal_plan.dart';
 import '../cubit/saving_goals_cubit.dart';
 import '../widgets/saving_goal_texts.dart';
 
@@ -20,11 +22,14 @@ class SavingGoalsListPage extends StatefulWidget {
 }
 
 class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
+  late final SavingGoalsCubit _cubit;
+
   @override
   void initState() {
     super.initState();
+    _cubit = context.read<SavingGoalsCubit>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<SavingGoalsCubit>().loadIfNeeded();
+      if (mounted) _cubit.loadIfNeeded();
     });
   }
 
@@ -32,10 +37,12 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
   final _toolbar = ToolbarToggleState.of('saving_goals');
 
   String _query = '';
+  _GoalChip _chip = _GoalChip.all;
 
   @override
   void dispose() {
     _search.dispose();
+    _cubit.resetMonth();
     super.dispose();
   }
 
@@ -108,10 +115,31 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
     BuildContext context,
     AppLocalizations l,
     SavingGoalsState state,
+    List<SavingGoal> all,
   ) {
     final s = state.overview.summary;
     final symbol = context.readUserCurrencySymbol;
     String money(double v) => moneyString(context, v, symbol: symbol);
+    final plan = s.monthPlanTotal;
+    final short = s.monthShortTotal;
+    final cubit = context.read<SavingGoalsCubit>();
+    final month = state.month ?? DateTime.now();
+    final counts = {
+      for (final p in SavingGoalPlan.values)
+        p: all.where((g) => SavingGoalPlan.of(g) == p).length,
+    };
+    HeroFilter filter(
+      _GoalChip chip,
+      String label,
+      int count, {
+      AppChipTone? tone,
+    }) => HeroFilter(
+      label: label,
+      count: count,
+      tone: tone,
+      selected: _chip == chip,
+      onTap: () => setState(() => _chip = chip),
+    );
     return AppHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
       margin: const EdgeInsets.fromLTRB(
@@ -120,42 +148,84 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
         AppSpacing.lg,
         AppSpacing.xs,
       ),
-      header: HeroHeader(
-        leading: [HeroCaption(l.fpGoalsListCaption)],
+      header: HeroSummaryHead(
+        icon: AppIcons.savings,
+        label: l.fpGoalsFactTotal,
+        amount: MoneyText(s.savedTotal, symbol: symbol),
         actions: [
-          const MoneyVisibilityToggle(),
           ToolbarToggleButton(
             state: _toolbar,
             filtered:
                 _query.isNotEmpty ||
                 state.filter != SavingGoalsFilter.active ||
-                state.sort != SavingGoalsSort.created,
+                state.sort != SavingGoalsSort.needFirst,
             tooltip: l.commonSearch,
           ),
         ],
       ),
       content: [
-        HeroNumber(
-          value: MoneyText(s.savedTotal, symbol: symbol),
-          layout: HeroNumberLayout.inline,
+        HeroStepperHead(
+          stepper: StepperPill.month(value: month, onChanged: cubit.setMonth),
+          title: state.month == null
+              ? l.fpGoalsPlanTitleNow
+              : l.fpGoalsPlanTitle,
         ),
-        if (s.monthPlanTotal > 0)
-          ProgressRow(
-            value: s.monthSavedTotal / s.monthPlanTotal,
-            trailing: l.fpM5GoalsMonthSaved(
-              money(s.monthSavedTotal),
-              money(s.monthPlanTotal),
+        Builder(
+          builder: (context) => HeroRingRow(
+            ring: (size) => HeroRing(
+              size: size,
+              stroke: 14,
+              value: plan > 0 ? s.monthSavedTotal / plan : 0,
+              label: l.fpGoalsSavedLabel,
+              amount: MoneyText(s.monthSavedTotal, symbol: symbol),
+              target: plan > 0 ? l.fpGoalsRingOfPlan(money(plan)) : null,
             ),
-          ),
-        HeroNote(
-          onTap: () => context.push('/saving-goals/spare'),
-          child: AppText(
-            l.fpGoalsSpareLine(money(s.unallocated)),
-            role: AppTextRole.caption,
+            facts: [
+              if (plan > 0)
+                HeroFact(
+                  l.fpGoalsRingShortLabel,
+                  money(short),
+                  color: short > 0 ? HeroColors.maybeOf(context)?.warning : null,
+                  icon: AppIcons.hourglass,
+                ),
+              HeroFact(
+                l.sgv2Spare,
+                money(s.unallocated),
+                icon: AppIcons.wallet,
+                onTap: () => context.push('/saving-goals/spare'),
+              ),
+              HeroFact(
+                l.fpGoalsFactGoals,
+                '${all.length}',
+                icon: AppIcons.savingGoal,
+              ),
+            ],
           ),
         ),
-        if (s.monthShortTotal > 0)
-          HeroAlert(text: l.fpGoalsMonthShortLine(money(s.monthShortTotal))),
+      ],
+      footer: [
+        HeroFilterChips(
+          filters: [
+            filter(_GoalChip.all, l.fpGoalsFilterAll, all.length),
+            filter(
+              _GoalChip.short,
+              l.fpGoalsFilterShort,
+              counts[SavingGoalPlan.short]!,
+              tone: AppChipTone.warning,
+            ),
+            filter(
+              _GoalChip.done,
+              l.fpGoalsReached,
+              counts[SavingGoalPlan.done]!,
+              tone: AppChipTone.success,
+            ),
+            filter(
+              _GoalChip.free,
+              l.fpGoalsFilterFree,
+              counts[SavingGoalPlan.noPlan]! + counts[SavingGoalPlan.ongoing]!,
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -174,6 +244,7 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
         value: state.sort,
         tooltip: l.fpM5GoalsSortTooltip,
         options: [
+          SortOption(SavingGoalsSort.needFirst, l.fpGoalsSortNeed),
           SortOption(SavingGoalsSort.created, l.fpM5GoalsSortCreated),
           SortOption(SavingGoalsSort.deadline, l.fpM5GoalsSortDeadline),
           SortOption(SavingGoalsSort.progress, l.fpM5GoalsSortProgress),
@@ -209,79 +280,76 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
   ) {
     final active = state.filter == SavingGoalsFilter.active;
     final q = _query.toLowerCase();
+    final all = state.goals;
     final goals = [
-      for (final g in state.goals)
-        if (q.isEmpty || g.name.toLowerCase().contains(q)) g,
-    ];
-    final ongoing = [
-      for (final g in goals)
-        if (g.isOngoing) g,
-    ];
-    final short = [
-      for (final g in goals)
-        if (!g.isOngoing && (g.monthShort ?? 0) > 0) g,
-    ];
-    final done = [
-      for (final g in goals)
-        if (!g.isOngoing &&
-            (g.monthShort == 0 || (g.monthShort == null && _isDone(g))))
+      for (final g in all)
+        if ((q.isEmpty || g.name.toLowerCase().contains(q)) &&
+            _chip.matches(SavingGoalPlan.of(g)))
           g,
     ];
-    final noPlan = [
-      for (final g in goals)
-        if (!g.isOngoing && !short.contains(g) && !done.contains(g)) g,
-    ];
     return [
-      _summary(context, l, state),
+      _summary(context, l, state, all),
       _toolbarRow(l, state, cubit),
-      if (goals.isEmpty && (!active || _query.isNotEmpty))
+      if (goals.isEmpty &&
+          (!active || _query.isNotEmpty || _chip != _GoalChip.all))
         EmptyView.compact(message: l.sgv2EmptyFilteredTitle),
-      if (active) ...[
-        ..._group(context, l, l.fpGoalsGroupShort, short, _Group.short),
-        ..._group(context, l, l.fpGoalsGroupDone, done, _Group.done),
-        ..._group(context, l, l.fpGoalsGroupOngoing, ongoing, _Group.ongoing),
-        ..._group(context, l, l.fpGoalsGroupNoPlan, noPlan, _Group.noPlan),
-      ] else
-        for (final g in goals) _row(context, l, g, _Group.noPlan),
+      if (goals.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.xs,
+            AppSpacing.lg,
+            0,
+          ),
+          child: SectionCard(
+            first: true,
+            children: [for (final g in goals) _row(context, l, g, state.month)],
+          ),
+        ),
       if (active)
         AddTile(label: l.savingGoalsAddNew, onTap: _add, inList: true),
     ];
   }
 
-  static bool _isDone(SavingGoal g) =>
-      g.status == SavingStatus.reached || g.isCompleted;
-
-  List<Widget> _group(
-    BuildContext context,
-    AppLocalizations l,
-    String title,
-    List<SavingGoal> goals,
-    _Group group,
-  ) {
-    if (goals.isEmpty) return const [];
-    return [
-      SectionHeader(title: title, count: goals.length),
-      for (final g in goals) _row(context, l, g, group),
-    ];
-  }
-
+  /// [month] is the stepped month, null = the current one.
   Widget _row(
     BuildContext context,
     AppLocalizations l,
     SavingGoal g,
-    _Group group,
+    DateTime? month,
   ) {
     final symbol = context.readUserCurrencySymbol;
     String money(double v) => moneyString(context, v, symbol: symbol);
-    final badge = savingGoalEtaBadge(context, l, g);
+    final monthName = month == null
+        ? l.fpGoalsThisMonth
+        : DateFormat.MMM(Localizations.localeOf(context).toLanguageTag())
+              .format(month);
+    final warning = Tone.warning.color(context);
+    final plan = SavingGoalPlan.of(g);
+    final behind =
+        !g.isArchived && !g.isCompleted && g.status == SavingStatus.behind;
+    final (badge, badgeTone) = g.isArchived
+        ? (l.sgv2FilterArchived, Tone.neutral)
+        : g.isCompleted
+        ? (l.fpGoalsClosed, Tone.success)
+        : behind
+        ? (l.fpGoalsBehind, Tone.warning)
+        : (null, Tone.success);
     final target = g.targetAmount;
+    final caption = target == null
+        ? l.fpGoalsGroupOngoing
+        : savingGoalEtaCaption(context, l, g);
     if (target == null) {
       return SavingGoalRow(
         key: ValueKey(g.id),
         title: g.name,
         iconCode: g.iconCode,
         fallbackIcon: AppIcons.savingGoal,
-        amountText: l.fpGoalsOngoingRow(
+        amountText: '',
+        caption: caption,
+        trailing: money(g.savedAmount),
+        trailingCaption: l.fpGoalsRowMonthOnly(
+          monthName,
           signedMoneyString(
             context,
             g.monthSaved,
@@ -289,32 +357,70 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
             symbol: symbol,
           ),
         ),
-        trailing: money(g.savedAmount),
-        badge: badge?.label,
-        badgeTone: badge?.tone ?? Tone.success,
+        badge: badge,
+        badgeTone: badgeTone,
         dimmed: g.isArchived,
         onTap: () => context.push('/saving-goals/${g.id}'),
       );
     }
+    final pct = (g.progressPct ?? 0).round();
+    final short = g.monthShort ?? 0;
+    final left = g.remainingAmount ?? target - g.savedAmount;
+    final (trailing, trailingTone, trailingCaption) = switch (plan) {
+      SavingGoalPlan.short => (
+        l.fpGoalsRowShort(money(short)),
+        Tone.warning,
+        l.fpGoalsRowMonth(
+          monthName,
+          money(g.monthSaved),
+          money(g.monthPlan ?? g.monthSaved + short),
+        ),
+      ),
+      SavingGoalPlan.done => (
+        l.fpGoalsRowDone,
+        Tone.success,
+        l.fpGoalsRowMonthOnly(monthName, money(g.monthSaved)),
+      ),
+      _ when left <= 0 => (l.fpGoalsRowDone, Tone.success, '$pct%'),
+      _ => (l.fpGoalsRowLeft(money(left)), Tone.neutral, '$pct%'),
+    };
+    final pace = month == null && g.state == SavingGoalState.active
+        ? savingGoalPaceRatio(g)
+        : null;
     return SavingGoalRow(
       key: ValueKey(g.id),
       title: g.name,
       iconCode: g.iconCode,
       fallbackIcon: AppIcons.savingGoal,
       value: (g.progressPct ?? 0) / 100,
-      amountText: '${money(g.savedAmount)} / ${money(target)}',
-      trailing: switch (group) {
-        _Group.short => l.fpGoalsRowShort(money(g.monthShort ?? 0)),
-        _Group.done => '✓',
-        _Group.ongoing || _Group.noPlan => null,
-      },
-      trailingTone: group == _Group.short ? Tone.warning : Tone.success,
-      badge: badge?.label,
-      badgeTone: badge?.tone ?? Tone.success,
+      amountText: '${money(g.savedAmount)} / ${money(target)} | $pct%',
+      caption: caption,
+      trailing: trailing,
+      trailingTone: trailingTone,
+      trailingCaption: trailingCaption,
+      badge: badge,
+      badgeTone: badgeTone,
+      color: behind ? warning : null,
+      marker: pace,
+      markerBubble: pace == null
+          ? null
+          : l.fpGoalsMarkerBubble(money(target * pace)),
       dimmed: g.isArchived,
       onTap: () => context.push('/saving-goals/${g.id}'),
     );
   }
 }
 
-enum _Group { short, done, ongoing, noPlan }
+enum _GoalChip {
+  all,
+  short,
+  done,
+  free;
+
+  bool matches(SavingGoalPlan p) => switch (this) {
+    all => true,
+    short => p == SavingGoalPlan.short,
+    done => p == SavingGoalPlan.done,
+    free => p == SavingGoalPlan.noPlan || p == SavingGoalPlan.ongoing,
+  };
+}

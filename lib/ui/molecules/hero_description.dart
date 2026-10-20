@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../atoms/app_input.dart';
 import '../atoms/ui_config.dart';
+import '../tokens/hero_colors.dart';
 
 class HeroDescription extends StatelessWidget {
   const HeroDescription({
@@ -27,10 +28,11 @@ class HeroDescription extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final style = Theme.of(
-      context,
-    ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
+    final style = Theme.of(context).textTheme.bodySmall?.copyWith(
+      color:
+          HeroColors.maybeOf(context)?.muted ??
+          Theme.of(context).colorScheme.onSurfaceVariant,
+    );
     if (editing) {
       return AppInput.card(
         controller: controller,

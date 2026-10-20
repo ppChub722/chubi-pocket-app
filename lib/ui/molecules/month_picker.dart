@@ -135,12 +135,49 @@ class _MonthPickerGridState extends State<MonthPickerGrid> {
   }
 }
 
+/// The twelve months with no year (Jan…Dec), one picked; [selected] and the
+/// picked value are 1–12.
+class MonthOfYearGrid extends StatelessWidget {
+  const MonthOfYearGrid({
+    required this.selected,
+    required this.onPicked,
+    super.key,
+  });
+
+  final int selected;
+  final ValueChanged<int> onPicked;
+
+  @override
+  Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    return GridView.count(
+      crossAxisCount: 6,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: AppSpacing.xs,
+      crossAxisSpacing: AppSpacing.xs,
+      childAspectRatio: 1.4,
+      children: [
+        for (var i = 1; i <= 12; i++)
+          _MonthCell(
+            key: ValueKey('monthOfYear$i'),
+            label: DateFormat.MMM(locale).format(DateTime(2001, i)),
+            isSelected: i == selected,
+            isCurrent: false,
+            onTap: () => onPicked(i),
+          ),
+      ],
+    );
+  }
+}
+
 class _MonthCell extends StatelessWidget {
   const _MonthCell({
     required this.label,
     required this.isSelected,
     required this.isCurrent,
     required this.onTap,
+    super.key,
   });
 
   final String label;

@@ -347,21 +347,15 @@ class TransactionWriteResult {
   const TransactionWriteResult({
     required this.rows,
     this.accountBalances = const {},
-    this.upcoming,
   });
 
   TransactionWriteResult.single(Transaction tx)
     : rows = [tx],
-      accountBalances = const {},
-      upcoming = null;
+      accountBalances = const {};
 
   final List<Transaction> rows;
 
   final Map<String, double> accountBalances;
-
-  final Map<String, dynamic>? upcoming;
-
-  bool get isUpcoming => upcoming != null;
 
   bool get isTransfer => rows.length > 1;
 
@@ -374,9 +368,6 @@ class TransactionWriteResult {
             .map(Transaction.fromJson)
             .toList(),
         accountBalances: WalletBalance.mapOf(json['account_balances']),
-        upcoming: json['upcoming'] is Map
-            ? (json['upcoming'] as Map).cast<String, dynamic>()
-            : null,
       );
 }
 

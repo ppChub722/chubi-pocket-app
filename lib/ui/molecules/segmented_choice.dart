@@ -16,6 +16,7 @@ class SegmentedChoice<T> extends StatelessWidget {
     required this.selected,
     required this.onChanged,
     this.enabled = true,
+    this.expand = false,
     super.key,
   }) : assert(segments.length >= 2, 'SegmentedChoice needs 2+ segments');
 
@@ -24,10 +25,15 @@ class SegmentedChoice<T> extends StatelessWidget {
   final ValueChanged<T> onChanged;
   final bool enabled;
 
+  /// Full width, equal segments, a larger label: a page's top tabs
+  /// (ภาพรวม | ปฏิทิน).
+  final bool expand;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme.labelMedium;
+    final textTheme = Theme.of(context).textTheme;
+    final text = expand ? textTheme.titleSmall : textTheme.labelMedium;
     return Opacity(
       opacity: enabled ? 1 : 0.5,
       child: DecoratedBox(
@@ -38,17 +44,30 @@ class SegmentedChoice<T> extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.xxs),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
             children: [
               for (final s in segments)
-                _Segment(
-                  label: s.label,
-                  on: s.value == selected,
-                  style: text,
-                  onTap: enabled && s.value != selected
-                      ? () => onChanged(s.value)
-                      : null,
-                ),
+                if (expand)
+                  Expanded(
+                    child: _Segment(
+                      label: s.label,
+                      on: s.value == selected,
+                      style: text,
+                      centered: true,
+                      onTap: enabled && s.value != selected
+                          ? () => onChanged(s.value)
+                          : null,
+                    ),
+                  )
+                else
+                  _Segment(
+                    label: s.label,
+                    on: s.value == selected,
+                    style: text,
+                    onTap: enabled && s.value != selected
+                        ? () => onChanged(s.value)
+                        : null,
+                  ),
             ],
           ),
         ),
@@ -63,12 +82,14 @@ class _Segment extends StatelessWidget {
     required this.on,
     required this.style,
     required this.onTap,
+    this.centered = false,
   });
 
   final String label;
   final bool on;
   final TextStyle? style;
   final VoidCallback? onTap;
+  final bool centered;
 
   @override
   Widget build(BuildContext context) {
@@ -91,6 +112,7 @@ class _Segment extends StatelessWidget {
             ),
             child: Text(
               label,
+              textAlign: centered ? TextAlign.center : null,
               style: style?.copyWith(
                 color: on ? scheme.onPrimaryContainer : scheme.onSurfaceVariant,
                 fontWeight: on ? FontWeight.w600 : FontWeight.w400,

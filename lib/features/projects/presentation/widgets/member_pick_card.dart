@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../ui/ui.dart';
 import '../../domain/project.dart';
-import 'project_common.dart';
 
 class MemberPickCard extends StatelessWidget {
   const MemberPickCard({
@@ -32,22 +31,3 @@ class MemberPickCard extends StatelessWidget {
     onTap: onTap,
   );
 }
-
-Future<String?> showMemberPicker(
-  BuildContext context, {
-  required String title,
-  required List<ProjectMember> members,
-  String? selected,
-}) => showOptionSheet<String>(
-  context,
-  title: title,
-  selected: selected,
-  options: [
-    for (final m in members)
-      SheetOption(
-        value: m.id,
-        label: m.displayName,
-        leading: memberAvatar(m, size: 28),
-      ),
-  ],
-);

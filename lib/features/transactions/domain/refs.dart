@@ -134,8 +134,10 @@ class RecurringItemLink extends Equatable {
     this.recurringIconCode,
     this.seq,
     this.total,
+    this.slot,
   });
 
+  /// The stored row's id, or `slot:{rule}:{slot}` when the BE sends none.
   final String itemId;
 
   final String? recurringId;
@@ -144,16 +146,22 @@ class RecurringItemLink extends Equatable {
   final int? seq;
   final int? total;
 
+  /// The occurrence's original date ("YYYY-MM-DD"); null from an old BE.
+  final String? slot;
+
   factory RecurringItemLink.fromJson(Map<String, dynamic> json) {
     final r = json['recurring'];
     final rec = r is Map ? r.cast<String, dynamic>() : null;
+    final ruleId = rec?['id'] as String? ?? json['rule_id'] as String?;
+    final slot = json['slot'] as String?;
     return RecurringItemLink(
-      itemId: json['item_id'] as String,
-      recurringId: rec?['id'] as String?,
+      itemId: json['item_id'] as String? ?? 'slot:$ruleId:$slot',
+      recurringId: ruleId,
       recurringName: rec?['name'] as String?,
       recurringIconCode: _icon(rec?['icon_code']),
       seq: (json['seq'] as num?)?.toInt(),
       total: (json['total'] as num?)?.toInt(),
+      slot: slot,
     );
   }
 
@@ -170,6 +178,7 @@ class RecurringItemLink extends Equatable {
     recurringIconCode,
     seq,
     total,
+    slot,
   ];
 }
 

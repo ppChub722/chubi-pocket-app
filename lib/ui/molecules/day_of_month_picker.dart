@@ -46,6 +46,13 @@ class DayOfMonthGrid extends StatelessWidget {
     required this.onPicked,
     this.selected,
     this.allowNone = true,
+    this.days = kLastDayOfMonth,
+    this.padding = const EdgeInsets.fromLTRB(
+      AppSpacing.lg,
+      AppSpacing.xs,
+      AppSpacing.lg,
+      AppSpacing.lg,
+    ),
     super.key,
   });
 
@@ -53,16 +60,17 @@ class DayOfMonthGrid extends StatelessWidget {
   final bool allowNone;
   final ValueChanged<int?> onPicked;
 
+  /// How many days to offer. The default ends on a "Last" cell (any month's
+  /// last day); fewer days list plain numbers, for a known month.
+  final int days;
+  final EdgeInsetsGeometry padding;
+
   @override
   Widget build(BuildContext context) {
     final l = UiConfig.stringsOf(context);
+    final withLast = days >= kLastDayOfMonth;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.xs,
-        AppSpacing.lg,
-        AppSpacing.lg,
-      ),
+      padding: padding,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -74,18 +82,19 @@ class DayOfMonthGrid extends StatelessWidget {
             mainAxisSpacing: AppSpacing.xs,
             crossAxisSpacing: AppSpacing.xs,
             children: [
-              for (var d = 1; d < kLastDayOfMonth; d++)
+              for (var d = 1; d <= (withLast ? kLastDayOfMonth - 1 : days); d++)
                 _DayCell(
                   label: '$d',
                   selected: d == selected,
                   onTap: () => onPicked(d),
                 ),
-              _DayCell(
-                label: l.dayLastShort,
-                selected: selected == kLastDayOfMonth,
-                onTap: () => onPicked(kLastDayOfMonth),
-                semantics: l.dayLast,
-              ),
+              if (withLast)
+                _DayCell(
+                  label: l.dayLastShort,
+                  selected: selected == kLastDayOfMonth,
+                  onTap: () => onPicked(kLastDayOfMonth),
+                  semantics: l.dayLast,
+                ),
             ],
           ),
           if (allowNone) ...[

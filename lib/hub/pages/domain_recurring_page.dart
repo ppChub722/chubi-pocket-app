@@ -86,56 +86,250 @@ class _RecurringPage extends StatelessWidget {
           child: const _CalendarDemo(),
         ),
         HubDemo(
-          title: 'NextOccurrenceCard + OccurrenceDates — the ล่วงหน้า tab',
+          title:
+              'MonthCalendar(showStepper: false) — under the page\'s stepper',
           note:
-              'The next occurrence as a prominent card with its actions '
-              '(แก้ยอด / เลื่อนวัน / ข้าม; a reminder with no amount gets '
-              'ใส่ยอด as the main one); the rest as date chips — edited '
-              'amber, skipped struck through, "+N ›" for more.',
+              'The recurring list\'s ปฏิทิน tab: the hero\'s ‹ month › drives '
+              'the grid, so the grid drops its own stepper.',
+          child: const _CalendarDemo(showStepper: false),
+        ),
+        HubDemo(
+          title: 'CalendarTile + DateTile — dates as tiles',
+          note:
+              'CalendarTile: a tear-off sheet (month strip in the card\'s '
+              'accent, the day big, the weekday) for the next occurrence in a '
+              'hero. DateTile: a row\'s day over its month, the short year '
+              'when it isn\'t this year, the weekday for a month\'s list, or '
+              'any caption ("พรุ่งนี้").',
+          child: Wrap(
+            spacing: AppSpacing.lg,
+            runSpacing: AppSpacing.md,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              CalendarTile(date: inDays(14)),
+              DateTile(date: inDays(3)),
+              DateTile(date: DateTime(now.year + 1, 1, 3)),
+              DateTile(date: inDays(5), weekday: true),
+              DateTile(date: inDays(1), caption: 'พรุ่งนี้'),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'TodayLine + OccurrenceRow — a month\'s occurrences',
+          note:
+              'In date order; past rows dimmed (a waiting one keeps its '
+              'warning), the today line between past and coming. The name '
+              'may run to 2 lines; a tag + muted line under it; the amount '
+              '(or amountWaiting "รอใส่ยอด" in warning) on the right with a '
+              'caption.',
+          child: Builder(
+            builder: (context) {
+              final warning = Theme.of(context).extension<AppColors>()!.warning;
+              Widget tag(String label, Color? color) => AppChip(
+                label: label,
+                color: color,
+                selected: color != null,
+                size: ChipSize.mini,
+              );
+              return SectionCard(
+                children: [
+                  OccurrenceRow(
+                    leading: DateTile(date: inDays(-17)),
+                    title: 'Netflix ประจำเดือน ต.ค. 2026',
+                    tag: tag('รอยืนยัน', warning),
+                    sub: 'บัตรเครดิต',
+                    amount: const MoneyText(-419, symbol: '฿'),
+                  ),
+                  OccurrenceRow(
+                    leading: DateTile(date: inDays(-5)),
+                    title: 'ค่าเน็ตบ้าน ประจำเดือน ต.ค. 2026',
+                    tag: tag('อัตโนมัติ', null),
+                    sub: 'กสิกร',
+                    amount: const MoneyText(-599, symbol: '฿'),
+                    dimmed: true,
+                  ),
+                  const TodayLine(label: 'วันนี้'),
+                  OccurrenceRow(
+                    leading: DateTile(date: inDays(1), caption: 'พรุ่งนี้'),
+                    title: 'Spotify ประจำเดือน ต.ค. 2026',
+                    amount: const MoneyText(-129, symbol: '฿'),
+                  ),
+                  OccurrenceRow(
+                    leading: DateTile(date: inDays(3)),
+                    title: 'ค่าไฟ ประจำเดือน ต.ค. 2026',
+                    amountWaiting: 'รอใส่ยอด',
+                    amountCaption: 'เฉลี่ย ฿1,240',
+                  ),
+                  OccurrenceRow(
+                    leading: DateTile(date: inDays(5)),
+                    title: 'ผ่อน iPhone 17 งวด 5/12 ประจำเดือน ต.ค. 2026',
+                    amount: const MoneyText(-1750, symbol: '฿'),
+                    amountCaption: 'งวด 5/12',
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        HubDemo(
+          title: 'DueCard — ต้องจัดการ',
+          note:
+              'The due occurrences, edged in the warning colour. One row per '
+              'occurrence: the main action as a button (ยืนยัน; ใส่ยอด in the '
+              'warning colour when the amount is unknown), the rest behind ⋯ '
+              '(จ่ายแล้ว / ข้าม / ผูกกับรายการที่มีอยู่). An item with many '
+              'gets a DueGroupHeader with the all-at-once actions and a '
+              'DueMoreRow.',
+          child: Builder(
+            builder: (context) {
+              final warning = Theme.of(context).extension<AppColors>()!.warning;
+              void noop() {}
+              final more = [
+                OccurrenceAction(label: 'จ่ายแล้ว', onTap: noop),
+                OccurrenceAction(label: 'ข้าม', onTap: noop),
+                OccurrenceAction(label: 'ผูกกับรายการที่มีอยู่', onTap: noop),
+              ];
+              Widget waiting() => AppChip(
+                label: 'รอยืนยัน',
+                color: warning,
+                selected: true,
+                size: ChipSize.mini,
+              );
+              return DueCard(
+                title: 'ต้องจัดการ',
+                trailing: '4 งวด',
+                children: [
+                  OccurrenceRow(
+                    leading: DateTile(date: inDays(3)),
+                    title: 'ค่าไฟ ประจำเดือน ต.ค. 2026',
+                    sub: 'อีก 3 วัน | เงินสด',
+                    action: OccurrenceActions(
+                      primary: OccurrenceAction(
+                        label: 'ใส่ยอด',
+                        onTap: noop,
+                        warning: true,
+                      ),
+                      more: more,
+                    ),
+                  ),
+                  DueGroupHeader(
+                    label: 'Netflix ค้าง 24 งวด',
+                    caption: 'ค้างตั้งแต่ พ.ย. 2024',
+                    actions: OccurrenceActions(
+                      primary: OccurrenceAction(
+                        label: 'ยืนยันทั้งหมด',
+                        onTap: noop,
+                      ),
+                      more: [
+                        OccurrenceAction(label: 'จ่ายแล้วทั้งหมด', onTap: noop),
+                        OccurrenceAction(label: 'ข้ามทั้งหมด', onTap: noop),
+                      ],
+                    ),
+                  ),
+                  for (final m in [10, 9, 8])
+                    OccurrenceRow(
+                      leading: DateTile(date: DateTime(now.year, m, 3)),
+                      title: 'Netflix ประจำเดือน $m/${now.year}',
+                      tag: waiting(),
+                      sub: '฿419 | บัตรเครดิต',
+                      action: OccurrenceActions(
+                        primary: OccurrenceAction(label: 'ยืนยัน', onTap: noop),
+                        more: more,
+                      ),
+                    ),
+                  DueMoreRow(label: 'ดูทั้ง 24 งวด', onTap: noop),
+                ],
+              );
+            },
+          ),
+        ),
+        HubDemo(
+          title: 'OccurrenceChain — an item\'s occurrences on one line',
+          note:
+              'The tier follows the width: a number in every dot (≤ ~12 on a '
+              'phone row), numbers only on the first / current / last (~13–18), '
+              'plain dots with PointerBubbles over those three (~19–24), else '
+              'a bar with the same bubbles. Paid = the card color, waiting = '
+              'warning, skipped = grey, the next one = a ring with a halo, '
+              'future = hollow. open: no end (month bubbles, a fading tail, no '
+              'last bubble). The current bubble wins a collision.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              NextOccurrenceCard(
-                title: 'งวดถัดไป | อีก 30 วัน',
-                caption: 'จะขึ้นร่างใน pending วันนั้น',
-                amount: const MoneyText(-3023),
-                actions: [
-                  NextOccurrenceAction(label: 'แก้ยอด', onTap: () {}),
-                  NextOccurrenceAction(label: 'เลื่อนวัน', onTap: () {}),
-                  NextOccurrenceAction(label: 'ข้าม', onTap: () {}),
+              for (final (total, cur, wait, skip) in [
+                (10, 5, 3, -1),
+                (18, 6, 5, -1),
+                (24, 8, -1, 6),
+                (72, 19, -1, -1),
+              ]) ...[
+                Text(
+                  '$total installments',
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                OccurrenceChain(
+                  dots: [
+                    for (var i = 0; i < total; i++)
+                      i == cur
+                          ? ChainDot.current
+                          : i == wait
+                          ? ChainDot.wait
+                          : i == skip
+                          ? ChainDot.skipped
+                          : i < cur
+                          ? ChainDot.paid
+                          : ChainDot.future,
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.lg),
+              ],
+              Text(
+                'Open (no end): Mar → next Nov + 3 to come',
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              OccurrenceChain(
+                open: true,
+                firstLabel: 'มี.ค. 26',
+                currentLabel: 'พ.ย.',
+                dots: [
+                  for (var i = 0; i < 12; i++)
+                    i == 8
+                        ? ChainDot.current
+                        : i == 7
+                        ? ChainDot.wait
+                        : i < 8
+                        ? ChainDot.paid
+                        : ChainDot.future,
                 ],
               ),
-              const SizedBox(height: AppSpacing.md),
-              NextOccurrenceCard(
-                title: 'งวดถัดไป | อีก 5 วัน',
-                amount: const Text('รอใส่ยอด'),
-                actions: [
-                  NextOccurrenceAction(
-                    label: 'ใส่ยอด',
-                    primary: true,
-                    onTap: () {},
-                  ),
-                  NextOccurrenceAction(label: 'เลื่อนวัน', onTap: () {}),
-                  NextOccurrenceAction(label: 'ข้าม', onTap: () {}),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'AmountLineChart — a bill whose amount changes',
+          note:
+              'In the recurring hero in place of the chain: each paid period '
+              'a point with its amount, a dashed average, and the next period '
+              'a hollow "?" in warning at the average. Colors come from the '
+              'hero.',
+          child: AppHeroCard(
+            style: HeroStyle.tinted(
+              color: Theme.of(context).colorScheme.tertiary,
+            ),
+            content: const [
+              AmountLineChart(
+                points: [
+                  AmountPoint('เม.ย.', 1070, amountText: '1,070'),
+                  AmountPoint('พ.ค.', 1150, amountText: '1,150'),
+                  AmountPoint('มิ.ย.', 1480, amountText: '1,480'),
+                  AmountPoint('ก.ค.', 1230, amountText: '1,230'),
+                  AmountPoint('ส.ค.', 1198, amountText: '1,198'),
+                  AmountPoint('ก.ย.', 1312, amountText: '1,312'),
                 ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              OccurrenceDates(
-                title: 'ต่อจากนั้น | อีก 11 งวด',
-                dates: const [
-                  OccurrenceDate(label: '16 ธ.ค.'),
-                  OccurrenceDate(
-                    label: '16 ม.ค. | ฿3,500',
-                    kind: OccurrenceDateKind.edited,
-                  ),
-                  OccurrenceDate(
-                    label: '16 ก.พ. | ข้าม',
-                    kind: OccurrenceDateKind.skipped,
-                  ),
-                  OccurrenceDate(label: '16 มี.ค.'),
-                ],
-                moreLabel: '+6 ›',
-                onMore: () {},
+                average: 1240,
+                averageLabel: 'เฉลี่ย 1,240',
+                nextLabel: 'ต.ค.',
               ),
             ],
           ),
@@ -536,57 +730,6 @@ class _RecurringPage extends StatelessWidget {
           },
         ),
         HubDemo(
-          title: 'RecurringPickerSheet — link a transaction to a recurring',
-          note:
-              'A presentational organism on the PickerSheet shell: groups '
-              '(recurring, then payment reminders with no amount yet), a '
-              'client search, selection = highlight, a pinned create row. '
-              'Opens live with sample rows; the feature wrapper loads the BE '
-              'list (GET /recurring?for_type=).',
-          child: AppButton(
-            label: 'Open the recurring picker',
-            variant: AppButtonVariant.outlined,
-            onPressed: () => showAppSheetCustom<RecurringPickChoice>(
-              context,
-              builder: (ctx) => RecurringPickerSheet(
-                title: 'Link to a recurring',
-                selectedId: 'a',
-                createLabel: 'Create a recurring from this transaction',
-                emptyText: 'No recurring to link to',
-                onPicked: (_) => Navigator.of(ctx).pop(),
-                onCreate: () => Navigator.of(ctx).pop(),
-                groups: const [
-                  RecurringPickGroup(
-                    title: 'Recurring',
-                    rows: [
-                      RecurringPickRow(
-                        id: 'a',
-                        title: 'Car loan',
-                        subtitle: 'Every 16th | Period 16 Oct not paid yet',
-                        leading: AppIcon(AppIcons.recurring),
-                        amount: 3023,
-                        tone: MoneyTone.expense,
-                      ),
-                    ],
-                  ),
-                  RecurringPickGroup(
-                    title: 'Payment reminders',
-                    rows: [
-                      RecurringPickRow(
-                        id: 'b',
-                        title: 'Water bill',
-                        subtitle: 'Every 15th | Period 15 Oct enter the amount',
-                        leading: AppIcon(AppIcons.notifications),
-                        trailingLabel: 'Amount pending',
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        HubDemo(
           title: 'AskCard — an inline question under a row',
           note:
               'The link\'s "update the recurring amount too?": message + '
@@ -650,7 +793,9 @@ class _RecurrenceSheetDemoState extends State<_RecurrenceSheetDemo> {
 }
 
 class _CalendarDemo extends StatefulWidget {
-  const _CalendarDemo();
+  const _CalendarDemo({this.showStepper = true});
+
+  final bool showStepper;
 
   @override
   State<_CalendarDemo> createState() => _CalendarDemoState();
@@ -662,8 +807,9 @@ class _CalendarDemoState extends State<_CalendarDemo> {
 
   @override
   Widget build(BuildContext context) {
-    return MonthCalendar(
+    final calendar = MonthCalendar(
       month: _month,
+      showStepper: widget.showStepper,
       today: DateTime.now(),
       selected: _selected,
       dots: {
@@ -679,6 +825,21 @@ class _CalendarDemoState extends State<_CalendarDemo> {
       },
       onMonthChanged: (m) => setState(() => _month = m),
       onSelect: (d) => setState(() => _selected = d),
+    );
+    if (widget.showStepper) return calendar;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: StepperPill.month(
+            value: _month,
+            onChanged: (m) => setState(() => _month = m),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        calendar,
+      ],
     );
   }
 }

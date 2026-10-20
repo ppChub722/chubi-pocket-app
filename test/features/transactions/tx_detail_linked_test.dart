@@ -71,19 +71,22 @@ Map<String, dynamic> _row() => {
 /// with the row — or, for a date after today, an upcoming item.
 class _Repo extends Fake implements TransactionsRepository {
   final links = <bool?>[];
-  final deleteLinks = <bool?>[];
+
+  /// Each delete's `skip_occurrence`.
+  final deleteSkips = <bool?>[];
   bool upcoming = false;
 
   @override
   Future<DeleteTransactionResult> delete(
     String id, {
     bool? alsoDeleteLink,
+    bool? skipOccurrence,
   }) async {
-    deleteLinks.add(alsoDeleteLink);
+    deleteSkips.add(skipOccurrence);
     return DeleteTransactionResult.fromJson({
       'id': id,
       'account_balances': <Object>[],
-      if (alsoDeleteLink ?? false) 'recurring_item_id': 'i3',
+      'recurring_item_id': 'i3',
     });
   }
 
@@ -261,19 +264,6 @@ void main() {
     expect(repo.links, [false]);
   });
 
-  testWidgets('a date moved past today: the row leaves the book and the '
-      'page closes', (t) async {
-    await pump(t);
-    repo.upcoming = true;
-    await editAmountAndSave(t, '450');
-    await t.tap(find.text('Save this side only'));
-    await settle(t);
-    expect(txs.byId('t1'), isNull);
-    expect(find.text('Moved to upcoming items'), findsOneWidget);
-    expect(find.byType(TransactionDetailPage), findsNothing);
-    expect(find.text('home'), findsOneWidget);
-  });
-
   Future<void> tapDelete(WidgetTester t) async {
     final hero = t.widget<TransactionHeroCard>(
       find.byType(TransactionHeroCard),
@@ -298,34 +288,38 @@ void main() {
     await settle(t);
   }
 
-  testWidgets('deleting a linked row asks; "Not now" deletes nothing', (
+  // A row recorded for a recurring occurrence asks about the occurrence
+  // (owner rule: delete the tx only, or delete it and skip the occurrence).
+  testWidgets('deleting a recurring row asks; "Cancel" deletes nothing', (
     t,
   ) async {
     await pump(t);
     await tapDelete(t);
-    expect(find.text('Delete the linked item too?'), findsOneWidget);
-    await t.tap(find.text('Not now'));
+    expect(find.text('Delete this transaction?'), findsOneWidget);
+    expect(find.text('Linked to Netflix | 3/12'), findsOneWidget);
+    // The dialog's Cancel (the page's edit bar has one too).
+    await t.tap(find.text('Cancel').last);
     await settle(t);
-    expect(repo.deleteLinks, isEmpty);
+    expect(repo.deleteSkips, isEmpty);
     expect(txs.byId('t1'), isNotNull);
   });
 
-  testWidgets('"Delete both" → also_delete_link true; the page closes', (
+  testWidgets('"Delete and skip the occurrence" → skip_occurrence true', (
     t,
   ) async {
     await pump(t);
     await tapDelete(t);
-    await t.tap(find.text('Delete both'));
+    await t.tap(find.text('Delete and skip the occurrence'));
     await settle(t);
-    expect(repo.deleteLinks, [true]);
+    expect(repo.deleteSkips, [true]);
     expect(find.text('home'), findsOneWidget);
   });
 
-  testWidgets('"Delete this side only" → also_delete_link false', (t) async {
+  testWidgets('"Delete only" → skip_occurrence false', (t) async {
     await pump(t);
     await tapDelete(t);
-    await t.tap(find.text('Delete this side only'));
+    await t.tap(find.text('Delete only (the occurrence is due again)'));
     await settle(t);
-    expect(repo.deleteLinks, [false]);
+    expect(repo.deleteSkips, [false]);
   });
 }

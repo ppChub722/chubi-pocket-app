@@ -9,7 +9,12 @@ import 'recurrence_rule.dart';
 import 'recurring.dart';
 
 class RecurringParent extends Equatable {
-  const RecurringParent({required this.id, required this.name, this.iconCode});
+  const RecurringParent({
+    required this.id,
+    required this.name,
+    this.iconCode,
+    this.kind,
+  });
 
   factory RecurringParent.fromJson(Map<String, dynamic> json) =>
       RecurringParent(
@@ -18,14 +23,20 @@ class RecurringParent extends Equatable {
         iconCode: json['icon_code'] is Map<String, dynamic>
             ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
             : null,
+        kind: json['kind'] is String
+            ? RecurringKind.fromJson(json['kind'] as String)
+            : null,
       );
 
   final String id;
   final String name;
   final IconCode? iconCode;
 
+  /// Null from a BE that doesn't send it yet.
+  final RecurringKind? kind;
+
   @override
-  List<Object?> get props => [id, name, iconCode];
+  List<Object?> get props => [id, name, iconCode, kind];
 }
 
 class RecurringItem extends Equatable {
@@ -51,10 +62,34 @@ class RecurringItem extends Equatable {
     this.manual = false,
     this.createdAt,
     this.updatedAt,
+    this.ruleId,
+    this.slot,
+    this.stored = true,
+    this.autoCreated = false,
+    this.needsAmount = false,
   });
 
+  /// The stored row's id, or `slot:{rule}:{slot}` for a computed occurrence
+  /// (the BE sends id null): a stable key either way.
   final String id;
   final RecurringParent? recurring;
+
+  /// The rule and the occurrence's original date ("YYYY-MM-DD"): its address
+  /// on `/recurring/{rule}/occurrences/{slot}`. Null from an old BE.
+  final String? ruleId;
+  final String? slot;
+
+  /// False = computed by the BE, no row yet.
+  final bool stored;
+
+  /// Recorded by the rule's auto-create, no tap.
+  final bool autoCreated;
+
+  /// Due or this month with no amount yet (ใส่ยอด).
+  final bool needsAmount;
+
+  /// Addressable by rule + slot (the new occurrence API).
+  bool get bySlot => ruleId != null && slot != null;
 
   final int? seq;
   final int? total;
@@ -94,11 +129,48 @@ class RecurringItem extends Equatable {
     return type == TransactionType.expense ? -a : a;
   }
 
-  factory RecurringItem.fromJson(Map<String, dynamic> json) => RecurringItem(
-    id: json['id'] as String,
-    recurring: json['recurring'] is Map<String, dynamic>
+  static const _types = {'expense', 'income', 'transfer'};
+
+  /// Null for a row the app has no type for (the BE's `saving`), so one such
+  /// row doesn't break a whole list.
+  static RecurringItem? tryParse(Object? json) =>
+      json is Map<String, dynamic> &&
+          _types.contains((json['type'] as String?) ?? 'expense')
+      ? RecurringItem.fromJson(json)
+      : null;
+
+  factory RecurringItem.fromJson(Map<String, dynamic> json) {
+    final recurring = json['recurring'] is Map<String, dynamic>
         ? RecurringParent.fromJson(json['recurring'] as Map<String, dynamic>)
-        : null,
+        : null;
+    final ruleId = json['rule_id'] as String? ?? recurring?.id;
+    final slot = json['slot'] as String?;
+    final id = json['id'] as String?;
+    return RecurringItem._fromJson(
+      json,
+      id: id ?? 'slot:$ruleId:$slot',
+      recurring: recurring,
+      ruleId: ruleId,
+      slot: slot,
+      stored: json['stored'] as bool? ?? id != null,
+    );
+  }
+
+  factory RecurringItem._fromJson(
+    Map<String, dynamic> json, {
+    required String id,
+    required RecurringParent? recurring,
+    required String? ruleId,
+    required String? slot,
+    required bool stored,
+  }) => RecurringItem(
+    id: id,
+    recurring: recurring,
+    ruleId: ruleId,
+    slot: slot,
+    stored: stored,
+    autoCreated: json['auto_created'] == true,
+    needsAmount: json['needs_amount'] == true,
     seq: (json['seq'] as num?)?.toInt(),
     total: (json['total'] as num?)?.toInt(),
     date: parseYmd(json['date'] as String?) ?? DateTime.now(),
@@ -168,18 +240,16 @@ class RecurringItem extends Equatable {
     manual,
     createdAt,
     updatedAt,
+    ruleId,
+    slot,
+    stored,
+    autoCreated,
+    needsAmount,
   ];
 }
 
 extension EditScopeJson on EditScope {
   String toJson() => this == EditScope.thisOne ? 'this' : name;
-}
-
-enum ItemTarget {
-  pending,
-  transaction;
-
-  String toJson() => name;
 }
 
 Map<String, dynamic> itemFieldsJson(PendingDraft d) => <String, dynamic>{
@@ -195,17 +265,26 @@ Map<String, dynamic> itemFieldsJson(PendingDraft d) => <String, dynamic>{
 };
 
 class ItemPage extends Equatable {
-  const ItemPage({this.items = const [], this.page = 1, this.totalPages = 1});
+  const ItemPage({
+    this.items = const [],
+    this.page = 1,
+    this.totalPages = 1,
+    this.windowed = false,
+    this.nextFrom,
+  });
 
   factory ItemPage.fromJson(Map<String, dynamic>? json) {
     final p = json?['pagination'] as Map<String, dynamic>?;
+    final w = json?['window'] as Map<String, dynamic>?;
     return ItemPage(
       items: [
         for (final e in (json?['data'] as List?) ?? const [])
-          RecurringItem.fromJson(e as Map<String, dynamic>),
+          ?RecurringItem.tryParse(e),
       ],
       page: (p?['page'] as num?)?.toInt() ?? 1,
       totalPages: (p?['total_pages'] as num?)?.toInt() ?? 1,
+      windowed: w != null,
+      nextFrom: parseYmd(w?['next_from'] as String?),
     );
   }
 
@@ -213,16 +292,23 @@ class ItemPage extends Equatable {
   final int page;
   final int totalPages;
 
+  /// A no-end rule's upcoming list comes a year at a time (`window`), not
+  /// by page; [nextFrom] is where the next year starts.
+  final bool windowed;
+  final DateTime? nextFrom;
+
   bool get hasMore => page < totalPages;
 
   ItemPage after(ItemPage previous) => ItemPage(
     items: [...previous.items, ...items],
     page: page,
     totalPages: totalPages,
+    windowed: windowed,
+    nextFrom: nextFrom,
   );
 
   @override
-  List<Object?> get props => [items, page, totalPages];
+  List<Object?> get props => [items, page, totalPages, windowed, nextFrom];
 }
 
 class RecurringDetail extends Equatable {
@@ -232,6 +318,8 @@ class RecurringDetail extends Equatable {
     this.upcoming = const ItemPage(),
     this.balances = const {},
     this.deletePreview,
+    this.stats,
+    this.txUpdateFailed = 0,
   });
 
   factory RecurringDetail.fromJson(Map<String, dynamic> json) =>
@@ -239,6 +327,13 @@ class RecurringDetail extends Equatable {
         recurring: Recurring.fromJson(
           json['recurring'] as Map<String, dynamic>,
         ),
+        stats: json['stats'] is Map<String, dynamic>
+            ? RecurringStats.fromJson(json['stats'] as Map<String, dynamic>)
+            : null,
+        txUpdateFailed:
+            ((json['tx_update'] as Map<String, dynamic>?)?['failed'] as List?)
+                ?.length ??
+            0,
         produced: ItemPage.fromJson(json['items'] as Map<String, dynamic>?),
         upcoming: ItemPage.fromJson(json['upcoming'] as Map<String, dynamic>?),
         balances: WalletBalance.mapOf(json['account_balances']),
@@ -259,6 +354,12 @@ class RecurringDetail extends Equatable {
 
   final Map<String, double> balances;
 
+  /// Null from an old BE.
+  final RecurringStats? stats;
+
+  /// After a rule edit with `also_update_tx`: recorded tx it couldn't update.
+  final int txUpdateFailed;
+
   @override
   List<Object?> get props => [
     recurring,
@@ -266,6 +367,8 @@ class RecurringDetail extends Equatable {
     upcoming,
     balances,
     deletePreview,
+    stats,
+    txUpdateFailed,
   ];
 }
 
@@ -297,6 +400,7 @@ class ItemWriteResult extends Equatable {
     this.deletedIds = const [],
     this.balances = const {},
     this.setting,
+    this.leftOut = const [],
   });
 
   factory ItemWriteResult.fromJson(Map<String, dynamic> json) =>
@@ -316,6 +420,14 @@ class ItemWriteResult extends Equatable {
         setting: json['setting'] is Map<String, dynamic>
             ? Recurring.fromJson(json['setting'] as Map<String, dynamic>)
             : null,
+        leftOut: [
+          for (final e in (json['left_out'] as List?) ?? const [])
+            if (e is Map<String, dynamic>)
+              (
+                slot: (e['slot'] as String?) ?? '',
+                reason: (e['reason'] as String?) ?? '',
+              ),
+        ],
       );
 
   final List<RecurringItem> items;
@@ -324,14 +436,23 @@ class ItemWriteResult extends Equatable {
 
   final Recurring? setting;
 
+  /// A bulk action's occurrences it didn't settle, and why.
+  final List<({String slot, String reason})> leftOut;
+
+  static String? _slotKey(RecurringItem i) =>
+      i.bySlot ? '${i.ruleId}:${i.slot}' : null;
+
+  /// Patches [list]: a written occurrence replaces its old row by id, or by
+  /// rule + slot when a computed one got stored (its id changed).
   List<RecurringItem> applyTo(List<RecurringItem> list) {
     final byId = {for (final i in items) i.id: i};
+    final bySlot = {for (final i in items) ?_slotKey(i): i};
     return [
       for (final i in list)
-        if (!deletedIds.contains(i.id)) byId[i.id] ?? i,
+        if (!deletedIds.contains(i.id)) byId[i.id] ?? bySlot[_slotKey(i)] ?? i,
     ];
   }
 
   @override
-  List<Object?> get props => [items, deletedIds, balances, setting];
+  List<Object?> get props => [items, deletedIds, balances, setting, leftOut];
 }

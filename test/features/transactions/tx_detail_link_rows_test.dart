@@ -21,6 +21,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../shared/fake_sync.dart';
+
 class _Accounts extends MockCubit<AccountsState> implements AccountsCubit {}
 
 class _Tags extends MockCubit<TagsState> implements TagsCubit {}
@@ -72,6 +74,7 @@ class _Repo extends Fake implements TransactionsRepository {
   Future<DeleteTransactionResult> delete(
     String id, {
     bool? alsoDeleteLink,
+    bool? skipOccurrence,
   }) async {
     deleteLinks.add(alsoDeleteLink);
     return DeleteTransactionResult.fromJson({
@@ -175,6 +178,7 @@ void main() {
         providers: [
           RepositoryProvider<TransactionsRepository>.value(value: repo),
           RepositoryProvider<ProjectsRepository>.value(value: _ProjectsRepo()),
+          syncCoordinatorProvider(),
         ],
         child: MultiBlocProvider(
           providers: [
@@ -237,8 +241,8 @@ void main() {
     await t.longPress(find.text('Split with people'));
     await settle(t);
     expect(find.text('Save'), findsOneWidget);
-    // Edit mode: still dashed, and no lock anywhere.
-    expect(chip(t, 'Add person').dashed, isTrue);
+    // Edit mode: the add button is live (outlined), and no lock anywhere.
+    expect(find.widgetWithText(AppButton, 'Add person'), findsOneWidget);
     expect(find.byIcon(AppIcons.lock), findsNothing);
   });
 }

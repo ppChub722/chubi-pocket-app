@@ -55,7 +55,14 @@ class _Repo extends Fake implements RecurringRepository {
     _prodItem(status: 'upcoming', date: '2026-12-03', id: 'i-b'),
     _prodItem(status: 'upcoming', date: '2027-01-03', id: 'i-c', edited: true),
   ];
-  List<Map<String, dynamic>> calendarData = [];
+
+  /// The list page's reads: the month's occurrences and ต้องจัดการ.
+  List<Map<String, dynamic>> monthData = [];
+  List<Map<String, dynamic>> dueData = [];
+
+  /// The upcoming list's `window` (a no-end rule's year); null = page mode.
+  Map<String, dynamic>? upcomingWindow;
+  final froms = <DateTime?>[];
   bool networkDown = false;
   final calls = <String>[];
   final queries = <String>[];
@@ -67,9 +74,15 @@ class _Repo extends Fake implements RecurringRepository {
   }
 
   @override
-  Future<ItemPage> calendar(DateTime month) async {
-    _hit('calendar:${month.year}-${month.month}');
-    return ItemPage.fromJson({'data': calendarData, 'pagination': _page});
+  Future<List<RecurringItem>> monthItems(DateTime month) async {
+    _hit('month:${month.year}-${month.month}');
+    return [for (final j in monthData) RecurringItem.fromJson(j)];
+  }
+
+  @override
+  Future<List<RecurringItem>> dueItems({String? ruleId}) async {
+    _hit('due');
+    return [for (final j in dueData) RecurringItem.fromJson(j)];
   }
 
   /// The BE's delete preview numbers (`?include=delete_preview`).
@@ -83,14 +96,18 @@ class _Repo extends Fake implements RecurringRepository {
   bool settingInWrites = true;
 
   Map<String, dynamic>? get _setting => settingInWrites
-      ? {..._prodRecurring(), 'next_date': '2026-12-03', 'pending_count': 7}
+      ? {..._prodRecurring(), 'next_date': '2026-12-03', 'saved_count': 7}
       : null;
 
   @override
   Future<RecurringDetail> get(String id, {bool deletePreview = false}) async {
     _hit(deletePreview ? 'preview:$id' : 'get:$id');
     return RecurringDetail.fromJson({
-      'upcoming': {'data': upcomingData, 'pagination': _page},
+      'upcoming': {
+        'data': upcomingData,
+        'pagination': _page,
+        'window': upcomingWindow,
+      },
       ...detail,
       if (deletePreview) 'delete_preview': preview,
     });
@@ -101,11 +118,14 @@ class _Repo extends Fake implements RecurringRepository {
     String recurringId, {
     required bool upcoming,
     int page = 1,
+    DateTime? from,
   }) async {
     _hit('items:${upcoming ? 'upcoming' : 'produced'}');
+    froms.add(from);
     return ItemPage.fromJson({
-      'data': upcoming ? upcomingData : const [],
+      'data': upcoming && from == null ? upcomingData : const [],
       'pagination': _page,
+      if (from != null) 'window': {...?upcomingWindow, 'next_from': null},
     });
   }
 
@@ -306,6 +326,32 @@ Map<String, dynamic> _prodItem({
   'updated_at': '2026-10-03T08:00:00Z',
 };
 
+String _ymd(DateTime d) =>
+    '${d.year}-${d.month.toString().padLeft(2, '0')}-'
+    '${d.day.toString().padLeft(2, '0')}';
+
+/// An occurrence as the C3 BE sends it: rule + slot, computed (no id).
+Map<String, dynamic> _occ(
+  DateTime date, {
+  String status = 'upcoming',
+  String rule = 'r1',
+  String name = 'Netflix',
+  Object? amount = 419,
+  String type = 'expense',
+}) => {
+  ..._prodItem(status: status, date: _ymd(date), amount: amount),
+  'id': null,
+  'rule_id': rule,
+  'slot': _ymd(date),
+  'stored': false,
+  'auto_created': false,
+  'needs_amount': amount == null,
+  'recurring': {'id': rule, 'name': name, 'icon_code': null},
+  'type': type,
+  'description': '$name – ${_ymd(date)}',
+  'transaction': null,
+};
+
 Map<String, dynamic> _prodDetail([Map<String, dynamic>? recurring]) => {
   'recurring': recurring ?? _prodRecurring(),
   'items': {
@@ -485,77 +531,109 @@ void main() {
     );
   });
 
+  // B1 (owner, mock 96eCKWTzYmNHySepKXewaC): ภาพรวม | ปฏิทิน over one month.
   group('list page', () {
-    testWidgets('opens with no request; the card is the BE\'s', (t) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final monthCall = 'month:${now.year}-${now.month}';
+
+    testWidgets('opens with the month + ต้องจัดการ reads; every rule by kind', (
+      t,
+    ) async {
       await pump(t, const RecurringHomePage());
-      expect(repo.calls, isEmpty);
+      expect(repo.calls, [monthCall, 'due']);
+      // รายการประจำทั้งหมด: the reminder sits in its own kind group.
+      expect(find.text('All recurring'), findsOneWidget);
+      expect(find.text('Subscription'), findsOneWidget);
+      expect(find.text('Reminder'), findsOneWidget);
       expect(find.text('Netflix'), findsOneWidget);
-      // The reminder lives on its own tab.
-      expect(find.text('Water bill'), findsNothing);
-      expect(find.text('Next 30 days to pay'), findsOneWidget);
-      expect(find.textContaining('6,860'), findsOneWidget);
-      expect(find.text('3 waiting for an amount'), findsOneWidget);
+      expect(find.text('Water bill'), findsOneWidget);
+      expect(find.text('Paid out this month'), findsOneWidget);
       expect(find.byType(ErrorView), findsNothing);
     });
 
-    testWidgets('card → tabs → rows, three swipe tabs', (t) async {
+    testWidgets('big tabs on top, then the hero, then the rules', (t) async {
       await pump(t, const RecurringHomePage());
-      final cardY = t.getTopLeft(find.byType(AppHeroCard)).dy;
-      final tabsY = t.getTopLeft(find.byType(AppTabBar<RecurringHomeTab>)).dy;
-      final rowY = t.getTopLeft(find.text('Netflix')).dy;
-      expect(cardY, lessThan(tabsY));
-      expect(tabsY, lessThan(rowY));
-      expect(find.text('Recurring'), findsWidgets);
-      expect(find.text('Reminders'), findsOneWidget);
+      final tabsY = t
+          .getTopLeft(find.byType(SegmentedChoice<RecurringHomeTab>))
+          .dy;
+      final heroY = t.getTopLeft(find.byType(AppHeroCard)).dy;
+      final allY = t.getTopLeft(find.text('All recurring')).dy;
+      expect(tabsY, lessThan(heroY));
+      expect(heroY, lessThan(allY));
+      expect(find.text('Overview'), findsOneWidget);
       expect(find.text('Calendar'), findsOneWidget);
     });
 
-    testWidgets('the amber alert goes to the reminder tab; no amount = words', (
+    testWidgets('the month: totals, tiles and the list with a today line', (
       t,
     ) async {
-      await pump(t, const RecurringHomePage());
-      await t.tap(find.text('3 waiting for an amount'));
-      await t.pumpAndSettle();
-      expect(find.text('Water bill'), findsOneWidget);
-      expect(find.text('No amount yet'), findsOneWidget);
-      // Due already → its own group.
-      expect(find.text('Due | in pending'), findsOneWidget);
-    });
-
-    testWidgets('the calendar loads its month the first time it shows', (
-      t,
-    ) async {
-      final now = DateTime.now();
-      final mm = now.month.toString().padLeft(2, '0');
-      repo.calendarData = [
-        _prodItem(
-          status: 'upcoming',
-          date: '${now.year}-$mm-${now.day.toString().padLeft(2, '0')}',
-          id: 'i-cal',
+      repo.monthData = [
+        _occ(today.subtract(const Duration(days: 2)), status: 'due'),
+        _occ(today.add(const Duration(days: 3)), rule: 'r2', amount: null),
+        _occ(
+          today.add(const Duration(days: 5)),
+          rule: 'r3',
+          name: 'Salary',
+          amount: 30000,
+          type: 'income',
         ),
       ];
       await pump(t, const RecurringHomePage());
-      expect(repo.calls, isEmpty);
-      await t.tap(find.text('Calendar'));
-      await t.pumpAndSettle();
-      expect(repo.calls, ['calendar:${now.year}-${now.month}']);
-      expect(find.byType(MonthCalendar), findsOneWidget);
-      // Today is picked: its item is listed under the grid.
-      expect(find.byKey(ValueKey('calendarDot:${now.day}')), findsOneWidget);
-      expect(find.text('Netflix'), findsWidgets);
+      expect(find.byType(OccurrenceRow), findsNWidgets(3));
+      expect(find.byType(TodayLine), findsOneWidget);
+      expect(find.text('This month'), findsOneWidget);
+      expect(find.text('3 items'), findsOneWidget);
+      // One with no amount: the tile counts it and its row waits for it.
+      expect(find.text('1 item'), findsOneWidget);
+      expect(find.text('Enter amount'), findsWidgets);
+      expect(find.textContaining('Income'), findsOneWidget);
     });
 
-    testWidgets('search filters on the device, no request', (t) async {
+    testWidgets(
+      'ต้องจัดการ: due rows with their buttons, all-at-once by rule',
+      (t) async {
+        repo.dueData = [
+          _occ(today.subtract(const Duration(days: 14)), status: 'due'),
+          _occ(today.subtract(const Duration(days: 7)), status: 'due'),
+        ];
+        await pump(t, const RecurringHomePage());
+        expect(find.byType(DueCard), findsOneWidget);
+        expect(find.text('Needs action'), findsOneWidget);
+        expect(find.byType(DueGroupHeader), findsOneWidget);
+        expect(find.text('Confirm all'), findsOneWidget);
+        expect(find.text('Confirm'), findsNWidgets(2));
+      },
+    );
+
+    testWidgets('ปฏิทิน: the month grid and the picked day, no new read', (
+      t,
+    ) async {
+      repo.monthData = [_occ(today)];
+      await pump(t, const RecurringHomePage());
+      await t.tap(find.text('Calendar'));
+      await t.pumpAndSettle();
+      expect(repo.calls, [monthCall, 'due']);
+      expect(find.byType(MonthCalendar), findsOneWidget);
+      // Today is picked: its occurrence is listed under the grid.
+      expect(find.byKey(ValueKey('calendarDot:${now.day}')), findsOneWidget);
+      expect(find.byType(OccurrenceRow), findsOneWidget);
+    });
+
+    testWidgets('search filters the rules on the device, no request', (
+      t,
+    ) async {
       await pump(t, const RecurringHomePage());
       await t.tap(find.byType(ToolbarToggleButton));
       await t.pumpAndSettle();
       await t.enterText(find.byType(TextField), 'netf');
       await t.pump();
       expect(find.text('Netflix'), findsOneWidget);
+      expect(find.text('Water bill'), findsNothing);
       await t.enterText(find.byType(TextField), 'zzz');
       await t.pump();
       expect(find.text('Netflix'), findsNothing);
-      expect(repo.calls, isEmpty);
+      expect(repo.calls, [monthCall, 'due']);
     });
 
     testWidgets('a failed sync keeps the rows on screen', (t) async {
@@ -567,12 +645,11 @@ void main() {
       expect(find.text('Netflix'), findsOneWidget);
     });
 
-    testWidgets('?tab=upcoming opens on the calendar', (t) async {
+    testWidgets('?tab=calendar opens on the calendar', (t) async {
       await pump(
         t,
         const RecurringHomePage(initialTab: RecurringHomeTab.calendar),
       );
-      expect(repo.calls.any((c) => c.startsWith('calendar:')), isTrue);
       expect(find.byType(MonthCalendar), findsOneWidget);
     });
 
@@ -587,66 +664,109 @@ void main() {
       expect(find.text('Netflix'), findsOneWidget);
     });
 
-    testWidgets('network down → error + retry; the sync landing fills it', (
+    testWidgets('network down → error + retry; the month comes back', (
       t,
     ) async {
-      final directory = RecurringDirectoryCubit(coordinator: testCoordinator());
-      await pump(t, const RecurringHomePage(), directory: directory);
-      directory.syncFailed(_down);
-      await t.pump(const Duration(milliseconds: 100));
+      repo.networkDown = true;
+      await pump(t, const RecurringHomePage());
       expect(find.byType(ErrorView), findsOneWidget);
+      repo.networkDown = false;
       await t.tap(find.text('Retry'));
       await t.pump();
-      directory.applySync({'data': repo.listData, 'summary': repo.summary});
       await t.pump(const Duration(milliseconds: 100));
+      expect(find.byType(ErrorView), findsNothing);
       expect(find.text('Netflix'), findsOneWidget);
     });
   });
 
   group('detail page', () {
-    testWidgets('hero: kind chip, tiles, tags, info, note; ONE call', (
+    testWidgets('hero: next + actions, chain, tiles, chips; ONE call', (
       t,
     ) async {
       await pump(t, const RecurringDetailPage(id: 'r1'));
       expect(repo.calls, ['get:r1']);
       expect(find.text('Subscription'), findsOneWidget);
       expect(find.text('Active'), findsOneWidget);
-      // The BE's tiles.
+      expect(find.byKey(const ValueKey('heroRound')), findsOneWidget);
+      // The next occurrence and its actions sit in the hero.
+      expect(find.byKey(const ValueKey('heroNext')), findsOneWidget);
+      expect(find.byType(CalendarTile), findsOneWidget);
+      expect(find.text('Edit amount'), findsOneWidget);
+      expect(find.text('Move date'), findsOneWidget);
+      expect(find.text('Skip'), findsOneWidget);
+      // A rule with an end: the chain from its progress.
+      expect(find.byType(OccurrenceChain), findsOneWidget);
       expect(find.text('Per year'), findsOneWidget);
       expect(find.textContaining('5,028'), findsWidgets);
       expect(find.text('Saved'), findsWidgets);
-      expect(find.text('To confirm'), findsOneWidget);
-      expect(find.text('2 times'), findsOneWidget);
+      expect(find.text('1 times'), findsOneWidget);
       expect(find.text('home'), findsOneWidget);
+      expect(find.text('KBank'), findsOneWidget);
       expect(find.text('Shared with mom'), findsOneWidget);
       expect(find.text('Family plan'), findsOneWidget);
       expect(find.text('Past'), findsOneWidget);
       expect(find.text('Upcoming'), findsOneWidget);
-      // Past tab: the produced occurrence with its state.
-      expect(find.byType(OccurrenceStateChip), findsOneWidget);
+      // Past tab: the produced occurrence as a row.
+      expect(find.byType(OccurrenceRow), findsOneWidget);
       expect(find.byType(ErrorView), findsNothing);
     });
 
-    testWidgets('upcoming: next card with actions + date chips', (t) async {
+    testWidgets('upcoming: one card of rows, next + edited tags', (t) async {
       await pump(t, const RecurringDetailPage(id: 'r1'));
       await t.tap(find.text('Upcoming'));
       await settle(t);
       // The first upcoming page rode along with the open call.
       expect(repo.calls, ['get:r1']);
-      expect(find.byType(NextOccurrenceCard), findsOneWidget);
-      expect(find.text('Edit amount'), findsOneWidget);
-      expect(find.text('Move date'), findsOneWidget);
-      expect(find.text('Skip'), findsOneWidget);
-      expect(find.byType(OccurrenceDates), findsOneWidget);
-      // The edited one is amber in the chips (amount in its label).
-      expect(find.textContaining('419'), findsWidgets);
-      expect(find.text('11 upcoming in total'), findsOneWidget);
+      expect(find.byType(OccurrenceRow), findsNWidgets(3));
+      expect(find.text('Next'), findsOneWidget);
+      expect(find.text('Edited'), findsOneWidget);
+      // Page mode (a rule with an end): no year / month buttons.
+      expect(find.byKey(const ValueKey('upcomingNextYear')), findsNothing);
+      expect(find.byKey(const ValueKey('upcomingGoToMonth')), findsNothing);
+    });
+
+    testWidgets('a due occurrence: ต้องจัดการ card above the tabs', (t) async {
+      repo.detail = {
+        ..._prodDetail(),
+        'items': {
+          'data': [
+            _prodItem(status: 'not_created', date: '2026-10-03', id: 'i-due'),
+          ],
+          'pagination': _page,
+        },
+      };
+      await pump(t, const RecurringDetailPage(id: 'r1'));
+      expect(find.byKey(const ValueKey('detailDue')), findsOneWidget);
+      expect(find.byKey(const ValueKey('due-i-due')), findsOneWidget);
+      expect(find.text('Needs action'), findsOneWidget);
+      // One due: no all-at-once head, no "see all" row.
+      expect(find.byType(DueGroupHeader), findsNothing);
+      expect(find.byType(DueMoreRow), findsNothing);
+    });
+
+    testWidgets('a no-end rule pages the upcoming list by year', (t) async {
+      repo.detail = _prodDetail({
+        ..._prodRecurring(),
+        'end': {'kind': 'none', 'date': null, 'count': null},
+        'progress': {'done': 1, 'total': null},
+      });
+      repo.upcomingWindow = {
+        'from': '2026-10-17',
+        'to': '2027-10-16',
+        'next_from': '2027-10-17',
+      };
+      await pump(t, const RecurringDetailPage(id: 'r1'));
+      await t.tap(find.text('Upcoming'));
+      await settle(t);
+      expect(find.byKey(const ValueKey('upcomingGoToMonth')), findsOneWidget);
+      await t.tap(find.byKey(const ValueKey('upcomingNextYear')));
+      await settle(t);
+      expect(repo.calls, ['get:r1', 'items:upcoming']);
+      expect(repo.froms.single, DateTime(2027, 10, 17));
     });
 
     testWidgets('แก้ยอด: ONE call, the answer patches the card', (t) async {
       await pump(t, const RecurringDetailPage(id: 'r1'));
-      await t.tap(find.text('Upcoming'));
-      await settle(t);
       await t.tap(find.text('Edit amount'));
       await t.pumpAndSettle();
       final field = find.descendant(
@@ -667,37 +787,37 @@ void main() {
       ]);
       expect(repo.writes.single['amount'], 500);
       expect(repo.writes.single['date'], isNull);
-      expect(find.text('Edited'), findsOneWidget);
+      // The hero's next amount is the answer's.
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('heroNext')),
+          matching: find.textContaining('500'),
+        ),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('hero ต่อเดือน = monthly_amount; info row = amount each time', (
-      t,
-    ) async {
+    testWidgets('hero ต่อเดือน = monthly_amount', (t) async {
       await pump(t, const RecurringDetailPage(id: 'r1'));
       expect(find.text('Per month'), findsOneWidget);
       expect(find.textContaining('838'), findsOneWidget);
-      expect(find.text('Amount each time'), findsOneWidget);
       expect(find.textContaining('419'), findsWidgets);
     });
 
     testWidgets('an item write patches the setting: no re-read', (t) async {
       await pump(t, const RecurringDetailPage(id: 'r1'));
-      await t.tap(find.text('Upcoming'));
-      await settle(t);
       await t.tap(find.text('Skip'));
       await t.pumpAndSettle();
       await t.tap(find.text('Skip').last);
       await t.pumpAndSettle();
       expect(repo.calls, ['get:r1', 'archive:i-2026-11-03']);
-      // The pending tile came from the write's `setting` (7 here).
+      // The saved tile came from the write's `setting` (7 here).
       expect(find.text('7 times'), findsOneWidget);
     });
 
     testWidgets('a write with no setting re-runs the page call', (t) async {
       repo.settingInWrites = false;
       await pump(t, const RecurringDetailPage(id: 'r1'));
-      await t.tap(find.text('Upcoming'));
-      await settle(t);
       await t.tap(find.text('Skip'));
       await t.pumpAndSettle();
       await t.tap(find.text('Skip').last);
@@ -707,19 +827,18 @@ void main() {
 
     testWidgets('ข้าม: confirm, then ONE archive call', (t) async {
       await pump(t, const RecurringDetailPage(id: 'r1'));
-      await t.tap(find.text('Upcoming'));
-      await settle(t);
       await t.tap(find.text('Skip'));
       await t.pumpAndSettle();
       expect(find.text('Skip this occurrence?'), findsOneWidget);
       await t.tap(find.text('Skip').last);
       await t.pumpAndSettle();
       expect(repo.calls, contains('archive:i-2026-11-03'));
-      // The skipped one left the upcoming list: the next one is the card.
-      expect(find.byType(NextOccurrenceCard), findsOneWidget);
+      // The skipped one is no longer next: the hero shows the one after.
+      expect(find.byKey(const ValueKey('heroNext')), findsOneWidget);
+      expect(find.text('Edit amount'), findsOneWidget);
     });
 
-    testWidgets('a reminder with no amount: "รอใส่ยอด" alert + ใส่ยอด action', (
+    testWidgets('a reminder with no amount: รอใส่ยอด + ใส่ยอด first', (
       t,
     ) async {
       repo.detail = _prodDetail(_reminder());
@@ -733,14 +852,19 @@ void main() {
       ];
       await pump(t, const RecurringDetailPage(id: 'r2'));
       expect(find.text('Reminder'), findsOneWidget);
-      // The big number and the amber alert say the amount is missing.
-      expect(find.text('Enter amount'), findsOneWidget);
-      expect(find.textContaining('Enter the amount'), findsOneWidget);
+      // The big number says the amount is missing; ใส่ยอด is the action.
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('heroNext')),
+          matching: find.text('Enter amount'),
+        ),
+        findsNWidgets(2),
+      );
+      expect(find.text('Edit amount'), findsNothing);
       await t.tap(find.text('Upcoming'));
       await settle(t);
-      // Enter amount is the main action of the next card.
-      expect(find.text('Enter amount'), findsWidgets);
-      expect(find.text('Edit amount'), findsNothing);
+      expect(find.text('Tap to enter the amount'), findsNothing);
+      expect(find.textContaining('Tap to enter the amount'), findsOneWidget);
     });
 
     testWidgets('network down → full-page error', (t) async {
@@ -825,7 +949,9 @@ void main() {
       // Computed numbers and occurrences are hidden in edit mode.
       expect(find.text('Per year'), findsNothing);
       expect(find.text('Upcoming'), findsNothing);
-      expect(find.byType(NextOccurrenceCard), findsNothing);
+      expect(find.byKey(const ValueKey('heroNext')), findsNothing);
+      // บันทึกอัตโนมัติ: amount + wallet set, so the switch is on offer.
+      expect(find.byKey(const ValueKey('autoCreateRow')), findsOneWidget);
     });
 
     testWidgets('ลบ: ONE preview call, the dialog prints its numbers', (

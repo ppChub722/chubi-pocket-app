@@ -34,7 +34,8 @@ class NotificationTile extends StatelessWidget {
 
   bool get _isRecurring =>
       notification.type == NotificationType.recurringDue ||
-      notification.type == NotificationType.recurringEnding;
+      notification.type == NotificationType.recurringEnding ||
+      notification.type == NotificationType.recurringAutoCreated;
 
   bool get _hasAction => switch (notification.type) {
     NotificationType.splitCreated ||
@@ -51,7 +52,7 @@ class NotificationTile extends StatelessWidget {
     NotificationType.projectTxChanged => l.notifActionUpdateCopy,
     NotificationType.splitChanged => l.notifActionUpdateCopy,
     NotificationType.recurringEnding => l.notifActionExtend,
-    NotificationType.recurringDue => l.notifActionOpenPending,
+    NotificationType.recurringDue => l.notifActionOpenDue,
     _ => l.notificationAccept,
   };
 
@@ -118,7 +119,8 @@ class NotificationTile extends StatelessWidget {
     NotificationType.contactLinkRequest => AppIcons.link,
     NotificationType.accountInvite => AppIcons.bank,
     NotificationType.recurringDue ||
-    NotificationType.recurringEnding => AppIcons.recurring,
+    NotificationType.recurringEnding ||
+    NotificationType.recurringAutoCreated => AppIcons.recurring,
     NotificationType.unknown => AppIcons.notifications,
   };
 
@@ -151,6 +153,9 @@ class NotificationTile extends StatelessWidget {
     NotificationType.recurringEnding => l.notifRecurringEnding(
       (n.payload['name'] as String?) ?? '',
       (n.payload['left'] as num?)?.toInt() ?? 0,
+    ),
+    NotificationType.recurringAutoCreated => l.notifRecurringAutoCreated(
+      (n.payload['count'] as num?)?.toInt() ?? 1,
     ),
     NotificationType.unknown => l.notifUnknown,
   };

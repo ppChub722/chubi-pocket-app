@@ -123,10 +123,6 @@ class TxFilterSheetLabels {
     required this.noWallet,
     required this.uncategorized,
     required this.noTag,
-    required this.walletPicker,
-    required this.categoryPicker,
-    required this.tagPicker,
-    required this.confirm,
   });
 
   final String title;
@@ -150,12 +146,6 @@ class TxFilterSheetLabels {
   final String uncategorized;
   final String noTag;
 
-  final AccountPickerLabels walletPicker;
-  final CategoryMultiPickerLabels categoryPicker;
-  final TagPickerLabels tagPicker;
-
-  final String Function(int count) confirm;
-
   String typeLabel(TransactionType? t) => switch (t) {
     null => all,
     TransactionType.expense => expense,
@@ -164,12 +154,26 @@ class TxFilterSheetLabels {
   };
 }
 
+typedef TxFilterPicks = ({List<String> ids, bool none});
+
+/// Opens the app's own picker for a filter row's "more" (the kit can't reach
+/// the entity pickers); answers the new ticks, null = closed.
+typedef TxFilterPick =
+    Future<TxFilterPicks?> Function(
+      BuildContext context,
+      TxFilterPicks current,
+      Set<TransactionType> types,
+    );
+
 Future<TxFilterSelection?> showTxFilterSideSheet(
   BuildContext context, {
   required TxFilterSelection initial,
   required TxFilterSelection reset,
   required Future<TxFilterOptions> options,
   required TxFilterSheetLabels labels,
+  TxFilterPick? pickWallets,
+  TxFilterPick? pickCategories,
+  TxFilterPick? pickTags,
   bool walletLocked = false,
 }) => showSideSheet<TxFilterSelection>(
   context,
@@ -180,6 +184,9 @@ Future<TxFilterSelection?> showTxFilterSideSheet(
       reset: reset,
       options: loaded,
       labels: labels,
+      pickWallets: pickWallets,
+      pickCategories: pickCategories,
+      pickTags: pickTags,
       walletLocked: walletLocked,
       onApply: (s) => Navigator.of(ctx).pop(s),
     ),
@@ -223,6 +230,9 @@ class TxFilterSheet extends StatefulWidget {
     required this.options,
     required this.labels,
     required this.onApply,
+    this.pickWallets,
+    this.pickCategories,
+    this.pickTags,
     this.walletLocked = false,
     super.key,
   });
@@ -233,6 +243,11 @@ class TxFilterSheet extends StatefulWidget {
   final TxFilterOptions? options;
   final TxFilterSheetLabels labels;
   final ValueChanged<TxFilterSelection> onApply;
+
+  /// The rows' "more": without one, a row shows only its chips.
+  final TxFilterPick? pickWallets;
+  final TxFilterPick? pickCategories;
+  final TxFilterPick? pickTags;
 
   final bool walletLocked;
 
@@ -302,70 +317,31 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
     );
   }
 
-  Future<void> _moreWallets(List<TxFilterOption> wallets) async {
-    final r = await showAccountMultiPickSheet(
-      context,
-      wallets: [
-        for (final a in wallets)
-          WalletPickItem(
-            id: a.id,
-            name: a.label,
-            icon: a.listIcon ?? a.icon ?? AppIcons.wallet,
-            color: a.color,
-          ),
-      ],
-      labels: _l.walletPicker,
-      confirm: _l.confirm,
-      selectedIds: _f.walletIds.toSet(),
-      noneSelected: _f.noWallet,
-    );
+  Future<void> _moreWallets() async {
+    final r = await widget.pickWallets!(context, (
+      ids: _f.walletIds,
+      none: _f.noWallet,
+    ), _f.types);
     if (r == null || !mounted) return;
-    _set(_f.copyWith(walletIds: r.ids.toList(), noWallet: r.none));
+    _set(_f.copyWith(walletIds: r.ids, noWallet: r.none));
   }
 
-  Future<void> _moreCategories(List<TxFilterOption> categories) async {
-    final pool = [
-      for (final c in categories)
-        if (_fits(c, _f.types)) c,
-    ];
-    final r = await showCategoryMultiPicker(
-      context,
-      rows: [
-        for (final c in pool)
-          CategoryPickerRow(
-            id: c.id,
-            name: c.label,
-            parentId: c.parentId,
-            sortOrder: c.sortOrder,
-            iconCode: c.iconCode,
-          ),
-      ],
-      labels: _l.categoryPicker,
-      initial: [
-        for (final id in _f.categoryIds) (id: id, includeChildren: false),
-      ],
-      showIncludeChildren: false,
-    );
+  Future<void> _moreCategories() async {
+    final r = await widget.pickCategories!(context, (
+      ids: _f.categoryIds,
+      none: _f.uncategorized,
+    ), _f.types);
     if (r == null || !mounted) return;
-    _set(_f.copyWith(categoryIds: [for (final p in r) p.id]));
+    _set(_f.copyWith(categoryIds: r.ids, uncategorized: r.none));
   }
 
-  Future<void> _moreTags(List<TxFilterOption> tags) async {
-    final r = await showTagPicker(
-      context,
-      data: ValueNotifier(
-        TagPickerData(
-          items: [
-            for (final t in tags)
-              TagPickerItem(id: t.id, name: t.label, iconCode: t.iconCode),
-          ],
-        ),
-      ),
-      labels: _l.tagPicker,
-      selected: _f.tagIds.toSet(),
-    );
+  Future<void> _moreTags() async {
+    final r = await widget.pickTags!(context, (
+      ids: _f.tagIds,
+      none: _f.noTags,
+    ), _f.types);
     if (r == null || !mounted) return;
-    _set(_f.copyWith(tagIds: r.toList()));
+    _set(_f.copyWith(tagIds: r.ids, noTags: r.none));
   }
 
   List<Widget> _skeletonChips() => [
@@ -456,7 +432,9 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
                   maxLines: _chipLines,
                   moreOnlyWhenCut: true,
                   moreLabel: _l.more,
-                  onMore: o == null ? null : () => _moreWallets(wallets),
+                  onMore: o == null || widget.pickWallets == null
+                      ? null
+                      : _moreWallets,
                   chips: [
                     all(
                       selected: _f.walletIds.isEmpty && !_f.noWallet,
@@ -491,7 +469,9 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
                 maxLines: _chipLines,
                 moreOnlyWhenCut: true,
                 moreLabel: _l.more,
-                onMore: o == null ? null : () => _moreCategories(o.categories),
+                onMore: o == null || widget.pickCategories == null
+                    ? null
+                    : _moreCategories,
                 chips: [
                   all(
                     selected: _f.categoryIds.isEmpty && !_f.uncategorized,
@@ -529,7 +509,7 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
                 maxLines: _chipLines,
                 moreOnlyWhenCut: true,
                 moreLabel: _l.more,
-                onMore: o == null ? null : () => _moreTags(tags),
+                onMore: o == null || widget.pickTags == null ? null : _moreTags,
                 chips: [
                   all(
                     selected: _f.tagIds.isEmpty && !_f.noTags,

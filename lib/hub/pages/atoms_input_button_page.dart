@@ -29,6 +29,37 @@ class _ButtonPageState extends State<_ButtonPage> {
           note: 'The real presets and where they are used.',
         ),
         HubDemo(
+          title: 'Chip-sized buttons and a trailing icon',
+          note:
+              'size: mini / chip / control match ChipSize (height, padding, icon, '
+              'label). trailingIcon puts ▾ after the label (settings dropdown rows).',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              for (final s in const [
+                AppButtonSize.mini,
+                AppButtonSize.chip,
+                AppButtonSize.control,
+              ])
+                AppButton(
+                  label: s.name,
+                  variant: AppButtonVariant.outlined,
+                  size: s,
+                  onPressed: () {},
+                ),
+              AppButton(
+                label: '80%',
+                variant: AppButtonVariant.outlined,
+                size: AppButtonSize.control,
+                trailingIcon: AppIcons.dropdown,
+                onPressed: () {},
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
           title: 'AppButton — variants',
           child: Wrap(
             spacing: AppSpacing.sm,

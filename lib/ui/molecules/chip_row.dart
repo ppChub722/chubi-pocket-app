@@ -2,10 +2,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/app_chip.dart';
+import '../tokens/chip_size.dart';
 
 class ChipOrder {
   List<String>? _frozen;
@@ -128,11 +130,16 @@ class _LimitedWrap extends MultiChildRenderObjectWidget {
     required this.hasTrailing,
     required this.moreOnlyWhenCut,
     required super.children,
+    this.onHidden,
   });
 
   final int maxLines;
   final bool hasTrailing;
   final bool moreOnlyWhenCut;
+
+  /// After a layout that changed it: how many chips (the trailing one aside)
+  /// didn't fit.
+  final ValueChanged<int>? onHidden;
 
   @override
   _RenderLimitedWrap createRenderObject(BuildContext context) =>
@@ -140,14 +147,15 @@ class _LimitedWrap extends MultiChildRenderObjectWidget {
         maxLines: maxLines,
         hasTrailing: hasTrailing,
         moreOnlyWhenCut: moreOnlyWhenCut,
-      );
+      )..onHidden = onHidden;
 
   @override
   void updateRenderObject(BuildContext context, _RenderLimitedWrap r) {
     r
       ..maxLines = maxLines
       ..hasTrailing = hasTrailing
-      ..moreOnlyWhenCut = moreOnlyWhenCut;
+      ..moreOnlyWhenCut = moreOnlyWhenCut
+      ..onHidden = onHidden;
   }
 }
 
@@ -189,6 +197,9 @@ class _RenderLimitedWrap extends RenderBox
     _hasTrailing = v;
     markNeedsLayout();
   }
+
+  ValueChanged<int>? onHidden;
+  int? _reportedHidden;
 
   @override
   void setupParentData(RenderBox child) {
@@ -268,6 +279,16 @@ class _RenderLimitedWrap extends RenderBox
       (c.parentData! as _WrapData).shown = shown.contains(i);
     }
     size = constraints.constrain(Size(width, y));
+    final report = onHidden;
+    if (report != null) {
+      final chips = _hasTrailing ? kids.length - 1 : kids.length;
+      final hidden = chips - shown.where((i) => i < chips).length;
+      if (hidden != _reportedHidden) {
+        _reportedHidden = hidden;
+        // Layout can't rebuild the "+N" chip; tell the owner after the frame.
+        SchedulerBinding.instance.addPostFrameCallback((_) => report(hidden));
+      }
+    }
   }
 
   @override
@@ -296,5 +317,83 @@ class _RenderLimitedWrap extends RenderBox
       child = data.previousSibling;
     }
     return false;
+  }
+}
+
+/// Chips in at most [maxLines] lines; the ones that don't fit become one
+/// "+N" chip at the end. Nothing extra shows when everything fits.
+///
+/// Tapping "+N" calls [onMore] (edit mode: open the picker). Without one and
+/// with [expandable], it opens the row up to every chip, ending in a ⌃ chip
+/// that folds it back to "+N".
+class LimitedChipWrap extends StatefulWidget {
+  const LimitedChipWrap({
+    required this.chips,
+    this.maxLines = 2,
+    this.onMore,
+    this.expandable = false,
+    this.size = ChipSize.chip,
+    super.key,
+  });
+
+  final List<Widget> chips;
+  final int maxLines;
+  final VoidCallback? onMore;
+  final bool expandable;
+  final ChipSize size;
+
+  @override
+  State<LimitedChipWrap> createState() => _LimitedChipWrapState();
+}
+
+class _LimitedChipWrapState extends State<LimitedChipWrap> {
+  int _hidden = 0;
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final more =
+        widget.onMore ??
+        (widget.expandable ? () => setState(() => _open = true) : null);
+    if (_open && widget.onMore == null) {
+      return ChipSizeScope(
+        size: widget.size,
+        child: Wrap(
+          spacing: _RenderLimitedWrap._gap,
+          runSpacing: _RenderLimitedWrap._gap,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            ...widget.chips,
+            AppChip(
+              key: const ValueKey('chipWrapFold'),
+              label: '',
+              icon: AppIcons.collapse,
+              size: widget.size,
+              onTap: () => setState(() => _open = false),
+            ),
+          ],
+        ),
+      );
+    }
+    return ChipSizeScope(
+      size: widget.size,
+      child: _LimitedWrap(
+        maxLines: widget.maxLines,
+        hasTrailing: true,
+        moreOnlyWhenCut: true,
+        onHidden: (n) {
+          if (mounted && n != _hidden) setState(() => _hidden = n);
+        },
+        children: [
+          ...widget.chips,
+          AppChip(
+            key: const ValueKey('chipWrapMore'),
+            label: _hidden > 0 ? '+$_hidden' : '+',
+            size: widget.size,
+            onTap: more,
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -34,11 +34,15 @@ class TxRow extends StatelessWidget {
     this.statusChip,
     this.dimmed = false,
     this.amountText,
+    this.titleMaxLines = 1,
     super.key,
   });
 
   final Widget leading;
   final String title;
+
+  /// 2 for an occurrence's full name ("Netflix ประจำเดือน ต.ค. 2026").
+  final int titleMaxLines;
   final num amount;
 
   final String? amountText;
@@ -157,7 +161,7 @@ class TxRow extends StatelessWidget {
                       Flexible(
                         child: Text(
                           title,
-                          maxLines: 1,
+                          maxLines: titleMaxLines,
                           overflow: TextOverflow.ellipsis,
                           style: textTheme.bodyLarge,
                         ),

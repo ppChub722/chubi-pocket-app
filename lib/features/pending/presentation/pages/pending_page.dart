@@ -441,9 +441,6 @@ class _PendingCard extends StatelessWidget {
             ),
       source: AppChip(
         label: _sourceLabel(l, item),
-        icon: item.source == PendingSource.recurring
-            ? AppIcons.recurring
-            : null,
         tone: item.source.isManual ? AppChipTone.info : AppChipTone.primary,
         selected: true,
         size: ChipSize.mini,
@@ -476,10 +473,6 @@ class _PendingCard extends StatelessWidget {
         PendingSource.projectUpdate => l.pendingSourceProject,
         PendingSource.ocr => l.pendingSourceOcr,
         PendingSource.chat => l.pendingSourceChat,
-        PendingSource.recurring =>
-          p.recurringRef?.label(l.pendingSourceRecurring) ??
-              l.pendingSourceRecurring,
-        PendingSource.upcoming => l.pendingSourceUpcoming,
         PendingSource.other => l.pendingSourceOther,
       };
 }
@@ -516,7 +509,6 @@ class PendingSavingRow extends StatelessWidget {
         : (needs != null ? item.needs('amount') : (d.amount ?? 0) <= 0)
         ? l.pendingErrMissingAmount
         : null;
-    final recurring = item.recurringRef;
 
     final row = SavingTxRow(
       kind: SavingTxKind.deposit,
@@ -541,19 +533,6 @@ class PendingSavingRow extends StatelessWidget {
           size: ChipSize.mini,
         ),
       ],
-      source: item.source.isRecurring
-          ? AppChip(
-              label:
-                  recurring?.label(l.pendingSourceRecurring) ??
-                  l.pendingSourceRecurring,
-              icon: item.source == PendingSource.recurring
-                  ? AppIcons.recurring
-                  : null,
-              tone: AppChipTone.primary,
-              selected: true,
-              size: ChipSize.mini,
-            )
-          : null,
       select: SelectCheck(
         value: selected,
         tooltip: l.pendingSelectOne,

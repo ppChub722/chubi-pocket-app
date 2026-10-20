@@ -14,7 +14,7 @@ import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
-import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
+import '../../../tags/presentation/widgets/tag_picker.dart';
 import '../../../transactions/domain/transaction.dart' show EmbeddedTag;
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../data/projects_repository.dart';
@@ -417,12 +417,13 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     final current = editing
         ? working.tagIds
         : {for (final t in _view?.project.tags ?? const <EmbeddedTag>[]) t.id};
-    final picked = await showTagPickerSheet(
+    final r = await TagPicker.many(
       context,
       selected: current,
       title: l.transactionFormTagsLabel,
     );
-    if (picked == null || !mounted) return;
+    if (r == null || !mounted) return;
+    final picked = r.ids;
     if (editing) {
       applyChange(working.copyWith(tagIds: picked));
       return;
@@ -781,9 +782,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         HeroNumber(
           label: l.fpEventsSpentTotal,
           value: MoneyText(p.totalExpense),
-          color: tint,
         ),
-        planned == null ? null : _budgetBar(l, v, planned, tint),
+        planned == null ? null : _budgetBar(l, v, planned),
         p.totalIncome > 0
             ? HeroValueLine(
                 label: l.fpEventsIncomeTotal,
@@ -820,18 +820,12 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     );
   }
 
-  Widget _budgetBar(
-    AppLocalizations l,
-    ProjectView v,
-    double planned,
-    Color tint,
-  ) {
+  Widget _budgetBar(AppLocalizations l, ProjectView v, double planned) {
     final p = v.project;
     final spent = v.summary?.spentNet ?? p.totalExpense;
     final left = p.remaining ?? v.summary?.remaining ?? 0;
     return HeroBar(
       value: planned > 0 ? spent / planned : 0,
-      color: tint,
       left: l.fpEventsBudgetUsed(
         moneyString(context, spent),
         moneyString(context, planned),
@@ -1130,7 +1124,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             controller: _ctrl[_Field.planned]!,
             label: l.fpEventsBudgetLabel,
             helper: l.fpEventsBudgetHelper,
-            accent: tint,
             onChanged: (t) => _onText(_Field.planned, t),
             validator: (t) {
               if (t == null || t.trim().isEmpty) return null;

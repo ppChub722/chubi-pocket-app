@@ -12,15 +12,15 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../accounts/presentation/widgets/account_picker.dart';
 import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
-import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
+import '../../../tags/presentation/widgets/tag_picker.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
 import '../cubit/tx_form_options_cubit.dart';
 import '../save_failure.dart';
-import '../widgets/account_picker_sheet.dart';
 import '../widgets/debt_entry_form.dart';
 import '../widgets/draft_form.dart';
 import '../widgets/pick_chip_rows.dart';
@@ -310,14 +310,14 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     final accounts =
         maybeTxFormOptions(context, watch: false)?.state.options?.accountList ??
         context.read<AccountsCubit>().state.accounts;
-    final r = await showAccountPickerSheet(
-      context: context,
+    final r = await AccountPicker.one(
+      context,
       accounts: accounts,
-      selected: _c.account,
+      selectedId: _c.account?.id,
       allowNone: true,
     );
     if (!mounted || r == null) return;
-    final a = r is AccountPickerSelected ? r.account : null;
+    final a = r is AccountPicked ? r.account : null;
     if (a != null) _accounts[a.id] = a;
     _c.setAccount(a);
   }
@@ -333,8 +333,8 @@ class _DebtEntryViewState extends State<_DebtEntryView>
   }
 
   Future<void> _moreTags() async {
-    final next = await showTagPickerSheet(context, selected: _c.tagIds);
-    if (next != null && mounted) _c.setTagIds(next);
+    final next = await TagPicker.many(context, selected: _c.tagIds);
+    if (next != null && mounted) _c.setTagIds(next.ids);
   }
 
   void _setPaid(bool v) {

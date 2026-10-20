@@ -60,6 +60,7 @@ class AppUiConfig extends StatelessWidget {
         reorderIndent: l.reorderIndent,
         loadMoreFailed: l.uiLoadMoreFailed,
         pickDatesHint: l.uiPickDatesHint,
+        more: l.commonMore,
         currencySymbol: _userCurrencySymbol(context),
       ),
       errors: _AppErrors(l),

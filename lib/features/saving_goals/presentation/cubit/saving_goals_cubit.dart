@@ -6,18 +6,25 @@ import '../../../../core/data/data_changes.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/saving_goals_repository.dart';
 import '../../domain/saving_goal.dart';
+import '../../domain/saving_goal_plan.dart';
 import '../../domain/saving_goals_overview.dart';
 
 enum SavingGoalsStatus { initial, loading, loaded, error }
 
 enum SavingGoalsSort {
+  /// Not a BE sort: the app orders the created list (see [SavingGoalsState.goals]).
+  needFirst,
   created,
   deadline,
   progress,
   remaining,
   byName;
 
-  String get query => this == byName ? 'name' : name;
+  String get query => switch (this) {
+    byName => 'name',
+    needFirst => 'created',
+    _ => name,
+  };
 }
 
 enum SavingGoalsFilter {
@@ -32,9 +39,10 @@ class SavingGoalsState extends Equatable {
   const SavingGoalsState({
     this.overview = const SavingGoalsOverview(),
     this.filter = SavingGoalsFilter.active,
-    this.sort = SavingGoalsSort.created,
+    this.sort = SavingGoalsSort.needFirst,
     this.status = SavingGoalsStatus.initial,
     this.error,
+    this.month,
   });
 
   final SavingGoalsOverview overview;
@@ -43,7 +51,13 @@ class SavingGoalsState extends Equatable {
   final SavingGoalsStatus status;
   final ApiException? error;
 
-  List<SavingGoal> get goals => overview.goals;
+  /// The month whose plan the list shows (first day); null = the current one.
+  final DateTime? month;
+
+  /// Sorts on every call: read it once per build.
+  List<SavingGoal> get goals => sort == SavingGoalsSort.needFirst
+      ? sortedNeedFirst(overview.goals)
+      : overview.goals;
 
   SavingGoalsState copyWith({
     SavingGoalsOverview? overview,
@@ -52,16 +66,19 @@ class SavingGoalsState extends Equatable {
     SavingGoalsStatus? status,
     ApiException? error,
     bool clearError = false,
+    DateTime? month,
+    bool clearMonth = false,
   }) => SavingGoalsState(
     overview: overview ?? this.overview,
     filter: filter ?? this.filter,
     sort: sort ?? this.sort,
     status: status ?? this.status,
     error: clearError ? null : (error ?? this.error),
+    month: clearMonth ? null : (month ?? this.month),
   );
 
   @override
-  List<Object?> get props => [overview, filter, sort, status, error];
+  List<Object?> get props => [overview, filter, sort, status, error, month];
 }
 
 class SavingGoalsCubit extends Cubit<SavingGoalsState>
@@ -97,14 +114,34 @@ class SavingGoalsCubit extends Cubit<SavingGoalsState>
     return load();
   }
 
+  /// Steps to another month's plan; the current month clears it.
+  Future<void> setMonth(DateTime month) {
+    final now = DateTime.now();
+    final current = month.year == now.year && month.month == now.month;
+    emit(
+      current
+          ? state.copyWith(clearMonth: true)
+          : state.copyWith(month: DateTime(month.year, month.month)),
+    );
+    return load();
+  }
+
+  Future<void> resetMonth() async {
+    if (state.month != null) await setMonth(DateTime.now());
+  }
+
   Future<void> load({bool silent = false}) async {
     if (!silent || state.status != SavingGoalsStatus.loaded) {
       emit(state.copyWith(status: SavingGoalsStatus.loading, clearError: true));
     }
     try {
+      final month = state.month;
       final overview = await _repo.list(
         status: state.filter.query,
         sort: state.sort.query,
+        month: month == null
+            ? null
+            : '${month.year}-${month.month.toString().padLeft(2, '0')}',
       );
       emit(
         state.copyWith(

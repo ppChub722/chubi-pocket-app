@@ -108,10 +108,13 @@ void main() {
       t,
       RecurrenceRule(freq: RecurrenceFreq.monthly, start: start),
     );
-    expect(find.text(th.recurOnDay(13)), findsOneWidget);
-    final nthLabel = th.recurOnNthWeekday('second', 2, th.recurWeekday2);
-    await tapText(t, nthLabel);
-    expect(find.text('ทุกวันอังคารที่ 2 ของเดือน'), findsOneWidget);
+    // By day first: the day grid, the summary says the start's day.
+    expect(find.byKey(const ValueKey('recurMonthDay')), findsOneWidget);
+    expect(find.textContaining(th.recurOnDay(13)), findsOneWidget);
+    await t.tap(find.byKey(const ValueKey('recurByWeekday')));
+    await t.pump();
+    // The start (the 13th) is the 2nd Tuesday.
+    expect(find.textContaining('ทุกวันอังคารที่ 2 ของเดือน'), findsOneWidget);
     await tapText(t, th.commonOk);
     expect(
       state().$2!.monthly,
@@ -122,16 +125,29 @@ void main() {
   testWidgets('monthly: day 31 reads as the last day; the 5th week = last', (
     t,
   ) async {
-    await open(
+    final state = await open(
       t,
       RecurrenceRule(
         freq: RecurrenceFreq.monthly,
         start: DateTime(2026, 10, 31),
       ),
     );
-    expect(find.text(th.recurSheetLastDayOfMonth), findsOneWidget);
+    expect(find.textContaining(th.recurLastDay), findsWidgets);
     // 31 Oct 2026 is the 5th Saturday → "the last Saturday".
-    expect(find.text(th.recurOnLastWeekday(th.recurWeekday6)), findsOneWidget);
+    await t.tap(find.byKey(const ValueKey('recurByWeekday')));
+    await t.pump();
+    expect(
+      find.textContaining(th.recurOnLastWeekday(th.recurWeekday6)),
+      findsOneWidget,
+    );
+    await tapText(t, th.commonOk);
+    expect(
+      state().$2!.monthly,
+      const RecurrenceMonthly.onWeekday(
+        nth: RecurrenceMonthly.lastWeek,
+        weekday: 6,
+      ),
+    );
   });
 
   testWidgets('ends after N occurrences', (t) async {

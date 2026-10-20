@@ -236,6 +236,36 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
             HubUse(
               wide: true,
               label:
+                  'grouped by day — rowCards: the rows of each day sit in one '
+                  'SectionCard (2px gaps), the day header above the card '
+                  '(cardedRows); wins over rowDividers',
+              page: 'Budget items, saving entries (planned), Transactions (later)',
+              child: framed(
+                ListPageBody(
+                  loading: false,
+                  error: null,
+                  isEmpty: false,
+                  onRetry: _refresh,
+                  empty: const EmptyView(
+                    icon: AppIcons.empty,
+                    title: 'Nothing here yet',
+                    message: '',
+                  ),
+                  topInset: 0,
+                  rowCards: true,
+                  children: [
+                    const DateGroupHeader(label: 'Today', total: -540),
+                    ...rows.take(2),
+                    const DateGroupHeader(label: 'Yesterday', total: 1200),
+                    ...rows.take(3),
+                  ],
+                ),
+                420,
+              ),
+            ),
+            HubUse(
+              wide: true,
+              label:
                   'loading — the skeleton mirrors the grouped list: toolbar, day '
                   'header, rows at the real height, the same hairlines and band',
               page: 'Every list on first load (built into ListPageBody)',

@@ -8,7 +8,7 @@ import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
-import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
+import '../../../tags/presentation/widgets/tag_picker.dart';
 import '../../domain/project.dart';
 import '../cubit/projects_cubit.dart';
 import '../widgets/project_common.dart';
@@ -56,14 +56,14 @@ class _ProjectsPageState extends State<ProjectsPage> {
   Future<void> _pickTags(ProjectsState state) async {
     final l = AppLocalizations.of(context)!;
     final cubit = context.read<ProjectsCubit>();
-    final picked = await showTagPickerSheet(
+    final picked = await TagPicker.many(
       context,
       selected: state.tagIds.toSet(),
       title: l.transactionFormTagsLabel,
       allowCreate: false,
     );
     if (picked == null || !mounted) return;
-    await cubit.load(tagIds: picked.toList());
+    await cubit.load(tagIds: picked.ids.toList());
   }
 
   void _open(Project p) => context.push('/projects/${p.id}');

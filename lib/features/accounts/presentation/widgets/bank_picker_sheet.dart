@@ -1,21 +1,7 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/bloc/cubit_feed.dart';
-import '../../../../core/data/sync_refresh.dart';
-import '../../../../core/data/sync_set.dart';
-import '../cubit/providers_cubit.dart';
-
-import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/payment_provider.dart';
-
-class BankPick {
-  const BankPick(this.bank);
-  final PaymentProvider? bank;
-}
 
 const _majorBankCodes = ['004', '014', '002', '006', '025'];
 
@@ -43,57 +29,6 @@ List<BankPickerItem> rankedBankItems(
       return r != 0 ? r : a.name(lang).compareTo(b.name(lang));
     });
   return [for (final b in banks) bankPickerItemOf(b, lang)];
-}
-
-Future<BankPick?> showBankPicker(
-  BuildContext context, {
-  required List<PaymentProvider> providers,
-  String? selectedCode,
-  bool allowNone = true,
-  String? title,
-}) async {
-  final l = AppLocalizations.of(context)!;
-  final lang = Localizations.localeOf(context).languageCode;
-  ProvidersCubit? cache;
-  try {
-    cache = context.read<ProvidersCubit>();
-  } catch (_) {
-    cache = null; // no cache here (a test, the hub): the list as given
-  }
-  var latest = providers;
-  final feed = cache == null
-      ? null
-      : CubitFeed<ProvidersState, List<BankPickerItem>>(cache, (s) {
-          latest = s.providers;
-          return rankedBankItems(latest, lang);
-        });
-  try {
-    final choice = await showBankSelectSheet(
-      context,
-      banks: rankedBankItems(providers, lang),
-      live: feed?.listenable,
-      onRefresh: cache == null
-          ? null
-          : syncRefreshOf(context, const {SyncSet.providers}),
-      selectedCode: selectedCode,
-      allowNone: allowNone,
-      strings: BankPickerStrings(
-        title: title ?? l.identifierBankLabel,
-        noneLabel: l.identifierBankNone,
-      ),
-    );
-    if (choice == null) return null;
-    return BankPick(
-      choice.code == null
-          ? null
-          : latest.firstWhere(
-              (p) => p.code == choice.code,
-              orElse: () => providers.firstWhere((p) => p.code == choice.code),
-            ),
-    );
-  } finally {
-    unawaited(feed?.dispose());
-  }
 }
 
 class BankMark extends StatelessWidget {

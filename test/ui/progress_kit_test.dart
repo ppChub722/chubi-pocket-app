@@ -410,7 +410,7 @@ void main() {
   });
 
   group('RecurrenceEditor simple', () {
-    testWidgets('no weekday / monthly options; rule has none', (t) async {
+    testWidgets('picks only where a period starts; rule has none', (t) async {
       await wide(t);
       RecurrenceRule? last;
       final start = DateTime(2026, 10, 13);
@@ -427,10 +427,12 @@ void main() {
           ),
         ),
       );
-      expect(find.byKey(const ValueKey('recurWeekday1')), findsNothing);
-      // Switch to monthly: still no day / Nth weekday chips.
+      // One weekday chip set for the period's first day, not a weekday set.
+      expect(find.byKey(const ValueKey('recurWeekday1')), findsOneWidget);
+      // Switch to monthly: the day grid, but no by-day / Nth weekday choice.
       await t.tap(find.text('month'));
       await t.pumpAndSettle();
+      expect(find.byKey(const ValueKey('recurByWeekday')), findsNothing);
       expect(last?.freq, RecurrenceFreq.monthly);
       expect(last?.monthly, isNull);
       expect(last?.weekdays, isEmpty);

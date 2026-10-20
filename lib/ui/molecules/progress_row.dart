@@ -1,6 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../tokens/app_spacing.dart';
+import '../tokens/hero_colors.dart';
+import 'pointer_bubbles.dart';
 
 class ProgressRow extends StatelessWidget {
   const ProgressRow({
@@ -13,6 +17,11 @@ class ProgressRow extends StatelessWidget {
     this.height = 8,
     this.marker,
     this.ticks = const [],
+    this.alert,
+    this.alertColor,
+    this.markerLabel,
+    this.alertLabel,
+    this.markerBubble,
     super.key,
   });
 
@@ -31,6 +40,19 @@ class ProgressRow extends StatelessWidget {
 
   final List<double> ticks;
 
+  /// A second line on the bar (a budget's warn point), in [alertColor].
+  final double? alert;
+  final Color? alertColor;
+
+  /// Small words over the [marker] / [alert] lines ("today", "warn").
+  final String? markerLabel;
+  final String? alertLabel;
+
+  /// Always shown over the [marker] in a bubble of the bar's color ("plan to
+  /// date ฿1,300"). It stays inside the bar's width, its arrow on the line,
+  /// and takes the place of the small labels.
+  final String? markerBubble;
+
   static (double used, double total) segments(double value, double? expected) {
     final used = value.clamp(0, 1).toDouble();
     final total = (value + (expected ?? 0)).clamp(used, 1).toDouble();
@@ -40,18 +62,34 @@ class ProgressRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final hero = HeroColors.maybeOf(context);
     final over = value > 1;
     final barColor = over
-        ? (overColor ?? scheme.error)
-        : (color ?? scheme.primary);
-    final captionStyle = Theme.of(
-      context,
-    ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
+        ? (overColor ?? hero?.danger ?? scheme.error)
+        : (color ?? hero?.accent ?? scheme.primary);
+    final captionStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+      color: hero?.muted ?? scheme.onSurfaceVariant,
+    );
     final (used, total) = segments(value, expected);
+    final alertC = alertColor ?? hero?.warning ?? scheme.tertiary;
+    final bubble = marker != null && markerBubble != null;
+    final labels = bubble
+        ? PointerBubbles(
+            key: const ValueKey('progressMarkerBubble'),
+            bubbles: [
+              PointerBubble(
+                at: marker!.clamp(0, 1).toDouble(),
+                text: markerBubble!,
+                color: barColor,
+              ),
+            ],
+          )
+        : _tickLabels(context, alertC);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
+        ?labels,
         ClipRRect(
           borderRadius: BorderRadius.circular(height),
           child: TweenAnimationBuilder<Offset>(
@@ -63,7 +101,9 @@ class ProgressRow extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  ColoredBox(color: scheme.surfaceContainerHighest),
+                  ColoredBox(
+                    color: hero?.track ?? scheme.surfaceContainerHighest,
+                  ),
                   if (v.dy > v.dx)
                     FractionallySizedBox(
                       key: const ValueKey('progressExpected'),
@@ -93,7 +133,21 @@ class ProgressRow extends StatelessWidget {
                         key: const ValueKey('progressMarker'),
                         painter: _MarkerPainter(
                           marker!.clamp(0, 1).toDouble(),
-                          scheme.onSurface.withValues(alpha: 0.55),
+                          bubble
+                              ? barColor
+                              : (hero?.text ?? scheme.onSurface).withValues(
+                                  alpha: 0.55,
+                                ),
+                        ),
+                      ),
+                    ),
+                  if (alert != null)
+                    Positioned.fill(
+                      child: CustomPaint(
+                        key: const ValueKey('progressAlert'),
+                        painter: _MarkerPainter(
+                          alert!.clamp(0, 1).toDouble(),
+                          alertC,
                         ),
                       ),
                     ),
@@ -129,6 +183,73 @@ class ProgressRow extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+
+  /// The words over the lines, each centred on its line (kept inside the
+  /// bar's width). Two lines too close for both: only the alert's shows.
+  Widget? _tickLabels(BuildContext context, Color alertC) {
+    final muted =
+        HeroColors.maybeOf(context)?.muted ??
+        Theme.of(context).colorScheme.onSurfaceVariant;
+    final items = <(double, String, Color)>[
+      if (marker != null && markerLabel != null)
+        (marker!.clamp(0, 1).toDouble(), markerLabel!, muted),
+      if (alert != null && alertLabel != null)
+        (alert!.clamp(0, 1).toDouble(), alertLabel!, alertC),
+    ];
+    if (items.isEmpty) return null;
+    if (items.length == 2 && (items[0].$1 - items[1].$1).abs() < 0.18) {
+      items.removeAt(0);
+    }
+    final style = Theme.of(
+      context,
+    ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600);
+    final direction = Directionality.of(context);
+    final scaler = MediaQuery.textScalerOf(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: LayoutBuilder(
+        builder: (context, box) {
+          final w = box.maxWidth;
+          final placed = [
+            for (final (at, text, color) in items)
+              (
+                at,
+                text,
+                color,
+                (TextPainter(
+                  text: TextSpan(text: text, style: style),
+                  textDirection: direction,
+                  textScaler: scaler,
+                  maxLines: 1,
+                )..layout()),
+              ),
+          ];
+          final h = placed.map((p) => p.$4.height).fold(0.0, math.max);
+          return SizedBox(
+            height: h,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                for (final (at, text, color, tp) in placed)
+                  Positioned(
+                    left: (at * w - tp.width / 2).clamp(
+                      0.0,
+                      math.max(0.0, w - tp.width),
+                    ),
+                    top: 0,
+                    child: Text(
+                      text,
+                      maxLines: 1,
+                      style: style?.copyWith(color: color),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

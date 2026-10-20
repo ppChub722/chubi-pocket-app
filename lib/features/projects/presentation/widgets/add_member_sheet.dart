@@ -5,7 +5,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../event_errors.dart';
 import '../../../../ui/ui.dart';
-import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
+import '../../../contacts/presentation/widgets/contact_picker.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
 
@@ -28,7 +28,7 @@ Future<({String name, EventPatch patch})?> showAddMemberSheet(
       emailHint: l.projectAddMemberEmailHint,
     ),
     onFromContacts: () async {
-      final r = await showContactPickerSheet(context, allowFreeText: false);
+      final r = await ContactPicker.one(context);
       return switch (r) {
         ContactPicked(:final contact) => AddMemberFill(
           name: contact.name,

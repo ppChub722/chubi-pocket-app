@@ -9,8 +9,8 @@ import '../../../../ui/ui.dart';
 import '../../domain/account.dart';
 import '../../domain/wallet_member.dart';
 import '../cubit/accounts_cubit.dart';
+import '../../../contacts/presentation/widgets/contact_picker.dart';
 import '../wallet_errors.dart';
-import 'wallet_invite_picker.dart';
 
 Future<bool> inviteWalletMember(
   BuildContext context, {
@@ -19,7 +19,7 @@ Future<bool> inviteWalletMember(
   required void Function(MembersResult) onResult,
 }) async {
   final l = AppLocalizations.of(context)!;
-  final contact = await showWalletInvitePicker(
+  final contact = await ContactPicker.walletInvite(
     context,
     excludeUserIds: {
       for (final m in members)

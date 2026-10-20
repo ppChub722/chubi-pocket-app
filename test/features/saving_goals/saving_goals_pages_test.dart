@@ -65,6 +65,7 @@ class _Repo extends Fake implements SavingGoalsRepository {
   Future<SavingGoalsOverview> list({
     String status = 'active',
     String sort = 'created',
+    String? month,
   }) async {
     sorts.add(sort);
     listCalls++;

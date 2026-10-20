@@ -5,6 +5,7 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/account_identifier.dart';
 import '../../domain/payment_provider.dart';
+import 'bank_picker.dart';
 import 'bank_picker_sheet.dart';
 
 String identifierKindLabel(AppLocalizations l, IdentifierKind k) => switch (k) {
@@ -305,6 +306,17 @@ Future<AccountIdentifier?> showIdentifierKindSheet(
       bankLabel: l.identifierBankLabel,
       bankNoneLabel: l.identifierBankNone,
     ),
+    pickBank: (context, code) async => switch (await BankPicker.one(
+      context,
+      selectedCode: code,
+      providers: providers,
+      title: l.identifierBankLabel,
+      noneLabel: l.identifierBankNone,
+    )) {
+      null => null,
+      BankPickedNone() => const BankPickerChoice(null),
+      BankPicked(:final bank) => BankPickerChoice(bank.code),
+    },
   );
   if (choice == null) return null;
   return AccountIdentifier(

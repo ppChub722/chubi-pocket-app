@@ -85,9 +85,11 @@ class BudgetDraft extends Equatable {
     },
   );
 
+  /// The sheet may move [start]: a period starts on the weekday / day it picks.
   BudgetDraft withKitRule(RecurrenceRule r) => copyWith(
     freq: r.freq == RecurrenceFreq.dates ? 'monthly' : r.freq.name,
     interval: r.interval < 1 ? 1 : r.interval,
+    start: DateTime(r.start.year, r.start.month, r.start.day),
     end: switch (r.end.kind) {
       RecurrenceEndKind.onDate when r.end.date != null => BudgetEnd.onDate(
         r.end.date!,

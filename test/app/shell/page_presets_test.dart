@@ -55,8 +55,7 @@ class _Contacts extends MockCubit<ContactsState> implements ContactsCubit {}
 class _Accounts extends MockCubit<AccountsState> implements AccountsCubit {}
 
 /// Payment providers never answer (names fall back) — not under test.
-class _AccountsRepo extends Fake implements AccountsRepository {
-}
+class _AccountsRepo extends Fake implements AccountsRepository {}
 
 const _wallet = Account(
   id: 'w1',

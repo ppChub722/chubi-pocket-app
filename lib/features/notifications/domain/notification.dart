@@ -18,6 +18,9 @@ enum NotificationType {
   recurringDue('recurring_due'),
 
   recurringEnding('recurring_ending'),
+
+  /// The day's tx the auto-create recorded (one notice per day).
+  recurringAutoCreated('recurring_auto_created'),
   unknown('unknown');
 
   const NotificationType(this.wire);

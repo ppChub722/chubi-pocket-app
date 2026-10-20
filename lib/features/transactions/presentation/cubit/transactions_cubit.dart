@@ -329,10 +329,6 @@ class TransactionsCubit extends Cubit<TransactionsState>
       tagIds: tagIds,
       alsoUpdateLink: alsoUpdateLink,
     );
-    if (result.isUpcoming) {
-      dropRow(id);
-      return result;
-    }
     _emitWrite(state.copyWith(transactions: _place(result.rows)));
     return result;
   }
@@ -355,9 +351,14 @@ class TransactionsCubit extends Cubit<TransactionsState>
   Future<DeleteTransactionResult> remove(
     String id, {
     bool? alsoDeleteLink,
+    bool? skipOccurrence,
   }) async {
     final tx = byId(id);
-    final result = await _repo.delete(id, alsoDeleteLink: alsoDeleteLink);
+    final result = await _repo.delete(
+      id,
+      alsoDeleteLink: alsoDeleteLink,
+      skipOccurrence: skipOccurrence,
+    );
     if (tx?.transferGroupId != null) {
       _emitWrite(
         state.copyWith(

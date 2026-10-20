@@ -8,6 +8,7 @@ import 'package:chubi_pocket/features/projects/presentation/cubit/projects_cubit
 import 'package:chubi_pocket/features/tags/presentation/cubit/tags_cubit.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
 import 'package:chubi_pocket/features/transactions/presentation/cubit/transactions_cubit.dart';
+import 'package:chubi_pocket/features/transactions/presentation/widgets/category_pick_card.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/draft_form.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/splits_section.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
@@ -95,18 +96,16 @@ void main() {
     );
   }
 
-  testWidgets('dashed pick chips lead the wallet and category rows', (t) async {
+  testWidgets('category and wallet are two cards side by side', (t) async {
     await pump(t);
     await t.pump();
-    final wallet = find.widgetWithText(AppChip, 'เลือกกระเป๋า');
-    final category = find.widgetWithText(AppChip, 'เลือกหมวด');
+    final wallet = find.byType(WalletPickCard);
+    final category = find.byType(CategoryPickCard);
     expect(wallet, findsOneWidget);
     expect(category, findsOneWidget);
-    expect(t.widget<AppChip>(wallet).dashed, isTrue);
-    expect(t.widget<AppChip>(category).dashed, isTrue);
-    // The wallet row sits above the category row; no big cards.
-    expect(t.getTopLeft(wallet).dy, lessThan(t.getTopLeft(category).dy));
-    expect(find.byType(PickCard), findsNothing);
+    // Same row, category first.
+    expect(t.getTopLeft(category).dy, t.getTopLeft(wallet).dy);
+    expect(t.getTopLeft(category).dx, lessThan(t.getTopLeft(wallet).dx));
   });
 
   testWidgets('the note is one inline row', (t) async {

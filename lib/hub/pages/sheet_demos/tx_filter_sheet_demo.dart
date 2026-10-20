@@ -8,7 +8,7 @@ import '../../../ui/ui.dart';
 Widget buildTxFilterSheetDemo(BuildContext context) =>
     const _TxFilterSheetDemo();
 
-final _labels = TxFilterSheetLabels(
+const _labels = TxFilterSheetLabels(
   title: 'Filters',
   apply: 'Apply',
   clear: 'Clear',
@@ -27,35 +27,7 @@ final _labels = TxFilterSheetLabels(
   noWallet: 'No wallet',
   uncategorized: 'No category',
   noTag: 'No tag',
-  walletPicker: const AccountPickerLabels(
-    title: 'Wallet',
-    none: 'No wallet',
-    create: 'Add wallet',
-    empty: 'No wallets',
-  ),
-  categoryPicker: CategoryMultiPickerLabels(
-    title: 'Category',
-    searchHint: 'Search',
-    includeChildren: 'Include subcategories',
-    confirm: (n) => 'OK ($n)',
-    empty: 'No categories',
-    noMatch: 'No match',
-  ),
-  tagPicker: const TagPickerLabels(
-    title: 'Tag',
-    searchHint: 'Search tags',
-    ok: 'OK',
-    addTag: 'Add tag',
-    createNamed: _createNamed,
-    empty: 'No tags',
-    noMatch: 'No match',
-    nameSave: 'Save',
-    nameHint: 'Tag name',
-  ),
-  confirm: (n) => n == 0 ? 'OK' : 'OK ($n)',
 );
-
-String _createNamed(String name) => 'Add "$name"';
 
 const _options = TxFilterOptions(
   wallets: [
@@ -94,8 +66,8 @@ const _options = TxFilterOptions(
   ],
 );
 
-/// Far more chips than the 4 lines hold: "More" shows only here — in
-/// [_options] every chip fits, so it is hidden.
+/// Far more chips than the 4 lines hold. "More" needs a pick callback, which
+/// only the app passes (it opens the entity pickers), so here the row is cut.
 final _manyOptions = TxFilterOptions(
   wallets: [
     for (var i = 1; i <= 24; i++)
@@ -168,7 +140,7 @@ class _TxFilterSheetDemoState extends State<_TxFilterSheetDemo> {
             ),
           ),
           AppButton(
-            label: 'Many options (More shows)',
+            label: 'Many options',
             variant: AppButtonVariant.outlined,
             onPressed: () => _open(options: Future.value(_manyOptions)),
           ),

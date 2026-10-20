@@ -265,11 +265,19 @@ class UpcomingItem extends Equatable {
     required this.overdue,
     required this.iconCode,
     required this.logoUrl,
+    this.ruleId,
+    this.slot,
   });
 
   final UpcomingKind kind;
 
+  /// A recurring occurrence's stored id, or `slot:{rule}:{slot}` when it is
+  /// computed (no id).
   final String id;
+
+  /// A recurring occurrence's rule and original date; null from an old BE.
+  final String? ruleId;
+  final String? slot;
   final String name;
   final TransactionType type;
   final double amount;
@@ -284,7 +292,7 @@ class UpcomingItem extends Equatable {
     kind: json['kind'] == 'card_due'
         ? UpcomingKind.cardDue
         : UpcomingKind.recurring,
-    id: json['id'] as String,
+    id: json['id'] as String? ?? 'slot:${json['rule_id']}:${json['slot']}',
     name: json['name'] as String? ?? '',
     type: json['type'] == 'income'
         ? TransactionType.income
@@ -295,6 +303,8 @@ class UpcomingItem extends Equatable {
     overdue: json['overdue'] as bool? ?? false,
     iconCode: _icon(json['icon_code']),
     logoUrl: json['logo_url'] as String?,
+    ruleId: json['rule_id'] as String?,
+    slot: json['slot'] as String?,
   );
 
   @override
@@ -309,6 +319,8 @@ class UpcomingItem extends Equatable {
     overdue,
     iconCode,
     logoUrl,
+    ruleId,
+    slot,
   ];
 }
 

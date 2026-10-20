@@ -8,15 +8,15 @@ import '../event_errors.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../accounts/presentation/widgets/account_picker.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
-import '../../../categories/presentation/widgets/category_picker_sheet.dart';
+import '../../../categories/presentation/widgets/category_picker.dart';
 import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../transactions/data/transactions_repository.dart';
 import '../../../transactions/domain/transaction_type.dart';
-import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
 import '../../domain/project.dart';
 
 Future<bool> showResolveSheet(
@@ -80,12 +80,11 @@ Future<bool> showResolveSheet(
         : null,
     showModeTabs: !isParent,
     onPickAccount: (current) async {
-      final r = await showAccountPickerSheet(
-        context: context,
-        accounts: accounts.state.accounts,
-        selected: current?.ref as Account?,
+      final r = await AccountPicker.one(
+        context,
+        selectedId: (current?.ref as Account?)?.id,
       );
-      if (r is! AccountPickerSelected || !context.mounted) return null;
+      if (r is! AccountPicked || !context.mounted) return null;
       final a = r.account;
       return ResolvePickResult(
         ResolvePickValue(
@@ -97,23 +96,24 @@ Future<bool> showResolveSheet(
       );
     },
     onPickCategory: (current) async {
-      final r = await showCategoryPickerSheet(
-        context: context,
-        categories: categories.state.categories,
-        selected: current?.ref as Category?,
-        type: txType == TransactionType.expense
-            ? CategoryType.expense
-            : CategoryType.income,
+      final r = await CategoryPicker.one(
+        context,
+        types: {
+          txType == TransactionType.expense
+              ? CategoryType.expense
+              : CategoryType.income,
+        },
+        selectedId: (current?.ref as Category?)?.id,
         allowNone: true,
         noneLabel: l.projectResolveCategoryNone,
         title: l.projectResolveCategory,
       );
-      if (r is CategoryPickerSelected) {
+      if (r is CategoryPicked) {
         return ResolvePickResult(
           ResolvePickValue(label: r.category.name, ref: r.category),
         );
       }
-      if (r is CategoryPickerCleared) return const ResolvePickResult(null);
+      if (r is CategoryPickedNone) return const ResolvePickResult(null);
       return null;
     },
     onSubmit: (res) async {

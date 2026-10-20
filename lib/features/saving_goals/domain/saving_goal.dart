@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../ui/ui.dart';
+import '../../recurring/domain/recurrence_rule.dart';
 
 // TODO(be-spec): shapes follow fe-saving's goals v2 proposal (ai/inbox/fe-saving.md
 // + the message to BE). Re-check every key against openapi.yaml when BE lands it.
@@ -83,29 +84,87 @@ class SavingAutoSave extends Equatable {
   const SavingAutoSave({
     required this.amount,
     required this.day,
+    this.id,
+    this.rule,
     this.wallet,
     this.nextDate,
   });
 
+  final String? id;
   final double amount;
 
   final int day;
+
+  /// Null from a BE without per-item rules: monthly on [day].
+  final RecurrenceRule? rule;
   final SavingWalletRef? wallet;
   final String? nextDate;
 
-  factory SavingAutoSave.fromJson(Map<String, dynamic> json) => SavingAutoSave(
-    amount: (json['amount'] as num?)?.toDouble() ?? 0,
-    day: (json['day'] as num?)?.toInt() ?? 1,
-    wallet: json['wallet'] is Map
-        ? SavingWalletRef.fromJson(
-            (json['wallet'] as Map).cast<String, dynamic>(),
+  factory SavingAutoSave.fromJson(Map<String, dynamic> json) {
+    final rule = json['rule'] is Map
+        ? recurrenceFromJson(
+            (json['rule'] as Map).cast<String, dynamic>(),
+            start: json['start_date'] as String?,
+            end: (json['end'] as Map?)?.cast<String, dynamic>(),
           )
-        : null,
-    nextDate: json['next_date'] as String?,
-  );
+        : null;
+    return SavingAutoSave(
+      id: json['id'] as String?,
+      amount: (json['amount'] as num?)?.toDouble() ?? 0,
+      day:
+          (json['day'] as num?)?.toInt() ??
+          rule?.monthly?.day ??
+          rule?.start.day ??
+          1,
+      rule: rule,
+      wallet: json['wallet'] is Map
+          ? SavingWalletRef.fromJson(
+              (json['wallet'] as Map).cast<String, dynamic>(),
+            )
+          : null,
+      nextDate: json['next_date'] as String?,
+    );
+  }
+
+  /// `auto_saves` when the BE sends the list, else the single `auto_save`.
+  static List<SavingAutoSave> listFromJson(Map<String, dynamic> json) {
+    final many = json['auto_saves'];
+    if (many is List) {
+      return [
+        for (final a in many)
+          SavingAutoSave.fromJson((a as Map).cast<String, dynamic>()),
+      ];
+    }
+    final one = json['auto_save'];
+    return one is Map
+        ? [SavingAutoSave.fromJson(one.cast<String, dynamic>())]
+        : const [];
+  }
 
   @override
-  List<Object?> get props => [amount, day, wallet, nextDate];
+  List<Object?> get props => [id, amount, day, rule, wallet, nextDate];
+}
+
+/// One auto-save as the PUT …/auto-saves list sends it.
+class SavingAutoSaveWrite {
+  const SavingAutoSaveWrite({
+    required this.amount,
+    required this.rule,
+    this.id,
+    this.accountId,
+  });
+
+  final String? id;
+  final double amount;
+  final RecurrenceRule rule;
+  final String? accountId;
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'id': ?id,
+    'amount': amount,
+    'account_id': accountId,
+    ...recurrenceToJson(rule),
+  };
 }
 
 class SavingMilestone extends Equatable {
@@ -195,7 +254,7 @@ class SavingGoal extends Equatable {
     this.monthPlan,
     this.monthSaved = 0,
     this.monthShort,
-    this.autoSave,
+    this.autoSaves = const [],
     this.group,
     this.milestones = const [],
     this.actions = const SavingGoalActions(),
@@ -232,7 +291,9 @@ class SavingGoal extends Equatable {
   final double monthSaved;
   final double? monthShort;
 
-  final SavingAutoSave? autoSave;
+  final List<SavingAutoSave> autoSaves;
+
+  SavingAutoSave? get autoSave => autoSaves.firstOrNull;
 
   final String? group;
   final List<SavingMilestone> milestones;
@@ -274,11 +335,7 @@ class SavingGoal extends Equatable {
       monthPlan: (json['month_plan'] as num?)?.toDouble(),
       monthSaved: (json['month_saved'] as num?)?.toDouble() ?? 0,
       monthShort: (json['month_short'] as num?)?.toDouble(),
-      autoSave: json['auto_save'] is Map
-          ? SavingAutoSave.fromJson(
-              (json['auto_save'] as Map).cast<String, dynamic>(),
-            )
-          : null,
+      autoSaves: SavingAutoSave.listFromJson(json),
       group: json['group'] as String?,
       milestones: [
         for (final m in (json['milestones'] as List? ?? const []))
@@ -327,7 +384,7 @@ class SavingGoal extends Equatable {
     monthPlan,
     monthSaved,
     monthShort,
-    autoSave,
+    autoSaves,
     group,
     milestones,
     actions,

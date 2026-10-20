@@ -27,6 +27,7 @@ void main() {
     'domain/transactions',
     'domain/people-accounts',
     'domain/others',
+    'domain/entity-pickers',
     'templates/transaction-detail',
   };
 

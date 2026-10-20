@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens/app/app_icons.dart';
 import 'app_chip.dart';
 import '../tokens/chip_size.dart';
+import '../tokens/hero_colors.dart';
 import 'app_icon.dart';
 import 'count_badge.dart';
 
@@ -190,12 +191,13 @@ class AppIconButton extends StatelessWidget {
     }
     final size = resolveSize(context, this.size);
     final scheme = Theme.of(context).colorScheme;
+    final hero = HeroColors.maybeOf(context);
     final enabled = onPressed != null;
     final iconColor = destructive
         ? scheme.error
         : selected
         ? scheme.onPrimaryContainer
-        : scheme.onSurface;
+        : hero?.accent ?? scheme.onSurface;
     final working = activity == IconChipActivity.progress;
     final done = activity == IconChipActivity.done;
     final glyphSize = size * 0.55;
@@ -233,7 +235,9 @@ class AppIconButton extends StatelessWidget {
           side: destructive
               ? BorderSide(color: scheme.error, width: 1.5)
               : BorderSide(
-                  color: selected ? scheme.primary : scheme.outlineVariant,
+                  color: selected
+                      ? scheme.primary
+                      : hero?.line ?? scheme.outlineVariant,
                 ),
         ),
         clipBehavior: Clip.antiAlias,

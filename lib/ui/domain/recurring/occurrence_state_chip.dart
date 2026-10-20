@@ -6,9 +6,19 @@ import '../../tokens/chip_size.dart';
 
 enum OccurrenceState {
   upcoming(StatusKind.upcoming),
-  notCreated(StatusKind.notCreated),
+
+  /// ค้าง: its date came and nothing was recorded (wire `due`; the old
+  /// `not_created`).
+  notCreated(StatusKind.warning),
   pending(StatusKind.pending),
+
+  /// Recorded with a tx.
   done(StatusKind.done),
+
+  /// Marked paid without a tx (someone else paid; before the rule existed).
+  paid(StatusKind.done),
+
+  /// ข้าม (wire `skipped`; the old `archived`).
   archived(StatusKind.archived);
 
   const OccurrenceState(this.kind);
@@ -19,15 +29,20 @@ enum OccurrenceState {
     'upcoming' => upcoming,
     'pending' => pending,
     'done' => done,
-    'archived' => archived,
+    'paid' => paid,
+    'archived' || 'skipped' => archived,
     _ => notCreated,
   };
+
+  /// Nothing more to do with it: recorded, paid or skipped.
+  bool get settled => this == done || this == paid || this == archived;
 
   String label(AppLocalizations l) => switch (this) {
     upcoming => l.occurrenceStateUpcoming,
     notCreated => l.occurrenceStateNotCreated,
     pending => l.occurrenceStatePending,
     done => l.occurrenceStateDone,
+    paid => l.occurrenceStatePaid,
     archived => l.occurrenceStateArchived,
   };
 }

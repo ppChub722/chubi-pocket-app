@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../features/accounts/presentation/widgets/bank_picker.dart';
 import '../../ui/ui.dart';
 import '../hub_kit.dart';
 import '../hub_playground.dart';
 
 /// `/dev/domain/sheets-accounts` — the wallet sheets as presentational
-/// organisms (sample data, no cubit / repository): adjust balance, bank
-/// picker, identifier kind picker, wallet invite picker.
+/// organisms (sample data, no cubit / repository): adjust balance and the
+/// identifier kind picker.
 Widget buildSheetsAccountsPage(BuildContext context) =>
     const _SheetsAccountsPage();
 
@@ -55,12 +56,6 @@ const _kinds = [
     label: 'Other',
     icon: AppIcons.accountNumber,
   ),
-];
-
-const _candidates = [
-  WalletInviteCandidate(id: '1', name: 'Aom Chan', email: 'aom@example.com'),
-  WalletInviteCandidate(id: '2', name: 'Bee', email: 'bee@example.com'),
-  WalletInviteCandidate(id: '3', name: 'Cat'),
 ];
 
 AdjustBalanceStrings _adjustStrings({required bool credit}) =>
@@ -121,20 +116,6 @@ class _SheetsAccountsPageState extends State<_SheetsAccountsPage> {
     );
   }
 
-  Future<void> _bank({required bool allowNone, String? selected}) async {
-    final r = await showBankSelectSheet(
-      context,
-      banks: _banks,
-      allowNone: allowNone,
-      selectedCode: selected,
-      strings: const BankPickerStrings(
-        title: 'Bank',
-        noneLabel: 'Not specified',
-      ),
-    );
-    _say(r == null ? 'dismissed' : 'bank ${r.code ?? 'none'}');
-  }
-
   Future<void> _kind(String kindId, String? bankCode) async {
     final r = await showIdentifierKindSelectSheet(
       context,
@@ -147,22 +128,14 @@ class _SheetsAccountsPageState extends State<_SheetsAccountsPage> {
         bankLabel: 'Bank',
         bankNoneLabel: 'Not specified',
       ),
+      pickBank: (context, code) async =>
+          switch (await BankPicker.one(context, selectedCode: code)) {
+            null => null,
+            BankPicked(:final bank) => BankPickerChoice(bank.code),
+            BankPickedNone() => const BankPickerChoice(null),
+          },
     );
     _say(r == null ? 'dismissed' : 'kind ${r.kindId} | bank ${r.bankCode}');
-  }
-
-  Future<void> _invite(List<WalletInviteCandidate> list) async {
-    final r = await showWalletInviteSelectSheet(
-      context,
-      candidates: list,
-      strings: const WalletInviteStrings(
-        title: 'Invite to this wallet',
-        searchHint: 'Search contacts',
-        hint: 'Only contacts linked to an app account can be invited.',
-        empty: 'Nobody to invite: link a contact to an app account first.',
-      ),
-    );
-    _say(r == null ? 'dismissed' : 'invite ${r.name}');
   }
 
   @override
@@ -200,19 +173,6 @@ class _SheetsAccountsPageState extends State<_SheetsAccountsPage> {
               child: _open('Open', _setBalance),
             ),
             HubUse(
-              label: 'Bank picker — with "none"',
-              page: 'Wallet numbers, wallet edit',
-              child: _open(
-                'Open',
-                () => _bank(allowNone: true, selected: '014'),
-              ),
-            ),
-            HubUse(
-              label: 'Bank picker — without "none"',
-              page: 'Wallet edit',
-              child: _open('Open', () => _bank(allowNone: false)),
-            ),
-            HubUse(
               label: 'Identifier kind — bank account + bank',
               page: 'Wallet numbers (edit row chip)',
               child: _open('Open', () => _kind('account', '004')),
@@ -221,16 +181,6 @@ class _SheetsAccountsPageState extends State<_SheetsAccountsPage> {
               label: 'Identifier kind — PromptPay',
               page: 'Wallet numbers (edit row chip)',
               child: _open('Open', () => _kind('promptpay', null)),
-            ),
-            HubUse(
-              label: 'Wallet invite — contacts',
-              page: 'Wallet members',
-              child: _open('Open', () => _invite(_candidates)),
-            ),
-            HubUse(
-              label: 'Wallet invite — nobody to invite',
-              page: 'Wallet members',
-              child: _open('Open', () => _invite(const [])),
             ),
           ],
         ),

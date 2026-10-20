@@ -7,8 +7,8 @@ import '../atoms/app_switch.dart';
 import '../atoms/connection_scope.dart';
 import '../molecules/detail_rows.dart';
 import '../molecules/option_menu.dart';
-import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
+import '../tokens/chip_size.dart';
 import 'option_sheet.dart';
 
 class SettingsSection extends StatelessWidget {
@@ -140,7 +140,7 @@ class SettingSummaryRow extends StatelessWidget {
 
   final String? error;
 
-  /// Shown instead of [summary] (e.g. an [IconStackCount]).
+  /// Shown instead of [summary].
   final Widget? trailing;
 
   @override
@@ -194,10 +194,19 @@ class SettingMenuRow<T> extends StatefulWidget {
     required this.onSelected,
     this.custom,
     this.helper,
+    this.note,
+    this.compact = false,
     super.key,
   });
 
   final String label;
+
+  /// Small words after the value, e.g. "= ฿1,600" for a percentage.
+  final String? note;
+
+  /// A bare line (label, value, note) without the settings-row inset, for use
+  /// inside a hero.
+  final bool compact;
 
   /// The current value as the button shows it.
   final String value;
@@ -223,7 +232,11 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
     super.initState();
     _syncText();
     _focus.addListener(() {
-      if (!_focus.hasFocus && _typing) _commit();
+      if (!_focus.hasFocus && _typing) {
+        _commit();
+      } else if (mounted) {
+        setState(() {});
+      }
     });
   }
 
@@ -275,50 +288,73 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
     }
   }
 
+  /// The typed value in the same pill as the menu button (size, edge, words,
+  /// ▾), only the number is an input with no box of its own.
   Widget _field(SettingMenuCustom<T> custom, VoidCallback toggle) {
     final scheme = Theme.of(context).colorScheme;
-    final style = Theme.of(context).textTheme.bodyLarge;
-    OutlineInputBorder edge(Color c) => OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      borderSide: BorderSide(color: c),
-    );
-    return SizedBox(
-      width: 124,
-      child: TextField(
-        controller: _text,
-        focusNode: _focus,
-        keyboardType: custom.keyboardType,
-        inputFormatters: custom.inputFormatters,
-        textAlign: TextAlign.end,
-        textInputAction: TextInputAction.done,
-        readOnly: widget.onSelected == null,
-        style: style,
-        onSubmitted: (_) => _commit(),
-        decoration: InputDecoration(
-          isDense: true,
-          hintText: custom.hint,
-          hintStyle: style?.copyWith(
-            color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+    const size = ChipSize.control;
+    final style = size
+        .textStyle(context)
+        ?.copyWith(
+          fontWeight: ChipSize.chipWeight,
+          color: scheme.primary,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        );
+    final focused = _focus.hasFocus;
+    final enabled = widget.onSelected != null;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: enabled ? _focus.requestFocus : null,
+      child: Container(
+        height: size.heightOf(context),
+        padding: EdgeInsetsDirectional.only(start: size.padding),
+        decoration: ShapeDecoration(
+          shape: StadiumBorder(
+            side: BorderSide(
+              color: focused ? scheme.primary : scheme.outline,
+              width: focused ? 1.5 : 1,
+            ),
           ),
-          suffixText: custom.suffix,
-          contentPadding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.sm,
-            0,
-            AppSpacing.sm,
-          ),
-          suffixIcon: IconButton(
-            onPressed: widget.onSelected == null ? null : toggle,
-            icon: const Icon(AppIcons.dropdown),
-            visualDensity: VisualDensity.compact,
-          ),
-          suffixIconConstraints: const BoxConstraints(
-            minWidth: 36,
-            minHeight: 36,
-          ),
-          enabledBorder: edge(scheme.outline),
-          focusedBorder: edge(scheme.primary),
-          border: edge(scheme.outline),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IntrinsicWidth(
+              child: TextField(
+                controller: _text,
+                focusNode: _focus,
+                keyboardType: custom.keyboardType,
+                inputFormatters: custom.inputFormatters,
+                textAlign: TextAlign.end,
+                textInputAction: TextInputAction.done,
+                readOnly: !enabled,
+                style: style,
+                onSubmitted: (_) => _commit(),
+                decoration: InputDecoration.collapsed(
+                  hintText: custom.hint,
+                  hintStyle: style?.copyWith(
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
+            ),
+            if (custom.suffix case final suffix?) Text(suffix, style: style),
+            InkResponse(
+              onTap: enabled ? toggle : null,
+              radius: 18,
+              child: Padding(
+                padding: EdgeInsetsDirectional.only(
+                  start: size.gap,
+                  end: size.padding,
+                ),
+                child: Icon(
+                  AppIcons.dropdown,
+                  size: size.icon + 4,
+                  color: scheme.primary,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -343,11 +379,8 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
               selectedLabel: _isCustomValue ? widget.value : null,
               onChoose: _startTyping,
             ),
-      builder: (context, toggle) => DetailRow(
-        label: widget.label,
-        helper: widget.helper,
-        onTap: cb == null || _typing ? null : toggle,
-        trailing: custom != null && (_typing || _isCustomValue)
+      builder: (context, toggle) {
+        final value = custom != null && (_typing || _isCustomValue)
             ? _field(custom, toggle)
             : AppButton(
                 label: widget.value,
@@ -355,8 +388,58 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
                 size: AppButtonSize.control,
                 trailingIcon: AppIcons.dropdown,
                 onPressed: cb == null ? null : toggle,
+              );
+        final note = widget.note;
+        // As big as the value on the button beside it.
+        final noteText = note == null
+            ? null
+            : Text(
+                note,
+                maxLines: 1,
+                style: ChipSize.control
+                    .textStyle(context)
+                    ?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+              );
+        if (widget.compact) {
+          return Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                ),
               ),
-      ),
+              value,
+              if (noteText != null) ...[
+                const SizedBox(width: AppSpacing.sm),
+                noteText,
+              ],
+            ],
+          );
+        }
+        return DetailRow(
+          label: widget.label,
+          helper: widget.helper,
+          onTap: cb == null || _typing ? null : toggle,
+          trailing: noteText == null
+              ? value
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    value,
+                    const SizedBox(width: AppSpacing.sm),
+                    noteText,
+                  ],
+                ),
+        );
+      },
     );
   }
 }

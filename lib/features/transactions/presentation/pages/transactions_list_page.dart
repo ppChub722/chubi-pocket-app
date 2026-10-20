@@ -36,7 +36,7 @@ class TransactionsListPage extends StatefulWidget {
     this.embedded = false,
     this.lockedAccount,
     this.typeFilter,
-    this.headerTiles,
+    this.period,
     super.key,
   });
 
@@ -46,7 +46,9 @@ class TransactionsListPage extends StatefulWidget {
 
   final ValueListenable<TransactionType?>? typeFilter;
 
-  final List<Widget> Function()? headerTiles;
+  /// The period, shared both ways with an owner outside the list (a hero
+  /// stepping months): the list writes its changes and follows the owner's.
+  final ValueNotifier<TxPeriod>? period;
 
   final String? initialCategoryId;
 
@@ -86,6 +88,11 @@ class _TransactionsListPageState extends State<TransactionsListPage>
   void initState() {
     super.initState();
     widget.typeFilter?.addListener(_onTypeFilter);
+    final owned = widget.period;
+    if (owned != null) {
+      _f = _f.copyWith(period: owned.value);
+      owned.addListener(_onPeriod);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       var f = _f;
@@ -118,8 +125,15 @@ class _TransactionsListPageState extends State<TransactionsListPage>
       final m = widget.initialMonth;
       if (m != null) f = f.copyWith(period: TxPeriod.month(m));
       setState(() => _f = _base = f);
+      widget.period?.value = f.period;
       _refetch();
     });
+  }
+
+  void _onPeriod() {
+    final p = widget.period?.value;
+    if (!mounted || p == null || p == _f.period) return;
+    _apply(_f.copyWith(period: p));
   }
 
   void _onTypeFilter() {
@@ -141,6 +155,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
   @override
   void dispose() {
     widget.typeFilter?.removeListener(_onTypeFilter);
+    widget.period?.removeListener(_onPeriod);
     if (_swipeHandlers?[ShellTab.transactions] == this) {
       _swipeHandlers!.remove(ShellTab.transactions);
     }
@@ -151,9 +166,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
 
   @override
   bool canSwipe(int dir) {
-    final p = _f.period;
-    if (p.step(dir) == null) return false;
-    return dir < 0 || p.canStepForward(DateTime.now());
+    return _f.period.step(dir) != null;
   }
 
   @override
@@ -184,6 +197,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
 
   void _apply(TxFilters f) {
     setState(() => _f = f);
+    widget.period?.value = f.period;
     _refetch();
   }
 
@@ -245,24 +259,6 @@ class _TransactionsListPageState extends State<TransactionsListPage>
                 ],
               ),
             ),
-            if (widget.headerTiles?.call() case final tiles?
-                when tiles.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.sm),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                child: IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final (i, t) in tiles.indexed) ...[
-                        if (i > 0) const SizedBox(width: AppSpacing.sm),
-                        Expanded(child: t),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ],
           ] else if (state.totals case final t?)
             _summary(l, t, activeFilters)
           else
@@ -318,24 +314,21 @@ class _TransactionsListPageState extends State<TransactionsListPage>
           hasMore: state.hasMore,
           loadingMore: state.loadingMore,
           onLoadMore: () => context.read<TransactionsCubit>().loadMore(),
-          sidePadding: 0,
-          rowDividers: true,
+          rowCards: true,
           topInset: 0,
           clearTopBar: !widget.embedded,
+          footer: locked == null || state.transactions.isEmpty
+              ? null
+              : Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.md),
+                  child: AddTile(
+                    label: l.navAddTransaction,
+                    onTap: () => showQuickCreateSheet(context, account: locked),
+                  ),
+                ),
           children: state.transactions.isEmpty
               ? const []
-              : _rows(
-                  context,
-                  state,
-                  footer: locked == null
-                      ? null
-                      : AddTile(
-                          label: l.navAddTransaction,
-                          variant: AddTileVariant.row,
-                          onTap: () =>
-                              showQuickCreateSheet(context, account: locked),
-                        ),
-                ),
+              : _rows(context, state),
         );
       },
     );
@@ -379,7 +372,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
       ),
       open: _summaryOpen,
       header: HeroHeader(
-        leading: [_periodPill()],
+        leading: [HeroModuleTile(AppIcons.transactions), _periodPill()],
         actions: [
           const MoneyVisibilityToggle(),
           ToolbarToggleButton(
@@ -486,11 +479,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
     );
   }
 
-  List<Widget> _rows(
-    BuildContext context,
-    TransactionsState state, {
-    Widget? footer,
-  }) {
+  List<Widget> _rows(BuildContext context, TransactionsState state) {
     final l = AppLocalizations.of(context)!;
     final hideAccount = _f.wallets.length == 1 && !_f.noWallet;
     final children = <Widget>[];
@@ -539,20 +528,6 @@ class _TransactionsListPageState extends State<TransactionsListPage>
           ),
         );
       }
-    }
-    // Next page in flight → the template shows row skeletons instead.
-    if (footer != null && !state.loadingMore) {
-      children.add(
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.md,
-            AppSpacing.lg,
-            0,
-          ),
-          child: footer,
-        ),
-      );
     }
     return children;
   }

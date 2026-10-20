@@ -23,10 +23,15 @@ Widget buildQuickCreateDemo(BuildContext context) => Wrap(
       variant: AppButtonVariant.outlined,
       onPressed: () => _open(context, _Variant.single),
     ),
+    AppButton(
+      label: 'One occurrence (subtitle + headerBar)',
+      variant: AppButtonVariant.outlined,
+      onPressed: () => _open(context, _Variant.occurrence),
+    ),
   ],
 );
 
-enum _Variant { create, draft, single }
+enum _Variant { create, draft, single, occurrence }
 
 Future<void> _open(BuildContext context, _Variant variant) =>
     showModalBottomSheet<bool>(
@@ -98,7 +103,32 @@ class _DemoSheetState extends State<_DemoSheet> {
         _Variant.create => 'New transaction',
         _Variant.draft => 'Edit draft',
         _Variant.single => 'New scheduled entry',
+        _Variant.occurrence => 'Netflix ประจำเดือน พ.ย. 2026',
       },
+      subtitle: v == _Variant.occurrence ? 'แก้เฉพาะงวดนี้' : null,
+      headerBar: v == _Variant.occurrence
+          ? Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                AppChip(
+                  label: 'ข้าม',
+                  icon: AppIcons.none,
+                  onTap: () => Navigator.of(context).pop(),
+                ),
+                AppChip(
+                  label: 'จ่ายแล้ว',
+                  icon: AppIcons.check,
+                  onTap: () => Navigator.of(context).pop(),
+                ),
+                AppChip(
+                  label: 'ผูกกับรายการที่มีอยู่',
+                  icon: AppIcons.link,
+                  onTap: () {},
+                ),
+              ],
+            )
+          : null,
       summaryBuilder: v == _Variant.create
           ? (scrollToTop) => GestureDetector(
               onTap: scrollToTop,
@@ -112,9 +142,11 @@ class _DemoSheetState extends State<_DemoSheet> {
       saveLabel: switch (v) {
         _Variant.create => 'Save',
         _Variant.draft => 'Confirm this one',
-        _Variant.single => 'Save',
+        _Variant.single || _Variant.occurrence => 'Save',
       },
-      draftLabel: v == _Variant.single ? null : 'Save as draft',
+      draftLabel: v == _Variant.single || v == _Variant.occurrence
+          ? null
+          : 'Save as draft',
       closeTooltip: 'Close',
       deleteTooltip: 'Delete',
       onDelete: v == _Variant.draft ? () => Navigator.of(context).pop() : null,

@@ -73,15 +73,21 @@ class AvatarStack extends StatelessWidget {
           if (overflow > 0)
             Positioned(
               left: visible.length * step,
-              child: CircleAvatar(
-                radius: size / 2,
-                backgroundColor: scheme.surfaceContainerHighest,
-                child: Text(
-                  '+$overflow',
-                  style: TextStyle(
-                    fontSize: size * 0.38,
-                    fontWeight: FontWeight.w600,
-                    color: scheme.onSurfaceVariant,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: scheme.surface, width: 1.5),
+                ),
+                child: CircleAvatar(
+                  radius: size / 2,
+                  backgroundColor: scheme.surfaceContainerHighest,
+                  child: Text(
+                    '+$overflow',
+                    style: TextStyle(
+                      fontSize: size * 0.38,
+                      fontWeight: FontWeight.w600,
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),

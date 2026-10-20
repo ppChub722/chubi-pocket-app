@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/shell_chrome.dart';
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/tab_root_scaffold.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -32,7 +33,6 @@ class _AccountsPageState extends State<AccountsPage> {
   _WalletTile? _tile;
   final _search = TextEditingController();
   final _toolbarOpen = ToolbarToggleState.of('wallets');
-  final _summaryOpen = ToolbarToggleState.of('wallets_summary', open: true);
 
   ReorderController? _reorder;
   final _reorderScroll = ScrollController();
@@ -243,48 +243,9 @@ class _AccountsPageState extends State<AccountsPage> {
   String _money(BuildContext context, double v) =>
       moneyString(context, v == 0 ? 0 : v);
 
-  /// Always all three, zeros included: ฿0 saved and ฿0 card debt are worth
-  /// seeing. available + saved − card debt = the net above them.
-  List<SummaryTile> _tiles(
-    BuildContext context,
-    AppLocalizations l,
-    AccountsState state,
-  ) {
-    final t = state.totals;
-    // Filtering by kind only means something when there are card wallets.
-    final hasCards = t.byType.any((b) => b.type.isCredit && b.count > 0);
-    final noDebt = t.cardDebt.abs() < 0.005;
-    void toggle(_WalletTile v) => setState(() => _tile = _tile == v ? null : v);
-    return [
-      SummaryTile(
-        label: l.fpWalletsTileAvailable,
-        value: _money(context, t.availableTotal),
-        tone: SummaryTileTone.green,
-        selected: _tile == _WalletTile.cash,
-        onTap: hasCards ? () => toggle(_WalletTile.cash) : null,
-      ),
-      SummaryTile(
-        label: l.walletSavingsSaved,
-        value: _money(context, t.savedTotal),
-        tone: SummaryTileTone.planning,
-        caption: t.savedTotal > 0 ? null : l.fpWalletsSaveStart,
-        onTap: () => _open(() => context.push('/saving-goals')),
-      ),
-      SummaryTile(
-        label: l.accountsSummaryCardDebt,
-        value: _money(context, t.cardDebt),
-        tone: noDebt ? SummaryTileTone.green : SummaryTileTone.orange,
-        selected: _tile == _WalletTile.card,
-        onTap: hasCards ? () => toggle(_WalletTile.card) : null,
-        caption: noDebt
-            ? l.fpWalletsNoCardDebt
-            : t.creditLimit > 0
-            ? l.fpWalletsCreditUsedPct(t.cardUsedPct)
-            : null,
-      ),
-    ];
-  }
-
+  /// The net in big, a bar of what makes it (available | saved | card debt)
+  /// and a row for each, zeros included: ฿0 saved and ฿0 card debt are worth
+  /// seeing. Filters show only when there are card wallets to split by.
   Widget _summary(
     BuildContext context,
     AppLocalizations l,
@@ -292,7 +253,24 @@ class _AccountsPageState extends State<AccountsPage> {
   ) {
     final t = state.totals;
     final net = MoneyText(t.net == 0 ? 0 : t.net);
-    final tiles = _tiles(context, l, state);
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final savedColor = ModuleColors.of(context).planning;
+    final debtColor = palette.walletLiability;
+    final hasDebt = t.cardDebt.abs() >= 0.005;
+    final cards = state.accounts.where((a) => a.type.isCredit).length;
+    final total = t.availableTotal + t.savedTotal + t.cardDebt.abs();
+    HeroFilter filter(
+      _WalletTile? v,
+      String label,
+      IconData icon,
+      int count,
+    ) => HeroFilter(
+      label: label,
+      icon: icon,
+      count: count,
+      selected: _tile == v,
+      onTap: () => setState(() => _tile = v),
+    );
     return AppHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
       margin: const EdgeInsets.fromLTRB(
@@ -301,25 +279,15 @@ class _AccountsPageState extends State<AccountsPage> {
         AppSpacing.lg,
         AppSpacing.md,
       ),
-      open: _summaryOpen,
-      header: HeroHeader(
-        leading: [
-          HeroCaption(l.accountsSummaryNet),
-          const HeroCaption('|'),
-          _CountMark(
-            icon: AppIcons.wallet,
-            count: state.accounts.length,
-            label: l.accountsSummaryWalletCount(state.accounts.length),
-          ),
-          if (t.sharedCount > 0)
-            _CountMark(
-              icon: AppIcons.link,
-              count: t.sharedCount,
-              label: l.fpWalletsSharedTooltip(t.sharedCount),
-            ),
-        ],
+      header: HeroSummaryHead(
+        icon: AppIcons.wallet,
+        label: [
+          l.accountsSummaryNet,
+          l.accountsSummaryWalletCount(state.accounts.length),
+          if (t.sharedCount > 0) l.fpWalletsSharedTooltip(t.sharedCount),
+        ].join(' | '),
+        amount: net,
         actions: [
-          const MoneyVisibilityToggle(),
           ListenableBuilder(
             listenable: _search,
             builder: (context, _) => ToolbarToggleButton(
@@ -333,14 +301,74 @@ class _AccountsPageState extends State<AccountsPage> {
           ),
         ],
       ),
-      content: [HeroNumber(value: net, layout: HeroNumberLayout.inline)],
-      folded: [
-        HeroNumber(value: net, layout: HeroNumberLayout.inline, small: true),
+      content: [
+        // Builders: the card's accent is only known inside the card.
+        if (total > 0)
+          Builder(
+            builder: (context) => HeroBar.split(
+              parts: [
+                (t.availableTotal / total, HeroColors.maybeOf(context)!.accent),
+                // A small saving still shows as a sliver.
+                if (t.savedTotal > 0)
+                  ((t.savedTotal / total).clamp(0.01, 1.0), savedColor),
+                if (hasDebt) (t.cardDebt.abs() / total, debtColor),
+              ],
+            ),
+          ),
+        Builder(
+          builder: (context) => HeroFactList(
+            facts: [
+              HeroFact(
+                l.fpWalletsTileAvailable,
+                _money(context, t.availableTotal),
+                icon: AppIcons.coin,
+                iconColor: HeroColors.maybeOf(context)!.accent,
+              ),
+              HeroFact(
+                l.walletSavingsSaved,
+                _money(context, t.savedTotal),
+                icon: AppIcons.savings,
+                iconColor: savedColor,
+                onTap: () => openPage(context, '/saving-goals'),
+              ),
+              HeroFact(
+                hasDebt && t.creditLimit > 0
+                    ? '${l.accountsSummaryCardDebt} | '
+                          '${l.fpWalletsCreditUsedPct(t.cardUsedPct)}'
+                    : l.accountsSummaryCardDebt,
+                _money(context, t.cardDebt),
+                icon: AppIcons.creditCard,
+                iconColor: debtColor,
+                color: hasDebt ? debtColor : null,
+              ),
+            ],
+          ),
+        ),
       ],
       footer: [
-        HeroTiles(
-          children: [for (final tile in tiles) SummaryTileView(tile: tile)],
-        ),
+        if (cards > 0)
+          HeroFilterChips(
+            filters: [
+              filter(
+                null,
+                l.fpWalletsFilterAll,
+                AppIcons.wallet,
+                state.accounts.length,
+              ),
+              filter(
+                _WalletTile.cash,
+                l.fpWalletsFilterCash,
+                AppIcons.bank,
+                state.accounts.length - cards,
+              ),
+              filter(
+                _WalletTile.card,
+                l.fpWalletsFilterCard,
+                AppIcons.creditCard,
+                cards,
+              ),
+            ],
+          ),
       ],
     );
   }
@@ -525,45 +553,6 @@ class _AccountsPageState extends State<AccountsPage> {
           onSave: () => _saveOrder(accounts),
         ),
       ],
-    );
-  }
-}
-
-/// An icon with a count beside it in the hero's caption line (👛 3, 🔗 1);
-/// [label] is what it means, for the tooltip and screen readers.
-class _CountMark extends StatelessWidget {
-  const _CountMark({
-    required this.icon,
-    required this.count,
-    required this.label,
-  });
-
-  final IconData icon;
-  final int count;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.onSurfaceVariant;
-    return Tooltip(
-      message: label,
-      child: Semantics(
-        label: label,
-        excludeSemantics: true,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppIcon(icon, size: AppIconSize.sm, color: color),
-            const SizedBox(width: AppSpacing.xxs),
-            Text(
-              '$count',
-              style: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(color: color),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

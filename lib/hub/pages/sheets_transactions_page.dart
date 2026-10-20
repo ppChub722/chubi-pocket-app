@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../hub_kit.dart';
-import 'sheet_demos/account_picker_sheet_demo.dart';
 import 'sheet_demos/description_picker_sheet_demo.dart';
-import 'sheet_demos/event_target_sheet_demo.dart';
 import 'sheet_demos/quick_create_demo.dart';
 import 'sheet_demos/settle_sheet_demo.dart';
 import 'sheet_demos/tx_filter_sheet_demo.dart';
@@ -29,26 +27,10 @@ Widget buildSheetsTransactionsPage(BuildContext context) => Column(
     HubDemo(
       title: 'TxFilterSheet — the list filter (side sheet)',
       note:
-          'Wallet / category / tag / type chips with their "more" pickers. '
-          'Takes plain option lists + the current selection and returns the '
-          'new selection; the wrapper loads the form options and maps them.',
+          'Wallet / category / tag / type chips. Takes plain option lists + '
+          'the current selection and returns the new selection; the wrapper '
+          'loads the form options, maps them and passes the "more" pickers.',
       child: buildTxFilterSheetDemo(context),
-    ),
-    HubDemo(
-      title: 'EventTargetSheet — pick, create or leave an event',
-      note:
-          'Existing events as plain items, a "new event" name row, and '
-          '"remove from event" when the row is in one. Returns '
-          'EventPickExisting / EventPickNew / EventPickRemove.',
-      child: buildEventTargetSheetDemo(context),
-    ),
-    HubDemo(
-      title: 'AccountPickerSheet — the wallet grid',
-      note:
-          'Wallet cards (the wrapper injects the real AccountCard; the '
-          'organism draws a simple card otherwise), "no wallet" and "new '
-          'wallet" (the caller\'s onCreate flow).',
-      child: buildAccountPickerSheetDemo(context),
     ),
     HubDemo(
       title: 'DescriptionPickerSheet — suggestions + free text',

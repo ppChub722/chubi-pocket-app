@@ -39,6 +39,7 @@ class StatusChip extends StatelessWidget {
     this.icon,
     this.size,
     this.onTap,
+    this.emphasis = false,
     super.key,
   }) : tone = null,
        _kind = kind;
@@ -49,6 +50,7 @@ class StatusChip extends StatelessWidget {
     this.icon,
     this.size,
     this.onTap,
+    this.emphasis = false,
     super.key,
   }) : _kind = null;
 
@@ -62,6 +64,10 @@ class StatusChip extends StatelessWidget {
 
   final VoidCallback? onTap;
 
+  /// A bold label: the chip is the headline status of its card (e.g. a list
+  /// hero's summary in place of a caption).
+  final bool emphasis;
+
   @override
   Widget build(BuildContext context) => AppChip(
     label: label,
@@ -72,5 +78,6 @@ class StatusChip extends StatelessWidget {
     size: size,
     trailing: onTap == null ? AppChipTrailing.none : AppChipTrailing.dropdown,
     onTap: onTap,
+    bold: emphasis,
   );
 }

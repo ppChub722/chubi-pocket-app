@@ -20,7 +20,7 @@ class TxPeriodPill extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final p = period;
     final prev = p.step(-1);
-    final next = p.canStepForward(DateTime.now()) ? p.step(1) : null;
+    final next = p.step(1);
     return StepperPill(
       label: p.label(context),
       prevTooltip: l.txPeriodPrev,

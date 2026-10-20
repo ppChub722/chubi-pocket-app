@@ -150,6 +150,10 @@ class SavingGoalCubit extends Cubit<SavingPageState> {
     _show(d);
   }
 
+  Future<void> setAutoSaves(List<SavingAutoSaveWrite> items) async {
+    _show(await _repo.setAutoSaves(id, items));
+  }
+
   Future<void> clearAutoSave() async {
     final d = await _repo.clearAutoSave(id);
     _show(d);

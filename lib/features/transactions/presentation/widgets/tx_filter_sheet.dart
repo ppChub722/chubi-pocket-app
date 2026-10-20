@@ -3,9 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
+import '../../../accounts/presentation/widgets/account_picker.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/category_label.dart';
+import '../../../categories/presentation/widgets/category_picker.dart';
 import '../../../tags/presentation/widgets/tag_chip.dart';
+import '../../../tags/presentation/widgets/tag_picker.dart';
 import '../cubit/tx_form_options_cubit.dart';
 import '../../domain/form_options.dart';
 import '../../domain/transaction_type.dart';
@@ -54,33 +57,50 @@ Future<TxFilters?> showTxFilterSheet(
       noWallet: l.txFilterNoWallet,
       uncategorized: l.txFilterNoCategory,
       noTag: l.txFilterNoTag,
-      walletPicker: AccountPickerLabels(
-        title: l.transactionsFilterAccount,
-        none: l.txFilterNoWallet,
-        create: l.accountsAddNew,
-        empty: l.transactionFormAccountPickerEmpty,
-      ),
-      categoryPicker: CategoryMultiPickerLabels(
-        title: l.transactionsFilterCategory,
-        searchHint: l.multiPickSearch,
-        includeChildren: l.multiPickIncludeChildren,
-        confirm: l.multiPickConfirm,
-        empty: l.multiPickEmpty,
-        noMatch: l.multiPickNoMatch,
-      ),
-      tagPicker: TagPickerLabels(
-        title: l.transactionsFilterTag,
-        searchHint: l.tagPickerSearchHint,
-        ok: l.commonOk,
-        addTag: l.projectTxAddTag,
-        createNamed: l.tagPickerCreateNamed,
-        empty: l.tagPickerEmpty,
-        noMatch: l.tagPickerNoMatch,
-        nameSave: l.commonSave,
-        nameHint: l.projectTxTagHint,
-      ),
-      confirm: (n) => n == 0 ? l.commonOk : '${l.commonOk} ($n)',
     ),
+    pickWallets: (context, current, _) async {
+      final r = await AccountPicker.many(
+        context,
+        selected: current.ids.toSet(),
+        allowNone: true,
+        noneSelected: current.none,
+        title: l.transactionsFilterAccount,
+      );
+      return r == null ? null : (ids: r.ids, none: r.none);
+    },
+    // The server takes a parent's sub-categories in too, so a ticked parent
+    // always covers them.
+    pickCategories: (context, current, types) async {
+      final r = await CategoryPicker.many(
+        context,
+        types: _categoryTypes(types),
+        initialType: types.length == 1 && types.single == TransactionType.income
+            ? CategoryType.income
+            : types.length == 1 && types.single == TransactionType.expense
+            ? CategoryType.expense
+            : null,
+        selectedWithChildren: current.ids.toSet(),
+        children: PickerChildren.always,
+        allowNone: true,
+        noneSelected: current.none,
+        title: l.transactionsFilterCategory,
+      );
+      return r == null
+          ? null
+          : (ids: [for (final c in r.categories) c.id], none: r.none);
+    },
+    pickTags: (context, current, _) async {
+      final r = await TagPicker.many(
+        context,
+        tags: loaded.tags,
+        selected: current.ids.toSet(),
+        allowCreate: false,
+        allowNone: true,
+        noneSelected: current.none,
+        title: l.transactionsFilterTag,
+      );
+      return r == null ? null : (ids: r.ids.toList(), none: r.none);
+    },
   );
   if (picked == null) return null;
   final categories = {
@@ -114,6 +134,16 @@ Future<TxFilters?> showTxFilterSheet(
     noTags: picked.noTags,
     amount: (min: picked.amountMin, max: picked.amountMax),
   );
+}
+
+/// The category types the picker offers for the filter's transaction types
+/// (none or transfer only = both).
+Set<CategoryType> _categoryTypes(Set<TransactionType> types) {
+  final out = {
+    if (types.contains(TransactionType.expense)) CategoryType.expense,
+    if (types.contains(TransactionType.income)) CategoryType.income,
+  };
+  return out.isEmpty ? const {CategoryType.expense, CategoryType.income} : out;
 }
 
 TxFilterSelection _selectionOf(TxFilters f) => TxFilterSelection(

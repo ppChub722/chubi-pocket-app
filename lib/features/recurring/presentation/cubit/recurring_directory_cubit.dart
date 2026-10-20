@@ -80,7 +80,7 @@ class RecurringDirectoryCubit extends Cubit<RecurringDirectoryState>
       RecurringDirectoryState(
         rules: [
           for (final r in (body['data'] as List? ?? const []))
-            Recurring.fromJson(r as Map<String, dynamic>),
+            ?Recurring.tryParse(r),
         ],
         summary: RecurringSummary.fromJson(body['summary']),
         status: RecurringDirectoryStatus.loaded,
@@ -136,6 +136,8 @@ class RecurringDirectoryCubit extends Cubit<RecurringDirectoryState>
                 final s => s.name,
               },
               amount: r.currentOccurrence!.amount,
+              ruleId: r.id,
+              slot: r.currentOccurrence!.slot,
             ),
           ),
     ];

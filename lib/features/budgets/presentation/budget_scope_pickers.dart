@@ -1,83 +1,45 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../../core/bloc/cubit_feed.dart';
-import '../../../core/data/sync_refresh.dart';
-import '../../../core/data/sync_set.dart';
-import '../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../categories/presentation/cubit/categories_cubit.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
 import '../../accounts/domain/account.dart';
+import '../../accounts/presentation/widgets/account_picker.dart';
 import '../../categories/domain/category.dart';
 import '../../categories/domain/category_tree.dart';
 import '../../categories/domain/category_type.dart';
+import '../../categories/presentation/widgets/category_picker.dart';
 import '../../transactions/domain/refs.dart';
 import '../domain/budget.dart';
 
+/// A budget's categories: expense ones, each parent with its own "include
+/// sub-categories" box.
 Future<List<BudgetScopeCategory>?> showBudgetCategoriesPicker(
   BuildContext context, {
   required List<Category> all,
   required List<BudgetScopeCategory> selected,
 }) async {
   final l = AppLocalizations.of(context)!;
-  final pool = [
-    for (final c in all)
-      if (!c.isSystem && c.type == CategoryType.expense) c,
-  ];
-  List<CategoryPickerRow> rowsOf(List<Category> source) => [
-    for (final c in source)
-      if (!c.isSystem && c.type == CategoryType.expense)
-        CategoryPickerRow(
-          id: c.id,
-          name: c.name,
-          parentId: c.parentId,
-          sortOrder: c.sortOrder,
-          iconCode: CategoryTree.resolveIconCode(c, source),
-        ),
-  ];
-  CategoriesCubit? cache;
-  try {
-    cache = context.read<CategoriesCubit>();
-  } catch (_) {
-    cache = null; // no cache here (a test, the hub): the list as given
-  }
-  final feed = cache == null
-      ? null
-      : CubitFeed<CategoriesState, List<CategoryPickerRow>>(
-          cache,
-          (s) => rowsOf(s.categories),
-        );
-  final picks = await showCategoryMultiPicker(
+  final r = await CategoryPicker.many(
     context,
-    rows: rowsOf(all),
-    live: feed?.listenable,
-    onRefresh: cache == null
-        ? null
-        : syncRefreshOf(context, const {SyncSet.categories}),
-    labels: CategoryMultiPickerLabels(
-      title: l.multiPickCategoriesTitle,
-      searchHint: l.multiPickSearch,
-      includeChildren: l.multiPickIncludeChildren,
-      confirm: l.multiPickConfirm,
-      empty: l.multiPickEmpty,
-      noMatch: l.multiPickNoMatch,
-    ),
-    initial: [
+    types: const {CategoryType.expense},
+    children: PickerChildren.toggle,
+    title: l.multiPickCategoriesTitle,
+    selected: {
       for (final s in selected)
-        (id: s.category.id, includeChildren: s.includeChildren),
-    ],
+        if (!s.includeChildren) s.category.id,
+    },
+    selectedWithChildren: {
+      for (final s in selected)
+        if (s.includeChildren) s.category.id,
+    },
   );
-  unawaited(feed?.dispose());
-  if (picks == null) return null;
-  final byId = {for (final c in pool) c.id: c};
-  final known = {for (final s in selected) s.category.id: s.category};
+  if (r == null) return null;
+  final picked = {for (final c in r.categories) c.id: c};
+  final before = {for (final s in selected) s.category.id: s.category};
   return [
-    for (final p in picks)
-      if (byId[p.id] ?? known[p.id]?.toCategory() case final c?)
+    for (final id in r.ids)
+      // A ticked category the cache no longer has keeps what it had.
+      if (picked[id] case final c?)
         BudgetScopeCategory(
           category: EmbeddedCategory(
             id: c.id,
@@ -86,57 +48,29 @@ Future<List<BudgetScopeCategory>?> showBudgetCategoriesPicker(
             iconCode: CategoryTree.resolveIconCode(c, all),
             parentId: c.parentId,
           ),
-          includeChildren: p.includeChildren,
+          includeChildren: r.withChildren.contains(id),
+        )
+      else if (before[id] case final e?)
+        BudgetScopeCategory(
+          category: e,
+          includeChildren: r.withChildren.contains(id),
         ),
   ];
 }
 
+/// A budget's wallets: the ticked ids, also one no longer in the cache (the
+/// caller keeps what it had for it).
 Future<List<String>?> showBudgetWalletsPicker(
   BuildContext context, {
-  required List<Account> all,
   required List<String> selected,
 }) async {
   final l = AppLocalizations.of(context)!;
-  List<AccountMultiPickItem> itemsOf(List<Account> source) => [
-    for (final a in source)
-      if (!a.isArchived || selected.contains(a.id))
-        AccountMultiPickItem(
-          id: a.id,
-          name: a.name,
-          icon: IconRegistry.get(a.iconCode?.icon, fallback: AppIcons.wallet),
-          balance: a.showsBalance ? moneyString(context, a.balance) : null,
-        ),
-  ];
-  AccountsCubit? cache;
-  try {
-    cache = context.read<AccountsCubit>();
-  } catch (_) {
-    cache = null; // no cache here (a test, the hub): the list as given
-  }
-  final feed = cache == null
-      ? null
-      : CubitFeed<AccountsState, List<AccountMultiPickItem>>(
-          cache,
-          (s) => itemsOf(s.allAccounts),
-        );
-  final picked = await showAccountMultiPicker(
+  final r = await AccountPicker.many(
     context,
-    wallets: itemsOf(all),
-    live: feed?.listenable,
-    onRefresh: cache == null
-        ? null
-        : syncRefreshOf(context, const {SyncSet.accounts}),
-    labels: AccountMultiPickerLabels(
-      title: l.multiPickWalletsTitle,
-      searchHint: l.multiPickSearch,
-      confirm: l.multiPickConfirm,
-      empty: l.multiPickEmpty,
-      noMatch: l.multiPickNoMatch,
-    ),
-    initial: selected,
+    selected: selected.toSet(),
+    title: l.multiPickWalletsTitle,
   );
-  unawaited(feed?.dispose());
-  return picked;
+  return r?.ids;
 }
 
 List<AccountRef> budgetWalletRefs(

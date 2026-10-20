@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../atoms/app_chip.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';
+import '../../tokens/hero_colors.dart';
 
 /// A status chip, then the big amount in [color] ("รอรับ ฿1,232").
 class StatusAmountLine extends StatelessWidget {
@@ -31,7 +32,7 @@ class StatusAmountLine extends StatelessWidget {
         Flexible(
           child: DefaultTextStyle.merge(
             style: text.headlineMedium?.copyWith(
-              color: color,
+              color: color ?? HeroColors.maybeOf(context)?.accent,
               fontWeight: FontWeight.w700,
             ),
             child: amount,

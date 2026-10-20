@@ -6,30 +6,9 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../ui/ui.dart';
 import '../../pending/domain/pending_transaction.dart';
-import '../domain/recurrence_rule.dart' show ymd;
+import '../domain/recurrence_rule.dart' show parseYmd, ymd;
 import '../domain/recurring.dart';
 import '../domain/recurring_item.dart';
-import '../domain/recurring_summary.dart';
-
-class RecurringList {
-  const RecurringList({
-    this.items = const [],
-    this.counts = const {},
-    this.page = 1,
-    this.totalPages = 1,
-    this.summary,
-  });
-
-  final List<Recurring> items;
-
-  final RecurringSummary? summary;
-
-  final Map<String, int> counts;
-  final int page;
-  final int totalPages;
-
-  bool get hasMore => page < totalPages;
-}
 
 class RecurringRepository {
   RecurringRepository({required ApiClient client}) : _client = client;
@@ -71,6 +50,7 @@ class RecurringRepository {
     RecurringWrite write, {
     EditScope scope = EditScope.upcoming,
     bool alsoUpdateLink = false,
+    bool alsoUpdateTx = false,
   }) => _call((dio) async {
     final res = await dio.put<Map<String, dynamic>>(
       '/recurring/$id',
@@ -78,6 +58,7 @@ class RecurringRepository {
         ...write.toJson(forUpdate: true),
         'scope': scope.toJson(),
         'also_update_link': alsoUpdateLink,
+        'also_update_tx': alsoUpdateTx,
       },
     );
     return RecurringDetail.fromJson(res.data!);
@@ -132,16 +113,23 @@ class RecurringRepository {
         return RecurringDetail.fromJson(res.data!);
       });
 
+  /// [from] = a no-end rule's upcoming year starting there (the BE sends
+  /// 12 months and `window.next_from`); otherwise by [page].
   Future<ItemPage> items(
     String recurringId, {
     required bool upcoming,
     int page = 1,
+    DateTime? from,
   }) => _call((dio) async {
     final res = await dio.get<Map<String, dynamic>>(
       '/recurring/$recurringId/items',
       queryParameters: {
         'tab': upcoming ? 'upcoming' : 'produced',
-        'page': page,
+        if (from != null) ...{
+          'from': ymd(from),
+          'months': 12,
+        } else
+          'page': page,
       },
     );
     return ItemPage.fromJson(res.data);
@@ -155,6 +143,147 @@ class RecurringRepository {
     );
     return ItemPage.fromJson(res.data);
   });
+
+  /// Every page of `GET /recurring-items` for these filters.
+  Future<List<RecurringItem>> _allItems(Map<String, dynamic> query) =>
+      _call((dio) async {
+        final out = <RecurringItem>[];
+        var page = 1;
+        while (true) {
+          final res = await dio.get<Map<String, dynamic>>(
+            '/recurring-items',
+            queryParameters: {...query, 'page': page, 'per_page': 100},
+          );
+          final p = ItemPage.fromJson(res.data);
+          out.addAll(p.items);
+          if (!p.hasMore || page >= 20) return out;
+          page++;
+        }
+      });
+
+  static String _month(DateTime m) =>
+      '${m.year}-${m.month.toString().padLeft(2, '0')}';
+
+  /// Every occurrence of [month], whatever its status.
+  Future<List<RecurringItem>> monthItems(DateTime month) =>
+      _allItems({'month': _month(month), 'status': 'all'});
+
+  /// What ต้องจัดการ lists: the due occurrences, plus this month's coming
+  /// ones that still need an amount (`needs_amount`). [ruleId] = one rule's.
+  Future<List<RecurringItem>> dueItems({String? ruleId}) =>
+      _allItems({'status': 'due', 'rule_id': ?ruleId});
+
+  /// One rule's occurrences around [txDate] for the link picker, and the one
+  /// the BE would pick ("งวดใกล้เคียง").
+  Future<({List<RecurringItem> items, String? suggestedSlot})> occurrences(
+    String ruleId, {
+    DateTime? txDate,
+    int past = 3,
+    int upcoming = 3,
+  }) => _call((dio) async {
+    final res = await dio.get<Map<String, dynamic>>(
+      '/recurring/$ruleId/occurrences',
+      queryParameters: {
+        if (txDate != null) 'tx_date': ymd(txDate),
+        'past': past,
+        'upcoming': upcoming,
+      },
+    );
+    final body = res.data ?? const {};
+    return (
+      items: [
+        for (final e in (body['data'] as List?) ?? const [])
+          ?RecurringItem.tryParse(e),
+      ],
+      suggestedSlot: body['suggested_slot'] as String?,
+    );
+  });
+
+  String _occ(String ruleId, String slot) =>
+      '/recurring/$ruleId/occurrences/$slot';
+
+  /// One occurrence by its address, stored or computed. The BE has no GET of
+  /// one, so it is read from its rule's month list: [date]'s month first (a
+  /// moved occurrence), then the slot's. Null when neither has it.
+  Future<RecurringItem?> findOccurrence(
+    String ruleId,
+    String slot, {
+    DateTime? date,
+  }) async {
+    final day = parseYmd(slot);
+    final months = {
+      if (date != null) DateTime(date.year, date.month),
+      if (day != null) DateTime(day.year, day.month),
+    };
+    for (final m in months) {
+      final items = await _allItems({
+        'month': _month(m),
+        'status': 'all',
+        'rule_id': ruleId,
+      });
+      for (final i in items) {
+        if (i.slot == slot) return i;
+      }
+    }
+    return null;
+  }
+
+  Future<ItemWriteResult> _occWrite(
+    String path, [
+    Map<String, dynamic>? body,
+  ]) => _call((dio) async {
+    final res = await dio.post<Map<String, dynamic>>(path, data: body);
+    return ItemWriteResult.fromJson(res.data!);
+  });
+
+  /// ยืนยัน: records the tx now, dated the occurrence's date unless [date].
+  Future<ItemWriteResult> confirmOccurrence(
+    String ruleId,
+    String slot, {
+    double? amount,
+    DateTime? date,
+    String? accountId,
+  }) => _occWrite('${_occ(ruleId, slot)}/confirm', {
+    'amount': ?amount,
+    'date': ?(date == null ? null : ymd(date)),
+    'account_id': ?accountId,
+  });
+
+  /// ข้าม; [deleteTx] also deletes the tx it is linked to.
+  Future<ItemWriteResult> skipOccurrence(
+    String ruleId,
+    String slot, {
+    bool? deleteTx,
+  }) => _occWrite('${_occ(ruleId, slot)}/skip', {'delete_tx': ?deleteTx});
+
+  Future<ItemWriteResult> restoreOccurrence(String ruleId, String slot) =>
+      _occWrite('${_occ(ruleId, slot)}/restore');
+
+  /// จ่ายแล้ว without a tx.
+  Future<ItemWriteResult> markOccurrencePaid(String ruleId, String slot) =>
+      _occWrite('${_occ(ruleId, slot)}/mark-paid');
+
+  Future<ItemWriteResult> unmarkOccurrencePaid(String ruleId, String slot) =>
+      _occWrite('${_occ(ruleId, slot)}/unmark-paid');
+
+  /// แก้เฉพาะงวดนี้. Presence-based: a key in [fields] overrides that value,
+  /// null clears the override.
+  Future<ItemWriteResult> updateOccurrence(
+    String ruleId,
+    String slot,
+    Map<String, dynamic> fields,
+  ) => _call((dio) async {
+    final res = await dio.put<Map<String, dynamic>>(
+      _occ(ruleId, slot),
+      data: fields,
+    );
+    return ItemWriteResult.fromJson(res.data!);
+  });
+
+  /// All of a rule's due occurrences at once: confirm (those with a known
+  /// amount), mark paid, or skip. `leftOut` says which stayed and why.
+  Future<ItemWriteResult> settleAll(String ruleId, OccurrenceBulk action) =>
+      _occWrite('/recurring/$ruleId/occurrences/${action.path}');
 
   Future<RecurringItem> getItem(String id) => _call((dio) async {
     final res = await dio.get<Map<String, dynamic>>('/recurring-items/$id');
@@ -177,15 +306,6 @@ class RecurringRepository {
     return ItemWriteResult.fromJson(res.data!);
   });
 
-  Future<ItemWriteResult> addItem(String? recurringId, PendingDraft values) =>
-      _call((dio) async {
-        final res = await dio.post<Map<String, dynamic>>(
-          '/recurring-items',
-          data: {'recurring_id': recurringId, ...itemFieldsJson(values)},
-        );
-        return ItemWriteResult.fromJson(res.data!);
-      });
-
   Future<ItemWriteResult> updateItem(
     String id,
     PendingDraft values, {
@@ -203,32 +323,6 @@ class RecurringRepository {
     return ItemWriteResult.fromJson(res.data!);
   });
 
-  Future<ItemWriteResult> deleteItem(
-    String id, {
-    required bool deleteLinkedTx,
-  }) => _call((dio) async {
-    final res = await dio.delete<Map<String, dynamic>>(
-      '/recurring-items/$id',
-      queryParameters: {'delete_linked_tx': deleteLinkedTx},
-    );
-    return ItemWriteResult.fromJson(res.data ?? {'id': id});
-  });
-
-  Future<ItemWriteResult> createFromItem(
-    String id,
-    ItemTarget target, {
-    PendingDraft? values,
-  }) => _call((dio) async {
-    final res = await dio.post<Map<String, dynamic>>(
-      '/recurring-items/$id/create',
-      data: {
-        'target': target.toJson(),
-        if (values != null) 'fields': itemFieldsJson(values),
-      },
-    );
-    return ItemWriteResult.fromJson(res.data!);
-  });
-
   Future<ItemWriteResult> setItemArchived(
     String id, {
     required bool archived,
@@ -238,26 +332,16 @@ class RecurringRepository {
         : await dio.post<Map<String, dynamic>>('/recurring-items/$id/restore');
     return ItemWriteResult.fromJson(res.data!);
   });
-
-  Future<ItemWriteResult> batch(
-    List<String> ids,
-    ItemBatchAction action, {
-    ItemTarget? target,
-    bool? deleteLinkedTx,
-  }) => _call((dio) async {
-    final res = await dio.post<Map<String, dynamic>>(
-      '/recurring-items/batch',
-      data: {
-        'ids': ids,
-        'action': action.name,
-        'target': ?target?.toJson(),
-        'delete_linked_tx': ?deleteLinkedTx,
-      },
-    );
-    return ItemWriteResult.fromJson(res.data!);
-  });
 }
 
 enum RecurringAction { pause, resume, archive, restore, extend }
 
-enum ItemBatchAction { create, archive, restore, delete }
+enum OccurrenceBulk {
+  confirm('confirm-ready'),
+  markPaid('mark-paid-ready'),
+  skip('skip-ready');
+
+  const OccurrenceBulk(this.path);
+
+  final String path;
+}

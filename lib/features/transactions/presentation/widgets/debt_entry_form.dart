@@ -6,17 +6,17 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
+import '../../../accounts/presentation/widgets/account_picker.dart';
+import '../../../contacts/presentation/widgets/contact_picker.dart';
 import '../../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
+import '../../../personal_debts/presentation/widgets/debt_entry_picker.dart';
 import '../../../tags/domain/tag.dart';
-import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
+import '../../../tags/presentation/widgets/tag_picker.dart';
 import '../../domain/refs.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/tx_form_options_cubit.dart';
-import 'account_picker_sheet.dart';
-import 'debt_close_picker_sheet.dart';
 import 'pick_chip_rows.dart';
 
 class DebtPick {
@@ -39,11 +39,7 @@ class DebtPick {
 
 /// The person card's third line: what is open with them right now, the amount
 /// coloured like the debts page (green = owed to me, red = I owe).
-Widget? debtNetSubtitle(
-  BuildContext context,
-  AppLocalizations l,
-  double? net,
-) {
+Widget? debtNetSubtitle(BuildContext context, AppLocalizations l, double? net) {
   if (net == null) return null;
   if (net.abs() <= 0.004) return Text(l.debtSettledLabel);
   final owedToMe = net > 0;
@@ -59,9 +55,10 @@ Widget? debtNetSubtitle(
       children: [
         TextSpan(
           text: money,
-          style: AppTypography.of(context, AppTextRole.money)?.copyWith(
-            color: owedToMe ? palette.income : palette.expense,
-          ),
+          style: AppTypography.of(
+            context,
+            AppTextRole.money,
+          )?.copyWith(color: owedToMe ? palette.income : palette.expense),
         ),
       ],
     ),
@@ -213,15 +210,15 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     final accounts =
         maybeTxFormOptions(context, watch: false)?.state.options?.accountList ??
         context.read<AccountsCubit>().state.accounts;
-    final r = await showAccountPickerSheet(
-      context: context,
+    final r = await AccountPicker.one(
+      context,
       accounts: accounts,
-      selected: _c.account,
+      selectedId: _c.account?.id,
       allowNone: true,
       allowCreate: true,
     );
     if (!mounted || r == null) return;
-    _c.setAccount(r is AccountPickerSelected ? r.account : null);
+    _c.setAccount(r is AccountPicked ? r.account : null);
   }
 
   Future<void> _pickDate() async {
@@ -235,8 +232,8 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
   }
 
   Future<void> _moreTags() async {
-    final next = await showTagPickerSheet(context, selected: _c.tagIds);
-    if (next != null && mounted) _c.setTagIds(next);
+    final next = await TagPicker.many(context, selected: _c.tagIds);
+    if (next != null && mounted) _c.setTagIds(next.ids);
   }
 
   String _dayLabel(AppLocalizations l, DateTime d) => DateFormatter.friendly(
@@ -309,12 +306,15 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
   Future<void> _pickClose() async {
     final person = _c.person;
     if (person == null) return;
-    final ids = await showDebtClosePickerSheet(
+    final r = await DebtEntryPicker.many(
       context,
-      person: person,
+      personKey: person.key,
       selected: _c.markPaidIds,
+      entries: person.typedName != null && person.key.startsWith('n:')
+          ? const []
+          : null,
     );
-    if (ids != null && mounted) _c.setMarkPaidIds(ids);
+    if (r != null && mounted) _c.setMarkPaidIds(r.ids);
   }
 
   Widget _createTxRow(AppLocalizations l) {
@@ -459,12 +459,13 @@ Future<DebtPick?> showDebtPersonPicker(
   final l = AppLocalizations.of(context)!;
   final directory = context.read<DebtDirectoryCubit>();
   final key = selected?.key;
-  final r = await showContactPickerSheet(
+  final r = await ContactPicker.one(
     context,
     mode: ContactPickerMode.debts,
+    allowFreeText: true,
     allowCreate: true,
     title: l.debtPersonPickerTitle,
-    selectedContactId: key == null
+    selectedId: key == null
         ? null
         : (key.startsWith('c:') ? key.substring(2) : key),
   );

@@ -5,6 +5,7 @@ import '../../tokens/app/app_colors.dart';
 import '../../tokens/app/module_colors.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
+import '../../tokens/hero_colors.dart';
 
 enum SummaryTileTone { neutral, green, amber, red, orange, planning }
 
@@ -43,16 +44,19 @@ class SummaryTileView extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
+    // In a hero a neutral tile takes the card's color, the rest its status set.
+    final hero = HeroColors.maybeOf(context);
+    final muted = hero?.muted ?? scheme.onSurfaceVariant;
     final color = switch (tile.tone) {
-      SummaryTileTone.neutral => scheme.onSurfaceVariant,
-      SummaryTileTone.green => palette.income,
-      SummaryTileTone.amber => palette.warning,
-      SummaryTileTone.red => palette.expense,
+      SummaryTileTone.neutral => hero?.accent ?? scheme.onSurfaceVariant,
+      SummaryTileTone.green => hero?.success ?? palette.income,
+      SummaryTileTone.amber => hero?.warning ?? palette.warning,
+      SummaryTileTone.red => hero?.danger ?? palette.expense,
       SummaryTileTone.orange => Colors.deepOrange,
       SummaryTileTone.planning => ModuleColors.of(context).planning,
     };
     final valueColor = tile.tone == SummaryTileTone.neutral
-        ? scheme.onSurface
+        ? (hero?.text ?? scheme.onSurface)
         : color;
     return Semantics(
       button: tile.onTap != null,
@@ -78,9 +82,7 @@ class SummaryTileView extends StatelessWidget {
               tile.label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: textTheme.labelMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+              style: textTheme.labelMedium?.copyWith(color: muted),
             ),
             const SizedBox(height: AppSpacing.xs),
             // A long amount shrinks to fit a narrow tile instead of "…".
@@ -101,9 +103,7 @@ class SummaryTileView extends StatelessWidget {
                 tile.caption!,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: textTheme.labelSmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
+                style: textTheme.labelSmall?.copyWith(color: muted),
               ),
           ],
         ),

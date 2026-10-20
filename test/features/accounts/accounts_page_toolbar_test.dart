@@ -53,7 +53,10 @@ void main() {
     t.view.physicalSize = const Size(400, 1400);
     t.view.devicePixelRatio = 1;
     addTearDown(t.view.reset);
-    final cubit = AccountsCubit(repository: _Repo(), coordinator: testCoordinator());
+    final cubit = AccountsCubit(
+      repository: _Repo(),
+      coordinator: testCoordinator(),
+    );
     addTearDown(cubit.close);
     cubit.emit(
       state ??
@@ -126,7 +129,7 @@ void main() {
     expect(find.byType(AccountCard), findsOneWidget);
   });
 
-  testWidgets('summary card: net, BE tiles as filters, saved line, groups', (
+  testWidgets('summary card: net, facts, filter chips, saved line, groups', (
     t,
   ) async {
     final totals = AccountTotals.fromJson({
@@ -165,19 +168,18 @@ void main() {
       ),
     );
     expect(find.byType(AppHeroCard), findsOneWidget);
-    expect(find.textContaining('Bank 100%'), findsOneWidget);
     expect(find.textContaining('8%'), findsWidgets);
     expect(find.textContaining('Saved'), findsOneWidget);
     // The default order is the user's own: one flat grid, no type headers.
     expect(find.byType(SectionHeader), findsNothing);
     expect(find.byType(AccountCard), findsNWidgets(3));
 
-    // The card tile filters to the card wallets; tapping again clears.
-    await t.tap(find.byKey(const ValueKey('summaryTile:Card debt')));
+    // The card chip filters to the card wallets; the All chip clears it.
+    await t.tap(find.byKey(const ValueKey('heroFilter:Credit cards')));
     await t.pumpAndSettle();
     expect(find.byType(AccountCard), findsOneWidget);
     expect(find.text('Visa'), findsOneWidget);
-    await t.tap(find.byKey(const ValueKey('summaryTile:Card debt')));
+    await t.tap(find.byKey(const ValueKey('heroFilter:All')));
     await t.pumpAndSettle();
     expect(find.byType(AccountCard), findsNWidgets(3));
   });

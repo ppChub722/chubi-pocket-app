@@ -34,41 +34,36 @@ Widget? savingGoalStatusChip(AppLocalizations l, SavingGoal g) {
   };
 }
 
-({String label, Tone tone})? savingGoalEtaBadge(
+/// A list row's line under the name: when the goal is expected to be reached,
+/// with how late it is. Null when the goal has no estimate.
+String? savingGoalEtaCaption(
   BuildContext context,
   AppLocalizations l,
   SavingGoal g,
 ) {
-  if (g.isArchived) {
-    return (label: l.sgv2FilterArchived, tone: Tone.neutral);
-  }
-  if (g.isCompleted) return (label: l.fpGoalsClosed, tone: Tone.success);
-  if (g.status == SavingStatus.reached) {
-    return (label: l.savingGoalCompletedLabel, tone: Tone.success);
+  if (g.isArchived || g.isCompleted || g.status == SavingStatus.reached) {
+    return null;
   }
   final locale = Localizations.localeOf(context).toLanguageTag();
   final eta = g.etaDate == null ? null : DateTime.tryParse(g.etaDate!);
   final month = eta == null ? null : DateFormat.yMMM(locale).format(eta);
+  if (month == null) return null;
   final months = g.behindMonths ?? 0;
-  return switch (g.status) {
-    SavingStatus.behind when month != null && months > 0 => (
-      label: l.fpGoalsEtaBehind(month, months),
-      tone: Tone.warning,
-    ),
-    SavingStatus.behind when month != null => (
-      label: l.fpGoalsEtaOn(month),
-      tone: Tone.warning,
-    ),
-    SavingStatus.behind => (
-      label: months > 0 ? l.sgv2PaceLate(months) : l.fpGoalsBehind,
-      tone: Tone.warning,
-    ),
-    SavingStatus.onTrack when month != null => (
-      label: l.fpGoalsEtaOn(month),
-      tone: Tone.success,
-    ),
-    _ => null,
-  };
+  return g.status == SavingStatus.behind && months > 0
+      ? l.fpGoalsEtaBehind(month, months)
+      : l.fpGoalsEtaOn(month);
+}
+
+/// How far along the goal should be by now, as a share of its target: the
+/// time from creation to the deadline that has passed. Null without both.
+double? savingGoalPaceRatio(SavingGoal g, {DateTime? now}) {
+  final created = g.createdAt;
+  final due = g.deadline == null ? null : DateTime.tryParse(g.deadline!);
+  if (created == null || due == null) return null;
+  final span = due.difference(created).inMilliseconds;
+  if (span <= 0) return null;
+  final passed = (now ?? DateTime.now()).difference(created).inMilliseconds;
+  return (passed / span).clamp(0.0, 1.0);
 }
 
 String savingAutoSaveCaption(

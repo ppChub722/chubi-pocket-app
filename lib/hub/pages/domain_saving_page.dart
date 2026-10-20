@@ -83,52 +83,38 @@ class _SavingPageState extends State<_SavingPage> {
     }
   }
 
-  String? _pickedGoal;
+  String? _pickedGoal = 'japan';
 
-  Future<void> _pickGoal() async {
-    final purple = Theme.of(context).colorScheme.tertiary;
-    final r = await showSavingGoalPickerSheet(
-      context,
-      title: 'Pick a goal',
-      selectedId: _pickedGoal,
-      items: [
-        SavingGoalPick(
-          id: null,
-          name: 'Unallocated',
-          icon: AppIcons.quickSaving,
-          color: purple,
-          amountText: '฿8,500',
-          caption: 'Kept aside, in no goal yet',
-        ),
-        const SavingGoalPick(
-          id: 'japan',
-          name: 'Japan trip',
-          icon: Icons.flight_outlined,
-          color: Color(0xFF38BDF8),
-          amountText: '฿52,000',
-          targetText: '฿80,000',
-          progress: 0.65,
-          caption: '฿2,500 short this month',
-        ),
-        const SavingGoalPick(
-          id: 'wedding',
-          name: 'Wedding',
-          icon: Icons.favorite_outline,
-          color: Color(0xFFF472B6),
-          amountText: '฿60,000',
-          targetText: '฿200,000',
-          progress: 0.3,
-          caption: '2 months behind',
-        ),
-      ],
-    );
-    if (mounted && r != null) {
-      setState(() {
-        _pickedGoal = r.id;
-        _result = 'Goal picker resolved: ${r.id ?? 'unallocated'}';
-      });
-    }
-  }
+  List<SavingGoalPick> _goals() => [
+    SavingGoalPick(
+      id: null,
+      name: 'Unallocated',
+      icon: AppIcons.quickSaving,
+      color: Theme.of(context).colorScheme.tertiary,
+      amountText: '฿8,500',
+      caption: 'Kept aside, in no goal yet',
+    ),
+    const SavingGoalPick(
+      id: 'japan',
+      name: 'Japan trip',
+      icon: Icons.flight_outlined,
+      color: Color(0xFF38BDF8),
+      amountText: '฿52,000',
+      targetText: '฿80,000',
+      progress: 0.65,
+      caption: '฿2,500 short this month',
+    ),
+    const SavingGoalPick(
+      id: 'wedding',
+      name: 'Wedding',
+      icon: Icons.favorite_outline,
+      color: Color(0xFFF472B6),
+      amountText: '฿60,000',
+      targetText: '฿200,000',
+      progress: 0.3,
+      caption: '2 months behind',
+    ),
+  ];
 
   Future<void> _close() async {
     final v = await showCloseGoalDialog(
@@ -333,6 +319,67 @@ class _SavingPageState extends State<_SavingPage> {
           ),
         ),
         HubDemo(
+          title: 'SavingGoalRow — one list in a SectionCard (no sections)',
+          note:
+              'The goals list without groups: the tag sits by the name, '
+              'caption only says what the goal has (due / late; nothing for '
+              '"no deadline" or "no target"), trailing + trailingCaption on the '
+              'right, marker + markerBubble = "should have by now". No bar for '
+              'an ongoing goal; an empty amountText leaves its line out.',
+          child: Builder(
+            builder: (context) {
+              final palette = Theme.of(context).extension<AppColors>()!;
+              return SectionCard(
+                first: true,
+                children: [
+                  SavingGoalRow(
+                    title: 'ฟหกasd',
+                    value: 0.1,
+                    caption: 'ถึงเป้า ก.ค. 2027 | ช้า 6 เดือน',
+                    amountText: '฿234 / ฿2,312 | 10%',
+                    trailing: 'ขาด ฿469',
+                    trailingTone: Tone.warning,
+                    trailingCaption: 'เดือนนี้ ฿234 / ฿703',
+                    badge: 'ช้ากว่าแผน',
+                    badgeTone: Tone.warning,
+                    color: palette.warning,
+                    marker: 0.32,
+                    markerBubble: 'ควรมีตอนนี้ ฿740',
+                    onTap: () {},
+                  ),
+                  SavingGoalRow(
+                    title: 'เที่ยวญี่ปุ่น',
+                    value: 0.45,
+                    caption: 'ถึงเป้า มี.ค. 2027',
+                    amountText: '฿27,000 / ฿60,000 | 45%',
+                    trailing: 'ครบแล้ว ✓',
+                    trailingTone: Tone.success,
+                    trailingCaption: 'เดือนนี้ ฿6,600',
+                    marker: 0.42,
+                    markerBubble: 'ควรมีตอนนี้ ฿25,200',
+                    onTap: () {},
+                  ),
+                  SavingGoalRow(
+                    title: 'test',
+                    value: 0,
+                    amountText: '฿0 / ฿100 | 0%',
+                    trailing: 'เหลือ ฿100',
+                    onTap: () {},
+                  ),
+                  SavingGoalRow(
+                    title: 'เงินสำรองฉุกเฉิน',
+                    caption: 'ออมต่อเนื่อง',
+                    amountText: '',
+                    trailing: '฿12,000',
+                    trailingCaption: 'เดือนนี้ +฿1,000',
+                    onTap: () {},
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        HubDemo(
           title: 'SavingGoalRow — behind | on track | reached | archived',
           note:
               'A goals-list row (reference §2): icon | name | "ขาด ฿x" / ✓ | '
@@ -461,11 +508,6 @@ class _SavingPageState extends State<_SavingPage> {
                     onPressed: () => _move(withdraw: true),
                   ),
                   AppButton(
-                    label: 'Goal picker (cards)',
-                    variant: AppButtonVariant.outlined,
-                    onPressed: _pickGoal,
-                  ),
-                  AppButton(
                     label: 'Close goal dialog',
                     variant: AppButtonVariant.outlined,
                     onPressed: _close,
@@ -474,6 +516,28 @@ class _SavingPageState extends State<_SavingPage> {
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(_result, style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'SavingGoalCard',
+          note:
+              'One goal as a card (the goal picker\'s card layout): name, '
+              'amount / target, progress and a caption. Picked = tinted with '
+              'a solid border, else a dashed one. Tap to pick.',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final g in _goals())
+                SizedBox(
+                  width: 180,
+                  child: SavingGoalCard(
+                    pick: g,
+                    selected: g.id == _pickedGoal,
+                    onTap: () => setState(() => _pickedGoal = g.id),
+                  ),
+                ),
             ],
           ),
         ),

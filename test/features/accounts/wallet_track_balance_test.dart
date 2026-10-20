@@ -95,7 +95,10 @@ void main() {
     t.view.devicePixelRatio = 1;
     addTearDown(t.view.reset);
     repo = _Repo();
-    final cubit = AccountsCubit(repository: repo, coordinator: testCoordinator());
+    final cubit = AccountsCubit(
+      repository: repo,
+      coordinator: testCoordinator(),
+    );
     addTearDown(cubit.close);
     if (wallet != null) {
       cubit.emit(
@@ -173,7 +176,8 @@ void main() {
   ) async {
     await pump(t, wallet: _wallet(track: false));
     expect(find.textContaining('1,234.50'), findsNothing);
-    expect(find.text('Balance not tracked'), findsOneWidget);
+    // No balance line, no mode chip: the hero just has no balance.
+    expect(find.text('Balance not tracked'), findsNothing);
     expect(find.text('Adjust balance'), findsNothing);
     // รายการ / โอน moved to the bottom + (reference §6): no action bar at all
     // on an untracked wallet.

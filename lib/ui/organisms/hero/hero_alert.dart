@@ -4,6 +4,7 @@ import '../../tokens/app/app_colors.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
+import '../../tokens/hero_colors.dart';
 
 /// An amber line in a hero (over budget, behind pace); tappable with [onTap].
 class HeroAlert extends StatelessWidget {
@@ -20,13 +21,15 @@ class HeroAlert extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final warning =
+        HeroColors.maybeOf(context)?.warning ??
+        Theme.of(context).extension<AppColors>()!.warning;
     final style = Theme.of(context).textTheme.bodySmall?.copyWith(
-      color: palette.warning,
+      color: warning,
       fontWeight: FontWeight.w600,
     );
     return Material(
-      color: palette.warning.withValues(alpha: 0.12),
+      color: warning.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -38,11 +41,11 @@ class HeroAlert extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(icon, size: 16, color: palette.warning),
+              Icon(icon, size: 16, color: warning),
               const SizedBox(width: AppSpacing.sm),
               Expanded(child: Text(text, style: style)),
               if (onTap != null)
-                Icon(AppIcons.chevronRight, size: 16, color: palette.warning),
+                Icon(AppIcons.chevronRight, size: 16, color: warning),
             ],
           ),
         ),

@@ -13,7 +13,7 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../contacts/presentation/cubit/contacts_cubit.dart';
-import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
+import '../../../contacts/presentation/widgets/contact_picker.dart';
 import '../../../transactions/domain/refs.dart';
 
 import '../../data/personal_debts_repository.dart';
@@ -102,9 +102,8 @@ class _PersonViewState extends State<_PersonView> {
     final l = AppLocalizations.of(context)!;
     final name = _name(_cubit.state);
     // Linking a name to a contact: opens on the contacts tab.
-    final picked = await showContactPickerSheet(
+    final picked = await ContactPicker.one(
       context,
-      allowFreeText: false,
       initialFilter: ContactPickerTabs.contactsContacts,
     );
     if (picked is! ContactPicked || !mounted) return;

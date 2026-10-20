@@ -5,9 +5,9 @@ import 'package:chubi_pocket/ui/atoms/app_icon_button.dart';
 import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/features/categories/domain/category.dart';
 import 'package:chubi_pocket/features/categories/domain/category_type.dart';
-import 'package:chubi_pocket/features/categories/presentation/widgets/category_picker_sheet.dart';
+import 'package:chubi_pocket/features/categories/presentation/widgets/category_picker.dart';
 import 'package:chubi_pocket/features/tags/presentation/cubit/tags_cubit.dart';
-import 'package:chubi_pocket/features/tags/presentation/widgets/tag_picker_sheet.dart';
+import 'package:chubi_pocket/features/tags/presentation/widgets/tag_picker.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -69,10 +69,10 @@ void main() {
     );
     const fuel = Category(id: 'g', name: 'น้ำมัน', type: CategoryType.expense);
 
-    Future<void> show(BuildContext context) => showCategoryPickerSheet(
-      context: context,
+    Future<void> show(BuildContext context) => CategoryPicker.one(
+      context,
+      types: const {CategoryType.expense},
       categories: const [food, rice, fuel],
-      type: CategoryType.expense,
     );
 
     testWidgets('▾ only on a row with children; it opens the level', (t) async {
@@ -108,8 +108,7 @@ void main() {
     when(tags.loadIfNeeded).thenAnswer((_) async {});
     await open(
       t,
-      (context) =>
-          showTagPickerSheet(context, selected: const {}, allowCreate: false),
+      (context) => TagPicker.many(context, allowCreate: false),
       tags: tags,
     );
     expect(find.text('ยังไม่มีแท็ก — สร้างได้ที่หน้าแท็ก'), findsOneWidget);

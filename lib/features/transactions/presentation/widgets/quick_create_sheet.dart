@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../app/shell/quick_create_context.dart';
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/constants/storage_keys.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -31,6 +32,7 @@ import '../../../tags/domain/tag.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../data/transactions_repository.dart';
 import '../../domain/form_options.dart';
+import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
 import '../cubit/tx_form_options_cubit.dart';
@@ -43,6 +45,7 @@ import 'debt_entry_form.dart';
 import 'saving_entry_form.dart';
 import 'draft_form.dart';
 import 'event_pick.dart';
+import 'event_picker.dart';
 import 'recurring_link.dart';
 import 'tx_summary_title.dart';
 
@@ -59,18 +62,37 @@ class EntrySheetAction {
   final bool primary;
 }
 
+/// A chip above the form (ข้าม / จ่ายแล้ว / ผูกกับรายการที่มีอยู่). [onTap]
+/// gets the sheet's context (a picker opens over it); true closes the sheet
+/// as saved.
+class EntrySheetChip {
+  const EntrySheetChip({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final Future<bool> Function(BuildContext sheetContext) onTap;
+}
+
 class EntrySheetConfig {
   const EntrySheetConfig({
     required this.title,
     required this.initial,
     required this.actions,
     this.onDelete,
+    this.subtitle,
+    this.chips = const [],
   });
 
   final String title;
   final PendingDraft initial;
   final List<EntrySheetAction> actions;
   final Future<bool> Function()? onDelete;
+  final String? subtitle;
+  final List<EntrySheetChip> chips;
 }
 
 Future<bool> showEntrySheet(
@@ -79,6 +101,8 @@ Future<bool> showEntrySheet(
   required PendingDraft initial,
   required List<EntrySheetAction> actions,
   Future<bool> Function()? onDelete,
+  String? subtitle,
+  List<EntrySheetChip> chips = const [],
 }) {
   assert(actions.isNotEmpty && actions.length <= 2, '1 or 2 actions');
   return showQuickCreateSheet(
@@ -88,12 +112,39 @@ Future<bool> showEntrySheet(
       initial: initial,
       actions: actions,
       onDelete: onDelete,
+      subtitle: subtitle,
+      chips: chips,
     ),
   );
 }
 
+/// Opens a committed tx for editing: in the quick create sheet when it is a
+/// plain one ([txEditsInSheet]), else on its detail page. True = saved or
+/// deleted in the sheet.
+Future<bool> editTransaction(BuildContext context, String id) async {
+  final cubit = context.read<TransactionsCubit>();
+  var tx = cubit.byId(id);
+  if (tx == null) {
+    try {
+      tx = await cubit.refreshOne(id);
+    } on ApiException catch (e) {
+      if (context.mounted) {
+        showAppSnackBar(context, e.message, tone: Tone.danger);
+      }
+      return false;
+    }
+  }
+  if (!context.mounted) return false;
+  if (!txEditsInSheet(tx)) {
+    openPage(context, '/transactions/$id');
+    return false;
+  }
+  return showQuickCreateSheet(context, editTransaction: tx);
+}
+
 Future<bool> showQuickCreateSheet(
   BuildContext context, {
+  Transaction? editTransaction,
   QuickCreatePreset? preset,
   ValueChanged<DebtEntryWriteResult>? onDebtSaved,
   ValueChanged<SavingWriteResult>? onSavingSaved,
@@ -139,6 +190,7 @@ Future<bool> showQuickCreateSheet(
     builder: (sheetContext) {
       final sheet = _QuickCreateSheet(
         prefs: prefs,
+        editTransaction: editTransaction,
         draft: draft,
         project: project,
         projectRow: projectRow,
@@ -180,6 +232,7 @@ enum _CloseChoice { draft, keepEditing, discard }
 class _QuickCreateSheet extends StatefulWidget {
   const _QuickCreateSheet({
     required this.prefs,
+    this.editTransaction,
     this.draft,
     this.project,
     this.projectRow,
@@ -228,6 +281,9 @@ class _QuickCreateSheet extends StatefulWidget {
   /// Editing this pending draft instead of creating.
   final PendingTransaction? draft;
 
+  /// Editing this committed (plain) tx instead of creating.
+  final Transaction? editTransaction;
+
   final ProjectView? project;
 
   final ProjectTxTree? projectRow;
@@ -255,7 +311,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
   bool get _isEntry => widget.entry != null;
 
-  bool get _draftLike => _editingDraft || _isEntry;
+  bool get _isEditTx => widget.editTransaction != null;
+
+  bool get _draftLike => _editingDraft || _isEntry || _isEditTx;
 
   bool get _isEvent => widget.project != null;
   bool get _editingRow => widget.projectRow != null;
@@ -463,6 +521,30 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   }
 
   void _prefillDraft() {
+    final tx = widget.editTransaction;
+    if (tx != null) {
+      final options = maybeTxFormOptions(context, watch: false)?.state.options;
+      final accounts = [
+        ...?options?.accountList,
+        if (options == null) ...context.read<AccountsCubit>().state.accounts,
+      ];
+      final categories = [
+        ...?options?.categoryList,
+        if (options == null)
+          ...context.read<CategoriesCubit>().state.categories,
+      ];
+      final account = tx.account;
+      if (account != null && !accounts.any((a) => a.id == account.id)) {
+        accounts.add(account.toAccount());
+      }
+      final category = tx.category;
+      if (category != null && !categories.any((c) => c.id == category.id)) {
+        categories.add(category.toCategory());
+      }
+      _c.prefillTransaction(tx, accounts: accounts, categories: categories);
+      _draftBaseline = _c.toDraft(keepIncomplete: true);
+      return;
+    }
     final entry = widget.entry;
     if (entry != null) {
       final options = maybeTxFormOptions(context, watch: false)?.state.options;
@@ -682,6 +764,35 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     return actions.firstWhere((a) => !identical(a, main));
   }
 
+  Future<void> _runEntryChip(EntrySheetChip chip) async {
+    final navigator = Navigator.of(context);
+    setState(() => _saving = true);
+    final ok = await chip.onTap(context);
+    if (!mounted) return;
+    if (ok) {
+      navigator.pop(true);
+    } else {
+      setState(() => _saving = false);
+    }
+  }
+
+  Widget? _entryChips() {
+    final chips = widget.entry?.chips ?? const [];
+    if (chips.isEmpty) return null;
+    return Wrap(
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
+      children: [
+        for (final c in chips)
+          AppChip(
+            label: c.label,
+            icon: c.icon,
+            onTap: _saving ? null : () => _runEntryChip(c),
+          ),
+      ],
+    );
+  }
+
   Future<void> _runEntry(EntrySheetAction action) async {
     final l = AppLocalizations.of(context)!;
     if (_c.amountValue <= 0) {
@@ -697,6 +808,95 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       navigator.pop(true);
     } else {
       setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _saveEditTx() async {
+    final l = AppLocalizations.of(context)!;
+    final tx = widget.editTransaction!;
+    final problem = transactionEditProblem(l, _c, splitsEditable: false);
+    if (problem != null) {
+      HapticFeedback.lightImpact();
+      _toast(problem);
+      return;
+    }
+    bool? alsoUpdateLink;
+    if (tx.hasPromptedLink) {
+      final choice = await showLinkedPrompt(
+        context,
+        title: l.linkedSaveTitle,
+        cancelLabel: l.linkedCancel,
+        thisSideLabel: l.linkedSaveThisOnly,
+        bothSidesLabel: l.linkedSaveBoth,
+      );
+      if (choice == null || !mounted) return;
+      alsoUpdateLink = choice == LinkedChoice.bothSides;
+    }
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _saving = true);
+    try {
+      final outcome = await saveTransactionEdit(
+        context,
+        t: tx,
+        c: _c,
+        initialAccountId: tx.accountId,
+        initialToAccountId: null,
+        alsoUpdateLink: alsoUpdateLink,
+      );
+      HapticFeedback.mediumImpact();
+      navigator.pop(true);
+      showAppSnackBarOn(
+        messenger,
+        outcome.warning ?? l.quickSaved,
+        tone: outcome.warning == null ? Tone.success : Tone.warning,
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      showSaveFailure(
+        context,
+        e,
+        retry: _saveEditTx,
+        message: splitErrorMessage(l, e) ?? walletErrorMessage(l, e),
+      );
+    }
+  }
+
+  /// A tx linked to a recurring occurrence asks whether to skip it too.
+  Future<void> _deleteEditTx() async {
+    final l = AppLocalizations.of(context)!;
+    final tx = widget.editTransaction!;
+    final link = tx.recurringItem;
+    bool? skip;
+    if (link != null) {
+      skip = await askDeleteRecurringTx(context, link);
+      if (skip == null) return;
+    } else {
+      final ok = await showConfirmDialog(
+        context,
+        title: l.transactionDetailDeleteConfirmTitle,
+        message: l.transactionDetailDeleteConfirmBody,
+        confirmLabel: l.transactionDetailDeleteConfirmAction,
+        destructive: true,
+      );
+      if (!ok) return;
+    }
+    if (!mounted) return;
+    final txCubit = context.read<TransactionsCubit>();
+    final accounts = context.read<AccountsCubit>();
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _saving = true);
+    try {
+      final result = await txCubit.remove(tx.id, skipOccurrence: skip);
+      accounts.patchBalances(result.accountBalances);
+      navigator.pop(true);
+      showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      showSaveFailure(context, e, retry: _deleteEditTx);
     }
   }
 
@@ -946,6 +1146,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     type: _c.type,
     categoryId: _c.isTransfer ? null : _c.category?.id,
     amount: _c.amountValue > 0 ? _c.amountValue : null,
+    txDate: _c.date,
     createRoute: recurringCreateRoute(
       type: _c.type,
       amount: _c.amountValue,
@@ -970,13 +1171,14 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   }
 
   Future<void> _pickEvent() async {
-    final picked = await showEventTargetSheet(
+    final picked = await EventPicker.one(
       context,
       suggestedName: _suggestEventName(),
       selectedProjectId: switch (_event) {
         ExistingEventTarget(:final project) => project.id,
         _ => null,
       },
+      showClosed: false,
       useRootNavigator: false,
     );
     if (picked != null && mounted) setState(() => _event = picked);
@@ -1095,7 +1297,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
     setState(() => _saving = true);
     String? warn;
-    var savedAsUpcoming = false;
     String? newTxId;
     try {
       if (event == null) {
@@ -1113,7 +1314,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         );
         accounts.patchBalances(saved.accountBalances);
         newTxId = saved.rows.firstOrNull?.id;
-        if (saved.isUpcoming) savedAsUpcoming = true;
       } else {
         final body = <String, dynamic>{
           'type': type.toJson(),
@@ -1152,7 +1352,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       navigator.pop(true);
       showAppSnackBarOn(
         messenger,
-        warn ?? (savedAsUpcoming ? l.txSavedAsUpcoming : l.quickSaved),
+        warn ?? l.quickSaved,
         tone: warn == null ? Tone.success : Tone.warning,
       );
     } on ApiException catch (e) {
@@ -1189,9 +1389,13 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           ? (_editingRow ? l.projectTxEditTitle : l.projectTxNewTitle)
           : _isEntry
           ? widget.entry!.title
+          : _isEditTx
+          ? l.transactionFormTitleEdit
           : _editingDraft
           ? l.pendingEditTitle
           : l.transactionFormTitleNew,
+      subtitle: widget.entry?.subtitle,
+      headerBar: _entryChips(),
       summaryBuilder: _summaryTitle && !_isDebt && !_isSaving
           ? (scrollToTop) => TxSummaryTitle(
               type: _c.type,
@@ -1204,6 +1408,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       deleteTooltip: l.commonDelete,
       onDelete: _isEntry
           ? (widget.entry!.onDelete == null ? null : _deleteEntry)
+          : _isEditTx
+          ? _deleteEditTx
           : _editingDraft
           ? _discardDraft
           : null,
@@ -1218,16 +1424,18 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       onCloseBlocked: _confirmClose,
       saveLabel: _isEntry
           ? _entryAction(primary: true).label
-          : _isEvent
+          : _isEvent || _isEditTx
           ? l.transactionFormSave
           : (_editingDraft ? l.pendingSubmitThis : l.quickSave),
       draftLabel: _isEntry
           ? _entrySecondary?.label
-          : _isEvent || _isDebt || (_isSaving && !_isSavingDraft)
+          : _isEvent || _isEditTx || _isDebt || (_isSaving && !_isSavingDraft)
           ? null
           : l.pendingSaveDraft,
       onSave: _isEntry
           ? (waiting ? null : () => _runEntry(_entryAction(primary: true)))
+          : _isEditTx
+          ? (waiting || _draftBaseline == null ? null : _saveEditTx)
           : _isSavingDraft
           ? _submitSavingDraft
           : _isDebt
@@ -1267,10 +1475,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                 heroKey: _heroKey,
                 chipLayout: _draftLike,
                 chipRows: true,
-                upcomingHint: !_draftLike && !_isEvent,
                 controller: _c,
                 defaultAccount: _defaultAccount(accounts, options: options),
-                typeLocked: _editingRow,
+                typeLocked: _editingRow || _isEditTx,
+                // An entry saves a PendingDraft: no splits there.
+                allowSplits: !_isEditTx && !_isEntry,
                 event: _isEvent
                     ? DraftEvent(
                         members: widget.project!.currentMembers,

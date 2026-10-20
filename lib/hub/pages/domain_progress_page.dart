@@ -127,6 +127,59 @@ class _ProgressPage extends StatelessWidget {
           },
         ),
         HubDemo(
+          title: 'ProgressCard — rows in one SectionCard + paceBubble',
+          note:
+              'The budgets list: the rows sit in one SectionCard (2px gaps); '
+              'paceBubble shows the plan to date over the pace tick all the '
+              'time, in the bar\'s color.',
+          child: SectionCard(
+            first: true,
+            children: [
+              ProgressCard(
+                title: 'test',
+                caption: 'รายเดือน | เหลือ 12 วัน',
+                fallbackIcon: Icons.movie_outlined,
+                value: 0,
+                tone: ProgressTone.normal,
+                alignWithTitle: true,
+                trailing: const ProgressRemainder(
+                  label: 'เหลือ',
+                  amount: '฿2,000',
+                ),
+                paceMarker: 0.65,
+                paceBubble: 'แผนถึงวันนี้ ฿1,300',
+                label: 'ใช้ ฿0 จาก ฿2,000',
+                percentText: '0%',
+              ),
+              ProgressCard(
+                title: 'อาหาร',
+                caption: 'รายเดือน | เหลือ 12 วัน',
+                fallbackIcon: Icons.restaurant_outlined,
+                value: 0.87,
+                tone: ProgressTone.warning,
+                alignWithTitle: true,
+                badge: const ProgressBadges(
+                  children: [
+                    StatusChip(
+                      label: 'ใกล้เต็ม',
+                      kind: StatusKind.warning,
+                      size: ChipSize.mini,
+                    ),
+                  ],
+                ),
+                trailing: const ProgressRemainder(
+                  label: 'เหลือ',
+                  amount: '฿650',
+                ),
+                paceMarker: 0.65,
+                paceBubble: 'แผนถึงวันนี้ ฿3,250',
+                label: 'ใช้ ฿4,350 จาก ฿5,000',
+                percentText: '87%',
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
           title: 'ProgressCard — list (hairline rows) + skeleton',
           note:
               'Rows sit in a divided list; ProgressCard.compact is the period '

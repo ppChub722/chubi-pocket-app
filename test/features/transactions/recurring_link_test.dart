@@ -1,7 +1,9 @@
+import 'package:chubi_pocket/core/data/sync_coordinator.dart';
 import 'package:chubi_pocket/core/network/api_exception.dart';
 import 'package:chubi_pocket/features/recurring/data/recurring_link_repository.dart';
 import 'package:chubi_pocket/features/recurring/domain/recurring_item.dart';
 import 'package:chubi_pocket/features/recurring/presentation/cubit/recurring_directory_cubit.dart';
+import 'package:chubi_pocket/features/transactions/domain/refs.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/recurring_link.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
@@ -81,9 +83,26 @@ class _FakeRepo implements RecurringLinkRepository {
   }
 
   @override
-  Future<LinkResult> link(String itemId, String transactionId) async {
-    links.add('$itemId<-$transactionId');
-    if (linkError != null) throw linkError!;
+  Future<RecurringItem> unlinkOccurrence(String ruleId, String slot) =>
+      unlink('slot:$ruleId:$slot');
+
+  @override
+  Future<LinkResult> linkOccurrence(
+    String ruleId,
+    String slot,
+    String transactionId, {
+    bool replace = false,
+  }) => link('slot:$ruleId:$slot', transactionId, replace: replace);
+
+  @override
+  Future<LinkResult> link(
+    String itemId,
+    String transactionId, {
+    bool replace = false,
+  }) async {
+    links.add('$itemId<-$transactionId${replace ? ' (replace)' : ''}');
+    // A taken side answers 409 unless the link replaces it.
+    if (linkError != null && !replace) throw linkError!;
     return LinkResult(
       transaction: null,
       amountDiffers: differs != null,
@@ -101,6 +120,7 @@ const _category = {'id': 'cat-1', 'name': 'Car', 'type': 'expense'};
 
 /// The directory the picker reads: the fake's rows as the sync would land
 /// them, or a failed sync.
+final _coordinator = testCoordinator();
 final _directories = Expando<RecurringDirectoryCubit>();
 
 RecurringDirectoryCubit _directory(_FakeRepo repo) {
@@ -125,11 +145,13 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('th'),
-        builder: (context, child) =>
-            BlocProvider<RecurringDirectoryCubit>.value(
-              value: _directory(repo),
-              child: AppUiConfig(child: child!),
-            ),
+        builder: (context, child) => RepositoryProvider<SyncCoordinator>.value(
+          value: _coordinator,
+          child: BlocProvider<RecurringDirectoryCubit>.value(
+            value: _directory(repo),
+            child: AppUiConfig(child: child!),
+          ),
+        ),
         home: Scaffold(
           body: ListenableBuilder(
             listenable: handle,
@@ -257,23 +279,48 @@ void main() {
     expect(find.byType(AskCard), findsNothing);
   });
 
-  testWidgets('409 ITEM_ALREADY_LINKED: its own message, no question', (
+  // One occurrence ↔ one tx: a taken side asks "สลับ?" before it replaces.
+  const taken = ApiException(
+    code: 'ITEM_ALREADY_LINKED',
+    message: 'x',
+    statusCode: 409,
+  );
+
+  Future<LinkResult?> linkAnswering(
+    WidgetTester t,
+    RecurringLinkHandle h,
+    String answer,
+  ) async {
+    final ctx = t.element(find.byType(SplitEventSection));
+    final result = h.link(ctx, 'tx-1', error: messages.add);
+    await t.pumpAndSettle();
+    expect(find.text('สลับรายการที่ผูก?'), findsOneWidget);
+    await t.tap(find.text(answer));
+    await t.pumpAndSettle();
+    return result;
+  }
+
+  testWidgets('409 ITEM_ALREADY_LINKED: asks to swap; ยกเลิก = its message', (
     t,
   ) async {
-    final repo = _FakeRepo(
-      rows: rows,
-      linkError: const ApiException(
-        code: 'ITEM_ALREADY_LINKED',
-        message: 'x',
-        statusCode: 409,
-      ),
-    );
+    final repo = _FakeRepo(rows: rows, linkError: taken);
     final h = await pump(t, repo);
     await pickCar(t, h);
-    final r = await link(t, h);
-    expect(r, isNull);
+    expect(await linkAnswering(t, h, 'ยกเลิก'), isNull);
+    expect(repo.links, ['item-1<-tx-1']);
     expect(messages, ['งวดนี้ผูกไปแล้ว (หรือรายการนี้ผูกอยู่แล้ว)']);
     expect(find.byType(AskCard), findsNothing);
+  });
+
+  testWidgets('409 ITEM_ALREADY_LINKED: สลับ = linked again with replace', (
+    t,
+  ) async {
+    final repo = _FakeRepo(rows: rows, linkError: taken);
+    final h = await pump(t, repo);
+    await pickCar(t, h);
+    expect(await linkAnswering(t, h, 'สลับ'), isNotNull);
+    expect(repo.links, ['item-1<-tx-1', 'item-1<-tx-1 (replace)']);
+    expect(messages, isEmpty);
   });
 
   testWidgets('likely rows form the FIRST group and leave their own group', (
@@ -294,11 +341,13 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('th'),
-        builder: (context, child) =>
-            BlocProvider<RecurringDirectoryCubit>.value(
-              value: _directory(repo),
-              child: AppUiConfig(child: child!),
-            ),
+        builder: (context, child) => RepositoryProvider<SyncCoordinator>.value(
+          value: _coordinator,
+          child: BlocProvider<RecurringDirectoryCubit>.value(
+            value: _directory(repo),
+            child: AppUiConfig(child: child!),
+          ),
+        ),
         home: Builder(
           builder: (context) => Scaffold(
             body: TextButton(
@@ -344,11 +393,13 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('th'),
-        builder: (context, child) =>
-            BlocProvider<RecurringDirectoryCubit>.value(
-              value: _directory(repo),
-              child: AppUiConfig(child: child!),
-            ),
+        builder: (context, child) => RepositoryProvider<SyncCoordinator>.value(
+          value: _coordinator,
+          child: BlocProvider<RecurringDirectoryCubit>.value(
+            value: _directory(repo),
+            child: AppUiConfig(child: child!),
+          ),
+        ),
         home: Scaffold(
           body: ListenableBuilder(
             listenable: handle,
@@ -361,7 +412,7 @@ void main() {
                 linkedName: 'รถ',
                 onUnlink: () => handle.unlinkNow(
                   context,
-                  'item-1',
+                  const RecurringItemLink(itemId: 'item-1'),
                   onUnlinked: () => unlinked++,
                   error: messages.add,
                 ),
@@ -397,17 +448,19 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('th'),
-        builder: (context, child) =>
-            BlocProvider<RecurringDirectoryCubit>.value(
-              value: _directory(repo),
-              child: AppUiConfig(child: child!),
-            ),
+        builder: (context, child) => RepositoryProvider<SyncCoordinator>.value(
+          value: _coordinator,
+          child: BlocProvider<RecurringDirectoryCubit>.value(
+            value: _directory(repo),
+            child: AppUiConfig(child: child!),
+          ),
+        ),
         home: Scaffold(
           body: Builder(
             builder: (context) => TextButton(
               onPressed: () => handle.unlinkNow(
                 context,
-                'item-1',
+                const RecurringItemLink(itemId: 'item-1'),
                 onUnlinked: () => unlinked++,
                 error: messages.add,
               ),

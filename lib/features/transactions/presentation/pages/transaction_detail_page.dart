@@ -33,6 +33,7 @@ import '../save_failure.dart';
 import '../widgets/draft_form.dart';
 import 'debt_entry_detail_page.dart';
 import '../widgets/event_pick.dart';
+import '../widgets/event_picker.dart';
 import '../widgets/recurring_link.dart';
 import '../widgets/tx_compact_hero.dart';
 
@@ -171,7 +172,7 @@ class _LoadedState extends State<_Loaded>
       _c.date,
       locale: Localizations.localeOf(context).toLanguageTag(),
     );
-    final picked = await showEventTargetSheet(
+    final picked = await EventPicker.one(
       context,
       suggestedName:
           '${description.isEmpty ? l.quickEventDefaultName : description}'
@@ -278,11 +279,16 @@ class _LoadedState extends State<_Loaded>
 
   Future<void> _linkRecurring() async {
     final tx = _edited;
+    final linked = _pendingUnlink ? null : widget.tx.recurringItem;
     await _link.choose(
       context,
       type: tx.type,
       categoryId: tx.type == TransactionType.transfer ? null : tx.categoryId,
       amount: tx.amount > 0 ? tx.amount : null,
+      txDate: DateTime.tryParse(tx.date),
+      txId: tx.id,
+      linkedRuleId: linked?.recurringId,
+      linkedItemId: linked?.itemId,
       createRoute: recurringCreateRoute(
         type: tx.type,
         amount: tx.amount,
@@ -307,10 +313,11 @@ class _LoadedState extends State<_Loaded>
   ) async {
     final item = widget.tx.recurringItem;
     final cached = widget.tx;
-    if (_pendingUnlink && item != null) {
+    final unlinked = _pendingUnlink && item != null;
+    if (unlinked) {
       await _link.unlinkNow(
         context,
-        item.itemId,
+        item,
         onUnlinked: () => txCubit.patchRow(
           cached.copyWith(clearRecurringItem: true),
           afterWrite: true,
@@ -329,6 +336,7 @@ class _LoadedState extends State<_Loaded>
           accounts.patchBalances(balances);
         },
         error: _say,
+        replace: item != null && !unlinked,
       );
       _link.clearChoice();
     }
@@ -473,10 +481,6 @@ class _LoadedState extends State<_Loaded>
       alsoUpdateLink = choice == LinkedChoice.bothSides;
     }
     setSaving(true);
-    final router = GoRouter.maybeOf(context);
-    final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-    final back = ShellBackScope.maybeOf(context);
     final projects = context.read<ProjectsRepository>();
     final txCubit = context.read<TransactionsCubit>();
     final accountsCubit = context.read<AccountsCubit>();
@@ -489,18 +493,6 @@ class _LoadedState extends State<_Loaded>
         initialToAccountId: _initialToAccountId,
         alsoUpdateLink: alsoUpdateLink,
       );
-      if (outcome.movedToUpcoming) {
-        commitSaved(working);
-        showAppSnackBarOn(messenger, l.txMovedToUpcoming, tone: Tone.success);
-        if (router == null) {
-          navigator.maybePop();
-        } else if (router.canPop()) {
-          router.pop();
-        } else {
-          back?.call();
-        }
-        return;
-      }
       final warn = outcome.warning;
       if (!mounted) return;
       final change = _eventChange;
@@ -617,12 +609,11 @@ class _LoadedState extends State<_Loaded>
         ? null
         : recurringItem;
     final recurringName = savedLink?.label(l.quickUpcomingHintTitle);
-    void openRecurring() => openPage(
-      context,
-      savedLink?.recurringId == null
-          ? '/recurring?tab=upcoming'
-          : '/recurring/${savedLink!.recurringId}',
-    );
+    void openRecurring() {
+      final id = savedLink?.recurringId;
+      if (id != null) openPage(context, '/recurring/$id');
+    }
+
     if (editing) {
       splitsReadOnly = null;
       eventSlot = canJoinEvent
@@ -766,10 +757,6 @@ class _LoadedState extends State<_Loaded>
                         typeLocked: true,
                         cardsInHero: true,
                         allowSplits: canEditSplits,
-                        upcomingHint:
-                            editing && tx.type != TransactionType.transfer,
-                        onUpcomingHintTap: () =>
-                            openPage(context, '/recurring?tab=upcoming'),
                         editing: editing,
                         categoryLockedHint: _edited.canEditCategory
                             ? null
@@ -849,6 +836,13 @@ class _LoadedState extends State<_Loaded>
     bool repayment = false,
   }) async {
     final tx = widget.tx;
+    final recurring = tx.recurringItem;
+    if (recurring != null && !repayment) {
+      final skip = await askDeleteRecurringTx(context, recurring);
+      if (skip == null || !context.mounted) return;
+      await _deleteNow(context, l, skipOccurrence: skip);
+      return;
+    }
     if (tx.hasPromptedLink && !repayment) {
       final choice = await showLinkedPrompt(
         context,
@@ -889,6 +883,7 @@ class _LoadedState extends State<_Loaded>
     AppLocalizations l, {
     bool repayment = false,
     bool? alsoDeleteLink,
+    bool? skipOccurrence,
   }) async {
     final tx = widget.tx;
     final router = GoRouter.of(context);
@@ -901,6 +896,7 @@ class _LoadedState extends State<_Loaded>
       final result = await txCubit.remove(
         tx.id,
         alsoDeleteLink: alsoDeleteLink,
+        skipOccurrence: skipOccurrence,
       );
       accountsCubit.patchBalances(result.accountBalances);
       showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
@@ -920,6 +916,7 @@ class _LoadedState extends State<_Loaded>
           l,
           repayment: repayment,
           alsoDeleteLink: alsoDeleteLink,
+          skipOccurrence: skipOccurrence,
         ),
       );
     }

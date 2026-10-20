@@ -24,6 +24,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../shared/fake_sync.dart';
+
 class _Accounts extends MockCubit<AccountsState> implements AccountsCubit {}
 
 class _Tags extends MockCubit<TagsState> implements TagsCubit {}
@@ -216,6 +218,7 @@ void main() {
         providers: [
           RepositoryProvider<PersonalDebtsRepository>.value(value: repo),
           RepositoryProvider<ProjectsRepository>.value(value: _ProjectsRepo()),
+          syncCoordinatorProvider(),
         ],
         child: MultiBlocProvider(
           providers: [
@@ -343,6 +346,9 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
+    // Clear of the bar that floats over the page bottom.
+    await t.drag(find.byType(Scrollable).first, const Offset(0, -160));
+    await t.pump();
     await t.tap(find.text('Delete this entry'));
     await settle(t);
     expect(find.textContaining('“KBank” goes too'), findsOneWidget);

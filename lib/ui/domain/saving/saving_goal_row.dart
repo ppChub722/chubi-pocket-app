@@ -4,12 +4,16 @@ import '../../atoms/app_chip.dart';
 import '../../molecules/progress_row.dart';
 import '../../molecules/status_chip.dart';
 import '../../tokens/app/app_colors.dart';
+import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';
 import '../../tokens/tone.dart';
 import '../icons/icon_code.dart';
 import '../icons/icon_code_widget.dart';
 
+/// A saving goal in a list: the name with its status tag, a line under it
+/// (when it is due), the amount on the right with a small line under it, then
+/// the bar (no bar for a goal without a target).
 class SavingGoalRow extends StatelessWidget {
   const SavingGoalRow({
     required this.title,
@@ -17,10 +21,15 @@ class SavingGoalRow extends StatelessWidget {
     this.value,
     this.iconCode,
     this.fallbackIcon,
+    this.caption,
     this.trailing,
     this.trailingTone = Tone.neutral,
+    this.trailingCaption,
     this.badge,
     this.badgeTone = Tone.success,
+    this.color,
+    this.marker,
+    this.markerBubble,
     this.dimmed = false,
     this.onTap,
     super.key,
@@ -34,11 +43,24 @@ class SavingGoalRow extends StatelessWidget {
   final IconCode? iconCode;
   final IconData? fallbackIcon;
 
+  /// Under the name: only what the goal has ("ถึงเป้า ก.ค. 2027 | ช้า 6 เดือน").
+  final String? caption;
+
   final String? trailing;
   final Tone trailingTone;
 
+  /// Small, under [trailing] ("เดือนนี้ ฿234 / ฿703").
+  final String? trailingCaption;
+
   final String? badge;
   final Tone badgeTone;
+
+  /// The bar's color; null = the goal's own tint.
+  final Color? color;
+
+  /// Where the goal should be by now, with [markerBubble] over it.
+  final double? marker;
+  final String? markerBubble;
   final bool dimmed;
   final VoidCallback? onTap;
 
@@ -62,7 +84,7 @@ class SavingGoalRow extends StatelessWidget {
             iconCode: iconCode,
             size: _tile,
             displayMode: IconDisplayMode.compact,
-            fallbackIcon: fallbackIcon ?? Icons.savings_outlined,
+            fallbackIcon: fallbackIcon ?? AppIcons.savings,
             fallbackColor: tint,
           ),
           const SizedBox(width: AppSpacing.md),
@@ -72,59 +94,98 @@ class SavingGoalRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: text.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: text.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              if (badge != null) ...[
+                                const SizedBox(width: AppSpacing.xs),
+                                Flexible(
+                                  child: StatusChip.tone(
+                                    label: badge!,
+                                    tone: AppChipTone.fromTone(badgeTone),
+                                    size: ChipSize.mini,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          if (caption != null)
+                            Text(
+                              caption!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: text.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     if (trailing != null) ...[
                       const SizedBox(width: AppSpacing.sm),
-                      Text(
-                        trailing!,
-                        maxLines: 1,
-                        style: text.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: trailingTone.color(context),
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            trailing!,
+                            maxLines: 1,
+                            style: text.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: trailingTone.color(context),
+                            ),
+                          ),
+                          if (trailingCaption != null)
+                            Text(
+                              trailingCaption!,
+                              maxLines: 1,
+                              style: text.labelSmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                        ],
                       ),
                     ],
                   ],
                 ),
                 if (value != null) ...[
                   const SizedBox(height: AppSpacing.sm),
-                  ProgressRow(value: value!, color: tint, height: 9),
+                  ProgressRow(
+                    value: value!,
+                    color: color ?? tint,
+                    height: 9,
+                    marker: marker,
+                    markerBubble: markerBubble,
+                  ),
                 ],
-                const SizedBox(height: AppSpacing.xs),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        amountText,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: text.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
+                // An empty amountText leaves the line out.
+                if (amountText.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    amountText,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: text.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
                     ),
-                    if (badge != null) ...[
-                      const SizedBox(width: AppSpacing.sm),
-                      Flexible(
-                        child: StatusChip.tone(
-                          label: badge!,
-                          tone: AppChipTone.fromTone(badgeTone),
-                          size: ChipSize.mini,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+                  ),
+                ],
               ],
             ),
           ),

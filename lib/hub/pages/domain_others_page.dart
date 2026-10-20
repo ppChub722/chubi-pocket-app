@@ -139,7 +139,7 @@ Widget buildOthersPage(BuildContext context) {
           HubUse(
             wide: true,
             label:
-                'NotificationTile — system notice: one button (open pending)',
+                'NotificationTile — system notice: one button (open ต้องจัดการ)',
             page: 'Notifications inbox',
             child: notifCard(
               notif(
@@ -147,6 +147,21 @@ Widget buildOthersPage(BuildContext context) {
                 system: true,
                 awaitsAnswer: false,
                 payload: const {'count': 3},
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label:
+                'NotificationTile — quiet system notice: no button (tap opens '
+                '/recurring)',
+            page: 'Notifications inbox',
+            child: notifCard(
+              notif(
+                NotificationType.recurringAutoCreated,
+                system: true,
+                awaitsAnswer: false,
+                payload: const {'count': 2, 'date': '2026-10-20'},
               ),
             ),
           ),

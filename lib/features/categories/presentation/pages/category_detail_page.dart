@@ -18,7 +18,7 @@ import '../../domain/category_tree.dart';
 import '../../domain/category_type.dart';
 import '../cubit/categories_cubit.dart';
 import '../widgets/category_chip_path.dart';
-import '../widgets/category_picker_sheet.dart';
+import '../widgets/category_picker.dart';
 import '../widgets/category_preview_card.dart';
 
 class CategoryDetailPage extends StatefulWidget {
@@ -426,11 +426,10 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           if (c.type == working.type) c.id,
       ]);
     }
-    final result = await showCategoryPickerSheet(
-      context: context,
-      categories: all,
-      type: working.type,
-      selected: selectedParent,
+    final result = await CategoryPicker.one(
+      context,
+      types: {working.type},
+      selectedId: selectedParent?.id,
       allowNone: true,
       noneLabel: l.categoryFormParentNone,
       title: l.categoryFormParentLabel,
@@ -438,7 +437,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       excludeIds: exclude,
     );
     if (!mounted || result == null) return;
-    if (result is CategoryPickerSelected) {
+    if (result is CategoryPicked) {
       final picked = result.category;
       setState(() {
         _pickedParent = picked;
@@ -452,7 +451,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         ];
       });
       applyChange(working.copyWith(parentId: picked.id));
-    } else if (result is CategoryPickerCleared) {
+    } else if (result is CategoryPickedNone) {
       applyChange(working.copyWith(clearParent: true));
     }
   }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,9 +10,9 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
-import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
-import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
+import '../../../accounts/presentation/widgets/account_picker.dart';
+import '../widgets/saving_goal_picker.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../data/saving_goals_repository.dart';
 import '../../domain/saving_entry.dart';
@@ -35,7 +36,7 @@ class SavingGoalDetailPage extends StatefulWidget {
   State<SavingGoalDetailPage> createState() => _SavingGoalDetailPageState();
 }
 
-enum _Field { name, target, description, note }
+enum _Field { name, target, description, note, opening }
 
 enum _GoalTab { overview, entries }
 
@@ -48,6 +49,8 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   final _targetCtrl = TextEditingController();
   final _descriptionCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
+  final _openingCtrl = TextEditingController();
+  final _autoCtrls = <int, TextEditingController>{};
   final _nameFocus = FocusNode();
   final _descriptionFocus = FocusNode();
   final _noteFocus = FocusNode();
@@ -83,6 +86,10 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     _targetCtrl.dispose();
     _descriptionCtrl.dispose();
     _noteCtrl.dispose();
+    _openingCtrl.dispose();
+    for (final c in _autoCtrls.values) {
+      c.dispose();
+    }
     _nameFocus.dispose();
     _descriptionFocus.dispose();
     _noteFocus.dispose();
@@ -113,6 +120,17 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     sync(_targetCtrl, working.target);
     sync(_descriptionCtrl, working.description);
     sync(_noteCtrl, working.note);
+    sync(_openingCtrl, working.opening);
+    final keys = {for (final a in working.autos) a.key};
+    _autoCtrls.removeWhere((k, c) {
+      if (keys.contains(k)) return false;
+      c.dispose();
+      return true;
+    });
+    for (final a in working.autos) {
+      final c = _autoCtrls[a.key];
+      if (c != null) sync(c, a.amount);
+    }
   }
 
   void _onText(_Field field, String v) =>
@@ -121,7 +139,127 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         _Field.target => working.copyWith(target: v),
         _Field.description => working.copyWith(description: v),
         _Field.note => working.copyWith(note: v),
+        _Field.opening => working.copyWith(opening: v),
       });
+
+  TextEditingController _autoCtrl(_AutoDraft a) => _autoCtrls.putIfAbsent(
+    a.key,
+    () => TextEditingController(text: a.amount),
+  );
+
+  void _changeAuto(_AutoDraft a, _AutoDraft next) => applyChange(
+    working.copyWith(
+      autos: [for (final x in working.autos) x.key == a.key ? next : x],
+    ),
+  );
+
+  void _onAutoAmount(_AutoDraft a, String v) => applyTextChange(
+    ('auto', a.key),
+    working.copyWith(
+      autos: [
+        for (final x in working.autos)
+          x.key == a.key ? x.copyWith(amount: v) : x,
+      ],
+    ),
+  );
+
+  /// A new line: monthly on the 25th, the first one carrying what the plan
+  /// needs a month.
+  _AutoDraft _newAuto() {
+    final w = working;
+    final target = AmountInput.parse(w.target);
+    final needed = w.autos.isNotEmpty || target == null
+        ? null
+        : SavingPlanPreview.of(
+            target: target,
+            saved: _cubit?.state.detail?.goal?.savedAmount ?? 0,
+            deadline: w.deadline,
+          ).neededMonthly;
+    return _AutoDraft(
+      amount: needed == null ? '' : AmountInput.format(needed),
+      rule: RecurrenceRule(
+        freq: RecurrenceFreq.monthly,
+        start: _nextMonthDay(_defaultAutoSaveDay),
+        monthly: const RecurrenceMonthly(
+          mode: RecurrenceMonthlyMode.day,
+          day: _defaultAutoSaveDay,
+        ),
+      ),
+    );
+  }
+
+  void _toggleAutoDraft(bool on) => applyChange(
+    working.copyWith(
+      autoOn: on,
+      autos: on && working.autos.isEmpty ? [_newAuto()] : null,
+    ),
+  );
+
+  void _addAuto() =>
+      applyChange(working.copyWith(autos: [...working.autos, _newAuto()]));
+
+  void _removeAuto(_AutoDraft a) {
+    final rest = [
+      for (final x in working.autos)
+        if (x.key != a.key) x,
+    ];
+    applyChange(working.copyWith(autos: rest, autoOn: rest.isNotEmpty));
+  }
+
+  Future<void> _pickAutoRule(_AutoDraft a) async {
+    final r = await showRecurrenceSheet(context, initial: a.rule);
+    if (r == null || !mounted || r == a.rule) return;
+    _changeAuto(a, a.copyWith(rule: r));
+  }
+
+  /// The wallet sheet: a picked wallet, `(null)` for none, null when dismissed.
+  Future<(SavingWalletRef?,)?> _pickWallet(SavingWalletRef? current) async {
+    final l = AppLocalizations.of(context)!;
+    final picked = await AccountPicker.one(
+      context,
+      selectedId: current?.id,
+      allowNone: true,
+      noneLabel: l.fpGoalsNoWallet,
+      title: l.fpGoalsAutoFrom,
+    );
+    return switch (picked) {
+      AccountPicked(:final account) => (
+        SavingWalletRef(
+          id: account.id,
+          name: account.name,
+          iconCode: account.iconCode,
+          logoUrl: account.logoUrl,
+          type: account.type.name,
+          currency: account.currency,
+        ),
+      ),
+      AccountPickedNone() => (null,),
+      null => null,
+    };
+  }
+
+  Future<void> _pickAutoWallet(_AutoDraft a) async {
+    final r = await _pickWallet(a.wallet);
+    if (r == null || !mounted) return;
+    final (wallet,) = r;
+    _changeAuto(
+      a,
+      wallet == null
+          ? a.copyWith(clearWallet: true)
+          : a.copyWith(wallet: wallet),
+    );
+  }
+
+  Future<void> _pickOpeningWallet() async {
+    final r = await _pickWallet(working.openingWallet);
+    if (r == null || !mounted) return;
+    final (wallet,) = r;
+    applyChange(
+      wallet == null
+          ? working.copyWith(clearOpeningWallet: true)
+          : working.copyWith(openingWallet: wallet),
+    );
+  }
 
   Future<void> _openIconMaker() async {
     final l = AppLocalizations.of(context)!;
@@ -170,6 +308,13 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     commitTextSession();
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final w = working;
+    if (w.sentAutos.any((a) => (AmountInput.parse(a.amount) ?? 0) <= 0)) {
+      _snack(
+        AppLocalizations.of(context)!.sgAutoAmountInvalid,
+        tone: Tone.danger,
+      );
+      return;
+    }
     final description = w.description.trim();
     final note = w.note.trim();
     final draft = SavingGoal(
@@ -184,11 +329,16 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
     FocusScope.of(context).unfocus();
     setSaving(true);
+    if (widget.isCreate) {
+      await _create(draft, w);
+      return;
+    }
     try {
-      if (widget.isCreate) {
-        await context.read<SavingGoalsRepository>().create(draft);
-      } else {
-        await _cubit!.update(draft);
+      await _cubit!.update(draft);
+      final before = original.sentAutos;
+      final after = w.sentAutos;
+      if (!listEquals(before, after)) {
+        await _cubit!.setAutoSaves([for (final a in after) a.write()]);
       }
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -198,13 +348,50 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     }
     if (!mounted) return;
     HapticFeedback.mediumImpact();
-    if (widget.isCreate) {
-      leavePage();
-      return;
-    }
     final saved = _cubit!.state.detail?.goal;
     _seededFrom = saved;
     commitSaved(saved == null ? w.trimmed() : _GoalDraft.from(saved));
+  }
+
+  /// The goal first; then its starting amount and its auto-saves. A failure
+  /// after the goal exists is said once and the page still leaves.
+  Future<void> _create(SavingGoal draft, _GoalDraft w) async {
+    final l = AppLocalizations.of(context)!;
+    final repo = context.read<SavingGoalsRepository>();
+    final String id;
+    try {
+      id = (await repo.create(draft)).goal!.id;
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setSaving(false);
+      _snack(e.message, tone: Tone.danger);
+      return;
+    }
+    String? failed;
+    try {
+      final opening = AmountInput.parse(w.opening);
+      if (opening != null && opening > 0) {
+        await repo.addEntry(
+          kind: SavingEntryKind.save,
+          amount: opening,
+          date: _isoDate(DateTime.now()),
+          goalId: id,
+          walletId: w.openingWallet?.id,
+        );
+      }
+      if (w.sentAutos.isNotEmpty) {
+        await repo.setAutoSaves(id, [for (final a in w.sentAutos) a.write()]);
+      }
+    } on ApiException catch (e) {
+      failed = e.message;
+    }
+    if (!mounted) return;
+    if (failed != null) {
+      _snack(l.sgCreatedPartly(failed), tone: Tone.warning);
+    } else {
+      HapticFeedback.mediumImpact();
+    }
+    leavePage();
   }
 
   void _snack(String message, {Tone tone = Tone.neutral}) {
@@ -378,7 +565,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final l = AppLocalizations.of(context)!;
     final auto = d.autoSave;
     final noWallet = SavingAutoSaveWallet(label: l.fpGoalsNoWallet);
-    final accounts = context.read<AccountsCubit>();
     final r = await showSavingAutoSaveSheet(
       context,
       title: l.fpGoalsAutoSheetTitle,
@@ -396,21 +582,18 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
             ),
       currencySymbol: context.readUserCurrencySymbol,
       onPickWallet: () async {
-        final picked = await showAccountPickerSheet(
-          context: context,
-          accounts: accounts.state.accounts,
-          selected: auto?.wallet == null
-              ? null
-              : accounts.byId(auto!.wallet!.id),
+        final picked = await AccountPicker.one(
+          context,
+          selectedId: auto?.wallet?.id,
           allowNone: true,
           title: l.fpGoalsAutoFrom,
         );
         return switch (picked) {
-          AccountPickerSelected(:final account) => SavingAutoSaveWallet(
+          AccountPicked(:final account) => SavingAutoSaveWallet(
             id: account.id,
             label: account.name,
           ),
-          AccountPickerCleared() => noWallet,
+          AccountPickedNone() => noWallet,
           null => null,
         };
       },
@@ -518,27 +701,19 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
 
   Future<void> _move(SavingGoalDetail d) async {
     final l = AppLocalizations.of(context)!;
-    final overview = await context.read<SavingGoalsRepository>().list();
-    if (!mounted) return;
-    final fromId = d.goal?.id;
-    final target = await showOptionSheet<String>(
+    final picked = await SavingGoalPicker.one(
       context,
       title: l.sgv2MovePick,
-      options: [
-        if (!d.isSpare)
-          SheetOption(
-            value: SavingGoalsRepository.spareId,
-            label: l.sgv2SpareName,
-          ),
-        for (final o in overview.goals)
-          if (o.id != fromId) SheetOption(value: o.id, label: o.name),
-      ],
+      allowSpare: !d.isSpare,
+      excludeIds: {?d.goal?.id},
     );
-    if (target == null || !mounted) return;
-    final toSpare = target == SavingGoalsRepository.spareId;
-    final targetName = toSpare
-        ? l.sgv2SpareName
-        : overview.goals.firstWhere((o) => o.id == target).name;
+    if (picked == null || !mounted) return;
+    final toSpare = picked is SavingSparePicked;
+    final target = picked.goalId;
+    final targetName = switch (picked) {
+      SavingGoalPicked(:final goal) => goal.name,
+      SavingSparePicked() => l.sgv2SpareName,
+    };
     final parts = await _moveSheet(
       l,
       d,
@@ -727,15 +902,113 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     String money(double v) => moneyString(context, v, symbol: symbol);
     final due = g.deadline == null ? null : DateTime.tryParse(g.deadline!);
     final days = g.daysRemaining;
-    final short = g.monthShort;
     final target = g.targetAmount;
     if (target == null) return _ongoingHero(l, g, style, accent, symbol);
+    final active = g.state == SavingGoalState.active;
+    final reached = g.status == SavingStatus.reached || g.savedAmount >= target;
+    final plan = g.monthPlan ?? 0;
+    final short = g.monthShort ?? 0;
+    final left = g.remainingAmount ?? target - g.savedAmount;
+    final months = g.behindMonths ?? 0;
+    final behind = active && !reached && g.status == SavingStatus.behind;
+    final pace = active ? savingGoalPaceRatio(g) : null;
+    final closed = g.closedAt;
+    final box = due == null
+        ? null
+        : HeroInfoBox(
+            key: const ValueKey('heroDue'),
+            icon: AppIcons.savingGoal,
+            title: l.sgv2DueOn(DateFormatter.medium(due, locale: locale)),
+            subtitle: reached
+                ? l.savingGoalCompletedLabel
+                : days != null && days > 0
+                ? l.fpGoalsDaysLeft(days)
+                : null,
+          );
+    final description = HeroDescription(
+      controller: _descriptionCtrl,
+      editing: false,
+      hint: l.commonDescription,
+      maxLength: TextLimits.description,
+      focusNode: _descriptionFocus,
+      onEnterEdit: () => enterEdit(focus: _descriptionFocus),
+    );
+    List<HeroFact> factsOf(Color? warning) => !active || reached
+        ? [
+            HeroFact(
+              l.fpGoalsFactTarget,
+              money(target),
+              icon: AppIcons.target,
+            ),
+            if (reached && closed != null)
+              HeroFact(
+                l.fpGoalsFactReachedOn,
+                DateFormatter.medium(closed, locale: locale),
+                icon: AppIcons.date,
+              ),
+            if (!reached && left > 0)
+              HeroFact(l.fpGoalsFactLeft, money(left), icon: AppIcons.hourglass),
+          ]
+        : [
+            if (plan > 0) ...[
+              HeroFact(
+                l.fpGoalsTileSaved,
+                '${money(g.monthSaved)} / ${money(plan)}',
+                icon: AppIcons.savings,
+              ),
+              HeroFact(
+                l.fpGoalsFactStillShort,
+                money(short),
+                color: short > 0 ? warning : null,
+                icon: AppIcons.hourglass,
+              ),
+            ] else
+              HeroFact(
+                l.fpGoalsTileSaved,
+                money(g.monthSaved),
+                icon: AppIcons.savings,
+              ),
+            if (pace != null)
+              HeroFact(
+                l.fpGoalsFactShouldHave,
+                money(target * pace),
+                icon: AppIcons.trendingUp,
+              ),
+            HeroFact(l.fpGoalsFactLeft, money(left), icon: AppIcons.target),
+          ];
+    final chips = [
+      if (active && reached)
+        StatusChip(
+          label: l.savingGoalCompletedLabel,
+          kind: StatusKind.done,
+          size: ChipSize.chip,
+        ),
+      if (active && !reached) ...[
+        if (short > 0)
+          StatusChip(
+            label: l.fpGoalsChipShort(money(short)),
+            kind: StatusKind.warning,
+            size: ChipSize.chip,
+          )
+        else if (plan > 0 || g.status == SavingStatus.onTrack)
+          StatusChip(
+            label: l.sgv2PaceOnTrack,
+            kind: StatusKind.active,
+            size: ChipSize.chip,
+          ),
+        if (behind)
+          StatusChip(
+            label: months > 0 ? l.fpGoalsChipLate(months) : l.fpGoalsBehind,
+            kind: StatusKind.warning,
+            size: ChipSize.chip,
+          ),
+      ],
+    ];
     return AppHeroCard(
       style: style,
-      header: HeroHeader(
-        leading: [?savingGoalStatusChip(l, g)],
-        onEdit: enterEdit,
-      ),
+      header: active
+          ? null
+          : HeroHeader(leading: [?savingGoalStatusChip(l, g)]),
       content: [
         HeroIdentity(
           icon: EditableCircle(
@@ -748,69 +1021,59 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
               fallbackColor: accent,
             ),
           ),
-          description: HeroDescription(
-            controller: _descriptionCtrl,
-            editing: false,
-            hint: l.commonDescription,
-            maxLength: TextLimits.description,
-            focusNode: _descriptionFocus,
-            onEnterEdit: () => enterEdit(focus: _descriptionFocus),
+          name: Text(g.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+          description: description,
+          trailing: _heroTrailing(box),
+        ),
+        Builder(
+          builder: (context) {
+            final hero = HeroColors.maybeOf(context);
+            return HeroRingRow(
+              ring: (size) => HeroRing(
+                size: size,
+                stroke: 14,
+                value: g.savedAmount / target,
+                marker: reached ? null : pace,
+                color: reached
+                    ? hero?.success
+                    : behind
+                    ? hero?.warning
+                    : null,
+                label: l.fpGoalsSavedLabel,
+                amount: MoneyText(g.savedAmount, symbol: symbol),
+                target: l.fpGoalsRingOf(
+                  money(target),
+                  (g.progressPct ?? 0).round(),
+                ),
+              ),
+              facts: factsOf(hero?.warning),
+            );
+          },
+        ),
+        if (chips.isNotEmpty)
+          Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: chips,
           ),
-        ),
-        HeroNumber(
-          label: l.fpGoalsSavedLabel,
-          value: MoneyText(g.savedAmount, symbol: symbol),
-          color: accent,
-          target: l.fpGoalsTargetSuffix(
-            money(target),
-            (g.progressPct ?? 0).round(),
-          ),
-        ),
-        HeroBar(
-          value: (g.progressPct ?? 0) / 100,
-          color: accent,
-          ticks: const [0.25, 0.5, 0.75],
-          left: due == null
-              ? l.sgv2NoDeadline
-              : l.sgv2DueOn(DateFormatter.medium(due, locale: locale)),
-          right: days != null && days > 0 ? l.fpGoalsDaysLeft(days) : null,
-        ),
-      ],
-      footer: [
-        for (final List<Widget> tiles in [
-          g.state != SavingGoalState.active
-              ? const []
-              : [
-                  SummaryTileView(
-                    tile: SummaryTile(
-                      label: l.fpGoalsTileShort,
-                      value: short == null ? '—' : money(short),
-                      tone: (short ?? 0) > 0
-                          ? SummaryTileTone.amber
-                          : SummaryTileTone.green,
-                    ),
-                  ),
-                  SummaryTileView(
-                    tile: SummaryTile(
-                      label: l.fpGoalsTileSaved,
-                      value: money(g.monthSaved),
-                      onTap: () => setState(() => _tab = _GoalTab.entries),
-                    ),
-                  ),
-                  SummaryTileView(
-                    tile: SummaryTile(
-                      label: l.fpGoalsTileNeeded,
-                      value: g.neededMonthly == null
-                          ? '—'
-                          : money(g.neededMonthly!),
-                    ),
-                  ),
-                ],
-        ])
-          if (tiles.isNotEmpty) HeroTiles(children: tiles),
       ],
     );
   }
+
+  /// The hero's right side: an optional info box beside the edit button.
+  Widget _heroTrailing(Widget? box) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      ?box,
+      if (box != null) const SizedBox(width: AppSpacing.sm),
+      CardActionButton(
+        key: const ValueKey('heroEdit'),
+        icon: AppIcons.edit,
+        tooltip: UiConfig.stringsOf(context).edit,
+        onTap: enterEdit,
+      ),
+    ],
+  );
 
   Widget _ongoingHero(
     AppLocalizations l,
@@ -820,13 +1083,15 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     String symbol,
   ) {
     String money(double v) => moneyString(context, v, symbol: symbol);
-    final auto = g.autoSave;
+    final active = g.state == SavingGoalState.active;
+    final autos = g.autoSaves;
+    final rule = autos.length == 1 ? autos.first.rule : null;
+    final monthly = autos.length == 1 && (rule == null || rule.monthly != null);
     return AppHeroCard(
       style: style,
-      header: HeroHeader(
-        leading: [?savingGoalStatusChip(l, g)],
-        onEdit: enterEdit,
-      ),
+      header: active
+          ? null
+          : HeroHeader(leading: [?savingGoalStatusChip(l, g)]),
       content: [
         HeroIdentity(
           icon: EditableCircle(
@@ -839,6 +1104,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
               fallbackColor: accent,
             ),
           ),
+          name: Text(g.name, maxLines: 1, overflow: TextOverflow.ellipsis),
           description: HeroDescription(
             controller: _descriptionCtrl,
             editing: false,
@@ -847,36 +1113,28 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
             focusNode: _descriptionFocus,
             onEnterEdit: () => enterEdit(focus: _descriptionFocus),
           ),
+          trailing: _heroTrailing(null),
         ),
         HeroNumber(
           label: l.fpGoalsSavedLabel,
           value: MoneyText(g.savedAmount, symbol: symbol),
-          color: accent,
         ),
-      ],
-      footer: [
-        for (final List<Widget> tiles in [
-          g.state != SavingGoalState.active
-              ? const []
-              : [
-                  SummaryTileView(
-                    tile: SummaryTile(
-                      label: l.fpGoalsTileSaved,
-                      value: money(g.monthSaved),
-                      onTap: () => setState(() => _tab = _GoalTab.entries),
-                    ),
-                  ),
-                  SummaryTileView(
-                    tile: SummaryTile(
-                      label: l.fpGoalsTileAuto,
-                      value: auto == null
-                          ? '—'
-                          : l.fpGoalsPerMonth(money(auto.amount)),
-                    ),
-                  ),
-                ],
-        ])
-          if (tiles.isNotEmpty) HeroTiles(children: tiles),
+        if (active)
+          HeroFactList(
+            facts: [
+              HeroFact(
+                l.fpGoalsTileSaved,
+                money(g.monthSaved),
+                icon: AppIcons.savings,
+              ),
+              if (monthly)
+                HeroFact(
+                  l.fpGoalsTileAuto,
+                  l.fpGoalsPerMonth(money(autos.first.amount)),
+                  icon: AppIcons.recurring,
+                ),
+            ],
+          ),
       ],
     );
   }
@@ -898,7 +1156,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         HeroNumber(
           label: l.sgv2Spare,
           value: MoneyText(d.spare?.amount ?? 0, symbol: symbol),
-          color: color,
         ),
       ],
     );
@@ -991,9 +1248,26 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
   }
 
+  /// View: a goal's auto-saves listed as the edit page lists them, read-only.
+  Widget _autoView(AppLocalizations l, SavingGoal g, String symbol) {
+    final autos = [for (final a in g.autoSaves) _AutoDraft.from(a)];
+    return SectionCard(
+      children: [
+        DetailRow(
+          label: l.sgv2AutoSave,
+          helper: autos.isEmpty ? l.sgAutoOffCaption : l.sgAutoOnCaption,
+          onLongPress: enterEdit,
+        ),
+        for (final a in autos) _autoLine(l, a, symbol, editing: false),
+        if (autos.isNotEmpty) const SizedBox(height: AppSpacing.sm),
+      ],
+    );
+  }
+
   Widget? _settings(AppLocalizations l, SavingGoalDetail d, String symbol) {
     final g = d.goal;
     if (g != null && g.state != SavingGoalState.active) return null;
+    if (g != null) return _autoView(l, g, symbol);
     final auto = d.autoSave;
     return SettingsSection(
       title: l.settingsTitle,
@@ -1060,10 +1334,51 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       hasMore: d.entries.hasMore,
       loadingMore: s.loadingMore,
       onLoadMore: _cubit!.loadMoreEntries,
-      rowDividers: true,
+      rowCards: true,
       topInset: 0,
-      children: [for (final e in items) _entryRow(l, e)],
+      children: _entryRows(l, d),
     );
+  }
+
+  /// The entries under a header per day, with the day's net for this goal (or
+  /// the spare) beside it.
+  List<Widget> _entryRows(AppLocalizations l, SavingGoalDetail d) {
+    final goalId = d.goal?.id;
+    bool here(SavingEndpoint p) => goalId == null
+        ? p.type == SavingEndpointType.spare
+        : p.type == SavingEndpointType.goal && p.id == goalId;
+    double signed(SavingEntry e) => switch (e.kind) {
+      SavingEntryKind.save => e.amount,
+      SavingEntryKind.withdraw => -e.amount,
+      SavingEntryKind.move =>
+        here(e.to)
+            ? e.amount
+            : here(e.from)
+            ? -e.amount
+            : 0,
+    };
+    final days = <String, List<SavingEntry>>{};
+    for (final e in d.entries.items) {
+      days.putIfAbsent(e.date, () => []).add(e);
+    }
+    final locale = Localizations.localeOf(context).languageCode;
+    return [
+      for (final MapEntry(key: date, value: entries) in days.entries) ...[
+        DateGroupHeader(
+          label: switch (DateFormatter.parseDay(date)) {
+            final day? => DateFormatter.friendly(
+              day,
+              today: l.commonToday,
+              yesterday: l.commonYesterday,
+              locale: locale,
+            ),
+            null => date,
+          },
+          total: entries.fold<double>(0, (sum, e) => sum + signed(e)),
+        ),
+        for (final e in entries) _entryRow(l, e),
+      ],
+    ];
   }
 
   Widget _entryRow(AppLocalizations l, SavingEntry e) {
@@ -1076,14 +1391,11 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       SavingEndpointType.spare => l.sgv2SpareName,
       _ => p.name ?? '',
     };
-    final locale = Localizations.localeOf(context).toLanguageTag();
-    final date = DateTime.tryParse(e.date);
     return SavingTxRow(
       key: ValueKey(e.id),
       kind: kind,
       title: _entryTitle(l, e),
       amount: e.amount,
-      date: date == null ? null : DateFormatter.short(date, locale: locale),
       walletLabel: e.wallet?.name ?? l.fpGoalsNoWallet,
       from: e.kind == SavingEntryKind.save ? null : end(e.from),
       to: e.kind == SavingEntryKind.withdraw ? null : end(e.to),
@@ -1150,7 +1462,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           HeroAmountField(
             controller: _targetCtrl,
             label: l.savingGoalFormTargetLabel,
-            accent: accent,
             symbol: symbol,
             helper: l.savingGoalFormTargetOptionalHint,
             onChanged: (v) => _onText(_Field.target, v),
@@ -1164,8 +1475,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           ),
         ],
       ),
-      info: _editInfo(l, goal, symbol),
-      settings: d == null ? null : _editSettings(l, d, symbol),
+      info: _planSection(l, symbol),
       note: NoteSection(
         label: l.commonNote,
         editing: true,
@@ -1195,42 +1505,194 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
   }
 
-  Widget _editInfo(AppLocalizations l, SavingGoal? goal, String symbol) {
-    final locale = Localizations.localeOf(context).toLanguageTag();
-    String money(double v) => moneyString(context, v, symbol: symbol);
-    final deadline = working.deadline;
-    final saved = goal?.savedAmount ?? 0;
-    final target = AmountInput.parse(working.target);
-    final plan = SavingPlanPreview.of(
-      target: target ?? 0,
-      saved: saved,
-      deadline: deadline,
+  String _day(DateTime d) => DateFormatter.medium(
+    d,
+    locale: Localizations.localeOf(context).toLanguageTag(),
+  );
+
+  Widget _walletChip(
+    AppLocalizations l,
+    SavingWalletRef? wallet, {
+    VoidCallback? onTap,
+  }) {
+    final palette = Theme.of(context).extension<AppColors>()!;
+    return AppChip(
+      label: wallet?.name ?? l.fpGoalsNoWallet,
+      icon: IconRegistry.get(wallet?.iconCode?.icon, fallback: AppIcons.wallet),
+      color: wallet?.iconCode.tintFor(palette),
+      trailing: onTap == null ? AppChipTrailing.none : AppChipTrailing.dropdown,
+      size: ChipSize.control,
+      onTap: onTap,
     );
-    final needed = plan.neededMonthly;
-    if (target == null) return const SizedBox.shrink();
-    return InfoBox(
-      rows: [
-        InfoRow(
+  }
+
+  /// Edit / create: when it's due, what it starts with (create only), and the
+  /// auto-saves.
+  Widget _planSection(AppLocalizations l, String symbol) {
+    final w = working;
+    final theme = Theme.of(context);
+    return SectionCard(
+      title: l.sgPlanSection,
+      description: l.sgPlanSectionDesc,
+      children: [
+        DetailRow(
           label: l.savingGoalFormDeadlineLabel,
-          value: deadline == null
-              ? l.savingGoalFormDeadlinePlaceholder
-              : DateFormatter.medium(deadline, locale: locale),
+          trailing: Text(
+            w.deadline == null
+                ? l.savingGoalFormDeadlinePlaceholder
+                : _day(w.deadline!),
+          ),
           showChevron: true,
           onTap: _pickDeadline,
         ),
-        InfoRow(
-          label: l.fpGoalsPlanLeft(money(saved), money(plan.remaining)),
-          value: needed == null ? null : l.fpGoalsPlanNeeded(money(needed)),
+        if (widget.isCreate)
+          DetailStacked(
+            label: l.sgOpeningLabel,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l.sgOpeningHelp,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppInput.card(
+                        controller: _openingCtrl,
+                        type: AppInputType.amount,
+                        currencySymbol: symbol,
+                        hint: '0',
+                        onChanged: (v) => _onText(_Field.opening, v),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    _walletChip(l, w.openingWallet, onTap: _pickOpeningWallet),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        SettingToggleRow(
+          label: l.sgv2AutoSave,
+          caption: w.autoOn ? l.sgAutoOnCaption : l.sgAutoOffCaption,
+          value: w.autoOn,
+          submits: false,
+          onChanged: _toggleAutoDraft,
         ),
+        if (w.autoOn) ...[
+          for (final a in w.autos) _autoLine(l, a, symbol, editing: true),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.xs,
+              AppSpacing.lg,
+              AppSpacing.md,
+            ),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: AppButton(
+                icon: AppIcons.add,
+                label: l.sgAutoAdd,
+                variant: AppButtonVariant.outlined,
+                size: AppButtonSize.control,
+                onPressed: _addAuto,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
 
-  Widget? _editSettings(
+  /// One auto-save laid out like a split-bill row: the wallet, the amount,
+  /// ✕; its round and next date under the name.
+  Widget _autoLine(
     AppLocalizations l,
-    SavingGoalDetail d,
-    String symbol,
-  ) => _settings(l, d, symbol);
+    _AutoDraft a,
+    String symbol, {
+    required bool editing,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    final next = a.nextDate == null ? null : DateTime.tryParse(a.nextDate!);
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.xs,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SplitRow(
+            avatar: IconCodeWidget(
+              iconCode: a.wallet?.iconCode,
+              size: SplitRow.avatarSize,
+              fallbackIcon: AppIcons.wallet,
+              fallbackColor: scheme.onSurfaceVariant,
+            ),
+            name: SplitRowName.picked(
+              a.wallet?.name ?? l.fpGoalsNoWallet,
+              onTap: editing ? () => _pickAutoWallet(a) : null,
+            ),
+            amount: editing
+                ? SizedBox(
+                    width: 104,
+                    height: SplitRow.height,
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: AppInput.card(
+                        controller: _autoCtrl(a),
+                        type: AppInputType.amount,
+                        hint: '0',
+                        onChanged: (v) => _onAutoAmount(a, v),
+                      ),
+                    ),
+                  )
+                : MoneyText(AmountInput.parse(a.amount) ?? 0, symbol: symbol),
+            trailing: editing
+                ? SplitRowAction(
+                    icon: AppIcons.close,
+                    tooltip: l.commonRemove,
+                    onTap: () => _removeAuto(a),
+                  )
+                : null,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Padding(
+            padding: const EdgeInsetsDirectional.only(
+              start: SplitRow.avatarSize + AppSpacing.sm,
+            ),
+            child: Wrap(
+              spacing: AppSpacing.xs,
+              runSpacing: AppSpacing.xs,
+              children: [
+                AppChip(
+                  label: recurrenceLabel(l, a.rule, showEnd: true),
+                  icon: AppIcons.recurring,
+                  tone: AppChipTone.primary,
+                  trailing: editing
+                      ? AppChipTrailing.dropdown
+                      : AppChipTrailing.none,
+                  size: ChipSize.chip,
+                  onTap: editing ? () => _pickAutoRule(a) : null,
+                ),
+                AppChip(
+                  label: next == null
+                      ? l.sgAutoFirst(_day(a.rule.start))
+                      : l.sgAutoNext(_day(next)),
+                  icon: AppIcons.date,
+                  size: ChipSize.chip,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget? _endZone(AppLocalizations l, SavingGoalDetail d, SavingGoal g) {
     final a = g.actions;
@@ -1270,6 +1732,92 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   }
 }
 
+/// One auto-save in the edit page; [key] ties it to its amount field.
+class _AutoDraft {
+  _AutoDraft({
+    required this.amount,
+    required this.rule,
+    this.id,
+    this.wallet,
+    this.nextDate,
+    int? key,
+  }) : key = key ?? _nextKey++;
+
+  static int _nextKey = 0;
+
+  factory _AutoDraft.from(SavingAutoSave a) => _AutoDraft(
+    id: a.id,
+    amount: AmountInput.format(a.amount),
+    wallet: a.wallet,
+    rule:
+        a.rule ??
+        RecurrenceRule(
+          freq: RecurrenceFreq.monthly,
+          start: _nextMonthDay(a.day),
+          monthly: RecurrenceMonthly(
+            mode: RecurrenceMonthlyMode.day,
+            day: a.day,
+          ),
+        ),
+    nextDate: a.nextDate,
+  );
+
+  final int key;
+  final String? id;
+  final String amount;
+  final SavingWalletRef? wallet;
+  final RecurrenceRule rule;
+
+  /// The BE's next date; dropped once the round changes.
+  final String? nextDate;
+
+  _AutoDraft copyWith({
+    String? amount,
+    SavingWalletRef? wallet,
+    bool clearWallet = false,
+    RecurrenceRule? rule,
+  }) => _AutoDraft(
+    key: key,
+    id: id,
+    amount: amount ?? this.amount,
+    wallet: clearWallet ? null : (wallet ?? this.wallet),
+    rule: rule ?? this.rule,
+    nextDate: rule == null ? nextDate : null,
+  );
+
+  SavingAutoSaveWrite write() => SavingAutoSaveWrite(
+    id: id,
+    amount: AmountInput.parse(amount) ?? 0,
+    rule: rule,
+    accountId: wallet?.id,
+  );
+
+  @override
+  bool operator ==(Object other) =>
+      other is _AutoDraft &&
+      other.id == id &&
+      other.amount == amount &&
+      other.wallet?.id == wallet?.id &&
+      other.rule == rule;
+
+  @override
+  int get hashCode => Object.hash(id, amount, wallet?.id, rule);
+}
+
+/// The next [day] of a month on or after today (a short month: its last day).
+DateTime _nextMonthDay(int day) {
+  final now = DateTime.now();
+  DateTime on(int y, int m) {
+    final last = DateTime(y, m + 1, 0).day;
+    return DateTime(y, m, day > last ? last : day);
+  }
+
+  final d = on(now.year, now.month);
+  return d.isBefore(DateTime(now.year, now.month, now.day))
+      ? on(now.year, now.month + 1)
+      : d;
+}
+
 class _GoalDraft {
   const _GoalDraft({
     this.name = '',
@@ -1278,6 +1826,10 @@ class _GoalDraft {
     this.iconCode,
     this.description = '',
     this.note = '',
+    this.opening = '',
+    this.openingWallet,
+    this.autoOn = false,
+    this.autos = const [],
   });
 
   factory _GoalDraft.from(SavingGoal g) => _GoalDraft(
@@ -1287,6 +1839,8 @@ class _GoalDraft {
     iconCode: g.iconCode,
     description: g.description ?? '',
     note: g.note ?? '',
+    autoOn: g.autoSaves.isNotEmpty,
+    autos: [for (final a in g.autoSaves) _AutoDraft.from(a)],
   );
 
   final String name;
@@ -1296,6 +1850,13 @@ class _GoalDraft {
   final IconCode? iconCode;
   final String description;
   final String note;
+
+  /// Create only: the first entry, saved right after the goal.
+  final String opening;
+  final SavingWalletRef? openingWallet;
+
+  final bool autoOn;
+  final List<_AutoDraft> autos;
 
   _GoalDraft trimmed() => copyWith(
     name: name.trim(),
@@ -1312,6 +1873,11 @@ class _GoalDraft {
     bool clearIcon = false,
     String? description,
     String? note,
+    String? opening,
+    SavingWalletRef? openingWallet,
+    bool clearOpeningWallet = false,
+    bool? autoOn,
+    List<_AutoDraft>? autos,
   }) => _GoalDraft(
     name: name ?? this.name,
     target: target ?? this.target,
@@ -1319,7 +1885,16 @@ class _GoalDraft {
     iconCode: clearIcon ? null : (iconCode ?? this.iconCode),
     description: description ?? this.description,
     note: note ?? this.note,
+    opening: opening ?? this.opening,
+    openingWallet: clearOpeningWallet
+        ? null
+        : (openingWallet ?? this.openingWallet),
+    autoOn: autoOn ?? this.autoOn,
+    autos: autos ?? this.autos,
   );
+
+  /// What PUT …/auto-saves should hold.
+  List<_AutoDraft> get sentAutos => autoOn ? autos : const [];
 
   @override
   bool operator ==(Object other) =>
@@ -1329,9 +1904,23 @@ class _GoalDraft {
       other.deadline == deadline &&
       other.iconCode == iconCode &&
       other.description == description &&
-      other.note == note;
+      other.note == note &&
+      other.opening == opening &&
+      other.openingWallet?.id == openingWallet?.id &&
+      other.autoOn == autoOn &&
+      listEquals(other.autos, autos);
 
   @override
-  int get hashCode =>
-      Object.hash(name, target, deadline, iconCode, description, note);
+  int get hashCode => Object.hash(
+    name,
+    target,
+    deadline,
+    iconCode,
+    description,
+    note,
+    opening,
+    openingWallet?.id,
+    autoOn,
+    Object.hashAll(autos),
+  );
 }

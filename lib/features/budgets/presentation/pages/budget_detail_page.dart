@@ -6,6 +6,7 @@ import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -14,8 +15,11 @@ import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../recurring/domain/recurrence_rule.dart' show today;
+import '../../../recurring/presentation/occurrence_actions.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
-import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
+import '../../../tags/presentation/widgets/tag_chip.dart';
+import '../../../tags/presentation/widgets/tag_picker.dart';
+import '../../../transactions/domain/refs.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../data/budgets_repository.dart';
 import '../../domain/budget.dart';
@@ -245,31 +249,24 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       for (final t in tags.state.tags)
         if (working.tags.contains(t.name)) t.id,
     ];
-    final picked = await showTagPickerSheet(
+    final picked = await TagPicker.many(
       context,
       selected: selectedIds.toSet(),
       title: l.bgScopeTags,
     );
     if (picked == null || !mounted) return;
     setState(() => _scopeMissing = false);
-    _change(
-      working.copyWith(
-        tags: [
-          for (final id in picked)
-            if (tags.byId(id) case final t?) t.name,
-        ],
-      ),
-    );
+    _change(working.copyWith(tags: [for (final t in picked.tags) t.name]));
   }
 
   Future<void> _pickWallets() async {
-    final accounts = context.read<AccountsCubit>().state.accounts;
     final ids = await showBudgetWalletsPicker(
       context,
-      all: accounts,
       selected: [for (final w in working.wallets) w.id],
     );
     if (!mounted || ids == null) return;
+    // Every wallet, archived ones too: a ticked archived wallet keeps its name.
+    final accounts = context.read<AccountsCubit>().state.allAccounts;
     setState(() => _scopeMissing = false);
     _change(
       working.copyWith(
@@ -583,7 +580,18 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     double bottom,
   ) {
     final b = d.budget;
-    final settings = _settings(l, editing: false);
+    final strips = _scopeStrips(l);
+    final scope = strips.isEmpty
+        ? null
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final (i, s) in strips.indexed) ...[
+                if (i > 0) const SizedBox(height: AppSpacing.sm),
+                s,
+              ],
+            ],
+          );
     final note = NoteSection(
       label: l.commonNote,
       editing: false,
@@ -615,7 +623,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
             _viewHero(l, d),
           ],
         ),
-        settings: settings,
+        tags: scope,
         note: note,
         records: SectionCard(
           title: l.fpBudgetsTabItems,
@@ -639,7 +647,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
 
     return TabbedDetailBody<_Tab>(
       hero: _viewHero(l, d),
-      belowHero: [?banner, settings, note],
+      belowHero: [?banner, ?scope, note],
       tabs: [
         AppTab(value: _Tab.items, label: l.fpBudgetsTabItems),
         AppTab(value: _Tab.periods, label: l.fpBudgetsTabPeriods),
@@ -680,47 +688,57 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
   }
 
+  /// The ring hero: the round box beside the edit button, a plan status, the
+  /// ring with what is left, and the facts beside it.
   Widget _viewHero(AppLocalizations l, BudgetDetail d) {
     final b = d.budget;
     final p = b.period;
     final f = d.forecast;
     final symbol = context.readUserCurrencySymbol;
-    final accent = budgetToneColor(context, b, p);
-    final over = p.overBy > 0;
-    final range = budgetRange(context, p.start, p.end);
-    final status = b.state == BudgetState.active
+    String money(num v) => budgetRowMoney(context, v);
+    // Only a warning / over period paints over the card's own color.
+    final toneColor = p.tone == BudgetTone.neutral
         ? null
-        : budgetStatusChip(l, b);
+        : budgetToneColor(context, b, p);
+    final over = p.overBy > 0;
+    final active = b.state == BudgetState.active;
+    final status = active ? null : budgetStatusChip(l, b);
+    final pace = f.pacePct;
+    final warn = b.warnPct;
+    final planned = pace == null ? null : p.amount * pace / 100;
+    final ahead = planned == null ? 0.0 : p.used - planned;
+    final description = (b.description ?? '').trim();
+
+    final days = [
+      if (f.daysLeft != null) l.bgRowDaysLeft(f.daysLeft!),
+      if (f.elapsedDays != null && f.totalDays != null)
+        '${f.elapsedDays}/${f.totalDays}',
+    ];
+    final box = HeroInfoBox(
+      key: const ValueKey('heroRound'),
+      icon: b.recurring ? AppIcons.recurring : AppIcons.date,
+      title: b.recurring && b.rule != null
+          ? _roundText(l, working)
+          : (b.openEnded ? l.bgRowOpenEnded : l.bgRowOneOff),
+      subtitle: days.isEmpty ? null : days.join(' | '),
+    );
+    final (statusKind, statusLabel) = over
+        ? (StatusKind.over, l.bgStatusOverBy(money(p.overBy)))
+        : ahead >= 1
+        ? (StatusKind.warning, l.bgStatusAhead(money(ahead)))
+        : p.status == BudgetStatus.warn
+        ? (StatusKind.warning, l.bgStatusWarn)
+        : (StatusKind.active, l.bgStatusOnPlan);
+    final end = p.end;
+    final next = b.recurring && end != null
+        ? DateTime(end.year, end.month, end.day + 1)
+        : null;
     return AppHeroCard(
       style: HeroStyle.tinted(
         color: budgetTint(context, b),
         glyph: AppIcons.budget,
       ),
-      header: HeroHeader(
-        leading: [
-          ?status,
-          if (b.recurring && b.rule != null)
-            AppChip(
-              label: l.bgChipRecurring(budgetRuleLabel(l, b.rule!)),
-              selected: true,
-            ),
-          AppChip(
-            label: f.elapsedDays != null && f.totalDays != null
-                ? l.fpBudgetsRangeDay(range, f.elapsedDays!, f.totalDays!)
-                : range,
-            icon: AppIcons.date,
-            selected: true,
-          ),
-          if (b.openEnded) AppChip(label: l.bgRowOpenEnded, selected: true),
-          if (p.overridden)
-            AppChip(
-              label: l.bgPeriodOverridden,
-              tone: AppChipTone.info,
-              selected: true,
-            ),
-        ],
-        onEdit: _canEdit ? enterEdit : null,
-      ),
+      header: status == null ? null : HeroHeader(leading: [status]),
       content: [
         HeroIdentity(
           icon: EditableCircle(
@@ -739,69 +757,105 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
               iconCode: b.iconCode,
             ),
           ),
-          description: HeroDescription(
-            controller: _ctrl[_Field.description]!,
-            editing: false,
-            focusNode: _descriptionFocus,
-            hint: l.commonDescription,
-            maxLength: TextLimits.description,
-            onEnterEdit: _canEdit
-                ? () => enterEdit(focus: _descriptionFocus)
-                : null,
+          name: Text(
+            b.name.isEmpty ? l.budgetDetailFallbackTitle : b.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          description: description.isEmpty
+              ? null
+              : HeroDescription(
+                  controller: _ctrl[_Field.description]!,
+                  editing: false,
+                  focusNode: _descriptionFocus,
+                  hint: l.commonDescription,
+                  maxLength: TextLimits.description,
+                  onEnterEdit: _canEdit
+                      ? () => enterEdit(focus: _descriptionFocus)
+                      : null,
+                ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              box,
+              if (_canEdit) ...[
+                const SizedBox(width: AppSpacing.sm),
+                CardActionButton(
+                  key: const ValueKey('heroEdit'),
+                  icon: AppIcons.edit,
+                  tooltip: UiConfig.stringsOf(context).edit,
+                  onTap: enterEdit,
+                ),
+              ],
+            ],
           ),
         ),
-        HeroNumber(
-          label: over ? l.fpBudgetsOverLabel : l.fpBudgetsLeftLabel,
-          value: MoneyText(over ? p.overBy : p.remaining, symbol: symbol),
-          color: accent,
-          target: l.fpBudgetsLimitTarget(budgetRowMoney(context, p.amount)),
+        HeroRingRow(
+          ring: (size) => HeroRing(
+            size: size,
+            stroke: 14,
+            value: p.usedRatio,
+            expected: p.expected > 0 ? p.expectedRatio : null,
+            marker: pace == null ? null : pace / 100,
+            alert: warn == null ? null : warn / 100,
+            color: toneColor,
+            label: over ? l.fpBudgetsOverLabel : l.fpBudgetsLeftLabel,
+            amount: MoneyText(over ? p.overBy : p.remaining, symbol: symbol),
+            target: l.bgRingOf(money(p.amount)),
+          ),
+          facts: [
+            HeroFact(l.bgFactUsed, money(p.used), icon: AppIcons.receipt),
+            if (p.expected > 0)
+              HeroFact(
+                l.bgFactPending,
+                money(p.expected),
+                icon: AppIcons.scheduled,
+              ),
+            if (planned != null)
+              HeroFact(
+                l.bgFactPlanToday,
+                money(planned),
+                icon: AppIcons.trendingUp,
+              ),
+            if (over && next != null)
+              HeroFact(
+                l.bgFactNextRound,
+                DateFormatter.short(
+                  next,
+                  locale: Localizations.localeOf(context).languageCode,
+                ),
+                icon: AppIcons.recurring,
+              )
+            else if (f.dailyAllowance != null)
+              HeroFact(
+                l.fpBudgetsTileDaily,
+                money(f.dailyAllowance!),
+                icon: AppIcons.date,
+              ),
+          ],
         ),
-        HeroBar(
-          value: p.usedRatio,
-          expected: p.expected > 0 ? p.expectedRatio : null,
-          marker: f.pacePct == null ? null : f.pacePct! / 100,
-          color: accent,
-          left: l.fpBudgetsUsedCaption(budgetRowMoney(context, p.used)),
-          right: f.pacePct == null ? null : l.fpBudgetsPaceCaption(f.pacePct!),
-        ),
-      ],
-      footer: [
-        for (final List<Widget> tiles in [_tiles(l, d)])
-          if (tiles.isNotEmpty) HeroTiles(children: tiles),
+        if (active || p.overridden)
+          Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: [
+              if (active)
+                StatusChip(
+                  key: const ValueKey('heroPlanStatus'),
+                  label: statusLabel,
+                  kind: statusKind,
+                  size: ChipSize.chip,
+                ),
+              if (p.overridden)
+                StatusChip.tone(
+                  label: l.bgPeriodOverridden,
+                  tone: AppChipTone.neutral,
+                  size: ChipSize.chip,
+                ),
+            ],
+          ),
       ],
     );
-  }
-
-  List<Widget> _tiles(AppLocalizations l, BudgetDetail d) {
-    final f = d.forecast;
-    Widget tile(String label, String value, [SummaryTileTone? tone]) =>
-        SummaryTileView(
-          tile: SummaryTile(
-            label: label,
-            value: value,
-            tone: tone ?? SummaryTileTone.neutral,
-          ),
-        );
-    return [
-      if (f.dailyAllowance != null)
-        tile(
-          l.fpBudgetsTileDaily,
-          budgetRowMoney(context, f.dailyAllowance!),
-          SummaryTileTone.green,
-        ),
-      if (f.projectedEnd != null)
-        tile(
-          l.fpBudgetsTileProjected,
-          budgetRowMoney(context, f.projectedEnd!),
-          (f.forecastOverBy ?? 0) > 0 ? SummaryTileTone.amber : null,
-        ),
-      if (f.daysLeft != null)
-        tile(l.fpBudgetsTileDaysLabel, l.fpBudgetsDaysValue(f.daysLeft!)),
-      if (f.avgMonthly != null)
-        tile(l.bgTileAvgMonthly, budgetRowMoney(context, f.avgMonthly!)),
-      if (f.thisMonth != null)
-        tile(l.bgTileThisMonth, budgetRowMoney(context, f.thisMonth!)),
-    ].take(4).toList();
   }
 
   Widget _itemsTab(AppLocalizations l, BudgetDetail d, List<String> meta) {
@@ -811,7 +865,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       isEmpty: d.items.items.isEmpty,
       onRetry: _load,
       empty: EmptyView.compact(message: l.bgItemsEmpty),
-      rowDividers: true,
+      rowCards: true,
       topInset: 0,
       loadingMore: _itemsBusy,
       loadMoreError: _itemsError,
@@ -896,23 +950,41 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
 
   List<Widget> _itemRows(AppLocalizations l, BudgetDetail d) {
     final out = <Widget>[];
+    final dayTotal = <DateTime, double>{};
+    for (final i in d.items.items) {
+      final date = i.date;
+      if (date != null) dayTotal[date] = (dayTotal[date] ?? 0) - i.amount;
+    }
     DateTime? last;
     for (final i in d.items.items) {
       final date = i.date;
       if (date != null && date != last) {
-        out.add(DateGroupHeader(label: budgetDate(context, date)));
+        out.add(
+          DateGroupHeader(
+            label: budgetDate(context, date),
+            total: dayTotal[date],
+          ),
+        );
         last = date;
       }
-      out.add(_itemRow(l, d.budget, i));
+      out.add(_itemRow(l, i));
     }
     return out;
   }
 
-  Widget _itemRow(AppLocalizations l, Budget b, BudgetItem i) {
+  Widget _itemRow(AppLocalizations l, BudgetItem i) {
     final title = (i.description ?? '').isNotEmpty
         ? i.description!
         : (i.category?.name ?? i.event?.name ?? '—');
-    final reason = budgetReasonText(l, b, i);
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final walletCode = i.account?.iconCode;
+    final walletFill = walletCode?.background != null
+        ? walletCode!.bgColorFor(palette)
+        : null;
+    final walletOnFill =
+        walletFill != null && (walletCode?.iconColors.isNotEmpty ?? false)
+        ? resolveColor(walletCode!.iconColors.first, palette)
+        : null;
     return TxRow(
       leading: IconDisplay(
         type: IconType.category,
@@ -929,17 +1001,36 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
               size: 14,
               iconCode: i.account!.iconCode,
             ),
-      source: AppChip(
-        label: i.event != null && i.source == BudgetSource.event
-            ? '${l.bgSourceEvent} ${i.event!.name}'
-            : budgetSourceLabel(l, i.source),
-        size: ChipSize.mini,
-        tone: AppChipTone.neutral,
-      ),
+      walletFill: walletFill,
+      walletOnFill: walletOnFill,
+      walletGlyph: walletFill == null
+          ? null
+          : IconRegistry.get(
+              walletCode!.icon,
+              fallback: IconType.account.fallbackIcon,
+            ),
+      source: i.source == BudgetSource.normal
+          ? null
+          : AppChip(
+              label: i.event != null && i.source == BudgetSource.event
+                  ? '${l.bgSourceEvent} ${i.event!.name}'
+                  : budgetSourceLabel(l, i.source),
+              size: ChipSize.mini,
+              tone: AppChipTone.neutral,
+            ),
       category: i.category != null && i.category!.name != title
           ? i.category!.name
           : null,
-      meta: [?reason],
+      tags: [
+        for (final t in i.tags)
+          TextSpan(
+            text: '#$t',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: tagColor(i.tagIcons[t], palette),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+      ],
       recurring: i.recurringItemId != null,
       progress: i.recurringSeq == null
           ? null
@@ -947,155 +1038,301 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
                 ? '${i.recurringSeq}'
                 : '${i.recurringSeq}/${i.recurringTotal}'),
       dimmed: i.expected,
-      onTap: i.kind == 'transaction'
-          ? () => openPage(context, '/transactions/${i.id}')
-          : null,
+      onTap: switch (i.kind) {
+        'transaction' => () => openPage(context, '/transactions/${i.id}'),
+        'recurring_item'
+            when i.recurringItemId != null ||
+                (i.ruleId != null && i.slot != null) =>
+          () => openOccurrence(
+            context,
+            itemId: i.recurringItemId,
+            ruleId: i.ruleId,
+            slot: i.slot,
+            onChanged: (_) => _load(),
+          ),
+        _ => null,
+      },
     );
   }
 
-  Widget _settings(AppLocalizations l, {required bool editing}) {
-    final w = working;
-    final scope = budgetScopeSummary(
-      l,
-      all: w.allScope,
-      categories: w.categories,
-      tags: w.tags,
-      wallets: w.wallets,
-    );
-    final warn = w.warnPct == null ? l.bgWarnOff : l.bgWarnPct(w.warnPct!);
-    return SettingsSection(
-      title: l.settingsTitle,
-      description: l.fpBudgetsSettingsDesc,
+  String _endText(AppLocalizations l, BudgetDraft w) => switch (w.end.kind) {
+    'date' => budgetDate(context, w.end.date!),
+    'count' => l.bgEndPeriods(w.end.count ?? 0),
+    _ => l.bgEndNone,
+  };
+
+  /// "รายสัปดาห์ ทุกวันจันทร์".
+  String _roundText(AppLocalizations l, BudgetDraft w) {
+    final days = recurrenceLabel(l, w.kitRule);
+    final n = w.rule.interval < 1 ? 1 : w.rule.interval;
+    return switch (w.rule.freq) {
+      'daily' => budgetRuleLabel(l, w.rule),
+      'weekly' ||
+      'monthly' when n == 1 => '${budgetRuleLabel(l, w.rule)} $days',
+      _ => days,
+    };
+  }
+
+  String _roundEndText(AppLocalizations l, BudgetDraft w) =>
+      switch (w.end.kind) {
+        'date' => l.bgEndOnDate(budgetDate(context, w.end.date!)),
+        'count' => l.bgEndPeriods(w.end.count ?? 0),
+        _ => l.bgEndNone,
+      };
+
+  /// The round as chips: its days, the first period's dates, how it ends.
+  Widget _roundChips(AppLocalizations l, BudgetDraft w) {
+    var end = budgetFirstPeriodEnd(w.rule, w.start);
+    final stop = w.end.kind == 'date' ? w.end.date : null;
+    if (stop != null && stop.isBefore(end)) end = stop;
+    return Wrap(
+      spacing: AppSpacing.xs,
+      runSpacing: AppSpacing.xs,
       children: [
-        if (!editing)
-          SettingSummaryRow(
-            label: l.fpBudgetsCountsWhat,
-            summary: scope ?? l.quickEventNone,
-            onTap: _canEdit ? enterEdit : null,
-          )
-        else ...[
-          SettingToggleRow(
-            label: l.bgScopeAll,
-            value: w.allScope,
-            submits: false,
-            onChanged: (v) {
-              setState(() => _scopeMissing = false);
-              _change(w.copyWith(allScope: v));
-            },
+        AppChip(
+          label: _roundText(l, w),
+          icon: AppIcons.recurring,
+          tone: AppChipTone.primary,
+          size: ChipSize.chip,
+        ),
+        AppChip(
+          label: budgetRangeShort(context, w.start, end),
+          icon: AppIcons.date,
+          tone: AppChipTone.primary,
+          size: ChipSize.chip,
+        ),
+        AppChip(label: _roundEndText(l, w), size: ChipSize.chip),
+      ],
+    );
+  }
+
+  /// Edit mode only (view shows the period in the hero): start, then a check
+  /// for whether it repeats beside the round, or the end date when it doesn't.
+  Widget _periodSection(AppLocalizations l) {
+    final w = working;
+    void toggleRepeat() => _change(
+      w.copyWith(
+        recurring: !w.recurring,
+        end: w.recurring && w.end.kind == 'count'
+            ? const BudgetEnd.none()
+            : w.end,
+      ),
+    );
+
+    return SectionCard(
+      title: l.bgSectionPeriod,
+      description: l.bgSectionPeriodDesc,
+      children: [
+        DetailRow(
+          label: l.bgFieldStart,
+          helper: l.bgFieldStartHelp,
+          trailing: Text(
+            budgetDate(context, w.start),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          if (!w.allScope) ...[
-            // Icons + a count, not names: a long list never gets cut to "…";
-            // the names are in the tooltip and the picker.
-            SettingSummaryRow(
-              label: l.bgScopeCategories,
-              summary: l.quickEventNone,
-              trailing: w.categories.isEmpty
-                  ? null
-                  : IconStackCount(
-                      count: w.categories.length,
-                      tooltip: budgetScopeSummary(
-                        l,
-                        all: false,
-                        categories: w.categories,
-                        tags: const [],
-                        wallets: const [],
-                      ),
-                      icons: [
-                        for (final c in w.categories)
-                          IconDisplay(
-                            type: IconType.category,
-                            size: 24,
-                            iconCode: c.category.iconCode,
-                          ),
-                      ],
-                    ),
-              onTap: _pickCategories,
-            ),
-            SettingSummaryRow(
-              label: l.bgScopeTags,
-              summary: l.quickEventNone,
-              trailing: w.tags.isEmpty
-                  ? null
-                  : IconStackCount(
-                      count: w.tags.length,
-                      tooltip: w.tags.join(', '),
-                      icons: const [AppIcon(AppIcons.tag, size: 18)],
-                    ),
-              onTap: _pickTags,
-            ),
-            SettingSummaryRow(
-              label: l.bgScopeWallets,
-              summary: l.quickEventNone,
-              trailing: w.wallets.isEmpty
-                  ? null
-                  : IconStackCount(
-                      count: w.wallets.length,
-                      tooltip: w.wallets.map((x) => x.name).join(', '),
-                      icons: [
-                        for (final a in w.wallets)
-                          IconDisplay(
-                            type: IconType.account,
-                            size: 24,
-                            iconCode: a.iconCode,
-                          ),
-                      ],
-                    ),
-              error: _scopeMissing && w.scopeEmpty ? l.bgScopeRequired : null,
-              onTap: _pickWallets,
-            ),
-          ],
-        ],
-        if (editing)
-          SettingMenuRow<int>(
-            label: l.fpBudgetsWarnAt,
-            value: warn,
-            selected: w.warnPct ?? 0,
-            options: [
-              for (final p in const [70, 80, 90, 95])
-                SheetOption(value: p, label: l.bgWarnPct(p)),
-              SheetOption(value: 0, label: l.bgWarnOff),
-            ],
-            onSelected: (p) => _change(
-              p == 0 ? w.copyWith(clearWarn: true) : w.copyWith(warnPct: p),
-            ),
-            // Any whole percent the backend takes (1–100).
-            custom: SettingMenuCustom<int>(
-              hint: l.commonCustomValue,
-              suffix: '%',
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(3),
-              ],
-              parse: (t) {
-                final n = int.tryParse(t);
-                return n == null || n < 1 ? null : n.clamp(1, 100);
-              },
-            ),
-          )
-        else
-          SettingSummaryRow(
-            label: l.fpBudgetsWarnAt,
-            summary: warn,
-            onTap: _canEdit ? enterEdit : null,
+          showChevron: true,
+          onTap: _pickStart,
+        ),
+        DetailPairRow(
+          first: DetailPairCell(
+            label: l.bgFieldRepeatToggle,
+            value: SelectCheck(value: w.recurring, onTap: null),
+            onTap: toggleRepeat,
           ),
-        SettingToggleRow(
-          label: l.fpBudgetsRepeat,
-          caption: l.fpBudgetsRepeatCaption,
-          value: w.recurring,
-          submits: false,
-          onChanged: _canEdit
-              ? (v) => _change(
-                  w.copyWith(
-                    recurring: v,
-                    end: !v && w.end.kind == 'count'
-                        ? const BudgetEnd.none()
-                        : w.end,
-                  ),
-                )
-              : null,
+          second: DetailPairCell(
+            label: w.recurring ? l.bgFieldRepeat : l.bgFieldEnd,
+            value: w.recurring ? _roundChips(l, w) : Text(_endText(l, w)),
+            chevron: true,
+            onTap: w.recurring ? _pickRule : _pickEnd,
+          ),
         ),
       ],
     );
+  }
+
+  /// View mode, under the hero: one icon + chips strip per scope list the
+  /// budget uses. "All" shows none.
+  List<Widget> _scopeStrips(AppLocalizations l) {
+    final w = working;
+    if (w.allScope) return const [];
+    final hold = _canEdit ? enterEdit : null;
+    return [
+      for (final (icon, chips) in [
+        (AppIcons.category, _categoryChips(l, w.categories)),
+        (AppIcons.wallet, _walletChips(w.wallets)),
+        (AppIcons.tag, _tagChips(w.tags)),
+      ])
+        if (chips.isNotEmpty)
+          IconChipStrip(
+            icon: icon,
+            chips: chips,
+            maxLines: 2,
+            onLongPress: hold,
+          ),
+    ];
+  }
+
+  /// What the budget counts. Categories, wallets and tags combine with AND;
+  /// inside one list any entry will do.
+  Widget _scopeSection(AppLocalizations l) {
+    final w = working;
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    final hint = Text(
+      l.bgScopeAndHint,
+      style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+    );
+    final rows = [
+      _scopeRow(
+        icon: AppIcons.category,
+        label: l.bgScopeCategories,
+        chips: _categoryChips(l, w.categories),
+        pickLabel: l.multiPickCategoriesTitle,
+        onPick: _pickCategories,
+      ),
+      _scopeRow(
+        icon: AppIcons.wallet,
+        label: l.bgScopeWallets,
+        chips: _walletChips(w.wallets),
+        pickLabel: l.multiPickWalletsTitle,
+        onPick: _pickWallets,
+      ),
+      _scopeRow(
+        icon: AppIcons.tag,
+        label: l.bgScopeTags,
+        chips: _tagChips(w.tags),
+        pickLabel: l.bgScopePickTags,
+        onPick: _pickTags,
+      ),
+    ];
+    // No card header: the question heads the first row, its answer beside it.
+    return SectionCard(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l.bgSectionScope,
+                      style: detailLabelStyle(context),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  SegmentedChoice<bool>(
+                    segments: [
+                      ChoiceSegment(true, l.bgScopeAll),
+                      ChoiceSegment(false, l.bgScopeChoose),
+                    ],
+                    selected: w.allScope,
+                    onChanged: (all) {
+                      if (all) setState(() => _scopeMissing = false);
+                      _change(w.copyWith(allScope: all));
+                    },
+                  ),
+                ],
+              ),
+              if (!w.allScope) ...[const SizedBox(height: AppSpacing.sm), hint],
+              if (_scopeMissing && w.scopeEmpty) ...[
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  l.bgScopeRequired,
+                  style: text.bodySmall?.copyWith(color: scheme.error),
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (!w.allScope) ...rows,
+      ],
+    );
+  }
+
+  /// One scope list laid out like the note: icon, heading, the chips under
+  /// it in a dashed frame that opens the picker.
+  Widget _scopeRow({
+    required IconData icon,
+    required String label,
+    required List<Widget> chips,
+    required String pickLabel,
+    required VoidCallback onPick,
+  }) {
+    final wrap = chips.isEmpty
+        ? null
+        : LimitedChipWrap(chips: chips, onMore: onPick, expandable: false);
+    return DetailStacked(
+      label: label,
+      leading: AppIcon(icon),
+      child: PickFrame(
+        onTap: onPick,
+        child: wrap ?? PickFramePrompt(pickLabel),
+      ),
+    );
+  }
+
+  List<Widget> _categoryChips(
+    AppLocalizations l,
+    List<BudgetScopeCategory> cats,
+  ) {
+    final palette = Theme.of(context).extension<AppColors>()!;
+    return [
+      for (final c in cats)
+        AppChip(
+          label: c.includeChildren
+              ? l.bgScopeChildren(c.category.name)
+              : c.category.name,
+          icon: IconRegistry.get(
+            c.category.iconCode?.icon,
+            fallback: AppIcons.category,
+          ),
+          color: c.category.iconCode.tintFor(palette),
+          selected: true,
+          size: ChipSize.chip,
+        ),
+    ];
+  }
+
+  List<Widget> _walletChips(List<AccountRef> wallets) {
+    final palette = Theme.of(context).extension<AppColors>()!;
+    return [
+      for (final a in wallets)
+        AppChip(
+          label: a.name,
+          icon: IconRegistry.get(a.iconCode?.icon, fallback: a.type.icon),
+          color: a.iconCode.tintFor(palette),
+          selected: true,
+          size: ChipSize.chip,
+        ),
+    ];
+  }
+
+  List<Widget> _tagChips(List<String> names) {
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final known = context.read<TagsCubit>().state.tags;
+    return [
+      for (final n in names)
+        if (known.where((t) => t.name.toLowerCase() == n.toLowerCase())
+            case final match)
+          AppChip(
+            label: n,
+            icon: IconRegistry.get(
+              match.firstOrNull?.iconCode?.icon,
+              fallback: AppIcons.tag,
+            ),
+            color: match.isEmpty
+                ? null
+                : tagColor(match.first.iconCode, palette),
+            selected: true,
+            size: ChipSize.chip,
+          ),
+    ];
   }
 
   Widget _editBody(
@@ -1115,17 +1352,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       hero: AppHeroCard(
         style: HeroStyle.tinted(color: accent, glyph: AppIcons.budget),
         mode: HeroCardMode.edit,
-        header: HeroHeader(
-          leading: [
-            if (w.recurring)
-              AppChip(
-                label: l.bgChipRecurring(budgetRuleLabel(l, w.rule)),
-                selected: true,
-                trailing: AppChipTrailing.dropdown,
-                onTap: _pickRule,
-              ),
-          ],
-        ),
         content: [
           HeroIdentity(
             icon: EditableCircle(
@@ -1159,7 +1385,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
           HeroAmountField(
             controller: _ctrl[_Field.amount]!,
             label: l.fpBudgetsLimitLabel,
-            accent: accent,
             symbol: context.readUserCurrencySymbol,
             onChanged: (v) => _onText(_Field.amount, v),
             validator: (v) {
@@ -1167,29 +1392,11 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
               return (n == null || n <= 0) ? l.budgetFormAmountInvalid : null;
             },
           ),
+          _warnRow(l),
         ],
       ),
-      info: InfoBox(
-        rows: [
-          InfoRow(
-            label: l.bgFieldStart,
-            value: budgetDate(context, w.start),
-            showChevron: true,
-            onTap: _pickStart,
-          ),
-          InfoRow(
-            label: l.bgFieldEnd,
-            value: switch (w.end.kind) {
-              'date' => budgetDate(context, w.end.date!),
-              'count' => l.bgEndPeriods(w.end.count ?? 0),
-              _ => l.bgEndNone,
-            },
-            showChevron: true,
-            onTap: _pickEnd,
-          ),
-        ],
-      ),
-      settings: _settings(l, editing: true),
+      info: _periodSection(l),
+      settings: _scopeSection(l),
       note: NoteSection(
         label: l.commonNote,
         editing: true,
@@ -1216,6 +1423,43 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
               createdAt: b.createdAt,
               updatedAt: b.updatedAt,
             ),
+    );
+  }
+
+  /// "Warn at" sits with the limit it is a share of, the money spelled out.
+  Widget _warnRow(AppLocalizations l) {
+    final w = working;
+    final limit = AmountInput.parse(_ctrl[_Field.amount]!.text);
+    final pct = w.warnPct;
+    return SettingMenuRow<int>(
+      compact: true,
+      label: l.fpBudgetsWarnAt,
+      value: pct == null ? l.bgWarnOff : l.bgWarnPct(pct),
+      note: limit == null || limit <= 0 || pct == null
+          ? null
+          : '= ${budgetRowMoney(context, limit * pct / 100)}',
+      selected: pct ?? 0,
+      options: [
+        for (final p in const [70, 80, 90, 95])
+          SheetOption(value: p, label: l.bgWarnPct(p)),
+        SheetOption(value: 0, label: l.bgWarnOff),
+      ],
+      onSelected: (p) => _change(
+        p == 0 ? w.copyWith(clearWarn: true) : w.copyWith(warnPct: p),
+      ),
+      // Any whole percent the backend takes (1–100).
+      custom: SettingMenuCustom<int>(
+        hint: l.commonCustomValue,
+        suffix: '%',
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(3),
+        ],
+        parse: (t) {
+          final n = int.tryParse(t);
+          return n == null || n < 1 ? null : n.clamp(1, 100);
+        },
+      ),
     );
   }
 

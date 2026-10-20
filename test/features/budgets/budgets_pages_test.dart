@@ -623,20 +623,26 @@ void main() {
       t,
     ) async {
       await pump(t, const BudgetsListPage());
-      final label = find.text('Current period | total used');
+      // The head: the module tile, then the summary chip (no caption).
+      final label = find.text('Left in total');
       final card = find.ancestor(of: label, matching: find.byType(AppCard));
       expect(card, findsOneWidget);
-      final screen = t.view.physicalSize.width / t.view.devicePixelRatio;
-      final r = t.getRect(label);
       final inset = AppSpacing.lg + HeroMetrics.fallback.padding.left;
-      expect(r.left, inset);
-      expect(screen - r.right, greaterThanOrEqualTo(inset));
+      expect(t.getRect(find.byType(HeroModuleTile)).left, inset);
+      expect(find.text('Current period | total used'), findsNothing);
+      // 7,980 over the plan to date of the budgets that have one.
+      expect(
+        find.descendant(of: card, matching: find.byType(StatusChip)),
+        findsOneWidget,
+      );
+      // The ring: what is left of the total, then three facts.
+      expect(find.textContaining('฿4,020', findRichText: true), findsWidgets);
+      expect(find.text('of ฿12,000'), findsOneWidget);
+      expect(find.text('Total spent'), findsOneWidget);
       expect(find.textContaining('฿7,980', findRichText: true), findsWidgets);
-      expect(find.textContaining('of ฿12,000'), findsOneWidget);
-      expect(find.text('฿4,020 left in total'), findsOneWidget);
       expect(find.text('67%'), findsOneWidget);
       for (final k in ['All', 'Normal', 'Near the limit', 'Over budget']) {
-        expect(find.byKey(ValueKey('summaryTile:$k')), findsOneWidget);
+        expect(find.byKey(ValueKey('heroFilter:$k')), findsOneWidget);
       }
       // 🔍 in the card; the toolbar is hidden until it is tapped.
       expect(find.byIcon(AppIcons.search), findsOneWidget);
@@ -696,11 +702,11 @@ void main() {
       t,
     ) async {
       await pump(t, const BudgetsListPage());
-      await t.tap(find.byKey(const ValueKey('summaryTile:Over budget')));
+      await t.tap(find.byKey(const ValueKey('heroFilter:Over budget')));
       await t.pump();
       await t.pump(const Duration(milliseconds: 100));
       expect(repo.calls, ['list:active:risk', 'list:active:risk:over']);
-      await t.tap(find.byKey(const ValueKey('summaryTile:Over budget')));
+      await t.tap(find.byKey(const ValueKey('heroFilter:Over budget')));
       await t.pump();
       await t.pump(const Duration(milliseconds: 100));
       expect(repo.calls.last, 'list:active:risk');
@@ -779,22 +785,26 @@ void main() {
       expect(find.byType(AppHeroCard), findsOneWidget);
       expect(find.text('Still available'), findsOneWidget);
       expect(find.textContaining('฿4,880', findRichText: true), findsWidgets);
-      expect(find.text('/ ฿8,000'), findsOneWidget);
-      expect(find.text('Used ฿3,120'), findsOneWidget);
-      expect(find.text('Should be at 26% by today'), findsOneWidget);
-      // The chips: the period kind and the range with the day counter.
-      expect(find.text('🔁 Monthly'), findsOneWidget);
-      expect(find.textContaining('day 8/31'), findsOneWidget);
-      // The 3 tiles are the BE's forecast numbers.
+      expect(find.text('of ฿8,000'), findsOneWidget);
+      // The facts beside the ring (the BE's forecast numbers).
+      expect(find.text('Spent'), findsOneWidget);
+      expect(find.text('฿3,120'), findsWidgets);
+      expect(find.text('Coming up'), findsOneWidget);
+      expect(find.text('Plan to date'), findsOneWidget);
+      expect(find.text('฿2,080'), findsOneWidget);
+      expect(find.text('Can spend per day'), findsOneWidget);
+      expect(find.text('฿165'), findsOneWidget);
+      // The plan status chip: 3,120 spent against 2,080 planned.
+      expect(find.text('฿1,040 ahead of plan'), findsOneWidget);
+      // The round box: the days left and the day counter.
+      expect(find.text('24 days left | 8/31'), findsOneWidget);
+      // The old tiles are gone.
       expect(
         find.byKey(const ValueKey('summaryTile:Can spend per day')),
-        findsOneWidget,
+        findsNothing,
       );
-      expect(find.textContaining('฿165'), findsOneWidget);
-      expect(find.text('Forecast at the end'), findsOneWidget);
-      expect(find.textContaining('฿12,990'), findsOneWidget);
-      expect(find.text('Left'), findsOneWidget);
-      expect(find.text('24 days'), findsOneWidget);
+      expect(find.text('Forecast at the end'), findsNothing);
+      expect(find.text('Warns at'), findsNothing);
       // No action bar, no "Setup" tab, no old dashboard sections.
       expect(find.byType(ActionBar), findsNothing);
       expect(find.text('Setup'), findsNothing);
@@ -822,54 +832,42 @@ void main() {
       expect(find.text('Still available'), findsNothing);
     });
 
-    testWidgets('settings, then the note, above the tabs', (t) async {
+    testWidgets('time card, what it counts, then the note, above the tabs', (
+      t,
+    ) async {
       await pump(t, const BudgetDetailPage(id: 'b1'));
-      expect(find.byType(SettingsSection), findsOneWidget);
-      expect(find.text('Settings'), findsOneWidget);
-      expect(
-        find.text('What this budget counts, and when it warns'),
-        findsOneWidget,
-      );
-      expect(find.text('What it counts'), findsOneWidget);
-      expect(find.textContaining('Food + sub'), findsOneWidget);
-      expect(find.text('Warn at'), findsOneWidget);
-      expect(find.text('80%'), findsOneWidget);
-      expect(find.text('Repeat every period'), findsOneWidget);
+      // No time card in view mode: the round is in the hero's box.
+      expect(find.text('Time'), findsNothing);
+      expect(find.text('Which spending counts'), findsNothing);
+      // What it counts: one icon strip per list (categories, wallets, tags).
+      expect(find.byType(IconChipStrip), findsNWidgets(3));
+      expect(find.text('All Food'), findsOneWidget);
+      expect(find.text('เที่ยว'), findsOneWidget);
+      // "Warn at" lives with the limit, not in a settings card.
+      expect(find.byType(SettingsSection), findsNothing);
       expect(find.byType(NoteSection), findsOneWidget);
-      final settings = t.getTopLeft(find.byType(SettingsSection)).dy;
+      final scope = t.getTopLeft(find.byType(IconChipStrip).first).dy;
       final note = t.getTopLeft(find.byType(NoteSection)).dy;
       final tabs = t.getTopLeft(find.text('This period')).dy;
-      expect(settings, lessThan(note));
+      expect(scope, lessThan(note));
       expect(note, lessThan(tabs));
     });
 
-    testWidgets('items: day headers and WHY each row counts', (t) async {
+    testWidgets('items: day headers, the source chip, the tags', (t) async {
       await pump(t, const BudgetDetailPage(id: 'b1'));
       expect(find.byType(TxRow), findsNWidgets(4));
       expect(find.byType(DateGroupHeader), findsNWidgets(3));
+      // The "Counted because" line is gone.
       expect(
-        find.textContaining(
-          'Counted because: wallet KBank',
-          findRichText: true,
-        ),
-        findsOneWidget,
+        find.textContaining('Counted because', findRichText: true),
+        findsNothing,
       );
+      // A chip only for a source that is not normal (the upcoming one).
+      expect(find.text('Recurring | upcoming'), findsOneWidget);
+      expect(find.text('Normal'), findsNothing);
+      // A tag is shown as #name.
       expect(
-        find.textContaining(
-          'Counted because: category Food',
-          findRichText: true,
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.textContaining(
-          'Counted because: sub-category of Food',
-          findRichText: true,
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.textContaining('Counted because: tag เที่ยว', findRichText: true),
+        find.textContaining('#เที่ยว', findRichText: true),
         findsOneWidget,
       );
     });
@@ -951,7 +949,8 @@ void main() {
       repo.detail = _openEndedDetail();
       await pump(t, const BudgetDetailPage(id: 'b3'));
       expect(find.text('All periods'), findsNothing);
-      expect(find.byType(SettingsSection), findsOneWidget);
+      expect(find.text('Time'), findsNothing);
+      expect(find.byType(IconChipStrip), findsWidgets);
       expect(find.text('This period'), findsOneWidget);
       expect(find.byType(TxRow), findsNWidgets(4));
     });
@@ -970,13 +969,22 @@ void main() {
       final field = t.widget<HeroAmountField>(find.byType(HeroAmountField));
       expect(field.controller.text, '8,000');
       expect(find.text('Budget limit'), findsOneWidget);
-      expect(find.byType(InfoBox), findsOneWidget);
-      expect(find.text('Start'), findsOneWidget);
-      expect(find.text('End'), findsOneWidget);
-      expect(find.text('Every expense'), findsOneWidget);
-      expect(find.text('Categories'), findsOneWidget);
+      // Warn at: under the limit, the money spelled out (80% of ฿8,000).
       expect(find.text('Warn at'), findsOneWidget);
-      expect(find.text('Repeat every period'), findsOneWidget);
+      expect(find.text('= ฿6,400'), findsOneWidget);
+      // Time: start, the repeat switch and the period (a repeating budget
+      // has no separate end row).
+      expect(find.text('Time'), findsOneWidget);
+      expect(find.text('Start'), findsOneWidget);
+      expect(find.text('Repeat'), findsOneWidget);
+      expect(find.text('Period'), findsOneWidget);
+      expect(find.text('End'), findsNothing);
+      // What it counts: all / choose, then the three lists.
+      expect(find.text('Every expense'), findsOneWidget);
+      expect(find.text('Choose'), findsOneWidget);
+      expect(find.text('Categories'), findsOneWidget);
+      expect(find.text('Wallets'), findsOneWidget);
+      expect(find.text('Tags'), findsOneWidget);
       // Hidden, not greyed: bar, tiles, forecast, items, tabs.
       expect(find.byType(HeroBar), findsNothing);
       expect(find.text('Can spend per day'), findsNothing);

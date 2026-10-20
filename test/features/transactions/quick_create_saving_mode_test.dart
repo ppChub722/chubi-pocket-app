@@ -46,8 +46,7 @@ class _Pending extends MockCubit<PendingState> implements PendingCubit {}
 
 class _Goals extends MockCubit<SavingGoalsState> implements SavingGoalsCubit {}
 
-class _TxRepo extends Fake implements TransactionsRepository {
-}
+class _TxRepo extends Fake implements TransactionsRepository {}
 
 /// The saving API; records the one write.
 class _SavingRepo extends Fake implements SavingGoalsRepository {
@@ -57,6 +56,7 @@ class _SavingRepo extends Fake implements SavingGoalsRepository {
   Future<SavingGoalsOverview> list({
     String status = 'active',
     String sort = 'created',
+    String? month,
   }) async => SavingGoalsOverview.fromJson(prodList());
 
   @override

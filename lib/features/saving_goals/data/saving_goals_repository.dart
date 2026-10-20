@@ -24,10 +24,11 @@ class SavingGoalsRepository {
   Future<SavingGoalsOverview> list({
     String status = 'active',
     String sort = 'created',
+    String? month,
   }) => _guard(() async {
     final res = await _client.dio.get<Map<String, dynamic>>(
       '/saving-goals',
-      queryParameters: {'status': status, 'sort': sort},
+      queryParameters: {'status': status, 'sort': sort, 'month': ?month},
     );
     return SavingGoalsOverview.fromJson(res.data!);
   });
@@ -97,6 +98,20 @@ class SavingGoalsRepository {
     final res = await _client.dio.put<Map<String, dynamic>>(
       '/saving-goals/$id/auto-save',
       data: {'amount': amount, 'day': day, 'account_id': accountId},
+    );
+    return SavingGoalDetail.fromJson(res.data!);
+  });
+
+  /// Replaces the whole set; an empty list clears it.
+  Future<SavingGoalDetail> setAutoSaves(
+    String id,
+    List<SavingAutoSaveWrite> items,
+  ) => _guard(() async {
+    final res = await _client.dio.put<Map<String, dynamic>>(
+      '/saving-goals/$id/auto-saves',
+      data: {
+        'items': [for (final i in items) i.toJson()],
+      },
     );
     return SavingGoalDetail.fromJson(res.data!);
   });

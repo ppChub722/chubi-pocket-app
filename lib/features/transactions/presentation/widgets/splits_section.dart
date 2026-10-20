@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
-import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
+import '../../../contacts/presentation/widgets/contact_picker.dart';
 import '../../domain/refs.dart';
 
 class SplitDraft {
@@ -170,7 +170,7 @@ class _SplitsSectionState extends State<SplitsSection> {
     widget.onChanged([...widget.drafts, d]);
   }
 
-  static void _apply(SplitDraft d, ContactPickResult r) {
+  static void _apply(SplitDraft d, ContactPick r) {
     switch (r) {
       case ContactPicked(:final contact):
         d.setPerson(
@@ -189,14 +189,12 @@ class _SplitsSectionState extends State<SplitsSection> {
   }
 
   Future<void> _changePerson(SplitDraft d) async {
-    final r = await showContactPickerSheet(
+    final r = await ContactPicker.one(
       context,
-      selectedContactId: d.contactId,
-      allowFreeText: false,
+      selectedId: d.contactId,
+      allowFreeText: true,
       allowCreate: true,
-      unlinkAs: d.contactId != null && d.personName.trim().isNotEmpty
-          ? d.personName
-          : null,
+      initialName: d.personName.trim().isEmpty ? null : d.personName,
     );
     if (r == null || !mounted) return;
     _apply(d, r);

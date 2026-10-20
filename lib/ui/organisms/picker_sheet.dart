@@ -18,6 +18,7 @@ class PickerSheet extends StatefulWidget {
   const PickerSheet({
     required this.title,
     required this.builder,
+    this.subtitle,
     this.searchable = false,
     this.searchHint,
     this.searchController,
@@ -33,6 +34,9 @@ class PickerSheet extends StatefulWidget {
   });
 
   final String title;
+
+  /// What the whole sheet is about, muted under the title; it doesn't scroll.
+  final String? subtitle;
 
   /// The body for the current search text ('' without [searchable]).
   final Widget Function(BuildContext context, String query) builder;
@@ -167,6 +171,21 @@ class _PickerSheetState extends State<PickerSheet> {
               ],
             ),
           ),
+          if (widget.subtitle case final subtitle?)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.sm,
+              ),
+              child: Text(
+                subtitle,
+                style: textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
           if (widget.searchable && (!widget.searchToggle || _searchOpen))
             Padding(
               padding: const EdgeInsets.fromLTRB(
@@ -333,6 +352,7 @@ class PickerConfirmBar extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.submits = false,
+    this.loading = false,
     super.key,
   });
 
@@ -340,6 +360,7 @@ class PickerConfirmBar extends StatelessWidget {
   final VoidCallback? onPressed;
 
   final bool submits;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
@@ -355,6 +376,7 @@ class PickerConfirmBar extends StatelessWidget {
         expand: true,
         size: AppButtonSize.large,
         submits: submits,
+        loading: loading,
         onPressed: onPressed,
       ),
     );

@@ -18,6 +18,7 @@ import '../../../notifications/presentation/notification_actions.dart';
 import '../../../notifications/presentation/widgets/notification_tile.dart';
 import '../../../pending/domain/pending_transaction.dart';
 import '../../../pending/presentation/cubit/pending_cubit.dart';
+import '../../../recurring/presentation/occurrence_actions.dart';
 import '../../../transactions/domain/transaction_type.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../../transactions/presentation/widgets/transaction_tile.dart';
@@ -295,7 +296,6 @@ class _NetWorthCard extends StatelessWidget {
         HeroNumber(
           label: l.homeNetWorthLabel,
           value: MoneyText(netWorth.total),
-          color: palette.primary,
         ),
         HeroNote(
           child: Row(
@@ -425,10 +425,16 @@ class _UpcomingCard extends StatelessWidget {
         borderColor: item.overdue ? palette.expense : null,
         borderWidth: item.overdue ? 1.5 : null,
         padding: const EdgeInsets.all(AppSpacing.sm),
-        onTap: () => openPage(
-          context,
-          isCard ? '/accounts/${item.id}' : '/recurring/items/${item.id}',
-        ),
+        onTap: isCard
+            ? () => openPage(context, '/accounts/${item.id}')
+            : () => openOccurrence(
+                context,
+                itemId: item.id,
+                ruleId: item.ruleId,
+                slot: item.slot,
+                date: item.dueDate,
+                onChanged: (_) => context.read<DashboardCubit>().load(),
+              ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -886,6 +892,9 @@ class _TodoSection extends StatelessWidget {
       notes.length,
     );
     final soon = upcoming.items;
+    final due = soon
+        .where((i) => i.overdue && i.kind == UpcomingKind.recurring)
+        .length;
     if (drafts.isEmpty && notes.isEmpty && soon.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -924,6 +933,11 @@ class _TodoSection extends StatelessWidget {
           _TodoGroup(
             icon: AppIcons.scheduled,
             title: l.homeTodoComingUp,
+            count: due > 0 ? due : null,
+            onViewAll: () => openPage(
+              context,
+              due > 0 ? '/recurring?focus=due' : '/recurring',
+            ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

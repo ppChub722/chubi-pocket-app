@@ -155,7 +155,7 @@ class SavingGoalDetail extends Equatable {
     this.spare,
     this.byWallet = const [],
     this.history = const [],
-    this.spareAutoSave,
+    this.spareAutoSaves = const [],
     this.entries = const SavingEntryPage(),
     this.deletePreview,
   });
@@ -165,14 +165,16 @@ class SavingGoalDetail extends Equatable {
   final List<SavingWalletShare> byWallet;
   final List<SavingHistoryPoint> history;
 
-  final SavingAutoSave? spareAutoSave;
+  final List<SavingAutoSave> spareAutoSaves;
   final SavingEntryPage entries;
 
   final SavingDeletePreview? deletePreview;
 
   bool get isSpare => goal == null;
 
-  SavingAutoSave? get autoSave => goal?.autoSave ?? spareAutoSave;
+  List<SavingAutoSave> get autoSaves => goal?.autoSaves ?? spareAutoSaves;
+
+  SavingAutoSave? get autoSave => autoSaves.firstOrNull;
 
   factory SavingGoalDetail.fromJson(Map<String, dynamic> json) {
     final goal = json['goal'] is Map
@@ -194,11 +196,9 @@ class SavingGoalDetail extends Equatable {
         for (final p in (json['history'] as List? ?? const []))
           SavingHistoryPoint.fromJson((p as Map).cast<String, dynamic>()),
       ],
-      spareAutoSave: goal == null && json['auto_save'] is Map
-          ? SavingAutoSave.fromJson(
-              (json['auto_save'] as Map).cast<String, dynamic>(),
-            )
-          : null,
+      spareAutoSaves: goal == null
+          ? SavingAutoSave.listFromJson(json)
+          : const [],
       entries: json['entries'] is Map
           ? SavingEntryPage.fromJson(
               (json['entries'] as Map).cast<String, dynamic>(),
@@ -217,7 +217,7 @@ class SavingGoalDetail extends Equatable {
     spare: spare,
     byWallet: byWallet,
     history: history,
-    spareAutoSave: spareAutoSave,
+    spareAutoSaves: spareAutoSaves,
     entries: entries ?? this.entries,
   );
 
@@ -227,7 +227,7 @@ class SavingGoalDetail extends Equatable {
     spare,
     byWallet,
     history,
-    spareAutoSave,
+    spareAutoSaves,
     entries,
     deletePreview,
   ];

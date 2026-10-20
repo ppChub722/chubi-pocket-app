@@ -126,6 +126,64 @@ class _FeedbackPageState extends State<_FeedbackPage> {
           note: 'The real presets and where they are used.',
         ),
         HubDemo(
+          title: 'ProgressRow: today and warn lines',
+          note:
+              'marker (the pace, "today") and alert (the warn point) are lines on '
+              'the bar; markerLabel / alertLabel name them above it. When the two '
+              'are too close for both, only the alert\'s label shows.',
+          child: Builder(
+            builder: (context) => ProgressRow(
+              value: 0.42,
+              marker: 0.61,
+              markerLabel: 'Today',
+              alert: 0.8,
+              alertColor: Theme.of(context).extension<AppColors>()!.warning,
+              alertLabel: 'Warn',
+              label: 'Used ฿840',
+              trailing: 'Up to ฿1,226 by today',
+            ),
+          ),
+        ),
+        HubDemo(
+          title: 'ProgressRow: markerBubble (always shown)',
+          note:
+              'markerBubble shows over the marker all the time, in the bar\'s '
+              'color, and replaces the small labels. Near an edge it slides '
+              'inside the row; its arrow stays on the line.',
+          child: Builder(
+            builder: (context) {
+              final palette = Theme.of(context).extension<AppColors>()!;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const ProgressRow(
+                    value: 0,
+                    marker: 0.65,
+                    markerBubble: 'Plan to date ฿1,300',
+                    label: 'Used ฿0 of ฿2,000',
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  ProgressRow(
+                    value: 0.87,
+                    marker: 0.65,
+                    markerBubble: 'Plan to date ฿3,250',
+                    color: palette.warning,
+                    label: 'Used ฿4,350 of ฿5,000',
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  ProgressRow(
+                    value: 1.1,
+                    marker: 0.95,
+                    markerBubble: 'Plan to date ฿2,850',
+                    overColor: palette.expense,
+                    label: 'Used ฿3,300 of ฿3,000',
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        HubDemo(
           title: 'AppMessage — icon override',
           note:
               'icon: replaces the tone\'s icon (a lock on a "locked" banner); the '

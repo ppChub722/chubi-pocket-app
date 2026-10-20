@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
+import '../hub_kit.dart';
 import '../hub_playground.dart';
 
 /// `/dev/ui/atoms/card` — AppCard: every surface in the app. The reference
@@ -16,6 +17,35 @@ Widget buildCardPage(BuildContext context) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
+      HubDemo(
+        title: 'AppCardPick: option cards in a picker',
+        note:
+            'The chosen card gets one solid primary line, the others a dashed '
+            'one. The wallet picker wraps its cards in it.',
+        child: Row(
+          children: [
+            Expanded(
+              child: AppCardPick(
+                chosen: true,
+                child: AppCard(
+                  style: AppCardStyle.bordered,
+                  child: body('chosen'),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: AppCardPick(
+                chosen: false,
+                child: AppCard(
+                  style: AppCardStyle.bordered,
+                  child: body('not chosen'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
       HubInApp(
         columns: 2,
         note: 'The real presets, each with the page that uses it.',

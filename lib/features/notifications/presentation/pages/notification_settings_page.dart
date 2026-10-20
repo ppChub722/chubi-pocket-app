@@ -4,8 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
-import '../../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
+import '../../../accounts/presentation/widgets/account_picker.dart';
 import '../../data/notifications_repository.dart';
 import '../../domain/notification.dart';
 import '../cubit/notification_settings_cubit.dart';
@@ -93,11 +92,7 @@ class _Body extends StatelessWidget {
             ];
           }
 
-          final accounts = ctx.watch<AccountsCubit>().state.accounts;
           final receiving = s.defaultAccount;
-          final selectedAccount = accounts
-              .where((a) => a.id == receiving?.id)
-              .firstOrNull;
           final walletRow = DetailRow(
             key: const ValueKey('auto-wallet'),
             leading: const AppIcon(AppIcons.bank),
@@ -105,15 +100,14 @@ class _Body extends StatelessWidget {
             trailing: Text(receiving?.name ?? l.notifDefaultAccountNone),
             showChevron: true,
             onTap: () async {
-              final r = await showAccountPickerSheet(
-                context: ctx,
-                accounts: accounts,
-                selected: selectedAccount,
+              final r = await AccountPicker.one(
+                ctx,
+                selectedId: receiving?.id,
                 title: l.notifDefaultAccount,
                 // "None" = record it without a wallet.
                 allowNone: true,
               );
-              if (r is AccountPickerSelected) {
+              if (r is AccountPicked) {
                 cubit.update(
                   defaultAccount: DefaultAccountRef(
                     id: r.account.id,
@@ -121,7 +115,7 @@ class _Body extends StatelessWidget {
                     iconCode: r.account.iconCode,
                   ),
                 );
-              } else if (r is AccountPickerCleared) {
+              } else if (r is AccountPickedNone) {
                 cubit.update(clearDefaultAccount: true);
               }
             },
@@ -201,6 +195,11 @@ class _Body extends StatelessWidget {
                     NotificationType.recurringEnding,
                     l.notifTypeRecurringEnding,
                     helper: l.notifTypeRecurringEndingHint,
+                  ),
+                  ...typeRow(
+                    NotificationType.recurringAutoCreated,
+                    l.notifTypeRecurringAutoCreated,
+                    helper: l.notifTypeRecurringAutoCreatedHint,
                   ),
                 ],
               ),

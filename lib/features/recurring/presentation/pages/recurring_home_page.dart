@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
@@ -17,17 +17,25 @@ import '../../domain/recurrence_rule.dart' show today;
 import '../../domain/recurring.dart';
 import '../../domain/recurring_item.dart';
 import '../cubit/recurring_directory_cubit.dart';
+import '../occurrence_actions.dart';
 import '../recurring_rows.dart';
 
-enum RecurringHomeTab { recurring, reminder, calendar }
+enum RecurringHomeTab { overview, calendar }
 
+/// Recurring, two big tabs over one month. ภาพรวม: the month's totals and its
+/// occurrences in date order (a today line), ต้องจัดการ, then every rule by
+/// kind. ปฏิทิน: the month as a calendar and the picked day's occurrences.
 class RecurringHomePage extends StatefulWidget {
   const RecurringHomePage({
-    this.initialTab = RecurringHomeTab.recurring,
+    this.initialTab = RecurringHomeTab.overview,
+    this.focusDue = false,
     super.key,
   });
 
   final RecurringHomeTab initialTab;
+
+  /// `?focus=due` (the due notice): scroll to ต้องจัดการ once it is there.
+  final bool focusDue;
 
   @override
   State<RecurringHomePage> createState() => _RecurringHomePageState();
@@ -35,22 +43,29 @@ class RecurringHomePage extends StatefulWidget {
 
 class _RecurringHomePageState extends State<RecurringHomePage> {
   late RecurringHomeTab _tab = widget.initialTab;
-  late final PageController _pager = PageController(
-    initialPage: RecurringHomeTab.values.indexOf(widget.initialTab),
-  );
+  late DateTime _month = _thisMonth;
+  late DateTime _day = today();
+
+  List<RecurringItem>? _items;
+
+  /// The month [_items] are of: they stay up while the next month loads.
+  DateTime? _itemsMonth;
+  Object? _itemsError;
+  int _itemsSeq = 0;
+  List<RecurringItem> _due = const [];
+
+  final _scroll = ScrollController();
+  final _dueKey = GlobalKey();
+  late bool _focusDue = widget.focusDue;
 
   final _search = TextEditingController();
   final _toolbar = ToolbarToggleState.of('recurring');
   String _query = '';
-  RecurringFilter _filter = RecurringFilter.current;
-  RecurringList? _list;
-  ApiException? _listError;
 
-  late DateTime _month = DateTime(today().year, today().month);
-  late DateTime _day = today();
-  ItemPage? _calendar;
-  Object? _calendarError;
-  int _calendarSeq = 0;
+  static DateTime get _thisMonth {
+    final t = today();
+    return DateTime(t.year, t.month);
+  }
 
   RecurringRepository get _repo => RecurringRepository.of(context);
 
@@ -60,57 +75,37 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(context.read<RecurringDirectoryCubit>().loadIfNeeded());
-      if (_tab == RecurringHomeTab.calendar) _loadCalendar();
+      unawaited(_loadMonth());
+      unawaited(_loadDue());
     });
   }
 
   @override
   void dispose() {
-    _pager.dispose();
+    _scroll.dispose();
     _search.dispose();
     super.dispose();
   }
 
-  RecurringList? _listOf(RecurringDirectoryState s) {
-    if (s.status != RecurringDirectoryStatus.loaded && s.rules.isEmpty) {
-      return null;
-    }
-    final needle = _query.trim().toLowerCase();
-    return RecurringList(
-      items: [
-        for (final r in s.rules)
-          if (switch (_filter) {
-                RecurringFilter.current => r.status != RecurringStatus.archived,
-                RecurringFilter.archived =>
-                  r.status == RecurringStatus.archived,
-                RecurringFilter.all => true,
-              } &&
-              (needle.isEmpty || r.name.toLowerCase().contains(needle)))
-            r,
-      ],
-      counts: {
-        'current': s.currentCount,
-        'archived': s.archivedCount,
-        'all': s.rules.length,
-      },
-      summary: s.summary,
-    );
-  }
-
-  Future<void> _loadCalendar() async {
-    final seq = ++_calendarSeq;
+  Future<void> _loadMonth() async {
+    final seq = ++_itemsSeq;
+    final month = _month;
     try {
-      final page = await _repo.calendar(_month);
-      if (!mounted || seq != _calendarSeq) return;
+      final items = await _repo.monthItems(month);
+      if (!mounted || seq != _itemsSeq) return;
       setState(() {
-        _calendar = page;
-        _calendarError = null;
+        _items = items..sort((a, b) => a.date.compareTo(b.date));
+        _itemsMonth = month;
+        _itemsError = null;
       });
     } catch (e, st) {
-      if (!mounted || seq != _calendarSeq) return;
+      if (!mounted || seq != _itemsSeq) return;
       final err = ApiException.from(e, st);
-      if (_calendar == null) {
-        setState(() => _calendarError = err);
+      if (_items == null || _itemsMonth != month) {
+        setState(() {
+          _items = null;
+          _itemsError = err;
+        });
       } else {
         showAppSnackBar(
           context,
@@ -121,350 +116,570 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     }
   }
 
-  void _setQuery(String v) => setState(() => _query = v);
+  /// Due, waiting to confirm, or still needing an amount this month.
+  static bool _todo(RecurringItem i) =>
+      i.state == OccurrenceState.notCreated ||
+      i.state == OccurrenceState.pending ||
+      (i.needsAmount && !i.state.settled);
 
-  bool get _filtered =>
-      _search.text.trim().isNotEmpty || _filter != RecurringFilter.current;
+  Future<void> _loadDue() async {
+    try {
+      final items = await _repo.dueItems();
+      if (!mounted) return;
+      setState(() {
+        _due = [
+          for (final i in items)
+            if (_todo(i)) i,
+        ]..sort((a, b) => a.date.compareTo(b.date));
+      });
+    } on ApiException {
+      // The card stays hidden; the month list still shows what is due.
+    }
+    if (_focusDue && _due.isNotEmpty) {
+      _focusDue = false;
+      _scrollToDue();
+    }
+  }
 
-  String _statusLabel(AppLocalizations l, RecurringFilter f) => switch (f) {
-    RecurringFilter.current => l.recurringFilterCurrent,
-    RecurringFilter.archived => l.recurringFilterArchived,
-    RecurringFilter.all => l.recurringFilterAll,
-  };
+  Future<void> _refresh() async {
+    await Future.wait([
+      _loadMonth(),
+      _loadDue(),
+      context.read<RecurringDirectoryCubit>().load(),
+    ]);
+  }
 
-  void _setFilter(RecurringFilter f) {
-    if (f == _filter) return;
-    setState(() => _filter = f);
+  void _onChanged(ItemWriteResult r) {
+    setState(() {
+      final items = _items;
+      if (items != null) _items = r.applyTo(items);
+      _due = [
+        for (final i in r.applyTo(_due))
+          if (_todo(i)) i,
+      ];
+    });
+    unawaited(_loadMonth());
+    unawaited(_loadDue());
+    unawaited(context.read<RecurringDirectoryCubit>().load());
   }
 
   void _onMonth(DateTime m) {
     final first = DateTime(m.year, m.month);
+    if (first == _month) return;
+    final last = DateUtils.getDaysInMonth(first.year, first.month);
     setState(() {
       _month = first;
-      final last = DateUtils.getDaysInMonth(first.year, first.month);
       _day = DateTime(first.year, first.month, _day.day > last ? 1 : _day.day);
     });
-    _loadCalendar();
+    unawaited(_loadMonth());
   }
 
-  void _goTab(RecurringHomeTab t) {
-    setState(() => _tab = t);
-    if (_pager.hasClients) {
-      _pager.animateToPage(
-        RecurringHomeTab.values.indexOf(t),
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-      );
+  /// ต้องจัดการ sits under the hero, which may be long: step down until it is
+  /// built, then bring it into view.
+  void _scrollToDue([int tries = 0]) {
+    if (_tab != RecurringHomeTab.overview) {
+      setState(() => _tab = RecurringHomeTab.overview);
     }
-    if (t == RecurringHomeTab.calendar && _calendar == null) _loadCalendar();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final target = _dueKey.currentContext;
+      if (target != null) {
+        Scrollable.ensureVisible(
+          target,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+        return;
+      }
+      if (tries >= 8 || !_scroll.hasClients) return;
+      final p = _scroll.position;
+      _scroll.jumpTo(
+        (p.pixels + p.viewportDimension).clamp(0, p.maxScrollExtent),
+      );
+      _scrollToDue(tries + 1);
+    });
   }
 
   void _open(String path) => openPage(context, path);
 
-  Future<void> _openItem(RecurringItem i) async {
-    await context.push('/recurring/items/${i.id}');
-    if (mounted) _loadCalendar();
-  }
+  Future<void> _openItem(RecurringItem i) =>
+      openOccurrenceSheet(context, i, onChanged: _onChanged);
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final dir = context.watch<RecurringDirectoryCubit>().state;
-    _list = _listOf(dir);
-    _listError = _list == null && dir.status == RecurringDirectoryStatus.error
-        ? dir.error
-        : null;
-    final summary = _list?.summary;
+    final items = _items ?? const <RecurringItem>[];
     return Scaffold(
       appBar: AppTopBar(title: l.recurringTitle, showBack: true),
       extendBodyBehindAppBar: true,
       body: TabSwitchBody(
-        child: TabbedListPageBody<RecurringHomeTab>(
-          tabs: [
-            AppTab(
-              value: RecurringHomeTab.recurring,
-              label: l.recurringTabRecurring,
+        child: ListPageBody(
+          loading: _items == null && _itemsError == null,
+          error: _items == null ? _itemsError : null,
+          // Until the month is in: the skeleton, or the error with a retry.
+          isEmpty: _items == null,
+          onRetry: _refresh,
+          empty: EmptyView.compact(message: l.recurringEmptyTitle),
+          controller: _scroll,
+          topInset: AppSpacing.sm,
+          children: [
+            SegmentedChoice<RecurringHomeTab>(
+              expand: true,
+              segments: [
+                ChoiceSegment(
+                  RecurringHomeTab.overview,
+                  l.recurringHomeTabOverview,
+                ),
+                ChoiceSegment(
+                  RecurringHomeTab.calendar,
+                  l.fpRecurringTabCalendar,
+                ),
+              ],
+              selected: _tab,
+              onChanged: (t) => setState(() => _tab = t),
             ),
-            AppTab(
-              value: RecurringHomeTab.reminder,
-              label: l.fpRecurringTabReminder,
-              badgeCount: summary?.awaitingAmountCount ?? 0,
-            ),
-            AppTab(
-              value: RecurringHomeTab.calendar,
-              label: l.fpRecurringTabCalendar,
-            ),
+            const SizedBox(height: AppSpacing.md),
+            _hero(l, items),
+            if (_tab == RecurringHomeTab.overview) ...[
+              if (_due.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.md),
+                _dueCard(l, dir),
+              ],
+              ..._allRules(l, dir),
+            ] else
+              ..._dayList(l, items),
           ],
-          header: [if (_list != null) _summaryCard(context, l)],
-          selected: _tab,
-          onChanged: (t) {
-            setState(() => _tab = t);
-            if (t == RecurringHomeTab.calendar && _calendar == null) {
-              _loadCalendar();
-            }
-          },
-          controller: _pager,
-          pageBuilder: (context, tab) => switch (tab) {
-            RecurringHomeTab.recurring => _recurringTab(l),
-            RecurringHomeTab.reminder => _reminderTab(l),
-            RecurringHomeTab.calendar => _calendarTab(l),
-          },
         ),
       ),
     );
   }
 
-  Widget _summaryCard(BuildContext context, AppLocalizations l) {
-    final s = _list?.summary;
+  String _money(num v) =>
+      moneyString(context, v, symbol: context.readUserCurrencySymbol);
+
+  Recurring? _ruleOf(RecurringDirectoryState dir, RecurringItem i) {
+    final id = i.ruleId ?? i.recurring?.id;
+    if (id == null) return null;
+    for (final r in dir.rules) {
+      if (r.id == id) return r;
+    }
+    return null;
+  }
+
+  static bool _unknown(RecurringItem i) => i.amount == null && !i.state.settled;
+
+  Widget _hero(AppLocalizations l, List<RecurringItem> items) {
+    var pay = 0.0;
+    var income = 0.0;
+    var count = 0;
+    var awaiting = 0;
+    for (final i in items) {
+      if (i.state == OccurrenceState.archived) continue;
+      count++;
+      final a = i.amount;
+      if (a == null) {
+        if (!i.state.settled) awaiting++;
+      } else if (i.type == TransactionType.expense) {
+        pay += a;
+      } else if (i.type == TransactionType.income) {
+        income += a;
+      }
+    }
     final symbol = context.readUserCurrencySymbol;
-    String money(num v) => moneyString(context, v, symbol: symbol);
     return AppHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
-      margin: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        AppSpacing.xs,
-      ),
       header: HeroHeader(
-        leading: [HeroCaption(l.fpRecurringListCaption)],
-        actions: [
-          const MoneyVisibilityToggle(),
-          if (_tab != RecurringHomeTab.calendar)
-            ListenableBuilder(
-              listenable: _search,
-              builder: (context, _) => ToolbarToggleButton(
-                state: _toolbar,
-                filtered: _filtered,
-                tooltip: l.recurringSearchHint,
-              ),
-            ),
+        leading: [
+          const HeroModuleTile(AppIcons.scheduled),
+          StepperPill.month(value: _month, onChanged: _onMonth),
         ],
+        actions: const [MoneyVisibilityToggle()],
       ),
       content: [
         HeroNumber(
-          value: MoneyText(s?.due30dTotal ?? 0, symbol: symbol),
-          layout: HeroNumberLayout.inline,
+          label: l.recurringHomeMonthPay,
+          value: MoneyText(-pay, tone: MoneyTone.signed, symbol: symbol),
         ),
-        if (s != null)
-          HeroNote(
-            child: AppText(
-              l.fpRecurringMonthLine(money(s.monthPay), money(s.monthReceive)),
-              role: AppTextRole.caption,
+        HeroNote(
+          child: AppText(
+            l.recurringHomeMonthIncome(_money(income)),
+            role: AppTextRole.caption,
+          ),
+        ),
+        HeroTiles(
+          children: [
+            SummaryTileView(
+              tile: SummaryTile(
+                label: l.recurringHomeMonthCount,
+                value: l.recurringHomeItemCount(count),
+              ),
             ),
-          ),
-        if ((s?.awaitingAmountCount ?? 0) > 0)
-          HeroAlert(
-            text: l.fpRecurringAwaitingAlert(s!.awaitingAmountCount),
-            onTap: () => _goTab(RecurringHomeTab.reminder),
-          ),
+            SummaryTileView(
+              tile: SummaryTile(
+                label: l.fpRecurringAwaitingValue,
+                value: l.recurringHomeItemCount(awaiting),
+                tone: awaiting > 0
+                    ? SummaryTileTone.amber
+                    : SummaryTileTone.neutral,
+                onTap: awaiting > 0 && _due.isNotEmpty ? _scrollToDue : null,
+              ),
+            ),
+          ],
+        ),
+        if (_tab == RecurringHomeTab.calendar)
+          MonthCalendar(
+            month: _month,
+            showStepper: false,
+            today: today(),
+            selected: _day,
+            dots: _dots(items),
+            onMonthChanged: _onMonth,
+            onSelect: (d) => setState(() => _day = d),
+          )
+        else if (items.isNotEmpty)
+          _monthList(l, items),
       ],
     );
   }
 
-  Widget _toolbarRow(AppLocalizations l) => ListToolbar(
-    collapse: _toolbar,
-    searchController: _search,
-    onSearchChanged: _setQuery,
-    searchHint: l.recurringSearchHint,
-    chips: [
-      OptionMenuAnchor<RecurringFilter>(
-        selected: _filter,
-        onSelected: _setFilter,
-        options: [
-          for (final f in RecurringFilter.values)
-            SheetOption(value: f, label: _statusLabel(l, f)),
-        ],
-        builder: (context, toggle) => AppChip(
-          label: '${l.recurringStatusLabel}: ${_statusLabel(l, _filter)}',
-          selected: _filter != RecurringFilter.current,
-          trailing: AppChipTrailing.dropdown,
-          onTap: toggle,
+  /// The month in date order. This month: the today line, the past dimmed
+  /// unless still waiting. A past month all dimmed; a coming one none.
+  Widget _monthList(AppLocalizations l, List<RecurringItem> items) {
+    final now = today();
+    final thisMonth = _month == _thisMonth;
+    final pastMonth = _month.isBefore(_thisMonth);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final rows = <Widget>[];
+    var lined = !thisMonth;
+    for (final i in items) {
+      final past = i.date.isBefore(now);
+      if (!lined && !past) {
+        rows.add(
+          TodayLine(
+            label: l.recurringHomeToday(DateFormat.MMMd(locale).format(now)),
+          ),
+        );
+        lined = true;
+      }
+      final waiting = _todo(i) || _unknown(i);
+      rows.add(
+        _row(l, i, dimmed: pastMonth || (thisMonth && past && !waiting)),
+      );
+    }
+    if (!lined) {
+      rows.add(
+        TodayLine(
+          label: l.recurringHomeToday(DateFormat.MMMd(locale).format(now)),
         ),
+      );
+    }
+    return HeroInsetBox(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: Column(children: rows),
+    );
+  }
+
+  /// One occurrence: its date, name, state tag, wallet | n/total, amount (or
+  /// รอใส่ยอด with the rule's average).
+  Widget _row(
+    AppLocalizations l,
+    RecurringItem i, {
+    bool dimmed = false,
+    bool actions = false,
+  }) {
+    final dir = context.read<RecurringDirectoryCubit>().state;
+    final unknown = _unknown(i);
+    final avg = _ruleOf(dir, i)?.avgAmount;
+    final tomorrow = i.daysUntil == 1;
+    final tag = switch (i.state) {
+      OccurrenceState.notCreated ||
+      OccurrenceState.pending => _tag(i.state.label(l), AppChipTone.warning),
+      OccurrenceState.paid => _tag(l.occurrenceStatePaid, null),
+      OccurrenceState.archived => _tag(l.occurrenceStateArchived, null),
+      OccurrenceState.done when i.autoCreated => _tag(
+        l.fpRecurringAutoChip,
+        null,
       ),
-    ],
+      _ => null,
+    };
+    return OccurrenceRow(
+      key: ValueKey('occ-${i.id}'),
+      leading: DateTile(
+        date: i.date,
+        caption: tomorrow ? l.homeUpcomingInDays(1) : null,
+      ),
+      title: i.title,
+      tag: tag,
+      sub: [
+        ?i.account?.name,
+        if (i.seq != null && i.total != null) '${i.seq}/${i.total}',
+      ].join(' | '),
+      amount: unknown
+          ? null
+          : MoneyText(
+              signedOf(i.type, i.amount ?? 0),
+              tone: toneOf(i.type),
+              symbol: context.readUserCurrencySymbol,
+            ),
+      amountWaiting: unknown ? l.fpRecurringAwaitingValue : null,
+      amountCaption: unknown && avg != null && avg > 0
+          ? l.fpRecurringAvgLine(_money(avg))
+          : null,
+      action: actions
+          ? occurrenceActionsFor(context, i, onChanged: _onChanged)
+          : null,
+      dimmed: dimmed,
+      onTap: () => _openItem(i),
+    );
+  }
+
+  Widget _tag(String label, AppChipTone? tone) => AppChip(
+    label: label,
+    tone: tone ?? AppChipTone.neutral,
+    selected: tone != null,
+    size: ChipSize.mini,
   );
 
-  Widget _listBody(
-    AppLocalizations l, {
-    required List<Recurring> rows,
-    required List<Widget> children,
-    required EmptyView empty,
-  }) {
-    final list = _list;
-    return ListPageBody(
-      loading: list == null && _listError == null,
-      error: list == null ? _listError : null,
-      isEmpty: rows.isEmpty,
-      onRetry: context.read<RecurringDirectoryCubit>().load,
-      rowDividers: true,
-      topInset: AppSpacing.sm,
-      header: [_toolbarRow(l)],
-      empty: _query.trim().isNotEmpty
-          ? EmptyView.compact(message: l.recurringNoMatch)
-          : empty,
+  Map<int, List<CalendarDot>> _dots(List<RecurringItem> items) {
+    final dots = <int, List<CalendarDot>>{};
+    for (final i in items) {
+      if (i.state == OccurrenceState.archived) continue;
+      final d = _todo(i) || _unknown(i)
+          ? CalendarDot.warning
+          : switch (i.type) {
+              TransactionType.income => CalendarDot.income,
+              TransactionType.expense => CalendarDot.expense,
+              TransactionType.transfer => CalendarDot.neutral,
+            };
+      final list = dots.putIfAbsent(i.date.day, () => []);
+      if (!list.contains(d)) list.add(d);
+    }
+    return dots;
+  }
+
+  /// ปฏิทิน: the picked day's occurrences, with their buttons.
+  List<Widget> _dayList(AppLocalizations l, List<RecurringItem> items) {
+    final day = [
+      for (final i in items)
+        if (DateUtils.isSameDay(i.date, _day)) i,
+    ];
+    if (day.isEmpty) return const [];
+    return [
+      DateGroupHeader(label: itemDateLabel(context, _day)),
+      SectionCard(children: [for (final i in day) _row(l, i, actions: true)]),
+    ];
+  }
+
+  /// ต้องจัดการ, one rule at a time: a rule with several gets its
+  /// all-at-once buttons and, past 3, a row to its page.
+  Widget _dueCard(AppLocalizations l, RecurringDirectoryState dir) {
+    final byRule = <String, List<RecurringItem>>{};
+    for (final i in _due) {
+      byRule.putIfAbsent(i.ruleId ?? i.recurring?.id ?? i.id, () => []).add(i);
+    }
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final children = <Widget>[];
+    for (final MapEntry(key: ruleId, value: list) in byRule.entries) {
+      if (list.length > 1) {
+        final first = list.first;
+        children.add(
+          DueGroupHeader(
+            label: first.recurring?.name ?? first.title,
+            caption: [
+              l.occurrenceDueSince(DateFormat.yMMM(locale).format(first.date)),
+              l.fpRecurringCountUnit(list.length),
+            ].join(' | '),
+            actions: first.bySlot
+                ? settleAllActions(context, ruleId, onChanged: _onChanged)
+                : null,
+          ),
+        );
+      }
+      for (final i in list.take(3)) {
+        children.add(_dueRow(l, i));
+      }
+      if (list.length > 3) {
+        children.add(
+          DueMoreRow(
+            label: l.occurrenceDueMore(list.length),
+            onTap: () => _open('/recurring/$ruleId'),
+          ),
+        );
+      }
+    }
+    return DueCard(
+      key: _dueKey,
+      title: l.occurrenceDueTitle,
+      trailing: l.fpRecurringCountUnit(_due.length),
       children: children,
     );
   }
 
-  Widget _recurringTab(AppLocalizations l) {
-    final rows = [
-      for (final r in _list?.items ?? const <Recurring>[])
-        if (r.kind != RecurringKind.reminder) r,
+  Widget _dueRow(AppLocalizations l, RecurringItem i) {
+    final known = i.amount != null && i.amount! > 0;
+    return OccurrenceRow(
+      key: ValueKey('due-${i.id}'),
+      leading: DateTile(date: i.date),
+      title: i.title,
+      tag: _tag(
+        i.state == OccurrenceState.upcoming
+            ? dueLabel(l, date: i.date, daysUntil: i.daysUntil)
+            : i.state.label(l),
+        AppChipTone.warning,
+      ),
+      sub: [if (known) _money(i.amount!), ?i.account?.name].join(' | '),
+      action: occurrenceActionsFor(context, i, onChanged: _onChanged),
+      onTap: () => _openItem(i),
+    );
+  }
+
+  /// รายการประจำทั้งหมด: 🔍 and +, then the rules by kind with each kind's
+  /// totals, the paused ones last. No archived ones.
+  List<Widget> _allRules(AppLocalizations l, RecurringDirectoryState dir) {
+    final needle = _query.trim().toLowerCase();
+    final rules = [
+      for (final r in dir.rules)
+        if (r.status != RecurringStatus.archived &&
+            (needle.isEmpty || r.name.toLowerCase().contains(needle)))
+          r,
     ];
+    final head = [
+      SectionHeader(
+        title: l.recurringHomeAllTitle,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListenableBuilder(
+              listenable: _search,
+              builder: (context, _) => ToolbarToggleButton(
+                state: _toolbar,
+                filtered: _search.text.trim().isNotEmpty,
+                tooltip: l.recurringSearchHint,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            CardActionButton(
+              icon: AppIcons.add,
+              tooltip: l.recurringAdd,
+              onTap: () => _open('/recurring/new'),
+            ),
+          ],
+        ),
+      ),
+      ListToolbar(
+        collapse: _toolbar,
+        searchController: _search,
+        onSearchChanged: (v) => setState(() => _query = v),
+        searchHint: l.recurringSearchHint,
+        sidePadding: 0,
+      ),
+    ];
+    final loaded = dir.status == RecurringDirectoryStatus.loaded;
+    if (rules.isEmpty && loaded) {
+      return [
+        ...head,
+        if (needle.isNotEmpty)
+          EmptyView.compact(message: l.recurringNoMatch)
+        else
+          EmptyView(
+            icon: AppIcons.scheduled,
+            title: l.recurringEmptyTitle,
+            message: l.recurringEmptyMessage,
+            cta: AddTile(
+              label: l.recurringAdd,
+              onTap: () => _open('/recurring/new'),
+            ),
+          ),
+      ];
+    }
     final live = [
-      for (final r in rows)
+      for (final r in rules)
         if (r.status != RecurringStatus.paused) r,
     ];
     final paused = [
-      for (final r in rows)
+      for (final r in rules)
         if (r.status == RecurringStatus.paused) r,
     ];
-    final canAdd = _filter != RecurringFilter.archived;
-    return _listBody(
-      l,
-      rows: rows,
-      empty: EmptyView(
-        icon: AppIcons.scheduled,
-        title: _filter == RecurringFilter.archived
-            ? l.recurringArchivedEmpty
-            : l.recurringEmptyTitle,
-        message: l.recurringEmptyMessage,
-        cta: canAdd
-            ? AddTile(
-                label: l.recurringAdd,
-                onTap: () => _open('/recurring/new'),
-              )
-            : null,
-      ),
-      children: [
-        for (final r in live)
-          RecurringRow(recurring: r, onTap: () => _open('/recurring/${r.id}')),
-        if (paused.isNotEmpty) ...[
-          SectionHeader(title: l.fpRecurringPausedGroup, count: paused.length),
-          for (final r in paused)
-            RecurringRow(
-              recurring: r,
-              onTap: () => _open('/recurring/${r.id}'),
-            ),
-        ],
-        if (canAdd)
-          AddTile(
-            label: l.recurringAdd,
-            inList: true,
-            onTap: () => _open('/recurring/new'),
-          ),
+    return [
+      ...head,
+      for (final k in const [
+        RecurringKind.subscription,
+        RecurringKind.installment,
+        RecurringKind.reminder,
+        RecurringKind.income,
+      ])
+        ..._kindGroup(l, k, [
+          for (final r in live)
+            if (r.kind == k) r,
+        ]),
+      if (paused.isNotEmpty) ...[
+        SectionHeader(title: l.fpRecurringPausedGroup, count: paused.length),
+        SectionCard(children: [for (final r in paused) _ruleRow(r)]),
       ],
-    );
+    ];
   }
 
-  Widget _reminderTab(AppLocalizations l) {
-    final rows = [
-      for (final r in _list?.items ?? const <Recurring>[])
-        if (r.kind == RecurringKind.reminder) r,
+  List<Widget> _kindGroup(
+    AppLocalizations l,
+    RecurringKind kind,
+    List<Recurring> rules,
+  ) {
+    if (rules.isEmpty) return const [];
+    double sum(double? Function(Recurring r) of) =>
+        rules.fold(0, (s, r) => s + (of(r) ?? 0));
+    final totals = switch (kind) {
+      RecurringKind.subscription => l.recurringHomePerMonthYear(
+        _money(sum((r) => r.monthlyAmount)),
+        _money(sum((r) => r.yearlyCost)),
+      ),
+      RecurringKind.installment => l.recurringHomeLeft(
+        _money(
+          sum(
+            (r) => r.progressTotal == null
+                ? null
+                : (r.amount ?? 0) * (r.progressTotal! - r.progressDone),
+          ),
+        ),
+      ),
+      RecurringKind.reminder => l.recurringHomeAvgPerMonth(
+        _money(sum((r) => r.avgAmount ?? r.monthlyAmount)),
+      ),
+      RecurringKind.income => l.recurringHomePerMonth(
+        _money(sum((r) => r.monthlyAmount)),
+      ),
+    };
+    return [
+      SectionHeader(
+        title: recurringKindLabel(l, kind),
+        count: rules.length,
+        trailing: AppText(totals, role: AppTextRole.caption),
+      ),
+      SectionCard(children: [for (final r in rules) _ruleRow(r)]),
     ];
-    bool due(Recurring r) {
-      final s = r.currentOccurrence?.status;
-      return s == OccurrenceState.pending || s == OccurrenceState.notCreated;
-    }
+  }
 
-    final dueRows = [
-      for (final r in rows)
-        if (due(r)) r,
-    ];
-    final comingRows = [
-      for (final r in rows)
-        if (!due(r)) r,
-    ];
-    Widget row(Recurring r) => RecurringRow(
+  /// A rule; one with an end (installments) gets its chain of occurrences.
+  Widget _ruleRow(Recurring r) {
+    final row = RecurringRow(
       recurring: r,
-      amount: r.nextAmount ?? r.currentOccurrence?.amount ?? r.amount,
       onTap: () => _open('/recurring/${r.id}'),
     );
-    final canAdd = _filter != RecurringFilter.archived;
-    return _listBody(
-      l,
-      rows: rows,
-      empty: EmptyView(
-        icon: AppIcons.scheduled,
-        title: l.recurringEmptyTitle,
-        message: l.recurringEmptyMessage,
-        cta: canAdd
-            ? AddTile(
-                label: l.fpRecurringAddReminder,
-                onTap: () => _open('/recurring/new?kind=reminder'),
-              )
-            : null,
-      ),
+    final dots = endChainDots(r);
+    if (dots == null) return row;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (dueRows.isNotEmpty) ...[
-          SectionHeader(title: l.fpRecurringGroupDue, count: dueRows.length),
-          for (final r in dueRows) row(r),
-        ],
-        if (comingRows.isNotEmpty) ...[
-          SectionHeader(
-            title: l.fpRecurringGroupComing,
-            count: comingRows.length,
+        row,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            0,
+            AppSpacing.lg,
+            AppSpacing.md,
           ),
-          for (final r in comingRows) row(r),
-        ],
-        if (canAdd)
-          AddTile(
-            label: l.fpRecurringAddReminder,
-            inList: true,
-            onTap: () => _open('/recurring/new?kind=reminder'),
-          ),
-      ],
-    );
-  }
-
-  CalendarDot _dot(RecurringItem i) => switch (i.type) {
-    TransactionType.income => CalendarDot.income,
-    TransactionType.expense => CalendarDot.expense,
-    TransactionType.transfer => CalendarDot.neutral,
-  };
-
-  Widget _calendarTab(AppLocalizations l) {
-    final page = _calendar;
-    final items = page?.items ?? const <RecurringItem>[];
-    final dots = <int, List<CalendarDot>>{};
-    for (final i in items) {
-      if (i.state == OccurrenceState.archived) continue;
-      final list = dots.putIfAbsent(i.date.day, () => []);
-      final d = _dot(i);
-      if (!list.contains(d)) list.add(d);
-    }
-    final dayItems = [
-      for (final i in items)
-        if (DateUtils.isSameDay(i.date, _day)) i,
-    ];
-    return ListPageBody(
-      loading: page == null && _calendarError == null,
-      error: page == null ? _calendarError : null,
-      isEmpty: false,
-      onRetry: _loadCalendar,
-      rowDividers: false,
-      topInset: AppSpacing.sm,
-      empty: EmptyView.compact(message: l.fpRecurringCalendarNone),
-      children: [
-        MonthCalendar(
-          month: _month,
-          today: today(),
-          selected: _day,
-          dots: dots,
-          onMonthChanged: _onMonth,
-          onSelect: (d) => setState(() => _day = d),
+          child: OccurrenceChain(dots: dots),
         ),
-        DateGroupHeader(label: itemDateLabel(context, _day)),
-        if (dayItems.isEmpty)
-          EmptyView.compact(message: l.fpRecurringCalendarNone)
-        else
-          for (final i in dayItems)
-            RecurringItemRow(
-              item: i,
-              showParent: true,
-              onTap: () => _openItem(i),
-            ),
       ],
     );
   }

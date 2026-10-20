@@ -19,7 +19,9 @@ import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../transactions/data/transactions_repository.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../../transactions/domain/transaction_type.dart';
+import '../../../transactions/domain/transactions_summary.dart';
 import '../../../transactions/presentation/pages/transactions_list_page.dart';
+import '../../../transactions/presentation/tx_list_filters.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../domain/account.dart';
 import '../../domain/account_identifier.dart';
@@ -234,6 +236,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     }
     onDraftRestored();
     _txType.addListener(_onTxType);
+    _period.addListener(_onPeriod);
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeOpenMembers());
     final providers = context.read<ProvidersCubit>();
     _providers = providers.state.providers;
@@ -251,6 +254,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     if (a != null && a != oldWidget.account) {
       final next = _AccountDraft.from(a);
       if (next != original) resetDraft(next);
+      _flows.clear();
+      unawaited(_loadFlow(a, _period.value));
     }
   }
 
@@ -259,6 +264,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     _providersSub?.cancel();
     _txType
       ..removeListener(_onTxType)
+      ..dispose();
+    _period
+      ..removeListener(_onPeriod)
       ..dispose();
     for (final c in [
       _nameController,
@@ -638,6 +646,10 @@ class _AccountDetailViewState extends State<_AccountDetailView>
 
   final _txType = ValueNotifier<TransactionType?>(null);
 
+  final _period = ValueNotifier<TxPeriod>(TxPeriod.month(DateTime.now()));
+  final _flows = <TxPeriod, TransactionsSummary>{};
+  final _flowLoading = <TxPeriod>{};
+
   bool _membersOpened = false;
 
   void _maybeOpenMembers() {
@@ -650,6 +662,42 @@ class _AccountDetailViewState extends State<_AccountDetailView>
 
   void _onTxType() {
     if (mounted) setState(() {});
+  }
+
+  void _onPeriod() {
+    final a = widget.account;
+    if (a != null) unawaited(_loadFlow(a, _period.value));
+    if (mounted) setState(() {});
+  }
+
+  static bool _isThisMonth(TxPeriod p) => p == TxPeriod.month(DateTime.now());
+
+  Future<void> _loadFlow(Account a, TxPeriod p) async {
+    if (_isThisMonth(p) || _flows.containsKey(p) || !_flowLoading.add(p)) {
+      return;
+    }
+    final b = p.bounds;
+    try {
+      final s = await context.read<TransactionsRepository>().summaryForAccount(
+        accountId: a.id,
+        from: b.from,
+        to: b.to,
+      );
+      if (mounted) setState(() => _flows[p] = s);
+    } on ApiException {
+      // The row shows "—" for this period; a period change or refresh retries.
+    } finally {
+      _flowLoading.remove(p);
+    }
+  }
+
+  /// What came in and went out in [p]; null while it loads or after it failed.
+  ({double income, double expense})? _flowOf(Account a, TxPeriod p) {
+    if (_isThisMonth(p)) return (income: a.monthIn, expense: a.monthOut);
+    final s = _flows[p];
+    return s == null
+        ? null
+        : (income: s.totalIncome, expense: s.totalExpense);
   }
 
   void _toggleTxType(TransactionType t) {
@@ -772,7 +820,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                   embedded: true,
                   lockedAccount: a,
                   typeFilter: _txType,
-                  headerTiles: () => _monthTiles(l, a),
+                  period: _period,
                 ),
               ),
             },
@@ -783,24 +831,27 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   }
 
   Widget _overviewTab(AppLocalizations l, Account a, double bottom) {
+    final gap = SizedBox(height: HeroMetrics.of(context).after);
     return PullToRefresh(
       onRefresh: _refresh,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, bottom),
         children: [
-          DetailSections(
-            info: _overviewInfo(l, a),
-            settings: _settingsSection(l, a),
-            people: _peopleStrip(l, a),
-            note: NoteSection(
+          for (final s in [
+            _overviewInfo(l, a),
+            _savedInSection(l, a),
+            _peopleStrip(l, a),
+            _settingsSection(l, a),
+            NoteSection(
               label: l.commonNote,
               editing: false,
               text: a.note,
               hint: l.commonLongPressToEdit,
               onLongPress: _enterOn(_noteFocus),
             ),
-          ),
+          ])
+            if (s != null) ...[gap, s],
           DetailMeta(
             lines: detailMetaLines(
               context,
@@ -816,67 +867,100 @@ class _AccountDetailViewState extends State<_AccountDetailView>
 
   Widget? _overviewInfo(AppLocalizations l, Account a) => _infoBox(l, a);
 
+  Widget? _savedInSection(AppLocalizations l, Account a) {
+    final buckets = a.savings?.buckets ?? const [];
+    if (buckets.isEmpty) return null;
+    final symbol = context.readUserCurrencySymbol;
+    final accent = a.iconCode.tintFor(
+      Theme.of(context).extension<AppColors>()!,
+      fallback: a.colorOf(context),
+    );
+    return SectionCard(
+      first: true,
+      title: l.fpWalletSavedInTitle,
+      description: l.fpWalletSavedInDesc,
+      children: [
+        for (final b in buckets)
+          DetailRow(
+            label: b.isGoal ? b.name : l.sgv2SpareTitle,
+            leading: IconCodeWidget(
+              iconCode: b.isGoal ? b.iconCode : null,
+              size: 36,
+              fallbackIcon: b.isGoal
+                  ? AppIcons.savingGoal
+                  : AppIcons.savingDeposit,
+              fallbackColor: accent,
+            ),
+            trailing: MoneyText(b.amount, symbol: symbol),
+            showChevron: true,
+            onTap: () => openPage(
+              context,
+              b.isGoal && b.id != null
+                  ? '/saving-goals/${b.id}'
+                  : '/saving-goals/spare',
+            ),
+          ),
+      ],
+    );
+  }
+
   EdgeInsets _tabInsets(double bottom) =>
       EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, bottom);
 
-  List<Widget> _monthTiles(AppLocalizations l, Account a) {
-    if (a.isLiability || !a.trackBalance) return const [];
-    final symbol = context.readUserCurrencySymbol;
+  String _periodLabel(TxPeriod p) {
     final locale = Localizations.localeOf(context).languageCode;
-    final month = DateFormat.MMM(locale).format(DateTime.now());
-    return [
-      SummaryTileView(
-        tile: SummaryTile(
-          label: l.fpWalletMonthIn(month),
-          value: '+${moneyString(context, a.monthIn, symbol: symbol)}',
-          tone: SummaryTileTone.green,
-          selected: _txType.value == TransactionType.income,
-          onTap: () => _toggleTxType(TransactionType.income),
-        ),
-      ),
-      SummaryTileView(
-        tile: SummaryTile(
-          label: l.fpWalletMonthOut(month),
-          value: '−${moneyString(context, a.monthOut, symbol: symbol)}',
-          tone: SummaryTileTone.red,
-          selected: _txType.value == TransactionType.expense,
-          onTap: () => _toggleTxType(TransactionType.expense),
-        ),
-      ),
-    ];
+    final now = DateTime.now();
+    return switch (p.kind) {
+      TxPeriodKind.month when p.start.year == now.year => DateFormat.MMM(
+        locale,
+      ).format(p.start),
+      TxPeriodKind.month => DateFormat.yMMM(locale).format(p.start),
+      TxPeriodKind.year => DateFormat.y(locale).format(p.start),
+      TxPeriodKind.day => DateFormat.MMMd(locale).format(p.start),
+      _ => p.label(context),
+    };
+  }
+
+  Widget _flowRow(AppLocalizations l, Account a) {
+    final p = _period.value;
+    final flow = _flowOf(a, p);
+    final symbol = context.readUserCurrencySymbol;
+    String signed(num v, {required bool negative}) => v == 0
+        ? moneyString(context, v, symbol: symbol)
+        : signedMoneyString(context, v, negative: negative, symbol: symbol);
+    final prev = p.step(-1);
+    final next = p.step(1);
+    final label = _periodLabel(p);
+    return HeroFlowRow(
+      incomeLabel: l.fpWalletFlowIn(label),
+      expenseLabel: l.fpWalletFlowOut(label),
+      income: flow == null ? '—' : signed(flow.income, negative: false),
+      expense: flow == null ? '—' : signed(flow.expense, negative: true),
+      onPrev: prev == null ? null : () => _period.value = prev,
+      onNext: next == null ? null : () => _period.value = next,
+      onTapIncome: () => _toggleTxType(TransactionType.income),
+      onTapExpense: () => _toggleTxType(TransactionType.expense),
+      selected: switch (_txType.value) {
+        TransactionType.income => HeroFlowSelection.income,
+        TransactionType.expense => HeroFlowSelection.expense,
+        _ => HeroFlowSelection.none,
+      },
+    );
   }
 
   Widget _viewHero(AppLocalizations l, Account a) {
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final accent = a.iconCode.tintFor(palette, fallback: a.colorOf(context));
     final symbol = context.readUserCurrencySymbol;
     final locale = Localizations.localeOf(context).languageCode;
-    final ref = a.identifiers.isEmpty ? null : a.identifiers.first;
-    final members = a.members.where((m) => m.isActive).length;
     final savings = a.savings;
     final due = a.dueDateNext;
-    final bar = _heroBar(l, a, accent, symbol, savings);
+    final split = _heroBar(l, a, symbol, savings);
+    final flow = _flowRow(l, a);
+    final members = [
+      for (final m in a.members)
+        if (m.isActive) m,
+    ];
     return AppHeroCard(
       style: accountHeroStyle(context, a),
-      header: HeroHeader(
-        leading: [
-          AppChip(
-            label: accountTypeLabel(context, a.type),
-            icon: a.type.icon,
-            color: a.colorOf(context),
-            selected: true,
-          ),
-          if (ref != null) AppChip(label: ref.masked),
-          if (a.isShared)
-            AppChip(
-              label: l.accountSharedWith(members),
-              icon: AppIcons.link,
-              color: accent,
-              selected: true,
-            ),
-        ],
-        onEdit: _isOwner ? enterEdit : null,
-      ),
       content: [
         HeroIdentity(
           icon: AccountIconCircle(
@@ -895,24 +979,41 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             controller: _descriptionController,
             editing: false,
             focusNode: _descriptionFocus,
-            hint: l.accountFormDescriptionExample,
+            hint: l.commonDescription,
             maxLength: TextLimits.description,
             onEnterEdit: _enterOn(_descriptionFocus),
           ),
+          trailing: _isOwner
+              ? CardActionButton(
+                  key: const ValueKey('heroEdit'),
+                  icon: AppIcons.edit,
+                  tooltip: UiConfig.stringsOf(context).edit,
+                  onTap: enterEdit,
+                )
+              : null,
         ),
-        a.showsBalance
-            ? HeroNumber(
-                label: a.isLiability
-                    ? l.accountsSummaryCardDebt
-                    : l.fpWalletBalanceLabel,
-                value: MoneyText(
-                  a.isLiability ? a.creditUsed : accountDisplayBalance(a),
-                  symbol: symbol,
-                ),
-                color: accountBalanceColor(context, a),
-              )
-            : AppText(l.walletTrackOffHero, role: AppTextRole.caption),
-        bar,
+        if (a.showsBalance)
+          HeroNumber(
+            label: a.isLiability
+                ? l.fpWalletCreditUsedLabel
+                : l.fpWalletBalanceLabel,
+            value: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: MoneyText(
+                a.isLiability ? a.creditUsed : accountDisplayBalance(a),
+                symbol: symbol,
+              ),
+            ),
+            color: accountBalanceColor(context, a),
+          ),
+        ...split,
+        if (a.showsBalance && (savings?.savedExceedsBalance ?? false))
+          HeroAlert(
+            text: l.fpWalletSavedOverAlert(
+              moneyString(context, savings!.overBy, symbol: symbol),
+            ),
+          ),
         if (a.isLiability && due != null && a.daysUntilDue != null)
           HeroAlert(
             text: l.fpWalletDueAlert(
@@ -920,50 +1021,122 @@ class _AccountDetailViewState extends State<_AccountDetailView>
               a.daysUntilDue!,
             ),
           ),
+        flow,
+        ChipRow(
+          chips: [
+            AppChip(
+              label: accountTypeLabel(context, a.type),
+              icon: a.type.icon,
+              color: a.colorOf(context),
+              selected: true,
+              size: ChipSize.chip,
+            ),
+            AppChip(
+              label: _scopeChipLabel(l, _effectiveScope(a)),
+              size: ChipSize.chip,
+            ),
+            if (a.isShared)
+              MemberChip(members: members, onTap: () => _openMembers(a)),
+          ],
+        ),
       ],
     );
   }
 
-  Widget? _heroBar(
+  String _scopeChipLabel(AppLocalizations l, WalletReportScope s) =>
+      switch (s) {
+        WalletReportScope.none => l.walletReportScopeNone,
+        WalletReportScope.own => l.fpWalletScopeOwnChip,
+        WalletReportScope.all => l.walletReportScopeAll,
+      };
+
+  /// The split bar and the facts under it that act as its legend; empty when
+  /// the wallet has neither savings nor a card limit.
+  List<Widget> _heroBar(
     AppLocalizations l,
     Account a,
-    Color accent,
     String symbol,
     WalletSavings? savings,
   ) {
-    if (!a.showsBalance) return null;
+    if (!a.showsBalance) return const [];
     final usedPct = a.creditUsedPct;
     final left = a.creditAvailable;
+    String money(num v) => moneyString(context, v, symbol: symbol);
+    // The colors come from the card, so these build inside it.
+    Widget inCard(Widget Function(HeroColors hero) build) =>
+        Builder(builder: (context) => build(HeroColors.maybeOf(context)!));
     if (usedPct != null && left != null) {
-      return HeroBar(
-        value: (usedPct / 100).clamp(0.0, 1.0),
-        color: accent,
-        left: l.fpWalletCardUsed(
-          usedPct,
-          moneyString(context, a.creditLimit!, symbol: symbol),
+      return [
+        inCard(
+          (hero) => HeroBar.split(
+            parts: [((usedPct / 100).clamp(0.0, 1.0), hero.accent)],
+          ),
         ),
-        right: l.fpWalletCardLeft(moneyString(context, left, symbol: symbol)),
-      );
+        inCard(
+          (hero) => HeroFactList(
+            facts: [
+              HeroFact(
+                l.fpWalletCardUsedLabel(usedPct),
+                money(a.creditUsed),
+                icon: AppIcons.creditCard,
+                iconColor: hero.accent,
+              ),
+              HeroFact(
+                l.fpWalletCardAvailableLabel(money(a.creditLimit!)),
+                money(left),
+                icon: AppIcons.coin,
+                iconColor: hero.muted,
+              ),
+            ],
+          ),
+        ),
+      ];
     }
     final available = savings?.available;
-    if (savings == null || savings.isEmpty || available == null) return null;
+    if (savings == null || savings.isEmpty || available == null) {
+      return const [];
+    }
+    final over = savings.savedExceedsBalance;
     final total = a.balance;
-    if (total <= 0) return null;
-    return HeroBar.split(
-      parts: [
-        ((available / total).clamp(0.0, 1.0), accent),
-        (
-          (savings.saved / total).clamp(0.0, 1.0),
-          accent.withValues(alpha: 0.4),
+    if (total <= 0 && !over) return const [];
+    Color saved(HeroColors hero) =>
+        over ? hero.warning : hero.accent.withValues(alpha: 0.4);
+    return [
+      inCard(
+        (hero) => HeroBar.split(
+          parts: [
+            (
+              total <= 0 ? 0.0 : (available / total).clamp(0.0, 1.0),
+              hero.accent,
+            ),
+            (
+              total <= 0 ? 1.0 : (savings.saved / total).clamp(0.0, 1.0),
+              saved(hero),
+            ),
+          ],
         ),
-      ],
-      left: l.fpWalletAvailableLegend(
-        moneyString(context, available, symbol: symbol),
       ),
-      right: l.fpWalletSavedLegend(
-        moneyString(context, savings.saved, symbol: symbol),
+      inCard(
+        (hero) => HeroFactList(
+          facts: [
+            HeroFact(
+              l.fpWalletAvailableLabel,
+              money(available),
+              icon: AppIcons.coin,
+              iconColor: hero.accent,
+            ),
+            HeroFact(
+              l.fpWalletSavedLabel,
+              money(savings.saved),
+              icon: AppIcons.savings,
+              iconColor: saved(hero),
+              color: over ? hero.warning : null,
+              onTap: () => _goTab(AccountDetailTab.overview),
+            ),
+          ],
+        ),
       ),
-    );
+    ];
   }
 
   Widget? _actionBar(AppLocalizations l, Account a) {
@@ -1160,11 +1333,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     double bottom,
   ) {
     final preview = _preview(l);
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final accent = preview.iconCode.tintFor(
-      palette,
-      fallback: preview.colorOf(context),
-    );
     final w = working;
     return DetailLayout(
       topInset: barInset + AppSpacing.lg,
@@ -1209,9 +1377,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                 editing: true,
                 controller: _nameController,
                 focusNode: _nameFocus,
-                hint: l.accountFormNameExample,
+                hint: l.commonName,
                 maxLength: TextLimits.name,
-                maxLines: 2,
                 onChanged: (v) => _onText(_Field.name, v),
                 validator: (v) {
                   final name = v?.trim() ?? '';
@@ -1226,7 +1393,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                 controller: _descriptionController,
                 editing: true,
                 focusNode: _descriptionFocus,
-                hint: l.accountFormDescriptionExample,
+                hint: l.commonDescription,
                 maxLength: TextLimits.description,
                 onChanged: (v) => _onText(_Field.description, v),
               ),
@@ -1238,7 +1405,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
               HeroAmountField(
                 controller: _openingController,
                 label: l.accountFormBalanceLabel,
-                accent: accent,
                 symbol: context.readUserCurrencySymbol,
                 onChanged: (v) => _onText(_Field.opening, v),
               ),

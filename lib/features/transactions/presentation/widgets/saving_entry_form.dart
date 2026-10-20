@@ -6,13 +6,14 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../accounts/presentation/widgets/account_picker.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
 import '../../../saving_goals/data/saving_goals_repository.dart';
 import '../../../saving_goals/domain/saving_goal.dart';
 import '../../../saving_goals/domain/saving_goals_overview.dart';
+import '../../../saving_goals/presentation/widgets/saving_goal_picker.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/tx_form_options_cubit.dart';
-import 'account_picker_sheet.dart';
 
 class SavingEntryController extends ChangeNotifier {
   SavingEntryController({this.goalId}) {
@@ -105,15 +106,15 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
     final accounts =
         maybeTxFormOptions(context, watch: false)?.state.options?.accountList ??
         context.read<AccountsCubit>().state.accounts;
-    final r = await showAccountPickerSheet(
-      context: context,
+    final r = await AccountPicker.one(
+      context,
       accounts: accounts,
-      selected: _c.account,
+      selectedId: _c.account?.id,
       allowNone: true,
       allowCreate: true,
     );
     if (!mounted || r == null) return;
-    _c.setAccount(r is AccountPickerSelected ? r.account : null);
+    _c.setAccount(r is AccountPicked ? r.account : null);
   }
 
   Future<void> _pickDate() async {
@@ -199,43 +200,13 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
   }
 
   Future<void> _pickGoal() async {
-    final l = AppLocalizations.of(context)!;
-    final symbol = debtCurrencySymbol(context);
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final planning = ModuleColors.of(context).planning;
-    String money(double v) => moneyString(context, v, symbol: symbol);
-    final overview = _overview;
-    final r = await showSavingGoalPickerSheet(
+    final r = await SavingGoalPicker.one(
       context,
-      title: l.savingEntryPickGoal,
       selectedId: _c.goalId,
-      items: [
-        SavingGoalPick(
-          id: null,
-          name: l.savingEntrySpare,
-          icon: AppIcons.quickSaving,
-          color: planning,
-          amountText: overview == null ? null : money(overview.spare.amount),
-          caption: l.sgv2SpareHint,
-        ),
-        for (final g in overview?.goals ?? const <SavingGoal>[])
-          SavingGoalPick(
-            id: g.id,
-            name: g.name,
-            icon: IconRegistry.get(
-              g.iconCode?.icon,
-              fallback: AppIcons.savingGoal,
-            ),
-            color: g.iconCode.tintFor(palette),
-            amountText: money(g.savedAmount),
-            targetText: g.targetAmount == null ? null : money(g.targetAmount!),
-            caption: g.description?.trim().isEmpty ?? true
-                ? null
-                : g.description!.trim(),
-          ),
-      ],
+      spareSelected: _c.goalId == null,
+      overview: _overview,
     );
-    if (r != null && mounted) _c.setGoal(r.id);
+    if (r != null && mounted) _c.setGoal(r.goalId);
   }
 
   @override

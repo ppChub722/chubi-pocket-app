@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../molecules/progress_row.dart';
 import '../../tokens/app_spacing.dart';
+import '../../tokens/hero_colors.dart';
 
 /// A hero's progress bar (a [ProgressRow]) or a split bar with a legend.
 class HeroBar extends StatelessWidget {
@@ -10,6 +11,10 @@ class HeroBar extends StatelessWidget {
     this.expected,
     this.marker,
     this.ticks = const [],
+    this.alert,
+    this.alertColor,
+    this.markerLabel,
+    this.alertLabel,
     this.color,
     this.overColor,
     this.left,
@@ -18,6 +23,7 @@ class HeroBar extends StatelessWidget {
     super.key,
   }) : parts = null;
 
+  /// The parts side by side, a small left / right legend under them.
   const HeroBar.split({
     required List<(double, Color)> this.parts,
     this.left,
@@ -28,6 +34,10 @@ class HeroBar extends StatelessWidget {
        expected = null,
        marker = null,
        ticks = const [],
+       alert = null,
+       alertColor = null,
+       markerLabel = null,
+       alertLabel = null,
        color = null,
        overColor = null;
 
@@ -35,6 +45,10 @@ class HeroBar extends StatelessWidget {
   final double? expected;
   final double? marker;
   final List<double> ticks;
+  final double? alert;
+  final Color? alertColor;
+  final String? markerLabel;
+  final String? alertLabel;
   final Color? color;
   final Color? overColor;
   final List<(double, Color)>? parts;
@@ -52,6 +66,10 @@ class HeroBar extends StatelessWidget {
         expected: expected,
         marker: marker,
         ticks: ticks,
+        alert: alert,
+        alertColor: alertColor,
+        markerLabel: markerLabel,
+        alertLabel: alertLabel,
         color: color,
         overColor: overColor,
         height: height,
@@ -60,9 +78,10 @@ class HeroBar extends StatelessWidget {
       );
     }
     final scheme = Theme.of(context).colorScheme;
-    final caption = Theme.of(
-      context,
-    ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
+    final hero = HeroColors.maybeOf(context);
+    final caption = Theme.of(context).textTheme.bodySmall?.copyWith(
+      color: hero?.muted ?? scheme.onSurfaceVariant,
+    );
     final used = split.fold<double>(0, (s, p) => s + p.$1).clamp(0.0, 1.0);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -73,7 +92,7 @@ class HeroBar extends StatelessWidget {
           child: SizedBox(
             height: height,
             child: ColoredBox(
-              color: scheme.surfaceContainerHighest,
+              color: hero?.track ?? scheme.surfaceContainerHighest,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

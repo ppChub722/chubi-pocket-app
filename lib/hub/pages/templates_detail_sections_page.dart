@@ -36,6 +36,14 @@ class _DetailSectionsDemoState extends State<_DetailSectionsDemo> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const HubDemo(
+            title: 'SettingMenuRow: a dropdown you can also type into',
+            note:
+                'The value opens the menu; custom ends it with an input box, and '
+                'choosing that turns the value into a field (its ▾ reopens the '
+                'menu). compact: true is the in-hero form; note adds "= ฿1,600".',
+            child: _MenuRowDemo(),
+          ),
           HubDemo(
             title: 'InfoBox / InfoRow',
             note:
@@ -223,8 +231,89 @@ class _DetailSectionsDemoState extends State<_DetailSectionsDemo> {
               ],
             ),
           ),
+          HubDemo(
+            title: 'IconChipStrip',
+            note:
+                'View mode, under the hero: a transaction’s tags; a budget’s '
+                'categories, wallets and tags, one strip each, only the ones '
+                'it has. maxLines folds the rest into "+N".',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const IconChipStrip(
+                  icon: AppIcons.category,
+                  maxLines: 1,
+                  chips: [
+                    AppChip(label: 'Food', size: ChipSize.chip),
+                    AppChip(label: 'Groceries', size: ChipSize.chip),
+                    AppChip(label: 'Coffee', size: ChipSize.chip),
+                    AppChip(label: 'Snacks', size: ChipSize.chip),
+                    AppChip(label: 'Delivery', size: ChipSize.chip),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                IconChipStrip(
+                  icon: AppIcons.wallet,
+                  onLongPress: noop,
+                  chips: const [AppChip(label: 'KBank', size: ChipSize.chip)],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                const IconChipStrip(
+                  icon: AppIcons.tag,
+                  chips: [
+                    AppChip(label: 'daily', size: ChipSize.chip),
+                    AppChip(label: 'work', size: ChipSize.chip),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _MenuRowDemo extends StatefulWidget {
+  const _MenuRowDemo();
+
+  @override
+  State<_MenuRowDemo> createState() => _MenuRowDemoState();
+}
+
+class _MenuRowDemoState extends State<_MenuRowDemo> {
+  int _pct = 80;
+
+  @override
+  Widget build(BuildContext context) {
+    SettingMenuRow<int> row({bool compact = false}) => SettingMenuRow<int>(
+      label: 'Warn at',
+      value: _pct == 0 ? 'Off' : '$_pct%',
+      note: compact && _pct > 0 ? '= ฿${2000 * _pct ~/ 100}' : null,
+      compact: compact,
+      selected: _pct,
+      options: [
+        for (final p in const [70, 80, 90, 95])
+          SheetOption(value: p, label: '$p%'),
+        SheetOption(value: 0, label: 'Off'),
+      ],
+      onSelected: (p) => setState(() => _pct = p),
+      custom: SettingMenuCustom<int>(
+        hint: 'Custom',
+        suffix: '%',
+        parse: (t) {
+          final n = int.tryParse(t);
+          return n == null || n < 1 ? null : n.clamp(1, 100);
+        },
+      ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionCard(children: [row()]),
+        const SizedBox(height: AppSpacing.md),
+        row(compact: true),
+      ],
     );
   }
 }

@@ -141,7 +141,7 @@ List<Map<String, dynamic>> _allTypes() => [
     'recurring_due',
     system: true,
     payload: {'count': 3},
-    deepLink: '/pending',
+    deepLink: '/recurring?focus=due',
   ),
   _row(
     'n10',
@@ -381,7 +381,10 @@ void main() {
         child: MultiBlocProvider(
           providers: [
             BlocProvider<AccountsCubit>(
-              create: (_) => AccountsCubit(repository: accounts, coordinator: testCoordinator()),
+              create: (_) => AccountsCubit(
+                repository: accounts,
+                coordinator: testCoordinator(),
+              ),
             ),
             BlocProvider<AuthCubit>.value(value: auth),
             BlocProvider<PendingCubit>.value(value: pending),
@@ -449,12 +452,12 @@ void main() {
     expect(find.byType(NotificationTileView), findsNWidgets(10));
     expect(find.text('Bee invited you to Japan trip'), findsOneWidget);
     expect(find.textContaining('iPhone has 2 items left'), findsOneWidget);
-    expect(find.textContaining('3 recurring items are due'), findsOneWidget);
+    expect(find.textContaining('3 recurring payments are due'), findsOneWidget);
     expect(find.text('Bee added you to Dinner party'), findsOneWidget);
     // Answer buttons: invites + requests, one-tap actions, ending, due.
     expect(find.text('Extend'), findsOneWidget);
     expect(find.text('Let it end'), findsOneWidget);
-    expect(find.text('Open pending ›'), findsOneWidget);
+    expect(find.text('Open ›'), findsOneWidget);
     expect(find.text('Add to my payables'), findsOneWidget);
     // The settings row is gone from the list.
     expect(find.text('Notification settings'), findsNothing);

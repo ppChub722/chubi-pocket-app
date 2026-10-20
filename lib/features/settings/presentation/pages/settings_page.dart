@@ -18,7 +18,7 @@ import '../../../preferences/presentation/cubit/font_id_cubit.dart';
 import '../../../preferences/presentation/cubit/locale_cubit.dart';
 import '../../../preferences/presentation/cubit/theme_id_cubit.dart';
 import '../../../preferences/presentation/cubit/theme_mode_cubit.dart';
-import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
+import '../../../accounts/presentation/widgets/account_picker.dart';
 import '../../../users/data/users_repository.dart';
 import '../../../users/presentation/refresh_me.dart';
 
@@ -609,17 +609,15 @@ class _MainWalletRowState extends State<_MainWalletRow> {
     final messenger = ScaffoldMessenger.of(context);
     await accounts.loadIfNeeded();
     if (!mounted) return;
-    final all = accounts.state.accounts;
     final currentId = widget.user.defaultAccount?.id;
-    final r = await showAccountPickerSheet(
-      context: context,
-      accounts: all,
-      selected: all.where((a) => a.id == currentId).firstOrNull,
+    final r = await AccountPicker.one(
+      context,
+      selectedId: currentId,
       title: l.settingsMainWallet,
       allowNone: true,
     );
     if (r == null || !mounted) return;
-    final newId = r is AccountPickerSelected ? r.account.id : null;
+    final newId = r is AccountPicked ? r.account.id : null;
     if (newId == currentId) return;
     setState(() => _busy = true);
     try {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/user_currency.dart';
@@ -38,6 +39,37 @@ String budgetRange(BuildContext context, DateTime start, DateTime? end) {
   final l = AppLocalizations.of(context)!;
   if (end == null) return l.bgRowSince(_day(context, start));
   return l.bgRowRange(_day(context, start), _day(context, end));
+}
+
+/// "1–31 ต.ค. 2026", "28 ต.ค. – 3 พ.ย. 2026": a range in a chip's room,
+/// the month and year said once where the two days share them.
+String budgetRangeShort(BuildContext context, DateTime start, DateTime end) {
+  final locale = Localizations.localeOf(context).toLanguageTag();
+  final last = DateFormat.yMMMd(locale).format(end);
+  if (start.year != end.year) return '${_day(context, start)} – $last';
+  final dayFirst = DateFormat.MMMd(locale).pattern?.startsWith('d') ?? false;
+  if (start.month == end.month && dayFirst) {
+    return '${DateFormat.d(locale).format(start)}–$last';
+  }
+  return '${DateFormat.MMMd(locale).format(start)} – $last';
+}
+
+/// The first period's last day, worked out like the BE's periods: the next
+/// start keeps the start's day (a short month uses its last day), less a day.
+DateTime budgetFirstPeriodEnd(BudgetRule rule, DateTime start) {
+  final n = rule.interval < 1 ? 1 : rule.interval;
+  DateTime on(int y, int m, int d) {
+    final last = DateTime(y, m + 1, 0).day;
+    return DateTime(y, m, d > last ? last : d);
+  }
+
+  final next = switch (rule.freq) {
+    'daily' => DateTime(start.year, start.month, start.day + n),
+    'weekly' => DateTime(start.year, start.month, start.day + 7 * n),
+    'yearly' => on(start.year + n, start.month, start.day),
+    _ => on(start.year, start.month + n, start.day),
+  };
+  return DateTime(next.year, next.month, next.day - 1);
 }
 
 String budgetPeriodTitle(BuildContext context, Budget budget, BudgetPeriod p) {
@@ -106,6 +138,7 @@ String budgetSourceLabel(AppLocalizations l, BudgetSource s) => switch (s) {
   BudgetSource.event => l.bgSourceEvent,
   BudgetSource.upcoming => l.bgSourceUpcoming,
   BudgetSource.pending => l.bgSourcePending,
+  BudgetSource.futureTx => l.bgSourceFutureTx,
 };
 
 /// The kit tone of a period: the BE's tone, never derived from the ratio.
@@ -153,7 +186,7 @@ String? budgetScopeSummary(
       categories
           .map(
             (c) => c.includeChildren
-                ? '${c.category.name} ${l.bgScopeChildren}'
+                ? l.bgScopeChildren(c.category.name)
                 : c.category.name,
           )
           .join(', '),
@@ -162,34 +195,6 @@ String? budgetScopeSummary(
       '${l.bgScopeWallets}: ${wallets.map((w) => w.name).join(', ')}',
   ];
   return parts.isEmpty ? null : parts.join(' | ');
-}
-
-/// Why a counted row counts ("Counted because: category Buffet"), from the BE's
-/// `reason`; null when it has none.
-String? budgetReasonText(AppLocalizations l, Budget b, BudgetItem i) {
-  switch (i.reason) {
-    case BudgetReason.all:
-      return l.fpBudgetsReasonAll;
-    case BudgetReason.category:
-      final c = i.category?.name;
-      return c == null ? null : l.fpBudgetsReasonCategory(c);
-    case BudgetReason.subCategory:
-      final parent = i.category?.parentId;
-      final scope = b.scope.categories
-          .where((s) => s.category.id == parent)
-          .firstOrNull;
-      return scope == null
-          ? l.fpBudgetsReasonSubCategoryAny
-          : l.fpBudgetsReasonSubCategory(scope.category.name);
-    case BudgetReason.tag:
-      final tag = i.tags.where(b.scope.tags.contains).firstOrNull;
-      return tag == null ? null : l.fpBudgetsReasonTag(tag);
-    case BudgetReason.wallet:
-      final w = i.account?.name;
-      return w == null ? null : l.fpBudgetsReasonWallet(w);
-    case BudgetReason.none:
-      return null;
-  }
 }
 
 String budgetRowCaption(BuildContext context, AppLocalizations l, Budget b) {

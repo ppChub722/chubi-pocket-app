@@ -16,12 +16,14 @@ import '../../data/contacts_repository.dart';
 import '../../domain/contact.dart';
 import '../../../transactions/presentation/save_failure.dart';
 import '../cubit/contacts_cubit.dart';
+import '../widgets/contact_picker.dart';
 
 class ContactDetailPage extends StatefulWidget {
   const ContactDetailPage({
     this.id,
     this.startEditing = false,
     this.popOnCreate = false,
+    this.initialName,
     super.key,
   });
 
@@ -32,6 +34,9 @@ class ContactDetailPage extends StatefulWidget {
   /// Create only, pushed over a picker: saving pops with the new [Contact] (the
   /// picker picks it) instead of turning into its page.
   final bool popOnCreate;
+
+  /// Create mode: the name already typed elsewhere (a picker's name row).
+  final String? initialName;
 
   bool get isCreate => id == null;
 
@@ -61,7 +66,9 @@ class _ContactDetailPageState extends State<ContactDetailPage>
   @override
   void initState() {
     super.initState();
-    initDraft(const _ContactDraft(), editing: widget.isCreate);
+    final name = widget.isCreate ? (widget.initialName ?? '') : '';
+    _ctrl[_Field.name]!.text = name;
+    initDraft(_ContactDraft(name: name), editing: widget.isCreate);
     if (!widget.isCreate) _load(enterEdit: widget.startEditing);
   }
 
@@ -345,18 +352,10 @@ class _ContactDetailPageState extends State<ContactDetailPage>
   Future<void> _openWireNames() async {
     final l = AppLocalizations.of(context)!;
     final contact = _contact!;
-    final wired = await showWireNamesSheet<(AbsorbResult, Set<String>)>(
+    final wired = await ContactPicker.wireNames<(AbsorbResult, Set<String>)>(
       context,
-      labels: WireNamesLabels(
-        title: l.contactWireSheetTitle(contact.name),
-        body: l.contactWireSheetBody,
-        searchHint: l.contactWireSearch,
-        saveLabel: l.contactWireSave,
-      ),
-      rows: [
-        for (final n in _unlinked)
-          WireNameRow(name: n.name, subtitle: l.contactWireCount(n.count)),
-      ],
+      contactName: contact.name,
+      names: _unlinked,
       onSave: (picked) async {
         try {
           final res = await context.read<ContactsCubit>().absorb(

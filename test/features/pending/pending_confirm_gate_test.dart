@@ -41,8 +41,7 @@ class _Goals extends MockCubit<SavingGoalsState> implements SavingGoalsCubit {}
 
 class _Unread extends MockCubit<int> implements UnreadBadgeCubit {}
 
-class _TxRepo extends Fake implements TransactionsRepository {
-}
+class _TxRepo extends Fake implements TransactionsRepository {}
 
 const _wallet = {
   'id': 'a1',

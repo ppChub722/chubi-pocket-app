@@ -11,18 +11,19 @@ import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../accounts/presentation/widgets/account_picker.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../categories/presentation/widgets/category_chip_path.dart';
-import '../../../categories/presentation/widgets/category_picker_sheet.dart';
+import '../../../categories/presentation/widgets/category_picker.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
-import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
+import '../../../tags/presentation/widgets/tag_picker.dart';
 import '../../../transactions/domain/transaction_type.dart';
-import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
 import '../../data/recurring_repository.dart';
 import '../../domain/recurrence_rule.dart';
 import '../../domain/recurring.dart';
 import '../../domain/recurring_item.dart';
+import '../occurrence_actions.dart';
 import '../recurring_draft.dart';
 import '../recurring_item_actions.dart';
 import '../recurring_rows.dart';
@@ -76,8 +77,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   ItemPage _produced = const ItemPage();
   bool _producedMore = false;
   Object? _producedMoreError;
-  final Set<String> _selected = {};
-  bool _selecting = false;
 
   ItemPage _upcoming = const ItemPage();
   bool _upcomingMore = false;
@@ -151,7 +150,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       _detail = d;
       _produced = d.produced;
       _upcoming = d.upcoming;
-      _selected.retainAll(d.produced.items.map((i) => i.id));
     });
     if (!isEditing) resetDraft(RecurringDraft.from(d.recurring));
   }
@@ -179,20 +177,51 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     }
   }
 
+  /// A no-end rule's next year (ดูปีถัดไป), else the next page.
   Future<void> _loadMoreUpcoming() async {
     final current = _upcoming;
-    if (!current.hasMore || _upcomingMore) return;
+    final from = current.nextFrom;
+    if (current.windowed ? from == null : !current.hasMore) return;
+    await _fetchUpcoming(
+      () => _repo.items(
+        widget.id!,
+        upcoming: true,
+        page: current.page + 1,
+        from: from,
+      ),
+      after: current,
+    );
+  }
+
+  /// ไปที่เดือน: the year from that month replaces the list.
+  Future<void> _jumpToMonth() async {
+    final now = today();
+    final shown = _upcoming.items.isEmpty ? now : _upcoming.items.first.date;
+    final month = await showMonthPicker(
+      context,
+      selected: DateTime(shown.year, shown.month),
+      first: DateTime(now.year, now.month),
+    );
+    if (!mounted || month == null) return;
+    await _fetchUpcoming(
+      () => _repo.items(widget.id!, upcoming: true, from: month),
+    );
+  }
+
+  Future<void> _fetchUpcoming(
+    Future<ItemPage> Function() call, {
+    ItemPage? after,
+  }) async {
+    if (_upcomingMore) return;
     setState(() {
       _upcomingMore = true;
       _upcomingMoreError = null;
     });
     try {
-      final next = await _repo.items(
-        widget.id!,
-        upcoming: true,
-        page: current.page + 1,
-      );
-      if (mounted) setState(() => _upcoming = next.after(current));
+      final next = await call();
+      if (mounted) {
+        setState(() => _upcoming = after == null ? next : next.after(after));
+      }
     } catch (e, st) {
       if (mounted) {
         setState(() => _upcomingMoreError = ApiException.from(e, st));
@@ -214,11 +243,15 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         if (!known.contains(i.id)) i,
     ];
     final up = _upcoming;
+    final now = today();
+    bool ahead(RecurringItem i) =>
+        i.state == OccurrenceState.upcoming ||
+        (i.state == OccurrenceState.archived && !i.date.isBefore(now));
     setState(() {
       _produced = ItemPage(
         items: [
           for (final i in merged)
-            if (i.state != OccurrenceState.upcoming) i,
+            if (!ahead(i)) i,
         ]..sort((a, b) => b.date.compareTo(a.date)),
         page: _produced.page,
         totalPages: _produced.totalPages,
@@ -226,12 +259,13 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       _upcoming = ItemPage(
         items: [
           for (final i in merged)
-            if (i.state == OccurrenceState.upcoming) i,
+            if (ahead(i)) i,
         ]..sort((a, b) => a.date.compareTo(b.date)),
         page: up.page,
         totalPages: up.totalPages,
+        windowed: up.windowed,
+        nextFrom: up.nextFrom,
       );
-      _selected.removeAll(r.deletedIds);
       final setting = r.setting;
       final d = _detail;
       if (setting != null && d != null) {
@@ -240,6 +274,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           produced: d.produced,
           upcoming: d.upcoming,
           balances: d.balances,
+          stats: d.stats,
         );
       }
     });
@@ -287,12 +322,14 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       focus: focus,
     );
     if (!mounted || r == null) return;
+    final date = r.date == i.date ? null : r.date;
     await _occurrenceCall(
-      () => _repo.editOccurrence(
-        i.id,
-        date: r.date == i.date ? null : r.date,
-        amount: r.amount,
-      ),
+      () => i.bySlot
+          ? _repo.updateOccurrence(i.ruleId!, i.slot!, {
+              'date': ?(date == null ? null : ymd(date)),
+              'amount': ?r.amount,
+            })
+          : _repo.editOccurrence(i.id, date: date, amount: r.amount),
     );
   }
 
@@ -305,11 +342,18 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       confirmLabel: l.fpRecurringActSkip,
     );
     if (!ok || !mounted) return;
-    await _occurrenceCall(() => _repo.setItemArchived(i.id, archived: true));
+    await _occurrenceCall(
+      () => i.bySlot
+          ? _repo.skipOccurrence(i.ruleId!, i.slot!)
+          : _repo.setItemArchived(i.id, archived: true),
+    );
   }
 
-  Future<void> _restoreItem(RecurringItem i) =>
-      _occurrenceCall(() => _repo.setItemArchived(i.id, archived: false));
+  Future<void> _restoreItem(RecurringItem i) => _occurrenceCall(
+    () => i.bySlot
+        ? _repo.restoreOccurrence(i.ruleId!, i.slot!)
+        : _repo.setItemArchived(i.id, archived: false),
+  );
 
   Future<void> _occurrenceMenu(RecurringItem i) async {
     final l = AppLocalizations.of(context)!;
@@ -342,7 +386,8 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             label: l.recurringItemRestore,
             leading: const AppIcon(AppIcons.unarchive),
           ),
-        SheetOption(value: _Occ.editFull, label: l.recurringItemEditTitle),
+        if (i.stored)
+          SheetOption(value: _Occ.editFull, label: l.recurringItemEditTitle),
       ],
     );
     if (!mounted || picked == null) return;
@@ -357,50 +402,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         await _restoreItem(i);
       case _Occ.editFull:
         await editRecurringItem(context, i, onChanged: _applyItems);
-    }
-  }
-
-  Future<void> _batch(ItemBatchAction action) async {
-    final ids = _selected.toList();
-    if (ids.isEmpty) return;
-    ItemTarget? target;
-    bool? deleteLinked;
-    if (action == ItemBatchAction.create) {
-      target = await askCreateTarget(context);
-      if (target == null) return;
-    } else if (action == ItemBatchAction.delete) {
-      final linkedTx = _produced.items.any(
-        (i) => _selected.contains(i.id) && i.transaction != null,
-      );
-      deleteLinked = await askDeleteLinked(
-        context,
-        linkedTx: linkedTx,
-        count: ids.length,
-      );
-      if (deleteLinked == null) return;
-    }
-    if (!mounted) return;
-    setState(() => _busy = true);
-    final accounts = context.read<AccountsCubit>();
-    try {
-      final r = await _repo.batch(
-        ids,
-        action,
-        target: target,
-        deleteLinkedTx: deleteLinked,
-      );
-      accounts.patchBalances(r.balances);
-      HapticFeedback.mediumImpact();
-      if (!mounted) return;
-      _applyItems(r);
-      setState(() {
-        _selected.clear();
-        _selecting = false;
-      });
-    } on ApiException catch (e) {
-      if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
-    } finally {
-      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -473,17 +474,13 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
 
   Future<void> _pickWallet({required bool to}) async {
     final l = AppLocalizations.of(context)!;
-    final accounts = context.read<AccountsCubit>();
-    final r = await showAccountPickerSheet(
-      context: context,
-      accounts: accounts.state.accounts,
-      selected: accounts.byId(
-        (to ? working.toAccountId : working.accountId) ?? '',
-      ),
-      excludeId: to ? working.accountId : working.toAccountId,
+    final r = await AccountPicker.one(
+      context,
+      selectedId: to ? working.toAccountId : working.accountId,
+      excludeIds: {?(to ? working.accountId : working.toAccountId)},
       title: to ? l.recurringFieldToWallet : null,
     );
-    if (!mounted || r is! AccountPickerSelected) return;
+    if (!mounted || r is! AccountPicked) return;
     setState(() => _walletMissing = false);
     _change(
       to
@@ -494,35 +491,36 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
 
   Future<void> _pickCategory() async {
     final l = AppLocalizations.of(context)!;
-    final cats = context.read<CategoriesCubit>();
-    final r = await showCategoryPickerSheet(
-      context: context,
-      categories: cats.state.categories,
-      type: working.type == TransactionType.income
-          ? CategoryType.income
-          : CategoryType.expense,
-      selected: cats.byId(working.categoryId ?? ''),
+    final r = await CategoryPicker.one(
+      context,
+      types: {
+        working.type == TransactionType.income
+            ? CategoryType.income
+            : CategoryType.expense,
+      },
+      selectedId: working.categoryId,
+      allowNone: true,
       title: l.recurringFieldCategory,
       allowCreate: true,
     );
     if (!mounted || r == null) return;
     _change(switch (r) {
-      CategoryPickerSelected(:final category) => working.copyWith(
+      CategoryPicked(:final category) => working.copyWith(
         categoryId: category.id,
       ),
-      CategoryPickerCleared() => working.copyWith(clearCategory: true),
+      CategoryPickedNone() => working.copyWith(clearCategory: true),
     });
   }
 
   Future<void> _pickTags() async {
     final l = AppLocalizations.of(context)!;
-    final picked = await showTagPickerSheet(
+    final picked = await TagPicker.many(
       context,
       selected: working.tagIds,
       title: l.transactionFormTagsLabel,
     );
     if (picked == null || !mounted) return;
-    _change(working.copyWith(tagIds: picked));
+    _change(working.copyWith(tagIds: picked.ids));
   }
 
   Future<void> _pickMode() async {
@@ -776,32 +774,21 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       return;
     }
 
-    var scope = EditScope.upcoming;
-    var alsoUpdateLink = false;
+    var alsoUpdateTx = false;
     final r = _recurring;
-    if (r != null && working.valuesDiffer(original)) {
+    final recorded = r?.recordedTxCount ?? 0;
+    if (recorded > 0 && working.txFieldsDiffer(original)) {
       final picked = await showEditScopeChoice(
         context,
-        title: l.recurringScopeTitle,
+        title: l.fpRecurringTxScopeTitle(recorded),
         options: {
-          EditScope.upcoming: l.recurringScopeUpcoming,
-          EditScope.all: l.recurringScopeAll,
+          EditScope.upcoming: l.fpRecurringTxScopeFuture,
+          EditScope.all: l.fpRecurringTxScopeAll,
         },
         selected: EditScope.upcoming,
       );
       if (!mounted || picked == null) return;
-      scope = picked;
-      if (scope == EditScope.all && r.counts.pending + r.counts.done > 0) {
-        final choice = await showLinkedPrompt(
-          context,
-          title: l.linkedSaveTitle,
-          cancelLabel: l.linkedCancel,
-          thisSideLabel: l.linkedSaveThisOnly,
-          bothSidesLabel: l.linkedSaveBoth,
-        );
-        if (!mounted || choice == null) return;
-        alsoUpdateLink = choice == LinkedChoice.bothSides;
-      }
+      alsoUpdateTx = picked == EditScope.all;
     }
 
     FocusScope.of(context).unfocus();
@@ -811,12 +798,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       final write = working.toWrite();
       final d = r == null
           ? await _repo.create(write)
-          : await _repo.update(
-              r.id,
-              write,
-              scope: scope,
-              alsoUpdateLink: alsoUpdateLink,
-            );
+          : await _repo.update(r.id, write, alsoUpdateTx: alsoUpdateTx);
       accounts.patchBalances(d.balances);
       if (!mounted) return;
       HapticFeedback.mediumImpact();
@@ -828,6 +810,13 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       }
       _take(d);
       commitSaved(RecurringDraft.from(d.recurring));
+      if (d.txUpdateFailed > 0) {
+        showAppSnackBarOn(
+          pageMessenger!,
+          l.fpRecurringTxUpdateFailed(d.txUpdateFailed),
+          tone: Tone.warning,
+        );
+      }
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
@@ -1015,12 +1004,11 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         ? null
         : AppMessage(tone: Tone.danger, message: _refreshError!.message);
     return TabbedDetailBody<_Tab>(
-      hero: _viewHero(l, r),
+      hero: _viewHero(l, d),
       belowHero: [
         ?banner,
         ?_notice(l, r),
-        ?_viewTags(r),
-        _infoBox(l, r, editing: false),
+        ?_dueCard(l, r),
         NoteSection(
           label: l.commonNote,
           editing: false,
@@ -1087,6 +1075,75 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     return null;
   }
 
+  /// ต้องจัดการ: this rule's due occurrences, plus this month's coming ones
+  /// that still need an amount. Up to 3 rows; more get the all-at-once
+  /// actions and a row to the ประวัติ tab.
+  Widget? _dueCard(AppLocalizations l, Recurring r) {
+    final due = [
+      for (final i in _produced.items)
+        if (i.state == OccurrenceState.notCreated) i,
+    ]..sort((a, b) => a.date.compareTo(b.date));
+    final todo = [
+      ...due,
+      for (final i in _upcoming.items)
+        if (i.needsAmount && i.state == OccurrenceState.upcoming) i,
+    ];
+    if (todo.isEmpty) return null;
+    final total = r.counts.notCreated > due.length
+        ? r.counts.notCreated + todo.length - due.length
+        : todo.length;
+    final shown = todo.take(3).toList();
+    final symbol = context.readUserCurrencySymbol;
+    return DueCard(
+      key: const ValueKey('detailDue'),
+      title: l.occurrenceDueTitle,
+      trailing: l.fpRecurringCountUnit(total),
+      children: [
+        if (due.length > 1 && due.first.bySlot)
+          DueGroupHeader(
+            label: l.occurrenceDueSince(_monthYear(due.first.date)),
+            actions: settleAllActions(context, r.id, onChanged: _applyItems),
+          ),
+        for (final i in shown)
+          OccurrenceRow(
+            key: ValueKey('due-${i.id}'),
+            leading: DateTile(date: i.date),
+            title: i.title,
+            tag: AppChip(
+              label: i.state == OccurrenceState.upcoming
+                  ? dueLabel(l, date: i.date, daysUntil: i.daysUntil)
+                  : l.occurrenceStatePending,
+              tone: AppChipTone.warning,
+              selected: true,
+              size: ChipSize.mini,
+            ),
+            sub: [
+              if (i.amount != null && i.amount! > 0)
+                moneyString(context, i.amount!, symbol: symbol),
+              ?i.account?.name,
+            ].join(' | '),
+            action: occurrenceActionsFor(context, i, onChanged: _applyItems),
+            onTap: () => _openOccurrence(i),
+          ),
+        if (total > shown.length)
+          DueMoreRow(
+            label: l.occurrenceDueMore(total),
+            onTap: () => _onTab(_Tab.past),
+          ),
+      ],
+    );
+  }
+
+  /// The occurrence's own sheet (แก้เฉพาะงวดนี้); an old BE's row (no slot)
+  /// keeps the old menu.
+  void _openOccurrence(RecurringItem i) {
+    if (i.bySlot || i.transaction != null) {
+      openOccurrenceSheet(context, i, onChanged: _applyItems);
+    } else {
+      _occurrenceMenu(i);
+    }
+  }
+
   Widget _statusChip(AppLocalizations l, Recurring r, {VoidCallback? onTap}) {
     final (label, kind) = switch (r.status) {
       RecurringStatus.active => (l.recurringStatusActive, StatusKind.active),
@@ -1099,54 +1156,23 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     return StatusChip(label: label, kind: kind, onTap: onTap);
   }
 
-  Widget _viewHero(AppLocalizations l, Recurring r) {
-    final symbol = context.readUserCurrencySymbol;
-    final amount = r.amount;
-    final known = amount != null && amount > 0;
-    final monthly = r.monthlyAmount;
-    final next = r.nextDate;
-    final installment = r.kind == RecurringKind.installment;
-    SummaryTileView tile(String label, String value, [SummaryTileTone? tone]) =>
-        SummaryTileView(
-          tile: SummaryTile(
-            label: label,
-            value: value,
-            tone: tone ?? SummaryTileTone.neutral,
-          ),
-        );
+  String get _locale => Localizations.localeOf(context).toLanguageTag();
+
+  /// "ก.ย. 27": the month with a short year.
+  String _monthYear(DateTime d) =>
+      '${DateFormat.MMM(_locale).format(d)} ${DateFormat('yy').format(d)}';
+
+  /// Who it is and its round, the next occurrence with its actions, the
+  /// chain (or the amounts line for a bill that changes), three numbers,
+  /// then the status and what it books into as chips.
+  Widget _viewHero(AppLocalizations l, RecurringDetail d) {
+    final r = d.recurring;
+    final rule = r.rule;
+    final description = (r.description ?? '').trim();
+    final next = _nextItem;
+    final stats = _stats(l, r, d.stats);
     return AppHeroCard(
       style: _style(r),
-      header: HeroHeader(
-        leading: [
-          if (r.actions.pause || r.actions.resume)
-            OptionMenuAnchor<RecurringAction>(
-              options: [
-                if (r.actions.pause)
-                  SheetOption(
-                    value: RecurringAction.pause,
-                    label: l.recurringPause,
-                    leading: const AppIcon(AppIcons.pause),
-                  ),
-                if (r.actions.resume)
-                  SheetOption(
-                    value: RecurringAction.resume,
-                    label: l.recurringResume,
-                    leading: const AppIcon(AppIcons.resume),
-                  ),
-              ],
-              onSelected: _action,
-              builder: (context, toggle) => _statusChip(l, r, onTap: toggle),
-            )
-          else
-            _statusChip(l, r),
-          AppChip(
-            label: recurringKindLabel(l, r.kind),
-            selected: true,
-            tone: AppChipTone.neutral,
-          ),
-        ],
-        onEdit: enterEdit,
-      ),
       content: [
         HeroIdentity(
           icon: EditableCircle(
@@ -1163,64 +1189,303 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
               iconCode: r.iconCode ?? r.category?.iconCode,
             ),
           ),
-          description: HeroDescription(
-            controller: _ctrl[_Field.description]!,
-            editing: false,
-            focusNode: _descriptionFocus,
-            hint: l.commonDescription,
-            maxLength: TextLimits.description,
-            onEnterEdit: () => enterEdit(focus: _descriptionFocus),
+          name: Text(r.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+          description: description.isEmpty
+              ? null
+              : HeroDescription(
+                  controller: _ctrl[_Field.description]!,
+                  editing: false,
+                  focusNode: _descriptionFocus,
+                  hint: l.commonDescription,
+                  maxLength: TextLimits.description,
+                  onEnterEdit: () => enterEdit(focus: _descriptionFocus),
+                ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              HeroInfoBox(
+                key: const ValueKey('heroRound'),
+                icon: AppIcons.recurring,
+                title: recurrenceLabel(l, rule),
+                subtitle: rule.end.kind == RecurrenceEndKind.never
+                    ? l.fpRecurringSince(
+                        DateFormat.yMMM(_locale).format(rule.start),
+                      )
+                    : _endText(l, rule.end),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              CardActionButton(
+                key: const ValueKey('heroEdit'),
+                icon: AppIcons.edit,
+                tooltip: UiConfig.stringsOf(context).edit,
+                onTap: enterEdit,
+              ),
+            ],
           ),
         ),
-        HeroNumber(
-          label: l.fpM5bRecurringPerMonth,
-          value: monthly != null && monthly > 0
-              ? MoneyText(
-                  signedOf(r.type, monthly),
-                  tone: toneOf(r.type),
-                  symbol: symbol,
-                )
-              : Text(l.fpRecurringAwaitingValue),
+        if (next != null) _nextBox(l, r, next),
+        ?_track(l, r, d.stats),
+        if (stats.isNotEmpty) HeroTiles(children: stats),
+        Wrap(
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xs,
+          children: _heroChips(l, r),
         ),
-        !known && next != null
-            ? HeroAlert(
-                text: l.fpRecurringAlertAwaiting(
-                  dueLabel(l, date: next, daysUntil: r.daysUntil),
-                ),
-              )
-            : null,
-      ],
-      footer: [
-        for (final List<Widget> tiles in [
-          [
-            if (installment)
-              tile(
-                l.fpRecurringTileInstallment,
-                r.progressTotal == null
-                    ? '${r.progressDone}'
-                    : '${r.progressDone}/${r.progressTotal}',
-              )
-            else
-              tile(
-                l.fpRecurringTileYearly,
-                moneyString(context, r.yearlyCost, symbol: symbol),
-              ),
-            tile(l.fpRecurringTileSaved, l.fpRecurringCountUnit(r.savedCount)),
-            tile(
-              l.fpRecurringTilePending,
-              l.fpRecurringCountUnit(r.pendingCount),
-              r.pendingCount > 0 ? SummaryTileTone.amber : null,
-            ),
-          ],
-        ])
-          if (tiles.isNotEmpty) HeroTiles(children: tiles),
       ],
     );
   }
 
-  Widget? _viewTags(Recurring r) {
-    if (r.tags.isEmpty) return null;
-    return TagRow(tags: [for (final t in r.tags) _tagChip(t.name, t.iconCode)]);
+  /// The next occurrence still to come: the hero's big date and amount.
+  RecurringItem? get _nextItem {
+    for (final i in _upcoming.items) {
+      if (i.state == OccurrenceState.upcoming) return i;
+    }
+    return null;
+  }
+
+  Widget _nextBox(AppLocalizations l, Recurring r, RecurringItem i) {
+    final hero = HeroColors.maybeOf(context);
+    final unknown = i.amount == null || i.amount! <= 0;
+    final due = dueLabel(l, date: i.date, daysUntil: i.daysUntil);
+    final seq = i.seq;
+    final total = i.total;
+    Widget button(String label, VoidCallback onTap, {bool primary = false}) =>
+        Expanded(
+          child: AppButton(
+            label: label,
+            onPressed: onTap,
+            variant: primary
+                ? AppButtonVariant.primary
+                : AppButtonVariant.outlined,
+            size: AppButtonSize.control,
+            expand: true,
+          ),
+        );
+    return HeroInsetBox(
+      key: const ValueKey('heroNext'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              CalendarTile(date: i.date),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: HeroNumber(
+                  label: r.kind == RecurringKind.installment &&
+                          seq != null &&
+                          total != null
+                      ? l.fpRecurringNextInstallment(seq, total, due)
+                      : l.fpRecurringNextOnce(due),
+                  value: unknown
+                      ? Text(l.fpRecurringAwaitingValue)
+                      : MoneyText(
+                          signedOf(i.type, i.amount!),
+                          tone: toneOf(i.type),
+                          symbol: context.readUserCurrencySymbol,
+                        ),
+                  color: unknown ? hero?.warning : null,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              button(
+                unknown
+                    ? l.fpRecurringActEnterAmount
+                    : l.fpRecurringActEditAmount,
+                () => _editOccurrence(i, focus: OccurrenceFocus.amount),
+                primary: unknown,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              button(
+                l.fpRecurringActMove,
+                () => _editOccurrence(i, focus: OccurrenceFocus.date),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              button(l.fpRecurringActSkip, () => _skip(i)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// A bill whose amount changes draws its recorded amounts as a line;
+  /// everything else its occurrences as a chain.
+  Widget? _track(AppLocalizations l, Recurring r, RecurringStats? s) {
+    final series = s?.series ?? const [];
+    final dayLabels =
+        r.rule.freq == RecurrenceFreq.daily ||
+        r.rule.freq == RecurrenceFreq.weekly;
+    String x(DateTime d) => dayLabels
+        ? DateFormat.Md(_locale).format(d)
+        : DateFormat.MMM(_locale).format(d);
+    if (!r.hasAmount && series.length >= 2) {
+      final recent = series.length > 6
+          ? series.sublist(series.length - 6)
+          : series;
+      final avg = s?.avgAmount ?? r.avgAmount;
+      final next = _nextItem;
+      return AmountLineChart(
+        key: const ValueKey('heroAmounts'),
+        points: [for (final p in recent) AmountPoint(x(p.slot), p.amount)],
+        average: avg,
+        averageLabel: avg == null
+            ? null
+            : l.fpRecurringAvgLine(
+                NumberFormat.decimalPattern(_locale).format(avg.round()),
+              ),
+        nextLabel: next == null ? null : x(next.date),
+        semanticLabel: l.fpRecurringChartLabel,
+      );
+    }
+    final chain = _chain(r);
+    if (chain.dots.isEmpty) return null;
+    final open = r.rule.end.kind == RecurrenceEndKind.never;
+    final total = r.progressTotal;
+    return OccurrenceChain(
+      key: const ValueKey('heroChain'),
+      dots: chain.dots,
+      open: open,
+      firstLabel: open && chain.first != null ? x(chain.first!) : null,
+      currentLabel: open && chain.current != null ? x(chain.current!) : null,
+      semanticLabel: total == null
+          ? null
+          : l.fpRecurringChainLabel(r.progressDone, total),
+    );
+  }
+
+  /// A rule with an end: every occurrence (the BE's `chain`, else from the
+  /// progress). No end: the loaded history, the next one and two after.
+  ({List<ChainDot> dots, DateTime? first, DateTime? current}) _chain(
+    Recurring r,
+  ) {
+    final ended = endChainDots(r);
+    if (ended != null) return (dots: ended, first: null, current: null);
+    final past = _produced.items.take(8).toList().reversed.toList();
+    final ahead = [
+      for (final i in _upcoming.items)
+        if (i.state == OccurrenceState.upcoming) i,
+    ].take(3).toList();
+    return (
+      dots: [
+        for (final i in past)
+          switch (i.state) {
+            OccurrenceState.done || OccurrenceState.paid => ChainDot.paid,
+            OccurrenceState.archived => ChainDot.skipped,
+            _ => ChainDot.wait,
+          },
+        for (final (n, _) in ahead.indexed)
+          n == 0 ? ChainDot.current : ChainDot.future,
+      ],
+      first: past.isEmpty ? null : past.first.date,
+      current: ahead.isEmpty ? null : ahead.first.date,
+    );
+  }
+
+  /// Installment: paid / left / last one. A bill that changes: average /
+  /// last time / highest. Else: per month / per year / recorded.
+  List<Widget> _stats(AppLocalizations l, Recurring r, RecurringStats? s) {
+    final symbol = context.readUserCurrencySymbol;
+    String money(double v) => moneyString(context, v, symbol: symbol);
+    Widget tile(String label, String value) =>
+        SummaryTileView(tile: SummaryTile(label: label, value: value));
+    if (r.kind == RecurringKind.installment) {
+      final per = r.amount ?? 0;
+      final total = r.progressTotal;
+      final left =
+          s?.remainingTotal ??
+          (total == null ? null : per * (total - r.progressDone));
+      final allShown = !_upcoming.windowed && !_upcoming.hasMore;
+      final last =
+          r.chain?.lastOrNull?.slot ??
+          (allShown ? _upcoming.items.lastOrNull?.date : null) ??
+          r.rule.end.date;
+      return [
+        tile(l.fpRecurringStatPaid, money(s?.paidTotal ?? per * r.progressDone)),
+        if (left != null) tile(l.fpRecurringStatRemaining, money(left)),
+        if (last != null) tile(l.fpRecurringStatLast, _monthYear(last)),
+      ];
+    }
+    if (!r.hasAmount) {
+      final avg = s?.avgAmount ?? r.avgAmount;
+      final prev = s?.lastAmount;
+      final max = s?.maxAmount;
+      return [
+        if (avg != null) tile(l.fpRecurringStatAvg, money(avg)),
+        if (prev != null) tile(l.fpRecurringStatPrev, money(prev)),
+        if (max != null) tile(l.fpRecurringStatMax, money(max)),
+      ];
+    }
+    final monthly = r.monthlyAmount;
+    return [
+      if (monthly != null && monthly > 0)
+        tile(l.fpM5bRecurringPerMonth, money(monthly)),
+      tile(l.fpRecurringTileYearly, money(r.yearlyCost)),
+      tile(
+        l.fpRecurringTileSaved,
+        l.fpRecurringCountUnit(s?.paidCount ?? r.savedCount),
+      ),
+    ];
+  }
+
+  /// Status ▾ (pause / resume), the kind, then the category, wallet(s),
+  /// tags and บันทึกอัตโนมัติ.
+  List<Widget> _heroChips(AppLocalizations l, Recurring r) {
+    final cats = context.watch<CategoriesCubit>();
+    final category = cats.byId(r.category?.id ?? '');
+    final account = r.account;
+    final toAccount = r.toAccount;
+    return [
+      if (r.actions.pause || r.actions.resume)
+        OptionMenuAnchor<RecurringAction>(
+          options: [
+            if (r.actions.pause)
+              SheetOption(
+                value: RecurringAction.pause,
+                label: l.recurringPause,
+                leading: const AppIcon(AppIcons.pause),
+              ),
+            if (r.actions.resume)
+              SheetOption(
+                value: RecurringAction.resume,
+                label: l.recurringResume,
+                leading: const AppIcon(AppIcons.resume),
+              ),
+          ],
+          onSelected: _action,
+          builder: (context, toggle) => _statusChip(l, r, onTap: toggle),
+        )
+      else
+        _statusChip(l, r),
+      AppChip(
+        label: recurringKindLabel(l, r.kind),
+        selected: true,
+        tone: AppChipTone.neutral,
+      ),
+      if (category != null)
+        categoryChipPath(context, category, all: cats.state.categories),
+      if (account != null)
+        walletValueChip(context, name: account.name, iconCode: account.iconCode),
+      if (toAccount != null)
+        walletValueChip(
+          context,
+          name: toAccount.name,
+          iconCode: toAccount.iconCode,
+        ),
+      for (final t in r.tags) _tagChip(t.name, t.iconCode),
+      if (r.autoCreate)
+        AppChip(
+          key: const ValueKey('heroAutoCreate'),
+          label: l.fpRecurringAutoChip,
+          icon: AppIcons.recurring,
+          selected: true,
+          tone: AppChipTone.primary,
+        ),
+    ];
   }
 
   Widget _tagChip(String name, IconCode? iconCode) {
@@ -1245,7 +1510,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     RecurrenceEndKind.afterCount => l.recurEndCount(end.count ?? 0),
   };
 
-  Widget _infoBox(AppLocalizations l, Recurring? r, {required bool editing}) {
+  Widget _infoBox(AppLocalizations l) {
     final accounts = context.watch<AccountsCubit>();
     final cats = context.watch<CategoriesCubit>();
     final w = working;
@@ -1254,7 +1519,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     final toAccount = accounts.byId(w.toAccountId ?? '');
     final category = cats.byId(w.categoryId ?? '');
     final transfer = w.isTransfer;
-    final next = r?.nextDate;
     final installment = w.kind == RecurringKind.installment;
     final walletLabel = transfer
         ? l.fpRecurringFieldFromWallet
@@ -1264,23 +1528,15 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     Widget? walletChip(String? name, IconCode? icon) => name == null
         ? null
         : walletValueChip(context, name: name, iconCode: icon);
-    final repeatValue = [
-      recurrenceLabel(l, rule),
-      if (!editing && next != null)
-        l.fpRecurringNextInline(
-          _date(next),
-          dueLabel(l, date: next, daysUntil: r?.daysUntil),
-        ),
-    ].join(' | ');
     return InfoBox(
       rows: [
         InfoRow(
           label: l.recurringFieldRepeat,
-          value: repeatValue,
-          showChevron: editing,
-          onTap: editing ? _pickRepeat : null,
+          value: recurrenceLabel(l, rule),
+          showChevron: true,
+          onTap: _pickRepeat,
         ),
-        if (!transfer && (editing || category != null))
+        if (!transfer)
           InfoRow(
             label: l.recurringFieldCategory,
             valueChip: category == null
@@ -1291,25 +1547,25 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
                     all: cats.state.categories,
                   ),
             value: category == null ? l.quickEventNone : null,
-            showChevron: editing,
-            onTap: editing ? _pickCategory : null,
+            showChevron: true,
+            onTap: _pickCategory,
           ),
         InfoRow(
           label: walletLabel,
           valueChip: walletChip(account?.name, account?.iconCode),
           value: account == null ? l.quickEventNone : null,
-          showChevron: editing,
-          onTap: editing ? () => _pickWallet(to: false) : null,
+          showChevron: true,
+          onTap: () => _pickWallet(to: false),
         ),
         if (transfer)
           InfoRow(
             label: l.recurringFieldToWallet,
             valueChip: walletChip(toAccount?.name, toAccount?.iconCode),
             value: toAccount == null ? l.quickEventNone : null,
-            showChevron: editing,
-            onTap: editing ? () => _pickWallet(to: true) : null,
+            showChevron: true,
+            onTap: () => _pickWallet(to: true),
           ),
-        if (editing && w.kind == RecurringKind.reminder)
+        if (w.kind == RecurringKind.reminder)
           InfoRow(
             label: l.fpRecurringFieldMode,
             value: transfer
@@ -1318,58 +1574,133 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             showChevron: true,
             onTap: _pickMode,
           ),
-        if (editing) ...[
+        InfoRow(
+          label: l.recurringFieldStart,
+          value: _date(rule.start),
+          showChevron: true,
+          onTap: _pickStart,
+        ),
+        if (rule.freq != RecurrenceFreq.dates)
+          installment
+              ? InfoRow(
+                  label: l.fpRecurringFieldCount,
+                  value: l.fpRecurringCountValue(rule.end.count ?? 0),
+                  showChevron: true,
+                  onTap: _pickCount,
+                )
+              : InfoRow(
+                  label: l.recurringFieldEnd,
+                  value: _endText(l, rule.end),
+                  showChevron: true,
+                  onTap: _pickEnd,
+                ),
+        if (w.kind == RecurringKind.subscription)
           InfoRow(
-            label: l.recurringFieldStart,
-            value: _date(rule.start),
+            label: l.fpRecurringTrialUntil,
+            value: w.trialUntil == null
+                ? l.quickEventNone
+                : _date(w.trialUntil!),
             showChevron: true,
-            onTap: _pickStart,
+            onTap: _pickTrial,
           ),
-          if (rule.freq != RecurrenceFreq.dates)
-            installment
-                ? InfoRow(
-                    label: l.fpRecurringFieldCount,
-                    value: l.fpRecurringCountValue(rule.end.count ?? 0),
-                    showChevron: true,
-                    onTap: _pickCount,
-                  )
-                : InfoRow(
-                    label: l.recurringFieldEnd,
-                    value: _endText(l, rule.end),
-                    showChevron: true,
-                    onTap: _pickEnd,
-                  ),
-          if (w.kind == RecurringKind.subscription)
-            InfoRow(
-              label: l.fpRecurringTrialUntil,
-              value: w.trialUntil == null
-                  ? l.quickEventNone
-                  : _date(w.trialUntil!),
-              showChevron: true,
-              onTap: _pickTrial,
-            ),
-        ] else ...[
-          if (r != null && r.hasAmount)
-            InfoRow(
-              label: l.fpM5bRecurringAmountPerTime,
-              value: moneyString(
-                context,
-                r.amount!,
-                symbol: context.readUserCurrencySymbol,
-              ),
-            ),
-          if (rule.freq != RecurrenceFreq.dates)
-            InfoRow(
-              label: l.fpRecurringInfoSpan,
-              value: '${_date(rule.start)} | ${_endText(l, rule.end)}',
-            ),
-          if (w.trialUntil != null)
-            InfoRow(
-              label: l.fpRecurringTrialUntil,
-              value: _date(w.trialUntil!),
-            ),
-        ],
+        InfoRow(
+          key: const ValueKey('autoCreateRow'),
+          label: l.fpRecurringAutoCreate,
+          valueWidget: AppSwitch(
+            value: w.autoCreate && w.canAutoCreate,
+            onChanged: w.canAutoCreate
+                ? (v) => _change(w.copyWith(autoCreate: v))
+                : null,
+            semanticLabel: l.fpRecurringAutoCreate,
+          ),
+        ),
       ],
+    );
+  }
+
+  /// One occurrence in either tab: its date, its name (the tx description),
+  /// a state tag with a hint, and the amount ("รอใส่ยอด" when unknown).
+  Widget _occurrenceRow(
+    AppLocalizations l,
+    Recurring r,
+    RecurringItem i, {
+    VoidCallback? onTap,
+    bool next = false,
+    bool last = false,
+  }) {
+    final symbol = context.readUserCurrencySymbol;
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final skipped = i.state == OccurrenceState.archived;
+    final due =
+        i.state == OccurrenceState.notCreated ||
+        i.state == OccurrenceState.pending;
+    final unknown = i.amount == null || i.amount! <= 0;
+    final slot = parseYmd(i.slot);
+    final moved = slot != null && slot != i.date;
+    final usual = r.amount;
+    Widget tag(String label, {AppChipTone? tone, Color? color}) => AppChip(
+      label: label,
+      tone: tone ?? AppChipTone.neutral,
+      color: color,
+      selected: true,
+      size: ChipSize.mini,
+    );
+    final (Widget? chip, String? sub) = skipped
+        ? (
+            tag(l.occurrenceStateArchived),
+            i.date.isBefore(today()) ? null : l.fpRecurringTapToRestore,
+          )
+        : due
+        ? (
+            tag(l.occurrenceStatePending, tone: AppChipTone.warning),
+            unknown ? l.fpRecurringTapToEnter : l.fpRecurringTapToConfirm,
+          )
+        : next
+        ? (
+            tag(
+              l.fpRecurringTagNext,
+              color: (r.iconCode ?? r.category?.iconCode).tintFor(palette),
+            ),
+            [
+              dueLabel(l, date: i.date, daysUntil: i.daysUntil),
+              if (unknown) l.fpRecurringTapToEnter,
+            ].join(' | '),
+          )
+        : moved
+        ? (
+            tag(l.fpRecurringTagMoved, tone: AppChipTone.info),
+            l.fpRecurringMovedFrom(DateFormat.MMMd(_locale).format(slot)),
+          )
+        : i.edited
+        ? (
+            tag(l.fpRecurringEditedChip, tone: AppChipTone.info),
+            !unknown && usual != null && usual > 0 && i.amount != usual
+                ? l.fpRecurringUsualAmount(
+                    moneyString(context, usual, symbol: symbol),
+                  )
+                : null,
+          )
+        : last
+        ? (tag(l.fpRecurringTagLast, tone: AppChipTone.success), null)
+        : i.state == OccurrenceState.paid
+        ? (tag(l.occurrenceStatePaid), null)
+        : (null, null);
+    return OccurrenceRow(
+      key: ValueKey('occ-${i.id}'),
+      leading: DateTile(date: i.date),
+      title: i.title,
+      tag: chip,
+      sub: sub,
+      amount: unknown
+          ? null
+          : MoneyText(
+              signedOf(i.type, i.amount!),
+              tone: toneOf(i.type),
+              symbol: symbol,
+            ),
+      amountWaiting: unknown ? l.fpRecurringAwaitingValue : null,
+      dimmed: skipped,
+      onTap: onTap,
     );
   }
 
@@ -1380,192 +1711,91 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       error: null,
       isEmpty: items.isEmpty,
       onRetry: _load,
-      rowDividers: true,
+      rowCards: true,
       topInset: AppSpacing.sm,
       hasMore: _produced.hasMore,
       loadingMore: _producedMore,
       onLoadMore: _loadMoreProduced,
       loadMoreError: _producedMoreError,
       onRetryMore: _loadMoreProduced,
-      header: [
-        if (_selecting && items.isNotEmpty)
-          SelectionToolbar(
-            selected: _selected.length,
-            total: items.length,
-            selectAllTooltip: l.recurringSelectAll,
-            onSelectAll: () => setState(
-              () => _selected.length == items.length
-                  ? _selected.clear()
-                  : _selected.addAll(items.map((i) => i.id)),
-            ),
-            actions: [
-              SelectionAction(
-                label: l.recurringItemCreate,
-                icon: AppIcons.add,
-                onTap: () => _batch(ItemBatchAction.create),
-              ),
-              SelectionAction(
-                label: l.recurringItemArchive,
-                icon: AppIcons.archive,
-                onTap: () => _batch(ItemBatchAction.archive),
-              ),
-            ],
-            trailing: [
-              AppChip(
-                label: l.fpRecurringSelectDone,
-                onTap: () => setState(() {
-                  _selecting = false;
-                  _selected.clear();
-                }),
-              ),
-            ],
-            deleteTooltip: l.commonDelete,
-            onDelete: () => _batch(ItemBatchAction.delete),
-          ),
-      ],
       empty: EmptyView.compact(message: l.recurringItemsEmpty),
       children: [
-        for (final group in groupItemsByDate(items)) ...[
-          DateGroupHeader(label: itemDateLabel(context, group.date)),
-          for (final item in group.items)
-            RecurringItemActions(
-              item: item,
-              onChanged: _applyItems,
-              onBusy: (b) => setState(() => _busy = b),
-              builder: (context, open) => RecurringItemRow(
-                item: item,
-                select: _selecting
-                    ? SelectCheck(
-                        value: _selected.contains(item.id),
-                        onTap: () => _toggle(item),
-                      )
-                    : null,
-                onTap: _selecting ? () => _toggle(item) : open,
-                onLongPress: _selecting
-                    ? null
-                    : () => setState(() {
-                        _selecting = true;
-                        _selected.add(item.id);
-                      }),
-              ),
-            ),
-        ],
-        AddTile(
-          label: l.recurringAddItem,
-          inList: true,
-          onTap: () => addRecurringItem(context, r, onChanged: _applyItems),
-        ),
+        for (final item in items)
+          _occurrenceRow(l, r, item, onTap: () => _openOccurrence(item)),
       ],
     );
   }
 
-  void _toggle(RecurringItem item) => setState(
-    () => _selected.contains(item.id)
-        ? _selected.remove(item.id)
-        : _selected.add(item.id),
-  );
-
+  /// Every occurrence to come in one card. A rule with an end shows them
+  /// all; a no-end rule a year at a time, with ดูปีถัดไป / ไปที่เดือน under
+  /// the card.
   Widget _upcomingTab(AppLocalizations l, Recurring r) {
     final page = _upcoming;
     final items = page.items;
-    final next = items.isEmpty ? null : items.first;
-    final locale = Localizations.localeOf(context).toLanguageTag();
-    String day(DateTime d) => DateFormat.MMMd(locale).format(d);
-    final symbol = context.readUserCurrencySymbol;
-    final rest = <RecurringItem>[
-      ...items.skip(1),
-      for (final i in _produced.items)
-        if (i.state == OccurrenceState.archived && i.date.isAfter(today())) i,
-    ]..sort((a, b) => a.date.compareTo(b.date));
-    OccurrenceDate chip(RecurringItem i) {
-      final skipped = i.state == OccurrenceState.archived;
-      final known = i.amount != null && i.amount! > 0;
-      return OccurrenceDate(
-        label: skipped
-            ? l.fpRecurringChipSkipped(day(i.date))
-            : (i.edited && known
-                  ? l.fpRecurringChipEdited(
-                      day(i.date),
-                      moneyString(context, i.amount!, symbol: symbol),
-                    )
-                  : day(i.date)),
-        kind: skipped
-            ? OccurrenceDateKind.skipped
-            : (i.edited
-                  ? OccurrenceDateKind.edited
-                  : OccurrenceDateKind.normal),
-        onTap: () => _occurrenceMenu(i),
-      );
-    }
-
+    final next = _nextItem;
+    final complete = !page.windowed && !page.hasMore;
     return ListPageBody(
       loading: false,
       error: null,
       isEmpty: items.isEmpty,
       onRetry: _load,
-      rowDividers: false,
+      rowCards: true,
       topInset: AppSpacing.sm,
+      hasMore: !page.windowed && page.hasMore,
+      loadingMore: _upcomingMore,
+      onLoadMore: page.windowed ? null : _loadMoreUpcoming,
+      loadMoreError: _upcomingMoreError,
+      onRetryMore: _loadMoreUpcoming,
       empty: EmptyView(
         icon: AppIcons.scheduled,
         title: l.recurringUpcomingEmpty,
         message: l.recurringUpcomingEmptyMessage,
       ),
+      footer: page.windowed
+          ? Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.md),
+              child: Row(
+                children: [
+                  if (page.nextFrom != null) ...[
+                    Expanded(
+                      child: AppButton(
+                        key: const ValueKey('upcomingNextYear'),
+                        label: l.fpRecurringNextYear,
+                        icon: AppIcons.expand,
+                        variant: AppButtonVariant.outlined,
+                        size: AppButtonSize.control,
+                        expand: true,
+                        loading: _upcomingMore,
+                        onPressed: _loadMoreUpcoming,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                  ],
+                  Expanded(
+                    child: AppButton(
+                      key: const ValueKey('upcomingGoToMonth'),
+                      label: l.fpRecurringGoToMonth,
+                      icon: AppIcons.date,
+                      variant: AppButtonVariant.outlined,
+                      size: AppButtonSize.control,
+                      expand: true,
+                      onPressed: _upcomingMore ? null : _jumpToMonth,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : null,
       children: [
-        if (next != null) _nextCard(l, next, symbol),
-        if (rest.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.lg),
-          OccurrenceDates(
-            title: l.fpRecurringThenTitle(r.counts.upcoming),
-            dates: [for (final i in rest) chip(i)],
-            moreLabel: page.hasMore ? l.fpRecurringMoreDates : null,
-            onMore: _upcomingMore ? null : _loadMoreUpcoming,
+        for (final (n, i) in items.indexed)
+          _occurrenceRow(
+            l,
+            r,
+            i,
+            next: identical(i, next),
+            last: complete && n == items.length - 1,
+            onTap: () => _openOccurrence(i),
           ),
-        ],
-        if (_upcomingMoreError != null)
-          LoadMoreErrorRow(onRetry: _loadMoreUpcoming),
-      ],
-    );
-  }
-
-  Widget _nextCard(AppLocalizations l, RecurringItem i, String symbol) {
-    final unknown = i.amount == null || i.amount! <= 0;
-    return NextOccurrenceCard(
-      title: l.fpRecurringNextTitle(
-        dueLabel(l, date: i.date, daysUntil: i.daysUntil),
-      ),
-      caption: l.fpRecurringNextCaption,
-      chips: [
-        if (i.edited)
-          AppChip(
-            label: l.fpRecurringEditedChip,
-            size: ChipSize.mini,
-            tone: AppChipTone.warning,
-            selected: true,
-          ),
-      ],
-      amount: unknown
-          ? Text(l.fpRecurringAwaitingValue)
-          : MoneyText(
-              signedOf(i.type, i.amount!),
-              tone: toneOf(i.type),
-              symbol: symbol,
-            ),
-      actions: [
-        NextOccurrenceAction(
-          label: unknown
-              ? l.fpRecurringActEnterAmount
-              : l.fpRecurringActEditAmount,
-          primary: unknown,
-          onTap: () => _editOccurrence(i, focus: OccurrenceFocus.amount),
-        ),
-        NextOccurrenceAction(
-          label: l.fpRecurringActMove,
-          onTap: () => _editOccurrence(i, focus: OccurrenceFocus.date),
-        ),
-        NextOccurrenceAction(
-          label: l.fpRecurringActSkip,
-          onTap: () => _skip(i),
-        ),
       ],
     );
   }
@@ -1634,7 +1864,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             label: w.amountOptional
                 ? l.fpRecurringAmountOptional
                 : l.fpRecurringAmountLabel,
-            accent: accent,
             symbol: context.readUserCurrencySymbol,
             onChanged: (v) => _onText(_Field.amount, v),
             validator: (v) {
@@ -1660,7 +1889,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             AppMessage(message: l.fpRecurringReminderHint),
             const SizedBox(height: AppSpacing.md),
           ],
-          _infoBox(l, r, editing: true),
+          _infoBox(l),
           if (_walletMissing && !w.walletOk)
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.xs),
@@ -1670,6 +1899,15 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
                 color: Theme.of(context).colorScheme.error,
               ),
             ),
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: AppText(
+              w.canAutoCreate
+                  ? l.fpRecurringAutoCreateHint
+                  : l.fpRecurringAutoCreateNeeds,
+              role: AppTextRole.caption,
+            ),
+          ),
         ],
       ),
       note: NoteSection(

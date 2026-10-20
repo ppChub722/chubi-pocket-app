@@ -20,10 +20,19 @@ class QuickCreateSheetShell extends StatefulWidget {
     this.onSave,
     this.onSaveDraft,
     this.onDelete,
+    this.subtitle,
+    this.headerBar,
     super.key,
   });
 
   final String title;
+
+  /// Muted, under the title ("แก้เฉพาะงวดนี้").
+  final String? subtitle;
+
+  /// Fixed between the header and the scrolling body: the sheet's own extra
+  /// actions (ข้าม / จ่ายแล้ว / ผูกกับรายการที่มีอยู่).
+  final Widget? headerBar;
 
   final Widget body;
 
@@ -258,9 +267,36 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
                             ],
                           ),
                         ),
+                        if (widget.subtitle != null)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.lg,
+                            ),
+                            child: Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(
+                                widget.subtitle!,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: scheme.onSurfaceVariant),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
+                  if (widget.headerBar != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.sm,
+                        AppSpacing.lg,
+                        0,
+                      ),
+                      child: Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: widget.headerBar,
+                      ),
+                    ),
                   Expanded(
                     child: ListView(
                       key: _listKey,

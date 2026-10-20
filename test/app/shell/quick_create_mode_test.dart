@@ -42,8 +42,7 @@ class _Unread extends MockCubit<int> implements UnreadBadgeCubit {}
 
 class _Auth extends MockCubit<AuthState> implements AuthCubit {}
 
-class _Repo extends Fake implements TransactionsRepository {
-}
+class _Repo extends Fake implements TransactionsRepository {}
 
 const _wallet = Account(
   id: 'w1',

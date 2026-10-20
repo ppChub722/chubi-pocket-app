@@ -11,8 +11,6 @@ enum PendingSource {
   projectUpdate('project_update'),
   ocr('ocr'),
   chat('chat'),
-  recurring('recurring'),
-  upcoming('upcoming'),
   other('');
 
   const PendingSource(this.wire);
@@ -24,8 +22,6 @@ enum PendingSource {
   );
 
   bool get isManual => this == manual;
-
-  bool get isRecurring => this == recurring || this == upcoming;
 
   bool get inManualBucket => this == manual || this == chat;
 }
@@ -300,13 +296,6 @@ class PendingTransaction extends Equatable {
   bool needs(String key) => needsInput?.contains(key) ?? false;
 
   bool get isSaving => kind == PendingKind.saving || draft.isSaving;
-
-  RecurringItemLink? get recurringRef {
-    final ref = sourceRef;
-    return source.isRecurring && ref != null && ref['item_id'] is String
-        ? RecurringItemLink.fromJson(ref)
-        : null;
-  }
 
   factory PendingTransaction.fromJson(Map<String, dynamic> json) {
     final err = json['last_error'];

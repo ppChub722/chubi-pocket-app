@@ -185,31 +185,43 @@ class _VerticalLayout extends StatelessWidget {
       mainAxisSize: MainAxisSize.max,
       children: [
         Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             AccountIconCircle(
               account: account,
               size: AvatarMetrics.sizeMedium,
               onTap: onIconTap,
             ),
-            const Spacer(),
-            if (account.isShared) OtherMembersStack(account: account),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppText(
+                    account.name,
+                    role: AppTextRole.title,
+                    weight: FontWeight.w700,
+                    maxLines: 1,
+                  ),
+                  AppText(
+                    desc != null && desc.isNotEmpty
+                        ? desc
+                        : accountTypeLabel(context, account.type),
+                    role: AppTextRole.caption,
+                    maxLines: 1,
+                  ),
+                ],
+              ),
+            ),
+            if (account.isShared) ...[
+              const SizedBox(width: AppSpacing.xs),
+              OtherMembersStack(account: account),
+            ],
           ],
         ),
         const Spacer(),
-        AppText(
-          account.name,
-          role: AppTextRole.title,
-          weight: FontWeight.w700,
-          maxLines: 1,
-        ),
-        AppText(
-          desc != null && desc.isNotEmpty
-              ? desc
-              : accountTypeLabel(context, account.type),
-          role: AppTextRole.caption,
-          maxLines: 1,
-        ),
+        if (account.showsBalance) _InfoLine(account: account),
         if (account.showsBalance) ...[
           const SizedBox(height: AppSpacing.xs),
           MoneyText(
@@ -219,6 +231,14 @@ class _VerticalLayout extends StatelessWidget {
               AppTextRole.money,
             )?.copyWith(color: accountBalanceColor(context, account)),
           ),
+          if (account.savings case final s? when s.saved > 0)
+            AppText(
+              AppLocalizations.of(
+                context,
+              )!.fpWalletSavedLegend(moneyString(context, s.saved)),
+              role: AppTextRole.caption,
+              maxLines: 1,
+            ),
         ],
         if (utilization != null) ...[
           const SizedBox(height: AppSpacing.xs),
@@ -237,6 +257,63 @@ class _VerticalLayout extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// What the grid card says above the balance: a card's due date (amber within
+/// a week), else its credit left, else this month's money in and out.
+class _InfoLine extends StatelessWidget {
+  const _InfoLine({required this.account});
+
+  final Account account;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final days = account.daysUntilDue;
+    final available = account.creditAvailable;
+    if (account.type.isCredit && days != null && days >= 0) {
+      return AppText(
+        days == 0 ? l.accountCardDueToday : l.accountCardDueIn(days),
+        role: AppTextRole.caption,
+        color: days <= 7 ? palette.warning : null,
+        weight: days <= 7 ? FontWeight.w700 : null,
+        maxLines: 1,
+      );
+    }
+    if (account.type.isCredit && available != null) {
+      return AppText(
+        l.fpWalletCardLeft(moneyString(context, available)),
+        role: AppTextRole.caption,
+        maxLines: 1,
+      );
+    }
+    if (account.monthIn <= 0 && account.monthOut <= 0) {
+      return const SizedBox.shrink();
+    }
+    Widget part(IconData icon, Color color, double amount) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AppIcon(icon, size: AppIconSize.xs, color: color),
+        const SizedBox(width: AppSpacing.xxs),
+        AppText(moneyString(context, amount), role: AppTextRole.caption),
+      ],
+    );
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            part(AppIcons.trendUp, palette.income, account.monthIn),
+            const SizedBox(width: AppSpacing.sm),
+            part(AppIcons.trendDown, palette.expense, account.monthOut),
+          ],
+        ),
+      ),
     );
   }
 }

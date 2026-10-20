@@ -51,6 +51,9 @@ Widget buildPeopleAccountsPage(BuildContext context) {
     currency: 'THB',
     description: 'Salary account',
     iconCode: IconCode(icon: 'account_balance', iconColors: ['#138F2D']),
+    monthIn: 52000,
+    monthOut: 18300,
+    savings: WalletSavings(balance: 48200, saved: 20000),
   );
   const cash = Account(
     id: 'a2',
@@ -67,7 +70,20 @@ Widget buildPeopleAccountsPage(BuildContext context) {
     balance: -12400,
     currency: 'THB',
     creditLimit: 50000,
+    creditUsedPct: 25,
+    creditAvailable: 37600,
+    daysUntilDue: 3,
     iconCode: IconCode(icon: 'credit_card', iconColors: ['#EF4444']),
+  );
+  const cardNoDue = Account(
+    id: 'a5',
+    name: 'บัตรเครดิต 2',
+    type: AccountType.creditCard,
+    balance: -8000,
+    currency: 'THB',
+    creditLimit: 30000,
+    creditUsedPct: 27,
+    creditAvailable: 22000,
   );
   const overpaid = Account(
     id: 'a4',
@@ -299,6 +315,75 @@ Widget buildPeopleAccountsPage(BuildContext context) {
             page: 'Account detail',
             child: MemberAvatarStack(members: [...members.take(2)], size: 28),
           ),
+          HubUse(
+            label: 'MemberAvatarStack — 5 members, size 28 (3 + "+2")',
+            page: 'Account detail hero header',
+            child: AppHeroCard(
+              style: HeroStyle.tinted(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              header: HeroHeader(
+                leading: [
+                  const StatusChip(label: 'Bank', kind: StatusKind.active),
+                  MemberAvatarStack(
+                    size: 28,
+                    members: [
+                      ...members,
+                      const WalletMember(
+                        id: '5',
+                        userId: 'u5',
+                        name: 'Dao',
+                        role: WalletRole.member,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              content: const [],
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'MemberChip — the members in a chip-height pill (+N)',
+            page: 'Account detail hero, bottom chip row',
+            child: AppHeroCard(
+              style: HeroStyle.tinted(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              content: [
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: [
+                    const AppChip(
+                      label: 'Bank',
+                      icon: AppIcons.bank,
+                      selected: true,
+                      size: ChipSize.chip,
+                    ),
+                    const AppChip(
+                      label: 'Mine only',
+                      selected: true,
+                      size: ChipSize.chip,
+                    ),
+                    MemberChip(
+                      size: ChipSize.chip,
+                      onTap: () {},
+                      members: [
+                        ...members,
+                        const WalletMember(
+                          id: '5',
+                          userId: 'u5',
+                          name: 'Dao',
+                          role: WalletRole.member,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
           const HubUse(
             label: 'UserAvatar — 28',
             page: 'Edit profile page',
@@ -339,6 +424,16 @@ Widget buildPeopleAccountsPage(BuildContext context) {
             label: 'AccountCard grid — credit card: owed + used-credit bar',
             page: 'Accounts page',
             child: gridCard(card),
+          ),
+          HubUse(
+            label: 'AccountCard grid — card, due in a week: amber line',
+            page: 'Accounts page',
+            child: gridCard(card.copyWith(daysUntilDue: 12)),
+          ),
+          HubUse(
+            label: 'AccountCard grid — card without a due day: credit left',
+            page: 'Accounts page',
+            child: gridCard(cardNoDue),
           ),
           HubUse(
             label: 'AccountCard grid — overpaid: no bar',

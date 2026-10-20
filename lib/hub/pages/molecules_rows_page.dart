@@ -20,6 +20,7 @@ class _RowsPageState extends State<_RowsPage> {
   final _editNote = TextEditingController(text: 'Tap to change this text.');
   final _emptyNote = TextEditingController();
   bool _switch = true;
+  bool _repeat = true;
   bool _editing = false;
   final _checked = <int>{1};
 
@@ -85,6 +86,29 @@ class _RowsPageState extends State<_RowsPage> {
           ),
         ),
         // ---- In the app ----
+        HubDemo(
+          title: 'DetailStacked with a leading icon',
+          note:
+              'leading (or a DetailLeadingScope above it) puts an icon left of the '
+              'label, the way the note shows it. NoteSection gives its field the 📝 '
+              'this way in edit mode.',
+          child: SectionCard(
+            children: [
+              DetailStacked(
+                label: 'Categories',
+                leading: const AppIcon(AppIcons.category),
+                child: const Text('All Food, Groceries'),
+              ),
+              const DetailLeadingScope(
+                leading: AppIcon(AppIcons.note),
+                child: DetailStacked(
+                  label: 'Note',
+                  child: Text('The icon comes from the scope above.'),
+                ),
+              ),
+            ],
+          ),
+        ),
         HubInApp(
           columns: 2,
           note:
@@ -164,6 +188,46 @@ class _RowsPageState extends State<_RowsPage> {
                   trailing: const Text('3'),
                   showChevron: true,
                   onTap: () {},
+                ),
+              ),
+            ),
+            HubUse(
+              label: 'DetailPairRow — a check beside what it asks for',
+              page: 'Budget detail (period: repeat | round or end)',
+              wide: true,
+              child: frame(
+                DetailPairRow(
+                  first: DetailPairCell(
+                    label: 'Repeat',
+                    value: SelectCheck(value: _repeat, onTap: null),
+                    onTap: () => setState(() => _repeat = !_repeat),
+                  ),
+                  second: DetailPairCell(
+                    label: _repeat ? 'Round' : 'Ends',
+                    value: _repeat
+                        ? const Wrap(
+                            spacing: AppSpacing.xs,
+                            runSpacing: AppSpacing.xs,
+                            children: [
+                              AppChip(
+                                label: 'Monthly on day 1',
+                                icon: AppIcons.recurring,
+                                tone: AppChipTone.primary,
+                                size: ChipSize.chip,
+                              ),
+                              AppChip(
+                                label: '1–31 Oct 2026',
+                                icon: AppIcons.date,
+                                tone: AppChipTone.primary,
+                                size: ChipSize.chip,
+                              ),
+                              AppChip(label: 'No end', size: ChipSize.chip),
+                            ],
+                          )
+                        : const Text('11 Dec 2026'),
+                    chevron: true,
+                    onTap: () {},
+                  ),
                 ),
               ),
             ),
