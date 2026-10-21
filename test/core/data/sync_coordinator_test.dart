@@ -70,9 +70,33 @@ void main() {
 
   tearDown(() async {
     coordinator.dispose();
-    await dir.delete(recursive: true);
+    // A device write may still hold a file (Windows): retry briefly.
+    for (var i = 0; ; i++) {
+      try {
+        await dir.delete(recursive: true);
+        return;
+      } on FileSystemException {
+        if (i == 20) rethrow;
+        await Future<void>.delayed(const Duration(milliseconds: 25));
+      }
+    }
   });
 
+  /// Waits for [done] instead of a fixed sleep: the debounce timer and the
+  /// device writes are real, and a busy machine (the full suite) can take
+  /// longer than any fixed delay.
+  Future<void> until(
+    FutureOr<bool> Function() done, {
+    String reason = 'condition',
+  }) async {
+    final deadline = DateTime.now().add(const Duration(seconds: 10));
+    while (!await done()) {
+      if (DateTime.now().isAfter(deadline)) fail('timed out waiting: $reason');
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+    }
+  }
+
+  /// Lets queued work run, for checks that something did NOT happen.
   Future<void> settle() =>
       Future<void>.delayed(const Duration(milliseconds: 60));
 
@@ -114,7 +138,7 @@ void main() {
       accounts.clear();
 
       final done = coordinator.sync({SyncSet.tags, SyncSet.accounts});
-      await settle();
+      await until(() => repo.calls.isNotEmpty, reason: 'the sync call');
       expect(repo.calls.single.have, {SyncSet.accounts: 'a1'});
       repo.calls.single.done.complete(
         _result(
@@ -128,9 +152,13 @@ void main() {
       expect(tags.single, {'v': 't2'});
       expect(accounts, isEmpty);
       expect(coordinator.held[SyncSet.tags], 't2');
-      await settle();
+      // The device write is fire-and-forget.
+      await until(
+        () async => (await store.readAll('u1'))[SyncSet.tags]?.v == 't2',
+        reason: 'tags saved on the device',
+      );
       final saved = await store.readAll('u1');
-      expect(saved[SyncSet.tags]?.v, 't2');
+      expect(saved[SyncSet.accounts]?.v, 'a1');
     },
   );
 
@@ -141,15 +169,14 @@ void main() {
       await coordinator.hydrate('u1');
 
       final first = coordinator.sync({SyncSet.tags});
-      await settle();
+      await until(() => repo.calls.isNotEmpty, reason: 'the first round');
       final second = coordinator.sync({SyncSet.contacts});
       final third = coordinator.sync({SyncSet.projects});
       await settle();
       expect(repo.calls, hasLength(1));
 
       repo.calls.first.done.complete(_result());
-      await settle();
-      expect(repo.calls, hasLength(2));
+      await until(() => repo.calls.length == 2, reason: 'the second round');
       expect(repo.calls.last.want, {SyncSet.contacts, SyncSet.projects});
       repo.calls.last.done.complete(_result());
 
@@ -180,6 +207,7 @@ void main() {
       repo.answer = (_) async => _result();
       coordinator.onVersions({'accounts': 'a2', 'tags': 't2'});
       coordinator.onVersions({'accounts': 'a2', 'contacts': 'c2'});
+      await until(() => repo.calls.isNotEmpty, reason: 'the debounced sync');
       await settle();
 
       expect(repo.calls, hasLength(1));
@@ -215,7 +243,7 @@ void main() {
       coordinator.attach(SyncSet.tags, bodies.add);
       await coordinator.hydrate('u1');
       final pending = coordinator.sync({SyncSet.tags});
-      await settle();
+      await until(() => repo.calls.isNotEmpty, reason: 'the sync call');
 
       await coordinator.clear();
       repo.calls.single.done.complete(_result(data: {SyncSet.tags: 't9'}));

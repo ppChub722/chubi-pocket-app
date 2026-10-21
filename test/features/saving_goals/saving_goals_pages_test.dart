@@ -48,11 +48,13 @@ class _Repo extends Fake implements SavingGoalsRepository {
   int detailCalls = 0;
   final writes = <String>[];
   final sorts = <String>[];
+  final months = <String?>[];
   int previewCalls = 0;
   Map<String, dynamic>? preview;
 
   Map<String, dynamic> listJson = prodList();
   Map<String, dynamic> goalJson = prodGoal();
+  Map<String, dynamic> spareJson = prodSpareDetail();
   ApiException? archiveError;
 
   void _check() {
@@ -68,6 +70,7 @@ class _Repo extends Fake implements SavingGoalsRepository {
     String? month,
   }) async {
     sorts.add(sort);
+    months.add(month);
     listCalls++;
     _check();
     return SavingGoalsOverview.fromJson(listJson);
@@ -83,7 +86,7 @@ class _Repo extends Fake implements SavingGoalsRepository {
     _check();
     return SavingGoalDetail.fromJson(
       id == SavingGoalsRepository.spareId
-          ? prodSpareDetail()
+          ? spareJson
           : {
               ...prodDetail(goal: goalJson),
               if (deletePreview) 'delete_preview': preview,
@@ -113,7 +116,11 @@ class _Repo extends Fake implements SavingGoalsRepository {
   @override
   Future<SavingGoalDetail> clearAutoSave(String id) async {
     writes.add('DELETE $id auto-save');
-    return SavingGoalDetail.fromJson(prodDetail(goal: prodGoal()));
+    return SavingGoalDetail.fromJson(
+      id == SavingGoalsRepository.spareId
+          ? prodSpareDetail()
+          : prodDetail(goal: prodGoal()),
+    );
   }
 
   @override
@@ -243,65 +250,92 @@ void main() {
 
   // ── List ────────────────────────────────────────────────────────────
 
-  testWidgets('list: summary card, groups and rows show the BE numbers', (
+  testWidgets('list: ring hero, filter chips and rows show the BE numbers', (
     t,
   ) async {
     repo.listJson = threeGoals();
     await pump(t, const SavingGoalsListPage());
     expect(find.byType(ErrorView), findsNothing);
     expect(repo.listCalls, 1);
-    // The card: caption, saved_total, "still short" (month_short_total) and
-    // the tappable unallocated line.
-    expect(find.text('Total savings now'), findsOneWidget);
-    expect(find.textContaining('60,500'), findsOneWidget);
+    // The head: saved_total. The ring: month_saved_total of month_plan_total.
+    // Facts: month_short_total, the tappable unallocated, the goal count.
+    expect(find.text('Total saved'), findsOneWidget);
+    expect(find.text('\$60,500'), findsOneWidget);
+    expect(find.text('This month’s saving plan'), findsOneWidget);
+    final ring = find.byType(HeroRing);
+    expect(find.descendant(of: ring, matching: find.text('\$3,000')), findsOne);
     expect(
-      find.textContaining('Still short this month \$2,500'),
-      findsOneWidget,
+      find.descendant(of: ring, matching: find.text('of \$5,500')),
+      findsOne,
     );
-    expect(find.textContaining('Not allocated \$8,500'), findsOneWidget);
-    // Groups, in the BE's order.
-    final short = find.widgetWithText(SectionHeader, 'Still short this month');
-    final done = find.widgetWithText(SectionHeader, 'Done this month ✓');
-    expect(short, findsOneWidget);
-    expect(done, findsOneWidget);
-    expect(t.getTopLeft(short).dy, lessThan(t.getTopLeft(done).dy));
-    // A row: name, "Short ฿x", "saved / target", the ETA badge.
-    expect(find.text('ทริปญี่ปุ่น'), findsOneWidget);
+    expect(find.widgetWithText(HeroFactList, 'Still short'), findsOneWidget);
+    expect(find.widgetWithText(HeroFactList, '\$2,500'), findsOneWidget);
+    expect(find.widgetWithText(HeroFactList, 'Not allocated'), findsOneWidget);
+    expect(find.widgetWithText(HeroFactList, '\$8,500'), findsOneWidget);
+    // No group sections: every row in ONE card, "needs saving first" order
+    // (short → done).
+    expect(find.byType(SectionHeader), findsNothing);
+    expect(find.byType(SectionCard), findsOneWidget);
+    double y(String name) => t.getTopLeft(find.text(name)).dy;
+    expect(y('ทริปญี่ปุ่น'), lessThan(y('บ้าน')));
+    expect(y('บ้าน'), lessThan(y('รถใหม่')));
+    // A short row: "Short ฿x", the month line, "saved / target | %", the ETA.
     expect(find.text('Short \$2,500'), findsOneWidget);
-    expect(find.textContaining('\$52,000 / \$80,000'), findsWidgets);
+    // (both short rows share the fixture's saved and month_plan)
+    expect(find.text('This month \$3,000 / \$5,500'), findsNWidgets(2));
+    expect(find.text('\$52,000 / \$80,000 | 65%'), findsNWidgets(2));
+    expect(find.text('\$30,000 / \$80,000 | 65%'), findsOneWidget);
     expect(find.text('Goal May 2027 | 2 months late'), findsOneWidget);
-    // Done group: a tick, a plain ETA badge (on track).
-    expect(find.text('✓'), findsOneWidget);
-    expect(find.text('Goal May 2027'), findsNWidgets(2));
+    // A done row: the tick, the month saved.
+    expect(find.text('Done ✓'), findsOneWidget);
+    expect(find.text('This month \$3,000'), findsOneWidget);
     // "0 months late" never shows.
     expect(find.textContaining('0 months late'), findsNothing);
-    expect(find.text('Goal May 2027 | 0 months late'), findsNothing);
+    expect(find.text('Goal May 2027'), findsWidgets);
     expect(find.text('Add saving goal'), findsOneWidget);
   });
 
-  testWidgets('list: a goal with no target sits in its own group (0.4.0-1)', (
+  testWidgets('list: the hero filter chips count and filter the rows', (
+    t,
+  ) async {
+    repo.listJson = threeGoals();
+    await pump(t, const SavingGoalsListPage());
+    final chips = find.byType(HeroFilterChips);
+    expect(find.descendant(of: chips, matching: find.text('3')), findsOne);
+    expect(find.descendant(of: chips, matching: find.text('2')), findsOne);
+    expect(find.descendant(of: chips, matching: find.text('1')), findsOne);
+    await t.tap(find.descendant(of: chips, matching: find.text('Reached')));
+    await t.pumpAndSettle();
+    expect(find.text('รถใหม่'), findsOneWidget);
+    expect(find.text('ทริปญี่ปุ่น'), findsNothing);
+    expect(find.text('บ้าน'), findsNothing);
+    // A chip filters on the device: no extra call.
+    expect(repo.listCalls, 1);
+  });
+
+  testWidgets('list: a goal with no target is a row with its kind (0.4.0-1)', (
     t,
   ) async {
     repo.listJson = prodList(goals: [prodGoal(), prodOngoingGoal()]);
     await pump(t, const SavingGoalsListPage());
-    final ongoing = find.widgetWithText(SectionHeader, 'Ongoing');
-    expect(ongoing, findsOneWidget);
+    expect(find.byType(SectionHeader), findsNothing);
     // Its row: the saved amount on the right, this month below — no bar,
-    // no "saved / target", no ETA badge.
+    // no "saved / target", no ETA.
     final row = find.ancestor(
       of: find.text('เงินเก็บให้ลูก'),
       matching: find.byType(SavingGoalRow),
     );
     expect(t.widget<SavingGoalRow>(row).value, isNull);
     expect(
+      find.descendant(of: row, matching: find.text('Ongoing')),
+      findsOneWidget,
+    );
+    expect(
       find.descendant(of: row, matching: find.text('\$45,000')),
       findsOneWidget,
     );
     expect(
-      find.descendant(
-        of: row,
-        matching: find.text('Ongoing | this month +\$2,000'),
-      ),
+      find.descendant(of: row, matching: find.text('This month +\$2,000')),
       findsOneWidget,
     );
     expect(find.byType(ProgressRow), findsWidgets); // the other goal's bar
@@ -316,14 +350,14 @@ void main() {
   ) async {
     await pump(t, const SavingGoalsListPage());
     final card = find.ancestor(
-      of: find.text('Total savings now'),
-      matching: find.byType(AppCard),
+      of: find.text('Total saved'),
+      matching: find.byType(AppHeroCard),
     );
     expect(card, findsOneWidget);
     expect(find.byType(ListToolbar), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
     await t.tap(
-      find.descendant(of: card, matching: find.byIcon(AppIcons.search)),
+      find.descendant(of: card, matching: find.byType(ToolbarToggleButton)),
     );
     await t.pumpAndSettle();
     expect(find.text('Search goals'), findsWidgets);
@@ -418,29 +452,49 @@ void main() {
     await pump(t, const SavingGoalDetailPage(id: 'g1'));
     expect(repo.detailCalls, 1);
     expect(find.byType(ErrorView), findsNothing);
-    // Hero: status chip (behind 2 months), saved, target + %, bar captions.
-    expect(find.text('2 months late'), findsOneWidget);
-    expect(find.widgetWithText(HeroNumber, 'Saved'), findsOneWidget);
-    expect(find.textContaining('52,000'), findsWidgets);
-    expect(find.text('/ \$80,000 | 65%'), findsOneWidget);
+    // The info box: due date + days left.
     expect(find.text('Due Mar 15, 2027'), findsOneWidget);
     expect(find.text('153 days left'), findsOneWidget);
-    // The three month tiles come from the BE (month_short / month_saved /
-    // needed_monthly).
-    expect(find.text('Short this month'), findsOneWidget);
-    expect(find.text('\$2,500'), findsOneWidget);
-    expect(find.text('Saved this month'), findsOneWidget);
-    expect(find.text('\$3,000'), findsOneWidget);
-    expect(find.text('Needed / month'), findsOneWidget);
-    expect(find.text('\$5,600'), findsOneWidget);
+    // The ring: saved of target + %.
+    final ring = find.byType(HeroRing);
+    expect(find.descendant(of: ring, matching: find.text('Saved')), findsOne);
+    expect(
+      find.descendant(of: ring, matching: find.text('\$52,000')),
+      findsOne,
+    );
+    expect(
+      find.descendant(of: ring, matching: find.text('of \$80,000 | 65%')),
+      findsOne,
+    );
+    // The facts come from the BE (month_saved / month_plan, month_short,
+    // remaining_amount).
+    final facts = find.byType(HeroFactList);
+    expect(find.widgetWithText(HeroFactList, 'Saved this month'), findsOne);
+    expect(
+      find.descendant(of: facts, matching: find.text('\$3,000 / \$5,500')),
+      findsOne,
+    );
+    expect(find.widgetWithText(HeroFactList, 'Short this month'), findsOne);
+    expect(
+      find.descendant(of: facts, matching: find.text('\$2,500')),
+      findsOne,
+    );
+    expect(find.widgetWithText(HeroFactList, 'Left to go'), findsOne);
+    expect(
+      find.descendant(of: facts, matching: find.text('\$28,000')),
+      findsOne,
+    );
+    // The status chips go last: short this month, behind 2 months.
+    expect(find.text('Short \$2,500 this month'), findsOneWidget);
+    expect(find.text('2 months behind schedule'), findsOneWidget);
     // The action bar follows the BE's flags.
     expect(find.widgetWithText(ActionBar, 'Save'), findsOneWidget);
     expect(find.text('Withdraw'), findsOneWidget);
     expect(find.text('Move'), findsOneWidget);
-    // Tabs.
+    // Two tabs.
     expect(find.text('Overview'), findsOneWidget);
     expect(find.text('Saving entries'), findsOneWidget);
-    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Settings'), findsNothing);
     // Two entries: the chart shows.
     expect(find.byType(SavingHistoryChart), findsOneWidget);
   });
@@ -464,25 +518,33 @@ void main() {
     expect(find.text('กสิกร'), findsWidgets);
   });
 
-  testWidgets('detail: the auto-save toggle is ONE PUT, then ONE DELETE', (
+  testWidgets('detail: a goal lists its auto-saves read-only, no switch', (
     t,
   ) async {
+    repo.goalJson = prodGoal(autoSave: prodAutoSave());
     await pump(t, const SavingGoalDetailPage(id: 'g1'));
-    expect(t.widget<AppSwitch>(find.byType(AppSwitch)).value, isFalse);
-    await t.tap(find.byType(AppSwitch));
-    await t.pumpAndSettle();
-    // ON = the plan's amount (month_plan 5500), the default day, no wallet.
-    expect(repo.writes, ['PUT g1 auto-save 5500.0 day 25 wallet null']);
+    // Auto-saves are edited in the edit form (many per goal), not toggled here.
+    expect(find.byType(AppSwitch), findsNothing);
+    expect(find.text('Auto-save'), findsOneWidget);
+    expect(find.text('โดราเอมอน'), findsOneWidget);
+    expect(find.text('Monthly on day 25'), findsOneWidget);
+    expect(find.text('Next Oct 25, 2026'), findsOneWidget);
+  });
+
+  testWidgets('spare: turning auto-save off is ONE DELETE, no re-read', (
+    t,
+  ) async {
+    repo.spareJson = prodSpareDetail(autoSave: prodAutoSave());
+    await pump(t, const SavingGoalDetailPage(id: 'spare'));
     expect(t.widget<AppSwitch>(find.byType(AppSwitch)).value, isTrue);
-    expect(find.textContaining('Edit amount, day and wallet'), findsOneWidget);
     expect(find.textContaining('from โดราเอมอน'), findsOneWidget);
-    // The write patched the page: no re-read.
-    expect(repo.detailCalls, 1);
+    expect(find.text('Edit amount, day and wallet'), findsOneWidget);
     await t.tap(find.byType(AppSwitch));
     await t.pumpAndSettle();
-    expect(repo.writes, hasLength(2));
-    expect(repo.writes.last, 'DELETE g1 auto-save');
+    expect(repo.writes, ['DELETE spare auto-save']);
     expect(t.widget<AppSwitch>(find.byType(AppSwitch)).value, isFalse);
+    expect(find.text('Edit amount, day and wallet'), findsNothing);
+    // The write patched the page.
     expect(repo.detailCalls, 1);
   });
 
@@ -490,11 +552,13 @@ void main() {
     t,
   ) async {
     await pump(t, const SavingGoalsListPage());
+    // "Needs saving first" (the default) is ordered on the device: the BE
+    // gets created.
     expect(repo.sorts, ['created']);
     final btn = find.byType(ToolbarToggleButton);
     await t.tap(btn);
     await t.pumpAndSettle();
-    await t.tap(find.text('By created'));
+    await t.tap(find.text('Needs saving first'));
     await t.pumpAndSettle();
     await t.tap(find.text('Nearest deadline').last);
     await t.pumpAndSettle();
@@ -507,11 +571,21 @@ void main() {
     expect(button.showDot, isTrue);
   });
 
-  testWidgets('list: the card shows saved / plan of the month (BE totals)', (
-    t,
-  ) async {
+  testWidgets('list: the month stepper heads the plan; another month is '
+      'one call with month=', (t) async {
     await pump(t, const SavingGoalsListPage());
-    expect(find.text('Saved \$3,000 / \$5,500'), findsOneWidget);
+    expect(find.text('This month’s saving plan'), findsOneWidget);
+    expect(repo.listCalls, 1);
+    await t.tap(
+      find.descendant(
+        of: find.byType(StepperPill),
+        matching: find.byIcon(AppIcons.chevronLeft),
+      ),
+    );
+    await t.pumpAndSettle();
+    expect(repo.listCalls, 2);
+    expect(repo.months.last, isNotNull);
+    expect(find.text('Saving plan'), findsOneWidget);
   });
 
   testWidgets('detail edit: delete with money held says close first', (
@@ -559,15 +633,17 @@ void main() {
     await pump(t, const SavingGoalDetailPage(id: 'g1'), router: true);
     await t.tap(find.byIcon(AppIcons.edit));
     await t.pumpAndSettle();
-    // No tabs, no status, no tiles in the edit form.
+    // No tabs, no status, no ring or facts in the edit form.
     expect(find.text('Saving entries'), findsNothing);
-    expect(find.text('2 months late'), findsNothing);
+    expect(find.text('2 months behind schedule'), findsNothing);
+    expect(find.byType(HeroRing), findsNothing);
     expect(find.text('Short this month'), findsNothing);
-    // The target field, the due date and the live line.
+    // The target field; the plan section with the due date and auto-save.
     expect(find.text('Target amount'), findsOneWidget);
+    expect(find.text('Saving plan'), findsOneWidget);
+    expect(find.text('Deadline'), findsOneWidget);
     expect(find.text('Mar 15, 2027'), findsOneWidget);
-    expect(find.textContaining('to go'), findsOneWidget);
-    expect(find.text('Save \$5,600/month'), findsOneWidget);
+    expect(find.text('Auto-save'), findsOneWidget);
     // End zone: close + archive — no delete (flag off). Archiving a goal
     // that holds money is fine (0.4.0-1): the line says what stops counting.
     expect(find.text('Close goal'), findsOneWidget);
@@ -604,23 +680,26 @@ void main() {
     expect(repo.writes, ['POST g1 archive']);
   });
 
-  testWidgets('detail: a goal with no target — chip, saved, two tiles', (
+  testWidgets('detail: a goal with no target — saved, month, auto-saving', (
     t,
   ) async {
     repo.goalJson = prodOngoingGoal(
       autoSave: {...prodAutoSave(), 'amount': 2000},
     );
     await pump(t, const SavingGoalDetailPage(id: 'g9'));
-    expect(find.widgetWithText(StatusChip, 'Ongoing'), findsOneWidget);
     expect(find.text('เก็บไว้ให้น้องโต'), findsOneWidget);
-    // No bar, target, %, due date, behind badge or short tile.
-    expect(find.byType(HeroBar), findsNothing);
+    // No ring, target, %, due date, behind chip or short fact.
+    expect(find.byType(HeroRing), findsNothing);
+    expect(find.byType(HeroInfoBox), findsNothing);
     expect(find.textContaining('%'), findsNothing);
-    expect(find.textContaining('months late'), findsNothing);
+    expect(find.textContaining('behind'), findsNothing);
     expect(find.text('Short this month'), findsNothing);
-    // This month saved + the auto-saving amount.
-    expect(find.text('\$2,000'), findsWidgets);
-    expect(find.text('Auto-saving'), findsWidgets);
+    // Saved, this month saved + the auto-saving amount.
+    expect(find.widgetWithText(HeroNumber, 'Saved'), findsOneWidget);
+    expect(find.text('\$45,000'), findsWidgets);
+    expect(find.widgetWithText(HeroFactList, 'Saved this month'), findsOne);
+    expect(find.widgetWithText(HeroFactList, '\$2,000'), findsOne);
+    expect(find.widgetWithText(HeroFactList, 'Auto-saving'), findsOne);
     expect(find.text('\$2,000/mo'), findsOneWidget);
   });
 
@@ -635,9 +714,9 @@ void main() {
       find.text('Leave empty for an ongoing goal with no target'),
       findsOneWidget,
     );
-    // No due date / monthly-need box without a target.
-    expect(find.byType(InfoBox), findsNothing);
-    // Typing a target brings the plan box back.
+    // The plan section stays: the deadline is optional too.
+    expect(find.text('Saving plan'), findsOneWidget);
+    expect(find.text('Optional'), findsOneWidget);
     await t.enterText(
       find.descendant(
         of: find.byType(HeroAmountField),
@@ -646,19 +725,23 @@ void main() {
       '100000',
     );
     await t.pumpAndSettle();
-    expect(find.byType(InfoBox), findsOneWidget);
+    expect(find.text('Saving plan'), findsOneWidget);
+    expect(
+      find.text('Leave empty for an ongoing goal with no target'),
+      findsOne,
+    );
   });
 
-  testWidgets('create: the form only — no tabs, no auto-save, no end zone', (
-    t,
-  ) async {
+  testWidgets('create: the form only — no tabs, no end zone; the plan '
+      'section has the start amount and auto-save', (t) async {
     await pump(t, const SavingGoalDetailPage());
     expect(repo.detailCalls, 0);
     expect(find.byType(HeroAmountField), findsOneWidget);
     expect(find.text('Target amount'), findsOneWidget);
-    // No target typed yet = no due-date box (0.4.0-1: the target is optional).
-    expect(find.byType(InfoBox), findsNothing);
-    expect(find.byType(AppSwitch), findsNothing);
+    expect(find.text('Saving plan'), findsOneWidget);
+    expect(find.text('Starting amount'), findsOneWidget);
+    // Auto-save starts off.
+    expect(t.widget<AppSwitch>(find.byType(AppSwitch)).value, isFalse);
     expect(find.byType(EndZone), findsNothing);
     expect(find.text('Saving entries'), findsNothing);
   });
@@ -677,7 +760,8 @@ void main() {
     await t.pump();
     await t.pump(const Duration(milliseconds: 100));
     expect(find.byType(ErrorView), findsNothing);
-    expect(find.widgetWithText(HeroNumber, 'Saved'), findsOneWidget);
+    expect(find.byType(HeroRing), findsOneWidget);
+    expect(find.text('\$52,000'), findsWidgets);
     expect(
       find.text('Refresh failed, showing the latest data'),
       findsOneWidget,
