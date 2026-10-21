@@ -143,6 +143,9 @@ class SavingGoalsCubit extends Cubit<SavingGoalsState>
             ? null
             : '${month.year}-${month.month.toString().padLeft(2, '0')}',
       );
+      // Leaving the page resets the month and reloads; the cubit may be
+      // closed by the time the answer comes back.
+      if (isClosed) return;
       emit(
         state.copyWith(
           overview: overview,
@@ -151,6 +154,7 @@ class SavingGoalsCubit extends Cubit<SavingGoalsState>
         ),
       );
     } catch (e, st) {
+      if (isClosed) return;
       emit(
         state.copyWith(
           status: SavingGoalsStatus.error,
