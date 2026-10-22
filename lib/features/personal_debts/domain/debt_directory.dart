@@ -80,11 +80,32 @@ int Function(PersonBalance, PersonBalance) _comparator(DebtPeopleSort sort) {
 }
 
 /// What `GET /personal-debts/people` answers for these parameters.
+/// The debts list's filter chips (owner 2026-10-22, mock DebtsList).
+enum DebtListFilter { all, receivable, payable, overdue30 }
+
+/// How many people each chip keeps: the open people, per side, and those
+/// whose oldest open debt is more than 30 days old.
+Map<DebtListFilter, int> countPeople(List<PersonBalance> people) {
+  final open = [
+    for (final p in people)
+      if (isOpenPerson(p)) p,
+  ];
+  return {
+    DebtListFilter.all: open.length,
+    DebtListFilter.receivable: open.where((p) => p.net > 0.005).length,
+    DebtListFilter.payable: open.where((p) => p.net < -0.005).length,
+    DebtListFilter.overdue30: open
+        .where((p) => (p.daysOutstanding ?? 0) > 30)
+        .length,
+  };
+}
+
 List<PersonBalance> filterPeople(
   List<PersonBalance> people, {
   String q = '',
   bool all = false,
   NetSide? side,
+  bool overdue30 = false,
   DebtPeopleSort sort = DebtPeopleSort.oldest,
 }) {
   final needle = q.trim().toLowerCase();
@@ -92,6 +113,7 @@ List<PersonBalance> filterPeople(
     for (final p in people)
       if ((all || isOpenPerson(p)) &&
           (side == null || side == NetSide.even || NetSide.of(p.net) == side) &&
+          (!overdue30 || (p.daysOutstanding ?? 0) > 30) &&
           (needle.isEmpty || p.person.name.toLowerCase().contains(needle)))
         p,
   ]..sort(_comparator(sort));

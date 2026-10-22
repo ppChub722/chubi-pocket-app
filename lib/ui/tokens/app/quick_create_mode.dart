@@ -7,8 +7,8 @@ enum QuickCreateMode { tx, debt, saving }
 abstract final class QuickCreateModeColors {
   static Color of(BuildContext context, QuickCreateMode mode) => switch (mode) {
     QuickCreateMode.tx => Theme.of(context).colorScheme.primary,
-    QuickCreateMode.debt => ModuleColors.of(context).people,
-    QuickCreateMode.saving => ModuleColors.of(context).planning,
+    QuickCreateMode.debt => ModuleColors.of(context).debt,
+    QuickCreateMode.saving => ModuleColors.of(context).saving,
   };
 
   static Color onOf(BuildContext context, QuickCreateMode mode) =>

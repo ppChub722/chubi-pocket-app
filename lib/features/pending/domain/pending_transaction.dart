@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../ui/ui.dart';
+import '../../transactions/domain/link_draft.dart';
 import '../../transactions/domain/refs.dart';
 import '../../transactions/domain/transaction_type.dart';
 
@@ -56,7 +57,17 @@ class PendingDraft extends Equatable {
     this.projectId,
     this.goalId,
     this.isSaving = false,
+    this.paidBy,
+    this.payer,
+    this.members = const [],
   });
+
+  /// จ่ายแทน (0.4.0-3 B1): `{contact_id | person_name, amount}`.
+  final Map<String, dynamic>? paidBy;
+
+  /// อีเวนต์ with [projectId] (B2): who paid and everyone's share.
+  final Map<String, dynamic>? payer;
+  final List<Map<String, dynamic>> members;
 
   final TransactionType? type;
   final double? amount;
@@ -95,6 +106,10 @@ class PendingDraft extends Equatable {
       splits: ((json['splits'] as List?) ?? const [])
           .cast<Map<String, dynamic>>(),
       projectId: json['project_id'] as String?,
+      paidBy: (json['paid_by'] as Map?)?.cast<String, dynamic>(),
+      payer: (json['payer'] as Map?)?.cast<String, dynamic>(),
+      members: ((json['members'] as List?) ?? const [])
+          .cast<Map<String, dynamic>>(),
     );
   }
 
@@ -111,6 +126,9 @@ class PendingDraft extends Equatable {
     if (tagIds.isNotEmpty) 'tag_ids': tagIds,
     if (splits.isNotEmpty) 'splits': splits,
     'project_id': ?projectId,
+    'paid_by': ?paidBy,
+    'payer': ?payer,
+    if (members.isNotEmpty) 'members': members,
   };
 
   @override
@@ -128,6 +146,9 @@ class PendingDraft extends Equatable {
     projectId,
     goalId,
     isSaving,
+    paidBy,
+    payer,
+    members,
   ];
 }
 
@@ -212,7 +233,21 @@ class DraftResolved extends Equatable {
     this.splits = const [],
     this.goal,
     this.missing = const [],
+    this.linkMode,
+    this.paidBy,
+    this.billPayer,
+    this.billMembers = const [],
   });
+
+  /// The quick-create tab the draft was saved with (0.4.0-3).
+  final LinkMode? linkMode;
+
+  /// จ่ายแทน: who paid and how much (`my_paid` null without an amount).
+  final ({EmbeddedPerson person, double amount})? paidBy;
+
+  /// อีเวนต์: the payer and everyone's share, names resolved.
+  final ResolvedBillPerson? billPayer;
+  final List<ResolvedBillPerson> billMembers;
 
   final AccountRef? account;
   final AccountRef? transferToAccount;
@@ -242,6 +277,24 @@ class DraftResolved extends Equatable {
     splits: _list(json['splits'], ResolvedSplit.fromJson),
     goal: _obj(json['goal'], SavingGoalRef.fromJson),
     missing: ((json['missing'] as List?) ?? const []).cast<String>(),
+    linkMode: LinkMode.parse(json['link_mode']),
+    paidBy: _obj(
+      json['paid_by'],
+      (p) => (
+        person: EmbeddedPerson.fromJson(
+          (p['person'] as Map? ?? const {}).cast<String, dynamic>(),
+        ),
+        amount: (p['amount'] as num?)?.toDouble() ?? 0,
+      ),
+    ),
+    billPayer: _obj(
+      (json['bill_people'] as Map?)?['payer'],
+      ResolvedBillPerson.fromJson,
+    ),
+    billMembers: _list(
+      (json['bill_people'] as Map?)?['members'],
+      ResolvedBillPerson.fromJson,
+    ),
   );
 
   @override
@@ -254,7 +307,40 @@ class DraftResolved extends Equatable {
     splits,
     goal,
     missing,
+    linkMode,
+    paidBy,
+    billPayer,
+    billMembers,
   ];
+}
+
+/// A person of a draft's event bill (BE ResolvedBillPerson).
+class ResolvedBillPerson extends Equatable {
+  const ResolvedBillPerson({
+    required this.me,
+    required this.name,
+    this.memberId,
+    this.contactId,
+    this.share = 0,
+  });
+
+  final bool me;
+  final String name;
+  final String? memberId;
+  final String? contactId;
+  final double share;
+
+  factory ResolvedBillPerson.fromJson(Map<String, dynamic> json) =>
+      ResolvedBillPerson(
+        me: (json['me'] as bool?) ?? false,
+        name: (json['name'] as String?) ?? '',
+        memberId: json['member_id'] as String?,
+        contactId: json['contact_id'] as String?,
+        share: (json['share'] as num?)?.toDouble() ?? 0,
+      );
+
+  @override
+  List<Object?> get props => [me, name, memberId, contactId, share];
 }
 
 class PendingTransaction extends Equatable {

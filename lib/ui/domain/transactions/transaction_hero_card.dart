@@ -157,20 +157,14 @@ class TransactionHeroCard extends StatelessWidget {
                   if (canSwitch || t == type) t,
               ].indexed) ...[
                 if (i > 0) const SizedBox(width: AppSpacing.xs),
-                _withDebtSubFor(
+                txTypeChip(
                   context,
-                  t,
-                  txTypeChip(
-                    context,
-                    type: t,
-                    selected: t == type,
-                    onTap: canSwitch && t != type
-                        ? () => onTypeChanged!(t)
-                        : null,
-                    dashed: canSwitch && t != type,
-                    debt: debt,
-                    repay: repay,
-                  ),
+                  type: t,
+                  selected: t == type,
+                  onTap: canSwitch && t != type
+                      ? () => onTypeChanged!(t)
+                      : null,
+                  dashed: canSwitch && t != type,
                   debt: debt,
                   repay: repay,
                 ),
@@ -402,35 +396,6 @@ Color txWordsColor(
   }
   final expense = t == TransactionType.expense;
   return debtStateColor(context, owedToMe: repay ? !expense : expense);
-}
-
-/// Recording a debt: a small line under รอรับ / รอจ่าย says who pays whom
-/// back ("เขาต้องคืนฉัน" / "ฉันต้องคืนเขา"; owner 2026-10-21, never ติด).
-Widget _withDebtSubFor(
-  BuildContext context,
-  TransactionType t,
-  Widget chip, {
-  required bool debt,
-  required bool repay,
-}) {
-  if (!debt || repay || t == TransactionType.transfer) return chip;
-  final l = AppLocalizations.of(context)!;
-  return Column(
-    mainAxisSize: MainAxisSize.min,
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      chip,
-      const SizedBox(height: AppSpacing.xxs),
-      Text(
-        t == TransactionType.expense
-            ? l.debtDirectionOwedToMeSub
-            : l.debtDirectionIOweSub,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
-      ),
-    ],
-  );
 }
 
 AppChip txTypeChip(

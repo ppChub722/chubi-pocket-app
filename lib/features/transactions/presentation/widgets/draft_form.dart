@@ -456,6 +456,43 @@ class DraftFormController extends ChangeNotifier {
     }
   }
 
+  /// A draft reopens on the tab it was saved with (0.4.0-3): จ่ายแทน's payer
+  /// + amount, อีเวนต์'s payer + members (by member id, else contact / name).
+  void prefillLinkFromDraft(PendingDraft d, DraftResolved r) {
+    final mode = r.linkMode;
+    if (mode == null || type != TransactionType.expense) return;
+    link
+      ..mode = mode
+      ..paidBy = null
+      ..paidAmount = null
+      ..myPaidAuto = true
+      ..myPaidTyped = null
+      ..eventPayer = null
+      ..eventMeAuto = true
+      ..eventMeTyped = null;
+    link.eventShares.clear();
+    link.eventExtra.clear();
+    final paid = r.paidBy;
+    if (paid != null) {
+      link
+        ..paidBy = LinkPerson.of(paid.person)
+        ..paidAmount = paid.amount;
+    }
+    LinkPerson person(ResolvedBillPerson p) => LinkPerson(
+      name: p.name,
+      contactId: p.memberId == null ? p.contactId : null,
+      memberId: p.memberId,
+    );
+    final payer = r.billPayer;
+    if (payer != null && !payer.me) link.eventPayer = person(payer);
+    for (final m in r.billMembers) {
+      if (m.me) continue;
+      final p = person(m);
+      link.eventExtra.add(p);
+      link.eventShares[p.key] = m.share;
+    }
+  }
+
   /// The tab + its data, to tell at save whether the tab changed.
   String linkSnapshot(LinkMode m) =>
       jsonEncode({'mode': m.wire, 'data': _linkData(m, projectId: null)});
@@ -673,7 +710,41 @@ class DraftFormController extends ChangeNotifier {
     return d;
   }
 
-  PendingDraft toDraft({bool keepIncomplete = false}) {
+  /// The draft as typed. Under the ผูกกับ tabs only the active tab's data
+  /// goes in (0.4.0-3): แบ่ง = splits, จ่ายแทน = paid_by, อีเวนต์ =
+  /// project_id ([eventProjectId] when the event lives outside the form) +
+  /// payer + members.
+  PendingDraft toDraft({bool keepIncomplete = false, String? eventProjectId}) {
+    final tab = isTransfer ? null : pickedTab;
+    if (tab != null) {
+      final base = _draftBase(keepIncomplete: keepIncomplete);
+      final bill = amountValue;
+      final event = tab == LinkMode.event
+          ? link.eventJson(bill, eventMembers)
+          : null;
+      return PendingDraft(
+        type: base.type,
+        amount: base.amount,
+        accountId: base.accountId,
+        categoryId: base.categoryId,
+        date: base.date,
+        description: base.description,
+        note: base.note,
+        tagIds: base.tagIds,
+        splits: tab == LinkMode.split ? base.splits : const [],
+        projectId: tab == LinkMode.event ? (eventProjectId ?? projectId) : null,
+        paidBy: tab == LinkMode.paid ? link.paidByJson(bill) : null,
+        payer: (event?['payer'] as Map?)?.cast<String, dynamic>(),
+        members: [
+          for (final m in (event?['members'] as List?) ?? const [])
+            (m as Map).cast<String, dynamic>(),
+        ],
+      );
+    }
+    return _draftBase(keepIncomplete: keepIncomplete);
+  }
+
+  PendingDraft _draftBase({bool keepIncomplete = false}) {
     final d = description.text.trim();
     final n = note.text.trim();
     return PendingDraft(
@@ -1185,7 +1256,11 @@ class _DraftFormState extends State<DraftForm> {
   /// expense).
   LinkMode? get _linkMode =>
       widget.linkTabs && _c.type == TransactionType.expense
-      ? _c.linkMode(hasEvent: widget.eventSlot?.name != null)
+      ? _c.linkMode(
+          hasEvent: widget.chipLayout
+              ? _c.projectId != null
+              : widget.eventSlot?.name != null,
+        )
       : null;
 
   /// The wallet card's line under ผูกกับ: nothing leaves it (dimmed), or
@@ -1286,7 +1361,10 @@ class _DraftFormState extends State<DraftForm> {
         gap,
         LinkSection(
           controller: _c,
-          event: widget.eventSlot ?? const SplitEventSlot(),
+          // A draft keeps its event on the form (project_id).
+          event: widget.chipLayout
+              ? _draftEventSlot()
+              : (widget.eventSlot ?? const SplitEventSlot()),
           eventIsNew: widget.linkEventIsNew,
           isEventMember: widget.linkIsEventMember,
           recurring: widget.recurringSlot,

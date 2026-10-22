@@ -20,10 +20,28 @@ class DebtPeopleState extends Equatable {
     this.all = false,
     this.sort = DebtPeopleSort.oldest,
     this.side,
+    this.overdue30 = false,
+    this.counts = const {},
     this.loadingMore = false,
     this.error,
     this.moreError,
   });
+
+  /// Only people whose oldest open debt is more than 30 days old.
+  final bool overdue30;
+
+  /// Each filter chip's count.
+  final Map<DebtListFilter, int> counts;
+
+  /// The chip picked (mock DebtsList: ทั้งหมด / รอรับ / รอจ่าย / ค้างเกิน 30
+  /// วัน).
+  DebtListFilter get filter => overdue30
+      ? DebtListFilter.overdue30
+      : switch (side) {
+          NetSide.owedToMe => DebtListFilter.receivable,
+          NetSide.iOwe => DebtListFilter.payable,
+          _ => DebtListFilter.all,
+        };
 
   final DebtLoadStatus status;
   final List<PersonBalance> items;
@@ -42,7 +60,7 @@ class DebtPeopleState extends Equatable {
   final ApiException? moreError;
 
   bool get hasMore => paging.hasMore;
-  bool get isFiltered => q.trim().isNotEmpty || side != null;
+  bool get isFiltered => q.trim().isNotEmpty || side != null || overdue30;
 
   bool get firstLoad =>
       items.isEmpty &&
@@ -58,6 +76,8 @@ class DebtPeopleState extends Equatable {
     DebtPeopleSort? sort,
     NetSide? side,
     bool clearSide = false,
+    bool? overdue30,
+    Map<DebtListFilter, int>? counts,
     bool? loadingMore,
     ApiException? error,
     bool clearError = false,
@@ -72,6 +92,8 @@ class DebtPeopleState extends Equatable {
     all: all ?? this.all,
     sort: sort ?? this.sort,
     side: clearSide ? null : (side ?? this.side),
+    overdue30: overdue30 ?? this.overdue30,
+    counts: counts ?? this.counts,
     loadingMore: loadingMore ?? this.loadingMore,
     error: clearError ? null : (error ?? this.error),
     moreError: clearMoreError ? null : (moreError ?? this.moreError),
@@ -87,6 +109,8 @@ class DebtPeopleState extends Equatable {
     all,
     sort,
     side,
+    overdue30,
+    counts,
     loadingMore,
     error,
     moreError,
@@ -112,6 +136,7 @@ class DebtPeopleCubit extends Cubit<DebtPeopleState> {
     DebtPeopleSort? sort,
     NetSide? side,
     bool clearSide = false,
+    bool? overdue30,
   }) {
     if (isClosed) return;
     final d = _directory.state;
@@ -121,12 +146,14 @@ class DebtPeopleCubit extends Cubit<DebtPeopleState> {
       sort: sort,
       side: side,
       clearSide: clearSide,
+      overdue30: overdue30,
     );
     final items = filterPeople(
       d.people,
       q: next.q,
       all: next.all,
       side: next.side,
+      overdue30: next.overdue30,
       sort: next.sort,
     );
     emit(
@@ -138,6 +165,7 @@ class DebtPeopleCubit extends Cubit<DebtPeopleState> {
           DebtDirectoryStatus.error => DebtLoadStatus.error,
         },
         items: items,
+        counts: countPeople(d.people),
         totals: d.totals,
         paging: DebtPaging(
           perPage: items.isEmpty ? 1 : items.length,
@@ -169,6 +197,17 @@ class DebtPeopleCubit extends Cubit<DebtPeopleState> {
 
   void toggleSide(NetSide side) =>
       state.side == side ? _derive(clearSide: true) : _derive(side: side);
+
+  /// One chip at a time (mock DebtsList).
+  void setFilter(DebtListFilter f) => switch (f) {
+    DebtListFilter.all => _derive(clearSide: true, overdue30: false),
+    DebtListFilter.receivable => _derive(
+      side: NetSide.owedToMe,
+      overdue30: false,
+    ),
+    DebtListFilter.payable => _derive(side: NetSide.iOwe, overdue30: false),
+    DebtListFilter.overdue30 => _derive(clearSide: true, overdue30: true),
+  };
 
   Future<void> loadMore() async {}
 

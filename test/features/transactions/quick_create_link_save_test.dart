@@ -7,6 +7,8 @@ import 'package:chubi_pocket/features/categories/presentation/cubit/categories_c
 import 'package:chubi_pocket/features/contacts/domain/contact.dart';
 import 'package:chubi_pocket/features/contacts/presentation/cubit/contacts_cubit.dart';
 import 'package:chubi_pocket/features/home/presentation/cubit/dashboard_cubit.dart';
+import 'package:chubi_pocket/features/pending/domain/pending_transaction.dart';
+import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.dart';
 import 'package:chubi_pocket/features/projects/data/projects_repository.dart';
 import 'package:chubi_pocket/features/tags/presentation/cubit/tags_cubit.dart';
 import 'package:chubi_pocket/features/transactions/data/transactions_repository.dart';
@@ -39,6 +41,8 @@ class _Dashboard extends MockCubit<DashboardState> implements DashboardCubit {}
 class _Auth extends MockCubit<AuthState> implements AuthCubit {}
 
 class _Projects extends Fake implements ProjectsRepository {}
+
+class _Pending extends MockCubit<PendingState> implements PendingCubit {}
 
 /// Records the create call's body parts.
 class _TxRepo extends Fake implements TransactionsRepository {
@@ -181,6 +185,9 @@ final _lee = Contact.fromJson({
 /// they paid it all.
 void main() {
   late _TxRepo repo;
+  late List<PendingDraft> drafts;
+
+  setUpAll(() => registerFallbackValue(<PendingDraft>[]));
 
   Future<void> open(WidgetTester t, {Transaction? edit}) async {
     SharedPreferences.setMockInitialValues({});
@@ -217,6 +224,13 @@ void main() {
       when(loader).thenAnswer((_) async {});
     }
     when(() => accounts.patchBalances(any())).thenReturn(null);
+    drafts = [];
+    final pending = _Pending();
+    when(() => pending.state).thenReturn(const PendingState());
+    when(() => pending.add(any())).thenAnswer((inv) async {
+      drafts.addAll(inv.positionalArguments.first as List<PendingDraft>);
+      return const <PendingTransaction>[];
+    });
     await t.pumpWidget(
       MultiRepositoryProvider(
         providers: [
@@ -234,6 +248,7 @@ void main() {
             FakeTxFormOptions().provider,
             BlocProvider<DashboardCubit>.value(value: dashboard),
             BlocProvider<AuthCubit>.value(value: auth),
+            BlocProvider<PendingCubit>.value(value: pending),
           ],
           child: MaterialApp(
             theme: ThemeData(extensions: [sweetTheme.lightColors]),
@@ -392,6 +407,35 @@ void main() {
     await save(t);
     expect(repo.previews, isEmpty);
     expect(repo.updates, [null]);
+  });
+
+  // ── drafts keep the tab (0.4.0-3 2c) ──────────────────────────────────
+  testWidgets('"Save draft" on จ่ายแทน keeps paid_by, nothing else', (t) async {
+    await open(t);
+    await typeAmount(t, '123');
+    await tab(t, 'Paid for me');
+    await t.tap(find.text('Pick who paid'));
+    await _settle(t);
+    await t.tap(find.text('Lee').last);
+    await _settle(t);
+    await t.tap(find.text('Save draft'));
+    await _settle(t);
+    final d = drafts.single;
+    expect(d.paidBy, {'contact_id': 'c2', 'amount': 123.0});
+    expect(d.splits, isEmpty);
+    expect(d.projectId, isNull);
+    expect(repo.created, isEmpty);
+  });
+
+  testWidgets('"Save draft" on ส่วนตัว is a plain draft', (t) async {
+    await open(t);
+    await typeAmount(t, '80');
+    await t.tap(find.text('Save draft'));
+    await _settle(t);
+    final d = drafts.single;
+    expect(d.amount, 80);
+    expect(d.paidBy, isNull);
+    expect(d.payer, isNull);
   });
 }
 

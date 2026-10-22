@@ -115,11 +115,22 @@ class MoneyListTile extends StatelessWidget {
 }
 
 class DateGroupHeader extends StatelessWidget implements ListBreak {
-  const DateGroupHeader({required this.label, this.total, super.key});
+  const DateGroupHeader({
+    required this.label,
+    this.total,
+    this.note,
+    this.noteColor,
+    super.key,
+  });
 
   final String label;
 
   final num? total;
+
+  /// Words at the end instead of [total] (a debt day: "เพิ่ม ฿70" /
+  /// "ลดลง ฿400"), in [noteColor].
+  final String? note;
+  final Color? noteColor;
 
   @override
   Widget build(BuildContext context) {
@@ -140,7 +151,15 @@ class DateGroupHeader extends StatelessWidget implements ListBreak {
       child: Row(
         children: [
           Expanded(child: Text(label, style: style)),
-          if (total != null)
+          if (note != null)
+            Text(
+              note!,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: noteColor ?? scheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            )
+          else if (total != null)
             MoneyText(total!, tone: MoneyTone.signed, style: style),
         ],
       ),

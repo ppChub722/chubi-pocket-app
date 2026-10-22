@@ -147,6 +147,36 @@ class _TransactionsPageState extends State<_TransactionsPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         HubDemo(
+          title: 'LinkSectionFrame — the whole ผูกกับ block',
+          note:
+              'The recurring row (optional), the LinkModeBar, then the picked '
+              'tab\'s card, with the kit gap between. The feature (LinkSection) '
+              'only wires state into it. "+ เลือกคนจ่าย" = SplitPickChip.',
+          child: LinkSectionFrame(
+            bar: LinkModeBar<int>(
+              label: 'ผูกกับ',
+              selected: 2,
+              onChanged: (_) {},
+              tabs: const [
+                AppTab(value: 0, label: 'ส่วนตัว', icon: AppIcons.wallet),
+                AppTab(value: 1, label: 'แบ่ง', icon: AppIcons.split),
+                AppTab(value: 2, label: 'จ่ายแทน', icon: AppIcons.contact),
+                AppTab(value: 3, label: 'อีเวนต์', icon: AppIcons.project),
+              ],
+            ),
+            card: ShareCard(
+              title: 'ใครจ่ายแทน',
+              rows: [
+                ShareRow(
+                  avatar: const SizedBox.square(dimension: SplitRow.avatarSize),
+                  name: SplitPickChip(label: 'เลือกคนจ่าย', onTap: () {}),
+                  amount: ShareAmountField(value: 120, onChanged: null),
+                ),
+              ],
+            ),
+          ),
+        ),
+        HubDemo(
           title: 'LinkModeBar + ShareCard — quick create "ผูกกับ"',
           note:
               '"ผูกกับ" and its pill tabs on one row (4 tabs: only the selected '

@@ -526,18 +526,9 @@ class _LoadedState extends State<_Loaded>
     final link = _linkChanged ? await _linkForSave() : null;
     if (_linkChanged && link == null) return;
     if (!mounted) return;
-    bool? alsoUpdateLink;
-    if (widget.tx.hasPromptedLink) {
-      final choice = await showLinkedPrompt(
-        context,
-        title: l.linkedSaveTitle,
-        cancelLabel: l.linkedCancel,
-        thisSideLabel: l.linkedSaveThisOnly,
-        bothSidesLabel: l.linkedSaveBoth,
-      );
-      if (choice == null || !mounted) return;
-      alsoUpdateLink = choice == LinkedChoice.bothSides;
-    }
+    final ask = await askLinkedTxSave(context, widget.tx);
+    if (ask.cancelled || !mounted) return;
+    final alsoUpdateLink = ask.alsoUpdateLink;
     setSaving(true);
     final projects = context.read<ProjectsRepository>();
     final txCubit = context.read<TransactionsCubit>();

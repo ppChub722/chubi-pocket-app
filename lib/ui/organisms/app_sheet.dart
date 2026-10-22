@@ -7,6 +7,7 @@ Future<T?> showAppSheet<T>(
   required WidgetBuilder builder,
   String? title,
   Widget? footer,
+  bool padded = false,
   bool useRootNavigator = true,
 }) {
   return showModalBottomSheet<T>(
@@ -15,8 +16,12 @@ Future<T?> showAppSheet<T>(
     useSafeArea: true,
     showDragHandle: true,
     useRootNavigator: useRootNavigator,
-    builder: (ctx) =>
-        AppSheetScaffold(title: title, footer: footer, child: builder(ctx)),
+    builder: (ctx) => AppSheetScaffold(
+      title: title,
+      footer: footer,
+      padded: padded,
+      child: builder(ctx),
+    ),
   );
 }
 
@@ -40,12 +45,17 @@ class AppSheetScaffold extends StatelessWidget {
     required this.child,
     this.title,
     this.footer,
+    this.padded = false,
     super.key,
   });
 
   final Widget child;
   final String? title;
   final Widget? footer;
+
+  /// The page gutter around [child] (a card shown in a sheet), so callers
+  /// never pad it themselves.
+  final bool padded;
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +79,19 @@ class AppSheetScaffold extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
-          Flexible(child: SingleChildScrollView(child: child)),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: padded
+                  ? const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      0,
+                      AppSpacing.lg,
+                      AppSpacing.lg,
+                    )
+                  : null,
+              child: child,
+            ),
+          ),
           if (footer != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(

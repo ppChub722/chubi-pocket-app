@@ -149,6 +149,10 @@ class _Repo extends Fake implements PersonalDebtsRepository {
   }
 
   @override
+  Future<DebtEntryWriteResult> setPaid(String id, bool paid) =>
+      updateEntry(id, DebtEntryUpdate(paid: paid));
+
+  @override
   Future<DebtEntryDeleteResult> deleteEntry(String id) async {
     deletes.add(id);
     return DebtEntryDeleteResult.fromJson({
@@ -249,36 +253,97 @@ void main() {
     await t.pump(const Duration(milliseconds: 100));
   }
 
-  testWidgets('one GET; Paid / Received, the person and wallet cards, the '
-      'balance now', (t) async {
+  testWidgets('one GET; the hero, "to receive from Mom ฿200", the person '
+      'card and only the paid box (mock DebtEntry)', (t) async {
     await pump(t, const DebtEntryDetailPage(entryId: 'e1'));
     expect(repo.gets, 1);
     final hero = t.widget<TransactionHeroCard>(
       find.byType(TransactionHeroCard),
     );
     expect(hero.debt, isTrue);
-    // The type chip (and the paid-label row).
-    expect(find.text('Paid'), findsWidgets);
     expect(find.text('Received'), findsNothing);
     expect(find.text('Mom'), findsWidgets);
-    expect(find.text('KBank'), findsWidgets);
-    expect(find.textContaining('Now: Mom owes you'), findsOneWidget);
+    final note = t.widget<DebtEntryNote>(
+      find.byKey(const ValueKey('debtEntryNote')),
+    );
+    expect(note.sentence, 'To receive from Mom');
+    expect(note.paidLabel, isNull);
+    // No origin from the BE → no มาจาก card; no wallet card any more.
+    expect(find.byKey(const ValueKey('debtOriginCard')), findsNothing);
+    expect(find.byType(WalletPickCard), findsNothing);
+    // The box holds only the paid switch (no money / wallet rows).
+    final paid = find.widgetWithText(SettingToggleRow, 'Paid');
+    await t.scrollUntilVisible(
+      paid,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(paid, findsOneWidget);
+    expect(find.text('Money in / out of a wallet'), findsNothing);
   });
 
-  testWidgets('a ledger-only entry: no wallet card, the switch is off', (
+  testWidgets('มาจาก › names the origin and stays read-only in edit', (
+    t,
+  ) async {
+    final body = _detail();
+    repo.body = {
+      ...body,
+      'entry': {
+        ...body['entry'] as Map<String, dynamic>,
+        'origin': {
+          'kind': 'split',
+          'transaction_id': 't5',
+          'bill_id': null,
+          'event_id': null,
+          'title': 'Dinner',
+          'amount': 600,
+          'date': '2026-10-12',
+          'account': null,
+        },
+      },
+    };
+    await pump(t, const DebtEntryDetailPage(entryId: 'e1'));
+    final card = t.widget<PickCard>(
+      find.byKey(const ValueKey('debtOriginCard')),
+    );
+    expect(card.label, 'From (split bill)');
+    expect(card.value, 'Dinner ฿600');
+    expect(card.onTap, isNotNull);
+    t.widget<TransactionHeroCard>(find.byType(TransactionHeroCard)).onEdit!();
+    await settle(t);
+    final locked = t.widget<PickCard>(
+      find.byKey(const ValueKey('debtOriginCard')),
+    );
+    expect(locked.onTap, isNull);
+    expect(find.text("can't change it here"), findsOneWidget);
+  });
+
+  testWidgets('view mode: the paid switch saves at once (ONE PUT)', (t) async {
+    await pump(t, const DebtEntryDetailPage(entryId: 'e1'));
+    final row = find.widgetWithText(SettingToggleRow, 'Paid');
+    await t.scrollUntilVisible(
+      row,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    t.widget<SettingToggleRow>(row).onChanged!(true);
+    await settle(t);
+    expect(repo.updates.single.paid, isTrue);
+  });
+
+  testWidgets('a ledger-only entry: edit box money switch off, no wallet', (
     t,
   ) async {
     repo.body = _detail(withWallet: false);
     await pump(t, const DebtEntryDetailPage(entryId: 'e1'));
     expect(find.byType(WalletPickCard), findsNothing);
-    expect(find.text('Also create a transaction'), findsOneWidget);
-    final sw = t.widget<AppSwitch>(
-      find.descendant(
-        of: find.widgetWithText(DetailRow, 'Also create a transaction'),
-        matching: find.byType(AppSwitch),
-      ),
+    t.widget<TransactionHeroCard>(find.byType(TransactionHeroCard)).onEdit!();
+    await settle(t);
+    final moved = t.widget<SettingToggleRow>(
+      find.widgetWithText(SettingToggleRow, 'Money in / out of a wallet'),
     );
-    expect(sw.value, isFalse);
+    expect(moved.value, isFalse);
+    expect(find.byKey(const ValueKey('debtEditWallet')), findsNothing);
   });
 
   testWidgets('switch off → ONE PUT: create_transaction false, no wallet or '
@@ -286,11 +351,14 @@ void main() {
     await pump(t, const DebtEntryDetailPage(entryId: 'e1'));
     t.widget<TransactionHeroCard>(find.byType(TransactionHeroCard)).onEdit!();
     await settle(t);
-    await t.ensureVisible(find.text('Also create a transaction'));
-    await settle(t);
-    await t.tap(find.text('Also create a transaction'));
+    expect(find.byKey(const ValueKey('debtEditWallet')), findsOneWidget);
+    t
+        .widget<SettingToggleRow>(
+          find.widgetWithText(SettingToggleRow, 'Money in / out of a wallet'),
+        )
+        .onChanged!(false);
     await t.pump(const Duration(milliseconds: 600));
-    expect(find.byType(WalletPickCard), findsNothing);
+    expect(find.byKey(const ValueKey('debtEditWallet')), findsNothing);
     await t.tap(find.text('Save'));
     await settle(t);
     final u = repo.updates.single;

@@ -14,6 +14,7 @@ class DebtEntryList extends Equatable {
     this.status = DebtLoadStatus.initial,
     this.items = const [],
     this.paging = const DebtPaging(),
+    this.days = const [],
     this.loadingMore = false,
     this.error,
     this.moreError,
@@ -22,6 +23,27 @@ class DebtEntryList extends Equatable {
   final DebtLoadStatus status;
   final List<DebtEntry> items;
   final DebtPaging paging;
+
+  /// The BE's day groups over the loaded pages (0.4.0-3), newest first.
+  final List<DebtDay> days;
+
+  /// [more] appended; a day split across two pages is one day.
+  static List<DebtDay> mergeDays(List<DebtDay> days, List<DebtDay> more) {
+    if (days.isEmpty || more.isEmpty) return [...days, ...more];
+    final last = days.last;
+    final first = more.first;
+    if (last.date != first.date) return [...days, ...more];
+    return [
+      ...days.take(days.length - 1),
+      DebtDay(
+        date: last.date,
+        change: last.change + first.change,
+        balanceAfter: last.balanceAfter,
+      ),
+      ...more.skip(1),
+    ];
+  }
+
   final bool loadingMore;
   final ApiException? error;
   final ApiException? moreError;
@@ -33,6 +55,7 @@ class DebtEntryList extends Equatable {
     DebtLoadStatus? status,
     List<DebtEntry>? items,
     DebtPaging? paging,
+    List<DebtDay>? days,
     bool? loadingMore,
     ApiException? error,
     bool clearError = false,
@@ -42,6 +65,7 @@ class DebtEntryList extends Equatable {
     status: status ?? this.status,
     items: items ?? this.items,
     paging: paging ?? this.paging,
+    days: days ?? this.days,
     loadingMore: loadingMore ?? this.loadingMore,
     error: clearError ? null : (error ?? this.error),
     moreError: clearMoreError ? null : (moreError ?? this.moreError),
@@ -52,6 +76,7 @@ class DebtEntryList extends Equatable {
     status,
     items,
     paging,
+    days,
     loadingMore,
     error,
     moreError,
@@ -183,6 +208,7 @@ class DebtPersonCubit extends Cubit<DebtPersonState>
                   status: DebtLoadStatus.loaded,
                   items: d.entries.items,
                   paging: d.entries.paging,
+                  days: d.entries.days,
                   loadingMore: false,
                   clearError: true,
                   clearMoreError: true,
@@ -261,6 +287,7 @@ class DebtPersonCubit extends Cubit<DebtPersonState>
                 status: DebtLoadStatus.loaded,
                 items: page.items,
                 paging: page.paging,
+                days: page.days,
               ),
         ),
       );
@@ -321,6 +348,7 @@ class DebtPersonCubit extends Cubit<DebtPersonState>
                 if (!seen.contains(e.id)) e,
             ],
             paging: page.paging,
+            days: DebtEntryList.mergeDays(cur.days, page.days),
           ),
         ),
       );

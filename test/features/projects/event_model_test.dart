@@ -45,6 +45,33 @@ void main() {
   });
 
   group('ProjectView.apply (EventPatch)', () {
+    test('a bill edit carries my linked tx (B3 my_transaction)', () {
+      final p = EventPatch.fromJson({
+        ...patchJson(),
+        'my_transaction': {
+          'id': 'tx9',
+          'type': 'expense',
+          'amount': 100,
+          'date': '2026-10-02',
+          'event_bill': {
+            'event': {'id': 'e1', 'name': 'Chiang Mai trip'},
+            'bill_id': 'b1',
+            'linked': false,
+            'kind': 'copy',
+            'in_sync': false,
+            'differences': [
+              {'field': 'amount', 'mine': 100, 'event': 120},
+            ],
+          },
+        },
+      });
+      final mine = p.myTransaction!;
+      expect(mine.id, 'tx9');
+      expect(mine.eventBill!.isOrigin, isFalse);
+      expect(mine.eventBill!.inSync, isFalse);
+      expect(EventPatch.fromJson(patchJson()).myTransaction, isNull);
+    });
+
     test('a changed bill replaces its old copy in place, splits too', () {
       final v = _view();
       final p = EventPatch.fromJson(

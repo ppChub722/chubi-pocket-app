@@ -62,6 +62,7 @@ class PersonalDebtsRepository {
     List<String>? tagIds,
     List<String>? markPaidIds,
     String? personName,
+    String? billId,
   }) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
@@ -80,6 +81,9 @@ class PersonalDebtsRepository {
           if (markPaidIds != null && markPaidIds.isNotEmpty)
             'mark_paid_ids': markPaidIds,
           'person_name': ?personName,
+          // The event resolve sheet's "as debt" (0.4.0-3 B3): the bill it
+          // settles a share of; the debt keeps it as its source.
+          'bill_id': ?billId,
         },
       );
       return DebtEntryWriteResult.fromJson(res.data!);
@@ -121,6 +125,41 @@ class PersonalDebtsRepository {
         },
       );
       return DebtRepaymentResult.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// The quick-create debt result box (0.4.0-3): the same POST with
+  /// `?preview=true`; nothing is saved. Record = [direction] (+ a wallet when
+  /// [createTransaction]); settle = [kind].
+  Future<DebtPreview> preview(
+    String key, {
+    DebtEntryDirection? direction,
+    DebtRepaymentKind? kind,
+    required double amount,
+    String? accountId,
+    bool? createTransaction,
+    String? personName,
+  }) async {
+    assert((direction == null) != (kind == null), 'record or settle');
+    try {
+      final person = Uri.encodeComponent(key);
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        kind == null
+            ? '/personal-debts/people/$person/entries'
+            : '/personal-debts/people/$person/repayments',
+        queryParameters: const {'preview': 'true'},
+        data: <String, dynamic>{
+          'direction': ?direction?.wire,
+          'kind': ?kind?.wire,
+          'amount': amount,
+          'account_id': ?accountId,
+          'create_transaction': ?createTransaction,
+          'person_name': ?personName,
+        },
+      );
+      return DebtPreview.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }

@@ -66,25 +66,12 @@ class LinkViewRows extends StatelessWidget {
         ),
     ];
     if (rows.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.md),
-      child: InfoBox(first: true, rows: rows),
-    );
+    // Not first: the kit's section gap above it.
+    return InfoBox(rows: rows);
   }
 
   static Future<void> _show(BuildContext context, Widget card) =>
-      showAppSheet<void>(
-        context,
-        builder: (_) => Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            0,
-            AppSpacing.lg,
-            AppSpacing.lg,
-          ),
-          child: card,
-        ),
-      );
+      showAppSheet<void>(context, padded: true, builder: (_) => card);
 
   static Widget _amount(double v) =>
       ShareAmountField(value: v, onChanged: null);

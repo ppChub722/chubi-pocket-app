@@ -58,7 +58,15 @@ class PersonBalance extends Equatable {
     this.lastActivityAt,
     this.clearedAt,
     this.daysOutstanding,
+    this.firstActivityAt,
+    this.lastActivity,
   });
+
+  /// The first line's date ever ("ติดต่อกันตั้งแต่ …"; 0.4.0-3).
+  final DateTime? firstActivityAt;
+
+  /// The latest line, for the people row's second line (0.4.0-3).
+  final DebtLastActivity? lastActivity;
 
   final String key;
   final EmbeddedPerson person;
@@ -89,6 +97,10 @@ class PersonBalance extends Equatable {
     lastActivityAt: _date(json['last_activity_at']),
     clearedAt: _date(json['cleared_at']),
     daysOutstanding: (json['days_outstanding'] as num?)?.toInt(),
+    firstActivityAt: _date(json['first_activity_at']),
+    lastActivity: json['last_activity'] is Map
+        ? DebtLastActivity.fromJson(_map(json['last_activity'])!)
+        : null,
   );
 
   static PersonBalance? maybe(Object? json) =>
@@ -104,7 +116,44 @@ class PersonBalance extends Equatable {
     lastActivityAt,
     clearedAt,
     daysOutstanding,
+    firstActivityAt,
+    lastActivity,
   ];
+}
+
+/// A person's latest statement line (BE `last_activity`, 0.4.0-3): a debt or
+/// a repayment, for the people row's "ค่าตั๋ว | 1 ก.ย." line.
+class DebtLastActivity extends Equatable {
+  const DebtLastActivity({
+    required this.isRepayment,
+    required this.id,
+    required this.direction,
+    required this.amount,
+    this.title,
+    this.date,
+  });
+
+  final bool isRepayment;
+  final String id;
+  final DebtEntryDirection direction;
+  final double amount;
+
+  /// Its description; null = word it from kind + direction.
+  final String? title;
+  final DateTime? date;
+
+  factory DebtLastActivity.fromJson(Map<String, dynamic> json) =>
+      DebtLastActivity(
+        isRepayment: json['kind'] == 'repayment',
+        id: (json['id'] as String?) ?? '',
+        direction: DebtEntryDirection.parse(json['direction'] as String?),
+        amount: ((json['amount'] as num?)?.toDouble() ?? 0).abs(),
+        title: _text(json['title']),
+        date: _date(json['date']),
+      );
+
+  @override
+  List<Object?> get props => [isRepayment, id, direction, amount, title, date];
 }
 
 class DebtTotals extends Equatable {
@@ -116,7 +165,12 @@ class DebtTotals extends Equatable {
     this.owedToMePeople = 0,
     this.iOwePeople = 0,
     this.over30DaysPeople = 0,
+    this.counts,
   });
+
+  /// The list's filter chips (0.4.0-3): people with something open, per
+  /// side, and older than 30 days. Null = an older BE (count on the device).
+  final ({int all, int receivable, int payable, int overdue30})? counts;
 
   final double owedToMe;
 
@@ -140,6 +194,15 @@ class DebtTotals extends Equatable {
           owedToMePeople: (json['owed_to_me_people'] as num?)?.toInt() ?? 0,
           iOwePeople: (json['i_owe_people'] as num?)?.toInt() ?? 0,
           over30DaysPeople: (json['over_30_days_people'] as num?)?.toInt() ?? 0,
+          counts: switch (_map(json['counts'])) {
+            final c? => (
+              all: (c['all'] as num?)?.toInt() ?? 0,
+              receivable: (c['receivable'] as num?)?.toInt() ?? 0,
+              payable: (c['payable'] as num?)?.toInt() ?? 0,
+              overdue30: (c['overdue_30'] as num?)?.toInt() ?? 0,
+            ),
+            null => null,
+          },
         );
 
   @override
@@ -151,6 +214,7 @@ class DebtTotals extends Equatable {
     owedToMePeople,
     iOwePeople,
     over30DaysPeople,
+    counts,
   ];
 }
 
@@ -228,7 +292,20 @@ class DebtEntry extends Equatable {
     this.updatedAt,
     this.inCurrentCycle,
     this.isRepayment = false,
+    this.origin,
+    this.runningBalance,
   });
+
+  /// Debts (0.4.0-3): where it came from (the row's sub-line, the debt
+  /// detail's "มาจาก" card); null = ledger-only / a repayment.
+  final DebtOrigin? origin;
+
+  /// The person's balance right after this line (0.4.0-3).
+  final double? runningBalance;
+
+  /// What the line adds to the person's net: + paid, − received.
+  double get signedAmount =>
+      direction == DebtEntryDirection.paid ? amount : -amount;
 
   /// A debt's id; on a [isRepayment] statement line, its transaction's id.
   final String id;
@@ -280,6 +357,10 @@ class DebtEntry extends Equatable {
     updatedAt: _date(json['updated_at']),
     inCurrentCycle: json['in_current_cycle'] as bool?,
     isRepayment: json['kind'] == 'repayment',
+    origin: json['origin'] is Map
+        ? DebtOrigin.fromJson(_map(json['origin'])!)
+        : null,
+    runningBalance: (json['running_balance'] as num?)?.toDouble(),
   );
 
   static DebtEntry? maybe(Object? json) =>
@@ -301,23 +382,107 @@ class DebtEntry extends Equatable {
     updatedAt,
     inCurrentCycle,
     isRepayment,
+    origin,
+    runningBalance,
   ];
 }
 
+/// Where a debt came from (BE DebtOrigin, 0.4.0-3): `split` (my bill),
+/// `paid_by` (someone paid for me), `partner` (another user's split on me),
+/// `event` (an event bill), `cash` (a cash loan with its own tx). The debt
+/// itself has no wallet; [account] is its transaction's.
+class DebtOrigin extends Equatable {
+  const DebtOrigin({
+    required this.kind,
+    this.transactionId,
+    this.billId,
+    this.eventId,
+    this.title,
+    this.amount,
+    this.date,
+    this.account,
+  });
+
+  final String kind;
+  final String? transactionId;
+  final String? billId;
+  final String? eventId;
+  final String? title;
+  final double? amount;
+  final DateTime? date;
+  final AccountRef? account;
+
+  factory DebtOrigin.fromJson(Map<String, dynamic> json) => DebtOrigin(
+    kind: (json['kind'] as String?) ?? '',
+    transactionId: json['transaction_id'] as String?,
+    billId: json['bill_id'] as String?,
+    eventId: json['event_id'] as String?,
+    title: _text(json['title']),
+    amount: (json['amount'] as num?)?.toDouble(),
+    date: _date(json['date']),
+    account: json['account'] is Map
+        ? AccountRef.fromJson(_map(json['account'])!)
+        : null,
+  );
+
+  @override
+  List<Object?> get props => [
+    kind,
+    transactionId,
+    billId,
+    eventId,
+    title,
+    amount,
+    date,
+    account,
+  ];
+}
+
+/// One day of a person's statement (BE `days`, 0.4.0-3): the day's change
+/// (+ = they owe me more / I owe less) and the balance at its end.
+class DebtDay extends Equatable {
+  const DebtDay({
+    required this.date,
+    required this.change,
+    required this.balanceAfter,
+  });
+
+  final DateTime date;
+  final double change;
+  final double balanceAfter;
+
+  factory DebtDay.fromJson(Map<String, dynamic> json) => DebtDay(
+    date: _date(json['date']) ?? DateTime(1970),
+    change: (json['change'] as num?)?.toDouble() ?? 0,
+    balanceAfter: (json['balance_after'] as num?)?.toDouble() ?? 0,
+  );
+
+  @override
+  List<Object?> get props => [date, change, balanceAfter];
+}
+
 class DebtEntriesPage extends Equatable {
-  const DebtEntriesPage({required this.items, required this.paging});
+  const DebtEntriesPage({
+    required this.items,
+    required this.paging,
+    this.days = const [],
+  });
 
   final List<DebtEntry> items;
   final DebtPaging paging;
+
+  /// The page's day groups (0.4.0-3); empty = an older BE (the app sums).
+  final List<DebtDay> days;
 
   factory DebtEntriesPage.fromJson(Map<String, dynamic> json, {String? key}) =>
       DebtEntriesPage(
         items: _list(json[key ?? 'data'], DebtEntry.fromJson),
         paging: DebtPaging.fromJson(_map(json['pagination'])),
+        days: _list(json['days'], DebtDay.fromJson),
       );
 
   @override
-  List<Object?> get props => [items, paging];
+  List<Object?> get props => [items, paging, days];
 }
 
 class DebtPersonDetail extends Equatable {
@@ -374,9 +539,18 @@ class DebtCounts extends Equatable {
 }
 
 class DebtSummaryMessage extends Equatable {
-  const DebtSummaryMessage({this.text = '', this.entries = 0, this.net = 0});
+  const DebtSummaryMessage({
+    this.text = '',
+    this.entries = 0,
+    this.net = 0,
+    this.textBalanceOnly = '',
+  });
 
+  /// Share variant "รอบนี้".
   final String text;
+
+  /// Share variant "ยอดคงเหลืออย่างเดียว" (0.4.0-3).
+  final String textBalanceOnly;
 
   final int entries;
   final double net;
@@ -386,12 +560,13 @@ class DebtSummaryMessage extends Equatable {
       ? const DebtSummaryMessage()
       : DebtSummaryMessage(
           text: (json['text'] as String?) ?? '',
+          textBalanceOnly: (json['text_balance_only'] as String?) ?? '',
           entries: (json['entries'] as num?)?.toInt() ?? 0,
           net: (json['net'] as num?)?.toDouble() ?? 0,
         );
 
   @override
-  List<Object?> get props => [text, entries, net];
+  List<Object?> get props => [text, textBalanceOnly, entries, net];
 }
 
 enum DebtPeopleSort {
@@ -614,6 +789,43 @@ class DebtEntryQuery extends Equatable {
 String debtPersonKey({String? contactId, String? name}) => contactId != null
     ? 'c:$contactId'
     : 'n:${(name ?? '').trim().toLowerCase()}';
+
+/// A debt write's `?preview=true` answer (0.4.0-3, BE DebtPreview): the
+/// person's net before → after (> 0 = they owe me) and the wallet effect.
+/// Nothing is saved.
+class DebtPreview extends Equatable {
+  const DebtPreview({
+    required this.before,
+    required this.after,
+    this.flipped = false,
+    this.walletDelta,
+  });
+
+  final double before;
+  final double after;
+
+  /// The side crossed (e.g. รอจ่าย 160, pay 200 → รอรับ 40).
+  final bool flipped;
+
+  /// The wallet's change; null = no wallet moves.
+  final double? walletDelta;
+
+  factory DebtPreview.fromJson(Map<String, dynamic> json) {
+    final people = _list(json['people'], (p) => p);
+    final wallets = _list(json['wallets'], (w) => w);
+    double n(Object? v) => (v as num?)?.toDouble() ?? 0;
+    final p = people.firstOrNull ?? const <String, dynamic>{};
+    return DebtPreview(
+      before: n(p['before']),
+      after: n(p['after']),
+      flipped: p['flipped'] == true,
+      walletDelta: wallets.isEmpty ? null : n(wallets.first['delta']),
+    );
+  }
+
+  @override
+  List<Object?> get props => [before, after, flipped, walletDelta];
+}
 
 String debtDateWire(DateTime d) =>
     '${d.year.toString().padLeft(4, '0')}-'

@@ -7575,4 +7575,301 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get txLinkApplied => 'อัปเดตตามอีเวนต์แล้ว';
+
+  @override
+  String get linkedEventAskTitle => 'แก้ในอีเวนต์ด้วยไหม?';
+
+  @override
+  String get linkedBookAskTitle => 'แก้ในสมุดของฉันด้วยไหม?';
+
+  @override
+  String get linkedMineOnly => 'แก้แค่ของฉัน';
+
+  @override
+  String get linkedEventOnly => 'แก้แค่ในอีเวนต์';
+
+  @override
+  String get linkedBoth => 'แก้ทั้งคู่';
+
+  @override
+  String get txLinkDraftNeedsExistingEvent =>
+      'ร่างผูกได้กับอีเวนต์ที่มีอยู่แล้วเท่านั้น';
+
+  @override
+  String get debtQuickCreateTxLabel => 'ทำรายการเงิน (tx) ด้วย';
+
+  @override
+  String debtResultNow(String name) {
+    return '$name ตอนนี้';
+  }
+
+  @override
+  String get debtResultAfterSave => 'หลังบันทึก';
+
+  @override
+  String debtResultWallet(String wallet) {
+    return 'กระเป๋า $wallet';
+  }
+
+  @override
+  String get debtWalletNotUsed => 'ไม่เปลี่ยน';
+
+  @override
+  String debtOverpayWarn(String after) {
+    return 'เกินยอดค้าง — หลังบันทึกจะกลายเป็น $after';
+  }
+
+  @override
+  String get debtOverpayTitle => 'จ่ายเกินยอดค้าง';
+
+  @override
+  String get debtOverpayConfirm => 'บันทึกเลย';
+
+  @override
+  String get debtOverpayEdit => 'แก้ยอด';
+
+  @override
+  String get debtWalletUnusedLabel => 'กระเป๋า (ไม่ใช้)';
+
+  @override
+  String get debtSomeone => 'เขา';
+
+  @override
+  String debtSentenceRecordIn(String name) {
+    return 'จดว่า$nameต้องคืนฉัน';
+  }
+
+  @override
+  String debtSentenceLendTx(String name) {
+    return '(ฉันให้$nameยืมเงินออกจากกระเป๋า)';
+  }
+
+  @override
+  String debtSentenceRecordOut(String name) {
+    return 'จดว่าฉันต้องคืน$name';
+  }
+
+  @override
+  String debtSentenceBorrowTx(String name) {
+    return '(ฉันยืมเงิน$nameเข้ากระเป๋า)';
+  }
+
+  @override
+  String debtSentenceSettleIn(String name) {
+    return '$nameคืนเงินฉัน เข้ากระเป๋า';
+  }
+
+  @override
+  String debtSentenceSettleOut(String name) {
+    return 'ฉันคืนเงิน$name ออกจากกระเป๋า';
+  }
+
+  @override
+  String get debtTxHintLend => 'เงินออกจากกระเป๋า (ให้ยืม)';
+
+  @override
+  String get debtTxHintBorrow => 'เงินเข้ากระเป๋า (ยืมมา)';
+
+  @override
+  String get debtTxHintOff => 'ปิด = จดในสมุดหนี้อย่างเดียว ไม่มีเงินเคลื่อน';
+
+  @override
+  String debtsHeroNet(int count) {
+    return 'หนี้สุทธิ | $count คน';
+  }
+
+  @override
+  String get debtsFilterAll => 'ทั้งหมด';
+
+  @override
+  String get debtsOver30Label => 'ค้างเกิน 30 วัน';
+
+  @override
+  String debtsPeopleCount(int count) {
+    return '$count คน';
+  }
+
+  @override
+  String debtsLastIPaidBack(String amount) {
+    return 'คุณจ่ายคืน $amount';
+  }
+
+  @override
+  String debtsLastTheyPaidBack(String name, String amount) {
+    return '$nameคืน $amount';
+  }
+
+  @override
+  String debtsLastLine(String what, String date) {
+    return '$what | $date';
+  }
+
+  @override
+  String debtPersonSince(String month) {
+    return 'ติดต่อกันตั้งแต่ $month';
+  }
+
+  @override
+  String debtPersonOweTo(String name) {
+    return 'รอจ่ายให้$name';
+  }
+
+  @override
+  String debtPersonOwedFrom(String name) {
+    return 'รอรับจาก$name';
+  }
+
+  @override
+  String debtPersonSettlePay(String amount) {
+    return 'จ่ายคืน $amount';
+  }
+
+  @override
+  String debtPersonSettleReceive(String amount) {
+    return 'รับคืน $amount';
+  }
+
+  @override
+  String get debtPersonSummary => 'สรุปยอด';
+
+  @override
+  String get debtPersonChase => 'ทวง';
+
+  @override
+  String debtPersonSummaryTitle(String name) {
+    return 'สรุปยอดกับ$name';
+  }
+
+  @override
+  String debtPersonChaseTitle(String name) {
+    return 'ทวงยอดกับ$name';
+  }
+
+  @override
+  String get debtShareThisCycle => 'รอบนี้';
+
+  @override
+  String get debtShareBalanceOnly => 'ยอดคงเหลืออย่างเดียว';
+
+  @override
+  String get debtShareFieldLabel => 'ข้อความ (แก้ได้ก่อนส่ง)';
+
+  @override
+  String get debtShareSend => 'แชร์ไป LINE / แอปอื่น';
+
+  @override
+  String debtDayUp(String amount) {
+    return 'เพิ่ม $amount';
+  }
+
+  @override
+  String debtDayDown(String amount) {
+    return 'ลดลง $amount';
+  }
+
+  @override
+  String debtEarlierShow(String date) {
+    return 'เคลียร์ครบ $date | ดูรอบก่อน ▾';
+  }
+
+  @override
+  String get debtEarlierShowPlain => 'ดูรอบก่อน ▾';
+
+  @override
+  String get debtEarlierHide => 'ซ่อนรอบก่อน ▴';
+
+  @override
+  String debtRowFromWallet(String name) {
+    return 'จากกระเป๋า $name';
+  }
+
+  @override
+  String debtRowIntoWallet(String name) {
+    return 'เข้ากระเป๋า $name';
+  }
+
+  @override
+  String get debtRowNoWallet => 'ไม่ระบุกระเป๋า';
+
+  @override
+  String debtRowTheyPaid(String name) {
+    return '$nameจ่ายแทน';
+  }
+
+  @override
+  String get debtRowIPaid => 'คุณจ่ายแทน';
+
+  @override
+  String debtRowSplitBill(String amount) {
+    return 'แบ่งบิล $amount';
+  }
+
+  @override
+  String debtRowEvent(String name) {
+    return 'อีเวนต์ $name';
+  }
+
+  @override
+  String debtRowIPaidBack(String name) {
+    return 'คุณจ่ายคืน$name';
+  }
+
+  @override
+  String debtRowTheyPaidBack(String name) {
+    return '$nameคืนเงิน';
+  }
+
+  @override
+  String get debtPaidPill => '✓ จ่ายแล้ว';
+
+  @override
+  String get debtPaidHelper => 'เป็นป้ายบอกเท่านั้น ไม่มีผลกับยอด';
+
+  @override
+  String debtOriginLabel(String kind) {
+    return 'มาจาก ($kind)';
+  }
+
+  @override
+  String get debtOriginSplit => 'แบ่งบิล';
+
+  @override
+  String get debtOriginPaidBy => 'จ่ายแทน';
+
+  @override
+  String get debtOriginPartner => 'แบ่งบิลมา';
+
+  @override
+  String get debtOriginEvent => 'อีเวนต์';
+
+  @override
+  String get debtOriginCash => 'ยืม / ให้ยืม';
+
+  @override
+  String get debtOriginLocked => 'แก้ไม่ได้ที่นี่';
+
+  @override
+  String get debtEditWalletLend => 'เงินออกจากกระเป๋า (ให้ยืม / จ่ายแทน)';
+
+  @override
+  String get debtEditWalletBorrow => 'เงินเข้ากระเป๋า (ยืมมา)';
+
+  @override
+  String get debtEditWalletOff => 'จดหนี้อย่างเดียว ไม่มีเงินเคลื่อน';
+
+  @override
+  String get quickCreateBtnTx => 'บันทึก';
+
+  @override
+  String get quickCreateBtnDebt => 'จดหนี้';
+
+  @override
+  String get quickCreateBtnSaving => 'ออมเงิน';
+
+  @override
+  String get debtsEmptyOpenTitle => 'ยังไม่มีหนี้ค้าง';
+
+  @override
+  String get debtsEmptyOpenMessage =>
+      'จดไว้ว่าใครยืม ใครจ่ายแทน จะได้ไม่ลืมทวง';
 }

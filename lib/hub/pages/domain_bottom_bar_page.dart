@@ -19,6 +19,12 @@ class _BottomBarPageState extends State<_BottomBarPage> {
   QuickCreateMode _mode = QuickCreateMode.tx;
   int _tab = 0;
 
+  static const _buttonWords = {
+    QuickCreateMode.tx: 'บันทึก',
+    QuickCreateMode.debt: 'จดหนี้',
+    QuickCreateMode.saving: 'ออมเงิน',
+  };
+
   static const _labels = {
     QuickCreateMode.tx: 'รายการ',
     QuickCreateMode.debt: 'หนี้',
@@ -64,18 +70,74 @@ class _BottomBarPageState extends State<_BottomBarPage> {
         HubDemo(
           title: 'QuickCreateButton — every mode',
           note:
-              'tx = the theme primary | debt = ModuleColors.people | saving = ModuleColors.planning. '
+              'Owner 2026-10-22 (mock QuickCreateBtn): in the bar it is a '
+              '48-high capsule — the mode icon (quickCreateModeIcon) + the '
+              'word บันทึก / จดหนี้ / ออมเงิน. tx = the theme primary | debt = '
+              'ModuleColors.debt (#7A5AE0) | saving = ModuleColors.saving '
+              '(#3B7DD8). Without a label: the round + (kept for reuse). '
               'Per page: Home / More / tx list / wallets / categories / tags '
               'lists and pending → tx; a wallet → tx + that wallet; a '
               'category → tx + that category; debts list → debt; a debt '
               'person / contact → debt + that person.',
-          child: HubRow(
-            cells: [
-              for (final m in QuickCreateMode.values)
-                HubCell(
-                  caption: m.name,
-                  child: QuickCreateButton(mode: m, onPressed: () {}),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              HubRow(
+                cells: [
+                  for (final m in QuickCreateMode.values)
+                    HubCell(
+                      caption: '${m.name} capsule',
+                      child: QuickCreateButton(
+                        mode: m,
+                        label: _buttonWords[m],
+                        onPressed: () {},
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              HubRow(
+                cells: [
+                  for (final m in QuickCreateMode.values)
+                    HubCell(
+                      caption: '${m.name} round',
+                      child: QuickCreateButton(mode: m, onPressed: () {}),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'QuickCreateHeadButton + QuickCreateCtaButton — in the page',
+          note:
+              'The + in a list head (level with the 🔍 beside it) and the '
+              'empty state’s filled call to action, both in the page’s mode '
+              'colour; both open quick create in that mode. Live on the '
+              'debts list (hero head + empty state).',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              HubRow(
+                cells: [
+                  for (final m in QuickCreateMode.values)
+                    HubCell(
+                      caption: '${m.name} head +',
+                      child: QuickCreateHeadButton(mode: m, onPressed: () {}),
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              EmptyView(
+                icon: AppIcons.debt,
+                title: 'ยังไม่มีหนี้ค้าง',
+                message: 'จดไว้ว่าใครยืม ใครจ่ายแทน จะได้ไม่ลืมทวง',
+                cta: QuickCreateCtaButton(
+                  mode: QuickCreateMode.debt,
+                  label: 'จดหนี้',
+                  onPressed: () {},
                 ),
+              ),
             ],
           ),
         ),

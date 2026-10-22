@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../molecules/list_row.dart';
+import '../../tokens/tone.dart';
 import '../icons/icon_code.dart';
 import '../money/net_balance.dart';
 import 'person_mark.dart';
@@ -20,9 +21,16 @@ class PersonBalanceRow extends StatelessWidget {
     this.selected = false,
     this.subtitleWarn = false,
     this.showCaption = true,
+    this.age,
+    this.ageWarn = false,
     this.onTap,
     super.key,
   });
+
+  /// Under the amount (mock DebtsList): "ค้าง 50 วัน"; [ageWarn] (past 30
+  /// days) paints it the warning colour, bold.
+  final String? age;
+  final bool ageWarn;
 
   final bool subtitleWarn;
 
@@ -44,6 +52,37 @@ class PersonBalanceRow extends StatelessWidget {
   final bool selected;
   final VoidCallback? onTap;
 
+  Widget _trailing(BuildContext context) {
+    final balance = NetBalance(
+      showCaption: showCaption,
+      amount: net,
+      owedToMeLabel: owedToMeLabel,
+      iOweLabel: iOweLabel,
+      settledLabel: settledLabel,
+      currencySymbol: currencySymbol,
+    );
+    final age = this.age;
+    if (age == null) return balance;
+    final text = Theme.of(context).textTheme.labelSmall;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        balance,
+        Text(
+          age,
+          key: const ValueKey('personAge'),
+          style: text?.copyWith(
+            color: ageWarn
+                ? Tone.warning.color(context)
+                : Theme.of(context).colorScheme.onSurfaceVariant,
+            fontWeight: ageWarn ? FontWeight.w700 : FontWeight.w400,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -64,14 +103,7 @@ class PersonBalanceRow extends StatelessWidget {
           title: name,
           subtitle: subtitle,
           subtitleWarn: subtitleWarn,
-          trailing: NetBalance(
-            showCaption: showCaption,
-            amount: net,
-            owedToMeLabel: owedToMeLabel,
-            iOweLabel: iOweLabel,
-            settledLabel: settledLabel,
-            currencySymbol: currencySymbol,
-          ),
+          trailing: _trailing(context),
           onTap: onTap,
         ),
       ),

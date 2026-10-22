@@ -457,31 +457,53 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     locale: Localizations.localeOf(context).languageCode,
   );
 
-  Widget? _balanceLine(AppLocalizations l, String symbol) {
+  /// Under the amount (mock DebtEntry): "รอรับจาก chalee ฿82" — this debt —
+  /// and "✓ จ่ายแล้ว".
+  Widget? _entryNote(AppLocalizations l, String symbol) {
     final p = _c.person;
     if (p == null) return null;
-    final net = isEditing ? _c.netAfter : widget.detail.balance.net;
-    if (net == null) return null;
+    final owedToMe = _c.direction == DebtEntryDirection.paid;
     final name = p.person.name;
-    final money = moneyString(context, net.abs(), symbol: symbol);
-    final result = net > 0.004
-        ? '${l.debtTheyOweYou(name)} $money'
-        : net < -0.004
-        ? '${l.debtYouOwe(name)} $money'
-        : l.debtSettledLabel;
-    return AppText(
-      isEditing ? l.debtResultAfter(result) : l.debtBalanceNow(result),
-      role: AppTextRole.caption,
+    return DebtEntryNote(
+      key: const ValueKey('debtEntryNote'),
+      sentence: owedToMe ? l.debtPersonOwedFrom(name) : l.debtPersonOweTo(name),
+      amount: MoneyText(_c.amountValue, symbol: symbol),
+      color: debtStateColor(context, owedToMe: owedToMe),
+      paidLabel: _paid ? l.debtPaidPill : null,
     );
   }
 
-  void _longPressHint() =>
-      _say(AppLocalizations.of(context)!.commonLongPressToEdit, Tone.info);
+  /// "มาจาก (แบ่งบิล)" — the kind in words.
+  String _originKind(AppLocalizations l, DebtOrigin o) => switch (o.kind) {
+    'split' => l.debtOriginSplit,
+    'paid_by' => l.debtOriginPaidBy,
+    'partner' => l.debtOriginPartner,
+    'event' => l.debtOriginEvent,
+    _ => l.debtOriginCash,
+  };
 
-  Widget _cards(AppLocalizations l) {
+  /// Opens where the debt came from: its transaction, else its event.
+  VoidCallback? _openOrigin(DebtOrigin o) {
+    final tx = o.transactionId;
+    if (tx != null) return () => openPage(context, '/transactions/$tx');
+    final ev = o.eventId;
+    if (ev != null) {
+      final bill = o.billId;
+      return () => openPage(
+        context,
+        bill == null ? '/projects/$ev' : '/projects/$ev?bill=$bill',
+      );
+    }
+    return null;
+  }
+
+  /// กับใคร › and มาจาก › (mock DebtEntry). A debt has no wallet of its own:
+  /// a cash loan's มาจาก card is its linked transaction.
+  Widget _cards(AppLocalizations l, String symbol) {
     final editable = isEditing && !_sourced;
     final p = _c.person;
     final canEditHere = !isEditing && !_sourced;
+    final origin = _entry.origin;
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -517,23 +539,27 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                   : () => openPage(context, debtPersonPath(p.key)),
             ),
           ),
-          if (_c.createTransaction) ...[
+          if (origin != null) ...[
             const SizedBox(width: AppSpacing.sm),
             Expanded(
-              child: WalletPickCard(
-                account: _c.account,
-                label: l.transactionFormAccountLabel,
-                placeholder: l.quickPickWallet,
-                dense: true,
-                editable: editable,
-                onLongPress: canEditHere
-                    ? () => enterEdit(then: _pickAccount)
-                    : null,
-                onTap: editable
-                    ? _pickAccount
-                    : canEditHere
-                    ? _longPressHint
-                    : null,
+              child: Opacity(
+                // Edit mode: shown, never changed here.
+                opacity: isEditing ? 0.75 : 1,
+                child: PickCard(
+                  key: const ValueKey('debtOriginCard'),
+                  label: l.debtOriginLabel(_originKind(l, origin)),
+                  value: [
+                    origin.title ?? '',
+                    if (origin.amount != null)
+                      moneyString(context, origin.amount!, symbol: symbol),
+                  ].where((s) => s.isNotEmpty).join(' '),
+                  placeholder: l.debtOriginLocked,
+                  dense: true,
+                  reserveSubtitle: true,
+                  subtitle: isEditing ? Text(l.debtOriginLocked) : null,
+                  leading: const PickCardEmptyIcon(AppIcons.receipt, size: 32),
+                  onTap: isEditing ? null : _openOrigin(origin),
+                ),
               ),
             ),
           ],
@@ -541,6 +567,82 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       ),
     );
   }
+
+  String _walletHint(AppLocalizations l) => !_c.createTransaction
+      ? l.debtEditWalletOff
+      : _c.direction == DebtEntryDirection.paid
+      ? l.debtEditWalletLend
+      : l.debtEditWalletBorrow;
+
+  /// Edit mode's box (mock DebtEntryEdit): money in / out of a wallet (+ the
+  /// wallet), and the จ่ายแล้ว label.
+  Widget _editBox(AppLocalizations l, bool first) => SectionCard(
+    first: first,
+    children: [
+      if (!_sourced) ...[
+        SettingToggleRow(
+          label: l.debtMoneyMovedLabel,
+          caption: _walletHint(l),
+          value: _c.createTransaction,
+          onChanged: _c.setCreateTransaction,
+        ),
+        if (_c.createTransaction)
+          DetailRow(
+            label: l.transactionFormAccountLabel,
+            trailing: Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: AppChip(
+                key: const ValueKey('debtEditWallet'),
+                label: _c.account?.name ?? l.quickPickWallet,
+                icon: AppIcons.wallet,
+                trailing: AppChipTrailing.dropdown,
+                onTap: _pickAccount,
+              ),
+            ),
+          ),
+      ],
+      SettingToggleRow(
+        label: l.debtsPaidChip,
+        caption: l.debtPaidHelper,
+        value: _paid,
+        onChanged: _setPaid,
+      ),
+    ],
+  );
+
+  /// View mode (bug B2): จ่ายแล้ว saves at once, no ✏️ needed.
+  Widget _paidLive(AppLocalizations l, bool first) => SectionCard(
+    first: first,
+    children: [
+      LiveSetting<bool>(
+        value: _entry.paid,
+        save: (on) async {
+          final r = await context.read<PersonalDebtsRepository>().setPaid(
+            _entry.id,
+            on,
+          );
+          if (!mounted) return true;
+          widget.onChanged(
+            DebtEntryDetail(
+              entry: r.entry,
+              balance: r.balance,
+              transaction: widget.detail.transaction,
+            ),
+          );
+          return true;
+        },
+        failedMessage: (e) => e is ApiException
+            ? e.message
+            : AppLocalizations.of(context)!.errorUnknownMessage,
+        builder: (context, value, onChanged) => SettingToggleRow(
+          label: l.debtsPaidChip,
+          caption: l.debtPaidHelper,
+          value: value,
+          onChanged: onChanged,
+        ),
+      ),
+    ],
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -621,25 +723,14 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                       symbol: symbol,
                       onEdit: () => enterEdit(),
                       onLongPressField: (f) => enterEdit(focus: f),
-                      amountNote: _balanceLine(l, symbol),
-                      footer: _cards(l),
+                      amountNote: _entryNote(l, symbol),
+                      footer: _cards(l, symbol),
                     ),
                   ],
                 ),
                 tags: tags,
                 sections: [
-                  (first) => SectionCard(
-                    first: first,
-                    children: [
-                      DetailRow(
-                        label: l.debtsPaidChip,
-                        trailing: AppSwitch(
-                          value: _paid,
-                          onChanged: editing ? _setPaid : null,
-                        ),
-                      ),
-                    ],
-                  ),
+                  (first) => editing ? _editBox(l, first) : _paidLive(l, first),
                   (first) => NoteSection(
                     first: first,
                     label: l.commonNote,
@@ -656,26 +747,8 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                       hint: l.debtNoteHint,
                     ),
                   ),
-                  if (!_sourced)
-                    (first) => SectionCard(
-                      first: first,
-                      children: [
-                        DetailRow(
-                          label: l.debtCreateTxLabel,
-                          helper: l.debtCreateTxHint,
-                          onTap: editing
-                              ? () => _c.setCreateTransaction(
-                                  !_c.createTransaction,
-                                )
-                              : null,
-                          trailing: AppSwitch(
-                            value: _c.createTransaction,
-                            onChanged: editing ? _c.setCreateTransaction : null,
-                          ),
-                        ),
-                      ],
-                    ),
-                  if (source != null)
+                  // An older BE without `origin`: the split source row.
+                  if (source != null && e.origin == null)
                     (first) => SectionCard(
                       first: first,
                       children: [

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
@@ -9,12 +10,12 @@ import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../contacts/presentation/cubit/contacts_cubit.dart';
 import '../../../contacts/presentation/widgets/contact_picker.dart';
 import '../../../transactions/domain/refs.dart';
+import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 
 import '../../data/personal_debts_repository.dart';
 import '../../domain/debt_ledger.dart';
@@ -22,6 +23,11 @@ import '../cubit/debt_people_cubit.dart';
 import '../cubit/debt_person_cubit.dart';
 import '../debt_wiring.dart';
 
+/// หนี้ · หน้าคน (owner 2026-10-22, mock DebtPerson): the hero (avatar,
+/// name, age | since, 🔍; "รอจ่ายให้ลี" + the big amount; [จ่ายคืน ฿x]
+/// [สรุปยอด / ทวง]), then the statement in the tx-list style — day groups
+/// with the day's change, each day's lines in one card, repayments on a soft
+/// background — and the earlier cycles behind "เคลียร์ครบ … | ดูรอบก่อน ▾".
 class DebtPersonPage extends StatelessWidget {
   const DebtPersonPage({required this.personKey, this.name, super.key});
 
@@ -52,6 +58,7 @@ class _PersonViewState extends State<_PersonView> {
   final _search = TextEditingController();
   final _toolbar = ToolbarToggleState.local();
   bool _linking = false;
+  bool _showEarlier = false;
 
   @override
   void dispose() {
@@ -61,6 +68,8 @@ class _PersonViewState extends State<_PersonView> {
   }
 
   DebtPersonCubit get _cubit => context.read<DebtPersonCubit>();
+
+  String get _locale => Localizations.localeOf(context).languageCode;
 
   String _name(DebtPersonState s) =>
       s.balance?.person.name ?? widget.name ?? '';
@@ -81,12 +90,25 @@ class _PersonViewState extends State<_PersonView> {
   );
 
   /// Every statement line opens (0.4.0-3): a repayment is a transaction
-  /// (its id IS the tx id); a debt opens its own page (the tx detail page in
-  /// debt mode), with or without a wallet tx.
+  /// (its id IS the tx id); a debt opens its own page.
   void _openEntry(DebtEntry e) => openPage(
     context,
     e.isRepayment ? '/transactions/${e.id}' : '/personal-debts/entries/${e.id}',
   );
+
+  /// [จ่ายคืน ฿x] / [รับคืน ฿x]: quick create, settle chip, the open amount.
+  Future<void> _settle(DebtPersonState s) async {
+    final net = s.balance?.net ?? 0;
+    await showQuickCreateSheet(
+      context,
+      preset: QuickCreatePreset.debt(
+        person: _person(s),
+        debtDirection: debtDirectionFor(net),
+        debtSub: DebtEntrySub.repay,
+        amount: net.abs(),
+      ),
+    );
+  }
 
   Future<void> _copy(String text) async {
     final l = AppLocalizations.of(context)!;
@@ -97,6 +119,33 @@ class _PersonViewState extends State<_PersonView> {
 
   Future<void> _share(String text) =>
       SharePlus.instance.share(ShareParams(text: text));
+
+  /// สรุปยอด (I owe) / ทวง (they owe me): pick รอบนี้ / ยอดคงเหลืออย่าง
+  /// เดียว, edit, copy or share.
+  Future<void> _openShare(DebtPersonState s) {
+    final l = AppLocalizations.of(context)!;
+    final name = _name(s);
+    final owedToMe = (s.balance?.net ?? 0) > 0;
+    final m = s.message;
+    return showAppSheet<void>(
+      context,
+      title: owedToMe
+          ? l.debtPersonChaseTitle(name)
+          : l.debtPersonSummaryTitle(name),
+      builder: (_) => DebtShareSheet(
+        variants: [
+          (label: l.debtShareThisCycle, text: m.text),
+          if (m.textBalanceOnly.isNotEmpty)
+            (label: l.debtShareBalanceOnly, text: m.textBalanceOnly),
+        ],
+        fieldLabel: l.debtShareFieldLabel,
+        copyLabel: l.fpDebtsCopy,
+        shareLabel: l.debtShareSend,
+        onCopy: _copy,
+        onShare: _share,
+      ),
+    );
+  }
 
   Future<void> _linkToContact() async {
     final l = AppLocalizations.of(context)!;
@@ -130,6 +179,11 @@ class _PersonViewState extends State<_PersonView> {
     }
   }
 
+  void _toggleEarlier() {
+    setState(() => _showEarlier = !_showEarlier);
+    if (_showEarlier) _cubit.openEarlier();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -156,6 +210,8 @@ class _PersonViewState extends State<_PersonView> {
                 loadingMore: s.current.loadingMore || s.earlier.loadingMore,
                 onLoadMore: _cubit.loadMore,
                 loadMoreError: s.current.moreError ?? s.earlier.moreError,
+                // Each day's lines in one card (the tx list's look).
+                rowCards: true,
                 rowDividers: true,
                 scrollHeader: s.balance == null
                     ? const []
@@ -222,20 +278,97 @@ class _PersonViewState extends State<_PersonView> {
     ];
   }
 
+  Widget _hero(BuildContext context, DebtPersonState s) {
+    final l = AppLocalizations.of(context)!;
+    final b = s.balance!;
+    final symbol = debtCurrencySymbol(context);
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final side = NetSide.of(b.net);
+    final color = switch (side) {
+      NetSide.owedToMe => palette.income,
+      NetSide.iOwe => palette.expense,
+      NetSide.even => null,
+    };
+    final style = color == null
+        ? const HeroStyle.plain()
+        : HeroStyle.tinted(color: color);
+    final name = b.person.name;
+    final days = b.daysOutstanding;
+    final first = b.firstActivityAt;
+    final fact = [
+      if (days != null) l.fpDebtsDaysOutstanding(days),
+      if (first != null)
+        l.debtPersonSince(DateFormat.yMMM(_locale).format(first)),
+    ].join(' | ');
+    final money = moneyString(context, b.net.abs(), symbol: symbol);
+    return AppHeroCard(
+      style: style,
+      content: [
+        HeroIdentity(
+          icon: PersonMark(
+            name: name,
+            level: debtPersonLevel(b.person),
+            iconCode: b.person.iconCode,
+            size: 40,
+          ),
+          name: Text(name),
+          fact: fact.isEmpty ? null : DebtAgeText(fact, warn: (days ?? 0) > 30),
+          actions: [
+            if (b.person.contactId != null)
+              CardActionButton(
+                icon: AppIcons.contact,
+                tooltip: l.debtsPersonOpenContact,
+                onTap: () =>
+                    openPage(context, '/contacts/${b.person.contactId}'),
+              ),
+            ListenableBuilder(
+              listenable: _search,
+              builder: (context, _) => ToolbarToggleButton(
+                state: _toolbar,
+                filtered: _search.text.isNotEmpty || s.query.isFiltered,
+                tooltip: l.commonSearch,
+              ),
+            ),
+          ],
+        ),
+        side == NetSide.even
+            ? DebtAmountLine(
+                net: b.net,
+                owedToMeLabel: l.debtsOwedToMe,
+                iOweLabel: l.debtsIOwe,
+                settledLabel: l.debtsEven,
+                currencySymbol: symbol,
+              )
+            : DebtSentenceAmount(
+                key: const ValueKey('debtSentence'),
+                sentence: side == NetSide.owedToMe
+                    ? l.debtPersonOwedFrom(name)
+                    : l.debtPersonOweTo(name),
+                amount: MoneyText(b.net.abs(), symbol: symbol),
+                color: color,
+              ),
+        DebtPersonActions(
+          color: color,
+          settleLabel: switch (side) {
+            NetSide.owedToMe => l.debtPersonSettleReceive(money),
+            NetSide.iOwe => l.debtPersonSettlePay(money),
+            NetSide.even => null,
+          },
+          onSettle: side == NetSide.even ? null : () => _settle(s),
+          shareLabel: side == NetSide.owedToMe
+              ? l.debtPersonChase
+              : l.debtPersonSummary,
+          onShare: () => _openShare(s),
+        ),
+      ],
+    );
+  }
+
   List<Widget> _statement(BuildContext context, DebtPersonState s) {
     final l = AppLocalizations.of(context)!;
-    final locale = Localizations.localeOf(context).languageCode;
     final q = s.query;
     final cleared = s.balance!.clearedAt;
     return [
-      if (s.current.items.isNotEmpty || s.counts.current > 0)
-        SectionHeader(
-          title: cleared == null
-              ? l.fpDebtsCycleHeader
-              : l.fpDebtsCycleHeaderSince(
-                  DateFormatter.short(cleared, locale: locale),
-                ),
-        ),
       ..._rows(context, s, s.current),
       if (s.current.items.isEmpty &&
           s.current.status == DebtLoadStatus.loaded &&
@@ -243,84 +376,41 @@ class _PersonViewState extends State<_PersonView> {
         EmptyView.compact(
           message: q.isFiltered ? l.debtsEntriesNoMatch : l.debtsTimelineEmpty,
         ),
-      if (s.counts.earlier > 0)
-        if (!s.earlier.opened)
-          DetailRow(
-            label: l.fpDebtsEarlierLink,
-            showChevron: true,
-            onTap: _cubit.openEarlier,
-          )
-        else ...[
-          SectionHeader(title: l.fpDebtsEarlierHeader),
-          ..._rows(context, s, s.earlier),
-        ],
+      if (s.counts.earlier > 0) ...[
+        CycleDivider(
+          key: const ValueKey('earlierDivider'),
+          label: _showEarlier
+              ? l.debtEarlierHide
+              : cleared == null
+              ? l.debtEarlierShowPlain
+              : l.debtEarlierShow(_dayLabel(cleared, withWeekday: false)),
+          onTap: _toggleEarlier,
+        ),
+        if (_showEarlier)
+          for (final w in _rows(context, s, s.earlier))
+            w is DateGroupHeader ? w : Opacity(opacity: 0.7, child: w),
+      ],
     ];
   }
 
-  Widget _hero(BuildContext context, DebtPersonState s) {
+  /// "ศ. 10 ต.ค. 2026".
+  String _dayLabel(DateTime d, {bool withWeekday = true}) => withWeekday
+      ? DateFormat('EEE d MMM y', _locale).format(d)
+      : DateFormat.MMMd(_locale).format(d);
+
+  /// The day's words (mock): away from zero = "เพิ่ม ฿x" in the side's
+  /// colour, toward zero = "ลดลง ฿x" in the brand colour.
+  (String, Color) _dayNote(double change, double? after, String symbol) {
     final l = AppLocalizations.of(context)!;
-    final b = s.balance!;
-    final symbol = debtCurrencySymbol(context);
     final palette = Theme.of(context).extension<AppColors>()!;
-    final side = NetSide.of(b.net);
-    final style = switch (side) {
-      NetSide.owedToMe => HeroStyle.tinted(color: palette.income),
-      NetSide.iOwe => HeroStyle.tinted(color: palette.expense),
-      NetSide.even => const HeroStyle.plain(),
-    };
-    final days = b.daysOutstanding;
-    return AppHeroCard(
-      style: style,
-      header: HeroHeader(
-        actions: [
-          if (b.person.contactId != null)
-            CardActionButton(
-              icon: AppIcons.contact,
-              tooltip: l.debtsPersonOpenContact,
-              onTap: () => openPage(context, '/contacts/${b.person.contactId}'),
-            ),
-          ListenableBuilder(
-            listenable: _search,
-            builder: (context, _) => ToolbarToggleButton(
-              state: _toolbar,
-              filtered: _search.text.isNotEmpty || s.query.isFiltered,
-              tooltip: l.commonSearch,
-            ),
-          ),
-        ],
-      ),
-      content: [
-        HeroIdentity(
-          icon: PersonMark(
-            name: b.person.name,
-            level: debtPersonLevel(b.person),
-            iconCode: b.person.iconCode,
-            size: 40,
-          ),
-          name: Text(b.person.name),
-          fact: days == null
-              ? null
-              : DebtAgeText(l.fpDebtsDaysOutstanding(days), warn: days > 30),
-        ),
-        DebtAmountLine(
-          net: b.net,
-          owedToMeLabel: l.debtsOwedToMe,
-          iOweLabel: l.debtsIOwe,
-          settledLabel: l.debtsEven,
-          currencySymbol: symbol,
-        ),
-        side == NetSide.even || s.message.text.isEmpty
-            ? null
-            : DebtSummaryMessageBox(
-                text: s.message.text,
-                label: l.fpDebtsMessageLabel,
-                copyLabel: l.fpDebtsCopy,
-                shareLabel: l.fpDebtsShare,
-                onCopy: _copy,
-                onShare: _share,
-              ),
-      ],
-    );
+    final money = moneyString(context, change.abs(), symbol: symbol);
+    final end = after ?? _cubit.state.balance?.net ?? change;
+    final before = end - change;
+    final grows = end.abs() > before.abs() + 0.004;
+    if (!grows) {
+      return (l.debtDayDown(money), Theme.of(context).colorScheme.primary);
+    }
+    return (l.debtDayUp(money), end > 0 ? palette.income : palette.expense);
   }
 
   List<Widget> _rows(
@@ -330,7 +420,6 @@ class _PersonViewState extends State<_PersonView> {
   ) {
     final l = AppLocalizations.of(context)!;
     final symbol = debtCurrencySymbol(context);
-    final locale = Localizations.localeOf(context).languageCode;
     final name = _name(s);
     if (list.items.isEmpty) {
       if (list.status == DebtLoadStatus.loading) {
@@ -346,39 +435,93 @@ class _PersonViewState extends State<_PersonView> {
         ];
       }
     }
-    return [for (final e in list.items) _ledgerRow(l, e, name, symbol, locale)];
+    // The BE's day totals when it sends them; else the lines' own sum.
+    final beDays = {for (final d in list.days) _ymd(d.date): d};
+    final out = <Widget>[];
+    String? day;
+    for (var i = 0; i < list.items.length; i++) {
+      final e = list.items[i];
+      final date = e.date;
+      final key = date == null ? '' : _ymd(date);
+      if (key != day) {
+        day = key;
+        if (date != null) {
+          final be = beDays[key];
+          final sameDay = [
+            for (final x in list.items.skip(i))
+              if (x.date != null && _ymd(x.date!) == key) x,
+          ];
+          final change =
+              be?.change ??
+              sameDay.fold<double>(0, (a, x) => a + x.signedAmount);
+          final after = be?.balanceAfter ?? sameDay.first.runningBalance;
+          final (note, color) = _dayNote(change, after, symbol);
+          out.add(
+            DateGroupHeader(
+              key: ValueKey('day:$key:${identical(list, s.earlier)}'),
+              label: _dayLabel(date),
+              note: note,
+              noteColor: color,
+            ),
+          );
+        }
+      }
+      out.add(_statementRow(l, e, name, symbol));
+    }
+    return out;
   }
 
-  Widget _ledgerRow(
+  static String _ymd(DateTime d) => '${d.year}-${d.month}-${d.day}';
+
+  /// The sub-line (mock): where the line came from / where the money went.
+  String? _subLine(AppLocalizations l, DebtEntry e, String name) {
+    final paid = e.direction == DebtEntryDirection.paid;
+    if (e.isRepayment) {
+      final acc = e.transaction?.account?.name;
+      if (acc == null) return l.debtRowNoWallet;
+      return paid ? l.debtRowFromWallet(acc) : l.debtRowIntoWallet(acc);
+    }
+    final o = e.origin;
+    final symbol = debtCurrencySymbol(context);
+    final wallet = o?.account?.name ?? e.transaction?.account?.name;
+    switch (o?.kind) {
+      case 'paid_by' || 'partner':
+        return l.debtRowTheyPaid(name);
+      case 'split':
+        final amount = o?.amount;
+        return amount == null
+            ? l.debtRowIPaid
+            : l.debtRowSplitBill(moneyString(context, amount, symbol: symbol));
+      case 'event':
+        return l.debtRowEvent(o?.title ?? '');
+    }
+    if (wallet != null) {
+      return paid ? l.debtRowFromWallet(wallet) : l.debtRowIntoWallet(wallet);
+    }
+    return paid ? l.debtRowIPaid : l.debtRowTheyPaid(name);
+  }
+
+  Widget _statementRow(
     AppLocalizations l,
     DebtEntry e,
     String name,
     String symbol,
-    String locale,
   ) {
-    final wallet = e.transaction?.account;
-    return LedgerRow(
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final paid = e.direction == DebtEntryDirection.paid;
+    final title =
+        e.description ??
+        (e.isRepayment
+            ? (paid ? l.debtRowIPaidBack(name) : l.debtRowTheyPaidBack(name))
+            : (paid ? l.debtEntryPaidTo(name) : l.debtEntryReceivedFrom(name)));
+    return DebtStatementRow(
       key: ValueKey(e.id),
-      direction: e.iPaid ? LedgerDirection.paid : LedgerDirection.received,
-      amount: e.amount,
-      signed: true,
-      title:
-          e.description ??
-          (e.iPaid ? l.debtEntryPaidTo(name) : l.debtEntryReceivedFrom(name)),
-      dateLabel: e.date == null
-          ? ''
-          : DateFormatter.short(e.date!, locale: locale),
-      walletLabel: wallet?.name,
-      walletIcon: wallet == null
-          ? null
-          : IconDisplay(
-              type: IconType.account,
-              size: 14,
-              iconCode: wallet.iconCode,
-            ),
-      paidLabel: e.paid ? l.debtsPaidChip : null,
-      sourceLabel: e.source?.title,
-      currencySymbol: symbol,
+      title: title,
+      subtitle: _subLine(l, e, name),
+      amount: MoneyText(e.amount, symbol: symbol),
+      amountColor: paid ? palette.income : palette.expense,
+      repayment: e.isRepayment,
+      paidLabel: !e.isRepayment && e.paid ? l.debtPaidPill : null,
       onTap: () => _openEntry(e),
     );
   }

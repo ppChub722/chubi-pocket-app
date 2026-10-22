@@ -13182,6 +13182,468 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Updated from the event'**
   String get txLinkApplied;
+
+  /// No description provided for @linkedEventAskTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change it in the event too?'**
+  String get linkedEventAskTitle;
+
+  /// No description provided for @linkedBookAskTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change it in my book too?'**
+  String get linkedBookAskTitle;
+
+  /// No description provided for @linkedMineOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only mine'**
+  String get linkedMineOnly;
+
+  /// No description provided for @linkedEventOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the event'**
+  String get linkedEventOnly;
+
+  /// No description provided for @linkedBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Both'**
+  String get linkedBoth;
+
+  /// No description provided for @txLinkDraftNeedsExistingEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'A draft can only go to an existing event'**
+  String get txLinkDraftNeedsExistingEvent;
+
+  /// No description provided for @debtQuickCreateTxLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Also record the money (a transaction)'**
+  String get debtQuickCreateTxLabel;
+
+  /// No description provided for @debtResultNow.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} now'**
+  String debtResultNow(String name);
+
+  /// No description provided for @debtResultAfterSave.
+  ///
+  /// In en, this message translates to:
+  /// **'After saving'**
+  String get debtResultAfterSave;
+
+  /// No description provided for @debtResultWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet {wallet}'**
+  String debtResultWallet(String wallet);
+
+  /// No description provided for @debtWalletNotUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'No change'**
+  String get debtWalletNotUsed;
+
+  /// No description provided for @debtOverpayWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'More than what\'s open — after saving: {after}'**
+  String debtOverpayWarn(String after);
+
+  /// No description provided for @debtOverpayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'More than what\'s open'**
+  String get debtOverpayTitle;
+
+  /// No description provided for @debtOverpayConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Save anyway'**
+  String get debtOverpayConfirm;
+
+  /// No description provided for @debtOverpayEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Change the amount'**
+  String get debtOverpayEdit;
+
+  /// No description provided for @debtWalletUnusedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet (not used)'**
+  String get debtWalletUnusedLabel;
+
+  /// No description provided for @debtSomeone.
+  ///
+  /// In en, this message translates to:
+  /// **'them'**
+  String get debtSomeone;
+
+  /// No description provided for @debtSentenceRecordIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Note that {name} owes me'**
+  String debtSentenceRecordIn(String name);
+
+  /// No description provided for @debtSentenceLendTx.
+  ///
+  /// In en, this message translates to:
+  /// **'(I lend {name} money from my wallet)'**
+  String debtSentenceLendTx(String name);
+
+  /// No description provided for @debtSentenceRecordOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Note that I owe {name}'**
+  String debtSentenceRecordOut(String name);
+
+  /// No description provided for @debtSentenceBorrowTx.
+  ///
+  /// In en, this message translates to:
+  /// **'(I borrow from {name} into my wallet)'**
+  String debtSentenceBorrowTx(String name);
+
+  /// No description provided for @debtSentenceSettleIn.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} pays me back, into my wallet'**
+  String debtSentenceSettleIn(String name);
+
+  /// No description provided for @debtSentenceSettleOut.
+  ///
+  /// In en, this message translates to:
+  /// **'I pay {name} back, from my wallet'**
+  String debtSentenceSettleOut(String name);
+
+  /// No description provided for @debtTxHintLend.
+  ///
+  /// In en, this message translates to:
+  /// **'Money leaves the wallet (a loan)'**
+  String get debtTxHintLend;
+
+  /// No description provided for @debtTxHintBorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Money comes into the wallet (borrowed)'**
+  String get debtTxHintBorrow;
+
+  /// No description provided for @debtTxHintOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off = only noted in the debts book, no money moves'**
+  String get debtTxHintOff;
+
+  /// No description provided for @debtsHeroNet.
+  ///
+  /// In en, this message translates to:
+  /// **'Net debts | {count} people'**
+  String debtsHeroNet(int count);
+
+  /// No description provided for @debtsFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get debtsFilterAll;
+
+  /// No description provided for @debtsOver30Label.
+  ///
+  /// In en, this message translates to:
+  /// **'Open over 30 days'**
+  String get debtsOver30Label;
+
+  /// No description provided for @debtsPeopleCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} people'**
+  String debtsPeopleCount(int count);
+
+  /// No description provided for @debtsLastIPaidBack.
+  ///
+  /// In en, this message translates to:
+  /// **'You paid back {amount}'**
+  String debtsLastIPaidBack(String amount);
+
+  /// No description provided for @debtsLastTheyPaidBack.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} paid back {amount}'**
+  String debtsLastTheyPaidBack(String name, String amount);
+
+  /// No description provided for @debtsLastLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{what} | {date}'**
+  String debtsLastLine(String what, String date);
+
+  /// No description provided for @debtPersonSince.
+  ///
+  /// In en, this message translates to:
+  /// **'together since {month}'**
+  String debtPersonSince(String month);
+
+  /// No description provided for @debtPersonOweTo.
+  ///
+  /// In en, this message translates to:
+  /// **'To pay {name}'**
+  String debtPersonOweTo(String name);
+
+  /// No description provided for @debtPersonOwedFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'To receive from {name}'**
+  String debtPersonOwedFrom(String name);
+
+  /// No description provided for @debtPersonSettlePay.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay back {amount}'**
+  String debtPersonSettlePay(String amount);
+
+  /// No description provided for @debtPersonSettleReceive.
+  ///
+  /// In en, this message translates to:
+  /// **'Got back {amount}'**
+  String debtPersonSettleReceive(String amount);
+
+  /// No description provided for @debtPersonSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get debtPersonSummary;
+
+  /// No description provided for @debtPersonChase.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind'**
+  String get debtPersonChase;
+
+  /// No description provided for @debtPersonSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary with {name}'**
+  String debtPersonSummaryTitle(String name);
+
+  /// No description provided for @debtPersonChaseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind {name}'**
+  String debtPersonChaseTitle(String name);
+
+  /// No description provided for @debtShareThisCycle.
+  ///
+  /// In en, this message translates to:
+  /// **'This cycle'**
+  String get debtShareThisCycle;
+
+  /// No description provided for @debtShareBalanceOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance only'**
+  String get debtShareBalanceOnly;
+
+  /// No description provided for @debtShareFieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Message (edit before sending)'**
+  String get debtShareFieldLabel;
+
+  /// No description provided for @debtShareSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Share to LINE / other apps'**
+  String get debtShareSend;
+
+  /// No description provided for @debtDayUp.
+  ///
+  /// In en, this message translates to:
+  /// **'up {amount}'**
+  String debtDayUp(String amount);
+
+  /// No description provided for @debtDayDown.
+  ///
+  /// In en, this message translates to:
+  /// **'down {amount}'**
+  String debtDayDown(String amount);
+
+  /// No description provided for @debtEarlierShow.
+  ///
+  /// In en, this message translates to:
+  /// **'All cleared {date} | Earlier ▾'**
+  String debtEarlierShow(String date);
+
+  /// No description provided for @debtEarlierShowPlain.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier ▾'**
+  String get debtEarlierShowPlain;
+
+  /// No description provided for @debtEarlierHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide earlier ▴'**
+  String get debtEarlierHide;
+
+  /// No description provided for @debtRowFromWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'from wallet {name}'**
+  String debtRowFromWallet(String name);
+
+  /// No description provided for @debtRowIntoWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'into wallet {name}'**
+  String debtRowIntoWallet(String name);
+
+  /// No description provided for @debtRowNoWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'no wallet'**
+  String get debtRowNoWallet;
+
+  /// No description provided for @debtRowTheyPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} paid for me'**
+  String debtRowTheyPaid(String name);
+
+  /// No description provided for @debtRowIPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'you paid for them'**
+  String get debtRowIPaid;
+
+  /// No description provided for @debtRowSplitBill.
+  ///
+  /// In en, this message translates to:
+  /// **'split bill {amount}'**
+  String debtRowSplitBill(String amount);
+
+  /// No description provided for @debtRowEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'event {name}'**
+  String debtRowEvent(String name);
+
+  /// No description provided for @debtRowIPaidBack.
+  ///
+  /// In en, this message translates to:
+  /// **'You paid {name} back'**
+  String debtRowIPaidBack(String name);
+
+  /// No description provided for @debtRowTheyPaidBack.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} paid back'**
+  String debtRowTheyPaidBack(String name);
+
+  /// No description provided for @debtPaidPill.
+  ///
+  /// In en, this message translates to:
+  /// **'✓ Paid'**
+  String get debtPaidPill;
+
+  /// No description provided for @debtPaidHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Only a label; it never changes a number'**
+  String get debtPaidHelper;
+
+  /// No description provided for @debtOriginLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'From ({kind})'**
+  String debtOriginLabel(String kind);
+
+  /// No description provided for @debtOriginSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'split bill'**
+  String get debtOriginSplit;
+
+  /// No description provided for @debtOriginPaidBy.
+  ///
+  /// In en, this message translates to:
+  /// **'paid for me'**
+  String get debtOriginPaidBy;
+
+  /// No description provided for @debtOriginPartner.
+  ///
+  /// In en, this message translates to:
+  /// **'their split'**
+  String get debtOriginPartner;
+
+  /// No description provided for @debtOriginEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'event'**
+  String get debtOriginEvent;
+
+  /// No description provided for @debtOriginCash.
+  ///
+  /// In en, this message translates to:
+  /// **'a loan'**
+  String get debtOriginCash;
+
+  /// No description provided for @debtOriginLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'can\'t change it here'**
+  String get debtOriginLocked;
+
+  /// No description provided for @debtEditWalletLend.
+  ///
+  /// In en, this message translates to:
+  /// **'Money leaves the wallet (a loan / paid for them)'**
+  String get debtEditWalletLend;
+
+  /// No description provided for @debtEditWalletBorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Money comes into the wallet (borrowed)'**
+  String get debtEditWalletBorrow;
+
+  /// No description provided for @debtEditWalletOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the debt, no money moves'**
+  String get debtEditWalletOff;
+
+  /// No description provided for @quickCreateBtnTx.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get quickCreateBtnTx;
+
+  /// No description provided for @quickCreateBtnDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Add debt'**
+  String get quickCreateBtnDebt;
+
+  /// No description provided for @quickCreateBtnSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Save money'**
+  String get quickCreateBtnSaving;
+
+  /// No description provided for @debtsEmptyOpenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No open debts'**
+  String get debtsEmptyOpenTitle;
+
+  /// No description provided for @debtsEmptyOpenMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Note who borrowed and who paid for whom, so you never forget to ask'**
+  String get debtsEmptyOpenMessage;
 }
 
 class _AppLocalizationsDelegate

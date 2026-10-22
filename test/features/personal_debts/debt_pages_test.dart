@@ -10,7 +10,6 @@ import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.d
 import 'package:chubi_pocket/features/personal_debts/data/personal_debts_repository.dart';
 import 'package:chubi_pocket/features/personal_debts/domain/debt_ledger.dart';
 import 'package:chubi_pocket/features/personal_debts/presentation/cubit/debt_directory_cubit.dart';
-import 'package:chubi_pocket/features/personal_debts/presentation/cubit/debt_people_cubit.dart';
 import 'package:chubi_pocket/features/personal_debts/presentation/cubit/debt_person_cubit.dart';
 import 'package:chubi_pocket/features/personal_debts/presentation/pages/debt_person_page.dart';
 import 'package:chubi_pocket/features/personal_debts/presentation/pages/personal_debts_page.dart';
@@ -132,7 +131,7 @@ Map<String, dynamic> _peopleBody() => {
   'data': [
     _person('c:c1', 'Mom', 200, contactId: 'c1', days: 45),
     _person('n:bank', 'Bank', -50, days: 6),
-    _person('n:gone', 'Gone', 0),
+    {..._person('n:gone', 'Gone', 0), 'open_count': 0},
   ],
   'totals': <String, dynamic>{},
   'pagination': {'page': 1, 'per_page': 3, 'total': 3, 'total_pages': 1},
@@ -230,8 +229,8 @@ void main() {
     ToolbarToggleState.resetAll();
   });
 
-  group('people list', () {
-    testWidgets('🔍 in the card; toolbar hidden until tapped; red dot', (
+  group('people list (mock DebtsList)', () {
+    testWidgets('🔍 in the card; the search hidden until tapped; red dot', (
       t,
     ) async {
       await pump(t, const PersonalDebtsPage());
@@ -240,7 +239,7 @@ void main() {
         matching: find.byType(ToolbarToggleButton),
       );
       expect(toggle, findsOneWidget);
-      expect(find.byType(AppChip), findsNothing);
+      expect(find.byType(TextField), findsNothing);
       CardActionButton button() => t.widget(
         find.descendant(
           of: find.byType(ToolbarToggleButton),
@@ -250,76 +249,126 @@ void main() {
       expect(button().showDot, isFalse);
       await t.tap(toggle);
       await t.pumpAndSettle();
-      expect(find.widgetWithText(AppChip, 'Show cleared'), findsOneWidget);
       await t.enterText(find.byType(TextField), 'Mom');
       await t.tap(toggle);
       await t.pumpAndSettle();
-      expect(find.widgetWithText(AppChip, 'Show cleared'), findsNothing);
       expect(button().showDot, isTrue);
     });
 
-    testWidgets('open = 1 call; tiles, alert, net line and rows from the BE', (
-      t,
-    ) async {
+    testWidgets('open = no request; the hero (net, facts, chips) and ONE card '
+        'of open people, oldest first, each with its age', (t) async {
       await pump(t, const PersonalDebtsPage());
-      expect(find.text('Total outstanding'), findsOneWidget);
-      // The tiles carry the BE's people counts + amounts.
+      expect(repo.calls, isEmpty);
+      // Tile + "หนี้สุทธิ | N คน" + the big net.
+      expect(find.byType(HeroSummaryHead), findsOneWidget);
+      expect(find.text('Net debts | 2 people'), findsOneWidget);
+      // Facts: รอรับ / รอจ่าย / ค้างเกิน 30 วัน.
       expect(find.text('To receive | 1 people'), findsOneWidget);
       expect(find.text('To pay | 1 people'), findsOneWidget);
-      expect(find.text('฿200'), findsWidgets);
-      expect(find.text('฿50'), findsWidgets);
-      // Both sides open → the BE's net line; the amber alert.
-      expect(find.byType(DebtNetLine), findsOneWidget);
-      expect(find.text('Over 30 days: 1 people'), findsOneWidget);
-      // Rows: name + age (amber over 30) + the amount; nothing else.
-      expect(find.byType(PersonBalanceRow), findsNWidgets(3));
-      expect(find.text('Outstanding 45 days'), findsOneWidget);
-      expect(find.text('Outstanding 6 days'), findsOneWidget);
-      final rows = t.widgetList<PersonBalanceRow>(
-        find.byType(PersonBalanceRow),
+      expect(find.text('1 people'), findsOneWidget);
+      // The filter chips with their counts.
+      expect(find.byKey(const ValueKey('heroFilter:All')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('heroFilter:Open over 30 days')),
+        findsOneWidget,
       );
-      expect(rows.map((r) => r.subtitleWarn), [true, false, false]);
-      expect(rows.every((r) => !r.showCaption), isTrue);
+      // The cleared person stays out; oldest first.
+      final rows = t
+          .widgetList<PersonBalanceRow>(find.byType(PersonBalanceRow))
+          .toList();
+      expect(rows.map((r) => r.name), ['Mom', 'Bank']);
+      expect(rows.map((r) => r.age), [
+        'Outstanding 45 days',
+        'Outstanding 6 days',
+      ]);
+      expect(rows.map((r) => r.ageWarn), [true, false]);
+      expect(rows.every((r) => r.showCaption), isTrue);
       expect(registry.preset.mode, QuickCreateMode.debt);
     });
 
-    testWidgets('a tile filters by side at once; tap again clears', (t) async {
+    testWidgets('the + beside 🔍 is debt mode (mock QuickCreateBtn)', (
+      t,
+    ) async {
       await pump(t, const PersonalDebtsPage());
-      await t.tap(find.text('To receive | 1 people'));
+      final add = t.widget<QuickCreateHeadButton>(
+        find.descendant(
+          of: find.byType(AppHeroCard),
+          matching: find.byKey(const ValueKey('debtsAdd')),
+        ),
+      );
+      expect(add.mode, QuickCreateMode.debt);
+      expect(add.onPressed, isNotNull);
+    });
+
+    testWidgets('nobody open → the empty state with the จดหนี้ CTA', (t) async {
+      directory.applySync({
+        ..._peopleBody(),
+        'data': [
+          {..._person('n:gone', 'Gone', 0), 'open_count': 0},
+        ],
+      });
+      await pump(t, const PersonalDebtsPage(), people: false);
+      expect(find.text('No open debts'), findsOneWidget);
+      final cta = t.widget<QuickCreateCtaButton>(
+        find.byKey(const ValueKey('debtsEmptyAdd')),
+      );
+      expect(cta.mode, QuickCreateMode.debt);
+      expect(cta.label, 'Add debt');
+    });
+
+    testWidgets('a chip filters at once, one at a time', (t) async {
+      await pump(t, const PersonalDebtsPage());
+      await t.tap(find.byKey(const ValueKey('heroFilter:To pay')));
+      await t.pump();
+      expect(find.byType(PersonBalanceRow), findsOneWidget);
+      expect(find.text('Bank'), findsOneWidget);
+      await t.tap(find.byKey(const ValueKey('heroFilter:Open over 30 days')));
       await t.pump();
       expect(find.byType(PersonBalanceRow), findsOneWidget);
       expect(find.text('Mom'), findsOneWidget);
-      await t.tap(find.text('To receive | 1 people'));
+      await t.tap(find.byKey(const ValueKey('heroFilter:All')));
       await t.pump();
-      expect(find.byType(PersonBalanceRow), findsNWidgets(3));
-    });
-
-    testWidgets('"Show cleared" turns all on, with no request', (t) async {
-      await pump(t, const PersonalDebtsPage());
-      await t.tap(find.byType(ToolbarToggleButton));
-      await t.pumpAndSettle();
-      await t.tap(find.widgetWithText(AppChip, 'Show cleared'));
-      await t.pump();
-      final cubit = t
-          .element(find.byType(ListPageBody))
-          .read<DebtPeopleCubit>();
-      expect(cubit.state.all, isTrue);
+      expect(find.byType(PersonBalanceRow), findsNWidgets(2));
       expect(repo.calls, isEmpty);
     });
 
-    testWidgets('the sort chip sorts on the device', (t) async {
-      await pump(t, const PersonalDebtsPage());
-      await t.tap(find.byType(ToolbarToggleButton));
-      await t.pumpAndSettle();
-      await t.tap(find.text('Longest owed'));
-      await t.pumpAndSettle();
-      await t.tap(find.text('Largest'));
-      await t.pump();
-      final cubit = t
-          .element(find.byType(ListPageBody))
-          .read<DebtPeopleCubit>();
-      expect(cubit.state.sort, DebtPeopleSort.amount);
-      expect(repo.calls, isEmpty);
+    testWidgets('the second line is the last activity; a repayment with no '
+        'title is worded', (t) async {
+      directory.applySync({
+        ..._peopleBody(),
+        'data': [
+          {
+            ..._person('c:c1', 'Mom', 200, contactId: 'c1', days: 45),
+            'last_activity': {
+              'kind': 'repayment',
+              'id': 't9',
+              'title': null,
+              'direction': 'paid',
+              'amount': 400,
+              'signed_amount': 400,
+              'date': '2026-10-10',
+            },
+          },
+          {
+            ..._person('n:bank', 'Bank', -50, days: 6),
+            'last_activity': {
+              'kind': 'debt',
+              'id': 'e1',
+              'title': 'Concert ticket',
+              'direction': 'received',
+              'amount': 50,
+              'signed_amount': -50,
+              'date': '2026-09-01',
+            },
+          },
+        ],
+      });
+      await pump(t, const PersonalDebtsPage(), people: false);
+      final rows = t
+          .widgetList<PersonBalanceRow>(find.byType(PersonBalanceRow))
+          .toList();
+      expect(rows.first.subtitle, startsWith('You paid back ฿400'));
+      expect(rows.last.subtitle, startsWith('Concert ticket | '));
     });
 
     testWidgets('a failed load → full-page error; the sync landing fills it', (
@@ -334,7 +383,7 @@ void main() {
       expect(find.byType(PersonBalanceRow), findsNothing);
       directory.applySync(_peopleBody());
       await t.pump(const Duration(milliseconds: 100));
-      expect(find.byType(PersonBalanceRow), findsNWidgets(3));
+      expect(find.byType(PersonBalanceRow), findsNWidgets(2));
     });
 
     testWidgets('a failed reload keeps the rows on screen', (t) async {
@@ -344,68 +393,80 @@ void main() {
       );
       await t.pump(const Duration(milliseconds: 100));
       expect(find.byType(ErrorView), findsNothing);
-      expect(find.byType(PersonBalanceRow), findsNWidgets(3));
+      expect(find.byType(PersonBalanceRow), findsNWidgets(2));
     });
   });
 
-  group('person page', () {
-    testWidgets('open = 1 call: hero, message box, current-cycle rows', (
-      t,
-    ) async {
+  group('person page (mock DebtPerson)', () {
+    testWidgets('open = 1 call: hero sentence + amount, two buttons, the '
+        'statement in day groups', (t) async {
       await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
       expect(repo.calls, ['person c:c1 cycle=current']);
-      // The hero: name, age, side pill + amount, the BE-built message.
       expect(find.byType(AppHeroCard), findsOneWidget);
       expect(find.text('Outstanding 6 days'), findsOneWidget);
-      expect(find.byType(DebtAmountLine), findsOneWidget);
-      expect(find.text('To receive'), findsOneWidget);
-      expect(find.text('฿200'), findsOneWidget);
-      expect(find.byType(DebtSummaryMessageBox), findsOneWidget);
-      expect(find.textContaining('Summary with Mom'), findsOneWidget);
-      // No tabs, no buttons under the card.
+      // "รอรับจากแม่" + the big amount.
+      expect(find.text('To receive from Mom'), findsOneWidget);
+      expect(find.byKey(const ValueKey('debtSentence')), findsOneWidget);
+      // [ได้คืน ฿200] + [ทวง]; no message box any more.
+      expect(find.text('Got back ฿200'), findsOneWidget);
+      expect(find.text('Remind'), findsOneWidget);
+      expect(find.byType(DebtSummaryMessageBox), findsNothing);
       expect(find.byType(AppTabBar), findsNothing);
-      expect(find.text('Add entry'), findsNothing);
-      // The statement: a cycle header, the entries, the earlier fold.
-      expect(
-        find.textContaining('Where the balance comes from | since cleared'),
-        findsOneWidget,
-      );
-      expect(find.byType(LedgerRow), findsNWidgets(2));
+      // One day: its header with the change, then the lines.
+      expect(find.byType(DateGroupHeader), findsOneWidget);
+      final header = t.widget<DateGroupHeader>(find.byType(DateGroupHeader));
+      expect(header.note, 'up ฿200');
+      expect(find.byType(DebtStatementRow), findsNWidgets(2));
       expect(find.text('Lunch money'), findsOneWidget);
-      // No description → the direction fallback.
+      // No description → the direction words; the wallet in the sub-line.
       expect(find.text('Received from Mom'), findsOneWidget);
-      expect(find.text('Earlier cycles'), findsOneWidget);
+      expect(find.text('from wallet Cash'), findsOneWidget);
+      expect(find.text('All cleared Oct 5 | Earlier ▾'), findsOneWidget);
     });
 
-    testWidgets('the earlier cycles load once, on the fold first tap', (
-      t,
-    ) async {
+    testWidgets('the earlier cycles load once, behind the divider', (t) async {
       await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
-      await t.tap(find.text('Earlier cycles'));
+      await t.tap(find.byKey(const ValueKey('earlierDivider')));
       await t.pump(const Duration(milliseconds: 100));
       expect(repo.calls, [
         'person c:c1 cycle=current',
         'entries cycle=earlier q=',
       ]);
-      expect(find.text('Earlier cycle | cleared'), findsOneWidget);
       expect(find.text('Old repayment'), findsOneWidget);
-      expect(find.text('Earlier cycles'), findsNothing);
+      expect(find.text('Hide earlier ▴'), findsOneWidget);
+      // Folding and opening again: no second call.
+      await t.tap(find.byKey(const ValueKey('earlierDivider')));
+      await t.pump(const Duration(milliseconds: 100));
+      expect(find.text('Old repayment'), findsNothing);
+      await t.tap(find.byKey(const ValueKey('earlierDivider')));
+      await t.pump(const Duration(milliseconds: 100));
+      expect(find.text('Old repayment'), findsOneWidget);
+      expect(repo.calls, hasLength(2));
     });
 
-    testWidgets('no earlier cycle → no fold', (t) async {
+    testWidgets('no earlier cycle → no divider', (t) async {
       repo.earlier = 0;
       await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
-      expect(find.text('Earlier cycles'), findsNothing);
+      expect(find.byKey(const ValueKey('earlierDivider')), findsNothing);
     });
 
-    testWidgets('a settled person: the word, no pill, no message box', (
-      t,
-    ) async {
+    testWidgets('a settled person: the word, no settle button', (t) async {
       repo.personNet = 0;
       await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
-      expect(find.text('Settled up'), findsOneWidget);
-      expect(find.text('To receive'), findsNothing);
-      expect(find.byType(DebtSummaryMessageBox), findsNothing);
+      expect(find.text('Settled up'), findsWidgets);
+      expect(find.byKey(const ValueKey('debtSentence')), findsNothing);
+      expect(find.byKey(const ValueKey('debtSettle')), findsNothing);
+      expect(find.byKey(const ValueKey('debtShare')), findsOneWidget);
+    });
+
+    testWidgets('remind opens the share sheet with the BE text', (t) async {
+      await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
+      await t.tap(find.byKey(const ValueKey('debtShare')));
+      await t.pumpAndSettle();
+      expect(find.byType(DebtShareSheet), findsOneWidget);
+      expect(find.text('Remind Mom'), findsOneWidget);
+      expect(find.byKey(const ValueKey('shareVariant0')), findsOneWidget);
+      expect(find.textContaining('Summary with Mom'), findsWidgets);
     });
 
     testWidgets('🪪 only with a contact; 🔍 toggles the toolbar', (t) async {
@@ -423,19 +484,20 @@ void main() {
       expect(registry.active()?.person?.contactId, 'c1');
     });
 
-    testWidgets('every statement line opens: a repayment, a debt with a '
-        'wallet tx and a ledger-only debt (0.4.0-3)', (t) async {
+    testWidgets('every statement line opens; a repayment has the cash icon '
+        'and no paid pill', (t) async {
       repo.repayment = true;
       await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
-      final rows = find.byType(LedgerRow);
+      final rows = find.byType(DebtStatementRow);
       expect(rows, findsNWidgets(3));
       for (final e in rows.evaluate()) {
-        expect((e.widget as LedgerRow).onTap, isNotNull);
+        expect((e.widget as DebtStatementRow).onTap, isNotNull);
       }
-      // The repayment: newest first, no "paid" label.
-      final first = t.widget<LedgerRow>(rows.first);
+      final first = t.widget<DebtStatementRow>(rows.first);
       expect(first.title, 'Got back from Mom');
+      expect(first.repayment, isTrue);
       expect(first.paidLabel, isNull);
+      expect(first.subtitle, 'into wallet Cash');
     });
 
     testWidgets('a debts change re-runs the page call', (t) async {
@@ -456,7 +518,7 @@ void main() {
       );
       await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
       expect(find.byType(ErrorView), findsOneWidget);
-      expect(find.byType(LedgerRow), findsNothing);
+      expect(find.byType(DebtStatementRow), findsNothing);
     });
 
     testWidgets('a failed reload keeps the statement on screen', (t) async {
@@ -469,7 +531,7 @@ void main() {
       await t.element(find.byType(AppHeroCard)).read<DebtPersonCubit>().load();
       await t.pump(const Duration(milliseconds: 100));
       expect(find.byType(ErrorView), findsNothing);
-      expect(find.byType(LedgerRow), findsNWidgets(2));
+      expect(find.byType(DebtStatementRow), findsNWidgets(2));
     });
 
     testWidgets('a gone typed name (404) → not found, no error', (t) async {

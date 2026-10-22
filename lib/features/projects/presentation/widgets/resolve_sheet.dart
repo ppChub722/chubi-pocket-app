@@ -143,6 +143,7 @@ Future<bool> showResolveSheet(
             description: tx.description,
             note: tx.note,
             personName: name,
+            billId: tx.parentProjectTransactionId ?? tx.id,
           );
         }
         return true;

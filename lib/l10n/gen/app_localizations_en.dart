@@ -7750,4 +7750,303 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txLinkApplied => 'Updated from the event';
+
+  @override
+  String get linkedEventAskTitle => 'Change it in the event too?';
+
+  @override
+  String get linkedBookAskTitle => 'Change it in my book too?';
+
+  @override
+  String get linkedMineOnly => 'Only mine';
+
+  @override
+  String get linkedEventOnly => 'Only the event';
+
+  @override
+  String get linkedBoth => 'Both';
+
+  @override
+  String get txLinkDraftNeedsExistingEvent =>
+      'A draft can only go to an existing event';
+
+  @override
+  String get debtQuickCreateTxLabel => 'Also record the money (a transaction)';
+
+  @override
+  String debtResultNow(String name) {
+    return '$name now';
+  }
+
+  @override
+  String get debtResultAfterSave => 'After saving';
+
+  @override
+  String debtResultWallet(String wallet) {
+    return 'Wallet $wallet';
+  }
+
+  @override
+  String get debtWalletNotUsed => 'No change';
+
+  @override
+  String debtOverpayWarn(String after) {
+    return 'More than what\'s open — after saving: $after';
+  }
+
+  @override
+  String get debtOverpayTitle => 'More than what\'s open';
+
+  @override
+  String get debtOverpayConfirm => 'Save anyway';
+
+  @override
+  String get debtOverpayEdit => 'Change the amount';
+
+  @override
+  String get debtWalletUnusedLabel => 'Wallet (not used)';
+
+  @override
+  String get debtSomeone => 'them';
+
+  @override
+  String debtSentenceRecordIn(String name) {
+    return 'Note that $name owes me';
+  }
+
+  @override
+  String debtSentenceLendTx(String name) {
+    return '(I lend $name money from my wallet)';
+  }
+
+  @override
+  String debtSentenceRecordOut(String name) {
+    return 'Note that I owe $name';
+  }
+
+  @override
+  String debtSentenceBorrowTx(String name) {
+    return '(I borrow from $name into my wallet)';
+  }
+
+  @override
+  String debtSentenceSettleIn(String name) {
+    return '$name pays me back, into my wallet';
+  }
+
+  @override
+  String debtSentenceSettleOut(String name) {
+    return 'I pay $name back, from my wallet';
+  }
+
+  @override
+  String get debtTxHintLend => 'Money leaves the wallet (a loan)';
+
+  @override
+  String get debtTxHintBorrow => 'Money comes into the wallet (borrowed)';
+
+  @override
+  String get debtTxHintOff =>
+      'Off = only noted in the debts book, no money moves';
+
+  @override
+  String debtsHeroNet(int count) {
+    return 'Net debts | $count people';
+  }
+
+  @override
+  String get debtsFilterAll => 'All';
+
+  @override
+  String get debtsOver30Label => 'Open over 30 days';
+
+  @override
+  String debtsPeopleCount(int count) {
+    return '$count people';
+  }
+
+  @override
+  String debtsLastIPaidBack(String amount) {
+    return 'You paid back $amount';
+  }
+
+  @override
+  String debtsLastTheyPaidBack(String name, String amount) {
+    return '$name paid back $amount';
+  }
+
+  @override
+  String debtsLastLine(String what, String date) {
+    return '$what | $date';
+  }
+
+  @override
+  String debtPersonSince(String month) {
+    return 'together since $month';
+  }
+
+  @override
+  String debtPersonOweTo(String name) {
+    return 'To pay $name';
+  }
+
+  @override
+  String debtPersonOwedFrom(String name) {
+    return 'To receive from $name';
+  }
+
+  @override
+  String debtPersonSettlePay(String amount) {
+    return 'Pay back $amount';
+  }
+
+  @override
+  String debtPersonSettleReceive(String amount) {
+    return 'Got back $amount';
+  }
+
+  @override
+  String get debtPersonSummary => 'Summary';
+
+  @override
+  String get debtPersonChase => 'Remind';
+
+  @override
+  String debtPersonSummaryTitle(String name) {
+    return 'Summary with $name';
+  }
+
+  @override
+  String debtPersonChaseTitle(String name) {
+    return 'Remind $name';
+  }
+
+  @override
+  String get debtShareThisCycle => 'This cycle';
+
+  @override
+  String get debtShareBalanceOnly => 'Balance only';
+
+  @override
+  String get debtShareFieldLabel => 'Message (edit before sending)';
+
+  @override
+  String get debtShareSend => 'Share to LINE / other apps';
+
+  @override
+  String debtDayUp(String amount) {
+    return 'up $amount';
+  }
+
+  @override
+  String debtDayDown(String amount) {
+    return 'down $amount';
+  }
+
+  @override
+  String debtEarlierShow(String date) {
+    return 'All cleared $date | Earlier ▾';
+  }
+
+  @override
+  String get debtEarlierShowPlain => 'Earlier ▾';
+
+  @override
+  String get debtEarlierHide => 'Hide earlier ▴';
+
+  @override
+  String debtRowFromWallet(String name) {
+    return 'from wallet $name';
+  }
+
+  @override
+  String debtRowIntoWallet(String name) {
+    return 'into wallet $name';
+  }
+
+  @override
+  String get debtRowNoWallet => 'no wallet';
+
+  @override
+  String debtRowTheyPaid(String name) {
+    return '$name paid for me';
+  }
+
+  @override
+  String get debtRowIPaid => 'you paid for them';
+
+  @override
+  String debtRowSplitBill(String amount) {
+    return 'split bill $amount';
+  }
+
+  @override
+  String debtRowEvent(String name) {
+    return 'event $name';
+  }
+
+  @override
+  String debtRowIPaidBack(String name) {
+    return 'You paid $name back';
+  }
+
+  @override
+  String debtRowTheyPaidBack(String name) {
+    return '$name paid back';
+  }
+
+  @override
+  String get debtPaidPill => '✓ Paid';
+
+  @override
+  String get debtPaidHelper => 'Only a label; it never changes a number';
+
+  @override
+  String debtOriginLabel(String kind) {
+    return 'From ($kind)';
+  }
+
+  @override
+  String get debtOriginSplit => 'split bill';
+
+  @override
+  String get debtOriginPaidBy => 'paid for me';
+
+  @override
+  String get debtOriginPartner => 'their split';
+
+  @override
+  String get debtOriginEvent => 'event';
+
+  @override
+  String get debtOriginCash => 'a loan';
+
+  @override
+  String get debtOriginLocked => 'can\'t change it here';
+
+  @override
+  String get debtEditWalletLend =>
+      'Money leaves the wallet (a loan / paid for them)';
+
+  @override
+  String get debtEditWalletBorrow => 'Money comes into the wallet (borrowed)';
+
+  @override
+  String get debtEditWalletOff => 'Only the debt, no money moves';
+
+  @override
+  String get quickCreateBtnTx => 'Add';
+
+  @override
+  String get quickCreateBtnDebt => 'Add debt';
+
+  @override
+  String get quickCreateBtnSaving => 'Save money';
+
+  @override
+  String get debtsEmptyOpenTitle => 'No open debts';
+
+  @override
+  String get debtsEmptyOpenMessage =>
+      'Note who borrowed and who paid for whom, so you never forget to ask';
 }

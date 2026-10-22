@@ -146,44 +146,42 @@ class _LinkSectionState extends State<LinkSection> {
       LinkMode.paid => _paidCard(l),
       LinkMode.event => _eventCard(l),
     };
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (recurring != null) ...[
-          RecurringLinkRow(slot: recurring, variant: SplitEventVariant.compact),
-          const SizedBox(height: AppSpacing.sm),
+    return LinkSectionFrame(
+      recurring: recurring == null
+          ? null
+          : RecurringLinkRow(
+              slot: recurring,
+              variant: SplitEventVariant.compact,
+            ),
+      card: card,
+      bar: LinkModeBar<LinkMode>(
+        key: const ValueKey('linkModeBar'),
+        label: l.txLinkTabLabel,
+        selected: mode,
+        onChanged: (m) => _c.setLinkMode(m, hasEvent: _hasEvent),
+        tabs: [
+          AppTab(
+            value: LinkMode.personal,
+            label: l.txLinkTabPersonal,
+            icon: AppIcons.wallet,
+          ),
+          AppTab(
+            value: LinkMode.split,
+            label: l.txLinkTabSplit,
+            icon: AppIcons.split,
+          ),
+          AppTab(
+            value: LinkMode.paid,
+            label: l.txLinkTabPaid,
+            icon: AppIcons.contact,
+          ),
+          AppTab(
+            value: LinkMode.event,
+            label: l.txLinkTabEvent,
+            icon: AppIcons.project,
+          ),
         ],
-        LinkModeBar<LinkMode>(
-          key: const ValueKey('linkModeBar'),
-          label: l.txLinkTabLabel,
-          selected: mode,
-          onChanged: (m) => _c.setLinkMode(m, hasEvent: _hasEvent),
-          tabs: [
-            AppTab(
-              value: LinkMode.personal,
-              label: l.txLinkTabPersonal,
-              icon: AppIcons.wallet,
-            ),
-            AppTab(
-              value: LinkMode.split,
-              label: l.txLinkTabSplit,
-              icon: AppIcons.split,
-            ),
-            AppTab(
-              value: LinkMode.paid,
-              label: l.txLinkTabPaid,
-              icon: AppIcons.contact,
-            ),
-            AppTab(
-              value: LinkMode.event,
-              label: l.txLinkTabEvent,
-              icon: AppIcons.project,
-            ),
-          ],
-        ),
-        if (card != null) ...[const SizedBox(height: AppSpacing.sm), card],
-      ],
+      ),
     );
   }
 
@@ -207,20 +205,8 @@ class _LinkSectionState extends State<LinkSection> {
     );
   }
 
-  Widget _pickChip(String label, VoidCallback onTap) => ConstrainedBox(
-    constraints: const BoxConstraints(minHeight: SplitRow.height),
-    child: Align(
-      alignment: AlignmentDirectional.centerStart,
-      child: AppChip(
-        icon: AppIcons.add,
-        label: label,
-        tone: AppChipTone.primary,
-        selected: true,
-        dashed: true,
-        onTap: onTap,
-      ),
-    ),
-  );
+  Widget _pickChip(String label, VoidCallback onTap) =>
+      SplitPickChip(label: label, onTap: onTap);
 
   Widget _remove(AppLocalizations l, VoidCallback onTap) => SplitRowAction(
     icon: AppIcons.close,

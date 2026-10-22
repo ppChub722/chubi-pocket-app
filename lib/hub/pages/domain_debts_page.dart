@@ -23,6 +23,8 @@ class _DebtsPage extends StatefulWidget {
 class _DebtsPageState extends State<_DebtsPage> {
   String? _picked = 'มาตาก';
   String _last = '—';
+  bool _towardMe = true;
+  bool _settle = false;
 
   void _note(String s) => setState(() => _last = s);
 
@@ -49,6 +51,167 @@ class _DebtsPageState extends State<_DebtsPage> {
       children: [
         Text('Last tap: $_last', style: text.bodySmall),
         const SizedBox(height: AppSpacing.md),
+        // ---- Debt pages (owner 2026-10-22, mocks DebtPerson / DebtEntry) ----
+        HubDemo(
+          title: 'Debt person + entry pieces',
+          note:
+              'The person hero line (sentence + big amount), its two buttons '
+              '(settle in the side colour, สรุปยอด / ทวง), a day header with '
+              'the day change, statement rows (debt / repayment on a soft '
+              'background, the ✓ จ่ายแล้ว pill), the earlier-cycles divider, '
+              'the entry line under the amount, and a person row with its '
+              'age. The share sheet opens from the button.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              DebtSentenceAmount(
+                sentence: 'รอจ่ายให้ลี',
+                amount: const MoneyText(230),
+                color: debtStateColor(context, owedToMe: false),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              DebtPersonActions(
+                color: debtStateColor(context, owedToMe: false),
+                settleLabel: 'จ่ายคืน ฿230',
+                onSettle: () => _note('settle'),
+                shareLabel: 'สรุปยอด',
+                onShare: () => showAppSheet<void>(
+                  context,
+                  title: 'สรุปยอดกับลี',
+                  builder: (_) => DebtShareSheet(
+                    variants: const [
+                      (
+                        label: 'รอบนี้',
+                        text: 'สรุปยอดกับลี\n• 25 ก.ย. ค่าอาหาร 60',
+                      ),
+                      (
+                        label: 'ยอดคงเหลืออย่างเดียว',
+                        text: 'ยอดกับลี ตอนนี้: ฉันรอจ่ายให้ลี 230 บาท',
+                      ),
+                    ],
+                    fieldLabel: 'ข้อความ (แก้ได้ก่อนส่ง)',
+                    copyLabel: 'คัดลอก',
+                    shareLabel: 'แชร์ไป LINE / แอปอื่น',
+                    onCopy: (t) => _note('copy ${t.length}'),
+                    onShare: (t) => _note('share ${t.length}'),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              DateGroupHeader(
+                label: 'ศ. 10 ต.ค. 2026',
+                note: 'ลดลง ฿400',
+                noteColor: Theme.of(context).colorScheme.primary,
+              ),
+              _list([
+                DebtStatementRow(
+                  title: 'คุณจ่ายคืนลี',
+                  subtitle: 'จากกระเป๋า test2',
+                  amount: const MoneyText(400),
+                  repayment: true,
+                  onTap: () => _note('repayment'),
+                ),
+                DebtStatementRow(
+                  title: 'ค่าอาหาร',
+                  subtitle: 'ลีจ่ายแทน',
+                  amount: const MoneyText(60),
+                  amountColor: debtStateColor(context, owedToMe: false),
+                  paidLabel: '✓ จ่ายแล้ว',
+                  onTap: () => _note('debt'),
+                ),
+              ]),
+              CycleDivider(
+                label: 'เคลียร์ครบ 20 ส.ค. | ดูรอบก่อน ▾',
+                onTap: () => _note('earlier'),
+              ),
+              DebtEntryNote(
+                sentence: 'รอรับจาก chalee',
+                amount: const MoneyText(82),
+                color: debtStateColor(context, owedToMe: true),
+                paidLabel: '✓ จ่ายแล้ว',
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              _list([
+                PersonBalanceRow(
+                  name: 'แบงค์ ทดสอบ',
+                  level: PersonLevel.contact,
+                  subtitle: 'ค่าตั๋วคอนเสิร์ต | 1 ก.ย.',
+                  net: 300,
+                  owedToMeLabel: _owedToMe,
+                  iOweLabel: _iOwe,
+                  settledLabel: _settled,
+                  age: 'ค้าง 50 วัน',
+                  ageWarn: true,
+                  onTap: () => _note('person'),
+                ),
+              ]),
+            ],
+          ),
+        ),
+        // ---- Quick create · หนี้ (owner 2026-10-21) ----
+        HubDemo(
+          title: 'DebtModeChips + DebtResultBox — quick create หนี้',
+          note:
+              'No sub-tabs: two chips where the tx mode has รายจ่าย / รายรับ '
+              '(record | settle), worded and coloured by the direction. The '
+              'arrow between กับใคร / กระเป๋า swaps it (tap "swap" here). '
+              'Under the hero, the result box: the person now → after saving '
+              '+ the wallet; a warning when a settle flips the side.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: DebtModeChips(
+                      towardMe: _towardMe,
+                      settle: _settle,
+                      recordLabel: _towardMe ? _owedToMe : _iOwe,
+                      settleLabel: _towardMe ? 'รับคืน' : 'จ่ายคืน',
+                      onChanged: (s) => setState(() => _settle = s),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => setState(() => _towardMe = !_towardMe),
+                    child: const Text('swap'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              DebtResultBox(
+                nowLabel: 'ลี ตอนนี้',
+                afterLabel: 'หลังบันทึก',
+                before: '$_iOwe ฿160.00',
+                after: '$_owedToMe ฿40.00',
+                beforeColor: debtStateColor(context, owedToMe: false),
+                afterColor: debtStateColor(context, owedToMe: true),
+                walletLabel: 'กระเป๋า test2',
+                walletValue: '−฿200.00',
+                warning: 'เกินยอดค้าง — หลังบันทึกจะกลายเป็น $_owedToMe ฿40.00',
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              DebtResultBox(
+                nowLabel: 'ลี ตอนนี้',
+                afterLabel: 'หลังบันทึก',
+                before: '$_iOwe ฿230.00',
+                after: '✓ เคลียร์ครบ',
+                beforeColor: debtStateColor(context, owedToMe: false),
+                afterColor: Theme.of(context).colorScheme.primary,
+                walletLabel: 'กระเป๋า',
+                walletValue: 'ไม่เปลี่ยน',
+                loading: true,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              FlowCards(
+                from: const AppCard(child: Text('กระเป๋า test2')),
+                to: const AppCard(child: Text('ลี ทดสอบ')),
+                onSwap: () => setState(() => _towardMe = !_towardMe),
+                swapTooltip: 'สลับ',
+                caption: 'จดว่าลีต้องคืนฉัน (ฉันให้ลียืมเงินออกจากกระเป๋า)',
+              ),
+            ],
+          ),
+        ),
         // ---- PersonRow ----
         HubDemo(
           title: 'PersonRow',

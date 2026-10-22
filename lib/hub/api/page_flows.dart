@@ -252,6 +252,18 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Row "ติดป้ายจ่ายแล้ว" opened (จ่ายคืน side)', [
       FlowCall('listDebtEntries', note: 'paid=false: the open entries'),
     ]),
+    FlowStep.action('Amount / person / chip / arrow changed (debt mode)', [
+      FlowCall(
+        'createDebtEntry',
+        note:
+            'record chip: ?preview=true (debounced, nothing saved) → the '
+            'result box: before → after + the wallet',
+      ),
+      FlowCall(
+        'createDebtRepayment',
+        note: 'settle chip: ?preview=true; flipped → the overpay warning',
+      ),
+    ]),
     FlowStep.action('Button "บันทึก" (debt mode, จดหนี้)', [
       FlowCall(
         'createDebtEntry',

@@ -49,6 +49,31 @@ class _DebtRepo extends Fake implements PersonalDebtsRepository {
   final created = <Map<String, Object?>>[];
   final repaid = <Map<String, Object?>>[];
 
+  /// The BE's ?preview=true answer; null = the call fails (the app sums).
+  DebtPreview? previewAnswer;
+  final previews = <Map<String, Object?>>[];
+
+  @override
+  Future<DebtPreview> preview(
+    String key, {
+    DebtEntryDirection? direction,
+    DebtRepaymentKind? kind,
+    required double amount,
+    String? accountId,
+    bool? createTransaction,
+    String? personName,
+  }) async {
+    previews.add({
+      'key': key,
+      'direction': direction,
+      'kind': kind,
+      'amount': amount,
+    });
+    final a = previewAnswer;
+    if (a == null) throw StateError('no preview');
+    return a;
+  }
+
   @override
   Future<DebtRepaymentResult> createRepayment(
     String key, {
@@ -93,6 +118,7 @@ class _DebtRepo extends Fake implements PersonalDebtsRepository {
     List<String>? tagIds,
     List<String>? markPaidIds,
     String? personName,
+    String? billId,
   }) async {
     created.add({
       'key': key,
@@ -211,20 +237,32 @@ void main() {
       find.byType(QuickCreateModeTabs),
     );
     expect(chips.mode, QuickCreateMode.debt);
-    // The value picker on top: record a debt | repay.
-    expect(find.text('Record a debt'), findsOneWidget);
-    expect(find.text('Repay'), findsOneWidget);
+    // No sub-tabs (owner 2026-10-21): two chips where รายจ่าย / รายรับ are,
+    // record | settle, worded by the direction (them → me here).
+    expect(find.byKey(const ValueKey('debtSub')), findsNothing);
+    final modeChips = t.widget<DebtModeChips>(find.byType(DebtModeChips));
+    expect(modeChips.towardMe, isTrue);
+    expect(modeChips.settle, isFalse);
     final card = t.widget<EntryCard>(find.byType(EntryCard));
     expect(card.debt, isTrue);
     expect(card.repay, isFalse);
-    // รอรับ / รอจ่าย (+ who pays whom back) replace Paid / Received.
     expect(find.text('To receive'), findsOneWidget);
-    expect(find.text('To pay'), findsOneWidget);
-    expect(find.text('they pay me back'), findsOneWidget);
-    expect(find.text('I pay them back'), findsOneWidget);
+    expect(find.text('Got back'), findsOneWidget);
+    // The sentence under the cards (mock QuickCreateDebt).
+    expect(find.text('Note that Mom owes me'), findsOneWidget);
     expect(find.text('Paid'), findsNothing);
     expect(find.text('Mom'), findsWidgets);
-    expect(find.text('Money in / out of a wallet'), findsOneWidget);
+    // Both cards, the arrow between them; the wallet dims while ledger-only.
+    expect(find.byKey(const ValueKey('debtFlow')), findsOneWidget);
+    // In the money's direction: recording รอรับ = my wallet → Mom.
+    final flow = t.widget<FlowCards>(find.byKey(const ValueKey('debtFlow')));
+    expect(flow.from, isA<WalletPickCard>());
+    expect(
+      t.widget<WalletPickCard>(find.byType(WalletPickCard)).label,
+      'Wallet (not used)',
+    );
+    expect(t.widget<WalletPickCard>(find.byType(WalletPickCard)).muted, isTrue);
+    expect(find.text('Also record the money (a transaction)'), findsOneWidget);
     expect(find.byType(TagChipRow), findsNothing);
     // No "close debts" on this side any more.
     expect(find.text('Close debts'), findsNothing);
@@ -234,8 +272,13 @@ void main() {
     expect(card.titleHint, contains('paid for their lunch'));
   });
 
-  testWidgets('the direction chips wear the DEBT-STATE colours: รอรับ '
-      'green, รอจ่าย red; the card follows', (t) async {
+  Future<void> swap(WidgetTester t) async {
+    await t.tap(find.byTooltip('Swap source and destination'));
+    await t.pumpAndSettle();
+  }
+
+  testWidgets('the arrow swaps the direction: the chips are renamed and '
+      'recoloured (รอรับ / รับคืน green ⇄ รอจ่าย / จ่ายคืน red)', (t) async {
     await open(
       t,
       preset: const QuickCreatePreset.debt(person: EmbeddedPerson(name: 'Mom')),
@@ -246,34 +289,51 @@ void main() {
     AppChip chip(String label) =>
         t.widget<AppChip>(find.widgetWithText(AppChip, label));
     expect(chip('To receive').color, green);
-    expect(chip('To pay').color, red);
-    expect(
-      t.widget<TransactionHeroCard>(find.byType(TransactionHeroCard)).debt,
-      isTrue,
-    );
-    expect(txWordsColor(ctx, TransactionType.expense, debt: true), green);
-    // The repay side: รับคืน (they owed me) green, จ่ายคืน red.
-    await t.tap(find.text('Repay'));
-    await t.pumpAndSettle();
     expect(chip('Got back').color, green);
+    await swap(t);
+    expect(find.text('To receive'), findsNothing);
+    expect(chip('To pay').color, red);
     expect(chip('Pay back').color, red);
+    expect(find.text('Note that I owe Mom'), findsOneWidget);
+    expect(
+      t.widget<EntryCard>(find.byType(EntryCard)).titleHint,
+      contains('they paid for my lunch'),
+    );
+    // The direction stays when the other chip is picked.
+    await t.tap(find.text('Pay back'));
+    await t.pumpAndSettle();
+    final modeChips = t.widget<DebtModeChips>(find.byType(DebtModeChips));
+    expect(modeChips.settle, isTrue);
+    expect(modeChips.towardMe, isFalse);
   });
 
-  testWidgets('the result line follows the amount and direction', (t) async {
+  testWidgets('the result box: now → after saving, and the wallet', (t) async {
     await open(
       t,
       preset: const QuickCreatePreset.debt(person: EmbeddedPerson(name: 'Mom')),
     );
     await t.enterText(amountField(t), '100');
-    await t.pump();
-    expect(find.textContaining('After saving: Mom owes you'), findsOneWidget);
-    expect(find.textContaining('300'), findsWidgets);
-    await t.tap(find.text('To pay'));
-    await t.pump();
-    expect(find.textContaining('100'), findsWidgets);
+    await t.pump(const Duration(milliseconds: 500));
+    final box = find.byKey(const ValueKey('debtResultBox'));
+    expect(box, findsOneWidget);
+    // Mom owes me 200; +100 → 300. No preview from this fake: the app's sum.
     expect(
-      t.widget<EntryCard>(find.byType(EntryCard)).titleHint,
-      contains('they paid for my lunch'),
+      find.descendant(of: box, matching: find.textContaining('200')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: box, matching: find.textContaining('300')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: box, matching: find.text('No change')),
+      findsOneWidget,
+    );
+    await swap(t);
+    // I owe her now: 200 − 100 = 100 still owed to me.
+    expect(
+      find.descendant(of: box, matching: find.textContaining('100')),
+      findsWidgets,
     );
   });
 
@@ -306,9 +366,9 @@ void main() {
       t,
       preset: const QuickCreatePreset.debt(person: EmbeddedPerson(name: 'Mom')),
     );
-    await t.ensureVisible(find.text('Money in / out of a wallet'));
+    await t.ensureVisible(find.text('Also record the money (a transaction)'));
     await t.pumpAndSettle();
-    await t.tap(find.text('Money in / out of a wallet'));
+    await t.tap(find.text('Also record the money (a transaction)'));
     await t.pump();
     expect(find.byType(TagChipRow), findsOneWidget);
     await t.enterText(amountField(t), '100');
@@ -333,19 +393,33 @@ void main() {
     final card = t.widget<EntryCard>(find.byType(EntryCard));
     expect(card.repay, isTrue);
     expect(card.type, TransactionType.income);
+    expect(t.widget<DebtModeChips>(find.byType(DebtModeChips)).settle, isTrue);
+    // Getting money back: Mom → my wallet.
+    expect(
+      t.widget<FlowCards>(find.byKey(const ValueKey('debtFlow'))).to,
+      isA<WalletPickCard>(),
+    );
+    expect(find.text('Mom pays me back, into my wallet'), findsOneWidget);
     expect(find.text('Got back'), findsWidgets);
     expect(card.amount.text, '200');
     expect(card.title.text, 'Got back from Mom');
-    expect(find.text('All cleared'), findsOneWidget);
+    await t.pump(const Duration(milliseconds: 500));
+    expect(find.text('✓ All cleared'), findsOneWidget);
     expect(find.text('Got back from'), findsOneWidget); // the person card
     expect(find.text('Mark as paid'), findsOneWidget);
-    // No switch: a repayment always moves money.
-    expect(find.text('Money in / out of a wallet'), findsNothing);
+    // No switch: a settle always moves money.
+    expect(find.text('Also record the money (a transaction)'), findsNothing);
     expect(find.byType(TagChipRow), findsOneWidget);
-    // A part: the line says what's left.
+    // A part: the box says what's left.
     await t.enterText(amountField(t), '150');
-    await t.pump();
-    expect(find.textContaining('50 left'), findsOneWidget);
+    await t.pump(const Duration(milliseconds: 500));
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('debtResultBox')),
+        matching: find.textContaining('50'),
+      ),
+      findsOneWidget,
+    );
     // No wallet → said, nothing sent.
     await t.tap(find.text('Save'));
     await t.pump();
@@ -380,25 +454,75 @@ void main() {
     expect(find.byType(QuickCreateSheetShell), findsNothing);
   });
 
-  testWidgets('switching to repay and swapping the kind follows the words', (
+  testWidgets('picking the settle chip, then the arrow: the words follow', (
     t,
   ) async {
     await open(
       t,
       preset: const QuickCreatePreset.debt(person: EmbeddedPerson(name: 'Mom')),
     );
-    await t.tap(find.text('Repay'));
+    await t.tap(find.text('Got back'));
     await t.pumpAndSettle();
     var card = t.widget<EntryCard>(find.byType(EntryCard));
     expect(card.repay, isTrue);
     expect(card.title.text, 'Got back from Mom');
-    // Switch the kind: the default description follows.
-    await t.tap(find.text('Pay back').first);
-    await t.pumpAndSettle();
+    // The arrow swaps the kind: the default description follows.
+    await swap(t);
     card = t.widget<EntryCard>(find.byType(EntryCard));
     expect(card.type, TransactionType.expense);
     expect(card.title.text, 'Paid back Mom');
     expect(find.text('Pay back to'), findsOneWidget);
+  });
+
+  testWidgets('the BE preview wins over the app sum (before, after, wallet)', (
+    t,
+  ) async {
+    await open(
+      t,
+      preset: const QuickCreatePreset.debt(person: EmbeddedPerson(name: 'Mom')),
+    );
+    debts.previewAnswer = const DebtPreview(
+      before: 200,
+      after: 777,
+      walletDelta: -100,
+    );
+    await t.enterText(amountField(t), '100');
+    await t.pump(const Duration(milliseconds: 500));
+    await t.pump();
+    expect(debts.previews.last['direction'], DebtEntryDirection.paid);
+    expect(debts.previews.last['amount'], 100);
+    final box = find.byKey(const ValueKey('debtResultBox'));
+    expect(
+      find.descendant(of: box, matching: find.textContaining('777')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('settling more than what is open warns ONCE, then saves', (
+    t,
+  ) async {
+    await open(
+      t,
+      preset: const QuickCreatePreset.debt(
+        person: EmbeddedPerson(name: 'Mom'),
+        debtSub: DebtEntrySub.repay,
+        amount: 300,
+      ),
+      account: Account.fromJson(_walletJson),
+    );
+    await t.pump(const Duration(milliseconds: 500));
+    // Mom owes me 200; getting 300 back flips it: I owe her 100.
+    expect(find.byKey(const ValueKey('debtResultWarning')), findsOneWidget);
+    await t.tap(find.text('Save'));
+    await t.pumpAndSettle();
+    expect(find.text("More than what's open"), findsOneWidget);
+    await t.tap(find.text('Change the amount'));
+    await t.pumpAndSettle();
+    expect(debts.repaid, isEmpty);
+    await t.tap(find.text('Save'));
+    await t.pumpAndSettle();
+    expect(find.text("More than what's open"), findsNothing);
+    expect(debts.repaid.single['amount'], 300);
   });
 
   testWidgets('no person → said, nothing sent', (t) async {

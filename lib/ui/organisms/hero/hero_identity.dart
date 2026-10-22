@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../atoms/app_chip.dart';
 import '../../tokens/app_spacing.dart';
+import '../../tokens/chip_size.dart';
 import '../../tokens/hero_colors.dart';
 import 'app_hero_card.dart';
 
@@ -12,6 +14,7 @@ class HeroIdentity extends StatelessWidget {
     this.fact,
     this.description,
     this.trailing,
+    this.actions = const [],
     this.below,
     super.key,
   });
@@ -21,6 +24,27 @@ class HeroIdentity extends StatelessWidget {
   final Widget? fact;
   final Widget? description;
   final Widget? trailing;
+
+  /// Round buttons at the end (🪪 / 🔍), spaced like [HeroSummaryHead]'s;
+  /// used when there is no [trailing].
+  final List<Widget> actions;
+
+  Widget? get _end =>
+      trailing ??
+      (actions.isEmpty
+          ? null
+          : ChipSizeScope(
+              size: ChipSize.control,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final (i, a) in actions.indexed) ...[
+                    if (i > 0) const SizedBox(width: AppSpacing.sm),
+                    a,
+                  ],
+                ],
+              ),
+            ));
 
   /// Under the icon and text, beside a tall [trailing] (a wallet's balance
   /// next to its month box); the row then aligns to the top.
@@ -35,6 +59,7 @@ class HeroIdentity extends StatelessWidget {
     final editing = AppHeroScope.maybeOf(context)?.editing ?? false;
     final hasText = name != null || fact != null || description != null;
     final under = below;
+    final trailing = _end;
     if (under != null) {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,7 +82,7 @@ class HeroIdentity extends StatelessWidget {
           ),
           if (trailing != null) ...[
             const SizedBox(width: AppSpacing.sm),
-            trailing!,
+            trailing,
           ],
         ],
       );
@@ -91,7 +116,7 @@ class HeroIdentity extends StatelessWidget {
           ),
         if (trailing != null) ...[
           const SizedBox(width: AppSpacing.sm),
-          trailing!,
+          trailing,
         ],
       ],
     );

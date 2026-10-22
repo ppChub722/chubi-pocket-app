@@ -41,3 +41,37 @@ class LinkModeBar<T> extends StatelessWidget {
     ],
   );
 }
+
+/// The whole ผูกกับ block (0.4.0-3): an optional [recurring] row, the
+/// [bar] (a [LinkModeBar]), then the picked tab's [card] — stacked with the
+/// kit's small gap, so the feature only wires them.
+class LinkSectionFrame extends StatelessWidget {
+  const LinkSectionFrame({
+    required this.bar,
+    this.recurring,
+    this.card,
+    super.key,
+  });
+
+  final Widget bar;
+  final Widget? recurring;
+  final Widget? card;
+
+  @override
+  Widget build(BuildContext context) {
+    final recurring = this.recurring;
+    final card = this.card;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (recurring != null) ...[
+          recurring,
+          const SizedBox(height: AppSpacing.sm),
+        ],
+        bar,
+        if (card != null) ...[const SizedBox(height: AppSpacing.sm), card],
+      ],
+    );
+  }
+}

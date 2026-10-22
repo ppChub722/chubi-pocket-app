@@ -157,6 +157,78 @@ void main() {
     expect(r.transaction, isNull);
   });
 
+  test(
+    'createEntry from the event resolve sheet carries bill_id (B3)',
+    () async {
+      http.body = _write;
+      http.status = 201;
+      await repo.createEntry(
+        'n:lee',
+        direction: DebtEntryDirection.paid,
+        amount: 82,
+        personName: 'Lee',
+        billId: 'b1',
+      );
+      expect(sent()['bill_id'], 'b1');
+      await repo.createEntry(
+        'n:lee',
+        direction: DebtEntryDirection.paid,
+        amount: 82,
+      );
+      expect(sent().containsKey('bill_id'), isFalse);
+    },
+  );
+
+  test(
+    'preview: the same POST with ?preview=true; DebtPreview parsed',
+    () async {
+      http.body = {
+        'preview': true,
+        'people': [
+          {
+            'key': 'n:lee',
+            'person': {'name': 'Lee'},
+            'before': -160,
+            'after': 40,
+            'delta': 200,
+            'side_before': 'payable',
+            'side_after': 'receivable',
+            'flipped': true,
+          },
+        ],
+        'wallets': [
+          {'account_id': 'a1', 'before': 1000, 'after': 800, 'delta': -200},
+        ],
+      };
+      final p = await repo.preview(
+        'n:lee',
+        kind: DebtRepaymentKind.pay,
+        amount: 200,
+        accountId: 'a1',
+      );
+      expect(http.last!.path, '/personal-debts/people/n%3Alee/repayments');
+      expect(http.last!.queryParameters['preview'], 'true');
+      expect(sent(), {'kind': 'pay', 'amount': 200.0, 'account_id': 'a1'});
+      expect(p.before, -160);
+      expect(p.after, 40);
+      expect(p.flipped, isTrue);
+      expect(p.walletDelta, -200);
+      http.body = {
+        'preview': true,
+        'people': <Object>[],
+        'wallets': <Object>[],
+      };
+      final r = await repo.preview(
+        'n:lee',
+        direction: DebtEntryDirection.paid,
+        amount: 50,
+        createTransaction: false,
+      );
+      expect(http.last!.path, '/personal-debts/people/n%3Alee/entries');
+      expect(r.walletDelta, isNull);
+    },
+  );
+
   test('updateEntry: account_id null (ledger-only) ≠ absent', () async {
     http.body = _write;
     await repo.updateEntry('e1', const DebtEntryUpdate(clearAccount: true));

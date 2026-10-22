@@ -40,6 +40,20 @@ class MainBottomNav extends StatefulWidget {
   static const double _tabGap = 2;
   static const double _addSize = 76;
 
+  /// The centre slot's width for a tab row [rowWidth] wide (owner
+  /// 2026-10-22, mock QuickCreateBtn): wide enough for the icon + word
+  /// capsule; the four tabs share the rest.
+  static double addSlotFor(double rowWidth) =>
+      (rowWidth * 0.32).clamp(96.0, 120.0);
+
+  /// The capsule's word per mode.
+  static String addLabel(AppLocalizations l, QuickCreateMode mode) =>
+      switch (mode) {
+        QuickCreateMode.tx => l.quickCreateBtnTx,
+        QuickCreateMode.debt => l.quickCreateBtnDebt,
+        QuickCreateMode.saving => l.quickCreateBtnSaving,
+      };
+
   static const double _blur = 16;
 
   @override
@@ -77,10 +91,15 @@ class _MainBottomNavState extends State<MainBottomNav> {
     }
   }
 
-  double get _tabWidth => (_rowWidth - MainBottomNav._addSize) / 4;
+  double get _addSlot => MainBottomNav.addSlotFor(_rowWidth);
 
-  double _slotLeft(int s) =>
-      s * _tabWidth + (s >= 2 ? MainBottomNav._addSize : 0);
+  /// The tab row inside a bar [barWidth] wide.
+  static double _rowWidthOf(double barWidth) =>
+      barWidth - 2 * (MainBottomNav._tabInset - MainBottomNav._tabGap);
+
+  double get _tabWidth => (_rowWidth - _addSlot) / 4;
+
+  double _slotLeft(int s) => s * _tabWidth + (s >= 2 ? _addSlot : 0);
 
   double _slotAt(double left) {
     for (var s = 0; s < 3; s++) {
@@ -218,11 +237,20 @@ class _MainBottomNavState extends State<MainBottomNav> {
                     ),
                   ),
                 ),
-                QuickCreateButton(
-                  mode: widget.addMode,
-                  size: MainBottomNav._addSize,
-                  tooltip: l.navAddTransaction,
-                  onPressed: widget.onAddPressed,
+                LayoutBuilder(
+                  builder: (context, box) => ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth:
+                          MainBottomNav.addSlotFor(_rowWidthOf(box.maxWidth)) -
+                          2 * MainBottomNav._tabGap,
+                    ),
+                    child: QuickCreateButton(
+                      mode: widget.addMode,
+                      label: MainBottomNav.addLabel(l, widget.addMode),
+                      tooltip: l.navAddTransaction,
+                      onPressed: widget.onAddPressed,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -251,7 +279,7 @@ class _MainBottomNavState extends State<MainBottomNav> {
           still: still,
           onTap: () => widget.onTabSelected(1),
         ),
-        const SizedBox(width: MainBottomNav._addSize),
+        SizedBox(width: _addSlot),
         _NavItem(
           icon: AppIcons.wallet,
           iconSelected: AppIcons.walletActive,

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../atoms/app_avatar.dart';
+import '../atoms/app_chip.dart';
 import '../atoms/app_icon.dart';
 import '../atoms/app_input.dart';
 import '../atoms/app_input_type.dart';
 import 'amount_input.dart';
+import '../tokens/app/app_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/icon_size.dart';
@@ -312,4 +314,29 @@ class _ShareAmountFieldState extends State<ShareAmountField> {
       ),
     );
   }
+}
+
+/// "+ เลือกคนจ่าย" in a share row's name slot: a dashed primary chip, at the
+/// start, level with a [SplitRow].
+class SplitPickChip extends StatelessWidget {
+  const SplitPickChip({required this.label, required this.onTap, super.key});
+
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) => ConstrainedBox(
+    constraints: const BoxConstraints(minHeight: SplitRow.height),
+    child: Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: AppChip(
+        icon: AppIcons.add,
+        label: label,
+        tone: AppChipTone.primary,
+        selected: true,
+        dashed: true,
+        onTap: onTap,
+      ),
+    ),
+  );
 }

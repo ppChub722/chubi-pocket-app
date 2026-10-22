@@ -216,17 +216,28 @@ void main() {
     await t.pumpAndSettle();
   }
 
-  testWidgets('the two mode colours differ (tx = primary, debt = people)', (
-    t,
-  ) async {
+  testWidgets('the mode colours differ (tx = primary, debt purple, saving '
+      'blue; owner 2026-10-22)', (t) async {
     await pump(t);
     final ctx = t.element(find.byType(QuickCreateButton));
     expect(colorOf(t, QuickCreateMode.tx), Theme.of(ctx).colorScheme.primary);
-    expect(colorOf(t, QuickCreateMode.debt), ModuleColors.of(ctx).people);
+    expect(colorOf(t, QuickCreateMode.debt), const Color(0xFF7A5AE0));
+    expect(colorOf(t, QuickCreateMode.saving), const Color(0xFF3B7DD8));
     expect(
       colorOf(t, QuickCreateMode.debt),
       isNot(colorOf(t, QuickCreateMode.tx)),
     );
+  });
+
+  testWidgets('the centre button is the capsule with the mode word', (t) async {
+    await pump(t);
+    final b = t.widget<QuickCreateButton>(find.byType(QuickCreateButton));
+    expect(b.label, isNotNull);
+    expect(
+      t.getSize(find.byType(QuickCreateButton)).height,
+      QuickCreateButton.capsuleHeight,
+    );
+    expect(find.byKey(const ValueKey('quickCreateLabel')), findsOneWidget);
   });
 
   testWidgets('a page with no preset: tx mode, primary', (t) async {

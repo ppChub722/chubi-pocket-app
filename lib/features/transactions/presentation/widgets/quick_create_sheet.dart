@@ -22,6 +22,7 @@ import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
+import '../../../personal_debts/presentation/debt_wiring.dart';
 import '../../../projects/data/projects_repository.dart';
 import '../../../projects/domain/project.dart';
 import '../../../projects/presentation/widgets/project_common.dart';
@@ -418,18 +419,25 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         if (s.memberId != null && s.amountValue > 0)
           ProjectSplitInput(memberId: s.memberId!, amount: s.amountValue),
     ];
+    // A bill made from my tx (0.4.0-3 B3): "แก้ในสมุดของฉันด้วยไหม?" up front
+    // (also_update_link = apply_to_my_tx). My copy of someone else's bill is
+    // asked after the save, from the answer's my_transaction.
     var alsoUpdateLink = false;
-    if (widget.projectRow?.parent.sourceTx != null) {
+    final asked = widget.projectRow?.parent.sourceTx != null;
+    if (asked) {
       final choice = await showLinkedPrompt(
         context,
-        title: l.linkedSaveTitle,
+        title: l.linkedBookAskTitle,
         cancelLabel: l.linkedCancel,
-        thisSideLabel: l.linkedSaveThisOnly,
-        bothSidesLabel: l.linkedSaveBoth,
+        thisSideLabel: l.linkedEventOnly,
+        bothSidesLabel: l.linkedBoth,
       );
       if (choice == null || !mounted) return;
       alsoUpdateLink = choice == LinkedChoice.bothSides;
     }
+    final txRepo = context.read<TransactionsRepository>();
+    final txCubit = context.read<TransactionsCubit>();
+    final accounts = context.read<AccountsCubit>();
     setState(() => _saving = true);
     try {
       final tagIds = <String>[];
@@ -467,6 +475,37 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         );
       }
       widget.onEventSaved?.call(patch);
+      final mine = patch.myTransaction;
+      if (mine != null) txCubit.patchRow(mine, afterWrite: true);
+      // My copy now differs from the bill: offer it once, here.
+      if (!asked &&
+          mine != null &&
+          mine.eventBill?.inSync == false &&
+          mounted) {
+        final choice = await showLinkedPrompt(
+          context,
+          title: l.linkedBookAskTitle,
+          cancelLabel: l.linkedCancel,
+          thisSideLabel: l.linkedEventOnly,
+          bothSidesLabel: l.linkedBoth,
+        );
+        if (choice == LinkedChoice.bothSides) {
+          try {
+            final applied = await txRepo.applyEvent(mine.id);
+            for (final r in applied.rows) {
+              txCubit.patchRow(r, afterWrite: true);
+            }
+            accounts.patchBalances(applied.accountBalances);
+          } on ApiException catch (e) {
+            // The bill is saved; the tx detail still offers it later.
+            showAppSnackBarOn(
+              messenger,
+              eventErrorMessage(l, e),
+              tone: Tone.warning,
+            );
+          }
+        }
+      }
       HapticFeedback.mediumImpact();
       navigator.pop(true);
       showAppSnackBarOn(messenger, l.quickSaved, tone: Tone.success);
@@ -603,6 +642,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         return;
       }
       _c.prefill(p.draft, accounts: accounts, categories: categories);
+      // Reopens on the tab it was saved with (0.4.0-3).
+      _c.prefillLinkFromDraft(p.draft, p.resolved);
       _draftBaseline = _c.toDraft(keepIncomplete: true);
     }
   }
@@ -614,12 +655,26 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       return;
     }
     if (!mounted) return;
+    // A new entry saves the tab on screen; อีเวนต์ needs an event that
+    // already exists (a draft can't make one).
+    if (!_draftLike && _c.type == TransactionType.expense) {
+      _c.link.mode ??= _linkMode;
+    }
+    final event = _activeEvent;
+    if (_c.pickedTab == LinkMode.event && event is NewEventTarget) {
+      HapticFeedback.lightImpact();
+      _toast(l.txLinkDraftNeedsExistingEvent);
+      return;
+    }
     final pending = context.read<PendingCubit>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _saving = true);
     try {
-      final d = _c.toDraft(keepIncomplete: true);
+      final d = _c.toDraft(
+        keepIncomplete: true,
+        eventProjectId: event is ExistingEventTarget ? event.project.id : null,
+      );
       final p = widget.draft;
       if (p == null) {
         await pending.add([d]);
@@ -856,18 +911,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         : null;
     if (changed && link == null) return;
     if (!mounted) return;
-    bool? alsoUpdateLink;
-    if (tx.hasPromptedLink) {
-      final choice = await showLinkedPrompt(
-        context,
-        title: l.linkedSaveTitle,
-        cancelLabel: l.linkedCancel,
-        thisSideLabel: l.linkedSaveThisOnly,
-        bothSidesLabel: l.linkedSaveBoth,
-      );
-      if (choice == null || !mounted) return;
-      alsoUpdateLink = choice == LinkedChoice.bothSides;
-    }
+    final ask = await askLinkedTxSave(context, tx);
+    if (ask.cancelled || !mounted) return;
+    final alsoUpdateLink = ask.alsoUpdateLink;
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _saving = true);
@@ -1086,6 +1132,24 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       _toast(problem!);
       return;
     }
+    // Settling more than what's open flips the side: say it once.
+    if (d.repaying && d.overpays && !_overpayWarned) {
+      _overpayWarned = true;
+      final go = await showChoiceDialog<bool>(
+        context,
+        title: l.debtOverpayTitle,
+        message: l.debtOverpayWarn(_debtAfterWords(l, d)),
+        choices: [
+          DialogChoice(
+            value: true,
+            label: l.debtOverpayConfirm,
+            variant: AppButtonVariant.primary,
+          ),
+          DialogChoice(value: false, label: l.debtOverpayEdit),
+        ],
+      );
+      if (go != true || !mounted) return;
+    }
     if (d.repaying) return _saveRepayment(d, person);
     final repo = context.read<PersonalDebtsRepository>();
     final accounts = context.read<AccountsCubit>();
@@ -1121,6 +1185,21 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       setState(() => _saving = false);
       showSaveFailure(context, e, retry: _saveDebt);
     }
+  }
+
+  bool _overpayWarned = false;
+
+  /// "รอรับ ฿40": the person's side after the settle (preview, else the
+  /// app's own sum).
+  String _debtAfterWords(AppLocalizations l, DebtEntryController d) {
+    final after = d.preview?.after ?? d.netAfter ?? 0;
+    if (after.abs() <= 0.004) return '✓ ${l.debtRepayCleared}';
+    final money = moneyString(
+      context,
+      after.abs(),
+      symbol: debtCurrencySymbol(context),
+    );
+    return '${after > 0 ? l.debtsOwedToMe : l.debtsIOwe} $money';
   }
 
   /// จ่ายคืน: ONE transaction tied to the person (not a debt row); the
@@ -1376,7 +1455,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       if (!_c.linkBalanced(mode)) return l.txLinkModeUnbalanced;
     }
     if (!_c.isTransfer && mode == LinkMode.event) {
-      if (_activeEvent == null) return l.txLinkModeNeedsEvent;
+      if (!_hasEvent) return l.txLinkModeNeedsEvent;
       if (_c.pickedTab != null && !_c.linkBalanced(mode)) {
         return l.txLinkModeUnbalanced;
       }
@@ -1391,7 +1470,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   }
 
   /// The ผูกกับ tab in use (inferred until one is picked).
-  LinkMode get _linkMode => _c.linkMode(hasEvent: _activeEvent != null);
+  LinkMode get _linkMode => _c.linkMode(hasEvent: _hasEvent);
+
+  /// A draft / an edit keeps its event on the form; a new entry on the sheet.
+  bool get _hasEvent =>
+      _draftLike ? _c.projectId != null : _activeEvent != null;
 
   Future<void> _save() async {
     final l = AppLocalizations.of(context)!;
@@ -1601,10 +1684,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           : _isDebt ||
                 _isSaving ||
                 _saving ||
-                _activeEvent != null ||
-                // A draft keeps no จ่ายแทน / อีเวนต์ data yet.
-                _linkMode == LinkMode.paid ||
-                _linkMode == LinkMode.event ||
+                // A draft keeps every tab's data (0.4.0-3); only a new event
+                // is refused, with a word, on the tap.
                 _isEmpty ||
                 waiting
           ? null
@@ -1637,7 +1718,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                     : null,
                 eventPending: _activeEvent != null,
                 // ผูกกับ (0.4.0-3): a new expense; the form shows the tabs.
-                linkTabs: !_isEvent && (!_draftLike || _linkEdit.active),
+                linkTabs:
+                    !_isEvent &&
+                    (!_draftLike || _linkEdit.active || _editingDraft),
                 linkEventIsNew: _event is NewEventTarget,
                 linkIsEventMember: _isEventMember,
                 recurringSlot: _recurringSlot(l),

@@ -1,3 +1,4 @@
+import 'package:chubi_pocket/features/pending/domain/pending_transaction.dart';
 import 'package:chubi_pocket/features/transactions/domain/link_draft.dart';
 import 'package:chubi_pocket/features/transactions/domain/refs.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction.dart';
@@ -335,6 +336,129 @@ void main() {
         final s = c.linkSave(LinkMode.paid);
         expect(s.link, isNull);
         expect(s.useWallet, isTrue);
+      });
+    });
+
+    group('drafts carry the tab (0.4.0-3 2c)', () {
+      test('toDraft: only the active tab goes in', () {
+        c
+          ..setSplits([split('บอส', 40, id: 'c1')])
+          ..setLinkMode(LinkMode.paid, hasEvent: false)
+          ..setPaidBy(_lee);
+        var d = c.toDraft();
+        expect(d.splits, isEmpty);
+        expect(d.paidBy, {'contact_id': 'c2', 'amount': 120.0});
+        expect(d.toJson()['paid_by'], isNotNull);
+
+        c.setLinkMode(LinkMode.event, hasEvent: true);
+        d = c.toDraft(eventProjectId: 'p1');
+        expect(d.paidBy, isNull);
+        expect(d.projectId, 'p1');
+        // Lee was carried over as the payer: Lee + บอส + me share it.
+        expect(d.payer, {'contact_id': 'c2'});
+        expect(d.members.first, {'me': true, 'share': 40.0});
+        expect(d.members, hasLength(3));
+
+        c.setLinkMode(LinkMode.split, hasEvent: false);
+        d = c.toDraft();
+        expect(d.splits.single['contact_id'], 'c1');
+        expect(d.projectId, isNull);
+        expect(d.payer, isNull);
+      });
+
+      test('no tab picked: the draft is as before', () {
+        c
+          ..projectId = 'p1'
+          ..setSplits([split('บอส', 40, id: 'c1')]);
+        final d = c.toDraft();
+        expect(d.splits, hasLength(1));
+        expect(d.projectId, 'p1');
+        expect(d.paidBy, isNull);
+      });
+
+      test('a draft reopens on its tab (resolved link_mode / paid_by / '
+          'bill_people)', () {
+        final p = PendingTransaction.fromJson({
+          'id': 'd1',
+          'source': 'manual',
+          'status': 'pending',
+          'created_at': '2026-10-22T08:00:00Z',
+          'draft': {
+            'type': 'expense',
+            'amount': 120,
+            'project_id': 'p1',
+            'payer': {'member_id': 'm2'},
+            'members': [
+              {'me': true, 'share': 60},
+              {'member_id': 'm2', 'share': 60},
+            ],
+          },
+          'resolved': {
+            'link_mode': 'event',
+            'bill_people': {
+              'payer': {
+                'me': false,
+                'member_id': 'm2',
+                'contact_id': null,
+                'name': 'Ann',
+              },
+              'members': [
+                {
+                  'me': true,
+                  'member_id': 'm1',
+                  'contact_id': null,
+                  'name': '',
+                  'share': 60,
+                },
+                {
+                  'me': false,
+                  'member_id': 'm2',
+                  'contact_id': null,
+                  'name': 'Ann',
+                  'share': 60,
+                },
+              ],
+            },
+          },
+        });
+        expect(p.draft.payer, {'member_id': 'm2'});
+        expect(p.draft.members, hasLength(2));
+        expect(p.resolved.linkMode, LinkMode.event);
+        c
+          ..amount.text = '120'
+          ..prefillLinkFromDraft(p.draft, p.resolved);
+        expect(c.pickedTab, LinkMode.event);
+        expect(c.link.eventPayer!.memberId, 'm2');
+        expect(c.myShareFor(LinkMode.event), 60);
+        final again = c.toDraft(eventProjectId: 'p1');
+        expect(again.payer, {'member_id': 'm2'});
+        expect(again.members.last, {'member_id': 'm2', 'share': 60.0});
+      });
+
+      test('a จ่ายแทน draft reopens with the payer + amount', () {
+        final p = PendingTransaction.fromJson({
+          'id': 'd2',
+          'source': 'manual',
+          'status': 'pending',
+          'created_at': '2026-10-22T08:00:00Z',
+          'draft': {
+            'type': 'expense',
+            'amount': 120,
+            'paid_by': {'contact_id': 'c2', 'amount': 20},
+          },
+          'resolved': {
+            'link_mode': 'paid',
+            'paid_by': {
+              'person': {'name': 'ลี', 'contact_id': 'c2'},
+              'amount': 20,
+              'my_paid': 100,
+            },
+          },
+        });
+        c.prefillLinkFromDraft(p.draft, p.resolved);
+        expect(c.pickedTab, LinkMode.paid);
+        expect(c.link.paidBy, _lee);
+        expect(c.walletOutFor(LinkMode.paid), 100);
       });
     });
 

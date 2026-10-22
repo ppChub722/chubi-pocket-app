@@ -160,13 +160,16 @@ class LinkEditSession {
   }
 
   /// The event a switch into อีเวนต์ goes to: the one picked (a new one is
-  /// made first), else the tx's own.
+  /// made first), else the one on the form ([formProjectId]: the sheet keeps
+  /// it there), else the tx's own.
   static Future<String?> _projectId(
     BuildContext context,
     Transaction t,
     EventTarget? picked,
+    String? formProjectId,
   ) async {
     final l = AppLocalizations.of(context)!;
+    if (picked == null && formProjectId != null) return formProjectId;
     switch (picked) {
       case ExistingEventTarget(:final project):
         return project.id;
@@ -217,7 +220,7 @@ class LinkEditSession {
       return null;
     }
     final projectId = m == LinkMode.event
-        ? await _projectId(context, t, event)
+        ? await _projectId(context, t, event, c.projectId)
         : null;
     if (m == LinkMode.event && projectId == null) return null;
     if (!context.mounted) return null;
@@ -253,6 +256,31 @@ class LinkEditSession {
       return null;
     }
   }
+}
+
+/// Saving an edit of my tx that's tied to another record asks whether that
+/// side changes too. An event bill (made from my tx, or my copy; 0.4.0-3
+/// B3, owner's words) asks "แก้ในอีเวนต์ด้วยไหม?" [แก้แค่ของฉัน]
+/// [แก้ทั้งคู่]; a recurring link keeps the generic ask. The answer is
+/// `also_update_link` (= apply_to_event on the BE). cancelled = stop.
+Future<({bool cancelled, bool? alsoUpdateLink})> askLinkedTxSave(
+  BuildContext context,
+  Transaction t,
+) async {
+  final l = AppLocalizations.of(context)!;
+  final event = t.eventBill != null;
+  if (!event && !t.hasPromptedLink) {
+    return (cancelled: false, alsoUpdateLink: null);
+  }
+  final choice = await showLinkedPrompt(
+    context,
+    title: event ? l.linkedEventAskTitle : l.linkedSaveTitle,
+    cancelLabel: l.linkedCancel,
+    thisSideLabel: event ? l.linkedMineOnly : l.linkedSaveThisOnly,
+    bothSidesLabel: event ? l.linkedBoth : l.linkedSaveBoth,
+  );
+  if (choice == null) return (cancelled: true, alsoUpdateLink: null);
+  return (cancelled: false, alsoUpdateLink: choice == LinkedChoice.bothSides);
 }
 
 /// The rule the server would reject first; null = ready to save.
