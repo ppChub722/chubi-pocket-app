@@ -84,6 +84,7 @@ Map<String, dynamic> _prodContact() => {
 void main() {
   late _Repo repo;
   late QuickCreateContext registry;
+  var contacts = _Contacts();
 
   setUp(() {
     repo = _Repo()..body = _prodContact();
@@ -96,7 +97,7 @@ void main() {
     final auth = _Auth();
     final pending = _Pending();
     final unread = _Unread();
-    final contacts = _Contacts();
+    contacts = _Contacts();
     when(() => auth.state).thenReturn(const AuthUnauthenticated());
     when(() => pending.state).thenReturn(const PendingState());
     when(() => unread.state).thenReturn(0);
@@ -181,7 +182,7 @@ void main() {
     expect(find.byType(DetailPageSkeleton), findsNothing);
   });
 
-  testWidgets('view: link chip, 💸 next to ✏️, info rows, link section, no '
+  testWidgets('view: link chip, 💸 next to ✏️, info rows, link section, the '
       '"show nickname" setting', (t) async {
     await pump(t);
     // A: the link state chip; B: name + description.
@@ -195,8 +196,8 @@ void main() {
     expect(find.text('Email'), findsOneWidget);
     expect(find.text('lee@example.com'), findsOneWidget);
     expect(find.text('Phone'), findsNothing);
-    // The nickname switch is an edit-mode setting only.
-    expect(find.text('Show nickname'), findsNothing);
+    // The nickname switch works in view too (owner 2026-10-21).
+    expect(find.text('Show nickname'), findsOneWidget);
     expect(find.byType(EndZone), findsNothing);
     // Link section: linked → unlink + match names with the BE's counts.
     expect(find.text('Link account'), findsOneWidget);
@@ -208,6 +209,45 @@ void main() {
     );
     // The old "debts with this person" row is gone (it is the 💸 button).
     expect(find.text('Debts with this person'), findsNothing);
+  });
+
+  Finder nicknameSwitch() => find.descendant(
+    of: find.widgetWithText(SettingToggleRow, 'Show nickname'),
+    matching: find.byType(AppSwitch),
+  );
+
+  testWidgets('view: "show nickname" saves at once — ONE update with only '
+      'that field, no edit mode', (t) async {
+    await pump(t);
+    when(
+      () => contacts.update('c1', showNickname: any(named: 'showNickname')),
+    ).thenAnswer(
+      (_) async =>
+          Contact.fromJson({..._prodContact(), 'show_nickname': false}),
+    );
+    expect(t.widget<AppSwitch>(nicknameSwitch()).value, isTrue);
+    await t.tap(nicknameSwitch());
+    await t.pump();
+    expect(t.widget<AppSwitch>(nicknameSwitch()).value, isFalse);
+    await t.pump(const Duration(milliseconds: 100));
+    verify(() => contacts.update('c1', showNickname: false)).called(1);
+    expect(t.widget<AppSwitch>(nicknameSwitch()).value, isFalse);
+    expect(find.byType(EndZone), findsNothing); // still view mode
+  });
+
+  testWidgets('view: a failed "show nickname" save flips back, with a retry', (
+    t,
+  ) async {
+    await pump(t);
+    when(
+      () => contacts.update('c1', showNickname: any(named: 'showNickname')),
+    ).thenThrow(const ApiException(code: 'INTERNAL', message: 'boom'));
+    await t.tap(nicknameSwitch());
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 100));
+    expect(t.widget<AppSwitch>(nicknameSwitch()).value, isTrue);
+    expect(find.text('boom'), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
   });
 
   testWidgets('unlinked contact with an email offers a link request', (

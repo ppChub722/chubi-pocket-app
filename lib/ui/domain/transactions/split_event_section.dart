@@ -103,15 +103,16 @@ class SplitEventSlot {
   final VoidCallback? onLongPress;
 }
 
-class EventRow extends StatelessWidget {
-  const EventRow({
+/// The event as a chip: "+ เลือกอีเวนต์" (dashed) when none, else the
+/// event's name (tap = change, × = take it off). [EventRow]'s value and the
+/// อีเวนต์ card's header.
+class EventPickChip extends StatelessWidget {
+  const EventPickChip({
     required this.name,
     this.onTap,
     this.onClear,
     this.locked = false,
     this.editing = true,
-    this.onLongPress,
-    this.variant = SplitEventVariant.full,
     super.key,
   });
 
@@ -120,14 +121,11 @@ class EventRow extends StatelessWidget {
   final VoidCallback? onClear;
   final bool locked;
   final bool editing;
-  final VoidCallback? onLongPress;
-  final SplitEventVariant variant;
 
-  bool get _compact => variant == SplitEventVariant.compact;
-
-  Widget _value(BuildContext context, AppLocalizations l) {
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final n = name;
-    final accent = ModuleColors.of(context).people;
     if (n == null) {
       if (onTap == null || locked) {
         return DetailPlaceholder(l.quickEventNone);
@@ -150,7 +148,7 @@ class EventRow extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, c) => AppChip(
               icon: AppIcons.project,
-              color: accent,
+              color: ModuleColors.of(context).people,
               label: n,
               selected: changeable,
               dashed: changeable,
@@ -168,11 +166,40 @@ class EventRow extends StatelessWidget {
       ],
     );
   }
+}
+
+class EventRow extends StatelessWidget {
+  const EventRow({
+    required this.name,
+    this.onTap,
+    this.onClear,
+    this.locked = false,
+    this.editing = true,
+    this.onLongPress,
+    this.variant = SplitEventVariant.full,
+    super.key,
+  });
+
+  final String? name;
+  final VoidCallback? onTap;
+  final VoidCallback? onClear;
+  final bool locked;
+  final bool editing;
+  final VoidCallback? onLongPress;
+  final SplitEventVariant variant;
+
+  bool get _compact => variant == SplitEventVariant.compact;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final value = _value(context, l);
+    final value = EventPickChip(
+      name: name,
+      onTap: onTap,
+      onClear: onClear,
+      locked: locked,
+      editing: editing,
+    );
     final Widget row = _compact
         ? DraftFieldRow(
             label: l.quickEventLabel,

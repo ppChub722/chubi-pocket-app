@@ -1823,7 +1823,7 @@ abstract class AppLocalizations {
   /// No description provided for @debtDirectionOwedToMe.
   ///
   /// In en, this message translates to:
-  /// **'They owe me'**
+  /// **'To receive'**
   String get debtDirectionOwedToMe;
 
   /// No description provided for @debtDirectionOwedToMeDesc.
@@ -1835,7 +1835,7 @@ abstract class AppLocalizations {
   /// No description provided for @debtDirectionIOwe.
   ///
   /// In en, this message translates to:
-  /// **'I owe them'**
+  /// **'To pay'**
   String get debtDirectionIOwe;
 
   /// No description provided for @debtDirectionIOweDesc.
@@ -2243,7 +2243,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectTxOwes.
   ///
   /// In en, this message translates to:
-  /// **'owes {name}'**
+  /// **'to pay {name}'**
   String projectTxOwes(String name);
 
   /// No description provided for @projectTxUnmark.
@@ -3317,7 +3317,7 @@ abstract class AppLocalizations {
   /// No description provided for @txSplitOwes.
   ///
   /// In en, this message translates to:
-  /// **'Owes'**
+  /// **'To pay'**
   String get txSplitOwes;
 
   /// No description provided for @txSplitRemove.
@@ -3557,7 +3557,7 @@ abstract class AppLocalizations {
   /// No description provided for @moreDebtsDesc.
   ///
   /// In en, this message translates to:
-  /// **'Who owes whom'**
+  /// **'To receive / to pay, with whom'**
   String get moreDebtsDesc;
 
   /// No description provided for @moreBudgetsDesc.
@@ -6412,7 +6412,7 @@ abstract class AppLocalizations {
   /// No description provided for @transactionSplitShareTitle.
   ///
   /// In en, this message translates to:
-  /// **'Share with… (I owe them their part)'**
+  /// **'Share with… (I pay them their part)'**
   String get transactionSplitShareTitle;
 
   /// No description provided for @quickCreateErrorTxNotFound.
@@ -6856,7 +6856,7 @@ abstract class AppLocalizations {
   /// No description provided for @txShareOthersOwe.
   ///
   /// In en, this message translates to:
-  /// **'others owe {amount}'**
+  /// **'to receive from others {amount}'**
   String txShareOthersOwe(String amount);
 
   /// No description provided for @txShareOthers.
@@ -12828,6 +12828,360 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This deletes {bills} bills and {members} members.'**
   String fpM5bEventDeleteNumbers(int bills, int members);
+
+  /// No description provided for @fpGoalsPlanHeadMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month’s saving plan | {month}'**
+  String fpGoalsPlanHeadMonth(String month);
+
+  /// No description provided for @fpGoalsRingSavedPct.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {pct}%'**
+  String fpGoalsRingSavedPct(int pct);
+
+  /// No description provided for @fpGoalsFactTargetShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Short of the targets'**
+  String get fpGoalsFactTargetShort;
+
+  /// No description provided for @fpGoalsFactMonthToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'To save this month'**
+  String get fpGoalsFactMonthToSave;
+
+  /// No description provided for @debtSubRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a debt'**
+  String get debtSubRecord;
+
+  /// No description provided for @debtSubRepay.
+  ///
+  /// In en, this message translates to:
+  /// **'Repay'**
+  String get debtSubRepay;
+
+  /// No description provided for @debtRepayReceive.
+  ///
+  /// In en, this message translates to:
+  /// **'Got back'**
+  String get debtRepayReceive;
+
+  /// No description provided for @debtMoneyMovedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Money in / out of a wallet'**
+  String get debtMoneyMovedLabel;
+
+  /// No description provided for @debtTitleHintOwedToMe.
+  ///
+  /// In en, this message translates to:
+  /// **'What for? e.g. paid for their lunch, a loan'**
+  String get debtTitleHintOwedToMe;
+
+  /// No description provided for @debtTitleHintIOwe.
+  ///
+  /// In en, this message translates to:
+  /// **'What for? e.g. they paid for my lunch, borrowed money'**
+  String get debtTitleHintIOwe;
+
+  /// No description provided for @debtRepayTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What for?'**
+  String get debtRepayTitleHint;
+
+  /// No description provided for @debtRepayTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay back to'**
+  String get debtRepayTo;
+
+  /// No description provided for @debtRepayFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Got back from'**
+  String get debtRepayFrom;
+
+  /// No description provided for @debtRepayDescPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid back {name}'**
+  String debtRepayDescPay(String name);
+
+  /// No description provided for @debtRepayDescReceive.
+  ///
+  /// In en, this message translates to:
+  /// **'Got back from {name}'**
+  String debtRepayDescReceive(String name);
+
+  /// No description provided for @debtMarkPaidLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as paid'**
+  String get debtMarkPaidLabel;
+
+  /// No description provided for @debtRepayLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'After saving: {amount} left'**
+  String debtRepayLeft(String amount);
+
+  /// No description provided for @debtRepayCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'All cleared'**
+  String get debtRepayCleared;
+
+  /// No description provided for @debtRepayPickTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'People with an open balance'**
+  String get debtRepayPickTitle;
+
+  /// No description provided for @debtRepayNoOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'No one owes or is owed right now'**
+  String get debtRepayNoOpen;
+
+  /// No description provided for @txRepaymentCategoryLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'A repayment keeps its system category'**
+  String get txRepaymentCategoryLocked;
+
+  /// No description provided for @txLinkModeNeedsPayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick who paid first'**
+  String get txLinkModeNeedsPayer;
+
+  /// No description provided for @txLinkModeNeedsEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick an event first'**
+  String get txLinkModeNeedsEvent;
+
+  /// No description provided for @txLinkModeUnbalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'The amounts don\'t add up to the bill yet. See the card\'s status line.'**
+  String get txLinkModeUnbalanced;
+
+  /// No description provided for @txLinkTabLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get txLinkTabLabel;
+
+  /// No description provided for @txLinkTabPersonal.
+  ///
+  /// In en, this message translates to:
+  /// **'Just me'**
+  String get txLinkTabPersonal;
+
+  /// No description provided for @txLinkTabSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'Split'**
+  String get txLinkTabSplit;
+
+  /// No description provided for @txLinkTabPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid for me'**
+  String get txLinkTabPaid;
+
+  /// No description provided for @txLinkTabEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Event'**
+  String get txLinkTabEvent;
+
+  /// No description provided for @txLinkBillLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill'**
+  String get txLinkBillLabel;
+
+  /// No description provided for @txLinkCardSplitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Split with'**
+  String get txLinkCardSplitTitle;
+
+  /// No description provided for @txLinkCardPaidTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who paid, and how much'**
+  String get txLinkCardPaidTitle;
+
+  /// No description provided for @txLinkCardMyPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'I paid (from my wallet)'**
+  String get txLinkCardMyPaid;
+
+  /// No description provided for @txLinkCardPickPayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick who paid'**
+  String get txLinkCardPickPayer;
+
+  /// No description provided for @txLinkCardWhoPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Who paid'**
+  String get txLinkCardWhoPaid;
+
+  /// No description provided for @txLinkCardWhoInBill.
+  ///
+  /// In en, this message translates to:
+  /// **'Who\'s in the bill'**
+  String get txLinkCardWhoInBill;
+
+  /// No description provided for @txLinkCardMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Me'**
+  String get txLinkCardMe;
+
+  /// No description provided for @txLinkCardSplitOk.
+  ///
+  /// In en, this message translates to:
+  /// **'✓ All split'**
+  String get txLinkCardSplitOk;
+
+  /// No description provided for @txLinkCardPaidOk.
+  ///
+  /// In en, this message translates to:
+  /// **'✓ Fully paid'**
+  String get txLinkCardPaidOk;
+
+  /// No description provided for @txLinkCardShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} short'**
+  String txLinkCardShort(String amount);
+
+  /// No description provided for @txLinkCardOver.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} over'**
+  String txLinkCardOver(String amount);
+
+  /// No description provided for @txLinkCardNewToEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'New · joins the event'**
+  String get txLinkCardNewToEvent;
+
+  /// No description provided for @txLinkWalletNotOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Not from your wallet'**
+  String get txLinkWalletNotOut;
+
+  /// No description provided for @txLinkWalletPart.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} from this wallet'**
+  String txLinkWalletPart(String amount);
+
+  /// No description provided for @txLinkShareIOwe.
+  ///
+  /// In en, this message translates to:
+  /// **'to pay {name} {amount}'**
+  String txLinkShareIOwe(String name, String amount);
+
+  /// No description provided for @txLinkViewPaidLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid by'**
+  String get txLinkViewPaidLabel;
+
+  /// No description provided for @txLinkViewMyPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'I paid {amount}'**
+  String txLinkViewMyPaid(String amount);
+
+  /// No description provided for @txLinkViewEventLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Event bill'**
+  String get txLinkViewEventLabel;
+
+  /// No description provided for @txLinkViewIPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'I paid'**
+  String get txLinkViewIPaid;
+
+  /// No description provided for @txLinkViewTheyPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} paid'**
+  String txLinkViewTheyPaid(String name);
+
+  /// No description provided for @txLinkViewPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} people'**
+  String txLinkViewPeople(int count);
+
+  /// No description provided for @debtDirectionOwedToMeSub.
+  ///
+  /// In en, this message translates to:
+  /// **'they pay me back'**
+  String get debtDirectionOwedToMeSub;
+
+  /// No description provided for @debtDirectionIOweSub.
+  ///
+  /// In en, this message translates to:
+  /// **'I pay them back'**
+  String get debtDirectionIOweSub;
+
+  /// No description provided for @txLinkPreviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What will change'**
+  String get txLinkPreviewTitle;
+
+  /// No description provided for @txLinkPreviewLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: {before} → {after}'**
+  String txLinkPreviewLine(String name, String before, String after);
+
+  /// No description provided for @txLinkPreviewNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No one\'s balance changes'**
+  String get txLinkPreviewNone;
+
+  /// No description provided for @txLinkOutOfSyncLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'The event bill changed'**
+  String get txLinkOutOfSyncLabel;
+
+  /// No description provided for @txLinkApplyEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Update from the event'**
+  String get txLinkApplyEvent;
+
+  /// No description provided for @txLinkApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated from the event'**
+  String get txLinkApplied;
 }
 
 class _AppLocalizationsDelegate

@@ -218,8 +218,13 @@ class _EventResolveSheetState extends State<EventResolveSheet> {
                 AppTab(
                   value: EventResolveMode.asTransaction,
                   label: l.asTransaction,
+                  icon: AppIcons.transactions,
                 ),
-                AppTab(value: EventResolveMode.asDebt, label: l.asDebt),
+                AppTab(
+                  value: EventResolveMode.asDebt,
+                  label: l.asDebt,
+                  icon: AppIcons.debt,
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.md),

@@ -13,6 +13,7 @@ class TransactionHeroCard extends StatelessWidget {
     this.onTypeChanged,
     this.allowTransfer = true,
     this.debt = false,
+    this.repay = false,
     this.typeBadge,
     this.accentColor,
     this.amountLocked = false,
@@ -48,7 +49,11 @@ class TransactionHeroCard extends StatelessWidget {
 
   final bool allowTransfer;
 
+  /// Debt words on the type chips: รอรับ (expense) / รอจ่าย (income).
   final bool debt;
+
+  /// Repayment words: จ่ายคืน (expense) / รับคืน (income). Implies [debt].
+  final bool repay;
 
   final Widget? typeBadge;
 
@@ -107,7 +112,7 @@ class TransactionHeroCard extends StatelessWidget {
   List<TransactionType> get _types => [
     TransactionType.expense,
     TransactionType.income,
-    if (allowTransfer && !debt) TransactionType.transfer,
+    if (allowTransfer && !debt && !repay) TransactionType.transfer,
   ];
 
   @override
@@ -115,7 +120,9 @@ class TransactionHeroCard extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final accent = accentColor ?? txTypeColor(context, type);
+    // The card's tint follows its selected chip (debt words: debt colours).
+    final accent =
+        accentColor ?? txWordsColor(context, type, debt: debt, repay: repay);
     final canSwitch = editing && onTypeChanged != null && typeBadge == null;
     final titleStyle = textTheme.titleMedium?.copyWith(
       fontWeight: FontWeight.w600,
@@ -143,21 +150,29 @@ class TransactionHeroCard extends StatelessWidget {
           alignment: AlignmentDirectional.centerStart,
           child: Row(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               for (final (i, t) in [
                 for (final t in _types)
                   if (canSwitch || t == type) t,
               ].indexed) ...[
                 if (i > 0) const SizedBox(width: AppSpacing.xs),
-                txTypeChip(
+                _withDebtSubFor(
                   context,
-                  type: t,
-                  selected: t == type,
-                  onTap: canSwitch && t != type
-                      ? () => onTypeChanged!(t)
-                      : null,
-                  dashed: canSwitch && t != type,
+                  t,
+                  txTypeChip(
+                    context,
+                    type: t,
+                    selected: t == type,
+                    onTap: canSwitch && t != type
+                        ? () => onTypeChanged!(t)
+                        : null,
+                    dashed: canSwitch && t != type,
+                    debt: debt,
+                    repay: repay,
+                  ),
                   debt: debt,
+                  repay: repay,
                 ),
               ],
             ],
@@ -202,7 +217,9 @@ class TransactionHeroCard extends StatelessWidget {
         currencySymbol: symbol,
         minWidth: 12,
         size: AppInputSize.hero,
-        label: editing && inline ? l.transactionFormAmountLabel : null,
+        label: editing && inline
+            ? (amountLabel ?? l.transactionFormAmountLabel)
+            : null,
         labelPlacement: AppInputLabelPlacement.above,
         hint: '0',
         hintStyle: bigAmount?.copyWith(color: accent.withValues(alpha: 0.35)),
@@ -370,6 +387,52 @@ Color txTypeColor(BuildContext context, TransactionType t) {
   };
 }
 
+/// The type's colour with debt words (owner 2026-10-21): the DEBT-STATE
+/// colours (`debtStateColor`), not the money ones. Recording a debt:
+/// รอรับ (expense) = green, รอจ่าย (income) = red. A
+/// repayment: จ่ายคืน = I owed (red), รับคืน = they owed me (green).
+Color txWordsColor(
+  BuildContext context,
+  TransactionType t, {
+  bool debt = false,
+  bool repay = false,
+}) {
+  if (t == TransactionType.transfer || !(debt || repay)) {
+    return txTypeColor(context, t);
+  }
+  final expense = t == TransactionType.expense;
+  return debtStateColor(context, owedToMe: repay ? !expense : expense);
+}
+
+/// Recording a debt: a small line under รอรับ / รอจ่าย says who pays whom
+/// back ("เขาต้องคืนฉัน" / "ฉันต้องคืนเขา"; owner 2026-10-21, never ติด).
+Widget _withDebtSubFor(
+  BuildContext context,
+  TransactionType t,
+  Widget chip, {
+  required bool debt,
+  required bool repay,
+}) {
+  if (!debt || repay || t == TransactionType.transfer) return chip;
+  final l = AppLocalizations.of(context)!;
+  return Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      chip,
+      const SizedBox(height: AppSpacing.xxs),
+      Text(
+        t == TransactionType.expense
+            ? l.debtDirectionOwedToMeSub
+            : l.debtDirectionIOweSub,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+    ],
+  );
+}
+
 AppChip txTypeChip(
   BuildContext context, {
   required TransactionType? type,
@@ -377,24 +440,37 @@ AppChip txTypeChip(
   VoidCallback? onTap,
   bool dashed = false,
   bool debt = false,
+  bool repay = false,
 }) {
   final l = AppLocalizations.of(context)!;
+  // Debt words (owner 2026-10-21): recording a debt says who owes whom;
+  // a repayment says which way the money goes back.
   final (IconData? icon, label) = switch (type) {
     null => (null, l.transactionsListFilterAll),
     TransactionType.expense => (
       AppIcons.expense,
-      debt ? l.debtsDirPaid : l.transactionTypeExpense,
+      repay
+          ? l.debtPay
+          : debt
+          ? l.debtDirectionOwedToMe
+          : l.transactionTypeExpense,
     ),
     TransactionType.income => (
       AppIcons.income,
-      debt ? l.debtsDirReceived : l.transactionTypeIncome,
+      repay
+          ? l.debtRepayReceive
+          : debt
+          ? l.debtDirectionIOwe
+          : l.transactionTypeIncome,
     ),
     TransactionType.transfer => (AppIcons.transfer, l.transactionTypeTransfer),
   };
   return AppChip(
     label: label,
     icon: dashed && !selected ? null : icon,
-    color: type == null ? null : txTypeColor(context, type),
+    color: type == null
+        ? null
+        : txWordsColor(context, type, debt: debt, repay: repay),
     selected: selected,
     onTap: onTap,
     dashed: dashed,

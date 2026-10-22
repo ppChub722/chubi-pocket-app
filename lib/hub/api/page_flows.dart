@@ -139,6 +139,26 @@ const List<PageFlow> pageFlows = [
             'linked prompt; a date after today → an upcoming item',
       ),
     ]),
+    FlowStep.action('Button "บันทึก" after switching the ผูกกับ tab', [
+      FlowCall(
+        'updateTransaction',
+        note:
+            '?preview=true first (nothing saved): who / which wallet moves, '
+            'for the ONE confirm',
+      ),
+      FlowCall(
+        'updateTransaction',
+        note:
+            'then the PUT with link_mode + that tab\'s data; returns the '
+            'row + person_balances',
+      ),
+    ]),
+    FlowStep.action('Row "บิลในอีเวนต์ถูกแก้ | อัปเดตตามอีเวนต์"', [
+      FlowCall(
+        'applyEventToTransaction',
+        note: 'my tx takes the bill as it is now (event_bill.in_sync false)',
+      ),
+    ]),
     FlowStep.action('Change tags', [
       FlowCall('setTransactionTags', note: 'replaces the tag set'),
     ]),
@@ -229,14 +249,21 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Person picker opened', [
       FlowCall('listDebtPeople', note: 'all=true, everyone, searchable'),
     ]),
-    FlowStep.action('Section "ทำเครื่องหมายรายการที่จ่ายครบ" opened', [
+    FlowStep.action('Row "ติดป้ายจ่ายแล้ว" opened (จ่ายคืน side)', [
       FlowCall('listDebtEntries', note: 'paid=false: the open entries'),
     ]),
-    FlowStep.action('Button "บันทึก" (debt mode)', [
+    FlowStep.action('Button "บันทึก" (debt mode, จดหนี้)', [
       FlowCall(
         'createDebtEntry',
         note:
-            'entry + wallet tx + tags + paid labels; returns the balance + wallet balances',
+            'the debt row (+ its own wallet tx when "มีเงินเข้า/ออกกระเป๋า" is on); returns the balance + wallet balances',
+      ),
+    ]),
+    FlowStep.action('Button "บันทึก" (debt mode, จ่ายคืน)', [
+      FlowCall(
+        'createDebtRepayment',
+        note:
+            'ONE transaction tied to the person + paid labels; returns the tx, the balance + wallet balances',
       ),
     ]),
   ]),
@@ -713,7 +740,7 @@ const List<PageFlow> pageFlows = [
   // ── Debts ───────────────────────────────────────────────────────────────────
   PageFlow(
     'debts-people',
-    'One list of people and their net (ติดคุณ / คุณติด together).',
+    'One list of people and their net (รอรับ / รอจ่าย together).',
     [
       FlowStep.open([FlowCall('listDebtPeople', note: 'page 1 + totals')]),
       FlowStep.action('Search / "ทั้งหมด" / a summary box / scroll', [

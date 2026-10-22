@@ -44,6 +44,20 @@ class CategoriesRepository {
     }
   }
 
+  /// `PUT /v1/categories/:id` with only `include_in_report` (the view-mode
+  /// switch; the BE leaves every field not sent as it is).
+  Future<CategoryDetail> setIncludeInReport(String id, bool on) async {
+    try {
+      final res = await _client.dio.put<Map<String, dynamic>>(
+        '/categories/$id',
+        data: <String, dynamic>{'include_in_report': on},
+      );
+      return CategoryDetail.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
   Future<List<Category>> delete(String id) async {
     try {
       final res = await _client.dio.delete<Map<String, dynamic>>(

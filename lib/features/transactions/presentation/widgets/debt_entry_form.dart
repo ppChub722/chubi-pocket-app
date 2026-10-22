@@ -65,8 +65,16 @@ Widget? debtNetSubtitle(BuildContext context, AppLocalizations l, double? net) {
   );
 }
 
+/// Quick create's debt mode. [sub] picks the side (owner 2026-10-21):
+/// record a debt (a ledger row; money in a wallet only when
+/// [createTransaction]) or repay (ONE transaction tied to the person; a wallet
+/// is always needed).
 class DebtEntryController extends ChangeNotifier {
-  DebtEntryController({DebtPick? person}) : _person = person {
+  DebtEntryController({
+    DebtPick? person,
+    DebtEntrySub sub = DebtEntrySub.record,
+  }) : _person = person,
+       _sub = sub {
     amount.addListener(notifyListeners);
     description.addListener(notifyListeners);
   }
@@ -77,7 +85,23 @@ class DebtEntryController extends ChangeNotifier {
   final note = TextEditingController();
   DateTime date = DateTime.now();
 
-  bool createTransaction = true;
+  /// "มีเงินเข้า/ออกกระเป๋า": off by default (owner 2026-10-21).
+  bool createTransaction = false;
+
+  DebtEntrySub _sub;
+  DebtEntrySub get sub => _sub;
+  bool get repaying => _sub == DebtEntrySub.repay;
+
+  DebtRepaymentKind repayKind = DebtRepaymentKind.pay;
+
+  /// Words for the default description of a repayment ("จ่ายคืน ลี"); set by
+  /// the form, which has the localizations.
+  String Function(DebtRepaymentKind kind, String name)? describeRepay;
+
+  /// The amount / description this controller filled itself: replaced when
+  /// the person or kind changes, kept once the person types their own.
+  String? _autoAmount;
+  String? _autoDescription;
 
   Account? account;
   final Set<String> tagIds = {};
@@ -89,14 +113,35 @@ class DebtEntryController extends ChangeNotifier {
 
   double get amountValue => AmountInput.parse(amount.text) ?? 0;
 
+  /// The person's balance after saving (> 0 = they owe me); instant typing
+  /// feedback only, the BE answers the real one.
   double? get netAfter {
     final n = _person?.net;
     if (n == null) return null;
+    if (repaying) {
+      return n +
+          (repayKind == DebtRepaymentKind.pay ? amountValue : -amountValue);
+    }
     return n +
         (direction == DebtEntryDirection.paid ? amountValue : -amountValue);
   }
 
   bool get hasKeyData => amountValue > 0 || description.text.trim().isNotEmpty;
+
+  void setSub(DebtEntrySub s) {
+    if (s == _sub) return;
+    _sub = s;
+    markPaidIds.clear();
+    if (repaying) _repayDefaults(kindFromBalance: true);
+    notifyListeners();
+  }
+
+  void setRepayKind(DebtRepaymentKind k) {
+    if (k == repayKind) return;
+    repayKind = k;
+    _repayDefaults(kindFromBalance: false);
+    notifyListeners();
+  }
 
   void setDirection(DebtEntryDirection d) {
     if (d == direction) return;
@@ -107,7 +152,41 @@ class DebtEntryController extends ChangeNotifier {
   void setPerson(DebtPick? p) {
     if (p?.key != _person?.key) markPaidIds.clear();
     _person = p;
+    if (repaying) _repayDefaults(kindFromBalance: true);
     notifyListeners();
+  }
+
+  /// Applies the repay defaults now (the form calls it once its words are in).
+  void syncRepayDefaults() {
+    if (!repaying) return;
+    _repayDefaults(kindFromBalance: true);
+    notifyListeners();
+  }
+
+  /// Repay: the kind from the balance, the full open amount, "จ่ายคืน ลี";
+  /// whatever the person typed themselves stays.
+  void _repayDefaults({required bool kindFromBalance}) {
+    final p = _person;
+    if (p == null) return;
+    final net = p.net ?? 0;
+    if (kindFromBalance && net.abs() > 0.004) {
+      repayKind = DebtRepaymentKind.forNet(net);
+    }
+    if (amount.text.isEmpty || amount.text == _autoAmount) {
+      final open = net.abs();
+      _autoAmount = open <= 0.004
+          ? ''
+          : (open == open.roundToDouble()
+                ? open.toStringAsFixed(0)
+                : open.toStringAsFixed(2));
+      amount.text = _autoAmount!;
+    }
+    final describe = describeRepay;
+    if (describe != null &&
+        (description.text.isEmpty || description.text == _autoDescription)) {
+      _autoDescription = describe(repayKind, p.person.name);
+      description.text = _autoDescription!;
+    }
   }
 
   void setAccount(Account? a) {
@@ -189,6 +268,63 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     _loadPeople();
   }
 
+  bool _wordsSet = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final l = AppLocalizations.of(context)!;
+    _c.describeRepay = (kind, name) => kind == DebtRepaymentKind.pay
+        ? l.debtRepayDescPay(name)
+        : l.debtRepayDescReceive(name);
+    if (!_wordsSet) {
+      _wordsSet = true;
+      // Opened on the repay side (a preset): fill its defaults once.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _c.syncRepayDefaults();
+      });
+    }
+  }
+
+  /// Repay: only people with something open, each with their balance.
+  Future<void> _pickOpenPerson() async {
+    final l = AppLocalizations.of(context)!;
+    final directory = context.read<DebtDirectoryCubit>();
+    final symbol = debtCurrencySymbol(context);
+    final open = [
+      for (final p in directory.state.people)
+        if (p.net.abs() > 0.004) p,
+    ];
+    final r = await showItemPicker(
+      context,
+      ItemPickerSheet(
+        title: l.debtRepayPickTitle,
+        selected: {?_c.person?.key},
+        emptyText: l.debtRepayNoOpen,
+        items: [
+          for (final p in open)
+            PickerItem(
+              id: p.key,
+              title: p.person.name,
+              subtitle:
+                  '${p.net > 0 ? l.debtsOwedToMe : l.debtsIOwe} '
+                  '${moneyString(context, p.net.abs(), symbol: symbol)}',
+              leading: PersonMark(
+                name: p.person.name,
+                level: debtPersonLevel(p.person),
+                iconCode: p.person.iconCode,
+                size: 32,
+              ),
+            ),
+        ],
+      ),
+    );
+    final id = r?.id;
+    if (id == null || !mounted) return;
+    final p = open.firstWhere((p) => p.key == id);
+    _c.setPerson(DebtPick(key: p.key, person: p.person, net: p.net));
+  }
+
   Future<void> _loadPeople() async {
     final directory = context.read<DebtDirectoryCubit>();
     try {
@@ -214,7 +350,8 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
       context,
       accounts: accounts,
       selectedId: _c.account?.id,
-      allowNone: true,
+      // A repayment is a real transaction: it always has a wallet.
+      allowNone: !_c.repaying,
       allowCreate: true,
     );
     if (!mounted || r == null) return;
@@ -249,6 +386,15 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     if (p == null || after == null || _c.amountValue <= 0) return null;
     final name = p.person.name;
     final money = moneyString(context, after.abs(), symbol: symbol);
+    final before = p.net ?? 0;
+    // Repay: "หลังบันทึก เหลือ ฿230" / "เคลียร์ครบ" while it still settles the
+    // same way; past zero it says who owes whom, like recording a debt.
+    if (_c.repaying && (after.abs() <= 0.004 || after.sign == before.sign)) {
+      return AppText(
+        after.abs() <= 0.004 ? l.debtRepayCleared : l.debtRepayLeft(money),
+        role: AppTextRole.caption,
+      );
+    }
     final result = after > 0.004
         ? '${l.debtTheyOweYou(name)} $money'
         : after < -0.004
@@ -260,7 +406,11 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
   Widget _personCard(AppLocalizations l) {
     final p = _c.person;
     return PickCard(
-      label: l.debtPersonPickerTitle,
+      label: !_c.repaying
+          ? l.debtPersonPickerTitle
+          : _c.repayKind == DebtRepaymentKind.pay
+          ? l.debtRepayTo
+          : l.debtRepayFrom,
       value: p?.person.name,
       placeholder: l.debtPickPerson,
       dense: true,
@@ -275,7 +425,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
               iconCode: p.person.iconCode,
               size: 32,
             ),
-      onTap: _pickPerson,
+      onTap: _c.repaying ? _pickOpenPerson : _pickPerson,
     );
   }
 
@@ -287,6 +437,21 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     editable: true,
     onTap: _pickAccount,
   );
+
+  /// Repay: always wallet ↔ person (pay = wallet → person).
+  Widget _repayFlow(AppLocalizations l) {
+    final pay = _c.repayKind == DebtRepaymentKind.pay;
+    final wallet = _walletCard(l);
+    final person = _personCard(l);
+    return FlowCards(
+      from: pay ? wallet : person,
+      to: pay ? person : wallet,
+      swapTooltip: l.quickSwap,
+      onSwap: () => _c.setRepayKind(
+        pay ? DebtRepaymentKind.receive : DebtRepaymentKind.pay,
+      ),
+    );
+  }
 
   Widget _flow(AppLocalizations l) {
     final paid = _c.direction == DebtEntryDirection.paid;
@@ -331,7 +496,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    l.debtCreateTxLabel,
+                    l.debtMoneyMovedLabel,
                     style: theme.textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -348,7 +513,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
             AppSwitch(
               value: _c.createTransaction,
               onChanged: _c.setCreateTransaction,
-              semanticLabel: l.debtCreateTxLabel,
+              semanticLabel: l.debtMoneyMovedLabel,
             ),
           ],
         ),
@@ -359,7 +524,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
   Widget _closeRow(AppLocalizations l) {
     final n = _c.markPaidIds.length;
     return DraftFieldRow(
-      label: l.debtCloseLabel,
+      label: l.debtMarkPaidLabel,
       dense: true,
       child: Align(
         alignment: AlignmentDirectional.centerStart,
@@ -393,21 +558,47 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
       listenable: _c,
       builder: (context, _) {
         const gap = SizedBox(height: AppSpacing.sm);
+        final repay = _c.repaying;
+        final paid = _c.direction == DebtEntryDirection.paid;
+        final payBack = _c.repayKind == DebtRepaymentKind.pay;
+        // Money in a wallet: always on the repay side, on request otherwise.
+        final moneyMoves = repay || _c.createTransaction;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
+            // A value picker, not tabs: which kind of debt entry this is.
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: SegmentedChoice<DebtEntrySub>(
+                key: const ValueKey('debtSub'),
+                segments: [
+                  ChoiceSegment(DebtEntrySub.record, l.debtSubRecord),
+                  ChoiceSegment(DebtEntrySub.repay, l.debtSubRepay),
+                ],
+                selected: _c.sub,
+                onChanged: _c.setSub,
+              ),
+            ),
+            gap,
             EntryCard(
               key: widget.heroKey,
               debt: true,
-              type: _c.direction == DebtEntryDirection.paid
+              repay: repay,
+              type: (repay ? payBack : paid)
                   ? TransactionType.expense
                   : TransactionType.income,
-              onTypeChanged: (t) => _c.setDirection(
-                t == TransactionType.income
-                    ? DebtEntryDirection.received
-                    : DebtEntryDirection.paid,
-              ),
+              onTypeChanged: repay
+                  ? (t) => _c.setRepayKind(
+                      t == TransactionType.income
+                          ? DebtRepaymentKind.receive
+                          : DebtRepaymentKind.pay,
+                    )
+                  : (t) => _c.setDirection(
+                      t == TransactionType.income
+                          ? DebtEntryDirection.received
+                          : DebtEntryDirection.paid,
+                    ),
               amount: _c.amount,
               title: _c.description,
               dateLabel: _dayLabel(l, _c.date),
@@ -415,13 +606,15 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
               autofocus: widget.autofocus,
               symbol: symbol,
               amountNote: _resultLine(l, symbol),
-              titleHint: _c.direction == DebtEntryDirection.paid
-                  ? l.debtTitleHintPaid
-                  : l.debtTitleHintReceived,
-              flowRow: _flow(l),
+              titleHint: repay
+                  ? l.debtRepayTitleHint
+                  : paid
+                  ? l.debtTitleHintOwedToMe
+                  : l.debtTitleHintIOwe,
+              flowRow: repay ? _repayFlow(l) : _flow(l),
             ),
             SizedBox(height: HeroMetrics.of(context).after),
-            if (_c.createTransaction) ...[
+            if (moneyMoves) ...[
               TagChipRow(
                 selected: _c.tagIds,
                 onRemove: _c.toggleTag,
@@ -441,8 +634,9 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
               ),
             ),
             gap,
-            _createTxRow(l),
-            if (_c.person != null) ...[gap, _closeRow(l)],
+            if (!repay) _createTxRow(l),
+            // "ติดป้ายจ่ายแล้ว": only on the repay side (owner 2026-10-21).
+            if (repay && _c.person != null) _closeRow(l),
           ],
         );
       },

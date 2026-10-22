@@ -540,17 +540,27 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     return '${d.year}-$m-$day';
   }
 
-  Future<void> _toggleAuto(SavingGoalDetail d, bool on) async {
+  /// The switch ([LiveSetting]: shown at once, put back on a failure). Off =
+  /// one DELETE. On = one PUT with the plan, or the sheet first when there is
+  /// no plan (closing it puts the switch back).
+  Future<bool> _toggleAuto(SavingGoalDetail d, bool on) async {
     if (!on) {
-      await _run(_cubit!.clearAutoSave);
-      return;
+      await _cubit!.clearAutoSave();
+      return true;
     }
     final plan = d.goal?.monthPlan ?? d.goal?.neededMonthly;
     if (plan == null || plan <= 0) {
-      await _editAuto(d);
-      return;
+      final r = await _askAuto(d);
+      if (r == null || !mounted) return false;
+      await _cubit!.setAutoSave(
+        amount: r.amount,
+        day: r.day,
+        accountId: r.accountId,
+      );
+      return true;
     }
-    await _setAuto(amount: plan, day: _defaultAutoSaveDay);
+    await _cubit!.setAutoSave(amount: plan, day: _defaultAutoSaveDay);
+    return true;
   }
 
   Future<void> _setAuto({
@@ -562,10 +572,16 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   );
 
   Future<void> _editAuto(SavingGoalDetail d) async {
+    final r = await _askAuto(d);
+    if (r == null || !mounted) return;
+    await _setAuto(amount: r.amount, day: r.day, accountId: r.accountId);
+  }
+
+  Future<SavingAutoSaveResult?> _askAuto(SavingGoalDetail d) {
     final l = AppLocalizations.of(context)!;
     final auto = d.autoSave;
     final noWallet = SavingAutoSaveWallet(label: l.fpGoalsNoWallet);
-    final r = await showSavingAutoSaveSheet(
+    return showSavingAutoSaveSheet(
       context,
       title: l.fpGoalsAutoSheetTitle,
       amountLabel: l.sgv2AmountLabel,
@@ -598,8 +614,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         };
       },
     );
-    if (r == null || !mounted) return;
-    await _setAuto(amount: r.amount, day: r.day, accountId: r.accountId);
   }
 
   ({String name, double amount}) _bucket(
@@ -879,8 +893,16 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         trailing: MoneyText(saved, symbol: symbol),
       ),
       tabs: [
-        AppTab(value: _GoalTab.overview, label: l.sgv2Overview),
-        AppTab(value: _GoalTab.entries, label: l.sgv2Entries),
+        AppTab(
+          value: _GoalTab.overview,
+          label: l.sgv2Overview,
+          icon: AppIcons.pie,
+        ),
+        AppTab(
+          value: _GoalTab.entries,
+          label: l.sgv2Entries,
+          icon: AppIcons.receipt,
+        ),
       ],
       selected: _tab,
       onChanged: (t) => setState(() => _tab = t),
@@ -935,11 +957,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
     List<HeroFact> factsOf(Color? warning) => !active || reached
         ? [
-            HeroFact(
-              l.fpGoalsFactTarget,
-              money(target),
-              icon: AppIcons.target,
-            ),
+            HeroFact(l.fpGoalsFactTarget, money(target), icon: AppIcons.target),
             if (reached && closed != null)
               HeroFact(
                 l.fpGoalsFactReachedOn,
@@ -947,7 +965,11 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
                 icon: AppIcons.date,
               ),
             if (!reached && left > 0)
-              HeroFact(l.fpGoalsFactLeft, money(left), icon: AppIcons.hourglass),
+              HeroFact(
+                l.fpGoalsFactLeft,
+                money(left),
+                icon: AppIcons.hourglass,
+              ),
           ]
         : [
             if (plan > 0) ...[
@@ -1050,12 +1072,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
             );
           },
         ),
-        if (chips.isNotEmpty)
-          Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
-            children: chips,
-          ),
+        if (chips.isNotEmpty) HeroChipRow(chips: chips),
       ],
     );
   }
@@ -1273,13 +1290,19 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       title: l.settingsTitle,
       description: l.fpGoalsSettingsDesc,
       children: [
-        SettingToggleRow(
-          label: l.sgv2AutoSave,
-          caption: auto == null
-              ? l.fpGoalsAutoOffHint
-              : savingAutoSaveCaption(context, l, auto, symbol),
+        LiveSetting<bool>(
           value: auto != null,
-          onChanged: isSaving ? null : (on) => _toggleAuto(d, on),
+          save: isSaving ? null : (on) => _toggleAuto(d, on),
+          failedMessage: (e) =>
+              e is ApiException ? e.message : l.errorUnknownMessage,
+          builder: (context, on, onChanged) => SettingToggleRow(
+            label: l.sgv2AutoSave,
+            caption: auto == null
+                ? l.fpGoalsAutoOffHint
+                : savingAutoSaveCaption(context, l, auto, symbol),
+            value: on,
+            onChanged: onChanged,
+          ),
         ),
         if (auto != null)
           SettingSummaryRow(

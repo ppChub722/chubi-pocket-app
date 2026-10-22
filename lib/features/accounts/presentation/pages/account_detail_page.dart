@@ -217,7 +217,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   final _noteFocus = FocusNode();
 
   late final String _currency;
-  bool _scopeBusy = false;
 
   List<PaymentProvider> _providers = const [];
   StreamSubscription<ProvidersState>? _providersSub;
@@ -603,21 +602,30 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     }
   }
 
-  Future<void> _setScope(Account a, WalletReportScope scope) async {
-    if (scope == _effectiveScope(a)) return;
-    final l = AppLocalizations.of(context)!;
+  /// One call; [LiveSetting] shows it at once and puts it back on a failure.
+  Future<bool> _setScope(Account a, WalletReportScope scope) async {
     final cubit = context.read<AccountsCubit>();
-    setState(() => _scopeBusy = true);
-    try {
-      final updated = await cubit.setReportScope(accountId: a.id, scope: scope);
-      widget.onAccount?.call(updated);
-    } on ApiException catch (e) {
-      if (mounted) {
-        showAppSnackBar(context, walletErrorMessage(l, e), tone: Tone.danger);
-      }
-    } finally {
-      if (mounted) setState(() => _scopeBusy = false);
+    final updated = await cubit.setReportScope(accountId: a.id, scope: scope);
+    widget.onAccount?.call(updated);
+    return true;
+  }
+
+  /// Off = one call. On asks the current balance first (closing the sheet
+  /// puts the switch back), then sends it with the switch: still one call.
+  Future<bool> _setTrack(Account a, bool on) async {
+    final cubit = context.read<AccountsCubit>();
+    double? balance;
+    if (on) {
+      balance = await showSetBalanceSheet(context, a);
+      if (balance == null || !mounted) return false;
     }
+    final updated = await cubit.setTrackBalance(
+      a.id,
+      on: on,
+      currentBalance: balance,
+    );
+    widget.onAccount?.call(updated);
+    return true;
   }
 
   Future<void> _refresh() async => widget.onRefresh?.call();
@@ -695,9 +703,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   ({double income, double expense})? _flowOf(Account a, TxPeriod p) {
     if (_isThisMonth(p)) return (income: a.monthIn, expense: a.monthOut);
     final s = _flows[p];
-    return s == null
-        ? null
-        : (income: s.totalIncome, expense: s.totalExpense);
+    return s == null ? null : (income: s.totalIncome, expense: s.totalExpense);
   }
 
   void _toggleTxType(TransactionType t) {
@@ -769,7 +775,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       padding: EdgeInsets.only(top: barInset),
       child: CompactHeroScope(
         heroKey: _heroKey,
-        top: _PinnedTabBar._height,
+        top: PinnedTabBarDelegate.height,
         bar: walletCompactHero(context, a, onTap: _scrollToHero),
         child: NestedScrollView(
           controller: _outerScroll,
@@ -791,7 +797,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             ),
             SliverPersistentHeader(
               pinned: true,
-              delegate: _PinnedTabBar(
+              delegate: PinnedTabBarDelegate(
                 background: scheme.surface,
                 child: AppTabBar<AccountDetailTab>(
                   selected: _tab,
@@ -799,7 +805,15 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                   pager: _pages,
                   tabs: [
                     for (final t in tabs)
-                      AppTab(value: t, label: _tabLabel(l, t)),
+                      AppTab(
+                        value: t,
+                        label: _tabLabel(l, t),
+                        icon: switch (t) {
+                          AccountDetailTab.overview => AppIcons.pie,
+                          AccountDetailTab.transactions =>
+                            AppIcons.transactions,
+                        },
+                      ),
                   ],
                 ),
               ),
@@ -1022,19 +1036,15 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             ),
           ),
         flow,
-        ChipRow(
+        HeroChipRow(
           chips: [
             AppChip(
               label: accountTypeLabel(context, a.type),
               icon: a.type.icon,
               color: a.colorOf(context),
               selected: true,
-              size: ChipSize.chip,
             ),
-            AppChip(
-              label: _scopeChipLabel(l, _effectiveScope(a)),
-              size: ChipSize.chip,
-            ),
+            AppChip(label: _scopeChipLabel(l, _effectiveScope(a))),
             if (a.isShared)
               MemberChip(members: members, onTap: () => _openMembers(a)),
           ],
@@ -1233,26 +1243,35 @@ class _AccountDetailViewState extends State<_AccountDetailView>
           : l.fpWalletSettingsDesc,
       children: [
         if (!a.isLiability)
-          SettingSwitchViewRow(
-            label: l.walletTrackLabel,
-            caption: l.walletTrackHelper,
-            value: a.trackBalance,
-            onLongPress: _isOwner
-                ? () => enterEdit(
-                    then: () => applyChange(
-                      working.copyWith(trackBalance: !working.trackBalance),
-                    ),
-                  )
-                : null,
-          ),
+          _isOwner
+              ? LiveSetting<bool>(
+                  value: a.trackBalance,
+                  save: (on) => _setTrack(a, on),
+                  failedMessage: (e) => _errorText(l, e),
+                  builder: (context, value, onChanged) => SettingToggleRow(
+                    label: l.walletTrackLabel,
+                    caption: l.walletTrackHelper,
+                    value: value,
+                    onChanged: onChanged,
+                  ),
+                )
+              : SettingSwitchViewRow(
+                  label: l.walletTrackLabel,
+                  caption: l.walletTrackHelper,
+                  value: a.trackBalance,
+                ),
         _scopeRow(l, a),
       ],
     );
   }
 
-  Widget _scopeRow(AppLocalizations l, Account a) {
-    final scope = _effectiveScope(a);
-    return OptionMenuAnchor<WalletReportScope>(
+  /// Saves at once, in view and edit mode alike: the scope is the viewer's
+  /// own setting, not part of the wallet form.
+  Widget _scopeRow(AppLocalizations l, Account a) => LiveSetting(
+    value: _effectiveScope(a),
+    save: (picked) => _setScope(a, picked),
+    failedMessage: (e) => _errorText(l, e),
+    builder: (context, scope, onChanged) => OptionMenuAnchor<WalletReportScope>(
       selected: scope,
       options: [
         for (final s in [
@@ -1262,16 +1281,17 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         ])
           SheetOption(value: s, label: _scopeLabel(l, s)),
       ],
-      onSelected: (picked) {
-        if (mounted) _setScope(a, picked);
-      },
+      onSelected: (picked) => onChanged?.call(picked),
       builder: (context, toggle) => SettingDropdownRow(
         label: l.walletReportScopeTitle,
         value: _scopeLabel(l, scope),
-        onTap: _scopeBusy ? null : toggle,
+        onTap: onChanged == null ? null : toggle,
       ),
-    );
-  }
+    ),
+  );
+
+  String _errorText(AppLocalizations l, Object e) =>
+      e is ApiException ? walletErrorMessage(l, e) : l.errorUnknownMessage;
 
   Widget? _peopleStrip(AppLocalizations l, Account a) {
     final members = [for (final m in a.members) m, ..._pendingInvites];
@@ -1723,41 +1743,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       },
     );
   }
-}
-
-/// The tab bar, pinned once the hero has scrolled away (the scroll view sits
-/// below the top bar, so it pins right under it).
-class _PinnedTabBar extends SliverPersistentHeaderDelegate {
-  _PinnedTabBar({required this.background, required this.child});
-
-  final Color background;
-  final Widget child;
-
-  static const _height = 52.0;
-
-  @override
-  double get minExtent => _height;
-
-  @override
-  double get maxExtent => _height;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlaps) =>
-      ColoredBox(
-        color: background,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.sm,
-            AppSpacing.lg,
-            0,
-          ),
-          child: child,
-        ),
-      );
-
-  @override
-  bool shouldRebuild(_PinnedTabBar old) => true;
 }
 
 class _AccountDraft {

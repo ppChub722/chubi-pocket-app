@@ -438,7 +438,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
                       AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
                   hero: isEditing ? _editHero(l) : _viewHero(l),
                   info: isEditing ? _editInfo(l) : _viewInfo(l),
-                  settings: isEditing ? _editSettings(l) : null,
+                  settings: isEditing ? _editSettings(l) : _viewSettings(l),
                   people: isEditing || _isCreate ? null : _linkSection(l),
                   note: _note(l),
                   endZone: isEditing && !_isCreate ? _endZone(l) : null,
@@ -741,6 +741,37 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       ),
     ],
   );
+
+  /// View mode: the same switch, saved at once with only that field
+  /// (owner 2026-10-21, like the other detail pages' settings).
+  Widget? _viewSettings(AppLocalizations l) {
+    final c = _contact;
+    if (c == null) return null;
+    return SettingsSection(
+      title: l.settingsTitle,
+      description: l.fpContactsSettingsDesc,
+      children: [
+        LiveSetting<bool>(
+          value: c.showNickname,
+          save: (v) async {
+            final updated = await context.read<ContactsCubit>().update(
+              c.id,
+              showNickname: v,
+            );
+            if (mounted) _patch(updated);
+            return true;
+          },
+          failedMessage: (e) =>
+              e is ApiException ? e.message : l.errorUnknownMessage,
+          builder: (context, value, onChanged) => SettingToggleRow(
+            label: l.contactShowNicknameLabel,
+            value: value,
+            onChanged: onChanged,
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _endZone(AppLocalizations l) {
     final c = _contact!;

@@ -9,8 +9,8 @@ import '../hub_playground.dart';
 /// is Thai (what the debts pages pass from l10n).
 Widget buildDebtsPage(BuildContext context) => const _DebtsPage();
 
-const _owedToMe = 'ติดคุณ';
-const _iOwe = 'คุณติด';
+const _owedToMe = 'รอรับ';
+const _iOwe = 'รอจ่าย';
 const _settled = 'หายกัน';
 
 class _DebtsPage extends StatefulWidget {
@@ -295,7 +295,7 @@ class _DebtsPageState extends State<_DebtsPage> {
           child: DebtSummaryMessageBox(
             text:
                 'สรุปยอดกับ test\n• 10 ต.ค. ค่าไรก็ได้ +฿667.67\n'
-                '• 11 ต.ค. Gaming +฿522.00\nรวม test ติดคุณ ฿1,189.67',
+                '• 11 ต.ค. Gaming +฿522.00\nรวม รอรับจาก test ฿1,189.67',
             label: 'ข้อความสรุปยอด | แก้ได้ก่อนส่ง',
             copyLabel: 'คัดลอก',
             shareLabel: 'แชร์',

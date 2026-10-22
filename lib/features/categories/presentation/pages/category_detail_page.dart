@@ -67,7 +67,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   bool get _isCreate => widget.isCreate && _persisted == null;
 
   CategoryDetail? _detail;
-  bool _feeBusy = false;
 
   num _monthSpent = 0;
   int _monthCount = 0;
@@ -80,9 +79,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
 
   static String _nameKey(String name, String? parentId) =>
       '${parentId ?? ''}|${name.trim()}';
-
-  bool? _includeOverride;
-  bool _includeBusy = false;
 
   String _errorText(ApiException e, AppLocalizations l) =>
       e.code == 'MAX_DEPTH_EXCEEDED' ? l.categoryErrorMaxDepth : e.message;
@@ -165,29 +161,17 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     }
   }
 
-  Future<void> _setFeeCategory(bool on) async {
+  /// One call ([LiveSetting] shows it at once, puts it back on a failure).
+  Future<bool> _setFeeCategory(bool on) async {
     final id = _persisted?.id;
-    if (id == null) return;
-    final l = AppLocalizations.of(context)!;
-    setState(() => _feeBusy = true);
-    try {
-      final me = await context.read<UsersRepository>().setFeeCategory(
-        on ? id : null,
-      );
-      if (!mounted) return;
-      context.read<AuthCubit>().updateUser(me);
-      setState(() => _detail = _detail?.withFee(on));
-    } on ApiException {
-      if (mounted) {
-        showAppSnackBarOn(
-          pageMessenger!,
-          l.categoryFeeSwitchFailed,
-          tone: Tone.danger,
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _feeBusy = false);
-    }
+    if (id == null) return false;
+    final me = await context.read<UsersRepository>().setFeeCategory(
+      on ? id : null,
+    );
+    if (!mounted) return true;
+    context.read<AuthCubit>().updateUser(me);
+    setState(() => _detail = _detail?.withFee(on));
+    return true;
   }
 
   @override
@@ -521,34 +505,26 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     return name.isEmpty ? l.categoriesTitle : name;
   }
 
-  Future<void> _setIncludeLive(bool v) async {
+  /// View mode: one call with only the switch ([LiveSetting] shows it at once
+  /// and puts it back on a failure).
+  Future<bool> _setIncludeLive(bool v) async {
     final row = _persisted;
-    if (row == null || _includeBusy) return;
-    final l = AppLocalizations.of(context)!;
-    final cubit = context.read<CategoriesCubit>();
+    if (row == null) return false;
+    final saved = await context.read<CategoriesCubit>().setIncludeInReport(
+      row.id,
+      v,
+    );
+    if (!mounted) return true;
     setState(() {
-      _includeOverride = v;
-      _includeBusy = true;
-    });
-    try {
-      final saved = await cubit.update(row.copyWith(includeInReport: v));
-      if (!mounted) return;
       _persisted = saved;
       _detail = saved.withFee(_detail?.isFeeCategory ?? saved.isFeeCategory);
-      resetDraft(_CategoryDraft.fromCategory(saved));
-    } on ApiException catch (e) {
-      if (mounted) {
-        showAppSnackBarOn(pageMessenger!, _errorText(e, l), tone: Tone.danger);
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _includeOverride = null;
-          _includeBusy = false;
-        });
-      }
-    }
+    });
+    resetDraft(_CategoryDraft.fromCategory(saved));
+    return true;
   }
+
+  String _failedText(Object e, AppLocalizations l) =>
+      e is ApiException ? _errorText(e, l) : l.errorUnknownMessage;
 
   String _monthLabel(AppLocalizations l, bool income) {
     final month = DateFormat.MMM(
@@ -614,23 +590,39 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         title: l.categorySectionSettings,
         description: l.categorySettingsSectionDescription,
         children: [
-          SettingToggleRow(
-            label: l.categoryFormIncludeInReportLabel,
-            caption: l.categoryFormIncludeInReportHelper,
-            value: editing
-                ? working.includeInReport
-                : (_includeOverride ?? working.includeInReport),
-            submits: !editing,
-            onChanged: editing
-                ? (v) => applyChange(working.copyWith(includeInReport: v))
-                : (_persisted == null || _includeBusy ? null : _setIncludeLive),
-          ),
-          if (_persisted != null && working.type == CategoryType.expense)
+          // Edit / create: part of the form. View: saves at once.
+          if (editing || _persisted == null)
             SettingToggleRow(
-              label: l.categoryFeeSwitchLabel,
-              caption: l.categoryFeeSwitchHelper,
+              label: l.categoryFormIncludeInReportLabel,
+              caption: l.categoryFormIncludeInReportHelper,
+              value: working.includeInReport,
+              submits: false,
+              onChanged: (v) =>
+                  applyChange(working.copyWith(includeInReport: v)),
+            )
+          else
+            LiveSetting<bool>(
+              value: working.includeInReport,
+              save: _setIncludeLive,
+              failedMessage: (e) => _failedText(e, l),
+              builder: (context, value, onChanged) => SettingToggleRow(
+                label: l.categoryFormIncludeInReportLabel,
+                caption: l.categoryFormIncludeInReportHelper,
+                value: value,
+                onChanged: onChanged,
+              ),
+            ),
+          if (_persisted != null && working.type == CategoryType.expense)
+            LiveSetting<bool>(
               value: _detail?.isFeeCategory ?? false,
-              onChanged: _feeBusy ? null : _setFeeCategory,
+              save: _setFeeCategory,
+              failedMessage: (_) => l.categoryFeeSwitchFailed,
+              builder: (context, value, onChanged) => SettingToggleRow(
+                label: l.categoryFeeSwitchLabel,
+                caption: l.categoryFeeSwitchHelper,
+                value: value,
+                onChanged: onChanged,
+              ),
             ),
         ],
       ),

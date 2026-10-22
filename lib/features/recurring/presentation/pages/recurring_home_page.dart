@@ -224,16 +224,17 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
           controller: _scroll,
           topInset: AppSpacing.sm,
           children: [
-            SegmentedChoice<RecurringHomeTab>(
-              expand: true,
-              segments: [
-                ChoiceSegment(
-                  RecurringHomeTab.overview,
-                  l.recurringHomeTabOverview,
+            AppTabBar<RecurringHomeTab>(
+              tabs: [
+                AppTab(
+                  value: RecurringHomeTab.overview,
+                  label: l.recurringHomeTabOverview,
+                  icon: AppIcons.pie,
                 ),
-                ChoiceSegment(
-                  RecurringHomeTab.calendar,
-                  l.fpRecurringTabCalendar,
+                AppTab(
+                  value: RecurringHomeTab.calendar,
+                  label: l.fpRecurringTabCalendar,
+                  icon: AppIcons.date,
                 ),
               ],
               selected: _tab,
@@ -290,11 +291,8 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     return AppHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
       header: HeroHeader(
-        leading: [
-          const HeroModuleTile(AppIcons.scheduled),
-          StepperPill.month(value: _month, onChanged: _onMonth),
-        ],
-        actions: const [MoneyVisibilityToggle()],
+        leading: const [HeroModuleTile(AppIcons.scheduled)],
+        fill: StepperPill.month(value: _month, onChanged: _onMonth),
       ),
       content: [
         HeroNumber(

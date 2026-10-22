@@ -228,6 +228,7 @@ class TabbedListPageBody<T> extends StatelessWidget {
 
   final bool clearTopBar;
 
+  /// False = the content can't be swiped (the tab bar still can).
   final bool swipeEnabled;
 
   final bool showPageDots;
@@ -242,11 +243,19 @@ class TabbedListPageBody<T> extends StatelessWidget {
               topInset + (clearTopBar ? MediaQuery.paddingOf(context).top : 0),
         ),
         if (!headerBelowTabs) ...header,
-        AppTabBar<T>(
-          tabs: tabs,
-          selected: selected,
-          onChanged: onChanged,
-          pager: controller,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            AppSpacing.sm,
+          ),
+          child: AppTabBar<T>(
+            tabs: tabs,
+            selected: selected,
+            onChanged: onChanged,
+            pager: controller,
+          ),
         ),
         if (headerBelowTabs) ...header,
         Expanded(

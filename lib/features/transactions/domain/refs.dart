@@ -187,20 +187,180 @@ class EventBillLink extends Equatable {
     required this.event,
     required this.billId,
     this.linked = false,
+    this.payer,
+    this.billAmount = 0,
+    this.members,
+    this.isOrigin,
+    this.inSync,
+    this.differences = const [],
   });
 
   final EventRef event;
   final String billId;
+
+  /// B3: true = the bill is this tx ("origin"), false = my share ("copy");
+  /// null on list rows / another member's tx.
+  final bool? isOrigin;
+
+  /// B3: false = the bill and my tx differ ([differences]); offer "update
+  /// from the event" (POST /transactions/{id}/apply-event).
+  final bool? inSync;
+  final List<({String field, Object? mine, Object? event})> differences;
+
+  /// true = my tx IS the bill (I paid); false = my copy of my share.
   final bool linked;
+
+  /// Who paid the bill (0.4.0-3 B2); null on list rows.
+  final BillMemberRef? payer;
+
+  /// The whole bill; 0 on list rows.
+  final double billAmount;
+
+  /// Everyone in the bill with their share, the payer first; null on list
+  /// rows.
+  final List<BillShare>? members;
 
   factory EventBillLink.fromJson(Map<String, dynamic> json) => EventBillLink(
     event: EventRef.fromJson((json['event'] as Map).cast<String, dynamic>()),
     billId: json['bill_id'] as String,
     linked: (json['linked'] as bool?) ?? false,
+    payer: json['payer'] is Map
+        ? BillMemberRef.fromJson((json['payer'] as Map).cast<String, dynamic>())
+        : null,
+    billAmount: (json['bill_amount'] as num?)?.toDouble() ?? 0,
+    members: json['members'] is List
+        ? [
+            for (final m in json['members'] as List)
+              BillShare.fromJson((m as Map).cast<String, dynamic>()),
+          ]
+        : null,
+    isOrigin: switch (json['kind']) {
+      'origin' => true,
+      'copy' => false,
+      _ => null,
+    },
+    inSync: json['in_sync'] as bool?,
+    differences: [
+      for (final d in (json['differences'] as List?) ?? const [])
+        if (d is Map)
+          (
+            field: (d['field'] as String?) ?? '',
+            mine: d['mine'],
+            event: d['event'],
+          ),
+    ],
   );
 
   @override
-  List<Object?> get props => [event, billId, linked];
+  List<Object?> get props => [
+    event,
+    billId,
+    linked,
+    payer,
+    billAmount,
+    members,
+    isOrigin,
+    inSync,
+    differences,
+  ];
+}
+
+/// A member of an event bill (BE MemberRef).
+class BillMemberRef extends Equatable {
+  const BillMemberRef({
+    required this.id,
+    required this.name,
+    this.userId,
+    this.iconCode,
+    this.isMe = false,
+  });
+
+  final String id;
+  final String name;
+  final String? userId;
+  final IconCode? iconCode;
+  final bool isMe;
+
+  factory BillMemberRef.fromJson(Map<String, dynamic> json) => BillMemberRef(
+    id: json['id'] as String,
+    name: (json['name'] as String?) ?? '',
+    userId: json['user_id'] as String?,
+    iconCode: _icon(json['icon_code']),
+    isMe: (json['is_me'] as bool?) ?? false,
+  );
+
+  @override
+  List<Object?> get props => [id, name, userId, iconCode, isMe];
+}
+
+class BillShare extends Equatable {
+  const BillShare({required this.member, required this.share});
+
+  final BillMemberRef member;
+  final double share;
+
+  factory BillShare.fromJson(Map<String, dynamic> json) => BillShare(
+    member: BillMemberRef.fromJson(
+      (json['member'] as Map).cast<String, dynamic>(),
+    ),
+    share: (json['share'] as num?)?.toDouble() ?? 0,
+  );
+
+  @override
+  List<Object?> get props => [member, share];
+}
+
+/// Someone paid (part of) my expense (0.4.0-3 B1): [amount] = what they
+/// paid, [myPaid] = what left my wallet (0 = none). The debt "I owe them"
+/// is part of the tx: edit / delete it through the tx.
+class TxPaidBy extends Equatable {
+  const TxPaidBy({
+    required this.debtId,
+    required this.key,
+    required this.person,
+    required this.amount,
+    required this.myPaid,
+    this.fromPartner = false,
+    this.paid = false,
+  });
+
+  final String debtId;
+
+  /// The person page key (`n:lee` | `c:<id>`).
+  final String key;
+  final EmbeddedPerson person;
+  final double amount;
+  final double myPaid;
+
+  /// A linked user's split on me, mirrored into my book: money / date /
+  /// wallet follow their bill (locked).
+  final bool fromPartner;
+
+  /// The debt's "จ่ายแล้ว" label.
+  final bool paid;
+
+  factory TxPaidBy.fromJson(Map<String, dynamic> json) => TxPaidBy(
+    debtId: json['debt_id'] as String,
+    key: (json['key'] as String?) ?? '',
+    person: EmbeddedPerson.fromJson(
+      (json['person'] as Map? ?? const {}).cast<String, dynamic>(),
+    ),
+    amount: (json['amount'] as num?)?.toDouble() ?? 0,
+    myPaid: (json['my_paid'] as num?)?.toDouble() ?? 0,
+    fromPartner: json['source'] == 'partner',
+    paid: (json['paid'] as bool?) ?? false,
+  );
+
+  @override
+  List<Object?> get props => [
+    debtId,
+    key,
+    person,
+    amount,
+    myPaid,
+    fromPartner,
+    paid,
+  ];
 }
 
 class EventRef extends Equatable {

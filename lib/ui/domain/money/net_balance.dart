@@ -4,6 +4,15 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../tokens/app/app_colors.dart';
 import 'money_text.dart';
 
+/// The debt-state colour everywhere a debt says who owes whom: รอรับ (they
+/// owe me) green, รอจ่าย (I owe) red (owner 2026-10-17). The debts pages, the
+/// person hero and the quick-create direction chips (รอรับ / รอจ่าย)
+/// all take it from here.
+Color debtStateColor(BuildContext context, {required bool owedToMe}) {
+  final palette = Theme.of(context).extension<AppColors>()!;
+  return owedToMe ? palette.income : palette.expense;
+}
+
 enum NetBalanceSize { row, hero }
 
 class NetBalance extends StatelessWidget {
@@ -33,7 +42,6 @@ class NetBalance extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
     final hero = size == NetBalanceSize.hero;
     final align = hero ? CrossAxisAlignment.start : CrossAxisAlignment.end;
     final textAlign = hero ? TextAlign.start : TextAlign.end;
@@ -54,7 +62,7 @@ class NetBalance extends StatelessWidget {
     }
 
     final owedToMe = amount > 0;
-    final color = owedToMe ? palette.income : palette.expense;
+    final color = debtStateColor(context, owedToMe: owedToMe);
     final amountStyle = (hero ? textTheme.headlineMedium : textTheme.titleSmall)
         ?.copyWith(
           color: color,

@@ -24,11 +24,10 @@ class SavingGoalsRepository {
   Future<SavingGoalsOverview> list({
     String status = 'active',
     String sort = 'created',
-    String? month,
   }) => _guard(() async {
     final res = await _client.dio.get<Map<String, dynamic>>(
       '/saving-goals',
-      queryParameters: {'status': status, 'sort': sort, 'month': ?month},
+      queryParameters: {'status': status, 'sort': sort},
     );
     return SavingGoalsOverview.fromJson(res.data!);
   });

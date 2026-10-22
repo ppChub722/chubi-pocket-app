@@ -27,7 +27,9 @@ class EntryCard extends StatelessWidget {
     this.amountFocus,
     this.titleFocus,
     this.amountNote,
+    this.amountLabel,
     this.debt = false,
+    this.repay = false,
     this.typeBadge,
     this.accentColor,
     this.dateNote,
@@ -66,7 +68,14 @@ class EntryCard extends StatelessWidget {
 
   final Widget? amountNote;
 
+  /// The word over the amount; default "จำนวนเงิน" (ผูกกับ: "ยอดบิล").
+  final String? amountLabel;
+
+  /// Debt words on the type chips (รอรับ / รอจ่าย).
   final bool debt;
+
+  /// Repayment words on the type chips (จ่ายคืน / รับคืน).
+  final bool repay;
 
   final Widget? typeBadge;
   final Color? accentColor;
@@ -108,9 +117,11 @@ class EntryCard extends StatelessWidget {
       amountFocus: amountFocus,
       titleFocus: titleFocus,
       amountNote: amountNote,
+      amountLabel: amountLabel,
       titleHint: titleHint,
       showTitle: showTitle,
       debt: debt,
+      repay: repay,
       typeBadge: typeBadge,
       accentColor: accentColor,
       dateNote: dateNote,

@@ -1,7 +1,9 @@
 import 'package:equatable/equatable.dart';
 
+import '../../personal_debts/domain/debt_ledger.dart' show PersonBalance;
 import '../../personal_debts/domain/debt_link.dart';
 import '../../tags/domain/tag.dart';
+import 'link_draft.dart';
 import 'refs.dart';
 import 'transaction_type.dart';
 import '../../../ui/ui.dart';
@@ -79,6 +81,7 @@ class Transaction extends Equatable {
     this.splits = const [],
     this.project,
     this.counterparty,
+    this.repaymentPerson,
     this.eventBill,
     this.recurringItem,
     this.transferPeer,
@@ -87,7 +90,20 @@ class Transaction extends Equatable {
     this.canSplit,
     this.canEditSplits,
     this.canJoinEvent,
+    this.linkMode,
+    this.paidBy,
+    this.walletAmount,
   });
+
+  /// The ผูกกับ tab it was saved with (0.4.0-3, read-only); reopen the form
+  /// on it. Null = an older BE.
+  final LinkMode? linkMode;
+
+  /// จ่ายแทน: who paid (part of) it.
+  final TxPaidBy? paidBy;
+
+  /// What left the wallet: amount − paid_by.amount.
+  final double? walletAmount;
 
   final String id;
   final String? accountId;
@@ -114,6 +130,12 @@ class Transaction extends Equatable {
   final DebtLink? counterparty;
 
   bool get isDebtEntry => counterparty != null;
+
+  /// A repayment to / from a debt person (0.4.0-3): the category is the
+  /// system one and locked.
+  final RepaymentPerson? repaymentPerson;
+
+  bool get isRepayment => repaymentPerson != null;
 
   final EventBillLink? eventBill;
 
@@ -228,6 +250,11 @@ class Transaction extends Equatable {
               (json['counterparty'] as Map).cast<String, dynamic>(),
             )
           : null,
+      repaymentPerson: json['repayment_person'] is Map
+          ? RepaymentPerson.fromJson(
+              (json['repayment_person'] as Map).cast<String, dynamic>(),
+            )
+          : null,
       transferPeer: json['transfer_peer'] is Map<String, dynamic>
           ? TransferPeer.fromJson(json['transfer_peer'] as Map<String, dynamic>)
           : null,
@@ -236,6 +263,11 @@ class Transaction extends Equatable {
       canSplit: json['can_split'] as bool?,
       canEditSplits: json['can_edit_splits'] as bool?,
       canJoinEvent: json['can_join_event'] as bool?,
+      linkMode: LinkMode.parse(json['link_mode']),
+      paidBy: json['paid_by'] is Map
+          ? TxPaidBy.fromJson((json['paid_by'] as Map).cast<String, dynamic>())
+          : null,
+      walletAmount: (json['wallet_amount'] as num?)?.toDouble(),
     );
   }
 
@@ -295,6 +327,7 @@ class Transaction extends Equatable {
       splits: splits ?? this.splits,
       project: project ?? this.project,
       counterparty: counterparty ?? this.counterparty,
+      repaymentPerson: repaymentPerson,
       eventBill: eventBill ?? this.eventBill,
       recurringItem: clearRecurringItem
           ? null
@@ -305,6 +338,9 @@ class Transaction extends Equatable {
       canSplit: canSplit ?? this.canSplit,
       canEditSplits: canEditSplits ?? this.canEditSplits,
       canJoinEvent: canJoinEvent ?? this.canJoinEvent,
+      linkMode: linkMode,
+      paidBy: paidBy,
+      walletAmount: walletAmount,
     );
   }
 
@@ -332,6 +368,7 @@ class Transaction extends Equatable {
     splits,
     project,
     counterparty,
+    repaymentPerson,
     eventBill,
     recurringItem,
     transferPeer,
@@ -340,6 +377,9 @@ class Transaction extends Equatable {
     canSplit,
     canEditSplits,
     canJoinEvent,
+    linkMode,
+    paidBy,
+    walletAmount,
   ];
 }
 
@@ -347,15 +387,25 @@ class TransactionWriteResult {
   const TransactionWriteResult({
     required this.rows,
     this.accountBalances = const {},
+    this.personBalance,
+    this.personBalances = const [],
   });
 
   TransactionWriteResult.single(Transaction tx)
     : rows = [tx],
-      accountBalances = const {};
+      accountBalances = const {},
+      personBalance = null,
+      personBalances = const [];
 
   final List<Transaction> rows;
 
   final Map<String, double> accountBalances;
+
+  /// On a repayment row (0.4.0-3): the person's balance after the edit.
+  final PersonBalance? personBalance;
+
+  /// A tab switch (0.4.0-3 B3): every person whose balance moved.
+  final List<PersonBalance> personBalances;
 
   bool get isTransfer => rows.length > 1;
 
@@ -368,10 +418,49 @@ class TransactionWriteResult {
             .map(Transaction.fromJson)
             .toList(),
         accountBalances: WalletBalance.mapOf(json['account_balances']),
+        personBalance: PersonBalance.maybe(json['person_balance']),
+        personBalances: [
+          for (final p in (json['person_balances'] as List?) ?? const [])
+            ?PersonBalance.maybe(p),
+        ],
       );
 }
 
 typedef TransactionMutationResult = TransactionWriteResult;
+
+/// PUT /transactions/{id}?preview=true (0.4.0-3 B3): what a tab switch
+/// would move; nothing is saved.
+class TxEditPreview {
+  const TxEditPreview({this.people = const [], this.wallets = const []});
+
+  final List<({String key, String name, double before, double after})> people;
+  final List<({String accountId, double before, double after})> wallets;
+
+  factory TxEditPreview.fromJson(Map<String, dynamic> json) {
+    double n(Object? v) => (v as num?)?.toDouble() ?? 0;
+    return TxEditPreview(
+      people: [
+        for (final p in (json['people'] as List?) ?? const [])
+          if (p is Map)
+            (
+              key: (p['key'] as String?) ?? '',
+              name: ((p['person'] as Map?)?['name'] as String?) ?? '',
+              before: n(p['before']),
+              after: n(p['after']),
+            ),
+      ],
+      wallets: [
+        for (final w in (json['wallets'] as List?) ?? const [])
+          if (w is Map)
+            (
+              accountId: (w['account_id'] as String?) ?? '',
+              before: n(w['before']),
+              after: n(w['after']),
+            ),
+      ],
+    );
+  }
+}
 
 class DeleteTransactionResult {
   const DeleteTransactionResult({
@@ -379,6 +468,7 @@ class DeleteTransactionResult {
     this.accountBalances = const {},
     this.recurringItemId,
     this.billId,
+    this.personBalance,
   });
 
   final String id;
@@ -387,12 +477,16 @@ class DeleteTransactionResult {
   final String? recurringItemId;
   final String? billId;
 
+  /// Deleting a repayment (0.4.0-3): the person's balance after it.
+  final PersonBalance? personBalance;
+
   factory DeleteTransactionResult.fromJson(Map<String, dynamic> json) =>
       DeleteTransactionResult(
         id: json['id'] as String,
         accountBalances: WalletBalance.mapOf(json['account_balances']),
         recurringItemId: json['recurring_item_id'] as String?,
         billId: json['bill_id'] as String?,
+        personBalance: PersonBalance.maybe(json['person_balance']),
       );
 }
 

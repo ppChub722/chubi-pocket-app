@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens/app/app_colors.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
+import '../tokens/hero_colors.dart';
 
 enum DailyBarKind { past, today, future }
 
@@ -44,11 +45,16 @@ class DailyBars extends StatelessWidget {
     final palette = Theme.of(context).extension<AppColors>()!;
     final text = Theme.of(context).textTheme;
     final max = bars.fold<double>(0, (m, b) => b.value > m ? b.value : m);
-    final caption = text.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
+    // Inside a hero the bars take the card's color; alone, the expense red.
+    final hero = HeroColors.maybeOf(context);
+    final fill = hero?.accent ?? palette.expense;
+    final caption = text.bodySmall?.copyWith(
+      color: hero?.muted ?? scheme.onSurfaceVariant,
+    );
     Color colorOf(DailyBarKind k) => switch (k) {
-      DailyBarKind.past => palette.expense.withValues(alpha: 0.35),
-      DailyBarKind.today => palette.expense,
-      DailyBarKind.future => scheme.surfaceContainerHighest,
+      DailyBarKind.past => fill.withValues(alpha: 0.35),
+      DailyBarKind.today => fill,
+      DailyBarKind.future => hero?.track ?? scheme.surfaceContainerHighest,
     };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

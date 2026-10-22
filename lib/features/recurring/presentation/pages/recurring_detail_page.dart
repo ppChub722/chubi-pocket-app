@@ -1022,8 +1022,13 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           value: _Tab.past,
           label: l.fpRecurringTabPast,
           badgeCount: r.counts.notCreated,
+          icon: AppIcons.history,
         ),
-        AppTab(value: _Tab.upcoming, label: l.fpRecurringTabUpcoming),
+        AppTab(
+          value: _Tab.upcoming,
+          label: l.fpRecurringTabUpcoming,
+          icon: AppIcons.date,
+        ),
       ],
       selected: _tab,
       onChanged: _onTab,
@@ -1226,11 +1231,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         if (next != null) _nextBox(l, r, next),
         ?_track(l, r, d.stats),
         if (stats.isNotEmpty) HeroTiles(children: stats),
-        Wrap(
-          spacing: AppSpacing.xs,
-          runSpacing: AppSpacing.xs,
-          children: _heroChips(l, r),
-        ),
+        HeroChipRow(chips: _heroChips(l, r)),
       ],
     );
   }
@@ -1272,7 +1273,8 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: HeroNumber(
-                  label: r.kind == RecurringKind.installment &&
+                  label:
+                      r.kind == RecurringKind.installment &&
                           seq != null &&
                           total != null
                       ? l.fpRecurringNextInstallment(seq, total, due)
@@ -1391,8 +1393,9 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   List<Widget> _stats(AppLocalizations l, Recurring r, RecurringStats? s) {
     final symbol = context.readUserCurrencySymbol;
     String money(double v) => moneyString(context, v, symbol: symbol);
-    Widget tile(String label, String value) =>
-        SummaryTileView(tile: SummaryTile(label: label, value: value));
+    Widget tile(String label, String value) => SummaryTileView(
+      tile: SummaryTile(label: label, value: value),
+    );
     if (r.kind == RecurringKind.installment) {
       final per = r.amount ?? 0;
       final total = r.progressTotal;
@@ -1405,7 +1408,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           (allShown ? _upcoming.items.lastOrNull?.date : null) ??
           r.rule.end.date;
       return [
-        tile(l.fpRecurringStatPaid, money(s?.paidTotal ?? per * r.progressDone)),
+        tile(
+          l.fpRecurringStatPaid,
+          money(s?.paidTotal ?? per * r.progressDone),
+        ),
         if (left != null) tile(l.fpRecurringStatRemaining, money(left)),
         if (last != null) tile(l.fpRecurringStatLast, _monthYear(last)),
       ];
@@ -1469,7 +1475,11 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       if (category != null)
         categoryChipPath(context, category, all: cats.state.categories),
       if (account != null)
-        walletValueChip(context, name: account.name, iconCode: account.iconCode),
+        walletValueChip(
+          context,
+          name: account.name,
+          iconCode: account.iconCode,
+        ),
       if (toAccount != null)
         walletValueChip(
           context,

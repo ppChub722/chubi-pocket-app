@@ -12,6 +12,7 @@ import 'package:chubi_pocket/features/transactions/data/transactions_repository.
 import 'package:chubi_pocket/features/transactions/domain/transaction.dart';
 import 'package:chubi_pocket/features/transactions/presentation/cubit/transactions_cubit.dart';
 import 'package:chubi_pocket/features/transactions/presentation/pages/transaction_detail_page.dart';
+import 'package:chubi_pocket/features/transactions/presentation/widgets/category_pick_card.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/ui/ui.dart';
@@ -65,10 +66,25 @@ Map<String, dynamic> _row() => {
 
 /// GET /:id returns the row; PUT records `also_update_link` and answers
 /// with the row — or, for a date after today, an upcoming item.
+/// A repayment (0.4.0-3): income "Debt Received" tied to the person Mom.
+Map<String, dynamic> _repaymentRow() => {
+  ..._row(),
+  'type': 'income',
+  'amount': 82,
+  'description': 'Got back from Mom',
+  'repayment_person': {
+    'key': 'c:c1',
+    'name': 'Mom',
+    'contact_id': 'c1',
+    'person': {'name': 'Mom', 'contact_id': 'c1'},
+  },
+};
+
 class _Repo extends Fake implements TransactionsRepository {
   final links = <bool?>[];
   final deleteLinks = <bool?>[];
   bool upcoming = false;
+  Map<String, dynamic> Function() row = _row;
 
   @override
   Future<DeleteTransactionResult> delete(
@@ -85,7 +101,7 @@ class _Repo extends Fake implements TransactionsRepository {
   }
 
   @override
-  Future<Transaction> get(String id) async => Transaction.fromJson(_row());
+  Future<Transaction> get(String id) async => Transaction.fromJson(row());
 
   @override
   Future<TransactionMutationResult> update({
@@ -103,6 +119,7 @@ class _Repo extends Fake implements TransactionsRepository {
     String? transferToAccountId,
     List<String>? tagIds,
     bool? alsoUpdateLink,
+    Map<String, dynamic>? link,
   }) async {
     links.add(alsoUpdateLink);
     return TransactionWriteResult.fromJson({
@@ -130,8 +147,12 @@ void main() {
     }
   }
 
-  Future<void> pump(WidgetTester t) async {
+  Future<void> pump(
+    WidgetTester t, {
+    Map<String, dynamic> Function()? row,
+  }) async {
     repo = _Repo();
+    if (row != null) repo.row = row;
     txs = TransactionsCubit(repository: repo);
     addTearDown(txs.close);
     final accounts = _Accounts();
@@ -210,6 +231,32 @@ void main() {
   AppChip chip(WidgetTester t, String label) =>
       t.widget<AppChip>(find.widgetWithText(AppChip, label));
 
+  testWidgets('a repayment (0.4.0-3): "Got back from Mom ›", editable, '
+      'its category locked', (t) async {
+    await pump(t, row: _repaymentRow);
+    final link = find.byKey(const ValueKey('repaymentPerson'));
+    expect(link, findsOneWidget);
+    expect(
+      find.descendant(of: link, matching: find.text('Got back from')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: link, matching: find.text('Mom')),
+      findsOneWidget,
+    );
+    expect(t.widget<InfoRow>(link).onTap, isNotNull);
+    // No "can't be edited" banner: a repayment is an ordinary row now.
+    expect(find.byType(AppMessage), findsNothing);
+    await t.tap(find.byIcon(AppIcons.edit).first);
+    await settle(t);
+    expect(find.text('Save'), findsOneWidget);
+    final category = t.widget<CategoryPickCard>(find.byType(CategoryPickCard));
+    expect(category.onTap, isNull);
+    expect(category.editable, isFalse);
+    // The person row is a view-mode link only.
+    expect(link, findsNothing);
+  });
+
   testWidgets('view: the three link rows are dashed "+" chips', (t) async {
     await pump(t);
     expect(find.text('Save'), findsNothing);
@@ -241,8 +288,13 @@ void main() {
     await t.longPress(find.text('Split with people'));
     await settle(t);
     expect(find.text('Save'), findsOneWidget);
-    // Edit mode: the add button is live (outlined), and no lock anywhere.
-    expect(find.widgetWithText(AppButton, 'Add person'), findsOneWidget);
+    // Edit mode (0.4.0-3 B3): the ผูกกับ tabs, on the saved tab (ส่วนตัว);
+    // แบ่ง shows its card with a live "Add person". No lock anywhere.
+    final bar = find.byKey(const ValueKey('linkModeBar'));
+    expect(bar, findsOneWidget);
+    await t.tap(find.descendant(of: bar, matching: find.text('Split')));
+    await settle(t);
+    expect(find.widgetWithText(AppChip, 'Add person'), findsOneWidget);
     expect(find.byIcon(AppIcons.lock), findsNothing);
   });
 }

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../atoms/app_avatar.dart';
 import '../atoms/app_icon.dart';
 import '../atoms/app_input.dart';
+import '../atoms/app_input_type.dart';
+import 'amount_input.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/icon_size.dart';
@@ -215,3 +217,99 @@ class SplitRowName extends StatelessWidget {
 }
 
 enum _Kind { muted, input, picked }
+
+/// A row's amount box (the split rows' look, now in the kit): [value] in, the
+/// parsed number out on every keystroke. [auto] greys the number while the
+/// row fills itself (the "A" toggle); typing calls [onChanged] as usual.
+class ShareAmountField extends StatefulWidget {
+  const ShareAmountField({
+    required this.value,
+    required this.onChanged,
+    this.auto = false,
+    this.enabled = true,
+    super.key,
+  });
+
+  final double? value;
+  final ValueChanged<double?>? onChanged;
+  final bool auto;
+  final bool enabled;
+
+  static const double width = 104;
+
+  @override
+  State<ShareAmountField> createState() => _ShareAmountFieldState();
+}
+
+class _ShareAmountFieldState extends State<ShareAmountField> {
+  late final TextEditingController _amount = TextEditingController(
+    text: _formatted(widget.value),
+  );
+  final _focus = FocusNode();
+
+  static String _formatted(double? v) => v == null ? '' : AmountInput.format(v);
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(_onFocus);
+  }
+
+  /// Leaving the box shows the number it stands for (a cleared box whose
+  /// value fills itself, e.g. "the whole bill").
+  void _onFocus() {
+    if (!_focus.hasFocus) _sync();
+  }
+
+  void _sync() {
+    if (AmountInput.parse(_amount.text) != widget.value) {
+      _amount.text = _formatted(widget.value);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant ShareAmountField old) {
+    super.didUpdateWidget(old);
+    // The number moved from outside (auto, หารเท่ากัน): show it, unless the
+    // person is typing this very value, or just cleared the box to retype.
+    if (_focus.hasFocus && _amount.text.trim().isEmpty) return;
+    _sync();
+  }
+
+  @override
+  void dispose() {
+    _focus.removeListener(_onFocus);
+    _amount.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final style = Theme.of(context).textTheme.bodyLarge?.copyWith(
+      fontWeight: FontWeight.w600,
+      fontFeatures: const [FontFeature.tabularFigures()],
+      color: widget.auto ? scheme.onSurfaceVariant : null,
+    );
+    final onChanged = widget.onChanged;
+    return SizedBox(
+      width: ShareAmountField.width,
+      height: SplitRow.height,
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: AppInput.card(
+          controller: _amount,
+          focusNode: _focus,
+          type: AppInputType.amount,
+          style: style,
+          hint: '0',
+          enabled: widget.enabled && onChanged != null,
+          onChanged: onChanged == null
+              ? null
+              : (v) => onChanged(AmountInput.parse(v)),
+        ),
+      ),
+    );
+  }
+}

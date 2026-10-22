@@ -176,17 +176,20 @@ class ProjectsRepository {
     ),
   );
 
+  /// [people] = the bill's `payer` + `members` (B2, beside new_transaction).
   Future<QuickCreateResult> quickCreate({
     required String name,
     Map<String, dynamic>? newTransaction,
     List<String> transactionIds = const [],
     bool move = false,
+    Map<String, dynamic>? people,
   }) => _call(() async {
     final res = await _client.dio.post<Map<String, dynamic>>(
       '/projects/quick',
       data: <String, dynamic>{
         'name': name,
         'new_transaction': ?newTransaction,
+        ...?people,
         if (transactionIds.isNotEmpty) 'transaction_ids': transactionIds,
         if (move) 'move': true,
       },
@@ -202,16 +205,19 @@ class ProjectsRepository {
     );
   });
 
+  /// [people] = the bill's `payer` + `members` (B2, beside new_transaction).
   Future<QuickCreateResult> addBills(
     String projectId, {
     Map<String, dynamic>? newTransaction,
     List<String> transactionIds = const [],
     bool move = false,
+    Map<String, dynamic>? people,
   }) => _call(() async {
     final res = await _client.dio.post<Map<String, dynamic>>(
       '/projects/$projectId/bills',
       data: <String, dynamic>{
         'new_transaction': ?newTransaction,
+        ...?people,
         if (transactionIds.isNotEmpty) 'transaction_ids': transactionIds,
         if (move) 'move': true,
       },

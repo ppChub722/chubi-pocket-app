@@ -109,6 +109,7 @@ class _Repo extends Fake implements TransactionsRepository {
     String? transferToAccountId,
     List<String>? tagIds,
     bool? alsoUpdateLink,
+    Map<String, dynamic>? link,
   }) async {
     links.add(alsoUpdateLink);
     return TransactionWriteResult.fromJson({

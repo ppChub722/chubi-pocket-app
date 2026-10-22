@@ -480,8 +480,16 @@ class _SheetState extends State<_Sheet> {
                 selected: _tab,
                 onChanged: (t) => setState(() => _tab = t),
                 tabs: [
-                  AppTab(value: _Tab.style, label: l.iconMakerTabStyle),
-                  AppTab(value: _Tab.color, label: l.iconMakerTabColor),
+                  AppTab(
+                    value: _Tab.style,
+                    label: l.iconMakerTabStyle,
+                    icon: AppIcons.iconPicker,
+                  ),
+                  AppTab(
+                    value: _Tab.color,
+                    label: l.iconMakerTabColor,
+                    icon: AppIcons.colorPicker,
+                  ),
                 ],
               ),
             ),

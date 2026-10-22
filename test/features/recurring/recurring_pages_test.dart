@@ -554,9 +554,8 @@ void main() {
 
     testWidgets('big tabs on top, then the hero, then the rules', (t) async {
       await pump(t, const RecurringHomePage());
-      final tabsY = t
-          .getTopLeft(find.byType(SegmentedChoice<RecurringHomeTab>))
-          .dy;
+      // The app's one tab style (0.4.0-3).
+      final tabsY = t.getTopLeft(find.byType(AppTabBar<RecurringHomeTab>)).dy;
       final heroY = t.getTopLeft(find.byType(AppHeroCard)).dy;
       final allY = t.getTopLeft(find.text('All recurring')).dy;
       expect(tabsY, lessThan(heroY));

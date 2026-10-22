@@ -951,13 +951,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtEditTitle => 'แก้ไขหนี้';
 
   @override
-  String get debtDirectionOwedToMe => 'เขาติดฉัน';
+  String get debtDirectionOwedToMe => 'รอรับ';
 
   @override
   String get debtDirectionOwedToMeDesc => 'ฉันให้ยืม หรือออกเงินแทนเขา';
 
   @override
-  String get debtDirectionIOwe => 'ฉันติดเขา';
+  String get debtDirectionIOwe => 'รอจ่าย';
 
   @override
   String get debtDirectionIOweDesc => 'ฉันยืมมา หรือเขาออกให้ก่อน';
@@ -1190,7 +1190,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String projectTxOwes(String name) {
-    return 'ติด $name';
+    return 'รอจ่ายให้$name';
   }
 
   @override
@@ -1407,7 +1407,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get projectTxSplitsHint =>
-      'แต่ละคนติดคนจ่ายเท่าไร | คนจ่ายรับส่วนที่เหลือ';
+      'แต่ละคนรอจ่ายให้คนจ่ายเท่าไร | คนจ่ายรับส่วนที่เหลือ';
 
   @override
   String get projectTxAddSplit => 'เพิ่มการหาร';
@@ -1816,7 +1816,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txSplitName => 'ชื่อ';
 
   @override
-  String get txSplitOwes => 'ติด';
+  String get txSplitOwes => 'รอจ่าย';
 
   @override
   String get txSplitRemove => 'นำออก';
@@ -1951,7 +1951,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get moreProjectsDesc => 'ทริปและงบร่วมกัน';
 
   @override
-  String get moreDebtsDesc => 'ใครติดใครเท่าไร';
+  String get moreDebtsDesc => 'รอรับ / รอจ่ายกับใครเท่าไร';
 
   @override
   String get moreBudgetsDesc => 'ตั้งเพดานการใช้จ่าย';
@@ -3575,7 +3575,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get transactionSplitWithTitle => 'หารกับ...';
 
   @override
-  String get transactionSplitShareTitle => 'แบ่งให้... (เราติดเงินเขา)';
+  String get transactionSplitShareTitle => 'แบ่งให้... (เรารอจ่ายเขา)';
 
   @override
   String get quickCreateErrorTxNotFound =>
@@ -3813,7 +3813,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String txShareOthersOwe(String amount) {
-    return 'คนอื่นติด $amount';
+    return 'รอรับจากคนอื่น $amount';
   }
 
   @override
@@ -7370,4 +7370,209 @@ class AppLocalizationsTh extends AppLocalizations {
   String fpM5bEventDeleteNumbers(int bills, int members) {
     return 'จะลบบิล $bills รายการ และสมาชิก $members คน';
   }
+
+  @override
+  String fpGoalsPlanHeadMonth(String month) {
+    return 'แผนการออมเดือนนี้ | $month';
+  }
+
+  @override
+  String fpGoalsRingSavedPct(int pct) {
+    return 'ออมแล้ว $pct%';
+  }
+
+  @override
+  String get fpGoalsFactTargetShort => 'ยังขาดถึงเป้า';
+
+  @override
+  String get fpGoalsFactMonthToSave => 'เดือนนี้ต้องออม';
+
+  @override
+  String get debtSubRecord => 'จดหนี้';
+
+  @override
+  String get debtSubRepay => 'จ่ายคืน';
+
+  @override
+  String get debtRepayReceive => 'รับคืน';
+
+  @override
+  String get debtMoneyMovedLabel => 'มีเงินเข้า/ออกกระเป๋า';
+
+  @override
+  String get debtTitleHintOwedToMe => 'ค่าอะไร? เช่น จ่ายแทนค่าข้าว, ให้ยืม';
+
+  @override
+  String get debtTitleHintIOwe => 'ค่าอะไร? เช่น เขาจ่ายแทนค่าข้าว, ยืมเงิน';
+
+  @override
+  String get debtRepayTitleHint => 'ค่าอะไร?';
+
+  @override
+  String get debtRepayTo => 'จ่ายคืนให้';
+
+  @override
+  String get debtRepayFrom => 'รับคืนจาก';
+
+  @override
+  String debtRepayDescPay(String name) {
+    return 'จ่ายคืน $name';
+  }
+
+  @override
+  String debtRepayDescReceive(String name) {
+    return 'รับคืนจาก $name';
+  }
+
+  @override
+  String get debtMarkPaidLabel => 'ติดป้ายจ่ายแล้ว';
+
+  @override
+  String debtRepayLeft(String amount) {
+    return 'หลังบันทึก เหลือ $amount';
+  }
+
+  @override
+  String get debtRepayCleared => 'เคลียร์ครบ';
+
+  @override
+  String get debtRepayPickTitle => 'คนที่ยังค้างกันอยู่';
+
+  @override
+  String get debtRepayNoOpen => 'ไม่มีใครค้างกันอยู่';
+
+  @override
+  String get txRepaymentCategoryLocked =>
+      'รายการจ่ายคืนใช้หมวดของระบบ เปลี่ยนไม่ได้';
+
+  @override
+  String get txLinkModeNeedsPayer => 'เลือกคนที่จ่ายแทนก่อน';
+
+  @override
+  String get txLinkModeNeedsEvent => 'เลือกอีเวนต์ก่อน';
+
+  @override
+  String get txLinkModeUnbalanced =>
+      'ยอดยังไม่ลงตัวกับยอดบิล — ดูบรรทัดสถานะในการ์ด';
+
+  @override
+  String get txLinkTabLabel => 'ผูกกับ';
+
+  @override
+  String get txLinkTabPersonal => 'ส่วนตัว';
+
+  @override
+  String get txLinkTabSplit => 'แบ่ง';
+
+  @override
+  String get txLinkTabPaid => 'จ่ายแทน';
+
+  @override
+  String get txLinkTabEvent => 'อีเวนต์';
+
+  @override
+  String get txLinkBillLabel => 'ยอดบิล';
+
+  @override
+  String get txLinkCardSplitTitle => 'แบ่งให้ใคร';
+
+  @override
+  String get txLinkCardPaidTitle => 'ใครจ่าย และจ่ายเท่าไหร่';
+
+  @override
+  String get txLinkCardMyPaid => 'ฉันจ่ายเอง (จากกระเป๋า)';
+
+  @override
+  String get txLinkCardPickPayer => 'เลือกคนที่จ่าย';
+
+  @override
+  String get txLinkCardWhoPaid => 'ใครจ่าย';
+
+  @override
+  String get txLinkCardWhoInBill => 'ใครอยู่ในบิล';
+
+  @override
+  String get txLinkCardMe => 'ฉัน';
+
+  @override
+  String get txLinkCardSplitOk => '✓ แบ่งครบแล้ว';
+
+  @override
+  String get txLinkCardPaidOk => '✓ จ่ายครบแล้ว';
+
+  @override
+  String txLinkCardShort(String amount) {
+    return 'ยังขาด $amount';
+  }
+
+  @override
+  String txLinkCardOver(String amount) {
+    return 'เกินยอด $amount';
+  }
+
+  @override
+  String get txLinkCardNewToEvent => 'ใหม่ · เพิ่มเข้าอีเวนต์';
+
+  @override
+  String get txLinkWalletNotOut => 'ไม่ออกจากกระเป๋า';
+
+  @override
+  String txLinkWalletPart(String amount) {
+    return 'จ่ายจากกระเป๋า $amount';
+  }
+
+  @override
+  String txLinkShareIOwe(String name, String amount) {
+    return 'รอจ่ายให้$name $amount';
+  }
+
+  @override
+  String get txLinkViewPaidLabel => 'จ่ายโดย';
+
+  @override
+  String txLinkViewMyPaid(String amount) {
+    return 'ฉันจ่ายเอง $amount';
+  }
+
+  @override
+  String get txLinkViewEventLabel => 'บิลอีเวนต์';
+
+  @override
+  String get txLinkViewIPaid => 'ฉันจ่าย';
+
+  @override
+  String txLinkViewTheyPaid(String name) {
+    return '$nameจ่าย';
+  }
+
+  @override
+  String txLinkViewPeople(int count) {
+    return '$count คน';
+  }
+
+  @override
+  String get debtDirectionOwedToMeSub => 'เขาต้องคืนฉัน';
+
+  @override
+  String get debtDirectionIOweSub => 'ฉันต้องคืนเขา';
+
+  @override
+  String get txLinkPreviewTitle => 'ยอดที่จะเปลี่ยน';
+
+  @override
+  String txLinkPreviewLine(String name, String before, String after) {
+    return '$name: $before → $after';
+  }
+
+  @override
+  String get txLinkPreviewNone => 'ไม่มียอดคงเหลือของใครเปลี่ยน';
+
+  @override
+  String get txLinkOutOfSyncLabel => 'บิลในอีเวนต์ถูกแก้';
+
+  @override
+  String get txLinkApplyEvent => 'อัปเดตตามอีเวนต์';
+
+  @override
+  String get txLinkApplied => 'อัปเดตตามอีเวนต์แล้ว';
 }

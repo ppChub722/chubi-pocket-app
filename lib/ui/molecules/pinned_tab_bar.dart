@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/app_spacing.dart';
+import 'app_tab_bar.dart';
 
+/// Pins an [AppTabBar] under the top bar once the hero scrolls away.
 class PinnedTabBarDelegate extends SliverPersistentHeaderDelegate {
   PinnedTabBarDelegate({required this.background, required this.child});
 
   final Color background;
   final Widget child;
 
-  static const double height = 52;
+  /// The bar plus a small gap above and below.
+  static const double height = AppSpacing.sm + AppTabBar.height + AppSpacing.sm;
 
   @override
   double get minExtent => height;
@@ -25,7 +28,7 @@ class PinnedTabBarDelegate extends SliverPersistentHeaderDelegate {
             AppSpacing.lg,
             AppSpacing.sm,
             AppSpacing.lg,
-            0,
+            AppSpacing.sm,
           ),
           child: child,
         ),

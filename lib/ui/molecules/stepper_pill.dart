@@ -7,6 +7,7 @@ import '../atoms/ui_config.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
+import '../tokens/hero_colors.dart';
 import 'month_picker.dart';
 
 enum StepperUnit { week, month, year }
@@ -168,6 +169,9 @@ class StepperPill extends StatelessWidget {
     String? tapTooltip,
   }) {
     final scheme = Theme.of(context).colorScheme;
+    // Inside a hero the pill takes the card's colors (a quiet fill, the card's
+    // line, accent arrows) and sits flat like the other chips there.
+    final hero = HeroColors.maybeOf(context);
     final arrows = onPrev != null || onNext != null;
     final chipSize = size ?? ChipSizeScope.of(context) ?? ChipSize.control;
     final height = chipSize.heightOf(context);
@@ -183,7 +187,7 @@ class StepperPill extends StatelessWidget {
             size: chipSize.icon + 4,
             color: onStep == null
                 ? scheme.onSurface.withValues(alpha: 0.38)
-                : scheme.onSurface,
+                : hero?.accent ?? scheme.onSurface,
           ),
         ),
       );
@@ -218,7 +222,7 @@ class StepperPill extends StatelessWidget {
               Icon(
                 AppIcons.dropdown,
                 size: chipSize.icon + 4,
-                color: scheme.onSurfaceVariant,
+                color: hero?.muted ?? scheme.onSurfaceVariant,
               ),
           ],
         ),
@@ -229,10 +233,12 @@ class StepperPill extends StatelessWidget {
     }
 
     return Material(
-      color: scheme.surfaceContainerHigh,
-      elevation: 1.5,
+      color: hero?.soft ?? scheme.surfaceContainerHigh,
+      elevation: hero == null ? 1.5 : 0,
       shadowColor: scheme.shadow.withValues(alpha: 0.2),
-      shape: StadiumBorder(side: BorderSide(color: scheme.outlineVariant)),
+      shape: StadiumBorder(
+        side: BorderSide(color: hero?.line ?? scheme.outlineVariant),
+      ),
       clipBehavior: Clip.antiAlias,
       child: Row(
         mainAxisSize: MainAxisSize.min,

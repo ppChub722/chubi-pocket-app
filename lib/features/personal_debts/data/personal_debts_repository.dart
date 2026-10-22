@@ -88,6 +88,44 @@ class PersonalDebtsRepository {
     }
   }
 
+  /// `POST /personal-debts/people/{key}/repayments` (createDebtRepayment): a
+  /// repayment = ONE transaction tied to the person (expense "Debt Paid" /
+  /// income "Debt Received"), not a debt row (owner 2026-10-21). The BE takes
+  /// the wallet as optional; quick create always sends one.
+  Future<DebtRepaymentResult> createRepayment(
+    String key, {
+    required DebtRepaymentKind kind,
+    required double amount,
+    required String accountId,
+    DateTime? date,
+    String? description,
+    String? note,
+    List<String>? tagIds,
+    List<String>? markPaidIds,
+    String? personName,
+  }) async {
+    try {
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        '/personal-debts/people/${Uri.encodeComponent(key)}/repayments',
+        data: <String, dynamic>{
+          'kind': kind.wire,
+          'amount': amount,
+          'account_id': accountId,
+          if (date != null) 'date': debtDateWire(date),
+          'description': ?description,
+          'note': ?note,
+          if (tagIds != null && tagIds.isNotEmpty) 'tag_ids': tagIds,
+          if (markPaidIds != null && markPaidIds.isNotEmpty)
+            'mark_paid_ids': markPaidIds,
+          'person_name': ?personName,
+        },
+      );
+      return DebtRepaymentResult.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
   Future<DebtEntryDetail> getEntry(String id) async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(

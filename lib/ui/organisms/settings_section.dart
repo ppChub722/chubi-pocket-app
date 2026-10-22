@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../atoms/app_button.dart';
+import '../atoms/ui_config.dart';
 import '../tokens/app/app_icons.dart';
 import '../atoms/app_switch.dart';
 import '../atoms/connection_scope.dart';
+import '../molecules/app_snackbar.dart';
 import '../molecules/detail_rows.dart';
 import '../molecules/option_menu.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/chip_size.dart';
+import '../tokens/tone.dart';
 import 'option_sheet.dart';
 
 class SettingsSection extends StatelessWidget {
@@ -32,6 +35,102 @@ class SettingsSection extends StatelessWidget {
     description: description,
     children: children,
   );
+}
+
+/// A setting that saves itself in VIEW mode, no ✏️ needed (owner 2026-10-21):
+/// a flip or a pick shows at once and makes ONE [save] call. [save] returns
+/// false when the person backed out (e.g. closed a sheet it opened): the old
+/// value comes back quietly. A throw also brings the old value back, with
+/// [failedMessage] and a retry. While a save runs the row ignores new input.
+///
+/// [builder] draws any settings row with the value to show and the change
+/// callback (null when read-only):
+///
+///     LiveSetting<bool>(
+///       value: wallet.trackBalance,
+///       save: (on) => saveTrack(on),
+///       failedMessage: (e) => messageOf(e),
+///       builder: (context, value, onChanged) => SettingToggleRow(
+///         label: …, value: value, onChanged: onChanged),
+///     )
+class LiveSetting<T> extends StatefulWidget {
+  const LiveSetting({
+    required this.value,
+    required this.save,
+    required this.failedMessage,
+    required this.builder,
+    super.key,
+  });
+
+  /// The saved value (from the page's data).
+  final T value;
+
+  /// Null = read-only (the row gets no change callback).
+  final Future<bool> Function(T value)? save;
+  final String Function(Object error) failedMessage;
+  final Widget Function(
+    BuildContext context,
+    T value,
+    ValueChanged<T>? onChanged,
+  )
+  builder;
+
+  @override
+  State<LiveSetting<T>> createState() => _LiveSettingState<T>();
+}
+
+class _LiveSettingState<T> extends State<LiveSetting<T>> {
+  /// The value picked but not yet confirmed by the page's data.
+  T? _shown;
+  bool _hasShown = false;
+  bool _busy = false;
+
+  T get _value => _hasShown ? _shown as T : widget.value;
+
+  @override
+  void didUpdateWidget(covariant LiveSetting<T> old) {
+    super.didUpdateWidget(old);
+    // The page's data moved (the save landed, or a refresh): it wins.
+    if (old.value != widget.value && !_busy) _hasShown = false;
+  }
+
+  Future<void> _change(T next) async {
+    final save = widget.save;
+    if (save == null || _busy || next == _value) return;
+    setState(() {
+      _shown = next;
+      _hasShown = true;
+      _busy = true;
+    });
+    var saved = false;
+    Object? error;
+    try {
+      saved = await save(next);
+    } catch (e) {
+      error = e;
+    }
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      // Kept on success until the page's data catches up (no flicker back).
+      if (!saved) _hasShown = false;
+    });
+    if (error != null) {
+      showAppSnackBar(
+        context,
+        widget.failedMessage(error),
+        tone: Tone.danger,
+        actionLabel: UiConfig.stringsOf(context).retry,
+        onAction: () => _change(next),
+      );
+    }
+  }
+
+  // The row stays enabled while saving (no grey flash); [_change] ignores
+  // taps until the save is done.
+  @override
+  Widget build(BuildContext context) =>
+      widget.builder(context, _value, widget.save == null ? null : _change);
 }
 
 class SettingToggleRow extends StatelessWidget {

@@ -262,8 +262,8 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
       // A tab bar under the hero (a budget's periods / items).
       tabBar: AppTabBar<int>(
         tabs: const [
-          AppTab(value: 0, label: 'Periods'),
-          AppTab(value: 1, label: 'Items'),
+          AppTab(value: 0, label: 'Periods', icon: AppIcons.history),
+          AppTab(value: 1, label: 'Items', icon: AppIcons.receipt),
         ],
         selected: 0,
         onChanged: (_) {},

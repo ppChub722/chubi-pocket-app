@@ -227,9 +227,16 @@ class DebtEntry extends Equatable {
     this.createdAt,
     this.updatedAt,
     this.inCurrentCycle,
+    this.isRepayment = false,
   });
 
+  /// A debt's id; on a [isRepayment] statement line, its transaction's id.
   final String id;
+
+  /// A person-statement line that is a REPAYMENT (a transaction tied to the
+  /// person, `kind: "repayment"`, 0.4.0-3) rather than a debt. It opens
+  /// /transactions/{id}; it has no paid label and no source.
+  final bool isRepayment;
 
   final bool? inCurrentCycle;
 
@@ -272,6 +279,7 @@ class DebtEntry extends Equatable {
     createdAt: _date(json['created_at']),
     updatedAt: _date(json['updated_at']),
     inCurrentCycle: json['in_current_cycle'] as bool?,
+    isRepayment: json['kind'] == 'repayment',
   );
 
   static DebtEntry? maybe(Object? json) =>
@@ -292,6 +300,7 @@ class DebtEntry extends Equatable {
     createdAt,
     updatedAt,
     inCurrentCycle,
+    isRepayment,
   ];
 }
 
@@ -464,6 +473,31 @@ class DebtEntryWriteResult extends Equatable {
     transaction,
     accountBalances,
   ];
+}
+
+/// What `POST /personal-debts/people/{key}/repayments` answers (0.4.0-3): the
+/// ONE transaction it made, the person's balance after it and the wallet
+/// balances it moved.
+class DebtRepaymentResult extends Equatable {
+  const DebtRepaymentResult({
+    required this.transaction,
+    required this.balance,
+    this.accountBalances = const {},
+  });
+
+  final Transaction transaction;
+  final PersonBalance balance;
+  final Map<String, double> accountBalances;
+
+  factory DebtRepaymentResult.fromJson(Map<String, dynamic> json) =>
+      DebtRepaymentResult(
+        transaction: Transaction.fromJson(_map(json['transaction'])!),
+        balance: PersonBalance.fromJson(_map(json['person_balance'])!),
+        accountBalances: WalletBalance.mapOf(json['account_balances']),
+      );
+
+  @override
+  List<Object?> get props => [transaction, balance, accountBalances];
 }
 
 class DebtEntryDeleteResult extends Equatable {

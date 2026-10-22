@@ -27,8 +27,11 @@ class MemberChip extends StatelessWidget {
     if (members.isEmpty) return const SizedBox.shrink();
     final scheme = Theme.of(context).colorScheme;
     final hero = HeroColors.maybeOf(context);
-    final height = (size ?? ChipSizeScope.of(context) ?? ChipSize.chip)
-        .heightOf(context);
+    final height = ChipSizeScope.resolve(
+      context,
+      size,
+      fallback: ChipSize.chip,
+    ).heightOf(context);
     final radius = BorderRadius.circular(height / 2);
     return Semantics(
       button: onTap != null,

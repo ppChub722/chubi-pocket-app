@@ -18,6 +18,8 @@ class QuickCreatePreset {
     this.person,
     this.goalId,
     this.debtDirection,
+    this.debtSub,
+    this.amount,
   });
 
   const QuickCreatePreset.saving({this.goalId})
@@ -26,14 +28,21 @@ class QuickCreatePreset {
       category = null,
       tag = null,
       person = null,
-      debtDirection = null;
+      debtDirection = null,
+      debtSub = null,
+      amount = null;
 
-  const QuickCreatePreset.debt({this.person, this.debtDirection})
-    : mode = QuickCreateMode.debt,
-      account = null,
-      category = null,
-      tag = null,
-      goalId = null;
+  /// [debtSub] repay + [person] + [amount]: "รับคืนแล้ว ฿82" on a person page.
+  const QuickCreatePreset.debt({
+    this.person,
+    this.debtDirection,
+    this.debtSub,
+    this.amount,
+  }) : mode = QuickCreateMode.debt,
+       account = null,
+       category = null,
+       tag = null,
+       goalId = null;
 
   static const none = QuickCreatePreset();
 
@@ -48,6 +57,10 @@ class QuickCreatePreset {
 
   final DebtEntryDirection? debtDirection;
 
+  /// Debt mode's side: record a debt (default) or repay.
+  final DebtEntrySub? debtSub;
+  final double? amount;
+
   @override
   bool operator ==(Object other) =>
       other is QuickCreatePreset &&
@@ -57,7 +70,9 @@ class QuickCreatePreset {
       other.tag?.id == tag?.id &&
       other.person == person &&
       other.goalId == goalId &&
-      other.debtDirection == debtDirection;
+      other.debtDirection == debtDirection &&
+      other.debtSub == debtSub &&
+      other.amount == amount;
 
   @override
   int get hashCode => Object.hash(
@@ -68,6 +83,8 @@ class QuickCreatePreset {
     person,
     goalId,
     debtDirection,
+    debtSub,
+    amount,
   );
 }
 

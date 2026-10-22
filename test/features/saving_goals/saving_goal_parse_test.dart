@@ -169,7 +169,11 @@ Map<String, dynamic> prodSpareDetail({Map<String, dynamic>? autoSave}) => {
   'entries': prodEntries(const []),
 };
 
-Map<String, dynamic> prodList({List<Map<String, dynamic>>? goals}) => {
+/// [summary] overrides the summary's keys (e.g. the long-term counts).
+Map<String, dynamic> prodList({
+  List<Map<String, dynamic>>? goals,
+  Map<String, dynamic> summary = const {},
+}) => {
   'summary': {
     'saved': 60500,
     'in_goals': 52000,
@@ -180,6 +184,15 @@ Map<String, dynamic> prodList({List<Map<String, dynamic>>? goals}) => {
     'month_plan_total': 5500,
     'month_saved_total': 3000,
     'unallocated': 8500,
+    // Long-term (0.4.0-3; names as proposed to the BE).
+    'target_total': 80000,
+    'target_saved_total': 52000,
+    'target_short_total': 28000,
+    'target_percent': 65,
+    'count_short': 1,
+    'count_done': 0,
+    'count_no_target': 0,
+    ...summary,
   },
   'spare': prodSpare(),
   'data': goals ?? [prodGoal()],
@@ -306,6 +319,14 @@ void main() {
     expect(o.summary.savedTotal, 60500);
     expect(o.summary.monthShortTotal, 2500);
     expect(o.summary.unallocated, 8500);
+    // Long-term progress + the filter counts (0.4.0-3).
+    expect(o.summary.targetTotal, 80000);
+    expect(o.summary.targetSavedTotal, 52000);
+    expect(o.summary.targetShortTotal, 28000);
+    expect(o.summary.targetPercent, 65);
+    expect(o.summary.countShort, 1);
+    expect(o.summary.countDone, 0);
+    expect(o.summary.countNoTarget, 0);
     expect(o.spare.amount, 8500);
     expect(o.goals, hasLength(1));
   });

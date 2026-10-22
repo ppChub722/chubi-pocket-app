@@ -363,7 +363,8 @@ class _TransactionsListPageState extends State<TransactionsListPage>
         _apply(_f.copyWith(types: only(type) ? const {} : {type}));
     final net = MoneyText(t.net, tone: MoneyTone.signed);
     return AppHeroCard(
-      style: const HeroStyle.plain(),
+      // The page color (the ▤ tile's); its pieces take their colors from it.
+      style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
       margin: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
         AppSpacing.sm,
@@ -372,9 +373,9 @@ class _TransactionsListPageState extends State<TransactionsListPage>
       ),
       open: _summaryOpen,
       header: HeroHeader(
-        leading: [HeroModuleTile(AppIcons.transactions), _periodPill()],
+        leading: const [HeroModuleTile(AppIcons.transactions)],
+        fill: _periodPill(),
         actions: [
-          const MoneyVisibilityToggle(),
           ToolbarToggleButton(
             state: _toolbarOpen,
             filtered: activeFilters > 0 || _q.isNotEmpty,

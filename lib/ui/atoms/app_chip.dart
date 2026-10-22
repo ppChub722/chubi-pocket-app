@@ -159,7 +159,7 @@ class AppChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = _size ?? ChipSizeScope.of(context) ?? ChipSize.control;
+    final size = ChipSizeScope.resolve(context, _size);
     final height = size.heightOf(context);
     final scheme = Theme.of(context).colorScheme;
     final tint = color ?? (tone ?? AppChipTone.primary).resolve(context);
@@ -416,13 +416,36 @@ class _RenderExpandedHit extends RenderProxyBox {
 }
 
 class ChipSizeScope extends InheritedWidget {
-  const ChipSizeScope({required this.size, required super.child, super.key});
+  const ChipSizeScope({required this.size, required super.child, super.key})
+    : force = false;
+
+  /// Every chip inside takes [size], even one that sets its own (a row that
+  /// must be one size, e.g. [HeroChipRow]).
+  const ChipSizeScope.force({
+    required this.size,
+    required super.child,
+    super.key,
+  }) : force = true;
 
   final ChipSize size;
+  final bool force;
 
   static ChipSize? of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<ChipSizeScope>()?.size;
 
+  /// The size a chip that asked for [own] gets here ([fallback] when neither
+  /// it nor a scope says).
+  static ChipSize resolve(
+    BuildContext context,
+    ChipSize? own, {
+    ChipSize fallback = ChipSize.control,
+  }) {
+    final scope = context.dependOnInheritedWidgetOfExactType<ChipSizeScope>();
+    if (scope != null && scope.force) return scope.size;
+    return own ?? scope?.size ?? fallback;
+  }
+
   @override
-  bool updateShouldNotify(ChipSizeScope old) => size != old.size;
+  bool updateShouldNotify(ChipSizeScope old) =>
+      size != old.size || force != old.force;
 }

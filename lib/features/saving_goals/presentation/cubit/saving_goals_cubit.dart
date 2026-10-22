@@ -42,7 +42,6 @@ class SavingGoalsState extends Equatable {
     this.sort = SavingGoalsSort.needFirst,
     this.status = SavingGoalsStatus.initial,
     this.error,
-    this.month,
   });
 
   final SavingGoalsOverview overview;
@@ -50,9 +49,6 @@ class SavingGoalsState extends Equatable {
   final SavingGoalsSort sort;
   final SavingGoalsStatus status;
   final ApiException? error;
-
-  /// The month whose plan the list shows (first day); null = the current one.
-  final DateTime? month;
 
   /// Sorts on every call: read it once per build.
   List<SavingGoal> get goals => sort == SavingGoalsSort.needFirst
@@ -66,19 +62,16 @@ class SavingGoalsState extends Equatable {
     SavingGoalsStatus? status,
     ApiException? error,
     bool clearError = false,
-    DateTime? month,
-    bool clearMonth = false,
   }) => SavingGoalsState(
     overview: overview ?? this.overview,
     filter: filter ?? this.filter,
     sort: sort ?? this.sort,
     status: status ?? this.status,
     error: clearError ? null : (error ?? this.error),
-    month: clearMonth ? null : (month ?? this.month),
   );
 
   @override
-  List<Object?> get props => [overview, filter, sort, status, error, month];
+  List<Object?> get props => [overview, filter, sort, status, error];
 }
 
 class SavingGoalsCubit extends Cubit<SavingGoalsState>
@@ -114,37 +107,18 @@ class SavingGoalsCubit extends Cubit<SavingGoalsState>
     return load();
   }
 
-  /// Steps to another month's plan; the current month clears it.
-  Future<void> setMonth(DateTime month) {
-    final now = DateTime.now();
-    final current = month.year == now.year && month.month == now.month;
-    emit(
-      current
-          ? state.copyWith(clearMonth: true)
-          : state.copyWith(month: DateTime(month.year, month.month)),
-    );
-    return load();
-  }
-
-  Future<void> resetMonth() async {
-    if (state.month != null) await setMonth(DateTime.now());
-  }
-
   Future<void> load({bool silent = false}) async {
     if (!silent || state.status != SavingGoalsStatus.loaded) {
       emit(state.copyWith(status: SavingGoalsStatus.loading, clearError: true));
     }
     try {
-      final month = state.month;
+      // Always the current month: past months would be recomputed from
+      // today's goals and rules, so they would mislead (owner 2026-10-21).
       final overview = await _repo.list(
         status: state.filter.query,
         sort: state.sort.query,
-        month: month == null
-            ? null
-            : '${month.year}-${month.month.toString().padLeft(2, '0')}',
       );
-      // Leaving the page resets the month and reloads; the cubit may be
-      // closed by the time the answer comes back.
+      // The cubit may be closed by the time the answer comes back.
       if (isClosed) return;
       emit(
         state.copyWith(

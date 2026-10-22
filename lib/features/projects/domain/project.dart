@@ -263,11 +263,16 @@ class ProjectMember extends Equatable {
     this.userId,
     this.iconCode,
     this.isMe = false,
+    this.contactId,
   });
 
   final String id;
   final String projectId;
   final String? userId;
+
+  /// MY contact for this member (linked: the contact of that user; typed: my
+  /// contact with the same name); null when none and on my own row.
+  final String? contactId;
 
   final String displayName;
   final MemberRole role;
@@ -293,6 +298,7 @@ class ProjectMember extends Equatable {
       status: MemberStatusWire.parse(json['status'] as String?),
       iconCode: _icon(json['icon_code']),
       isMe: json['is_me'] == true,
+      contactId: json['contact_id'] as String?,
     );
   }
 
@@ -301,6 +307,7 @@ class ProjectMember extends Equatable {
     id,
     projectId,
     userId,
+    contactId,
     displayName,
     role,
     status,
@@ -873,6 +880,7 @@ class EventPatch {
     this.row = const [],
     this.removedRowId,
     this.accountBalances = const {},
+    this.myTransaction,
   });
 
   final Project project;
@@ -885,6 +893,11 @@ class EventPatch {
   final String? removedRowId;
 
   final Map<String, double> accountBalances;
+
+  /// A bill edit (0.4.0-3 B3): MY tx linked to the bill (made from it, or my
+  /// copy) after the edit; its event_bill.in_sync says whether to offer
+  /// "แก้ในสมุดของฉันด้วย" (apply-event).
+  final Transaction? myTransaction;
 
   factory EventPatch.fromJson(Map<String, dynamic> json) {
     final project = Project.fromJson(json['event'] as Map<String, dynamic>);
@@ -905,6 +918,11 @@ class EventPatch {
           : const [],
       removedRowId: json['removed_row_id'] as String?,
       accountBalances: WalletBalance.mapOf(json['account_balances']),
+      myTransaction: json['my_transaction'] is Map
+          ? Transaction.fromJson(
+              (json['my_transaction'] as Map).cast<String, dynamic>(),
+            )
+          : null,
     );
   }
 

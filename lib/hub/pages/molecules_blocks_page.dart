@@ -210,9 +210,22 @@ class _BlocksPageState extends State<_BlocksPage> {
                         selected: _tab,
                         onChanged: (v) => setState(() => _tab = v),
                         tabs: const [
-                          AppTab(value: 'a', label: 'Overview'),
-                          AppTab(value: 'b', label: 'Members', badgeCount: 3),
-                          AppTab(value: 'c', label: 'History'),
+                          AppTab(
+                            value: 'a',
+                            label: 'Overview',
+                            icon: AppIcons.pie,
+                          ),
+                          AppTab(
+                            value: 'b',
+                            label: 'Members',
+                            icon: AppIcons.member,
+                            badgeCount: 3,
+                          ),
+                          AppTab(
+                            value: 'c',
+                            label: 'History',
+                            icon: AppIcons.history,
+                          ),
                         ],
                       ),
                     ),

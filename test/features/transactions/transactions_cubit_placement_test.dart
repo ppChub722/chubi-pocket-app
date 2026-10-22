@@ -83,6 +83,7 @@ class _Repo extends Fake implements TransactionsRepository {
     List<String> tagIds = const [],
     List<Map<String, dynamic>>? splits,
     String? sourceProjectTransactionId,
+    Map<String, dynamic>? link,
   }) async => next!;
 
   @override
@@ -101,6 +102,7 @@ class _Repo extends Fake implements TransactionsRepository {
     String? transferToAccountId,
     List<String>? tagIds,
     bool? alsoUpdateLink,
+    Map<String, dynamic>? link,
   }) async => next!;
 }
 

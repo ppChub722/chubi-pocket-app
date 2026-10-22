@@ -121,8 +121,16 @@ class _TabbedDetailDemoState extends State<_TabbedDetailDemo> {
                   selected: _tab,
                   onChanged: (t) => setState(() => _tab = t),
                   tabs: const [
-                    AppTab(value: _Tab.ledger, label: 'Entries'),
-                    AppTab(value: _Tab.history, label: 'Payments'),
+                    AppTab(
+                      value: _Tab.ledger,
+                      label: 'Entries',
+                      icon: AppIcons.receipt,
+                    ),
+                    AppTab(
+                      value: _Tab.history,
+                      label: 'Payments',
+                      icon: AppIcons.history,
+                    ),
                   ],
                   hero: AppHeroCard(
                     style: HeroStyle.tinted(

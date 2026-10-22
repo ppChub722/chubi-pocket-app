@@ -620,16 +620,68 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
           ),
         ),
         HubDemo(
-          title: 'HeroStepperHead',
+          title: 'HeroChipRow: the chip row at the bottom of a hero',
           note:
-              'A list hero\'s plan head: a stepper with the plan\'s title '
-              'beside it, no divider. The saving goals list puts a month '
-              'StepperPill here; the title is its own text per month.',
+              'ONE row piece for every hero (recurring / budget / goal / '
+              'wallet detail): every chip in it is CHIP size (28), even one '
+              'that asks for mini or control (ChipSizeScope.force), so they '
+              'share height, padding, radius, font and icon size. Each keeps '
+              'its colour; the status dropdown keeps its ▾. Wraps with 6 px '
+              'gaps, never overflows. A plan status chip goes LAST.',
           child: AppHeroCard(
             style: HeroStyle.tinted(
               color: Theme.of(context).colorScheme.primary,
             ),
             content: [
+              HeroChipRow(
+                chips: [
+                  StatusChip(
+                    label: 'Active',
+                    kind: StatusKind.active,
+                    onTap: () {},
+                  ),
+                  const AppChip(
+                    label: 'Subscription',
+                    selected: true,
+                    tone: AppChipTone.neutral,
+                  ),
+                  const AppChip(
+                    label: 'Transportation',
+                    icon: AppIcons.category,
+                    size: ChipSize.control,
+                  ),
+                  const AppChip(label: 'Wallet', icon: AppIcons.wallet),
+                  AppChip(
+                    label: 'Trip tag',
+                    icon: AppIcons.tag,
+                    color: Theme.of(context).colorScheme.error,
+                    selected: true,
+                    size: ChipSize.mini,
+                  ),
+                  const StatusChip(
+                    label: 'Short ฿2,500 this month',
+                    kind: StatusKind.warning,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'HeroStepperHead',
+          note:
+              'A list hero\'s plan head: the plan\'s title, with a stepper '
+              'before it when the plan can be stepped; no divider. Without a '
+              'stepper it is the plain title (the saving goals list: always '
+              'this month, "This month\'s saving plan | October 2026").',
+          child: AppHeroCard(
+            style: HeroStyle.tinted(
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            content: [
+              const HeroStepperHead(
+                title: 'This month\'s saving plan | October 2026',
+              ),
               HeroStepperHead(
                 stepper: StepperPill.month(
                   value: DateTime(2026, 10),
@@ -648,19 +700,35 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
           ),
         ),
         HubDemo(
-          title: 'List summary — folds',
+          title: 'List summary — folds (the transactions list)',
           note:
-              'header: a period pill + actions (⌃ added by the card). '
-              'content: the number inline with its label. footer: filter '
-              'tiles. Folded: header + the number, small.',
+              'header: HeroHeader(fill:) = ONE row: [module tile 40] [the '
+              'period stepper filling the room, ‹ › at its ends] [🔍], all 40 '
+              'high on one axis; the ⌃ stays '
+              'in the corner (added by the card). content: the number inline '
+              'with its label. footer: filter tiles. Folded: header + the '
+              'number, small. Tinted with the page color: the stepper (soft '
+              'fill, the card line, accent arrows, flat), the 🔍 and the '
+              'daily bars take their colors from the card; status colors '
+              '(the net, the income / expense tiles) still win.',
           child: AppHeroCard(
             style: HeroStyle.tinted(color: scheme.primary),
             open: _listOpen,
             header: HeroHeader(
-              leading: [
-                StepperPill(label: 'October 2026', onPrev: () {}, onTap: () {}),
+              leading: const [HeroModuleTile(AppIcons.transactions)],
+              fill: StepperPill(
+                label: 'October 2026',
+                onPrev: () {},
+                onNext: () {},
+                onTap: () {},
+              ),
+              actions: [
+                CardActionButton(
+                  icon: AppIcons.search,
+                  onTap: () {},
+                  showDot: true,
+                ),
               ],
-              actions: [AppIconButton(icon: AppIcons.search, onPressed: () {})],
             ),
             content: [
               HeroNumber(
@@ -696,6 +764,25 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
               ),
             ],
             footer: [HeroTiles(children: _tiles(selectable: true))],
+          ),
+        ),
+        HubDemo(
+          title: 'List head without actions (the recurring list)',
+          note:
+              'HeroHeader(fill:) with no fold and no actions: the month '
+              'stepper runs from the module tile to the card edge.',
+          child: AppHeroCard(
+            style: HeroStyle.tinted(color: scheme.primary),
+            header: HeroHeader(
+              leading: const [HeroModuleTile(AppIcons.scheduled)],
+              fill: StepperPill.month(
+                value: DateTime(2026, 10),
+                onChanged: (_) {},
+              ),
+            ),
+            content: const [
+              HeroNumber(label: 'To pay this month', value: Text('-฿12,419')),
+            ],
           ),
         ),
         HubDemo(

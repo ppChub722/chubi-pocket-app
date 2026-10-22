@@ -64,6 +64,26 @@ class AccountsRepository {
     });
   }
 
+  /// `PUT /v1/accounts/:id` with only `track_balance` (the DTO is
+  /// presence-tracked: nothing else changes). Turning it on sends the
+  /// [currentBalance] the person typed with it.
+  Future<Account> setTrackBalance(
+    String id, {
+    required bool on,
+    double? currentBalance,
+  }) {
+    return _guard(() async {
+      final res = await _client.dio.put<Map<String, dynamic>>(
+        '/accounts/$id',
+        data: <String, dynamic>{
+          'track_balance': on,
+          'current_balance': ?currentBalance,
+        },
+      );
+      return Account.fromJson(res.data!);
+    });
+  }
+
   Future<Account> archive(String id) {
     return _guard(() async {
       final res = await _client.dio.post<Map<String, dynamic>>(

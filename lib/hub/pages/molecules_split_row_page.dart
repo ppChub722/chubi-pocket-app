@@ -37,6 +37,28 @@ class _SplitRowPageState extends State<_SplitRowPage> {
           note: 'Every level side by side, as the split editor shows them.',
         ),
         HubDemo(
+          title: 'ShareAmountField + AutoToggleChip (the "A" toggle)',
+          note:
+              'The ผูกกับ cards\' amount box and the "A" toggle (owner '
+              '2026-10-21): on = the row takes the remainder of the bill '
+              '(the number greys); typing turns it off; tap A to turn it back '
+              'on.',
+          child: SplitRow(
+            avatar: const SizedBox.square(dimension: SplitRow.avatarSize),
+            name: const SplitRowName.muted('ฉันจ่ายเอง'),
+            amount: ShareAmountField(
+              value: _auto ? 110 : 80,
+              auto: _auto,
+              onChanged: (_) => setState(() => _auto = false),
+            ),
+            trailing: AutoToggleChip(
+              value: _auto,
+              tooltip: 'Auto',
+              onChanged: (v) => setState(() => _auto = v),
+            ),
+          ),
+        ),
+        HubDemo(
           title: 'SplitRow + SplitRowAction + SplitRowName',
           note:
               'One row of a bill split: avatar | name | amount | a fixed 40px '

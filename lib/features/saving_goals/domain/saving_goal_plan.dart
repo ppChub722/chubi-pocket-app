@@ -19,6 +19,26 @@ enum SavingGoalPlan {
   }
 }
 
+/// Where a goal stands against its whole target (the list hero's filter
+/// chips, 0.4.0-3). Picked from the goal's BE fields, no maths.
+enum SavingGoalProgress {
+  /// Has a target, not reached yet.
+  short,
+
+  /// Reached (BE status) or closed.
+  done,
+
+  /// No target (open-ended saving).
+  noTarget;
+
+  static SavingGoalProgress of(SavingGoal g) {
+    if (g.targetAmount == null) return SavingGoalProgress.noTarget;
+    return g.status == SavingStatus.reached || g.isCompleted
+        ? SavingGoalProgress.done
+        : SavingGoalProgress.short;
+  }
+}
+
 /// Short goals, then done, then no plan, then ongoing; ties keep their order.
 List<SavingGoal> sortedNeedFirst(List<SavingGoal> goals) {
   final ranked = [

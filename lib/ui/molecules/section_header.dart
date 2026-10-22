@@ -12,10 +12,12 @@ class SectionHeader extends StatelessWidget implements ListBreak {
     this.actionLabel,
     this.onAction,
     this.trailing,
+    // No end inset: the trailing ends flush with the cards below it (the
+    // list's gutter), owner 2026-10-21.
     this.padding = const EdgeInsets.fromLTRB(
       AppSpacing.lg,
       AppSpacing.md,
-      AppSpacing.sm,
+      0,
       AppSpacing.xs,
     ),
     super.key,
@@ -36,52 +38,87 @@ class SectionHeader extends StatelessWidget implements ListBreak {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final hasEnd =
+        (actionLabel != null && onAction != null) || trailing != null;
     return Padding(
       padding: padding,
-      child: Row(
-        children: [
-          if (leading != null) ...[
-            leading!,
-            const SizedBox(width: AppSpacing.sm),
-          ],
-          Flexible(
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
+      child: LayoutBuilder(
+        builder: (context, box) {
+          // The end keeps its own width when there's room; on a narrow screen
+          // it's capped so the title keeps [_minTitle] (it ellipsizes first,
+          // then a long trailing text wraps) — never an overflow.
+          final endMax = (box.maxWidth - _minTitle).clamp(0.0, double.infinity);
+          return Row(
+            children: [
+              if (leading != null) ...[
+                leading!,
+                const SizedBox(width: AppSpacing.sm),
+              ],
+              // One Expanded holds the title + count, so the trailing always
+              // sits at the end. (A loose Flexible title + a Spacer left the
+              // title's unused share AFTER the trailing, ending it short of
+              // the cards.)
+              Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    if (count != null) ...[
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(
+                        '| $count',
+                        style: textTheme.titleMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
-          ),
-          if (count != null) ...[
-            const SizedBox(width: AppSpacing.xs),
-            Text(
-              '| $count',
-              style: textTheme.titleMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-          const Spacer(),
-          if (actionLabel != null && onAction != null)
-            TextButton(
-              onPressed: onAction,
-              style: TextButton.styleFrom(
-                minimumSize: const Size(0, 40),
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(actionLabel!),
-                  const Icon(AppIcons.chevronRight, size: 18),
-                ],
-              ),
-            ),
-          ?trailing,
-        ],
+              if (hasEnd) ...[
+                const SizedBox(width: AppSpacing.sm),
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: endMax),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (actionLabel != null && onAction != null)
+                        TextButton(
+                          onPressed: onAction,
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(0, 40),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(actionLabel!),
+                              const Icon(AppIcons.chevronRight, size: 18),
+                            ],
+                          ),
+                        ),
+                      if (trailing != null) Flexible(child: trailing!),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          );
+        },
       ),
     );
   }
+
+  /// What the title (+ count) always keeps on a narrow screen.
+  static const double _minTitle = 120;
 }

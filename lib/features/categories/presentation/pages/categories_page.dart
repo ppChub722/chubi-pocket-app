@@ -238,10 +238,12 @@ class _CategoriesPageState extends State<CategoriesPage> {
                     AppTab(
                       value: CategoryType.expense,
                       label: l.categoryTypeExpense,
+                      icon: AppIcons.expense,
                     ),
                     AppTab(
                       value: CategoryType.income,
                       label: l.categoryTypeIncome,
+                      icon: AppIcons.income,
                     ),
                   ],
                   pageBuilder: (context, t) => _tab(

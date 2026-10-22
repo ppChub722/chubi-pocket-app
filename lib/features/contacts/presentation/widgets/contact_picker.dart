@@ -37,6 +37,20 @@ class ContactNameTyped extends ContactPick {
   final String name;
 }
 
+/// What [ContactPicker.payer] answers: me, or a person.
+sealed class PayerPick {
+  const PayerPick();
+}
+
+class PayerMe extends PayerPick {
+  const PayerMe();
+}
+
+class PayerPerson extends PayerPick {
+  const PayerPerson(this.pick);
+  final ContactPick pick;
+}
+
 /// Same people either way: every active contact, then the names from the
 /// debts that aren't contacts. [debts] adds each one's balance, puts the
 /// people still owing first and has the owing / no-debt tabs.
@@ -69,6 +83,59 @@ abstract final class ContactPicker {
     String? title,
     int initialFilter = 0,
     bool useRootNavigator = true,
+  }) async {
+    final r = await _pick(
+      context,
+      mode: mode,
+      selectedId: selectedId,
+      allowFreeText: allowFreeText,
+      allowCreate: allowCreate,
+      initialName: initialName,
+      title: title,
+      initialFilter: initialFilter,
+      useRootNavigator: useRootNavigator,
+    );
+    return r?.pick;
+  }
+
+  /// "ใครจ่าย": [me] pinned on top ("ฉัน"), then the people as in [one]
+  /// (free text + create on). Answers [PayerMe] or [PayerPerson].
+  static Future<PayerPick?> payer(
+    BuildContext context, {
+    required PickerNone me,
+    bool meSelected = false,
+    String? selectedId,
+    String? title,
+    bool useRootNavigator = true,
+  }) async {
+    final r = await _pick(
+      context,
+      selectedId: selectedId,
+      allowFreeText: true,
+      allowCreate: true,
+      title: title,
+      useRootNavigator: useRootNavigator,
+      none: me,
+      noneSelected: meSelected,
+    );
+    if (r == null) return null;
+    if (r.none) return const PayerMe();
+    final p = r.pick;
+    return p == null ? null : PayerPerson(p);
+  }
+
+  static Future<({bool none, ContactPick? pick})?> _pick(
+    BuildContext context, {
+    ContactPickerMode mode = ContactPickerMode.contacts,
+    String? selectedId,
+    bool allowFreeText = false,
+    bool allowCreate = false,
+    String? initialName,
+    String? title,
+    int initialFilter = 0,
+    bool useRootNavigator = true,
+    PickerNone? none,
+    bool noneSelected = false,
   }) async {
     final l = AppLocalizations.of(context)!;
     final contacts = _maybeRead<ContactsCubit>(context);
@@ -114,7 +181,8 @@ abstract final class ContactPicker {
           items: data.value.items,
           live: data,
           selected: {?selectedId},
-          noneSelected: selectedId == null,
+          none: none,
+          noneSelected: none == null ? selectedId == null : noneSelected,
           filters: debts
               ? [
                   PickerFilter(l.contactPickerFilterAll, (_) => true),
@@ -177,16 +245,24 @@ abstract final class ContactPicker {
         ),
       );
       if (r == null) return null;
-      if (r.text case final typed?) return ContactNameTyped(typed);
+      if (r.none) return (none: true, pick: null);
+      if (r.text case final typed?) {
+        return (none: false, pick: ContactNameTyped(typed));
+      }
       final id = r.id;
-      if (created case final c? when c.id == id) return ContactPicked(c);
-      return switch (data.value.items.where((i) => i.id == id).firstOrNull) {
+      if (created case final c? when c.id == id) {
+        return (none: false, pick: ContactPicked(c));
+      }
+      final ContactPick? pick = switch (data.value.items
+          .where((i) => i.id == id)
+          .firstOrNull) {
         PickerItem(data: final Contact c) => ContactPicked(c),
         PickerItem(data: final PersonBalance p) => ContactNamePicked(
           p.person.name,
         ),
         _ => null,
       };
+      return (none: false, pick: pick);
     } finally {
       for (final s in subs) {
         unawaited(s.cancel());

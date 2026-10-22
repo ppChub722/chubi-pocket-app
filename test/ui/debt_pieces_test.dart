@@ -25,8 +25,8 @@ void main() {
   Color? colorOf(WidgetTester t, String text) =>
       t.widget<Text>(find.text(text)).style?.color;
 
-  const owed = 'ติดคุณ';
-  const owe = 'คุณติด';
+  const owed = 'รอรับ';
+  const owe = 'รอจ่าย';
   const even = 'หายกัน';
 
   NetBalance net(num amount, {NetBalanceSize size = NetBalanceSize.row}) =>

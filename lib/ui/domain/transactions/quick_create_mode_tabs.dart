@@ -34,12 +34,7 @@ class QuickCreateModeTabs extends StatelessWidget {
       tabs: [
         for (final m in QuickCreateMode.values)
           if (labels[m] != null)
-            AppTab(
-              value: m,
-              label: labels[m]!,
-              icon: iconOf(m),
-              color: QuickCreateModeColors.of(context, m),
-            ),
+            AppTab(value: m, label: labels[m]!, icon: iconOf(m)),
       ],
     );
   }

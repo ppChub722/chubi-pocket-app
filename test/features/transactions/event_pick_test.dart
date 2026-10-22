@@ -50,6 +50,7 @@ class _Repo extends Fake implements ProjectsRepository {
     Map<String, dynamic>? newTransaction,
     List<String> transactionIds = const [],
     bool move = false,
+    Map<String, dynamic>? people,
   }) async {
     calls.add('quick $name $transactionIds move=$move');
     return _ok;
@@ -61,6 +62,7 @@ class _Repo extends Fake implements ProjectsRepository {
     Map<String, dynamic>? newTransaction,
     List<String> transactionIds = const [],
     bool move = false,
+    Map<String, dynamic>? people,
   }) async {
     calls.add('bills $projectId $transactionIds move=$move');
     return _ok;

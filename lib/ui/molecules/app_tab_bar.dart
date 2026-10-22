@@ -11,17 +11,23 @@ class AppTab<T> {
     required this.label,
     this.badgeCount = 0,
     this.icon,
-    this.color,
   });
 
   final T value;
   final String label;
   final int badgeCount;
+
+  /// Shown on every tab when there are 2–3, only on the selected one with 4+.
   final IconData? icon;
-  final Color? color;
 }
 
-class AppTabBar<T> extends StatelessWidget {
+/// The ONE tab style app-wide (owner 2026-10-21): a pill track with equal
+/// segments; the selected pill slides to a tapped tab. Dragging ON THE BAR
+/// moves the pill with the finger and snaps to the nearest tab on release.
+/// With [pager] the pill rides the page position, so swiping the content
+/// moves it too, and a drag on the bar moves the content with it.
+/// Always the theme's primary (no per-tab colours).
+class AppTabBar<T> extends StatefulWidget {
   const AppTabBar({
     required this.tabs,
     required this.selected,
@@ -34,105 +40,248 @@ class AppTabBar<T> extends StatelessWidget {
   final T selected;
   final ValueChanged<T> onChanged;
 
-  /// The [AppTabPager]'s controller — the underline then tracks the page
-  /// position (mid-swipe included) instead of jumping per tab.
+  /// The [AppTabPager]'s controller, when the tabs page content.
   final PageController? pager;
 
-  static const _slide = Duration(milliseconds: 240);
+  static const double height = 40;
 
-  static const underlineKey = ValueKey('app-tab-bar-underline');
+  /// The pill's slide, and the [AppTabPager]'s content slide with it.
+  static const duration = Duration(milliseconds: 300);
+  static const curve = Cubic(0.2, 0.8, 0.2, 1);
+
+  static const pillKey = ValueKey('app-tab-bar-pill');
+
+  @override
+  State<AppTabBar<T>> createState() => _AppTabBarState<T>();
+}
+
+class _AppTabBarState<T> extends State<AppTabBar<T>> {
+  static const _inset = 3.0;
+
+  /// The finger's travel while dragging the bar; null when not dragging.
+  double? _drag;
+
+  /// The tab the drag started from (the selection may move under it: the
+  /// pager reports pages it passes).
+  int _from = 0;
+  double _segment = 0;
+
+  int get _index => widget.tabs
+      .indexWhere((t) => t.value == widget.selected)
+      .clamp(0, 1 << 20);
+
+  PageController? get _pages {
+    final p = widget.pager;
+    return p != null && p.hasClients && p.position.hasContentDimensions
+        ? p
+        : null;
+  }
+
+  /// Where the pill is, in tabs (0 = first).
+  double get _position {
+    final drag = _drag;
+    if (drag != null && _segment > 0) return _from + drag / _segment;
+    return _pages?.page ?? _index.toDouble();
+  }
+
+  void _onDragStart(DragStartDetails _) {
+    // Mid-slide: start from where the pill is now.
+    _from = _position.round();
+    setState(() => _drag = (_position - _from) * _segment);
+  }
+
+  void _onDragUpdate(DragUpdateDetails d) {
+    final n = widget.tabs.length;
+    final min = -_from * _segment;
+    final max = (n - 1 - _from) * _segment;
+    setState(() => _drag = ((_drag ?? 0) + d.delta.dx).clamp(min, max));
+    // The content follows the finger too.
+    final p = _pages;
+    if (p != null) p.jumpTo(_position * p.position.viewportDimension);
+  }
+
+  void _onDragEnd([DragEndDetails? _]) {
+    final n = widget.tabs.length;
+    final target = _position.round().clamp(0, n - 1);
+    setState(() => _drag = null);
+    // Snap the content too (it followed the finger).
+    _pages?.animateToPage(
+      target,
+      duration: AppTabBar.duration,
+      curve: AppTabBar.curve,
+    );
+    final value = widget.tabs[target].value;
+    if (value != widget.selected) widget.onChanged(value);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final index = tabs.indexWhere((t) => t.value == selected);
-    final pager = this.pager;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
-      ),
-      child: LayoutBuilder(
-        builder: (context, box) {
-          final w = box.maxWidth / tabs.length;
-          final underline = ColoredBox(
-            key: underlineKey,
-            color: (index >= 0 ? tabs[index].color : null) ?? scheme.primary,
-          );
-          return Stack(
-            children: [
-              Row(children: [for (final t in tabs) _tab(context, scheme, t)]),
-              if (pager != null)
-                AnimatedBuilder(
-                  animation: pager,
-                  builder: (context, child) {
-                    final page =
-                        pager.hasClients && pager.position.hasContentDimensions
-                        ? pager.page ?? index.toDouble()
-                        : index.toDouble();
-                    return Positioned(
-                      left: page * w,
-                      width: w,
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final dark = theme.brightness == Brightness.dark;
+    final primary = scheme.primary;
+    Color wash(double a) =>
+        Color.alphaBlend(primary.withValues(alpha: a), scheme.surface);
+    final strong = Color.lerp(
+      primary,
+      dark ? Colors.white : Colors.black,
+      dark ? 0.35 : 0.5,
+    )!;
+    final dragging = _drag != null;
+    final pager = widget.pager;
+    return GestureDetector(
+      onHorizontalDragStart: _onDragStart,
+      onHorizontalDragUpdate: _onDragUpdate,
+      onHorizontalDragEnd: _onDragEnd,
+      onHorizontalDragCancel: _onDragEnd,
+      child: Container(
+        height: AppTabBar.height,
+        padding: const EdgeInsets.all(_inset),
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(AppTabBar.height / 2),
+          border: Border.all(color: scheme.outlineVariant),
+        ),
+        child: LayoutBuilder(
+          builder: (context, box) {
+            final n = widget.tabs.length;
+            _segment = box.maxWidth / n;
+            double leftOf(double position) =>
+                (position * _segment).clamp(0.0, (n - 1) * _segment);
+            final pill = DecoratedBox(
+              decoration: BoxDecoration(
+                color: wash(dark ? 0.32 : 0.24),
+                borderRadius: BorderRadius.circular(17),
+                border: Border.all(color: wash(0.6)),
+                boxShadow: [
+                  BoxShadow(
+                    color: strong.withValues(alpha: 0.12),
+                    blurRadius: 2,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+            );
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // With a pager the pill rides the page (a tap, a content
+                // swipe or a bar drag all move the page); without one it
+                // animates to the tab itself.
+                if (pager != null)
+                  AnimatedBuilder(
+                    key: AppTabBar.pillKey,
+                    animation: pager,
+                    builder: (context, child) => Positioned(
+                      left: leftOf(_position),
+                      width: _segment,
+                      top: 0,
                       bottom: 0,
-                      height: 2.5,
                       child: child!,
-                    );
-                  },
-                  child: underline,
-                )
-              else if (index >= 0)
-                AnimatedPositioned(
-                  duration: _slide,
-                  curve: Curves.easeOutCubic,
-                  left: index * w,
-                  width: w,
-                  bottom: 0,
-                  height: 2.5,
-                  child: underline,
+                    ),
+                    child: pill,
+                  )
+                else
+                  AnimatedPositioned(
+                    key: AppTabBar.pillKey,
+                    duration: dragging ? Duration.zero : AppTabBar.duration,
+                    curve: AppTabBar.curve,
+                    left: leftOf(_position),
+                    width: _segment,
+                    top: 0,
+                    bottom: 0,
+                    child: pill,
+                  ),
+                Row(
+                  children: [
+                    for (final t in widget.tabs)
+                      _segmentOf(context, t, n, strong, scheme),
+                  ],
                 ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget _tab(BuildContext context, ColorScheme scheme, AppTab<T> t) {
-    final active = t.value == selected;
-    final tint = active ? (t.color ?? scheme.primary) : scheme.onSurfaceVariant;
+  static const double _iconSize = 16;
+
+  /// Whether [label] (+ the icon) fits one segment, its side padding taken.
+  bool _fits(
+    BuildContext context,
+    String label,
+    TextStyle style, {
+    required bool withIcon,
+  }) {
+    if (_segment <= 0) return true;
+    final painter = TextPainter(
+      text: TextSpan(text: label, style: style),
+      maxLines: 1,
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    final need =
+        painter.width +
+        (withIcon ? _iconSize + AppSpacing.xs : 0) +
+        AppSpacing.xs * 2;
+    painter.dispose();
+    return need <= _segment;
+  }
+
+  Widget _segmentOf(
+    BuildContext context,
+    AppTab<T> t,
+    int n,
+    Color strong,
+    ColorScheme scheme,
+  ) {
+    final active = t.value == widget.selected;
+    final tint = active ? strong : scheme.onSurfaceVariant;
+    final icon = t.icon;
+    final style = Theme.of(context).textTheme.labelLarge!.copyWith(
+      fontSize: 14,
+      color: tint,
+      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+    );
+    // Icons: every tab with 2–3 tabs, the selected one with 4+, and only
+    // when icon + label fit the segment (a narrow phone drops the icon
+    // rather than cut the word, owner 2026-10-21).
+    final showIcon =
+        icon != null &&
+        (n <= 3 || active) &&
+        _fits(context, t.label, style, withIcon: true);
     final text = AnimatedDefaultTextStyle(
-      duration: _slide,
-      curve: Curves.easeOutCubic,
-      style: Theme.of(context).textTheme.titleSmall!.copyWith(
-        color: tint,
-        fontWeight: active ? FontWeight.w700 : FontWeight.w400,
-      ),
+      duration: const Duration(milliseconds: 200),
+      style: style,
       child: Text(t.label, maxLines: 1, overflow: TextOverflow.ellipsis),
     );
-    final label = t.icon == null
-        ? text
-        : Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(t.icon, size: 18, color: tint),
-              const SizedBox(width: AppSpacing.xs),
-              Flexible(child: text),
-            ],
-          );
+    final label = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (showIcon) ...[
+          Icon(icon, size: _iconSize, color: tint),
+          const SizedBox(width: AppSpacing.xs),
+        ],
+        Flexible(child: text),
+      ],
+    );
     return Expanded(
-      child: InkWell(
-        onTap: () => onChanged(t.value),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.xs,
-            AppSpacing.md,
-            AppSpacing.xs,
-            AppSpacing.md + 2.5,
-          ),
-          child: Center(
-            child: CountBadge.floating(
-              child: label,
-              count: t.badgeCount,
-              offset: const Offset(-14, -10),
+      child: Semantics(
+        button: true,
+        selected: active,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => widget.onChanged(t.value),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+            child: Center(
+              child: CountBadge.floating(
+                count: t.badgeCount,
+                offset: const Offset(-10, -8),
+                child: label,
+              ),
             ),
           ),
         ),
@@ -141,6 +290,9 @@ class AppTabBar<T> extends StatelessWidget {
   }
 }
 
+/// The tabs' pages. Changing tab slides the content with the pill (same
+/// duration and curve); swiping the content changes tabs too, and the bar's
+/// pill rides along (owner 2026-10-21: swipe works on both).
 class AppTabPager<T> extends StatefulWidget {
   const AppTabPager({
     required this.values,
@@ -159,12 +311,14 @@ class AppTabPager<T> extends StatefulWidget {
   final ValueChanged<T> onChanged;
   final PageController controller;
   final Widget Function(BuildContext context, T value) builder;
+
+  /// False = the content can't be swiped (edit / reorder modes).
   final bool enabled;
 
   final bool showPageDots;
 
-  static const duration = Duration(milliseconds: 320);
-  static const curve = Curves.easeInOutCubic;
+  static const duration = AppTabBar.duration;
+  static const curve = AppTabBar.curve;
 
   @override
   State<AppTabPager<T>> createState() => _AppTabPagerState<T>();

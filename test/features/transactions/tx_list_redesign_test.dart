@@ -62,6 +62,7 @@ class _Repo extends Fake implements TransactionsRepository {
     List<String> tagIds = const [],
     List<Map<String, dynamic>>? splits,
     String? sourceProjectTransactionId,
+    Map<String, dynamic>? link,
   }) async => next!;
 }
 

@@ -15,6 +15,13 @@ class SavingSummary extends Equatable {
     this.monthPlanTotal = 0,
     this.monthSavedTotal = 0,
     this.unallocated = 0,
+    this.targetTotal = 0,
+    this.targetSavedTotal = 0,
+    this.targetShortTotal = 0,
+    this.targetPercent = 0,
+    this.countShort = 0,
+    this.countDone = 0,
+    this.countNoTarget = 0,
   });
 
   final double saved;
@@ -31,17 +38,42 @@ class SavingSummary extends Equatable {
 
   final double unallocated;
 
-  factory SavingSummary.fromJson(Map<String, dynamic> json) => SavingSummary(
-    saved: (json['saved'] as num?)?.toDouble() ?? 0,
-    inGoals: (json['in_goals'] as num?)?.toDouble() ?? 0,
-    spare: (json['spare'] as num?)?.toDouble() ?? 0,
-    currency: json['currency'] as String? ?? '',
-    savedTotal: (json['saved_total'] as num?)?.toDouble() ?? 0,
-    monthShortTotal: (json['month_short_total'] as num?)?.toDouble() ?? 0,
-    monthPlanTotal: (json['month_plan_total'] as num?)?.toDouble() ?? 0,
-    monthSavedTotal: (json['month_saved_total'] as num?)?.toDouble() ?? 0,
-    unallocated: (json['unallocated'] as num?)?.toDouble() ?? 0,
-  );
+  /// Long-term progress over the goals that have a target (0.4.0-3): the
+  /// targets' sum, what is saved toward them, what is still missing, and the
+  /// percent (0–100) — all BE numbers.
+  final double targetTotal;
+  final double targetSavedTotal;
+  final double targetShortTotal;
+  final double targetPercent;
+
+  /// The list's filter counts (long-term): has a target and not reached ·
+  /// reached or closed · no target.
+  final int countShort;
+  final int countDone;
+  final int countNoTarget;
+
+  factory SavingSummary.fromJson(Map<String, dynamic> json) {
+    double money(String key) => (json[key] as num?)?.toDouble() ?? 0;
+    int count(String key) => (json[key] as num?)?.toInt() ?? 0;
+    return SavingSummary(
+      saved: money('saved'),
+      inGoals: money('in_goals'),
+      spare: money('spare'),
+      currency: json['currency'] as String? ?? '',
+      savedTotal: money('saved_total'),
+      monthShortTotal: money('month_short_total'),
+      monthPlanTotal: money('month_plan_total'),
+      monthSavedTotal: money('month_saved_total'),
+      unallocated: money('unallocated'),
+      targetTotal: money('target_total'),
+      targetSavedTotal: money('target_saved_total'),
+      targetShortTotal: money('target_short_total'),
+      targetPercent: money('target_percent'),
+      countShort: count('count_short'),
+      countDone: count('count_done'),
+      countNoTarget: count('count_no_target'),
+    );
+  }
 
   @override
   List<Object?> get props => [
@@ -54,6 +86,13 @@ class SavingSummary extends Equatable {
     monthPlanTotal,
     monthSavedTotal,
     unallocated,
+    targetTotal,
+    targetSavedTotal,
+    targetShortTotal,
+    targetPercent,
+    countShort,
+    countDone,
+    countNoTarget,
   ];
 }
 

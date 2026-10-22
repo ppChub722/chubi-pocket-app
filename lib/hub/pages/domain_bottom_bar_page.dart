@@ -82,9 +82,9 @@ class _BottomBarPageState extends State<_BottomBarPage> {
         HubDemo(
           title: 'QuickCreateModeTabs — the sheet’s mode switch',
           note:
-              'At the very top of the quick create, above the EntryCard; '
-              'each chip in its mode’s colour (the same as the +). Not in the '
-              'sheet yet: debt mode waits on the BE.',
+              'At the very top of the quick create, above the EntryCard: the '
+              'app\'s one tab style (AppTabBar pill), an icon on each mode, '
+              'in the theme primary (no per-mode colours, owner 2026-10-21).',
           child: HubRow(
             cells: [
               for (final m in QuickCreateMode.values)

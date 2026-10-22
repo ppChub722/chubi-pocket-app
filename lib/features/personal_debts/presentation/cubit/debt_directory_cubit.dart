@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bloc/clearable_cubit.dart';
@@ -33,6 +34,15 @@ class DebtDirectoryState extends Equatable {
 /// list all read this one list.
 class DebtDirectoryCubit extends Cubit<DebtDirectoryState>
     with Clearable, SyncBacked<DebtDirectoryState> {
+  /// The app's directory, or null where none is provided (a lone page test).
+  static DebtDirectoryCubit? maybeOf(BuildContext context) {
+    try {
+      return context.read<DebtDirectoryCubit>();
+    } on ProviderNotFoundException {
+      return null;
+    }
+  }
+
   DebtDirectoryCubit({required SyncCoordinator coordinator})
     : syncCoordinator = coordinator,
       super(const DebtDirectoryState()) {

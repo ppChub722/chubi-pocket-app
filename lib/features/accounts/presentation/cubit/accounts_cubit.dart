@@ -143,6 +143,20 @@ class AccountsCubit extends Cubit<AccountsState>
     return updated;
   }
 
+  Future<Account> setTrackBalance(
+    String id, {
+    required bool on,
+    double? currentBalance,
+  }) async {
+    final updated = await _repo.setTrackBalance(
+      id,
+      on: on,
+      currentBalance: currentBalance,
+    );
+    _replace(updated);
+    return updated;
+  }
+
   Future<AccountDetail> getDetail(String id) => _repo.getDetail(id);
 
   List<Account> get archived => state.archivedAccounts;

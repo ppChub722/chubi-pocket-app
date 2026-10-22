@@ -198,9 +198,12 @@ class TransactionsRepository {
     List<String> tagIds = const [],
     List<Map<String, dynamic>>? splits,
     String? sourceProjectTransactionId,
+    Map<String, dynamic>? link,
   }) async {
     try {
       final body = <String, dynamic>{
+        // ผูกกับ (0.4.0-3 B1): `paid_by` {contact_id | person_name, amount}.
+        ...?link,
         'type': type.toJson(),
         'account_id': ?accountId,
         'amount': amount,
@@ -223,6 +226,8 @@ class TransactionsRepository {
     }
   }
 
+  /// [link] = a ผูกกับ tab switch (B3): `link_mode` + that tab's data,
+  /// sent with the field edits in the one PUT.
   Future<TransactionMutationResult> update({
     required String id,
     double? amount,
@@ -238,42 +243,117 @@ class TransactionsRepository {
     String? transferToAccountId,
     List<String>? tagIds,
     bool? alsoUpdateLink,
+    Map<String, dynamic>? link,
   }) async {
     try {
-      final body = <String, dynamic>{'amount': ?amount, 'date': ?date};
-      if (alsoUpdateLink != null) body['also_update_link'] = alsoUpdateLink;
-      if (tagIds != null) body['tag_ids'] = tagIds;
-      if (categoryId != null) {
-        body['category_id'] = categoryId;
-      } else if (clearCategory) {
-        body['category_id'] = null;
-      }
-      if (note != null) {
-        body['note'] = note;
-      } else if (clearNote) {
-        body['note'] = null;
-      }
-      if (description != null) {
-        body['description'] = description;
-      } else if (clearDescription) {
-        body['description'] = null;
-      }
-      if (accountId != null) {
-        body['account_id'] = accountId;
-      } else if (clearAccount) {
-        body['account_id'] = null;
-      }
-      if (transferToAccountId != null) {
-        body['transfer_to_account_id'] = transferToAccountId;
-      }
       final res = await _client.dio.put<Map<String, dynamic>>(
         '/transactions/$id',
-        data: body,
+        data: _updateBody(
+          amount: amount,
+          date: date,
+          categoryId: categoryId,
+          clearCategory: clearCategory,
+          note: note,
+          clearNote: clearNote,
+          description: description,
+          clearDescription: clearDescription,
+          accountId: accountId,
+          clearAccount: clearAccount,
+          transferToAccountId: transferToAccountId,
+          tagIds: tagIds,
+          alsoUpdateLink: alsoUpdateLink,
+          link: link,
+        ),
       );
       return TransactionWriteResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
+  }
+
+  /// The same PUT with `?preview=true`: what would move (people, wallets);
+  /// nothing is saved. Feeds the ONE confirm of a tab switch.
+  Future<TxEditPreview> previewUpdate({
+    required String id,
+    double? amount,
+    String? date,
+    String? accountId,
+    bool clearAccount = false,
+    required Map<String, dynamic> link,
+  }) async {
+    try {
+      final res = await _client.dio.put<Map<String, dynamic>>(
+        '/transactions/$id',
+        queryParameters: const {'preview': 'true'},
+        data: _updateBody(
+          amount: amount,
+          date: date,
+          accountId: accountId,
+          clearAccount: clearAccount,
+          link: link,
+        ),
+      );
+      return TxEditPreview.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// "อัปเดตตามอีเวนต์": my linked tx takes the bill as it is now.
+  Future<TransactionMutationResult> applyEvent(String id) async {
+    try {
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        '/transactions/$id/apply-event',
+      );
+      return TransactionWriteResult.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  static Map<String, dynamic> _updateBody({
+    double? amount,
+    String? date,
+    String? categoryId,
+    bool clearCategory = false,
+    String? note,
+    bool clearNote = false,
+    String? description,
+    bool clearDescription = false,
+    String? accountId,
+    bool clearAccount = false,
+    String? transferToAccountId,
+    List<String>? tagIds,
+    bool? alsoUpdateLink,
+    Map<String, dynamic>? link,
+  }) {
+    final body = <String, dynamic>{...?link, 'amount': ?amount, 'date': ?date};
+    if (alsoUpdateLink != null) body['also_update_link'] = alsoUpdateLink;
+    if (tagIds != null) body['tag_ids'] = tagIds;
+    if (categoryId != null) {
+      body['category_id'] = categoryId;
+    } else if (clearCategory) {
+      body['category_id'] = null;
+    }
+    if (note != null) {
+      body['note'] = note;
+    } else if (clearNote) {
+      body['note'] = null;
+    }
+    if (description != null) {
+      body['description'] = description;
+    } else if (clearDescription) {
+      body['description'] = null;
+    }
+    if (accountId != null) {
+      body['account_id'] = accountId;
+    } else if (clearAccount) {
+      body['account_id'] = null;
+    }
+    if (transferToAccountId != null) {
+      body['transfer_to_account_id'] = transferToAccountId;
+    }
+    return body;
   }
 
   /// [skipOccurrence]: a tx linked to a recurring occurrence also skips it

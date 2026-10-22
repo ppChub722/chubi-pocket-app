@@ -93,6 +93,8 @@ class _TransactionsPageState extends State<_TransactionsPage> {
   final _empty = TextEditingController();
   TransactionType _type = TransactionType.expense;
   TransactionType _debtDir = TransactionType.expense;
+  bool _repay = false;
+  int _linkMode = 1;
   bool _selected = false;
   bool _selected2 = true;
   String _last = '—';
@@ -144,6 +146,159 @@ class _TransactionsPageState extends State<_TransactionsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        HubDemo(
+          title: 'LinkModeBar + ShareCard — quick create "ผูกกับ"',
+          note:
+              '"ผูกกับ" and its pill tabs on one row (4 tabs: only the selected '
+              'one shows its icon, and only when it fits). Each tab but '
+              'ส่วนตัว shows ONE ShareCard: a header with its chips, '
+              'ShareRows (SplitRow + an optional tag), the status line. All '
+              'three views edit one data set (owner 2026-10-21).',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              LinkModeBar<int>(
+                label: 'ผูกกับ',
+                selected: _linkMode,
+                onChanged: (v) => setState(() => _linkMode = v),
+                tabs: const [
+                  AppTab(value: 0, label: 'ส่วนตัว', icon: AppIcons.wallet),
+                  AppTab(value: 1, label: 'แบ่ง', icon: AppIcons.split),
+                  AppTab(value: 2, label: 'จ่ายแทน', icon: AppIcons.contact),
+                  AppTab(value: 3, label: 'อีเวนต์', icon: AppIcons.project),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              if (_linkMode == 1)
+                ShareCard(
+                  title: 'แบ่งให้ใคร',
+                  actions: [
+                    AppChip(label: 'หารเท่ากัน', onTap: () {}),
+                    AppChip(label: 'เพิ่มคน', icon: AppIcons.add, onTap: () {}),
+                  ],
+                  rows: [
+                    ShareRow(
+                      avatar: const SizedBox.square(
+                        dimension: SplitRow.avatarSize,
+                      ),
+                      name: const SplitRowName.muted('ส่วนของฉัน'),
+                      amount: ShareAmountField(
+                        value: 41,
+                        auto: true,
+                        onChanged: (_) {},
+                      ),
+                      trailing: AutoToggleChip(value: true, onChanged: (_) {}),
+                    ),
+                    ShareRow(
+                      avatar: const SizedBox.square(
+                        dimension: SplitRow.avatarSize,
+                      ),
+                      name: const SplitRowName.picked('บอส ทดสอบ'),
+                      amount: ShareAmountField(value: 82, onChanged: (_) {}),
+                      trailing: SplitRowAction(
+                        icon: AppIcons.close,
+                        tooltip: 'Remove',
+                        onTap: () {},
+                      ),
+                    ),
+                  ],
+                  status: const ShareStatus('✓ แบ่งครบแล้ว', ok: true),
+                )
+              else if (_linkMode == 2)
+                ShareCard(
+                  title: 'ใครจ่าย และจ่ายเท่าไหร่',
+                  actions: [AppChip(label: 'หารเท่ากัน', onTap: () {})],
+                  rows: [
+                    ShareRow(
+                      avatar: const SizedBox.square(
+                        dimension: SplitRow.avatarSize,
+                      ),
+                      name: const SplitRowName.muted('ฉันจ่ายเอง'),
+                      amount: ShareAmountField(value: 0, onChanged: (_) {}),
+                      trailing: AutoToggleChip(value: false, onChanged: (_) {}),
+                    ),
+                    ShareRow(
+                      avatar: const SizedBox.square(
+                        dimension: SplitRow.avatarSize,
+                      ),
+                      name: const SplitRowName.picked('ลี ทดสอบ'),
+                      amount: ShareAmountField(value: 100, onChanged: (_) {}),
+                      trailing: SplitRowAction(
+                        icon: AppIcons.close,
+                        tooltip: 'Remove',
+                        onTap: () {},
+                      ),
+                    ),
+                  ],
+                  status: const ShareStatus('ยังขาด ฿23', ok: false),
+                )
+              else if (_linkMode == 3)
+                ShareCard(
+                  // No title: the EventPickChip takes the header.
+                  headerLeading: EventPickChip(
+                    name: 'ทริปเขาใหญ่',
+                    onTap: () => _note('pick event'),
+                    onClear: () => _note('event removed'),
+                  ),
+                  rows: [
+                    const ShareSubhead(title: 'ใครจ่าย'),
+                    ShareRow(
+                      avatar: const SizedBox.square(
+                        dimension: SplitRow.avatarSize,
+                      ),
+                      name: SplitRowName.picked('ลี ทดสอบ', onTap: () {}),
+                      amount: const ShareAmountField(
+                        value: 123,
+                        onChanged: null,
+                      ),
+                    ),
+                    ShareSubhead(
+                      title: 'ใครอยู่ในบิล',
+                      actions: [
+                        AppChip(label: 'หารเท่ากัน', onTap: () {}),
+                        AppChip(
+                          label: 'เพิ่มคน',
+                          icon: AppIcons.add,
+                          onTap: () {},
+                        ),
+                      ],
+                    ),
+                    ShareRow(
+                      avatar: const SizedBox.square(
+                        dimension: SplitRow.avatarSize,
+                      ),
+                      name: const SplitRowName.muted('ฉัน'),
+                      amount: ShareAmountField(
+                        value: 41,
+                        auto: true,
+                        onChanged: (_) {},
+                      ),
+                      trailing: AutoToggleChip(value: true, onChanged: (_) {}),
+                    ),
+                    ShareRow(
+                      avatar: const SizedBox.square(
+                        dimension: SplitRow.avatarSize,
+                      ),
+                      name: const SplitRowName.picked('มาตาก'),
+                      amount: ShareAmountField(value: 41, onChanged: (_) {}),
+                      trailing: SplitRowAction(
+                        icon: AppIcons.close,
+                        tooltip: 'Remove',
+                        onTap: () {},
+                      ),
+                      tag: const AppChip(
+                        label: 'ใหม่ · เพิ่มเข้าอีเวนต์',
+                        size: ChipSize.mini,
+                        tone: AppChipTone.info,
+                        selected: true,
+                      ),
+                    ),
+                  ],
+                  status: const ShareStatus('เกินยอด ฿5', ok: false),
+                ),
+            ],
+          ),
+        ),
         HubDemo(
           title: 'TxRow — the ONE transaction / pending row',
           note:
@@ -420,27 +575,35 @@ class _TransactionsPageState extends State<_TransactionsPage> {
           ),
         ),
         HubDemo(
-          title: 'EntryCard(debt: true) — quick create in debt mode',
+          title: 'EntryCard(debt / repay) — quick create in debt mode',
           note:
-              'The same card (owner 2026-10-12): Paid / Received replace the '
-              'type (paid = the expense colour: I paid them; received = the '
-              'income colour), the PERSON chip row replaces the category, the '
-              'wallet row adds "ไม่ผูก" (no wallet = ledger only), and the '
-              'line under the amount shows the result. Tags sit under the card '
-              'only while a wallet is picked.',
+              'Debt mode has two sides (owner 2026-10-21), picked by a '
+              'SegmentedChoice [จดหนี้ | จ่ายคืน] above the card. debt: true = '
+              'recording a debt: the type chips say รอรับ / รอจ่าย in '
+              'the DEBT-STATE colours (txWordsColor ← debtStateColor: รอรับ '
+              'green, รอจ่าย red; the card tint follows). repay: true = a '
+              'repayment (a real '
+              'transaction): จ่ายคืน / รับคืน, a wallet always, "หลังบันทึก '
+              'เหลือ ฿x" / "เคลียร์ครบ" under the amount. Toggle below.',
           child: EntryCard(
             debt: true,
+            repay: _repay,
             type: _debtDir,
             amount: _amount,
             title: _title,
             dateLabel: 'Today',
             onTypeChanged: (t) => setState(() => _debtDir = t),
             onPickDate: () {},
-            amountNote: Text(
-              _debtDir == TransactionType.expense
-                  ? 'After saving: Mom owes you ฿1,450'
-                  : 'After saving: Mom owes you ฿-1,050',
-              style: Theme.of(context).textTheme.bodySmall,
+            amountNote: GestureDetector(
+              onTap: () => setState(() => _repay = !_repay),
+              child: Text(
+                _repay
+                    ? 'After saving: ฿230 left  (tap: debt words)'
+                    : _debtDir == TransactionType.expense
+                    ? 'After saving: Mom owes you ฿1,450  (tap: repay words)'
+                    : 'After saving: Mom owes you ฿-1,050  (tap: repay words)',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ),
             walletRow: const _DemoChipRow(
               icon: AppIcons.wallet,

@@ -103,8 +103,9 @@ class _DetailSectionsDemoState extends State<_DetailSectionsDemo> {
             note:
                 'A dropdown row shows its value as a dashed ▾ chip (never a ›: '
                 'tapping opens a menu, not a page) — wrap it in an '
-                'OptionMenuAnchor. The view-mode switch only SHOWS the setting; '
-                'long-press enters edit, where it is live.',
+                'OptionMenuAnchor. SettingSwitchViewRow only SHOWS a setting '
+                'the viewer may not change (e.g. a wallet member); settings '
+                'they may change are LiveSetting rows (below).',
             child: SettingsSection(
               first: true,
               title: 'Settings',
@@ -136,6 +137,16 @@ class _DetailSectionsDemoState extends State<_DetailSectionsDemo> {
                 ),
               ],
             ),
+          ),
+          const HubDemo(
+            title: 'LiveSetting: settings that save in view mode',
+            note:
+                'No ✏️: a flip or a pick shows at once and makes ONE save call '
+                '(here a fake 600 ms call). A failure puts the old value back '
+                'and says so, with Retry. save returning false (a sheet closed '
+                'without a value) puts it back quietly. Wallet, category, '
+                'contact and the spare savings page use it.',
+            child: _LiveSettingDemo(),
           ),
           HubDemo(
             title: 'PeopleStrip',
@@ -272,6 +283,77 @@ class _DetailSectionsDemoState extends State<_DetailSectionsDemo> {
       ),
     );
   }
+}
+
+class _LiveSettingDemo extends StatefulWidget {
+  const _LiveSettingDemo();
+
+  @override
+  State<_LiveSettingDemo> createState() => _LiveSettingDemoState();
+}
+
+class _LiveSettingDemoState extends State<_LiveSettingDemo> {
+  bool _track = true;
+  String _scope = 'Whole wallet';
+  bool _fail = false;
+
+  /// The fake API call: waits, then fails when asked to.
+  Future<bool> _call(VoidCallback apply) async {
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    if (_fail) throw StateError('offline');
+    if (mounted) setState(apply);
+    return true;
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      SettingsSection(
+        first: true,
+        title: 'Settings',
+        description: 'Counts in totals and reports.',
+        children: [
+          LiveSetting<bool>(
+            value: _track,
+            save: (v) => _call(() => _track = v),
+            failedMessage: (_) => "Couldn't save the setting",
+            builder: (context, value, onChanged) => SettingToggleRow(
+              label: 'Track balance',
+              caption: 'Turn off to skip the balance.',
+              value: value,
+              onChanged: onChanged,
+            ),
+          ),
+          LiveSetting<String>(
+            value: _scope,
+            save: (v) => _call(() => _scope = v),
+            failedMessage: (_) => "Couldn't save the setting",
+            builder: (context, value, onChanged) => OptionMenuAnchor<String>(
+              selected: value,
+              options: [
+                for (final s in const ['None', 'Mine', 'Whole wallet'])
+                  SheetOption(value: s, label: s),
+              ],
+              onSelected: (s) => onChanged?.call(s),
+              builder: (context, toggle) => SettingDropdownRow(
+                label: 'In my report',
+                value: value,
+                onTap: onChanged == null ? null : toggle,
+              ),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      SettingToggleRow(
+        label: 'Demo: the next saves fail',
+        value: _fail,
+        submits: false,
+        onChanged: (v) => setState(() => _fail = v),
+      ),
+    ],
+  );
 }
 
 class _MenuRowDemo extends StatefulWidget {

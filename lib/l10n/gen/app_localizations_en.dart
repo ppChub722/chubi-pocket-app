@@ -966,13 +966,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtEditTitle => 'Edit debt';
 
   @override
-  String get debtDirectionOwedToMe => 'They owe me';
+  String get debtDirectionOwedToMe => 'To receive';
 
   @override
   String get debtDirectionOwedToMeDesc => 'I lent money or paid for them';
 
   @override
-  String get debtDirectionIOwe => 'I owe them';
+  String get debtDirectionIOwe => 'To pay';
 
   @override
   String get debtDirectionIOweDesc => 'I borrowed or they paid for me';
@@ -1212,7 +1212,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String projectTxOwes(String name) {
-    return 'owes $name';
+    return 'to pay $name';
   }
 
   @override
@@ -1844,7 +1844,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txSplitName => 'Name';
 
   @override
-  String get txSplitOwes => 'Owes';
+  String get txSplitOwes => 'To pay';
 
   @override
   String get txSplitRemove => 'Remove';
@@ -1983,7 +1983,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moreProjectsDesc => 'Trips & shared budgets';
 
   @override
-  String get moreDebtsDesc => 'Who owes whom';
+  String get moreDebtsDesc => 'To receive / to pay, with whom';
 
   @override
   String get moreBudgetsDesc => 'Spending limits';
@@ -3668,7 +3668,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get transactionSplitShareTitle =>
-      'Share with… (I owe them their part)';
+      'Share with… (I pay them their part)';
 
   @override
   String get quickCreateErrorTxNotFound =>
@@ -3913,7 +3913,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String txShareOthersOwe(String amount) {
-    return 'others owe $amount';
+    return 'to receive from others $amount';
   }
 
   @override
@@ -7543,4 +7543,211 @@ class AppLocalizationsEn extends AppLocalizations {
   String fpM5bEventDeleteNumbers(int bills, int members) {
     return 'This deletes $bills bills and $members members.';
   }
+
+  @override
+  String fpGoalsPlanHeadMonth(String month) {
+    return 'This month’s saving plan | $month';
+  }
+
+  @override
+  String fpGoalsRingSavedPct(int pct) {
+    return 'Saved $pct%';
+  }
+
+  @override
+  String get fpGoalsFactTargetShort => 'Short of the targets';
+
+  @override
+  String get fpGoalsFactMonthToSave => 'To save this month';
+
+  @override
+  String get debtSubRecord => 'Record a debt';
+
+  @override
+  String get debtSubRepay => 'Repay';
+
+  @override
+  String get debtRepayReceive => 'Got back';
+
+  @override
+  String get debtMoneyMovedLabel => 'Money in / out of a wallet';
+
+  @override
+  String get debtTitleHintOwedToMe =>
+      'What for? e.g. paid for their lunch, a loan';
+
+  @override
+  String get debtTitleHintIOwe =>
+      'What for? e.g. they paid for my lunch, borrowed money';
+
+  @override
+  String get debtRepayTitleHint => 'What for?';
+
+  @override
+  String get debtRepayTo => 'Pay back to';
+
+  @override
+  String get debtRepayFrom => 'Got back from';
+
+  @override
+  String debtRepayDescPay(String name) {
+    return 'Paid back $name';
+  }
+
+  @override
+  String debtRepayDescReceive(String name) {
+    return 'Got back from $name';
+  }
+
+  @override
+  String get debtMarkPaidLabel => 'Mark as paid';
+
+  @override
+  String debtRepayLeft(String amount) {
+    return 'After saving: $amount left';
+  }
+
+  @override
+  String get debtRepayCleared => 'All cleared';
+
+  @override
+  String get debtRepayPickTitle => 'People with an open balance';
+
+  @override
+  String get debtRepayNoOpen => 'No one owes or is owed right now';
+
+  @override
+  String get txRepaymentCategoryLocked =>
+      'A repayment keeps its system category';
+
+  @override
+  String get txLinkModeNeedsPayer => 'Pick who paid first';
+
+  @override
+  String get txLinkModeNeedsEvent => 'Pick an event first';
+
+  @override
+  String get txLinkModeUnbalanced =>
+      'The amounts don\'t add up to the bill yet. See the card\'s status line.';
+
+  @override
+  String get txLinkTabLabel => 'Link';
+
+  @override
+  String get txLinkTabPersonal => 'Just me';
+
+  @override
+  String get txLinkTabSplit => 'Split';
+
+  @override
+  String get txLinkTabPaid => 'Paid for me';
+
+  @override
+  String get txLinkTabEvent => 'Event';
+
+  @override
+  String get txLinkBillLabel => 'Bill';
+
+  @override
+  String get txLinkCardSplitTitle => 'Split with';
+
+  @override
+  String get txLinkCardPaidTitle => 'Who paid, and how much';
+
+  @override
+  String get txLinkCardMyPaid => 'I paid (from my wallet)';
+
+  @override
+  String get txLinkCardPickPayer => 'Pick who paid';
+
+  @override
+  String get txLinkCardWhoPaid => 'Who paid';
+
+  @override
+  String get txLinkCardWhoInBill => 'Who\'s in the bill';
+
+  @override
+  String get txLinkCardMe => 'Me';
+
+  @override
+  String get txLinkCardSplitOk => '✓ All split';
+
+  @override
+  String get txLinkCardPaidOk => '✓ Fully paid';
+
+  @override
+  String txLinkCardShort(String amount) {
+    return '$amount short';
+  }
+
+  @override
+  String txLinkCardOver(String amount) {
+    return '$amount over';
+  }
+
+  @override
+  String get txLinkCardNewToEvent => 'New · joins the event';
+
+  @override
+  String get txLinkWalletNotOut => 'Not from your wallet';
+
+  @override
+  String txLinkWalletPart(String amount) {
+    return '$amount from this wallet';
+  }
+
+  @override
+  String txLinkShareIOwe(String name, String amount) {
+    return 'to pay $name $amount';
+  }
+
+  @override
+  String get txLinkViewPaidLabel => 'Paid by';
+
+  @override
+  String txLinkViewMyPaid(String amount) {
+    return 'I paid $amount';
+  }
+
+  @override
+  String get txLinkViewEventLabel => 'Event bill';
+
+  @override
+  String get txLinkViewIPaid => 'I paid';
+
+  @override
+  String txLinkViewTheyPaid(String name) {
+    return '$name paid';
+  }
+
+  @override
+  String txLinkViewPeople(int count) {
+    return '$count people';
+  }
+
+  @override
+  String get debtDirectionOwedToMeSub => 'they pay me back';
+
+  @override
+  String get debtDirectionIOweSub => 'I pay them back';
+
+  @override
+  String get txLinkPreviewTitle => 'What will change';
+
+  @override
+  String txLinkPreviewLine(String name, String before, String after) {
+    return '$name: $before → $after';
+  }
+
+  @override
+  String get txLinkPreviewNone => 'No one\'s balance changes';
+
+  @override
+  String get txLinkOutOfSyncLabel => 'The event bill changed';
+
+  @override
+  String get txLinkApplyEvent => 'Update from the event';
+
+  @override
+  String get txLinkApplied => 'Updated from the event';
 }

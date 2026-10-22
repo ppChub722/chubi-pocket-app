@@ -13,6 +13,8 @@ class WalletPickCard extends StatelessWidget {
     this.dense = false,
     this.editable = false,
     this.onLongPress,
+    this.muted = false,
+    this.note,
     super.key,
   });
 
@@ -26,6 +28,13 @@ class WalletPickCard extends StatelessWidget {
   final VoidCallback? onLongPress;
 
   final bool dense;
+
+  /// Nothing leaves this wallet (someone else paid it all): the card dims
+  /// but stays tappable (owner 2026-10-21).
+  final bool muted;
+
+  /// In place of the balance line: "ไม่ออกจากกระเป๋า" / "−฿110 จาก ฿172".
+  final String? note;
 
   double get _icon =>
       dense ? AvatarMetrics.sizeSmall : AvatarMetrics.sizeMedium;
@@ -44,13 +53,16 @@ class WalletPickCard extends StatelessWidget {
       );
       if (a.isShared) icon = SharedWalletIconBadge(size: _icon, child: icon);
     }
-    return PickCard(
+    final note = this.note;
+    final card = PickCard(
       reserveSubtitle: true,
       label: label,
       value: a?.name,
       placeholder: placeholder,
       leading: icon ?? PickCardEmptyIcon(AppIcons.noWallet, size: _icon),
-      subtitle: a == null || !a.showsBalance
+      subtitle: note != null
+          ? Text(note, maxLines: 1, overflow: TextOverflow.ellipsis)
+          : a == null || !a.showsBalance
           ? null
           : MoneyText(
               a.balance,
@@ -67,5 +79,8 @@ class WalletPickCard extends StatelessWidget {
       errorText: errorText,
       dense: dense,
     );
+    return muted ? Opacity(opacity: mutedOpacity, child: card) : card;
   }
+
+  static const double mutedOpacity = 0.45;
 }

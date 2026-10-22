@@ -47,6 +47,9 @@ class _Repo extends PersonalDebtsRepository {
   /// Earlier-cycle entries behind the fold.
   int earlier = 1;
 
+  /// Adds a repayment line (a transaction, 0.4.0-3) to the statement.
+  bool repayment = false;
+
   @override
   Future<DebtPersonDetail> person(
     String key, {
@@ -68,6 +71,12 @@ class _Repo extends PersonalDebtsRepository {
         'earlier': earlier,
       },
       'items': [
+        if (repayment)
+          {
+            ..._entry('t9', 'received', 82, 'Got back from Mom', withTx: true),
+            'kind': 'repayment',
+            'paid': null,
+          },
         _entry('e1', 'paid', 300, 'Lunch money', withTx: true),
         _entry('e2', 'received', 100, null),
       ],
@@ -412,6 +421,21 @@ void main() {
       await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
       expect(registry.preset.mode, QuickCreateMode.debt);
       expect(registry.active()?.person?.contactId, 'c1');
+    });
+
+    testWidgets('every statement line opens: a repayment, a debt with a '
+        'wallet tx and a ledger-only debt (0.4.0-3)', (t) async {
+      repo.repayment = true;
+      await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
+      final rows = find.byType(LedgerRow);
+      expect(rows, findsNWidgets(3));
+      for (final e in rows.evaluate()) {
+        expect((e.widget as LedgerRow).onTap, isNotNull);
+      }
+      // The repayment: newest first, no "paid" label.
+      final first = t.widget<LedgerRow>(rows.first);
+      expect(first.title, 'Got back from Mom');
+      expect(first.paidLabel, isNull);
     });
 
     testWidgets('a debts change re-runs the page call', (t) async {

@@ -649,8 +649,16 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       hero: _viewHero(l, d),
       belowHero: [?banner, ?scope, note],
       tabs: [
-        AppTab(value: _Tab.items, label: l.fpBudgetsTabItems),
-        AppTab(value: _Tab.periods, label: l.fpBudgetsTabPeriods),
+        AppTab(
+          value: _Tab.items,
+          label: l.fpBudgetsTabItems,
+          icon: AppIcons.receipt,
+        ),
+        AppTab(
+          value: _Tab.periods,
+          label: l.fpBudgetsTabPeriods,
+          icon: AppIcons.history,
+        ),
       ],
       selected: _tab,
       onChanged: (t) => setState(() => _tab = t),
@@ -835,22 +843,19 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
           ],
         ),
         if (active || p.overridden)
-          Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
-            children: [
+          HeroChipRow(
+            chips: [
+              if (p.overridden)
+                StatusChip.tone(
+                  label: l.bgPeriodOverridden,
+                  tone: AppChipTone.neutral,
+                ),
+              // The plan status chip goes LAST.
               if (active)
                 StatusChip(
                   key: const ValueKey('heroPlanStatus'),
                   label: statusLabel,
                   kind: statusKind,
-                  size: ChipSize.chip,
-                ),
-              if (p.overridden)
-                StatusChip.tone(
-                  label: l.bgPeriodOverridden,
-                  tone: AppChipTone.neutral,
-                  size: ChipSize.chip,
                 ),
             ],
           ),

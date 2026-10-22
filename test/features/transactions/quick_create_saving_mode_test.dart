@@ -56,7 +56,6 @@ class _SavingRepo extends Fake implements SavingGoalsRepository {
   Future<SavingGoalsOverview> list({
     String status = 'active',
     String sort = 'created',
-    String? month,
   }) async => SavingGoalsOverview.fromJson(prodList());
 
   @override

@@ -20,8 +20,12 @@ import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../accounts/presentation/wallet_errors.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
+import '../../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
+import '../../../personal_debts/presentation/debt_wiring.dart';
 import '../../../projects/data/projects_repository.dart';
 import '../../../pending/domain/pending_transaction.dart';
+import '../../data/transactions_repository.dart';
+import '../../domain/link_draft.dart';
 import '../../domain/refs.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
@@ -34,6 +38,7 @@ import '../widgets/draft_form.dart';
 import 'debt_entry_detail_page.dart';
 import '../widgets/event_pick.dart';
 import '../widgets/event_picker.dart';
+import '../widgets/link_view.dart';
 import '../widgets/recurring_link.dart';
 import '../widgets/tx_compact_hero.dart';
 
@@ -144,6 +149,9 @@ class _LoadedState extends State<_Loaded>
   @override
   bool get canEdit {
     final tx = widget.tx;
+    // A repayment (0.4.0-3) is an ordinary row apart from its locked
+    // category: amount, date, wallet, words and tags can change.
+    if (tx.isRepayment) return !tx.isLocked;
     final isSystemRow =
         tx.type != TransactionType.transfer && (tx.category?.isSystem ?? false);
     return !isSystemRow && !tx.isLocked;
@@ -154,7 +162,8 @@ class _LoadedState extends State<_Loaded>
       super.isDirty ||
       _eventChange != null ||
       _pendingUnlink ||
-      _link.candidateFor(_edited.type) != null;
+      _link.candidateFor(_edited.type) != null ||
+      _linkChanged;
 
   @override
   void cancelEdit() {
@@ -162,6 +171,44 @@ class _LoadedState extends State<_Loaded>
     _pendingUnlink = false;
     _link.clear();
     super.cancelEdit();
+    _prefillLink();
+  }
+
+  // ── ผูกกับ (0.4.0-3 B3): edit opens on the saved tab ─────────────────
+  late final _linkEdit = LinkEditSession(_c);
+
+  bool get _linkTabs => _linkEdit.active;
+
+  void _prefillLink() => _linkEdit.start(widget.tx, enabled: canEdit);
+
+  bool get _linkChanged => _linkEdit.changed;
+
+  /// A tab switch: checks, preview, ONE confirm. Null = stop.
+  Future<Map<String, dynamic>?> _linkForSave() => _linkEdit.prepare(
+    context,
+    t: _edited,
+    event: _eventChange,
+    initialAccountId: _initialAccountId,
+    accounts: _accountPool([_edited.account]),
+    retry: _save,
+  );
+
+  /// "อัปเดตตามอีเวนต์": my linked tx takes the bill as it is now.
+  Future<void> _applyEvent() async {
+    final l = AppLocalizations.of(context)!;
+    final repo = context.read<TransactionsRepository>();
+    final txCubit = context.read<TransactionsCubit>();
+    final accounts = context.read<AccountsCubit>();
+    try {
+      final result = await repo.applyEvent(widget.tx.id);
+      for (final row in result.rows) {
+        txCubit.patchRow(row, afterWrite: true);
+      }
+      accounts.patchBalances(result.accountBalances);
+      _say(l.txLinkApplied, tone: Tone.success);
+    } on ApiException catch (e) {
+      _say(eventErrorMessage(l, e));
+    }
   }
 
   Future<void> _pickEvent() async {
@@ -406,6 +453,7 @@ class _LoadedState extends State<_Loaded>
     _splitsPrefilled = edited.splitCount == 0 || edited.splits.isNotEmpty;
     _initialAccountId = _c.account?.id;
     _initialToAccountId = _c.toAccount?.id;
+    _prefillLink();
   }
 
   void _reload() {
@@ -429,7 +477,11 @@ class _LoadedState extends State<_Loaded>
     if (_restoring) return;
     final next = _c.toDraft();
     final w = working;
-    if (next == w) return;
+    if (next == w) {
+      // A ผูกกับ change lives outside the draft: refresh บันทึก.
+      if (_linkTabs && isEditing) setState(() {});
+      return;
+    }
     final textOnly =
         next.type == w.type &&
         next.date == w.date &&
@@ -456,17 +508,23 @@ class _LoadedState extends State<_Loaded>
   Future<void> _save() async {
     final l = AppLocalizations.of(context)!;
     commitTextSession();
+    final onSplitTab = _linkEdit.onSplitTab;
     final problem = transactionEditProblem(
       l,
       _c,
       splitsEditable: _splitsEditable,
+      checkSplits: onSplitTab,
     );
     if (problem != null) {
       HapticFeedback.lightImpact();
       showAppSnackBar(context, problem, tone: Tone.danger);
       return;
     }
-    if (!await confirmIncompleteSplits(context, _c)) return;
+    if (onSplitTab && !await confirmIncompleteSplits(context, _c)) return;
+    if (!mounted) return;
+    // A ผูกกับ tab switch: preview + ONE confirm, then it rides in the PUT.
+    final link = _linkChanged ? await _linkForSave() : null;
+    if (_linkChanged && link == null) return;
     if (!mounted) return;
     bool? alsoUpdateLink;
     if (widget.tx.hasPromptedLink) {
@@ -492,10 +550,16 @@ class _LoadedState extends State<_Loaded>
         initialAccountId: _initialAccountId,
         initialToAccountId: _initialToAccountId,
         alsoUpdateLink: alsoUpdateLink,
+        link: link,
       );
       final warn = outcome.warning;
       if (!mounted) return;
-      final change = _eventChange;
+      // Under the tabs the event moves with the tab switch; the old event
+      // call only moves a bill between events on the อีเวนต์ tab.
+      final change =
+          link == null && (!_linkTabs || _c.pickedTab == LinkMode.event)
+          ? _eventChange
+          : null;
       if (change != null) {
         try {
           await applyEventChange(
@@ -550,10 +614,18 @@ class _LoadedState extends State<_Loaded>
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final tx = widget.tx;
+    // A repayment tied to a person (0.4.0-3) is editable, so it is not a
+    // read-only system row; the older repayment rows (no person) still are.
+    final repaymentPerson = tx.repaymentPerson;
     final isSystemRow =
-        tx.type != TransactionType.transfer && (tx.category?.isSystem ?? false);
+        repaymentPerson == null &&
+        tx.type != TransactionType.transfer &&
+        (tx.category?.isSystem ?? false);
     final isRepayment =
-        isSystemRow && !tx.isLocked && (tx.category?.isDebtRepayment ?? false);
+        repaymentPerson != null ||
+        (isSystemRow &&
+            !tx.isLocked &&
+            (tx.category?.isDebtRepayment ?? false));
     final canEditSplits =
         canEdit && txCanEditSplits(_edited) && _splitsPrefilled;
     _splitsEditable = canEditSplits;
@@ -616,7 +688,8 @@ class _LoadedState extends State<_Loaded>
 
     if (editing) {
       splitsReadOnly = null;
-      eventSlot = canJoinEvent
+      // Under the tabs the อีเวนต์ card always has its event chip.
+      eventSlot = canJoinEvent || _linkTabs
           ? SplitEventSlot(
               name: _eventName(l, tx),
               onTap: _pickEvent,
@@ -758,7 +831,9 @@ class _LoadedState extends State<_Loaded>
                         cardsInHero: true,
                         allowSplits: canEditSplits,
                         editing: editing,
-                        categoryLockedHint: _edited.canEditCategory
+                        categoryLockedHint: repaymentPerson != null
+                            ? l.txRepaymentCategoryLocked
+                            : _edited.canEditCategory
                             ? null
                             : l.transactionFormCategoryAuthorOnlyHint,
                         onEdit: canEdit ? _enterEdit : null,
@@ -769,10 +844,41 @@ class _LoadedState extends State<_Loaded>
                         splitsReadOnly: splitsReadOnly,
                         eventSlot: eventSlot,
                         recurringSlot: recurringSlot,
+                        linkTabs: _linkTabs,
+                        linkEventIsNew: _eventChange is NewEventTarget,
                         eventPending:
                             _eventChange is NewEventTarget ||
                             _eventChange is ExistingEventTarget,
                       ),
+                      // ผูกกับ summary rows (0.4.0-3): › = the card,
+                      // read-only.
+                      if (!editing)
+                        LinkViewRows(
+                          tx: tx,
+                          onOpenEvent: openProject,
+                          onApplyEvent: canEdit ? _applyEvent : null,
+                        ),
+                      // "จ่ายคืนให้ ลี ›" / "รับคืนจาก chalee ›" → the person.
+                      if (repaymentPerson != null && !editing) ...[
+                        const SizedBox(height: AppSpacing.md),
+                        InfoBox(
+                          first: true,
+                          rows: [
+                            InfoRow(
+                              key: const ValueKey('repaymentPerson'),
+                              label: tx.type == TransactionType.expense
+                                  ? l.debtRepayTo
+                                  : l.debtRepayFrom,
+                              value: repaymentPerson.name,
+                              showChevron: true,
+                              onTap: () => openPage(
+                                context,
+                                debtPersonPath(repaymentPerson.key),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                   sections: const [],
@@ -889,6 +995,7 @@ class _LoadedState extends State<_Loaded>
     final router = GoRouter.of(context);
     final txCubit = context.read<TransactionsCubit>();
     final accountsCubit = context.read<AccountsCubit>();
+    final debts = DebtDirectoryCubit.maybeOf(context);
     final messenger = ScaffoldMessenger.of(context);
     final back = ShellBackScope.maybeOf(context);
     setSaving(true);
@@ -899,6 +1006,9 @@ class _LoadedState extends State<_Loaded>
         skipOccurrence: skipOccurrence,
       );
       accountsCubit.patchBalances(result.accountBalances);
+      // Deleting a repayment moves the person's balance back (0.4.0-3).
+      final balance = result.personBalance;
+      if (balance != null) debts?.applyBalance(balance);
       showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
       if (router.canPop()) {
         router.pop();

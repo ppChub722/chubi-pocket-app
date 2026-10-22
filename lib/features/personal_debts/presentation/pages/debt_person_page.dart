@@ -80,13 +80,13 @@ class _PersonViewState extends State<_PersonView> {
     debtDirection: debtDirectionFor(s.balance?.net),
   );
 
-  /// The entry's detail = the transaction detail page in debt mode
-  /// (fe-core). TODO(debt-mode): push `/personal-debts/entries/<id>` once
-  /// that route exists; until then an entry with a wallet tx opens the tx.
-  void _openEntry(DebtEntry e) {
-    final tx = e.transaction;
-    if (tx != null) openPage(context, '/transactions/${tx.id}');
-  }
+  /// Every statement line opens (0.4.0-3): a repayment is a transaction
+  /// (its id IS the tx id); a debt opens its own page (the tx detail page in
+  /// debt mode), with or without a wallet tx.
+  void _openEntry(DebtEntry e) => openPage(
+    context,
+    e.isRepayment ? '/transactions/${e.id}' : '/personal-debts/entries/${e.id}',
+  );
 
   Future<void> _copy(String text) async {
     final l = AppLocalizations.of(context)!;
@@ -379,7 +379,7 @@ class _PersonViewState extends State<_PersonView> {
       paidLabel: e.paid ? l.debtsPaidChip : null,
       sourceLabel: e.source?.title,
       currencySymbol: symbol,
-      onTap: e.transaction == null ? null : () => _openEntry(e),
+      onTap: () => _openEntry(e),
     );
   }
 

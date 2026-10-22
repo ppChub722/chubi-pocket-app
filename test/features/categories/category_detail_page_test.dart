@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:chubi_pocket/app/shell/quick_create_context.dart';
 import 'package:chubi_pocket/core/network/api_exception.dart';
@@ -158,36 +160,47 @@ void main() {
     expect(find.byType(HeroNameInput), findsOneWidget);
   });
 
-  testWidgets('view toggle saves at once with one update', (t) async {
+  testWidgets('view toggle saves at once: ONE call with only the switch', (
+    t,
+  ) async {
     arrange();
-    when(() => categories.update(any())).thenAnswer((inv) async {
-      final c = inv.positionalArguments.first as Category;
-      return CategoryDetail.fromCategory(c);
-    });
+    final done = Completer<CategoryDetail>();
+    when(
+      () => categories.setIncludeInReport(any(), any()),
+    ).thenAnswer((_) => done.future);
     await pump(t, const CategoryDetailPage(editingId: 'cat1'));
     await t.tap(find.byType(AppSwitch).first);
     await t.pump();
+    // Optimistic: flipped before the answer.
+    expect(t.widget<AppSwitch>(find.byType(AppSwitch).first).value, isFalse);
+    verify(() => categories.setIncludeInReport('cat1', false)).called(1);
+    verifyNever(() => categories.update(any()));
+    done.complete(
+      CategoryDetail.fromCategory(
+        Category.fromJson({..._prodJson, 'include_in_report': false}),
+      ),
+    );
+    await t.pump();
     await t.pump(const Duration(milliseconds: 100));
-    final sent =
-        verify(() => categories.update(captureAny())).captured.single
-            as Category;
-    expect(sent.includeInReport, isFalse);
-    expect(sent.name, 'Food');
+    expect(t.widget<AppSwitch>(find.byType(AppSwitch).first).value, isFalse);
   });
 
-  testWidgets('view toggle reverts when the save fails', (t) async {
+  testWidgets('view toggle reverts when the save fails, with a retry', (
+    t,
+  ) async {
     arrange();
-    when(() => categories.update(any())).thenThrow(
+    when(() => categories.setIncludeInReport(any(), any())).thenThrow(
       const ApiException(code: 'INTERNAL', message: 'boom', statusCode: 500),
     );
     await pump(t, const CategoryDetailPage(editingId: 'cat1'));
     await t.tap(find.byType(AppSwitch).first);
     await t.pump();
     await t.pump(const Duration(milliseconds: 100));
-    verify(() => categories.update(any())).called(1);
+    verify(() => categories.setIncludeInReport('cat1', false)).called(1);
     final sw = t.widget<AppSwitch>(find.byType(AppSwitch).first);
     expect(sw.value, isTrue);
     expect(find.text('boom'), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
   });
 
   testWidgets('edit mode hides the number and shows the delete end zone', (

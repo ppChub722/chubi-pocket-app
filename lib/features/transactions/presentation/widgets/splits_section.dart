@@ -104,6 +104,39 @@ double splitLeft(double total, double? me, Iterable<SplitDraft> drafts) {
   return double.parse(left.toStringAsFixed(2));
 }
 
+/// Puts the picked person on [d] (a contact with its look, else the name).
+void applyContactPick(SplitDraft d, ContactPick r) {
+  switch (r) {
+    case ContactPicked(:final contact):
+      d.setPerson(
+        contact.name,
+        contact: contact.id,
+        look: EmbeddedPerson(
+          name: contact.name,
+          contactId: contact.id,
+          iconCode: contact.iconCode,
+          linked: contact.isLinked,
+          linkedUserId: contact.linkedUser?.id,
+        ),
+      );
+    case ContactNameTyped(:final name) || ContactNamePicked(:final name):
+      d.setPerson(name.trim());
+  }
+}
+
+/// The status line of a ผูกกับ card: [left] = what's still to place (> 0
+/// ยังขาด, < 0 เกินยอด); [ok] is the ✓ words.
+ShareStatus linkCardStatus(BuildContext context, double left, String ok) {
+  final l = AppLocalizations.of(context)!;
+  if (left.abs() <= 0.005) return ShareStatus(ok, ok: true);
+  return ShareStatus(
+    left > 0
+        ? l.txLinkCardShort(moneyString(context, left))
+        : l.txLinkCardOver(moneyString(context, -left)),
+    ok: false,
+  );
+}
+
 class SplitsSection extends StatefulWidget {
   const SplitsSection({
     required this.label,
@@ -117,9 +150,14 @@ class SplitsSection extends StatefulWidget {
     this.overText,
     this.embedded = false,
     this.compact = false,
+    this.card = false,
     this.helper,
     super.key,
   });
+
+  /// The ผูกกับ แบ่ง card: a [ShareCard] ([label] as its title), the chips in
+  /// its header, ฉัน + the people as rows, the status line.
+  final bool card;
 
   final String? helper;
 
@@ -170,24 +208,6 @@ class _SplitsSectionState extends State<SplitsSection> {
     widget.onChanged([...widget.drafts, d]);
   }
 
-  static void _apply(SplitDraft d, ContactPick r) {
-    switch (r) {
-      case ContactPicked(:final contact):
-        d.setPerson(
-          contact.name,
-          contact: contact.id,
-          look: EmbeddedPerson(
-            name: contact.name,
-            contactId: contact.id,
-            iconCode: contact.iconCode,
-            linked: contact.isLinked,
-          ),
-        );
-      case ContactNameTyped(:final name) || ContactNamePicked(:final name):
-        d.setPerson(name.trim());
-    }
-  }
-
   Future<void> _changePerson(SplitDraft d) async {
     final r = await ContactPicker.one(
       context,
@@ -197,7 +217,7 @@ class _SplitsSectionState extends State<SplitsSection> {
       initialName: d.personName.trim().isEmpty ? null : d.personName,
     );
     if (r == null || !mounted) return;
-    _apply(d, r);
+    applyContactPick(d, r);
     widget.onChanged(List.of(widget.drafts));
   }
 
@@ -220,10 +240,61 @@ class _SplitsSectionState extends State<SplitsSection> {
     if (!widget.meAuto) widget.onMeChanged!(r.me);
   }
 
+  void _remove(int i) =>
+      widget.onChanged(List<SplitDraft>.of(widget.drafts)..removeAt(i));
+
+  Widget _card(AppLocalizations l) {
+    final drafts = widget.drafts;
+    return ShareCard(
+      title: widget.label,
+      actions: [
+        AppChip(
+          label: l.txSplitEqually,
+          enabled: drafts.isNotEmpty && widget.totalAmount > 0,
+          onTap: _splitEqually,
+        ),
+        AppChip(
+          icon: AppIcons.add,
+          label: l.txSplitAddPerson,
+          onTap: _addPerson,
+        ),
+      ],
+      rows: [
+        if (_withMe)
+          SplitMeRow(
+            label: l.txSplitMe,
+            amount: widget.me,
+            auto: widget.meAuto,
+            onAutoChanged: widget.onMeAutoChanged,
+            onChanged: widget.onMeChanged!,
+            card: true,
+          ),
+        for (var i = 0; i < drafts.length; i++)
+          SplitDraftRow(
+            key: ObjectKey(drafts[i]),
+            draft: drafts[i],
+            card: true,
+            autofocusName: identical(drafts[i], _justAdded),
+            onChange: () => widget.onChanged(List.of(drafts)),
+            onChangePerson: () => _changePerson(drafts[i]),
+            onRemove: () => _remove(i),
+          ),
+      ],
+      status: _withMe
+          ? linkCardStatus(
+              context,
+              splitLeft(widget.totalAmount, widget.me, drafts),
+              l.txLinkCardSplitOk,
+            )
+          : null,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l = AppLocalizations.of(context)!;
+    if (widget.card) return _card(l);
     final sectioned = widget.embedded && !widget.compact;
     const chipSize = ChipSize.control;
     final pillChildren = <Widget>[
@@ -269,7 +340,8 @@ class _SplitsSectionState extends State<SplitsSection> {
     final rows = <Widget>[
       if (_withMe)
         inset(
-          _MeRow(
+          SplitMeRow(
+            label: l.txSplitMe,
             amount: widget.me,
             auto: widget.meAuto,
             onAutoChanged: widget.onMeAutoChanged,
@@ -278,7 +350,7 @@ class _SplitsSectionState extends State<SplitsSection> {
         ),
       for (var i = 0; i < widget.drafts.length; i++)
         inset(
-          _DraftRow(
+          SplitDraftRow(
             // Key by the draft object itself: removing a middle row must drop
             // THAT row's controller, not shift amounts onto siblings.
             key: ObjectKey(widget.drafts[i]),
@@ -286,10 +358,7 @@ class _SplitsSectionState extends State<SplitsSection> {
             autofocusName: identical(widget.drafts[i], _justAdded),
             onChange: () => widget.onChanged(List.of(widget.drafts)),
             onChangePerson: () => _changePerson(widget.drafts[i]),
-            onRemove: () {
-              final next = List<SplitDraft>.of(widget.drafts)..removeAt(i);
-              widget.onChanged(next);
-            },
+            onRemove: () => _remove(i),
           ),
         ),
     ];
@@ -493,60 +562,95 @@ class _AmountBoxState extends State<_AmountBox> {
   }
 }
 
-class _MeRow extends StatelessWidget {
-  const _MeRow({
-    required this.amount,
-    required this.auto,
-    required this.onAutoChanged,
-    required this.onChanged,
-  });
-  final double? amount;
-  final bool auto;
-  final ValueChanged<bool>? onAutoChanged;
-  final ValueChanged<double?> onChanged;
+/// My avatar (from the signed-in user), the same size as a person's mark.
+class MyAvatar extends StatelessWidget {
+  const MyAvatar({required this.fallbackName, super.key});
+
+  final String fallbackName;
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
     final me = context.select<AuthCubit, (String, IconCode?)?>((c) {
       final s = c.state;
       return s is AuthAuthenticated
           ? (s.user.displayName, s.user.iconCode)
           : null;
     });
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        UserAvatar(
+          displayName: me?.$1 ?? fallbackName,
+          iconCode: me?.$2,
+          size: SplitRow.avatarSize,
+        ),
+        SizedBox(width: PersonMark.linkSlotWidth(SplitRow.avatarSize)),
+      ],
+    );
+  }
+}
+
+/// My row: [label] ("ส่วนของฉัน", "ฉันจ่ายเอง (จากกระเป๋า)", "ฉัน"), the
+/// amount, and the auto toggle ([card]: the "A" chip; typing turns it off).
+class SplitMeRow extends StatelessWidget {
+  const SplitMeRow({
+    required this.label,
+    required this.amount,
+    required this.auto,
+    required this.onAutoChanged,
+    required this.onChanged,
+    this.card = false,
+    super.key,
+  });
+  final String label;
+  final double? amount;
+  final bool auto;
+  final ValueChanged<bool>? onAutoChanged;
+  final ValueChanged<double?> onChanged;
+  final bool card;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final toggle = onAutoChanged;
     return SplitRow(
-      avatar: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          UserAvatar(
-            displayName: me?.$1 ?? l.txSplitMe,
-            iconCode: me?.$2,
-            size: SplitRow.avatarSize,
-          ),
-          SizedBox(width: PersonMark.linkSlotWidth(SplitRow.avatarSize)),
-        ],
-      ),
-      name: SplitRowName.muted(l.txSplitMe),
-      amount: _AmountBox(value: amount, onChanged: onChanged),
-      trailing: onAutoChanged == null
+      avatar: MyAvatar(fallbackName: l.txSplitMe),
+      name: SplitRowName.muted(label),
+      amount: card
+          ? ShareAmountField(value: amount, auto: auto, onChanged: onChanged)
+          : _AmountBox(value: amount, onChanged: onChanged),
+      trailing: toggle == null
           ? null
+          : card
+          ? AutoToggleChip(
+              value: auto,
+              tooltip: l.txSplitAuto,
+              onChanged: toggle,
+            )
           : SplitRowAction(
               icon: AppIcons.auto,
               tooltip: l.txSplitAuto,
               selected: auto,
-              onTap: () => onAutoChanged!(!auto),
+              onTap: () => toggle(!auto),
             ),
     );
   }
 }
 
-class _DraftRow extends StatefulWidget {
-  const _DraftRow({
+/// One person's row. By default the amount is [SplitDraft.owedAmount]; the
+/// อีเวนต์ card passes [amount] + [onAmount] (their share of the bill) and
+/// the "ใหม่ · เพิ่มเข้าอีเวนต์" [tag].
+class SplitDraftRow extends StatefulWidget {
+  const SplitDraftRow({
     required this.draft,
     required this.onChange,
     required this.onChangePerson,
     required this.onRemove,
     this.autofocusName = false,
+    this.card = false,
+    this.amount,
+    this.onAmount,
+    this.tag,
     super.key,
   });
 
@@ -557,19 +661,23 @@ class _DraftRow extends StatefulWidget {
   final VoidCallback onRemove;
 
   final bool autofocusName;
+  final bool card;
+  final double? amount;
+  final ValueChanged<double?>? onAmount;
+  final Widget? tag;
 
   @override
-  State<_DraftRow> createState() => _DraftRowState();
+  State<SplitDraftRow> createState() => _SplitDraftRowState();
 }
 
-class _DraftRowState extends State<_DraftRow> {
+class _SplitDraftRowState extends State<SplitDraftRow> {
   late final TextEditingController _name = TextEditingController(
     text: widget.draft.personName,
   );
   final _nameFocus = FocusNode();
 
   @override
-  void didUpdateWidget(covariant _DraftRow old) {
+  void didUpdateWidget(covariant SplitDraftRow old) {
     super.didUpdateWidget(old);
     if (_name.text != widget.draft.personName) {
       _name.text = widget.draft.personName;
@@ -617,25 +725,38 @@ class _DraftRowState extends State<_DraftRow> {
           )
         : SplitRowName.picked(draft.personName, onTap: widget.onChangePerson);
 
+    final onAmount = widget.onAmount;
+    final value = onAmount == null ? draft.owedAmount : widget.amount;
+    void changed(double? v) {
+      if (onAmount != null) return onAmount(v);
+      draft.owedAmount = v;
+      widget.onChange();
+    }
+
+    final avatar = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: widget.onChangePerson,
+      child: mark,
+    );
+    final remove = SplitRowAction(
+      icon: AppIcons.close,
+      tooltip: l.txSplitRemove,
+      onTap: widget.onRemove,
+    );
+    if (widget.card) {
+      return ShareRow(
+        avatar: avatar,
+        name: name,
+        amount: ShareAmountField(value: value, onChanged: changed),
+        trailing: remove,
+        tag: widget.tag,
+      );
+    }
     final row = SplitRow(
-      avatar: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onChangePerson,
-        child: mark,
-      ),
+      avatar: avatar,
       name: name,
-      amount: _AmountBox(
-        value: draft.owedAmount,
-        onChanged: (v) {
-          draft.owedAmount = v;
-          widget.onChange();
-        },
-      ),
-      trailing: SplitRowAction(
-        icon: AppIcons.close,
-        tooltip: l.txSplitRemove,
-        onTap: widget.onRemove,
-      ),
+      amount: _AmountBox(value: value, onChanged: changed),
+      trailing: remove,
     );
     if (!draft.hasRepayments && !draft.cancelled) return row;
     return Column(

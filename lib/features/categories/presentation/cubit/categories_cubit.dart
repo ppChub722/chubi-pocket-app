@@ -132,6 +132,12 @@ class CategoriesCubit extends Cubit<CategoriesState>
     return updated;
   }
 
+  Future<CategoryDetail> setIncludeInReport(String id, bool on) async {
+    final updated = await _repo.setIncludeInReport(id, on);
+    _patch(updated);
+    return updated;
+  }
+
   void _patch(Category updated) {
     if (!state.categories.any((c) => c.id == updated.id)) return;
     emit(

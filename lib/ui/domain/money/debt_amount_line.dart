@@ -6,6 +6,7 @@ import '../../atoms/app_chip.dart';
 import '../../tokens/app/app_colors.dart';
 import '../../tokens/app_spacing.dart';
 import 'money_text.dart';
+import 'net_balance.dart';
 
 class DebtAmountLine extends StatelessWidget {
   const DebtAmountLine({
@@ -27,7 +28,6 @@ class DebtAmountLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
     if (CurrencyFormatter.roundsToZero(net)) {
       return Text(
         settledLabel,
@@ -41,7 +41,7 @@ class DebtAmountLine extends StatelessWidget {
     return StatusAmountLine(
       status: owedToMe ? owedToMeLabel : iOweLabel,
       tone: owedToMe ? AppChipTone.success : AppChipTone.danger,
-      color: owedToMe ? palette.income : palette.expense,
+      color: debtStateColor(context, owedToMe: owedToMe),
       amount: MoneyText(net.abs(), symbol: currencySymbol),
     );
   }

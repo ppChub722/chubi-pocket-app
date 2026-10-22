@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
+import 'package:chubi_pocket/core/network/api_exception.dart';
 import 'package:chubi_pocket/features/accounts/data/accounts_repository.dart';
 import 'package:chubi_pocket/features/accounts/domain/account.dart';
 import 'package:chubi_pocket/features/accounts/presentation/cubit/accounts_cubit.dart';
@@ -55,6 +56,22 @@ class _Repo extends Fake implements AccountsRepository {
       'id': 'w9',
       'name': draft.name,
     });
+  }
+
+  /// The view-mode switch: one PUT with only these fields.
+  final tracks = <Map<String, dynamic>>[];
+  ApiException? trackError;
+
+  @override
+  Future<Account> setTrackBalance(
+    String id, {
+    required bool on,
+    double? currentBalance,
+  }) async {
+    tracks.add({'track_balance': on, 'current_balance': ?currentBalance});
+    final e = trackError;
+    if (e != null) throw e;
+    return Account.fromJson({..._json(track: on), 'id': id});
   }
 
   @override
@@ -252,6 +269,56 @@ void main() {
     expect(repo.updates, hasLength(1));
     expect(repo.updates.single['track_balance'], false);
     expect(repo.updates.single.containsKey('current_balance'), isFalse);
+  });
+
+  bool switchValue(WidgetTester t) =>
+      t.widget<AppSwitch>(find.byType(AppSwitch).first).value;
+
+  testWidgets('view: on → off saves at once, ONE call, no edit mode', (
+    t,
+  ) async {
+    await pump(t, wallet: _wallet());
+    expect(switchValue(t), isTrue);
+    await t.tap(find.byType(Switch).first);
+    await t.pump();
+    expect(switchValue(t), isFalse); // optimistic
+    await t.pump(const Duration(milliseconds: 300));
+    expect(repo.tracks, [
+      {'track_balance': false},
+    ]);
+    expect(repo.updates, isEmpty);
+    expect(find.text('Save'), findsNothing); // still view mode
+    expect(switchValue(t), isFalse);
+  });
+
+  testWidgets('view: off → on asks the balance, then ONE call with it', (
+    t,
+  ) async {
+    await pump(t, wallet: _wallet(track: false));
+    await t.tap(find.byType(Switch).first);
+    await t.pump(const Duration(milliseconds: 300));
+    expect(find.text('Current balance'), findsOneWidget);
+    expect(repo.tracks, isEmpty);
+    await t.enterText(find.byType(TextField).last, '500');
+    await t.pump();
+    await tapText(t, 'Set balance');
+    expect(repo.tracks, [
+      {'track_balance': true, 'current_balance': 500},
+    ]);
+    expect(switchValue(t), isTrue);
+  });
+
+  testWidgets('view: a failed save puts the switch back, with a retry', (
+    t,
+  ) async {
+    await pump(t, wallet: _wallet());
+    repo.trackError = const ApiException(code: 'INTERNAL', message: 'boom');
+    await t.tap(find.byType(Switch).first);
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 300));
+    expect(repo.tracks, hasLength(1));
+    expect(switchValue(t), isTrue);
+    expect(find.text('Retry'), findsOneWidget);
   });
 
   test('untracked: no credit figures, showsBalance false', () {

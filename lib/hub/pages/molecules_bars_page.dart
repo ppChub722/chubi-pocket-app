@@ -113,9 +113,14 @@ class _BarsPageState extends State<_BarsPage> {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final pagerTabs = [
-      const AppTab(value: 'a', label: 'First'),
-      const AppTab(value: 'b', label: 'Second'),
-      const AppTab(value: 'c', label: 'Third', badgeCount: 12),
+      const AppTab(value: 'a', label: 'Overview', icon: AppIcons.pie),
+      const AppTab(value: 'b', label: 'Entries', icon: AppIcons.receipt),
+      const AppTab(
+        value: 'c',
+        label: 'Past',
+        icon: AppIcons.history,
+        badgeCount: 12,
+      ),
     ];
     final colorChoices = <(String, Color)>[
       ('primary', scheme.primary),
@@ -180,16 +185,25 @@ class _BarsPageState extends State<_BarsPage> {
               'Every real variant, side by side, each with the page that uses it.',
           uses: [
             HubUse(
-              label: 'AppTabBar — plain tabs',
-              page: 'Categories (expense / income), notifications inbox',
+              label: 'AppTabBar — two tabs',
+              page: 'Categories (expense / income), event resolve, icon maker',
               wide: true,
               child: _frame(
                 HubStateful<String>(
                   initial: 'expense',
                   builder: (context, sel, set) => AppTabBar<String>(
                     tabs: const [
-                      AppTab(value: 'expense', label: 'Expense'),
-                      AppTab(value: 'income', label: 'Income', badgeCount: 3),
+                      AppTab(
+                        value: 'expense',
+                        label: 'Expense',
+                        icon: AppIcons.expense,
+                      ),
+                      AppTab(
+                        value: 'income',
+                        label: 'Income',
+                        icon: AppIcons.income,
+                        badgeCount: 3,
+                      ),
                     ],
                     selected: sel,
                     onChanged: set,
@@ -199,7 +213,7 @@ class _BarsPageState extends State<_BarsPage> {
             ),
             HubUse(
               label: 'AppTabBar — three tabs, badge on the last',
-              page: 'Transactions (expense / income / transfer)',
+              page: 'Quick create (รายการ / หนี้ / ออม)',
               wide: true,
               child: _frame(
                 HubStateful<String>(
@@ -213,8 +227,8 @@ class _BarsPageState extends State<_BarsPage> {
               ),
             ),
             HubUse(
-              label: 'AppTabBar + AppTabPager — swipeable',
-              page: 'Account detail, categories',
+              label: 'AppTabBar + AppTabPager — swipe the bar or the page',
+              page: 'Detail pages with tabs, categories',
               wide: true,
               child: _frame(
                 Column(
@@ -234,7 +248,7 @@ class _BarsPageState extends State<_BarsPage> {
                         onChanged: (v) => setState(() => _pagerTab = v),
                         builder: (context, v) => Center(
                           child: Text(
-                            'Page "$v" - swipe or tap a tab',
+                            'Page "$v" - tap, drag the bar or swipe here',
                             style: text.bodyMedium,
                           ),
                         ),
@@ -897,15 +911,26 @@ class _BarsPageState extends State<_BarsPage> {
         HubPlayground(
           title: 'AppTabBar',
           note:
-              'Equal-width underline tabs, value-driven; the underline slides. '
-              'badgeCount > 0 on a tab shows a badge. (The pager option is '
-              'shown under "In the app".)',
+              'The ONE tab style: a pill track (40 high), equal segments, the '
+              'pill slides to a tapped tab (300 ms, cubic .2/.8/.2/1). Drag ON '
+              'the bar: the pill follows the finger and snaps to the nearest '
+              'tab. Theme primary only. Icons: on every tab with 2–3 tabs, '
+              'only on the selected one with 4+. badgeCount > 0 shows a '
+              'badge. (With a pager, a content swipe moves the pill too: see '
+              '"In the app".)',
           controls: [
             const PlayNum('tabs', min: 2, max: 4, step: 1, initialValue: 2),
+            const PlayBool('icons', initialValue: true),
             const PlayBool('badge', initialValue: true),
           ],
           builder: (context, v) {
             const names = ['Expense', 'Income', 'Transfer', 'Debts'];
+            const icons = [
+              AppIcons.expense,
+              AppIcons.income,
+              AppIcons.transfer,
+              AppIcons.debt,
+            ];
             final n = v<double>('tabs').round();
             return HubStateful<int>(
               initial: 0,
@@ -916,6 +941,7 @@ class _BarsPageState extends State<_BarsPage> {
                       AppTab(
                         value: i,
                         label: names[i],
+                        icon: v<bool>('icons') ? icons[i] : null,
                         badgeCount: v<bool>('badge') && i == 1 ? 3 : 0,
                       ),
                   ],

@@ -280,6 +280,7 @@ class TransactionsCubit extends Cubit<TransactionsState>
     String? transferToAccountId,
     List<String> tagIds = const [],
     List<Map<String, dynamic>>? splits,
+    Map<String, dynamic>? link,
   }) async {
     final result = await _repo.create(
       type: type,
@@ -292,6 +293,7 @@ class TransactionsCubit extends Cubit<TransactionsState>
       transferToAccountId: transferToAccountId,
       tagIds: tagIds,
       splits: splits,
+      link: link,
     );
     _emitWrite(state.copyWith(transactions: _place(result.rows)));
     return result;
@@ -312,6 +314,7 @@ class TransactionsCubit extends Cubit<TransactionsState>
     String? transferToAccountId,
     List<String>? tagIds,
     bool? alsoUpdateLink,
+    Map<String, dynamic>? link,
   }) async {
     final result = await _repo.update(
       id: id,
@@ -328,6 +331,7 @@ class TransactionsCubit extends Cubit<TransactionsState>
       transferToAccountId: transferToAccountId,
       tagIds: tagIds,
       alsoUpdateLink: alsoUpdateLink,
+      link: link,
     );
     _emitWrite(state.copyWith(transactions: _place(result.rows)));
     return result;

@@ -19,6 +19,7 @@ import '../../../pending/domain/pending_transaction.dart';
 import '../../../tags/domain/tag.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../../tags/presentation/widgets/tag_chip.dart';
+import '../../domain/refs.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../../../projects/domain/project.dart';
@@ -27,8 +28,10 @@ import '../../../projects/presentation/widgets/member_picker.dart';
 import '../../../projects/presentation/widgets/project_common.dart';
 import '../../../projects/presentation/cubit/project_directory_cubit.dart';
 import '../cubit/tx_form_options_cubit.dart';
+import '../../domain/link_draft.dart';
 import 'event_pick.dart';
 import 'event_picker.dart';
+import 'link_section.dart';
 import 'pick_chip_rows.dart';
 import 'splits_section.dart';
 import '../../../tags/presentation/widgets/tag_picker.dart';
@@ -238,6 +241,250 @@ class DraftFormController extends ChangeNotifier {
   void setSplits(List<SplitDraft> s) {
     splits = s;
     notifyListeners();
+  }
+
+  // ── ผูกกับ tabs (owner 2026-10-21): ONE data set, four views ─────────
+  /// The จ่ายแทน and อีเวนต์ parts; the แบ่ง part is [splits] / [meAmount].
+  final link = LinkDraft();
+
+  /// The แบ่ง people, as the other views read them.
+  List<LinkPerson> get splitPeople => [
+    for (final s in splits)
+      if (s.personName.trim().isNotEmpty)
+        LinkPerson(
+          name: s.personName.trim(),
+          contactId: s.contactId,
+          person: s.person,
+        ),
+  ];
+
+  /// The tab in use: the one picked, else what the form holds (an event →
+  /// อีเวนต์, people → แบ่ง, else ส่วนตัว) so forms without the tabs keep
+  /// working.
+  LinkMode linkMode({required bool hasEvent}) =>
+      pickedTab ??
+      (hasEvent
+          ? LinkMode.event
+          : splits.any((s) => s.isComplete)
+          ? LinkMode.split
+          : LinkMode.personal);
+
+  /// The tab picked; the tabs are an expense's only (income / transfer go by
+  /// what the form holds).
+  LinkMode? get pickedTab => type == TransactionType.expense ? link.mode : null;
+
+  void setLinkMode(LinkMode next, {required bool hasEvent}) {
+    final from = linkMode(hasEvent: hasEvent);
+    if (next == from && link.mode != null) return;
+    link.switchTo(next, from: from);
+    notifyListeners();
+  }
+
+  List<LinkPerson> get eventMembers => link.eventMembers(splitPeople);
+
+  /// "ส่วนของคุณ": my share of the bill in [m] (what I spend).
+  double myShareFor(LinkMode m) => switch (m) {
+    LinkMode.personal || LinkMode.paid => amountValue,
+    LinkMode.split => meAmount ?? amountValue,
+    LinkMode.event => link.eventMine(amountValue, eventMembers),
+  };
+
+  /// What leaves my wallet in [m]; 0 dims the wallet card.
+  double walletOutFor(LinkMode m) => link.walletOut(m, amountValue);
+
+  /// Whether [m]'s card adds up (its status line is ✓).
+  bool linkBalanced(LinkMode m) => switch (m) {
+    LinkMode.personal => true,
+    LinkMode.split => splitsBalanced,
+    LinkMode.paid =>
+      link.paidBy != null && link.payDiff(amountValue).abs() <= 0.005,
+    LinkMode.event => link.eventDiff(amountValue, eventMembers).abs() <= 0.005,
+  };
+
+  void setPaidBy(LinkPerson? p) {
+    link.paidBy = p;
+    notifyListeners();
+  }
+
+  void setPaidAmount(double? v) {
+    link.paidAmount = v;
+    notifyListeners();
+  }
+
+  void setMyPaid(double? v) {
+    link
+      ..myPaidTyped = v
+      ..myPaidAuto = false;
+    notifyListeners();
+  }
+
+  void setMyPaidAuto(bool on) {
+    if (!on) link.myPaidTyped = link.myPaid(amountValue);
+    link.myPaidAuto = on;
+    notifyListeners();
+  }
+
+  void paidEqually() {
+    link.paidEqually(amountValue);
+    notifyListeners();
+  }
+
+  void setEventPayer(LinkPerson? p) {
+    link.eventPayer = p;
+    notifyListeners();
+  }
+
+  void setEventShare(LinkPerson p, double? v) {
+    if (v == null) {
+      link.eventShares.remove(p.key);
+    } else {
+      link.eventShares[p.key] = v;
+    }
+    notifyListeners();
+  }
+
+  void setEventMeAmount(double? v) {
+    link
+      ..eventMeTyped = v
+      ..eventMeAuto = false;
+    notifyListeners();
+  }
+
+  void setEventMeAuto(bool on) {
+    if (!on) link.eventMeTyped = link.eventMine(amountValue, eventMembers);
+    link.eventMeAuto = on;
+    notifyListeners();
+  }
+
+  void eventEqually() {
+    link.eventEqually();
+    notifyListeners();
+  }
+
+  /// Drops a person from the event bill: the payer goes back to me; a แบ่ง
+  /// person leaves the shared list (every view).
+  void removeEventMember(LinkPerson p) {
+    link.eventShares.remove(p.key);
+    link.eventExtra.removeWhere((e) => e.key == p.key);
+    if (link.eventPayer?.key == p.key) link.eventPayer = null;
+    if (link.paidBy?.key == p.key) link.paidBy = null;
+    splits = [
+      for (final s in splits)
+        if (LinkPerson(name: s.personName.trim(), contactId: s.contactId).key !=
+            p.key)
+          s,
+    ];
+    notifyListeners();
+  }
+
+  /// What a save sends for [m]: only the active tab is saved. [useWallet] =
+  /// the wallet is charged. The BE infers `link_mode`: จ่ายแทน sends `paid_by`
+  /// (B1); อีเวนต์ sends `payer` + `members` to the bills call (B2). Before a
+  /// tab is
+  /// picked (forms without the tabs) it's today's body: complete splits, the
+  /// wallet, no link fields.
+  ({
+    List<Map<String, dynamic>> splits,
+    bool useWallet,
+    Map<String, dynamic>? link,
+  })
+  linkSave(LinkMode m) {
+    final complete = [
+      for (final s in splits)
+        if (s.isComplete) s.toJson(),
+    ];
+    if (isTransfer) return (splits: const [], useWallet: true, link: null);
+    if (pickedTab == null) {
+      return (splits: complete, useWallet: true, link: null);
+    }
+    final bill = amountValue;
+    return switch (m) {
+      LinkMode.personal => (splits: const [], useWallet: true, link: null),
+      LinkMode.split => (splits: complete, useWallet: true, link: null),
+      LinkMode.paid => (
+        splits: const [],
+        useWallet: link.myPaid(bill) > 0.005,
+        link: {'paid_by': ?link.paidByJson(bill)},
+      ),
+      // B2: no splits; `payer` + `members` go beside new_transaction. Paid
+      // by someone else = my share, no wallet.
+      LinkMode.event => (
+        splits: const [],
+        useWallet: link.eventPayer == null,
+        link: link.eventJson(bill, eventMembers),
+      ),
+    };
+  }
+
+  // ── editing a saved tx (0.4.0-3 B3) ────────────────────────────────
+  /// Opens the tabs on the tab [t] was saved with, its จ่ายแทน / อีเวนต์
+  /// data in place (the แบ่ง people come from [prefillTransaction]).
+  void prefillLink(Transaction t) {
+    link
+      ..mode =
+          t.linkMode ??
+          (t.eventBill != null || t.projectId != null
+              ? LinkMode.event
+              : t.splitCount > 0
+              ? LinkMode.split
+              : LinkMode.personal)
+      ..paidBy = null
+      ..paidAmount = null
+      ..myPaidAuto = true
+      ..myPaidTyped = null
+      ..eventPayer = null
+      ..eventMeAuto = true
+      ..eventMeTyped = null;
+    link.eventShares.clear();
+    link.eventExtra.clear();
+    final paid = t.paidBy;
+    if (paid != null) {
+      link
+        ..paidBy = LinkPerson.of(paid.person)
+        ..paidAmount = paid.amount;
+    }
+    final bill = t.eventBill;
+    for (final s in bill?.members ?? const <BillShare>[]) {
+      if (s.member.isMe) continue;
+      final p = LinkPerson(name: s.member.name, memberId: s.member.id);
+      link.eventExtra.add(p);
+      link.eventShares[p.key] = s.share;
+    }
+    final payer = bill?.payer;
+    if (payer != null && !payer.isMe) {
+      link.eventPayer = LinkPerson(name: payer.name, memberId: payer.id);
+    }
+  }
+
+  /// The tab + its data, to tell at save whether the tab changed.
+  String linkSnapshot(LinkMode m) =>
+      jsonEncode({'mode': m.wire, 'data': _linkData(m, projectId: null)});
+
+  /// The B3 PUT part for [m]: `link_mode` + that tab's data. The event tab
+  /// needs the event's [projectId].
+  Map<String, dynamic> linkEditJson(LinkMode m, {String? projectId}) => {
+    'link_mode': m.wire,
+    ..._linkData(m, projectId: projectId),
+  };
+
+  Map<String, dynamic> _linkData(LinkMode m, {required String? projectId}) {
+    final bill = amountValue;
+    return switch (m) {
+      LinkMode.personal => const {},
+      LinkMode.split => {
+        'splits': [
+          for (final s in splits)
+            if (s.isComplete) s.toUpdateJson(),
+        ],
+      },
+      LinkMode.paid => {'paid_by': ?link.paidByJson(bill)},
+      LinkMode.event => {
+        'event': {
+          'project_id': ?projectId,
+          ...link.eventJson(bill, eventMembers),
+        },
+      },
+    };
   }
 
   double? get meAmount {
@@ -521,8 +768,19 @@ class DraftForm extends StatefulWidget {
     this.cardsInHero = false,
     this.chipRows = false,
     this.missing = const {},
+    this.linkTabs = false,
+    this.linkEventIsNew = false,
+    this.linkIsEventMember,
     super.key,
   });
+
+  /// The picked existing event's members, as a check ([LinkSection]).
+  final bool Function(LinkPerson p)? linkIsEventMember;
+
+  /// Quick create (new expense): the "ผูกกับ" tabs ([LinkSection]) instead
+  /// of the split / event section; [eventSlot] feeds the อีเวนต์ card.
+  final bool linkTabs;
+  final bool linkEventIsNew;
 
   final bool chipLayout;
 
@@ -726,11 +984,14 @@ class _DraftFormState extends State<DraftForm> {
         onTap: null,
       );
     }
+    final mode = _c.isTransfer ? null : _linkMode;
     return WalletPickCard(
       account: account,
       label: label,
       placeholder: placeholder,
       dense: true,
+      muted: mode != null && _c.walletOutFor(mode) <= 0.005,
+      note: _walletNote(AppLocalizations.of(context)!, mode),
       onTap: _heroTap(onPick),
       onLongPress: _heroLongPress(onPick),
       editable: widget.editing && !widget.readOnly,
@@ -798,6 +1059,7 @@ class _DraftFormState extends State<DraftForm> {
       builder: (context, _) {
         final isTransfer = _c.isTransfer;
         final entryLayout = widget.chipLayout || widget.chipRows;
+        final linkMode = _linkMode;
         final categoryHint = widget.categoryLockedHint;
         final form = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -816,9 +1078,14 @@ class _DraftFormState extends State<DraftForm> {
                 compact: widget.compact,
                 amountFocus: _amountFocus,
                 titleFocus: _descriptionFocus,
-                amountNote: !isTransfer && (!editing || widget.allowSplits)
+                amountNote: linkMode != null
+                    ? _ShareLine.ofLink(_c, linkMode, l)
+                    : !isTransfer && (!editing || widget.allowSplits)
                     ? _ShareLine.of(_c)
                     : null,
+                amountLabel: linkMode == null || linkMode == LinkMode.personal
+                    ? null
+                    : l.txLinkBillLabel,
                 missing: widget.missing,
                 showTitle: !isTransfer,
                 titleHint: isTransfer
@@ -854,9 +1121,14 @@ class _DraftFormState extends State<DraftForm> {
                         _pickDate();
                       },
                 inline: true,
-                amountNote: !isTransfer && (!editing || widget.allowSplits)
+                amountNote: linkMode != null
+                    ? _ShareLine.ofLink(_c, linkMode, l)
+                    : !isTransfer && (!editing || widget.allowSplits)
                     ? _ShareLine.of(_c)
                     : null,
+                amountLabel: linkMode == null || linkMode == LinkMode.personal
+                    ? null
+                    : l.txLinkBillLabel,
                 footer: widget.cardsInHero
                     ? _cardsRow(l, isTransfer: isTransfer)
                     : null,
@@ -909,8 +1181,31 @@ class _DraftFormState extends State<DraftForm> {
     );
   }
 
+  /// The ผูกกับ tab in use; null = no tabs here (not quick create's new
+  /// expense).
+  LinkMode? get _linkMode =>
+      widget.linkTabs && _c.type == TransactionType.expense
+      ? _c.linkMode(hasEvent: widget.eventSlot?.name != null)
+      : null;
+
+  /// The wallet card's line under ผูกกับ: nothing leaves it (dimmed), or
+  /// only part of the bill does.
+  String? _walletNote(AppLocalizations l, LinkMode? m) {
+    if (m == null || m == LinkMode.personal || m == LinkMode.split) {
+      return null;
+    }
+    final out = _c.walletOutFor(m);
+    if (out <= 0.005) return l.txLinkWalletNotOut;
+    if (out < _c.amountValue - 0.005) {
+      return l.txLinkWalletPart(moneyString(context, out));
+    }
+    return null;
+  }
+
   Widget _entryCards(AppLocalizations l) {
     final locked = widget.categoryLockedHint != null;
+    final mode = _linkMode;
+    final walletNote = _walletNote(l, mode);
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -934,6 +1229,8 @@ class _DraftFormState extends State<DraftForm> {
               placeholder: l.transactionFormAccountNone,
               dense: true,
               editable: true,
+              muted: mode != null && _c.walletOutFor(mode) <= 0.005,
+              note: walletNote,
               onTap: () => _pickAccount(),
             ),
           ),
@@ -985,7 +1282,16 @@ class _DraftFormState extends State<DraftForm> {
           hint: l.txNoteAddHint,
         ),
       ),
-      if (!isTransfer || widget.recurringSlot != null) ...[
+      if (_linkMode != null) ...[
+        gap,
+        LinkSection(
+          controller: _c,
+          event: widget.eventSlot ?? const SplitEventSlot(),
+          eventIsNew: widget.linkEventIsNew,
+          isEventMember: widget.linkIsEventMember,
+          recurring: widget.recurringSlot,
+        ),
+      ] else if (!isTransfer || widget.recurringSlot != null) ...[
         gap,
         ?_splitEventSection(
           l,
@@ -1184,7 +1490,20 @@ class _DraftFormState extends State<DraftForm> {
         SizedBox(height: HeroMetrics.of(context).after),
       ],
       ?note,
-      ?_splitEventSection(l, editing: editing, transfer: isTransfer),
+      if (editing && _linkMode != null) ...[
+        const SizedBox(height: AppSpacing.lg),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          child: LinkSection(
+            controller: _c,
+            event: widget.eventSlot ?? const SplitEventSlot(),
+            eventIsNew: widget.linkEventIsNew,
+            isEventMember: widget.linkIsEventMember,
+            recurring: widget.recurringSlot,
+          ),
+        ),
+      ] else
+        ?_splitEventSection(l, editing: editing, transfer: isTransfer),
     ];
   }
 }
@@ -1240,11 +1559,47 @@ class _ShareLine extends StatelessWidget {
     required this.type,
     required this.mine,
     required this.others,
+    this.owe,
   });
 
   final TransactionType type;
   final double mine;
   final double others;
+
+  /// "ค้าง ลี ฿13": who I owe for this bill, and how much.
+  final ({String name, double amount})? owe;
+
+  /// Under ผูกกับ: my REAL share in [m] (owner 2026-10-21); ส่วนตัว has none.
+  static Widget? ofLink(DraftFormController c, LinkMode m, AppLocalizations l) {
+    final bill = c.amountValue;
+    final link = c.link;
+    switch (m) {
+      case LinkMode.personal:
+        return null;
+      case LinkMode.split:
+        return of(c);
+      case LinkMode.paid:
+        final payer = link.paidBy;
+        if (payer == null || bill <= 0) return null;
+        return _ShareLine(
+          type: c.type,
+          mine: bill,
+          others: 0,
+          owe: (name: payer.name, amount: link.paidAmountFor(bill)),
+        );
+      case LinkMode.event:
+        if (bill <= 0) return null;
+        final members = c.eventMembers;
+        final mine = link.eventMine(bill, members);
+        final payer = link.eventPayer;
+        return _ShareLine(
+          type: c.type,
+          mine: mine,
+          others: payer == null ? link.eventOthers(bill, members) : 0,
+          owe: payer == null ? null : (name: payer.name, amount: mine),
+        );
+    }
+  }
 
   static Widget? of(DraftFormController c) {
     final saved = c.savedMyShare;
@@ -1271,6 +1626,14 @@ class _ShareLine extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final over = mine < -0.005;
     final othersText = moneyString(context, others);
+    final owe = this.owe;
+    final String? tail = owe != null
+        ? l.txLinkShareIOwe(owe.name, moneyString(context, owe.amount))
+        : others > 0.005
+        ? (type == TransactionType.income
+              ? l.txShareYouOweOthers(othersText)
+              : l.txShareOthersOweYou(othersText))
+        : null;
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -1289,17 +1652,19 @@ class _ShareLine extends StatelessWidget {
             color: over ? scheme.error : txTypeColor(context, type),
           ),
         ),
-        const SizedBox(width: AppSpacing.xs),
-        Flexible(
-          child: Text(
-            '| ${type == TransactionType.income ? l.txShareYouOweOthers(othersText) : l.txShareOthersOweYou(othersText)}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
+        if (tail != null) ...[
+          const SizedBox(width: AppSpacing.xs),
+          Flexible(
+            child: Text(
+              '| $tail',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
             ),
           ),
-        ),
+        ],
       ],
     );
   }
