@@ -137,7 +137,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
       footer: hasPlan
           ? ProgressRow(
               value: (planned - left) / planned,
-              fillLabel: '${((planned - left) / planned * 100).round()}%',
+              fillLabel: money(planned - left),
               endLabel: money(planned),
               height: 6,
             )

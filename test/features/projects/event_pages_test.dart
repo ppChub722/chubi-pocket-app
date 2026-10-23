@@ -375,11 +375,12 @@ void main() {
       expect(find.text('Gets back'), findsOneWidget);
       // No income → no income line.
       expect(find.text('Total income'), findsNothing);
-      // My tags + the event-tag filter chips.
       expect(find.text('My tags:'), findsOneWidget);
       expect(find.text('Trips'), findsOneWidget);
-      expect(find.text('All'), findsOneWidget);
+      // Search + "only mine" on the first date header; the toolbar is shut.
+      expect(find.byKey(const ValueKey('billsSearch')), findsOneWidget);
       expect(find.text('Only mine'), findsOneWidget);
+      expect(find.byKey(const ValueKey('billsTagFilter')), findsNothing);
       expect(find.text('Food'), findsWidgets);
       // Tabs: the bills first; the member strip lives in Summary.
       expect(find.text('Bills'), findsOneWidget);
@@ -417,20 +418,34 @@ void main() {
       expect(find.text('Total income'), findsOneWidget);
     });
 
-    testWidgets('an event tag chip filters the bills with one call', (t) async {
+    testWidgets('the tag filter (search → Tags) filters with one call', (
+      t,
+    ) async {
       await pump(t, const ProjectDetailPage(id: 'e1'));
+      await t.tap(find.byKey(const ValueKey('billsSearch')));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const ValueKey('billsTagFilter')));
+      await t.pumpAndSettle();
       await t.tap(
-        find.descendant(of: find.byType(ChipRow), matching: find.text('Food')),
+        find.descendant(
+          of: find.byType(ItemPickerSheet),
+          matching: find.text('Food'),
+        ),
       );
-      await t.pump();
-      await t.pump(const Duration(milliseconds: 100));
+      await t.pumpAndSettle();
       expect(repo.calls, ['detail e1', 'bills tag=t1 mine=false']);
       expect(find.text('Tagged bill'), findsOneWidget);
       expect(find.text('Dinner'), findsNothing);
-      // The tag row's "All" clears it without a call (the page's own board).
-      await t.tap(find.text('All').last);
-      await t.pump();
-      await t.pump(const Duration(milliseconds: 100));
+      // "All" in the picker clears it without a call (the page's own board).
+      await t.tap(find.byKey(const ValueKey('billsTagFilter')));
+      await t.pumpAndSettle();
+      await t.tap(
+        find.descendant(
+          of: find.byType(ItemPickerSheet),
+          matching: find.text('All'),
+        ),
+      );
+      await t.pumpAndSettle();
       expect(repo.calls.length, 2);
       expect(find.text('Dinner'), findsOneWidget);
     });

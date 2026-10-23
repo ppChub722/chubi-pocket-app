@@ -15,6 +15,7 @@ import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
+import '../../../tags/domain/tag.dart';
 import '../../../tags/presentation/widgets/tag_picker.dart';
 import '../../../transactions/domain/transaction.dart' show EmbeddedTag;
 import '../../data/projects_repository.dart';
@@ -896,7 +897,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
 
   Widget _viewHero(AppLocalizations l, ProjectView v) {
     final p = v.project;
-    final board = _board!;
     final palette = Theme.of(context).extension<AppColors>()!;
     final tint = p.iconCode.tintFor(palette);
     final range = projectDateRange(context, p.startDate, p.endDate);
@@ -929,11 +929,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             onEnterEdit: _enterOn(_focus[_Field.description]!),
           ),
           actions: [
-            ToolbarToggleButton(
-              state: _toolbarOpen,
-              filtered: board.filtered,
-              tooltip: l.commonSearch,
-            ),
             if (v.isOwner)
               CardActionButton(
                 key: const ValueKey('heroEdit'),
@@ -1066,7 +1061,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       BoardSort.oldest: l.fpEventsSortOldest,
       BoardSort.amount: l.fpEventsSortAmount,
     };
-    final palette = Theme.of(context).extension<AppColors>()!;
     ProjectTxTreeTile tile(ProjectTxTree t) {
       final focused = t.parent.id == _focusBill;
       return ProjectTxTreeTile(
@@ -1093,99 +1087,122 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     }
     if (_focusBill != null && _focusDone != _focusBill) _scheduleFocus();
 
+    final searched = [
+      board.query.isNotEmpty,
+      board.payerId != null,
+      board.tagId != null,
+      board.sort != BoardSort.newest,
+    ].where((on) => on).length;
+    // Search + "only mine", at the toolbar's chip size.
+    final tools = ChipSizeScope(
+      size: ChipSize.chip,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppChip(
+            key: const ValueKey('billsSearch'),
+            label: '',
+            icon: AppIcons.search,
+            tooltip: l.commonSearch,
+            // Active = the search is open; shut with filters on, their count.
+            selected: _toolbarOpen.value,
+            count: _toolbarOpen.value ? 0 : searched,
+            onTap: () => setState(_toolbarOpen.toggle),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          AppChip(
+            key: const ValueKey('billsOnlyMine'),
+            label: l.evbOnlyMine,
+            icon: AppIcons.member,
+            selected: board.mine,
+            onTap: () => board.change(mine: !board.mine),
+          ),
+        ],
+      ),
+    );
+    // A filter loading: a card of skeleton rows in place of the old list.
+    final loadingBills = board.loading && board.rows == null;
+    // Shut: on the first date header. Open: their own row over the search.
+    final headed =
+        !_toolbarOpen.value &&
+        (loadingBills || (groups.isNotEmpty && groups.first.$1 != null));
+    final toolsRow = Align(
+      alignment: AlignmentDirectional.centerEnd,
+      child: tools,
+    );
     return DetailRecords(
       children: [
-        ListToolbar(
-          collapse: _toolbarOpen,
-          sidePadding: 0,
-          searchController: _billSearch,
-          searchHint: l.fpEventsBillsSearchHint,
-          onSearchChanged: _onBillSearch,
-          chips: [
-            OptionMenuAnchor<String?>(
-              selected: board.payerId,
-              onSelected: (id) => board.change(payerId: id),
-              options: [
-                SheetOption<String?>(value: null, label: l.fpEventsPayerAll),
-                for (final m in payers)
-                  SheetOption<String?>(
-                    value: m.id,
-                    label: m.displayName,
-                    leading: memberAvatar(m, size: 28),
-                  ),
-              ],
-              builder: (context, toggle) => AppChip(
-                label: board.payerId == null
-                    ? l.fpEventsPayerFilter
-                    : '${l.fpEventsPayerFilter}: '
-                          '${v.member(board.payerId!).displayName}',
-                selected: board.payerId != null,
-                trailing: AppChipTrailing.dropdown,
-                onTap: toggle,
-              ),
-            ),
-          ],
-          trailing: OptionMenuAnchor<BoardSort>(
-            selected: board.sort,
-            onSelected: (s) => board.change(sort: s),
-            options: [
-              for (final e in sortLabels.entries)
-                SheetOption(value: e.key, label: e.value),
-            ],
-            builder: (context, toggle) => AppChip(
-              label: sortLabels[board.sort]!,
-              icon: AppIcons.sort,
-              trailing: AppChipTrailing.dropdown,
-              onTap: toggle,
-            ),
-          ),
-        ),
-        // Tags scroll on the left, "only mine" stays on the right; the
-        // toolbar's chip size.
-        ChipSizeScope(
-          size: ChipSize.chip,
-          child: Row(
+        if (!headed && !_toolbarOpen.value) toolsRow,
+        // Open: the buttons, then the search a small step under them.
+        if (_toolbarOpen.value)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: v.eventTags.isEmpty
-                    ? const SizedBox.shrink()
-                    : ChipRow(
-                        chips: [
-                          AppChip(
-                            label: l.fpEventsTagAll,
-                            selected: board.tagId == null,
-                            onTap: () => board.change(tagId: null),
-                          ),
-                          for (final t in v.eventTags)
-                            AppChip(
-                              label: t.name,
-                              icon: IconRegistry.get(
-                                t.iconCode?.icon,
-                                fallback: AppIcons.tag,
-                              ),
-                              color: EventTagRef(
-                                t.name,
-                                iconCode: t.iconCode,
-                              ).colorOf(palette),
-                              selected: board.tagId == t.id,
-                              onTap: () => board.change(
-                                tagId: board.tagId == t.id ? null : t.id,
-                              ),
-                            ),
-                        ],
+              toolsRow,
+              const SizedBox(height: AppSpacing.xs),
+              ListToolbar(
+                sidePadding: 0,
+                searchController: _billSearch,
+                searchHint: l.fpEventsBillsSearchHint,
+                onSearchChanged: _onBillSearch,
+                chips: [
+                  OptionMenuAnchor<String?>(
+                    selected: board.payerId,
+                    onSelected: (id) => board.change(payerId: id),
+                    options: [
+                      SheetOption<String?>(
+                        value: null,
+                        label: l.fpEventsPayerAll,
                       ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              AppChip(
-                key: const ValueKey('billsOnlyMine'),
-                label: l.evbOnlyMine,
-                icon: AppIcons.member,
-                selected: board.mine,
-                onTap: () => board.change(mine: !board.mine),
+                      for (final m in payers)
+                        SheetOption<String?>(
+                          value: m.id,
+                          label: m.displayName,
+                          leading: memberAvatar(m, size: 28),
+                        ),
+                    ],
+                    builder: (context, toggle) => AppChip(
+                      label: board.payerId == null
+                          ? l.fpEventsPayerFilter
+                          : '${l.fpEventsPayerFilter}: '
+                                '${v.member(board.payerId!).displayName}',
+                      selected: board.payerId != null,
+                      trailing: AppChipTrailing.dropdown,
+                      onTap: toggle,
+                    ),
+                  ),
+                  if (v.eventTags.isNotEmpty)
+                    AppChip(
+                      key: const ValueKey('billsTagFilter'),
+                      label:
+                          v.eventTags
+                              .where((t) => t.id == board.tagId)
+                              .firstOrNull
+                              ?.name ??
+                          l.transactionFormTagsLabel,
+                      icon: AppIcons.tag,
+                      selected: board.tagId != null,
+                      trailing: AppChipTrailing.dropdown,
+                      onTap: () => _pickBoardTag(v, board),
+                    ),
+                ],
+                trailing: OptionMenuAnchor<BoardSort>(
+                  selected: board.sort,
+                  onSelected: (s) => board.change(sort: s),
+                  options: [
+                    for (final e in sortLabels.entries)
+                      SheetOption(value: e.key, label: e.value),
+                  ],
+                  builder: (context, toggle) => AppChip(
+                    label: sortLabels[board.sort]!,
+                    icon: AppIcons.sort,
+                    trailing: AppChipTrailing.dropdown,
+                    onTap: toggle,
+                  ),
+                ),
               ),
             ],
           ),
-        ),
         if (board.error != null)
           AppMessage(
             message: l.fpEventsLoadFailed,
@@ -1194,26 +1211,64 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
               AppMessageAction(label: l.commonRetry, onPressed: board.reload),
             ],
           ),
-        if (board.loading && board.rows == null)
-          const ListRowSkeleton()
-        else if (trees.isEmpty)
-          EmptyView.compact(
-            message: board.filtered ? l.projectTxNoMatch : l.projectTxEmpty,
-          ),
-        for (final (day, list) in groups)
+        if (loadingBills)
           SectionCard(
-            title: day == null ? null : projectTxDateLabel(context, day),
-            children: [for (final t in list) tile(t)],
-          ),
+            first: true,
+            // The date header's bar, as the list skeletons draw it.
+            leading: SkeletonText(style: (t) => t.labelLarge, width: 80),
+            trailing: headed ? tools : null,
+            children: const [
+              ListRowSkeleton(),
+              ListRowSkeleton(),
+              ListRowSkeleton(),
+            ],
+          )
+        else ...[
+          if (trees.isEmpty)
+            EmptyView.compact(
+              message: board.filtered ? l.projectTxNoMatch : l.projectTxEmpty,
+            ),
+          for (final (i, (day, list)) in groups.indexed)
+            SectionCard(
+              first: i == 0,
+              title: day == null ? null : projectTxDateLabel(context, day),
+              trailing: i == 0 && headed ? tools : null,
+              children: [for (final t in list) tile(t)],
+            ),
+          if (_loadingMore)
+            const SectionCard(
+              children: [ListRowSkeleton(), ListRowSkeleton()],
+            ),
+        ],
         if (v.canAddTx)
           AddTile(
             label: l.evbNewBill,
             variant: AddTileVariant.row,
             onTap: _addTx,
           ),
-        if (_loadingMore) const ListRowSkeleton(),
       ],
     );
+  }
+
+  /// The bills of one event tag (the tag picker over the event's tags).
+  Future<void> _pickBoardTag(
+    ProjectView v,
+    ProjectBoardController board,
+  ) async {
+    final l = AppLocalizations.of(context)!;
+    final r = await TagPicker.one(
+      context,
+      selectedId: board.tagId,
+      allowNone: true,
+      noneLabel: l.fpEventsTagAll,
+      allowCreate: false,
+      tags: [
+        for (final t in v.eventTags)
+          Tag(id: t.id, name: t.name, iconCode: t.iconCode),
+      ],
+    );
+    if (!mounted || r == null) return;
+    await board.change(tagId: r is TagPicked ? r.tag.id : null);
   }
 
   Future<void> _importOne(String tagId) async {
