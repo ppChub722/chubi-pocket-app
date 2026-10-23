@@ -43,13 +43,15 @@ class WalletPickCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<AppColors>()!;
     final a = account;
-    final accent = a?.iconCode.tintFor(palette);
+    // No icon colour: the wallet's type colour, for the card and its icon.
+    final accent = a?.iconCode.tintFor(palette, fallback: a.colorOf(context));
     Widget? icon;
     if (a != null) {
       icon = IconDisplay(
         type: IconType.account,
         size: _icon,
         iconCode: a.iconCode,
+        fallbackColor: a.colorOf(context),
       );
       if (a.isShared) icon = SharedWalletIconBadge(size: _icon, child: icon);
     }

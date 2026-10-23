@@ -334,6 +334,9 @@ class _FramedInputState extends State<FramedInput> {
             disabledBorder: InputBorder.none,
             contentPadding: EdgeInsets.zero,
             hintText: w.hideHintOnFocus && focused ? null : w.hint,
+            // The hint is laid out even when the field has text: a long one
+            // wrapping to 2 lines would push a fixed-row field's underline down.
+            hintMaxLines: w.valueRow != null ? 1 : null,
             hintStyle: w.hintStyle ?? style?.copyWith(color: faint),
             counterText: '',
           ),

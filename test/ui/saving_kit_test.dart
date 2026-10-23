@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Saving goals v2 kit: MilestoneRow, SavingHistoryChart, SavingTxRow,
+/// Saving goals v2 kit: MilestoneRow, SavingHistoryChart,
 /// SavingMoveSheet, CloseGoalDialog.
 void main() {
   Future<void> pump(WidgetTester t, Widget child, {double width = 400}) =>
@@ -120,86 +120,6 @@ void main() {
     expect(find.text('25%'), findsOneWidget);
     expect(find.text('50'), findsOneWidget);
     expect(find.text('X'), findsOneWidget);
-  });
-
-  group('SavingTxRow', () {
-    const lead = SizedBox(width: 36, height: 36);
-    Future<double> h(WidgetTester t, Widget w) async {
-      await pump(t, Column(children: [w]));
-      return t.getSize(find.byWidget(w)).height;
-    }
-
-    testWidgets('same height as TxRow, every kind and draft', (t) async {
-      final tx = await h(
-        t,
-        const TxRow(
-          leading: lead,
-          title: 'Lunch',
-          amount: -120,
-          walletLabel: 'KBank',
-          category: 'Food',
-        ),
-      );
-      for (final k in SavingTxKind.values) {
-        final row = await h(
-          t,
-          SavingTxRow(
-            kind: k,
-            title: 'Save',
-            walletLabel: 'KBank',
-            from: 'Spare',
-            to: 'Trip',
-            amount: 100,
-            source: const AppChip(label: 'Rec', size: ChipSize.mini),
-          ),
-        );
-        expect(row, closeTo(tx, 1), reason: '$k');
-      }
-      final draft = await h(
-        t,
-        const SavingTxRow(
-          kind: SavingTxKind.deposit,
-          draft: true,
-          title: 'Save',
-          walletLabel: 'KBank',
-          draftChips: [AppChip(label: 'Sav', size: ChipSize.mini)],
-          to: 'Trip',
-          amount: 100,
-        ),
-      );
-      expect(draft, closeTo(tx, 1));
-    });
-
-    testWidgets('signs: deposit + / withdraw -; dimmed fades', (t) async {
-      await pump(
-        t,
-        const Column(
-          children: [
-            SavingTxRow(
-              kind: SavingTxKind.deposit,
-              title: 'A',
-              walletLabel: 'W',
-              to: 'T',
-              amount: 5,
-            ),
-            SavingTxRow(
-              kind: SavingTxKind.withdraw,
-              title: 'B',
-              walletLabel: 'W',
-              from: 'T',
-              amount: 5,
-              dimmed: true,
-            ),
-          ],
-        ),
-      );
-      expect(find.text('+'), findsOneWidget);
-      expect(find.text('−'), findsOneWidget);
-      final fade = t.widget<Opacity>(
-        find.ancestor(of: find.text('B'), matching: find.byType(Opacity)),
-      );
-      expect(fade.opacity, lessThan(1));
-    });
   });
 
   group('SavingMoveSheet', () {

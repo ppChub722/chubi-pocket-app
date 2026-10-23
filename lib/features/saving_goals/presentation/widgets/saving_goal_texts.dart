@@ -34,24 +34,17 @@ Widget? savingGoalStatusChip(AppLocalizations l, SavingGoal g) {
   };
 }
 
-/// A list row's line under the name: when the goal is expected to be reached,
-/// with how late it is. Null when the goal has no estimate.
-String? savingGoalEtaCaption(
+/// A list row's line under the name: the goal's deadline ("ภายใน 31 ธ.ค.
+/// 2026"). Null without one.
+String? savingGoalDueCaption(
   BuildContext context,
   AppLocalizations l,
   SavingGoal g,
 ) {
-  if (g.isArchived || g.isCompleted || g.status == SavingStatus.reached) {
-    return null;
-  }
+  final due = g.deadline == null ? null : DateTime.tryParse(g.deadline!);
+  if (due == null) return null;
   final locale = Localizations.localeOf(context).toLanguageTag();
-  final eta = g.etaDate == null ? null : DateTime.tryParse(g.etaDate!);
-  final month = eta == null ? null : DateFormat.yMMM(locale).format(eta);
-  if (month == null) return null;
-  final months = g.behindMonths ?? 0;
-  return g.status == SavingStatus.behind && months > 0
-      ? l.fpGoalsEtaBehind(month, months)
-      : l.fpGoalsEtaOn(month);
+  return l.fpGoalsDueBy(DateFormat.yMMMd(locale).format(due));
 }
 
 /// How far along the goal should be by now, as a share of its target: the

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../atoms/app_button.dart';
 import '../../atoms/app_chip.dart';
 import '../../atoms/app_input.dart';
-import '../../atoms/icon_tile.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
@@ -172,124 +171,6 @@ class DebtPersonActions extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// One line of a person's statement (mock DebtPerson): an icon (a debt, or
-/// a repayment's cash on a soft background), the title, a sub-line ("ลีจ่าย
-/// แทน", "จากกระเป๋า test2") with an optional "✓ จ่ายแล้ว" pill, the amount.
-class DebtStatementRow extends StatelessWidget {
-  const DebtStatementRow({
-    required this.title,
-    required this.amount,
-    this.subtitle,
-    this.amountColor,
-    this.repayment = false,
-    this.paidLabel,
-    this.onTap,
-    super.key,
-  });
-
-  final String title;
-  final String? subtitle;
-  final Widget amount;
-  final Color? amountColor;
-  final bool repayment;
-  final String? paidLabel;
-  final VoidCallback? onTap;
-
-  static const double iconSize = 38;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    final subtitle = this.subtitle;
-    final paid = paidLabel;
-    final row = Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      child: Row(
-        children: [
-          IconTile(
-            icon: repayment ? AppIcons.cash : AppIcons.debt,
-            color: repayment ? scheme.primary : scheme.tertiary,
-            size: iconSize,
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: text.bodyLarge,
-                ),
-                // The pill follows the sub-line; with no room left it
-                // drops under it instead of overflowing.
-                if (subtitle != null || paid != null)
-                  LayoutBuilder(
-                    builder: (context, box) => Wrap(
-                      spacing: AppSpacing.xs,
-                      runSpacing: 2,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        if (subtitle != null)
-                          ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: box.maxWidth),
-                            child: Text(
-                              subtitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: text.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                        if (paid != null)
-                          AppChip(
-                            key: const ValueKey('debtPaidPill'),
-                            label: paid,
-                            size: ChipSize.mini,
-                          ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          // A big amount shrinks rather than pushing the row (320 wide).
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.sizeOf(context).width * 0.32,
-            ),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: AlignmentDirectional.centerEnd,
-              child: DefaultTextStyle.merge(
-                style: text.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: repayment ? scheme.onSurfaceVariant : amountColor,
-                ),
-                child: amount,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-    return Material(
-      color: repayment
-          ? scheme.primary.withValues(alpha: 0.05)
-          : Colors.transparent,
-      child: InkWell(onTap: onTap, child: row),
     );
   }
 }

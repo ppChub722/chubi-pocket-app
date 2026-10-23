@@ -88,12 +88,14 @@ class CalendarTile extends StatelessWidget {
 
 /// A row's date: the day number over its month ("3" / "ต.ค."), with the short
 /// year when it isn't this year ("ม.ค. 27"), or over the weekday for a
-/// month's list ([weekday]).
+/// month's list ([weekday]). [inline]: the two on one line ("3 ศ."), end
+/// aligned so a column of them lines up.
 class DateTile extends StatelessWidget {
   const DateTile({
     required this.date,
     this.caption,
     this.weekday = false,
+    this.inline = false,
     this.color,
     this.today,
     super.key,
@@ -104,6 +106,7 @@ class DateTile extends StatelessWidget {
   /// Replaces the month / weekday line ("พรุ่งนี้").
   final String? caption;
   final bool weekday;
+  final bool inline;
 
   /// The day number's colour.
   final Color? color;
@@ -112,6 +115,7 @@ class DateTile extends StatelessWidget {
   final DateTime? today;
 
   static const double minWidth = 38;
+  static const double inlineWidth = 48;
 
   @override
   Widget build(BuildContext context) {
@@ -127,6 +131,33 @@ class DateTile extends StatelessWidget {
             : date.year == now.year
             ? month
             : '$month ${DateFormat('yy').format(date)}');
+    final lineColor =
+        HeroColors.maybeOf(context)?.muted ?? scheme.onSurfaceVariant;
+    if (inline) {
+      return SizedBox(
+        width: inlineWidth,
+        child: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: '${date.day}',
+                style: text.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+              TextSpan(
+                text: ' $line',
+                style: text.labelSmall?.copyWith(color: lineColor),
+              ),
+            ],
+          ),
+          maxLines: 1,
+          textAlign: TextAlign.end,
+        ),
+      );
+    }
     return ConstrainedBox(
       constraints: const BoxConstraints(minWidth: minWidth),
       child: Column(
@@ -144,10 +175,7 @@ class DateTile extends StatelessWidget {
           Text(
             line,
             maxLines: 1,
-            style: text.labelSmall?.copyWith(
-              color:
-                  HeroColors.maybeOf(context)?.muted ?? scheme.onSurfaceVariant,
-            ),
+            style: text.labelSmall?.copyWith(color: lineColor),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../atoms/app_button.dart';
+import '../../atoms/app_chip.dart';
 import '../../atoms/app_icon.dart';
 import '../../atoms/app_icon_button.dart';
 import '../../tokens/app/app_icons.dart';
@@ -26,6 +27,8 @@ class QuickCreateButton extends StatelessWidget {
     this.size = 76,
     this.label,
     this.tooltip,
+    this.color,
+    this.icon,
     super.key,
   });
 
@@ -36,6 +39,11 @@ class QuickCreateButton extends StatelessWidget {
   final String? label;
   final String? tooltip;
 
+  /// A page's own create action (an event's "เพิ่มบิล" in its tint): this
+  /// colour and [icon] instead of the mode's.
+  final Color? color;
+  final IconData? icon;
+
   static const double _ring = 4;
   static const double capsuleHeight = 48;
 
@@ -43,8 +51,10 @@ class QuickCreateButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final still = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-    final fill = QuickCreateModeColors.of(context, mode);
-    final on = QuickCreateModeColors.onOf(context, mode);
+    final fill = color ?? QuickCreateModeColors.of(context, mode);
+    final on = color != null
+        ? AppChip.readableOn(color!)
+        : QuickCreateModeColors.onOf(context, mode);
     final label = this.label;
     final Widget button;
     if (label != null) {
@@ -71,7 +81,7 @@ class QuickCreateButton extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       AppIcon(
-                        quickCreateModeIcon(mode),
+                        icon ?? quickCreateModeIcon(mode),
                         size: AppIconSize.lg,
                         color: on,
                       ),

@@ -229,6 +229,7 @@ class ShareAmountField extends StatefulWidget {
     required this.onChanged,
     this.auto = false,
     this.enabled = true,
+    this.hint = '0',
     super.key,
   });
 
@@ -236,6 +237,9 @@ class ShareAmountField extends StatefulWidget {
   final ValueChanged<double?>? onChanged;
   final bool auto;
   final bool enabled;
+
+  /// While empty ("รอใส่ยอด" on a recurring row).
+  final String hint;
 
   static const double width = 104;
 
@@ -305,7 +309,7 @@ class _ShareAmountFieldState extends State<ShareAmountField> {
           focusNode: _focus,
           type: AppInputType.amount,
           style: style,
-          hint: '0',
+          hint: widget.hint,
           enabled: widget.enabled && onChanged != null,
           onChanged: onChanged == null
               ? null

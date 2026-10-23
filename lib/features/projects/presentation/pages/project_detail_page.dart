@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/quick_create_context.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -16,13 +17,13 @@ import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../../tags/presentation/widgets/tag_picker.dart';
 import '../../../transactions/domain/transaction.dart' show EmbeddedTag;
-import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
 import '../cubit/projects_cubit.dart';
 import '../event_errors.dart';
 import '../project_board_controller.dart';
 import '../widgets/add_member_sheet.dart';
+import '../widgets/event_bill_sheet.dart';
 import '../widgets/event_tags_manager.dart';
 import '../widgets/project_common.dart';
 import '../widgets/project_tx_tiles.dart';
@@ -30,6 +31,10 @@ import '../widgets/project_tx_tiles.dart';
 enum _Field { name, description, note, planned }
 
 enum _DeleteChoice { notYet, keepTxs, withTxs }
+
+enum _Tab { bills, summary }
+
+enum _SettleMode { pairs, fewest }
 
 class ProjectDetailPage extends StatefulWidget {
   const ProjectDetailPage({
@@ -55,7 +60,13 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   final _formKey = GlobalKey<FormState>();
   final _ctrl = {for (final f in _Field.values) f: TextEditingController()};
   final _focus = {for (final f in _Field.values) f: FocusNode()};
-  final _scroll = ScrollController();
+
+  _Tab _tab = _Tab.bills;
+  _SettleMode _settleMode = _SettleMode.fewest;
+
+  /// Who pays whom (the สรุป tab); null = not loaded since the last change.
+  EventSettle? _settle;
+  bool _settleLoading = false;
 
   final _toolbarOpen = ToolbarToggleState.local();
   final _billSearch = TextEditingController();
@@ -79,7 +90,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(_onScroll);
     if (_isCreate) {
       initDraft(const _Draft(), editing: true);
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -122,7 +132,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     }
     _billSearch.dispose();
     _toolbarOpen.dispose();
-    _scroll.dispose();
     _board?.dispose();
     super.dispose();
   }
@@ -167,7 +176,11 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     context.read<ProjectsCubit>().patch(p.project);
     context.read<AccountsCubit>().patchBalances(p.accountBalances);
     final next = v.apply(p);
-    setState(() => _view = next);
+    setState(() {
+      _view = next;
+      _settle = null;
+    });
+    if (_tab == _Tab.summary) unawaited(_loadSettle());
     final board = _board;
     if (board == null) return;
     board.viewChanged(v, next);
@@ -516,10 +529,130 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   Future<void> _addTx() async {
     final view = _view;
     if (view == null) return;
-    await showQuickCreateSheet(
-      context,
-      project: view,
-      onEventSaved: _applyPatch,
+    await showEventBillSheet(context, view: view, onPatch: _applyPatch);
+  }
+
+  Future<void> _loadSettle() async {
+    if (_settleLoading || widget.id == null) return;
+    setState(() => _settleLoading = true);
+    try {
+      final s = await context.read<ProjectsRepository>().settle(widget.id!);
+      if (mounted) setState(() => _settle = s);
+    } on ApiException catch (e) {
+      _showError(e);
+    } finally {
+      if (mounted) setState(() => _settleLoading = false);
+    }
+  }
+
+  void _onTab(_Tab t) {
+    setState(() => _tab = t);
+    if (t == _Tab.summary && _settle == null) unawaited(_loadSettle());
+  }
+
+  /// สรุป: each member's standing, then who pays whom; "จ่ายแล้ว" records the
+  /// payback in the event (anyone may).
+  Widget _summaryTab(AppLocalizations l, ProjectView v) {
+    final s = _settle;
+    final lines = s == null
+        ? const <SettleLine>[]
+        : (_settleMode == _SettleMode.pairs ? s.pairs : s.simplified);
+    Widget line(SettleLine x) => AppListRow(
+      key: ValueKey('settle:${x.from.id}:${x.to.id}'),
+      leading: ProjectMemberAvatar(
+        name: x.from.name,
+        iconCode: x.from.iconCode,
+        size: 32,
+      ),
+      title: '${x.from.name} → ${x.to.name}',
+      trailing: ListRowTrailing.value(MoneyText(x.amount)),
+      actions: [
+        if (v.canAddTx)
+          ListRowAction.button(
+            AppIcons.check,
+            tooltip: l.evbSettlePaid,
+            onTap: () => showEventBillSheet(
+              context,
+              view: v,
+              kind: EventEntryKind.payback,
+              from: x.from.id,
+              to: x.to.id,
+              amount: x.amount,
+              onPatch: _applyPatch,
+            ),
+          ),
+      ],
+    );
+    return ListPageBody(
+      loading: false,
+      error: null,
+      isEmpty: false,
+      onRetry: () async {
+        await _refresh();
+        await _loadSettle();
+      },
+      topInset: AppSpacing.sm,
+      empty: EmptyView.compact(message: l.evbAllSettled),
+      children: [
+        _people(l, v),
+        SectionCard(
+          title: l.evbSettleTitle,
+          children: [
+            AppTabBar<_SettleMode>(
+              framed: false,
+              tabs: [
+                AppTab(value: _SettleMode.fewest, label: l.evbSettleFewest),
+                AppTab(value: _SettleMode.pairs, label: l.evbSettlePairs),
+              ],
+              selected: _settleMode,
+              onChanged: (m) => setState(() => _settleMode = m),
+            ),
+            // A swipe on the lines switches the tab too, like the bar.
+            GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onHorizontalDragEnd: (d) {
+                final v = d.primaryVelocity ?? 0;
+                if (v.abs() < 200) return;
+                setState(
+                  () => _settleMode = v < 0
+                      ? _SettleMode.pairs
+                      : _SettleMode.fewest,
+                );
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (s == null)
+                    const ListRowSkeleton()
+                  else if (lines.isEmpty)
+                    EmptyView.compact(message: l.evbAllSettled)
+                  else ...[
+                    for (final x in lines) line(x),
+                    AppText(l.evbSettleHint, role: AppTextRole.caption),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _billsTab(AppLocalizations l, ProjectView v) {
+    final board = _board!;
+    final more = board.rows != null ? board.hasMore : v.hasMoreRows;
+    return ListPageBody(
+      loading: false,
+      error: null,
+      isEmpty: false,
+      onRetry: _refresh,
+      topInset: 0,
+      hasMore: more && !_moreFailed,
+      loadingMore: _loadingMore,
+      onLoadMore: _loadMoreRows,
+      empty: EmptyView.compact(message: l.projectTxEmpty),
+      children: [_records(l, v)],
     );
   }
 
@@ -528,12 +661,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     _debounce = Timer(const Duration(milliseconds: 350), () {
       if (mounted) _board?.change(query: v.trim());
     });
-  }
-
-  void _onScroll() {
-    if (!_scroll.hasClients || _loadingMore || _moreFailed) return;
-    final pos = _scroll.position;
-    if (pos.maxScrollExtent - pos.pixels < 600) _loadMoreRows();
   }
 
   Future<void> _loadMoreRows() async {
@@ -644,7 +771,18 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
       ),
     );
-    return page;
+    if (v == null || isEditing || _isCreate || !v.canAddTx) return page;
+    // The centre capsule is this event's "เพิ่มบิล" (the event's colour).
+    return QuickCreatePresetScope(
+      preset: QuickCreatePreset.custom(
+        word: l.evbNewBill,
+        color: v.project.iconCode.tintFor(
+          Theme.of(context).extension<AppColors>()!,
+        ),
+        onCreate: _addTx,
+      ),
+      child: page,
+    );
   }
 
   Widget _viewBody(
@@ -671,36 +809,33 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
               ],
             ),
           );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
+    return TabbedDetailBody<_Tab>(
+      hero: _viewHero(l, v),
+      belowHero: [
         ?banner,
-        Expanded(
-          child: DetailLayout(
-            controller: _scroll,
-            onRefresh: _refresh,
-            physics: const AlwaysScrollableScrollPhysics(),
-            topInset: (banner == null ? barInset : 0) + AppSpacing.lg,
-            bottomInset: bottom,
-            hero: _viewHero(l, v),
-            tags: _tagRow(l, p.tags.map(_myTagRef).toList(), editing: false),
-            people: _people(l, v),
-            note: NoteSection(
-              label: l.commonNote,
-              editing: false,
-              text: p.note,
-              hint: l.commonLongPressToEdit,
-              onLongPress: _enterOn(_focus[_Field.note]!),
-            ),
-            records: _records(l, v),
-            metaLines: detailMetaLines(
-              context,
-              createdAt: p.createdAt,
-              updatedAt: p.updatedAt,
-            ),
-          ),
+        _tagRow(l, p.tags.map(_myTagRef).toList(), editing: false),
+        NoteSection(
+          label: l.commonNote,
+          editing: false,
+          text: p.note,
+          hint: l.commonLongPressToEdit,
+          onLongPress: _enterOn(_focus[_Field.note]!),
         ),
       ],
+      tabs: [
+        AppTab(value: _Tab.bills, label: l.evbTabBills, icon: AppIcons.receipt),
+        AppTab(
+          value: _Tab.summary,
+          label: l.evbTabSummary,
+          icon: AppIcons.project,
+        ),
+      ],
+      selected: _tab,
+      onChanged: _onTab,
+      tabBuilder: (context, t) => switch (t) {
+        _Tab.bills => _billsTab(l, v),
+        _Tab.summary => _summaryTab(l, v),
+      },
     );
   }
 
@@ -741,6 +876,24 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     );
   }
 
+  /// Edit mode: the status is a setting (the view hero keeps the chip).
+  Widget _statusRow(AppLocalizations l, ProjectStatus status) {
+    final canChange = _isOwner && !_isCreate;
+    return OptionMenuAnchor<ProjectStatus>(
+      selected: status,
+      onSelected: _changeStatus,
+      options: [
+        for (final s in ProjectStatus.values)
+          SheetOption(value: s, label: projectStatusLabel(l, s), submits: true),
+      ],
+      builder: (context, toggle) => SettingDropdownRow(
+        label: l.projectsStatusLabel,
+        value: projectStatusLabel(l, status),
+        onTap: canChange ? toggle : null,
+      ),
+    );
+  }
+
   Widget _viewHero(AppLocalizations l, ProjectView v) {
     final p = v.project;
     final board = _board!;
@@ -749,22 +902,18 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     final range = projectDateRange(context, p.startDate, p.endDate);
     final planned = p.plannedAmount;
     final owe = p.myPayable > 0;
+    final owed = p.myReceivable > 0;
+    final sideColor = owe ? palette.expense : (owed ? palette.income : null);
+    final myPos = v.summary?.positions
+        .where((x) => x.memberId == v.me?.id)
+        .firstOrNull;
+    final myBacks = (
+      received: myPos?.received ?? 0.0,
+      sent: myPos?.sent ?? 0.0,
+    );
+    String money(double x) => moneyString(context, x);
     return AppHeroCard(
       style: HeroStyle.tinted(color: tint, glyph: AppIcons.project),
-      header: HeroHeader(
-        leading: [
-          _statusChip(l, p.status),
-          if (range != null) AppChip(label: range, icon: AppIcons.date),
-        ],
-        actions: [
-          ToolbarToggleButton(
-            state: _toolbarOpen,
-            filtered: board.filtered,
-            tooltip: l.commonSearch,
-          ),
-        ],
-        onEdit: v.isOwner ? enterEdit : null,
-      ),
       content: [
         HeroIdentity(
           icon: IconDisplay(
@@ -772,50 +921,74 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             size: 40,
             iconCode: p.iconCode,
           ),
+          name: Text(p.name, maxLines: 2, overflow: TextOverflow.ellipsis),
           description: HeroDescription(
             controller: _ctrl[_Field.description]!,
             editing: false,
             hint: l.commonDescription,
             onEnterEdit: _enterOn(_focus[_Field.description]!),
           ),
+          actions: [
+            ToolbarToggleButton(
+              state: _toolbarOpen,
+              filtered: board.filtered,
+              tooltip: l.commonSearch,
+            ),
+            if (v.isOwner)
+              CardActionButton(
+                key: const ValueKey('heroEdit'),
+                icon: AppIcons.edit,
+                tooltip: UiConfig.stringsOf(context).edit,
+                onTap: enterEdit,
+              ),
+          ],
         ),
         HeroNumber(
           label: l.fpEventsSpentTotal,
           value: MoneyText(p.totalExpense),
         ),
-        planned == null ? null : _budgetBar(l, v, planned),
-        p.totalIncome > 0
-            ? HeroValueLine(
-                label: l.fpEventsIncomeTotal,
-                value: MoneyText(p.totalIncome, tone: MoneyTone.income),
-              )
-            : null,
-      ],
-      footer: [
-        for (final List<Widget> tiles in [
-          [
-            SummaryTileView(
-              tile: SummaryTile(
-                label: l.fpEventsMyShare,
-                value: moneyString(context, p.myShare),
-                selected: board.mine,
-                onTap: () => board.change(mine: !board.mine),
+        if (planned != null) _budgetBar(l, v, planned),
+        // Read top to bottom like a sum: what I paid − my part (± the
+        // paybacks) = what I get back / still owe.
+        HeroFactList(
+          facts: [
+            HeroFact(l.evbIPaid, money(p.myPaid), icon: AppIcons.wallet),
+            HeroFact(l.fpEventsMyShare, money(p.myShare), icon: AppIcons.split),
+            if (myBacks.received > 0.005)
+              HeroFact(
+                l.evbBackReceived,
+                money(myBacks.received),
+                icon: AppIcons.transfer,
               ),
-            ),
-            SummaryTileView(
-              tile: SummaryTile(
-                label: owe ? l.fpEventsOwe : l.fpEventsOwed,
-                value: moneyString(context, owe ? p.myPayable : p.myReceivable),
-                tone: owe
-                    ? SummaryTileTone.red
-                    : (p.myReceivable > 0
-                          ? SummaryTileTone.green
-                          : SummaryTileTone.neutral),
+            if (myBacks.sent > 0.005)
+              HeroFact(
+                l.evbBackSent,
+                money(myBacks.sent),
+                icon: AppIcons.transfer,
               ),
+            HeroFact(
+              owe ? l.fpEventsOwe : l.fpEventsOwed,
+              money(owe ? p.myPayable : p.myReceivable),
+              icon: owe ? AppIcons.flowOut : AppIcons.flowIn,
+              iconColor: sideColor,
+              color: sideColor,
             ),
+            if (p.totalIncome > 0)
+              HeroFact(
+                l.fpEventsIncomeTotal,
+                money(p.totalIncome),
+                icon: AppIcons.income,
+                iconColor: palette.income,
+                color: palette.income,
+              ),
           ],
-        ])
-          if (tiles.isNotEmpty) HeroTiles(children: tiles),
+        ),
+        HeroChipRow(
+          chips: [
+            _statusChip(l, p.status),
+            if (range != null) AppChip(label: range, icon: AppIcons.date),
+          ],
+        ),
       ],
     );
   }
@@ -823,16 +996,11 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   Widget _budgetBar(AppLocalizations l, ProjectView v, double planned) {
     final p = v.project;
     final spent = v.summary?.spentNet ?? p.totalExpense;
-    final left = p.remaining ?? v.summary?.remaining ?? 0;
+    final ratio = planned > 0 ? spent / planned : 0.0;
     return HeroBar(
-      value: planned > 0 ? spent / planned : 0,
-      left: l.fpEventsBudgetUsed(
-        moneyString(context, spent),
-        moneyString(context, planned),
-      ),
-      right: left < 0
-          ? l.fpEventsBudgetOver(moneyString(context, left.abs()))
-          : l.fpEventsBudgetLeft(moneyString(context, left)),
+      value: ratio,
+      fillLabel: '${(ratio * 100).round()}%',
+      endLabel: moneyString(context, planned),
     );
   }
 
@@ -910,6 +1078,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         onPatch: _applyPatch,
         onShowTag: (tag) => board.change(tagId: tag.id),
         onAddTagToMine: (tag) => _importOne(tag.id),
+        onlyMine: board.mine,
       );
     }
 
@@ -971,32 +1140,52 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             ),
           ),
         ),
-        if (v.eventTags.isNotEmpty)
-          ChipRow(
-            label: l.fpEventsTagsFilterLabel,
-            chips: [
-              AppChip(
-                label: l.fpEventsTagAll,
-                selected: board.tagId == null,
-                onTap: () => board.change(tagId: null),
+        // Tags scroll on the left, "only mine" stays on the right; the
+        // toolbar's chip size.
+        ChipSizeScope(
+          size: ChipSize.chip,
+          child: Row(
+            children: [
+              Expanded(
+                child: v.eventTags.isEmpty
+                    ? const SizedBox.shrink()
+                    : ChipRow(
+                        chips: [
+                          AppChip(
+                            label: l.fpEventsTagAll,
+                            selected: board.tagId == null,
+                            onTap: () => board.change(tagId: null),
+                          ),
+                          for (final t in v.eventTags)
+                            AppChip(
+                              label: t.name,
+                              icon: IconRegistry.get(
+                                t.iconCode?.icon,
+                                fallback: AppIcons.tag,
+                              ),
+                              color: EventTagRef(
+                                t.name,
+                                iconCode: t.iconCode,
+                              ).colorOf(palette),
+                              selected: board.tagId == t.id,
+                              onTap: () => board.change(
+                                tagId: board.tagId == t.id ? null : t.id,
+                              ),
+                            ),
+                        ],
+                      ),
               ),
-              for (final t in v.eventTags)
-                AppChip(
-                  label: t.name,
-                  icon: IconRegistry.get(
-                    t.iconCode?.icon,
-                    fallback: AppIcons.tag,
-                  ),
-                  color: EventTagRef(
-                    t.name,
-                    iconCode: t.iconCode,
-                  ).colorOf(palette),
-                  selected: board.tagId == t.id,
-                  onTap: () =>
-                      board.change(tagId: board.tagId == t.id ? null : t.id),
-                ),
+              const SizedBox(width: AppSpacing.sm),
+              AppChip(
+                key: const ValueKey('billsOnlyMine'),
+                label: l.evbOnlyMine,
+                icon: AppIcons.member,
+                selected: board.mine,
+                onTap: () => board.change(mine: !board.mine),
+              ),
             ],
           ),
+        ),
         if (board.error != null)
           AppMessage(
             message: l.fpEventsLoadFailed,
@@ -1018,7 +1207,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
           ),
         if (v.canAddTx)
           AddTile(
-            label: l.projectAddTransaction,
+            label: l.evbNewBill,
             variant: AddTileVariant.row,
             onTap: _addTx,
           ),
@@ -1089,7 +1278,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       hero: AppHeroCard(
         style: HeroStyle.tinted(color: tint, glyph: AppIcons.project),
         mode: HeroCardMode.edit,
-        header: HeroHeader(leading: [if (p != null) _statusChip(l, p.status)]),
         content: [
           HeroIdentity(
             icon: EditableCircle(
@@ -1134,11 +1322,15 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         ],
       ),
       tags: _tagRow(l, _draftTags(w.tagIds), editing: true),
-      info: InfoBox(
-        rows: [
-          InfoRow(
+      settings: SettingsSection(
+        title: l.settingsTitle,
+        children: [
+          if (p != null) _statusRow(l, p.status),
+          SettingSummaryRow(
+            key: const ValueKey('eventDates'),
             label: l.fpEventsDatesLabel,
-            valueChip: range == null
+            onTap: _pickRange,
+            trailing: range == null
                 ? null
                 : AppChip(
                     label: range,
@@ -1148,25 +1340,15 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                     onTap: _pickRange,
                     onRemove: _clearRange,
                   ),
-            value: range == null ? l.eventDateNone : null,
-            showChevron: range == null,
-            onTap: _pickRange,
           ),
+          if (v != null)
+            SettingSummaryRow(
+              label: l.fpEventsManageTags,
+              summary: l.fpEventsTagsCount(v.eventTags.length),
+              onTap: _manageTags,
+            ),
         ],
       ),
-      settings: v == null
-          ? null
-          : SettingsSection(
-              title: l.settingsTitle,
-              description: l.fpEventsSettingsDesc,
-              children: [
-                SettingSummaryRow(
-                  label: l.fpEventsManageTags,
-                  summary: l.fpEventsTagsCount(v.eventTags.length),
-                  onTap: _manageTags,
-                ),
-              ],
-            ),
       note: NoteSection(
         label: l.commonNote,
         editing: true,

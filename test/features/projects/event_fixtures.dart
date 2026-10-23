@@ -202,7 +202,15 @@ Map<String, dynamic> listSummaryJson() => {
   'my_share_total': 14289,
   'paid_total': 22539,
   'receivable_total': 8250,
-  'counts': {'active': 2, 'unsettled': 1, 'ended': 5},
+  'payable_total': 100,
+  'counts': {
+    'all': 7,
+    'active': 2,
+    'unsettled': 3,
+    'receivable': 2,
+    'payable': 1,
+    'ended': 5,
+  },
 };
 
 Map<String, dynamic> patchJson({

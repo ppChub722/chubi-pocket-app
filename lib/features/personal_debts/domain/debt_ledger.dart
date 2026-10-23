@@ -60,7 +60,12 @@ class PersonBalance extends Equatable {
     this.daysOutstanding,
     this.firstActivityAt,
     this.lastActivity,
+    this.nextDueDate,
   });
+
+  /// The earliest due date among the unpaid debts on the person's current
+  /// side; null when even or none has one.
+  final DateTime? nextDueDate;
 
   /// The first line's date ever ("ติดต่อกันตั้งแต่ …"; 0.4.0-3).
   final DateTime? firstActivityAt;
@@ -101,6 +106,7 @@ class PersonBalance extends Equatable {
     lastActivity: json['last_activity'] is Map
         ? DebtLastActivity.fromJson(_map(json['last_activity'])!)
         : null,
+    nextDueDate: _date(json['next_due_date']),
   );
 
   static PersonBalance? maybe(Object? json) =>
@@ -118,6 +124,7 @@ class PersonBalance extends Equatable {
     daysOutstanding,
     firstActivityAt,
     lastActivity,
+    nextDueDate,
   ];
 }
 
@@ -294,7 +301,11 @@ class DebtEntry extends Equatable {
     this.isRepayment = false,
     this.origin,
     this.runningBalance,
+    this.dueDate,
   });
+
+  /// "กำหนดจ่าย" (0.4.0-3); never on a repayment.
+  final DateTime? dueDate;
 
   /// Debts (0.4.0-3): where it came from (the row's sub-line, the debt
   /// detail's "มาจาก" card); null = ledger-only / a repayment.
@@ -361,6 +372,7 @@ class DebtEntry extends Equatable {
         ? DebtOrigin.fromJson(_map(json['origin'])!)
         : null,
     runningBalance: (json['running_balance'] as num?)?.toDouble(),
+    dueDate: _date(json['due_date']),
   );
 
   static DebtEntry? maybe(Object? json) =>
@@ -384,6 +396,7 @@ class DebtEntry extends Equatable {
     isRepayment,
     origin,
     runningBalance,
+    dueDate,
   ];
 }
 

@@ -1382,6 +1382,12 @@ abstract class AppLocalizations {
   /// **'If this email belongs to a user, they\'ll get a request'**
   String get contactLinkRequestHint;
 
+  /// No description provided for @contactEmailFromAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'From their account'**
+  String get contactEmailFromAccount;
+
   /// No description provided for @contactLinkNeedsEmail.
   ///
   /// In en, this message translates to:
@@ -1421,13 +1427,13 @@ abstract class AppLocalizations {
   /// No description provided for @contactWireTitle.
   ///
   /// In en, this message translates to:
-  /// **'Match names in splits'**
+  /// **'Link names you typed before'**
   String get contactWireTitle;
 
   /// No description provided for @contactWireHint.
   ///
   /// In en, this message translates to:
-  /// **'{names} names | {splits} splits not linked to a contact'**
+  /// **'{names} names | {splits} entries not linked to anyone'**
   String contactWireHint(int names, int splits);
 
   /// No description provided for @contactWireNone.
@@ -1553,13 +1559,13 @@ abstract class AppLocalizations {
   /// No description provided for @debtsOwedToMe.
   ///
   /// In en, this message translates to:
-  /// **'To receive'**
+  /// **'Owes me'**
   String get debtsOwedToMe;
 
   /// No description provided for @debtsIOwe.
   ///
   /// In en, this message translates to:
-  /// **'To pay'**
+  /// **'I owe'**
   String get debtsIOwe;
 
   /// No description provided for @debtsEven.
@@ -2243,7 +2249,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectTxOwes.
   ///
   /// In en, this message translates to:
-  /// **'to pay {name}'**
+  /// **'I owe {name}'**
   String projectTxOwes(String name);
 
   /// No description provided for @projectTxUnmark.
@@ -2891,7 +2897,7 @@ abstract class AppLocalizations {
   /// No description provided for @notifActionAddDebt.
   ///
   /// In en, this message translates to:
-  /// **'Add to my payables'**
+  /// **'Add to my debts'**
   String get notifActionAddDebt;
 
   /// No description provided for @notifActionCopyToBook.
@@ -3557,7 +3563,7 @@ abstract class AppLocalizations {
   /// No description provided for @moreDebtsDesc.
   ///
   /// In en, this message translates to:
-  /// **'To receive / to pay, with whom'**
+  /// **'Who owes me, whom I owe'**
   String get moreDebtsDesc;
 
   /// No description provided for @moreBudgetsDesc.
@@ -7954,7 +7960,7 @@ abstract class AppLocalizations {
   /// No description provided for @debtSettledLabel.
   ///
   /// In en, this message translates to:
-  /// **'All square'**
+  /// **'Settled up'**
   String get debtSettledLabel;
 
   /// No description provided for @debtResultAfter.
@@ -8266,7 +8272,7 @@ abstract class AppLocalizations {
   /// No description provided for @occurrenceStateNotCreated.
   ///
   /// In en, this message translates to:
-  /// **'Due'**
+  /// **'To confirm'**
   String get occurrenceStateNotCreated;
 
   /// No description provided for @occurrenceStatePending.
@@ -8407,6 +8413,192 @@ abstract class AppLocalizations {
   /// **'See all {n}'**
   String occurrenceDueMore(int n);
 
+  /// No description provided for @occurrenceSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get occurrenceSelectAll;
+
+  /// No description provided for @occurrenceSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} selected'**
+  String occurrenceSelectedCount(int n);
+
+  /// No description provided for @occurrenceSkipSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip selected'**
+  String get occurrenceSkipSelected;
+
+  /// No description provided for @occurrenceConfirmSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =0{Confirm selected} other{Confirm selected ({n})}}'**
+  String occurrenceConfirmSelected(int n);
+
+  /// No description provided for @occurrenceSkipSelectedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip the {n} selected?'**
+  String occurrenceSkipSelectedTitle(int n);
+
+  /// No description provided for @occurrenceSkippedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} skipped'**
+  String occurrenceSkippedCount(int n);
+
+  /// No description provided for @occurrenceSavedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} recorded'**
+  String occurrenceSavedCount(int n);
+
+  /// No description provided for @recurringWholeMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole month'**
+  String get recurringWholeMonth;
+
+  /// No description provided for @occurrenceZeroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, one{1 has no amount yet} other{{n} have no amount yet}}'**
+  String occurrenceZeroTitle(int n);
+
+  /// No description provided for @occurrenceZeroBody.
+  ///
+  /// In en, this message translates to:
+  /// **'They\'ll be recorded as 0 for now. You can fix the amount later. Go ahead?'**
+  String get occurrenceZeroBody;
+
+  /// No description provided for @recurringSortDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get recurringSortDate;
+
+  /// No description provided for @recurringSortAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Largest amount'**
+  String get recurringSortAmount;
+
+  /// No description provided for @recurringSortTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get recurringSortTooltip;
+
+  /// No description provided for @recurringFilterAllStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Any status'**
+  String get recurringFilterAllStatus;
+
+  /// No description provided for @recurringFilterAllKinds.
+  ///
+  /// In en, this message translates to:
+  /// **'Any type'**
+  String get recurringFilterAllKinds;
+
+  /// No description provided for @recurringMonthNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing matches these filters'**
+  String get recurringMonthNoMatch;
+
+  /// No description provided for @occurrenceShowLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get occurrenceShowLess;
+
+  /// No description provided for @recurringAheadForever.
+  ///
+  /// In en, this message translates to:
+  /// **'keeps going'**
+  String get recurringAheadForever;
+
+  /// No description provided for @recurringAheadLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} more'**
+  String recurringAheadLeft(int n);
+
+  /// No description provided for @recurringAheadTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} in all'**
+  String recurringAheadTotal(String amount);
+
+  /// No description provided for @recurringAheadUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'until {date}'**
+  String recurringAheadUntil(String date);
+
+  /// No description provided for @recurringAheadEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed ahead'**
+  String get recurringAheadEdited;
+
+  /// No description provided for @recurringAheadCustomize.
+  ///
+  /// In en, this message translates to:
+  /// **'Change ahead'**
+  String get recurringAheadCustomize;
+
+  /// No description provided for @recurringAheadCustomizeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Change the amount, move or skip the ones ahead'**
+  String get recurringAheadCustomizeHint;
+
+  /// No description provided for @recurringAheadNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get recurringAheadNext;
+
+  /// No description provided for @recurringAheadSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get recurringAheadSummary;
+
+  /// No description provided for @recurringTileMoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Moved'**
+  String get recurringTileMoved;
+
+  /// No description provided for @recurringTileEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'Edited'**
+  String get recurringTileEdited;
+
+  /// No description provided for @recurringFieldKind.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get recurringFieldKind;
+
+  /// No description provided for @recurringFieldDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick dates'**
+  String get recurringFieldDates;
+
+  /// No description provided for @recurringSectionPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get recurringSectionPeriod;
+
   /// No description provided for @recurringHomeTabOverview.
   ///
   /// In en, this message translates to:
@@ -8442,6 +8634,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Today {date}'**
   String recurringHomeToday(String date);
+
+  /// No description provided for @recurringDayEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing on {date}'**
+  String recurringDayEmpty(String date);
 
   /// No description provided for @recurringHomeAllTitle.
   ///
@@ -10709,14 +10907,20 @@ abstract class AppLocalizations {
   /// No description provided for @fpContactsLinkSection.
   ///
   /// In en, this message translates to:
-  /// **'Link account'**
+  /// **'App account'**
   String get fpContactsLinkSection;
 
   /// No description provided for @fpContactsLinkSectionDesc.
   ///
   /// In en, this message translates to:
-  /// **'Link to an app user and match names in splits'**
+  /// **'Tie this person to the account they use in the app (their name, email and icon), and merge names typed in splits'**
   String get fpContactsLinkSectionDesc;
+
+  /// No description provided for @contactLinkedAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked to {name}\'s account'**
+  String contactLinkedAccount(String name);
 
   /// No description provided for @fpContactsArchiveConsequence.
   ///
@@ -10739,13 +10943,13 @@ abstract class AppLocalizations {
   /// No description provided for @fpDebtsOwedToMeTile.
   ///
   /// In en, this message translates to:
-  /// **'To receive | {count} people'**
+  /// **'Owe me | {count} people'**
   String fpDebtsOwedToMeTile(int count);
 
   /// No description provided for @fpDebtsIOweTile.
   ///
   /// In en, this message translates to:
-  /// **'To pay | {count} people'**
+  /// **'I owe | {count} people'**
   String fpDebtsIOweTile(int count);
 
   /// No description provided for @fpDebtsOver30.
@@ -10928,6 +11132,12 @@ abstract class AppLocalizations {
   /// **'Goal {date} | {n} months late'**
   String fpGoalsEtaBehind(String date, int n);
 
+  /// No description provided for @fpGoalsDueBy.
+  ///
+  /// In en, this message translates to:
+  /// **'By {date}'**
+  String fpGoalsDueBy(String date);
+
   /// No description provided for @fpGoalsBehind.
   ///
   /// In en, this message translates to:
@@ -11099,7 +11309,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpGoalsRingOfPlan.
   ///
   /// In en, this message translates to:
-  /// **'of {amount}'**
+  /// **'Goal {amount}'**
   String fpGoalsRingOfPlan(String amount);
 
   /// No description provided for @fpGoalsRingOf.
@@ -11159,7 +11369,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpGoalsFilterShort.
   ///
   /// In en, this message translates to:
-  /// **'Short'**
+  /// **'Saving'**
   String get fpGoalsFilterShort;
 
   /// No description provided for @fpGoalsFilterFree.
@@ -11324,17 +11534,41 @@ abstract class AppLocalizations {
   /// **'Refresh failed, showing the latest data'**
   String get fpGoalsRefreshFailed;
 
-  /// No description provided for @fpEventsSummaryCaption.
+  /// No description provided for @fpEventsHeroNet.
   ///
   /// In en, this message translates to:
-  /// **'Active events | my share'**
-  String get fpEventsSummaryCaption;
+  /// **'Net owed | {count} events'**
+  String fpEventsHeroNet(int count);
 
-  /// No description provided for @fpEventsPaidLine.
+  /// No description provided for @fpEventsOwedFact.
   ///
   /// In en, this message translates to:
-  /// **'I paid {paid} → owed {receivable}'**
-  String fpEventsPaidLine(String paid, String receivable);
+  /// **'Gets back | {count} events'**
+  String fpEventsOwedFact(int count);
+
+  /// No description provided for @fpEventsOweFact.
+  ///
+  /// In en, this message translates to:
+  /// **'To pay | {count} events'**
+  String fpEventsOweFact(int count);
+
+  /// No description provided for @fpEventsShareFact.
+  ///
+  /// In en, this message translates to:
+  /// **'My share | {count} active'**
+  String fpEventsShareFact(int count);
+
+  /// No description provided for @fpEventsFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get fpEventsFilterAll;
+
+  /// No description provided for @fpEventsOverBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Over budget'**
+  String get fpEventsOverBudget;
 
   /// No description provided for @fpEventsTileActive.
   ///
@@ -11378,12 +11612,6 @@ abstract class AppLocalizations {
   /// **'Create event'**
   String get fpEventsCreate;
 
-  /// No description provided for @fpEventsRowSpent.
-  ///
-  /// In en, this message translates to:
-  /// **'Spent {amount}'**
-  String fpEventsRowSpent(String amount);
-
   /// No description provided for @fpEventsRowShare.
   ///
   /// In en, this message translates to:
@@ -11393,13 +11621,13 @@ abstract class AppLocalizations {
   /// No description provided for @fpEventsOwed.
   ///
   /// In en, this message translates to:
-  /// **'Owed to me'**
+  /// **'Gets back'**
   String get fpEventsOwed;
 
   /// No description provided for @fpEventsOwe.
   ///
   /// In en, this message translates to:
-  /// **'I owe'**
+  /// **'To pay'**
   String get fpEventsOwe;
 
   /// No description provided for @fpEventsSpentTotal.
@@ -11471,7 +11699,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpEventsMemberOwed.
   ///
   /// In en, this message translates to:
-  /// **'Owed {amount}'**
+  /// **'Gets back {amount}'**
   String fpEventsMemberOwed(String amount);
 
   /// No description provided for @fpEventsMemberOwe.
@@ -11545,12 +11773,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Start – end'**
   String get fpEventsDatesLabel;
-
-  /// No description provided for @fpEventsSettingsDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Bill tags in this event, shared with every member'**
-  String get fpEventsSettingsDesc;
 
   /// No description provided for @fpEventsManageTags.
   ///
@@ -11713,6 +11935,258 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t refresh | showing the last data'**
   String get fpEventsLoadFailed;
+
+  /// No description provided for @evbNewBill.
+  ///
+  /// In en, this message translates to:
+  /// **'Add bill'**
+  String get evbNewBill;
+
+  /// No description provided for @evbEditBill.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit bill'**
+  String get evbEditBill;
+
+  /// No description provided for @evbNewPayback.
+  ///
+  /// In en, this message translates to:
+  /// **'Payback'**
+  String get evbNewPayback;
+
+  /// No description provided for @evbEditPayback.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit payback'**
+  String get evbEditPayback;
+
+  /// No description provided for @evbTypePayback.
+  ///
+  /// In en, this message translates to:
+  /// **'Payback'**
+  String get evbTypePayback;
+
+  /// No description provided for @evbPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'In the bill | {count}'**
+  String evbPeople(int count);
+
+  /// No description provided for @evbPays.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get evbPays;
+
+  /// No description provided for @evbPaidBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid back'**
+  String get evbPaidBack;
+
+  /// No description provided for @evbMembersSection.
+  ///
+  /// In en, this message translates to:
+  /// **'In this event'**
+  String get evbMembersSection;
+
+  /// No description provided for @evbAddPeopleConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {count}'**
+  String evbAddPeopleConfirm(int count);
+
+  /// No description provided for @evbMyBooks.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to my books'**
+  String get evbMyBooks;
+
+  /// No description provided for @evbBooked.
+  ///
+  /// In en, this message translates to:
+  /// **'In my books'**
+  String get evbBooked;
+
+  /// No description provided for @evbBookDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt'**
+  String get evbBookDebt;
+
+  /// No description provided for @evbBookDebtLine.
+  ///
+  /// In en, this message translates to:
+  /// **'I owe {name}'**
+  String evbBookDebtLine(String name);
+
+  /// No description provided for @evbBookTx.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction'**
+  String get evbBookTx;
+
+  /// No description provided for @evbBookTxLine.
+  ///
+  /// In en, this message translates to:
+  /// **'My share as an expense'**
+  String get evbBookTxLine;
+
+  /// No description provided for @evbNotBooked.
+  ///
+  /// In en, this message translates to:
+  /// **'Not in my books'**
+  String get evbNotBooked;
+
+  /// No description provided for @evbOwesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} owes {to} {amount}'**
+  String evbOwesHint(String from, String to, String amount);
+
+  /// No description provided for @evbUseAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this'**
+  String get evbUseAmount;
+
+  /// No description provided for @evbPaybackBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Payback | by {name}'**
+  String evbPaybackBy(String name);
+
+  /// No description provided for @evbPaidFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid from {wallet}'**
+  String evbPaidFrom(String wallet);
+
+  /// No description provided for @evbBackFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Back from {name}'**
+  String evbBackFrom(String name);
+
+  /// No description provided for @evbNoWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'No wallet'**
+  String get evbNoWallet;
+
+  /// No description provided for @evbTabBills.
+  ///
+  /// In en, this message translates to:
+  /// **'Bills'**
+  String get evbTabBills;
+
+  /// No description provided for @evbTabSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get evbTabSummary;
+
+  /// No description provided for @evbNets.
+  ///
+  /// In en, this message translates to:
+  /// **'Each person'**
+  String get evbNets;
+
+  /// No description provided for @evbSettleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who pays whom'**
+  String get evbSettleTitle;
+
+  /// No description provided for @evbSettlePairs.
+  ///
+  /// In en, this message translates to:
+  /// **'Pair by pair'**
+  String get evbSettlePairs;
+
+  /// No description provided for @evbSettleFewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get evbSettleFewest;
+
+  /// No description provided for @evbSettlePaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get evbSettlePaid;
+
+  /// No description provided for @evbSettleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap \"Paid\" to record the payback in the event; anyone can'**
+  String get evbSettleHint;
+
+  /// No description provided for @evbAllSettled.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone is even'**
+  String get evbAllSettled;
+
+  /// No description provided for @evbOnlyMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Only mine'**
+  String get evbOnlyMine;
+
+  /// No description provided for @evbDebtorsLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} owe me'**
+  String evbDebtorsLine(int count);
+
+  /// No description provided for @evbNoDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'No debt'**
+  String get evbNoDebt;
+
+  /// No description provided for @evbRecordDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Record the debt'**
+  String get evbRecordDebt;
+
+  /// No description provided for @evbIPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'I paid'**
+  String get evbIPaid;
+
+  /// No description provided for @evbBackReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Got back'**
+  String get evbBackReceived;
+
+  /// No description provided for @evbBackSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid back'**
+  String get evbBackSent;
+
+  /// No description provided for @evbTheyOweMe.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} owes me'**
+  String evbTheyOweMe(String name);
+
+  /// No description provided for @evbDebtUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt up'**
+  String get evbDebtUp;
+
+  /// No description provided for @evbDebtDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt down'**
+  String get evbDebtDown;
 
   /// No description provided for @categoryDeleteConsequence.
   ///
@@ -12895,6 +13369,84 @@ abstract class AppLocalizations {
   /// **'What for?'**
   String get debtRepayTitleHint;
 
+  /// No description provided for @debtRecordChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Log a debt'**
+  String get debtRecordChip;
+
+  /// No description provided for @debtSettleChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay a debt'**
+  String get debtSettleChip;
+
+  /// No description provided for @debtOriginFieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Origin'**
+  String get debtOriginFieldLabel;
+
+  /// No description provided for @debtOriginPickFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a person first'**
+  String get debtOriginPickFirst;
+
+  /// No description provided for @debtOriginLend.
+  ///
+  /// In en, this message translates to:
+  /// **'Lent to {name}'**
+  String debtOriginLend(String name);
+
+  /// No description provided for @debtOriginBorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Borrowed from {name}'**
+  String debtOriginBorrow(String name);
+
+  /// No description provided for @debtRoleDebtor.
+  ///
+  /// In en, this message translates to:
+  /// **'Owes me'**
+  String get debtRoleDebtor;
+
+  /// No description provided for @debtRoleCreditor.
+  ///
+  /// In en, this message translates to:
+  /// **'I owe'**
+  String get debtRoleCreditor;
+
+  /// No description provided for @debtSummaryDebtor.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} owes me'**
+  String debtSummaryDebtor(String name);
+
+  /// No description provided for @debtSummaryCreditor.
+  ///
+  /// In en, this message translates to:
+  /// **'I owe {name}'**
+  String debtSummaryCreditor(String name);
+
+  /// No description provided for @debtSummaryBecomesDebtor.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} now owes me'**
+  String debtSummaryBecomesDebtor(String name);
+
+  /// No description provided for @debtSummaryBecomesCreditor.
+  ///
+  /// In en, this message translates to:
+  /// **'Now I owe {name}'**
+  String debtSummaryBecomesCreditor(String name);
+
+  /// No description provided for @debtSummaryCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Settled up with {name}'**
+  String debtSummaryCleared(String name);
+
   /// No description provided for @debtRepayTo.
   ///
   /// In en, this message translates to:
@@ -12922,7 +13474,7 @@ abstract class AppLocalizations {
   /// No description provided for @debtMarkPaidLabel.
   ///
   /// In en, this message translates to:
-  /// **'Mark as paid'**
+  /// **'Close debts'**
   String get debtMarkPaidLabel;
 
   /// No description provided for @debtRepayLeft.
@@ -12934,7 +13486,7 @@ abstract class AppLocalizations {
   /// No description provided for @debtRepayCleared.
   ///
   /// In en, this message translates to:
-  /// **'All cleared'**
+  /// **'Settled up'**
   String get debtRepayCleared;
 
   /// No description provided for @debtRepayPickTitle.
@@ -13096,7 +13648,7 @@ abstract class AppLocalizations {
   /// No description provided for @txLinkShareIOwe.
   ///
   /// In en, this message translates to:
-  /// **'to pay {name} {amount}'**
+  /// **'I owe {name} {amount}'**
   String txLinkShareIOwe(String name, String amount);
 
   /// No description provided for @txLinkViewPaidLabel.
@@ -13222,7 +13774,7 @@ abstract class AppLocalizations {
   /// No description provided for @debtQuickCreateTxLabel.
   ///
   /// In en, this message translates to:
-  /// **'Also record the money (a transaction)'**
+  /// **'Also save as a transaction'**
   String get debtQuickCreateTxLabel;
 
   /// No description provided for @debtResultNow.
@@ -13324,19 +13876,19 @@ abstract class AppLocalizations {
   /// No description provided for @debtTxHintLend.
   ///
   /// In en, this message translates to:
-  /// **'Money leaves the wallet (a loan)'**
+  /// **'Adds an expense to the wallet'**
   String get debtTxHintLend;
 
   /// No description provided for @debtTxHintBorrow.
   ///
   /// In en, this message translates to:
-  /// **'Money comes into the wallet (borrowed)'**
+  /// **'Adds income to the wallet'**
   String get debtTxHintBorrow;
 
   /// No description provided for @debtTxHintOff.
   ///
   /// In en, this message translates to:
-  /// **'Off = only noted in the debts book, no money moves'**
+  /// **'Wallet balance unchanged'**
   String get debtTxHintOff;
 
   /// No description provided for @debtsHeroNet.
@@ -13390,13 +13942,13 @@ abstract class AppLocalizations {
   /// No description provided for @debtPersonOweTo.
   ///
   /// In en, this message translates to:
-  /// **'To pay {name}'**
+  /// **'I owe {name}'**
   String debtPersonOweTo(String name);
 
   /// No description provided for @debtPersonOwedFrom.
   ///
   /// In en, this message translates to:
-  /// **'To receive from {name}'**
+  /// **'{name} owes me'**
   String debtPersonOwedFrom(String name);
 
   /// No description provided for @debtPersonSettlePay.
@@ -13474,7 +14026,7 @@ abstract class AppLocalizations {
   /// No description provided for @debtEarlierShow.
   ///
   /// In en, this message translates to:
-  /// **'All cleared {date} | Earlier ▾'**
+  /// **'Settled up {date} | Earlier ▾'**
   String debtEarlierShow(String date);
 
   /// No description provided for @debtEarlierShowPlain.
@@ -13548,6 +14100,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'✓ Paid'**
   String get debtPaidPill;
+
+  /// No description provided for @debtUnpaidLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Not paid'**
+  String get debtUnpaidLabel;
+
+  /// No description provided for @debtDueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Due'**
+  String get debtDueLabel;
+
+  /// No description provided for @debtsSectionTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get debtsSectionTotal;
+
+  /// No description provided for @debtDuePick.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a due date'**
+  String get debtDuePick;
+
+  /// No description provided for @debtDueOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Due {date}'**
+  String debtDueOn(String date);
+
+  /// No description provided for @debtOverdueDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days overdue'**
+  String debtOverdueDays(int days);
+
+  /// No description provided for @debtsOwingDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Owing for {days} days'**
+  String debtsOwingDays(int days);
+
+  /// No description provided for @debtLinkTx.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a transaction from this debt'**
+  String get debtLinkTx;
 
   /// No description provided for @debtPaidHelper.
   ///

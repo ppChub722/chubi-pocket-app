@@ -331,22 +331,15 @@ class _PersonViewState extends State<_PersonView> {
             ),
           ],
         ),
-        side == NetSide.even
-            ? DebtAmountLine(
-                net: b.net,
-                owedToMeLabel: l.debtsOwedToMe,
-                iOweLabel: l.debtsIOwe,
-                settledLabel: l.debtsEven,
-                currencySymbol: symbol,
-              )
-            : DebtSentenceAmount(
-                key: const ValueKey('debtSentence'),
-                sentence: side == NetSide.owedToMe
-                    ? l.debtPersonOwedFrom(name)
-                    : l.debtPersonOweTo(name),
-                amount: MoneyText(b.net.abs(), symbol: symbol),
-                color: color,
-              ),
+        // [↙ ลูกหนี้] ฿x from the start (owner 2026-10-23); settled = the word.
+        DebtAmountLine(
+          key: const ValueKey('debtSentence'),
+          net: b.net,
+          owedToMeLabel: l.debtsOwedToMe,
+          iOweLabel: l.debtsIOwe,
+          settledLabel: l.debtsEven,
+          currencySymbol: symbol,
+        ),
         DebtPersonActions(
           color: color,
           settleLabel: switch (side) {
@@ -473,17 +466,32 @@ class _PersonViewState extends State<_PersonView> {
 
   static String _ymd(DateTime d) => '${d.year}-${d.month}-${d.day}';
 
-  /// The sub-line (mock): where the line came from / where the money went.
-  String? _subLine(AppLocalizations l, DebtEntry e, String name) {
-    final paid = e.direction == DebtEntryDirection.paid;
-    if (e.isRepayment) {
-      final acc = e.transaction?.account?.name;
-      if (acc == null) return l.debtRowNoWallet;
-      return paid ? l.debtRowFromWallet(acc) : l.debtRowIntoWallet(acc);
+  /// Rows whose ✓ is saving: one save per row, the circle spins.
+  final Set<String> _paidSaving = {};
+
+  Future<void> _togglePaid(DebtEntry e) async {
+    if (!_paidSaving.add(e.id)) return;
+    setState(() {});
+    try {
+      await _cubit.setPaid(e.id, !e.paid);
+    } catch (err) {
+      if (!mounted) return;
+      final l = AppLocalizations.of(context)!;
+      showAppSnackBar(
+        context,
+        err is ApiException ? err.message : l.errorUnknownMessage,
+        tone: Tone.danger,
+      );
+    } finally {
+      if (mounted) setState(() => _paidSaving.remove(e.id));
     }
+  }
+
+  /// The sub-line: where a debt came from (a split, someone paid, an event);
+  /// the wallet is a chip by the title instead (owner 2026-10-23).
+  String? _originLine(AppLocalizations l, DebtEntry e, String name) {
+    if (e.isRepayment) return null;
     final o = e.origin;
-    final symbol = debtCurrencySymbol(context);
-    final wallet = o?.account?.name ?? e.transaction?.account?.name;
     switch (o?.kind) {
       case 'paid_by' || 'partner':
         return l.debtRowTheyPaid(name);
@@ -491,14 +499,17 @@ class _PersonViewState extends State<_PersonView> {
         final amount = o?.amount;
         return amount == null
             ? l.debtRowIPaid
-            : l.debtRowSplitBill(moneyString(context, amount, symbol: symbol));
+            : l.debtRowSplitBill(
+                moneyString(
+                  context,
+                  amount,
+                  symbol: debtCurrencySymbol(context),
+                ),
+              );
       case 'event':
         return l.debtRowEvent(o?.title ?? '');
     }
-    if (wallet != null) {
-      return paid ? l.debtRowFromWallet(wallet) : l.debtRowIntoWallet(wallet);
-    }
-    return paid ? l.debtRowIPaid : l.debtRowTheyPaid(name);
+    return null;
   }
 
   Widget _statementRow(
@@ -507,21 +518,55 @@ class _PersonViewState extends State<_PersonView> {
     String name,
     String symbol,
   ) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final scheme = Theme.of(context).colorScheme;
     final paid = e.direction == DebtEntryDirection.paid;
     final title =
         e.description ??
         (e.isRepayment
             ? (paid ? l.debtRowIPaidBack(name) : l.debtRowTheyPaidBack(name))
             : (paid ? l.debtEntryPaidTo(name) : l.debtEntryReceivedFrom(name)));
-    return DebtStatementRow(
+    final sub = _originLine(l, e, name);
+    final wallet = e.origin?.account ?? e.transaction?.account;
+    final palette = Theme.of(context).extension<AppColors>()!;
+    // A debt's icon IS its จ่ายแล้ว circle (the detail page's): tap it to
+    // tick / untick here; the rest of the row opens the debt.
+    final Widget leading = e.isRepayment
+        ? IconTile(
+            icon: AppIcons.cash,
+            color: scheme.primary,
+            size: 36,
+            style: IconTileStyle.solid,
+          )
+        : CheckCircleButton(
+            key: ValueKey('debtPaidMark:${e.id}'),
+            checked: e.paid,
+            loading: _paidSaving.contains(e.id),
+            onChanged: (_) => _togglePaid(e),
+            size: 36,
+            color: palette.income,
+            tooltip: l.debtsPaidChip,
+          );
+    // A repayment's amount stays plain, a debt's takes the side's colour.
+    return AppListRow(
       key: ValueKey(e.id),
+      leading: leading,
       title: title,
-      subtitle: _subLine(l, e, name),
-      amount: MoneyText(e.amount, symbol: symbol),
-      amountColor: paid ? palette.income : palette.expense,
-      repayment: e.isRepayment,
-      paidLabel: !e.isRepayment && e.paid ? l.debtPaidPill : null,
+      titleChips: [
+        if (wallet != null)
+          walletRowChip(context, name: wallet.name, iconCode: wallet.iconCode),
+      ],
+      line2: sub == null ? null : ListRowLine(parts: [sub]),
+      trailing: ListRowTrailing.value(
+        MoneyText(
+          e.amount,
+          symbol: symbol,
+          tone: e.isRepayment
+              ? MoneyTone.plain
+              : paid
+              ? MoneyTone.income
+              : MoneyTone.expense,
+        ),
+      ),
       onTap: () => _openEntry(e),
     );
   }

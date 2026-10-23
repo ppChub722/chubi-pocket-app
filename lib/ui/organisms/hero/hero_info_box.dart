@@ -6,8 +6,8 @@ import '../../tokens/app_spacing.dart';
 import '../../tokens/hero_colors.dart';
 import '../../tokens/icon_size.dart';
 
-/// A box inside a hero: the card's soft fill and line border. It groups the
-/// pieces that act on one thing (the next occurrence and its buttons).
+/// A box set into a hero ([HeroColors.inset], darker than the card in dark
+/// mode) with the card's line border: a month's list, the next occurrence.
 class HeroInsetBox extends StatelessWidget {
   const HeroInsetBox({
     required this.child,
@@ -24,7 +24,7 @@ class HeroInsetBox extends StatelessWidget {
     final hero = HeroColors.maybeOf(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: hero?.soft ?? scheme.surfaceContainer,
+        color: hero?.insetOrSoft ?? scheme.surfaceContainer,
         border: Border.all(color: hero?.line ?? scheme.outlineVariant),
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),

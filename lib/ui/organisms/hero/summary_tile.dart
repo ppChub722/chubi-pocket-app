@@ -6,6 +6,7 @@ import '../../tokens/app/module_colors.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/hero_colors.dart';
+import 'hero_tiles.dart';
 
 enum SummaryTileTone { neutral, green, amber, red, orange, planning }
 
@@ -58,15 +59,21 @@ class SummaryTileView extends StatelessWidget {
     final valueColor = tile.tone == SummaryTileTone.neutral
         ? (hero?.text ?? scheme.onSurface)
         : color;
+    if (HeroTiles.joinedOf(context)) {
+      return _flat(context, muted: muted, valueColor: valueColor);
+    }
     return Semantics(
       button: tile.onTap != null,
       selected: tile.selected,
       // Selected = the card's own edge turns primary; no ring around it, so
       // the tile keeps the same edges and gaps whether chosen or not.
+      // In a hero the tile is a plain (white on light) card on the card's
+      // line; only the value carries the tone. Outside one it is tinted.
       child: AppCard(
         key: ValueKey('summaryTile:${tile.label}'),
-        style: AppCardStyle.tinted,
-        color: color,
+        style: hero != null ? AppCardStyle.plain : AppCardStyle.tinted,
+        color: hero != null ? null : color,
+        borderColor: hero?.line,
         selected: tile.selected,
         radius: BorderRadius.circular(AppRadius.md),
         padding: const EdgeInsets.symmetric(
@@ -106,6 +113,63 @@ class SummaryTileView extends StatelessWidget {
                 style: textTheme.labelSmall?.copyWith(color: muted),
               ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// A cell of a joined [HeroTiles]: no card; a tappable one ends its value
+  /// with ›.
+  Widget _flat(
+    BuildContext context, {
+    required Color muted,
+    required Color valueColor,
+  }) {
+    final textTheme = Theme.of(context).textTheme;
+    final valueStyle = textTheme.titleMedium?.copyWith(
+      color: valueColor,
+      fontWeight: FontWeight.w700,
+    );
+    return Semantics(
+      button: tile.onTap != null,
+      selected: tile.selected,
+      child: InkWell(
+        key: ValueKey('summaryTile:${tile.label}'),
+        onTap: tile.onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm + AppSpacing.xxs,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                tile.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.labelMedium?.copyWith(color: muted),
+              ),
+              const SizedBox(height: AppSpacing.xxs),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  tile.onTap == null ? tile.value : '${tile.value} ›',
+                  maxLines: 1,
+                  style: valueStyle,
+                ),
+              ),
+              if (tile.caption != null)
+                Text(
+                  tile.caption!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.labelSmall?.copyWith(color: muted),
+                ),
+            ],
+          ),
         ),
       ),
     );

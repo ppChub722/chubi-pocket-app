@@ -855,7 +855,7 @@ void main() {
 
     testWidgets('items: day headers, the source chip, the tags', (t) async {
       await pump(t, const BudgetDetailPage(id: 'b1'));
-      expect(find.byType(TxRow), findsNWidgets(4));
+      expect(find.byType(AppListRow), findsNWidgets(4));
       expect(find.byType(DateGroupHeader), findsNWidgets(3));
       // The "Counted because" line is gone.
       expect(
@@ -940,7 +940,7 @@ void main() {
       expect(find.byType(ErrorView), findsNothing);
       expect(find.text('no connection'), findsOneWidget);
       expect(find.text('Still available'), findsOneWidget);
-      expect(find.byType(TxRow), findsNWidgets(4));
+      expect(find.byType(AppListRow), findsNWidgets(4));
     });
 
     testWidgets('a one-off budget is one page: no tabs, items below', (
@@ -952,7 +952,7 @@ void main() {
       expect(find.text('Time'), findsNothing);
       expect(find.byType(IconChipStrip), findsWidgets);
       expect(find.text('This period'), findsOneWidget);
-      expect(find.byType(TxRow), findsNWidgets(4));
+      expect(find.byType(AppListRow), findsNWidgets(4));
     });
 
     Future<void> openEdit(WidgetTester t) async {
@@ -988,7 +988,7 @@ void main() {
       // Hidden, not greyed: bar, tiles, forecast, items, tabs.
       expect(find.byType(HeroBar), findsNothing);
       expect(find.text('Can spend per day'), findsNothing);
-      expect(find.byType(TxRow), findsNothing);
+      expect(find.byType(AppListRow), findsNothing);
       expect(find.text('All periods'), findsNothing);
       // End zone: archive + delete (no close: the BE says it can't).
       expect(find.byType(EndZone), findsOneWidget);

@@ -1094,8 +1094,15 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     if (m == _mode) return;
     final from = _fieldsOf(_mode);
     final to = _fieldsOf(m);
-    to.$1.text = from.$1.text;
-    to.$2.text = from.$2.text;
+    // The debt tab's description is worked out by its form, and its amount may
+    // be the open balance it filled in: neither is something typed, so neither
+    // is carried to another tab (and no other tab's text is carried into it).
+    final debtInvolved =
+        _mode == QuickCreateMode.debt || m == QuickCreateMode.debt;
+    if (!(_mode == QuickCreateMode.debt && _debt.amountIsAuto)) {
+      to.$1.text = from.$1.text;
+    }
+    if (!debtInvolved) to.$2.text = from.$2.text;
     final toNote = to.$3;
     final fromNote = from.$3;
     if (toNote != null && fromNote != null) toNote.text = fromNote.text;
@@ -1124,8 +1131,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         ? l.quickAmountRequired
         : person == null
         ? l.debtCounterpartyRequired
-        : d.repaying && d.account == null
-        ? l.debtSettleAccountRequired
         : null;
     if (problem != null || person == null) {
       HapticFeedback.lightImpact();
@@ -1172,6 +1177,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         note: text(d.note),
         tagIds: d.createTransaction ? d.tagIds.toList() : null,
         personName: person.typedName,
+        dueDate: d.dueDate,
       );
       accounts.patchBalances(r.accountBalances);
       final tx = r.transaction;
@@ -1189,8 +1195,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
   bool _overpayWarned = false;
 
-  /// "รอรับ ฿40": the person's side after the settle (preview, else the
-  /// app's own sum).
+  /// "ลี กลายเป็นลูกหนี้ ฿40": the person's side after the settle (preview,
+  /// else the app's own sum).
   String _debtAfterWords(AppLocalizations l, DebtEntryController d) {
     final after = d.preview?.after ?? d.netAfter ?? 0;
     if (after.abs() <= 0.004) return '✓ ${l.debtRepayCleared}';
@@ -1199,7 +1205,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       after.abs(),
       symbol: debtCurrencySymbol(context),
     );
-    return '${after > 0 ? l.debtsOwedToMe : l.debtsIOwe} $money';
+    final name = d.person?.person.name ?? l.debtSomeone;
+    final words = after > 0
+        ? l.debtSummaryBecomesDebtor(name)
+        : l.debtSummaryBecomesCreditor(name);
+    return '$words $money';
   }
 
   /// จ่ายคืน: ONE transaction tied to the person (not a debt row); the
@@ -1220,7 +1230,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         person.key,
         kind: d.repayKind,
         amount: d.amountValue,
-        accountId: d.account!.id,
+        accountId: d.account?.id,
         date: d.date,
         description: text(d.description),
         note: text(d.note),

@@ -193,16 +193,15 @@ class _IdentifierEditRowState extends State<IdentifierEditRow> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
     final id = widget.identifier;
-    return ListRow(
+    return AppListRow(
       leading: AppChip(
         label: _kindLine(context, id, widget.providers),
         leading: _mark(context, id, widget.providers, size: 18),
         trailing: AppChipTrailing.dropdown,
         onTap: _pickKind,
       ),
-      body: AppInput(
+      titleField: AppInput(
         controller: _number,
         autofocus: widget.autofocus,
         dense: true,
@@ -223,13 +222,13 @@ class _IdentifierEditRowState extends State<IdentifierEditRow> {
           ),
         ),
       ),
-      trailing: AppIconButton.close(
-        tooltip: l.identifierDelete,
-        iconSize: AppIconSize.md,
-        dense: true,
-        color: scheme.onSurfaceVariant,
-        onPressed: widget.onRemove,
-      ),
+      actions: [
+        ListRowAction.icon(
+          AppIcons.close,
+          tooltip: l.identifierDelete,
+          onTap: widget.onRemove,
+        ),
+      ],
     );
   }
 

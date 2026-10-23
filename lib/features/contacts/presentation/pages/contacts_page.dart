@@ -242,16 +242,15 @@ class _ContactRow extends StatelessWidget {
       contact.description?.trim() ?? '',
       contact.email?.trim() ?? '',
     ].where((s) => s.isNotEmpty).join(' | ');
-    return ListRow(
+    return AppListRow(
       leading: PersonMark(
         name: contact.name,
         level: contact.isLinked ? PersonLevel.linked : PersonLevel.contact,
         iconCode: contact.iconCode,
-        size: 40,
-        reserveLinkSlot: true,
+        size: 36,
       ),
       title: contact.name,
-      subtitle: sub,
+      line2: ListRowLine(parts: [sub]),
       dimmed: contact.isArchived,
       onTap: () => context.push('/contacts/${contact.id}'),
     );

@@ -439,25 +439,21 @@ class _ReorderDemoState extends State<_ReorderDemo> {
       ReorderRow(
         key: ValueKey(item.id),
         id: item.id,
-        child: ListRow(
+        child: AppListRow(
           indent: (item.level - 1) * AppSpacing.xxl,
           leading: CircleAvatar(
-            radius: 20,
+            radius: 18,
             child: Text(_names[item.id]!.characters.first),
           ),
           title: _names[item.id]!,
-          subtitle: 'Level ${item.level}',
-          trailing: _c.hasChildren(item.id)
-              ? IconButton(
-                  visualDensity: VisualDensity.compact,
-                  icon: Icon(
-                    _c.isCollapsed(item.id)
-                        ? AppIcons.expand
-                        : AppIcons.collapse,
-                  ),
-                  onPressed: () => _c.toggleCollapsed(item.id),
-                )
-              : null,
+          line2: ListRowLine(parts: ['Level ${item.level}']),
+          actions: [
+            if (_c.hasChildren(item.id))
+              ListRowAction.icon(
+                _c.isCollapsed(item.id) ? AppIcons.expand : AppIcons.collapse,
+                onTap: () => _c.toggleCollapsed(item.id),
+              ),
+          ],
         ),
       ),
     ],
@@ -476,9 +472,9 @@ class _ReorderDemoState extends State<_ReorderDemo> {
         ReorderRow(
           key: ValueKey(item.id),
           id: item.id,
-          child: ListRow(
+          child: AppListRow(
             leading: const CircleAvatar(
-              radius: 20,
+              radius: 18,
               child: Icon(AppIcons.wallet),
             ),
             title: _names[item.id]!,

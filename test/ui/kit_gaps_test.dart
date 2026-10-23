@@ -210,7 +210,7 @@ void main() {
     expect(t.getSize(find.byType(ConstrainedBox).last).width, 400);
   });
 
-  testWidgets('AppMessage icon override; MoneyListTile dimmed', (t) async {
+  testWidgets('AppMessage icon override; AppListRow dimmed', (t) async {
     await pump(
       t,
       const AppMessage(message: 'Locked', tone: Tone.warning, icon: Icons.lock),
@@ -219,12 +219,7 @@ void main() {
     expect(find.byIcon(AppIcons.warning), findsNothing);
     await pump(
       t,
-      const MoneyListTile(
-        leading: SizedBox(),
-        title: 'Old',
-        amount: -10,
-        dimmed: true,
-      ),
+      const AppListRow(leading: SizedBox(), title: 'Old', dimmed: true),
     );
     final o = t.widget<Opacity>(
       find.ancestor(of: find.text('Old'), matching: find.byType(Opacity)).first,

@@ -14,7 +14,6 @@ import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../categories/presentation/category_label.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
-import '../../../tags/presentation/widgets/tag_chip.dart';
 import '../../../transactions/domain/transaction_type.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../data/slip_qr_reader.dart';
@@ -421,46 +420,36 @@ class _PendingCard extends StatelessWidget {
             size: 36,
           );
 
-    return TxRow(
+    return AppListRow(
       leading: leading,
       title: title,
-      amount: d.amount ?? 0,
-      tone: tone,
-      select: SelectCheck(
-        value: selected,
-        tooltip: l.pendingSelectOne,
-        onTap: onToggle,
-      ),
-      walletLabel: wallet?.name ?? l.transactionFormAccountNone,
-      walletIcon: wallet == null
-          ? null
-          : IconDisplay(
-              type: IconType.account,
-              size: 14,
-              iconCode: wallet.iconCode,
-            ),
-      source: AppChip(
-        label: _sourceLabel(l, item),
-        tone: item.source.isManual ? AppChipTone.info : AppChipTone.primary,
-        selected: true,
-        size: ChipSize.mini,
-      ),
-      category: description.isNotEmpty ? categoryName : null,
-      extra: d.type == TransactionType.transfer
-          ? '→ ${toWallet?.name ?? '?'}'
-          : null,
-      tags: [
-        for (final t in rowTags)
-          TextSpan(
-            text: '#${t.name}',
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: tagColor(t.iconCode, palette),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+      checked: selected,
+      checkTooltip: l.pendingSelectOne,
+      onCheck: onToggle,
+      titleChips: [
+        walletRowChip(
+          context,
+          name: wallet?.name ?? l.transactionFormAccountNone,
+          iconCode: wallet?.iconCode,
+        ),
       ],
-      warning: warn,
-      warningColor: palette.warning,
+      line2: ListRowLine(
+        lead: ListRowChip(
+          _sourceLabel(l, item),
+          tone: item.source.isManual ? Tone.info : Tone.primary,
+          selected: true,
+        ),
+        parts: [
+          if (description.isNotEmpty && categoryName != null) categoryName,
+          if (d.type == TransactionType.transfer) '→ ${toWallet?.name ?? '?'}',
+        ],
+        spans: [
+          for (final t in rowTags)
+            tagSpan(context, t.name, iconCode: t.iconCode),
+        ],
+      ),
+      trailing: ListRowTrailing.value(MoneyText(d.amount ?? 0, tone: tone)),
+      alert: warn == null ? null : ListRowAlert(warn),
       onTap: onOpen,
     );
   }
@@ -477,8 +466,8 @@ class _PendingCard extends StatelessWidget {
       };
 }
 
-/// A 🐷 saving draft: the kit [SavingTxRow] in draft mode (wallet → goal, or
-/// the spare bucket), a checkbox first, and why it can't go yet under it.
+/// A 🐷 saving draft: wallet → goal (or the spare bucket), a checkbox first,
+/// and why it can't go yet under it.
 class PendingSavingRow extends StatelessWidget {
   const PendingSavingRow({
     required this.item,
@@ -510,57 +499,33 @@ class PendingSavingRow extends StatelessWidget {
         ? l.pendingErrMissingAmount
         : null;
 
-    final row = SavingTxRow(
-      kind: SavingTxKind.deposit,
+    return AppListRow(
+      leading: IconTile(icon: AppIcons.savingDeposit, color: palette.income),
       title: note.isNotEmpty ? note : bucket,
-      amount: d.amount ?? 0,
-      walletLabel: wallet?.name ?? l.transactionFormAccountNone,
-      walletIcon: wallet == null
-          ? null
-          : IconDisplay(
-              type: IconType.account,
-              size: 14,
-              iconCode: wallet.iconCode,
-            ),
-      to: bucket,
-      draft: true,
-      draftChips: [
-        AppChip(
-          label: l.sgv2KindSave,
+      checked: selected,
+      checkTooltip: l.pendingSelectOne,
+      onCheck: onToggle,
+      titleChips: [
+        walletRowChip(
+          context,
+          name: wallet?.name ?? l.transactionFormAccountNone,
+          iconCode: wallet?.iconCode,
+        ),
+      ],
+      line2: ListRowLine(
+        lead: ListRowChip(
+          l.sgv2KindSave,
           icon: AppIcons.savingDeposit,
-          tone: AppChipTone.primary,
+          tone: Tone.primary,
           selected: true,
-          size: ChipSize.mini,
         ),
-      ],
-      select: SelectCheck(
-        value: selected,
-        tooltip: l.pendingSelectOne,
-        onTap: onToggle,
+        parts: ['→ $bucket'],
       ),
+      trailing: ListRowTrailing.value(
+        MoneyText(d.amount ?? 0, tone: MoneyTone.income),
+      ),
+      alert: warn == null ? null : ListRowAlert(warn),
       onTap: onOpen,
-    );
-    if (warn == null) return row;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        row,
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            0,
-            AppSpacing.lg,
-            AppSpacing.sm,
-          ),
-          child: Text(
-            warn,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: palette.warning),
-          ),
-        ),
-      ],
     );
   }
 }

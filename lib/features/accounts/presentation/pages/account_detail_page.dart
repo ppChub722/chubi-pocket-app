@@ -769,7 +769,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     double bottom,
   ) {
     final tabs = _tabs;
-    final scheme = Theme.of(context).colorScheme;
     final actions = _actionBar(l, a);
     return Padding(
       padding: EdgeInsets.only(top: barInset),
@@ -798,7 +797,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             SliverPersistentHeader(
               pinned: true,
               delegate: PinnedTabBarDelegate(
-                background: scheme.surface,
                 child: AppTabBar<AccountDetailTab>(
                   selected: _tab,
                   onChanged: _goTab,
@@ -1044,7 +1042,15 @@ class _AccountDetailViewState extends State<_AccountDetailView>
               color: a.colorOf(context),
               selected: true,
             ),
-            AppChip(label: _scopeChipLabel(l, _effectiveScope(a))),
+            // Border and text in one colour, like the type chip (owner
+            // 2026-10-23): the card's own colour.
+            Builder(
+              builder: (context) => AppChip(
+                label: _scopeChipLabel(l, _effectiveScope(a)),
+                color: HeroColors.maybeOf(context)?.accent,
+                selected: true,
+              ),
+            ),
             if (a.isShared)
               MemberChip(members: members, onTap: () => _openMembers(a)),
           ],
@@ -1078,15 +1084,17 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     if (usedPct != null && left != null) {
       return [
         inCard(
-          (hero) => HeroBar.split(
-            parts: [((usedPct / 100).clamp(0.0, 1.0), hero.accent)],
+          (hero) => HeroBar(
+            value: (usedPct / 100).clamp(0.0, 1.0),
+            color: hero.accent,
+            fillLabel: '$usedPct%',
           ),
         ),
         inCard(
           (hero) => HeroFactList(
             facts: [
               HeroFact(
-                l.fpWalletCardUsedLabel(usedPct),
+                l.bgFactUsed,
                 money(a.creditUsed),
                 icon: AppIcons.creditCard,
                 iconColor: hero.accent,
@@ -1362,30 +1370,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         child: AppHeroCard(
           style: accountHeroStyle(context, preview),
           mode: _isCreate ? HeroCardMode.create : HeroCardMode.edit,
-          header: HeroHeader(
-            leading: [
-              OptionMenuAnchor<AccountType>(
-                selected: w.type,
-                onSelected: (t) => applyChange(w.copyWith(type: t)),
-                options: [
-                  for (final t in AccountType.values)
-                    SheetOption(
-                      value: t,
-                      label: accountTypeLabel(context, t),
-                      leading: AppIcon(t.icon),
-                    ),
-                ],
-                builder: (context, toggle) => AppChip(
-                  label: accountTypeLabel(context, w.type),
-                  icon: w.type.icon,
-                  color: w.type.colorOf(context),
-                  selected: true,
-                  trailing: AppChipTrailing.dropdown,
-                  onTap: toggle,
-                ),
-              ),
-            ],
-          ),
           content: [
             HeroIdentity(
               icon: AccountIconCircle(
@@ -1513,15 +1497,46 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   Widget? _editInfo(AppLocalizations l) {
     final credit = _creditBox(l);
     final numbers = _identifiersSection(l, first: false);
-    if (credit == null) return numbers;
+    final gap = SizedBox(height: HeroMetrics.of(context).after);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        credit,
-        if (numbers != null) ...[
-          SizedBox(height: HeroMetrics.of(context).after),
-          numbers,
-        ],
+        _typeCard(l),
+        if (credit != null) ...[gap, credit],
+        if (numbers != null) ...[gap, numbers],
+      ],
+    );
+  }
+
+  /// Edit: the wallet type is a field with the others below the hero, not a
+  /// chip on the hero (owner 2026-10-23).
+  Widget _typeCard(AppLocalizations l) {
+    final w = working;
+    return SectionCard(
+      children: [
+        DetailRow(
+          label: l.accountFormTypeLabel,
+          trailing: OptionMenuAnchor<AccountType>(
+            selected: w.type,
+            onSelected: (t) => applyChange(w.copyWith(type: t)),
+            options: [
+              for (final t in AccountType.values)
+                SheetOption(
+                  value: t,
+                  label: accountTypeLabel(context, t),
+                  leading: AppIcon(t.icon),
+                ),
+            ],
+            builder: (context, toggle) => AppChip(
+              label: accountTypeLabel(context, w.type),
+              icon: w.type.icon,
+              color: w.type.colorOf(context),
+              selected: true,
+              trailing: AppChipTrailing.dropdown,
+              onTap: toggle,
+            ),
+          ),
+        ),
       ],
     );
   }

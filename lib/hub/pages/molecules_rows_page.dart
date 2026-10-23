@@ -22,7 +22,6 @@ class _RowsPageState extends State<_RowsPage> {
   bool _switch = true;
   bool _repeat = true;
   bool _editing = false;
-  final _checked = <int>{1};
 
   @override
   void dispose() {
@@ -36,8 +35,6 @@ class _RowsPageState extends State<_RowsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
     Widget frame(Widget child) =>
         AppCard(style: AppCardStyle.bordered, child: child);
     Widget pageBg(Widget child) => ColoredBox(
@@ -492,91 +489,6 @@ class _RowsPageState extends State<_RowsPage> {
               ),
             ),
             HubUse(
-              label: 'ListRow — leading, subtitle, usage count',
-              page: 'Categories, tags, contacts lists',
-              wide: true,
-              child: frame(
-                ListRow(
-                  title: 'Food',
-                  subtitle: 'Used 24 times',
-                  leading: IconTile(
-                    icon: AppIcons.category,
-                    color: scheme.primary,
-                    size: 40,
-                    shape: IconTileShape.rounded,
-                    style: IconTileStyle.solid,
-                  ),
-                  trailing: const Text('x24'),
-                  onTap: () {},
-                ),
-              ),
-            ),
-            HubUse(
-              label: 'ListRow — indent + dimmed',
-              page: 'Categories (sub-levels, archived)',
-              wide: true,
-              child: frame(
-                const Column(
-                  children: [
-                    ListRow(
-                      title: 'Level 2',
-                      subtitle: 'indent: 24',
-                      indent: 24,
-                    ),
-                    AppDivider.row(),
-                    ListRow(
-                      title: 'Archived',
-                      subtitle: 'dimmed: true',
-                      dimmed: true,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            HubUse(
-              label: 'ListRow — selection mode',
-              page: 'Categories, tags, contacts (batch edit)',
-              wide: true,
-              child: frame(
-                Column(
-                  children: [
-                    for (var i = 0; i < 3; i++) ...[
-                      if (i > 0) const AppDivider.row(),
-                      ListRow(
-                        title: 'Selectable row ${i + 1}',
-                        subtitle: _checked.contains(i)
-                            ? 'Selected'
-                            : 'Not selected',
-                        checked: _checked.contains(i),
-                        onCheck: () => setState(() {
-                          _checked.contains(i)
-                              ? _checked.remove(i)
-                              : _checked.add(i);
-                        }),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            HubUse(
-              label: 'ListRow — no leading, no subtitle',
-              page: 'Tags list, pickers',
-              child: frame(ListRow(title: 'Tag name', onTap: () {})),
-            ),
-            HubUse(
-              label: 'ListRow — body replaces title + subtitle',
-              page: 'Custom list rows',
-              child: frame(
-                ListRow(
-                  title: '',
-                  body: Text('Custom body', style: text.bodyMedium),
-                  trailing: const Text('x3'),
-                  onTap: () {},
-                ),
-              ),
-            ),
-            HubUse(
               label: 'SectionCard — no icons',
               page: 'Detail pages',
               wide: true,
@@ -910,53 +822,6 @@ class _RowsPageState extends State<_RowsPage> {
                       onPressed: () {},
                     )
                   : null,
-            ),
-          ),
-        ),
-        // ---- ListRow ----
-        HubPlayground(
-          title: 'ListRow',
-          note:
-              'A library list row. checked non-null shows a SelectCheck first '
-              '(tinted when true); body replaces title + subtitle. No '
-              'ListTile.',
-          controls: [
-            const PlayText('title', initialValue: 'Food'),
-            const PlayBool('subtitle', initialValue: true),
-            const PlayBool('leading', initialValue: true),
-            const PlayBool('trailing', initialValue: true),
-            const PlayNum('indent', min: 0, max: 48, step: 12, initialValue: 0),
-            const PlayBool('dimmed'),
-            PlayChoice<bool?>('checked', [
-              ('null', null),
-              ('false', false),
-              ('true', true),
-            ]),
-            const PlayBool('body'),
-            const PlayBool('onTap', initialValue: true),
-          ],
-          builder: (context, v) => frame(
-            ListRow(
-              title: v<String>('title'),
-              subtitle: v<bool>('subtitle') ? 'One line of description' : null,
-              leading: v<bool>('leading')
-                  ? IconTile(
-                      icon: AppIcons.category,
-                      color: scheme.primary,
-                      size: 40,
-                      shape: IconTileShape.rounded,
-                      style: IconTileStyle.solid,
-                    )
-                  : null,
-              trailing: v<bool>('trailing') ? const Text('x24') : null,
-              indent: v<double>('indent'),
-              dimmed: v<bool>('dimmed'),
-              checked: v<bool?>('checked'),
-              onCheck: () {},
-              body: v<bool>('body')
-                  ? Text('body replaces title', style: text.bodyMedium)
-                  : null,
-              onTap: v<bool>('onTap') ? () {} : null,
             ),
           ),
         ),

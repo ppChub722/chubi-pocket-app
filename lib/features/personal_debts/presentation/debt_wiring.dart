@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
 import '../../auth/presentation/cubit/auth_cubit.dart';
 import '../../transactions/domain/refs.dart';
@@ -24,6 +25,21 @@ DebtEntryDirection? debtDirectionFor(double? net) =>
       NetSide.iOwe => DebtEntryDirection.paid,
       NetSide.even => null,
     };
+
+/// The words quick create saves as a debt's description; shown wherever an
+/// entry (or its wallet transaction) has none.
+String debtAutoTitle(
+  AppLocalizations l, {
+  required DebtEntryDirection direction,
+  required bool isRepayment,
+  required String name,
+}) {
+  final paid = direction == DebtEntryDirection.paid;
+  if (isRepayment) {
+    return paid ? l.debtRepayDescPay(name) : l.debtRepayDescReceive(name);
+  }
+  return paid ? l.debtOriginLend(name) : l.debtOriginBorrow(name);
+}
 
 String debtPersonPath(String key) =>
     '/personal-debts/people/${Uri.encodeComponent(key)}';

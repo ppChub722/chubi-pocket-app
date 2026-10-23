@@ -388,9 +388,58 @@ class ProjectsRepository {
     ),
   );
 
+  /// The people a bill names, as members (non-members are added); ids come
+  /// back in [people]'s order. Each person is a BillPerson json.
+  Future<({List<String> memberIds, EventPatch patch})> resolvePeople(
+    String projectId,
+    List<Map<String, dynamic>> people,
+  ) => _call(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/projects/$projectId/people',
+      data: <String, dynamic>{'people': people},
+    );
+    return (
+      memberIds: [
+        for (final id in (res.data!['member_ids'] as List)) id as String,
+      ],
+      patch: EventPatch.fromJson(res.data!),
+    );
+  });
+
+  /// "ลงบัญชีของฉัน" on an existing row: [unlink] keeps my rows in my books
+  /// without the link; [link] takes the remembered ones back. `relinked` =
+  /// the kinds of [link] that found any (the rest are for the caller to make).
+  Future<({List<String> relinked, EventPatch patch})> setMyBooks(
+    String projectId,
+    String ptId, {
+    List<String> link = const [],
+    List<String> unlink = const [],
+  }) => _call(() async {
+    final res = await _client.dio.put<Map<String, dynamic>>(
+      '/projects/$projectId/project-transactions/$ptId/my-books',
+      data: <String, dynamic>{'link': link, 'unlink': unlink},
+    );
+    return (
+      relinked: [
+        for (final k in (res.data!['relinked'] as List? ?? const []))
+          k as String,
+      ],
+      patch: EventPatch.fromJson(res.data!),
+    );
+  });
+
+  Future<EventSettle> settle(String projectId) => _call(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>(
+      '/projects/$projectId/settle',
+    );
+    return EventSettle.fromJson(res.data!);
+  });
+
+  /// [transactionMemberId]: paybacks only (who paid back).
   Future<EventPatch> updateTransaction(
     String projectId,
     String ptId, {
+    String? transactionMemberId,
     double? amount,
     String? date,
     String? description,
@@ -403,6 +452,7 @@ class ProjectsRepository {
     _client.dio.put<Map<String, dynamic>>(
       '/projects/$projectId/project-transactions/$ptId',
       data: <String, dynamic>{
+        'transaction_member_id': ?transactionMemberId,
         'amount': ?amount,
         'date': ?date,
         'description': ?description,

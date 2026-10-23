@@ -197,10 +197,11 @@ class _MainShellState extends State<MainShell>
   }
 
   void _openQuickCreate(BuildContext context) {
-    showQuickCreateSheet(
-      context,
-      preset: _quickCreate.active() ?? QuickCreatePreset.none,
-    );
+    final preset = _quickCreate.active() ?? QuickCreatePreset.none;
+    // A page with its own create action (an event's "เพิ่มบิล") runs it.
+    final own = preset.onCreate;
+    if (own != null) return own();
+    showQuickCreateSheet(context, preset: preset);
   }
 
   Widget _shell(BuildContext context) {
@@ -253,6 +254,9 @@ class _MainShellState extends State<MainShell>
                     widget.navigationShell.currentIndex == _moreBranch,
                 onTabSelected: _goBranch,
                 addMode: _quickCreate.preset.mode,
+                addWord: _quickCreate.preset.word,
+                addColor: _quickCreate.preset.color,
+                addIcon: _quickCreate.preset.icon,
                 onAddPressed: () => _openQuickCreate(context),
                 onMorePressed: () => _goBranch(_moreBranch),
               ),

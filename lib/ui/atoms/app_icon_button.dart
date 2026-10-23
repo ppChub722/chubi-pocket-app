@@ -63,6 +63,15 @@ class AppIconButton extends StatelessWidget {
     Key? key,
   }) = _BareIconButton;
 
+  /// Filled in primary with the icon in onPrimary (a row's ✓).
+  const factory AppIconButton.filled({
+    required IconData icon,
+    required VoidCallback? onPressed,
+    String? tooltip,
+    double? size,
+    Key? key,
+  }) = _FilledIconButton;
+
   const AppIconButton._bare({
     this.color,
     required this.icon,
@@ -282,6 +291,45 @@ class AppIconButton extends StatelessWidget {
     );
     if (tooltip != null) chip = Tooltip(message: tooltip!, child: chip);
     return chip;
+  }
+}
+
+class _FilledIconButton extends AppIconButton {
+  const _FilledIconButton({
+    required super.icon,
+    required super.onPressed,
+    super.tooltip,
+    super.size,
+    super.key,
+  }) : super._bare();
+
+  @override
+  Widget build(BuildContext context) {
+    final size = AppIconButton.resolveSize(context, this.size);
+    final scheme = Theme.of(context).colorScheme;
+    final enabled = onPressed != null;
+    Widget button = Material(
+      color: enabled
+          ? scheme.primary
+          : scheme.onSurface.withValues(alpha: 0.12),
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onPressed,
+        child: SizedBox.square(
+          dimension: size,
+          child: Icon(
+            icon,
+            size: size * 0.6,
+            color: enabled
+                ? scheme.onPrimary
+                : scheme.onSurface.withValues(alpha: 0.38),
+          ),
+        ),
+      ),
+    );
+    if (tooltip != null) button = Tooltip(message: tooltip!, child: button);
+    return Semantics(button: true, child: button);
   }
 }
 

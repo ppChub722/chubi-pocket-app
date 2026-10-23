@@ -71,7 +71,12 @@ class _TabbedDetailDemoState extends State<_TabbedDetailDemo> {
     ],
     children: [
       for (var i = 0; i < n; i++)
-        ListRow(title: '$prefix ${i + 1}', subtitle: '12 Oct', onTap: () {}),
+        AppListRow(
+          leading: const AppAvatar.icon(AppIcons.debt, size: 36),
+          title: '$prefix ${i + 1}',
+          line2: const ListRowLine(parts: ['12 Oct']),
+          onTap: () {},
+        ),
     ],
   );
 

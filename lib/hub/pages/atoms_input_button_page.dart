@@ -203,6 +203,43 @@ class _ButtonPageState extends State<_ButtonPage> {
           ),
         ),
         HubDemo(
+          title: 'AppIconButton.filled',
+          note:
+              'Primary fill, icon in onPrimary: the ✓ at the end of a list '
+              'row (ListRowAction.button). Null onPressed = disabled.',
+          child: Wrap(
+            spacing: AppSpacing.lg,
+            runSpacing: AppSpacing.md,
+            children: [
+              HubCell(
+                caption: 'chip size',
+                child: AppIconButton.filled(
+                  icon: AppIcons.check,
+                  tooltip: 'ยืนยัน',
+                  size: ChipSize.chip.heightOf(context),
+                  onPressed: () {},
+                ),
+              ),
+              HubCell(
+                caption: 'control size',
+                child: AppIconButton.filled(
+                  icon: AppIcons.check,
+                  tooltip: 'ยืนยัน',
+                  onPressed: () {},
+                ),
+              ),
+              HubCell(
+                caption: 'disabled',
+                child: AppIconButton.filled(
+                  icon: AppIcons.check,
+                  size: ChipSize.chip.heightOf(context),
+                  onPressed: null,
+                ),
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
           title: 'Shell top-right buttons',
           note:
               "The top bar's chips, normal and \"current page\" (the page they "

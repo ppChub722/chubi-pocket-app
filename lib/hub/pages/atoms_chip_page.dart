@@ -10,6 +10,46 @@ Widget buildChipPage(BuildContext context) => Column(
   crossAxisAlignment: CrossAxisAlignment.stretch,
   children: [
     HubDemo(
+      title: 'AppChip.bare — the wallet on a list row',
+      note:
+          'No fill, no border, no side padding: a bigger icon and the label '
+          'in color (w600). Without a color it is muted. walletRowChip '
+          'builds it from a wallet\'s own colour.',
+      child: Wrap(
+        spacing: AppSpacing.lg,
+        runSpacing: AppSpacing.sm,
+        children: [
+          AppChip(
+            label: 'เงินในธนาคาร',
+            icon: AppIcons.bank,
+            color: Theme.of(context).colorScheme.primary,
+            size: ChipSize.mini,
+            bare: true,
+          ),
+          AppChip(
+            label: 'เงินเงินเงิน',
+            icon: AppIcons.cash,
+            color: Theme.of(context).extension<AppColors>()!.expense,
+            size: ChipSize.mini,
+            bare: true,
+          ),
+          const AppChip(
+            label: 'ไม่ระบุกระเป๋า',
+            icon: AppIcons.noWallet,
+            size: ChipSize.mini,
+            bare: true,
+          ),
+          AppChip(
+            label: 'chip size',
+            icon: AppIcons.savings,
+            color: Theme.of(context).extension<AppColors>()!.income,
+            size: ChipSize.chip,
+            bare: true,
+          ),
+        ],
+      ),
+    ),
+    HubDemo(
       title: 'StatusChip — one tone per status, app-wide',
       note:
           'A status is a filled chip with a dot (owner 2026-10-11): pass a '

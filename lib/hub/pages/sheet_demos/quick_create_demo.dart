@@ -19,6 +19,11 @@ Widget buildQuickCreateDemo(BuildContext context) => Wrap(
       onPressed: () => _open(context, _Variant.draft),
     ),
     AppButton(
+      label: 'Edit (delete button bottom left)',
+      variant: AppButtonVariant.outlined,
+      onPressed: () => _open(context, _Variant.edit),
+    ),
+    AppButton(
       label: 'Single save button',
       variant: AppButtonVariant.outlined,
       onPressed: () => _open(context, _Variant.single),
@@ -31,7 +36,7 @@ Widget buildQuickCreateDemo(BuildContext context) => Wrap(
   ],
 );
 
-enum _Variant { create, draft, single, occurrence }
+enum _Variant { create, draft, edit, single, occurrence }
 
 Future<void> _open(BuildContext context, _Variant variant) =>
     showModalBottomSheet<bool>(
@@ -102,6 +107,7 @@ class _DemoSheetState extends State<_DemoSheet> {
       title: switch (v) {
         _Variant.create => 'New transaction',
         _Variant.draft => 'Edit draft',
+        _Variant.edit => 'Edit bill',
         _Variant.single => 'New scheduled entry',
         _Variant.occurrence => 'Netflix ประจำเดือน พ.ย. 2026',
       },
@@ -142,14 +148,20 @@ class _DemoSheetState extends State<_DemoSheet> {
       saveLabel: switch (v) {
         _Variant.create => 'Save',
         _Variant.draft => 'Confirm this one',
-        _Variant.single || _Variant.occurrence => 'Save',
+        _Variant.edit || _Variant.single || _Variant.occurrence => 'Save',
       },
-      draftLabel: v == _Variant.single || v == _Variant.occurrence
+      draftLabel:
+          v == _Variant.edit ||
+              v == _Variant.single ||
+              v == _Variant.occurrence
           ? null
           : 'Save as draft',
       closeTooltip: 'Close',
       deleteTooltip: 'Delete',
-      onDelete: v == _Variant.draft ? () => Navigator.of(context).pop() : null,
+      deleteLabel: v == _Variant.edit ? 'Delete' : null,
+      onDelete: v == _Variant.draft || v == _Variant.edit
+          ? () => Navigator.of(context).pop()
+          : null,
       saving: _saving,
       dirty: !_empty,
       onCloseBlocked: _ask,

@@ -579,7 +579,7 @@ void main() {
         ),
       ];
       await pump(t, const RecurringHomePage());
-      expect(find.byType(OccurrenceRow), findsNWidgets(3));
+      expect(find.byType(AppListRow), findsNWidgets(3));
       expect(find.byType(TodayLine), findsOneWidget);
       expect(find.text('This month'), findsOneWidget);
       expect(find.text('3 items'), findsOneWidget);
@@ -616,7 +616,7 @@ void main() {
       expect(find.byType(MonthCalendar), findsOneWidget);
       // Today is picked: its occurrence is listed under the grid.
       expect(find.byKey(ValueKey('calendarDot:${now.day}')), findsOneWidget);
-      expect(find.byType(OccurrenceRow), findsOneWidget);
+      expect(find.byType(AppListRow), findsOneWidget);
     });
 
     testWidgets('search filters the rules on the device, no request', (
@@ -706,7 +706,7 @@ void main() {
       expect(find.text('Past'), findsOneWidget);
       expect(find.text('Upcoming'), findsOneWidget);
       // Past tab: the produced occurrence as a row.
-      expect(find.byType(OccurrenceRow), findsOneWidget);
+      expect(find.byType(AppListRow), findsOneWidget);
       expect(find.byType(ErrorView), findsNothing);
     });
 
@@ -716,7 +716,7 @@ void main() {
       await settle(t);
       // The first upcoming page rode along with the open call.
       expect(repo.calls, ['get:r1']);
-      expect(find.byType(OccurrenceRow), findsNWidgets(3));
+      expect(find.byType(AppListRow), findsNWidgets(3));
       expect(find.text('Next'), findsOneWidget);
       expect(find.text('Edited'), findsOneWidget);
       // Page mode (a rule with an end): no year / month buttons.

@@ -265,7 +265,7 @@ void main() {
     final ring = find.byType(HeroRing);
     expect(t.widget<HeroRing>(ring).value, 0.65);
     expect(
-      find.descendant(of: ring, matching: find.text('Saved 65%')),
+      find.descendant(of: ring, matching: find.text('Saved')),
       findsOne,
     );
     expect(
@@ -273,7 +273,7 @@ void main() {
       findsOne,
     );
     expect(
-      find.descendant(of: ring, matching: find.text('of \$80,000')),
+      find.descendant(of: ring, matching: find.text('Goal \$80,000')),
       findsOne,
     );
     final facts = find.byType(HeroFactList);
@@ -305,19 +305,16 @@ void main() {
     double y(String name) => t.getTopLeft(find.text(name)).dy;
     expect(y('ทริปญี่ปุ่น'), lessThan(y('บ้าน')));
     expect(y('บ้าน'), lessThan(y('รถใหม่')));
-    // A short row: "Short ฿x", the month line, "saved / target | %", the ETA.
-    expect(find.text('Short \$2,500'), findsOneWidget);
-    // (both short rows share the fixture's saved and month_plan)
-    expect(find.text('This month \$3,000 / \$5,500'), findsNWidgets(2));
-    expect(find.text('\$52,000 / \$80,000 | 65%'), findsNWidgets(2));
-    expect(find.text('\$30,000 / \$80,000 | 65%'), findsOneWidget);
-    expect(find.text('Goal May 2027 | 2 months late'), findsOneWidget);
-    // A done row: the tick, the month saved.
-    expect(find.text('Done ✓'), findsOneWidget);
-    expect(find.text('This month \$3,000'), findsOneWidget);
-    // "0 months late" never shows.
-    expect(find.textContaining('0 months late'), findsNothing);
-    expect(find.text('Goal May 2027'), findsWidgets);
+    // Each row: the deadline, saved over the target, % on the bar. Only the
+    // behind goals get the tag; no month numbers, no "should have by now".
+    expect(find.text('By Mar 15, 2027'), findsNWidgets(3));
+    expect(find.text('Goal \$80,000'), findsNWidgets(4)); // 3 rows + the ring
+    expect(find.text('65%'), findsNWidgets(3));
+    expect(find.text('Behind plan'), findsNWidgets(2));
+    expect(find.text('\$30,000'), findsOneWidget);
+    expect(find.textContaining('months late'), findsNothing);
+    expect(find.textContaining('This month'), findsNothing);
+    expect(find.textContaining('Should have'), findsNothing);
     expect(find.text('Add saving goal'), findsOneWidget);
   });
 
@@ -348,7 +345,7 @@ void main() {
     expect(find.text('รถใหม่'), findsOneWidget);
     expect(find.text('ทริปญี่ปุ่น'), findsNothing);
     expect(find.text('เงินเก็บให้ลูก'), findsNothing);
-    await tapChip('Short');
+    await tapChip('Saving');
     expect(find.text('ทริปญี่ปุ่น'), findsOneWidget);
     expect(find.text('รถใหม่'), findsNothing);
     await tapChip('No deadline');
@@ -368,9 +365,9 @@ void main() {
     // no "saved / target", no ETA.
     final row = find.ancestor(
       of: find.text('เงินเก็บให้ลูก'),
-      matching: find.byType(SavingGoalRow),
+      matching: find.byType(AppListRow),
     );
-    expect(t.widget<SavingGoalRow>(row).value, isNull);
+    expect(t.widget<AppListRow>(row).footer, isNull);
     expect(
       find.descendant(of: row, matching: find.text('Ongoing')),
       findsOneWidget,
@@ -557,7 +554,7 @@ void main() {
     await pump(t, const SavingGoalDetailPage(id: 'g1'));
     await t.tap(find.text('Saving entries'));
     await t.pumpAndSettle();
-    expect(find.byType(SavingTxRow), findsNWidgets(2));
+    expect(find.byType(AppListRow), findsNWidgets(2));
     // An automatic entry carries the tag, with its wallet.
     expect(find.text('Auto'), findsWidgets);
     expect(find.text('กสิกร'), findsWidgets);

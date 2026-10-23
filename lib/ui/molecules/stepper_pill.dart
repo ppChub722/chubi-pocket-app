@@ -21,6 +21,7 @@ class StepperPill extends StatelessWidget {
     this.prevTooltip,
     this.nextTooltip,
     this.size,
+    this.caret = true,
     super.key,
   }) : _unit = null,
        _value = null,
@@ -35,6 +36,7 @@ class StepperPill extends StatelessWidget {
     DateTime? last,
     this.onTap,
     this.size,
+    this.caret = true,
     super.key,
   }) : _unit = StepperUnit.month,
        _value = value,
@@ -55,6 +57,7 @@ class StepperPill extends StatelessWidget {
     DateTime? last,
     this.onTap,
     this.size,
+    this.caret = true,
     super.key,
   }) : _unit = unit,
        _value = value,
@@ -75,6 +78,9 @@ class StepperPill extends StatelessWidget {
   final String? nextTooltip;
 
   final ChipSize? size;
+
+  /// False = no ▾ after a tappable label (it still opens the picker).
+  final bool caret;
 
   final StepperUnit? _unit;
   final DateTime? _value;
@@ -169,8 +175,9 @@ class StepperPill extends StatelessWidget {
     String? tapTooltip,
   }) {
     final scheme = Theme.of(context).colorScheme;
-    // Inside a hero the pill takes the card's colors (a quiet fill, the card's
-    // line, accent arrows) and sits flat like the other chips there.
+    // Inside a hero the pill takes the card's colors (the inset fill the
+    // boxes in the card use — white on light — the card's line, accent
+    // arrows) and sits flat like the other chips there.
     final hero = HeroColors.maybeOf(context);
     final arrows = onPrev != null || onNext != null;
     final chipSize = size ?? ChipSizeScope.of(context) ?? ChipSize.control;
@@ -218,7 +225,7 @@ class StepperPill extends StatelessWidget {
                 ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
-            if (onTap != null)
+            if (onTap != null && caret)
               Icon(
                 AppIcons.dropdown,
                 size: chipSize.icon + 4,
@@ -233,7 +240,7 @@ class StepperPill extends StatelessWidget {
     }
 
     return Material(
-      color: hero?.soft ?? scheme.surfaceContainerHigh,
+      color: hero?.insetOrSoft ?? scheme.surfaceContainerHigh,
       elevation: hero == null ? 1.5 : 0,
       shadowColor: scheme.shadow.withValues(alpha: 0.2),
       shape: StadiumBorder(

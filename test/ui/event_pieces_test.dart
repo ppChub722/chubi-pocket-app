@@ -251,14 +251,16 @@ void main() {
       expect(childTicks, 1);
     });
 
-    testWidgets('geometry: bill row (no children) = TxRow height', (t) async {
+    testWidgets('geometry: bill row (no children) = AppListRow height', (
+      t,
+    ) async {
       final tx = await height(
         t,
-        const TxRow(
+        const AppListRow(
           leading: SizedBox(width: 36, height: 36),
           title: 'Lunch',
-          amount: -120,
-          category: 'Food',
+          line2: ListRowLine(parts: ['Food']),
+          trailing: ListRowTrailing.value(Text('฿120')),
         ),
       );
       final bill = await height(

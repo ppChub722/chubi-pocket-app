@@ -175,7 +175,8 @@ class RecurringStats extends Equatable {
     series: [
       for (final s in (json['series'] as List?) ?? const [])
         (
-          slot: parseYmd((s as Map<String, dynamic>)['slot'] as String?) ??
+          slot:
+              parseYmd((s as Map<String, dynamic>)['slot'] as String?) ??
               DateTime.now(),
           amount: (s['amount'] as num?)?.toDouble() ?? 0,
         ),

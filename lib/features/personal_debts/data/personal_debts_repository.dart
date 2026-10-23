@@ -63,6 +63,7 @@ class PersonalDebtsRepository {
     List<String>? markPaidIds,
     String? personName,
     String? billId,
+    DateTime? dueDate,
   }) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
@@ -84,6 +85,7 @@ class PersonalDebtsRepository {
           // The event resolve sheet's "as debt" (0.4.0-3 B3): the bill it
           // settles a share of; the debt keeps it as its source.
           'bill_id': ?billId,
+          if (dueDate != null) 'due_date': debtDateWire(dueDate),
         },
       );
       return DebtEntryWriteResult.fromJson(res.data!);
@@ -94,19 +96,20 @@ class PersonalDebtsRepository {
 
   /// `POST /personal-debts/people/{key}/repayments` (createDebtRepayment): a
   /// repayment = ONE transaction tied to the person (expense "Debt Paid" /
-  /// income "Debt Received"), not a debt row (owner 2026-10-21). The BE takes
-  /// the wallet as optional; quick create always sends one.
+  /// income "Debt Received"), not a debt row (owner 2026-10-21). No wallet =
+  /// the transaction moves no balance.
   Future<DebtRepaymentResult> createRepayment(
     String key, {
     required DebtRepaymentKind kind,
     required double amount,
-    required String accountId,
+    String? accountId,
     DateTime? date,
     String? description,
     String? note,
     List<String>? tagIds,
     List<String>? markPaidIds,
     String? personName,
+    String? billId,
   }) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
@@ -114,7 +117,7 @@ class PersonalDebtsRepository {
         data: <String, dynamic>{
           'kind': kind.wire,
           'amount': amount,
-          'account_id': accountId,
+          'account_id': ?accountId,
           if (date != null) 'date': debtDateWire(date),
           'description': ?description,
           'note': ?note,
@@ -122,6 +125,7 @@ class PersonalDebtsRepository {
           if (markPaidIds != null && markPaidIds.isNotEmpty)
             'mark_paid_ids': markPaidIds,
           'person_name': ?personName,
+          'bill_id': ?billId,
         },
       );
       return DebtRepaymentResult.fromJson(res.data!);
@@ -243,10 +247,19 @@ class DebtEntryUpdate {
     this.tagIds,
     this.key,
     this.personName,
+    this.dueDate,
+    this.clearDueDate = false,
   }) : assert(
          !clearAccount || accountId == null,
          'clearAccount and accountId together',
+       ),
+       assert(
+         !clearDueDate || dueDate == null,
+         'clearDueDate and dueDate together',
        );
+
+  final DateTime? dueDate;
+  final bool clearDueDate;
 
   final DebtEntryDirection? direction;
   final double? amount;
@@ -275,5 +288,9 @@ class DebtEntryUpdate {
     'tag_ids': ?tagIds,
     'key': ?key,
     'person_name': ?personName,
+    if (clearDueDate)
+      'due_date': null
+    else if (dueDate != null)
+      'due_date': debtDateWire(dueDate!),
   };
 }

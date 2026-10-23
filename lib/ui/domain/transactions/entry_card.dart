@@ -16,6 +16,8 @@ class EntryCard extends StatelessWidget {
     this.toWalletRow,
     this.flowRow,
     this.titleHint,
+    this.titleReadOnly = false,
+    this.titleLabel,
     this.showTitle = true,
     this.onTypeChanged,
     this.onPickDate,
@@ -55,6 +57,11 @@ class EntryCard extends StatelessWidget {
   final Widget? flowRow;
 
   final String? titleHint;
+
+  /// The title is app-made text (a debt's "ที่มา"), not typed; see
+  /// [TransactionHeroCard.titleReadOnly].
+  final bool titleReadOnly;
+  final String? titleLabel;
   final bool showTitle;
 
   final Set<EntryField> missing;
@@ -119,6 +126,8 @@ class EntryCard extends StatelessWidget {
       amountNote: amountNote,
       amountLabel: amountLabel,
       titleHint: titleHint,
+      titleReadOnly: titleReadOnly,
+      titleLabel: titleLabel,
       showTitle: showTitle,
       debt: debt,
       repay: repay,

@@ -35,6 +35,8 @@ class _EventsPageState extends State<_EventsPage> {
   bool _billMarked = false;
   bool _childAMarked = true;
   bool _childBMarked = false;
+  bool _bookDebt = true;
+  bool _bookTx = false;
   String? _lastTap;
 
   void _tapped(String what) => setState(() => _lastTap = what);
@@ -111,43 +113,67 @@ class _EventsPageState extends State<_EventsPage> {
         HubDemo(
           title: 'EventListRow — the 0.4.0 events list row',
           note:
-              'Icon, name, ONE muted line (dates | spent | my share) and my '
-              'position at the right: รอรับ (green, +) / รอจ่าย (red, −) with '
-              'a small caption, a plain ฿0 when even. dimmed = ended / '
-              'archived. The list page puts these on hairlines.',
+              'Built on AppListRow. Icon, name + a mini 👥 N chip (members) + '
+              'an optional status chip (เกินงบ), meta on line 2 (dates | my '
+              'share) and my '
+              'position at the right: ได้คืน (green, +) / ต้องจ่าย (red, −); '
+              'settled shows my share with เคลียร์แล้ว. footer = a full-width '
+              'budget bar (ProgressRow). dimmed = ended and settled. The list '
+              'page puts these in a SectionCard per status.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               EventListRow(
                 name: 'ทริปญี่ปุ่น',
                 iconCode: _trip,
-                subtitle: '1–9 พ.ย. | ใช้ไป ฿42,800 | ส่วนฉัน ฿10,700',
+                members: 4,
+                meta: const ['1–9 พ.ย.', 'ส่วนฉัน ฿10,700'],
                 amount: 8250,
                 tone: MoneyTone.income,
-                caption: 'รอรับ',
+                caption: 'ได้คืน',
+                footer: const ProgressRow(
+                  value: 0.86,
+                  height: 6,
+                  label: 'ใช้ไป ฿42,800 จากงบ ฿50,000',
+                  trailing: 'เหลือ ฿7,200',
+                ),
                 onTap: () => _tapped('row: owed'),
               ),
               const AppDivider.row(),
               EventListRow(
                 name: 'งานสัมมนา',
                 iconCode: _work,
-                subtitle: '12–13 ก.ย. | ใช้ไป ฿11,800 | ส่วนฉัน ฿3,000',
+                members: 6,
+                status: const ListRowChip('เกินงบ', tone: Tone.danger),
+                meta: const ['12–13 ก.ย.', 'ส่วนฉัน ฿3,000'],
                 amount: 420,
                 tone: MoneyTone.expense,
-                caption: 'รอจ่าย',
+                caption: 'ต้องจ่าย',
+                footer: const ProgressRow(
+                  value: 1.18,
+                  height: 6,
+                  label: 'ใช้ไป ฿11,800 จากงบ ฿10,000',
+                  trailing: 'เกินงบ ฿1,800',
+                ),
                 onTap: () => _tapped('row: owe'),
               ),
               const AppDivider.row(),
               EventListRow(
                 name: 'ปาร์ตี้ปีใหม่',
                 iconCode: _party,
-                subtitle: '10 ต.ค. | ใช้ไป ฿3,589 | ส่วนฉัน ฿3,589',
+                members: 3,
+                meta: const ['10 ต.ค.'],
+                amount: 3589,
+                caption: 'เคลียร์แล้ว',
                 onTap: () => _tapped('row: even'),
               ),
               const AppDivider.row(),
               const EventListRow(
                 name: 'ทริปภูเก็ต',
-                subtitle: '2–4 ส.ค. | ใช้ไป ฿9,000 | ส่วนฉัน ฿3,000',
+                members: 3,
+                meta: ['2–4 ส.ค.'],
+                amount: 3000,
+                caption: 'เคลียร์แล้ว',
                 dimmed: true,
               ),
             ],
@@ -208,7 +234,7 @@ class _EventsPageState extends State<_EventsPage> {
         HubDemo(
           title: 'EventBillRow — a board bill',
           note:
-              'TxRow geometry. Leading square tick = the resolve STATE '
+              'AppListRow geometry. Leading square tick = the resolve STATE '
               '(SelectCheck look, not a selection); a marked row fades. '
               'Event tags ride on line 1 as mini chips, each its own tap '
               '(onTagTap gets the chip context, or tagAnchorBuilder wraps it '
@@ -325,6 +351,99 @@ class _EventsPageState extends State<_EventsPage> {
                 onTickTap: () => _tapped('never fires'),
               ),
             ],
+          ),
+        ),
+        HubDemo(
+          title: 'EventBillRow(tick: false) — the event book',
+          note:
+              'The event book (0.4.0-3): no tick boxes. payerVerb makes line '
+              '2 "**ฝน** จ่าย"; badge marks my part that isn\'t in my books '
+              '(ยังไม่ลงบัญชี). A payback is a row of its own: leading ⇄, '
+              '"from → to", amountColor = the planning colour.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              EventBillRow(
+                tick: false,
+                title: 'กาแฟดอยช้าง',
+                amount: -640,
+                payerName: 'ฝน',
+                payerVerb: 'จ่าย',
+                onTap: () => _tapped('book bill'),
+                children: [
+                  EventBillChildRow(
+                    tick: false,
+                    name: 'ฉัน',
+                    amount: 160,
+                    badge: const AppChip(
+                      label: 'ยังไม่ลงบัญชี',
+                      tone: AppChipTone.warning,
+                      size: ChipSize.mini,
+                    ),
+                    onTap: () => _tapped('my part'),
+                  ),
+                  EventBillChildRow(
+                    tick: false,
+                    name: 'ต้น',
+                    amount: 160,
+                    onTap: () => _tapped('their part'),
+                  ),
+                ],
+              ),
+              const AppDivider.row(),
+              EventBillRow(
+                tick: false,
+                leading: IconTile(
+                  icon: AppIcons.transfer,
+                  color: ModuleColors.of(context).planning,
+                  size: 28,
+                ),
+                title: 'ต้น → ฉัน',
+                amount: 300,
+                amountColor: ModuleColors.of(context).planning,
+                caption: 'จ่ายคืน | จดโดย ฉัน',
+                onTap: () => _tapped('payback'),
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'BookOptionCard — where my part of a bill goes',
+          note:
+              'The event bill sheet\'s "ลงบัญชีของฉันด้วย": one card per '
+              'book (หนี้ / รายการ). Ticked = primary border + wash, and the '
+              'child (person, result box, pickers) opens under it.',
+          child: StatefulBuilder(
+            builder: (context, set) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                BookOptionCard(
+                  icon: AppIcons.debt,
+                  title: 'หนี้',
+                  subtitle: 'ฉันค้าง ฝน',
+                  amount: const MoneyText(160),
+                  checked: _bookDebt,
+                  onChanged: (v) => set(() => _bookDebt = v),
+                  child: const DebtResultBox(
+                    nowLabel: 'ฝน ตอนนี้',
+                    before: 'เจ้าหนี้ ฿340',
+                    afterLabel: 'หลังบันทึก',
+                    after: 'เจ้าหนี้ ฿500',
+                    walletLabel: 'กระเป๋า',
+                    walletValue: 'ไม่เปลี่ยน',
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                BookOptionCard(
+                  icon: AppIcons.receipt,
+                  title: 'รายการ',
+                  subtitle: 'รายจ่ายส่วนของฉัน',
+                  amount: const MoneyText(160),
+                  checked: _bookTx,
+                  onChanged: (v) => set(() => _bookTx = v),
+                ),
+              ],
+            ),
           ),
         ),
         HubDemo(

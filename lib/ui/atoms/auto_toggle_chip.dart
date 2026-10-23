@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../tokens/chip_size.dart';
+import '../tokens/app/app_icons.dart';
 
-/// The "A" toggle after an amount that can fill itself (owner 2026-10-21):
-/// on = the row takes the remainder of the bill (a soft primary chip);
-/// off = the person typed their own amount (an outlined grey chip). Typing in
-/// the amount turns it off; tapping it turns it back on.
+/// The auto toggle after an amount that can fill itself (owner 2026-10-21;
+/// the auto icon, the same everywhere, 2026-10-23): on = the row takes the
+/// remainder of the bill (a soft primary chip); off = the person typed their
+/// own amount (an outlined grey chip). Typing in the amount turns it off;
+/// tapping it turns it back on. [label] is the screen-reader word.
 class AutoToggleChip extends StatelessWidget {
   const AutoToggleChip({
     required this.value,
@@ -51,14 +52,10 @@ class AutoToggleChip extends StatelessWidget {
               color: on ? scheme.primary : scheme.outlineVariant,
             ),
           ),
-          child: Text(
-            label,
-            style: ChipSize.chip
-                .textStyle(context)
-                ?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: on ? scheme.primary : scheme.onSurfaceVariant,
-                ),
+          child: Icon(
+            AppIcons.auto,
+            size: 16,
+            color: on ? scheme.primary : scheme.onSurfaceVariant,
           ),
         ),
       ),

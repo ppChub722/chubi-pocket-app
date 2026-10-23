@@ -591,7 +591,7 @@ class MyAvatar extends StatelessWidget {
 }
 
 /// My row: [label] ("ส่วนของฉัน", "ฉันจ่ายเอง (จากกระเป๋า)", "ฉัน"), the
-/// amount, and the auto toggle ([card]: the "A" chip; typing turns it off).
+/// amount, and the auto toggle (typing turns it off).
 class SplitMeRow extends StatelessWidget {
   const SplitMeRow({
     required this.label,
@@ -619,19 +619,13 @@ class SplitMeRow extends StatelessWidget {
       amount: card
           ? ShareAmountField(value: amount, auto: auto, onChanged: onChanged)
           : _AmountBox(value: amount, onChanged: onChanged),
+      // The same auto toggle in and out of the card (owner 2026-10-23).
       trailing: toggle == null
           ? null
-          : card
-          ? AutoToggleChip(
+          : AutoToggleChip(
               value: auto,
               tooltip: l.txSplitAuto,
               onChanged: toggle,
-            )
-          : SplitRowAction(
-              icon: AppIcons.auto,
-              tooltip: l.txSplitAuto,
-              selected: auto,
-              onTap: () => toggle(!auto),
             ),
     );
   }

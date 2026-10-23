@@ -981,67 +981,50 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     final title = (i.description ?? '').isNotEmpty
         ? i.description!
         : (i.category?.name ?? i.event?.name ?? '—');
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final walletCode = i.account?.iconCode;
-    final walletFill = walletCode?.background != null
-        ? walletCode!.bgColorFor(palette)
-        : null;
-    final walletOnFill =
-        walletFill != null && (walletCode?.iconColors.isNotEmpty ?? false)
-        ? resolveColor(walletCode!.iconColors.first, palette)
-        : null;
-    return TxRow(
+    final seq = i.recurringSeq;
+    return AppListRow(
       leading: IconDisplay(
         type: IconType.category,
         size: 36,
         iconCode: i.category?.iconCode ?? i.event?.iconCode,
       ),
       title: title,
-      amount: -i.amount,
-      walletLabel: i.account?.name,
-      walletIcon: i.account == null
-          ? null
-          : IconDisplay(
-              type: IconType.account,
-              size: 14,
-              iconCode: i.account!.iconCode,
-            ),
-      walletFill: walletFill,
-      walletOnFill: walletOnFill,
-      walletGlyph: walletFill == null
-          ? null
-          : IconRegistry.get(
-              walletCode!.icon,
-              fallback: IconType.account.fallbackIcon,
-            ),
-      source: i.source == BudgetSource.normal
-          ? null
-          : AppChip(
-              label: i.event != null && i.source == BudgetSource.event
-                  ? '${l.bgSourceEvent} ${i.event!.name}'
-                  : budgetSourceLabel(l, i.source),
-              size: ChipSize.mini,
-              tone: AppChipTone.neutral,
-            ),
-      category: i.category != null && i.category!.name != title
-          ? i.category!.name
-          : null,
-      tags: [
-        for (final t in i.tags)
-          TextSpan(
-            text: '#$t',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: tagColor(i.tagIcons[t], palette),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+      titleChips: [
+        walletRowChip(
+          context,
+          name: i.account?.name ?? l.transactionFormAccountNone,
+          iconCode: i.account?.iconCode,
+        ),
       ],
-      recurring: i.recurringItemId != null,
-      progress: i.recurringSeq == null
-          ? null
-          : (i.recurringTotal == null
-                ? '${i.recurringSeq}'
-                : '${i.recurringSeq}/${i.recurringTotal}'),
+      line2: ListRowLine(
+        lead: i.source == BudgetSource.normal
+            ? null
+            : ListRowChip(
+                i.event != null && i.source == BudgetSource.event
+                    ? '${l.bgSourceEvent} ${i.event!.name}'
+                    : budgetSourceLabel(l, i.source),
+              ),
+        parts: [
+          if (i.category != null && i.category!.name != title)
+            i.category!.name,
+        ],
+        spans: [
+          for (final t in i.tags) tagSpan(context, t, iconCode: i.tagIcons[t]),
+        ],
+        glyphs: [
+          if (i.recurringItemId != null) const ListRowGlyph(AppIcons.recurring),
+          if (seq != null)
+            ListRowGlyph(
+              AppIcons.progress,
+              text: i.recurringTotal == null
+                  ? '$seq'
+                  : '$seq/${i.recurringTotal}',
+            ),
+        ],
+      ),
+      trailing: ListRowTrailing.value(
+        MoneyText(-i.amount, tone: MoneyTone.signed),
+      ),
       dimmed: i.expected,
       onTap: switch (i.kind) {
         'transaction' => () => openPage(context, '/transactions/${i.id}'),

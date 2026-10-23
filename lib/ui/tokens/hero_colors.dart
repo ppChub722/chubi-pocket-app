@@ -18,6 +18,7 @@ class HeroColors {
     required this.warning,
     required this.danger,
     required this.success,
+    this.inset,
   });
 
   factory HeroColors.from(ThemeData theme, Color? color) {
@@ -27,6 +28,7 @@ class HeroColors {
     final accent = ensureContrast(color ?? scheme.primary, surface);
     Color wash(double alpha) =>
         Color.alphaBlend(accent.withValues(alpha: alpha), surface);
+    final dark = theme.brightness == Brightness.dark;
     return HeroColors(
       accent: accent,
       soft: wash(0.09),
@@ -37,6 +39,9 @@ class HeroColors {
       warning: palette?.warning ?? scheme.tertiary,
       danger: palette?.error ?? scheme.error,
       success: palette?.success ?? scheme.primary,
+      inset: dark
+          ? Color.lerp(surface, Colors.black, 0.25)!.withValues(alpha: 0.85)
+          : surface.withValues(alpha: 0.9),
     );
   }
 
@@ -61,6 +66,12 @@ class HeroColors {
   final Color danger;
   final Color success;
 
+  /// A box set into the card, darker than it in dark mode (HeroInsetBox,
+  /// joined HeroTiles). Null = [soft].
+  final Color? inset;
+
+  Color get insetOrSoft => inset ?? soft;
+
   /// The set of the hero around [context]; null outside one.
   static HeroColors? maybeOf(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<HeroColorScope>()?.colors;
@@ -76,7 +87,8 @@ class HeroColors {
       other.muted == muted &&
       other.warning == warning &&
       other.danger == danger &&
-      other.success == success;
+      other.success == success &&
+      other.inset == inset;
 
   @override
   int get hashCode => Object.hash(
@@ -89,6 +101,7 @@ class HeroColors {
     warning,
     danger,
     success,
+    inset,
   );
 }
 

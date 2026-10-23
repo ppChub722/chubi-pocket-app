@@ -22,8 +22,19 @@ class ProgressRow extends StatelessWidget {
     this.markerLabel,
     this.alertLabel,
     this.markerBubble,
+    this.fillLabel,
+    this.fillDot = false,
+    this.endLabel,
     super.key,
   });
+
+  /// A round dot on the end of the fill (in place of a [fillLabel] pill);
+  /// pair it with [marker] = the fill + [markerBubble] for the amount.
+  final bool fillDot;
+
+  /// Words at the bar's right end, on its line (the whole: "฿20,000"); the
+  /// bar is that much shorter.
+  final String? endLabel;
 
   final double value;
 
@@ -52,6 +63,10 @@ class ProgressRow extends StatelessWidget {
   /// date ฿1,300"). It stays inside the bar's width, its arrow on the line,
   /// and takes the place of the small labels.
   final String? markerBubble;
+
+  /// A pill in the bar's color sitting on the end of the fill ("31%"),
+  /// kept inside the bar's width.
+  final String? fillLabel;
 
   static (double used, double total) segments(double value, double? expected) {
     final used = value.clamp(0, 1).toDouble();
@@ -85,77 +100,107 @@ class ProgressRow extends StatelessWidget {
             ],
           )
         : _tickLabels(context, alertC);
+    final bar = ClipRRect(
+      borderRadius: BorderRadius.circular(height),
+      child: TweenAnimationBuilder<Offset>(
+        tween: Tween(begin: Offset.zero, end: Offset(used, total)),
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
+        builder: (_, v, _) => SizedBox(
+          height: height,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ColoredBox(color: hero?.track ?? scheme.surfaceContainerHighest),
+              if (v.dy > v.dx)
+                FractionallySizedBox(
+                  key: const ValueKey('progressExpected'),
+                  alignment: Alignment.centerLeft,
+                  widthFactor: v.dy,
+                  child: CustomPaint(painter: _StripePainter(barColor)),
+                ),
+              FractionallySizedBox(
+                key: const ValueKey('progressUsed'),
+                alignment: Alignment.centerLeft,
+                widthFactor: v.dx,
+                child: ColoredBox(color: barColor),
+              ),
+              if (ticks.isNotEmpty)
+                Positioned.fill(
+                  child: CustomPaint(
+                    key: const ValueKey('progressTicks'),
+                    painter: _TicksPainter(
+                      ticks,
+                      Colors.white.withValues(alpha: 0.85),
+                    ),
+                  ),
+                ),
+              if (marker != null)
+                Positioned.fill(
+                  child: CustomPaint(
+                    key: const ValueKey('progressMarker'),
+                    painter: _MarkerPainter(
+                      marker!.clamp(0, 1).toDouble(),
+                      bubble
+                          ? barColor
+                          : (hero?.text ?? scheme.onSurface).withValues(
+                              alpha: 0.55,
+                            ),
+                    ),
+                  ),
+                ),
+              if (alert != null)
+                Positioned.fill(
+                  child: CustomPaint(
+                    key: const ValueKey('progressAlert'),
+                    painter: _MarkerPainter(
+                      alert!.clamp(0, 1).toDouble(),
+                      alertC,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    final withFill = fillLabel != null || fillDot
+        ? _withFillLabel(context, bar, barColor, used)
+        : bar;
+    final end = endLabel;
+    final line = end == null
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [?labels, withFill],
+          )
+        : Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [?labels, withFill],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              // The size of a hero fact's value (the lines under it).
+              Text(
+                end,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: hero?.text ?? scheme.onSurface,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ],
+          );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        ?labels,
-        ClipRRect(
-          borderRadius: BorderRadius.circular(height),
-          child: TweenAnimationBuilder<Offset>(
-            tween: Tween(begin: Offset.zero, end: Offset(used, total)),
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeOutCubic,
-            builder: (_, v, _) => SizedBox(
-              height: height,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  ColoredBox(
-                    color: hero?.track ?? scheme.surfaceContainerHighest,
-                  ),
-                  if (v.dy > v.dx)
-                    FractionallySizedBox(
-                      key: const ValueKey('progressExpected'),
-                      alignment: Alignment.centerLeft,
-                      widthFactor: v.dy,
-                      child: CustomPaint(painter: _StripePainter(barColor)),
-                    ),
-                  FractionallySizedBox(
-                    key: const ValueKey('progressUsed'),
-                    alignment: Alignment.centerLeft,
-                    widthFactor: v.dx,
-                    child: ColoredBox(color: barColor),
-                  ),
-                  if (ticks.isNotEmpty)
-                    Positioned.fill(
-                      child: CustomPaint(
-                        key: const ValueKey('progressTicks'),
-                        painter: _TicksPainter(
-                          ticks,
-                          Colors.white.withValues(alpha: 0.85),
-                        ),
-                      ),
-                    ),
-                  if (marker != null)
-                    Positioned.fill(
-                      child: CustomPaint(
-                        key: const ValueKey('progressMarker'),
-                        painter: _MarkerPainter(
-                          marker!.clamp(0, 1).toDouble(),
-                          bubble
-                              ? barColor
-                              : (hero?.text ?? scheme.onSurface).withValues(
-                                  alpha: 0.55,
-                                ),
-                        ),
-                      ),
-                    ),
-                  if (alert != null)
-                    Positioned.fill(
-                      child: CustomPaint(
-                        key: const ValueKey('progressAlert'),
-                        painter: _MarkerPainter(
-                          alert!.clamp(0, 1).toDouble(),
-                          alertC,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ),
+        line,
         if (label != null || trailing != null) ...[
           const SizedBox(height: AppSpacing.xs),
           Row(
@@ -183,6 +228,108 @@ class ProgressRow extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+
+  /// The "31%" pill in [color] that sits on the end of the fill, with its
+  /// size.
+  static (Widget, double, double) fillPill(
+    BuildContext context,
+    String label,
+    Color color, {
+    double minHeight = 0,
+  }) {
+    final onFill =
+        ThemeData.estimateBrightnessForColor(color) == Brightness.dark
+        ? Colors.white
+        : Colors.black87;
+    final small = Theme.of(context).textTheme.labelSmall;
+    final style = small?.copyWith(
+      fontSize: (small.fontSize ?? 11) - 2,
+      fontWeight: FontWeight.w700,
+      color: onFill,
+      height: 1.2,
+    );
+    final tp = TextPainter(
+      text: TextSpan(text: label, style: style),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final w = tp.width + (AppSpacing.xs + AppSpacing.xxs) * 2;
+    final h = math.max(minHeight, tp.height + AppSpacing.xxs * 2);
+    final pill = Container(
+      key: const ValueKey('progressFillLabel'),
+      width: w,
+      height: h,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(h / 2),
+      ),
+      child: Text(label, maxLines: 1, style: style),
+    );
+    return (pill, w, h);
+  }
+
+  Widget _withFillLabel(
+    BuildContext context,
+    Widget bar,
+    Color barColor,
+    double used,
+  ) {
+    final dot = height * 2;
+    final (pill, pillW, pillH) = fillLabel != null
+        ? fillPill(context, fillLabel!, barColor, minHeight: height)
+        : (
+            Container(
+              key: const ValueKey('progressFillDot'),
+              width: dot,
+              height: dot,
+              decoration: BoxDecoration(
+                color: barColor,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.surface,
+                  width: 2,
+                ),
+              ),
+            ),
+            dot,
+            dot,
+          );
+    return LayoutBuilder(
+      builder: (context, box) {
+        final w = box.maxWidth;
+        return SizedBox(
+          height: pillH,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(
+                left: 0,
+                right: 0,
+                top: (pillH - height) / 2,
+                child: bar,
+              ),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: used),
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOutCubic,
+                builder: (_, v, child) => Positioned(
+                  left: (v * w - pillW / 2).clamp(
+                    0.0,
+                    math.max(0.0, w - pillW),
+                  ),
+                  top: 0,
+                  child: child!,
+                ),
+                child: pill,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

@@ -151,47 +151,47 @@ class EventTagsSheet extends StatelessWidget {
               EmptyView.compact(message: labels.empty)
             else
               for (final t in tags)
-                ListRow(
+                AppListRow(
                   leading: IconDisplay(
                     type: IconType.tag,
                     size: 36,
                     iconCode: t.iconCode,
                   ),
                   title: t.name,
-                  subtitle: t.subtitle,
-                  trailing: OptionMenuAnchor<_TagAction>(
-                    options: [
-                      SheetOption(
-                        value: _TagAction.rename,
-                        label: labels.rename,
-                        leading: const AppIcon(AppIcons.edit),
-                        submits: true,
-                      ),
-                      SheetOption(
-                        value: _TagAction.restyle,
-                        label: labels.restyle,
-                        leading: const AppIcon(AppIcons.colorPicker),
-                        submits: true,
-                      ),
-                      SheetOption(
-                        value: _TagAction.importOne,
-                        label: labels.importOne,
-                        leading: const AppIcon(AppIcons.add),
-                        enabled: t.canImport,
-                        submits: true,
-                      ),
-                      SheetOption(
-                        value: _TagAction.delete,
-                        label: labels.delete,
-                        leading: const AppIcon(AppIcons.delete),
-                        destructive: true,
-                        submits: true,
-                      ),
-                    ],
-                    onSelected: (a) => _act(context, t, a),
-                    builder: (context, toggle) =>
-                        AppIconButton.more(onPressed: toggle),
-                  ),
+                  line2: ListRowLine(parts: [?t.subtitle]),
+                  actions: [
+                    ListRowAction.menu<_TagAction>(
+                      options: [
+                        SheetOption(
+                          value: _TagAction.rename,
+                          label: labels.rename,
+                          leading: const AppIcon(AppIcons.edit),
+                          submits: true,
+                        ),
+                        SheetOption(
+                          value: _TagAction.restyle,
+                          label: labels.restyle,
+                          leading: const AppIcon(AppIcons.colorPicker),
+                          submits: true,
+                        ),
+                        SheetOption(
+                          value: _TagAction.importOne,
+                          label: labels.importOne,
+                          leading: const AppIcon(AppIcons.add),
+                          enabled: t.canImport,
+                          submits: true,
+                        ),
+                        SheetOption(
+                          value: _TagAction.delete,
+                          label: labels.delete,
+                          leading: const AppIcon(AppIcons.delete),
+                          destructive: true,
+                          submits: true,
+                        ),
+                      ],
+                      onSelected: (a) => _act(context, t, a),
+                    ),
+                  ],
                 ),
             Padding(
               padding: const EdgeInsets.fromLTRB(

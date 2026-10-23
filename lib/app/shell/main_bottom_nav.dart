@@ -15,10 +15,19 @@ class MainBottomNav extends StatefulWidget {
     required this.onMorePressed,
     this.moreSelected = false,
     this.addMode = QuickCreateMode.tx,
+    this.addWord,
+    this.addColor,
+    this.addIcon,
     super.key,
   });
 
   final QuickCreateMode addMode;
+
+  /// A page's own create action (QuickCreatePreset.custom): its word, colour
+  /// and icon in place of the mode's.
+  final String? addWord;
+  final Color? addColor;
+  final IconData? addIcon;
 
   final int currentIndex;
 
@@ -246,8 +255,12 @@ class _MainBottomNavState extends State<MainBottomNav> {
                     ),
                     child: QuickCreateButton(
                       mode: widget.addMode,
-                      label: MainBottomNav.addLabel(l, widget.addMode),
-                      tooltip: l.navAddTransaction,
+                      label:
+                          widget.addWord ??
+                          MainBottomNav.addLabel(l, widget.addMode),
+                      color: widget.addColor,
+                      icon: widget.addIcon,
+                      tooltip: widget.addWord ?? l.navAddTransaction,
                       onPressed: widget.onAddPressed,
                     ),
                   ),

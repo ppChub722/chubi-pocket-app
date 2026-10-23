@@ -106,75 +106,104 @@ class _ProjectsPageState extends State<ProjectsPage> {
     ProjectSort.nameAsc => l.projectsSortName,
   };
 
-  String _subtitle(AppLocalizations l, Project p) => [
-    ?projectDateRange(context, p.startDate, p.endDate),
-    l.fpEventsRowSpent(moneyString(context, p.totalExpense)),
-    l.fpEventsRowShare(moneyString(context, p.myShare)),
-  ].join(' | ');
-
+  /// Owed → ได้คืน (green), owe → ต้องจ่าย (red), settled → my share with
+  /// เคลียร์แล้ว. A plan adds the budget bar under the row.
   Widget _row(AppLocalizations l, Project p) {
     final owed = p.myReceivable > 0;
     final owe = p.myPayable > 0;
+    final planned = p.plannedAmount;
+    final left = p.remaining;
+    final hasPlan = planned != null && planned > 0 && left != null;
+    final over = hasPlan && left < 0;
+    String money(double v) => moneyString(context, v);
     return EventListRow(
+      key: ValueKey('event:${p.id}'),
       name: p.name,
       iconCode: p.iconCode,
-      subtitle: _subtitle(l, p),
-      amount: owed ? p.myReceivable : (owe ? p.myPayable : 0),
+      members: p.membersCount > 0 ? p.membersCount : null,
+      status: over
+          ? ListRowChip(l.fpEventsOverBudget, tone: Tone.danger)
+          : null,
+      meta: [
+        ?projectDateRange(context, p.startDate, p.endDate),
+        if (p.isUnsettled) l.fpEventsRowShare(money(p.myShare)),
+      ],
+      amount: owed ? p.myReceivable : (owe ? p.myPayable : p.myShare),
       tone: owed
           ? MoneyTone.income
           : (owe ? MoneyTone.expense : MoneyTone.plain),
-      caption: owed ? l.fpEventsOwed : (owe ? l.fpEventsOwe : null),
-      dimmed: p.status != ProjectStatus.active,
+      caption: owed ? l.fpEventsOwed : (owe ? l.fpEventsOwe : l.debtsEven),
+      dimmed: !p.isActive && !p.isUnsettled,
+      footer: hasPlan
+          ? ProgressRow(
+              value: (planned - left) / planned,
+              fillLabel: '${((planned - left) / planned * 100).round()}%',
+              endLabel: money(planned),
+              height: 6,
+            )
+          : null,
       onTap: () => _open(p),
     );
   }
 
-  List<SummaryTile> _tiles(
-    AppLocalizations l,
-    ProjectsState state,
-    ProjectListSummary s,
-  ) {
-    void pick(String f) => context.read<ProjectsCubit>().load(
-      statusFilter: state.statusFilter == f ? 'active' : f,
-    );
+  /// กำลังทำ / จบแล้ว, each under its header; counts and my share are the
+  /// loaded rows'.
+  List<Widget> _sections(AppLocalizations l, ProjectsState state) {
+    final active = [
+      for (final p in state.projects)
+        if (p.isActive) p,
+    ];
+    final ended = [
+      for (final p in state.projects)
+        if (!p.isActive) p,
+    ];
+    List<Widget> section(String title, List<Project> rows) => [
+      if (rows.isNotEmpty) ...[
+        SectionHeader(
+          key: ValueKey('eventsSection-$title'),
+          title: title,
+          count: rows.length,
+          trailing: AppText(
+            l.fpEventsRowShare(
+              moneyString(
+                context,
+                rows.fold<double>(0, (s, p) => s + p.myShare),
+              ),
+            ),
+            role: AppTextRole.caption,
+          ),
+        ),
+        for (final p in rows) _row(l, p),
+      ],
+    ];
     return [
-      SummaryTile(
-        label: l.fpEventsTileActive,
-        value: '${s.active}',
-        tone: SummaryTileTone.green,
-        selected: state.statusFilter == 'active',
-        onTap: () => pick('active'),
-      ),
-      SummaryTile(
-        label: l.fpEventsTileUnsettled,
-        value: '${s.unsettled}',
-        tone: SummaryTileTone.amber,
-        selected: state.statusFilter == 'unsettled',
-        onTap: () => pick('unsettled'),
-      ),
-      SummaryTile(
-        label: l.fpEventsTileEnded,
-        value: '${s.ended}',
-        selected: state.statusFilter == 'ended',
-        onTap: () => pick('ended'),
-      ),
+      ...section(l.fpEventsTileActive, active),
+      ...section(l.fpEventsTileEnded, ended),
     ];
   }
 
-  Widget _summary(AppLocalizations l, ProjectsState state) {
+  Widget _hero(AppLocalizations l, ProjectsState state) {
     final s = state.summary ?? const ProjectListSummary();
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final cubit = context.read<ProjectsCubit>();
+    final net = s.net;
+    String money(double v) => moneyString(context, v);
     return AppHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
       margin: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
         AppSpacing.sm,
         AppSpacing.lg,
-        AppSpacing.xs,
+        AppSpacing.md,
       ),
-      header: HeroHeader(
-        leading: [HeroCaption(l.fpEventsSummaryCaption)],
+      header: HeroSummaryHead(
+        icon: AppIcons.project,
+        label: l.fpEventsHeroNet(s.unsettled),
+        amount: MoneyText(net, tone: MoneyTone.signed),
+        amountColor: net.abs() <= 0.005
+            ? null
+            : (net > 0 ? palette.income : palette.expense),
         actions: [
-          const MoneyVisibilityToggle(),
           ListenableBuilder(
             listenable: _search,
             builder: (context, _) => ToolbarToggleButton(
@@ -186,27 +215,60 @@ class _ProjectsPageState extends State<ProjectsPage> {
               tooltip: l.commonSearch,
             ),
           ),
+          CardActionButton(
+            key: const ValueKey('eventsAdd'),
+            icon: AppIcons.add,
+            tooltip: l.fpEventsCreate,
+            onTap: _create,
+          ),
         ],
       ),
       content: [
-        HeroNumber(
-          value: MoneyText(s.myShareTotal),
-          layout: HeroNumberLayout.inline,
-        ),
-        HeroNote(
-          child: AppText(
-            l.fpEventsPaidLine(
-              moneyString(context, s.paidTotal),
-              moneyString(context, s.receivableTotal),
+        HeroFactList(
+          facts: [
+            HeroFact(
+              l.fpEventsOwedFact(s.receivable),
+              money(s.receivableTotal),
+              icon: AppIcons.flowIn,
+              iconColor: palette.income,
+              color: palette.income,
             ),
-            role: AppTextRole.caption,
-          ),
+            HeroFact(
+              l.fpEventsOweFact(s.payable),
+              money(s.payableTotal),
+              icon: AppIcons.flowOut,
+              iconColor: palette.expense,
+              color: palette.expense,
+            ),
+            HeroFact(
+              l.fpEventsShareFact(s.active),
+              money(s.myShareTotal),
+              icon: AppIcons.split,
+            ),
+          ],
         ),
       ],
       footer: [
-        HeroTiles(
-          children: [
-            for (final t in _tiles(l, state, s)) SummaryTileView(tile: t),
+        HeroFilterChips(
+          filters: [
+            for (final (f, label, tone, count) in [
+              ('current', l.fpEventsFilterAll, null, s.all),
+              ('active', l.fpEventsTileActive, AppChipTone.success, s.active),
+              (
+                'unsettled',
+                l.fpEventsTileUnsettled,
+                AppChipTone.warning,
+                s.unsettled,
+              ),
+              ('ended', l.fpEventsTileEnded, AppChipTone.neutral, s.ended),
+            ])
+              HeroFilter(
+                label: label,
+                count: count,
+                tone: tone,
+                selected: state.statusFilter == f,
+                onTap: () => cubit.load(statusFilter: f),
+              ),
           ],
         ),
       ],
@@ -283,7 +345,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                       ],
                     ),
                   ),
-                _summary(l, state),
+                _hero(l, state),
                 _toolbar(l, state),
               ],
               loading: firstLoad,
@@ -303,20 +365,16 @@ class _ProjectsPageState extends State<ProjectsPage> {
                       message: l.projectsEmptyMessage,
                       cta: create,
                     ),
-              topInset: AppSpacing.xs,
-              sidePadding: 0,
+              topInset: AppSpacing.sm,
+              rowCards: true,
               rowDividers: true,
+              rowDividerIndent:
+                  AppSpacing.lg + EventListRow.iconSize + AppSpacing.md,
               controller: _scroll,
               hasMore: state.hasMore,
               loadingMore: state.loadingMore,
               onLoadMore: _loadMore,
-              children: [
-                for (final p in state.projects) _row(l, p),
-                Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: create,
-                ),
-              ],
+              children: _sections(l, state),
             );
           },
         ),

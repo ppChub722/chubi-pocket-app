@@ -222,7 +222,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ListRow(
+                  AppListRow(
                     leading: PersonMark(
                       name: 'มาตาก',
                       level: PersonLevel.linked,
@@ -230,10 +230,10 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                       reserveLinkSlot: true,
                     ),
                     title: 'มาตาก',
-                    subtitle: 'linked',
+                    line2: ListRowLine(parts: ['linked']),
                   ),
                   AppDivider.row(),
-                  ListRow(
+                  AppListRow(
                     leading: PersonMark(
                       name: 'บี',
                       level: PersonLevel.contact,
@@ -241,10 +241,10 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                       reserveLinkSlot: true,
                     ),
                     title: 'บี',
-                    subtitle: 'contact — slot kept empty',
+                    line2: ListRowLine(parts: ['contact — slot kept empty']),
                   ),
                   AppDivider.row(),
-                  ListRow(
+                  AppListRow(
                     leading: PersonMark(
                       name: 'ลี',
                       level: PersonLevel.name,
@@ -252,7 +252,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                       reserveLinkSlot: true,
                     ),
                     title: 'ลี',
-                    subtitle: 'typed name — slot kept empty',
+                    line2: ListRowLine(parts: ['typed name — slot kept empty']),
                   ),
                 ],
               ),

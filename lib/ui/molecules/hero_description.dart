@@ -93,7 +93,28 @@ class HeroNameInput extends StatelessWidget {
   final TextStyle? style;
 
   @override
-  Widget build(BuildContext context) => AppInput.title(
+  Widget build(BuildContext context) {
+    // View: plain text, so the description sits right under the name (the
+    // input row's height left a gap; owner 2026-10-23).
+    if (!editing) {
+      return ValueListenableBuilder<TextEditingValue>(
+        valueListenable: controller,
+        builder: (context, value, _) => GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onLongPress: onEnterEdit,
+          child: Text(
+            value.text,
+            maxLines: maxLines,
+            overflow: TextOverflow.ellipsis,
+            style: style ?? Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+      );
+    }
+    return _input(context);
+  }
+
+  Widget _input(BuildContext context) => AppInput.title(
     editing: editing,
     controller: controller,
     focusNode: focusNode,
@@ -105,6 +126,8 @@ class HeroNameInput extends StatelessWidget {
     maxLines: maxLines,
     style: style,
     label: UiConfig.stringsOf(context).fieldName,
-    size: AppInputSize.title,
+    // The description's row height, so name and description sit close and
+    // the name lines up with the icon's top (owner 2026-10-23).
+    size: AppInputSize.regular,
   );
 }

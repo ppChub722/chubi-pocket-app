@@ -20,7 +20,10 @@ class QuickCreatePreset {
     this.debtDirection,
     this.debtSub,
     this.amount,
-  });
+  }) : word = null,
+       color = null,
+       icon = null,
+       onCreate = null;
 
   const QuickCreatePreset.saving({this.goalId})
     : mode = QuickCreateMode.saving,
@@ -30,7 +33,11 @@ class QuickCreatePreset {
       person = null,
       debtDirection = null,
       debtSub = null,
-      amount = null;
+      amount = null,
+      word = null,
+      color = null,
+      icon = null,
+      onCreate = null;
 
   /// [debtSub] repay + [person] + [amount]: "รับคืนแล้ว ฿82" on a person page.
   const QuickCreatePreset.debt({
@@ -42,9 +49,39 @@ class QuickCreatePreset {
        account = null,
        category = null,
        tag = null,
-       goalId = null;
+       goalId = null,
+       word = null,
+       color = null,
+       icon = null,
+       onCreate = null;
+
+  /// A page's OWN create action in the centre capsule (owner 2026-10-23: an
+  /// event's "เพิ่มบิล" in its tint opens the event bill sheet): [word],
+  /// [color] and [icon] in place of the mode's; [onCreate] runs instead of
+  /// quick create. The page builds the closure, so it reaches its own state.
+  const QuickCreatePreset.custom({
+    required String this.word,
+    required Color this.color,
+    required VoidCallback this.onCreate,
+    this.icon,
+  }) : mode = QuickCreateMode.tx,
+       account = null,
+       category = null,
+       tag = null,
+       person = null,
+       goalId = null,
+       debtDirection = null,
+       debtSub = null,
+       amount = null;
 
   static const none = QuickCreatePreset();
+
+  final String? word;
+  final Color? color;
+  final IconData? icon;
+
+  /// Not part of equality: a page rebuilds its closure on every build.
+  final VoidCallback? onCreate;
 
   final QuickCreateMode mode;
   final Account? account;
@@ -72,7 +109,10 @@ class QuickCreatePreset {
       other.goalId == goalId &&
       other.debtDirection == debtDirection &&
       other.debtSub == debtSub &&
-      other.amount == amount;
+      other.amount == amount &&
+      other.word == word &&
+      other.color == color &&
+      other.icon == icon;
 
   @override
   int get hashCode => Object.hash(
@@ -85,6 +125,9 @@ class QuickCreatePreset {
     debtDirection,
     debtSub,
     amount,
+    word,
+    color,
+    icon,
   );
 }
 

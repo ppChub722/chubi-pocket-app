@@ -54,11 +54,37 @@ class FlowCards extends StatelessWidget {
         children: [
           Expanded(child: from),
           if (to != null) ...[
-            AppIconButton.flat(
-              tooltip: onSwap == null ? null : swapTooltip,
-              dense: true,
-              icon: AppIcons.arrowForward,
-              onPressed: onSwap,
+            // The money icon under the arrow says what travels between the
+            // cards (owner 2026-10-23).
+            Builder(
+              builder: (context) => Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Read-only: a plain arrow, not a greyed-out button.
+                  if (onSwap == null)
+                    Padding(
+                      padding: const EdgeInsets.all(AppSpacing.sm),
+                      child: Icon(
+                        AppIcons.arrowForward,
+                        size: 22,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    )
+                  else
+                    AppIconButton.flat(
+                      tooltip: swapTooltip,
+                      dense: true,
+                      icon: AppIcons.arrowForward,
+                      onPressed: onSwap,
+                    ),
+                  Icon(
+                    AppIcons.cash,
+                    key: const ValueKey('flowMoney'),
+                    size: 16,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
             ),
             Expanded(child: to),
           ],

@@ -30,6 +30,8 @@ class TransactionHeroCard extends StatelessWidget {
     this.titlePlaceholder,
     this.titleMaxLength = TextLimits.description,
     this.onTitleTap,
+    this.titleReadOnly = false,
+    this.titleLabel,
     this.titleLeading,
     this.titleError,
     this.amountFocus,
@@ -40,6 +42,9 @@ class TransactionHeroCard extends StatelessWidget {
     this.inline = false,
     this.footer,
     this.amountNote,
+    this.headerLeading,
+    this.extraTypeChip,
+    this.extraTypeSelected = false,
     super.key,
   });
 
@@ -90,6 +95,13 @@ class TransactionHeroCard extends StatelessWidget {
 
   final VoidCallback? onTitleTap;
 
+  /// The text is made by the app (a debt's "ที่มา"): shown like a field's
+  /// value but no cursor, no underline, nothing to type.
+  final bool titleReadOnly;
+
+  /// Replaces "คำอธิบาย" above the title cell.
+  final String? titleLabel;
+
   final Widget? titleLeading;
 
   final String? titleError;
@@ -108,6 +120,16 @@ class TransactionHeroCard extends StatelessWidget {
   final Widget? footer;
 
   final Widget? amountNote;
+
+  /// Before the type chips (a debt's paid checkbox).
+  final Widget? headerLeading;
+
+  /// One more type after the built-in chips (an event's จ่ายคืน); the
+  /// caller builds it and handles its tap.
+  final Widget? extraTypeChip;
+
+  /// The extra type is the picked one: the built-in chips all show unpicked.
+  final bool extraTypeSelected;
 
   List<TransactionType> get _types => [
     TransactionType.expense,
@@ -142,6 +164,7 @@ class TransactionHeroCard extends StatelessWidget {
     }
 
     final chips = [
+      ?headerLeading,
       if (typeBadge != null)
         typeBadge!
       else
@@ -154,20 +177,24 @@ class TransactionHeroCard extends StatelessWidget {
             children: [
               for (final (i, t) in [
                 for (final t in _types)
-                  if (canSwitch || t == type) t,
+                  if (canSwitch || (t == type && !extraTypeSelected)) t,
               ].indexed) ...[
                 if (i > 0) const SizedBox(width: AppSpacing.xs),
                 txTypeChip(
                   context,
                   type: t,
-                  selected: t == type,
-                  onTap: canSwitch && t != type
+                  selected: t == type && !extraTypeSelected,
+                  onTap: canSwitch && (t != type || extraTypeSelected)
                       ? () => onTypeChanged!(t)
                       : null,
-                  dashed: canSwitch && t != type,
+                  dashed: canSwitch && (t != type || extraTypeSelected),
                   debt: debt,
                   repay: repay,
                 ),
+              ],
+              if (extraTypeChip != null) ...[
+                const SizedBox(width: AppSpacing.xs),
+                extraTypeChip!,
               ],
             ],
           ),
@@ -234,13 +261,16 @@ class TransactionHeroCard extends StatelessWidget {
         child: AppInput.card(
           controller: title,
           focusNode: titleFocus,
-          readOnly: !editing || onTitleTap != null,
+          readOnly: !editing || titleReadOnly || onTitleTap != null,
           onTap: editing ? onTitleTap : null,
-          showCursor: editing && onTitleTap == null ? null : false,
-          enableInteractiveSelection: editing && onTitleTap == null,
+          showCursor: editing && onTitleTap == null && !titleReadOnly
+              ? null
+              : false,
+          enableInteractiveSelection:
+              editing && onTitleTap == null && !titleReadOnly,
           maxLength: titleMaxLength,
           size: inline ? AppInputSize.hero : null,
-          label: editing && inline ? l.commonDescription : null,
+          label: editing && inline ? (titleLabel ?? l.commonDescription) : null,
           labelPlacement: AppInputLabelPlacement.above,
           minLines: 1,
           maxLines: maxLines,
@@ -250,7 +280,7 @@ class TransactionHeroCard extends StatelessWidget {
               ? (titlePlaceholder ?? titleHint ?? l.txHeroTitleHint)
               : (onLongPressField != null ? l.commonLongPressToEdit : null),
           focusColor: accent,
-          underline: editing,
+          underline: editing && !titleReadOnly,
         ),
       ),
       titleFocus,
@@ -338,10 +368,11 @@ class TransactionHeroCard extends StatelessWidget {
     ];
 
     // An [accentColor] (the saving mode's planning purple) washes the whole
-    // card, not just the amount, so it never reads as green income.
+    // card, not just the amount, so it never reads as green income. Debt
+    // words wash it in the debt-state colour, like their chips and amount.
     return AppHeroCard(
-      style: accentColor != null
-          ? HeroStyle.tinted(color: accentColor!)
+      style: accentColor != null || debt || repay
+          ? HeroStyle.tinted(color: accent)
           : txHeroStyle(context, type),
       mode: editing ? HeroCardMode.edit : HeroCardMode.view,
       header: HeroHeader(

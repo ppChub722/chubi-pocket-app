@@ -43,9 +43,9 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
                   if (!_picked.remove(i)) _picked.add(i);
                 })
               : () {},
-          child: ListRow(
+          child: AppListRow(
             title: 'Item ${i + 1}',
-            subtitle: 'A line about it',
+            line2: const ListRowLine(parts: ['A line about it']),
             leading: const AppAvatar.icon(AppIcons.wallet, size: 36),
             checked: _selecting ? _picked.contains(i) : null,
             onCheck: _selecting
@@ -239,7 +239,8 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
                   'grouped by day — rowCards: the rows of each day sit in one '
                   'SectionCard (2px gaps), the day header above the card '
                   '(cardedRows); wins over rowDividers',
-              page: 'Budget items, saving entries (planned), Transactions (later)',
+              page:
+                  'Budget items, saving entries (planned), Transactions (later)',
               child: framed(
                 ListPageBody(
                   loading: false,

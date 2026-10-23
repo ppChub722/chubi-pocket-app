@@ -183,6 +183,46 @@ class _FeedbackPageState extends State<_FeedbackPage> {
             },
           ),
         ),
+        const HubDemo(
+          title: 'ProgressRow: fillDot + markerBubble + endLabel',
+          note:
+              'The event budget bar: a dot on the end of the fill, what\'s '
+              'spent in a bubble over it (marker = the fill), and the whole '
+              'budget at the bar\'s right end, on its line.',
+          child: ProgressRow(
+            value: 0.59,
+            fillDot: true,
+            marker: 0.59,
+            markerBubble: '฿11,740',
+            endLabel: '฿20,000',
+          ),
+        ),
+        HubDemo(
+          title: 'ProgressRow: fillLabel (on the fill\'s end)',
+          note:
+              'A pill in the bar\'s color sitting on the end of the fill '
+              '(the saving goals list: ━━━(31%)───). It moves with the fill '
+              'and stays inside the bar\'s width at 0% and 100%.',
+          child: Builder(
+            builder: (context) {
+              final palette = Theme.of(context).extension<AppColors>()!;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const ProgressRow(value: 0, fillLabel: '0%'),
+                  const SizedBox(height: AppSpacing.md),
+                  ProgressRow(
+                    value: 0.31,
+                    color: palette.warning,
+                    fillLabel: '31%',
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  const ProgressRow(value: 1, fillLabel: '100%'),
+                ],
+              );
+            },
+          ),
+        ),
         HubDemo(
           title: 'AppMessage — icon override',
           note:

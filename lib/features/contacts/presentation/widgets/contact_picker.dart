@@ -51,6 +51,34 @@ class PayerPerson extends PayerPick {
   final ContactPick pick;
 }
 
+/// An event member [ContactPicker.people] lists in its own section on top.
+class PickerMember {
+  const PickerMember({
+    required this.id,
+    required this.name,
+    this.iconCode,
+    this.level = PersonLevel.name,
+    this.contactId,
+  });
+
+  final String id;
+  final String name;
+  final IconCode? iconCode;
+  final PersonLevel level;
+
+  /// My contact for this member: that contact isn't listed again below.
+  final String? contactId;
+}
+
+/// What [ContactPicker.people] answers: the ticked members and people, or
+/// one typed name (typing replaces the ticks).
+class PeoplePicks {
+  const PeoplePicks({this.memberIds = const [], this.picks = const []});
+
+  final List<String> memberIds;
+  final List<ContactPick> picks;
+}
+
 /// Same people either way: every active contact, then the names from the
 /// debts that aren't contacts. [debts] adds each one's balance, puts the
 /// people still owing first and has the owing / no-debt tabs.
@@ -122,6 +150,124 @@ abstract final class ContactPicker {
     if (r.none) return const PayerMe();
     final p = r.pick;
     return p == null ? null : PayerPerson(p);
+  }
+
+  /// Many people at once (an event bill's "เพิ่มคน"): [members] in a section
+  /// of their own ([membersLabel]) on top, then the people as in [one]. A
+  /// typed name answers just that name.
+  static Future<PeoplePicks?> people(
+    BuildContext context, {
+    required List<PickerMember> members,
+    required String membersLabel,
+    required String Function(int count) confirmLabel,
+    Set<String> selectedMemberIds = const {},
+    String? title,
+    bool useRootNavigator = true,
+  }) async {
+    final l = AppLocalizations.of(context)!;
+    final contacts = _maybeRead<ContactsCubit>(context);
+    final directory = _maybeRead<DebtDirectoryCubit>(context);
+    if (contacts != null) unawaited(contacts.loadIfNeeded());
+    if (directory != null) unawaited(directory.loadIfNeeded());
+    const memberGroup = 'members', peopleGroup = 'people';
+    final memberContacts = {for (final m in members) ?m.contactId};
+    PickerData dataOf() {
+      final s = contacts?.state;
+      final others = _people(
+        l,
+        contacts: [
+          for (final c in s?.contacts ?? const <Contact>[])
+            if (c.status == ContactStatus.active &&
+                !memberContacts.contains(c.id))
+              c,
+        ],
+        debts: directory?.state.people ?? const [],
+        withDebt: false,
+        symbol: '',
+      );
+      return PickerData(
+        [
+          for (final m in members)
+            PickerItem(
+              id: 'm:${m.id}',
+              title: m.name,
+              leading: _mark(m.name, m.level, m.iconCode),
+              group: memberGroup,
+              data: m,
+            ),
+          for (final i in others.items)
+            PickerItem(
+              id: i.id,
+              title: i.title,
+              subtitle: i.subtitle,
+              leading: i.leading,
+              keywords: i.keywords,
+              group: peopleGroup,
+              data: i.data,
+            ),
+        ],
+        loading: s != null && _loading(s),
+        error: s != null && s.status == ContactsStatus.error ? s.error : null,
+      );
+    }
+
+    final data = ValueNotifier(dataOf());
+    final subs = [
+      ?contacts?.stream.listen((_) => data.value = dataOf()),
+      ?directory?.stream.listen((_) => data.value = dataOf()),
+    ];
+    try {
+      final r = await showItemPicker(
+        context,
+        useRootNavigator: useRootNavigator,
+        ItemPickerSheet(
+          title: title ?? l.contactPickerTitle,
+          items: data.value.items,
+          live: data,
+          multi: true,
+          selected: {for (final id in selectedMemberIds) 'm:$id'},
+          groups: [
+            PickerGroup(memberGroup, membersLabel),
+            PickerGroup(peopleGroup, l.contactPickerFilterContacts),
+          ],
+          freeText: PickerFreeText(
+            hint: l.contactPickerTypeName,
+            saveLabel: l.contactPickerUseName,
+            leading: (typed) => _mark(typed, PersonLevel.name, null),
+            maxLength: TextLimits.name,
+          ),
+          searchable: true,
+          searchHint: l.contactsSearchHint,
+          emptyText: l.contactPickerEmpty,
+          noMatchText: l.contactPickerNoMatch,
+          confirmLabel: confirmLabel,
+          onRetry: contacts?.load,
+        ),
+      );
+      if (r == null) return null;
+      if (r.text case final typed?) {
+        return PeoplePicks(picks: [ContactNameTyped(typed)]);
+      }
+      final byId = {for (final i in data.value.items) i.id: i};
+      final memberIds = <String>[];
+      final picks = <ContactPick>[];
+      for (final id in r.ids) {
+        switch (byId[id]?.data) {
+          case final PickerMember m:
+            memberIds.add(m.id);
+          case final Contact c:
+            picks.add(ContactPicked(c));
+          case final PersonBalance p:
+            picks.add(ContactNamePicked(p.person.name));
+        }
+      }
+      return PeoplePicks(memberIds: memberIds, picks: picks);
+    } finally {
+      for (final s in subs) {
+        unawaited(s.cancel());
+      }
+      data.dispose();
+    }
   }
 
   static Future<({bool none, ContactPick? pick})?> _pick(
@@ -410,10 +556,11 @@ abstract final class ContactPicker {
     final order = {for (final (i, p) in debts.indexed) p.key: i};
     Widget? trailing(PersonBalance? p) => !withDebt || p == null || p.net == 0
         ? null
+        // Debts mode is quick create's "กับใคร": its words (owner 2026-10-23).
         : NetBalance(
             amount: p.net,
-            owedToMeLabel: l.debtsOwedToMe,
-            iOweLabel: l.debtsIOwe,
+            owedToMeLabel: l.debtRoleDebtor,
+            iOweLabel: l.debtRoleCreditor,
             settledLabel: l.debtSettledLabel,
             currencySymbol: symbol,
           );

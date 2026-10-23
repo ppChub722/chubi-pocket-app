@@ -94,6 +94,29 @@ class ContactPickerDemos extends StatelessWidget {
           ],
         ),
         _demo(
+          'ContactPicker.people — event bill "เพิ่มคน"',
+          'Many at once: the event\'s members in their own section on top '
+              '(ticked = already in the bill), then contacts / debt names. A typed '
+              'name answers just that name.',
+          [
+            _new('New', () async {
+              final r = await ContactPicker.people(
+                context,
+                membersLabel: 'คนในอีเวนต์',
+                confirmLabel: (n) => 'เพิ่ม $n คน',
+                selectedMemberIds: const {'m1'},
+                members: const [
+                  PickerMember(id: 'm1', name: 'ฉัน'),
+                  PickerMember(id: 'm2', name: 'ฝน'),
+                  PickerMember(id: 'm3', name: 'ต้น'),
+                ],
+              );
+              if (r == null) return 'cancelled';
+              return 'members ${r.memberIds} + ${r.picks.length} people';
+            }),
+          ],
+        ),
+        _demo(
           'ContactPicker.one — debt person (กับใคร)',
           'Debt form / debt detail: balances on the right, people still owing '
               'first, 4 tabs, a typed name, add a contact. Opens on the first '

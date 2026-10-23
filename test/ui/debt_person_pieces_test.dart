@@ -57,33 +57,9 @@ void main() {
               paidLabel: 'จ่ายแล้ว',
             ),
             const SizedBox(height: 8),
-            const DebtStatementRow(
-              key: ValueKey('debtRow'),
-              title: 'ค่าตั๋วคอนเสิร์ตรอบพิเศษที่ไปด้วยกันเมื่อเดือนก่อน',
-              subtitle: '$longNameจ่ายแทน · จากกระเป๋าเงินสด',
-              amount: Text('+฿1,234,567.89', key: ValueKey('rowAmount')),
-              paidLabel: 'จ่ายแล้ว',
-            ),
-            const DebtStatementRow(
-              title: 'ได้คืนจาก$longName',
-              amount: Text('฿5,000'),
-              repayment: true,
-            ),
             const CycleDivider(
               key: ValueKey('divider'),
               label: 'เคลียร์ครบ 20 ส.ค. 2026 | ดูรอบก่อนหน้าทั้งหมด ▾',
-            ),
-            const PersonBalanceRow(
-              key: ValueKey('balanceRow'),
-              name: longName,
-              level: PersonLevel.contact,
-              net: -12345.5,
-              owedToMeLabel: 'รอรับ',
-              iOweLabel: 'รอจ่าย',
-              settledLabel: 'ครบแล้ว',
-              subtitle: 'ค่าตั๋วคอนเสิร์ตรอบพิเศษ | 20 ส.ค.',
-              age: 'ค้าง 145 วัน',
-              ageWarn: true,
             ),
           ],
         ),
@@ -102,22 +78,11 @@ void main() {
       expect(share.right, lessThanOrEqualTo(right));
       await t.tap(find.byKey(const ValueKey('debtSettle')));
       expect(settled, 1);
-      // A row's amount ends at the row's padding; the title is to its left.
-      final row = t.getRect(find.byKey(const ValueKey('debtRow')));
-      final amount = t.getRect(find.byKey(const ValueKey('rowAmount')));
-      expect(amount.right, closeTo(row.right - 12, 4));
       // The divider: a line left and right of the (wrapped) words.
       final words = t.getRect(find.byKey(const ValueKey('cycleDivider')));
       final divider = t.getRect(find.byKey(const ValueKey('divider')));
       expect(words.left - divider.left, greaterThanOrEqualTo(16));
       expect(divider.right - words.right, greaterThanOrEqualTo(16));
-      // The age sits under the amount, warned.
-      final age = t.widget<Text>(find.byKey(const ValueKey('personAge')));
-      expect(age.style?.fontWeight, FontWeight.w700);
-      expect(
-        t.getRect(find.byKey(const ValueKey('personAge'))).right,
-        lessThanOrEqualTo(right),
-      );
     });
 
     testWidgets('at $width: the share sheet picks, edits, copies', (t) async {

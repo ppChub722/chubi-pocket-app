@@ -15,7 +15,7 @@ class ProjectsState extends Equatable {
     this.projects = const [],
     this.status = ProjectsStatus.initial,
     this.error,
-    this.statusFilter = 'active',
+    this.statusFilter = 'current',
     this.page = 0,
     this.totalPages = 0,
     this.loadingMore = false,
@@ -31,6 +31,9 @@ class ProjectsState extends Equatable {
   final ProjectsStatus status;
   final ApiException? error;
   String? get errorMessage => error?.message;
+
+  /// The BE `status`: current (all but archived) | active | unsettled |
+  /// receivable | payable | ended.
   final String statusFilter;
 
   final int page;
@@ -43,7 +46,7 @@ class ProjectsState extends Equatable {
   final ProjectSort sort;
 
   bool get filtered =>
-      statusFilter != 'active' || query.trim().isNotEmpty || tagIds.isNotEmpty;
+      statusFilter != 'current' || query.trim().isNotEmpty || tagIds.isNotEmpty;
 
   bool get hasMore => page > 0 && page < totalPages;
 
@@ -303,6 +306,9 @@ class ProjectsCubit extends Cubit<ProjectsState>
     final f = state.statusFilter;
     const stored = {'active', 'completed', 'cancelled', 'archived'};
     if (stored.contains(f) && p.status.wire != f) return remove(p.id);
+    if (f == 'current' && p.status == ProjectStatus.archived) {
+      return remove(p.id);
+    }
     emit(
       state.copyWith(
         projects: [

@@ -5,9 +5,10 @@ import 'app_tab_bar.dart';
 
 /// Pins an [AppTabBar] under the top bar once the hero scrolls away.
 class PinnedTabBarDelegate extends SliverPersistentHeaderDelegate {
-  PinnedTabBarDelegate({required this.background, required this.child});
+  PinnedTabBarDelegate({required this.child, this.background});
 
-  final Color background;
+  /// Null = the page's own background, so the band doesn't show.
+  final Color? background;
   final Widget child;
 
   /// The bar plus a small gap above and below.
@@ -22,7 +23,7 @@ class PinnedTabBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlaps) =>
       ColoredBox(
-        color: background,
+        color: background ?? Theme.of(context).scaffoldBackgroundColor,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.lg,

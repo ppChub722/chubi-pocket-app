@@ -154,9 +154,7 @@ class _HorizontalLayout extends StatelessWidget {
                   value: (account.creditUsedPct! / 100).clamp(0.0, 1.0),
                   color: accent,
                   height: 4,
-                  label: AppLocalizations.of(
-                    context,
-                  )!.accountCreditUsedPercent(account.creditUsedPct!),
+                  fillLabel: '${account.creditUsedPct}%',
                 ),
               ),
             ],
@@ -242,18 +240,11 @@ class _VerticalLayout extends StatelessWidget {
         ],
         if (utilization != null) ...[
           const SizedBox(height: AppSpacing.xs),
-          Row(
-            children: [
-              Expanded(
-                child: ProgressRow(
-                  value: utilization,
-                  color: accent,
-                  height: 4,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              AppText('${account.creditUsedPct}%', role: AppTextRole.caption),
-            ],
+          ProgressRow(
+            value: utilization,
+            color: accent,
+            height: 4,
+            fillLabel: '${account.creditUsedPct}%',
           ),
         ],
       ],
@@ -340,6 +331,7 @@ class AccountIconCircle extends StatelessWidget {
       type: IconType.account,
       size: size,
       iconCode: account.iconCode,
+      fallbackColor: account.colorOf(context),
     );
     // Only an EDITABLE icon is an EditableCircle (never below 40, with the
     // pencil); a plain one — the compact bar's 28 — is just the icon.

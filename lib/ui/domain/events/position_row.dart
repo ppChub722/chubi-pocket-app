@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../molecules/list_row.dart';
+import '../../molecules/app_list_row.dart';
 import '../../molecules/progress_row.dart';
-import '../../tokens/app_spacing.dart';
 import '../money/money_text.dart';
 
 class PositionRow extends StatelessWidget {
@@ -33,31 +32,15 @@ class PositionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListRow(
-      leading: leading,
+    return AppListRow(
+      leading: leading ?? const SizedBox.shrink(),
+      title: label,
+      trailing: ListRowTrailing.value(
+        MoneyText(amount, tone: tone, symbol: symbol),
+      ),
+      footer: ProgressRow(value: share, color: color, height: barHeight),
       onTap: onTap,
       dimmed: dimmed,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              MoneyText(amount, tone: tone, symbol: symbol),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          ProgressRow(value: share, color: color, height: barHeight),
-        ],
-      ),
     );
   }
 }

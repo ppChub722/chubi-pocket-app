@@ -42,7 +42,8 @@ class HeroFields extends StatelessWidget implements HeroSpacedRow {
             return Stack(
               children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
                   children: [
                     if (lead == null)
                       Expanded(child: end)

@@ -34,6 +34,8 @@ abstract final class AppIcons {
   static const scheduled = Icons.schedule_outlined;
 
   static const recurring = Icons.repeat;
+  static const progress = Icons.timelapse;
+  static const subscription = Icons.subscriptions_outlined;
   static const member = Icons.person_outline;
   static const inviteMember = Icons.person_add_alt_1_outlined;
   static const addContact = Icons.person_add_outlined;
@@ -58,6 +60,9 @@ abstract final class AppIcons {
   static const date = Icons.calendar_today_outlined;
   static const note = Icons.sticky_note_2_outlined;
   static const split = Icons.call_split;
+
+  /// A row's mark for a shared bill, with the head count beside it.
+  static const shared = Icons.group_outlined;
 
   static const auto = Icons.auto_mode;
   static const link = Icons.link;
@@ -86,6 +91,7 @@ abstract final class AppIcons {
   static const darkMode = Icons.dark_mode_outlined;
   static const systemMode = Icons.smartphone_outlined;
   static const email = Icons.mail_outline;
+  static const phone = Icons.phone_outlined;
 
   static const add = Icons.add;
   static const edit = Icons.edit_outlined;
@@ -171,6 +177,8 @@ abstract final class AppIcons {
       'goalClose': goalClose,
       'scheduled': scheduled,
       'recurring': recurring,
+      'progress': progress,
+      'subscription': subscription,
       'member': member,
       'inviteMember': inviteMember,
       'addContact': addContact,
@@ -194,6 +202,7 @@ abstract final class AppIcons {
       'date': date,
       'note': note,
       'split': split,
+      'shared': shared,
       'auto': auto,
       'link': link,
       'unlink': unlink,

@@ -15,6 +15,7 @@ class QuickCreateSheetShell extends StatefulWidget {
     this.summaryBuilder,
     this.draftLabel,
     this.deleteTooltip,
+    this.deleteLabel,
     this.saving = false,
     this.dirty = false,
     this.onSave,
@@ -47,6 +48,9 @@ class QuickCreateSheetShell extends StatefulWidget {
   final String? draftLabel;
 
   final String? deleteTooltip;
+
+  /// Set: the delete is a button at the bottom left, not the title-row icon.
+  final String? deleteLabel;
   final String closeTooltip;
 
   /// A save / delete is in flight: dims the sheet, blocks input, the save
@@ -175,6 +179,18 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
     }
     _lastInsets = insets;
     final summary = widget.summaryBuilder;
+    // Offline: the delete can't reach the server.
+    final onDelete = widget.saving || ConnectionScope.isOffline(context)
+        ? null
+        : widget.onDelete;
+    final deleteButton = widget.onDelete == null || widget.deleteLabel == null
+        ? null
+        : AppButton(
+            label: widget.deleteLabel!,
+            icon: AppIcons.delete,
+            variant: AppButtonVariant.destructiveOutlined,
+            onPressed: onDelete,
+          );
 
     return PopScope(
       canPop: !widget.dirty || widget.saving,
@@ -247,17 +263,13 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
                                         ),
                                 ),
                               ),
-                              if (widget.onDelete != null)
+                              if (widget.onDelete != null &&
+                                  deleteButton == null)
                                 AppIconButton.flat(
                                   icon: AppIcons.delete,
                                   tooltip: widget.deleteTooltip,
                                   color: scheme.error,
-                                  // Offline: the delete can't reach the server.
-                                  onPressed:
-                                      widget.saving ||
-                                          ConnectionScope.isOffline(context)
-                                      ? null
-                                      : widget.onDelete,
+                                  onPressed: onDelete,
                                 ),
                               AppIconButton.close(
                                 tooltip: widget.closeTooltip,
@@ -310,7 +322,7 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
                       children: [widget.body],
                     ),
                   ),
-                  if (widget.draftLabel == null)
+                  if (widget.draftLabel == null && deleteButton == null)
                     PinnedBar(
                       child: AppButton(
                         label: widget.saveLabel,
@@ -324,13 +336,19 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
                     PinnedBar(
                       child: Row(
                         children: [
-                          AppButton(
-                            label: widget.draftLabel!,
-                            variant: AppButtonVariant.outlined,
-                            submits: true,
-                            onPressed: widget.onSaveDraft,
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
+                          if (deleteButton != null) ...[
+                            deleteButton,
+                            const SizedBox(width: AppSpacing.sm),
+                          ],
+                          if (widget.draftLabel != null) ...[
+                            AppButton(
+                              label: widget.draftLabel!,
+                              variant: AppButtonVariant.outlined,
+                              submits: true,
+                              onPressed: widget.onSaveDraft,
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                          ],
                           Expanded(
                             child: AppButton(
                               label: widget.saveLabel,

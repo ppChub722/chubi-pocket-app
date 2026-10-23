@@ -23,8 +23,12 @@ class DetailTextField extends StatelessWidget {
     this.obscurable = false,
     this.helper,
     this.errorText,
+    this.leading,
     super.key,
   });
+
+  /// An icon left of the label and field (see [DetailStacked.leading]).
+  final Widget? leading;
 
   final String label;
   final TextEditingController controller;
@@ -68,6 +72,7 @@ class DetailTextField extends StatelessWidget {
         }
         return DetailStacked(
           label: label,
+          leading: leading,
           child: AppInput.inline(
             editing: editing && !locked,
             controller: controller,

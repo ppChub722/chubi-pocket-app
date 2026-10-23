@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../tokens/app/app_icons.dart';
 import '../icons/icon_code.dart';
+import '../../atoms/corner_badge.dart';
 import '../../atoms/dashed_rect_border.dart';
 import '../../atoms/user_avatar.dart';
 
@@ -30,19 +31,24 @@ class PersonMark extends StatelessWidget {
     this.size = 20,
     this.reserveLinkSlot = false,
     this.tappable = false,
+    this.linkOnCorner = false,
     super.key,
   });
 
-  static double linkSlotWidth(double size) =>
-      _gap(size) + PersonLinkBadge.defaultSize;
+  /// Kept for callers: a linked person's 🔗 is now ALWAYS a [CornerBadge] on
+  /// the avatar (owner 2026-10-23, app-wide).
+  final bool linkOnCorner;
 
-  static double _gap(double size) => size >= 32 ? 4 : 2;
+  /// The badge sits on the avatar, so no row needs a slot beside it.
+  static double linkSlotWidth(double size) => 0;
 
   final String name;
   final PersonLevel level;
 
   final IconCode? iconCode;
   final double size;
+
+  /// Kept for callers; no-op now that the badge sits on the avatar.
   final bool reserveLinkSlot;
 
   /// Draws the name-level icon inside a dashed ring so it reads as pressable.
@@ -81,23 +87,16 @@ class PersonMark extends StatelessWidget {
             iconCode: iconCode,
             size: size,
           );
-    if (level == PersonLevel.linked) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          mark,
-          SizedBox(width: _gap(size)),
-          const PersonLinkBadge(),
-        ],
-      );
-    }
-    if (!reserveLinkSlot) return mark;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        mark,
-        SizedBox(width: linkSlotWidth(size)),
-      ],
+    if (level != PersonLevel.linked) return mark;
+    // A touch bigger than other corner badges, the chain nearly filling it
+    // (owner 2026-10-23).
+    return CornerBadge(
+      size: size,
+      icon: AppIcons.link,
+      essential: true,
+      scale: 1.15,
+      glyphRatio: 0.82,
+      child: mark,
     );
   }
 }

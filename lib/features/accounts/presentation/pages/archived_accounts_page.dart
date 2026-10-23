@@ -67,6 +67,7 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
                           type: IconType.account,
                           size: AvatarMetrics.sizeMedium,
                           iconCode: a.iconCode,
+                          fallbackColor: a.colorOf(context),
                         ),
                       ),
                       label: a.name,

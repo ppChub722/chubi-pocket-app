@@ -79,13 +79,14 @@ class _DebtRepo extends Fake implements PersonalDebtsRepository {
     String key, {
     required DebtRepaymentKind kind,
     required double amount,
-    required String accountId,
+    String? accountId,
     DateTime? date,
     String? description,
     String? note,
     List<String>? tagIds,
     List<String>? markPaidIds,
     String? personName,
+    String? billId,
   }) async {
     repaid.add({
       'key': key,
@@ -119,6 +120,7 @@ class _DebtRepo extends Fake implements PersonalDebtsRepository {
     List<String>? markPaidIds,
     String? personName,
     String? billId,
+    DateTime? dueDate,
   }) async {
     created.add({
       'key': key,

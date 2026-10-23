@@ -67,6 +67,7 @@ class AppChip extends StatelessWidget {
     this.fill,
     this.onFill,
     this.bold = false,
+    this.bare = false,
     super.key,
   }) : assert(
          trailing != AppChipTrailing.remove || onRemove != null,
@@ -120,6 +121,10 @@ class AppChip extends StatelessWidget {
   /// summary status).
   final bool bold;
 
+  /// No fill, no border, no side padding: a bigger icon and the label in
+  /// [color] (a wallet on a list row).
+  final bool bare;
+
   static Color readableOn(Color bg, [Color? preferred]) {
     double ratio(Color a, Color b) {
       final la = a.computeLuminance() + 0.05;
@@ -163,16 +168,20 @@ class AppChip extends StatelessWidget {
     final height = size.heightOf(context);
     final scheme = Theme.of(context).colorScheme;
     final tint = color ?? (tone ?? AppChipTone.primary).resolve(context);
-    final solid = fill;
-    final fg = solid != null
+    final solid = bare ? null : fill;
+    final fg = bare
+        ? (color != null || tone != null ? tint : scheme.onSurfaceVariant)
+        : solid != null
         ? readableOn(solid)
         : selected
         ? tint
         : scheme.onSurfaceVariant;
-    final iconColor = solid != null || color != null || tone != null
+    final iconColor = bare
+        ? fg
+        : solid != null || color != null || tone != null
         ? (solid != null ? readableOn(solid, onFill) : tint)
         : fg;
-    final iconSize = size.icon;
+    final iconSize = bare ? size.icon + 5 : size.icon;
     final gap = size.gap;
     final tap = enabled && !removeOnly
         ? (onTap ?? (trailing == AppChipTrailing.remove ? onRemove : null))
@@ -239,6 +248,8 @@ class AppChip extends StatelessWidget {
             color: fg,
             fontWeight: bold
                 ? FontWeight.w700
+                : bare
+                ? FontWeight.w600
                 : solid != null
                 ? FontWeight.w500
                 : ChipSize.chipWeight,
@@ -246,7 +257,11 @@ class AppChip extends StatelessWidget {
     );
 
     final iconOnly = label.isEmpty && lead != null && tail == null;
-    final sidePad = iconOnly ? (height - size.icon) / 2 : size.padding;
+    final sidePad = bare
+        ? 0.0
+        : iconOnly
+        ? (height - size.icon) / 2
+        : size.padding;
     final borderColor = solid ?? (selected ? tint : scheme.outlineVariant);
     final ringed = dashed && inset && selected;
     final Widget content = ConstrainedBox(
@@ -256,7 +271,7 @@ class AppChip extends StatelessWidget {
           left: sidePad,
           // ▾ / ✕ / 🔒 carry their own air; the filled count badge sits
           // concentric with the chip's round end instead.
-          right: tail == null || iconOnly
+          right: tail == null || iconOnly || bare
               ? sidePad
               : trailing == AppChipTrailing.count
               ? (height - (size.icon + 2)) / 2
@@ -280,7 +295,7 @@ class AppChip extends StatelessWidget {
           solid ??
           (selected ? tint.withValues(alpha: 0.12) : Colors.transparent),
       shape: StadiumBorder(
-        side: dashed
+        side: dashed || bare
             ? BorderSide.none
             : BorderSide(color: borderColor, width: selected ? 1.5 : 1),
       ),

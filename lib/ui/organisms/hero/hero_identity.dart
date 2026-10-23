@@ -16,8 +16,17 @@ class HeroIdentity extends StatelessWidget {
     this.trailing,
     this.actions = const [],
     this.below,
+    this.alignTop = true,
     super.key,
   });
+
+  /// The icon and the buttons sit at the top of the row, not centred on the
+  /// text — every detail page (owner 2026-10-23). False = centred.
+  final bool alignTop;
+
+  /// One icon size in view and edit (owner 2026-10-23): a view icon (40)
+  /// scales up to the edit one (44, the EditableCircle).
+  static const double iconSize = 44;
 
   final Widget? icon;
   final Widget? name;
@@ -87,12 +96,17 @@ class HeroIdentity extends StatelessWidget {
         ],
       );
     }
+    final mark = icon;
     return Row(
-      crossAxisAlignment: editing
+      crossAxisAlignment: editing || alignTop
           ? CrossAxisAlignment.start
           : CrossAxisAlignment.center,
       children: [
-        ?icon,
+        if (mark != null)
+          SizedBox.square(
+            dimension: iconSize,
+            child: FittedBox(fit: BoxFit.contain, child: mark),
+          ),
         if (icon != null && hasText) const SizedBox(width: AppSpacing.md),
         if (hasText)
           Expanded(

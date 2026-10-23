@@ -29,11 +29,11 @@ void main() {
   testWidgets('list row: skeleton = real transaction row', (t) async {
     final real = await height(
       t,
-      const TxRow(
+      const AppListRow(
         leading: SizedBox(width: 36, height: 36),
         title: 'Lunch',
-        amount: -120,
-        category: 'Food',
+        line2: ListRowLine(parts: ['Food']),
+        trailing: ListRowTrailing.value(Text('฿120')),
       ),
     );
     final skel = await height(t, const ListRowSkeleton());

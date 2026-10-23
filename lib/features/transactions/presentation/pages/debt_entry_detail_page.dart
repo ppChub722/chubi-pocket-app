@@ -104,7 +104,11 @@ class _DebtDraft extends Equatable {
     required this.tagIds,
     required this.paid,
     required this.createTx,
+    required this.due,
   });
+
+  /// กำหนดจ่าย, YYYY-MM-DD.
+  final String? due;
 
   final DebtEntryDirection direction;
   final String amount;
@@ -129,10 +133,12 @@ class _DebtDraft extends Equatable {
     tagIds: tagIds,
     paid: paid ?? this.paid,
     createTx: createTx,
+    due: due,
   );
 
   @override
   List<Object?> get props => [
+    due,
     direction,
     amount,
     description,
@@ -218,10 +224,11 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     _restoring = true;
     _c
       ..direction = e.direction
-      ..amount.text = _amountText(e.amount)
+      ..amount.text = AmountInput.format(e.amount)
       ..description.text = e.description ?? ''
       ..note.text = e.note ?? ''
       ..date = e.date ?? DateTime.now()
+      ..dueDate = e.dueDate
       ..account = account
       ..setPerson(pick)
       ..knownTags.clear()
@@ -234,9 +241,6 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     _c.createTransaction = tx != null;
     _restoring = false;
   }
-
-  static String _amountText(double v) =>
-      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
 
   static String _ymd(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-'
@@ -253,6 +257,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     tagIds: (_c.tagIds.toList()..sort()),
     paid: _paid,
     createTx: _c.createTransaction,
+    due: _c.dueDate == null ? null : _ymd(_c.dueDate!),
   );
 
   @override
@@ -265,6 +270,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       ..description.text = w.description
       ..note.text = w.note
       ..date = DateTime.parse(w.date)
+      ..dueDate = w.due == null ? null : DateTime.parse(w.due!)
       ..account = w.accountId == null ? null : _accounts[w.accountId]
       ..setPerson(_people[w.personKey])
       ..setTagIds(w.tagIds.toSet());
@@ -286,6 +292,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
         next.personKey == w.personKey &&
         next.paid == w.paid &&
         next.createTx == w.createTx &&
+        next.due == w.due &&
         next.tagIds.join() == w.tagIds.join();
     if (textOnly) {
       final field = next.note != w.note
@@ -380,32 +387,110 @@ class _DebtEntryViewState extends State<_DebtEntryView>
           : null,
       key: w.personKey != o.personKey ? w.personKey : null,
       personName: w.personKey != o.personKey ? pick?.typedName : null,
+      dueDate: w.due != o.due && w.due != null ? DateTime.parse(w.due!) : null,
+      clearDueDate: w.due != o.due && w.due == null,
     );
     final repo = context.read<PersonalDebtsRepository>();
-    final accounts = context.read<AccountsCubit>();
-    final txCubit = context.read<TransactionsCubit>();
-    final oldTxId = widget.detail.transaction?.id;
     setSaving(true);
     try {
       final r = await repo.updateEntry(_entry.id, update);
-      accounts.patchBalances(r.accountBalances);
-      final tx = r.transaction;
-      if (tx != null) {
-        txCubit.patchRow(tx, afterWrite: true);
-      } else if (oldTxId != null) {
-        txCubit.dropRow(oldTxId);
-      }
       if (!mounted) return;
       HapticFeedback.mediumImpact();
       commitSaved(working);
-      widget.onChanged(
-        DebtEntryDetail(entry: r.entry, balance: r.balance, transaction: tx),
-      );
+      _applyWrite(r);
       _say(l.quickSaved, Tone.success);
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
       showSaveFailure(context, e, retry: _save);
+    }
+  }
+
+  /// Wallet balances, the transactions list and this page follow the answer.
+  void _applyWrite(DebtEntryWriteResult r) {
+    context.read<AccountsCubit>().patchBalances(r.accountBalances);
+    final txCubit = context.read<TransactionsCubit>();
+    final tx = r.transaction;
+    final oldTxId = widget.detail.transaction?.id;
+    if (tx != null) {
+      txCubit.patchRow(tx, afterWrite: true);
+    } else if (oldTxId != null) {
+      txCubit.dropRow(oldTxId);
+    }
+    widget.onChanged(
+      DebtEntryDetail(entry: r.entry, balance: r.balance, transaction: tx),
+    );
+  }
+
+  /// ผูกรายการ: the wallet first ("ไม่ระบุกระเป๋า" offered too, like quick
+  /// create), then the BE makes the transaction. Cancel = nothing.
+  Future<void> _linkTx() async {
+    final accounts =
+        maybeTxFormOptions(context, watch: false)?.state.options?.accountList ??
+        context.read<AccountsCubit>().state.accounts;
+    final picked = await AccountPicker.one(
+      context,
+      accounts: accounts,
+      allowNone: true,
+    );
+    if (picked == null || !mounted) return;
+    final wallet = picked is AccountPicked ? picked.account : null;
+    if (isEditing) {
+      if (wallet != null) _accounts[wallet.id] = wallet;
+      _c
+        ..setCreateTransaction(true)
+        ..setAccount(wallet);
+      return;
+    }
+    final repo = context.read<PersonalDebtsRepository>();
+    setSaving(true);
+    try {
+      final r = await repo.updateEntry(
+        _entry.id,
+        DebtEntryUpdate(createTransaction: true, accountId: wallet?.id),
+      );
+      if (mounted) _applyWrite(r);
+    } catch (e) {
+      if (mounted) _say(_failed(e), Tone.danger);
+    } finally {
+      if (mounted) setSaving(false);
+    }
+  }
+
+  bool _paidBusy = false;
+
+  /// The ☑ in the hero: view mode saves at once, edit mode is part of the
+  /// draft.
+  Future<void> _togglePaid() async {
+    if (isEditing) {
+      _setPaid(!_paid);
+      return;
+    }
+    if (_paidBusy) return;
+    final next = !_paid;
+    setState(() {
+      _paid = next;
+      _paidBusy = true;
+    });
+    try {
+      final r = await context.read<PersonalDebtsRepository>().setPaid(
+        _entry.id,
+        next,
+      );
+      if (!mounted) return;
+      widget.onChanged(
+        DebtEntryDetail(
+          entry: r.entry,
+          balance: r.balance,
+          transaction: widget.detail.transaction,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _paid = _entry.paid);
+      _say(_failed(e), Tone.danger);
+    } finally {
+      if (mounted) setState(() => _paidBusy = false);
     }
   }
 
@@ -457,21 +542,60 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     locale: Localizations.localeOf(context).languageCode,
   );
 
-  /// Under the amount (mock DebtEntry): "รอรับจาก chalee ฿82" — this debt —
-  /// and "✓ จ่ายแล้ว".
-  Widget? _entryNote(AppLocalizations l, String symbol) {
-    final p = _c.person;
-    if (p == null) return null;
-    final owedToMe = _c.direction == DebtEntryDirection.paid;
-    final name = p.person.name;
-    return DebtEntryNote(
-      key: const ValueKey('debtEntryNote'),
-      sentence: owedToMe ? l.debtPersonOwedFrom(name) : l.debtPersonOweTo(name),
-      amount: MoneyText(_c.amountValue, symbol: symbol),
-      color: debtStateColor(context, owedToMe: owedToMe),
-      paidLabel: _paid ? l.debtPaidPill : null,
+  /// The hero's first item: ☑ = จ่ายแล้ว, marked right here.
+  Widget _paidBox(AppLocalizations l) {
+    final theme = Theme.of(context);
+    // Unpaid with a due date: the date (or how late it is) says more than
+    // "ยังไม่จ่าย" (owner 2026-10-23).
+    final due = _paid ? null : _c.dueDate;
+    final now = DateTime.now();
+    final late = due == null
+        ? 0
+        : DateTime(now.year, now.month, now.day)
+              .difference(DateTime(due.year, due.month, due.day))
+              .inDays;
+    final overdue = late > 0;
+    final status = _paid
+        ? l.debtsPaidChip
+        : due == null
+        ? l.debtUnpaidLabel
+        : overdue
+        ? l.debtOverdueDays(late)
+        : l.debtDueOn(_dayLabel(l, due));
+    return GestureDetector(
+      key: const ValueKey('debtPaidBox'),
+      behavior: HitTestBehavior.opaque,
+      // One save at a time: the circle spins and every tap waits.
+      onTap: _paidBusy ? null : _togglePaid,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CheckCircleButton(
+            checked: _paid,
+            loading: _paidBusy,
+            tooltip: l.debtsPaidChip,
+            onChanged: (_) => _togglePaid(),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            status,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: overdue ? theme.colorScheme.error : null,
+            ),
+          ),
+        ],
+      ),
     );
   }
+
+  /// Shown in italics when the entry has no description of its own.
+  String _autoTitle(AppLocalizations l, DebtEntry e) => debtAutoTitle(
+    l,
+    direction: e.direction,
+    isRepayment: e.isRepayment,
+    name: _c.person?.person.name ?? widget.detail.balance.person.name,
+  );
 
   /// "มาจาก (แบ่งบิล)" — the kind in words.
   String _originKind(AppLocalizations l, DebtOrigin o) => switch (o.kind) {
@@ -497,48 +621,129 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     return null;
   }
 
-  /// กับใคร › and มาจาก › (mock DebtEntry). A debt has no wallet of its own:
-  /// a cash loan's มาจาก card is its linked transaction.
+  /// The linked transaction as its wallet; none = a dashed ผูกรายการ. The
+  /// transaction has no page of its own (this page is it), so the card opens
+  /// the wallet; edit mode changes the wallet, × unlinks on save.
+  Widget _txCard(AppLocalizations l) {
+    final editing = isEditing;
+    final linked = editing
+        ? _c.createTransaction
+        : widget.detail.transaction != null;
+    if (!linked) {
+      return PickCard(
+        key: const ValueKey('debtTxCard'),
+        label: l.transactionFormAccountLabel,
+        placeholder: l.debtLinkTx,
+        dense: true,
+        reserveSubtitle: true,
+        leading: const PickCardEmptyIcon(AppIcons.link, size: 32),
+        editable: editing,
+        onLongPress: editing ? null : () => enterEdit(),
+        onTap: _linkTx,
+      );
+    }
+    // The wallet's own card, as in quick create: its icon, colours, balance.
+    final walletId = widget.detail.transaction?.account?.id;
+    final picked = _c.account;
+    // The loaded wallet has the icon colours and balance the ref lacks.
+    Account? full;
+    for (final a in context.watch<AccountsCubit>().state.accounts) {
+      if (a.id == picked?.id) full = a;
+    }
+    final card = WalletPickCard(
+      key: editing ? null : const ValueKey('debtTxCard'),
+      account: full ?? picked,
+      label: l.transactionFormAccountLabel,
+      placeholder: l.debtNoWallet,
+      dense: true,
+      editable: editing,
+      onLongPress: editing ? null : () => enterEdit(),
+      onTap: editing
+          ? _pickAccount
+          : walletId == null
+          ? null
+          : () => openPage(context, '/accounts/$walletId'),
+    );
+    if (!editing) return card;
+    // × small in the card's top-right corner, in the warning colour.
+    return Stack(
+      key: const ValueKey('debtTxCard'),
+      fit: StackFit.passthrough,
+      children: [
+        card,
+        PositionedDirectional(
+          top: AppSpacing.xs,
+          end: AppSpacing.xs,
+          child: AppIconButton.flat(
+            key: const ValueKey('debtUnlinkTx'),
+            icon: AppIcons.close,
+            iconSize: 16,
+            dense: true,
+            color: Tone.warning.color(context),
+            tooltip: l.commonDelete,
+            onPressed: () => _c.setCreateTransaction(false),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// กับใคร › and the wallet card (mock DebtEntry); a split's or an event's
+  /// debt shows where it came from instead.
   Widget _cards(AppLocalizations l, String symbol) {
     final editable = isEditing && !_sourced;
     final p = _c.person;
     final canEditHere = !isEditing && !_sourced;
     final origin = _entry.origin;
+    final personCard = PickCard(
+      label: l.debtPersonPickerTitle,
+      value: p?.person.name,
+      placeholder: l.debtPickPerson,
+      dense: true,
+      reserveSubtitle: true,
+      subtitle: debtNetSubtitle(
+        context,
+        l,
+        isEditing ? p?.net : widget.detail.balance.net,
+      ),
+      leading: p == null
+          ? const PickCardEmptyIcon(AppIcons.contact, size: 32)
+          : PersonMark(
+              name: p.person.name,
+              level: debtPersonLevel(p.person),
+              iconCode: p.person.iconCode,
+              size: 32,
+            ),
+      editable: editable,
+      onLongPress: canEditHere ? () => enterEdit(then: _pickPerson) : null,
+      onTap: editable
+          ? _pickPerson
+          : isEditing || p == null
+          ? null
+          : () => openPage(context, debtPersonPath(p.key)),
+    );
+    // Like quick create (owner 2026-10-23): my wallet ⇄ the person in the
+    // money's direction; edit mode's arrow swaps it.
+    if (!_sourced) {
+      final mine = _txCard(l);
+      final out = _c.direction == DebtEntryDirection.paid;
+      return FlowCards(
+        key: const ValueKey('debtFlow'),
+        from: out ? mine : personCard,
+        to: out ? personCard : mine,
+        swapTooltip: l.quickSwap,
+        onSwap: isEditing
+            ? () => _c.setDirection(
+                out ? DebtEntryDirection.received : DebtEntryDirection.paid,
+              )
+            : null,
+      );
+    }
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: PickCard(
-              label: l.debtPersonPickerTitle,
-              value: p?.person.name,
-              placeholder: l.debtPickPerson,
-              dense: true,
-              reserveSubtitle: true,
-              subtitle: debtNetSubtitle(
-                context,
-                l,
-                isEditing ? p?.net : widget.detail.balance.net,
-              ),
-              leading: p == null
-                  ? const PickCardEmptyIcon(AppIcons.contact, size: 32)
-                  : PersonMark(
-                      name: p.person.name,
-                      level: debtPersonLevel(p.person),
-                      iconCode: p.person.iconCode,
-                      size: 32,
-                    ),
-              editable: editable,
-              onLongPress: canEditHere
-                  ? () => enterEdit(then: _pickPerson)
-                  : null,
-              onTap: editable
-                  ? _pickPerson
-                  : isEditing || p == null
-                  ? null
-                  : () => openPage(context, debtPersonPath(p.key)),
-            ),
-          ),
+          Expanded(child: personCard),
           if (origin != null) ...[
             const SizedBox(width: AppSpacing.sm),
             Expanded(
@@ -562,87 +767,71 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                 ),
               ),
             ),
+          ] else ...[
+            // Alone it keeps the create form's half width.
+            const SizedBox(width: AppSpacing.sm),
+            const Spacer(),
           ],
         ],
       ),
     );
   }
 
-  String _walletHint(AppLocalizations l) => !_c.createTransaction
-      ? l.debtEditWalletOff
-      : _c.direction == DebtEntryDirection.paid
-      ? l.debtEditWalletLend
-      : l.debtEditWalletBorrow;
+  Future<void> _pickDue() async {
+    final from = DateTime(_c.date.year, _c.date.month, _c.date.day);
+    final r = await showAppDatePicker(
+      context,
+      initial: _c.dueDate ?? from,
+      first: from,
+      last: from.add(const Duration(days: 365 * 5)),
+    );
+    if (r is AppDatePicked && mounted) _c.setDueDate(r.date);
+  }
 
-  /// Edit mode's box (mock DebtEntryEdit): money in / out of a wallet (+ the
-  /// wallet), and the จ่ายแล้ว label.
-  Widget _editBox(AppLocalizations l, bool first) => SectionCard(
-    first: first,
-    children: [
-      if (!_sourced) ...[
-        SettingToggleRow(
-          label: l.debtMoneyMovedLabel,
-          caption: _walletHint(l),
-          value: _c.createTransaction,
-          onChanged: _c.setCreateTransaction,
-        ),
-        if (_c.createTransaction)
-          DetailRow(
-            label: l.transactionFormAccountLabel,
-            trailing: Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: AppChip(
-                key: const ValueKey('debtEditWallet'),
-                label: _c.account?.name ?? l.quickPickWallet,
-                icon: AppIcons.wallet,
-                trailing: AppChipTrailing.dropdown,
-                onTap: _pickAccount,
-              ),
-            ),
+  /// "กำหนดจ่าย" under โน้ต, like quick create's row; view mode shows it only
+  /// when set.
+  Widget _dueSection(AppLocalizations l, bool first) {
+    final due = _c.dueDate;
+    final Widget chip = !isEditing
+        ? AppChip(label: _dayLabel(l, due!), icon: AppIcons.date)
+        : due == null
+        ? AppChip(
+            label: l.debtDuePick,
+            icon: AppIcons.add,
+            tone: AppChipTone.primary,
+            selected: true,
+            dashed: true,
+            onTap: _pickDue,
+          )
+        : AppChip(
+            label: _dayLabel(l, due),
+            icon: AppIcons.date,
+            selected: true,
+            dashed: true,
+            inset: true,
+            trailing: AppChipTrailing.remove,
+            onRemove: () => _c.setDueDate(null),
+            onTap: _pickDue,
+          );
+    return SectionCard(
+      key: const ValueKey('debtDueRow'),
+      first: first,
+      children: [
+        DetailRow(
+          label: l.debtDueLabel,
+          onLongPress: isEditing ? null : () => enterEdit(then: _pickDue),
+          trailing: Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: chip,
           ),
-      ],
-      SettingToggleRow(
-        label: l.debtsPaidChip,
-        caption: l.debtPaidHelper,
-        value: _paid,
-        onChanged: _setPaid,
-      ),
-    ],
-  );
-
-  /// View mode (bug B2): จ่ายแล้ว saves at once, no ✏️ needed.
-  Widget _paidLive(AppLocalizations l, bool first) => SectionCard(
-    first: first,
-    children: [
-      LiveSetting<bool>(
-        value: _entry.paid,
-        save: (on) async {
-          final r = await context.read<PersonalDebtsRepository>().setPaid(
-            _entry.id,
-            on,
-          );
-          if (!mounted) return true;
-          widget.onChanged(
-            DebtEntryDetail(
-              entry: r.entry,
-              balance: r.balance,
-              transaction: widget.detail.transaction,
-            ),
-          );
-          return true;
-        },
-        failedMessage: (e) => e is ApiException
-            ? e.message
-            : AppLocalizations.of(context)!.errorUnknownMessage,
-        builder: (context, value, onChanged) => SettingToggleRow(
-          label: l.debtsPaidChip,
-          caption: l.debtPaidHelper,
-          value: value,
-          onChanged: onChanged,
         ),
-      ),
-    ],
-  );
+      ],
+    );
+  }
+
+  String _failed(Object e) => e is ApiException
+      ? e.message
+      : AppLocalizations.of(context)!.errorUnknownMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -706,31 +895,28 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                       type: _c.direction == DebtEntryDirection.paid
                           ? TransactionType.expense
                           : TransactionType.income,
-                      onTypeChanged: editing && !_sourced
-                          ? (t) => _c.setDirection(
-                              t == TransactionType.income
-                                  ? DebtEntryDirection.received
-                                  : DebtEntryDirection.paid,
-                            )
-                          : null,
+                      headerLeading: _paidBox(l),
+                      // No direction chips: the flow cards' arrow says (and,
+                      // in edit mode, swaps) it.
+                      typeBadge: const SizedBox.shrink(),
                       amount: _c.amount,
                       title: _c.description,
-                      titlePlaceholder: e.direction == DebtEntryDirection.paid
-                          ? l.debtsDirPaid
-                          : l.debtsDirReceived,
+                      // A recorded debt says what it was for; a repayment's
+                      // and a split's text comes from the app.
+                      titleReadOnly: e.isRepayment || _sourced,
+                      titleLabel: l.debtOriginFieldLabel,
+                      titlePlaceholder: _autoTitle(l, e),
                       dateLabel: _dayLabel(l, _c.date),
                       onPickDate: editing && !_sourced ? _pickDate : null,
                       symbol: symbol,
                       onEdit: () => enterEdit(),
                       onLongPressField: (f) => enterEdit(focus: f),
-                      amountNote: _entryNote(l, symbol),
                       footer: _cards(l, symbol),
                     ),
                   ],
                 ),
                 tags: tags,
                 sections: [
-                  (first) => editing ? _editBox(l, first) : _paidLive(l, first),
                   (first) => NoteSection(
                     first: first,
                     label: l.commonNote,
@@ -747,6 +933,8 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                       hint: l.debtNoteHint,
                     ),
                   ),
+                  if (!e.isRepayment && (editing || _c.dueDate != null))
+                    (first) => _dueSection(l, first),
                   // An older BE without `origin`: the split source row.
                   if (source != null && e.origin == null)
                     (first) => SectionCard(

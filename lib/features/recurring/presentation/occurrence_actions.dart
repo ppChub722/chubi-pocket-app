@@ -228,7 +228,9 @@ Future<void> openOccurrenceSheet(
     await editTransaction(context, tx.id);
     return;
   }
-  if (item.state == OccurrenceState.pending) {
+  // An old draft in รอยืนยัน: by slot it opens here like any due one (the BE
+  // drops the draft when it is recorded).
+  if (item.state == OccurrenceState.pending && !item.bySlot) {
     openPage(context, '/pending');
     return;
   }
@@ -359,9 +361,7 @@ OccurrenceActions? occurrenceActionsFor(
       ),
     );
   }
-  if (item.state.settled || item.state == OccurrenceState.pending) {
-    return null;
-  }
+  if (item.state.settled) return null;
   void sheet() =>
       unawaited(openOccurrenceSheet(context, item, onChanged: onChanged));
   final unknown = item.needsAmount || item.amount == null;
@@ -395,6 +395,132 @@ OccurrenceActions? occurrenceActionsFor(
             unawaited(linkExistingTx(context, item, onChanged: onChanged)),
       ),
     ],
+  );
+}
+
+/// A due occurrence's buttons laid out in an OccurrenceFocusCard: the main
+/// one (ยืนยัน / ใส่ยอด; a draft's ยืนยัน opens รอยืนยัน), จ่ายแล้ว, ข้าม. The
+/// rest are in its sheet (a tap on the card).
+List<OccurrenceAction> occurrenceFocusActions(
+  BuildContext context,
+  RecurringItem item, {
+  required ValueChanged<ItemWriteResult> onChanged,
+}) {
+  final l = AppLocalizations.of(context)!;
+  void sheet() =>
+      unawaited(openOccurrenceSheet(context, item, onChanged: onChanged));
+  if (!item.bySlot) {
+    return [OccurrenceAction(label: l.occurrenceConfirm, onTap: sheet)];
+  }
+  final unknown = item.needsAmount || item.amount == null;
+  return [
+    unknown
+        ? OccurrenceAction(
+            label: l.occurrenceEnterAmount,
+            warning: true,
+            onTap: sheet,
+          )
+        : OccurrenceAction(
+            label: l.occurrenceConfirm,
+            onTap: () => unawaited(
+              confirmOccurrence(context, item, onChanged: onChanged),
+            ),
+          ),
+    OccurrenceAction(
+      label: l.occurrenceMarkPaid,
+      onTap: () => unawaited(_paid(context, item, onChanged, paid: true)),
+    ),
+    OccurrenceAction(
+      label: l.occurrenceSkip,
+      onTap: () =>
+          unawaited(skipOccurrence(context, item, onChanged: onChanged)),
+    ),
+  ];
+}
+
+/// Can be picked for ยืนยันที่เลือก / ข้ามที่เลือก: addressable by slot (an
+/// old draft too) and not settled.
+bool canSettleSelected(RecurringItem i) => i.bySlot && !i.state.settled;
+
+/// Still needs an amount: it goes in the รอใส่ยอด box with a field.
+bool needsAmountInput(RecurringItem i) =>
+    i.needsAmount || i.amount == null || i.amount! <= 0;
+
+/// A waiting occurrence's word: รอใส่ยอด while it has no amount, else
+/// รอยืนยัน (a due one and an old draft read the same now).
+String waitingLabel(AppLocalizations l, RecurringItem i) => needsAmountInput(i)
+    ? l.fpRecurringAwaitingValue
+    : l.occurrenceStateNotCreated;
+
+/// ยืนยัน ([skip] false) or ข้าม (asks first) for the picked ones, one write
+/// per occurrence. ยืนยัน records [amounts] typed in the รอใส่ยอด box; one
+/// still without an amount is recorded as 0 after a warning, to fix later.
+/// A snack says how many went through.
+Future<void> settleSelected(
+  BuildContext context,
+  List<RecurringItem> items, {
+  required bool skip,
+  required ValueChanged<ItemWriteResult> onChanged,
+  Map<String, double> amounts = const {},
+}) async {
+  final l = AppLocalizations.of(context)!;
+  double? amountOf(RecurringItem i) =>
+      amounts[i.id] ?? (needsAmountInput(i) ? 0 : null);
+  if (skip) {
+    final ok = await showConfirmDialog(
+      context,
+      title: l.occurrenceSkipSelectedTitle(items.length),
+      confirmLabel: l.occurrenceSkip,
+      destructive: true,
+    );
+    if (!ok || !context.mounted) return;
+  } else {
+    final zero = items.where((i) => amountOf(i) == 0).length;
+    if (zero > 0) {
+      final ok = await showConfirmDialog(
+        context,
+        title: l.occurrenceZeroTitle(zero),
+        message: l.occurrenceZeroBody,
+        confirmLabel: l.occurrenceConfirm,
+      );
+      if (!ok || !context.mounted) return;
+    }
+  }
+  final repo = RecurringRepository.of(context);
+  final accounts = context.read<AccountsCubit>();
+  final messenger = ScaffoldMessenger.of(context);
+  var done = 0;
+  ApiException? failed;
+  for (final i in items) {
+    if (!_inFlight.add(i.id)) continue;
+    try {
+      final r = skip
+          ? await repo.skipOccurrence(i.ruleId!, i.slot!)
+          : await repo.confirmOccurrence(
+              i.ruleId!,
+              i.slot!,
+              amount: amountOf(i),
+            );
+      accounts.patchBalances(r.balances);
+      onChanged(r);
+      done++;
+    } on ApiException catch (e) {
+      failed ??= e;
+    } finally {
+      _inFlight.remove(i.id);
+    }
+  }
+  if (done > 0) HapticFeedback.mediumImpact();
+  final parts = [
+    if (done > 0)
+      skip ? l.occurrenceSkippedCount(done) : l.occurrenceSavedCount(done),
+    if (failed != null) failed.message,
+  ];
+  if (parts.isEmpty) return;
+  showAppSnackBarOn(
+    messenger,
+    parts.join(' | '),
+    tone: failed != null ? Tone.danger : Tone.success,
   );
 }
 

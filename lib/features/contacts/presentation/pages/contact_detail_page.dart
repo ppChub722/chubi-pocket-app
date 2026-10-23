@@ -333,6 +333,34 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     }
   }
 
+  /// The person's name is the hero's title: big and bold (owner 2026-10-23).
+  TextStyle? get _nameStyle => Theme.of(
+    context,
+  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700);
+
+  /// The account row's icon: a filled success circle when linked (the
+  /// "active" look), the plain grey link icon when not.
+  Widget _linkMark({required bool linked}) {
+    final scheme = Theme.of(context).colorScheme;
+    if (!linked) {
+      return Icon(AppIcons.link, size: 22, color: scheme.onSurfaceVariant);
+    }
+    final success = Theme.of(context).extension<AppColors>()!.success;
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(color: success, shape: BoxShape.circle),
+      child: const Icon(AppIcons.link, size: 16, color: Colors.white),
+    );
+  }
+
+  /// No email yet: open edit on the email field and say why.
+  void _askEmailFirst() {
+    final l = AppLocalizations.of(context)!;
+    showAppSnackBar(context, l.contactLinkNeedsEmail);
+    _enterOn(_Field.email)();
+  }
+
   Future<void> _toggleArchive() async {
     final l = AppLocalizations.of(context)!;
     final cubit = context.read<ContactsCubit>();
@@ -438,7 +466,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
                       AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
                   hero: isEditing ? _editHero(l) : _viewHero(l),
                   info: isEditing ? _editInfo(l) : _viewInfo(l),
-                  settings: isEditing ? _editSettings(l) : _viewSettings(l),
                   people: isEditing || _isCreate ? null : _linkSection(l),
                   note: _note(l),
                   endZone: isEditing && !_isCreate ? _endZone(l) : null,
@@ -469,49 +496,43 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     );
   }
 
-  String _linkLabel(AppLocalizations l, Contact c) {
-    final u = c.linkedUser;
-    if (u == null) return l.fpContactsNotLinked;
-    final handle = u.username;
-    return l.fpContactsLinkedWith(
-      handle == null || handle.isEmpty ? u.displayName : '@$handle',
-    );
-  }
-
   Widget _viewHero(AppLocalizations l) {
     final c = _contact!;
+    // The avatar row is the top of the card, its buttons at the end, like the
+    // wallet page; a header only when archived (owner 2026-10-23).
     return AppHeroCard(
       style: _heroStyle(c.name, c.iconCode),
-      header: HeroHeader(
-        leading: [
-          if (c.isArchived)
-            AppChip(
-              label: l.contactArchivedBadge,
-              icon: AppIcons.archive,
-              tone: AppChipTone.warning,
-              selected: true,
-            ),
-          AppChip(
-            label: _linkLabel(l, c),
-            icon: c.isLinked ? AppIcons.link : null,
-            tone: c.isLinked ? AppChipTone.success : AppChipTone.neutral,
-            selected: c.isLinked,
-          ),
-        ],
-        actions: [
-          CardActionButton(
-            icon: AppIcons.debt,
-            tooltip: l.contactDebts,
-            onTap: () => openPage(
-              context,
-              '/personal-debts/people/${Uri.encodeComponent('c:${c.id}')}',
-            ),
-          ),
-        ],
-        onEdit: enterEdit,
-      ),
+      header: c.isArchived
+          ? HeroHeader(
+              leading: [
+                AppChip(
+                  label: l.contactArchivedBadge,
+                  icon: AppIcons.archive,
+                  tone: AppChipTone.warning,
+                  selected: true,
+                ),
+              ],
+            )
+          : null,
       content: [
         HeroIdentity(
+          alignTop: true,
+          actions: [
+            CardActionButton(
+              icon: AppIcons.debt,
+              tooltip: l.contactDebts,
+              onTap: () => openPage(
+                context,
+                '/personal-debts/people/${Uri.encodeComponent('c:${c.id}')}',
+              ),
+            ),
+            CardActionButton(
+              key: const ValueKey('heroEdit'),
+              icon: AppIcons.edit,
+              tooltip: UiConfig.stringsOf(context).edit,
+              onTap: enterEdit,
+            ),
+          ],
           icon: GestureDetector(
             onLongPress: _linked
                 ? null
@@ -532,6 +553,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
             editing: false,
             controller: _viewName,
             maxLength: TextLimits.name,
+            style: _nameStyle,
             onEnterEdit: _linked ? null : _enterOn(_Field.name),
           ),
           description: HeroDescription(
@@ -542,22 +564,66 @@ class _ContactDetailPageState extends State<ContactDetailPage>
             onEnterEdit: _enterOn(_Field.description),
           ),
         ),
+        _businessCard(l, c),
       ],
+    );
+  }
+
+  /// Email + phone in the hero, like a business card (owner 2026-10-23).
+  /// Both always show; an empty one says it can be filled (long-press).
+  Widget _businessCard(AppLocalizations l, Contact c) {
+    final faint = HeroColors.maybeOf(context)?.muted ??
+        Theme.of(context).colorScheme.onSurfaceVariant;
+    HeroFact fact(String label, String? value, IconData icon) {
+      final empty = value == null || value.trim().isEmpty;
+      return HeroFact(
+        label,
+        empty ? l.commonLongPressToEdit : value,
+        icon: icon,
+        color: empty ? faint : null,
+      );
+    }
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: _enterOn(_Field.phone),
+      child: HeroFactList(
+        facts: [
+          fact(l.contactEmailLabel, c.email, AppIcons.email),
+          fact(l.contactPhoneLabel, c.phone, AppIcons.phone),
+        ],
+      ),
     );
   }
 
   Widget? _viewInfo(AppLocalizations l) {
     final c = _contact!;
-    InfoRow? row(String label, String? value, _Field f) =>
-        value == null || value.trim().isEmpty
-        ? null
-        : InfoRow(label: label, value: value, onLongPress: _enterOn(f));
-    final rows = <InfoRow>[
-      ?row(l.contactNicknameLabel, c.nickname, _Field.nickname),
-      ?row(l.contactEmailLabel, c.email, _Field.email),
-      ?row(l.contactPhoneLabel, c.phone, _Field.phone),
-    ];
-    return rows.isEmpty ? null : InfoBox(rows: rows);
+    // Only a linked person has a nickname (their name comes from their
+    // account); its switch sits right under it. Email / phone are in the hero.
+    if (!c.isLinked) return null;
+    final faint = Theme.of(context).colorScheme.onSurfaceVariant;
+    final nickname = c.nickname;
+    return SectionCard(
+      children: [
+        nickname == null || nickname.trim().isEmpty
+            ? InfoRow(
+                label: l.contactNicknameLabel,
+                valueWidget: Text(
+                  l.commonLongPressToEdit,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: faint),
+                ),
+                onLongPress: _enterOn(_Field.nickname),
+              )
+            : InfoRow(
+                label: l.contactNicknameLabel,
+                value: nickname,
+                onLongPress: _enterOn(_Field.nickname),
+              ),
+        _viewNicknameSwitch(l, c),
+      ],
+    );
   }
 
   Widget _linkSection(AppLocalizations l) {
@@ -565,28 +631,56 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     final hasEmail = c.email?.isNotEmpty ?? false;
 
     final hasNames = _unlinkedNames > 0;
+    // Linked: ONE row with the account as a set (name, @handle, email); a
+    // tap offers to unlink. No leading icons (owner 2026-10-23).
+    final u = c.linkedUser;
+    final handle = u?.username;
+    final account = u == null
+        ? null
+        : [
+            if (handle != null && handle.isNotEmpty) '@$handle',
+            if (hasEmail) c.email!,
+          ].join(' | ');
     return SectionCard(
       title: l.fpContactsLinkSection,
       description: l.fpContactsLinkSectionDesc,
       children: [
+        // Like the note row: an icon in front, here a filled "active" circle
+        // once linked; ⋯ holds the one action (owner 2026-10-23).
         if (c.isLinked)
           DetailRow(
-            leading: const AppIcon(AppIcons.link),
-            label: l.contactUnlink,
-            helper: l.contactLinkLinked,
-            showChevron: true,
-            onTap: _unlink,
+            leading: _linkMark(linked: true),
+            label: l.contactLinkedAccount(u?.displayName ?? c.name),
+            helper: account == null || account.isEmpty ? null : account,
+            trailing: OptionMenuAnchor<int>(
+              options: [
+                SheetOption(
+                  value: 0,
+                  label: l.contactUnlink,
+                  leading: const Icon(AppIcons.unlink, size: 18),
+                  destructive: true,
+                ),
+              ],
+              onSelected: (_) => _unlink(),
+              builder: (context, open) => AppIconButton.flat(
+                icon: AppIcons.more,
+                tooltip: l.contactUnlink,
+                dense: true,
+                onPressed: open,
+              ),
+            ),
           )
-        else if (hasEmail)
+        // Always offered, so people know it exists; it needs their email
+        // first (owner 2026-10-23).
+        else
           DetailRow(
-            leading: const AppIcon(AppIcons.send),
+            leading: _linkMark(linked: false),
             label: l.contactLinkRequest,
-            helper: l.contactLinkRequestHint,
+            helper: hasEmail ? l.contactLinkRequestHint : l.contactLinkNeedsEmail,
             showChevron: true,
-            onTap: _requestLink,
+            onTap: hasEmail ? _requestLink : _askEmailFirst,
           ),
         DetailRow(
-          leading: const AppIcon(AppIcons.split),
           label: l.contactWireTitle,
           helper: hasNames
               ? l.contactWireHint(_unlinkedNames, _unlinkedRecords)
@@ -642,27 +736,14 @@ class _ContactDetailPageState extends State<ContactDetailPage>
             onTap: _linked ? null : _openIconMaker,
             child: PersonMark(
               name: name,
-              level: PersonLevel.contact,
+              level: _linked ? PersonLevel.linked : PersonLevel.contact,
               iconCode: _linked ? c!.iconCode : w.iconCode,
               size: 44,
             ),
           ),
-          name: _linked
-              ? null
-              : HeroNameInput(
-                  editing: true,
-                  controller: _ctrl[_Field.name]!,
-                  focusNode: _focus[_Field.name],
-                  hint: l.contactNameHint,
-                  maxLength: TextLimits.name,
-                  onChanged: (v) => _onText(_Field.name, v),
-                  validator: (v) {
-                    final s = v?.trim() ?? '';
-                    if (s.isEmpty) return l.contactNameRequired;
-                    if (s.length > TextLimits.name) return l.contactNameTooLong;
-                    return null;
-                  },
-                ),
+          // A linked person's name comes from their account: shown with its
+          // label, not typed, and it follows the nickname switch live.
+          name: _linked ? _lockedName(l, c!, w) : _unlinkedNameInput(l),
           description: HeroDescription(
             controller: _ctrl[_Field.description]!,
             editing: true,
@@ -670,6 +751,52 @@ class _ContactDetailPageState extends State<ContactDetailPage>
             maxLength: TextLimits.description,
             focusNode: _focus[_Field.description],
             onChanged: (v) => _onText(_Field.description, v),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _unlinkedNameInput(AppLocalizations l) => HeroNameInput(
+    editing: true,
+    controller: _ctrl[_Field.name]!,
+    focusNode: _focus[_Field.name],
+    hint: l.contactNameHint,
+    maxLength: TextLimits.name,
+    style: _nameStyle,
+    onChanged: (v) => _onText(_Field.name, v),
+    validator: (v) {
+      final s = v?.trim() ?? '';
+      if (s.isEmpty) return l.contactNameRequired;
+      if (s.length > TextLimits.name) return l.contactNameTooLong;
+      return null;
+    },
+  );
+
+  /// A linked person's name in the edit hero: its label like the other hero
+  /// fields, read-only, and live — the nickname while "แสดงชื่อเล่น" is on,
+  /// else the account's name (owner 2026-10-23).
+  Widget _lockedName(AppLocalizations l, Contact c, _ContactDraft w) {
+    final nick = w.nickname.trim();
+    final shown = w.showNickname && nick.isNotEmpty
+        ? nick
+        : (c.linkedUser?.displayName ?? c.name);
+    final labelStyle = Theme.of(context).textTheme.titleSmall?.copyWith(
+      fontWeight: FontWeight.w700,
+      color: HeroColors.maybeOf(context)?.text,
+    );
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(l.contactNameLabel, style: labelStyle),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: Text(
+            shown,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _nameStyle,
           ),
         ),
       ],
@@ -684,6 +811,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       required int maxLength,
       TextInputType? keyboard,
       FormFieldValidator<String>? validator,
+      IconData? icon,
     }) => DetailTextField(
       label: label,
       controller: _ctrl[f]!,
@@ -694,19 +822,64 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       keyboardType: keyboard,
       onChanged: (v) => _onText(f, v),
       validator: validator,
+      leading: icon == null ? null : AppIcon(icon),
     );
+    final w = working;
     return SectionCard(
       children: [
-        field(
-          _Field.nickname,
-          l.contactNicknameLabel,
-          hint: l.contactNicknameHint,
-          maxLength: TextLimits.name,
-        ),
-        if (!_linked)
+        // Nickname + its switch: linked people only (owner 2026-10-23). With
+        // the switch off the nickname isn't used, so its field greys out.
+        if (_linked) ...[
+          IgnorePointer(
+            ignoring: !w.showNickname,
+            child: Opacity(
+              opacity: w.showNickname ? 1 : 0.45,
+              child: field(
+                _Field.nickname,
+                l.contactNicknameLabel,
+                hint: l.contactNicknameHint,
+                maxLength: TextLimits.name,
+              ),
+            ),
+          ),
+          SettingToggleRow(
+            label: l.contactShowNicknameLabel,
+            value: w.showNickname,
+            submits: false,
+            onChanged: (v) => applyChange(w.copyWith(showNickname: v)),
+          ),
+          // The account's email: not editable; a small 🔗 after it says why.
+          DetailStacked(
+            label: l.contactEmailLabel,
+            leading: const AppIcon(AppIcons.email),
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    w.email,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Tooltip(
+                  message: l.contactEmailFromAccount,
+                  triggerMode: TooltipTriggerMode.tap,
+                  child: Icon(
+                    AppIcons.link,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ] else
           field(
             _Field.email,
             l.contactEmailLabel,
+            icon: AppIcons.email,
             hint: l.contactEmailHint,
             maxLength: TextLimits.email,
             keyboard: TextInputType.emailAddress,
@@ -721,6 +894,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         field(
           _Field.phone,
           l.contactPhoneLabel,
+          icon: AppIcons.phone,
           hint: l.contactPhoneHint,
           maxLength: TextLimits.phone,
           keyboard: TextInputType.phone,
@@ -729,49 +903,25 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     );
   }
 
-  Widget _editSettings(AppLocalizations l) => SettingsSection(
-    title: l.settingsTitle,
-    description: l.fpContactsSettingsDesc,
-    children: [
-      SettingToggleRow(
-        label: l.contactShowNicknameLabel,
-        value: working.showNickname,
-        submits: false,
-        onChanged: (v) => applyChange(working.copyWith(showNickname: v)),
-      ),
-    ],
-  );
-
-  /// View mode: the same switch, saved at once with only that field
+  /// View mode: the "แสดงชื่อเล่น" switch, saved at once with only that field
   /// (owner 2026-10-21, like the other detail pages' settings).
-  Widget? _viewSettings(AppLocalizations l) {
-    final c = _contact;
-    if (c == null) return null;
-    return SettingsSection(
-      title: l.settingsTitle,
-      description: l.fpContactsSettingsDesc,
-      children: [
-        LiveSetting<bool>(
-          value: c.showNickname,
-          save: (v) async {
-            final updated = await context.read<ContactsCubit>().update(
-              c.id,
-              showNickname: v,
-            );
-            if (mounted) _patch(updated);
-            return true;
-          },
-          failedMessage: (e) =>
-              e is ApiException ? e.message : l.errorUnknownMessage,
-          builder: (context, value, onChanged) => SettingToggleRow(
-            label: l.contactShowNicknameLabel,
-            value: value,
-            onChanged: onChanged,
-          ),
-        ),
-      ],
-    );
-  }
+  Widget _viewNicknameSwitch(AppLocalizations l, Contact c) => LiveSetting<bool>(
+    value: c.showNickname,
+    save: (v) async {
+      final updated = await context.read<ContactsCubit>().update(
+        c.id,
+        showNickname: v,
+      );
+      if (mounted) _patch(updated);
+      return true;
+    },
+    failedMessage: (e) => e is ApiException ? e.message : l.errorUnknownMessage,
+    builder: (context, value, onChanged) => SettingToggleRow(
+      label: l.contactShowNicknameLabel,
+      value: value,
+      onChanged: onChanged,
+    ),
+  );
 
   Widget _endZone(AppLocalizations l) {
     final c = _contact!;

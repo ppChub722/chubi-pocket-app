@@ -170,6 +170,7 @@ class SettingDropdownRow extends StatelessWidget {
     required this.onTap,
     this.helper,
     this.leading,
+    this.icon,
     super.key,
   });
 
@@ -179,6 +180,9 @@ class SettingDropdownRow extends StatelessWidget {
   final String? helper;
   final Widget? leading;
 
+  /// The chosen value's icon, in the button before its label.
+  final IconData? icon;
+
   @override
   Widget build(BuildContext context) => DetailRow(
     leading: leading,
@@ -187,6 +191,7 @@ class SettingDropdownRow extends StatelessWidget {
     onTap: onTap,
     trailing: AppButton(
       label: value,
+      icon: icon,
       variant: AppButtonVariant.outlined,
       size: AppButtonSize.control,
       trailingIcon: AppIcons.dropdown,

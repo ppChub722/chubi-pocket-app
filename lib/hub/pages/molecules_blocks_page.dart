@@ -205,7 +205,6 @@ class _BlocksPageState extends State<_BlocksPage> {
                   SliverPersistentHeader(
                     pinned: true,
                     delegate: PinnedTabBarDelegate(
-                      background: scheme.surface,
                       child: AppTabBar<String>(
                         selected: _tab,
                         onChanged: (v) => setState(() => _tab = v),

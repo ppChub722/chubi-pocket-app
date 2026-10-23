@@ -419,11 +419,26 @@ class ProjectTransaction extends Equatable {
     this.myShare = 0,
     this.locked = false,
     this.linked = false,
+    this.myBooked = false,
+    this.myBooks = const [],
     this.sourceTx,
   });
 
   final String id;
   final String projectId;
+
+  /// A payback: [transactionMember] paid back the one child's member.
+  bool get isPayback => type == 'payback';
+
+  /// My part is already in my books (a tx / repayment / debt points here).
+  final bool myBooked;
+
+  /// Which parts of my books hold it: [bookTx] / [bookDebt] / [bookRepay].
+  final List<String> myBooks;
+
+  static const bookTx = 'tx';
+  static const bookDebt = 'debt';
+  static const bookRepay = 'repay';
 
   final ProjectMemberRef? transactionMember;
 
@@ -492,6 +507,12 @@ class ProjectTransaction extends Equatable {
       myShare: _money(json['my_share']),
       locked: json['locked'] == true,
       linked: json['linked'] == true,
+      myBooked: json['my_booked'] == true,
+      myBooks: [
+        if (json['my_books'] case final Map<String, dynamic> b)
+          for (final k in const [bookTx, bookDebt, bookRepay])
+            if (b[k] == true) k,
+      ],
       sourceTx: BoardSourceTx.tryParse(json['source_tx']),
     );
   }
@@ -546,6 +567,8 @@ class ProjectTransaction extends Equatable {
       myShare: myShare,
       locked: locked,
       linked: linked,
+      myBooked: myBooked,
+      myBooks: myBooks,
       sourceTx: sourceTx,
     );
   }
@@ -580,6 +603,8 @@ class ProjectTransaction extends Equatable {
     myShare,
     locked,
     linked,
+    myBooked,
+    myBooks,
     sourceTx,
   ];
 }
@@ -718,6 +743,8 @@ class ProjectMemberPosition extends Equatable {
     required this.net,
     this.receivable = 0,
     this.payable = 0,
+    this.sent = 0,
+    this.received = 0,
     this.userId,
     this.iconCode,
   });
@@ -728,6 +755,10 @@ class ProjectMemberPosition extends Equatable {
   final IconCode? iconCode;
   final double paid;
   final double share;
+
+  /// Paybacks this member made / got; net = paid − share + sent − received.
+  final double sent;
+  final double received;
   final double net;
 
   final double receivable;
@@ -745,6 +776,8 @@ class ProjectMemberPosition extends Equatable {
       net: _money(json['net']),
       receivable: _money(json['receivable']),
       payable: _money(json['payable']),
+      sent: _money(json['sent']),
+      received: _money(json['received']),
     );
   }
 
@@ -756,10 +789,55 @@ class ProjectMemberPosition extends Equatable {
     iconCode,
     paid,
     share,
+    sent,
+    received,
     net,
     receivable,
     payable,
   ];
+}
+
+/// [from] owes [to] [amount] (GET /projects/:id/settle).
+class SettleLine extends Equatable {
+  const SettleLine({
+    required this.from,
+    required this.to,
+    required this.amount,
+  });
+
+  final ProjectMemberRef from;
+  final ProjectMemberRef to;
+  final double amount;
+
+  static SettleLine? tryParse(Object? json) {
+    if (json is! Map<String, dynamic>) return null;
+    final from = ProjectMemberRef.tryParse(json['from']);
+    final to = ProjectMemberRef.tryParse(json['to']);
+    if (from == null || to == null) return null;
+    return SettleLine(from: from, to: to, amount: _money(json['amount']));
+  }
+
+  @override
+  List<Object?> get props => [from, to, amount];
+}
+
+/// Who pays whom: [pairs] nets each two members; [simplified] is the
+/// fewest transfers.
+class EventSettle extends Equatable {
+  const EventSettle({this.pairs = const [], this.simplified = const []});
+
+  final List<SettleLine> pairs;
+  final List<SettleLine> simplified;
+
+  factory EventSettle.fromJson(Map<String, dynamic> json) {
+    List<SettleLine> lines(String k) => [
+      for (final l in (json[k] as List?) ?? const []) ?SettleLine.tryParse(l),
+    ];
+    return EventSettle(pairs: lines('pairs'), simplified: lines('simplified'));
+  }
+
+  @override
+  List<Object?> get props => [pairs, simplified];
 }
 
 class ProjectTagTotal extends Equatable {
@@ -930,23 +1008,35 @@ class EventPatch {
       _board(json['rows']);
 }
 
+/// Share / paid: active events. Receivable / payable and the counts: every
+/// event but archived.
 class ProjectListSummary extends Equatable {
   const ProjectListSummary({
     this.myShareTotal = 0,
     this.paidTotal = 0,
     this.receivableTotal = 0,
+    this.payableTotal = 0,
+    this.all = 0,
     this.active = 0,
     this.unsettled = 0,
+    this.receivable = 0,
+    this.payable = 0,
     this.ended = 0,
   });
 
   final double myShareTotal;
   final double paidTotal;
   final double receivableTotal;
+  final double payableTotal;
 
+  final int all;
   final int active;
   final int unsettled;
+  final int receivable;
+  final int payable;
   final int ended;
+
+  double get net => receivableTotal - payableTotal;
 
   factory ProjectListSummary.fromJson(Map<String, dynamic> json) {
     final c = json['counts'];
@@ -955,8 +1045,12 @@ class ProjectListSummary extends Equatable {
       myShareTotal: _money(json['my_share_total']),
       paidTotal: _money(json['paid_total']),
       receivableTotal: _money(json['receivable_total']),
+      payableTotal: _money(json['payable_total']),
+      all: n('all'),
       active: n('active'),
       unsettled: n('unsettled'),
+      receivable: n('receivable'),
+      payable: n('payable'),
       ended: n('ended'),
     );
   }
@@ -966,8 +1060,12 @@ class ProjectListSummary extends Equatable {
     myShareTotal,
     paidTotal,
     receivableTotal,
+    payableTotal,
+    all,
     active,
     unsettled,
+    receivable,
+    payable,
     ended,
   ];
 }

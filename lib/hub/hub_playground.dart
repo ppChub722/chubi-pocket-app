@@ -59,6 +59,19 @@ class _HubPlaygroundState extends State<HubPlayground> {
   void _set(String name, Object? value) =>
       setState(() => _v = {..._v, name: value});
 
+  // A control added while the page is open (hot reload) starts at its initial.
+  @override
+  void didUpdateWidget(covariant HubPlayground oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final missing = [
+      for (final c in widget.controls)
+        if (!_v.containsKey(c.name)) c,
+    ];
+    if (missing.isNotEmpty) {
+      _v = {..._v, for (final c in missing) c.name: c.initial};
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;

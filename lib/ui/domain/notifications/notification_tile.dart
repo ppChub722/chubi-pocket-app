@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../atoms/app_button.dart';
-import '../../atoms/app_chip.dart';
-import '../../atoms/app_text.dart';
 import '../../atoms/corner_badge.dart';
 import '../../atoms/icon_tile.dart';
 import '../../atoms/user_avatar.dart';
 import '../../molecules/confirm_dialog.dart';
-import '../../molecules/list_row.dart';
+import '../../molecules/app_list_row.dart';
+import '../../tokens/tone.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_spacing.dart';
-import '../../tokens/chip_size.dart';
-import '../../tokens/typography.dart';
 import '../icons/icon_code.dart';
 
 class NotificationRejectConfirm {
@@ -91,7 +88,7 @@ class NotificationTileView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ListRow(
+          AppListRow(
             onTap: onTap,
             leading: system
                 ? IconTile(icon: typeIcon, color: scheme.primary, size: _avatar)
@@ -104,32 +101,28 @@ class NotificationTileView extends StatelessWidget {
                       size: _avatar,
                     ),
                   ),
-            body: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AppText(
-                  title,
-                  weight: unread ? FontWeight.w600 : FontWeight.w400,
-                ),
-                AppText(
-                  [timeText, ?amountText].join(' | '),
-                  role: AppTextRole.caption,
-                ),
-                if (acceptedLabel != null) ...[
-                  const SizedBox(height: AppSpacing.xs),
-                  AppChip(
-                    label: acceptedLabel!,
-                    icon: AppIcons.success,
-                    tone: AppChipTone.success,
-                    selected: true,
-                    size: ChipSize.mini,
-                  ),
-                ],
-              ],
+            title: title,
+            titleStrong: unread,
+            titleMaxLines: 3,
+            line2: ListRowLine(
+              lead: acceptedLabel == null
+                  ? null
+                  : ListRowChip(
+                      acceptedLabel!,
+                      icon: AppIcons.success,
+                      tone: Tone.success,
+                      selected: true,
+                    ),
+              parts: [timeText, ?amountText],
             ),
             trailing: unread
-                ? Icon(Icons.circle, size: AppSpacing.sm, color: scheme.primary)
+                ? ListRowTrailing.value(
+                    Icon(
+                      Icons.circle,
+                      size: AppSpacing.sm,
+                      color: scheme.primary,
+                    ),
+                  )
                 : null,
           ),
           if (pending)

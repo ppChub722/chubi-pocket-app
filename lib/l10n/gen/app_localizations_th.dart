@@ -689,6 +689,9 @@ class AppLocalizationsTh extends AppLocalizations {
       'ถ้าอีเมลนี้เป็นของผู้ใช้ในแอป เขาจะได้รับคำขอ';
 
   @override
+  String get contactEmailFromAccount => 'จากบัญชีของเขา';
+
+  @override
   String get contactLinkNeedsEmail => 'ใส่อีเมลก่อนเพื่อส่งคำขอเชื่อม';
 
   @override
@@ -710,11 +713,11 @@ class AppLocalizationsTh extends AppLocalizations {
   String get contactUnlinked => 'ยกเลิกการเชื่อมแล้ว';
 
   @override
-  String get contactWireTitle => 'จับคู่ชื่อในรายการหาร';
+  String get contactWireTitle => 'ผูกชื่อที่เคยพิมพ์ไว้';
 
   @override
   String contactWireHint(int names, int splits) {
-    return '$names ชื่อ | $splits รายการ ที่ยังไม่ผูกผู้ติดต่อ';
+    return '$names ชื่อ | $splits รายการ ยังไม่ได้ผูกกับใคร';
   }
 
   @override
@@ -796,10 +799,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtsNet => 'สุทธิ';
 
   @override
-  String get debtsOwedToMe => 'รอรับ';
+  String get debtsOwedToMe => 'ลูกหนี้';
 
   @override
-  String get debtsIOwe => 'รอจ่าย';
+  String get debtsIOwe => 'เจ้าหนี้';
 
   @override
   String get debtsEven => 'เคลียร์แล้ว';
@@ -832,7 +835,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get debtsEmptyMessage =>
-      'บันทึกรายการรอรับ / รอจ่ายกับเพื่อน — หรือหารบิลจากรายการ';
+      'จดว่าใครเป็นลูกหนี้ ใครเป็นเจ้าหนี้ — หรือหารบิลจากรายการ';
 
   @override
   String get debtsNoMatch => 'ไม่พบคนที่ค้นหา';
@@ -864,12 +867,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String debtTheyOweYou(String name) {
-    return 'รอรับจาก $name';
+    return '$name เป็นลูกหนี้';
   }
 
   @override
   String debtYouOwe(String name) {
-    return 'รอจ่าย $name';
+    return '$name เป็นเจ้าหนี้';
   }
 
   @override
@@ -951,13 +954,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtEditTitle => 'แก้ไขหนี้';
 
   @override
-  String get debtDirectionOwedToMe => 'รอรับ';
+  String get debtDirectionOwedToMe => 'จดให้ยืม';
 
   @override
   String get debtDirectionOwedToMeDesc => 'ฉันให้ยืม หรือออกเงินแทนเขา';
 
   @override
-  String get debtDirectionIOwe => 'รอจ่าย';
+  String get debtDirectionIOwe => 'จดยืมมา';
 
   @override
   String get debtDirectionIOweDesc => 'ฉันยืมมา หรือเขาออกให้ก่อน';
@@ -1190,7 +1193,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String projectTxOwes(String name) {
-    return 'รอจ่ายให้$name';
+    return '$name เป็นเจ้าหนี้';
   }
 
   @override
@@ -1407,7 +1410,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get projectTxSplitsHint =>
-      'แต่ละคนรอจ่ายให้คนจ่ายเท่าไร | คนจ่ายรับส่วนที่เหลือ';
+      'แต่ละคนต้องคืนคนจ่ายเท่าไร | คนจ่ายรับส่วนที่เหลือ';
 
   @override
   String get projectTxAddSplit => 'เพิ่มการหาร';
@@ -1555,7 +1558,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifAutoUpdateCopy => 'อัตโนมัติ: อัปเดตรายการส่วนตัวตาม';
 
   @override
-  String get notifActionAddDebt => 'เพิ่มเข้ารอจ่ายของฉัน';
+  String get notifActionAddDebt => 'เพิ่มเข้าหนี้ของฉัน';
 
   @override
   String get notifActionCopyToBook => 'บันทึกเข้าบัญชีส่วนตัว';
@@ -1951,7 +1954,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get moreProjectsDesc => 'ทริปและงบร่วมกัน';
 
   @override
-  String get moreDebtsDesc => 'รอรับ / รอจ่ายกับใครเท่าไร';
+  String get moreDebtsDesc => 'ลูกหนี้ / เจ้าหนี้ ใครเท่าไร';
 
   @override
   String get moreBudgetsDesc => 'ตั้งเพดานการใช้จ่าย';
@@ -1974,7 +1977,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String moreLiveDebts(String owed, String owe) {
-    return 'รอรับ $owed | รอจ่าย $owe';
+    return 'ลูกหนี้ $owed | เจ้าหนี้ $owe';
   }
 
   @override
@@ -2423,10 +2426,10 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get notifSplitChangeUpdated => 'อัปเดตรายการรอจ่ายตามแล้ว';
+  String get notifSplitChangeUpdated => 'อัปเดตหนี้ตามแล้ว';
 
   @override
-  String get notifSplitChangeDeleted => 'ลบรายการรอจ่ายนี้ออกแล้ว';
+  String get notifSplitChangeDeleted => 'ลบหนี้รายการนี้ออกแล้ว';
 
   @override
   String get notifSplitChangeZeroed =>
@@ -2439,7 +2442,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifSplitChangeStale => 'อัปเดตไม่ได้แล้ว — มีการแก้ใหม่กว่านี้';
 
   @override
-  String get notifSplitChangeGone => 'รายการรอจ่ายนี้ถูกลบไปแล้ว';
+  String get notifSplitChangeGone => 'หนี้รายการนี้ถูกลบไปแล้ว';
 
   @override
   String txSplitStatusOverpaidToThem(String amount) {
@@ -4063,12 +4066,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String txShareOthersOweYou(String amount) {
-    return 'รอรับจากคนอื่น $amount';
+    return 'ลูกหนี้จากบิลนี้ $amount';
   }
 
   @override
   String txShareYouOweOthers(String amount) {
-    return 'รอจ่ายคนอื่น $amount';
+    return 'เจ้าหนี้จากบิลนี้ $amount';
   }
 
   @override
@@ -4422,7 +4425,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtPersonPickerTitle => 'กับใคร';
 
   @override
-  String get debtSettledLabel => 'หายกัน';
+  String get debtSettledLabel => 'เคลียร์แล้ว';
 
   @override
   String debtResultAfter(Object result) {
@@ -4605,7 +4608,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get occurrenceStateUpcoming => 'ล่วงหน้า';
 
   @override
-  String get occurrenceStateNotCreated => 'ค้าง';
+  String get occurrenceStateNotCreated => 'รอยืนยัน';
 
   @override
   String get occurrenceStatePending => 'รอยืนยัน';
@@ -4695,6 +4698,130 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
+  String get occurrenceSelectAll => 'เลือกทั้งหมด';
+
+  @override
+  String occurrenceSelectedCount(int n) {
+    return 'เลือกแล้ว $n';
+  }
+
+  @override
+  String get occurrenceSkipSelected => 'ข้ามที่เลือก';
+
+  @override
+  String occurrenceConfirmSelected(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'ยืนยันที่เลือก ($n)',
+      zero: 'ยืนยันที่เลือก',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String occurrenceSkipSelectedTitle(int n) {
+    return 'ข้าม $n งวดที่เลือก?';
+  }
+
+  @override
+  String occurrenceSkippedCount(int n) {
+    return 'ข้ามแล้ว $n งวด';
+  }
+
+  @override
+  String occurrenceSavedCount(int n) {
+    return 'บันทึกแล้ว $n งวด';
+  }
+
+  @override
+  String get recurringWholeMonth => 'ทั้งเดือน';
+
+  @override
+  String occurrenceZeroTitle(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'มี $n รายการที่ยังไม่ใส่ยอด',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get occurrenceZeroBody =>
+      'จะบันทึกเป็นยอด 0 ก่อน แล้วค่อยแก้ยอดทีหลังได้ ยืนยันไหม?';
+
+  @override
+  String get recurringSortDate => 'วันที่';
+
+  @override
+  String get recurringSortAmount => 'ยอดมากสุด';
+
+  @override
+  String get recurringSortTooltip => 'เรียงลำดับ';
+
+  @override
+  String get recurringFilterAllStatus => 'ทุกสถานะ';
+
+  @override
+  String get recurringFilterAllKinds => 'ทุกประเภท';
+
+  @override
+  String get recurringMonthNoMatch => 'ไม่มีรายการตามตัวกรองนี้';
+
+  @override
+  String get occurrenceShowLess => 'ย่อ';
+
+  @override
+  String get recurringAheadForever => 'วนต่อไปเรื่อยๆ';
+
+  @override
+  String recurringAheadLeft(int n) {
+    return 'อีก $n งวด';
+  }
+
+  @override
+  String recurringAheadTotal(String amount) {
+    return 'รวม $amount';
+  }
+
+  @override
+  String recurringAheadUntil(String date) {
+    return 'ถึง $date';
+  }
+
+  @override
+  String get recurringAheadEdited => 'ที่ปรับไว้';
+
+  @override
+  String get recurringAheadCustomize => 'ปรับแต่งล่วงหน้า';
+
+  @override
+  String get recurringAheadCustomizeHint =>
+      'แก้ยอด เลื่อนวัน หรือข้ามงวดข้างหน้า';
+
+  @override
+  String get recurringAheadNext => 'ถัดไป';
+
+  @override
+  String get recurringAheadSummary => 'สรุป';
+
+  @override
+  String get recurringTileMoved => 'เลื่อน';
+
+  @override
+  String get recurringTileEdited => 'แก้';
+
+  @override
+  String get recurringFieldKind => 'ประเภท';
+
+  @override
+  String get recurringFieldDates => 'เลือกวันเอง';
+
+  @override
+  String get recurringSectionPeriod => 'ช่วงเวลา';
+
+  @override
   String get recurringHomeTabOverview => 'ภาพรวม';
 
   @override
@@ -4721,6 +4848,11 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String recurringHomeToday(String date) {
     return 'วันนี้ $date';
+  }
+
+  @override
+  String recurringDayEmpty(String date) {
+    return 'ไม่มีรายการวันที่ $date';
   }
 
   @override
@@ -6131,11 +6263,16 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpContactsSettingsDesc => 'ชื่อที่ใช้แสดงคนนี้ทั้งแอป';
 
   @override
-  String get fpContactsLinkSection => 'เชื่อมบัญชี';
+  String get fpContactsLinkSection => 'บัญชีในแอป';
 
   @override
   String get fpContactsLinkSectionDesc =>
-      'เชื่อมกับผู้ใช้ในแอป และจับคู่ชื่อในรายการหาร';
+      'ผูกคนนี้กับบัญชีที่เขาใช้ในแอป ให้ชื่อ อีเมล และไอคอนตามบัญชีของเขา และรวมชื่อที่เคยพิมพ์ไว้ในรายการหาร';
+
+  @override
+  String contactLinkedAccount(String name) {
+    return 'เชื่อมกับบัญชี $name';
+  }
 
   @override
   String get fpContactsArchiveConsequence =>
@@ -6150,12 +6287,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpDebtsOwedToMeTile(int count) {
-    return 'รอรับ | $count คน';
+    return 'ลูกหนี้ | $count คน';
   }
 
   @override
   String fpDebtsIOweTile(int count) {
-    return 'รอจ่าย | $count คน';
+    return 'เจ้าหนี้ | $count คน';
   }
 
   @override
@@ -6267,6 +6404,11 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
+  String fpGoalsDueBy(String date) {
+    return 'ภายใน $date';
+  }
+
+  @override
   String get fpGoalsBehind => 'ช้ากว่าแผน';
 
   @override
@@ -6362,7 +6504,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpGoalsRingOfPlan(String amount) {
-    return 'จาก $amount';
+    return 'เป้าหมาย $amount';
   }
 
   @override
@@ -6395,7 +6537,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpGoalsFilterAll => 'ทั้งหมด';
 
   @override
-  String get fpGoalsFilterShort => 'ยังขาด';
+  String get fpGoalsFilterShort => 'กำลังออม';
 
   @override
   String get fpGoalsFilterFree => 'ไม่มีกำหนด';
@@ -6504,12 +6646,30 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpGoalsRefreshFailed => 'รีเฟรชไม่สำเร็จ แสดงข้อมูลล่าสุดที่มี';
 
   @override
-  String get fpEventsSummaryCaption => 'event ที่กำลังทำ | ส่วนของฉัน';
+  String fpEventsHeroNet(int count) {
+    return 'ค้างสุทธิ | $count อีเวนต์';
+  }
 
   @override
-  String fpEventsPaidLine(String paid, String receivable) {
-    return 'ฉันจ่ายไป $paid → รอรับ $receivable';
+  String fpEventsOwedFact(int count) {
+    return 'ได้คืน | $count อีเวนต์';
   }
+
+  @override
+  String fpEventsOweFact(int count) {
+    return 'ต้องจ่าย | $count อีเวนต์';
+  }
+
+  @override
+  String fpEventsShareFact(int count) {
+    return 'ส่วนของฉัน | กำลังทำ $count';
+  }
+
+  @override
+  String get fpEventsFilterAll => 'ทั้งหมด';
+
+  @override
+  String get fpEventsOverBudget => 'เกินงบ';
 
   @override
   String get fpEventsTileActive => 'กำลังทำ';
@@ -6533,20 +6693,15 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpEventsCreate => 'สร้างอีเวนต์';
 
   @override
-  String fpEventsRowSpent(String amount) {
-    return 'ใช้ไป $amount';
-  }
-
-  @override
   String fpEventsRowShare(String amount) {
     return 'ส่วนฉัน $amount';
   }
 
   @override
-  String get fpEventsOwed => 'รอรับ';
+  String get fpEventsOwed => 'ได้คืน';
 
   @override
-  String get fpEventsOwe => 'รอจ่าย';
+  String get fpEventsOwe => 'ต้องจ่าย';
 
   @override
   String get fpEventsSpentTotal => 'ใช้ไปรวม';
@@ -6591,12 +6746,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpEventsMemberOwed(String amount) {
-    return 'รอรับ $amount';
+    return 'ได้คืน $amount';
   }
 
   @override
   String fpEventsMemberOwe(String amount) {
-    return 'รอจ่าย $amount';
+    return 'ต้องจ่าย $amount';
   }
 
   @override
@@ -6636,10 +6791,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpEventsDatesLabel => 'วันเริ่ม – สิ้นสุด';
-
-  @override
-  String get fpEventsSettingsDesc =>
-      'แท็กของบิลในอีเวนต์นี้ ใช้ร่วมกับสมาชิกทุกคน';
 
   @override
   String get fpEventsManageTags => 'จัดการแท็กอีเวนต์';
@@ -6728,6 +6879,150 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpEventsLoadFailed => 'โหลดใหม่ไม่ได้ | แสดงข้อมูลล่าสุด';
+
+  @override
+  String get evbNewBill => 'เพิ่มบิล';
+
+  @override
+  String get evbEditBill => 'แก้ไขบิล';
+
+  @override
+  String get evbNewPayback => 'จ่ายคืน';
+
+  @override
+  String get evbEditPayback => 'แก้ไขการจ่ายคืน';
+
+  @override
+  String get evbTypePayback => 'จ่ายคืน';
+
+  @override
+  String evbPeople(int count) {
+    return 'คนในบิล | $count';
+  }
+
+  @override
+  String get evbPays => 'จ่าย';
+
+  @override
+  String get evbPaidBack => 'คืนแล้ว';
+
+  @override
+  String get evbMembersSection => 'คนในอีเวนต์';
+
+  @override
+  String evbAddPeopleConfirm(int count) {
+    return 'เพิ่ม $count คน';
+  }
+
+  @override
+  String get evbMyBooks => 'ลงบัญชีของฉันด้วย';
+
+  @override
+  String get evbBooked => 'ลงบัญชีแล้ว';
+
+  @override
+  String get evbBookDebt => 'หนี้';
+
+  @override
+  String evbBookDebtLine(String name) {
+    return 'ฉันค้าง $name';
+  }
+
+  @override
+  String get evbBookTx => 'รายการ';
+
+  @override
+  String get evbBookTxLine => 'รายจ่ายส่วนของฉัน';
+
+  @override
+  String get evbNotBooked => 'ยังไม่ลงบัญชี';
+
+  @override
+  String evbOwesHint(String from, String to, String amount) {
+    return '$from ค้าง $to อยู่ $amount';
+  }
+
+  @override
+  String get evbUseAmount => 'ใช้ยอดนี้';
+
+  @override
+  String evbPaybackBy(String name) {
+    return 'จ่ายคืน | จดโดย $name';
+  }
+
+  @override
+  String evbPaidFrom(String wallet) {
+    return 'จ่ายจาก $wallet';
+  }
+
+  @override
+  String evbBackFrom(String name) {
+    return 'รับคืนจาก $name';
+  }
+
+  @override
+  String get evbNoWallet => 'ไม่ตัดกระเป๋า';
+
+  @override
+  String get evbTabBills => 'บิล';
+
+  @override
+  String get evbTabSummary => 'สรุป';
+
+  @override
+  String get evbNets => 'ยอดแต่ละคน';
+
+  @override
+  String get evbSettleTitle => 'ต้องจ่ายกัน';
+
+  @override
+  String get evbSettlePairs => 'แยกรายคู่';
+
+  @override
+  String get evbSettleFewest => 'ยอดสุทธิ';
+
+  @override
+  String get evbSettlePaid => 'จ่ายแล้ว';
+
+  @override
+  String get evbSettleHint => 'กด \"จ่ายแล้ว\" = จดจ่ายคืนลงอีเวนต์ ใครจดก็ได้';
+
+  @override
+  String get evbAllSettled => 'เคลียร์กันครบแล้ว';
+
+  @override
+  String get evbOnlyMine => 'เฉพาะของฉัน';
+
+  @override
+  String evbDebtorsLine(int count) {
+    return 'ลูกหนี้ $count คน';
+  }
+
+  @override
+  String get evbNoDebt => 'ไม่เป็นหนี้';
+
+  @override
+  String get evbRecordDebt => 'จดหนี้';
+
+  @override
+  String get evbIPaid => 'ฉันจ่ายไป';
+
+  @override
+  String get evbBackReceived => 'รับคืนแล้ว';
+
+  @override
+  String get evbBackSent => 'จ่ายคืนแล้ว';
+
+  @override
+  String evbTheyOweMe(String name) {
+    return '$name ค้างฉัน';
+  }
+
+  @override
+  String get evbDebtUp => 'เพิ่มหนี้';
+
+  @override
+  String get evbDebtDown => 'ลดหนี้';
 
   @override
   String get categoryDeleteConsequence => 'ลบถาวร | รายการในหมวดนี้จะไม่มีหมวด';
@@ -7409,6 +7704,59 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtRepayTitleHint => 'ค่าอะไร?';
 
   @override
+  String get debtRecordChip => 'จดหนี้';
+
+  @override
+  String get debtSettleChip => 'จ่ายหนี้';
+
+  @override
+  String get debtOriginFieldLabel => 'ที่มา';
+
+  @override
+  String get debtOriginPickFirst => 'เลือกคนก่อน';
+
+  @override
+  String debtOriginLend(String name) {
+    return 'ให้ $name ยืม';
+  }
+
+  @override
+  String debtOriginBorrow(String name) {
+    return 'ยืมจาก $name';
+  }
+
+  @override
+  String get debtRoleDebtor => 'ลูกหนี้';
+
+  @override
+  String get debtRoleCreditor => 'เจ้าหนี้';
+
+  @override
+  String debtSummaryDebtor(String name) {
+    return '$name เป็นลูกหนี้';
+  }
+
+  @override
+  String debtSummaryCreditor(String name) {
+    return '$name เป็นเจ้าหนี้';
+  }
+
+  @override
+  String debtSummaryBecomesDebtor(String name) {
+    return '$name กลายเป็นลูกหนี้';
+  }
+
+  @override
+  String debtSummaryBecomesCreditor(String name) {
+    return '$name กลายเป็นเจ้าหนี้';
+  }
+
+  @override
+  String debtSummaryCleared(String name) {
+    return 'เคลียร์แล้วกับ $name';
+  }
+
+  @override
   String get debtRepayTo => 'จ่ายคืนให้';
 
   @override
@@ -7425,7 +7773,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get debtMarkPaidLabel => 'ติดป้ายจ่ายแล้ว';
+  String get debtMarkPaidLabel => 'ปิดหนี้';
 
   @override
   String debtRepayLeft(String amount) {
@@ -7433,7 +7781,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get debtRepayCleared => 'เคลียร์ครบ';
+  String get debtRepayCleared => 'เคลียร์แล้ว';
 
   @override
   String get debtRepayPickTitle => 'คนที่ยังค้างกันอยู่';
@@ -7523,7 +7871,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String txLinkShareIOwe(String name, String amount) {
-    return 'รอจ่ายให้$name $amount';
+    return '$name เป็นเจ้าหนี้ $amount';
   }
 
   @override
@@ -7596,7 +7944,7 @@ class AppLocalizationsTh extends AppLocalizations {
       'ร่างผูกได้กับอีเวนต์ที่มีอยู่แล้วเท่านั้น';
 
   @override
-  String get debtQuickCreateTxLabel => 'ทำรายการเงิน (tx) ด้วย';
+  String get debtQuickCreateTxLabel => 'บันทึกเป็นรายการด้วย';
 
   @override
   String debtResultNow(String name) {
@@ -7616,7 +7964,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String debtOverpayWarn(String after) {
-    return 'เกินยอดค้าง — หลังบันทึกจะกลายเป็น $after';
+    return 'เกินยอดค้าง — หลังบันทึก $after';
   }
 
   @override
@@ -7665,13 +8013,13 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get debtTxHintLend => 'เงินออกจากกระเป๋า (ให้ยืม)';
+  String get debtTxHintLend => 'สร้างรายการจ่ายในกระเป๋า';
 
   @override
-  String get debtTxHintBorrow => 'เงินเข้ากระเป๋า (ยืมมา)';
+  String get debtTxHintBorrow => 'สร้างรายการรับในกระเป๋า';
 
   @override
-  String get debtTxHintOff => 'ปิด = จดในสมุดหนี้อย่างเดียว ไม่มีเงินเคลื่อน';
+  String get debtTxHintOff => 'ไม่กระทบยอดกระเป๋า';
 
   @override
   String debtsHeroNet(int count) {
@@ -7696,7 +8044,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String debtsLastTheyPaidBack(String name, String amount) {
-    return '$nameคืน $amount';
+    return '$name คืน $amount';
   }
 
   @override
@@ -7711,12 +8059,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String debtPersonOweTo(String name) {
-    return 'รอจ่ายให้$name';
+    return '$name เป็นเจ้าหนี้';
   }
 
   @override
   String debtPersonOwedFrom(String name) {
-    return 'รอรับจาก$name';
+    return '$name เป็นลูกหนี้';
   }
 
   @override
@@ -7769,7 +8117,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String debtEarlierShow(String date) {
-    return 'เคลียร์ครบ $date | ดูรอบก่อน ▾';
+    return 'เคลียร์แล้ว $date | ดูรอบก่อน ▾';
   }
 
   @override
@@ -7811,16 +8159,46 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String debtRowIPaidBack(String name) {
-    return 'คุณจ่ายคืน$name';
+    return 'คุณจ่ายคืน $name';
   }
 
   @override
   String debtRowTheyPaidBack(String name) {
-    return '$nameคืนเงิน';
+    return '$name คืนเงิน';
   }
 
   @override
   String get debtPaidPill => '✓ จ่ายแล้ว';
+
+  @override
+  String get debtUnpaidLabel => 'ยังไม่จ่าย';
+
+  @override
+  String get debtDueLabel => 'กำหนดจ่าย';
+
+  @override
+  String get debtsSectionTotal => 'รวม';
+
+  @override
+  String get debtDuePick => 'เลือกวันกำหนดจ่าย';
+
+  @override
+  String debtDueOn(String date) {
+    return 'ครบกำหนด $date';
+  }
+
+  @override
+  String debtOverdueDays(int days) {
+    return 'เลยกำหนด $days วัน';
+  }
+
+  @override
+  String debtsOwingDays(int days) {
+    return 'ค้างมา $days วันแล้ว';
+  }
+
+  @override
+  String get debtLinkTx => 'สร้างรายการจากหนี้';
 
   @override
   String get debtPaidHelper => 'เป็นป้ายบอกเท่านั้น ไม่มีผลกับยอด';

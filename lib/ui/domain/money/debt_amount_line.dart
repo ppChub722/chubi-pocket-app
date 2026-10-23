@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../atoms/app_chip.dart';
 import '../../tokens/app/app_colors.dart';
+import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_spacing.dart';
+import '../../tokens/chip_size.dart';
 import 'money_text.dart';
 import 'net_balance.dart';
 
@@ -40,6 +42,8 @@ class DebtAmountLine extends StatelessWidget {
     final owedToMe = net > 0;
     return StatusAmountLine(
       status: owedToMe ? owedToMeLabel : iOweLabel,
+      icon: owedToMe ? AppIcons.flowIn : AppIcons.flowOut,
+      chipSize: ChipSize.control,
       tone: owedToMe ? AppChipTone.success : AppChipTone.danger,
       color: debtStateColor(context, owedToMe: owedToMe),
       amount: MoneyText(net.abs(), symbol: currencySymbol),

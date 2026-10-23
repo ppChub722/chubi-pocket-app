@@ -261,11 +261,13 @@ class _EditProfilePageState extends State<EditProfilePage>
         ],
       );
     }
+    // The avatar row is the top of the card, the edit button at its end — no
+    // empty header row (owner 2026-10-23, like the contact / wallet pages).
     return AppHeroCard(
       style: style,
-      header: HeroHeader(onEdit: enterEdit),
       content: [
         HeroIdentity(
+          alignTop: true,
           icon: EditableCircle(
             size: 40,
             onLongPress: () => enterEdit(),
@@ -275,8 +277,21 @@ class _EditProfilePageState extends State<EditProfilePage>
               size: 40,
             ),
           ),
-          name: Text(_shownName),
+          name: Text(
+            _shownName,
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+          ),
           fact: Text('@${_user.username}'),
+          actions: [
+            CardActionButton(
+              key: const ValueKey('heroEdit'),
+              icon: AppIcons.edit,
+              tooltip: UiConfig.stringsOf(context).edit,
+              onTap: enterEdit,
+            ),
+          ],
         ),
       ],
     );

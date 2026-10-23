@@ -5,7 +5,7 @@ import '../hub_kit.dart';
 import '../hub_playground.dart';
 
 /// `/dev/domain/saving` — saving goals v2 pieces: MilestoneRow,
-/// SavingHistoryChart, SavingTxRow (+ draft), SavingMoveSheet,
+/// SavingHistoryChart, SavingMoveSheet (history rows: Molecules › List row),
 /// CloseGoalDialog and the 3-button action row under a goal's hero.
 Widget buildDomainSavingPage(BuildContext context) => const _SavingPage();
 
@@ -241,184 +241,69 @@ class _SavingPageState extends State<_SavingPage> {
           child: box(const SavingHistoryChart.skeleton()),
         ),
         HubDemo(
-          title: 'SavingTxRow — deposit | withdraw | allocate',
+          title: 'Saving goal row — AppListRow + ProgressRow.fillLabel',
           note:
-              'The saving-tx record (never a real tx): kind glyph | title | '
-              'source chip | line 2 "wallet → bucket" or "bucket → wallet" | '
-              'signed amount (accent + / muted −). Same row height as TxRow.',
-          child: AppCard(
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                SavingTxRow(
-                  kind: SavingTxKind.deposit,
-                  title: 'Saved to goal',
-                  walletLabel: 'KBank',
-                  to: 'Japan trip',
-                  amount: 4000,
-                ),
-                SavingTxRow(
-                  kind: SavingTxKind.deposit,
-                  title: 'Recurring saving',
-                  source: AppChip(label: 'Recurring', size: ChipSize.mini),
-                  walletLabel: 'KBank',
-                  to: 'Japan trip',
-                  amount: 4000,
-                ),
-                SavingTxRow(
-                  kind: SavingTxKind.withdraw,
-                  title: 'Withdraw | hotel deposit',
-                  from: 'Japan trip',
-                  walletLabel: 'SCB',
-                  amount: 3000,
-                ),
-                SavingTxRow(
-                  kind: SavingTxKind.allocate,
-                  title: 'Allocate',
-                  walletLabel: 'KBank',
-                  from: 'Unallocated',
-                  to: 'Japan trip',
-                  amount: 6000,
-                ),
-              ],
-            ),
-          ),
-        ),
-        HubDemo(
-          title: 'SavingTxRow — draft (pending list) and dimmed',
-          note:
-              'draft: the 🐷 row of the pending list — wallet chip up after '
-              'the title, line 2 = kind / source chips + the target, outlined '
-              'glyph, slightly faded; same height. dimmed = archived.',
-          child: AppCard(
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                SavingTxRow(
-                  kind: SavingTxKind.deposit,
-                  draft: true,
-                  title: 'Save for Japan trip',
-                  walletLabel: 'KBank',
-                  draftChips: [
-                    AppChip(label: 'Saving', size: ChipSize.mini),
-                    AppChip(label: 'Recurring', size: ChipSize.mini),
-                  ],
-                  to: 'Japan trip',
-                  amount: 4000,
-                ),
-                SavingTxRow(
-                  kind: SavingTxKind.deposit,
-                  dimmed: true,
-                  title: 'Saved to goal',
-                  walletLabel: 'KBank',
-                  to: 'Old goal',
-                  amount: 1000,
-                ),
-              ],
-            ),
-          ),
-        ),
-        HubDemo(
-          title: 'SavingGoalRow — one list in a SectionCard (no sections)',
-          note:
-              'The goals list without groups: the tag sits by the name, '
-              'caption only says what the goal has (due / late; nothing for '
-              '"no deadline" or "no target"), trailing + trailingCaption on the '
-              'right, marker + markerBubble = "should have by now". No bar for '
-              'an ongoing goal; an empty amountText leaves its line out.',
+              'The goals list: name + "ช้ากว่าแผน" | "ภายใน <deadline>" | '
+              'saved (or "ครบแล้ว ✓") over "เป้า <target>" | bar with the % on '
+              'the fill\'s end. A goal without a target has no bar.',
           child: Builder(
             builder: (context) {
               final palette = Theme.of(context).extension<AppColors>()!;
+              Widget icon(IconData i) => IconCodeWidget(
+                iconCode: null,
+                size: 36,
+                displayMode: IconDisplayMode.compact,
+                fallbackIcon: i,
+                fallbackColor: palette.info,
+              );
               return SectionCard(
                 first: true,
                 children: [
-                  SavingGoalRow(
-                    title: 'ฟหกasd',
-                    value: 0.1,
-                    caption: 'ถึงเป้า ก.ค. 2027 | ช้า 6 เดือน',
-                    amountText: '฿234 / ฿2,312 | 10%',
-                    trailing: 'ขาด ฿469',
-                    trailingTone: Tone.warning,
-                    trailingCaption: 'เดือนนี้ ฿234 / ฿703',
-                    badge: 'ช้ากว่าแผน',
-                    badgeTone: Tone.warning,
-                    color: palette.warning,
-                    marker: 0.32,
-                    markerBubble: 'ควรมีตอนนี้ ฿740',
+                  AppListRow(
+                    leading: icon(AppIcons.savingGoal),
+                    title: 'ซื้อ MacBook',
+                    status: const ListRowChip('ช้ากว่าแผน', tone: Tone.warning),
+                    line2: const ListRowLine(parts: ['ภายใน 31 ธ.ค. 2026']),
+                    trailing: const ListRowTrailing.value(
+                      Text('฿17,000'),
+                      caption: 'เป้า ฿55,000',
+                    ),
+                    footer: ProgressRow(
+                      value: 0.31,
+                      color: palette.warning,
+                      fillLabel: '31%',
+                    ),
                     onTap: () {},
                   ),
-                  SavingGoalRow(
-                    title: 'เที่ยวญี่ปุ่น',
-                    value: 0.45,
-                    caption: 'ถึงเป้า มี.ค. 2027',
-                    amountText: '฿27,000 / ฿60,000 | 45%',
-                    trailing: 'ครบแล้ว ✓',
-                    trailingTone: Tone.success,
-                    trailingCaption: 'เดือนนี้ ฿6,600',
-                    marker: 0.42,
-                    markerBubble: 'ควรมีตอนนี้ ฿25,200',
+                  AppListRow(
+                    leading: icon(AppIcons.savingGoal),
+                    title: 'ของขวัญวันเกิดแม่',
+                    line2: const ListRowLine(parts: ['ภายใน 15 พ.ย. 2026']),
+                    trailing: const ListRowTrailing.text(
+                      'ครบแล้ว ✓',
+                      tone: Tone.success,
+                      caption: 'เป้า ฿3,000',
+                    ),
+                    footer: ProgressRow(
+                      value: 1,
+                      color: palette.info,
+                      fillLabel: '100%',
+                    ),
                     onTap: () {},
                   ),
-                  SavingGoalRow(
-                    title: 'test',
-                    value: 0,
-                    amountText: '฿0 / ฿100 | 0%',
-                    trailing: 'เหลือ ฿100',
-                    onTap: () {},
-                  ),
-                  SavingGoalRow(
+                  AppListRow(
+                    leading: icon(AppIcons.savingGoal),
                     title: 'เงินสำรองฉุกเฉิน',
-                    caption: 'ออมต่อเนื่อง',
-                    amountText: '',
-                    trailing: '฿12,000',
-                    trailingCaption: 'เดือนนี้ +฿1,000',
+                    line2: const ListRowLine(parts: ['ออมต่อเนื่อง']),
+                    trailing: const ListRowTrailing.value(
+                      Text('฿12,000'),
+                      caption: 'เดือนนี้ +฿1,000',
+                    ),
                     onTap: () {},
                   ),
                 ],
               );
             },
-          ),
-        ),
-        HubDemo(
-          title: 'SavingGoalRow — behind | on track | reached | archived',
-          note:
-              'A goals-list row (reference §2): icon | name | "ขาด ฿x" / ✓ | '
-              'thick bar in the goal colour | "saved / target" | ETA badge '
-              '(amber when behind, green on track / reached). No buttons; tap '
-              'opens the goal. Every word is a param.',
-          child: AppCard(
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                SavingGoalRow(
-                  title: 'Wedding',
-                  value: 0.3,
-                  amountText: '฿60,000 / ฿200,000',
-                  trailing: 'Short ฿2,500',
-                  trailingTone: Tone.warning,
-                  badge: 'Goal Aug 2029 | 2 months late',
-                  badgeTone: Tone.warning,
-                  onTap: () {},
-                ),
-                SavingGoalRow(
-                  title: 'Japan trip',
-                  value: 0.65,
-                  amountText: '฿52,000 / ฿80,000',
-                  trailing: '✓',
-                  trailingTone: Tone.success,
-                  badge: 'Goal Mar 2027',
-                  onTap: () {},
-                ),
-                const SavingGoalRow(
-                  title: 'Old goal',
-                  value: 1,
-                  amountText: '฿10,000 / ฿10,000',
-                  badge: 'Archived',
-                  badgeTone: Tone.neutral,
-                  dimmed: true,
-                ),
-              ],
-            ),
           ),
         ),
         HubDemo(

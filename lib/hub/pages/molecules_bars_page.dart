@@ -212,6 +212,25 @@ class _BarsPageState extends State<_BarsPage> {
               ),
             ),
             HubUse(
+              label: 'AppTabBar(framed: false) — inside a card',
+              page: 'Event สรุป (ยอดสุทธิ / แยกรายคู่)',
+              wide: true,
+              child: _frame(
+                HubStateful<String>(
+                  initial: 'net',
+                  builder: (context, sel, set) => AppTabBar<String>(
+                    framed: false,
+                    tabs: const [
+                      AppTab(value: 'net', label: 'ยอดสุทธิ'),
+                      AppTab(value: 'pairs', label: 'แยกรายคู่'),
+                    ],
+                    selected: sel,
+                    onChanged: set,
+                  ),
+                ),
+              ),
+            ),
+            HubUse(
               label: 'AppTabBar — three tabs, badge on the last',
               page: 'Quick create (รายการ / หนี้ / ออม)',
               wide: true,

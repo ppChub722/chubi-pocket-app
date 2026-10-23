@@ -33,12 +33,16 @@ class AppTabBar<T> extends StatefulWidget {
     required this.selected,
     required this.onChanged,
     this.pager,
+    this.framed = true,
     super.key,
   });
 
   final List<AppTab<T>> tabs;
   final T selected;
   final ValueChanged<T> onChanged;
+
+  /// False: no track border (tabs inside a card that already frames them).
+  final bool framed;
 
   /// The [AppTabPager]'s controller, when the tabs page content.
   final PageController? pager;
@@ -140,7 +144,9 @@ class _AppTabBarState<T> extends State<AppTabBar<T>> {
         decoration: BoxDecoration(
           color: scheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(AppTabBar.height / 2),
-          border: Border.all(color: scheme.outlineVariant),
+          border: widget.framed
+              ? Border.all(color: scheme.outlineVariant)
+              : null,
         ),
         child: LayoutBuilder(
           builder: (context, box) {

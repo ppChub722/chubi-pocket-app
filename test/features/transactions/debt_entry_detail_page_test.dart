@@ -253,43 +253,39 @@ void main() {
     await t.pump(const Duration(milliseconds: 100));
   }
 
-  testWidgets('one GET; the hero, "to receive from Mom ฿200", the person '
-      'card and only the paid box (mock DebtEntry)', (t) async {
+  testWidgets('one GET; the ☑ + system title in the hero, the person card '
+      'and the wallet card; no switches below (mock DebtEntry)', (t) async {
     await pump(t, const DebtEntryDetailPage(entryId: 'e1'));
     expect(repo.gets, 1);
     final hero = t.widget<TransactionHeroCard>(
       find.byType(TransactionHeroCard),
     );
     expect(hero.debt, isTrue);
+    expect(hero.titlePlaceholder, 'Lent to Mom');
+    expect(hero.titleReadOnly, isFalse);
+    expect(hero.amountNote, isNull);
+    expect(find.byKey(const ValueKey('debtPaidBox')), findsOneWidget);
+    expect(find.text('Not paid'), findsOneWidget);
     expect(find.text('Received'), findsNothing);
     expect(find.text('Mom'), findsWidgets);
-    final note = t.widget<DebtEntryNote>(
-      find.byKey(const ValueKey('debtEntryNote')),
+    // The wallet's own card (its colours), as in quick create.
+    final card = t.widget<WalletPickCard>(
+      find.byKey(const ValueKey('debtTxCard')),
     );
-    expect(note.sentence, 'To receive from Mom');
-    expect(note.paidLabel, isNull);
-    // No origin from the BE → no มาจาก card; no wallet card any more.
+    expect(card.label, 'Wallet');
+    expect(card.account?.name, 'KBank');
+    expect(card.onTap, isNotNull);
     expect(find.byKey(const ValueKey('debtOriginCard')), findsNothing);
-    expect(find.byType(WalletPickCard), findsNothing);
-    // The box holds only the paid switch (no money / wallet rows).
-    final paid = find.widgetWithText(SettingToggleRow, 'Paid');
-    await t.scrollUntilVisible(
-      paid,
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(paid, findsOneWidget);
-    expect(find.text('Money in / out of a wallet'), findsNothing);
+    expect(find.byType(SettingToggleRow), findsNothing);
   });
 
-  testWidgets('มาจาก › names the origin and stays read-only in edit', (
-    t,
-  ) async {
+  testWidgets('a split debt shows มาจาก, read-only in edit', (t) async {
     final body = _detail();
     repo.body = {
       ...body,
       'entry': {
         ...body['entry'] as Map<String, dynamic>,
+        'source': {'kind': 'split', 'id': 't5', 'title': 'Dinner'},
         'origin': {
           'kind': 'split',
           'transaction_id': 't5',
@@ -303,6 +299,7 @@ void main() {
       },
     };
     await pump(t, const DebtEntryDetailPage(entryId: 'e1'));
+    expect(find.byKey(const ValueKey('debtTxCard')), findsNothing);
     final card = t.widget<PickCard>(
       find.byKey(const ValueKey('debtOriginCard')),
     );
@@ -318,47 +315,64 @@ void main() {
     expect(find.text("can't change it here"), findsOneWidget);
   });
 
-  testWidgets('view mode: the paid switch saves at once (ONE PUT)', (t) async {
+  testWidgets('view mode: the ☑ saves at once (ONE PUT)', (t) async {
     await pump(t, const DebtEntryDetailPage(entryId: 'e1'));
-    final row = find.widgetWithText(SettingToggleRow, 'Paid');
-    await t.scrollUntilVisible(
-      row,
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    t.widget<SettingToggleRow>(row).onChanged!(true);
+    await t.tap(find.byKey(const ValueKey('debtPaidBox')));
     await settle(t);
     expect(repo.updates.single.paid, isTrue);
   });
 
-  testWidgets('a ledger-only entry: edit box money switch off, no wallet', (
+  testWidgets('edit mode: the ☑ is part of the draft, sent on save', (
     t,
   ) async {
-    repo.body = _detail(withWallet: false);
     await pump(t, const DebtEntryDetailPage(entryId: 'e1'));
-    expect(find.byType(WalletPickCard), findsNothing);
     t.widget<TransactionHeroCard>(find.byType(TransactionHeroCard)).onEdit!();
     await settle(t);
-    final moved = t.widget<SettingToggleRow>(
-      find.widgetWithText(SettingToggleRow, 'Money in / out of a wallet'),
-    );
-    expect(moved.value, isFalse);
-    expect(find.byKey(const ValueKey('debtEditWallet')), findsNothing);
+    await t.tap(find.byKey(const ValueKey('debtPaidBox')));
+    await t.pump(const Duration(milliseconds: 600));
+    expect(repo.updates, isEmpty);
+    await t.tap(find.text('Save'));
+    await settle(t);
+    expect(repo.updates.single.paid, isTrue);
   });
 
-  testWidgets('switch off → ONE PUT: create_transaction false, no wallet or '
-      'tags sent', (t) async {
+  testWidgets('flow cards: wallet → person; the arrow swaps only in edit, '
+      'sent on save', (t) async {
+    await pump(t, const DebtEntryDetailPage(entryId: 'e1'));
+    final view = t.widget<FlowCards>(find.byKey(const ValueKey('debtFlow')));
+    expect((view.from.key as ValueKey).value, 'debtTxCard');
+    expect(view.onSwap, isNull);
+    t.widget<TransactionHeroCard>(find.byType(TransactionHeroCard)).onEdit!();
+    await settle(t);
+    t.widget<FlowCards>(find.byKey(const ValueKey('debtFlow'))).onSwap!();
+    await t.pump(const Duration(milliseconds: 600));
+    final swapped = t.widget<FlowCards>(
+      find.byKey(const ValueKey('debtFlow')),
+    );
+    expect((swapped.to!.key as ValueKey).value, 'debtTxCard');
+    await t.tap(find.text('Save'));
+    await settle(t);
+    expect(repo.updates.single.direction, DebtEntryDirection.received);
+  });
+
+  testWidgets('a ledger-only entry: a dashed ผูกรายการ card', (t) async {
+    repo.body = _detail(withWallet: false);
+    await pump(t, const DebtEntryDetailPage(entryId: 'e1'));
+    final card = t.widget<PickCard>(find.byKey(const ValueKey('debtTxCard')));
+    expect(card.value, isNull);
+    expect(card.placeholder, 'Create a transaction from this debt');
+    expect(card.onTap, isNotNull);
+  });
+
+  testWidgets('edit mode: × unlinks → ONE PUT: create_transaction false, no '
+      'wallet or tags sent', (t) async {
     await pump(t, const DebtEntryDetailPage(entryId: 'e1'));
     t.widget<TransactionHeroCard>(find.byType(TransactionHeroCard)).onEdit!();
     await settle(t);
-    expect(find.byKey(const ValueKey('debtEditWallet')), findsOneWidget);
-    t
-        .widget<SettingToggleRow>(
-          find.widgetWithText(SettingToggleRow, 'Money in / out of a wallet'),
-        )
-        .onChanged!(false);
+    await t.tap(find.byKey(const ValueKey('debtUnlinkTx')));
     await t.pump(const Duration(milliseconds: 600));
-    expect(find.byKey(const ValueKey('debtEditWallet')), findsNothing);
+    final card = t.widget<PickCard>(find.byKey(const ValueKey('debtTxCard')));
+    expect(card.value, isNull);
     await t.tap(find.text('Save'));
     await settle(t);
     final u = repo.updates.single;

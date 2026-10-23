@@ -100,7 +100,6 @@ class _TabbedDetailBodyState<T> extends State<TabbedDetailBody<T>> {
           SliverPersistentHeader(
             pinned: true,
             delegate: PinnedTabBarDelegate(
-              background: Theme.of(context).colorScheme.surface,
               child: AppTabBar<T>(
                 tabs: w.tabs,
                 selected: w.selected,

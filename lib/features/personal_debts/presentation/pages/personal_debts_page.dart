@@ -54,30 +54,157 @@ class _PeopleViewState extends State<_PeopleView> {
   void _open(PersonBalance p) =>
       openPage(context, debtPersonPath(p.key), extra: p.person.name);
 
-  /// "ค่าตั๋วคอนเสิร์ต | 1 ก.ย." / "คุณจ่ายคืน ฿400 | 10 ต.ค." /
-  /// "มิ้นท์คืน ฿100 | 15 ต.ค.".
-  String? _lastLine(AppLocalizations l, PersonBalance p, String symbol) {
-    final a = p.lastActivity;
-    if (a == null) return null;
-    final money = moneyString(context, a.amount, symbol: symbol);
-    final what =
-        a.title ??
-        (a.isRepayment
-            ? (a.direction == DebtEntryDirection.paid
-                  ? l.debtsLastIPaidBack(money)
-                  : l.debtsLastTheyPaidBack(p.person.name, money))
-            : money);
-    final date = a.date;
-    if (date == null) return what;
-    return l.debtsLastLine(
-      what,
-      DateFormatter.friendly(
-        date,
-        today: l.commonToday,
-        yesterday: l.commonYesterday,
-        locale: Localizations.localeOf(context).languageCode,
+  /// Line 2: the due date when there is one ("ครบกำหนด 30 ต.ค." /
+  /// "เลยกำหนด 3 วัน"), else how long it's been open.
+  (String?, bool) _line2(AppLocalizations l, PersonBalance p) {
+    final due = p.nextDueDate;
+    if (due != null) {
+      final now = DateTime.now();
+      final late = DateTime(now.year, now.month, now.day)
+          .difference(DateTime(due.year, due.month, due.day))
+          .inDays;
+      if (late > 0) return (l.debtOverdueDays(late), true);
+      return (
+        l.debtDueOn(
+          DateFormatter.friendly(
+            due,
+            today: l.commonToday,
+            yesterday: l.commonYesterday,
+            locale: Localizations.localeOf(context).languageCode,
+          ),
+        ),
+        false,
+      );
+    }
+    final days = p.daysOutstanding;
+    return (days == null ? null : l.debtsOwingDays(days), (days ?? 0) > 30);
+  }
+
+  /// The app's data row: the section above says the side, the amount's
+  /// colour repeats it.
+  Widget _row(AppLocalizations l, PersonBalance p) {
+    final (line2, warn) = _line2(l, p);
+    return AppListRow(
+      key: ValueKey(p.key),
+      leading: PersonMark(
+        name: p.person.name,
+        level: debtPersonLevel(p.person),
+        iconCode: p.person.iconCode,
+        size: 36,
       ),
+      title: p.person.name,
+      line2: line2 == null
+          ? null
+          : warn
+          ? ListRowLine(
+              spans: [
+                TextSpan(
+                  text: line2,
+                  style: TextStyle(
+                    color: Tone.warning.color(context),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            )
+          : ListRowLine(parts: [line2]),
+      trailing: ListRowTrailing.value(
+        MoneyText(
+          p.net.abs(),
+          tone: p.net > 0.005
+              ? MoneyTone.income
+              : p.net < -0.005
+              ? MoneyTone.expense
+              : MoneyTone.plain,
+        ),
+      ),
+      onTap: () => _open(p),
     );
+  }
+
+  /// ลูกหนี้ / เจ้าหนี้ / เคลียร์แล้ว, each under its header (icon, people,
+  /// total); the totals are the whole list's, not just the loaded pages.
+  List<Widget> _sections(
+    AppLocalizations l,
+    DebtPeopleState s,
+    String symbol,
+  ) {
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final scheme = Theme.of(context).colorScheme;
+    final owedToMe = [for (final p in s.items) if (p.net > 0.005) p];
+    final iOwe = [for (final p in s.items) if (p.net < -0.005) p];
+    final even = [for (final p in s.items) if (p.net.abs() <= 0.005) p];
+    Widget head(
+      String title,
+      IconData icon,
+      Color color,
+      int count,
+      double? total,
+    ) => SectionHeader(
+      key: ValueKey('debtsSection-$title'),
+      leading: AppIcon(icon, size: AppIconSize.md, color: color),
+      title: title,
+      count: count,
+      // The total ends over the rows' amounts (AppListRow's lg end inset), like
+      // the transactions list's day totals.
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.xs,
+      ),
+      // "รวม" small, then the total in the side's colour, like the
+      // transactions list's day totals.
+      trailing: total == null
+          ? null
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                AppText(l.debtsSectionTotal, role: AppTextRole.caption),
+                const SizedBox(width: AppSpacing.xs),
+                Text(
+                  moneyString(context, total, symbol: symbol),
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+    );
+    return [
+      if (owedToMe.isNotEmpty) ...[
+        head(
+          l.debtsOwedToMe,
+          AppIcons.flowIn,
+          palette.income,
+          s.counts[DebtListFilter.receivable] ?? owedToMe.length,
+          s.totals.owedToMe,
+        ),
+        for (final p in owedToMe) _row(l, p),
+      ],
+      if (iOwe.isNotEmpty) ...[
+        head(
+          l.debtsIOwe,
+          AppIcons.flowOut,
+          palette.expense,
+          s.counts[DebtListFilter.payable] ?? iOwe.length,
+          s.totals.iOwe,
+        ),
+        for (final p in iOwe) _row(l, p),
+      ],
+      if (even.isNotEmpty) ...[
+        head(
+          l.debtsEven,
+          AppIcons.check,
+          scheme.onSurfaceVariant,
+          even.length,
+          null,
+        ),
+        for (final p in even) _row(l, p),
+      ],
+    ];
   }
 
   Widget _hero(AppLocalizations l, DebtPeopleState s, String symbol) {
@@ -88,7 +215,8 @@ class _PeopleViewState extends State<_PeopleView> {
     final palette = Theme.of(context).extension<AppColors>()!;
     final net = t.net;
     return AppHeroCard(
-      style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
+      // The จดหนี้ button's colour, so the page reads as the debt module.
+      style: HeroStyle.tinted(color: ModuleColors.of(context).debt),
       margin: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
         AppSpacing.sm,
@@ -211,7 +339,6 @@ class _PeopleViewState extends State<_PeopleView> {
               // ONE card of people (mock).
               rowCards: true,
               rowDividers: true,
-              rowDividerIndent: 72,
               topInset: AppSpacing.sm,
               header: [
                 _hero(l, s, symbol),
@@ -222,26 +349,7 @@ class _PeopleViewState extends State<_PeopleView> {
                   searchHint: l.debtsSearchHint,
                 ),
               ],
-              children: [
-                for (final p in s.items)
-                  PersonBalanceRow(
-                    key: ValueKey(p.key),
-                    name: p.person.name,
-                    level: debtPersonLevel(p.person),
-                    iconCode: p.person.iconCode,
-                    subtitle: _lastLine(l, p, symbol),
-                    net: p.net,
-                    owedToMeLabel: l.debtsOwedToMe,
-                    iOweLabel: l.debtsIOwe,
-                    settledLabel: l.debtsEven,
-                    currencySymbol: symbol,
-                    age: p.daysOutstanding == null
-                        ? null
-                        : l.fpDebtsDaysOutstanding(p.daysOutstanding!),
-                    ageWarn: (p.daysOutstanding ?? 0) > 30,
-                    onTap: () => _open(p),
-                  ),
-              ],
+              children: _sections(l, s, symbol),
             ),
           ),
         ),

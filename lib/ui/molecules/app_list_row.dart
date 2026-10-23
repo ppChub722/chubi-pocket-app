@@ -1,0 +1,613 @@
+import 'package:flutter/material.dart';
+
+import '../atoms/app_chip.dart';
+import '../atoms/app_icon_button.dart';
+import '../atoms/select_check.dart';
+import '../organisms/option_sheet.dart';
+import '../tokens/app/app_icons.dart';
+import '../tokens/app_spacing.dart';
+import '../tokens/chip_size.dart';
+import '../tokens/hero_colors.dart';
+import '../tokens/tone.dart';
+import 'option_menu.dart';
+import 'split_row.dart';
+
+/// The one data row of every list: leading | title + chips / line 2 / alert |
+/// trailing value | actions. It knows no domain: money, wallets, tags and
+/// due dates come in as widgets, strings and [ListRowChip]s.
+class AppListRow extends StatelessWidget {
+  const AppListRow({
+    required this.leading,
+    this.title = '',
+    this.titleField,
+    this.titleStrong = false,
+    this.titleMaxLines = 1,
+    this.titleChips = const [],
+    this.status,
+    this.line2,
+    this.trailing,
+    this.actions = const [],
+    this.alert,
+    this.footer,
+    this.dimmed = false,
+    this.highlighted = false,
+    this.accent,
+    this.checked,
+    this.onCheck,
+    this.checkTooltip,
+    this.indent = 0,
+    this.onTap,
+    this.onLongPress,
+    super.key,
+  });
+
+  static const double chipMaxWidth = 120;
+
+  final Widget leading;
+  final String title;
+
+  /// In place of [title] while the row is edited in place (an input).
+  final Widget? titleField;
+
+  /// The title in w600 (an unread item).
+  final bool titleStrong;
+  final int titleMaxLines;
+  final List<ListRowChip> titleChips;
+  final ListRowChip? status;
+  final ListRowLine? line2;
+  final ListRowTrailing? trailing;
+
+  /// Taps here never reach [onTap].
+  final List<ListRowAction> actions;
+  final ListRowAlert? alert;
+
+  /// Under the title and value, from the title's left edge to the row's
+  /// right (a progress bar); taps and dims with the row.
+  final Widget? footer;
+  final bool dimmed;
+  final bool highlighted;
+
+  /// The row's own colour (its item's): pieces inside that follow a hero's
+  /// colours (a footer chain or bar) take it, as in an [AppHeroCard].
+  final Color? accent;
+
+  /// Non-null = select mode: a check before [leading].
+  final bool? checked;
+
+  /// Falls back to [onTap].
+  final VoidCallback? onCheck;
+  final String? checkTooltip;
+  final double indent;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final small = textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
+    final line = line2?._build(context, small);
+    final alert = this.alert;
+    final trailing = this.trailing;
+    final status = this.status;
+    final titleField = this.titleField;
+
+    final body = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            if (titleField != null)
+              Expanded(child: titleField)
+            else
+              Flexible(
+                child: Text(
+                  title,
+                  maxLines: titleMaxLines,
+                  overflow: TextOverflow.ellipsis,
+                  style: titleStrong
+                      ? textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        )
+                      : textTheme.bodyLarge,
+                ),
+              ),
+            for (final c in titleChips) ...[
+              const SizedBox(width: AppSpacing.xs),
+              c._build(),
+            ],
+            if (status != null) ...[
+              const SizedBox(width: AppSpacing.xs),
+              status._build(),
+            ],
+          ],
+        ),
+        if (line != null)
+          Padding(padding: const EdgeInsets.only(top: 2), child: line),
+        if (alert != null)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: alert._build(context),
+          ),
+      ],
+    );
+
+    final tint = (checked ?? false) || highlighted
+        ? scheme.primary.withValues(alpha: 0.08)
+        : Colors.transparent;
+    final Widget row = Material(
+      color: tint,
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.lg + indent,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            AppSpacing.sm,
+          ),
+          child: Row(
+            children: [
+              if (checked != null) ...[
+                SelectCheck(
+                  value: checked,
+                  tooltip: checkTooltip,
+                  onTap: onCheck ?? onTap,
+                ),
+                const SizedBox(width: AppSpacing.xs),
+              ],
+              leading,
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: body),
+                        if (trailing != null) ...[
+                          const SizedBox(width: AppSpacing.sm),
+                          trailing._build(context, small),
+                        ],
+                        if (actions.isNotEmpty) ...[
+                          const SizedBox(width: AppSpacing.sm),
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () {},
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                for (final (i, a) in actions.indexed) ...[
+                                  if (i > 0)
+                                    const SizedBox(width: AppSpacing.sm),
+                                  a._build(context),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    if (footer != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.xs),
+                        child: footer,
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    final accent = this.accent;
+    final colored = accent == null
+        ? row
+        : HeroColorScope(
+            colors: HeroColors.from(Theme.of(context), accent),
+            child: row,
+          );
+    return dimmed ? Opacity(opacity: 0.55, child: colored) : colored;
+  }
+}
+
+/// A chip of an [AppListRow]; always drawn as a mini [AppChip].
+@immutable
+class ListRowChip {
+  const ListRowChip(
+    this.label, {
+    this.icon,
+    this.leading,
+    this.tone,
+    this.selected = false,
+    this.fill,
+    this.onFill,
+    this.color,
+    this.bare = false,
+  });
+
+  final String label;
+  final IconData? icon;
+  final Widget? leading;
+  final Tone? tone;
+  final bool selected;
+  final Color? fill;
+  final Color? onFill;
+
+  /// The tint in place of [tone]; with [bare] the icon and label colour.
+  final Color? color;
+
+  /// See [AppChip.bare].
+  final bool bare;
+
+  Widget _build() => AppChip(
+    label: label,
+    icon: icon,
+    leading: leading,
+    tone: tone == null ? null : AppChipTone.fromTone(tone!),
+    color: color,
+    selected: selected,
+    fill: fill,
+    onFill: onFill,
+    bare: bare,
+    size: ChipSize.mini,
+    maxWidth: AppListRow.chipMaxWidth,
+  );
+}
+
+/// The row's second line, always one text line tall: a mini chip in it
+/// overflows evenly instead of growing the row.
+@immutable
+class ListRowLine {
+  const ListRowLine({
+    this.lead,
+    this.icon,
+    this.parts = const [],
+    this.spans = const [],
+    this.glyphs = const [],
+  }) : custom = null;
+
+  /// For a line that doesn't fit lead / parts / spans / glyphs.
+  const ListRowLine.custom(Widget this.custom)
+    : lead = null,
+      icon = null,
+      parts = const [],
+      spans = const [],
+      glyphs = const [];
+
+  final ListRowChip? lead;
+
+  /// Before the text (↻ ทุกเดือน).
+  final IconData? icon;
+
+  /// Joined with " | ".
+  final List<String> parts;
+
+  /// After [parts]: the first after " | ", the rest after a space.
+  final List<InlineSpan> spans;
+  final List<ListRowGlyph> glyphs;
+  final Widget? custom;
+
+  Widget? _build(BuildContext context, TextStyle? small) {
+    final shown = [
+      for (final p in parts)
+        if (p.isNotEmpty) p,
+    ];
+    final lead = this.lead;
+    final custom = this.custom;
+    final hasText = shown.isNotEmpty || spans.isNotEmpty;
+    final icon = this.icon;
+    if (custom == null &&
+        lead == null &&
+        icon == null &&
+        !hasText &&
+        glyphs.isEmpty) {
+      return null;
+    }
+    final Widget content;
+    if (custom != null) {
+      content = DefaultTextStyle.merge(style: small, child: custom);
+    } else {
+      content = Row(
+        children: [
+          if (lead != null) ...[
+            lead._build(),
+            if (hasText || icon != null) const SizedBox(width: AppSpacing.xs),
+          ],
+          if (icon != null) ...[
+            Icon(icon, size: 14, color: small?.color),
+            if (hasText) const SizedBox(width: AppSpacing.xxs),
+          ],
+          if (hasText)
+            Flexible(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    if (shown.isNotEmpty) TextSpan(text: shown.join(' | ')),
+                    for (final (i, s) in spans.indexed) ...[
+                      if (i > 0 || shown.isNotEmpty)
+                        TextSpan(text: i == 0 ? ' | ' : ' '),
+                      s,
+                    ],
+                  ],
+                ),
+                style: small,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          for (final g in glyphs) ...[
+            const SizedBox(width: AppSpacing.sm),
+            g._build(small),
+          ],
+        ],
+      );
+    }
+    final height = (TextPainter(
+      text: TextSpan(text: 'Ag', style: small),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout()).height;
+    return SizedBox(
+      height: height,
+      child: OverflowBox(
+        maxHeight: double.infinity,
+        alignment: AlignmentDirectional.centerStart,
+        child: content,
+      ),
+    );
+  }
+}
+
+/// A small icon on line 2 (↻, 🔗, split), with an optional short text.
+@immutable
+class ListRowGlyph {
+  const ListRowGlyph(this.icon, {this.text});
+
+  final IconData icon;
+  final String? text;
+
+  Widget _build(TextStyle? small) {
+    final text = this.text;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: small?.color),
+        if (text != null && text.isNotEmpty) ...[
+          const SizedBox(width: 2),
+          Text(text, style: small, maxLines: 1),
+        ],
+      ],
+    );
+  }
+}
+
+/// The value at the right, with an optional caption under it.
+sealed class ListRowTrailing {
+  const ListRowTrailing({this.caption, this.captionTone});
+
+  /// [child] gets the row's number style (a money widget, a count).
+  const factory ListRowTrailing.value(
+    Widget child, {
+    String? caption,
+    Tone? captionTone,
+  }) = _ValueTrailing;
+
+  /// Muted, or in [tone] ("รอใส่ยอด" in warning).
+  const factory ListRowTrailing.text(
+    String text, {
+    Tone? tone,
+    String? caption,
+    Tone? captionTone,
+  }) = _TextTrailing;
+
+  final String? caption;
+  final Tone? captionTone;
+
+  Widget _value(BuildContext context, TextStyle? style);
+
+  Widget _build(BuildContext context, TextStyle? small) {
+    final style = Theme.of(context).textTheme.titleSmall?.copyWith(
+      fontWeight: FontWeight.w600,
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
+    final caption = this.caption;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _value(context, style),
+        if (caption != null && caption.isNotEmpty)
+          Text(
+            caption,
+            maxLines: 1,
+            style: captionTone == null
+                ? small
+                : small?.copyWith(color: captionTone!.color(context)),
+          ),
+      ],
+    );
+  }
+}
+
+class _ValueTrailing extends ListRowTrailing {
+  const _ValueTrailing(this.child, {super.caption, super.captionTone});
+
+  final Widget child;
+
+  @override
+  Widget _value(BuildContext context, TextStyle? style) =>
+      DefaultTextStyle.merge(style: style, child: child);
+}
+
+class _TextTrailing extends ListRowTrailing {
+  const _TextTrailing(this.text, {this.tone, super.caption, super.captionTone});
+
+  final String text;
+  final Tone? tone;
+
+  @override
+  Widget _value(BuildContext context, TextStyle? style) => Text(
+    text,
+    maxLines: 1,
+    style: style?.copyWith(
+      fontWeight: tone == null ? FontWeight.w400 : null,
+      color:
+          tone?.color(context) ??
+          Theme.of(context).colorScheme.onSurfaceVariant,
+    ),
+  );
+}
+
+/// Something to type in or press at the row's far right.
+sealed class ListRowAction {
+  const ListRowAction();
+
+  /// The quick-create amount box ([ShareAmountField]); [key] keeps what is
+  /// typed when the list rebuilds.
+  const factory ListRowAction.amount({
+    Key? key,
+    required double? value,
+    required ValueChanged<double?>? onChanged,
+    String hint,
+    bool enabled,
+  }) = _AmountAction;
+
+  /// A round, filled icon button the height of a chip (✓).
+  /// A plain icon button (expand / collapse, remove).
+  const factory ListRowAction.icon(
+    IconData icon, {
+    required VoidCallback? onTap,
+    String? tooltip,
+  }) = _IconAction;
+
+  const factory ListRowAction.button(
+    IconData icon, {
+    required VoidCallback? onTap,
+    String? tooltip,
+  }) = _ButtonAction;
+
+  /// ⋯ that opens [options] in a popover menu.
+  static ListRowAction menu<T>({
+    required List<SheetOption<T>> options,
+    required ValueChanged<T> onSelected,
+    String? tooltip,
+  }) => _MenuAction<T>(
+    options: options,
+    onSelected: onSelected,
+    tooltip: tooltip,
+  );
+
+  Widget _build(BuildContext context);
+}
+
+class _IconAction extends ListRowAction {
+  const _IconAction(this.icon, {required this.onTap, this.tooltip});
+
+  final IconData icon;
+  final VoidCallback? onTap;
+  final String? tooltip;
+
+  @override
+  Widget _build(BuildContext context) => AppIconButton.flat(
+    icon: icon,
+    tooltip: tooltip,
+    dense: true,
+    color: Theme.of(context).colorScheme.onSurfaceVariant,
+    onPressed: onTap,
+  );
+}
+
+class _MenuAction<T> extends ListRowAction {
+  const _MenuAction({
+    required this.options,
+    required this.onSelected,
+    this.tooltip,
+  });
+
+  final List<SheetOption<T>> options;
+  final ValueChanged<T> onSelected;
+  final String? tooltip;
+
+  @override
+  Widget _build(BuildContext context) => OptionMenuAnchor<T>(
+    options: options,
+    onSelected: onSelected,
+    builder: (context, toggle) =>
+        AppIconButton.more(onPressed: toggle, tooltip: tooltip, dense: true),
+  );
+}
+
+class _AmountAction extends ListRowAction {
+  const _AmountAction({
+    this.key,
+    required this.value,
+    required this.onChanged,
+    this.hint = '0',
+    this.enabled = true,
+  });
+
+  final Key? key;
+  final double? value;
+  final ValueChanged<double?>? onChanged;
+  final String hint;
+  final bool enabled;
+
+  @override
+  Widget _build(BuildContext context) => ShareAmountField(
+    key: key,
+    value: value,
+    onChanged: onChanged,
+    hint: hint,
+    enabled: enabled,
+  );
+}
+
+class _ButtonAction extends ListRowAction {
+  const _ButtonAction(this.icon, {required this.onTap, this.tooltip});
+
+  final IconData icon;
+  final VoidCallback? onTap;
+  final String? tooltip;
+
+  @override
+  Widget _build(BuildContext context) => AppIconButton.filled(
+    icon: icon,
+    onPressed: onTap,
+    tooltip: tooltip,
+    size: ChipSize.chip.heightOf(context),
+  );
+}
+
+/// A warning line under the row.
+@immutable
+class ListRowAlert {
+  const ListRowAlert(this.text, {this.tone = Tone.warning});
+
+  final String text;
+  final Tone tone;
+
+  Widget _build(BuildContext context) {
+    final color = tone.color(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(AppIcons.warning, size: 14, color: color),
+        const SizedBox(width: AppSpacing.xs),
+        Expanded(
+          child: Text(
+            text,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

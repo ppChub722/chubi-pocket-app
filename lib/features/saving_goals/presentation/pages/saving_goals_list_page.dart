@@ -163,7 +163,7 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
               size: size,
               stroke: 14,
               value: s.targetPercent / 100,
-              label: l.fpGoalsRingSavedPct(s.targetPercent.round()),
+              label: l.fpGoalsSavedLabel,
               amount: MoneyText(s.targetSavedTotal, symbol: symbol),
               target: target > 0 ? l.fpGoalsRingOfPlan(money(target)) : null,
             ),
@@ -305,88 +305,71 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
   Widget _row(BuildContext context, AppLocalizations l, SavingGoal g) {
     final symbol = context.readUserCurrencySymbol;
     String money(double v) => moneyString(context, v, symbol: symbol);
-    final monthName = l.fpGoalsThisMonth;
-    final warning = Tone.warning.color(context);
-    final plan = SavingGoalPlan.of(g);
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final tint = g.iconCode.tintFor(palette);
     final behind =
         !g.isArchived && !g.isCompleted && g.status == SavingStatus.behind;
-    final (badge, badgeTone) = g.isArchived
-        ? (l.sgv2FilterArchived, Tone.neutral)
+    final status = g.isArchived
+        ? ListRowChip(l.sgv2FilterArchived, tone: Tone.neutral)
         : g.isCompleted
-        ? (l.fpGoalsClosed, Tone.success)
+        ? ListRowChip(l.fpGoalsClosed, tone: Tone.success)
         : behind
-        ? (l.fpGoalsBehind, Tone.warning)
-        : (null, Tone.success);
+        ? ListRowChip(l.fpGoalsBehind, tone: Tone.warning)
+        : null;
     final target = g.targetAmount;
-    final caption = target == null
-        ? l.fpGoalsGroupOngoing
-        : savingGoalEtaCaption(context, l, g);
+    final saved = MoneyText(g.savedAmount, symbol: symbol);
+    final leading = IconCodeWidget(
+      iconCode: g.iconCode,
+      size: 36,
+      displayMode: IconDisplayMode.compact,
+      fallbackIcon: AppIcons.savingGoal,
+      fallbackColor: tint,
+    );
     if (target == null) {
-      return SavingGoalRow(
+      return AppListRow(
         key: ValueKey(g.id),
+        leading: leading,
         title: g.name,
-        iconCode: g.iconCode,
-        fallbackIcon: AppIcons.savingGoal,
-        amountText: '',
-        caption: caption,
-        trailing: money(g.savedAmount),
-        trailingCaption: l.fpGoalsRowMonthOnly(
-          monthName,
-          signedMoneyString(
-            context,
-            g.monthSaved,
-            negative: g.monthSaved < 0,
-            symbol: symbol,
+        status: status,
+        line2: ListRowLine(parts: [l.fpGoalsGroupOngoing]),
+        trailing: ListRowTrailing.value(
+          saved,
+          caption: l.fpGoalsRowMonthOnly(
+            l.fpGoalsThisMonth,
+            signedMoneyString(
+              context,
+              g.monthSaved,
+              negative: g.monthSaved < 0,
+              symbol: symbol,
+            ),
           ),
         ),
-        badge: badge,
-        badgeTone: badgeTone,
         dimmed: g.isArchived,
         onTap: () => context.push('/saving-goals/${g.id}'),
       );
     }
     final pct = (g.progressPct ?? 0).round();
-    final short = g.monthShort ?? 0;
     final left = g.remainingAmount ?? target - g.savedAmount;
-    final (trailing, trailingTone, trailingCaption) = switch (plan) {
-      SavingGoalPlan.short => (
-        l.fpGoalsRowShort(money(short)),
-        Tone.warning,
-        l.fpGoalsRowMonth(
-          monthName,
-          money(g.monthSaved),
-          money(g.monthPlan ?? g.monthSaved + short),
-        ),
-      ),
-      SavingGoalPlan.done => (
-        l.fpGoalsRowDone,
-        Tone.success,
-        l.fpGoalsRowMonthOnly(monthName, money(g.monthSaved)),
-      ),
-      _ when left <= 0 => (l.fpGoalsRowDone, Tone.success, '$pct%'),
-      _ => (l.fpGoalsRowLeft(money(left)), Tone.neutral, '$pct%'),
-    };
-    final pace = g.state == SavingGoalState.active
-        ? savingGoalPaceRatio(g)
-        : null;
-    return SavingGoalRow(
+    final goal = l.sgv2ChartTarget(money(target));
+    final due = savingGoalDueCaption(context, l, g);
+    return AppListRow(
       key: ValueKey(g.id),
+      leading: leading,
       title: g.name,
-      iconCode: g.iconCode,
-      fallbackIcon: AppIcons.savingGoal,
-      value: (g.progressPct ?? 0) / 100,
-      amountText: '${money(g.savedAmount)} / ${money(target)} | $pct%',
-      caption: caption,
-      trailing: trailing,
-      trailingTone: trailingTone,
-      trailingCaption: trailingCaption,
-      badge: badge,
-      badgeTone: badgeTone,
-      color: behind ? warning : null,
-      marker: pace,
-      markerBubble: pace == null
-          ? null
-          : l.fpGoalsMarkerBubble(money(target * pace)),
+      status: status,
+      line2: due == null ? null : ListRowLine(parts: [due]),
+      trailing: left <= 0
+          ? ListRowTrailing.text(
+              l.fpGoalsRowDone,
+              tone: Tone.success,
+              caption: goal,
+            )
+          : ListRowTrailing.value(saved, caption: goal),
+      footer: ProgressRow(
+        value: (g.progressPct ?? 0) / 100,
+        color: behind ? Tone.warning.color(context) : tint,
+        fillLabel: '$pct%',
+      ),
       dimmed: g.isArchived,
       onTap: () => context.push('/saving-goals/${g.id}'),
     );

@@ -95,8 +95,6 @@ class _TransactionsPageState extends State<_TransactionsPage> {
   TransactionType _debtDir = TransactionType.expense;
   bool _repay = false;
   int _linkMode = 1;
-  bool _selected = false;
-  bool _selected2 = true;
   String _last = '—';
 
   @override
@@ -106,9 +104,6 @@ class _TransactionsPageState extends State<_TransactionsPage> {
     _empty.dispose();
     super.dispose();
   }
-
-  Widget _leading(IconData icon, Color color) =>
-      IconTile(icon: icon, color: color, size: 36);
 
   void _note(String s) => setState(() => _last = s);
 
@@ -132,7 +127,6 @@ class _TransactionsPageState extends State<_TransactionsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
     final allCats = const [_catFood, _catSalary];
     final sample = Transaction(
       id: 'demo',
@@ -330,196 +324,6 @@ class _TransactionsPageState extends State<_TransactionsPage> {
           ),
         ),
         HubDemo(
-          title: 'TxRow — the ONE transaction / pending row',
-          note:
-              'Two lines and an amount. Callers resolve names, icons and '
-              'colours; the row is domain-agnostic.',
-          child: Column(
-            children: [
-              TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
-                title: 'ข้าวมันไก่',
-                amount: -540,
-                category: 'อาหาร',
-              ),
-              const AppDivider(),
-              TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
-                title:
-                    'ค่าไฟฟ้า ประจำเดือน ต.ค. 2026 บ้านเชียงใหม่ (titleMaxLines: 2)',
-                titleMaxLines: 2,
-                amount: -1240,
-                category: 'ค่าน้ำค่าไฟ',
-              ),
-              const AppDivider(),
-              TxRow(
-                leading: _leading(AppIcons.income, palette.income),
-                title: 'เงินเดือน',
-                amount: 42000,
-                walletLabel: 'กสิกร',
-                walletIcon: const Icon(AppIcons.wallet, size: 12),
-              ),
-              const AppDivider(),
-              TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
-                title: 'ค่ากาแฟ',
-                amount: -95,
-                source: const AppChip(
-                  label: 'Manual',
-                  tone: AppChipTone.info,
-                  selected: true,
-                  size: ChipSize.mini,
-                ),
-                category: 'อาหาร',
-              ),
-              const AppDivider(),
-              TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
-                title: 'ข้าวกลางวัน',
-                amount: -180,
-                category: 'อาหาร',
-                tags: [
-                  TextSpan(
-                    text: '#lunch',
-                    style: TextStyle(
-                      color: palette.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  TextSpan(
-                    text: '#work',
-                    style: TextStyle(
-                      color: palette.secondary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const AppDivider(),
-              TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
-                title: 'ค่าอาหารทริป',
-                amount: -2400,
-                category: 'อาหาร',
-                hasSplits: true,
-              ),
-              const AppDivider(),
-              TxRow(
-                leading: _leading(AppIcons.transfer, palette.primary),
-                title: 'โอนเข้าออมทรัพย์',
-                amount: 5000,
-                tone: MoneyTone.plain,
-                extra: '→ ออมทรัพย์',
-              ),
-              const AppDivider(),
-              TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
-                title: 'Draft with a warning',
-                amount: -300,
-                warning: 'Pick a wallet before submitting',
-                source: const AppChip(
-                  label: 'Text',
-                  tone: AppChipTone.primary,
-                  selected: true,
-                  size: ChipSize.mini,
-                ),
-              ),
-              const AppDivider(),
-              TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
-                title: 'Selectable (off)',
-                amount: -120,
-                category: 'อาหาร',
-                select: SelectCheck(
-                  value: _selected,
-                  onTap: () => setState(() => _selected = !_selected),
-                ),
-                onTap: () => setState(() => _selected = !_selected),
-              ),
-              const AppDivider(),
-              TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
-                title: 'Selectable (on)',
-                amount: -120,
-                category: 'อาหาร',
-                select: SelectCheck(
-                  value: _selected2,
-                  onTap: () => setState(() => _selected2 = !_selected2),
-                ),
-                onTap: () => setState(() => _selected2 = !_selected2),
-              ),
-            ],
-          ),
-        ),
-        HubDemo(
-          title: 'TxRow — recurring / linked / status / archived markers',
-          note:
-              'recurring adds 🔁 + progress ("3/12"), linked adds 🔗 (the '
-              'EventBillRow glyph); metaLeading leads line 2 with its own '
-              'style (a DueText keeps its overdue tint), meta adds texts; '
-              'statusChip is a mini chip on line 1 after the wallet; dimmed '
-              'fades the row (archived). None changes the row height.',
-          child: Column(
-            children: [
-              TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
-                title: 'Netflix',
-                amount: -419,
-                walletLabel: 'กสิกร',
-                walletIcon: const Icon(AppIcons.wallet, size: 12),
-                metaLeading: DueText(
-                  date: DateTime.now().add(const Duration(days: 3)),
-                  withDate: false,
-                ),
-                meta: const ['ทุกวันที่ 3'],
-                recurring: true,
-              ),
-              const AppDivider(),
-              TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
-                title: 'ผ่อนโทรศัพท์',
-                amount: -1290,
-                metaLeading: DueText(
-                  date: DateTime.now().subtract(const Duration(days: 2)),
-                  withDate: false,
-                ),
-                category: 'ช้อปปิ้ง',
-                recurring: true,
-                progress: '3/12',
-                linked: true,
-              ),
-              const AppDivider(),
-              TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
-                title: 'ค่ายิม',
-                amount: -900,
-                category: 'สุขภาพ',
-                meta: const ['ทุกเดือน'],
-                recurring: true,
-                statusChip: const AppChip(
-                  label: 'หยุดชั่วคราว',
-                  tone: AppChipTone.warning,
-                  size: ChipSize.mini,
-                ),
-              ),
-              const AppDivider(),
-              TxRow(
-                leading: _leading(AppIcons.income, palette.income),
-                title: 'ค่าเช่าห้อง',
-                amount: 6000,
-                category: 'รายได้อื่น',
-                recurring: true,
-                progress: '12/12',
-                statusChip: const AppChip(
-                  label: 'เก็บถาวร',
-                  size: ChipSize.mini,
-                ),
-                dimmed: true,
-              ),
-            ],
-          ),
-        ),
-        HubDemo(
           title: 'TransactionHeroCard — type switch, editing',
           note:
               'Inline layout (a transaction). Tap a chip or swipe the card to '
@@ -685,6 +489,33 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 const SizedBox(height: AppSpacing.md),
               ],
             ],
+          ),
+        ),
+        HubDemo(
+          title: 'TransactionHeroCard(extraTypeChip) — one more type',
+          note:
+              'An event bill sheet adds "จ่ายคืน" after the built-in chips; '
+              'extraTypeSelected shows every built-in chip unpicked and the '
+              'caller paints the card (accentColor).',
+          child: TransactionHeroCard(
+            type: TransactionType.expense,
+            amount: _amount,
+            title: _title,
+            dateLabel: 'Today',
+            inline: true,
+            allowTransfer: false,
+            onTypeChanged: (_) {},
+            onPickDate: () {},
+            compact: true,
+            showTitle: false,
+            extraTypeSelected: true,
+            accentColor: ModuleColors.of(context).planning,
+            extraTypeChip: AppChip(
+              label: 'จ่ายคืน',
+              icon: AppIcons.transfer,
+              color: ModuleColors.of(context).planning,
+              selected: true,
+            ),
           ),
         ),
         HubDemo(

@@ -5,7 +5,7 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../categories/presentation/category_label.dart';
-import '../../../tags/presentation/widgets/tag_chip.dart';
+import '../../../personal_debts/presentation/debt_wiring.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 
@@ -51,64 +51,56 @@ class TransactionTile extends StatelessWidget {
           )
         : '';
     final description = tx.description?.trim() ?? '';
+    final debt = tx.counterparty;
     final title = description.isNotEmpty
         ? description
+        : debt != null
+        ? debtAutoTitle(
+            l,
+            direction: debt.direction,
+            isRepayment: false,
+            name: debt.person.name,
+          )
         : (categoryName.isNotEmpty ? categoryName : '—');
 
     final wallet = tx.account;
-    final walletCode = wallet?.iconCode;
-    final walletFill = walletCode?.background != null
-        ? walletCode!.bgColorFor(palette)
-        : null;
-    final walletOnFill =
-        walletFill != null && (walletCode?.iconColors.isNotEmpty ?? false)
-        ? resolveColor(walletCode!.iconColors.first, palette)
-        : null;
-
     final day = DateFormatter.parseDay(tx.date);
     final now = DateTime.now();
     final upcoming =
         day != null && day.isAfter(DateTime(now.year, now.month, now.day));
 
-    return TxRow(
+    return AppListRow(
       leading: leading,
       title: title,
-      amount: tx.signedAmount,
       dimmed: upcoming,
-      statusChip: upcoming ? DueText(date: day, withDate: false) : null,
-      walletLabel: showAccount
-          ? (tx.account?.name ?? l.transactionFormAccountNone)
-          : null,
-      walletIcon: wallet == null
-          ? null
-          : IconDisplay(
-              type: IconType.account,
-              size: 14,
-              iconCode: wallet.iconCode,
-            ),
-      walletFill: walletFill,
-      walletOnFill: walletOnFill,
-      walletGlyph: walletFill == null
-          ? null
-          : IconRegistry.get(
-              walletCode!.icon,
-              fallback: IconType.account.fallbackIcon,
-            ),
-      category: description.isNotEmpty && categoryName.isNotEmpty
-          ? categoryName
-          : null,
-      extra: showDate ? _date(context, l, tx.date) : null,
-      tags: [
-        for (final t in tx.tags)
-          TextSpan(
-            text: '#${t.name}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: tagColor(t.asTag.iconCode, palette),
-              fontWeight: FontWeight.w600,
-            ),
+      titleChips: [
+        if (showAccount)
+          walletRowChip(
+            context,
+            name: wallet?.name ?? l.transactionFormAccountNone,
+            iconCode: wallet?.iconCode,
           ),
       ],
-      hasSplits: tx.hasSplits,
+      status: upcoming
+          ? ListRowChip(dueLabel(l, date: day, withDate: false))
+          : null,
+      line2: ListRowLine(
+        parts: [
+          if (description.isNotEmpty) categoryName,
+          if (showDate) _date(context, l, tx.date),
+        ],
+        spans: [
+          for (final t in tx.tags)
+            tagSpan(context, t.name, iconCode: t.asTag.iconCode),
+        ],
+        glyphs: [
+          if (tx.hasSplits)
+            ListRowGlyph(AppIcons.shared, text: '${tx.splitCount + 1}'),
+        ],
+      ),
+      trailing: ListRowTrailing.value(
+        MoneyText(tx.signedAmount, tone: MoneyTone.signed),
+      ),
       onTap: onTap ?? () => openPage(context, '/transactions/${tx.id}'),
     );
   }

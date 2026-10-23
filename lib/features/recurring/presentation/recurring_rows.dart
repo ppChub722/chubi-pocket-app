@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
+import '../../transactions/domain/refs.dart';
 import '../../transactions/domain/transaction_type.dart';
 import '../domain/recurring.dart';
 
@@ -13,10 +14,18 @@ String recurringKindLabel(AppLocalizations l, RecurringKind k) => switch (k) {
   RecurringKind.reminder => l.fpRecurringKindReminder,
 };
 
+IconData recurringKindIcon(RecurringKind k) => switch (k) {
+  RecurringKind.subscription => AppIcons.subscription,
+  RecurringKind.installment => AppIcons.progress,
+  RecurringKind.income => AppIcons.cash,
+  RecurringKind.reminder => AppIcons.notifications,
+};
+
 class RecurringRow extends StatelessWidget {
   const RecurringRow({
     required this.recurring,
     this.amount,
+    this.footer,
     this.onTap,
     super.key,
   });
@@ -24,6 +33,9 @@ class RecurringRow extends StatelessWidget {
   final Recurring recurring;
 
   final double? amount;
+
+  /// Under the name and amount (an installment's chain).
+  final Widget? footer;
   final VoidCallback? onTap;
 
   @override
@@ -33,56 +45,72 @@ class RecurringRow extends StatelessWidget {
     final next = r.nextDate;
     final shown = amount ?? r.amount;
     final known = shown != null && shown > 0;
-    return TxRow(
-      leading: IconDisplay(
-        type: IconType.category,
-        size: 36,
-        iconCode: r.iconCode ?? r.category?.iconCode,
-      ),
+    final account = r.account;
+    final icon = r.iconCode ?? r.category?.iconCode;
+    return AppListRow(
+      // The item's own colour for what the row holds (the footer's chain).
+      accent: icon?.accentColorFor(Theme.of(context).extension<AppColors>()!),
+      leading: IconDisplay(type: IconType.category, size: 36, iconCode: icon),
       title: r.name,
-      amount: known ? signedOf(r.type, shown) : 0,
-      amountText: known ? null : l.fpRecurringAwaitingAmount,
-      tone: toneOf(r.type),
-      walletLabel: r.account?.name,
-      walletIcon: r.account == null
-          ? null
-          : IconDisplay(
-              type: IconType.account,
-              size: 14,
-              iconCode: r.account!.iconCode,
+      // Its state (พัก / ใกล้ครบ) or when it is next ("อีก 3 วัน") beside the
+      // name; the wallet leads line 2 so the name keeps its room.
+      status:
+          _status(l, r) ??
+          (next == null
+              ? null
+              : ListRowChip(
+                  dueLabel(
+                    l,
+                    date: next,
+                    daysUntil: r.daysUntil,
+                    withDate: false,
+                  ),
+                  tone: (r.daysUntil ?? 0) < 0 ? Tone.warning : Tone.primary,
+                )),
+      line2: ListRowLine(
+        lead: account == null
+            ? null
+            : walletRowChip(
+                context,
+                name: account.name,
+                iconCode: account.iconCode,
+              ),
+        icon: AppIcons.recurring,
+        parts: [recurrenceLabel(l, r.rule)],
+        glyphs: [
+          if (r.progressTotal != null)
+            ListRowGlyph(
+              AppIcons.progress,
+              text: '${r.progressDone}/${r.progressTotal}',
             ),
-      statusChip: _status(l, r),
+        ],
+      ),
+      // No amount yet (a bill): nothing on the right.
+      trailing: known
+          ? ListRowTrailing.value(
+              MoneyText(signedOf(r.type, shown), tone: toneOf(r.type)),
+            )
+          : null,
+      footer: footer,
       dimmed: r.status != RecurringStatus.active,
-      recurring: true,
-      progress: r.progressTotal == null
-          ? null
-          : '${r.progressDone}/${r.progressTotal}',
-      metaLeading: next == null
-          ? null
-          : DueText(date: next, daysUntil: r.daysUntil, withDate: false),
-      meta: [recurrenceLabel(l, r.rule)],
       onTap: onTap,
     );
   }
 
-  static Widget? _status(AppLocalizations l, Recurring r) => switch (r.status) {
-    RecurringStatus.paused => StatusChip(
-      label: l.recurringStatusPaused,
-      kind: StatusKind.paused,
-      size: ChipSize.mini,
-    ),
-    RecurringStatus.archived => StatusChip(
-      label: l.recurringStatusArchived,
-      kind: StatusKind.archived,
-      size: ChipSize.mini,
-    ),
-    RecurringStatus.active when r.endingSoon => StatusChip(
-      label: l.recurringStatusEndingSoon,
-      kind: StatusKind.endingSoon,
-      size: ChipSize.mini,
-    ),
-    _ => null,
-  };
+  static ListRowChip? _status(AppLocalizations l, Recurring r) =>
+      switch (r.status) {
+        RecurringStatus.paused => ListRowChip(
+          l.recurringStatusPaused,
+          tone: Tone.warning,
+          icon: AppIcons.pause,
+        ),
+        RecurringStatus.archived => ListRowChip(l.recurringStatusArchived),
+        RecurringStatus.active when r.endingSoon => ListRowChip(
+          l.recurringStatusEndingSoon,
+          tone: Tone.warning,
+        ),
+        _ => null,
+      };
 }
 
 /// A rule with an end, one dot per occurrence (the BE's `chain`, else from
@@ -115,6 +143,16 @@ num signedOf(TransactionType type, double amount) =>
 
 MoneyTone toneOf(TransactionType type) =>
     type == TransactionType.transfer ? MoneyTone.plain : MoneyTone.signed;
+
+/// An occurrence's wallet as the list rows' wallet chip, by its name.
+ListRowChip? occurrenceWalletChip(BuildContext context, AccountRef? account) =>
+    account == null
+    ? null
+    : walletRowChip(context, name: account.name, iconCode: account.iconCode);
+
+/// A waiting occurrence's pill: รอใส่ยอด / รอยืนยัน in warning.
+ListRowChip waitingChip(String label) =>
+    ListRowChip(label, tone: Tone.warning, selected: true);
 
 String itemDateLabel(BuildContext context, DateTime date) {
   final l = AppLocalizations.of(context)!;

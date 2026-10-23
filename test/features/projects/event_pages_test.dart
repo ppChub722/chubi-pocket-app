@@ -130,6 +130,21 @@ class _Repo extends Fake implements ProjectsRepository {
   }
 
   @override
+  Future<EventSettle> settle(String projectId) async {
+    calls.add('settle $projectId');
+    _net();
+    final line = {
+      'from': memberRef('m-lee', 'Lee'),
+      'to': memberRef('m-me', 'Pond', me: true),
+      'amount': 250,
+    };
+    return EventSettle.fromJson({
+      'pairs': [line],
+      'simplified': [line],
+    });
+  }
+
+  @override
   Future<EventPatch> archive(String id) async {
     calls.add('archive $id');
     return EventPatch.fromJson(patchJson());
@@ -247,26 +262,34 @@ void main() {
   }
 
   group('events list', () {
-    testWidgets('one call; the card and the rows show the BE numbers', (
+    testWidgets('one call; the hero and the rows show the BE numbers', (
       t,
     ) async {
       await pump(t, const ProjectsPage());
       expect(repo.calls, ['list q= page=1']);
+      expect(repo.statuses, ['current']);
+      // Net owed = gets back − to pay; then the facts.
+      expect(find.text('Net owed | 3 events'), findsOneWidget);
+      expect(find.text('+฿8,150'), findsOneWidget);
+      expect(find.text('Gets back | 2 events'), findsOneWidget);
+      expect(find.text('To pay | 1 events'), findsOneWidget);
+      expect(find.text('My share | 2 active'), findsOneWidget);
       expect(find.text('฿14,289'), findsOneWidget);
-      expect(find.text('I paid ฿22,539 → owed ฿8,250'), findsOneWidget);
-      // The three tiles carry the BE counts.
-      expect(find.text('2'), findsOneWidget);
-      expect(find.text('1'), findsOneWidget);
-      expect(find.text('5'), findsOneWidget);
+      expect(find.byType(HeroFilterChips), findsOneWidget);
+      // All three are active: one section.
+      expect(find.byType(SectionHeader), findsOneWidget);
       expect(find.byType(EventListRow), findsNWidgets(3));
-      // Right side: owed (green) / owe (red) / even.
+      // Right side: gets back (green) / to pay (red) / settled = my share.
       expect(find.text('+฿250'), findsOneWidget);
-      expect(find.text('Owed to me'), findsOneWidget);
+      expect(find.text('Gets back'), findsOneWidget);
       expect(find.text('−฿100'), findsOneWidget);
-      expect(find.text('I owe'), findsOneWidget);
+      expect(find.text('To pay'), findsOneWidget);
+      expect(find.text('Settled up'), findsOneWidget);
+      // Each has a plan: the budget bar.
+      expect(find.byType(ProgressRow), findsNWidgets(3));
     });
 
-    testWidgets('the tiles are the status filter', (t) async {
+    testWidgets('the hero chips are the status filter', (t) async {
       await pump(t, const ProjectsPage());
       await t.tap(find.text('Not settled'));
       await t.pump();
@@ -276,14 +299,13 @@ void main() {
       expect(repo.statuses.last, 'unsettled');
       expect(find.byType(EventListRow), findsNWidgets(3));
       expect(repo.calls.length, 2);
-      // Tapping the ringed tile again goes back to the default.
-      await t.tap(find.text('Not settled'));
+      await t.tap(find.text('All'));
       await t.pump();
       await t.pump(const Duration(milliseconds: 100));
-      expect(repo.statuses.last, 'active');
+      expect(repo.statuses.last, 'current');
     });
 
-    testWidgets('the ended tile sends status=ended', (t) async {
+    testWidgets('the ended chip sends status=ended', (t) async {
       await pump(t, const ProjectsPage());
       await t.tap(find.text('Ended'));
       await t.pump();
@@ -346,25 +368,39 @@ void main() {
       expect(find.byType(ErrorView), findsNothing);
       // Hero: total spent, the budget bar (a plan is set), the tiles.
       expect(find.text('Total spent'), findsOneWidget);
-      expect(find.text('Spent ฿1,750 of ฿10,000 budget'), findsOneWidget);
-      expect(find.text('฿8,250 left'), findsOneWidget);
+      // The budget bar: what's spent on the fill, the budget at its end.
+      expect(find.byKey(const ValueKey('progressFillLabel')), findsOneWidget);
+      expect(find.text('฿10,000'), findsOneWidget);
       expect(find.text('My share'), findsOneWidget);
-      expect(find.text('Owed to me'), findsOneWidget);
+      expect(find.text('Gets back'), findsOneWidget);
       // No income → no income line.
       expect(find.text('Total income'), findsNothing);
       // My tags + the event-tag filter chips.
       expect(find.text('My tags:'), findsOneWidget);
       expect(find.text('Trips'), findsOneWidget);
-      expect(find.text('Event tags'), findsOneWidget);
       expect(find.text('All'), findsOneWidget);
+      expect(find.text('Only mine'), findsOneWidget);
       expect(find.text('Food'), findsWidgets);
-      // The member strip: paid + owed / owes per member.
+      // Tabs: the bills first; the member strip lives in Summary.
+      expect(find.text('Bills'), findsOneWidget);
+      expect(find.text('Summary'), findsOneWidget);
+      expect(find.byType(EventBillRow), findsNWidgets(2));
+      expect(find.byType(PeopleStrip), findsNothing);
+    });
+
+    testWidgets('the summary tab: the member strip and who pays whom', (
+      t,
+    ) async {
+      await pump(t, const ProjectDetailPage(id: 'e1'));
+      await t.tap(find.text('Summary'));
+      await t.pumpAndSettle();
+      expect(repo.calls, ['detail e1', 'settle e1']);
       expect(find.byType(PeopleStrip), findsOneWidget);
       expect(find.text('Paid ฿1,000'), findsOneWidget);
       expect(find.text('Owed ฿250'), findsOneWidget);
       expect(find.text('Owes ฿250'), findsOneWidget);
-      // The bills, no tabs.
-      expect(find.byType(EventBillRow), findsNWidgets(2));
+      expect(find.text('Lee → Pond'), findsOneWidget);
+      expect(find.text('Pair by pair'), findsOneWidget);
     });
 
     testWidgets('no planned budget → no bar; income → the income line', (
@@ -391,8 +427,8 @@ void main() {
       expect(repo.calls, ['detail e1', 'bills tag=t1 mine=false']);
       expect(find.text('Tagged bill'), findsOneWidget);
       expect(find.text('Dinner'), findsNothing);
-      // "All" clears it without a call (the page's own board again).
-      await t.tap(find.text('All'));
+      // The tag row's "All" clears it without a call (the page's own board).
+      await t.tap(find.text('All').last);
       await t.pump();
       await t.pump(const Duration(milliseconds: 100));
       expect(repo.calls.length, 2);
@@ -439,16 +475,18 @@ void main() {
       expect(rows.where((r) => r.highlighted).map((r) => r.title), ['Dinner']);
     });
 
-    testWidgets('a tick is one call; its patch is applied (no reload)', (
+    testWidgets('bills have no tick boxes; my unbooked part is flagged', (
       t,
     ) async {
       await pump(t, const ProjectDetailPage(id: 'e1'));
-      final row = find.byType(EventBillRow).last; // b2: not mine to resolve
-      final tick = find.descendant(of: row, matching: find.byType(SelectCheck));
-      await t.tap(tick.first);
-      await t.pump();
-      await t.pump(const Duration(milliseconds: 100));
-      expect(repo.calls, ['detail e1', 'mark b2 true']);
+      expect(
+        find.descendant(
+          of: find.byType(EventBillRow),
+          matching: find.byType(SelectCheck),
+        ),
+        findsNothing,
+      );
+      expect(find.text('Not in my books'), findsWidgets);
     });
   });
 
@@ -459,7 +497,8 @@ void main() {
       await pumpEdit(t);
       expect(find.byType(HeroAmountField), findsOneWidget);
       expect(find.text('Planned budget (optional)'), findsOneWidget);
-      expect(find.text('Start – end'), findsOneWidget);
+      // The dates are a chip in the hero's bottom row, beside the status.
+      expect(find.byKey(const ValueKey('eventDates')), findsOneWidget);
       expect(find.text('Manage event tags'), findsOneWidget);
       expect(find.text('1 tags'), findsOneWidget);
       // Hidden, not greyed.

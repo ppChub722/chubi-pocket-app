@@ -254,24 +254,24 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
               description: description,
               children: [
                 for (final m in list)
-                  ListRow(
+                  AppListRow(
                     dimmed: m.status != MemberStatus.active,
                     leading: memberAvatar(m, size: 40),
                     title: m.displayName,
-                    subtitle: m.isLinked
-                        ? l.projectMemberLinked
-                        : l.projectMemberAdHoc,
-                    trailing: AppChip(
-                      label: m.isOwner
+                    line2: ListRowLine(
+                      parts: [
+                        m.isLinked
+                            ? l.projectMemberLinked
+                            : l.projectMemberAdHoc,
+                      ],
+                    ),
+                    trailing: ListRowTrailing.text(
+                      m.isOwner
                           ? l.projectRoleOwner
                           : m.role == MemberRole.viewer
                           ? l.projectRoleViewer
                           : l.projectRoleMember,
-                      tone: m.isOwner
-                          ? AppChipTone.primary
-                          : AppChipTone.neutral,
-                      selected: true,
-                      size: ChipSize.chip,
+                      tone: m.isOwner ? Tone.primary : null,
                     ),
                     onTap: _isOwner && readOnly == false && !m.isOwner
                         ? () => _memberActions(m)

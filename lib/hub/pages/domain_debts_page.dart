@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../features/transactions/domain/transaction_type.dart';
 import '../../ui/ui.dart';
 import '../hub_kit.dart';
 import '../hub_playground.dart';
 
-/// `/dev/domain/debts` — the debts rework pieces: PersonRow,
-/// PersonBalanceRow, NetBalance, the debt hero pieces and LedgerRow. Sample data
-/// is Thai (what the debts pages pass from l10n).
+/// `/dev/domain/debts` — the debts pieces: NetBalance, the debt hero pieces
+/// and the debt pages' rows (AppListRow). Sample data is Thai (what the debts
+/// pages pass from l10n).
 Widget buildDebtsPage(BuildContext context) => const _DebtsPage();
 
 const _owedToMe = 'รอรับ';
@@ -21,10 +22,19 @@ class _DebtsPage extends StatefulWidget {
 }
 
 class _DebtsPageState extends State<_DebtsPage> {
-  String? _picked = 'มาตาก';
   String _last = '—';
   bool _towardMe = true;
   bool _settle = false;
+  bool _moneyMoves = false;
+  final _amount = TextEditingController(text: '1232');
+  final _origin = TextEditingController(text: 'ให้ ลี ยืม');
+
+  @override
+  void dispose() {
+    _amount.dispose();
+    _origin.dispose();
+    super.dispose();
+  }
 
   void _note(String s) => setState(() => _last = s);
 
@@ -41,7 +51,27 @@ class _DebtsPageState extends State<_DebtsPage> {
     ),
   );
 
-  static const _walletIcon = Icon(AppIcons.wallet, size: 12);
+  Widget _person() => PickCard(
+    label: 'กับใคร',
+    value: 'ลี ทดสอบ',
+    dense: true,
+    editable: true,
+    reserveSubtitle: true,
+    accent: Theme.of(context).colorScheme.primary,
+    leading: const PersonMark(name: 'ลี', level: PersonLevel.linked, size: 32),
+    onTap: () => _note('person card'),
+  );
+
+  Widget _me() => _moneyMoves
+      ? WalletPickCard(
+          account: null,
+          label: 'กระเป๋า',
+          placeholder: 'เลือกกระเป๋า',
+          dense: true,
+          editable: true,
+          onTap: () => _note('wallet card'),
+        )
+      : const MeFlowCard(label: 'ฉัน', name: 'ปอนด์');
 
   @override
   Widget build(BuildContext context) {
@@ -103,20 +133,31 @@ class _DebtsPageState extends State<_DebtsPage> {
                 note: 'ลดลง ฿400',
                 noteColor: Theme.of(context).colorScheme.primary,
               ),
+              // Statement rows: the app's AppListRow (owner 2026-10-23).
               _list([
-                DebtStatementRow(
+                AppListRow(
+                  leading: IconTile(
+                    icon: AppIcons.cash,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 36,
+                  ),
                   title: 'คุณจ่ายคืนลี',
-                  subtitle: 'จากกระเป๋า test2',
-                  amount: const MoneyText(400),
-                  repayment: true,
+                  line2: const ListRowLine(parts: ['จากกระเป๋า test2']),
+                  trailing: ListRowTrailing.value(const MoneyText(400)),
                   onTap: () => _note('repayment'),
                 ),
-                DebtStatementRow(
+                AppListRow(
+                  leading: IconTile(
+                    icon: AppIcons.debt,
+                    color: Theme.of(context).colorScheme.tertiary,
+                    size: 36,
+                  ),
                   title: 'ค่าอาหาร',
-                  subtitle: 'ลีจ่ายแทน',
-                  amount: const MoneyText(60),
-                  amountColor: debtStateColor(context, owedToMe: false),
-                  paidLabel: '✓ จ่ายแล้ว',
+                  status: const ListRowChip('จ่ายแล้ว', icon: AppIcons.check),
+                  line2: const ListRowLine(parts: ['ลีจ่ายแทน']),
+                  trailing: ListRowTrailing.value(
+                    const MoneyText(60, tone: MoneyTone.expense),
+                  ),
                   onTap: () => _note('debt'),
                 ),
               ]),
@@ -131,17 +172,43 @@ class _DebtsPageState extends State<_DebtsPage> {
                 paidLabel: '✓ จ่ายแล้ว',
               ),
               const SizedBox(height: AppSpacing.sm),
+              // The debts list rows: AppListRow; past 30 days or overdue the
+              // line is the warning colour.
               _list([
-                PersonBalanceRow(
-                  name: 'แบงค์ ทดสอบ',
-                  level: PersonLevel.contact,
-                  subtitle: 'ค่าตั๋วคอนเสิร์ต | 1 ก.ย.',
-                  net: 300,
-                  owedToMeLabel: _owedToMe,
-                  iOweLabel: _iOwe,
-                  settledLabel: _settled,
-                  age: 'ค้าง 50 วัน',
-                  ageWarn: true,
+                AppListRow(
+                  leading: const PersonMark(
+                    name: 'ลี',
+                    level: PersonLevel.linked,
+                    size: 36,
+                  ),
+                  title: 'ลี ทดสอบ',
+                  line2: const ListRowLine(parts: ['ครบกำหนด 30 ต.ค.']),
+                  trailing: ListRowTrailing.value(
+                    const MoneyText(1232, tone: MoneyTone.income),
+                  ),
+                  onTap: () => _note('person'),
+                ),
+                AppListRow(
+                  leading: const PersonMark(
+                    name: 'แบงค์',
+                    level: PersonLevel.contact,
+                    size: 36,
+                  ),
+                  title: 'แบงค์ ทดสอบ',
+                  line2: ListRowLine(
+                    spans: [
+                      TextSpan(
+                        text: 'ค้างมา 50 วันแล้ว',
+                        style: TextStyle(
+                          color: Tone.warning.color(context),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  trailing: ListRowTrailing.value(
+                    const MoneyText(300, tone: MoneyTone.income),
+                  ),
                   onTap: () => _note('person'),
                 ),
               ]),
@@ -153,10 +220,11 @@ class _DebtsPageState extends State<_DebtsPage> {
           title: 'DebtModeChips + DebtResultBox — quick create หนี้',
           note:
               'No sub-tabs: two chips where the tx mode has รายจ่าย / รายรับ '
-              '(record | settle), worded and coloured by the direction. The '
-              'arrow between กับใคร / กระเป๋า swaps it (tap "swap" here). '
-              'Under the hero, the result box: the person now → after saving '
-              '+ the wallet; a warning when a settle flips the side.',
+              '(record | settle): "จดหนี้" | "จ่ายหนี้", no direction words; the '
+              'colour follows the direction. The '
+              'arrow between the cards swaps it (tap "swap" here). '
+              'DebtResultBox is the old three-line result (no longer used by '
+              'quick create: a one-line caption replaced it).',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -166,8 +234,8 @@ class _DebtsPageState extends State<_DebtsPage> {
                     child: DebtModeChips(
                       towardMe: _towardMe,
                       settle: _settle,
-                      recordLabel: _towardMe ? _owedToMe : _iOwe,
-                      settleLabel: _towardMe ? 'รับคืน' : 'จ่ายคืน',
+                      recordLabel: 'จดหนี้',
+                      settleLabel: 'จ่ายหนี้',
                       onChanged: (s) => setState(() => _settle = s),
                     ),
                   ),
@@ -202,80 +270,81 @@ class _DebtsPageState extends State<_DebtsPage> {
                 loading: true,
               ),
               const SizedBox(height: AppSpacing.sm),
-              FlowCards(
-                from: const AppCard(child: Text('กระเป๋า test2')),
-                to: const AppCard(child: Text('ลี ทดสอบ')),
-                onSwap: () => setState(() => _towardMe = !_towardMe),
-                swapTooltip: 'สลับ',
-                caption: 'จดว่าลีต้องคืนฉัน (ฉันให้ลียืมเงินออกจากกระเป๋า)',
-              ),
             ],
           ),
         ),
-        // ---- PersonRow ----
         HubDemo(
-          title: 'PersonRow',
+          title: 'MeFlowCard + read-only ที่มา — debt hero',
           note:
-              'A member / contact row on PersonMark (40): typed name, contact, '
-              'linked + 🔗. The 🔗 slot is kept on every row so the names line '
-              'up. Optional caption, role chip (chip 28), trailing slot; '
-              'pending fades it; onTap null = not tappable. ListRow height.',
-          child: _list([
-            PersonRow(
-              name: 'มาตาก',
-              level: PersonLevel.linked,
-              caption: 'ผูกบัญชีแล้ว',
-              role: 'เจ้าของ',
-              roleTone: AppChipTone.primary,
-              onTap: () => _note('PersonRow มาตาก'),
-            ),
-            PersonRow(
-              name: 'บี',
-              level: PersonLevel.contact,
-              caption: 'ผู้ติดต่อ',
-              role: 'สมาชิก',
-              trailing: AppIconButton.flat(
-                icon: AppIcons.chevronRight,
-                dense: true,
-                onPressed: () => _note('PersonRow trailing'),
+              'Owner 2026-10-23. The description cell is app-made text '
+              '("ที่มา": titleReadOnly, no underline, nothing to type). The '
+              'pair is [กับใคร] ⇄ [ฉัน], both in the app colour: with the '
+              'switch off the "ฉัน" card only says who the money goes to / '
+              'comes from; with it on (settle: always) it is the usual wallet '
+              'card. Under the switch, above the tag row: the summary row '
+              '(DebtSummaryRow; green / red / cleared / overpay).',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              EntryCard(
+                debt: true,
+                type: _towardMe
+                    ? TransactionType.expense
+                    : TransactionType.income,
+                typeBadge: DebtModeChips(
+                  towardMe: _towardMe,
+                  settle: false,
+                  recordLabel: 'จดหนี้',
+                  settleLabel: 'จ่ายหนี้',
+                  onChanged: (_) {},
+                ),
+                amount: _amount,
+                title: _origin,
+                titleReadOnly: true,
+                titleLabel: 'ที่มา',
+                dateLabel: 'วันนี้',
+                flowRow: FlowCards(
+                  from: _towardMe ? _me() : _person(),
+                  to: _towardMe ? _person() : _me(),
+                  onSwap: () => setState(() => _towardMe = !_towardMe),
+                  swapTooltip: 'สลับ',
+                ),
               ),
-              onTap: () => _note('PersonRow บี'),
-            ),
-            const PersonRow(name: 'ลี', level: PersonLevel.name),
-            const PersonRow(
-              name: 'ต้น',
-              level: PersonLevel.linked,
-              caption: 'รอตอบรับคำเชิญ',
-              role: 'สมาชิก',
-              pending: true,
-            ),
-          ]),
-        ),
-        // ---- PersonBalanceRow ----
-        HubDemo(
-          title: 'PersonBalanceRow',
-          note:
-              'The debts people row (list + picker): PersonMark | name | sub '
-              'line | NetBalance (row). Tap to pick: selected = the highlight '
-              'tint, never a ✓. Same height as PersonRow / ListRow.',
-          child: _list([
-            for (final (name, level, net, sub) in const [
-              ('มาตาก', PersonLevel.linked, 1200, 'ค้าง 2 รายการ'),
-              ('บี', PersonLevel.contact, -450.5, 'ค้าง 1 รายการ'),
-              ('ลี', PersonLevel.name, 0, 'ไม่มีรายการค้าง'),
-            ])
-              PersonBalanceRow(
-                name: name,
-                level: level,
-                net: net,
-                subtitle: sub,
-                owedToMeLabel: _owedToMe,
-                iOweLabel: _iOwe,
-                settledLabel: _settled,
-                selected: _picked == name,
-                onTap: () => setState(() => _picked = name),
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                children: [
+                  const Expanded(child: Text('ทำรายการเงิน (tx) ด้วย')),
+                  AppSwitch(
+                    value: _moneyMoves,
+                    onChanged: (v) => setState(() => _moneyMoves = v),
+                    semanticLabel: 'ทำรายการเงิน',
+                  ),
+                ],
               ),
-          ]),
+              const SizedBox(height: AppSpacing.sm),
+              DebtSummaryRow(
+                label: 'หลังบันทึก',
+                words: _towardMe ? 'ลี เป็นลูกหนี้' : 'ลี เป็นเจ้าหนี้',
+                amount: '฿2,464',
+                tone: _towardMe
+                    ? DebtSummaryTone.owedToMe
+                    : DebtSummaryTone.iOwe,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              const DebtSummaryRow(
+                label: 'หลังบันทึก',
+                words: 'เคลียร์ครบกับ ลี แล้ว',
+                tone: DebtSummaryTone.cleared,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              const DebtSummaryRow(
+                label: 'หลังบันทึก',
+                words: 'ลี กลายเป็นเจ้าหนี้',
+                amount: '฿40',
+                tone: DebtSummaryTone.warn,
+              ),
+            ],
+          ),
         ),
         // ---- NetBalance ----
         HubDemo(
@@ -464,131 +533,6 @@ class _DebtsPageState extends State<_DebtsPage> {
             shareLabel: 'แชร์',
             onCopy: (t) => _note('copy ${t.length} chars'),
             onShare: (t) => _note('share ${t.length} chars'),
-          ),
-        ),
-        HubDemo(
-          title: 'PersonBalanceRow — people list',
-          note:
-              'The 0.4.0 list row: showCaption false = only the amount, '
-              'coloured by side; the subtitle is "ค้าง N วัน" and subtitleWarn '
-              'turns it amber when over 30 days.',
-          child: _list([
-            for (final (name, level, net, sub, warn) in const [
-              ('มาตาก', PersonLevel.linked, 1189.67, 'ค้าง 45 วัน', true),
-              ('บี', PersonLevel.contact, -450.5, 'ค้าง 20 วัน', false),
-              ('ลี', PersonLevel.name, 0, null, false),
-            ])
-              PersonBalanceRow(
-                name: name,
-                level: level,
-                net: net,
-                subtitle: sub,
-                subtitleWarn: warn,
-                showCaption: false,
-                owedToMeLabel: _owedToMe,
-                iOweLabel: _iOwe,
-                settledLabel: _settled,
-                onTap: () => _note('PersonBalanceRow $name'),
-              ),
-          ]),
-        ),
-        HubDemo(
-          title: 'LedgerRow — statement (signed)',
-          note:
-              'signed: + a debt added (normal colour), − a repayment '
-              '(income colour). The person page uses it.',
-          child: _list([
-            const LedgerRow(
-              direction: LedgerDirection.paid,
-              amount: 522,
-              title: 'Gaming',
-              dateLabel: '11 ต.ค.',
-              signed: true,
-            ),
-            const LedgerRow(
-              direction: LedgerDirection.received,
-              amount: 200,
-              title: 'รับคืน',
-              dateLabel: '5 ต.ค.',
-              signed: true,
-            ),
-          ]),
-        ),
-        // ---- LedgerRow ----
-        HubDemo(
-          title: 'LedgerRow',
-          note:
-              'One debt entry, by direction: paid ↗ (expense colour) / '
-              'received ↙ (income colour); the amount is always positive. '
-              'Line 2: date | wallet mini chip | paid mini chip | source. '
-              'Never a category. TxRow geometry.',
-          child: _list([
-            LedgerRow(
-              direction: LedgerDirection.paid,
-              amount: 500,
-              title: 'ฉันจ่ายให้มาตาก',
-              dateLabel: '12 ต.ค.',
-              walletLabel: 'กสิกร',
-              walletIcon: _walletIcon,
-              onTap: () => _note('LedgerRow paid'),
-            ),
-            LedgerRow(
-              direction: LedgerDirection.received,
-              amount: 300,
-              title: 'มาตากจ่ายให้ฉัน',
-              dateLabel: '10 ต.ค.',
-              walletLabel: 'เงินสด',
-              walletIcon: _walletIcon,
-              paidLabel: 'จ่ายแล้ว',
-              onTap: () => _note('LedgerRow received'),
-            ),
-            LedgerRow(
-              direction: LedgerDirection.received,
-              amount: 240,
-              title: 'ค่าข้าวเที่ยง',
-              dateLabel: '8 ต.ค.',
-              sourceLabel: 'ทริปเชียงใหม่',
-              onTap: () => _note('LedgerRow split'),
-            ),
-            LedgerRow(
-              direction: LedgerDirection.paid,
-              amount: 1200,
-              title: 'ค่าตั๋วคอนเสิร์ต',
-              dateLabel: '1 ต.ค.',
-              paidLabel: 'จ่ายแล้ว',
-              sourceLabel: 'ค่าตั๋วคอนเสิร์ต (หาร 3)',
-            ),
-          ]),
-        ),
-        HubPlayground(
-          title: 'LedgerRow',
-          controls: [
-            PlayChoice<LedgerDirection>('direction', [
-              for (final d in LedgerDirection.values) (d.name, d),
-            ]),
-            const PlayNum(
-              'amount',
-              min: 0,
-              max: 5000,
-              step: 250,
-              initialValue: 500,
-            ),
-            const PlayText('title', initialValue: 'ฉันจ่ายให้มาตาก'),
-            const PlayText('dateLabel', initialValue: '12 ต.ค.'),
-            const PlayBool('wallet', initialValue: true),
-            const PlayBool('paid'),
-            const PlayText('sourceLabel'),
-          ],
-          builder: (context, v) => LedgerRow(
-            direction: v<LedgerDirection>('direction'),
-            amount: v<double>('amount'),
-            title: v<String>('title'),
-            dateLabel: v<String>('dateLabel'),
-            walletLabel: v<bool>('wallet') ? 'กสิกร' : null,
-            walletIcon: _walletIcon,
-            paidLabel: v<bool>('paid') ? 'จ่ายแล้ว' : null,
-            sourceLabel: v<String>('sourceLabel'),
-            onTap: () {},
           ),
         ),
       ],

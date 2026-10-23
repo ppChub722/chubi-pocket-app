@@ -39,9 +39,15 @@ class PointerBubbles extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final surface = Theme.of(context).colorScheme.surface;
-    final base = Theme.of(
-      context,
-    ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600);
+    // Measure with the style the Text really gets (the inherited one + the
+    // label) and the app's locale, so Thai is measured in the font it is
+    // drawn in; the bubble then sits centred on its point.
+    final base = DefaultTextStyle.of(context).style.merge(
+      Theme.of(
+        context,
+      ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600),
+    );
+    final locale = Localizations.maybeLocaleOf(context);
     return LayoutBuilder(
       builder: (context, box) {
         final w = box.maxWidth;
@@ -55,6 +61,7 @@ class PointerBubbles extends StatelessWidget {
             text: TextSpan(text: b.text, style: base),
             textDirection: Directionality.of(context),
             textScaler: MediaQuery.textScalerOf(context),
+            locale: locale,
             maxLines: 1,
           )..layout();
           final bw = tp.width + 2 * _padX + 2;
@@ -98,33 +105,38 @@ class PointerBubbles extends StatelessWidget {
     final ink = b.strong ? AppChip.readableOn(b.color) : b.color;
     final x = b.at.clamp(0, 1) * w;
     final arrowX = x
-        .clamp(p.left + _arrow + 2, p.left + p.bw - _arrow - 2)
+        .clamp(p.left + _arrow + 1, p.left + p.bw - _arrow - 1)
         .toDouble();
     final top = height - p.bh;
+    // One shape — box and arrow share a single outline, so no line cuts
+    // across the arrow's root (owner 2026-10-23).
     return [
-      Positioned(
-        left: arrowX - _arrow,
-        top: top + p.bh - 1,
-        child: CustomPaint(
-          size: const Size(_arrow * 2, _arrow),
-          painter: _ArrowPainter(fill, edge),
-        ),
-      ),
       Positioned(
         left: p.left,
         top: top,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: fill,
-            border: Border.all(color: edge),
-            borderRadius: BorderRadius.circular(AppSpacing.sm),
+        child: CustomPaint(
+          painter: _BubblePainter(
+            fill: fill,
+            edge: edge,
+            boxHeight: p.bh,
+            tailX: arrowX - p.left,
           ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: _padX,
-              vertical: _padY,
+          // Exactly the measured width, so the arrow math holds.
+          child: SizedBox(
+            width: p.bw,
+            height: p.bh + _arrow,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: _arrow),
+              child: Center(
+                child: Text(
+                  b.text,
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.visible,
+                  style: base?.copyWith(color: ink),
+                ),
+              ),
             ),
-            child: Text(b.text, maxLines: 1, style: base?.copyWith(color: ink)),
           ),
         ),
       ),
@@ -132,29 +144,65 @@ class PointerBubbles extends StatelessWidget {
   }
 }
 
-class _ArrowPainter extends CustomPainter {
-  const _ArrowPainter(this.fill, this.edge);
+/// A rounded box with its arrow under [tailX], drawn as one path (fill, then
+/// a 1px outline round the whole thing).
+class _BubblePainter extends CustomPainter {
+  const _BubblePainter({
+    required this.fill,
+    required this.edge,
+    required this.boxHeight,
+    required this.tailX,
+  });
 
   final Color fill;
   final Color edge;
+  final double boxHeight;
+  final double tailX;
+
+  static const _r = AppSpacing.sm;
+  static const _a = PointerBubbles._arrow;
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Half a pixel in, so the 1px outline sits fully inside the bounds.
+    const i = 0.5;
+    final w = size.width - i;
+    final h = boxHeight - i;
+    final r = math.min(_r, (h - i) / 2);
+    final t = tailX.clamp(i + _a, w - _a).toDouble();
+    // A tail near an edge (the first / last point) takes room from that
+    // bottom corner, which rounds less, so the arrow still hits its point.
+    final rl = math.max(0.0, math.min(r, t - _a - i));
+    final rr = math.max(0.0, math.min(r, w - (t + _a)));
     final path = Path()
-      ..moveTo(0, 0)
-      ..lineTo(size.width / 2, size.height)
-      ..lineTo(size.width, 0);
+      ..moveTo(i + r, i)
+      ..lineTo(w - r, i)
+      ..arcToPoint(Offset(w, i + r), radius: Radius.circular(r))
+      ..lineTo(w, h - rr)
+      ..arcToPoint(Offset(w - rr, h), radius: Radius.circular(rr))
+      ..lineTo(t + _a, h)
+      ..lineTo(t, h + _a)
+      ..lineTo(t - _a, h)
+      ..lineTo(i + rl, h)
+      ..arcToPoint(Offset(i, h - rl), radius: Radius.circular(rl))
+      ..lineTo(i, i + r)
+      ..arcToPoint(Offset(i + r, i), radius: Radius.circular(r))
+      ..close();
     canvas.drawPath(path, Paint()..color = fill);
     canvas.drawPath(
       path,
       Paint()
         ..color = edge
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1,
+        ..strokeWidth = 1
+        ..strokeJoin = StrokeJoin.round,
     );
   }
 
   @override
-  bool shouldRepaint(_ArrowPainter old) =>
-      old.fill != fill || old.edge != edge;
+  bool shouldRepaint(_BubblePainter old) =>
+      old.fill != fill ||
+      old.edge != edge ||
+      old.boxHeight != boxHeight ||
+      old.tailX != tailX;
 }

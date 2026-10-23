@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../ui/ui.dart';
 import '../hub_kit.dart';
 
-/// Money pieces: MoneyText, MoneyVisibilityToggle, MoneyListTile,
+/// Money pieces: MoneyText, MoneyVisibilityToggle,
 /// DateGroupHeader, CurrencyTile. (IconTile is on Atoms → Badge & avatar,
 /// SummaryStats on Organisms → Section & hero.)
 Widget buildMoneyPage(BuildContext context) => const _MoneyPage();
@@ -157,90 +157,38 @@ class _MoneyPageState extends State<_MoneyPage> {
           ),
         ),
         HubDemo(
-          title: 'MoneyListTile — dimmed',
-          note: 'dimmed: faded (archived / cancelled / settled rows).',
-          child: Column(
-            children: [
-              MoneyListTile(
-                leading: const AppIcon(AppIcons.cash),
-                title: 'Salary',
-                amount: 32000,
-                onTap: () {},
-              ),
-              MoneyListTile(
-                leading: const AppIcon(AppIcons.cash),
-                title: 'Old subscription (cancelled)',
-                amount: -199,
-                dimmed: true,
-                onTap: () {},
-              ),
-            ],
-          ),
-        ),
-        HubDemo(
-          title: 'DateGroupHeader + MoneyListTile',
+          title: 'DateGroupHeader',
           note:
-              'A grouped list: date header with net total, income / expense '
-              'rows, caption under the amount, footer line, a row with a '
-              'warning, and a tappable row.',
+              'A day\'s heading with its net total over AppListRow rows; '
+              'without a total it is the label alone.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const DateGroupHeader(label: 'Today', total: 4460),
-              MoneyListTile(
+              AppListRow(
                 leading: IconTile(icon: AppIcons.cash, color: palette.income),
                 title: 'Salary',
-                subtitle: const Text('Main bank'),
-                amount: 5000,
+                trailing: const ListRowTrailing.value(
+                  MoneyText(5000, tone: MoneyTone.signed),
+                ),
               ),
-              MoneyListTile(
+              AppListRow(
                 leading: IconTile(
                   icon: AppIcons.expense,
                   color: palette.expense,
                 ),
                 title: 'Lunch',
-                subtitle: const Text('Cash'),
-                footer: const Text('#food  #work'),
-                amount: -540,
-                amountCaption: 'split 3',
-                onTap: () {},
+                trailing: const ListRowTrailing.value(
+                  MoneyText(-540, tone: MoneyTone.signed),
+                ),
               ),
-              const AppDivider.row(),
               const DateGroupHeader(label: 'Yesterday'),
-              MoneyListTile(
+              AppListRow(
                 leading: IconTile(icon: AppIcons.debt, color: scheme.primary),
                 title: 'Owed by Alex',
-                subtitle: Row(
-                  children: [
-                    Icon(AppIcons.warning, color: palette.warning),
-                    const SizedBox(width: AppSpacing.xs),
-                    const Flexible(
-                      child: Text(
-                        'Overdue 5 days',
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                trailing: const ListRowTrailing.value(
+                  MoneyText(300, tone: MoneyTone.income),
                 ),
-                amount: 300,
-                amountCaption: 'owes you',
-              ),
-              MoneyListTile(
-                leading: IconTile(
-                  icon: AppIcons.transfer,
-                  color: scheme.secondary,
-                ),
-                title: 'Transfer to savings',
-                amount: 1000,
-              ),
-              MoneyListTile(
-                leading: IconTile(
-                  icon: AppIcons.expense,
-                  color: palette.expense,
-                ),
-                title: 'Forced expense tone',
-                amount: 120,
-                tone: MoneyTone.expense,
               ),
             ],
           ),

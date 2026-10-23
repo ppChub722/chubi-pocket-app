@@ -81,14 +81,14 @@ class _DashboardTemplateState extends State<_DashboardTemplate> {
         margin: const EdgeInsets.only(top: AppSpacing.xs),
         child: Column(
           children: const [
-            ListRow(
+            AppListRow(
               title: '3 drafts to confirm',
-              subtitle: 'Not counted yet',
+              line2: ListRowLine(parts: ['Not counted yet']),
               leading: AppAvatar.icon(AppIcons.pending, size: 36),
             ),
-            ListRow(
+            AppListRow(
               title: 'Aom paid you back',
-              subtitle: 'Notification',
+              line2: ListRowLine(parts: ['Notification']),
               leading: AppAvatar.icon(AppIcons.notifications, size: 36),
             ),
           ],
@@ -206,19 +206,23 @@ class _DashboardTemplateState extends State<_DashboardTemplate> {
         margin: EdgeInsets.zero,
         child: Column(
           children: [
-            TxRow(
+            AppListRow(
               leading: const AppAvatar.icon(AppIcons.expense, size: 36),
               title: 'Chicken rice',
-              amount: -120,
-              walletLabel: 'Cash',
-              category: 'Food',
+              titleChips: [walletRowChip(context, name: 'Cash')],
+              line2: const ListRowLine(parts: ['Food']),
+              trailing: const ListRowTrailing.value(
+                MoneyText(-120, tone: MoneyTone.signed),
+              ),
             ),
-            TxRow(
+            AppListRow(
               leading: const AppAvatar.icon(AppIcons.income, size: 36),
               title: 'Salary',
-              amount: 42000,
-              walletLabel: 'KBank',
-              category: 'Income',
+              titleChips: [walletRowChip(context, name: 'KBank')],
+              line2: const ListRowLine(parts: ['Income']),
+              trailing: const ListRowTrailing.value(
+                MoneyText(42000, tone: MoneyTone.signed),
+              ),
             ),
           ],
         ),

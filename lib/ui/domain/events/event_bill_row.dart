@@ -17,6 +17,10 @@ typedef EventTagAnchorBuilder =
 
 const double _fadedOpacity = 0.55;
 
+/// Bill rows show the person's avatar only: no 🔗 badge on a linked member.
+PersonLevel _noBadge(PersonLevel level) =>
+    level == PersonLevel.linked ? PersonLevel.contact : level;
+
 class EventBillRow extends StatelessWidget {
   const EventBillRow({
     required this.title,
@@ -26,15 +30,19 @@ class EventBillRow extends StatelessWidget {
     this.marked = false,
     this.onTickTap,
     this.tickTooltip,
+    this.tick = true,
     this.leading,
     this.tags = const [],
     this.onTagTap,
     this.tagAnchorBuilder,
     this.payerName,
+    this.payerVerb,
     this.payerLevel = PersonLevel.name,
     this.payerIconCode,
     this.caption,
     this.summary,
+    this.badge,
+    this.amountColor,
     this.linked = false,
     this.locked = false,
     this.onTap,
@@ -50,15 +58,27 @@ class EventBillRow extends StatelessWidget {
   final bool marked;
   final VoidCallback? onTickTap;
   final String? tickTooltip;
+
+  /// False: no tick box (the event book shows a [badge] instead).
+  final bool tick;
   final Widget? leading;
   final List<EventTagRef> tags;
   final void Function(BuildContext chipContext, int index)? onTagTap;
   final EventTagAnchorBuilder? tagAnchorBuilder;
   final String? payerName;
+
+  /// With it, line 2 reads "**[payerName]** [payerVerb]" (ฝน จ่าย).
+  final String? payerVerb;
   final PersonLevel payerLevel;
   final IconCode? payerIconCode;
   final String? caption;
   final String? summary;
+
+  /// After line 2's text (a mini chip: "ยังไม่ลงบัญชี").
+  final Widget? badge;
+
+  /// Paints the amount (a payback's colour); null = [tone]'s.
+  final Color? amountColor;
   final bool linked;
   final bool locked;
   final VoidCallback? onTap;
@@ -91,12 +111,14 @@ class EventBillRow extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final small = textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
     final payer = payerName?.trim() ?? '';
+    final verb = payerVerb;
     final line2Text = [
-      if (payer.isNotEmpty) payer,
+      if (payer.isNotEmpty && verb == null) payer,
       if (caption?.isNotEmpty ?? false) caption!,
       if (summary?.isNotEmpty ?? false) summary!,
     ].join(' | ');
-    final hasLine2 = line2Text.isNotEmpty || linked;
+    final hasLine2 =
+        line2Text.isNotEmpty || linked || badge != null || payer.isNotEmpty;
 
     final line1 = LayoutBuilder(
       builder: (context, box) => Row(
@@ -142,13 +164,34 @@ class EventBillRow extends StatelessWidget {
           if (payer.isNotEmpty) ...[
             PersonMark(
               name: payer,
-              level: payerLevel,
+              level: _noBadge(payerLevel),
               iconCode: payerIconCode,
               size: 16,
             ),
             const SizedBox(width: AppSpacing.xs),
           ],
-          if (line2Text.isNotEmpty)
+          if (verb != null && payer.isNotEmpty)
+            Flexible(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: payer,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: scheme.onSurface,
+                      ),
+                    ),
+                    TextSpan(text: ' $verb'),
+                    if (line2Text.isNotEmpty) TextSpan(text: ' | $line2Text'),
+                  ],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: small,
+              ),
+            )
+          else if (line2Text.isNotEmpty)
             Flexible(
               child: Text(
                 line2Text,
@@ -161,6 +204,7 @@ class EventBillRow extends StatelessWidget {
             const SizedBox(width: AppSpacing.xs),
             Icon(AppIcons.link, size: 14, color: scheme.onSurfaceVariant),
           ],
+          if (badge != null) ...[const SizedBox(width: AppSpacing.xs), badge!],
         ],
       ),
     );
@@ -174,12 +218,14 @@ class EventBillRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            SelectCheck(
-              value: marked,
-              onTap: locked ? null : onTickTap,
-              tooltip: tickTooltip,
-            ),
-            const SizedBox(width: AppSpacing.sm),
+            if (tick) ...[
+              SelectCheck(
+                value: marked,
+                onTap: locked ? null : onTickTap,
+                tooltip: tickTooltip,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+            ],
             if (leading != null) ...[
               leading!,
               const SizedBox(width: AppSpacing.md),
@@ -194,10 +240,11 @@ class EventBillRow extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             MoneyText(
               amount,
-              tone: tone,
+              tone: amountColor == null ? tone : MoneyTone.plain,
               symbol: symbol,
               style: textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
+                color: amountColor,
               ),
             ),
           ],
@@ -295,12 +342,20 @@ class EventBillChildRow extends StatelessWidget {
     this.marked = false,
     this.onTickTap,
     this.tickTooltip,
+    this.tick = true,
+    this.badge,
     this.locked = false,
     this.onTap,
     super.key,
   });
 
   static const double indent = AppSpacing.xxl;
+
+  /// False: no tick box.
+  final bool tick;
+
+  /// After the name (a mini chip: "ยังไม่ลงบัญชี").
+  final Widget? badge;
 
   final String name;
   final num amount;
@@ -330,37 +385,49 @@ class EventBillChildRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            SelectCheck(
-              value: marked,
-              onTap: locked ? null : onTickTap,
-              tooltip: tickTooltip,
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            PersonMark(
-              name: name,
-              level: level,
-              iconCode: iconCode,
-              reserveLinkSlot: true,
-            ),
+            if (tick) ...[
+              SelectCheck(
+                value: marked,
+                onTap: locked ? null : onTickTap,
+                tooltip: tickTooltip,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+            ],
+            PersonMark(name: name, level: _noBadge(level), iconCode: iconCode),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(text: name),
-                    if (caption?.isNotEmpty ?? false)
-                      TextSpan(
-                        text: '  ${caption!}',
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
+              child: badge != null
+                  ? Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.bodyMedium,
+                          ),
                         ),
+                        const SizedBox(width: AppSpacing.xs),
+                        badge!,
+                      ],
+                    )
+                  : Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(text: name),
+                          if (caption?.isNotEmpty ?? false)
+                            TextSpan(
+                              text: '  ${caption!}',
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                        ],
                       ),
-                  ],
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: textTheme.bodyMedium,
-              ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.bodyMedium,
+                    ),
             ),
             const SizedBox(width: AppSpacing.sm),
             MoneyText(

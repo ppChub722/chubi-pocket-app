@@ -696,6 +696,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'If this email belongs to a user, they\'ll get a request';
 
   @override
+  String get contactEmailFromAccount => 'From their account';
+
+  @override
   String get contactLinkNeedsEmail => 'Add an email to send a link request';
 
   @override
@@ -717,11 +720,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactUnlinked => 'Unlinked';
 
   @override
-  String get contactWireTitle => 'Match names in splits';
+  String get contactWireTitle => 'Link names you typed before';
 
   @override
   String contactWireHint(int names, int splits) {
-    return '$names names | $splits splits not linked to a contact';
+    return '$names names | $splits entries not linked to anyone';
   }
 
   @override
@@ -809,10 +812,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtsNet => 'Net';
 
   @override
-  String get debtsOwedToMe => 'To receive';
+  String get debtsOwedToMe => 'Owes me';
 
   @override
-  String get debtsIOwe => 'To pay';
+  String get debtsIOwe => 'I owe';
 
   @override
   String get debtsEven => 'Settled up';
@@ -1212,7 +1215,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String projectTxOwes(String name) {
-    return 'to pay $name';
+    return 'I owe $name';
   }
 
   @override
@@ -1579,7 +1582,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifAutoUpdateCopy => 'Auto: update my copy to match';
 
   @override
-  String get notifActionAddDebt => 'Add to my payables';
+  String get notifActionAddDebt => 'Add to my debts';
 
   @override
   String get notifActionCopyToBook => 'Add to my book';
@@ -1983,7 +1986,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moreProjectsDesc => 'Trips & shared budgets';
 
   @override
-  String get moreDebtsDesc => 'To receive / to pay, with whom';
+  String get moreDebtsDesc => 'Who owes me, whom I owe';
 
   @override
   String get moreBudgetsDesc => 'Spending limits';
@@ -4533,7 +4536,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtPersonPickerTitle => 'With whom?';
 
   @override
-  String get debtSettledLabel => 'All square';
+  String get debtSettledLabel => 'Settled up';
 
   @override
   String debtResultAfter(Object result) {
@@ -4716,7 +4719,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get occurrenceStateUpcoming => 'Upcoming';
 
   @override
-  String get occurrenceStateNotCreated => 'Due';
+  String get occurrenceStateNotCreated => 'To confirm';
 
   @override
   String get occurrenceStatePending => 'Waiting';
@@ -4808,6 +4811,131 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get occurrenceSelectAll => 'Select all';
+
+  @override
+  String occurrenceSelectedCount(int n) {
+    return '$n selected';
+  }
+
+  @override
+  String get occurrenceSkipSelected => 'Skip selected';
+
+  @override
+  String occurrenceConfirmSelected(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Confirm selected ($n)',
+      zero: 'Confirm selected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String occurrenceSkipSelectedTitle(int n) {
+    return 'Skip the $n selected?';
+  }
+
+  @override
+  String occurrenceSkippedCount(int n) {
+    return '$n skipped';
+  }
+
+  @override
+  String occurrenceSavedCount(int n) {
+    return '$n recorded';
+  }
+
+  @override
+  String get recurringWholeMonth => 'Whole month';
+
+  @override
+  String occurrenceZeroTitle(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n have no amount yet',
+      one: '1 has no amount yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get occurrenceZeroBody =>
+      'They\'ll be recorded as 0 for now. You can fix the amount later. Go ahead?';
+
+  @override
+  String get recurringSortDate => 'Date';
+
+  @override
+  String get recurringSortAmount => 'Largest amount';
+
+  @override
+  String get recurringSortTooltip => 'Sort';
+
+  @override
+  String get recurringFilterAllStatus => 'Any status';
+
+  @override
+  String get recurringFilterAllKinds => 'Any type';
+
+  @override
+  String get recurringMonthNoMatch => 'Nothing matches these filters';
+
+  @override
+  String get occurrenceShowLess => 'Show less';
+
+  @override
+  String get recurringAheadForever => 'keeps going';
+
+  @override
+  String recurringAheadLeft(int n) {
+    return '$n more';
+  }
+
+  @override
+  String recurringAheadTotal(String amount) {
+    return '$amount in all';
+  }
+
+  @override
+  String recurringAheadUntil(String date) {
+    return 'until $date';
+  }
+
+  @override
+  String get recurringAheadEdited => 'Changed ahead';
+
+  @override
+  String get recurringAheadCustomize => 'Change ahead';
+
+  @override
+  String get recurringAheadCustomizeHint =>
+      'Change the amount, move or skip the ones ahead';
+
+  @override
+  String get recurringAheadNext => 'Next';
+
+  @override
+  String get recurringAheadSummary => 'Summary';
+
+  @override
+  String get recurringTileMoved => 'Moved';
+
+  @override
+  String get recurringTileEdited => 'Edited';
+
+  @override
+  String get recurringFieldKind => 'Type';
+
+  @override
+  String get recurringFieldDates => 'Pick dates';
+
+  @override
+  String get recurringSectionPeriod => 'Schedule';
+
+  @override
   String get recurringHomeTabOverview => 'Overview';
 
   @override
@@ -4835,6 +4963,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String recurringHomeToday(String date) {
     return 'Today $date';
+  }
+
+  @override
+  String recurringDayEmpty(String date) {
+    return 'Nothing on $date';
   }
 
   @override
@@ -6284,11 +6417,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'The name used for this person across the app';
 
   @override
-  String get fpContactsLinkSection => 'Link account';
+  String get fpContactsLinkSection => 'App account';
 
   @override
   String get fpContactsLinkSectionDesc =>
-      'Link to an app user and match names in splits';
+      'Tie this person to the account they use in the app (their name, email and icon), and merge names typed in splits';
+
+  @override
+  String contactLinkedAccount(String name) {
+    return 'Linked to $name\'s account';
+  }
 
   @override
   String get fpContactsArchiveConsequence =>
@@ -6303,12 +6441,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpDebtsOwedToMeTile(int count) {
-    return 'To receive | $count people';
+    return 'Owe me | $count people';
   }
 
   @override
   String fpDebtsIOweTile(int count) {
-    return 'To pay | $count people';
+    return 'I owe | $count people';
   }
 
   @override
@@ -6421,6 +6559,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String fpGoalsDueBy(String date) {
+    return 'By $date';
+  }
+
+  @override
   String get fpGoalsBehind => 'Behind plan';
 
   @override
@@ -6518,7 +6661,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpGoalsRingOfPlan(String amount) {
-    return 'of $amount';
+    return 'Goal $amount';
   }
 
   @override
@@ -6551,7 +6694,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fpGoalsFilterAll => 'All';
 
   @override
-  String get fpGoalsFilterShort => 'Short';
+  String get fpGoalsFilterShort => 'Saving';
 
   @override
   String get fpGoalsFilterFree => 'No deadline';
@@ -6661,12 +6804,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fpGoalsRefreshFailed => 'Refresh failed, showing the latest data';
 
   @override
-  String get fpEventsSummaryCaption => 'Active events | my share';
+  String fpEventsHeroNet(int count) {
+    return 'Net owed | $count events';
+  }
 
   @override
-  String fpEventsPaidLine(String paid, String receivable) {
-    return 'I paid $paid → owed $receivable';
+  String fpEventsOwedFact(int count) {
+    return 'Gets back | $count events';
   }
+
+  @override
+  String fpEventsOweFact(int count) {
+    return 'To pay | $count events';
+  }
+
+  @override
+  String fpEventsShareFact(int count) {
+    return 'My share | $count active';
+  }
+
+  @override
+  String get fpEventsFilterAll => 'All';
+
+  @override
+  String get fpEventsOverBudget => 'Over budget';
 
   @override
   String get fpEventsTileActive => 'Active';
@@ -6690,20 +6851,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fpEventsCreate => 'Create event';
 
   @override
-  String fpEventsRowSpent(String amount) {
-    return 'Spent $amount';
-  }
-
-  @override
   String fpEventsRowShare(String amount) {
     return 'My share $amount';
   }
 
   @override
-  String get fpEventsOwed => 'Owed to me';
+  String get fpEventsOwed => 'Gets back';
 
   @override
-  String get fpEventsOwe => 'I owe';
+  String get fpEventsOwe => 'To pay';
 
   @override
   String get fpEventsSpentTotal => 'Total spent';
@@ -6748,7 +6904,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpEventsMemberOwed(String amount) {
-    return 'Owed $amount';
+    return 'Gets back $amount';
   }
 
   @override
@@ -6793,10 +6949,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpEventsDatesLabel => 'Start – end';
-
-  @override
-  String get fpEventsSettingsDesc =>
-      'Bill tags in this event, shared with every member';
 
   @override
   String get fpEventsManageTags => 'Manage event tags';
@@ -6892,6 +7044,151 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpEventsLoadFailed => 'Couldn\'t refresh | showing the last data';
+
+  @override
+  String get evbNewBill => 'Add bill';
+
+  @override
+  String get evbEditBill => 'Edit bill';
+
+  @override
+  String get evbNewPayback => 'Payback';
+
+  @override
+  String get evbEditPayback => 'Edit payback';
+
+  @override
+  String get evbTypePayback => 'Payback';
+
+  @override
+  String evbPeople(int count) {
+    return 'In the bill | $count';
+  }
+
+  @override
+  String get evbPays => 'Paid';
+
+  @override
+  String get evbPaidBack => 'Paid back';
+
+  @override
+  String get evbMembersSection => 'In this event';
+
+  @override
+  String evbAddPeopleConfirm(int count) {
+    return 'Add $count';
+  }
+
+  @override
+  String get evbMyBooks => 'Add to my books';
+
+  @override
+  String get evbBooked => 'In my books';
+
+  @override
+  String get evbBookDebt => 'Debt';
+
+  @override
+  String evbBookDebtLine(String name) {
+    return 'I owe $name';
+  }
+
+  @override
+  String get evbBookTx => 'Transaction';
+
+  @override
+  String get evbBookTxLine => 'My share as an expense';
+
+  @override
+  String get evbNotBooked => 'Not in my books';
+
+  @override
+  String evbOwesHint(String from, String to, String amount) {
+    return '$from owes $to $amount';
+  }
+
+  @override
+  String get evbUseAmount => 'Use this';
+
+  @override
+  String evbPaybackBy(String name) {
+    return 'Payback | by $name';
+  }
+
+  @override
+  String evbPaidFrom(String wallet) {
+    return 'Paid from $wallet';
+  }
+
+  @override
+  String evbBackFrom(String name) {
+    return 'Back from $name';
+  }
+
+  @override
+  String get evbNoWallet => 'No wallet';
+
+  @override
+  String get evbTabBills => 'Bills';
+
+  @override
+  String get evbTabSummary => 'Summary';
+
+  @override
+  String get evbNets => 'Each person';
+
+  @override
+  String get evbSettleTitle => 'Who pays whom';
+
+  @override
+  String get evbSettlePairs => 'Pair by pair';
+
+  @override
+  String get evbSettleFewest => 'Net';
+
+  @override
+  String get evbSettlePaid => 'Paid';
+
+  @override
+  String get evbSettleHint =>
+      'Tap \"Paid\" to record the payback in the event; anyone can';
+
+  @override
+  String get evbAllSettled => 'Everyone is even';
+
+  @override
+  String get evbOnlyMine => 'Only mine';
+
+  @override
+  String evbDebtorsLine(int count) {
+    return '$count owe me';
+  }
+
+  @override
+  String get evbNoDebt => 'No debt';
+
+  @override
+  String get evbRecordDebt => 'Record the debt';
+
+  @override
+  String get evbIPaid => 'I paid';
+
+  @override
+  String get evbBackReceived => 'Got back';
+
+  @override
+  String get evbBackSent => 'Paid back';
+
+  @override
+  String evbTheyOweMe(String name) {
+    return '$name owes me';
+  }
+
+  @override
+  String get evbDebtUp => 'Debt up';
+
+  @override
+  String get evbDebtDown => 'Debt down';
 
   @override
   String get categoryDeleteConsequence =>
@@ -7584,6 +7881,59 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtRepayTitleHint => 'What for?';
 
   @override
+  String get debtRecordChip => 'Log a debt';
+
+  @override
+  String get debtSettleChip => 'Pay a debt';
+
+  @override
+  String get debtOriginFieldLabel => 'Origin';
+
+  @override
+  String get debtOriginPickFirst => 'Pick a person first';
+
+  @override
+  String debtOriginLend(String name) {
+    return 'Lent to $name';
+  }
+
+  @override
+  String debtOriginBorrow(String name) {
+    return 'Borrowed from $name';
+  }
+
+  @override
+  String get debtRoleDebtor => 'Owes me';
+
+  @override
+  String get debtRoleCreditor => 'I owe';
+
+  @override
+  String debtSummaryDebtor(String name) {
+    return '$name owes me';
+  }
+
+  @override
+  String debtSummaryCreditor(String name) {
+    return 'I owe $name';
+  }
+
+  @override
+  String debtSummaryBecomesDebtor(String name) {
+    return '$name now owes me';
+  }
+
+  @override
+  String debtSummaryBecomesCreditor(String name) {
+    return 'Now I owe $name';
+  }
+
+  @override
+  String debtSummaryCleared(String name) {
+    return 'Settled up with $name';
+  }
+
+  @override
   String get debtRepayTo => 'Pay back to';
 
   @override
@@ -7600,7 +7950,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get debtMarkPaidLabel => 'Mark as paid';
+  String get debtMarkPaidLabel => 'Close debts';
 
   @override
   String debtRepayLeft(String amount) {
@@ -7608,7 +7958,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get debtRepayCleared => 'All cleared';
+  String get debtRepayCleared => 'Settled up';
 
   @override
   String get debtRepayPickTitle => 'People with an open balance';
@@ -7698,7 +8048,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String txLinkShareIOwe(String name, String amount) {
-    return 'to pay $name $amount';
+    return 'I owe $name $amount';
   }
 
   @override
@@ -7771,7 +8121,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'A draft can only go to an existing event';
 
   @override
-  String get debtQuickCreateTxLabel => 'Also record the money (a transaction)';
+  String get debtQuickCreateTxLabel => 'Also save as a transaction';
 
   @override
   String debtResultNow(String name) {
@@ -7840,14 +8190,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get debtTxHintLend => 'Money leaves the wallet (a loan)';
+  String get debtTxHintLend => 'Adds an expense to the wallet';
 
   @override
-  String get debtTxHintBorrow => 'Money comes into the wallet (borrowed)';
+  String get debtTxHintBorrow => 'Adds income to the wallet';
 
   @override
-  String get debtTxHintOff =>
-      'Off = only noted in the debts book, no money moves';
+  String get debtTxHintOff => 'Wallet balance unchanged';
 
   @override
   String debtsHeroNet(int count) {
@@ -7887,12 +8236,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String debtPersonOweTo(String name) {
-    return 'To pay $name';
+    return 'I owe $name';
   }
 
   @override
   String debtPersonOwedFrom(String name) {
-    return 'To receive from $name';
+    return '$name owes me';
   }
 
   @override
@@ -7945,7 +8294,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String debtEarlierShow(String date) {
-    return 'All cleared $date | Earlier ▾';
+    return 'Settled up $date | Earlier ▾';
   }
 
   @override
@@ -7997,6 +8346,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get debtPaidPill => '✓ Paid';
+
+  @override
+  String get debtUnpaidLabel => 'Not paid';
+
+  @override
+  String get debtDueLabel => 'Due';
+
+  @override
+  String get debtsSectionTotal => 'Total';
+
+  @override
+  String get debtDuePick => 'Pick a due date';
+
+  @override
+  String debtDueOn(String date) {
+    return 'Due $date';
+  }
+
+  @override
+  String debtOverdueDays(int days) {
+    return '$days days overdue';
+  }
+
+  @override
+  String debtsOwingDays(int days) {
+    return 'Owing for $days days';
+  }
+
+  @override
+  String get debtLinkTx => 'Create a transaction from this debt';
 
   @override
   String get debtPaidHelper => 'Only a label; it never changes a number';

@@ -11,6 +11,7 @@ class IconDisplay extends StatelessWidget {
     required this.size,
     this.imageUrl,
     this.iconCode,
+    this.fallbackColor,
     super.key,
   });
 
@@ -18,6 +19,11 @@ class IconDisplay extends StatelessWidget {
   final double size;
   final String? imageUrl;
   final IconCode? iconCode;
+
+  /// No [iconCode]: the default disc in this colour (a wallet passes the
+  /// colour its card falls back to, so icon and card match; owner
+  /// 2026-10-23). Null = the theme's primary container.
+  final Color? fallbackColor;
 
   @override
   Widget build(BuildContext context) {
@@ -64,13 +70,13 @@ class IconDisplay extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: scheme.primaryContainer,
+        color: fallbackColor ?? scheme.primaryContainer,
         shape: BoxShape.circle,
       ),
       child: Icon(
         type.fallbackIcon,
         size: size * 0.55,
-        color: scheme.onPrimaryContainer,
+        color: fallbackColor == null ? scheme.onPrimaryContainer : Colors.white,
       ),
     );
   }

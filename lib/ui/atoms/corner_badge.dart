@@ -12,8 +12,16 @@ class CornerBadge extends StatelessWidget {
     this.tooltip,
     this.show = true,
     this.essential = false,
+    this.scale = 1,
+    this.glyphRatio,
     super.key,
   });
+
+  /// Grows the badge past the metric size (a person's 🔗 is a bit bigger).
+  final double scale;
+
+  /// The glyph's share of the badge; default the metric one (0.62).
+  final double? glyphRatio;
 
   final Widget child;
 
@@ -33,7 +41,7 @@ class CornerBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final visible = show && (essential || AvatarMetrics.showsCornerBadge(size));
-    final d = AvatarMetrics.cornerBadge(size);
+    final d = AvatarMetrics.cornerBadge(size) * scale;
     Widget badge = Container(
       width: d,
       height: d,
@@ -47,7 +55,9 @@ class CornerBadge extends StatelessWidget {
       ),
       child: Icon(
         icon,
-        size: AvatarMetrics.cornerBadgeGlyph(d),
+        size: glyphRatio == null
+            ? AvatarMetrics.cornerBadgeGlyph(d)
+            : d * glyphRatio!,
         color: iconColor ?? scheme.onPrimary,
       ),
     );

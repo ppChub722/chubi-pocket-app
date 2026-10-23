@@ -656,20 +656,17 @@ class _TagsPageState extends State<TagsPage>
     return _rowsWithFooter(
       rows: [
         for (final t in shown)
-          ListRow(
+          AppListRow(
             key: _tileKey(t.id),
             leading: IconDisplay(
               type: IconType.tag,
-              size: 40,
+              size: 36,
               iconCode: t.iconCode,
             ),
             title: t.name,
-            subtitle: t.description,
+            line2: ListRowLine(parts: [t.description ?? '']),
             trailing: t.usageCount > 0
-                ? AppText(
-                    l.tagsUsageCount(t.usageCount),
-                    role: AppTextRole.caption,
-                  )
+                ? ListRowTrailing.text(l.tagsUsageCount(t.usageCount))
                 : null,
             onLongPress: () => _beginEdit(focusKey: t.id),
           ),
@@ -691,20 +688,20 @@ class _TagsPageState extends State<TagsPage>
         padding: padding,
         rows: [
           for (final d in visible)
-            ListRow(
+            AppListRow(
               key: _tileKey(d.key),
               checked: _selected.contains(d.key),
               onTap: () => _toggleSelect(d.key),
               leading: EditableCircle(
-                size: 40,
+                size: 36,
                 onTap: () => _openIconMaker(d),
                 child: IconDisplay(
                   type: IconType.tag,
-                  size: 40,
+                  size: 36,
                   iconCode: d.iconCode,
                 ),
               ),
-              body: AppInput(
+              titleField: AppInput(
                 controller: _controllerFor(d),
                 focusNode: _focusFor(d.key),
                 maxLength: TextLimits.tagName,

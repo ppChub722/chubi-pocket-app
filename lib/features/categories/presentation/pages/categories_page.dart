@@ -645,35 +645,25 @@ class _RowContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final hidden = !category.includeInReport;
-    return ListRow(
+    return AppListRow(
       indent: depth * AppSpacing.xxl,
       leading: IconDisplay(
         type: IconType.category,
-        size: 40,
+        size: 36,
         iconCode: iconCode,
       ),
       title: category.name,
-      subtitle: category.description?.trim(),
-      trailing: hidden || hasChildren
-          ? Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (hidden)
-                  AppChip(
-                    label: l.categoryHiddenFromReport,
-                    icon: AppIcons.hidden,
-                    tone: AppChipTone.neutral,
-                    size: ChipSize.chip,
-                  ),
-                if (hasChildren)
-                  AppIconButton.flat(
-                    icon: isCollapsed ? AppIcons.expand : AppIcons.collapse,
-                    dense: true,
-                    onPressed: onToggleCollapse,
-                  ),
-              ],
-            )
+      status: hidden
+          ? ListRowChip(l.categoryHiddenFromReport, icon: AppIcons.hidden)
           : null,
+      line2: ListRowLine(parts: [category.description?.trim() ?? '']),
+      actions: [
+        if (hasChildren)
+          ListRowAction.icon(
+            isCollapsed ? AppIcons.expand : AppIcons.collapse,
+            onTap: onToggleCollapse,
+          ),
+      ],
       onTap: reorderMode
           ? null
           : () => context.push('/categories/${category.id}'),

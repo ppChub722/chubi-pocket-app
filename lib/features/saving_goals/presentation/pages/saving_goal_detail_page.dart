@@ -1405,26 +1405,47 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   }
 
   Widget _entryRow(AppLocalizations l, SavingEntry e) {
-    final kind = switch (e.kind) {
-      SavingEntryKind.save => SavingTxKind.deposit,
-      SavingEntryKind.withdraw => SavingTxKind.withdraw,
-      SavingEntryKind.move => SavingTxKind.allocate,
-    };
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final scheme = Theme.of(context).colorScheme;
     String end(SavingEndpoint p) => switch (p.type) {
       SavingEndpointType.spare => l.sgv2SpareName,
       _ => p.name ?? '',
     };
-    return SavingTxRow(
+    final out = e.kind == SavingEntryKind.withdraw;
+    return AppListRow(
       key: ValueKey(e.id),
-      kind: kind,
+      leading: IconTile(
+        icon: switch (e.kind) {
+          SavingEntryKind.save => AppIcons.savingDeposit,
+          SavingEntryKind.withdraw => AppIcons.savingWithdraw,
+          SavingEntryKind.move => AppIcons.savingAllocate,
+        },
+        color: out ? scheme.onSurfaceVariant : palette.income,
+      ),
       title: _entryTitle(l, e),
-      amount: e.amount,
-      walletLabel: e.wallet?.name ?? l.fpGoalsNoWallet,
-      from: e.kind == SavingEntryKind.save ? null : end(e.from),
-      to: e.kind == SavingEntryKind.withdraw ? null : end(e.to),
-      source: e.fromRecurring
-          ? AppChip(label: l.fpGoalsAutoTag, size: ChipSize.mini)
-          : null,
+      titleChips: [
+        walletRowChip(
+          context,
+          name: e.wallet?.name ?? l.fpGoalsNoWallet,
+          iconCode: e.wallet?.iconCode,
+        ),
+      ],
+      status: e.fromRecurring ? ListRowChip(l.fpGoalsAutoTag) : null,
+      line2: ListRowLine(
+        parts: [
+          switch (e.kind) {
+            SavingEntryKind.save => '→ ${end(e.to)}',
+            SavingEntryKind.withdraw => '${end(e.from)} →',
+            SavingEntryKind.move => '${end(e.from)} → ${end(e.to)}',
+          },
+        ],
+      ),
+      trailing: ListRowTrailing.value(
+        MoneyText(
+          out ? -e.amount : e.amount,
+          tone: out ? MoneyTone.plain : MoneyTone.income,
+        ),
+      ),
       onTap: isSaving ? null : () => _deleteEntry(e),
     );
   }
