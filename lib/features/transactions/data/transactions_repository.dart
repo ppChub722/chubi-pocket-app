@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
+import '../../../core/logger/app_logger.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../domain/transaction.dart';
@@ -220,7 +223,23 @@ class TransactionsRepository {
         '/transactions',
         data: body,
       );
-      return TransactionWriteResult.fromJson(res.data!);
+      try {
+        return TransactionWriteResult.fromJson(res.data!);
+      } catch (e, st) {
+        // Saved on the server (2xx) but unreadable here: keep the body in
+        // the log (dev hub > Logs) so the cause shows next time.
+        final raw = jsonEncode(res.data);
+        AppLogger.instance.error(
+          'tx.create_unreadable',
+          fields: {
+            'error': '$e',
+            'status': res.statusCode,
+            'body': raw.length > 2000 ? '${raw.substring(0, 2000)}…' : raw,
+            'stack': '$st',
+          },
+        );
+        throw ApiException.from(e, st);
+      }
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }

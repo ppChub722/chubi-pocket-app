@@ -93,6 +93,8 @@
   "homeRecentViewAll": "ดูทั้งหมด",
 
   "navDashboard": "แดชบอร์ด",
+  "homeComingSoonTitle": "Coming Soon",
+  "homeComingSoonMessage": "หน้าภาพรวมกำลังปรับปรุง ระหว่างนี้ใช้เมนูด้านล่างได้เลย",
   "navTransactions": "รายการ",
   "navAccounts": "กระเป๋า",
   "navAddTransaction": "เพิ่มรายการ",

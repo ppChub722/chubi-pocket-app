@@ -608,6 +608,18 @@ abstract class AppLocalizations {
   /// **'Dashboard'**
   String get navDashboard;
 
+  /// No description provided for @homeComingSoonTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming Soon'**
+  String get homeComingSoonTitle;
+
+  /// No description provided for @homeComingSoonMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The overview is being reworked. Use the tabs below in the meantime.'**
+  String get homeComingSoonMessage;
+
   /// No description provided for @navTransactions.
   ///
   /// In en, this message translates to:

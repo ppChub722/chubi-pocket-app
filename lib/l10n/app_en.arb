@@ -99,6 +99,8 @@
   "homeRecentViewAll": "View all",
 
   "navDashboard": "Dashboard",
+  "homeComingSoonTitle": "Coming Soon",
+  "homeComingSoonMessage": "The overview is being reworked. Use the tabs below in the meantime.",
   "navTransactions": "Transactions",
   "navAccounts": "Wallets",
   "navAddTransaction": "Add transaction",

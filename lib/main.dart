@@ -58,7 +58,9 @@ Future<void> main() async {
       booted = true;
     },
     (error, stack) {
-      if (booted) {
+      // The app is on screen: an uncaught error is logged, never swapped for
+      // the boot-error page (a failed save replaced the whole app once).
+      if (booted || WidgetsBinding.instance.rootElement != null) {
         AppLogger.instance.error(
           'zone.uncaught',
           fields: {'exception': '$error', 'stack': '$stack'},

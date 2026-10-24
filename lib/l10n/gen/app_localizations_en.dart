@@ -276,6 +276,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navDashboard => 'Dashboard';
 
   @override
+  String get homeComingSoonTitle => 'Coming Soon';
+
+  @override
+  String get homeComingSoonMessage =>
+      'The overview is being reworked. Use the tabs below in the meantime.';
+
+  @override
   String get navTransactions => 'Transactions';
 
   @override

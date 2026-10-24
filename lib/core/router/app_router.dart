@@ -53,7 +53,7 @@ import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
-import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/home/presentation/pages/home_coming_soon_page.dart';
 import '../../features/settings/presentation/pages/change_password_page.dart';
 import '../../features/settings/presentation/pages/edit_profile_page.dart';
 import '../../features/archived/presentation/archived_page.dart';
@@ -203,7 +203,7 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
     GoRoute(
       path: '/',
       name: 'home',
-      builder: (context, state) => const HomePage(),
+      builder: (context, state) => const HomeComingSoonPage(),
       routes: [
         GoRoute(
           path: 'browse',

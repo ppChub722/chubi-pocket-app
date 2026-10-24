@@ -274,6 +274,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String get navDashboard => 'แดชบอร์ด';
 
   @override
+  String get homeComingSoonTitle => 'Coming Soon';
+
+  @override
+  String get homeComingSoonMessage =>
+      'หน้าภาพรวมกำลังปรับปรุง ระหว่างนี้ใช้เมนูด้านล่างได้เลย';
+
+  @override
   String get navTransactions => 'รายการ';
 
   @override
