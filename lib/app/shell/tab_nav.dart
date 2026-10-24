@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../ui/tokens/app/app_modules.dart';
+import '../../ui/tokens/app/theme/app_page_transitions.dart';
 
 enum ShellTab {
   home,
@@ -125,6 +126,7 @@ void Function(String location, {Object? extra}) pageOpener(
     if (here == null || there == null || here == there) {
       router.push(location, extra: extra);
     } else {
+      AppPageTransitionsBuilder.landNextWithoutPush();
       router.go(location, extra: extra);
     }
   };

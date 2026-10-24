@@ -1,9 +1,40 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 class AppPageTransitionsBuilder extends PageTransitionsBuilder {
   const AppPageTransitionsBuilder();
 
   static const _inner = PredictiveBackPageTransitionsBuilder();
+
+  static bool _landing = false;
+  static Timer? _landingEnd;
+  static final _landed = Expando<bool>();
+
+  /// A cross-tab open: the pages it builds arrive under the tab switch's own
+  /// animation, so they skip their push (popping them still animates).
+  static void landNextWithoutPush() {
+    _landing = true;
+    _landingEnd?.cancel();
+    _landingEnd = Timer(const Duration(milliseconds: 500), _endLanding);
+  }
+
+  static void _endLanding() {
+    _landing = false;
+    _landingEnd?.cancel();
+    _landingEnd = null;
+  }
+
+  bool _landsWithoutPush(PageRoute<dynamic> route) {
+    final known = _landed[route];
+    if (known != null) return known;
+    _landed[route] = _landing;
+    if (_landing) {
+      SchedulerBinding.instance.addPostFrameCallback((_) => _endLanding());
+    }
+    return _landing;
+  }
 
   @override
   DelegatedTransitionBuilder? get delegatedTransition =>
@@ -23,11 +54,13 @@ class AppPageTransitionsBuilder extends PageTransitionsBuilder {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
+    final landed =
+        _landsWithoutPush(route) && animation.status == AnimationStatus.forward;
     return _CoveredRouteGate(
       child: _inner.buildTransitions(
         route,
         context,
-        animation,
+        landed ? kAlwaysCompleteAnimation : animation,
         secondaryAnimation,
         child,
       ),
