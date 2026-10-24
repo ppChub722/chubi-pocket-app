@@ -198,6 +198,16 @@ class _LinkSectionState extends State<LinkSection> {
       onPay: payer == null ? null : () => setPayer(null),
     );
 
+    // "คืนแล้ว": on a bill I paid (แบ่ง), or any event bill; with someone
+    // else paying a แบ่ง the shares are what I owe, nobody pays back.
+    Widget? paidBackChip(LinkPerson p) => !event && payer != null
+        ? null
+        : PaidBackChip(
+            label: l.evbPaidBack,
+            paidBack: _c.isPaidBack(p),
+            onTap: () => _c.togglePaidBack(p),
+          );
+
     BillPerson draftRow(SplitDraft d) {
       final named = d.personName.trim().isNotEmpty;
       final person = named ? _personOfDraft(d) : null;
@@ -223,16 +233,14 @@ class _LinkSectionState extends State<LinkSection> {
         },
         paid: paid,
         onPay: person == null || paid ? null : () => setPayer(person),
+        chips: [if (person != null && !paid) ?paidBackChip(person)],
         tag: person == null ? null : tagFor(person),
         onRemove: () {
           if (paid) setPayer(null);
           if (event && person != null) {
             _c.removeEventMember(person);
           } else {
-            _c.setSplits([
-              for (final s in _c.splits)
-                if (!identical(s, d)) s,
-            ]);
+            _c.removeDraft(d);
           }
         },
       );
@@ -262,6 +270,7 @@ class _LinkSectionState extends State<LinkSection> {
             onAmount: (v) => _c.setEventShare(p, v),
             paid: p == payer,
             onPay: p == payer ? null : () => setPayer(p),
+            chips: [if (p != payer) ?paidBackChip(p)],
             tag: tagFor(p),
             onRemove: () => _c.removeEventMember(p),
           ),

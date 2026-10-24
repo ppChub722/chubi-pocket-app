@@ -131,6 +131,10 @@ class LinkDraft {
   /// Shares typed per person (key → amount); the rest share equally.
   final Map<String, double> eventShares = {};
 
+  /// People (keys) who already paid the payer back ("คืนแล้ว"): the bill
+  /// saves their payback with it.
+  final Set<String> paidBack = {};
+
   bool eventMeAuto = true;
   double? eventMeTyped;
 

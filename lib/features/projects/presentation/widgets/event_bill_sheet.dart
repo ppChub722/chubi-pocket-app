@@ -809,13 +809,9 @@ class _EventBillSheetState extends State<_EventBillSheet> {
         onPay: payer ? null : () => _setPayer(p),
         chips: [
           if (!payer && _payer != null)
-            AppChip(
+            PaidBackChip(
               label: l.evbPaidBack,
-              icon: p.paidBack ? AppIcons.check : null,
-              selected: p.paidBack,
-              dashed: !p.paidBack,
-              tone: AppChipTone.info,
-              size: ChipSize.mini,
+              paidBack: p.paidBack,
               onTap: () => setState(() => p.paidBack = !p.paidBack),
             ),
         ],

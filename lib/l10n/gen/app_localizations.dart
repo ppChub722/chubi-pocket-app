@@ -13645,6 +13645,12 @@ abstract class AppLocalizations {
   /// **'Add to event'**
   String get txLinkAddToEvent;
 
+  /// No description provided for @txPaidBackNeedsWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid back needs the wallet the money went into'**
+  String get txPaidBackNeedsWallet;
+
   /// No description provided for @txLinkWalletNotOut.
   ///
   /// In en, this message translates to:

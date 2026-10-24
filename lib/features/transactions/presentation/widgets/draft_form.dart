@@ -240,6 +240,7 @@ class DraftFormController extends ChangeNotifier {
     if (before.key != after.key) {
       final share = link.eventShares.remove(before.key);
       if (share != null) link.eventShares[after.key] = share;
+      if (link.paidBack.remove(before.key)) link.paidBack.add(after.key);
       if (link.paidBy?.key == before.key) link.paidBy = after;
       final payer = link.eventPayer;
       if (payer != null && payer.memberId == null && payer.key == before.key) {
@@ -247,6 +248,47 @@ class DraftFormController extends ChangeNotifier {
       }
     }
     setSplits(List.of(splits));
+  }
+
+  /// A row taken off the bill.
+  void removeDraft(SplitDraft d) {
+    link.paidBack.remove(_draftPerson(d).key);
+    setSplits([
+      for (final s in splits)
+        if (!identical(s, d)) s,
+    ]);
+  }
+
+  bool isPaidBack(LinkPerson p) => link.paidBack.contains(p.key);
+
+  void togglePaidBack(LinkPerson p) {
+    if (!link.paidBack.remove(p.key)) link.paidBack.add(p.key);
+    notifyListeners();
+  }
+
+  /// Who is marked "คืนแล้ว" with what they owe: แบ่ง when I paid (the debt is
+  /// paid back at once), or [event] (a payback row in the event). Not the
+  /// payer, nobody owing nothing.
+  List<({LinkPerson person, double amount})> paidBackShares({
+    required bool event,
+  }) {
+    final payer = event ? link.eventPayer : link.paidBy;
+    final members = eventMembers;
+    final bill = amountValue;
+    final out = <({LinkPerson person, double amount})>[];
+    for (final p in event ? members : splitPeople) {
+      if (!link.paidBack.contains(p.key) || p == payer) continue;
+      final double amount;
+      if (event) {
+        amount = link.eventShareOf(p, bill, members);
+      } else {
+        amount = splits
+            .where((s) => _draftPerson(s) == p)
+            .fold<double>(0, (a, s) => a + (s.owedAmount ?? 0));
+      }
+      if (amount > 0.005) out.add((person: p, amount: amount));
+    }
+    return out;
   }
 
   /// People added to the bill (the picker, or an event's members): they go
@@ -439,6 +481,7 @@ class DraftFormController extends ChangeNotifier {
   /// The payer on the แบ่ง tab: null = me (แบ่ง), a person = จ่ายแทน.
   void setPaidBy(LinkPerson? p) {
     link.paidBy = p;
+    if (p != null) link.paidBack.remove(p.key);
     if (link.mode == LinkMode.split || link.mode == LinkMode.paid) {
       link.mode = p == null ? LinkMode.split : LinkMode.paid;
     }
@@ -487,6 +530,7 @@ class DraftFormController extends ChangeNotifier {
   }
 
   void setEventPayer(LinkPerson? p) {
+    if (p != null) link.paidBack.remove(p.key);
     link.eventPayer = p;
     notifyListeners();
   }
@@ -522,6 +566,7 @@ class DraftFormController extends ChangeNotifier {
   /// person leaves the shared list (every view).
   void removeEventMember(LinkPerson p) {
     link.eventShares.remove(p.key);
+    link.paidBack.remove(p.key);
     link.eventExtra.removeWhere((e) => e.key == p.key);
     if (link.eventPayer?.key == p.key) link.eventPayer = null;
     if (link.paidBy?.key == p.key) link.paidBy = null;

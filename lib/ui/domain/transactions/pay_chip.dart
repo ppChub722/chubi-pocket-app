@@ -31,3 +31,29 @@ class PayChip extends StatelessWidget {
     onTap: paid ? null : onTap,
   );
 }
+
+/// "คืนแล้ว" after [PayChip]: this person already paid the payer back (✓ and
+/// filled when on, dashed otherwise; tap toggles).
+class PaidBackChip extends StatelessWidget {
+  const PaidBackChip({
+    required this.label,
+    required this.paidBack,
+    required this.onTap,
+    super.key,
+  });
+
+  final String label;
+  final bool paidBack;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) => AppChip(
+    label: label,
+    icon: paidBack ? AppIcons.check : null,
+    selected: paidBack,
+    dashed: !paidBack,
+    tone: AppChipTone.info,
+    size: ChipSize.mini,
+    onTap: onTap,
+  );
+}

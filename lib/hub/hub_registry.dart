@@ -1154,6 +1154,7 @@ final List<HubPage> hubPages = [
       'BillPeopleCard',
       'BillPerson',
       'PayChip',
+      'PaidBackChip',
       'ShareCard',
       'ShareRow',
       'ShareStatus',

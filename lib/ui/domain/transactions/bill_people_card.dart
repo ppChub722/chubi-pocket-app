@@ -148,6 +148,8 @@ class _BillPersonRow extends StatefulWidget {
 }
 
 class _BillPersonRowState extends State<_BillPersonRow> {
+  static const double _nameInputWidth = 150;
+
   late final TextEditingController _name = TextEditingController(
     text: widget.person.name,
   );
@@ -173,13 +175,17 @@ class _BillPersonRowState extends State<_BillPersonRow> {
     final Widget name = p.isMe
         ? SplitRowName.muted(p.name)
         : p.editableName
-        ? SplitRowName.input(
-            controller: _name,
-            focusNode: _nameFocus,
-            autofocus: p.autofocusName,
-            maxLength: TextLimits.name,
-            hint: l.txSplitNameHint,
-            onChanged: p.onName,
+        // A name is short: the chips and the amount stay next to it.
+        ? ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: _nameInputWidth),
+            child: SplitRowName.input(
+              controller: _name,
+              focusNode: _nameFocus,
+              autofocus: p.autofocusName,
+              maxLength: TextLimits.name,
+              hint: l.txSplitNameHint,
+              onChanged: p.onName,
+            ),
           )
         : SplitRowName.picked(p.name, onTap: p.onChangePerson);
     final change = p.isMe ? null : p.onChangePerson;

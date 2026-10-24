@@ -1466,6 +1466,12 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       if (!_c.linkBalanced(mode)) return l.txLinkModeUnbalanced;
       if (_c.saveAmountFor(mode) <= 0) return l.quickAmountRequired;
     }
+    if (!_c.isTransfer &&
+        mode == LinkMode.split &&
+        _c.account == null &&
+        _c.paidBackShares(event: false).isNotEmpty) {
+      return l.txPaidBackNeedsWallet;
+    }
     if (!_c.isTransfer && mode == LinkMode.event) {
       if (!_hasEvent) return l.txLinkModeNeedsEvent;
       if (_c.pickedTab != null && !_c.linkBalanced(mode)) {
@@ -1521,10 +1527,20 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final tagIds = _c.tagIds.toList();
     final txBody = txCreateBody(_c, mode);
     final bill = eventBillBody(_c, mode);
+    // "คืนแล้ว": paid back on the spot — a repayment of the debt (แบ่ง, I
+    // paid) or a payback row in the event.
+    final backShares = event != null || mode == LinkMode.split
+        ? _c.paidBackShares(event: event != null)
+        : const <({LinkPerson person, double amount})>[];
+    final debts = context.read<PersonalDebtsRepository>();
+    final debtDirectory = context.read<DebtDirectoryCubit>();
+    final payerJson = _c.link.eventPayer?.toJson() ?? const {'me': true};
+    final date = _c.date;
 
     setState(() => _saving = true);
     String? warn;
     String? newTxId;
+    String? eventProjectId;
     try {
       if (event == null) {
         final saved = await txCubit.add(
@@ -1559,6 +1575,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         };
         final txId = result.transactionId;
         newTxId = txId;
+        eventProjectId = result.project.id;
         if (txId != null && tagIds.isNotEmpty) {
           try {
             await txRepo.setTags(txId, tagIds);
@@ -1567,6 +1584,25 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           }
         }
         accounts.patchBalances(result.accountBalances);
+      }
+      if (backShares.isNotEmpty) {
+        warn ??= eventProjectId == null
+            ? await _repayNow(
+                debts,
+                debtDirectory,
+                accounts,
+                txCubit,
+                backShares,
+                accountId: txBody.accountId,
+                date: date,
+              )
+            : await _paybackInEvent(
+                projects,
+                eventProjectId,
+                payerJson,
+                backShares,
+                date: date,
+              );
       }
       warn ??= await _linkAfterCreate(newTxId);
       await _remember();
@@ -1587,6 +1623,73 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
             ? walletErrorMessage(l, e)
             : eventErrorMessage(l, e),
       );
+    }
+  }
+
+  /// แบ่ง, I paid: each one marked "คืนแล้ว" has the debt just made paid back
+  /// into the wallet. A failure after the bill is saved is said as a warning.
+  Future<String?> _repayNow(
+    PersonalDebtsRepository debts,
+    DebtDirectoryCubit directory,
+    AccountsCubit accounts,
+    TransactionsCubit txCubit,
+    List<({LinkPerson person, double amount})> rows, {
+    required String? accountId,
+    required DateTime date,
+  }) async {
+    final l = AppLocalizations.of(context)!;
+    try {
+      for (final r in rows) {
+        final p = r.person;
+        final res = await debts.createRepayment(
+          p.contactId != null
+              ? debtPersonKey(contactId: p.contactId)
+              : debtPersonKey(name: p.name),
+          kind: DebtRepaymentKind.receive,
+          amount: r.amount,
+          accountId: accountId,
+          date: date,
+          personName: p.name,
+        );
+        accounts.patchBalances(res.accountBalances);
+        txCubit.patchRow(res.transaction, afterWrite: true);
+        directory.applyBalance(res.balance);
+      }
+      return null;
+    } on ApiException catch (e) {
+      return walletErrorMessage(l, e);
+    }
+  }
+
+  /// An event bill: each one marked "คืนแล้ว" gets a payback row to the payer
+  /// (as on the event bill sheet).
+  Future<String?> _paybackInEvent(
+    ProjectsRepository projects,
+    String projectId,
+    Map<String, dynamic> payer,
+    List<({LinkPerson person, double amount})> rows, {
+    required DateTime date,
+  }) async {
+    final l = AppLocalizations.of(context)!;
+    try {
+      final resolved = await projects.resolvePeople(projectId, [
+        payer,
+        for (final r in rows) r.person.toJson(),
+      ]);
+      final payerId = resolved.memberIds.first;
+      for (final (i, r) in rows.indexed) {
+        await projects.createTransaction(
+          projectId,
+          transactionMemberId: resolved.memberIds[i + 1],
+          type: 'payback',
+          amount: r.amount,
+          date: _ymd(date),
+          splits: [ProjectSplitInput(memberId: payerId, amount: r.amount)],
+        );
+      }
+      return null;
+    } on ApiException catch (e) {
+      return eventErrorMessage(l, e);
     }
   }
 

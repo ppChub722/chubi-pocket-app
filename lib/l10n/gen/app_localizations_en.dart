@@ -8046,6 +8046,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txLinkAddToEvent => 'Add to event';
 
   @override
+  String get txPaidBackNeedsWallet =>
+      'Paid back needs the wallet the money went into';
+
+  @override
   String get txLinkWalletNotOut => 'Not from your wallet';
 
   @override

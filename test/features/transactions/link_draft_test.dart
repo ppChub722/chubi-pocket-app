@@ -535,4 +535,36 @@ void main() {
     expect(c.link.paidBy, _mtk);
     expect(c.link.eventShares.containsKey('n:มา'), isFalse);
   });
+
+  test(
+    '"คืนแล้ว": who paid back and what they owe, on แบ่ง and on an event',
+    () {
+      final c = _form()
+        ..setSplits([_split('บอส', 40, id: 'c1'), _split('มาตาก', 30)])
+        ..setLinkMode(LinkMode.split, hasEvent: false);
+      expect(c.paidBackShares(event: false), isEmpty);
+
+      c.togglePaidBack(_boss);
+      expect(c.isPaidBack(_boss), isTrue);
+      final back = c.paidBackShares(event: false);
+      expect(back.single.person, _boss);
+      expect(back.single.amount, 40);
+
+      // The payer can't have paid back, a rename keeps the mark, × drops it.
+      c.renameDraft(c.splits.last, 'มาตาก ๒');
+      c.togglePaidBack(const LinkPerson(name: 'มาตาก ๒'));
+      expect(c.paidBackShares(event: false), hasLength(2));
+      c.setPaidBy(_boss);
+      expect(c.isPaidBack(_boss), isFalse);
+      c.removeDraft(c.splits.last);
+      expect(c.link.paidBack, isEmpty);
+
+      // On an event bill the share is the event share (equal when not typed).
+      final e = _form()
+        ..setSplits([_split('บอส', 40, id: 'c1')])
+        ..setLinkMode(LinkMode.event, hasEvent: true)
+        ..togglePaidBack(_boss);
+      expect(e.paidBackShares(event: true).single.amount, 60);
+    },
+  );
 }
