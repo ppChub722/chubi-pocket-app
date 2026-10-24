@@ -861,6 +861,10 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
               key: widget.heroKey,
               debt: true,
               repay: repay,
+              accentColor: QuickCreateModeColors.of(
+                context,
+                QuickCreateMode.debt,
+              ),
               type: (repay ? payBack : paid)
                   ? TransactionType.expense
                   : TransactionType.income,

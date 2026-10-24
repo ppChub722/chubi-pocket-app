@@ -23,10 +23,19 @@ class QuickCreateSheetShell extends StatefulWidget {
     this.onDelete,
     this.subtitle,
     this.headerBar,
+    this.tint,
     super.key,
   });
 
   final String title;
+
+  /// The modal route's own background: clear, because the shell paints the
+  /// sheet (so its colour can follow the mode).
+  static const Color modalBackground = Colors.transparent;
+
+  /// The create mode's colour: the whole sheet takes a wash of it, so what is
+  /// being made reads at a glance. Null = the plain sheet.
+  final Color? tint;
 
   /// Muted, under the title ("แก้เฉพาะงวดนี้").
   final String? subtitle;
@@ -173,6 +182,20 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final base =
+        Theme.of(context).bottomSheetTheme.backgroundColor ??
+        scheme.surfaceContainerLow;
+    final tint = widget.tint;
+    final sheetColor = tint == null
+        ? base
+        : Color.alphaBlend(
+            tint.withValues(
+              alpha: Theme.of(context).brightness == Brightness.dark
+                  ? 0.18
+                  : 0.12,
+            ),
+            base,
+          );
     final insets = MediaQuery.viewInsetsOf(context).bottom;
     if (insets > _lastInsets) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _revealFocus());
@@ -203,165 +226,176 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
         curve: Curves.easeOutCubic,
         builder: (context, dy, sheet) =>
             Transform.translate(offset: Offset(0, dy), child: sheet),
-        child: SavingOverlay(
-          saving: widget.saving,
-          child: SizedBox(
-            height: MediaQuery.sizeOf(context).height * 0.94,
-            child: Padding(
-              padding: EdgeInsets.only(bottom: insets),
-              child: Column(
-                children: [
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onVerticalDragUpdate: _onDragUpdate,
-                    onVerticalDragEnd: _onDragEnd,
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: AppSpacing.sm),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(2),
-                            child: ColoredBox(
-                              color: scheme.outlineVariant,
-                              child: const SizedBox(width: 36, height: 4),
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(
-                            AppSpacing.lg,
-                            AppSpacing.xs,
-                            AppSpacing.xs,
-                            0,
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: AnimatedSwitcher(
-                                  duration:
-                                      MediaQuery.disableAnimationsOf(context)
-                                      ? Duration.zero
-                                      : const Duration(milliseconds: 200),
-                                  layoutBuilder: (current, previous) => Stack(
-                                    alignment: AlignmentDirectional.centerStart,
-                                    children: [...previous, ?current],
-                                  ),
-                                  child: _collapsed && summary != null
-                                      ? KeyedSubtree(
-                                          key: const ValueKey('summary'),
-                                          child: summary(_scrollToTop),
-                                        )
-                                      : Text(
-                                          key: const ValueKey('title'),
-                                          widget.title,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                        ),
-                                ),
-                              ),
-                              if (widget.onDelete != null &&
-                                  deleteButton == null)
-                                AppIconButton.flat(
-                                  icon: AppIcons.delete,
-                                  tooltip: widget.deleteTooltip,
-                                  color: scheme.error,
-                                  onPressed: onDelete,
-                                ),
-                              AppIconButton.close(
-                                tooltip: widget.closeTooltip,
-                                onPressed: () =>
-                                    Navigator.of(context).maybePop(),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (widget.subtitle != null)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.lg,
-                            ),
-                            child: Align(
-                              alignment: AlignmentDirectional.centerStart,
-                              child: Text(
-                                widget.subtitle!,
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: scheme.onSurfaceVariant),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  if (widget.headerBar != null)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.lg,
-                        AppSpacing.sm,
-                        AppSpacing.lg,
-                        0,
-                      ),
-                      child: Align(
-                        alignment: AlignmentDirectional.centerStart,
-                        child: widget.headerBar,
-                      ),
-                    ),
-                  Expanded(
-                    child: ListView(
-                      key: _listKey,
-                      controller: _scroll,
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.lg,
-                        AppSpacing.xs,
-                        AppSpacing.lg,
-                        AppSpacing.xxl,
-                      ),
-                      children: [widget.body],
-                    ),
-                  ),
-                  if (widget.draftLabel == null && deleteButton == null)
-                    PinnedBar(
-                      child: AppButton(
-                        label: widget.saveLabel,
-                        expand: true,
-                        loading: widget.saving,
-                        submits: true,
-                        onPressed: widget.onSave,
-                      ),
-                    )
-                  else
-                    PinnedBar(
-                      child: Row(
+        child: Material(
+          color: sheetColor,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          clipBehavior: Clip.antiAlias,
+          animationDuration: const Duration(milliseconds: 250),
+          child: SavingOverlay(
+            saving: widget.saving,
+            child: SizedBox(
+              height: MediaQuery.sizeOf(context).height * 0.94,
+              child: Padding(
+                padding: EdgeInsets.only(bottom: insets),
+                child: Column(
+                  children: [
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onVerticalDragUpdate: _onDragUpdate,
+                      onVerticalDragEnd: _onDragEnd,
+                      child: Column(
                         children: [
-                          if (deleteButton != null) ...[
-                            deleteButton,
-                            const SizedBox(width: AppSpacing.sm),
-                          ],
-                          if (widget.draftLabel != null) ...[
-                            AppButton(
-                              label: widget.draftLabel!,
-                              variant: AppButtonVariant.outlined,
-                              submits: true,
-                              onPressed: widget.onSaveDraft,
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                          ],
-                          Expanded(
-                            child: AppButton(
-                              label: widget.saveLabel,
-                              expand: true,
-                              loading: widget.saving,
-                              submits: true,
-                              onPressed: widget.onSave,
+                          Padding(
+                            padding: const EdgeInsets.only(top: AppSpacing.sm),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(2),
+                              child: ColoredBox(
+                                color: scheme.outlineVariant,
+                                child: const SizedBox(width: 36, height: 4),
+                              ),
                             ),
                           ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              AppSpacing.lg,
+                              AppSpacing.xs,
+                              AppSpacing.xs,
+                              0,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: AnimatedSwitcher(
+                                    duration:
+                                        MediaQuery.disableAnimationsOf(context)
+                                        ? Duration.zero
+                                        : const Duration(milliseconds: 200),
+                                    layoutBuilder: (current, previous) => Stack(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      children: [...previous, ?current],
+                                    ),
+                                    child: _collapsed && summary != null
+                                        ? KeyedSubtree(
+                                            key: const ValueKey('summary'),
+                                            child: summary(_scrollToTop),
+                                          )
+                                        : Text(
+                                            key: const ValueKey('title'),
+                                            widget.title,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                          ),
+                                  ),
+                                ),
+                                if (widget.onDelete != null &&
+                                    deleteButton == null)
+                                  AppIconButton.flat(
+                                    icon: AppIcons.delete,
+                                    tooltip: widget.deleteTooltip,
+                                    color: scheme.error,
+                                    onPressed: onDelete,
+                                  ),
+                                AppIconButton.close(
+                                  tooltip: widget.closeTooltip,
+                                  onPressed: () =>
+                                      Navigator.of(context).maybePop(),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (widget.subtitle != null)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.lg,
+                              ),
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  widget.subtitle!,
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: scheme.onSurfaceVariant,
+                                      ),
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
-                ],
+                    if (widget.headerBar != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.lg,
+                          AppSpacing.sm,
+                          AppSpacing.lg,
+                          0,
+                        ),
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: widget.headerBar,
+                        ),
+                      ),
+                    Expanded(
+                      child: ListView(
+                        key: _listKey,
+                        controller: _scroll,
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.lg,
+                          AppSpacing.xs,
+                          AppSpacing.lg,
+                          AppSpacing.xxl,
+                        ),
+                        children: [widget.body],
+                      ),
+                    ),
+                    if (widget.draftLabel == null && deleteButton == null)
+                      PinnedBar(
+                        child: AppButton(
+                          label: widget.saveLabel,
+                          expand: true,
+                          loading: widget.saving,
+                          submits: true,
+                          onPressed: widget.onSave,
+                        ),
+                      )
+                    else
+                      PinnedBar(
+                        child: Row(
+                          children: [
+                            if (deleteButton != null) ...[
+                              deleteButton,
+                              const SizedBox(width: AppSpacing.sm),
+                            ],
+                            if (widget.draftLabel != null) ...[
+                              AppButton(
+                                label: widget.draftLabel!,
+                                variant: AppButtonVariant.outlined,
+                                submits: true,
+                                onPressed: widget.onSaveDraft,
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                            ],
+                            Expanded(
+                              child: AppButton(
+                                label: widget.saveLabel,
+                                expand: true,
+                                loading: widget.saving,
+                                submits: true,
+                                onPressed: widget.onSave,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),

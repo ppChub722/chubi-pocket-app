@@ -191,6 +191,8 @@ Future<bool> showQuickCreateSheet(
     // sit under the floating nav (the tab body runs on beneath it).
     useRootNavigator: true,
     enableDrag: false,
+    // The shell paints the sheet itself (the mode's wash).
+    backgroundColor: QuickCreateSheetShell.modalBackground,
     builder: (sheetContext) {
       final sheet = _QuickCreateSheet(
         prefs: prefs,
@@ -1058,6 +1060,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   }
 
   bool get _canSwitchMode => !_draftLike && !_isEvent;
+
+  /// The mode's colour (sheet wash, hero card, mode tab) while the sheet
+  /// creates something new; null elsewhere.
+  Color? get _modeColor =>
+      _canSwitchMode ? QuickCreateModeColors.of(context, _mode) : null;
   bool get _isDebt => _mode == QuickCreateMode.debt;
   bool get _isSaving => _mode == QuickCreateMode.saving;
 
@@ -1604,7 +1611,12 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           ? l.transactionFormTitleEdit
           : _editingDraft
           ? l.pendingEditTitle
+          : _isDebt
+          ? l.quickCreateBtnDebt
+          : _isSaving
+          ? l.quickCreateBtnSaving
           : l.transactionFormTitleNew,
+      tint: _modeColor,
       subtitle: widget.entry?.subtitle,
       headerBar: _entryChips(),
       summaryBuilder: _summaryTitle && !_isDebt && !_isSaving
@@ -1685,6 +1697,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
             ? const EntryCardSkeleton()
             : DraftForm(
                 heroKey: _heroKey,
+                accentColor: _modeColor,
                 chipLayout: _draftLike,
                 chipRows: true,
                 controller: _c,

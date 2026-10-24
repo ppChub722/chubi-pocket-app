@@ -870,8 +870,13 @@ class DraftForm extends StatefulWidget {
     this.linkTabs = false,
     this.linkEventIsNew = false,
     this.linkIsEventMember,
+    this.accentColor,
     super.key,
   });
+
+  /// The create mode's colour: washes the hero card, so red / green stay on
+  /// the type chip alone.
+  final Color? accentColor;
 
   /// The picked existing event's members, as a check ([LinkSection]).
   final bool Function(LinkPerson p)? linkIsEventMember;
@@ -1169,6 +1174,7 @@ class _DraftFormState extends State<DraftForm> {
                 key: widget.heroKey,
                 type: _c.type,
                 onTypeChanged: widget.typeLocked ? null : _c.setType,
+                accentColor: widget.accentColor,
                 amount: _c.amount,
                 title: _c.description,
                 dateLabel: _dayLabel(context, _c.date),

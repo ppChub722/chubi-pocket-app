@@ -610,6 +610,7 @@ class _AppInputState extends State<AppInput> {
         helperMaxLines: 3,
         errorText: w.errorText,
         errorMaxLines: 3,
+        hintMaxLines: 1,
         suffixIcon: w.obscurable && editing
             ? AppIconButton.flat(
                 icon: _inlineObscured ? AppIcons.visible : AppIcons.hidden,

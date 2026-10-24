@@ -4564,7 +4564,7 @@ abstract class AppLocalizations {
   /// No description provided for @txNoteAddHint.
   ///
   /// In en, this message translates to:
-  /// **'e.g. where, with whom, or anything to remember'**
+  /// **'e.g. where, with whom'**
   String get txNoteAddHint;
 
   /// No description provided for @bgNoteHint.
@@ -4600,7 +4600,7 @@ abstract class AppLocalizations {
   /// No description provided for @debtNoteHint.
   ///
   /// In en, this message translates to:
-  /// **'e.g. what it was for, or when it is due back'**
+  /// **'e.g. what it was for'**
   String get debtNoteHint;
 
   /// No description provided for @quickEventNone.

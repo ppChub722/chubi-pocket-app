@@ -2588,7 +2588,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get txNoteAddHint => 'e.g. where, with whom, or anything to remember';
+  String get txNoteAddHint => 'e.g. where, with whom';
 
   @override
   String get bgNoteHint =>
@@ -2609,7 +2609,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryNoteHint => 'e.g. which spending belongs here';
 
   @override
-  String get debtNoteHint => 'e.g. what it was for, or when it is due back';
+  String get debtNoteHint => 'e.g. what it was for';
 
   @override
   String get quickEventNone => 'None';

@@ -2529,7 +2529,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get txNoteAddHint => 'เช่น ซื้อที่ไหน กับใคร หรือรายละเอียดที่อยากจำ';
+  String get txNoteAddHint => 'เช่น ซื้อที่ไหน กับใคร';
 
   @override
   String get bgNoteHint => 'เช่น ทำไมตั้งเพดานนี้ หรืออยากลดรายจ่ายอะไร';
@@ -2547,7 +2547,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get categoryNoteHint => 'เช่น รายการแบบไหนควรอยู่หมวดนี้';
 
   @override
-  String get debtNoteHint => 'เช่น ยืมไปทำอะไร หรือนัดคืนเมื่อไร';
+  String get debtNoteHint => 'เช่น ยืมไปทำอะไร';
 
   @override
   String get quickEventNone => 'ไม่ได้เลือก';
