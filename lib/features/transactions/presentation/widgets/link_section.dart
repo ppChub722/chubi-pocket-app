@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../contacts/presentation/widgets/contact_picker.dart';
-import '../../../projects/domain/project.dart';
 import '../../domain/link_draft.dart';
-import '../../domain/refs.dart';
 import 'draft_form.dart';
 import 'splits_section.dart';
 
@@ -20,7 +18,6 @@ class LinkSection extends StatefulWidget {
     required this.event,
     this.eventIsNew = false,
     this.isEventMember,
-    this.eventMembers,
     this.recurring,
     super.key,
   });
@@ -37,9 +34,6 @@ class LinkSection extends StatefulWidget {
   /// not known (yet), so no tags.
   final bool Function(LinkPerson p)? isEventMember;
 
-  /// The picked existing event's members, for the "เพิ่มคน" picker.
-  final List<ProjectMember>? eventMembers;
-
   final SplitRecurringSlot? recurring;
 
   @override
@@ -50,6 +44,8 @@ class _LinkSectionState extends State<LinkSection> {
   DraftFormController get _c => widget.controller;
 
   bool get _hasEvent => widget.event.name != null;
+
+  SplitDraft? _justAdded;
 
   static LinkPerson _personOfDraft(SplitDraft d) => LinkPerson(
     name: d.personName.trim(),
@@ -73,69 +69,12 @@ class _LinkSectionState extends State<LinkSection> {
     _c.rekeyDraft(before, d);
   }
 
-  /// "เพิ่มคน": pick at once (event members on top when there is an event,
-  /// then contacts, or type a name).
-  Future<void> _addPeople() async {
-    final l = AppLocalizations.of(context)!;
-    final members = [
-      for (final m in widget.eventMembers ?? const <ProjectMember>[])
-        if (!m.isMe) m,
-    ];
-    bool inBill(ProjectMember m) => _c.splitPeople.any(
-      (p) => p.isMember(
-        name: m.displayName,
-        contactId: m.contactId,
-        userId: m.userId,
-      ),
-    );
-    final r = await ContactPicker.people(
-      context,
-      title: l.txSplitAddPerson,
-      membersLabel: l.evbMembersSection,
-      confirmLabel: l.evbAddPeopleConfirm,
-      selectedMemberIds: {
-        for (final m in members)
-          if (inBill(m)) m.id,
-      },
-      members: [
-        for (final m in members)
-          PickerMember(
-            id: m.id,
-            name: m.displayName,
-            iconCode: m.iconCode,
-            level: m.isLinked
-                ? PersonLevel.linked
-                : (m.iconCode != null ? PersonLevel.contact : PersonLevel.name),
-            contactId: m.contactId,
-          ),
-      ],
-    );
-    if (r == null || !mounted) return;
-    final ids = r.memberIds.toSet();
-    _c.addPeople([
-      ...DraftFormController.peopleOfMembers([
-        for (final m in members)
-          if (ids.contains(m.id)) m,
-      ]),
-      for (final pick in r.picks) _personOfPick(pick),
-    ]);
+  /// "เพิ่มคน": a new row, its name ready to type (or tap the avatar to pick).
+  void _addPerson() {
+    final d = SplitDraft();
+    _justAdded = d;
+    _c.setSplits([..._c.splits, d]);
   }
-
-  static LinkPerson _personOfPick(ContactPick r) => switch (r) {
-    ContactPicked(:final contact) => LinkPerson(
-      name: contact.name,
-      contactId: contact.id,
-      person: EmbeddedPerson(
-        name: contact.name,
-        contactId: contact.id,
-        iconCode: contact.iconCode,
-        linked: contact.isLinked,
-        linkedUserId: contact.linkedUser?.id,
-      ),
-    ),
-    ContactNameTyped(:final name) ||
-    ContactNamePicked(:final name) => LinkPerson(name: name.trim()),
-  };
 
   /// หารเท่ากัน on แบ่ง: each person the same, ฉัน the rest.
   void _splitEqually() {
@@ -265,6 +204,7 @@ class _LinkSectionState extends State<LinkSection> {
       final paid = person != null && person == payer;
       return BillPerson(
         id: d,
+        autofocusName: identical(d, _justAdded),
         name: d.personName,
         avatar: _mark(_personOfDraft(d)),
         editableName: d.contactId == null,
@@ -329,7 +269,7 @@ class _LinkSectionState extends State<LinkSection> {
       onEqually: event
           ? (members.isNotEmpty && bill > 0 ? _c.eventEqually : null)
           : (_c.splits.isNotEmpty && _c.splitCap > 0 ? _splitEqually : null),
-      onAdd: _addPeople,
+      onAdd: _addPerson,
       status: event
           ? linkCardStatus(
               context,

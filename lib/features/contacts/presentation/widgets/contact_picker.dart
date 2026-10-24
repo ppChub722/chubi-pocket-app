@@ -230,6 +230,21 @@ abstract final class ContactPicker {
             PickerGroup(memberGroup, membersLabel),
             PickerGroup(peopleGroup, l.contactPickerFilterContacts),
           ],
+          // The same tabs as the one-person picker, plus the event's people
+          // when there is an event.
+          filters: [
+            PickerFilter(l.contactPickerFilterAll, (_) => true),
+            if (members.isNotEmpty)
+              PickerFilter(membersLabel, (i) => i.group == memberGroup),
+            PickerFilter(
+              l.contactPickerFilterContacts,
+              (i) => i.group != memberGroup && !_isName(i.id),
+            ),
+            PickerFilter(
+              l.contactPickerFilterNotInContacts,
+              (i) => _isName(i.id),
+            ),
+          ],
           freeText: PickerFreeText(
             hint: l.contactPickerTypeName,
             saveLabel: l.contactPickerUseName,

@@ -999,7 +999,6 @@ class DraftForm extends StatefulWidget {
     this.linkTabs = false,
     this.linkEventIsNew = false,
     this.linkIsEventMember,
-    this.linkEventMembers,
     this.accentColor,
     super.key,
   });
@@ -1010,9 +1009,6 @@ class DraftForm extends StatefulWidget {
 
   /// The picked existing event's members, as a check ([LinkSection]).
   final bool Function(LinkPerson p)? linkIsEventMember;
-
-  /// The picked existing event's members, for the people picker.
-  final List<ProjectMember>? linkEventMembers;
 
   /// Quick create (new expense): the "ผูกกับ" tabs ([LinkSection]) instead
   /// of the split / event section; [eventSlot] feeds the อีเวนต์ card.
@@ -1534,7 +1530,6 @@ class _DraftFormState extends State<DraftForm> {
               : (widget.eventSlot ?? const SplitEventSlot()),
           eventIsNew: widget.linkEventIsNew,
           isEventMember: widget.linkIsEventMember,
-          eventMembers: widget.linkEventMembers,
           recurring: widget.recurringSlot,
         ),
       ] else if (!isTransfer || widget.recurringSlot != null) ...[
@@ -1745,7 +1740,6 @@ class _DraftFormState extends State<DraftForm> {
             event: widget.eventSlot ?? const SplitEventSlot(),
             eventIsNew: widget.linkEventIsNew,
             isEventMember: widget.linkIsEventMember,
-            eventMembers: widget.linkEventMembers,
             recurring: widget.recurringSlot,
           ),
         ),

@@ -1723,7 +1723,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                     (!_draftLike || _linkEdit.active || _editingDraft),
                 linkEventIsNew: _event is NewEventTarget,
                 linkIsEventMember: _isEventMember,
-                linkEventMembers: _eventMembers,
                 recurringSlot: _recurringSlot(l),
                 eventSlot:
                     (!_draftLike || _linkEdit.active) &&
