@@ -92,6 +92,8 @@ class ApiClient {
   }
 
   static Future<String?> _platformBuild() async {
+    // The web build is a dev tool: its number is pubspec's, not a release's.
+    if (kIsWeb) return null;
     try {
       return (await PackageInfo.fromPlatform()).buildNumber;
     } catch (_) {
