@@ -95,7 +95,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
         final tx = context.read<TransactionsCubit>().byId(widget.transactionId);
         final link = tx?.counterparty;
         if (link != null) return DebtEntryDetailPage(entryId: link.entryId);
-        if (tx != null) return _Loaded(tx: tx);
+        if (tx != null) return _Loaded(tx: tx, fetching: _fetching);
         final missing = _error?.statusCode == 404;
         return Scaffold(
           appBar: AppTopBar(title: l.navTransactions, showBack: true),
@@ -117,8 +117,9 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
 }
 
 class _Loaded extends StatefulWidget {
-  const _Loaded({required this.tx});
+  const _Loaded({required this.tx, this.fetching = false});
   final Transaction tx;
+  final bool fetching;
 
   @override
   State<_Loaded> createState() => _LoadedState();
@@ -709,6 +710,10 @@ class _LoadedState extends State<_Loaded>
                   _splitRow(context, s, () => _openSplits(s)),
               ]),
             )
+          : hasSplits && widget.fetching
+          ? splitsBlock([
+              for (var i = 0; i < splitCount; i++) const ListRowSkeleton(),
+            ])
           : hasSplits
           ? splitsLongPressable(
               splitsBlock([DetailRow(label: l.txSplitSeeDebts)]),
