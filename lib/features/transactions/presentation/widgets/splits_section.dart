@@ -152,23 +152,22 @@ class SplitsSection extends StatefulWidget {
     this.compact = false,
     this.card = false,
     this.helper,
-    this.payerTitle,
-    this.payerRow,
-    this.draftTag,
+    this.payerChip,
+    this.footer,
     super.key,
   });
 
+  /// The card's last row (the event row on the ผูกกับ แบ่ง card).
+  final Widget? footer;
+
   /// The ผูกกับ แบ่ง card: a [ShareCard] ([label] as its title), the chips in
-  /// its header, ฉัน + the people as rows, the status line. With [payerRow]
-  /// the card opens with "[payerTitle]" and that row, and [label] heads the
-  /// people below it.
+  /// its header, ฉัน + the people as rows, the status line. With [payerChip]
+  /// every row (ฉัน first, even alone) carries that chip beside the name
+  /// ("จ่าย": the one who paid) and the header chips are small.
   final bool card;
 
-  final String? payerTitle;
-  final Widget? payerRow;
-
-  /// A tag under a person's name (the one who paid).
-  final Widget? Function(SplitDraft d)? draftTag;
+  /// The chip beside a name; the draft is null on ฉัน's row.
+  final Widget? Function(SplitDraft? d)? payerChip;
 
   final String? helper;
 
@@ -201,7 +200,9 @@ class SplitsSection extends StatefulWidget {
 }
 
 class _SplitsSectionState extends State<SplitsSection> {
-  bool get _withMe => widget.onMeChanged != null && widget.drafts.isNotEmpty;
+  bool get _withMe =>
+      widget.onMeChanged != null &&
+      (widget.drafts.isNotEmpty || widget.payerChip != null);
 
   double get _peopleTotal {
     var total = 0.0;
@@ -256,27 +257,25 @@ class _SplitsSectionState extends State<SplitsSection> {
 
   Widget _card(AppLocalizations l) {
     final drafts = widget.drafts;
-    final payerRow = widget.payerRow;
-    final actions = [
-      AppChip(
-        label: l.txSplitEqually,
-        enabled: drafts.isNotEmpty && widget.totalAmount > 0,
-        onTap: _splitEqually,
-      ),
-      AppChip(
-        icon: AppIcons.add,
-        label: l.txSplitAddPerson,
-        onTap: _addPerson,
-      ),
-    ];
+    final payerChip = widget.payerChip;
+    final size = payerChip == null ? null : ChipSize.mini;
     return ShareCard(
-      title: payerRow == null ? widget.label : widget.payerTitle,
-      actions: payerRow == null ? actions : const [],
+      title: widget.label,
+      actions: [
+        AppChip(
+          label: l.txSplitEqually,
+          enabled: drafts.isNotEmpty && widget.totalAmount > 0,
+          onTap: _splitEqually,
+          size: size,
+        ),
+        AppChip(
+          icon: AppIcons.add,
+          label: l.txSplitAddPerson,
+          onTap: _addPerson,
+          size: size,
+        ),
+      ],
       rows: [
-        if (payerRow != null) ...[
-          payerRow,
-          ShareSubhead(title: widget.label, actions: actions),
-        ],
         if (_withMe)
           SplitMeRow(
             label: l.txSplitMe,
@@ -285,6 +284,7 @@ class _SplitsSectionState extends State<SplitsSection> {
             onAutoChanged: widget.onMeAutoChanged,
             onChanged: widget.onMeChanged!,
             card: true,
+            nameTrailing: payerChip?.call(null),
           ),
         for (var i = 0; i < drafts.length; i++)
           SplitDraftRow(
@@ -292,11 +292,12 @@ class _SplitsSectionState extends State<SplitsSection> {
             draft: drafts[i],
             card: true,
             autofocusName: identical(drafts[i], _justAdded),
-            tag: widget.draftTag?.call(drafts[i]),
+            nameTrailing: payerChip?.call(drafts[i]),
             onChange: () => widget.onChanged(List.of(drafts)),
             onChangePerson: () => _changePerson(drafts[i]),
             onRemove: () => _remove(i),
           ),
+        ?widget.footer,
       ],
       status: _withMe
           ? linkCardStatus(
@@ -618,6 +619,7 @@ class SplitMeRow extends StatelessWidget {
     required this.onAutoChanged,
     required this.onChanged,
     this.card = false,
+    this.nameTrailing,
     super.key,
   });
   final String label;
@@ -627,6 +629,9 @@ class SplitMeRow extends StatelessWidget {
   final ValueChanged<double?> onChanged;
   final bool card;
 
+  /// A chip beside the name ("จ่าย").
+  final Widget? nameTrailing;
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -634,6 +639,7 @@ class SplitMeRow extends StatelessWidget {
     return SplitRow(
       avatar: MyAvatar(fallbackName: l.txSplitMe),
       name: SplitRowName.muted(label),
+      nameTrailing: nameTrailing,
       amount: card
           ? ShareAmountField(value: amount, auto: auto, onChanged: onChanged)
           : _AmountBox(value: amount, onChanged: onChanged),
@@ -663,6 +669,7 @@ class SplitDraftRow extends StatefulWidget {
     this.amount,
     this.onAmount,
     this.tag,
+    this.nameTrailing,
     super.key,
   });
 
@@ -677,6 +684,9 @@ class SplitDraftRow extends StatefulWidget {
   final double? amount;
   final ValueChanged<double?>? onAmount;
   final Widget? tag;
+
+  /// A chip beside the name ("จ่าย").
+  final Widget? nameTrailing;
 
   @override
   State<SplitDraftRow> createState() => _SplitDraftRowState();
@@ -759,6 +769,7 @@ class _SplitDraftRowState extends State<SplitDraftRow> {
       return ShareRow(
         avatar: avatar,
         name: name,
+        nameTrailing: widget.nameTrailing,
         amount: ShareAmountField(value: value, onChanged: changed),
         trailing: remove,
         tag: widget.tag,

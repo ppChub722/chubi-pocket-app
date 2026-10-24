@@ -1351,6 +1351,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     );
     if (picked != null && mounted) {
       setState(() => _event = picked);
+      _c.eventChanged(hasEvent: true);
       unawaited(_loadEventMembers(picked));
     }
   }
@@ -1730,7 +1731,10 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                         onTap: _pickEvent,
                         onClear: _event == null
                             ? null
-                            : () => setState(() => _event = null),
+                            : () {
+                                setState(() => _event = null);
+                                _c.eventChanged(hasEvent: false);
+                              },
                       )
                     : null,
               ),

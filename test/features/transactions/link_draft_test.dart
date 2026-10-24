@@ -172,7 +172,8 @@ void main() {
     final share = _form()..setSplits([_split('บอส', 40, id: 'c1')]);
     expect(share.myShareFor(LinkMode.personal), 120);
     expect(share.myShareFor(LinkMode.split), 80);
-    expect(share.myShareFor(LinkMode.paid), 120);
+    // Someone else paid: only my share (the bill less บอส's 40) is saved.
+    expect(share.myShareFor(LinkMode.paid), 80);
     expect(share.myShareFor(LinkMode.event), 60);
 
     final toggles = _form()
@@ -290,7 +291,8 @@ void main() {
       ..setPaidBy(_lee);
     var d = c.toDraft();
     expect(d.splits, isEmpty);
-    expect(d.paidBy, {'contact_id': 'c2', 'amount': 120.0});
+    // paid_by carries only my share: the bill 120 less บอส's 40.
+    expect(d.paidBy, {'contact_id': 'c2', 'amount': 80.0});
     expect(d.toJson()['paid_by'], isNotNull);
 
     c.setLinkMode(LinkMode.event, hasEvent: true);
@@ -301,7 +303,10 @@ void main() {
     expect(d.members.first, {'me': true, 'share': 40.0});
     expect(d.members, hasLength(3));
 
-    c.setLinkMode(LinkMode.split, hasEvent: false);
+    // The แบ่ง tab is จ่ายแทน while someone else is the payer: back to me.
+    c
+      ..setPaidBy(null)
+      ..setLinkMode(LinkMode.split, hasEvent: false);
     d = c.toDraft();
     expect(d.splits.single['contact_id'], 'c1');
     expect(d.projectId, isNull);
@@ -473,4 +478,31 @@ void main() {
     expect(json['link_mode'], 'split');
     expect((json['splits'] as List).single['contact_id'], 'c1');
   });
+
+  test(
+    'an event added to / taken off แบ่ง flips the tab and carries amounts',
+    () {
+      final c = _form()
+        ..setSplits([_split('บอส', 40, id: 'c1')])
+        ..setLinkMode(LinkMode.split, hasEvent: false)
+        ..setPaidBy(_lee);
+      expect(c.linkMode(hasEvent: false), LinkMode.paid);
+
+      c.eventChanged(hasEvent: true);
+      expect(c.linkMode(hasEvent: true), LinkMode.event);
+      expect(c.link.eventPayer, _lee);
+      expect(c.link.eventShares[_boss.key], 40);
+
+      c.link.eventShares[_boss.key] = 50;
+      c.eventChanged(hasEvent: false);
+      expect(c.linkMode(hasEvent: false), LinkMode.paid);
+      expect(c.splits.single.owedAmount, 50);
+      expect(c.link.paidBy, _lee);
+
+      // Not on the bill tab (ส่วนตัว): the event changes nothing.
+      final personal = _form()..setLinkMode(LinkMode.personal, hasEvent: false);
+      personal.eventChanged(hasEvent: true);
+      expect(personal.linkMode(hasEvent: false), LinkMode.personal);
+    },
+  );
 }

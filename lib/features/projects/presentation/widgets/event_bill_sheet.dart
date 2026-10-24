@@ -559,8 +559,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
       : '${_sideText(l, now)} → ${_sideText(l, now + delta)}';
 
   Widget? _myBooks(AppLocalizations l) {
-    final involved =
-        _booked || (_payback ? _involved : (_iPaid || _meInBill));
+    final involved = _booked || (_payback ? _involved : (_iPaid || _meInBill));
     if (!involved || _view.me == null) return null;
     // A part already linked changes nothing in my books (no pickers, no
     // before → after); unticking it unlinks it.
@@ -652,11 +651,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
                     if (i > 0) const SizedBox(height: AppSpacing.sm),
                     _personLine(
                       p,
-                      _change(
-                        l,
-                        _netWith(p),
-                        debtLinked ? 0 : _shareOf(p),
-                      ),
+                      _change(l, _netWith(p), debtLinked ? 0 : _shareOf(p)),
                       up: true,
                       amount: debtLinked ? null : _shareOf(p),
                     ),
@@ -735,9 +730,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
 
   /// Avatars only: no 🔗 badge on a linked member (as on the bill rows).
   Widget _personAvatar(_Person p) {
-    final level = p.level == PersonLevel.linked
-        ? PersonLevel.contact
-        : p.level;
+    final level = p.level == PersonLevel.linked ? PersonLevel.contact : p.level;
     return p.isMe
         ? ProjectMemberAvatar(
             name: p.name,
@@ -765,22 +758,13 @@ class _EventBillSheetState extends State<_EventBillSheet> {
       return ShareRow(
         key: ValueKey('evbPerson:${p.key}'),
         avatar: _personAvatar(p),
-        name: Row(
+        name: p.isMe
+            ? SplitRowName.muted(l.txLinkCardMe)
+            : SplitRowName.picked(p.name),
+        nameTrailing: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Flexible(
-              child: p.isMe
-                  ? SplitRowName.muted(l.txLinkCardMe)
-                  : SplitRowName.picked(p.name),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            AppChip(
-              label: l.evbPays,
-              icon: payer ? AppIcons.check : null,
-              selected: payer,
-              dashed: !payer,
-              size: ChipSize.mini,
-              onTap: payer ? null : () => _setPayer(p),
-            ),
+            PayChip(label: l.evbPays, paid: payer, onTap: () => _setPayer(p)),
             if (!payer && _payer != null) ...[
               const SizedBox(width: AppSpacing.xs),
               AppChip(
@@ -1032,8 +1016,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
       link: link,
       unlink: unlink,
     );
-    bool make(String kind) =>
-        link.contains(kind) && !r.relinked.contains(kind);
+    bool make(String kind) => link.contains(kind) && !r.relinked.contains(kind);
     return (
       tx: make(_txKind),
       debt: make(ProjectTransaction.bookDebt),

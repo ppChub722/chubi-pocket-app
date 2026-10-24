@@ -168,8 +168,63 @@ class DraftFormController extends ChangeNotifier {
   void setProject(String? id, {String? name}) {
     projectId = id;
     projectName = id == null ? null : name;
+    _applyEventMode(hasEvent: id != null);
     notifyListeners();
   }
+
+  /// An event was picked or cleared elsewhere (the sheet's / the page's own
+  /// state): the แบ่ง tab follows it.
+  void eventChanged({required bool hasEvent}) {
+    _applyEventMode(hasEvent: hasEvent);
+    notifyListeners();
+  }
+
+  /// แบ่ง with an event is อีเวนต์; without one it is จ่ายแทน when someone
+  /// else paid, else แบ่ง. What was typed goes with the bill: shares and my
+  /// share one way, the payer the other.
+  void _applyEventMode({required bool hasEvent}) {
+    final from = link.mode;
+    if (from == null || from == LinkMode.personal) return;
+    final wasEvent = from == LinkMode.event;
+    if (wasEvent && !hasEvent) {
+      final payer = link.eventPayer;
+      link.paidBy = payer?.memberId == null ? payer : null;
+    }
+    final to = hasEvent
+        ? LinkMode.event
+        : link.paidBy != null
+        ? LinkMode.paid
+        : LinkMode.split;
+    if (to == from) return;
+    if (to == LinkMode.event) {
+      for (final s in splits) {
+        final owed = s.owedAmount ?? 0;
+        if (s.personName.trim().isEmpty || owed <= 0) continue;
+        link.eventShares[_draftPerson(s).key] = owed;
+      }
+      if (!meAuto) {
+        link
+          ..eventMeAuto = false
+          ..eventMeTyped = meAmount;
+      }
+    } else if (wasEvent) {
+      for (final s in splits) {
+        final share = link.eventShares[_draftPerson(s).key];
+        if (share != null) s.owedAmount = share;
+      }
+      if (!link.eventMeAuto) {
+        meAuto = false;
+        _meTyped = link.eventMeTyped;
+      }
+    }
+    link.switchTo(to, from: from);
+  }
+
+  static LinkPerson _draftPerson(SplitDraft s) => LinkPerson(
+    name: s.personName.trim(),
+    contactId: s.contactId,
+    person: s.person,
+  );
 
   bool get isTransfer => type == TransactionType.transfer;
   double get amountValue => AmountInput.parse(amount.text) ?? 0;
@@ -273,12 +328,18 @@ class DraftFormController extends ChangeNotifier {
   /// what the form holds).
   LinkMode? get pickedTab => type == TransactionType.expense ? link.mode : null;
 
-  /// แบ่ง and จ่ายแทน are one tab: a payer other than me makes it จ่ายแทน.
+  /// แบ่ง, จ่ายแทน and อีเวนต์ are one tab: [LinkMode.split] means "the bill
+  /// with people", which is อีเวนต์ once an event is added, else จ่ายแทน when
+  /// someone else paid, else แบ่ง.
   void setLinkMode(LinkMode next, {required bool hasEvent}) {
     final from = linkMode(hasEvent: hasEvent);
-    final to = next == LinkMode.split && link.paidBy != null
+    final to = next != LinkMode.split
+        ? next
+        : hasEvent
+        ? LinkMode.event
+        : link.paidBy != null
         ? LinkMode.paid
-        : next;
+        : LinkMode.split;
     if (to == from && link.mode != null) return;
     link.switchTo(to, from: from);
     notifyListeners();

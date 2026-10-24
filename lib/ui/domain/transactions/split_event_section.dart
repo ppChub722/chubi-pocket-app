@@ -177,6 +177,7 @@ class EventRow extends StatelessWidget {
     this.editing = true,
     this.onLongPress,
     this.variant = SplitEventVariant.full,
+    this.inCard = false,
     super.key,
   });
 
@@ -187,6 +188,9 @@ class EventRow extends StatelessWidget {
   final bool editing;
   final VoidCallback? onLongPress;
   final SplitEventVariant variant;
+
+  /// The last row of a [ShareCard]: a gap above it.
+  final bool inCard;
 
   bool get _compact => variant == SplitEventVariant.compact;
 
@@ -216,7 +220,13 @@ class EventRow extends StatelessWidget {
               child: value,
             ),
           );
-    return _longPressRow(row, onLongPress);
+    final pressable = _longPressRow(row, onLongPress);
+    return inCard
+        ? Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: pressable,
+          )
+        : pressable;
   }
 }
 

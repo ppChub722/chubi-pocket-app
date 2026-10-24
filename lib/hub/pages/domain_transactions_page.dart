@@ -107,6 +107,61 @@ class _TransactionsPageState extends State<_TransactionsPage> {
 
   void _note(String s) => setState(() => _last = s);
 
+  /// The quick-create แบ่ง card: ฉัน first (the payer), a person, and — with
+  /// [event] — the EventRow at the bottom.
+  Widget _peopleCard({String? event}) => ShareCard(
+    title: 'คนในบิล | 2',
+    actions: [
+      AppChip(label: 'หารเท่ากัน', size: ChipSize.mini, onTap: () {}),
+      AppChip(
+        label: 'เพิ่มคน',
+        icon: AppIcons.add,
+        size: ChipSize.mini,
+        onTap: () {},
+      ),
+    ],
+    rows: [
+      ShareRow(
+        avatar: const SizedBox.square(dimension: SplitRow.avatarSize),
+        name: const SplitRowName.muted('ฉัน'),
+        nameTrailing: const PayChip(label: 'จ่าย', paid: true),
+        amount: ShareAmountField(value: 41, auto: true, onChanged: (_) {}),
+        trailing: AutoToggleChip(value: true, onChanged: (_) {}),
+      ),
+      ShareRow(
+        avatar: const SizedBox.square(dimension: SplitRow.avatarSize),
+        name: const SplitRowName.picked('บอส ทดสอบ'),
+        nameTrailing: PayChip(
+          label: 'จ่าย',
+          paid: false,
+          onTap: () => _note('payer: บอส'),
+        ),
+        amount: ShareAmountField(value: 82, onChanged: (_) {}),
+        trailing: SplitRowAction(
+          icon: AppIcons.close,
+          tooltip: 'Remove',
+          onTap: () {},
+        ),
+        tag: event == null
+            ? null
+            : const AppChip(
+                label: 'ใหม่ · เพิ่มเข้าอีเวนต์',
+                size: ChipSize.mini,
+                tone: AppChipTone.info,
+                selected: true,
+              ),
+      ),
+      EventRow(
+        name: event,
+        onTap: () => _note('pick event'),
+        onClear: () => _note('event removed'),
+        variant: SplitEventVariant.compact,
+        inCard: true,
+      ),
+    ],
+    status: const ShareStatus('✓ แบ่งครบแล้ว', ok: true),
+  );
+
   Future<void> _openForm(bool chipLayout) async {
     final controller = DraftFormController();
     await showDialog<void>(
@@ -143,40 +198,29 @@ class _TransactionsPageState extends State<_TransactionsPage> {
         HubDemo(
           title: 'LinkSectionFrame — the whole ผูกกับ block',
           note:
-              'The recurring row (optional), the LinkModeBar, then the picked '
-              'tab\'s card, with the kit gap between. The feature (LinkSection) '
-              'only wires state into it. "+ เลือกคนจ่าย" = SplitPickChip.',
+              'The recurring row (optional), the LinkModeBar (ส่วนตัว | แบ่ง), '
+              'then the picked tab\'s card, with the kit gap between. The '
+              'feature (LinkSection) only wires state into it.',
           child: LinkSectionFrame(
             bar: LinkModeBar<int>(
-              selected: 2,
+              selected: 1,
               onChanged: (_) {},
               tabs: const [
                 AppTab(value: 0, label: 'ส่วนตัว', icon: AppIcons.wallet),
                 AppTab(value: 1, label: 'แบ่ง', icon: AppIcons.split),
-                AppTab(value: 2, label: 'จ่ายแทน', icon: AppIcons.contact),
-                AppTab(value: 3, label: 'อีเวนต์', icon: AppIcons.project),
               ],
             ),
-            card: ShareCard(
-              title: 'ใครจ่ายแทน',
-              rows: [
-                ShareRow(
-                  avatar: const SizedBox.square(dimension: SplitRow.avatarSize),
-                  name: SplitPickChip(label: 'เลือกคนจ่าย', onTap: () {}),
-                  amount: ShareAmountField(value: 120, onChanged: null),
-                ),
-              ],
-            ),
+            card: _peopleCard(),
           ),
         ),
         HubDemo(
-          title: 'LinkModeBar + ShareCard — quick create "ผูกกับ"',
+          title: 'LinkModeBar + people ShareCard — quick create "ผูกกับ"',
           note:
-              '"ผูกกับ" and its pill tabs on one row (4 tabs: only the selected '
-              'one shows its icon, and only when it fits). Each tab but '
-              'ส่วนตัว shows ONE ShareCard: a header with its chips, '
-              'ShareRows (SplitRow + an optional tag), the status line. All '
-              'three views edit one data set (owner 2026-10-21).',
+              'Two pill tabs across the full width. แบ่ง is ONE ShareCard: '
+              '"คนในบิล | n" with small header chips, ShareRows (SplitRow + a '
+              'PayChip after the name: ✓ จ่าย on the payer, dashed on the '
+              'rest) and the status line; adding an event is the EventRow at '
+              'the bottom, which makes it an event bill.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -186,138 +230,10 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 tabs: const [
                   AppTab(value: 0, label: 'ส่วนตัว', icon: AppIcons.wallet),
                   AppTab(value: 1, label: 'แบ่ง', icon: AppIcons.split),
-                  AppTab(value: 2, label: 'จ่ายแทน', icon: AppIcons.contact),
-                  AppTab(value: 3, label: 'อีเวนต์', icon: AppIcons.project),
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
-              if (_linkMode == 1)
-                ShareCard(
-                  title: 'แบ่งให้ใคร',
-                  actions: [
-                    AppChip(label: 'หารเท่ากัน', onTap: () {}),
-                    AppChip(label: 'เพิ่มคน', icon: AppIcons.add, onTap: () {}),
-                  ],
-                  rows: [
-                    ShareRow(
-                      avatar: const SizedBox.square(
-                        dimension: SplitRow.avatarSize,
-                      ),
-                      name: const SplitRowName.muted('ส่วนของฉัน'),
-                      amount: ShareAmountField(
-                        value: 41,
-                        auto: true,
-                        onChanged: (_) {},
-                      ),
-                      trailing: AutoToggleChip(value: true, onChanged: (_) {}),
-                    ),
-                    ShareRow(
-                      avatar: const SizedBox.square(
-                        dimension: SplitRow.avatarSize,
-                      ),
-                      name: const SplitRowName.picked('บอส ทดสอบ'),
-                      amount: ShareAmountField(value: 82, onChanged: (_) {}),
-                      trailing: SplitRowAction(
-                        icon: AppIcons.close,
-                        tooltip: 'Remove',
-                        onTap: () {},
-                      ),
-                    ),
-                  ],
-                  status: const ShareStatus('✓ แบ่งครบแล้ว', ok: true),
-                )
-              else if (_linkMode == 2)
-                ShareCard(
-                  title: 'ใครจ่าย และจ่ายเท่าไหร่',
-                  actions: [AppChip(label: 'หารเท่ากัน', onTap: () {})],
-                  rows: [
-                    ShareRow(
-                      avatar: const SizedBox.square(
-                        dimension: SplitRow.avatarSize,
-                      ),
-                      name: const SplitRowName.muted('ฉันจ่ายเอง'),
-                      amount: ShareAmountField(value: 0, onChanged: (_) {}),
-                      trailing: AutoToggleChip(value: false, onChanged: (_) {}),
-                    ),
-                    ShareRow(
-                      avatar: const SizedBox.square(
-                        dimension: SplitRow.avatarSize,
-                      ),
-                      name: const SplitRowName.picked('ลี ทดสอบ'),
-                      amount: ShareAmountField(value: 100, onChanged: (_) {}),
-                      trailing: SplitRowAction(
-                        icon: AppIcons.close,
-                        tooltip: 'Remove',
-                        onTap: () {},
-                      ),
-                    ),
-                  ],
-                  status: const ShareStatus('ยังขาด ฿23', ok: false),
-                )
-              else if (_linkMode == 3)
-                ShareCard(
-                  // No title: the EventPickChip takes the header.
-                  headerLeading: EventPickChip(
-                    name: 'ทริปเขาใหญ่',
-                    onTap: () => _note('pick event'),
-                    onClear: () => _note('event removed'),
-                  ),
-                  rows: [
-                    const ShareSubhead(title: 'ใครจ่าย'),
-                    ShareRow(
-                      avatar: const SizedBox.square(
-                        dimension: SplitRow.avatarSize,
-                      ),
-                      name: SplitRowName.picked('ลี ทดสอบ', onTap: () {}),
-                      amount: const ShareAmountField(
-                        value: 123,
-                        onChanged: null,
-                      ),
-                    ),
-                    ShareSubhead(
-                      title: 'ใครอยู่ในบิล',
-                      actions: [
-                        AppChip(label: 'หารเท่ากัน', onTap: () {}),
-                        AppChip(
-                          label: 'เพิ่มคน',
-                          icon: AppIcons.add,
-                          onTap: () {},
-                        ),
-                      ],
-                    ),
-                    ShareRow(
-                      avatar: const SizedBox.square(
-                        dimension: SplitRow.avatarSize,
-                      ),
-                      name: const SplitRowName.muted('ฉัน'),
-                      amount: ShareAmountField(
-                        value: 41,
-                        auto: true,
-                        onChanged: (_) {},
-                      ),
-                      trailing: AutoToggleChip(value: true, onChanged: (_) {}),
-                    ),
-                    ShareRow(
-                      avatar: const SizedBox.square(
-                        dimension: SplitRow.avatarSize,
-                      ),
-                      name: const SplitRowName.picked('มาตาก'),
-                      amount: ShareAmountField(value: 41, onChanged: (_) {}),
-                      trailing: SplitRowAction(
-                        icon: AppIcons.close,
-                        tooltip: 'Remove',
-                        onTap: () {},
-                      ),
-                      tag: const AppChip(
-                        label: 'ใหม่ · เพิ่มเข้าอีเวนต์',
-                        size: ChipSize.mini,
-                        tone: AppChipTone.info,
-                        selected: true,
-                      ),
-                    ),
-                  ],
-                  status: const ShareStatus('เกินยอด ฿5', ok: false),
-                ),
+              if (_linkMode == 1) _peopleCard(event: 'ทริปเขาใหญ่'),
             ],
           ),
         ),

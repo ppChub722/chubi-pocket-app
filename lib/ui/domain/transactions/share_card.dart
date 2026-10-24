@@ -193,6 +193,7 @@ class ShareRow extends StatelessWidget {
     required this.amount,
     this.trailing,
     this.tag,
+    this.nameTrailing,
     super.key,
   });
 
@@ -202,6 +203,9 @@ class ShareRow extends StatelessWidget {
   final Widget? trailing;
   final Widget? tag;
 
+  /// Chips right after the name (the [PayChip], "คืนแล้ว").
+  final Widget? nameTrailing;
+
   @override
   Widget build(BuildContext context) {
     final row = SplitRow(
@@ -209,6 +213,7 @@ class ShareRow extends StatelessWidget {
       name: name,
       amount: amount,
       trailing: trailing,
+      nameTrailing: nameTrailing,
     );
     final tag = this.tag;
     if (tag == null) return row;

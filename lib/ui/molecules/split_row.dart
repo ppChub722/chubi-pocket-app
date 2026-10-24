@@ -17,6 +17,7 @@ class SplitRow extends StatelessWidget {
     required this.name,
     required this.amount,
     this.trailing,
+    this.nameTrailing,
     super.key,
   });
 
@@ -31,6 +32,9 @@ class SplitRow extends StatelessWidget {
   final Widget amount;
   final Widget? trailing;
 
+  /// Chips right after the name ("จ่าย", "คืนแล้ว").
+  final Widget? nameTrailing;
+
   @override
   Widget build(BuildContext context) => Row(
     children: [
@@ -39,7 +43,17 @@ class SplitRow extends StatelessWidget {
         child: Align(alignment: Alignment.centerLeft, child: avatar),
       ),
       const SizedBox(width: AppSpacing.sm),
-      Expanded(child: name),
+      Expanded(
+        child: nameTrailing == null
+            ? name
+            : Row(
+                children: [
+                  Flexible(child: name),
+                  const SizedBox(width: AppSpacing.xs),
+                  nameTrailing!,
+                ],
+              ),
+      ),
       const SizedBox(width: AppSpacing.xs),
       amount,
       SizedBox(

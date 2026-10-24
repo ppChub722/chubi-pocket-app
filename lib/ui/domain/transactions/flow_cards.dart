@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_icon_button.dart';
 import '../../tokens/app/app_icons.dart';
+import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 
 class FlowCards extends StatelessWidget {
@@ -57,34 +57,58 @@ class FlowCards extends StatelessWidget {
             // The money icon under the arrow says what travels between the
             // cards (owner 2026-10-23).
             Builder(
-              builder: (context) => Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Read-only: a plain arrow, not a greyed-out button.
-                  if (onSwap == null)
-                    Padding(
-                      padding: const EdgeInsets.all(AppSpacing.sm),
-                      child: Icon(
-                        AppIcons.arrowForward,
-                        size: 22,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    )
-                  else
-                    AppIconButton.flat(
-                      tooltip: swapTooltip,
-                      dense: true,
-                      icon: AppIcons.arrowForward,
-                      onPressed: onSwap,
+              builder: (context) {
+                final scheme = Theme.of(context).colorScheme;
+                final column = Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Read-only: a plain arrow, not a greyed-out button.
+                    onSwap == null
+                        ? Icon(
+                            AppIcons.arrowForward,
+                            size: 24,
+                            color: scheme.onSurfaceVariant,
+                          )
+                        : DecoratedBox(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: scheme.onSurface.withValues(alpha: 0.08),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(AppSpacing.sm),
+                              child: Icon(
+                                AppIcons.arrowForward,
+                                size: 22,
+                                color: scheme.onSurface,
+                              ),
+                            ),
+                          ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Icon(
+                      AppIcons.cash,
+                      key: const ValueKey('flowMoney'),
+                      size: 30,
+                      color: scheme.onSurfaceVariant,
                     ),
-                  Icon(
-                    AppIcons.cash,
-                    key: const ValueKey('flowMoney'),
-                    size: 16,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ],
-              ),
+                  ],
+                );
+                // The swap takes the whole column, top to bottom.
+                return SizedBox(
+                  width: 64,
+                  child: onSwap == null
+                      ? column
+                      : Semantics(
+                          button: true,
+                          label: swapTooltip,
+                          child: InkWell(
+                            key: const ValueKey('flowSwap'),
+                            onTap: onSwap,
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            child: column,
+                          ),
+                        ),
+                );
+              },
             ),
             Expanded(child: to),
           ],

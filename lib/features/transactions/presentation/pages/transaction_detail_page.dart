@@ -240,13 +240,19 @@ class _LoadedState extends State<_Loaded>
         _ => picked,
       },
     );
+    _c.eventChanged(hasEvent: _eventName(l, widget.tx) != null);
   }
 
-  void _clearEvent() => setState(
-    () => _eventChange = widget.tx.projectId == null
-        ? null
-        : const RemoveFromEvent(),
-  );
+  void _clearEvent() {
+    setState(
+      () => _eventChange = widget.tx.projectId == null
+          ? null
+          : const RemoveFromEvent(),
+    );
+    _c.eventChanged(
+      hasEvent: _eventName(AppLocalizations.of(context)!, widget.tx) != null,
+    );
+  }
 
   String? _eventName(AppLocalizations l, Transaction tx) =>
       switch (_eventChange) {

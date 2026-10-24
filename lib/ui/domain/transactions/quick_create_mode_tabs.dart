@@ -27,6 +27,7 @@ class QuickCreateModeTabs extends StatelessWidget {
   static const double _activeShare = 0.44;
 
   static const _inset = 4.0;
+  static const _duration = Duration(milliseconds: 280);
 
   static IconData iconOf(QuickCreateMode m) => switch (m) {
     QuickCreateMode.tx => AppIcons.transactions,
@@ -85,16 +86,17 @@ class QuickCreateModeTabs extends StatelessWidget {
     final text = theme.textTheme;
     final color = QuickCreateModeColors.of(context, m);
     final on = QuickCreateModeColors.onOf(context, m);
-    final label = Text(
-      labels[m]!,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: selected
+    final duration = animate ? _duration : Duration.zero;
+    final label = AnimatedDefaultTextStyle(
+      duration: duration,
+      curve: Curves.easeOutCubic,
+      style: (selected
           ? text.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: on)
           : text.labelLarge?.copyWith(
               fontWeight: FontWeight.w500,
               color: theme.colorScheme.onSurfaceVariant,
-            ),
+            ))!,
+      child: Text(labels[m]!, maxLines: 1, overflow: TextOverflow.ellipsis),
     );
     return Semantics(
       button: true,
@@ -106,7 +108,7 @@ class QuickCreateModeTabs extends StatelessWidget {
         },
         child: AnimatedContainer(
           key: ValueKey('quickMode-${m.name}'),
-          duration: animate ? const Duration(milliseconds: 250) : Duration.zero,
+          duration: duration,
           curve: Curves.easeOutCubic,
           width: width,
           height: double.infinity,
@@ -124,16 +126,26 @@ class QuickCreateModeTabs extends StatelessWidget {
             ],
           ),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-          child: selected
-              ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(iconOf(m), size: 22, color: on),
-                    const SizedBox(width: AppSpacing.xs),
-                    Flexible(child: label),
-                  ],
-                )
-              : label,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // The icon grows in (and shrinks out) beside the label.
+              AnimatedSize(
+                duration: duration,
+                curve: Curves.easeOutCubic,
+                alignment: AlignmentDirectional.centerStart,
+                child: selected
+                    ? Padding(
+                        padding: const EdgeInsetsDirectional.only(
+                          end: AppSpacing.xs,
+                        ),
+                        child: Icon(iconOf(m), size: 22, color: on),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              Flexible(child: label),
+            ],
+          ),
         ),
       ),
     );
