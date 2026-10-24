@@ -304,7 +304,7 @@
   "debtCreatedAt": "วันที่สร้าง",
   "debtCounterparty": "กับใคร",
   "debtCounterpartyPlaceholder": "เลือกผู้ติดต่อ หรือพิมพ์ชื่อ",
-  "debtCounterpartyRequired": "เลือกหรือพิมพ์ชื่อ",
+  "debtCounterpartyRequired": "ใส่ชื่อคนก่อน",
   "debtCancel": "ยกเลิกหนี้นี้",
   "debtCancelTitle": "ยกเลิกหนี้นี้?",
   "debtCancelBody": "ไม่มีเงินเคลื่อนไหว ใช้ตอนยกหนี้ให้ หรือบันทึกผิด",

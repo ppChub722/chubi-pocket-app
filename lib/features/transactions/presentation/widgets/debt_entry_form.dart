@@ -121,15 +121,31 @@ class DebtEntryController extends ChangeNotifier {
 
   bool get amountIsAuto => _autoAmount != null && amount.text == _autoAmount;
 
-  /// The description is never typed: it is worked out from the side, the
-  /// direction and the person every time one of them changes.
-  void refreshOrigin() {
+  /// The words worked out from the side, the direction and the person; null
+  /// until a person is picked.
+  String? get originText {
     final p = _person;
     final describe = describeOrigin;
-    final text = p == null || describe == null
-        ? ''
+    return p == null || describe == null
+        ? null
         : describe(repaying, towardMe, p.person.name);
-    if (description.text != text) description.text = text;
+  }
+
+  String? _autoDescription;
+
+  /// Settling: the description is never typed, it is [originText] every time
+  /// the side, direction or person changes. Recording: the person types it
+  /// (blank saves none; the debt then shows [originText] as its default), so
+  /// only the text settling filled itself is taken back out.
+  void refreshOrigin() {
+    if (repaying) {
+      final text = originText ?? '';
+      _autoDescription = text;
+      if (description.text != text) description.text = text;
+    } else if (_autoDescription != null) {
+      if (description.text == _autoDescription) description.text = '';
+      _autoDescription = null;
+    }
   }
 
   void _clearAutoAmount() {
@@ -161,7 +177,10 @@ class DebtEntryController extends ChangeNotifier {
         (direction == DebtEntryDirection.paid ? amountValue : -amountValue);
   }
 
-  bool get hasKeyData => amountValue > 0 || note.text.trim().isNotEmpty;
+  bool get hasKeyData =>
+      amountValue > 0 ||
+      note.text.trim().isNotEmpty ||
+      (!repaying && description.text.trim().isNotEmpty);
 
   /// The direction both chips share (owner 2026-10-21, the arrow): them → me
   /// (รอรับ / รับคืน) or me → them (รอจ่าย / จ่ายคืน).
@@ -863,10 +882,13 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
               onPickDate: _pickDate,
               autofocus: widget.autofocus,
               symbol: symbol,
-              // The description is worked out, not typed (owner 2026-10-23).
-              titleReadOnly: true,
-              titleLabel: l.debtOriginFieldLabel,
-              titleHint: l.debtOriginPickFirst,
+              // Settling words its own description; recording lets the person
+              // type one, the default ("ให้ ลี ยืม") being the hint.
+              titleReadOnly: repay,
+              titleLabel: repay ? l.debtOriginFieldLabel : null,
+              titleHint: repay
+                  ? l.debtOriginPickFirst
+                  : _c.originText ?? l.commonDescription,
               flowRow: _flowCards(l),
             ),
             SizedBox(height: HeroMetrics.of(context).after),

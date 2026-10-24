@@ -26,8 +26,9 @@ DebtEntryDirection? debtDirectionFor(double? net) =>
       NetSide.even => null,
     };
 
-/// The words quick create saves as a debt's description; shown wherever an
-/// entry (or its wallet transaction) has none.
+/// The default words of a debt with no description of its own (quick create
+/// saves a typed one, or none); shown wherever an entry (or its wallet
+/// transaction) has none.
 String debtAutoTitle(
   AppLocalizations l, {
   required DebtEntryDirection direction,

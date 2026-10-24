@@ -945,7 +945,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtCounterpartyPlaceholder => 'Pick a contact or type a name';
 
   @override
-  String get debtCounterpartyRequired => 'Pick or type a name';
+  String get debtCounterpartyRequired => 'Add the person first';
 
   @override
   String get debtCancel => 'Cancel this debt';

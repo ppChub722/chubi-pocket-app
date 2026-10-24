@@ -1122,10 +1122,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final l = AppLocalizations.of(context)!;
     final d = _debt;
     final person = d.person;
-    final problem = d.amountValue <= 0
-        ? l.quickAmountRequired
-        : person == null
+    // The person first: description and amount can be typed before picking.
+    final problem = person == null
         ? l.debtCounterpartyRequired
+        : d.amountValue <= 0
+        ? l.quickAmountRequired
         : null;
     if (problem != null || person == null) {
       HapticFeedback.lightImpact();

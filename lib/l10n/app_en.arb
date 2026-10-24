@@ -343,7 +343,7 @@
   "debtCreatedAt": "Created",
   "debtCounterparty": "With",
   "debtCounterpartyPlaceholder": "Pick a contact or type a name",
-  "debtCounterpartyRequired": "Pick or type a name",
+  "debtCounterpartyRequired": "Add the person first",
   "debtCancel": "Cancel this debt",
   "debtCancelTitle": "Cancel this debt?",
   "debtCancelBody": "No money moves. Use it when you forgive the debt or recorded it by mistake.",

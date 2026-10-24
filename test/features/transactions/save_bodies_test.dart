@@ -53,6 +53,31 @@ DraftFormController _form({
 }
 
 void main() {
+  test('debt description: typed when recording, worded when settling', () {
+    final d = DebtEntryController(
+      person: const DebtPick(
+        key: 'n:lee',
+        person: EmbeddedPerson(name: 'Lee'),
+      ),
+    )..describeOrigin = (repaying, toMe, name) =>
+        repaying ? 'pay $name' : 'lend $name';
+    addTearDown(d.dispose);
+
+    expect(d.originText, 'lend Lee');
+    d.description.text = 'rent';
+    d.refreshOrigin();
+    expect(d.description.text, 'rent');
+
+    d.setSub(DebtEntrySub.repay);
+    expect(d.description.text, 'pay Lee');
+    d.setSub(DebtEntrySub.record);
+    expect(d.description.text, '');
+
+    d.description.text = 'rent';
+    d.refreshOrigin();
+    expect(d.description.text, 'rent');
+  });
+
   test('แบ่ง with another payer saves only my share, no wallet, no splits', () {
     final c = _form(
       amount: '300',

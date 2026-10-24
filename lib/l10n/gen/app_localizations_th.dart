@@ -930,7 +930,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtCounterpartyPlaceholder => 'เลือกผู้ติดต่อ หรือพิมพ์ชื่อ';
 
   @override
-  String get debtCounterpartyRequired => 'เลือกหรือพิมพ์ชื่อ';
+  String get debtCounterpartyRequired => 'ใส่ชื่อคนก่อน';
 
   @override
   String get debtCancel => 'ยกเลิกหนี้นี้';

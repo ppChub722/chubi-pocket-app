@@ -1781,7 +1781,7 @@ abstract class AppLocalizations {
   /// No description provided for @debtCounterpartyRequired.
   ///
   /// In en, this message translates to:
-  /// **'Pick or type a name'**
+  /// **'Add the person first'**
   String get debtCounterpartyRequired;
 
   /// No description provided for @debtCancel.
