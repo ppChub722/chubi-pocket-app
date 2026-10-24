@@ -23,7 +23,7 @@ class AccountsRepository {
     return _guard(() async {
       final res = await _client.dio.get<Map<String, dynamic>>(
         '/accounts/$id',
-        queryParameters: const {'include': 'summary,members'},
+        queryParameters: const {'include': 'members'},
       );
       return AccountDetail.fromJson(res.data!);
     });

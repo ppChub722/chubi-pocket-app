@@ -344,8 +344,11 @@ const List<PageFlow> pageFlows = [
     FlowStep.open([
       FlowCall(
         'getAccount',
-        note: 'include=summary,members: wallet + members + month totals',
+        note: 'include=members: wallet + members (this month is on the row)',
       ),
+    ]),
+    FlowStep.action('Period changed to another month', [
+      FlowCall('getAccountSummary', note: 'that month\'s in / out, cached'),
     ]),
     FlowStep.action('Transactions tab opened (lazy)', [
       FlowCall('listTransactions', note: 'rows of this wallet (account_id)'),
