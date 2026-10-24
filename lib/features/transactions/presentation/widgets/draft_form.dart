@@ -226,6 +226,70 @@ class DraftFormController extends ChangeNotifier {
     person: s.person,
   );
 
+  /// The name of a typed row was edited: its share and the payer mark follow.
+  void renameDraft(SplitDraft d, String name) {
+    final before = _draftPerson(d);
+    d.personName = name;
+    rekeyDraft(before, d);
+  }
+
+  /// [d] is somebody else now (or renamed): what was keyed to [before] (its
+  /// event share, being the payer) moves to the new person.
+  void rekeyDraft(LinkPerson before, SplitDraft d) {
+    final after = _draftPerson(d);
+    if (before.key != after.key) {
+      final share = link.eventShares.remove(before.key);
+      if (share != null) link.eventShares[after.key] = share;
+      if (link.paidBy?.key == before.key) link.paidBy = after;
+      final payer = link.eventPayer;
+      if (payer != null && payer.memberId == null && payer.key == before.key) {
+        link.eventPayer = after;
+      }
+    }
+    setSplits(List.of(splits));
+  }
+
+  /// People added to the bill (the picker, or an event's members): they go
+  /// after whoever is already there; the empty placeholder row makes way.
+  void addPeople(List<LinkPerson> people) {
+    bool blank(SplitDraft s) =>
+        s.personName.trim().isEmpty && (s.owedAmount ?? 0) == 0;
+    final keep = [
+      for (final s in splits)
+        if (!blank(s)) s,
+    ];
+    final have = {
+      for (final s in keep)
+        if (s.personName.trim().isNotEmpty) _draftPerson(s).key,
+    };
+    for (final p in people) {
+      if (!have.add(p.key)) continue;
+      keep.add(
+        SplitDraft()..setPerson(p.name, contact: p.contactId, look: p.person),
+      );
+    }
+    setSplits(keep.isEmpty ? [SplitDraft()] : keep);
+  }
+
+  /// An event's members, as people for [addPeople] (not me).
+  static List<LinkPerson> peopleOfMembers(Iterable<ProjectMember> members) => [
+    for (final m in members)
+      if (!m.isMe)
+        LinkPerson(
+          name: m.displayName,
+          contactId: m.contactId,
+          person: m.contactId == null
+              ? null
+              : EmbeddedPerson(
+                  name: m.displayName,
+                  contactId: m.contactId,
+                  iconCode: m.iconCode,
+                  linked: m.isLinked,
+                  linkedUserId: m.userId,
+                ),
+        ),
+  ];
+
   bool get isTransfer => type == TransactionType.transfer;
   double get amountValue => AmountInput.parse(amount.text) ?? 0;
 
@@ -342,6 +406,10 @@ class DraftFormController extends ChangeNotifier {
         : LinkMode.split;
     if (to == from && link.mode != null) return;
     link.switchTo(to, from: from);
+    // Opening the bill tab: ฉัน and the first (empty) person, ready to fill.
+    if (next == LinkMode.split && from == LinkMode.personal && splits.isEmpty) {
+      splits = [SplitDraft()];
+    }
     notifyListeners();
   }
 
@@ -931,6 +999,7 @@ class DraftForm extends StatefulWidget {
     this.linkTabs = false,
     this.linkEventIsNew = false,
     this.linkIsEventMember,
+    this.linkEventMembers,
     this.accentColor,
     super.key,
   });
@@ -941,6 +1010,9 @@ class DraftForm extends StatefulWidget {
 
   /// The picked existing event's members, as a check ([LinkSection]).
   final bool Function(LinkPerson p)? linkIsEventMember;
+
+  /// The picked existing event's members, for the people picker.
+  final List<ProjectMember>? linkEventMembers;
 
   /// Quick create (new expense): the "ผูกกับ" tabs ([LinkSection]) instead
   /// of the split / event section; [eventSlot] feeds the อีเวนต์ card.
@@ -1462,6 +1534,7 @@ class _DraftFormState extends State<DraftForm> {
               : (widget.eventSlot ?? const SplitEventSlot()),
           eventIsNew: widget.linkEventIsNew,
           isEventMember: widget.linkIsEventMember,
+          eventMembers: widget.linkEventMembers,
           recurring: widget.recurringSlot,
         ),
       ] else if (!isTransfer || widget.recurringSlot != null) ...[
@@ -1672,6 +1745,7 @@ class _DraftFormState extends State<DraftForm> {
             event: widget.eventSlot ?? const SplitEventSlot(),
             eventIsNew: widget.linkEventIsNew,
             isEventMember: widget.linkIsEventMember,
+            eventMembers: widget.linkEventMembers,
             recurring: widget.recurringSlot,
           ),
         ),

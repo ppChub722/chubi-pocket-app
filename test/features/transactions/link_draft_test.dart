@@ -505,4 +505,34 @@ void main() {
       expect(personal.linkMode(hasEvent: false), LinkMode.personal);
     },
   );
+
+  test('the bill tab opens with an empty person; people go after the rest', () {
+    final c = _form()..setLinkMode(LinkMode.split, hasEvent: false);
+    expect(c.splits, hasLength(1));
+    expect(c.splits.single.personName, isEmpty);
+
+    // Nothing entered yet: the event's people take the empty row's place.
+    c.addPeople([_boss, _mtk]);
+    expect(c.splitPeople, [_boss, _mtk]);
+    expect(c.splits, hasLength(2));
+
+    // Something entered: new people follow, nobody twice.
+    c.splits.first.owedAmount = 30;
+    c.addPeople([_boss, _lee]);
+    expect(c.splitPeople, [_boss, _mtk, _lee]);
+  });
+
+  test('renaming a typed row keeps its share and the payer mark', () {
+    final c = _form()
+      ..setSplits([_split('มา', 40)])
+      ..setLinkMode(LinkMode.split, hasEvent: false);
+    final row = c.splits.single;
+    c.link.eventShares[const LinkPerson(name: 'มา').key] = 25;
+    c.setPaidBy(const LinkPerson(name: 'มา'));
+
+    c.renameDraft(row, 'มาตาก');
+    expect(c.link.eventShares[_mtk.key], 25);
+    expect(c.link.paidBy, _mtk);
+    expect(c.link.eventShares.containsKey('n:มา'), isFalse);
+  });
 }

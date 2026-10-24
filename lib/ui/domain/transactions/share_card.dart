@@ -26,8 +26,13 @@ class ShareCard extends StatelessWidget {
     this.actions = const [],
     this.headerLeading,
     this.status,
+    this.top,
     super.key,
   }) : assert(title != null || headerLeading != null, 'a card needs a header');
+
+  /// A row above the header, set off from it by a divider (the "add to
+  /// event" row of quick create).
+  final Widget? top;
 
   final String? title;
 
@@ -61,6 +66,13 @@ class ShareCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (top != null) ...[
+            top!,
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              child: Divider(height: 1, color: scheme.outlineVariant),
+            ),
+          ],
           _HeaderLine(
             actions: actions,
             title: title == null

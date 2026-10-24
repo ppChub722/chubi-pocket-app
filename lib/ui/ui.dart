@@ -217,6 +217,7 @@ export 'domain/events/position_row.dart';
 export 'domain/transactions/entry_card.dart';
 export 'domain/transactions/flow_cards.dart';
 export 'domain/transactions/link_mode_bar.dart';
+export 'domain/transactions/bill_people_card.dart';
 export 'domain/transactions/pay_chip.dart';
 export 'domain/transactions/share_card.dart';
 export 'domain/transactions/entry_card_skeleton.dart';

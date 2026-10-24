@@ -2798,6 +2798,7 @@
   "txLinkCardOver": "{amount} over",
   "@txLinkCardOver": {"placeholders": {"amount": {"type": "String"}}},
   "txLinkCardNewToEvent": "New · joins the event",
+  "txLinkAddToEvent": "Add to event",
   "txLinkWalletNotOut": "Not from your wallet",
   "txLinkWalletPart": "{amount} from this wallet",
   "@txLinkWalletPart": {"placeholders": {"amount": {"type": "String"}}},

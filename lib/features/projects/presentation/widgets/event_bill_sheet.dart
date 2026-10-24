@@ -96,7 +96,7 @@ class _Person {
   );
 
   final String key;
-  final String name;
+  String name;
   final String? memberId;
   final String? contactId;
   final IconCode? iconCode;
@@ -107,6 +107,9 @@ class _Person {
   final bool isNew;
 
   bool paidBack = false;
+
+  /// A name that was typed (no member, no contact): the row lets it be edited.
+  bool get typed => !isMe && memberId == null && contactId == null;
 
   Map<String, dynamic> get json => isMe
       ? const {'me': true}
@@ -356,25 +359,49 @@ class _EventBillSheetState extends State<_EventBillSheet> {
         if (m != null) _people.add(_Person.member(m));
       }
       for (final pick in r.picks) {
-        final added = switch (pick) {
-          ContactPicked(:final Contact contact) => _Person(
-            key: 'c:${contact.id}',
-            name: contact.name,
-            contactId: contact.id,
-            iconCode: contact.iconCode,
-            level: contact.isLinked ? PersonLevel.linked : PersonLevel.contact,
-            isNew: true,
-          ),
-          ContactNamePicked(:final name) ||
-          ContactNameTyped(:final name) => _Person(
-            key: 'n:${name.trim().toLowerCase()}',
-            name: name,
-            isNew: true,
-          ),
-        };
+        final added = _personOfPick(pick);
         if (!_people.any((p) => p.key == added.key)) _people.add(added);
       }
       if (_person(_payerKey) == null) _payerKey = _people.firstOrNull?.key;
+    });
+  }
+
+  static _Person _personOfPick(ContactPick pick) => switch (pick) {
+    ContactPicked(:final Contact contact) => _Person(
+      key: 'c:${contact.id}',
+      name: contact.name,
+      contactId: contact.id,
+      iconCode: contact.iconCode,
+      level: contact.isLinked ? PersonLevel.linked : PersonLevel.contact,
+      isNew: true,
+    ),
+    ContactNamePicked(:final name) || ContactNameTyped(:final name) => _Person(
+      key: 'n:${name.trim().toLowerCase()}',
+      name: name,
+      isNew: true,
+    ),
+  };
+
+  /// Pick somebody else for a row: it keeps its place, its share and the
+  /// payer mark.
+  Future<void> _changePerson(_Person p) async {
+    final r = await ContactPicker.one(
+      context,
+      selectedId: p.contactId,
+      allowFreeText: true,
+      allowCreate: true,
+      initialName: p.typed ? p.name : null,
+    );
+    if (r == null || !mounted) return;
+    final next = _personOfPick(r);
+    if (_people.any((x) => x.key == next.key && x != p)) return;
+    setState(() {
+      final i = _people.indexOf(p);
+      if (i < 0) return;
+      _people[i] = next;
+      if (_payerKey == p.key) _payerKey = next.key;
+      final share = _typed.remove(p.key);
+      if (share != null) _typed[next.key] = share;
     });
   }
 
@@ -752,51 +779,46 @@ class _EventBillSheetState extends State<_EventBillSheet> {
         .where((p) => p.key != _payerKey)
         .fold<double>(0, (s, p) => s + (shares[p.key] ?? 0));
     final over = others - _total;
-    final ordered = [?_payer, ..._people.where((p) => p.key != _payerKey)];
-    Widget row(_Person p) {
+    // ฉัน first, the rest as added: choosing who paid never moves a row.
+    final ordered = [
+      ..._people.where((p) => p.isMe),
+      ..._people.where((p) => !p.isMe),
+    ];
+    BillPerson row(_Person p) {
       final payer = p.key == _payerKey;
-      return ShareRow(
-        key: ValueKey('evbPerson:${p.key}'),
+      return BillPerson(
+        id: p.key,
+        name: p.name,
         avatar: _personAvatar(p),
-        name: p.isMe
-            ? SplitRowName.muted(l.txLinkCardMe)
-            : SplitRowName.picked(p.name),
-        nameTrailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            PayChip(label: l.evbPays, paid: payer, onTap: () => _setPayer(p)),
-            if (!payer && _payer != null) ...[
-              const SizedBox(width: AppSpacing.xs),
-              AppChip(
-                label: l.evbPaidBack,
-                icon: p.paidBack ? AppIcons.check : null,
-                selected: p.paidBack,
-                dashed: !p.paidBack,
-                tone: AppChipTone.info,
-                size: ChipSize.mini,
-                onTap: () => setState(() => p.paidBack = !p.paidBack),
-              ),
-            ],
-          ],
-        ),
-        amount: ShareAmountField(
-          value: shares[p.key],
-          auto: !payer && !_typed.containsKey(p.key),
-          onChanged: payer
-              ? null
-              : (v) => setState(() {
-                  if (v == null) {
-                    _typed.remove(p.key);
-                  } else {
-                    _typed[p.key] = v;
-                  }
-                }),
-        ),
-        trailing: SplitRowAction(
-          icon: AppIcons.close,
-          tooltip: l.commonRemove,
-          onTap: _people.length > 1 ? () => _remove(p) : null,
-        ),
+        isMe: p.isMe,
+        editableName: p.typed,
+        onName: (v) => setState(() => p.name = v),
+        onChangePerson: () => _changePerson(p),
+        amount: shares[p.key],
+        auto: !payer && !_typed.containsKey(p.key),
+        onAmount: payer
+            ? null
+            : (v) => setState(() {
+                if (v == null) {
+                  _typed.remove(p.key);
+                } else {
+                  _typed[p.key] = v;
+                }
+              }),
+        paid: payer,
+        onPay: payer ? null : () => _setPayer(p),
+        chips: [
+          if (!payer && _payer != null)
+            AppChip(
+              label: l.evbPaidBack,
+              icon: p.paidBack ? AppIcons.check : null,
+              selected: p.paidBack,
+              dashed: !p.paidBack,
+              tone: AppChipTone.info,
+              size: ChipSize.mini,
+              onTap: () => setState(() => p.paidBack = !p.paidBack),
+            ),
+        ],
         tag: p.isNew
             ? AppChip(
                 label: l.txLinkCardNewToEvent,
@@ -804,35 +826,16 @@ class _EventBillSheetState extends State<_EventBillSheet> {
                 tone: AppChipTone.info,
               )
             : null,
+        onRemove: _people.length > 1 ? () => _remove(p) : null,
       );
     }
 
-    return ShareCard(
+    return BillPeopleCard(
       title: l.evbPeople(_people.length),
-      actions: [
-        AppChip(
-          label: l.txSplitEqually,
-          onTap: _typed.isEmpty ? null : _splitEqual,
-          size: ChipSize.mini,
-        ),
-        AppChip(
-          label: l.txSplitAddPerson,
-          icon: AppIcons.add,
-          onTap: _addPeople,
-          size: ChipSize.mini,
-        ),
-      ],
-      rows: [
-        ConstrainedBox(
-          // About five rows; more scroll inside the card.
-          constraints: const BoxConstraints(maxHeight: 5 * 56),
-          child: ListView(
-            shrinkWrap: true,
-            padding: EdgeInsets.zero,
-            children: [for (final p in ordered) row(p)],
-          ),
-        ),
-      ],
+      people: [for (final p in ordered) row(p)],
+      onEqually: _typed.isEmpty ? null : _splitEqual,
+      onAdd: _addPeople,
+      maxRows: 5,
       status: _total <= 0
           ? null
           : over > 0.005

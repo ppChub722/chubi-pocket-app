@@ -13639,6 +13639,12 @@ abstract class AppLocalizations {
   /// **'New · joins the event'**
   String get txLinkCardNewToEvent;
 
+  /// No description provided for @txLinkAddToEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to event'**
+  String get txLinkAddToEvent;
+
   /// No description provided for @txLinkWalletNotOut.
   ///
   /// In en, this message translates to:

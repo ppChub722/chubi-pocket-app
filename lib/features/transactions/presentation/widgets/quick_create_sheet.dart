@@ -1369,6 +1369,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       final members = await projects.listMembers(target.project.id);
       if (!mounted || !identical(_event, target)) return;
       setState(() => _eventMembers = members);
+      // The event's people join the bill (after whoever is already in it).
+      _c.addPeople(DraftFormController.peopleOfMembers(members));
     } on ApiException {
       // No tags; the save still adds whoever isn't a member.
     }
@@ -1721,6 +1723,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                     (!_draftLike || _linkEdit.active || _editingDraft),
                 linkEventIsNew: _event is NewEventTarget,
                 linkIsEventMember: _isEventMember,
+                linkEventMembers: _eventMembers,
                 recurringSlot: _recurringSlot(l),
                 eventSlot:
                     (!_draftLike || _linkEdit.active) &&

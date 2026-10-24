@@ -177,7 +177,7 @@ class EventRow extends StatelessWidget {
     this.editing = true,
     this.onLongPress,
     this.variant = SplitEventVariant.full,
-    this.inCard = false,
+    this.label,
     super.key,
   });
 
@@ -189,8 +189,8 @@ class EventRow extends StatelessWidget {
   final VoidCallback? onLongPress;
   final SplitEventVariant variant;
 
-  /// The last row of a [ShareCard]: a gap above it.
-  final bool inCard;
+  /// Replaces "อีเวนต์" as the row's label ("เพิ่มในอีเวนต์").
+  final String? label;
 
   bool get _compact => variant == SplitEventVariant.compact;
 
@@ -204,7 +204,24 @@ class EventRow extends StatelessWidget {
       locked: locked,
       editing: editing,
     );
-    final Widget row = _compact
+    final custom = label;
+    final Widget row = custom != null
+        // Its own label: as wide as the words, not the forms' shared column.
+        ? Row(
+            children: [
+              Text(
+                custom,
+                maxLines: 1,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Flexible(child: value),
+            ],
+          )
+        : _compact
         ? DraftFieldRow(
             label: l.quickEventLabel,
             dense: true,
@@ -220,13 +237,7 @@ class EventRow extends StatelessWidget {
               child: value,
             ),
           );
-    final pressable = _longPressRow(row, onLongPress);
-    return inCard
-        ? Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xs),
-            child: pressable,
-          )
-        : pressable;
+    return _longPressRow(row, onLongPress);
   }
 }
 

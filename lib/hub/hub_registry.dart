@@ -1151,6 +1151,8 @@ final List<HubPage> hubPages = [
       'LinkModeBar',
       'LinkSectionFrame',
       'SplitPickChip',
+      'BillPeopleCard',
+      'BillPerson',
       'PayChip',
       'ShareCard',
       'ShareRow',

@@ -7866,6 +7866,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txLinkCardNewToEvent => 'ใหม่ · เพิ่มเข้าอีเวนต์';
 
   @override
+  String get txLinkAddToEvent => 'เพิ่มในอีเวนต์';
+
+  @override
   String get txLinkWalletNotOut => 'ไม่ออกจากกระเป๋า';
 
   @override

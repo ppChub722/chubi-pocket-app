@@ -107,41 +107,42 @@ class _TransactionsPageState extends State<_TransactionsPage> {
 
   void _note(String s) => setState(() => _last = s);
 
-  /// The quick-create แบ่ง card: ฉัน first (the payer), a person, and — with
-  /// [event] — the EventRow at the bottom.
-  Widget _peopleCard({String? event}) => ShareCard(
-    title: 'คนในบิล | 2',
-    actions: [
-      AppChip(label: 'หารเท่ากัน', size: ChipSize.mini, onTap: () {}),
-      AppChip(
-        label: 'เพิ่มคน',
-        icon: AppIcons.add,
-        size: ChipSize.mini,
-        onTap: () {},
-      ),
-    ],
-    rows: [
-      ShareRow(
+  /// The people card of the event bill sheet and quick create's แบ่ง tab:
+  /// ฉัน first (the payer), a typed name (an input), a picked person and —
+  /// with [event] — the "เพิ่มในอีเวนต์" row on top.
+  Widget _peopleCard({String? event}) => BillPeopleCard(
+    title: 'คนในบิล | 3',
+    top: EventRow(
+      name: event,
+      label: 'เพิ่มในอีเวนต์',
+      onTap: () => _note('pick event'),
+      onClear: () => _note('event removed'),
+      variant: SplitEventVariant.compact,
+    ),
+    onEqually: () => _note('equally'),
+    onAdd: () => _note('add people'),
+    status: const ShareStatus('✓ แบ่งครบแล้ว', ok: true),
+    people: [
+      BillPerson(
+        id: 'me',
+        name: 'ส่วนของฉัน',
+        isMe: true,
         avatar: const SizedBox.square(dimension: SplitRow.avatarSize),
-        name: const SplitRowName.muted('ฉัน'),
-        nameTrailing: const PayChip(label: 'จ่าย', paid: true),
-        amount: ShareAmountField(value: 41, auto: true, onChanged: (_) {}),
-        trailing: AutoToggleChip(value: true, onChanged: (_) {}),
+        amount: 41,
+        auto: true,
+        onAmount: (_) {},
+        onAuto: (_) {},
+        paid: true,
       ),
-      ShareRow(
+      BillPerson(
+        id: 'typed',
+        name: 'มาตาก',
         avatar: const SizedBox.square(dimension: SplitRow.avatarSize),
-        name: const SplitRowName.picked('บอส ทดสอบ'),
-        nameTrailing: PayChip(
-          label: 'จ่าย',
-          paid: false,
-          onTap: () => _note('payer: บอส'),
-        ),
-        amount: ShareAmountField(value: 82, onChanged: (_) {}),
-        trailing: SplitRowAction(
-          icon: AppIcons.close,
-          tooltip: 'Remove',
-          onTap: () {},
-        ),
+        editableName: true,
+        onName: (_) {},
+        amount: 41,
+        onAmount: (_) {},
+        onPay: () => _note('payer: มาตาก'),
         tag: event == null
             ? null
             : const AppChip(
@@ -150,18 +151,20 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 tone: AppChipTone.info,
                 selected: true,
               ),
+        onRemove: () {},
       ),
-      EventRow(
-        name: event,
-        onTap: () => _note('pick event'),
-        onClear: () => _note('event removed'),
-        variant: SplitEventVariant.compact,
-        inCard: true,
+      BillPerson(
+        id: 'picked',
+        name: 'บอส ทดสอบ',
+        avatar: const SizedBox.square(dimension: SplitRow.avatarSize),
+        onChangePerson: () => _note('change person'),
+        amount: 41,
+        onAmount: (_) {},
+        onPay: () => _note('payer: บอส'),
+        onRemove: () {},
       ),
     ],
-    status: const ShareStatus('✓ แบ่งครบแล้ว', ok: true),
   );
-
   Future<void> _openForm(bool chipLayout) async {
     final controller = DraftFormController();
     await showDialog<void>(
