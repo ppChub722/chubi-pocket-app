@@ -60,6 +60,10 @@ class AppButton extends StatelessWidget {
 
   final bool submits;
 
+  /// Told the label of every tap; the app sets it to record the user's steps
+  /// (the kit itself knows no logger).
+  static void Function(String label)? tapObserver;
+
   double _height(BuildContext context) =>
       size.chipSize?.heightOf(context) ??
       (size == AppButtonSize.large ? 48 : 40);
@@ -73,7 +77,15 @@ class AppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final enabled = isEnabled(context);
-    final callback = enabled ? onPressed : null;
+    final observe = tapObserver;
+    final callback = !enabled
+        ? null
+        : observe == null
+        ? onPressed
+        : () {
+            observe(label);
+            onPressed!();
+          };
     final chip = size.chipSize;
     final minSize = Size(expand ? double.infinity : 0, _height(context));
     final padding = EdgeInsets.symmetric(

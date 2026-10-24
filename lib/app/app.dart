@@ -17,6 +17,7 @@ import 'refresh/app_refresh.dart';
 import '../core/network/api_client.dart';
 import '../core/network/connectivity_cubit.dart';
 import '../core/network/connection_cubit.dart';
+import '../core/logger/breadcrumbs.dart';
 import '../core/network/network_recorder.dart';
 import '../core/router/app_router.dart';
 import '../core/storage/secure_token_storage.dart';
@@ -157,11 +158,12 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
       },
     );
     _router = buildAppRouter(_authCubit, versionCubit: _versionCubit);
-    _router.routerDelegate.addListener(
-      () => NetworkRecorder.instance.noteRoute(
-        _router.routerDelegate.currentConfiguration.uri.path,
-      ),
-    );
+    _router.routerDelegate.addListener(() {
+      final path = _router.routerDelegate.currentConfiguration.uri.path;
+      NetworkRecorder.instance.noteRoute(path);
+      Breadcrumbs.instance.page(path);
+    });
+    AppButton.tapObserver = Breadcrumbs.instance.tap;
     _versionCubit.check();
 
     _authCubit.init();

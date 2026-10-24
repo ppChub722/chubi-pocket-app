@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/logger/app_logger.dart';
+import '../core/logger/breadcrumbs.dart';
 import '../ui/ui.dart';
 
 class BootErrorApp extends StatelessWidget {
@@ -19,9 +20,11 @@ class BootErrorApp extends StatelessWidget {
         .toList()
         .reversed
         .join('\n');
+    final steps = Breadcrumbs.instance.text;
     return 'ChubiPocket boot failure\n'
         'error: $error\n\n'
         'stack:\n${stackTrace ?? '-'}\n\n'
+        'steps (oldest first):\n${steps.isEmpty ? '-' : steps}\n\n'
         'recent logs:\n$logs';
   }
 

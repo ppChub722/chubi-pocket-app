@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'breadcrumbs.dart';
 import 'log_config.dart';
 import 'log_entry.dart';
 
@@ -135,13 +136,20 @@ class AppLogger {
   ) {
     if (level.severity < _config.minLevel.severity) return;
 
+    // An error carries the steps that led to it (Breadcrumbs).
+    final withSteps =
+        level.severity >= LogLevel.error.severity &&
+            Breadcrumbs.instance.steps.isNotEmpty &&
+            !(fields?.containsKey('steps') ?? false)
+        ? {...?fields, 'steps': Breadcrumbs.instance.steps}
+        : fields;
     final entry = LogEntry(
       timestamp: DateTime.now(),
       level: level,
       message: msg,
       requestId: requestId,
       userId: userId,
-      fields: fields ?? const {},
+      fields: withSteps ?? const {},
     );
 
     _ring.add(entry);

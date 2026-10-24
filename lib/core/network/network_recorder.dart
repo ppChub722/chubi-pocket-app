@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+import '../logger/breadcrumbs.dart';
+
 enum NetworkTrigger { open, action }
 
 @immutable
@@ -181,6 +183,12 @@ class NetworkRecorderInterceptor extends Interceptor {
     ResponseInterceptorHandler handler,
   ) {
     final o = response.requestOptions;
+    if (o.method != 'GET') {
+      Breadcrumbs.instance.add(
+        '${o.method} ${o.path} → ${response.statusCode} '
+        '(${(o.extra[_stopwatchExtra] as Stopwatch?)?.elapsedMilliseconds} ms)',
+      );
+    }
     _recorder._finish(
       o.extra[_idExtra] as int? ?? -1,
       statusCode: response.statusCode,
@@ -194,6 +202,9 @@ class NetworkRecorderInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     final o = err.requestOptions;
+    Breadcrumbs.instance.add(
+      '${o.method} ${o.path} → ${err.response?.statusCode ?? err.type.name}',
+    );
     _recorder._finish(
       o.extra[_idExtra] as int? ?? -1,
       statusCode: err.response?.statusCode,
