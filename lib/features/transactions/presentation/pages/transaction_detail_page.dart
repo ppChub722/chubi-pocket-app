@@ -714,36 +714,13 @@ class _LoadedState extends State<_Loaded>
           ? splitsBlock([
               for (var i = 0; i < splitCount; i++) const ListRowSkeleton(),
             ])
-          : hasSplits
-          ? null
-          : canEditSplits
-          ? splitsLongPressable(
-              DetailRow(
-                label: l.txSplitPeopleLabel,
-                trailing: Align(
-                  alignment: AlignmentDirectional.centerEnd,
-                  child: AppChip(
-                    icon: AppIcons.add,
-                    label: l.txSplitAddPerson,
-                    tone: AppChipTone.primary,
-                    selected: true,
-                    dashed: true,
-                    onTap: _longPressHint,
-                  ),
-                ),
-              ),
-            )
           : null;
+      // Only what is linked shows here; the empty "add" rows live in the
+      // edit page.
       eventSlot = eventName != null
           ? SplitEventSlot(name: eventName, onTap: openProject, editing: false)
-          : canJoinEvent
-          ? SplitEventSlot(
-              onTap: _longPressHint,
-              editing: false,
-              onLongPress: () => _enterEdit(then: _pickEvent),
-            )
           : null;
-      recurringSlot = recurringItem == null && !canEdit
+      recurringSlot = recurringItem == null
           ? null
           : _link.slot(
               context,
