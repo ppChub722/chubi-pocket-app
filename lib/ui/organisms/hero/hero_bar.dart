@@ -114,7 +114,12 @@ class HeroBar extends StatelessWidget {
         if (shown.length < 2)
           _bar(context, split, used, hero, scheme)
         else
-          _labelled(context, shown, _bar(context, split, used, hero, scheme)),
+          _labelled(
+            context,
+            shown,
+            _bar(context, split, used, hero, scheme),
+            hero?.track ?? scheme.surfaceContainerHighest,
+          ),
         if (left != null || right != null)
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.xs),
@@ -137,18 +142,20 @@ class HeroBar extends StatelessWidget {
   }
 
   /// Each part's share in a pill at its middle; a narrow part's pill
-  /// overlaps its neighbours, kept inside the bar.
+  /// overlaps its neighbours, kept inside the bar. A see-through part colour
+  /// is laid on the track first, so its pill is solid like its segment.
   Widget _labelled(
     BuildContext context,
     List<(double, Color)> parts,
     Widget bar,
+    Color track,
   ) {
     final pills = [
       for (final (ratio, c) in parts)
         ProgressRow.fillPill(
           context,
           '${(ratio * 100).round()}%',
-          c,
+          Color.alphaBlend(c, track),
           minHeight: height,
         ),
     ];
