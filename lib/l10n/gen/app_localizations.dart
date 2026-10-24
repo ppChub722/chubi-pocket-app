@@ -4471,12 +4471,6 @@ abstract class AppLocalizations {
   /// **'That contact can\'t be used any more'**
   String get txSplitErrorContact;
 
-  /// No description provided for @txSplitSeeDebts.
-  ///
-  /// In en, this message translates to:
-  /// **'See on the debts page'**
-  String get txSplitSeeDebts;
-
   /// No description provided for @txSplitEditOnDebts.
   ///
   /// In en, this message translates to:

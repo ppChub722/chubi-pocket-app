@@ -715,9 +715,7 @@ class _LoadedState extends State<_Loaded>
               for (var i = 0; i < splitCount; i++) const ListRowSkeleton(),
             ])
           : hasSplits
-          ? splitsLongPressable(
-              splitsBlock([DetailRow(label: l.txSplitSeeDebts)]),
-            )
+          ? null
           : canEditSplits
           ? splitsLongPressable(
               DetailRow(

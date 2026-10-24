@@ -2523,9 +2523,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txSplitErrorContact => 'That contact can\'t be used any more';
 
   @override
-  String get txSplitSeeDebts => 'See on the debts page';
-
-  @override
   String get txSplitEditOnDebts => 'Edit on the debts page';
 
   @override

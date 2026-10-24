@@ -2470,9 +2470,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txSplitErrorContact => 'ผู้ติดต่อนี้ใช้ไม่ได้แล้ว';
 
   @override
-  String get txSplitSeeDebts => 'ดูในหน้าหนี้';
-
-  @override
   String get txSplitEditOnDebts => 'แก้ได้ที่หน้าหนี้';
 
   @override

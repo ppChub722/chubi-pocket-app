@@ -868,7 +868,6 @@
   "txSplitRepaidSoFar": "Paid back {amount}",
   "@txSplitRepaidSoFar": { "placeholders": { "amount": { "type": "String" } } },
   "txSplitErrorContact": "That contact can't be used any more",
-  "txSplitSeeDebts": "See on the debts page",
   "txSplitEditOnDebts": "Edit on the debts page",
   "txSplitStatusPaid": "✓ Paid",
   "txSplitStatusRepaid": "✓ Repaid",
