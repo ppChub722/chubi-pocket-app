@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../atoms/app_divider.dart';
 import '../../atoms/select_check.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_spacing.dart';
@@ -85,8 +86,6 @@ class EventBillRow extends StatelessWidget {
   final List<Widget> children;
   final bool highlighted;
 
-  static const double tagsMaxShare = 0.6;
-
   Widget _tag(BuildContext context, int i) {
     final ref = tags[i];
     if (locked) return ref.chip(context, maxWidth: 96);
@@ -112,47 +111,74 @@ class EventBillRow extends StatelessWidget {
     final small = textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
     final payer = payerName?.trim() ?? '';
     final verb = payerVerb;
+    // "ฝน จ่าย" is its own line under the tags, sized like the bill's people.
+    final payerLine = verb != null && payer.isNotEmpty;
     final line2Text = [
       if (payer.isNotEmpty && verb == null) payer,
       if (caption?.isNotEmpty ?? false) caption!,
       if (summary?.isNotEmpty ?? false) summary!,
     ].join(' | ');
     final hasLine2 =
-        line2Text.isNotEmpty || linked || badge != null || payer.isNotEmpty;
+        line2Text.isNotEmpty ||
+        (!payerLine && (linked || badge != null || payer.isNotEmpty));
 
-    final line1 = LayoutBuilder(
-      builder: (context, box) => Row(
+    final line1 = Text(
+      title,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: textTheme.bodyLarge,
+    );
+
+    final tagLine = Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
+        child: Row(
+          children: [
+            for (var i = 0; i < tags.length; i++) ...[
+              if (i > 0) const SizedBox(width: AppSpacing.xs),
+              _tag(context, i),
+            ],
+          ],
+        ),
+      ),
+    );
+
+    final payerRow = Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: Row(
         children: [
+          PersonMark(
+            name: payer,
+            level: _noBadge(payerLevel),
+            iconCode: payerIconCode,
+          ),
+          const SizedBox(width: AppSpacing.sm),
           Flexible(
-            child: Text(
-              title,
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: payer,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  TextSpan(
+                    text: ' $verb',
+                    style: TextStyle(color: scheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: textTheme.bodyLarge,
+              style: textTheme.bodyMedium,
             ),
           ),
-          if (tags.isNotEmpty) ...[
+          if (linked) ...[
             const SizedBox(width: AppSpacing.xs),
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: box.maxWidth * tagsMaxShare,
-              ),
-              child: UnconstrainedBox(
-                alignment: Alignment.centerLeft,
-                constrainedAxis: Axis.vertical,
-                clipBehavior: Clip.hardEdge,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (var i = 0; i < tags.length; i++) ...[
-                      if (i > 0) const SizedBox(width: AppSpacing.xs),
-                      _tag(context, i),
-                    ],
-                  ],
-                ),
-              ),
-            ),
+            Icon(AppIcons.link, size: 14, color: scheme.onSurfaceVariant),
           ],
+          if (badge != null) ...[const SizedBox(width: AppSpacing.xs), badge!],
         ],
       ),
     );
@@ -161,7 +187,7 @@ class EventBillRow extends StatelessWidget {
       padding: const EdgeInsets.only(top: 2),
       child: Row(
         children: [
-          if (payer.isNotEmpty) ...[
+          if (payer.isNotEmpty && !payerLine) ...[
             PersonMark(
               name: payer,
               level: _noBadge(payerLevel),
@@ -170,28 +196,7 @@ class EventBillRow extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.xs),
           ],
-          if (verb != null && payer.isNotEmpty)
-            Flexible(
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text: payer,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: scheme.onSurface,
-                      ),
-                    ),
-                    TextSpan(text: ' $verb'),
-                    if (line2Text.isNotEmpty) TextSpan(text: ' | $line2Text'),
-                  ],
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: small,
-              ),
-            )
-          else if (line2Text.isNotEmpty)
+          if (line2Text.isNotEmpty)
             Flexible(
               child: Text(
                 line2Text,
@@ -200,11 +205,14 @@ class EventBillRow extends StatelessWidget {
                 style: small,
               ),
             ),
-          if (linked) ...[
+          if (linked && !payerLine) ...[
             const SizedBox(width: AppSpacing.xs),
             Icon(AppIcons.link, size: 14, color: scheme.onSurfaceVariant),
           ],
-          if (badge != null) ...[const SizedBox(width: AppSpacing.xs), badge!],
+          if (badge != null && !payerLine) ...[
+            const SizedBox(width: AppSpacing.xs),
+            badge!,
+          ],
         ],
       ),
     );
@@ -217,6 +225,9 @@ class EventBillRow extends StatelessWidget {
           vertical: AppSpacing.sm,
         ),
         child: Row(
+          crossAxisAlignment: payerLine || tags.isNotEmpty
+              ? CrossAxisAlignment.start
+              : CrossAxisAlignment.center,
           children: [
             if (tick) ...[
               SelectCheck(
@@ -234,7 +245,12 @@ class EventBillRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
-                children: [line1, if (hasLine2) line2],
+                children: [
+                  line1,
+                  if (tags.isNotEmpty) tagLine,
+                  if (hasLine2) line2,
+                  if (payerLine) payerRow,
+                ],
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -258,7 +274,8 @@ class EventBillRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
-      children: [row, ...children],
+      // The payer above, the rest of the bill below.
+      children: [row, const AppDivider.row(), ...children],
     );
   }
 }
