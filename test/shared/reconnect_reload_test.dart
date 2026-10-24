@@ -15,14 +15,14 @@ void main() {
     }
   });
 
-  test('shown again: reopens only once the data is 30 s old', () {
+  test('shown again: reopens only once the data is 5 minutes old', () {
     final t0 = DateTime(2026, 10, 24, 12);
     final cases = <(String, DateTime?, Duration, bool)>[
       ('never loaded', null, Duration.zero, true),
-      ('just loaded', t0, const Duration(seconds: 5), false),
-      ('a second short', t0, const Duration(seconds: 29), false),
-      ('exactly 30 s', t0, const Duration(seconds: 30), true),
-      ('minutes later', t0, const Duration(minutes: 4), true),
+      ('just loaded', t0, const Duration(seconds: 30), false),
+      ('a second short', t0, const Duration(minutes: 4, seconds: 59), false),
+      ('exactly 5 min', t0, const Duration(minutes: 5), true),
+      ('an hour later', t0, const Duration(hours: 1), true),
     ];
     for (final (name, loadedAt, after, want) in cases) {
       expect(reopensWhenShown(loadedAt, t0.add(after)), want, reason: name);

@@ -4,9 +4,9 @@
 bool reloadsOnReconnect(int? before, int now) =>
     before != null && now != before;
 
-/// How long a page's data counts as fresh (owner 2026-10-24: as few calls
-/// per page as possible).
-const pageDataFreshFor = Duration(seconds: 30);
+/// How long a page's data counts as fresh (owner 2026-10-25: 5 minutes, the
+/// same as coming back to the app; own writes patch the page at once anyway).
+const pageDataFreshFor = Duration(minutes: 5);
 
 /// Shown again (tab switch, pop back, app resume) re-opens the page only once
 /// its data is older than [pageDataFreshFor]; never loaded = stale. A pull
