@@ -214,12 +214,16 @@ class _AppTabBarState<T> extends State<AppTabBar<T>> {
 
   static const double _iconSize = 16;
 
+  /// The count badge beside the label: its gap plus a two-digit width.
+  static const double _badgeWidth = AppSpacing.xs + 26;
+
   /// Whether [label] (+ the icon) fits one segment, its side padding taken.
   bool _fits(
     BuildContext context,
     String label,
     TextStyle style, {
     required bool withIcon,
+    bool withBadge = false,
   }) {
     if (_segment <= 0) return true;
     final painter = TextPainter(
@@ -231,6 +235,7 @@ class _AppTabBarState<T> extends State<AppTabBar<T>> {
     final need =
         painter.width +
         (withIcon ? _iconSize + AppSpacing.xs : 0) +
+        (withBadge ? _badgeWidth : 0) +
         AppSpacing.xs * 2;
     painter.dispose();
     return need <= _segment;
@@ -257,7 +262,13 @@ class _AppTabBarState<T> extends State<AppTabBar<T>> {
     final showIcon =
         icon != null &&
         (n <= 3 || active) &&
-        _fits(context, t.label, style, withIcon: true);
+        _fits(
+          context,
+          t.label,
+          style,
+          withIcon: true,
+          withBadge: t.badgeCount > 0,
+        );
     final text = AnimatedDefaultTextStyle(
       duration: const Duration(milliseconds: 200),
       style: style,
@@ -271,6 +282,10 @@ class _AppTabBarState<T> extends State<AppTabBar<T>> {
           const SizedBox(width: AppSpacing.xs),
         ],
         Flexible(child: text),
+        if (t.badgeCount > 0) ...[
+          const SizedBox(width: AppSpacing.xs),
+          CountBadge(count: t.badgeCount),
+        ],
       ],
     );
     return Expanded(
@@ -282,13 +297,7 @@ class _AppTabBarState<T> extends State<AppTabBar<T>> {
           onTap: () => widget.onChanged(t.value),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-            child: Center(
-              child: CountBadge.floating(
-                count: t.badgeCount,
-                offset: const Offset(-10, -8),
-                child: label,
-              ),
-            ),
+            child: Center(child: label),
           ),
         ),
       ),

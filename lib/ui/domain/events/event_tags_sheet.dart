@@ -31,7 +31,6 @@ class EventTagsLabels {
     required this.importOne,
     required this.delete,
     required this.nameLabel,
-    required this.nameRequired,
     required this.addTitle,
     required this.renameTitle,
     required this.save,
@@ -50,7 +49,6 @@ class EventTagsLabels {
   final String importOne;
   final String delete;
   final String nameLabel;
-  final String nameRequired;
   final String addTitle;
   final String renameTitle;
   final String save;
@@ -97,9 +95,12 @@ class EventTagsSheet extends StatelessWidget {
     BuildContext context, {
     required String title,
     String initial = '',
-  }) => showAppSheetCustom<String>(
+  }) => showNewTagNameSheet(
     context,
-    builder: (_) => _NameSheet(title: title, initial: initial, labels: labels),
+    title: title,
+    saveLabel: labels.save,
+    hint: labels.nameLabel,
+    initial: initial,
   );
 
   Future<void> _act(
@@ -221,66 +222,6 @@ class EventTagsSheet extends StatelessWidget {
                   ),
                 ),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NameSheet extends StatefulWidget {
-  const _NameSheet({
-    required this.title,
-    required this.initial,
-    required this.labels,
-  });
-
-  final String title;
-  final String initial;
-  final EventTagsLabels labels;
-
-  @override
-  State<_NameSheet> createState() => _NameSheetState();
-}
-
-class _NameSheetState extends State<_NameSheet> {
-  final _formKey = GlobalKey<FormState>();
-  late final _name = TextEditingController(text: widget.initial);
-
-  @override
-  void dispose() {
-    _name.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    Navigator.pop(context, _name.text.trim());
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = widget.labels;
-    return FormSheet(
-      title: widget.title,
-      primaryLabel: l.save,
-      onPrimary: _submit,
-      dirty: _name.text.trim() != widget.initial.trim(),
-      child: Form(
-        key: _formKey,
-        child: SectionCard(
-          fields: true,
-          dividers: false,
-          children: [
-            AppInput(
-              controller: _name,
-              label: l.nameLabel,
-              autofocus: true,
-              maxLength: TextLimits.name,
-              onChanged: (_) => setState(() {}),
-              validator: (v) =>
-                  (v?.trim().isEmpty ?? true) ? l.nameRequired : null,
-            ),
           ],
         ),
       ),

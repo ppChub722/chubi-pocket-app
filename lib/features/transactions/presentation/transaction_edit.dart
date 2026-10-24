@@ -232,7 +232,7 @@ class LinkEditSession {
       // When someone else pays the event, `amount` is the BILL (be-A).
       final preview = await repo.previewUpdate(
         id: t.id,
-        amount: c.amountValue,
+        amount: c.saveAmountFor(m),
         accountId: accountChanged ? accountId : null,
         clearAccount: accountChanged && accountId == null,
         link: link,
@@ -418,8 +418,9 @@ TxEditBody txEditBody(
       t.canEditCategory &&
       splitsLoaded &&
       jsonEncode(splits) != jsonEncode(splitsBefore);
+  final amount = c.saveAmountFor(link == null ? null : c.pickedTab);
   return (
-    amount: c.amountValue,
+    amount: amount,
     date: _ymd(c.date),
     categoryId: canCategory ? c.category?.id : null,
     clearCategory: canCategory && t.categoryId != null && c.category == null,
@@ -435,7 +436,7 @@ TxEditBody txEditBody(
     link: link,
     splits: splits,
     splitsChanged: splitsChanged,
-    lowering: c.amountValue < t.amount,
+    lowering: amount < t.amount,
   );
 }
 

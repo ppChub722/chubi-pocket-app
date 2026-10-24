@@ -12,6 +12,7 @@ Future<String?> showNewTagNameSheet(
   required String saveLabel,
   required String hint,
   int maxLength = TextLimits.tagName,
+  String initial = '',
 }) async {
   final name = await showAppSheetCustom<String>(
     context,
@@ -20,6 +21,7 @@ Future<String?> showNewTagNameSheet(
       saveLabel: saveLabel,
       hint: hint,
       maxLength: maxLength,
+      initial: initial,
     ),
   );
   final n = name?.trim() ?? '';
@@ -32,19 +34,21 @@ class _NewTagNameSheet extends StatefulWidget {
     required this.saveLabel,
     required this.hint,
     required this.maxLength,
+    required this.initial,
   });
 
   final String title;
   final String saveLabel;
   final String hint;
   final int maxLength;
+  final String initial;
 
   @override
   State<_NewTagNameSheet> createState() => _NewTagNameSheetState();
 }
 
 class _NewTagNameSheetState extends State<_NewTagNameSheet> {
-  final _text = TextEditingController();
+  late final _text = TextEditingController(text: widget.initial);
 
   @override
   void dispose() {

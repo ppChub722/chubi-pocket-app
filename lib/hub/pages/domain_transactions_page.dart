@@ -148,7 +148,6 @@ class _TransactionsPageState extends State<_TransactionsPage> {
               'only wires state into it. "+ เลือกคนจ่าย" = SplitPickChip.',
           child: LinkSectionFrame(
             bar: LinkModeBar<int>(
-              label: 'ผูกกับ',
               selected: 2,
               onChanged: (_) {},
               tabs: const [
@@ -182,7 +181,6 @@ class _TransactionsPageState extends State<_TransactionsPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               LinkModeBar<int>(
-                label: 'ผูกกับ',
                 selected: _linkMode,
                 onChanged: (v) => setState(() => _linkMode = v),
                 tabs: const [

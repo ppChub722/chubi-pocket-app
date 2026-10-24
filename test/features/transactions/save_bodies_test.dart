@@ -53,6 +53,32 @@ DraftFormController _form({
 }
 
 void main() {
+  test('แบ่ง with another payer saves only my share, no wallet, no splits', () {
+    final c = _form(
+      amount: '300',
+      set: (c) => c
+        ..link.mode = LinkMode.split
+        ..setSplits([
+          SplitDraft(personName: 'Bo', owedAmount: 100),
+          SplitDraft(personName: 'Lee', contactId: 'c2', owedAmount: 100),
+        ])
+        ..setPaidBy(_lee),
+    );
+    expect(c.linkMode(hasEvent: false), LinkMode.paid);
+    expect(c.linkBalanced(LinkMode.paid), isTrue);
+
+    final body = txCreateBody(c, LinkMode.paid);
+    expect(body.amount, 100);
+    expect(body.accountId, isNull);
+    expect(body.splits, isNull);
+    expect(body.link, {
+      'paid_by': {'contact_id': 'c2', 'amount': 100.0},
+    });
+
+    c.setPaidBy(null);
+    expect(c.linkMode(hasEvent: false), LinkMode.split);
+  });
+
   test('quick create tx body, per ผูกกับ tab', () {
     final cases = <({
       String name,

@@ -36,7 +36,7 @@ TxCreateBody txCreateBody(DraftFormController c, LinkMode mode) {
   return (
     type: c.type,
     accountId: plan.useWallet ? c.account?.id : null,
-    amount: c.amountValue,
+    amount: c.saveAmountFor(mode),
     date: _ymd(c.date),
     categoryId: c.isTransfer ? null : c.category?.id,
     description: _text(c.description),

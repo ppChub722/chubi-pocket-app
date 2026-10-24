@@ -8,10 +8,10 @@ import '../../domain/refs.dart';
 import 'draft_form.dart';
 import 'splits_section.dart';
 
-/// Quick create's "ผูกกับ" (owner 2026-10-21, variant B): the รายการประจำ
-/// row, then "ผูกกับ" + [ส่วนตัว | แบ่ง | จ่ายแทน | อีเวนต์] on one row, then
-/// the active tab's card. The tabs edit ONE data set in [controller]; only
-/// the active one is saved.
+/// Quick create's "ผูกกับ": the รายการประจำ row, the full-width tabs
+/// [ส่วนตัว | แบ่ง | อีเวนต์], then the active tab's card. แบ่ง holds จ่ายแทน
+/// too: pick someone else as the payer. The tabs edit ONE data set in
+/// [controller]; only the active one is saved.
 class LinkSection extends StatefulWidget {
   const LinkSection({
     required this.controller,
@@ -69,17 +69,34 @@ class _LinkSectionState extends State<LinkSection> {
     person: d.person,
   );
 
-  Future<void> _pickPaidBy() async {
+  /// Who paid on the แบ่ง tab: me, or a person (who gets a row in the bill
+  /// if they have none, so their own share is placed).
+  Future<void> _pickPayer() async {
+    final l = AppLocalizations.of(context)!;
     final now = _c.link.paidBy;
-    final r = await ContactPicker.one(
+    final r = await ContactPicker.payer(
       context,
+      title: l.txLinkCardWhoPaid,
+      me: PickerNone(
+        label: l.txLinkCardMe,
+        leading: MyAvatar(fallbackName: l.txLinkCardMe),
+      ),
+      meSelected: now == null,
       selectedId: now?.contactId,
-      allowFreeText: true,
-      allowCreate: true,
-      initialName: now?.contactId == null ? now?.name : null,
     );
     if (r == null || !mounted) return;
-    _c.setPaidBy(_personOf(r));
+    switch (r) {
+      case PayerMe():
+        _c.setPaidBy(null);
+      case PayerPerson(:final pick):
+        final person = _personOf(pick);
+        if (!_c.splitPeople.contains(person)) {
+          final d = SplitDraft();
+          applyContactPick(d, pick);
+          _c.setSplits([..._c.splits, d]);
+        }
+        _c.setPaidBy(person);
+    }
   }
 
   Future<void> _pickEventPayer() async {
@@ -132,18 +149,7 @@ class _LinkSectionState extends State<LinkSection> {
     final recurring = widget.recurring;
     final card = switch (mode) {
       LinkMode.personal => null,
-      LinkMode.split => SplitsSection(
-        card: true,
-        label: l.txLinkCardSplitTitle,
-        totalAmount: _c.splitCap,
-        drafts: _c.splits,
-        onChanged: _c.setSplits,
-        me: _c.meAmount,
-        onMeChanged: _c.setMeAmount,
-        meAuto: _c.meAuto,
-        onMeAutoChanged: _c.setMeAuto,
-      ),
-      LinkMode.paid => _paidCard(l),
+      LinkMode.split || LinkMode.paid => _splitCard(l),
       LinkMode.event => _eventCard(l),
     };
     return LinkSectionFrame(
@@ -156,8 +162,7 @@ class _LinkSectionState extends State<LinkSection> {
       card: card,
       bar: LinkModeBar<LinkMode>(
         key: const ValueKey('linkModeBar'),
-        label: l.txLinkTabLabel,
-        selected: mode,
+        selected: mode == LinkMode.paid ? LinkMode.split : mode,
         onChanged: (m) => _c.setLinkMode(m, hasEvent: _hasEvent),
         tabs: [
           AppTab(
@@ -169,11 +174,6 @@ class _LinkSectionState extends State<LinkSection> {
             value: LinkMode.split,
             label: l.txLinkTabSplit,
             icon: AppIcons.split,
-          ),
-          AppTab(
-            value: LinkMode.paid,
-            label: l.txLinkTabPaid,
-            icon: AppIcons.contact,
           ),
           AppTab(
             value: LinkMode.event,
@@ -205,55 +205,51 @@ class _LinkSectionState extends State<LinkSection> {
     );
   }
 
-  Widget _pickChip(String label, VoidCallback onTap) =>
-      SplitPickChip(label: label, onTap: onTap);
-
   Widget _remove(AppLocalizations l, VoidCallback onTap) => SplitRowAction(
     icon: AppIcons.close,
     tooltip: l.txSplitRemove,
     onTap: onTap,
   );
 
-  // ── จ่ายแทน ──────────────────────────────────────────────────────────
-  Widget _paidCard(AppLocalizations l) {
-    final link = _c.link;
+  // ── แบ่ง (and จ่ายแทน when someone else paid) ────────────────────────
+  Widget _splitCard(AppLocalizations l) {
     final bill = _c.amountValue;
-    final payer = link.paidBy;
-    return ShareCard(
-      key: const ValueKey('linkCardPaid'),
-      title: l.txLinkCardPaidTitle,
-      actions: [
-        AppChip(
-          label: l.txSplitEqually,
-          enabled: payer != null && bill > 0,
-          onTap: _c.paidEqually,
-        ),
-      ],
-      rows: [
-        SplitMeRow(
-          label: l.txLinkCardMyPaid,
-          amount: link.myPaid(bill),
-          auto: link.myPaidAuto,
-          onAutoChanged: _c.setMyPaidAuto,
-          onChanged: _c.setMyPaid,
-          card: true,
-        ),
-        if (payer == null)
-          _pickChip(l.txLinkCardPickPayer, _pickPaidBy)
-        else
-          ShareRow(
-            avatar: _mark(payer, onTap: _pickPaidBy),
-            name: SplitRowName.picked(payer.name, onTap: _pickPaidBy),
-            amount: ShareAmountField(
-              value: link.paidAmountFor(bill),
-              onChanged: _c.setPaidAmount,
-            ),
-            trailing: _remove(l, () => _c.setPaidBy(null)),
-          ),
-      ],
-      status: payer == null
-          ? null
-          : linkCardStatus(context, -link.payDiff(bill), l.txLinkCardPaidOk),
+    final payer = _c.link.paidBy;
+    final pick = _pickPayer;
+    return SplitsSection(
+      card: true,
+      label: l.txLinkCardSplitTitle,
+      totalAmount: _c.splitCap,
+      drafts: _c.splits,
+      onChanged: _c.setSplits,
+      me: _c.meAmount,
+      onMeChanged: _c.setMeAmount,
+      meAuto: _c.meAuto,
+      onMeAutoChanged: _c.setMeAuto,
+      payerTitle: l.txLinkCardWhoPaid,
+      payerRow: ShareRow(
+        key: const ValueKey('linkPayerRow'),
+        avatar: payer == null
+            ? GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: pick,
+                child: MyAvatar(fallbackName: l.txLinkCardMe),
+              )
+            : _mark(payer, onTap: pick),
+        name: SplitRowName.picked(payer?.name ?? l.txLinkCardMe, onTap: pick),
+        // One payer: they paid the whole bill.
+        amount: ShareAmountField(value: bill, onChanged: null),
+      ),
+      draftTag: (d) {
+        if (payer == null || d.personName.trim().isEmpty) return null;
+        if (_personOfDraft(d) != payer) return null;
+        return AppChip(
+          label: l.evbSettlePaid,
+          size: ChipSize.mini,
+          tone: AppChipTone.primary,
+          selected: true,
+        );
+      },
     );
   }
 

@@ -1267,14 +1267,26 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   }
 
   /// View: a goal's auto-saves listed as the edit page lists them, read-only.
-  Widget _autoView(AppLocalizations l, SavingGoal g, String symbol) {
+  Widget _autoView(
+    AppLocalizations l,
+    SavingGoalDetail d,
+    SavingGoal g,
+    String symbol,
+  ) {
     final autos = [for (final a in g.autoSaves) _AutoDraft.from(a)];
     return SectionCard(
       children: [
-        DetailRow(
-          label: l.sgv2AutoSave,
-          helper: autos.isEmpty ? l.sgAutoOffCaption : l.sgAutoOnCaption,
-          onLongPress: enterEdit,
+        LiveSetting<bool>(
+          value: autos.isNotEmpty,
+          save: isSaving ? null : (on) => _toggleAuto(d, on),
+          failedMessage: (e) =>
+              e is ApiException ? e.message : l.errorUnknownMessage,
+          builder: (context, on, onChanged) => SettingToggleRow(
+            label: l.sgv2AutoSave,
+            caption: on ? l.sgAutoOnCaption : l.sgAutoOffCaption,
+            value: on,
+            onChanged: onChanged,
+          ),
         ),
         for (final a in autos) _autoLine(l, a, symbol, editing: false),
         if (autos.isNotEmpty) const SizedBox(height: AppSpacing.sm),
@@ -1285,7 +1297,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   Widget? _settings(AppLocalizations l, SavingGoalDetail d, String symbol) {
     final g = d.goal;
     if (g != null && g.state != SavingGoalState.active) return null;
-    if (g != null) return _autoView(l, g, symbol);
+    if (g != null) return _autoView(l, d, g, symbol);
     final auto = d.autoSave;
     return SettingsSection(
       title: l.settingsTitle,

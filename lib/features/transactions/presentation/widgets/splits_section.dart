@@ -152,12 +152,23 @@ class SplitsSection extends StatefulWidget {
     this.compact = false,
     this.card = false,
     this.helper,
+    this.payerTitle,
+    this.payerRow,
+    this.draftTag,
     super.key,
   });
 
   /// The ผูกกับ แบ่ง card: a [ShareCard] ([label] as its title), the chips in
-  /// its header, ฉัน + the people as rows, the status line.
+  /// its header, ฉัน + the people as rows, the status line. With [payerRow]
+  /// the card opens with "[payerTitle]" and that row, and [label] heads the
+  /// people below it.
   final bool card;
+
+  final String? payerTitle;
+  final Widget? payerRow;
+
+  /// A tag under a person's name (the one who paid).
+  final Widget? Function(SplitDraft d)? draftTag;
 
   final String? helper;
 
@@ -245,21 +256,27 @@ class _SplitsSectionState extends State<SplitsSection> {
 
   Widget _card(AppLocalizations l) {
     final drafts = widget.drafts;
+    final payerRow = widget.payerRow;
+    final actions = [
+      AppChip(
+        label: l.txSplitEqually,
+        enabled: drafts.isNotEmpty && widget.totalAmount > 0,
+        onTap: _splitEqually,
+      ),
+      AppChip(
+        icon: AppIcons.add,
+        label: l.txSplitAddPerson,
+        onTap: _addPerson,
+      ),
+    ];
     return ShareCard(
-      title: widget.label,
-      actions: [
-        AppChip(
-          label: l.txSplitEqually,
-          enabled: drafts.isNotEmpty && widget.totalAmount > 0,
-          onTap: _splitEqually,
-        ),
-        AppChip(
-          icon: AppIcons.add,
-          label: l.txSplitAddPerson,
-          onTap: _addPerson,
-        ),
-      ],
+      title: payerRow == null ? widget.label : widget.payerTitle,
+      actions: payerRow == null ? actions : const [],
       rows: [
+        if (payerRow != null) ...[
+          payerRow,
+          ShareSubhead(title: widget.label, actions: actions),
+        ],
         if (_withMe)
           SplitMeRow(
             label: l.txSplitMe,
@@ -275,6 +292,7 @@ class _SplitsSectionState extends State<SplitsSection> {
             draft: drafts[i],
             card: true,
             autofocusName: identical(drafts[i], _justAdded),
+            tag: widget.draftTag?.call(drafts[i]),
             onChange: () => widget.onChanged(List.of(drafts)),
             onChangePerson: () => _changePerson(drafts[i]),
             onRemove: () => _remove(i),

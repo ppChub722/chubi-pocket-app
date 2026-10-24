@@ -1453,6 +1453,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     if (!_c.isTransfer && mode == LinkMode.paid) {
       if (_c.link.paidBy == null) return l.txLinkModeNeedsPayer;
       if (!_c.linkBalanced(mode)) return l.txLinkModeUnbalanced;
+      if (_c.saveAmountFor(mode) <= 0) return l.quickAmountRequired;
     }
     if (!_c.isTransfer && mode == LinkMode.event) {
       if (!_hasEvent) return l.txLinkModeNeedsEvent;

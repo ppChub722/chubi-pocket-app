@@ -273,10 +273,14 @@ class DraftFormController extends ChangeNotifier {
   /// what the form holds).
   LinkMode? get pickedTab => type == TransactionType.expense ? link.mode : null;
 
+  /// แบ่ง and จ่ายแทน are one tab: a payer other than me makes it จ่ายแทน.
   void setLinkMode(LinkMode next, {required bool hasEvent}) {
     final from = linkMode(hasEvent: hasEvent);
-    if (next == from && link.mode != null) return;
-    link.switchTo(next, from: from);
+    final to = next == LinkMode.split && link.paidBy != null
+        ? LinkMode.paid
+        : next;
+    if (to == from && link.mode != null) return;
+    link.switchTo(to, from: from);
     notifyListeners();
   }
 
@@ -284,8 +288,8 @@ class DraftFormController extends ChangeNotifier {
 
   /// "ส่วนของคุณ": my share of the bill in [m] (what I spend).
   double myShareFor(LinkMode m) => switch (m) {
-    LinkMode.personal || LinkMode.paid => amountValue,
-    LinkMode.split => meAmount ?? amountValue,
+    LinkMode.personal => amountValue,
+    LinkMode.split || LinkMode.paid => meAmount ?? amountValue,
     LinkMode.event => link.eventMine(amountValue, eventMembers),
   };
 
@@ -297,14 +301,38 @@ class DraftFormController extends ChangeNotifier {
     LinkMode.personal => true,
     LinkMode.split => splitsBalanced,
     LinkMode.paid =>
-      link.paidBy != null && link.payDiff(amountValue).abs() <= 0.005,
+      link.paidBy != null &&
+          link.payDiff(amountValue).abs() <= 0.005 &&
+          splitsBalanced,
     LinkMode.event => link.eventDiff(amountValue, eventMembers).abs() <= 0.005,
   };
 
+  /// The payer on the แบ่ง tab: null = me (แบ่ง), a person = จ่ายแทน.
   void setPaidBy(LinkPerson? p) {
     link.paidBy = p;
+    if (link.mode == LinkMode.split || link.mode == LinkMode.paid) {
+      link.mode = p == null ? LinkMode.split : LinkMode.paid;
+    }
     notifyListeners();
   }
+
+  /// `paid_by`: what they paid is my share of the bill (all of it with nobody
+  /// else in the bill), unless a saved row kept a part amount.
+  Map<String, dynamic>? get paidByBody {
+    final p = link.paidBy;
+    if (p == null) return null;
+    return {
+      ...p.toJson(),
+      'amount': link.paidAmount ?? myShareFor(LinkMode.paid),
+    };
+  }
+
+  /// The amount a save sends in [m]: จ่ายแทน records only my share (what
+  /// they paid for me), the rest of the bill is theirs and others' business.
+  double saveAmountFor(LinkMode? m) =>
+      m == LinkMode.paid && link.paidAmount == null
+      ? myShareFor(LinkMode.paid)
+      : amountValue;
 
   void setPaidAmount(double? v) {
     link.paidAmount = v;
@@ -404,7 +432,7 @@ class DraftFormController extends ChangeNotifier {
       LinkMode.paid => (
         splits: const [],
         useWallet: link.myPaid(bill) > 0.005,
-        link: {'paid_by': ?link.paidByJson(bill)},
+        link: {'paid_by': ?paidByBody},
       ),
       // B2: no splits; `payer` + `members` go beside new_transaction. Paid
       // by someone else = my share, no wallet.
@@ -514,7 +542,7 @@ class DraftFormController extends ChangeNotifier {
             if (s.isComplete) s.toUpdateJson(),
         ],
       },
-      LinkMode.paid => {'paid_by': ?link.paidByJson(bill)},
+      LinkMode.paid => {'paid_by': ?paidByBody},
       LinkMode.event => {
         'event': {
           'project_id': ?projectId,
@@ -724,7 +752,7 @@ class DraftFormController extends ChangeNotifier {
           : null;
       return PendingDraft(
         type: base.type,
-        amount: base.amount,
+        amount: tab == LinkMode.paid ? saveAmountFor(tab) : base.amount,
         accountId: base.accountId,
         categoryId: base.categoryId,
         date: base.date,
@@ -733,7 +761,7 @@ class DraftFormController extends ChangeNotifier {
         tagIds: base.tagIds,
         splits: tab == LinkMode.split ? base.splits : const [],
         projectId: tab == LinkMode.event ? (eventProjectId ?? projectId) : null,
-        paidBy: tab == LinkMode.paid ? link.paidByJson(bill) : null,
+        paidBy: tab == LinkMode.paid ? paidByBody : null,
         payer: (event?['payer'] as Map?)?.cast<String, dynamic>(),
         members: [
           for (final m in (event?['members'] as List?) ?? const [])

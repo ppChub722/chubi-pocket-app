@@ -464,7 +464,10 @@ class _AppInputState extends State<AppInput> {
   Widget build(BuildContext context) => switch (widget._kind) {
     _Kind.field => _buildField(context),
     _Kind.card => _withLabel(context, _buildField(context)),
-    _Kind.inline => _buildInline(context),
+    _Kind.inline => ListenableBuilder(
+      listenable: widget.controller!,
+      builder: (context, _) => _buildInline(context),
+    ),
     _Kind.title => _withLabel(context, _buildTitle(context)),
     _Kind.search => _buildSearch(context),
   };
@@ -587,6 +590,9 @@ class _AppInputState extends State<AppInput> {
     final text = Theme.of(context).textTheme;
     final editing = w.editing;
     final flush = !editing && w.onEnterEdit == null;
+    // The hint is laid out even under text, so a long one would keep a
+    // one-line value's box 2 lines tall: it only exists while empty.
+    final hasText = w.controller!.text.isNotEmpty;
     final field = TextFormField(
       controller: w.controller,
       focusNode: w.focusNode,
@@ -616,7 +622,9 @@ class _AppInputState extends State<AppInput> {
           minWidth: 40,
           minHeight: 32,
         ),
-        hintText: editing
+        hintText: hasText
+            ? null
+            : editing
             ? w.hint
             : (w.onEnterEdit != null
                   ? (w.viewHint ?? UiConfig.stringsOf(context).longPressToEdit)

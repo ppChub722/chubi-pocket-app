@@ -122,7 +122,6 @@ class _EventTagsManagerState extends State<_EventTagsManager> {
         importOne: l.fpEventsTagImportOne,
         delete: l.commonDelete,
         nameLabel: l.fpEventsTagNameLabel,
-        nameRequired: l.fpEventsTagNameRequired,
         addTitle: l.fpEventsTagNewTitle,
         renameTitle: l.fpEventsTagRenameTitle,
         save: l.commonSave,

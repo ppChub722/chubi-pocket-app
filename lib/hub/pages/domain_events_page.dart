@@ -211,7 +211,6 @@ class _EventsPageState extends State<_EventsPage> {
                   importOne: 'นำเข้าแท็กของฉัน',
                   delete: 'ลบ',
                   nameLabel: 'ชื่อแท็ก',
-                  nameRequired: 'ใส่ชื่อแท็ก',
                   addTitle: 'แท็กอีเวนต์ใหม่',
                   renameTitle: 'เปลี่ยนชื่อแท็ก',
                   save: 'บันทึก',
