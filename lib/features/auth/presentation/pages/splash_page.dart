@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
@@ -49,7 +50,12 @@ class _SplashPageState extends State<SplashPage> {
           Column(
             children: [
               const Spacer(),
-              const BrandLogo(),
+              // Stuck on a startup error, the dev hub (Connection, Logs) is
+              // still one secret tap away.
+              SecretTapDetector(
+                onUnlock: () => context.push('/dev'),
+                child: const BrandLogo(),
+              ),
               Expanded(
                 child: BlocBuilder<AuthCubit, AuthState>(
                   builder: (context, state) {

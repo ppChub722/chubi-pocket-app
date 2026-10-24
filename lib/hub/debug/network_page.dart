@@ -231,6 +231,7 @@ class _CallList extends StatelessWidget {
       if (c.query.isNotEmpty) ('Query', c.query),
       ('Endpoint', c.endpoint),
       ('Status', c.statusCode?.toString() ?? c.errorCode ?? 'pending'),
+      if (c.errorDetail != null) ('Error', c.errorDetail!),
       ('Duration', c.durationMs == null ? '—' : '${c.durationMs} ms'),
       ('Response size', _bytes(c.responseBytes)),
       ('Started', _time(c.startedAt)),

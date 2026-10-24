@@ -16,6 +16,7 @@ import 'pages/molecules_blocks_page.dart';
 import 'pages/molecules_split_row_page.dart';
 import 'pages/molecules_list_row_page.dart';
 import 'pages/molecules_list_header_page.dart';
+import 'debug/connection_page.dart';
 import 'debug/env_page.dart';
 import 'debug/imports_lab_page.dart';
 import 'pages/api_pages.dart';
@@ -432,7 +433,8 @@ final List<HubPage> hubPages = [
     title: 'List row',
     summary:
         'The one data row of every list: leading | title + mini chips | line 2 | value | field + ✓; select, dimmed, alert. Knows no domain.',
-    usedBy: 'every data list (tx, pending, budget, recurring, debts, events, saving, categories, tags, contacts, notifications)',
+    usedBy:
+        'every data list (tx, pending, budget, recurring, debts, events, saving, categories, tags, contacts, notifications)',
     covers: [
       'AppListRow',
       'ListRowChip',
@@ -1324,6 +1326,15 @@ final List<HubPage> hubPages = [
     summary: 'API base URL, build mode, platform, app version and build.',
     generic: false,
     screen: (_) => const EnvInfoScreen(),
+  ),
+  HubPage(
+    level: HubLevel.debug,
+    slug: 'connection',
+    title: 'Connection',
+    summary:
+        'Can this device reach the server: API URL, what its DNS answers, /health and /app/version, online state, the latest failed calls; copy it all as a report.',
+    generic: false,
+    screen: (_) => const ConnectionCheckScreen(),
   ),
   HubPage(
     level: HubLevel.debug,

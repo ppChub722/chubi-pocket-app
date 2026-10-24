@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 
 import '../logger/app_logger.dart';
 import '../logger/log_entry.dart';
+import 'network_recorder.dart';
 
 class HttpLoggerInterceptor extends Interceptor {
   HttpLoggerInterceptor({AppLogger? logger})
@@ -92,6 +93,7 @@ class HttpLoggerInterceptor extends Interceptor {
       'latency_ms': latencyMs,
       'type': err.type.name,
       'message': err.message,
+      'error': ?NetworkRecorderInterceptor.errorDetailOf(err),
     };
     if (_logger.config.logBodies && err.response?.data != null) {
       final body = _captureBody(err.response!.data, err.response!.headers.map);

@@ -15,6 +15,7 @@ class NetworkCall {
     this.durationMs,
     this.responseBytes,
     this.errorCode,
+    this.errorDetail,
     this.requestId,
     this.page = '',
     this.trigger = NetworkTrigger.action,
@@ -33,6 +34,10 @@ class NetworkCall {
   final int? responseBytes;
 
   final String? errorCode;
+
+  /// The platform's own words when no response came back (a failed DNS
+  /// lookup, a refused or timed-out connection and the address it tried).
+  final String? errorDetail;
   final String? requestId;
   final bool pending;
 
@@ -54,6 +59,7 @@ class NetworkCall {
     int? durationMs,
     int? responseBytes,
     String? errorCode,
+    String? errorDetail,
     String? requestId,
     bool? pending,
   }) => NetworkCall(
@@ -66,6 +72,7 @@ class NetworkCall {
     durationMs: durationMs ?? this.durationMs,
     responseBytes: responseBytes ?? this.responseBytes,
     errorCode: errorCode ?? this.errorCode,
+    errorDetail: errorDetail ?? this.errorDetail,
     requestId: requestId ?? this.requestId,
     page: page,
     trigger: trigger,
@@ -124,6 +131,7 @@ class NetworkRecorder extends ChangeNotifier {
     int? durationMs,
     int? bytes,
     String? errorCode,
+    String? errorDetail,
     String? requestId,
   }) {
     final i = _calls.lastIndexWhere((c) => c.id == id);
@@ -133,6 +141,7 @@ class NetworkRecorder extends ChangeNotifier {
       durationMs: durationMs,
       responseBytes: bytes,
       errorCode: errorCode,
+      errorDetail: errorDetail,
       requestId: requestId,
       pending: false,
     );
@@ -191,9 +200,19 @@ class NetworkRecorderInterceptor extends Interceptor {
       durationMs: (o.extra[_stopwatchExtra] as Stopwatch?)?.elapsedMilliseconds,
       bytes: err.response == null ? null : _size(err.response!),
       errorCode: err.response == null ? err.type.name : null,
+      errorDetail: errorDetailOf(err),
       requestId: o.headers['X-Request-ID']?.toString(),
     );
     handler.next(err);
+  }
+
+  /// What the platform said when no response came back, cut to 300 chars;
+  /// null when the server answered (its status says enough).
+  static String? errorDetailOf(DioException err) {
+    if (err.response != null) return null;
+    final raw = (err.error ?? err.message ?? '').toString().trim();
+    if (raw.isEmpty) return null;
+    return raw.length > 300 ? '${raw.substring(0, 300)}…' : raw;
   }
 
   static final _secret = RegExp(
