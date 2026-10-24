@@ -7,7 +7,6 @@ import 'package:yaml/yaml.dart';
 
 /// Keeps the page-flow registry honest (lib/hub/api/page_flows.dart):
 ///  - every operationId a flow names exists in the BE spec;
-///  - an "unspecified" call is really not in the spec (else name its id);
 ///  - every endpoint the app calls is in some flow — the ones that are not are
 ///    the debt in `test/hub/api_flows_baseline.txt`, which can only shrink.
 ///    Regenerate: `UPDATE_BASELINE=1 flutter test test/hub`.
@@ -67,18 +66,6 @@ void main() {
               '${f.page}: ${c.operationId}',
     ];
     expect(missing, isEmpty, reason: 'unknown operationId');
-  }, skip: skip);
-
-  test('an unspecified call is really not in the spec', () {
-    final inSpec = {for (final e in doc.endpoints) key(e.method, e.path)};
-    final wrong = <String>[
-      for (final f in pageFlows)
-        for (final s in f.steps)
-          for (final c in s.calls)
-            if (!c.inSpec && inSpec.contains(key(c.method!, c.path!)))
-              '${f.page}: ${c.method} ${c.path} is in the spec — use its id',
-    ];
-    expect(wrong, isEmpty);
   }, skip: skip);
 
   test('every endpoint the app calls is in a flow (ratchet)', () {

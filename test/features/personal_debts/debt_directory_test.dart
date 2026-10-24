@@ -45,11 +45,18 @@ void main() {
   List<String> keys(List<PersonBalance> l) => [for (final p in l) p.key];
 
   test(
-    'settled people are hidden unless all; open means net or an open entry',
+    'settled people are hidden unless all; open means net or an open entry; '
+    'search is a case-insensitive substring',
     () {
       expect(keys(filterPeople(people)), isNot(contains('n:cat')));
       expect(keys(filterPeople(people)), contains('n:dan'));
       expect(keys(filterPeople(people, all: true)), contains('n:cat'));
+      expect(keys(filterPeople(people, all: true, q: ' A')), [
+        'n:ann',
+        'n:dan',
+        'n:cat',
+      ]);
+      expect(keys(filterPeople(people, all: true, q: 'EVE')), ['n:eve']);
     },
   );
 
@@ -65,43 +72,30 @@ void main() {
     );
   });
 
-  test('search is a case-insensitive substring of the name', () {
-    expect(keys(filterPeople(people, all: true, q: ' A')), [
-      'n:ann',
-      'n:dan',
-      'n:cat',
-    ]);
-    expect(keys(filterPeople(people, all: true, q: 'EVE')), ['n:eve']);
-  });
-
-  test('oldest: days outstanding desc (none last), then amount, then last', () {
-    expect(keys(filterPeople(people, all: true)), [
-      'n:eve',
-      'n:bob',
-      'n:ann',
-      'n:dan',
-      'n:cat',
-    ]);
-  });
-
-  test('amount: |net| desc, then last desc (none last), then key', () {
-    expect(keys(filterPeople(people, all: true, sort: DebtPeopleSort.amount)), [
-      'n:ann',
-      'n:eve',
-      'n:bob',
-      'n:dan',
-      'n:cat',
-    ]);
-  });
-
-  test('recent: last desc (none last), then |net| desc', () {
-    expect(keys(filterPeople(people, all: true, sort: DebtPeopleSort.recent)), [
-      'n:dan',
-      'n:cat',
-      'n:ann',
-      'n:bob',
-      'n:eve',
-    ]);
+  test('sorts', () {
+    for (final c in [
+      (
+        name: 'oldest: days outstanding desc (none last), then amount, then last',
+        sort: DebtPeopleSort.oldest,
+        want: ['n:eve', 'n:bob', 'n:ann', 'n:dan', 'n:cat'],
+      ),
+      (
+        name: 'amount: |net| desc, then last desc (none last), then key',
+        sort: DebtPeopleSort.amount,
+        want: ['n:ann', 'n:eve', 'n:bob', 'n:dan', 'n:cat'],
+      ),
+      (
+        name: 'recent: last desc (none last), then |net| desc',
+        sort: DebtPeopleSort.recent,
+        want: ['n:dan', 'n:cat', 'n:ann', 'n:bob', 'n:eve'],
+      ),
+    ]) {
+      expect(
+        keys(filterPeople(people, all: true, sort: c.sort)),
+        c.want,
+        reason: c.name,
+      );
+    }
   });
 
   test('totals cover everyone, however the list is filtered', () {

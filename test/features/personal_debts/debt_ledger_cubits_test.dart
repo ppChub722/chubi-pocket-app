@@ -138,27 +138,26 @@ Map<String, dynamic> _entryJson(String id, String dir, num amount) => {
 
 void main() {
   group('models', () {
-    test('entry: direction + positive amount; blank description = null', () {
+    test('entry, net side, person key, direction, query wire params', () {
       final e = DebtEntry.fromJson(_entryJson('e1', 'received', -120));
       expect(e.direction, DebtEntryDirection.received);
       expect(e.amount, 120);
       expect(e.description, isNull);
       expect(e.movedMoney, isTrue);
       expect(e.transaction!.account!.name, 'เงินสด');
-    });
 
-    test('net side', () {
       expect(NetSide.of(1), NetSide.owedToMe);
       expect(NetSide.of(-1), NetSide.iOwe);
       expect(NetSide.of(0.001), NetSide.even);
-    });
 
-    test('person key', () {
       expect(debtPersonKey(contactId: 'x'), 'c:x');
       expect(debtPersonKey(name: ' Mom '), 'n:mom');
-    });
 
-    test('query: wire params', () {
+      expect(debtDirectionFor(120), DebtEntryDirection.received);
+      expect(debtDirectionFor(-40), DebtEntryDirection.paid);
+      expect(debtDirectionFor(0), isNull);
+      expect(debtDirectionFor(null), isNull);
+
       const q = DebtEntryQuery(
         q: ' rent ',
         direction: DebtEntryDirection.paid,
@@ -264,19 +263,20 @@ void main() {
       await dir.close();
     });
 
-    test('the directory status and error come through', () async {
-      final dir = DebtDirectoryCubit(coordinator: testCoordinator());
-      final c = DebtPeopleCubit(directory: dir);
-      expect(c.state.status, DebtLoadStatus.initial);
-      dir.syncFailed(const ApiException(code: 'INTERNAL', message: 'down'));
+    test('the directory error comes through; a returned balance patches the '
+        'person at once', () async {
+      final failing = DebtDirectoryCubit(coordinator: testCoordinator());
+      final fc = DebtPeopleCubit(directory: failing);
+      expect(fc.state.status, DebtLoadStatus.initial);
+      failing.syncFailed(
+        const ApiException(code: 'INTERNAL', message: 'down'),
+      );
       await Future<void>.delayed(Duration.zero);
-      expect(c.state.status, DebtLoadStatus.error);
-      expect(c.state.error!.message, 'down');
-      await c.close();
-      await dir.close();
-    });
+      expect(fc.state.status, DebtLoadStatus.error);
+      expect(fc.state.error!.message, 'down');
+      await fc.close();
+      await failing.close();
 
-    test('a balance a write returned patches the person at once', () async {
       final dir = directory();
       final c = DebtPeopleCubit(directory: dir);
       dir.applyBalance(PersonBalance.fromJson(_personJson('c:c1', 'แม่', 0)));
@@ -390,13 +390,6 @@ void main() {
         await c.close();
       },
     );
-
-    test('debtDirectionFor: the balance picks the + direction', () {
-      expect(debtDirectionFor(120), DebtEntryDirection.received);
-      expect(debtDirectionFor(-40), DebtEntryDirection.paid);
-      expect(debtDirectionFor(0), isNull);
-      expect(debtDirectionFor(null), isNull);
-    });
 
     test(
       'a failed reload keeps the statement; a failed open → error',

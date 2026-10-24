@@ -11,6 +11,7 @@ import '../../../auth/domain/user.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../users/data/users_repository.dart';
 import '../../../users/presentation/refresh_me.dart';
+import '../profile_changes.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -81,19 +82,24 @@ class _EditProfilePageState extends State<EditProfilePage>
     final l = AppLocalizations.of(context)!;
     final w = working;
     final o = original;
-    final email = w.email.trim();
-    final emailChanged = email.isNotEmpty && email != o.email;
-    final iconChanged = w.iconCode != o.iconCode;
+    final changes = profileChanges(
+      name: w.name,
+      email: w.email,
+      iconCode: w.iconCode,
+      originalName: o.name,
+      originalEmail: o.email,
+      originalIconCode: o.iconCode,
+    );
     final auth = context.read<AuthCubit>();
     FocusScope.of(context).unfocus();
     setSaving(true);
     setState(() => _emailError = null);
     try {
       final updated = await context.read<UsersRepository>().updateMe(
-        displayName: w.name.trim() != o.name ? w.name.trim() : null,
-        email: emailChanged ? email : null,
-        iconCode: iconChanged ? w.iconCode : null,
-        clearIconCode: iconChanged && w.iconCode == null,
+        displayName: changes.displayName,
+        email: changes.email,
+        iconCode: changes.iconCode,
+        clearIconCode: changes.clearIconCode,
       );
       auth.updateUser(updated);
       if (!mounted) return;

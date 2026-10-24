@@ -21,6 +21,7 @@ import '../../domain/saving_goals_overview.dart';
 import '../../domain/saving_plan_preview.dart';
 import '../cubit/saving_goal_cubit.dart';
 import '../cubit/saving_goals_cubit.dart';
+import '../saving_goal_delete_guard.dart';
 import '../widgets/saving_goal_texts.dart';
 
 class SavingGoalDetailPage extends StatefulWidget {
@@ -465,7 +466,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     if (!mounted) return;
     setSaving(false);
     // A goal holding money cannot be deleted: say so, no confirm.
-    if (preview != null && !preview.canDelete) {
+    if (deleteBlockedByMoney(preview)) {
       _snack(l.fpGoalsArchiveNeedsClose, tone: Tone.warning);
       return;
     }
@@ -482,7 +483,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final needsClose = l.fpGoalsArchiveNeedsClose;
     if (await _run(
           _cubit!.delete,
-          message: (e) => e.code == 'GOAL_HAS_SAVINGS' ? needsClose : null,
+          message: (e) => deleteRefusedForMoney(e) ? needsClose : null,
         ) &&
         mounted) {
       commitSaved(working);

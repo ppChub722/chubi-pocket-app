@@ -4,36 +4,33 @@ import 'package:flutter_test/flutter_test.dart';
 /// Never "-฿0.00" (owner 2026-10-11): anything that shows as zero prints
 /// as a plain zero.
 void main() {
-  currencyDecimalsTests();
-  test('-0.0 and tiny negatives print as ฿0.00', () {
-    expect(CurrencyFormatter.format(-0.0), '฿0.00');
-    expect(CurrencyFormatter.format(-0.004), '฿0.00');
-    expect(CurrencyFormatter.format(0.004), '฿0.00');
-  });
-
-  test('real amounts keep their sign', () {
-    expect(CurrencyFormatter.format(-0.01), '-฿0.01');
-    expect(CurrencyFormatter.format(-0.005), '-฿0.01'); // half away from 0
-    expect(CurrencyFormatter.format(-1250.5), '-฿1,250.50');
-    expect(CurrencyFormatter.format(1250.5), '฿1,250.50');
+  test('format: zero-looking amounts are plain, real ones keep their sign', () {
+    final cases = <(String, String)>[
+      (CurrencyFormatter.format(-0.0), '฿0.00'),
+      (CurrencyFormatter.format(-0.004), '฿0.00'),
+      (CurrencyFormatter.format(0.004), '฿0.00'),
+      (CurrencyFormatter.format(-0.01), '-฿0.01'),
+      (CurrencyFormatter.format(-0.005), '-฿0.01'),
+      (CurrencyFormatter.format(-1250.5), '-฿1,250.50'),
+      (CurrencyFormatter.format(1250.5), '฿1,250.50'),
+      (CurrencyFormatter.format(1234.5, symbol: '¥'), '¥1,235'),
+      (CurrencyFormatter.format(1234.5, symbol: '฿'), '฿1,234.50'),
+    ];
+    for (final (got, want) in cases) {
+      expect(got, want);
+    }
   });
 
   test('roundsToZero follows the decimals shown', () {
-    expect(CurrencyFormatter.roundsToZero(-0.004), isTrue);
-    expect(CurrencyFormatter.roundsToZero(-0.005), isFalse);
-    expect(CurrencyFormatter.roundsToZero(-0.4, decimalDigits: 0), isTrue);
-  });
-}
-
-void currencyDecimalsTests() {
-  group('decimals follow the currency', () {
-    test('JPY symbol prints no decimals', () {
-      expect(CurrencyFormatter.format(1234.5, symbol: '¥'), '¥1,235');
-      expect(CurrencyFormatter.format(1234.5, symbol: '฿'), '฿1,234.50');
-    });
-    test('roundsToZero uses the currency decimals', () {
-      expect(CurrencyFormatter.roundsToZero(0.4, symbol: '¥'), isTrue);
-      expect(CurrencyFormatter.roundsToZero(0.4), isFalse);
-    });
+    final cases = <(bool, bool)>[
+      (CurrencyFormatter.roundsToZero(-0.004), true),
+      (CurrencyFormatter.roundsToZero(-0.005), false),
+      (CurrencyFormatter.roundsToZero(-0.4, decimalDigits: 0), true),
+      (CurrencyFormatter.roundsToZero(0.4, symbol: '¥'), true),
+      (CurrencyFormatter.roundsToZero(0.4), false),
+    ];
+    for (final (i, (got, want)) in cases.indexed) {
+      expect(got, want, reason: 'case $i');
+    }
   });
 }

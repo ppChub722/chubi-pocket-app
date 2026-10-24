@@ -72,7 +72,7 @@ Map<String, dynamic> _row({
 };
 
 void main() {
-  test('Transaction.fromJson reads the embedded v2 refs', () {
+  test('Transaction.fromJson reads the v2 refs; none on the wire → null', () {
     final t = Transaction.fromJson(_row());
     expect(t.accountId, 'a1');
     expect(t.categoryId, 'c1');
@@ -107,20 +107,18 @@ void main() {
     expect(s.person.linkedUserId, 'u2');
     expect(s.owedToMe, isFalse);
     expect(s.outstanding, 60);
-  });
 
-  test('no refs on the wire → null ids', () {
-    final t = Transaction.fromJson({
+    final bare = Transaction.fromJson({
       'id': 'n',
       'type': 'income',
       'amount': 1,
       'date': '2026-10-12',
     });
-    expect(t.accountId, isNull);
-    expect(t.categoryId, isNull);
-    expect(t.projectId, isNull);
-    expect(t.isDebtEntry, isFalse);
-    expect(t.transferPeer, isNull);
+    expect(bare.accountId, isNull);
+    expect(bare.categoryId, isNull);
+    expect(bare.projectId, isNull);
+    expect(bare.isDebtEntry, isFalse);
+    expect(bare.transferPeer, isNull);
   });
 
   test('transfer direction comes from transfer_peer', () {
@@ -180,7 +178,7 @@ void main() {
     expect(r.accountBalances, {'a1': 750.0, 'a2': 1250.5});
   });
 
-  test('DeleteTransactionResult parses id and balances', () {
+  test('DeleteTransactionResult and WalletBalance.mapOf', () {
     final r = DeleteTransactionResult.fromJson({
       'id': 't9',
       'account_balances': [
@@ -193,9 +191,7 @@ void main() {
       DeleteTransactionResult.fromJson({'id': 'x'}).accountBalances,
       isEmpty,
     );
-  });
 
-  test('WalletBalance.mapOf', () {
     expect(WalletBalance.mapOf(null), isEmpty);
     expect(WalletBalance.mapOf(const []), isEmpty);
     expect(

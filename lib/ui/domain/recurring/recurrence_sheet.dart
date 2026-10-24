@@ -16,6 +16,7 @@ import '../../organisms/app_sheet.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/typography.dart';
+import 'recurrence_choices.dart';
 import 'recurrence_rule.dart';
 import 'recurrence_text.dart';
 
@@ -41,7 +42,7 @@ class _RecurrenceSheet extends StatefulWidget {
 }
 
 class _RecurrenceSheetState extends State<_RecurrenceSheet> {
-  late RecurrenceRule _rule = RecurrenceEditor.normalize(widget.initial);
+  late RecurrenceRule _rule = RecurrenceChoices.normalize(widget.initial);
 
   @override
   Widget build(BuildContext context) {
@@ -97,17 +98,6 @@ class RecurrenceEditor extends StatefulWidget {
 
   final ValueChanged<RecurrenceRule> onChanged;
 
-  static const endSpanYears = 2;
-
-  static RecurrenceRule normalize(RecurrenceRule r) {
-    final dates = r.freq == RecurrenceFreq.dates;
-    return r.copyWith(
-      freq: dates ? RecurrenceFreq.monthly : null,
-      dates: dates ? const [] : null,
-      interval: r.interval < 1 ? 1 : r.interval,
-    );
-  }
-
   @override
   State<RecurrenceEditor> createState() => _RecurrenceEditorState();
 }
@@ -121,73 +111,19 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
   ];
 
   late RecurrenceRule _rule;
-
-  /// The start the sheet opened with; a moved start is always worked out
-  /// from here, so picking the old day again puts it back.
-  late DateTime _base;
-  late RecurrenceFreq _freq;
-  late int _interval;
-  late Set<int> _weekdays;
-  late int _startWeekday;
-  late RecurrenceMonthlyMode _monthlyMode;
-  late int _monthDay;
-  late int _nth;
-  late int _nthWeekday;
-  late int _yearMonth;
-  late int _yearDay;
-  late RecurrenceEndKind _endKind;
-  late DateTime _endDate;
-  late int _endCount;
+  late final RecurrenceChoices _c;
   late final TextEditingController _intervalText;
   late final TextEditingController _countText;
 
   DateTime get _start => _rule.start;
 
-  DateTime get _lastEnd => DateTime(
-    _start.year + RecurrenceEditor.endSpanYears,
-    _start.month,
-    _start.day,
-  );
-
   @override
   void initState() {
     super.initState();
-    _rule = RecurrenceEditor.normalize(widget.initial);
-    final start = DateTime(_start.year, _start.month, _start.day);
-    _base = start;
-    _freq = _rule.freq;
-    _interval = _rule.interval.clamp(1, 99);
-    _weekdays = {
-      for (final d in _rule.weekdays)
-        if (d >= 1 && d <= 7) d,
-    };
-    if (_weekdays.isEmpty) _weekdays = {start.weekday};
-    _startWeekday = start.weekday;
-    _yearMonth = start.month;
-    _yearDay = start.day.clamp(1, _daysIn(start.month));
-
-    final m = _rule.monthly;
-    _monthlyMode = m?.mode ?? RecurrenceMonthlyMode.day;
-    final day = (m?.mode == RecurrenceMonthlyMode.day ? m?.day : null);
-    _monthDay = (day ?? start.day).clamp(1, RecurrenceMonthly.lastDay);
-    final weekdayMode = m?.mode == RecurrenceMonthlyMode.weekday;
-    final startNth = (start.day - 1) ~/ 7 + 1;
-    _nth = (weekdayMode ? m?.nth : null) ?? startNth;
-    if (_nth >= 5) _nth = RecurrenceMonthly.lastWeek;
-    _nthWeekday = (weekdayMode ? m?.weekday : null) ?? start.weekday;
-
-    final end = _rule.end;
-    _endKind = end.kind;
-    final date = end.date;
-    _endDate = date == null
-        ? DateTime(start.year, start.month + 1, start.day)
-        : DateTime(date.year, date.month, date.day);
-    if (_endDate.isBefore(start)) _endDate = start;
-    if (_endDate.isAfter(_lastEnd)) _endDate = _lastEnd;
-    _endCount = (end.count ?? 12).clamp(1, 999);
-
-    _intervalText = TextEditingController(text: '$_interval');
-    _countText = TextEditingController(text: '$_endCount');
+    _rule = RecurrenceChoices.normalize(widget.initial);
+    _c = RecurrenceChoices(widget.initial, simple: widget.simple);
+    _intervalText = TextEditingController(text: '${_c.interval}');
+    _countText = TextEditingController(text: '${_c.endCount}');
   }
 
   @override
@@ -197,96 +133,37 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
     super.dispose();
   }
 
-  /// Days in [month] of a common year: a yearly day never lands on 29 Feb.
-  static int _daysIn(int month) => DateTime(2001, month + 1, 0).day;
-
-  /// Where the first round lands. A yearly rule repeats on its start, and a
-  /// budget's periods (simple) start on the picked weekday or day, so both
-  /// move the start to the next such day on or after [_base].
-  DateTime _anchoredStart() {
-    final b = _base;
-    if (_freq == RecurrenceFreq.yearly) {
-      final d = DateTime(b.year, _yearMonth, _yearDay);
-      return d.isBefore(b) ? DateTime(b.year + 1, _yearMonth, _yearDay) : d;
-    }
-    if (!widget.simple) return b;
-    switch (_freq) {
-      case RecurrenceFreq.weekly:
-        return DateTime(
-          b.year,
-          b.month,
-          b.day + (_startWeekday - b.weekday) % 7,
-        );
-      case RecurrenceFreq.monthly:
-        for (var k = 0; k < 12; k++) {
-          final last = DateTime(b.year, b.month + k + 1, 0).day;
-          final day = _monthDay >= RecurrenceMonthly.lastDay ? last : _monthDay;
-          if (day > last) continue;
-          final d = DateTime(b.year, b.month + k, day);
-          if (!d.isBefore(b)) return d;
-        }
-        return b;
-      default:
-        return b;
-    }
-  }
-
-  RecurrenceRule _build() => RecurrenceRule(
-    freq: _freq,
-    start: _anchoredStart(),
-    interval: _interval,
-    weekdays: _freq == RecurrenceFreq.weekly && !widget.simple
-        ? {..._weekdays}
-        : const {},
-    monthly: _freq != RecurrenceFreq.monthly || widget.simple
-        ? null
-        : (_monthlyMode == RecurrenceMonthlyMode.day
-              ? RecurrenceMonthly.onDay(_monthDay)
-              : RecurrenceMonthly.onWeekday(nth: _nth, weekday: _nthWeekday)),
-    end: switch (_endKind) {
-      RecurrenceEndKind.never => const RecurrenceEnd.never(),
-      RecurrenceEndKind.onDate => RecurrenceEnd.onDate(_endDate),
-      RecurrenceEndKind.afterCount => RecurrenceEnd.afterCount(_endCount),
-    },
-  );
-
   void _edit(VoidCallback change) {
-    setState(() {
-      change();
-      final start = _anchoredStart();
-      if (_endDate.isBefore(start)) _endDate = start;
-      _rule = _build();
-    });
+    setState(() => _rule = _c.edit(change));
     widget.onChanged(_rule);
   }
 
   void _toggleWeekday(int d) {
-    if (_weekdays.contains(d) && _weekdays.length == 1) return;
-    _edit(() {
-      _weekdays = {..._weekdays};
-      _weekdays.contains(d) ? _weekdays.remove(d) : _weekdays.add(d);
-    });
+    final r = _c.toggleWeekday(d);
+    if (r == null) return;
+    setState(() => _rule = r);
+    widget.onChanged(_rule);
   }
 
   Future<void> _pickEndDate() async {
     final start = DateTime(_start.year, _start.month, _start.day);
     final r = await showAppDatePicker(
       context,
-      initial: _endDate,
+      initial: _c.endDate,
       first: start,
-      last: _lastEnd,
+      last: RecurrenceChoices.lastEndOf(_start),
     );
     if (r is AppDatePicked && mounted) {
       final d = r.date;
-      _edit(() => _endDate = DateTime(d.year, d.month, d.day));
+      _edit(() => _c.endDate = DateTime(d.year, d.month, d.day));
     }
   }
 
   String _unitLabel(AppLocalizations l, RecurrenceFreq f) => switch (f) {
-    RecurrenceFreq.daily => l.recurSheetUnitDay(_interval),
-    RecurrenceFreq.weekly => l.recurSheetUnitWeek(_interval),
-    RecurrenceFreq.monthly => l.recurSheetUnitMonth(_interval),
-    _ => l.recurSheetUnitYear(_interval),
+    RecurrenceFreq.daily => l.recurSheetUnitDay(_c.interval),
+    RecurrenceFreq.weekly => l.recurSheetUnitWeek(_c.interval),
+    RecurrenceFreq.monthly => l.recurSheetUnitMonth(_c.interval),
+    _ => l.recurSheetUnitYear(_c.interval),
   };
 
   @override
@@ -356,8 +233,8 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
         ),
     ]);
 
-    final byDay = widget.simple || _monthlyMode == RecurrenceMonthlyMode.day;
-    final moved = !DateUtils.isSameDay(_rule.start, _base);
+    final byDay = widget.simple || _c.monthlyMode == RecurrenceMonthlyMode.day;
+    final moved = !DateUtils.isSameDay(_rule.start, _c.base);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -384,36 +261,36 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
           children: [
             AppText(l.recurSheetEvery),
             const SizedBox(width: AppSpacing.sm),
-            numberField(_intervalText, 99, (n) => _edit(() => _interval = n)),
+            numberField(_intervalText, 99, (n) => _edit(() => _c.interval = n)),
             const SizedBox(width: AppSpacing.md),
             Expanded(
               child: chips([
                 for (final f in _units)
                   AppChip(
                     label: _unitLabel(l, f),
-                    selected: _freq == f,
-                    onTap: () => _edit(() => _freq = f),
+                    selected: _c.freq == f,
+                    onTap: () => _edit(() => _c.freq = f),
                   ),
               ]),
             ),
           ],
         ),
-        if (_freq == RecurrenceFreq.weekly)
+        if (_c.freq == RecurrenceFreq.weekly)
           section(
             widget.simple ? l.recurSheetPeriodStart : l.recurSheetRepeatOn,
             widget.simple
                 ? weekdayChips(
                     'recurWeekday',
-                    (d) => _startWeekday == d,
-                    (d) => _edit(() => _startWeekday = d),
+                    (d) => _c.startWeekday == d,
+                    (d) => _edit(() => _c.startWeekday = d),
                   )
                 : weekdayChips(
                     'recurWeekday',
-                    _weekdays.contains,
+                    _c.weekdays.contains,
                     _toggleWeekday,
                   ),
           ),
-        if (_freq == RecurrenceFreq.monthly)
+        if (_c.freq == RecurrenceFreq.monthly)
           section(
             widget.simple ? l.recurSheetPeriodStart : l.recurSheetMonthlyOn,
             Column(
@@ -426,15 +303,16 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
                       key: const ValueKey('recurByDay'),
                       label: l.recurSheetByDay,
                       selected: byDay,
-                      onTap: () =>
-                          _edit(() => _monthlyMode = RecurrenceMonthlyMode.day),
+                      onTap: () => _edit(
+                        () => _c.monthlyMode = RecurrenceMonthlyMode.day,
+                      ),
                     ),
                     AppChip(
                       key: const ValueKey('recurByWeekday'),
                       label: l.recurSheetByWeekday,
                       selected: !byDay,
                       onTap: () => _edit(
-                        () => _monthlyMode = RecurrenceMonthlyMode.weekday,
+                        () => _c.monthlyMode = RecurrenceMonthlyMode.weekday,
                       ),
                     ),
                   ]),
@@ -443,10 +321,11 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
                 if (byDay)
                   DayOfMonthGrid(
                     key: const ValueKey('recurMonthDay'),
-                    selected: _monthDay,
+                    selected: _c.monthDay,
                     allowNone: false,
                     padding: EdgeInsets.zero,
-                    onPicked: (d) => _edit(() => _monthDay = d ?? _monthDay),
+                    onPicked: (d) =>
+                        _edit(() => _c.monthDay = d ?? _c.monthDay),
                   )
                 else ...[
                   chips([
@@ -462,21 +341,21 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
                         label: n == RecurrenceMonthly.lastWeek
                             ? strings.dayLastShort
                             : l.recurSheetNth(_ordinal(n), n),
-                        selected: _nth == n,
-                        onTap: () => _edit(() => _nth = n),
+                        selected: _c.nth == n,
+                        onTap: () => _edit(() => _c.nth = n),
                       ),
                   ]),
                   const SizedBox(height: AppSpacing.sm),
                   weekdayChips(
                     'recurNthWeekday',
-                    (d) => _nthWeekday == d,
-                    (d) => _edit(() => _nthWeekday = d),
+                    (d) => _c.nthWeekday == d,
+                    (d) => _edit(() => _c.nthWeekday = d),
                   ),
                 ],
               ],
             ),
           ),
-        if (_freq == RecurrenceFreq.yearly)
+        if (_c.freq == RecurrenceFreq.yearly)
           section(
             widget.simple ? l.recurSheetPeriodStart : l.recurSheetYearlyOn,
             Column(
@@ -484,20 +363,23 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 MonthOfYearGrid(
-                  selected: _yearMonth,
+                  selected: _c.yearMonth,
                   onPicked: (m) => _edit(() {
-                    _yearMonth = m;
-                    _yearDay = _yearDay.clamp(1, _daysIn(m));
+                    _c.yearMonth = m;
+                    _c.yearDay = _c.yearDay.clamp(
+                      1,
+                      RecurrenceChoices.daysIn(m),
+                    );
                   }),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 DayOfMonthGrid(
                   key: const ValueKey('recurYearDay'),
-                  days: _daysIn(_yearMonth),
-                  selected: _yearDay,
+                  days: RecurrenceChoices.daysIn(_c.yearMonth),
+                  selected: _c.yearDay,
                   allowNone: false,
                   padding: EdgeInsets.zero,
-                  onPicked: (d) => _edit(() => _yearDay = d ?? _yearDay),
+                  onPicked: (d) => _edit(() => _c.yearDay = d ?? _c.yearDay),
                 ),
               ],
             ),
@@ -516,30 +398,30 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
                 ])
                   AppChip(
                     label: label,
-                    selected: _endKind == kind,
-                    onTap: () => _edit(() => _endKind = kind),
+                    selected: _c.endKind == kind,
+                    onTap: () => _edit(() => _c.endKind = kind),
                   ),
               ]),
-              if (_endKind == RecurrenceEndKind.onDate) ...[
+              if (_c.endKind == RecurrenceEndKind.onDate) ...[
                 const SizedBox(height: AppSpacing.md),
                 AppChip(
-                  label: DateFormat.yMMMd(l.localeName).format(_endDate),
+                  label: DateFormat.yMMMd(l.localeName).format(_c.endDate),
                   icon: AppIcons.date,
                   trailing: AppChipTrailing.dropdown,
                   onTap: _pickEndDate,
                 ),
               ],
-              if (_endKind == RecurrenceEndKind.afterCount) ...[
+              if (_c.endKind == RecurrenceEndKind.afterCount) ...[
                 const SizedBox(height: AppSpacing.md),
                 Row(
                   children: [
                     numberField(
                       _countText,
                       999,
-                      (n) => _edit(() => _endCount = n),
+                      (n) => _edit(() => _c.endCount = n),
                     ),
                     const SizedBox(width: AppSpacing.sm),
-                    AppText(l.recurSheetOccurrences(_endCount)),
+                    AppText(l.recurSheetOccurrences(_c.endCount)),
                   ],
                 ),
               ],

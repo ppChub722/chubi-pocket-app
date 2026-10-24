@@ -33,11 +33,7 @@ void main() {
     expect(n.state, NotificationState.unread);
     expect(n.isUnread, isTrue);
     expect(n.awaitsAnswer, isTrue);
-  });
-
-  test('a system event has no actor', () {
-    final n = AppNotification.fromJson(_json(actor: null));
-    expect(n.actor, isNull);
+    expect(AppNotification.fromJson(_json(actor: null)).actor, isNull);
   });
 
   // The dashboard's "ต้องจัดการ" lists what the BE says still waits.

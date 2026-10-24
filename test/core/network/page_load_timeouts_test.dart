@@ -50,32 +50,44 @@ void main() {
     );
   });
 
-  test('GET: 5 s connect / 10 s receive', () async {
-    await client.dio.get<dynamic>('/contacts/1');
-    final o = adapter.seen.single;
-    expect(o.connectTimeout, ApiClient.pageLoadConnectTimeout);
-    expect(o.receiveTimeout, ApiClient.pageLoadReceiveTimeout);
-  });
+  test(
+    'timeouts: GET fails fast, POST keeps the defaults, a set one stays',
+    () async {
+      final cases = <(String, Future<void> Function(), Duration, Duration)>[
+        (
+          'GET',
+          () => client.dio.get<dynamic>('/contacts/1'),
+          ApiClient.pageLoadConnectTimeout,
+          ApiClient.pageLoadReceiveTimeout,
+        ),
+        (
+          'POST',
+          () => client.dio.post<dynamic>('/contacts', data: {}),
+          const Duration(seconds: 10),
+          const Duration(seconds: 15),
+        ),
+        (
+          'GET with its own receive timeout',
+          () => client.dio.get<dynamic>(
+            '/export',
+            options: Options(receiveTimeout: const Duration(seconds: 60)),
+          ),
+          ApiClient.pageLoadConnectTimeout,
+          const Duration(seconds: 60),
+        ),
+      ];
+      for (final (name, call, connect, receive) in cases) {
+        adapter.seen.clear();
+        await call();
+        final o = adapter.seen.single;
+        expect(o.connectTimeout, connect, reason: '$name connect');
+        expect(o.receiveTimeout, receive, reason: '$name receive');
+      }
+    },
+  );
 
   test('every request carries X-Timezone (the device IANA name)', () async {
     await client.dio.get<dynamic>('/categories');
     expect(adapter.seen.single.headers['X-Timezone'], 'Asia/Bangkok');
-  });
-
-  test('POST keeps the 10 s connect / 15 s receive defaults', () async {
-    await client.dio.post<dynamic>('/contacts', data: {});
-    final o = adapter.seen.single;
-    expect(o.connectTimeout, const Duration(seconds: 10));
-    expect(o.receiveTimeout, const Duration(seconds: 15));
-  });
-
-  test('a GET that sets its own receive timeout keeps it', () async {
-    await client.dio.get<dynamic>(
-      '/export',
-      options: Options(receiveTimeout: const Duration(seconds: 60)),
-    );
-    final o = adapter.seen.single;
-    expect(o.receiveTimeout, const Duration(seconds: 60));
-    expect(o.connectTimeout, ApiClient.pageLoadConnectTimeout);
   });
 }

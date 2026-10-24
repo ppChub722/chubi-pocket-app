@@ -722,14 +722,22 @@ class _ListRowPageState extends State<_ListRowPage> {
                     line2: ListRowLine.custom(
                       Row(
                         children: [
-                          AppChip(
-                            label: 'เงินในธนาคาร',
-                            icon: AppIcons.bank,
-                            fill: scheme.primary,
-                            onFill: scheme.onPrimary,
-                            size: ChipSize.mini,
+                          Flexible(
+                            child: AppChip(
+                              label: 'เงินในธนาคาร',
+                              icon: AppIcons.bank,
+                              fill: scheme.primary,
+                              onFill: scheme.onPrimary,
+                              size: ChipSize.mini,
+                            ),
                           ),
-                          const Text('  →  เที่ยวญี่ปุ่น'),
+                          const Flexible(
+                            child: Text(
+                              '  →  เที่ยวญี่ปุ่น',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ],
                       ),
                     ),

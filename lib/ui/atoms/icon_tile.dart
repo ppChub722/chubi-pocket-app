@@ -17,12 +17,16 @@ class IconTile extends StatelessWidget {
     this.shape = IconTileShape.circle,
     this.style = IconTileStyle.soft,
     this.badgeIcon,
+    this.glyphSize,
     super.key,
   });
 
   final IconData icon;
   final Color color;
   final double size;
+
+  /// The glyph's size; default the avatar metric for [size].
+  final double? glyphSize;
   final IconTileShape shape;
   final IconTileStyle style;
 
@@ -47,7 +51,7 @@ class IconTile extends StatelessWidget {
       ),
       child: Icon(
         icon,
-        size: AvatarMetrics.glyph(size),
+        size: glyphSize ?? AvatarMetrics.glyph(size),
         color: solid ? Colors.white : color,
       ),
     );

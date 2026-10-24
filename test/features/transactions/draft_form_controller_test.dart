@@ -1,5 +1,6 @@
 import 'package:chubi_pocket/features/categories/domain/category.dart';
 import 'package:chubi_pocket/features/categories/domain/category_type.dart';
+import 'package:chubi_pocket/features/pending/domain/pending_transaction.dart';
 import 'package:chubi_pocket/features/transactions/domain/refs.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
@@ -85,5 +86,33 @@ void main() {
     expect(s.owedAmount, 150);
     expect(s.debtId, 'd1');
     expect(s.hasRepayments, isTrue); // can't be removed
+  });
+
+  test('a draft keeps half-filled splits and its event; confirm does not', () {
+    final c = DraftFormController();
+    addTearDown(c.dispose);
+    c.amount.text = '100';
+    c.setProject('p1', name: 'ทริป');
+    c.setSplits([
+      SplitDraft(personName: 'ลี', owedAmount: 30),
+      SplitDraft(personName: 'บี'), // no amount
+      SplitDraft(owedAmount: 20), // no name
+      SplitDraft(), // nothing
+    ]);
+    final saved = c.toDraft(keepIncomplete: true);
+    expect(saved.splits, hasLength(3));
+    expect(saved.projectId, 'p1');
+    expect(saved.toJson()['project_id'], 'p1');
+    // Confirming sends only whole rows.
+    expect(c.toDraft().splits, hasLength(1));
+  });
+
+  test('project_id round-trips through the draft JSON; absent = none', () {
+    final d = PendingDraft.fromJson({'amount': 5, 'project_id': 'p9'});
+    expect(d.projectId, 'p9');
+    expect(d.toJson()['project_id'], 'p9');
+    final none = PendingDraft.fromJson({'amount': 5});
+    expect(none.projectId, isNull);
+    expect(none.toJson().containsKey('project_id'), isFalse);
   });
 }

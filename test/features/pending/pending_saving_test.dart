@@ -1,11 +1,6 @@
 import 'package:chubi_pocket/features/pending/data/pending_repository.dart';
 import 'package:chubi_pocket/features/pending/domain/pending_transaction.dart';
 import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.dart';
-import 'package:chubi_pocket/features/pending/presentation/pages/pending_page.dart';
-import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/ui/ui.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Map<String, dynamic> _saving(
@@ -98,52 +93,6 @@ void main() {
     final spare = PendingTransaction.fromJson(_saving('p2', goal: false));
     expect(spare.draft.goalId, isNull);
     expect(spare.resolved.goal, isNull);
-  });
-
-  Future<void> pump(WidgetTester t, PendingTransaction p) => t.pumpWidget(
-    MaterialApp(
-      locale: const Locale('th'),
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      theme: ThemeData(
-        extensions: [
-          ThemeRegistry.byId(
-            ThemeRegistry.defaultThemeId,
-          ).colorsFor(Brightness.light),
-        ],
-      ),
-      home: Scaffold(
-        body: PendingSavingRow(
-          item: p,
-          selected: false,
-          onToggle: () {},
-          onOpen: () {},
-        ),
-      ),
-    ),
-  );
-
-  testWidgets('row: 🐷 draft with the goal name', (t) async {
-    await pump(t, PendingTransaction.fromJson(_saving('p1')));
-    expect(find.byIcon(AppIcons.savingDeposit), findsWidgets);
-    expect(find.text('Japan trip'), findsWidgets);
-    expect(find.text('KBank'), findsOneWidget);
-    // Recurring left pending (owner): an old recurring draft has no chip.
-    expect(find.text('Save monthly | 2/12'), findsNothing);
-  });
-
-  testWidgets('row: spare label and a missing-wallet problem', (t) async {
-    await pump(
-      t,
-      PendingTransaction.fromJson(_saving('p1', goal: false, wallet: false)),
-    );
-    expect(find.text('ยังไม่จัดสรร'), findsWidgets);
-    expect(find.text('ต้องเลือกกระเป๋าก่อนยืนยัน'), findsOneWidget);
   });
 
   test('submit removes the saving row via the existing endpoint', () async {

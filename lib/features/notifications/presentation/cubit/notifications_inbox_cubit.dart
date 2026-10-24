@@ -158,6 +158,11 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
     }
   }
 
+  Future<void> pick(InboxFilter f) async {
+    if (f == state.filter) return;
+    await load(filter: f);
+  }
+
   Future<void> reload() => load();
 
   Future<void> loadMore() async {

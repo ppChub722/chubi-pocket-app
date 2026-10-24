@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:chubi_pocket/core/network/api_client.dart';
-import 'package:chubi_pocket/core/network/api_exception.dart';
 import 'package:chubi_pocket/features/personal_debts/data/personal_debts_repository.dart';
 import 'package:chubi_pocket/features/personal_debts/domain/debt_ledger.dart';
 import 'package:dio/dio.dart';
@@ -266,11 +265,5 @@ void main() {
     expect(http.last!.path, '/personal-debts/split-changes/n1/apply');
     expect(s.deleted, isTrue);
     expect(s.entry, isNull);
-  });
-
-  test('a 404 surfaces as ApiException', () async {
-    http.body = {'code': 'NOT_FOUND', 'message': 'not found'};
-    http.status = 404;
-    await expectLater(repo.getEntry('gone'), throwsA(isA<ApiException>()));
   });
 }

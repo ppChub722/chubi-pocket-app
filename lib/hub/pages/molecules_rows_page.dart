@@ -474,6 +474,20 @@ class _RowsPageState extends State<_RowsPage> {
               ),
             ),
             HubUse(
+              label: 'SectionHeader — total (label + amount in a colour)',
+              page: 'Debts list (ลูกหนี้ / เจ้าหนี้ sections)',
+              wide: true,
+              child: frame(
+                SectionHeader(
+                  title: 'ลูกหนี้',
+                  count: 2,
+                  totalLabel: 'รวม',
+                  total: '฿1,200.00',
+                  totalColor: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ),
+            HubUse(
               label: 'SectionHeader — icon trailing',
               page: 'No page yet (the option exists)',
               wide: true,

@@ -16,6 +16,7 @@ import '../../domain/category.dart';
 import '../../domain/category_reorder_logic.dart';
 import '../../domain/category_tree.dart';
 import '../../domain/category_type.dart';
+import '../category_errors.dart';
 import '../cubit/categories_cubit.dart';
 import '../widgets/category_chip_path.dart';
 import '../widgets/category_picker.dart';
@@ -290,7 +291,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      if (e.code == 'CATEGORY_NAME_DUPLICATE' || e.code == 'DUPLICATE_NAME') {
+      if (isCategoryNameDuplicate(e)) {
         _nameServerError = l.categoryFormNameDuplicate;
         _nameServerErrorFor = _nameKey(w.name, w.parentId);
         _formKey.currentState?.validate();

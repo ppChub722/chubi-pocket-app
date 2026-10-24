@@ -38,10 +38,11 @@ import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
 import '../cubit/tx_form_options_cubit.dart';
+import '../delete_results.dart';
+import '../quick_create_bodies.dart';
 import '../save_failure.dart';
 import '../transaction_edit.dart';
 import '../../../saving_goals/data/saving_goals_repository.dart';
-import '../../../saving_goals/domain/saving_entry.dart';
 import '../../../saving_goals/domain/saving_goals_overview.dart';
 import 'debt_entry_form.dart';
 import 'saving_entry_form.dart';
@@ -412,13 +413,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final repo = context.read<ProjectsRepository>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final description = _c.description.text.trim();
-    final note = _c.note.text.trim();
-    final splits = [
-      for (final s in _c.memberSplits)
-        if (s.memberId != null && s.amountValue > 0)
-          ProjectSplitInput(memberId: s.memberId!, amount: s.amountValue),
-    ];
+    final bill = projectBillBody(_c, payer);
     // A bill made from my tx (0.4.0-3 B3): "แก้ในสมุดของฉันด้วยไหม?" up front
     // (also_update_link = apply_to_my_tx). My copy of someone else's bill is
     // asked after the save, from the answer's my_transaction.
@@ -452,25 +447,25 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       if (row == null) {
         patch = await repo.createTransaction(
           view.project.id,
-          transactionMemberId: payer,
-          type: _c.type == TransactionType.income ? 'income' : 'expense',
-          amount: amount,
-          date: _ymd(_c.date),
-          description: description.isEmpty ? null : description,
-          note: note.isEmpty ? null : note,
+          transactionMemberId: bill.payerId,
+          type: bill.type,
+          amount: bill.amount,
+          date: bill.date,
+          description: bill.description,
+          note: bill.note,
           tagIds: tagIds,
-          splits: splits,
+          splits: bill.splits,
         );
       } else {
         patch = await repo.updateTransaction(
           view.project.id,
           row.parent.id,
-          amount: amount,
-          date: _ymd(_c.date),
-          description: description,
-          note: note,
+          amount: bill.amount,
+          date: bill.date,
+          description: bill.description ?? '',
+          note: bill.note ?? '',
           tagIds: tagIds,
-          splits: splits,
+          splits: bill.splits,
           alsoUpdateLink: alsoUpdateLink,
         );
       }
@@ -973,7 +968,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     setState(() => _saving = true);
     try {
       final result = await txCubit.remove(tx.id, skipOccurrence: skip);
-      accounts.patchBalances(result.accountBalances);
+      applyTxDeleteResult(result, accounts: accounts);
       navigator.pop(true);
       showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
     } on ApiException catch (e) {
@@ -1162,22 +1157,21 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final debtDirectory = context.read<DebtDirectoryCubit>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    String? text(TextEditingController c) =>
-        c.text.trim().isEmpty ? null : c.text.trim();
+    final body = debtRecordBody(d, person);
     setState(() => _saving = true);
     try {
       final r = await repo.createEntry(
-        person.key,
-        direction: d.direction,
-        amount: d.amountValue,
-        date: d.date,
-        accountId: d.createTransaction ? d.account?.id : null,
-        createTransaction: d.createTransaction,
-        description: text(d.description),
-        note: text(d.note),
-        tagIds: d.createTransaction ? d.tagIds.toList() : null,
-        personName: person.typedName,
-        dueDate: d.dueDate,
+        body.key,
+        direction: body.direction,
+        amount: body.amount,
+        date: body.date,
+        accountId: body.accountId,
+        createTransaction: body.createTransaction,
+        description: body.description,
+        note: body.note,
+        tagIds: body.tagIds,
+        personName: body.personName,
+        dueDate: body.dueDate,
       );
       accounts.patchBalances(r.accountBalances);
       final tx = r.transaction;
@@ -1222,21 +1216,20 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final debtDirectory = context.read<DebtDirectoryCubit>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    String? text(TextEditingController c) =>
-        c.text.trim().isEmpty ? null : c.text.trim();
+    final body = debtRepaymentBody(d, person);
     setState(() => _saving = true);
     try {
       final r = await repo.createRepayment(
-        person.key,
-        kind: d.repayKind,
-        amount: d.amountValue,
-        accountId: d.account?.id,
-        date: d.date,
-        description: text(d.description),
-        note: text(d.note),
-        tagIds: d.tagIds.toList(),
-        markPaidIds: d.markPaidIds.toList(),
-        personName: person.typedName,
+        body.key,
+        kind: body.kind,
+        amount: body.amount,
+        accountId: body.accountId,
+        date: body.date,
+        description: body.description,
+        note: body.note,
+        tagIds: body.tagIds,
+        markPaidIds: body.markPaidIds,
+        personName: body.personName,
       );
       accounts.patchBalances(r.accountBalances);
       txCubit.patchRow(r.transaction, afterWrite: true);
@@ -1263,19 +1256,16 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final accounts = context.read<AccountsCubit>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final d = s.date;
-    final iso =
-        '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-    final note = s.note.text.trim();
+    final body = savingSaveBody(s);
     setState(() => _saving = true);
     try {
       final r = await repo.addEntry(
-        kind: SavingEntryKind.save,
-        amount: s.amountValue,
-        date: iso,
-        goalId: s.goalId,
-        walletId: s.account?.id,
-        note: note.isEmpty ? null : note,
+        kind: body.kind,
+        amount: body.amount,
+        date: body.date,
+        goalId: body.goalId,
+        walletId: body.walletId,
+        note: body.note,
       );
       accounts.patchSavings(r.walletSavings);
       widget.onSavingSaved?.call(r);
@@ -1513,19 +1503,12 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final messenger = ScaffoldMessenger.of(context);
     // Only the active ผูกกับ tab is saved (owner 2026-10-21).
     final mode = _linkMode;
-    final plan = _c.linkSave(mode);
-    final splits = plan.splits;
-    final description = _c.description.text.trim().isEmpty
-        ? null
-        : _c.description.text.trim();
-    final note = _c.note.text.trim().isEmpty ? null : _c.note.text.trim();
     final event = mode == LinkMode.event && !_c.isTransfer
         ? _activeEvent
         : null;
-    final type = _c.type;
-    final amount = _c.amountValue;
-    final account = plan.useWallet ? _c.account : null;
     final tagIds = _c.tagIds.toList();
+    final txBody = txCreateBody(_c, mode);
+    final bill = eventBillBody(_c, mode);
 
     setState(() => _saving = true);
     String? warn;
@@ -1533,43 +1516,32 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     try {
       if (event == null) {
         final saved = await txCubit.add(
-          type: type,
-          accountId: account?.id,
-          amount: amount,
-          date: _ymd(_c.date),
-          categoryId: _c.isTransfer ? null : _c.category?.id,
-          description: description,
-          note: note,
-          transferToAccountId: _c.isTransfer ? _c.toAccount?.id : null,
-          tagIds: tagIds,
-          splits: splits.isEmpty ? null : splits,
-          link: plan.link,
+          type: txBody.type,
+          accountId: txBody.accountId,
+          amount: txBody.amount,
+          date: txBody.date,
+          categoryId: txBody.categoryId,
+          description: txBody.description,
+          note: txBody.note,
+          transferToAccountId: txBody.transferToAccountId,
+          tagIds: txBody.tagIds,
+          splits: txBody.splits,
+          link: txBody.link,
         );
         accounts.patchBalances(saved.accountBalances);
         newTxId = saved.rows.firstOrNull?.id;
       } else {
-        final body = <String, dynamic>{
-          'type': type.toJson(),
-          'amount': amount,
-          'date': _ymd(_c.date),
-          'account_id': ?account?.id,
-          'category_id': ?_c.category?.id,
-          'description': ?description,
-          'note': ?note,
-          if (splits.isNotEmpty) 'splits': splits,
-        };
         // B2: payer + members beside new_transaction.
-        final people = plan.link;
         final result = switch (event) {
           NewEventTarget(:final name) => await projects.quickCreate(
             name: name,
-            newTransaction: body,
-            people: people,
+            newTransaction: bill.newTransaction,
+            people: bill.people,
           ),
           ExistingEventTarget(:final project) => await projects.addBills(
             project.id,
-            newTransaction: body,
-            people: people,
+            newTransaction: bill.newTransaction,
+            people: bill.people,
           ),
           RemoveFromEvent() => throw StateError('nothing to remove from'),
         };

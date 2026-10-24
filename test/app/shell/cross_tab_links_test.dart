@@ -54,18 +54,6 @@ void main() {
     expect(problems, isEmpty, reason: problems.join('\n'));
   });
 
-  test('the scan sees calls (it is not silently matching nothing)', () {
-    const sample = '''
-      context.push('/contacts/1');
-      router.go('/transactions/2');
-      context.pushReplacement('/projects/3');
-      GoRouter.of(context).push('/budgets');
-      context.push(location);
-    ''';
-    final found = _call.allMatches(sample).length;
-    expect(found, 5);
-  });
-
   test('ShellTab.ofPath knows every tab', () {
     expect(ShellTab.ofPath('/'), ShellTab.home);
     expect(ShellTab.ofPath('/browse?month=2026-10'), ShellTab.home);

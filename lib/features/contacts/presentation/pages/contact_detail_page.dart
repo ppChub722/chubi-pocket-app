@@ -346,11 +346,12 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       return Icon(AppIcons.link, size: 22, color: scheme.onSurfaceVariant);
     }
     final success = Theme.of(context).extension<AppColors>()!.success;
-    return Container(
-      width: 28,
-      height: 28,
-      decoration: BoxDecoration(color: success, shape: BoxShape.circle),
-      child: const Icon(AppIcons.link, size: 16, color: Colors.white),
+    return IconTile(
+      icon: AppIcons.link,
+      color: success,
+      size: 28,
+      glyphSize: 16,
+      style: IconTileStyle.solid,
     );
   }
 
@@ -572,7 +573,8 @@ class _ContactDetailPageState extends State<ContactDetailPage>
   /// Email + phone in the hero, like a business card (owner 2026-10-23).
   /// Both always show; an empty one says it can be filled (long-press).
   Widget _businessCard(AppLocalizations l, Contact c) {
-    final faint = HeroColors.maybeOf(context)?.muted ??
+    final faint =
+        HeroColors.maybeOf(context)?.muted ??
         Theme.of(context).colorScheme.onSurfaceVariant;
     HeroFact fact(String label, String? value, IconData icon) {
       final empty = value == null || value.trim().isEmpty;
@@ -676,7 +678,9 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           DetailRow(
             leading: _linkMark(linked: false),
             label: l.contactLinkRequest,
-            helper: hasEmail ? l.contactLinkRequestHint : l.contactLinkNeedsEmail,
+            helper: hasEmail
+                ? l.contactLinkRequestHint
+                : l.contactLinkNeedsEmail,
             showChevron: true,
             onTap: hasEmail ? _requestLink : _askEmailFirst,
           ),
@@ -905,23 +909,25 @@ class _ContactDetailPageState extends State<ContactDetailPage>
 
   /// View mode: the "แสดงชื่อเล่น" switch, saved at once with only that field
   /// (owner 2026-10-21, like the other detail pages' settings).
-  Widget _viewNicknameSwitch(AppLocalizations l, Contact c) => LiveSetting<bool>(
-    value: c.showNickname,
-    save: (v) async {
-      final updated = await context.read<ContactsCubit>().update(
-        c.id,
-        showNickname: v,
+  Widget _viewNicknameSwitch(AppLocalizations l, Contact c) =>
+      LiveSetting<bool>(
+        value: c.showNickname,
+        save: (v) async {
+          final updated = await context.read<ContactsCubit>().update(
+            c.id,
+            showNickname: v,
+          );
+          if (mounted) _patch(updated);
+          return true;
+        },
+        failedMessage: (e) =>
+            e is ApiException ? e.message : l.errorUnknownMessage,
+        builder: (context, value, onChanged) => SettingToggleRow(
+          label: l.contactShowNicknameLabel,
+          value: value,
+          onChanged: onChanged,
+        ),
       );
-      if (mounted) _patch(updated);
-      return true;
-    },
-    failedMessage: (e) => e is ApiException ? e.message : l.errorUnknownMessage,
-    builder: (context, value, onChanged) => SettingToggleRow(
-      label: l.contactShowNicknameLabel,
-      value: value,
-      onChanged: onChanged,
-    ),
-  );
 
   Widget _endZone(AppLocalizations l) {
     final c = _contact!;

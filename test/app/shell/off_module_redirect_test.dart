@@ -4,47 +4,39 @@ import 'package:flutter_test/flutter_test.dart';
 /// A module that's off (AppModules) has no pages: the router sends any
 /// way in — deep link, notification link, openPage — somewhere safe.
 void main() {
-  bool allOn(ShellTab _) => true;
   bool Function(ShellTab) off(ShellTab t) =>
       (tab) => tab != t;
+  bool allOn(ShellTab _) => true;
+  bool allOff(ShellTab _) => false;
 
-  test('everything on — nothing redirects', () {
-    for (final path in ['/', '/projects/1', '/pending', '/settings']) {
-      expect(offModuleRedirect(path, isOn: allOn), isNull, reason: path);
+  test('redirect table', () {
+    final cases = <(String, bool Function(ShellTab), String?)>[
+      ('/projects/1', allOn, null),
+      ('/pending', allOn, null),
+      ('/projects', off(ShellTab.projects), '/more'),
+      ('/projects/abc/members', off(ShellTab.projects), '/more'),
+      ('/contacts/1', off(ShellTab.projects), null),
+      ('/pending/new', off(ShellTab.pending), '/'),
+      ('/notifications', off(ShellTab.notifications), '/'),
+      ('/settings/notifications', off(ShellTab.notifications), '/'),
+      ('/settings/profile', off(ShellTab.notifications), null),
+      ('/dev/widgets', allOff, null),
+      ('/auth/login', allOff, null),
+    ];
+    for (final (path, isOn, want) in cases) {
+      expect(offModuleRedirect(path, isOn: isOn), want, reason: path);
     }
-  });
-
-  test('a เพิ่มเติม card that is off → the hub', () {
-    final isOn = off(ShellTab.projects);
-    expect(offModuleRedirect('/projects', isOn: isOn), '/more');
-    expect(offModuleRedirect('/projects/abc/members', isOn: isOn), '/more');
-    expect(offModuleRedirect('/contacts/1', isOn: isOn), isNull);
-  });
-
-  test('a top-bar module that is off → the dashboard', () {
-    expect(offModuleRedirect('/pending/new', isOn: off(ShellTab.pending)), '/');
-    expect(
-      offModuleRedirect('/notifications', isOn: off(ShellTab.notifications)),
-      '/',
-    );
-  });
-
-  test('notification settings under ตั้งค่า belong to notifications', () {
-    final isOn = off(ShellTab.notifications);
-    expect(offModuleRedirect('/settings/notifications', isOn: isOn), '/');
-    expect(offModuleRedirect('/settings/profile', isOn: isOn), isNull);
-  });
-
-  test('outside the shell is never blocked', () {
-    bool none(ShellTab _) => false;
-    expect(offModuleRedirect('/dev/widgets', isOn: none), isNull);
-    expect(offModuleRedirect('/auth/login', isOn: none), isNull);
   });
 
   test('with the real switches, every core tab stays reachable', () {
-    for (final path in ['/', '/transactions', '/accounts', '/more']) {
+    for (final path in [
+      '/',
+      '/transactions',
+      '/accounts',
+      '/more',
+      '/settings',
+    ]) {
       expect(offModuleRedirect(path), isNull, reason: path);
     }
-    expect(offModuleRedirect('/settings'), isNull);
   });
 }

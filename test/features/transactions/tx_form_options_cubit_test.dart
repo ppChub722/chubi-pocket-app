@@ -85,7 +85,7 @@ void main() {
     late FormDefaultsCubit defaults;
     late TxFormOptionsCubit cubit;
 
-    setUp(() {
+    void build() {
       final sync = testCoordinator();
       accounts = AccountsCubit(repository: _AccountsRepo(), coordinator: sync);
       categories = CategoriesCubit(
@@ -102,9 +102,9 @@ void main() {
         projects: projects,
         defaults: defaults,
       );
-    });
+    }
 
-    tearDown(() async {
+    Future<void> dispose() async {
       await cubit.close();
       await Future.wait([
         accounts.close(),
@@ -113,7 +113,7 @@ void main() {
         projects.close(),
         defaults.close(),
       ]);
-    });
+    }
 
     Future<void> settle() => Future<void>.delayed(Duration.zero);
 
@@ -137,41 +137,82 @@ void main() {
       defaults.applySync({'default_account_id': 'a2', 'fee_category_id': 'c9'});
     }
 
-    test('there are no options until every cache has its data', () {
-      expect(cubit.state.isLoading, isTrue);
-      accounts.applySync({'data': const [], 'total': 0});
-      categories.applySync({'data': const []});
-      tags.applySync({'data': const []});
-      projects.applySync({'data': const []});
-      expect(cubit.state.options, isNull);
-      expect(cubit.state.isLoading, isTrue);
-    });
+    test('cubit state table', () async {
+      final cases =
+          <({String name, Future<Object?> Function() run, Object? expected})>[
+            (
+              name: 'there are no options until every cache has its data',
+              run: () async {
+                final loadingAtFirst = cubit.state.isLoading;
+                accounts.applySync({'data': const [], 'total': 0});
+                categories.applySync({'data': const []});
+                tags.applySync({'data': const []});
+                projects.applySync({'data': const []});
+                return [
+                  loadingAtFirst,
+                  cubit.state.options == null,
+                  cubit.state.isLoading,
+                ];
+              },
+              expected: [true, true, true],
+            ),
+            (
+              name:
+                  'options appear once everything is loaded and follow the caches',
+              run: () async {
+                fillAll();
+                await settle();
+                final o = cubit.state.options!;
+                final seen = [
+                  cubit.state.status,
+                  o.accountList.map((a) => a.id).toList(),
+                  o.defaultAccountId,
+                  o.feeCategoryId,
+                  o.categories.map((c) => c.ref.id).toList(),
+                  o.tags.single.name,
+                ];
 
-    test(
-      'options appear once everything is loaded and follow the caches',
-      () async {
-        fillAll();
-        await settle();
-        final o = cubit.state.options!;
-        expect(cubit.state.status, TxFormOptionsStatus.loaded);
-        expect(o.accountList.map((a) => a.id), ['a1', 'a2']);
-        expect(o.defaultAccountId, 'a2');
-        expect(o.feeCategoryId, 'c9');
-        expect(o.categories.map((c) => c.ref.id), ['c1', 'c2']);
-        expect(o.tags.single.name, 'trip');
-
-        accounts.patchBalances({'a1': 7});
-        await settle();
-        expect(cubit.state.options!.accountList.first.balance, 7);
-      },
-    );
-
-    test('a failing cache with nothing loaded yet shows its error', () async {
-      accounts.syncFailed(const ApiException(code: 'NETWORK', message: 'down'));
-      await settle();
-      expect(cubit.state.status, TxFormOptionsStatus.error);
-      expect(cubit.state.error?.code, 'NETWORK');
-      expect(cubit.state.options, isNull);
+                accounts.patchBalances({'a1': 7});
+                await settle();
+                return [
+                  ...seen,
+                  cubit.state.options!.accountList.first.balance,
+                ];
+              },
+              expected: [
+                TxFormOptionsStatus.loaded,
+                ['a1', 'a2'],
+                'a2',
+                'c9',
+                ['c1', 'c2'],
+                'trip',
+                7,
+              ],
+            ),
+            (
+              name: 'a failing cache with nothing loaded yet shows its error',
+              run: () async {
+                accounts.syncFailed(
+                  const ApiException(code: 'NETWORK', message: 'down'),
+                );
+                await settle();
+                return [
+                  cubit.state.status,
+                  cubit.state.error?.code,
+                  cubit.state.options == null,
+                ];
+              },
+              expected: [TxFormOptionsStatus.error, 'NETWORK', true],
+            ),
+          ];
+      for (final c in cases) {
+        build();
+        try {
+          expect(await c.run(), c.expected, reason: c.name);
+        } finally {
+          await dispose();
+        }
+      }
     });
   });
 }

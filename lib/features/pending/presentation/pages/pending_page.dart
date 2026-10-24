@@ -20,6 +20,7 @@ import '../../data/slip_qr_reader.dart';
 import '../../domain/pending_transaction.dart';
 import '../cubit/pending_cubit.dart';
 import '../pending_errors.dart';
+import '../pending_selection.dart';
 
 class PendingPage extends StatefulWidget {
   const PendingPage({super.key});
@@ -56,17 +57,10 @@ class _PendingPageState extends State<PendingPage> {
       };
 
   Future<void> _submitSelected() async {
-    final byId = {
-      for (final p in context.read<PendingCubit>().state.items) p.id: p,
-    };
-    final blocked = [
-      for (final id in _selected)
-        if (byId[id] != null && !byId[id]!.canConfirm) byId[id]!,
-    ];
-    final ready = [
-      for (final id in _selected)
-        if (byId[id]?.canConfirm ?? true) id,
-    ];
+    final (:blocked, :ready) = splitSelection(
+      _selected,
+      context.read<PendingCubit>().state.items,
+    );
     if (ready.isEmpty && blocked.isNotEmpty) {
       await _open(blocked.first);
       return;

@@ -20,6 +20,7 @@ import '../../recurring/data/recurring_repository.dart';
 import '../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../domain/notification.dart';
 import 'cubit/notifications_inbox_cubit.dart';
+import 'notification_routes.dart';
 
 abstract final class NotificationActions {
   static Future<void> tap(BuildContext ctx, AppNotification n) async {
@@ -59,26 +60,27 @@ abstract final class NotificationActions {
   }
 
   static Future<void> accept(BuildContext ctx, AppNotification n) =>
-      switch (n.type) {
-        NotificationType.accountInvite => _onAcceptWalletInvite(ctx, n.id),
-        NotificationType.splitCreated => _onAcceptSplit(ctx, n.id),
-        NotificationType.projectTxRecordedForYou => _onCopyToBook(ctx, n),
-        NotificationType.projectTxChanged => _onUpdateCopy(ctx, n),
-        NotificationType.splitChanged => _onApplySplitChange(ctx, n),
-        NotificationType.projectInvite => _onAcceptProjectInvite(ctx, n),
-        NotificationType.recurringEnding => _onExtendRecurring(ctx, n),
-        NotificationType.recurringDue => _onOpenDue(ctx, n),
-        _ => _onAcceptLinkRequest(ctx, n.id),
+      switch (acceptRouteOf(n.type)) {
+        AcceptRoute.walletInvite => _onAcceptWalletInvite(ctx, n.id),
+        AcceptRoute.split => _onAcceptSplit(ctx, n.id),
+        AcceptRoute.copyToBook => _onCopyToBook(ctx, n),
+        AcceptRoute.updateCopy => _onUpdateCopy(ctx, n),
+        AcceptRoute.splitChange => _onApplySplitChange(ctx, n),
+        AcceptRoute.projectInvite => _onAcceptProjectInvite(ctx, n),
+        AcceptRoute.extendRecurring => _onExtendRecurring(ctx, n),
+        AcceptRoute.openDue => _onOpenDue(ctx, n),
+        AcceptRoute.linkRequest => _onAcceptLinkRequest(ctx, n.id),
       };
 
   static Future<void> reject(BuildContext ctx, AppNotification n) =>
-      switch (n.type) {
-        NotificationType.accountInvite => _onRejectWalletInvite(ctx, n.id),
-        NotificationType.contactLinkRequest => _onRejectLinkRequest(ctx, n.id),
-        NotificationType.projectInvite => _onRejectProjectInvite(ctx, n.id),
-        NotificationType.recurringEnding =>
+      switch (rejectRouteOf(n.type)) {
+        RejectRoute.walletInvite => _onRejectWalletInvite(ctx, n.id),
+        RejectRoute.linkRequest => _onRejectLinkRequest(ctx, n.id),
+        RejectRoute.projectInvite => _onRejectProjectInvite(ctx, n.id),
+        RejectRoute.markActioned =>
           ctx.read<NotificationsInboxCubit>().markActioned(n.id),
-        _ => ctx.read<NotificationsInboxCubit>().markDismissed(n.id),
+        RejectRoute.dismiss =>
+          ctx.read<NotificationsInboxCubit>().markDismissed(n.id),
       };
 }
 

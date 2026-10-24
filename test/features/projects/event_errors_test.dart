@@ -10,14 +10,16 @@ void main() {
   String text(String code) =>
       eventErrorText(l, ApiException(code: code, message: 'server says'));
 
-  test('the BE event codes map to plain Thai', () {
-    expect(text('PROJECT_LOCKED'), l.eventErrLocked);
-    expect(text('FORBIDDEN_ROLE'), l.eventErrNotOwner);
-    expect(text('INVALID_DATE_RANGE'), l.eventDatesInvalid);
-    expect(text('OWNER_CANNOT_LEAVE'), l.eventErrOwnerCannotLeave);
-  });
-
-  test('an unknown code keeps the server message', () {
-    expect(text('SOMETHING_ELSE'), 'server says');
+  test('the BE event codes map to plain Thai; an unknown code keeps the '
+      'server message', () {
+    for (final c in [
+      (code: 'PROJECT_LOCKED', want: l.eventErrLocked),
+      (code: 'FORBIDDEN_ROLE', want: l.eventErrNotOwner),
+      (code: 'INVALID_DATE_RANGE', want: l.eventDatesInvalid),
+      (code: 'OWNER_CANNOT_LEAVE', want: l.eventErrOwnerCannotLeave),
+      (code: 'SOMETHING_ELSE', want: 'server says'),
+    ]) {
+      expect(text(c.code), c.want, reason: c.code);
+    }
   });
 }

@@ -56,11 +56,11 @@ class DebtModeChips extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
+        Wrap(
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xs,
           children: [
             chip(recordLabel, AppIcons.debt, false),
-            const SizedBox(width: AppSpacing.xs),
             chip(settleLabel, AppIcons.cash, true),
           ],
         ),

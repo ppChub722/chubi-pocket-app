@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/app_text.dart';
 import '../atoms/list_break.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
+import '../tokens/typography.dart';
 
 class SectionHeader extends StatelessWidget implements ListBreak {
   const SectionHeader({
@@ -12,6 +14,9 @@ class SectionHeader extends StatelessWidget implements ListBreak {
     this.actionLabel,
     this.onAction,
     this.trailing,
+    this.totalLabel,
+    this.total,
+    this.totalColor,
     // No end inset: the trailing ends flush with the cards below it (the
     // list's gutter), owner 2026-10-21.
     this.padding = const EdgeInsets.fromLTRB(
@@ -32,14 +37,39 @@ class SectionHeader extends StatelessWidget implements ListBreak {
 
   /// An icon action at the end instead (the wallet groups' ⇅).
   final Widget? trailing;
+
+  /// A small [totalLabel] then the [total] text in [totalColor], at the end
+  /// (a debts section's "รวม ฿1,200"); used when there is no [trailing].
+  final String? totalLabel;
+  final String? total;
+  final Color? totalColor;
   final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final hasEnd =
-        (actionLabel != null && onAction != null) || trailing != null;
+    final total = this.total;
+    final end =
+        trailing ??
+        (total == null
+            ? null
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  if (totalLabel != null) ...[
+                    AppText(totalLabel!, role: AppTextRole.caption),
+                    const SizedBox(width: AppSpacing.xs),
+                  ],
+                  Text(
+                    total,
+                    style: textTheme.labelLarge?.copyWith(color: totalColor),
+                  ),
+                ],
+              ));
+    final hasEnd = (actionLabel != null && onAction != null) || end != null;
     return Padding(
       padding: padding,
       child: LayoutBuilder(
@@ -107,7 +137,7 @@ class SectionHeader extends StatelessWidget implements ListBreak {
                             ],
                           ),
                         ),
-                      if (trailing != null) Flexible(child: trailing!),
+                      if (end != null) Flexible(child: end),
                     ],
                   ),
                 ),

@@ -15,26 +15,6 @@ void main() {
     expect(SlipQr.crc16('123456789'), '29B1');
   });
 
-  test('reads ref, bank and country off a slip QR', () {
-    final raw = slipPayload('004', '016282103123ABC45678');
-    final qr = SlipQr.tryParse(raw)!;
-    expect(qr.transRef, '016282103123ABC45678');
-    expect(qr.bankCode, '004');
-    expect(qr.apiId, '000001');
-    expect(qr.country, 'TH');
-    expect(qr.crcValid, isTrue);
-  });
-
-  test('a real K PLUS slip QR (owner 2026-10-09)', () {
-    final qr = SlipQr.tryParse(
-      '0041000600000101030040220016282153110ATF020625102TH91042F66',
-    )!;
-    expect(qr.transRef, '016282153110ATF02062');
-    expect(qr.bankCode, '004');
-    expect(qr.country, 'TH');
-    expect(qr.crcValid, isTrue);
-  });
-
   test('a wrong CRC still gives the ref, flagged', () {
     final raw = slipPayload('014', 'REF0001');
     final bad = '${raw.substring(0, raw.length - 4)}0000';
@@ -43,12 +23,38 @@ void main() {
     expect(qr.crcValid, isFalse);
   });
 
-  test('not a slip QR → null', () {
-    // PromptPay merchant QR: tag 00 is the 2-char format version.
-    expect(SlipQr.tryParse('000201010211'), isNull);
-    expect(SlipQr.tryParse('https://example.com'), isNull);
-    expect(SlipQr.tryParse(''), isNull);
-    // Truncated TLV.
-    expect(SlipQr.tryParse('0041000600'), isNull);
+  test('reads a slip QR: ref, bank, country; anything else is null', () {
+    for (final c in [
+      (
+        name: 'built payload',
+        raw: slipPayload('004', '016282103123ABC45678'),
+        ref: '016282103123ABC45678',
+        bank: '004',
+      ),
+      (
+        name: 'a real K PLUS slip QR (owner 2026-10-09)',
+        raw: '0041000600000101030040220016282153110ATF020625102TH91042F66',
+        ref: '016282153110ATF02062',
+        bank: '004',
+      ),
+    ]) {
+      final qr = SlipQr.tryParse(c.raw)!;
+      expect(qr.transRef, c.ref, reason: c.name);
+      expect(qr.bankCode, c.bank, reason: c.name);
+      expect(qr.country, 'TH', reason: c.name);
+      expect(qr.crcValid, isTrue, reason: c.name);
+    }
+    expect(
+      SlipQr.tryParse(slipPayload('004', '016282103123ABC45678'))!.apiId,
+      '000001',
+    );
+    for (final raw in [
+      '000201010211',
+      'https://example.com',
+      '',
+      '0041000600',
+    ]) {
+      expect(SlipQr.tryParse(raw), isNull, reason: raw);
+    }
   });
 }

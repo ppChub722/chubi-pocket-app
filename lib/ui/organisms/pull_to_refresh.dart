@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../atoms/connection_scope.dart';
 import '../atoms/refresh_registry.dart';
 import 'page_pop_observer.dart';
+import 'reconnect_reload.dart';
 import '../tokens/app_durations.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app/app_colors.dart';
@@ -67,7 +68,7 @@ class _PullToRefreshState extends State<PullToRefresh>
     final now = ConnectionScope.reconnectsOf(context);
     final before = _reconnects;
     _reconnects = now;
-    var reopen = before != null && now != before;
+    var reopen = reloadsOnReconnect(before, now);
 
     final active = TickerMode.valuesOf(context).enabled;
     final current = ModalRoute.of(context)?.isCurrent ?? true;

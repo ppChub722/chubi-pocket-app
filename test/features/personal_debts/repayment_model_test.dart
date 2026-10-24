@@ -84,7 +84,8 @@ void main() {
     );
   });
 
-  test('POST …/repayments answers the tx, the balance, the wallets', () {
+  test('repayment answers: POST the tx, balance, wallets; PUT / DELETE the '
+      'person balance', () {
     final r = DebtRepaymentResult.fromJson({
       'transaction': tx(),
       'item': <String, dynamic>{},
@@ -96,9 +97,6 @@ void main() {
     expect(r.transaction.id, 't9');
     expect(r.balance.net, 118);
     expect(r.accountBalances, {'w1': 1082});
-  });
-
-  test('PUT / DELETE on a repayment answer the person balance', () {
     final put = TransactionWriteResult.fromJson({
       'rows': [tx()],
       'account_balances': <Object>[],

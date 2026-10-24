@@ -128,9 +128,11 @@ class RecurringLinkHandle extends ChangeNotifier {
       txDate: txDate,
       txId: txId,
     );
-    if (picked != null) _set(candidate: picked);
+    if (picked != null) pick(picked);
     return picked;
   }
+
+  void pick(LinkCandidate c) => _set(candidate: c);
 
   RecurringLinkRepository _repo(BuildContext context) =>
       repository ?? RecurringLinkRepository.of(context);
@@ -152,10 +154,28 @@ class RecurringLinkHandle extends ChangeNotifier {
     required void Function(String message) error,
     bool replace = false,
   }) async {
+    if (_candidate == null) return null;
+    final l = AppLocalizations.of(context)!;
+    return linkWith(
+      _repo(context),
+      txId,
+      error: error,
+      errorText: (e) => recurringLinkError(l, e),
+      askSwap: (e) async => context.mounted && await askSwapLink(context, e),
+      replace: replace,
+    );
+  }
+
+  Future<LinkResult?> linkWith(
+    RecurringLinkRepository repo,
+    String txId, {
+    required void Function(String message) error,
+    required String Function(ApiException e) errorText,
+    required Future<bool> Function(ApiException e) askSwap,
+    bool replace = false,
+  }) async {
     final c = _candidate;
     if (c == null) return null;
-    final l = AppLocalizations.of(context)!;
-    final repo = _repo(context);
     _set(busy: true);
     try {
       LinkResult r;
@@ -166,8 +186,7 @@ class RecurringLinkHandle extends ChangeNotifier {
             !_alreadyLinked(e) ||
             replace ||
             c.replace ||
-            !context.mounted ||
-            !await askSwapLink(context, e)) {
+            !await askSwap(e)) {
           rethrow;
         }
         r = await _linkCall(repo, c.occurrence, txId, true);
@@ -185,7 +204,7 @@ class RecurringLinkHandle extends ChangeNotifier {
       return r;
     } on ApiException catch (e) {
       _set(busy: false);
-      error(recurringLinkError(l, e));
+      error(errorText(e));
       return null;
     }
   }
@@ -209,8 +228,19 @@ class RecurringLinkHandle extends ChangeNotifier {
     RecurringItemLink link, {
     required VoidCallback onUnlinked,
     required void Function(String message) error,
+  }) => unlinkWith(
+    _repo(context),
+    link,
+    onUnlinked: onUnlinked,
+    error: error,
+  );
+
+  Future<bool> unlinkWith(
+    RecurringLinkRepository repo,
+    RecurringItemLink link, {
+    required VoidCallback onUnlinked,
+    required void Function(String message) error,
   }) async {
-    final repo = _repo(context);
     final ruleId = link.recurringId;
     final slot = link.slot;
     _set(busy: true);
@@ -236,19 +266,34 @@ class RecurringLinkHandle extends ChangeNotifier {
     required void Function(String message) error,
     required void Function(String message) done,
   }) async {
+    if (_ask == null) return;
+    return answerWith(
+      _repo(context),
+      update: update,
+      error: error,
+      done: done,
+      doneText: AppLocalizations.of(context)!.recurringLinkedAmountUpdated,
+    );
+  }
+
+  Future<void> answerWith(
+    RecurringLinkRepository repo, {
+    required bool update,
+    required void Function(String message) error,
+    required void Function(String message) done,
+    required String doneText,
+  }) async {
     final a = _ask;
     if (a == null) return;
     if (!update) {
       _set();
       return;
     }
-    final l = AppLocalizations.of(context)!;
-    final repo = _repo(context);
     _set(busy: true, ask: a);
     try {
       await repo.updateAmount(a.recurringId, a.txAmount);
       _set(busy: false);
-      done(l.recurringLinkedAmountUpdated);
+      done(doneText);
     } on ApiException catch (e) {
       _set(busy: false, ask: a);
       error(e.message);

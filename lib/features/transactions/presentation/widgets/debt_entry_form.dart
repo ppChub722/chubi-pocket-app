@@ -21,6 +21,7 @@ import '../../../tags/presentation/widgets/tag_picker.dart';
 import '../../domain/refs.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/tx_form_options_cubit.dart';
+import '../quick_create_bodies.dart';
 import 'pick_chip_rows.dart';
 
 class DebtPick {
@@ -552,14 +553,15 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
       return;
     }
     try {
+      final body = debtPreviewBody(_c, p);
       final r = await repo.preview(
-        p.key,
-        direction: _c.repaying ? null : _c.direction,
-        kind: _c.repaying ? _c.repayKind : null,
-        amount: _c.amountValue,
-        accountId: _c.repaying || _c.createTransaction ? _c.account?.id : null,
-        createTransaction: _c.repaying ? null : _c.createTransaction,
-        personName: p.typedName,
+        body.key,
+        direction: body.direction,
+        kind: body.kind,
+        amount: body.amount,
+        accountId: body.accountId,
+        createTransaction: body.createTransaction,
+        personName: body.personName,
       );
       if (!mounted || _c.previewKey != want) return;
       _c.setPreview(want, r);

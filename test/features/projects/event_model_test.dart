@@ -104,14 +104,12 @@ void main() {
     expect(_view().tagIdsFor(['food', 'New one']), ['t1']);
   });
 
-  test('withEventTags updates the rows’ mine flags', () {
+  test('withEventTags: mine flags update; a deleted event tag comes off the '
+      'rows; a renamed one is renamed', () {
     final v = _view().withEventTags([
       const BoardTag(id: 't1', name: 'Food', mine: true),
     ]);
     expect(v.txs.last.tagRefs.single.mine, isTrue);
-  });
-
-  test('a deleted event tag comes off the rows; a renamed one is renamed', () {
     final renamed = _view().withEventTags([
       const BoardTag(id: 't1', name: 'Meals'),
     ]);
@@ -134,6 +132,9 @@ void main() {
     expect(s.myShareTotal, 14289);
     expect(s.paidTotal, 22539);
     expect(s.receivableTotal, 8250);
-    expect((s.active, s.unsettled, s.ended), (2, 1, 5));
+    expect(
+      (s.all, s.active, s.unsettled, s.receivable, s.payable, s.ended),
+      (7, 2, 3, 2, 1, 5),
+    );
   });
 }

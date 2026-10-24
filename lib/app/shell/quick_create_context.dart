@@ -136,7 +136,7 @@ class QuickCreateContext extends ChangeNotifier {
     QuickCreateRouteObserver.changes.addListener(refresh);
   }
 
-  final List<_Entry> _entries = [];
+  final List<QuickCreateEntry> _entries = [];
   QuickCreatePreset _preset = QuickCreatePreset.none;
   int? _currentBranch;
   bool _scheduled = false;
@@ -151,12 +151,12 @@ class QuickCreateContext extends ChangeNotifier {
     refresh();
   }
 
-  void _add(_Entry e) {
+  void add(QuickCreateEntry e) {
     _entries.add(e);
     refresh();
   }
 
-  void _remove(_Entry e) {
+  void remove(QuickCreateEntry e) {
     _entries.remove(e);
     refresh();
   }
@@ -191,8 +191,8 @@ class QuickCreateContext extends ChangeNotifier {
   }
 }
 
-class _Entry {
-  _Entry(this.preset, this.isShowing);
+class QuickCreateEntry {
+  QuickCreateEntry(this.preset, this.isShowing);
   QuickCreatePreset preset;
   final bool Function() isShowing;
 }
@@ -259,7 +259,10 @@ class QuickCreatePresetScope extends StatefulWidget {
 
 class _QuickCreatePresetScopeState extends State<QuickCreatePresetScope> {
   QuickCreateContext? _registry;
-  late final _Entry _entry = _Entry(widget.preset, _isShowing);
+  late final QuickCreateEntry _entry = QuickCreateEntry(
+    widget.preset,
+    _isShowing,
+  );
 
   bool _isShowing() {
     if (!mounted || !(ModalRoute.of(context)?.isCurrent ?? false)) {
@@ -276,8 +279,8 @@ class _QuickCreatePresetScopeState extends State<QuickCreatePresetScope> {
     super.didChangeDependencies();
     final registry = QuickCreateContextScope.maybeOf(context);
     if (registry == _registry) return;
-    _registry?._remove(_entry);
-    _registry = registry?.._add(_entry);
+    _registry?.remove(_entry);
+    _registry = registry?..add(_entry);
   }
 
   @override
@@ -290,7 +293,7 @@ class _QuickCreatePresetScopeState extends State<QuickCreatePresetScope> {
 
   @override
   void dispose() {
-    _registry?._remove(_entry);
+    _registry?.remove(_entry);
     super.dispose();
   }
 

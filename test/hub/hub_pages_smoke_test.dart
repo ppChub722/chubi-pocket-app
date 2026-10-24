@@ -60,6 +60,7 @@ void main() {
       );
       await t.pump(const Duration(milliseconds: 100));
       t.takeException();
+      FlutterError.onError = previous;
       expect(errors, isEmpty, reason: errors.join('\n---\n'));
     });
   }

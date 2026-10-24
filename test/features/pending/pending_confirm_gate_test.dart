@@ -1,47 +1,8 @@
-import 'package:bloc_test/bloc_test.dart';
-import 'package:chubi_pocket/app/shell/quick_create_context.dart';
-import 'package:chubi_pocket/features/accounts/presentation/cubit/accounts_cubit.dart';
-import 'package:chubi_pocket/features/auth/domain/user.dart';
-import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
-import 'package:chubi_pocket/features/categories/presentation/cubit/categories_cubit.dart';
-import 'package:chubi_pocket/features/home/presentation/cubit/dashboard_cubit.dart';
-import 'package:chubi_pocket/features/notifications/presentation/cubit/unread_badge_cubit.dart';
 import 'package:chubi_pocket/features/pending/data/pending_repository.dart';
 import 'package:chubi_pocket/features/pending/domain/pending_transaction.dart';
 import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.dart';
-import 'package:chubi_pocket/features/pending/presentation/pages/pending_page.dart';
-import 'package:chubi_pocket/features/saving_goals/presentation/cubit/saving_goals_cubit.dart';
-import 'package:chubi_pocket/features/tags/presentation/cubit/tags_cubit.dart';
-import 'package:chubi_pocket/features/transactions/data/transactions_repository.dart';
-import 'package:chubi_pocket/features/transactions/presentation/cubit/transactions_cubit.dart';
-import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/ui/ui.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:chubi_pocket/features/pending/presentation/pending_selection.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
-
-import '../../shared/fake_sync.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-class _Accounts extends MockCubit<AccountsState> implements AccountsCubit {}
-
-class _Categories extends MockCubit<CategoriesState>
-    implements CategoriesCubit {}
-
-class _Tags extends MockCubit<TagsState> implements TagsCubit {}
-
-class _Txs extends MockCubit<TransactionsState> implements TransactionsCubit {}
-
-class _Dashboard extends MockCubit<DashboardState> implements DashboardCubit {}
-
-class _Auth extends MockCubit<AuthState> implements AuthCubit {}
-
-class _Goals extends MockCubit<SavingGoalsState> implements SavingGoalsCubit {}
-
-class _Unread extends MockCubit<int> implements UnreadBadgeCubit {}
-
-class _TxRepo extends Fake implements TransactionsRepository {}
 
 const _wallet = {
   'id': 'a1',
@@ -217,7 +178,7 @@ class _Repo extends Fake implements PendingRepository {
 }
 
 void main() {
-  test('parses needs_input / can_confirm; absent = old behaviour', () {
+  test('parses needs_input / can_confirm and the summary (null-safe)', () {
     final p = PendingTransaction.fromJson(
       draftJson('p1', amount: null, needsInput: ['amount'], canConfirm: false),
     );
@@ -229,9 +190,7 @@ void main() {
     expect(old.needsInput, isNull);
     expect(old.canConfirm, isTrue);
     expect(old.needs('amount'), isFalse);
-  });
 
-  test('parses summary (null-safe)', () {
     final s = PendingSummary.fromJson(summaryJson());
     expect(s.count, 3);
     expect(s.expenseTotal, 500.5);
@@ -348,168 +307,63 @@ void main() {
     });
   });
 
-  group('page', () {
-    late _Repo repo;
-    late PendingCubit pending;
-
-    Future<void> pump(WidgetTester t, _Repo r) async {
-      SharedPreferences.setMockInitialValues({});
-      t.view.physicalSize = const Size(800, 3000);
-      t.view.devicePixelRatio = 1;
-      addTearDown(t.view.reset);
-      repo = r;
-      pending = PendingCubit(repository: repo);
-      addTearDown(pending.close);
-      final accounts = _Accounts();
-      final categories = _Categories();
-      final tags = _Tags();
-      final txs = _Txs();
-      final dashboard = _Dashboard();
-      final goals = _Goals();
-      final auth = _Auth();
-      final unread = _Unread();
-      when(() => accounts.state).thenReturn(const AccountsState());
-      when(() => categories.state).thenReturn(const CategoriesState());
-      when(() => tags.state).thenReturn(const TagsState());
-      when(() => txs.state).thenReturn(const TransactionsState());
-      when(() => dashboard.state).thenReturn(const DashboardState());
-      when(() => goals.state).thenReturn(const SavingGoalsState());
-      when(() => unread.state).thenReturn(0);
-      when(() => auth.state).thenReturn(
-        const AuthAuthenticated(
-          User(id: 'u1', username: 'me', displayName: 'Me', currency: 'THB'),
-        ),
-      );
-      when(() => accounts.loadIfNeeded()).thenAnswer((_) async {});
-      when(() => categories.loadIfNeeded()).thenAnswer((_) async {});
-      when(() => tags.loadIfNeeded()).thenAnswer((_) async {});
-      final registry = QuickCreateContext();
-      addTearDown(registry.dispose);
-      await t.pumpWidget(
-        RepositoryProvider<TransactionsRepository>.value(
-          value: _TxRepo(),
-          child: MultiBlocProvider(
-            providers: [
-              BlocProvider<AccountsCubit>.value(value: accounts),
-              BlocProvider<CategoriesCubit>.value(value: categories),
-              BlocProvider<TagsCubit>.value(value: tags),
-              BlocProvider<TransactionsCubit>.value(value: txs),
-              FakeTxFormOptions().provider,
-              BlocProvider<DashboardCubit>.value(value: dashboard),
-              BlocProvider<AuthCubit>.value(value: auth),
-              BlocProvider<SavingGoalsCubit>.value(value: goals),
-              BlocProvider<UnreadBadgeCubit>.value(value: unread),
-              BlocProvider<PendingCubit>.value(value: pending),
-            ],
-            child: MaterialApp(
-              theme: ThemeData(
-                extensions: [
-                  ThemeRegistry.byId(
-                    ThemeRegistry.defaultThemeId,
-                  ).colorsFor(Brightness.light),
-                ],
-              ),
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-              locale: const Locale('en'),
-              builder: (context, child) => AppUiConfig(
-                child: QuickCreateContextScope(
-                  registry: registry,
-                  child: child!,
-                ),
-              ),
-              home: const PendingPage(),
-            ),
-          ),
-        ),
-      );
-      await t.pump();
-      await t.pump(const Duration(milliseconds: 200));
+  test('only the confirmable part of a selection is sent, in one call', () async {
+    final lunch = PendingTransaction.fromJson(
+      draftJson('p1', description: 'Lunch'),
+    );
+    final noAmount = PendingTransaction.fromJson(
+      draftJson(
+        'p3',
+        amount: null,
+        needsInput: ['amount'],
+        canConfirm: false,
+        description: 'Rent reminder',
+      ),
+    );
+    for (final c in [
+      (
+        name: 'amount-less alone: nothing goes, it is blocked',
+        selected: ['p3'],
+        ready: <String>[],
+        blocked: ['p3'],
+      ),
+      (
+        name: 'mixed: only the confirmable go',
+        selected: ['p1', 'p3'],
+        ready: ['p1'],
+        blocked: ['p3'],
+      ),
+      (
+        name: 'all confirmable',
+        selected: ['p1'],
+        ready: ['p1'],
+        blocked: <String>[],
+      ),
+      (
+        name: 'an id the list does not hold still goes',
+        selected: ['p9'],
+        ready: ['p9'],
+        blocked: <String>[],
+      ),
+    ]) {
+      final r = splitSelection(c.selected, [lunch, noAmount]);
+      expect(r.ready, c.ready, reason: c.name);
+      expect(r.blocked.map((p) => p.id), c.blocked, reason: c.name);
     }
 
-    testWidgets('opens with ONE call; filter chips come from the summary', (
-      t,
-    ) async {
-      await pump(
-        t,
-        _Repo([
-          PendingTransaction.fromJson(draftJson('p1', description: 'Lunch')),
-          PendingTransaction.fromJson(draftJson('p2', description: 'Taxi')),
-          PendingTransaction.fromJson(
-            draftJson(
-              'p3',
-              source: 'recurring',
-              amount: null,
-              needsInput: ['amount'],
-              canConfirm: false,
-              description: 'Rent reminder',
-            ),
-          ),
-        ], summary: summaryJson()),
-      );
-      expect(repo.listCalls, 1);
-      expect(find.text('Lunch'), findsOneWidget);
-      expect(find.text('All 3'), findsOneWidget);
-      expect(find.text('Mine 2'), findsOneWidget);
-      expect(find.text('From others 1'), findsOneWidget);
-    });
-
-    testWidgets('an amount-less reminder cannot be confirmed from the list: '
-        'it opens the sheet and nothing is sent', (t) async {
-      await pump(
-        t,
-        _Repo([
-          PendingTransaction.fromJson(
-            draftJson(
-              'p3',
-              source: 'recurring',
-              amount: null,
-              needsInput: ['amount'],
-              canConfirm: false,
-              description: 'Rent reminder',
-            ),
-          ),
-        ], summary: summaryJson(count: 1, manual: 0, ready: 0, needs: 1)),
-      );
-      // The row says what is missing (from needs_input).
-      expect(find.text('Enter an amount before confirming'), findsWidgets);
-      await t.tap(find.byType(SelectCheck).first);
-      await t.pump();
-      await t.tap(find.text('Confirm selected (1)'));
-      await t.pumpAndSettle();
-      expect(repo.submitCalls, isEmpty);
-      expect(repo.submitReadyCalls, 0);
-      expect(find.byType(QuickCreateSheetShell), findsOneWidget);
-    });
-
-    testWidgets('a mixed selection sends only the ones that can go, in one '
-        'call', (t) async {
-      await pump(
-        t,
-        _Repo([
-          PendingTransaction.fromJson(draftJson('p1', description: 'Lunch')),
-          PendingTransaction.fromJson(
-            draftJson(
-              'p3',
-              amount: null,
-              needsInput: ['amount'],
-              canConfirm: false,
-              description: 'Rent reminder',
-            ),
-          ),
-        ], summary: summaryJson(count: 2, manual: 2, ready: 1, needs: 1)),
-      );
-      await t.tap(find.byType(SelectCheck).first); // select all
-      await t.pump();
-      await t.tap(find.text('Confirm selected (2)'));
-      await t.pumpAndSettle();
-      expect(repo.submitCalls, [
-        ['p1'],
-      ]);
-      expect(pending.state.items.map((e) => e.id), ['p3']);
-      // The numbers came with the submit answer; the list is not re-read.
-      expect(repo.listCalls, 1);
-      expect(pending.state.summary?.count, 1);
-    });
+    final repo = _Repo([
+      lunch,
+      noAmount,
+    ], summary: summaryJson(count: 2, manual: 2, ready: 1, needs: 1));
+    final cubit = PendingCubit(repository: repo);
+    await cubit.load();
+    await cubit.submit(splitSelection(['p1', 'p3'], cubit.state.items).ready);
+    expect(repo.submitCalls, [
+      ['p1'],
+    ]);
+    expect(cubit.state.items.map((e) => e.id), ['p3']);
+    expect(repo.listCalls, 1);
+    expect(cubit.state.summary?.count, 1);
+    await cubit.close();
   });
 }

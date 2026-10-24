@@ -31,6 +31,7 @@ import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
 import '../cubit/tx_form_options_cubit.dart';
+import '../delete_results.dart';
 import '../transaction_edit.dart';
 import '../tx_rules.dart';
 import '../save_failure.dart';
@@ -996,10 +997,7 @@ class _LoadedState extends State<_Loaded>
         alsoDeleteLink: alsoDeleteLink,
         skipOccurrence: skipOccurrence,
       );
-      accountsCubit.patchBalances(result.accountBalances);
-      // Deleting a repayment moves the person's balance back (0.4.0-3).
-      final balance = result.personBalance;
-      if (balance != null) debts?.applyBalance(balance);
+      applyTxDeleteResult(result, accounts: accountsCubit, debts: debts);
       showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
       if (router.canPop()) {
         router.pop();

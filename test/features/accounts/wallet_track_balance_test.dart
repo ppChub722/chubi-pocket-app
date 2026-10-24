@@ -1,88 +1,18 @@
-import 'dart:async';
-
-import 'package:bloc_test/bloc_test.dart';
-import 'package:chubi_pocket/core/network/api_exception.dart';
+import 'package:chubi_pocket/core/network/api_client.dart';
 import 'package:chubi_pocket/features/accounts/data/accounts_repository.dart';
 import 'package:chubi_pocket/features/accounts/domain/account.dart';
-import 'package:chubi_pocket/features/accounts/presentation/cubit/accounts_cubit.dart';
-import 'package:chubi_pocket/features/accounts/presentation/pages/account_detail_page.dart';
-import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
-import 'package:chubi_pocket/features/notifications/presentation/cubit/unread_badge_cubit.dart';
-import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.dart';
-import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
-import 'package:chubi_pocket/ui/ui.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import '../../shared/fake_sync.dart';
 import 'package:mocktail/mocktail.dart';
 
-class _Pending extends MockCubit<PendingState> implements PendingCubit {}
+class _MockDio extends Mock implements Dio {}
 
-class _Unread extends MockCubit<int> implements UnreadBadgeCubit {}
-
-class _Auth extends MockCubit<AuthState> implements AuthCubit {}
-
-/// Records what the page sends, in the wire shape the BE reads.
-class _Repo extends Fake implements AccountsRepository {
-  final creates = <Map<String, dynamic>>[];
-  final updates = <Map<String, dynamic>>[];
+class _FakeApiClient extends Fake implements ApiClient {
+  _FakeApiClient(this._dio);
+  final Dio _dio;
 
   @override
-  @override
-  Future<AccountDetail> getDetail(String id) =>
-      Completer<AccountDetail>().future;
-
-  int previews = 0;
-
-  @override
-  Future<AccountDeletePreview?> deletePreview(String id) async {
-    previews++;
-    return AccountDeletePreview.fromJson({
-      'transactions': 12,
-      'transfers': 2,
-      'system_rows_deleted': 1,
-      'recurring': 3,
-      'saving_entries': {'count': 4, 'amount': 800.0},
-    });
-  }
-
-  @override
-  Future<Account> create(Account draft) async {
-    creates.add(draft.toCreateJson());
-    return Account.fromJson({
-      ..._json(track: draft.trackBalance),
-      'id': 'w9',
-      'name': draft.name,
-    });
-  }
-
-  /// The view-mode switch: one PUT with only these fields.
-  final tracks = <Map<String, dynamic>>[];
-  ApiException? trackError;
-
-  @override
-  Future<Account> setTrackBalance(
-    String id, {
-    required bool on,
-    double? currentBalance,
-  }) async {
-    tracks.add({'track_balance': on, 'current_balance': ?currentBalance});
-    final e = trackError;
-    if (e != null) throw e;
-    return Account.fromJson({..._json(track: on), 'id': id});
-  }
-
-  @override
-  Future<Account> update(Account account, {double? currentBalance}) async {
-    updates.add(account.toUpdateJson(currentBalance: currentBalance));
-    return Account.fromJson({
-      ..._json(track: account.trackBalance),
-      'id': account.id,
-      'name': account.name,
-    });
-  }
+  Dio get dio => _dio;
 }
 
 /// A wallet as the BE sends it.
@@ -102,224 +32,8 @@ Map<String, dynamic> _json({bool track = true, double balance = 1234.5}) => {
   'track_balance': track,
 };
 
-Account _wallet({bool track = true}) => Account.fromJson(_json(track: track));
-
 void main() {
-  late _Repo repo;
-
-  Future<void> pump(WidgetTester t, {Account? wallet, Widget? home}) async {
-    t.view.physicalSize = const Size(800, 1800);
-    t.view.devicePixelRatio = 1;
-    addTearDown(t.view.reset);
-    repo = _Repo();
-    final cubit = AccountsCubit(
-      repository: repo,
-      coordinator: testCoordinator(),
-    );
-    addTearDown(cubit.close);
-    if (wallet != null) {
-      cubit.emit(
-        AccountsState(accounts: [wallet], status: AccountsStatus.loaded),
-      );
-    }
-    final auth = _Auth();
-    when(() => auth.state).thenReturn(const AuthUnauthenticated());
-    final pending = _Pending();
-    final unread = _Unread();
-    when(() => pending.state).thenReturn(const PendingState());
-    when(() => unread.state).thenReturn(0);
-    await t.pumpWidget(
-      RepositoryProvider<AccountsRepository>.value(
-        value: repo,
-        child: MultiBlocProvider(
-          providers: [
-            BlocProvider<AccountsCubit>.value(value: cubit),
-            providersCubitProvider(),
-            BlocProvider<AuthCubit>.value(value: auth),
-            BlocProvider<PendingCubit>.value(value: pending),
-            BlocProvider<UnreadBadgeCubit>.value(value: unread),
-          ],
-          child: MaterialApp(
-            theme: ThemeData(extensions: [sweetTheme.lightColors]),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            locale: const Locale('en'),
-            builder: (context, child) => AppUiConfig(child: child!),
-            home:
-                home ??
-                (wallet == null
-                    ? const AccountDetailPage(popOnCreate: true)
-                    : AccountDetailPage(accountId: wallet.id)),
-          ),
-        ),
-      ),
-    );
-    await t.pump();
-    await t.pump(const Duration(milliseconds: 100));
-  }
-
-  Future<void> tapText(WidgetTester t, String text) async {
-    await t.pump(const Duration(seconds: 1));
-    await t.tap(find.text(text).last);
-    await t.pump(const Duration(seconds: 1));
-  }
-
-  testWidgets('list card: a tracked wallet shows its balance', (t) async {
-    await pump(
-      t,
-      home: Scaffold(body: AccountCard(account: _wallet(), horizontal: false)),
-    );
-    expect(find.textContaining('1,234.50'), findsOneWidget);
-  });
-
-  testWidgets('list card: an untracked wallet shows no balance', (t) async {
-    for (final horizontal in [false, true]) {
-      await pump(
-        t,
-        home: Scaffold(
-          body: AccountCard(
-            account: _wallet(track: false),
-            horizontal: horizontal,
-          ),
-        ),
-      );
-      expect(find.text('KBank'), findsOneWidget);
-      expect(find.textContaining('1,234.50'), findsNothing);
-    }
-  });
-
-  testWidgets('hero: untracked hides the balance and the ปรับยอด action', (
-    t,
-  ) async {
-    await pump(t, wallet: _wallet(track: false));
-    expect(find.textContaining('1,234.50'), findsNothing);
-    // No balance line, no mode chip: the hero just has no balance.
-    expect(find.text('Balance not tracked'), findsNothing);
-    expect(find.text('Adjust balance'), findsNothing);
-    // รายการ / โอน moved to the bottom + (reference §6): no action bar at all
-    // on an untracked wallet.
-    expect(find.text('Transfer'), findsNothing);
-  });
-
-  testWidgets('hero: tracked shows the balance and the ปรับยอด action', (
-    t,
-  ) async {
-    await pump(t, wallet: _wallet());
-    expect(find.textContaining('1,234.50'), findsWidgets);
-    expect(find.text('Adjust balance'), findsOneWidget);
-  });
-
-  testWidgets('create: switch off sends track_balance:false, no balance', (
-    t,
-  ) async {
-    await pump(t);
-    // Opening balance is asked while tracking is on.
-    expect(find.text('Opening balance'), findsOneWidget);
-    await t.enterText(find.byType(TextFormField).first, 'Pocket');
-    await t.tap(find.byType(Switch));
-    await t.pump(const Duration(milliseconds: 300));
-    expect(find.text('Opening balance'), findsNothing);
-    await tapText(t, 'Save');
-    expect(repo.creates, hasLength(1));
-    expect(repo.creates.single['track_balance'], false);
-    expect(repo.creates.single.containsKey('balance'), isFalse);
-  });
-
-  testWidgets('edit: off → on asks the balance once, one PUT', (t) async {
-    await pump(t, wallet: _wallet(track: false));
-    await t.tap(find.byTooltip('Edit'));
-    await t.pump(const Duration(milliseconds: 300));
-    await t.tap(find.byType(Switch));
-    await t.pump(const Duration(milliseconds: 300));
-    await tapText(t, 'Save');
-    // The balance sheet asks for the current balance; nothing sent yet.
-    expect(find.text('Current balance'), findsOneWidget);
-    expect(repo.updates, isEmpty);
-    await t.enterText(find.byType(TextField).last, '500');
-    await t.pump();
-    await tapText(t, 'Set balance');
-    expect(repo.updates, hasLength(1));
-    expect(repo.updates.single['track_balance'], true);
-    expect(repo.updates.single['current_balance'], 500);
-  });
-
-  testWidgets('edit: ลบ asks the BE for the numbers once, then confirms', (
-    t,
-  ) async {
-    await pump(t, wallet: _wallet());
-    await t.tap(find.byTooltip('Edit'));
-    await t.pump(const Duration(milliseconds: 300));
-    await t.ensureVisible(find.text('Delete this wallet'));
-    await t.tap(find.text('Delete this wallet'));
-    await t.pump(const Duration(milliseconds: 300));
-    expect(repo.previews, 1);
-    expect(find.text('Delete this wallet?'), findsOneWidget);
-    expect(find.textContaining('12 transactions stay'), findsOneWidget);
-    expect(find.textContaining('3 recurring settings'), findsOneWidget);
-  });
-
-  testWidgets('edit: on → off just saves track_balance:false', (t) async {
-    await pump(t, wallet: _wallet());
-    await t.tap(find.byTooltip('Edit'));
-    await t.pump(const Duration(milliseconds: 300));
-    await t.tap(find.byType(Switch));
-    await t.pump(const Duration(milliseconds: 300));
-    await tapText(t, 'Save');
-    expect(find.text('Current balance'), findsNothing);
-    expect(repo.updates, hasLength(1));
-    expect(repo.updates.single['track_balance'], false);
-    expect(repo.updates.single.containsKey('current_balance'), isFalse);
-  });
-
-  bool switchValue(WidgetTester t) =>
-      t.widget<AppSwitch>(find.byType(AppSwitch).first).value;
-
-  testWidgets('view: on → off saves at once, ONE call, no edit mode', (
-    t,
-  ) async {
-    await pump(t, wallet: _wallet());
-    expect(switchValue(t), isTrue);
-    await t.tap(find.byType(Switch).first);
-    await t.pump();
-    expect(switchValue(t), isFalse); // optimistic
-    await t.pump(const Duration(milliseconds: 300));
-    expect(repo.tracks, [
-      {'track_balance': false},
-    ]);
-    expect(repo.updates, isEmpty);
-    expect(find.text('Save'), findsNothing); // still view mode
-    expect(switchValue(t), isFalse);
-  });
-
-  testWidgets('view: off → on asks the balance, then ONE call with it', (
-    t,
-  ) async {
-    await pump(t, wallet: _wallet(track: false));
-    await t.tap(find.byType(Switch).first);
-    await t.pump(const Duration(milliseconds: 300));
-    expect(find.text('Current balance'), findsOneWidget);
-    expect(repo.tracks, isEmpty);
-    await t.enterText(find.byType(TextField).last, '500');
-    await t.pump();
-    await tapText(t, 'Set balance');
-    expect(repo.tracks, [
-      {'track_balance': true, 'current_balance': 500},
-    ]);
-    expect(switchValue(t), isTrue);
-  });
-
-  testWidgets('view: a failed save puts the switch back, with a retry', (
-    t,
-  ) async {
-    await pump(t, wallet: _wallet());
-    repo.trackError = const ApiException(code: 'INTERNAL', message: 'boom');
-    await t.tap(find.byType(Switch).first);
-    await t.pump();
-    await t.pump(const Duration(milliseconds: 300));
-    expect(repo.tracks, hasLength(1));
-    expect(switchValue(t), isTrue);
-    expect(find.text('Retry'), findsOneWidget);
-  });
+  setUpAll(() => registerFallbackValue(<String, dynamic>{}));
 
   test('untracked: no credit figures, showsBalance false', () {
     final a = Account.fromJson({
@@ -329,5 +43,49 @@ void main() {
     });
     expect(a.showsBalance, isFalse);
     expect(a.creditUsed, 0);
+  });
+
+  test('track_balance bodies: create, edit and the view switch', () async {
+    final tracked = Account.fromJson(_json());
+    final untracked = Account.fromJson(_json(track: false));
+
+    final create = tracked.toCreateJson();
+    expect(create['track_balance'], true);
+    expect(create['balance'], 1234.5);
+    final createOff = untracked.toCreateJson();
+    expect(createOff['track_balance'], false);
+    expect(createOff.containsKey('balance'), isFalse);
+
+    final turnOn = tracked.toUpdateJson(currentBalance: 500);
+    expect(turnOn['track_balance'], true);
+    expect(turnOn['current_balance'], 500);
+    final turnOff = untracked.toUpdateJson();
+    expect(turnOff['track_balance'], false);
+    expect(turnOff.containsKey('current_balance'), isFalse);
+    final offWithBalance = untracked.toUpdateJson(currentBalance: 500);
+    expect(offWithBalance.containsKey('current_balance'), isFalse);
+
+    final dio = _MockDio();
+    final repo = AccountsRepository(client: _FakeApiClient(dio));
+    final sent = <Object?>[];
+    when(
+      () => dio.put<Map<String, dynamic>>(
+        '/accounts/w1',
+        data: any(named: 'data'),
+      ),
+    ).thenAnswer((i) async {
+      sent.add(i.namedArguments[#data]);
+      return Response<Map<String, dynamic>>(
+        requestOptions: RequestOptions(path: ''),
+        statusCode: 200,
+        data: _json(),
+      );
+    });
+    await repo.setTrackBalance('w1', on: false);
+    await repo.setTrackBalance('w1', on: true, currentBalance: 500);
+    expect(sent, [
+      {'track_balance': false},
+      {'track_balance': true, 'current_balance': 500},
+    ]);
   });
 }

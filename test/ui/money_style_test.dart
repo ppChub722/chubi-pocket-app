@@ -1,31 +1,9 @@
 import 'package:chubi_pocket/ui/ui.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// The user's money style (owner 2026-10-17): + / −, ( ) or colour only,
 /// coloured or not. No scope (users from before it) = + / − in colour.
 void main() {
-  final colors = ThemeRegistry.byId(
-    ThemeRegistry.defaultThemeId,
-  ).colorsFor(Brightness.light);
-
-  Future<void> pump(WidgetTester t, MoneyStyle? style, MoneyTone tone) {
-    const money = MoneyText(540, tone: MoneyTone.plain);
-    final text = MoneyText(540, tone: tone, symbol: '฿');
-    return t.pumpWidget(
-      MaterialApp(
-        theme: ThemeData(extensions: [colors]),
-        home: Scaffold(
-          body: style == null
-              ? Column(children: [text, money])
-              : MoneyStyleScope(style: style, child: text),
-        ),
-      ),
-    );
-  }
-
-  Text shown(WidgetTester t) => t.widget<Text>(find.byType(Text).first);
-
   test('the preference round-trips; unknown / null = legacy', () {
     for (final v in [
       'plus_minus',
@@ -40,38 +18,66 @@ void main() {
     expect(MoneyStyle.fromPreference('rainbow'), MoneyStyle.legacy);
   });
 
-  test('colour only is always coloured', () {
-    expect(MoneyStyle.colorOnly.copyWith(colored: false).colored, isTrue);
-  });
-
-  testWidgets('no scope: + / − in colour (users from before it)', (t) async {
-    await pump(t, null, MoneyTone.expense);
-    expect(shown(t).data, '−฿540.00');
-    expect(shown(t).style?.color, colors.expense);
-  });
-
-  testWidgets('parentheses, coloured: (฿540) in red; income has no mark', (
-    t,
-  ) async {
-    const s = MoneyStyle(sign: MoneySign.parentheses);
-    await pump(t, s, MoneyTone.expense);
-    expect(shown(t).data, '(฿540.00)');
-    expect(shown(t).style?.color, colors.expense);
-    await pump(t, s, MoneyTone.income);
-    expect(shown(t).data, '฿540.00');
-    expect(shown(t).style?.color, colors.income);
-  });
-
-  testWidgets('+ / − without colour: the sign alone', (t) async {
-    await pump(t, const MoneyStyle(colored: false), MoneyTone.income);
-    expect(shown(t).data, '+฿540.00');
-    expect(shown(t).style?.color, isNot(colors.income));
-  });
-
-  testWidgets('colour only: no mark, the colour says it', (t) async {
-    await pump(t, MoneyStyle.colorOnly, MoneyTone.expense);
-    expect(shown(t).data, '฿540.00');
-    expect(shown(t).style?.color, colors.expense);
+  test('apply: the mark per sign style; colour only is always coloured', () {
+    const parens = MoneyStyle(sign: MoneySign.parentheses);
+    for (final c in [
+      (
+        name: 'plus / minus, expense',
+        style: MoneyStyle.legacy,
+        negative: true,
+        want: '−฿540.00',
+        colored: true,
+      ),
+      (
+        name: 'plus / minus, income',
+        style: MoneyStyle.legacy,
+        negative: false,
+        want: '+฿540.00',
+        colored: true,
+      ),
+      (
+        name: 'plus / minus without colour',
+        style: const MoneyStyle(colored: false),
+        negative: false,
+        want: '+฿540.00',
+        colored: false,
+      ),
+      (
+        name: 'parentheses, expense',
+        style: parens,
+        negative: true,
+        want: '(฿540.00)',
+        colored: true,
+      ),
+      (
+        name: 'parentheses, income has no mark',
+        style: parens,
+        negative: false,
+        want: '฿540.00',
+        colored: true,
+      ),
+      (
+        name: 'colour only, expense',
+        style: MoneyStyle.colorOnly,
+        negative: true,
+        want: '฿540.00',
+        colored: true,
+      ),
+      (
+        name: 'colour only cannot be turned plain',
+        style: MoneyStyle.colorOnly.copyWith(colored: false),
+        negative: false,
+        want: '฿540.00',
+        colored: true,
+      ),
+    ]) {
+      expect(
+        c.style.apply('฿540.00', negative: c.negative),
+        c.want,
+        reason: c.name,
+      );
+      expect(c.style.colored, c.colored, reason: c.name);
+    }
   });
 
   test('decimals: always / never (rounded) / auto (hide .00 only)', () {
@@ -97,14 +103,5 @@ void main() {
       MoneyStyle.fromPreferences(decimals: 'never').decimals,
       MoneyDecimals.never,
     );
-  });
-
-  testWidgets('auto decimals in MoneyText: ฿540 (no .00)', (t) async {
-    await pump(
-      t,
-      const MoneyStyle(decimals: MoneyDecimals.auto),
-      MoneyTone.expense,
-    );
-    expect(shown(t).data, '−฿540');
   });
 }

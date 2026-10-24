@@ -15,25 +15,25 @@ TextEditingValue _type(ThousandsInputFormatter f, String old, String next) =>
     );
 
 void main() {
-  group('ThousandsInputFormatter', () {
-    test('groups thousands', () {
-      expect(_type(ThousandsInputFormatter(), '123', '1234').text, '1,234');
-    });
-
-    test('rejects a minus unless allowNegative', () {
-      expect(_type(ThousandsInputFormatter(), '12', '-12').text, '12');
-    });
-
-    test('keeps a leading minus and groups the magnitude', () {
-      final f = ThousandsInputFormatter(allowNegative: true);
-      expect(_type(f, '-123', '-1234').text, '-1,234');
-      expect(_type(f, '-1,234', '-1,234.5').text, '-1,234.5');
-    });
-
-    test('rejects bad input after the minus', () {
-      final f = ThousandsInputFormatter(allowNegative: true);
-      expect(_type(f, '-12', '-12a').text, '-12');
-    });
+  test('ThousandsInputFormatter: grouping, minus, bad input', () {
+    final plain = ThousandsInputFormatter();
+    final signed = ThousandsInputFormatter(allowNegative: true);
+    final cases = <(String, ThousandsInputFormatter, String, String, String)>[
+      ('groups thousands', plain, '123', '1234', '1,234'),
+      ('rejects a minus unless allowNegative', plain, '12', '-12', '12'),
+      (
+        'keeps a leading minus, groups the magnitude',
+        signed,
+        '-123',
+        '-1234',
+        '-1,234',
+      ),
+      ('keeps decimals', signed, '-1,234', '-1,234.5', '-1,234.5'),
+      ('rejects bad input after the minus', signed, '-12', '-12a', '-12'),
+    ];
+    for (final (name, f, old, next, want) in cases) {
+      expect(_type(f, old, next).text, want, reason: name);
+    }
   });
 
   test('AmountInput.parse reads the sign', () {

@@ -106,20 +106,28 @@ class _Repo extends Fake implements TransactionsRepository {
   }) async => next!;
 }
 
-void main() {
-  late _Repo repo;
-  late TransactionsCubit cubit;
+/// A fresh book of three rows and a cubit over it.
+class _Env {
+  _Env()
+    : repo = _Repo([
+        _tx('t3', '2026-10-09'),
+        _tx('t2', '2026-10-05', type: TransactionType.income),
+        _tx('t1', '2026-10-02'),
+      ]) {
+    cubit = _open();
+  }
 
-  setUp(() {
-    repo = _Repo([
-      _tx('t3', '2026-10-09'),
-      _tx('t2', '2026-10-05', type: TransactionType.income),
-      _tx('t1', '2026-10-02'),
-    ]);
-    cubit = TransactionsCubit(repository: repo);
-  });
+  final _Repo repo;
+  late final TransactionsCubit cubit;
+  final _opened = <TransactionsCubit>[];
 
-  tearDown(() => cubit.close());
+  TransactionsCubit _open() {
+    final c = TransactionsCubit(repository: repo);
+    _opened.add(c);
+    return c;
+  }
+
+  TransactionsCubit another() => _open();
 
   List<String> ids() => cubit.state.transactions.map((t) => t.id).toList();
 
@@ -128,108 +136,189 @@ void main() {
     return cubit.add(type: t.type, amount: t.amount, date: t.date);
   }
 
-  test('refresh keeps the filters (no reset to all-time)', () async {
-    await cubit.load(
-      type: TransactionType.expense,
-      from: '2026-10-01',
-      to: '2026-10-31',
-    );
-    await cubit.refresh();
-    expect(repo.calls.last.type, TransactionType.expense);
-    expect(repo.calls.last.from, '2026-10-01');
-    expect(repo.calls.last.to, '2026-10-31');
-    expect(ids(), ['t3', 't1']);
-  });
+  Future<void> close() async {
+    for (final c in _opened) {
+      await c.close();
+    }
+  }
+}
 
-  test('refresh before any load does nothing', () async {
-    await cubit.refresh();
-    expect(repo.calls, isEmpty);
-  });
+typedef _Case = ({
+  String name,
+  Future<Object?> Function(_Env e) run,
+  Object? expected,
+});
 
-  test('a new row that fails the filters stays out', () async {
-    await cubit.load(type: TransactionType.income);
-    await add(_tx('n1', '2026-10-10')); // an expense
-    expect(ids(), ['t2']);
-  });
+Future<void> _check(List<_Case> cases) async {
+  for (final c in cases) {
+    final e = _Env();
+    try {
+      expect(await c.run(e), c.expected, reason: c.name);
+    } finally {
+      await e.close();
+    }
+  }
+}
 
-  test('a back-dated row lands at its date, not at the top', () async {
-    await cubit.load(from: '2026-10-01', to: '2026-10-31');
-    await add(_tx('n1', '2026-10-04'));
-    expect(ids(), ['t3', 't2', 'n1', 't1']);
-  });
-
-  test('a new row is first among its own day (newest first)', () async {
-    await cubit.load();
-    await add(_tx('n1', '2026-10-05'));
-    expect(ids(), ['t3', 'n1', 't2', 't1']);
-  });
-
-  test('outside the date range → not shown', () async {
-    await cubit.load(from: '2026-10-01', to: '2026-10-31');
-    await add(_tx('n1', '2026-09-30'));
-    expect(ids(), ['t3', 't2', 't1']);
-  });
-
-  test('oldest-first sort puts it at its place from the other end', () async {
-    await cubit.load(sort: 'date_asc');
-    // The fake always answers newest-first; set the expected order.
-    cubit.emit(
-      cubit.state.copyWith(
-        transactions: [
-          _tx('t1', '2026-10-02'),
-          _tx('t2', '2026-10-05', type: TransactionType.income),
-          _tx('t3', '2026-10-09'),
+void main() {
+  test('refresh table', () async {
+    await _check([
+      (
+        name: 'refresh keeps the filters (no reset to all-time)',
+        run: (e) async {
+          await e.cubit.load(
+            type: TransactionType.expense,
+            from: '2026-10-01',
+            to: '2026-10-31',
+          );
+          await e.cubit.refresh();
+          return [
+            e.repo.calls.last.type,
+            e.repo.calls.last.from,
+            e.repo.calls.last.to,
+            e.ids(),
+          ];
+        },
+        expected: [
+          TransactionType.expense,
+          '2026-10-01',
+          '2026-10-31',
+          ['t3', 't1'],
         ],
       ),
-    );
-    await add(_tx('n1', '2026-10-05'));
-    expect(ids(), ['t1', 't2', 'n1', 't3']);
+      (
+        name: 'refresh before any load does nothing',
+        run: (e) async {
+          await e.cubit.refresh();
+          return e.repo.calls;
+        },
+        expected: isEmpty,
+      ),
+    ]);
   });
 
-  test('an edit that changes the date moves the row', () async {
-    await cubit.load();
-    repo.next = TransactionMutationResult.single(_tx('t1', '2026-10-10'));
-    await cubit.updateTransaction(id: 't1', date: '2026-10-10');
-    expect(ids(), ['t1', 't3', 't2']);
+  test('placement table', () async {
+    await _check([
+      (
+        name: 'a new row that fails the filters stays out',
+        run: (e) async {
+          await e.cubit.load(type: TransactionType.income);
+          await e.add(_tx('n1', '2026-10-10')); // an expense
+          return e.ids();
+        },
+        expected: ['t2'],
+      ),
+      (
+        name: 'a back-dated row lands at its date, not at the top',
+        run: (e) async {
+          await e.cubit.load(from: '2026-10-01', to: '2026-10-31');
+          await e.add(_tx('n1', '2026-10-04'));
+          return e.ids();
+        },
+        expected: ['t3', 't2', 'n1', 't1'],
+      ),
+      (
+        name: 'a new row is first among its own day (newest first)',
+        run: (e) async {
+          await e.cubit.load();
+          await e.add(_tx('n1', '2026-10-05'));
+          return e.ids();
+        },
+        expected: ['t3', 'n1', 't2', 't1'],
+      ),
+      (
+        name: 'outside the date range → not shown',
+        run: (e) async {
+          await e.cubit.load(from: '2026-10-01', to: '2026-10-31');
+          await e.add(_tx('n1', '2026-09-30'));
+          return e.ids();
+        },
+        expected: ['t3', 't2', 't1'],
+      ),
+      (
+        name: 'oldest-first sort puts it at its place from the other end',
+        run: (e) async {
+          await e.cubit.load(sort: 'date_asc');
+          // The fake always answers newest-first; set the expected order.
+          e.cubit.emit(
+            e.cubit.state.copyWith(
+              transactions: [
+                _tx('t1', '2026-10-02'),
+                _tx('t2', '2026-10-05', type: TransactionType.income),
+                _tx('t3', '2026-10-09'),
+              ],
+            ),
+          );
+          await e.add(_tx('n1', '2026-10-05'));
+          return e.ids();
+        },
+        expected: ['t1', 't2', 'n1', 't3'],
+      ),
+      (
+        name: 'an edit that changes the date moves the row',
+        run: (e) async {
+          await e.cubit.load();
+          e.repo.next = TransactionMutationResult.single(
+            _tx('t1', '2026-10-10'),
+          );
+          await e.cubit.updateTransaction(id: 't1', date: '2026-10-10');
+          return e.ids();
+        },
+        expected: ['t1', 't3', 't2'],
+      ),
+      (
+        name: 'an edit that leaves the filter drops the row',
+        run: (e) async {
+          await e.cubit.load(type: TransactionType.expense);
+          e.repo.next = TransactionMutationResult.single(
+            _tx('t1', '2026-10-02', type: TransactionType.income),
+          );
+          await e.cubit.updateTransaction(id: 't1');
+          return e.ids();
+        },
+        expected: ['t3'],
+      ),
+    ]);
   });
 
-  test('an edit that leaves the filter drops the row', () async {
-    await cubit.load(type: TransactionType.expense);
-    repo.next = TransactionMutationResult.single(
-      _tx('t1', '2026-10-02', type: TransactionType.income),
-    );
-    await cubit.updateTransaction(id: 't1');
-    expect(ids(), ['t3']);
+  test('live-lists table', () async {
+    await _check([
+      (
+        name: 'a write in one list refreshes the other live lists',
+        run: (e) async {
+          final walletTab = e.another();
+          await e.cubit.load();
+          await walletTab.load(type: TransactionType.expense);
+          e.repo.calls.clear();
+          final created = _tx('n1', '2026-10-10');
+          e.repo.book = [created, ...e.repo.book];
+          await e.add(created);
+          await Future<void>.delayed(Duration.zero);
+          // The wallet tab re-fetched with its own filter.
+          return [
+            e.repo.calls.single.type,
+            walletTab.state.transactions.first.id,
+          ];
+        },
+        expected: [TransactionType.expense, 'n1'],
+      ),
+      (
+        name:
+            'a transactions change refreshes every live list, each with its '
+            'filters',
+        run: (e) async {
+          final other = e.another();
+          await e.cubit.load(type: TransactionType.income);
+          await other.load(type: TransactionType.expense);
+          e.repo.calls.clear();
+          await DataChanges.instance.changed({DataTable.transactions});
+          return e.repo.calls.map((c) => c.type).toList();
+        },
+        expected: containsAll([
+          TransactionType.income,
+          TransactionType.expense,
+        ]),
+      ),
+    ]);
   });
-
-  test('a write in one list refreshes the other live lists', () async {
-    final walletTab = TransactionsCubit(repository: repo);
-    addTearDown(walletTab.close);
-    await cubit.load();
-    await walletTab.load(type: TransactionType.expense);
-    repo.calls.clear();
-    final created = _tx('n1', '2026-10-10');
-    repo.book = [created, ...repo.book];
-    await add(created);
-    await Future<void>.delayed(Duration.zero);
-    // The wallet tab re-fetched with its own filter.
-    expect(repo.calls.single.type, TransactionType.expense);
-    expect(walletTab.state.transactions.first.id, 'n1');
-  });
-
-  test(
-    'a transactions change refreshes every live list, each with its filters',
-    () async {
-      final other = TransactionsCubit(repository: repo);
-      addTearDown(other.close);
-      await cubit.load(type: TransactionType.income);
-      await other.load(type: TransactionType.expense);
-      repo.calls.clear();
-      await DataChanges.instance.changed({DataTable.transactions});
-      expect(
-        repo.calls.map((c) => c.type),
-        containsAll([TransactionType.income, TransactionType.expense]),
-      );
-    },
-  );
 }

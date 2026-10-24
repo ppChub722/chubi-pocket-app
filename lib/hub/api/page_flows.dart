@@ -552,6 +552,15 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Resolve sheet "บันทึกเป็นหนี้"', [
       FlowCall('createDebtEntry'),
     ]),
+    FlowStep.action('Tab "สรุป" (who pays whom)', [
+      FlowCall('getProjectSettle'),
+    ]),
+    FlowStep.action('Bill sheet: people as event members', [
+      FlowCall('resolveProjectPeople'),
+    ]),
+    FlowStep.action('Bill sheet "ลงบัญชีของฉัน" (unlink / relink)', [
+      FlowCall('setProjectTransactionMyBooks'),
+    ]),
   ]),
   PageFlow('event-members', 'Members (on hold: kept as is, on the new API).', [
     FlowStep.open([FlowCall('getProject'), FlowCall('listProjectMembers')]),

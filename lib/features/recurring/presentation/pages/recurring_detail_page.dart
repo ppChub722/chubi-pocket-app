@@ -28,6 +28,7 @@ import '../../domain/recurrence_rule.dart';
 import '../../domain/recurring.dart';
 import '../../domain/recurring_item.dart';
 import '../due_boxes.dart';
+import '../item_write_apply.dart';
 import '../occurrence_actions.dart';
 import '../recurring_draft.dart';
 import '../recurring_item_actions.dart';
@@ -239,48 +240,17 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
 
   void _applyItems(ItemWriteResult r) {
     _changed = true;
-    final all = [..._produced.items, ..._upcoming.items];
-    final known = {for (final i in all) i.id};
-    final merged = [
-      ...r.applyTo(all),
-      for (final i in r.items)
-        if (!known.contains(i.id)) i,
-    ];
-    final up = _upcoming;
-    final now = today();
-    bool ahead(RecurringItem i) =>
-        i.state == OccurrenceState.upcoming ||
-        (i.state == OccurrenceState.archived && !i.date.isBefore(now));
+    final applied = applyItemWrite(
+      r,
+      produced: _produced,
+      upcoming: _upcoming,
+      detail: _detail,
+      now: today(),
+    );
     setState(() {
-      _produced = ItemPage(
-        items: [
-          for (final i in merged)
-            if (!ahead(i)) i,
-        ]..sort((a, b) => b.date.compareTo(a.date)),
-        page: _produced.page,
-        totalPages: _produced.totalPages,
-      );
-      _upcoming = ItemPage(
-        items: [
-          for (final i in merged)
-            if (ahead(i)) i,
-        ]..sort((a, b) => a.date.compareTo(b.date)),
-        page: up.page,
-        totalPages: up.totalPages,
-        windowed: up.windowed,
-        nextFrom: up.nextFrom,
-      );
-      final setting = r.setting;
-      final d = _detail;
-      if (setting != null && d != null) {
-        _detail = RecurringDetail(
-          recurring: setting,
-          produced: d.produced,
-          upcoming: d.upcoming,
-          balances: d.balances,
-          stats: d.stats,
-        );
-      }
+      _produced = applied.produced;
+      _upcoming = applied.upcoming;
+      _detail = applied.detail;
     });
     if (r.setting == null) _load();
   }

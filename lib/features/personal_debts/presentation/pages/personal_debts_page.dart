@@ -60,9 +60,11 @@ class _PeopleViewState extends State<_PeopleView> {
     final due = p.nextDueDate;
     if (due != null) {
       final now = DateTime.now();
-      final late = DateTime(now.year, now.month, now.day)
-          .difference(DateTime(due.year, due.month, due.day))
-          .inDays;
+      final late = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).difference(DateTime(due.year, due.month, due.day)).inDays;
       if (late > 0) return (l.debtOverdueDays(late), true);
       return (
         l.debtDueOn(
@@ -95,19 +97,7 @@ class _PeopleViewState extends State<_PeopleView> {
       title: p.person.name,
       line2: line2 == null
           ? null
-          : warn
-          ? ListRowLine(
-              spans: [
-                TextSpan(
-                  text: line2,
-                  style: TextStyle(
-                    color: Tone.warning.color(context),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            )
-          : ListRowLine(parts: [line2]),
+          : ListRowLine(parts: [line2], tone: warn ? Tone.warning : null),
       trailing: ListRowTrailing.value(
         MoneyText(
           p.net.abs(),
@@ -124,16 +114,21 @@ class _PeopleViewState extends State<_PeopleView> {
 
   /// ลูกหนี้ / เจ้าหนี้ / เคลียร์แล้ว, each under its header (icon, people,
   /// total); the totals are the whole list's, not just the loaded pages.
-  List<Widget> _sections(
-    AppLocalizations l,
-    DebtPeopleState s,
-    String symbol,
-  ) {
+  List<Widget> _sections(AppLocalizations l, DebtPeopleState s, String symbol) {
     final palette = Theme.of(context).extension<AppColors>()!;
     final scheme = Theme.of(context).colorScheme;
-    final owedToMe = [for (final p in s.items) if (p.net > 0.005) p];
-    final iOwe = [for (final p in s.items) if (p.net < -0.005) p];
-    final even = [for (final p in s.items) if (p.net.abs() <= 0.005) p];
+    final owedToMe = [
+      for (final p in s.items)
+        if (p.net > 0.005) p,
+    ];
+    final iOwe = [
+      for (final p in s.items)
+        if (p.net < -0.005) p,
+    ];
+    final even = [
+      for (final p in s.items)
+        if (p.net.abs() <= 0.005) p,
+    ];
     Widget head(
       String title,
       IconData icon,
@@ -155,23 +150,9 @@ class _PeopleViewState extends State<_PeopleView> {
       ),
       // "รวม" small, then the total in the side's colour, like the
       // transactions list's day totals.
-      trailing: total == null
-          ? null
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                AppText(l.debtsSectionTotal, role: AppTextRole.caption),
-                const SizedBox(width: AppSpacing.xs),
-                Text(
-                  moneyString(context, total, symbol: symbol),
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: color,
-                  ),
-                ),
-              ],
-            ),
+      totalLabel: l.debtsSectionTotal,
+      total: total == null ? null : moneyString(context, total, symbol: symbol),
+      totalColor: color,
     );
     return [
       if (owedToMe.isNotEmpty) ...[

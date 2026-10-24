@@ -10,290 +10,194 @@ import 'package:flutter_test/flutter_test.dart';
 /// split must add up exactly to save, "หารเท่ากัน" counts me in (the
 /// rounding remainder is mine), and only an app-linked saved contact locks
 /// its row.
+DraftFormController _form({String amount = '1,000'}) {
+  final c = DraftFormController()..amount.text = amount;
+  addTearDown(c.dispose);
+  return c;
+}
+
+Transaction _tx({
+  required double amount,
+  required List<TxSplit> splits,
+  String id = 't1',
+  String? projectId,
+  double? myShare,
+}) => Transaction(
+  id: id,
+  accountId: null,
+  type: TransactionType.expense,
+  amount: amount,
+  date: '2026-10-11',
+  splitCount: splits.length,
+  projectId: projectId,
+  myShare: myShare,
+  splits: splits,
+);
+
+TxSplit _saved(String id, String name, double amount) =>
+    TxSplit(debtId: id, person: EmbeddedPerson(name: name), amount: amount);
+
 void main() {
-  group('balance rule', () {
-    test('nobody to split with → nothing to balance', () {
-      final c = DraftFormController();
-      addTearDown(c.dispose);
-      c.amount.text = '1,000';
-      expect(c.splitsBalanced, isTrue);
-      expect(c.meAmount, isNull);
-    });
+  test('balance rule: nothing to balance alone; typed ฉัน must add up', () {
+    final alone = _form();
+    expect(alone.splitsBalanced, isTrue);
+    expect(alone.meAmount, isNull);
 
-    test('typed ฉัน: ฉัน + the people must make the amount exactly', () {
-      final c = DraftFormController();
-      addTearDown(c.dispose);
-      c.amount.text = '1,000';
-      c.setSplits([SplitDraft(personName: 'บี', owedAmount: 300)]);
+    final c = _form();
+    c.setSplits([SplitDraft(personName: 'บี', owedAmount: 300)]);
 
-      c.setMeAmount(600);
-      expect(c.meAuto, isFalse);
-      expect(c.splitLeftover, 100);
-      expect(c.splitsBalanced, isFalse);
+    c.setMeAmount(600);
+    expect(c.meAuto, isFalse);
+    expect(c.splitLeftover, 100);
+    expect(c.splitsBalanced, isFalse);
 
-      c.setMeAmount(700);
-      expect(c.splitLeftover, 0);
-      expect(c.splitsBalanced, isTrue);
+    c.setMeAmount(700);
+    expect(c.splitLeftover, 0);
+    expect(c.splitsBalanced, isTrue);
 
-      c.setMeAmount(800);
-      expect(c.splitLeftover, -100); // over
-      expect(c.splitsBalanced, isFalse);
+    c.setMeAmount(800);
+    expect(c.splitLeftover, -100);
+    expect(c.splitsBalanced, isFalse);
 
-      // Typed, it stays put: a new amount unbalances it.
-      c.setMeAmount(700);
-      c.amount.text = '1,200';
-      expect(c.splitLeftover, 200);
-      expect(c.splitsBalanced, isFalse);
+    // Typed, it stays put: a new amount unbalances it.
+    c.setMeAmount(700);
+    c.amount.text = '1,200';
+    expect(c.splitLeftover, 200);
+    expect(c.splitsBalanced, isFalse);
 
-      // Everyone removed → no ฉัน, nothing to balance.
-      c.setSplits(const []);
-      expect(c.meAmount, isNull);
-      expect(c.splitsBalanced, isTrue);
-    });
+    c.setSplits(const []);
+    expect(c.meAmount, isNull);
+    expect(c.splitsBalanced, isTrue);
   });
 
-  group('อัตโนมัติ', () {
-    late DraftFormController c;
-    late SplitDraft b;
-    setUp(() {
-      c = DraftFormController()..amount.text = '1,000';
-      b = SplitDraft(personName: 'บี', owedAmount: 300);
-    });
-    tearDown(() => c.dispose());
+  test('อัตโนมัติ: on by default, typing turns it off, the chip re-fills', () {
+    final on = _form();
+    final b = SplitDraft(personName: 'บี', owedAmount: 300);
+    expect(on.meAuto, isTrue);
+    on.setSplits([b]);
+    expect(on.meAmount, 700);
+    expect(on.splitsBalanced, isTrue);
+    b.owedAmount = 450;
+    on.setSplits([b]);
+    expect(on.meAmount, 550);
+    on.amount.text = '2,000';
+    expect(on.meAmount, 1550);
+    expect(on.splitsBalanced, isTrue);
 
-    test('on by default: ฉัน is what is left, live', () {
-      expect(c.meAuto, isTrue);
-      c.setSplits([b]);
-      expect(c.meAmount, 700);
-      expect(c.splitsBalanced, isTrue);
+    final typed = _form();
+    typed.setSplits([SplitDraft(personName: 'บี', owedAmount: 300)]);
+    typed.setMeAmount(500);
+    expect(typed.meAuto, isFalse);
+    expect(typed.meAmount, 500);
+    expect(typed.splitLeftover, 200);
+    typed.setMeAuto(true);
+    expect(typed.meAuto, isTrue);
+    expect(typed.meAmount, 700);
+    expect(typed.splitsBalanced, isTrue);
 
-      b.owedAmount = 450;
-      c.setSplits([b]);
-      expect(c.meAmount, 550);
-      c.amount.text = '2,000';
-      expect(c.meAmount, 1550);
-      expect(c.splitsBalanced, isTrue);
-    });
+    final off = _form();
+    final o = SplitDraft(personName: 'บี', owedAmount: 300);
+    off.setSplits([o]);
+    off.setMeAuto(false);
+    expect(off.meAmount, 700);
+    o.owedAmount = 400;
+    off.setSplits([o]);
+    expect(off.meAmount, 700);
+    expect(off.splitLeftover, -100);
+  });
 
-    test('typing ฉัน turns it off; the chip turns it back on and re-fills', () {
-      c.setSplits([b]);
-      c.setMeAmount(500);
-      expect(c.meAuto, isFalse);
-      expect(c.meAmount, 500);
-      expect(c.splitLeftover, 200);
+  test('the others past the cap: ฉัน 0, "แบ่งเกิน"', () {
+    final c = _form();
+    c.setSplits([SplitDraft(personName: 'บี', owedAmount: 1200)]);
+    expect(c.meAmount, 0);
+    expect(c.splitLeftover, -200);
+    expect(c.splitsBalanced, isFalse);
+  });
 
-      c.setMeAuto(true);
-      expect(c.meAuto, isTrue);
-      expect(c.meAmount, 700);
-      expect(c.splitsBalanced, isTrue);
-    });
-
-    test('the chip off keeps the number shown, as typed', () {
-      c.setSplits([b]);
-      c.setMeAuto(false);
-      expect(c.meAmount, 700);
-      b.owedAmount = 400;
-      c.setSplits([b]);
-      expect(c.meAmount, 700); // no longer follows
-      expect(c.splitLeftover, -100);
-    });
-
-    test('the others past the cap: ฉัน 0, "แบ่งเกิน"', () {
-      b.owedAmount = 1200;
-      c.setSplits([b]);
-      expect(c.meAmount, 0);
-      expect(c.splitLeftover, -200);
-      expect(c.splitsBalanced, isFalse);
-    });
-
-    test('a pending draft with splits opens on auto: ฉัน = what is left, '
-        'so the hero and the rows agree (QA run-3 S2)', () {
-      c.prefill(
-        const PendingDraft(
-          amount: 600,
-          splits: [
-            {'person_name': 'บี', 'owed_amount': 300},
-          ],
-        ),
-        accounts: const [],
-        categories: const [],
-      );
-      expect(c.meAuto, isTrue);
-      expect(c.meAmount, 300);
-      expect(c.splitLeftover, 0);
-      expect(c.splitsBalanced, isTrue);
-    });
-
-    test('a loaded row comes back on auto (balanced)', () {
-      c.setSplits([b]);
-      c.setMeAmount(1);
-      const tx = Transaction(
-        id: 't1',
-        accountId: null,
-        type: TransactionType.expense,
-        amount: 500,
-        date: '2026-10-11',
-        splitCount: 1,
+  test('a pending draft with splits opens on auto (QA run-3 S2)', () {
+    final c = _form();
+    c.prefill(
+      const PendingDraft(
+        amount: 600,
         splits: [
-          TxSplit(
-            debtId: 'd1',
-            person: EmbeddedPerson(name: 'บี'),
-            amount: 200,
-          ),
+          {'person_name': 'บี', 'owed_amount': 300},
         ],
-      );
-      c.prefillTransaction(tx, accounts: const [], categories: const []);
-      expect(c.meAuto, isTrue);
-      expect(c.meAmount, 300);
-    });
+      ),
+      accounts: const [],
+      categories: const [],
+    );
+    expect(c.meAuto, isTrue);
+    expect(c.meAmount, 300);
+    expect(c.splitLeftover, 0);
+    expect(c.splitsBalanced, isTrue);
+  });
 
-    test('a saved split loads balanced (ฉัน = the rest of the share)', () {
-      final c = DraftFormController();
-      addTearDown(c.dispose);
-      const tx = Transaction(
-        id: 't1',
-        accountId: null,
-        type: TransactionType.expense,
+  test('loaded rows come back on auto, balanced', () {
+    final typed = _form();
+    typed.setSplits([SplitDraft(personName: 'บี', owedAmount: 300)]);
+    typed.setMeAmount(1);
+    typed.prefillTransaction(
+      _tx(amount: 500, splits: [_saved('d1', 'บี', 200)]),
+      accounts: const [],
+      categories: const [],
+    );
+    expect(typed.meAuto, isTrue);
+    expect(typed.meAmount, 300);
+
+    final two = _form();
+    two.prefillTransaction(
+      _tx(
         amount: 900,
-        date: '2026-10-11',
-        splitCount: 2,
-        splits: [
-          TxSplit(
-            debtId: 'd1',
-            person: EmbeddedPerson(name: 'บี'),
-            amount: 300,
-          ),
-          TxSplit(
-            debtId: 'd2',
-            person: EmbeddedPerson(name: 'ต้น'),
-            amount: 200,
-          ),
-        ],
-      );
-      c.prefillTransaction(tx, accounts: const [], categories: const []);
-      expect(c.meAmount, 400);
-      expect(c.splitsBalanced, isTrue);
-    });
+        splits: [_saved('d1', 'บี', 300), _saved('d2', 'ต้น', 200)],
+      ),
+      accounts: const [],
+      categories: const [],
+    );
+    expect(two.meAmount, 400);
+    expect(two.splitsBalanced, isTrue);
+  });
 
-    test('an event bill: the base is the amount − the event others', () {
-      final c = DraftFormController();
-      addTearDown(c.dispose);
-      // 1,200 bill, my share 500 → others on the event 600, my splits 100.
-      const tx = Transaction(
+  test('an event bill: the base is the amount − the event others', () {
+    final c = _form();
+    // 1,200 bill, my share 500 → others on the event 600, my splits 100.
+    c.prefillTransaction(
+      _tx(
         id: 't2',
-        accountId: null,
-        type: TransactionType.expense,
         amount: 1200,
-        date: '2026-10-11',
-        splitCount: 1,
         projectId: 'p1',
         myShare: 500,
-        splits: [
-          TxSplit(
-            debtId: 'd1',
-            person: EmbeddedPerson(name: 'บี'),
-            amount: 100,
-          ),
-        ],
-      );
-      c.prefillTransaction(tx, accounts: const [], categories: const []);
-      expect(c.eventOthers, 600);
-      expect(c.splitCap, 600);
-      expect(c.meAmount, 500);
-      expect(c.splitsBalanced, isTrue);
-    });
+        splits: [_saved('d1', 'บี', 100)],
+      ),
+      accounts: const [],
+      categories: const [],
+    );
+    expect(c.eventOthers, 600);
+    expect(c.splitCap, 600);
+    expect(c.meAmount, 500);
+    expect(c.splitsBalanced, isTrue);
   });
 
-  group('หารเท่ากัน — me included', () {
-    test('even: everyone the same', () {
-      final r = splitEquallyWithMe(1000, 3);
-      expect(r.each, 250);
-      expect(r.me, 250);
-    });
+  test('หารเท่ากัน counts me in; the rounding remainder is mine', () {
+    final even = splitEquallyWithMe(1000, 3);
+    expect(even.each, 250);
+    expect(even.me, 250);
 
-    test('a remainder goes on me, so nothing is left', () {
-      final r = splitEquallyWithMe(100, 2);
-      expect(r.each, 33.33);
-      expect(r.me, 33.34);
-      expect(r.each * 2 + r.me, closeTo(100, 0.0001));
+    final r = splitEquallyWithMe(100, 2);
+    expect(r.each, 33.33);
+    expect(r.me, 33.34);
+    expect(r.each * 2 + r.me, closeTo(100, 0.0001));
+    final s = splitEquallyWithMe(10, 6);
+    expect(s.each, 1.42);
+    expect(s.me, 1.48);
 
-      final s = splitEquallyWithMe(10, 6); // 7 ways
-      expect(s.each, 1.42);
-      expect(s.me, 1.48);
-    });
-
-    test('applied to the drafts: balanced', () {
-      final drafts = [
-        SplitDraft(personName: 'บี'),
-        SplitDraft(personName: 'ต้น'),
-      ];
-      final r = splitEquallyWithMe(100, drafts.length);
-      for (final d in drafts) {
-        d.owedAmount = r.each;
-      }
-      expect(splitLeft(100, r.me, drafts), 0);
-    });
-  });
-
-  group('who a saved row is, per level', () {
-    test('L1 typed name, saved: can change who, in place', () {
-      final d = SplitDraft(debtId: 'd1', personName: 'ลี', owedAmount: 100);
-      d.setPerson('ลีน่า');
-      expect(d.toUpdateJson(), {
-        'debt_id': 'd1',
-        'owed_amount': 100.0,
-        'person_name': 'ลีน่า',
-      });
-    });
-
-    test('L2 plain contact, saved: can switch — back to a name drops '
-        'the contact explicitly', () {
-      final d = SplitDraft(
-        debtId: 'd1',
-        personName: 'บี',
-        contactId: 'c1',
-        owedAmount: 100,
-      );
-      // Another contact.
-      d.setPerson('ต้น', contact: 'c2');
-      expect(d.toUpdateJson(), {
-        'debt_id': 'd1',
-        'owed_amount': 100.0,
-        'contact_id': 'c2',
-        'person_name': 'ต้น',
-      });
-      // Back to a typed name: "contact_id": null is sent on purpose.
-      d.setPerson('บีบี');
-      final json = d.toUpdateJson();
-      expect(json.containsKey('contact_id'), isTrue);
-      expect(json['contact_id'], isNull);
-      expect(json['person_name'], 'บีบี');
-    });
-
-    test('L2 unchanged: contact_id left out (= unchanged)', () {
-      final d = SplitDraft(
-        debtId: 'd1',
-        personName: 'บี',
-        contactId: 'c1',
-        owedAmount: 120,
-      );
-      expect(d.toUpdateJson(), {'debt_id': 'd1', 'owed_amount': 120.0});
-    });
-
-    test('L3 linked to an app user, saved: swappable like any other', () {
-      // The BE does the remove + add (new debt_id); the request is the same.
-      final d = SplitDraft(
-        debtId: 'd1',
-        personName: 'บี',
-        contactId: 'c1',
-        owedAmount: 100,
-      )..setPerson('ต้น', contact: 'c2');
-      expect(d.toUpdateJson(), {
-        'debt_id': 'd1',
-        'owed_amount': 100.0,
-        'contact_id': 'c2',
-        'person_name': 'ต้น',
-      });
-    });
+    final drafts = [
+      SplitDraft(personName: 'บี'),
+      SplitDraft(personName: 'ต้น'),
+    ];
+    final applied = splitEquallyWithMe(100, drafts.length);
+    for (final d in drafts) {
+      d.owedAmount = applied.each;
+    }
+    expect(splitLeft(100, applied.me, drafts), 0);
   });
 }

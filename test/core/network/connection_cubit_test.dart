@@ -95,6 +95,26 @@ void main() {
     expect(cubit.state.reconnects, 1);
   });
 
+  test(
+    'pages reload once per outage: reconnects rises only on return',
+    () async {
+      for (var outage = 1; outage <= 2; outage++) {
+        api.unreachable.add(null);
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+        expect(cubit.state.reconnects, outage - 1, reason: 'going offline');
+        api.reachable.add(null);
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+        expect(cubit.state.reconnects, outage, reason: 'back online');
+        api.reachable.add(null);
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+        expect(cubit.state.reconnects, outage, reason: 'already online');
+        await Future<void>.delayed(const Duration(milliseconds: 400));
+        expect(cubit.state.status, ConnectionStatus.online);
+        expect(cubit.state.reconnects, outage, reason: 'settling');
+      }
+    },
+  );
+
   test('retryNow polls immediately', () async {
     api.unreachable.add(null);
     await Future<void>.delayed(const Duration(milliseconds: 5));

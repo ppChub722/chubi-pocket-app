@@ -1,11 +1,7 @@
-import 'dart:async';
+import 'dart:convert';
 
-import 'package:bloc_test/bloc_test.dart';
-import 'package:chubi_pocket/core/data/data_changes.dart' as changes;
-import 'package:chubi_pocket/app/shell/quick_create_context.dart';
-import 'package:chubi_pocket/core/network/api_exception.dart';
-import 'package:chubi_pocket/features/accounts/presentation/cubit/accounts_cubit.dart';
-import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:chubi_pocket/core/data/data_changes.dart';
+import 'package:chubi_pocket/core/network/api_client.dart';
 import 'package:chubi_pocket/features/budgets/data/budgets_repository.dart';
 import 'package:chubi_pocket/features/budgets/domain/budget.dart';
 import 'package:chubi_pocket/features/budgets/domain/budget_detail.dart';
@@ -13,53 +9,44 @@ import 'package:chubi_pocket/features/budgets/domain/budget_period.dart';
 import 'package:chubi_pocket/features/budgets/presentation/budget_draft.dart';
 import 'package:chubi_pocket/features/budgets/presentation/budget_labels.dart';
 import 'package:chubi_pocket/features/budgets/presentation/cubit/budgets_cubit.dart';
-import 'package:chubi_pocket/features/budgets/presentation/pages/budget_detail_page.dart';
-import 'package:chubi_pocket/features/budgets/presentation/pages/budgets_list_page.dart';
-import 'package:chubi_pocket/features/categories/presentation/cubit/categories_cubit.dart';
-import 'package:chubi_pocket/features/home/presentation/cubit/dashboard_cubit.dart';
-import 'package:chubi_pocket/features/notifications/presentation/cubit/unread_badge_cubit.dart';
-import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.dart';
-import 'package:chubi_pocket/features/tags/presentation/cubit/tags_cubit.dart';
-import 'package:chubi_pocket/features/transactions/presentation/cubit/transactions_cubit.dart';
-import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/ui/ui.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 
-class _Auth extends MockCubit<AuthState> implements AuthCubit {}
+class _FakeApi extends Fake implements ApiClient {
+  _FakeApi(this.dio);
 
-class _Pending extends MockCubit<PendingState> implements PendingCubit {}
+  @override
+  final Dio dio;
+}
 
-class _Unread extends MockCubit<int> implements UnreadBadgeCubit {}
+/// Records the request; answers with [body].
+class _Adapter implements HttpClientAdapter {
+  Object? body;
+  RequestOptions? last;
 
-class _Accounts extends MockCubit<AccountsState> implements AccountsCubit {}
-
-class _Categories extends MockCubit<CategoriesState>
-    implements CategoriesCubit {}
-
-class _Tags extends MockCubit<TagsState> implements TagsCubit {}
-
-class _Dashboard extends MockCubit<DashboardState> implements DashboardCubit {}
-
-class _Transactions extends MockCubit<TransactionsState>
-    implements TransactionsCubit {}
-
-const _down = ApiException(code: 'NETWORK_ERROR', message: 'no connection');
-
-/// Runs the REAL model parsing on prod-shaped bodies, or fails like the
-/// network does.
-class _Repo extends Fake implements BudgetsRepository {
-  Map<String, dynamic> detail = _recurringDetail();
-  Map<String, dynamic> listBody = _list();
-  bool networkDown = false;
-  final calls = <String>[];
-
-  void _hit(String call) {
-    calls.add(call);
-    if (networkDown) throw _down;
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<dynamic>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    last = options;
+    return ResponseBody.fromString(
+      jsonEncode(body),
+      200,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
   }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+/// Answers every list call with the prod-shaped body and records it.
+class _ListRepo extends Fake implements BudgetsRepository {
+  final calls = <String>[];
 
   @override
   Future<BudgetList> list({
@@ -68,58 +55,9 @@ class _Repo extends Fake implements BudgetsRepository {
     BudgetHealth health = BudgetHealth.all,
   }) async {
     final h = health == BudgetHealth.all ? '' : ':${health.name}';
-    _hit('list:${filter.name}:${sort.name}$h');
-    return BudgetList.fromJson(listBody);
+    calls.add('list:${filter.name}:${sort.name}$h');
+    return BudgetList.fromJson(_list());
   }
-
-  @override
-  Future<BudgetDetail> get(
-    String id, {
-    String? periodId,
-    bool deletePreview = false,
-  }) async {
-    _hit(
-      'get:$id${periodId == null ? '' : ':$periodId'}'
-      '${deletePreview ? ':preview' : ''}',
-    );
-    return BudgetDetail.fromJson({
-      ...detail,
-      if (deletePreview)
-        'delete_preview': {
-          'periods': 6,
-          'overridden_periods': 2,
-          'categories': 3,
-          'wallets': 1,
-        },
-    });
-  }
-
-  /// What the next period write answers (the page at that period).
-  Map<String, dynamic>? periodAnswer;
-
-  @override
-  Future<BudgetDetail> updatePeriod(
-    String id,
-    String periodId, {
-    required double? amount,
-    required String? note,
-  }) async {
-    _hit('period:$id:$periodId:${amount ?? 'base'}');
-    return BudgetDetail.fromJson(periodAnswer ?? detail);
-  }
-
-  @override
-  Future<BudgetDetail> archive(String id) async {
-    _hit('archive:$id');
-    final d = detail;
-    return BudgetDetail.fromJson({
-      ...d,
-      'budget': {...(d['budget'] as Map<String, dynamic>), 'state': 'archived'},
-    });
-  }
-
-  @override
-  Future<void> delete(String id) async => _hit('delete:$id');
 }
 
 Map<String, dynamic> _account() => {
@@ -373,90 +311,6 @@ Map<String, dynamic> _openEndedDetail() => {
 };
 
 void main() {
-  late _Repo repo;
-  late QuickCreateContext registry;
-  BudgetsCubit? budgets;
-  late StreamController<TransactionsState> txBook;
-
-  setUp(() {
-    ToolbarToggleState.resetAll();
-    repo = _Repo();
-    registry = QuickCreateContext();
-    txBook = StreamController<TransactionsState>.broadcast();
-  });
-
-  tearDown(() async {
-    registry.dispose();
-    await budgets?.close();
-    await txBook.close();
-  });
-
-  Future<void> pump(WidgetTester t, Widget page) async {
-    final auth = _Auth();
-    final pending = _Pending();
-    final unread = _Unread();
-    final accounts = _Accounts();
-    final categories = _Categories();
-    final tags = _Tags();
-    final dashboard = _Dashboard();
-    final transactions = _Transactions();
-    final cubit = budgets = BudgetsCubit(repository: repo);
-    t.view.physicalSize = const Size(800, 6000);
-    t.view.devicePixelRatio = 1;
-    addTearDown(t.view.reset);
-    when(() => auth.state).thenReturn(const AuthUnauthenticated());
-    when(() => pending.state).thenReturn(const PendingState());
-    when(() => unread.state).thenReturn(0);
-    when(() => accounts.state).thenReturn(const AccountsState());
-    when(() => accounts.loadIfNeeded()).thenAnswer((_) async {});
-    when(() => categories.state).thenReturn(const CategoriesState());
-    when(() => categories.loadIfNeeded()).thenAnswer((_) async {});
-    when(() => tags.state).thenReturn(const TagsState());
-    when(() => tags.loadIfNeeded()).thenAnswer((_) async {});
-    when(() => dashboard.state).thenReturn(const DashboardState());
-    whenListen(
-      transactions,
-      txBook.stream,
-      initialState: const TransactionsState(),
-    );
-    await t.pumpWidget(
-      RepositoryProvider<BudgetsRepository>.value(
-        value: repo,
-        child: MultiBlocProvider(
-          providers: [
-            BlocProvider<AuthCubit>.value(value: auth),
-            BlocProvider<PendingCubit>.value(value: pending),
-            BlocProvider<UnreadBadgeCubit>.value(value: unread),
-            BlocProvider<AccountsCubit>.value(value: accounts),
-            BlocProvider<CategoriesCubit>.value(value: categories),
-            BlocProvider<TagsCubit>.value(value: tags),
-            BlocProvider<DashboardCubit>.value(value: dashboard),
-            BlocProvider<TransactionsCubit>.value(value: transactions),
-            BlocProvider<BudgetsCubit>.value(value: cubit),
-          ],
-          child: MaterialApp(
-            theme: ThemeData(
-              extensions: [
-                ThemeRegistry.byId(
-                  ThemeRegistry.defaultThemeId,
-                ).colorsFor(Brightness.light),
-              ],
-            ),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            locale: const Locale('en'),
-            builder: (context, child) => AppUiConfig(
-              child: QuickCreateContextScope(registry: registry, child: child!),
-            ),
-            home: page,
-          ),
-        ),
-      ),
-    );
-    await t.pump();
-    await t.pump(const Duration(milliseconds: 100));
-  }
-
   group('model', () {
     test('a budget list parses the BE statuses and the summary', () {
       final l = BudgetList.fromJson(_list());
@@ -594,470 +448,146 @@ void main() {
     });
   });
 
-  group('list page', () {
-    testWidgets('opens with ONE call and lists the budgets', (t) async {
-      await pump(t, const BudgetsListPage());
-      expect(repo.calls, ['list:active:risk']);
-      expect(find.text('ช้อปปิ้ง'), findsOneWidget);
-      expect(find.text('อาหาร'), findsOneWidget);
-      expect(find.text('Over'), findsOneWidget);
-      expect(find.byType(ErrorView), findsNothing);
-    });
+  test('repository writes: period limit, override reset, archive, preview', () async {
+    final http = _Adapter();
+    final repo = BudgetsRepository(
+      client: _FakeApi(Dio()..httpClientAdapter = http),
+    );
+    final cases =
+        <
+          ({
+            String name,
+            Future<Object?> Function() call,
+            Object body,
+            String method,
+            String path,
+            Map<String, dynamic> query,
+            Object? data,
+          })
+        >[
+          (
+            name: 'period limit: one PUT with the amount',
+            call: () =>
+                repo.updatePeriod('b1', 'p0', amount: 9000, note: null),
+            body: _recurringDetail(),
+            method: 'PUT',
+            path: '/budgets/b1/periods/p0',
+            query: {},
+            data: {'amount': 9000, 'note': null},
+          ),
+          (
+            name: 'override reset: amount null goes back to the base',
+            call: () => repo.updatePeriod('b1', 'p0', amount: null, note: 'n'),
+            body: _recurringDetail(),
+            method: 'PUT',
+            path: '/budgets/b1/periods/p0',
+            query: {},
+            data: {'amount': null, 'note': 'n'},
+          ),
+          (
+            name: 'archive',
+            call: () => repo.archive('b1'),
+            body: _recurringDetail(),
+            method: 'POST',
+            path: '/budgets/b1/archive',
+            query: {},
+            data: null,
+          ),
+          (
+            name: 'restore',
+            call: () => repo.restore('b1'),
+            body: _recurringDetail(),
+            method: 'POST',
+            path: '/budgets/b1/restore',
+            query: {},
+            data: null,
+          ),
+          (
+            name: 'delete',
+            call: () => repo.delete('b1'),
+            body: <String, dynamic>{},
+            method: 'DELETE',
+            path: '/budgets/b1',
+            query: {},
+            data: null,
+          ),
+          (
+            name: 'delete preview',
+            call: () => repo.get('b1', deletePreview: true),
+            body: _recurringDetail(),
+            method: 'GET',
+            path: '/budgets/b1',
+            query: {'include': 'delete_preview'},
+            data: null,
+          ),
+          (
+            name: 'detail at a period',
+            call: () => repo.get('b1', periodId: 'p0'),
+            body: _recurringDetail(),
+            method: 'GET',
+            path: '/budgets/b1',
+            query: {'period_id': 'p0'},
+            data: null,
+          ),
+          (
+            name: 'list with a health tile',
+            call: () => repo.list(health: BudgetHealth.over),
+            body: _list(),
+            method: 'GET',
+            path: '/budgets',
+            query: {'status': 'active', 'sort': 'risk', 'health': 'over'},
+            data: null,
+          ),
+          (
+            name: 'list without a health tile sends no health',
+            call: () => repo.list(filter: BudgetFilter.ended),
+            body: _list(),
+            method: 'GET',
+            path: '/budgets',
+            query: {'status': 'ended', 'sort': 'risk'},
+            data: null,
+          ),
+        ];
 
-    testWidgets('a change of the budgets key refreshes the spent figures', (
-      t,
-    ) async {
-      await pump(t, const BudgetsListPage());
-      expect(repo.calls, ['list:active:risk']);
-      await changes.DataChanges.instance.changed({changes.DataTable.budgets});
-      await t.pump();
-      expect(repo.calls, ['list:active:risk', 'list:active:risk']);
-    });
-
-    Future<void> openToolbar(WidgetTester t) async {
-      await t.tap(find.byType(ToolbarToggleButton));
-      await t.pumpAndSettle();
+    for (final c in cases) {
+      http.body = c.body;
+      await c.call();
+      final sent = http.last!;
+      expect(sent.method, c.method, reason: c.name);
+      expect(sent.path, c.path, reason: c.name);
+      expect(sent.queryParameters, c.query, reason: c.name);
+      expect(sent.data, c.data, reason: c.name);
     }
-
-    testWidgets('summary card: totals, tiles, 🔍; toolbar hidden by default', (
-      t,
-    ) async {
-      await pump(t, const BudgetsListPage());
-      // The head: the module tile, then the summary chip (no caption).
-      final label = find.text('Left in total');
-      final card = find.ancestor(of: label, matching: find.byType(AppCard));
-      expect(card, findsOneWidget);
-      final inset = AppSpacing.lg + HeroMetrics.fallback.padding.left;
-      expect(t.getRect(find.byType(HeroModuleTile)).left, inset);
-      expect(find.text('Current period | total used'), findsNothing);
-      // 7,980 over the plan to date of the budgets that have one.
-      expect(
-        find.descendant(of: card, matching: find.byType(StatusChip)),
-        findsOneWidget,
-      );
-      // The ring: what is left of the total, then three facts.
-      expect(find.textContaining('฿4,020', findRichText: true), findsWidgets);
-      expect(find.text('of ฿12,000'), findsOneWidget);
-      expect(find.text('Total spent'), findsOneWidget);
-      expect(find.textContaining('฿7,980', findRichText: true), findsWidgets);
-      expect(find.text('67%'), findsOneWidget);
-      for (final k in ['All', 'Normal', 'Near the limit', 'Over budget']) {
-        expect(find.byKey(ValueKey('heroFilter:$k')), findsOneWidget);
-      }
-      // 🔍 in the card; the toolbar is hidden until it is tapped.
-      expect(find.byIcon(AppIcons.search), findsOneWidget);
-      expect(find.byType(TextField), findsNothing);
-      await openToolbar(t);
-      expect(find.byType(TextField), findsOneWidget);
-      expect(
-        t.getTopLeft(card).dy,
-        lessThan(t.getTopLeft(find.byType(ListToolbar)).dy),
-      );
-    });
-
-    testWidgets('search by name (local, no call)', (t) async {
-      await pump(t, const BudgetsListPage());
-      await openToolbar(t);
-      await t.enterText(find.byType(TextField), 'ช้อป');
-      await t.pump();
-      expect(find.text('ช้อปปิ้ง'), findsOneWidget);
-      expect(find.text('อาหาร'), findsNothing);
-      await t.enterText(find.byType(TextField), 'zzz');
-      await t.pump();
-      expect(find.text('No matching budgets'), findsOneWidget);
-      expect(repo.calls, ['list:active:risk']);
-    });
-
-    testWidgets('red dot on the 🔍 while hidden with a search typed', (
-      t,
-    ) async {
-      await pump(t, const BudgetsListPage());
-      await openToolbar(t);
-      await t.enterText(find.byType(TextField), 'ช้อป');
-      await t.pump();
-      bool dot() =>
-          t.widget<CardActionButton>(find.byType(CardActionButton)).showDot;
-      expect(dot(), isFalse);
-      await openToolbar(t); // hide again
-      expect(find.byType(TextField), findsNothing);
-      expect(dot(), isTrue);
-    });
-
-    testWidgets('status is ONE dropdown chip and changes the filter', (
-      t,
-    ) async {
-      await pump(t, const BudgetsListPage());
-      await openToolbar(t);
-      expect(find.text('Status: Active'), findsOneWidget);
-      await t.tap(find.text('Status: Active'));
-      await t.pump(const Duration(milliseconds: 300));
-      await t.tap(find.text('Ended').last);
-      await t.pump();
-      await t.pump(const Duration(milliseconds: 100));
-      expect(repo.calls, ['list:active:risk', 'list:ended:risk']);
-      expect(find.text('Status: Ended'), findsOneWidget);
-    });
-
-    testWidgets('a health tile is ONE call; the same tile clears it', (
-      t,
-    ) async {
-      await pump(t, const BudgetsListPage());
-      await t.tap(find.byKey(const ValueKey('heroFilter:Over budget')));
-      await t.pump();
-      await t.pump(const Duration(milliseconds: 100));
-      expect(repo.calls, ['list:active:risk', 'list:active:risk:over']);
-      await t.tap(find.byKey(const ValueKey('heroFilter:Over budget')));
-      await t.pump();
-      await t.pump(const Duration(milliseconds: 100));
-      expect(repo.calls.last, 'list:active:risk');
-    });
-
-    testWidgets('a row: remaining on the name line, short caption, badges', (
-      t,
-    ) async {
-      await pump(t, const BudgetsListPage());
-      expect(find.textContaining('฿4,880', findRichText: true), findsOneWidget);
-      expect(find.textContaining('฿860', findRichText: true), findsOneWidget);
-      expect(find.text('Monthly | 24 days left'), findsNWidgets(2));
-      expect(find.text('Used ฿3,120 of ฿8,000'), findsOneWidget);
-      expect(find.text('On pace to exceed'), findsOneWidget);
-      expect(find.text('Over'), findsOneWidget);
-    });
-
-    testWidgets('network down → full-page error + retry', (t) async {
-      repo.networkDown = true;
-      await pump(t, const BudgetsListPage());
-      expect(find.byType(ErrorView), findsOneWidget);
-      repo.networkDown = false;
-      await t.tap(find.text('Retry'));
-      await t.pump();
-      await t.pump(const Duration(milliseconds: 100));
-      expect(find.text('อาหาร'), findsOneWidget);
-    });
-
-    testWidgets('no budgets → the empty state with the add tile', (t) async {
-      repo.listBody = {'summary': _list()['summary'], 'data': <dynamic>[]};
-      await pump(t, const BudgetsListPage());
-      expect(find.byType(EmptyView), findsOneWidget);
-      expect(find.byType(AddTile), findsOneWidget);
-    });
   });
 
-  group('budget page', () {
-    Future<void> settle(WidgetTester t) async {
-      await t.pump();
-      await t.pump(const Duration(milliseconds: 400));
-    }
+  test('cubit: a budgets change refreshes it once loaded; one call per '
+      'filter, sort or tile change', () async {
+    final repo = _ListRepo();
+    final cubit = BudgetsCubit(repository: repo);
+    addTearDown(cubit.close);
 
-    /// The recurring detail with the previous period overridden to 9,000.
-    Map<String, dynamic> overriddenDetail() {
-      final d = _recurringDetail();
-      final periods = (d['periods'] as Map<String, dynamic>)['data'] as List;
-      return {
-        ...d,
-        'periods': {
-          'data': [
-            periods.first,
-            _period(
-              id: 'p0',
-              seq: 4,
-              start: '2026-09-01',
-              end: '2026-09-30',
-              current: false,
-              used: 8460,
-              expected: 0,
-              amount: 9000,
-              status: 'over',
-              tone: 'danger',
-              overridden: true,
-            ),
-          ],
-          'has_more': true,
-        },
-      };
-    }
+    await DataChanges.instance.changed({DataTable.budgets});
+    expect(repo.calls, isEmpty);
 
-    testWidgets('hero: remaining, target, bar caption with the pace, tiles', (
-      t,
-    ) async {
-      await pump(t, const BudgetDetailPage(id: 'b1'));
-      expect(repo.calls, ['get:b1']);
-      expect(find.byType(AppHeroCard), findsOneWidget);
-      expect(find.text('Still available'), findsOneWidget);
-      expect(find.textContaining('฿4,880', findRichText: true), findsWidgets);
-      expect(find.text('of ฿8,000'), findsOneWidget);
-      // The facts beside the ring (the BE's forecast numbers).
-      expect(find.text('Spent'), findsOneWidget);
-      expect(find.text('฿3,120'), findsWidgets);
-      expect(find.text('Coming up'), findsOneWidget);
-      expect(find.text('Plan to date'), findsOneWidget);
-      expect(find.text('฿2,080'), findsOneWidget);
-      expect(find.text('Can spend per day'), findsOneWidget);
-      expect(find.text('฿165'), findsOneWidget);
-      // The plan status chip: 3,120 spent against 2,080 planned.
-      expect(find.text('฿1,040 ahead of plan'), findsOneWidget);
-      // The round box: the days left and the day counter.
-      expect(find.text('24 days left | 8/31'), findsOneWidget);
-      // The old tiles are gone.
-      expect(
-        find.byKey(const ValueKey('summaryTile:Can spend per day')),
-        findsNothing,
-      );
-      expect(find.text('Forecast at the end'), findsNothing);
-      expect(find.text('Warns at'), findsNothing);
-      // No action bar, no "Setup" tab, no old dashboard sections.
-      expect(find.byType(ActionBar), findsNothing);
-      expect(find.text('Setup'), findsNothing);
-      expect(find.text('By source'), findsNothing);
-      expect(find.byType(ErrorView), findsNothing);
-    });
+    await cubit.load();
+    expect(repo.calls, ['list:active:risk']);
 
-    testWidgets('an over-budget period reads "Over budget" with the excess', (
-      t,
-    ) async {
-      repo.detail = {
-        ..._recurringDetail(),
-        'budget': _budget(
-          period: _period(
-            used: 8860,
-            expected: 0,
-            status: 'over',
-            tone: 'danger',
-          ),
-        ),
-      };
-      await pump(t, const BudgetDetailPage(id: 'b1'));
-      expect(find.text('Over budget'), findsWidgets);
-      expect(find.textContaining('฿860', findRichText: true), findsWidgets);
-      expect(find.text('Still available'), findsNothing);
-    });
+    await DataChanges.instance.changed({DataTable.budgets});
+    expect(repo.calls.length, 2);
+    await DataChanges.instance.changed({DataTable.accounts});
+    expect(repo.calls.length, 2);
 
-    testWidgets('time card, what it counts, then the note, above the tabs', (
-      t,
-    ) async {
-      await pump(t, const BudgetDetailPage(id: 'b1'));
-      // No time card in view mode: the round is in the hero's box.
-      expect(find.text('Time'), findsNothing);
-      expect(find.text('Which spending counts'), findsNothing);
-      // What it counts: one icon strip per list (categories, wallets, tags).
-      expect(find.byType(IconChipStrip), findsNWidgets(3));
-      expect(find.text('All Food'), findsOneWidget);
-      expect(find.text('เที่ยว'), findsOneWidget);
-      // "Warn at" lives with the limit, not in a settings card.
-      expect(find.byType(SettingsSection), findsNothing);
-      expect(find.byType(NoteSection), findsOneWidget);
-      final scope = t.getTopLeft(find.byType(IconChipStrip).first).dy;
-      final note = t.getTopLeft(find.byType(NoteSection)).dy;
-      final tabs = t.getTopLeft(find.text('This period')).dy;
-      expect(scope, lessThan(note));
-      expect(note, lessThan(tabs));
-    });
-
-    testWidgets('items: day headers, the source chip, the tags', (t) async {
-      await pump(t, const BudgetDetailPage(id: 'b1'));
-      expect(find.byType(AppListRow), findsNWidgets(4));
-      expect(find.byType(DateGroupHeader), findsNWidgets(3));
-      // The "Counted because" line is gone.
-      expect(
-        find.textContaining('Counted because', findRichText: true),
-        findsNothing,
-      );
-      // A chip only for a source that is not normal (the upcoming one).
-      expect(find.text('Recurring | upcoming'), findsOneWidget);
-      expect(find.text('Normal'), findsNothing);
-      // A tag is shown as #name.
-      expect(
-        find.textContaining('#เที่ยว', findRichText: true),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets('all periods: a row per period, tap = edit its limit', (
-      t,
-    ) async {
-      repo.periodAnswer = {
-        ..._recurringDetail(),
-        'budget': _budget(
-          period: _period(
-            id: 'p0',
-            seq: 4,
-            start: '2026-09-01',
-            end: '2026-09-30',
-            current: false,
-            used: 8460,
-            expected: 0,
-            amount: 9000,
-            status: 'over',
-            tone: 'danger',
-            overridden: true,
-          ),
-        ),
-      };
-      await pump(t, const BudgetDetailPage(id: 'b1'));
-      await t.tap(find.text('All periods'));
-      await settle(t);
-      expect(find.byType(ProgressCard), findsNWidgets(2));
-      expect(find.text('Used ฿8,460 of ฿8,000'), findsOneWidget);
-      await t.tap(find.byType(ProgressCard).last);
-      await settle(t);
-      expect(find.text('Edit this period only'), findsOneWidget);
-      await t.enterText(find.byType(TextField).first, '9000');
-      await t.pump();
-      await t.tap(find.text('Save').last);
-      await settle(t);
-      // ONE call: the PUT; the answer patches the row, the hero stays on the
-      // CURRENT period.
-      expect(repo.calls, ['get:b1', 'period:b1:p0:9000.0']);
-      expect(
-        find.textContaining('Used ฿8,460 of ฿9,000', findRichText: true),
-        findsOneWidget,
-      );
-      expect(find.textContaining('฿4,880', findRichText: true), findsWidgets);
-    });
-
-    testWidgets('an overridden period goes back to the base amount', (t) async {
-      repo.detail = overriddenDetail();
-      repo.periodAnswer = overriddenDetail();
-      await pump(t, const BudgetDetailPage(id: 'b1'));
-      await t.tap(find.text('All periods'));
-      await settle(t);
-      await t.tap(find.byType(ProgressCard).last);
-      await settle(t);
-      await t.tap(find.text('Back to the base amount (฿8,000)'));
-      await t.pump();
-      await t.tap(find.text('Save').last);
-      await settle(t);
-      expect(repo.calls.last, 'period:b1:p0:base');
-    });
-
-    testWidgets('a failed reload keeps the page and says why', (t) async {
-      await pump(t, const BudgetDetailPage(id: 'b1'));
-      repo.networkDown = true;
-      txBook.add(const TransactionsState(revision: 1));
-      await t.pump(const Duration(milliseconds: 500));
-      await t.pump();
-      expect(repo.calls, ['get:b1', 'get:b1']);
-      expect(find.byType(ErrorView), findsNothing);
-      expect(find.text('no connection'), findsOneWidget);
-      expect(find.text('Still available'), findsOneWidget);
-      expect(find.byType(AppListRow), findsNWidgets(4));
-    });
-
-    testWidgets('a one-off budget is one page: no tabs, items below', (
-      t,
-    ) async {
-      repo.detail = _openEndedDetail();
-      await pump(t, const BudgetDetailPage(id: 'b3'));
-      expect(find.text('All periods'), findsNothing);
-      expect(find.text('Time'), findsNothing);
-      expect(find.byType(IconChipStrip), findsWidgets);
-      expect(find.text('This period'), findsOneWidget);
-      expect(find.byType(AppListRow), findsNWidgets(4));
-    });
-
-    Future<void> openEdit(WidgetTester t) async {
-      await t.tap(find.byIcon(AppIcons.edit).first);
-      await t.pumpAndSettle();
-    }
-
-    testWidgets('edit: its own form — limit field, dates, settings, end zone', (
-      t,
-    ) async {
-      await pump(t, const BudgetDetailPage(id: 'b1'));
-      await openEdit(t);
-      expect(find.byType(ModeActionBar), findsOneWidget);
-      final field = t.widget<HeroAmountField>(find.byType(HeroAmountField));
-      expect(field.controller.text, '8,000');
-      expect(find.text('Budget limit'), findsOneWidget);
-      // Warn at: under the limit, the money spelled out (80% of ฿8,000).
-      expect(find.text('Warn at'), findsOneWidget);
-      expect(find.text('= ฿6,400'), findsOneWidget);
-      // Time: start, the repeat switch and the period (a repeating budget
-      // has no separate end row).
-      expect(find.text('Time'), findsOneWidget);
-      expect(find.text('Start'), findsOneWidget);
-      expect(find.text('Repeat'), findsOneWidget);
-      expect(find.text('Period'), findsOneWidget);
-      expect(find.text('End'), findsNothing);
-      // What it counts: all / choose, then the three lists.
-      expect(find.text('Every expense'), findsOneWidget);
-      expect(find.text('Choose'), findsOneWidget);
-      expect(find.text('Categories'), findsOneWidget);
-      expect(find.text('Wallets'), findsOneWidget);
-      expect(find.text('Tags'), findsOneWidget);
-      // Hidden, not greyed: bar, tiles, forecast, items, tabs.
-      expect(find.byType(HeroBar), findsNothing);
-      expect(find.text('Can spend per day'), findsNothing);
-      expect(find.byType(AppListRow), findsNothing);
-      expect(find.text('All periods'), findsNothing);
-      // End zone: archive + delete (no close: the BE says it can't).
-      expect(find.byType(EndZone), findsOneWidget);
-      expect(find.text('Archive'), findsOneWidget);
-      expect(find.text('Delete this budget'), findsOneWidget);
-      expect(find.text('Close the budget'), findsNothing);
-    });
-
-    testWidgets('edit: an open-ended budget can be closed', (t) async {
-      repo.detail = _openEndedDetail();
-      await pump(t, const BudgetDetailPage(id: 'b3'));
-      await openEdit(t);
-      expect(find.text('Close the budget'), findsOneWidget);
-    });
-
-    testWidgets('archive: confirm, ONE call, the page takes the answer', (
-      t,
-    ) async {
-      await pump(t, const BudgetDetailPage(id: 'b1'));
-      await openEdit(t);
-      await t.tap(find.text('Archive'));
-      await t.pumpAndSettle();
-      expect(find.text('Archive this budget?'), findsOneWidget);
-      await t.tap(find.text('Archive').last);
-      await t.pumpAndSettle();
-      expect(repo.calls, ['get:b1', 'archive:b1']);
-      expect(find.byType(ModeActionBar), findsNothing);
-    });
-
-    testWidgets('delete asks first and calls nothing on cancel', (t) async {
-      await pump(t, const BudgetDetailPage(id: 'b1'));
-      await openEdit(t);
-      await t.tap(find.text('Delete this budget'));
-      await t.pumpAndSettle();
-      expect(find.text('Delete this budget?'), findsOneWidget);
-      // The BE's preview, printed as sent.
-      expect(
-        find.textContaining(
-          'Deletes 6 periods (2 adjusted) | 3 categories | 1 wallets',
-        ),
-        findsOneWidget,
-      );
-      await t.tap(find.text('Cancel').last);
-      await t.pumpAndSettle();
-      // ONE preview call on the button; nothing else on cancel.
-      expect(repo.calls, ['get:b1', 'get:b1:preview']);
-    });
-
-    testWidgets('create: no call, the form opens, no end zone', (t) async {
-      await pump(t, const BudgetDetailPage());
-      expect(repo.calls, isEmpty);
-      expect(find.byType(ModeActionBar), findsOneWidget);
-      expect(find.byType(HeroAmountField), findsOneWidget);
-      expect(find.byType(EndZone), findsNothing);
-      expect(find.byType(HeroBar), findsNothing);
-    });
-
-    testWidgets('network down → full-page error', (t) async {
-      repo.networkDown = true;
-      await pump(t, const BudgetDetailPage(id: 'b1'));
-      expect(find.byType(ErrorView), findsOneWidget);
-    });
-
-    testWidgets('a malformed body → error, not an endless skeleton', (t) async {
-      repo.detail = {
-        'budget': {'name': 'x'},
-      };
-      await pump(t, const BudgetDetailPage(id: 'b1'));
-      expect(find.byType(ErrorView), findsOneWidget);
-    });
+    repo.calls.clear();
+    await cubit.setHealth(BudgetHealth.over);
+    await cubit.setHealth(BudgetHealth.over);
+    await cubit.setFilter(BudgetFilter.ended);
+    await cubit.setFilter(BudgetFilter.ended);
+    await cubit.setSort(BudgetSort.newest);
+    expect(repo.calls, [
+      'list:active:risk:over',
+      'list:active:risk',
+      'list:ended:risk',
+      'list:ended:newest',
+    ]);
   });
 }

@@ -21,6 +21,7 @@ import '../../../transactions/domain/transaction.dart' show EmbeddedTag;
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
 import '../cubit/projects_cubit.dart';
+import '../event_delete_choice.dart';
 import '../event_errors.dart';
 import '../project_board_controller.dart';
 import '../widgets/add_member_sheet.dart';
@@ -30,8 +31,6 @@ import '../widgets/project_common.dart';
 import '../widgets/project_tx_tiles.dart';
 
 enum _Field { name, description, note, planned }
-
-enum _DeleteChoice { notYet, keepTxs, withTxs }
 
 enum _Tab { bills, summary }
 
@@ -347,36 +346,36 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     final numbers = preview == null
         ? null
         : l.fpM5bEventDeleteNumbers(preview.bills, preview.members);
-    final choice = await showChoiceDialog<_DeleteChoice>(
+    final choice = await showChoiceDialog<DeleteChoice>(
       context,
       title: l.projectDeleteTitle(p.name),
       message: linked > 0 ? [?numbers, l.eventDeleteBody].join('\n') : numbers,
       choices: [
         DialogChoice(
-          value: _DeleteChoice.notYet,
+          value: DeleteChoice.notYet,
           label: l.eventDeleteNotYet,
           variant: AppButtonVariant.primary,
         ),
         if (linked > 0) ...[
           DialogChoice(
-            value: _DeleteChoice.keepTxs,
+            value: DeleteChoice.keepTxs,
             label: l.eventDeleteKeepTxs,
           ),
           DialogChoice(
-            value: _DeleteChoice.withTxs,
+            value: DeleteChoice.withTxs,
             label: l.eventDeleteWithTxs(linked),
             variant: AppButtonVariant.destructive,
           ),
         ] else
           DialogChoice(
-            value: _DeleteChoice.keepTxs,
+            value: DeleteChoice.keepTxs,
             label: l.eventDeleteConfirm,
             variant: AppButtonVariant.destructive,
           ),
       ],
     );
-    if (choice == null || choice == _DeleteChoice.notYet || !mounted) return;
-    final withTxs = choice == _DeleteChoice.withTxs;
+    final withTxs = deleteLinkedTxsOf(choice);
+    if (withTxs == null || !mounted) return;
     setSaving(true);
     try {
       final accounts = context.read<AccountsCubit>();

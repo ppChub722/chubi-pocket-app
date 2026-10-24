@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../l10n/gen/app_localizations.dart';
 import '../../features/transactions/presentation/widgets/quick_create_sheet.dart';
+import 'back_history.dart';
 import 'fade_branch_container.dart';
 import 'main_bottom_nav.dart';
 import 'quick_create_context.dart';
@@ -38,27 +39,14 @@ class _MainShellState extends State<MainShell>
     initialLocation: i == widget.navigationShell.currentIndex,
   );
 
-  final List<int> _history = [];
-
-  /// The tab a back is heading to — arriving there records nothing, so back
-  /// never builds a "forward" trail.
-  int? _backTo;
+  final ShellBackHistory _history = ShellBackHistory();
 
   @override
   void didUpdateWidget(MainShell old) {
     super.didUpdateWidget(old);
-    final from = old.navigationShell.currentIndex;
     final to = widget.navigationShell.currentIndex;
     _quickCreate.currentBranch = to;
-    if (from == to) return;
-    _history.remove(to);
-    if (_backTo == to) {
-      _backTo = null;
-      return;
-    }
-    _history
-      ..remove(from)
-      ..add(from);
+    _history.branchChanged(old.navigationShell.currentIndex, to);
   }
 
   @override
@@ -147,14 +135,8 @@ class _MainShellState extends State<MainShell>
   bool _askingExit = false;
 
   Future<void> _onBackAtRoot() async {
-    final ShellTab? fallback = _current.inMore
-        ? ShellTab.more
-        : _current == ShellTab.home
-        ? null
-        : ShellTab.home;
-    final to = _history.isNotEmpty ? _history.removeLast() : fallback?.index;
+    final to = _history.backTarget(_current);
     if (to != null) {
-      _backTo = to;
       widget.navigationShell.goBranch(to);
       return;
     }

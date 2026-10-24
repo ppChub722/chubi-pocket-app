@@ -21,6 +21,7 @@ import '../../data/personal_debts_repository.dart';
 import '../../domain/debt_ledger.dart';
 import '../cubit/debt_people_cubit.dart';
 import '../cubit/debt_person_cubit.dart';
+import '../debt_person_preset.dart';
 import '../debt_wiring.dart';
 
 /// หนี้ · หน้าคน (owner 2026-10-22, mock DebtPerson): the hero (avatar,
@@ -74,19 +75,13 @@ class _PersonViewState extends State<_PersonView> {
   String _name(DebtPersonState s) =>
       s.balance?.person.name ?? widget.name ?? '';
 
-  EmbeddedPerson _person(DebtPersonState s) {
-    final p = s.balance?.person;
-    if (p != null) return p;
-    final key = s.personKey;
-    return EmbeddedPerson(
-      name: _name(s),
-      contactId: key.startsWith('c:') ? key.substring(2) : null,
-    );
-  }
+  EmbeddedPerson _person(DebtPersonState s) =>
+      debtPersonOf(personKey: s.personKey, name: _name(s), balance: s.balance);
 
-  QuickCreatePreset _preset(DebtPersonState s) => QuickCreatePreset.debt(
-    person: _person(s),
-    debtDirection: debtDirectionFor(s.balance?.net),
+  QuickCreatePreset _preset(DebtPersonState s) => debtPersonPreset(
+    personKey: s.personKey,
+    name: _name(s),
+    balance: s.balance,
   );
 
   /// Every statement line opens (0.4.0-3): a repayment is a transaction

@@ -221,16 +221,13 @@ void main() {
       expect(g.actions.save, isTrue);
       expect(g.actions.delete, isFalse);
       expect(g.currency, 'THB');
+      expect(SavingGoal.fromJson(prodGoal()).autoSave, isNull);
+      final noWallet = SavingGoal.fromJson(
+        prodGoal(autoSave: prodAutoSave(withWallet: false)),
+      );
+      expect(noWallet.autoSave!.wallet, isNull);
     },
   );
-
-  test('no auto-saving is null; a wallet-less one has no wallet', () {
-    expect(SavingGoal.fromJson(prodGoal()).autoSave, isNull);
-    final g = SavingGoal.fromJson(
-      prodGoal(autoSave: prodAutoSave(withWallet: false)),
-    );
-    expect(g.autoSave!.wallet, isNull);
-  });
 
   test('closed state and reached status; no plan = null month figures', () {
     final g = SavingGoal.fromJson(
@@ -254,18 +251,22 @@ void main() {
     expect(SavingGoal.fromJson(prodGoal()).isOngoing, isFalse);
   });
 
-  test('no target writes target_amount null (clears it on update)', () {
-    final json = SavingGoal.fromJson(prodOngoingGoal()).toWriteJson();
-    expect(json.containsKey('target_amount'), isTrue);
-    expect(json['target_amount'], isNull);
-  });
-
-  test('the write body has no wallet and no %', () {
+  test('the write body', () {
+    final ongoing = SavingGoal.fromJson(prodOngoingGoal()).toWriteJson();
+    expect(
+      ongoing.containsKey('target_amount'),
+      isTrue,
+      reason: 'no target writes null (clears it on update)',
+    );
+    expect(ongoing['target_amount'], isNull);
+    expect(ongoing['deadline'], isNull);
     final json = SavingGoal.fromJson(prodGoal()).toWriteJson();
+    expect(json['target_amount'], 80000);
+    expect(json['deadline'], '2027-03-15');
     expect(json.keys, containsAll(['name', 'target_amount', 'deadline']));
-    expect(json.keys, isNot(contains('linked_account_id')));
-    expect(json.keys, isNot(contains('allocation_pct')));
-    expect(json.keys, isNot(contains('auto_save')));
+    for (final key in ['linked_account_id', 'allocation_pct', 'auto_save']) {
+      expect(json.keys, isNot(contains(key)), reason: key);
+    }
   });
 
   test('the goal page parses nested detail, entries and paging', () {
@@ -283,15 +284,39 @@ void main() {
     expect(d.entries.items.first.fromRecurring, isTrue);
     expect(d.entries.items.first.to.type, SavingEndpointType.goal);
     expect(d.entries.hasMore, isTrue);
+    expect(d.deletePreview, isNull);
   });
 
-  test('an entry with no wallet parses (money saved outside the app)', () {
+  test('the delete preview: money held blocks, a missing flag blocks', () {
+    for (final c in <({String name, dynamic preview, bool? can, int entries})>[
+      (
+        name: 'money held',
+        preview: {'entries': 4, 'saved_amount': 52000, 'can_delete': false},
+        can: false,
+        entries: 4,
+      ),
+      (
+        name: 'empty goal',
+        preview: {'entries': 4, 'saved_amount': 0, 'can_delete': true},
+        can: true,
+        entries: 4,
+      ),
+      (name: 'no flag', preview: <String, dynamic>{}, can: false, entries: 0),
+      (name: 'no preview', preview: null, can: null, entries: 0),
+    ]) {
+      final p = SavingGoalDetail.fromJson({
+        ...prodDetail(),
+        'delete_preview': c.preview,
+      }).deletePreview;
+      expect(p?.canDelete, c.can, reason: c.name);
+      expect(p?.entries ?? 0, c.entries, reason: c.name);
+    }
+  });
+
+  test('no-wallet shapes parse (money saved outside the app)', () {
     final e = SavingEntry.fromJson(prodEntry(withWallet: false));
     expect(e.wallet, isNull);
     expect(e.from.type, SavingEndpointType.wallet);
-  });
-
-  test('a bucket share with no wallet parses', () {
     final s = SavingWalletShare.fromJson({
       'wallet': null,
       'amount': 1000,
@@ -342,10 +367,7 @@ void main() {
     expect(r.goalById('nope'), isNull);
     expect(r.spare.amount, 8500);
     expect(r.page, isNull);
-  });
-
-  test('a write answer carries the page it was made from', () {
-    final r = SavingWriteResult.fromJson({
+    final paged = SavingWriteResult.fromJson({
       'entries': <dynamic>[],
       'goals': <dynamic>[],
       'spare': prodSpare(),
@@ -353,47 +375,43 @@ void main() {
       'goal_page': prodDetail(),
       'spare_page': null,
     });
-    expect(r.page!.goal!.name, 'ทริปญี่ปุ่น');
-    expect(r.page!.entries.items, hasLength(2));
+    expect(paged.page!.goal!.name, 'ทริปญี่ปุ่น');
+    expect(paged.page!.entries.items, hasLength(2));
   });
 
-  group('SavingPlanPreview (the edit form\'s live line)', () {
+  test('SavingPlanPreview (the edit form\'s live line)', () {
     final today = DateTime(2026, 10, 17);
-
-    test('rounds the monthly need up to the baht', () {
-      // 150 days ≈ 4.93 months → 5 months → 28,000 / 5 = 5,600.
-      final p = SavingPlanPreview.of(
-        target: 80000,
-        saved: 52000,
-        deadline: DateTime(2027, 3, 16),
-        today: today,
-      );
-      expect(p.remaining, 28000);
-      expect(p.neededMonthly, 5600);
-    });
-
-    test('no deadline, a past deadline or nothing left: no monthly need', () {
-      expect(
-        SavingPlanPreview.of(target: 100, saved: 0, today: today).neededMonthly,
-        isNull,
-      );
-      expect(
-        SavingPlanPreview.of(
-          target: 100,
-          saved: 0,
-          deadline: DateTime(2026, 1, 1),
-          today: today,
-        ).neededMonthly,
-        isNull,
-      );
-      final done = SavingPlanPreview.of(
+    // 150 days ≈ 4.93 months → 5 months → 28,000 / 5 = 5,600.
+    final p = SavingPlanPreview.of(
+      target: 80000,
+      saved: 52000,
+      deadline: DateTime(2027, 3, 16),
+      today: today,
+    );
+    expect(p.remaining, 28000);
+    expect(p.neededMonthly, 5600);
+    expect(
+      SavingPlanPreview.of(target: 100, saved: 0, today: today).neededMonthly,
+      isNull,
+      reason: 'no deadline',
+    );
+    expect(
+      SavingPlanPreview.of(
         target: 100,
-        saved: 150,
-        deadline: DateTime(2027, 1, 1),
+        saved: 0,
+        deadline: DateTime(2026, 1, 1),
         today: today,
-      );
-      expect(done.remaining, 0);
-      expect(done.neededMonthly, isNull);
-    });
+      ).neededMonthly,
+      isNull,
+      reason: 'past deadline',
+    );
+    final done = SavingPlanPreview.of(
+      target: 100,
+      saved: 150,
+      deadline: DateTime(2027, 1, 1),
+      today: today,
+    );
+    expect(done.remaining, 0);
+    expect(done.neededMonthly, isNull, reason: 'nothing left');
   });
 }

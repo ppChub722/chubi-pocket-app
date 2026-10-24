@@ -12,72 +12,70 @@ void main() {
     owedAmount: 100,
   );
 
-  test('a new row: name, contact, amount — no debt_id', () {
-    final d = SplitDraft()
-      ..setPerson('ลี', contact: 'c1')
-      ..owedAmount = 50;
-    expect(d.toUpdateJson(), {
-      'person_name': 'ลี',
-      'contact_id': 'c1',
-      'owed_amount': 50,
-    });
-  });
+  test('SplitDraft.toUpdateJson / isWired table', () {
+    final cases = <({String name, SplitDraft draft, Map<String, dynamic> json})>[
+      (
+        name: 'a new row: name, contact, amount — no debt_id',
+        draft: SplitDraft()
+          ..setPerson('ลี', contact: 'c1')
+          ..owedAmount = 50,
+        json: {'person_name': 'ลี', 'contact_id': 'c1', 'owed_amount': 50},
+      ),
+      (
+        name: 'a saved row, person unchanged: debt + amount only',
+        draft: saved(),
+        json: {'debt_id': 'd1', 'owed_amount': 100},
+      ),
+      (
+        name: 'saved + unlinked, renamed: sends the new name',
+        draft: saved()..setPerson('ลีลา'),
+        json: {'debt_id': 'd1', 'owed_amount': 100, 'person_name': 'ลีลา'},
+      ),
+      (
+        name: 'saved typed name, linked to a contact: sends contact_id + name',
+        draft: saved()..setPerson('ลี', contact: 'c9'),
+        json: {
+          'debt_id': 'd1',
+          'owed_amount': 100,
+          'contact_id': 'c9',
+          'person_name': 'ลี',
+        },
+      ),
+      (
+        name: 'saved + unlinked, renamed back: nothing to change',
+        draft: saved()
+          ..setPerson('ลีลา')
+          ..setPerson('ลี'),
+        json: {'debt_id': 'd1', 'owed_amount': 100},
+      ),
+      (
+        name: 'saved contact swapped for another: contact_id + name',
+        draft: saved(contact: 'c1')..setPerson('ต้น', contact: 'c2'),
+        json: {
+          'debt_id': 'd1',
+          'owed_amount': 100,
+          'contact_id': 'c2',
+          'person_name': 'ต้น',
+        },
+      ),
+      (
+        name: 'saved contact back to a typed name: contact_id null, name kept',
+        draft: saved(contact: 'c1')..setPerson('ลี'),
+        json: {
+          'debt_id': 'd1',
+          'owed_amount': 100,
+          'contact_id': null,
+          'person_name': 'ลี',
+        },
+      ),
+    ];
+    for (final c in cases) {
+      expect(c.draft.toUpdateJson(), c.json, reason: c.name);
+    }
 
-  test('a saved row, person unchanged: debt + amount only', () {
-    expect(saved().toUpdateJson(), {'debt_id': 'd1', 'owed_amount': 100});
-  });
-
-  test('saved + unlinked, renamed: sends the new name', () {
-    final d = saved()..setPerson('ลีลา');
-    expect(d.toUpdateJson(), {
-      'debt_id': 'd1',
-      'owed_amount': 100,
-      'person_name': 'ลีลา',
-    });
-  });
-
-  test('saved typed name, linked to a contact: sends contact_id + name', () {
-    final d = saved()..setPerson('ลี', contact: 'c9');
-    expect(d.toUpdateJson(), {
-      'debt_id': 'd1',
-      'owed_amount': 100,
-      'contact_id': 'c9',
-      'person_name': 'ลี',
-    });
-  });
-
-  test('saved + unlinked, renamed back: nothing to change', () {
-    final d = saved()
-      ..setPerson('ลีลา')
-      ..setPerson('ลี');
-    expect(d.toUpdateJson(), {'debt_id': 'd1', 'owed_amount': 100});
-  });
-
-  test(
-    'saved contact swapped for another: contact_id + name (the BE swaps)',
-    () {
-      final d = saved(contact: 'c1')..setPerson('ต้น', contact: 'c2');
-      expect(d.toUpdateJson(), {
-        'debt_id': 'd1',
-        'owed_amount': 100,
-        'contact_id': 'c2',
-        'person_name': 'ต้น',
-      });
-    },
-  );
-
-  test('saved contact back to a typed name: contact_id null, name kept', () {
-    final d = saved(contact: 'c1')..setPerson('ลี');
-    final json = d.toUpdateJson();
-    expect(json.containsKey('contact_id'), isTrue);
-    expect(json['contact_id'], isNull);
-    expect(json['person_name'], 'ลี');
-  });
-
-  test('an unsaved row: wired or not by its contact', () {
-    final d = SplitDraft()..setPerson('ลี', contact: 'c1');
-    expect(d.isWired, isTrue);
-    d.setPerson('ลีลา');
-    expect(d.isWired, isFalse);
+    final unsaved = SplitDraft()..setPerson('ลี', contact: 'c1');
+    expect(unsaved.isWired, isTrue, reason: 'an unsaved row with a contact');
+    unsaved.setPerson('ลีลา');
+    expect(unsaved.isWired, isFalse, reason: 'an unsaved row renamed');
   });
 }

@@ -7,6 +7,7 @@ import '../molecules/error_view.dart';
 import '../molecules/app_snackbar.dart';
 import 'pull_to_refresh.dart';
 import '../atoms/connection_scope.dart';
+import 'async_state_kind.dart';
 import 'page_skeletons.dart';
 
 class AsyncStateView extends StatefulWidget {
@@ -134,28 +135,33 @@ class _AsyncStateViewState extends State<AsyncStateView> {
   Widget build(BuildContext context) {
     final w = widget;
     if (!w.loading || !w.isEmpty) _settled = true;
-    if (!w.isEmpty) return w.builder(context);
-    if (w.loading && !_settled && ConnectionScope.isOffline(context)) {
-      return _pullable(
+    final kind = asyncStateKind(
+      loading: w.loading,
+      isEmpty: w.isEmpty,
+      hasError: w.error != null,
+      hasEmptyView: w.empty != null,
+      settled: _settled,
+      slow: _slow,
+      isOffline: () => ConnectionScope.isOffline(context),
+    );
+    return switch (kind) {
+      AsyncStateKind.content => w.builder(context),
+      AsyncStateKind.offline => _pullable(
         ErrorView(error: TimeoutException('offline'), onRetry: _retry),
-      );
-    }
-    if (w.loading && !_settled && _slow) {
-      return _pullable(
+      ),
+      AsyncStateKind.slow => _pullable(
         ErrorView(error: TimeoutException('still loading'), onRetry: _retry),
-      );
-    }
-    if (w.loading && !_settled) {
-      return w.skeleton ??
-          (w._detail
-              ? const DetailPageSkeleton()
-              : const ListPageSkeleton(rows: 6));
-    }
-    if (w.error != null) {
-      return _pullable(ErrorView(error: w.error!, onRetry: w.onRetry));
-    }
-    final empty = w.empty;
-    return empty == null ? w.builder(context) : _pullable(empty);
+      ),
+      AsyncStateKind.skeleton =>
+        w.skeleton ??
+            (w._detail
+                ? const DetailPageSkeleton()
+                : const ListPageSkeleton(rows: 6)),
+      AsyncStateKind.error => _pullable(
+        ErrorView(error: w.error!, onRetry: w.onRetry),
+      ),
+      AsyncStateKind.empty => _pullable(w.empty!),
+    };
   }
 
   Widget _pullable(Widget view) {

@@ -1,4 +1,3 @@
-import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/features/accounts/domain/account.dart';
 import 'package:chubi_pocket/features/tags/domain/tag.dart';
 import 'package:chubi_pocket/features/transactions/data/transactions_repository.dart';
@@ -6,10 +5,22 @@ import 'package:chubi_pocket/features/transactions/domain/transaction.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
 import 'package:chubi_pocket/features/transactions/presentation/cubit/transactions_cubit.dart';
 import 'package:chubi_pocket/features/transactions/presentation/tx_list_filters.dart';
-import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/ui/ui.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+/// A list answer as the BE sends it (0.4.0): `totals`, top-level
+/// `avg_daily_spend` and `daily`.
+Map<String, dynamic> _answer() => {
+  'totals': {'income': 30540, 'expense': 18200, 'net': 12340, 'count': 2},
+  'avg_daily_spend': 1138,
+  'daily': [
+    for (var d = 1; d <= 30; d++)
+      {
+        'date': '2026-10-${d.toString().padLeft(2, '0')}',
+        'income': 0,
+        'expense': d.isEven ? 600 : 200,
+      },
+  ],
+};
 
 class _Repo extends Fake implements TransactionsRepository {
   ListTotals? totals = const ListTotals(income: 100, expense: 40, net: 60);
@@ -67,97 +78,121 @@ class _Repo extends Fake implements TransactionsRepository {
 }
 
 void main() {
-  // ── The period ────────────────────────────────────────────────────
-
-  group('TxPeriod', () {
-    test('month: bounds, steps, forward stops at this month', () {
-      final p = TxPeriod.month(DateTime(2026, 10, 15));
-      expect(p.bounds, (from: '2026-10-01', to: '2026-10-31'));
-      expect(p.step(-1), TxPeriod.month(DateTime(2026, 9)));
-      expect(p.step(1)!.bounds.from, '2026-11-01');
-      expect(p.canStepForward(DateTime(2026, 10, 20)), isFalse);
-      expect(p.step(-1)!.canStepForward(DateTime(2026, 10, 20)), isTrue);
-    });
-
-    test('day: one day, steps across month / year ends, stops at today', () {
-      final d = TxPeriod.day(DateTime(2026, 10, 10, 18, 30));
-      expect(d.bounds, (from: '2026-10-10', to: '2026-10-10'));
-      expect(d.step(-1)!.bounds.from, '2026-10-09');
-      expect(
-        TxPeriod.day(DateTime(2026, 10, 31)).step(1),
-        TxPeriod.day(DateTime(2026, 11, 1)),
-      );
-      expect(
-        TxPeriod.day(DateTime(2026, 1, 1)).step(-1)!.bounds.from,
-        '2025-12-31',
-      );
-      expect(d.canStepForward(DateTime(2026, 10, 10, 23)), isFalse);
-      expect(d.step(-1)!.canStepForward(DateTime(2026, 10, 10)), isTrue);
-      expect(TxPeriod.of(TxPeriodKind.day, DateTime(2026, 10, 10)), d);
-    });
-
-    test('a month step crosses the year', () {
-      final jan = TxPeriod.month(DateTime(2026, 1, 5));
-      expect(jan.step(-1)!.bounds, (from: '2025-12-01', to: '2025-12-31'));
-    });
-
-    test('week: Monday to Sunday', () {
-      // 2026-10-10 is a Saturday.
-      final w = TxPeriod.week(DateTime(2026, 10, 10));
-      expect(w.bounds, (from: '2026-10-05', to: '2026-10-11'));
-      expect(w.step(1)!.bounds.from, '2026-10-12');
-    });
-
-    test('year', () {
-      final y = TxPeriod.year(DateTime(2026, 6, 1));
-      expect(y.bounds, (from: '2026-01-01', to: '2026-12-31'));
-      expect(y.step(-1), TxPeriod.year(DateTime(2025)));
-    });
-
-    test('ทั้งหมด and a custom range have no neighbours', () {
-      expect(TxPeriod.all.bounds, (from: null, to: null));
-      expect(TxPeriod.all.step(1), isNull);
-      final c = TxPeriod.custom(DateTime(2026, 10, 3), DateTime(2026, 10, 9));
-      expect(c.bounds, (from: '2026-10-03', to: '2026-10-09'));
-      expect(c.step(-1), isNull);
-    });
-
-    test('switching unit keeps the place', () {
-      final week = TxPeriod.of(TxPeriodKind.week, DateTime(2026, 10, 1));
-      expect(week.bounds.from, '2026-09-28');
-      expect(
-        TxPeriod.of(TxPeriodKind.month, week.start),
-        TxPeriod.month(DateTime(2026, 9)),
-      );
-    });
+  test('TxPeriod table', () {
+    final cases =
+        <({String name, Object? Function() actual, Object? expected})>[
+          (
+            name: 'month: bounds, steps, forward stops at this month',
+            actual: () {
+              final p = TxPeriod.month(DateTime(2026, 10, 15));
+              return [
+                p.bounds,
+                p.step(-1),
+                p.step(1)!.bounds.from,
+                p.canStepForward(DateTime(2026, 10, 20)),
+                p.step(-1)!.canStepForward(DateTime(2026, 10, 20)),
+              ];
+            },
+            expected: [
+              (from: '2026-10-01', to: '2026-10-31'),
+              TxPeriod.month(DateTime(2026, 9)),
+              '2026-11-01',
+              false,
+              true,
+            ],
+          ),
+          (
+            name:
+                'day: one day, steps across month / year ends, stops at today',
+            actual: () {
+              final d = TxPeriod.day(DateTime(2026, 10, 10, 18, 30));
+              return [
+                d.bounds,
+                d.step(-1)!.bounds.from,
+                TxPeriod.day(DateTime(2026, 10, 31)).step(1),
+                TxPeriod.day(DateTime(2026, 1, 1)).step(-1)!.bounds.from,
+                d.canStepForward(DateTime(2026, 10, 10, 23)),
+                d.step(-1)!.canStepForward(DateTime(2026, 10, 10)),
+                TxPeriod.of(TxPeriodKind.day, DateTime(2026, 10, 10)) == d,
+              ];
+            },
+            expected: [
+              (from: '2026-10-10', to: '2026-10-10'),
+              '2026-10-09',
+              TxPeriod.day(DateTime(2026, 11, 1)),
+              '2025-12-31',
+              false,
+              true,
+              true,
+            ],
+          ),
+          (
+            name: 'a month step crosses the year',
+            actual: () => TxPeriod.month(DateTime(2026, 1, 5)).step(-1)!.bounds,
+            expected: (from: '2025-12-01', to: '2025-12-31'),
+          ),
+          (
+            name: 'week: Monday to Sunday',
+            actual: () {
+              // 2026-10-10 is a Saturday.
+              final w = TxPeriod.week(DateTime(2026, 10, 10));
+              return [w.bounds, w.step(1)!.bounds.from];
+            },
+            expected: [(from: '2026-10-05', to: '2026-10-11'), '2026-10-12'],
+          ),
+          (
+            name: 'year',
+            actual: () {
+              final y = TxPeriod.year(DateTime(2026, 6, 1));
+              return [y.bounds, y.step(-1)];
+            },
+            expected: [
+              (from: '2026-01-01', to: '2026-12-31'),
+              TxPeriod.year(DateTime(2025)),
+            ],
+          ),
+          (
+            name: 'ทั้งหมด and a custom range have no neighbours',
+            actual: () {
+              final c = TxPeriod.custom(
+                DateTime(2026, 10, 3),
+                DateTime(2026, 10, 9),
+              );
+              return [
+                TxPeriod.all.bounds,
+                TxPeriod.all.step(1),
+                c.bounds,
+                c.step(-1),
+              ];
+            },
+            expected: [
+              (from: null, to: null),
+              null,
+              (from: '2026-10-03', to: '2026-10-09'),
+              null,
+            ],
+          ),
+          (
+            name: 'switching unit keeps the place',
+            actual: () {
+              final week = TxPeriod.of(
+                TxPeriodKind.week,
+                DateTime(2026, 10, 1),
+              );
+              return [
+                week.bounds.from,
+                TxPeriod.of(TxPeriodKind.month, week.start),
+              ];
+            },
+            expected: ['2026-09-28', TxPeriod.month(DateTime(2026, 9))],
+          ),
+        ];
+    for (final c in cases) {
+      expect(c.actual(), c.expected, reason: c.name);
+    }
   });
 
-  // ── The filters ───────────────────────────────────────────────────
-
-  test('sameFiltersAs ignores the period, sees tags in any order', () {
-    final a = TxFilters(
-      period: TxPeriod.month(DateTime(2026, 10)),
-      tags: const [
-        Tag(id: 't1', name: 'a'),
-        Tag(id: 't2', name: 'b'),
-      ],
-    );
-    final b = a.copyWith(
-      period: TxPeriod.all,
-      tags: const [
-        Tag(id: 't2', name: 'b'),
-        Tag(id: 't1', name: 'a'),
-      ],
-    );
-    expect(a.sameFiltersAs(b), isTrue);
-    expect(
-      a.sameFiltersAs(b.copyWith(types: const {TransactionType.expense})),
-      isFalse,
-    );
-    expect(a.sameFiltersAs(b.copyWith(tags: const [])), isFalse);
-  });
-
-  test('wallet filters compare by wallet id, and "no wallet" counts', () {
+  test('filters table', () {
     Account acc(String id) => Account.fromJson({
       'id': id,
       'name': id,
@@ -165,31 +200,65 @@ void main() {
       'balance': 0,
       'currency': 'THB',
     });
-    final p = TxPeriod.all;
-    final a = TxFilters(period: p, wallets: [acc('a')]);
-    expect(a.sameFiltersAs(TxFilters(period: p, wallets: [acc('a')])), isTrue);
-    expect(a.sameFiltersAs(TxFilters(period: p, wallets: [acc('b')])), isFalse);
-    expect(
-      a.sameFiltersAs(
-        TxFilters(period: p, wallets: [acc('a')], noWallet: true),
-      ),
-      isFalse,
-    );
-    // "no wallet" next to a pick: two values on, one more than the base.
-    final base = TxFilters(period: p);
-    expect(
-      TxFilters(
-        period: p,
-        wallets: [acc('a')],
-        noWallet: true,
-      ).activeCount(base),
-      2,
-    );
+    final cases =
+        <({String name, Object? Function() actual, Object? expected})>[
+          (
+            name: 'sameFiltersAs ignores the period, sees tags in any order',
+            actual: () {
+              final a = TxFilters(
+                period: TxPeriod.month(DateTime(2026, 10)),
+                tags: const [
+                  Tag(id: 't1', name: 'a'),
+                  Tag(id: 't2', name: 'b'),
+                ],
+              );
+              final b = a.copyWith(
+                period: TxPeriod.all,
+                tags: const [
+                  Tag(id: 't2', name: 'b'),
+                  Tag(id: 't1', name: 'a'),
+                ],
+              );
+              return [
+                a.sameFiltersAs(b),
+                a.sameFiltersAs(
+                  b.copyWith(types: const {TransactionType.expense}),
+                ),
+                a.sameFiltersAs(b.copyWith(tags: const [])),
+              ];
+            },
+            expected: [true, false, false],
+          ),
+          (
+            name: 'wallet filters compare by wallet id, and "no wallet" counts',
+            actual: () {
+              final p = TxPeriod.all;
+              final a = TxFilters(period: p, wallets: [acc('a')]);
+              final base = TxFilters(period: p);
+              return [
+                a.sameFiltersAs(TxFilters(period: p, wallets: [acc('a')])),
+                a.sameFiltersAs(TxFilters(period: p, wallets: [acc('b')])),
+                a.sameFiltersAs(
+                  TxFilters(period: p, wallets: [acc('a')], noWallet: true),
+                ),
+                // "no wallet" next to a pick: two values on, one more than the
+                // base.
+                TxFilters(
+                  period: p,
+                  wallets: [acc('a')],
+                  noWallet: true,
+                ).activeCount(base),
+              ];
+            },
+            expected: [true, false, false, 2],
+          ),
+        ];
+    for (final c in cases) {
+      expect(c.actual(), c.expected, reason: c.name);
+    }
   });
 
-  // ── Totals ────────────────────────────────────────────────────────
-
-  test('ListTotals reads the BE shape; absent → null', () {
+  test('totals parse: the BE shape, absent → null, daily bars + average', () {
     final t = ListTotals.fromJson({
       'income': 12000.0,
       'expense': 8540,
@@ -201,9 +270,16 @@ void main() {
     expect(t.net, 3460);
     expect(t.count, 57);
     expect(ListTotals.fromJson(null), isNull);
+
+    final totals = ListTotals.fromResponse(_answer())!;
+    expect(totals.net, 12340);
+    expect(totals.avgDailySpend, 1138);
+    expect(totals.daily, hasLength(30));
+    expect(totals.daily.first.date, '2026-10-01');
+    expect(totals.daily[1].expense, 600);
   });
 
-  test('the cubit keeps the totals; a write re-fetches them', () async {
+  test('totals re-fetch: the cubit keeps them, a write re-fetches', () async {
     final repo = _Repo();
     final cubit = TransactionsCubit(repository: repo);
     addTearDown(cubit.close);
@@ -225,84 +301,11 @@ void main() {
     );
     await Future<void>.delayed(Duration.zero);
     expect(repo.lists, greaterThan(before));
-  });
 
-  test('no totals from the server → none in state', () async {
-    final repo = _Repo()..totals = null;
-    final cubit = TransactionsCubit(repository: repo);
-    addTearDown(cubit.close);
-    await cubit.load();
-    expect(cubit.state.totals, isNull);
-  });
-
-  // ── The side sheet ────────────────────────────────────────────────
-
-  group('showSideSheet', () {
-    Future<Future<String?>> open(WidgetTester t) async {
-      late Future<String?> result;
-      await t.pumpWidget(
-        MaterialApp(
-          theme: ThemeData(extensions: [sweetTheme.lightColors]),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Builder(
-            builder: (context) => Scaffold(
-              body: Center(
-                child: TextButton(
-                  onPressed: () => result = showSideSheet<String>(
-                    context,
-                    builder: (sheet) => SideSheetScaffold(
-                      title: 'ตัวกรอง',
-                      body: const Text('body'),
-                      footer: TextButton(
-                        onPressed: () => Navigator.of(sheet).pop('applied'),
-                        child: const Text('apply'),
-                      ),
-                    ),
-                  ),
-                  child: const Text('open'),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-      await t.tap(find.text('open'));
-      await t.pumpAndSettle();
-      return result;
-    }
-
-    testWidgets('slides in on the right, ~85% wide', (t) async {
-      await open(t);
-      final panel = t.getRect(find.byType(SideSheetScaffold));
-      final screen = t.view.physicalSize / t.view.devicePixelRatio;
-      expect(panel.right, closeTo(screen.width, 0.5));
-      expect(
-        panel.width,
-        closeTo((screen.width * 0.85).clamp(0, 420).toDouble(), 0.5),
-      );
-    });
-
-    testWidgets('resolves what it pops with', (t) async {
-      final result = await open(t);
-      await t.tap(find.text('apply'));
-      await t.pumpAndSettle();
-      expect(await result, 'applied');
-    });
-
-    testWidgets('a swipe to the right closes it', (t) async {
-      final result = await open(t);
-      await t.fling(find.text('body'), const Offset(300, 0), 1000);
-      await t.pumpAndSettle();
-      expect(find.text('body'), findsNothing);
-      expect(await result, isNull);
-    });
-
-    testWidgets('tapping the scrim closes it', (t) async {
-      await open(t);
-      await t.tapAt(const Offset(10, 300));
-      await t.pumpAndSettle();
-      expect(find.text('body'), findsNothing);
-    });
+    final bare = _Repo()..totals = null;
+    final bareCubit = TransactionsCubit(repository: bare);
+    addTearDown(bareCubit.close);
+    await bareCubit.load();
+    expect(bareCubit.state.totals, isNull);
   });
 }

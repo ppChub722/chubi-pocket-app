@@ -60,9 +60,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
   }
 
   void _pick(InboxFilter f) {
-    final cubit = context.read<NotificationsInboxCubit>();
-    if (f == cubit.state.filter) return;
-    cubit.load(filter: f);
+    context.read<NotificationsInboxCubit>().pick(f);
   }
 
   String _filterLabel(AppLocalizations l, InboxFilter f) => switch (f) {

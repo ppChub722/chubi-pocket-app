@@ -1,4 +1,3 @@
-import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -20,6 +19,8 @@ import '../../../tags/presentation/widgets/tag_picker.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
 import '../cubit/tx_form_options_cubit.dart';
+import '../debt_entry_update.dart';
+import '../delete_results.dart';
 import '../save_failure.dart';
 import '../widgets/debt_entry_form.dart';
 import '../widgets/draft_form.dart';
@@ -92,66 +93,6 @@ class _DebtEntryDetailPageState extends State<DebtEntryDetailPage> {
   }
 }
 
-class _DebtDraft extends Equatable {
-  const _DebtDraft({
-    required this.direction,
-    required this.amount,
-    required this.description,
-    required this.note,
-    required this.date,
-    required this.accountId,
-    required this.personKey,
-    required this.tagIds,
-    required this.paid,
-    required this.createTx,
-    required this.due,
-  });
-
-  /// กำหนดจ่าย, YYYY-MM-DD.
-  final String? due;
-
-  final DebtEntryDirection direction;
-  final String amount;
-  final String description;
-  final String note;
-  final String date;
-  final String? accountId;
-  final String personKey;
-  final List<String> tagIds;
-  final bool paid;
-
-  final bool createTx;
-
-  _DebtDraft copyWith({bool? paid}) => _DebtDraft(
-    direction: direction,
-    amount: amount,
-    description: description,
-    note: note,
-    date: date,
-    accountId: accountId,
-    personKey: personKey,
-    tagIds: tagIds,
-    paid: paid ?? this.paid,
-    createTx: createTx,
-    due: due,
-  );
-
-  @override
-  List<Object?> get props => [
-    due,
-    direction,
-    amount,
-    description,
-    note,
-    date,
-    accountId,
-    personKey,
-    tagIds,
-    paid,
-    createTx,
-  ];
-}
-
 class _DebtEntryView extends StatefulWidget {
   const _DebtEntryView({
     required this.detail,
@@ -168,7 +109,7 @@ class _DebtEntryView extends StatefulWidget {
 }
 
 class _DebtEntryViewState extends State<_DebtEntryView>
-    with EditModeMixin<_DebtEntryView, _DebtDraft> {
+    with EditModeMixin<_DebtEntryView, DebtEntryDraft> {
   final _c = DebtEntryController();
   final _heroKey = GlobalKey();
   bool _paid = false;
@@ -246,7 +187,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-'
       '${d.day.toString().padLeft(2, '0')}';
 
-  _DebtDraft _snap() => _DebtDraft(
+  DebtEntryDraft _snap() => DebtEntryDraft(
     direction: _c.direction,
     amount: _c.amount.text,
     description: _c.description.text,
@@ -362,33 +303,14 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       _say(l.quickAmountRequired, Tone.danger);
       return;
     }
-    final o = original;
     final w = working;
-    final pick = _people[w.personKey];
-    final txChange = w.createTx != o.createTx;
-    final update = DebtEntryUpdate(
-      direction: w.direction != o.direction ? w.direction : null,
-      amount: w.amount != o.amount ? _c.amountValue : null,
-      date: w.date != o.date ? _c.date : null,
-      createTransaction: _sourced ? null : w.createTx,
-      accountId: w.createTx && (w.accountId != o.accountId || txChange)
-          ? w.accountId
-          : null,
-      clearAccount:
-          w.createTx && !txChange && o.accountId != null && w.accountId == null,
-      description: w.description != o.description ? w.description.trim() : null,
-      note: w.note != o.note ? w.note.trim() : null,
-      paid: w.paid != o.paid ? w.paid : null,
-      tagIds:
-          w.createTx &&
-              (w.tagIds.join() != o.tagIds.join() ||
-                  (txChange && w.tagIds.isNotEmpty))
-          ? w.tagIds
-          : null,
-      key: w.personKey != o.personKey ? w.personKey : null,
-      personName: w.personKey != o.personKey ? pick?.typedName : null,
-      dueDate: w.due != o.due && w.due != null ? DateTime.parse(w.due!) : null,
-      clearDueDate: w.due != o.due && w.due == null,
+    final update = debtEntryUpdate(
+      original,
+      w,
+      amountValue: _c.amountValue,
+      date: _c.date,
+      sourced: _sourced,
+      typedName: _people[w.personKey]?.typedName,
     );
     final repo = context.read<PersonalDebtsRepository>();
     setSaving(true);
@@ -517,9 +439,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     setSaving(true);
     try {
       final r = await repo.deleteEntry(_entry.id);
-      accounts.patchBalances(r.accountBalances);
-      final txId = r.transactionId;
-      if (txId != null) txCubit.dropRow(txId);
+      applyDebtEntryDeleteResult(r, accounts: accounts, txs: txCubit);
       showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
       if (router == null) {
         navigator.maybePop();

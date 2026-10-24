@@ -96,32 +96,43 @@ class AppListRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          children: [
-            if (titleField != null)
-              Expanded(child: titleField)
-            else
-              Flexible(
-                child: Text(
-                  title,
-                  maxLines: titleMaxLines,
-                  overflow: TextOverflow.ellipsis,
-                  style: titleStrong
-                      ? textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        )
-                      : textTheme.bodyLarge,
-                ),
-              ),
-            for (final c in titleChips) ...[
-              const SizedBox(width: AppSpacing.xs),
-              c._build(),
-            ],
-            if (status != null) ...[
-              const SizedBox(width: AppSpacing.xs),
-              status._build(),
-            ],
-          ],
+        // The chips give way on a narrow row (under half of it each) so the
+        // title keeps room; at normal widths the cap is above the chip's own
+        // max width.
+        LayoutBuilder(
+          builder: (context, box) {
+            Widget chip(Widget c) => ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: box.maxWidth * 0.45),
+              child: c,
+            );
+            return Row(
+              children: [
+                if (titleField != null)
+                  Expanded(child: titleField)
+                else
+                  Flexible(
+                    child: Text(
+                      title,
+                      maxLines: titleMaxLines,
+                      overflow: TextOverflow.ellipsis,
+                      style: titleStrong
+                          ? textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            )
+                          : textTheme.bodyLarge,
+                    ),
+                  ),
+                for (final c in titleChips) ...[
+                  const SizedBox(width: AppSpacing.xs),
+                  chip(c._build()),
+                ],
+                if (status != null) ...[
+                  const SizedBox(width: AppSpacing.xs),
+                  chip(status._build()),
+                ],
+              ],
+            );
+          },
         ),
         if (line != null)
           Padding(padding: const EdgeInsets.only(top: 2), child: line),
@@ -269,6 +280,7 @@ class ListRowLine {
     this.parts = const [],
     this.spans = const [],
     this.glyphs = const [],
+    this.tone,
   }) : custom = null;
 
   /// For a line that doesn't fit lead / parts / spans / glyphs.
@@ -277,9 +289,13 @@ class ListRowLine {
       icon = null,
       parts = const [],
       spans = const [],
-      glyphs = const [];
+      glyphs = const [],
+      tone = null;
 
   final ListRowChip? lead;
+
+  /// The text in this tone, semibold (an overdue age in warning).
+  final Tone? tone;
 
   /// Before the text (↻ ทุกเดือน).
   final IconData? icon;
@@ -312,39 +328,70 @@ class ListRowLine {
     if (custom != null) {
       content = DefaultTextStyle.merge(style: small, child: custom);
     } else {
-      content = Row(
-        children: [
-          if (lead != null) ...[
-            lead._build(),
-            if (hasText || icon != null) const SizedBox(width: AppSpacing.xs),
-          ],
-          if (icon != null) ...[
-            Icon(icon, size: 14, color: small?.color),
-            if (hasText) const SizedBox(width: AppSpacing.xxs),
-          ],
-          if (hasText)
-            Flexible(
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    if (shown.isNotEmpty) TextSpan(text: shown.join(' | ')),
-                    for (final (i, s) in spans.indexed) ...[
-                      if (i > 0 || shown.isNotEmpty)
-                        TextSpan(text: i == 0 ? ' | ' : ' '),
-                      s,
-                    ],
-                  ],
+      // The chip and the glyphs share the room that is left (55% / 45% at
+      // most) so the line never overflows; at normal widths the caps are above
+      // the chip's own max width and change nothing.
+      content = LayoutBuilder(
+        builder: (context, box) {
+          // What is left after the fixed bits (the gaps and the icon, 20 px).
+          final room = (box.maxWidth - 24).clamp(0.0, double.infinity);
+          return Row(
+            children: [
+              if (lead != null) ...[
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: room * 0.55),
+                  child: lead._build(),
                 ),
-                style: small,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          for (final g in glyphs) ...[
-            const SizedBox(width: AppSpacing.sm),
-            g._build(small),
-          ],
-        ],
+                if (hasText || icon != null)
+                  const SizedBox(width: AppSpacing.xs),
+              ],
+              if (icon != null) ...[
+                Icon(icon, size: 14, color: small?.color),
+                if (hasText) const SizedBox(width: AppSpacing.xxs),
+              ],
+              if (hasText)
+                Flexible(
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        if (shown.isNotEmpty) TextSpan(text: shown.join(' | ')),
+                        for (final (i, s) in spans.indexed) ...[
+                          if (i > 0 || shown.isNotEmpty)
+                            TextSpan(text: i == 0 ? ' | ' : ' '),
+                          s,
+                        ],
+                      ],
+                    ),
+                    style: tone == null
+                        ? small
+                        : small?.copyWith(
+                            color: tone!.color(context),
+                            fontWeight: FontWeight.w600,
+                          ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              if (glyphs.isNotEmpty)
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: room * 0.45),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final g in glyphs) ...[
+                          const SizedBox(width: AppSpacing.sm),
+                          g._build(small),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
       );
     }
     final height = (TextPainter(

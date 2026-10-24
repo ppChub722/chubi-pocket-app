@@ -417,81 +417,104 @@ class DueSelectBar extends StatelessWidget {
           AppSpacing.lg,
           AppSpacing.sm,
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: InkWell(
-                key: const ValueKey('dueSelectAll'),
-                onTap: onSelectAll,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                child: Row(
-                  children: [
-                    SelectCheck(
-                      value: selected == 0
-                          ? false
-                          : selected >= total
-                          ? true
-                          : null,
-                      onTap: onSelectAll,
-                    ),
-                    const SizedBox(width: AppSpacing.xs),
-                    Flexible(
-                      child: Text(
-                        selectLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: heading
-                            ? Theme.of(context).textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              )
-                            : Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
-                              ),
+        child: LayoutBuilder(
+          builder: (context, box) => Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  key: const ValueKey('dueSelectAll'),
+                  onTap: onSelectAll,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  child: Row(
+                    children: [
+                      SelectCheck(
+                        value: selected == 0
+                            ? false
+                            : selected >= total
+                            ? true
+                            : null,
+                        onTap: onSelectAll,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            AppButton(
-              key: const ValueKey('dueSkipSelected'),
-              label: skipLabel,
-              onPressed: any ? onSkip : null,
-              variant: AppButtonVariant.outlined,
-              size: AppButtonSize.chip,
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            AppButton(
-              key: const ValueKey('dueConfirmSelected'),
-              label: confirmLabel,
-              onPressed: any ? onConfirm : null,
-              size: AppButtonSize.chip,
-            ),
-            if (onToggle != null)
-              Semantics(
-                button: true,
-                expanded: open,
-                child: InkResponse(
-                  key: const ValueKey('dueSectionFold'),
-                  onTap: onToggle,
-                  radius: 18,
-                  child: Padding(
-                    padding: const EdgeInsetsDirectional.only(
-                      start: AppSpacing.xs,
-                    ),
-                    child: Icon(
-                      open ? AppIcons.collapse : AppIcons.expand,
-                      size: 20,
-                      color: scheme.onSurfaceVariant,
-                    ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Flexible(
+                        child: Text(
+                          selectLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: heading
+                              ? Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w700)
+                              : Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-          ],
+              // The buttons scale down on a narrow screen instead of
+              // overflowing; the label keeps at least [_minLabel].
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: (box.maxWidth - _minLabel).clamp(
+                    0.0,
+                    double.infinity,
+                  ),
+                ),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppButton(
+                        key: const ValueKey('dueSkipSelected'),
+                        label: skipLabel,
+                        onPressed: any ? onSkip : null,
+                        variant: AppButtonVariant.outlined,
+                        size: AppButtonSize.chip,
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      AppButton(
+                        key: const ValueKey('dueConfirmSelected'),
+                        label: confirmLabel,
+                        onPressed: any ? onConfirm : null,
+                        size: AppButtonSize.chip,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (onToggle != null)
+                Semantics(
+                  button: true,
+                  expanded: open,
+                  child: InkResponse(
+                    key: const ValueKey('dueSectionFold'),
+                    onTap: onToggle,
+                    radius: 18,
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.only(
+                        start: AppSpacing.xs,
+                      ),
+                      child: Icon(
+                        open ? AppIcons.collapse : AppIcons.expand,
+                        size: 20,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
+
+  /// The room the select label always keeps (check + a few letters + the
+  /// fold arrow).
+  static const _minLabel = 120.0;
 }
 
 /// One item's head inside a [DueCard] when it has several due occurrences:

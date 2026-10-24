@@ -5,44 +5,16 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('AccountIdentifier', () {
-    test('normalize keeps digits and hidden-digit marks', () {
+    test('normalize keeps digits and hidden-digit marks; looksValid', () {
       expect(AccountIdentifier.normalize('123-4-52780-6'), '1234527806');
       expect(AccountIdentifier.normalize('xxx-x-x2780-x'), 'xxxxx2780x');
       expect(
         AccountIdentifier.normalize('4000 •••• **** 1234'),
         '4000xxxxxxxx1234',
       );
-    });
-
-    test('looksValid / digitCount', () {
       expect(AccountIdentifier.looksValid('081 234 4464'), isTrue);
       expect(AccountIdentifier.looksValid('12a4'), isFalse);
       expect(AccountIdentifier.digitCount('xxxxx2780x'), 4);
-    });
-
-    test('formatted is the plain digits; masked shows the last 4', () {
-      const bank = AccountIdentifier(
-        kind: IdentifierKind.bankAccount,
-        value: '1234527806',
-      );
-      expect(bank.formatted, '1234527806');
-      expect(bank.masked, '•••• 7806');
-      const slip = AccountIdentifier(
-        kind: IdentifierKind.other,
-        value: 'xxxxx2780x',
-      );
-      expect(slip.formatted, 'xxxxx2780x');
-      expect(slip.masked, '•••• 2780');
-      const phone = AccountIdentifier(
-        kind: IdentifierKind.promptPay,
-        value: '0812344464',
-      );
-      expect(phone.formatted, '0812344464');
-      const card = AccountIdentifier(
-        kind: IdentifierKind.card,
-        value: '4000123412341234',
-      );
-      expect(card.formatted, '4000123412341234');
     });
 
     test('json round trip; unknown kind reads as other', () {
@@ -96,6 +68,65 @@ void main() {
         isFalse,
       );
     });
+  });
+
+  test('Account.fromJson parses savings (and null when absent)', () {
+    Map<String, dynamic> savings({bool exceeds = false, bool tracked = true}) =>
+        {
+          'balance': 1000.0,
+          'saved': exceeds ? 1300.0 : 800.0,
+          'spare': 200.0,
+          'available': tracked ? (exceeds ? -300.0 : 200.0) : null,
+          'saved_exceeds_balance': exceeds,
+          'over_by': exceeds ? 300.0 : 0.0,
+          'buckets': [
+            {
+              'type': 'goal',
+              'id': 'g1',
+              'name': 'Japan trip',
+              'icon_code': {'icon': 'flag', 'color': 'blue'},
+              'amount': 600.0,
+            },
+            {
+              'type': 'spare',
+              'name': 'Spare',
+              'icon_code': null,
+              'amount': 200.0,
+            },
+          ],
+        };
+    Account wallet({Map<String, dynamic>? savings, bool track = true}) =>
+        Account.fromJson({
+      'id': 'w1',
+      'name': 'KBank',
+      'type': 'bank',
+      'group': 'asset',
+      'balance': 1000.0,
+      'currency': 'THB',
+      'icon_code': {'icon': 'bank', 'color': 'blue'},
+      'status': 'active',
+      'sort_order': 0,
+      'my_role': 'owner',
+      'can_edit': true,
+      'is_shared': false,
+      'track_balance': track,
+      'savings': ?savings,
+    });
+
+    final s = wallet(savings: savings(exceeds: true)).savings!;
+    expect(s.saved, 1300);
+    expect(s.available, -300);
+    expect(s.savedExceedsBalance, isTrue);
+    expect(s.overBy, 300);
+    expect(s.buckets, hasLength(2));
+    expect(s.buckets.first.isGoal, isTrue);
+    expect(s.buckets.first.id, 'g1');
+    expect(s.buckets.last.isGoal, isFalse);
+    expect(wallet().savings, isNull);
+    expect(
+      wallet(track: false, savings: savings(tracked: false)).savings!.available,
+      isNull,
+    );
   });
 
   test('User reads fee_category_id from preferences', () {

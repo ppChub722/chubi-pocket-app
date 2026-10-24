@@ -73,43 +73,83 @@ class _Repo extends Fake implements TransactionsRepository {
 }
 
 void main() {
-  late _Repo repo;
-  late TransactionsCubit cubit;
-
-  setUp(() async {
-    repo = _Repo([_tx('t1', splitCount: 2)]);
-    cubit = TransactionsCubit(repository: repo);
+  Future<({_Repo repo, TransactionsCubit cubit})> start() async {
+    final repo = _Repo([_tx('t1', splitCount: 2)]);
+    final cubit = TransactionsCubit(repository: repo);
     await cubit.load();
-  });
+    return (repo: repo, cubit: cubit);
+  }
 
-  tearDown(() => cubit.close());
+  Transaction row(TransactionsCubit cubit) => cubit.byId('t1')!;
 
-  Transaction row() => cubit.byId('t1')!;
+  test('split-cache table', () async {
+    final cases =
+        <
+          ({
+            String name,
+            Future<Object?> Function(_Repo repo, TransactionsCubit cubit) run,
+            Object? expected,
+          })
+        >[
+          (
+            name: 'refreshOne is a read: no page-1 refetch, splits stay',
+            run: (repo, cubit) async {
+              final hadTotals = cubit.state.totals != null;
+              repo.one = _tx('t1', splitCount: 2, withSplits: true);
+              final before = repo.lists;
+              final revision = cubit.state.revision;
 
-  test('refreshOne is a read: no page-1 refetch, splits stay', () async {
-    expect(cubit.state.totals, isNotNull);
-    repo.one = _tx('t1', splitCount: 2, withSplits: true);
-    final before = repo.lists;
-    final revision = cubit.state.revision;
+              await cubit.refreshOne('t1');
+              await Future<void>.delayed(Duration.zero);
 
-    await cubit.refreshOne('t1');
-    await Future<void>.delayed(Duration.zero);
+              return [
+                hadTotals,
+                repo.lists == before,
+                cubit.state.revision == revision,
+                row(cubit).splits.length,
+              ];
+            },
+            expected: [true, true, true, 2],
+          ),
+          (
+            name: 'a later refresh keeps the fetched splits (same split_count)',
+            run: (repo, cubit) async {
+              repo.one = _tx('t1', splitCount: 2, withSplits: true);
+              await cubit.refreshOne('t1');
 
-    expect(repo.lists, before);
-    expect(cubit.state.revision, revision);
-    expect(row().splits, hasLength(2));
-  });
+              await cubit.refresh();
 
-  test('a later refresh keeps the fetched splits (same split_count)', () async {
-    repo.one = _tx('t1', splitCount: 2, withSplits: true);
-    await cubit.refreshOne('t1');
+              return row(cubit).splits.length;
+            },
+            expected: 2,
+          ),
+          (
+            name: 'a changed split_count drops the cached splits',
+            run: (repo, cubit) async {
+              repo.one = _tx('t1', splitCount: 2, withSplits: true);
+              await cubit.refreshOne('t1');
+              repo.rows = [_tx('t1', splitCount: 3)];
 
-    await cubit.refresh();
+              await cubit.refresh();
 
-    expect(row().splits, hasLength(2));
+              return [row(cubit).splits.isEmpty, row(cubit).splitCount];
+            },
+            expected: [true, 3],
+          ),
+        ];
+    for (final c in cases) {
+      final s = await start();
+      try {
+        expect(await c.run(s.repo, s.cubit), c.expected, reason: c.name);
+      } finally {
+        await s.cubit.close();
+      }
+    }
   });
 
   test('refreshOne after a write re-fetches, splits survive it', () async {
+    final (:repo, :cubit) = await start();
+    addTearDown(cubit.close);
     repo.one = _tx('t1', splitCount: 2, withSplits: true);
     final before = repo.lists;
 
@@ -117,17 +157,6 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     expect(repo.lists, greaterThan(before));
-    expect(row().splits, hasLength(2));
-  });
-
-  test('a changed split_count drops the cached splits', () async {
-    repo.one = _tx('t1', splitCount: 2, withSplits: true);
-    await cubit.refreshOne('t1');
-    repo.rows = [_tx('t1', splitCount: 3)];
-
-    await cubit.refresh();
-
-    expect(row().splits, isEmpty);
-    expect(row().splitCount, 3);
+    expect(row(cubit).splits, hasLength(2));
   });
 }

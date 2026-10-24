@@ -269,9 +269,7 @@ Future<({bool cancelled, bool? alsoUpdateLink})> askLinkedTxSave(
 ) async {
   final l = AppLocalizations.of(context)!;
   final event = t.eventBill != null;
-  if (!event && !t.hasPromptedLink) {
-    return (cancelled: false, alsoUpdateLink: null);
-  }
+  if (!linkedSaveAsks(t)) return linkedSaveAnswer(null, asked: false);
   final choice = await showLinkedPrompt(
     context,
     title: event ? l.linkedEventAskTitle : l.linkedSaveTitle,
@@ -279,6 +277,18 @@ Future<({bool cancelled, bool? alsoUpdateLink})> askLinkedTxSave(
     thisSideLabel: event ? l.linkedMineOnly : l.linkedSaveThisOnly,
     bothSidesLabel: event ? l.linkedBoth : l.linkedSaveBoth,
   );
+  return linkedSaveAnswer(choice);
+}
+
+bool linkedSaveAsks(Transaction t) => t.eventBill != null || t.hasPromptedLink;
+
+/// The ask's answer as the PUT flag: both sides = true, this side = false,
+/// no ask = null, cancelled = stop.
+({bool cancelled, bool? alsoUpdateLink}) linkedSaveAnswer(
+  LinkedChoice? choice, {
+  bool asked = true,
+}) {
+  if (!asked) return (cancelled: false, alsoUpdateLink: null);
   if (choice == null) return (cancelled: true, alsoUpdateLink: null);
   return (cancelled: false, alsoUpdateLink: choice == LinkedChoice.bothSides);
 }
@@ -351,18 +361,34 @@ Future<bool> confirmIncompleteSplits(
   return skip ?? false;
 }
 
-Future<TransactionEditOutcome> saveTransactionEdit(
-  BuildContext context, {
-  required Transaction t,
-  required DraftFormController c,
+typedef TxEditBody = ({
+  double amount,
+  String date,
+  String? categoryId,
+  bool clearCategory,
+  String? note,
+  bool clearNote,
+  String? description,
+  bool clearDescription,
+  String? accountId,
+  bool clearAccount,
+  String? transferToAccountId,
+  List<String> tagIds,
+  bool? alsoUpdateLink,
+  Map<String, dynamic>? link,
+  List<Map<String, dynamic>> splits,
+  bool splitsChanged,
+  bool lowering,
+});
+
+TxEditBody txEditBody(
+  Transaction t,
+  DraftFormController c, {
   required String? initialAccountId,
   required String? initialToAccountId,
   bool? alsoUpdateLink,
   Map<String, dynamic>? link,
-}) async {
-  final txCubit = context.read<TransactionsCubit>();
-  final accounts = context.read<AccountsCubit>();
-  final debts = DebtDirectoryCubit.maybeOf(context);
+}) {
   final isTransfer = c.isTransfer;
   final description = c.description.text.trim().isEmpty
       ? null
@@ -375,7 +401,6 @@ Future<TransactionEditOutcome> saveTransactionEdit(
   final accountChanged = accountId != initialAccountId;
   final toAccountChanged = isTransfer && c.toAccount?.id != initialToAccountId;
 
-  final repo = context.read<TransactionsRepository>();
   final splits = [
     for (final s in c.splits)
       if (s.isComplete) s.toUpdateJson(),
@@ -393,15 +418,7 @@ Future<TransactionEditOutcome> saveTransactionEdit(
       t.canEditCategory &&
       splitsLoaded &&
       jsonEncode(splits) != jsonEncode(splitsBefore);
-  Future<Transaction?> putSplits() async {
-    if (!splitsChanged) return null;
-    return repo.updateSplits(t.id, splits);
-  }
-
-  final lowering = c.amountValue < t.amount;
-  if (lowering) await putSplits();
-  final result = await txCubit.updateTransaction(
-    id: t.id,
+  return (
     amount: c.amountValue,
     date: _ymd(c.date),
     categoryId: canCategory ? c.category?.id : null,
@@ -416,6 +433,55 @@ Future<TransactionEditOutcome> saveTransactionEdit(
     tagIds: c.tagIds.toList(),
     alsoUpdateLink: alsoUpdateLink,
     link: link,
+    splits: splits,
+    splitsChanged: splitsChanged,
+    lowering: c.amountValue < t.amount,
+  );
+}
+
+Future<TransactionEditOutcome> saveTransactionEdit(
+  BuildContext context, {
+  required Transaction t,
+  required DraftFormController c,
+  required String? initialAccountId,
+  required String? initialToAccountId,
+  bool? alsoUpdateLink,
+  Map<String, dynamic>? link,
+}) async {
+  final txCubit = context.read<TransactionsCubit>();
+  final accounts = context.read<AccountsCubit>();
+  final debts = DebtDirectoryCubit.maybeOf(context);
+  final repo = context.read<TransactionsRepository>();
+  final body = txEditBody(
+    t,
+    c,
+    initialAccountId: initialAccountId,
+    initialToAccountId: initialToAccountId,
+    alsoUpdateLink: alsoUpdateLink,
+    link: link,
+  );
+  Future<Transaction?> putSplits() async {
+    if (!body.splitsChanged) return null;
+    return repo.updateSplits(t.id, body.splits);
+  }
+
+  if (body.lowering) await putSplits();
+  final result = await txCubit.updateTransaction(
+    id: t.id,
+    amount: body.amount,
+    date: body.date,
+    categoryId: body.categoryId,
+    clearCategory: body.clearCategory,
+    note: body.note,
+    clearNote: body.clearNote,
+    description: body.description,
+    clearDescription: body.clearDescription,
+    accountId: body.accountId,
+    clearAccount: body.clearAccount,
+    transferToAccountId: body.transferToAccountId,
+    tagIds: body.tagIds,
+    alsoUpdateLink: body.alsoUpdateLink,
+    link: body.link,
   );
   accounts.patchBalances(result.accountBalances);
   // A repayment's edit moves the person's balance (0.4.0-3); a tab switch
@@ -423,7 +489,7 @@ Future<TransactionEditOutcome> saveTransactionEdit(
   for (final b in [?result.personBalance, ...result.personBalances]) {
     debts?.applyBalance(b);
   }
-  if (!lowering && splitsChanged) {
+  if (!body.lowering && body.splitsChanged) {
     final row = await putSplits();
     if (row != null) txCubit.patchRow(row, afterWrite: true);
   }

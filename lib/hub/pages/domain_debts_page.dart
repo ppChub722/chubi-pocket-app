@@ -195,16 +195,9 @@ class _DebtsPageState extends State<_DebtsPage> {
                     size: 36,
                   ),
                   title: 'แบงค์ ทดสอบ',
-                  line2: ListRowLine(
-                    spans: [
-                      TextSpan(
-                        text: 'ค้างมา 50 วันแล้ว',
-                        style: TextStyle(
-                          color: Tone.warning.color(context),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                  line2: const ListRowLine(
+                    parts: ['ค้างมา 50 วันแล้ว'],
+                    tone: Tone.warning,
                   ),
                   trailing: ListRowTrailing.value(
                     const MoneyText(300, tone: MoneyTone.income),

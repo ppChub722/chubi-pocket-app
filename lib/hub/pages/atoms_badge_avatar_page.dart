@@ -128,6 +128,19 @@ Widget buildBadgeAvatarPage(BuildContext context) {
             ]),
           ),
           HubUse(
+            label: 'IconTile — solid circle, set glyph size',
+            page: 'Contact detail (linked account mark)',
+            child: left(
+              IconTile(
+                icon: AppIcons.link,
+                color: scheme.primary,
+                size: 28,
+                glyphSize: 16,
+                style: IconTileStyle.solid,
+              ),
+            ),
+          ),
+          HubUse(
             label: 'IconTile — with a corner badge',
             page: 'Pending, project transactions',
             child: left(

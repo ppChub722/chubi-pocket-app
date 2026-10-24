@@ -4,15 +4,11 @@ import 'dart:typed_data';
 
 import 'package:chubi_pocket/core/network/api_client.dart';
 import 'package:chubi_pocket/core/storage/secure_token_storage.dart';
-import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/features/app_version/data/app_version_repository.dart';
 import 'package:chubi_pocket/features/app_version/domain/app_version_info.dart';
 import 'package:chubi_pocket/features/app_version/presentation/cubit/app_version_cubit.dart';
-import 'package:chubi_pocket/features/app_version/presentation/pages/update_required_page.dart';
 import 'package:chubi_pocket/features/app_version/presentation/version_gate.dart';
-import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -133,47 +129,74 @@ void main() {
 
     const info = AppVersionInfo(minBuild: 41, latestBuild: 43);
 
-    test('starts out checking (the splash holds)', () {
-      final c = cubit(build: 42, fetch: () async => info);
-      expect(c.state.status, AppVersionStatus.checking);
+    test('status by build', () async {
+      expect(
+        cubit(build: 42, fetch: () async => info).state.status,
+        AppVersionStatus.checking,
+        reason: 'starts out checking (the splash holds)',
+      );
+      for (final c in <({
+        String name,
+        int build,
+        AppVersionInfo info,
+        AppVersionStatus status,
+        bool blocked,
+        bool banner,
+      })>[
+        (
+          name: 'below min → blocked',
+          build: 40,
+          info: info,
+          status: AppVersionStatus.updateRequired,
+          blocked: true,
+          banner: false,
+        ),
+        (
+          name: 'below latest → the banner',
+          build: 42,
+          info: info,
+          status: AppVersionStatus.updateAvailable,
+          blocked: false,
+          banner: true,
+        ),
+        (
+          name: 'up to date → ok',
+          build: 43,
+          info: info,
+          status: AppVersionStatus.ok,
+          blocked: false,
+          banner: false,
+        ),
+        (
+          name: 'the check off (0s) → ok',
+          build: 1,
+          info: const AppVersionInfo(),
+          status: AppVersionStatus.ok,
+          blocked: false,
+          banner: false,
+        ),
+      ]) {
+        final k = cubit(build: c.build, fetch: () async => c.info);
+        await k.check();
+        expect(k.state.status, c.status, reason: c.name);
+        expect(k.state.blocked, c.blocked, reason: c.name);
+        expect(k.state.showBanner, c.banner, reason: c.name);
+      }
     });
 
-    test('build below min → blocked', () async {
-      final c = cubit(build: 40, fetch: () async => info);
-      await c.check();
-      expect(c.state.status, AppVersionStatus.updateRequired);
-      expect(c.state.blocked, isTrue);
-    });
-
-    test('build below latest → the banner', () async {
-      final c = cubit(build: 42, fetch: () async => info);
-      await c.check();
-      expect(c.state.status, AppVersionStatus.updateAvailable);
-      expect(c.state.showBanner, isTrue);
-    });
-
-    test('up to date, or the check off (0s) → ok', () async {
-      final c = cubit(build: 43, fetch: () async => info);
-      await c.check();
-      expect(c.state.status, AppVersionStatus.ok);
-      final off = cubit(build: 1, fetch: () async => const AppVersionInfo());
-      await off.check();
-      expect(off.state.status, AppVersionStatus.ok);
-    });
-
-    test('a failed check lets the user in (offline / 5xx)', () async {
-      final c = cubit(build: 1, fetch: () async => throw Exception('offline'));
-      await c.check();
-      expect(c.state.status, AppVersionStatus.ok);
-    });
-
-    test('a check that hangs times out and lets the user in', () async {
-      final c = cubit(
+    test('a failed or hanging check lets the user in', () async {
+      final failed = cubit(
+        build: 1,
+        fetch: () async => throw Exception('offline'),
+      );
+      await failed.check();
+      expect(failed.state.status, AppVersionStatus.ok);
+      final hung = cubit(
         build: 1,
         fetch: () => Completer<AppVersionInfo>().future,
       );
-      await c.check();
-      expect(c.state.status, AppVersionStatus.ok);
+      await hung.check();
+      expect(hung.state.status, AppVersionStatus.ok);
     });
 
     test('a failed re-check keeps a block it already knows of', () async {
@@ -236,68 +259,23 @@ void main() {
 
   // ── The redirect ───────────────────────────────────────────────────
 
-  group('versionGateRedirect', () {
-    test('blocked: everything goes to the gate', () {
-      for (final loc in ['/', '/auth/login', '/accounts/1', '/more']) {
-        expect(
-          versionGateRedirect(loc, blocked: true),
-          updateRequiredPath,
-          reason: loc,
-        );
-      }
-      expect(versionGateRedirect(updateRequiredPath, blocked: true), isNull);
-    });
-
-    test('/dev is exempt', () {
-      expect(versionGateRedirect('/dev', blocked: true), isNull);
-      expect(versionGateRedirect('/dev/widgets', blocked: true), isNull);
-    });
-
-    test('not blocked: nothing moves; the gate page sends you home', () {
-      expect(versionGateRedirect('/accounts', blocked: false), isNull);
-      expect(versionGateRedirect(updateRequiredPath, blocked: false), '/');
-    });
-  });
-
-  // ── The page ───────────────────────────────────────────────────────
-
-  group('UpdateRequiredView', () {
-    Future<void> pump(WidgetTester t, AppVersionInfo info) => t.pumpWidget(
-      MaterialApp(
-        theme: ThemeData(extensions: [sweetTheme.lightColors]),
-        locale: const Locale('th'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: UpdateRequiredView(info: info, currentBuild: 40),
-      ),
-    );
-
-    testWidgets('the server\'s message, and the download button', (t) async {
-      await pump(
-        t,
-        const AppVersionInfo(
-          minBuild: 41,
-          downloadUrl: 'https://example.com/apk',
-          messageTh: 'อัปเดตก่อนนะ',
-        ),
-      );
-      expect(find.text('ต้องอัปเดตก่อนใช้งาน'), findsOneWidget);
-      expect(find.text('อัปเดตก่อนนะ'), findsOneWidget);
-      expect(find.text('ดาวน์โหลดเวอร์ชันใหม่'), findsOneWidget);
-    });
-
-    testWidgets('no link → the default text and a note', (t) async {
-      await pump(t, const AppVersionInfo(minBuild: 41));
+  test('versionGateRedirect', () {
+    for (final c in <({String loc, bool blocked, String? want})>[
+      (loc: '/', blocked: true, want: updateRequiredPath),
+      (loc: '/auth/login', blocked: true, want: updateRequiredPath),
+      (loc: '/accounts/1', blocked: true, want: updateRequiredPath),
+      (loc: '/more', blocked: true, want: updateRequiredPath),
+      (loc: updateRequiredPath, blocked: true, want: null),
+      (loc: '/dev', blocked: true, want: null),
+      (loc: '/dev/widgets', blocked: true, want: null),
+      (loc: '/accounts', blocked: false, want: null),
+      (loc: updateRequiredPath, blocked: false, want: '/'),
+    ]) {
       expect(
-        find.text(
-          'แอปเวอร์ชันนี้เก่าเกินไปแล้ว ดาวน์โหลดเวอร์ชันใหม่เพื่อใช้งานต่อ',
-        ),
-        findsOneWidget,
+        versionGateRedirect(c.loc, blocked: c.blocked),
+        c.want,
+        reason: '${c.loc} blocked=${c.blocked}',
       );
-      expect(
-        find.text('ยังไม่มีลิงก์ดาวน์โหลด — ติดต่อผู้ดูแล'),
-        findsOneWidget,
-      );
-    });
+    }
   });
 }

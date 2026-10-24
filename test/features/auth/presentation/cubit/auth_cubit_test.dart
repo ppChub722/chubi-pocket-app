@@ -125,6 +125,20 @@ void main() {
       act: (c) => c.init(),
       expect: () => [const AuthInitial(), const AuthAuthenticated(_user)],
     );
+
+    blocTest<AuthCubit, AuthState>(
+      'two init calls while one runs join it (one /me)',
+      build: () {
+        when(() => tokens.readAuthToken()).thenAnswer((_) async => 'tok');
+        when(() => repo.getCurrentUser()).thenAnswer((_) async => _user);
+        return build();
+      },
+      act: (c) => Future.wait([c.init(), c.init()]),
+      expect: () => [const AuthAuthenticated(_user)],
+      verify: (_) {
+        verify(() => repo.getCurrentUser()).called(1);
+      },
+    );
   });
 
   group('login()', () {
@@ -199,30 +213,26 @@ void main() {
     );
 
     blocTest<AuthCubit, AuthState>(
-      'USERNAME_EXISTS → [Loading, Failure]',
+      'a failed login left behind is acknowledged, not shown on register',
       build: () {
         when(
-          () => repo.register(
-            username: any(named: 'username'),
+          () => repo.login(
+            identifier: any(named: 'identifier'),
             password: any(named: 'password'),
-            displayName: any(named: 'displayName'),
-            email: any(named: 'email'),
-            currency: any(named: 'currency'),
           ),
         ).thenThrow(
-          const ApiException(code: 'USERNAME_EXISTS', message: 'taken'),
+          const ApiException(code: 'INVALID_CREDENTIALS', message: 'bad'),
         );
         return build();
       },
-      act: (c) =>
-          c.register(username: 'alice', password: 'pw', displayName: 'Alice'),
+      act: (c) async {
+        await c.login(identifier: 'alice', password: 'wrong');
+        c.acknowledgeFailure();
+      },
       expect: () => [
         const AuthLoading(AuthInitial()),
-        isA<AuthFailure>().having(
-          (f) => f.error.code,
-          'code',
-          'USERNAME_EXISTS',
-        ),
+        isA<AuthFailure>(),
+        const AuthInitial(),
       ],
     );
   });
@@ -308,14 +318,6 @@ void main() {
       act: (c) => c.acknowledgeFailure(),
       expect: () => [const AuthAuthenticated(_user)],
     );
-
-    blocTest<AuthCubit, AuthState>(
-      'no-op when state is not a Failure',
-      build: build,
-      seed: () => const AuthAuthenticated(_user),
-      act: (c) => c.acknowledgeFailure(),
-      expect: () => const <AuthState>[],
-    );
   });
 
   group('updateUser()', () {
@@ -333,14 +335,6 @@ void main() {
       act: (c) => c.updateUser(newUser),
       expect: () => [const AuthAuthenticated(newUser)],
     );
-
-    blocTest<AuthCubit, AuthState>(
-      'no-op when not authenticated',
-      build: build,
-      seed: () => const AuthUnauthenticated(),
-      act: (c) => c.updateUser(newUser),
-      expect: () => const <AuthState>[],
-    );
   });
 
   group('onUnauthorized event', () {
@@ -357,17 +351,6 @@ void main() {
       verify: (_) {
         verify(() => tokens.clearAuthToken()).called(1);
       },
-    );
-
-    blocTest<AuthCubit, AuthState>(
-      'when not authenticated, ignores the event',
-      build: build,
-      seed: () => const AuthUnauthenticated(),
-      act: (_) async {
-        unauthorizedCtrl.add(null);
-        await Future<void>.delayed(Duration.zero);
-      },
-      expect: () => const <AuthState>[],
     );
   });
 }

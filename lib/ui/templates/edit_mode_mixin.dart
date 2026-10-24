@@ -10,18 +10,14 @@ import '../atoms/ui_config.dart';
 import '../molecules/confirm_dialog.dart';
 import '../organisms/saving_overlay.dart';
 import '../molecules/mode_action_bar.dart';
+import 'edit_draft.dart';
 import 'edit_mode_scope.dart';
 
 mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   bool _editing = false;
   bool _askingToDiscard = false;
   bool _saving = false;
-  late D _original;
-  late D _working;
-  final List<D> _undoStack = [];
-
-  D? _sessionStart;
-  Object? _sessionField;
+  late EditDraft<D> _draft;
   Timer? _debounce;
 
   final _messengerKey = GlobalKey<ScaffoldMessengerState>();
@@ -37,10 +33,10 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
 
   bool get canEdit => true;
   bool get isSaving => _saving;
-  D get original => _original;
-  D get working => _working;
-  bool get isDirty => _working != _original;
-  bool get canUndo => _sessionStart != null || _undoStack.isNotEmpty;
+  D get original => _draft.original;
+  D get working => _draft.working;
+  bool get isDirty => _draft.isDirty;
+  bool get canUndo => _draft.canUndo;
 
   void onDraftRestored() {}
 
@@ -55,17 +51,13 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   }
 
   void initDraft(D draft, {bool editing = false}) {
-    _original = draft;
-    _working = draft;
+    _draft = EditDraft(draft);
     _editing = editing;
   }
 
   void resetDraft(D draft) {
     if (_editing) return;
-    setState(() {
-      _original = draft;
-      _working = draft;
-    });
+    setState(() => _draft.reset(draft));
     onDraftRestored();
   }
 
@@ -109,10 +101,7 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     _debounce = null;
     FocusScope.of(context).unfocus();
     setState(() {
-      _working = _original;
-      _undoStack.clear();
-      _sessionStart = null;
-      _sessionField = null;
+      _draft.discard();
       _editing = false;
       _saving = false;
     });
@@ -125,7 +114,7 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
       leavePage();
       return;
     }
-    if (isDirty || _sessionStart != null) {
+    if (_draft.needsDiscardPrompt) {
       final l = UiConfig.stringsOf(context);
       _askingToDiscard = true;
       final ok = await showConfirmDialog(
@@ -143,26 +132,15 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   }
 
   void applyChange(D next) {
-    commitTextSession();
-    if (next == _working) return;
-    setState(() {
-      _editing = true;
-      _undoStack.add(_working);
-      _working = next;
-    });
+    _debounce?.cancel();
+    _debounce = null;
+    if (!_draft.change(next)) return;
+    setState(() => _editing = true);
     HapticFeedback.selectionClick();
   }
 
   void applyTextChange(Object field, D next) {
-    if (_sessionStart == null) {
-      _sessionStart = _working;
-      _sessionField = field;
-    } else if (_sessionField != field) {
-      commitTextSession();
-      _sessionStart = _working;
-      _sessionField = field;
-    }
-    setState(() => _working = next);
+    setState(() => _draft.textChange(field, next));
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
       if (mounted) setState(commitTextSession);
@@ -172,28 +150,19 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   void commitTextSession() {
     _debounce?.cancel();
     _debounce = null;
-    final start = _sessionStart;
-    _sessionStart = null;
-    _sessionField = null;
-    if (start != null && start != _working) _undoStack.add(start);
+    _draft.commitSession();
   }
 
   void undo() {
     HapticFeedback.selectionClick();
-    if (_sessionStart != null) {
-      final start = _sessionStart as D;
+    if (!_draft.canUndo) return;
+    if (_draft.hasOpenSession) {
       _debounce?.cancel();
       _debounce = null;
-      _sessionStart = null;
-      _sessionField = null;
-      setState(() => _working = start);
-    } else if (_undoStack.isNotEmpty) {
-      setState(() => _working = _undoStack.removeLast());
-    } else {
-      return;
     }
+    setState(_draft.undo);
     onDraftRestored();
-    if (_undoStack.isEmpty && !isDirty) cancelEdit();
+    if (_draft.fullyUndone) cancelEdit();
   }
 
   void setSaving(bool value) {
@@ -205,11 +174,7 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     _debounce?.cancel();
     _debounce = null;
     setState(() {
-      _original = saved;
-      _working = saved;
-      _undoStack.clear();
-      _sessionStart = null;
-      _sessionField = null;
+      _draft.commitSaved(saved);
       _editing = false;
       _saving = false;
     });
@@ -219,13 +184,7 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   void rebaseEdit({required D original, required D working}) {
     _debounce?.cancel();
     _debounce = null;
-    setState(() {
-      _original = original;
-      _working = working;
-      _undoStack.clear();
-      _sessionStart = null;
-      _sessionField = null;
-    });
+    setState(() => _draft.rebase(original: original, working: working));
     onDraftRestored();
   }
 
