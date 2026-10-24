@@ -42,15 +42,24 @@ class _MainShellState extends State<MainShell>
   final ShellBackHistory _history = ShellBackHistory();
 
   @override
+  void initState() {
+    super.initState();
+    // Any push / pop / replace in a tab: ask the editing bars again.
+    QuickCreateRouteObserver.changes.addListener(_chrome.refresh);
+  }
+
+  @override
   void didUpdateWidget(MainShell old) {
     super.didUpdateWidget(old);
     final to = widget.navigationShell.currentIndex;
     _quickCreate.currentBranch = to;
     _history.branchChanged(old.navigationShell.currentIndex, to);
+    _chrome.refresh();
   }
 
   @override
   void dispose() {
+    QuickCreateRouteObserver.changes.removeListener(_chrome.refresh);
     _nudge.dispose();
     _chrome.dispose();
     _quickCreate.dispose();

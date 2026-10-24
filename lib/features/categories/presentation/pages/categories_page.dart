@@ -28,7 +28,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
   CategoryType _listType = CategoryType.expense;
 
-  ShellChromeController? _shellChrome;
+  late final ShellNavClaim _shellNav = ShellNavClaim(
+    () => mounted && _reordering,
+  );
 
   final Set<String> _collapsedIds = <String>{};
 
@@ -106,12 +108,12 @@ class _CategoriesPageState extends State<CategoriesPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _shellChrome = ShellChrome.of(context);
+    _shellNav.attach(context);
   }
 
   @override
   void dispose() {
-    if (_reordering) _shellChrome?.show();
+    _shellNav.dispose();
     _reorder?.dispose();
     for (final c in _scrollControllers.values) {
       c.dispose();
@@ -123,7 +125,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
   void _enterReorder(List<Category> all, {String? select}) {
     HapticFeedback.lightImpact();
-    _shellChrome?.hide();
     final c = ReorderController(
       items: CategoryReorderLogic.toOutline(all, types: _types),
       maxDepth: CategoryTree.maxDepth,
@@ -131,6 +132,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
     )..addListener(_onReorderChanged);
     if (select != null) c.select(select);
     _keepOffset(() => _reorder = c);
+    _shellNav.changed();
   }
 
   void _keepOffset(VoidCallback change) {
@@ -153,12 +155,12 @@ class _CategoriesPageState extends State<CategoriesPage> {
   }
 
   void _exitReorder() {
-    _shellChrome?.show(); // restore the shell nav
     final c = _reorder;
     _keepOffset(() {
       _reorder = null;
       _savingReorder = false;
     });
+    _shellNav.changed();
     WidgetsBinding.instance.addPostFrameCallback((_) => c?.dispose());
   }
 

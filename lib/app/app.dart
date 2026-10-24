@@ -148,8 +148,10 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     );
     _lifecycle = AppLifecycleListener(
       onHide: _appRefresh.onHidden,
+      // Resume re-checks the version at most once a day (soft banner); a
+      // forced update is a 426 on any call anyway.
       onResume: () {
-        _versionCubit.check();
+        unawaited(_versionCubit.checkIfDue());
         unawaited(
           _appRefresh.onResumed(
             signedIn: _authCubit.state is AuthAuthenticated,
@@ -267,14 +269,11 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
             create: (_) =>
                 TransactionsCubit(repository: _transactionsRepository),
           ),
+          // Started by the auth listener below (once per sign-in), not here:
+          // starting in both made two badge calls at every sign-in.
           BlocProvider<UnreadBadgeCubit>(
-            create: (ctx) {
-              final cubit = UnreadBadgeCubit(
-                repository: _notificationsRepository,
-              );
-              if (_authCubit.state is AuthAuthenticated) cubit.start();
-              return cubit;
-            },
+            create: (ctx) =>
+                UnreadBadgeCubit(repository: _notificationsRepository),
           ),
           BlocProvider<ContactsCubit>(
             create: (_) => ContactsCubit(

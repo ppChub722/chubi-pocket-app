@@ -50,6 +50,11 @@ class AppVersionState {
   );
 }
 
+/// Never checked, or the last check is [AppVersionCubit.recheckEvery] old.
+bool versionRecheckDue(DateTime? checkedAt, DateTime now) =>
+    checkedAt == null ||
+    now.difference(checkedAt) >= AppVersionCubit.recheckEvery;
+
 class AppVersionCubit extends Cubit<AppVersionState> {
   AppVersionCubit({
     required AppVersionRepository repository,
@@ -78,10 +83,23 @@ class AppVersionCubit extends Cubit<AppVersionState> {
   static const _bannerQuiet = Duration(days: 1);
 
   bool _checking = false;
+  DateTime? _checkedAt;
+
+  /// How often a resume may re-check (owner 2026-10-24): the soft "update
+  /// available" banner still reaches an app left in the background for
+  /// days, at one call a day. A forced update is gated on every call anyway.
+  static const recheckEvery = Duration(days: 1);
+
+  /// On resume: [check] only when the last one is [recheckEvery] old.
+  Future<void> checkIfDue() async {
+    if (!versionRecheckDue(_checkedAt, _now())) return;
+    await check();
+  }
 
   Future<void> check() async {
     if (_checking) return;
     _checking = true;
+    _checkedAt = _now();
     try {
       final build = await _currentBuild();
       final info = await _repository.fetch().timeout(timeout);

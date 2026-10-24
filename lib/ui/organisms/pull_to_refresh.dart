@@ -47,6 +47,9 @@ class _PullToRefreshState extends State<PullToRefresh>
 
   int? _reconnects;
 
+  /// When this page's data last loaded: the page loads on open, so start now.
+  DateTime? _loadedAt = DateTime.now();
+
   bool? _tabActive;
   bool? _routeCurrent;
   int _popsWhenCovered = 0;
@@ -63,41 +66,53 @@ class _PullToRefreshState extends State<PullToRefresh>
         route: ModalRoute.of(context),
         isActive: () =>
             mounted && widget.enabled && TickerMode.valuesOf(context).enabled,
-        run: () => widget.onRefresh(),
+        run: () => _reopen(force: false),
       );
     final now = ConnectionScope.reconnectsOf(context);
     final before = _reconnects;
     _reconnects = now;
-    var reopen = reloadsOnReconnect(before, now);
+    final reconnected = reloadsOnReconnect(before, now);
 
+    var shown = false;
     final active = TickerMode.valuesOf(context).enabled;
     final current = ModalRoute.of(context)?.isCurrent ?? true;
-    if (_tabActive == false && active) reopen = true;
+    if (_tabActive == false && active) shown = true;
     if (_routeCurrent != false && !current) {
       _popsWhenCovered = PagePopObserver.generation;
     }
     if (_routeCurrent == false &&
         current &&
         PagePopObserver.generation != _popsWhenCovered) {
-      reopen = true;
+      shown = true;
     }
     _tabActive = active;
     _routeCurrent = current;
 
-    if (reopen && widget.enabled) {
+    if ((reconnected || shown) && widget.enabled) {
       // Back online / shown again: re-open the page — the same load a pull
-      // would run.
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        if (!mounted || !widget.enabled || _showRefreshing) return;
-        _showRefreshing = true;
-        try {
-          await widget.onRefresh();
-        } catch (_) {
-        } finally {
-          _showRefreshing = false;
-        }
-      });
+      // would run (shown again: only once the data is stale).
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _reopen(force: reconnected),
+      );
     }
+  }
+
+  Future<void> _reopen({required bool force}) async {
+    if (!mounted || !widget.enabled || _showRefreshing) return;
+    if (!force && !reopensWhenShown(_loadedAt, DateTime.now())) return;
+    _showRefreshing = true;
+    try {
+      await widget.onRefresh();
+      _loadedAt = DateTime.now();
+    } catch (_) {
+    } finally {
+      _showRefreshing = false;
+    }
+  }
+
+  Future<void> _pulled() async {
+    await widget.onRefresh();
+    _loadedAt = DateTime.now();
   }
 
   @override
@@ -166,7 +181,7 @@ class _PullToRefreshState extends State<PullToRefresh>
       fit: StackFit.passthrough,
       children: [
         RefreshIndicator.noSpinner(
-          onRefresh: widget.onRefresh,
+          onRefresh: _pulled,
           onStatusChange: _onStatus,
           child: NotificationListener<ScrollNotification>(
             onNotification: _track,

@@ -3,3 +3,13 @@
 /// again" notice settling away leave the count alone.
 bool reloadsOnReconnect(int? before, int now) =>
     before != null && now != before;
+
+/// How long a page's data counts as fresh (owner 2026-10-24: as few calls
+/// per page as possible).
+const pageDataFreshFor = Duration(seconds: 30);
+
+/// Shown again (tab switch, pop back, app resume) re-opens the page only once
+/// its data is older than [pageDataFreshFor]; never loaded = stale. A pull
+/// or a reconnect doesn't ask: they always reload.
+bool reopensWhenShown(DateTime? loadedAt, DateTime now) =>
+    loadedAt == null || now.difference(loadedAt) >= pageDataFreshFor;

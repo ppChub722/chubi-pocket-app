@@ -37,7 +37,9 @@ class _AccountsPageState extends State<AccountsPage> {
   ReorderController? _reorder;
   final _reorderScroll = ScrollController();
   bool _savingOrder = false;
-  ShellChromeController? _shellChrome;
+  late final ShellNavClaim _shellNav = ShellNavClaim(
+    () => mounted && _reordering,
+  );
 
   bool get _reordering => _reorder != null;
 
@@ -46,12 +48,12 @@ class _AccountsPageState extends State<AccountsPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _shellChrome = ShellChrome.of(context);
+    _shellNav.attach(context);
   }
 
   @override
   void dispose() {
-    if (_reordering) _shellChrome?.show();
+    _shellNav.dispose();
     _reorder?.dispose();
     _reorderScroll.dispose();
     _search.dispose();
@@ -105,24 +107,24 @@ class _AccountsPageState extends State<AccountsPage> {
 
   void _enterReorder(List<Account> current, {String? select}) {
     HapticFeedback.lightImpact();
-    _shellChrome?.hide();
     final c = ReorderController(
       maxDepth: 1,
       items: [for (final a in current) OutlineItem(a.id, 1)],
     )..addListener(_onReorderChanged);
     if (select != null) c.select(select);
     setState(() => _reorder = c);
+    _shellNav.changed();
   }
 
   void _onReorderChanged() => setState(() {});
 
   void _exitReorder() {
-    _shellChrome?.show();
     final c = _reorder;
     setState(() {
       _reorder = null;
       _savingOrder = false;
     });
+    _shellNav.changed();
     WidgetsBinding.instance.addPostFrameCallback((_) => c?.dispose());
   }
 
@@ -259,18 +261,14 @@ class _AccountsPageState extends State<AccountsPage> {
     final hasDebt = t.cardDebt.abs() >= 0.005;
     final cards = state.accounts.where((a) => a.type.isCredit).length;
     final total = t.availableTotal + t.savedTotal + t.cardDebt.abs();
-    HeroFilter filter(
-      _WalletTile? v,
-      String label,
-      IconData icon,
-      int count,
-    ) => HeroFilter(
-      label: label,
-      icon: icon,
-      count: count,
-      selected: _tile == v,
-      onTap: () => setState(() => _tile = v),
-    );
+    HeroFilter filter(_WalletTile? v, String label, IconData icon, int count) =>
+        HeroFilter(
+          label: label,
+          icon: icon,
+          count: count,
+          selected: _tile == v,
+          onTap: () => setState(() => _tile = v),
+        );
     return AppHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
       margin: const EdgeInsets.fromLTRB(

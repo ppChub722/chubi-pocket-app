@@ -96,7 +96,21 @@ class BudgetsCubit extends Cubit<BudgetsState>
   @override
   void clear() {
     _request++;
+    _stale = false;
     emit(const BudgetsState());
+  }
+
+  bool _stale = false;
+
+  /// A budget page wrote: the list reloads when it is shown again, and only
+  /// then (owner 2026-10-24: as few calls per page as possible).
+  void markStale() => _stale = true;
+
+  /// True once after [markStale].
+  bool takeStale() {
+    final s = _stale;
+    _stale = false;
+    return s;
   }
 
   Future<void> load({bool silent = false}) async {

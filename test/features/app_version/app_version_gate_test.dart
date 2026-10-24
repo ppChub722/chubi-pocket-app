@@ -135,47 +135,50 @@ void main() {
         AppVersionStatus.checking,
         reason: 'starts out checking (the splash holds)',
       );
-      for (final c in <({
-        String name,
-        int build,
-        AppVersionInfo info,
-        AppVersionStatus status,
-        bool blocked,
-        bool banner,
-      })>[
-        (
-          name: 'below min → blocked',
-          build: 40,
-          info: info,
-          status: AppVersionStatus.updateRequired,
-          blocked: true,
-          banner: false,
-        ),
-        (
-          name: 'below latest → the banner',
-          build: 42,
-          info: info,
-          status: AppVersionStatus.updateAvailable,
-          blocked: false,
-          banner: true,
-        ),
-        (
-          name: 'up to date → ok',
-          build: 43,
-          info: info,
-          status: AppVersionStatus.ok,
-          blocked: false,
-          banner: false,
-        ),
-        (
-          name: 'the check off (0s) → ok',
-          build: 1,
-          info: const AppVersionInfo(),
-          status: AppVersionStatus.ok,
-          blocked: false,
-          banner: false,
-        ),
-      ]) {
+      for (final c
+          in <
+            ({
+              String name,
+              int build,
+              AppVersionInfo info,
+              AppVersionStatus status,
+              bool blocked,
+              bool banner,
+            })
+          >[
+            (
+              name: 'below min → blocked',
+              build: 40,
+              info: info,
+              status: AppVersionStatus.updateRequired,
+              blocked: true,
+              banner: false,
+            ),
+            (
+              name: 'below latest → the banner',
+              build: 42,
+              info: info,
+              status: AppVersionStatus.updateAvailable,
+              blocked: false,
+              banner: true,
+            ),
+            (
+              name: 'up to date → ok',
+              build: 43,
+              info: info,
+              status: AppVersionStatus.ok,
+              blocked: false,
+              banner: false,
+            ),
+            (
+              name: 'the check off (0s) → ok',
+              build: 1,
+              info: const AppVersionInfo(),
+              status: AppVersionStatus.ok,
+              blocked: false,
+              banner: false,
+            ),
+          ]) {
         final k = cubit(build: c.build, fetch: () async => c.info);
         await k.check();
         expect(k.state.status, c.status, reason: c.name);
@@ -276,6 +279,19 @@ void main() {
         c.want,
         reason: '${c.loc} blocked=${c.blocked}',
       );
+    }
+  });
+
+  test('resume re-checks the version at most once a day', () {
+    final t0 = DateTime(2026, 10, 24, 9);
+    final cases = <(String, DateTime?, Duration, bool)>[
+      ('never checked', null, Duration.zero, true),
+      ('an hour later', t0, const Duration(hours: 1), false),
+      ('23 h later', t0, const Duration(hours: 23), false),
+      ('a day later', t0, const Duration(days: 1), true),
+    ];
+    for (final (name, at, after, want) in cases) {
+      expect(versionRecheckDue(at, t0.add(after)), want, reason: name);
     }
   });
 }

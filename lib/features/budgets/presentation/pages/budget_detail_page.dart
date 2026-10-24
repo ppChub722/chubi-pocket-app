@@ -6,6 +6,7 @@ import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
+import '../cubit/budgets_cubit.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -133,6 +134,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
   }
 
   void _afterWrite(BudgetDetail d) {
+    context.read<BudgetsCubit>().markStale();
     setState(() {
       _detail = d;
       _allPeriods = null;
@@ -351,6 +353,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       );
       if (!mounted) return;
       HapticFeedback.mediumImpact();
+      context.read<BudgetsCubit>().markStale();
       setState(() {
         _detail = (_detail ?? d).afterPeriodWrite(next);
         _allPeriods = _allPeriods?.replace(next.budget.period);
@@ -398,6 +401,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       if (!mounted) return;
       HapticFeedback.mediumImpact();
       if (widget.isCreate) {
+        context.read<BudgetsCubit>().markStale();
         commitSaved(working);
         leavePage();
         return;
@@ -490,6 +494,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       return;
     }
     if (!mounted) return;
+    context.read<BudgetsCubit>().markStale();
     // Pop without the discard prompt — the budget is gone.
     commitSaved(working);
     leavePage();

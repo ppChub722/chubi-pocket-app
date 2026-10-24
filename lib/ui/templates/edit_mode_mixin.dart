@@ -26,8 +26,9 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   /// shown through it float above the page's action bar instead of over it.
   ScaffoldMessengerState? get pageMessenger => _messengerKey.currentState;
 
-  ShellChromeController? _shellChrome;
-  bool? _chromeHiddenFor;
+  /// The nav hides while this page is on screen in edit mode (the action bar
+  /// takes its place); worked out from state, never remembered.
+  late final ShellNavClaim _shellNav = ShellNavClaim(() => mounted && _editing);
 
   bool get isEditing => _editing;
 
@@ -64,16 +65,13 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final element = context
-        .getElementForInheritedWidgetOfExactType<ShellChrome>();
-    _shellChrome = (element?.widget as ShellChrome?)?.notifier;
+    _shellNav.attach(context);
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
-    // Always release: this page can never keep the shell hidden past its life.
-    _shellChrome?.show(owner: this);
+    _shellNav.dispose();
     super.dispose();
   }
 
@@ -222,20 +220,5 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     );
   }
 
-  void _syncShellChrome() {
-    if (_chromeHiddenFor == _editing) return;
-    _chromeHiddenFor = _editing;
-    final route = ModalRoute.of(context);
-    // Deferred: toggling notifies the shell, which can't rebuild mid-build.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      if (!_editing) {
-        _shellChrome?.show(owner: this);
-        return;
-      }
-      whenRouteSettled(route, () {
-        if (mounted && _editing) _shellChrome?.hide(owner: this);
-      });
-    });
-  }
+  void _syncShellChrome() => _shellNav.changed();
 }

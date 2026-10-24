@@ -37,9 +37,12 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
     });
   }
 
+  /// Back from a budget page: reload only if it wrote something.
   Future<void> _open(Future<Object?> Function() push) async {
     await push();
-    if (mounted) context.read<BudgetsCubit>().load();
+    if (!mounted) return;
+    final cubit = context.read<BudgetsCubit>();
+    if (cubit.takeStale()) cubit.load(silent: true);
   }
 
   @override

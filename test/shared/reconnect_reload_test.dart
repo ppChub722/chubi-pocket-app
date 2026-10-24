@@ -14,4 +14,18 @@ void main() {
       expect(reloadsOnReconnect(before, now), want, reason: name);
     }
   });
+
+  test('shown again: reopens only once the data is 30 s old', () {
+    final t0 = DateTime(2026, 10, 24, 12);
+    final cases = <(String, DateTime?, Duration, bool)>[
+      ('never loaded', null, Duration.zero, true),
+      ('just loaded', t0, const Duration(seconds: 5), false),
+      ('a second short', t0, const Duration(seconds: 29), false),
+      ('exactly 30 s', t0, const Duration(seconds: 30), true),
+      ('minutes later', t0, const Duration(minutes: 4), true),
+    ];
+    for (final (name, loadedAt, after, want) in cases) {
+      expect(reopensWhenShown(loadedAt, t0.add(after)), want, reason: name);
+    }
+  });
 }
