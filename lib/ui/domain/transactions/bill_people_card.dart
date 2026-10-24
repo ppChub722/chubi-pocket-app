@@ -21,7 +21,9 @@ class BillPerson {
     this.onAuto,
     this.paid = false,
     this.onPay,
-    this.chips = const [],
+    this.canPaidBack = false,
+    this.paidBack = false,
+    this.onPaidBack,
     this.tag,
     this.onRemove,
   });
@@ -53,8 +55,12 @@ class BillPerson {
   final bool paid;
   final VoidCallback? onPay;
 
-  /// More chips after "จ่าย" (คืนแล้ว).
-  final List<Widget> chips;
+  /// "คืนแล้ว" applies to this row (the card has the column): ✓ when [paidBack],
+  /// tap = [onPaidBack] (none: shown, not tappable yet). Rows it does not
+  /// apply to keep the column's space.
+  final bool canPaidBack;
+  final bool paidBack;
+  final VoidCallback? onPaidBack;
 
   /// Under the name ("ใหม่ | เพิ่มเข้าอีเวนต์").
   final Widget? tag;
@@ -98,8 +104,11 @@ class BillPeopleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    // "คืนแล้ว" is a column of the card as soon as one row can have it.
+    final column = people.any((p) => p.canPaidBack);
     final rows = [
-      for (final p in people) _BillPersonRow(key: ValueKey(p.id), person: p),
+      for (final p in people)
+        _BillPersonRow(key: ValueKey(p.id), person: p, paidBackColumn: column),
     ];
     final max = maxRows;
     return ShareCard(
@@ -139,9 +148,16 @@ class BillPeopleCard extends StatelessWidget {
 }
 
 class _BillPersonRow extends StatefulWidget {
-  const _BillPersonRow({required this.person, super.key});
+  const _BillPersonRow({
+    required this.person,
+    required this.paidBackColumn,
+    super.key,
+  });
 
   final BillPerson person;
+
+  /// The card has the "คืนแล้ว" column: rows without it keep the space.
+  final bool paidBackColumn;
 
   @override
   State<_BillPersonRow> createState() => _BillPersonRowState();
@@ -196,25 +212,38 @@ class _BillPersonRowState extends State<_BillPersonRow> {
             onTap: change,
             child: p.avatar,
           );
+    // The chips are always there, in fixed columns at the right of the name,
+    // so every row lines up (a row they don't apply to keeps the space).
+    final paidBack = PaidBackChip(
+      label: l.evbPaidBack,
+      paidBack: p.paidBack,
+      onTap: p.onPaidBack,
+    );
     final chips = [
-      if (p.onPay != null || p.paid)
-        PayChip(label: l.evbPays, paid: p.paid, onTap: p.onPay),
-      ...p.chips,
+      PayChip(label: l.evbPays, paid: p.paid, onTap: p.onPay),
+      if (widget.paidBackColumn)
+        p.canPaidBack
+            ? paidBack
+            : Visibility(
+                visible: false,
+                maintainSize: true,
+                maintainAnimation: true,
+                maintainState: true,
+                child: paidBack,
+              ),
     ];
     return ShareRow(
       avatar: avatar,
       name: name,
-      nameTrailing: chips.isEmpty
-          ? null
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final (i, c) in chips.indexed) ...[
-                  if (i > 0) const SizedBox(width: AppSpacing.xs),
-                  c,
-                ],
-              ],
-            ),
+      nameTrailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final (i, c) in chips.indexed) ...[
+            if (i > 0) const SizedBox(width: AppSpacing.xs),
+            c,
+          ],
+        ],
+      ),
       amount: ShareAmountField(
         value: p.amount,
         auto: p.auto,

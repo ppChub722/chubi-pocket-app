@@ -24,7 +24,7 @@ class PayChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) => AppChip(
     label: label,
-    icon: paid ? AppIcons.check : null,
+    icon: AppIcons.check,
     selected: paid,
     dashed: !paid,
     size: ChipSize.mini,
@@ -49,7 +49,7 @@ class PaidBackChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) => AppChip(
     label: label,
-    icon: paidBack ? AppIcons.check : null,
+    icon: AppIcons.check,
     selected: paidBack,
     dashed: !paidBack,
     tone: AppChipTone.info,

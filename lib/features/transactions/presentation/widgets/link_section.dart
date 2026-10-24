@@ -200,13 +200,7 @@ class _LinkSectionState extends State<LinkSection> {
 
     // "คืนแล้ว": on a bill I paid (แบ่ง), or any event bill; with someone
     // else paying a แบ่ง the shares are what I owe, nobody pays back.
-    Widget? paidBackChip(LinkPerson p) => !event && payer != null
-        ? null
-        : PaidBackChip(
-            label: l.evbPaidBack,
-            paidBack: _c.isPaidBack(p),
-            onTap: () => _c.togglePaidBack(p),
-          );
+    final paidBackAllowed = event || payer == null;
 
     BillPerson draftRow(SplitDraft d) {
       final named = d.personName.trim().isNotEmpty;
@@ -233,7 +227,9 @@ class _LinkSectionState extends State<LinkSection> {
         },
         paid: paid,
         onPay: person == null || paid ? null : () => setPayer(person),
-        chips: [if (person != null && !paid) ?paidBackChip(person)],
+        canPaidBack: paidBackAllowed && !paid,
+        paidBack: person != null && _c.isPaidBack(person),
+        onPaidBack: person == null ? null : () => _c.togglePaidBack(person),
         tag: person == null ? null : tagFor(person),
         onRemove: () {
           if (paid) setPayer(null);
@@ -270,7 +266,9 @@ class _LinkSectionState extends State<LinkSection> {
             onAmount: (v) => _c.setEventShare(p, v),
             paid: p == payer,
             onPay: p == payer ? null : () => setPayer(p),
-            chips: [if (p != payer) ?paidBackChip(p)],
+            canPaidBack: paidBackAllowed && p != payer,
+            paidBack: _c.isPaidBack(p),
+            onPaidBack: () => _c.togglePaidBack(p),
             tag: tagFor(p),
             onRemove: () => _c.removeEventMember(p),
           ),

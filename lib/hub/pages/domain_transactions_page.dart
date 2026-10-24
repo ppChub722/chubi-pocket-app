@@ -143,6 +143,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
         amount: 41,
         onAmount: (_) {},
         onPay: () => _note('payer: มาตาก'),
+        canPaidBack: true,
         tag: event == null
             ? null
             : const AppChip(
@@ -161,13 +162,8 @@ class _TransactionsPageState extends State<_TransactionsPage> {
         amount: 41,
         onAmount: (_) {},
         onPay: () => _note('payer: บอส'),
-        chips: [
-          PaidBackChip(
-            label: 'คืนแล้ว',
-            paidBack: false,
-            onTap: () => _note('paid back'),
-          ),
-        ],
+        canPaidBack: true,
+        onPaidBack: () => _note('paid back'),
         onRemove: () {},
       ),
     ],

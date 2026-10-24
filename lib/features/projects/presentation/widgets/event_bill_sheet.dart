@@ -807,14 +807,9 @@ class _EventBillSheetState extends State<_EventBillSheet> {
               }),
         paid: payer,
         onPay: payer ? null : () => _setPayer(p),
-        chips: [
-          if (!payer && _payer != null)
-            PaidBackChip(
-              label: l.evbPaidBack,
-              paidBack: p.paidBack,
-              onTap: () => setState(() => p.paidBack = !p.paidBack),
-            ),
-        ],
+        canPaidBack: !payer && _payer != null,
+        paidBack: p.paidBack,
+        onPaidBack: () => setState(() => p.paidBack = !p.paidBack),
         tag: p.isNew
             ? AppChip(
                 label: l.txLinkCardNewToEvent,

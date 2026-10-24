@@ -46,9 +46,16 @@ class SplitRow extends StatelessWidget {
       Expanded(
         child: nameTrailing == null
             ? name
+            // The name keeps its own width at the start; the chips sit flush
+            // right, next to the amount, so they line up row to row.
             : Row(
                 children: [
-                  Flexible(child: name),
+                  Expanded(
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: name,
+                    ),
+                  ),
                   const SizedBox(width: AppSpacing.xs),
                   nameTrailing!,
                 ],
