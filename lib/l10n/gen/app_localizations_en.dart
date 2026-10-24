@@ -8050,6 +8050,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Paid back needs the wallet the money went into';
 
   @override
+  String get txLinkBookDebt => 'Record the debts too';
+
+  @override
   String get txLinkWalletNotOut => 'Not from your wallet';
 
   @override

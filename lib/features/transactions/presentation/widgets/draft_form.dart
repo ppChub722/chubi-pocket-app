@@ -261,6 +261,20 @@ class DraftFormController extends ChangeNotifier {
 
   bool isPaidBack(LinkPerson p) => link.paidBack.contains(p.key);
 
+  /// "จ่าย" or "คืนแล้ว" was pressed on a row that has no name yet: it can be
+  /// pressed, but the bill can't be saved until the name is there.
+  bool markedWithoutName(LinkMode mode) {
+    final payer = switch (mode) {
+      LinkMode.event => link.eventPayer,
+      LinkMode.paid => link.paidBy,
+      _ => null,
+    };
+    if (payer != null && payer.name.trim().isEmpty) return true;
+    final backApplies = mode == LinkMode.event || mode == LinkMode.split;
+    return backApplies &&
+        link.paidBack.contains(const LinkPerson(name: '').key);
+  }
+
   void togglePaidBack(LinkPerson p) {
     if (!link.paidBack.remove(p.key)) link.paidBack.add(p.key);
     notifyListeners();
@@ -289,6 +303,30 @@ class DraftFormController extends ChangeNotifier {
       if (amount > 0.005) out.add((person: p, amount: amount));
     }
     return out;
+  }
+
+  /// What "จดหนี้ด้วย" records for an event bill, as the event bill sheet
+  /// does: I paid → each one's share is owed to me (not the ones who paid
+  /// back now); someone else paid → my share is owed to them.
+  ({
+    List<({LinkPerson person, double amount})> owedToMe,
+    LinkPerson? payer,
+    double myShare,
+  })
+  eventDebts() {
+    final members = eventMembers;
+    final bill = amountValue;
+    final payer = link.eventPayer;
+    return (
+      owedToMe: [
+        if (payer == null)
+          for (final p in members)
+            if (!isPaidBack(p) && link.eventShareOf(p, bill, members) > 0.005)
+              (person: p, amount: link.eventShareOf(p, bill, members)),
+      ],
+      payer: payer,
+      myShare: link.eventMine(bill, members),
+    );
   }
 
   /// People added to the bill (the picker, or an event's members): they go
@@ -526,6 +564,11 @@ class DraftFormController extends ChangeNotifier {
 
   void paidEqually() {
     link.paidEqually(amountValue);
+    notifyListeners();
+  }
+
+  void setEventBookDebts(bool on) {
+    link.eventBookDebts = on;
     notifyListeners();
   }
 

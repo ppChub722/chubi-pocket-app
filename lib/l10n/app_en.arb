@@ -2800,6 +2800,7 @@
   "txLinkCardNewToEvent": "New · joins the event",
   "txLinkAddToEvent": "Add to event",
   "txPaidBackNeedsWallet": "Paid back needs the wallet the money went into",
+  "txLinkBookDebt": "Record the debts too",
   "txLinkWalletNotOut": "Not from your wallet",
   "txLinkWalletPart": "{amount} from this wallet",
   "@txLinkWalletPart": {"placeholders": {"amount": {"type": "String"}}},

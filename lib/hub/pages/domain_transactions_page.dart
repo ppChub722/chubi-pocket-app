@@ -116,6 +116,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
       name: event,
       label: 'เพิ่มในอีเวนต์',
       onTap: () => _note('pick event'),
+      onBookDebt: event == null ? null : (_) {},
       onClear: () => _note('event removed'),
       variant: SplitEventVariant.compact,
     ),
@@ -204,39 +205,29 @@ class _TransactionsPageState extends State<_TransactionsPage> {
         HubDemo(
           title: 'LinkSectionFrame — the whole ผูกกับ block',
           note:
-              'The recurring row (optional), the LinkModeBar (ส่วนตัว | แบ่ง), '
-              'then the picked tab\'s card, with the kit gap between. The '
-              'feature (LinkSection) only wires state into it.',
+              'The recurring row (optional), the LinkSwitchRow ("แบ่ง" + a '
+              'switch, like the other labelled rows), then the card, with the '
+              'kit gap between. The feature (LinkSection) only wires state '
+              'into it.',
           child: LinkSectionFrame(
-            bar: LinkModeBar<int>(
-              selected: 1,
-              onChanged: (_) {},
-              tabs: const [
-                AppTab(value: 0, label: 'ส่วนตัว', icon: AppIcons.wallet),
-                AppTab(value: 1, label: 'แบ่ง', icon: AppIcons.split),
-              ],
-            ),
+            bar: LinkSwitchRow(label: 'แบ่ง', value: true, onChanged: (_) {}),
             card: _peopleCard(),
           ),
         ),
         HubDemo(
-          title: 'LinkModeBar + people ShareCard — quick create "ผูกกับ"',
+          title: 'LinkSwitchRow + people card — quick create "ผูกกับ"',
           note:
-              'Two pill tabs across the full width. แบ่ง is ONE ShareCard: '
-              '"คนในบิล | n" with small header chips, ShareRows (SplitRow + a '
-              'PayChip after the name: ✓ จ่าย on the payer, dashed on the '
-              'rest) and the status line; adding an event is the EventRow at '
-              'the bottom, which makes it an event bill.',
+              'แบ่ง off = a plain transaction; on = ONE BillPeopleCard: "คนในบิล '
+              '| n", people with the จ่าย / คืนแล้ว columns, the status line, '
+              'and "เพิ่มในอีเวนต์" on top (with the "จดหนี้ด้วย" switch once '
+              'an event is picked).',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              LinkModeBar<int>(
-                selected: _linkMode,
-                onChanged: (v) => setState(() => _linkMode = v),
-                tabs: const [
-                  AppTab(value: 0, label: 'ส่วนตัว', icon: AppIcons.wallet),
-                  AppTab(value: 1, label: 'แบ่ง', icon: AppIcons.split),
-                ],
+              LinkSwitchRow(
+                label: 'แบ่ง',
+                value: _linkMode == 1,
+                onChanged: (v) => setState(() => _linkMode = v ? 1 : 0),
               ),
               const SizedBox(height: AppSpacing.sm),
               if (_linkMode == 1) _peopleCard(event: 'ทริปเขาใหญ่'),

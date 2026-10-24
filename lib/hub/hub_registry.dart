@@ -1148,7 +1148,7 @@ final List<HubPage> hubPages = [
       'EntryCardSkeleton',
       'EntryField',
       'SplitEventSection',
-      'LinkModeBar',
+      'LinkSwitchRow',
       'LinkSectionFrame',
       'SplitPickChip',
       'BillPeopleCard',

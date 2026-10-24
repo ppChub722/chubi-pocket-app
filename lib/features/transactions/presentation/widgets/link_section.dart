@@ -103,22 +103,14 @@ class _LinkSectionState extends State<LinkSection> {
       card: mode == LinkMode.personal
           ? null
           : _peopleCard(l, event: mode == LinkMode.event),
-      bar: LinkModeBar<LinkMode>(
-        key: const ValueKey('linkModeBar'),
-        selected: mode == LinkMode.personal ? mode : LinkMode.split,
-        onChanged: (m) => _c.setLinkMode(m, hasEvent: _hasEvent),
-        tabs: [
-          AppTab(
-            value: LinkMode.personal,
-            label: l.txLinkTabPersonal,
-            icon: AppIcons.wallet,
-          ),
-          AppTab(
-            value: LinkMode.split,
-            label: l.txLinkTabSplit,
-            icon: AppIcons.split,
-          ),
-        ],
+      bar: LinkSwitchRow(
+        key: const ValueKey('linkSwitchRow'),
+        label: l.txLinkTabSplit,
+        value: mode != LinkMode.personal,
+        onChanged: (on) => _c.setLinkMode(
+          on ? LinkMode.split : LinkMode.personal,
+          hasEvent: _hasEvent,
+        ),
       ),
     );
   }
@@ -152,6 +144,11 @@ class _LinkSectionState extends State<LinkSection> {
       onLongPress: e.onLongPress,
       variant: SplitEventVariant.compact,
       label: l.txLinkAddToEvent,
+      // Debts of an event bill are only made when asked; on by default.
+      onBookDebt: _hasEvent && _c.link.eventBookDebts != null
+          ? _c.setEventBookDebts
+          : null,
+      bookDebt: _c.link.eventBookDebts ?? true,
     );
   }
 
@@ -166,10 +163,14 @@ class _LinkSectionState extends State<LinkSection> {
         event ? _c.setEventPayer(p) : _c.setPaidBy(p);
 
     // A saved จ่ายแทน opens with its payer in the list.
-    if (!event && payer != null && !_c.splitPeople.contains(payer)) {
+    if (!event &&
+        payer != null &&
+        payer.name.isNotEmpty &&
+        !_c.splitPeople.contains(payer)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final p = _c.link.paidBy;
-        if (!mounted || p == null || _c.splitPeople.contains(p)) return;
+        if (!mounted || p == null || p.name.isEmpty) return;
+        if (_c.splitPeople.contains(p)) return;
         _c.addPeople([p]);
       });
     }
@@ -204,8 +205,10 @@ class _LinkSectionState extends State<LinkSection> {
 
     BillPerson draftRow(SplitDraft d) {
       final named = d.personName.trim().isNotEmpty;
-      final person = named ? _personOfDraft(d) : null;
-      final paid = person != null && person == payer;
+      // A row with no name yet can be marked too (it keeps the mark when the
+      // name is typed); saving waits for the name.
+      final person = _personOfDraft(d);
+      final paid = person == payer;
       return BillPerson(
         id: d,
         autofocusName: identical(d, _justAdded),
@@ -226,14 +229,14 @@ class _LinkSectionState extends State<LinkSection> {
           }
         },
         paid: paid,
-        onPay: person == null || paid ? null : () => setPayer(person),
+        onPay: paid ? null : () => setPayer(person),
         canPaidBack: paidBackAllowed && !paid,
-        paidBack: person != null && _c.isPaidBack(person),
-        onPaidBack: person == null ? null : () => _c.togglePaidBack(person),
-        tag: person == null ? null : tagFor(person),
+        paidBack: _c.isPaidBack(person),
+        onPaidBack: () => _c.togglePaidBack(person),
+        tag: named ? tagFor(person) : null,
         onRemove: () {
           if (paid) setPayer(null);
-          if (event && person != null) {
+          if (event && named) {
             _c.removeEventMember(person);
           } else {
             _c.removeDraft(d);

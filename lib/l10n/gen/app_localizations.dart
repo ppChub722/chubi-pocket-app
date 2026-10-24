@@ -13651,6 +13651,12 @@ abstract class AppLocalizations {
   /// **'Paid back needs the wallet the money went into'**
   String get txPaidBackNeedsWallet;
 
+  /// No description provided for @txLinkBookDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Record the debts too'**
+  String get txLinkBookDebt;
+
   /// No description provided for @txLinkWalletNotOut.
   ///
   /// In en, this message translates to:

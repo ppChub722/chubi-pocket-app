@@ -7872,6 +7872,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txPaidBackNeedsWallet => 'คืนแล้วต้องเลือกกระเป๋าที่รับเงิน';
 
   @override
+  String get txLinkBookDebt => 'จดหนี้ด้วย';
+
+  @override
   String get txLinkWalletNotOut => 'ไม่ออกจากกระเป๋า';
 
   @override

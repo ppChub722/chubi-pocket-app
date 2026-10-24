@@ -323,6 +323,7 @@ void main() {
 
     final ledgerOnly = form(
       set: (d) => d
+        ..createTransaction = false
         ..account = _wallet
         ..tagIds.add('t1')
         ..note.text = ' n '

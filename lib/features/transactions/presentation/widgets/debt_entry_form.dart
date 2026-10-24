@@ -98,8 +98,9 @@ class DebtEntryController extends ChangeNotifier {
   final note = TextEditingController();
   DateTime date = DateTime.now();
 
-  /// "มีเงินเข้า/ออกกระเป๋า": off by default (owner 2026-10-21).
-  bool createTransaction = false;
+  /// "บันทึกเป็นรายการด้วย" (money in / out of a wallet): on by default (owner
+  /// 2026-10-26; it was off 2026-10-21).
+  bool createTransaction = true;
 
   /// "กำหนดจ่าย": recording only, never before [date].
   DateTime? dueDate;
@@ -619,9 +620,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
         ? (owedToMe
               ? l.debtSummaryBecomesDebtor(name)
               : l.debtSummaryBecomesCreditor(name))
-        : (owedToMe
-              ? l.debtSummaryDebtor(name)
-              : l.debtSummaryCreditor(name));
+        : (owedToMe ? l.debtSummaryDebtor(name) : l.debtSummaryCreditor(name));
     return DebtSummaryRow(
       label: l.debtResultAfterSave,
       words: words,
@@ -896,8 +895,6 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
               flowRow: _flowCards(l),
             ),
             SizedBox(height: HeroMetrics.of(context).after),
-            if (!repay) ...[_createTxRow(l), gap],
-            if (summary != null) ...[summary, gap],
             if (moneyMoves) ...[
               TagChipRow(
                 selected: _c.tagIds,
@@ -907,6 +904,8 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
               ),
               gap,
             ],
+            if (!repay) ...[_createTxRow(l), gap],
+            if (summary != null) ...[summary, gap],
             DraftFieldRow(
               label: l.commonNote,
               child: AppInput.inline(

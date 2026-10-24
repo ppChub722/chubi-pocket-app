@@ -517,6 +517,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   void initState() {
     super.initState();
     _link.addListener(_onLinkChanged);
+    // A new bill offers "จดหนี้ด้วย" (on) once it has an event.
+    if (!_draftLike && !_isEvent) _c.link.eventBookDebts = true;
     final type = widget.initialType;
     if (type != null) _c.setType(type);
     final toAccount = widget.initialToAccount;
@@ -1467,6 +1469,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       if (_c.saveAmountFor(mode) <= 0) return l.quickAmountRequired;
     }
     if (!_c.isTransfer &&
+        mode != LinkMode.personal &&
+        _c.markedWithoutName(mode)) {
+      return l.debtCounterpartyRequired;
+    }
+    if (!_c.isTransfer &&
         mode == LinkMode.split &&
         _c.account == null &&
         _c.paidBackShares(event: false).isNotEmpty) {
@@ -1536,6 +1543,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final debtDirectory = context.read<DebtDirectoryCubit>();
     final payerJson = _c.link.eventPayer?.toJson() ?? const {'me': true};
     final date = _c.date;
+    // "จดหนี้ด้วย": the event bill goes into my debts too.
+    final bookDebts = event != null && (_c.link.eventBookDebts ?? false);
+    final eventDebts = _c.eventDebts();
 
     setState(() => _saving = true);
     String? warn;
@@ -1585,6 +1595,17 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         }
         accounts.patchBalances(result.accountBalances);
       }
+      if (bookDebts && eventProjectId != null) {
+        warn ??= await _bookEventDebts(
+          debts,
+          debtDirectory,
+          txRepo,
+          eventDebts,
+          billTxId: newTxId,
+          description: txBody.description,
+          note: txBody.note,
+        );
+      }
       if (backShares.isNotEmpty) {
         warn ??= eventProjectId == null
             ? await _repayNow(
@@ -1602,6 +1623,16 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                 payerJson,
                 backShares,
                 date: date,
+                // As on the event bill sheet: with debts on and me paying,
+                // the cash they handed back is a repayment too.
+                repay: bookDebts && eventDebts.payer == null
+                    ? (
+                        debts: debts,
+                        directory: debtDirectory,
+                        accounts: accounts,
+                        accountId: txBody.accountId,
+                      )
+                    : null,
               );
       }
       warn ??= await _linkAfterCreate(newTxId);
@@ -1642,9 +1673,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       for (final r in rows) {
         final p = r.person;
         final res = await debts.createRepayment(
-          p.contactId != null
-              ? debtPersonKey(contactId: p.contactId)
-              : debtPersonKey(name: p.name),
+          _debtKey(p),
           kind: DebtRepaymentKind.receive,
           amount: r.amount,
           accountId: accountId,
@@ -1669,6 +1698,13 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     Map<String, dynamic> payer,
     List<({LinkPerson person, double amount})> rows, {
     required DateTime date,
+    ({
+      PersonalDebtsRepository debts,
+      DebtDirectoryCubit directory,
+      AccountsCubit accounts,
+      String? accountId,
+    })?
+    repay,
   }) async {
     final l = AppLocalizations.of(context)!;
     try {
@@ -1678,7 +1714,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       ]);
       final payerId = resolved.memberIds.first;
       for (final (i, r) in rows.indexed) {
-        await projects.createTransaction(
+        final patch = await projects.createTransaction(
           projectId,
           transactionMemberId: resolved.memberIds[i + 1],
           type: 'payback',
@@ -1686,6 +1722,81 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           date: _ymd(date),
           splits: [ProjectSplitInput(memberId: payerId, amount: r.amount)],
         );
+        if (repay == null) continue;
+        final p = r.person;
+        final res = await repay.debts.createRepayment(
+          _debtKey(p),
+          kind: DebtRepaymentKind.receive,
+          amount: r.amount,
+          accountId: repay.accountId,
+          date: date,
+          personName: p.name,
+          billId: patch.row.where((x) => x.isParent).firstOrNull?.id,
+        );
+        repay.accounts.patchBalances(res.accountBalances);
+        repay.directory.applyBalance(res.balance);
+      }
+      return null;
+    } on ApiException catch (e) {
+      return eventErrorMessage(l, e);
+    }
+  }
+
+  static String _debtKey(LinkPerson p) => p.contactId != null
+      ? debtPersonKey(contactId: p.contactId)
+      : debtPersonKey(name: p.name);
+
+  /// "จดหนี้ด้วย" on an event bill (as the event bill sheet does): I paid →
+  /// each one's share is owed to me; someone else paid → my share is owed to
+  /// them. Linked to the bill when its id can be found.
+  Future<String?> _bookEventDebts(
+    PersonalDebtsRepository debts,
+    DebtDirectoryCubit directory,
+    TransactionsRepository txRepo,
+    ({
+      List<({LinkPerson person, double amount})> owedToMe,
+      LinkPerson? payer,
+      double myShare,
+    })
+    plan, {
+    required String? billTxId,
+    required String? description,
+    required String? note,
+  }) async {
+    final l = AppLocalizations.of(context)!;
+    try {
+      String? billId;
+      if (billTxId != null) {
+        try {
+          billId = (await txRepo.get(billTxId)).eventBill?.billId;
+        } on ApiException {
+          // Unlinked debts are still debts.
+        }
+      }
+      for (final r in plan.owedToMe) {
+        final res = await debts.createEntry(
+          _debtKey(r.person),
+          direction: DebtEntryDirection.paid,
+          amount: r.amount,
+          description: description,
+          note: note,
+          personName: r.person.name,
+          billId: billId,
+        );
+        directory.applyBalance(res.balance);
+      }
+      final payer = plan.payer;
+      if (payer != null && plan.myShare > 0.005) {
+        final res = await debts.createEntry(
+          _debtKey(payer),
+          direction: DebtEntryDirection.received,
+          amount: plan.myShare,
+          description: description,
+          note: note,
+          personName: payer.name,
+          billId: billId,
+        );
+        directory.applyBalance(res.balance);
       }
       return null;
     } on ApiException catch (e) {

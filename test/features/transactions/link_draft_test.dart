@@ -567,4 +567,48 @@ void main() {
       expect(e.paidBackShares(event: true).single.amount, 60);
     },
   );
+
+  test(
+    '"จดหนี้ด้วย" on an event bill: who owes me, or what I owe the payer',
+    () {
+      final c = _form()
+        ..setSplits([_split('บอส', 40, id: 'c1'), _split('มาตาก', 30)])
+        ..setLinkMode(LinkMode.event, hasEvent: true);
+      var d = c.eventDebts();
+      expect(d.payer, isNull);
+      expect(d.owedToMe.map((r) => r.person), [_boss, _mtk]);
+
+      // Paid back on the spot: no debt for that one.
+      c.togglePaidBack(_mtk);
+      expect(c.eventDebts().owedToMe.map((r) => r.person), [_boss]);
+
+      // Someone else paid: nobody owes me; my share is owed to them.
+      c.setEventPayer(_lee);
+      d = c.eventDebts();
+      expect(d.owedToMe, isEmpty);
+      expect(d.payer, _lee);
+      expect(d.myShare, greaterThan(0));
+    },
+  );
+
+  test(
+    '"จ่าย" / "คืนแล้ว" on a row with no name can be pressed, not saved',
+    () {
+      final c = _form()..setLinkMode(LinkMode.split, hasEvent: false);
+      final blank = c.splits.single;
+      expect(c.markedWithoutName(LinkMode.split), isFalse);
+
+      c.togglePaidBack(const LinkPerson(name: ''));
+      expect(c.markedWithoutName(LinkMode.split), isTrue);
+
+      // The name arrives: the mark follows it and the bill can be saved.
+      c.renameDraft(blank, 'มาตาก');
+      expect(c.isPaidBack(_mtk), isTrue);
+      expect(c.markedWithoutName(LinkMode.split), isFalse);
+
+      c.setPaidBy(const LinkPerson(name: ''));
+      expect(c.markedWithoutName(LinkMode.paid), isTrue);
+      expect(c.eventMembers.where((p) => p.name.isEmpty), isEmpty);
+    },
+  );
 }

@@ -2499,6 +2499,7 @@
   "txLinkCardNewToEvent": "ใหม่ · เพิ่มเข้าอีเวนต์",
   "txLinkAddToEvent": "เพิ่มในอีเวนต์",
   "txPaidBackNeedsWallet": "คืนแล้วต้องเลือกกระเป๋าที่รับเงิน",
+  "txLinkBookDebt": "จดหนี้ด้วย",
   "txLinkWalletNotOut": "ไม่ออกจากกระเป๋า",
   "txLinkWalletPart": "จ่ายจากกระเป๋า {amount}",
   "@txLinkWalletPart": {"placeholders": {"amount": {"type": "String"}}},

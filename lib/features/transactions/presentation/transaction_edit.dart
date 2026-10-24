@@ -153,6 +153,7 @@ class LinkEditSession {
     if (m == LinkMode.paid && c.link.paidBy == null) {
       return l.txLinkModeNeedsPayer;
     }
+    if (c.markedWithoutName(m)) return l.debtCounterpartyRequired;
     if (!c.linkBalanced(m)) {
       return m == LinkMode.split ? l.txSplitUnbalanced : l.txLinkModeUnbalanced;
     }

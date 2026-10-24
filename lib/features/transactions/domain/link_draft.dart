@@ -135,6 +135,11 @@ class LinkDraft {
   /// saves their payback with it.
   final Set<String> paidBack = {};
 
+  /// "จดหนี้ด้วย": an event bill also goes into my debts (who owes me, or
+  /// whom I owe), as on the event bill sheet. Null = not offered (editing).
+  /// Quick create turns it on.
+  bool? eventBookDebts;
+
   bool eventMeAuto = true;
   double? eventMeTyped;
 
@@ -148,7 +153,8 @@ class LinkDraft {
     final seen = <String>{};
     return [
       for (final p in [...splitPeople, ?paidBy, ?eventPayer, ...eventExtra])
-        if (seen.add(p.key)) p,
+        // A payer marked on a row that has no name yet is not a member (yet).
+        if (p.name.trim().isNotEmpty && seen.add(p.key)) p,
     ];
   }
 

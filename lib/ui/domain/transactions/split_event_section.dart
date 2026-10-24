@@ -178,6 +178,8 @@ class EventRow extends StatelessWidget {
     this.onLongPress,
     this.variant = SplitEventVariant.full,
     this.label,
+    this.onBookDebt,
+    this.bookDebt = true,
     super.key,
   });
 
@@ -188,6 +190,11 @@ class EventRow extends StatelessWidget {
   final bool editing;
   final VoidCallback? onLongPress;
   final SplitEventVariant variant;
+
+  /// At the end of the row, "จดหนี้ด้วย": the bill's debts go in my debts too.
+  /// Null = no switch.
+  final ValueChanged<bool>? onBookDebt;
+  final bool bookDebt;
 
   /// Replaces "อีเวนต์" as the row's label ("เพิ่มในอีเวนต์").
   final String? label;
@@ -218,7 +225,26 @@ class EventRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
-              Flexible(child: value),
+              Expanded(
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: value,
+                ),
+              ),
+              if (onBookDebt != null) ...[
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  l.txLinkBookDebt,
+                  maxLines: 1,
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                AppSwitch(
+                  value: bookDebt,
+                  onChanged: onBookDebt,
+                  semanticLabel: l.txLinkBookDebt,
+                ),
+              ],
             ],
           )
         : _compact
