@@ -24,8 +24,22 @@ class QuickCreateSheetShell extends StatefulWidget {
     this.subtitle,
     this.headerBar,
     this.tint,
+    this.barActionLabel,
+    this.onBarAction,
+    this.barActionIcon,
+    this.draftIcon,
+    this.saveIcon,
     super.key,
   });
+
+  /// A plain extra action at the bottom left (ข้าม / ยกเลิกจ่ายแล้ว).
+  final String? barActionLabel;
+  final VoidCallback? onBarAction;
+
+  /// Icons on the bottom buttons (null = text only).
+  final IconData? barActionIcon;
+  final IconData? draftIcon;
+  final IconData? saveIcon;
 
   final String title;
 
@@ -355,10 +369,13 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
                         children: [widget.body],
                       ),
                     ),
-                    if (widget.draftLabel == null && deleteButton == null)
+                    if (widget.draftLabel == null &&
+                        deleteButton == null &&
+                        widget.barActionLabel == null)
                       PinnedBar(
                         child: AppButton(
                           label: widget.saveLabel,
+                          icon: widget.saveIcon,
                           expand: true,
                           loading: widget.saving,
                           submits: true,
@@ -373,9 +390,21 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
                               deleteButton,
                               const SizedBox(width: AppSpacing.sm),
                             ],
+                            if (widget.barActionLabel != null) ...[
+                              AppButton(
+                                label: widget.barActionLabel!,
+                                icon: widget.barActionIcon,
+                                variant: AppButtonVariant.outlined,
+                                onPressed: widget.saving
+                                    ? null
+                                    : widget.onBarAction,
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                            ],
                             if (widget.draftLabel != null) ...[
                               AppButton(
                                 label: widget.draftLabel!,
+                                icon: widget.draftIcon,
                                 variant: AppButtonVariant.outlined,
                                 submits: true,
                                 onPressed: widget.onSaveDraft,
@@ -385,6 +414,7 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
                             Expanded(
                               child: AppButton(
                                 label: widget.saveLabel,
+                                icon: widget.saveIcon,
                                 expand: true,
                                 loading: widget.saving,
                                 submits: true,

@@ -66,6 +66,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
   BudgetPeriodPage? _allPeriods;
   bool _itemsBusy = false;
   Object? _itemsError;
+  bool _showExpected = false;
   bool _periodsBusy = false;
   Object? _periodsError;
 
@@ -331,9 +332,15 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     final l = AppLocalizations.of(context)!;
     final r = await showPeriodLimitSheet(
       context,
-      title: l.bgPeriodEditTitle,
+      title: d.budget.name,
+      subtitle: l.bgPeriodEditSubtitle(budgetPeriodTitle(context, d.budget, p)),
+      baseCaption: l.bgPeriodBase,
+      baseValue: budgetRowMoney(context, p.baseAmount),
+      usedCaption: l.bgFactUsed,
+      usedValue: budgetRowMoney(context, p.used),
       amountLabel: l.bgPeriodAmountField,
       noteLabel: l.commonNote,
+      noteHint: l.bgPeriodNoteHint,
       saveLabel: l.commonSave,
       symbol: context.readUserCurrencySymbol,
       amount: p.amount,
@@ -350,6 +357,8 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         p.id,
         amount: r.amount,
         note: r.note,
+        setAmount: r.amountChanged,
+        setNote: r.noteChanged,
       );
       if (!mounted) return;
       HapticFeedback.mediumImpact();
@@ -633,10 +642,8 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         records: SectionCard(
           title: l.fpBudgetsTabItems,
           children: [
-            if (d.items.items.isEmpty)
-              EmptyView.compact(message: l.bgItemsEmpty)
-            else
-              ..._itemRows(l, d),
+            ?_expectedChip(l, d),
+            ..._itemRows(l, d),
             if (d.items.hasMore)
               DetailRow.pick(
                 label: l.bgItemsMore,
@@ -877,6 +884,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       empty: EmptyView.compact(message: l.bgItemsEmpty),
       rowCards: true,
       topInset: 0,
+      scrollHeader: [?_expectedChip(l, d)],
       loadingMore: _itemsBusy,
       loadMoreError: _itemsError,
       onRetryMore: _loadMoreItems,
@@ -922,6 +930,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         for (final x in periods)
           ProgressCard.compact(
             title: budgetPeriodTitle(context, b, x),
+            caption: x.note,
             badge: _periodBadge(l, b, x),
             value: x.usedRatio,
             expected: x.expected > 0 ? x.expectedRatio : null,
@@ -958,91 +967,116 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     return budgetStatusChip(l, b, period: x, size: ChipSize.mini);
   }
 
+  /// Shows / hides the รอจ่าย rows (hidden at first), with how many there are.
+  Widget? _expectedChip(AppLocalizations l, BudgetDetail d) {
+    final n = d.bySource
+        .where((r) => r.expected)
+        .fold<int>(0, (s, r) => s + r.count);
+    if (n == 0) return null;
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: AppChip(
+        label: l.bgFactPending,
+        icon: AppIcons.scheduled,
+        trailing: AppChipTrailing.count,
+        count: n,
+        selected: _showExpected,
+        onTap: () => setState(() => _showExpected = !_showExpected),
+      ),
+    );
+  }
+
+  /// One header per day, newest day first, whatever order the pages came in
+  /// (expected and used rows share a day's group).
   List<Widget> _itemRows(AppLocalizations l, BudgetDetail d) {
-    final out = <Widget>[];
-    final dayTotal = <DateTime, double>{};
-    for (final i in d.items.items) {
+    final byDay = <DateTime, List<BudgetItem>>{};
+    final undated = <BudgetItem>[];
+    final shown = [
+      for (final i in d.items.items)
+        if (_showExpected || !i.expected) i,
+    ];
+    if (shown.isEmpty) return [EmptyView.compact(message: l.bgItemsEmpty)];
+    for (final i in shown) {
       final date = i.date;
-      if (date != null) dayTotal[date] = (dayTotal[date] ?? 0) - i.amount;
-    }
-    DateTime? last;
-    for (final i in d.items.items) {
-      final date = i.date;
-      if (date != null && date != last) {
-        out.add(
-          DateGroupHeader(
-            label: budgetDate(context, date),
-            total: dayTotal[date],
-          ),
-        );
-        last = date;
+      if (date == null) {
+        undated.add(i);
+      } else {
+        (byDay[date] ??= []).add(i);
       }
-      out.add(_itemRow(l, i));
     }
-    return out;
+    final days = byDay.keys.toList()..sort((a, b) => b.compareTo(a));
+    return [
+      for (final day in days) ...[
+        DateGroupHeader(
+          label: budgetDate(context, day),
+          total: byDay[day]!.fold<double>(0, (s, i) => s - i.amount),
+        ),
+        for (final i in byDay[day]!) _itemRow(l, i),
+      ],
+      for (final i in undated) _itemRow(l, i),
+    ];
   }
 
   Widget _itemRow(AppLocalizations l, BudgetItem i) {
     final title = (i.description ?? '').isNotEmpty
         ? i.description!
         : (i.category?.name ?? i.event?.name ?? '—');
-    final seq = i.recurringSeq;
-    return AppListRow(
-      leading: IconDisplay(
-        type: IconType.category,
-        size: 36,
-        iconCode: i.category?.iconCode ?? i.event?.iconCode,
-      ),
+    final account = i.account;
+    final source = switch (i.source) {
+      BudgetSource.recurring || BudgetSource.upcoming =>
+        i.recurringTotal != null ? TxSource.installment : TxSource.recurring,
+      BudgetSource.event => TxSource.event,
+      BudgetSource.pending => TxSource.pending,
+      BudgetSource.normal || BudgetSource.futureTx => null,
+    };
+    void occurrence() => openOccurrence(
+      context,
+      itemId: i.recurringItemId,
+      ruleId: i.ruleId,
+      slot: i.slot,
+      onChanged: (_) => _load(),
+    );
+    // The same row as the transactions list (a budget only counts spending).
+    return TxListRow(
+      kind: TxListKind.expense,
+      icon: i.category?.iconCode ?? i.event?.iconCode,
       title: title,
-      titleChips: [
-        walletRowChip(
-          context,
-          name: i.account?.name ?? l.transactionFormAccountNone,
-          iconCode: i.account?.iconCode,
-          type: i.account?.type,
-        ),
-      ],
-      line2: ListRowLine(
-        lead: i.source == BudgetSource.normal
-            ? null
-            : ListRowChip(
-                i.event != null && i.source == BudgetSource.event
-                    ? '${l.bgSourceEvent} ${i.event!.name}'
-                    : budgetSourceLabel(l, i.source),
-              ),
-        parts: [
-          if (i.category != null && i.category!.name != title) i.category!.name,
-        ],
-        spans: [
-          for (final t in i.tags) tagSpan(context, t, iconCode: i.tagIcons[t]),
-        ],
-        glyphs: [
-          if (i.recurringItemId != null) const ListRowGlyph(AppIcons.recurring),
-          if (seq != null)
-            ListRowGlyph(
-              AppIcons.progress,
-              text: i.recurringTotal == null
-                  ? '$seq'
-                  : '$seq/${i.recurringTotal}',
+      source: source,
+      wallet: account == null
+          ? null
+          : walletRowChip(
+              context,
+              name: account.name,
+              iconCode: account.iconCode,
+              type: account.type,
             ),
-        ],
-      ),
-      trailing: ListRowTrailing.value(
-        MoneyText(-i.amount, tone: MoneyTone.signed),
-      ),
+      parts: [
+        if (i.category != null && i.category!.name != title) i.category!.name,
+      ],
+      tags: [
+        for (final t in i.tags) tagSpan(context, t, iconCode: i.tagIcons[t]),
+      ],
+      amount: MoneyText(-i.amount, tone: MoneyTone.signed),
       dimmed: i.expected,
+      status: !i.expected
+          ? null
+          : i.source == BudgetSource.pending
+          ? ListRowChip(l.bgSourcePending)
+          : i.date != null
+          ? ListRowChip(dueLabel(l, date: i.date!, withDate: false))
+          : null,
       onTap: switch (i.kind) {
         'transaction' => () => openPage(context, '/transactions/${i.id}'),
         'recurring_item'
             when i.recurringItemId != null ||
                 (i.ruleId != null && i.slot != null) =>
-          () => openOccurrence(
-            context,
-            itemId: i.recurringItemId,
-            ruleId: i.ruleId,
-            slot: i.slot,
-            onChanged: (_) => _load(),
-          ),
+          occurrence,
+        'event_bill' when i.event != null => () => openPage(
+          context,
+          '/projects/${i.event!.id}',
+        ),
+        'pending' when i.recurringItemId != null => occurrence,
+        'pending' => () => openPage(context, '/pending'),
         _ => null,
       },
     );

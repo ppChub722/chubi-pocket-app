@@ -163,6 +163,29 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
           ),
         ),
         HubDemo(
+          title: 'PickedRowFrame: one picked item as a row',
+          note:
+              'A single picked thing shown as its normal list row (an '
+              'occurrence\'s linked transaction): dashed primary frame, tap '
+              'picks again, ✕ takes it off.',
+          child: PickedRowFrame(
+            onTap: () {},
+            onRemove: () {},
+            child: AppListRow(
+              leading: const IconDisplay(
+                type: IconType.category,
+                size: 36,
+                iconCode: null,
+              ),
+              title: 'lucky',
+              line2: const ListRowLine(parts: ['Food & Drinks', 'เมื่อวาน']),
+              trailing: const ListRowTrailing.value(
+                MoneyText(-600, tone: MoneyTone.signed),
+              ),
+            ),
+          ),
+        ),
+        HubDemo(
           title: 'PickCard — one height per variant',
           note:
               'Picking never adds a line or moves the layout. The 3-line '

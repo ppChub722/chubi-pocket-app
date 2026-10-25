@@ -20,11 +20,13 @@ class AppListRow extends StatelessWidget {
     required this.leading,
     this.title = '',
     this.titleField,
+    this.titleMark,
     this.titleStrong = false,
     this.titleMaxLines = 1,
     this.titleChips = const [],
     this.status,
     this.line2,
+    this.line3,
     this.trailing,
     this.actions = const [],
     this.alert,
@@ -43,6 +45,10 @@ class AppListRow extends StatelessWidget {
 
   static const double chipMaxWidth = 120;
 
+  /// A small circle before the title, as tall as its letters: where the row
+  /// came from (รายการประจำ / ผ่อน / อีเวนต์ …).
+  final ListRowMark? titleMark;
+
   final Widget leading;
   final String title;
 
@@ -55,6 +61,9 @@ class AppListRow extends StatelessWidget {
   final List<ListRowChip> titleChips;
   final ListRowChip? status;
   final ListRowLine? line2;
+
+  /// Under line 2, the same style (a money row's tags).
+  final ListRowLine? line3;
   final ListRowTrailing? trailing;
 
   /// Taps here never reach [onTap].
@@ -87,6 +96,7 @@ class AppListRow extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final small = textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
     final line = line2?._build(context, small);
+    final third = line3?._build(context, small);
     final alert = this.alert;
     final trailing = this.trailing;
     final status = this.status;
@@ -107,6 +117,10 @@ class AppListRow extends StatelessWidget {
             );
             return Row(
               children: [
+                if (titleMark case final mark?) ...[
+                  mark._build(context, textTheme.bodyLarge),
+                  const SizedBox(width: AppSpacing.xs),
+                ],
                 if (titleField != null)
                   Expanded(child: titleField)
                 else
@@ -136,6 +150,8 @@ class AppListRow extends StatelessWidget {
         ),
         if (line != null)
           Padding(padding: const EdgeInsets.only(top: 2), child: line),
+        if (third != null)
+          Padding(padding: const EdgeInsets.only(top: 2), child: third),
         if (alert != null)
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.xs),
@@ -407,6 +423,26 @@ class ListRowLine {
         child: content,
       ),
     );
+  }
+}
+
+/// [AppListRow.titleMark]: the glyph alone in its colour (no disc), a little
+/// larger than the title's letters (text scale included).
+@immutable
+class ListRowMark {
+  const ListRowMark(this.icon, {required this.color, this.tooltip});
+
+  final IconData icon;
+  final Color color;
+  final String? tooltip;
+
+  Widget _build(BuildContext context, TextStyle? title) {
+    final size = MediaQuery.textScalerOf(
+      context,
+    ).scale((title?.fontSize ?? 16) * 1.15);
+    final mark = Icon(icon, size: size, color: color);
+    final tip = tooltip;
+    return tip == null ? mark : Tooltip(message: tip, child: mark);
   }
 }
 

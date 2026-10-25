@@ -50,6 +50,7 @@ import 'draft_form.dart';
 import 'event_pick.dart';
 import 'event_picker.dart';
 import 'recurring_link.dart';
+import 'transaction_tile.dart';
 import 'tx_summary_title.dart';
 
 class EntrySheetAction {
@@ -80,6 +81,29 @@ class EntrySheetChip {
   final Future<bool> Function(BuildContext sheetContext) onTap;
 }
 
+/// บันทึกในรายการ: [pick] chooses an existing transaction; nothing is written
+/// until the main button, which then runs [apply] (true closes as saved).
+class EntrySheetLink {
+  const EntrySheetLink({required this.pick, required this.apply});
+
+  final Future<Transaction?> Function(BuildContext sheetContext) pick;
+  final Future<bool> Function(BuildContext sheetContext, Transaction tx) apply;
+}
+
+/// จ่ายแล้ว: a tick row (paid without a transaction). A change is written on
+/// the main button by [apply] (with the form's edits); true closes as saved.
+class EntrySheetPaid {
+  const EntrySheetPaid({required this.initial, required this.apply});
+
+  final bool initial;
+  final Future<bool> Function(
+    BuildContext sheetContext,
+    bool paid,
+    PendingDraft draft,
+  )
+  apply;
+}
+
 class EntrySheetConfig {
   const EntrySheetConfig({
     required this.title,
@@ -88,7 +112,17 @@ class EntrySheetConfig {
     this.onDelete,
     this.subtitle,
     this.chips = const [],
+    this.barAction,
+    this.link,
+    this.createAction,
+    this.paid,
   });
+
+  final EntrySheetPaid? paid;
+
+  /// A tick row ([EntrySheetAction.label]); ticked, บันทึก runs this instead
+  /// of the main action (an occurrence recorded now).
+  final EntrySheetAction? createAction;
 
   final String title;
   final PendingDraft initial;
@@ -96,6 +130,11 @@ class EntrySheetConfig {
   final Future<bool> Function()? onDelete;
   final String? subtitle;
   final List<EntrySheetChip> chips;
+
+  /// A plain button at the bottom left (ข้าม / ยกเลิกจ่ายแล้ว).
+  final EntrySheetChip? barAction;
+
+  final EntrySheetLink? link;
 }
 
 Future<bool> showEntrySheet(
@@ -106,6 +145,10 @@ Future<bool> showEntrySheet(
   Future<bool> Function()? onDelete,
   String? subtitle,
   List<EntrySheetChip> chips = const [],
+  EntrySheetChip? barAction,
+  EntrySheetLink? link,
+  EntrySheetAction? createAction,
+  EntrySheetPaid? paid,
 }) {
   assert(actions.isNotEmpty && actions.length <= 2, '1 or 2 actions');
   return showQuickCreateSheet(
@@ -117,6 +160,10 @@ Future<bool> showEntrySheet(
       onDelete: onDelete,
       subtitle: subtitle,
       chips: chips,
+      barAction: barAction,
+      link: link,
+      createAction: createAction,
+      paid: paid,
     ),
   );
 }
@@ -839,6 +886,170 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     } else {
       setState(() => _saving = false);
     }
+  }
+
+  /// The transaction picked in บันทึกในรายการ (written on the main button),
+  /// and the form's own values it covers in the hero meanwhile.
+  Transaction? _entryTx;
+  ({String amount, DateTime date, Account? account, Category? category})?
+  _beforeEntryTx;
+
+  Future<void> _pickEntryTx() async {
+    final link = widget.entry?.link;
+    if (link == null) return;
+    final tx = await link.pick(context);
+    if (tx == null || !mounted) return;
+    _beforeEntryTx ??= (
+      amount: _c.amount.text,
+      date: _c.date,
+      account: _c.account,
+      category: _c.category,
+    );
+    final opts = maybeTxFormOptions(context, watch: false)?.state.options;
+    final accounts =
+        opts?.accountList ?? context.read<AccountsCubit>().state.accounts;
+    final categories =
+        opts?.categoryList ?? context.read<CategoriesCubit>().state.categories;
+    _c.amount.text = AmountInput.format(tx.amount);
+    _c.setDate(DateTime.tryParse(tx.date) ?? _c.date);
+    _c.setAccount(
+      accounts.where((a) => a.id == tx.accountId).firstOrNull ??
+          tx.account?.toAccount(),
+    );
+    _c.setCategory(
+      categories.where((c) => c.id == tx.categoryId).firstOrNull ??
+          tx.category?.toCategory(),
+    );
+    setState(() => _entryTx = tx);
+  }
+
+  void _clearEntryTx() {
+    final was = _beforeEntryTx;
+    if (was != null) {
+      _c.amount.text = was.amount;
+      _c.setDate(was.date);
+      _c.setAccount(was.account);
+      _c.setCategory(was.category);
+    }
+    setState(() {
+      _entryTx = null;
+      _beforeEntryTx = null;
+    });
+  }
+
+  Future<void> _runEntryLink() async {
+    final link = widget.entry!.link!;
+    final navigator = Navigator.of(context);
+    setState(() => _saving = true);
+    final ok = await link.apply(context, _entryTx!);
+    if (!mounted) return;
+    if (ok) {
+      navigator.pop(true);
+    } else {
+      setState(() => _saving = false);
+    }
+  }
+
+  /// สร้างรายการใหม่ ticked: บันทึก records the transaction now.
+  bool _entryCreate = false;
+
+  /// จ่ายแล้ว as ticked now (written on บันทึก when it changed).
+  late bool _entryPaid = widget.entry?.paid?.initial ?? false;
+
+  bool get _entryPaidChanged {
+    final paid = widget.entry?.paid;
+    return paid != null && _entryPaid != paid.initial;
+  }
+
+  Future<void> _runEntryPaid() async {
+    final paid = widget.entry!.paid!;
+    final navigator = Navigator.of(context);
+    setState(() => _saving = true);
+    final ok = await paid.apply(context, _entryPaid, _c.toDraft());
+    if (!mounted) return;
+    if (ok) {
+      navigator.pop(true);
+    } else {
+      setState(() => _saving = false);
+    }
+  }
+
+  /// สร้างรายการใหม่ (a tick), บันทึกในรายการ and จ่ายแล้ว (a tick): each
+  /// settles the occurrence, so each locks the others.
+  Widget? _entryRows(AppLocalizations l) {
+    final entry = widget.entry;
+    if (entry == null) return null;
+    final tx = _entryTx;
+    final create = entry.createAction;
+    final paid = entry.paid;
+    final rows = <Widget>[
+      if (create != null)
+        DraftFieldRow(
+          label: create.label,
+          dense: true,
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: SelectCheck(
+              value: _entryCreate,
+              onTap: _saving || tx != null || _entryPaid
+                  ? null
+                  : () => setState(() => _entryCreate = !_entryCreate),
+            ),
+          ),
+        ),
+      if (paid != null)
+        DraftFieldRow(
+          key: const ValueKey('entryPaidRow'),
+          label: l.occurrenceMarkPaid,
+          dense: true,
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: SelectCheck(
+              value: _entryPaid,
+              onTap: _saving || tx != null || _entryCreate
+                  ? null
+                  : () => setState(() => _entryPaid = !_entryPaid),
+            ),
+          ),
+        ),
+      if (entry.link != null)
+        DraftFieldRow(
+          label: l.occurrenceRecordInTx,
+          dense: true,
+          child: tx == null
+              ? Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: AppChip(
+                    label: l.occurrenceLinkPick,
+                    icon: AppIcons.add,
+                    tone: AppChipTone.primary,
+                    selected: true,
+                    dashed: true,
+                    onTap: _saving || _entryCreate || _entryPaid
+                        ? null
+                        : _pickEntryTx,
+                  ),
+                )
+              // The picked one as its list row: tap picks again, ✕ takes it
+              // off.
+              : PickedRowFrame(
+                  onTap: _saving ? null : _pickEntryTx,
+                  onRemove: _saving ? null : _clearEntryTx,
+                  removeTooltip: l.commonRemove,
+                  child: TransactionTile(transaction: tx, showDate: true),
+                ),
+        ),
+    ];
+    if (rows.isEmpty) return null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final (i, r) in rows.indexed) ...[
+          if (i > 0) const SizedBox(height: AppSpacing.sm),
+          r,
+        ],
+      ],
+    );
   }
 
   Widget? _entryChips() {
@@ -1862,18 +2073,35 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           ? _sav.hasKeyData
           : _dirty,
       onCloseBlocked: _confirmClose,
+      barActionLabel: widget.entry?.barAction?.label,
+      barActionIcon: widget.entry?.barAction?.icon,
+      draftIcon: _isEntry ? AppIcons.save : null,
+      saveIcon: _isEntry ? AppIcons.save : null,
+      onBarAction: widget.entry?.barAction == null
+          ? null
+          : () => _runEntryChip(widget.entry!.barAction!),
+      // One word for every entry: บันทึก records, links or keeps the edits.
       saveLabel: _isEntry
           ? _entryAction(primary: true).label
           : _isEvent || _isEditTx
           ? l.transactionFormSave
           : (_editingDraft ? l.pendingSubmitThis : l.quickSave),
+      // A picked transaction settles the occurrence: no draft save beside it.
       draftLabel: _isEntry
-          ? _entrySecondary?.label
+          ? (_entryTx != null ? null : _entrySecondary?.label)
           : _isEvent || _isEditTx || _isDebt || (_isSaving && !_isSavingDraft)
           ? null
           : l.pendingSaveDraft,
       onSave: _isEntry
-          ? (waiting ? null : () => _runEntry(_entryAction(primary: true)))
+          ? (waiting
+                ? null
+                : _entryTx != null
+                ? _runEntryLink
+                : _entryPaidChanged
+                ? _runEntryPaid
+                : _entryCreate && widget.entry!.createAction != null
+                ? () => _runEntry(widget.entry!.createAction!)
+                : () => _runEntry(_entryAction(primary: true)))
           : _isEditTx
           ? (waiting || _draftBaseline == null ? null : _saveEditTx)
           : _isSavingDraft
@@ -1919,9 +2147,14 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                 chipRows: true,
                 controller: _c,
                 defaultAccount: _defaultAccount(accounts, options: options),
-                typeLocked: _editingRow || _isEditTx,
+                // An entry keeps its type: the occurrence API takes none.
+                typeLocked: _editingRow || _isEditTx || _isEntry,
                 // An entry saves a PendingDraft: no splits there.
                 allowSplits: !_isEditTx && !_isEntry,
+                rowAboveNote: _isEntry ? _entryRows(l) : null,
+                heroLocked: _entryTx != null,
+                // An occurrence keeps no event: its section saved nothing.
+                linkSections: !_isEntry,
                 event: _isEvent
                     ? DraftEvent(
                         members: widget.project!.currentMembers,

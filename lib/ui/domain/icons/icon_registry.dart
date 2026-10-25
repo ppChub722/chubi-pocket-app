@@ -77,6 +77,8 @@ class IconRegistry {
     'subscriptions': Icons.subscriptions_outlined,
     'swap_horiz': Icons.swap_horiz,
     'schedule': Icons.schedule,
+    'timelapse': Icons.timelapse,
+    'notifications': Icons.notifications_outlined,
     'credit_card': Icons.credit_card_outlined,
     'redeem': Icons.redeem_outlined,
     'payments': Icons.payments_outlined,

@@ -63,6 +63,7 @@ class PersonalDebtsRepository {
     List<String>? markPaidIds,
     String? personName,
     String? billId,
+    String? eventId,
     DateTime? dueDate,
   }) async {
     try {
@@ -85,6 +86,8 @@ class PersonalDebtsRepository {
           // The event resolve sheet's "as debt" (0.4.0-3 B3): the bill it
           // settles a share of; the debt keeps it as its source.
           'bill_id': ?billId,
+          // An event's จัดการ line (no bill): settle shows it as recorded.
+          'event_id': ?eventId,
           if (dueDate != null) 'due_date': debtDateWire(dueDate),
         },
       );
@@ -198,6 +201,27 @@ class PersonalDebtsRepository {
   /// The "จ่ายแล้ว" label only (it never changes a number).
   Future<DebtEntryWriteResult> setPaid(String id, bool paid) =>
       updateEntry(id, DebtEntryUpdate(paid: paid));
+
+  /// บันทึกในรายการ: points the entry at one of my transactions (its own
+  /// transaction, if any, goes).
+  Future<DebtEntryWriteResult> linkTx(String id, String transactionId) =>
+      _write('/personal-debts/$id/link', {'transaction_id': transactionId});
+
+  /// Drops the link; the transaction stays.
+  Future<DebtEntryWriteResult> unlinkTx(String id) =>
+      _write('/personal-debts/$id/unlink', null);
+
+  Future<DebtEntryWriteResult> _write(String path, Object? body) async {
+    try {
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        path,
+        data: body,
+      );
+      return DebtEntryWriteResult.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
 
   Future<DebtEntryDeleteResult> deleteEntry(String id) async {
     try {

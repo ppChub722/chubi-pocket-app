@@ -163,41 +163,72 @@ class SettingToggleRow extends StatelessWidget {
   }
 }
 
-class SettingDropdownRow extends StatelessWidget {
+/// A settings row whose value is a ▾ button that opens a menu of [options]
+/// right under that button. Tapping anywhere on the row opens it too. A null
+/// [onSelected] makes the row read-only.
+class SettingDropdownRow<T> extends StatefulWidget {
   const SettingDropdownRow({
     required this.label,
     required this.value,
-    required this.onTap,
+    this.options = const [],
+    this.selected,
+    this.onSelected,
     this.helper,
     this.leading,
     this.icon,
+    this.iconColor,
     super.key,
   });
 
   final String label;
   final String value;
-  final VoidCallback? onTap;
+  final List<SheetOption<T>> options;
+  final T? selected;
+  final ValueChanged<T>? onSelected;
   final String? helper;
   final Widget? leading;
 
   /// The chosen value's icon, in the button before its label.
   final IconData? icon;
 
+  /// The chosen value's own colour (e.g. a type's), for [icon] only.
+  final Color? iconColor;
+
   @override
-  Widget build(BuildContext context) => DetailRow(
-    leading: leading,
-    label: label,
-    helper: helper,
-    onTap: onTap,
-    trailing: AppButton(
-      label: value,
-      icon: icon,
-      variant: AppButtonVariant.outlined,
-      size: AppButtonSize.control,
-      trailingIcon: AppIcons.dropdown,
-      onPressed: onTap,
-    ),
-  );
+  State<SettingDropdownRow<T>> createState() => _SettingDropdownRowState<T>();
+}
+
+class _SettingDropdownRowState<T> extends State<SettingDropdownRow<T>> {
+  final _menu = MenuController();
+
+  void _toggle() => _menu.isOpen ? _menu.close() : _menu.open();
+
+  @override
+  Widget build(BuildContext context) {
+    final cb = widget.onSelected;
+    return DetailRow(
+      leading: widget.leading,
+      label: widget.label,
+      helper: widget.helper,
+      onTap: cb == null ? null : _toggle,
+      trailing: OptionMenuAnchor<T>(
+        controller: _menu,
+        alignEnd: true,
+        options: widget.options,
+        selected: widget.selected,
+        onSelected: (v) => cb?.call(v),
+        builder: (context, toggle) => AppButton(
+          label: widget.value,
+          icon: widget.icon,
+          iconColor: widget.iconColor,
+          variant: AppButtonVariant.outlined,
+          size: AppButtonSize.control,
+          trailingIcon: AppIcons.dropdown,
+          onPressed: cb == null ? null : toggle,
+        ),
+      ),
+    );
+  }
 }
 
 class SettingSwitchViewRow extends StatelessWidget {
@@ -329,6 +360,7 @@ class SettingMenuRow<T> extends StatefulWidget {
 class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
   final _text = TextEditingController();
   final _focus = FocusNode();
+  final _menu = MenuController();
   bool _typing = false;
 
   @override
@@ -468,7 +500,11 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
   Widget build(BuildContext context) {
     final custom = widget.custom;
     final cb = widget.onSelected;
-    return OptionMenuAnchor<T>(
+    // The menu hangs under the value, not under the whole row.
+    final value = OptionMenuAnchor<T>(
+      controller: _menu,
+      // The value ends the row unless a note follows it.
+      alignEnd: widget.note == null,
       options: widget.options,
       selected: widget.selected,
       onSelected: (v) {
@@ -483,67 +519,67 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
               selectedLabel: _isCustomValue ? widget.value : null,
               onChoose: _startTyping,
             ),
-      builder: (context, toggle) {
-        final value = custom != null && (_typing || _isCustomValue)
-            ? _field(custom, toggle)
-            : AppButton(
-                label: widget.value,
-                variant: AppButtonVariant.outlined,
-                size: AppButtonSize.control,
-                trailingIcon: AppIcons.dropdown,
-                onPressed: cb == null ? null : toggle,
-              );
-        final note = widget.note;
-        // As big as the value on the button beside it.
-        final noteText = note == null
-            ? null
-            : Text(
-                note,
-                maxLines: 1,
-                style: ChipSize.control
-                    .textStyle(context)
-                    ?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-              );
-        if (widget.compact) {
-          return Row(
-            children: [
-              Expanded(
-                child: Text(
-                  widget.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+      builder: (context, toggle) => custom != null && (_typing || _isCustomValue)
+          ? _field(custom, toggle)
+          : AppButton(
+              label: widget.value,
+              variant: AppButtonVariant.outlined,
+              size: AppButtonSize.control,
+              trailingIcon: AppIcons.dropdown,
+              onPressed: cb == null ? null : toggle,
+            ),
+    );
+    final note = widget.note;
+    // As big as the value on the button beside it.
+    final noteText = note == null
+        ? null
+        : Text(
+            note,
+            maxLines: 1,
+            style: ChipSize.control
+                .textStyle(context)
+                ?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
-              ),
-              value,
-              if (noteText != null) ...[
+          );
+    if (widget.compact) {
+      return Row(
+        children: [
+          Expanded(
+            child: Text(
+              widget.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
+          value,
+          if (noteText != null) ...[
+            const SizedBox(width: AppSpacing.sm),
+            noteText,
+          ],
+        ],
+      );
+    }
+    return DetailRow(
+      label: widget.label,
+      helper: widget.helper,
+      onTap: cb == null || _typing
+          ? null
+          : () => _menu.isOpen ? _menu.close() : _menu.open(),
+      trailing: noteText == null
+          ? value
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                value,
                 const SizedBox(width: AppSpacing.sm),
                 noteText,
               ],
-            ],
-          );
-        }
-        return DetailRow(
-          label: widget.label,
-          helper: widget.helper,
-          onTap: cb == null || _typing ? null : toggle,
-          trailing: noteText == null
-              ? value
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    value,
-                    const SizedBox(width: AppSpacing.sm),
-                    noteText,
-                  ],
-                ),
-        );
-      },
+            ),
     );
   }
 }

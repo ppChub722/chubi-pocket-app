@@ -47,6 +47,21 @@ class DebtEntryDraft extends Equatable {
     due: due,
   );
 
+  /// Without the entry's own transaction (its wallet and tags went with it).
+  DebtEntryDraft withoutTx() => DebtEntryDraft(
+    direction: direction,
+    amount: amount,
+    description: description,
+    note: note,
+    date: date,
+    accountId: null,
+    personKey: personKey,
+    tagIds: const [],
+    paid: paid,
+    createTx: false,
+    due: due,
+  );
+
   @override
   List<Object?> get props => [
     due,

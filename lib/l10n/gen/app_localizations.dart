@@ -8395,6 +8395,24 @@ abstract class AppLocalizations {
   /// **'Link an existing transaction'**
   String get occurrenceLinkExisting;
 
+  /// No description provided for @occurrenceRecordInTx.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded as'**
+  String get occurrenceRecordInTx;
+
+  /// No description provided for @occurrenceLinkPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Link a transaction'**
+  String get occurrenceLinkPick;
+
+  /// No description provided for @occurrenceCreateNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Create it now'**
+  String get occurrenceCreateNow;
+
   /// No description provided for @occurrenceConfirmAll.
   ///
   /// In en, this message translates to:
@@ -8563,36 +8581,6 @@ abstract class AppLocalizations {
   /// **'Show less'**
   String get occurrenceShowLess;
 
-  /// No description provided for @recurringAheadForever.
-  ///
-  /// In en, this message translates to:
-  /// **'keeps going'**
-  String get recurringAheadForever;
-
-  /// No description provided for @recurringAheadLeft.
-  ///
-  /// In en, this message translates to:
-  /// **'{n} more'**
-  String recurringAheadLeft(int n);
-
-  /// No description provided for @recurringAheadTotal.
-  ///
-  /// In en, this message translates to:
-  /// **'{amount} in all'**
-  String recurringAheadTotal(String amount);
-
-  /// No description provided for @recurringAheadUntil.
-  ///
-  /// In en, this message translates to:
-  /// **'until {date}'**
-  String recurringAheadUntil(String date);
-
-  /// No description provided for @recurringAheadEdited.
-  ///
-  /// In en, this message translates to:
-  /// **'Changed ahead'**
-  String get recurringAheadEdited;
-
   /// No description provided for @recurringAheadCustomize.
   ///
   /// In en, this message translates to:
@@ -8610,12 +8598,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Next'**
   String get recurringAheadNext;
-
-  /// No description provided for @recurringAheadSummary.
-  ///
-  /// In en, this message translates to:
-  /// **'Summary'**
-  String get recurringAheadSummary;
 
   /// No description provided for @recurringTileMoved.
   ///
@@ -9751,6 +9733,18 @@ abstract class AppLocalizations {
   /// **'Move'**
   String get sgv2KindMove;
 
+  /// No description provided for @sgEntryFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'from {name}'**
+  String sgEntryFrom(String name);
+
+  /// No description provided for @sgEntryTo.
+  ///
+  /// In en, this message translates to:
+  /// **'to {name}'**
+  String sgEntryTo(String name);
+
   /// No description provided for @sgv2SpareTitle.
   ///
   /// In en, this message translates to:
@@ -10068,6 +10062,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Amount for this period'**
   String get bgPeriodAmountField;
+
+  /// No description provided for @bgPeriodEditSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Only {period} | other periods stay'**
+  String bgPeriodEditSubtitle(String period);
+
+  /// No description provided for @bgPeriodBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Base amount'**
+  String get bgPeriodBase;
+
+  /// No description provided for @bgPeriodNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. a wedding this month'**
+  String get bgPeriodNoteHint;
 
   /// No description provided for @bgSectionScope.
   ///
@@ -11123,7 +11135,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpBudgetsPeriodReset.
   ///
   /// In en, this message translates to:
-  /// **'Back to the base amount ({amount})'**
+  /// **'↺ Use the base amount ({amount})'**
   String fpBudgetsPeriodReset(String amount);
 
   /// No description provided for @fpBudgetsCloseConsequence.
@@ -12134,6 +12146,60 @@ abstract class AppLocalizations {
   /// **'Each person'**
   String get evbNets;
 
+  /// No description provided for @evbMembersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get evbMembersTitle;
+
+  /// No description provided for @evbManageMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage members ›'**
+  String get evbManageMembers;
+
+  /// No description provided for @evbSettleSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Settle up'**
+  String get evbSettleSection;
+
+  /// No description provided for @evbSettleRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Record as a debt'**
+  String get evbSettleRecord;
+
+  /// No description provided for @evbSettleRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded'**
+  String get evbSettleRecorded;
+
+  /// No description provided for @evbSettleRecordBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Record in your debts: {from} → {to} {amount}'**
+  String evbSettleRecordBody(String from, String to, String amount);
+
+  /// No description provided for @evbBookedDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt'**
+  String get evbBookedDebt;
+
+  /// No description provided for @evbBookedTx.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction'**
+  String get evbBookedTx;
+
+  /// No description provided for @evbBookMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Book it'**
+  String get evbBookMine;
+
   /// No description provided for @evbSettleTitle.
   ///
   /// In en, this message translates to:
@@ -12161,7 +12227,7 @@ abstract class AppLocalizations {
   /// No description provided for @evbSettleHint.
   ///
   /// In en, this message translates to:
-  /// **'Tap \"Paid\" to record the payback in the event; anyone can'**
+  /// **'Tap a line to record the payback in the event (anyone can) | the inbox button records it as your debt'**
   String get evbSettleHint;
 
   /// No description provided for @evbAllSettled.
@@ -12859,6 +12925,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reminder'**
   String get fpRecurringKindReminder;
+
+  /// No description provided for @fpRecurringKindSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving'**
+  String get fpRecurringKindSaving;
+
+  /// No description provided for @recurringHomeMonthPayNoSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid this month, savings not included'**
+  String get recurringHomeMonthPayNoSaving;
+
+  /// No description provided for @recurringHomeMonthSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved this month'**
+  String get recurringHomeMonthSave;
+
+  /// No description provided for @sgRecurringTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring saves'**
+  String get sgRecurringTitle;
+
+  /// No description provided for @sgRecurringCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Saves into this goal on the round you set'**
+  String get sgRecurringCaption;
+
+  /// No description provided for @sgRecurringSpareCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Saves into unallocated on the round you set'**
+  String get sgRecurringSpareCaption;
 
   /// No description provided for @fpRecurringRefreshFailed.
   ///
@@ -14208,6 +14310,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create a transaction from this debt'**
   String get debtLinkTx;
+
+  /// No description provided for @debtTxNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No transaction linked'**
+  String get debtTxNone;
+
+  /// No description provided for @debtLinkedAmountDiffers.
+  ///
+  /// In en, this message translates to:
+  /// **'The transaction is {amount}, not the debt\'s amount'**
+  String debtLinkedAmountDiffers(String amount);
 
   /// No description provided for @debtPaidHelper.
   ///

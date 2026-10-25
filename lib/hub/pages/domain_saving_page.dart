@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../features/saving_goals/domain/saving_goal.dart';
 import '../../ui/ui.dart';
 import '../hub_kit.dart';
 import '../hub_playground.dart';
@@ -241,6 +242,49 @@ class _SavingPageState extends State<_SavingPage> {
           child: box(const SavingHistoryChart.skeleton()),
         ),
         HubDemo(
+          title: 'SavingGoalPickCard — where a saving goes',
+          note:
+              'The "to" tile beside a WalletPickCard (FlowCards): a goal = its '
+              'icon, name and saved / target; ยังไม่จัดสรร = a real choice, '
+              'drawn as picked with what it holds; nothing yet = dashed "+ '
+              'เลือกเป้าหมาย" (a new ออมเงิน recurring). Used by the saving '
+              'form and the ออมเงิน recurring page.',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final (goal, spare) in [
+                (
+                  const SavingGoal(
+                    id: 'g1',
+                    name: 'MacBook',
+                    currency: 'THB',
+                    targetAmount: 55000,
+                    savedAmount: 17000,
+                  ),
+                  false,
+                ),
+                (null, true),
+                (null, false),
+              ])
+                SizedBox(
+                  width: 180,
+                  child: SavingGoalPickCard(
+                    goal: goal,
+                    spare: spare,
+                    spareAmount: 2400,
+                    label: 'Saving goal',
+                    placeholder: 'Pick a goal',
+                    spareLabel: 'Unallocated',
+                    dense: true,
+                    editable: true,
+                    onTap: () {},
+                  ),
+                ),
+            ],
+          ),
+        ),
+        HubDemo(
           title: 'Saving goal row — AppListRow + ProgressRow.fillLabel',
           note:
               'The goals list: name + "ช้ากว่าแผน" | "ภายใน <deadline>" | '
@@ -303,40 +347,6 @@ class _SavingPageState extends State<_SavingPage> {
                   ),
                 ],
               );
-            },
-          ),
-        ),
-        HubDemo(
-          title: 'showSavingAutoSaveSheet',
-          note:
-              'The auto-saving sheet: amount | day of the month | the wallet '
-              '(the app owns the wallet picker — "no wallet" is a valid '
-              'source). Save is disabled until the amount is above zero. '
-              'Resolves (amount, day, accountId) or null.',
-          child: AppButton(
-            label: 'Auto-saving sheet',
-            variant: AppButtonVariant.outlined,
-            onPressed: () async {
-              final r = await showSavingAutoSaveSheet(
-                context,
-                title: 'Auto-saving',
-                amountLabel: 'Amount',
-                dayLabel: 'Day of the month',
-                walletLabel: 'Take from',
-                saveLabel: 'Save',
-                amount: 5500,
-                day: 25,
-                wallet: const SavingAutoSaveWallet(label: 'No wallet'),
-                onPickWallet: () async =>
-                    const SavingAutoSaveWallet(id: 'kbank', label: 'KBank'),
-              );
-              if (mounted) {
-                setState(
-                  () => _result = r == null
-                      ? 'Auto-saving sheet resolved: null'
-                      : 'Auto-saving: ${r.amount} on day ${r.day} from ${r.accountId}',
-                );
-              }
             },
           ),
         ),

@@ -287,17 +287,28 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   static bool _unknown(RecurringItem i) => i.amount == null && !i.state.settled;
 
   /// The month's money out, a bar of how much of it is already paid, then
-  /// the month's income and count in one box (ต้องจัดการ below says what
-  /// waits).
+  /// the month's income, its ออมเงิน (saved / planned) and count in one box
+  /// (ต้องจัดการ below says what waits). ออมเงิน is none of the money out,
+  /// the bar or the count.
   Widget _hero(AppLocalizations l, List<RecurringItem> items) {
     var pay = 0.0;
     var paid = 0.0;
     var income = 0.0;
     var count = 0;
+    var savePlan = 0.0;
+    var saved = 0.0;
+    var anySaving = false;
     for (final i in items) {
       if (i.state == OccurrenceState.archived) continue;
-      count++;
       final a = i.amount;
+      if (i.isSaving) {
+        anySaving = true;
+        if (a == null) continue;
+        savePlan += a;
+        if (i.state.settled) saved += a;
+        continue;
+      }
+      count++;
       if (a == null) continue;
       if (i.type == TransactionType.expense) {
         pay += a;
@@ -325,7 +336,9 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
       ),
       content: [
         HeroNumber(
-          label: l.recurringHomeMonthPay,
+          label: anySaving
+              ? l.recurringHomeMonthPayNoSaving
+              : l.recurringHomeMonthPay,
           value: MoneyText(-pay, tone: MoneyTone.signed, symbol: symbol),
         ),
         if (pay > 0)
@@ -353,6 +366,14 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
                     : SummaryTileTone.neutral,
               ),
             ),
+            if (anySaving)
+              SummaryTileView(
+                key: const ValueKey('heroSaved'),
+                tile: SummaryTile(
+                  label: l.recurringHomeMonthSave,
+                  value: '${_money(saved)} / ${_money(savePlan)}',
+                ),
+              ),
             SummaryTileView(
               tile: SummaryTile(
                 label: l.recurringHomeMonthCount,
@@ -521,6 +542,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
           RecurringKind.installment,
           RecurringKind.reminder,
           RecurringKind.income,
+          RecurringKind.saving,
         ])
           SheetOption(value: k, label: recurringKindLabel(l, k)),
       ],
@@ -621,10 +643,12 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
 
   IconCode? _iconOf(RecurringItem i) {
     final rule = _ruleOf(context.read<RecurringDirectoryCubit>().state, i);
-    return i.recurring?.iconCode ??
-        rule?.iconCode ??
-        rule?.category?.iconCode ??
-        i.category?.iconCode;
+    final kind = rule?.kind ?? i.recurring?.kind;
+    final own = i.recurring?.iconCode ?? rule?.iconCode;
+    final category = rule?.category?.iconCode ?? i.category?.iconCode;
+    return kind == null
+        ? own ?? category
+        : recurringIconCode(kind: kind, own: own, category: category);
   }
 
   Widget _icon(RecurringItem i) =>
@@ -720,17 +744,18 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     );
   }
 
-  /// The state worth a pill: waiting ones in warning, then จ่ายแล้ว / ข้าม /
-  /// อัตโนมัติ.
+  /// The state worth a pill: waiting ones in warning, then จ่ายแล้ว (linked
+  /// to a tx or marked) / ข้าม / อัตโนมัติ.
   ListRowChip? _stateChip(AppLocalizations l, RecurringItem i) =>
       switch (i.state) {
         OccurrenceState.notCreated ||
         OccurrenceState.pending => waitingChip(waitingLabel(l, i)),
-        OccurrenceState.paid => ListRowChip(l.occurrenceStatePaid),
         OccurrenceState.archived => ListRowChip(l.occurrenceStateArchived),
         OccurrenceState.done when i.autoCreated => ListRowChip(
           l.fpRecurringAutoChip,
         ),
+        OccurrenceState.paid ||
+        OccurrenceState.done => ListRowChip(l.occurrenceStatePaid),
         _ => null,
       };
 
@@ -757,7 +782,8 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     final waiting = _alerts(items);
     for (final i in items) {
       if (i.state == OccurrenceState.archived) continue;
-      if (i.type == TransactionType.transfer) continue;
+      // Money in and out only: ออมเงิน is neither.
+      if (i.type == TransactionType.transfer || i.isSaving) continue;
       final d = i.date.day;
       var a = i.amount;
       if (a == null || a <= 0) {
@@ -915,7 +941,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
       RecurringKind.reminder => l.recurringHomeAvgPerMonth(
         _money(sum((r) => r.avgAmount ?? r.monthlyAmount)),
       ),
-      RecurringKind.income => l.recurringHomePerMonth(
+      RecurringKind.income || RecurringKind.saving => l.recurringHomePerMonth(
         _money(sum((r) => r.monthlyAmount)),
       ),
     };

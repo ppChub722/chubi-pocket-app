@@ -164,37 +164,19 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
   /// Where it goes: the chosen goal, else ยังไม่จัดสรร (the spare pool, which
   /// is a real choice, so it reads as picked).
   Widget _goalCard(AppLocalizations l) {
-    final palette = Theme.of(context).extension<AppColors>()!;
     SavingGoal? chosen;
     for (final g in _goals ?? const <SavingGoal>[]) {
       if (g.id == _c.goalId) chosen = g;
     }
-    final symbol = debtCurrencySymbol(context);
-    String money(double v) => moneyString(context, v, symbol: symbol);
-    final target = chosen?.targetAmount;
-    final spare = _overview?.spare.amount;
-    final status = chosen == null
-        ? (spare == null ? null : money(spare))
-        : target == null
-        ? money(chosen.savedAmount)
-        : '${money(chosen.savedAmount)} / ${money(target)}';
-    return PickCard(
+    return SavingGoalPickCard(
+      goal: chosen,
+      spare: chosen == null,
+      spareAmount: _overview?.spare.amount,
       label: l.savingEntryGoalLabel,
-      value: chosen?.name ?? l.savingEntrySpare,
-      reserveSubtitle: true,
-      subtitle: status == null ? null : Text(status),
+      placeholder: l.savingEntryPickGoal,
+      spareLabel: l.savingEntrySpare,
       dense: true,
       editable: true,
-      accent: chosen == null
-          ? ModuleColors.of(context).planning
-          : chosen.iconCode.tintFor(palette),
-      leading: chosen == null
-          ? const PickCardEmptyIcon(AppIcons.quickSaving, size: 32)
-          : IconDisplay(
-              type: IconType.category,
-              size: 32,
-              iconCode: chosen.iconCode,
-            ),
       onTap: _pickGoal,
     );
   }

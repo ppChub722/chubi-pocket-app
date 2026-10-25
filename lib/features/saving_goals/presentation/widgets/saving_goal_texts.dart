@@ -58,14 +58,3 @@ double? savingGoalPaceRatio(SavingGoal g, {DateTime? now}) {
   final passed = (now ?? DateTime.now()).difference(created).inMilliseconds;
   return (passed / span).clamp(0.0, 1.0);
 }
-
-String savingAutoSaveCaption(
-  BuildContext context,
-  AppLocalizations l,
-  SavingAutoSave a,
-  String symbol,
-) => l.fpGoalsAutoCaption(
-  dayOfMonthLabel(context, a.day),
-  moneyString(context, a.amount, symbol: symbol),
-  a.wallet?.name ?? l.fpGoalsNoWallet,
-);

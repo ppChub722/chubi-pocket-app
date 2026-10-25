@@ -72,15 +72,22 @@ class BudgetsRepository {
         return BudgetDetail.fromJson(res.data!);
       });
 
+  /// Only what changed is sent: [setAmount] (amount null = back to the base)
+  /// and / or [setNote].
   Future<BudgetDetail> updatePeriod(
     String id,
     String periodId, {
     required double? amount,
     required String? note,
+    bool setAmount = true,
+    bool setNote = true,
   }) => _call((dio) async {
     final res = await dio.put<Map<String, dynamic>>(
       '/budgets/$id/periods/$periodId',
-      data: {'amount': amount, 'note': note},
+      data: {
+        if (setAmount) 'amount': amount,
+        if (setNote) 'note': note,
+      },
     );
     return BudgetDetail.fromJson(res.data!);
   });

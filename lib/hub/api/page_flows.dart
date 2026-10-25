@@ -616,34 +616,25 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Button "เพิ่มเป้าหมาย" → "บันทึก"', [
       FlowCall('createSavingGoal'),
       FlowCall('createSavingEntry', note: 'the starting amount, when set'),
-      FlowCall('setGoalAutoSaves', note: 'the auto-saves, when on'),
     ]),
   ]),
   PageFlow('goals-detail', 'One saving goal and its saving entries.', [
-    FlowStep.open([FlowCall('getSavingGoal')]),
+    FlowStep.open([
+      FlowCall('getSavingGoal'),
+      FlowCall('listRecurring', note: 'its saving rules, from the shared list'),
+    ]),
     FlowStep.action('Entries opened / scroll', [FlowCall('listSavingEntries')]),
     FlowStep.action('Button "เพิ่มเงินออม" / "ถอน" / "ย้าย"', [
       FlowCall('createSavingEntry'),
     ]),
     FlowStep.action('Edit an entry', [FlowCall('updateSavingEntry')]),
     FlowStep.action('Delete an entry', [FlowCall('deleteSavingEntry')]),
-    FlowStep.action('Button "บันทึก"', [
-      FlowCall('updateSavingGoal'),
-      FlowCall('setGoalAutoSaves', note: 'only when the auto-saves changed'),
-    ]),
+    FlowStep.action('Button "บันทึก"', [FlowCall('updateSavingGoal')]),
     FlowStep.action('Button "ปิดเป้าหมาย"', [FlowCall('closeSavingGoal')]),
     // fe-pages M5: delete preview first (can_delete), then the delete.
     FlowStep.action('Button "ลบ"', [
       FlowCall('getSavingGoal', note: 'include=delete_preview'),
       FlowCall('deleteSavingGoal'),
-    ]),
-    // The spare pool's auto-save switch and sheet; a goal's go with "บันทึก".
-    FlowStep.action('ออมอัตโนมัติ: switch / edit', [
-      FlowCall('setGoalAutoSave'),
-      FlowCall('clearGoalAutoSave'),
-      FlowCall('setSpareAutoSave'),
-      FlowCall('clearSpareAutoSave'),
-      FlowCall('setSpareAutoSaves', note: 'the spare pool, the whole set'),
     ]),
     FlowStep.action('Button "เก็บถาวร"', [FlowCall('archiveSavingGoal')]),
     FlowStep.action('Button "กู้คืน"', [FlowCall('restoreSavingGoal')]),

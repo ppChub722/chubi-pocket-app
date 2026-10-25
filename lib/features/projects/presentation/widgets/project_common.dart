@@ -195,6 +195,8 @@ class ProjectView {
       displayName: r.name,
       iconCode: r.iconCode,
       isMe: r.isMe,
+      // The listed member's contact: a debt from this row binds to it.
+      contactId: listed.isEmpty ? null : listed.first.contactId,
       role: listed.isEmpty ? MemberRole.contributor : listed.first.role,
       status: listed.isEmpty ? MemberStatus.active : listed.first.status,
     );

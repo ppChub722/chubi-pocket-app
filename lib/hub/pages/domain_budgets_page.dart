@@ -176,9 +176,12 @@ class _BudgetsPageState extends State<_BudgetsPage> {
         HubDemo(
           title: 'showPeriodLimitSheet — one period\'s own limit',
           note:
-              'Amount + a "back to the base amount" chip (only when the '
-              'period differs from the base) + note. Resolves '
-              'PeriodLimitResult (amount null = back to base), or null.',
+              'Title = the budget, subtitle = which period (others stay), '
+              'tiles งบปกติ / ใช้ไปแล้ว, the amount, "↺ ใช้งบปกติ" (while the '
+              'period has its own amount) and a note. An amount equal to the '
+              'base is the base; save is on once something changed. Resolves '
+              'PeriodLimitResult (amount null = back to base, + which fields '
+              'changed), or null.',
           child: Row(
             children: [
               AppButton(
@@ -187,21 +190,29 @@ class _BudgetsPageState extends State<_BudgetsPage> {
                 onPressed: () async {
                   final r = await showPeriodLimitSheet(
                     context,
-                    title: 'แก้เพดานของรอบนี้',
-                    amountLabel: 'เพดานของรอบนี้',
+                    title: 'เงินสดในกระเป๋า',
+                    subtitle: 'แก้เฉพาะรอบ ต.ค. 2026 | รอบอื่นไม่เปลี่ยน',
+                    baseCaption: 'งบปกติ',
+                    baseValue: '฿2,500',
+                    usedCaption: 'ใช้ไป',
+                    usedValue: '฿1,550',
+                    amountLabel: 'งบรอบนี้',
                     noteLabel: 'โน้ต',
+                    noteHint: 'เช่น เดือนนี้มีงานแต่ง',
                     saveLabel: 'บันทึก',
                     symbol: '฿',
-                    amount: 9000,
-                    baseAmount: 10000,
+                    amount: 4000,
+                    baseAmount: 2500,
                     overridden: true,
-                    resetLabel: 'คืนเป็นค่าเดิม (฿10,000)',
+                    note: 'งานแต่ง',
+                    resetLabel: '↺ ใช้งบปกติ (฿2,500)',
                   );
                   if (mounted) {
                     setState(
                       () => _limit = r == null
                           ? 'cancelled'
-                          : '${r.amount ?? 'base'} / ${r.note ?? '—'}',
+                          : '${r.amountChanged ? (r.amount ?? 'base') : '='} / '
+                                '${r.noteChanged ? (r.note ?? '—') : '='}',
                     );
                   }
                 },

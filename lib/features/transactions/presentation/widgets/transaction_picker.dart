@@ -8,13 +8,17 @@ import '../../data/transactions_repository.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 
-/// A recorded tx to link a recurring occurrence to: [type]'s tx within
-/// [windowDays] of [near], nearest first; the same category or an amount
-/// within 5% under น่าจะใช่. A tx already linked shows its recurring (the
-/// caller asks before moving it). [load] replaces the API read.
+/// What [TransactionPicker.pick] answers: a tx, or its create row.
+typedef TxPick = ({Transaction? tx, bool create});
+
+/// A recorded tx to link a recurring occurrence (or a debt) to: [type]'s tx
+/// within [windowDays] of [near], nearest first; the same category or an
+/// amount within 5% under น่าจะใช่. A tx already linked shows its recurring
+/// (the caller asks before moving it). [load] replaces the API read.
 abstract final class TransactionPicker {
   static const _likely = 'likely';
   static const _near = 'near';
+  static const _create = '_create';
 
   static final _ymd = DateFormat('yyyy-MM-dd');
 
@@ -27,6 +31,30 @@ abstract final class TransactionPicker {
     String? title,
     int windowDays = 45,
     Future<List<Transaction>> Function()? load,
+  }) async => (await pick(
+    context,
+    type: type,
+    near: near,
+    categoryId: categoryId,
+    amount: amount,
+    title: title,
+    windowDays: windowDays,
+    load: load,
+  ))?.tx;
+
+  /// [one], plus a first row [createLabel] ("make one instead") and rows
+  /// [exclude] leaves out.
+  static Future<TxPick?> pick(
+    BuildContext context, {
+    required TransactionType type,
+    required DateTime near,
+    String? categoryId,
+    double? amount,
+    String? title,
+    String? createLabel,
+    bool Function(Transaction t)? exclude,
+    int windowDays = 45,
+    Future<List<Transaction>> Function()? load,
   }) async {
     final l = AppLocalizations.of(context)!;
     final fetch = load ?? _fetch(context, type, near, windowDays);
@@ -36,10 +64,17 @@ abstract final class TransactionPicker {
       ItemPickerSheet(
         title: title ?? l.txPickerTitle,
         items: const [],
+        create: createLabel == null
+            ? null
+            : PickerCreate(
+                label: (_) => createLabel,
+                onCreate: (_) async => _create,
+                atTop: true,
+              ),
         load: () async {
           final rows = [
             for (final t in await fetch())
-              if (!t.isTransferIn) t,
+              if (!t.isTransferIn && !(exclude?.call(t) ?? false)) t,
           ];
           byId
             ..clear()
@@ -59,7 +94,9 @@ abstract final class TransactionPicker {
       ),
     );
     final id = result?.id;
-    return id == null ? null : byId[id];
+    if (id == _create) return (tx: null, create: true);
+    final tx = id == null ? null : byId[id];
+    return tx == null ? null : (tx: tx, create: false);
   }
 
   static Future<List<Transaction>> Function() _fetch(

@@ -355,10 +355,12 @@ class _EventsPageState extends State<_EventsPage> {
         HubDemo(
           title: 'EventBillRow(tick: false) — the event book',
           note:
-              'The event book (0.4.0-3): no tick boxes. payerVerb makes line '
-              '2 "**ฝน** จ่าย"; badge marks my part that isn\'t in my books '
-              '(ยังไม่ลงบัญชี). A payback is a row of its own: leading ⇄, '
-              '"from → to", amountColor = the planning colour.',
+              'The event book: no tick boxes. payerVerb makes line 2 '
+              '"**ฝน** จ่าย". My part not fully in my books: mine (a tint that '
+              'stays) + onAction ⤓ (on my split left of the amount; on the '
+              'payer line at its end when I paid); badge = ✓ chips for what is '
+              'booked. A payback is a row of its own: leading ⇄, "from → to", '
+              'amountColor = the planning colour.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -374,9 +376,13 @@ class _EventsPageState extends State<_EventsPage> {
                     tick: false,
                     name: 'ฉัน',
                     amount: 160,
+                    mine: true,
+                    onAction: () => _tapped('ลงบัญชี'),
+                    actionTooltip: 'ลงบัญชี',
                     badge: const AppChip(
-                      label: 'ยังไม่ลงบัญชี',
-                      tone: AppChipTone.warning,
+                      label: 'ลงรายการ',
+                      icon: AppIcons.check,
+                      tone: AppChipTone.success,
                       size: ChipSize.mini,
                     ),
                     onTap: () => _tapped('my part'),
@@ -402,6 +408,84 @@ class _EventsPageState extends State<_EventsPage> {
                 amountColor: ModuleColors.of(context).planning,
                 caption: 'จ่ายคืน | จดโดย ฉัน',
                 onTap: () => _tapped('payback'),
+              ),
+              const AppDivider.row(),
+              EventBillRow(
+                tick: false,
+                title: 'ค่าที่พัก',
+                amount: -3000,
+                payerName: 'ฉัน',
+                payerVerb: 'จ่าย',
+                mine: true,
+                onAction: () => _tapped('ลงบัญชี (I paid)'),
+                actionTooltip: 'ลงบัญชี',
+                onTap: () => _tapped('book bill'),
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'SettleRow — an event\'s จัดการ line',
+          note:
+              'from → to + amount. A line with me in it: ⤓ จดเป็นหนี้ '
+              '(onRecord) and, once recorded, a ✓ chip; the others are '
+              'dimmed. A tap records the payback in the event.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SettleRow(
+                fromAvatar: const PersonMark(
+                  name: 'เบียร์',
+                  level: PersonLevel.name,
+                  size: 32,
+                ),
+                fromName: 'เบียร์',
+                toAvatar: const PersonMark(
+                  name: 'ฉัน',
+                  level: PersonLevel.name,
+                  size: 20,
+                ),
+                toName: 'ฉัน',
+                amount: const MoneyText(3230),
+                mine: true,
+                onRecord: () => _tapped('จดเป็นหนี้'),
+                recordTooltip: 'จดเป็นหนี้',
+                onTap: () => _tapped('payback'),
+              ),
+              SettleRow(
+                fromAvatar: const PersonMark(
+                  name: 'ฉัน',
+                  level: PersonLevel.name,
+                  size: 32,
+                ),
+                fromName: 'ฉัน',
+                toAvatar: const PersonMark(
+                  name: 'ต้น',
+                  level: PersonLevel.name,
+                  size: 20,
+                ),
+                toName: 'ต้น',
+                amount: const MoneyText(120),
+                mine: true,
+                recordedLabel: 'จดแล้ว',
+                onRecord: () => _tapped('จดเป็นหนี้ again'),
+                recordTooltip: 'จดเป็นหนี้',
+              ),
+              SettleRow(
+                fromAvatar: const PersonMark(
+                  name: 'ฝน',
+                  level: PersonLevel.name,
+                  size: 32,
+                ),
+                fromName: 'ฝน',
+                toAvatar: const PersonMark(
+                  name: 'เบียร์',
+                  level: PersonLevel.name,
+                  size: 20,
+                ),
+                toName: 'เบียร์',
+                amount: const MoneyText(500),
+                onTap: () => _tapped('payback (not mine)'),
               ),
             ],
           ),

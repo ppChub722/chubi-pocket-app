@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/app_icon_button.dart';
 import '../atoms/dashed_rect_border.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_radius.dart';
@@ -33,6 +34,55 @@ class PickFrame extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.sm),
             child: SizedBox(width: double.infinity, child: child),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One picked item shown as its own list row (a linked transaction) in a
+/// dashed frame: a tap picks again, ✕ takes it off.
+class PickedRowFrame extends StatelessWidget {
+  const PickedRowFrame({
+    required this.child,
+    this.onTap,
+    this.onRemove,
+    this.removeTooltip,
+    super.key,
+  });
+
+  /// The row (it keeps its own padding).
+  final Widget child;
+  final VoidCallback? onTap;
+  final VoidCallback? onRemove;
+  final String? removeTooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return DashedRectBorder(
+      color: scheme.primary,
+      strokeWidth: 1.5,
+      dashLength: 4,
+      gapLength: 3,
+      borderRadius: const Radius.circular(AppRadius.md),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          onTap: onTap,
+          child: Row(
+            children: [
+              Expanded(child: IgnorePointer(child: child)),
+              if (onRemove != null)
+                AppIconButton.flat(
+                  icon: AppIcons.close,
+                  tooltip: removeTooltip,
+                  dense: true,
+                  onPressed: onRemove,
+                ),
+            ],
           ),
         ),
       ),

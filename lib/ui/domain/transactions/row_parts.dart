@@ -4,6 +4,7 @@ import '../../../features/accounts/domain/account_type.dart';
 import '../../molecules/app_list_row.dart';
 import '../../tokens/app/app_colors.dart';
 import '../../tokens/app/app_icons.dart';
+import '../../tokens/app/module_colors.dart';
 import '../../tokens/color_contrast.dart';
 import '../icons/color_token.dart';
 import '../icons/icon_code.dart';
@@ -11,6 +12,20 @@ import '../icons/icon_registry.dart';
 import '../icons/icon_type.dart';
 import '../icons/type_icon_default.dart';
 import '../money/wallet_card.dart';
+
+/// Where a transaction row came from, shown as its [AppListRow.titleMark].
+enum TxSource { recurring, installment, event, debt, pending }
+
+ListRowMark txSourceMark(BuildContext context, TxSource source) {
+  final m = ModuleColors.of(context);
+  return switch (source) {
+    TxSource.recurring => ListRowMark(AppIcons.recurring, color: m.planning),
+    TxSource.installment => ListRowMark(AppIcons.progress, color: m.planning),
+    TxSource.event => ListRowMark(AppIcons.project, color: m.people),
+    TxSource.debt => ListRowMark(AppIcons.debt, color: m.debt),
+    TxSource.pending => ListRowMark(AppIcons.pending, color: m.saving),
+  };
+}
 
 /// A wallet on an [AppListRow]: its icon and name in the wallet's own colour
 /// (its [type]'s default until the user picks one), no fill, no border; muted

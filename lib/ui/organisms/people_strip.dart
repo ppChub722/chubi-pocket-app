@@ -40,8 +40,13 @@ class PeopleStrip extends StatelessWidget {
     this.actionLabel,
     this.onAction,
     this.first = false,
+    this.compact = false,
     super.key,
   });
+
+  /// Smaller cards for members with no numbers (avatar and name only); the
+  /// invite card follows.
+  final bool compact;
 
   final String title;
   final String? description;
@@ -57,9 +62,12 @@ class PeopleStrip extends StatelessWidget {
 
   static const _cardWidth = 92.0;
   static const _cardHeight = 100.0;
+  static const _compactWidth = 76.0;
+  static const _compactHeight = 76.0;
 
   @override
   Widget build(BuildContext context) {
+    final width = compact ? _compactWidth : _cardWidth;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -81,7 +89,9 @@ class PeopleStrip extends StatelessWidget {
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: _cardHeight),
+            constraints: BoxConstraints(
+              minHeight: compact ? _compactHeight : _cardHeight,
+            ),
             child: IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -90,13 +100,18 @@ class PeopleStrip extends StatelessWidget {
                     if (i > 0) const SizedBox(width: AppSpacing.sm),
                     _MemberCard(
                       member: m,
+                      width: width,
                       onTap: onMemberTap == null ? null : () => onMemberTap!(i),
                     ),
                   ],
                   if (onInvite != null) ...[
                     if (members.isNotEmpty)
                       const SizedBox(width: AppSpacing.sm),
-                    _InviteCard(label: inviteLabel, onTap: onInvite!),
+                    _InviteCard(
+                      label: inviteLabel,
+                      width: width,
+                      onTap: onInvite!,
+                    ),
                   ],
                 ],
               ),
@@ -109,9 +124,14 @@ class PeopleStrip extends StatelessWidget {
 }
 
 class _MemberCard extends StatelessWidget {
-  const _MemberCard({required this.member, required this.onTap});
+  const _MemberCard({
+    required this.member,
+    required this.width,
+    required this.onTap,
+  });
 
   final PeopleStripMember member;
+  final double width;
   final VoidCallback? onTap;
 
   @override
@@ -125,7 +145,7 @@ class _MemberCard extends StatelessWidget {
       PeopleTone.negative => colors?.expense ?? scheme.error,
     };
     return SizedBox(
-      width: PeopleStrip._cardWidth,
+      width: width,
       child: Material(
         color: scheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -171,16 +191,21 @@ class _MemberCard extends StatelessWidget {
 }
 
 class _InviteCard extends StatelessWidget {
-  const _InviteCard({required this.label, required this.onTap});
+  const _InviteCard({
+    required this.label,
+    required this.width,
+    required this.onTap,
+  });
 
   final String label;
+  final double width;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme.primary;
     return SizedBox(
-      width: PeopleStrip._cardWidth,
+      width: width,
       child: DashedRectBorder(
         color: color,
         borderRadius: const Radius.circular(AppRadius.lg),

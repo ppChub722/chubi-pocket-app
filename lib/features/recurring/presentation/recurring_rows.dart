@@ -12,14 +12,53 @@ String recurringKindLabel(AppLocalizations l, RecurringKind k) => switch (k) {
   RecurringKind.installment => l.fpRecurringKindInstallment,
   RecurringKind.income => l.fpRecurringKindIncome,
   RecurringKind.reminder => l.fpRecurringKindReminder,
+  RecurringKind.saving => l.fpRecurringKindSaving,
 };
 
-IconData recurringKindIcon(RecurringKind k) => switch (k) {
-  RecurringKind.subscription => AppIcons.subscription,
-  RecurringKind.installment => AppIcons.progress,
-  RecurringKind.income => AppIcons.cash,
-  RecurringKind.reminder => AppIcons.notifications,
-};
+IconData recurringKindIcon(RecurringKind k) => k.iconDefault.icon;
+
+/// Each kind's own icon + colour, shown when the item has neither its own
+/// icon nor a category.
+extension RecurringKindIconDefault on RecurringKind {
+  TypeIconDefault get iconDefault => switch (this) {
+    RecurringKind.subscription => const TypeIconDefault(
+      iconId: 'subscriptions',
+      color: Color(0xFFDB2777),
+    ),
+    RecurringKind.installment => const TypeIconDefault(
+      iconId: 'timelapse',
+      color: Color(0xFF0891B2),
+    ),
+    RecurringKind.income => const TypeIconDefault(
+      iconId: 'cash',
+      color: Color(0xFF16A34A),
+    ),
+    RecurringKind.reminder => const TypeIconDefault(
+      iconId: 'notifications',
+      color: Color(0xFFD97706),
+    ),
+    RecurringKind.saving => const TypeIconDefault(
+      iconId: 'savings',
+      color: ModuleColors.defaultSaving,
+    ),
+  };
+}
+
+/// What a recurring item shows: its own icon, else its category's, else its
+/// kind's.
+IconCode recurringIconCode({
+  required RecurringKind kind,
+  IconCode? own,
+  IconCode? category,
+}) => (own ?? category).orDefault(kind.iconDefault);
+
+extension RecurringShownIcon on Recurring {
+  IconCode get shownIconCode => recurringIconCode(
+    kind: kind,
+    own: iconCode,
+    category: category?.iconCode,
+  );
+}
 
 class RecurringRow extends StatelessWidget {
   const RecurringRow({
@@ -46,10 +85,10 @@ class RecurringRow extends StatelessWidget {
     final shown = amount ?? r.amount;
     final known = shown != null && shown > 0;
     final account = r.account;
-    final icon = r.iconCode ?? r.category?.iconCode;
+    final icon = r.shownIconCode;
     return AppListRow(
       // The item's own colour for what the row holds (the footer's chain).
-      accent: icon?.accentColorFor(Theme.of(context).extension<AppColors>()!),
+      accent: icon.accentColorFor(Theme.of(context).extension<AppColors>()!),
       leading: IconDisplay(type: IconType.category, size: 36, iconCode: icon),
       title: r.name,
       // Its state (พัก / ใกล้ครบ) or when it is next ("อีก 3 วัน") beside the

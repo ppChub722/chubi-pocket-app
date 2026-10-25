@@ -1283,7 +1283,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     value: _effectiveScope(a),
     save: (picked) => _setScope(a, picked),
     failedMessage: (e) => _errorText(l, e),
-    builder: (context, scope, onChanged) => OptionMenuAnchor<WalletReportScope>(
+    builder: (context, scope, onChanged) => SettingDropdownRow<WalletReportScope>(
+      label: l.walletReportScopeTitle,
+      value: _scopeLabel(l, scope),
       selected: scope,
       options: [
         for (final s in [
@@ -1293,12 +1295,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         ])
           SheetOption(value: s, label: _scopeLabel(l, s)),
       ],
-      onSelected: (picked) => onChanged?.call(picked),
-      builder: (context, toggle) => SettingDropdownRow(
-        label: l.walletReportScopeTitle,
-        value: _scopeLabel(l, scope),
-        onTap: onChanged == null ? null : toggle,
-      ),
+      onSelected: onChanged,
     ),
   );
 

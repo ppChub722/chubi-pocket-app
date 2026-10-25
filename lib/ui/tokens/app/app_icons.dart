@@ -13,6 +13,9 @@ abstract final class AppIcons {
   static const close = Icons.close;
   static const notifications = Icons.notifications_outlined;
   static const pending = Icons.move_to_inbox_outlined;
+
+  /// Into my books (ลงบัญชี / จดเป็นหนี้).
+  static const bookIn = Icons.save_alt;
   static const settings = Icons.settings_outlined;
   static const markAllRead = Icons.done_all;
   static const profile = Icons.person_outline;
@@ -30,6 +33,9 @@ abstract final class AppIcons {
   static const quickSaving = Icons.inventory_2_outlined;
   static const savingWithdraw = Icons.keyboard_return; // ถอนออม
   static const savingAllocate = Icons.shuffle; // จัดสรร
+  // A saving row's money in / out (a pair, unlike the pig).
+  static const savingIn = Icons.input;
+  static const savingOut = Icons.output;
   static const goalClose = Icons.flag; // ปิดเป้าหมาย
   static const scheduled = Icons.schedule_outlined;
 
@@ -131,6 +137,7 @@ abstract final class AppIcons {
   static const expand = Icons.expand_more;
   static const collapse = Icons.expand_less;
   static const check = Icons.check;
+  static const save = Icons.save_outlined;
   static const none = Icons.block;
   static const lock = Icons.lock_outline;
 

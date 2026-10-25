@@ -7,15 +7,13 @@ import 'package:chubi_pocket/core/network/api_exception.dart';
 import 'package:chubi_pocket/core/storage/secure_token_storage.dart';
 import 'package:chubi_pocket/features/saving_goals/data/saving_goals_repository.dart';
 import 'package:chubi_pocket/features/saving_goals/domain/saving_goals_overview.dart';
-import 'package:chubi_pocket/features/saving_goals/presentation/cubit/saving_goal_cubit.dart';
 import 'package:chubi_pocket/features/saving_goals/presentation/cubit/saving_goals_cubit.dart';
 import 'package:chubi_pocket/features/saving_goals/presentation/saving_goal_delete_guard.dart';
 import 'package:chubi_pocket/ui/ui.dart' show Currencies;
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'saving_goal_parse_test.dart'
-    show prodAutoSave, prodDetail, prodGoal, prodList, prodSpareDetail;
+import 'saving_goal_parse_test.dart' show prodDetail, prodList;
 
 class _NoTokens extends Fake implements SecureTokenStorage {
   @override
@@ -50,12 +48,7 @@ class _Adapter implements HttpClientAdapter {
 class _Repo extends Fake implements SavingGoalsRepository {
   bool networkDown = false;
   int listCalls = 0;
-  int detailCalls = 0;
-  final writes = <String>[];
   final sorts = <String>[];
-
-  Map<String, dynamic> goalJson = prodGoal(autoSave: prodAutoSave());
-  Map<String, dynamic> spareJson = prodSpareDetail(autoSave: prodAutoSave());
 
   @override
   Future<SavingGoalsOverview> list({
@@ -69,46 +62,9 @@ class _Repo extends Fake implements SavingGoalsRepository {
     }
     return SavingGoalsOverview.fromJson(prodList());
   }
-
-  @override
-  Future<SavingGoalDetail> detail(
-    String id, {
-    bool deletePreview = false,
-  }) async {
-    detailCalls++;
-    return SavingGoalDetail.fromJson(
-      id == SavingGoalsRepository.spareId
-          ? spareJson
-          : prodDetail(goal: goalJson),
-    );
-  }
-
-  @override
-  Future<SavingGoalDetail> clearAutoSave(String id) async {
-    writes.add('DELETE $id auto-save');
-    return SavingGoalDetail.fromJson(
-      id == SavingGoalsRepository.spareId
-          ? prodSpareDetail()
-          : prodDetail(goal: prodGoal()),
-    );
-  }
 }
 
 void main() {
-  test('auto-save off: one DELETE, the page patched, not re-read', () async {
-    for (final id in [SavingGoalsRepository.spareId, 'g1']) {
-      final repo = _Repo();
-      final cubit = SavingGoalCubit(repository: repo, id: id);
-      await cubit.load();
-      expect(cubit.state.detail!.autoSave, isNotNull, reason: id);
-      await cubit.clearAutoSave();
-      expect(repo.writes, ['DELETE $id auto-save'], reason: id);
-      expect(cubit.state.detail!.autoSave, isNull, reason: id);
-      expect(repo.detailCalls, 1, reason: id);
-      await cubit.close();
-    }
-  });
-
   test('the list reloads on a saving-goals change and keeps its rows', () async {
     final repo = _Repo();
     final cubit = SavingGoalsCubit(repository: repo);
@@ -208,13 +164,6 @@ void main() {
         method: 'GET',
         path: '/saving-goals/g1',
         query: {'include': 'delete_preview'},
-      ),
-      (
-        name: 'auto-save off',
-        run: () => repo.clearAutoSave('spare'),
-        method: 'DELETE',
-        path: '/saving-goals/spare/auto-save',
-        query: {},
       ),
     ];
     for (final c in calls) {

@@ -16,6 +16,7 @@ import '../../data/recurring_repository.dart';
 import '../../domain/recurring.dart';
 import '../../domain/recurring_item.dart';
 import '../cubit/recurring_directory_cubit.dart';
+import '../recurring_rows.dart';
 
 /// One rule's occurrences around a tx date, and the one the BE would pick.
 typedef OccurrenceLoader =
@@ -108,10 +109,13 @@ abstract final class RecurringPicker {
     } catch (_) {
       cache = null;
     }
-    List<LinkCandidate> candidatesOf() => _byDue(
-      cache?.candidates(type, categoryId: categoryId, amount: amount) ??
-          const [],
-    );
+    // ออมเงิน records a saving, never a transaction.
+    List<LinkCandidate> candidatesOf() => _byDue([
+      for (final c
+          in cache?.candidates(type, categoryId: categoryId, amount: amount) ??
+              const <LinkCandidate>[])
+        if (!c.setting.isSaving) c,
+    ]);
     var latest = candidatesOf();
     final start = latest;
     final feed = cache == null
@@ -199,7 +203,7 @@ abstract final class RecurringPicker {
           : IconDisplay(
               type: IconType.category,
               size: 36,
-              iconCode: s.iconCode ?? s.category?.iconCode,
+              iconCode: s.shownIconCode,
             ),
       trailing: _amount(l, s.type, o.amount),
     );

@@ -16,6 +16,7 @@ import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
 import '../../../tags/presentation/widgets/tag_picker.dart';
+import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
 import '../cubit/tx_form_options_cubit.dart';
@@ -25,6 +26,8 @@ import '../save_failure.dart';
 import '../widgets/debt_entry_form.dart';
 import '../widgets/draft_form.dart';
 import '../widgets/pick_chip_rows.dart';
+import '../widgets/transaction_picker.dart';
+import '../widgets/transaction_tile.dart';
 
 class DebtEntryDetailPage extends StatefulWidget {
   const DebtEntryDetailPage({required this.entryId, super.key});
@@ -122,6 +125,8 @@ class _DebtEntryViewState extends State<_DebtEntryView>
   DebtEntry get _entry => widget.detail.entry;
 
   bool get _sourced => _entry.source != null;
+
+  Transaction? get _linked => widget.detail.linkedTransaction;
 
   @override
   void initState() {
@@ -340,8 +345,57 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       txCubit.dropRow(oldTxId);
     }
     widget.onChanged(
-      DebtEntryDetail(entry: r.entry, balance: r.balance, transaction: tx),
+      DebtEntryDetail(
+        entry: r.entry,
+        balance: r.balance,
+        transaction: tx,
+        linkedTransaction: r.linkedTransaction,
+      ),
     );
+  }
+
+  /// บันทึกในรายการ: one of my transactions of the entry's way (paid =
+  /// expense), or สร้างรายการจากหนี้ on top. A pick saves at once.
+  Future<void> _pickLink() async {
+    final l = AppLocalizations.of(context)!;
+    final e = _entry;
+    final r = await TransactionPicker.pick(
+      context,
+      type: e.direction == DebtEntryDirection.paid
+          ? TransactionType.expense
+          : TransactionType.income,
+      near: e.date ?? DateTime.now(),
+      amount: e.amount,
+      createLabel: l.debtLinkTx,
+      exclude: (t) => t.isDebtEntry || t.isRepayment,
+    );
+    if (r == null || !mounted) return;
+    final tx = r.tx;
+    if (tx == null) return _linkTx();
+    await _writeLink((repo) => repo.linkTx(e.id, tx.id));
+  }
+
+  Future<void> _unlink() =>
+      _writeLink((repo) => repo.unlinkTx(_entry.id));
+
+  Future<void> _writeLink(
+    Future<DebtEntryWriteResult> Function(PersonalDebtsRepository repo) call,
+  ) async {
+    final repo = context.read<PersonalDebtsRepository>();
+    setSaving(true);
+    try {
+      final r = await call(repo);
+      if (!mounted) return;
+      _applyWrite(r);
+      // A link replaces the entry's own transaction: an open edit follows.
+      if (isEditing && r.transaction == null && working.createTx) {
+        rebaseEdit(original: original.withoutTx(), working: working.withoutTx());
+      }
+    } catch (e) {
+      if (mounted) _say(_failed(e), Tone.danger);
+    } finally {
+      if (mounted) setSaving(false);
+    }
   }
 
   /// ผูกรายการ: the wallet first ("ไม่ระบุกระเป๋า" offered too, like quick
@@ -541,25 +595,46 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     return null;
   }
 
-  /// The linked transaction as its wallet; none = a dashed ผูกรายการ. The
+  /// The entry's own transaction as its wallet; none = a dashed ผูกรายการ. The
   /// transaction has no page of its own (this page is it), so the card opens
-  /// the wallet; edit mode changes the wallet, × unlinks on save.
+  /// the wallet; edit mode changes the wallet, × unlinks on save. A linked
+  /// transaction's wallet is only shown (it changes on its own page).
   Widget _txCard(AppLocalizations l) {
     final editing = isEditing;
     final linked = editing
         ? _c.createTransaction
         : widget.detail.transaction != null;
+    final other = _linked;
+    if (!linked && other != null) {
+      final ref = other.account;
+      Account? full;
+      for (final a in context.watch<AccountsCubit>().state.accounts) {
+        if (a.id == ref?.id) full = a;
+      }
+      return WalletPickCard(
+        key: const ValueKey('debtTxCard'),
+        account: full ?? ref?.toAccount(),
+        label: l.transactionFormAccountLabel,
+        placeholder: l.debtNoWallet,
+        dense: true,
+        editable: false,
+        onLongPress: editing ? null : () => enterEdit(),
+        onTap: editing || ref == null
+            ? null
+            : () => openPage(context, '/accounts/${ref.id}'),
+      );
+    }
     if (!linked) {
       return PickCard(
         key: const ValueKey('debtTxCard'),
         label: l.transactionFormAccountLabel,
-        placeholder: l.debtLinkTx,
+        placeholder: l.debtTxNone,
         dense: true,
         reserveSubtitle: true,
         leading: const PickCardEmptyIcon(AppIcons.link, size: 32),
         editable: editing,
         onLongPress: editing ? null : () => enterEdit(),
-        onTap: _linkTx,
+        onTap: _pickLink,
       );
     }
     // The wallet's own card, as in quick create: its icon, colours, balance.
@@ -712,27 +787,13 @@ class _DebtEntryViewState extends State<_DebtEntryView>
   /// when set.
   Widget _dueSection(AppLocalizations l, bool first) {
     final due = _c.dueDate;
-    final Widget chip = !isEditing
-        ? AppChip(label: _dayLabel(l, due!), icon: AppIcons.date)
-        : due == null
-        ? AppChip(
-            label: l.debtDuePick,
-            icon: AppIcons.add,
-            tone: AppChipTone.primary,
-            selected: true,
-            dashed: true,
-            onTap: _pickDue,
-          )
-        : AppChip(
-            label: _dayLabel(l, due),
-            icon: AppIcons.date,
-            selected: true,
-            dashed: true,
-            inset: true,
-            trailing: AppChipTrailing.remove,
-            onRemove: () => _c.setDueDate(null),
-            onTap: _pickDue,
-          );
+    final chip = DatePickChip(
+      date: due,
+      emptyLabel: l.debtDuePick,
+      format: (d) => _dayLabel(l, d),
+      onPick: isEditing ? _pickDue : null,
+      onClear: () => _c.setDueDate(null),
+    );
     return SectionCard(
       key: const ValueKey('debtDueRow'),
       first: first,
@@ -743,6 +804,69 @@ class _DebtEntryViewState extends State<_DebtEntryView>
           trailing: Align(
             alignment: AlignmentDirectional.centerEnd,
             child: chip,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// บันทึกในรายการ above กำหนดจ่าย: the linked transaction as its list row
+  /// (view: tap opens it; edit: tap picks again, ✕ unlinks), or a dashed
+  /// ผูกรายการ. Each saves at once.
+  Widget _linkSection(AppLocalizations l, String symbol, bool first) {
+    final tx = _linked;
+    final busy = isSaving;
+    if (tx == null) {
+      return SectionCard(
+        key: const ValueKey('debtLinkRow'),
+        first: first,
+        children: [
+          DetailRow(
+            label: l.occurrenceRecordInTx,
+            trailing: Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: AppChip(
+                label: l.occurrenceLinkPick,
+                icon: AppIcons.add,
+                tone: AppChipTone.primary,
+                selected: true,
+                dashed: true,
+                onTap: busy ? null : _pickLink,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    final differs = (tx.amount - _entry.amount).abs() > 0.004;
+    return SectionCard(
+      key: const ValueKey('debtLinkRow'),
+      first: first,
+      children: [
+        DetailRow(
+          label: l.occurrenceRecordInTx,
+          helper: differs
+              ? l.debtLinkedAmountDiffers(
+                  moneyString(context, tx.amount, symbol: symbol),
+                )
+              : null,
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            0,
+            AppSpacing.lg,
+            AppSpacing.md,
+          ),
+          child: PickedRowFrame(
+            onTap: busy
+                ? null
+                : isEditing
+                ? _pickLink
+                : () => openPage(context, '/transactions/${tx.id}'),
+            onRemove: isEditing && !busy ? _unlink : null,
+            removeTooltip: l.commonRemove,
+            child: TransactionTile(transaction: tx, showDate: true),
           ),
         ),
       ],
@@ -853,6 +977,8 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                       hint: l.debtNoteHint,
                     ),
                   ),
+                  if (!e.isRepayment && !_sourced)
+                    (first) => _linkSection(l, symbol, first),
                   if (!e.isRepayment && (editing || _c.dueDate != null))
                     (first) => _dueSection(l, first),
                   // An older BE without `origin`: the split source row.

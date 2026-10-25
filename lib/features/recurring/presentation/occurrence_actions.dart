@@ -10,6 +10,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
 import '../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../pending/domain/pending_transaction.dart';
+import '../../transactions/domain/transaction.dart';
 import '../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../transactions/presentation/widgets/recurring_link.dart';
@@ -160,22 +161,39 @@ Future<bool> _paid(
   onChanged,
 );
 
-/// ผูกกับรายการที่มีอยู่: picks a tx near the occurrence's date; one already
-/// on another occurrence asks before it moves.
+/// ผูกกับรายการที่มีอยู่: picks a tx near the occurrence's date, then links
+/// it ([applyOccurrenceTx]).
 Future<bool> linkExistingTx(
   BuildContext context,
   RecurringItem item, {
   required ValueChanged<ItemWriteResult> onChanged,
 }) async {
-  final l = AppLocalizations.of(context)!;
-  final tx = await TransactionPicker.one(
-    context,
-    type: item.type,
-    near: item.date,
-    categoryId: item.category?.id,
-    amount: item.amount,
-  );
+  final tx = await pickOccurrenceTx(context, item);
   if (tx == null || !context.mounted) return false;
+  return applyOccurrenceTx(context, item, tx, onChanged: onChanged);
+}
+
+/// A transaction of the occurrence's type near its date (nothing written).
+Future<Transaction?> pickOccurrenceTx(
+  BuildContext context,
+  RecurringItem item,
+) => TransactionPicker.one(
+  context,
+  type: item.type,
+  near: item.date,
+  categoryId: item.category?.id,
+  amount: item.amount,
+);
+
+/// Links [tx] to the occurrence; one already on another occurrence asks
+/// before it moves.
+Future<bool> applyOccurrenceTx(
+  BuildContext context,
+  RecurringItem item,
+  Transaction tx, {
+  required ValueChanged<ItemWriteResult> onChanged,
+}) async {
+  final l = AppLocalizations.of(context)!;
   final moving = tx.recurringItem != null;
   if (moving) {
     final ok = await showConfirmDialog(
@@ -214,10 +232,10 @@ Future<bool> linkExistingTx(
 }
 
 /// One occurrence in the quick create sheet (แก้เฉพาะงวดนี้): บันทึก keeps the
-/// edits on this occurrence only, ยืนยัน records the tx. Chips: ข้าม /
-/// จ่ายแล้ว / ผูกกับรายการที่มีอยู่, or ยกเลิกการข้าม / ยกเลิกจ่ายแล้ว once
-/// settled. One with a tx opens the tx; one from an old BE (no slot) the old
-/// item sheet.
+/// edits on this occurrence only, ยืนยัน records the tx; บันทึกในรายการ picks
+/// an existing tx instead (linked on ยืนยันและผูก). The bottom left: ข้าม, or
+/// ยกเลิกการข้าม / ยกเลิกจ่ายแล้ว once settled. One with a tx opens the tx;
+/// one from an old BE (no slot) the old item sheet.
 Future<void> openOccurrenceSheet(
   BuildContext context,
   RecurringItem item, {
@@ -241,50 +259,69 @@ Future<void> openOccurrenceSheet(
   final l = AppLocalizations.of(context)!;
   final initial = item.toDraft();
   final settled = item.state.settled;
-  final link = EntrySheetChip(
-    label: l.occurrenceLinkExisting,
-    icon: AppIcons.link,
-    onTap: (c) => linkExistingTx(c, item, onChanged: onChanged),
-  );
+  final archived = item.state == OccurrenceState.archived;
   await showEntrySheet(
     context,
     title: item.recurring?.name ?? item.title,
     subtitle: l.occurrenceEditOnly,
     initial: initial,
-    chips: switch (item.state) {
-      OccurrenceState.archived => [
-        EntrySheetChip(
-          label: l.occurrenceRestore,
-          icon: AppIcons.unarchive,
-          onTap: (c) => _restore(c, item, onChanged),
-        ),
-      ],
-      OccurrenceState.paid => [
-        EntrySheetChip(
-          label: l.occurrenceUnmarkPaid,
-          icon: AppIcons.undo,
-          onTap: (c) => _paid(c, item, onChanged, paid: false),
-        ),
-        link,
-      ],
-      _ => [
-        EntrySheetChip(
-          label: l.occurrenceSkip,
-          icon: AppIcons.none,
-          onTap: (c) => skipOccurrence(c, item, onChanged: onChanged),
-        ),
-        EntrySheetChip(
-          label: l.occurrenceMarkPaid,
-          icon: AppIcons.check,
-          onTap: (c) => _paid(c, item, onChanged, paid: true),
-        ),
-        link,
-      ],
+    barAction: switch (item.state) {
+      OccurrenceState.archived => EntrySheetChip(
+        label: l.occurrenceRestore,
+        icon: AppIcons.unarchive,
+        onTap: (c) => _restore(c, item, onChanged),
+      ),
+      // The จ่ายแล้ว row takes it off.
+      OccurrenceState.paid => null,
+      _ => EntrySheetChip(
+        label: l.occurrenceSkip,
+        icon: AppIcons.none,
+        onTap: (c) => skipOccurrence(c, item, onChanged: onChanged),
+      ),
     },
+    // Paid without a transaction; a recorded one (a saving entry) is paid by
+    // its link.
+    paid: archived || item.state == OccurrenceState.done
+        ? null
+        : EntrySheetPaid(
+            initial: item.state == OccurrenceState.paid,
+            apply: (c, paid, draft) {
+              final fields = occurrenceFields(initial, draft);
+              return _write(c, item.id, (r) async {
+                if (fields.isNotEmpty) {
+                  await r.updateOccurrence(item.ruleId!, item.slot!, fields);
+                }
+                return paid
+                    ? r.markOccurrencePaid(item.ruleId!, item.slot!)
+                    : r.unmarkOccurrencePaid(item.ruleId!, item.slot!);
+              }, onChanged);
+            },
+          ),
+    // ออมเงิน records a saving, never a transaction.
+    link: archived || item.isSaving
+        ? null
+        : EntrySheetLink(
+            pick: (c) => pickOccurrenceTx(c, item),
+            apply: (c, tx) =>
+                applyOccurrenceTx(c, item, tx, onChanged: onChanged),
+          ),
+    // บันทึก keeps the edits on the occurrence (it reaches the รอยืนยัน box
+    // as edited on its day); สร้างรายการใหม่ ticked records it now.
+    createAction: settled
+        ? null
+        : EntrySheetAction(
+            label: l.occurrenceCreateNow,
+            onPressed: (draft) => confirmOccurrence(
+              context,
+              item,
+              onChanged: onChanged,
+              was: initial,
+              now: draft,
+            ),
+          ),
     actions: [
       EntrySheetAction(
         label: l.commonSave,
-        primary: settled,
         onPressed: (draft) async {
           final fields = occurrenceFields(initial, draft);
           if (fields.isEmpty) return true;
@@ -296,17 +333,6 @@ Future<void> openOccurrenceSheet(
           );
         },
       ),
-      if (!settled)
-        EntrySheetAction(
-          label: l.occurrenceConfirm,
-          onPressed: (draft) => confirmOccurrence(
-            context,
-            item,
-            onChanged: onChanged,
-            was: initial,
-            now: draft,
-          ),
-        ),
     ],
   );
 }

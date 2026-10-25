@@ -803,22 +803,33 @@ class SettleLine extends Equatable {
     required this.from,
     required this.to,
     required this.amount,
+    this.recorded = false,
   });
 
   final ProjectMemberRef from;
   final ProjectMemberRef to;
   final double amount;
 
+  /// A line with me in it that I already recorded as a debt.
+  final bool recorded;
+
+  bool get mine => from.isMe || to.isMe;
+
   static SettleLine? tryParse(Object? json) {
     if (json is! Map<String, dynamic>) return null;
     final from = ProjectMemberRef.tryParse(json['from']);
     final to = ProjectMemberRef.tryParse(json['to']);
     if (from == null || to == null) return null;
-    return SettleLine(from: from, to: to, amount: _money(json['amount']));
+    return SettleLine(
+      from: from,
+      to: to,
+      amount: _money(json['amount']),
+      recorded: json['recorded'] == true,
+    );
   }
 
   @override
-  List<Object?> get props => [from, to, amount];
+  List<Object?> get props => [from, to, amount, recorded];
 }
 
 /// Who pays whom: [pairs] nets each two members; [simplified] is the

@@ -604,11 +604,16 @@ class DebtEntryDetail extends Equatable {
     required this.entry,
     required this.balance,
     this.transaction,
+    this.linkedTransaction,
   });
 
   final DebtEntry entry;
   final PersonBalance balance;
   final Transaction? transaction;
+
+  /// One of my own transactions linked to the entry (บันทึกในรายการ); never
+  /// set together with [transaction].
+  final Transaction? linkedTransaction;
 
   factory DebtEntryDetail.fromJson(Map<String, dynamic> json) =>
       DebtEntryDetail(
@@ -617,10 +622,13 @@ class DebtEntryDetail extends Equatable {
         transaction: json['transaction'] is Map
             ? Transaction.fromJson(_map(json['transaction'])!)
             : null,
+        linkedTransaction: json['linked_transaction'] is Map
+            ? Transaction.fromJson(_map(json['linked_transaction'])!)
+            : null,
       );
 
   @override
-  List<Object?> get props => [entry, balance, transaction];
+  List<Object?> get props => [entry, balance, transaction, linkedTransaction];
 }
 
 class DebtEntryWriteResult extends Equatable {
@@ -629,6 +637,7 @@ class DebtEntryWriteResult extends Equatable {
     required this.balance,
     this.previousBalance,
     this.transaction,
+    this.linkedTransaction,
     this.accountBalances = const {},
   });
 
@@ -639,6 +648,7 @@ class DebtEntryWriteResult extends Equatable {
   final PersonBalance? previousBalance;
 
   final Transaction? transaction;
+  final Transaction? linkedTransaction;
 
   final Map<String, double> accountBalances;
 
@@ -650,6 +660,9 @@ class DebtEntryWriteResult extends Equatable {
         transaction: json['transaction'] is Map
             ? Transaction.fromJson(_map(json['transaction'])!)
             : null,
+        linkedTransaction: json['linked_transaction'] is Map
+            ? Transaction.fromJson(_map(json['linked_transaction'])!)
+            : null,
         accountBalances: WalletBalance.mapOf(json['account_balances']),
       );
 
@@ -659,6 +672,7 @@ class DebtEntryWriteResult extends Equatable {
     balance,
     previousBalance,
     transaction,
+    linkedTransaction,
     accountBalances,
   ];
 }

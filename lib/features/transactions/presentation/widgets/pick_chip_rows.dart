@@ -200,23 +200,27 @@ class TagChipRow extends StatelessWidget {
       load: (c) => opts == null
           ? c.read<TagsCubit>().loadIfNeeded()
           : opts.loadIfNeeded(),
-      child: ChipRow(
-        icon: leadingIcon ? AppIcons.tag : null,
-        moreLabel: l.commonMore,
-        onMore: editing ? onMore : null,
-        maxLines: maxLines,
-        chips: [
-          ...leading,
-          if (loading) ..._skeletonChips(context),
-          for (final id in selected)
-            if (byId[id] ?? known[id] case final t?)
-              tagAppChip(
-                context,
-                t,
-                selected: true,
-                onRemove: editing ? () => onRemove(t.id) : null,
-              ),
-        ],
+      // Mini everywhere under a hero (owner): the tags stay quiet.
+      child: ChipSizeScope.force(
+        size: ChipSize.mini,
+        child: ChipRow(
+          icon: leadingIcon ? AppIcons.tag : null,
+          moreLabel: l.commonMore,
+          onMore: editing ? onMore : null,
+          maxLines: maxLines,
+          chips: [
+            ...leading,
+            if (loading) ..._skeletonChips(context),
+            for (final id in selected)
+              if (byId[id] ?? known[id] case final t?)
+                tagAppChip(
+                  context,
+                  t,
+                  selected: true,
+                  onRemove: editing ? () => onRemove(t.id) : null,
+                ),
+          ],
+        ),
       ),
     );
   }

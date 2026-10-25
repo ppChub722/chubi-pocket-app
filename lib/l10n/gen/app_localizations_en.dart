@@ -4777,6 +4777,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get occurrenceLinkExisting => 'Link an existing transaction';
 
   @override
+  String get occurrenceRecordInTx => 'Recorded as';
+
+  @override
+  String get occurrenceLinkPick => 'Link a transaction';
+
+  @override
+  String get occurrenceCreateNow => 'Create it now';
+
+  @override
   String get occurrenceConfirmAll => 'Confirm all';
 
   @override
@@ -4906,27 +4915,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get occurrenceShowLess => 'Show less';
 
   @override
-  String get recurringAheadForever => 'keeps going';
-
-  @override
-  String recurringAheadLeft(int n) {
-    return '$n more';
-  }
-
-  @override
-  String recurringAheadTotal(String amount) {
-    return '$amount in all';
-  }
-
-  @override
-  String recurringAheadUntil(String date) {
-    return 'until $date';
-  }
-
-  @override
-  String get recurringAheadEdited => 'Changed ahead';
-
-  @override
   String get recurringAheadCustomize => 'Change ahead';
 
   @override
@@ -4935,9 +4923,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recurringAheadNext => 'Next';
-
-  @override
-  String get recurringAheadSummary => 'Summary';
 
   @override
   String get recurringTileMoved => 'Moved';
@@ -5740,6 +5725,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sgv2KindMove => 'Move';
 
   @override
+  String sgEntryFrom(String name) {
+    return 'from $name';
+  }
+
+  @override
+  String sgEntryTo(String name) {
+    return 'to $name';
+  }
+
+  @override
   String get sgv2SpareTitle => 'Not allocated';
 
   @override
@@ -5913,6 +5908,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bgPeriodAmountField => 'Amount for this period';
+
+  @override
+  String bgPeriodEditSubtitle(String period) {
+    return 'Only $period | other periods stay';
+  }
+
+  @override
+  String get bgPeriodBase => 'Base amount';
+
+  @override
+  String get bgPeriodNoteHint => 'e.g. a wedding this month';
 
   @override
   String get bgSectionScope => 'Which spending counts';
@@ -6529,7 +6535,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpBudgetsPeriodReset(String amount) {
-    return 'Back to the base amount ($amount)';
+    return '↺ Use the base amount ($amount)';
   }
 
   @override
@@ -7147,6 +7153,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get evbNets => 'Each person';
 
   @override
+  String get evbMembersTitle => 'Members';
+
+  @override
+  String get evbManageMembers => 'Manage members ›';
+
+  @override
+  String get evbSettleSection => 'Settle up';
+
+  @override
+  String get evbSettleRecord => 'Record as a debt';
+
+  @override
+  String get evbSettleRecorded => 'Recorded';
+
+  @override
+  String evbSettleRecordBody(String from, String to, String amount) {
+    return 'Record in your debts: $from → $to $amount';
+  }
+
+  @override
+  String get evbBookedDebt => 'Debt';
+
+  @override
+  String get evbBookedTx => 'Transaction';
+
+  @override
+  String get evbBookMine => 'Book it';
+
+  @override
   String get evbSettleTitle => 'Who pays whom';
 
   @override
@@ -7160,7 +7195,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get evbSettleHint =>
-      'Tap \"Paid\" to record the payback in the event; anyone can';
+      'Tap a line to record the payback in the event (anyone can) | the inbox button records it as your debt';
 
   @override
   String get evbAllSettled => 'Everyone is even';
@@ -7558,6 +7593,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpRecurringKindReminder => 'Reminder';
+
+  @override
+  String get fpRecurringKindSaving => 'Saving';
+
+  @override
+  String get recurringHomeMonthPayNoSaving =>
+      'Paid this month, savings not included';
+
+  @override
+  String get recurringHomeMonthSave => 'Saved this month';
+
+  @override
+  String get sgRecurringTitle => 'Recurring saves';
+
+  @override
+  String get sgRecurringCaption => 'Saves into this goal on the round you set';
+
+  @override
+  String get sgRecurringSpareCaption =>
+      'Saves into unallocated on the round you set';
 
   @override
   String get fpRecurringRefreshFailed =>
@@ -8395,6 +8450,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get debtLinkTx => 'Create a transaction from this debt';
+
+  @override
+  String get debtTxNone => 'No transaction linked';
+
+  @override
+  String debtLinkedAmountDiffers(String amount) {
+    return 'The transaction is $amount, not the debt\'s amount';
+  }
 
   @override
   String get debtPaidHelper => 'Only a label; it never changes a number';

@@ -14,6 +14,8 @@ class RecurringPreset {
     this.categoryId,
     this.name,
     this.accountId,
+    this.goalId,
+    this.spare = false,
   });
 
   factory RecurringPreset.fromQuery(Map<String, String> q) {
@@ -25,6 +27,8 @@ class RecurringPreset {
       categoryId: q['category'],
       name: q['name'],
       accountId: q['account'],
+      goalId: q['goal'],
+      spare: q['spare'] == '1',
     );
   }
 
@@ -34,6 +38,14 @@ class RecurringPreset {
   final String? categoryId;
   final String? name;
   final String? accountId;
+
+  /// ออมเงิน into this goal (picked already).
+  final String? goalId;
+
+  /// ออมเงิน into ยังไม่จัดสรร (picked already).
+  final bool spare;
+
+  bool get _saving => goalId != null || spare;
 }
 
 @immutable
@@ -53,6 +65,8 @@ class RecurringDraft {
     this.tagIds = const {},
     this.trialUntil,
     this.autoCreate = false,
+    this.goalId,
+    this.goalPicked = false,
   });
 
   factory RecurringDraft.blank({
@@ -61,6 +75,7 @@ class RecurringDraft {
   }) {
     final k =
         preset.kind ??
+        (preset._saving ? RecurringKind.saving : null) ??
         switch (preset.type) {
           TransactionType.income => RecurringKind.income,
           TransactionType.transfer => RecurringKind.reminder,
@@ -79,7 +94,9 @@ class RecurringDraft {
           ? ''
           : AmountInput.format(preset.amount!),
       accountId: preset.accountId,
-      categoryId: preset.categoryId,
+      categoryId: k == RecurringKind.saving ? null : preset.categoryId,
+      goalId: preset.goalId,
+      goalPicked: preset._saving,
       rule: RecurrenceRule(
         freq: RecurrenceFreq.monthly,
         start: start,
@@ -108,6 +125,8 @@ class RecurringDraft {
     tagIds: {for (final t in r.tags) t.id},
     trialUntil: r.trialUntil,
     autoCreate: r.autoCreate,
+    goalId: r.goalId,
+    goalPicked: r.isSaving,
   );
 
   final RecurringKind kind;
@@ -126,7 +145,18 @@ class RecurringDraft {
   final DateTime? trialUntil;
   final bool autoCreate;
 
+  /// ออมเงิน: the goal (null = ยังไม่จัดสรร once [goalPicked]).
+  final String? goalId;
+
+  /// A new saving rule starts with nothing picked: the goal or ยังไม่จัดสรร
+  /// has to be chosen.
+  final bool goalPicked;
+
   bool get isTransfer => type == TransactionType.transfer;
+
+  bool get isSaving => kind == RecurringKind.saving;
+
+  bool get goalOk => !isSaving || goalPicked;
 
   bool get amountOptional => kind == RecurringKind.reminder;
 
@@ -151,6 +181,7 @@ class RecurringDraft {
         rule.end.kind != RecurrenceEndKind.afterCount) {
       nextRule = rule.copyWith(end: const RecurrenceEnd.afterCount(12));
     }
+    final saving = k == RecurringKind.saving;
     return RecurringDraft(
       kind: k,
       rule: nextRule,
@@ -162,12 +193,35 @@ class RecurringDraft {
       type: nextType,
       accountId: accountId,
       toAccountId: nextType == TransactionType.transfer ? toAccountId : null,
-      categoryId: nextType == type ? categoryId : null,
-      tagIds: tagIds,
+      // ออมเงิน has no category or tags.
+      categoryId: saving || isSaving || nextType != type ? null : categoryId,
+      tagIds: saving ? const {} : tagIds,
       trialUntil: k == RecurringKind.subscription ? trialUntil : null,
       autoCreate: autoCreate,
+      goalId: saving ? goalId : null,
+      goalPicked: saving && goalPicked,
     );
   }
+
+  /// Picks the goal (null = ยังไม่จัดสรร).
+  RecurringDraft withGoal(String? id) => RecurringDraft(
+    kind: kind,
+    rule: rule,
+    name: name,
+    description: description,
+    note: note,
+    amount: amount,
+    iconCode: iconCode,
+    type: type,
+    accountId: accountId,
+    toAccountId: toAccountId,
+    categoryId: categoryId,
+    tagIds: tagIds,
+    trialUntil: trialUntil,
+    autoCreate: autoCreate,
+    goalId: id,
+    goalPicked: true,
+  );
 
   /// What a rule edit can carry over to its recorded tx (R20): never the
   /// date or the amount.
@@ -177,6 +231,7 @@ class RecurringDraft {
       accountId != o.accountId ||
       toAccountId != o.toAccountId ||
       categoryId != o.categoryId ||
+      goalId != o.goalId ||
       !setEquals(tagIds, o.tagIds);
 
   bool get walletOk =>
@@ -202,8 +257,9 @@ class RecurringDraft {
       trialUntil: trialUntil,
       accountId: accountId,
       toAccountId: isTransfer ? toAccountId : null,
-      categoryId: isTransfer ? null : categoryId,
-      tagIds: tagIds.toList(),
+      categoryId: isTransfer || isSaving ? null : categoryId,
+      tagIds: isSaving ? const [] : tagIds.toList(),
+      goalId: isSaving ? goalId : null,
       rule: rule,
       autoCreate: autoCreate && canAutoCreate,
     );
@@ -242,6 +298,8 @@ class RecurringDraft {
     tagIds: tagIds ?? this.tagIds,
     trialUntil: clearTrial ? null : (trialUntil ?? this.trialUntil),
     autoCreate: autoCreate ?? this.autoCreate,
+    goalId: goalId,
+    goalPicked: goalPicked,
   );
 
   @override
@@ -260,6 +318,8 @@ class RecurringDraft {
       other.categoryId == categoryId &&
       other.trialUntil == trialUntil &&
       other.autoCreate == autoCreate &&
+      other.goalId == goalId &&
+      other.goalPicked == goalPicked &&
       setEquals(other.tagIds, tagIds);
 
   @override
@@ -277,6 +337,8 @@ class RecurringDraft {
     categoryId,
     trialUntil,
     autoCreate,
+    goalId,
+    goalPicked,
     Object.hashAllUnordered(tagIds),
   );
 }

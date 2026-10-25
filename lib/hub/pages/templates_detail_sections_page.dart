@@ -102,8 +102,8 @@ class _DetailSectionsDemoState extends State<_DetailSectionsDemo> {
             title: 'SettingDropdownRow | SettingSwitchViewRow',
             note:
                 'A dropdown row shows its value as a dashed ▾ chip (never a ›: '
-                'tapping opens a menu, not a page) — wrap it in an '
-                'OptionMenuAnchor. SettingSwitchViewRow only SHOWS a setting '
+                'tapping opens a menu, not a page). The menu hangs under that '
+                'chip, not under the whole row. SettingSwitchViewRow only SHOWS a setting '
                 'the viewer may not change (e.g. a wallet member); settings '
                 'they may change are LiveSetting rows (below).',
             child: SettingsSection(
@@ -117,23 +117,19 @@ class _DetailSectionsDemoState extends State<_DetailSectionsDemo> {
                   value: _a,
                   onLongPress: () => setState(() => _a = !_a),
                 ),
-                OptionMenuAnchor<String>(
+                SettingDropdownRow<String>(
+                  label: 'In my report',
+                  value: _scope,
                   selected: _scope,
                   options: [
                     for (final s in const ['None', 'Mine', 'Whole wallet'])
                       SheetOption(value: s, label: s),
                   ],
                   onSelected: (s) => setState(() => _scope = s),
-                  builder: (context, toggle) => SettingDropdownRow(
-                    label: 'In my report',
-                    value: _scope,
-                    onTap: toggle,
-                  ),
                 ),
-                const SettingDropdownRow(
+                const SettingDropdownRow<String>(
                   label: 'Busy (inert)',
                   value: 'Whole wallet',
-                  onTap: null,
                 ),
               ],
             ),
@@ -176,6 +172,31 @@ class _DetailSectionsDemoState extends State<_DetailSectionsDemo> {
                 PeopleStripMember(
                   avatar: AppAvatar(name: 'Chai'),
                   name: 'Chai',
+                ),
+              ],
+            ),
+          ),
+          HubDemo(
+            title: 'PeopleStrip(compact: true)',
+            note:
+                'Members only (no numbers): smaller cards, the invite card '
+                'the same size. The event page, under the note.',
+            child: PeopleStrip(
+              compact: true,
+              title: 'Members',
+              inviteLabel: 'Invite',
+              onInvite: noop,
+              actionLabel: 'Manage members ›',
+              onAction: noop,
+              onMemberTap: (_) {},
+              members: const [
+                PeopleStripMember(
+                  avatar: AppAvatar(name: 'Aom Chan', size: 32),
+                  name: 'Aom',
+                ),
+                PeopleStripMember(
+                  avatar: AppAvatar(name: 'Bee', size: 32),
+                  name: 'Bee',
                 ),
               ],
             ),
@@ -329,18 +350,15 @@ class _LiveSettingDemoState extends State<_LiveSettingDemo> {
             value: _scope,
             save: (v) => _call(() => _scope = v),
             failedMessage: (_) => "Couldn't save the setting",
-            builder: (context, value, onChanged) => OptionMenuAnchor<String>(
+            builder: (context, value, onChanged) => SettingDropdownRow<String>(
+              label: 'In my report',
+              value: value,
               selected: value,
               options: [
                 for (final s in const ['None', 'Mine', 'Whole wallet'])
                   SheetOption(value: s, label: s),
               ],
-              onSelected: (s) => onChanged?.call(s),
-              builder: (context, toggle) => SettingDropdownRow(
-                label: 'In my report',
-                value: value,
-                onTap: onChanged == null ? null : toggle,
-              ),
+              onSelected: onChanged,
             ),
           ),
         ],

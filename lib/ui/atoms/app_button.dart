@@ -38,6 +38,7 @@ class AppButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.iconColor,
     this.trailingIcon,
     this.variant = AppButtonVariant.primary,
     this.size = AppButtonSize.regular,
@@ -50,6 +51,9 @@ class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
+
+  /// Null = the button's text colour.
+  final Color? iconColor;
 
   /// After the label, e.g. ▾ on a button that opens a menu.
   final IconData? trailingIcon;
@@ -205,7 +209,10 @@ class AppButton extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (icon != null) ...[Icon(icon, size: iconSize), SizedBox(width: gap)],
+        if (icon != null) ...[
+          Icon(icon, size: iconSize, color: iconColor),
+          SizedBox(width: gap),
+        ],
         Flexible(child: text),
         if (trailingIcon != null) ...[
           SizedBox(width: gap),

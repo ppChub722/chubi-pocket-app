@@ -4669,6 +4669,15 @@ class AppLocalizationsTh extends AppLocalizations {
   String get occurrenceLinkExisting => 'ผูกกับรายการที่มีอยู่';
 
   @override
+  String get occurrenceRecordInTx => 'บันทึกในรายการ';
+
+  @override
+  String get occurrenceLinkPick => 'ผูกรายการ';
+
+  @override
+  String get occurrenceCreateNow => 'สร้างรายการใหม่';
+
+  @override
   String get occurrenceConfirmAll => 'ยืนยันทั้งหมด';
 
   @override
@@ -4795,27 +4804,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get occurrenceShowLess => 'ย่อ';
 
   @override
-  String get recurringAheadForever => 'วนต่อไปเรื่อยๆ';
-
-  @override
-  String recurringAheadLeft(int n) {
-    return 'อีก $n งวด';
-  }
-
-  @override
-  String recurringAheadTotal(String amount) {
-    return 'รวม $amount';
-  }
-
-  @override
-  String recurringAheadUntil(String date) {
-    return 'ถึง $date';
-  }
-
-  @override
-  String get recurringAheadEdited => 'ที่ปรับไว้';
-
-  @override
   String get recurringAheadCustomize => 'ปรับแต่งล่วงหน้า';
 
   @override
@@ -4824,9 +4812,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get recurringAheadNext => 'ถัดไป';
-
-  @override
-  String get recurringAheadSummary => 'สรุป';
 
   @override
   String get recurringTileMoved => 'เลื่อน';
@@ -5593,6 +5578,16 @@ class AppLocalizationsTh extends AppLocalizations {
   String get sgv2KindMove => 'จัดสรร';
 
   @override
+  String sgEntryFrom(String name) {
+    return 'จาก $name';
+  }
+
+  @override
+  String sgEntryTo(String name) {
+    return 'ไป $name';
+  }
+
+  @override
   String get sgv2SpareTitle => 'ยังไม่จัดสรร';
 
   @override
@@ -5766,6 +5761,17 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get bgPeriodAmountField => 'งบรอบนี้';
+
+  @override
+  String bgPeriodEditSubtitle(String period) {
+    return 'แก้เฉพาะรอบ $period | รอบอื่นไม่เปลี่ยน';
+  }
+
+  @override
+  String get bgPeriodBase => 'งบปกติ';
+
+  @override
+  String get bgPeriodNoteHint => 'เช่น เดือนนี้มีงานแต่ง';
 
   @override
   String get bgSectionScope => 'นับรายจ่ายไหนบ้าง';
@@ -6378,7 +6384,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpBudgetsPeriodReset(String amount) {
-    return 'คืนเป็นค่าเดิม ($amount)';
+    return '↺ ใช้งบปกติ ($amount)';
   }
 
   @override
@@ -6985,6 +6991,35 @@ class AppLocalizationsTh extends AppLocalizations {
   String get evbNets => 'ยอดแต่ละคน';
 
   @override
+  String get evbMembersTitle => 'สมาชิก';
+
+  @override
+  String get evbManageMembers => 'จัดการสมาชิก ›';
+
+  @override
+  String get evbSettleSection => 'จัดการ';
+
+  @override
+  String get evbSettleRecord => 'จดเป็นหนี้';
+
+  @override
+  String get evbSettleRecorded => 'จดแล้ว';
+
+  @override
+  String evbSettleRecordBody(String from, String to, String amount) {
+    return 'จดลงหนี้สินของคุณ: $from → $to $amount';
+  }
+
+  @override
+  String get evbBookedDebt => 'ลงหนี้';
+
+  @override
+  String get evbBookedTx => 'ลงรายการ';
+
+  @override
+  String get evbBookMine => 'ลงบัญชี';
+
+  @override
   String get evbSettleTitle => 'ต้องจ่ายกัน';
 
   @override
@@ -6997,7 +7032,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get evbSettlePaid => 'จ่ายแล้ว';
 
   @override
-  String get evbSettleHint => 'กด \"จ่ายแล้ว\" = จดจ่ายคืนลงอีเวนต์ ใครจดก็ได้';
+  String get evbSettleHint =>
+      'แตะแถว = จดจ่ายคืนลงอีเวนต์ ใครจดก็ได้ | ปุ่มลงกล่อง = จดเป็นหนี้ของคุณ';
 
   @override
   String get evbAllSettled => 'เคลียร์กันครบแล้ว';
@@ -7390,6 +7426,24 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpRecurringKindReminder => 'เตือนจ่าย';
+
+  @override
+  String get fpRecurringKindSaving => 'ออมเงิน';
+
+  @override
+  String get recurringHomeMonthPayNoSaving => 'จ่ายรวมทั้งเดือน ไม่รวมออมเงิน';
+
+  @override
+  String get recurringHomeMonthSave => 'ออมเดือนนี้';
+
+  @override
+  String get sgRecurringTitle => 'ทำเป็นรายการประจำ';
+
+  @override
+  String get sgRecurringCaption => 'ออมเข้าเป้าหมายนี้ตามรอบที่ตั้งไว้';
+
+  @override
+  String get sgRecurringSpareCaption => 'ออมเข้ายังไม่จัดสรรตามรอบที่ตั้งไว้';
 
   @override
   String get fpRecurringRefreshFailed =>
@@ -8220,6 +8274,14 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get debtLinkTx => 'สร้างรายการจากหนี้';
+
+  @override
+  String get debtTxNone => 'ยังไม่ผูกรายการ';
+
+  @override
+  String debtLinkedAmountDiffers(String amount) {
+    return 'ยอดรายการ $amount ไม่ตรงกับหนี้';
+  }
 
   @override
   String get debtPaidHelper => 'เป็นป้ายบอกเท่านั้น ไม่มีผลกับยอด';

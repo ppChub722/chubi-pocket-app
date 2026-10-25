@@ -215,6 +215,8 @@ class OptionMenuAnchor<T> extends StatelessWidget {
     this.selected,
     this.title,
     this.custom,
+    this.controller,
+    this.alignEnd = false,
     super.key,
   });
 
@@ -228,14 +230,23 @@ class OptionMenuAnchor<T> extends StatelessWidget {
   /// Ends the menu with a "type your own" box.
   final OptionMenuCustom? custom;
 
+  /// Lets something outside the anchor (a whole row) open the menu that hangs
+  /// under the anchor.
+  final MenuController? controller;
+
+  /// The menu's end edge lines up with the anchor's (a ▾ at a row's end),
+  /// instead of its start edge.
+  final bool alignEnd;
+
   @override
   Widget build(BuildContext context) {
     final custom = this.custom;
-    return MenuAnchor(
+    final anchor = MenuAnchor(
+      controller: controller,
       style: _menuStyle(context),
       consumeOutsideTap: true,
       alignmentOffset: const Offset(0, AppSpacing.xs),
-      menuChildren: [
+      menuChildren: _keepDirection(context, [
         if (title != null) _PopoverTitle(title!),
         for (final o in options)
           _PopoverItem(
@@ -247,10 +258,28 @@ class OptionMenuAnchor<T> extends StatelessWidget {
           const AppDivider(height: AppSpacing.sm),
           _PopoverCustomItem(custom),
         ],
-      ],
-      builder: (context, controller, _) =>
-          builder(context, () => _toggle(controller)),
+      ]),
+      // [context] here is the page's, outside the flipped direction.
+      builder: (inner, controller, _) => _keepDirection(context, [
+        builder(inner, () => _toggle(controller)),
+      ]).single,
     );
+    if (!alignEnd) return anchor;
+    // MenuAnchor lines the menu up with the anchor's start edge, so it lays
+    // out under the opposite direction; the trigger and items keep the page's.
+    final ltr = Directionality.of(context) == TextDirection.ltr;
+    return Directionality(
+      textDirection: ltr ? TextDirection.rtl : TextDirection.ltr,
+      child: anchor,
+    );
+  }
+
+  List<Widget> _keepDirection(BuildContext context, List<Widget> children) {
+    if (!alignEnd) return children;
+    final dir = Directionality.of(context);
+    return [
+      for (final c in children) Directionality(textDirection: dir, child: c),
+    ];
   }
 }
 

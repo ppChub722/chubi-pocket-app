@@ -263,6 +263,71 @@ class _ListRowPageState extends State<_ListRowPage> {
           },
         ),
         HubDemo(
+          title: 'TxListRow: one row for every money item',
+          note:
+              'The same on รายการ, กระเป๋า, งบ, เป้าออม and the linked card: '
+              'category icon (else the kind\'s) | source mark + title / wallet '
+              '| parts / tags | amount. Savings take the money colours: in '
+              'green, out red, a move grey.',
+          child: _Card(
+            rows: [
+              TxListRow(
+                kind: TxListKind.expense,
+                title: 'ค่าเน็ตบ้าน ประจำเดือน',
+                source: TxSource.recurring,
+                wallet: walletRowChip(context, name: 'เงินในธนาคาร'),
+                parts: const ['Communication'],
+                tags: [tagSpan(context, 'บ้าน')],
+                amount: const MoneyText(-599, tone: MoneyTone.signed),
+              ),
+              const TxListRow(
+                kind: TxListKind.income,
+                title: 'เงินเดือน',
+                parts: ['Salary'],
+                amount: MoneyText(41500, tone: MoneyTone.signed),
+              ),
+              const TxListRow(
+                kind: TxListKind.savingIn,
+                title: 'ออม',
+                source: TxSource.recurring,
+                amount: MoneyText(2000, tone: MoneyTone.income),
+              ),
+              const TxListRow(
+                kind: TxListKind.savingOut,
+                title: 'ถอน',
+                amount: MoneyText(-500, tone: MoneyTone.expense),
+              ),
+              const TxListRow(
+                kind: TxListKind.savingMove,
+                title: 'จัดสรร',
+                parts: ['จาก กองทุนฉุกเฉิน'],
+                amount: MoneyText(1000, tone: MoneyTone.plain),
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'titleMark: where a row came from (txSourceMark)',
+          note:
+              'A circle as tall as the title\'s letters, before it: รายการประจำ, '
+              'ผ่อน, อีเวนต์, หนี้, รอยืนยัน. Rows show it instead of source '
+              'chips / ↻ / 5/12; tags stay on the detail page.',
+          child: _Card(
+            rows: [
+              for (final s in TxSource.values)
+                AppListRow(
+                  leading: tile(AppIcons.category, palette.warning),
+                  title: s.name,
+                  titleMark: txSourceMark(context, s),
+                  line2: const ListRowLine(parts: ['Groceries']),
+                  trailing: const ListRowTrailing.value(
+                    MoneyText(-350, tone: MoneyTone.signed),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        HubDemo(
           title: 'walletRowChip + tagSpan (lib/ui/domain)',
           note:
               'Layer-2 helpers every entity row uses, so wallets and tags look '

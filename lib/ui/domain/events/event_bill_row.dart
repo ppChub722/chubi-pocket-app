@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../atoms/app_divider.dart';
+import '../../atoms/app_icon_button.dart';
 import '../../atoms/select_check.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_spacing.dart';
+import '../../tokens/chip_size.dart';
 import '../icons/icon_code.dart';
 import '../money/money_text.dart';
 import '../people/person_mark.dart';
@@ -21,6 +23,23 @@ const double _fadedOpacity = 0.55;
 /// Bill rows show the person's avatar only: no 🔗 badge on a linked member.
 PersonLevel _noBadge(PersonLevel level) =>
     level == PersonLevel.linked ? PersonLevel.contact : level;
+
+/// My part not yet in my books: a light tint that stays (unlike the flash).
+Color _mineTint(BuildContext context) =>
+    Theme.of(context).colorScheme.primary.withValues(alpha: 0.08);
+
+/// The row's own button (⤓ ลงบัญชี): round, filled, a chip tall.
+Widget _actionButton(
+  BuildContext context,
+  IconData icon,
+  VoidCallback onTap,
+  String? tooltip,
+) => AppIconButton.filled(
+  icon: icon,
+  onPressed: onTap,
+  tooltip: tooltip,
+  size: ChipSize.chip.heightOf(context),
+);
 
 class EventBillRow extends StatelessWidget {
   const EventBillRow({
@@ -49,8 +68,20 @@ class EventBillRow extends StatelessWidget {
     this.onTap,
     this.children = const [],
     this.highlighted = false,
+    this.mine = false,
+    this.onAction,
+    this.actionIcon = AppIcons.bookIn,
+    this.actionTooltip,
     super.key,
   });
+
+  /// My part (I paid) isn't in my books yet: the row keeps a light tint.
+  final bool mine;
+
+  /// A button at the end of the payer line (else of line 2): ⤓ ลงบัญชี.
+  final VoidCallback? onAction;
+  final IconData actionIcon;
+  final String? actionTooltip;
 
   final String title;
   final num amount;
@@ -120,7 +151,11 @@ class EventBillRow extends StatelessWidget {
     ].join(' | ');
     final hasLine2 =
         line2Text.isNotEmpty ||
-        (!payerLine && (linked || badge != null || payer.isNotEmpty));
+        (!payerLine &&
+            (linked || badge != null || payer.isNotEmpty || onAction != null));
+    final action = onAction == null
+        ? null
+        : _actionButton(context, actionIcon, onAction!, actionTooltip);
 
     final line1 = Text(
       title,
@@ -179,6 +214,7 @@ class EventBillRow extends StatelessWidget {
             Icon(AppIcons.link, size: 14, color: scheme.onSurfaceVariant),
           ],
           if (badge != null) ...[const SizedBox(width: AppSpacing.xs), badge!],
+          if (action != null) ...[const Spacer(), action],
         ],
       ),
     );
@@ -213,6 +249,7 @@ class EventBillRow extends StatelessWidget {
             const SizedBox(width: AppSpacing.xs),
             badge!,
           ],
+          if (action != null && !payerLine) ...[const Spacer(), action],
         ],
       ),
     );
@@ -267,6 +304,7 @@ class EventBillRow extends StatelessWidget {
         ),
       ),
     );
+    if (mine) row = ColoredBox(color: _mineTint(context), child: row);
     if (locked) row = IgnorePointer(child: row);
     if (locked || marked) row = Opacity(opacity: _fadedOpacity, child: row);
     row = _Flash(on: highlighted, child: row);
@@ -363,10 +401,22 @@ class EventBillChildRow extends StatelessWidget {
     this.badge,
     this.locked = false,
     this.onTap,
+    this.mine = false,
+    this.onAction,
+    this.actionIcon = AppIcons.bookIn,
+    this.actionTooltip,
     super.key,
   });
 
   static const double indent = AppSpacing.xxl;
+
+  /// My share isn't in my books yet: the row keeps a light tint.
+  final bool mine;
+
+  /// A button left of the amount: ⤓ ลงบัญชี.
+  final VoidCallback? onAction;
+  final IconData actionIcon;
+  final String? actionTooltip;
 
   /// False: no tick box.
   final bool tick;
@@ -446,6 +496,10 @@ class EventBillChildRow extends StatelessWidget {
                       style: textTheme.bodyMedium,
                     ),
             ),
+            if (onAction != null) ...[
+              const SizedBox(width: AppSpacing.sm),
+              _actionButton(context, actionIcon, onAction!, actionTooltip),
+            ],
             const SizedBox(width: AppSpacing.sm),
             MoneyText(
               amount,
@@ -459,6 +513,7 @@ class EventBillChildRow extends StatelessWidget {
         ),
       ),
     );
+    if (mine) row = ColoredBox(color: _mineTint(context), child: row);
     if (locked) row = IgnorePointer(child: row);
     if (locked || marked) row = Opacity(opacity: _fadedOpacity, child: row);
     return row;

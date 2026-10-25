@@ -137,7 +137,7 @@ class AccountPickerDemos extends StatelessWidget {
         _demo(
           'AccountPicker.one — none, no add',
           'debt_entry_detail_page (default title), settings main wallet, '
-              'notification receiving wallet, saving goal auto-save source: '
+              'notification receiving wallet, saving goal starting-amount source: '
               'each its own title and "ไม่ระบุกระเป๋า". Nothing set yet = the '
               'none card is the picked one.',
           [

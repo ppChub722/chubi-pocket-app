@@ -58,6 +58,8 @@ class RecurringItem extends Equatable {
     this.note,
     this.pendingId,
     this.transaction,
+    this.savingEntryId,
+    this.isSaving = false,
     this.edited = false,
     this.manual = false,
     this.createdAt,
@@ -110,6 +112,10 @@ class RecurringItem extends Equatable {
   final String? pendingId;
 
   final BoardSourceTx? transaction;
+
+  /// ออมเงิน: recorded as a saving entry (not a transaction).
+  final String? savingEntryId;
+  final bool isSaving;
   final bool edited;
   final bool manual;
   final DateTime? createdAt;
@@ -129,10 +135,10 @@ class RecurringItem extends Equatable {
     return type == TransactionType.expense ? -a : a;
   }
 
-  static const _types = {'expense', 'income', 'transfer'};
+  static const _types = {'expense', 'income', 'transfer', 'saving'};
 
-  /// Null for a row the app has no type for (the BE's `saving`), so one such
-  /// row doesn't break a whole list.
+  /// Null for a row the app has no type for, so one such row doesn't break a
+  /// whole list.
   static RecurringItem? tryParse(Object? json) =>
       json is Map<String, dynamic> &&
           _types.contains((json['type'] as String?) ?? 'expense')
@@ -175,7 +181,9 @@ class RecurringItem extends Equatable {
     total: (json['total'] as num?)?.toInt(),
     date: parseYmd(json['date'] as String?) ?? DateTime.now(),
     daysUntil: (json['days_until'] as num?)?.toInt() ?? 0,
-    type: TransactionType.fromJson((json['type'] as String?) ?? 'expense'),
+    type: recurringTypeFromJson(json['type'] as String?),
+    isSaving: json['type'] == 'saving',
+    savingEntryId: json['saving_entry_id'] as String?,
     amount: (json['amount'] as num?)?.toDouble(),
     account: json['account'] is Map<String, dynamic>
         ? AccountRef.fromJson(json['account'] as Map<String, dynamic>)
@@ -236,6 +244,8 @@ class RecurringItem extends Equatable {
     state,
     pendingId,
     transaction,
+    savingEntryId,
+    isSaving,
     edited,
     manual,
     createdAt,

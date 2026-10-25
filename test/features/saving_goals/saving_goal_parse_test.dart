@@ -15,15 +15,7 @@ Map<String, dynamic> wallet(String id, String name) => {
   'archived': false,
 };
 
-/// The goal's auto-saving as the BE sends it (`SavingAutoSave`).
-Map<String, dynamic> prodAutoSave({bool withWallet = true}) => {
-  'amount': 5500,
-  'day': 25,
-  'wallet': withWallet ? wallet('w1', 'โดราเอมอน') : null,
-  'next_date': '2026-10-25',
-};
-
-/// A goal as the BE sends it (0.4.0: month figures, status, auto_save).
+/// A goal as the BE sends it (0.4.0: month figures, status).
 Map<String, dynamic> prodGoal({
   String id = 'g1',
   String name = 'ทริปญี่ปุ่น',
@@ -32,7 +24,6 @@ Map<String, dynamic> prodGoal({
   int behindMonths = 2,
   num saved = 52000,
   num? monthShort = 2500,
-  Map<String, dynamic>? autoSave,
   Map<String, bool> actions = const {},
 }) => {
   'id': id,
@@ -73,7 +64,6 @@ Map<String, dynamic> prodGoal({
   'month_short': monthShort,
   'status': status,
   'behind_months': status == 'behind' ? behindMonths : null,
-  'auto_save': autoSave,
   'created_at': '2026-05-02T08:00:00Z',
   'updated_at': '2026-10-13T08:00:00Z',
 };
@@ -84,9 +74,8 @@ Map<String, dynamic> prodOngoingGoal({
   String id = 'g9',
   String name = 'เงินเก็บให้ลูก',
   num saved = 45000,
-  Map<String, dynamic>? autoSave,
 }) => {
-  ...prodGoal(id: id, name: name, saved: saved, autoSave: autoSave),
+  ...prodGoal(id: id, name: name, saved: saved),
   'description': 'เก็บไว้ให้น้องโต',
   'target_amount': null,
   'deadline': null,
@@ -99,7 +88,7 @@ Map<String, dynamic> prodOngoingGoal({
   'pace': 'none',
   'late_months': null,
   'milestones': <dynamic>[],
-  'month_plan': autoSave == null ? null : autoSave['amount'],
+  'month_plan': null,
   'month_saved': 2000,
   'month_short': null,
   'status': 'none',
@@ -161,11 +150,10 @@ Map<String, dynamic> prodSpare() => {
   ],
 };
 
-/// The spare page (`GET /saving-goals/spare`): `auto_save` is an object here.
-Map<String, dynamic> prodSpareDetail({Map<String, dynamic>? autoSave}) => {
+/// The spare page (`GET /saving-goals/spare`).
+Map<String, dynamic> prodSpareDetail() => {
   'spare': prodSpare(),
   'history': <dynamic>[],
-  'auto_save': autoSave,
   'entries': prodEntries(const []),
 };
 
@@ -202,7 +190,7 @@ void main() {
   test(
     'a goal parses the 0.4.0 figures (BE computed, nothing client-side)',
     () {
-      final g = SavingGoal.fromJson(prodGoal(autoSave: prodAutoSave()));
+      final g = SavingGoal.fromJson(prodGoal());
       expect(g.state, SavingGoalState.active);
       expect(g.savedAmount, 52000);
       expect(g.progressPct, 65);
@@ -213,19 +201,10 @@ void main() {
       expect(g.monthPlan, 5500);
       expect(g.monthSaved, 3000);
       expect(g.monthShort, 2500);
-      expect(g.autoSave!.amount, 5500);
-      expect(g.autoSave!.day, 25);
-      expect(g.autoSave!.wallet!.name, 'โดราเอมอน');
-      expect(g.autoSave!.nextDate, '2026-10-25');
       expect(g.milestones, hasLength(2));
       expect(g.actions.save, isTrue);
       expect(g.actions.delete, isFalse);
       expect(g.currency, 'THB');
-      expect(SavingGoal.fromJson(prodGoal()).autoSave, isNull);
-      final noWallet = SavingGoal.fromJson(
-        prodGoal(autoSave: prodAutoSave(withWallet: false)),
-      );
-      expect(noWallet.autoSave!.wallet, isNull);
     },
   );
 
@@ -270,16 +249,11 @@ void main() {
   });
 
   test('the goal page parses nested detail, entries and paging', () {
-    final d = SavingGoalDetail.fromJson(
-      prodDetail(goal: prodGoal(autoSave: prodAutoSave())),
-    );
+    final d = SavingGoalDetail.fromJson(prodDetail());
     expect(d.isSpare, isFalse);
     expect(d.goal!.name, 'ทริปญี่ปุ่น');
     expect(d.byWallet.map((w) => w.wallet!.name), ['กสิกร', 'ไทยพาณิชย์']);
     expect(d.history.last.cumulative, 52000);
-    // The auto-saving lives on the goal now (no list on the page).
-    expect(d.autoSave!.amount, 5500);
-    expect(d.spareAutoSaves, isEmpty);
     expect(d.entries.items.first.kind, SavingEntryKind.save);
     expect(d.entries.items.first.fromRecurring, isTrue);
     expect(d.entries.items.first.to.type, SavingEndpointType.goal);
@@ -326,16 +300,11 @@ void main() {
     expect(s.amount, 1000);
   });
 
-  test('the spare page has no goal; its auto-saving is an object', () {
-    final d = SavingGoalDetail.fromJson(
-      prodSpareDetail(autoSave: prodAutoSave(withWallet: false)),
-    );
+  test('the spare page has no goal', () {
+    final d = SavingGoalDetail.fromJson(prodSpareDetail());
     expect(d.isSpare, isTrue);
     expect(d.spare!.amount, 8500);
     expect(d.byWallet.single.wallet!.name, 'กสิกร');
-    expect(d.spareAutoSaves.single.day, 25);
-    expect(d.autoSave!.wallet, isNull);
-    expect(SavingGoalDetail.fromJson(prodSpareDetail()).autoSave, isNull);
   });
 
   test('the list parses summary, spare and goals', () {

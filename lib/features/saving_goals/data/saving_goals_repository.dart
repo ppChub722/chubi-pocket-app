@@ -88,40 +88,6 @@ class SavingGoalsRepository {
     return SavingGoalDetail.fromJson(res.data!);
   });
 
-  Future<SavingGoalDetail> setAutoSave(
-    String id, {
-    required double amount,
-    required int day,
-    String? accountId,
-  }) => _guard(() async {
-    final res = await _client.dio.put<Map<String, dynamic>>(
-      '/saving-goals/$id/auto-save',
-      data: {'amount': amount, 'day': day, 'account_id': accountId},
-    );
-    return SavingGoalDetail.fromJson(res.data!);
-  });
-
-  /// Replaces the whole set; an empty list clears it.
-  Future<SavingGoalDetail> setAutoSaves(
-    String id,
-    List<SavingAutoSaveWrite> items,
-  ) => _guard(() async {
-    final res = await _client.dio.put<Map<String, dynamic>>(
-      '/saving-goals/$id/auto-saves',
-      data: {
-        'items': [for (final i in items) i.toJson()],
-      },
-    );
-    return SavingGoalDetail.fromJson(res.data!);
-  });
-
-  Future<SavingGoalDetail> clearAutoSave(String id) => _guard(() async {
-    final res = await _client.dio.delete<Map<String, dynamic>>(
-      '/saving-goals/$id/auto-save',
-    );
-    return SavingGoalDetail.fromJson(res.data!);
-  });
-
   Future<SavingWriteResult> close(String id, {required bool toWallets}) =>
       _guard(() async {
         final res = await _client.dio.post<Map<String, dynamic>>(

@@ -1088,8 +1088,21 @@ class DraftForm extends StatefulWidget {
     this.linkEventIsNew = false,
     this.linkIsEventMember,
     this.accentColor,
+    this.rowAboveNote,
+    this.heroLocked = false,
+    this.linkSections = true,
     super.key,
   });
+
+  /// Chip layout: a row between the tags and the note (an occurrence's
+  /// บันทึกในรายการ).
+  final Widget? rowAboveNote;
+
+  /// The hero shows values it can't change here (a picked transaction's).
+  final bool heroLocked;
+
+  /// False: no ผูกกับ / split / event section under the note.
+  final bool linkSections;
 
   /// The create mode's colour: washes the hero card, so red / green stay on
   /// the type chip alone.
@@ -1387,35 +1400,41 @@ class _DraftFormState extends State<DraftForm> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (entryLayout)
-              EntryCard(
-                key: widget.heroKey,
-                type: _c.type,
-                onTypeChanged: widget.typeLocked ? null : _c.setType,
-                accentColor: widget.accentColor,
-                amount: _c.amount,
-                title: _c.description,
-                dateLabel: _dayLabel(context, _c.date),
-                onPickDate: _pickDate,
-                autofocus: widget.autofocus && !widget.readOnly,
-                compact: widget.compact,
-                amountFocus: _amountFocus,
-                titleFocus: _descriptionFocus,
-                amountNote: linkMode != null
-                    ? _ShareLine.ofLink(_c, linkMode, l)
-                    : !isTransfer && (!editing || widget.allowSplits)
-                    ? _ShareLine.of(_c)
-                    : null,
-                amountLabel: linkMode == null || linkMode == LinkMode.personal
-                    ? null
-                    : l.txLinkBillLabel,
-                missing: widget.missing,
-                showTitle: !isTransfer,
-                titleHint: isTransfer
-                    ? null
-                    : (_c.type == TransactionType.income
-                          ? l.txTitleHintIncome
-                          : l.txTitleHintExpense),
-                flowRow: isTransfer ? _transferFlow(l) : _entryCards(l),
+              IgnorePointer(
+                ignoring: widget.heroLocked,
+                child: EntryCard(
+                  key: widget.heroKey,
+                  type: _c.type,
+                  onTypeChanged: widget.typeLocked ? null : _c.setType,
+                  accentColor: widget.accentColor,
+                  amount: _c.amount,
+                  title: _c.description,
+                  dateLabel: _dayLabel(context, _c.date),
+                  onPickDate: _pickDate,
+                  autofocus:
+                      widget.autofocus &&
+                      !widget.readOnly &&
+                      !widget.heroLocked,
+                  compact: widget.compact,
+                  amountFocus: _amountFocus,
+                  titleFocus: _descriptionFocus,
+                  amountNote: linkMode != null
+                      ? _ShareLine.ofLink(_c, linkMode, l)
+                      : !isTransfer && (!editing || widget.allowSplits)
+                      ? _ShareLine.of(_c)
+                      : null,
+                  amountLabel: linkMode == null || linkMode == LinkMode.personal
+                      ? null
+                      : l.txLinkBillLabel,
+                  missing: widget.missing,
+                  showTitle: !isTransfer,
+                  titleHint: isTransfer
+                      ? null
+                      : (_c.type == TransactionType.income
+                            ? l.txTitleHintIncome
+                            : l.txTitleHintExpense),
+                  flowRow: isTransfer ? _transferFlow(l) : _entryCards(l),
+                ),
               )
             else
               TransactionHeroCard(
@@ -1529,7 +1548,7 @@ class _DraftFormState extends State<DraftForm> {
   }
 
   Widget _entryCards(AppLocalizations l) {
-    final locked = widget.categoryLockedHint != null;
+    final locked = widget.categoryLockedHint != null || widget.heroLocked;
     final mode = _linkMode;
     final walletNote = _walletNote(l, mode);
     return IntrinsicHeight(
@@ -1554,7 +1573,7 @@ class _DraftFormState extends State<DraftForm> {
               label: l.transactionFormAccountLabel,
               placeholder: l.transactionFormAccountNone,
               dense: true,
-              editable: true,
+              editable: !widget.heroLocked,
               muted: mode != null && _c.walletOutFor(mode) <= 0.005,
               note: walletNote,
               onTap: () => _pickAccount(),
@@ -1597,6 +1616,7 @@ class _DraftFormState extends State<DraftForm> {
         known: _c.knownTags,
       ),
       gap,
+      if (widget.rowAboveNote != null) ...[widget.rowAboveNote!, gap],
       DraftFieldRow(
         label: l.commonNote,
         child: AppInput.inline(
@@ -1608,7 +1628,9 @@ class _DraftFormState extends State<DraftForm> {
           hint: l.txNoteAddHint,
         ),
       ),
-      if (_linkMode != null) ...[
+      if (!widget.linkSections)
+        ...const <Widget>[]
+      else if (_linkMode != null) ...[
         gap,
         LinkSection(
           controller: _c,

@@ -14,6 +14,8 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
+import '../../../personal_debts/data/personal_debts_repository.dart';
+import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../../tags/domain/tag.dart';
 import '../../../tags/presentation/widgets/tag_picker.dart';
@@ -33,8 +35,6 @@ import '../widgets/project_tx_tiles.dart';
 enum _Field { name, description, note, planned }
 
 enum _Tab { bills, summary }
-
-enum _SettleMode { pairs, fewest }
 
 class ProjectDetailPage extends StatefulWidget {
   const ProjectDetailPage({
@@ -62,7 +62,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   final _focus = {for (final f in _Field.values) f: FocusNode()};
 
   _Tab _tab = _Tab.bills;
-  _SettleMode _settleMode = _SettleMode.fewest;
 
   /// Who pays whom (the สรุป tab); null = not loaded since the last change.
   EventSettle? _settle;
@@ -550,28 +549,33 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     if (t == _Tab.summary && _settle == null) unawaited(_loadSettle());
   }
 
-  /// สรุป: each member's standing, then who pays whom; "จ่ายแล้ว" records the
-  /// payback in the event (anyone may).
+  /// สรุป: ยอดแต่ละคน (everyone, me first), then จัดการ: the fewest
+  /// transfers. A line with me in it can be recorded as my debt; a tap
+  /// records the payback in the event (anyone may).
   Widget _summaryTab(AppLocalizations l, ProjectView v) {
     final s = _settle;
-    final lines = s == null
-        ? const <SettleLine>[]
-        : (_settleMode == _SettleMode.pairs ? s.pairs : s.simplified);
-    Widget line(SettleLine x) => AppListRow(
+    final lines = s?.simplified ?? const <SettleLine>[];
+    Widget line(SettleLine x) => SettleRow(
       key: ValueKey('settle:${x.from.id}:${x.to.id}'),
-      leading: ProjectMemberAvatar(
+      fromAvatar: ProjectMemberAvatar(
         name: x.from.name,
         iconCode: x.from.iconCode,
         size: 32,
       ),
-      title: '${x.from.name} → ${x.to.name}',
-      trailing: ListRowTrailing.value(MoneyText(x.amount)),
-      actions: [
-        if (v.canAddTx)
-          ListRowAction.button(
-            AppIcons.check,
-            tooltip: l.evbSettlePaid,
-            onTap: () => showEventBillSheet(
+      fromName: x.from.name,
+      toAvatar: ProjectMemberAvatar(
+        name: x.to.name,
+        iconCode: x.to.iconCode,
+        size: 20,
+      ),
+      toName: x.to.name,
+      amount: MoneyText(x.amount),
+      mine: x.mine,
+      recordedLabel: x.recorded ? l.evbSettleRecorded : null,
+      onRecord: x.mine ? () => _recordSettle(l, v, x) : null,
+      recordTooltip: l.evbSettleRecord,
+      onTap: v.canAddTx
+          ? () => showEventBillSheet(
               context,
               view: v,
               kind: EventEntryKind.payback,
@@ -579,9 +583,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
               to: x.to.id,
               amount: x.amount,
               onPatch: _applyPatch,
-            ),
-          ),
-      ],
+            )
+          : null,
     );
     return ListPageBody(
       loading: false,
@@ -594,49 +597,102 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       topInset: AppSpacing.sm,
       empty: EmptyView.compact(message: l.evbAllSettled),
       children: [
-        _people(l, v),
+        _nets(l, v),
         SectionCard(
-          title: l.evbSettleTitle,
+          title: l.evbSettleSection,
           children: [
-            AppTabBar<_SettleMode>(
-              framed: false,
-              tabs: [
-                AppTab(value: _SettleMode.fewest, label: l.evbSettleFewest),
-                AppTab(value: _SettleMode.pairs, label: l.evbSettlePairs),
-              ],
-              selected: _settleMode,
-              onChanged: (m) => setState(() => _settleMode = m),
-            ),
-            // A swipe on the lines switches the tab too, like the bar.
-            GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onHorizontalDragEnd: (d) {
-                final v = d.primaryVelocity ?? 0;
-                if (v.abs() < 200) return;
-                setState(
-                  () => _settleMode = v < 0
-                      ? _SettleMode.pairs
-                      : _SettleMode.fewest,
-                );
-              },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (s == null)
-                    const ListRowSkeleton()
-                  else if (lines.isEmpty)
-                    EmptyView.compact(message: l.evbAllSettled)
-                  else ...[
-                    for (final x in lines) line(x),
-                    AppText(l.evbSettleHint, role: AppTextRole.caption),
-                  ],
-                ],
-              ),
-            ),
+            if (s == null)
+              const ListRowSkeleton()
+            else if (lines.isEmpty)
+              EmptyView.compact(message: l.evbAllSettled)
+            else ...[
+              for (final x in lines) line(x),
+              AppText(l.evbSettleHint, role: AppTextRole.caption),
+            ],
           ],
         ),
       ],
     );
+  }
+
+  /// ยอดแต่ละคน: avatar and name, what they paid, what they get back / owe.
+  Widget _nets(AppLocalizations l, ProjectView v) {
+    final meId = v.me?.id;
+    final rows = [...?v.summary?.positions]
+      ..sort(
+        (a, b) => (b.memberId == meId ? 1 : 0) - (a.memberId == meId ? 1 : 0),
+      );
+    return SectionCard(
+      title: l.evbNets,
+      children: [
+        for (final p in rows)
+          AppListRow(
+            key: ValueKey('net:${p.memberId}'),
+            leading: ProjectMemberAvatar(
+              name: p.displayName,
+              iconCode: p.iconCode,
+              size: 32,
+            ),
+            title: p.displayName,
+            line2: ListRowLine(
+              parts: [l.fpEventsMemberPaid(moneyString(context, p.paid))],
+            ),
+            trailing: p.receivable > 0
+                ? ListRowTrailing.text(
+                    l.fpEventsMemberOwed(moneyString(context, p.receivable)),
+                    tone: Tone.success,
+                  )
+                : p.payable > 0
+                ? ListRowTrailing.text(
+                    l.fpEventsMemberOwe(moneyString(context, p.payable)),
+                    tone: Tone.danger,
+                  )
+                : null,
+          ),
+      ],
+    );
+  }
+
+  /// จดเป็นหนี้: my side of a จัดการ line into my debts, after a confirm.
+  Future<void> _recordSettle(
+    AppLocalizations l,
+    ProjectView v,
+    SettleLine x,
+  ) async {
+    final ok = await showConfirmDialog(
+      context,
+      title: l.evbSettleRecord,
+      message: l.evbSettleRecordBody(
+        x.from.name,
+        x.to.name,
+        moneyString(context, x.amount),
+      ),
+      confirmLabel: l.evbSettleRecord,
+    );
+    if (!ok || !mounted) return;
+    final other = x.from.isMe ? x.to : x.from;
+    String? contactId;
+    for (final m in v.members) {
+      if (m.id == other.id) contactId = m.contactId;
+    }
+    try {
+      await context.read<PersonalDebtsRepository>().createEntry(
+        contactId != null
+            ? debtPersonKey(contactId: contactId)
+            : debtPersonKey(name: other.name),
+        direction: x.from.isMe
+            ? DebtEntryDirection.received
+            : DebtEntryDirection.paid,
+        amount: x.amount,
+        personName: other.name,
+        eventId: v.project.id,
+      );
+      if (!mounted) return;
+      showAppSnackBar(context, l.quickSaved, tone: Tone.success);
+      await _loadSettle();
+    } on ApiException catch (e) {
+      _showError(e);
+    }
   }
 
   Widget _billsTab(AppLocalizations l, ProjectView v) {
@@ -821,6 +877,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
           hint: l.commonLongPressToEdit,
           onLongPress: _enterOn(_focus[_Field.note]!),
         ),
+        _people(l, v),
       ],
       tabs: [
         AppTab(value: _Tab.bills, label: l.evbTabBills, icon: AppIcons.receipt),
@@ -879,18 +936,15 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   /// Edit mode: the status is a setting (the view hero keeps the chip).
   Widget _statusRow(AppLocalizations l, ProjectStatus status) {
     final canChange = _isOwner && !_isCreate;
-    return OptionMenuAnchor<ProjectStatus>(
+    return SettingDropdownRow<ProjectStatus>(
+      label: l.projectsStatusLabel,
+      value: projectStatusLabel(l, status),
       selected: status,
-      onSelected: _changeStatus,
+      onSelected: canChange ? _changeStatus : null,
       options: [
         for (final s in ProjectStatus.values)
           SheetOption(value: s, label: projectStatusLabel(l, s), submits: true),
       ],
-      builder: (context, toggle) => SettingDropdownRow(
-        label: l.projectsStatusLabel,
-        value: projectStatusLabel(l, status),
-        onTap: canChange ? toggle : null,
-      ),
     );
   }
 
@@ -998,50 +1052,27 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     );
   }
 
+  /// สมาชิก under the note: small cards, no numbers (they are in สรุป).
   Widget _people(AppLocalizations l, ProjectView v) {
-    final positions = {
-      for (final pos in v.summary?.positions ?? const <ProjectMemberPosition>[])
-        pos.memberId: pos,
-    };
-    final order = [for (final pos in positions.values) pos.memberId];
     final members = [...v.currentMembers]
-      ..sort((a, b) {
-        int rank(ProjectMember m) {
-          final i = order.indexOf(m.id);
-          return i < 0 ? order.length : i;
-        }
-
-        return rank(a).compareTo(rank(b));
-      });
-    PeopleStripMember card(ProjectMember m) {
-      final pos = positions[m.id];
-      final owed = (pos?.receivable ?? 0) > 0;
-      final owe = (pos?.payable ?? 0) > 0;
-      return PeopleStripMember(
-        avatar: ProjectMemberAvatar(
-          name: m.displayName,
-          iconCode: m.iconCode,
-          level: projectMemberLevel(m),
-          size: 36,
-        ),
-        name: m.displayName,
-        lead: l.fpEventsMemberPaid(moneyString(context, pos?.paid ?? 0)),
-        caption: owed
-            ? l.fpEventsMemberOwed(moneyString(context, pos!.receivable))
-            : (owe
-                  ? l.fpEventsMemberOwe(moneyString(context, pos!.payable))
-                  : null),
-        tone: owed
-            ? PeopleTone.positive
-            : (owe ? PeopleTone.negative : PeopleTone.neutral),
-      );
-    }
-
+      ..sort((a, b) => (b.isMe ? 1 : 0) - (a.isMe ? 1 : 0));
     return PeopleStrip(
-      title: l.fpEventsMembersTitle,
-      actionLabel: l.fpEventsManage,
+      title: l.evbMembersTitle,
+      compact: true,
+      actionLabel: l.evbManageMembers,
       onAction: _openMembers,
-      members: [for (final m in members) card(m)],
+      members: [
+        for (final m in members)
+          PeopleStripMember(
+            avatar: ProjectMemberAvatar(
+              name: m.displayName,
+              iconCode: m.iconCode,
+              level: projectMemberLevel(m),
+              size: 32,
+            ),
+            name: m.displayName,
+          ),
+      ],
       inviteLabel: l.fpEventsInvite,
       onInvite: v.isOwner && v.project.status != ProjectStatus.archived
           ? _invite
@@ -1235,9 +1266,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
               children: [for (final t in list) tile(t)],
             ),
           if (_loadingMore)
-            const SectionCard(
-              children: [ListRowSkeleton(), ListRowSkeleton()],
-            ),
+            const SectionCard(children: [ListRowSkeleton(), ListRowSkeleton()]),
         ],
         if (v.canAddTx)
           AddTile(

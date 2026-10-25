@@ -26,6 +26,8 @@ class DraftFieldRow extends StatelessWidget {
     l.quickEventLabel,
     l.txRecurringRowLabel,
     l.debtCloseLabel,
+    l.occurrenceRecordInTx,
+    l.occurrenceCreateNow,
   ];
 
   /// The label column's width: the widest shared label at the current font and

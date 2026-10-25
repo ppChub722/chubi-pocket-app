@@ -136,32 +136,6 @@ class SavingGoalCubit extends Cubit<SavingPageState> {
     return r;
   }
 
-  Future<void> setAutoSave({
-    required double amount,
-    required int day,
-    String? accountId,
-  }) async {
-    final d = await _repo.setAutoSave(
-      id,
-      amount: amount,
-      day: day,
-      accountId: accountId,
-    );
-    _show(d);
-  }
-
-  Future<void> setAutoSaves(List<SavingAutoSaveWrite> items) async {
-    _show(await _repo.setAutoSaves(id, items));
-  }
-
-  Future<void> clearAutoSave() async {
-    final d = await _repo.clearAutoSave(id);
-    _show(d);
-  }
-
-  void _show(SavingGoalDetail d) =>
-      emit(state.copyWith(status: SavingPageStatus.loaded, detail: d));
-
   Future<void> update(SavingGoal goal) async {
     final d = await _repo.update(goal);
     emit(state.copyWith(status: SavingPageStatus.loaded, detail: d));

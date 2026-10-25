@@ -35,6 +35,8 @@ enum EventEntryKind { expense, income, payback }
 /// who paid, or a payback "A → B"; "ลงบัญชีของฉันด้วย" puts my part in my
 /// books on save (resolve). [row] edits that bill / payback. A payback can
 /// start from [from] → [to] for [amount] (the summary's "จ่ายแล้ว").
+/// [booksOnly] (with [row]): only the "my books" card; saving puts my part in
+/// my books and leaves the bill as it is (any member may).
 Future<bool> showEventBillSheet(
   BuildContext context, {
   required ProjectView view,
@@ -44,6 +46,7 @@ Future<bool> showEventBillSheet(
   String? to,
   double? amount,
   ValueChanged<EventPatch>? onPatch,
+  bool booksOnly = false,
 }) async {
   context.read<AccountsCubit>().loadIfNeeded();
   context.read<CategoriesCubit>().loadIfNeeded();
@@ -67,6 +70,7 @@ Future<bool> showEventBillSheet(
       to: to,
       amount: amount,
       onPatch: onPatch,
+      booksOnly: booksOnly && row != null,
     ),
   );
   return saved ?? false;
@@ -133,6 +137,7 @@ class _EventBillSheet extends StatefulWidget {
     this.to,
     this.amount,
     this.onPatch,
+    this.booksOnly = false,
   });
 
   final ProjectView view;
@@ -142,6 +147,7 @@ class _EventBillSheet extends StatefulWidget {
   final String? to;
   final double? amount;
   final ValueChanged<EventPatch>? onPatch;
+  final bool booksOnly;
 
   @override
   State<_EventBillSheet> createState() => _EventBillSheetState();
@@ -245,6 +251,14 @@ class _EventBillSheetState extends State<_EventBillSheet> {
       _books = true;
       _bookTx = _linked(_txKind);
       _bookDebt = _linked(ProjectTransaction.bookDebt);
+    }
+    // ⤓ ลงบัญชี: what's linked stays, the rest ticked as for a new bill.
+    if (widget.booksOnly) {
+      _books = true;
+      _bookTx = _bookTx || _payback || _iPaid;
+      _bookDebt =
+          _linked(ProjectTransaction.bookDebt) ||
+          (_payback ? !_debtAlreadyBooked : true);
     }
     _amount.addListener(_changed);
   }
@@ -1083,7 +1097,9 @@ class _EventBillSheetState extends State<_EventBillSheet> {
         );
       }
     } else {
-      patch = _editing
+      patch = widget.booksOnly
+          ? (await repo.setMyBooks(projectId, widget.row!.parent.id)).patch
+          : _editing
           ? await repo.updateTransaction(
               projectId,
               widget.row!.parent.id,
@@ -1220,7 +1236,9 @@ class _EventBillSheetState extends State<_EventBillSheet> {
     final resolved = await repo.resolvePeople(projectId, [from.json, to.json]);
     final fromId = resolved.memberIds[0], toId = resolved.memberIds[1];
     final splits = [ProjectSplitInput(memberId: toId, amount: total)];
-    var patch = _editing
+    var patch = widget.booksOnly
+        ? (await repo.setMyBooks(projectId, widget.row!.parent.id)).patch
+        : _editing
         ? await repo.updateTransaction(
             projectId,
             widget.row!.parent.id,
@@ -1315,6 +1333,23 @@ class _EventBillSheetState extends State<_EventBillSheet> {
     final l = AppLocalizations.of(context)!;
     final books = _myBooks(l);
     const gap = SizedBox(height: AppSpacing.sm);
+    if (widget.booksOnly) {
+      final p = widget.row!.parent;
+      return QuickCreateSheetShell(
+        title: l.evbBookMine,
+        subtitle: p.description ?? _view.project.name,
+        saveLabel: l.commonSave,
+        saveIcon: AppIcons.save,
+        closeTooltip: UiConfig.stringsOf(context).close,
+        saving: _saving,
+        onSave: !_saving && _total > 0 && books != null ? _save : null,
+        onCloseBlocked: () {},
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [?books],
+        ),
+      );
+    }
     final canSave =
         !_saving &&
         _total > 0 &&

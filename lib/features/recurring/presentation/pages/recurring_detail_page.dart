@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/user_currency.dart';
@@ -15,15 +16,17 @@ import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../accounts/presentation/widgets/account_picker.dart';
-import '../../../categories/domain/category_tree.dart';
 import '../../../categories/domain/category_type.dart';
-import '../../../categories/presentation/category_label.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
-import '../../../categories/presentation/widgets/category_chip_path.dart';
 import '../../../categories/presentation/widgets/category_picker.dart';
+import '../../../saving_goals/data/saving_goals_repository.dart';
+import '../../../saving_goals/domain/saving_goal.dart';
+import '../../../saving_goals/domain/saving_goals_overview.dart';
+import '../../../saving_goals/presentation/widgets/saving_goal_picker.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../../tags/presentation/widgets/tag_picker.dart';
 import '../../../transactions/domain/transaction_type.dart';
+import '../../../transactions/presentation/widgets/category_pick_card.dart';
 import '../../data/recurring_repository.dart';
 import '../../domain/recurrence_rule.dart';
 import '../../domain/recurring.dart';
@@ -83,6 +86,11 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   bool _busy = false;
   bool _changed = false;
   bool _walletMissing = false;
+  bool _goalMissing = false;
+
+  /// ออมเงิน: the goals for the goal tile (loaded once a saving rule shows).
+  SavingGoalsOverview? _goals;
+  bool _goalsAsked = false;
 
   ItemPage _produced = const ItemPage();
   bool _producedMore = false;
@@ -464,6 +472,35 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     );
   }
 
+  void _loadGoals() {
+    if (_goalsAsked) return;
+    _goalsAsked = true;
+    final repo = context.read<SavingGoalsRepository>();
+    unawaited(
+      repo.list().then(
+        (o) {
+          if (mounted) setState(() => _goals = o);
+        },
+        onError: (Object _) {
+          if (mounted) setState(() => _goals = const SavingGoalsOverview());
+        },
+      ),
+    );
+  }
+
+  Future<void> _pickGoal() async {
+    final w = working;
+    final r = await SavingGoalPicker.one(
+      context,
+      selectedId: w.goalId,
+      spareSelected: w.goalPicked && w.goalId == null,
+      overview: _goals,
+    );
+    if (!mounted || r == null) return;
+    setState(() => _goalMissing = false);
+    _change(working.withGoal(r.goalId));
+  }
+
   Future<void> _pickCategory() async {
     final l = AppLocalizations.of(context)!;
     final r = await CategoryPicker.one(
@@ -591,8 +628,14 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     final l = AppLocalizations.of(context)!;
     final formOk = _formKey.currentState?.validate() ?? false;
     final walletOk = working.walletOk;
-    if (!walletOk) setState(() => _walletMissing = true);
-    if (!formOk || !walletOk) return;
+    final goalOk = working.goalOk;
+    if (!walletOk || !goalOk) {
+      setState(() {
+        _walletMissing = !walletOk;
+        _goalMissing = !goalOk;
+      });
+    }
+    if (!formOk || !walletOk || !goalOk) return;
     if (!working.countOk) {
       showAppSnackBarOn(
         pageMessenger!,
@@ -817,7 +860,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   HeroStyle _style(Recurring r) {
     final palette = Theme.of(context).extension<AppColors>()!;
     return HeroStyle.tinted(
-      color: (r.iconCode ?? r.category?.iconCode).tintFor(palette),
+      color: r.shownIconCode.tintFor(palette),
       glyph: AppIcons.scheduled,
     );
   }
@@ -875,7 +918,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       leading: IconDisplay(
         type: IconType.category,
         size: 28,
-        iconCode: r.iconCode ?? r.category?.iconCode,
+        iconCode: r.shownIconCode,
       ),
       title: AppText(r.name, role: AppTextRole.title),
       trailing: amount == null || amount <= 0
@@ -1096,7 +1139,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             child: IconDisplay(
               type: IconType.category,
               size: HeroIdentity.iconSize,
-              iconCode: r.iconCode ?? r.category?.iconCode,
+              iconCode: r.shownIconCode,
             ),
           ),
           name: Text(r.name, maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -1135,6 +1178,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         ),
         ?_track(l, r, d.stats),
         if (stats.isNotEmpty) HeroTiles(joined: true, children: stats),
+        ?_pickCards(l),
         HeroChipRow(chips: _heroChips(l, r)),
       ],
     );
@@ -1271,13 +1315,9 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     ];
   }
 
-  /// Status ▾ (pause / resume), the kind, then the category, wallet(s),
-  /// tags and บันทึกอัตโนมัติ.
+  /// Status ▾ (pause / resume), the kind, tags and บันทึกอัตโนมัติ (the
+  /// category and wallets are the tiles above).
   List<Widget> _heroChips(AppLocalizations l, Recurring r) {
-    final cats = context.watch<CategoriesCubit>();
-    final category = cats.byId(r.category?.id ?? '');
-    final account = r.account;
-    final toAccount = r.toAccount;
     return [
       if (r.actions.pause || r.actions.resume)
         OptionMenuAnchor<RecurringAction>(
@@ -1305,40 +1345,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         selected: true,
         tone: AppChipTone.neutral,
       ),
-      // The deepest category alone (Housing, not Bills › Housing).
-      if (category != null)
-        ChipPath(
-          segments: [
-            ChipPathSegment(
-              label: categoryDisplayName(l, category),
-              icon: IconRegistry.get(
-                CategoryTree.resolveIconCode(
-                  category,
-                  cats.state.categories,
-                )?.icon,
-                fallback: AppIcons.category,
-              ),
-              color: CategoryTree.resolveIconCode(
-                category,
-                cats.state.categories,
-              ).tintFor(Theme.of(context).extension<AppColors>()!),
-            ),
-          ],
-        ),
-      if (account != null)
-        walletValueChip(
-          context,
-          name: account.name,
-          iconCode: account.iconCode,
-          type: account.type,
-        ),
-      if (toAccount != null)
-        walletValueChip(
-          context,
-          name: toAccount.name,
-          iconCode: toAccount.iconCode,
-          type: toAccount.type,
-        ),
       for (final t in r.tags) _tagChip(t.name, t.iconCode),
       if (r.autoCreate)
         AppChip(
@@ -1450,54 +1456,156 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     ].join(' | ');
   }
 
-  /// Edit: what it is and where the money goes. ประเภท and แบบ drop down in
-  /// place.
-  Widget _detailSection(AppLocalizations l) {
+  /// หมวดหมู่ + กระเป๋า as the pair of tiles quick create uses; a transfer is
+  /// กระเป๋า → กระเป๋า. View mode: a tap opens the category / wallet, a long
+  /// press edits it, and a missing one is left out.
+  Widget? _pickCards(AppLocalizations l) {
+    final editing = isEditing;
     final accounts = context.watch<AccountsCubit>();
-    final cats = context.watch<CategoriesCubit>();
     final w = working;
     final account = accounts.byId(w.accountId ?? '');
     final toAccount = accounts.byId(w.toAccountId ?? '');
-    final category = cats.byId(w.categoryId ?? '');
-    final transfer = w.isTransfer;
-    final walletLabel = transfer
-        ? l.fpRecurringFieldFromWallet
-        : (w.type == TransactionType.income
-              ? l.fpRecurringFieldIntoWallet
-              : l.fpRecurringFieldPayFrom);
-    Widget? walletChip(Account? a) => a == null
+    final category = w.isTransfer
         ? null
-        : walletValueChip(
-            context,
-            name: a.name,
-            iconCode: a.iconCode,
-            type: a.type,
+        : context.watch<CategoriesCubit>().byId(w.categoryId ?? '');
+    String? missing(Account? a) =>
+        editing && _walletMissing && a == null
+        ? l.recurringWalletRequired
+        : null;
+    Widget wallet(Account? a, String label, {bool to = false}) =>
+        WalletPickCard(
+          account: a,
+          label: label,
+          placeholder: l.quickPickWallet,
+          dense: true,
+          editable: editing,
+          errorText: missing(a),
+          onTap: editing
+              ? () => _pickWallet(to: to)
+              : () => openPage(context, '/accounts/${a!.id}'),
+          onLongPress: editing
+              ? null
+              : () => enterEdit(then: () => _pickWallet(to: to)),
+        );
+    if (w.isTransfer) {
+      if (!editing && account == null && toAccount == null) return null;
+      return FlowCards(
+        from: wallet(account, l.fpRecurringFieldFromWallet),
+        to: wallet(toAccount, l.recurringFieldToWallet, to: true),
+      );
+    }
+    if (w.isSaving) {
+      return FlowCards(
+        from: wallet(account, l.transactionFormAccountLabel),
+        to: _goalCard(l),
+      );
+    }
+    final categoryCard = !editing && category == null
+        ? null
+        : CategoryPickCard(
+            category: category,
+            label: l.recurringFieldCategory,
+            placeholder: l.transactionFormCategoryNone,
+            dense: true,
+            editable: editing,
+            onTap: editing
+                ? _pickCategory
+                : () => openPage(context, '/categories/${category!.id}'),
+            onLongPress: editing
+                ? null
+                : () => enterEdit(then: _pickCategory),
           );
+    final walletCard = !editing && account == null
+        ? null
+        : wallet(account, l.transactionFormAccountLabel);
+    if (categoryCard == null || walletCard == null) {
+      return categoryCard ?? walletCard;
+    }
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: categoryCard),
+          // As far apart as the cards sit from the hero's edge.
+          SizedBox(width: HeroMetrics.of(context).padding.left),
+          Expanded(child: walletCard),
+        ],
+      ),
+    );
+  }
+
+  /// ออมเงิน: where it goes. View mode: a tap opens the goal (or
+  /// ยังไม่จัดสรร), a long press edits it.
+  Widget _goalCard(AppLocalizations l) {
+    _loadGoals();
+    final editing = isEditing;
+    final w = working;
+    SavingGoal? goal;
+    for (final g in _goals?.goals ?? const <SavingGoal>[]) {
+      if (g.id == w.goalId) goal = g;
+    }
+    final spare = w.goalPicked && w.goalId == null;
+    return SavingGoalPickCard(
+      // Until the goals load, the rule's own goal name shows.
+      goal: goal,
+      spare: spare,
+      spareAmount: _goals?.spare.amount,
+      label: l.savingEntryGoalLabel,
+      placeholder: w.goalId != null
+          ? (_recurring?.goal?.name ?? l.savingEntryPickGoal)
+          : l.savingEntryPickGoal,
+      spareLabel: l.savingEntrySpare,
+      dense: true,
+      editable: editing,
+      errorText: editing && _goalMissing ? l.savingEntryPickGoal : null,
+      onTap: editing
+          ? _pickGoal
+          : () => openPage(
+              context,
+              '/saving-goals/${w.goalId ?? SavingGoalsRepository.spareId}',
+            ),
+      onLongPress: editing ? null : () => enterEdit(then: _pickGoal),
+    );
+  }
+
+  /// Edit: what it is and its options. ประเภท and แบบ drop down in place.
+  Widget _detailSection(AppLocalizations l) {
+    final w = working;
+    final transfer = w.isTransfer;
     return SectionCard(
       children: [
-        OptionMenuAnchor<RecurringKind>(
+        SettingDropdownRow<RecurringKind>(
+          key: const ValueKey('kindRow'),
+          label: l.recurringFieldKind,
+          value: recurringKindLabel(l, w.kind),
+          icon: recurringKindIcon(w.kind),
+          iconColor: w.kind.iconDefault.color,
           selected: w.kind,
           onSelected: (k) {
             if (k != w.kind) _change(w.withKind(k));
           },
           options: [
+            // A saved rule can't switch between ออมเงิน and a money kind.
             for (final k in RecurringKind.values)
+              if (_recurring == null ||
+                  (k == RecurringKind.saving) == _recurring!.isSaving)
               SheetOption(
                 value: k,
                 label: recurringKindLabel(l, k),
-                leading: AppIcon(recurringKindIcon(k)),
+                leading: AppIcon(
+                  recurringKindIcon(k),
+                  color: k.iconDefault.color,
+                ),
               ),
           ],
-          builder: (context, toggle) => SettingDropdownRow(
-            key: const ValueKey('kindRow'),
-            label: l.recurringFieldKind,
-            value: recurringKindLabel(l, w.kind),
-            icon: recurringKindIcon(w.kind),
-            onTap: toggle,
-          ),
         ),
         if (w.kind == RecurringKind.reminder)
-          OptionMenuAnchor<TransactionType>(
+          SettingDropdownRow<TransactionType>(
+            label: l.fpRecurringFieldMode,
+            value: transfer
+                ? l.transactionTypeTransfer
+                : l.transactionTypeExpense,
+            icon: transfer ? AppIcons.transfer : AppIcons.expense,
             selected: w.type,
             onSelected: _setMode,
             options: [
@@ -1512,53 +1620,16 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
                 leading: const AppIcon(AppIcons.transfer),
               ),
             ],
-            builder: (context, toggle) => SettingDropdownRow(
-              label: l.fpRecurringFieldMode,
-              value: transfer
-                  ? l.transactionTypeTransfer
-                  : l.transactionTypeExpense,
-              icon: transfer ? AppIcons.transfer : AppIcons.expense,
-              onTap: toggle,
-            ),
-          ),
-        if (!transfer)
-          DetailRow.pick(
-            label: l.recurringFieldCategory,
-            valueChip: category == null
-                ? null
-                : categoryChipPath(
-                    context,
-                    category,
-                    all: cats.state.categories,
-                  ),
-            emptyText: l.quickEventNone,
-            onTap: _pickCategory,
-          ),
-        DetailRow.pick(
-          label: walletLabel,
-          valueChip: walletChip(account),
-          emptyText: l.quickEventNone,
-          error: _walletMissing && account == null
-              ? l.recurringWalletRequired
-              : null,
-          onTap: () => _pickWallet(to: false),
-        ),
-        if (transfer)
-          DetailRow.pick(
-            label: l.recurringFieldToWallet,
-            valueChip: walletChip(toAccount),
-            emptyText: l.quickEventNone,
-            error: _walletMissing && toAccount == null
-                ? l.recurringWalletRequired
-                : null,
-            onTap: () => _pickWallet(to: true),
           ),
         if (w.kind == RecurringKind.subscription)
-          DetailRow.pick(
+          DetailRow(
             label: l.fpRecurringTrialUntil,
-            value: w.trialUntil == null ? null : _date(w.trialUntil!),
-            emptyText: l.quickEventNone,
             onTap: _pickTrial,
+            trailing: DatePickChip(
+              date: w.trialUntil,
+              onPick: _pickTrial,
+              onClear: () => _change(w.copyWith(clearTrial: true)),
+            ),
           ),
         SettingToggleRow(
           key: const ValueKey('autoCreateRow'),
@@ -1633,7 +1704,8 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           )
         : last
         ? (l.fpRecurringTagLast, Tone.success, null)
-        : i.state == OccurrenceState.paid
+        // Paid = linked to a tx, or marked paid without one.
+        : i.state == OccurrenceState.paid || i.state == OccurrenceState.done
         ? (l.occurrenceStatePaid, null, null)
         : (null, null, null);
     return AppListRow(
@@ -1729,8 +1801,8 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     );
   }
 
-  /// ล่วงหน้า in three sections: ถัดไป (the next one), สรุป (what comes
-  /// after it, then ปรับแต่งล่วงหน้า), ที่ปรับไว้ (the ones changed ahead).
+  /// ล่วงหน้า in two sections: ถัดไป (the next one) and ปรับแต่งล่วงหน้า (the
+  /// way in, then the ones already changed ahead).
   Widget _upcomingTab(AppLocalizations l, Recurring r) {
     final items = _upcoming.items;
     final next = _nextItem;
@@ -1766,12 +1838,12 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
               ),
             ],
           ),
+        // ปรับแต่งล่วงหน้า: the way in, then the ones already changed ahead.
         SectionCard(
-          key: const ValueKey('upcomingSummarySection'),
+          key: const ValueKey('upcomingCustomizeSection'),
           first: next == null,
-          title: l.recurringAheadSummary,
+          title: l.recurringAheadCustomize,
           children: [
-            _aheadSummary(l, r),
             AppListRow(
               key: const ValueKey('upcomingCustomize'),
               leading: const AppAvatar.icon(AppIcons.edit),
@@ -1781,18 +1853,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
               trailing: ListRowTrailing.value(_chevron()),
               onTap: () => _openAheadSheet(l),
             ),
+            for (final i in changed)
+              _occurrenceRow(l, r, i, onTap: () => _openOccurrence(i)),
           ],
         ),
-        if (changed.isNotEmpty)
-          SectionCard(
-            key: const ValueKey('upcomingChanged'),
-            title: l.recurringAheadEdited,
-            trailing: AppText('${changed.length}', role: AppTextRole.caption),
-            children: [
-              for (final i in changed)
-                _occurrenceRow(l, r, i, onTap: () => _openOccurrence(i)),
-            ],
-          ),
       ],
     );
   }
@@ -1808,81 +1872,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     return i.state == OccurrenceState.archived ||
         i.edited ||
         (slot != null && slot != i.date);
-  }
-
-  /// What comes after the next one: a no-end rule "ทุกวันที่ 12 | วนต่อไป
-  /// เรื่อยๆ" with its monthly amount; one with an end "อีก 7 งวด | ถึง
-  /// พ.ค. 2027" with what is left to pay. A tap edits its round.
-  Widget _aheadSummary(AppLocalizations l, Recurring r) {
-    final symbol = context.readUserCurrencySymbol;
-    String money(double v) => moneyString(context, v, symbol: symbol);
-    final rule = r.rule;
-    final page = _upcoming;
-    final complete = !page.windowed && !page.hasMore;
-    final open = rule.end.kind == RecurrenceEndKind.never;
-    final IconData icon;
-    final String title;
-    final String? sub;
-    String? right;
-    if (open) {
-      icon = AppIcons.recurring;
-      title = recurrenceLabel(l, rule);
-      sub = l.recurringAheadForever;
-      final monthly = r.monthlyAmount;
-      if (monthly != null && monthly > 0) {
-        right = l.recurringHomePerMonth(money(monthly));
-      }
-    } else {
-      icon = AppIcons.progress;
-      final total = r.progressTotal;
-      final left = total != null
-          ? total - r.progressDone
-          : complete
-          ? page.items.where((i) => i.state == OccurrenceState.upcoming).length
-          : null;
-      final last =
-          r.chain?.lastOrNull?.slot ??
-          (complete ? page.items.lastOrNull?.date : null) ??
-          rule.end.date;
-      title = left != null
-          ? l.recurringAheadLeft(left)
-          : recurrenceLabel(l, rule);
-      sub = last == null
-          ? null
-          : l.recurringAheadUntil(DateFormat.yMMM(_locale).format(last));
-      final per = r.amount;
-      final sum =
-          _detail?.stats?.remainingTotal ??
-          (per != null && per > 0 && left != null ? per * left : null);
-      if (sum != null && sum > 0) right = l.recurringAheadTotal(money(sum));
-    }
-    return AppListRow(
-      key: const ValueKey('upcomingSummary'),
-      leading: AppAvatar.icon(icon),
-      title: title,
-      line2: sub == null ? null : ListRowLine(parts: [sub]),
-      trailing: ListRowTrailing.value(
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (right != null) ...[
-              Text(right),
-              const SizedBox(width: AppSpacing.xs),
-            ],
-            _chevron(),
-          ],
-        ),
-      ),
-      onTap: _editRound,
-    );
-  }
-
-  /// Into edit mode with the custom-repeat sheet open.
-  void _editRound() {
-    enterEdit();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && isEditing) unawaited(_openRecurrenceSheet());
-    });
   }
 
   /// ปรับแต่งล่วงหน้า: every occurrence to come as a month grid, a year at a
@@ -2105,7 +2094,15 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   ) {
     final w = working;
     final palette = Theme.of(context).extension<AppColors>()!;
-    final accent = w.iconCode.tintFor(palette);
+    final icon = recurringIconCode(
+      kind: w.kind,
+      own: w.iconCode,
+      category: context
+          .watch<CategoriesCubit>()
+          .byId(w.isTransfer ? '' : w.categoryId ?? '')
+          ?.iconCode,
+    );
+    final accent = icon.tintFor(palette);
     final tags = context.watch<TagsCubit>();
     return DetailLayout(
       topInset: barInset + AppSpacing.lg,
@@ -2122,7 +2119,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
               child: IconDisplay(
                 type: IconType.category,
                 size: 44,
-                iconCode: w.iconCode,
+                iconCode: icon,
               ),
             ),
             name: HeroNameInput(
@@ -2158,16 +2155,21 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
               return (n == null || n <= 0) ? l.recurringAmountInvalid : null;
             },
           ),
+          ?_pickCards(l),
         ],
       ),
-      tags: TagRow(
-        tags: [
-          for (final id in w.tagIds)
-            if (tags.byId(id) case final t?) _tagChip(t.name, t.iconCode),
-        ],
-        onAdd: _pickTags,
-        addLabel: l.tagsAddNew,
-      ),
+      // ออมเงิน has no tags.
+      tags: w.isSaving
+          ? null
+          : TagRow(
+              tags: [
+                for (final id in w.tagIds)
+                  if (tags.byId(id) case final t?)
+                    _tagChip(t.name, t.iconCode),
+              ],
+              onAdd: _pickTags,
+              addLabel: l.tagsAddNew,
+            ),
       info: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

@@ -19,7 +19,10 @@ enum RecurringKind {
   subscription,
   installment,
   income,
-  reminder;
+  reminder,
+
+  /// ออมเงิน: wallet → a saving goal (or ยังไม่จัดสรร); the BE's type `saving`.
+  saving;
 
   static RecurringKind fromJson(String? v) => RecurringKind.values.firstWhere(
     (k) => k.name == v,
@@ -28,8 +31,31 @@ enum RecurringKind {
 
   String toJson() => name;
 
+  /// Saving leaves the wallet, so the app treats it as an expense.
   TransactionType get defaultType =>
       this == income ? TransactionType.income : TransactionType.expense;
+}
+
+/// The wire type: `saving` reads as an expense (money out of the wallet).
+TransactionType recurringTypeFromJson(String? v) =>
+    v == 'saving' ? TransactionType.expense : TransactionType.fromJson(v ?? 'expense');
+
+/// The goal a saving rule saves into (null = ยังไม่จัดสรร).
+class SavingGoalRef extends Equatable {
+  const SavingGoalRef({required this.id, required this.name});
+
+  static SavingGoalRef? tryParse(Object? json) => json is Map<String, dynamic>
+      ? SavingGoalRef(
+          id: json['id'] as String,
+          name: (json['name'] as String?) ?? '',
+        )
+      : null;
+
+  final String id;
+  final String name;
+
+  @override
+  List<Object?> get props => [id, name];
 }
 
 class RecurringActions extends Equatable {
@@ -225,6 +251,8 @@ class Recurring extends Equatable {
     this.toAccount,
     this.category,
     this.tags = const [],
+    this.goalId,
+    this.goal,
     this.trialUntil,
     this.yearlyCost = 0,
     this.monthlyAmount,
@@ -262,6 +290,10 @@ class Recurring extends Equatable {
   final AccountRef? toAccount;
   final EmbeddedCategory? category;
   final List<TagRef> tags;
+
+  /// Saving only: the goal it saves into; null = ยังไม่จัดสรร.
+  final String? goalId;
+  final SavingGoalRef? goal;
   final RecurrenceRule rule;
   final RecurringStatus status;
 
@@ -301,10 +333,12 @@ class Recurring extends Equatable {
 
   bool get hasAmount => amount != null && amount! > 0;
 
-  static const _types = {'expense', 'income', 'transfer'};
+  bool get isSaving => kind == RecurringKind.saving;
 
-  /// Null for a rule the app has no type for (the BE's `saving`), so one
-  /// such rule doesn't break a whole list.
+  static const _types = {'expense', 'income', 'transfer', 'saving'};
+
+  /// Null for a rule the app has no type for, so one such rule doesn't break
+  /// a whole list.
   static Recurring? tryParse(Object? json) =>
       json is Map<String, dynamic> &&
           _types.contains((json['type'] as String?) ?? 'expense')
@@ -321,8 +355,12 @@ class Recurring extends Equatable {
       iconCode: json['icon_code'] is Map<String, dynamic>
           ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
-      kind: RecurringKind.fromJson(json['kind'] as String?),
-      type: TransactionType.fromJson((json['type'] as String?) ?? 'expense'),
+      kind: json['type'] == 'saving'
+          ? RecurringKind.saving
+          : RecurringKind.fromJson(json['kind'] as String?),
+      type: recurringTypeFromJson(json['type'] as String?),
+      goalId: json['goal_id'] as String?,
+      goal: SavingGoalRef.tryParse(json['goal']),
       amount: (json['amount'] as num?)?.toDouble(),
       account: json['account'] is Map<String, dynamic>
           ? AccountRef.fromJson(json['account'] as Map<String, dynamic>)
@@ -393,6 +431,8 @@ class Recurring extends Equatable {
     toAccount,
     category,
     tags,
+    goalId,
+    goal,
     rule,
     status,
     trialUntil,
@@ -434,11 +474,15 @@ class RecurringWrite extends Equatable {
     this.toAccountId,
     this.categoryId,
     this.tagIds = const [],
+    this.goalId,
     this.autoCreate = false,
   });
 
   final String name;
   final RecurringKind kind;
+
+  /// Saving only (null = ยังไม่จัดสรร).
+  final String? goalId;
   final String? description;
   final String? note;
   final IconCode? iconCode;
@@ -454,25 +498,31 @@ class RecurringWrite extends Equatable {
   final RecurrenceRule rule;
   final bool autoCreate;
 
-  Map<String, dynamic> toJson({bool forUpdate = false}) => <String, dynamic>{
-    'name': name,
-    'kind': kind.toJson(),
-    'description': description,
-    'note': note,
-    'icon_code': iconCode?.toJson(),
-    'type': type.toJson(),
-    'amount': amount ?? 0,
-    'account_id': accountId,
-    'to_account_id': type == TransactionType.transfer ? toAccountId : null,
-    'category_id': type == TransactionType.transfer ? null : categoryId,
-    'tag_ids': tagIds,
-    'auto_create': autoCreate,
-    if (kind == RecurringKind.subscription && trialUntil != null)
-      'trial_until': ymd(trialUntil!)
-    else if (forUpdate)
-      'trial_until': '',
-    ...recurrenceToJson(rule),
-  };
+  Map<String, dynamic> toJson({bool forUpdate = false}) {
+    final saving = kind == RecurringKind.saving;
+    return <String, dynamic>{
+      'name': name,
+      'kind': kind.toJson(),
+      'description': description,
+      'note': note,
+      'icon_code': iconCode?.toJson(),
+      'type': saving ? 'saving' : type.toJson(),
+      'amount': amount ?? 0,
+      'account_id': accountId,
+      'to_account_id': type == TransactionType.transfer ? toAccountId : null,
+      'category_id': saving || type == TransactionType.transfer
+          ? null
+          : categoryId,
+      'tag_ids': saving ? const <String>[] : tagIds,
+      'goal_id': saving ? goalId : null,
+      'auto_create': autoCreate,
+      if (kind == RecurringKind.subscription && trialUntil != null)
+        'trial_until': ymd(trialUntil!)
+      else if (forUpdate)
+        'trial_until': '',
+      ...recurrenceToJson(rule),
+    };
+  }
 
   @override
   List<Object?> get props => [
@@ -488,6 +538,7 @@ class RecurringWrite extends Equatable {
     toAccountId,
     categoryId,
     tagIds,
+    goalId,
     rule,
     autoCreate,
   ];

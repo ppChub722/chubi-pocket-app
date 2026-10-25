@@ -28,21 +28,7 @@ class TransactionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final tx = transaction;
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
-
     final cat = tx.category;
-    final Widget leading = cat != null
-        ? IconDisplay(type: IconType.category, size: 36, iconCode: cat.iconCode)
-        : IconTile(
-            icon: _typeIcon(tx.type),
-            color: switch (tx.type) {
-              TransactionType.expense => palette.expense,
-              TransactionType.income => palette.income,
-              TransactionType.transfer => scheme.onSurfaceVariant,
-            },
-            size: 36,
-          );
 
     final categoryName = cat != null
         ? categoryDisplayName(
@@ -69,41 +55,55 @@ class TransactionTile extends StatelessWidget {
     final upcoming =
         day != null && day.isAfter(DateTime(now.year, now.month, now.day));
 
-    return AppListRow(
-      leading: leading,
+    return TxListRow(
+      kind: switch (tx.type) {
+        TransactionType.expense => TxListKind.expense,
+        TransactionType.income => TxListKind.income,
+        TransactionType.transfer => TxListKind.transfer,
+      },
+      icon: cat?.iconCode,
       title: title,
+      source: sourceOf(tx),
       dimmed: upcoming,
-      titleChips: [
-        if (showAccount)
-          walletRowChip(
-            context,
-            name: wallet?.name ?? l.transactionFormAccountNone,
-            iconCode: wallet?.iconCode,
-            type: wallet?.type,
-          ),
-      ],
       status: upcoming
           ? ListRowChip(dueLabel(l, date: day, withDate: false))
           : null,
-      line2: ListRowLine(
-        parts: [
-          if (description.isNotEmpty) categoryName,
-          if (showDate) _date(context, l, tx.date),
-        ],
-        spans: [
-          for (final t in tx.tags)
-            tagSpan(context, t.name, iconCode: t.asTag.iconCode),
-        ],
-        glyphs: [
-          if (tx.hasSplits)
-            ListRowGlyph(AppIcons.shared, text: '${tx.splitCount + 1}'),
-        ],
-      ),
-      trailing: ListRowTrailing.value(
-        MoneyText(tx.signedAmount, tone: MoneyTone.signed),
-      ),
+      wallet: showAccount && wallet != null
+          ? walletRowChip(
+              context,
+              name: wallet.name,
+              iconCode: wallet.iconCode,
+              type: wallet.type,
+            )
+          : null,
+      parts: [
+        if (description.isNotEmpty) categoryName,
+        if (showDate) _date(context, l, tx.date),
+      ],
+      glyphs: [
+        if (tx.hasSplits)
+          ListRowGlyph(AppIcons.shared, text: '${tx.splitCount + 1}'),
+      ],
+      tags: [
+        for (final t in tx.tags)
+          tagSpan(context, t.name, iconCode: t.asTag.iconCode),
+      ],
+      amount: MoneyText(tx.signedAmount, tone: MoneyTone.signed),
       onTap: onTap ?? () => openPage(context, '/transactions/${tx.id}'),
     );
+  }
+
+  /// Where [tx] came from: an installment before its recurring rule.
+  static TxSource? sourceOf(Transaction tx) {
+    final rec = tx.recurringItem;
+    if (rec != null) {
+      return rec.total != null ? TxSource.installment : TxSource.recurring;
+    }
+    if (tx.eventBill != null || tx.projectId != null) return TxSource.event;
+    if (tx.counterparty != null || tx.repaymentPerson != null) {
+      return TxSource.debt;
+    }
+    return null;
   }
 
   static String _date(BuildContext context, AppLocalizations l, String ymd) {
@@ -116,10 +116,4 @@ class TransactionTile extends StatelessWidget {
       locale: Localizations.localeOf(context).languageCode,
     );
   }
-
-  static IconData _typeIcon(TransactionType t) => switch (t) {
-    TransactionType.expense => AppIcons.expense,
-    TransactionType.income => AppIcons.income,
-    TransactionType.transfer => AppIcons.transfer,
-  };
 }

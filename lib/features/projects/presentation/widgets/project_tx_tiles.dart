@@ -41,7 +41,9 @@ PersonLevel projectMemberLevel(ProjectMember m) => m.isLinked
     : (m.iconCode != null ? PersonLevel.contact : PersonLevel.name);
 
 /// One row of the event book: a bill with its splits, or a payback. A tap
-/// opens the event sheet; "ยังไม่ลงบัญชี" marks my part that isn't in my books.
+/// opens the event sheet. My part (my line when I paid, else my split) that
+/// isn't fully in my books is tinted with a ⤓ (ลงบัญชี: the "my books" card
+/// alone); what is booked shows as ✓ chips.
 class ProjectTxTreeTile extends StatelessWidget {
   const ProjectTxTreeTile({
     required this.tree,
@@ -81,11 +83,10 @@ class ProjectTxTreeTile extends StatelessWidget {
     final myId = view.me?.id;
     final symbol = context.readUserCurrencySymbol;
     final locked = view.rowsLocked;
-    final notBooked = AppChip(
-      label: l.evbNotBooked,
-      tone: AppChipTone.warning,
-      size: ChipSize.mini,
-    );
+    final booked = parent.myBooks;
+    final chips = _bookedChips(l, booked);
+    VoidCallback? book(Set<String> want) =>
+        locked || want.every(booked.contains) ? null : () => _book(context);
 
     if (parent.isPayback) {
       final to = tree.children.isEmpty
@@ -98,6 +99,9 @@ class ProjectTxTreeTile extends StatelessWidget {
           myId != null &&
           (parent.transactionMemberId == myId || to?.id == myId);
       final color = ModuleColors.of(context).planning;
+      final onBook = involved
+          ? book({ProjectTransaction.bookDebt, ProjectTransaction.bookRepay})
+          : null;
       return EventBillRow(
         tick: false,
         leading: IconTile(icon: AppIcons.transfer, color: color, size: 28),
@@ -106,7 +110,10 @@ class ProjectTxTreeTile extends StatelessWidget {
         amountColor: color,
         symbol: symbol,
         caption: l.evbPaybackBy(by?.displayName ?? '?'),
-        badge: involved && !parent.myBooked ? notBooked : null,
+        badge: involved ? chips : null,
+        mine: onBook != null,
+        onAction: onBook,
+        actionTooltip: l.evbBookMine,
         locked: locked,
         highlighted: highlighted,
         onTap: () => _open(context),
@@ -115,6 +122,11 @@ class ProjectTxTreeTile extends StatelessWidget {
 
     final showTag = onShowTag;
     final iPaid = myId != null && parent.transactionMemberId == myId;
+    final othersIn = tree.children.any((c) => c.transactionMemberId != myId);
+    final onBook = book({
+      ProjectTransaction.bookTx,
+      if (!iPaid || othersIn) ProjectTransaction.bookDebt,
+    });
     final children = !onlyMine
         ? tree.children
         : (iPaid
@@ -164,12 +176,48 @@ class ProjectTxTreeTile extends StatelessWidget {
       payerVerb: l.evbPays,
       payerLevel: projectMemberLevel(payer),
       payerIconCode: payer.iconCode,
-      badge: iPaid && !parent.myBooked ? notBooked : null,
+      badge: iPaid ? chips : null,
+      mine: iPaid && onBook != null,
+      onAction: iPaid ? onBook : null,
+      actionTooltip: l.evbBookMine,
       onTap: () => _open(context),
       children: [
         for (final (i, c) in children.indexed) ...[
           if (i > 0) const AppDivider.row(),
-          _child(context, c, symbol: symbol, myId: myId, notBooked: notBooked),
+          _child(
+            context,
+            c,
+            symbol: symbol,
+            myId: myId,
+            chips: chips,
+            onBook: iPaid ? null : onBook,
+            bookTooltip: l.evbBookMine,
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// ✓ ลงหนี้ / ✓ ลงรายการ for what my books already hold.
+  Widget? _bookedChips(AppLocalizations l, List<String> booked) {
+    final labels = [
+      if (booked.contains(ProjectTransaction.bookDebt)) l.evbBookedDebt,
+      if (booked.contains(ProjectTransaction.bookTx) ||
+          booked.contains(ProjectTransaction.bookRepay))
+        l.evbBookedTx,
+    ];
+    if (labels.isEmpty) return null;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final (i, t) in labels.indexed) ...[
+          if (i > 0) const SizedBox(width: AppSpacing.xs),
+          AppChip(
+            label: t,
+            icon: AppIcons.check,
+            tone: AppChipTone.success,
+            size: ChipSize.mini,
+          ),
         ],
       ],
     );
@@ -180,7 +228,9 @@ class ProjectTxTreeTile extends StatelessWidget {
     ProjectTransaction c, {
     required String symbol,
     required String? myId,
-    required Widget notBooked,
+    required Widget? chips,
+    required VoidCallback? onBook,
+    required String bookTooltip,
   }) {
     final debtor = view.memberOf(c);
     final mine = myId != null && debtor.id == myId;
@@ -191,10 +241,27 @@ class ProjectTxTreeTile extends StatelessWidget {
       level: projectMemberLevel(debtor),
       iconCode: debtor.iconCode,
       symbol: symbol,
-      badge: mine && !tree.parent.myBooked ? notBooked : null,
+      badge: mine ? chips : null,
+      mine: mine && onBook != null,
+      onAction: mine ? onBook : null,
+      actionTooltip: bookTooltip,
       locked: view.rowsLocked,
       onTap: () => _open(context),
     );
+  }
+
+  /// ⤓: the event sheet with only "ลงบัญชีของฉันด้วย"; the bill isn't
+  /// changed.
+  Future<void> _book(BuildContext context) async {
+    final patch = onPatch;
+    final saved = await showEventBillSheet(
+      context,
+      view: view,
+      row: tree,
+      onPatch: patch,
+      booksOnly: true,
+    );
+    if (saved && patch == null) await onChanged();
   }
 
   Future<void> _open(BuildContext context) async {

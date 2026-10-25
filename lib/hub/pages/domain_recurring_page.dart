@@ -125,6 +125,16 @@ class _RecurringPage extends StatelessWidget {
           ),
         ),
         HubDemo(
+          title: 'DatePickChip — an optional date as a chip',
+          note:
+              'None = dashed "+ เลือกวันที่" (emptyLabel can say more, e.g. '
+              '"เลือกวันกำหนดจ่าย"); set = the day + ✕ to clear; no onPick = '
+              'view mode, just the day. format swaps the medium date for '
+              'the page\'s own words. Used by the recurring trial date and '
+              'the debt due date.',
+          child: _DatePickChipDemo(start: inDays(30)),
+        ),
+        HubDemo(
           title: 'TodayLine — between past and coming rows',
           note:
               'The calendar list in date order: past rows dimmed unless '
@@ -1103,4 +1113,41 @@ class _CalendarDemoState extends State<_CalendarDemo> {
       ],
     );
   }
+}
+
+class _DatePickChipDemo extends StatefulWidget {
+  const _DatePickChipDemo({required this.start});
+
+  final DateTime start;
+
+  @override
+  State<_DatePickChipDemo> createState() => _DatePickChipDemoState();
+}
+
+class _DatePickChipDemoState extends State<_DatePickChipDemo> {
+  DateTime? _date;
+
+  Future<void> _pick() async {
+    final r = await showAppDatePicker(
+      context,
+      initial: _date ?? widget.start,
+    );
+    if (r is AppDatePicked && mounted) setState(() => _date = r.date);
+  }
+
+  @override
+  Widget build(BuildContext context) => Wrap(
+    spacing: AppSpacing.md,
+    runSpacing: AppSpacing.sm,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: [
+      DatePickChip(
+        date: _date,
+        onPick: _pick,
+        onClear: () => setState(() => _date = null),
+      ),
+      DatePickChip(date: widget.start, onPick: _noop, onClear: _noop),
+      DatePickChip(date: widget.start),
+    ],
+  );
 }

@@ -194,7 +194,6 @@ class SavingGoalDetail extends Equatable {
     this.spare,
     this.byWallet = const [],
     this.history = const [],
-    this.spareAutoSaves = const [],
     this.entries = const SavingEntryPage(),
     this.deletePreview,
   });
@@ -203,17 +202,11 @@ class SavingGoalDetail extends Equatable {
   final SavingSpare? spare;
   final List<SavingWalletShare> byWallet;
   final List<SavingHistoryPoint> history;
-
-  final List<SavingAutoSave> spareAutoSaves;
   final SavingEntryPage entries;
 
   final SavingDeletePreview? deletePreview;
 
   bool get isSpare => goal == null;
-
-  List<SavingAutoSave> get autoSaves => goal?.autoSaves ?? spareAutoSaves;
-
-  SavingAutoSave? get autoSave => autoSaves.firstOrNull;
 
   factory SavingGoalDetail.fromJson(Map<String, dynamic> json) {
     final goal = json['goal'] is Map
@@ -235,9 +228,6 @@ class SavingGoalDetail extends Equatable {
         for (final p in (json['history'] as List? ?? const []))
           SavingHistoryPoint.fromJson((p as Map).cast<String, dynamic>()),
       ],
-      spareAutoSaves: goal == null
-          ? SavingAutoSave.listFromJson(json)
-          : const [],
       entries: json['entries'] is Map
           ? SavingEntryPage.fromJson(
               (json['entries'] as Map).cast<String, dynamic>(),
@@ -256,7 +246,6 @@ class SavingGoalDetail extends Equatable {
     spare: spare,
     byWallet: byWallet,
     history: history,
-    spareAutoSaves: spareAutoSaves,
     entries: entries ?? this.entries,
   );
 
@@ -266,7 +255,6 @@ class SavingGoalDetail extends Equatable {
     spare,
     byWallet,
     history,
-    spareAutoSaves,
     entries,
     deletePreview,
   ];

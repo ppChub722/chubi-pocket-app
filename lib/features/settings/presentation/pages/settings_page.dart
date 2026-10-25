@@ -258,19 +258,16 @@ class _LanguageRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final code = context.watch<LocaleCubit>().state.languageCode;
-    return OptionMenuAnchor<String>(
+    return SettingDropdownRow<String>(
+      leading: const AppIcon(AppIcons.language),
+      label: l.settingsLanguage,
+      value: kLanguageNames[code] ?? code,
       selected: code,
       onSelected: (picked) => context.read<LocaleCubit>().set(Locale(picked)),
       options: [
         for (final e in kLanguageNames.entries)
           SheetOption(value: e.key, label: e.value),
       ],
-      builder: (context, toggle) => SettingDropdownRow(
-        leading: const AppIcon(AppIcons.language),
-        label: l.settingsLanguage,
-        value: kLanguageNames[code] ?? code,
-        onTap: toggle,
-      ),
     );
   }
 }
@@ -397,9 +394,13 @@ class _CurrencyRowState extends State<_CurrencyRow> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final value = widget.user.currency;
-    return OptionMenuAnchor<String>(
+    return SettingDropdownRow<String>(
+      leading: const AppIcon(AppIcons.currency),
+      label: l.profileCurrencyLabel,
+      helper: l.settingsCurrencyHint,
+      value: '${Currencies.symbolOf(value)} $value',
       selected: value,
-      onSelected: _change,
+      onSelected: _busy ? null : _change,
       options: [
         for (final c in Currencies.codes)
           SheetOption(
@@ -411,13 +412,6 @@ class _CurrencyRowState extends State<_CurrencyRow> {
             ),
           ),
       ],
-      builder: (context, toggle) => SettingDropdownRow(
-        leading: const AppIcon(AppIcons.currency),
-        label: l.profileCurrencyLabel,
-        helper: l.settingsCurrencyHint,
-        value: '${Currencies.symbolOf(value)} $value',
-        onTap: _busy ? null : toggle,
-      ),
     );
   }
 }
@@ -465,9 +459,17 @@ class _MoneyStyleRowState extends State<_MoneyStyleRow> {
           '${s.apply(expense, negative: true)}';
     }
 
-    return OptionMenuAnchor<MoneySign>(
+    return SettingDropdownRow<MoneySign>(
+      leading: const AppIcon(AppIcons.moneyStyle),
+      label: l.settingsMoneyStyle,
+      helper: example(current.sign),
+      value: switch (current.sign) {
+        MoneySign.plusMinus => l.settingsMoneySignPlusMinus,
+        MoneySign.parentheses => l.settingsMoneySignParentheses,
+        MoneySign.none => l.settingsMoneySignNone,
+      },
       selected: current.sign,
-      onSelected: _change,
+      onSelected: _busy ? null : _change,
       options: [
         for (final (sign, label) in [
           (MoneySign.plusMinus, l.settingsMoneySignPlusMinus),
@@ -476,17 +478,6 @@ class _MoneyStyleRowState extends State<_MoneyStyleRow> {
         ])
           SheetOption(value: sign, label: label, subtitle: example(sign)),
       ],
-      builder: (context, toggle) => SettingDropdownRow(
-        leading: const AppIcon(AppIcons.moneyStyle),
-        label: l.settingsMoneyStyle,
-        helper: example(current.sign),
-        value: switch (current.sign) {
-          MoneySign.plusMinus => l.settingsMoneySignPlusMinus,
-          MoneySign.parentheses => l.settingsMoneySignParentheses,
-          MoneySign.none => l.settingsMoneySignNone,
-        },
-        onTap: _busy ? null : toggle,
-      ),
     );
   }
 }
@@ -539,20 +530,17 @@ class _MoneyDecimalsRowState extends State<_MoneyDecimalsRow> {
       MoneyDecimals.auto => l.settingsMoneyDecimalsAuto,
     };
 
-    return OptionMenuAnchor<MoneyDecimals>(
+    return SettingDropdownRow<MoneyDecimals>(
+      leading: const AppIcon(AppIcons.moneyDecimals),
+      label: l.settingsMoneyDecimals,
+      helper: example(current),
+      value: label(current),
       selected: current,
-      onSelected: _change,
+      onSelected: _busy ? null : _change,
       options: [
         for (final d in MoneyDecimals.values)
           SheetOption(value: d, label: label(d), subtitle: example(d)),
       ],
-      builder: (context, toggle) => SettingDropdownRow(
-        leading: const AppIcon(AppIcons.moneyDecimals),
-        label: l.settingsMoneyDecimals,
-        helper: example(current),
-        value: label(current),
-        onTap: _busy ? null : toggle,
-      ),
     );
   }
 }

@@ -785,25 +785,13 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
       dense: true,
       child: Align(
         alignment: AlignmentDirectional.centerStart,
-        child: due == null
-            ? AppChip(
-                label: l.debtDuePick,
-                icon: AppIcons.add,
-                tone: AppChipTone.primary,
-                selected: true,
-                dashed: true,
-                onTap: _pickDue,
-              )
-            : AppChip(
-                label: _dayLabel(l, due),
-                icon: AppIcons.date,
-                selected: true,
-                dashed: true,
-                inset: true,
-                trailing: AppChipTrailing.remove,
-                onRemove: () => _c.setDueDate(null),
-                onTap: _pickDue,
-              ),
+        child: DatePickChip(
+          date: due,
+          emptyLabel: l.debtDuePick,
+          format: (d) => _dayLabel(l, d),
+          onPick: _pickDue,
+          onClear: () => _c.setDueDate(null),
+        ),
       ),
     );
   }
