@@ -547,7 +547,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
               name: c.name,
               level: c.isLinked ? PersonLevel.linked : PersonLevel.contact,
               iconCode: c.iconCode,
-              size: 40,
+              size: HeroIdentity.iconSize,
             ),
           ),
           name: HeroNameInput(

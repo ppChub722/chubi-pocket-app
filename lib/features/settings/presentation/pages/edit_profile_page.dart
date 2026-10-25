@@ -275,12 +275,12 @@ class _EditProfilePageState extends State<EditProfilePage>
         HeroIdentity(
           alignTop: true,
           icon: EditableCircle(
-            size: 40,
+            size: HeroIdentity.iconSize,
             onLongPress: () => enterEdit(),
             child: UserAvatar(
               displayName: _shownName,
               iconCode: w.iconCode,
-              size: 40,
+              size: HeroIdentity.iconSize,
             ),
           ),
           name: Text(

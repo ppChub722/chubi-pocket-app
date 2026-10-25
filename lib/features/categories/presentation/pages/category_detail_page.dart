@@ -752,11 +752,11 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       content: [
         HeroIdentity(
           icon: EditableCircle(
-            size: 40,
+            size: HeroIdentity.iconSize,
             onLongPress: _enterEditThenOpenMaker,
             child: IconDisplay(
               type: IconType.category,
-              size: 40,
+              size: HeroIdentity.iconSize,
               iconCode: iconCode,
             ),
           ),

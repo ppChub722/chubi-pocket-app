@@ -1086,7 +1086,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       content: [
         HeroIdentity(
           icon: EditableCircle(
-            size: 40,
+            size: HeroIdentity.iconSize,
             onLongPress: () {
               enterEdit();
               WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1095,7 +1095,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             },
             child: IconDisplay(
               type: IconType.category,
-              size: 40,
+              size: HeroIdentity.iconSize,
               iconCode: r.iconCode ?? r.category?.iconCode,
             ),
           ),

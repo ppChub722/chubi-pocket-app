@@ -24,8 +24,8 @@ class HeroIdentity extends StatelessWidget {
   /// text — every detail page (owner 2026-10-23). False = centred.
   final bool alignTop;
 
-  /// One icon size in view and edit (owner 2026-10-23): a view icon (40)
-  /// scales up to the edit one (44, the EditableCircle).
+  /// One icon size in view and edit: draw the icon at this size, so its
+  /// letters/glyph match too (a smaller icon only gets scaled up).
   static const double iconSize = 44;
 
   final Widget? icon;

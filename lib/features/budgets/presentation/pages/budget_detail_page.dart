@@ -755,7 +755,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       content: [
         HeroIdentity(
           icon: EditableCircle(
-            size: 40,
+            size: HeroIdentity.iconSize,
             onLongPress: _canEdit
                 ? () {
                     enterEdit();
@@ -766,7 +766,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
                 : null,
             child: IconDisplay(
               type: IconType.category,
-              size: 40,
+              size: HeroIdentity.iconSize,
               iconCode: b.iconCode,
             ),
           ),

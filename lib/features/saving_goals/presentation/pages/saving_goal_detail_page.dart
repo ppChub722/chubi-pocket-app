@@ -1036,11 +1036,11 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       content: [
         HeroIdentity(
           icon: EditableCircle(
-            size: 40,
+            size: HeroIdentity.iconSize,
             onLongPress: _enterEditThenOpenMaker,
             child: IconCodeWidget(
               iconCode: g.iconCode,
-              size: 40,
+              size: HeroIdentity.iconSize,
               fallbackIcon: AppIcons.savingGoal,
               fallbackColor: accent,
             ),
@@ -1114,11 +1114,11 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       content: [
         HeroIdentity(
           icon: EditableCircle(
-            size: 40,
+            size: HeroIdentity.iconSize,
             onLongPress: _enterEditThenOpenMaker,
             child: IconCodeWidget(
               iconCode: g.iconCode,
-              size: 40,
+              size: HeroIdentity.iconSize,
               fallbackIcon: AppIcons.savingGoal,
               fallbackColor: accent,
             ),

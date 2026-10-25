@@ -981,7 +981,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         HeroIdentity(
           icon: AccountIconCircle(
             account: a,
-            size: 40,
+            size: HeroIdentity.iconSize,
             onLongPress: _isOwner ? _enterEditThenOpenMaker : null,
           ),
           name: HeroNameInput(
