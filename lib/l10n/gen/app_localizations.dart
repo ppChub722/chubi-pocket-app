@@ -1652,17 +1652,17 @@ abstract class AppLocalizations {
   /// **'Record a debt with this person'**
   String get debtsPersonAdd;
 
-  /// No description provided for @debtsPersonLinkContact.
+  /// No description provided for @debtsPersonAddContact.
   ///
   /// In en, this message translates to:
-  /// **'Link to a contact'**
-  String get debtsPersonLinkContact;
+  /// **'Add to contacts'**
+  String get debtsPersonAddContact;
 
-  /// No description provided for @debtsPersonLinkContactHint.
+  /// No description provided for @debtsPersonAddContactHint.
   ///
   /// In en, this message translates to:
-  /// **'Merge this name\'s debts into a contact'**
-  String get debtsPersonLinkContactHint;
+  /// **'Add this name to an existing contact or create a new one'**
+  String get debtsPersonAddContactHint;
 
   /// No description provided for @debtsPersonLinked.
   ///
@@ -3551,7 +3551,7 @@ abstract class AppLocalizations {
   /// No description provided for @moreCategoriesDesc.
   ///
   /// In en, this message translates to:
-  /// **'Group income & spending'**
+  /// **'Group your entries'**
   String get moreCategoriesDesc;
 
   /// No description provided for @moreTagsDesc.
@@ -3563,31 +3563,31 @@ abstract class AppLocalizations {
   /// No description provided for @moreContactsDesc.
   ///
   /// In en, this message translates to:
-  /// **'People you split bills with'**
+  /// **'People in your bills and debts'**
   String get moreContactsDesc;
 
   /// No description provided for @moreProjectsDesc.
   ///
   /// In en, this message translates to:
-  /// **'Trips & shared budgets'**
+  /// **'Trips and shared-cost activities'**
   String get moreProjectsDesc;
 
   /// No description provided for @moreDebtsDesc.
   ///
   /// In en, this message translates to:
-  /// **'Who owes me, whom I owe'**
+  /// **'Loans and money owed'**
   String get moreDebtsDesc;
 
   /// No description provided for @moreBudgetsDesc.
   ///
   /// In en, this message translates to:
-  /// **'Spending limits'**
+  /// **'Keep monthly spending in check'**
   String get moreBudgetsDesc;
 
   /// No description provided for @moreSavingGoalsDesc.
   ///
   /// In en, this message translates to:
-  /// **'Save towards a target'**
+  /// **'Save for what you want'**
   String get moreSavingGoalsDesc;
 
   /// No description provided for @moreScheduledDesc.
@@ -3596,23 +3596,65 @@ abstract class AppLocalizations {
   /// **'Recurring & upcoming bills'**
   String get moreScheduledDesc;
 
-  /// No description provided for @moreLiveCount.
+  /// No description provided for @moreChipOverBudget.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{1 item} other{{count} items}}'**
-  String moreLiveCount(int count);
+  /// **'Over budget'**
+  String get moreChipOverBudget;
 
-  /// No description provided for @moreLiveDebts.
+  /// No description provided for @moreChipNearBudget.
   ///
   /// In en, this message translates to:
-  /// **'Owed to you {owed} | you owe {owe}'**
-  String moreLiveDebts(String owed, String owe);
+  /// **'Near limit'**
+  String get moreChipNearBudget;
 
-  /// No description provided for @moreLiveDueSoon.
+  /// No description provided for @moreChipGoalReached.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{1 due in {days} days} other{{count} due in {days} days}}'**
-  String moreLiveDueSoon(int count, int days);
+  /// **'Goal reached'**
+  String get moreChipGoalReached;
+
+  /// No description provided for @moreChipNearGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Near goal'**
+  String get moreChipNearGoal;
+
+  /// No description provided for @moreChipDueSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} due soon'**
+  String moreChipDueSoon(int count);
+
+  /// No description provided for @moreChipReceivable.
+  ///
+  /// In en, this message translates to:
+  /// **'To receive {amount}'**
+  String moreChipReceivable(String amount);
+
+  /// No description provided for @moreChipPayable.
+  ///
+  /// In en, this message translates to:
+  /// **'To pay {amount}'**
+  String moreChipPayable(String amount);
+
+  /// No description provided for @moreChipOpenEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} open'**
+  String moreChipOpenEvents(int count);
+
+  /// No description provided for @moreChipPending.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} to confirm'**
+  String moreChipPending(int count);
+
+  /// No description provided for @moreChipUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} unread'**
+  String moreChipUnread(int count);
 
   /// No description provided for @categoriesTitle.
   ///
@@ -9274,7 +9316,7 @@ abstract class AppLocalizations {
   /// No description provided for @moreRecurringDesc.
   ///
   /// In en, this message translates to:
-  /// **'Recurring bills & upcoming items'**
+  /// **'Bills and repeating entries'**
   String get moreRecurringDesc;
 
   /// No description provided for @notifRecurringDue.
@@ -9486,12 +9528,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Account, theme and notifications'**
   String get moreSettingsDesc;
-
-  /// No description provided for @moreLiveUnread.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, other{{count} unread}}'**
-  String moreLiveUnread(int count);
 
   /// No description provided for @sgv2SavedTotal.
   ///

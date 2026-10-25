@@ -1007,7 +1007,7 @@ class _PickDemoState extends State<_PickDemo> {
                   key: ValueKey('pickDemo-$i'),
                   value: _values[i],
                   onChanged: (v) => _values[i] = v,
-                  hint: 'รอใส่ยอด',
+                  hint: 'รอยอด',
                 ),
                 check,
               ],

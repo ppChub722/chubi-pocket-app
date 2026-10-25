@@ -145,13 +145,9 @@ class _PersonViewState extends State<_PersonView> {
   Future<void> _linkToContact() async {
     final l = AppLocalizations.of(context)!;
     final name = _name(_cubit.state);
-    // Linking a name to a contact: opens on the contacts tab.
-    final picked = await ContactPicker.one(
-      context,
-      initialFilter: ContactPickerTabs.contactsContacts,
-    );
-    if (picked is! ContactPicked || !mounted) return;
-    final contact = picked.contact;
+    // A contact picked or just created both link this name to it.
+    final contact = await ContactPicker.contactFor(context, name: name);
+    if (contact == null || !mounted) return;
     setState(() => _linking = true);
     try {
       final n = (await context.read<ContactsCubit>().absorb(contact.id, [
@@ -231,9 +227,9 @@ class _PersonViewState extends State<_PersonView> {
             DetailRow(
               leading: _linking
                   ? const AppSpinner(size: AppSpinnerSize.medium)
-                  : const AppIcon(AppIcons.link),
-              label: l.debtsPersonLinkContact,
-              helper: l.debtsPersonLinkContactHint,
+                  : const AppIcon(AppIcons.addContact),
+              label: l.debtsPersonAddContact,
+              helper: l.debtsPersonAddContactHint,
               showChevron: true,
               onTap: _linking ? null : _linkToContact,
             ),
@@ -548,7 +544,12 @@ class _PersonViewState extends State<_PersonView> {
       title: title,
       titleChips: [
         if (wallet != null)
-          walletRowChip(context, name: wallet.name, iconCode: wallet.iconCode),
+          walletRowChip(
+            context,
+            name: wallet.name,
+            iconCode: wallet.iconCode,
+            type: wallet.type,
+          ),
       ],
       line2: sub == null ? null : ListRowLine(parts: [sub]),
       trailing: ListRowTrailing.value(

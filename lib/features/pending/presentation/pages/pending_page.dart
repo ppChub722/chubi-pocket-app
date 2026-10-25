@@ -425,6 +425,7 @@ class _PendingCard extends StatelessWidget {
           context,
           name: wallet?.name ?? l.transactionFormAccountNone,
           iconCode: wallet?.iconCode,
+          type: wallet?.type,
         ),
       ],
       line2: ListRowLine(
@@ -504,6 +505,7 @@ class PendingSavingRow extends StatelessWidget {
           context,
           name: wallet?.name ?? l.transactionFormAccountNone,
           iconCode: wallet?.iconCode,
+          type: wallet?.type,
         ),
       ],
       line2: ListRowLine(

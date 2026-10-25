@@ -514,7 +514,7 @@ class _TextTrailing extends ListRowTrailing {
 sealed class ListRowAction {
   const ListRowAction();
 
-  /// The quick-create amount box ([ShareAmountField]); [key] keeps what is
+  /// A compact [ShareAmountField] (as wide as ฿99,999); [key] keeps what is
   /// typed when the list rebuilds.
   const factory ListRowAction.amount({
     Key? key,
@@ -611,6 +611,7 @@ class _AmountAction extends ListRowAction {
     onChanged: onChanged,
     hint: hint,
     enabled: enabled,
+    compact: true,
   );
 }
 

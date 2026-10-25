@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../features/accounts/domain/account_type.dart';
 import '../../molecules/app_list_row.dart';
 import '../../tokens/app/app_colors.dart';
 import '../../tokens/app/app_icons.dart';
@@ -8,17 +9,21 @@ import '../icons/color_token.dart';
 import '../icons/icon_code.dart';
 import '../icons/icon_registry.dart';
 import '../icons/icon_type.dart';
+import '../icons/type_icon_default.dart';
+import '../money/wallet_card.dart';
 
-/// A wallet on an [AppListRow]: its icon and name in the wallet's own colour,
-/// no fill, no border (muted without a colour or a wallet).
+/// A wallet on an [AppListRow]: its icon and name in the wallet's own colour
+/// (its [type]'s default until the user picks one), no fill, no border; muted
+/// with no wallet.
 ListRowChip walletRowChip(
   BuildContext context, {
   required String name,
   IconCode? iconCode,
+  AccountType? type,
 }) {
   final palette = Theme.of(context).extension<AppColors>()!;
   final surface = Theme.of(context).colorScheme.surface;
-  final code = iconCode;
+  final code = type == null ? iconCode : iconCode.orDefault(type.iconDefault);
   final own = code == null
       ? null
       : code.background != null

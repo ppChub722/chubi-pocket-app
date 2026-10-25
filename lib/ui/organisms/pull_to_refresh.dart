@@ -24,6 +24,10 @@ class PullToRefresh extends StatefulWidget {
 
   final bool enabled;
 
+  /// Set by the app; runs when a pull starts and when it ends (the shell
+  /// re-checks its bottom nav then).
+  static VoidCallback? onPull;
+
   @override
   State<PullToRefresh> createState() => _PullToRefreshState();
 }
@@ -34,6 +38,8 @@ class _PullToRefreshState extends State<PullToRefresh>
 
   double _pull = 0;
   double _viewport = 0;
+
+  final OverlayPortalController _portal = OverlayPortalController();
 
   late final AnimationController _drop = AnimationController(
     vsync: this,
@@ -134,18 +140,22 @@ class _PullToRefreshState extends State<PullToRefresh>
 
   void _onStatus(RefreshIndicatorStatus? status) {
     setState(() => _status = status);
+    if (status != null && !_portal.isShowing) _portal.show();
     switch (status) {
       case RefreshIndicatorStatus.drag:
         _pull = 0;
         _exit.value = 0;
+        PullToRefresh.onPull?.call();
       case RefreshIndicatorStatus.snap || RefreshIndicatorStatus.refresh:
         if (!_drop.isAnimating) _drop.repeat();
       case RefreshIndicatorStatus.done || RefreshIndicatorStatus.canceled:
+        PullToRefresh.onPull?.call();
         _exit.forward(from: 0).whenComplete(() {
           if (!mounted) return;
           _drop
             ..stop()
             ..value = 0;
+          if (_portal.isShowing) _portal.hide();
           setState(() {
             _status = null;
             _pull = 0;
@@ -173,36 +183,64 @@ class _PullToRefreshState extends State<PullToRefresh>
     return false;
   }
 
+  Widget _indicator() => IgnorePointer(
+    child: AnimatedBuilder(
+      animation: Listenable.merge([_drop, _exit]),
+      builder: (context, _) => CoinDropIndicator(
+        pull: _refreshing ? 1 : _progress,
+        drop: _refreshing ? _drop.value : null,
+        exit: _exit.value,
+      ),
+    ),
+  );
+
+  /// On a page the indicator always drops from the same place, just under the
+  /// top bar, wherever the scroll area starts; in a sheet it stays on the list.
+  Widget _atScreenTop(BuildContext context) {
+    if (_status == null) return const SizedBox.shrink();
+    final overlay = Overlay.maybeOf(context)?.context.findRenderObject();
+    final overlayTop = overlay is RenderBox && overlay.hasSize
+        ? overlay.localToGlobal(Offset.zero).dy
+        : 0.0;
+    final top =
+        MediaQueryData.fromView(View.of(context)).padding.top + kToolbarHeight;
+    return Positioned(
+      top: top - overlayTop,
+      left: 0,
+      right: 0,
+      child: _indicator(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!widget.enabled) return widget.child;
-    final edge = MediaQuery.paddingOf(context).top;
+    final list = RefreshIndicator.noSpinner(
+      onRefresh: _pulled,
+      onStatusChange: _onStatus,
+      child: NotificationListener<ScrollNotification>(
+        onNotification: _track,
+        child: widget.child,
+      ),
+    );
+    final inSheet = ModalRoute.of(context) is PopupRoute;
+    if (!inSheet && Overlay.maybeOf(context) != null) {
+      return OverlayPortal(
+        controller: _portal,
+        overlayChildBuilder: _atScreenTop,
+        child: list,
+      );
+    }
     return Stack(
       fit: StackFit.passthrough,
       children: [
-        RefreshIndicator.noSpinner(
-          onRefresh: _pulled,
-          onStatusChange: _onStatus,
-          child: NotificationListener<ScrollNotification>(
-            onNotification: _track,
-            child: widget.child,
-          ),
-        ),
+        list,
         if (_status != null)
           Positioned(
-            top: edge,
+            top: MediaQuery.paddingOf(context).top,
             left: 0,
             right: 0,
-            child: IgnorePointer(
-              child: AnimatedBuilder(
-                animation: Listenable.merge([_drop, _exit]),
-                builder: (context, _) => CoinDropIndicator(
-                  pull: _refreshing ? 1 : _progress,
-                  drop: _refreshing ? _drop.value : null,
-                  exit: _exit.value,
-                ),
-              ),
-            ),
+            child: _indicator(),
           ),
       ],
     );

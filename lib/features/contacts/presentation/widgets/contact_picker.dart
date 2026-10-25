@@ -126,6 +126,28 @@ abstract final class ContactPicker {
     return r?.pick;
   }
 
+  /// Contacts only, no tabs, "สร้างผู้ติดต่อใหม่" as the first row: a new
+  /// contact ([name] prefilled) answers as if it was picked.
+  static Future<Contact?> contactFor(
+    BuildContext context, {
+    String? name,
+    String? title,
+    bool useRootNavigator = true,
+  }) async {
+    final r = await _pick(
+      context,
+      allowCreate: true,
+      contactsOnly: true,
+      initialName: name,
+      title: title,
+      useRootNavigator: useRootNavigator,
+    );
+    return switch (r?.pick) {
+      ContactPicked(:final contact) => contact,
+      _ => null,
+    };
+  }
+
   /// "ใครจ่าย": [me] pinned on top ("ฉัน"), then the people as in [one]
   /// (free text + create on). Answers [PayerMe] or [PayerPerson].
   static Future<PayerPick?> payer(
@@ -297,10 +319,13 @@ abstract final class ContactPicker {
     bool useRootNavigator = true,
     PickerNone? none,
     bool noneSelected = false,
+    bool contactsOnly = false,
   }) async {
     final l = AppLocalizations.of(context)!;
     final contacts = _maybeRead<ContactsCubit>(context);
-    final directory = _maybeRead<DebtDirectoryCubit>(context);
+    final directory = contactsOnly
+        ? null
+        : _maybeRead<DebtDirectoryCubit>(context);
     if (contacts != null) unawaited(contacts.loadIfNeeded());
     if (directory != null) unawaited(directory.loadIfNeeded());
     final debts = mode == ContactPickerMode.debts;
@@ -344,7 +369,9 @@ abstract final class ContactPicker {
           selected: {?selectedId},
           none: none,
           noneSelected: none == null ? selectedId == null : noneSelected,
-          filters: debts
+          filters: contactsOnly
+              ? const []
+              : debts
               ? [
                   PickerFilter(l.contactPickerFilterAll, (_) => true),
                   PickerFilter(
@@ -375,13 +402,19 @@ abstract final class ContactPicker {
           create: allowCreate
               ? PickerCreate(
                   label: (_) => l.contactPickerCreateNew,
+                  atTop: contactsOnly,
                   onCreate: (typed) async {
+                    final name = typed.isNotEmpty
+                        ? typed
+                        : (contactsOnly ? initialName?.trim() : null);
                     final made =
                         await Navigator.of(context, rootNavigator: true).push(
                           MaterialPageRoute<Contact>(
                             builder: (_) => ContactDetailPage(
                               popOnCreate: true,
-                              initialName: typed.isEmpty ? null : typed,
+                              initialName: name == null || name.isEmpty
+                                  ? null
+                                  : name,
                             ),
                           ),
                         );

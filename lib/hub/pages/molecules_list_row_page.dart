@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../features/accounts/domain/account_type.dart';
 import '../../ui/ui.dart';
 import '../hub_kit.dart';
 import '../hub_playground.dart';
@@ -214,7 +215,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                     'field' => [
                       ListRowAction.amount(
                         value: null,
-                        hint: 'รอใส่ยอด',
+                        hint: 'รอยอด',
                         onChanged: (_) {},
                       ),
                       ListRowAction.button(
@@ -267,8 +268,9 @@ class _ListRowPageState extends State<_ListRowPage> {
               'Layer-2 helpers every entity row uses, so wallets and tags look '
               'the same on every list. walletRowChip: a bare chip (no fill, no '
               'border), the wallet\'s icon and name in its own colour, made '
-              'readable on the card; muted without a colour; pass the "no '
-              'wallet" label as the name when there is none. tagSpan: '
+              'readable on the card; with no picked icon, its type\'s default '
+              '(pass type); muted with no wallet — pass the "no '
+              'wallet" label as the name. tagSpan: '
               '#name in the tag\'s icon colour, for ListRowLine.spans.',
           child: _Card(
             rows: [
@@ -315,6 +317,19 @@ class _ListRowPageState extends State<_ListRowPage> {
                 ],
                 trailing: ListRowTrailing.value(money(-80)),
               ),
+              for (final t in AccountType.values)
+                AppListRow(
+                  leading: tile(AppIcons.category, palette.info),
+                  title: 'Not picked: the type\'s default',
+                  titleChips: [
+                    walletRowChip(
+                      context,
+                      name: accountTypeLabel(context, t),
+                      type: t,
+                    ),
+                  ],
+                  trailing: ListRowTrailing.value(money(-50)),
+                ),
               AppListRow(
                 leading: tile(AppIcons.category, palette.error),
                 title: 'No wallet',
@@ -528,7 +543,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                       ListRowAction.amount(
                         key: const ValueKey('power'),
                         value: null,
-                        hint: 'รอใส่ยอด',
+                        hint: 'รอยอด',
                         onChanged: (_) {},
                       ),
                       ListRowAction.button(
@@ -556,7 +571,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                       ListRowAction.amount(
                         key: const ValueKey('water'),
                         value: _water,
-                        hint: 'รอใส่ยอด',
+                        hint: 'รอยอด',
                         onChanged: (v) => _water = v,
                       ),
                       ListRowAction.button(

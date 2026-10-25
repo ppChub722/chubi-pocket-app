@@ -253,6 +253,7 @@ export 'domain/icons/icon_maker_sheet.dart';
 export 'domain/icons/icon_registry.dart';
 export 'domain/icons/icon_shape.dart';
 export 'domain/icons/icon_type.dart';
+export 'domain/icons/type_icon_default.dart';
 export 'domain/people/user_profile_preview.dart';
 export 'organisms/reorder/reorder_outline.dart';
 export 'templates/dashboard_page_body.dart';

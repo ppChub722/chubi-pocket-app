@@ -540,6 +540,54 @@ Widget buildPeopleAccountsPage(BuildContext context) {
             child: AccountIconCircle(account: card, size: 44, onTap: () {}),
           ),
           HubUse(
+            wide: true,
+            label:
+                'AccountTypeIconDefault — each type\'s own icon + colour '
+                '(TypeIconDefault), until the user picks theirs; last = custom',
+            page: 'Wallet avatar, hero, chips, tx rows, type dropdown',
+            child: Wrap(
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.sm,
+              children: [
+                for (final t in AccountType.values)
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AccountIconCircle(
+                        account: Account(
+                          id: t.name,
+                          name: t.name,
+                          type: t,
+                          balance: 0,
+                          currency: 'THB',
+                        ),
+                        size: 40,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      walletValueChip(
+                        context,
+                        name: accountTypeLabel(context, t),
+                        type: t,
+                      ),
+                    ],
+                  ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const AccountIconCircle(account: bank, size: 40),
+                    const SizedBox(height: AppSpacing.xs),
+                    walletValueChip(
+                      context,
+                      name: bank.name,
+                      iconCode: bank.iconCode,
+                      type: bank.type,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          HubUse(
             label: 'SharedWalletIconBadge — around any icon, 32',
             page: 'Wallet compact hero',
             child: SharedWalletIconBadge(

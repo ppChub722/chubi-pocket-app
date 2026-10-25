@@ -386,8 +386,8 @@ AppChip _walletChip(
   required VoidCallback? onTap,
 }) => AppChip(
   label: a.name,
-  icon: IconRegistry.get(a.iconCode?.icon, fallback: a.type.icon),
-  color: a.iconCode.tintFor(palette),
+  icon: a.iconCode.glyphOr(a.type.iconDefault),
+  color: a.iconCode.tintOr(a.type.iconDefault, palette),
   selected: selected,
   onTap: onTap,
   dashed: true,

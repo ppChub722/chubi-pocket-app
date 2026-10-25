@@ -168,10 +168,10 @@ TxFilterOptions _filterOptions(
       TxFilterOption(
         id: a.id,
         label: a.name,
-        icon: IconRegistry.get(a.iconCode?.icon, fallback: a.type.icon),
-        color: a.iconCode.tintFor(palette),
+        icon: a.iconCode.glyphOr(a.type.iconDefault),
+        color: a.iconCode.tintOr(a.type.iconDefault, palette),
         listIcon: a.type.icon,
-        iconCode: a.iconCode,
+        iconCode: a.iconCode.orDefault(a.type.iconDefault),
       ),
   ],
   categories: [

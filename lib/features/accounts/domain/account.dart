@@ -123,10 +123,16 @@ class Account extends Equatable {
 
   bool get isArchived => status == AccountStatus.archived;
 
-  Color colorOf(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
-    return isLiability ? palette.walletLiability : palette.walletAsset;
-  }
+  /// The icon as shown: the user's own, else the type's default.
+  IconCode get shownIconCode => iconCode.orDefault(type.iconDefault);
+
+  IconData get shownIcon => iconCode.glyphOr(type.iconDefault);
+
+  /// The wallet's own colour: the user's, else the type's default.
+  Color colorOf(BuildContext context) => iconCode.tintOr(
+    type.iconDefault,
+    Theme.of(context).extension<AppColors>()!,
+  );
 
   List<WalletMember> get otherMembers => members.where((m) => !m.isMe).toList();
 

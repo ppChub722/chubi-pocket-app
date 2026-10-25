@@ -999,6 +999,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
           context,
           name: i.account?.name ?? l.transactionFormAccountNone,
           iconCode: i.account?.iconCode,
+          type: i.account?.type,
         ),
       ],
       line2: ListRowLine(
@@ -1010,8 +1011,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
                     : budgetSourceLabel(l, i.source),
               ),
         parts: [
-          if (i.category != null && i.category!.name != title)
-            i.category!.name,
+          if (i.category != null && i.category!.name != title) i.category!.name,
         ],
         spans: [
           for (final t in i.tags) tagSpan(context, t, iconCode: i.tagIcons[t]),
@@ -1298,8 +1298,8 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       for (final a in wallets)
         AppChip(
           label: a.name,
-          icon: IconRegistry.get(a.iconCode?.icon, fallback: a.type.icon),
-          color: a.iconCode.tintFor(palette),
+          icon: a.iconCode.glyphOr(a.type.iconDefault),
+          color: a.iconCode.tintOr(a.type.iconDefault, palette),
           selected: true,
           size: ChipSize.chip,
         ),

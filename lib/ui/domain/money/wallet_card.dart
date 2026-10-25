@@ -41,12 +41,8 @@ HeroStyle accountHeroStyle(
   Account account, {
   bool showGlyph = true,
 }) {
-  final palette = Theme.of(context).extension<AppColors>()!;
   return HeroStyle.tinted(
-    color: account.iconCode.tintFor(
-      palette,
-      fallback: account.colorOf(context),
-    ),
+    color: account.colorOf(context),
     glyph: showGlyph ? account.type.icon : null,
     strongBorder: false,
   );
@@ -90,8 +86,7 @@ class _HorizontalLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final accent = account.iconCode.tintFor(palette);
+    final accent = account.colorOf(context);
     final desc = account.description?.trim();
     final note = account.note?.trim();
     final hasDesc = desc != null && desc.isNotEmpty;
@@ -172,8 +167,7 @@ class _VerticalLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final accent = account.iconCode.tintFor(palette);
+    final accent = account.colorOf(context);
     final desc = account.description?.trim();
     final utilization = account.creditUsedPct == null
         ? null
@@ -330,8 +324,7 @@ class AccountIconCircle extends StatelessWidget {
     final display = IconDisplay(
       type: IconType.account,
       size: size,
-      iconCode: account.iconCode,
-      fallbackColor: account.colorOf(context),
+      iconCode: account.shownIconCode,
     );
     // Only an EDITABLE icon is an EditableCircle (never below 40, with the
     // pencil); a plain one — the compact bar's 28 — is just the icon.
@@ -389,8 +382,8 @@ class OtherMembersStack extends StatelessWidget {
 }
 
 Color accountBalanceColor(BuildContext context, Account account) {
-  if (account.isLiability) return account.colorOf(context);
   final palette = Theme.of(context).extension<AppColors>()!;
+  if (account.isLiability) return palette.walletLiability;
   return account.iconCode.tintFor(palette);
 }
 
@@ -413,4 +406,30 @@ String accountTypeLabel(BuildContext context, AccountType type) {
     case AccountType.payLater:
       return l.accountTypePayLater;
   }
+}
+
+/// Each wallet type's own icon + colour, shown until the user picks theirs.
+extension AccountTypeIconDefault on AccountType {
+  TypeIconDefault get iconDefault => switch (this) {
+    AccountType.cash => const TypeIconDefault(
+      iconId: 'cash',
+      color: Color(0xFF16A34A),
+    ),
+    AccountType.bank => const TypeIconDefault(
+      iconId: 'bank',
+      color: Color(0xFF2563EB),
+    ),
+    AccountType.eWallet => const TypeIconDefault(
+      iconId: 'e_wallet',
+      color: Color(0xFF7C3AED),
+    ),
+    AccountType.creditCard => const TypeIconDefault(
+      iconId: 'credit_card',
+      color: Color(0xFFEA580C),
+    ),
+    AccountType.payLater => const TypeIconDefault(
+      iconId: 'schedule',
+      color: Color(0xFFD97706),
+    ),
+  };
 }

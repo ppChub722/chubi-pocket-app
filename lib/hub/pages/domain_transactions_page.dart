@@ -218,7 +218,8 @@ class _TransactionsPageState extends State<_TransactionsPage> {
           title: 'LinkSwitchRow + people card — quick create "ผูกกับ"',
           note:
               'แบ่ง off = a plain transaction; on = ONE BillPeopleCard: "คนในบิล '
-              '| n", people with the จ่าย / คืนแล้ว columns, the status line, '
+              '| n", each person on two lines (avatar | name | amount | ✕, '
+              'then the จ่าย / คืนแล้ว chips under the name), the status line, '
               'and "เพิ่มในอีเวนต์" on top (with the "จดหนี้ด้วย" switch once '
               'an event is picked).',
           child: Column(

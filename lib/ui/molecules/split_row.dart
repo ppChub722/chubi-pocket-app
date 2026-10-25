@@ -5,6 +5,7 @@ import '../atoms/app_chip.dart';
 import '../atoms/app_icon.dart';
 import '../atoms/app_input.dart';
 import '../atoms/app_input_type.dart';
+import '../atoms/ui_config.dart';
 import 'amount_input.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_radius.dart';
@@ -17,7 +18,7 @@ class SplitRow extends StatelessWidget {
     required this.name,
     required this.amount,
     this.trailing,
-    this.nameTrailing,
+    this.under,
     super.key,
   });
 
@@ -32,43 +33,48 @@ class SplitRow extends StatelessWidget {
   final Widget amount;
   final Widget? trailing;
 
-  /// Chips right after the name ("จ่าย", "คืนแล้ว").
-  final Widget? nameTrailing;
+  /// A second line under the name, from the name's start ("จ่าย",
+  /// "คืนแล้ว"); the avatar, amount and trailing stay level with the name.
+  final Widget? under;
 
   @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      SizedBox(
-        height: height,
-        child: Align(alignment: Alignment.centerLeft, child: avatar),
-      ),
-      const SizedBox(width: AppSpacing.sm),
-      Expanded(
-        child: nameTrailing == null
-            ? name
-            // The name keeps its own width at the start; the chips sit flush
-            // right, next to the amount, so they line up row to row.
-            : Row(
-                children: [
-                  Expanded(
-                    child: Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      child: name,
+  Widget build(BuildContext context) {
+    final under = this.under;
+    return Row(
+      crossAxisAlignment: under == null
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: height,
+          child: Align(alignment: Alignment.centerLeft, child: avatar),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: under == null
+              ? name
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    name,
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                      child: under,
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                  nameTrailing!,
-                ],
-              ),
-      ),
-      const SizedBox(width: AppSpacing.xs),
-      amount,
-      SizedBox(
-        width: trailingSlot,
-        child: Center(child: trailing),
-      ),
-    ],
-  );
+                  ],
+                ),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        amount,
+        SizedBox(
+          width: trailingSlot,
+          height: under == null ? null : height,
+          child: Center(child: trailing),
+        ),
+      ],
+    );
+  }
 }
 
 class SplitRowAction extends StatelessWidget {
@@ -251,6 +257,7 @@ class ShareAmountField extends StatefulWidget {
     this.auto = false,
     this.enabled = true,
     this.hint = '0',
+    this.compact = false,
     super.key,
   });
 
@@ -259,10 +266,32 @@ class ShareAmountField extends StatefulWidget {
   final bool auto;
   final bool enabled;
 
-  /// While empty ("รอใส่ยอด" on a recurring row).
+  /// While empty ("รอยอด" on a recurring row).
   final String hint;
 
+  /// Only as wide as [compactSample] with the currency symbol (a list row's
+  /// inline box); a longer number scrolls inside it.
+  final bool compact;
+
   static const double width = 104;
+
+  static const String compactSample = '99,999';
+
+  /// The width of a [compact] box in [style] (the caret's room included).
+  static double compactWidth(BuildContext context, TextStyle? style) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: '${UiConfig.stringsOf(context).currencySymbol}$compactSample',
+        style: style,
+      ),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final w = painter.width;
+    painter.dispose();
+    return w.ceilToDouble() + AppSpacing.xs;
+  }
 
   @override
   State<ShareAmountField> createState() => _ShareAmountFieldState();
@@ -321,7 +350,9 @@ class _ShareAmountFieldState extends State<ShareAmountField> {
     );
     final onChanged = widget.onChanged;
     return SizedBox(
-      width: ShareAmountField.width,
+      width: widget.compact
+          ? ShareAmountField.compactWidth(context, style)
+          : ShareAmountField.width,
       height: SplitRow.height,
       child: Align(
         alignment: Alignment.bottomCenter,

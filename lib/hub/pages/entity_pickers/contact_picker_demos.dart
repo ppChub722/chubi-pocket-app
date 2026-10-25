@@ -138,18 +138,15 @@ class ContactPickerDemos extends StatelessWidget {
           ],
         ),
         _demo(
-          'ContactPicker.one — link a debt name to a contact',
-          'Debt person page: no free text, starts on the ผู้ติดต่อ tab.',
+          'ContactPicker.contactFor — add a debt name to contacts',
+          'Debt person page: contacts only, no tabs, "สร้างผู้ติดต่อใหม่" as '
+              'the first row (PickerCreate.atTop); the new contact, named '
+              'after the debt name, answers as the pick.',
           [
-            _new(
-              'New',
-              () async => _pick(
-                await ContactPicker.one(
-                  context,
-                  initialFilter: ContactPickerTabs.contactsContacts,
-                ),
-              ),
-            ),
+            _new('New', () async {
+              final c = await ContactPicker.contactFor(context, name: 'ป้าแดง');
+              return c == null ? 'closed' : 'contact ${c.name}';
+            }),
           ],
         ),
         _demo(

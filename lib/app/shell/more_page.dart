@@ -51,67 +51,95 @@ class _MoreView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final c = context.watch<MeCountsCubit>().state.counts;
-    String? count(int? n) => n == null || n == 0 ? null : l.moreLiveCount(n);
     final groupColors = ModuleColors.of(context);
+    final budgetPct = c == null || c.budgets == 0 ? 0 : c.budgetUtilizationPct;
+    final goalPct = c == null || c.goals == 0 ? 0 : c.goalsProgressPct;
+    final hasDebts = c != null && c.openDebts > 0;
+    final owedToMe = hasDebts ? c.owedToMe : 0;
+    final iOwe = hasDebts ? c.iOwe : 0;
     _MoreEntry entry(ShellTab tab) => switch (tab) {
       ShellTab.categories => _MoreEntry(
         AppIcons.category,
         l.moreCategories,
-        count(c?.categories) ?? l.moreCategoriesDesc,
+        l.moreCategoriesDesc,
         '/categories',
       ),
       ShellTab.tags => _MoreEntry(
         AppIcons.tag,
         l.moreTags,
-        count(c?.tags) ?? l.moreTagsDesc,
+        l.moreTagsDesc,
         '/tags',
       ),
       ShellTab.contacts => _MoreEntry(
         AppIcons.contact,
         l.moreContacts,
-        count(c?.contacts) ?? l.moreContactsDesc,
+        l.moreContactsDesc,
         '/contacts',
       ),
       ShellTab.projects => _MoreEntry(
         AppIcons.project,
         l.moreProjects,
-        count(c?.activeEvents) ?? l.moreProjectsDesc,
+        l.moreProjectsDesc,
         '/projects',
+        statuses: [
+          if ((c?.activeEvents ?? 0) > 0)
+            TileStatus(l.moreChipOpenEvents(c!.activeEvents), tone: Tone.info),
+        ],
       ),
       ShellTab.debts => _MoreEntry(
         AppIcons.debt,
         l.moreDebts,
-        c == null || c.openDebts == 0
-            ? l.moreDebtsDesc
-            : l.moreLiveDebts(
-                moneyString(context, c.owedToMe),
-                moneyString(context, c.iOwe),
-              ),
+        l.moreDebtsDesc,
         '/personal-debts',
+        statuses: [
+          if (owedToMe > 0)
+            TileStatus(
+              l.moreChipReceivable(moneyString(context, owedToMe)),
+              tone: Tone.success,
+            ),
+          if (iOwe > 0)
+            TileStatus(
+              l.moreChipPayable(moneyString(context, iOwe)),
+              tone: Tone.warning,
+            ),
+        ],
       ),
       ShellTab.budgets => _MoreEntry(
         AppIcons.budget,
         l.moreBudgets,
-        c == null || c.budgets == 0
-            ? l.moreBudgetsDesc
-            : l.homeBudgetsUsed(c.budgetUtilizationPct.round().toString()),
+        l.moreBudgetsDesc,
         '/budgets',
+        statuses: [
+          if (budgetPct >= 100)
+            TileStatus(l.moreChipOverBudget, tone: Tone.danger)
+          else if (budgetPct >= 80)
+            TileStatus(l.moreChipNearBudget, tone: Tone.warning),
+        ],
       ),
       ShellTab.savingGoals => _MoreEntry(
         AppIcons.savingGoal,
         l.moreSavingGoals,
-        c == null || c.goals == 0
-            ? l.moreSavingGoalsDesc
-            : '${c.goalsProgressPct.round()}% | ${l.homeGoalsCount(c.goals)}',
+        l.moreSavingGoalsDesc,
         '/saving-goals',
+        statuses: [
+          if (goalPct >= 100)
+            TileStatus(l.moreChipGoalReached, tone: Tone.success)
+          else if (goalPct >= 80)
+            TileStatus(l.moreChipNearGoal, tone: Tone.success),
+        ],
       ),
       ShellTab.recurring => _MoreEntry(
         AppIcons.recurring,
         l.moreRecurring,
-        c == null || c.recurringUpcoming == 0
-            ? l.moreRecurringDesc
-            : l.moreLiveDueSoon(c.recurringUpcoming, 14),
+        l.moreRecurringDesc,
         '/recurring',
+        statuses: [
+          if ((c?.recurringUpcoming ?? 0) > 0)
+            TileStatus(
+              l.moreChipDueSoon(c!.recurringUpcoming),
+              tone: Tone.warning,
+            ),
+        ],
       ),
       _ => throw ArgumentError('$tab has no เพิ่มเติม card'),
     };
@@ -145,19 +173,31 @@ class _MoreView extends StatelessWidget {
         _MoreEntry(
           AppIcons.pending,
           l.pendingTitle,
-          count(c?.pendingDrafts) ?? l.morePendingDesc,
+          l.morePendingDesc,
           '/pending',
           main: true,
+          statuses: [
+            if ((c?.pendingDrafts ?? 0) > 0)
+              TileStatus(
+                l.moreChipPending(c!.pendingDrafts),
+                tone: Tone.warning,
+              ),
+          ],
         ),
       if (isOn(ShellTab.notifications))
         _MoreEntry(
           AppIcons.notifications,
           l.notificationsTitle,
-          c == null || c.unreadNotifications == 0
-              ? l.moreNotificationsDesc
-              : l.moreLiveUnread(c.unreadNotifications),
+          l.moreNotificationsDesc,
           '/notifications',
           main: true,
+          statuses: [
+            if ((c?.unreadNotifications ?? 0) > 0)
+              TileStatus(
+                l.moreChipUnread(c!.unreadNotifications),
+                tone: Tone.info,
+              ),
+          ],
         ),
       _MoreEntry(
         AppIcons.settings,
@@ -206,6 +246,7 @@ class _MoreView extends StatelessWidget {
                         icon: e.icon,
                         title: e.title,
                         subtitle: e.subtitle,
+                        statuses: e.statuses,
                         color: tint,
                         onTap: () => e.main
                             ? openPage(context, e.route)
@@ -229,12 +270,14 @@ class _MoreEntry {
     this.subtitle,
     this.route, {
     this.main = false,
+    this.statuses = const [],
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final String route;
+  final List<TileStatus> statuses;
 
   final bool main;
 }

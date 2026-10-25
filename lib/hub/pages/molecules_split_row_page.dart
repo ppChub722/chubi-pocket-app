@@ -59,6 +59,26 @@ class _SplitRowPageState extends State<_SplitRowPage> {
           ),
         ),
         HubDemo(
+          title: 'ShareAmountField compact',
+          note:
+              'A list row\'s inline box (ListRowAction.amount, the recurring '
+              'rows): only as wide as ฿99,999; a longer number scrolls inside '
+              'it. Empty: the hint ("รอยอด").',
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              ShareAmountField(value: 99999, onChanged: (_) {}, compact: true),
+              const SizedBox(width: AppSpacing.md),
+              ShareAmountField(
+                value: null,
+                onChanged: (_) {},
+                hint: 'รอยอด',
+                compact: true,
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
           title: 'SplitRow + SplitRowAction + SplitRowName',
           note:
               'One row of a bill split: avatar | name | amount | a fixed 40px '

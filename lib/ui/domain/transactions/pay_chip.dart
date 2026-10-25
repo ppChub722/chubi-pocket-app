@@ -4,7 +4,7 @@ import '../../atoms/app_chip.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/chip_size.dart';
 
-/// "จ่าย" beside a person's name in a bill: ✓ and filled on the one who paid,
+/// "จ่าย" under a person's name in a bill: ✓ and filled on the one who paid,
 /// dashed on everyone else (tap = they paid). The event bill and quick
 /// create's แบ่ง card share it.
 class PayChip extends StatelessWidget {

@@ -700,7 +700,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
                 ? _rowAmounts[i.id]
                 : knownAmount(i),
             onChanged: (v) => _rowAmounts[i.id] = v,
-            hint: l.fpRecurringAwaitingValue,
+            hint: l.fpRecurringAwaitingAmount,
           ),
         if (act)
           ListRowAction.button(

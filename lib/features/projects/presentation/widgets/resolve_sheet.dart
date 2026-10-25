@@ -89,7 +89,7 @@ Future<bool> showResolveSheet(
       return ResolvePickResult(
         ResolvePickValue(
           label: a.name,
-          icon: a.type.icon,
+          icon: a.shownIcon,
           color: a.colorOf(context),
           ref: a,
         ),

@@ -79,6 +79,7 @@ class TransactionTile extends StatelessWidget {
             context,
             name: wallet?.name ?? l.transactionFormAccountNone,
             iconCode: wallet?.iconCode,
+            type: wallet?.type,
           ),
       ],
       status: upcoming

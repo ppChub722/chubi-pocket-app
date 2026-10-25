@@ -74,6 +74,7 @@ class RecurringRow extends StatelessWidget {
                 context,
                 name: account.name,
                 iconCode: account.iconCode,
+                type: account.type,
               ),
         icon: AppIcons.recurring,
         parts: [recurrenceLabel(l, r.rule)],
@@ -148,7 +149,12 @@ MoneyTone toneOf(TransactionType type) =>
 ListRowChip? occurrenceWalletChip(BuildContext context, AccountRef? account) =>
     account == null
     ? null
-    : walletRowChip(context, name: account.name, iconCode: account.iconCode);
+    : walletRowChip(
+        context,
+        name: account.name,
+        iconCode: account.iconCode,
+        type: account.type,
+      );
 
 /// A waiting occurrence's pill: รอใส่ยอด / รอยืนยัน in warning.
 ListRowChip waitingChip(String label) =>

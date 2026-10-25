@@ -859,10 +859,11 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtsPersonAdd => 'บันทึกหนี้กับคนนี้';
 
   @override
-  String get debtsPersonLinkContact => 'ผูกกับผู้ติดต่อ';
+  String get debtsPersonAddContact => 'เพิ่มผู้ติดต่อ';
 
   @override
-  String get debtsPersonLinkContactHint => 'รวมหนี้ของชื่อนี้เข้ากับผู้ติดต่อ';
+  String get debtsPersonAddContactHint =>
+      'เพิ่มชื่อนี้ในผู้ติดต่อที่มีอยู่แล้ว หรือสร้างผู้ติดต่อใหม่';
 
   @override
   String debtsPersonLinked(int count, String name) {
@@ -1949,52 +1950,69 @@ class AppLocalizationsTh extends AppLocalizations {
   String get moreGroupPlanning => 'วางแผน';
 
   @override
-  String get moreCategoriesDesc => 'จัดกลุ่มรายรับ-รายจ่าย';
+  String get moreCategoriesDesc => 'จัดกลุ่มรายการ';
 
   @override
   String get moreTagsDesc => 'ติดป้ายให้ค้นง่าย';
 
   @override
-  String get moreContactsDesc => 'คนที่หารบิลด้วย';
+  String get moreContactsDesc => 'คนที่ใช้ในบิลและหนี้';
 
   @override
-  String get moreProjectsDesc => 'ทริปและงบร่วมกัน';
+  String get moreProjectsDesc => 'ทริปและกิจกรรมที่หารเงิน';
 
   @override
-  String get moreDebtsDesc => 'ลูกหนี้ / เจ้าหนี้ ใครเท่าไร';
+  String get moreDebtsDesc => 'เงินยืมและเงินที่ติดค้าง';
 
   @override
-  String get moreBudgetsDesc => 'ตั้งเพดานการใช้จ่าย';
+  String get moreBudgetsDesc => 'คุมรายจ่ายรายเดือน';
 
   @override
-  String get moreSavingGoalsDesc => 'เก็บเงินให้ถึงเป้า';
+  String get moreSavingGoalsDesc => 'ออมเพื่อสิ่งที่อยากได้';
 
   @override
   String get moreScheduledDesc => 'บิลประจำและที่จะถึง';
 
   @override
-  String moreLiveCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count รายการ',
-    );
-    return '$_temp0';
+  String get moreChipOverBudget => 'เกินงบ';
+
+  @override
+  String get moreChipNearBudget => 'ใกล้เต็มงบ';
+
+  @override
+  String get moreChipGoalReached => 'ถึงเป้าแล้ว';
+
+  @override
+  String get moreChipNearGoal => 'ใกล้ถึงเป้า';
+
+  @override
+  String moreChipDueSoon(int count) {
+    return 'ใกล้ถึงกำหนด $count';
   }
 
   @override
-  String moreLiveDebts(String owed, String owe) {
-    return 'ลูกหนี้ $owed | เจ้าหนี้ $owe';
+  String moreChipReceivable(String amount) {
+    return 'รอรับ $amount';
   }
 
   @override
-  String moreLiveDueSoon(int count, int days) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'ถึงกำหนด $count รายการใน $days วัน',
-    );
-    return '$_temp0';
+  String moreChipPayable(String amount) {
+    return 'ต้องจ่าย $amount';
+  }
+
+  @override
+  String moreChipOpenEvents(int count) {
+    return 'เปิดอยู่ $count';
+  }
+
+  @override
+  String moreChipPending(int count) {
+    return 'รอยืนยัน $count';
+  }
+
+  @override
+  String moreChipUnread(int count) {
+    return 'ยังไม่อ่าน $count';
   }
 
   @override
@@ -5291,7 +5309,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get moreRecurring => 'รายการประจำ';
 
   @override
-  String get moreRecurringDesc => 'บิลประจำและรายการล่วงหน้า';
+  String get moreRecurringDesc => 'บิลและรายการที่เกิดซ้ำ';
 
   @override
   String notifRecurringDue(int count) {
@@ -5452,16 +5470,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get moreSettingsDesc => 'บัญชี ธีม และการแจ้งเตือน';
-
-  @override
-  String moreLiveUnread(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'ยังไม่ได้อ่าน $count รายการ',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get sgv2SavedTotal => 'ออมแล้วทั้งหมด';

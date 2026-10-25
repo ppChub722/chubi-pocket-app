@@ -185,7 +185,7 @@ class _DueBoxesState extends State<DueBoxes> {
           key: ValueKey('dueAmount-${i.id}'),
           value: _amounts.containsKey(i.id) ? _amounts[i.id] : knownAmount(i),
           onChanged: (v) => _amounts[i.id] = v,
-          hint: l.fpRecurringAwaitingValue,
+          hint: l.fpRecurringAwaitingAmount,
         ),
         ListRowAction.button(
           AppIcons.check,

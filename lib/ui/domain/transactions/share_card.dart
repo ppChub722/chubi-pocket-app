@@ -196,8 +196,8 @@ class _HeaderLine extends StatelessWidget {
 }
 
 /// One row of a [ShareCard]: a [SplitRow] (avatar | name | amount | trailing:
-/// × or the "A" toggle), with an optional [tag] under the name ("ใหม่ ·
-/// เพิ่มเข้าอีเวนต์").
+/// × or the "A" toggle), with optional [chips] and a [tag] under the name
+/// ("ใหม่ | เพิ่มเข้าอีเวนต์").
 class ShareRow extends StatelessWidget {
   const ShareRow({
     required this.avatar,
@@ -205,7 +205,7 @@ class ShareRow extends StatelessWidget {
     required this.amount,
     this.trailing,
     this.tag,
-    this.nameTrailing,
+    this.chips,
     super.key,
   });
 
@@ -215,8 +215,8 @@ class ShareRow extends StatelessWidget {
   final Widget? trailing;
   final Widget? tag;
 
-  /// Chips right after the name (the [PayChip], "คืนแล้ว").
-  final Widget? nameTrailing;
+  /// A line of its own under the name (the [PayChip], "คืนแล้ว").
+  final Widget? chips;
 
   @override
   Widget build(BuildContext context) {
@@ -225,7 +225,7 @@ class ShareRow extends StatelessWidget {
       name: name,
       amount: amount,
       trailing: trailing,
-      nameTrailing: nameTrailing,
+      under: chips,
     );
     final tag = this.tag;
     if (tag == null) return row;

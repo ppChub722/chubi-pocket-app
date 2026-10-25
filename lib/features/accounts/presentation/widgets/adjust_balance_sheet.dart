@@ -10,15 +10,13 @@ Future<AdjustBalanceInput?> showAdjustBalanceSheet(
   Account account,
 ) {
   final l = AppLocalizations.of(context)!;
-  final palette = Theme.of(context).extension<AppColors>()!;
-  final scheme = Theme.of(context).colorScheme;
   final credit = account.isLiability;
   return showAdjustBalanceFormSheet(
     context,
     name: account.name,
     balance: account.balance,
     symbol: context.readUserCurrencySymbol,
-    tint: account.iconCode.tintFor(palette, fallback: scheme.primary),
+    tint: account.colorOf(context),
     isCredit: credit,
     strings: AdjustBalanceStrings(
       title: l.accountAdjustBalanceTitle,
@@ -43,15 +41,13 @@ Future<double?> showSetBalanceSheet(
   Account account,
 ) async {
   final l = AppLocalizations.of(context)!;
-  final palette = Theme.of(context).extension<AppColors>()!;
-  final scheme = Theme.of(context).colorScheme;
   final credit = account.isLiability;
   final result = await showAdjustBalanceFormSheet(
     context,
     name: account.name,
     balance: 0,
     symbol: context.readUserCurrencySymbol,
-    tint: account.iconCode.tintFor(palette, fallback: scheme.primary),
+    tint: account.colorOf(context),
     isCredit: credit,
     setOnly: true,
     strings: AdjustBalanceStrings(

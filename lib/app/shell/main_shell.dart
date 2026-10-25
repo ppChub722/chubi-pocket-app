@@ -46,6 +46,8 @@ class _MainShellState extends State<MainShell>
     super.initState();
     // Any push / pop / replace in a tab: ask the editing bars again.
     QuickCreateRouteObserver.changes.addListener(_chrome.refresh);
+    // A pull re-checks the nav, so a wrongly hidden one comes back.
+    PullToRefresh.onPull = _chrome.refresh;
   }
 
   @override
@@ -60,6 +62,7 @@ class _MainShellState extends State<MainShell>
   @override
   void dispose() {
     QuickCreateRouteObserver.changes.removeListener(_chrome.refresh);
+    if (PullToRefresh.onPull == _chrome.refresh) PullToRefresh.onPull = null;
     _nudge.dispose();
     _chrome.dispose();
     _quickCreate.dispose();

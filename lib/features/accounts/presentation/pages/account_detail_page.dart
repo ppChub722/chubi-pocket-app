@@ -381,17 +381,24 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final result = await showIconMakerSheet(
       context: context,
       type: IconType.account,
-      initial: working.iconCode,
+      initial: preview.shownIconCode,
       title: l.accountFormIconLabel,
       iconSectionLabel: l.accountFormIconLabel,
       colorSectionLabel: l.accountFormColorLabel,
+      removeLabel: l.iconMakerUseDefault,
       previewBuilder: (iconCode) => AccountCard(
         account: preview.copyWith(iconCode: iconCode),
         horizontal: true,
       ),
     );
-    if (!mounted || result is! IconMakerSelected) return;
-    applyChange(working.copyWith(iconCode: result.iconCode));
+    if (!mounted) return;
+    // "Use default" = back to the type's icon, which then follows the type.
+    if (result is IconMakerRemoved) {
+      applyChange(working.copyWith(clearIcon: true));
+    } else if (result is IconMakerSelected &&
+        result.iconCode != preview.shownIconCode) {
+      applyChange(working.copyWith(iconCode: result.iconCode));
+    }
   }
 
   Future<void> _save() async {
@@ -883,10 +890,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final buckets = a.savings?.buckets ?? const [];
     if (buckets.isEmpty) return null;
     final symbol = context.readUserCurrencySymbol;
-    final accent = a.iconCode.tintFor(
-      Theme.of(context).extension<AppColors>()!,
-      fallback: a.colorOf(context),
-    );
+    final accent = a.colorOf(context);
     return SectionCard(
       first: true,
       title: l.fpWalletSavedInTitle,
@@ -1524,13 +1528,13 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                 SheetOption(
                   value: t,
                   label: accountTypeLabel(context, t),
-                  leading: AppIcon(t.icon),
+                  leading: AppIcon(t.icon, color: t.iconDefault.color),
                 ),
             ],
             builder: (context, toggle) => AppChip(
               label: accountTypeLabel(context, w.type),
               icon: w.type.icon,
-              color: w.type.colorOf(context),
+              color: w.type.iconDefault.color,
               selected: true,
               trailing: AppChipTrailing.dropdown,
               onTap: toggle,
@@ -1838,11 +1842,12 @@ class _AccountDraft {
     String? minPayment,
     List<AccountIdentifier>? identifiers,
     bool? trackBalance,
+    bool clearIcon = false,
   }) {
     return _AccountDraft(
       name: name ?? this.name,
       type: type ?? this.type,
-      iconCode: iconCode ?? this.iconCode,
+      iconCode: clearIcon ? null : (iconCode ?? this.iconCode),
       description: description ?? this.description,
       note: note ?? this.note,
       opening: opening ?? this.opening,

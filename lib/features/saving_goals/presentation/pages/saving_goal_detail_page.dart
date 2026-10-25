@@ -11,6 +11,7 @@ import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
+import '../../../accounts/domain/account_type.dart';
 import '../../../accounts/presentation/widgets/account_picker.dart';
 import '../widgets/saving_goal_picker.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
@@ -1441,6 +1442,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           context,
           name: e.wallet?.name ?? l.fpGoalsNoWallet,
           iconCode: e.wallet?.iconCode,
+          type: AccountType.tryParse(e.wallet?.type),
         ),
       ],
       status: e.fromRecurring ? ListRowChip(l.fpGoalsAutoTag) : null,
@@ -1573,10 +1575,15 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     VoidCallback? onTap,
   }) {
     final palette = Theme.of(context).extension<AppColors>()!;
+    final d = AccountType.tryParse(wallet?.type)?.iconDefault;
     return AppChip(
       label: wallet?.name ?? l.fpGoalsNoWallet,
-      icon: IconRegistry.get(wallet?.iconCode?.icon, fallback: AppIcons.wallet),
-      color: wallet?.iconCode.tintFor(palette),
+      icon: d == null
+          ? IconRegistry.get(wallet?.iconCode?.icon, fallback: AppIcons.wallet)
+          : wallet?.iconCode.glyphOr(d),
+      color: d == null
+          ? wallet?.iconCode.tintFor(palette)
+          : wallet?.iconCode.tintOr(d, palette),
       trailing: onTap == null ? AppChipTrailing.none : AppChipTrailing.dropdown,
       size: ChipSize.control,
       onTap: onTap,
@@ -1685,7 +1692,10 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         children: [
           SplitRow(
             avatar: IconCodeWidget(
-              iconCode: a.wallet?.iconCode,
+              iconCode: switch (AccountType.tryParse(a.wallet?.type)) {
+                final t? => a.wallet?.iconCode.orDefault(t.iconDefault),
+                null => a.wallet?.iconCode,
+              },
               size: SplitRow.avatarSize,
               fallbackIcon: AppIcons.wallet,
               fallbackColor: scheme.onSurfaceVariant,

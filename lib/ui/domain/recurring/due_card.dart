@@ -411,8 +411,9 @@ class DueSelectBar extends StatelessWidget {
         border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
       ),
       child: Padding(
+        // The same start as an AppListRow: its check sits over the rows'.
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md,
+          AppSpacing.lg,
           AppSpacing.xs,
           AppSpacing.lg,
           AppSpacing.sm,

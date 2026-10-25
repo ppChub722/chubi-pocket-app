@@ -114,6 +114,7 @@ class PickerCreate {
     required this.label,
     required this.onCreate,
     this.fromSearch = false,
+    this.atTop = false,
   });
 
   /// The row's words for what was typed ('' when nothing, or without
@@ -124,6 +125,9 @@ class PickerCreate {
   /// Hands the search text to [label] / [onCreate] when no item has that exact
   /// name.
   final bool fromSearch;
+
+  /// The row is the list's first row instead of sitting in the footer.
+  final bool atTop;
 }
 
 /// A name typed by hand as the answer ([PickerResult.text]): the last row is
@@ -556,24 +560,27 @@ class _ItemPickerSheetState extends State<ItemPickerSheet> {
     ],
   );
 
+  Widget? _createRow(List<PickerItem> items, PickerTree tree, String typed) {
+    final create = widget.create;
+    if (create == null) return null;
+    final lower = typed.toLowerCase();
+    final exact =
+        typed.isNotEmpty && items.any((i) => i.title.toLowerCase() == lower);
+    if (create.fromSearch && exact) return null;
+    final word = create.fromSearch
+        ? typed
+        : (widget.freeText == null ? '' : _name.text.trim());
+    return PickerCreateRow(
+      label: create.label(word),
+      onTap: _creating ? null : () => _create(word, tree),
+    );
+  }
+
   Widget? _footer(List<PickerItem> items, PickerTree tree, String typed) {
     final freeText = widget.freeText;
-    final create = widget.create;
-    Widget? createRow;
-    if (create != null) {
-      final lower = typed.toLowerCase();
-      final exact =
-          typed.isNotEmpty && items.any((i) => i.title.toLowerCase() == lower);
-      if (!(create.fromSearch && exact)) {
-        final word = create.fromSearch
-            ? typed
-            : (freeText == null ? '' : _name.text.trim());
-        createRow = PickerCreateRow(
-          label: create.label(word),
-          onTap: _creating ? null : () => _create(word, tree),
-        );
-      }
-    }
+    final createRow = (widget.create?.atTop ?? false)
+        ? null
+        : _createRow(items, tree, typed);
     final pinned = [
       for (final a in widget.actions)
         if (a.pinned) _actionRow(context, a),
@@ -704,10 +711,14 @@ class _ItemPickerSheetState extends State<ItemPickerSheet> {
         nameRow != null &&
         widget.layout == PickerLayout.rows &&
         sections.isNotEmpty;
+    final topCreate = (widget.create?.atTop ?? false)
+        ? _createRow(items, tree, typed)
+        : null;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        ?topCreate,
         if (showNone && !noneInFirst)
           _layoutOf(context, const [], view, first: true, none: none),
         for (final (i, (label, group)) in sections.indexed) ...[

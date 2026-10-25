@@ -146,7 +146,8 @@ class _BlocksPageState extends State<_BlocksPage> {
               'A grid of tinted tiles inside a scrolling page: fixed height, the '
               'column count follows the width (2 on phones, 3–4 wide). Each tile '
               'is the group colour + a faded glyph + a solid rounded icon tile. '
-              'The More page.',
+              'The subtitle is only a short description; live status goes in '
+              'up to two TileStatus chips in the top-right corner. The More page.',
           child: CardGrid(
             children: [
               TileCard(
@@ -154,6 +155,17 @@ class _BlocksPageState extends State<_BlocksPage> {
                 title: 'Wallets',
                 subtitle: 'Your accounts and balances',
                 color: scheme.primary,
+                onTap: () {},
+              ),
+              TileCard(
+                icon: AppIcons.debt,
+                title: 'Debts',
+                subtitle: 'Loans and money owed',
+                color: scheme.primary,
+                statuses: const [
+                  TileStatus('To receive ฿1,200', tone: Tone.success),
+                  TileStatus('To pay ฿350', tone: Tone.warning),
+                ],
                 onTap: () {},
               ),
               TileCard(

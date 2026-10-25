@@ -8,20 +8,7 @@ enum AccountType {
   creditCard,
   payLater;
 
-  IconData get icon {
-    switch (this) {
-      case AccountType.cash:
-        return AppIcons.cash;
-      case AccountType.bank:
-        return AppIcons.bank;
-      case AccountType.eWallet:
-        return AppIcons.eWallet;
-      case AccountType.creditCard:
-        return AppIcons.creditCard;
-      case AccountType.payLater:
-        return AppIcons.payLater;
-    }
-  }
+  IconData get icon => iconDefault.icon;
 
   String toJson() {
     switch (this) {
@@ -55,11 +42,14 @@ enum AccountType {
     }
   }
 
+  /// The wire value or the enum name; null when unknown.
+  static AccountType? tryParse(String? raw) {
+    for (final t in values) {
+      if (t.toJson() == raw || t.name == raw) return t;
+    }
+    return null;
+  }
+
   bool get isCredit =>
       this == AccountType.creditCard || this == AccountType.payLater;
-
-  Color colorOf(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
-    return isCredit ? palette.walletLiability : palette.walletAsset;
-  }
 }

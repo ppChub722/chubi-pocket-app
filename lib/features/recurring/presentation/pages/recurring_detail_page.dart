@@ -12,6 +12,7 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
+import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../accounts/presentation/widgets/account_picker.dart';
 import '../../../categories/domain/category_tree.dart';
@@ -1329,12 +1330,14 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           context,
           name: account.name,
           iconCode: account.iconCode,
+          type: account.type,
         ),
       if (toAccount != null)
         walletValueChip(
           context,
           name: toAccount.name,
           iconCode: toAccount.iconCode,
+          type: toAccount.type,
         ),
       for (final t in r.tags) _tagChip(t.name, t.iconCode),
       if (r.autoCreate)
@@ -1428,7 +1431,8 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         size: ChipSize.chip,
       ),
       AppChip(
-        label: working.kind == RecurringKind.installment &&
+        label:
+            working.kind == RecurringKind.installment &&
                 end.kind == RecurrenceEndKind.afterCount
             ? l.fpRecurringCountValue(end.count ?? 0)
             : _endText(l, end),
@@ -1461,9 +1465,14 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         : (w.type == TransactionType.income
               ? l.fpRecurringFieldIntoWallet
               : l.fpRecurringFieldPayFrom);
-    Widget? walletChip(String? name, IconCode? icon) => name == null
+    Widget? walletChip(Account? a) => a == null
         ? null
-        : walletValueChip(context, name: name, iconCode: icon);
+        : walletValueChip(
+            context,
+            name: a.name,
+            iconCode: a.iconCode,
+            type: a.type,
+          );
     return SectionCard(
       children: [
         OptionMenuAnchor<RecurringKind>(
@@ -1527,7 +1536,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           ),
         DetailRow.pick(
           label: walletLabel,
-          valueChip: walletChip(account?.name, account?.iconCode),
+          valueChip: walletChip(account),
           emptyText: l.quickEventNone,
           error: _walletMissing && account == null
               ? l.recurringWalletRequired
@@ -1537,7 +1546,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         if (transfer)
           DetailRow.pick(
             label: l.recurringFieldToWallet,
-            valueChip: walletChip(toAccount?.name, toAccount?.iconCode),
+            valueChip: walletChip(toAccount),
             emptyText: l.quickEventNone,
             error: _walletMissing && toAccount == null
                 ? l.recurringWalletRequired
@@ -1678,7 +1687,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
                 ? _rowAmounts[i.id]
                 : knownAmount(i),
             onChanged: (v) => _rowAmounts[i.id] = v,
-            hint: l.fpRecurringAwaitingValue,
+            hint: l.fpRecurringAwaitingAmount,
           ),
           ListRowAction.button(
             AppIcons.check,
@@ -2064,7 +2073,11 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       tone: tone,
       was: moved
           ? DateFormat.MMMd(_locale).format(slot)
-          : edited && !unknown && usual != null && usual > 0 && i.amount != usual
+          : edited &&
+                !unknown &&
+                usual != null &&
+                usual > 0 &&
+                i.amount != usual
           ? moneyString(context, usual, symbol: symbol)
           : null,
       highlight: next,
@@ -2226,4 +2239,3 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     );
   }
 }
-

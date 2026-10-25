@@ -175,6 +175,7 @@ class _RingPainter extends CustomPainter {
   static const _tickOut = 4.0;
   static const _top = -math.pi / 2;
   static const _minExpected = 0.02;
+  static const _startGap = 0.01;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -226,6 +227,8 @@ class _RingPainter extends CustomPainter {
       );
     }
     void tick(double at, Color color) {
+      // A tick on the start point would read as a start marker: none there.
+      if (at <= _startGap || at >= 1 - _startGap) return;
       final a = _top + at * 2 * math.pi;
       final dir = Offset(math.cos(a), math.sin(a));
       canvas.drawLine(

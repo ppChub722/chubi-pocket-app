@@ -873,11 +873,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtsPersonAdd => 'Record a debt with this person';
 
   @override
-  String get debtsPersonLinkContact => 'Link to a contact';
+  String get debtsPersonAddContact => 'Add to contacts';
 
   @override
-  String get debtsPersonLinkContactHint =>
-      'Merge this name\'s debts into a contact';
+  String get debtsPersonAddContactHint =>
+      'Add this name to an existing contact or create a new one';
 
   @override
   String debtsPersonLinked(int count, String name) {
@@ -1981,54 +1981,69 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moreGroupPlanning => 'Planning';
 
   @override
-  String get moreCategoriesDesc => 'Group income & spending';
+  String get moreCategoriesDesc => 'Group your entries';
 
   @override
   String get moreTagsDesc => 'Labels for quick search';
 
   @override
-  String get moreContactsDesc => 'People you split bills with';
+  String get moreContactsDesc => 'People in your bills and debts';
 
   @override
-  String get moreProjectsDesc => 'Trips & shared budgets';
+  String get moreProjectsDesc => 'Trips and shared-cost activities';
 
   @override
-  String get moreDebtsDesc => 'Who owes me, whom I owe';
+  String get moreDebtsDesc => 'Loans and money owed';
 
   @override
-  String get moreBudgetsDesc => 'Spending limits';
+  String get moreBudgetsDesc => 'Keep monthly spending in check';
 
   @override
-  String get moreSavingGoalsDesc => 'Save towards a target';
+  String get moreSavingGoalsDesc => 'Save for what you want';
 
   @override
   String get moreScheduledDesc => 'Recurring & upcoming bills';
 
   @override
-  String moreLiveCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count items',
-      one: '1 item',
-    );
-    return '$_temp0';
+  String get moreChipOverBudget => 'Over budget';
+
+  @override
+  String get moreChipNearBudget => 'Near limit';
+
+  @override
+  String get moreChipGoalReached => 'Goal reached';
+
+  @override
+  String get moreChipNearGoal => 'Near goal';
+
+  @override
+  String moreChipDueSoon(int count) {
+    return '$count due soon';
   }
 
   @override
-  String moreLiveDebts(String owed, String owe) {
-    return 'Owed to you $owed | you owe $owe';
+  String moreChipReceivable(String amount) {
+    return 'To receive $amount';
   }
 
   @override
-  String moreLiveDueSoon(int count, int days) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count due in $days days',
-      one: '1 due in $days days',
-    );
-    return '$_temp0';
+  String moreChipPayable(String amount) {
+    return 'To pay $amount';
+  }
+
+  @override
+  String moreChipOpenEvents(int count) {
+    return '$count open';
+  }
+
+  @override
+  String moreChipPending(int count) {
+    return '$count to confirm';
+  }
+
+  @override
+  String moreChipUnread(int count) {
+    return '$count unread';
   }
 
   @override
@@ -5428,7 +5443,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moreRecurring => 'Recurring';
 
   @override
-  String get moreRecurringDesc => 'Recurring bills & upcoming items';
+  String get moreRecurringDesc => 'Bills and repeating entries';
 
   @override
   String notifRecurringDue(int count) {
@@ -5602,16 +5617,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moreSettingsDesc => 'Account, theme and notifications';
-
-  @override
-  String moreLiveUnread(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count unread',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get sgv2SavedTotal => 'Saved in total';
