@@ -366,6 +366,7 @@ class _AppTabPagerState<T> extends State<AppTabPager<T>> {
 
   @override
   Widget build(BuildContext context) {
+    final selected = widget.values.indexOf(widget.selected);
     return PageView(
       controller: widget.controller,
       physics: widget.enabled
@@ -375,15 +376,22 @@ class _AppTabPagerState<T> extends State<AppTabPager<T>> {
       children: [
         for (var i = 0; i < widget.values.length; i++)
           _KeepAlive(
-            child: widget.showPageDots && widget.values.length > 1
-                ? PageDotsScope(
-                    count: widget.values.length,
-                    index: i,
-                    child: Builder(
+            // Only the selected tab ticks, so a tab shown again replays its
+            // bars like a page does.
+            child: TickerMode(
+              enabled: i == selected,
+              child: widget.showPageDots && widget.values.length > 1
+                  ? PageDotsScope(
+                      count: widget.values.length,
+                      index: i,
+                      child: Builder(
+                        builder: (c) => widget.builder(c, widget.values[i]),
+                      ),
+                    )
+                  : Builder(
                       builder: (c) => widget.builder(c, widget.values[i]),
                     ),
-                  )
-                : Builder(builder: (c) => widget.builder(c, widget.values[i])),
+            ),
           ),
       ],
     );

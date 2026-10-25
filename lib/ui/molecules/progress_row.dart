@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../atoms/shown_tween_builder.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/hero_colors.dart';
 import 'pointer_bubbles.dart';
@@ -102,7 +103,7 @@ class ProgressRow extends StatelessWidget {
         : _tickLabels(context, alertC);
     final bar = ClipRRect(
       borderRadius: BorderRadius.circular(height),
-      child: TweenAnimationBuilder<Offset>(
+      child: ShownTweenBuilder<Offset>(
         tween: Tween(begin: Offset.zero, end: Offset(used, total)),
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeOutCubic,
@@ -312,7 +313,7 @@ class ProgressRow extends StatelessWidget {
                 top: (pillH - height) / 2,
                 child: bar,
               ),
-              TweenAnimationBuilder<double>(
+              ShownTweenBuilder<double>(
                 tween: Tween(begin: 0, end: used),
                 duration: const Duration(milliseconds: 400),
                 curve: Curves.easeOutCubic,

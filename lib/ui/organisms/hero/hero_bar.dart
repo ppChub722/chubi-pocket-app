@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../atoms/shown_tween_builder.dart';
 import '../../molecules/progress_row.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/hero_colors.dart';
@@ -111,15 +112,24 @@ class HeroBar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (shown.length < 2)
-          _bar(context, split, used, hero, scheme)
-        else
-          _labelled(
-            context,
-            shown,
-            _bar(context, split, used, hero, scheme),
-            hero?.track ?? scheme.surfaceContainerHighest,
-          ),
+        // Grows from empty each time the page is shown, like ProgressRow.
+        ShownTweenBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeOutCubic,
+          builder: (context, t, _) {
+            final grown = [for (final (r, c) in split) (r * t, c)];
+            final bar = _bar(context, grown, used * t, hero, scheme);
+            if (shown.length < 2) return bar;
+            return _labelled(
+              context,
+              shown,
+              bar,
+              hero?.track ?? scheme.surfaceContainerHighest,
+              t,
+            );
+          },
+        ),
         if (left != null || right != null)
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.xs),
@@ -149,6 +159,7 @@ class HeroBar extends StatelessWidget {
     List<(double, Color)> parts,
     Widget bar,
     Color track,
+    double grown,
   ) {
     final pills = [
       for (final (ratio, c) in parts)
@@ -166,7 +177,7 @@ class HeroBar extends StatelessWidget {
         var start = 0.0;
         final placed = <Widget>[];
         for (final (i, (ratio, _)) in parts.indexed) {
-          final segW = ratio.clamp(0.0, 1.0) * w;
+          final segW = ratio.clamp(0.0, 1.0) * grown * w;
           final (pill, pw, ph) = pills[i];
           placed.add(
             Positioned(

@@ -62,6 +62,35 @@ class _ProgressPage extends StatelessWidget {
             ],
           ),
         ),
+        HubDemo(
+          title: 'ShownTweenBuilder — bars replay when shown',
+          note:
+              'ProgressRow, HeroRing, HeroBar.split and DonutChart grow from '
+              'zero each time their page is shown (first open after the push, '
+              'back from a tab or page, an inner tab selected again, app '
+              'resume). The button plays the app-resume replay.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 300,
+                child: HubCell(
+                  caption: 'used 62%',
+                  child: ProgressRow(
+                    value: 0.62,
+                    color: ProgressTone.normal.resolve(context),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              AppButton(
+                label: 'Replay (as on app resume)',
+                variant: AppButtonVariant.outlined,
+                onPressed: () => ShownTweenBuilder.replayAll.value++,
+              ),
+            ],
+          ),
+        ),
         HubPlayground(
           title: 'ProgressCard',
           note:

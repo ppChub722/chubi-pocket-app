@@ -1079,6 +1079,7 @@ final List<HubPage> hubPages = [
     generic: false,
     usedBy: 'Budget list and detail',
     covers: [
+      'ShownTweenBuilder',
       'SourceChip',
       'SourceChips',
       'SourceChipItem',

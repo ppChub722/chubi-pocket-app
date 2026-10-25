@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../atoms/shown_tween_builder.dart';
 import '../../molecules/progress_row.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/hero_colors.dart';
@@ -97,7 +98,7 @@ class HeroRing extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          TweenAnimationBuilder<Offset>(
+          ShownTweenBuilder<Offset>(
             tween: Tween(begin: Offset.zero, end: Offset(used, total)),
             duration: const Duration(milliseconds: 400),
             curve: Curves.easeOutCubic,

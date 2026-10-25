@@ -151,6 +151,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
       // Resume re-checks the version at most once a day (soft banner); a
       // forced update is a 426 on any call anyway.
       onResume: () {
+        ShownTweenBuilder.replayAll.value++;
         unawaited(_versionCubit.checkIfDue());
         unawaited(
           _appRefresh.onResumed(

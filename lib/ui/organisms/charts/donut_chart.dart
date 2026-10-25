@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../atoms/shown_tween_builder.dart';
+
 class DonutSegment {
   const DonutSegment({required this.value, required this.color});
 
@@ -26,15 +28,23 @@ class DonutChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final shown = segments.where((s) => s.value > 0).toList();
     return SizedBox.square(
       dimension: size,
-      child: CustomPaint(
-        painter: _DonutPainter(
-          segments: segments.where((s) => s.value > 0).toList(),
-          thickness: thickness,
-          track: scheme.surfaceContainerHighest,
-          gapColor:
-              Theme.of(context).cardTheme.color ?? scheme.surfaceContainerLow,
+      child: ShownTweenBuilder<double>(
+        tween: Tween(begin: 0, end: 1),
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
+        builder: (context, t, child) => CustomPaint(
+          painter: _DonutPainter(
+            segments: shown,
+            thickness: thickness,
+            track: scheme.surfaceContainerHighest,
+            gapColor:
+                Theme.of(context).cardTheme.color ?? scheme.surfaceContainerLow,
+            grown: t,
+          ),
+          child: child,
         ),
         child: center == null
             ? null
@@ -55,12 +65,16 @@ class _DonutPainter extends CustomPainter {
     required this.thickness,
     required this.track,
     required this.gapColor,
+    this.grown = 1,
   });
 
   final List<DonutSegment> segments;
   final double thickness;
   final Color track;
   final Color gapColor;
+
+  /// 0 → 1 while the ring fills in.
+  final double grown;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -73,9 +87,12 @@ class _DonutPainter extends CustomPainter {
       canvas.drawArc(rect, 0, math.pi * 2, false, stroke..color = track);
       return;
     }
+    if (grown < 1) {
+      canvas.drawArc(rect, 0, math.pi * 2, false, stroke..color = track);
+    }
     var start = -math.pi / 2;
     for (final s in segments) {
-      final sweep = s.value / total * math.pi * 2;
+      final sweep = s.value / total * math.pi * 2 * grown;
       canvas.drawArc(rect, start, sweep, false, stroke..color = s.color);
       start += sweep;
     }
@@ -93,7 +110,7 @@ class _DonutPainter extends CustomPainter {
           c + dir * (outer + 1),
           gap,
         );
-        a += s.value / total * math.pi * 2;
+        a += s.value / total * math.pi * 2 * grown;
       }
     }
   }
@@ -103,5 +120,6 @@ class _DonutPainter extends CustomPainter {
       old.segments != segments ||
       old.thickness != thickness ||
       old.track != track ||
-      old.gapColor != gapColor;
+      old.gapColor != gapColor ||
+      old.grown != grown;
 }
