@@ -103,7 +103,7 @@ class _OccurrenceSheetState extends State<_OccurrenceSheet> {
   bool get _dirty => _date != widget.date || _parsed != widget.amount;
 
   Future<void> _pickDate() async {
-    final r = await showAppDatePicker(
+    final r = await AppDatePicker.show(
       context,
       initial: _date,
       first: widget.first,

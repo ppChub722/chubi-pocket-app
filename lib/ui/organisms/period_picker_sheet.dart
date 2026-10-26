@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import '../atoms/app_chip.dart';
 import '../molecules/month_picker.dart';
 import '../tokens/app_spacing.dart';
-import 'app_date_range_picker.dart';
-import 'app_sheet.dart';
+import 'app_date_picker.dart';
 
 enum PeriodUnit { day, week, month, year, all, custom }
 
@@ -51,30 +50,7 @@ class PeriodPickerLabels {
   };
 }
 
-Future<PeriodPick?> showPeriodPickerSheet(
-  BuildContext context, {
-  required PeriodPick current,
-  required PeriodPickerLabels labels,
-  DateTime? last,
-}) => showAppSheet<PeriodPick>(
-  context,
-  title: labels.title,
-  builder: (ctx) => Padding(
-    padding: const EdgeInsets.fromLTRB(
-      AppSpacing.lg,
-      0,
-      AppSpacing.lg,
-      AppSpacing.lg,
-    ),
-    child: PeriodPickerSheet(
-      current: current,
-      labels: labels,
-      last: last,
-      onPicked: (p) => Navigator.of(ctx).pop(p),
-    ),
-  ),
-);
-
+/// The body of [AppDatePicker.period].
 class PeriodPickerSheet extends StatefulWidget {
   const PeriodPickerSheet({
     required this.current,
@@ -114,7 +90,7 @@ class _PeriodPickerSheetState extends State<PeriodPickerSheet> {
   Future<void> _pickRange() async {
     final p = widget.current;
     final end = p.end ?? p.start;
-    final range = await showAppDateRangePicker(
+    final range = await AppDatePicker.range(
       context,
       first: _first,
       last: _last,

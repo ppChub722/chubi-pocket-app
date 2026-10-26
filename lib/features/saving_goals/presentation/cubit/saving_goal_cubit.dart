@@ -141,6 +141,12 @@ class SavingGoalCubit extends Cubit<SavingPageState> {
     emit(state.copyWith(status: SavingPageStatus.loaded, detail: d));
   }
 
+  /// Saves only [fields] (a pick on the page, no edit mode).
+  Future<void> patch(Map<String, dynamic> fields) async {
+    final d = await _repo.patch(id, fields);
+    emit(state.copyWith(status: SavingPageStatus.loaded, detail: d));
+  }
+
   Future<void> archive() async {
     final d = await _repo.archive(id);
     emit(state.copyWith(status: SavingPageStatus.loaded, detail: d));

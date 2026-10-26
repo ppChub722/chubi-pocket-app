@@ -304,20 +304,59 @@ class _SheetsPageState extends State<_SheetsPage> {
           note: 'The real sheets and where they are used.',
         ),
         HubDemo(
-          title: 'showAppDatePicker + AppDatePickerSheet',
+          title: 'AppAmountSheet.show — one amount setting',
           note:
-              'THE date picker: a bottom sheet with a calendar — tapping a day '
-              'picks it at once — plus "Today" and, when clearable, "Clear". '
-              'Replaces the raw Material date picker. Resolves with '
-              'AppDatePicked(date) / AppDateCleared / null (dismissed). Used by '
-              'the quick-create date, the scheduled next billing, a goal '
-              "deadline (clearable), a debt's payment date.",
+              'A setting that is one amount (a saving goal\'s เป้าต่อรอบ): '
+              'label over the amount input, an optional helper line, and a '
+              'clear link while there is a value. Save is on once the amount '
+              'is above 0 and differs. Resolves AppAmountResult.amount / '
+              '.cleared / null (dismissed).',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              _demoButton('Empty', () async {
+                final r = await AppAmountSheet.show(
+                  context,
+                  title: 'เป้าต่อรอบ',
+                  label: 'ยอดต่อรอบ',
+                  symbol: '฿',
+                  saveLabel: 'บันทึก',
+                );
+                _say(r == null ? null : (r.cleared ? 'cleared' : r.amount));
+              }),
+              _demoButton('With a value + clear', () async {
+                final r = await AppAmountSheet.show(
+                  context,
+                  title: 'เป้าต่อรอบ',
+                  label: 'ยอดต่อรอบ',
+                  symbol: '฿',
+                  saveLabel: 'บันทึก',
+                  initial: 30000,
+                  helper: 'รอบสุดท้ายใช้เท่าที่เหลือ ไม่เกินยอดเต็ม',
+                  clearLabel: 'ไม่ตั้งเป้าต่อรอบ',
+                );
+                _say(r == null ? null : (r.cleared ? 'cleared' : r.amount));
+              }),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'AppDatePicker.show + AppDatePickerSheet',
+          note:
+              'THE date picker, every page picks one date through it: a bottom '
+              'sheet with a calendar — tapping a day picks it at once — plus '
+              '"Today" and, when clearable, "Clear"; title names the field. '
+              'Resolves with AppDatePicked(date) / AppDateCleared / null '
+              '(dismissed). Used by the quick-create date, the scheduled next '
+              "billing, a goal deadline (clearable), a debt's payment date, a "
+              'budget start / end, event bills, settle-up.',
           child: Wrap(
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.sm,
             children: [
               _demoButton('Pick a date', () async {
-                final r = await showAppDatePicker(
+                final r = await AppDatePicker.show(
                   context,
                   initial: DateTime.now(),
                 );
@@ -325,7 +364,7 @@ class _SheetsPageState extends State<_SheetsPage> {
               }),
               _demoButton('Deadline (clearable, future only)', () async {
                 final now = DateTime.now();
-                final r = await showAppDatePicker(
+                final r = await AppDatePicker.show(
                   context,
                   initial: now.add(const Duration(days: 90)),
                   first: now,
@@ -357,7 +396,7 @@ class _SheetsPageState extends State<_SheetsPage> {
             children: [
               _demoButton('Period sheet (reference)', () async {
                 final now = DateTime.now();
-                final r = await showPeriodPickerSheet(
+                final r = await AppDatePicker.period(
                   context,
                   current: PeriodPick(PeriodUnit.month, now),
                   labels: const PeriodPickerLabels(
@@ -379,25 +418,27 @@ class _SheetsPageState extends State<_SheetsPage> {
           ),
         ),
         HubDemo(
-          title: 'showAppDateRangePicker + AppDateRangePickerSheet',
+          title: 'AppDatePicker.range + AppDateRangePickerSheet',
           note:
-              'THE date RANGE picker, same sheet look as the date picker: tap a '
+              'A from–to range, same sheet look as the date picker: tap a '
               'day to start, another to end (tap again to start over), then '
               'Save. Optional preset chips above the calendar. Resolves with a '
               'DateTimeRange / null (dismissed). Used by the transactions '
-              'custom period.',
+              'custom period and an event\'s dates. AppDatePicker.period '
+              '(above) and AppDatePicker.month (StepperPill) are the other '
+              'two kinds.',
           child: Wrap(
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.sm,
             children: [
               _demoButton('Pick a range', () async {
-                final r = await showAppDateRangePicker(context);
+                final r = await AppDatePicker.range(context);
                 _say(r);
               }),
               _demoButton('With presets, up to today', () async {
                 final now = DateTime.now();
                 final today = DateTime(now.year, now.month, now.day);
-                final r = await showAppDateRangePicker(
+                final r = await AppDatePicker.range(
                   context,
                   last: today,
                   initial: DateTimeRange(

@@ -208,6 +208,38 @@ void main() {
     },
   );
 
+  test('เป้าต่อรอบ: the setting and the period today is in', () {
+    final g = SavingGoal.fromJson({
+      ...prodGoal(),
+      'period': {
+        'amount': 30000,
+        'freq': 'monthly',
+        'interval': 2,
+        'anchor': '2026-11-01',
+        'current': {
+          'start': '2027-01-01',
+          'end': '2027-02-28',
+          'target': 30000,
+          'saved': 8000,
+          'short': 22000,
+          'days_left': 39,
+          'eta_date': '2027-04-30',
+          'late': true,
+          'plan': 4000,
+        },
+      },
+    });
+    final p = g.period!;
+    expect(p.amount, 30000);
+    expect(p.interval, 2);
+    expect(p.anchor, DateTime(2026, 11));
+    expect(p.current!.short, 22000);
+    expect(p.current!.etaDate, DateTime(2027, 4, 30));
+    expect(p.current!.late, isTrue);
+    expect(p.current!.plan, 4000);
+    expect(SavingGoal.fromJson(prodGoal()).period, isNull);
+  });
+
   test('closed state and reached status; no plan = null month figures', () {
     final g = SavingGoal.fromJson(
       prodGoal(state: 'completed', status: 'reached', monthShort: null),

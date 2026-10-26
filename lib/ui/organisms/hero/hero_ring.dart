@@ -44,9 +44,10 @@ class HeroRingRow extends StatelessWidget {
 }
 
 /// A hero's ring: how much of a limit is used, what is expected on top
-/// (lighter), a pace tick and an alert tick, with the number inside. Over
-/// the base ring a shade starts at a round head at the top and is gone by
-/// half way, so the start reads even at 0.
+/// (lighter) and an alert tick, with the number inside. Over the base ring a
+/// shade starts at a round head at the top and is gone by half way, so the
+/// start reads even at 0. No pace tick (owner 2026-10-26: a light line on the
+/// ring reads as a glitch); the pace lives in the facts.
 /// Colors come from the card; [color] paints over the fill (a warning or over
 /// state).
 class HeroRing extends StatelessWidget {
@@ -56,7 +57,6 @@ class HeroRing extends StatelessWidget {
     this.label,
     this.target,
     this.expected,
-    this.marker,
     this.alert,
     this.color,
     this.size = 124,
@@ -73,10 +73,7 @@ class HeroRing extends StatelessWidget {
   final String? target;
   final double? expected;
 
-  /// Where today should be (the pace), as a share of the ring.
-  final double? marker;
-
-  /// The warn point, as a share of the ring.
+  /// The warn point, as a share of the ring (in the warning colour).
   final double? alert;
   final Color? color;
   final double size;
@@ -108,15 +105,11 @@ class HeroRing extends StatelessWidget {
               painter: _RingPainter(
                 used: v.dx,
                 total: v.dy,
-                marker: marker?.clamp(0.0, 1.0),
                 alert: alert?.clamp(0.0, 1.0),
                 stroke: stroke,
                 fill: fill,
                 trackStart: hero?.line ?? Color.lerp(track, accent, 0.25)!,
                 trackEnd: hero?.soft ?? scheme.surfaceContainerHigh,
-                markerColor: (hero?.text ?? scheme.onSurface).withValues(
-                  alpha: 0.55,
-                ),
                 alertColor: hero?.warning ?? scheme.tertiary,
               ),
             ),
@@ -152,25 +145,21 @@ class _RingPainter extends CustomPainter {
   const _RingPainter({
     required this.used,
     required this.total,
-    required this.marker,
     required this.alert,
     required this.stroke,
     required this.fill,
     required this.trackStart,
     required this.trackEnd,
-    required this.markerColor,
     required this.alertColor,
   });
 
   final double used;
   final double total;
-  final double? marker;
   final double? alert;
   final double stroke;
   final Color fill;
   final Color trackStart;
   final Color trackEnd;
-  final Color markerColor;
   final Color alertColor;
 
   static const _tickOut = 4.0;
@@ -227,35 +216,31 @@ class _RingPainter extends CustomPainter {
         ring(fill, cap: StrokeCap.round),
       );
     }
-    void tick(double at, Color color) {
-      // A tick on the start point would read as a start marker: none there.
-      if (at <= _startGap || at >= 1 - _startGap) return;
+    // The warn point, never on the start point (it would read as a start
+    // marker).
+    final at = alert;
+    if (at != null && at > _startGap && at < 1 - _startGap) {
       final a = _top + at * 2 * math.pi;
       final dir = Offset(math.cos(a), math.sin(a));
       canvas.drawLine(
         center + dir * (r - stroke / 2 - _tickOut + 1),
         center + dir * (r + stroke / 2 + _tickOut - 1),
         Paint()
-          ..color = color
+          ..color = alertColor
           ..strokeWidth = 3
           ..strokeCap = StrokeCap.round,
       );
     }
-
-    if (marker != null) tick(marker!, markerColor);
-    if (alert != null) tick(alert!, alertColor);
   }
 
   @override
   bool shouldRepaint(_RingPainter old) =>
       old.used != used ||
       old.total != total ||
-      old.marker != marker ||
       old.alert != alert ||
       old.stroke != stroke ||
       old.fill != fill ||
       old.trackStart != trackStart ||
       old.trackEnd != trackEnd ||
-      old.markerColor != markerColor ||
       old.alertColor != alertColor;
 }

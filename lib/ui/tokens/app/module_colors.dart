@@ -17,6 +17,13 @@ class ModuleColors extends ThemeExtension<ModuleColors> {
   static const Color defaultDebt = Color(0xFF7A5AE0);
   static const Color defaultSaving = Color(0xFF3B7DD8);
 
+  /// A recurring setting's default icon colour by its kind (ค่าบริการ /
+  /// ผ่อน / รายรับ / แจ้งเตือน; ออมเงิน = [defaultSaving]).
+  static const Color defaultSubscription = Color(0xFFDB2777);
+  static const Color defaultInstallment = Color(0xFF0891B2);
+  static const Color defaultIncome = Color(0xFF16A34A);
+  static const Color defaultReminder = Color(0xFFD97706);
+
   final Color library;
 
   final Color people;

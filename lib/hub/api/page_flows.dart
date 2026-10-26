@@ -786,6 +786,12 @@ const List<PageFlow> pageFlows = [
         FlowCall('getDebtEntry', note: 'entry + balance + the full tx row'),
       ]),
       FlowStep.action('Button "บันทึก"', [FlowCall('updateDebtEntry')]),
+      FlowStep.action('บันทึกในรายการ: pick a transaction', [
+        FlowCall('linkDebtEntryTx', note: 'saves at once'),
+      ]),
+      FlowStep.action('บันทึกในรายการ: ✕', [
+        FlowCall('unlinkDebtEntryTx', note: 'the transaction stays'),
+      ]),
       FlowStep.action('Button "ลบ"', [
         FlowCall(
           'deleteDebtEntry',

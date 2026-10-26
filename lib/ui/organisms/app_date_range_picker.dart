@@ -4,31 +4,8 @@ import 'package:flutter/material.dart';
 import '../atoms/app_button.dart';
 import '../atoms/ui_config.dart';
 import '../tokens/app_spacing.dart';
-import 'app_sheet.dart';
 
-Future<DateTimeRange?> showAppDateRangePicker(
-  BuildContext context, {
-  DateTimeRange? initial,
-  DateTime? first,
-  DateTime? last,
-  String? title,
-  List<AppDateRangePreset> presets = const [],
-}) {
-  final f = first ?? DateTime(2000);
-  final l = last ?? DateTime.now().add(const Duration(days: 365 * 20));
-  return showAppSheet<DateTimeRange>(
-    context,
-    title: title ?? UiConfig.stringsOf(context).pickDate,
-    builder: (ctx) => AppDateRangePickerSheet(
-      initial: initial,
-      first: f,
-      last: l,
-      presets: presets,
-      onResult: (r) => Navigator.of(ctx).pop(r),
-    ),
-  );
-}
-
+/// A named range [AppDatePicker.range] offers above its calendar.
 class AppDateRangePreset {
   const AppDateRangePreset(this.label, this.range);
   final String label;

@@ -20,22 +20,44 @@ import 'recurrence_choices.dart';
 import 'recurrence_rule.dart';
 import 'recurrence_text.dart';
 
-Future<RecurrenceRule?> showRecurrenceSheet(
-  BuildContext context, {
-  required RecurrenceRule initial,
-  bool simple = false,
-}) {
-  return showAppSheetCustom<RecurrenceRule>(
-    context,
-    builder: (_) => _RecurrenceSheet(initial: initial, simple: simple),
-  );
+/// The app's one repeat / period sheet: ทุก [N] [วัน / สัปดาห์ / เดือน / ปี],
+/// then when it falls, then when it ends. [simple] = a period (a budget's or
+/// a goal's รอบ): one start day instead of repeat days ("รอบใหม่เริ่มวัน").
+/// [showEnd] false drops the สิ้นสุด part (a goal's รอบ ends with the goal).
+/// [title] names the field; none = "ทำซ้ำแบบกำหนดเอง". Every page sets a
+/// repeat or a period through this.
+abstract final class AppRecurrenceSheet {
+  static Future<RecurrenceRule?> show(
+    BuildContext context, {
+    required RecurrenceRule initial,
+    bool simple = false,
+    bool showEnd = true,
+    String? title,
+  }) {
+    return showAppSheetCustom<RecurrenceRule>(
+      context,
+      builder: (_) => _RecurrenceSheet(
+        initial: initial,
+        simple: simple,
+        showEnd: showEnd,
+        title: title,
+      ),
+    );
+  }
 }
 
 class _RecurrenceSheet extends StatefulWidget {
-  const _RecurrenceSheet({required this.initial, required this.simple});
+  const _RecurrenceSheet({
+    required this.initial,
+    required this.simple,
+    required this.showEnd,
+    required this.title,
+  });
 
   final RecurrenceRule initial;
   final bool simple;
+  final bool showEnd;
+  final String? title;
 
   @override
   State<_RecurrenceSheet> createState() => _RecurrenceSheetState();
@@ -49,7 +71,7 @@ class _RecurrenceSheetState extends State<_RecurrenceSheet> {
     final l = AppLocalizations.of(context)!;
     final strings = UiConfig.stringsOf(context);
     return AppSheetScaffold(
-      title: l.recurSheetTitle,
+      title: widget.title ?? l.recurSheetTitle,
       footer: Row(
         children: [
           Expanded(
@@ -77,6 +99,7 @@ class _RecurrenceSheetState extends State<_RecurrenceSheet> {
         child: RecurrenceEditor(
           initial: widget.initial,
           simple: widget.simple,
+          showEnd: widget.showEnd,
           onChanged: (r) => _rule = r,
         ),
       ),
@@ -89,12 +112,16 @@ class RecurrenceEditor extends StatefulWidget {
     required this.initial,
     required this.onChanged,
     this.simple = false,
+    this.showEnd = true,
     super.key,
   });
 
   final RecurrenceRule initial;
 
   final bool simple;
+
+  /// False: no สิ้นสุด part (the rule keeps the end it came with).
+  final bool showEnd;
 
   final ValueChanged<RecurrenceRule> onChanged;
 
@@ -147,7 +174,7 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
 
   Future<void> _pickEndDate() async {
     final start = DateTime(_start.year, _start.month, _start.day);
-    final r = await showAppDatePicker(
+    final r = await AppDatePicker.show(
       context,
       initial: _c.endDate,
       first: start,
@@ -241,7 +268,7 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
       mainAxisSize: MainAxisSize.min,
       children: [
         AppText(
-          recurrenceLabel(l, _rule, showEnd: true),
+          recurrenceLabel(l, _rule, showEnd: widget.showEnd),
           role: AppTextRole.title,
           color: scheme.primary,
         ),
@@ -384,50 +411,51 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
               ],
             ),
           ),
-        section(
-          l.recurSheetEnds,
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              chips([
-                for (final (kind, label) in [
-                  (RecurrenceEndKind.never, l.recurSheetEndNever),
-                  (RecurrenceEndKind.onDate, l.recurSheetEndOnDate),
-                  (RecurrenceEndKind.afterCount, l.recurSheetEndAfter),
-                ])
-                  AppChip(
-                    label: label,
-                    selected: _c.endKind == kind,
-                    onTap: () => _edit(() => _c.endKind = kind),
-                  ),
-              ]),
-              if (_c.endKind == RecurrenceEndKind.onDate) ...[
-                const SizedBox(height: AppSpacing.md),
-                AppChip(
-                  label: DateFormat.yMMMd(l.localeName).format(_c.endDate),
-                  icon: AppIcons.date,
-                  trailing: AppChipTrailing.dropdown,
-                  onTap: _pickEndDate,
-                ),
-              ],
-              if (_c.endKind == RecurrenceEndKind.afterCount) ...[
-                const SizedBox(height: AppSpacing.md),
-                Row(
-                  children: [
-                    numberField(
-                      _countText,
-                      999,
-                      (n) => _edit(() => _c.endCount = n),
+        if (widget.showEnd)
+          section(
+            l.recurSheetEnds,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                chips([
+                  for (final (kind, label) in [
+                    (RecurrenceEndKind.never, l.recurSheetEndNever),
+                    (RecurrenceEndKind.onDate, l.recurSheetEndOnDate),
+                    (RecurrenceEndKind.afterCount, l.recurSheetEndAfter),
+                  ])
+                    AppChip(
+                      label: label,
+                      selected: _c.endKind == kind,
+                      onTap: () => _edit(() => _c.endKind = kind),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                    AppText(l.recurSheetOccurrences(_c.endCount)),
-                  ],
-                ),
+                ]),
+                if (_c.endKind == RecurrenceEndKind.onDate) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  AppChip(
+                    label: DateFormat.yMMMd(l.localeName).format(_c.endDate),
+                    icon: AppIcons.date,
+                    trailing: AppChipTrailing.dropdown,
+                    onTap: _pickEndDate,
+                  ),
+                ],
+                if (_c.endKind == RecurrenceEndKind.afterCount) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    children: [
+                      numberField(
+                        _countText,
+                        999,
+                        (n) => _edit(() => _c.endCount = n),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      AppText(l.recurSheetOccurrences(_c.endCount)),
+                    ],
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
-        ),
         const SizedBox(height: AppSpacing.sm),
       ],
     );

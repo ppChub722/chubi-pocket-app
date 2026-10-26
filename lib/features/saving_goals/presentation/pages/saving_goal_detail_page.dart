@@ -200,8 +200,9 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final now = DateTime.now();
     final current = working.deadline;
     final first = current != null && current.isBefore(now) ? current : now;
-    final picked = await showAppDatePicker(
+    final picked = await AppDatePicker.show(
       context,
+      title: AppLocalizations.of(context)!.savingGoalFormDeadlineLabel,
       initial: current ?? now.add(const Duration(days: 90)),
       first: first,
       last: DateTime(now.year + 20),
@@ -776,7 +777,30 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       focusNode: _descriptionFocus,
       onEnterEdit: () => enterEdit(focus: _descriptionFocus),
     );
-    List<HeroFact> factsOf(Color? warning) => !active || reached
+    final period = g.period?.current;
+    List<HeroFact> factsOf(Color? warning) =>
+        period != null && active && !reached
+        // เป้าต่อรอบ: this period, its target, what's left, when it is done.
+        ? [
+            HeroFact(
+              l.fpGoalsFactPeriodSaved,
+              money(period.saved),
+              icon: AppIcons.savings,
+            ),
+            HeroFact(
+              l.fpGoalsFactPeriodTarget,
+              money(period.target),
+              icon: AppIcons.target,
+            ),
+            HeroFact(l.fpGoalsFactLeft, money(left), icon: AppIcons.hourglass),
+            HeroFact(
+              l.fpGoalsFactPeriodEta,
+              DateFormatter.monthYear(period.etaDate, locale: locale),
+              color: period.late ? warning : null,
+              icon: AppIcons.date,
+            ),
+          ]
+        : !active || reached
         ? [
             HeroFact(l.fpGoalsFactTarget, money(target), icon: AppIcons.target),
             if (reached && closed != null)
@@ -826,7 +850,22 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           kind: StatusKind.done,
           size: ChipSize.chip,
         ),
-      if (active && !reached) ...[
+      if (active && !reached && period != null)
+        period.short > 0.004
+            ? StatusChip(
+                label: l.fpGoalsChipPeriodShort(
+                  money(period.short),
+                  period.daysLeft,
+                ),
+                kind: StatusKind.warning,
+                size: ChipSize.chip,
+              )
+            : StatusChip(
+                label: l.fpGoalsChipPeriodDone,
+                kind: StatusKind.active,
+                size: ChipSize.chip,
+              ),
+      if (active && !reached && period == null) ...[
         if (short > 0)
           StatusChip(
             label: l.fpGoalsChipShort(money(short)),
@@ -876,7 +915,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
                 size: size,
                 stroke: 14,
                 value: g.savedAmount / target,
-                marker: reached ? null : pace,
                 color: reached
                     ? hero?.success
                     : behind
@@ -1076,8 +1114,10 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
   }
 
-  /// The saving recurring rules into this goal (the spare: into no goal);
-  /// the add row starts one with this goal already picked.
+  /// วางแผนการออม: a goal with a target sets its due date, its เป้าต่อรอบ
+  /// and the periods here (each pick saves at once); then its saving
+  /// recurring rules (the spare: the rules into no goal), the add row
+  /// starting one with this goal already picked.
   Widget? _recurring(AppLocalizations l, SavingGoalDetail d) {
     final g = d.goal;
     if (g != null && g.state != SavingGoalState.active) return null;
@@ -1086,14 +1126,24 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         r.isSaving &&
         r.goalId == goalId &&
         r.status != RecurringStatus.archived;
+    final planned = g != null && g.targetAmount != null;
     return BlocBuilder<RecurringDirectoryCubit, RecurringDirectoryState>(
       buildWhen: (a, b) => a.rules != b.rules,
       builder: (context, dir) => SectionCard(
-        title: l.sgRecurringTitle,
-        description: g == null
-            ? l.sgRecurringSpareCaption
-            : l.sgRecurringCaption,
+        title: g == null ? l.sgRecurringTitle : l.sgPlanTitle,
+        description: g == null ? l.sgRecurringSpareCaption : null,
         children: [
+          if (planned) ..._planRows(l, g),
+          if (planned)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.md,
+                AppSpacing.lg,
+                0,
+              ),
+              child: AppText(l.sgRecurringLabel, role: AppTextRole.caption),
+            ),
           for (final r in dir.rules)
             if (mine(r))
               RecurringRow(
@@ -1111,6 +1161,121 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           ),
         ],
       ),
+    );
+  }
+
+  /// วันที่ครบกำหนด, เป้าต่อรอบ, รอบ (once there is a target per period) and
+  /// a warning when the recurring saves fall short of it.
+  List<Widget> _planRows(AppLocalizations l, SavingGoal g) {
+    final symbol = context.readUserCurrencySymbol;
+    String money(double v) => moneyString(context, v, symbol: symbol);
+    final due = g.deadline == null ? null : DateTime.tryParse(g.deadline!);
+    final p = g.period;
+    final now = p?.current;
+    final plan = now?.plan ?? 0;
+    return [
+      DetailRow.pick(
+        label: l.savingGoalFormDeadlineLabel,
+        value: due == null ? null : _day(due),
+        emptyText: l.savingGoalFormDeadlinePlaceholder,
+        onTap: isSaving ? null : () => _pickDeadlineLive(g),
+      ),
+      DetailRow.pick(
+        key: const ValueKey('goalPeriodAmount'),
+        label: l.sgPeriodTarget,
+        value: p == null ? null : money(p.amount),
+        emptyText: l.sgPeriodNone,
+        onTap: isSaving ? null : () => _pickPeriodAmount(g),
+      ),
+      if (p != null)
+        DetailRow.pick(
+          key: const ValueKey('goalPeriodRule'),
+          label: l.sgPeriodRule,
+          value: recurrenceLabel(l, _periodRule(p)),
+          emptyText: '',
+          onTap: isSaving ? null : () => _pickPeriodRule(g, p),
+        ),
+      if (now != null && plan + 0.004 < now.target)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: HintLine(
+            icon: AppIcons.warning,
+            text: l.sgPeriodPlanShort(money(plan), money(p!.amount)),
+          ),
+        ),
+    ];
+  }
+
+  RecurrenceRule _periodRule(SavingPeriod p) => RecurrenceRule(
+    freq: RecurrenceFreq.values.firstWhere(
+      (f) => f.name == p.freq,
+      orElse: () => RecurrenceFreq.monthly,
+    ),
+    interval: p.interval,
+    start: p.anchor,
+  );
+
+  static String _ymdOf(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
+
+  Future<void> _pickDeadlineLive(SavingGoal g) async {
+    final l = AppLocalizations.of(context)!;
+    final now = DateTime.now();
+    final current = g.deadline == null ? null : DateTime.tryParse(g.deadline!);
+    final first = current != null && current.isBefore(now) ? current : now;
+    final picked = await AppDatePicker.show(
+      context,
+      title: l.savingGoalFormDeadlineLabel,
+      initial: current ?? now.add(const Duration(days: 90)),
+      first: first,
+      last: DateTime(now.year + 20),
+      clearable: current != null,
+    );
+    if (!mounted || picked == null) return;
+    final value = switch (picked) {
+      AppDatePicked(:final date) => _ymdOf(date),
+      AppDateCleared() => null,
+    };
+    await _run(() => _cubit!.patch({'deadline': value}));
+  }
+
+  Future<void> _pickPeriodAmount(SavingGoal g) async {
+    final l = AppLocalizations.of(context)!;
+    final r = await AppAmountSheet.show(
+      context,
+      title: l.sgPeriodTarget,
+      label: l.sgPeriodTargetField,
+      symbol: context.readUserCurrencySymbol,
+      saveLabel: l.commonSave,
+      initial: g.period?.amount,
+      helper: l.sgPeriodHelper,
+      clearLabel: l.sgPeriodClear,
+    );
+    if (!mounted || r == null) return;
+    await _run(
+      () => _cubit!.patch({'period_amount': r.cleared ? null : r.amount}),
+    );
+  }
+
+  Future<void> _pickPeriodRule(SavingGoal g, SavingPeriod p) async {
+    final l = AppLocalizations.of(context)!;
+    final r = await AppRecurrenceSheet.show(
+      context,
+      initial: _periodRule(p),
+      simple: true,
+      showEnd: false,
+      title: l.sgPeriodRule,
+    );
+    if (!mounted || r == null) return;
+    await _run(
+      () => _cubit!.patch({
+        'period': {
+          'freq': r.freq == RecurrenceFreq.dates ? 'monthly' : r.freq.name,
+          'interval': r.interval < 1 ? 1 : r.interval,
+          'anchor': _ymdOf(r.start),
+        },
+      }),
     );
   }
 

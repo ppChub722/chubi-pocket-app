@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../atoms/app_chip.dart';
 import '../../atoms/app_divider.dart';
 import '../../atoms/app_icon_button.dart';
 import '../../atoms/select_check.dart';
@@ -27,6 +28,30 @@ PersonLevel _noBadge(PersonLevel level) =>
 /// My part not yet in my books: a light tint that stays (unlike the flash).
 Color _mineTint(BuildContext context) =>
     Theme.of(context).colorScheme.primary.withValues(alpha: 0.08);
+
+/// What my books already hold of a bill, as ✓ mini chips in a row (✓ ลงหนี้
+/// ✓ ลงรายการ): the badge of [EventBillRow] / [EventBillChildRow].
+class EventBookedChips extends StatelessWidget {
+  const EventBookedChips({required this.labels, super.key});
+
+  final List<String> labels;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      for (final (i, t) in labels.indexed) ...[
+        if (i > 0) const SizedBox(width: AppSpacing.xs),
+        AppChip(
+          label: t,
+          icon: AppIcons.check,
+          tone: AppChipTone.success,
+          size: ChipSize.mini,
+        ),
+      ],
+    ],
+  );
+}
 
 /// The row's own button (⤓ ลงบัญชี): round, filled, a chip tall.
 Widget _actionButton(

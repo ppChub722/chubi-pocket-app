@@ -575,7 +575,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   Future<void> _pickStart() async {
     final now = today();
     final current = working.rule.start;
-    final picked = await showAppDatePicker(
+    final picked = await AppDatePicker.show(
       context,
       initial: current,
       first: current.isBefore(now) ? current : now,
@@ -598,7 +598,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   }
 
   Future<void> _openRecurrenceSheet() async {
-    final picked = await showRecurrenceSheet(context, initial: working.rule);
+    final picked = await AppRecurrenceSheet.show(context, initial: working.rule);
     if (!mounted || picked == null) return;
     _change(working.copyWith(rule: picked));
   }
@@ -607,7 +607,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     final l = AppLocalizations.of(context)!;
     final now = today();
     final current = working.trialUntil;
-    final picked = await showAppDatePicker(
+    final picked = await AppDatePicker.show(
       context,
       initial: current ?? now.add(const Duration(days: 30)),
       first: now,

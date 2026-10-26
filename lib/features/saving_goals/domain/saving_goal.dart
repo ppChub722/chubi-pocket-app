@@ -143,6 +143,106 @@ class SavingGoalActions extends Equatable {
   ];
 }
 
+/// The period today is in (เป้าต่อรอบ).
+class SavingPeriodNow extends Equatable {
+  const SavingPeriodNow({
+    required this.start,
+    required this.end,
+    required this.target,
+    required this.saved,
+    required this.short,
+    required this.daysLeft,
+    required this.etaDate,
+    required this.late,
+    this.plan,
+  });
+
+  final DateTime start;
+  final DateTime end;
+
+  /// The amount, never more than the goal still needed when the period began.
+  final double target;
+  final double saved;
+  final double short;
+  final int daysLeft;
+
+  /// When the goal is done if every period from now on reaches its target.
+  final DateTime etaDate;
+  final bool late;
+
+  /// What the saving recurring settings put in within the period.
+  final double? plan;
+
+  static SavingPeriodNow? tryParse(Object? json) {
+    if (json is! Map) return null;
+    final start = DateTime.tryParse('${json['start']}');
+    final end = DateTime.tryParse('${json['end']}');
+    final eta = DateTime.tryParse('${json['eta_date']}');
+    if (start == null || end == null || eta == null) return null;
+    return SavingPeriodNow(
+      start: start,
+      end: end,
+      target: (json['target'] as num?)?.toDouble() ?? 0,
+      saved: (json['saved'] as num?)?.toDouble() ?? 0,
+      short: (json['short'] as num?)?.toDouble() ?? 0,
+      daysLeft: (json['days_left'] as num?)?.toInt() ?? 0,
+      etaDate: eta,
+      late: json['late'] == true,
+      plan: (json['plan'] as num?)?.toDouble(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    start,
+    end,
+    target,
+    saved,
+    short,
+    daysLeft,
+    etaDate,
+    late,
+    plan,
+  ];
+}
+
+/// A goal's เป้าต่อรอบ: [amount] every [interval] [freq] from [anchor].
+class SavingPeriod extends Equatable {
+  const SavingPeriod({
+    required this.amount,
+    required this.freq,
+    required this.interval,
+    required this.anchor,
+    this.current,
+  });
+
+  final double amount;
+
+  /// daily | weekly | monthly | yearly.
+  final String freq;
+  final int interval;
+  final DateTime anchor;
+
+  /// Null when the goal isn't active, has no target or holds it already.
+  final SavingPeriodNow? current;
+
+  static SavingPeriod? tryParse(Object? json) {
+    if (json is! Map) return null;
+    final anchor = DateTime.tryParse('${json['anchor']}');
+    if (anchor == null) return null;
+    return SavingPeriod(
+      amount: (json['amount'] as num?)?.toDouble() ?? 0,
+      freq: json['freq'] as String? ?? 'monthly',
+      interval: (json['interval'] as num?)?.toInt() ?? 1,
+      anchor: anchor,
+      current: SavingPeriodNow.tryParse(json['current']),
+    );
+  }
+
+  @override
+  List<Object?> get props => [amount, freq, interval, anchor, current];
+}
+
 class SavingGoal extends Equatable {
   const SavingGoal({
     required this.id,
@@ -166,6 +266,7 @@ class SavingGoal extends Equatable {
     this.monthPlan,
     this.monthSaved = 0,
     this.monthShort,
+    this.period,
     this.group,
     this.milestones = const [],
     this.actions = const SavingGoalActions(),
@@ -201,6 +302,9 @@ class SavingGoal extends Equatable {
   final double? monthPlan;
   final double monthSaved;
   final double? monthShort;
+
+  /// เป้าต่อรอบ; null = none.
+  final SavingPeriod? period;
 
   final String? group;
   final List<SavingMilestone> milestones;
@@ -242,6 +346,7 @@ class SavingGoal extends Equatable {
       monthPlan: (json['month_plan'] as num?)?.toDouble(),
       monthSaved: (json['month_saved'] as num?)?.toDouble() ?? 0,
       monthShort: (json['month_short'] as num?)?.toDouble(),
+      period: SavingPeriod.tryParse(json['period']),
       group: json['group'] as String?,
       milestones: [
         for (final m in (json['milestones'] as List? ?? const []))
@@ -290,6 +395,7 @@ class SavingGoal extends Equatable {
     monthPlan,
     monthSaved,
     monthShort,
+    period,
     group,
     milestones,
     actions,

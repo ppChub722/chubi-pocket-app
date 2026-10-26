@@ -520,7 +520,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
   }
 
   Future<void> _pickDate() async {
-    final r = await showAppDatePicker(
+    final r = await AppDatePicker.show(
       context,
       initial: _c.date,
       first: DateTime(2000),
@@ -767,7 +767,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
 
   Future<void> _pickDue() async {
     final from = DateTime(_c.date.year, _c.date.month, _c.date.day);
-    final r = await showAppDatePicker(
+    final r = await AppDatePicker.show(
       context,
       initial: _c.dueDate ?? from,
       first: from,

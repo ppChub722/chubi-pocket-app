@@ -11498,6 +11498,36 @@ abstract class AppLocalizations {
   /// **'{n} months behind schedule'**
   String fpGoalsChipLate(int n);
 
+  /// No description provided for @fpGoalsFactPeriodSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'This period'**
+  String get fpGoalsFactPeriodSaved;
+
+  /// No description provided for @fpGoalsFactPeriodTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Period target'**
+  String get fpGoalsFactPeriodTarget;
+
+  /// No description provided for @fpGoalsFactPeriodEta.
+  ///
+  /// In en, this message translates to:
+  /// **'Done by'**
+  String get fpGoalsFactPeriodEta;
+
+  /// No description provided for @fpGoalsChipPeriodShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Short {amount} this period | {days} days left'**
+  String fpGoalsChipPeriodShort(String amount, int days);
+
+  /// No description provided for @fpGoalsChipPeriodDone.
+  ///
+  /// In en, this message translates to:
+  /// **'This period is done'**
+  String get fpGoalsChipPeriodDone;
+
   /// No description provided for @fpGoalsArchiveConsequenceMoney.
   ///
   /// In en, this message translates to:
@@ -12949,6 +12979,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recurring saves'**
   String get sgRecurringTitle;
+
+  /// No description provided for @sgPlanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving plan'**
+  String get sgPlanTitle;
+
+  /// No description provided for @sgRecurringLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring saves'**
+  String get sgRecurringLabel;
+
+  /// No description provided for @sgPeriodTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target per period'**
+  String get sgPeriodTarget;
+
+  /// No description provided for @sgPeriodTargetField.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount per period'**
+  String get sgPeriodTargetField;
+
+  /// No description provided for @sgPeriodNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get sgPeriodNone;
+
+  /// No description provided for @sgPeriodClear.
+  ///
+  /// In en, this message translates to:
+  /// **'No target per period'**
+  String get sgPeriodClear;
+
+  /// No description provided for @sgPeriodHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'The last period takes only what is left of the goal'**
+  String get sgPeriodHelper;
+
+  /// No description provided for @sgPeriodRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get sgPeriodRule;
+
+  /// No description provided for @sgPeriodPlanShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring saves put in {plan} a period, short of the {target} target'**
+  String sgPeriodPlanShort(String plan, String target);
 
   /// No description provided for @sgRecurringCaption.
   ///

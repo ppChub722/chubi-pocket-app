@@ -103,7 +103,7 @@ class _BudgetsPageState extends State<_BudgetsPage> {
         ),
         HubDemo(
           title:
-              'RecurrenceEditor(simple: true) / showRecurrenceSheet(simple:)',
+              'RecurrenceEditor(simple: true) / AppRecurrenceSheet.show(simple:)',
           note:
               'The budget period: "every N day | week | month | year" and the '
               'end. No weekday toggles, no monthly day / Nth weekday; the '
@@ -119,20 +119,38 @@ class _BudgetsPageState extends State<_BudgetsPage> {
                   onChanged: (r) => _rule = r,
                 ),
               ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: AppButton(
-                  label: 'Open as sheet',
-                  variant: AppButtonVariant.outlined,
-                  onPressed: () async {
-                    final r = await showRecurrenceSheet(
-                      context,
-                      initial: _rule,
-                      simple: true,
-                    );
-                    if (r != null && mounted) setState(() => _rule = r);
-                  },
-                ),
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  AppButton(
+                    label: 'Open as sheet',
+                    variant: AppButtonVariant.outlined,
+                    onPressed: () async {
+                      final r = await AppRecurrenceSheet.show(
+                        context,
+                        initial: _rule,
+                        simple: true,
+                      );
+                      if (r != null && mounted) setState(() => _rule = r);
+                    },
+                  ),
+                  // A saving goal's รอบ: no end (the goal ends it), its own title.
+                  AppButton(
+                    label: 'Goal period (showEnd: false, title)',
+                    variant: AppButtonVariant.outlined,
+                    onPressed: () async {
+                      final r = await AppRecurrenceSheet.show(
+                        context,
+                        initial: _rule,
+                        simple: true,
+                        showEnd: false,
+                        title: 'รอบ',
+                      );
+                      if (r != null && mounted) setState(() => _rule = r);
+                    },
+                  ),
+                ],
               ),
             ],
           ),

@@ -450,12 +450,12 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
           ),
         ),
         HubDemo(
-          title: 'StepperPill presets + MonthPickerGrid + showMonthPicker',
+          title: 'StepperPill presets + MonthPickerGrid + AppDatePicker.month',
           note:
-              'One pill for every period. StepperPill.month steps by month and opens '
-              'the picker on tap; StepperPill.period does the same for a week '
-              '(Mon–Sun) and a year (budgets). first / last bound the arrows. '
-              'The grid is the picker sheet body.',
+              'One pill for every period. StepperPill (a button) steps by month '
+              'and opens AppDatePicker.month on tap; StepperPill.period does '
+              'the same for a week (Mon–Sun) and a year (budgets). first / last '
+              'bound the arrows. The grid is the picker sheet body.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -505,10 +505,10 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
               Row(
                 children: [
                   AppButton(
-                    label: 'showMonthPicker',
+                    label: 'AppDatePicker.month',
                     variant: AppButtonVariant.tonal,
                     onPressed: () async {
-                      final m = await showMonthPicker(
+                      final m = await AppDatePicker.month(
                         context,
                         selected: _month,
                       );

@@ -422,7 +422,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
   // ---------- pickers ----------
 
   Future<void> _pickDate() async {
-    final r = await showAppDatePicker(
+    final r = await AppDatePicker.show(
       context,
       initial: _date,
       first: DateTime(2000),

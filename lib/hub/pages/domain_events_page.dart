@@ -379,12 +379,7 @@ class _EventsPageState extends State<_EventsPage> {
                     mine: true,
                     onAction: () => _tapped('ลงบัญชี'),
                     actionTooltip: 'ลงบัญชี',
-                    badge: const AppChip(
-                      label: 'ลงรายการ',
-                      icon: AppIcons.check,
-                      tone: AppChipTone.success,
-                      size: ChipSize.mini,
-                    ),
+                    badge: const EventBookedChips(labels: ['ลงรายการ']),
                     onTap: () => _tapped('my part'),
                   ),
                   EventBillChildRow(

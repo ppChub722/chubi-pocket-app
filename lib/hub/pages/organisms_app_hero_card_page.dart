@@ -272,8 +272,9 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
           note:
               'The budget hero. HeroInfoBox sits beside the edit button '
               '(max 168 wide, lines end in "…" so a long name keeps its '
-              'room). HeroRing: used + expected (lighter), a pace tick and '
-              'a warn tick, the number inside; over the base ring a shade '
+              'room). HeroRing: used + expected (lighter) and a warn tick '
+              '(no pace tick: the pace is a fact), the number inside; over '
+              'the base ring a shade '
               'starts at a round head at the top and is gone by half way, '
               'so the start reads at 0; color: paints a '
               'warning / over state. HeroRingRow: the facts get half the '
@@ -324,7 +325,6 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                         stroke: 14,
                         value: used,
                         expected: used > 0 && used < 1 ? 0.1 : null,
-                        marker: 0.65,
                         alert: 0.8,
                         color: color,
                         label: used > 1 ? 'Over' : 'Left',

@@ -6760,6 +6760,23 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get fpGoalsFactPeriodSaved => 'This period';
+
+  @override
+  String get fpGoalsFactPeriodTarget => 'Period target';
+
+  @override
+  String get fpGoalsFactPeriodEta => 'Done by';
+
+  @override
+  String fpGoalsChipPeriodShort(String amount, int days) {
+    return 'Short $amount this period | $days days left';
+  }
+
+  @override
+  String get fpGoalsChipPeriodDone => 'This period is done';
+
+  @override
   String fpGoalsArchiveConsequenceMoney(String amount) {
     return 'Hidden | $amount not counted in savings | can be restored';
   }
@@ -7606,6 +7623,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sgRecurringTitle => 'Recurring saves';
+
+  @override
+  String get sgPlanTitle => 'Saving plan';
+
+  @override
+  String get sgRecurringLabel => 'Recurring saves';
+
+  @override
+  String get sgPeriodTarget => 'Target per period';
+
+  @override
+  String get sgPeriodTargetField => 'Amount per period';
+
+  @override
+  String get sgPeriodNone => 'Not set';
+
+  @override
+  String get sgPeriodClear => 'No target per period';
+
+  @override
+  String get sgPeriodHelper =>
+      'The last period takes only what is left of the goal';
+
+  @override
+  String get sgPeriodRule => 'Period';
+
+  @override
+  String sgPeriodPlanShort(String plan, String target) {
+    return 'Recurring saves put in $plan a period, short of the $target target';
+  }
 
   @override
   String get sgRecurringCaption => 'Saves into this goal on the round you set';

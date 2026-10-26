@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../atoms/ui_config.dart';
+import '../organisms/app_date_picker.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/hero_colors.dart';
-import 'month_picker.dart';
 
 enum StepperUnit { week, month, year }
 
@@ -151,7 +151,7 @@ class StepperPill extends StatelessWidget {
           onTap ??
           (isMonth
               ? () async {
-                  final picked = await showMonthPicker(
+                  final picked = await AppDatePicker.month(
                     context,
                     selected: start,
                     first: _first,

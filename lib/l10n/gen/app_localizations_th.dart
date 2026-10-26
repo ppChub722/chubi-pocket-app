@@ -6606,6 +6606,23 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
+  String get fpGoalsFactPeriodSaved => 'ออมรอบนี้';
+
+  @override
+  String get fpGoalsFactPeriodTarget => 'เป้ารอบนี้';
+
+  @override
+  String get fpGoalsFactPeriodEta => 'ครบตามเป้า';
+
+  @override
+  String fpGoalsChipPeriodShort(String amount, int days) {
+    return 'รอบนี้ขาด $amount | อีก $days วัน';
+  }
+
+  @override
+  String get fpGoalsChipPeriodDone => 'รอบนี้ครบแล้ว';
+
+  @override
   String fpGoalsArchiveConsequenceMoney(String amount) {
     return 'ซ่อนไว้ | เงิน $amount ไม่นับในยอดออม | กู้คืนได้';
   }
@@ -7438,6 +7455,35 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get sgRecurringTitle => 'ทำเป็นรายการประจำ';
+
+  @override
+  String get sgPlanTitle => 'วางแผนการออม';
+
+  @override
+  String get sgRecurringLabel => 'รายการประจำการออม';
+
+  @override
+  String get sgPeriodTarget => 'เป้าต่อรอบ';
+
+  @override
+  String get sgPeriodTargetField => 'ยอดต่อรอบ';
+
+  @override
+  String get sgPeriodNone => 'ไม่ได้ตั้ง';
+
+  @override
+  String get sgPeriodClear => 'ไม่ตั้งเป้าต่อรอบ';
+
+  @override
+  String get sgPeriodHelper => 'รอบสุดท้ายใช้เท่าที่เหลือ ไม่เกินยอดเต็ม';
+
+  @override
+  String get sgPeriodRule => 'รอบ';
+
+  @override
+  String sgPeriodPlanShort(String plan, String target) {
+    return 'รายการประจำออมได้ $plan ต่อรอบ ไม่ถึงเป้าต่อรอบ $target';
+  }
 
   @override
   String get sgRecurringCaption => 'ออมเข้าเป้าหมายนี้ตามรอบที่ตั้งไว้';

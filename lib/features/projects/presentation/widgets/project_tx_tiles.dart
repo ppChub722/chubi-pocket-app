@@ -207,20 +207,7 @@ class ProjectTxTreeTile extends StatelessWidget {
         l.evbBookedTx,
     ];
     if (labels.isEmpty) return null;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (final (i, t) in labels.indexed) ...[
-          if (i > 0) const SizedBox(width: AppSpacing.xs),
-          AppChip(
-            label: t,
-            icon: AppIcons.check,
-            tone: AppChipTone.success,
-            size: ChipSize.mini,
-          ),
-        ],
-      ],
-    );
+    return EventBookedChips(labels: labels);
   }
 
   Widget _child(

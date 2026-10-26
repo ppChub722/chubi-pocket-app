@@ -23,19 +23,19 @@ extension RecurringKindIconDefault on RecurringKind {
   TypeIconDefault get iconDefault => switch (this) {
     RecurringKind.subscription => const TypeIconDefault(
       iconId: 'subscriptions',
-      color: Color(0xFFDB2777),
+      color: ModuleColors.defaultSubscription,
     ),
     RecurringKind.installment => const TypeIconDefault(
       iconId: 'timelapse',
-      color: Color(0xFF0891B2),
+      color: ModuleColors.defaultInstallment,
     ),
     RecurringKind.income => const TypeIconDefault(
       iconId: 'cash',
-      color: Color(0xFF16A34A),
+      color: ModuleColors.defaultIncome,
     ),
     RecurringKind.reminder => const TypeIconDefault(
       iconId: 'notifications',
-      color: Color(0xFFD97706),
+      color: ModuleColors.defaultReminder,
     ),
     RecurringKind.saving => const TypeIconDefault(
       iconId: 'savings',

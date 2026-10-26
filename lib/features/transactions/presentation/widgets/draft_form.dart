@@ -1236,7 +1236,7 @@ class _DraftFormState extends State<DraftForm> {
   }
 
   Future<void> _pickDate() async {
-    final r = await showAppDatePicker(
+    final r = await AppDatePicker.show(
       context,
       initial: _c.date,
       first: DateTime(2000),

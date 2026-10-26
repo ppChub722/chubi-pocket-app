@@ -767,11 +767,13 @@ class _RecurringPage extends StatelessWidget {
           ),
         ),
         HubDemo(
-          title: 'showRecurrenceSheet — the custom repeat sheet',
+          title: 'AppRecurrenceSheet.show — the one repeat / period sheet',
           note:
-              'The editor in the app sheet with Cancel | OK. Resolves the '
-              'edited rule on OK, null on Cancel / dismiss. The last result '
-              'is shown under the button.',
+              'The editor in the app sheet with Cancel | OK; every page sets a '
+              'repeat or a period through it. simple: a period (a start day '
+              'instead of repeat days), showEnd: false drops สิ้นสุด, title '
+              'names the field. Resolves the edited rule on OK, null on '
+              'Cancel / dismiss. The last result is shown under the button.',
           child: _RecurrenceSheetDemo(
             initial: rule(RecurrenceFreq.weekly, weekdays: const {1}),
           ),
@@ -888,7 +890,7 @@ class _RecurringPage extends StatelessWidget {
   }
 }
 
-/// A button that opens [showRecurrenceSheet] and shows the last result.
+/// A button that opens [AppRecurrenceSheet] and shows the last result.
 class _RecurrenceSheetDemo extends StatefulWidget {
   const _RecurrenceSheetDemo({required this.initial});
 
@@ -910,10 +912,10 @@ class _RecurrenceSheetDemoState extends State<_RecurrenceSheetDemo> {
       mainAxisSize: MainAxisSize.min,
       children: [
         AppButton(
-          label: 'showRecurrenceSheet',
+          label: 'AppRecurrenceSheet.show',
           variant: AppButtonVariant.outlined,
           onPressed: () async {
-            final r = await showRecurrenceSheet(context, initial: _rule);
+            final r = await AppRecurrenceSheet.show(context, initial: _rule);
             if (!mounted) return;
             setState(() {
               if (r != null) _rule = r;
@@ -1128,7 +1130,7 @@ class _DatePickChipDemoState extends State<_DatePickChipDemo> {
   DateTime? _date;
 
   Future<void> _pick() async {
-    final r = await showAppDatePicker(
+    final r = await AppDatePicker.show(
       context,
       initial: _date ?? widget.start,
     );

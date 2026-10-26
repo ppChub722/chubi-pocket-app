@@ -71,6 +71,16 @@ class SavingGoalsRepository {
     return SavingGoalDetail.fromJson(res.data!);
   });
 
+  /// Only the given keys (PUT is partial): the deadline, the เป้าต่อรอบ …
+  Future<SavingGoalDetail> patch(String id, Map<String, dynamic> fields) =>
+      _guard(() async {
+        final res = await _client.dio.put<Map<String, dynamic>>(
+          '/saving-goals/$id',
+          data: fields,
+        );
+        return SavingGoalDetail.fromJson(res.data!);
+      });
+
   Future<void> delete(String id) =>
       _guard(() => _client.dio.delete<void>('/saving-goals/$id'));
 

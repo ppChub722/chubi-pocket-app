@@ -411,7 +411,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     final w = working;
     final start = w.startDate ?? w.endDate;
     final end = w.endDate ?? w.startDate;
-    final r = await showAppDateRangePicker(
+    final r = await AppDatePicker.range(
       context,
       title: l.fpEventsDatesLabel,
       initial: start == null ? null : DateTimeRange(start: start, end: end!),

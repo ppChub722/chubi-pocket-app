@@ -7,28 +7,10 @@ import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/ui_config.dart';
 import '../atoms/app_button.dart';
-import '../organisms/app_sheet.dart';
 
 DateTime _monthOf(DateTime d) => DateTime(d.year, d.month);
 
-Future<DateTime?> showMonthPicker(
-  BuildContext context, {
-  required DateTime selected,
-  DateTime? first,
-  DateTime? last,
-}) {
-  return showAppSheet<DateTime>(
-    context,
-    title: UiConfig.stringsOf(context).monthPickerTitle,
-    builder: (ctx) => MonthPickerGrid(
-      selected: selected,
-      first: first,
-      last: last,
-      onPicked: (m) => Navigator.of(ctx).pop(m),
-    ),
-  );
-}
-
+/// The body of [AppDatePicker.month].
 class MonthPickerGrid extends StatefulWidget {
   const MonthPickerGrid({
     required this.selected,

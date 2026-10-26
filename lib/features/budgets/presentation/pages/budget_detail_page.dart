@@ -281,7 +281,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
   Future<void> _pickStart() async {
     final current = working.start;
     final now = today();
-    final picked = await showAppDatePicker(
+    final picked = await AppDatePicker.show(
       context,
       initial: current,
       first: DateTime(now.year - 2, 1, 1),
@@ -292,7 +292,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
   }
 
   Future<void> _pickRule() async {
-    final r = await showRecurrenceSheet(
+    final r = await AppRecurrenceSheet.show(
       context,
       initial: working.kitRule,
       simple: true,
@@ -316,7 +316,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     if (!mounted || choice == null) return;
     if (!choice) return _change(working.copyWith(end: const BudgetEnd.none()));
     final start = working.start;
-    final picked = await showAppDatePicker(
+    final picked = await AppDatePicker.show(
       context,
       initial: working.end.date ?? start.add(const Duration(days: 30)),
       first: start,
@@ -816,7 +816,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
             stroke: 14,
             value: p.usedRatio,
             expected: p.expected > 0 ? p.expectedRatio : null,
-            marker: pace == null ? null : pace / 100,
             alert: warn == null ? null : warn / 100,
             color: toneColor,
             label: over ? l.fpBudgetsOverLabel : l.fpBudgetsLeftLabel,
