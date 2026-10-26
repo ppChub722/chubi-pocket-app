@@ -6,6 +6,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/tab_nav.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -336,7 +337,10 @@ class _VersionRowState extends State<_VersionRow> {
     PackageInfo.fromPlatform()
         .then((info) {
           if (mounted) {
-            setState(() => _version = '${info.version} (${info.buildNumber})');
+            setState(
+              () => _version =
+                  '${info.version} (${ApiClient.releaseBuild(info.buildNumber)})',
+            );
           }
         })
         .catchError((Object _) {});

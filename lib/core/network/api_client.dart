@@ -91,11 +91,18 @@ class ApiClient {
     }
   }
 
+  /// The pubspec build of [raw]: a split-per-abi APK's versionCode is
+  /// 1000 × abi + build (arm64 170 → 2170).
+  static String releaseBuild(String raw) {
+    final n = int.tryParse(raw);
+    return n != null && n >= 1000 ? '${n % 1000}' : raw;
+  }
+
   static Future<String?> _platformBuild() async {
     // The web build is a dev tool: its number is pubspec's, not a release's.
     if (kIsWeb) return null;
     try {
-      return (await PackageInfo.fromPlatform()).buildNumber;
+      return releaseBuild((await PackageInfo.fromPlatform()).buildNumber);
     } catch (_) {
       return null; // no build header — the server lets it through
     }

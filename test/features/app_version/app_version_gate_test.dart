@@ -294,4 +294,12 @@ void main() {
       expect(versionRecheckDue(at, t0.add(after)), want, reason: name);
     }
   });
+
+  test('releaseBuild: a split-per-abi versionCode → the pubspec build', () {
+    expect(ApiClient.releaseBuild('170'), '170');
+    expect(ApiClient.releaseBuild('1170'), '170');
+    expect(ApiClient.releaseBuild('2170'), '170');
+    expect(ApiClient.releaseBuild('4170'), '170');
+    expect(ApiClient.releaseBuild('x'), 'x');
+  });
 }

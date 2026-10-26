@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../../../core/network/api_client.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../cubit/auth_cubit.dart';
@@ -30,7 +31,10 @@ class _SplashPageState extends State<SplashPage> {
     try {
       final info = await PackageInfo.fromPlatform();
       if (mounted) {
-        setState(() => _version = 'v${info.version} (${info.buildNumber})');
+        setState(
+          () => _version =
+              'v${info.version} (${ApiClient.releaseBuild(info.buildNumber)})',
+        );
       }
     } catch (_) {}
   }
