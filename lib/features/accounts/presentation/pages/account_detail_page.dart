@@ -897,8 +897,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       description: l.fpWalletSavedInDesc,
       children: [
         for (final b in buckets)
-          DetailRow(
-            label: b.isGoal ? b.name : l.sgv2SpareTitle,
+          AppListRow(
+            title: b.isGoal ? b.name : l.sgv2SpareTitle,
             leading: IconCodeWidget(
               iconCode: b.isGoal ? b.iconCode : null,
               size: 36,
@@ -907,8 +907,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                   : AppIcons.savingDeposit,
               fallbackColor: accent,
             ),
-            trailing: MoneyText(b.amount, symbol: symbol),
-            showChevron: true,
+            trailing: ListRowTrailing.value(
+              MoneyText(b.amount, symbol: symbol),
+            ),
             onTap: () => openPage(
               context,
               b.isGoal && b.id != null
@@ -1570,18 +1571,12 @@ class _AccountDetailViewState extends State<_AccountDetailView>
           : IdentifiersVisibility(show: list.isNotEmpty),
       children: [
         if (list.isEmpty)
-          InkWell(
+          DetailAddRow(
+            label: l.accountIdentifiersAdd,
             onTap: () {
               if (!editing) enterEdit();
               _addIdentifier();
             },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.md,
-              ),
-              child: DetailPlaceholder(l.accountIdentifiersEmpty),
-            ),
           ),
         for (final (i, id) in list.indexed)
           if (editing)

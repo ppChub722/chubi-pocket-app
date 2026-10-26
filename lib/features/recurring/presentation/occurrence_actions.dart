@@ -19,7 +19,6 @@ import '../data/recurring_link_repository.dart';
 import '../data/recurring_repository.dart';
 import '../domain/recurrence_rule.dart';
 import '../domain/recurring_item.dart';
-import 'recurring_item_actions.dart';
 
 /// Occurrences being written, so a second tap waits for the first.
 final _inFlight = <String>{};
@@ -234,8 +233,7 @@ Future<bool> applyOccurrenceTx(
 /// One occurrence in the quick create sheet (แก้เฉพาะงวดนี้): บันทึก keeps the
 /// edits on this occurrence only, ยืนยัน records the tx; บันทึกในรายการ picks
 /// an existing tx instead (linked on ยืนยันและผูก). The bottom left: ข้าม, or
-/// ยกเลิกการข้าม / ยกเลิกจ่ายแล้ว once settled. One with a tx opens the tx;
-/// one from an old BE (no slot) the old item sheet.
+/// ยกเลิกการข้าม / ยกเลิกจ่ายแล้ว once settled. One with a tx opens the tx.
 Future<void> openOccurrenceSheet(
   BuildContext context,
   RecurringItem item, {
@@ -244,16 +242,6 @@ Future<void> openOccurrenceSheet(
   final tx = item.transaction;
   if (tx != null) {
     await editTransaction(context, tx.id);
-    return;
-  }
-  // An old draft in รอยืนยัน: by slot it opens here like any due one (the BE
-  // drops the draft when it is recorded).
-  if (item.state == OccurrenceState.pending && !item.bySlot) {
-    openPage(context, '/pending');
-    return;
-  }
-  if (!item.bySlot) {
-    await editRecurringItem(context, item, onChanged: onChanged);
     return;
   }
   final l = AppLocalizations.of(context)!;
@@ -368,62 +356,6 @@ Future<void> openOccurrence(
   await openOccurrenceSheet(context, item, onChanged: onChanged);
 }
 
-/// A due occurrence's buttons in ต้องจัดการ: ยืนยัน in one tap when the
-/// amount is known, else ใส่ยอด (the sheet); ⋯ แก้เฉพาะงวดนี้ / จ่ายแล้ว /
-/// ข้าม / ผูกกับรายการที่มีอยู่. A skipped one offers ยกเลิกการข้าม. Null when
-/// there is nothing to do (recorded, paid, or an old BE's row).
-OccurrenceActions? occurrenceActionsFor(
-  BuildContext context,
-  RecurringItem item, {
-  required ValueChanged<ItemWriteResult> onChanged,
-}) {
-  if (!item.bySlot) return null;
-  final l = AppLocalizations.of(context)!;
-  if (item.state == OccurrenceState.archived) {
-    return OccurrenceActions(
-      primary: OccurrenceAction(
-        label: l.occurrenceRestore,
-        onTap: () => unawaited(_restore(context, item, onChanged)),
-      ),
-    );
-  }
-  if (item.state.settled) return null;
-  void sheet() =>
-      unawaited(openOccurrenceSheet(context, item, onChanged: onChanged));
-  final unknown = item.needsAmount || item.amount == null;
-  return OccurrenceActions(
-    primary: unknown
-        ? OccurrenceAction(
-            label: l.occurrenceEnterAmount,
-            warning: true,
-            onTap: sheet,
-          )
-        : OccurrenceAction(
-            label: l.occurrenceConfirm,
-            onTap: () => unawaited(
-              confirmOccurrence(context, item, onChanged: onChanged),
-            ),
-          ),
-    more: [
-      if (!unknown) OccurrenceAction(label: l.occurrenceEditOnly, onTap: sheet),
-      OccurrenceAction(
-        label: l.occurrenceMarkPaid,
-        onTap: () => unawaited(_paid(context, item, onChanged, paid: true)),
-      ),
-      OccurrenceAction(
-        label: l.occurrenceSkip,
-        onTap: () =>
-            unawaited(skipOccurrence(context, item, onChanged: onChanged)),
-      ),
-      OccurrenceAction(
-        label: l.occurrenceLinkExisting,
-        onTap: () =>
-            unawaited(linkExistingTx(context, item, onChanged: onChanged)),
-      ),
-    ],
-  );
-}
-
 /// A due occurrence's buttons laid out in an OccurrenceFocusCard: the main
 /// one (ยืนยัน / ใส่ยอด; a draft's ยืนยัน opens รอยืนยัน), จ่ายแล้ว, ข้าม. The
 /// rest are in its sheet (a tap on the card).
@@ -435,9 +367,6 @@ List<OccurrenceAction> occurrenceFocusActions(
   final l = AppLocalizations.of(context)!;
   void sheet() =>
       unawaited(openOccurrenceSheet(context, item, onChanged: onChanged));
-  if (!item.bySlot) {
-    return [OccurrenceAction(label: l.occurrenceConfirm, onTap: sheet)];
-  }
   final unknown = item.needsAmount || item.amount == null;
   return [
     unknown
@@ -478,21 +407,31 @@ String waitingLabel(AppLocalizations l, RecurringItem i) => needsAmountInput(i)
     ? l.fpRecurringAwaitingValue
     : l.occurrenceStateNotCreated;
 
-/// ยืนยัน ([skip] false) or ข้าม (asks first) for the picked ones, one write
-/// per occurrence. ยืนยัน records [amounts] typed in the รอใส่ยอด box; one
-/// still without an amount is recorded as 0 after a warning, to fix later.
-/// A snack says how many went through.
+/// What ต้องจัดการ does to the picked rows (confirm / skip / markPaid).
+typedef SettleAction = OccurrenceBulk;
+
+/// The amount ยืนยัน records [i] with: typed in its row, else its own; null
+/// while it has none (such a row can't be confirmed, only skipped or marked
+/// paid).
+double? settleAmount(RecurringItem i, Map<String, double> typed) {
+  final t = typed[i.id];
+  if (t != null && t > 0) return t;
+  return needsAmountInput(i) ? null : i.amount;
+}
+
+/// ยืนยัน / ข้าม (asks first) / จ่ายแล้ว for the picked ones, in one bulk
+/// call (per [RecurringRepository.maxBulk]). ยืนยัน records [amounts] typed
+/// in the rows and leaves out the ones still without an amount. A snack says
+/// how many went through and how many were left.
 Future<void> settleSelected(
   BuildContext context,
   List<RecurringItem> items, {
-  required bool skip,
+  required SettleAction action,
   required ValueChanged<ItemWriteResult> onChanged,
   Map<String, double> amounts = const {},
 }) async {
   final l = AppLocalizations.of(context)!;
-  double? amountOf(RecurringItem i) =>
-      amounts[i.id] ?? (needsAmountInput(i) ? 0 : null);
-  if (skip) {
+  if (action == SettleAction.skip) {
     final ok = await showConfirmDialog(
       context,
       title: l.occurrenceSkipSelectedTitle(items.length),
@@ -500,57 +439,71 @@ Future<void> settleSelected(
       destructive: true,
     );
     if (!ok || !context.mounted) return;
-  } else {
-    final zero = items.where((i) => amountOf(i) == 0).length;
-    if (zero > 0) {
-      final ok = await showConfirmDialog(
-        context,
-        title: l.occurrenceZeroTitle(zero),
-        message: l.occurrenceZeroBody,
-        confirmLabel: l.occurrenceConfirm,
-      );
-      if (!ok || !context.mounted) return;
-    }
   }
+  final noAmount = action == SettleAction.confirm
+      ? [
+          for (final i in items)
+            if (settleAmount(i, amounts) == null) i,
+        ]
+      : const <RecurringItem>[];
   final repo = RecurringRepository.of(context);
   final accounts = context.read<AccountsCubit>();
   final messenger = ScaffoldMessenger.of(context);
+  final send = [
+    for (final i in items)
+      if (!noAmount.contains(i) && _inFlight.add(i.id)) i,
+  ];
   var done = 0;
+  var refused = 0;
   ApiException? failed;
-  for (final i in items) {
-    if (!_inFlight.add(i.id)) continue;
-    try {
-      final r = skip
-          ? await repo.skipOccurrence(i.ruleId!, i.slot!)
-          : await repo.confirmOccurrence(
-              i.ruleId!,
-              i.slot!,
-              amount: amountOf(i),
-            );
+  try {
+    for (var at = 0; at < send.length; at += RecurringRepository.maxBulk) {
+      final chunk = send.skip(at).take(RecurringRepository.maxBulk).toList();
+      final r = await repo.settleMany(action, [
+        for (final i in chunk)
+          (
+            ruleId: i.ruleId!,
+            slot: i.slot!,
+            amount: action == SettleAction.confirm
+                ? settleAmount(i, amounts)
+                : null,
+          ),
+      ]);
       accounts.patchBalances(r.balances);
       onChanged(r);
-      done++;
-    } on ApiException catch (e) {
-      failed ??= e;
-    } finally {
-      _inFlight.remove(i.id);
+      done += chunk.length - r.leftOut.length;
+      refused += r.leftOut.length;
     }
+  } on ApiException catch (e) {
+    failed = e;
+  } finally {
+    _inFlight.removeAll(send.map((i) => i.id));
   }
   if (done > 0) HapticFeedback.mediumImpact();
   final parts = [
     if (done > 0)
-      skip ? l.occurrenceSkippedCount(done) : l.occurrenceSavedCount(done),
+      switch (action) {
+        SettleAction.skip => l.occurrenceSkippedCount(done),
+        SettleAction.markPaid => l.occurrencePaidCount(done),
+        SettleAction.confirm => l.occurrenceSavedCount(done),
+      },
+    if (noAmount.isNotEmpty) l.occurrenceLeftOut(noAmount.length),
+    if (refused > 0) l.occurrenceLeftOutRefused(refused),
     if (failed != null) failed.message,
   ];
   if (parts.isEmpty) return;
   showAppSnackBarOn(
     messenger,
     parts.join(' | '),
-    tone: failed != null ? Tone.danger : Tone.success,
+    tone: failed != null
+        ? Tone.danger
+        : noAmount.isNotEmpty || refused > 0
+        ? Tone.warning
+        : Tone.success,
   );
 }
 
-/// A rule's all-at-once buttons for its [DueGroupHeader]: ยืนยันทั้งหมด (the
+/// A rule's all-at-once buttons: ยืนยันทั้งหมด (the
 /// ones with an amount; the rest stay, a snack says how many), ⋯
 /// จ่ายแล้วทั้งหมด / ข้ามทั้งหมด.
 OccurrenceActions settleAllActions(

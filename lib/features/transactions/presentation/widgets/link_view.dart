@@ -6,6 +6,7 @@ import '../../../../ui/ui.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
 import '../../domain/refs.dart';
 import '../../domain/transaction.dart';
+import '../../domain/transaction_type.dart';
 import 'splits_section.dart';
 
 /// The tx detail's ผูกกับ in VIEW mode (0.4.0-3): one summary row per link,
@@ -33,14 +34,18 @@ class LinkViewRows extends StatelessWidget {
     final payer = bill?.payer;
     final members = bill?.members ?? const <BillShare>[];
     String money(double v) => moneyString(context, v);
+    final income = tx.type == TransactionType.income;
     final rows = [
       if (paid != null)
         InfoRow(
           key: const ValueKey('linkViewPaid'),
-          label: l.txLinkViewPaidLabel,
+          label: income ? l.txLinkViewGotLabel : l.txLinkViewPaidLabel,
           value: [
             '${paid.person.name} ${money(paid.amount)}',
-            if (paid.myPaid > 0.005) l.txLinkViewMyPaid(money(paid.myPaid)),
+            if (paid.myPaid > 0.005)
+              income
+                  ? l.txLinkViewMyGot(money(paid.myPaid))
+                  : l.txLinkViewMyPaid(money(paid.myPaid)),
           ].join(' | '),
           showChevron: true,
           onTap: () => _show(context, _paidCard(context, l, paid)),
@@ -50,7 +55,9 @@ class LinkViewRows extends StatelessWidget {
           key: const ValueKey('linkViewEvent'),
           label: l.txLinkViewEventLabel,
           value: [
-            payer.isMe ? l.txLinkViewIPaid : l.txLinkViewTheyPaid(payer.name),
+            payer.isMe
+                ? (income ? l.txLinkViewIGot : l.txLinkViewIPaid)
+                : l.txLinkViewTheyPaid(payer.name),
             l.txLinkViewPeople(members.length),
           ].join(' | '),
           showChevron: true,
@@ -92,13 +99,16 @@ class LinkViewRows extends StatelessWidget {
       openPage(context, debtPersonPath(p.key));
     }
 
+    final income = tx.type == TransactionType.income;
     return ShareCard(
       key: const ValueKey('linkViewPaidCard'),
-      title: l.txLinkCardPaidTitle,
+      title: income ? l.txLinkCardGotTitle : l.txLinkCardPaidTitle,
       rows: [
         ShareRow(
           avatar: MyAvatar(fallbackName: l.txLinkCardMe),
-          name: SplitRowName.muted(l.txLinkCardMyPaid),
+          name: SplitRowName.muted(
+            income ? l.txLinkCardMyGot : l.txLinkCardMyPaid,
+          ),
           amount: _amount(p.myPaid),
         ),
         ShareRow(
@@ -117,7 +127,10 @@ class LinkViewRows extends StatelessWidget {
           amount: _amount(p.amount),
         ),
       ],
-      status: ShareStatus(l.txLinkCardPaidOk, ok: true),
+      status: ShareStatus(
+        income ? l.txLinkCardGotOk : l.txLinkCardPaidOk,
+        ok: true,
+      ),
     );
   }
 
@@ -142,7 +155,11 @@ class LinkViewRows extends StatelessWidget {
               },
       ),
       rows: [
-        ShareSubhead(title: l.txLinkCardWhoPaid),
+        ShareSubhead(
+          title: tx.type == TransactionType.income
+              ? l.txLinkCardWhoGot
+              : l.txLinkCardWhoPaid,
+        ),
         ShareRow(
           avatar: _memberMark(payer, l),
           name: SplitRowName.picked(nameOf(payer)),

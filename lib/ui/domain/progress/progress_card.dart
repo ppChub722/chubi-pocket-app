@@ -9,6 +9,11 @@ import '../icons/icon_code.dart';
 import '../icons/icon_code_widget.dart';
 import 'progress_tone.dart';
 
+/// A budget list row: icon, title / caption and [trailing] (left / over);
+/// the bar with [percentText] as a pill on the fill, the [expected] capsule
+/// and the [paceBubble]; under it the [badge] + [expectedLabel] and [label].
+/// [ProgressCard.compact] is a period row: [badge] beside the title, [label]
+/// and [percentText] under a thinner bar.
 class ProgressCard extends StatelessWidget {
   const ProgressCard({
     required this.title,
@@ -21,17 +26,17 @@ class ProgressCard extends StatelessWidget {
     this.expected,
     this.tone = ProgressTone.neutral,
     this.label,
-    this.overLabel,
-    this.struckLabel,
     this.percentText,
     this.onTap,
     this.dimmed = false,
     this.trailing,
     this.paceMarker,
     this.paceBubble,
-    this.alignWithTitle = false,
+    this.expectedLabel,
     super.key,
-  }) : compact = false,
+  }) : overLabel = null,
+       struckLabel = null,
+       compact = false,
        skeleton = false,
        skeletonIcon = true;
 
@@ -51,11 +56,11 @@ class ProgressCard extends StatelessWidget {
     this.trailing,
     this.paceMarker,
     this.paceBubble,
-    this.alignWithTitle = false,
     super.key,
   }) : iconCode = null,
        fallbackIcon = null,
        leading = null,
+       expectedLabel = null,
        compact = true,
        skeleton = false,
        skeletonIcon = true;
@@ -80,7 +85,7 @@ class ProgressCard extends StatelessWidget {
        trailing = null,
        paceMarker = null,
        paceBubble = null,
-       alignWithTitle = false,
+       expectedLabel = null,
        onTap = null,
        dimmed = false,
        skeleton = true,
@@ -108,10 +113,11 @@ class ProgressCard extends StatelessWidget {
 
   final double? paceMarker;
 
-  /// Shown over the [paceMarker] all the time ("plan to date ฿1,300").
+  /// Shown over the [paceMarker] all the time ("แผน ฿1,300").
   final String? paceBubble;
 
-  final bool alignWithTitle;
+  /// The list row's legend for the [expected] capsule ("รอจ่าย ฿600").
+  final String? expectedLabel;
   final bool compact;
   final bool skeleton;
   final bool skeletonIcon;
@@ -166,7 +172,7 @@ class ProgressCard extends StatelessWidget {
               ],
             ),
           ),
-          if (badge != null) ...[
+          if (compact && badge != null) ...[
             const SizedBox(width: AppSpacing.sm),
             ConstrainedBox(
               constraints: BoxConstraints(maxWidth: box.maxWidth * 0.35),
@@ -252,7 +258,6 @@ class ProgressCard extends StatelessWidget {
             ),
           );
 
-    final indent = alignWithTitle && hasTile ? _tile + AppSpacing.md : 0.0;
     final body = Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
@@ -264,25 +269,18 @@ class ProgressCard extends StatelessWidget {
         children: [
           header,
           const SizedBox(height: AppSpacing.sm),
-          Padding(
-            padding: EdgeInsets.only(left: indent),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ProgressRow(
-                  value: value,
-                  expected: expected,
-                  color: color,
-                  overColor: color,
-                  height: compact ? 6 : 8,
-                  marker: paceMarker,
-                  markerBubble: paceBubble,
-                ),
-                footer,
-              ],
-            ),
+          ProgressRow(
+            value: value,
+            expected: expected,
+            color: color,
+            overColor: color,
+            height: compact ? 6 : 8,
+            marker: paceMarker,
+            markerBubble: paceBubble,
+            fillLabel: compact ? null : percentText,
+            expectedCapsule: !compact,
           ),
+          if (compact) footer else _listFooter(context, color, small),
         ],
       ),
     );
@@ -292,6 +290,64 @@ class ProgressCard extends StatelessWidget {
       child: onTap == null ? body : InkWell(onTap: onTap, child: body),
     );
     return dimmed ? Opacity(opacity: 0.55, child: row) : row;
+  }
+
+  /// Under a list row's bar: the [badge] and the [expectedLabel] legend on
+  /// the left, [label] ("ใช้ ฿x จาก ฿y") at the far right.
+  Widget _listFooter(BuildContext context, Color color, TextStyle? small) {
+    final expectedLabel = this.expectedLabel;
+    final left = [
+      ?badge,
+      if (expectedLabel != null)
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 14,
+              height: 6,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Flexible(
+              child: Text(
+                expectedLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: small,
+              ),
+            ),
+          ],
+        ),
+    ];
+    if (left.isEmpty && label == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: Row(
+        children: [
+          Expanded(
+            child: Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.xs,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: left,
+            ),
+          ),
+          if (label != null) ...[
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              label!,
+              maxLines: 1,
+              style: small?.copyWith(
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   Widget _skeleton() => Padding(
@@ -352,26 +408,29 @@ class ProgressRemainder extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
-    final small = Theme.of(context).textTheme.bodySmall;
-    return Text.rich(
-      TextSpan(
-        children: [
-          TextSpan(
-            text: '$label ',
-            style: small?.copyWith(
-              color: over ? palette.error : scheme.onSurfaceVariant,
-            ),
+    final text = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          style: text.labelSmall?.copyWith(
+            color: over ? palette.error : scheme.onSurfaceVariant,
           ),
-          TextSpan(
-            text: amount,
-            style: small?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: over ? palette.error : scheme.onSurface,
-            ),
+        ),
+        Text(
+          amount,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: text.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: over ? palette.error : scheme.onSurface,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
-        ],
-      ),
-      maxLines: 1,
+        ),
+      ],
     );
   }
 }

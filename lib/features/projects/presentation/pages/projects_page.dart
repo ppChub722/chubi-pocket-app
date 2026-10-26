@@ -22,7 +22,7 @@ class ProjectsPage extends StatefulWidget {
 
 class _ProjectsPageState extends State<ProjectsPage> {
   final _search = TextEditingController();
-  final _toolbarOpen = ToolbarToggleState.of('events');
+  final _toolbarOpen = AppListToolbarState.of('events');
   Timer? _debounce;
   final _scroll = ScrollController();
 
@@ -159,18 +159,17 @@ class _ProjectsPageState extends State<ProjectsPage> {
     ];
     List<Widget> section(String title, List<Project> rows) => [
       if (rows.isNotEmpty) ...[
-        SectionHeader(
+        AppListHeader(
           key: ValueKey('eventsSection-$title'),
           title: title,
           count: rows.length,
-          trailing: AppText(
+          trailing: ListHeaderTrailing.text(
             l.fpEventsRowShare(
               moneyString(
                 context,
                 rows.fold<double>(0, (s, p) => s + p.myShare),
               ),
             ),
-            role: AppTextRole.caption,
           ),
         ),
         for (final p in rows) _row(l, p),
@@ -206,7 +205,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
         actions: [
           ListenableBuilder(
             listenable: _search,
-            builder: (context, _) => ToolbarToggleButton(
+            builder: (context, _) => AppListToolbarToggle(
               state: _toolbarOpen,
               filtered:
                   _search.text.isNotEmpty ||
@@ -277,12 +276,14 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
   Widget _toolbar(AppLocalizations l, ProjectsState state) {
     final cubit = context.read<ProjectsCubit>();
-    return ListToolbar(
-      collapse: _toolbarOpen,
-      searchController: _search,
-      searchHint: l.projectsSearchHint,
-      onSearchChanged: _onSearch,
-      chips: [
+    return AppListToolbar(
+      state: _toolbarOpen,
+      search: ListToolbarSearch(
+        controller: _search,
+        hint: l.projectsSearchHint,
+        onChanged: _onSearch,
+      ),
+      filters: [
         AppChip(
           label: l.transactionFormTagsLabel,
           icon: AppIcons.tag,

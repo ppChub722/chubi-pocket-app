@@ -18,7 +18,7 @@ Future<CloseGoalChoice?> showCloseGoalDialog(
   required String toSpareLabel,
   required String backToWalletsLabel,
   required String cancelLabel,
-  String currencySymbol = '฿',
+  String? currencySymbol,
 }) {
   return showDialog<CloseGoalChoice>(
     context: context,
@@ -44,7 +44,7 @@ class CloseGoalDialog extends StatelessWidget {
     required this.toSpareLabel,
     required this.backToWalletsLabel,
     required this.cancelLabel,
-    this.currencySymbol = '฿',
+    this.currencySymbol,
     super.key,
   });
 
@@ -55,7 +55,7 @@ class CloseGoalDialog extends StatelessWidget {
   final String toSpareLabel;
   final String backToWalletsLabel;
   final String cancelLabel;
-  final String currencySymbol;
+  final String? currencySymbol;
 
   @override
   Widget build(BuildContext context) {

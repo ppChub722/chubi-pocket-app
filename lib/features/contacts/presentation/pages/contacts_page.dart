@@ -156,10 +156,12 @@ class _ContactsPageState extends State<ContactsPage> {
               sidePadding: 0,
               topInset: 0,
               header: [
-                ListToolbar(
-                  searchController: _searchController,
-                  searchHint: l.contactsSearchHint,
-                  onSearchChanged: (v) => setState(() => _query = v),
+                AppListToolbar(
+                  search: ListToolbarSearch(
+                    controller: _searchController,
+                    hint: l.contactsSearchHint,
+                    onChanged: (v) => setState(() => _query = v),
+                  ),
                   trailing: OptionMenuAnchor<_ContactSort>(
                     selected: _sort,
                     onSelected: (v) => setState(() => _sort = v),
@@ -174,7 +176,7 @@ class _ContactsPageState extends State<ContactsPage> {
                       onTap: toggle,
                     ),
                   ),
-                  chips: [
+                  filters: [
                     OptionMenuAnchor<String>(
                       selected: state.statusFilter,
                       onSelected: (v) =>

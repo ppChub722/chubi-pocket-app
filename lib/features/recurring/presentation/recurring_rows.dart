@@ -128,7 +128,10 @@ class RecurringRow extends StatelessWidget {
       // No amount yet (a bill): nothing on the right.
       trailing: known
           ? ListRowTrailing.value(
-              MoneyText(signedOf(r.type, shown), tone: toneOf(r.type)),
+              MoneyText(
+                signedOf(r.type, shown, saving: r.isSaving),
+                tone: toneOf(r.type, saving: r.isSaving),
+              ),
             )
           : null,
       footer: footer,
@@ -178,11 +181,14 @@ List<ChainDot>? endChainDots(Recurring r) {
   return dots;
 }
 
-num signedOf(TransactionType type, double amount) =>
-    type == TransactionType.expense ? -amount : amount;
+/// ออมเงิน ([saving]) stays plain: the money moves to a goal, it isn't spent.
+num signedOf(TransactionType type, double amount, {bool saving = false}) =>
+    !saving && type == TransactionType.expense ? -amount : amount;
 
-MoneyTone toneOf(TransactionType type) =>
-    type == TransactionType.transfer ? MoneyTone.plain : MoneyTone.signed;
+MoneyTone toneOf(TransactionType type, {bool saving = false}) =>
+    saving || type == TransactionType.transfer
+    ? MoneyTone.plain
+    : MoneyTone.signed;
 
 /// An occurrence's wallet as the list rows' wallet chip, by its name.
 ListRowChip? occurrenceWalletChip(BuildContext context, AccountRef? account) =>

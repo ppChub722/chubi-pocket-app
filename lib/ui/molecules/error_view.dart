@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/app_button.dart';
 import '../atoms/ui_config.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
@@ -46,10 +47,10 @@ class ErrorView extends StatelessWidget {
               ),
               if (onRetry != null) ...[
                 const SizedBox(height: AppSpacing.lg),
-                FilledButton.icon(
+                AppButton(
+                  label: config.strings.retry,
                   onPressed: onRetry,
-                  icon: const Icon(AppIcons.refresh),
-                  label: Text(config.strings.retry),
+                  icon: AppIcons.refresh,
                 ),
               ],
             ],

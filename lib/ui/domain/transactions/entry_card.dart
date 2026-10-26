@@ -22,7 +22,7 @@ class EntryCard extends StatelessWidget {
     this.onTypeChanged,
     this.onPickDate,
     this.missing = const {},
-    this.symbol = '฿',
+    this.symbol,
     this.autofocus = false,
     this.compact = false,
     this.amountError,
@@ -66,7 +66,8 @@ class EntryCard extends StatelessWidget {
 
   final Set<EntryField> missing;
 
-  final String symbol;
+  /// Null = the user's currency.
+  final String? symbol;
   final bool autofocus;
   final bool compact;
   final String? amountError;

@@ -177,6 +177,7 @@ class SettingDropdownRow<T> extends StatefulWidget {
     this.leading,
     this.icon,
     this.iconColor,
+    this.submits = true,
     super.key,
   });
 
@@ -187,6 +188,9 @@ class SettingDropdownRow<T> extends StatefulWidget {
   final ValueChanged<T>? onSelected;
   final String? helper;
   final Widget? leading;
+
+  /// A pick is saved at once, so the row is read-only while offline.
+  final bool submits;
 
   /// The chosen value's icon, in the button before its label.
   final IconData? icon;
@@ -205,7 +209,9 @@ class _SettingDropdownRowState<T> extends State<SettingDropdownRow<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final cb = widget.onSelected;
+    final cb = widget.submits && ConnectionScope.isOffline(context)
+        ? null
+        : widget.onSelected;
     return DetailRow(
       leading: widget.leading,
       label: widget.label,
@@ -331,10 +337,14 @@ class SettingMenuRow<T> extends StatefulWidget {
     this.helper,
     this.note,
     this.compact = false,
+    this.submits = true,
     super.key,
   });
 
   final String label;
+
+  /// A pick is saved at once, so the row is read-only while offline.
+  final bool submits;
 
   /// Small words after the value, e.g. "= ฿1,600" for a percentage.
   final String? note;
@@ -398,6 +408,11 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
     super.dispose();
   }
 
+  ValueChanged<T>? get _onSelected =>
+      widget.submits && ConnectionScope.isOffline(context)
+      ? null
+      : widget.onSelected;
+
   bool get _isCustomValue {
     final v = widget.selected;
     return v != null && !widget.options.any((o) => o.value == v);
@@ -416,7 +431,7 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
   void _commit() {
     final value = widget.custom?.parse(_text.text.trim());
     setState(() => _typing = false);
-    final cb = widget.onSelected;
+    final cb = _onSelected;
     if (value != null && cb != null) {
       cb(value);
     } else {
@@ -437,7 +452,7 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
           fontFeatures: const [FontFeature.tabularFigures()],
         );
     final focused = _focus.hasFocus;
-    final enabled = widget.onSelected != null;
+    final enabled = _onSelected != null;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: enabled ? _focus.requestFocus : null,
@@ -499,7 +514,7 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
   @override
   Widget build(BuildContext context) {
     final custom = widget.custom;
-    final cb = widget.onSelected;
+    final cb = _onSelected;
     // The menu hangs under the value, not under the whole row.
     final value = OptionMenuAnchor<T>(
       controller: _menu,

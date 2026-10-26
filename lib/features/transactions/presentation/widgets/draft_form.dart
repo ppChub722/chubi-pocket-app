@@ -393,6 +393,8 @@ class DraftFormController extends ChangeNotifier {
     _categoryByType[type] = category;
     type = t;
     category = _categoryByType[t];
+    // An event income is always mine: only an expense has another payer.
+    if (t == TransactionType.income) link.eventPayer = null;
     notifyListeners();
   }
 
@@ -468,9 +470,13 @@ class DraftFormController extends ChangeNotifier {
           ? LinkMode.split
           : LinkMode.personal);
 
-  /// The tab picked; the tabs are an expense's only (income / transfer go by
-  /// what the form holds).
-  LinkMode? get pickedTab => type == TransactionType.expense ? link.mode : null;
+  /// The tab picked; a transfer has no tabs (it goes by what the form holds).
+  LinkMode? get pickedTab => hasLinkTabs(type) ? link.mode : null;
+
+  /// Expense and income have the ผูกกับ tabs; on income the payer is who
+  /// received it for me (รับแทน).
+  static bool hasLinkTabs(TransactionType t) =>
+      t == TransactionType.expense || t == TransactionType.income;
 
   /// แบ่ง, จ่ายแทน and อีเวนต์ are one tab: [LinkMode.split] means "the bill
   /// with people", which is อีเวนต์ once an event is added, else จ่ายแทน when
@@ -705,7 +711,7 @@ class DraftFormController extends ChangeNotifier {
   /// + amount, อีเวนต์'s payer + members (by member id, else contact / name).
   void prefillLinkFromDraft(PendingDraft d, DraftResolved r) {
     final mode = r.linkMode;
-    if (mode == null || type != TransactionType.expense) return;
+    if (mode == null || !hasLinkTabs(type)) return;
     link
       ..mode = mode
       ..paidBy = null
@@ -1434,6 +1440,7 @@ class _DraftFormState extends State<DraftForm> {
                             ? l.txTitleHintIncome
                             : l.txTitleHintExpense),
                   flowRow: isTransfer ? _transferFlow(l) : _entryCards(l),
+                  dateNote: _futureNote(l, editing: true),
                 ),
               )
             else
@@ -1447,6 +1454,7 @@ class _DraftFormState extends State<DraftForm> {
                     ? _titlePlaceholder(l)
                     : null,
                 dateLabel: _dayLabel(context, _c.date),
+                dateNote: _futureNote(l, editing: editing),
                 onPickDate: _pickDate,
                 editing: editing,
                 autofocus: widget.autofocus && !widget.readOnly,
@@ -1522,10 +1530,31 @@ class _DraftFormState extends State<DraftForm> {
     );
   }
 
-  /// The ผูกกับ tab in use; null = no tabs here (not quick create's new
-  /// expense).
+  /// A date after today: the balances count it only from that day. Editing
+  /// says so in a hint; viewing shows "อีก N วัน" as a chip.
+  Widget? _futureNote(AppLocalizations l, {required bool editing}) {
+    if (!isAfterToday(_c.date)) return null;
+    final when = dueLabel(l, date: _c.date, withDate: false);
+    if (!editing) {
+      return AppChip(
+        key: const ValueKey('txFutureChip'),
+        label: when,
+        size: ChipSize.mini,
+        tone: AppChipTone.info,
+        selected: true,
+      );
+    }
+    return HintLine(
+      key: const ValueKey('txFutureHint'),
+      icon: AppIcons.scheduled,
+      text: l.txFutureHint(when),
+    );
+  }
+
+  /// The ผูกกับ tab in use; null = no tabs here (not quick create, or a
+  /// transfer).
   LinkMode? get _linkMode =>
-      widget.linkTabs && _c.type == TransactionType.expense
+      widget.linkTabs && DraftFormController.hasLinkTabs(_c.type)
       ? _c.linkMode(
           hasEvent: widget.chipLayout
               ? _c.projectId != null
@@ -1540,9 +1569,13 @@ class _DraftFormState extends State<DraftForm> {
       return null;
     }
     final out = _c.walletOutFor(m);
-    if (out <= 0.005) return l.txLinkWalletNotOut;
+    final income = _c.type == TransactionType.income;
+    if (out <= 0.005) {
+      return income ? l.txLinkWalletNotIn : l.txLinkWalletNotOut;
+    }
     if (out < _c.amountValue - 0.005) {
-      return l.txLinkWalletPart(moneyString(context, out));
+      final money = moneyString(context, out);
+      return income ? l.txLinkWalletPartIn(money) : l.txLinkWalletPart(money);
     }
     return null;
   }

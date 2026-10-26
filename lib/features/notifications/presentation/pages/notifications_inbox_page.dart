@@ -189,7 +189,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
               final day = '${local.year}-${local.month}-${local.day}';
               if (day != lastDay) {
                 lastDay = day;
-                rows.add(DateGroupHeader(label: _dayLabel(ctx, local)));
+                rows.add(AppListHeader(title: _dayLabel(ctx, local)));
               }
               final tile = NotificationTile(
                 notification: n,

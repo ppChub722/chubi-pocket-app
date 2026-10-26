@@ -994,9 +994,14 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         if (active)
           HeroFactList(
             facts: [
+              // As on a goal with a target: this month's saved / its plan
+              // (the goal's saving rules).
               HeroFact(
                 l.fpGoalsTileSaved,
-                moneyString(context, g.monthSaved, symbol: symbol),
+                (g.monthPlan ?? 0) > 0
+                    ? '${moneyString(context, g.monthSaved, symbol: symbol)}'
+                          ' / ${moneyString(context, g.monthPlan!, symbol: symbol)}'
+                    : moneyString(context, g.monthSaved, symbol: symbol),
                 icon: AppIcons.savings,
               ),
             ],
@@ -1353,8 +1358,8 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final locale = Localizations.localeOf(context).languageCode;
     return [
       for (final MapEntry(key: date, value: entries) in days.entries) ...[
-        DateGroupHeader(
-          label: switch (DateFormatter.parseDay(date)) {
+        AppListHeader(
+          title: switch (DateFormatter.parseDay(date)) {
             final day? => DateFormatter.friendly(
               day,
               today: l.commonToday,
@@ -1363,7 +1368,12 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
             ),
             null => date,
           },
-          total: entries.fold<double>(0, (sum, e) => sum + signed(e)),
+          trailing: ListHeaderTrailing.value(
+            MoneyText(
+              entries.fold<double>(0, (sum, e) => sum + signed(e)),
+              tone: MoneyTone.signed,
+            ),
+          ),
         ),
         for (final e in entries) _entryRow(l, e),
       ],
@@ -1548,6 +1558,8 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final theme = Theme.of(context);
     return SectionCard(
       title: l.sgPlanSection,
+      // Editing has the due date only; it says itself.
+      description: widget.isCreate ? l.sgPlanSectionDesc : null,
       children: [
         DetailRow(
           label: l.savingGoalFormDeadlineLabel,

@@ -40,6 +40,7 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.iconColor,
     this.trailingIcon,
+    this.color,
     this.variant = AppButtonVariant.primary,
     this.size = AppButtonSize.regular,
     this.loading = false,
@@ -57,6 +58,10 @@ class AppButton extends StatelessWidget {
 
   /// After the label, e.g. ▾ on a button that opens a menu.
   final IconData? trailingIcon;
+
+  /// Text and outlined only: the label / border colour in place of primary,
+  /// e.g. a tone's colour on a tinted message.
+  final Color? color;
   final AppButtonVariant variant;
   final AppButtonSize size;
   final bool loading;
@@ -141,8 +146,10 @@ class AppButton extends StatelessWidget {
             tapTargetSize: tapTarget,
             shape: shape,
             visualDensity: density,
+            foregroundColor: color,
+            side: color == null ? null : BorderSide(color: color!),
           ),
-          child: _content(scheme.primary),
+          child: _content(color ?? scheme.primary),
         );
       case AppButtonVariant.text:
         button = TextButton(
@@ -154,8 +161,9 @@ class AppButton extends StatelessWidget {
             tapTargetSize: tapTarget,
             shape: shape,
             visualDensity: density,
+            foregroundColor: color,
           ),
-          child: _content(scheme.primary),
+          child: _content(color ?? scheme.primary),
         );
       case AppButtonVariant.destructive:
         button = FilledButton(

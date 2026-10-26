@@ -243,30 +243,35 @@ class _RecurringPage extends StatelessWidget {
           ),
         ),
         HubDemo(
-          title: 'DueGroupHeader + OccurrenceActions — a head with actions',
+          title: 'OccurrenceActions + DueMoreRow',
           note:
-              'A head inside a DueCard with a main button and the rest behind '
-              '⋯ (OccurrenceActions; the detail page\'s focus card and the ⋯ '
-              'menu use OccurrenceAction too). DueMoreRow: "ดูทั้ง n งวด ›".',
-          child: DueCard(
+              'A main button and the rest behind ⋯ (the detail page\'s focus '
+              'card and the ⋯ menu use OccurrenceAction too). DueMoreRow: '
+              '"ดูทั้ง n งวด ›".',
+          child: const DueCard(
             title: 'ต้องจัดการ',
             trailing: '24',
             children: [
-              DueGroupHeader(
-                label: 'Netflix',
-                caption: 'ตั้งแต่ พ.ย. 2024 | 24 งวด',
-                actions: OccurrenceActions(
-                  primary: const OccurrenceAction(
-                    label: 'ยืนยันทั้งหมด',
-                    onTap: _noop,
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.sm,
+                ),
+                child: Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: OccurrenceActions(
+                    primary: OccurrenceAction(
+                      label: 'ยืนยันทั้งหมด',
+                      onTap: _noop,
+                    ),
+                    more: [
+                      OccurrenceAction(label: 'จ่ายแล้วทั้งหมด', onTap: _noop),
+                      OccurrenceAction(label: 'ข้ามทั้งหมด', onTap: _noop),
+                    ],
                   ),
-                  more: const [
-                    OccurrenceAction(label: 'จ่ายแล้วทั้งหมด', onTap: _noop),
-                    OccurrenceAction(label: 'ข้ามทั้งหมด', onTap: _noop),
-                  ],
                 ),
               ),
-              const DueMoreRow(label: 'ดูทั้ง 24 งวด', onTap: _noop),
+              DueMoreRow(label: 'ดูทั้ง 24 งวด', onTap: _noop),
             ],
           ),
         ),
@@ -319,7 +324,7 @@ class _RecurringPage extends StatelessWidget {
               'One card for what to do next. warning: ต้องจัดการ head, the '
               'oldest due one big (CalendarTile in warning) with its buttons '
               '(the first filled; ใส่ยอด in warning), then footer rows '
-              '(DueGroupHeader, DueMoreRow, OccurrenceFocusNext = ครั้งถัดไป '
+              '(DueMoreRow, OccurrenceFocusNext = ครั้งถัดไป '
               'as a line). Quiet: the next occurrence with แก้ยอด / เลื่อนวัน '
               '/ ข้าม.',
           child: Builder(
@@ -963,6 +968,8 @@ class _PickDemoState extends State<_PickDemo> {
       total: ids.length,
       selectLabel: '$name ${ids.length}',
       skipLabel: 'ข้ามที่เลือก',
+      paidLabel: 'จ่ายแล้วที่เลือก',
+      onPaid: () => setState(() => _picked.removeAll(ids)),
       confirmLabel: n == 0 ? 'ยืนยันที่เลือก' : 'ยืนยันที่เลือก ($n)',
       onSelectAll: () => setState(() {
         if (n == ids.length) {

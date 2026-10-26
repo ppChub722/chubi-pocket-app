@@ -17,7 +17,7 @@ enum AppInputSize {
 
   title(valueRow: 44, valueBaseline: 32),
 
-  hero(valueRow: 48, valueBaseline: 38);
+  hero(valueRow: 44, valueBaseline: 34);
 
   const AppInputSize({required this.valueRow, required this.valueBaseline});
 

@@ -612,9 +612,6 @@ abstract final class ContactPicker {
             settledLabel: l.debtSettledLabel,
             currencySymbol: symbol,
           );
-    String? owingLine(PersonBalance? p) => !withDebt || p == null || p.net == 0
-        ? null
-        : l.debtsOpenCount(p.openCount);
 
     final rows = <({PickerItem item, int? debtOrder})>[];
     final owing = <String>{};
@@ -632,9 +629,7 @@ abstract final class ContactPicker {
         PickerItem(
           id: c.id,
           title: c.name,
-          subtitle:
-              owingLine(p) ??
-              (about.isNotEmpty ? about : (email.isEmpty ? null : email)),
+          subtitle: about.isNotEmpty ? about : (email.isEmpty ? null : email),
           leading: _mark(
             c.name,
             c.isLinked ? PersonLevel.linked : PersonLevel.contact,
@@ -659,7 +654,6 @@ abstract final class ContactPicker {
         PickerItem(
           id: p.key,
           title: p.person.name,
-          subtitle: owingLine(p),
           leading: _mark(p.person.name, PersonLevel.name, p.person.iconCode),
           trailing: trailing(p),
           data: p,

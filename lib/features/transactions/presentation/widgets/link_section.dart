@@ -4,6 +4,7 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../contacts/presentation/widgets/contact_picker.dart';
 import '../../domain/link_draft.dart';
+import '../../domain/transaction_type.dart';
 import 'draft_form.dart';
 import 'splits_section.dart';
 
@@ -159,6 +160,10 @@ class _LinkSectionState extends State<LinkSection> {
     final bill = _c.amountValue;
     final members = _c.eventMembers;
     final payer = event ? link.eventPayer : link.paidBy;
+    // An income: the payer is who received it (รับแทน); an event income is
+    // always mine.
+    final income = _c.type == TransactionType.income;
+    final canPayOthers = !(event && income);
     void setPayer(LinkPerson? p) =>
         event ? _c.setEventPayer(p) : _c.setPaidBy(p);
 
@@ -229,7 +234,7 @@ class _LinkSectionState extends State<LinkSection> {
           }
         },
         paid: paid,
-        onPay: paid ? null : () => setPayer(person),
+        onPay: paid || !canPayOthers ? null : () => setPayer(person),
         canPaidBack: paidBackAllowed && !paid,
         paidBack: _c.isPaidBack(person),
         onPaidBack: () => _c.togglePaidBack(person),
@@ -255,6 +260,7 @@ class _LinkSectionState extends State<LinkSection> {
 
     return BillPeopleCard(
       key: ValueKey(event ? 'linkCardEvent' : 'linkCardSplit'),
+      payLabel: income ? l.evbReceives : null,
       top: _eventRow(l),
       title: l.evbPeople((event ? members.length : _c.splits.length) + 1),
       people: [
@@ -268,7 +274,7 @@ class _LinkSectionState extends State<LinkSection> {
             amount: link.eventShareOf(p, bill, members),
             onAmount: (v) => _c.setEventShare(p, v),
             paid: p == payer,
-            onPay: p == payer ? null : () => setPayer(p),
+            onPay: p == payer || !canPayOthers ? null : () => setPayer(p),
             canPaidBack: paidBackAllowed && p != payer,
             paidBack: _c.isPaidBack(p),
             onPaidBack: () => _c.togglePaidBack(p),

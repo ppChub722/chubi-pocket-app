@@ -243,13 +243,13 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
         ),
         HubInApp(
           note:
-              'Today\'s headers and toolbars redrawn with the new pieces, '
-              'before any page moves over. Data is made up.',
+              'Every list page\'s headers and toolbars with these pieces '
+              '(Home / More keep SectionHeader). Data is made up.',
           uses: [
             HubUse(
               label: 'Day header: total over the rows\' amounts',
               page:
-                  'Transactions, budget, pending, saving history (DateGroupHeader)',
+                  'Transactions, budget, pending, saving history',
               child: group([
                 const AppListHeader(
                   title: 'เมื่อวาน',
@@ -265,7 +265,7 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
             ),
             HubUse(
               label: 'Kind section: count + totals as text',
-              page: 'Recurring · all (SectionHeader)',
+              page: 'Recurring · all',
               child: group([
                 const AppListHeader(
                   title: 'ค่าสมาชิก',
@@ -279,7 +279,7 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
             ),
             HubUse(
               label: 'Leading icon, "รวม" + total in the side\'s colour',
-              page: 'Debts (SectionHeader)',
+              page: 'Debts',
               child: group([
                 AppListHeader(
                   leading: AppIcon(
@@ -299,7 +299,7 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
             ),
             HubUse(
               label: 'Leading icon, count, "ดูทั้งหมด ›"',
-              page: 'Home · recent (SectionHeader)',
+              page: 'None yet (Home keeps SectionHeader)',
               child: group([
                 AppListHeader(
                   leading: AppIcon(
@@ -382,7 +382,7 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
             ),
             HubUse(
               label: 'No state: search + chips + sort always open',
-              page: 'Categories, tags, contacts (ListToolbar)',
+              page: 'Categories, tags, contacts',
               child: group([
                 AppListToolbar(
                   search: ListToolbarSearch(
@@ -395,6 +395,46 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
                   sort: _sortChip(),
                 ),
                 card([row('Dining', -540, palette.warning)]),
+              ]),
+            ),
+            HubUse(
+              label: 'Day header: a coloured note instead of a total',
+              page: 'Debt person statement',
+              child: group([
+                AppListHeader(
+                  title: '21 ต.ค.',
+                  trailing: ListHeaderTrailing.text(
+                    'เพิ่ม ฿70',
+                    color: palette.income,
+                  ),
+                ),
+                card([row('ข้าวเที่ยง', 70, palette.income)]),
+              ]),
+            ),
+            HubUse(
+              label: 'Trailing that isn\'t a sort chip: a menu + edit',
+              page: 'Tags, contacts',
+              child: group([
+                AppListToolbar(
+                  search: ListToolbarSearch(
+                    controller: _search,
+                    hint: 'ค้นหาแท็ก',
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppChip(
+                        label: 'ชื่อ',
+                        icon: AppIcons.sort,
+                        trailing: AppChipTrailing.dropdown,
+                        onTap: () {},
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      AppIconButton.edit(tooltip: 'Edit', onPressed: () {}),
+                    ],
+                  ),
+                ),
+                card([row('ทริป', -1200, palette.info)]),
               ]),
             ),
           ],

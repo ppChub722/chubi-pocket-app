@@ -85,11 +85,6 @@ class TxPeriod {
     TxPeriodKind.all || TxPeriodKind.custom => null,
   };
 
-  bool canStepForward(DateTime today) {
-    final next = step(1);
-    return next != null && !next.start.isAfter(today);
-  }
-
   String label(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).toLanguageTag();

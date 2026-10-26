@@ -94,19 +94,39 @@ class _ButtonPageState extends State<_ButtonPage> {
               'A button that sends to the server (save, submit, sign in, '
               'delete) passes submits: true and disables itself while the '
               'app is offline (ConnectionScope). Other buttons stay live. '
-              'Shown here inside an offline scope.',
+              'Also gated: OccurrenceAction (submits by default), SheetOption '
+              '(submits: true), SettingDropdownRow / SettingMenuRow (submits '
+              'by default; false for a local or edit-mode value). Shown here '
+              'inside an offline scope.',
           child: ConnectionScope(
             offline: true,
             reconnects: 0,
-            child: Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                AppButton(label: 'Save', submits: true, onPressed: () {}),
-                AppButton(
-                  label: 'Cancel',
-                  variant: AppButtonVariant.outlined,
-                  onPressed: () {},
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    AppButton(label: 'Save', submits: true, onPressed: () {}),
+                    AppButton(
+                      label: 'Cancel',
+                      variant: AppButtonVariant.outlined,
+                      onPressed: () {},
+                    ),
+                    OccurrenceActions(
+                      primary: OccurrenceAction(label: 'ยืนยัน', onTap: () {}),
+                      more: [OccurrenceAction(label: 'ข้าม', onTap: () {})],
+                    ),
+                  ],
+                ),
+                SettingDropdownRow<int>(
+                  label: 'สกุลเงิน',
+                  value: 'THB',
+                  selected: 0,
+                  onSelected: (_) {},
+                  options: const [SheetOption(value: 0, label: 'THB')],
                 ),
               ],
             ),

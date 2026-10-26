@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../ui/ui.dart';
-import '../../pending/domain/pending_transaction.dart';
 import '../domain/recurrence_rule.dart' show parseYmd, ymd;
 import '../domain/recurring.dart';
 import '../domain/recurring_item.dart';
@@ -131,15 +130,6 @@ class RecurringRepository {
         } else
           'page': page,
       },
-    );
-    return ItemPage.fromJson(res.data);
-  });
-
-  Future<ItemPage> calendar(DateTime month) => _call((dio) async {
-    final mm = month.month.toString().padLeft(2, '0');
-    final res = await dio.get<Map<String, dynamic>>(
-      '/recurring-items',
-      queryParameters: {'month': '${month.year}-$mm'},
     );
     return ItemPage.fromJson(res.data);
   });
@@ -285,63 +275,43 @@ class RecurringRepository {
   Future<ItemWriteResult> settleAll(String ruleId, OccurrenceBulk action) =>
       _occWrite('/recurring/$ruleId/occurrences/${action.path}');
 
+  /// The picked occurrences of any rules in ONE call (at most [maxBulk]);
+  /// `leftOut` says which stayed and why.
+  Future<ItemWriteResult> settleMany(
+    OccurrenceBulk action,
+    List<OccurrenceRef> items,
+  ) => _occWrite('/recurring/occurrences/bulk', {
+    'action': action.wire,
+    'items': [
+      for (final i in items)
+        {'rule_id': i.ruleId, 'slot': i.slot, 'amount': ?i.amount},
+    ],
+  });
+
+  static const maxBulk = 100;
+
   Future<RecurringItem> getItem(String id) => _call((dio) async {
     final res = await dio.get<Map<String, dynamic>>('/recurring-items/$id');
     return RecurringItem.fromJson(res.data!);
   });
 
-  Future<ItemWriteResult> editOccurrence(
-    String id, {
-    DateTime? date,
-    double? amount,
-  }) => _call((dio) async {
-    final res = await dio.put<Map<String, dynamic>>(
-      '/recurring-items/$id',
-      data: {
-        'date': ?(date == null ? null : ymd(date)),
-        'amount': ?amount,
-        'scope': 'this',
-      },
-    );
-    return ItemWriteResult.fromJson(res.data!);
-  });
-
-  Future<ItemWriteResult> updateItem(
-    String id,
-    PendingDraft values, {
-    EditScope scope = EditScope.thisOne,
-    bool alsoUpdateLink = false,
-  }) => _call((dio) async {
-    final res = await dio.put<Map<String, dynamic>>(
-      '/recurring-items/$id',
-      data: {
-        ...itemFieldsJson(values),
-        'scope': scope.toJson(),
-        'also_update_link': alsoUpdateLink,
-      },
-    );
-    return ItemWriteResult.fromJson(res.data!);
-  });
-
-  Future<ItemWriteResult> setItemArchived(
-    String id, {
-    required bool archived,
-  }) => _call((dio) async {
-    final res = archived
-        ? await dio.post<Map<String, dynamic>>('/recurring-items/$id/archive')
-        : await dio.post<Map<String, dynamic>>('/recurring-items/$id/restore');
-    return ItemWriteResult.fromJson(res.data!);
-  });
 }
 
 enum RecurringAction { pause, resume, archive, restore, extend }
 
 enum OccurrenceBulk {
-  confirm('confirm-ready'),
-  markPaid('mark-paid-ready'),
-  skip('skip-ready');
+  confirm('confirm-ready', 'confirm'),
+  markPaid('mark-paid-ready', 'mark_paid'),
+  skip('skip-ready', 'skip');
 
-  const OccurrenceBulk(this.path);
+  const OccurrenceBulk(this.path, this.wire);
 
+  /// A rule's all-at-once endpoint.
   final String path;
+
+  /// The `action` of `POST /recurring/occurrences/bulk`.
+  final String wire;
 }
+
+/// One row of [RecurringRepository.settleMany]; [amount] is for confirm only.
+typedef OccurrenceRef = ({String ruleId, String slot, double? amount});

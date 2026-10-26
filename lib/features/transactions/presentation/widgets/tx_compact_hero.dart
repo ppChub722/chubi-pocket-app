@@ -11,7 +11,7 @@ AppCompactHeroCard txCompactHeroBar(
   required double amount,
   String? categoryName,
   IconCode? categoryIcon,
-  String symbol = '฿',
+  String? symbol,
   VoidCallback? onTap,
 }) {
   final l = AppLocalizations.of(context)!;

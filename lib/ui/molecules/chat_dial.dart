@@ -88,21 +88,22 @@ class _ChatDialState extends State<ChatDial> {
                           hint: widget.hint,
                         ),
                       ),
-                      IconButton.filled(
+                      AppIconButton.filled(
+                        icon: AppIcons.send,
                         tooltip: widget.sendTooltip,
-                        icon: const Icon(AppIcons.send, size: 20),
+                        size: 36,
                         onPressed: _send,
                       ),
+                      const SizedBox(width: AppSpacing.xs),
                     ],
                   ),
                 ),
               ),
             )
-          : FloatingActionButton(
-              heroTag: null,
+          : AppIconButton.fab(
+              icon: AppIcons.chat,
               tooltip: widget.tooltip,
               onPressed: () => setState(() => _open = true),
-              child: const Icon(AppIcons.chat),
             ),
     );
   }

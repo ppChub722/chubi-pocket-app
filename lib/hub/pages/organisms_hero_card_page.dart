@@ -45,7 +45,7 @@ class _HeroCardPageState extends State<_HeroCardPage> {
         color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
     );
-    final toggle = ToolbarToggleState.local();
+    final toggle = AppListToolbarState.local();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -91,7 +91,7 @@ class _HeroCardPageState extends State<_HeroCardPage> {
             style: blueStyle,
             header: HeroHeader(
               leading: const [AppChip(label: 'ตามแผน', selected: true)],
-              actions: [ToolbarToggleButton(state: toggle, filtered: false)],
+              actions: [AppListToolbarToggle(state: toggle)],
               onEdit: () {},
             ),
             content: [
@@ -194,7 +194,7 @@ class _HeroCardPageState extends State<_HeroCardPage> {
               HeroIdentity(
                 icon: avatar,
                 name: const Text('Mint'),
-                fact: const Text('3 รายการค้าง | ล่าสุด 5 ต.ค.'),
+                fact: const Text('ล่าสุด 5 ต.ค.'),
               ),
               HeroNumber(
                 label: 'รอรับ',

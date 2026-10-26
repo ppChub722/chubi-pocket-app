@@ -35,14 +35,12 @@ import '../due_boxes.dart';
 import '../item_write_apply.dart';
 import '../occurrence_actions.dart';
 import '../recurring_draft.dart';
-import '../recurring_item_actions.dart';
 import '../recurring_rows.dart';
 
 enum _Tab { past, upcoming }
 
 enum _Field { name, description, amount, note }
 
-enum _Occ { editAmount, move, skip, restore, editFull }
 
 class RecurringDetailPage extends StatefulWidget {
   const RecurringDetailPage({
@@ -307,12 +305,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     if (!mounted || r == null) return;
     final date = r.date == i.date ? null : r.date;
     await _occurrenceCall(
-      () => i.bySlot
-          ? _repo.updateOccurrence(i.ruleId!, i.slot!, {
-              'date': ?(date == null ? null : ymd(date)),
-              'amount': ?r.amount,
-            })
-          : _repo.editOccurrence(i.id, date: date, amount: r.amount),
+      () => _repo.updateOccurrence(i.ruleId!, i.slot!, {
+        'date': ?(date == null ? null : ymd(date)),
+        'amount': ?r.amount,
+      }),
     );
   }
 
@@ -325,67 +321,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       confirmLabel: l.fpRecurringActSkip,
     );
     if (!ok || !mounted) return;
-    await _occurrenceCall(
-      () => i.bySlot
-          ? _repo.skipOccurrence(i.ruleId!, i.slot!)
-          : _repo.setItemArchived(i.id, archived: true),
-    );
-  }
-
-  Future<void> _restoreItem(RecurringItem i) => _occurrenceCall(
-    () => i.bySlot
-        ? _repo.restoreOccurrence(i.ruleId!, i.slot!)
-        : _repo.setItemArchived(i.id, archived: false),
-  );
-
-  Future<void> _occurrenceMenu(RecurringItem i) async {
-    final l = AppLocalizations.of(context)!;
-    final skipped = i.state == OccurrenceState.archived;
-    final picked = await showOptionSheet<_Occ>(
-      context,
-      title: DateFormat.MMMd(
-        Localizations.localeOf(context).toLanguageTag(),
-      ).format(i.date),
-      options: [
-        if (!skipped) ...[
-          SheetOption(
-            value: _Occ.editAmount,
-            label: l.fpRecurringActEditAmount,
-            leading: const AppIcon(AppIcons.edit),
-          ),
-          SheetOption(
-            value: _Occ.move,
-            label: l.fpRecurringActMove,
-            leading: const AppIcon(AppIcons.date),
-          ),
-          SheetOption(
-            value: _Occ.skip,
-            label: l.fpRecurringActSkip,
-            leading: const AppIcon(AppIcons.archive),
-          ),
-        ] else
-          SheetOption(
-            value: _Occ.restore,
-            label: l.recurringItemRestore,
-            leading: const AppIcon(AppIcons.unarchive),
-          ),
-        if (i.stored)
-          SheetOption(value: _Occ.editFull, label: l.recurringItemEditTitle),
-      ],
-    );
-    if (!mounted || picked == null) return;
-    switch (picked) {
-      case _Occ.editAmount:
-        await _editOccurrence(i, focus: OccurrenceFocus.amount);
-      case _Occ.move:
-        await _editOccurrence(i, focus: OccurrenceFocus.date);
-      case _Occ.skip:
-        await _skip(i);
-      case _Occ.restore:
-        await _restoreItem(i);
-      case _Occ.editFull:
-        await editRecurringItem(context, i, onChanged: _applyItems);
-    }
+    await _occurrenceCall(() => _repo.skipOccurrence(i.ruleId!, i.slot!));
   }
 
   Future<void> _action(RecurringAction a) async {
@@ -924,8 +860,8 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       trailing: amount == null || amount <= 0
           ? null
           : MoneyText(
-              signedOf(r.type, amount),
-              tone: toneOf(r.type),
+              signedOf(r.type, amount, saving: r.isSaving),
+              tone: toneOf(r.type, saving: r.isSaving),
               symbol: context.readUserCurrencySymbol,
               style: AppTypography.of(context, AppTextRole.money),
             ),
@@ -972,8 +908,8 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     final warning = Theme.of(context).extension<AppColors>()!.warning;
     bool unknown(RecurringItem i) => i.amount == null || i.amount! <= 0;
     Widget money(RecurringItem i) => MoneyText(
-      signedOf(i.type, i.amount!),
-      tone: toneOf(i.type),
+      signedOf(i.type, i.amount!, saving: i.isSaving),
+      tone: toneOf(i.type, saving: i.isSaving),
       symbol: symbol,
     );
     String nextLabel(RecurringItem i) {
@@ -1088,15 +1024,9 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     );
   }
 
-  /// The occurrence's own sheet (แก้เฉพาะงวดนี้); an old BE's row (no slot)
-  /// keeps the old menu.
-  void _openOccurrence(RecurringItem i) {
-    if (i.bySlot || i.transaction != null) {
+  /// The occurrence's own sheet (แก้เฉพาะงวดนี้).
+  void _openOccurrence(RecurringItem i) =>
       openOccurrenceSheet(context, i, onChanged: _applyItems);
-    } else {
-      _occurrenceMenu(i);
-    }
-  }
 
   Widget _statusChip(AppLocalizations l, Recurring r, {VoidCallback? onTap}) {
     final (label, kind) = switch (r.status) {
@@ -1327,12 +1257,14 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
                 value: RecurringAction.pause,
                 label: l.recurringPause,
                 leading: const AppIcon(AppIcons.pause),
+                submits: true,
               ),
             if (r.actions.resume)
               SheetOption(
                 value: RecurringAction.resume,
                 label: l.recurringResume,
                 leading: const AppIcon(AppIcons.resume),
+                submits: true,
               ),
           ],
           onSelected: _action,
@@ -1581,6 +1513,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           icon: recurringKindIcon(w.kind),
           iconColor: w.kind.iconDefault.color,
           selected: w.kind,
+          submits: false,
           onSelected: (k) {
             if (k != w.kind) _change(w.withKind(k));
           },
@@ -1607,6 +1540,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
                 : l.transactionTypeExpense,
             icon: transfer ? AppIcons.transfer : AppIcons.expense,
             selected: w.type,
+            submits: false,
             onSelected: _setMode,
             options: [
               SheetOption(
@@ -1746,8 +1680,8 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             )
           : ListRowTrailing.value(
               MoneyText(
-                signedOf(i.type, i.amount!),
-                tone: toneOf(i.type),
+                signedOf(i.type, i.amount!, saving: i.isSaving),
+                tone: toneOf(i.type, saving: i.isSaving),
                 symbol: symbol,
               ),
             ),

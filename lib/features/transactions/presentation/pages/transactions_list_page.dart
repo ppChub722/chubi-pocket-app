@@ -72,10 +72,10 @@ class _TransactionsListPageState extends State<TransactionsListPage>
   String _q = '';
   Timer? _debounce;
   final _search = TextEditingController();
-  late final _toolbarOpen = ToolbarToggleState.of(
+  late final _toolbarOpen = AppListToolbarState.of(
     widget.embedded ? 'transactions_wallet' : 'transactions',
   );
-  final _summaryOpen = ToolbarToggleState.of(
+  final _summaryOpen = AppListToolbarState.of(
     'transactions_summary',
     open: true,
   );
@@ -250,7 +250,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
                   const Spacer(),
                   ListenableBuilder(
                     listenable: _search,
-                    builder: (context, _) => ToolbarToggleButton(
+                    builder: (context, _) => AppListToolbarToggle(
                       state: _toolbarOpen,
                       filtered: activeFilters > 0 || _q.isNotEmpty,
                       tooltip: l.commonSearch,
@@ -263,13 +263,15 @@ class _TransactionsListPageState extends State<TransactionsListPage>
             _summary(l, t, activeFilters)
           else
             const SizedBox(height: AppSpacing.sm),
-          ListToolbar(
-            collapse: _toolbarOpen,
-            searchKey: const ValueKey('tx-search'),
-            searchController: _search,
-            onSearchChanged: _onSearch,
-            searchHint: l.transactionsSearchHint,
-            chips: [
+          AppListToolbar(
+            state: _toolbarOpen,
+            search: ListToolbarSearch(
+              key: const ValueKey('tx-search'),
+              controller: _search,
+              onChanged: _onSearch,
+              hint: l.transactionsSearchHint,
+            ),
+            filters: [
               AppChip(
                 label: l.transactionsFiltersTitle,
                 icon: Icons.tune,
@@ -376,7 +378,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
         leading: const [HeroModuleTile(AppIcons.transactions)],
         fill: _periodPill(),
         actions: [
-          ToolbarToggleButton(
+          AppListToolbarToggle(
             state: _toolbarOpen,
             filtered: activeFilters > 0 || _q.isNotEmpty,
             tooltip: l.commonSearch,
@@ -501,8 +503,8 @@ class _TransactionsListPageState extends State<TransactionsListPage>
             .where((t) => t.type != TransactionType.transfer)
             .fold<double>(0, (a, t) => a + t.signedAmount);
         children.add(
-          DateGroupHeader(
-            label: d == null
+          AppListHeader(
+            title: d == null
                 ? e.key
                 : DateFormatter.friendly(
                     d,
@@ -510,7 +512,9 @@ class _TransactionsListPageState extends State<TransactionsListPage>
                     yesterday: l.commonYesterday,
                     locale: Localizations.localeOf(context).languageCode,
                   ),
-            total: net,
+            trailing: ListHeaderTrailing.value(
+              MoneyText(net, tone: MoneyTone.signed),
+            ),
           ),
         );
         for (final t in e.value) {

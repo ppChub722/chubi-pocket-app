@@ -1006,9 +1006,14 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     final days = byDay.keys.toList()..sort((a, b) => b.compareTo(a));
     return [
       for (final day in days) ...[
-        DateGroupHeader(
-          label: budgetDate(context, day),
-          total: byDay[day]!.fold<double>(0, (s, i) => s - i.amount),
+        AppListHeader(
+          title: budgetDate(context, day),
+          trailing: ListHeaderTrailing.value(
+            MoneyText(
+              byDay[day]!.fold<double>(0, (s, i) => s - i.amount),
+              tone: MoneyTone.signed,
+            ),
+          ),
         ),
         for (final i in byDay[day]!) _itemRow(l, i),
       ],
@@ -1459,6 +1464,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     final pct = w.warnPct;
     return SettingMenuRow<int>(
       compact: true,
+      submits: false,
       label: l.fpBudgetsWarnAt,
       value: pct == null ? l.bgWarnOff : l.bgWarnPct(pct),
       note: limit == null || limit <= 0 || pct == null

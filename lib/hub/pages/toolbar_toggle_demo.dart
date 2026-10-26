@@ -14,7 +14,7 @@ class ToolbarToggleDemo extends StatefulWidget {
 }
 
 class _ToolbarToggleDemoState extends State<ToolbarToggleDemo> {
-  final _toggle = ToolbarToggleState.local();
+  final _toggle = AppListToolbarState.local();
   final _search = TextEditingController();
   bool _checked = false;
 
@@ -29,12 +29,12 @@ class _ToolbarToggleDemoState extends State<ToolbarToggleDemo> {
   Widget build(BuildContext context) {
     return HubDemo(
       title:
-          'CardActionButton | CheckCircleButton | ToolbarToggleButton | '
-          'ListToolbar(collapse)',
+          'CardActionButton | CheckCircleButton | AppListToolbarToggle | '
+          'AppListToolbar(state)',
       note:
           'The card has ONE standard top-right action slot. List pages put the '
           '🔍 here; it shows / hides the toolbar under the card (hidden by '
-          'default, remembered per page via ToolbarToggleState.of(key)). '
+          'default, remembered per page via AppListToolbarState.of(key)). '
           'Type a search, hide the toolbar: the 🔍 shows a red dot. '
           'CheckCircleButton is the same size: the circle itself is the box '
           '(a debt\'s จ่ายแล้ว).',
@@ -59,7 +59,7 @@ class _ToolbarToggleDemoState extends State<ToolbarToggleDemo> {
                 const Expanded(child: Text('Summary card')),
                 ListenableBuilder(
                   listenable: _search,
-                  builder: (context, _) => ToolbarToggleButton(
+                  builder: (context, _) => AppListToolbarToggle(
                     state: _toggle,
                     filtered: _search.text.isNotEmpty,
                     tooltip: 'Search',
@@ -70,11 +70,10 @@ class _ToolbarToggleDemoState extends State<ToolbarToggleDemo> {
               ],
             ),
           ),
-          ListToolbar(
-            collapse: _toggle,
-            searchController: _search,
-            searchHint: 'Search',
-            chips: const [AppChip(label: 'Status: Active')],
+          AppListToolbar(
+            state: _toggle,
+            search: ListToolbarSearch(controller: _search, hint: 'Search'),
+            filters: const [AppChip(label: 'Status: Active')],
           ),
         ],
       ),

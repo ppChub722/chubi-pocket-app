@@ -303,8 +303,8 @@ class _PendingPageState extends State<PendingPage> {
       final d = DateFormatter.parseDay(k);
       if (k.isNotEmpty) {
         out.add(
-          DateGroupHeader(
-            label: d == null
+          AppListHeader(
+            title: d == null
                 ? k
                 : DateFormatter.friendly(
                     d,

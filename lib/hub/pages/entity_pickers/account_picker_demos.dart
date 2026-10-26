@@ -154,17 +154,6 @@ class AccountPickerDemos extends StatelessWidget {
           ],
         ),
         _demo(
-          'AccountPicker.one — resolve (event)',
-          'resolve_sheet: a wallet only; no none, no add.',
-          [
-            _new(
-              'New',
-              () async =>
-                  _one(await AccountPicker.one(context, selectedId: first?.id)),
-            ),
-          ],
-        ),
-        _demo(
           'AccountPicker.many — transaction filter',
           'tx_filter_sheet "more": wallet cards with their balance; '
               '"ไม่ระบุกระเป๋า" is a tick of its own.',

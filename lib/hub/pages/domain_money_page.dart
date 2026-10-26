@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import '../../ui/ui.dart';
 import '../hub_kit.dart';
 
-/// Money pieces: MoneyText, MoneyVisibilityToggle,
-/// DateGroupHeader, CurrencyTile. (IconTile is on Atoms → Badge & avatar,
+/// Money pieces: MoneyText, MoneyVisibilityToggle, CurrencyTile. (IconTile is on Atoms → Badge & avatar,
 /// SummaryStats on Organisms → Section & hero.)
 Widget buildMoneyPage(BuildContext context) => const _MoneyPage();
 
@@ -20,8 +19,6 @@ class _MoneyPageState extends State<_MoneyPage> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -152,43 +149,6 @@ class _MoneyPageState extends State<_MoneyPage> {
               const HubCell(
                 caption: 'MoneyVisibilityToggle size 32',
                 child: MoneyVisibilityToggle(size: 32),
-              ),
-            ],
-          ),
-        ),
-        HubDemo(
-          title: 'DateGroupHeader',
-          note:
-              'A day\'s heading with its net total over AppListRow rows; '
-              'without a total it is the label alone.',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const DateGroupHeader(label: 'Today', total: 4460),
-              AppListRow(
-                leading: IconTile(icon: AppIcons.cash, color: palette.income),
-                title: 'Salary',
-                trailing: const ListRowTrailing.value(
-                  MoneyText(5000, tone: MoneyTone.signed),
-                ),
-              ),
-              AppListRow(
-                leading: IconTile(
-                  icon: AppIcons.expense,
-                  color: palette.expense,
-                ),
-                title: 'Lunch',
-                trailing: const ListRowTrailing.value(
-                  MoneyText(-540, tone: MoneyTone.signed),
-                ),
-              ),
-              const DateGroupHeader(label: 'Yesterday'),
-              AppListRow(
-                leading: IconTile(icon: AppIcons.debt, color: scheme.primary),
-                title: 'Owed by Alex',
-                trailing: const ListRowTrailing.value(
-                  MoneyText(300, tone: MoneyTone.income),
-                ),
               ),
             ],
           ),

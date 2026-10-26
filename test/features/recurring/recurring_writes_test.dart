@@ -81,12 +81,10 @@ void main() {
       ],
     };
 
-    await repo.editOccurrence('i1', amount: 500);
+    await repo.updateOccurrence('r1', '2026-11-03', {'amount': 500});
     expect(http.last!.method, 'PUT');
-    expect(http.last!.path, '/recurring-items/i1');
-    expect(http.last!.data, {'amount': 500, 'scope': 'this'});
-    await repo.editOccurrence('i1', date: DateTime(2026, 12, 5));
-    expect(http.last!.data, {'date': '2026-12-05', 'scope': 'this'});
+    expect(http.last!.path, '/recurring/r1/occurrences/2026-11-03');
+    expect(http.last!.data, {'amount': 500});
 
     await repo.skipOccurrence('r1', '2026-11-03');
     expect(http.last!.method, 'POST');

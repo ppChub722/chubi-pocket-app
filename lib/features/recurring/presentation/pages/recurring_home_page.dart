@@ -67,7 +67,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   late bool _focusDue = widget.focusDue;
 
   final _search = TextEditingController();
-  final _toolbar = ToolbarToggleState.of('recurring');
+  final _toolbar = AppListToolbarState.of('recurring');
   String _query = '';
 
   // The calendar list's 🔍 / filters / sort, behind its own toggle.
@@ -75,7 +75,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
 
   /// Amounts typed in the calendar list's rows, by occurrence.
   final _rowAmounts = <String, double?>{};
-  final _monthToolbar = ToolbarToggleState.of('recurringMonth');
+  final _monthToolbar = AppListToolbarState.of('recurringMonth');
   String _monthQuery = '';
   _MonthStatus _status = _MonthStatus.all;
   RecurringKind? _kind;
@@ -459,101 +459,74 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     return out;
   }
 
-  /// The calendar list's head: the month or the picked day, the count and
-  /// 🔍 (opens the search box); under it one chip row, all chip size:
-  /// ✕ ทั้งเดือน (a picked day), the status and kind filters, the sort.
+  /// The calendar list's head: the month, or the picked day as a ✕ chip that
+  /// goes back to the month; the count; the status and kind filters and 🔍,
+  /// which opens the search box and the sort under it.
   List<Widget> _calendarHead(
     AppLocalizations l,
     String title,
     int count, {
     bool day = false,
   }) => [
-    SectionHeader(
+    AppListHeader(
       title: title,
       count: count,
-      trailing: ListenableBuilder(
-        listenable: _monthSearch,
-        builder: (context, _) => ToolbarToggleButton(
-          key: const ValueKey('calendarListTools'),
-          state: _monthToolbar,
-          filtered: _monthQuery.isNotEmpty,
+      onClearTitle: day ? () => setState(() => _day = null) : null,
+      actions: [
+        ListHeaderAction.filter<_MonthStatus>(
+          label: _statusLabel(l, _status),
+          value: _status,
+          active: _status != _MonthStatus.all,
+          options: [
+            for (final s in _MonthStatus.values)
+              SheetOption(value: s, label: _statusLabel(l, s)),
+          ],
+          onSelected: (s) => setState(() => _status = s),
+        ),
+        ListHeaderAction.filter<RecurringKind?>(
+          label: _kind == null
+              ? l.recurringFilterAllKinds
+              : recurringKindLabel(l, _kind!),
+          value: _kind,
+          active: _kind != null,
+          options: [
+            SheetOption(value: null, label: l.recurringFilterAllKinds),
+            for (final k in const [
+              RecurringKind.subscription,
+              RecurringKind.installment,
+              RecurringKind.reminder,
+              RecurringKind.income,
+              RecurringKind.saving,
+            ])
+              SheetOption(value: k, label: recurringKindLabel(l, k)),
+          ],
+          onSelected: (k) => setState(() => _kind = k),
+        ),
+        ListHeaderAction.toolbar(
+          _monthToolbar,
+          filtered: _monthQuery.isNotEmpty || _sort != _MonthSort.date,
           tooltip: l.recurringSearchHint,
         ),
+      ],
+    ),
+    AppListToolbar(
+      state: _monthToolbar,
+      search: ListToolbarSearch(
+        controller: _monthSearch,
+        onChanged: (v) => setState(() => _monthQuery = v.trim()),
+        hint: l.recurringSearchHint,
       ),
-    ),
-    ListToolbar(
-      collapse: _monthToolbar,
-      searchController: _monthSearch,
-      onSearchChanged: (v) => setState(() => _monthQuery = v.trim()),
-      searchHint: l.recurringSearchHint,
-      sidePadding: 0,
-    ),
-    ChipSizeScope(
-      size: ChipSize.chip,
-      child: FilterBar(
-        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-        trailing: SortChip<_MonthSort>(
-          value: _sort,
-          tooltip: l.recurringSortTooltip,
-          options: [
-            SortOption(_MonthSort.date, l.recurringSortDate),
-            SortOption(_MonthSort.amount, l.recurringSortAmount),
-            SortOption(_MonthSort.name, l.commonName),
-          ],
-          onChanged: (s) => setState(() => _sort = s),
-        ),
-        chips: [
-          if (day)
-            AppChip(
-              key: const ValueKey('calendarWholeMonth'),
-              label: l.recurringWholeMonth,
-              icon: AppIcons.clear,
-              selected: true,
-              onTap: () => setState(() => _day = null),
-            ),
-          ..._filterChips(l),
+      sort: SortChip<_MonthSort>(
+        value: _sort,
+        tooltip: l.recurringSortTooltip,
+        options: [
+          SortOption(_MonthSort.date, l.recurringSortDate),
+          SortOption(_MonthSort.amount, l.recurringSortAmount),
+          SortOption(_MonthSort.name, l.commonName),
         ],
+        onChanged: (s) => setState(() => _sort = s),
       ),
-    ),
-  ];
-
-  List<Widget> _filterChips(AppLocalizations l) => [
-    OptionMenuAnchor<_MonthStatus>(
-      selected: _status,
-      onSelected: (s) => setState(() => _status = s),
-      options: [
-        for (final s in _MonthStatus.values)
-          SheetOption(value: s, label: _statusLabel(l, s)),
-      ],
-      builder: (context, toggle) => AppChip(
-        label: _statusLabel(l, _status),
-        selected: _status != _MonthStatus.all,
-        trailing: AppChipTrailing.dropdown,
-        onTap: toggle,
-      ),
-    ),
-    OptionMenuAnchor<RecurringKind?>(
-      selected: _kind,
-      onSelected: (k) => setState(() => _kind = k),
-      options: [
-        SheetOption(value: null, label: l.recurringFilterAllKinds),
-        for (final k in const [
-          RecurringKind.subscription,
-          RecurringKind.installment,
-          RecurringKind.reminder,
-          RecurringKind.income,
-          RecurringKind.saving,
-        ])
-          SheetOption(value: k, label: recurringKindLabel(l, k)),
-      ],
-      builder: (context, toggle) => AppChip(
-        label: _kind == null
-            ? l.recurringFilterAllKinds
-            : recurringKindLabel(l, _kind!),
-        selected: _kind != null,
-        trailing: AppChipTrailing.dropdown,
-        onTap: toggle,
-      ),
+      sidePadding: 0,
     ),
   ];
 
@@ -708,8 +681,8 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
           ? null
           : ListRowTrailing.value(
               MoneyText(
-                signedOf(i.type, i.amount ?? 0),
-                tone: toneOf(i.type),
+                signedOf(i.type, i.amount ?? 0, saving: i.isSaving),
+                tone: toneOf(i.type, saving: i.isSaving),
                 symbol: context.readUserCurrencySymbol,
               ),
               caption: !act && i.daysUntil == 1
@@ -841,33 +814,28 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
           r,
     ];
     final head = [
-      SectionHeader(
+      AppListHeader(
         title: l.recurringHomeAllTitle,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListenableBuilder(
-              listenable: _search,
-              builder: (context, _) => ToolbarToggleButton(
-                state: _toolbar,
-                filtered: _search.text.trim().isNotEmpty,
-                tooltip: l.recurringSearchHint,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            CardActionButton(
-              icon: AppIcons.add,
-              tooltip: l.recurringAdd,
-              onTap: () => _open('/recurring/new'),
-            ),
-          ],
-        ),
+        actions: [
+          ListHeaderAction.toolbar(
+            _toolbar,
+            filtered: _query.trim().isNotEmpty,
+            tooltip: l.recurringSearchHint,
+          ),
+          ListHeaderAction.button(
+            AppIcons.add,
+            tooltip: l.recurringAdd,
+            onTap: () => _open('/recurring/new'),
+          ),
+        ],
       ),
-      ListToolbar(
-        collapse: _toolbar,
-        searchController: _search,
-        onSearchChanged: (v) => setState(() => _query = v),
-        searchHint: l.recurringSearchHint,
+      AppListToolbar(
+        state: _toolbar,
+        search: ListToolbarSearch(
+          controller: _search,
+          onChanged: (v) => setState(() => _query = v),
+          hint: l.recurringSearchHint,
+        ),
         sidePadding: 0,
       ),
     ];
@@ -910,7 +878,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
             if (r.kind == k) r,
         ]),
       if (paused.isNotEmpty) ...[
-        SectionHeader(title: l.fpRecurringPausedGroup, count: paused.length),
+        AppListHeader(title: l.fpRecurringPausedGroup, count: paused.length),
         SectionCard(children: [for (final r in paused) _ruleRow(r)]),
       ],
     ];
@@ -946,10 +914,10 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
       ),
     };
     return [
-      SectionHeader(
+      AppListHeader(
         title: recurringKindLabel(l, kind),
         count: rules.length,
-        trailing: AppText(totals, role: AppTextRole.caption),
+        trailing: ListHeaderTrailing.text(totals),
       ),
       SectionCard(children: [for (final r in rules) _ruleRow(r)]),
     ];

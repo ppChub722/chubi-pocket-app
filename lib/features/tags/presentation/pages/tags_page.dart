@@ -512,11 +512,13 @@ class _TagsPageState extends State<TagsPage>
     final codes = tags.map((t) => t.iconCode);
     final colors = {for (final c in codes) ?_colorOf(c)}.toList()..sort();
     final icons = {for (final c in codes) ?_iconOf(c)}.toList()..sort();
-    return ListToolbar(
-      searchController: _searchController,
-      searchHint: l.tagsSearchHint,
-      onSearchChanged: (v) => _onFilterChanged(() => _query = v),
-      chips: [_colorFilter(l, colors), _iconFilter(l, icons)],
+    return AppListToolbar(
+      search: ListToolbarSearch(
+        controller: _searchController,
+        hint: l.tagsSearchHint,
+        onChanged: (v) => _onFilterChanged(() => _query = v),
+      ),
+      filters: [_colorFilter(l, colors), _iconFilter(l, icons)],
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -542,11 +544,13 @@ class _TagsPageState extends State<TagsPage>
   }
 
   Widget _editBar(AppLocalizations l, List<_TagDraft> visible) {
-    return ListToolbar(
-      searchController: _searchController,
-      searchHint: l.tagsSearchHint,
-      onSearchChanged: (v) => _onFilterChanged(() => _query = v),
-      chips: [
+    return AppListToolbar(
+      search: ListToolbarSearch(
+        controller: _searchController,
+        hint: l.tagsSearchHint,
+        onChanged: (v) => _onFilterChanged(() => _query = v),
+      ),
+      filters: [
         SelectAllCount(
           selected: visible.where((d) => _selected.contains(d.key)).length,
           total: visible.length,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/app_button.dart';
 import '../molecules/amount_input.dart';
 import '../molecules/hint_line.dart';
 import '../templates/form_sheet.dart';
@@ -117,10 +118,11 @@ class _AmountSheetState extends State<_AmountSheet> {
             const SizedBox(height: AppSpacing.sm),
             Align(
               alignment: AlignmentDirectional.centerStart,
-              child: HintLine(
-                text: '',
-                linkLabel: clear,
-                onTap: () =>
+              child: AppButton(
+                label: clear,
+                variant: AppButtonVariant.text,
+                size: AppButtonSize.chip,
+                onPressed: () =>
                     Navigator.of(context).pop(const AppAmountResult.cleared()),
               ),
             ),

@@ -59,12 +59,12 @@ Future<bool?> askDeleteRecurringTx(
   );
 }
 
-/// Editing shows the ผูกกับ tabs (0.4.0-3 B3): my own expense, not a
-/// repayment / debt entry, not a partner's mirror (its money is locked), not
+/// Editing shows the ผูกกับ tabs (0.4.0-3 B3): my own expense / income, not
+/// a repayment / debt entry, not a partner's mirror (its money is locked), not
 /// my copy of someone else's event bill (that one follows the board).
 bool txLinkTabsEditable(Transaction t) {
   final bill = t.eventBill;
-  return t.type == TransactionType.expense &&
+  return DraftFormController.hasLinkTabs(t.type) &&
       !t.isDebtEntry &&
       !t.isRepayment &&
       !t.isLocked &&

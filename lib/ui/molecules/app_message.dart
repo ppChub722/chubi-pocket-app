@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/app_button.dart';
 import '../atoms/app_icon_button.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_radius.dart';
@@ -54,15 +55,12 @@ class AppMessage extends StatelessWidget {
     );
     final two = actions.length == 2;
 
-    Widget button(AppMessageAction a) => TextButton(
+    Widget button(AppMessageAction a) => AppButton(
+      label: a.label,
       onPressed: a.onPressed,
-      style: TextButton.styleFrom(
-        foregroundColor: color,
-        visualDensity: VisualDensity.compact,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-        textStyle: text.labelLarge?.copyWith(fontWeight: FontWeight.w700),
-      ),
-      child: Text(a.label),
+      variant: AppButtonVariant.text,
+      size: AppButtonSize.control,
+      color: color,
     );
 
     final body = Row(

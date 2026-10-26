@@ -64,6 +64,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
 
   Category? _persisted;
   bool _notFound = false;
+  ApiException? _detailError;
 
   bool get _isCreate => widget.isCreate && _persisted == null;
 
@@ -149,17 +150,29 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         _monthSpent = d.monthSpent;
         _monthCount = d.monthCount;
         _notFound = false;
+        _detailError = null;
       });
       if (_persisted == null) {
         _persisted = d;
         resetDraft(_CategoryDraft.fromCategory(d));
       }
     } on ApiException catch (e) {
-      if (mounted && _persisted == null && e.code == 'NOT_FOUND') {
-        setState(() => _notFound = true);
-      }
-      // Otherwise keep the list row; counts fall back to zero.
+      if (!mounted || _persisted != null) return;
+      setState(() {
+        if (e.code == 'NOT_FOUND') {
+          _notFound = true;
+        } else {
+          _detailError = e;
+        }
+      });
     }
+  }
+
+  void _retryOpen() {
+    setState(() => _detailError = null);
+    final cubit = context.read<CategoriesCubit>();
+    if (cubit.state.error != null) cubit.load();
+    _loadDetail();
   }
 
   /// One call ([LiveSetting] shows it at once, puts it back on a failure).
@@ -453,9 +466,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
               appBar: AppTopBar(title: l.categoriesTitle, showBack: true),
               body: BlocBuilder<CategoriesCubit, CategoriesState>(
                 builder: (context, state) => AsyncStateView.fallback(
-                  loading: !_notFound && state.error == null,
-                  error: _notFound ? null : state.error,
-                  onRetry: context.read<CategoriesCubit>().load,
+                  loading:
+                      !_notFound &&
+                      state.error == null &&
+                      _detailError == null,
+                  error: _notFound ? null : (_detailError ?? state.error),
+                  onRetry: _retryOpen,
                   notFound: EmptyView(
                     icon: AppIcons.empty,
                     title: l.categoryDetailNotFound,

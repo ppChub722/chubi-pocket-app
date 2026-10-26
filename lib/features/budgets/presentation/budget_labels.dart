@@ -123,12 +123,8 @@ Widget? budgetStatusChip(
       kind: StatusKind.warning,
       size: size,
     ),
-    BudgetStatus.pace => StatusChip.tone(
-      label: l.bgStatusPace,
-      tone: AppChipTone.neutral,
-      size: size,
-    ),
-    BudgetStatus.ok => null,
+    // On pace to go over: the pace line says it, no chip (owner 2026-10-26).
+    BudgetStatus.pace || BudgetStatus.ok => null,
   };
 }
 

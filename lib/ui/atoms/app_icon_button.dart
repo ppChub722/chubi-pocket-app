@@ -54,12 +54,14 @@ class AppIconButton extends StatelessWidget {
        color = null,
        dense = false;
 
+  /// No circle until [selected] (then primaryContainer).
   const factory AppIconButton.bare({
     required IconData icon,
     required VoidCallback? onPressed,
     String? tooltip,
     double? size,
     Color? color,
+    bool selected,
     Key? key,
   }) = _BareIconButton;
 
@@ -72,16 +74,24 @@ class AppIconButton extends StatelessWidget {
     Key? key,
   }) = _FilledIconButton;
 
+  /// The page's floating action (Scaffold.floatingActionButton).
+  const factory AppIconButton.fab({
+    required IconData icon,
+    required VoidCallback? onPressed,
+    String? tooltip,
+    Key? key,
+  }) = _FabIconButton;
+
   const AppIconButton._bare({
     this.color,
     required this.icon,
     required this.onPressed,
     this.tooltip,
     this.size,
+    this.selected = false,
     super.key,
   }) : badgeCount = 0,
        destructive = false,
-       selected = false,
        activity = IconChipActivity.none,
        progress = null,
        _flat = false,
@@ -333,6 +343,23 @@ class _FilledIconButton extends AppIconButton {
   }
 }
 
+class _FabIconButton extends AppIconButton {
+  const _FabIconButton({
+    required super.icon,
+    required super.onPressed,
+    super.tooltip,
+    super.key,
+  }) : super._bare();
+
+  @override
+  Widget build(BuildContext context) => FloatingActionButton(
+    heroTag: null,
+    tooltip: tooltip,
+    onPressed: onPressed,
+    child: Icon(icon),
+  );
+}
+
 class _BareIconButton extends AppIconButton {
   const _BareIconButton({
     required super.icon,
@@ -340,6 +367,7 @@ class _BareIconButton extends AppIconButton {
     super.tooltip,
     super.size,
     super.color,
+    super.selected,
     super.key,
   }) : super._bare();
 
@@ -351,7 +379,8 @@ class _BareIconButton extends AppIconButton {
     Widget button = Opacity(
       opacity: enabled ? 1 : 0.38,
       child: Material(
-        type: MaterialType.transparency,
+        type: selected ? MaterialType.circle : MaterialType.transparency,
+        color: selected ? scheme.primaryContainer : null,
         child: InkResponse(
           onTap: onPressed,
           radius: size / 2,
@@ -362,7 +391,9 @@ class _BareIconButton extends AppIconButton {
               child: Icon(
                 icon,
                 size: size * 0.55,
-                color: color ?? scheme.onSurfaceVariant,
+                color: selected
+                    ? scheme.primary
+                    : color ?? scheme.onSurfaceVariant,
               ),
             ),
           ),

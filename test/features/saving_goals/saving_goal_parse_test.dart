@@ -1,7 +1,6 @@
 import 'package:chubi_pocket/features/saving_goals/domain/saving_entry.dart';
 import 'package:chubi_pocket/features/saving_goals/domain/saving_goal.dart';
 import 'package:chubi_pocket/features/saving_goals/domain/saving_goals_overview.dart';
-import 'package:chubi_pocket/features/saving_goals/domain/saving_plan_preview.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Map<String, dynamic> wallet(String id, String name) => {
@@ -378,41 +377,5 @@ void main() {
     });
     expect(paged.page!.goal!.name, 'ทริปญี่ปุ่น');
     expect(paged.page!.entries.items, hasLength(2));
-  });
-
-  test('SavingPlanPreview (the edit form\'s live line)', () {
-    final today = DateTime(2026, 10, 17);
-    // 150 days ≈ 4.93 months → 5 months → 28,000 / 5 = 5,600.
-    final p = SavingPlanPreview.of(
-      target: 80000,
-      saved: 52000,
-      deadline: DateTime(2027, 3, 16),
-      today: today,
-    );
-    expect(p.remaining, 28000);
-    expect(p.neededMonthly, 5600);
-    expect(
-      SavingPlanPreview.of(target: 100, saved: 0, today: today).neededMonthly,
-      isNull,
-      reason: 'no deadline',
-    );
-    expect(
-      SavingPlanPreview.of(
-        target: 100,
-        saved: 0,
-        deadline: DateTime(2026, 1, 1),
-        today: today,
-      ).neededMonthly,
-      isNull,
-      reason: 'past deadline',
-    );
-    final done = SavingPlanPreview.of(
-      target: 100,
-      saved: 150,
-      deadline: DateTime(2027, 1, 1),
-      today: today,
-    );
-    expect(done.remaining, 0);
-    expect(done.neededMonthly, isNull, reason: 'nothing left');
   });
 }

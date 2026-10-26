@@ -12,7 +12,7 @@ import '../molecules/chip_row.dart';
 import '../molecules/danger_row.dart';
 import '../molecules/detail_rows.dart';
 import '../molecules/empty_view.dart';
-import '../molecules/section_header.dart';
+import '../molecules/app_list_header.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/chip_size.dart';
@@ -722,7 +722,7 @@ class _ItemPickerSheetState extends State<ItemPickerSheet> {
         if (showNone && !noneInFirst)
           _layoutOf(context, const [], view, first: true, none: none),
         for (final (i, (label, group)) in sections.indexed) ...[
-          if (label != null) SectionHeader(title: label),
+          if (label != null) AppListHeader(title: label),
           _layoutOf(
             context,
             group,

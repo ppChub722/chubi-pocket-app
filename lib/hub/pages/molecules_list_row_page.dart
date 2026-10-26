@@ -413,7 +413,12 @@ class _ListRowPageState extends State<_ListRowPage> {
               label: 'Wallet chip, category | tags, shared glyph + head count',
               page: 'Transactions (TransactionTile)',
               child: _Card(
-                header: const DateGroupHeader(label: '21 ต.ค.', total: -1149),
+                header: const AppListHeader(
+                  title: '21 ต.ค.',
+                  trailing: ListHeaderTrailing.value(
+                    MoneyText(-1149, tone: MoneyTone.signed),
+                  ),
+                ),
                 rows: [
                   AppListRow(
                     leading: tile(AppIcons.category, palette.warning),
@@ -495,7 +500,12 @@ class _ListRowPageState extends State<_ListRowPage> {
               label: 'Source chip, recurring glyph, expected = dimmed',
               page: 'Budget detail',
               child: _Card(
-                header: const DateGroupHeader(label: '22 ต.ค.', total: -1068),
+                header: const AppListHeader(
+                  title: '22 ต.ค.',
+                  trailing: ListHeaderTrailing.value(
+                    MoneyText(-1068, tone: MoneyTone.signed),
+                  ),
+                ),
                 rows: [
                   AppListRow(
                     leading: tile(AppIcons.category, palette.success),

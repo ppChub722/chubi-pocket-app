@@ -2,7 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// Ratchet: `lib/features` uses the kit, not raw Material / hand-made styles.
+/// Ratchet: `lib/features` uses the kit, not raw Material / hand-made styles;
+/// `lib/ui` + `lib/app` use no raw Material buttons.
 /// Counts per (file, pattern) may only go DOWN against
 /// `raw_widgets_baseline.txt`. Fix a hit or, for a real exception, lower
 /// nothing — ask Lead. After removing hits, shrink the baseline:
@@ -55,14 +56,41 @@ void main() {
           l.split('|').take(2).join('|'),
   };
 
-  Map<String, int> scan() {
-    final out = <String, int>{};
-    for (final f in Directory('lib/features').listSync(recursive: true)) {
+  // The kit and the shell build on raw Material, but a button is always
+  // AppButton / AppIconButton, the only files that wrap Material's.
+  const buttons = [
+    'TextButton',
+    'FilledButton',
+    'OutlinedButton',
+    'ElevatedButton',
+    'IconButton',
+    'FloatingActionButton',
+  ];
+  final buttonPatterns = <String, RegExp>{
+    for (final w in buttons)
+      w: RegExp(
+        '(?<![A-Za-z0-9_.])$w'
+        r'(\.[a-z]+)?\(',
+      ),
+  };
+  const buttonOwners = {
+    'lib/ui/atoms/app_button.dart',
+    'lib/ui/atoms/app_icon_button.dart',
+  };
+
+  void scanDir(
+    String dir,
+    Map<String, RegExp> patterns,
+    Map<String, int> out, {
+    Set<String> skip = const {},
+  }) {
+    for (final f in Directory(dir).listSync(recursive: true)) {
       if (f is! File || !f.path.endsWith('.dart')) continue;
       if (f.path.endsWith('.g.dart') || f.path.endsWith('.freezed.dart')) {
         continue;
       }
       final path = f.path.replaceAll(r'\', '/');
+      if (skip.contains(path)) continue;
       for (final line in f.readAsLinesSync()) {
         if (line.trimLeft().startsWith('//')) continue;
         for (final e in patterns.entries) {
@@ -73,10 +101,19 @@ void main() {
         }
       }
     }
+  }
+
+  Map<String, int> scan() {
+    final out = <String, int>{};
+    scanDir('lib/features', patterns, out);
+    for (final dir in ['lib/ui', 'lib/app']) {
+      scanDir(dir, buttonPatterns, out, skip: buttonOwners);
+    }
     return out;
   }
 
-  test('no new raw widgets in lib/features', () {
+  test('no new raw widgets in lib/features, no raw buttons in lib/ui + '
+      'lib/app', () {
     final now = scan();
     if (Platform.environment['UPDATE_BASELINE'] == '1') {
       final keys = now.keys.toList()..sort();

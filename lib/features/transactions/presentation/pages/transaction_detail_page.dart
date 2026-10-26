@@ -1014,11 +1014,8 @@ String _titleForType(AppLocalizations l, TransactionType t) => switch (t) {
   TransactionType.transfer => l.transactionTypeTransfer,
 };
 
-DetailRow _splitRow(BuildContext context, TxSplit s, VoidCallback onOpen) {
+AppListRow _splitRow(BuildContext context, TxSplit s, VoidCallback onOpen) {
   final l = AppLocalizations.of(context)!;
-  final scheme = Theme.of(context).colorScheme;
-  final textTheme = Theme.of(context).textTheme;
-  final palette = Theme.of(context).extension<AppColors>()!;
   final person = s.person;
   String money(double v) => moneyString(context, v);
   final status = switch (s.status) {
@@ -1037,8 +1034,8 @@ DetailRow _splitRow(BuildContext context, TxSplit s, VoidCallback onOpen) {
           ? l.txSplitStatusAwaiting(money(s.outstanding))
           : l.txSplitStatusToPay(money(s.outstanding)),
   };
-  return DetailRow(
-    label: s.personName,
+  return AppListRow(
+    title: s.personName,
     onTap: onOpen,
     leading: PersonMark(
       name: s.personName,
@@ -1051,23 +1048,14 @@ DetailRow _splitRow(BuildContext context, TxSplit s, VoidCallback onOpen) {
       size: 32,
       reserveLinkSlot: true,
     ),
-    trailing: Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(money(s.amount), style: textTheme.bodyLarge),
-        Text(
-          status,
-          style: textTheme.bodySmall?.copyWith(
-            color: s.isOverpaid
-                ? palette.warning
-                : s.status == 'settled'
-                ? palette.income
-                : scheme.onSurfaceVariant,
-            fontWeight: s.status == 'settled' ? FontWeight.w600 : null,
-          ),
-        ),
-      ],
+    trailing: ListRowTrailing.value(
+      Text(money(s.amount)),
+      caption: status,
+      captionTone: s.isOverpaid
+          ? Tone.warning
+          : s.status == 'settled'
+          ? Tone.success
+          : null,
     ),
   );
 }

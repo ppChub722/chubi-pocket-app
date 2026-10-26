@@ -1184,13 +1184,14 @@ Future<Color?> _showColorWheelDialog(BuildContext context, Color seed) {
         ),
       ),
       actions: [
-        TextButton(
+        AppButton(
+          label: l.commonCancel,
+          variant: AppButtonVariant.text,
           onPressed: () => Navigator.of(ctx).pop(),
-          child: Text(l.commonCancel),
         ),
-        FilledButton(
+        AppButton(
+          label: l.colorPickerUse,
           onPressed: () => Navigator.of(ctx).pop(selected),
-          child: Text(l.colorPickerUse),
         ),
       ],
     ),

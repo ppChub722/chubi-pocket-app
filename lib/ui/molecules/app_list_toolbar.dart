@@ -18,9 +18,10 @@ class AppListToolbar extends StatelessWidget {
     this.search,
     this.filters = const [],
     this.sort,
+    this.trailing,
     this.sidePadding = AppSpacing.lg,
     super.key,
-  });
+  }) : assert(sort == null || trailing == null);
 
   static const double gap = AppSpacing.sm;
 
@@ -30,6 +31,10 @@ class AppListToolbar extends StatelessWidget {
   /// Chip-size chips (a dropdown [AppChip], a toggle chip).
   final List<Widget> filters;
   final SortChip<dynamic>? sort;
+
+  /// The end of the chip row when it isn't a [sort] (a sort menu, an edit or
+  /// delete button).
+  final Widget? trailing;
 
   /// 0 inside a block that already has the page gutter.
   final double sidePadding;
@@ -51,7 +56,8 @@ class AppListToolbar extends StatelessWidget {
 
   Widget _block() {
     final search = this.search;
-    final hasFilters = filters.isNotEmpty || sort != null;
+    final end = sort ?? trailing;
+    final hasFilters = filters.isNotEmpty || end != null;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Column(
@@ -71,7 +77,7 @@ class AppListToolbar extends StatelessWidget {
               size: ChipSize.chip,
               child: FilterBar(
                 chips: filters,
-                trailing: sort,
+                trailing: end,
                 padding: EdgeInsets.symmetric(horizontal: sidePadding),
               ),
             ),

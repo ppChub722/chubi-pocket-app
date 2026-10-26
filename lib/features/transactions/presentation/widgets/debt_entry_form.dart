@@ -323,10 +323,14 @@ class DebtEntryController extends ChangeNotifier {
     }
   }
 
+  /// "ไม่ระบุกระเป๋า" was picked (else no wallet = not picked yet).
+  bool noWalletPicked = false;
+
   /// Picking a wallet while recording means the money moved: the switch
-  /// turns on.
-  void setAccount(Account? a) {
+  /// turns on. [picked]: the person chose it in the picker.
+  void setAccount(Account? a, {bool picked = false}) {
     account = a;
+    noWalletPicked = picked && a == null;
     if (a != null && !repaying) createTransaction = true;
     notifyListeners();
   }
@@ -516,7 +520,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
       allowCreate: true,
     );
     if (!mounted || r == null) return;
-    _c.setAccount(r is AccountPicked ? r.account : null);
+    _c.setAccount(r is AccountPicked ? r.account : null, picked: true);
   }
 
   Future<void> _pickDate() async {
@@ -671,11 +675,14 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
   /// name — so the arrow still points at someone.
   Widget _meCard(AppLocalizations l) {
     if (_c.repaying || _c.createTransaction) {
-      // No wallet is a choice here, as in the tx mode: "ไม่ระบุกระเป๋า".
+      // No wallet is a choice here, as in the tx mode: "ไม่ระบุกระเป๋า"
+      // once picked, "เลือกกระเป๋า" before.
       return WalletPickCard(
         account: _c.account,
         label: l.transactionFormAccountLabel,
-        placeholder: l.transactionFormAccountNone,
+        placeholder: _c.noWalletPicked
+            ? l.transactionFormAccountNone
+            : l.quickPickWallet,
         dense: true,
         editable: true,
         onTap: _pickAccount,

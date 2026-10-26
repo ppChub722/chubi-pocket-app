@@ -263,6 +263,8 @@ class _LanguageRow extends StatelessWidget {
       label: l.settingsLanguage,
       value: kLanguageNames[code] ?? code,
       selected: code,
+      // Kept on this phone only.
+      submits: false,
       onSelected: (picked) => context.read<LocaleCubit>().set(Locale(picked)),
       options: [
         for (final e in kLanguageNames.entries)

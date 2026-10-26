@@ -33,7 +33,7 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
   }
 
   final _search = TextEditingController();
-  final _toolbar = ToolbarToggleState.of('saving_goals');
+  final _toolbar = AppListToolbarState.of('saving_goals');
 
   String _query = '';
   _GoalChip _chip = _GoalChip.all;
@@ -146,7 +146,7 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
         label: l.fpGoalsFactTotal,
         amount: MoneyText(s.savedTotal, symbol: symbol),
         actions: [
-          ToolbarToggleButton(
+          AppListToolbarToggle(
             state: _toolbar,
             filtered:
                 _query.isNotEmpty ||
@@ -226,12 +226,14 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
     SavingGoalsState state,
     SavingGoalsCubit cubit,
   ) {
-    return ListToolbar(
-      collapse: _toolbar,
-      searchController: _search,
-      onSearchChanged: (v) => setState(() => _query = v.trim()),
-      searchHint: l.sgv2SearchHint,
-      trailing: SortChip<SavingGoalsSort>(
+    return AppListToolbar(
+      state: _toolbar,
+      search: ListToolbarSearch(
+        controller: _search,
+        onChanged: (v) => setState(() => _query = v.trim()),
+        hint: l.sgv2SearchHint,
+      ),
+      sort: SortChip<SavingGoalsSort>(
         value: state.sort,
         tooltip: l.fpM5GoalsSortTooltip,
         options: [
@@ -244,7 +246,7 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
         ],
         onChanged: cubit.setSort,
       ),
-      chips: [
+      filters: [
         OptionMenuAnchor<SavingGoalsFilter>(
           selected: state.filter,
           onSelected: cubit.setFilter,

@@ -89,29 +89,21 @@ class IdentifierRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    return DetailRow(
+    return AppListRow(
       leading: _mark(context, identifier, providers),
-      label: _kindLine(context, identifier, providers),
+      title: _kindLine(context, identifier, providers),
       onTap: onTap,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            hidden ? identifier.masked : identifier.formatted,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-          if (onDelete != null)
-            AppIconButton.close(
-              tooltip: l.identifierDelete,
-              dense: true,
-              color: scheme.error,
-              onPressed: onDelete,
-            ),
-        ],
+      trailing: ListRowTrailing.value(
+        Text(hidden ? identifier.masked : identifier.formatted),
       ),
+      actions: [
+        if (onDelete != null)
+          ListRowAction.icon(
+            AppIcons.close,
+            tooltip: l.identifierDelete,
+            onTap: onDelete,
+          ),
+      ],
     );
   }
 }

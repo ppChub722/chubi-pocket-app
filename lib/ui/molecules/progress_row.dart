@@ -26,8 +26,13 @@ class ProgressRow extends StatelessWidget {
     this.fillLabel,
     this.fillDot = false,
     this.endLabel,
+    this.expectedCapsule = false,
     super.key,
   });
+
+  /// The [expected] segment as a soft rounded capsule tucked under the fill's
+  /// rounded end, in place of stripes.
+  final bool expectedCapsule;
 
   /// A round dot on the end of the fill (in place of a [fillLabel] pill);
   /// pair it with [marker] = the fill + [markerBubble] for the amount.
@@ -118,13 +123,27 @@ class ProgressRow extends StatelessWidget {
                   key: const ValueKey('progressExpected'),
                   alignment: Alignment.centerLeft,
                   widthFactor: v.dy,
-                  child: CustomPaint(painter: _StripePainter(barColor)),
+                  child: expectedCapsule
+                      ? DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: barColor.withValues(alpha: 0.35),
+                            borderRadius: BorderRadius.circular(height / 2),
+                          ),
+                        )
+                      : CustomPaint(painter: _StripePainter(barColor)),
                 ),
               FractionallySizedBox(
                 key: const ValueKey('progressUsed'),
                 alignment: Alignment.centerLeft,
                 widthFactor: v.dx,
-                child: ColoredBox(color: barColor),
+                child: expectedCapsule
+                    ? DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: barColor,
+                          borderRadius: BorderRadius.circular(height / 2),
+                        ),
+                      )
+                    : ColoredBox(color: barColor),
               ),
               if (ticks.isNotEmpty)
                 Positioned.fill(

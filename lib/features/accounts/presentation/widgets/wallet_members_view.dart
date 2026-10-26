@@ -261,64 +261,59 @@ class _MemberRow extends StatelessWidget {
       if (member.leftAt != null)
         l.walletMemberLeft(_dateOnly(member.leftAt!, locale)),
     ];
-    final Widget pill = member.pending
-        ? AppChip(
-            label: l.walletMemberPending,
-            tone: AppChipTone.warning,
+    final role = member.pending
+        ? ListRowChip(
+            l.walletMemberPending,
+            tone: Tone.warning,
             selected: true,
-            size: ChipSize.chip,
           )
-        : AppChip(
-            label: member.isOwner
-                ? l.walletMemberRoleOwner
-                : l.walletMemberRoleMember,
-            tone: member.isOwner ? AppChipTone.primary : AppChipTone.neutral,
+        : ListRowChip(
+            member.isOwner ? l.walletMemberRoleOwner : l.walletMemberRoleMember,
+            tone: member.isOwner ? Tone.primary : Tone.neutral,
             selected: true,
-            size: ChipSize.chip,
           );
-    return DetailRow(
+    return AppListRow(
       leading: UserAvatar(
         displayName: member.name,
         iconCode: member.iconCode,
         size: 40,
       ),
-      label: isSelf ? '${member.name} (${l.walletMemberYou})' : member.name,
-      helper: dates.isEmpty ? null : dates.join(' | '),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          pill,
-          if (canLeave || canRemove || canTransfer)
-            OptionMenuAnchor<_MemberAction>(
-              onSelected: (a) => switch (a) {
-                _MemberAction.leave => onLeave?.call(),
-                _MemberAction.remove => onRemove?.call(),
-                _MemberAction.transferOwnership => onTransferOwnership?.call(),
-              },
-              options: [
-                if (canTransfer)
-                  SheetOption(
-                    value: _MemberAction.transferOwnership,
-                    label: l.walletTransferOwnershipAction,
-                  ),
-                if (canRemove)
-                  SheetOption(
-                    value: _MemberAction.remove,
-                    label: l.walletRemoveMemberAction,
-                    destructive: true,
-                  ),
-                if (canLeave)
-                  SheetOption(
-                    value: _MemberAction.leave,
-                    label: l.walletLeave,
-                    destructive: true,
-                  ),
-              ],
-              builder: (context, toggle) =>
-                  AppIconButton.more(tooltip: l.commonMore, onPressed: toggle),
-            ),
-        ],
-      ),
+      title: isSelf ? '${member.name} (${l.walletMemberYou})' : member.name,
+      status: role,
+      line2: dates.isEmpty ? null : ListRowLine(parts: dates),
+      actions: [
+        if (canLeave || canRemove || canTransfer)
+          ListRowAction.menu<_MemberAction>(
+            tooltip: l.commonMore,
+            onSelected: (a) => switch (a) {
+              _MemberAction.leave => onLeave?.call(),
+              _MemberAction.remove => onRemove?.call(),
+              _MemberAction.transferOwnership => onTransferOwnership?.call(),
+            },
+            options: [
+              if (canTransfer)
+                SheetOption(
+                  value: _MemberAction.transferOwnership,
+                  label: l.walletTransferOwnershipAction,
+                  submits: true,
+                ),
+              if (canRemove)
+                SheetOption(
+                  value: _MemberAction.remove,
+                  label: l.walletRemoveMemberAction,
+                  destructive: true,
+                  submits: true,
+                ),
+              if (canLeave)
+                SheetOption(
+                  value: _MemberAction.leave,
+                  label: l.walletLeave,
+                  destructive: true,
+                  submits: true,
+                ),
+            ],
+          ),
+      ],
     );
   }
 

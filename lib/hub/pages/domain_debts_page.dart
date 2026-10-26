@@ -128,10 +128,12 @@ class _DebtsPageState extends State<_DebtsPage> {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              DateGroupHeader(
-                label: 'ศ. 10 ต.ค. 2026',
-                note: 'ลดลง ฿400',
-                noteColor: Theme.of(context).colorScheme.primary,
+              AppListHeader(
+                title: 'ศ. 10 ต.ค. 2026',
+                trailing: ListHeaderTrailing.text(
+                  'ลดลง ฿400',
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
               // Statement rows: the app's AppListRow (owner 2026-10-23).
               _list([

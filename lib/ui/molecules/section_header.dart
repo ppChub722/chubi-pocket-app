@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/app_button.dart';
 import '../atoms/app_text.dart';
 import '../atoms/list_break.dart';
 import '../tokens/app/app_icons.dart';
@@ -121,21 +122,11 @@ class SectionHeader extends StatelessWidget implements ListBreak {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (actionLabel != null && onAction != null)
-                        TextButton(
+                        AppButton(
+                          label: actionLabel!,
                           onPressed: onAction,
-                          style: TextButton.styleFrom(
-                            minimumSize: const Size(0, 40),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.sm,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(actionLabel!),
-                              const Icon(AppIcons.chevronRight, size: 18),
-                            ],
-                          ),
+                          variant: AppButtonVariant.text,
+                          trailingIcon: AppIcons.chevronRight,
                         ),
                       if (end != null) Flexible(child: end),
                     ],

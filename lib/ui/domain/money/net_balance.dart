@@ -22,7 +22,7 @@ class NetBalance extends StatelessWidget {
     required this.iOweLabel,
     required this.settledLabel,
     this.size = NetBalanceSize.row,
-    this.currencySymbol = '฿',
+    this.currencySymbol,
     this.showCaption = true,
     super.key,
   });
@@ -34,7 +34,7 @@ class NetBalance extends StatelessWidget {
   final String iOweLabel;
   final String settledLabel;
   final NetBalanceSize size;
-  final String currencySymbol;
+  final String? currencySymbol;
 
   bool get isSettled => CurrencyFormatter.roundsToZero(amount);
 

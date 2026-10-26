@@ -38,7 +38,7 @@ class _PeopleView extends StatefulWidget {
 
 class _PeopleViewState extends State<_PeopleView> {
   final _search = TextEditingController();
-  final _toolbar = ToolbarToggleState.of('personal_debts');
+  final _toolbar = AppListToolbarState.of('personal_debts');
 
   @override
   void dispose() {
@@ -135,24 +135,23 @@ class _PeopleViewState extends State<_PeopleView> {
       Color color,
       int count,
       double? total,
-    ) => SectionHeader(
+    ) => AppListHeader(
       key: ValueKey('debtsSection-$title'),
       leading: AppIcon(icon, size: AppIconSize.md, color: color),
       title: title,
       count: count,
-      // The total ends over the rows' amounts (AppListRow's lg end inset), like
-      // the transactions list's day totals.
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.lg,
-        AppSpacing.xs,
-      ),
-      // "รวม" small, then the total in the side's colour, like the
-      // transactions list's day totals.
-      totalLabel: l.debtsSectionTotal,
-      total: total == null ? null : moneyString(context, total, symbol: symbol),
-      totalColor: color,
+      trailing: total == null
+          ? null
+          : ListHeaderTrailing.value(
+              MoneyText(
+                total,
+                symbol: symbol,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(color: color),
+              ),
+              prefix: l.debtsSectionTotal,
+            ),
     );
     return [
       if (owedToMe.isNotEmpty) ...[
@@ -214,7 +213,7 @@ class _PeopleViewState extends State<_PeopleView> {
         actions: [
           ListenableBuilder(
             listenable: _search,
-            builder: (context, _) => ToolbarToggleButton(
+            builder: (context, _) => AppListToolbarToggle(
               state: _toolbar,
               filtered: _search.text.isNotEmpty,
               tooltip: l.commonSearch,
@@ -323,11 +322,13 @@ class _PeopleViewState extends State<_PeopleView> {
               topInset: AppSpacing.sm,
               header: [
                 _hero(l, s, symbol),
-                ListToolbar(
-                  collapse: _toolbar,
-                  searchController: _search,
-                  onSearchChanged: cubit.search,
-                  searchHint: l.debtsSearchHint,
+                AppListToolbar(
+                  state: _toolbar,
+                  search: ListToolbarSearch(
+                    controller: _search,
+                    onChanged: cubit.search,
+                    hint: l.debtsSearchHint,
+                  ),
                 ),
               ],
               children: _sections(l, s, symbol),

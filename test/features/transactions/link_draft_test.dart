@@ -263,13 +263,16 @@ void main() {
     expect(t.link!['payer'], {'contact_id': 'c2'});
   });
 
-  test('linkSave: income ignores the tab, a transfer carries no link', () {
+  test('linkSave: income keeps the tab (รับแทน), a transfer carries no link', () {
     final income = _form()
-      ..setSplits([_split('บอส', 40, id: 'c1')])
-      ..setLinkMode(LinkMode.paid, hasEvent: false)
-      ..setType(TransactionType.income);
-    expect(income.linkMode(hasEvent: false), LinkMode.split);
-    expect(income.linkSave(LinkMode.split).link, isNull);
+      ..setType(TransactionType.income)
+      ..setLinkMode(LinkMode.split, hasEvent: false)
+      ..setPaidBy(_lee);
+    expect(income.linkMode(hasEvent: false), LinkMode.paid);
+    expect(
+      (income.linkSave(LinkMode.paid).link!['paid_by'] as Map)['contact_id'],
+      'c2',
+    );
 
     final transfer = _form()
       ..setType(TransactionType.transfer)

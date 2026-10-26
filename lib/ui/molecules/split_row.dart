@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../atoms/app_avatar.dart';
 import '../atoms/app_chip.dart';
-import '../atoms/app_icon.dart';
+import '../atoms/app_icon_button.dart';
 import '../atoms/app_input.dart';
 import '../atoms/app_input_type.dart';
 import '../atoms/ui_config.dart';
@@ -10,7 +10,6 @@ import 'amount_input.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
-import '../tokens/icon_size.dart';
 
 class SplitRow extends StatelessWidget {
   const SplitRow({
@@ -94,30 +93,13 @@ class SplitRowAction extends StatelessWidget {
   final bool selected;
 
   @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Tooltip(
-      message: tooltip,
-      child: InkResponse(
-        onTap: onTap,
-        radius: SplitRow.trailingSlot / 2,
-        child: Container(
-          width: circle,
-          height: circle,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: selected ? scheme.primaryContainer : null,
-          ),
-          child: AppIcon(
-            icon,
-            size: AppIconSize.md,
-            color: selected ? scheme.primary : scheme.onSurfaceVariant,
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => AppIconButton.bare(
+    icon: icon,
+    tooltip: tooltip,
+    onPressed: onTap,
+    size: circle,
+    selected: selected,
+  );
 }
 
 class SplitRowName extends StatelessWidget {

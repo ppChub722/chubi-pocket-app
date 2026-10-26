@@ -12,7 +12,7 @@ class TxSummaryTitle extends StatelessWidget {
     required this.amount,
     this.category,
     this.onTap,
-    this.symbol = '฿',
+    this.symbol,
     super.key,
   });
 
@@ -21,7 +21,9 @@ class TxSummaryTitle extends StatelessWidget {
 
   final Category? category;
   final VoidCallback? onTap;
-  final String symbol;
+
+  /// Null = the user's currency.
+  final String? symbol;
 
   @override
   Widget build(BuildContext context) {

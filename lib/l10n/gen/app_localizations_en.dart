@@ -69,9 +69,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonOk => 'OK';
 
   @override
-  String get commonBack => 'Back';
-
-  @override
   String get commonClose => 'Close';
 
   @override
@@ -105,15 +102,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonUndo => 'Undo';
 
   @override
-  String get commonDiscard => 'Discard';
-
-  @override
-  String get commonDiscardTitle => 'Discard changes?';
-
-  @override
-  String get commonDiscardBody => 'Your edits will be lost.';
-
-  @override
   String get commonCurrency => 'Currency';
 
   @override
@@ -133,9 +121,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get contactPickerTitle => 'Who?';
-
-  @override
-  String get contactPickerSearchHint => 'Search contacts or type a name';
 
   @override
   String get contactPickerEmpty => 'No contacts yet — type a name above';
@@ -169,15 +154,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorValidationMessage =>
       'Some fields aren’t valid — please check them';
-
-  @override
-  String get errorBannerNoConnection => 'No connection. Check your internet.';
-
-  @override
-  String get errorBannerNoConnectionShort => 'No connection. Try again.';
-
-  @override
-  String get offlineBanner => 'You\'re offline';
 
   @override
   String get authLoginIdentifierLabel => 'Username or email';
@@ -244,9 +220,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authRegisterEmailTaken => 'That email is already registered.';
 
   @override
-  String get authRegisterFixErrors => 'Please fix the errors below.';
-
-  @override
   String get authRegisterUsernameTakenInline => 'Already taken';
 
   @override
@@ -301,9 +274,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navProjects => 'Events';
 
   @override
-  String get projectsCreateNew => 'Create new';
-
-  @override
   String get navMore => 'More';
 
   @override
@@ -314,10 +284,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountsAddNew => 'Add wallet';
-
-  @override
-  String get accountsReorderHint =>
-      'Drag ≡ to reorder. This order is yours only — it never moves wallets for other members.';
 
   @override
   String get accountTypeCash => 'Cash';
@@ -335,11 +301,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountTypePayLater => 'Pay later';
 
   @override
-  String accountCreditUsedPercent(int percent) {
-    return '$percent% used';
-  }
-
-  @override
   String get accountDetailNotFound => 'Wallet not found';
 
   @override
@@ -351,11 +312,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountDetailArchive => 'Archive';
-
-  @override
-  String accountDetailCreditAvailable(String available, String limit) {
-    return '$available available of $limit';
-  }
 
   @override
   String get accountDetailSummaryTitle => 'Summary';
@@ -391,11 +347,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountDetailMinimumPayment => 'Minimum payment';
 
   @override
-  String accountDetailDayOfMonth(int day) {
-    return '$day of every month';
-  }
-
-  @override
   String get accountDetailTransactionsTitle => 'Transactions';
 
   @override
@@ -403,9 +354,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountFormTitle => 'New wallet';
-
-  @override
-  String get accountFormTitleEdit => 'Edit wallet';
 
   @override
   String get accountFormTypeLabel => 'Type';
@@ -426,10 +374,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountFormBalanceLabel => 'Opening balance';
 
   @override
-  String get accountFormBalanceHelper =>
-      'Money already in this wallet on the day you start tracking.';
-
-  @override
   String get accountFormCreditLimitLabel => 'Credit limit';
 
   @override
@@ -439,19 +383,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountFormStatementDateLabel => 'Statement date';
 
   @override
-  String get accountFormStatementDateHelper => 'Day of month (1–31)';
-
-  @override
   String get accountFormPaymentDueLabel => 'Payment due';
 
   @override
-  String get accountFormPaymentDueHelper => 'Day of month (1–31)';
-
-  @override
   String get accountFormMinimumPaymentLabel => 'Minimum payment';
-
-  @override
-  String get accountFormDayInvalid => 'Must be 1–31';
 
   @override
   String get accountAdjustBalanceTitle => 'Adjust balance';
@@ -576,13 +511,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get colorPickerUse => 'Use colour';
 
   @override
-  String get projectsPlaceholderTitle => 'No events yet';
-
-  @override
-  String get projectsPlaceholderMessage =>
-      'Create an event to track costs you share with others.';
-
-  @override
   String get moreCategories => 'Categories';
 
   @override
@@ -637,9 +565,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactTitleNew => 'New contact';
 
   @override
-  String get contactTitleEdit => 'Edit contact';
-
-  @override
   String get contactNotFound => 'Contact not found';
 
   @override
@@ -676,24 +601,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactNoteHint => 'Optional | e.g. prefers PromptPay';
 
   @override
-  String get contactLinkedBadge => 'Linked to an app account';
-
-  @override
   String get contactLinkedLockedHint =>
       'Name and email come from their account';
 
   @override
   String get contactArchivedBadge => 'Archived';
-
-  @override
-  String get contactSectionActions => 'Manage';
-
-  @override
-  String get contactLinkTitle => 'Link account';
-
-  @override
-  String get contactLinkLinked =>
-      'Linked — name, email and icon follow their account';
 
   @override
   String get contactLinkRequest => 'Send link request';
@@ -816,9 +728,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get debtsNet => 'Net';
-
-  @override
   String get debtsOwedToMe => 'Owes me';
 
   @override
@@ -831,28 +740,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtsSearchHint => 'Search name';
 
   @override
-  String get debtsStatusLabel => 'Status';
-
-  @override
-  String get debtsStatusOpen => 'Outstanding';
-
-  @override
   String get debtsStatusAll => 'All';
-
-  @override
-  String debtsOpenCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count outstanding',
-      one: '1 outstanding',
-      zero: 'Nothing outstanding',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get debtsEmptyTitle => 'No debts yet';
 
   @override
   String get debtsEmptyMessage =>
@@ -860,17 +748,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get debtsNoMatch => 'No matching people';
-
-  @override
-  String get debtsAddNew => 'Record a debt';
-
-  @override
-  String debtsPersonHistory(int count) {
-    return 'History ($count)';
-  }
-
-  @override
-  String get debtsPersonAdd => 'Record a debt with this person';
 
   @override
   String get debtsPersonAddContact => 'Add to contacts';
@@ -888,148 +765,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtsPersonOpenContact => 'View contact';
 
   @override
-  String debtTheyOweYou(String name) {
-    return '$name owes you';
-  }
-
-  @override
-  String debtYouOwe(String name) {
-    return 'You owe $name';
-  }
-
-  @override
-  String get debtStatusSettled => 'Paid back';
-
-  @override
-  String get debtStatusCancelled => 'Cancelled';
-
-  @override
-  String get debtOutstanding => 'Outstanding';
-
-  @override
-  String debtProgress(String paid, String total) {
-    return 'Paid back $paid of $total';
-  }
-
-  @override
-  String get debtReceive => 'Receive payment';
-
-  @override
   String get debtPay => 'Pay back';
-
-  @override
-  String get debtAmount => 'Full amount';
-
-  @override
-  String get debtSettled => 'Paid back';
-
-  @override
-  String get debtSource => 'From';
-
-  @override
-  String get debtSourceManual => 'Recorded manually';
-
-  @override
-  String get debtSourceTransaction => 'Bill split';
-
-  @override
-  String get debtSourceProject => 'Event';
-
-  @override
-  String get debtCreatedAt => 'Created';
-
-  @override
-  String get debtCounterparty => 'With';
-
-  @override
-  String get debtCounterpartyPlaceholder => 'Pick a contact or type a name';
 
   @override
   String get debtCounterpartyRequired => 'Add the person first';
 
   @override
-  String get debtCancel => 'Cancel this debt';
-
-  @override
-  String get debtCancelTitle => 'Cancel this debt?';
-
-  @override
-  String get debtCancelBody =>
-      'No money moves. Use it when you forgive the debt or recorded it by mistake.';
-
-  @override
-  String get debtCancelled => 'Debt cancelled';
-
-  @override
-  String get debtDeleteTitle => 'Delete this debt?';
-
-  @override
-  String get debtDeleteBody => 'Deleted for good — this can\'t be undone.';
-
-  @override
-  String get debtDeleted => 'Debt deleted';
-
-  @override
-  String get debtNewTitle => 'Record a debt';
-
-  @override
-  String get debtEditTitle => 'Edit debt';
-
-  @override
   String get debtDirectionOwedToMe => 'To receive';
 
   @override
-  String get debtDirectionOwedToMeDesc => 'I lent money or paid for them';
-
-  @override
   String get debtDirectionIOwe => 'To pay';
-
-  @override
-  String get debtDirectionIOweDesc => 'I borrowed or they paid for me';
-
-  @override
-  String get debtAmountRequired => 'Enter an amount above 0';
-
-  @override
-  String debtAmountBelowSettled(String amount) {
-    return 'Can\'t be less than what\'s been paid back ($amount)';
-  }
-
-  @override
-  String debtSettleTitleReceive(String name) {
-    return 'Receive from $name';
-  }
-
-  @override
-  String debtSettleTitlePay(String name) {
-    return 'Pay back $name';
-  }
-
-  @override
-  String get debtSettleAll => 'All';
-
-  @override
-  String get debtSettleHalf => 'Half';
-
-  @override
-  String debtSettleOver(String amount) {
-    return 'More than outstanding ($amount)';
-  }
-
-  @override
-  String get debtSettleAccount => 'Wallet';
-
-  @override
-  String get debtSettleAccountRequired => 'Pick a wallet';
-
-  @override
-  String get debtSettleDate => 'Date';
-
-  @override
-  String get debtSettleConfirm => 'Confirm';
-
-  @override
-  String get debtSettleDone => 'Payment recorded';
 
   @override
   String get projectStatusActive => 'In progress';
@@ -1044,16 +789,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectStatusArchived => 'Archived';
 
   @override
-  String get projectsStatusAll => 'All';
-
-  @override
   String get projectsStatusLabel => 'Status';
 
   @override
   String get projectsSearchHint => 'Search events';
-
-  @override
-  String get projectsSortRecent => 'Recent';
 
   @override
   String get projectsSortName => 'Name';
@@ -1069,51 +808,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectsNoMatch => 'No matching events';
 
   @override
-  String projectsMembersCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count members',
-      one: '1 member',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get projectTabDashboard => 'Overview';
-
-  @override
-  String get projectTabTransactions => 'Transactions';
-
-  @override
-  String get projectTabResolve => 'Settle up';
-
-  @override
-  String get projectAddTransaction => 'Add transaction';
-
-  @override
   String get projectNewTitle => 'New event';
-
-  @override
-  String get projectEditTitle => 'Edit event';
-
-  @override
-  String get projectNameLabel => 'Event name';
 
   @override
   String get projectNameRequired => 'Name is required';
 
   @override
-  String get projectTypeLabel => 'Type';
-
-  @override
-  String get projectTypeHint => 'e.g. trip, freelance';
-
-  @override
   String get projectIconLabel => 'Event icon';
-
-  @override
-  String get projectStatusChangeTitle => 'Change status';
 
   @override
   String projectStatusLockTitle(String status) {
@@ -1145,74 +846,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get projectDeleteBody =>
-      'Only events without transactions can be deleted. If it has some, archive it instead.';
-
-  @override
   String get projectDeleted => 'Event deleted';
-
-  @override
-  String get projectDashTotalExpense => 'Total spent';
-
-  @override
-  String get projectDashTotalIncome => 'Total income';
-
-  @override
-  String get projectDashMembers => 'Members';
-
-  @override
-  String get projectDashWhoPaid => 'Who paid';
-
-  @override
-  String get projectDashTopTags => 'Top tags';
-
-  @override
-  String get projectDashRecent => 'Recent';
-
-  @override
-  String get projectDashSeeAll => 'See all';
-
-  @override
-  String projectDashTxCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count transactions',
-      one: '1 transaction',
-      zero: 'No transactions',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get projectTxSearchHint => 'Search transactions';
-
-  @override
-  String get projectTxTypeLabel => 'Type';
-
-  @override
-  String get projectTxTypeAll => 'All';
-
-  @override
-  String get projectTxTypeExpense => 'Expense';
-
-  @override
-  String get projectTxTypeIncome => 'Income';
-
-  @override
-  String get projectTxOnlyMine => 'Only me';
-
-  @override
-  String get projectTxSortTime => 'Date';
-
-  @override
-  String get projectTxSortAmount => 'Amount';
-
-  @override
-  String get projectTxSortMember => 'Who paid';
-
-  @override
-  String get projectTxSortTag => 'Tag';
 
   @override
   String get projectTxEmpty => 'No transactions in this event yet';
@@ -1221,48 +855,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectTxNoMatch => 'No matching transactions';
 
   @override
-  String projectTxOwes(String name) {
-    return 'I owe $name';
-  }
-
-  @override
-  String get projectTxUnmark => 'Unmark';
-
-  @override
-  String get projectTxResolve => 'Record in my book';
-
-  @override
-  String get projectTxResolveHint =>
-      'Create a transaction or a debt in your own book';
-
-  @override
-  String get projectTxEdit => 'Edit transaction';
-
-  @override
   String get projectTxDelete => 'Delete transaction';
 
   @override
   String get projectTxDeleteTitle => 'Delete this transaction?';
-
-  @override
-  String get projectTxDeleteBody => 'Its splits are deleted too.';
-
-  @override
-  String get projectTxDeleted => 'Transaction deleted';
-
-  @override
-  String get projectResolveAsTx => 'As transaction';
-
-  @override
-  String get projectResolveAsDebt => 'As debt';
-
-  @override
-  String get projectResolveShareOnly => 'Only my share';
-
-  @override
-  String projectResolveShareHint(String full, String share) {
-    return 'Full $full | my share $share';
-  }
 
   @override
   String get projectResolveAmount => 'Amount';
@@ -1272,19 +868,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get projectResolveCategoryNone => 'No category';
-
-  @override
-  String get projectResolveDebtHint => 'The person comes from the event member';
-
-  @override
-  String get projectResolveConfirm => 'Record';
-
-  @override
-  String get projectResolveDone => 'Recorded in your book';
-
-  @override
-  String get projectResolveComingSoon =>
-      'A settle-up summary is on the way. For now, tick rows in the Transactions tab.';
 
   @override
   String get projectMembersTitle => 'Members';
@@ -1312,14 +895,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get projectMemberRoleChanged => 'Access updated';
-
-  @override
-  String projectMyPosition(String paid, String share) {
-    return 'Me: paid $paid | my share $share';
-  }
-
-  @override
-  String get projectMyNet => 'Net';
 
   @override
   String get projectMemberLinked => 'Has an app account';
@@ -1480,20 +1055,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get settingsDefaultCurrencyHint =>
-      'Used when you create wallets and debts';
-
-  @override
-  String get settingsCurrencySaved => 'Default currency updated';
-
-  @override
   String get settingsFontSample => 'Sample ภาษาไทย 123';
 
   @override
   String get notificationsTitle => 'Notifications';
-
-  @override
-  String get notificationsMarkAllRead => 'Mark all as read';
 
   @override
   String get notificationsEmptyTitle => 'You are all caught up';
@@ -1657,9 +1222,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeVsPrevMonth => 'Spending vs last month';
 
   @override
-  String get homeComingUp => 'Coming up';
-
-  @override
   String homeComingUpWindow(int days) {
     return '$days days';
   }
@@ -1713,17 +1275,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeBudgetsNone => 'No budgets yet';
 
   @override
-  String homeDebtsOpen(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count open',
-      one: '1 open',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get homeDebtsNone => 'All settled';
 
   @override
@@ -1742,12 +1293,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeLoadError => 'Couldn\'t load the dashboard';
-
-  @override
-  String get homePrevMonth => 'Previous month';
-
-  @override
-  String get homeNextMonth => 'Next month';
 
   @override
   String get transactionsFilterType => 'Type';
@@ -1783,31 +1328,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionsClearFilters => 'Clear filters';
 
   @override
-  String get txDetailAccount => 'Wallet';
-
-  @override
-  String get txDetailCategory => 'Category';
-
-  @override
-  String get txDetailTags => 'Tags';
-
-  @override
-  String get txDetailSplits => 'Split';
-
-  @override
-  String get txDetailRecordedBy => 'Recorded by';
-
-  @override
-  String get txDetailSource => 'From';
-
-  @override
   String get txDetailSourceProject => 'Event';
-
-  @override
-  String get txDetailTransferTo => 'To';
-
-  @override
-  String get txDetailBalanceAfter => 'Balance after';
 
   @override
   String get txDeleted => 'Transaction deleted';
@@ -1828,33 +1349,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txDeleteRecurringSkip => 'Delete and skip the occurrence';
 
   @override
-  String get txSplitAdd => 'Split with others';
-
-  @override
-  String get txSplitWith => 'Split with';
-
-  @override
   String get txSplitEqually => 'Split equally';
 
   @override
-  String get txSplitCollapse => 'Remove split';
-
-  @override
   String get txSplitAddPerson => 'Add person';
-
-  @override
-  String txSplitRemaining(String amount) {
-    return 'Your share $amount';
-  }
-
-  @override
-  String get txSplitWiredContact => 'Linked to a contact';
-
-  @override
-  String get txSplitName => 'Name';
-
-  @override
-  String get txSplitOwes => 'To pay';
 
   @override
   String get txSplitRemove => 'Remove';
@@ -1904,12 +1402,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Lets friends link their account with yours';
 
   @override
-  String get authLanguage => 'Language';
-
-  @override
-  String get accountsTotalShared => 'Shared pot';
-
-  @override
   String get accountsSummaryNet => 'My net balance';
 
   @override
@@ -1953,10 +1445,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txSplitOver => 'Splits are more than the transaction amount';
 
   @override
-  String get txSplitFreeText =>
-      'Typed name: pick a contact from the suggestions to link it';
-
-  @override
   String get moreDebts => 'Debts';
 
   @override
@@ -1967,18 +1455,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moreSavingGoals => 'Saving goals';
-
-  @override
-  String get moreScheduled => 'Scheduled transactions';
-
-  @override
-  String get moreGroupLibrary => 'Library';
-
-  @override
-  String get moreGroupPeople => 'People & shared money';
-
-  @override
-  String get moreGroupPlanning => 'Planning';
 
   @override
   String get moreCategoriesDesc => 'Group your entries';
@@ -2000,9 +1476,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moreSavingGoalsDesc => 'Save for what you want';
-
-  @override
-  String get moreScheduledDesc => 'Recurring & upcoming bills';
 
   @override
   String get moreChipOverBudget => 'Over budget';
@@ -2080,9 +1553,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryFormTitleNew => 'New category';
 
   @override
-  String get categoryFormTitleEdit => 'Edit category';
-
-  @override
   String get categoryFormNameRequired => 'Required';
 
   @override
@@ -2091,13 +1561,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get categoryFormNameDuplicate =>
       'Another category at this level already uses this name';
-
-  @override
-  String get categoryFormTypeLabel => 'Type';
-
-  @override
-  String get categoryFormTypeImmutableHelper =>
-      'Type can\'t be changed after creation. Delete and recreate to switch.';
 
   @override
   String get categoryFormParentLabel => 'Parent';
@@ -2178,13 +1641,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactDeleteThis => 'Delete this contact';
 
   @override
-  String get debtDeleteThis => 'Delete this debt';
-
-  @override
   String get projectDeleteThis => 'Delete this event';
-
-  @override
-  String get scheduledDeleteThis => 'Delete this schedule';
 
   @override
   String get transactionDeleteThis => 'Delete this transaction';
@@ -2256,14 +1713,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tagDeleteConfirmTitle => 'Delete tag?';
 
   @override
-  String get tagDeleteConfirmBody =>
-      'Removes the tag from any transactions using it. This can\'t be undone.';
-
-  @override
   String get tagDeleteConfirmAction => 'Delete';
-
-  @override
-  String get tagFormTitleEdit => 'Edit tag';
 
   @override
   String get tagFormNameLabel => 'Name';
@@ -2287,19 +1737,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTitle => 'Settings';
 
   @override
-  String get settingsSectionAccount => 'Account';
-
-  @override
-  String get settingsSectionPreferences => 'Preferences';
-
-  @override
   String get settingsSectionAbout => 'About';
 
   @override
   String get settingsChangePassword => 'Change password';
-
-  @override
-  String get settingsDefaultCurrency => 'Default currency';
 
   @override
   String get settingsTheme => 'Theme';
@@ -2339,14 +1780,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editProfileEmailLabel => 'Email';
 
   @override
-  String get editProfileEmailHelper =>
-      'Used as your account ID and as the matching key when other people send you a contact link request.';
-
-  @override
   String get editProfileEmailInvalid => 'Enter a valid email address.';
-
-  @override
-  String get editProfileEmailTooLong => 'Email is too long.';
 
   @override
   String get editProfileEmailTaken =>
@@ -2380,46 +1814,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get changePasswordConfirmMismatch => 'Doesn\'t match new password';
 
   @override
-  String get changePasswordSubmit => 'Update password';
-
-  @override
   String get changePasswordSnackSuccess => 'Password updated';
-
-  @override
-  String get previewTitle => 'Core Preview';
-
-  @override
-  String get sectionTheme => 'Theme';
-
-  @override
-  String get sectionMode => 'Mode';
-
-  @override
-  String get sectionLanguage => 'Language';
-
-  @override
-  String get sectionFont => 'Font';
-
-  @override
-  String get sectionCurrentSelection => 'Current selection';
-
-  @override
-  String get sectionTypographySamples => 'Typography samples';
-
-  @override
-  String get sectionSemanticColors => 'Semantic colors';
-
-  @override
-  String get sectionFormatters => 'Formatters';
-
-  @override
-  String get sectionControls => 'Controls';
-
-  @override
-  String get sectionInput => 'Input';
-
-  @override
-  String get sectionCard => 'Card';
 
   @override
   String get modeLight => 'Light';
@@ -2431,18 +1826,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get modeSystem => 'System';
 
   @override
-  String fontsAvailableFor(int count, String lang) {
-    return '$count available for \"$lang\"';
-  }
-
-  @override
   String get amountLabel => 'Amount';
-
-  @override
-  String get amountHint => '0.00';
-
-  @override
-  String get monthlyBalance => 'Monthly balance';
 
   @override
   String get transactionFormTitleNew => 'New transaction';
@@ -2459,19 +1843,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get txDetailRepaymentBanner =>
       'Recorded from a debt repayment — it can\'t be edited, but it can be deleted (the debt\'s repaid amount goes down).';
-
-  @override
-  String get debtOverpaid => 'Overpaid';
-
-  @override
-  String get debtOverpaidIOwe => 'Overpaid | I owe them back';
-
-  @override
-  String get debtOverpaidTheyOwe => 'Overpaid | they owe me back';
-
-  @override
-  String get debtOverpaidCantSettle =>
-      'This debt is already overpaid — nothing more to record';
 
   @override
   String txDetailDeleteRepaymentBody(String amount) {
@@ -2506,10 +1877,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifSplitChangeDeleted => 'That debt was removed';
 
   @override
-  String get notifSplitChangeZeroed =>
-      'Your share is now 0 — what you paid counts as overpaid';
-
-  @override
   String get notifSplitChangeUsed => 'Already updated';
 
   @override
@@ -2536,9 +1903,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txSplitErrorContact => 'That contact can\'t be used any more';
-
-  @override
-  String get txSplitEditOnDebts => 'Edit on the debts page';
 
   @override
   String get txSplitStatusPaid => '✓ Paid';
@@ -2575,27 +1939,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get txTypeLockedHint => 'The type can\'t change after saving';
-
-  @override
-  String txDetailSplitEditElsewhere(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count people',
-      one: '1 person',
-    );
-    return '$_temp0 | edit on the debts page';
-  }
-
-  @override
   String get txDetailCreatedAt => 'Recorded';
 
   @override
   String get txDetailUpdatedAt => 'Last edited';
-
-  @override
-  String get txSplitShareShort => 'Share with';
 
   @override
   String tagPickerCreateNamed(String name) {
@@ -2658,16 +2005,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txTagCreateFailed => 'Couldn\'t create the tag';
 
   @override
-  String get quickEventUseName => 'Use this name';
-
-  @override
-  String get quickEventCreatedOnSave => 'The event is created when you save.';
-
-  @override
   String get projectTxPayerRequired => 'Pick a member first';
-
-  @override
-  String get scheduledHeroNameHint => 'What\'s it for, e.g. Netflix';
 
   @override
   String get quickFrom => 'From';
@@ -2702,13 +2040,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickEventRemove => 'Don\'t add to an event';
 
   @override
-  String get quickEventNew => 'Create a new event';
-
-  @override
   String get quickEventNameLabel => 'Event name';
-
-  @override
-  String get quickEventExisting => 'Or add to an existing event';
 
   @override
   String get quickEventNoneYet => 'No open events yet';
@@ -2741,16 +2073,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pendingChatClose => 'Close';
 
   @override
-  String get pendingScanning => 'Reading slips…';
-
-  @override
-  String get pendingScanDone => 'Slips imported';
-
-  @override
   String get pendingSelectAll => 'Select all';
-
-  @override
-  String get pendingSelectNone => 'Select none';
 
   @override
   String get pendingSelectOne => 'Select this one';
@@ -2886,11 +2209,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pendingKeepAsDraft => 'Keep as a draft';
 
   @override
-  String pendingBlockTitle(int count) {
-    return '$count pending';
-  }
-
-  @override
   String pendingBlockMore(int count) {
     return '+ $count more';
   }
@@ -2963,9 +2281,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get transactionFormAccountPickerEmpty =>
       'No active wallets. Create one first.';
-
-  @override
-  String get transactionFormCategoryPickerTitle => 'Pick a category';
 
   @override
   String get transactionFormCategoryPickerNoneOption => 'Uncategorized';
@@ -3045,18 +2360,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Set a target on top of a wallet and track your progress as the balance grows.';
 
   @override
-  String savingGoalProgressLine(String current, String target) {
-    return '$current of $target';
-  }
-
-  @override
   String get savingGoalCompletedLabel => 'Goal reached';
 
   @override
   String get savingGoalFormTitle => 'New saving goal';
-
-  @override
-  String get savingGoalFormTitleEdit => 'Edit saving goal';
 
   @override
   String get savingGoalFormIconLabel => 'Icon';
@@ -3065,22 +2372,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get savingGoalFormNameRequired => 'Required';
 
   @override
-  String get savingGoalFormLinkedAccountLabel => 'Linked wallet';
-
-  @override
-  String get savingGoalFormAccountRequired => 'Pick a linked wallet';
-
-  @override
   String get savingGoalFormTargetLabel => 'Target amount';
 
   @override
   String get savingGoalFormTargetInvalid => 'Enter a positive amount';
-
-  @override
-  String get savingGoalFormAllocationLabel => 'Allocation';
-
-  @override
-  String get savingGoalFormAllocationInvalid => 'Must be between 0 and 100';
 
   @override
   String get savingGoalFormDeadlineLabel => 'Deadline';
@@ -3099,46 +2394,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get savingGoalDetailArchive => 'Archive';
 
   @override
-  String savingGoalDetailOfTarget(String target) {
-    return 'of $target';
-  }
-
-  @override
-  String get savingGoalDetailRemaining => 'Remaining';
-
-  @override
-  String get savingGoalDetailDaysRemaining => 'Days remaining';
-
-  @override
-  String savingGoalDetailDaysValue(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count days',
-      one: '1 day',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get savingGoalDetailRequiredMonthly => 'Suggested monthly';
-
-  @override
   String get savingGoalArchiveConfirmTitle => 'Archive this goal?';
-
-  @override
-  String get savingGoalArchiveConfirmBody =>
-      'Archiving frees its allocation slot on the linked wallet. You can restore it later if capacity is available.';
 
   @override
   String get savingGoalArchiveConfirmAction => 'Archive';
 
   @override
   String get savingGoalDeleteConfirmTitle => 'Delete this goal?';
-
-  @override
-  String get savingGoalDeleteConfirmBody =>
-      'This permanently removes the goal. The linked wallet and its transactions are unaffected.';
 
   @override
   String get savingGoalDeleteConfirmAction => 'Delete';
@@ -3157,42 +2419,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Set a per-category limit and we\'ll track your spending against it each period.';
 
   @override
-  String get budgetPeriodWeekly => 'Weekly';
-
-  @override
-  String get budgetPeriodMonthly => 'Monthly';
-
-  @override
-  String get budgetPeriodYearly => 'Yearly';
-
-  @override
-  String budgetSpentLine(String spent, String limit) {
-    return '$spent of $limit';
-  }
-
-  @override
   String get budgetFormTitle => 'New budget';
 
   @override
-  String get budgetFormTitleEdit => 'Edit budget';
-
-  @override
-  String get budgetFormCategoryLabel => 'Category';
-
-  @override
-  String get budgetFormCategoryPlaceholder => 'Pick a category';
-
-  @override
-  String get budgetFormCategoryRequired => 'Pick a category';
-
-  @override
-  String get budgetFormAmountLabel => 'Limit per period';
-
-  @override
   String get budgetFormAmountInvalid => 'Enter a positive amount';
-
-  @override
-  String get budgetFormPeriodLabel => 'Period';
 
   @override
   String get budgetDetailNotFound => 'Budget not found';
@@ -3206,28 +2436,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get budgetDetailArchive => 'Archive';
-
-  @override
-  String budgetDetailOfLimit(String limit) {
-    return 'of $limit';
-  }
-
-  @override
-  String budgetDetailRemainingLine(String amount) {
-    return '$amount left';
-  }
-
-  @override
-  String budgetDetailPeriodRange(String start, String end) {
-    return '$start – $end';
-  }
-
-  @override
-  String get budgetDetailOverLimitWarning =>
-      'You\'ve gone over the limit for this period.';
-
-  @override
-  String get budgetDetailBreakdownTitle => 'Spend by category';
 
   @override
   String get budgetArchiveConfirmTitle => 'Archive this budget?';
@@ -3250,255 +2458,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get budgetDeleteConfirmAction => 'Delete';
 
   @override
-  String get scheduledTitle => 'Scheduled transactions';
-
-  @override
-  String get scheduledAddNew => 'Add scheduled';
-
-  @override
-  String get scheduledEmptyTitle => 'No scheduled transactions';
-
-  @override
-  String get scheduledEmptyMessage =>
-      'Set up subscriptions, installments, or loans and we\'ll generate the transactions for you.';
-
-  @override
-  String get scheduledVariantRecurring => 'Recurring';
-
-  @override
-  String get scheduledVariantInstallment => 'Installment';
-
-  @override
-  String get scheduledVariantLoan => 'Loan';
-
-  @override
-  String get scheduledCycleDaily => 'Daily';
-
-  @override
-  String get scheduledCycleWeekly => 'Weekly';
-
-  @override
-  String get scheduledCycleMonthly => 'Monthly';
-
-  @override
-  String get scheduledCycleYearly => 'Yearly';
-
-  @override
-  String get scheduledStatusActive => 'Active';
-
-  @override
-  String get scheduledStatusPaused => 'Paused';
-
-  @override
-  String get scheduledStatusCompleted => 'Completed';
-
-  @override
-  String get scheduledStatusCancelled => 'Cancelled';
-
-  @override
-  String scheduledNextDue(String date) {
-    return 'Due $date';
-  }
-
-  @override
-  String scheduledInstallmentsLeft(int remaining, int total) {
-    return '$remaining/$total left';
-  }
-
-  @override
-  String get scheduledFormSave => 'Create';
-
-  @override
-  String get scheduledFormIconLabel => 'Icon';
-
-  @override
-  String get scheduledFormNameRequired => 'Required';
-
-  @override
-  String get scheduledFormAmountLabel => 'Amount per cycle';
-
-  @override
-  String get scheduledFormPaymentLabel => 'Payment per cycle';
-
-  @override
-  String get scheduledFormAmountInvalid => 'Enter a positive amount';
-
-  @override
-  String get scheduledFormAccountLabel => 'Wallet';
-
-  @override
-  String get scheduledFormAccountRequired => 'Pick a wallet';
-
-  @override
-  String get scheduledFormCategoryLabel => 'Category';
-
-  @override
-  String get scheduledFormCategoryRequired => 'Pick a category';
-
-  @override
-  String get scheduledFormCycleLabel => 'Cycle';
-
-  @override
-  String get scheduledFormNextBillingLabel => 'Next billing date';
-
-  @override
-  String get scheduledFormInstallmentSection => 'Installment details';
-
-  @override
-  String get scheduledFormTotalAmountLabel => 'Total amount';
-
-  @override
-  String get scheduledFormTotalAmountHelper =>
-      'Sum of all installments + down payment.';
-
-  @override
-  String get scheduledFormTotalAmountHelperLoan =>
-      'Lifetime total: principal + interest combined.';
-
-  @override
-  String get scheduledFormDownPaymentLabel => 'Down payment';
-
-  @override
-  String get scheduledFormTotalInstallmentsLabel => 'Total installments';
-
-  @override
-  String get scheduledFormRemainingInstallmentsLabel => 'Remaining';
-
-  @override
-  String get scheduledFormInstallmentsInvalid => 'Enter a valid count';
-
-  @override
-  String get scheduledFormRemainingExceeds => 'Cannot exceed total';
-
-  @override
-  String get scheduledFormInterestRateLabel => 'Interest rate (APR)';
-
-  @override
-  String get scheduledFormInterestInvalid => 'Must be between 0 and 99.99';
-
-  @override
-  String get scheduledDetailNotFound => 'Schedule not found';
-
-  @override
-  String get scheduledDetailNotFoundMessage =>
-      'This scheduled entry may have been deleted or cancelled.';
-
-  @override
-  String get scheduledDetailPause => 'Pause';
-
-  @override
-  String get scheduledDetailResume => 'Resume';
-
-  @override
-  String get scheduledDetailCancel => 'Cancel';
-
-  @override
-  String scheduledDetailNextDue(String date) {
-    return 'Next due $date';
-  }
-
-  @override
-  String get scheduledDetailAccount => 'Wallet';
-
-  @override
-  String get scheduledDetailCategory => 'Category';
-
-  @override
-  String get scheduledDetailCycle => 'Cycle';
-
-  @override
-  String get scheduledDetailTotalAmount => 'Total amount';
-
-  @override
-  String get scheduledDetailDownPayment => 'Down payment';
-
-  @override
-  String get scheduledDetailInstallments => 'Installments';
-
-  @override
-  String get scheduledDetailInterestRate => 'Interest rate';
-
-  @override
-  String get scheduledGenerateNowTitle => 'Generate now';
-
-  @override
-  String get scheduledGenerateNowBody =>
-      'Record the next payment now and move the due date to the next period.';
-
-  @override
-  String get scheduledGenerateNowAction => 'Generate';
-
-  @override
-  String get scheduledGenerateNowSuccess => 'Transaction generated';
-
-  @override
-  String get scheduledGenerateNowViewTransaction => 'View';
-
-  @override
-  String get scheduledDetailHistoryTitle => 'Generated transactions';
-
-  @override
-  String get scheduledDetailHistoryEmpty =>
-      'No transactions have been generated yet.';
-
-  @override
-  String scheduledDetailHistoryTotal(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count transactions',
-      one: '1 transaction',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get scheduledCancelConfirmTitle => 'Cancel this schedule?';
-
-  @override
-  String get scheduledCancelConfirmBody =>
-      'Cancelling is final — you\'ll need to create a new entry to schedule again.';
-
-  @override
-  String get scheduledCancelConfirmAction => 'Cancel schedule';
-
-  @override
-  String get scheduledDeleteConfirmTitle => 'Delete this schedule?';
-
-  @override
-  String get scheduledStatusChangeTitle => 'Change status';
-
-  @override
-  String get scheduledDeleteConfirmBody =>
-      'Past generated transactions stay; only the schedule is removed.';
-
-  @override
-  String get scheduledDeleteConfirmAction => 'Delete';
-
-  @override
-  String get projectFormPlannedLabel => 'Planned budget';
-
-  @override
-  String get projectFormPlannedHelper =>
-      'Optional — the total you plan to spend. Clear to turn the plan display off.';
-
-  @override
   String get projectFormPlannedInvalid => 'Enter a positive amount';
-
-  @override
-  String projectMetaPlanned(String amount) {
-    return 'Budget $amount';
-  }
-
-  @override
-  String projectPlannedLine(String planned, String remaining) {
-    return 'Planned $planned | $remaining left';
-  }
-
-  @override
-  String projectPlannedOverLine(String over) {
-    return '🔴 Over budget by $over';
-  }
 
   @override
   String get walletSharedLabel => 'Shared wallet';
@@ -3541,18 +2501,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String walletMemberLeft(String date) {
     return 'Left $date';
   }
-
-  @override
-  String get walletMembersInvite => 'Invite by email';
-
-  @override
-  String get walletInviteTitle => 'Invite member';
-
-  @override
-  String get walletInviteEmailLabel => 'Email';
-
-  @override
-  String get walletInviteEmailInvalid => 'Enter a valid email address.';
 
   @override
   String get walletInviteSend => 'Send invite';
@@ -3614,15 +2562,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walletTransferOwnershipSuccess => 'Ownership transferred';
 
   @override
-  String get walletSettingsMembersSubtitlePersonal =>
-      'Invite someone to share this wallet';
-
-  @override
   String get walletReportScopeTitle => 'In my reports';
-
-  @override
-  String get walletReportScopeHelper =>
-      'Controls how this wallet\'s entries count in your personal summaries and budgets. The wallet page itself always shows everything.';
 
   @override
   String get walletReportScopeNone => 'Not in reports';
@@ -3632,9 +2572,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walletReportScopeAll => 'In reports';
-
-  @override
-  String get walletReportScopeSaved => 'Report setting saved';
 
   @override
   String get transactionFormCategoryAuthorOnlyHint =>
@@ -3686,13 +2623,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'That user is already a member of this wallet.';
 
   @override
-  String get transactionSplitWithTitle => 'Split with…';
-
-  @override
-  String get transactionSplitShareTitle =>
-      'Share with… (I pay them their part)';
-
-  @override
   String get quickCreateErrorTxNotFound =>
       'Some selected bills no longer exist — refresh and try again.';
 
@@ -3705,37 +2635,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Something\'s not right — check the form and try again.';
 
   @override
-  String budgetsOverviewSpent(String spent, String total) {
-    return 'Spent $spent of $total';
-  }
-
-  @override
-  String budgetsOverviewOverCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count budgets over',
-      one: '1 budget over',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get transactionsSearchHint =>
       'Search description | note | category | wallet';
-
-  @override
-  String get savingGoalAllocationAuto => 'Auto';
-
-  @override
-  String get accountSharingSectionTitle => 'Sharing & reports';
-
-  @override
-  String get accountFormOpeningDebtLabel => 'Opening outstanding balance';
-
-  @override
-  String get accountFormOpeningDebtHelper =>
-      'What you still owe on it on the day you start tracking (0 if nothing)';
 
   @override
   String get accountAdjustBalanceNewDebtLabel => 'New outstanding balance';
@@ -3749,19 +2650,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get scheduledSheetTitleNew => 'New scheduled entry';
-
-  @override
-  String get scheduledSheetTitleEdit => 'Edit scheduled entry';
-
-  @override
   String get accountIdentifiersTitle => 'Reference numbers';
-
-  @override
-  String get accountIdentifiersHelper => 'Matches bank slips to this wallet';
-
-  @override
-  String get accountIdentifiersEmpty => 'No numbers yet';
 
   @override
   String get accountIdentifiersAdd => 'Add a number';
@@ -3779,12 +2668,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get identifierKindOther => 'Other';
 
   @override
-  String get identifierSheetAddTitle => 'Add a number';
-
-  @override
-  String get identifierSheetEditTitle => 'Edit number';
-
-  @override
   String get identifierKindLabel => 'Kind';
 
   @override
@@ -3795,15 +2678,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get identifierValueLabel => 'Number';
-
-  @override
-  String get identifierValueHint => 'e.g. 123-4-56789-0 or xxx-x-x2780-x';
-
-  @override
-  String get identifierValueHelperPromptPay => 'Phone or national ID number';
-
-  @override
-  String get identifierValueInvalid => 'Digits, x and dashes only';
 
   @override
   String get identifierValueTooShort => 'Needs at least 4 digits';
@@ -3873,9 +2747,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appUpdateAvailableAction => 'Update';
 
   @override
-  String get appUpdateLater => 'Later';
-
-  @override
   String get transactionsEmptyMonthTitle => 'No transactions this month yet';
 
   @override
@@ -3901,9 +2772,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionsFiltersApply => 'Apply filters';
 
   @override
-  String get transactionsSortBy => 'Sort by';
-
-  @override
   String get txPeriodMonth => 'Month';
 
   @override
@@ -3925,23 +2793,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionsEmptyPeriodTitle => 'No transactions in this period';
 
   @override
-  String get transactionsFilterRemove => 'Remove this filter';
-
-  @override
   String get commonMore => 'More';
 
   @override
   String get txShareMine => 'Your share';
-
-  @override
-  String txShareOthersOwe(String amount) {
-    return 'to receive from others $amount';
-  }
-
-  @override
-  String txShareOthers(String amount) {
-    return 'others\' share $amount';
-  }
 
   @override
   String get txSplitAuthorOnly =>
@@ -3971,12 +2826,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txSplitExceedsShare => 'More than your share';
 
   @override
-  String get accountsGroupMine => 'Mine';
-
-  @override
-  String get accountsReorder => 'Reorder';
-
-  @override
   String get accountsReorderSave => 'Save order';
 
   @override
@@ -3994,26 +2843,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Archived wallets wait here — restore one any time';
 
   @override
-  String get accountDetailAddTx => 'Transaction';
-
-  @override
-  String get accountDetailTransfer => 'Transfer';
-
-  @override
-  String get accountDayNone => 'Not set';
-
-  @override
   String get txPeriodDay => 'Day';
 
   @override
   String get txPeriodWeekHint =>
       'Tap any day — its whole week (Monday to Sunday)';
-
-  @override
-  String get quickEventOpenTitle => 'Open events';
-
-  @override
-  String get quickEventNewRow => 'New event';
 
   @override
   String quickEventCreateNamed(String name) {
@@ -4029,9 +2863,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventPickerTabClosed => 'Closed';
-
-  @override
-  String get txSplitInEvent => 'Split in the event';
 
   @override
   String get txSplitInEventHelper =>
@@ -4199,18 +3030,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get txSplitNoContact => 'Unspecified contact';
-
-  @override
-  String get txSplitNoContactHint => 'Keep the name, still editable';
-
-  @override
-  String get accountFormNameExample => 'e.g. Salary account';
-
-  @override
-  String get accountFormDescriptionExample => 'e.g. For household spending';
-
-  @override
   String get accountsSortCustom => 'My order';
 
   @override
@@ -4220,16 +3039,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountsSortName => 'Name';
 
   @override
-  String get accountsSortType => 'Type';
-
-  @override
   String get accountsSummaryCardDebt => 'Card debt';
-
-  @override
-  String get accountReportSectionTitle => 'Reports';
-
-  @override
-  String get accountOpeningSectionTitle => 'Opening balance';
 
   @override
   String get accountCreditSectionTitle => 'Card / credit limit';
@@ -4300,51 +3110,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailManageTitle => 'Manage';
 
   @override
-  String get draftPickWalletFrom => 'Pick the source wallet';
-
-  @override
-  String get draftPickWalletTo => 'Pick the destination wallet';
-
-  @override
-  String get draftPickCategory => 'Pick a category';
-
-  @override
-  String get draftExtrasTitle => 'Split with / Event';
-
-  @override
-  String draftExtrasSplits(int count) {
-    return 'Split with $count';
-  }
-
-  @override
   String get draftExtrasNone => 'Not set';
-
-  @override
-  String get pendingErrInvalidSplit =>
-      'A split row is incomplete — it needs a name and an amount above 0';
-
-  @override
-  String get pendingErrSplitsExceed =>
-      'The split adds up to more than the amount';
-
-  @override
-  String get pendingErrProjectGone =>
-      'That event no longer exists — pick another or remove it';
-
-  @override
-  String get pendingErrProjectClosed =>
-      'That event is closed or locked — nothing can be added';
-
-  @override
-  String get pendingErrProjectMember => 'You\'re not a member of that event';
-
-  @override
-  String get pendingErrProjectReadOnly =>
-      'You can only view that event — nothing can be added';
-
-  @override
-  String get accountReportSectionDescription =>
-      'Choose how much of this wallet counts in your reports';
 
   @override
   String get accountMembersSectionDescription =>
@@ -4355,31 +3121,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Statement day, due day and minimum payment for this card';
 
   @override
-  String get accountOpeningSectionDescription =>
-      'The wallet\'s starting balance; after creating, change it with Adjust balance';
-
-  @override
-  String get accountTypeSectionDescription => 'What kind of wallet this is';
-
-  @override
   String get walletMembersHistoryDescription =>
       'People who were in this wallet and have left';
 
   @override
   String get categorySettingsSectionDescription =>
       'Whether this category counts in reports and is used for fees';
-
-  @override
-  String get contactActionsSectionDescription =>
-      'Link to a user account, match split names and see this person\'s debts';
-
-  @override
-  String get budgetDetailBreakdownDescription =>
-      'Spending split by sub-category this period';
-
-  @override
-  String get scheduledDetailHistoryDescription =>
-      'Transactions already created from this schedule';
 
   @override
   String get projectMembersDescription =>
@@ -4427,10 +3174,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactShowNicknameLabel => 'Show nickname';
 
   @override
-  String get contactShowNicknameHelper =>
-      'On = use the nickname instead of the name everywhere';
-
-  @override
   String get notOwnerError => 'Only the wallet owner can do this';
 
   @override
@@ -4453,15 +3196,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get uiLoadMoreFailed => 'Couldn\'t load more';
-
-  @override
-  String get debtsTabEntries => 'Entries';
-
-  @override
-  String get debtsTabMoney => 'Payments';
-
-  @override
-  String get debtsAddEntry => 'Add entry';
 
   @override
   String get debtsSortLabel => 'Sort';
@@ -4494,9 +3228,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtsTimelineEmpty => 'No entries yet';
 
   @override
-  String get debtsMoneyEmpty => 'No payments yet';
-
-  @override
   String get debtsEntriesNoMatch => 'No matching entries';
 
   @override
@@ -4516,28 +3247,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get eventStartDateLabel => 'Start date';
 
   @override
-  String get eventEndDateLabel => 'End date';
-
-  @override
   String get eventDatesInvalid =>
       'The end date can\'t be before the start date';
-
-  @override
-  String get eventDateNone => 'Not set';
 
   @override
   String get eventTagShowBills => 'Show bills with this tag';
 
   @override
   String get eventTagAddToMine => 'Add to my tags';
-
-  @override
-  String get eventTagsImportAll => 'Import all';
-
-  @override
-  String eventTagFilter(String name) {
-    return 'Tag: $name';
-  }
 
   @override
   String get quickModeTx => 'Transaction';
@@ -4556,11 +3273,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get debtSettledLabel => 'Settled up';
-
-  @override
-  String debtResultAfter(Object result) {
-    return 'After saving: $result';
-  }
 
   @override
   String get debtMarkPaidTitle => 'Mark entries as paid';
@@ -4583,13 +3295,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String debtCloseConfirm(int n) {
     return 'Pick $n debts';
   }
-
-  @override
-  String get debtCreateTxLabel => 'Also create a transaction';
-
-  @override
-  String get debtCreateTxHint =>
-      'Off = only noted in the debt book, not counted in income or expenses';
 
   @override
   String get txFilterNoWallet => 'Unspecified wallet';
@@ -4619,12 +3324,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txTitleHintIncome => 'What is the money for?';
 
   @override
-  String get debtTitleHintPaid => 'What did you pay for them?';
-
-  @override
-  String get debtTitleHintReceived => 'What are they paying back?';
-
-  @override
   String get savingTitleHint => 'Saving for what?';
 
   @override
@@ -4632,13 +3331,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get debtEntrySaved => 'Debt saved';
-
-  @override
-  String get eventSourceTx => 'Source transaction';
-
-  @override
-  String get eventLinkedHint =>
-      'Amount, date and payer are linked to the source transaction: edits change both';
 
   @override
   String eventTagsImported(int count) {
@@ -4676,32 +3368,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtSourceRowLabel => 'From';
 
   @override
-  String debtBalanceNow(Object result) {
-    return 'Now: $result';
-  }
-
-  @override
-  String txInEventRow(Object name) {
-    return 'In the event $name';
-  }
-
-  @override
-  String get txLinkedMoneyHint =>
-      'Amount and date are shared with the event bill: an edit changes both.';
-
-  @override
-  String get eventBillLinkedMoneyHint =>
-      'Amount and date are shared with the source transaction: an edit changes both.';
-
-  @override
   String get eventErrLocked => 'This event is locked: it can\'t be edited';
 
   @override
   String get eventErrNotOwner => 'Only the event owner can do this';
-
-  @override
-  String get eventErrMoneyLinked =>
-      'Amount and date are linked to a member\'s transaction: its owner edits them';
 
   @override
   String get eventErrTagTaken => 'This event already has a tag with that name';
@@ -4765,16 +3435,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get occurrenceMarkPaid => 'Paid';
 
   @override
-  String get occurrenceUnmarkPaid => 'Not paid';
-
-  @override
   String get occurrenceSkip => 'Skip';
 
   @override
   String get occurrenceRestore => 'Un-skip';
-
-  @override
-  String get occurrenceLinkExisting => 'Link an existing transaction';
 
   @override
   String get occurrenceRecordInTx => 'Recorded as';
@@ -4829,11 +3493,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get occurrenceDueTitle => 'Needs action';
 
   @override
-  String occurrenceDueSince(String date) {
-    return 'Due since $date';
-  }
-
-  @override
   String occurrenceDueMore(int n) {
     return 'See all $n';
   }
@@ -4876,22 +3535,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get recurringWholeMonth => 'Whole month';
-
-  @override
-  String occurrenceZeroTitle(int n) {
-    String _temp0 = intl.Intl.pluralLogic(
-      n,
-      locale: localeName,
-      other: '$n have no amount yet',
-      one: '1 has no amount yet',
-    );
-    return '$_temp0';
+  String occurrencePaidCount(int n) {
+    return '$n marked paid';
   }
 
   @override
-  String get occurrenceZeroBody =>
-      'They\'ll be recorded as 0 for now. You can fix the amount later. Go ahead?';
+  String get occurrencePaidSelected => 'Mark paid';
+
+  @override
+  String get occurrenceNeedsAmount => 'Enter the amount first';
 
   @override
   String get recurringSortDate => 'Date';
@@ -4944,11 +3596,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recurringHomeMonthPay => 'Paid out this month';
-
-  @override
-  String recurringHomeMonthIncome(String amount) {
-    return 'Income $amount';
-  }
 
   @override
   String get recurringHomeMonthCount => 'This month';
@@ -5249,13 +3896,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Set up repeating items like rent or internet. When the day comes, they wait in Pending.';
 
   @override
-  String get upcomingEmptyTitle => 'Nothing upcoming';
-
-  @override
-  String get upcomingEmptyMessage =>
-      'Future-dated items and upcoming recurring items show here.';
-
-  @override
   String get recurringNewTitle => 'New recurring';
 
   @override
@@ -5280,9 +3920,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recurringFieldStart => 'Starts';
 
   @override
-  String get recurringFieldEnd => 'Ends';
-
-  @override
   String get recurringNameRequired => 'Enter a name';
 
   @override
@@ -5290,9 +3927,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recurringWalletRequired => 'Pick a wallet';
-
-  @override
-  String get recurringRepeatDates => 'Pick dates…';
 
   @override
   String get recurringRepeatDatesTitle => 'Pick dates';
@@ -5310,12 +3944,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recurringEndNever => 'Never';
-
-  @override
-  String get recurringEndOnDateOption => 'On a date…';
-
-  @override
-  String get recurringEndAfterCountOption => 'After a number of times…';
 
   @override
   String get recurringStatusActive => 'Active';
@@ -5373,15 +4001,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get recurringScopeTitle => 'Apply to';
-
-  @override
-  String get recurringScopeUpcoming => 'All upcoming items';
-
-  @override
-  String get recurringScopeAll => 'All items';
-
-  @override
   String recurringEndingSoon(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -5408,21 +4027,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get recurringUpcomingEmptyMessage =>
       'Extend it or edit the setting to produce more.';
-
-  @override
-  String get recurringItemRestore => 'Restore';
-
-  @override
-  String get recurringScopeThis => 'This item only';
-
-  @override
-  String get recurringScopeFollowing => 'This and following';
-
-  @override
-  String get recurringScopePast => 'All past items';
-
-  @override
-  String get recurringItemEditTitle => 'Edit item';
 
   @override
   String get moreRecurring => 'Recurring';
@@ -5514,9 +4118,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recurSheetMonthlyOn => 'Monthly on';
 
   @override
-  String get recurSheetLastDayOfMonth => 'the last day of the month';
-
-  @override
   String get recurSheetEnds => 'Ends';
 
   @override
@@ -5568,9 +4169,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get recurringRepeatCustom => 'Custom…';
-
-  @override
   String get moreGroupPlan => 'Money plans';
 
   @override
@@ -5604,12 +4202,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moreSettingsDesc => 'Account, theme and notifications';
 
   @override
-  String get sgv2SavedTotal => 'Saved in total';
-
-  @override
-  String get sgv2InGoals => 'In goals';
-
-  @override
   String get sgv2Spare => 'Not allocated';
 
   @override
@@ -5636,20 +4228,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sgv2PaceOnTrack => 'On track';
 
   @override
-  String sgv2PaceLine(String needed, String pace) {
-    return 'Need $needed/mo | saving $pace';
-  }
-
-  @override
   String sgv2DueOn(String date) {
     return 'Due $date';
   }
-
-  @override
-  String get sgv2NoDeadline => 'No deadline';
-
-  @override
-  String get sgv2ActionAdd => 'Add savings';
 
   @override
   String get sgv2ActionWithdraw => 'Withdraw';
@@ -5661,37 +4242,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sgv2Overview => 'Overview';
 
   @override
-  String get sgv2NeededMonthly => 'Needed per month';
-
-  @override
-  String get sgv2PaceMonthly => 'Actual (3-month average)';
-
-  @override
-  String get sgv2Eta => 'At this pace, done';
-
-  @override
-  String get sgv2TimeLeft => 'Time left';
-
-  @override
-  String get sgv2ByWallet => 'By wallet';
-
-  @override
-  String get sgv2ByWalletHint => 'Saved money remembers its wallet';
-
-  @override
   String get sgv2Entries => 'Saving entries';
 
   @override
   String get sgv2EntriesEmpty => 'No saving entries yet';
-
-  @override
-  String get sgv2EntriesMore => 'Show more';
-
-  @override
-  String get sgv2AutoSave => 'Auto-save';
-
-  @override
-  String get sgv2AutoSaveNone => 'Not set';
 
   @override
   String get sgv2CloseGoal => 'Close goal';
@@ -5711,9 +4265,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sgv2CloseToWallets => 'Back to the wallets';
-
-  @override
-  String get sgv2Restore => 'Restore';
 
   @override
   String get sgv2KindSave => 'Save';
@@ -5736,11 +4287,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sgv2SpareTitle => 'Not allocated';
-
-  @override
-  String sgv2Milestone(int pct) {
-    return 'Reached $pct%';
-  }
 
   @override
   String get walletTrackLabel => 'Track balance';
@@ -5816,9 +4362,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bgStatusWarn => 'Near limit';
-
-  @override
-  String get bgStatusPace => 'On pace to exceed';
 
   @override
   String get bgStatusEnded => 'Ended';
@@ -5902,9 +4445,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bgItemsEmpty => 'Nothing counted in this period yet';
-
-  @override
-  String get bgPeriodEditTitle => 'Edit this period only';
 
   @override
   String get bgPeriodAmountField => 'Amount for this period';
@@ -6001,7 +4541,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String bgPaceBubble(String amount) {
-    return 'Plan to date $amount';
+    return 'Plan $amount';
   }
 
   @override
@@ -6077,43 +4617,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bgNameRequired => 'Enter a name';
 
   @override
-  String get pendingSavingConfirmTitle => 'Confirm as saving?';
-
-  @override
-  String get pendingSavingConfirm => 'Confirm';
-
-  @override
   String get pendingSavingNoWallet => 'Pick a wallet before confirming';
-
-  @override
-  String get walletSavingsTitle => 'Savings';
-
-  @override
-  String get walletSavingsDescription =>
-      'Money you have set aside in this wallet';
-
-  @override
-  String get walletSavingsBalance => 'Real balance';
 
   @override
   String get walletSavingsSaved => 'Saved';
 
   @override
-  String get walletSavingsAvailable => 'Available to spend';
-
-  @override
-  String walletSavingsOver(String amount) {
-    return 'Saved more than the real balance $amount';
-  }
-
-  @override
   String get quickModeSaving => 'Savings';
-
-  @override
-  String get savingEntryTitleHint => 'Note (optional)';
-
-  @override
-  String get savingEntryTarget => 'Save into';
 
   @override
   String get savingEntrySpare => 'Not allocated';
@@ -6132,13 +4642,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get savingEntryWalletRequired => 'Pick a wallet';
-
-  @override
   String get savingEntrySaved => 'Saving recorded';
-
-  @override
-  String get walletSavingsAdd => 'Add savings';
 
   @override
   String get sgv2MoveTitle => 'Move savings';
@@ -6198,24 +4702,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sgv2ChartCaption => 'Saved so far';
 
   @override
-  String get sgv2ChartActual => 'Saved / at this pace';
-
-  @override
-  String get sgv2ChartNeeded => 'Line needed';
-
-  @override
   String sgv2ChartTarget(String amount) {
     return 'Goal $amount';
   }
 
   @override
   String get sgv2SpareName => 'Not allocated';
-
-  @override
-  String get sgv2NoOtherGoal => 'No other goal to move to';
-
-  @override
-  String get sgv2EntryDeleted => 'Saving entry deleted';
 
   @override
   String get profileCurrencyChangeTitle => 'Change currency?';
@@ -6323,11 +4815,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fpWalletCreditUsedLabel => 'Used on the card';
 
   @override
-  String fpWalletCardUsedLabel(int pct) {
-    return 'Used $pct%';
-  }
-
-  @override
   String fpWalletCardAvailableLabel(String limit) {
     return 'Available of the $limit limit';
   }
@@ -6420,18 +4907,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fpWalletDeleted => 'Wallet deleted';
 
   @override
-  String get fpContactsNotLinked => 'Not linked to an app user';
-
-  @override
-  String fpContactsLinkedWith(String user) {
-    return 'Linked with $user';
-  }
-
-  @override
-  String get fpContactsSettingsDesc =>
-      'The name used for this person across the app';
-
-  @override
   String get fpContactsLinkSection => 'App account';
 
   @override
@@ -6452,9 +4927,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Old records keep just the name; amounts unchanged';
 
   @override
-  String get fpDebtsTotalCaption => 'Total outstanding';
-
-  @override
   String fpDebtsOwedToMeTile(int count) {
     return 'Owe me | $count people';
   }
@@ -6465,52 +4937,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String fpDebtsOver30(int count) {
-    return 'Over 30 days: $count people';
-  }
-
-  @override
   String fpDebtsDaysOutstanding(int count) {
     return 'Outstanding $count days';
   }
 
   @override
-  String get fpDebtsIncludeCleared => 'Show cleared';
-
-  @override
-  String get fpDebtsSortOldest => 'Longest owed';
-
-  @override
-  String get fpDebtsSortAmount => 'Largest';
-
-  @override
-  String get fpDebtsSortRecent => 'Latest';
-
-  @override
-  String get fpDebtsMessageLabel => 'Summary message | editable before sending';
-
-  @override
   String get fpDebtsCopy => 'Copy';
 
   @override
-  String get fpDebtsShare => 'Share';
-
-  @override
   String get fpDebtsCopied => 'Message copied';
-
-  @override
-  String get fpDebtsCycleHeader => 'Where the balance comes from';
-
-  @override
-  String fpDebtsCycleHeaderSince(String date) {
-    return 'Where the balance comes from | since cleared $date';
-  }
-
-  @override
-  String get fpDebtsEarlierHeader => 'Earlier cycle | cleared';
-
-  @override
-  String get fpDebtsEarlierLink => 'Earlier cycles';
 
   @override
   String get fpBudgetsLeftLabel => 'Still available';
@@ -6559,21 +4994,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String fpGoalsRowShort(String amount) {
-    return 'Short $amount';
-  }
-
-  @override
-  String fpGoalsEtaOn(String date) {
-    return 'Goal $date';
-  }
-
-  @override
-  String fpGoalsEtaBehind(String date, int n) {
-    return 'Goal $date | $n months late';
-  }
-
-  @override
   String fpGoalsDueBy(String date) {
     return 'By $date';
   }
@@ -6605,27 +5025,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fpGoalsActionRestore => 'Restore';
 
   @override
-  String get fpGoalsSettingsDesc => 'Save automatically';
-
-  @override
-  String fpGoalsAutoCaption(String day, String amount, String wallet) {
-    return '$day | $amount from $wallet';
-  }
-
-  @override
-  String get fpGoalsAutoOffHint =>
-      'Turn on to get a saving to confirm every month';
-
-  @override
-  String get fpGoalsAutoEdit => 'Edit amount, day and wallet';
-
-  @override
-  String get fpGoalsAutoSheetTitle => 'Auto-saving';
-
-  @override
-  String get fpGoalsAutoDay => 'Day of the month';
-
-  @override
   String get fpGoalsAutoFrom => 'Take from';
 
   @override
@@ -6633,9 +5032,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpGoalsChartActual => 'Saved';
-
-  @override
-  String get fpGoalsAutoTag => 'Auto';
 
   @override
   String get fpGoalsCloseConsequence =>
@@ -6662,17 +5058,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpGoalsGroupOngoing => 'Ongoing';
-
-  @override
-  String get fpGoalsTileAuto => 'Auto-saving';
-
-  @override
-  String fpGoalsPerMonth(String amount) {
-    return '$amount/mo';
-  }
-
-  @override
-  String get fpGoalsRingShortLabel => 'Still short';
 
   @override
   String fpGoalsRingOfPlan(String amount) {
@@ -6721,33 +5106,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fpGoalsRowDone => 'Done ✓';
 
   @override
-  String fpGoalsRowLeft(String amount) {
-    return '$amount left';
-  }
-
-  @override
-  String fpGoalsRowMonth(String month, String saved, String plan) {
-    return '$month $saved / $plan';
-  }
-
-  @override
   String fpGoalsRowMonthOnly(String month, String amount) {
     return '$month $amount';
   }
 
   @override
   String get fpGoalsThisMonth => 'This month';
-
-  @override
-  String get fpGoalsPlanTitleNow => 'This month’s saving plan';
-
-  @override
-  String get fpGoalsPlanTitle => 'Saving plan';
-
-  @override
-  String fpGoalsMarkerBubble(String amount) {
-    return 'Should have $amount by now';
-  }
 
   @override
   String fpGoalsChipShort(String amount) {
@@ -6794,8 +5158,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sgPlanSection => 'Saving plan';
 
   @override
-  String get sgPlanSectionDesc =>
-      'When it\'s due, what it starts with, and saving on its own';
+  String get sgPlanSectionDesc => 'When it\'s due, and what it starts with';
 
   @override
   String get sgOpeningLabel => 'Starting amount';
@@ -6805,27 +5168,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Money you already have, saved as the first entry';
 
   @override
-  String get sgAutoOnCaption => 'Each one has its own wallet, amount and round';
-
-  @override
-  String get sgAutoOffCaption =>
-      'Turn on to get savings to confirm on a schedule';
-
-  @override
   String get sgAutoAdd => 'Add a saving';
-
-  @override
-  String sgAutoFirst(String date) {
-    return 'First $date';
-  }
-
-  @override
-  String sgAutoNext(String date) {
-    return 'Next $date';
-  }
-
-  @override
-  String get sgAutoAmountInvalid => 'Enter more than 0';
 
   @override
   String sgCreatedPartly(String error) {
@@ -6897,21 +5240,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fpEventsSpentTotal => 'Total spent';
 
   @override
-  String fpEventsBudgetUsed(String spent, String planned) {
-    return 'Spent $spent of $planned budget';
-  }
-
-  @override
-  String fpEventsBudgetLeft(String amount) {
-    return '$amount left';
-  }
-
-  @override
-  String fpEventsBudgetOver(String amount) {
-    return 'Over by $amount';
-  }
-
-  @override
   String get fpEventsMyShare => 'My share';
 
   @override
@@ -6922,12 +5250,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpEventsTagPick => 'Pick';
-
-  @override
-  String get fpEventsMembersTitle => 'Members | who paid / who owes';
-
-  @override
-  String get fpEventsManage => 'Manage ›';
 
   @override
   String fpEventsMemberPaid(String amount) {
@@ -6957,20 +5279,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fpEventsPayerAll => 'Everyone';
 
   @override
-  String get fpEventsTagsFilterLabel => 'Event tags';
-
-  @override
   String get fpEventsTagAll => 'All';
-
-  @override
-  String fpEventsSplitCount(int count) {
-    return 'Split $count';
-  }
-
-  @override
-  String fpEventsPaidBy(String name) {
-    return '$name paid';
-  }
 
   @override
   String get fpEventsBudgetLabel => 'Planned budget (optional)';
@@ -7036,9 +5345,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpEventsTagNameLabel => 'Tag name';
-
-  @override
-  String get fpEventsTagNameRequired => 'Enter a tag name';
 
   @override
   String get fpEventsTagNewTitle => 'New event tag';
@@ -7132,17 +5438,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get evbBookTxLine => 'My share as an expense';
 
   @override
-  String get evbNotBooked => 'Not in my books';
-
-  @override
-  String evbOwesHint(String from, String to, String amount) {
-    return '$from owes $to $amount';
-  }
-
-  @override
-  String get evbUseAmount => 'Use this';
-
-  @override
   String evbPaybackBy(String name) {
     return 'Payback | by $name';
   }
@@ -7150,11 +5445,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String evbPaidFrom(String wallet) {
     return 'Paid from $wallet';
-  }
-
-  @override
-  String evbBackFrom(String name) {
-    return 'Back from $name';
   }
 
   @override
@@ -7197,18 +5487,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get evbBookMine => 'Book it';
-
-  @override
-  String get evbSettleTitle => 'Who pays whom';
-
-  @override
-  String get evbSettlePairs => 'Pair by pair';
-
-  @override
-  String get evbSettleFewest => 'Net';
-
-  @override
-  String get evbSettlePaid => 'Paid';
 
   @override
   String get evbSettleHint =>
@@ -7374,9 +5652,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileSectionSecurity => 'Security';
 
   @override
-  String get settingsSaveFailed => 'Could not save, try again';
-
-  @override
   String get notifTileAll => 'All';
 
   @override
@@ -7387,25 +5662,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notifTileHidden => 'Hidden';
-
-  @override
-  String get notifCardCaption => 'Needs answer';
-
-  @override
-  String notifCardMain(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count items',
-      zero: 'Nothing',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String notifCardUnread(int count) {
-    return '| unread $count';
-  }
 
   @override
   String get notifReadAllTooltip => 'Mark all as read';
@@ -7655,9 +5911,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get sgRecurringCaption => 'Saves into this goal on the round you set';
-
-  @override
   String get sgRecurringSpareCaption =>
       'Saves into unallocated on the round you set';
 
@@ -7736,9 +5989,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'No amount needed. On the day, enter the real amount in the draft.';
 
   @override
-  String get fpRecurringFieldCount => 'Number of payments';
-
-  @override
   String fpRecurringCountValue(int n) {
     return '$n payments';
   }
@@ -7749,12 +5999,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpRecurringFieldMode => 'Type';
-
-  @override
-  String get fpRecurringFieldPayFrom => 'Pay from';
-
-  @override
-  String get fpRecurringFieldIntoWallet => 'Into wallet';
 
   @override
   String get fpRecurringFieldFromWallet => 'From wallet';
@@ -7878,12 +6122,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fpRecurringAutoChip => 'Auto-record';
 
   @override
-  String get fpRecurringNextYear => 'Next year';
-
-  @override
-  String get fpRecurringGoToMonth => 'Go to month';
-
-  @override
   String get fpRecurringTagNext => 'Next';
 
   @override
@@ -7901,9 +6139,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String fpRecurringMovedFrom(String date) {
     return 'From $date';
   }
-
-  @override
-  String get fpRecurringTapToConfirm => 'Tap to confirm';
 
   @override
   String get fpRecurringTapToEnter => 'Tap to enter the amount';
@@ -7953,43 +6188,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String fpGoalsPlanHeadMonth(String month) {
-    return 'This month’s saving plan | $month';
-  }
-
-  @override
-  String fpGoalsRingSavedPct(int pct) {
-    return 'Saved $pct%';
-  }
-
-  @override
   String get fpGoalsFactTargetShort => 'Short of the targets';
 
   @override
   String get fpGoalsFactMonthToSave => 'To save this month';
 
   @override
-  String get debtSubRecord => 'Record a debt';
-
-  @override
-  String get debtSubRepay => 'Repay';
-
-  @override
   String get debtRepayReceive => 'Got back';
-
-  @override
-  String get debtMoneyMovedLabel => 'Money in / out of a wallet';
-
-  @override
-  String get debtTitleHintOwedToMe =>
-      'What for? e.g. paid for their lunch, a loan';
-
-  @override
-  String get debtTitleHintIOwe =>
-      'What for? e.g. they paid for my lunch, borrowed money';
-
-  @override
-  String get debtRepayTitleHint => 'What for?';
 
   @override
   String get debtRecordChip => 'Log a debt';
@@ -8064,11 +6269,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtMarkPaidLabel => 'Close debts';
 
   @override
-  String debtRepayLeft(String amount) {
-    return 'After saving: $amount left';
-  }
-
-  @override
   String get debtRepayCleared => 'Settled up';
 
   @override
@@ -8092,34 +6292,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'The amounts don\'t add up to the bill yet. See the card\'s status line.';
 
   @override
-  String get txLinkTabLabel => 'Link';
-
-  @override
-  String get txLinkTabPersonal => 'Just me';
-
-  @override
   String get txLinkTabSplit => 'Split';
 
   @override
-  String get txLinkTabPaid => 'Paid for me';
-
-  @override
-  String get txLinkTabEvent => 'Event';
-
-  @override
   String get txLinkBillLabel => 'Bill';
-
-  @override
-  String get txLinkCardSplitTitle => 'Split with';
 
   @override
   String get txLinkCardPaidTitle => 'Who paid, and how much';
 
   @override
   String get txLinkCardMyPaid => 'I paid (from my wallet)';
-
-  @override
-  String get txLinkCardPickPayer => 'Pick who paid';
 
   @override
   String get txLinkCardWhoPaid => 'Who paid';
@@ -8197,12 +6379,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get debtDirectionOwedToMeSub => 'they pay me back';
-
-  @override
-  String get debtDirectionIOweSub => 'I pay them back';
-
-  @override
   String get txLinkPreviewTitle => 'What will change';
 
   @override
@@ -8275,40 +6451,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtOverpayEdit => 'Change the amount';
 
   @override
-  String get debtWalletUnusedLabel => 'Wallet (not used)';
-
-  @override
   String get debtSomeone => 'them';
-
-  @override
-  String debtSentenceRecordIn(String name) {
-    return 'Note that $name owes me';
-  }
-
-  @override
-  String debtSentenceLendTx(String name) {
-    return '(I lend $name money from my wallet)';
-  }
-
-  @override
-  String debtSentenceRecordOut(String name) {
-    return 'Note that I owe $name';
-  }
-
-  @override
-  String debtSentenceBorrowTx(String name) {
-    return '(I borrow from $name into my wallet)';
-  }
-
-  @override
-  String debtSentenceSettleIn(String name) {
-    return '$name pays me back, into my wallet';
-  }
-
-  @override
-  String debtSentenceSettleOut(String name) {
-    return 'I pay $name back, from my wallet';
-  }
 
   @override
   String get debtTxHintLend => 'Adds an expense to the wallet';
@@ -8336,33 +6479,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String debtsLastIPaidBack(String amount) {
-    return 'You paid back $amount';
-  }
-
-  @override
-  String debtsLastTheyPaidBack(String name, String amount) {
-    return '$name paid back $amount';
-  }
-
-  @override
-  String debtsLastLine(String what, String date) {
-    return '$what | $date';
-  }
-
-  @override
   String debtPersonSince(String month) {
     return 'together since $month';
-  }
-
-  @override
-  String debtPersonOweTo(String name) {
-    return 'I owe $name';
-  }
-
-  @override
-  String debtPersonOwedFrom(String name) {
-    return '$name owes me';
   }
 
   @override
@@ -8425,19 +6543,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtEarlierHide => 'Hide earlier ▴';
 
   @override
-  String debtRowFromWallet(String name) {
-    return 'from wallet $name';
-  }
-
-  @override
-  String debtRowIntoWallet(String name) {
-    return 'into wallet $name';
-  }
-
-  @override
-  String get debtRowNoWallet => 'no wallet';
-
-  @override
   String debtRowTheyPaid(String name) {
     return '$name paid for me';
   }
@@ -8464,9 +6569,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String debtRowTheyPaidBack(String name) {
     return '$name paid back';
   }
-
-  @override
-  String get debtPaidPill => '✓ Paid';
 
   @override
   String get debtUnpaidLabel => 'Not paid';
@@ -8507,9 +6609,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get debtPaidHelper => 'Only a label; it never changes a number';
-
-  @override
   String debtOriginLabel(String kind) {
     return 'From ($kind)';
   }
@@ -8533,16 +6632,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtOriginLocked => 'can\'t change it here';
 
   @override
-  String get debtEditWalletLend =>
-      'Money leaves the wallet (a loan / paid for them)';
-
-  @override
-  String get debtEditWalletBorrow => 'Money comes into the wallet (borrowed)';
-
-  @override
-  String get debtEditWalletOff => 'Only the debt, no money moves';
-
-  @override
   String get quickCreateBtnTx => 'Add';
 
   @override
@@ -8557,4 +6646,43 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get debtsEmptyOpenMessage =>
       'Note who borrowed and who paid for whom, so you never forget to ask';
+
+  @override
+  String get evbReceives => 'Got it';
+
+  @override
+  String get txLinkWalletNotIn => 'Not into this wallet';
+
+  @override
+  String txLinkWalletPartIn(String amount) {
+    return '$amount into this wallet';
+  }
+
+  @override
+  String get txLinkViewGotLabel => 'Received by';
+
+  @override
+  String txLinkViewMyGot(String amount) {
+    return 'I got $amount';
+  }
+
+  @override
+  String get txLinkViewIGot => 'I got it';
+
+  @override
+  String get txLinkCardGotTitle => 'Who got it, and how much';
+
+  @override
+  String get txLinkCardMyGot => 'I got it (into my wallet)';
+
+  @override
+  String get txLinkCardWhoGot => 'Who got it';
+
+  @override
+  String get txLinkCardGotOk => '✓ Fully received';
+
+  @override
+  String txFutureHint(String when) {
+    return '$when | counts in the balance from that day';
+  }
 }

@@ -16,7 +16,7 @@ class DebtAmountLine extends StatelessWidget {
     required this.owedToMeLabel,
     required this.iOweLabel,
     required this.settledLabel,
-    this.currencySymbol = '฿',
+    this.currencySymbol,
     super.key,
   });
 
@@ -24,7 +24,7 @@ class DebtAmountLine extends StatelessWidget {
   final String owedToMeLabel;
   final String iOweLabel;
   final String settledLabel;
-  final String currencySymbol;
+  final String? currencySymbol;
 
   @override
   Widget build(BuildContext context) {
@@ -75,13 +75,13 @@ class DebtNetLine extends StatelessWidget {
   const DebtNetLine({
     required this.label,
     required this.net,
-    this.currencySymbol = '฿',
+    this.currencySymbol,
     super.key,
   });
 
   final String label;
   final num net;
-  final String currencySymbol;
+  final String? currencySymbol;
 
   @override
   Widget build(BuildContext context) {

@@ -110,8 +110,9 @@ class _TransactionsPageState extends State<_TransactionsPage> {
   /// The people card of the event bill sheet and quick create's แบ่ง tab:
   /// ฉัน first (the payer), a typed name (an input), a picked person and —
   /// with [event] — the "เพิ่มในอีเวนต์" row on top.
-  Widget _peopleCard({String? event}) => BillPeopleCard(
+  Widget _peopleCard({String? event, bool income = false}) => BillPeopleCard(
     title: 'คนในบิล | 3',
+    payLabel: income ? 'รับ' : null,
     top: EventRow(
       name: event,
       label: 'เพิ่มในอีเวนต์',
@@ -143,7 +144,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
         onName: (_) {},
         amount: 41,
         onAmount: (_) {},
-        onPay: () => _note('payer: มาตาก'),
+        onPay: income && event != null ? null : () => _note('payer: มาตาก'),
         canPaidBack: true,
         tag: event == null
             ? null
@@ -162,7 +163,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
         onChangePerson: () => _note('change person'),
         amount: 41,
         onAmount: (_) {},
-        onPay: () => _note('payer: บอส'),
+        onPay: income && event != null ? null : () => _note('payer: บอส'),
         canPaidBack: true,
         onPaidBack: () => _note('paid back'),
         onRemove: () {},
@@ -232,6 +233,21 @@ class _TransactionsPageState extends State<_TransactionsPage> {
               ),
               const SizedBox(height: AppSpacing.sm),
               if (_linkMode == 1) _peopleCard(event: 'ทริปเขาใหญ่'),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'BillPeopleCard — income (รับแทน)',
+          note:
+              'payLabel "รับ": the chip says who received the money (someone '
+              'else = รับแทน, they owe me). An event income is always mine: '
+              'rows with neither paid nor onPay show no chip.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _peopleCard(income: true),
+              const SizedBox(height: AppSpacing.md),
+              _peopleCard(income: true, event: 'ทริปเขาใหญ่'),
             ],
           ),
         ),

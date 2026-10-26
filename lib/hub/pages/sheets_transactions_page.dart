@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../hub_kit.dart';
 import 'sheet_demos/description_picker_sheet_demo.dart';
 import 'sheet_demos/quick_create_demo.dart';
-import 'sheet_demos/settle_sheet_demo.dart';
 import 'sheet_demos/tx_filter_sheet_demo.dart';
 
 /// `/dev/domain/sheets-transactions` — the transaction sheets, each split in
@@ -38,14 +37,6 @@ Widget buildSheetsTransactionsPage(BuildContext context) => Column(
           'Generic: past descriptions as suggestions and a typed one; all '
           'strings are parameters.',
       child: buildDescriptionPickerSheetDemo(context),
-    ),
-    HubDemo(
-      title: 'SettleSheet — receive / pay back',
-      note:
-          'The hero amount with quick fills, the wallet and a note. The '
-          'wrapper runs the settle call inside the sheet through onConfirm, '
-          'so a failure keeps it open.',
-      child: buildSettleSheetDemo(context),
     ),
   ],
 );

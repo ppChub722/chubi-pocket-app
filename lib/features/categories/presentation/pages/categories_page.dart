@@ -328,11 +328,13 @@ class _CategoriesPageState extends State<CategoriesPage> {
     ];
     final colors = {for (final c in codes) ?_colorOf(c)}.toList()..sort();
     final icons = {for (final c in codes) ?c?.icon}.toList()..sort();
-    return ListToolbar(
-      searchController: _search,
-      searchHint: l.categoriesSearchHint,
-      onSearchChanged: (v) => setState(() => _query = v),
-      chips: [
+    return AppListToolbar(
+      search: ListToolbarSearch(
+        controller: _search,
+        hint: l.categoriesSearchHint,
+        onChanged: (v) => setState(() => _query = v),
+      ),
+      filters: [
         PopoverAnchor(
           builder: (context, toggle) => AppChip(
             label: l.iconMakerTabColor,

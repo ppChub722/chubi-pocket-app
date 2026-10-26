@@ -66,8 +66,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   /// Who pays whom (the สรุป tab); null = not loaded since the last change.
   EventSettle? _settle;
   bool _settleLoading = false;
+  ApiException? _settleError;
 
-  final _toolbarOpen = ToolbarToggleState.local();
+  final _toolbarOpen = AppListToolbarState.local();
   final _billSearch = TextEditingController();
   Timer? _debounce;
   ProjectBoardController? _board;
@@ -533,12 +534,15 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
 
   Future<void> _loadSettle() async {
     if (_settleLoading || widget.id == null) return;
-    setState(() => _settleLoading = true);
+    setState(() {
+      _settleLoading = true;
+      _settleError = null;
+    });
     try {
       final s = await context.read<ProjectsRepository>().settle(widget.id!);
       if (mounted) setState(() => _settle = s);
     } on ApiException catch (e) {
-      _showError(e);
+      if (mounted) setState(() => _settleError = e);
     } finally {
       if (mounted) setState(() => _settleLoading = false);
     }
@@ -601,7 +605,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         SectionCard(
           title: l.evbSettleSection,
           children: [
-            if (s == null)
+            if (s == null && _settleError != null)
+              ErrorView(error: _settleError!, onRetry: _loadSettle)
+            else if (s == null)
               const ListRowSkeleton()
             else if (lines.isEmpty)
               EmptyView.compact(message: l.evbAllSettled)
@@ -1170,12 +1176,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             children: [
               toolsRow,
               const SizedBox(height: AppSpacing.xs),
-              ListToolbar(
+              AppListToolbar(
                 sidePadding: 0,
-                searchController: _billSearch,
-                searchHint: l.fpEventsBillsSearchHint,
-                onSearchChanged: _onBillSearch,
-                chips: [
+                search: ListToolbarSearch(
+                  controller: _billSearch,
+                  hint: l.fpEventsBillsSearchHint,
+                  onChanged: _onBillSearch,
+                ),
+                filters: [
                   OptionMenuAnchor<String?>(
                     selected: board.payerId,
                     onSelected: (id) => board.change(payerId: id),

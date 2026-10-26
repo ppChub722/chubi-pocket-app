@@ -650,27 +650,27 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         // Like the note row: an icon in front, here a filled "active" circle
         // once linked; ⋯ holds the one action (owner 2026-10-23).
         if (c.isLinked)
-          DetailRow(
+          AppListRow(
             leading: _linkMark(linked: true),
-            label: l.contactLinkedAccount(u?.displayName ?? c.name),
-            helper: account == null || account.isEmpty ? null : account,
-            trailing: OptionMenuAnchor<int>(
-              options: [
-                SheetOption(
-                  value: 0,
-                  label: l.contactUnlink,
-                  leading: const Icon(AppIcons.unlink, size: 18),
-                  destructive: true,
-                ),
-              ],
-              onSelected: (_) => _unlink(),
-              builder: (context, open) => AppIconButton.flat(
-                icon: AppIcons.more,
+            title: l.contactLinkedAccount(u?.displayName ?? c.name),
+            line2: account == null || account.isEmpty
+                ? null
+                : ListRowLine(parts: [account]),
+            actions: [
+              ListRowAction.menu<int>(
                 tooltip: l.contactUnlink,
-                dense: true,
-                onPressed: open,
+                options: [
+                  SheetOption(
+                    value: 0,
+                    label: l.contactUnlink,
+                    leading: const Icon(AppIcons.unlink, size: 18),
+                    destructive: true,
+                    submits: true,
+                  ),
+                ],
+                onSelected: (_) => _unlink(),
               ),
-            ),
+            ],
           )
         // Always offered, so people know it exists; it needs their email
         // first (owner 2026-10-23).

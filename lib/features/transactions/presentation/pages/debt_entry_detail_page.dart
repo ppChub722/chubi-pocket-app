@@ -272,7 +272,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     if (!mounted || r == null) return;
     final a = r is AccountPicked ? r.account : null;
     if (a != null) _accounts[a.id] = a;
-    _c.setAccount(a);
+    _c.setAccount(a, picked: true);
   }
 
   Future<void> _pickDate() async {
@@ -415,7 +415,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       if (wallet != null) _accounts[wallet.id] = wallet;
       _c
         ..setCreateTransaction(true)
-        ..setAccount(wallet);
+        ..setAccount(wallet, picked: true);
       return;
     }
     final repo = context.read<PersonalDebtsRepository>();
@@ -645,11 +645,16 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     for (final a in context.watch<AccountsCubit>().state.accounts) {
       if (a.id == picked?.id) full = a;
     }
+    // A saved tx with no wallet, or "ไม่ระบุ" picked: none on purpose; a tx
+    // just switched on: not picked yet.
+    final noneOnPurpose =
+        _c.noWalletPicked ||
+        (widget.detail.transaction != null && walletId == null);
     final card = WalletPickCard(
       key: editing ? null : const ValueKey('debtTxCard'),
       account: full ?? picked,
       label: l.transactionFormAccountLabel,
-      placeholder: l.debtNoWallet,
+      placeholder: noneOnPurpose ? l.debtNoWallet : l.quickPickWallet,
       dense: true,
       editable: editing,
       onLongPress: editing ? null : () => enterEdit(),

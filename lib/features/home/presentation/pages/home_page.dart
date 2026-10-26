@@ -709,9 +709,7 @@ class _Tiles extends StatelessWidget {
               value: debts.openCount == 0
                   ? null
                   : MoneyText(debts.net, tone: MoneyTone.signed),
-              caption: debts.openCount == 0
-                  ? l.homeDebtsNone
-                  : l.homeDebtsOpen(debts.openCount),
+              caption: debts.openCount == 0 ? l.homeDebtsNone : null,
             ),
           ),
           const SizedBox(width: AppSpacing.sm),

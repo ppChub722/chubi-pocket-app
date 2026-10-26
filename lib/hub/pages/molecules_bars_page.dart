@@ -1156,7 +1156,7 @@ class _BarsPageState extends State<_BarsPage> {
           note:
               'A list\'s sort: the current option + ▾; tap opens the central '
               'popover with the current one highlighted (no ✓). In a '
-              'ListToolbar\'s trailing slot it follows the toolbar\'s chip '
+              'AppListToolbar\'s sort slot it follows the toolbar\'s chip '
               'size (28); alone it is a control chip (40).',
           child: HubStateful<String>(
             initial: 'newest',
@@ -1171,12 +1171,12 @@ class _BarsPageState extends State<_BarsPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _frame(
-                    ListToolbar(
-                      chips: [
+                    AppListToolbar(
+                      filters: [
                         AppChip(label: 'ฉันจ่าย', onTap: () {}),
                         AppChip(label: 'ค้าง', onTap: () {}),
                       ],
-                      trailing: SortChip<String>(
+                      sort: SortChip<String>(
                         value: sort,
                         options: options,
                         onChanged: set,

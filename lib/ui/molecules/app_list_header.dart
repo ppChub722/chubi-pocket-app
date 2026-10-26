@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/app_button.dart';
 import '../atoms/app_chip.dart';
 import '../atoms/list_break.dart';
 import '../organisms/option_sheet.dart';
@@ -140,8 +141,10 @@ sealed class ListHeaderTrailing {
   const factory ListHeaderTrailing.value(Widget child, {String? prefix}) =
       _ValueHeaderTrailing;
 
-  /// Muted small words ("฿5,635/เดือน | ฿67,622/ปี").
-  const factory ListHeaderTrailing.text(String text) = _TextHeaderTrailing;
+  /// Muted small words ("฿5,635/เดือน | ฿67,622/ปี"); with [color] they
+  /// stand out in it ("เพิ่ม ฿70").
+  const factory ListHeaderTrailing.text(String text, {Color? color}) =
+      _TextHeaderTrailing;
 
   Widget _build(BuildContext context);
 }
@@ -182,9 +185,10 @@ class _ValueHeaderTrailing extends ListHeaderTrailing {
 }
 
 class _TextHeaderTrailing extends ListHeaderTrailing {
-  const _TextHeaderTrailing(this.text);
+  const _TextHeaderTrailing(this.text, {this.color});
 
   final String text;
+  final Color? color;
 
   @override
   Widget _build(BuildContext context) => Text(
@@ -193,7 +197,8 @@ class _TextHeaderTrailing extends ListHeaderTrailing {
     textAlign: TextAlign.end,
     overflow: TextOverflow.ellipsis,
     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
+      color: color ?? Theme.of(context).colorScheme.onSurfaceVariant,
+      fontWeight: color == null ? null : FontWeight.w600,
     ),
   );
 }
@@ -283,16 +288,11 @@ class _LinkHeaderAction extends ListHeaderAction {
   final VoidCallback onTap;
 
   @override
-  Widget _build(BuildContext context) => TextButton(
+  Widget _build(BuildContext context) => AppButton(
+    label: label,
     onPressed: onTap,
-    style: TextButton.styleFrom(
-      minimumSize: const Size(0, 40),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [Text(label), const Icon(AppIcons.chevronRight, size: 18)],
-    ),
+    variant: AppButtonVariant.text,
+    trailingIcon: AppIcons.chevronRight,
   );
 }
 

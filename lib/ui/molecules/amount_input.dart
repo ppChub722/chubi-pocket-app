@@ -4,9 +4,9 @@ import '../atoms/input_formatters.dart';
 export '../atoms/input_formatters.dart' show ThousandsInputFormatter;
 import 'package:intl/intl.dart';
 
-import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/app_chip.dart';
+import '../atoms/ui_config.dart';
 
 class AmountQuickFill {
   const AmountQuickFill({required this.label, required this.amount});
@@ -30,7 +30,7 @@ class AmountInput extends StatelessWidget {
   const AmountInput({
     required this.controller,
     this.label,
-    this.currencySymbol = '฿',
+    this.currencySymbol,
     this.autofocus = false,
     this.enabled = true,
     this.validator,
@@ -43,7 +43,9 @@ class AmountInput extends StatelessWidget {
 
   final TextEditingController controller;
   final String? label;
-  final String currencySymbol;
+
+  /// Null = the user's currency.
+  final String? currencySymbol;
   final bool autofocus;
   final bool enabled;
   final FormFieldValidator<String>? validator;
@@ -97,30 +99,19 @@ class AmountInput extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (allowNegative) ...[
-                  Tooltip(
-                    message: '+ / −',
-                    child: InkWell(
-                      onTap: enabled ? _toggleSign : null,
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                          vertical: AppSpacing.xs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: scheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                        ),
-                        child: Text(
-                          '±',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ),
-                    ),
+                  AppChip(
+                    label: '±',
+                    tooltip: '+ / −',
+                    bold: true,
+                    enabled: enabled,
+                    onTap: enabled ? _toggleSign : null,
                   ),
                   const SizedBox(width: AppSpacing.sm),
                 ],
-                Text(currencySymbol, style: big),
+                Text(
+                  currencySymbol ?? UiConfig.stringsOf(context).currencySymbol,
+                  style: big,
+                ),
               ],
             ),
           ),

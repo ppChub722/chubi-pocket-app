@@ -703,7 +703,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     if (!mounted) return;
     // A new entry saves the tab on screen; อีเวนต์ needs an event that
     // already exists (a draft can't make one).
-    if (!_draftLike && _c.type == TransactionType.expense) {
+    if (!_draftLike && DraftFormController.hasLinkTabs(_c.type)) {
       _c.link.mode ??= _linkMode;
     }
     final event = _activeEvent;
@@ -1063,6 +1063,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           AppChip(
             label: c.label,
             icon: c.icon,
+            // Each one writes at once.
+            enabled: !ConnectionScope.isOffline(context),
             onTap: _saving ? null : () => _runEntryChip(c),
           ),
       ],
@@ -1719,8 +1721,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       return;
     }
     // The tab on screen is what's saved, picked or not (the tabs show for
-    // an expense here).
-    if (_c.type == TransactionType.expense) _c.link.mode ??= _linkMode;
+    // an expense / income here).
+    if (DraftFormController.hasLinkTabs(_c.type)) _c.link.mode ??= _linkMode;
     final problem = _problem(l);
     if (problem != null) {
       HapticFeedback.lightImpact();

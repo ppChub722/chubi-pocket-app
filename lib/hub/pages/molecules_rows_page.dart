@@ -51,22 +51,17 @@ class _RowsPageState extends State<_RowsPage> {
           title: 'HintLine — where something will go',
           note:
               'Quick create, a date after today (owner 2026-10-13): the '
-              'line under the date says it becomes an upcoming item and '
-              'where it goes; the link part opens that page.',
+              'line under the date says it becomes an upcoming item. Not '
+              'tappable; a link next to it is an AppButton.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              HintLine(
-                icon: AppIcons.scheduled,
-                linkLabel: 'Upcoming',
-                text: 'goes to drafts on 3 Nov 2026',
-                onTap: () {},
-              ),
-              const SizedBox(height: AppSpacing.sm),
               const HintLine(
                 icon: AppIcons.scheduled,
-                text: 'A plain hint, not tappable',
+                text: 'Upcoming from 3 Nov 2026',
               ),
+              const SizedBox(height: AppSpacing.sm),
+              const HintLine(text: 'A plain hint without an icon'),
             ],
           ),
         ),

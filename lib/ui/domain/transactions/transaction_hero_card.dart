@@ -19,7 +19,7 @@ class TransactionHeroCard extends StatelessWidget {
     this.amountLocked = false,
     this.dateNote,
     this.onPickDate,
-    this.symbol = '฿',
+    this.symbol,
     this.editing = true,
     this.autofocus = false,
     this.compact = false,
@@ -75,7 +75,8 @@ class TransactionHeroCard extends StatelessWidget {
   /// Null = the date can't be changed here.
   final VoidCallback? onPickDate;
 
-  final String symbol;
+  /// Null = the user's currency.
+  final String? symbol;
 
   final bool editing;
   final bool autofocus;
@@ -235,7 +236,7 @@ class TransactionHeroCard extends StatelessWidget {
         cursorColor: scheme.primary,
         focusColor: accent,
         symbolScale: 0.7,
-        currencySymbol: symbol,
+        currencySymbol: symbol ?? UiConfig.stringsOf(context).currencySymbol,
         minWidth: 12,
         size: AppInputSize.hero,
         label: editing && inline

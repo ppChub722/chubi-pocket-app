@@ -12,9 +12,9 @@ import 'recurring_rows.dart';
 /// ต้องจัดการ as one รอยืนยัน card that folds to its head line. Every row
 /// has a check, an amount field and a ✓: the field holds the amount it will
 /// be recorded with (filled in when known, still editable; empty = รอใส่ยอด).
-/// One เลือกทั้งหมด row with ข้ามที่เลือก / ยืนยันที่เลือก. One recorded with
-/// no amount goes in as 0, after a warning. [shownCount] rows, then
-/// ดูทั้ง n / ย่อ.
+/// One เลือกทั้งหมด row with ข้าม / จ่ายแล้ว / ยืนยันที่เลือก. A row with no
+/// amount can't be confirmed (it's left out), only skipped or marked paid.
+/// [shownCount] rows, then ดูทั้ง n / ย่อ.
 class DueBoxes extends StatefulWidget {
   const DueBoxes({
     required this.items,
@@ -80,18 +80,29 @@ class _DueBoxesState extends State<DueBoxes> {
     for (final MapEntry(:key, :value) in _amounts.entries) key: ?value,
   };
 
-  Future<void> _settle(List<RecurringItem> items, {required bool skip}) async {
+  Future<void> _settle(
+    List<RecurringItem> items, {
+    required SettleAction action,
+  }) async {
     if (items.isEmpty) return;
     FocusScope.of(context).unfocus();
+    final typed = _typed;
     await settleSelected(
       context,
       items,
-      skip: skip,
-      amounts: _typed,
+      action: action,
+      amounts: typed,
       onChanged: widget.onChanged,
     );
     if (!mounted) return;
-    setState(() => _picked.removeAll(items.map((i) => i.id)));
+    // A row left out for want of an amount stays picked.
+    setState(
+      () => _picked.removeAll([
+        for (final i in items)
+          if (action != SettleAction.confirm || settleAmount(i, typed) != null)
+            i.id,
+      ]),
+    );
   }
 
   void _confirmOne(RecurringItem i) {
@@ -99,7 +110,15 @@ class _DueBoxesState extends State<DueBoxes> {
       widget.onOpen(i);
       return;
     }
-    unawaited(_settle([i], skip: false));
+    if (settleAmount(i, _typed) == null) {
+      showAppSnackBar(
+        context,
+        AppLocalizations.of(context)!.occurrenceNeedsAmount,
+        tone: Tone.warning,
+      );
+      return;
+    }
+    unawaited(_settle([i], action: SettleAction.confirm));
   }
 
   @override
@@ -130,6 +149,7 @@ class _DueBoxesState extends State<DueBoxes> {
                 ? l.occurrenceSelectAll
                 : l.occurrenceSelectedCount(picked.length),
             skipLabel: l.occurrenceSkipSelected,
+            paidLabel: l.occurrencePaidSelected,
             confirmLabel: l.occurrenceConfirmSelected(picked.length),
             onSelectAll: () => setState(() {
               if (picked.length == pickable.length) {
@@ -138,8 +158,11 @@ class _DueBoxesState extends State<DueBoxes> {
                 _picked.addAll(pickable.map((i) => i.id));
               }
             }),
-            onSkip: () => unawaited(_settle(picked, skip: true)),
-            onConfirm: () => unawaited(_settle(picked, skip: false)),
+            onSkip: () => unawaited(_settle(picked, action: SettleAction.skip)),
+            onPaid: () =>
+                unawaited(_settle(picked, action: SettleAction.markPaid)),
+            onConfirm: () =>
+                unawaited(_settle(picked, action: SettleAction.confirm)),
           ),
         for (final i in shown) _row(l, i),
         if (items.length > widget.shownCount)
@@ -202,8 +225,8 @@ class _DueBoxesState extends State<DueBoxes> {
 double? knownAmount(RecurringItem i) => needsAmountInput(i) ? null : i.amount;
 
 /// A list row's ✓ (the month, a picked day): records [i] with the amount in
-/// its field (none = 0, after a warning). A row that can't be written by
-/// slot opens [onOpen] instead.
+/// its field. With no amount it only says so (enter one first). A row that
+/// can't be written by slot opens [onOpen] instead.
 void confirmOccurrenceRow(
   BuildContext context,
   RecurringItem i, {
@@ -215,13 +238,22 @@ void confirmOccurrenceRow(
     onOpen();
     return;
   }
+  final amounts = {i.id: ?typed};
+  if (settleAmount(i, amounts) == null) {
+    showAppSnackBar(
+      context,
+      AppLocalizations.of(context)!.occurrenceNeedsAmount,
+      tone: Tone.warning,
+    );
+    return;
+  }
   FocusScope.of(context).unfocus();
   unawaited(
     settleSelected(
       context,
       [i],
-      skip: false,
-      amounts: {i.id: ?typed},
+      action: SettleAction.confirm,
+      amounts: amounts,
       onChanged: onChanged,
     ),
   );

@@ -80,9 +80,8 @@ const List<PageFlow> pageFlows = [
     'The offline banner: while the server is unreachable the app polls /health every few seconds (backoff 3 → 10 s) until it answers.',
     [
       FlowStep.action('Server unreachable (a network-level failure)', [
-        FlowCall.unspecified(
-          'GET',
-          '/health',
+        FlowCall(
+          'getHealth',
           note: 'Liveness poll while offline; any answer = back online.',
         ),
       ]),
@@ -652,6 +651,12 @@ const List<PageFlow> pageFlows = [
         FlowCall('listRecurringItems', note: '?month=YYYY-MM'),
       ]),
       FlowStep.action('Search / status chip', [FlowCall('listRecurring')]),
+      FlowStep.action('ต้องจัดการ: ยืนยัน / จ่ายแล้ว / ข้าม ที่เลือก', [
+        FlowCall(
+          'settleRecurringOccurrences',
+          note: 'action confirm | mark_paid | skip, ≤ 100 rule + slot per call',
+        ),
+      ]),
     ],
   ),
   PageFlow(

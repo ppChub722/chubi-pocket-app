@@ -57,7 +57,7 @@ class _PersonView extends StatefulWidget {
 
 class _PersonViewState extends State<_PersonView> {
   final _search = TextEditingController();
-  final _toolbar = ToolbarToggleState.local();
+  final _toolbar = AppListToolbarState.local();
   bool _linking = false;
   bool _showEarlier = false;
 
@@ -235,12 +235,14 @@ class _PersonViewState extends State<_PersonView> {
             ),
           ],
         ),
-      ListToolbar(
-        collapse: _toolbar,
-        searchController: _search,
-        onSearchChanged: _cubit.search,
-        searchHint: l.debtsEntrySearchHint,
-        chips: [
+      AppListToolbar(
+        state: _toolbar,
+        search: ListToolbarSearch(
+          controller: _search,
+          onChanged: _cubit.search,
+          hint: l.debtsEntrySearchHint,
+        ),
+        filters: [
           _optionChip<DebtEntryDirection?>(
             label: l.debtsDirLabel,
             value: q.direction,
@@ -254,7 +256,7 @@ class _PersonViewState extends State<_PersonView> {
             ),
           ),
         ],
-        trailing: SortChip<DebtEntrySort>(
+        sort: SortChip<DebtEntrySort>(
           value: q.sort,
           tooltip: l.debtsSortLabel,
           options: [
@@ -314,7 +316,7 @@ class _PersonViewState extends State<_PersonView> {
               ),
             ListenableBuilder(
               listenable: _search,
-              builder: (context, _) => ToolbarToggleButton(
+              builder: (context, _) => AppListToolbarToggle(
                 state: _toolbar,
                 filtered: _search.text.isNotEmpty || s.query.isFiltered,
                 tooltip: l.commonSearch,
@@ -372,7 +374,7 @@ class _PersonViewState extends State<_PersonView> {
         ),
         if (_showEarlier)
           for (final w in _rows(context, s, s.earlier))
-            w is DateGroupHeader ? w : Opacity(opacity: 0.7, child: w),
+            w is AppListHeader ? w : Opacity(opacity: 0.7, child: w),
       ],
     ];
   }
@@ -441,11 +443,10 @@ class _PersonViewState extends State<_PersonView> {
           final after = be?.balanceAfter ?? sameDay.first.runningBalance;
           final (note, color) = _dayNote(change, after, symbol);
           out.add(
-            DateGroupHeader(
+            AppListHeader(
               key: ValueKey('day:$key:${identical(list, s.earlier)}'),
-              label: _dayLabel(date),
-              note: note,
-              noteColor: color,
+              title: _dayLabel(date),
+              trailing: ListHeaderTrailing.text(note, color: color),
             ),
           );
         }

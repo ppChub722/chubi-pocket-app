@@ -79,9 +79,9 @@ class BootErrorApp extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Builder(
-                  builder: (ctx) => FilledButton.icon(
-                    icon: const AppIcon(Icons.copy, size: AppIconSize.md),
-                    label: const Text('คัดลอกรายละเอียด / Copy details'),
+                  builder: (ctx) => AppButton(
+                    icon: Icons.copy,
+                    label: 'คัดลอกรายละเอียด / Copy details',
                     onPressed: () async {
                       await Clipboard.setData(ClipboardData(text: _report()));
                       if (ctx.mounted) {

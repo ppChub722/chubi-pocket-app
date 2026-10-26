@@ -190,10 +190,11 @@ class _PeriodLimitSheetState extends State<_PeriodLimitSheet> {
               alignment: AlignmentDirectional.centerStart,
               child: Padding(
                 padding: const EdgeInsets.only(top: AppSpacing.sm),
-                child: HintLine(
-                  text: '',
-                  linkLabel: widget.resetLabel,
-                  onTap: () => setState(
+                child: AppButton(
+                  label: widget.resetLabel,
+                  variant: AppButtonVariant.text,
+                  size: AppButtonSize.chip,
+                  onPressed: () => setState(
                     () => _amount.text = AmountInput.format(widget.baseAmount),
                   ),
                 ),

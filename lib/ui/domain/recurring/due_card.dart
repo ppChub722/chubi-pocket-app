@@ -15,8 +15,7 @@ import 'occurrence_row.dart';
 /// [title] head ("ต้องจัดการ", [trailing] count). Otherwise the next
 /// occurrence, quiet. Either way: a calendar sheet, [label] over the big
 /// [value], the [actions] as equal buttons (the first filled when
-/// [primaryFirst]), then [footer] rows (DueGroupHeader, DueMoreRow,
-/// [OccurrenceFocusNext]).
+/// [primaryFirst]), then [footer] rows ([DueMoreRow], [OccurrenceFocusNext]).
 class OccurrenceFocusCard extends StatelessWidget {
   const OccurrenceFocusCard({
     required this.date,
@@ -187,6 +186,7 @@ class OccurrenceFocusCard extends StatelessWidget {
     Widget button = AppButton(
       label: a.label,
       onPressed: a.onTap,
+      submits: a.submits,
       variant: a.destructive
           ? AppButtonVariant.destructive
           : primary
@@ -270,7 +270,7 @@ class OccurrenceFocusNext extends StatelessWidget {
 /// "ต้องจัดการ": the occurrences that are due (or still need an amount), in
 /// one card edged and washed in the warning colour (as [OccurrenceFocusCard]).
 /// [children]: a [DueSelectBar] first when rows can be picked, then
-/// OccurrenceRows, [DueGroupHeader]s and [DueMoreRow]s. With [onToggle] it
+/// OccurrenceRows and [DueMoreRow]s. With [onToggle] it
 /// folds like a hero card: ⌄ / ⌃ at the head's end (the whole head taps);
 /// folded, the head line alone.
 class DueCard extends StatelessWidget {
@@ -380,11 +380,17 @@ class DueSelectBar extends StatelessWidget {
     required this.confirmLabel,
     required this.onSkip,
     required this.onConfirm,
+    this.paidLabel,
+    this.onPaid,
     this.heading = false,
     this.open = true,
     this.onToggle,
     super.key,
   });
+
+  /// จ่ายแล้วที่เลือก, between ข้าม and ยืนยัน (with [onPaid]).
+  final String? paidLabel;
+  final VoidCallback? onPaid;
 
   /// [selectLabel] is a section's name ("รอใส่ยอด 11"), set like a title.
   final bool heading;
@@ -472,14 +478,27 @@ class DueSelectBar extends StatelessWidget {
                         key: const ValueKey('dueSkipSelected'),
                         label: skipLabel,
                         onPressed: any ? onSkip : null,
+                        submits: true,
                         variant: AppButtonVariant.outlined,
                         size: AppButtonSize.chip,
                       ),
+                      if (paidLabel != null && onPaid != null) ...[
+                        const SizedBox(width: AppSpacing.sm),
+                        AppButton(
+                          key: const ValueKey('duePaidSelected'),
+                          label: paidLabel!,
+                          onPressed: any ? onPaid : null,
+                          submits: true,
+                          variant: AppButtonVariant.outlined,
+                          size: AppButtonSize.chip,
+                        ),
+                      ],
                       const SizedBox(width: AppSpacing.sm),
                       AppButton(
                         key: const ValueKey('dueConfirmSelected'),
                         label: confirmLabel,
                         onPressed: any ? onConfirm : null,
+                        submits: true,
                         size: AppButtonSize.chip,
                       ),
                     ],
@@ -516,67 +535,6 @@ class DueSelectBar extends StatelessWidget {
   /// The room the select label always keeps (check + a few letters + the
   /// fold arrow).
   static const _minLabel = 120.0;
-}
-
-/// One item's head inside a [DueCard] when it has several due occurrences:
-/// "Netflix ค้าง 24 งวด", "ค้างตั้งแต่ พ.ย. 2024", and the all-at-once
-/// actions (an OccurrenceActions: ยืนยันทั้งหมด, then จ่ายแล้ว / ข้ามทั้งหมด).
-class DueGroupHeader extends StatelessWidget {
-  const DueGroupHeader({
-    required this.label,
-    this.caption,
-    this.actions,
-    super.key,
-  });
-
-  final String label;
-  final String? caption;
-  final Widget? actions;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        AppSpacing.xs,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                if (caption != null)
-                  Text(
-                    caption!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: text.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          if (actions != null) ...[
-            const SizedBox(width: AppSpacing.sm),
-            actions!,
-          ],
-        ],
-      ),
-    );
-  }
 }
 
 /// "ดูทั้ง 24 งวด" (the chevron is added): the rest of an item's due

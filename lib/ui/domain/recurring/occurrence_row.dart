@@ -19,10 +19,14 @@ class OccurrenceAction {
     required this.onTap,
     this.warning = false,
     this.destructive = false,
+    this.submits = true,
   });
 
   final String label;
   final VoidCallback? onTap;
+
+  /// Writes to the server, so it is off while offline (almost every one is).
+  final bool submits;
 
   /// The button in the warning colour ("ใส่ยอด" when the amount is unknown).
   final bool warning;
@@ -51,6 +55,7 @@ class OccurrenceActions extends StatelessWidget {
     Widget button = AppButton(
       label: primary.label,
       onPressed: primary.onTap,
+      submits: primary.submits,
       size: AppButtonSize.chip,
       variant: primary.destructive
           ? AppButtonVariant.destructive
@@ -84,6 +89,7 @@ class OccurrenceActions extends StatelessWidget {
                   value: i,
                   label: a.label,
                   enabled: a.onTap != null,
+                  submits: a.submits,
                   destructive: a.destructive,
                 ),
             ],

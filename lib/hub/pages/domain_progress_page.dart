@@ -6,7 +6,7 @@ import '../hub_playground.dart';
 
 /// `/dev/domain/progress` — the progress pieces shared by budgets and saving
 /// goals: ProgressRow with the expected segment, ProgressCard (row / compact /
-/// skeleton), ProgressSummary, ProgressHeroFooter, BreakdownRow, StatGrid.
+/// skeleton), StatGrid.
 Widget buildProgressPage(BuildContext context) => const _ProgressPage();
 
 class _ProgressPage extends StatelessWidget {
@@ -94,16 +94,18 @@ class _ProgressPage extends StatelessWidget {
         HubPlayground(
           title: 'ProgressCard',
           note:
-              'The row of a budget / goal list. tone is decided by the caller '
-              '(the BE for budgets) — never derived from value. The % text is '
-              'the caller\'s string, not clamped.',
+              'The budgets list row (mock 2026-10-26): % pill on the fill, '
+              'the expected capsule + its legend and the status chip under '
+              'the bar, "ใช้ ฿x จาก ฿y" at the right. The budgets list passes '
+              'tone neutral (the budget\'s own colour). compact = a period '
+              'row. The % text is the caller\'s string, not clamped.',
           controls: [
             PlayChoice<ProgressTone>('tone', tones),
             PlayNum('used %', min: 0, max: 200, step: 1, initialValue: 86),
             PlayNum('expected %', min: 0, max: 100, step: 1, initialValue: 7),
             const PlayBool('icon', initialValue: true),
             const PlayBool('badge', initialValue: true),
-            const PlayBool('overLabel'),
+            const PlayBool('pace', initialValue: true),
             const PlayBool('compact'),
             const PlayBool('dimmed'),
           ],
@@ -147,8 +149,17 @@ class _ProgressPage extends StatelessWidget {
                     expected: exp,
                     tone: tone,
                     badge: badge,
-                    label: 'ใช้ ฿3,120 จาก ฿8,000 | คาด +฿720',
-                    overLabel: v<bool>('overLabel') ? 'เกินงบ ฿860' : null,
+                    trailing: ProgressRemainder(
+                      label: used > 1 ? 'เกิน' : 'เหลือ',
+                      amount: '฿${((1 - used).abs() * 8000).round()}',
+                      over: used > 1,
+                    ),
+                    expectedLabel: exp > 0
+                        ? 'รอจ่าย ฿${(exp * 8000).round()}'
+                        : null,
+                    paceMarker: v<bool>('pace') ? 0.6 : null,
+                    paceBubble: v<bool>('pace') ? 'แผน ฿4,800' : null,
+                    label: 'ใช้ ฿${(used * 8000).round()} จาก ฿8,000',
                     percentText: '${(used * 100).round()}%',
                     dimmed: v<bool>('dimmed'),
                     onTap: () {},
@@ -159,8 +170,8 @@ class _ProgressPage extends StatelessWidget {
           title: 'ProgressCard — rows in one SectionCard + paceBubble',
           note:
               'The budgets list: the rows sit in one SectionCard (2px gaps); '
-              'paceBubble shows the plan to date over the pace tick all the '
-              'time, in the bar\'s color.',
+              'paceBubble ("แผน ฿…") shows the plan to date over the pace '
+              'line all the time, in the bar\'s colour.',
           child: SectionCard(
             first: true,
             children: [
@@ -169,41 +180,36 @@ class _ProgressPage extends StatelessWidget {
                 caption: 'รายเดือน | เหลือ 12 วัน',
                 fallbackIcon: Icons.movie_outlined,
                 value: 0,
-                tone: ProgressTone.normal,
-                alignWithTitle: true,
                 trailing: const ProgressRemainder(
                   label: 'เหลือ',
                   amount: '฿2,000',
                 ),
                 paceMarker: 0.65,
-                paceBubble: 'แผนถึงวันนี้ ฿1,300',
+                paceBubble: 'แผน ฿1,300',
                 label: 'ใช้ ฿0 จาก ฿2,000',
                 percentText: '0%',
               ),
               ProgressCard(
                 title: 'อาหาร',
                 caption: 'รายเดือน | เหลือ 12 วัน',
+                iconCode: entity,
                 fallbackIcon: Icons.restaurant_outlined,
-                value: 0.87,
-                tone: ProgressTone.warning,
-                alignWithTitle: true,
-                badge: const ProgressBadges(
-                  children: [
-                    StatusChip(
-                      label: 'ใกล้เต็ม',
-                      kind: StatusKind.warning,
-                      size: ChipSize.mini,
-                    ),
-                  ],
+                value: 0.61,
+                expected: 0.08,
+                badge: const StatusChip(
+                  label: 'ใกล้เต็ม',
+                  kind: StatusKind.warning,
+                  size: ChipSize.mini,
                 ),
+                expectedLabel: 'รอจ่าย ฿600',
                 trailing: const ProgressRemainder(
                   label: 'เหลือ',
-                  amount: '฿650',
+                  amount: '฿2,799',
                 ),
-                paceMarker: 0.65,
-                paceBubble: 'แผนถึงวันนี้ ฿3,250',
-                label: 'ใช้ ฿4,350 จาก ฿5,000',
-                percentText: '87%',
+                paceMarker: 0.6,
+                paceBubble: 'แผน ฿4,348',
+                label: 'ใช้ ฿4,448 จาก ฿7,247',
+                percentText: '61%',
               ),
             ],
           ),
@@ -221,17 +227,11 @@ class _ProgressPage extends StatelessWidget {
                 caption: 'รายเดือน | 1–31 ต.ค.',
                 fallbackIcon: Icons.shopping_bag_outlined,
                 value: 1.22,
-                tone: ProgressTone.danger,
                 badge: const ProgressBadges(
                   children: [
                     StatusChip(
                       label: 'เกินงบ',
                       kind: StatusKind.over,
-                      size: ChipSize.mini,
-                    ),
-                    StatusChip(
-                      label: 'ตามเพซจะเกิน',
-                      kind: StatusKind.warning,
                       size: ChipSize.mini,
                     ),
                   ],
@@ -242,7 +242,6 @@ class _ProgressPage extends StatelessWidget {
                   over: true,
                 ),
                 label: 'ใช้ ฿4,860 จาก ฿4,000',
-                overLabel: 'เกิน ฿860',
                 percentText: '122%',
               ),
               const AppDivider(),
@@ -257,96 +256,6 @@ class _ProgressPage extends StatelessWidget {
               const ProgressCard.skeleton(),
               const AppDivider(),
               const ProgressCard.skeleton(compact: true),
-            ],
-          ),
-        ),
-        HubDemo(
-          title: 'ProgressSummary — no icon',
-          note:
-              'The list header / hero footer: big money title, caption, bar, '
-              'left label + right %, footnote.',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const ProgressSummary(
-                amount: 12400,
-                caption: 'ใช้ไปแล้ว จาก ฿20,000',
-                value: 0.62,
-                expected: 0.08,
-                label: 'ใช้แล้ว',
-                percentText: '62%',
-                footnote: 'เหลือ ฿7,600 | เกิน 1 งบ',
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              const ProgressSummary.skeleton(),
-            ],
-          ),
-        ),
-        HubDemo(
-          title: 'ProgressHeroFooter — the AppHeroCard footer',
-          child: AppHeroCard(
-            style: HeroStyle.tinted(color: Colors.orange),
-            content: [
-              HeroIdentity(
-                icon: const IconTile(
-                  icon: Icons.restaurant,
-                  color: Colors.orange,
-                ),
-                name: const Text('อาหาร'),
-              ),
-            ],
-            footer: [
-              const Padding(
-                padding: EdgeInsets.only(top: AppSpacing.md),
-                child: ProgressHeroFooter(
-                  caption: 'ใช้ไปแล้ว',
-                  amount: 3120,
-                  subCaption: 'จาก ฿8,000 | เหลือ ฿4,880',
-                  value: 0.39,
-                  expected: 0.09,
-                  color: Colors.orange,
-                  legendUsed: 'ใช้แล้ว 39%',
-                  legendExpected: 'คาดว่าจะใช้ +฿720',
-                ),
-              ),
-            ],
-          ),
-        ),
-        HubDemo(
-          title: 'BreakdownRow',
-          note:
-              'By source / by category / a goal\'s wallet share. expected = '
-              'muted "+amount" and a striped bar (still to come).',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              BreakdownRow(
-                leading: const IconTile(
-                  icon: Icons.restaurant,
-                  color: Colors.orange,
-                  size: 28,
-                ),
-                label: 'ร้านอาหาร',
-                amount: 1680,
-                value: 0.54,
-                color: Colors.orange,
-              ),
-              const BreakdownRow(
-                label: 'ปกติ',
-                caption: '18 รายการ',
-                amount: 2460,
-                value: 0.31,
-                color: Colors.orange,
-              ),
-              const BreakdownRow(
-                label: 'รายการประจำ | ล่วงหน้า',
-                caption: '1 รายการ',
-                amount: 450,
-                expected: true,
-                value: 0.056,
-                color: Colors.orange,
-              ),
-              const BreakdownRow(label: 'No bar', amountText: '฿90'),
             ],
           ),
         ),

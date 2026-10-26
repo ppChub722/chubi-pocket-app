@@ -10,6 +10,11 @@ Widget buildListPageTemplate(BuildContext context) => const _ListPageTemplate();
 
 enum _State { data, loading, error, empty }
 
+Widget _dayHead(String title, num total) => AppListHeader(
+  title: title,
+  trailing: ListHeaderTrailing.value(MoneyText(total, tone: MoneyTone.signed)),
+);
+
 class _ListPageTemplate extends StatefulWidget {
   const _ListPageTemplate();
 
@@ -57,15 +62,13 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
         ),
     ];
 
-    // Search + filters / sort as ONE block (ListToolbar): the chip row sits
+    // Search + filters / sort as ONE block (AppListToolbar): the chip row sits
     // one size below the 40 capsule (chip 28).
     final header = <Widget>[
       if (_selecting)
-        ListToolbar(
-          searchController: _search,
-          searchHint: 'Search',
-          onSearchChanged: (_) {},
-          chips: [
+        AppListToolbar(
+          search: ListToolbarSearch(controller: _search, hint: 'Search'),
+          filters: [
             SelectAllCount(
               selected: _picked.length,
               total: 8,
@@ -81,11 +84,9 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
           trailing: BulkDeleteButton(onPressed: _picked.isEmpty ? null : () {}),
         )
       else
-        ListToolbar(
-          searchController: _search,
-          searchHint: 'Search',
-          onSearchChanged: (_) {},
-          chips: const [
+        AppListToolbar(
+          search: ListToolbarSearch(controller: _search, hint: 'Search'),
+          filters: const [
             AppChip(
               label: 'Status',
               trailing: AppChipTrailing.dropdown,
@@ -224,9 +225,9 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
                   topInset: 0,
                   rowDividers: true,
                   children: [
-                    const DateGroupHeader(label: 'Today', total: -540),
+                    _dayHead('Today', -540),
                     ...rows.take(2),
-                    const DateGroupHeader(label: 'Yesterday', total: 1200),
+                    _dayHead('Yesterday', 1200),
                     ...rows.take(3),
                   ],
                 ),
@@ -255,9 +256,9 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
                   topInset: 0,
                   rowCards: true,
                   children: [
-                    const DateGroupHeader(label: 'Today', total: -540),
+                    _dayHead('Today', -540),
                     ...rows.take(2),
-                    const DateGroupHeader(label: 'Yesterday', total: 1200),
+                    _dayHead('Yesterday', 1200),
                     ...rows.take(3),
                   ],
                 ),

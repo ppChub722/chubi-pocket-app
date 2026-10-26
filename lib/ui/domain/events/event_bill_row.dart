@@ -10,7 +10,7 @@ import '../../tokens/chip_size.dart';
 import '../icons/icon_code.dart';
 import '../money/money_text.dart';
 import '../people/person_mark.dart';
-import 'event_card.dart';
+import 'event_tag_ref.dart';
 
 typedef EventTagAnchorBuilder =
     Widget Function(
@@ -71,7 +71,7 @@ class EventBillRow extends StatelessWidget {
     required this.title,
     required this.amount,
     this.tone = MoneyTone.signed,
-    this.symbol = '฿',
+    this.symbol,
     this.marked = false,
     this.onTickTap,
     this.tickTooltip,
@@ -111,7 +111,7 @@ class EventBillRow extends StatelessWidget {
   final String title;
   final num amount;
   final MoneyTone tone;
-  final String symbol;
+  final String? symbol;
   final bool marked;
   final VoidCallback? onTickTap;
   final String? tickTooltip;
@@ -418,7 +418,7 @@ class EventBillChildRow extends StatelessWidget {
     this.iconCode,
     this.caption,
     this.tone = MoneyTone.plain,
-    this.symbol = '฿',
+    this.symbol,
     this.marked = false,
     this.onTickTap,
     this.tickTooltip,
@@ -455,7 +455,7 @@ class EventBillChildRow extends StatelessWidget {
   final IconCode? iconCode;
   final String? caption;
   final MoneyTone tone;
-  final String symbol;
+  final String? symbol;
   final bool marked;
   final VoidCallback? onTickTap;
   final String? tickTooltip;

@@ -60,10 +60,8 @@ class _TabbedDetailDemoState extends State<_TabbedDetailDemo> {
     onLoadMore: _loadMore,
     bottomInset: AppSpacing.lg,
     header: [
-      ListToolbar(
-        searchHint: 'Search',
-        onSearchChanged: (_) {},
-        chips: [
+      AppListToolbar(
+        filters: [
           AppChip(label: 'Paid', onTap: () {}),
           AppChip(label: 'Open', onTap: () {}),
         ],

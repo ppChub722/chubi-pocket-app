@@ -69,9 +69,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get commonOk => 'ตกลง';
 
   @override
-  String get commonBack => 'ย้อนกลับ';
-
-  @override
   String get commonClose => 'ปิด';
 
   @override
@@ -105,15 +102,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get commonUndo => 'เลิกทำ';
 
   @override
-  String get commonDiscard => 'ทิ้ง';
-
-  @override
-  String get commonDiscardTitle => 'ทิ้งการแก้ไข?';
-
-  @override
-  String get commonDiscardBody => 'การแก้ไขที่ยังไม่บันทึกจะหายไป';
-
-  @override
   String get commonCurrency => 'สกุลเงิน';
 
   @override
@@ -133,9 +121,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get contactPickerTitle => 'กับใคร';
-
-  @override
-  String get contactPickerSearchHint => 'ค้นหาผู้ติดต่อ หรือพิมพ์ชื่อ';
 
   @override
   String get contactPickerEmpty => 'ยังไม่มีผู้ติดต่อ — พิมพ์ชื่อด้านบนได้เลย';
@@ -166,16 +151,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get errorValidationMessage => 'ข้อมูลบางช่องไม่ถูกต้อง กรุณาตรวจสอบ';
-
-  @override
-  String get errorBannerNoConnection =>
-      'ไม่มีการเชื่อมต่อ ตรวจสอบอินเทอร์เน็ตของคุณ';
-
-  @override
-  String get errorBannerNoConnectionShort => 'ไม่มีการเชื่อมต่อ ลองใหม่';
-
-  @override
-  String get offlineBanner => 'คุณกำลังออฟไลน์';
 
   @override
   String get authLoginIdentifierLabel => 'ชื่อผู้ใช้หรืออีเมล';
@@ -242,9 +217,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get authRegisterEmailTaken => 'อีเมลนี้ถูกใช้แล้ว';
 
   @override
-  String get authRegisterFixErrors => 'กรุณาแก้ไขข้อผิดพลาดด้านล่าง';
-
-  @override
   String get authRegisterUsernameTakenInline => 'ถูกใช้แล้ว';
 
   @override
@@ -299,9 +271,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get navProjects => 'อีเวนต์';
 
   @override
-  String get projectsCreateNew => 'สร้างใหม่';
-
-  @override
   String get navMore => 'เพิ่มเติม';
 
   @override
@@ -312,10 +281,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get accountsAddNew => 'เพิ่มกระเป๋า';
-
-  @override
-  String get accountsReorderHint =>
-      'ลากที่ ≡ เพื่อจัดลำดับ ลำดับนี้เป็นของคุณคนเดียว ไม่กระทบสมาชิกกระเป๋าแชร์';
 
   @override
   String get accountTypeCash => 'เงินสด';
@@ -333,11 +298,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountTypePayLater => 'ผ่อนทีหลัง';
 
   @override
-  String accountCreditUsedPercent(int percent) {
-    return 'ใช้ $percent%';
-  }
-
-  @override
   String get accountDetailNotFound => 'ไม่พบกระเป๋า';
 
   @override
@@ -349,11 +309,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get accountDetailArchive => 'เก็บถาวร';
-
-  @override
-  String accountDetailCreditAvailable(String available, String limit) {
-    return 'เหลือ $available จาก $limit';
-  }
 
   @override
   String get accountDetailSummaryTitle => 'สรุป';
@@ -388,11 +343,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountDetailMinimumPayment => 'ขั้นต่ำที่ต้องจ่าย';
 
   @override
-  String accountDetailDayOfMonth(int day) {
-    return 'วันที่ $day ของทุกเดือน';
-  }
-
-  @override
   String get accountDetailTransactionsTitle => 'รายการ';
 
   @override
@@ -400,9 +350,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get accountFormTitle => 'กระเป๋าใหม่';
-
-  @override
-  String get accountFormTitleEdit => 'แก้ไขกระเป๋า';
 
   @override
   String get accountFormTypeLabel => 'ประเภท';
@@ -423,10 +370,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountFormBalanceLabel => 'ยอดเริ่มต้น';
 
   @override
-  String get accountFormBalanceHelper =>
-      'เงินที่มีอยู่ในกระเป๋านี้ ณ วันที่เริ่มติดตาม';
-
-  @override
   String get accountFormCreditLimitLabel => 'วงเงิน';
 
   @override
@@ -436,19 +379,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountFormStatementDateLabel => 'วันสรุปยอด';
 
   @override
-  String get accountFormStatementDateHelper => 'วันของเดือน (1–31)';
-
-  @override
   String get accountFormPaymentDueLabel => 'วันครบกำหนดชำระ';
 
   @override
-  String get accountFormPaymentDueHelper => 'วันของเดือน (1–31)';
-
-  @override
   String get accountFormMinimumPaymentLabel => 'ขั้นต่ำที่ต้องจ่าย';
-
-  @override
-  String get accountFormDayInvalid => 'ต้องเป็น 1–31';
 
   @override
   String get accountAdjustBalanceTitle => 'ปรับยอดเงิน';
@@ -571,13 +505,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get colorPickerUse => 'ใช้สีนี้';
 
   @override
-  String get projectsPlaceholderTitle => 'ยังไม่มีอีเวนต์';
-
-  @override
-  String get projectsPlaceholderMessage =>
-      'สร้างอีเวนต์เพื่อบันทึกค่าใช้จ่ายร่วมกับคนอื่น';
-
-  @override
   String get moreCategories => 'หมวดหมู่';
 
   @override
@@ -631,9 +558,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get contactTitleNew => 'ผู้ติดต่อใหม่';
 
   @override
-  String get contactTitleEdit => 'แก้ไขผู้ติดต่อ';
-
-  @override
   String get contactNotFound => 'ไม่พบผู้ติดต่อ';
 
   @override
@@ -670,23 +594,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get contactNoteHint => 'ไม่บังคับ | เช่น ชอบให้โอนผ่านพร้อมเพย์';
 
   @override
-  String get contactLinkedBadge => 'เชื่อมกับบัญชีผู้ใช้';
-
-  @override
   String get contactLinkedLockedHint => 'ชื่อและอีเมลมาจากบัญชีของเขา';
 
   @override
   String get contactArchivedBadge => 'เก็บถาวร';
-
-  @override
-  String get contactSectionActions => 'การจัดการ';
-
-  @override
-  String get contactLinkTitle => 'เชื่อมบัญชี';
-
-  @override
-  String get contactLinkLinked =>
-      'เชื่อมแล้ว — ชื่อ อีเมล และไอคอนตามบัญชีของเขา';
 
   @override
   String get contactLinkRequest => 'ส่งคำขอเชื่อม';
@@ -803,9 +714,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get debtsNet => 'สุทธิ';
-
-  @override
   String get debtsOwedToMe => 'ลูกหนี้';
 
   @override
@@ -818,27 +726,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtsSearchHint => 'ค้นหาชื่อ';
 
   @override
-  String get debtsStatusLabel => 'สถานะ';
-
-  @override
-  String get debtsStatusOpen => 'ค้างอยู่';
-
-  @override
   String get debtsStatusAll => 'ทั้งหมด';
-
-  @override
-  String debtsOpenCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'ค้าง $count รายการ',
-      zero: 'ไม่มีค้าง',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get debtsEmptyTitle => 'ยังไม่มีหนี้';
 
   @override
   String get debtsEmptyMessage =>
@@ -846,17 +734,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get debtsNoMatch => 'ไม่พบคนที่ค้นหา';
-
-  @override
-  String get debtsAddNew => 'บันทึกหนี้';
-
-  @override
-  String debtsPersonHistory(int count) {
-    return 'ประวัติ ($count)';
-  }
-
-  @override
-  String get debtsPersonAdd => 'บันทึกหนี้กับคนนี้';
 
   @override
   String get debtsPersonAddContact => 'เพิ่มผู้ติดต่อ';
@@ -874,148 +751,16 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtsPersonOpenContact => 'ดูผู้ติดต่อ';
 
   @override
-  String debtTheyOweYou(String name) {
-    return '$name เป็นลูกหนี้';
-  }
-
-  @override
-  String debtYouOwe(String name) {
-    return '$name เป็นเจ้าหนี้';
-  }
-
-  @override
-  String get debtStatusSettled => 'คืนครบแล้ว';
-
-  @override
-  String get debtStatusCancelled => 'ยกเลิก';
-
-  @override
-  String get debtOutstanding => 'คงค้าง';
-
-  @override
-  String debtProgress(String paid, String total) {
-    return 'คืนแล้ว $paid จาก $total';
-  }
-
-  @override
-  String get debtReceive => 'รับเงินคืน';
-
-  @override
   String get debtPay => 'จ่ายคืน';
-
-  @override
-  String get debtAmount => 'ยอดเต็ม';
-
-  @override
-  String get debtSettled => 'คืนแล้ว';
-
-  @override
-  String get debtSource => 'ที่มา';
-
-  @override
-  String get debtSourceManual => 'บันทึกเอง';
-
-  @override
-  String get debtSourceTransaction => 'หารบิลจากรายการ';
-
-  @override
-  String get debtSourceProject => 'อีเวนต์';
-
-  @override
-  String get debtCreatedAt => 'วันที่สร้าง';
-
-  @override
-  String get debtCounterparty => 'กับใคร';
-
-  @override
-  String get debtCounterpartyPlaceholder => 'เลือกผู้ติดต่อ หรือพิมพ์ชื่อ';
 
   @override
   String get debtCounterpartyRequired => 'ใส่ชื่อคนก่อน';
 
   @override
-  String get debtCancel => 'ยกเลิกหนี้นี้';
-
-  @override
-  String get debtCancelTitle => 'ยกเลิกหนี้นี้?';
-
-  @override
-  String get debtCancelBody =>
-      'ไม่มีเงินเคลื่อนไหว ใช้ตอนยกหนี้ให้ หรือบันทึกผิด';
-
-  @override
-  String get debtCancelled => 'ยกเลิกหนี้แล้ว';
-
-  @override
-  String get debtDeleteTitle => 'ลบหนี้นี้?';
-
-  @override
-  String get debtDeleteBody => 'ลบถาวร ย้อนกลับไม่ได้';
-
-  @override
-  String get debtDeleted => 'ลบหนี้แล้ว';
-
-  @override
-  String get debtNewTitle => 'บันทึกหนี้';
-
-  @override
-  String get debtEditTitle => 'แก้ไขหนี้';
-
-  @override
   String get debtDirectionOwedToMe => 'จดให้ยืม';
 
   @override
-  String get debtDirectionOwedToMeDesc => 'ฉันให้ยืม หรือออกเงินแทนเขา';
-
-  @override
   String get debtDirectionIOwe => 'จดยืมมา';
-
-  @override
-  String get debtDirectionIOweDesc => 'ฉันยืมมา หรือเขาออกให้ก่อน';
-
-  @override
-  String get debtAmountRequired => 'ใส่ยอดมากกว่า 0';
-
-  @override
-  String debtAmountBelowSettled(String amount) {
-    return 'ต้องไม่น้อยกว่ายอดที่คืนแล้ว ($amount)';
-  }
-
-  @override
-  String debtSettleTitleReceive(String name) {
-    return 'รับเงินคืนจาก $name';
-  }
-
-  @override
-  String debtSettleTitlePay(String name) {
-    return 'จ่ายคืน $name';
-  }
-
-  @override
-  String get debtSettleAll => 'ทั้งหมด';
-
-  @override
-  String get debtSettleHalf => 'ครึ่งหนึ่ง';
-
-  @override
-  String debtSettleOver(String amount) {
-    return 'เกินยอดคงค้าง ($amount)';
-  }
-
-  @override
-  String get debtSettleAccount => 'กระเป๋า';
-
-  @override
-  String get debtSettleAccountRequired => 'เลือกกระเป๋า';
-
-  @override
-  String get debtSettleDate => 'วันที่';
-
-  @override
-  String get debtSettleConfirm => 'ยืนยัน';
-
-  @override
-  String get debtSettleDone => 'บันทึกการคืนเงินแล้ว';
 
   @override
   String get projectStatusActive => 'กำลังดำเนินการ';
@@ -1030,16 +775,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get projectStatusArchived => 'เก็บถาวร';
 
   @override
-  String get projectsStatusAll => 'ทั้งหมด';
-
-  @override
   String get projectsStatusLabel => 'สถานะ';
 
   @override
   String get projectsSearchHint => 'ค้นหาอีเวนต์';
-
-  @override
-  String get projectsSortRecent => 'ล่าสุด';
 
   @override
   String get projectsSortName => 'ชื่อ';
@@ -1055,45 +794,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String get projectsNoMatch => 'ไม่พบอีเวนต์ที่ค้นหา';
 
   @override
-  String projectsMembersCount(int count) {
-    return '$count สมาชิก';
-  }
-
-  @override
-  String get projectTabDashboard => 'ภาพรวม';
-
-  @override
-  String get projectTabTransactions => 'รายการ';
-
-  @override
-  String get projectTabResolve => 'เคลียร์ยอด';
-
-  @override
-  String get projectAddTransaction => 'เพิ่มรายการ';
-
-  @override
   String get projectNewTitle => 'อีเวนต์ใหม่';
-
-  @override
-  String get projectEditTitle => 'แก้ไขอีเวนต์';
-
-  @override
-  String get projectNameLabel => 'ชื่ออีเวนต์';
 
   @override
   String get projectNameRequired => 'ต้องใส่ชื่อ';
 
   @override
-  String get projectTypeLabel => 'ประเภท';
-
-  @override
-  String get projectTypeHint => 'เช่น ทริป งานฟรีแลนซ์';
-
-  @override
   String get projectIconLabel => 'ไอคอนอีเวนต์';
-
-  @override
-  String get projectStatusChangeTitle => 'เปลี่ยนสถานะ';
 
   @override
   String projectStatusLockTitle(String status) {
@@ -1125,73 +832,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get projectDeleteBody =>
-      'ลบได้เฉพาะอีเวนต์ที่ยังไม่มีรายการ | ถ้ามีรายการแล้ว ให้เปลี่ยนสถานะเป็นเก็บถาวรแทน';
-
-  @override
   String get projectDeleted => 'ลบอีเวนต์แล้ว';
-
-  @override
-  String get projectDashTotalExpense => 'รายจ่ายรวม';
-
-  @override
-  String get projectDashTotalIncome => 'รายรับรวม';
-
-  @override
-  String get projectDashMembers => 'สมาชิก';
-
-  @override
-  String get projectDashWhoPaid => 'ใครจ่ายเท่าไร';
-
-  @override
-  String get projectDashTopTags => 'แท็กที่ใช้มากสุด';
-
-  @override
-  String get projectDashRecent => 'ล่าสุด';
-
-  @override
-  String get projectDashSeeAll => 'ดูทั้งหมด';
-
-  @override
-  String projectDashTxCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count รายการ',
-      zero: 'ยังไม่มีรายการ',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get projectTxSearchHint => 'ค้นหารายการ';
-
-  @override
-  String get projectTxTypeLabel => 'ประเภท';
-
-  @override
-  String get projectTxTypeAll => 'ทั้งหมด';
-
-  @override
-  String get projectTxTypeExpense => 'รายจ่าย';
-
-  @override
-  String get projectTxTypeIncome => 'รายรับ';
-
-  @override
-  String get projectTxOnlyMine => 'เฉพาะฉัน';
-
-  @override
-  String get projectTxSortTime => 'วันที่';
-
-  @override
-  String get projectTxSortAmount => 'ยอด';
-
-  @override
-  String get projectTxSortMember => 'คนจ่าย';
-
-  @override
-  String get projectTxSortTag => 'แท็ก';
 
   @override
   String get projectTxEmpty => 'ยังไม่มีรายการในอีเวนต์';
@@ -1200,47 +841,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get projectTxNoMatch => 'ไม่พบรายการที่ค้นหา';
 
   @override
-  String projectTxOwes(String name) {
-    return '$name เป็นเจ้าหนี้';
-  }
-
-  @override
-  String get projectTxUnmark => 'ยกเลิกการติ๊ก';
-
-  @override
-  String get projectTxResolve => 'ลงบัญชีส่วนตัว';
-
-  @override
-  String get projectTxResolveHint => 'สร้างรายการหรือหนี้ในบัญชีของคุณ';
-
-  @override
-  String get projectTxEdit => 'แก้ไขรายการ';
-
-  @override
   String get projectTxDelete => 'ลบรายการ';
 
   @override
   String get projectTxDeleteTitle => 'ลบรายการนี้?';
-
-  @override
-  String get projectTxDeleteBody => 'ยอดหารที่ผูกกับรายการนี้จะถูกลบด้วย';
-
-  @override
-  String get projectTxDeleted => 'ลบรายการแล้ว';
-
-  @override
-  String get projectResolveAsTx => 'เป็นรายการ';
-
-  @override
-  String get projectResolveAsDebt => 'เป็นหนี้';
-
-  @override
-  String get projectResolveShareOnly => 'ใช้เฉพาะส่วนของฉัน';
-
-  @override
-  String projectResolveShareHint(String full, String share) {
-    return 'เต็ม $full | ส่วนของฉัน $share';
-  }
 
   @override
   String get projectResolveAmount => 'ยอด';
@@ -1250,19 +854,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get projectResolveCategoryNone => 'ไม่ระบุหมวด';
-
-  @override
-  String get projectResolveDebtHint => 'ชื่อคนมาจากสมาชิกในอีเวนต์';
-
-  @override
-  String get projectResolveConfirm => 'ลงบัญชี';
-
-  @override
-  String get projectResolveDone => 'ลงบัญชีแล้ว';
-
-  @override
-  String get projectResolveComingSoon =>
-      'หน้าสรุปการเคลียร์ยอดกำลังมา — ตอนนี้ติ๊กเคลียร์ได้จากแท็บรายการ';
 
   @override
   String get projectMembersTitle => 'สมาชิก';
@@ -1290,14 +881,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get projectMemberRoleChanged => 'เปลี่ยนสิทธิ์แล้ว';
-
-  @override
-  String projectMyPosition(String paid, String share) {
-    return 'ของฉัน: จ่ายไป $paid | ส่วนของฉัน $share';
-  }
-
-  @override
-  String get projectMyNet => 'สุทธิ';
 
   @override
   String get projectMemberLinked => 'มีบัญชีในแอป';
@@ -1458,20 +1041,10 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get settingsDefaultCurrencyHint =>
-      'ใช้เป็นค่าเริ่มต้นตอนสร้างกระเป๋าและหนี้';
-
-  @override
-  String get settingsCurrencySaved => 'เปลี่ยนสกุลเงินเริ่มต้นแล้ว';
-
-  @override
   String get settingsFontSample => 'ตัวอย่าง ภาษาไทย ABC 123';
 
   @override
   String get notificationsTitle => 'การแจ้งเตือน';
-
-  @override
-  String get notificationsMarkAllRead => 'อ่านทั้งหมดแล้ว';
 
   @override
   String get notificationsEmptyTitle => 'ไม่มีการแจ้งเตือน';
@@ -1634,9 +1207,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get homeVsPrevMonth => 'รายจ่ายเทียบเดือนก่อน';
 
   @override
-  String get homeComingUp => 'เร็วๆ นี้';
-
-  @override
   String homeComingUpWindow(int days) {
     return '$days วัน';
   }
@@ -1689,16 +1259,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get homeBudgetsNone => 'ยังไม่ตั้งงบ';
 
   @override
-  String homeDebtsOpen(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'ค้าง $count รายการ',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get homeDebtsNone => 'ไม่มีหนี้ค้าง';
 
   @override
@@ -1716,12 +1276,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get homeLoadError => 'โหลดแดชบอร์ดไม่สำเร็จ';
-
-  @override
-  String get homePrevMonth => 'เดือนก่อน';
-
-  @override
-  String get homeNextMonth => 'เดือนถัดไป';
 
   @override
   String get transactionsFilterType => 'ประเภท';
@@ -1757,31 +1311,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get transactionsClearFilters => 'ล้างตัวกรอง';
 
   @override
-  String get txDetailAccount => 'กระเป๋า';
-
-  @override
-  String get txDetailCategory => 'หมวด';
-
-  @override
-  String get txDetailTags => 'แท็ก';
-
-  @override
-  String get txDetailSplits => 'การหาร';
-
-  @override
-  String get txDetailRecordedBy => 'ผู้บันทึก';
-
-  @override
-  String get txDetailSource => 'มาจาก';
-
-  @override
   String get txDetailSourceProject => 'อีเวนต์';
-
-  @override
-  String get txDetailTransferTo => 'ไปที่';
-
-  @override
-  String get txDetailBalanceAfter => 'ยอดคงเหลือหลังรายการ';
 
   @override
   String get txDeleted => 'ลบรายการแล้ว';
@@ -1801,33 +1331,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txDeleteRecurringSkip => 'ลบรายการและข้ามงวดนี้';
 
   @override
-  String get txSplitAdd => 'เพิ่มการหาร';
-
-  @override
-  String get txSplitWith => 'หารกับ';
-
-  @override
   String get txSplitEqually => 'หารเท่ากัน';
 
   @override
-  String get txSplitCollapse => 'ยกเลิกการหาร';
-
-  @override
   String get txSplitAddPerson => 'เพิ่มคน';
-
-  @override
-  String txSplitRemaining(String amount) {
-    return 'ส่วนของคุณ $amount';
-  }
-
-  @override
-  String get txSplitWiredContact => 'ผูกกับผู้ติดต่อแล้ว';
-
-  @override
-  String get txSplitName => 'ชื่อ';
-
-  @override
-  String get txSplitOwes => 'รอจ่าย';
 
   @override
   String get txSplitRemove => 'นำออก';
@@ -1874,12 +1381,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get authRegisterEmailHint => 'ใช้ให้เพื่อนเชื่อมบัญชีกับคุณได้';
 
   @override
-  String get authLanguage => 'ภาษา';
-
-  @override
-  String get accountsTotalShared => 'กองกลาง';
-
-  @override
   String get accountsSummaryNet => 'ยอดสุทธิของฉัน';
 
   @override
@@ -1922,10 +1423,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txSplitOver => 'ยอดหารรวมเกินยอดรายการ';
 
   @override
-  String get txSplitFreeText =>
-      'พิมพ์ชื่อเอง — เลือกจากรายชื่อที่แนะนำเพื่อผูกผู้ติดต่อ';
-
-  @override
   String get moreDebts => 'หนี้สิน';
 
   @override
@@ -1936,18 +1433,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get moreSavingGoals => 'เป้าหมายการออม';
-
-  @override
-  String get moreScheduled => 'รายการตามกำหนด';
-
-  @override
-  String get moreGroupLibrary => 'คลังข้อมูล';
-
-  @override
-  String get moreGroupPeople => 'คนและเงินร่วม';
-
-  @override
-  String get moreGroupPlanning => 'วางแผน';
 
   @override
   String get moreCategoriesDesc => 'จัดกลุ่มรายการ';
@@ -1969,9 +1454,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get moreSavingGoalsDesc => 'ออมเพื่อสิ่งที่อยากได้';
-
-  @override
-  String get moreScheduledDesc => 'บิลประจำและที่จะถึง';
 
   @override
   String get moreChipOverBudget => 'เกินงบ';
@@ -2047,9 +1529,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get categoryFormTitleNew => 'หมวดหมู่ใหม่';
 
   @override
-  String get categoryFormTitleEdit => 'แก้ไขหมวดหมู่';
-
-  @override
   String get categoryFormNameRequired => 'จำเป็น';
 
   @override
@@ -2058,13 +1537,6 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get categoryFormNameDuplicate =>
       'มีหมวดหมู่ในระดับนี้ที่ใช้ชื่อนี้แล้ว';
-
-  @override
-  String get categoryFormTypeLabel => 'ประเภท';
-
-  @override
-  String get categoryFormTypeImmutableHelper =>
-      'เปลี่ยนประเภทหลังสร้างไม่ได้ ถ้าต้องการเปลี่ยนให้ลบแล้วสร้างใหม่';
 
   @override
   String get categoryFormParentLabel => 'หมวดหลัก';
@@ -2133,13 +1605,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get contactDeleteThis => 'ลบผู้ติดต่อนี้';
 
   @override
-  String get debtDeleteThis => 'ลบหนี้นี้';
-
-  @override
   String get projectDeleteThis => 'ลบอีเวนต์นี้';
-
-  @override
-  String get scheduledDeleteThis => 'ลบรายการตามกำหนดนี้';
 
   @override
   String get transactionDeleteThis => 'ลบรายการนี้';
@@ -2209,14 +1675,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get tagDeleteConfirmTitle => 'ลบแท็ก?';
 
   @override
-  String get tagDeleteConfirmBody =>
-      'จะลบแท็กออกจากรายการที่ใช้แท็กนี้ ไม่สามารถย้อนกลับได้';
-
-  @override
   String get tagDeleteConfirmAction => 'ลบ';
-
-  @override
-  String get tagFormTitleEdit => 'แก้ไขแท็ก';
 
   @override
   String get tagFormNameLabel => 'ชื่อ';
@@ -2240,19 +1699,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsTitle => 'การตั้งค่า';
 
   @override
-  String get settingsSectionAccount => 'บัญชี';
-
-  @override
-  String get settingsSectionPreferences => 'การตั้งค่าส่วนตัว';
-
-  @override
   String get settingsSectionAbout => 'เกี่ยวกับ';
 
   @override
   String get settingsChangePassword => 'เปลี่ยนรหัสผ่าน';
-
-  @override
-  String get settingsDefaultCurrency => 'สกุลเงินเริ่มต้น';
 
   @override
   String get settingsTheme => 'ธีม';
@@ -2291,14 +1741,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get editProfileEmailLabel => 'อีเมล';
 
   @override
-  String get editProfileEmailHelper =>
-      'ใช้เป็นรหัสบัญชีของคุณ และเป็นคีย์ที่คนอื่นใช้ค้นหาเพื่อส่งคำขอเชื่อมโยงผู้ติดต่อ';
-
-  @override
   String get editProfileEmailInvalid => 'กรุณากรอกอีเมลให้ถูกต้อง';
-
-  @override
-  String get editProfileEmailTooLong => 'อีเมลยาวเกินไป';
 
   @override
   String get editProfileEmailTaken => 'อีเมลนี้ถูกใช้กับบัญชีอื่นแล้ว';
@@ -2331,46 +1774,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get changePasswordConfirmMismatch => 'ไม่ตรงกับรหัสผ่านใหม่';
 
   @override
-  String get changePasswordSubmit => 'อัปเดตรหัสผ่าน';
-
-  @override
   String get changePasswordSnackSuccess => 'อัปเดตรหัสผ่านแล้ว';
-
-  @override
-  String get previewTitle => 'ตัวอย่างคอร์';
-
-  @override
-  String get sectionTheme => 'ธีม';
-
-  @override
-  String get sectionMode => 'โหมด';
-
-  @override
-  String get sectionLanguage => 'ภาษา';
-
-  @override
-  String get sectionFont => 'ฟอนต์';
-
-  @override
-  String get sectionCurrentSelection => 'การเลือกปัจจุบัน';
-
-  @override
-  String get sectionTypographySamples => 'ตัวอย่างตัวอักษร';
-
-  @override
-  String get sectionSemanticColors => 'สีเชิงความหมาย';
-
-  @override
-  String get sectionFormatters => 'รูปแบบการแสดงผล';
-
-  @override
-  String get sectionControls => 'ปุ่ม';
-
-  @override
-  String get sectionInput => 'ช่องกรอก';
-
-  @override
-  String get sectionCard => 'การ์ด';
 
   @override
   String get modeLight => 'สว่าง';
@@ -2382,18 +1786,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get modeSystem => 'ระบบ';
 
   @override
-  String fontsAvailableFor(int count, String lang) {
-    return 'มี $count รายการสำหรับ \"$lang\"';
-  }
-
-  @override
   String get amountLabel => 'จำนวนเงิน';
-
-  @override
-  String get amountHint => '0.00';
-
-  @override
-  String get monthlyBalance => 'ยอดคงเหลือรายเดือน';
 
   @override
   String get transactionFormTitleNew => 'รายการใหม่';
@@ -2410,19 +1803,6 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get txDetailRepaymentBanner =>
       'รายการนี้บันทึกจากการจ่ายหนี้ แก้ไขไม่ได้ แต่ลบได้ (ยอดที่จ่ายคืนของหนี้จะลดลงตาม)';
-
-  @override
-  String get debtOverpaid => 'จ่ายเกิน';
-
-  @override
-  String get debtOverpaidIOwe => 'จ่ายเกินมา | ฉันต้องคืนเขา';
-
-  @override
-  String get debtOverpaidTheyOwe => 'จ่ายเกินไป | เขาต้องคืนฉัน';
-
-  @override
-  String get debtOverpaidCantSettle =>
-      'หนี้นี้จ่ายเกินแล้ว บันทึกรับ/จ่ายเพิ่มไม่ได้';
 
   @override
   String txDetailDeleteRepaymentBody(String amount) {
@@ -2457,10 +1837,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifSplitChangeDeleted => 'ลบหนี้รายการนี้ออกแล้ว';
 
   @override
-  String get notifSplitChangeZeroed =>
-      'ยอดของคุณเป็น 0 แล้ว — ที่คืนไปถือว่าจ่ายเกิน';
-
-  @override
   String get notifSplitChangeUsed => 'อัปเดตไปแล้ว';
 
   @override
@@ -2486,9 +1862,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get txSplitErrorContact => 'ผู้ติดต่อนี้ใช้ไม่ได้แล้ว';
-
-  @override
-  String get txSplitEditOnDebts => 'แก้ได้ที่หน้าหนี้';
 
   @override
   String get txSplitStatusPaid => '✓ จ่ายแล้ว';
@@ -2525,21 +1898,10 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get txTypeLockedHint => 'เปลี่ยนประเภทไม่ได้หลังบันทึก';
-
-  @override
-  String txDetailSplitEditElsewhere(int count) {
-    return '$count คน | แก้ได้ที่หน้าหนี้';
-  }
-
-  @override
   String get txDetailCreatedAt => 'บันทึกเมื่อ';
 
   @override
   String get txDetailUpdatedAt => 'แก้ไขล่าสุด';
-
-  @override
-  String get txSplitShareShort => 'แบ่งให้';
 
   @override
   String tagPickerCreateNamed(String name) {
@@ -2599,16 +1961,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txTagCreateFailed => 'สร้างแท็กไม่สำเร็จ';
 
   @override
-  String get quickEventUseName => 'ใช้ชื่อนี้';
-
-  @override
-  String get quickEventCreatedOnSave => 'จะสร้างอีเวนต์เมื่อกดบันทึก';
-
-  @override
   String get projectTxPayerRequired => 'เลือกสมาชิกก่อน';
-
-  @override
-  String get scheduledHeroNameHint => 'จ่ายค่าอะไร เช่น Netflix';
 
   @override
   String get quickFrom => 'จาก';
@@ -2643,13 +1996,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get quickEventRemove => 'ไม่เพิ่มเข้าอีเวนต์';
 
   @override
-  String get quickEventNew => 'สร้างอีเวนต์ใหม่';
-
-  @override
   String get quickEventNameLabel => 'ชื่ออีเวนต์';
-
-  @override
-  String get quickEventExisting => 'หรือเพิ่มเข้าอีเวนต์ที่มีอยู่';
 
   @override
   String get quickEventNoneYet => 'ยังไม่มีอีเวนต์ที่เปิดอยู่';
@@ -2682,16 +2029,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get pendingChatClose => 'ปิด';
 
   @override
-  String get pendingScanning => 'กำลังอ่านสลิป…';
-
-  @override
-  String get pendingScanDone => 'นำเข้าสลิปแล้ว';
-
-  @override
   String get pendingSelectAll => 'เลือกทั้งหมด';
-
-  @override
-  String get pendingSelectNone => 'ไม่เลือก';
 
   @override
   String get pendingSelectOne => 'เลือกรายการนี้';
@@ -2808,11 +2146,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get pendingKeepAsDraft => 'เก็บเป็นร่าง';
 
   @override
-  String pendingBlockTitle(int count) {
-    return 'รอยืนยัน $count รายการ';
-  }
-
-  @override
   String pendingBlockMore(int count) {
     return '+ อีก $count รายการ';
   }
@@ -2884,9 +2217,6 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get transactionFormAccountPickerEmpty =>
       'ยังไม่มีกระเป๋าที่ใช้งาน เพิ่มกระเป๋าก่อน';
-
-  @override
-  String get transactionFormCategoryPickerTitle => 'เลือกหมวดหมู่';
 
   @override
   String get transactionFormCategoryPickerNoneOption => 'ไม่ระบุหมวด';
@@ -2962,18 +2292,10 @@ class AppLocalizationsTh extends AppLocalizations {
       'ตั้งเป้าหมายซ้อนบนกระเป๋าของคุณ แล้วดูความคืบหน้าตามยอดเงิน';
 
   @override
-  String savingGoalProgressLine(String current, String target) {
-    return '$current จาก $target';
-  }
-
-  @override
   String get savingGoalCompletedLabel => 'ถึงเป้าแล้ว';
 
   @override
   String get savingGoalFormTitle => 'เป้าหมายใหม่';
-
-  @override
-  String get savingGoalFormTitleEdit => 'แก้ไขเป้าหมาย';
 
   @override
   String get savingGoalFormIconLabel => 'ไอคอน';
@@ -2982,22 +2304,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get savingGoalFormNameRequired => 'จำเป็น';
 
   @override
-  String get savingGoalFormLinkedAccountLabel => 'กระเป๋าที่เชื่อม';
-
-  @override
-  String get savingGoalFormAccountRequired => 'เลือกกระเป๋าที่เชื่อม';
-
-  @override
   String get savingGoalFormTargetLabel => 'ยอดเป้าหมาย';
 
   @override
   String get savingGoalFormTargetInvalid => 'ใส่จำนวนที่มากกว่าศูนย์';
-
-  @override
-  String get savingGoalFormAllocationLabel => 'การจัดสรร';
-
-  @override
-  String get savingGoalFormAllocationInvalid => 'ต้องอยู่ระหว่าง 0 ถึง 100';
 
   @override
   String get savingGoalFormDeadlineLabel => 'วันที่ครบกำหนด';
@@ -3016,46 +2326,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String get savingGoalDetailArchive => 'เก็บถาวร';
 
   @override
-  String savingGoalDetailOfTarget(String target) {
-    return 'จาก $target';
-  }
-
-  @override
-  String get savingGoalDetailRemaining => 'คงเหลือ';
-
-  @override
-  String get savingGoalDetailDaysRemaining => 'วันที่เหลือ';
-
-  @override
-  String savingGoalDetailDaysValue(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count วัน',
-      one: '1 วัน',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get savingGoalDetailRequiredMonthly => 'แนะนำต่อเดือน';
-
-  @override
   String get savingGoalArchiveConfirmTitle => 'เก็บถาวรเป้าหมายนี้?';
-
-  @override
-  String get savingGoalArchiveConfirmBody =>
-      'การเก็บถาวรจะคืนสัดส่วนการจัดสรรให้กระเป๋า กู้คืนได้ภายหลังหากยังมีพื้นที่';
 
   @override
   String get savingGoalArchiveConfirmAction => 'เก็บถาวร';
 
   @override
   String get savingGoalDeleteConfirmTitle => 'ลบเป้าหมายนี้?';
-
-  @override
-  String get savingGoalDeleteConfirmBody =>
-      'ลบถาวร กระเป๋าที่เชื่อมและรายการในกระเป๋าไม่ได้รับผลกระทบ';
 
   @override
   String get savingGoalDeleteConfirmAction => 'ลบ';
@@ -3074,42 +2351,10 @@ class AppLocalizationsTh extends AppLocalizations {
       'กำหนดเพดานต่อหมวดหมู่ ระบบจะตรวจการใช้จ่ายให้ในแต่ละรอบ';
 
   @override
-  String get budgetPeriodWeekly => 'รายสัปดาห์';
-
-  @override
-  String get budgetPeriodMonthly => 'รายเดือน';
-
-  @override
-  String get budgetPeriodYearly => 'รายปี';
-
-  @override
-  String budgetSpentLine(String spent, String limit) {
-    return '$spent จาก $limit';
-  }
-
-  @override
   String get budgetFormTitle => 'งบประมาณใหม่';
 
   @override
-  String get budgetFormTitleEdit => 'แก้ไขงบประมาณ';
-
-  @override
-  String get budgetFormCategoryLabel => 'หมวดหมู่';
-
-  @override
-  String get budgetFormCategoryPlaceholder => 'เลือกหมวดหมู่';
-
-  @override
-  String get budgetFormCategoryRequired => 'เลือกหมวดหมู่';
-
-  @override
-  String get budgetFormAmountLabel => 'เพดานต่อรอบ';
-
-  @override
   String get budgetFormAmountInvalid => 'ใส่จำนวนที่มากกว่าศูนย์';
-
-  @override
-  String get budgetFormPeriodLabel => 'รอบ';
 
   @override
   String get budgetDetailNotFound => 'ไม่พบงบประมาณ';
@@ -3123,27 +2368,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get budgetDetailArchive => 'เก็บถาวร';
-
-  @override
-  String budgetDetailOfLimit(String limit) {
-    return 'จาก $limit';
-  }
-
-  @override
-  String budgetDetailRemainingLine(String amount) {
-    return 'เหลือ $amount';
-  }
-
-  @override
-  String budgetDetailPeriodRange(String start, String end) {
-    return '$start – $end';
-  }
-
-  @override
-  String get budgetDetailOverLimitWarning => 'ใช้เกินเพดานงบประมาณรอบนี้แล้ว';
-
-  @override
-  String get budgetDetailBreakdownTitle => 'การใช้จ่ายตามหมวด';
 
   @override
   String get budgetArchiveConfirmTitle => 'เก็บถาวรงบประมาณนี้?';
@@ -3165,253 +2389,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get budgetDeleteConfirmAction => 'ลบ';
 
   @override
-  String get scheduledTitle => 'รายการตามกำหนด';
-
-  @override
-  String get scheduledAddNew => 'เพิ่มรายการ';
-
-  @override
-  String get scheduledEmptyTitle => 'ยังไม่มีรายการตามกำหนด';
-
-  @override
-  String get scheduledEmptyMessage =>
-      'ตั้งค่าค่าสมาชิก ผ่อนชำระ หรือเงินกู้ ระบบจะสร้างรายการให้อัตโนมัติ';
-
-  @override
-  String get scheduledVariantRecurring => 'ประจำ';
-
-  @override
-  String get scheduledVariantInstallment => 'ผ่อนชำระ';
-
-  @override
-  String get scheduledVariantLoan => 'เงินกู้';
-
-  @override
-  String get scheduledCycleDaily => 'ทุกวัน';
-
-  @override
-  String get scheduledCycleWeekly => 'ทุกสัปดาห์';
-
-  @override
-  String get scheduledCycleMonthly => 'ทุกเดือน';
-
-  @override
-  String get scheduledCycleYearly => 'ทุกปี';
-
-  @override
-  String get scheduledStatusActive => 'ใช้งาน';
-
-  @override
-  String get scheduledStatusPaused => 'พักไว้';
-
-  @override
-  String get scheduledStatusCompleted => 'จบแล้ว';
-
-  @override
-  String get scheduledStatusCancelled => 'ยกเลิก';
-
-  @override
-  String scheduledNextDue(String date) {
-    return 'ครบกำหนด $date';
-  }
-
-  @override
-  String scheduledInstallmentsLeft(int remaining, int total) {
-    return 'เหลือ $remaining/$total';
-  }
-
-  @override
-  String get scheduledFormSave => 'สร้าง';
-
-  @override
-  String get scheduledFormIconLabel => 'ไอคอน';
-
-  @override
-  String get scheduledFormNameRequired => 'จำเป็น';
-
-  @override
-  String get scheduledFormAmountLabel => 'จำนวนต่อรอบ';
-
-  @override
-  String get scheduledFormPaymentLabel => 'ค่างวดต่อรอบ';
-
-  @override
-  String get scheduledFormAmountInvalid => 'ใส่จำนวนที่มากกว่าศูนย์';
-
-  @override
-  String get scheduledFormAccountLabel => 'กระเป๋า';
-
-  @override
-  String get scheduledFormAccountRequired => 'เลือกกระเป๋า';
-
-  @override
-  String get scheduledFormCategoryLabel => 'หมวดหมู่';
-
-  @override
-  String get scheduledFormCategoryRequired => 'เลือกหมวดหมู่';
-
-  @override
-  String get scheduledFormCycleLabel => 'รอบ';
-
-  @override
-  String get scheduledFormNextBillingLabel => 'วันที่งวดถัดไป';
-
-  @override
-  String get scheduledFormInstallmentSection => 'ข้อมูลการผ่อน';
-
-  @override
-  String get scheduledFormTotalAmountLabel => 'ยอดรวม';
-
-  @override
-  String get scheduledFormTotalAmountHelper => 'รวมทุกงวด + เงินดาวน์';
-
-  @override
-  String get scheduledFormTotalAmountHelperLoan =>
-      'ยอดรวมตลอดสัญญา รวมต้นและดอกเบี้ย';
-
-  @override
-  String get scheduledFormDownPaymentLabel => 'เงินดาวน์';
-
-  @override
-  String get scheduledFormTotalInstallmentsLabel => 'งวดทั้งหมด';
-
-  @override
-  String get scheduledFormRemainingInstallmentsLabel => 'งวดที่เหลือ';
-
-  @override
-  String get scheduledFormInstallmentsInvalid => 'จำนวนไม่ถูกต้อง';
-
-  @override
-  String get scheduledFormRemainingExceeds => 'ห้ามเกินจำนวนงวดทั้งหมด';
-
-  @override
-  String get scheduledFormInterestRateLabel => 'อัตราดอกเบี้ย (ต่อปี)';
-
-  @override
-  String get scheduledFormInterestInvalid => 'ต้องอยู่ระหว่าง 0 ถึง 99.99';
-
-  @override
-  String get scheduledDetailNotFound => 'ไม่พบรายการ';
-
-  @override
-  String get scheduledDetailNotFoundMessage =>
-      'รายการนี้อาจถูกลบหรือยกเลิกแล้ว';
-
-  @override
-  String get scheduledDetailPause => 'พักไว้';
-
-  @override
-  String get scheduledDetailResume => 'ใช้งานต่อ';
-
-  @override
-  String get scheduledDetailCancel => 'ยกเลิก';
-
-  @override
-  String scheduledDetailNextDue(String date) {
-    return 'งวดถัดไป $date';
-  }
-
-  @override
-  String get scheduledDetailAccount => 'กระเป๋า';
-
-  @override
-  String get scheduledDetailCategory => 'หมวดหมู่';
-
-  @override
-  String get scheduledDetailCycle => 'รอบ';
-
-  @override
-  String get scheduledDetailTotalAmount => 'ยอดรวม';
-
-  @override
-  String get scheduledDetailDownPayment => 'เงินดาวน์';
-
-  @override
-  String get scheduledDetailInstallments => 'งวด';
-
-  @override
-  String get scheduledDetailInterestRate => 'อัตราดอกเบี้ย';
-
-  @override
-  String get scheduledGenerateNowTitle => 'สร้างตอนนี้';
-
-  @override
-  String get scheduledGenerateNowBody =>
-      'บันทึกรายการของงวดถัดไปตอนนี้เลย แล้วเลื่อนวันครบกำหนดไปงวดหน้า';
-
-  @override
-  String get scheduledGenerateNowAction => 'สร้าง';
-
-  @override
-  String get scheduledGenerateNowSuccess => 'สร้างรายการแล้ว';
-
-  @override
-  String get scheduledGenerateNowViewTransaction => 'ดู';
-
-  @override
-  String get scheduledDetailHistoryTitle => 'รายการที่สร้างแล้ว';
-
-  @override
-  String get scheduledDetailHistoryEmpty => 'ยังไม่มีรายการที่ระบบสร้าง';
-
-  @override
-  String scheduledDetailHistoryTotal(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count รายการ',
-      one: '1 รายการ',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get scheduledCancelConfirmTitle => 'ยกเลิกรายการนี้?';
-
-  @override
-  String get scheduledCancelConfirmBody =>
-      'การยกเลิกถาวร ต้องสร้างใหม่หากต้องการตั้งใหม่';
-
-  @override
-  String get scheduledCancelConfirmAction => 'ยกเลิก';
-
-  @override
-  String get scheduledDeleteConfirmTitle => 'ลบรายการนี้?';
-
-  @override
-  String get scheduledStatusChangeTitle => 'เปลี่ยนสถานะ';
-
-  @override
-  String get scheduledDeleteConfirmBody =>
-      'รายการที่ระบบสร้างแล้วยังคงอยู่ ลบเฉพาะรายการตามกำหนด';
-
-  @override
-  String get scheduledDeleteConfirmAction => 'ลบ';
-
-  @override
-  String get projectFormPlannedLabel => 'ตั้งงบไว้';
-
-  @override
-  String get projectFormPlannedHelper =>
-      'ไม่บังคับ — ยอดรวมที่ตั้งใจจะใช้ ล้างค่าเพื่อปิดการแสดงแผน';
-
-  @override
   String get projectFormPlannedInvalid => 'ใส่จำนวนที่มากกว่าศูนย์';
-
-  @override
-  String projectMetaPlanned(String amount) {
-    return 'งบ $amount';
-  }
-
-  @override
-  String projectPlannedLine(String planned, String remaining) {
-    return 'ตั้งงบไว้ $planned | เหลือ $remaining';
-  }
-
-  @override
-  String projectPlannedOverLine(String over) {
-    return '🔴 เกินงบ $over';
-  }
 
   @override
   String get walletSharedLabel => 'กระเป๋าร่วม';
@@ -3453,18 +2431,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String walletMemberLeft(String date) {
     return 'ออกเมื่อ $date';
   }
-
-  @override
-  String get walletMembersInvite => 'เชิญทางอีเมล';
-
-  @override
-  String get walletInviteTitle => 'เชิญสมาชิก';
-
-  @override
-  String get walletInviteEmailLabel => 'อีเมล';
-
-  @override
-  String get walletInviteEmailInvalid => 'กรุณากรอกอีเมลให้ถูกต้อง';
 
   @override
   String get walletInviteSend => 'ส่งคำเชิญ';
@@ -3526,15 +2492,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get walletTransferOwnershipSuccess => 'โอนความเป็นเจ้าของแล้ว';
 
   @override
-  String get walletSettingsMembersSubtitlePersonal =>
-      'ชวนคนอื่นมาใช้กระเป๋านี้ร่วมกัน';
-
-  @override
   String get walletReportScopeTitle => 'ในรายงานของฉัน';
-
-  @override
-  String get walletReportScopeHelper =>
-      'กำหนดว่ารายการของกระเป๋านี้จะถูกนับในสรุปและงบประมาณส่วนตัวของคุณอย่างไร หน้ากระเป๋าเองยังแสดงทุกรายการเสมอ';
 
   @override
   String get walletReportScopeNone => 'ไม่รวมในรายงาน';
@@ -3544,9 +2502,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get walletReportScopeAll => 'รวมในรายงาน';
-
-  @override
-  String get walletReportScopeSaved => 'บันทึกการตั้งค่ารายงานแล้ว';
 
   @override
   String get transactionFormCategoryAuthorOnlyHint => 'หมวดแก้ได้เฉพาะคนจด';
@@ -3597,12 +2552,6 @@ class AppLocalizationsTh extends AppLocalizations {
       'ผู้ใช้นี้เป็นสมาชิกของกระเป๋านี้อยู่แล้ว';
 
   @override
-  String get transactionSplitWithTitle => 'หารกับ...';
-
-  @override
-  String get transactionSplitShareTitle => 'แบ่งให้... (เรารอจ่ายเขา)';
-
-  @override
   String get quickCreateErrorTxNotFound =>
       'บางบิลที่เลือกไม่มีอยู่แล้ว ลองรีเฟรชแล้วเลือกใหม่';
 
@@ -3615,30 +2564,7 @@ class AppLocalizationsTh extends AppLocalizations {
       'ข้อมูลบางอย่างยังไม่ถูกต้อง ลองตรวจดูอีกครั้ง';
 
   @override
-  String budgetsOverviewSpent(String spent, String total) {
-    return 'ใช้ไป $spent จาก $total';
-  }
-
-  @override
-  String budgetsOverviewOverCount(int count) {
-    return 'เกิน $count งบ';
-  }
-
-  @override
   String get transactionsSearchHint => 'ค้นหาคำอธิบาย | โน้ต | หมวด | กระเป๋า';
-
-  @override
-  String get savingGoalAllocationAuto => 'อัตโนมัติ';
-
-  @override
-  String get accountSharingSectionTitle => 'การแชร์และรายงาน';
-
-  @override
-  String get accountFormOpeningDebtLabel => 'ยอดค้างชำระตอนเริ่ม';
-
-  @override
-  String get accountFormOpeningDebtHelper =>
-      'ยอดที่ยังค้างจ่าย ณ วันที่เริ่มติดตาม (ไม่มีให้ใส่ 0)';
 
   @override
   String get accountAdjustBalanceNewDebtLabel => 'ยอดค้างชำระใหม่';
@@ -3652,19 +2578,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get scheduledSheetTitleNew => 'ตั้งรายการประจำ';
-
-  @override
-  String get scheduledSheetTitleEdit => 'แก้รายการประจำ';
-
-  @override
   String get accountIdentifiersTitle => 'เลขอ้างอิง';
-
-  @override
-  String get accountIdentifiersHelper => 'ใช้จับคู่สลิปธนาคารกับกระเป๋านี้';
-
-  @override
-  String get accountIdentifiersEmpty => 'ยังไม่มีเลข';
 
   @override
   String get accountIdentifiersAdd => 'เพิ่มเลข';
@@ -3682,12 +2596,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get identifierKindOther => 'อื่น ๆ';
 
   @override
-  String get identifierSheetAddTitle => 'เพิ่มเลข';
-
-  @override
-  String get identifierSheetEditTitle => 'แก้ไขเลข';
-
-  @override
   String get identifierKindLabel => 'ชนิด';
 
   @override
@@ -3698,15 +2606,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get identifierValueLabel => 'เลข';
-
-  @override
-  String get identifierValueHint => 'เช่น 123-4-56789-0 หรือ xxx-x-x2780-x';
-
-  @override
-  String get identifierValueHelperPromptPay => 'เบอร์โทรหรือเลขบัตรประชาชน';
-
-  @override
-  String get identifierValueInvalid => 'ใส่ได้แค่ตัวเลข, x และขีด';
 
   @override
   String get identifierValueTooShort => 'ต้องมีตัวเลขอย่างน้อย 4 ตัว';
@@ -3776,9 +2675,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get appUpdateAvailableAction => 'อัปเดต';
 
   @override
-  String get appUpdateLater => 'ไว้ทีหลัง';
-
-  @override
   String get transactionsEmptyMonthTitle => 'เดือนนี้ยังไม่มีรายการ';
 
   @override
@@ -3804,9 +2700,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get transactionsFiltersApply => 'ใช้ตัวกรอง';
 
   @override
-  String get transactionsSortBy => 'เรียงตาม';
-
-  @override
   String get txPeriodMonth => 'เดือน';
 
   @override
@@ -3828,23 +2721,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get transactionsEmptyPeriodTitle => 'ไม่มีรายการในช่วงนี้';
 
   @override
-  String get transactionsFilterRemove => 'เอาตัวกรองนี้ออก';
-
-  @override
   String get commonMore => 'เพิ่มเติม';
 
   @override
   String get txShareMine => 'ส่วนของคุณ';
-
-  @override
-  String txShareOthersOwe(String amount) {
-    return 'รอรับจากคนอื่น $amount';
-  }
-
-  @override
-  String txShareOthers(String amount) {
-    return 'ของคนอื่น $amount';
-  }
 
   @override
   String get txSplitAuthorOnly => 'เฉพาะคนที่บันทึกรายการนี้แก้การหารได้';
@@ -3872,12 +2752,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txSplitExceedsShare => 'เกินส่วนของคุณ';
 
   @override
-  String get accountsGroupMine => 'ของฉัน';
-
-  @override
-  String get accountsReorder => 'จัดลำดับ';
-
-  @override
   String get accountsReorderSave => 'บันทึกลำดับ';
 
   @override
@@ -3895,26 +2769,11 @@ class AppLocalizationsTh extends AppLocalizations {
       'กระเป๋าที่เก็บถาวรจะอยู่ที่นี่ กู้คืนได้ทุกเมื่อ';
 
   @override
-  String get accountDetailAddTx => 'รายการ';
-
-  @override
-  String get accountDetailTransfer => 'โอน';
-
-  @override
-  String get accountDayNone => 'ไม่ระบุ';
-
-  @override
   String get txPeriodDay => 'วัน';
 
   @override
   String get txPeriodWeekHint =>
       'แตะวันไหนก็ได้ — ได้ทั้งสัปดาห์ (จันทร์ถึงอาทิตย์)';
-
-  @override
-  String get quickEventOpenTitle => 'อีเวนต์ที่เปิดอยู่';
-
-  @override
-  String get quickEventNewRow => 'สร้างอีเวนต์ใหม่';
 
   @override
   String quickEventCreateNamed(String name) {
@@ -3929,9 +2788,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get eventPickerTabClosed => 'ปิดแล้ว';
-
-  @override
-  String get txSplitInEvent => 'หารในอีเวนต์';
 
   @override
   String get txSplitInEventHelper =>
@@ -4097,18 +2953,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get txSplitNoContact => 'ไม่ระบุผู้ติดต่อ';
-
-  @override
-  String get txSplitNoContactHint => 'ใช้ชื่อเดิม พิมพ์แก้ได้';
-
-  @override
-  String get accountFormNameExample => 'เช่น บัญชีเงินเดือน';
-
-  @override
-  String get accountFormDescriptionExample => 'เช่น ไว้จ่ายของใช้ในบ้าน';
-
-  @override
   String get accountsSortCustom => 'ลำดับที่จัดเอง';
 
   @override
@@ -4118,16 +2962,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountsSortName => 'ชื่อ';
 
   @override
-  String get accountsSortType => 'ประเภท';
-
-  @override
   String get accountsSummaryCardDebt => 'หนี้บัตร';
-
-  @override
-  String get accountReportSectionTitle => 'รายงาน';
-
-  @override
-  String get accountOpeningSectionTitle => 'ยอดเริ่มต้น';
 
   @override
   String get accountCreditSectionTitle => 'บัตร / วงเงิน';
@@ -4198,50 +3033,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get detailManageTitle => 'การจัดการ';
 
   @override
-  String get draftPickWalletFrom => 'เลือกกระเป๋าต้นทาง';
-
-  @override
-  String get draftPickWalletTo => 'เลือกกระเป๋าปลายทาง';
-
-  @override
-  String get draftPickCategory => 'เลือกหมวด';
-
-  @override
-  String get draftExtrasTitle => 'หารกับ / อีเวนต์';
-
-  @override
-  String draftExtrasSplits(int count) {
-    return 'หารกับ $count คน';
-  }
-
-  @override
   String get draftExtrasNone => 'ไม่ได้ตั้ง';
-
-  @override
-  String get pendingErrInvalidSplit =>
-      'แถวหารยังไม่ครบ — ต้องมีชื่อและยอดมากกว่า 0';
-
-  @override
-  String get pendingErrSplitsExceed => 'ยอดที่หารเกินยอดรายการ';
-
-  @override
-  String get pendingErrProjectGone =>
-      'อีเวนต์นี้ไม่มีแล้ว เลือกอีเวนต์ใหม่หรือเอาออก';
-
-  @override
-  String get pendingErrProjectClosed =>
-      'อีเวนต์นี้ปิดหรือถูกล็อกแล้ว เพิ่มรายการไม่ได้';
-
-  @override
-  String get pendingErrProjectMember => 'คุณไม่ได้เป็นสมาชิกของอีเวนต์นี้';
-
-  @override
-  String get pendingErrProjectReadOnly =>
-      'คุณดูอีเวนต์นี้ได้อย่างเดียว เพิ่มรายการไม่ได้';
-
-  @override
-  String get accountReportSectionDescription =>
-      'เลือกว่ากระเป๋านี้นับในรายงานของคุณแค่ไหน';
 
   @override
   String get accountMembersSectionDescription => 'คนที่ใช้กระเป๋านี้ร่วมกับคุณ';
@@ -4251,32 +3043,12 @@ class AppLocalizationsTh extends AppLocalizations {
       'วันตัดรอบ วันครบกำหนด และยอดชำระขั้นต่ำของบัตรนี้';
 
   @override
-  String get accountOpeningSectionDescription =>
-      'ยอดตั้งต้นของกระเป๋า หลังสร้างแล้วแก้ผ่านปรับยอด';
-
-  @override
-  String get accountTypeSectionDescription =>
-      'ชนิดของกระเป๋า เลือกได้ตอนสร้างและแก้ไข';
-
-  @override
   String get walletMembersHistoryDescription =>
       'คนที่เคยอยู่ในกระเป๋านี้แต่ออกไปแล้ว';
 
   @override
   String get categorySettingsSectionDescription =>
       'ตั้งว่าหมวดนี้นับในรายงานและใช้กับค่าธรรมเนียมหรือไม่';
-
-  @override
-  String get contactActionsSectionDescription =>
-      'เชื่อมกับบัญชีผู้ใช้ จับคู่ชื่อในรายการหาร และดูหนี้ของคนนี้';
-
-  @override
-  String get budgetDetailBreakdownDescription =>
-      'ยอดใช้จ่ายแยกตามหมวดย่อยในงวดนี้';
-
-  @override
-  String get scheduledDetailHistoryDescription =>
-      'รายการที่สร้างจากรายการประจำนี้แล้ว';
 
   @override
   String get projectMembersDescription => 'คนที่ร่วมอีเวนต์นี้อยู่ตอนนี้';
@@ -4321,9 +3093,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get contactShowNicknameLabel => 'แสดงชื่อเล่น';
 
   @override
-  String get contactShowNicknameHelper => 'เปิด = ใช้ชื่อเล่นแทนชื่อจริงทุกที่';
-
-  @override
   String get notOwnerError => 'เฉพาะเจ้าของกระเป๋าเท่านั้น';
 
   @override
@@ -4346,15 +3115,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get uiLoadMoreFailed => 'โหลดเพิ่มไม่สำเร็จ';
-
-  @override
-  String get debtsTabEntries => 'รายการหนี้';
-
-  @override
-  String get debtsTabMoney => 'ประวัติการจ่าย';
-
-  @override
-  String get debtsAddEntry => 'บันทึกรายการ';
 
   @override
   String get debtsSortLabel => 'เรียง';
@@ -4387,9 +3147,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtsTimelineEmpty => 'ยังไม่มีรายการ';
 
   @override
-  String get debtsMoneyEmpty => 'ยังไม่มีประวัติการจ่าย';
-
-  @override
   String get debtsEntriesNoMatch => 'ไม่พบรายการที่ค้นหา';
 
   @override
@@ -4409,27 +3166,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String get eventStartDateLabel => 'วันเริ่ม';
 
   @override
-  String get eventEndDateLabel => 'วันสิ้นสุด';
-
-  @override
   String get eventDatesInvalid => 'วันสิ้นสุดต้องไม่ก่อนวันเริ่ม';
-
-  @override
-  String get eventDateNone => 'ไม่ระบุ';
 
   @override
   String get eventTagShowBills => 'ดูบิลที่ติดแท็กนี้';
 
   @override
   String get eventTagAddToMine => 'เพิ่มเข้าแท็กของฉัน';
-
-  @override
-  String get eventTagsImportAll => 'นำเข้าทั้งหมด';
-
-  @override
-  String eventTagFilter(String name) {
-    return 'แท็ก: $name';
-  }
 
   @override
   String get quickModeTx => 'รายการ';
@@ -4448,11 +3191,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get debtSettledLabel => 'เคลียร์แล้ว';
-
-  @override
-  String debtResultAfter(Object result) {
-    return 'หลังบันทึก: $result';
-  }
 
   @override
   String get debtMarkPaidTitle => 'ทำเครื่องหมายรายการที่จ่ายแล้ว';
@@ -4475,13 +3213,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String debtCloseConfirm(int n) {
     return 'เลือก $n หนี้';
   }
-
-  @override
-  String get debtCreateTxLabel => 'สร้างรายการด้วย';
-
-  @override
-  String get debtCreateTxHint =>
-      'ปิด = จดในสมุดหนี้อย่างเดียว ไม่นับในรายรับรายจ่าย';
 
   @override
   String get txFilterNoWallet => 'ไม่ระบุกระเป๋า';
@@ -4511,12 +3242,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txTitleHintIncome => 'รับเงินค่าอะไร?';
 
   @override
-  String get debtTitleHintPaid => 'จ่ายแทนค่าอะไร?';
-
-  @override
-  String get debtTitleHintReceived => 'รับคืนค่าอะไร?';
-
-  @override
   String get savingTitleHint => 'ออมอะไร?';
 
   @override
@@ -4524,13 +3249,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get debtEntrySaved => 'บันทึกหนี้แล้ว';
-
-  @override
-  String get eventSourceTx => 'รายการต้นทาง';
-
-  @override
-  String get eventLinkedHint =>
-      'จำนวน วันที่ และผู้จ่ายผูกกับรายการต้นทาง แก้แล้วเปลี่ยนทั้งสองฝั่ง';
 
   @override
   String eventTagsImported(int count) {
@@ -4568,32 +3286,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtSourceRowLabel => 'มาจาก';
 
   @override
-  String debtBalanceNow(Object result) {
-    return 'ตอนนี้: $result';
-  }
-
-  @override
-  String txInEventRow(Object name) {
-    return 'อยู่ในอีเวนต์ $name';
-  }
-
-  @override
-  String get txLinkedMoneyHint =>
-      'จำนวนเงินและวันที่ผูกกับบิลในอีเวนต์ — แก้แล้วเปลี่ยนทั้งสองฝั่ง';
-
-  @override
-  String get eventBillLinkedMoneyHint =>
-      'จำนวนเงินและวันที่ผูกกับรายการต้นทาง — แก้แล้วเปลี่ยนทั้งสองฝั่ง';
-
-  @override
   String get eventErrLocked => 'อีเวนต์นี้ล็อกอยู่ แก้ไขไม่ได้';
 
   @override
   String get eventErrNotOwner => 'เฉพาะเจ้าของอีเวนต์ทำได้';
-
-  @override
-  String get eventErrMoneyLinked =>
-      'จำนวนเงินและวันที่ผูกกับรายการของสมาชิก ให้เจ้าของรายการเป็นคนแก้';
 
   @override
   String get eventErrTagTaken => 'มีแท็กชื่อนี้ในอีเวนต์แล้ว';
@@ -4657,16 +3353,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get occurrenceMarkPaid => 'จ่ายแล้ว';
 
   @override
-  String get occurrenceUnmarkPaid => 'ยกเลิกจ่ายแล้ว';
-
-  @override
   String get occurrenceSkip => 'ข้าม';
 
   @override
   String get occurrenceRestore => 'ยกเลิกการข้าม';
-
-  @override
-  String get occurrenceLinkExisting => 'ผูกกับรายการที่มีอยู่';
 
   @override
   String get occurrenceRecordInTx => 'บันทึกในรายการ';
@@ -4719,11 +3409,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get occurrenceDueTitle => 'ต้องจัดการ';
 
   @override
-  String occurrenceDueSince(String date) {
-    return 'ค้างตั้งแต่ $date';
-  }
-
-  @override
   String occurrenceDueMore(int n) {
     return 'ดูทั้ง $n งวด';
   }
@@ -4766,21 +3451,15 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get recurringWholeMonth => 'ทั้งเดือน';
-
-  @override
-  String occurrenceZeroTitle(int n) {
-    String _temp0 = intl.Intl.pluralLogic(
-      n,
-      locale: localeName,
-      other: 'มี $n รายการที่ยังไม่ใส่ยอด',
-    );
-    return '$_temp0';
+  String occurrencePaidCount(int n) {
+    return 'จ่ายแล้ว $n งวด';
   }
 
   @override
-  String get occurrenceZeroBody =>
-      'จะบันทึกเป็นยอด 0 ก่อน แล้วค่อยแก้ยอดทีหลังได้ ยืนยันไหม?';
+  String get occurrencePaidSelected => 'จ่ายแล้วที่เลือก';
+
+  @override
+  String get occurrenceNeedsAmount => 'ใส่ยอดก่อนยืนยัน';
 
   @override
   String get recurringSortDate => 'วันที่';
@@ -4833,11 +3512,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get recurringHomeMonthPay => 'จ่ายรวมทั้งเดือน';
-
-  @override
-  String recurringHomeMonthIncome(String amount) {
-    return 'รายรับ $amount';
-  }
 
   @override
   String get recurringHomeMonthCount => 'รายการเดือนนี้';
@@ -5119,13 +3793,6 @@ class AppLocalizationsTh extends AppLocalizations {
       'ตั้งรายการที่เกิดซ้ำ เช่น ค่าเน็ต ค่าห้อง พอถึงวันจะมีรายการรอยืนยันให้';
 
   @override
-  String get upcomingEmptyTitle => 'ไม่มีรายการล่วงหน้า';
-
-  @override
-  String get upcomingEmptyMessage =>
-      'รายการที่ลงวันที่ในอนาคต และรายการประจำที่จะถึง จะอยู่ที่นี่';
-
-  @override
   String get recurringNewTitle => 'รายการประจำใหม่';
 
   @override
@@ -5150,9 +3817,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get recurringFieldStart => 'เริ่ม';
 
   @override
-  String get recurringFieldEnd => 'สิ้นสุด';
-
-  @override
   String get recurringNameRequired => 'ใส่ชื่อรายการ';
 
   @override
@@ -5160,9 +3824,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get recurringWalletRequired => 'เลือกกระเป๋า';
-
-  @override
-  String get recurringRepeatDates => 'เลือกวันเอง…';
 
   @override
   String get recurringRepeatDatesTitle => 'เลือกวัน';
@@ -5179,12 +3840,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get recurringEndNever => 'ไม่สิ้นสุด';
-
-  @override
-  String get recurringEndOnDateOption => 'สิ้นสุดวันที่…';
-
-  @override
-  String get recurringEndAfterCountOption => 'ครบจำนวนครั้ง…';
 
   @override
   String get recurringStatusActive => 'ใช้งาน';
@@ -5240,15 +3895,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get recurringScopeTitle => 'ใช้กับรายการไหน';
-
-  @override
-  String get recurringScopeUpcoming => 'รายการที่จะถึงทั้งหมด';
-
-  @override
-  String get recurringScopeAll => 'ทุกรายการ';
-
-  @override
   String recurringEndingSoon(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -5274,21 +3920,6 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get recurringUpcomingEmptyMessage =>
       'กด \"ต่ออีก\" หรือแก้การตั้งค่าเพื่อสร้างรายการต่อ';
-
-  @override
-  String get recurringItemRestore => 'กู้คืน';
-
-  @override
-  String get recurringScopeThis => 'เฉพาะรายการนี้';
-
-  @override
-  String get recurringScopeFollowing => 'รายการนี้และถัดไป';
-
-  @override
-  String get recurringScopePast => 'รายการที่ผ่านมาทั้งหมด';
-
-  @override
-  String get recurringItemEditTitle => 'แก้ไขรายการ';
 
   @override
   String get moreRecurring => 'รายการประจำ';
@@ -5374,9 +4005,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get recurSheetMonthlyOn => 'วันในเดือน';
 
   @override
-  String get recurSheetLastDayOfMonth => 'วันสุดท้ายของเดือน';
-
-  @override
   String get recurSheetEnds => 'สิ้นสุด';
 
   @override
@@ -5421,9 +4049,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get recurringRepeatCustom => 'กำหนดเอง…';
-
-  @override
   String get moreGroupPlan => 'แผนการเงิน';
 
   @override
@@ -5457,12 +4082,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get moreSettingsDesc => 'บัญชี ธีม และการแจ้งเตือน';
 
   @override
-  String get sgv2SavedTotal => 'ออมแล้วทั้งหมด';
-
-  @override
-  String get sgv2InGoals => 'อยู่ในเป้าหมาย';
-
-  @override
   String get sgv2Spare => 'ยังไม่จัดสรร';
 
   @override
@@ -5489,20 +4108,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get sgv2PaceOnTrack => 'ตามแผน';
 
   @override
-  String sgv2PaceLine(String needed, String pace) {
-    return 'ต้องออม $needed/เดือน | ออมจริง $pace';
-  }
-
-  @override
   String sgv2DueOn(String date) {
     return 'ครบ $date';
   }
-
-  @override
-  String get sgv2NoDeadline => 'ไม่มีกำหนด';
-
-  @override
-  String get sgv2ActionAdd => 'เพิ่มเงินออม';
 
   @override
   String get sgv2ActionWithdraw => 'ถอน';
@@ -5514,37 +4122,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get sgv2Overview => 'ภาพรวม';
 
   @override
-  String get sgv2NeededMonthly => 'ต้องออมต่อเดือน';
-
-  @override
-  String get sgv2PaceMonthly => 'ออมจริง (เฉลี่ย 3 เดือน)';
-
-  @override
-  String get sgv2Eta => 'ตามเพซจะครบ';
-
-  @override
-  String get sgv2TimeLeft => 'เหลือเวลา';
-
-  @override
-  String get sgv2ByWallet => 'แยกตามกระเป๋า';
-
-  @override
-  String get sgv2ByWalletHint => 'เงินออมจำว่ามาจากกระเป๋าไหน';
-
-  @override
   String get sgv2Entries => 'รายการออม';
 
   @override
   String get sgv2EntriesEmpty => 'ยังไม่มีรายการออม';
-
-  @override
-  String get sgv2EntriesMore => 'ดูเพิ่ม';
-
-  @override
-  String get sgv2AutoSave => 'ออมอัตโนมัติ';
-
-  @override
-  String get sgv2AutoSaveNone => 'ยังไม่ได้ตั้ง';
 
   @override
   String get sgv2CloseGoal => 'ปิดเป้าหมาย';
@@ -5564,9 +4145,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get sgv2CloseToWallets => 'กลับกระเป๋า';
-
-  @override
-  String get sgv2Restore => 'กู้คืน';
 
   @override
   String get sgv2KindSave => 'ออม';
@@ -5589,11 +4167,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get sgv2SpareTitle => 'ยังไม่จัดสรร';
-
-  @override
-  String sgv2Milestone(int pct) {
-    return 'ถึง $pct%';
-  }
 
   @override
   String get walletTrackLabel => 'ติดตามยอดเงิน';
@@ -5669,9 +4242,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get bgStatusWarn => 'ใกล้เต็ม';
-
-  @override
-  String get bgStatusPace => 'ตามเพซจะเกิน';
 
   @override
   String get bgStatusEnded => 'จบแล้ว';
@@ -5755,9 +4325,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get bgItemsEmpty => 'ยังไม่มีรายการในรอบนี้';
-
-  @override
-  String get bgPeriodEditTitle => 'แก้เฉพาะรอบนี้';
 
   @override
   String get bgPeriodAmountField => 'งบรอบนี้';
@@ -5853,7 +4420,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String bgPaceBubble(String amount) {
-    return 'แผนถึงวันนี้ $amount';
+    return 'แผน $amount';
   }
 
   @override
@@ -5929,42 +4496,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String get bgNameRequired => 'ใส่ชื่องบ';
 
   @override
-  String get pendingSavingConfirmTitle => 'ยืนยันเป็นเงินออม?';
-
-  @override
-  String get pendingSavingConfirm => 'ยืนยัน';
-
-  @override
   String get pendingSavingNoWallet => 'ต้องเลือกกระเป๋าก่อนยืนยัน';
-
-  @override
-  String get walletSavingsTitle => 'เงินออม';
-
-  @override
-  String get walletSavingsDescription => 'เงินที่กันไว้ในกระเป๋านี้';
-
-  @override
-  String get walletSavingsBalance => 'ยอดเงินจริง';
 
   @override
   String get walletSavingsSaved => 'ออมไว้';
 
   @override
-  String get walletSavingsAvailable => 'ใช้ได้';
-
-  @override
-  String walletSavingsOver(String amount) {
-    return 'ออมเกินยอดเงินจริง $amount';
-  }
-
-  @override
   String get quickModeSaving => 'ออม';
-
-  @override
-  String get savingEntryTitleHint => 'โน้ต (ไม่บังคับ)';
-
-  @override
-  String get savingEntryTarget => 'ออมเข้า';
 
   @override
   String get savingEntrySpare => 'ยังไม่จัดสรร';
@@ -5983,13 +4521,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get savingEntryWalletRequired => 'เลือกกระเป๋า';
-
-  @override
   String get savingEntrySaved => 'บันทึกเงินออมแล้ว';
-
-  @override
-  String get walletSavingsAdd => 'เพิ่มเงินออม';
 
   @override
   String get sgv2MoveTitle => 'ย้ายเงินออม';
@@ -6049,24 +4581,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get sgv2ChartCaption => 'ยอดสะสม';
 
   @override
-  String get sgv2ChartActual => 'ออมแล้ว / ตามเพซ';
-
-  @override
-  String get sgv2ChartNeeded => 'เส้นที่ต้องออม';
-
-  @override
   String sgv2ChartTarget(String amount) {
     return 'เป้า $amount';
   }
 
   @override
   String get sgv2SpareName => 'ยังไม่จัดสรร';
-
-  @override
-  String get sgv2NoOtherGoal => 'ไม่มีเป้าหมายอื่นให้ย้ายไป';
-
-  @override
-  String get sgv2EntryDeleted => 'ลบรายการออมแล้ว';
 
   @override
   String get profileCurrencyChangeTitle => 'เปลี่ยนสกุลเงิน?';
@@ -6174,11 +4694,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpWalletCreditUsedLabel => 'ยอดใช้ไป';
 
   @override
-  String fpWalletCardUsedLabel(int pct) {
-    return 'ใช้ไป $pct%';
-  }
-
-  @override
   String fpWalletCardAvailableLabel(String limit) {
     return 'เหลือใช้ จากวงเงิน $limit';
   }
@@ -6270,17 +4785,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpWalletDeleted => 'ลบกระเป๋าแล้ว';
 
   @override
-  String get fpContactsNotLinked => 'ยังไม่เชื่อมกับผู้ใช้ในแอป';
-
-  @override
-  String fpContactsLinkedWith(String user) {
-    return 'เชื่อมกับ $user แล้ว';
-  }
-
-  @override
-  String get fpContactsSettingsDesc => 'ชื่อที่ใช้แสดงคนนี้ทั้งแอป';
-
-  @override
   String get fpContactsLinkSection => 'บัญชีในแอป';
 
   @override
@@ -6301,9 +4805,6 @@ class AppLocalizationsTh extends AppLocalizations {
       'รายการเก่าเหลือแค่ชื่อ ยอดไม่เปลี่ยน';
 
   @override
-  String get fpDebtsTotalCaption => 'ยอดค้างทั้งหมด';
-
-  @override
   String fpDebtsOwedToMeTile(int count) {
     return 'ลูกหนี้ | $count คน';
   }
@@ -6314,52 +4815,15 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String fpDebtsOver30(int count) {
-    return 'ค้างเกิน 30 วัน $count คน';
-  }
-
-  @override
   String fpDebtsDaysOutstanding(int count) {
     return 'ค้าง $count วัน';
   }
 
   @override
-  String get fpDebtsIncludeCleared => 'รวมคนที่เคลียร์แล้ว';
-
-  @override
-  String get fpDebtsSortOldest => 'ค้างนานสุด';
-
-  @override
-  String get fpDebtsSortAmount => 'ยอดมากสุด';
-
-  @override
-  String get fpDebtsSortRecent => 'ล่าสุด';
-
-  @override
-  String get fpDebtsMessageLabel => 'ข้อความสรุปยอด | แก้ได้ก่อนส่ง';
-
-  @override
   String get fpDebtsCopy => 'คัดลอก';
 
   @override
-  String get fpDebtsShare => 'แชร์';
-
-  @override
   String get fpDebtsCopied => 'คัดลอกข้อความแล้ว';
-
-  @override
-  String get fpDebtsCycleHeader => 'ที่มาของยอด';
-
-  @override
-  String fpDebtsCycleHeaderSince(String date) {
-    return 'ที่มาของยอด | ตั้งแต่เคลียร์ครบ $date';
-  }
-
-  @override
-  String get fpDebtsEarlierHeader => 'รอบก่อน | เคลียร์ครบแล้ว';
-
-  @override
-  String get fpDebtsEarlierLink => 'รอบก่อนหน้านี้';
 
   @override
   String get fpBudgetsLeftLabel => 'ยังใช้ได้';
@@ -6407,21 +4871,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String fpGoalsRowShort(String amount) {
-    return 'ขาด $amount';
-  }
-
-  @override
-  String fpGoalsEtaOn(String date) {
-    return 'ถึงเป้า $date';
-  }
-
-  @override
-  String fpGoalsEtaBehind(String date, int n) {
-    return 'ถึงเป้า $date | ช้า $n เดือน';
-  }
-
-  @override
   String fpGoalsDueBy(String date) {
     return 'ภายใน $date';
   }
@@ -6453,27 +4902,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpGoalsActionRestore => 'กู้คืน';
 
   @override
-  String get fpGoalsSettingsDesc => 'ระบบออมให้อัตโนมัติ';
-
-  @override
-  String fpGoalsAutoCaption(String day, String amount, String wallet) {
-    return '$day | $amount จาก $wallet';
-  }
-
-  @override
-  String get fpGoalsAutoOffHint =>
-      'เปิดเพื่อให้ระบบสร้างรายการออมให้ยืนยันทุกเดือน';
-
-  @override
-  String get fpGoalsAutoEdit => 'แก้จำนวน วัน และกระเป๋า';
-
-  @override
-  String get fpGoalsAutoSheetTitle => 'ออมอัตโนมัติ';
-
-  @override
-  String get fpGoalsAutoDay => 'วันที่ออมของทุกเดือน';
-
-  @override
   String get fpGoalsAutoFrom => 'กันเงินจาก';
 
   @override
@@ -6481,9 +4909,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpGoalsChartActual => 'ออมจริง';
-
-  @override
-  String get fpGoalsAutoTag => 'อัตโนมัติ';
 
   @override
   String get fpGoalsCloseConsequence =>
@@ -6508,17 +4933,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpGoalsGroupOngoing => 'ออมต่อเนื่อง';
-
-  @override
-  String get fpGoalsTileAuto => 'ออมอัตโนมัติ';
-
-  @override
-  String fpGoalsPerMonth(String amount) {
-    return '$amount/ด.';
-  }
-
-  @override
-  String get fpGoalsRingShortLabel => 'ยังขาดอีก';
 
   @override
   String fpGoalsRingOfPlan(String amount) {
@@ -6567,33 +4981,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpGoalsRowDone => 'ครบแล้ว ✓';
 
   @override
-  String fpGoalsRowLeft(String amount) {
-    return 'เหลือ $amount';
-  }
-
-  @override
-  String fpGoalsRowMonth(String month, String saved, String plan) {
-    return '$month $saved / $plan';
-  }
-
-  @override
   String fpGoalsRowMonthOnly(String month, String amount) {
     return '$month $amount';
   }
 
   @override
   String get fpGoalsThisMonth => 'เดือนนี้';
-
-  @override
-  String get fpGoalsPlanTitleNow => 'แผนการออมเดือนนี้';
-
-  @override
-  String get fpGoalsPlanTitle => 'แผนการออม';
-
-  @override
-  String fpGoalsMarkerBubble(String amount) {
-    return 'ควรมีตอนนี้ $amount';
-  }
 
   @override
   String fpGoalsChipShort(String amount) {
@@ -6640,8 +5033,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get sgPlanSection => 'แผนการออม';
 
   @override
-  String get sgPlanSectionDesc =>
-      'ครบเมื่อไร เริ่มจากเท่าไร และออมให้อัตโนมัติ';
+  String get sgPlanSectionDesc => 'ครบเมื่อไร และเริ่มจากเท่าไร';
 
   @override
   String get sgOpeningLabel => 'เงินออมเริ่มต้น';
@@ -6650,27 +5042,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get sgOpeningHelp => 'เงินที่มีอยู่แล้ว ลงเป็นรายการออมแรก';
 
   @override
-  String get sgAutoOnCaption => 'แต่ละรายการมีกระเป๋า จำนวน และรอบของตัวเอง';
-
-  @override
-  String get sgAutoOffCaption =>
-      'เปิดเพื่อให้ระบบสร้างรายการออมให้ยืนยันตามรอบ';
-
-  @override
   String get sgAutoAdd => 'เพิ่มรายการออม';
-
-  @override
-  String sgAutoFirst(String date) {
-    return 'ครั้งแรก $date';
-  }
-
-  @override
-  String sgAutoNext(String date) {
-    return 'ครั้งถัดไป $date';
-  }
-
-  @override
-  String get sgAutoAmountInvalid => 'ใส่จำนวนมากกว่า 0';
 
   @override
   String sgCreatedPartly(String error) {
@@ -6742,21 +5114,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpEventsSpentTotal => 'ใช้ไปรวม';
 
   @override
-  String fpEventsBudgetUsed(String spent, String planned) {
-    return 'ใช้ไป $spent จากงบ $planned';
-  }
-
-  @override
-  String fpEventsBudgetLeft(String amount) {
-    return 'เหลือ $amount';
-  }
-
-  @override
-  String fpEventsBudgetOver(String amount) {
-    return 'เกินงบ $amount';
-  }
-
-  @override
   String get fpEventsMyShare => 'ส่วนของฉัน';
 
   @override
@@ -6767,12 +5124,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpEventsTagPick => 'เลือก';
-
-  @override
-  String get fpEventsMembersTitle => 'สมาชิก | ใครจ่าย / ใครค้าง';
-
-  @override
-  String get fpEventsManage => 'จัดการ ›';
 
   @override
   String fpEventsMemberPaid(String amount) {
@@ -6802,20 +5153,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpEventsPayerAll => 'ทุกคน';
 
   @override
-  String get fpEventsTagsFilterLabel => 'แท็กอีเวนต์';
-
-  @override
   String get fpEventsTagAll => 'ทั้งหมด';
-
-  @override
-  String fpEventsSplitCount(int count) {
-    return 'หาร $count คน';
-  }
-
-  @override
-  String fpEventsPaidBy(String name) {
-    return '$name จ่าย';
-  }
 
   @override
   String get fpEventsBudgetLabel => 'ตั้งงบไว้ (ไม่บังคับ)';
@@ -6880,9 +5218,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpEventsTagNameLabel => 'ชื่อแท็ก';
-
-  @override
-  String get fpEventsTagNameRequired => 'ใส่ชื่อแท็ก';
 
   @override
   String get fpEventsTagNewTitle => 'แท็กอีเวนต์ใหม่';
@@ -6970,17 +5305,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get evbBookTxLine => 'รายจ่ายส่วนของฉัน';
 
   @override
-  String get evbNotBooked => 'ยังไม่ลงบัญชี';
-
-  @override
-  String evbOwesHint(String from, String to, String amount) {
-    return '$from ค้าง $to อยู่ $amount';
-  }
-
-  @override
-  String get evbUseAmount => 'ใช้ยอดนี้';
-
-  @override
   String evbPaybackBy(String name) {
     return 'จ่ายคืน | จดโดย $name';
   }
@@ -6988,11 +5312,6 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String evbPaidFrom(String wallet) {
     return 'จ่ายจาก $wallet';
-  }
-
-  @override
-  String evbBackFrom(String name) {
-    return 'รับคืนจาก $name';
   }
 
   @override
@@ -7035,18 +5354,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get evbBookMine => 'ลงบัญชี';
-
-  @override
-  String get evbSettleTitle => 'ต้องจ่ายกัน';
-
-  @override
-  String get evbSettlePairs => 'แยกรายคู่';
-
-  @override
-  String get evbSettleFewest => 'ยอดสุทธิ';
-
-  @override
-  String get evbSettlePaid => 'จ่ายแล้ว';
 
   @override
   String get evbSettleHint =>
@@ -7208,9 +5515,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get profileSectionSecurity => 'ความปลอดภัย';
 
   @override
-  String get settingsSaveFailed => 'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง';
-
-  @override
   String get notifTileAll => 'ทั้งหมด';
 
   @override
@@ -7221,25 +5525,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get notifTileHidden => 'ซ่อนไว้';
-
-  @override
-  String get notifCardCaption => 'ต้องตอบ';
-
-  @override
-  String notifCardMain(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count เรื่อง',
-      zero: 'ไม่มี',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String notifCardUnread(int count) {
-    return '| ยังไม่อ่าน $count';
-  }
 
   @override
   String get notifReadAllTooltip => 'อ่านทั้งหมดแล้ว';
@@ -7486,9 +5771,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get sgRecurringCaption => 'ออมเข้าเป้าหมายนี้ตามรอบที่ตั้งไว้';
-
-  @override
   String get sgRecurringSpareCaption => 'ออมเข้ายังไม่จัดสรรตามรอบที่ตั้งไว้';
 
   @override
@@ -7566,9 +5848,6 @@ class AppLocalizationsTh extends AppLocalizations {
       'ไม่ต้องใส่ยอดก็ได้ ถึงวันให้ใส่ยอดจริงในร่าง';
 
   @override
-  String get fpRecurringFieldCount => 'จำนวนงวด';
-
-  @override
   String fpRecurringCountValue(int n) {
     return '$n งวด';
   }
@@ -7578,12 +5857,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpRecurringFieldMode => 'แบบ';
-
-  @override
-  String get fpRecurringFieldPayFrom => 'จ่ายจาก';
-
-  @override
-  String get fpRecurringFieldIntoWallet => 'เข้ากระเป๋า';
 
   @override
   String get fpRecurringFieldFromWallet => 'จากกระเป๋า';
@@ -7705,12 +5978,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpRecurringAutoChip => 'บันทึกอัตโนมัติ';
 
   @override
-  String get fpRecurringNextYear => 'ดูปีถัดไป';
-
-  @override
-  String get fpRecurringGoToMonth => 'ไปที่เดือน';
-
-  @override
   String get fpRecurringTagNext => 'ครั้งถัดไป';
 
   @override
@@ -7728,9 +5995,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String fpRecurringMovedFrom(String date) {
     return 'จาก $date';
   }
-
-  @override
-  String get fpRecurringTapToConfirm => 'แตะเพื่อยืนยัน';
 
   @override
   String get fpRecurringTapToEnter => 'แตะเพื่อใส่ยอด';
@@ -7779,41 +6043,13 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String fpGoalsPlanHeadMonth(String month) {
-    return 'แผนการออมเดือนนี้ | $month';
-  }
-
-  @override
-  String fpGoalsRingSavedPct(int pct) {
-    return 'ออมแล้ว $pct%';
-  }
-
-  @override
   String get fpGoalsFactTargetShort => 'ยังขาดถึงเป้า';
 
   @override
   String get fpGoalsFactMonthToSave => 'เดือนนี้ต้องออม';
 
   @override
-  String get debtSubRecord => 'จดหนี้';
-
-  @override
-  String get debtSubRepay => 'จ่ายคืน';
-
-  @override
   String get debtRepayReceive => 'รับคืน';
-
-  @override
-  String get debtMoneyMovedLabel => 'มีเงินเข้า/ออกกระเป๋า';
-
-  @override
-  String get debtTitleHintOwedToMe => 'ค่าอะไร? เช่น จ่ายแทนค่าข้าว, ให้ยืม';
-
-  @override
-  String get debtTitleHintIOwe => 'ค่าอะไร? เช่น เขาจ่ายแทนค่าข้าว, ยืมเงิน';
-
-  @override
-  String get debtRepayTitleHint => 'ค่าอะไร?';
 
   @override
   String get debtRecordChip => 'จดหนี้';
@@ -7888,11 +6124,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtMarkPaidLabel => 'ปิดหนี้';
 
   @override
-  String debtRepayLeft(String amount) {
-    return 'หลังบันทึก เหลือ $amount';
-  }
-
-  @override
   String get debtRepayCleared => 'เคลียร์แล้ว';
 
   @override
@@ -7916,34 +6147,16 @@ class AppLocalizationsTh extends AppLocalizations {
       'ยอดยังไม่ลงตัวกับยอดบิล — ดูบรรทัดสถานะในการ์ด';
 
   @override
-  String get txLinkTabLabel => 'ผูกกับ';
-
-  @override
-  String get txLinkTabPersonal => 'ส่วนตัว';
-
-  @override
   String get txLinkTabSplit => 'แบ่ง';
 
   @override
-  String get txLinkTabPaid => 'จ่ายแทน';
-
-  @override
-  String get txLinkTabEvent => 'อีเวนต์';
-
-  @override
   String get txLinkBillLabel => 'ยอดบิล';
-
-  @override
-  String get txLinkCardSplitTitle => 'แบ่งให้ใคร';
 
   @override
   String get txLinkCardPaidTitle => 'ใครจ่าย และจ่ายเท่าไหร่';
 
   @override
   String get txLinkCardMyPaid => 'ฉันจ่ายเอง (จากกระเป๋า)';
-
-  @override
-  String get txLinkCardPickPayer => 'เลือกคนที่จ่าย';
 
   @override
   String get txLinkCardWhoPaid => 'ใครจ่าย';
@@ -8020,12 +6233,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get debtDirectionOwedToMeSub => 'เขาต้องคืนฉัน';
-
-  @override
-  String get debtDirectionIOweSub => 'ฉันต้องคืนเขา';
-
-  @override
   String get txLinkPreviewTitle => 'ยอดที่จะเปลี่ยน';
 
   @override
@@ -8098,40 +6305,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtOverpayEdit => 'แก้ยอด';
 
   @override
-  String get debtWalletUnusedLabel => 'กระเป๋า (ไม่ใช้)';
-
-  @override
   String get debtSomeone => 'เขา';
-
-  @override
-  String debtSentenceRecordIn(String name) {
-    return 'จดว่า$nameต้องคืนฉัน';
-  }
-
-  @override
-  String debtSentenceLendTx(String name) {
-    return '(ฉันให้$nameยืมเงินออกจากกระเป๋า)';
-  }
-
-  @override
-  String debtSentenceRecordOut(String name) {
-    return 'จดว่าฉันต้องคืน$name';
-  }
-
-  @override
-  String debtSentenceBorrowTx(String name) {
-    return '(ฉันยืมเงิน$nameเข้ากระเป๋า)';
-  }
-
-  @override
-  String debtSentenceSettleIn(String name) {
-    return '$nameคืนเงินฉัน เข้ากระเป๋า';
-  }
-
-  @override
-  String debtSentenceSettleOut(String name) {
-    return 'ฉันคืนเงิน$name ออกจากกระเป๋า';
-  }
 
   @override
   String get debtTxHintLend => 'สร้างรายการจ่ายในกระเป๋า';
@@ -8159,33 +6333,8 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String debtsLastIPaidBack(String amount) {
-    return 'คุณจ่ายคืน $amount';
-  }
-
-  @override
-  String debtsLastTheyPaidBack(String name, String amount) {
-    return '$name คืน $amount';
-  }
-
-  @override
-  String debtsLastLine(String what, String date) {
-    return '$what | $date';
-  }
-
-  @override
   String debtPersonSince(String month) {
     return 'ติดต่อกันตั้งแต่ $month';
-  }
-
-  @override
-  String debtPersonOweTo(String name) {
-    return '$name เป็นเจ้าหนี้';
-  }
-
-  @override
-  String debtPersonOwedFrom(String name) {
-    return '$name เป็นลูกหนี้';
   }
 
   @override
@@ -8248,19 +6397,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtEarlierHide => 'ซ่อนรอบก่อน ▴';
 
   @override
-  String debtRowFromWallet(String name) {
-    return 'จากกระเป๋า $name';
-  }
-
-  @override
-  String debtRowIntoWallet(String name) {
-    return 'เข้ากระเป๋า $name';
-  }
-
-  @override
-  String get debtRowNoWallet => 'ไม่ระบุกระเป๋า';
-
-  @override
   String debtRowTheyPaid(String name) {
     return '$nameจ่ายแทน';
   }
@@ -8287,9 +6423,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String debtRowTheyPaidBack(String name) {
     return '$name คืนเงิน';
   }
-
-  @override
-  String get debtPaidPill => '✓ จ่ายแล้ว';
 
   @override
   String get debtUnpaidLabel => 'ยังไม่จ่าย';
@@ -8330,9 +6463,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get debtPaidHelper => 'เป็นป้ายบอกเท่านั้น ไม่มีผลกับยอด';
-
-  @override
   String debtOriginLabel(String kind) {
     return 'มาจาก ($kind)';
   }
@@ -8356,15 +6486,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtOriginLocked => 'แก้ไม่ได้ที่นี่';
 
   @override
-  String get debtEditWalletLend => 'เงินออกจากกระเป๋า (ให้ยืม / จ่ายแทน)';
-
-  @override
-  String get debtEditWalletBorrow => 'เงินเข้ากระเป๋า (ยืมมา)';
-
-  @override
-  String get debtEditWalletOff => 'จดหนี้อย่างเดียว ไม่มีเงินเคลื่อน';
-
-  @override
   String get quickCreateBtnTx => 'บันทึก';
 
   @override
@@ -8379,4 +6500,43 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get debtsEmptyOpenMessage =>
       'จดไว้ว่าใครยืม ใครจ่ายแทน จะได้ไม่ลืมทวง';
+
+  @override
+  String get evbReceives => 'รับ';
+
+  @override
+  String get txLinkWalletNotIn => 'ไม่เข้ากระเป๋า';
+
+  @override
+  String txLinkWalletPartIn(String amount) {
+    return 'เข้ากระเป๋า $amount';
+  }
+
+  @override
+  String get txLinkViewGotLabel => 'รับโดย';
+
+  @override
+  String txLinkViewMyGot(String amount) {
+    return 'ฉันรับเอง $amount';
+  }
+
+  @override
+  String get txLinkViewIGot => 'ฉันรับ';
+
+  @override
+  String get txLinkCardGotTitle => 'ใครรับ และรับเท่าไหร่';
+
+  @override
+  String get txLinkCardMyGot => 'ฉันรับเอง (เข้ากระเป๋า)';
+
+  @override
+  String get txLinkCardWhoGot => 'ใครรับ';
+
+  @override
+  String get txLinkCardGotOk => '✓ รับครบแล้ว';
+
+  @override
+  String txFutureHint(String when) {
+    return '$when | นับเข้ายอดเมื่อถึงวันนั้น';
+  }
 }

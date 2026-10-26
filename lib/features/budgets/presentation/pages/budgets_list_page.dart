@@ -8,7 +8,6 @@ import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/budget.dart';
-import '../../domain/budget_period.dart';
 import '../budget_labels.dart';
 import '../cubit/budgets_cubit.dart';
 
@@ -21,7 +20,7 @@ class BudgetsListPage extends StatefulWidget {
 
 class _BudgetsListPageState extends State<BudgetsListPage> {
   final _search = TextEditingController();
-  final _toolbar = ToolbarToggleState.of('budgets');
+  final _toolbar = AppListToolbarState.of('budgets');
 
   @override
   void dispose() {
@@ -65,7 +64,7 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
     final active = state.filter == BudgetFilter.active;
     final rows = state.visible;
     final searching = state.query.trim().isNotEmpty;
-    final toggleButton = ToolbarToggleButton(
+    final toggleButton = AppListToolbarToggle(
       state: _toolbar,
       filtered:
           searching ||
@@ -103,12 +102,14 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
             ),
             content: const [],
           ),
-        ListToolbar(
-          collapse: _toolbar,
-          searchController: _search,
-          onSearchChanged: cubit.search,
-          searchHint: l.bgSearchHint,
-          chips: [
+        AppListToolbar(
+          state: _toolbar,
+          search: ListToolbarSearch(
+            controller: _search,
+            onChanged: cubit.search,
+            hint: l.bgSearchHint,
+          ),
+          filters: [
             OptionMenuAnchor<BudgetFilter>(
               selected: state.filter,
               options: [
@@ -326,32 +327,13 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
   Widget _row(BuildContext context, AppLocalizations l, Budget b) {
     final x = b.period;
     final over = x.overBy > 0;
-    final status = x.status == BudgetStatus.pace
-        ? null
-        : budgetStatusChip(l, b, size: ChipSize.mini);
-    final pace =
-        b.state == BudgetState.active &&
-        (x.onPaceToExceed || x.status == BudgetStatus.pace);
     final paceFraction = budgetPaceFraction(x.start, x.end, DateTime.now());
     return ProgressCard(
       title: b.name,
       iconCode: b.iconCode,
       fallbackIcon: AppIcons.budget,
       caption: budgetRowCaption(context, l, b),
-      alignWithTitle: true,
-      badge: status == null && !pace
-          ? null
-          : ProgressBadges(
-              children: [
-                ?status,
-                if (pace)
-                  StatusChip.tone(
-                    label: l.bgStatusPace,
-                    tone: AppChipTone.warning,
-                    size: ChipSize.mini,
-                  ),
-              ],
-            ),
+      badge: budgetStatusChip(l, b, size: ChipSize.mini),
       trailing: ProgressRemainder(
         label: over ? l.bgRowOverAmount : l.bgRowLeft,
         amount: budgetRowMoney(context, over ? x.overBy : x.remaining),
@@ -359,7 +341,11 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
       ),
       value: x.usedRatio,
       expected: x.expected > 0 ? x.expectedRatio : null,
-      tone: budgetRowTone(x),
+      expectedLabel: x.expected > 0
+          ? '${l.bgFactPending} ${budgetRowMoney(context, x.expected)}'
+          : null,
+      // The budget's own colour; its status is the chip under the bar.
+      tone: ProgressTone.neutral,
       paceMarker: paceFraction,
       paceBubble: paceFraction == null
           ? null

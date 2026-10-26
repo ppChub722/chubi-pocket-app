@@ -82,28 +82,20 @@ void main() {
     final cases =
         <({String name, Object? Function() actual, Object? expected})>[
           (
-            name: 'month: bounds, steps, forward stops at this month',
+            name: 'month: bounds, steps',
             actual: () {
               final p = TxPeriod.month(DateTime(2026, 10, 15));
-              return [
-                p.bounds,
-                p.step(-1),
-                p.step(1)!.bounds.from,
-                p.canStepForward(DateTime(2026, 10, 20)),
-                p.step(-1)!.canStepForward(DateTime(2026, 10, 20)),
-              ];
+              return [p.bounds, p.step(-1), p.step(1)!.bounds.from];
             },
             expected: [
               (from: '2026-10-01', to: '2026-10-31'),
               TxPeriod.month(DateTime(2026, 9)),
               '2026-11-01',
-              false,
-              true,
             ],
           ),
           (
             name:
-                'day: one day, steps across month / year ends, stops at today',
+                'day: one day, steps across month / year ends',
             actual: () {
               final d = TxPeriod.day(DateTime(2026, 10, 10, 18, 30));
               return [
@@ -111,8 +103,6 @@ void main() {
                 d.step(-1)!.bounds.from,
                 TxPeriod.day(DateTime(2026, 10, 31)).step(1),
                 TxPeriod.day(DateTime(2026, 1, 1)).step(-1)!.bounds.from,
-                d.canStepForward(DateTime(2026, 10, 10, 23)),
-                d.step(-1)!.canStepForward(DateTime(2026, 10, 10)),
                 TxPeriod.of(TxPeriodKind.day, DateTime(2026, 10, 10)) == d,
               ];
             },
@@ -121,8 +111,6 @@ void main() {
               '2026-10-09',
               TxPeriod.day(DateTime(2026, 11, 1)),
               '2025-12-31',
-              false,
-              true,
               true,
             ],
           ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../atoms/connection_scope.dart';
 import '../atoms/refresh_registry.dart';
+import '../atoms/ui_config.dart';
 import 'page_pop_observer.dart';
 import 'reconnect_reload.dart';
 import '../tokens/app_durations.dart';
@@ -355,7 +356,8 @@ class CoinDropIndicator extends StatelessWidget {
                             shape: BoxShape.circle,
                           ),
                           child: Text(
-                            '฿',
+                            UiConfig.stringsOf(context).currencySymbol,
+                            maxLines: 1,
                             style: TextStyle(
                               color: palette.onWarning,
                               fontSize: 11,

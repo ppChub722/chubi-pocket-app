@@ -61,7 +61,7 @@ Future<List<SavingMoveSplit>?> showSavingMoveSheet(
   required String Function(double sum) sumOkText,
   required String Function(double sum, double amount) sumOffText,
   List<SavingMoveSplit> Function(double amount)? autoSplit,
-  String currencySymbol = '฿',
+  String? currencySymbol,
 }) {
   return showAppSheetCustom<List<SavingMoveSplit>>(
     context,
@@ -97,7 +97,7 @@ class SavingMoveSheet extends StatefulWidget {
     required this.sumOkText,
     required this.sumOffText,
     this.autoSplit,
-    this.currencySymbol = '฿',
+    this.currencySymbol,
     super.key,
   });
 
@@ -113,7 +113,7 @@ class SavingMoveSheet extends StatefulWidget {
   final String Function(double sum) sumOkText;
   final String Function(double sum, double amount) sumOffText;
   final List<SavingMoveSplit> Function(double amount)? autoSplit;
-  final String currencySymbol;
+  final String? currencySymbol;
 
   @override
   State<SavingMoveSheet> createState() => _SavingMoveSheetState();
@@ -273,6 +273,7 @@ class _SavingMoveSheetState extends State<SavingMoveSheet> {
       footer: AppButton(
         label: widget.saveLabel,
         expand: true,
+        submits: true,
         onPressed: ok ? _save : null,
       ),
       child: Padding(

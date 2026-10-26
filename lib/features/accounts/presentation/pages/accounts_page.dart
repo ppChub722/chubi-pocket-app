@@ -32,7 +32,7 @@ class _AccountsPageState extends State<AccountsPage> {
   _WalletSort _sort = _WalletSort.custom;
   _WalletTile? _tile;
   final _search = TextEditingController();
-  final _toolbarOpen = ToolbarToggleState.of('wallets');
+  final _toolbarOpen = AppListToolbarState.of('wallets');
 
   ReorderController? _reorder;
   final _reorderScroll = ScrollController();
@@ -212,12 +212,14 @@ class _AccountsPageState extends State<AccountsPage> {
   }
 
   Widget _listToolbar(AppLocalizations l, List<Account> accounts) {
-    return ListToolbar(
-      collapse: _toolbarOpen,
-      searchController: _search,
-      onSearchChanged: (_) => setState(() {}),
-      searchHint: l.accountsSearchHint,
-      chips: [
+    return AppListToolbar(
+      state: _toolbarOpen,
+      search: ListToolbarSearch(
+        controller: _search,
+        onChanged: (_) => setState(() {}),
+        hint: l.accountsSearchHint,
+      ),
+      filters: [
         OptionMenuAnchor<_WalletSort>(
           selected: _sort,
           onSelected: (s) => setState(() => _sort = s),
@@ -288,7 +290,7 @@ class _AccountsPageState extends State<AccountsPage> {
         actions: [
           ListenableBuilder(
             listenable: _search,
-            builder: (context, _) => ToolbarToggleButton(
+            builder: (context, _) => AppListToolbarToggle(
               state: _toolbarOpen,
               filtered:
                   _search.text.isNotEmpty ||
@@ -443,11 +445,11 @@ class _AccountsPageState extends State<AccountsPage> {
         .where((b) => b.type == type)
         .fold<double?>(null, (s, b) => (s ?? 0) + b.balance);
     return [
-      SectionHeader(
+      AppListHeader(
         title: accountTypeLabel(context, type),
         count: of.length,
         trailing: showSubtotal && sum != null && of.every((a) => a.showsBalance)
-            ? MoneyText(sum == 0 ? 0 : sum)
+            ? ListHeaderTrailing.value(MoneyText(sum == 0 ? 0 : sum))
             : null,
       ),
       _grid(context, accounts, of, cols),

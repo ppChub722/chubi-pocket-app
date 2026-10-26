@@ -51,7 +51,8 @@ class BillPerson {
   /// The "A" toggle at the end of the row (no remove then).
   final ValueChanged<bool>? onAuto;
 
-  /// The one who paid: ✓ จ่าย; the others get a dashed chip when [onPay].
+  /// The one who paid: ✓ จ่าย; the others get a dashed chip when [onPay]
+  /// (no chip with neither).
   final bool paid;
   final VoidCallback? onPay;
 
@@ -81,12 +82,16 @@ class BillPeopleCard extends StatelessWidget {
     this.top,
     this.status,
     this.maxRows,
+    this.payLabel,
     super.key,
   });
 
   final String title;
   final List<BillPerson> people;
   final VoidCallback onAdd;
+
+  /// The payer chip's word; default "จ่าย" (an income: "รับ").
+  final String? payLabel;
 
   /// Null = หารเท่ากัน is disabled.
   final VoidCallback? onEqually;
@@ -102,7 +107,12 @@ class BillPeopleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final rows = [
-      for (final p in people) _BillPersonRow(key: ValueKey(p.id), person: p),
+      for (final p in people)
+        _BillPersonRow(
+          key: ValueKey(p.id),
+          person: p,
+          payLabel: payLabel ?? l.evbPays,
+        ),
     ];
     final max = maxRows;
     // A row: the name line, the chips line, a little for a tag.
@@ -145,9 +155,14 @@ class BillPeopleCard extends StatelessWidget {
 }
 
 class _BillPersonRow extends StatefulWidget {
-  const _BillPersonRow({required this.person, super.key});
+  const _BillPersonRow({
+    required this.person,
+    required this.payLabel,
+    super.key,
+  });
 
   final BillPerson person;
+  final String payLabel;
 
   @override
   State<_BillPersonRow> createState() => _BillPersonRowState();
@@ -203,7 +218,8 @@ class _BillPersonRowState extends State<_BillPersonRow> {
         spacing: AppSpacing.xs,
         runSpacing: AppSpacing.xs,
         children: [
-          PayChip(label: l.evbPays, paid: p.paid, onTap: p.onPay),
+          if (p.paid || p.onPay != null)
+            PayChip(label: widget.payLabel, paid: p.paid, onTap: p.onPay),
           if (p.canPaidBack)
             PaidBackChip(
               label: l.evbPaidBack,

@@ -395,6 +395,7 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
                                 label: widget.barActionLabel!,
                                 icon: widget.barActionIcon,
                                 variant: AppButtonVariant.outlined,
+                                submits: true,
                                 onPressed: widget.saving
                                     ? null
                                     : widget.onBarAction,

@@ -1,2 +1,1 @@
-GET /health
 GET /transactions/summary
