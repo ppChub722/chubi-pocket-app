@@ -107,30 +107,22 @@ Future<bool> confirmOccurrence(
   );
 }
 
-/// ข้าม; one linked to a tx asks whether that tx goes too.
+/// ข้าม. A filled one can't be skipped (owner 2026-10-27): its tx is
+/// disconnected first.
 Future<bool> skipOccurrence(
   BuildContext context,
   RecurringItem item, {
   required ValueChanged<ItemWriteResult> onChanged,
 }) async {
-  bool? deleteTx;
   if (item.transaction != null) {
     final l = AppLocalizations.of(context)!;
-    final choice = await showLinkedPrompt(
-      context,
-      title: l.occurrenceSkipLinkedTitle,
-      cancelLabel: l.linkedCancel,
-      thisSideLabel: l.occurrenceSkipKeepTx,
-      bothSidesLabel: l.occurrenceSkipDeleteTx,
-      destructive: true,
-    );
-    if (choice == null || !context.mounted) return false;
-    deleteTx = choice == LinkedChoice.bothSides;
+    showAppSnackBar(context, l.occurrenceSkipFilled, tone: Tone.warning);
+    return false;
   }
   return _write(
     context,
     item.id,
-    (r) => r.skipOccurrence(item.ruleId!, item.slot!, deleteTx: deleteTx),
+    (r) => r.skipOccurrence(item.ruleId!, item.slot!),
     onChanged,
   );
 }
@@ -267,26 +259,32 @@ Future<void> openOccurrenceSheet(
         onTap: (c) => skipOccurrence(c, item, onChanged: onChanged),
       ),
     },
-    // Paid without a transaction; a recorded one (a saving entry) is paid by
-    // its link.
-    paid: archived || item.state == OccurrenceState.done
+    // Paid without a transaction, with its amount (R5); a skipped one too
+    // (R4). A recorded one (a saving entry) is paid by its link.
+    paid: item.state == OccurrenceState.done
         ? null
         : EntrySheetPaid(
             initial: item.state == OccurrenceState.paid,
             apply: (c, paid, draft) {
               final fields = occurrenceFields(initial, draft);
+              final amount = paid ? fields.remove('amount') as double? : null;
               return _write(c, item.id, (r) async {
                 if (fields.isNotEmpty) {
                   await r.updateOccurrence(item.ruleId!, item.slot!, fields);
                 }
                 return paid
-                    ? r.markOccurrencePaid(item.ruleId!, item.slot!)
+                    ? r.markOccurrencePaid(
+                        item.ruleId!,
+                        item.slot!,
+                        amount: amount,
+                      )
                     : r.unmarkOccurrencePaid(item.ruleId!, item.slot!);
               }, onChanged);
             },
           ),
-    // ออมเงิน records a saving, never a transaction.
-    link: archived || item.isSaving
+    // ออมเงิน records a saving, never a transaction. A skipped one takes a
+    // tx straight away (R4).
+    link: item.isSaving
         ? null
         : EntrySheetLink(
             pick: (c) => pickOccurrenceTx(c, item),
@@ -295,7 +293,8 @@ Future<void> openOccurrenceSheet(
           ),
     // บันทึก keeps the edits on the occurrence (it reaches the รอยืนยัน box
     // as edited on its day); สร้างรายการใหม่ ticked records it now.
-    createAction: settled
+    // A skipped one is confirmed straight away (R4).
+    createAction: settled && !archived
         ? null
         : EntrySheetAction(
             label: l.occurrenceCreateNow,
@@ -381,9 +380,12 @@ List<OccurrenceAction> occurrenceFocusActions(
               confirmOccurrence(context, item, onChanged: onChanged),
             ),
           ),
+    // จ่ายแล้ว keeps an amount (R5): without one the sheet asks for it.
     OccurrenceAction(
       label: l.occurrenceMarkPaid,
-      onTap: () => unawaited(_paid(context, item, onChanged, paid: true)),
+      onTap: unknown
+          ? sheet
+          : () => unawaited(_paid(context, item, onChanged, paid: true)),
     ),
     OccurrenceAction(
       label: l.occurrenceSkip,
@@ -410,9 +412,8 @@ String waitingLabel(AppLocalizations l, RecurringItem i) => needsAmountInput(i)
 /// What ต้องจัดการ does to the picked rows (confirm / skip / markPaid).
 typedef SettleAction = OccurrenceBulk;
 
-/// The amount ยืนยัน records [i] with: typed in its row, else its own; null
-/// while it has none (such a row can't be confirmed, only skipped or marked
-/// paid).
+/// The amount ยืนยัน / จ่ายแล้ว records [i] with: typed in its row, else its
+/// own; null while it has none (such a row can only be skipped).
 double? settleAmount(RecurringItem i, Map<String, double> typed) {
   final t = typed[i.id];
   if (t != null && t > 0) return t;
@@ -420,9 +421,9 @@ double? settleAmount(RecurringItem i, Map<String, double> typed) {
 }
 
 /// ยืนยัน / ข้าม (asks first) / จ่ายแล้ว for the picked ones, in one bulk
-/// call (per [RecurringRepository.maxBulk]). ยืนยัน records [amounts] typed
-/// in the rows and leaves out the ones still without an amount. A snack says
-/// how many went through and how many were left.
+/// call (per [RecurringRepository.maxBulk]). ยืนยัน and จ่ายแล้ว (R5) take
+/// [amounts] typed in the rows and leave out the ones still without an
+/// amount. A snack says how many went through and how many were left.
 Future<void> settleSelected(
   BuildContext context,
   List<RecurringItem> items, {
@@ -440,7 +441,8 @@ Future<void> settleSelected(
     );
     if (!ok || !context.mounted) return;
   }
-  final noAmount = action == SettleAction.confirm
+  final withAmount = action != SettleAction.skip;
+  final noAmount = withAmount
       ? [
           for (final i in items)
             if (settleAmount(i, amounts) == null) i,
@@ -464,9 +466,7 @@ Future<void> settleSelected(
           (
             ruleId: i.ruleId!,
             slot: i.slot!,
-            amount: action == SettleAction.confirm
-                ? settleAmount(i, amounts)
-                : null,
+            amount: withAmount ? settleAmount(i, amounts) : null,
           ),
       ]);
       accounts.patchBalances(r.balances);

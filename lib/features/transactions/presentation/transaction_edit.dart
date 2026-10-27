@@ -13,7 +13,6 @@ import '../../accounts/presentation/wallet_errors.dart';
 import '../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import '../../projects/data/projects_repository.dart';
 import '../domain/link_draft.dart';
-import '../domain/refs.dart';
 import '../domain/transaction.dart';
 import '../domain/transaction_type.dart';
 import '../data/transactions_repository.dart';
@@ -34,30 +33,6 @@ bool txEditsInSheet(Transaction t) =>
     t.splitCount == 0 &&
     t.projectId == null &&
     t.eventBill == null;
-
-/// Deleting a tx linked to a recurring occurrence: true = also skip the
-/// occurrence, false = the tx only (the occurrence is due again), null =
-/// cancelled.
-Future<bool?> askDeleteRecurringTx(
-  BuildContext context,
-  RecurringItemLink link,
-) {
-  final l = AppLocalizations.of(context)!;
-  return showChoiceDialog<bool?>(
-    context,
-    title: l.txDeleteRecurringTitle,
-    message: l.txDeleteRecurringBody(link.label(l.transactionTypeExpense)),
-    choices: [
-      DialogChoice(value: false, label: l.txDeleteRecurringOnly),
-      DialogChoice(
-        value: true,
-        label: l.txDeleteRecurringSkip,
-        variant: AppButtonVariant.destructive,
-      ),
-      DialogChoice(value: null, label: l.commonCancel),
-    ],
-  );
-}
 
 /// Editing shows the ผูกกับ tabs (0.4.0-3 B3): my own expense / income, not
 /// a repayment / debt entry, not a partner's mirror (its money is locked), not
@@ -262,8 +237,9 @@ class LinkEditSession {
 /// Saving an edit of my tx that's tied to another record asks whether that
 /// side changes too. An event bill (made from my tx, or my copy; 0.4.0-3
 /// B3, owner's words) asks "แก้ในอีเวนต์ด้วยไหม?" [แก้แค่ของฉัน]
-/// [แก้ทั้งคู่]; a recurring link keeps the generic ask. The answer is
-/// `also_update_link` (= apply_to_event on the BE). cancelled = stop.
+/// [แก้ทั้งคู่]. A recurring slot is never asked about: it reads the tx
+/// (0.4.1-1 R1). The answer is `also_update_link` (= apply_to_event on the
+/// BE). cancelled = stop.
 Future<({bool cancelled, bool? alsoUpdateLink})> askLinkedTxSave(
   BuildContext context,
   Transaction t,
@@ -281,7 +257,7 @@ Future<({bool cancelled, bool? alsoUpdateLink})> askLinkedTxSave(
   return linkedSaveAnswer(choice);
 }
 
-bool linkedSaveAsks(Transaction t) => t.eventBill != null || t.hasPromptedLink;
+bool linkedSaveAsks(Transaction t) => t.eventBill != null;
 
 /// The ask's answer as the PUT flag: both sides = true, this side = false,
 /// no ask = null, cancelled = stop.
@@ -295,13 +271,18 @@ bool linkedSaveAsks(Transaction t) => t.eventBill != null || t.hasPromptedLink;
 }
 
 /// The rule the server would reject first; null = ready to save.
+/// [savedAmount]: the tx's stored amount. A 0 the system wrote (sync,
+/// auto-create) saves as long as the amount wasn't touched (B1); a typed
+/// amount stays > 0.
 String? transactionEditProblem(
   AppLocalizations l,
   DraftFormController c, {
   bool splitsEditable = true,
   bool checkSplits = true,
+  double? savedAmount,
 }) {
-  if (c.amountValue <= 0) return l.quickAmountRequired;
+  final untouchedZero = savedAmount == 0 && c.amountValue == 0;
+  if (c.amountValue <= 0 && !untouchedZero) return l.quickAmountRequired;
   if (c.isTransfer) {
     if (c.account == null || c.toAccount == null) return l.txTransferNeedsTo;
     if (c.account!.id == c.toAccount!.id) return l.txTransferSameWallet;

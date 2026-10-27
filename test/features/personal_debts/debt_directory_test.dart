@@ -44,21 +44,18 @@ void main() {
 
   List<String> keys(List<PersonBalance> l) => [for (final p in l) p.key];
 
-  test(
-    'settled people are hidden unless all; open means net or an open entry; '
-    'search is a case-insensitive substring',
-    () {
-      expect(keys(filterPeople(people)), isNot(contains('n:cat')));
-      expect(keys(filterPeople(people)), contains('n:dan'));
-      expect(keys(filterPeople(people, all: true)), contains('n:cat'));
-      expect(keys(filterPeople(people, all: true, q: ' A')), [
-        'n:ann',
-        'n:dan',
-        'n:cat',
-      ]);
-      expect(keys(filterPeople(people, all: true, q: 'EVE')), ['n:eve']);
-    },
-  );
+  test('settled people are hidden unless all; open means net or an open entry; '
+      'search is a case-insensitive substring', () {
+    expect(keys(filterPeople(people)), isNot(contains('n:cat')));
+    expect(keys(filterPeople(people)), contains('n:dan'));
+    expect(keys(filterPeople(people, all: true)), contains('n:cat'));
+    expect(keys(filterPeople(people, all: true, q: ' A')), [
+      'n:ann',
+      'n:dan',
+      'n:cat',
+    ]);
+    expect(keys(filterPeople(people, all: true, q: 'EVE')), ['n:eve']);
+  });
 
   test('side filters on the net with the 0.005 margin', () {
     expect(keys(filterPeople(people, side: NetSide.owedToMe)), [
@@ -75,7 +72,8 @@ void main() {
   test('sorts', () {
     for (final c in [
       (
-        name: 'oldest: days outstanding desc (none last), then amount, then last',
+        name:
+            'oldest: days outstanding desc (none last), then amount, then last',
         sort: DebtPeopleSort.oldest,
         want: ['n:eve', 'n:bob', 'n:ann', 'n:dan', 'n:cat'],
       ),

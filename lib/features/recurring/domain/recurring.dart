@@ -15,6 +15,24 @@ enum RecurringStatus {
       .firstWhere((s) => s.name == v, orElse: () => RecurringStatus.active);
 }
 
+/// Why a paused setting is paused (0.4.1-1 R7); null unless paused.
+enum RecurringPauseReason {
+  manual,
+
+  /// "ค้าง 3 งวด": 3 occurrences were waiting when a 4th came due.
+  overdueLimit,
+
+  /// ออมเงิน whose goal was closed / archived.
+  goalInactive;
+
+  static RecurringPauseReason? fromJson(Object? v) => switch (v) {
+    'manual' => manual,
+    'overdue_limit' => overdueLimit,
+    'goal_inactive' => goalInactive,
+    _ => null,
+  };
+}
+
 enum RecurringKind {
   subscription,
   installment,
@@ -37,8 +55,9 @@ enum RecurringKind {
 }
 
 /// The wire type: `saving` reads as an expense (money out of the wallet).
-TransactionType recurringTypeFromJson(String? v) =>
-    v == 'saving' ? TransactionType.expense : TransactionType.fromJson(v ?? 'expense');
+TransactionType recurringTypeFromJson(String? v) => v == 'saving'
+    ? TransactionType.expense
+    : TransactionType.fromJson(v ?? 'expense');
 
 /// The goal a saving rule saves into (null = ยังไม่จัดสรร).
 class SavingGoalRef extends Equatable {
@@ -272,6 +291,7 @@ class Recurring extends Equatable {
     this.chain,
     this.recordedTxCount = 0,
     this.autoCreate = false,
+    this.pauseReason,
     this.createdAt,
     this.updatedAt,
   });
@@ -328,6 +348,8 @@ class Recurring extends Equatable {
 
   /// บันทึกอัตโนมัติ: each occurrence becomes a tx on its day, no tap.
   final bool autoCreate;
+
+  final RecurringPauseReason? pauseReason;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -412,6 +434,7 @@ class Recurring extends Equatable {
           : null,
       recordedTxCount: (json['recorded_tx_count'] as num?)?.toInt() ?? 0,
       autoCreate: json['auto_create'] == true,
+      pauseReason: RecurringPauseReason.fromJson(json['pause_reason']),
       createdAt: DateTime.tryParse((json['created_at'] as String?) ?? ''),
       updatedAt: DateTime.tryParse((json['updated_at'] as String?) ?? ''),
     );
@@ -454,6 +477,7 @@ class Recurring extends Equatable {
     chain,
     recordedTxCount,
     autoCreate,
+    pauseReason,
     createdAt,
     updatedAt,
   ];

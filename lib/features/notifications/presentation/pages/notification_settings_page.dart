@@ -157,6 +157,10 @@ class _Body extends StatelessWidget {
                     helper: l.notifAutoApplySplitChange,
                     canAuto: true,
                   ),
+                  ...typeRow(
+                    NotificationType.debtDisconnected,
+                    l.notifTypeDebtDisconnected,
+                  ),
                 ],
               ),
               (first) => SectionCard(

@@ -53,29 +53,26 @@ DraftFormController _form({
 }
 
 void main() {
-  test('debt description: typed when recording, worded when settling', () {
+  test('debt description: typed on every kind, never filled in', () {
     final d = DebtEntryController(
       person: const DebtPick(
         key: 'n:lee',
         person: EmbeddedPerson(name: 'Lee'),
       ),
-    )..describeOrigin = (repaying, toMe, name) =>
-        repaying ? 'pay $name' : 'lend $name';
+    );
     addTearDown(d.dispose);
 
-    expect(d.originText, 'lend Lee');
-    d.description.text = 'rent';
-    d.refreshOrigin();
-    expect(d.description.text, 'rent');
-
+    expect(d.description.text, '');
+    expect(d.moneyOut, isTrue);
     d.setSub(DebtEntrySub.repay);
-    expect(d.description.text, 'pay Lee');
-    d.setSub(DebtEntrySub.record);
     expect(d.description.text, '');
 
     d.description.text = 'rent';
-    d.refreshOrigin();
+    expect(d.hasKeyData, isTrue);
+    d.setSub(DebtEntrySub.record);
+    d.swapDirection();
     expect(d.description.text, 'rent');
+    expect(d.moneyOut, isFalse);
   });
 
   test('แบ่ง with another payer saves only my share, no wallet, no splits', () {
@@ -105,91 +102,87 @@ void main() {
   });
 
   test('quick create tx body, per ผูกกับ tab', () {
-    final cases = <({
-      String name,
-      DraftFormController c,
-      LinkMode mode,
-      String? account,
-      Object? splits,
-      Object? link,
-    })>[
-      (
-        name: 'ส่วนตัว: a plain expense on the wallet',
-        c: _form(amount: '80'),
-        mode: LinkMode.personal,
-        account: 'w1',
-        splits: null,
-        link: null,
-      ),
-      (
-        name: 'จ่ายแทน, they paid it all: no wallet, paid_by = the bill',
-        c: _form(
-          amount: '123',
-          set: (c) => c
-            ..link.mode = LinkMode.paid
-            ..link.paidBy = _lee,
-        ),
-        mode: LinkMode.paid,
-        account: null,
-        splits: null,
-        link: {
-          'paid_by': {'contact_id': 'c2', 'amount': 123.0},
-        },
-      ),
-      (
-        name: 'จ่ายแทน, they paid part: my part leaves the wallet',
-        c: _form(
-          amount: '100',
-          set: (c) => c
-            ..link.mode = LinkMode.paid
-            ..link.paidBy = _lee
-            ..link.paidAmount = 40,
-        ),
-        mode: LinkMode.paid,
-        account: 'w1',
-        splits: null,
-        link: {
-          'paid_by': {'contact_id': 'c2', 'amount': 40.0},
-        },
-      ),
-      (
-        name: 'แบ่ง: the complete rows only, no link',
-        c: _form(
-          set: (c) => c
-            ..link.mode = LinkMode.split
-            ..setSplits([
-              SplitDraft(personName: 'Bo', owedAmount: 30),
-              SplitDraft(personName: 'half row'),
-            ]),
-        ),
-        mode: LinkMode.split,
-        account: 'w1',
-        splits: [
-          {
-            'person_name': 'Bo',
-            'owed_amount': 30.0,
-            'split_type': 'fixed',
-          },
-        ],
-        link: null,
-      ),
-      (
-        name: 'a tab not picked: today’s body, the complete splits',
-        c: _form(
-          set: (c) => c.setSplits([SplitDraft(personName: 'Bo', owedAmount: 30)]),
-        ),
-        mode: LinkMode.split,
-        account: 'w1',
-        splits: [
-          {
-            'person_name': 'Bo',
-            'owed_amount': 30.0,
-            'split_type': 'fixed',
-          },
-        ],
-        link: null,
-      ),
-    ];
+    final cases =
+        <
+          ({
+            String name,
+            DraftFormController c,
+            LinkMode mode,
+            String? account,
+            Object? splits,
+            Object? link,
+          })
+        >[
+          (
+            name: 'ส่วนตัว: a plain expense on the wallet',
+            c: _form(amount: '80'),
+            mode: LinkMode.personal,
+            account: 'w1',
+            splits: null,
+            link: null,
+          ),
+          (
+            name: 'จ่ายแทน, they paid it all: no wallet, paid_by = the bill',
+            c: _form(
+              amount: '123',
+              set: (c) => c
+                ..link.mode = LinkMode.paid
+                ..link.paidBy = _lee,
+            ),
+            mode: LinkMode.paid,
+            account: null,
+            splits: null,
+            link: {
+              'paid_by': {'contact_id': 'c2', 'amount': 123.0},
+            },
+          ),
+          (
+            name: 'จ่ายแทน, they paid part: my part leaves the wallet',
+            c: _form(
+              amount: '100',
+              set: (c) => c
+                ..link.mode = LinkMode.paid
+                ..link.paidBy = _lee
+                ..link.paidAmount = 40,
+            ),
+            mode: LinkMode.paid,
+            account: 'w1',
+            splits: null,
+            link: {
+              'paid_by': {'contact_id': 'c2', 'amount': 40.0},
+            },
+          ),
+          (
+            name: 'แบ่ง: the complete rows only, no link',
+            c: _form(
+              set: (c) => c
+                ..link.mode = LinkMode.split
+                ..setSplits([
+                  SplitDraft(personName: 'Bo', owedAmount: 30),
+                  SplitDraft(personName: 'half row'),
+                ]),
+            ),
+            mode: LinkMode.split,
+            account: 'w1',
+            splits: [
+              {'person_name': 'Bo', 'owed_amount': 30.0, 'split_type': 'fixed'},
+            ],
+            link: null,
+          ),
+          (
+            name: 'a tab not picked: today’s body, the complete splits',
+            c: _form(
+              set: (c) =>
+                  c.setSplits([SplitDraft(personName: 'Bo', owedAmount: 30)]),
+            ),
+            mode: LinkMode.split,
+            account: 'w1',
+            splits: [
+              {'person_name': 'Bo', 'owed_amount': 30.0, 'split_type': 'fixed'},
+            ],
+            link: null,
+          ),
+        ];
     for (final k in cases) {
       final b = txCreateBody(k.c, k.mode);
       expect(b.accountId, k.account, reason: k.name);
@@ -239,43 +232,9 @@ void main() {
     expect(tb.link, isNull);
   });
 
-  test('quick create EVENT mode: the tab’s bill and the event sheet bill', () {
-    final mine = _form(
-      amount: '300',
-      set: (c) => c
-        ..setCategory(_food)
-        ..description.text = 'Dinner'
-        ..link.mode = LinkMode.event
-        ..link.eventExtra.add(_lee),
-    );
-    final bill = eventBillBody(mine, LinkMode.event);
-    expect(bill.newTransaction, {
-      'type': 'expense',
-      'amount': 300.0,
-      'date': '2026-10-24',
-      'account_id': 'w1',
-      'category_id': 'cat1',
-      'description': 'Dinner',
-    });
-    expect(bill.people, {
-      'payer': {'me': true},
-      'members': [
-        {'me': true, 'share': 150.0},
-        {'contact_id': 'c2', 'share': 150.0},
-      ],
-    });
-
-    final theyPaid = _form(
-      amount: '300',
-      set: (c) => c
-        ..link.mode = LinkMode.event
-        ..link.eventExtra.add(_lee)
-        ..link.eventPayer = _lee,
-    );
-    final other = eventBillBody(theyPaid, LinkMode.event);
-    expect(other.newTransaction.containsKey('account_id'), isFalse);
-    expect(other.people!['payer'], {'contact_id': 'c2'});
-
+  // The อีเวนต์ tab's body (one /event-bills call) is in
+  // event_book_body_test.dart.
+  test('quick create event sheet: its own bill', () {
     final sheet = _form(
       amount: '90',
       wallet: false,
@@ -336,6 +295,7 @@ void main() {
       date: DateTime(2026, 10, 24),
       accountId: null,
       createTransaction: false,
+      linkTransactionId: null,
       description: null,
       note: 'n',
       tagIds: null,
@@ -359,6 +319,7 @@ void main() {
       date: DateTime(2026, 10, 24),
       accountId: 'w1',
       createTransaction: true,
+      linkTransactionId: null,
       description: null,
       note: null,
       tagIds: txBody.tagIds,
@@ -381,11 +342,14 @@ void main() {
       kind: settle.repayKind,
       amount: 250.0,
       accountId: 'w1',
+      createTransaction: true,
+      linkTransactionId: null,
       date: DateTime(2026, 10, 24),
       description: null,
       note: null,
       tagIds: settleBody.tagIds,
       markPaidIds: settleBody.markPaidIds,
+      markAllPaid: false,
       personName: null,
     ));
     settle.setRepayKind(DebtRepaymentKind.receive);
@@ -397,9 +361,51 @@ void main() {
       kind: DebtRepaymentKind.receive,
       amount: 250.0,
       accountId: 'w1',
-      createTransaction: null,
+      createTransaction: true,
       personName: null,
     ));
+
+    // 0.4.1-1 D10: a repayment off "บันทึกในรายการ" is ledger-only (no
+    // wallet, no tags); ปิดหนี้ rides along.
+    final outside = form(
+      sub: DebtEntrySub.repay,
+      set: (d) => d
+        ..account = _wallet
+        ..tagIds.add('t1')
+        ..setCreateTransaction(false)
+        ..setCloseDebt(true),
+    );
+    final outsideBody = debtRepaymentBody(outside, lee);
+    expect(outsideBody.createTransaction, isFalse);
+    expect(outsideBody.accountId, isNull);
+    expect(outsideBody.tagIds, isEmpty);
+    expect(outsideBody.markAllPaid, isTrue);
+
+    // An existing transaction connected: its id, no amount (its own wins),
+    // no new transaction, no wallet, no tags.
+    final linkTx = Transaction.fromJson({
+      'id': 'tx7',
+      'type': 'expense',
+      'amount': 300,
+      'date': '2026-10-20',
+    });
+    final linked = form(
+      set: (d) => d
+        ..account = _wallet
+        ..tagIds.add('t1')
+        ..setLinkedTx(linkTx),
+    );
+    expect(linked.amount.text, '300');
+    expect(linked.date, DateTime(2026, 10, 20));
+    final linkedBody = debtRecordBody(linked, lee);
+    expect(linkedBody.linkTransactionId, 'tx7');
+    expect(linkedBody.amount, isNull);
+    expect(linkedBody.createTransaction, isFalse);
+    expect(linkedBody.accountId, isNull);
+    expect(linkedBody.tagIds, isNull);
+    expect(debtPreviewBody(linked, lee).accountId, isNull);
+    linked.clearLinkedTx();
+    expect(debtRecordBody(linked, lee).createTransaction, isTrue);
     expect(debtPreviewBody(ledgerOnly, lee), (
       key: 'c:c2',
       direction: DebtEntryDirection.paid,
@@ -456,11 +462,10 @@ void main() {
     c.description.text = 'Netflix 4K';
     c.setDate(DateTime(2026, 11, 5));
     d = c.toDraft();
-    expect([d.amount, d.description, d.date], [
-      450,
-      'Netflix 4K',
-      '2026-11-05',
-    ]);
+    expect(
+      [d.amount, d.description, d.date],
+      [450, 'Netflix 4K', '2026-11-05'],
+    );
   });
 
   group('tx edit PUT', () {
@@ -508,7 +513,11 @@ void main() {
       final t = row();
       final c = form(t);
       for (final k in [
-        (name: 'switch to personal', link: {'link_mode': 'personal'}, also: null),
+        (
+          name: 'switch to personal',
+          link: {'link_mode': 'personal'},
+          also: null,
+        ),
         (name: 'apply to the event too', link: null, also: true),
         (name: 'mine only', link: null, also: false),
       ]) {
@@ -734,25 +743,28 @@ void main() {
       askSwap: (_) async => swap,
     );
 
-    test('amount differs: the question; อัปเดต = one PUT, ไม่ต้อง = none', () async {
-      for (final update in [true, false]) {
-        final o = open(differs: (3023, 3100));
-        await link(o.h, o.repo, o.said);
-        expect(o.repo.links, ['item-1<-tx-1']);
-        final ask = o.h.ask!;
-        expect((ask.ruleAmount, ask.txAmount), (3023, 3100));
-        await o.h.answerWith(
-          o.repo,
-          update: update,
-          error: o.said.add,
-          done: o.said.add,
-          doneText: 'updated',
-        );
-        expect(o.repo.puts, update ? [('1', 3100.0)] : isEmpty);
-        expect(o.said, update ? ['updated'] : isEmpty);
-        expect(o.h.ask, isNull);
-      }
-    });
+    test(
+      'amount differs: the question; อัปเดต = one PUT, ไม่ต้อง = none',
+      () async {
+        for (final update in [true, false]) {
+          final o = open(differs: (3023, 3100));
+          await link(o.h, o.repo, o.said);
+          expect(o.repo.links, ['item-1<-tx-1']);
+          final ask = o.h.ask!;
+          expect((ask.ruleAmount, ask.txAmount), (3023, 3100));
+          await o.h.answerWith(
+            o.repo,
+            update: update,
+            error: o.said.add,
+            done: o.said.add,
+            doneText: 'updated',
+          );
+          expect(o.repo.puts, update ? [('1', 3100.0)] : isEmpty);
+          expect(o.said, update ? ['updated'] : isEmpty);
+          expect(o.h.ask, isNull);
+        }
+      },
+    );
 
     test('same amount: no question', () async {
       final o = open();
@@ -760,17 +772,20 @@ void main() {
       expect(o.h.ask, isNull);
     });
 
-    test('409 taken: no = its message, swap = linked again with replace', () async {
-      final no = open(linkError: taken);
-      expect(await link(no.h, no.repo, no.said), isNull);
-      expect(no.repo.links, ['item-1<-tx-1']);
-      expect(no.said, ['taken']);
+    test(
+      '409 taken: no = its message, swap = linked again with replace',
+      () async {
+        final no = open(linkError: taken);
+        expect(await link(no.h, no.repo, no.said), isNull);
+        expect(no.repo.links, ['item-1<-tx-1']);
+        expect(no.said, ['taken']);
 
-      final yes = open(linkError: taken);
-      expect(await link(yes.h, yes.repo, yes.said, swap: true), isNotNull);
-      expect(yes.repo.links, ['item-1<-tx-1', 'item-1<-tx-1 (replace)']);
-      expect(yes.said, isEmpty);
-    });
+        final yes = open(linkError: taken);
+        expect(await link(yes.h, yes.repo, yes.said, swap: true), isNotNull);
+        expect(yes.repo.links, ['item-1<-tx-1', 'item-1<-tx-1 (replace)']);
+        expect(yes.said, isEmpty);
+      },
+    );
 
     test('moving off its own old occurrence replaces without asking', () async {
       final o = open(linkError: taken);
@@ -786,42 +801,45 @@ void main() {
       expect(o.repo.links, ['item-1<-tx-1 (replace)']);
     });
 
-    test('unlink = ONE call (by slot when it has one); failure says why', () async {
-      final o = open();
-      var unlinked = 0;
-      for (final link in [
-        const RecurringItemLink(itemId: 'item-1'),
-        const RecurringItemLink(
-          itemId: 'x',
-          recurringId: 'r1',
-          slot: '2026-10-16',
-        ),
-      ]) {
-        await o.h.unlinkWith(
-          o.repo,
-          link,
-          onUnlinked: () => unlinked++,
-          error: o.said.add,
-        );
-      }
-      expect(o.repo.unlinks, ['item-1', 'slot:r1:2026-10-16']);
-      expect(unlinked, 2);
+    test(
+      'unlink = ONE call (by slot when it has one); failure says why',
+      () async {
+        final o = open();
+        var unlinked = 0;
+        for (final link in [
+          const RecurringItemLink(itemId: 'item-1'),
+          const RecurringItemLink(
+            itemId: 'x',
+            recurringId: 'r1',
+            slot: '2026-10-16',
+          ),
+        ]) {
+          await o.h.unlinkWith(
+            o.repo,
+            link,
+            onUnlinked: () => unlinked++,
+            error: o.said.add,
+          );
+        }
+        expect(o.repo.unlinks, ['item-1', 'slot:r1:2026-10-16']);
+        expect(unlinked, 2);
 
-      final bad = open();
-      bad.repo.unlinkError = const ApiException(
-        code: 'VALIDATION_ERROR',
-        message: 'no linked transaction',
-        statusCode: 400,
-      );
-      final ok = await bad.h.unlinkWith(
-        bad.repo,
-        const RecurringItemLink(itemId: 'item-1'),
-        onUnlinked: () => fail('must not run'),
-        error: bad.said.add,
-      );
-      expect(ok, isFalse);
-      expect(bad.said, ['no linked transaction']);
-    });
+        final bad = open();
+        bad.repo.unlinkError = const ApiException(
+          code: 'VALIDATION_ERROR',
+          message: 'no linked transaction',
+          statusCode: 400,
+        );
+        final ok = await bad.h.unlinkWith(
+          bad.repo,
+          const RecurringItemLink(itemId: 'item-1'),
+          onUnlinked: () => fail('must not run'),
+          error: bad.said.add,
+        );
+        expect(ok, isFalse);
+        expect(bad.said, ['no linked transaction']);
+      },
+    );
   });
 }
 

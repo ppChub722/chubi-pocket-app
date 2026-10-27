@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../data/write_effects.dart';
 import '../storage/secure_token_storage.dart';
 import 'http_logger_interceptor.dart';
 import 'network_recorder.dart';
@@ -51,6 +52,7 @@ class ApiClient {
     _dio.interceptors.add(_outdatedNotifier());
     _dio.interceptors.add(_reachability());
     _dio.interceptors.add(_syncVersionsReader());
+    _dio.interceptors.add(_effectsReader());
   }
 
   final Dio _dio;
@@ -181,6 +183,15 @@ class ApiClient {
       if (versions != null && versions.isNotEmpty) {
         onSyncVersions?.call(versions);
       }
+      handler.next(response);
+    },
+  );
+
+  /// 0.4.1-1 B2: a write's `effects` go to every cache that holds them.
+  Interceptor _effectsReader() => InterceptorsWrapper(
+    onResponse: (response, handler) {
+      final effects = WriteEffects.of(response.data);
+      if (effects != null) WriteEffectsBus.instance.publish(effects);
       handler.next(response);
     },
   );

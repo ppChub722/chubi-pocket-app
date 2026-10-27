@@ -17,6 +17,7 @@ import '../../domain/category_reorder_logic.dart';
 import '../../domain/category_tree.dart';
 import '../../domain/category_type.dart';
 import '../category_errors.dart';
+import '../category_label.dart';
 import '../cubit/categories_cubit.dart';
 import '../widgets/category_chip_path.dart';
 import '../widgets/category_picker.dart';
@@ -67,6 +68,10 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   ApiException? _detailError;
 
   bool get _isCreate => widget.isCreate && _persisted == null;
+
+  /// A system category: the name, the parent and "นับในรายงาน" are fixed;
+  /// only the icon, description and note change (owner 2026-10-27).
+  bool get _system => _persisted?.isSystem ?? false;
 
   CategoryDetail? _detail;
 
@@ -467,9 +472,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
               body: BlocBuilder<CategoriesCubit, CategoriesState>(
                 builder: (context, state) => AsyncStateView.fallback(
                   loading:
-                      !_notFound &&
-                      state.error == null &&
-                      _detailError == null,
+                      !_notFound && state.error == null && _detailError == null,
                   error: _notFound ? null : (_detailError ?? state.error),
                   onRetry: _retryOpen,
                   notFound: EmptyView(
@@ -518,7 +521,8 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
 
   String _title(AppLocalizations l) {
     if (_isCreate) return l.categoryFormTitleNew;
-    final name = _persisted?.name ?? '';
+    final c = _persisted;
+    final name = c == null ? '' : categoryDisplayName(l, c);
     return name.isEmpty ? l.categoriesTitle : name;
   }
 
@@ -595,11 +599,13 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
             value: chain == null
                 ? (breadcrumb ?? l.categoryFormParentNone)
                 : null,
-            showChevron: true,
-            onTap: () {
-              if (!editing) enterEdit();
-              _openParentPicker(all);
-            },
+            showChevron: !_system,
+            onTap: _system
+                ? null
+                : () {
+                    if (!editing) enterEdit();
+                    _openParentPicker(all);
+                  },
           ),
         ],
       ),
@@ -607,8 +613,16 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         title: l.categorySectionSettings,
         description: l.categorySettingsSectionDescription,
         children: [
+          // System: shown, never changed.
+          if (_system)
+            SettingToggleRow(
+              label: l.categoryFormIncludeInReportLabel,
+              caption: l.categorySystemLockedHelper,
+              value: working.includeInReport,
+              onChanged: null,
+            )
           // Edit / create: part of the form. View: saves at once.
-          if (editing || _persisted == null)
+          else if (editing || _persisted == null)
             SettingToggleRow(
               label: l.categoryFormIncludeInReportLabel,
               caption: l.categoryFormIncludeInReportHelper,
@@ -749,7 +763,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
               ),
             ),
             name: HeroNameInput(
-              editing: true,
+              editing: !_system,
               controller: _nameController,
               focusNode: _nameFocus,
               hint: l.commonName,

@@ -112,6 +112,7 @@ class NotificationTile extends StatelessWidget {
   static IconData _iconFor(NotificationType t) => switch (t) {
     NotificationType.splitCreated ||
     NotificationType.splitChanged => AppIcons.split,
+    NotificationType.debtDisconnected => AppIcons.link,
     NotificationType.projectTxRecordedForYou ||
     NotificationType.projectTxChanged ||
     NotificationType.projectInvite ||
@@ -132,6 +133,7 @@ class NotificationTile extends StatelessWidget {
   ) => switch (n.type) {
     NotificationType.splitCreated => l.notifSplitCreated(actor),
     NotificationType.splitChanged => _splitChangeTitle(context, l, n),
+    NotificationType.debtDisconnected => _debtDisconnectedTitle(context, l, n),
     NotificationType.projectTxRecordedForYou => l.notifProjectTxForYou(actor),
     NotificationType.projectTxChanged => l.notifProjectTxChanged(actor),
     NotificationType.projectInvite => l.notifProjectInvite(
@@ -159,6 +161,26 @@ class NotificationTile extends StatelessWidget {
     ),
     NotificationType.unknown => l.notifUnknown,
   };
+}
+
+/// "ลี ตัดการเชื่อมหนี้ ฿300 แล้ว" (D9); a tap opens my entry (deep link).
+String _debtDisconnectedTitle(
+  BuildContext context,
+  AppLocalizations l,
+  AppNotification n,
+) {
+  final p = n.payload;
+  final who =
+      n.actor?.displayName ??
+      (p['person_name'] as String?) ??
+      l.notificationsSomeone;
+  final amount = p['amount'];
+  return l.notifDebtDisconnected(
+    who,
+    amount is num
+        ? moneyString(context, amount, symbol: context.readUserCurrencySymbol)
+        : '—',
+  );
 }
 
 String _splitChangeTitle(

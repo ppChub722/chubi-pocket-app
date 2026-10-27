@@ -39,6 +39,7 @@ import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
 import '../cubit/tx_form_options_cubit.dart';
 import '../delete_results.dart';
+import '../event_book_body.dart';
 import '../quick_create_bodies.dart';
 import '../save_failure.dart';
 import '../transaction_edit.dart';
@@ -1097,6 +1098,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       _c,
       splitsEditable: false,
       checkSplits: _linkEdit.onSplitTab,
+      savedAmount: widget.editTransaction?.amount,
     );
     if (problem != null) {
       HapticFeedback.lightImpact();
@@ -1158,33 +1160,25 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  /// A tx linked to a recurring occurrence asks whether to skip it too.
+  /// A recurring slot the tx filled is skipped by the server (R2): no ask.
   Future<void> _deleteEditTx() async {
     final l = AppLocalizations.of(context)!;
     final tx = widget.editTransaction!;
-    final link = tx.recurringItem;
-    bool? skip;
-    if (link != null) {
-      skip = await askDeleteRecurringTx(context, link);
-      if (skip == null) return;
-    } else {
-      final ok = await showConfirmDialog(
-        context,
-        title: l.transactionDetailDeleteConfirmTitle,
-        message: l.transactionDetailDeleteConfirmBody,
-        confirmLabel: l.transactionDetailDeleteConfirmAction,
-        destructive: true,
-      );
-      if (!ok) return;
-    }
-    if (!mounted) return;
+    final ok = await showConfirmDialog(
+      context,
+      title: l.transactionDetailDeleteConfirmTitle,
+      message: l.transactionDetailDeleteConfirmBody,
+      confirmLabel: l.transactionDetailDeleteConfirmAction,
+      destructive: true,
+    );
+    if (!ok || !mounted) return;
     final txCubit = context.read<TransactionsCubit>();
     final accounts = context.read<AccountsCubit>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _saving = true);
     try {
-      final result = await txCubit.remove(tx.id, skipOccurrence: skip);
+      final result = await txCubit.remove(tx.id);
       applyTxDeleteResult(result, accounts: accounts);
       navigator.pop(true);
       showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
@@ -1390,6 +1384,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         date: body.date,
         accountId: body.accountId,
         createTransaction: body.createTransaction,
+        linkTransactionId: body.linkTransactionId,
         description: body.description,
         note: body.note,
         tagIds: body.tagIds,
@@ -1429,8 +1424,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     return '$words $money';
   }
 
-  /// จ่ายคืน: ONE transaction tied to the person (not a debt row); the
-  /// answer patches the wallet, the transactions list and the debts list.
+  /// จ่ายคืน / รับคืน: a person-book row (0.4.1-1 D3), its transaction as
+  /// "บันทึกในรายการ" says; the answer patches the wallet, the transactions
+  /// list and the debts list.
   Future<void> _saveRepayment(DebtEntryController d, DebtPick person) async {
     final l = AppLocalizations.of(context)!;
     final repo = context.read<PersonalDebtsRepository>();
@@ -1447,15 +1443,20 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         kind: body.kind,
         amount: body.amount,
         accountId: body.accountId,
+        createTransaction: body.createTransaction,
+        linkTransactionId: body.linkTransactionId,
         date: body.date,
         description: body.description,
         note: body.note,
         tagIds: body.tagIds,
         markPaidIds: body.markPaidIds,
+        markAllPaid: body.markAllPaid,
         personName: body.personName,
       );
       accounts.patchBalances(r.accountBalances);
-      txCubit.patchRow(r.transaction, afterWrite: true);
+      final tx = r.transaction;
+      if (tx != null) txCubit.patchRow(tx, afterWrite: true);
+      widget.onDebtSaved?.call(r);
       debtDirectory.applyBalance(r.balance);
       navigator.pop(true);
       showAppSnackBarOn(messenger, l.debtEntrySaved, tone: Tone.success);
@@ -1736,7 +1737,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final txCubit = context.read<TransactionsCubit>();
     final accounts = context.read<AccountsCubit>();
     final projects = context.read<ProjectsRepository>();
-    final txRepo = context.read<TransactionsRepository>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     // Only the active ผูกกับ tab is saved (owner 2026-10-21).
@@ -1746,24 +1746,18 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         : null;
     final tagIds = _c.tagIds.toList();
     final txBody = txCreateBody(_c, mode);
-    final bill = eventBillBody(_c, mode);
-    // "คืนแล้ว": paid back on the spot — a repayment of the debt (แบ่ง, I
-    // paid) or a payback row in the event.
-    final backShares = event != null || mode == LinkMode.split
-        ? _c.paidBackShares(event: event != null)
+    // "คืนแล้ว" on แบ่ง (I paid): the debt is paid back at once. In an event
+    // the book-bill call does it.
+    final backShares = event == null && mode == LinkMode.split
+        ? _c.paidBackShares(event: false)
         : const <({LinkPerson person, double amount})>[];
     final debts = context.read<PersonalDebtsRepository>();
     final debtDirectory = context.read<DebtDirectoryCubit>();
-    final payerJson = _c.link.eventPayer?.toJson() ?? const {'me': true};
     final date = _c.date;
-    // "จดหนี้ด้วย": the event bill goes into my debts too.
-    final bookDebts = event != null && (_c.link.eventBookDebts ?? false);
-    final eventDebts = _c.eventDebts();
 
     setState(() => _saving = true);
     String? warn;
     String? newTxId;
-    String? eventProjectId;
     try {
       if (event == null) {
         final saved = await txCubit.add(
@@ -1782,71 +1776,34 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         accounts.patchBalances(saved.accountBalances);
         newTxId = saved.rows.firstOrNull?.id;
       } else {
-        // B2: payer + members beside new_transaction.
-        final result = switch (event) {
-          NewEventTarget(:final name) => await projects.quickCreate(
-            name: name,
-            newTransaction: bill.newTransaction,
-            people: bill.people,
-          ),
-          ExistingEventTarget(:final project) => await projects.addBills(
-            project.id,
-            newTransaction: bill.newTransaction,
-            people: bill.people,
-          ),
-          RemoveFromEvent() => throw StateError('nothing to remove from'),
-        };
-        final txId = result.transactionId;
-        newTxId = txId;
-        eventProjectId = result.project.id;
-        if (txId != null && tagIds.isNotEmpty) {
-          try {
-            await txRepo.setTags(txId, tagIds);
-          } on ApiException {
-            warn = l.txSavedTagsFailed;
-          }
-        }
-        accounts.patchBalances(result.accountBalances);
-      }
-      if (bookDebts && eventProjectId != null) {
-        warn ??= await _bookEventDebts(
-          debts,
-          debtDirectory,
-          txRepo,
-          eventDebts,
-          billTxId: newTxId,
-          description: txBody.description,
-          note: txBody.note,
+        // ONE call, ONE DB transaction (0.4.1-1 E8): the bill, the
+        // "คืนแล้ว" paybacks, my tx, "จดหนี้ด้วย" and its repayments; the
+        // wallets / people / rows follow the answer's effects (B2).
+        final body = eventBookBodies(_c, tagIds: tagIds);
+        final result = await projects.bookEventBill(
+          projectId: switch (event) {
+            ExistingEventTarget(:final project) => project.id,
+            _ => null,
+          },
+          newEvent: switch (event) {
+            NewEventTarget(:final name) => newEventBody(name),
+            _ => null,
+          },
+          bill: body.bill,
+          myBooks: body.myBooks,
         );
+        newTxId = result.transactionId;
       }
       if (backShares.isNotEmpty) {
-        warn ??= eventProjectId == null
-            ? await _repayNow(
-                debts,
-                debtDirectory,
-                accounts,
-                txCubit,
-                backShares,
-                accountId: txBody.accountId,
-                date: date,
-              )
-            : await _paybackInEvent(
-                projects,
-                eventProjectId,
-                payerJson,
-                backShares,
-                date: date,
-                // As on the event bill sheet: with debts on and me paying,
-                // the cash they handed back is a repayment too.
-                repay: bookDebts && eventDebts.payer == null
-                    ? (
-                        debts: debts,
-                        directory: debtDirectory,
-                        accounts: accounts,
-                        accountId: txBody.accountId,
-                      )
-                    : null,
-              );
+        warn ??= await _repayNow(
+          debts,
+          debtDirectory,
+          accounts,
+          txCubit,
+          backShares,
+          accountId: txBody.accountId,
+          date: date,
+        );
       }
       warn ??= await _linkAfterCreate(newTxId);
       await _remember();
@@ -1890,11 +1847,14 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           kind: DebtRepaymentKind.receive,
           amount: r.amount,
           accountId: accountId,
+          // Into the wallet now: a transaction, as before 0.4.1-1 D3.
+          createTransaction: true,
           date: date,
           personName: p.name,
         );
         accounts.patchBalances(res.accountBalances);
-        txCubit.patchRow(res.transaction, afterWrite: true);
+        final tx = res.transaction;
+        if (tx != null) txCubit.patchRow(tx, afterWrite: true);
         directory.applyBalance(res.balance);
       }
       return null;
@@ -1903,119 +1863,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  /// An event bill: each one marked "คืนแล้ว" gets a payback row to the payer
-  /// (as on the event bill sheet).
-  Future<String?> _paybackInEvent(
-    ProjectsRepository projects,
-    String projectId,
-    Map<String, dynamic> payer,
-    List<({LinkPerson person, double amount})> rows, {
-    required DateTime date,
-    ({
-      PersonalDebtsRepository debts,
-      DebtDirectoryCubit directory,
-      AccountsCubit accounts,
-      String? accountId,
-    })?
-    repay,
-  }) async {
-    final l = AppLocalizations.of(context)!;
-    try {
-      final resolved = await projects.resolvePeople(projectId, [
-        payer,
-        for (final r in rows) r.person.toJson(),
-      ]);
-      final payerId = resolved.memberIds.first;
-      for (final (i, r) in rows.indexed) {
-        final patch = await projects.createTransaction(
-          projectId,
-          transactionMemberId: resolved.memberIds[i + 1],
-          type: 'payback',
-          amount: r.amount,
-          date: _ymd(date),
-          splits: [ProjectSplitInput(memberId: payerId, amount: r.amount)],
-        );
-        if (repay == null) continue;
-        final p = r.person;
-        final res = await repay.debts.createRepayment(
-          _debtKey(p),
-          kind: DebtRepaymentKind.receive,
-          amount: r.amount,
-          accountId: repay.accountId,
-          date: date,
-          personName: p.name,
-          billId: patch.row.where((x) => x.isParent).firstOrNull?.id,
-        );
-        repay.accounts.patchBalances(res.accountBalances);
-        repay.directory.applyBalance(res.balance);
-      }
-      return null;
-    } on ApiException catch (e) {
-      return eventErrorMessage(l, e);
-    }
-  }
-
   static String _debtKey(LinkPerson p) => p.contactId != null
       ? debtPersonKey(contactId: p.contactId)
       : debtPersonKey(name: p.name);
-
-  /// "จดหนี้ด้วย" on an event bill (as the event bill sheet does): I paid →
-  /// each one's share is owed to me; someone else paid → my share is owed to
-  /// them. Linked to the bill when its id can be found.
-  Future<String?> _bookEventDebts(
-    PersonalDebtsRepository debts,
-    DebtDirectoryCubit directory,
-    TransactionsRepository txRepo,
-    ({
-      List<({LinkPerson person, double amount})> owedToMe,
-      LinkPerson? payer,
-      double myShare,
-    })
-    plan, {
-    required String? billTxId,
-    required String? description,
-    required String? note,
-  }) async {
-    final l = AppLocalizations.of(context)!;
-    try {
-      String? billId;
-      if (billTxId != null) {
-        try {
-          billId = (await txRepo.get(billTxId)).eventBill?.billId;
-        } on ApiException {
-          // Unlinked debts are still debts.
-        }
-      }
-      for (final r in plan.owedToMe) {
-        final res = await debts.createEntry(
-          _debtKey(r.person),
-          direction: DebtEntryDirection.paid,
-          amount: r.amount,
-          description: description,
-          note: note,
-          personName: r.person.name,
-          billId: billId,
-        );
-        directory.applyBalance(res.balance);
-      }
-      final payer = plan.payer;
-      if (payer != null && plan.myShare > 0.005) {
-        final res = await debts.createEntry(
-          _debtKey(payer),
-          direction: DebtEntryDirection.received,
-          amount: plan.myShare,
-          description: description,
-          note: note,
-          personName: payer.name,
-          billId: billId,
-        );
-        directory.applyBalance(res.balance);
-      }
-      return null;
-    } on ApiException catch (e) {
-      return eventErrorMessage(l, e);
-    }
-  }
 
   bool get _summaryTitle => !_draftLike && !_isEvent;
 

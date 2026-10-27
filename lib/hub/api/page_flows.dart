@@ -210,6 +210,14 @@ const List<PageFlow> pageFlows = [
         note: 'creates tx + tags + splits; returns the row + wallet balances',
       ),
     ], today: '3 calls (create, reload wallets, reload the book)'),
+    FlowStep.action('Button "บันทึก" (ผูกกับ อีเวนต์ tab)', [
+      FlowCall(
+        'bookEventBill',
+        note:
+            'ONE call (0.4.1-1 E8): the bill (new event or existing), '
+            '"คืนแล้ว" paybacks, my tx, "จดหนี้ด้วย"; effects patch the caches',
+      ),
+    ], today: 'was 3-6 calls (addBills / quickCreate, setTags, debts, paybacks)'),
     FlowStep.action('Button "บันทึกร่าง"', [
       FlowCall('createPending', note: 'saves a draft'),
     ]),
@@ -563,6 +571,14 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Bill sheet "ลงบัญชีของฉัน" (unlink / relink)', [
       FlowCall('setProjectTransactionMyBooks'),
     ]),
+    // 0.4.1-1 E8: the bill sheet's save is ONE call (bill + paybacks + my
+    // book in one DB transaction).
+    FlowStep.action('Bill sheet "บันทึก" (new bill / payback)', [
+      FlowCall('bookEventBill'),
+    ]),
+    FlowStep.action('Bill sheet "บันทึก" (edit) / ⤓ "ลงบัญชี"', [
+      FlowCall('rebookEventBill'),
+    ]),
   ]),
   PageFlow('event-members', 'Members (on hold: kept as is, on the new API).', [
     FlowStep.open([FlowCall('getProject'), FlowCall('listProjectMembers')]),
@@ -796,6 +812,12 @@ const List<PageFlow> pageFlows = [
       ]),
       FlowStep.action('บันทึกในรายการ: ✕', [
         FlowCall('unlinkDebtEntryTx', note: 'the transaction stays'),
+      ]),
+      FlowStep.action('Button "ตัดการเชื่อม" (linked partner, D9)', [
+        FlowCall(
+          'disconnectDebtPartner',
+          note: 'my side only; the other user gets debt_disconnected',
+        ),
       ]),
       FlowStep.action('Button "ลบ"', [
         FlowCall(

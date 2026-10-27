@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../core/data/write_effects.dart';
 import '../../../ui/ui.dart';
 import '../../pending/domain/pending_transaction.dart';
 import '../../projects/domain/project.dart';
@@ -14,6 +15,7 @@ class RecurringParent extends Equatable {
     required this.name,
     this.iconCode,
     this.kind,
+    this.pauseReason,
   });
 
   factory RecurringParent.fromJson(Map<String, dynamic> json) =>
@@ -26,6 +28,7 @@ class RecurringParent extends Equatable {
         kind: json['kind'] is String
             ? RecurringKind.fromJson(json['kind'] as String)
             : null,
+        pauseReason: RecurringPauseReason.fromJson(json['pause_reason']),
       );
 
   final String id;
@@ -35,8 +38,11 @@ class RecurringParent extends Equatable {
   /// Null from a BE that doesn't send it yet.
   final RecurringKind? kind;
 
+  /// R7: "ค้าง 3 งวด" on its due rows in ต้องจัดการ.
+  final RecurringPauseReason? pauseReason;
+
   @override
-  List<Object?> get props => [id, name, iconCode, kind];
+  List<Object?> get props => [id, name, iconCode, kind, pauseReason];
 }
 
 class RecurringItem extends Equatable {
@@ -329,7 +335,6 @@ class RecurringDetail extends Equatable {
     this.balances = const {},
     this.deletePreview,
     this.stats,
-    this.txUpdateFailed = 0,
   });
 
   factory RecurringDetail.fromJson(Map<String, dynamic> json) =>
@@ -340,10 +345,6 @@ class RecurringDetail extends Equatable {
         stats: json['stats'] is Map<String, dynamic>
             ? RecurringStats.fromJson(json['stats'] as Map<String, dynamic>)
             : null,
-        txUpdateFailed:
-            ((json['tx_update'] as Map<String, dynamic>?)?['failed'] as List?)
-                ?.length ??
-            0,
         produced: ItemPage.fromJson(json['items'] as Map<String, dynamic>?),
         upcoming: ItemPage.fromJson(json['upcoming'] as Map<String, dynamic>?),
         balances: WalletBalance.mapOf(json['account_balances']),
@@ -367,9 +368,6 @@ class RecurringDetail extends Equatable {
   /// Null from an old BE.
   final RecurringStats? stats;
 
-  /// After a rule edit with `also_update_tx`: recorded tx it couldn't update.
-  final int txUpdateFailed;
-
   @override
   List<Object?> get props => [
     recurring,
@@ -378,7 +376,6 @@ class RecurringDetail extends Equatable {
     balances,
     deletePreview,
     stats,
-    txUpdateFailed,
   ];
 }
 
@@ -439,6 +436,16 @@ class ItemWriteResult extends Equatable {
               ),
         ],
       );
+
+  /// B2: the recurring slots a write changed anywhere (`effects.slots`, a tx
+  /// delete's skip included), as a patch for a page's lists; null = none.
+  static ItemWriteResult? fromEffects(WriteEffects e) {
+    final slots = e.slots;
+    if (slots.isEmpty) return null;
+    return ItemWriteResult(
+      items: [for (final s in slots) RecurringItem.fromJson(s)],
+    );
+  }
 
   final List<RecurringItem> items;
   final List<String> deletedIds;

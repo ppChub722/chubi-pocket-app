@@ -1019,6 +1019,63 @@ class EventPatch {
       _board(json['rows']);
 }
 
+/// `POST /event-bills` / `PUT /event-bills/{pt_id}` (0.4.1-1 E8, one call
+/// for the bill sheet): the bill's patch and my transaction for it. The
+/// wallets, people and rows it moved arrive as its `effects` (B2: the caches
+/// apply them by themselves).
+class EventBillBookResult {
+  const EventBillBookResult({required this.patch, this.transactionId});
+
+  final EventPatch patch;
+
+  /// My transaction for the bill (made or kept); null = none.
+  final String? transactionId;
+
+  factory EventBillBookResult.fromJson(Map<String, dynamic> json) =>
+      EventBillBookResult(
+        patch: EventPatch.fromJson(json),
+        transactionId: json['transaction_id'] as String?,
+      );
+}
+
+/// The bill sheet's `?preview=true` (0.4.1-1 E8): every person and wallet
+/// the save would move, before → after; nothing is saved.
+class EventBillBookPreview {
+  const EventBillBookPreview({
+    this.people = const {},
+    this.wallets = const {},
+    this.debtDefault = true,
+  });
+
+  /// Person key → (before, after); net > 0 = they owe me.
+  final Map<String, ({double before, double after})> people;
+
+  /// Wallet id → (before, after).
+  final Map<String, ({double before, double after})> wallets;
+
+  /// What `my_books.debt: null` does on a payback (false = my book already
+  /// holds this event's debt with them).
+  final bool debtDefault;
+
+  factory EventBillBookPreview.fromJson(Map<String, dynamic> json) {
+    double n(Object? v) => (v as num?)?.toDouble() ?? 0;
+    return EventBillBookPreview(
+      people: {
+        for (final p in _list(json['people']))
+          p['key'] as String: (before: n(p['before']), after: n(p['after'])),
+      },
+      wallets: {
+        for (final w in _list(json['wallets']))
+          w['account_id'] as String: (
+            before: n(w['before']),
+            after: n(w['after']),
+          ),
+      },
+      debtDefault: json['debt_default'] as bool? ?? true,
+    );
+  }
+}
+
 /// Share / paid: active events. Receivable / payable and the counts: every
 /// event but archived.
 class ProjectListSummary extends Equatable {

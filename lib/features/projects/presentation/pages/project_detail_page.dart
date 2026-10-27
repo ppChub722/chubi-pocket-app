@@ -553,12 +553,13 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     if (t == _Tab.summary && _settle == null) unawaited(_loadSettle());
   }
 
-  /// สรุป: ยอดแต่ละคน (everyone, me first), then จัดการ: the fewest
-  /// transfers. A line with me in it can be recorded as my debt; a tap
-  /// records the payback in the event (anyone may).
+  /// สรุป: ยอดแต่ละคน (everyone, me first), then จัดการ: the real pairs
+  /// (each two members' own bills and paybacks, netted). A line with me in
+  /// it can be recorded as my debt; a tap records the payback in the event
+  /// (anyone may).
   Widget _summaryTab(AppLocalizations l, ProjectView v) {
     final s = _settle;
-    final lines = s?.simplified ?? const <SettleLine>[];
+    final lines = s?.pairs ?? const <SettleLine>[];
     Widget line(SettleLine x) => SettleRow(
       key: ValueKey('settle:${x.from.id}:${x.to.id}'),
       fromAvatar: ProjectMemberAvatar(

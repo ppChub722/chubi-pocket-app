@@ -6539,4 +6539,79 @@ class AppLocalizationsTh extends AppLocalizations {
   String txFutureHint(String when) {
     return '$when | นับเข้ายอดเมื่อถึงวันนั้น';
   }
+
+  @override
+  String get categorySystemLoanGiven => 'ให้กู้ยืม';
+
+  @override
+  String get categorySystemLoanTaken => 'กู้ยืม';
+
+  @override
+  String get categorySystemLockedHelper =>
+      'หมวดระบบ: เปลี่ยนชื่อและการนับในรายงานไม่ได้';
+
+  @override
+  String get debtLinkExistingLabel => 'ผูกกับรายการที่มีอยู่';
+
+  @override
+  String get debtLinkedAmountNote => 'ยอดและวันที่ตามรายการที่ผูก';
+
+  @override
+  String get debtCloseAllHint => 'ติดป้ายจ่ายแล้วให้หนี้ที่ค้างกับคนนี้ทั้งหมด';
+
+  @override
+  String get fpRecurringAutoCreateNeedsWallet => 'ต้องเลือกกระเป๋าก่อน';
+
+  @override
+  String get fpRecurringAutoCreateZeroWarn =>
+      'ไม่มียอดคงที่: ถึงวันจะบันทึกยอด 0 ให้ไปแก้เอง ไม่เหมาะกับรายการที่ยอดเปลี่ยนทุกงวด (เช่น ค่าไฟ)';
+
+  @override
+  String get txLinkDisconnect => 'ตัดการเชื่อม';
+
+  @override
+  String get txLinkDisconnectTitle => 'ตัดการเชื่อมกับอีเวนต์?';
+
+  @override
+  String get txLinkDisconnectBody =>
+      'รายการนี้จะเป็นรายการธรรมดา บิลในอีเวนต์ไม่เปลี่ยน';
+
+  @override
+  String get txLinkDisconnected => 'ตัดการเชื่อมแล้ว';
+
+  @override
+  String get occurrenceSkipFilled =>
+      'งวดนี้มีรายการแล้ว ตัดการเชื่อมรายการก่อนจึงข้ามได้';
+
+  @override
+  String get recurringPausedOverdue =>
+      'ค้าง 3 งวด: พักไว้แล้ว เคลียร์งวดที่ค้างแล้วกดเริ่มใหม่ จะเริ่มที่งวดปัจจุบัน';
+
+  @override
+  String get recurringPausedGoal => 'เป้าหมายออมปิดแล้ว: พักไว้อยู่';
+
+  @override
+  String get recurringOverdueLimitChip => 'ค้าง 3 งวด';
+
+  @override
+  String get notifTypeDebtDisconnected => 'มีคนตัดการเชื่อมหนี้กับฉัน';
+
+  @override
+  String notifDebtDisconnected(String who, String amount) {
+    return '$who ตัดการเชื่อมหนี้ $amount แล้ว';
+  }
+
+  @override
+  String debtDisconnectTitle(String name) {
+    return 'ตัดการเชื่อมหนี้กับ $name?';
+  }
+
+  @override
+  String get debtDisconnectBody =>
+      'หนี้นี้จะเป็นหนี้ธรรมดาในสมุดของคุณ แก้ได้เอง การแก้บิลของอีกฝ่ายจะไม่ตามมาอีก อีกฝ่ายจะได้รับแจ้ง';
+
+  @override
+  String debtPartnerLinked(String name) {
+    return 'เชื่อมกับสมุดของ $name';
+  }
 }

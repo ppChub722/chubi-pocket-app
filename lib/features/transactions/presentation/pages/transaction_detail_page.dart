@@ -213,6 +213,42 @@ class _LoadedState extends State<_Loaded>
     }
   }
 
+  /// "ตัดการเชื่อม" (0.4.1-1): ONE call, my-books unlink of my tx; the bill
+  /// stays as it is, my debt / repayment rows of it stay linked.
+  Future<void> _disconnectEvent() async {
+    final l = AppLocalizations.of(context)!;
+    final bill = widget.tx.eventBill;
+    if (bill == null) return;
+    final go = await showConfirmDialog(
+      context,
+      title: l.txLinkDisconnectTitle,
+      message: l.txLinkDisconnectBody,
+      confirmLabel: l.txLinkDisconnect,
+    );
+    if (!go || !mounted) return;
+    final projects = context.read<ProjectsRepository>();
+    final txCubit = context.read<TransactionsCubit>();
+    setSaving(true);
+    try {
+      await projects.setMyBooks(
+        bill.event.id,
+        bill.billId,
+        unlink: const ['tx'],
+      );
+      // The answer is the event's patch; my row comes back without the link.
+      try {
+        await txCubit.refreshOne(widget.tx.id, afterWrite: true);
+      } on ApiException {
+        // Keep the cached row.
+      }
+      _say(l.txLinkDisconnected, tone: Tone.success);
+    } on ApiException catch (e) {
+      _say(eventErrorMessage(l, e));
+    } finally {
+      if (mounted) setSaving(false);
+    }
+  }
+
   Future<void> _pickEvent() async {
     final l = AppLocalizations.of(context)!;
     final current = widget.tx.projectId;
@@ -522,6 +558,7 @@ class _LoadedState extends State<_Loaded>
       _c,
       splitsEditable: _splitsEditable,
       checkSplits: onSplitTab,
+      savedAmount: _edited.amount,
     );
     if (problem != null) {
       HapticFeedback.lightImpact();
@@ -564,8 +601,9 @@ class _LoadedState extends State<_Loaded>
           await applyEventChange(
             projects,
             txId: _edited.id,
-            currentProjectId: _edited.projectId,
+            currentProjectId: _edited.eventBill?.event.id ?? _edited.projectId,
             change: change,
+            billId: _edited.eventBill?.billId,
           );
         } on ApiException catch (e) {
           if (!mounted) return;
@@ -835,6 +873,7 @@ class _LoadedState extends State<_Loaded>
                           tx: tx,
                           onOpenEvent: openProject,
                           onApplyEvent: canEdit ? _applyEvent : null,
+                          onDisconnectEvent: canEdit ? _disconnectEvent : null,
                         ),
                       // "จ่ายคืนให้ ลี ›" / "รับคืนจาก chalee ›" → the person.
                       if (repaymentPerson != null && !editing) ...[
@@ -919,31 +958,10 @@ class _LoadedState extends State<_Loaded>
     AppLocalizations l, {
     bool repayment = false,
   }) async {
+    // 0.4.1-1: deleting my tx asks nothing about its links. A recurring
+    // slot it filled is skipped (R2); an event bill stays, only my tx leaves
+    // it (rule f).
     final tx = widget.tx;
-    final recurring = tx.recurringItem;
-    if (recurring != null && !repayment) {
-      final skip = await askDeleteRecurringTx(context, recurring);
-      if (skip == null || !context.mounted) return;
-      await _deleteNow(context, l, skipOccurrence: skip);
-      return;
-    }
-    if (tx.hasPromptedLink && !repayment) {
-      final choice = await showLinkedPrompt(
-        context,
-        title: l.linkedDeleteTitle,
-        cancelLabel: l.linkedCancel,
-        thisSideLabel: l.linkedDeleteThisOnly,
-        bothSidesLabel: l.linkedDeleteBoth,
-        destructive: true,
-      );
-      if (choice == null || !context.mounted) return;
-      await _deleteNow(
-        context,
-        l,
-        alsoDeleteLink: choice == LinkedChoice.bothSides,
-      );
-      return;
-    }
     final isTransfer = tx.type == TransactionType.transfer;
     final ok = await showConfirmDialog(
       context,
@@ -966,8 +984,6 @@ class _LoadedState extends State<_Loaded>
     BuildContext context,
     AppLocalizations l, {
     bool repayment = false,
-    bool? alsoDeleteLink,
-    bool? skipOccurrence,
   }) async {
     final tx = widget.tx;
     final router = GoRouter.of(context);
@@ -978,11 +994,7 @@ class _LoadedState extends State<_Loaded>
     final back = ShellBackScope.maybeOf(context);
     setSaving(true);
     try {
-      final result = await txCubit.remove(
-        tx.id,
-        alsoDeleteLink: alsoDeleteLink,
-        skipOccurrence: skipOccurrence,
-      );
+      final result = await txCubit.remove(tx.id);
       applyTxDeleteResult(result, accounts: accountsCubit, debts: debts);
       showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
       if (router.canPop()) {
@@ -996,13 +1008,7 @@ class _LoadedState extends State<_Loaded>
       showSaveFailure(
         context,
         e,
-        retry: () => _deleteNow(
-          context,
-          l,
-          repayment: repayment,
-          alsoDeleteLink: alsoDeleteLink,
-          skipOccurrence: skipOccurrence,
-        ),
+        retry: () => _deleteNow(context, l, repayment: repayment),
       );
     }
   }

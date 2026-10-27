@@ -82,26 +82,14 @@ void main() {
     );
   });
 
-  test('DELETE /transactions/{id}: skip_occurrence / also_delete_link', () async {
+  test('DELETE /transactions/{id}: no skip_occurrence (R2), also_delete_link as given', () async {
     adapter.body = {'id': 't1'};
-    for (final c in <({String name, bool? skip, bool? also, Map<String, dynamic> query})>[
-      (name: 'skip', skip: true, also: null, query: {'skip_occurrence': true}),
-      (
-        name: 'tx only',
-        skip: false,
-        also: null,
-        query: {'skip_occurrence': false},
-      ),
-      (name: 'no ask', skip: null, also: null, query: {}),
-      (name: 'both sides', skip: null, also: true, query: {'also_delete_link': true}),
-      (
-        name: 'this side',
-        skip: null,
-        also: false,
-        query: {'also_delete_link': false},
-      ),
+    for (final c in <({String name, bool? also, Map<String, dynamic> query})>[
+      (name: 'plain', also: null, query: {}),
+      (name: 'both sides', also: true, query: {'also_delete_link': true}),
+      (name: 'this side', also: false, query: {'also_delete_link': false}),
     ]) {
-      await repo.delete('t1', skipOccurrence: c.skip, alsoDeleteLink: c.also);
+      await repo.delete('t1', alsoDeleteLink: c.also);
       final sent = adapter.last!;
       expect(sent.method, 'DELETE', reason: c.name);
       expect(sent.path, '/transactions/t1', reason: c.name);

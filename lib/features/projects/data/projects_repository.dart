@@ -388,6 +388,75 @@ class ProjectsRepository {
     ),
   );
 
+  /// "ลงบัญชีของฉัน" in ONE call and ONE DB transaction (0.4.1-1 E8): the
+  /// new bill or payback ([bill], an EventBillInput json), the payback rows
+  /// of the people marked "คืนแล้ว" and my book ([myBooks], EventBillBooks).
+  /// [projectId] = an existing event, else [newEvent] (`{name, icon_code}`).
+  Future<EventBillBookResult> bookEventBill({
+    String? projectId,
+    Map<String, dynamic>? newEvent,
+    required Map<String, dynamic> bill,
+    required Map<String, dynamic> myBooks,
+  }) => _call(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/event-bills',
+      data: <String, dynamic>{
+        'project_id': ?projectId,
+        'new_event': ?newEvent,
+        'bill': bill,
+        'my_books': myBooks,
+      },
+    );
+    return EventBillBookResult.fromJson(res.data!);
+  });
+
+  /// [bookEventBill] on an existing bill ([ptId], its parent row): [bill]
+  /// null = my book only ("ลงบัญชี" on a bill someone else recorded).
+  Future<EventBillBookResult> rebookEventBill(
+    String ptId, {
+    Map<String, dynamic>? bill,
+    required Map<String, dynamic> myBooks,
+    bool applyToMyTx = false,
+  }) => _call(() async {
+    final res = await _client.dio.put<Map<String, dynamic>>(
+      '/event-bills/$ptId',
+      data: <String, dynamic>{
+        'bill': ?bill,
+        'my_books': myBooks,
+        if (applyToMyTx) 'apply_to_my_tx': true,
+      },
+    );
+    return EventBillBookResult.fromJson(res.data!);
+  });
+
+  /// The bill sheet's before → after lines: the same body with
+  /// `?preview=true` ([ptId] = an edit); nothing is saved.
+  Future<EventBillBookPreview> previewEventBill({
+    String? ptId,
+    String? projectId,
+    Map<String, dynamic>? bill,
+    required Map<String, dynamic> myBooks,
+  }) => _call(() async {
+    final body = <String, dynamic>{
+      if (ptId == null) 'project_id': ?projectId,
+      'bill': ?bill,
+      'my_books': myBooks,
+    };
+    const query = {'preview': 'true'};
+    final res = ptId == null
+        ? await _client.dio.post<Map<String, dynamic>>(
+            '/event-bills',
+            queryParameters: query,
+            data: body,
+          )
+        : await _client.dio.put<Map<String, dynamic>>(
+            '/event-bills/$ptId',
+            queryParameters: query,
+            data: body,
+          );
+    return EventBillBookPreview.fromJson(res.data!);
+  });
+
   /// The people a bill names, as members (non-members are added); ids come
   /// back in [people]'s order. Each person is a BillPerson json.
   Future<({List<String> memberIds, EventPatch patch})> resolvePeople(

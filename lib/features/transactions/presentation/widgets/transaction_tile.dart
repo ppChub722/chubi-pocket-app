@@ -5,6 +5,7 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../categories/presentation/category_label.dart';
+import '../../../personal_debts/domain/debt_direction.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
@@ -38,16 +39,19 @@ class TransactionTile extends StatelessWidget {
         : '';
     final description = tx.description?.trim() ?? '';
     final debt = tx.counterparty;
+    // No description: the category's name; a debt tx without one (older
+    // rows) its kind's.
     final title = description.isNotEmpty
         ? description
+        : categoryName.isNotEmpty
+        ? categoryName
         : debt != null
-        ? debtAutoTitle(
+        ? debtKindName(
             l,
-            direction: debt.direction,
-            isRepayment: false,
-            name: debt.person.name,
+            out: debt.direction == DebtEntryDirection.paid,
+            repayment: false,
           )
-        : (categoryName.isNotEmpty ? categoryName : '—');
+        : '—';
 
     final wallet = tx.account;
     final day = DateFormatter.parseDay(tx.date);

@@ -264,12 +264,21 @@ class DebtEntrySource extends Equatable {
   List<Object?> get props => [kind, id, title];
 }
 
+/// An entry's transaction (light ref), connected + synced with it.
 class DebtEntryTransaction extends Equatable {
-  const DebtEntryTransaction({required this.id, this.account});
+  const DebtEntryTransaction({
+    required this.id,
+    this.account,
+    this.connected = false,
+  });
 
   final String id;
 
   final AccountRef? account;
+
+  /// 0.4.1-1 D2: an existing transaction connected later (can disconnect);
+  /// false = made from the entry (can't; delete it, the entry stays).
+  final bool connected;
 
   factory DebtEntryTransaction.fromJson(Map<String, dynamic> json) =>
       DebtEntryTransaction(
@@ -277,10 +286,11 @@ class DebtEntryTransaction extends Equatable {
         account: json['account'] is Map
             ? AccountRef.fromJson(_map(json['account'])!)
             : null,
+        connected: (json['connected'] as bool?) ?? false,
       );
 
   @override
-  List<Object?> get props => [id, account];
+  List<Object?> get props => [id, account, connected];
 }
 
 class DebtEntry extends Equatable {
@@ -302,7 +312,16 @@ class DebtEntry extends Equatable {
     this.origin,
     this.runningBalance,
     this.dueDate,
+    this.partnerLinked = false,
+    this.disconnectedAt,
   });
+
+  /// D9: a copy of this debt is in the other user's book now (a linked
+  /// split / paid_by / partner); only then "ตัดการเชื่อม" shows.
+  final bool partnerLinked;
+
+  /// D9: when either side disconnected it (a plain debt since).
+  final DateTime? disconnectedAt;
 
   /// "กำหนดจ่าย" (0.4.0-3); never on a repayment.
   final DateTime? dueDate;
@@ -318,12 +337,12 @@ class DebtEntry extends Equatable {
   double get signedAmount =>
       direction == DebtEntryDirection.paid ? amount : -amount;
 
-  /// A debt's id; on a [isRepayment] statement line, its transaction's id.
+  /// The person-book row's id, debt or repayment (0.4.1-1 D3).
   final String id;
 
-  /// A person-statement line that is a REPAYMENT (a transaction tied to the
-  /// person, `kind: "repayment"`, 0.4.0-3) rather than a debt. It opens
-  /// /transactions/{id}; it has no paid label and no source.
+  /// A REPAYMENT row (`kind: "repayment"`) rather than a debt: tied to the
+  /// person, a transaction optional (0.4.1-1 D3). Like a debt it opens
+  /// /personal-debts/{id}; it has no paid label, no due date, no origin.
   final bool isRepayment;
 
   final bool? inCurrentCycle;
@@ -373,6 +392,8 @@ class DebtEntry extends Equatable {
         : null,
     runningBalance: (json['running_balance'] as num?)?.toDouble(),
     dueDate: _date(json['due_date']),
+    partnerLinked: json['partner_linked'] == true,
+    disconnectedAt: _date(json['disconnected_at']),
   );
 
   static DebtEntry? maybe(Object? json) =>
@@ -397,6 +418,8 @@ class DebtEntry extends Equatable {
     origin,
     runningBalance,
     dueDate,
+    partnerLinked,
+    disconnectedAt,
   ];
 }
 
@@ -604,16 +627,14 @@ class DebtEntryDetail extends Equatable {
     required this.entry,
     required this.balance,
     this.transaction,
-    this.linkedTransaction,
   });
 
   final DebtEntry entry;
   final PersonBalance balance;
-  final Transaction? transaction;
 
-  /// One of my own transactions linked to the entry (บันทึกในรายการ); never
-  /// set together with [transaction].
-  final Transaction? linkedTransaction;
+  /// The entry's transaction as a full row, made from it or connected
+  /// (`entry.transaction.connected`); null = ledger-only.
+  final Transaction? transaction;
 
   factory DebtEntryDetail.fromJson(Map<String, dynamic> json) =>
       DebtEntryDetail(
@@ -622,46 +643,46 @@ class DebtEntryDetail extends Equatable {
         transaction: json['transaction'] is Map
             ? Transaction.fromJson(_map(json['transaction'])!)
             : null,
-        linkedTransaction: json['linked_transaction'] is Map
-            ? Transaction.fromJson(_map(json['linked_transaction'])!)
-            : null,
       );
 
   @override
-  List<Object?> get props => [entry, balance, transaction, linkedTransaction];
+  List<Object?> get props => [entry, balance, transaction];
 }
 
+/// Every person-book write (debt or repayment; create, edit, link, unlink).
 class DebtEntryWriteResult extends Equatable {
   const DebtEntryWriteResult({
     required this.entry,
     required this.balance,
+    this.item,
     this.previousBalance,
     this.transaction,
-    this.linkedTransaction,
     this.accountBalances = const {},
   });
 
   final DebtEntry entry;
 
+  /// Create only: the entry as its person-page statement line (with
+  /// `running_balance` / `in_current_cycle`).
+  final DebtEntry? item;
+
   final PersonBalance balance;
 
   final PersonBalance? previousBalance;
 
+  /// The entry's transaction (full row); null = ledger-only.
   final Transaction? transaction;
-  final Transaction? linkedTransaction;
 
   final Map<String, double> accountBalances;
 
   factory DebtEntryWriteResult.fromJson(Map<String, dynamic> json) =>
       DebtEntryWriteResult(
         entry: DebtEntry.fromJson(_map(json['entry'])!),
+        item: DebtEntry.maybe(json['item']),
         balance: PersonBalance.fromJson(_map(json['person_balance'])!),
         previousBalance: PersonBalance.maybe(json['previous_person_balance']),
         transaction: json['transaction'] is Map
             ? Transaction.fromJson(_map(json['transaction'])!)
-            : null,
-        linkedTransaction: json['linked_transaction'] is Map
-            ? Transaction.fromJson(_map(json['linked_transaction'])!)
             : null,
         accountBalances: WalletBalance.mapOf(json['account_balances']),
       );
@@ -669,37 +690,12 @@ class DebtEntryWriteResult extends Equatable {
   @override
   List<Object?> get props => [
     entry,
+    item,
     balance,
     previousBalance,
     transaction,
-    linkedTransaction,
     accountBalances,
   ];
-}
-
-/// What `POST /personal-debts/people/{key}/repayments` answers (0.4.0-3): the
-/// ONE transaction it made, the person's balance after it and the wallet
-/// balances it moved.
-class DebtRepaymentResult extends Equatable {
-  const DebtRepaymentResult({
-    required this.transaction,
-    required this.balance,
-    this.accountBalances = const {},
-  });
-
-  final Transaction transaction;
-  final PersonBalance balance;
-  final Map<String, double> accountBalances;
-
-  factory DebtRepaymentResult.fromJson(Map<String, dynamic> json) =>
-      DebtRepaymentResult(
-        transaction: Transaction.fromJson(_map(json['transaction'])!),
-        balance: PersonBalance.fromJson(_map(json['person_balance'])!),
-        accountBalances: WalletBalance.mapOf(json['account_balances']),
-      );
-
-  @override
-  List<Object?> get props => [transaction, balance, accountBalances];
 }
 
 class DebtEntryDeleteResult extends Equatable {

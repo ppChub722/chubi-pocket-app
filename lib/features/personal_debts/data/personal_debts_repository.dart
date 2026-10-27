@@ -50,13 +50,18 @@ class PersonalDebtsRepository {
     }
   }
 
+  /// A DEBT (ให้ยืม / ยืม). The transaction side: none (ledger-only), a new
+  /// one ([createTransaction] / [accountId]) or one of mine connected in the
+  /// same call ([linkTransactionId]: its amount and date are used, so
+  /// [amount] may be null).
   Future<DebtEntryWriteResult> createEntry(
     String key, {
     required DebtEntryDirection direction,
-    required double amount,
+    double? amount,
     DateTime? date,
     String? accountId,
     bool? createTransaction,
+    String? linkTransactionId,
     String? description,
     String? note,
     List<String>? tagIds,
@@ -71,10 +76,11 @@ class PersonalDebtsRepository {
         '/personal-debts/people/${Uri.encodeComponent(key)}/entries',
         data: <String, dynamic>{
           'direction': direction.wire,
-          'amount': amount,
+          'amount': ?amount,
           if (date != null) 'date': debtDateWire(date),
           'account_id': ?accountId,
           'create_transaction': ?createTransaction,
+          'link_transaction_id': ?linkTransactionId,
           'description': ?description,
           'note': ?note,
           if ((accountId != null || createTransaction == true) &&
@@ -98,19 +104,24 @@ class PersonalDebtsRepository {
   }
 
   /// `POST /personal-debts/people/{key}/repayments` (createDebtRepayment): a
-  /// repayment = ONE transaction tied to the person (expense "Debt Paid" /
-  /// income "Debt Received"), not a debt row (owner 2026-10-21). No wallet =
-  /// the transaction moves no balance.
-  Future<DebtRepaymentResult> createRepayment(
+  /// repayment is a person-book row tied to the PERSON (0.4.1-1 D3), its
+  /// transaction optional as on a debt: none = ledger-only ("paid outside
+  /// the app"), [createTransaction] (wallet optional) = a new one (expense
+  /// "Debt Paid" / income "Debt Received"), [linkTransactionId] = one of mine
+  /// connected ([amount] may then be null). [markAllPaid] = ปิดหนี้.
+  Future<DebtEntryWriteResult> createRepayment(
     String key, {
     required DebtRepaymentKind kind,
-    required double amount,
+    double? amount,
     String? accountId,
+    bool? createTransaction,
+    String? linkTransactionId,
     DateTime? date,
     String? description,
     String? note,
     List<String>? tagIds,
     List<String>? markPaidIds,
+    bool markAllPaid = false,
     String? personName,
     String? billId,
   }) async {
@@ -119,19 +130,22 @@ class PersonalDebtsRepository {
         '/personal-debts/people/${Uri.encodeComponent(key)}/repayments',
         data: <String, dynamic>{
           'kind': kind.wire,
-          'amount': amount,
+          'amount': ?amount,
           'account_id': ?accountId,
+          'create_transaction': ?createTransaction,
+          'link_transaction_id': ?linkTransactionId,
           if (date != null) 'date': debtDateWire(date),
           'description': ?description,
           'note': ?note,
           if (tagIds != null && tagIds.isNotEmpty) 'tag_ids': tagIds,
           if (markPaidIds != null && markPaidIds.isNotEmpty)
             'mark_paid_ids': markPaidIds,
+          if (markAllPaid) 'mark_all_paid': true,
           'person_name': ?personName,
           'bill_id': ?billId,
         },
       );
-      return DebtRepaymentResult.fromJson(res.data!);
+      return DebtEntryWriteResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
@@ -202,14 +216,23 @@ class PersonalDebtsRepository {
   Future<DebtEntryWriteResult> setPaid(String id, bool paid) =>
       updateEntry(id, DebtEntryUpdate(paid: paid));
 
-  /// บันทึกในรายการ: points the entry at one of my transactions (its own
-  /// transaction, if any, goes).
+  /// ผูกกับรายการที่มีอยู่ (0.4.1-1 D2): one of my transactions becomes the
+  /// entry's, connected + synced (the entry takes its amount and date; it
+  /// takes the kind's category). Only an entry with no transaction (409
+  /// ENTRY_HAS_TRANSACTION).
   Future<DebtEntryWriteResult> linkTx(String id, String transactionId) =>
       _write('/personal-debts/$id/link', {'transaction_id': transactionId});
 
-  /// Drops the link; the transaction stays.
+  /// Disconnects a CONNECTED transaction (its old category comes back); the
+  /// entry stays ledger-only. A transaction made from the entry: 409
+  /// TX_NOT_DISCONNECTABLE.
   Future<DebtEntryWriteResult> unlinkTx(String id) =>
       _write('/personal-debts/$id/unlink', null);
+
+  /// D9: my copy of a linked debt stops following the other user's (my
+  /// side only); they get debt_disconnected. 409 DEBT_NOT_LINKED.
+  Future<DebtEntryWriteResult> disconnect(String id) =>
+      _write('/personal-debts/$id/disconnect', null);
 
   Future<DebtEntryWriteResult> _write(String path, Object? body) async {
     try {

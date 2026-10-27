@@ -88,6 +88,13 @@ class EmbeddedCategory extends Equatable {
 
   bool get isDebtRepayment =>
       systemKind == 'DEBT_PAID' || systemKind == 'DEBT_RECEIVED';
+
+  /// One of the four person-book kinds (ให้กู้ยืม, กู้ยืม, ชำระหนี้,
+  /// รับชำระหนี้).
+  bool get isDebtKind =>
+      isDebtRepayment ||
+      systemKind == 'LOAN_GIVEN' ||
+      systemKind == 'LOAN_TAKEN';
   bool get isTransferOut => systemKind == 'TRANSFER_OUT';
   bool get isTransferIn => systemKind == 'TRANSFER_IN';
 
@@ -111,6 +118,7 @@ class EmbeddedCategory extends Equatable {
     iconCode: iconCode,
     parentId: parentId,
     isSystem: isSystem,
+    systemKind: systemKind,
     sortOrder: sortOrder,
   );
 

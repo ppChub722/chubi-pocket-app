@@ -26,21 +26,25 @@ DebtEntryDirection? debtDirectionFor(double? net) =>
       NetSide.even => null,
     };
 
-/// The default words of a debt with no description of its own (quick create
-/// saves a typed one, or none); shown wherever an entry (or its wallet
-/// transaction) has none.
-String debtAutoTitle(
+/// A person-book kind as its system category's name (ให้กู้ยืม, กู้ยืม,
+/// ชำระหนี้, รับชำระหนี้): what an entry with no description of its own shows
+/// (owner 2026-10-26; no generated "ให้ ลี ยืม" any more). [out] = the money
+/// went from me to them.
+String debtKindName(
   AppLocalizations l, {
-  required DebtEntryDirection direction,
-  required bool isRepayment,
-  required String name,
-}) {
-  final paid = direction == DebtEntryDirection.paid;
-  if (isRepayment) {
-    return paid ? l.debtRepayDescPay(name) : l.debtRepayDescReceive(name);
-  }
-  return paid ? l.debtOriginLend(name) : l.debtOriginBorrow(name);
-}
+  required bool out,
+  required bool repayment,
+}) => repayment
+    ? (out ? l.categorySystemDebtPaid : l.categorySystemDebtReceived)
+    : (out ? l.categorySystemLoanGiven : l.categorySystemLoanTaken);
+
+/// [debtKindName] of a stored entry: paid = money out of me, both for a debt
+/// (I lent) and a repayment (I paid back).
+String debtEntryKindName(AppLocalizations l, DebtEntry e) => debtKindName(
+  l,
+  out: e.direction == DebtEntryDirection.paid,
+  repayment: e.isRepayment,
+);
 
 String debtPersonPath(String key) =>
     '/personal-debts/people/${Uri.encodeComponent(key)}';

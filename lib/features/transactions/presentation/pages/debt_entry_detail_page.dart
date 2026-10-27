@@ -26,6 +26,7 @@ import '../save_failure.dart';
 import '../widgets/debt_entry_form.dart';
 import '../widgets/draft_form.dart';
 import '../widgets/pick_chip_rows.dart';
+import '../widgets/quick_create_sheet.dart';
 import '../widgets/transaction_picker.dart';
 import '../widgets/transaction_tile.dart';
 
@@ -126,7 +127,11 @@ class _DebtEntryViewState extends State<_DebtEntryView>
 
   bool get _sourced => _entry.source != null;
 
-  Transaction? get _linked => widget.detail.linkedTransaction;
+  /// An existing transaction of mine connected later (0.4.1-1 D2): synced,
+  /// can disconnect; its wallet and tags change on its own page.
+  bool get _connected => _entry.transaction?.connected ?? false;
+
+  Transaction? get _linked => _connected ? widget.detail.transaction : null;
 
   @override
   void initState() {
@@ -303,7 +308,11 @@ class _DebtEntryViewState extends State<_DebtEntryView>
   Future<void> _save() async {
     final l = AppLocalizations.of(context)!;
     commitTextSession();
-    if (_c.amountValue <= 0) {
+    // 0.4.1-1 B1: only the system writes 0 (a synced / auto-made row); such
+    // a row saves while its amount is untouched, a typed amount stays > 0.
+    final untouchedZero =
+        _entry.amount.abs() < 0.005 && working.amount == original.amount;
+    if (_c.amountValue <= 0 && !untouchedZero) {
       HapticFeedback.lightImpact();
       _say(l.quickAmountRequired, Tone.danger);
       return;
@@ -345,12 +354,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       txCubit.dropRow(oldTxId);
     }
     widget.onChanged(
-      DebtEntryDetail(
-        entry: r.entry,
-        balance: r.balance,
-        transaction: tx,
-        linkedTransaction: r.linkedTransaction,
-      ),
+      DebtEntryDetail(entry: r.entry, balance: r.balance, transaction: tx),
     );
   }
 
@@ -367,7 +371,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       near: e.date ?? DateTime.now(),
       amount: e.amount,
       createLabel: l.debtLinkTx,
-      exclude: (t) => t.isDebtEntry || t.isRepayment,
+      exclude: (t) => t.debtLink != null,
     );
     if (r == null || !mounted) return;
     final tx = r.tx;
@@ -375,8 +379,30 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     await _writeLink((repo) => repo.linkTx(e.id, tx.id));
   }
 
-  Future<void> _unlink() =>
-      _writeLink((repo) => repo.unlinkTx(_entry.id));
+  Future<void> _unlink() => _writeLink((repo) => repo.unlinkTx(_entry.id));
+
+  /// D9: my copy stops following the other user's (my side only, ONE
+  /// call); it stays a plain debt with that person. They get a notice.
+  Future<void> _disconnectPartner() async {
+    final l = AppLocalizations.of(context)!;
+    final name = widget.detail.balance.person.name;
+    final ok = await showConfirmDialog(
+      context,
+      title: l.debtDisconnectTitle(name),
+      message: l.debtDisconnectBody,
+      confirmLabel: l.txLinkDisconnect,
+    );
+    if (!ok || !mounted) return;
+    var done = false;
+    await _writeLink((repo) async {
+      final r = await repo.disconnect(_entry.id);
+      done = true;
+      return r;
+    });
+    if (mounted && done) {
+      showAppSnackBar(context, l.txLinkDisconnected, tone: Tone.success);
+    }
+  }
 
   Future<void> _writeLink(
     Future<DebtEntryWriteResult> Function(PersonalDebtsRepository repo) call,
@@ -389,7 +415,10 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       _applyWrite(r);
       // A link replaces the entry's own transaction: an open edit follows.
       if (isEditing && r.transaction == null && working.createTx) {
-        rebaseEdit(original: original.withoutTx(), working: working.withoutTx());
+        rebaseEdit(
+          original: original.withoutTx(),
+          working: working.withoutTx(),
+        );
       }
     } catch (e) {
       if (mounted) _say(_failed(e), Tone.danger);
@@ -472,7 +501,9 @@ class _DebtEntryViewState extends State<_DebtEntryView>
 
   Future<void> _confirmDelete() async {
     final l = AppLocalizations.of(context)!;
-    final wallet = widget.detail.transaction?.account?.name;
+    // A connected transaction stays (disconnected, 0.4.1-1 D2): only the
+    // entry goes.
+    final wallet = _connected ? null : widget.detail.transaction?.account?.name;
     final ok = await showConfirmDialog(
       context,
       title: l.debtEntryDeleteTitle,
@@ -525,9 +556,11 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     final now = DateTime.now();
     final late = due == null
         ? 0
-        : DateTime(now.year, now.month, now.day)
-              .difference(DateTime(due.year, due.month, due.day))
-              .inDays;
+        : DateTime(
+            now.year,
+            now.month,
+            now.day,
+          ).difference(DateTime(due.year, due.month, due.day)).inDays;
     final overdue = late > 0;
     final status = _paid
         ? l.debtsPaidChip
@@ -563,13 +596,24 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     );
   }
 
-  /// Shown in italics when the entry has no description of its own.
-  String _autoTitle(AppLocalizations l, DebtEntry e) => debtAutoTitle(
-    l,
-    direction: e.direction,
-    isRepayment: e.isRepayment,
-    name: _c.person?.person.name ?? widget.detail.balance.person.name,
-  );
+  /// A debt one of my transactions made (แบ่ง / จ่ายแทน): "edit" opens that
+  /// transaction's edit (owner 2026-10-26). A partner's copy or an event's
+  /// debt has no tx of mine here.
+  String? get _originTxId {
+    final o = _entry.origin;
+    if (o == null || o.kind == 'partner' || o.kind == 'event') return null;
+    return o.transactionId;
+  }
+
+  /// Every "edit" on this page: the origin transaction's edit when there is
+  /// one, else this page's edit mode.
+  void _edit({FocusNode? focus, VoidCallback? then}) {
+    final txId = _originTxId;
+    if (txId == null) return enterEdit(focus: focus, then: then);
+    editTransaction(context, txId).then((saved) {
+      if (saved && mounted) widget.onRefresh();
+    });
+  }
 
   /// "มาจาก (แบ่งบิล)" — the kind in words.
   String _originKind(AppLocalizations l, DebtOrigin o) => switch (o.kind) {
@@ -605,7 +649,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
         ? _c.createTransaction
         : widget.detail.transaction != null;
     final other = _linked;
-    if (!linked && other != null) {
+    if (other != null) {
       final ref = other.account;
       Account? full;
       for (final a in context.watch<AccountsCubit>().state.accounts) {
@@ -618,7 +662,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
         placeholder: l.debtNoWallet,
         dense: true,
         editable: false,
-        onLongPress: editing ? null : () => enterEdit(),
+        onLongPress: editing ? null : () => _edit(),
         onTap: editing || ref == null
             ? null
             : () => openPage(context, '/accounts/${ref.id}'),
@@ -633,7 +677,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
         reserveSubtitle: true,
         leading: const PickCardEmptyIcon(AppIcons.link, size: 32),
         editable: editing,
-        onLongPress: editing ? null : () => enterEdit(),
+        onLongPress: editing ? null : () => _edit(),
         onTap: _pickLink,
       );
     }
@@ -657,7 +701,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       placeholder: noneOnPurpose ? l.debtNoWallet : l.quickPickWallet,
       dense: true,
       editable: editing,
-      onLongPress: editing ? null : () => enterEdit(),
+      onLongPress: editing ? null : () => _edit(),
       onTap: editing
           ? _pickAccount
           : walletId == null
@@ -715,7 +759,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
               size: 32,
             ),
       editable: editable,
-      onLongPress: canEditHere ? () => enterEdit(then: _pickPerson) : null,
+      onLongPress: canEditHere ? () => _edit(then: _pickPerson) : null,
       onTap: editable
           ? _pickPerson
           : isEditing || p == null
@@ -732,7 +776,8 @@ class _DebtEntryViewState extends State<_DebtEntryView>
         from: out ? mine : personCard,
         to: out ? personCard : mine,
         swapTooltip: l.quickSwap,
-        onSwap: isEditing
+        // A connected transaction's type can't flip (400 on the BE).
+        onSwap: isEditing && !_connected
             ? () => _c.setDirection(
                 out ? DebtEntryDirection.received : DebtEntryDirection.paid,
               )
@@ -805,7 +850,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       children: [
         DetailRow(
           label: l.debtDueLabel,
-          onLongPress: isEditing ? null : () => enterEdit(then: _pickDue),
+          onLongPress: isEditing ? null : () => _edit(then: _pickDue),
           trailing: Align(
             alignment: AlignmentDirectional.centerEnd,
             child: chip,
@@ -891,7 +936,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     final source = e.source;
     final tags = !_c.createTransaction
         ? null
-        : editing && !_sourced
+        : editing && !_sourced && !_connected
         ? TagChipRow(
             selected: _c.tagIds,
             onRemove: _c.toggleTag,
@@ -944,22 +989,23 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                       type: _c.direction == DebtEntryDirection.paid
                           ? TransactionType.expense
                           : TransactionType.income,
-                      headerLeading: _paidBox(l),
+                      // A repayment has no "จ่ายแล้ว" label (0.4.1-1 D3).
+                      headerLeading: e.isRepayment ? null : _paidBox(l),
                       // No direction chips: the flow cards' arrow says (and,
                       // in edit mode, swaps) it.
                       typeBadge: const SizedBox.shrink(),
                       amount: _c.amount,
                       title: _c.description,
-                      // A recorded debt says what it was for; a repayment's
-                      // and a split's text comes from the app.
-                      titleReadOnly: e.isRepayment || _sourced,
-                      titleLabel: l.debtOriginFieldLabel,
-                      titlePlaceholder: _autoTitle(l, e),
+                      // Typed freely on every kind; empty = the kind's
+                      // category name (owner 2026-10-26). A split's text
+                      // comes from its bill.
+                      titleReadOnly: _sourced,
+                      titlePlaceholder: debtEntryKindName(l, e),
                       dateLabel: _dayLabel(l, _c.date),
                       onPickDate: editing && !_sourced ? _pickDate : null,
                       symbol: symbol,
-                      onEdit: () => enterEdit(),
-                      onLongPressField: (f) => enterEdit(focus: f),
+                      onEdit: () => _edit(),
+                      onLongPressField: (f) => _edit(focus: f),
                       footer: _cards(l, symbol),
                     ),
                   ],
@@ -972,7 +1018,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                     editing: editing,
                     text: _c.note.text,
                     hint: l.commonLongPressToEdit,
-                    onLongPress: () => enterEdit(),
+                    onLongPress: () => _edit(),
                     editField: DetailTextField(
                       label: l.commonNote,
                       controller: _c.note,
@@ -982,10 +1028,36 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                       hint: l.debtNoteHint,
                     ),
                   ),
-                  if (!e.isRepayment && !_sourced)
+                  // Debts and repayments alike: connect one of my
+                  // transactions while there is none, or show / disconnect
+                  // the connected one (a tx made from the entry is the
+                  // wallet card above).
+                  if (!_sourced &&
+                      (widget.detail.transaction == null || _connected))
                     (first) => _linkSection(l, symbol, first),
                   if (!e.isRepayment && (editing || _c.dueDate != null))
                     (first) => _dueSection(l, first),
+                  // D9: a copy lives in the other user's book; disconnect my
+                  // side (view mode, not through _edit).
+                  if (e.partnerLinked && !editing)
+                    (first) => SectionCard(
+                      first: first,
+                      children: [
+                        DetailRow(
+                          key: const ValueKey('debtPartnerLinked'),
+                          label: l.debtPartnerLinked(
+                            widget.detail.balance.person.name,
+                          ),
+                          trailing: AppButton(
+                            key: const ValueKey('debtDisconnectPartner'),
+                            label: l.txLinkDisconnect,
+                            variant: AppButtonVariant.outlined,
+                            size: AppButtonSize.control,
+                            onPressed: isSaving ? null : _disconnectPartner,
+                          ),
+                        ),
+                      ],
+                    ),
                   // An older BE without `origin`: the split source row.
                   if (source != null && e.origin == null)
                     (first) => SectionCard(

@@ -84,12 +84,11 @@ class _PersonViewState extends State<_PersonView> {
     balance: s.balance,
   );
 
-  /// Every statement line opens (0.4.0-3): a repayment is a transaction
-  /// (its id IS the tx id); a debt opens its own page.
-  void _openEntry(DebtEntry e) => openPage(
-    context,
-    e.isRepayment ? '/transactions/${e.id}' : '/personal-debts/entries/${e.id}',
-  );
+  /// Every statement line opens its own page, debt or repayment (0.4.1-1 D4:
+  /// a repayment is a person-book row, its id the entry's, a transaction
+  /// optional).
+  void _openEntry(DebtEntry e) =>
+      openPage(context, '/personal-debts/entries/${e.id}');
 
   /// [จ่ายคืน ฿x] / [รับคืน ฿x]: quick create, settle chip, the open amount.
   Future<void> _settle(DebtPersonState s) async {

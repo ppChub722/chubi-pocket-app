@@ -161,9 +161,15 @@ class RecurringDraft {
   bool get amountOptional => kind == RecurringKind.reminder;
 
   /// บันทึกอัตโนมัติ needs a fixed amount and the wallet(s).
-  bool get canAutoCreate {
+  /// Auto-create never waits (R12): it books at amount 0 when there is no
+  /// amount, so only the wallet is needed.
+  bool get canAutoCreate => walletOk;
+
+  /// Auto-create with no amount (or a varying one, entered as none) books
+  /// 0 every time: the form warns that it isn't a good fit.
+  bool get autoCreateWarns {
     final a = AmountInput.parse(amount);
-    return a != null && a > 0 && walletOk;
+    return autoCreate && canAutoCreate && (a == null || a <= 0);
   }
 
   RecurringDraft withKind(RecurringKind k) {
@@ -222,17 +228,6 @@ class RecurringDraft {
     goalId: id,
     goalPicked: true,
   );
-
-  /// What a rule edit can carry over to its recorded tx (R20): never the
-  /// date or the amount.
-  bool txFieldsDiffer(RecurringDraft o) =>
-      name.trim() != o.name.trim() ||
-      note.trim() != o.note.trim() ||
-      accountId != o.accountId ||
-      toAccountId != o.toAccountId ||
-      categoryId != o.categoryId ||
-      goalId != o.goalId ||
-      !setEquals(tagIds, o.tagIds);
 
   bool get walletOk =>
       accountId != null && (!isTransfer || toAccountId != null);

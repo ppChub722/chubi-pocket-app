@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../ui/ui.dart';
 import '../domain/recurrence_rule.dart' show parseYmd, ymd;
 import '../domain/recurring.dart';
 import '../domain/recurring_item.dart';
@@ -44,24 +43,16 @@ class RecurringRepository {
     return RecurringDetail.fromJson(res.data!);
   });
 
-  Future<RecurringDetail> update(
-    String id,
-    RecurringWrite write, {
-    EditScope scope = EditScope.upcoming,
-    bool alsoUpdateLink = false,
-    bool alsoUpdateTx = false,
-  }) => _call((dio) async {
-    final res = await dio.put<Map<String, dynamic>>(
-      '/recurring/$id',
-      data: {
-        ...write.toJson(forUpdate: true),
-        'scope': scope.toJson(),
-        'also_update_link': alsoUpdateLink,
-        'also_update_tx': alsoUpdateTx,
-      },
-    );
-    return RecurringDetail.fromJson(res.data!);
-  });
+  /// A rule edit reaches only the slots not filled yet (R6): no scope, no
+  /// carry-over to recorded tx.
+  Future<RecurringDetail> update(String id, RecurringWrite write) =>
+      _call((dio) async {
+        final res = await dio.put<Map<String, dynamic>>(
+          '/recurring/$id',
+          data: write.toJson(forUpdate: true),
+        );
+        return RecurringDetail.fromJson(res.data!);
+      });
 
   Future<RecurringDetail> duplicate(String id) => _call((dio) async {
     final res = await dio.post<Map<String, dynamic>>(
@@ -239,19 +230,20 @@ class RecurringRepository {
     'account_id': ?accountId,
   });
 
-  /// ข้าม; [deleteTx] also deletes the tx it is linked to.
-  Future<ItemWriteResult> skipOccurrence(
-    String ruleId,
-    String slot, {
-    bool? deleteTx,
-  }) => _occWrite('${_occ(ruleId, slot)}/skip', {'delete_tx': ?deleteTx});
+  /// ข้าม an open one; a filled one answers 409 (unlink its tx first).
+  Future<ItemWriteResult> skipOccurrence(String ruleId, String slot) =>
+      _occWrite('${_occ(ruleId, slot)}/skip');
 
   Future<ItemWriteResult> restoreOccurrence(String ruleId, String slot) =>
       _occWrite('${_occ(ruleId, slot)}/restore');
 
-  /// จ่ายแล้ว without a tx.
-  Future<ItemWriteResult> markOccurrencePaid(String ruleId, String slot) =>
-      _occWrite('${_occ(ruleId, slot)}/mark-paid');
+  /// จ่ายแล้ว without a tx (R5): [amount], else its planned one (400
+  /// AMOUNT_REQUIRED with neither).
+  Future<ItemWriteResult> markOccurrencePaid(
+    String ruleId,
+    String slot, {
+    double? amount,
+  }) => _occWrite('${_occ(ruleId, slot)}/mark-paid', {'amount': ?amount});
 
   Future<ItemWriteResult> unmarkOccurrencePaid(String ruleId, String slot) =>
       _occWrite('${_occ(ruleId, slot)}/unmark-paid');
@@ -294,7 +286,6 @@ class RecurringRepository {
     final res = await dio.get<Map<String, dynamic>>('/recurring-items/$id');
     return RecurringItem.fromJson(res.data!);
   });
-
 }
 
 enum RecurringAction { pause, resume, archive, restore, extend }
@@ -313,5 +304,6 @@ enum OccurrenceBulk {
   final String wire;
 }
 
-/// One row of [RecurringRepository.settleMany]; [amount] is for confirm only.
+/// One row of [RecurringRepository.settleMany]; [amount] is for confirm and
+/// mark_paid (R5).
 typedef OccurrenceRef = ({String ruleId, String slot, double? amount});

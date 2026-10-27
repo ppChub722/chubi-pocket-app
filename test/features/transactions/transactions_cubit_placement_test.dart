@@ -1,4 +1,5 @@
 import 'package:chubi_pocket/core/data/data_changes.dart';
+import 'package:chubi_pocket/core/data/write_effects.dart';
 import 'package:chubi_pocket/features/transactions/data/transactions_repository.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
@@ -320,5 +321,84 @@ void main() {
         ]),
       ),
     ]);
+  });
+
+  test(
+    'effects table (B2): one published write patches every live list',
+    () async {
+      Map<String, dynamic> j(String id, String date, {double amount = 100}) => {
+        'id': id,
+        'account': {'id': 'a1', 'name': 'a1'},
+        'type': 'expense',
+        'amount': amount,
+        'date': date,
+        'category': {'id': 'c1', 'name': 'c1'},
+      };
+      WriteEffects fx({
+        List<Map<String, dynamic>> txs = const [],
+        List<String> removed = const [],
+      }) => WriteEffects.of({
+        'effects': {'transactions': txs, 'removed_transaction_ids': removed},
+      })!;
+      await _check([
+        (
+          name: 'changed row patches in place, removed one drops',
+          run: (e) async {
+            await e.cubit.load();
+            WriteEffectsBus.instance.publish(
+              fx(txs: [j('t2', '2026-10-05', amount: 7)], removed: ['t1']),
+            );
+            return [e.ids(), e.cubit.byId('t2')?.amount];
+          },
+          expected: [
+            ['t3', 't2'],
+            7.0,
+          ],
+        ),
+        (
+          name: 'a new row joins by date; another live list gets it too',
+          run: (e) async {
+            final other = e.another();
+            await e.cubit.load();
+            await other.load();
+            WriteEffectsBus.instance.publish(fx(txs: [j('t9', '2026-10-06')]));
+            return [
+              e.ids(),
+              other.state.transactions.map((t) => t.id).toList(),
+            ];
+          },
+          expected: [
+            ['t3', 't9', 't2', 't1'],
+            ['t3', 't9', 't2', 't1'],
+          ],
+        ),
+        (
+          name: 'a closed cubit takes nothing',
+          run: (e) async {
+            await e.cubit.load();
+            await e.cubit.close();
+            WriteEffectsBus.instance.publish(fx(removed: ['t3']));
+            return e.ids();
+          },
+          expected: ['t3', 't2', 't1'],
+        ),
+      ]);
+    },
+  );
+
+  test('WriteEffects.of: only a body with an effects map', () {
+    expect(WriteEffects.of(null), isNull);
+    expect(WriteEffects.of({'id': 't1'}), isNull);
+    final e = WriteEffects.of({
+      'effects': {
+        'account_balances': [
+          {'account_id': 'a1', 'balance': 5},
+        ],
+        'removed_debt_ids': ['d1'],
+      },
+    })!;
+    expect(e.accountBalances.single['balance'], 5);
+    expect(e.removedDebtIds, ['d1']);
+    expect(e.transactions, isEmpty, reason: 'a missing key reads as none');
   });
 }

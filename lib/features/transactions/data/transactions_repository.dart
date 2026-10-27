@@ -375,20 +375,16 @@ class TransactionsRepository {
     return body;
   }
 
-  /// [skipOccurrence]: a tx linked to a recurring occurrence also skips it
-  /// (else the occurrence becomes due / upcoming again).
+  /// A recurring occurrence the tx filled is always skipped by the server
+  /// (0.4.1-1 R2).
   Future<DeleteTransactionResult> delete(
     String id, {
     bool? alsoDeleteLink,
-    bool? skipOccurrence,
   }) async {
     try {
       final res = await _client.dio.delete<Map<String, dynamic>>(
         '/transactions/$id',
-        queryParameters: {
-          'also_delete_link': ?alsoDeleteLink,
-          'skip_occurrence': ?skipOccurrence,
-        },
+        queryParameters: {'also_delete_link': ?alsoDeleteLink},
       );
       return DeleteTransactionResult.fromJson(res.data!);
     } on DioException catch (e) {

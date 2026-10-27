@@ -12,7 +12,13 @@ enum AcceptRoute {
   linkRequest,
 }
 
-enum RejectRoute { walletInvite, linkRequest, projectInvite, markActioned, dismiss }
+enum RejectRoute {
+  walletInvite,
+  linkRequest,
+  projectInvite,
+  markActioned,
+  dismiss,
+}
 
 AcceptRoute acceptRouteOf(NotificationType type) => switch (type) {
   NotificationType.accountInvite => AcceptRoute.walletInvite,

@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -14,11 +17,9 @@ import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../categories/presentation/widgets/category_picker.dart';
 import '../../../contacts/domain/contact.dart';
 import '../../../contacts/presentation/widgets/contact_picker.dart';
-import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import '../../../tags/presentation/widgets/tag_picker.dart' show askNewTagName;
-import '../../../transactions/data/transactions_repository.dart';
 import '../../../transactions/domain/transaction_type.dart';
 import '../../../transactions/presentation/widgets/category_pick_card.dart';
 import '../../data/projects_repository.dart';
@@ -177,6 +178,10 @@ class _EventBillSheetState extends State<_EventBillSheet> {
   bool _bookDebt = true;
   bool _bookTx = false;
 
+  /// A payback's จดหนี้ was ticked / unticked by hand (else the server
+  /// decides, E5).
+  bool _debtTouched = false;
+
   /// The row's parts in my books when the sheet opened (editing).
   List<String> _wasBooked = const [];
   Account? _account;
@@ -278,8 +283,60 @@ class _EventBillSheetState extends State<_EventBillSheet> {
 
   void _changed() => setState(() {});
 
+  // ---------- the BE preview (?preview=true) behind the before → after ----
+
+  /// What the save would move, for the body now on screen (E8); null = none
+  /// yet (the app's own estimate shows meanwhile).
+  EventBillBookPreview? _preview;
+  String? _previewAsked;
+  Timer? _previewTimer;
+
+  /// The body the preview is for; null = nothing to preview (my book off, or
+  /// the bill not complete yet).
+  String? get _previewKey {
+    if (!_books || _view.me == null || _total <= 0) return null;
+    if (_payback ? (_fromKey == null || _toKey == null) : _payer == null) {
+      return null;
+    }
+    return jsonEncode({'bill': _billBody, 'books': _booksBody});
+  }
+
+  /// After each build: a changed body asks the BE again (debounced); a
+  /// failure keeps the app's own numbers.
+  void _schedulePreview() {
+    final want = _previewKey;
+    if (want == _previewAsked) return;
+    _previewAsked = want;
+    _previewTimer?.cancel();
+    if (want == null) return;
+    _previewTimer = Timer(const Duration(milliseconds: 350), () async {
+      try {
+        final p = await context.read<ProjectsRepository>().previewEventBill(
+          ptId: widget.row?.parent.id,
+          projectId: _view.project.id,
+          bill: _billBody,
+          myBooks: _booksBody,
+        );
+        if (mounted && _previewAsked == want) setState(() => _preview = p);
+      } catch (_) {
+        if (mounted && _previewAsked == want) setState(() => _preview = null);
+      }
+    });
+  }
+
+  /// A payback's จดหนี้ as the save would do it: the BE's default until the
+  /// user ticks it by hand (no second debt when my book holds it, E5).
+  bool get _debtOn =>
+      _payback &&
+          !_debtTouched &&
+          !_linked(ProjectTransaction.bookDebt) &&
+          _preview != null
+      ? _preview!.debtDefault
+      : _bookDebt;
+
   @override
   void dispose() {
+    _previewTimer?.cancel();
     _amount.dispose();
     _title.dispose();
     _note.dispose();
@@ -488,8 +545,11 @@ class _EventBillSheetState extends State<_EventBillSheet> {
   double get _myShare =>
       _myKey == null || !_meInBill ? 0 : (_shares[_myKey!] ?? 0);
 
-  /// My balance with [p] in the debts (> 0: they owe me).
+  /// My balance with [p] now (> 0: they owe me): the BE preview's, else the
+  /// debts list's.
   double _netWith(_Person p) {
+    final seen = _preview?.people[p.debtKey];
+    if (seen != null) return seen.before;
     final dir = context.read<DebtDirectoryCubit?>();
     final key = p.debtKey;
     for (final b in dir?.state.people ?? const <PersonBalance>[]) {
@@ -497,6 +557,10 @@ class _EventBillSheetState extends State<_EventBillSheet> {
     }
     return 0;
   }
+
+  /// My balance with [p] after the save: the BE preview's, else [estimate].
+  double _afterWith(_Person p, double estimate) =>
+      _preview?.people[p.debtKey]?.after ?? estimate;
 
   String _sideText(AppLocalizations l, double net) {
     final money = moneyString(context, net.abs());
@@ -599,6 +663,12 @@ class _EventBillSheetState extends State<_EventBillSheet> {
       ? _sideText(l, now)
       : '${_sideText(l, now)} → ${_sideText(l, now + delta)}';
 
+  /// [_change] for [p], the BE preview's after when it has one.
+  String _changeOf(AppLocalizations l, _Person p, double delta) {
+    final now = _netWith(p);
+    return _change(l, now, _afterWith(p, now + delta) - now);
+  }
+
   Widget? _myBooks(AppLocalizations l) {
     final involved = _booked || (_payback ? _involved : (_iPaid || _meInBill));
     if (!involved || _view.me == null) return null;
@@ -615,11 +685,11 @@ class _EventBillSheetState extends State<_EventBillSheet> {
           // จดหนี้ puts the event's debt in my books (they owe me / I owe
           // them); รับคืน / จ่ายคืน is the money that clears it. Both = even.
           final now = _netWith(other);
-          final record = _bookDebt && !debtLinked
+          final record = _debtOn && !debtLinked
               ? (iPay ? -_total : _total)
               : 0.0;
           final repay = _bookTx && !txLinked ? (iPay ? _total : -_total) : 0.0;
-          final after = now + record + repay;
+          final after = _afterWith(other, now + record + repay);
           rows.addAll([
             BookOptionCard(
               icon: AppIcons.debt,
@@ -628,8 +698,11 @@ class _EventBillSheetState extends State<_EventBillSheet> {
                   ? l.evbBookDebtLine(other.name)
                   : l.evbTheyOweMe(other.name),
               amount: MoneyText(_total),
-              checked: _bookDebt,
-              onChanged: (v) => setState(() => _bookDebt = v),
+              checked: _debtOn,
+              onChanged: (v) => setState(() {
+                _bookDebt = v;
+                _debtTouched = true;
+              }),
               child: _personLine(
                 other,
                 _change(l, now, record),
@@ -692,7 +765,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
                     if (i > 0) const SizedBox(height: AppSpacing.sm),
                     _personLine(
                       p,
-                      _change(l, _netWith(p), debtLinked ? 0 : _shareOf(p)),
+                      _changeOf(l, p, debtLinked ? 0 : _shareOf(p)),
                       up: true,
                       amount: debtLinked ? null : _shareOf(p),
                     ),
@@ -721,7 +794,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
                     children: [
                       _personLine(
                         payer,
-                        _change(l, now, -owe),
+                        _changeOf(l, payer, -owe),
                         up: true,
                         amount: debtLinked ? null : share,
                       ),
@@ -730,7 +803,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
                         nowLabel: l.debtResultNow(payer.name),
                         before: _sideText(l, now),
                         afterLabel: l.debtResultAfterSave,
-                        after: _sideText(l, now - owe),
+                        after: _sideText(l, _afterWith(payer, now - owe)),
                         walletLabel: l.transactionFormAccountLabel,
                         walletValue: l.debtWalletNotUsed,
                       ),
@@ -968,23 +1041,32 @@ class _EventBillSheetState extends State<_EventBillSheet> {
 
   // ---------- save ----------
 
+  /// ONE call, ONE DB transaction (0.4.1-1 E8): the bill (or payback), the
+  /// payback rows of the people marked "คืนแล้ว" and my book. The server
+  /// books "คืนแล้ว" and who owes whom (E2–E5); the app sends the ticks.
   Future<void> _save() async {
     final l = AppLocalizations.of(context)!;
-    final total = _total;
-    if (total <= 0) return;
+    if (_total <= 0) return;
     if (_payback && (_fromKey == null || _toKey == null)) return;
     if (!_payback && _payer == null) return;
     final repo = context.read<ProjectsRepository>();
-    final txRepo = context.read<TransactionsRepository>();
-    final debts = context.read<PersonalDebtsRepository>();
-    final accounts = context.read<AccountsCubit>();
     final navigator = Navigator.of(context);
     setState(() => _saving = true);
     try {
-      final patch = _payback
-          ? await _savePayback(repo, debts, total)
-          : await _saveBill(repo, txRepo, debts, accounts, total);
-      if (patch != null) widget.onPatch?.call(patch);
+      final row = widget.row;
+      final r = row != null
+          ? await repo.rebookEventBill(
+              row.parent.id,
+              bill: _billBody,
+              myBooks: _booksBody,
+            )
+          : await repo.bookEventBill(
+              projectId: _view.project.id,
+              bill: _billBody!,
+              myBooks: _booksBody,
+            );
+      // Wallets and people follow the answer's effects (B2) by themselves.
+      widget.onPatch?.call(r.patch);
       navigator.pop(true);
     } on ApiException catch (e) {
       if (mounted) {
@@ -995,306 +1077,57 @@ class _EventBillSheetState extends State<_EventBillSheet> {
     }
   }
 
-  /// What to make in my books once the row is saved. New: what's ticked.
-  /// Editing: a linked part unticked is unlinked (it stays in my books); a
-  /// part ticked again takes its old rows back, and only the ones the server
-  /// can't find are made anew.
-  Future<({bool tx, bool debt, EventPatch? patch})> _syncBooks(
-    ProjectsRepository repo,
-    String rowId,
-  ) async {
-    final wantTx = _books && _bookTx;
-    final wantDebt = _books && _bookDebt;
-    if (!_editing) return (tx: wantTx, debt: wantDebt, patch: null);
-    final want = {_txKind: wantTx, ProjectTransaction.bookDebt: wantDebt};
-    final link = [
-      for (final e in want.entries)
-        if (e.value && !_linked(e.key)) e.key,
-    ];
-    final unlink = [
-      for (final e in want.entries)
-        if (!e.value && _linked(e.key)) e.key,
-    ];
-    if (link.isEmpty && unlink.isEmpty) {
-      return (tx: false, debt: false, patch: null);
-    }
-    final r = await repo.setMyBooks(
-      _view.project.id,
-      rowId,
-      link: link,
-      unlink: unlink,
-    );
-    bool make(String kind) => link.contains(kind) && !r.relinked.contains(kind);
-    return (
-      tx: make(_txKind),
-      debt: make(ProjectTransaction.bookDebt),
-      patch: r.patch,
-    );
-  }
-
   String get _day => projectDay(_date);
   String? get _desc => _title.text.trim().isEmpty ? null : _title.text.trim();
   String? get _noteText => _note.text.trim().isEmpty ? null : _note.text.trim();
 
-  Future<EventPatch?> _saveBill(
-    ProjectsRepository repo,
-    TransactionsRepository txRepo,
-    PersonalDebtsRepository debts,
-    AccountsCubit accounts,
-    double total,
-  ) async {
-    final projectId = _view.project.id;
-    final type = _kind == EventEntryKind.income ? 'income' : 'expense';
+  /// The bill as `EventBillInput`; null = my book only (⤓ ลงบัญชี). Every
+  /// person but the payer with their share (the payer's is the rest) and
+  /// "คืนแล้ว"; a payback = from → to.
+  Map<String, dynamic>? get _billBody {
+    if (widget.booksOnly) return null;
+    if (_payback) {
+      return {
+        'kind': 'payback',
+        'amount': _total,
+        'date': _day,
+        'note': _noteText,
+        'from': _person(_fromKey)!.json,
+        'to': _person(_toKey)!.json,
+      };
+    }
     final payer = _payer!;
-    final ordered = [payer, ..._people.where((p) => p != payer)];
-    final resolved = await repo.resolvePeople(projectId, [
-      for (final p in ordered) p.json,
-    ]);
-    final ids = {
-      for (final (i, p) in ordered.indexed) p.key: resolved.memberIds[i],
-    };
     final shares = _shares;
-    final splits = [
-      for (final p in ordered.skip(1))
-        if ((shares[p.key] ?? 0) > 0.005)
-          ProjectSplitInput(memberId: ids[p.key]!, amount: shares[p.key]!),
-    ];
-    final payerId = ids[payer.key]!;
-    EventPatch patch;
-    String rowId;
-    ({bool tx, bool debt, EventPatch? patch}) books;
-    var made = false;
-    if (!_editing && _books && _iPaid && _bookTx) {
-      // My tx is the whole bill on my wallet, linked to the new bill.
-      final res = await repo.addBills(
-        projectId,
-        newTransaction: {
-          'type': type,
-          'amount': total,
-          'date': _day,
-          'account_id': ?_account?.id,
-          'category_id': ?_category?.id,
-          'description': ?_desc,
-          'note': ?_noteText,
-        },
-        people: {
-          'payer': const {'me': true},
-          'members': [
-            for (final p in ordered)
-              {'member_id': ids[p.key], 'share': shares[p.key] ?? 0},
-          ],
-        },
-      );
-      accounts.patchBalances(res.accountBalances);
-      patch = res.patch!;
-      rowId = patch.row.firstWhere((r) => r.isParent).id;
-      books = (tx: false, debt: _books && _bookDebt, patch: null);
-      if (_tagIds.isNotEmpty) {
-        patch = await repo.updateTransaction(
-          projectId,
-          rowId,
-          tagIds: _tagIds.toList(),
-        );
-      }
-    } else {
-      patch = widget.booksOnly
-          ? (await repo.setMyBooks(projectId, widget.row!.parent.id)).patch
-          : _editing
-          ? await repo.updateTransaction(
-              projectId,
-              widget.row!.parent.id,
-              amount: total,
-              date: _day,
-              description: _desc ?? '',
-              note: _noteText ?? '',
-              tagIds: _tagIds.toList(),
-              splits: splits,
-            )
-          : await repo.createTransaction(
-              projectId,
-              transactionMemberId: payerId,
-              type: type,
-              amount: total,
-              date: _day,
-              description: _desc,
-              note: _noteText,
-              tagIds: _tagIds.toList(),
-              splits: splits,
-            );
-      rowId = _editing
-          ? widget.row!.parent.id
-          : patch.row.firstWhere((r) => r.isParent).id;
-      books = await _syncBooks(repo, rowId);
-      if (books.patch case final p?) patch = p;
-      if (_iPaid) {
-        if (books.tx) {
-          made = true;
-          final created = await txRepo.create(
-            type: type == 'income'
-                ? TransactionType.income
-                : TransactionType.expense,
-            accountId: _account?.id,
-            amount: total,
-            date: _day,
-            categoryId: _category?.id,
-            description: _desc,
-            note: _noteText,
-            sourceProjectTransactionId: rowId,
-          );
-          accounts.patchBalances(created.accountBalances);
-        }
-      } else if (_meInBill) {
-        final share = _myShare;
-        final myRow = patch.row
-            .where(
-              (r) =>
-                  r.parentProjectTransactionId == rowId &&
-                  r.transactionMemberId == _view.me!.id,
-            )
-            .firstOrNull;
-        if (books.debt && share > 0) {
-          made = true;
-          await debts.createEntry(
-            payer.debtKey,
-            direction: DebtEntryDirection.received,
-            amount: share,
-            description: _desc,
-            note: _noteText,
-            personName: payer.name,
-            billId: rowId,
-          );
-        }
-        if (books.tx && share > 0) {
-          made = true;
-          final created = await txRepo.create(
-            type: TransactionType.expense,
-            accountId: _account?.id,
-            amount: share,
-            date: _day,
-            categoryId: _category?.id,
-            description: _desc,
-            note: _noteText,
-            sourceProjectTransactionId: myRow?.id ?? rowId,
-          );
-          accounts.patchBalances(created.accountBalances);
-        }
-      }
-    }
-    // I paid: each other share is my debtor (not the ones who paid back now).
-    if (_iPaid && books.debt) {
-      made = made || _debtors.isNotEmpty;
-      for (final p in _debtors) {
-        await debts.createEntry(
-          p.debtKey,
-          direction: DebtEntryDirection.paid,
-          amount: _shareOf(p),
-          description: _desc,
-          note: _noteText,
-          personName: p.name,
-          billId: rowId,
-        );
-      }
-    }
-    // The row's my_books after what was just made (a no-op call = its patch).
-    if (made) patch = (await repo.setMyBooks(projectId, rowId)).patch;
-    // "คืนแล้ว": each one paid the payer back on the spot → a payback row.
-    for (final p in ordered.skip(1).where((p) => p.paidBack)) {
-      final amount = shares[p.key] ?? 0;
-      if (amount <= 0.005) continue;
-      patch = await repo.createTransaction(
-        projectId,
-        transactionMemberId: ids[p.key]!,
-        type: 'payback',
-        amount: amount,
-        date: _day,
-        splits: [ProjectSplitInput(memberId: payerId, amount: amount)],
-      );
-      if (_books && _iPaid) {
-        final backId = patch.row.firstWhere((r) => r.isParent).id;
-        await debts.createRepayment(
-          p.debtKey,
-          kind: DebtRepaymentKind.receive,
-          amount: amount,
-          accountId: _account?.id,
-          date: _date,
-          personName: p.name,
-          billId: backId,
-        );
-      }
-    }
-    return patch;
+    return {
+      'kind': _kind == EventEntryKind.income ? 'income' : 'expense',
+      'amount': _total,
+      'date': _day,
+      'description': _desc,
+      'note': _noteText,
+      'tag_ids': _tagIds.toList(),
+      // The payer stays on an edit (400 PAYER_FIXED).
+      if (!_editing) 'payer': payer.json,
+      'members': [
+        for (final p in _people)
+          if (p.key != payer.key)
+            {...p.json, 'share': shares[p.key] ?? 0, 'paid_back': p.paidBack},
+      ],
+    };
   }
 
-  Future<EventPatch?> _savePayback(
-    ProjectsRepository repo,
-    PersonalDebtsRepository debts,
-    double total,
-  ) async {
-    final projectId = _view.project.id;
-    final from = _person(_fromKey)!;
-    final to = _person(_toKey)!;
-    final resolved = await repo.resolvePeople(projectId, [from.json, to.json]);
-    final fromId = resolved.memberIds[0], toId = resolved.memberIds[1];
-    final splits = [ProjectSplitInput(memberId: toId, amount: total)];
-    var patch = widget.booksOnly
-        ? (await repo.setMyBooks(projectId, widget.row!.parent.id)).patch
-        : _editing
-        ? await repo.updateTransaction(
-            projectId,
-            widget.row!.parent.id,
-            transactionMemberId: fromId,
-            amount: total,
-            date: _day,
-            note: _noteText ?? '',
-            splits: splits,
-          )
-        : await repo.createTransaction(
-            projectId,
-            transactionMemberId: fromId,
-            type: 'payback',
-            amount: total,
-            date: _day,
-            note: _noteText,
-            splits: splits,
-          );
-    final rowId = _editing
-        ? widget.row!.parent.id
-        : patch.row.firstWhere((r) => r.isParent).id;
-    final books = await _syncBooks(repo, rowId);
-    if (books.patch case final p?) patch = p;
-    if (_involved && (books.debt || books.tx)) {
-      final iPay = from.isMe;
-      final other = iPay ? to : from;
-      // จดหนี้ first (the debt the payback clears), then the money.
-      if (books.debt) {
-        await debts.createEntry(
-          other.debtKey,
-          direction: iPay
-              ? DebtEntryDirection.received
-              : DebtEntryDirection.paid,
-          amount: total,
-          date: _date,
-          note: _noteText,
-          personName: other.name,
-          billId: rowId,
-        );
-      }
-      if (books.tx) {
-        await debts.createRepayment(
-          other.debtKey,
-          kind: iPay ? DebtRepaymentKind.pay : DebtRepaymentKind.receive,
-          amount: total,
-          accountId: _account?.id,
-          date: _date,
-          note: _noteText,
-          personName: other.name,
-          billId: rowId,
-        );
-      }
-      patch = (await repo.setMyBooks(projectId, rowId)).patch;
-    }
-    return patch;
-  }
+  /// What my book should hold of the bill (`EventBillBooks`); on an edit a
+  /// linked part unticked is unlinked by the server, its rows stay. A
+  /// payback's debt the user didn't touch = null: the server decides (no
+  /// second debt when my book already holds it, E5).
+  Map<String, dynamic> get _booksBody => {
+    'on': _books,
+    'tx': _bookTx,
+    'debt': _payback && !_debtTouched && !_linked(ProjectTransaction.bookDebt)
+        ? null
+        : _bookDebt,
+    'account_id': _account?.id,
+    if (!_payback) 'category_id': _category?.id,
+  };
 
   Future<void> _delete() async {
     final l = AppLocalizations.of(context)!;
@@ -1332,6 +1165,9 @@ class _EventBillSheetState extends State<_EventBillSheet> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final books = _myBooks(l);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _schedulePreview();
+    });
     const gap = SizedBox(height: AppSpacing.sm);
     if (widget.booksOnly) {
       final p = widget.row!.parent;

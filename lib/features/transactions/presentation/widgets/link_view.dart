@@ -17,11 +17,16 @@ class LinkViewRows extends StatelessWidget {
     required this.tx,
     this.onOpenEvent,
     this.onApplyEvent,
+    this.onDisconnectEvent,
     super.key,
   });
 
   final Transaction tx;
   final VoidCallback? onOpenEvent;
+
+  /// "ตัดการเชื่อม" on the event card: my tx leaves the event, the bill stays
+  /// (0.4.1-1 rule f). Null = no button.
+  final VoidCallback? onDisconnectEvent;
 
   /// The bill and my tx differ (B3 in_sync false): "อัปเดตตามอีเวนต์".
   final VoidCallback? onApplyEvent;
@@ -141,9 +146,23 @@ class LinkViewRows extends StatelessWidget {
     BillMemberRef payer,
   ) {
     final open = onOpenEvent;
+    final disconnect = onDisconnectEvent;
     String nameOf(BillMemberRef m) => m.isMe ? l.txLinkCardMe : m.name;
     return ShareCard(
       key: const ValueKey('linkViewEventCard'),
+      actions: [
+        if (disconnect != null)
+          AppButton(
+            key: const ValueKey('linkViewDisconnectEvent'),
+            label: l.txLinkDisconnect,
+            variant: AppButtonVariant.outlined,
+            size: AppButtonSize.control,
+            onPressed: () {
+              Navigator.of(context, rootNavigator: true).pop();
+              disconnect();
+            },
+          ),
+      ],
       headerLeading: EventPickChip(
         name: bill.event.name,
         editing: false,

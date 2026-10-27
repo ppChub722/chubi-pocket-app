@@ -48,10 +48,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categorySystemTransferOut => 'Transfer out';
 
   @override
-  String get categorySystemDebtReceived => 'Debt received';
+  String get categorySystemDebtReceived => 'Debt collected';
 
   @override
-  String get categorySystemDebtPaid => 'Debt paid';
+  String get categorySystemDebtPaid => 'Debt repayment';
 
   @override
   String get commonCancel => 'Cancel';
@@ -6684,5 +6684,81 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String txFutureHint(String when) {
     return '$when | counts in the balance from that day';
+  }
+
+  @override
+  String get categorySystemLoanGiven => 'Loan given';
+
+  @override
+  String get categorySystemLoanTaken => 'Loan taken';
+
+  @override
+  String get categorySystemLockedHelper =>
+      'System category: the name and \"count in reports\" can\'t change';
+
+  @override
+  String get debtLinkExistingLabel => 'Connect an existing transaction';
+
+  @override
+  String get debtLinkedAmountNote =>
+      'Amount and date follow the connected transaction';
+
+  @override
+  String get debtCloseAllHint => 'Label every open debt with this person paid';
+
+  @override
+  String get fpRecurringAutoCreateNeedsWallet => 'Pick a wallet first';
+
+  @override
+  String get fpRecurringAutoCreateZeroWarn =>
+      'No fixed amount: on the day it records 0 for you to fix. Not a good fit for an amount that changes every time (e.g. electricity)';
+
+  @override
+  String get txLinkDisconnect => 'Disconnect';
+
+  @override
+  String get txLinkDisconnectTitle => 'Disconnect from the event?';
+
+  @override
+  String get txLinkDisconnectBody =>
+      'This becomes a plain transaction. The event\'s bill doesn\'t change';
+
+  @override
+  String get txLinkDisconnected => 'Disconnected';
+
+  @override
+  String get occurrenceSkipFilled =>
+      'This one is recorded. Disconnect its transaction first to skip it';
+
+  @override
+  String get recurringPausedOverdue =>
+      '3 waiting: paused. Clear them and resume; it goes on from the current period';
+
+  @override
+  String get recurringPausedGoal => 'The saving goal is closed: paused';
+
+  @override
+  String get recurringOverdueLimitChip => '3 waiting';
+
+  @override
+  String get notifTypeDebtDisconnected => 'Someone disconnects a debt with me';
+
+  @override
+  String notifDebtDisconnected(String who, String amount) {
+    return '$who disconnected the debt $amount';
+  }
+
+  @override
+  String debtDisconnectTitle(String name) {
+    return 'Disconnect the debt with $name?';
+  }
+
+  @override
+  String get debtDisconnectBody =>
+      'It becomes a plain debt in your book that you can edit. Their bill edits won\'t follow any more; they get a notice';
+
+  @override
+  String debtPartnerLinked(String name) {
+    return 'Linked with $name\'s book';
   }
 }

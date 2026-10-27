@@ -48,28 +48,6 @@ TxCreateBody txCreateBody(DraftFormController c, LinkMode mode) {
   );
 }
 
-/// The อีเวนต์ tab's bill: `new_transaction` plus the payer + members that go
-/// beside it (B2).
-({Map<String, dynamic> newTransaction, Map<String, dynamic>? people})
-eventBillBody(DraftFormController c, LinkMode mode) {
-  final plan = c.linkSave(mode);
-  final splits = plan.splits;
-  final account = plan.useWallet ? c.account : null;
-  return (
-    newTransaction: <String, dynamic>{
-      'type': c.type.toJson(),
-      'amount': c.amountValue,
-      'date': _ymd(c.date),
-      'account_id': ?account?.id,
-      'category_id': ?c.category?.id,
-      'description': ?_text(c.description),
-      'note': ?_text(c.note),
-      if (splits.isNotEmpty) 'splits': splits,
-    },
-    people: plan.link,
-  );
-}
-
 typedef ProjectBillBody = ({
   String payerId,
   String type,
@@ -99,10 +77,11 @@ ProjectBillBody projectBillBody(DraftFormController c, String payerId) => (
 typedef DebtRecordBody = ({
   String key,
   DebtEntryDirection direction,
-  double amount,
+  double? amount,
   DateTime date,
   String? accountId,
   bool createTransaction,
+  String? linkTransactionId,
   String? description,
   String? note,
   List<String>? tagIds,
@@ -110,45 +89,65 @@ typedef DebtRecordBody = ({
   DateTime? dueDate,
 });
 
-DebtRecordBody debtRecordBody(DebtEntryController d, DebtPick person) => (
-  key: person.key,
-  direction: d.direction,
-  amount: d.amountValue,
-  date: d.date,
-  accountId: d.createTransaction ? d.account?.id : null,
-  createTransaction: d.createTransaction,
-  description: _text(d.description),
-  note: _text(d.note),
-  tagIds: d.createTransaction ? d.tagIds.toList() : null,
-  personName: person.typedName,
-  dueDate: d.dueDate,
-);
+/// ให้ยืม / ยืม. "บันทึกในรายการ" off = ledger-only; on = a new transaction
+/// (wallet optional, tags) or, when one was picked, an existing one connected
+/// (its amount and date win, so none is sent).
+DebtRecordBody debtRecordBody(DebtEntryController d, DebtPick person) {
+  final link = d.createTransaction ? d.linkedTx?.id : null;
+  final make = d.createTransaction && link == null;
+  return (
+    key: person.key,
+    direction: d.direction,
+    amount: link == null ? d.amountValue : null,
+    date: d.date,
+    accountId: make ? d.account?.id : null,
+    createTransaction: make,
+    linkTransactionId: link,
+    description: _text(d.description),
+    note: _text(d.note),
+    tagIds: make ? d.tagIds.toList() : null,
+    personName: person.typedName,
+    dueDate: d.dueDate,
+  );
+}
 
 typedef DebtRepaymentBody = ({
   String key,
   DebtRepaymentKind kind,
-  double amount,
+  double? amount,
   String? accountId,
+  bool createTransaction,
+  String? linkTransactionId,
   DateTime date,
   String? description,
   String? note,
   List<String> tagIds,
   List<String> markPaidIds,
+  bool markAllPaid,
   String? personName,
 });
 
-DebtRepaymentBody debtRepaymentBody(DebtEntryController d, DebtPick person) => (
-  key: person.key,
-  kind: d.repayKind,
-  amount: d.amountValue,
-  accountId: d.account?.id,
-  date: d.date,
-  description: _text(d.description),
-  note: _text(d.note),
-  tagIds: d.tagIds.toList(),
-  markPaidIds: d.markPaidIds.toList(),
-  personName: person.typedName,
-);
+/// จ่ายคืน / รับคืน (0.4.1-1 D3 / D10): a person-book row like a debt, the
+/// transaction side the same as [debtRecordBody]; ปิดหนี้ = [markAllPaid].
+DebtRepaymentBody debtRepaymentBody(DebtEntryController d, DebtPick person) {
+  final link = d.createTransaction ? d.linkedTx?.id : null;
+  final make = d.createTransaction && link == null;
+  return (
+    key: person.key,
+    kind: d.repayKind,
+    amount: link == null ? d.amountValue : null,
+    accountId: make ? d.account?.id : null,
+    createTransaction: make,
+    linkTransactionId: link,
+    date: d.date,
+    description: _text(d.description),
+    note: _text(d.note),
+    tagIds: make ? d.tagIds.toList() : const [],
+    markPaidIds: d.markPaidIds.toList(),
+    markAllPaid: d.closeDebt,
+    personName: person.typedName,
+  );
+}
 
 typedef DebtPreviewBody = ({
   String key,
@@ -160,15 +159,18 @@ typedef DebtPreviewBody = ({
   String? personName,
 });
 
-DebtPreviewBody debtPreviewBody(DebtEntryController d, DebtPick person) => (
-  key: person.key,
-  direction: d.repaying ? null : d.direction,
-  kind: d.repaying ? d.repayKind : null,
-  amount: d.amountValue,
-  accountId: d.repaying || d.createTransaction ? d.account?.id : null,
-  createTransaction: d.repaying ? null : d.createTransaction,
-  personName: person.typedName,
-);
+DebtPreviewBody debtPreviewBody(DebtEntryController d, DebtPick person) {
+  final make = d.createTransaction && d.linkedTx == null;
+  return (
+    key: person.key,
+    direction: d.repaying ? null : d.direction,
+    kind: d.repaying ? d.repayKind : null,
+    amount: d.amountValue,
+    accountId: make ? d.account?.id : null,
+    createTransaction: make,
+    personName: person.typedName,
+  );
+}
 
 typedef SavingSaveBody = ({
   SavingEntryKind kind,

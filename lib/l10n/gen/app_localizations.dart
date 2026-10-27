@@ -179,13 +179,13 @@ abstract class AppLocalizations {
   /// No description provided for @categorySystemDebtReceived.
   ///
   /// In en, this message translates to:
-  /// **'Debt received'**
+  /// **'Debt collected'**
   String get categorySystemDebtReceived;
 
   /// No description provided for @categorySystemDebtPaid.
   ///
   /// In en, this message translates to:
-  /// **'Debt paid'**
+  /// **'Debt repayment'**
   String get categorySystemDebtPaid;
 
   /// No description provided for @commonCancel.
@@ -11340,6 +11340,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{when} | counts in the balance from that day'**
   String txFutureHint(String when);
+
+  /// No description provided for @categorySystemLoanGiven.
+  ///
+  /// In en, this message translates to:
+  /// **'Loan given'**
+  String get categorySystemLoanGiven;
+
+  /// No description provided for @categorySystemLoanTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'Loan taken'**
+  String get categorySystemLoanTaken;
+
+  /// No description provided for @categorySystemLockedHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'System category: the name and \"count in reports\" can\'t change'**
+  String get categorySystemLockedHelper;
+
+  /// No description provided for @debtLinkExistingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect an existing transaction'**
+  String get debtLinkExistingLabel;
+
+  /// No description provided for @debtLinkedAmountNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount and date follow the connected transaction'**
+  String get debtLinkedAmountNote;
+
+  /// No description provided for @debtCloseAllHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Label every open debt with this person paid'**
+  String get debtCloseAllHint;
+
+  /// No description provided for @fpRecurringAutoCreateNeedsWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a wallet first'**
+  String get fpRecurringAutoCreateNeedsWallet;
+
+  /// No description provided for @fpRecurringAutoCreateZeroWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'No fixed amount: on the day it records 0 for you to fix. Not a good fit for an amount that changes every time (e.g. electricity)'**
+  String get fpRecurringAutoCreateZeroWarn;
+
+  /// No description provided for @txLinkDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get txLinkDisconnect;
+
+  /// No description provided for @txLinkDisconnectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect from the event?'**
+  String get txLinkDisconnectTitle;
+
+  /// No description provided for @txLinkDisconnectBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This becomes a plain transaction. The event\'s bill doesn\'t change'**
+  String get txLinkDisconnectBody;
+
+  /// No description provided for @txLinkDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected'**
+  String get txLinkDisconnected;
+
+  /// No description provided for @occurrenceSkipFilled.
+  ///
+  /// In en, this message translates to:
+  /// **'This one is recorded. Disconnect its transaction first to skip it'**
+  String get occurrenceSkipFilled;
+
+  /// No description provided for @recurringPausedOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'3 waiting: paused. Clear them and resume; it goes on from the current period'**
+  String get recurringPausedOverdue;
+
+  /// No description provided for @recurringPausedGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'The saving goal is closed: paused'**
+  String get recurringPausedGoal;
+
+  /// No description provided for @recurringOverdueLimitChip.
+  ///
+  /// In en, this message translates to:
+  /// **'3 waiting'**
+  String get recurringOverdueLimitChip;
+
+  /// No description provided for @notifTypeDebtDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone disconnects a debt with me'**
+  String get notifTypeDebtDisconnected;
+
+  /// No description provided for @notifDebtDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} disconnected the debt {amount}'**
+  String notifDebtDisconnected(String who, String amount);
+
+  /// No description provided for @debtDisconnectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect the debt with {name}?'**
+  String debtDisconnectTitle(String name);
+
+  /// No description provided for @debtDisconnectBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It becomes a plain debt in your book that you can edit. Their bill edits won\'t follow any more; they get a notice'**
+  String get debtDisconnectBody;
+
+  /// No description provided for @debtPartnerLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked with {name}\'s book'**
+  String debtPartnerLinked(String name);
 }
 
 class _AppLocalizationsDelegate

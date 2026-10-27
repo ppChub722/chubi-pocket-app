@@ -6,6 +6,7 @@ import '../../../../core/bloc/clearable_cubit.dart';
 import '../../../../core/data/sync_backed.dart';
 import '../../../../core/data/sync_coordinator.dart';
 import '../../../../core/data/sync_set.dart';
+import '../../../../core/data/write_effects.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../domain/debt_directory.dart';
 import '../../domain/debt_ledger.dart';
@@ -33,7 +34,10 @@ class DebtDirectoryState extends Equatable {
 /// Who owes whom, app-wide: the contact picker, the debt form and the debts
 /// list all read this one list.
 class DebtDirectoryCubit extends Cubit<DebtDirectoryState>
-    with Clearable, SyncBacked<DebtDirectoryState> {
+    with
+        Clearable,
+        SyncBacked<DebtDirectoryState>,
+        ApplyWriteEffects<DebtDirectoryState> {
   /// The app's directory, or null where none is provided (a lone page test).
   static DebtDirectoryCubit? maybeOf(BuildContext context) {
     try {
@@ -47,6 +51,12 @@ class DebtDirectoryCubit extends Cubit<DebtDirectoryState>
     : syncCoordinator = coordinator,
       super(const DebtDirectoryState()) {
     bindSync();
+    // B2: every person whose balance a write moved, linked sides included.
+    applyEffectsWith((e) {
+      for (final p in e.personBalances) {
+        applyBalance(PersonBalance.fromJson(p));
+      }
+    });
   }
 
   @override

@@ -15,14 +15,16 @@ import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
-import '../../../personal_debts/presentation/widgets/debt_entry_picker.dart';
 import '../../../tags/domain/tag.dart';
 import '../../../tags/presentation/widgets/tag_picker.dart';
 import '../../domain/refs.dart';
+import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/tx_form_options_cubit.dart';
 import '../quick_create_bodies.dart';
 import 'pick_chip_rows.dart';
+import 'transaction_picker.dart';
+import 'transaction_tile.dart';
 
 class DebtPick {
   const DebtPick({
@@ -78,10 +80,11 @@ Widget? debtNetSubtitle(
   );
 }
 
-/// Quick create's debt mode. [sub] picks the side (owner 2026-10-21):
-/// record a debt (a ledger row; money in a wallet only when
-/// [createTransaction]) or repay (ONE transaction tied to the person; a wallet
-/// is always needed).
+/// Quick create's debt mode, one form for the four kinds (0.4.1-1 D10): [sub]
+/// picks record (ให้ยืม / ยืม) or repay (จ่ายคืน / รับคืน), the arrow the
+/// direction. Every kind is a person-book row; a transaction comes with it
+/// only when [createTransaction] ("บันทึกในรายการ": a new one, wallet
+/// optional, or [linkedTx] connected).
 class DebtEntryController extends ChangeNotifier {
   DebtEntryController({
     DebtPick? person,
@@ -98,8 +101,8 @@ class DebtEntryController extends ChangeNotifier {
   final note = TextEditingController();
   DateTime date = DateTime.now();
 
-  /// "บันทึกเป็นรายการด้วย" (money in / out of a wallet): on by default (owner
-  /// 2026-10-26; it was off 2026-10-21).
+  /// "บันทึกในรายการ" (money in / out of a wallet), every kind: on by default
+  /// (owner 2026-10-26; it was off 2026-10-21).
   bool createTransaction = true;
 
   /// "กำหนดจ่าย": recording only, never before [date].
@@ -111,10 +114,6 @@ class DebtEntryController extends ChangeNotifier {
 
   DebtRepaymentKind repayKind = DebtRepaymentKind.pay;
 
-  /// The words of the "ที่มา" text ("ให้ ลี ยืม", "รับคืนจาก ลี"); set by the
-  /// form, which has the localizations.
-  String Function(bool repaying, bool toMe, String name)? describeOrigin;
-
   /// The amount this controller filled itself (a repayment's open balance):
   /// replaced when the person or kind changes, kept once the person types
   /// their own.
@@ -122,32 +121,10 @@ class DebtEntryController extends ChangeNotifier {
 
   bool get amountIsAuto => _autoAmount != null && amount.text == _autoAmount;
 
-  /// The words worked out from the side, the direction and the person; null
-  /// until a person is picked.
-  String? get originText {
-    final p = _person;
-    final describe = describeOrigin;
-    return p == null || describe == null
-        ? null
-        : describe(repaying, towardMe, p.person.name);
-  }
-
-  String? _autoDescription;
-
-  /// Settling: the description is never typed, it is [originText] every time
-  /// the side, direction or person changes. Recording: the person types it
-  /// (blank saves none; the debt then shows [originText] as its default), so
-  /// only the text settling filled itself is taken back out.
-  void refreshOrigin() {
-    if (repaying) {
-      final text = originText ?? '';
-      _autoDescription = text;
-      if (description.text != text) description.text = text;
-    } else if (_autoDescription != null) {
-      if (description.text == _autoDescription) description.text = '';
-      _autoDescription = null;
-    }
-  }
+  /// The money goes from me to them: lend, or pay back.
+  bool get moneyOut => repaying
+      ? repayKind == DebtRepaymentKind.pay
+      : direction == DebtEntryDirection.paid;
 
   void _clearAutoAmount() {
     if (!amountIsAuto) return;
@@ -181,7 +158,7 @@ class DebtEntryController extends ChangeNotifier {
   bool get hasKeyData =>
       amountValue > 0 ||
       note.text.trim().isNotEmpty ||
-      (!repaying && description.text.trim().isNotEmpty);
+      description.text.trim().isNotEmpty;
 
   /// The direction both chips share (owner 2026-10-21, the arrow): them → me
   /// (รอรับ / รับคืน) or me → them (รอจ่าย / จ่ายคืน).
@@ -198,7 +175,6 @@ class DebtEntryController extends ChangeNotifier {
   void swapDirection() {
     _syncDirection(!towardMe);
     if (repaying) _repayDefaults(kindFromBalance: false);
-    refreshOrigin();
     notifyListeners();
   }
 
@@ -212,7 +188,9 @@ class DebtEntryController extends ChangeNotifier {
       repaying,
       towardMe,
       amountValue,
-      repaying || createTransaction ? account?.id : null,
+      createTransaction,
+      linkedTx?.id,
+      createTransaction ? account?.id : null,
     ].join('|');
   }
 
@@ -243,11 +221,8 @@ class DebtEntryController extends ChangeNotifier {
   /// The wallet's change, as the app reckons it (money out < 0); null = no
   /// wallet moves. The BE preview has the last word.
   double? get walletDelta {
-    if (!(repaying || createTransaction) || account == null) return null;
-    final out = repaying
-        ? repayKind == DebtRepaymentKind.pay
-        : direction == DebtEntryDirection.paid;
-    return out ? -amountValue : amountValue;
+    if (!createTransaction || linkedTx != null || account == null) return null;
+    return moneyOut ? -amountValue : amountValue;
   }
 
   /// The chip picked: record (รอรับ / รอจ่าย) or settle (รับคืน / จ่ายคืน);
@@ -266,7 +241,6 @@ class DebtEntryController extends ChangeNotifier {
       // an amount the person typed.
       _clearAutoAmount();
     }
-    refreshOrigin();
     notifyListeners();
   }
 
@@ -274,14 +248,12 @@ class DebtEntryController extends ChangeNotifier {
     if (k == repayKind) return;
     _syncDirection(k == DebtRepaymentKind.receive);
     _repayDefaults(kindFromBalance: false);
-    refreshOrigin();
     notifyListeners();
   }
 
   void setDirection(DebtEntryDirection d) {
     if (d == direction) return;
     _syncDirection(d == DebtEntryDirection.paid);
-    refreshOrigin();
     notifyListeners();
   }
 
@@ -290,14 +262,12 @@ class DebtEntryController extends ChangeNotifier {
     _person = p;
     if (p == null) _clearAutoAmount();
     if (repaying) _repayDefaults(kindFromBalance: true);
-    refreshOrigin();
     notifyListeners();
   }
 
-  /// Applies the repay defaults now (the form calls it once its words are in).
+  /// Applies the repay defaults now (the form calls it after its first frame).
   void syncRepayDefaults() {
     if (repaying) _repayDefaults(kindFromBalance: true);
-    refreshOrigin();
     notifyListeners();
   }
 
@@ -326,18 +296,56 @@ class DebtEntryController extends ChangeNotifier {
   /// "ไม่ระบุกระเป๋า" was picked (else no wallet = not picked yet).
   bool noWalletPicked = false;
 
-  /// Picking a wallet while recording means the money moved: the switch
-  /// turns on. [picked]: the person chose it in the picker.
+  /// "ผูกกับรายการที่มีอยู่" (0.4.1-1 D10): one of my transactions connected
+  /// in the save call instead of a new one; its amount and date are the
+  /// entry's.
+  Transaction? linkedTx;
+
+  /// "ปิดหนี้" (repaying only): label every open debt on the side this
+  /// repayment pays down paid (label only).
+  bool closeDebt = false;
+
+  /// Picking a wallet means the money moved: "บันทึกในรายการ" turns on (every
+  /// kind). [picked]: the person chose it in the picker.
   void setAccount(Account? a, {bool picked = false}) {
     account = a;
     noWalletPicked = picked && a == null;
-    if (a != null && !repaying) createTransaction = true;
+    linkedTx = null;
+    createTransaction = true;
+    notifyListeners();
+  }
+
+  /// An existing transaction instead of a new one: the amount and date follow
+  /// it (the BE uses its values).
+  void setLinkedTx(Transaction tx) {
+    linkedTx = tx;
+    account = null;
+    noWalletPicked = false;
+    createTransaction = true;
+    _autoAmount = null;
+    amount.text = AmountInput.format(tx.amount);
+    final d = DateTime.tryParse(tx.date);
+    if (d != null) date = d;
+    notifyListeners();
+  }
+
+  /// Back to a new transaction (the amount and date stay as they are).
+  void clearLinkedTx() {
+    if (linkedTx == null) return;
+    linkedTx = null;
     notifyListeners();
   }
 
   void setCreateTransaction(bool v) {
     if (v == createTransaction) return;
     createTransaction = v;
+    if (!v) linkedTx = null;
+    notifyListeners();
+  }
+
+  void setCloseDebt(bool v) {
+    if (v == closeDebt) return;
+    closeDebt = v;
     notifyListeners();
   }
 
@@ -417,6 +425,11 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     super.initState();
     _loadPeople();
     _c.addListener(_onChanged);
+    // A repay preset's defaults, after the frame: the controller notifies,
+    // which must not happen mid-build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _c.syncRepayDefaults();
+    });
   }
 
   @override
@@ -424,30 +437,6 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     _previewTimer?.cancel();
     _c.removeListener(_onChanged);
     super.dispose();
-  }
-
-  bool _wordsSet = false;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final l = AppLocalizations.of(context)!;
-    _c.describeOrigin = (repaying, toMe, name) => repaying
-        ? (toMe ? l.debtRepayDescReceive(name) : l.debtRepayDescPay(name))
-        : (toMe ? l.debtOriginLend(name) : l.debtOriginBorrow(name));
-    // Words in (or the language changed): work the "ที่มา" text out again,
-    // and on the first pass fill a repay preset's defaults. After the frame:
-    // the controller notifies, which must not happen mid-build.
-    final first = !_wordsSet;
-    _wordsSet = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      if (first) {
-        _c.syncRepayDefaults();
-      } else {
-        _c.refreshOrigin();
-      }
-    });
   }
 
   /// Repay: only people with something open, each with their balance.
@@ -671,10 +660,22 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
   }
 
   /// My end of the flow (owner 2026-10-23): the wallet card when money moves
-  /// (settle always, record with the switch on), else "ฉัน" — my avatar +
-  /// name — so the arrow still points at someone.
+  /// ("บันทึกในรายการ" on, every kind), else "ฉัน" — my avatar + name — so
+  /// the arrow still points at someone. A connected transaction shows its
+  /// own wallet, not changed here.
   Widget _meCard(AppLocalizations l) {
-    if (_c.repaying || _c.createTransaction) {
+    final linked = _c.linkedTx;
+    if (_c.createTransaction && linked != null) {
+      return WalletPickCard(
+        account: linked.account?.toAccount(),
+        label: l.transactionFormAccountLabel,
+        placeholder: l.debtNoWallet,
+        dense: true,
+        editable: false,
+        onTap: _pickLinkTx,
+      );
+    }
+    if (_c.createTransaction) {
       // No wallet is a choice here, as in the tx mode: "ไม่ระบุกระเป๋า"
       // once picked, "เลือกกระเป๋า" before.
       return WalletPickCard(
@@ -714,24 +715,40 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     );
   }
 
-  Future<void> _pickClose() async {
-    final person = _c.person;
-    if (person == null) return;
-    final r = await DebtEntryPicker.many(
-      context,
-      personKey: person.key,
-      selected: _c.markPaidIds,
-      entries: person.typedName != null && person.key.startsWith('n:')
-          ? const []
-          : null,
-    );
-    if (r != null && mounted) _c.setMarkPaidIds(r.ids);
-  }
+  /// "บันทึกในรายการ" (0.4.1-1 D10, every kind): off = the person book only,
+  /// on = a transaction too (a new one, or one of mine connected).
+  Widget _createTxRow(AppLocalizations l) => _switchRow(
+    key: const ValueKey('debtCreateTx'),
+    label: l.occurrenceRecordInTx,
+    hint: !_c.createTransaction
+        ? l.debtTxHintOff
+        : _c.moneyOut
+        ? l.debtTxHintLend
+        : l.debtTxHintBorrow,
+    value: _c.createTransaction,
+    onChanged: _c.setCreateTransaction,
+  );
 
-  Widget _createTxRow(AppLocalizations l) {
+  /// "ปิดหนี้" (repaying): every open debt on the side this pays down gets the
+  /// "จ่ายแล้ว" label (label only, numbers never change).
+  Widget _closeRow(AppLocalizations l) => _switchRow(
+    key: const ValueKey('debtCloseAll'),
+    label: l.debtMarkPaidLabel,
+    hint: l.debtCloseAllHint,
+    value: _c.closeDebt,
+    onChanged: _c.setCloseDebt,
+  );
+
+  Widget _switchRow({
+    required Key key,
+    required String label,
+    required String hint,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
     final theme = Theme.of(context);
     return InkWell(
-      onTap: () => _c.setCreateTransaction(!_c.createTransaction),
+      onTap: () => onChanged(!value),
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
@@ -742,17 +759,13 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    l.debtQuickCreateTxLabel,
+                    label,
                     style: theme.textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   Text(
-                    !_c.createTransaction
-                        ? l.debtTxHintOff
-                        : _c.towardMe
-                        ? l.debtTxHintLend
-                        : l.debtTxHintBorrow,
+                    hint,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -761,14 +774,59 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
               ),
             ),
             AppSwitch(
-              key: const ValueKey('debtCreateTx'),
-              value: _c.createTransaction,
-              onChanged: _c.setCreateTransaction,
-              semanticLabel: l.debtQuickCreateTxLabel,
+              key: key,
+              value: value,
+              onChanged: onChanged,
+              semanticLabel: label,
             ),
           ],
         ),
       ),
+    );
+  }
+
+  /// "ผูกกับรายการที่มีอยู่": one of my plain transactions of the money's way
+  /// (out = expense), connected in the save call.
+  Future<void> _pickLinkTx() async {
+    final l = AppLocalizations.of(context)!;
+    final tx = await TransactionPicker.one(
+      context,
+      type: _c.moneyOut ? TransactionType.expense : TransactionType.income,
+      near: _c.date,
+      amount: _c.amountValue > 0 ? _c.amountValue : null,
+      title: l.debtLinkExistingLabel,
+    );
+    if (tx != null && mounted) _c.setLinkedTx(tx);
+  }
+
+  /// The connected transaction as its list row (tap = pick again, ✕ = back
+  /// to a new one), or a dashed "ผูกรายการ".
+  Widget _linkRow(AppLocalizations l) {
+    final tx = _c.linkedTx;
+    if (tx == null) {
+      return DraftFieldRow(
+        key: const ValueKey('debtLinkRow'),
+        label: l.debtLinkExistingLabel,
+        dense: true,
+        child: Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: AppChip(
+            label: l.occurrenceLinkPick,
+            icon: AppIcons.link,
+            tone: AppChipTone.primary,
+            selected: true,
+            dashed: true,
+            onTap: _pickLinkTx,
+          ),
+        ),
+      );
+    }
+    return PickedRowFrame(
+      key: const ValueKey('debtLinkRow'),
+      onTap: _pickLinkTx,
+      onRemove: _c.clearLinkedTx,
+      removeTooltip: l.commonRemove,
+      child: TransactionTile(transaction: tx, showDate: true),
     );
   }
 
@@ -803,35 +861,6 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     );
   }
 
-  Widget _closeRow(AppLocalizations l) {
-    final n = _c.markPaidIds.length;
-    return DraftFieldRow(
-      label: l.debtMarkPaidLabel,
-      dense: true,
-      child: Align(
-        alignment: AlignmentDirectional.centerStart,
-        child: n == 0
-            ? AppChip(
-                label: l.debtClosePick,
-                icon: AppIcons.add,
-                tone: AppChipTone.primary,
-                selected: true,
-                dashed: true,
-                onTap: _pickClose,
-              )
-            : AppChip(
-                label: l.debtCloseChosen(n),
-                selected: true,
-                dashed: true,
-                inset: true,
-                trailing: AppChipTrailing.remove,
-                onRemove: _c.clearMarkPaid,
-                onTap: _pickClose,
-              ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -844,8 +873,10 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
         final paid = _c.direction == DebtEntryDirection.paid;
         final payBack = _c.repayKind == DebtRepaymentKind.pay;
         final toMe = _c.towardMe;
-        // Money in a wallet: always when settling, on request when recording.
-        final moneyMoves = repay || _c.createTransaction;
+        // A transaction too ("บันทึกในรายการ", every kind); tags only on a
+        // new one (a connected one keeps its own).
+        final withTx = _c.createTransaction;
+        final linked = withTx && _c.linkedTx != null;
         final summary = _summaryRow(l, symbol);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -880,17 +911,14 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
               onPickDate: _pickDate,
               autofocus: widget.autofocus,
               symbol: symbol,
-              // Settling words its own description; recording lets the person
-              // type one, the default ("ให้ ลี ยืม") being the hint.
-              titleReadOnly: repay,
-              titleLabel: repay ? l.debtOriginFieldLabel : null,
-              titleHint: repay
-                  ? l.debtOriginPickFirst
-                  : _c.originText ?? l.commonDescription,
+              // Typed freely on every kind; blank saves none and shows the
+              // kind's category name, the hint (owner 2026-10-26).
+              titleHint: debtKindName(l, out: _c.moneyOut, repayment: repay),
+              amountNote: linked ? Text(l.debtLinkedAmountNote) : null,
               flowRow: _flowCards(l),
             ),
             SizedBox(height: HeroMetrics.of(context).after),
-            if (moneyMoves) ...[
+            if (withTx && !linked) ...[
               TagChipRow(
                 selected: _c.tagIds,
                 onRemove: _c.toggleTag,
@@ -899,7 +927,9 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
               ),
               gap,
             ],
-            if (!repay) ...[_createTxRow(l), gap],
+            _createTxRow(l),
+            gap,
+            if (withTx) ...[_linkRow(l), gap],
             if (summary != null) ...[summary, gap],
             DraftFieldRow(
               label: l.commonNote,

@@ -38,11 +38,15 @@ String eventErrorMessage(AppLocalizations l, ApiException e) =>
       _ => e.message,
     };
 
+/// [billId]: the event bill my tx belongs to (`event_bill.bill_id`). Leaving
+/// the event then only disconnects my tx (my-books unlink): the bill stays as
+/// it is (0.4.1-1 rule f); removing a bill is done in the event itself.
 Future<void> applyEventChange(
   ProjectsRepository repo, {
   required String txId,
   required String? currentProjectId,
   required EventTarget change,
+  String? billId,
 }) async {
   final move = currentProjectId != null;
   switch (change) {
@@ -53,6 +57,10 @@ Future<void> applyEventChange(
       await repo.addBills(project.id, transactionIds: [txId], move: move);
     case RemoveFromEvent():
       if (currentProjectId == null) return;
+      if (billId != null) {
+        await repo.setMyBooks(currentProjectId, billId, unlink: const ['tx']);
+        return;
+      }
       await repo.removeBill(currentProjectId, txId);
   }
 }

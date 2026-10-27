@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bloc/clearable_cubit.dart';
 import '../../../../core/data/data_changes.dart';
+import '../../../../core/data/write_effects.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/transactions_repository.dart';
 import '../../domain/transaction.dart';
@@ -80,12 +81,16 @@ class TransactionsState extends Equatable {
 enum TransactionsStatus { initial, loading, loaded, error }
 
 class TransactionsCubit extends Cubit<TransactionsState>
-    with Clearable, RefreshOnDataChange<TransactionsState> {
+    with
+        Clearable,
+        RefreshOnDataChange<TransactionsState>,
+        ApplyWriteEffects<TransactionsState> {
   TransactionsCubit({required TransactionsRepository repository})
     : _repo = repository,
       super(const TransactionsState()) {
     _live.add(this);
     refreshOn({DataTable.transactions}, refresh);
+    applyEffectsWith(applyEffects);
   }
 
   final TransactionsRepository _repo;
@@ -355,14 +360,9 @@ class TransactionsCubit extends Cubit<TransactionsState>
   Future<DeleteTransactionResult> remove(
     String id, {
     bool? alsoDeleteLink,
-    bool? skipOccurrence,
   }) async {
     final tx = byId(id);
-    final result = await _repo.delete(
-      id,
-      alsoDeleteLink: alsoDeleteLink,
-      skipOccurrence: skipOccurrence,
-    );
+    final result = await _repo.delete(id, alsoDeleteLink: alsoDeleteLink);
     if (tx?.transferGroupId != null) {
       _emitWrite(
         state.copyWith(
@@ -379,6 +379,41 @@ class TransactionsCubit extends Cubit<TransactionsState>
       );
     }
     return result;
+  }
+
+  /// B2: a write's effects (linked sides too). Removed rows drop, changed
+  /// ones patch in place, new ones join the list where they match it. Every
+  /// live list gets them itself, so no cross-refresh; only totals and
+  /// filters this list can't judge go to the server.
+  void applyEffects(WriteEffects e) {
+    if (isClosed) return;
+    final gone = e.removedTransactionIds.toSet();
+    final rows = [for (final j in e.transactions) Transaction.fromJson(j)];
+    if (gone.isEmpty && rows.isEmpty) return;
+    final kept = [
+      for (final t in state.transactions)
+        if (!gone.contains(t.id)) t,
+    ];
+    final ids = {for (final t in kept) t.id};
+    emit(
+      state.copyWith(
+        transactions: _patch(kept, [
+          for (final r in rows)
+            if (ids.contains(r.id)) r,
+        ]),
+      ),
+    );
+    final fresh = [
+      for (final r in rows)
+        if (!ids.contains(r.id)) r,
+    ];
+    emit(
+      state.copyWith(
+        transactions: fresh.isEmpty ? null : _place(fresh),
+        revision: state.revision + 1,
+      ),
+    );
+    if (!_last.judgeable || state.totals != null) unawaited(refresh());
   }
 
   void dropRow(String id) {

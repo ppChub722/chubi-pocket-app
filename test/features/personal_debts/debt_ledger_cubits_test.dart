@@ -268,9 +268,7 @@ void main() {
       final failing = DebtDirectoryCubit(coordinator: testCoordinator());
       final fc = DebtPeopleCubit(directory: failing);
       expect(fc.state.status, DebtLoadStatus.initial);
-      failing.syncFailed(
-        const ApiException(code: 'INTERNAL', message: 'down'),
-      );
+      failing.syncFailed(const ApiException(code: 'INTERNAL', message: 'down'));
       await Future<void>.delayed(Duration.zero);
       expect(fc.state.status, DebtLoadStatus.error);
       expect(fc.state.error!.message, 'down');

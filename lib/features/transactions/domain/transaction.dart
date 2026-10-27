@@ -80,8 +80,7 @@ class Transaction extends Equatable {
     this.splitCount = 0,
     this.splits = const [],
     this.project,
-    this.counterparty,
-    this.repaymentPerson,
+    this.debtLink,
     this.eventBill,
     this.recurringItem,
     this.transferPeer,
@@ -127,15 +126,29 @@ class Transaction extends Equatable {
 
   final String? transferGroupId;
 
-  final DebtLink? counterparty;
+  /// The person-book entry this is the transaction of, debt or repayment
+  /// (`counterparty`, 0.4.1-1 D3).
+  final DebtLink? debtLink;
+
+  /// The debt (not a repayment) this is the transaction of.
+  DebtLink? get counterparty =>
+      debtLink == null || debtLink!.repayment ? null : debtLink;
 
   bool get isDebtEntry => counterparty != null;
 
   /// A repayment to / from a debt person (0.4.0-3): the category is the
   /// system one and locked.
-  final RepaymentPerson? repaymentPerson;
+  RepaymentPerson? get repaymentPerson {
+    final link = debtLink;
+    if (link == null || !link.repayment) return null;
+    return RepaymentPerson(
+      key: link.key,
+      person: link.person,
+      entryId: link.entryId,
+    );
+  }
 
-  bool get isRepayment => repaymentPerson != null;
+  bool get isRepayment => debtLink?.repayment ?? false;
 
   final EventBillLink? eventBill;
 
@@ -245,14 +258,9 @@ class Transaction extends Equatable {
               (json['event_bill'] as Map).cast<String, dynamic>(),
             )
           : null,
-      counterparty: json['counterparty'] is Map
+      debtLink: json['counterparty'] is Map
           ? DebtLink.fromJson(
               (json['counterparty'] as Map).cast<String, dynamic>(),
-            )
-          : null,
-      repaymentPerson: json['repayment_person'] is Map
-          ? RepaymentPerson.fromJson(
-              (json['repayment_person'] as Map).cast<String, dynamic>(),
             )
           : null,
       transferPeer: json['transfer_peer'] is Map<String, dynamic>
@@ -293,7 +301,7 @@ class Transaction extends Equatable {
     int? splitCount,
     List<TxSplit>? splits,
     EventRef? project,
-    DebtLink? counterparty,
+    DebtLink? debtLink,
     EventBillLink? eventBill,
     RecurringItemLink? recurringItem,
     bool clearRecurringItem = false,
@@ -326,8 +334,7 @@ class Transaction extends Equatable {
       splitCount: splitCount ?? this.splitCount,
       splits: splits ?? this.splits,
       project: project ?? this.project,
-      counterparty: counterparty ?? this.counterparty,
-      repaymentPerson: repaymentPerson,
+      debtLink: debtLink ?? this.debtLink,
       eventBill: eventBill ?? this.eventBill,
       recurringItem: clearRecurringItem
           ? null
@@ -367,8 +374,7 @@ class Transaction extends Equatable {
     splitCount,
     splits,
     project,
-    counterparty,
-    repaymentPerson,
+    debtLink,
     eventBill,
     recurringItem,
     transferPeer,

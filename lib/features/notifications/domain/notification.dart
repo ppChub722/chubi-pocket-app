@@ -6,6 +6,10 @@ enum NotificationType {
   splitCreated('split_created'),
 
   splitChanged('split_changed'),
+
+  /// 0.4.1-1 D9: the other side disconnected a linked debt (info only;
+  /// payload person_name / amount / direction, deep link to my entry).
+  debtDisconnected('debt_disconnected'),
   projectTxRecordedForYou('project_tx_recorded_for_you'),
   projectTxChanged('project_tx_changed'),
   projectInvite('project_invite'),

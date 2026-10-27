@@ -167,6 +167,24 @@ Widget buildOthersPage(BuildContext context) {
           ),
           HubUse(
             wide: true,
+            label:
+                'NotificationTile — debt disconnected (D9): info only, a tap '
+                'opens my entry',
+            page: 'Notifications inbox',
+            child: notifCard(
+              notif(
+                NotificationType.debtDisconnected,
+                awaitsAnswer: false,
+                payload: const {
+                  'person_name': 'Lee',
+                  'amount': 300,
+                  'direction': 'paid',
+                },
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
             label: 'NotificationTile — event invite: Accept / Decline',
             page: 'Notifications inbox',
             child: notifCard(

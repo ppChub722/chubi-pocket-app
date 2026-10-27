@@ -521,8 +521,9 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
         name: state.extra is String ? state.extra as String : null,
       ),
     ),
-    // A debt (with or without its own wallet tx): the tx detail page in debt
-    // mode. A repayment line opens /transactions/{id} instead (0.4.0-3).
+    // A person-book entry (debt or repayment, with or without its own wallet
+    // tx): the tx detail page in debt mode. Every statement line opens it
+    // (0.4.1-1, D4).
     GoRoute(
       path: '/personal-debts/entries/:id',
       name: 'personal-debt-entry',

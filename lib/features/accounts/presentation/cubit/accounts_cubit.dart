@@ -5,6 +5,7 @@ import '../../../../core/bloc/clearable_cubit.dart';
 import '../../../../core/data/sync_backed.dart';
 import '../../../../core/data/sync_coordinator.dart';
 import '../../../../core/data/sync_set.dart';
+import '../../../../core/data/write_effects.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/accounts_repository.dart';
 import '../../domain/account.dart';
@@ -68,7 +69,10 @@ class AccountsState extends Equatable {
 enum AccountsStatus { initial, loading, loaded, error }
 
 class AccountsCubit extends Cubit<AccountsState>
-    with Clearable, SyncBacked<AccountsState> {
+    with
+        Clearable,
+        SyncBacked<AccountsState>,
+        ApplyWriteEffects<AccountsState> {
   AccountsCubit({
     required AccountsRepository repository,
     required SyncCoordinator coordinator,
@@ -76,6 +80,14 @@ class AccountsCubit extends Cubit<AccountsState>
        syncCoordinator = coordinator,
        super(const AccountsState()) {
     bindSync();
+    // B2: every wallet a write moved, linked sides included.
+    applyEffectsWith(
+      (e) => patchBalances({
+        for (final b in e.accountBalances)
+          if (b['account_id'] is String && b['balance'] is num)
+            b['account_id'] as String: (b['balance'] as num).toDouble(),
+      }),
+    );
   }
 
   final AccountsRepository _repo;

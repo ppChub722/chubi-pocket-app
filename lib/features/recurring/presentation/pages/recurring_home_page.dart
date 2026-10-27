@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/tab_nav.dart';
+import '../../../../core/data/write_effects.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -88,9 +89,12 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
 
   RecurringRepository get _repo => RecurringRepository.of(context);
 
+  void Function()? _offEffects;
+
   @override
   void initState() {
     super.initState();
+    _offEffects = WriteEffectsBus.instance.listen(_onEffects);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(context.read<RecurringDirectoryCubit>().loadIfNeeded());
@@ -99,8 +103,28 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     });
   }
 
+  /// B2: slots any write changed (a tx deleted or unlinked elsewhere too)
+  /// patch both lists in place; one that newly needs handling reloads
+  /// ต้องจัดการ.
+  void _onEffects(WriteEffects e) {
+    final r = ItemWriteResult.fromEffects(e);
+    if (r == null || !mounted) return;
+    final known = {for (final i in _due) i.id};
+    final newTodo = r.items.any((i) => _todo(i) && !known.contains(i.id));
+    setState(() {
+      final items = _items;
+      if (items != null) _items = r.applyTo(items);
+      _due = [
+        for (final i in r.applyTo(_due))
+          if (_todo(i)) i,
+      ];
+    });
+    if (newTodo) unawaited(_loadDue());
+  }
+
   @override
   void dispose() {
+    _offEffects?.call();
     _search.dispose();
     _monthSearch.dispose();
     super.dispose();
@@ -799,6 +823,10 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     items: _due,
     leading: _icon,
     titleOf: _name,
+    // R7: its rule stopped at 3 waiting occurrences.
+    tag: (i) => i.recurring?.pauseReason == RecurringPauseReason.overdueLimit
+        ? ListRowChip(l.recurringOverdueLimitChip, tone: Tone.warning)
+        : null,
     onChanged: _onChanged,
     onOpen: (i) => unawaited(_openItem(i)),
   );

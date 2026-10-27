@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/tab_nav.dart';
+import '../../../../core/data/write_effects.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/user_currency.dart';
@@ -40,7 +41,6 @@ import '../recurring_rows.dart';
 enum _Tab { past, upcoming }
 
 enum _Field { name, description, amount, note }
-
 
 class RecurringDetailPage extends StatefulWidget {
   const RecurringDetailPage({
@@ -119,6 +119,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       editing: widget.isCreate,
     );
     onDraftRestored();
+    _offEffects = WriteEffectsBus.instance.listen(_onEffects);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<AccountsCubit>().loadIfNeeded();
@@ -128,8 +129,36 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     });
   }
 
+  void Function()? _offEffects;
+
+  /// B2: this rule's slots any write changed (a tx deleted or unlinked
+  /// elsewhere too) patch the lists in place; no re-fetch.
+  void _onEffects(WriteEffects e) {
+    final r = ItemWriteResult.fromEffects(e);
+    final id = widget.id;
+    if (r == null || id == null || !mounted || _detail == null) return;
+    final mine = [
+      for (final i in r.items)
+        if (i.ruleId == id) i,
+    ];
+    if (mine.isEmpty) return;
+    final applied = applyItemWrite(
+      ItemWriteResult(items: mine),
+      produced: _produced,
+      upcoming: _upcoming,
+      detail: _detail,
+      now: today(),
+    );
+    setState(() {
+      _produced = applied.produced;
+      _upcoming = applied.upcoming;
+      _detail = applied.detail;
+    });
+  }
+
   @override
   void dispose() {
+    _offEffects?.call();
     for (final c in _ctrl.values) {
       c.dispose();
     }
@@ -534,7 +563,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   }
 
   Future<void> _openRecurrenceSheet() async {
-    final picked = await AppRecurrenceSheet.show(context, initial: working.rule);
+    final picked = await AppRecurrenceSheet.show(
+      context,
+      initial: working.rule,
+    );
     if (!mounted || picked == null) return;
     _change(working.copyWith(rule: picked));
   }
@@ -581,23 +613,9 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       return;
     }
 
-    var alsoUpdateTx = false;
+    // A rule edit never touches filled slots (R6): their tx keep their own
+    // values.
     final r = _recurring;
-    final recorded = r?.recordedTxCount ?? 0;
-    if (recorded > 0 && working.txFieldsDiffer(original)) {
-      final picked = await showEditScopeChoice(
-        context,
-        title: l.fpRecurringTxScopeTitle(recorded),
-        options: {
-          EditScope.upcoming: l.fpRecurringTxScopeFuture,
-          EditScope.all: l.fpRecurringTxScopeAll,
-        },
-        selected: EditScope.upcoming,
-      );
-      if (!mounted || picked == null) return;
-      alsoUpdateTx = picked == EditScope.all;
-    }
-
     FocusScope.of(context).unfocus();
     setSaving(true);
     final accounts = context.read<AccountsCubit>();
@@ -605,7 +623,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       final write = working.toWrite();
       final d = r == null
           ? await _repo.create(write)
-          : await _repo.update(r.id, write, alsoUpdateTx: alsoUpdateTx);
+          : await _repo.update(r.id, write);
       accounts.patchBalances(d.balances);
       if (!mounted) return;
       HapticFeedback.mediumImpact();
@@ -617,13 +635,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       }
       _take(d);
       commitSaved(RecurringDraft.from(d.recurring));
-      if (d.txUpdateFailed > 0) {
-        showAppSnackBarOn(
-          pageMessenger!,
-          l.fpRecurringTxUpdateFailed(d.txUpdateFailed),
-          tone: Tone.warning,
-        );
-      }
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
@@ -882,7 +893,17 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       );
     }
     if (r.status == RecurringStatus.paused) {
-      return AppMessage(message: l.recurringPausedNotice);
+      // R7: why it's paused; resume starts at the current period (R8).
+      return switch (r.pauseReason) {
+        RecurringPauseReason.overdueLimit => AppMessage(
+          message: l.recurringPausedOverdue,
+          tone: Tone.warning,
+        ),
+        RecurringPauseReason.goalInactive => AppMessage(
+          message: l.recurringPausedGoal,
+        ),
+        _ => AppMessage(message: l.recurringPausedNotice),
+      };
     }
     return null;
   }
@@ -1400,8 +1421,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     final category = w.isTransfer
         ? null
         : context.watch<CategoriesCubit>().byId(w.categoryId ?? '');
-    String? missing(Account? a) =>
-        editing && _walletMissing && a == null
+    String? missing(Account? a) => editing && _walletMissing && a == null
         ? l.recurringWalletRequired
         : null;
     Widget wallet(Account? a, String label, {bool to = false}) =>
@@ -1443,9 +1463,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             onTap: editing
                 ? _pickCategory
                 : () => openPage(context, '/categories/${category!.id}'),
-            onLongPress: editing
-                ? null
-                : () => enterEdit(then: _pickCategory),
+            onLongPress: editing ? null : () => enterEdit(then: _pickCategory),
           );
     final walletCard = !editing && account == null
         ? null
@@ -1522,14 +1540,14 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             for (final k in RecurringKind.values)
               if (_recurring == null ||
                   (k == RecurringKind.saving) == _recurring!.isSaving)
-              SheetOption(
-                value: k,
-                label: recurringKindLabel(l, k),
-                leading: AppIcon(
-                  recurringKindIcon(k),
-                  color: k.iconDefault.color,
+                SheetOption(
+                  value: k,
+                  label: recurringKindLabel(l, k),
+                  leading: AppIcon(
+                    recurringKindIcon(k),
+                    color: k.iconDefault.color,
+                  ),
                 ),
-              ),
           ],
         ),
         if (w.kind == RecurringKind.reminder)
@@ -1570,13 +1588,27 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           label: l.fpRecurringAutoCreate,
           caption: w.canAutoCreate
               ? l.fpRecurringAutoCreateHint
-              : l.fpRecurringAutoCreateNeeds,
+              : l.fpRecurringAutoCreateNeedsWallet,
           value: w.autoCreate && w.canAutoCreate,
           submits: false,
           onChanged: w.canAutoCreate
               ? (v) => _change(w.copyWith(autoCreate: v))
               : null,
         ),
+        if (w.autoCreateWarns)
+          Padding(
+            key: const ValueKey('autoCreateZeroWarn'),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              0,
+              AppSpacing.lg,
+              AppSpacing.md,
+            ),
+            child: AppMessage(
+              tone: Tone.warning,
+              message: l.fpRecurringAutoCreateZeroWarn,
+            ),
+          ),
       ],
     );
   }
@@ -2098,8 +2130,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           : TagRow(
               tags: [
                 for (final id in w.tagIds)
-                  if (tags.byId(id) case final t?)
-                    _tagChip(t.name, t.iconCode),
+                  if (tags.byId(id) case final t?) _tagChip(t.name, t.iconCode),
               ],
               onAdd: _pickTags,
               addLabel: l.tagsAddNew,

@@ -1,7 +1,8 @@
 import '../../../ui/ui.dart';
 import '../domain/recurring_item.dart';
 
-({ItemPage produced, ItemPage upcoming, RecurringDetail? detail}) applyItemWrite(
+({ItemPage produced, ItemPage upcoming, RecurringDetail? detail})
+applyItemWrite(
   ItemWriteResult r, {
   required ItemPage produced,
   required ItemPage upcoming,
