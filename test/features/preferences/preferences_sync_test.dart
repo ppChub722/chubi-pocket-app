@@ -170,4 +170,41 @@ void main() {
     expect(users.server['theme_mode'], 'dark', reason: 'retried and saved');
     expect(sync.state, 0);
   });
+
+  const inStep = {
+    'theme_id': 'mint',
+    'theme_mode': 'system',
+    'language': 'th',
+    'font_th': 'IBM Plex Sans Thai',
+    'font_en': 'Inter',
+  };
+
+  test('saveNow (the settings page): shows at once, ONE PUT of that key, '
+      'no second save from the echo', () async {
+    await start(inStep);
+    await sync.saveNow(PreferencesSyncCubit.themeModeKey, 'dark');
+    await _settle();
+    expect(themeMode.state, ThemeMode.dark);
+    expect(users.puts, [
+      {'theme_mode': 'dark'},
+    ]);
+    expect(sync.state, 0);
+  });
+
+  test('saveNow failing: the old value comes back, it throws, and nothing '
+      'is kept for a retry', () async {
+    await start(inStep);
+    users.fail = true;
+    await expectLater(
+      sync.saveNow(PreferencesSyncCubit.themeIdKey, 'sweet'),
+      throwsA(isA<ApiException>()),
+    );
+    await _settle();
+    expect(themeId.state, 'mint', reason: 'rolled back');
+    users.fail = false;
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+    expect(users.puts, hasLength(1), reason: 'no background retry');
+    expect(users.server['theme_id'], 'mint');
+    expect(sync.state, 0);
+  });
 }

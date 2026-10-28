@@ -1056,7 +1056,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifGroupRequests => 'Invites and requests';
 
   @override
-  String get notifTypeSplitCreated => 'Someone splits a bill with me';
+  String get notifTypeSplitCreated => 'Someone shares a bill with me';
 
   @override
   String get notifTypeProjectTxForYou =>
@@ -1064,9 +1064,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notifTypeProjectTxChanged => 'An event transaction is edited';
-
-  @override
-  String get notifTypeAlwaysOn => 'Always on';
 
   @override
   String get notifTypeProjectAdded => 'Added to an event';
@@ -1648,8 +1645,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLogoutDialogTitle => 'Log out of ChubiPocket?';
 
   @override
-  String get settingsLogoutDialogBody =>
-      'You will be returned to the login screen.';
+  String get settingsLogoutDialogBody => 'Back to the sign-in screen.';
 
   @override
   String get editProfileTitle => 'Edit profile';
@@ -4521,8 +4517,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileCurrencyChangeTitle => 'Change currency?';
 
   @override
-  String get profileCurrencyChangeMessage =>
-      'Only the label changes. Your amounts are NOT converted: 100 stays 100.';
+  String get profileCurrencyChangeMessage => '100 stays 100';
 
   @override
   String get profileCurrencyChangeConfirm => 'Change currency';
@@ -5363,7 +5358,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsMoneySignParentheses => 'Parentheses ( )';
 
   @override
-  String get settingsMoneySignNone => 'Colour only';
+  String get settingsMoneySignNone => 'No sign';
 
   @override
   String get settingsMoneyColor => 'Red / green colours';
@@ -5384,8 +5379,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsMoneyDecimalsAuto => 'Hide .00 only';
 
   @override
-  String get settingsMainWalletHint =>
-      'Used for every new entry; not set = the last wallet used';
+  String get settingsMainWalletHint => 'Not set = the last wallet used';
 
   @override
   String get settingsMainWalletNone => 'Not set';
@@ -5395,7 +5389,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsArchivedHint =>
-      'Wallets, budgets, goals, events, contacts';
+      'Wallets, budgets, saving goals, recurring, events, contacts';
 
   @override
   String get settingsExportCsv => 'Export CSV';
@@ -6454,7 +6448,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventCompleteBody =>
-      'This can\'t be undone. No more adding or editing bills, and everyone\'s books stop syncing with this event at once (the links stay).';
+      'This can\'t be undone. No more adding or editing bills, and everyone\'s books stop updating with this event at once (the links stay).';
 
   @override
   String get eventCompleteConfirm => 'Complete event';
@@ -6464,7 +6458,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventCompletedNotice =>
-      'This event is completed: bills can\'t be added or edited, and nobody\'s book syncs with it any more.';
+      'This event is completed: bills can\'t be added or edited, and nobody\'s book updates with it any more.';
 
   @override
   String get eventErrCompleted =>
@@ -6478,40 +6472,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'A bill still has an empty person slot: fill it before completing the event';
 
   @override
-  String get settingsHomeCaption =>
-      'Saved with your account, the same on every device';
-
-  @override
-  String get settingsGroupSync => 'Auto sync';
+  String get settingsGroupSync => 'Auto update';
 
   @override
   String get settingsGroupPagePrefs => 'Filters and sorting';
-
-  @override
-  String get settingsSummaryOn => 'on';
-
-  @override
-  String get settingsSummaryOff => 'off';
-
-  @override
-  String settingsSyncSummary(String events, String debts) {
-    return 'Events $events | Debts and splits $debts';
-  }
-
-  @override
-  String settingsNotificationsOnSummary(int on, int total) {
-    return '$on of $total on';
-  }
-
-  @override
-  String settingsPagePrefsSummary(int count) {
-    return '$count pages | remembers your last choice';
-  }
-
-  @override
-  String settingsMainWalletSummary(String name) {
-    return 'Main wallet $name';
-  }
 
   @override
   String get settingsComingSoon => 'Coming soon';
@@ -6538,48 +6502,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsFeeCategoryHint => 'Used for transfers with a fee';
 
   @override
-  String get settingsSyncLegend =>
-      'On = when someone edits a bill, mine changes at once\nOff = a notification asks me to \"Update\"';
-
-  @override
-  String get settingsSyncEvents => 'Events';
-
-  @override
-  String get settingsSyncEventsHint => 'Bills in events I have a part in';
-
-  @override
-  String get settingsSyncDebts => 'Debts and splits';
-
-  @override
-  String get settingsSyncDebtsHint => 'Bills and debts with linked people';
-
-  @override
   String get settingsSyncFootnote =>
-      'The same switches as on the event page and the person page: change it anywhere, it\'s one value | Muted notifications still sync quietly';
+      'The same auto switches as on the event page and the person page: change them anywhere, it\'s one value';
 
   @override
   String get notifSettingsOnOffLegend =>
-      'On = notify me | Off = silent\nAuto sync is its own setting; muted types still update quietly';
+      'Notify = send me a notification about it\nAuto = don\'t ask, just do it\nWith auto off, notify stays on: someone has to answer';
 
   @override
   String get notifGroupSharedBills => 'Shared bills';
 
   @override
-  String get notifSetSplitCreatedHint => 'A new bill with my share';
-
-  @override
   String get notifSetSplitChanged => 'Someone edited a bill shared with me';
-
-  @override
-  String get notifSetSplitChangedHint => 'Amount, date or description changed';
 
   @override
   String get notifSetSharedBillDeleted =>
       'Someone deleted a bill shared with me';
-
-  @override
-  String get notifSetSharedBillDeletedHint =>
-      'My copy becomes a plain transaction';
 
   @override
   String get notifSetSharedBillDisconnected =>
@@ -6594,18 +6532,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'My debt stays, just no longer connected';
 
   @override
-  String get notifSetProjectTxForYouHint =>
-      'Someone paid for me, or booked a bill I paid';
-
-  @override
-  String get notifSetProjectTxChangedHint => 'A bill with my share changed';
-
-  @override
   String get notifSetEventCompleted => 'Event completed';
 
   @override
   String get notifSetEventCompletedHint =>
-      'Locked for good, no more sync, claim once';
+      'Locked for good, no more updates, claim once';
 
   @override
   String get notifSetEventMemberRemoved => 'Removed from an event';
@@ -6734,16 +6665,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pagePrefNone => 'none';
 
   @override
-  String pagePrefValue(String title, String value) {
-    return '$title: $value';
-  }
-
-  @override
   String get pagePrefsChanged => 'Changed';
 
   @override
   String get pagePrefsCaption =>
-      'Picking on a page changes it here too | tap to set it yourself';
+      'Picking on a page changes it here too\nTap to set it yourself';
 
   @override
   String get pagePrefsFootnote =>
@@ -6928,23 +6854,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAcceptTitle => 'Auto-accept new bills';
 
   @override
-  String get settingsAcceptLegend =>
-      'On = a new bill with my share goes into my book at once\nOff = a notification asks me to \"Add to my book\"';
-
-  @override
-  String get settingsAcceptEventsHint => 'New bills in events I have a part in';
-
-  @override
-  String get settingsAcceptDebtsHint => 'New split bills from linked people';
-
-  @override
-  String get settingsAcceptShortHint => 'New bills go into my book at once';
-
-  @override
-  String get settingsSyncShortHint =>
-      'When someone edits a bill, mine changes at once';
-
-  @override
   String get eventDeleteKeepsBills =>
       'Only the event goes. Its bills stay as split bills, everyone stays connected, and nothing in anyone\'s book is deleted.';
 
@@ -6966,4 +6875,104 @@ class AppLocalizationsEn extends AppLocalizations {
   String evbPayersLine(String payers) {
     return 'Paid by $payers';
   }
+
+  @override
+  String get settingsSectionSettings => 'Settings';
+
+  @override
+  String get settingsSectionData => 'Data';
+
+  @override
+  String settingsNotificationsSummary(int on, int total, int auto) {
+    return 'Notify $on of $total | Auto $auto';
+  }
+
+  @override
+  String settingsPagePrefsChangedSummary(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pages changed',
+      one: '1 page changed',
+      zero: 'No changes',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsSectionAppearance => 'Look';
+
+  @override
+  String get settingsSectionLanguageFont => 'Language and fonts';
+
+  @override
+  String get settingsMoneyStyleHint =>
+      'How income / expense amounts are signed';
+
+  @override
+  String get settingsMoneyDecimalsHint => 'Show the cents or not';
+
+  @override
+  String get notifColumnNotify => 'Notify';
+
+  @override
+  String get notifColumnAuto => 'Auto';
+
+  @override
+  String get notifAutoAcceptHint => 'Auto = put it in my book at once';
+
+  @override
+  String get notifAutoUpdateHint => 'Auto = update mine at once';
+
+  @override
+  String get notifAutoDeleteHint =>
+      'Auto = delete my copy too\nThe same value as the \"edits a bill\" row';
+
+  @override
+  String get notifLockedByAutoHint =>
+      'Auto is off, so notify can\'t be turned off';
+
+  @override
+  String get notifSetProjectAddedHint => 'Someone adds me as a member';
+
+  @override
+  String get notifSetRecurringDueHint => 'Payments to pay / receive today';
+
+  @override
+  String get notifSetRecurringEndingHint => 'The last payment is left';
+
+  @override
+  String get settingsAutoTitle => 'Auto';
+
+  @override
+  String get settingsAutoEventsDescription =>
+      'For every event; set it in Settings › Notifications';
+
+  @override
+  String get settingsAutoDebtsDescription =>
+      'For everyone; set it in Settings › Notifications';
+
+  @override
+  String get profileSectionAccount => 'Account';
+
+  @override
+  String get pagePrefsResetTitle => 'Reset';
+
+  @override
+  String get pagePrefsResetAllHint => 'Every page back to its defaults';
+
+  @override
+  String get pagePrefsResetPageBody =>
+      'This page goes back to the default filters and sort';
+
+  @override
+  String pagePrefSetCount(String title, int count) {
+    return '$title $count';
+  }
+
+  @override
+  String get settingsMainWalletUnsetSummary => 'No main wallet';
+
+  @override
+  String get pagePrefsSectionPages => 'Pages';
 }

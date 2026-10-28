@@ -36,9 +36,6 @@ String moneyDecimalsLabel(AppLocalizations l, MoneyDecimals d) => switch (d) {
   MoneyDecimals.auto => l.settingsMoneyDecimalsAuto,
 };
 
-String onOffLabel(AppLocalizations l, bool on) =>
-    on ? l.settingsSummaryOn : l.settingsSummaryOff;
-
 /// "แอป": theme | mode | language | the current language's font.
 String appSummary(BuildContext context, AppLocalizations l) {
   final theme = ThemeRegistry.byId(context.watch<ThemeIdCubit>().state);
@@ -53,21 +50,31 @@ String appSummary(BuildContext context, AppLocalizations l) {
   ].join(' | ');
 }
 
-/// "เงิน": currency | sign | decimals | main wallet.
+/// "เงิน": currency | sign | decimals | main wallet (bare values).
 String moneySummary(AppLocalizations l, User u) {
   final style = MoneyStyle.fromPreference(u.moneyStyle);
   return [
     u.currency,
     moneySignLabel(l, style.sign),
     moneyDecimalsLabel(l, MoneyDecimals.fromPreference(u.moneyDecimals)),
-    l.settingsMainWalletSummary(
-      u.defaultAccount?.name ?? l.settingsMainWalletNone,
-    ),
+    u.defaultAccount?.name ?? l.settingsMainWalletUnsetSummary,
   ].join(' | ');
 }
 
-/// "ซิงก์อัตโนมัติ": both switches.
-String syncSummary(AppLocalizations l, User u) => l.settingsSyncSummary(
-  onOffLabel(l, u.autoSyncEvents),
-  onOffLabel(l, u.autoSyncDebts),
-);
+/// How many of the four auto switches (รับบิลใหม่ / อัปเดต, events / debts)
+/// are on.
+int autoOnCount(User u) => [
+  u.autoAcceptDebts,
+  u.autoAcceptEvents,
+  u.autoSyncDebts,
+  u.autoSyncEvents,
+].where((on) => on).length;
+
+/// "การแจ้งเตือน": "แจ้ง N จาก 11 เรื่อง | อัตโนมัติ M เรื่อง"; null before the
+/// server sent its counts.
+String? notificationsSummary(AppLocalizations l, User u) {
+  final n = u.notificationSummary;
+  return n == null
+      ? null
+      : l.settingsNotificationsSummary(n.on, n.total, autoOnCount(u));
+}

@@ -943,10 +943,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
           onLongPress: _enterOn(_focus[_Field.note]!),
         ),
         _people(l, v),
-        // SA14: the same one switch as on the settings page (no sync once
-        // the event is completed).
-        if (!v.isCompleted)
-          SectionCard(children: autoSyncRows(AutoSyncKind.events)),
+        // SA14: the account-wide auto switches, the same values as on the
+        // notification settings page (no updates once the event is completed).
+        if (!v.isCompleted) autoSyncSection(l, AutoSyncKind.events),
       ],
       tabs: [
         AppTab(value: _Tab.bills, label: l.evbTabBills, icon: AppIcons.receipt),

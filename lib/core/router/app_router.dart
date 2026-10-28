@@ -61,7 +61,6 @@ import '../../features/settings/presentation/pages/settings_app_page.dart';
 import '../../features/settings/presentation/pages/settings_money_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/settings/presentation/pages/settings_page_prefs_page.dart';
-import '../../features/settings/presentation/pages/settings_sync_page.dart';
 
 GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
   return GoRouter(
@@ -354,7 +353,9 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
         GoRoute(
           path: 'sync',
           name: 'settings-sync',
-          builder: (context, state) => const SettingsSyncPage(),
+          // The auto switches moved to the notification page (owner
+          // 2026-10-28): an old link lands there.
+          redirect: (context, state) => '/settings/notifications',
         ),
         GoRoute(
           path: 'page-prefs',

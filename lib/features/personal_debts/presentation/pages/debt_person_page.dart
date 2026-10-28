@@ -240,8 +240,7 @@ class _PersonViewState extends State<_PersonView> {
           ],
         ),
       // Auto sync only reaches a linked person; one account-wide value.
-      if (s.balance!.person.linked)
-        SectionCard(children: autoSyncRows(AutoSyncKind.debts)),
+      if (s.balance!.person.linked) autoSyncSection(l, AutoSyncKind.debts),
       _recurringSection(l, s),
       AppListToolbar(
         state: _toolbar,

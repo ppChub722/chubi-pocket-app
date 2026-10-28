@@ -1,4 +1,9 @@
 import 'package:chubi_pocket/features/auth/domain/user.dart';
+import 'package:chubi_pocket/features/preferences/page_prefs.dart';
+import 'package:chubi_pocket/features/settings/presentation/pages/settings_page_prefs_page.dart';
+import 'package:chubi_pocket/features/settings/presentation/settings_labels.dart';
+import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// `GET /users/me` as the 0.4.1-2 BE answers (BE-3 spec: server preferences,
@@ -96,5 +101,30 @@ void main() {
     expect(none.feeCategory, isNull);
     expect(none.themeMode, isNull);
     expect(none.pagePrefs, isEmpty);
+  });
+
+  test('home summaries: notifications count the four auto switches; page '
+      'prefs show bare values', () {
+    final l = lookupAppLocalizations(const Locale('th'));
+    final u = User.fromJson(_meJson());
+    // sync events on, sync debts off, accept events off, accept debts on
+    expect(autoOnCount(u), 2);
+    expect(
+      notificationsSummary(l, u),
+      'แจ้ง 9 จาก 12 เรื่อง | อัตโนมัติ 2 เรื่อง',
+    );
+    final budgets = pagePrefPage(PagePrefIds.budgets);
+    final line = pagePrefSummary(l, budgets, u.pagePref(PagePrefIds.budgets))!;
+    expect(line, isNot(contains(':')), reason: 'no "เรียง:" prefix');
+    expect(line.split(' | '), hasLength(budgets.fields.length));
+    // A page of sets only, all empty: nothing to show.
+    final categories = pagePrefPage(PagePrefIds.categories);
+    expect(pagePrefSummary(l, categories, const {}), isNull);
+    expect(
+      pagePrefSummary(l, categories, const {
+        'collapsed': ['a', 'b', 'c'],
+      }),
+      '${l.pagePrefCollapsed} 3',
+    );
   });
 }

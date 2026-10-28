@@ -119,6 +119,15 @@ class _EditProfilePageState extends State<EditProfilePage>
     }
   }
 
+  String? _stamp(BuildContext context) {
+    final lines = detailMetaLines(
+      context,
+      createdAt: _user.createdAt,
+      updatedAt: _user.updatedAt,
+    );
+    return lines.isEmpty ? null : lines.join('\n');
+  }
+
   String get _shownName =>
       working.name.trim().isEmpty ? _user.displayName : working.name;
 
@@ -153,40 +162,60 @@ class _EditProfilePageState extends State<EditProfilePage>
                     AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
                 hero: _hero(l, editing),
                 info: SectionCard(
+                  title: l.profileSectionAccount,
                   children: [
-                    DetailTextField(
-                      label: l.editProfileEmailLabel,
-                      controller: _emailCtrl,
-                      editing: editing,
-                      placeholderWhenEmpty: true,
-                      notSetLabel: l.contactFieldNotSet,
-                      maxLength: TextLimits.email,
-                      keyboardType: TextInputType.emailAddress,
-                      viewHint: l.commonLongPressToEdit,
-                      onEnterEdit: () => enterEdit(),
-                      onChanged: (v) {
-                        if (_emailError != null) {
-                          setState(() => _emailError = null);
-                        }
-                        applyTextChange(
-                          _Field.email,
-                          working.copyWith(email: v),
-                        );
-                      },
-                      validator: (v) {
-                        if (_emailError != null) return _emailError;
-                        final s = v?.trim() ?? '';
-                        // Once set, the email can't go back to empty.
-                        if (s.isEmpty) {
-                          return original.email.isEmpty
+                    // View: a plain row, the value on the right, no › (a tap
+                    // goes nowhere); long-press or ✏️ edits (owner
+                    // 2026-10-28).
+                    if (!editing)
+                      DetailRow(
+                        leading: const AppIcon(AppIcons.email),
+                        label: l.editProfileEmailLabel,
+                        trailing: working.email.isEmpty
+                            ? DetailPlaceholder(l.contactFieldNotSet)
+                            : Text(
+                                working.email,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                        onLongPress: () => enterEdit(),
+                      )
+                    else
+                      DetailTextField(
+                        label: l.editProfileEmailLabel,
+                        controller: _emailCtrl,
+                        editing: editing,
+                        placeholderWhenEmpty: true,
+                        notSetLabel: l.contactFieldNotSet,
+                        maxLength: TextLimits.email,
+                        keyboardType: TextInputType.emailAddress,
+                        viewHint: l.commonLongPressToEdit,
+                        onEnterEdit: () => enterEdit(),
+                        onChanged: (v) {
+                          if (_emailError != null) {
+                            setState(() => _emailError = null);
+                          }
+                          applyTextChange(
+                            _Field.email,
+                            working.copyWith(email: v),
+                          );
+                        },
+                        validator: (v) {
+                          if (_emailError != null) return _emailError;
+                          final s = v?.trim() ?? '';
+                          // Once set, the email can't go back to empty.
+                          if (s.isEmpty) {
+                            return original.email.isEmpty
+                                ? null
+                                : l.profileEmailCannotClear;
+                          }
+                          return RegExp(
+                                r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                              ).hasMatch(s)
                               ? null
-                              : l.profileEmailCannotClear;
-                        }
-                        return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(s)
-                            ? null
-                            : l.editProfileEmailInvalid;
-                      },
-                    ),
+                              : l.editProfileEmailInvalid;
+                        },
+                      ),
                   ],
                 ),
                 settings: editing
@@ -194,26 +223,25 @@ class _EditProfilePageState extends State<EditProfilePage>
                     : SettingsSection(
                         title: l.profileSectionSecurity,
                         children: [
+                          // The lock after the value marks it locked.
                           DetailRow(
-                            leading: const AppIcon(AppIcons.lock),
+                            leading: const AppIcon(AppIcons.profile),
                             label: l.editProfileUsernameLabel,
                             helper: l.profileUsernameLocked,
                             locked: true,
                             trailing: Text('@${_user.username}'),
                           ),
                           DetailRow(
-                            leading: const AppIcon(AppIcons.lock),
+                            leading: const AppIcon(AppIcons.password),
                             label: l.settingsChangePassword,
                             showChevron: true,
                             onTap: () => context.push('/settings/password'),
                           ),
                         ],
                       ),
-                metaLines: detailMetaLines(
-                  context,
-                  createdAt: _user.createdAt,
-                  updatedAt: _user.updatedAt,
-                ),
+                // The record stamp, inset like a card title (owner
+                // 2026-10-28; this page only).
+                footnote: _stamp(context),
               ),
             ),
           ),

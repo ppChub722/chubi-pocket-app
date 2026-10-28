@@ -1042,16 +1042,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifGroupRequests => 'คำเชิญและคำขอ';
 
   @override
-  String get notifTypeSplitCreated => 'มีคนหารบิลกับฉัน';
+  String get notifTypeSplitCreated => 'มีคนแชร์บิลกับฉัน';
 
   @override
   String get notifTypeProjectTxForYou => 'มีคนบันทึกรายการอีเวนต์ให้ฉัน';
 
   @override
   String get notifTypeProjectTxChanged => 'มีการแก้ไขรายการในอีเวนต์';
-
-  @override
-  String get notifTypeAlwaysOn => 'เปิดตลอด';
 
   @override
   String get notifTypeProjectAdded => 'ถูกเพิ่มเข้าอีเวนต์';
@@ -1611,7 +1608,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsLogoutDialogTitle => 'ออกจากระบบ ChubiPocket?';
 
   @override
-  String get settingsLogoutDialogBody => 'คุณจะถูกนำกลับไปยังหน้าเข้าสู่ระบบ';
+  String get settingsLogoutDialogBody => 'ฉันจะกลับไปที่หน้าเข้าสู่ระบบ';
 
   @override
   String get editProfileTitle => 'แก้ไขโปรไฟล์';
@@ -4402,8 +4399,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get profileCurrencyChangeTitle => 'เปลี่ยนสกุลเงิน?';
 
   @override
-  String get profileCurrencyChangeMessage =>
-      'เปลี่ยนแค่สัญลักษณ์ ตัวเลขจะไม่ถูกแปลงค่า: 100 ก็ยังเป็น 100';
+  String get profileCurrencyChangeMessage => '100 ก็ยังเป็น 100';
 
   @override
   String get profileCurrencyChangeConfirm => 'เปลี่ยนสกุลเงิน';
@@ -5229,7 +5225,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsMoneySignParentheses => 'วงเล็บ ( )';
 
   @override
-  String get settingsMoneySignNone => 'สีอย่างเดียว';
+  String get settingsMoneySignNone => 'ไม่มีเครื่องหมาย';
 
   @override
   String get settingsMoneyColor => 'ใช้สีแดง / เขียว';
@@ -5250,8 +5246,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsMoneyDecimalsAuto => 'ซ่อนเฉพาะ .00';
 
   @override
-  String get settingsMainWalletHint =>
-      'ใช้ทุกครั้งที่จดรายการ ไม่ตั้ง = กระเป๋าที่ใช้ล่าสุด';
+  String get settingsMainWalletHint => 'ไม่ตั้ง = ใช้กระเป๋าล่าสุด';
 
   @override
   String get settingsMainWalletNone => 'ยังไม่ตั้ง';
@@ -5260,7 +5255,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsArchived => 'ที่เก็บถาวร';
 
   @override
-  String get settingsArchivedHint => 'กระเป๋า งบ เป้าหมาย event ผู้ติดต่อ';
+  String get settingsArchivedHint =>
+      'กระเป๋า งบประมาณ เป้าออม รายการประจำ อีเวนต์ ผู้ติดต่อ';
 
   @override
   String get settingsExportCsv => 'ส่งออก CSV';
@@ -6310,7 +6306,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get eventCompleteBody =>
-      'ย้อนกลับไม่ได้ เพิ่มหรือแก้บิลไม่ได้อีก และรายการในสมุดของทุกคนจะเลิกซิงก์กับอีเวนต์นี้ทันที (ยังเชื่อมกันไว้)';
+      'ย้อนกลับไม่ได้ เพิ่มหรือแก้บิลไม่ได้อีก และรายการในสมุดของทุกคนจะเลิกอัปเดตตามอีเวนต์นี้ทันที (ยังเชื่อมกันไว้)';
 
   @override
   String get eventCompleteConfirm => 'ปิดอีเวนต์';
@@ -6320,7 +6316,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get eventCompletedNotice =>
-      'อีเวนต์นี้ปิดแล้ว แก้ไขหรือเพิ่มบิลไม่ได้ และไม่ซิงก์กับสมุดของใครอีก';
+      'อีเวนต์นี้ปิดแล้ว แก้ไขหรือเพิ่มบิลไม่ได้ และสมุดของทุกคนเลิกอัปเดตตามอีเวนต์นี้แล้ว';
 
   @override
   String get eventErrCompleted => 'อีเวนต์นี้ปิดแล้ว แก้ไขไม่ได้';
@@ -6333,39 +6329,10 @@ class AppLocalizationsTh extends AppLocalizations {
       'ยังมีบิลที่มีช่องคนว่าง ใส่คนให้ครบก่อนปิดอีเวนต์';
 
   @override
-  String get settingsHomeCaption => 'ทุกค่าเก็บไว้กับบัญชี ใช้ได้ทุกเครื่อง';
-
-  @override
-  String get settingsGroupSync => 'ซิงก์อัตโนมัติ';
+  String get settingsGroupSync => 'อัปเดตอัตโนมัติ';
 
   @override
   String get settingsGroupPagePrefs => 'ตัวกรองและการเรียง';
-
-  @override
-  String get settingsSummaryOn => 'เปิด';
-
-  @override
-  String get settingsSummaryOff => 'ปิด';
-
-  @override
-  String settingsSyncSummary(String events, String debts) {
-    return 'อีเวนต์ $events | หนี้และแบ่งจ่าย $debts';
-  }
-
-  @override
-  String settingsNotificationsOnSummary(int on, int total) {
-    return 'เปิด $on จาก $total เรื่อง';
-  }
-
-  @override
-  String settingsPagePrefsSummary(int count) {
-    return '$count หน้า | จำค่าที่เลือกล่าสุด';
-  }
-
-  @override
-  String settingsMainWalletSummary(String name) {
-    return 'กระเป๋าหลัก $name';
-  }
 
   @override
   String get settingsComingSoon => 'เร็วๆ นี้';
@@ -6392,46 +6359,21 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsFeeCategoryHint => 'ใช้ตอนโอนเงินที่มีค่าธรรมเนียม';
 
   @override
-  String get settingsSyncLegend =>
-      'เปิด = คนอื่นแก้บิล ของฉันเปลี่ยนตามทันที\nปิด = ได้แจ้งเตือน “อัปเดตตาม” ให้กดเอง';
-
-  @override
-  String get settingsSyncEvents => 'อีเวนต์';
-
-  @override
-  String get settingsSyncEventsHint => 'บิลในอีเวนต์ที่ฉันมีส่วน';
-
-  @override
-  String get settingsSyncDebts => 'หนี้และแบ่งจ่าย';
-
-  @override
-  String get settingsSyncDebtsHint => 'บิลและหนี้กับคนที่เชื่อมบัญชี';
-
-  @override
   String get settingsSyncFootnote =>
-      'สวิตช์เดียวกับในหน้าอีเวนต์และหน้าคน เปลี่ยนที่ไหนก็เป็นค่าเดียวกัน | ปิดเสียงแจ้งเตือนแล้ว ซิงก์ยังทำงานเงียบๆ';
+      'สวิตช์อัตโนมัติชุดเดียวกับในหน้าอีเวนต์และหน้าคน เปลี่ยนที่ไหนก็เป็นค่าเดียวกัน';
 
   @override
   String get notifSettingsOnOffLegend =>
-      'เปิด = ได้รับแจ้งเตือน | ปิด = เงียบ\nซิงก์อัตโนมัติแยกอยู่ในหน้าตั้งค่า ปิดเสียงแล้วยังอัปเดตให้เงียบๆ';
+      'แจ้ง = ส่งแจ้งเตือนเรื่องนี้\nอัตโนมัติ = ไม่ต้องถาม ทำให้เลย\nปิดอัตโนมัติอยู่ ต้องเปิดแจ้งไว้ เพราะต้องมีคนตอบ';
 
   @override
   String get notifGroupSharedBills => 'บิลที่แชร์';
 
   @override
-  String get notifSetSplitCreatedHint => 'บิลใหม่ที่มีส่วนของฉัน';
-
-  @override
   String get notifSetSplitChanged => 'มีคนแก้บิลที่แชร์กับฉัน';
 
   @override
-  String get notifSetSplitChangedHint => 'ยอด วันที่ หรือคำอธิบายเปลี่ยน';
-
-  @override
   String get notifSetSharedBillDeleted => 'มีคนลบบิลที่แชร์กับฉัน';
-
-  @override
-  String get notifSetSharedBillDeletedHint => 'สำเนาของฉันกลายเป็นรายการธรรมดา';
 
   @override
   String get notifSetSharedBillDisconnected =>
@@ -6446,18 +6388,11 @@ class AppLocalizationsTh extends AppLocalizations {
       'หนี้ของฉันยังอยู่ แค่ไม่เชื่อมกันแล้ว';
 
   @override
-  String get notifSetProjectTxForYouHint =>
-      'คนอื่นจ่ายแทน หรือลงบิลที่ฉันเป็นคนจ่าย';
-
-  @override
-  String get notifSetProjectTxChangedHint => 'บิลที่มีส่วนของฉันเปลี่ยน';
-
-  @override
   String get notifSetEventCompleted => 'อีเวนต์ปิดแล้ว';
 
   @override
   String get notifSetEventCompletedHint =>
-      'ล็อกถาวร เลิกซิงก์ เคลมได้ครั้งเดียว';
+      'ล็อกถาวร เลิกอัปเดต เคลมได้ครั้งเดียว';
 
   @override
   String get notifSetEventMemberRemoved => 'ถูกเอาออกจากอีเวนต์';
@@ -6584,16 +6519,11 @@ class AppLocalizationsTh extends AppLocalizations {
   String get pagePrefNone => 'ไม่มี';
 
   @override
-  String pagePrefValue(String title, String value) {
-    return '$title: $value';
-  }
-
-  @override
   String get pagePrefsChanged => 'เปลี่ยนแล้ว';
 
   @override
   String get pagePrefsCaption =>
-      'เลือกในหน้าไหน ค่าตรงนี้ก็เปลี่ยนตาม | แตะเพื่อตั้งเอง';
+      'เลือกในหน้าไหน ค่าตรงนี้ก็เปลี่ยนตาม\nแตะเพื่อตั้งเอง';
 
   @override
   String get pagePrefsFootnote =>
@@ -6776,22 +6706,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsAcceptTitle => 'รับบิลใหม่อัตโนมัติ';
 
   @override
-  String get settingsAcceptLegend =>
-      'เปิด = บิลใหม่ที่มีส่วนของฉัน ลงสมุดฉันทันที\nปิด = ได้แจ้งเตือน “เพิ่มในสมุด” ให้กดเอง';
-
-  @override
-  String get settingsAcceptEventsHint => 'บิลใหม่ในอีเวนต์ที่ฉันมีส่วน';
-
-  @override
-  String get settingsAcceptDebtsHint => 'บิลแบ่งจ่ายใหม่จากคนที่เชื่อมบัญชี';
-
-  @override
-  String get settingsAcceptShortHint => 'บิลใหม่ลงสมุดฉันทันที';
-
-  @override
-  String get settingsSyncShortHint => 'คนอื่นแก้บิล ของฉันเปลี่ยนตามทันที';
-
-  @override
   String get eventDeleteKeepsBills =>
       'ลบแค่อีเวนต์ บิลข้างในยังอยู่ เป็นบิลแบ่งจ่าย ทุกคนยังเชื่อมกันเหมือนเดิม ไม่มีรายการในสมุดของใครถูกลบ';
 
@@ -6813,4 +6727,102 @@ class AppLocalizationsTh extends AppLocalizations {
   String evbPayersLine(String payers) {
     return 'จ่าย $payers';
   }
+
+  @override
+  String get settingsSectionSettings => 'ตั้งค่า';
+
+  @override
+  String get settingsSectionData => 'ข้อมูล';
+
+  @override
+  String settingsNotificationsSummary(int on, int total, int auto) {
+    return 'แจ้ง $on จาก $total เรื่อง | อัตโนมัติ $auto เรื่อง';
+  }
+
+  @override
+  String settingsPagePrefsChangedSummary(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'เปลี่ยน $count หน้า',
+      zero: 'ยังไม่เปลี่ยน',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsSectionAppearance => 'หน้าตา';
+
+  @override
+  String get settingsSectionLanguageFont => 'ภาษาและฟอนต์';
+
+  @override
+  String get settingsMoneyStyleHint =>
+      'รายรับ / รายจ่ายแสดงด้วยเครื่องหมายแบบไหน';
+
+  @override
+  String get settingsMoneyDecimalsHint => 'แสดงสตางค์ไหม';
+
+  @override
+  String get notifColumnNotify => 'แจ้ง';
+
+  @override
+  String get notifColumnAuto => 'อัตโนมัติ';
+
+  @override
+  String get notifAutoAcceptHint => 'อัตโนมัติ = รับเข้าสมุดเลย';
+
+  @override
+  String get notifAutoUpdateHint => 'อัตโนมัติ = อัปเดตตามเลย';
+
+  @override
+  String get notifAutoDeleteHint =>
+      'อัตโนมัติ = ลบสำเนาของฉันตาม\nใช้ค่าเดียวกับแถว \"แก้บิล\"';
+
+  @override
+  String get notifLockedByAutoHint => 'ปิดอัตโนมัติอยู่ แจ้งปิดไม่ได้';
+
+  @override
+  String get notifSetProjectAddedHint => 'มีคนเพิ่มฉันเป็นสมาชิก';
+
+  @override
+  String get notifSetRecurringDueHint => 'งวดที่ต้องจ่าย / ต้องรับวันนี้';
+
+  @override
+  String get notifSetRecurringEndingHint => 'เหลืองวดสุดท้ายแล้ว';
+
+  @override
+  String get settingsAutoTitle => 'อัตโนมัติ';
+
+  @override
+  String get settingsAutoEventsDescription =>
+      'ใช้กับทุกอีเวนต์ ตั้งได้ที่ การตั้งค่า › การแจ้งเตือน';
+
+  @override
+  String get settingsAutoDebtsDescription =>
+      'ใช้กับทุกคน ตั้งได้ที่ การตั้งค่า › การแจ้งเตือน';
+
+  @override
+  String get profileSectionAccount => 'บัญชี';
+
+  @override
+  String get pagePrefsResetTitle => 'คืนค่า';
+
+  @override
+  String get pagePrefsResetAllHint => 'ทุกหน้ากลับเป็นค่าเริ่มต้น';
+
+  @override
+  String get pagePrefsResetPageBody =>
+      'หน้านี้กลับไปใช้ตัวกรองและการเรียงเริ่มต้น';
+
+  @override
+  String pagePrefSetCount(String title, int count) {
+    return '$title $count';
+  }
+
+  @override
+  String get settingsMainWalletUnsetSummary => 'ยังไม่ตั้งกระเป๋าหลัก';
+
+  @override
+  String get pagePrefsSectionPages => 'หน้าในแอป';
 }

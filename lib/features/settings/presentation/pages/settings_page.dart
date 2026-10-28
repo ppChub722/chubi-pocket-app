@@ -5,19 +5,19 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
-import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/domain/user.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
+import '../../../preferences/page_prefs.dart';
 import '../../../users/presentation/refresh_me.dart';
 import '../settings_labels.dart';
 import 'settings_money_page.dart' show signedInUser;
 
-/// The settings home (0.4.1-2 P7, owner-approved mock): every user
-/// preference, all kept on the account. Only the groups show here, each with
-/// one line of its current values; a tap opens the group's page.
+/// The settings home (0.4.1-2 P7; owner 2026-10-28 mock): the profile card,
+/// "ตั้งค่า" (the four groups, each with one line of its current values),
+/// "ข้อมูล" (archive, CSV export, version), then logout.
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
@@ -33,7 +33,9 @@ class SettingsPage extends StatelessWidget {
             final user = signedInUser(state);
             if (user == null) return const SizedBox.shrink();
             final inset = MediaQuery.paddingOf(context);
-            final notif = user.notificationSummary;
+            final changedPages = pagePrefPages
+                .where((p) => p.changed(user.pagePref(p.id)))
+                .length;
             return DetailPageBody(
               onRefresh: () => refreshMe(context),
               physics: const AlwaysScrollableScrollPhysics(),
@@ -43,7 +45,7 @@ class SettingsPage extends StatelessWidget {
               sections: [
                 (first) => SectionCard(
                   first: first,
-                  description: l.settingsHomeCaption,
+                  title: l.settingsSectionSettings,
                   children: [
                     SettingsGroupRow(
                       icon: AppIcons.colorPicker,
@@ -58,46 +60,35 @@ class SettingsPage extends StatelessWidget {
                       onTap: () => context.push('/settings/money'),
                     ),
                     SettingsGroupRow(
-                      icon: AppIcons.sync,
-                      label: l.settingsGroupSync,
-                      summary: syncSummary(l, user),
-                      onTap: () => context.push('/settings/sync'),
-                    ),
-                    SettingsGroupRow(
                       icon: AppIcons.notifications,
                       label: l.settingsNotifications,
-                      summary: notif == null
-                          ? null
-                          : l.settingsNotificationsOnSummary(
-                              notif.on,
-                              notif.total,
-                            ),
+                      summary: notificationsSummary(l, user),
                       onTap: () => context.push('/settings/notifications'),
                     ),
                     SettingsGroupRow(
                       icon: AppIcons.filter,
                       label: l.settingsGroupPagePrefs,
-                      summary: l.settingsPagePrefsSummary(
-                        PagePrefIds.all.length,
-                      ),
+                      summary: l.settingsPagePrefsChangedSummary(changedPages),
                       onTap: () => context.push('/settings/page-prefs'),
                     ),
                   ],
                 ),
                 (first) => SectionCard(
                   first: first,
+                  title: l.settingsSectionData,
                   children: [
                     DetailRow(
                       leading: const AppIcon(AppIcons.archive),
                       label: l.settingsArchived,
                       helper: l.settingsArchivedHint,
                       showChevron: true,
-                      onTap: () => openPage(context, '/archived'),
+                      // Inside the settings tab, like the other groups.
+                      onTap: () => context.push('/archived'),
                     ),
                     LockedInEdit(
                       locked: true,
                       child: DetailRow(
-                        leading: const AppIcon(AppIcons.share),
+                        leading: const AppIcon(AppIcons.download),
                         label: l.settingsExportCsv,
                         trailing: AppBadge(label: l.settingsComingSoon),
                       ),

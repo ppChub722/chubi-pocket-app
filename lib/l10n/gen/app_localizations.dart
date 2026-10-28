@@ -1991,7 +1991,7 @@ abstract class AppLocalizations {
   /// No description provided for @notifTypeSplitCreated.
   ///
   /// In en, this message translates to:
-  /// **'Someone splits a bill with me'**
+  /// **'Someone shares a bill with me'**
   String get notifTypeSplitCreated;
 
   /// No description provided for @notifTypeProjectTxForYou.
@@ -2005,12 +2005,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'An event transaction is edited'**
   String get notifTypeProjectTxChanged;
-
-  /// No description provided for @notifTypeAlwaysOn.
-  ///
-  /// In en, this message translates to:
-  /// **'Always on'**
-  String get notifTypeAlwaysOn;
 
   /// No description provided for @notifTypeProjectAdded.
   ///
@@ -2963,7 +2957,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsLogoutDialogBody.
   ///
   /// In en, this message translates to:
-  /// **'You will be returned to the login screen.'**
+  /// **'Back to the sign-in screen.'**
   String get settingsLogoutDialogBody;
 
   /// No description provided for @editProfileTitle.
@@ -7666,7 +7660,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileCurrencyChangeMessage.
   ///
   /// In en, this message translates to:
-  /// **'Only the label changes. Your amounts are NOT converted: 100 stays 100.'**
+  /// **'100 stays 100'**
   String get profileCurrencyChangeMessage;
 
   /// No description provided for @profileCurrencyChangeConfirm.
@@ -9095,7 +9089,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsMoneySignNone.
   ///
   /// In en, this message translates to:
-  /// **'Colour only'**
+  /// **'No sign'**
   String get settingsMoneySignNone;
 
   /// No description provided for @settingsMoneyColor.
@@ -9137,7 +9131,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsMainWalletHint.
   ///
   /// In en, this message translates to:
-  /// **'Used for every new entry; not set = the last wallet used'**
+  /// **'Not set = the last wallet used'**
   String get settingsMainWalletHint;
 
   /// No description provided for @settingsMainWalletNone.
@@ -9155,7 +9149,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsArchivedHint.
   ///
   /// In en, this message translates to:
-  /// **'Wallets, budgets, goals, events, contacts'**
+  /// **'Wallets, budgets, saving goals, recurring, events, contacts'**
   String get settingsArchivedHint;
 
   /// No description provided for @settingsExportCsv.
@@ -10942,7 +10936,7 @@ abstract class AppLocalizations {
   /// No description provided for @eventCompleteBody.
   ///
   /// In en, this message translates to:
-  /// **'This can\'t be undone. No more adding or editing bills, and everyone\'s books stop syncing with this event at once (the links stay).'**
+  /// **'This can\'t be undone. No more adding or editing bills, and everyone\'s books stop updating with this event at once (the links stay).'**
   String get eventCompleteBody;
 
   /// No description provided for @eventCompleteConfirm.
@@ -10960,7 +10954,7 @@ abstract class AppLocalizations {
   /// No description provided for @eventCompletedNotice.
   ///
   /// In en, this message translates to:
-  /// **'This event is completed: bills can\'t be added or edited, and nobody\'s book syncs with it any more.'**
+  /// **'This event is completed: bills can\'t be added or edited, and nobody\'s book updates with it any more.'**
   String get eventCompletedNotice;
 
   /// No description provided for @eventErrCompleted.
@@ -10981,16 +10975,10 @@ abstract class AppLocalizations {
   /// **'A bill still has an empty person slot: fill it before completing the event'**
   String get eventErrEmptyPerson;
 
-  /// No description provided for @settingsHomeCaption.
-  ///
-  /// In en, this message translates to:
-  /// **'Saved with your account, the same on every device'**
-  String get settingsHomeCaption;
-
   /// No description provided for @settingsGroupSync.
   ///
   /// In en, this message translates to:
-  /// **'Auto sync'**
+  /// **'Auto update'**
   String get settingsGroupSync;
 
   /// No description provided for @settingsGroupPagePrefs.
@@ -10998,42 +10986,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Filters and sorting'**
   String get settingsGroupPagePrefs;
-
-  /// No description provided for @settingsSummaryOn.
-  ///
-  /// In en, this message translates to:
-  /// **'on'**
-  String get settingsSummaryOn;
-
-  /// No description provided for @settingsSummaryOff.
-  ///
-  /// In en, this message translates to:
-  /// **'off'**
-  String get settingsSummaryOff;
-
-  /// No description provided for @settingsSyncSummary.
-  ///
-  /// In en, this message translates to:
-  /// **'Events {events} | Debts and splits {debts}'**
-  String settingsSyncSummary(String events, String debts);
-
-  /// No description provided for @settingsNotificationsOnSummary.
-  ///
-  /// In en, this message translates to:
-  /// **'{on} of {total} on'**
-  String settingsNotificationsOnSummary(int on, int total);
-
-  /// No description provided for @settingsPagePrefsSummary.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} pages | remembers your last choice'**
-  String settingsPagePrefsSummary(int count);
-
-  /// No description provided for @settingsMainWalletSummary.
-  ///
-  /// In en, this message translates to:
-  /// **'Main wallet {name}'**
-  String settingsMainWalletSummary(String name);
 
   /// No description provided for @settingsComingSoon.
   ///
@@ -11083,46 +11035,16 @@ abstract class AppLocalizations {
   /// **'Used for transfers with a fee'**
   String get settingsFeeCategoryHint;
 
-  /// No description provided for @settingsSyncLegend.
-  ///
-  /// In en, this message translates to:
-  /// **'On = when someone edits a bill, mine changes at once\nOff = a notification asks me to \"Update\"'**
-  String get settingsSyncLegend;
-
-  /// No description provided for @settingsSyncEvents.
-  ///
-  /// In en, this message translates to:
-  /// **'Events'**
-  String get settingsSyncEvents;
-
-  /// No description provided for @settingsSyncEventsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Bills in events I have a part in'**
-  String get settingsSyncEventsHint;
-
-  /// No description provided for @settingsSyncDebts.
-  ///
-  /// In en, this message translates to:
-  /// **'Debts and splits'**
-  String get settingsSyncDebts;
-
-  /// No description provided for @settingsSyncDebtsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Bills and debts with linked people'**
-  String get settingsSyncDebtsHint;
-
   /// No description provided for @settingsSyncFootnote.
   ///
   /// In en, this message translates to:
-  /// **'The same switches as on the event page and the person page: change it anywhere, it\'s one value | Muted notifications still sync quietly'**
+  /// **'The same auto switches as on the event page and the person page: change them anywhere, it\'s one value'**
   String get settingsSyncFootnote;
 
   /// No description provided for @notifSettingsOnOffLegend.
   ///
   /// In en, this message translates to:
-  /// **'On = notify me | Off = silent\nAuto sync is its own setting; muted types still update quietly'**
+  /// **'Notify = send me a notification about it\nAuto = don\'t ask, just do it\nWith auto off, notify stays on: someone has to answer'**
   String get notifSettingsOnOffLegend;
 
   /// No description provided for @notifGroupSharedBills.
@@ -11131,35 +11053,17 @@ abstract class AppLocalizations {
   /// **'Shared bills'**
   String get notifGroupSharedBills;
 
-  /// No description provided for @notifSetSplitCreatedHint.
-  ///
-  /// In en, this message translates to:
-  /// **'A new bill with my share'**
-  String get notifSetSplitCreatedHint;
-
   /// No description provided for @notifSetSplitChanged.
   ///
   /// In en, this message translates to:
   /// **'Someone edited a bill shared with me'**
   String get notifSetSplitChanged;
 
-  /// No description provided for @notifSetSplitChangedHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Amount, date or description changed'**
-  String get notifSetSplitChangedHint;
-
   /// No description provided for @notifSetSharedBillDeleted.
   ///
   /// In en, this message translates to:
   /// **'Someone deleted a bill shared with me'**
   String get notifSetSharedBillDeleted;
-
-  /// No description provided for @notifSetSharedBillDeletedHint.
-  ///
-  /// In en, this message translates to:
-  /// **'My copy becomes a plain transaction'**
-  String get notifSetSharedBillDeletedHint;
 
   /// No description provided for @notifSetSharedBillDisconnected.
   ///
@@ -11179,18 +11083,6 @@ abstract class AppLocalizations {
   /// **'My debt stays, just no longer connected'**
   String get notifSetDebtDisconnectedHint;
 
-  /// No description provided for @notifSetProjectTxForYouHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Someone paid for me, or booked a bill I paid'**
-  String get notifSetProjectTxForYouHint;
-
-  /// No description provided for @notifSetProjectTxChangedHint.
-  ///
-  /// In en, this message translates to:
-  /// **'A bill with my share changed'**
-  String get notifSetProjectTxChangedHint;
-
   /// No description provided for @notifSetEventCompleted.
   ///
   /// In en, this message translates to:
@@ -11200,7 +11092,7 @@ abstract class AppLocalizations {
   /// No description provided for @notifSetEventCompletedHint.
   ///
   /// In en, this message translates to:
-  /// **'Locked for good, no more sync, claim once'**
+  /// **'Locked for good, no more updates, claim once'**
   String get notifSetEventCompletedHint;
 
   /// No description provided for @notifSetEventMemberRemoved.
@@ -11419,12 +11311,6 @@ abstract class AppLocalizations {
   /// **'none'**
   String get pagePrefNone;
 
-  /// No description provided for @pagePrefValue.
-  ///
-  /// In en, this message translates to:
-  /// **'{title}: {value}'**
-  String pagePrefValue(String title, String value);
-
   /// No description provided for @pagePrefsChanged.
   ///
   /// In en, this message translates to:
@@ -11434,7 +11320,7 @@ abstract class AppLocalizations {
   /// No description provided for @pagePrefsCaption.
   ///
   /// In en, this message translates to:
-  /// **'Picking on a page changes it here too | tap to set it yourself'**
+  /// **'Picking on a page changes it here too\nTap to set it yourself'**
   String get pagePrefsCaption;
 
   /// No description provided for @pagePrefsFootnote.
@@ -11743,36 +11629,6 @@ abstract class AppLocalizations {
   /// **'Auto-accept new bills'**
   String get settingsAcceptTitle;
 
-  /// No description provided for @settingsAcceptLegend.
-  ///
-  /// In en, this message translates to:
-  /// **'On = a new bill with my share goes into my book at once\nOff = a notification asks me to \"Add to my book\"'**
-  String get settingsAcceptLegend;
-
-  /// No description provided for @settingsAcceptEventsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'New bills in events I have a part in'**
-  String get settingsAcceptEventsHint;
-
-  /// No description provided for @settingsAcceptDebtsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'New split bills from linked people'**
-  String get settingsAcceptDebtsHint;
-
-  /// No description provided for @settingsAcceptShortHint.
-  ///
-  /// In en, this message translates to:
-  /// **'New bills go into my book at once'**
-  String get settingsAcceptShortHint;
-
-  /// No description provided for @settingsSyncShortHint.
-  ///
-  /// In en, this message translates to:
-  /// **'When someone edits a bill, mine changes at once'**
-  String get settingsSyncShortHint;
-
   /// No description provided for @eventDeleteKeepsBills.
   ///
   /// In en, this message translates to:
@@ -11808,6 +11664,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Paid by {payers}'**
   String evbPayersLine(String payers);
+
+  /// No description provided for @settingsSectionSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsSectionSettings;
+
+  /// No description provided for @settingsSectionData.
+  ///
+  /// In en, this message translates to:
+  /// **'Data'**
+  String get settingsSectionData;
+
+  /// No description provided for @settingsNotificationsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify {on} of {total} | Auto {auto}'**
+  String settingsNotificationsSummary(int on, int total, int auto);
+
+  /// No description provided for @settingsPagePrefsChangedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No changes} =1{1 page changed} other{{count} pages changed}}'**
+  String settingsPagePrefsChangedSummary(int count);
+
+  /// No description provided for @settingsSectionAppearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Look'**
+  String get settingsSectionAppearance;
+
+  /// No description provided for @settingsSectionLanguageFont.
+  ///
+  /// In en, this message translates to:
+  /// **'Language and fonts'**
+  String get settingsSectionLanguageFont;
+
+  /// No description provided for @settingsMoneyStyleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'How income / expense amounts are signed'**
+  String get settingsMoneyStyleHint;
+
+  /// No description provided for @settingsMoneyDecimalsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the cents or not'**
+  String get settingsMoneyDecimalsHint;
+
+  /// No description provided for @notifColumnNotify.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify'**
+  String get notifColumnNotify;
+
+  /// No description provided for @notifColumnAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get notifColumnAuto;
+
+  /// No description provided for @notifAutoAcceptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto = put it in my book at once'**
+  String get notifAutoAcceptHint;
+
+  /// No description provided for @notifAutoUpdateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto = update mine at once'**
+  String get notifAutoUpdateHint;
+
+  /// No description provided for @notifAutoDeleteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto = delete my copy too\nThe same value as the \"edits a bill\" row'**
+  String get notifAutoDeleteHint;
+
+  /// No description provided for @notifLockedByAutoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto is off, so notify can\'t be turned off'**
+  String get notifLockedByAutoHint;
+
+  /// No description provided for @notifSetProjectAddedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone adds me as a member'**
+  String get notifSetProjectAddedHint;
+
+  /// No description provided for @notifSetRecurringDueHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments to pay / receive today'**
+  String get notifSetRecurringDueHint;
+
+  /// No description provided for @notifSetRecurringEndingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The last payment is left'**
+  String get notifSetRecurringEndingHint;
+
+  /// No description provided for @settingsAutoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get settingsAutoTitle;
+
+  /// No description provided for @settingsAutoEventsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'For every event; set it in Settings › Notifications'**
+  String get settingsAutoEventsDescription;
+
+  /// No description provided for @settingsAutoDebtsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'For everyone; set it in Settings › Notifications'**
+  String get settingsAutoDebtsDescription;
+
+  /// No description provided for @profileSectionAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get profileSectionAccount;
+
+  /// No description provided for @pagePrefsResetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get pagePrefsResetTitle;
+
+  /// No description provided for @pagePrefsResetAllHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Every page back to its defaults'**
+  String get pagePrefsResetAllHint;
+
+  /// No description provided for @pagePrefsResetPageBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This page goes back to the default filters and sort'**
+  String get pagePrefsResetPageBody;
+
+  /// No description provided for @pagePrefSetCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{title} {count}'**
+  String pagePrefSetCount(String title, int count);
+
+  /// No description provided for @settingsMainWalletUnsetSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'No main wallet'**
+  String get settingsMainWalletUnsetSummary;
+
+  /// No description provided for @pagePrefsSectionPages.
+  ///
+  /// In en, this message translates to:
+  /// **'Pages'**
+  String get pagePrefsSectionPages;
 }
 
 class _AppLocalizationsDelegate

@@ -10,20 +10,23 @@ import '../../../preferences/page_prefs.dart';
 import '../../../users/presentation/refresh_me.dart';
 import 'settings_money_page.dart' show saveMe, signedInUser;
 
-/// "เรียง: ใกล้หมด | กรอง: ใช้งานอยู่": a page's remembered choices in one line.
-String pagePrefSummary(
+/// "ใช้งานอยู่ | ใกล้หมด": a page's remembered choices as bare values (owner
+/// 2026-10-28), "|" between them. A set (collapsed parents, colours …) shows
+/// only when it holds something: "ยุบหมวดแม่ 3". Null = nothing to show.
+String? pagePrefSummary(
   AppLocalizations l,
   PagePrefPage page,
   Map<String, dynamic> pref,
-) => [
-  for (final f in page.fields)
-    l.pagePrefValue(
-      f.title(l),
-      f.isSet
-          ? (f.picks(pref).isEmpty ? l.pagePrefNone : '${f.picks(pref).length}')
-          : f.option(f.pick(pref)).label(l),
-    ),
-].join(' | ');
+) {
+  final parts = [
+    for (final f in page.fields)
+      if (!f.isSet)
+        f.option(f.pick(pref)).label(l)
+      else if (f.picks(pref).isNotEmpty)
+        l.pagePrefSetCount(f.title(l), f.picks(pref).length),
+  ];
+  return parts.isEmpty ? null : parts.join(' | ');
+}
 
 /// Settings › ตัวกรองและการเรียง (0.4.1-2 P6): every page's remembered
 /// sort / filter, one row each; a tap opens that page's choices.
@@ -33,7 +36,6 @@ class SettingsPagePrefsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final inset = MediaQuery.paddingOf(context);
     return Scaffold(
       appBar: AppTopBar(title: l.settingsGroupPagePrefs, showBack: true),
       extendBodyBehindAppBar: true,
@@ -41,14 +43,18 @@ class SettingsPagePrefsPage extends StatelessWidget {
         builder: (context, state) {
           final user = signedInUser(state);
           if (user == null) return const SizedBox.shrink();
+          // Inside the Scaffold body: the inset includes the floating top bar.
+          final inset = MediaQuery.paddingOf(context);
           return DetailPageBody(
             onRefresh: () => refreshMe(context),
             topInset: inset.top + AppSpacing.lg,
             bottomInset: AppSpacing.huge + inset.bottom,
+            // The page legend, above the cards (inset like a card title).
+            hero: DetailFootnote(l.pagePrefsCaption),
             sections: [
               (first) => SectionCard(
                 first: first,
-                description: l.pagePrefsCaption,
+                title: l.pagePrefsSectionPages,
                 children: [
                   for (final page in pagePrefPages)
                     DetailRow(
@@ -66,13 +72,19 @@ class SettingsPagePrefsPage extends StatelessWidget {
                 ],
               ),
             ],
-            metaLines: [l.pagePrefsFootnote],
+            footnote: l.pagePrefsFootnote,
             manage: user.pagePrefs.isEmpty
                 ? null
-                : DetailRow(
-                    leading: const AppIcon(AppIcons.reset),
-                    label: l.pagePrefsResetAll,
-                    onTap: () => _resetAll(context),
+                : SectionCard(
+                    title: l.pagePrefsResetTitle,
+                    children: [
+                      DetailRow(
+                        leading: const AppIcon(AppIcons.reset),
+                        label: l.pagePrefsResetAll,
+                        helper: l.pagePrefsResetAllHint,
+                        onTap: () => _resetAll(context),
+                      ),
+                    ],
                   ),
           );
         },
@@ -104,7 +116,6 @@ class SettingsPagePrefPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final inset = MediaQuery.paddingOf(context);
     final page = pagePrefPage(pageId);
     return Scaffold(
       appBar: AppTopBar(title: page.title(l), showBack: true),
@@ -113,6 +124,8 @@ class SettingsPagePrefPage extends StatelessWidget {
         builder: (context, state) {
           final user = signedInUser(state);
           if (user == null) return const SizedBox.shrink();
+          // Inside the Scaffold body: the inset includes the floating top bar.
+          final inset = MediaQuery.paddingOf(context);
           final pref = user.pagePref(pageId);
           return DetailPageBody(
             onRefresh: () => refreshMe(context),
@@ -121,6 +134,7 @@ class SettingsPagePrefPage extends StatelessWidget {
             sections: [
               (first) => SectionCard(
                 first: first,
+                title: l.settingsGroupPagePrefs,
                 children: [
                   for (final f in page.fields)
                     if (f.isSet)
@@ -149,16 +163,33 @@ class SettingsPagePrefPage extends StatelessWidget {
               ),
             ],
             manage: page.changed(pref)
-                ? DetailRow(
-                    leading: const AppIcon(AppIcons.reset),
-                    label: l.pagePrefsResetPage,
-                    onTap: () =>
-                        saveMe(context, (u) => u.setPagePref(pageId, null)),
+                ? SectionCard(
+                    title: l.pagePrefsResetTitle,
+                    children: [
+                      DetailRow(
+                        leading: const AppIcon(AppIcons.reset),
+                        label: l.pagePrefsResetPage,
+                        onTap: () => _resetPage(context),
+                      ),
+                    ],
                   )
                 : null,
           );
         },
       ),
     );
+  }
+
+  Future<void> _resetPage(BuildContext context) async {
+    final l = AppLocalizations.of(context)!;
+    final ok = await showConfirmDialog(
+      context,
+      title: l.pagePrefsResetPage,
+      message: l.pagePrefsResetPageBody,
+      confirmLabel: l.pagePrefsResetPage,
+    );
+    if (ok && context.mounted) {
+      await saveMe(context, (u) => u.setPagePref(pageId, null));
+    }
   }
 }
