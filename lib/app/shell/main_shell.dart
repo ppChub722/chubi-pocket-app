@@ -85,21 +85,23 @@ class _MainShellState extends State<MainShell>
   bool _swiping = false;
   double _dragDx = 0;
 
-  bool _swipesBetweenTabs(ShellTab tab) => _layout.barOf(tab) != null;
+  /// The body trails a swipe on a bar tab's root page (never switches tabs;
+  /// only the bars do, owner 2026-10-28).
+  bool _followsSwipe(ShellTab tab) => _layout.barOf(tab) != null;
 
   void _onDragStart(DragStartDetails _) {
     final shell = widget.navigationShell;
     final branchNav = shell.route.branches[shell.currentIndex].navigatorKey;
     _swiping =
-        _swipesBetweenTabs(_current) &&
+        _followsSwipe(_current) &&
         !_chrome.hidden &&
         !(branchNav.currentState?.canPop() ?? true);
     _dragDx = 0;
     if (_swiping) _nudge.stop();
   }
 
-  /// The body trails the finger, damped so it only ever moves a little — half
-  /// as far toward an end with no tab past it.
+  /// The body trails the finger, damped so it only ever moves a little, then
+  /// eases back.
   void _onDragUpdate(DragUpdateDetails d) {
     if (!_swiping) return;
     _dragDx += d.primaryDelta ?? 0;
@@ -107,26 +109,19 @@ class _MainShellState extends State<MainShell>
       _nudge.value = 0;
       return;
     }
-    final max = _neighbour(_dragDx) != null ? _maxNudge : _maxNudge / 2;
-    final u = _dragDx / (max * 3);
-    _nudge.value = max * u / (1 + u.abs());
+    final u = _dragDx / (_maxNudge * 3);
+    _nudge.value = _maxNudge * u / (1 + u.abs());
   }
 
   void _onDragEnd(DragEndDetails d) {
     if (!_swiping) return;
     _swiping = false;
     final v = d.primaryVelocity ?? 0;
-    if (v.abs() < _minFlingVelocity) return _settle();
-    if (_pageSwipes(v)) {
+    if (v.abs() >= _minFlingVelocity && _pageSwipes(v)) {
       HapticFeedback.selectionClick();
       _swipeHandlers[_current]!.onSwipe(v < 0 ? 1 : -1);
-      return _settle();
     }
-    final next = _neighbour(v);
-    if (next == null) return _settle();
-    _nudge.value = 0;
-    HapticFeedback.selectionClick();
-    _goBranch(next);
+    _settle();
   }
 
   final Map<ShellTab, ShellSwipeHandler> _swipeHandlers = {};
@@ -145,12 +140,6 @@ class _MainShellState extends State<MainShell>
     duration: AppDurations.chrome,
     curve: AppDurations.chromeCurve,
   );
-
-  int? _neighbour(double dx) {
-    final bar = _layout.barOf(_current);
-    if (bar == null) return null;
-    return _layout.swipeTarget(bar, _current, dx < 0 ? 1 : -1)?.index;
-  }
 
   bool _askingExit = false;
 

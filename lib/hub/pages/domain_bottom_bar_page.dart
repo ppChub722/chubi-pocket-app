@@ -47,7 +47,11 @@ class _BottomBarPageState extends State<_BottomBarPage> {
               'colour. A change (tab switch, push, pop) cross-fades in 200 ms. '
               'Pick a mode below to see it. Its items come from the shell’s '
               'NavLayout (bottomItems, + after the first half); top chips and '
-              'the More groups read the same object.',
+              'the More groups read the same object. A swipe drags the '
+              'highlight and switches only while one of its items is open '
+              '(a top chip / More page: it follows, then fades); past either '
+              'end it stretches and eases back. The page body never switches '
+              'tabs; the top chips swipe among themselves the same way.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

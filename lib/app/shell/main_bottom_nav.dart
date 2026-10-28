@@ -200,7 +200,9 @@ class _MainBottomNavState extends State<MainBottomNav> {
         : v < -_minFlingVelocity
         ? at.floor()
         : at.round();
-    final moved = target != _selectedSlot;
+    // No item of this bar is open (a top chip's page, a page only เพิ่มเติม
+    // opens): the highlight followed the finger, now it just fades away.
+    final moved = _selectedSlot != null && target != _selectedSlot;
     setState(() {
       _dragLeft = null;
       _landing = moved ? target : null;
@@ -214,8 +216,19 @@ class _MainBottomNavState extends State<MainBottomNav> {
     if (_dragLeft != null) setState(() => _dragLeft = null);
   }
 
-  double _clampLeft(double left) =>
-      left.clamp(_slotLeft(0), _slotLeft(_count - 1));
+  /// How far the highlight stretches past the first / last item.
+  static const _maxStretch = 24.0;
+
+  /// [left] kept on the items, with a damped stretch past either end (it
+  /// eases back on release).
+  double _clampLeft(double left) {
+    final lo = _slotLeft(0);
+    final hi = _slotLeft(_count - 1);
+    if (left >= lo && left <= hi) return left;
+    final over = left < lo ? left - lo : left - hi;
+    final u = over / (_maxStretch * 3);
+    return (over < 0 ? lo : hi) + _maxStretch * u / (1 + u.abs());
+  }
 
   @override
   Widget build(BuildContext context) {
