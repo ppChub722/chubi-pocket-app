@@ -34,9 +34,10 @@ class _MainShellState extends State<MainShell>
 
   ShellTab get _current => ShellTab.values[widget.navigationShell.currentIndex];
 
-  void _goBranch(int i) => widget.navigationShell.goBranch(
-    i,
-    initialLocation: i == widget.navigationShell.currentIndex,
+  void _goBranch(int i) => goTab(
+    ShellTab.values[i],
+    from: widget.navigationShell.currentIndex,
+    goBranch: widget.navigationShell.goBranch,
   );
 
   final ShellBackHistory _history = ShellBackHistory();
@@ -149,7 +150,7 @@ class _MainShellState extends State<MainShell>
   Future<void> _onBackAtRoot() async {
     final to = _history.backTarget(_current);
     if (to != null) {
-      widget.navigationShell.goBranch(to);
+      _goBranch(to);
       return;
     }
     if (_askingExit) return;

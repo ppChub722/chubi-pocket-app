@@ -67,6 +67,15 @@ enum ShellTab {
     return ofPath(path);
   }
 
+  /// Left for another tab, this tab comes back at its first page instead of
+  /// the page it was left on (owner 2026-10-28: the profile / settings tab).
+  bool get resetsOnReturn => this == settings;
+
+  /// Whether switching [from] a tab to this one lands on this tab's first
+  /// page: tapping the tab already open pops it home, and a tab that
+  /// [resetsOnReturn] always starts there. Other tabs keep their stack.
+  bool opensAtRootFrom(ShellTab from) => from == this || resetsOnReturn;
+
   ShellRow get row => ShellRow.values.firstWhere((r) => r.all.contains(this));
 
   bool get inNav => row == ShellRow.nav;
@@ -113,6 +122,18 @@ String? offModuleRedirect(String location, {bool Function(ShellTab)? isOn}) {
   if (tab == null || (isOn ?? (t) => t.enabled)(tab)) return null;
   return tab.inMore ? '/more' : '/';
 }
+
+/// The one way the shell switches tabs (nav bar, top-bar chips, swipes, back
+/// on a tab root); see [ShellTab.opensAtRootFrom]. A link into a page of
+/// another tab goes through [openPage] instead.
+void goTab(
+  ShellTab to, {
+  required int from,
+  required void Function(int index, {bool initialLocation}) goBranch,
+}) => goBranch(
+  to.index,
+  initialLocation: to.opensAtRootFrom(ShellTab.values[from]),
+);
 
 void Function(String location, {Object? extra}) pageOpener(
   BuildContext context,

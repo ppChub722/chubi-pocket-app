@@ -324,7 +324,7 @@ class _UniversalChips extends StatelessWidget {
       GoRouter.maybeOf(context)?.push(path);
       return;
     }
-    shell.goBranch(tab.index, initialLocation: shell.currentIndex == tab.index);
+    goTab(tab, from: shell.currentIndex, goBranch: shell.goBranch);
   }
 
   @override
