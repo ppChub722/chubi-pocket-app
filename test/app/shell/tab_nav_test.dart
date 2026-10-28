@@ -66,4 +66,16 @@ void main() {
       }
     }
   });
+
+  test('only coming back to settings drops its pages unseen', () {
+    for (final from in ShellTab.values) {
+      for (final to in ShellTab.values) {
+        expect(
+          goTabDropsPages(to, from: from.index),
+          to == ShellTab.settings && from != ShellTab.settings,
+          reason: '$from → $to',
+        );
+      }
+    }
+  });
 }

@@ -96,10 +96,21 @@ void goTab(
   ShellTab to, {
   required int from,
   required void Function(int index, {bool initialLocation}) goBranch,
-}) => goBranch(
-  to.index,
-  initialLocation: to.opensAtRootFrom(ShellTab.values[from]),
-);
+}) {
+  final root = to.opensAtRootFrom(ShellTab.values[from]);
+  // Back to a tab that starts over: the page it was left on leaves unseen,
+  // the tab's home arrives with the tab's own entry only.
+  if (goTabDropsPages(to, from: from)) {
+    AppPageTransitionsBuilder.popNextWithoutAnimation();
+  }
+  goBranch(to.index, initialLocation: root);
+}
+
+/// Whether switching [from] → [to] drops [to]'s pages without a back slide:
+/// only a tab that [ShellTab.resetsOnReturn], entered from another tab
+/// (tapping the open tab pops home with the usual slide).
+bool goTabDropsPages(ShellTab to, {required int from}) =>
+    to.resetsOnReturn && to.index != from;
 
 void Function(String location, {Object? extra}) pageOpener(
   BuildContext context,

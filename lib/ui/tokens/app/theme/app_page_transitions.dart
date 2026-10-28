@@ -52,6 +52,30 @@ class AppPageTransitionsBuilder extends PageTransitionsBuilder {
     return _landing;
   }
 
+  static bool _dropping = false;
+  static Timer? _droppingEnd;
+  static final _dropped = Expando<bool>();
+
+  /// Coming back to a tab that starts over (settings): the pages it drops
+  /// leave at once, no back slide, while the tab plays its own entry (the
+  /// mirror of [landNextWithoutPush]).
+  static void popNextWithoutAnimation() {
+    _dropping = true;
+    _droppingEnd?.cancel();
+    _droppingEnd = Timer(const Duration(milliseconds: 500), () {
+      _dropping = false;
+      _droppingEnd = null;
+    });
+  }
+
+  /// Whether [route] pops unseen ([popNextWithoutAnimation]).
+  static bool _isDropped(PageRoute<dynamic> route, Animation<double> a) {
+    if (_dropped[route] ?? false) return true;
+    if (!_dropping || a.status != AnimationStatus.reverse) return false;
+    _dropped[route] = true;
+    return true;
+  }
+
   @override
   Duration get transitionDuration => _inner.transitionDuration;
 
@@ -217,14 +241,20 @@ class _RenderPopSlide extends RenderProxyBox {
 
   Offset _offset = Offset.zero;
 
+  bool _hidden = false;
+
   @override
   void paint(PaintingContext context, Offset offset) {
+    // Dropped by a tab that starts over: gone at once, no slide.
+    _hidden = AppPageTransitionsBuilder._isDropped(route, _animation);
+    if (_hidden) return;
     _offset = Offset(_shift * size.width, 0);
     super.paint(context, offset + _offset);
   }
 
   @override
   bool hitTestChildren(BoxHitTestResult result, {required Offset position}) =>
+      !_hidden &&
       result.addWithPaintOffset(
         offset: _offset,
         position: position,
