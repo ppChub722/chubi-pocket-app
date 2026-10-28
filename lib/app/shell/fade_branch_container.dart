@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
+import 'nav_layout.dart';
 import 'tab_nav.dart';
 import '../../ui/ui.dart';
 
@@ -234,10 +235,15 @@ class TabSwitchBody extends StatelessWidget {
       return FadeTransition(opacity: scope.animation, child: child);
     }
     final previous = scope.previous;
-    final from = previous == null
+    final layout = NavLayoutScope.read(context);
+    final bar = previous == null
+        ? null
+        : layout.barOf(ShellTab.values[previous]);
+    final row = bar == null ? const <ShellTab>[] : layout.itemsOf(bar);
+    final to = row.indexOf(ShellTab.values[scope.current]);
+    final from = previous == null || to < 0
         ? 0.0
-        : ShellTab.values[previous].sideOf(ShellTab.values[scope.current]) *
-              _enterShift;
+        : (to - row.indexOf(ShellTab.values[previous])).sign * _enterShift;
     final Widget body = FadeTransition(
       opacity: scope.animation,
       child: SlideTransition(

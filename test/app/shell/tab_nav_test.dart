@@ -1,17 +1,27 @@
+import 'package:chubi_pocket/app/shell/nav_layout.dart';
 import 'package:chubi_pocket/app/shell/tab_nav.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('every tab sits in exactly one row, switched on by default', () {
+  test('every tab sits in exactly one place of the default layout, all on', () {
+    final d = NavLayout.defaults;
     for (final tab in ShellTab.values) {
-      final rows = ShellRow.values.where((r) => r.all.contains(tab));
-      expect(rows, hasLength(1), reason: '$tab');
-    }
-    for (final row in ShellRow.values) {
-      expect(row.tabs, row.all, reason: '$row');
+      final places = [
+        if (d.bottom.contains(tab)) 'bottom',
+        if (d.top.contains(tab)) 'top',
+        for (final g in d.more)
+          if (g.items.contains(tab)) g.id.name,
+      ];
+      expect(places, hasLength(1), reason: '$tab');
+      expect(d.isOn(tab), isTrue, reason: '$tab');
     }
   });
 
+  test('a tab path leads back to its tab', () {
+    for (final tab in ShellTab.values) {
+      expect(ShellTab.ofPath(tab.path), tab, reason: tab.path);
+    }
+  });
   test('which tab switches land on the first page', () {
     final t = ShellTab.values;
     // Only the profile / settings tab forgets its stack when left.

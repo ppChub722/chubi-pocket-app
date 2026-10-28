@@ -9,15 +9,19 @@ import '../../features/transactions/presentation/widgets/quick_create_sheet.dart
 import 'back_history.dart';
 import 'fade_branch_container.dart';
 import 'main_bottom_nav.dart';
+import 'nav_layout.dart';
 import 'quick_create_context.dart';
 import 'shell_chrome.dart';
 import 'tab_nav.dart';
 import '../../ui/ui.dart';
 
 class MainShell extends StatefulWidget {
-  const MainShell({required this.navigationShell, super.key});
+  const MainShell({required this.navigationShell, this.layout, super.key});
 
   final StatefulNavigationShell navigationShell;
+
+  /// Where the bars, chips and More groups sit; [NavLayout.defaults] = today.
+  final NavLayout? layout;
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -30,7 +34,7 @@ class _MainShellState extends State<MainShell>
   late final QuickCreateContext _quickCreate = QuickCreateContext()
     ..currentBranch = widget.navigationShell.currentIndex;
 
-  static final _moreBranch = ShellTab.more.index;
+  NavLayout get _layout => widget.layout ?? NavLayout.defaults;
 
   ShellTab get _current => ShellTab.values[widget.navigationShell.currentIndex];
 
@@ -81,8 +85,7 @@ class _MainShellState extends State<MainShell>
   bool _swiping = false;
   double _dragDx = 0;
 
-  static bool _swipesBetweenTabs(ShellTab tab) =>
-      tab.row == ShellRow.nav || tab.row == ShellRow.top;
+  bool _swipesBetweenTabs(ShellTab tab) => _layout.barOf(tab) != null;
 
   void _onDragStart(DragStartDetails _) {
     final shell = widget.navigationShell;
@@ -143,12 +146,16 @@ class _MainShellState extends State<MainShell>
     curve: AppDurations.chromeCurve,
   );
 
-  int? _neighbour(double dx) => _current.beside(dx < 0 ? 1 : -1)?.index;
+  int? _neighbour(double dx) {
+    final bar = _layout.barOf(_current);
+    if (bar == null) return null;
+    return _layout.swipeTarget(bar, _current, dx < 0 ? 1 : -1)?.index;
+  }
 
   bool _askingExit = false;
 
   Future<void> _onBackAtRoot() async {
-    final to = _history.backTarget(_current);
+    final to = _history.backTarget(_current, _layout);
     if (to != null) {
       _goBranch(to);
       return;
@@ -178,13 +185,16 @@ class _MainShellState extends State<MainShell>
         if (await tab.currentState?.maybePop() ?? false) return;
         _onBackAtRoot();
       },
-      child: ShellBackScope(
-        onBack: _onBackAtRoot,
-        child: ShellSwipeScope(
-          handlers: _swipeHandlers,
-          child: QuickCreateContextScope(
-            registry: _quickCreate,
-            child: _shell(context),
+      child: NavLayoutScope(
+        layout: _layout,
+        child: ShellBackScope(
+          onBack: _onBackAtRoot,
+          child: ShellSwipeScope(
+            handlers: _swipeHandlers,
+            child: QuickCreateContextScope(
+              registry: _quickCreate,
+              child: _shell(context),
+            ),
           ),
         ),
       ),
@@ -244,16 +254,14 @@ class _MainShellState extends State<MainShell>
               key: const ValueKey('nav'),
               listenable: _quickCreate,
               builder: (context, _) => MainBottomNav(
-                currentIndex: widget.navigationShell.currentIndex,
-                moreSelected:
-                    widget.navigationShell.currentIndex == _moreBranch,
-                onTabSelected: _goBranch,
+                items: _layout.bottomItems,
+                current: _current,
+                onSelected: (tab) => _goBranch(tab.index),
                 addMode: _quickCreate.preset.mode,
                 addWord: _quickCreate.preset.word,
                 addColor: _quickCreate.preset.color,
                 addIcon: _quickCreate.preset.icon,
                 onAddPressed: () => _openQuickCreate(context),
-                onMorePressed: () => _goBranch(_moreBranch),
               ),
             ),
     );

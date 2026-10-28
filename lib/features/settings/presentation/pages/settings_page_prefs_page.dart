@@ -3,8 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/nav_layout.dart';
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
+import '../../../auth/domain/user.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../preferences/page_prefs.dart';
 import '../../../users/presentation/refresh_me.dart';
@@ -28,6 +31,28 @@ String? pagePrefSummary(
   return parts.isEmpty ? null : parts.join(' | ');
 }
 
+/// The module a page-prefs row belongs to.
+ShellTab pagePrefModule(String pageId) => switch (pageId) {
+  PagePrefIds.transactions => ShellTab.transactions,
+  PagePrefIds.wallets => ShellTab.accounts,
+  PagePrefIds.pending => ShellTab.pending,
+  PagePrefIds.notifications => ShellTab.notifications,
+  PagePrefIds.budgets => ShellTab.budgets,
+  PagePrefIds.goals => ShellTab.savingGoals,
+  PagePrefIds.recurring => ShellTab.recurring,
+  PagePrefIds.debts => ShellTab.debts,
+  PagePrefIds.events => ShellTab.projects,
+  PagePrefIds.categories => ShellTab.categories,
+  PagePrefIds.tags => ShellTab.tags,
+  PagePrefIds.contacts => ShellTab.contacts,
+  _ => ShellTab.home,
+};
+
+/// A row opens its page's choices only when the page remembers something and
+/// its module is on; otherwise it shows disabled (owner 2026-10-28).
+bool pagePrefRowEnabled(PagePrefPage page, NavLayout layout) =>
+    !page.soon && layout.isOn(pagePrefModule(page.id));
+
 /// Settings › ตัวกรองและการเรียง (0.4.1-2 P6): every page's remembered
 /// sort / filter, one row each; a tap opens that page's choices.
 class SettingsPagePrefsPage extends StatelessWidget {
@@ -36,6 +61,7 @@ class SettingsPagePrefsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final layout = NavLayoutScope.of(context);
     return Scaffold(
       appBar: AppTopBar(title: l.settingsGroupPagePrefs, showBack: true),
       extendBodyBehindAppBar: true,
@@ -70,22 +96,26 @@ class SettingsPagePrefsPage extends StatelessWidget {
                           ),
                         )
                       else
-                        DetailRow(
+                        LockedInEdit(
                           key: ValueKey('page-pref-${page.id}'),
-                          leading: AppIcon(page.icon),
-                          label: page.title(l),
-                          helper: pagePrefSummary(
-                            l,
-                            page,
-                            user.pagePref(page.id),
+                          // A module that is off: shown, not tappable.
+                          locked: !pagePrefRowEnabled(page, layout),
+                          child: DetailRow(
+                            leading: AppIcon(page.icon),
+                            label: page.title(l),
+                            helper: pagePrefSummary(
+                              l,
+                              page,
+                              user.pagePref(page.id),
+                            ),
+                            helperMaxLines: 1,
+                            trailing: page.changed(user.pagePref(page.id))
+                                ? AppBadge(label: l.pagePrefsChanged)
+                                : null,
+                            showChevron: pagePrefRowEnabled(page, layout),
+                            onTap: () =>
+                                context.push('/settings/page-prefs/${page.id}'),
                           ),
-                          helperMaxLines: 1,
-                          trailing: page.changed(user.pagePref(page.id))
-                              ? AppBadge(label: l.pagePrefsChanged)
-                              : null,
-                          showChevron: true,
-                          onTap: () =>
-                              context.push('/settings/page-prefs/${page.id}'),
                         ),
                   ],
                 ),

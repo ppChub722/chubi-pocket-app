@@ -1,3 +1,4 @@
+import 'nav_layout.dart';
 import 'tab_nav.dart';
 
 class ShellBackHistory {
@@ -20,14 +21,20 @@ class ShellBackHistory {
   }
 
   /// The branch a back on a tab root goes to, or null when it should ask to
-  /// close the app.
-  int? backTarget(ShellTab current) {
-    final ShellTab? fallback = current.inMore
-        ? ShellTab.more
-        : current == ShellTab.home
-        ? null
-        : ShellTab.home;
-    final to = _visited.isNotEmpty ? _visited.removeLast() : fallback?.index;
+  /// close the app. Without history a page only เพิ่มเติม opens goes to
+  /// เพิ่มเติม, any other tab to the bottom bar's first item.
+  int? peekBackTarget(ShellTab current, [NavLayout? layout]) {
+    if (_visited.isNotEmpty) return _visited.last;
+    final nav = layout ?? NavLayout.defaults;
+    final first = nav.bottomItems.firstOrNull;
+    if (nav.isMoreOnly(current)) return ShellTab.more.index;
+    return current == first ? null : first?.index;
+  }
+
+  /// [peekBackTarget], taken: the back is under way.
+  int? backTarget(ShellTab current, [NavLayout? layout]) {
+    final to = peekBackTarget(current, layout);
+    if (_visited.isNotEmpty) _visited.removeLast();
     if (to != null) _backTo = to;
     return to;
   }

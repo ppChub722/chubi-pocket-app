@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../ui/tokens/app/app_modules.dart';
 import '../../ui/tokens/app/theme/app_page_transitions.dart';
+import 'nav_layout.dart';
 
 enum ShellTab {
   home,
@@ -55,6 +56,10 @@ enum ShellTab {
     'tags': tags,
   };
 
+  /// The tab's first page.
+  String get path =>
+      '/${_segments.entries.firstWhere((e) => e.value == this).key}';
+
   static ShellTab? ofPath(String location) {
     final path = Uri.parse(location).path;
     final segments = path.split('/').where((s) => s.isNotEmpty);
@@ -75,52 +80,13 @@ enum ShellTab {
   /// page: tapping the tab already open pops it home, and a tab that
   /// [resetsOnReturn] always starts there. Other tabs keep their stack.
   bool opensAtRootFrom(ShellTab from) => from == this || resetsOnReturn;
-
-  ShellRow get row => ShellRow.values.firstWhere((r) => r.all.contains(this));
-
-  bool get inNav => row == ShellRow.nav;
-
-  bool get inMore => row.inMore;
-
-  ShellTab? beside(int step) {
-    final tabs = row.tabs;
-    final i = tabs.indexOf(this);
-    if (i < 0) return null;
-    final j = i + step;
-    return j < 0 || j >= tabs.length ? null : tabs[j];
-  }
-
-  int sideOf(ShellTab to) =>
-      to.row != row ? 0 : (row.all.indexOf(to) - row.all.indexOf(this)).sign;
 }
 
-enum ShellRow {
-  nav([ShellTab.home, ShellTab.transactions, ShellTab.accounts, ShellTab.more]),
-
-  top([ShellTab.pending, ShellTab.notifications, ShellTab.settings]),
-
-  planning([ShellTab.budgets, ShellTab.savingGoals, ShellTab.recurring]),
-
-  people([ShellTab.debts, ShellTab.projects]),
-
-  library([ShellTab.categories, ShellTab.tags, ShellTab.contacts]);
-
-  const ShellRow(this.all);
-
-  final List<ShellTab> all;
-
-  List<ShellTab> get tabs => [
-    for (final t in all)
-      if (t.enabled) t,
-  ];
-
-  bool get inMore => index >= planning.index;
-}
-
-String? offModuleRedirect(String location, {bool Function(ShellTab)? isOn}) {
+String? offModuleRedirect(String location, {NavLayout? layout}) {
+  final nav = layout ?? NavLayout.defaults;
   final tab = ShellTab.moduleOfPath(location);
-  if (tab == null || (isOn ?? (t) => t.enabled)(tab)) return null;
-  return tab.inMore ? '/more' : '/';
+  if (tab == null || nav.isOn(tab)) return null;
+  return nav.isMoreOnly(tab) ? '/more' : '/';
 }
 
 /// The one way the shell switches tabs (nav bar, top-bar chips, swipes, back

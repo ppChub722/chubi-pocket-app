@@ -8,6 +8,8 @@ import '../../features/notifications/presentation/cubit/unread_badge_cubit.dart'
 import '../../features/pending/presentation/cubit/pending_cubit.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'fade_branch_container.dart';
+import 'main_bottom_nav.dart';
+import 'nav_layout.dart';
 import 'tab_nav.dart';
 import 'top_bar_crumbs.dart';
 import '../../ui/ui.dart';
@@ -335,7 +337,7 @@ class _UniversalChips extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (final tab in ShellRow.top.tabs)
+        for (final tab in NavLayoutScope.of(context).topItems)
           _chipFor(context, l, tab, shell?.currentIndex == tab.index),
       ],
     );
@@ -394,7 +396,14 @@ class _UniversalChips extends StatelessWidget {
           );
         },
       ),
-      _ => throw ArgumentError('$tab has no top-bar chip'),
+      // Any other page a layout puts up here: its icon, no badge.
+      _ => _chip(
+        icon: MainBottomNav.itemOf(l, tab).$1,
+        tooltip: MainBottomNav.itemOf(l, tab).$3,
+        active: active,
+        badgeCount: 0,
+        onPressed: () => _open(context, tab, tab.path),
+      ),
     };
   }
 
