@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../ui/tokens/app/theme/app_page_transitions.dart';
 import '../../ui/ui.dart';
 import '../hub_kit.dart';
 
@@ -122,7 +123,13 @@ Widget buildRadiusDurationPage(BuildContext context) {
         title: 'AppDurations',
         note:
             'Motion lengths. Every animation also respects the device’s '
-            '“reduce motion” setting (zero duration).',
+            '“reduce motion” setting (zero duration). Navigation: a push '
+            'is FadeForwards (450 ms); every back (←, system back, the '
+            'predictive back gesture) slides the page off to the right in '
+            '“pop” (AppPageTransitionsBuilder.popDuration), the page under '
+            'it held in place, the gesture dragging it; a tab switch takes '
+            '“chrome”: a 6 % shift (side / up / down) or a 0.8 → 1 grow '
+            'out of the tapped spot, with a fade.',
         child: Column(
           children: [
             for (final (name, d) in <(String, Duration)>[
@@ -131,6 +138,7 @@ Widget buildRadiusDurationPage(BuildContext context) {
               ('normal', AppDurations.normal),
               ('slow', AppDurations.slow),
               ('chrome', AppDurations.chrome),
+              ('pop', AppPageTransitionsBuilder.popDuration),
             ])
               _DurationBar(name: name, duration: d),
           ],

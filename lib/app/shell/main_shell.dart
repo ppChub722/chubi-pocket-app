@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ import 'nav_layout.dart';
 import 'quick_create_context.dart';
 import 'shell_chrome.dart';
 import 'tab_nav.dart';
+import '../../ui/tokens/app/theme/app_page_transitions.dart';
 import '../../ui/ui.dart';
 
 class MainShell extends StatefulWidget {
@@ -28,7 +30,7 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   final ShellChromeController _chrome = ShellChromeController();
 
   late final QuickCreateContext _quickCreate = QuickCreateContext()
@@ -53,6 +55,7 @@ class _MainShellState extends State<MainShell>
     QuickCreateRouteObserver.changes.addListener(_chrome.refresh);
     // A pull re-checks the nav, so a wrongly hidden one comes back.
     PullToRefresh.onPull = _chrome.refresh;
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -68,7 +71,9 @@ class _MainShellState extends State<MainShell>
   void dispose() {
     QuickCreateRouteObserver.changes.removeListener(_chrome.refresh);
     if (PullToRefresh.onPull == _chrome.refresh) PullToRefresh.onPull = null;
+    WidgetsBinding.instance.removeObserver(this);
     _nudge.dispose();
+    _backSlide.dispose();
     _chrome.dispose();
     _quickCreate.dispose();
     super.dispose();
@@ -143,12 +148,18 @@ class _MainShellState extends State<MainShell>
 
   bool _askingExit = false;
 
+  late final TabBackSlide _backSlide = TabBackSlide(vsync: this);
+
+  GlobalKey<NavigatorState> get _branchNav {
+    final shell = widget.navigationShell;
+    return shell.route.branches[shell.currentIndex].navigatorKey;
+  }
+
   Future<void> _onBackAtRoot() async {
+    // One back between tabs at a time.
+    if (_backSlide.underlay.value != null) return;
     final to = _history.backTarget(_current, _layout);
-    if (to != null) {
-      _goBranch(to);
-      return;
-    }
+    if (to != null) return _slideBackTo(to);
     if (_askingExit) return;
     _askingExit = true;
     final l = AppLocalizations.of(context)!;
@@ -159,6 +170,82 @@ class _MainShellState extends State<MainShell>
     );
     _askingExit = false;
     if (ok) await SystemNavigator.pop();
+  }
+
+  /// A back between tabs: the open tab slides off to the right over [to]
+  /// (owner 2026-10-28), then [to] is the tab, already in place.
+  Future<void> _slideBackTo(int to) async {
+    if (MediaQuery.disableAnimationsOf(context)) return _arriveBack(to);
+    _backSlide.underlay.value = to;
+    final there = await _backSlide.finish(
+      curve: AppPageTransitionsBuilder.popCurve,
+    );
+    if (there && mounted) _arriveBack(to);
+  }
+
+  void _arriveBack(int to) {
+    _backSlide.arriveAt(to);
+    _goBranch(to);
+    // The switch ends the slide; should it not happen, drop the slide.
+    Timer(const Duration(milliseconds: 600), () {
+      if (!mounted || _current.index == to) return;
+      if (_backSlide.underlay.value == to) _backSlide.abort();
+    });
+  }
+
+  /// The tab a predictive back gesture is sliding back to.
+  int? _gestureTo;
+
+  // The Android predictive back gesture on a tab root: the tab follows the
+  // finger off to the right, the tab it goes back to under it. A page above
+  // the root, a sheet or a dialog takes the gesture itself (or nobody does
+  // and the commit runs the plain back).
+  @override
+  bool handleStartBackGesture(PredictiveBackEvent backEvent) {
+    _gestureTo = null;
+    if (backEvent.isButtonEvent || !mounted) return false;
+    if (_backSlide.underlay.value != null) return false;
+    if (MediaQuery.disableAnimationsOf(context)) return false;
+    if (!(ModalRoute.isCurrentOf(context) ?? true) || _chrome.hidden) {
+      return false;
+    }
+    if (_branchNav.currentState?.canPop() ?? true) return false;
+    final to = _history.peekBackTarget(_current, _layout);
+    if (to == null) return false;
+    _gestureTo = to;
+    _backSlide.progress.stop();
+    _backSlide.underlay.value = to;
+    _backSlide.progress.value = backEvent.progress;
+    return true;
+  }
+
+  @override
+  void handleUpdateBackGestureProgress(PredictiveBackEvent backEvent) {
+    if (_gestureTo == null) return;
+    _backSlide.progress.value = backEvent.progress;
+  }
+
+  @override
+  void handleCancelBackGesture() {
+    if (_gestureTo == null) return;
+    _gestureTo = null;
+    _backSlide.cancel();
+  }
+
+  @override
+  void handleCommitBackGesture() async {
+    final to = _gestureTo;
+    if (to == null) return;
+    _gestureTo = null;
+    // A root page that handles back itself (a select mode) keeps the tab.
+    if (await _branchNav.currentState?.maybePop() ?? false) {
+      return _backSlide.cancel();
+    }
+    if (!mounted || _history.backTarget(_current, _layout) != to) {
+      return _backSlide.cancel();
+    }
+    final there = await _backSlide.finish();
+    if (there && mounted) _arriveBack(to);
   }
 
   @override
@@ -210,7 +297,13 @@ class _MainShellState extends State<MainShell>
             onHorizontalDragUpdate: _onDragUpdate,
             onHorizontalDragEnd: _onDragEnd,
             onHorizontalDragCancel: _onDragCancel,
-            child: TabSwipeNudge(offset: _nudge, child: widget.navigationShell),
+            child: TabBackSlideScope(
+              slide: _backSlide,
+              child: TabSwipeNudge(
+                offset: _nudge,
+                child: widget.navigationShell,
+              ),
+            ),
           ),
         ),
         bottomNavigationBar: ListenableBuilder(

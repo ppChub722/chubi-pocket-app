@@ -61,4 +61,14 @@ void main() {
       expect(got, c.backs, reason: c.name);
     }
   });
+
+  test('a predictive back peeks first, takes only on commit', () {
+    final history = ShellBackHistory()
+      ..branchChanged(ShellTab.home.index, ShellTab.notifications.index);
+    expect(history.peekBackTarget(ShellTab.notifications), 0);
+    expect(history.peekBackTarget(ShellTab.notifications), 0);
+    expect(history.backTarget(ShellTab.notifications), 0);
+    history.branchChanged(ShellTab.notifications.index, 0);
+    expect(history.peekBackTarget(ShellTab.home), isNull);
+  });
 }

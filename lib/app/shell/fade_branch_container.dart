@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -5,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'nav_layout.dart';
 import 'tab_entry.dart';
 import 'tab_nav.dart';
+import '../../ui/tokens/app/theme/app_page_transitions.dart';
 import '../../ui/ui.dart';
 
 class FadeBranchContainer extends StatefulWidget {
@@ -48,6 +51,8 @@ class _FadeBranchContainerState extends State<FadeBranchContainer>
       // The arriving tab's page claims it again while this frame builds
       // (TabSwitchBody depends on the scope, so it rebuilds now).
       _claimed.remove(widget.currentIndex);
+      final slide = TabBackSlideScope.maybeOf(context);
+      final back = slide?._takeArrival(widget.currentIndex) ?? false;
       final box = context.findRenderObject() as RenderBox?;
       final size = box != null && box.hasSize
           ? box.size
@@ -58,6 +63,7 @@ class _FadeBranchContainerState extends State<FadeBranchContainer>
         to: ShellTab.values[widget.currentIndex],
         layout: NavLayoutScope.read(context),
         origin: origin == null ? null : originAlignment(origin, size),
+        back: back,
         reducedMotion: MediaQuery.disableAnimationsOf(context),
       );
       if (_entry.kind == TabEntryKind.none) {
@@ -65,6 +71,8 @@ class _FadeBranchContainerState extends State<FadeBranchContainer>
       } else {
         _ctrl.forward(from: 0);
       }
+      // Any switch ends a back slide: what it uncovered is the tab now.
+      slide?._reset();
     }
   }
 
@@ -74,8 +82,11 @@ class _FadeBranchContainerState extends State<FadeBranchContainer>
     super.dispose();
   }
 
+  static final _noUnderlay = ValueNotifier<int?>(null);
+
   @override
   Widget build(BuildContext context) {
+    final slide = TabBackSlideScope.maybeOf(context);
     return TabSwitchScope._(
       animation: _curve,
       entry: _entry,
@@ -83,29 +94,236 @@ class _FadeBranchContainerState extends State<FadeBranchContainer>
       previous: _previous,
       topBars: _topBars,
       claimed: _claimed,
-      child: IndexedStack(
-        index: widget.currentIndex,
-        children: [
-          for (var i = 0; i < widget.children.length; i++)
-            TickerMode(
-              enabled: i == widget.currentIndex,
+      child: ValueListenableBuilder<int?>(
+        valueListenable: slide?.underlay ?? _noUnderlay,
+        builder: (context, under, _) => _branches(slide, under),
+      ),
+    );
+  }
+
+  /// Every branch kept alive; only the current one shows, plus, during a
+  /// back between tabs, the one it goes back to, under it.
+  Widget _branches(TabBackSlide? slide, int? under) {
+    final current = widget.currentIndex;
+    final below = under == current ? null : under;
+    final order = [
+      for (var i = 0; i < widget.children.length; i++)
+        if (i != current && i != below) i,
+      ?below,
+      current,
+    ];
+    return _BranchLayers(
+      children: [
+        for (final i in order)
+          Offstage(
+            key: ValueKey(i),
+            offstage: i != current && i != below,
+            child: TickerMode(
+              enabled: i == current,
               child: ExcludeSemantics(
-                excluding: i != widget.currentIndex,
+                excluding: i != current,
                 child: HeroMode(
-                  enabled: i == widget.currentIndex,
-                  child: _EntryPaint(
-                    animation: _curve,
-                    entry: () => _entry,
-                    // A page with a TabSwitchBody animates the body itself.
-                    active: () => !_claimed.contains(i),
-                    child: _BranchIndex(index: i, child: widget.children[i]),
+                  enabled: i == current,
+                  child: _BackSlidePaint(
+                    progress: slide?.progress,
+                    active: i == current && below != null,
+                    child: _EntryPaint(
+                      animation: _curve,
+                      entry: () => _entry,
+                      // A page with a TabSwitchBody animates its body itself.
+                      active: () => !_claimed.contains(i),
+                      child: _BranchIndex(index: i, child: widget.children[i]),
+                    ),
                   ),
                 ),
               ),
             ),
-        ],
+          ),
+      ],
+    );
+  }
+}
+
+/// The branches on top of each other, each filling the container, painted
+/// in order (the IndexedStack that can show a second branch under the
+/// current one); offstage ones are kept but not painted.
+class _BranchLayers extends MultiChildRenderObjectWidget {
+  const _BranchLayers({super.children});
+
+  @override
+  RenderStack createRenderObject(BuildContext context) => RenderStack(
+    alignment: Alignment.topLeft,
+    fit: StackFit.expand,
+    textDirection: Directionality.maybeOf(context),
+  );
+
+  @override
+  void updateRenderObject(BuildContext context, RenderStack r) =>
+      r.textDirection = Directionality.maybeOf(context);
+}
+
+/// A back between tabs (owner 2026-10-28): the open tab slides off to the
+/// right over the tab it goes back to ([underlay]), by the finger with the
+/// predictive back gesture. Owned by the shell, played by
+/// [FadeBranchContainer].
+class TabBackSlide {
+  TabBackSlide({required TickerProvider vsync})
+    : progress = AnimationController(vsync: vsync);
+
+  /// 0 = in place, 1 = gone off the right edge.
+  final AnimationController progress;
+
+  /// The branch shown under the sliding one; null when no back is under way.
+  final ValueNotifier<int?> underlay = ValueNotifier(null);
+
+  int? _arriving;
+
+  /// The next switch to [branch] finishes this back: it lands in place.
+  void arriveAt(int branch) => _arriving = branch;
+
+  bool _takeArrival(int branch) {
+    final hit = _arriving == branch;
+    _arriving = null;
+    return hit;
+  }
+
+  /// Drops a back under way (the switch it led to never came).
+  void abort() => _reset();
+
+  void _reset() {
+    _arriving = null;
+    underlay.value = null;
+    progress.value = 0;
+  }
+
+  /// Back in place (a cancelled gesture).
+  Future<void> cancel() async {
+    await _run(
+      progress.animateTo(
+        0,
+        duration: _remaining(progress.value),
+        curve: Curves.easeOutCubic,
       ),
     );
+    if (progress.value == 0) underlay.value = null;
+  }
+
+  /// Off the right edge from wherever it is; true when it got there.
+  Future<bool> finish({Curve curve = Curves.linear}) async {
+    await _run(
+      progress.animateTo(
+        1,
+        duration: _remaining(1 - progress.value),
+        curve: curve,
+      ),
+    );
+    return progress.value >= 1 && underlay.value != null;
+  }
+
+  static Future<void> _run(TickerFuture f) {
+    final done = Completer<void>();
+    f.whenCompleteOrCancel(done.complete);
+    return done.future;
+  }
+
+  static Duration _remaining(double fraction) =>
+      AppPageTransitionsBuilder.popDuration * fraction.clamp(0.0, 1.0);
+
+  void dispose() {
+    progress.dispose();
+    underlay.dispose();
+  }
+}
+
+class TabBackSlideScope extends InheritedWidget {
+  const TabBackSlideScope({
+    required this.slide,
+    required super.child,
+    super.key,
+  });
+
+  final TabBackSlide slide;
+
+  static TabBackSlide? maybeOf(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<TabBackSlideScope>()?.slide;
+
+  @override
+  bool updateShouldNotify(TabBackSlideScope old) => slide != old.slide;
+}
+
+/// Shifts its child right by [progress] x its width while [active].
+class _BackSlidePaint extends SingleChildRenderObjectWidget {
+  const _BackSlidePaint({
+    required this.progress,
+    required this.active,
+    super.child,
+  });
+
+  final Animation<double>? progress;
+  final bool active;
+
+  @override
+  _RenderBackSlide createRenderObject(BuildContext context) =>
+      _RenderBackSlide(progress, active);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderBackSlide r) => r
+    ..progress = progress
+    ..active = active;
+}
+
+class _RenderBackSlide extends RenderProxyBox {
+  _RenderBackSlide(this._progress, this._active);
+
+  Animation<double>? _progress;
+  bool _active;
+
+  set progress(Animation<double>? value) {
+    if (value == _progress) return;
+    if (attached) _progress?.removeListener(markNeedsPaint);
+    _progress = value;
+    if (attached) _progress?.addListener(markNeedsPaint);
+    markNeedsPaint();
+  }
+
+  set active(bool value) {
+    if (value == _active) return;
+    _active = value;
+    markNeedsPaint();
+  }
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    _progress?.addListener(markNeedsPaint);
+  }
+
+  @override
+  void detach() {
+    _progress?.removeListener(markNeedsPaint);
+    super.detach();
+  }
+
+  Offset _offset = Offset.zero;
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    final p = _active ? (_progress?.value ?? 0) : 0.0;
+    _offset = Offset(p.clamp(0.0, 1.0) * size.width, 0);
+    super.paint(context, offset + _offset);
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) =>
+      result.addWithPaintOffset(
+        offset: _offset,
+        position: position,
+        hitTest: (result, p) => super.hitTestChildren(result, position: p),
+      );
+
+  @override
+  void applyPaintTransform(RenderObject child, Matrix4 transform) {
+    transform.translateByDouble(_offset.dx, 0, 0, 1);
   }
 }
 
