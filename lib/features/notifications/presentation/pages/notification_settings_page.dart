@@ -14,11 +14,12 @@ import '../../domain/notification.dart';
 import '../../domain/notification_rows.dart';
 import '../cubit/notification_settings_cubit.dart';
 
-/// Settings › การแจ้งเตือน (0.4.1-2; owner 2026-10-28 layout ก): per type a
-/// [แจ้ง] switch, and for a notice that asks something an [อัตโนมัติ] switch
-/// beside it (the account's auto-accept / auto-update switches, the same
-/// values the event and person pages show). Auto off locks แจ้ง on: someone
-/// must answer. Grouped as the BE lists the types.
+/// Settings › การแจ้งเตือน (0.4.1-2; owner 2026-10-28): per type a [แจ้ง]
+/// switch. A notice that asks something (a new / edited / deleted shared bill)
+/// is ONE row in "บิลที่แชร์" with its auto switches beside it, one per bill
+/// kind: อีเวนต์ | แบ่งจ่าย (the account's auto-accept / auto-update switches,
+/// the same values the event and person pages show). An auto switch that is
+/// off locks แจ้ง on: someone must answer.
 class NotificationSettingsPage extends StatelessWidget {
   const NotificationSettingsPage({super.key});
 
@@ -39,17 +40,9 @@ class NotificationSettingsPage extends StatelessWidget {
   AppLocalizations l,
   NotificationRow r,
 ) => switch ((r.kind, r.group)) {
-  (NotificationRowKind.billCreated, NotificationGroup.event) => (
-    label: l.notifTypeProjectTxForYou,
-    helper: l.notifAutoAcceptHint,
-  ),
   (NotificationRowKind.billCreated, _) => (
-    label: l.notifTypeSplitCreated,
+    label: l.notifSetBillCreated,
     helper: l.notifAutoAcceptHint,
-  ),
-  (NotificationRowKind.billEdited, NotificationGroup.event) => (
-    label: l.notifTypeProjectTxChanged,
-    helper: l.notifAutoUpdateHint,
   ),
   (NotificationRowKind.billEdited, _) => (
     label: l.notifSetSplitChanged,
@@ -164,10 +157,11 @@ class _Body extends StatelessWidget {
           final cubit = ctx.read<NotificationSettingsCubit>();
           final saved = _autoOf(user);
           final groups = notificationRows(s);
-          final columns = [l.notifColumnNotify, l.notifColumnAuto];
+          // The auto columns of the "บิลที่แชร์" card, in [autoColumns] order.
+          final autoLabels = [l.notifColumnAutoEvents, l.notifColumnAutoSplit];
 
           Widget row(NotificationRow r, ({String label, String? helper}) t) {
-            Widget build(AutoValues a, ValueChanged<bool>? onAuto) {
+            Widget build(AutoValues a, Map<AutoSwitch, ValueChanged<bool>> on) {
               final locked = r.notifyLocked(a);
               final helper = [
                 ?t.helper,
@@ -181,40 +175,54 @@ class _Body extends StatelessWidget {
                   SettingSwitchCell(
                     value: r.notifyOn(s, a),
                     onChanged: r.notifyEditable(a)
-                        ? (on) => cubit.setOn(r.type, on)
+                        ? (v) => cubit.setOn(r.type, v)
                         : null,
                     semanticLabel: '${l.notifColumnNotify} ${t.label}',
                   ),
-                  if (r.auto case final auto?)
-                    SettingSwitchCell(
-                      value: a.of(auto),
-                      onChanged: onAuto,
-                      semanticLabel: '${l.notifColumnAuto} ${t.label}',
-                    )
-                  else
-                    null,
+                  for (final (i, auto) in r.autos.indexed)
+                    if (auto != null)
+                      SettingSwitchCell(
+                        value: a.of(auto),
+                        onChanged: on[auto],
+                        semanticLabel:
+                            '${l.notifColumnAuto} ${autoLabels[i]} ${t.label}',
+                      )
+                    else
+                      null,
                 ],
               );
             }
 
-            final auto = r.auto;
-            if (auto == null || r.autoMirror) return build(saved, null);
-            // The auto switch saves at once; the แจ้ง lock follows the shown
-            // value (back with the old one if the save fails).
-            return LiveSetting<bool>(
-              key: ValueKey('auto-${r.key}'),
-              value: saved.of(auto),
-              failedMessage: (_) => l.notifSettingsSaveFailed,
-              save: (on) async {
-                final auth = ctx.read<AuthCubit>();
-                auth.updateUser(
-                  await _saveAuto(ctx.read<UsersRepository>(), auto, on),
-                );
-                return true;
-              },
-              builder: (context, on, onChanged) =>
-                  build(_with(saved, auto, on), onChanged),
-            );
+            // Each auto switch saves at once; the แจ้ง lock follows the shown
+            // values (back with the old one if a save fails). One LiveSetting
+            // per switch, nested.
+            final editable = r.autoMirror
+                ? const <AutoSwitch>[]
+                : [...r.shownAutos];
+            Widget nest(
+              int i,
+              AutoValues a,
+              Map<AutoSwitch, ValueChanged<bool>> on,
+            ) {
+              if (i == editable.length) return build(a, on);
+              final auto = editable[i];
+              return LiveSetting<bool>(
+                key: ValueKey('auto-${r.key}-${auto.name}'),
+                value: saved.of(auto),
+                failedMessage: (_) => l.notifSettingsSaveFailed,
+                save: (v) async {
+                  final auth = ctx.read<AuthCubit>();
+                  auth.updateUser(
+                    await _saveAuto(ctx.read<UsersRepository>(), auto, v),
+                  );
+                  return true;
+                },
+                builder: (context, v, onChanged) =>
+                    nest(i + 1, _with(a, auto, v), {...on, auto: ?onChanged}),
+              );
+            }
+
+            return nest(0, saved, const {});
           }
 
           return DetailPageBody(
@@ -231,12 +239,12 @@ class _Body extends StatelessWidget {
                       if (_rowText(l, r) case final t?) row(r, t),
                   ];
                   if (children.isEmpty) return null;
-                  final hasAuto = rows.any((r) => r.auto != null);
+                  final hasAuto = rows.any((r) => r.autos.isNotEmpty);
                   return SectionCard(
                     first: first,
                     title: _groupTitle(l, g),
                     trailing: SettingColumnLabels(
-                      labels: [columns[0], hasAuto ? columns[1] : ''],
+                      labels: [l.notifColumnNotify, if (hasAuto) ...autoLabels],
                     ),
                     children: children,
                   );

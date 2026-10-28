@@ -42,61 +42,62 @@ const _allOn = AutoValues(
 );
 
 void main() {
-  test('rows: the new-bill and edit types show in both groups with the '
-      'kind\'s auto switch; requests are one row', () {
+  test('rows: the new-bill and edit types are ONE row each in บิลที่แชร์ with '
+      'an event and a split auto switch; requests are one row', () {
     final rows = notificationRows(_settings());
     String line(NotificationRow r) =>
-        '${r.type}:${r.auto?.name ?? '-'}'
+        '${r.type}:${r.autos.map((a) => a?.name ?? '-').join('|')}'
         '${r.autoMirror ? '(mirror)' : ''}';
     expect(rows[NotificationGroup.sharedBill]!.map(line), [
-      'shared_bill_created:acceptDebts',
-      'project_tx_changed:syncDebts',
-      'shared_bill_deleted:syncEvents(mirror)',
-      'shared_bill_disconnected:-',
-      'debt_disconnected:-',
+      'shared_bill_created:acceptEvents|acceptDebts',
+      'project_tx_changed:syncEvents|syncDebts',
+      'shared_bill_deleted:syncEvents|-(mirror)',
+      'shared_bill_disconnected:-|-',
+      'debt_disconnected:-|-',
     ]);
+    // No auto columns outside บิลที่แชร์; the edit type isn't repeated.
     expect(rows[NotificationGroup.event]!.map(line), [
-      'shared_bill_created:acceptEvents',
-      'project_tx_changed:syncEvents',
-      'project_added:-',
-      'event_completed:-',
-      'event_member_removed:-',
+      'project_added:',
+      'event_completed:',
+      'event_member_removed:',
     ]);
     expect(rows[NotificationGroup.recurring], hasLength(3));
     final requests = rows[NotificationGroup.request]!.single;
     expect(requests.mutable, isFalse);
+    expect(requests.autos, isEmpty);
     // Every key is unique on the page.
     final keys = [for (final g in rows.values) ...g.map((r) => r.key)];
     expect(keys.toSet(), hasLength(keys.length));
   });
 
-  test('auto off locks แจ้ง on (even when muted); auto on + muted = off', () {
+  test('any auto switch off locks แจ้ง on (even when muted); all on + muted '
+      '= off', () {
     final s = _settings(muted: ['shared_bill_created', 'project_tx_changed']);
-    final rows = notificationRows(s);
-    final splitNew = rows[NotificationGroup.sharedBill]!.first;
-    final eventNew = rows[NotificationGroup.event]!.first;
-    const a = AutoValues(
+    final rows = notificationRows(s)[NotificationGroup.sharedBill]!;
+    final created = rows.first;
+    final edited = rows[1];
+    const splitOff = AutoValues(
       acceptDebts: false,
       acceptEvents: true,
       syncDebts: true,
       syncEvents: true,
     );
-    // Split bills: auto-accept off → asks → always delivered.
-    expect(splitNew.notifyLocked(a), isTrue);
-    expect(splitNew.notifyOn(s, a), isTrue);
-    expect(splitNew.notifyEditable(a), isFalse);
-    // Event bills: auto-accept on → muted = silent.
-    expect(eventNew.notifyLocked(a), isFalse);
-    expect(eventNew.notifyOn(s, a), isFalse);
-    expect(eventNew.notifyEditable(a), isTrue);
+    // Split auto-accept off → asks → always delivered.
+    expect(created.notifyLocked(splitOff), isTrue);
+    expect(created.notifyOn(s, splitOff), isTrue);
+    expect(created.notifyEditable(splitOff), isFalse);
+    // Both update switches on → muted = silent.
+    expect(edited.notifyLocked(splitOff), isFalse);
+    expect(edited.notifyOn(s, splitOff), isFalse);
+    expect(edited.notifyEditable(splitOff), isTrue);
 
     // A type without auto follows its mute; requests are always on.
-    final unlinked = rows[NotificationGroup.sharedBill]!.last;
+    final unlinked = rows.last;
     expect(
       unlinked.notifyOn(_settings(muted: ['debt_disconnected']), _allOn),
       isFalse,
     );
-    final requests = rows[NotificationGroup.request]!.single;
+    final requests = notificationRows(s)[NotificationGroup.request]!.single;
     expect(requests.notifyOn(s, _allOn), isTrue);
     expect(requests.notifyEditable(_allOn), isFalse);
   });
@@ -104,16 +105,17 @@ void main() {
   test(
     'the delete row mirrors the event update switch (event-bill deletes follow it)',
     () {
-      final s = _settings();
-      final deleted = notificationRows(s)[NotificationGroup.sharedBill]!
-          .firstWhere((r) => r.type == 'shared_bill_deleted');
+      final deleted =
+          notificationRows(_settings())[NotificationGroup.sharedBill]!
+              .firstWhere((r) => r.type == 'shared_bill_deleted');
       const off = AutoValues(
         acceptDebts: true,
         acceptEvents: true,
         syncDebts: true,
         syncEvents: false,
       );
-      expect(deleted.auto, AutoSwitch.syncEvents);
+      expect(deleted.autos, [AutoSwitch.syncEvents, null]);
+      expect(deleted.autoMirror, isTrue);
       expect(deleted.notifyLocked(off), isTrue);
       expect(deleted.notifyLocked(_allOn), isFalse);
     },
