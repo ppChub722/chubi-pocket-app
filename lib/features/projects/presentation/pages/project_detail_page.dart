@@ -14,16 +14,19 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
-import '../../../personal_debts/data/personal_debts_repository.dart';
-import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../../tags/domain/tag.dart';
 import '../../../tags/presentation/widgets/tag_picker.dart';
 import '../../../transactions/domain/transaction.dart' show EmbeddedTag;
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
+import '../../../auth/domain/user.dart' show PagePrefIds;
+import '../../../preferences/page_prefs.dart';
+import '../../../settings/presentation/widgets/auto_sync_setting.dart';
 import '../cubit/projects_cubit.dart';
-import '../event_delete_choice.dart';
+import '../event_assign.dart';
+import '../event_claim.dart';
+import '../event_settle_book.dart';
 import '../event_errors.dart';
 import '../project_board_controller.dart';
 import '../widgets/add_member_sheet.dart';
@@ -66,6 +69,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   /// Who pays whom (the สรุป tab); null = not loaded since the last change.
   EventSettle? _settle;
   bool _settleLoading = false;
+
+  /// สรุป shows "จ่ายน้อยครั้งสุด" (completed events only) instead of the
+  /// real pairs.
+  bool _simplified = false;
   ApiException? _settleError;
 
   final _toolbarOpen = AppListToolbarState.local();
@@ -101,7 +108,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         repository: context.read<ProjectsRepository>(),
         projectId: widget.id!,
       );
-      _load(enterEdit: widget.startEditing);
+      // P6: the board opens in the sort I last picked (one account value).
+      final events = pagePrefPage(PagePrefIds.events);
+      final saved = BoardSort.values.byName(
+        events.fields.first.pick(readPagePref(context, PagePrefIds.events)),
+      );
+      _load(enterEdit: widget.startEditing).then((_) {
+        if (mounted && saved != BoardSort.newest) _board?.change(sort: saved);
+      });
     }
   }
 
@@ -217,8 +231,11 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
 
   bool get _isOwner => _isCreate || (_view?.isOwner ?? false);
 
+  /// A completed event is locked for good: no edit mode at all.
+  bool get _canEditEvent => _isOwner && !(_view?.isCompleted ?? false);
+
   VoidCallback? _enterOn(FocusNode focus) =>
-      _isOwner ? () => enterEdit(focus: focus) : null;
+      _canEditEvent ? () => enterEdit(focus: focus) : null;
 
   void _showError(ApiException e) {
     if (!mounted) return;
@@ -331,59 +348,20 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   Future<void> _delete() async {
     final l = AppLocalizations.of(context)!;
     final p = _view!.project;
-    EventDeletePreview? preview;
-    try {
-      preview = (await context.read<ProjectsRepository>().detail(
-        p.id,
-        deletePreview: true,
-      )).deletePreview;
-    } on ApiException catch (e) {
-      if (mounted) _showError(e);
-      return;
-    }
-    if (!mounted) return;
-    final linked = preview?.linkedTxCount ?? 0;
-    final numbers = preview == null
-        ? null
-        : l.fpM5bEventDeleteNumbers(preview.bills, preview.members);
-    final choice = await showChoiceDialog<DeleteChoice>(
+    // Owner 2026-10-28: the bills stay, as standalone split bills with every
+    // copy still connected; only the event goes. One confirm, one call.
+    final ok = await showConfirmDialog(
       context,
       title: l.projectDeleteTitle(p.name),
-      message: linked > 0 ? [?numbers, l.eventDeleteBody].join('\n') : numbers,
-      choices: [
-        DialogChoice(
-          value: DeleteChoice.notYet,
-          label: l.eventDeleteNotYet,
-          variant: AppButtonVariant.primary,
-        ),
-        if (linked > 0) ...[
-          DialogChoice(
-            value: DeleteChoice.keepTxs,
-            label: l.eventDeleteKeepTxs,
-          ),
-          DialogChoice(
-            value: DeleteChoice.withTxs,
-            label: l.eventDeleteWithTxs(linked),
-            variant: AppButtonVariant.destructive,
-          ),
-        ] else
-          DialogChoice(
-            value: DeleteChoice.keepTxs,
-            label: l.eventDeleteConfirm,
-            variant: AppButtonVariant.destructive,
-          ),
-      ],
+      message: l.eventDeleteKeepsBills,
+      confirmLabel: l.eventDeleteConfirm,
+      destructive: true,
     );
-    final withTxs = deleteLinkedTxsOf(choice);
-    if (withTxs == null || !mounted) return;
+    if (!ok || !mounted) return;
     setSaving(true);
     try {
-      final accounts = context.read<AccountsCubit>();
-      final balances = await context.read<ProjectsCubit>().delete(
-        p.id,
-        deleteLinkedTxs: withTxs,
-      );
-      accounts.patchBalances(balances);
+      // No wallet moves; my re-pointed rows come back through `effects`.
+      await context.read<ProjectsCubit>().delete(p.id);
       if (!mounted) return;
       showAppSnackBar(context, l.projectDeleted, tone: Tone.success);
       commitSaved(working);
@@ -478,10 +456,48 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     );
   }
 
+  /// ปิดอีเวนต์: owner only, after a confirm, never undone (its own call).
+  Future<void> _complete() async {
+    final l = AppLocalizations.of(context)!;
+    final ok = await showConfirmDialog(
+      context,
+      title: l.eventCompleteTitle,
+      message: l.eventCompleteBody,
+      confirmLabel: l.eventCompleteConfirm,
+      destructive: true,
+    );
+    if (!ok || !mounted) return;
+    setSaving(true);
+    try {
+      final p = await context.read<ProjectsCubit>().complete(widget.id!);
+      if (!mounted) return;
+      setSaving(false);
+      showAppSnackBar(context, l.eventCompleted, tone: Tone.success);
+      _applyPatch(p);
+      resetDraft(_Draft.from(p.project));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setSaving(false);
+      _showError(e);
+    }
+  }
+
+  List<ProjectStatus> _statusOptions(ProjectStatus current) =>
+      eventStatusOptions(
+        current,
+        completed: _view?.isCompleted ?? false,
+        canComplete: _view?.project.canComplete ?? false,
+      );
+
   Future<void> _changeStatus(ProjectStatus next) async {
     final l = AppLocalizations.of(context)!;
     final current = _view!.project.status;
     if (next == current || !mounted) return;
+    if (next == ProjectStatus.completed) {
+      // An archived once-completed event: restore brings it back completed.
+      return _view!.isCompleted ? _restore() : _complete();
+    }
+    if (next == ProjectStatus.archived && _view!.isCompleted) return _archive();
     final locks =
         next == ProjectStatus.cancelled || next == ProjectStatus.archived;
     if (locks) {
@@ -507,6 +523,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     } on ApiException catch (e) {
       _showError(e);
     }
+  }
+
+  /// ต้องจัดการ "ใส่คน": every empty spot of a removed member (one call).
+  Future<void> _assignEmpty() async {
+    final v = _view;
+    if (v == null) return;
+    final p = await assignAllEmptySpots(context, view: v);
+    if (p != null) _applyPatch(p);
   }
 
   Future<void> _openMembers() async {
@@ -559,7 +583,11 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   /// (anyone may).
   Widget _summaryTab(AppLocalizations l, ProjectView v) {
     final s = _settle;
-    final lines = s?.pairs ?? const <SettleLine>[];
+    // V12: "จ่ายน้อยครั้งสุด" only once the event is completed.
+    final simplified = _simplified && (s?.simplifiedAvailable ?? false);
+    final booked = s?.myBookedAt;
+    final lines =
+        (simplified ? s?.simplified : s?.pairs) ?? const <SettleLine>[];
     Widget line(SettleLine x) => SettleRow(
       key: ValueKey('settle:${x.from.id}:${x.to.id}'),
       fromAvatar: ProjectMemberAvatar(
@@ -576,8 +604,12 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       toName: x.to.name,
       amount: MoneyText(x.amount),
       mine: x.mine,
-      recordedLabel: x.recorded ? l.evbSettleRecorded : null,
-      onRecord: x.mine ? () => _recordSettle(l, v, x) : null,
+      recordedLabel: x.recorded && !simplified ? l.evbSettleRecorded : null,
+      // A pair is claimed from its row; the simplified lines are booked
+      // together below; after that booking pairs can't be claimed.
+      onRecord: x.mine && !simplified && booked == null
+          ? () => _claimWith(x)
+          : null,
       recordTooltip: l.evbSettleRecord,
       onTap: v.canAddTx
           ? () => showEventBillSheet(
@@ -610,16 +642,53 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
               ErrorView(error: _settleError!, onRetry: _loadSettle)
             else if (s == null)
               const ListRowSkeleton()
-            else if (lines.isEmpty)
-              EmptyView.compact(message: l.evbAllSettled)
             else ...[
-              for (final x in lines) line(x),
-              AppText(l.evbSettleHint, role: AppTextRole.caption),
+              if (s.simplifiedAvailable)
+                SegmentedChoice<bool>(
+                  key: const ValueKey('settleMode'),
+                  selected: simplified,
+                  onChanged: (on) => setState(() => _simplified = on),
+                  segments: [
+                    ChoiceSegment(false, l.evbSettlePairs),
+                    ChoiceSegment(true, l.evbSettleSimplified),
+                  ],
+                ),
+              if (lines.isEmpty)
+                EmptyView.compact(message: l.evbAllSettled)
+              else ...[
+                for (final x in lines) line(x),
+                if (!simplified)
+                  AppText(l.evbSettleHint, role: AppTextRole.caption),
+              ],
+              if (simplified && booked != null)
+                AppMessage(
+                  message: l.evbSettleBookedOn(
+                    DateFormatter.short(
+                      booked,
+                      locale: Localizations.localeOf(context).languageCode,
+                    ),
+                  ),
+                  tone: Tone.success,
+                )
+              else if (simplified && s.mySimplified.isNotEmpty)
+                AppButton(
+                  key: const ValueKey('settleBook'),
+                  label: l.evbSettleBook,
+                  onPressed: () => _bookSettle(s),
+                ),
             ],
           ],
         ),
       ],
     );
+  }
+
+  /// V12 "ลงในสมุดฉัน": my simplified lines, once (pickers + ONE call).
+  Future<void> _bookSettle(EventSettle s) async {
+    final next = await bookMySettle(context, projectId: widget.id!, settle: s);
+    if (next == null || !mounted) return;
+    setState(() => _settle = next);
+    await _refresh();
   }
 
   /// ยอดแต่ละคน: avatar and name, what they paid, what they get back / owe.
@@ -660,46 +729,20 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     );
   }
 
-  /// จดเป็นหนี้: my side of a จัดการ line into my debts, after a confirm.
-  Future<void> _recordSettle(
-    AppLocalizations l,
-    ProjectView v,
-    SettleLine x,
-  ) async {
-    final ok = await showConfirmDialog(
-      context,
-      title: l.evbSettleRecord,
-      message: l.evbSettleRecordBody(
-        x.from.name,
-        x.to.name,
-        moneyString(context, x.amount),
-      ),
-      confirmLabel: l.evbSettleRecord,
-    );
-    if (!ok || !mounted) return;
+  /// "claim ก้อน" (V7): my bills with the other person of a pair line into
+  /// my book as ONE debt (the claim sheet; replaces the old {event_id} debt).
+  Future<void> _claimWith(SettleLine x) async {
     final other = x.from.isMe ? x.to : x.from;
-    String? contactId;
-    for (final m in v.members) {
-      if (m.id == other.id) contactId = m.contactId;
-    }
-    try {
-      await context.read<PersonalDebtsRepository>().createEntry(
-        contactId != null
-            ? debtPersonKey(contactId: contactId)
-            : debtPersonKey(name: other.name),
-        direction: x.from.isMe
-            ? DebtEntryDirection.received
-            : DebtEntryDirection.paid,
-        amount: x.amount,
-        personName: other.name,
-        eventId: v.project.id,
-      );
-      if (!mounted) return;
-      showAppSnackBar(context, l.quickSaved, tone: Tone.success);
-      await _loadSettle();
-    } on ApiException catch (e) {
-      _showError(e);
-    }
+    final claimed = await showClaimSheet(
+      context,
+      projectId: widget.id!,
+      memberId: other.id,
+      memberName: other.name,
+    );
+    if (!claimed || !mounted) return;
+    setState(() => _settle = null);
+    await _refresh();
+    await _loadSettle();
   }
 
   Widget _billsTab(AppLocalizations l, ProjectView v) {
@@ -876,6 +919,21 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       hero: _viewHero(l, v),
       belowHero: [
         ?banner,
+        if (v.isCompleted)
+          AppMessage(message: l.eventCompletedNotice, tone: Tone.info),
+        // ต้องจัดการ (V15): a removed member's empty spots to fill.
+        if (!v.isCompleted && p.emptyPersonBillCount > 0)
+          AppMessage(
+            message: l.evbEmptyPersonsNotice(p.emptyPersonBillCount),
+            tone: Tone.warning,
+            actions: [
+              if (v.canAddTx)
+                AppMessageAction(
+                  label: l.evbAssignAction,
+                  onPressed: _assignEmpty,
+                ),
+            ],
+          ),
         _tagRow(l, p.tags.map(_myTagRef).toList(), editing: false),
         NoteSection(
           label: l.commonNote,
@@ -885,6 +943,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
           onLongPress: _enterOn(_focus[_Field.note]!),
         ),
         _people(l, v),
+        // SA14: the same one switch as on the settings page (no sync once
+        // the event is completed).
+        if (!v.isCompleted)
+          SectionCard(children: autoSyncRows(AutoSyncKind.events)),
       ],
       tabs: [
         AppTab(value: _Tab.bills, label: l.evbTabBills, icon: AppIcons.receipt),
@@ -922,12 +984,22 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
 
   Widget _statusChip(AppLocalizations l, ProjectStatus status) {
     final canChange = _isOwner && !_isCreate;
-    return OptionMenuAnchor<ProjectStatus>(
+    // A completed event has no edit mode, so its "ลบ" lives here (owner
+    // 2026-10-28); null = delete (the usual preview + confirm).
+    final completed = _view?.isCompleted ?? false;
+    return OptionMenuAnchor<ProjectStatus?>(
       selected: status,
-      onSelected: _changeStatus,
+      onSelected: (s) => s == null ? _delete() : _changeStatus(s),
       options: [
-        for (final s in ProjectStatus.values)
+        for (final s in _statusOptions(status))
           SheetOption(value: s, label: projectStatusLabel(l, s), submits: true),
+        if (completed)
+          SheetOption<ProjectStatus?>(
+            value: null,
+            label: l.projectDeleteThis,
+            leading: const AppIcon(AppIcons.delete),
+            submits: true,
+          ),
       ],
       builder: (context, toggle) => AppChip(
         label: projectStatusLabel(l, status),
@@ -949,7 +1021,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       selected: status,
       onSelected: canChange ? _changeStatus : null,
       options: [
-        for (final s in ProjectStatus.values)
+        for (final s in _statusOptions(status))
           SheetOption(value: s, label: projectStatusLabel(l, s), submits: true),
       ],
     );
@@ -989,7 +1061,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             onEnterEdit: _enterOn(_focus[_Field.description]!),
           ),
           actions: [
-            if (v.isOwner)
+            if (_canEditEvent)
               CardActionButton(
                 key: const ValueKey('heroEdit'),
                 icon: AppIcons.edit,
@@ -1081,7 +1153,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
           ),
       ],
       inviteLabel: l.fpEventsInvite,
-      onInvite: v.isOwner && v.project.status != ProjectStatus.archived
+      onInvite:
+          v.isOwner &&
+              v.project.status != ProjectStatus.archived &&
+              !v.isCompleted
           ? _invite
           : null,
       onMemberTap: (_) => _openMembers(),
@@ -1227,7 +1302,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                 ],
                 trailing: OptionMenuAnchor<BoardSort>(
                   selected: board.sort,
-                  onSelected: (s) => board.change(sort: s),
+                  onSelected: (s) {
+                    board.change(sort: s);
+                    unawaited(
+                      rememberPagePref(context, PagePrefIds.events, {
+                        'sort': s.name,
+                      }),
+                    );
+                  },
                   options: [
                     for (final e in sortLabels.entries)
                       SheetOption(value: e.key, label: e.value),
@@ -1480,7 +1562,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                 EndZoneAction(
                   kind: EndZoneKind.delete,
                   label: l.projectDeleteThis,
-                  consequence: l.fpEventsDeleteConsequence,
+                  consequence: l.eventDeleteKeepsBillsShort,
                   onTap: isSaving ? null : _delete,
                 ),
               ],

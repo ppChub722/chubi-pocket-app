@@ -20,6 +20,10 @@ import '../../../accounts/presentation/widgets/account_picker.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../categories/presentation/widgets/category_picker.dart';
+import '../../../personal_debts/domain/debt_direction.dart';
+import '../../../personal_debts/domain/debt_ledger.dart' show debtPersonKey;
+import '../../../personal_debts/presentation/debt_wiring.dart'
+    show debtPersonLevel;
 import '../../../saving_goals/data/saving_goals_repository.dart';
 import '../../../saving_goals/domain/saving_goal.dart';
 import '../../../saving_goals/domain/saving_goals_overview.dart';
@@ -27,7 +31,10 @@ import '../../../saving_goals/presentation/widgets/saving_goal_picker.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../../tags/presentation/widgets/tag_picker.dart';
 import '../../../transactions/domain/transaction_type.dart';
+import '../../../transactions/domain/refs.dart' show EmbeddedPerson;
 import '../../../transactions/presentation/widgets/category_pick_card.dart';
+import '../../../transactions/presentation/widgets/debt_entry_form.dart'
+    show DebtPick, showDebtPersonPicker;
 import '../../data/recurring_repository.dart';
 import '../../domain/recurrence_rule.dart';
 import '../../domain/recurring.dart';
@@ -85,6 +92,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   bool _changed = false;
   bool _walletMissing = false;
   bool _goalMissing = false;
+  bool _personMissing = false;
 
   /// ออมเงิน: the goals for the goal tile (loaded once a saving rule shows).
   SavingGoalsOverview? _goals;
@@ -427,8 +435,15 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       selectedId: to ? working.toAccountId : working.accountId,
       excludeIds: {?(to ? working.accountId : working.toAccountId)},
       title: to ? l.recurringFieldToWallet : null,
+      // หนี้: no wallet = ledger-only entries.
+      allowNone: working.isDebt,
     );
-    if (!mounted || r is! AccountPicked) return;
+    if (!mounted) return;
+    if (r is AccountPickedNone && working.isDebt) {
+      _change(working.copyWith(clearAccount: true));
+      return;
+    }
+    if (r is! AccountPicked) return;
     setState(() => _walletMissing = false);
     _change(
       to
@@ -597,13 +612,15 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     final formOk = _formKey.currentState?.validate() ?? false;
     final walletOk = working.walletOk;
     final goalOk = working.goalOk;
-    if (!walletOk || !goalOk) {
+    final personOk = working.personOk;
+    if (!walletOk || !goalOk || !personOk) {
       setState(() {
         _walletMissing = !walletOk;
         _goalMissing = !goalOk;
+        _personMissing = !personOk;
       });
     }
-    if (!formOk || !walletOk || !goalOk) return;
+    if (!formOk || !walletOk || !goalOk || !personOk) return;
     if (!working.countOk) {
       showAppSnackBarOn(
         pageMessenger!,
@@ -901,6 +918,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         ),
         RecurringPauseReason.goalInactive => AppMessage(
           message: l.recurringPausedGoal,
+        ),
+        // K13: a new debt with the person starts it again by itself.
+        RecurringPauseReason.noBalance => AppMessage(
+          message: l.recurringPausedNoBalance,
         ),
         _ => AppMessage(message: l.recurringPausedNotice),
       };
@@ -1452,6 +1473,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         to: _goalCard(l),
       );
     }
+    if (w.isDebt) return _debtCards(l, account);
     final categoryCard = !editing && category == null
         ? null
         : CategoryPickCard(
@@ -1482,6 +1504,87 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         ],
       ),
     );
+  }
+
+  /// หนี้: [กับใคร] ⇄ [กระเป๋า] in the money's direction (paid = me → them),
+  /// as quick create's debt mode; the arrow swaps it. No wallet = the entries
+  /// stay in the person book only ("ไม่ระบุกระเป๋า").
+  Widget _debtCards(AppLocalizations l, Account? account) {
+    final editing = isEditing;
+    final w = working;
+    final p = w.person;
+    final person = PickCard(
+      label: l.debtPersonPickerTitle,
+      value: p?.name,
+      placeholder: l.debtPickPerson,
+      dense: true,
+      editable: editing,
+      accent: Theme.of(context).colorScheme.primary,
+      errorText: editing && _personMissing ? l.debtPickPerson : null,
+      leading: p == null
+          ? const PickCardEmptyIcon(AppIcons.contact, size: 32)
+          : PersonMark(
+              name: p.name,
+              level: debtPersonLevel(p),
+              iconCode: p.iconCode,
+              size: 32,
+            ),
+      onTap: editing
+          ? _pickPerson
+          : () => openPage(context, debtPersonPath(p!)),
+      onLongPress: editing ? null : () => enterEdit(then: _pickPerson),
+    );
+    final wallet = WalletPickCard(
+      account: account,
+      label: l.transactionFormAccountLabel,
+      placeholder: l.debtNoWallet,
+      dense: true,
+      editable: editing,
+      onTap: editing
+          ? () => _pickWallet(to: false)
+          : (account == null
+                ? null
+                : () => openPage(context, '/accounts/${account.id}')),
+      onLongPress: editing
+          ? null
+          : () => enterEdit(then: () => _pickWallet(to: false)),
+    );
+    final paid = w.direction == DebtEntryDirection.paid;
+    return FlowCards(
+      key: const ValueKey('debtFlow'),
+      from: paid ? wallet : person,
+      to: paid ? person : wallet,
+      swapTooltip: l.quickSwap,
+      onSwap: editing
+          ? () => _change(
+              w.withDebt(
+                direction: paid
+                    ? DebtEntryDirection.received
+                    : DebtEntryDirection.paid,
+              ),
+            )
+          : null,
+    );
+  }
+
+  static String debtPersonPath(EmbeddedPerson p) =>
+      '/personal-debts/people/'
+      '${Uri.encodeComponent(debtPersonKey(contactId: p.contactId, name: p.name))}';
+
+  Future<void> _pickPerson() async {
+    final p = working.person;
+    final picked = await showDebtPersonPicker(
+      context,
+      selected: p == null
+          ? null
+          : DebtPick(
+              key: debtPersonKey(contactId: p.contactId, name: p.name),
+              person: p,
+            ),
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _personMissing = false);
+    _change(working.withDebt(person: picked.person));
   }
 
   /// ออมเงิน: where it goes. View mode: a tap opens the goal (or
@@ -1536,10 +1639,12 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             if (k != w.kind) _change(w.withKind(k));
           },
           options: [
-            // A saved rule can't switch between ออมเงิน and a money kind.
+            // A saved rule can't switch between ออมเงิน / หนี้ and a money
+            // kind.
             for (final k in RecurringKind.values)
               if (_recurring == null ||
-                  (k == RecurringKind.saving) == _recurring!.isSaving)
+                  ((k == RecurringKind.saving) == _recurring!.isSaving &&
+                      (k == RecurringKind.debt) == _recurring!.isDebt))
                 SheetOption(
                   value: k,
                   label: recurringKindLabel(l, k),
@@ -1571,6 +1676,22 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
                 label: l.transactionTypeTransfer,
                 leading: const AppIcon(AppIcons.transfer),
               ),
+            ],
+          ),
+        if (w.isDebt)
+          SettingDropdownRow<DebtEntrySub>(
+            key: const ValueKey('debtSubRow'),
+            label: l.fpRecurringFieldMode,
+            value: w.debtSub == DebtEntrySub.record
+                ? l.debtRecordChip
+                : l.debtSettleChip,
+            icon: AppIcons.debt,
+            selected: w.debtSub,
+            submits: false,
+            onSelected: (s) => _change(w.withDebt(sub: s)),
+            options: [
+              SheetOption(value: DebtEntrySub.record, label: l.debtRecordChip),
+              SheetOption(value: DebtEntrySub.repay, label: l.debtSettleChip),
             ],
           ),
         if (w.kind == RecurringKind.subscription)
@@ -2124,8 +2245,8 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           ?_pickCards(l),
         ],
       ),
-      // ออมเงิน has no tags.
-      tags: w.isSaving
+      // ออมเงิน and หนี้ have no tags.
+      tags: w.isSaving || w.isDebt
           ? null
           : TagRow(
               tags: [

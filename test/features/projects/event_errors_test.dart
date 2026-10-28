@@ -17,6 +17,9 @@ void main() {
       (code: 'FORBIDDEN_ROLE', want: l.eventErrNotOwner),
       (code: 'INVALID_DATE_RANGE', want: l.eventDatesInvalid),
       (code: 'OWNER_CANNOT_LEAVE', want: l.eventErrOwnerCannotLeave),
+      (code: 'EVENT_COMPLETED', want: l.eventErrCompleted),
+      (code: 'PROJECT_NOT_ACTIVE', want: l.eventErrNotActive),
+      (code: 'EVENT_HAS_EMPTY_PERSON', want: l.eventErrEmptyPerson),
       (code: 'SOMETHING_ELSE', want: 'server says'),
     ]) {
       expect(text(c.code), c.want, reason: c.code);

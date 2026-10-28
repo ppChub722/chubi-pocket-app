@@ -60,7 +60,7 @@ import '../features/transactions/presentation/cubit/transactions_cubit.dart';
 import '../features/users/data/users_repository.dart';
 import '../features/preferences/presentation/cubit/font_id_cubit.dart';
 import '../features/preferences/presentation/cubit/locale_cubit.dart';
-import '../features/preferences/presentation/cubit/money_visibility_cubit.dart';
+import '../features/preferences/presentation/cubit/preferences_sync_cubit.dart';
 import '../features/preferences/presentation/cubit/theme_id_cubit.dart';
 import '../features/preferences/presentation/cubit/theme_mode_cubit.dart';
 import '../l10n/gen/app_localizations.dart';
@@ -242,11 +242,20 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
             create: (_) => ThemeModeCubit(widget.prefs),
           ),
           BlocProvider<LocaleCubit>(create: (_) => LocaleCubit(widget.prefs)),
-          BlocProvider<MoneyVisibilityCubit>(
-            create: (_) => MoneyVisibilityCubit(widget.prefs),
-          ),
           BlocProvider<FontIdCubit>(
             create: (ctx) => FontIdCubit(widget.prefs, ctx.read<LocaleCubit>()),
+          ),
+          // Theme / language / fonts on the server (P3); runs from the start.
+          BlocProvider<PreferencesSyncCubit>(
+            lazy: false,
+            create: (ctx) => PreferencesSyncCubit(
+              auth: _authCubit,
+              users: _usersRepository,
+              themeId: ctx.read<ThemeIdCubit>(),
+              themeMode: ctx.read<ThemeModeCubit>(),
+              locale: ctx.read<LocaleCubit>(),
+              font: ctx.read<FontIdCubit>(),
+            ),
           ),
           BlocProvider<AccountsCubit>(
             create: (_) => AccountsCubit(

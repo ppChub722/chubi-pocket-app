@@ -7,22 +7,17 @@ import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_client.dart';
-import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
-import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../auth/domain/user.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
-import '../../../auth/presentation/widgets/auth_widgets.dart'
-    show kLanguageNames;
-import '../../../preferences/presentation/cubit/font_id_cubit.dart';
-import '../../../preferences/presentation/cubit/locale_cubit.dart';
-import '../../../preferences/presentation/cubit/theme_id_cubit.dart';
-import '../../../preferences/presentation/cubit/theme_mode_cubit.dart';
-import '../../../accounts/presentation/widgets/account_picker.dart';
-import '../../../users/data/users_repository.dart';
 import '../../../users/presentation/refresh_me.dart';
+import '../settings_labels.dart';
+import 'settings_money_page.dart' show signedInUser;
 
+/// The settings home (0.4.1-2 P7, owner-approved mock): every user
+/// preference, all kept on the account. Only the groups show here, each with
+/// one line of its current values; a tap opens the group's page.
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
@@ -35,9 +30,10 @@ class SettingsPage extends StatelessWidget {
       body: TabSwitchBody(
         child: BlocBuilder<AuthCubit, AuthState>(
           builder: (context, state) {
-            final user = _userOf(state);
+            final user = signedInUser(state);
             if (user == null) return const SizedBox.shrink();
             final inset = MediaQuery.paddingOf(context);
+            final notif = user.notificationSummary;
             return DetailPageBody(
               onRefresh: () => refreshMe(context),
               physics: const AlwaysScrollableScrollPhysics(),
@@ -47,47 +43,49 @@ class SettingsPage extends StatelessWidget {
               sections: [
                 (first) => SectionCard(
                   first: first,
-                  title: l.settingsSectionApp,
-                  children: const [
-                    _ThemeRow(),
-                    _ThemeModeRow(),
-                    _LanguageRow(),
-                    _FontRow(),
-                  ],
-                ),
-                (first) => SectionCard(
-                  first: first,
-                  title: l.settingsSectionMoney,
+                  description: l.settingsHomeCaption,
                   children: [
-                    _CurrencyRow(user: user),
-                    _MoneyStyleRow(user: user),
-                    if (MoneyStyle.fromPreference(user.moneyStyle).sign !=
-                        MoneySign.none)
-                      _MoneyColorRow(user: user),
-                    _MoneyDecimalsRow(user: user),
-                    _MainWalletRow(user: user),
-                  ],
-                ),
-                (first) => SectionCard(
-                  first: first,
-                  children: [
-                    DetailRow(
-                      leading: const AppIcon(AppIcons.notifications),
+                    SettingsGroupRow(
+                      icon: AppIcons.colorPicker,
+                      label: l.settingsSectionApp,
+                      summary: appSummary(context, l),
+                      onTap: () => context.push('/settings/app'),
+                    ),
+                    SettingsGroupRow(
+                      icon: AppIcons.currency,
+                      label: l.settingsSectionMoney,
+                      summary: moneySummary(l, user),
+                      onTap: () => context.push('/settings/money'),
+                    ),
+                    SettingsGroupRow(
+                      icon: AppIcons.sync,
+                      label: l.settingsGroupSync,
+                      summary: syncSummary(l, user),
+                      onTap: () => context.push('/settings/sync'),
+                    ),
+                    SettingsGroupRow(
+                      icon: AppIcons.notifications,
                       label: l.settingsNotifications,
-                      helper: user.notificationSummary == null
-                          ? l.settingsNotificationsHint
-                          : l.settingsNotificationsSummary(
-                              user.notificationSummary!.on,
-                              user.notificationSummary!.auto,
+                      summary: notif == null
+                          ? null
+                          : l.settingsNotificationsOnSummary(
+                              notif.on,
+                              notif.total,
                             ),
-                      showChevron: true,
                       onTap: () => context.push('/settings/notifications'),
+                    ),
+                    SettingsGroupRow(
+                      icon: AppIcons.filter,
+                      label: l.settingsGroupPagePrefs,
+                      summary: l.settingsPagePrefsSummary(
+                        PagePrefIds.all.length,
+                      ),
+                      onTap: () => context.push('/settings/page-prefs'),
                     ),
                   ],
                 ),
                 (first) => SectionCard(
                   first: first,
-                  title: l.settingsSectionData,
                   children: [
                     DetailRow(
                       leading: const AppIcon(AppIcons.archive),
@@ -101,15 +99,11 @@ class SettingsPage extends StatelessWidget {
                       child: DetailRow(
                         leading: const AppIcon(AppIcons.share),
                         label: l.settingsExportCsv,
-                        trailing: AppBadge(label: l.settingsComingIn04),
+                        trailing: AppBadge(label: l.settingsComingSoon),
                       ),
                     ),
+                    const _VersionRow(),
                   ],
-                ),
-                (first) => SectionCard(
-                  first: first,
-                  title: l.settingsSectionAbout,
-                  children: const [_VersionRow()],
                 ),
               ],
               manage: DangerRow(
@@ -164,162 +158,6 @@ class SettingsPage extends StatelessWidget {
   }
 }
 
-User? _userOf(AuthState state) {
-  if (state is AuthAuthenticated) return state.user;
-  if (state is AuthLoading && state.previous is AuthAuthenticated) {
-    return (state.previous as AuthAuthenticated).user;
-  }
-  return null;
-}
-
-class _ThemeRow extends StatelessWidget {
-  const _ThemeRow();
-
-  static String _name(AppLocalizations l, AppTheme t) => switch (t.id) {
-    'mint' => l.settingsThemeMint,
-    'sweet' => l.settingsThemeSweet,
-    _ => t.id,
-  };
-
-  static Widget _swatches(AppTheme t) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      for (final c in t.previewSwatch.take(2))
-        Icon(Icons.circle, size: AppSpacing.lg, color: c),
-    ],
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final selected = context.watch<ThemeIdCubit>().state;
-    final current = ThemeRegistry.all
-        .where((t) => t.id == selected)
-        .firstOrNull;
-    return DetailRow(
-      leading: const AppIcon(AppIcons.colorPicker),
-      label: l.settingsTheme,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (current != null) ...[
-            _swatches(current),
-            const SizedBox(width: AppSpacing.xs),
-            Text(_name(l, current)),
-          ],
-        ],
-      ),
-      showChevron: true,
-      onTap: () async {
-        final picked = await showOptionSheet<String>(
-          context,
-          title: l.settingsTheme,
-          selected: selected,
-          options: [
-            for (final t in ThemeRegistry.all)
-              SheetOption(
-                value: t.id,
-                label: _name(l, t),
-                leading: _swatches(t),
-              ),
-          ],
-        );
-        if (picked != null && context.mounted) {
-          context.read<ThemeIdCubit>().set(picked);
-        }
-      },
-    );
-  }
-}
-
-class _ThemeModeRow extends StatelessWidget {
-  const _ThemeModeRow();
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final mode = context.watch<ThemeModeCubit>().state;
-    return DetailStacked(
-      label: l.settingsAppearance,
-      child: ThemeModeChips(
-        selected: mode,
-        onChanged: (m) => context.read<ThemeModeCubit>().set(m),
-        lightLabel: l.modeLight,
-        darkLabel: l.modeDark,
-        systemLabel: l.modeSystem,
-      ),
-    );
-  }
-}
-
-class _LanguageRow extends StatelessWidget {
-  const _LanguageRow();
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final code = context.watch<LocaleCubit>().state.languageCode;
-    return SettingDropdownRow<String>(
-      leading: const AppIcon(AppIcons.language),
-      label: l.settingsLanguage,
-      value: kLanguageNames[code] ?? code,
-      selected: code,
-      // Kept on this phone only.
-      submits: false,
-      onSelected: (picked) => context.read<LocaleCubit>().set(Locale(picked)),
-      options: [
-        for (final e in kLanguageNames.entries)
-          SheetOption(value: e.key, label: e.value),
-      ],
-    );
-  }
-}
-
-class _FontRow extends StatelessWidget {
-  const _FontRow();
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final lang = context.watch<LocaleCubit>().state.languageCode;
-    final fontId = context.watch<FontIdCubit>().state;
-    final available = FontRegistry.availableFor(lang);
-    final current =
-        available.where((f) => f.id == fontId).firstOrNull ??
-        (available.isNotEmpty ? available.first : null);
-    return DetailRow(
-      leading: const AppIcon(AppIcons.font),
-      label: l.settingsFont,
-      trailing: Text(current?.family ?? '—'),
-      showChevron: available.length > 1,
-      onTap: available.length < 2
-          ? null
-          : () async {
-              final picked = await showOptionSheet<String>(
-                context,
-                title: l.settingsFont,
-                selected: current?.id,
-                options: [
-                  for (final f in available)
-                    SheetOption(
-                      value: f.id,
-                      label: f.family,
-                      subtitle: l.settingsFontSample,
-                      // The preview must show the font itself.
-                      labelStyle: Theme.of(
-                        context,
-                      ).textTheme.bodyLarge?.copyWith(fontFamily: f.family),
-                    ),
-                ],
-              );
-              if (picked != null && context.mounted) {
-                context.read<FontIdCubit>().set(picked);
-              }
-            },
-    );
-  }
-}
-
 class _VersionRow extends StatefulWidget {
   const _VersionRow();
 
@@ -356,289 +194,6 @@ class _VersionRowState extends State<_VersionRow> {
       onTap: () {
         if (_counter.register()) context.push('/dev');
       },
-    );
-  }
-}
-
-/// Currency: a label, never converted.
-class _CurrencyRow extends StatefulWidget {
-  const _CurrencyRow({required this.user});
-
-  final User user;
-
-  @override
-  State<_CurrencyRow> createState() => _CurrencyRowState();
-}
-
-class _CurrencyRowState extends State<_CurrencyRow> {
-  bool _busy = false;
-
-  Future<void> _change(String code) async {
-    if (code == widget.user.currency || _busy) return;
-    final l = AppLocalizations.of(context)!;
-    final ok = await showConfirmDialog(
-      context,
-      title: l.profileCurrencyChangeTitle,
-      message: l.profileCurrencyChangeMessage,
-      confirmLabel: l.profileCurrencyChangeConfirm,
-    );
-    if (!ok || !mounted) return;
-    final auth = context.read<AuthCubit>();
-    final users = context.read<UsersRepository>();
-    final messenger = ScaffoldMessenger.of(context);
-    setState(() => _busy = true);
-    try {
-      auth.updateUser(await users.updateMe(currency: code));
-    } on ApiException catch (e) {
-      if (mounted) showAppSnackBarOn(messenger, e.message, tone: Tone.danger);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final value = widget.user.currency;
-    return SettingDropdownRow<String>(
-      leading: const AppIcon(AppIcons.currency),
-      label: l.profileCurrencyLabel,
-      helper: l.settingsCurrencyHint,
-      value: '${Currencies.symbolOf(value)} $value',
-      selected: value,
-      onSelected: _busy ? null : _change,
-      options: [
-        for (final c in Currencies.codes)
-          SheetOption(
-            value: c,
-            label: '$c | ${Currencies.nameOf(l, c)}',
-            leading: SizedBox(
-              width: 24,
-              child: Text(Currencies.symbolOf(c), textAlign: TextAlign.center),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-Future<void> _saveMoneyStyle(BuildContext context, MoneyStyle style) async {
-  final auth = context.read<AuthCubit>();
-  final users = context.read<UsersRepository>();
-  final messenger = ScaffoldMessenger.of(context);
-  try {
-    auth.updateUser(await users.setMoneyStyle(style.preference));
-  } on ApiException catch (e) {
-    showErrorSnackBarOn(messenger, e);
-  }
-}
-
-class _MoneyStyleRow extends StatefulWidget {
-  const _MoneyStyleRow({required this.user});
-
-  final User user;
-
-  @override
-  State<_MoneyStyleRow> createState() => _MoneyStyleRowState();
-}
-
-class _MoneyStyleRowState extends State<_MoneyStyleRow> {
-  bool _busy = false;
-
-  Future<void> _change(MoneySign sign) async {
-    final current = MoneyStyle.fromPreference(widget.user.moneyStyle);
-    if (sign == current.sign || _busy) return;
-    setState(() => _busy = true);
-    await _saveMoneyStyle(context, current.copyWith(sign: sign));
-    if (mounted) setState(() => _busy = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final current = MoneyStyle.fromPreference(widget.user.moneyStyle);
-    String example(MoneySign sign) {
-      final s = current.copyWith(sign: sign);
-      final income = moneyString(context, 1000);
-      final expense = moneyString(context, 540);
-      return '${s.apply(income, negative: false)} | '
-          '${s.apply(expense, negative: true)}';
-    }
-
-    return SettingDropdownRow<MoneySign>(
-      leading: const AppIcon(AppIcons.moneyStyle),
-      label: l.settingsMoneyStyle,
-      helper: example(current.sign),
-      value: switch (current.sign) {
-        MoneySign.plusMinus => l.settingsMoneySignPlusMinus,
-        MoneySign.parentheses => l.settingsMoneySignParentheses,
-        MoneySign.none => l.settingsMoneySignNone,
-      },
-      selected: current.sign,
-      onSelected: _busy ? null : _change,
-      options: [
-        for (final (sign, label) in [
-          (MoneySign.plusMinus, l.settingsMoneySignPlusMinus),
-          (MoneySign.parentheses, l.settingsMoneySignParentheses),
-          (MoneySign.none, l.settingsMoneySignNone),
-        ])
-          SheetOption(value: sign, label: label, subtitle: example(sign)),
-      ],
-    );
-  }
-}
-
-/// Decimals: always / never (rounded) / hide .00 only — each option shows
-/// ฿1,000 and ฿99.50 its way.
-class _MoneyDecimalsRow extends StatefulWidget {
-  const _MoneyDecimalsRow({required this.user});
-
-  final User user;
-
-  @override
-  State<_MoneyDecimalsRow> createState() => _MoneyDecimalsRowState();
-}
-
-class _MoneyDecimalsRowState extends State<_MoneyDecimalsRow> {
-  bool _busy = false;
-
-  Future<void> _change(MoneyDecimals d) async {
-    if (_busy || d == MoneyDecimals.fromPreference(widget.user.moneyDecimals)) {
-      return;
-    }
-    final auth = context.read<AuthCubit>();
-    final users = context.read<UsersRepository>();
-    final messenger = ScaffoldMessenger.of(context);
-    setState(() => _busy = true);
-    try {
-      auth.updateUser(await users.setMoneyDecimals(d.preference));
-    } on ApiException catch (e) {
-      showErrorSnackBarOn(messenger, e);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final current = MoneyDecimals.fromPreference(widget.user.moneyDecimals);
-    final symbol = UiConfig.stringsOf(context).currencySymbol;
-    String example(MoneyDecimals d) {
-      final s = MoneyStyle(decimals: d);
-      return '${formatMoneyWith(s, 1000, symbol: symbol)} | '
-          '${formatMoneyWith(s, 99.5, symbol: symbol)}';
-    }
-
-    String label(MoneyDecimals d) => switch (d) {
-      MoneyDecimals.always => l.settingsMoneyDecimalsAlways,
-      MoneyDecimals.never => l.settingsMoneyDecimalsNever,
-      MoneyDecimals.auto => l.settingsMoneyDecimalsAuto,
-    };
-
-    return SettingDropdownRow<MoneyDecimals>(
-      leading: const AppIcon(AppIcons.moneyDecimals),
-      label: l.settingsMoneyDecimals,
-      helper: example(current),
-      value: label(current),
-      selected: current,
-      onSelected: _busy ? null : _change,
-      options: [
-        for (final d in MoneyDecimals.values)
-          SheetOption(value: d, label: label(d), subtitle: example(d)),
-      ],
-    );
-  }
-}
-
-class _MoneyColorRow extends StatefulWidget {
-  const _MoneyColorRow({required this.user});
-
-  final User user;
-
-  @override
-  State<_MoneyColorRow> createState() => _MoneyColorRowState();
-}
-
-class _MoneyColorRowState extends State<_MoneyColorRow> {
-  bool _busy = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final current = MoneyStyle.fromPreference(widget.user.moneyStyle);
-    return SettingToggleRow(
-      label: l.settingsMoneyColor,
-      caption: l.settingsMoneyColorHint,
-      value: current.colored,
-      onChanged: _busy
-          ? null
-          : (on) async {
-              setState(() => _busy = true);
-              await _saveMoneyStyle(context, current.copyWith(colored: on));
-              if (mounted) setState(() => _busy = false);
-            },
-    );
-  }
-}
-
-class _MainWalletRow extends StatefulWidget {
-  const _MainWalletRow({required this.user});
-
-  final User user;
-
-  @override
-  State<_MainWalletRow> createState() => _MainWalletRowState();
-}
-
-class _MainWalletRowState extends State<_MainWalletRow> {
-  bool _busy = false;
-
-  Future<void> _pick() async {
-    if (_busy) return;
-    final l = AppLocalizations.of(context)!;
-    final accounts = context.read<AccountsCubit>();
-    final users = context.read<UsersRepository>();
-    final auth = context.read<AuthCubit>();
-    final messenger = ScaffoldMessenger.of(context);
-    await accounts.loadIfNeeded();
-    if (!mounted) return;
-    final currentId = widget.user.defaultAccount?.id;
-    final r = await AccountPicker.one(
-      context,
-      selectedId: currentId,
-      title: l.settingsMainWallet,
-      allowNone: true,
-    );
-    if (r == null || !mounted) return;
-    final newId = r is AccountPicked ? r.account.id : null;
-    if (newId == currentId) return;
-    setState(() => _busy = true);
-    try {
-      auth.updateUser(
-        await users.updateMe(
-          defaultAccountId: newId,
-          clearDefaultAccount: newId == null,
-        ),
-      );
-    } on ApiException catch (e) {
-      if (mounted) showAppSnackBarOn(messenger, e.message, tone: Tone.danger);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final wallet = widget.user.defaultAccount;
-    return DetailRow(
-      leading: const AppIcon(AppIcons.wallet),
-      label: l.settingsMainWallet,
-      helper: l.settingsMainWalletHint,
-      trailing: Text(wallet?.name ?? l.settingsMainWalletNone),
-      showChevron: true,
-      onTap: _busy ? null : _pick,
     );
   }
 }

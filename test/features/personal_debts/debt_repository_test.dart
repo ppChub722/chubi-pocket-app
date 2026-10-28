@@ -259,11 +259,5 @@ void main() {
     final del = await repo.deleteEntry('e1');
     expect(http.last!.method, 'DELETE');
     expect(del.transactionId, 't1');
-
-    http.body = {'result': 'deleted', 'entry': null, 'person_balance': _person};
-    final s = await repo.applySplit('n1');
-    expect(http.last!.path, '/personal-debts/split-changes/n1/apply');
-    expect(s.deleted, isTrue);
-    expect(s.entry, isNull);
   });
 }

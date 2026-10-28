@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,8 @@ import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
+import '../../../auth/domain/user.dart';
+import '../../../preferences/page_prefs.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../domain/saving_goal.dart';
 import '../../domain/saving_goal_plan.dart';
@@ -27,9 +31,47 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
   void initState() {
     super.initState();
     _cubit = context.read<SavingGoalsCubit>();
+    final changed = _restorePrefs();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _cubit.loadIfNeeded();
+      if (!mounted) return;
+      unawaited(changed ? _cubit.load() : _cubit.loadIfNeeded());
     });
+  }
+
+  /// The status / sort / chip remembered on the account; true when the
+  /// cubit's status or sort changed (it must reload).
+  bool _restorePrefs() {
+    final pref = readPagePref(context, PagePrefIds.goals);
+    final fields = pagePrefPage(PagePrefIds.goals).fields;
+    String pick(String key) =>
+        fields.firstWhere((f) => f.key == key).pick(pref);
+    _chip = _GoalChip.values.asNameMap()[pick('chip')] ?? _GoalChip.all;
+    return _cubit.applyPrefs(
+      filter:
+          SavingGoalsFilter.values.asNameMap()[pick('filter')] ??
+          SavingGoalsFilter.active,
+      sort:
+          SavingGoalsSort.values.asNameMap()[pick('sort')] ??
+          SavingGoalsSort.needFirst,
+    );
+  }
+
+  void _remember(Map<String, Object?> patch) =>
+      unawaited(rememberPagePref(context, PagePrefIds.goals, patch));
+
+  void _setFilter(SavingGoalsFilter f) {
+    unawaited(_cubit.setFilter(f));
+    _remember({'filter': f.name});
+  }
+
+  void _setSort(SavingGoalsSort s) {
+    unawaited(_cubit.setSort(s));
+    _remember({'sort': s.name});
+  }
+
+  void _setChip(_GoalChip chip) {
+    setState(() => _chip = chip);
+    _remember({'chip': chip.name});
   }
 
   final _search = TextEditingController();
@@ -131,7 +173,7 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
       count: count,
       tone: tone,
       selected: _chip == chip,
-      onTap: () => setState(() => _chip = chip),
+      onTap: () => _setChip(chip),
     );
     return AppHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
@@ -244,12 +286,12 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
           SortOption(SavingGoalsSort.remaining, l.fpM5GoalsSortRemaining),
           SortOption(SavingGoalsSort.byName, l.fpM5GoalsSortName),
         ],
-        onChanged: cubit.setSort,
+        onChanged: _setSort,
       ),
       filters: [
         OptionMenuAnchor<SavingGoalsFilter>(
           selected: state.filter,
-          onSelected: cubit.setFilter,
+          onSelected: _setFilter,
           options: [
             for (final f in SavingGoalsFilter.values)
               SheetOption(value: f, label: _filterLabel(l, f)),

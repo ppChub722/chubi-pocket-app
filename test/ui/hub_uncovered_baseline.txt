@@ -22,7 +22,6 @@ TextLimits
 ThemeRegistry
 detailLabelStyle
 detailMetaLines
-isMoneyHidden
 isThemeToken
 moneyString
 resolveColor

@@ -175,8 +175,24 @@ const List<PageFlow> pageFlows = [
             'prompt',
       ),
     ]),
-    FlowStep.action('Event card: out of the event', [
-      FlowCall('removeBillFromProject'),
+    // 0.4.1-2 (V16): the event pick on the new endpoints only.
+    FlowStep.action('Event pick: a bill I\'m in → another event', [
+      FlowCall(
+        'rebookEventBill',
+        note: 'move (project_id / new_event); every copy stays connected',
+      ),
+    ]),
+    FlowStep.action('Event pick: not in a bill → join an event', [
+      FlowCall(
+        'updateTransaction',
+        note: 'the อีเวนต์ link (I paid); a new event is made first',
+      ),
+    ]),
+    FlowStep.action('Event card "ตัดการเชื่อม"', [
+      FlowCall(
+        'disconnectEventBill',
+        note: 'my copy tx + my debts of the bill become plain; the bill stays',
+      ),
     ]),
   ]),
   PageFlow('quick-create-sheet', 'Create a transaction, a draft, or an event bill.', [
@@ -218,14 +234,16 @@ const List<PageFlow> pageFlows = [
             '"คืนแล้ว" paybacks, my tx, "จดหนี้ด้วย"; effects patch the caches',
       ),
     ], today: 'was 3-6 calls (addBills / quickCreate, setTags, debts, paybacks)'),
+    FlowStep.action('Button "บันทึก" (ผูกกับ แบ่งกับคน / คนจ่ายแทน tab)', [
+      FlowCall(
+        'bookEventBill',
+        note:
+            'ONE call (0.4.1-2 SA7): split: true = a split bill (payer, '
+            'shares, "คืนแล้ว", my copy; each member\'s copy by their switch)',
+      ),
+    ], today: 'was the tx add + one repayment call per "คืนแล้ว" person'),
     FlowStep.action('Button "บันทึกร่าง"', [
       FlowCall('createPending', note: 'saves a draft'),
-    ]),
-    FlowStep.action('Button "สร้างอีเวนต์"', [
-      FlowCall('quickCreateEvent', note: 'creates the event from the bills'),
-    ]),
-    FlowStep.action('Button "เพิ่มเข้าอีเวนต์"', [
-      FlowCall('addBillsToEvent', note: 'adds the bills to an event'),
     ]),
     FlowStep.action('Split editor opened (lazy)', [
       FlowCall('listContacts', note: 'person picker'),
@@ -240,11 +258,11 @@ const List<PageFlow> pageFlows = [
       ),
       FlowCall(
         'createProjectTransaction',
-        note: 'new bill (tag_ids); returns the EventPatch',
+        note: 'no caller since 0.4.1-2 (bookEventBill); retired with V16',
       ),
       FlowCall(
         'updateProjectTransaction',
-        note: 'edit a bill (tag_ids); returns the EventPatch',
+        note: 'no caller since 0.4.1-2 (rebookEventBill); retired with V16',
       ),
     ]),
     FlowStep.action('Mode chip "หนี้" (debt mode)', [
@@ -445,23 +463,19 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Wallet invite: accept', [FlowCall('acceptAccountInvite')]),
     FlowStep.action('Wallet invite: reject', [FlowCall('rejectAccountInvite')]),
     FlowStep.action('Unlinked names opened', [FlowCall('listUnlinkedNames')]),
-    FlowStep.action('Event bill: copy to my book', [
-      FlowCall('copyProjectTransactionToPersonal'),
+    // 0.4.1-2 SA15: one call for every shared-bill notice (created, changed,
+    // deleted with my switch off; and the old recorded-for-you rows).
+    FlowStep.action('Shared bill: "เพิ่มในสมุด" / "อัปเดตตาม" / "ลบตาม"', [
+      FlowCall(
+        'applyEventBill',
+        note: 'my copy takes the bill as it is now; the rest rides effects',
+      ),
     ]),
     FlowStep.action('Event link request: accept', [
       FlowCall('acceptProjectLinkRequest'),
     ]),
     FlowStep.action('Event link request: reject', [
       FlowCall('rejectProjectLinkRequest'),
-    ]),
-    FlowStep.action('Split request: accept', [
-      FlowCall(
-        'acceptDebtSplitRequest',
-        note: 'my entry; opens the person page',
-      ),
-    ]),
-    FlowStep.action('Split change: "อัปเดตตาม"', [
-      FlowCall('applyDebtSplitChange'),
     ]),
     FlowStep.action('Split paid: "บันทึกรับเงิน"', [
       FlowCall(
@@ -476,14 +490,74 @@ const List<PageFlow> pageFlows = [
   PageFlow('more-hub', 'The More tab: counts and badges.', [
     FlowStep.open([FlowCall('getMyCounts', note: 'badges + counts')]),
   ]),
-  PageFlow('settings-notifications', 'Notification preferences.', [
+  PageFlow(
+    'settings-home',
+    'The settings home: groups with a one-line summary (no own call: the '
+        'signed-in user carries every value).',
+    [
+      FlowStep.action('Pull to refresh', [
+        FlowCall('getMe', note: 'preferences, switches, notification summary'),
+      ]),
+    ],
+  ),
+  PageFlow(
+    'settings-app',
+    'Theme, theme mode, language, one font per language (shown at once, '
+        'saved to the account; login: the server wins, unset keys are filled '
+        'from the device).',
+    [
+      FlowStep.action('Change any value', [
+        FlowCall(
+          'updateMe',
+          note:
+              'preferences: theme_id / theme_mode / '
+              'language / font_th / font_en, only the changed keys',
+        ),
+      ]),
+    ],
+  ),
+  PageFlow(
+    'settings-money',
+    'Currency, money style, main wallet, fee category.',
+    [
+      FlowStep.action('Change any value', [
+        FlowCall(
+          'updateMe',
+          note: 'currency / preferences / default_account_id',
+        ),
+      ]),
+      FlowStep.action('Wallet picker opened (lazy)', [
+        FlowCall('listAccounts'),
+      ]),
+      FlowStep.action('Category picker opened (lazy)', [
+        FlowCall('listCategories'),
+      ]),
+    ],
+  ),
+  PageFlow(
+    'settings-page-prefs',
+    'Remembered sort / filter per list page (also written by the pages).',
+    [
+      FlowStep.action('Pick a value / a page changes one', [
+        FlowCall('updateMe', note: 'preferences.page_prefs {page: {...}}'),
+      ]),
+      FlowStep.action('คืนค่าเริ่มต้น (one page / all)', [
+        FlowCall('updateMe', note: 'page_prefs {page: null} / null'),
+      ]),
+    ],
+  ),
+  PageFlow('settings-sync', 'The two auto-sync switches.', [
+    FlowStep.action('Flip a switch', [
+      FlowCall('updateMe', note: 'auto_sync_events / auto_sync_debts'),
+    ]),
+  ]),
+  PageFlow('settings-notifications', 'On / off per notification type.', [
     FlowStep.open([
-      FlowCall('getNotificationSettings', note: 'default wallet as a full ref'),
+      FlowCall('getNotificationSettings', note: 'types in page order'),
     ]),
-    FlowStep.action('Change a switch', [
-      FlowCall('updateNotificationSettings'),
+    FlowStep.action('Flip a switch', [
+      FlowCall('updateNotificationSettings', note: 'the whole muted_types'),
     ]),
-    FlowStep.action('Wallet picker opened (lazy)', [FlowCall('listAccounts')]),
   ]),
   PageFlow('settings-account', 'Profile, password, deactivate.', [
     FlowStep.open([FlowCall('getMe', note: 'typed preferences')]),
@@ -535,24 +609,41 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Button "บันทึก" (edit event) / status / my tags', [
       FlowCall('updateProject'),
     ]),
-    FlowStep.action('Button "ลบอีเวนต์นี้"', [
-      FlowCall('getProjectDetail', note: '?include=delete_preview'),
-    ]),
-    FlowStep.action('Delete dialog "ยืนยัน"', [FlowCall('deleteProject')]),
+    // Owner 2026-10-28: bills stay as split bills, so no preview counts.
+    FlowStep.action(
+      '"ลบอีเวนต์นี้" (edit mode, or the status menu once '
+      'completed) → confirm',
+      [FlowCall('deleteProject', note: 'event only; effects re-point my rows')],
+    ),
     // fe-pages: archive / restore + the event-tag manager sheet.
     FlowStep.action('Button "เก็บถาวร" / "กู้คืน"', [
       FlowCall('archiveProject'),
       FlowCall('restoreProject'),
+    ]),
+    // 0.4.1-2 V3: completed = locked for good, every book unsynced.
+    FlowStep.action('Status "เสร็จสิ้น" → confirm "ปิดอีเวนต์"', [
+      FlowCall('completeProject'),
+    ]),
+    // V15: a removed member's empty spots ("( ) ____").
+    FlowStep.action('ต้องจัดการ "ใส่คน" / tap an empty spot on a bill', [
+      FlowCall(
+        'assignRemovedMember',
+        note: 'all their bills, or bill_ids = the tapped bill',
+      ),
     ]),
     FlowStep.action('Tag manager: rename / restyle / delete', [
       FlowCall('updateProjectTag'),
       FlowCall('deleteProjectTag'),
     ]),
     FlowStep.action('Button "เชิญสมาชิก"', [FlowCall('addProjectMember')]),
-    FlowStep.action('Tick a bill / split', [
-      FlowCall('markProjectTransaction'),
+    // 0.4.1-2: no caller any more (ticks are gone, a bill is deleted from
+    // the bill form = deleteEventBill); retired with V16.
+    FlowStep.action('Tick a bill / split (retired)', [
+      FlowCall('markProjectTransaction', note: 'no caller'),
     ]),
-    FlowStep.action('Delete a bill', [FlowCall('deleteProjectTransaction')]),
+    FlowStep.action('Delete a bill (retired)', [
+      FlowCall('deleteProjectTransaction', note: 'no caller'),
+    ]),
     FlowStep.action('Tag menu "+ เพิ่มเข้าแท็กของฉัน" / "นำเข้าทั้งหมด"', [
       FlowCall('importProjectTags'),
     ]),
@@ -565,11 +656,26 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Tab "สรุป" (who pays whom)', [
       FlowCall('getProjectSettle'),
     ]),
+    // 0.4.1-2 V7: "claim ก้อน" on a pair row with me (replaces the old
+    // {event_id} debt from the settle line).
+    FlowStep.action('สรุป pair row "จดเป็นหนี้" → claim sheet', [
+      FlowCall('listClaimableBills', note: '?member_id = the other person'),
+    ]),
+    // V12: completed events only, once per member.
+    FlowStep.action('สรุป "จ่ายน้อยครั้งสุด" → "ลงในสมุดฉัน"', [
+      FlowCall(
+        'bookEventSettle',
+        note: 'my simplified lines (wallet + category each); effects',
+      ),
+    ]),
+    FlowStep.action('Claim sheet "ลงสมุด N บิล"', [
+      FlowCall(
+        'claimBills',
+        note: 'one debt (lump) + my "จ่ายโดย" copies; effects',
+      ),
+    ]),
     FlowStep.action('Bill sheet: people as event members', [
       FlowCall('resolveProjectPeople'),
-    ]),
-    FlowStep.action('Bill sheet "ลงบัญชีของฉัน" (unlink / relink)', [
-      FlowCall('setProjectTransactionMyBooks'),
     ]),
     // 0.4.1-1 E8: the bill sheet's save is ONE call (bill + paybacks + my
     // book in one DB transaction).
@@ -577,7 +683,24 @@ const List<PageFlow> pageFlows = [
       FlowCall('bookEventBill'),
     ]),
     FlowStep.action('Bill sheet "บันทึก" (edit) / ⤓ "ลงบัญชี"', [
-      FlowCall('rebookEventBill'),
+      FlowCall(
+        'rebookEventBill',
+        note: 'expected_updated_at → 409 BILL_CHANGED carries the newer bill',
+      ),
+    ]),
+    // 0.4.1-2 SA2: an existing bill (event or split) opens from its own
+    // answer, from anywhere (tx edit, a debt, a notification, this page).
+    FlowStep.action('Bill sheet opened on an existing bill', [
+      FlowCall(
+        'getEventBill',
+        note: 'ONE call: the bill + shares, rights, my copy, version',
+      ),
+    ]),
+    FlowStep.action('Bill sheet "ลบ"', [
+      FlowCall(
+        'deleteEventBill',
+        note: 'one call; the others\' copies follow their switch',
+      ),
     ]),
   ]),
   PageFlow('event-members', 'Members (on hold: kept as is, on the new API).', [

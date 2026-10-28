@@ -135,6 +135,11 @@ class LinkDraft {
   /// saves their payback with it.
   final Set<String> paidBack = {};
 
+  /// 0.4.1-2 SA6: someone else paid (จ่ายแทน / an event payer) and I already
+  /// paid them back ("คืน A แล้ว" on my row): my share leaves my wallet, no
+  /// debt.
+  bool mePaidBack = false;
+
   /// "จดหนี้ด้วย": an event bill also goes into my debts (who owes me, or
   /// whom I owe), as on the event bill sheet. Null = not offered (editing).
   /// Quick create turns it on.

@@ -6,7 +6,9 @@ import '../../atoms/corner_badge.dart';
 import '../../atoms/dashed_rect_border.dart';
 import '../../atoms/user_avatar.dart';
 
-enum PersonLevel { name, contact, linked }
+/// [empty] = a spot with nobody in it yet (an event member removed: "( ) ____"
+/// on their bills, to assign).
+enum PersonLevel { name, contact, linked, empty }
 
 class PersonLinkBadge extends StatelessWidget {
   const PersonLinkBadge({this.size = defaultSize, super.key});
@@ -57,6 +59,20 @@ class PersonMark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    if (level == PersonLevel.empty) {
+      // An empty dashed ring: nobody there yet.
+      return SizedBox.square(
+        dimension: size,
+        child: DashedRectBorder(
+          color: scheme.outline,
+          strokeWidth: 1.2,
+          dashLength: 3,
+          gapLength: 3,
+          borderRadius: Radius.circular(size / 2),
+          child: const SizedBox.expand(),
+        ),
+      );
+    }
     final Widget plain = Icon(
       AppIcons.profile,
       size: size,

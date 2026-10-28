@@ -144,6 +144,28 @@ class BudgetsCubit extends Cubit<BudgetsState>
     }
   }
 
+  /// Restores the page's remembered choices WITHOUT loading (the page loads
+  /// right after); a changed choice drops the rows of the old one.
+  void applyPrefs({
+    required BudgetFilter filter,
+    required BudgetHealth health,
+    required BudgetSort sort,
+  }) {
+    if (filter == state.filter &&
+        health == state.health &&
+        sort == state.sort) {
+      return;
+    }
+    emit(
+      state.copyWith(
+        filter: filter,
+        health: health,
+        sort: sort,
+        budgets: const [],
+      ),
+    );
+  }
+
   Future<void> setFilter(BudgetFilter filter) {
     if (filter == state.filter) return Future.value();
     emit(

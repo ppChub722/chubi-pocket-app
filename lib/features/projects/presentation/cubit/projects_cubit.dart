@@ -232,20 +232,6 @@ class ProjectsCubit extends Cubit<ProjectsState>
     return d.project;
   }
 
-  Future<QuickCreateResult> quickCreate({
-    required String name,
-    required Map<String, dynamic> newTransaction,
-    List<String> transactionIds = const [],
-  }) async {
-    final result = await _repo.quickCreate(
-      name: name,
-      newTransaction: newTransaction,
-      transactionIds: transactionIds,
-    );
-    emit(state.copyWith(projects: [result.project, ...state.projects]));
-    return result;
-  }
-
   Future<EventPatch> update(
     String id, {
     String? name,
@@ -292,13 +278,17 @@ class ProjectsCubit extends Cubit<ProjectsState>
     return p;
   }
 
-  Future<Map<String, double>> delete(
-    String id, {
-    bool deleteLinkedTxs = false,
-  }) async {
-    final balances = await _repo.delete(id, deleteLinkedTxs: deleteLinkedTxs);
+  Future<EventPatch> complete(String id) async {
+    final p = await _repo.complete(id);
+    patch(p.project);
+    return p;
+  }
+
+  /// The bills that became standalone split bills.
+  Future<int> delete(String id) async {
+    final splits = await _repo.delete(id);
     remove(id);
-    return balances;
+    return splits;
   }
 
   void patch(Project p) {

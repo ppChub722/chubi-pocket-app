@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../ui/ui.dart';
 import '../../pending/domain/pending_transaction.dart';
+import '../../personal_debts/domain/debt_direction.dart';
 import '../../transactions/domain/refs.dart';
 import '../../transactions/domain/transaction_type.dart';
 import 'recurrence_rule.dart';
@@ -23,12 +24,17 @@ enum RecurringPauseReason {
   overdueLimit,
 
   /// ออมเงิน whose goal was closed / archived.
-  goalInactive;
+  goalInactive,
+
+  /// หนี้ จ่ายหนี้: nothing owed for 3 rounds; a new debt with the person
+  /// starts it again by itself (0.4.1-2 K5).
+  noBalance;
 
   static RecurringPauseReason? fromJson(Object? v) => switch (v) {
     'manual' => manual,
     'overdue_limit' => overdueLimit,
     'goal_inactive' => goalInactive,
+    'no_balance' => noBalance,
     _ => null,
   };
 }
@@ -40,7 +46,11 @@ enum RecurringKind {
   reminder,
 
   /// ออมเงิน: wallet → a saving goal (or ยังไม่จัดสรร); the BE's type `saving`.
-  saving;
+  saving,
+
+  /// หนี้ (0.4.1-2 K): each occurrence books a person-book entry (จดหนี้ |
+  /// จ่ายหนี้) with one person; the BE's type `debt`. No category / tags.
+  debt;
 
   static RecurringKind fromJson(String? v) => RecurringKind.values.firstWhere(
     (k) => k.name == v,
@@ -49,15 +59,27 @@ enum RecurringKind {
 
   String toJson() => name;
 
-  /// Saving leaves the wallet, so the app treats it as an expense.
+  /// Saving leaves the wallet, so the app treats it as an expense; a debt's
+  /// side comes from its direction, not this type.
   TransactionType get defaultType =>
       this == income ? TransactionType.income : TransactionType.expense;
 }
 
-/// The wire type: `saving` reads as an expense (money out of the wallet).
-TransactionType recurringTypeFromJson(String? v) => v == 'saving'
+/// The wire type: `saving` / `debt` read as an expense here (the kind and,
+/// for a debt, the direction decide how they show).
+TransactionType recurringTypeFromJson(String? v) => v == 'saving' || v == 'debt'
     ? TransactionType.expense
     : TransactionType.fromJson(v ?? 'expense');
+
+/// A หนี้ rule's entry kind: จดหนี้ (`debt`) or จ่ายหนี้ (`repayment`).
+DebtEntrySub? recurringDebtSubFromJson(Object? v) => switch (v) {
+  'debt' => DebtEntrySub.record,
+  'repayment' => DebtEntrySub.repay,
+  _ => null,
+};
+
+String recurringDebtSubToJson(DebtEntrySub s) =>
+    s == DebtEntrySub.record ? 'debt' : 'repayment';
 
 /// The goal a saving rule saves into (null = ยังไม่จัดสรร).
 class SavingGoalRef extends Equatable {
@@ -292,6 +314,11 @@ class Recurring extends Equatable {
     this.recordedTxCount = 0,
     this.autoCreate = false,
     this.pauseReason,
+    this.person,
+    this.debtSub,
+    this.direction,
+    this.personBalance,
+    this.zeroRounds = 0,
     this.createdAt,
     this.updatedAt,
   });
@@ -302,6 +329,15 @@ class Recurring extends Equatable {
   final String? note;
   final IconCode? iconCode;
   final RecurringKind kind;
+
+  /// หนี้ only: the person, จดหนี้ | จ่ายหนี้, the money's direction, the
+  /// person's net now (> 0 = they owe me) and the rounds in a row with
+  /// nothing owed (3 = paused, [RecurringPauseReason.noBalance]).
+  final EmbeddedPerson? person;
+  final DebtEntrySub? debtSub;
+  final DebtEntryDirection? direction;
+  final double? personBalance;
+  final int zeroRounds;
   final TransactionType type;
 
   final double? amount;
@@ -357,7 +393,9 @@ class Recurring extends Equatable {
 
   bool get isSaving => kind == RecurringKind.saving;
 
-  static const _types = {'expense', 'income', 'transfer', 'saving'};
+  bool get isDebt => kind == RecurringKind.debt;
+
+  static const _types = {'expense', 'income', 'transfer', 'saving', 'debt'};
 
   /// Null for a rule the app has no type for, so one such rule doesn't break
   /// a whole list.
@@ -377,10 +415,26 @@ class Recurring extends Equatable {
       iconCode: json['icon_code'] is Map<String, dynamic>
           ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
-      kind: json['type'] == 'saving'
-          ? RecurringKind.saving
-          : RecurringKind.fromJson(json['kind'] as String?),
-      type: recurringTypeFromJson(json['type'] as String?),
+      kind: switch (json['type']) {
+        'saving' => RecurringKind.saving,
+        'debt' => RecurringKind.debt,
+        _ => RecurringKind.fromJson(json['kind'] as String?),
+      },
+      person: json['person'] is Map
+          ? EmbeddedPerson.fromJson(
+              (json['person'] as Map).cast<String, dynamic>(),
+            )
+          : null,
+      debtSub: recurringDebtSubFromJson(json['debt_kind']),
+      direction: json['direction'] is String
+          ? DebtEntryDirection.parse(json['direction'] as String)
+          : null,
+      personBalance: (json['person_balance'] as num?)?.toDouble(),
+      zeroRounds: (json['zero_rounds'] as num?)?.toInt() ?? 0,
+      // หนี้: money in or out by its direction (received = in).
+      type: json['type'] == 'debt' && json['direction'] == 'received'
+          ? TransactionType.income
+          : recurringTypeFromJson(json['type'] as String?),
       goalId: json['goal_id'] as String?,
       goal: SavingGoalRef.tryParse(json['goal']),
       amount: (json['amount'] as num?)?.toDouble(),
@@ -478,6 +532,11 @@ class Recurring extends Equatable {
     recordedTxCount,
     autoCreate,
     pauseReason,
+    person,
+    debtSub,
+    direction,
+    personBalance,
+    zeroRounds,
     createdAt,
     updatedAt,
   ];
@@ -500,10 +559,21 @@ class RecurringWrite extends Equatable {
     this.tagIds = const [],
     this.goalId,
     this.autoCreate = false,
+    this.contactId,
+    this.personName,
+    this.debtSub,
+    this.direction,
   });
 
   final String name;
   final RecurringKind kind;
+
+  /// หนี้ only: the person (a contact, else a typed name), จดหนี้ | จ่ายหนี้
+  /// and the money's direction.
+  final String? contactId;
+  final String? personName;
+  final DebtEntrySub? debtSub;
+  final DebtEntryDirection? direction;
 
   /// Saving only (null = ยังไม่จัดสรร).
   final String? goalId;
@@ -524,6 +594,25 @@ class RecurringWrite extends Equatable {
 
   Map<String, dynamic> toJson({bool forUpdate = false}) {
     final saving = kind == RecurringKind.saving;
+    if (kind == RecurringKind.debt) {
+      // No category / tags / goal / transfer on a debt rule (400 otherwise).
+      return <String, dynamic>{
+        'name': name,
+        'kind': kind.toJson(),
+        'type': 'debt',
+        'description': description,
+        'note': note,
+        'icon_code': iconCode?.toJson(),
+        'amount': amount ?? 0,
+        'account_id': accountId,
+        'contact_id': contactId,
+        'person_name': contactId == null ? personName : null,
+        'debt_kind': recurringDebtSubToJson(debtSub ?? DebtEntrySub.record),
+        'direction': (direction ?? DebtEntryDirection.paid).wire,
+        'auto_create': autoCreate,
+        ...recurrenceToJson(rule),
+      };
+    }
     return <String, dynamic>{
       'name': name,
       'kind': kind.toJson(),
@@ -565,5 +654,9 @@ class RecurringWrite extends Equatable {
     goalId,
     rule,
     autoCreate,
+    contactId,
+    personName,
+    debtSub,
+    direction,
   ];
 }

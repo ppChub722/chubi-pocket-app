@@ -14,6 +14,10 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../contacts/presentation/cubit/contacts_cubit.dart';
 import '../../../contacts/presentation/widgets/contact_picker.dart';
+import '../../../recurring/domain/recurring.dart'
+    show RecurringKind, RecurringStatus;
+import '../../../recurring/presentation/recurring_rows.dart'
+    show debtParts, pauseReasonChip, recurringIconCode;
 import '../../../transactions/domain/refs.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 
@@ -23,6 +27,7 @@ import '../cubit/debt_people_cubit.dart';
 import '../cubit/debt_person_cubit.dart';
 import '../debt_person_preset.dart';
 import '../debt_wiring.dart';
+import '../../../settings/presentation/widgets/auto_sync_setting.dart';
 
 /// หนี้ · หน้าคน (owner 2026-10-22, mock DebtPerson): the hero (avatar,
 /// name, age | since, 🔍; "รอจ่ายให้ลี" + the big amount; [จ่ายคืน ฿x]
@@ -234,6 +239,10 @@ class _PersonViewState extends State<_PersonView> {
             ),
           ],
         ),
+      // Auto sync only reaches a linked person; one account-wide value.
+      if (s.balance!.person.linked)
+        SectionCard(children: autoSyncRows(AutoSyncKind.debts)),
+      _recurringSection(l, s),
       AppListToolbar(
         state: _toolbar,
         search: ListToolbarSearch(
@@ -268,6 +277,85 @@ class _PersonViewState extends State<_PersonView> {
         ),
       ),
     ];
+  }
+
+  /// K13: the person's หนี้ recurring settings (each opens its page), then
+  /// ตั้งเป็นรายการประจำ: a new หนี้ setting with this person picked.
+  Widget _recurringSection(AppLocalizations l, DebtPersonState s) {
+    final person = s.balance!.person;
+    final rules = s.recurring;
+    return SectionCard(
+      title: rules.isEmpty ? null : l.recurringTitle,
+      children: [
+        for (final r in rules) _recurringRow(l, r),
+        DetailAddRow(
+          key: const ValueKey('debtPersonAddRecurring'),
+          label: l.debtsPersonAddRecurring,
+          icon: AppIcons.recurring,
+          onTap: () => openPage(
+            context,
+            Uri(
+              path: '/recurring/new',
+              queryParameters: {
+                'kind': RecurringKind.debt.toJson(),
+                'person_name': person.name,
+                'contact': ?person.contactId,
+              },
+            ).toString(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// One setting: its icon and name (ไม่มียอดค้าง / พักไว้ beside it), then
+  /// จดหนี้ | จ่ายหนี้ and when it is next; its next amount on the right.
+  Widget _recurringRow(AppLocalizations l, DebtPersonRecurring r) {
+    final paused = r.status == RecurringStatus.paused;
+    final next = r.nextDate;
+    final amount = r.nextAmount ?? r.amount;
+    final received = r.direction == DebtEntryDirection.received;
+    return AppListRow(
+      key: ValueKey('debtPersonRecurring:${r.id}'),
+      leading: IconDisplay(
+        type: IconType.category,
+        size: 36,
+        iconCode: recurringIconCode(kind: RecurringKind.debt, own: r.iconCode),
+      ),
+      title: r.name,
+      status: paused
+          ? (pauseReasonChip(l, r.pauseReason) ??
+                ListRowChip(
+                  l.recurringStatusPaused,
+                  tone: Tone.warning,
+                  icon: AppIcons.pause,
+                ))
+          : r.dueCount > 0
+          ? ListRowChip(
+              l.occurrenceStateNotCreated,
+              tone: Tone.warning,
+              selected: true,
+            )
+          : null,
+      line2: ListRowLine(
+        icon: AppIcons.recurring,
+        parts: [
+          ...debtParts(l, person: null, sub: r.sub),
+          if (next != null && !paused) dueLabel(l, date: next),
+        ],
+      ),
+      trailing: amount > 0
+          ? ListRowTrailing.value(
+              MoneyText(
+                received ? amount : -amount,
+                tone: MoneyTone.signed,
+                symbol: debtCurrencySymbol(context),
+              ),
+            )
+          : null,
+      dimmed: paused,
+      onTap: () => openPage(context, '/recurring/${r.id}'),
+    );
   }
 
   Widget _hero(BuildContext context, DebtPersonState s) {

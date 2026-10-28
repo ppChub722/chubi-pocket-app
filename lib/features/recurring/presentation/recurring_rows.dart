@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
+import '../../personal_debts/domain/debt_direction.dart';
 import '../../transactions/domain/refs.dart';
 import '../../transactions/domain/transaction_type.dart';
 import '../domain/recurring.dart';
+import '../domain/recurring_item.dart';
 
 String recurringKindLabel(AppLocalizations l, RecurringKind k) => switch (k) {
   RecurringKind.subscription => l.fpRecurringKindSubscription,
@@ -13,6 +15,7 @@ String recurringKindLabel(AppLocalizations l, RecurringKind k) => switch (k) {
   RecurringKind.income => l.fpRecurringKindIncome,
   RecurringKind.reminder => l.fpRecurringKindReminder,
   RecurringKind.saving => l.fpRecurringKindSaving,
+  RecurringKind.debt => l.fpRecurringKindDebt,
 };
 
 IconData recurringKindIcon(RecurringKind k) => k.iconDefault.icon;
@@ -40,6 +43,10 @@ extension RecurringKindIconDefault on RecurringKind {
     RecurringKind.saving => const TypeIconDefault(
       iconId: 'savings',
       color: ModuleColors.defaultSaving,
+    ),
+    RecurringKind.debt => const TypeIconDefault(
+      iconId: 'handshake',
+      color: ModuleColors.defaultDebt,
     ),
   };
 }
@@ -116,7 +123,11 @@ class RecurringRow extends StatelessWidget {
                 type: account.type,
               ),
         icon: AppIcons.recurring,
-        parts: [recurrenceLabel(l, r.rule)],
+        parts: [
+          recurrenceLabel(l, r.rule),
+          // หนี้: with whom, จดหนี้ | จ่ายหนี้.
+          if (r.isDebt) ...debtParts(l, person: r.person?.name, sub: r.debtSub),
+        ],
         glyphs: [
           if (r.progressTotal != null)
             ListRowGlyph(
@@ -142,6 +153,14 @@ class RecurringRow extends StatelessWidget {
 
   static ListRowChip? _status(AppLocalizations l, Recurring r) =>
       switch (r.status) {
+        // หนี้ with nothing owed 3 rounds (K13): it starts again by itself.
+        RecurringStatus.paused
+            when r.pauseReason == RecurringPauseReason.noBalance =>
+          ListRowChip(
+            l.recurringNoBalanceChip,
+            tone: Tone.warning,
+            icon: AppIcons.pause,
+          ),
         RecurringStatus.paused => ListRowChip(
           l.recurringStatusPaused,
           tone: Tone.warning,
@@ -180,6 +199,37 @@ List<ChainDot>? endChainDots(Recurring r) {
   if (next >= 0) dots[next] = ChainDot.current;
   return dots;
 }
+
+/// A หนี้ row's bits for its second line: the person, then จดหนี้ |
+/// จ่ายหนี้ (either may be missing).
+List<String> debtParts(
+  AppLocalizations l, {
+  required String? person,
+  required DebtEntrySub? sub,
+}) => [
+  if (person != null && person.trim().isNotEmpty) person.trim(),
+  if (sub != null)
+    sub == DebtEntrySub.repay ? l.debtSettleChip : l.debtRecordChip,
+];
+
+/// A due row's pill for why its rule stopped by itself: ค้าง 3 งวด (R7) or
+/// ไม่มียอดค้าง (หนี้, K13); null otherwise.
+ListRowChip? pauseReasonChip(AppLocalizations l, RecurringPauseReason? r) =>
+    switch (r) {
+      RecurringPauseReason.overdueLimit => ListRowChip(
+        l.recurringOverdueLimitChip,
+        tone: Tone.warning,
+      ),
+      RecurringPauseReason.noBalance => ListRowChip(
+        l.recurringNoBalanceChip,
+        tone: Tone.warning,
+      ),
+      _ => null,
+    };
+
+/// [debtParts] of an occurrence; empty for one that isn't หนี้.
+List<String> occurrenceDebtParts(AppLocalizations l, RecurringItem i) =>
+    i.isDebt ? debtParts(l, person: i.person?.name, sub: i.debtSub) : const [];
 
 /// ออมเงิน ([saving]) stays plain: the money moves to a goal, it isn't spent.
 num signedOf(TransactionType type, double amount, {bool saving = false}) =>

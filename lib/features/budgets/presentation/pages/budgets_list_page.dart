@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,8 @@ import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
+import '../../../auth/domain/user.dart';
+import '../../../preferences/page_prefs.dart';
 import '../../domain/budget.dart';
 import '../budget_labels.dart';
 import '../cubit/budgets_cubit.dart';
@@ -31,9 +35,42 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
   @override
   void initState() {
     super.initState();
+    _restorePrefs();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<BudgetsCubit>().load();
     });
+  }
+
+  /// The status / health / sort remembered on the account, set before the
+  /// first load.
+  void _restorePrefs() {
+    final pref = readPagePref(context, PagePrefIds.budgets);
+    final fields = pagePrefPage(PagePrefIds.budgets).fields;
+    String pick(String key) =>
+        fields.firstWhere((f) => f.key == key).pick(pref);
+    context.read<BudgetsCubit>().applyPrefs(
+      filter:
+          BudgetFilter.values.asNameMap()[pick('filter')] ??
+          BudgetFilter.active,
+      health:
+          BudgetHealth.values.asNameMap()[pick('health')] ?? BudgetHealth.all,
+      sort: BudgetSort.values.asNameMap()[pick('sort')] ?? BudgetSort.risk,
+    );
+  }
+
+  /// Runs a user [change] on the cubit, then remembers the resulting choices
+  /// (a status change also resets health; a health tap may toggle back).
+  void _change(Future<void> Function(BudgetsCubit cubit) change) {
+    final cubit = context.read<BudgetsCubit>();
+    unawaited(change(cubit));
+    final s = cubit.state;
+    unawaited(
+      rememberPagePref(context, PagePrefIds.budgets, {
+        'filter': s.filter.name,
+        'health': s.health.name,
+        'sort': s.sort.name,
+      }),
+    );
   }
 
   /// Back from a budget page: reload only if it wrote something.
@@ -116,7 +153,7 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
                 for (final f in BudgetFilter.values)
                   SheetOption(value: f, label: _statusLabel(l, f)),
               ],
-              onSelected: cubit.setFilter,
+              onSelected: (f) => _change((c) => c.setFilter(f)),
               builder: (context, toggle) => AppChip(
                 label:
                     '${l.bgStatusFieldLabel}: ${_statusLabel(l, state.filter)}',
@@ -132,7 +169,7 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
               for (final o in BudgetSort.values)
                 SheetOption(value: o, label: _sortLabel(l, o)),
             ],
-            onSelected: cubit.setSort,
+            onSelected: (o) => _change((c) => c.setSort(o)),
             builder: (context, toggle) => AppChip(
               label: l.bgSortChip(_sortLabel(l, state.sort)),
               trailing: AppChipTrailing.dropdown,
@@ -220,7 +257,6 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
     Widget toggleButton,
   ) {
     final s = state.summary;
-    final cubit = context.read<BudgetsCubit>();
     final overBy = s.totalRemaining < 0 ? -s.totalRemaining : 0.0;
     final over = overBy > 0;
     HeroFilter filter(
@@ -233,7 +269,7 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
       count: count,
       tone: tone,
       selected: state.health == h,
-      onTap: () => cubit.setHealth(h),
+      onTap: () => _change((c) => c.setHealth(h)),
     );
     return AppHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),

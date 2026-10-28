@@ -5,7 +5,6 @@ import 'package:chubi_pocket/features/categories/domain/category_type.dart';
 import 'package:chubi_pocket/features/pending/domain/pending_transaction.dart';
 import 'package:chubi_pocket/features/personal_debts/data/personal_debts_repository.dart';
 import 'package:chubi_pocket/features/personal_debts/domain/debt_ledger.dart';
-import 'package:chubi_pocket/features/projects/domain/project.dart';
 import 'package:chubi_pocket/features/recurring/data/recurring_link_repository.dart';
 import 'package:chubi_pocket/features/recurring/domain/recurring.dart';
 import 'package:chubi_pocket/features/recurring/domain/recurring_item.dart';
@@ -99,6 +98,109 @@ void main() {
 
     c.setPaidBy(null);
     expect(c.linkMode(hasEvent: false), LinkMode.split);
+  });
+
+  // 0.4.1-2 SA7: แบ่ง / จ่ายแทน = ONE POST /event-bills {split: true}.
+  group('split bill body', () {
+    test('แบ่ง, I paid: me + each person, คืนแล้ว, my wallet', () {
+      final c = _form(
+        amount: '300',
+        set: (c) => c
+          ..link.mode = LinkMode.split
+          ..setCategory(_food)
+          ..setSplits([
+            SplitDraft(personName: 'Bo', owedAmount: 50),
+            SplitDraft(personName: 'Lee', contactId: 'c2', owedAmount: 100),
+            SplitDraft(personName: 'Bo', owedAmount: 50),
+          ])
+          ..togglePaidBack(_lee),
+      );
+      final b = splitBookBodies(c, LinkMode.split)!;
+      expect(b.bill['payer'], {'me': true});
+      expect(b.bill['amount'], 300);
+      expect(b.bill['date'], '2026-10-24');
+      expect(b.bill['members'], [
+        {'me': true, 'share': 100.0},
+        {'person_name': 'Bo', 'share': 100.0},
+        {'contact_id': 'c2', 'share': 100.0, 'paid_back': true},
+      ]);
+      expect(b.myBooks['account_id'], 'w1');
+      expect(b.myBooks['category_id'], 'cat1');
+      expect(b.myBooks['debt'], isTrue);
+    });
+
+    test('จ่ายแทน, they paid it all: payer them, my share, no wallet', () {
+      final c = _form(
+        amount: '300',
+        set: (c) => c
+          ..link.mode = LinkMode.split
+          ..setSplits([
+            SplitDraft(personName: 'Bo', owedAmount: 100),
+            SplitDraft(personName: 'Lee', contactId: 'c2', owedAmount: 100),
+          ])
+          ..setPaidBy(_lee),
+      );
+      final b = splitBookBodies(c, LinkMode.paid)!;
+      expect(b.bill['payer'], {'contact_id': 'c2'});
+      expect(b.bill['members'], [
+        {'me': true, 'share': 100.0},
+        {'person_name': 'Bo', 'share': 100.0},
+      ]);
+      expect(b.myBooks['account_id'], isNull);
+    });
+
+    // SA6: "คืน X แล้ว" on my row brings my wallet back; others' too.
+    test('จ่ายแทน + I paid them back: my paid_back, my wallet', () {
+      final c = _form(
+        amount: '300',
+        set: (c) => c
+          ..link.mode = LinkMode.split
+          ..setSplits([
+            SplitDraft(personName: 'Bo', owedAmount: 100),
+            SplitDraft(personName: 'Lee', contactId: 'c2', owedAmount: 100),
+          ])
+          ..setPaidBy(_lee)
+          ..toggleMePaidBack()
+          ..togglePaidBack(const LinkPerson(name: 'Bo')),
+      );
+      expect(c.unpaidPayer(LinkMode.paid), isNull);
+      expect(c.walletOutFor(LinkMode.paid), 100);
+      final b = splitBookBodies(c, LinkMode.paid)!;
+      expect(b.bill['members'], [
+        {'me': true, 'share': 100.0, 'paid_back': true},
+        {'person_name': 'Bo', 'share': 100.0, 'paid_back': true},
+      ]);
+      expect(b.myBooks['account_id'], 'w1');
+      c.setPaidBy(null);
+      expect(c.link.mePaidBack, isFalse);
+    });
+
+    test('not a split bill: no people, ส่วนตัว', () {
+      expect(splitBookBodies(_form(), LinkMode.split), isNull);
+      expect(splitBookBodies(_form(), LinkMode.personal), isNull);
+    });
+
+    // Multi-payer (owner 2026-10-28): 123 = me 110 + ลี 13, my share 123.
+    test('จ่ายแทน บางส่วน: two payers, every share, my wallet', () {
+      final c = _form(
+        amount: '123',
+        set: (c) => c
+          ..link.mode = LinkMode.paid
+          ..link.paidBy = _lee
+          ..link.paidAmount = 13,
+      );
+      final b = splitBookBodies(c, LinkMode.paid)!;
+      expect(b.bill.containsKey('payer'), isFalse);
+      expect(b.bill['payers'], [
+        {'me': true, 'amount': 110.0},
+        {'contact_id': 'c2', 'amount': 13.0},
+      ]);
+      expect(b.bill['members'], [
+        {'me': true, 'share': 123.0},
+        {'contact_id': 'c2', 'share': 0.0},
+      ]);
+      expect(b.myBooks['account_id'], 'w1');
+    });
   });
 
   test('quick create tx body, per ผูกกับ tab', () {
@@ -234,29 +336,6 @@ void main() {
 
   // The อีเวนต์ tab's body (one /event-bills call) is in
   // event_book_body_test.dart.
-  test('quick create event sheet: its own bill', () {
-    final sheet = _form(
-      amount: '90',
-      wallet: false,
-      set: (c) => c
-        ..description.text = ' Taxi '
-        ..note.text = ''
-        ..addMemberSplit('m2', amount: 30)
-        ..addMemberSplit(null, amount: 10)
-        ..addMemberSplit('m3'),
-    );
-    final b = projectBillBody(sheet, 'm1');
-    expect(b.payerId, 'm1');
-    expect(b.type, 'expense');
-    expect(b.amount, 90);
-    expect(b.date, '2026-10-24');
-    expect(b.description, 'Taxi');
-    expect(b.note, isNull);
-    expect(b.splits, const [ProjectSplitInput(memberId: 'm2', amount: 30)]);
-    sheet.setType(TransactionType.income);
-    expect(projectBillBody(sheet, 'm1').type, 'income');
-  });
-
   test('quick create debt record / settle / preview bodies', () {
     const lee = DebtPick(
       key: 'c:c2',

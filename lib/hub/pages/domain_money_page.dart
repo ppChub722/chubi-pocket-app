@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../ui/ui.dart';
 import '../hub_kit.dart';
 
-/// Money pieces: MoneyText, MoneyVisibilityToggle, CurrencyTile. (IconTile is on Atoms → Badge & avatar,
+/// Money pieces: MoneyText, CurrencyTile. (IconTile is on Atoms → Badge & avatar,
 /// SummaryStats on Organisms → Section & hero.)
 Widget buildMoneyPage(BuildContext context) => const _MoneyPage();
 
@@ -57,9 +57,7 @@ class _MoneyPageState extends State<_MoneyPage> {
         ),
         HubDemo(
           title: 'MoneyText — symbol and styles',
-          note:
-              'symbol swaps the currency glyph; style sets the size. '
-              'hideable: false keeps an amount visible even under privacy.',
+          note: 'symbol swaps the currency glyph; style sets the size.',
           child: HubRow(
             cells: [
               HubCell(
@@ -95,10 +93,6 @@ class _MoneyPageState extends State<_MoneyPage> {
                 ),
               ),
               HubCell(
-                caption: 'hideable: false',
-                child: const MoneyText(777, hideable: false),
-              ),
-              HubCell(
                 caption: 'textAlign center, in a box',
                 child: const SizedBox(
                   width: 120,
@@ -123,33 +117,6 @@ class _MoneyPageState extends State<_MoneyPage> {
                     ' | ${formatMoneyWith(MoneyStyle(decimals: d), 99.5, symbol: '฿')}',
                   ),
                 ),
-            ],
-          ),
-        ),
-        HubDemo(
-          title: 'MoneyText — hidden (privacy) vs shown',
-          note:
-              'kMoneyPrivacyEnabled is a const false right now, so amounts '
-              'never hide and the toggle renders nothing. The hidden look is '
-              'the symbol plus four bullets, drawn below as static text.',
-          child: HubRow(
-            cells: [
-              const HubCell(
-                caption: 'shown',
-                child: MoneyText(1250.5, tone: MoneyTone.income),
-              ),
-              const HubCell(
-                caption: 'hidden (static look)',
-                child: AppText('฿••••', role: AppTextRole.money),
-              ),
-              const HubCell(
-                caption: 'MoneyVisibilityToggle (empty while off)',
-                child: MoneyVisibilityToggle(),
-              ),
-              const HubCell(
-                caption: 'MoneyVisibilityToggle size 32',
-                child: MoneyVisibilityToggle(size: 32),
-              ),
             ],
           ),
         ),

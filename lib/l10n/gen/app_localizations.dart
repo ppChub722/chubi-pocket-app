@@ -332,18 +332,6 @@ abstract class AppLocalizations {
   /// **'No contacts yet — type a name above'**
   String get contactPickerEmpty;
 
-  /// No description provided for @commonShowAmounts.
-  ///
-  /// In en, this message translates to:
-  /// **'Show amounts'**
-  String get commonShowAmounts;
-
-  /// No description provided for @commonHideAmounts.
-  ///
-  /// In en, this message translates to:
-  /// **'Hide amounts'**
-  String get commonHideAmounts;
-
   /// No description provided for @errorNetworkTitle.
   ///
   /// In en, this message translates to:
@@ -1850,35 +1838,11 @@ abstract class AppLocalizations {
   /// **'Added {name}'**
   String projectAddMemberAdded(String name);
 
-  /// No description provided for @projectTxNewTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Add event transaction'**
-  String get projectTxNewTitle;
-
-  /// No description provided for @projectTxEditTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit transaction'**
-  String get projectTxEditTitle;
-
   /// No description provided for @projectTxPaidBy.
   ///
   /// In en, this message translates to:
   /// **'Paid by'**
   String get projectTxPaidBy;
-
-  /// No description provided for @projectTxReceivedBy.
-  ///
-  /// In en, this message translates to:
-  /// **'Received by'**
-  String get projectTxReceivedBy;
-
-  /// No description provided for @projectTxTags.
-  ///
-  /// In en, this message translates to:
-  /// **'Tags'**
-  String get projectTxTags;
 
   /// No description provided for @projectTxAddTag.
   ///
@@ -1892,71 +1856,11 @@ abstract class AppLocalizations {
   /// **'Tag name'**
   String get projectTxTagHint;
 
-  /// No description provided for @projectTxDescriptionHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Description'**
-  String get projectTxDescriptionHint;
-
-  /// No description provided for @projectTxDescriptionUse.
-  ///
-  /// In en, this message translates to:
-  /// **'Use \"{text}\"'**
-  String projectTxDescriptionUse(String text);
-
-  /// No description provided for @projectTxDescriptionPast.
-  ///
-  /// In en, this message translates to:
-  /// **'Used before in this event'**
-  String get projectTxDescriptionPast;
-
   /// No description provided for @projectTxSplitMember.
   ///
   /// In en, this message translates to:
   /// **'Who'**
   String get projectTxSplitMember;
-
-  /// No description provided for @projectTxSplits.
-  ///
-  /// In en, this message translates to:
-  /// **'Split with'**
-  String get projectTxSplits;
-
-  /// No description provided for @projectTxSplitsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'How much each person owes the payer; the payer keeps the rest'**
-  String get projectTxSplitsHint;
-
-  /// No description provided for @projectTxAddSplit.
-  ///
-  /// In en, this message translates to:
-  /// **'Add a split'**
-  String get projectTxAddSplit;
-
-  /// No description provided for @projectTxSplitEqual.
-  ///
-  /// In en, this message translates to:
-  /// **'Split equally'**
-  String get projectTxSplitEqual;
-
-  /// No description provided for @projectTxSplitsOver.
-  ///
-  /// In en, this message translates to:
-  /// **'Splits ({sum}) are more than the total'**
-  String projectTxSplitsOver(String sum);
-
-  /// No description provided for @projectTxPayerKeeps.
-  ///
-  /// In en, this message translates to:
-  /// **'Payer\'s own share {amount}'**
-  String projectTxPayerKeeps(String amount);
-
-  /// No description provided for @projectTxAmountRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter an amount above 0'**
-  String get projectTxAmountRequired;
 
   /// No description provided for @settingsThemeMint.
   ///
@@ -1975,18 +1879,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Notifications'**
   String get settingsNotifications;
-
-  /// No description provided for @settingsNotificationsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'What you get and what happens automatically'**
-  String get settingsNotificationsHint;
-
-  /// No description provided for @settingsNotificationsSummary.
-  ///
-  /// In en, this message translates to:
-  /// **'{on} on | {auto} automatic'**
-  String settingsNotificationsSummary(int on, int auto);
 
   /// No description provided for @settingsFontSample.
   ///
@@ -2084,24 +1976,6 @@ abstract class AppLocalizations {
   /// **'Hidden'**
   String get notifHidden;
 
-  /// No description provided for @notifSettingsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Notification settings'**
-  String get notifSettingsTitle;
-
-  /// No description provided for @notifSettingsReceive.
-  ///
-  /// In en, this message translates to:
-  /// **'Notifications you get'**
-  String get notifSettingsReceive;
-
-  /// No description provided for @notifGroupSplits.
-  ///
-  /// In en, this message translates to:
-  /// **'Bill splits'**
-  String get notifGroupSplits;
-
   /// No description provided for @notifGroupProjects.
   ///
   /// In en, this message translates to:
@@ -2144,30 +2018,6 @@ abstract class AppLocalizations {
   /// **'Added to an event'**
   String get notifTypeProjectAdded;
 
-  /// No description provided for @notifAutoAddDebt.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto: add to my debts'**
-  String get notifAutoAddDebt;
-
-  /// No description provided for @notifAutoCopyToBook.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto: add to my book'**
-  String get notifAutoCopyToBook;
-
-  /// No description provided for @notifAutoUpdateCopy.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto: update my copy to match'**
-  String get notifAutoUpdateCopy;
-
-  /// No description provided for @notifActionAddDebt.
-  ///
-  /// In en, this message translates to:
-  /// **'Add to my debts'**
-  String get notifActionAddDebt;
-
   /// No description provided for @notifActionCopyToBook.
   ///
   /// In en, this message translates to:
@@ -2197,18 +2047,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{actor} added you to {project}'**
   String notifProjectAdded(String actor, String project);
-
-  /// No description provided for @notifDefaultAccount.
-  ///
-  /// In en, this message translates to:
-  /// **'Receiving wallet'**
-  String get notifDefaultAccount;
-
-  /// No description provided for @notifDefaultAccountNone.
-  ///
-  /// In en, this message translates to:
-  /// **'Not set'**
-  String get notifDefaultAccountNone;
 
   /// No description provided for @notifSettingsSaveFailed.
   ///
@@ -2444,30 +2282,6 @@ abstract class AppLocalizations {
   /// **'Transaction deleted'**
   String get txDeleted;
 
-  /// No description provided for @txDeleteRecurringTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete this transaction?'**
-  String get txDeleteRecurringTitle;
-
-  /// No description provided for @txDeleteRecurringBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Linked to {name}'**
-  String txDeleteRecurringBody(String name);
-
-  /// No description provided for @txDeleteRecurringOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete only (the occurrence is due again)'**
-  String get txDeleteRecurringOnly;
-
-  /// No description provided for @txDeleteRecurringSkip.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete and skip the occurrence'**
-  String get txDeleteRecurringSkip;
-
   /// No description provided for @txSplitEqually.
   ///
   /// In en, this message translates to:
@@ -2491,12 +2305,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Split total is more than the transaction amount'**
   String get txSplitExceeds;
-
-  /// No description provided for @txSavedTagsFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Saved, but the tags didn\'t stick — edit them on the transaction'**
-  String get txSavedTagsFailed;
 
   /// No description provided for @txTransferNeedsTo.
   ///
@@ -3110,12 +2918,6 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settingsTitle;
 
-  /// No description provided for @settingsSectionAbout.
-  ///
-  /// In en, this message translates to:
-  /// **'About'**
-  String get settingsSectionAbout;
-
   /// No description provided for @settingsChangePassword.
   ///
   /// In en, this message translates to:
@@ -3139,12 +2941,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Language'**
   String get settingsLanguage;
-
-  /// No description provided for @settingsFont.
-  ///
-  /// In en, this message translates to:
-  /// **'Font'**
-  String get settingsFont;
 
   /// No description provided for @settingsAppVersion.
   ///
@@ -3326,18 +3122,6 @@ abstract class AppLocalizations {
   /// **'The debt\'s repaid amount goes down by {amount}.'**
   String txDetailDeleteRepaymentBody(String amount);
 
-  /// No description provided for @notifTypeSplitChanged.
-  ///
-  /// In en, this message translates to:
-  /// **'Someone changes a split with me'**
-  String get notifTypeSplitChanged;
-
-  /// No description provided for @notifAutoApplySplitChange.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto: update my debt to match'**
-  String get notifAutoApplySplitChange;
-
   /// No description provided for @notifSplitAmountChanged.
   ///
   /// In en, this message translates to:
@@ -3354,36 +3138,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{who} removed you from the split {what}'**
   String notifSplitRemovedYou(String who, String what);
-
-  /// No description provided for @notifSplitChangeUpdated.
-  ///
-  /// In en, this message translates to:
-  /// **'Your debt was updated'**
-  String get notifSplitChangeUpdated;
-
-  /// No description provided for @notifSplitChangeDeleted.
-  ///
-  /// In en, this message translates to:
-  /// **'That debt was removed'**
-  String get notifSplitChangeDeleted;
-
-  /// No description provided for @notifSplitChangeUsed.
-  ///
-  /// In en, this message translates to:
-  /// **'Already updated'**
-  String get notifSplitChangeUsed;
-
-  /// No description provided for @notifSplitChangeStale.
-  ///
-  /// In en, this message translates to:
-  /// **'Can\'t update any more — there\'s a newer change'**
-  String get notifSplitChangeStale;
-
-  /// No description provided for @notifSplitChangeGone.
-  ///
-  /// In en, this message translates to:
-  /// **'That debt was deleted'**
-  String get notifSplitChangeGone;
 
   /// No description provided for @txSplitStatusOverpaidToThem.
   ///
@@ -3570,12 +3324,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t create the tag'**
   String get txTagCreateFailed;
-
-  /// No description provided for @projectTxPayerRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick a member first'**
-  String get projectTxPayerRequired;
 
   /// No description provided for @quickFrom.
   ///
@@ -4747,24 +4495,6 @@ abstract class AppLocalizations {
   /// **'That account number isn’t valid'**
   String get walletErrorInvalidIdentifier;
 
-  /// No description provided for @categoryFeeSwitchLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Use for fees'**
-  String get categoryFeeSwitchLabel;
-
-  /// No description provided for @categoryFeeSwitchHelper.
-  ///
-  /// In en, this message translates to:
-  /// **'Fees from bank slips go here | one category at a time'**
-  String get categoryFeeSwitchHelper;
-
-  /// No description provided for @categoryFeeSwitchFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Couldn’t set the fee category'**
-  String get categoryFeeSwitchFailed;
-
   /// No description provided for @monthPickerTitle.
   ///
   /// In en, this message translates to:
@@ -5815,18 +5545,6 @@ abstract class AppLocalizations {
   /// **'Close debts'**
   String get debtCloseLabel;
 
-  /// No description provided for @debtClosePick.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick debts'**
-  String get debtClosePick;
-
-  /// No description provided for @debtCloseChosen.
-  ///
-  /// In en, this message translates to:
-  /// **'{n} debts picked'**
-  String debtCloseChosen(int n);
-
   /// No description provided for @debtCloseConfirm.
   ///
   /// In en, this message translates to:
@@ -5995,35 +5713,11 @@ abstract class AppLocalizations {
   /// **'The owner must transfer ownership before leaving'**
   String get eventErrOwnerCannotLeave;
 
-  /// No description provided for @eventDeleteBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Every bill in the event is deleted | your transactions linked to it can stay or be deleted too'**
-  String get eventDeleteBody;
-
-  /// No description provided for @eventDeleteKeepTxs.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete, keep my transactions'**
-  String get eventDeleteKeepTxs;
-
-  /// No description provided for @eventDeleteWithTxs.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete and remove {count} transactions'**
-  String eventDeleteWithTxs(int count);
-
   /// No description provided for @eventDeleteConfirm.
   ///
   /// In en, this message translates to:
   /// **'Delete'**
   String get eventDeleteConfirm;
-
-  /// No description provided for @eventDeleteNotYet.
-  ///
-  /// In en, this message translates to:
-  /// **'Not now'**
-  String get eventDeleteNotYet;
 
   /// No description provided for @occurrenceStateUpcoming.
   ///
@@ -6144,24 +5838,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, one{1 couldn\'t be recorded} other{{count} couldn\'t be recorded}}'**
   String occurrenceLeftOutRefused(int count);
-
-  /// No description provided for @occurrenceSkipLinkedTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Skip this occurrence?'**
-  String get occurrenceSkipLinkedTitle;
-
-  /// No description provided for @occurrenceSkipKeepTx.
-  ///
-  /// In en, this message translates to:
-  /// **'Skip, keep the transaction'**
-  String get occurrenceSkipKeepTx;
-
-  /// No description provided for @occurrenceSkipDeleteTx.
-  ///
-  /// In en, this message translates to:
-  /// **'Skip and delete the transaction'**
-  String get occurrenceSkipDeleteTx;
 
   /// No description provided for @occurrenceDueTitle.
   ///
@@ -6432,24 +6108,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save and update the other side'**
   String get linkedSaveBoth;
-
-  /// No description provided for @linkedDeleteTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete the linked item too?'**
-  String get linkedDeleteTitle;
-
-  /// No description provided for @linkedDeleteThisOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete this side only'**
-  String get linkedDeleteThisOnly;
-
-  /// No description provided for @linkedDeleteBoth.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete both'**
-  String get linkedDeleteBoth;
 
   /// No description provided for @dueToday.
   ///
@@ -8990,12 +8648,6 @@ abstract class AppLocalizations {
   /// **'Hidden, not counted, can be restored'**
   String get fpEventsArchiveConsequence;
 
-  /// No description provided for @fpEventsDeleteConsequence.
-  ///
-  /// In en, this message translates to:
-  /// **'You choose whether its bills go too'**
-  String get fpEventsDeleteConsequence;
-
   /// No description provided for @fpEventsRestore.
   ///
   /// In en, this message translates to:
@@ -9200,41 +8852,17 @@ abstract class AppLocalizations {
   /// **'In my books'**
   String get evbBooked;
 
-  /// No description provided for @evbBookDebt.
-  ///
-  /// In en, this message translates to:
-  /// **'Debt'**
-  String get evbBookDebt;
-
   /// No description provided for @evbBookDebtLine.
   ///
   /// In en, this message translates to:
   /// **'I owe {name}'**
   String evbBookDebtLine(String name);
 
-  /// No description provided for @evbBookTx.
-  ///
-  /// In en, this message translates to:
-  /// **'Transaction'**
-  String get evbBookTx;
-
-  /// No description provided for @evbBookTxLine.
-  ///
-  /// In en, this message translates to:
-  /// **'My share as an expense'**
-  String get evbBookTxLine;
-
   /// No description provided for @evbPaybackBy.
   ///
   /// In en, this message translates to:
   /// **'Payback | by {name}'**
   String evbPaybackBy(String name);
-
-  /// No description provided for @evbPaidFrom.
-  ///
-  /// In en, this message translates to:
-  /// **'Paid from {wallet}'**
-  String evbPaidFrom(String wallet);
 
   /// No description provided for @evbNoWallet.
   ///
@@ -9290,12 +8918,6 @@ abstract class AppLocalizations {
   /// **'Recorded'**
   String get evbSettleRecorded;
 
-  /// No description provided for @evbSettleRecordBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Record in your debts: {from} → {to} {amount}'**
-  String evbSettleRecordBody(String from, String to, String amount);
-
   /// No description provided for @evbBookedDebt.
   ///
   /// In en, this message translates to:
@@ -9331,12 +8953,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Only mine'**
   String get evbOnlyMine;
-
-  /// No description provided for @evbDebtorsLine.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} owe me'**
-  String evbDebtorsLine(int count);
 
   /// No description provided for @evbNoDebt.
   ///
@@ -9404,30 +9020,6 @@ abstract class AppLocalizations {
   /// **'{month} received | {count} transactions ›'**
   String categoryMonthEarnedLabel(String month, int count);
 
-  /// No description provided for @notifSettingsLegend.
-  ///
-  /// In en, this message translates to:
-  /// **'Off: no notice | Notify: a notice with a one-tap button | Auto: done for you, then you are told what was done'**
-  String get notifSettingsLegend;
-
-  /// No description provided for @notifStateOff.
-  ///
-  /// In en, this message translates to:
-  /// **'Off'**
-  String get notifStateOff;
-
-  /// No description provided for @notifStateNotify.
-  ///
-  /// In en, this message translates to:
-  /// **'Notify'**
-  String get notifStateNotify;
-
-  /// No description provided for @notifStateAuto.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto'**
-  String get notifStateAuto;
-
   /// No description provided for @notifGroupRecurring.
   ///
   /// In en, this message translates to:
@@ -9440,35 +9032,17 @@ abstract class AppLocalizations {
   /// **'Recurring items are due'**
   String get notifTypeRecurringDue;
 
-  /// No description provided for @notifTypeRecurringDueHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Always listed under To do on the recurring page | Off = no notice'**
-  String get notifTypeRecurringDueHint;
-
   /// No description provided for @notifTypeRecurringEnding.
   ///
   /// In en, this message translates to:
   /// **'A recurring is about to end'**
   String get notifTypeRecurringEnding;
 
-  /// No description provided for @notifTypeRecurringEndingHint.
-  ///
-  /// In en, this message translates to:
-  /// **'A few items left | extend it?'**
-  String get notifTypeRecurringEndingHint;
-
   /// No description provided for @notifTypeRecurringAutoCreated.
   ///
   /// In en, this message translates to:
   /// **'Recorded automatically'**
   String get notifTypeRecurringAutoCreated;
-
-  /// No description provided for @notifTypeRecurringAutoCreatedHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Once a day, how many were recorded | Off = no notice'**
-  String get notifTypeRecurringAutoCreatedHint;
 
   /// No description provided for @notifTypeRequestsHint.
   ///
@@ -9487,12 +9061,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Money'**
   String get settingsSectionMoney;
-
-  /// No description provided for @settingsSectionData.
-  ///
-  /// In en, this message translates to:
-  /// **'Data'**
-  String get settingsSectionData;
 
   /// No description provided for @settingsCurrencyHint.
   ///
@@ -9569,7 +9137,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsMainWalletHint.
   ///
   /// In en, this message translates to:
-  /// **'Used as the default when recording'**
+  /// **'Used for every new entry; not set = the last wallet used'**
   String get settingsMainWalletHint;
 
   /// No description provided for @settingsMainWalletNone.
@@ -9595,12 +9163,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Export CSV'**
   String get settingsExportCsv;
-
-  /// No description provided for @settingsComingIn04.
-  ///
-  /// In en, this message translates to:
-  /// **'0.4'**
-  String get settingsComingIn04;
 
   /// No description provided for @profileSectionSecurity.
   ///
@@ -10477,36 +10039,6 @@ abstract class AppLocalizations {
   /// **'On the day it\'s recorded for you, no confirm needed'**
   String get fpRecurringAutoCreateHint;
 
-  /// No description provided for @fpRecurringAutoCreateNeeds.
-  ///
-  /// In en, this message translates to:
-  /// **'Needs a fixed amount and a wallet first'**
-  String get fpRecurringAutoCreateNeeds;
-
-  /// No description provided for @fpRecurringTxScopeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Apply this to the {n} recorded transactions too?'**
-  String fpRecurringTxScopeTitle(int n);
-
-  /// No description provided for @fpRecurringTxScopeFuture.
-  ///
-  /// In en, this message translates to:
-  /// **'Only from now on'**
-  String get fpRecurringTxScopeFuture;
-
-  /// No description provided for @fpRecurringTxScopeAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Recorded ones too (amount and date stay)'**
-  String get fpRecurringTxScopeAll;
-
-  /// No description provided for @fpRecurringTxUpdateFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'{n} recorded transactions couldn\'t be updated'**
-  String fpRecurringTxUpdateFailed(int n);
-
   /// No description provided for @fpM5bRecurringPerMonth.
   ///
   /// In en, this message translates to:
@@ -10518,12 +10050,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This deletes {items} occurrences, {drafts} waiting drafts and touches {linked} saved records.'**
   String fpM5bRecurringDeleteNumbers(int items, int drafts, int linked);
-
-  /// No description provided for @fpM5bEventDeleteNumbers.
-  ///
-  /// In en, this message translates to:
-  /// **'This deletes {bills} bills and {members} members.'**
-  String fpM5bEventDeleteNumbers(int bills, int members);
 
   /// No description provided for @fpGoalsFactTargetShort.
   ///
@@ -10554,30 +10080,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pay a debt'**
   String get debtSettleChip;
-
-  /// No description provided for @debtOriginFieldLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Origin'**
-  String get debtOriginFieldLabel;
-
-  /// No description provided for @debtOriginPickFirst.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick a person first'**
-  String get debtOriginPickFirst;
-
-  /// No description provided for @debtOriginLend.
-  ///
-  /// In en, this message translates to:
-  /// **'Lent to {name}'**
-  String debtOriginLend(String name);
-
-  /// No description provided for @debtOriginBorrow.
-  ///
-  /// In en, this message translates to:
-  /// **'Borrowed from {name}'**
-  String debtOriginBorrow(String name);
 
   /// No description provided for @debtRoleDebtor.
   ///
@@ -10632,18 +10134,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Got back from'**
   String get debtRepayFrom;
-
-  /// No description provided for @debtRepayDescPay.
-  ///
-  /// In en, this message translates to:
-  /// **'Paid back {name}'**
-  String debtRepayDescPay(String name);
-
-  /// No description provided for @debtRepayDescReceive.
-  ///
-  /// In en, this message translates to:
-  /// **'Got back from {name}'**
-  String debtRepayDescReceive(String name);
 
   /// No description provided for @debtMarkPaidLabel.
   ///
@@ -10879,23 +10369,11 @@ abstract class AppLocalizations {
   /// **'Change it in the event too?'**
   String get linkedEventAskTitle;
 
-  /// No description provided for @linkedBookAskTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Change it in my book too?'**
-  String get linkedBookAskTitle;
-
   /// No description provided for @linkedMineOnly.
   ///
   /// In en, this message translates to:
   /// **'Only mine'**
   String get linkedMineOnly;
-
-  /// No description provided for @linkedEventOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'Only the event'**
-  String get linkedEventOnly;
 
   /// No description provided for @linkedBoth.
   ///
@@ -10908,12 +10386,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A draft can only go to an existing event'**
   String get txLinkDraftNeedsExistingEvent;
-
-  /// No description provided for @debtQuickCreateTxLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Also save as a transaction'**
-  String get debtQuickCreateTxLabel;
 
   /// No description provided for @debtResultNow.
   ///
@@ -11278,7 +10750,7 @@ abstract class AppLocalizations {
   /// No description provided for @evbReceives.
   ///
   /// In en, this message translates to:
-  /// **'Got it'**
+  /// **'Received'**
   String get evbReceives;
 
   /// No description provided for @txLinkWalletNotIn.
@@ -11401,12 +10873,6 @@ abstract class AppLocalizations {
   /// **'Disconnect from the event?'**
   String get txLinkDisconnectTitle;
 
-  /// No description provided for @txLinkDisconnectBody.
-  ///
-  /// In en, this message translates to:
-  /// **'This becomes a plain transaction. The event\'s bill doesn\'t change'**
-  String get txLinkDisconnectBody;
-
   /// No description provided for @txLinkDisconnected.
   ///
   /// In en, this message translates to:
@@ -11466,6 +10932,882 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Linked with {name}\'s book'**
   String debtPartnerLinked(String name);
+
+  /// No description provided for @eventCompleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete this event for good?'**
+  String get eventCompleteTitle;
+
+  /// No description provided for @eventCompleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This can\'t be undone. No more adding or editing bills, and everyone\'s books stop syncing with this event at once (the links stay).'**
+  String get eventCompleteBody;
+
+  /// No description provided for @eventCompleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete event'**
+  String get eventCompleteConfirm;
+
+  /// No description provided for @eventCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Event completed'**
+  String get eventCompleted;
+
+  /// No description provided for @eventCompletedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'This event is completed: bills can\'t be added or edited, and nobody\'s book syncs with it any more.'**
+  String get eventCompletedNotice;
+
+  /// No description provided for @eventErrCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'This event is completed and can\'t be changed'**
+  String get eventErrCompleted;
+
+  /// No description provided for @eventErrNotActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Only an active event can be completed'**
+  String get eventErrNotActive;
+
+  /// No description provided for @eventErrEmptyPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'A bill still has an empty person slot: fill it before completing the event'**
+  String get eventErrEmptyPerson;
+
+  /// No description provided for @settingsHomeCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved with your account, the same on every device'**
+  String get settingsHomeCaption;
+
+  /// No description provided for @settingsGroupSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto sync'**
+  String get settingsGroupSync;
+
+  /// No description provided for @settingsGroupPagePrefs.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters and sorting'**
+  String get settingsGroupPagePrefs;
+
+  /// No description provided for @settingsSummaryOn.
+  ///
+  /// In en, this message translates to:
+  /// **'on'**
+  String get settingsSummaryOn;
+
+  /// No description provided for @settingsSummaryOff.
+  ///
+  /// In en, this message translates to:
+  /// **'off'**
+  String get settingsSummaryOff;
+
+  /// No description provided for @settingsSyncSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Events {events} | Debts and splits {debts}'**
+  String settingsSyncSummary(String events, String debts);
+
+  /// No description provided for @settingsNotificationsOnSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{on} of {total} on'**
+  String settingsNotificationsOnSummary(int on, int total);
+
+  /// No description provided for @settingsPagePrefsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pages | remembers your last choice'**
+  String settingsPagePrefsSummary(int count);
+
+  /// No description provided for @settingsMainWalletSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Main wallet {name}'**
+  String settingsMainWalletSummary(String name);
+
+  /// No description provided for @settingsComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get settingsComingSoon;
+
+  /// No description provided for @settingsFontThai.
+  ///
+  /// In en, this message translates to:
+  /// **'Thai font'**
+  String get settingsFontThai;
+
+  /// No description provided for @settingsFontEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English font'**
+  String get settingsFontEnglish;
+
+  /// No description provided for @settingsPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get settingsPreview;
+
+  /// No description provided for @settingsSectionNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Number display'**
+  String get settingsSectionNumbers;
+
+  /// No description provided for @settingsSectionEntryDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry defaults'**
+  String get settingsSectionEntryDefaults;
+
+  /// No description provided for @settingsFeeCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Fee category'**
+  String get settingsFeeCategory;
+
+  /// No description provided for @settingsFeeCategoryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Used for transfers with a fee'**
+  String get settingsFeeCategoryHint;
+
+  /// No description provided for @settingsSyncLegend.
+  ///
+  /// In en, this message translates to:
+  /// **'On = when someone edits a bill, mine changes at once\nOff = a notification asks me to \"Update\"'**
+  String get settingsSyncLegend;
+
+  /// No description provided for @settingsSyncEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Events'**
+  String get settingsSyncEvents;
+
+  /// No description provided for @settingsSyncEventsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Bills in events I have a part in'**
+  String get settingsSyncEventsHint;
+
+  /// No description provided for @settingsSyncDebts.
+  ///
+  /// In en, this message translates to:
+  /// **'Debts and splits'**
+  String get settingsSyncDebts;
+
+  /// No description provided for @settingsSyncDebtsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Bills and debts with linked people'**
+  String get settingsSyncDebtsHint;
+
+  /// No description provided for @settingsSyncFootnote.
+  ///
+  /// In en, this message translates to:
+  /// **'The same switches as on the event page and the person page: change it anywhere, it\'s one value | Muted notifications still sync quietly'**
+  String get settingsSyncFootnote;
+
+  /// No description provided for @notifSettingsOnOffLegend.
+  ///
+  /// In en, this message translates to:
+  /// **'On = notify me | Off = silent\nAuto sync is its own setting; muted types still update quietly'**
+  String get notifSettingsOnOffLegend;
+
+  /// No description provided for @notifGroupSharedBills.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared bills'**
+  String get notifGroupSharedBills;
+
+  /// No description provided for @notifSetSplitCreatedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A new bill with my share'**
+  String get notifSetSplitCreatedHint;
+
+  /// No description provided for @notifSetSplitChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone edited a bill shared with me'**
+  String get notifSetSplitChanged;
+
+  /// No description provided for @notifSetSplitChangedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount, date or description changed'**
+  String get notifSetSplitChangedHint;
+
+  /// No description provided for @notifSetSharedBillDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone deleted a bill shared with me'**
+  String get notifSetSharedBillDeleted;
+
+  /// No description provided for @notifSetSharedBillDeletedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'My copy becomes a plain transaction'**
+  String get notifSetSharedBillDeletedHint;
+
+  /// No description provided for @notifSetSharedBillDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone disconnected a bill shared with me'**
+  String get notifSetSharedBillDisconnected;
+
+  /// No description provided for @notifSetSharedBillDisconnectedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'My bill stays, just no longer connected'**
+  String get notifSetSharedBillDisconnectedHint;
+
+  /// No description provided for @notifSetDebtDisconnectedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'My debt stays, just no longer connected'**
+  String get notifSetDebtDisconnectedHint;
+
+  /// No description provided for @notifSetProjectTxForYouHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone paid for me, or booked a bill I paid'**
+  String get notifSetProjectTxForYouHint;
+
+  /// No description provided for @notifSetProjectTxChangedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A bill with my share changed'**
+  String get notifSetProjectTxChangedHint;
+
+  /// No description provided for @notifSetEventCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Event completed'**
+  String get notifSetEventCompleted;
+
+  /// No description provided for @notifSetEventCompletedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked for good, no more sync, claim once'**
+  String get notifSetEventCompletedHint;
+
+  /// No description provided for @notifSetEventMemberRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from an event'**
+  String get notifSetEventMemberRemoved;
+
+  /// No description provided for @notifSetEventMemberRemovedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What I booked stays, just no longer connected'**
+  String get notifSetEventMemberRemovedHint;
+
+  /// No description provided for @notifSetRecurringAutoCreatedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Entries recorded for me on schedule'**
+  String get notifSetRecurringAutoCreatedHint;
+
+  /// No description provided for @notifSetRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Event invites, contact link requests, wallet invites'**
+  String get notifSetRequests;
+
+  /// No description provided for @notifActionAddToBook.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to my book'**
+  String get notifActionAddToBook;
+
+  /// No description provided for @notifActionRemoveMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove mine too'**
+  String get notifActionRemoveMine;
+
+  /// No description provided for @notifActionKeepMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get notifActionKeepMine;
+
+  /// No description provided for @notifSharedBillCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} recorded {what}, a bill you\'re in'**
+  String notifSharedBillCreated(String who, String what);
+
+  /// No description provided for @notifSharedBillDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} deleted the bill {what}'**
+  String notifSharedBillDeleted(String who, String what);
+
+  /// No description provided for @notifSharedBillDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} disconnected from the bill {what}'**
+  String notifSharedBillDisconnected(String who, String what);
+
+  /// No description provided for @notifEventCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} completed the event {name}'**
+  String notifEventCompleted(String who, String name);
+
+  /// No description provided for @notifEventMemberRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} removed you from the event {name}'**
+  String notifEventMemberRemoved(String who, String name);
+
+  /// No description provided for @notifBillRemovedMine.
+  ///
+  /// In en, this message translates to:
+  /// **'This bill\'s records were removed from your book'**
+  String get notifBillRemovedMine;
+
+  /// No description provided for @notifBillGone.
+  ///
+  /// In en, this message translates to:
+  /// **'This bill was deleted'**
+  String get notifBillGone;
+
+  /// No description provided for @notifBillDisconnectedMine.
+  ///
+  /// In en, this message translates to:
+  /// **'You disconnected this bill; connect again from the bill'**
+  String get notifBillDisconnectedMine;
+
+  /// No description provided for @txLinkDisconnectBodyCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'This entry and your debts from this bill become plain records you edit freely. The bill doesn\'t change and its edits won\'t reach you any more.'**
+  String get txLinkDisconnectBodyCopy;
+
+  /// No description provided for @evbEmptyPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'No one yet'**
+  String get evbEmptyPerson;
+
+  /// No description provided for @evbAssignMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Me'**
+  String get evbAssignMe;
+
+  /// No description provided for @evbAssignTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who takes this spot'**
+  String get evbAssignTitle;
+
+  /// No description provided for @evbAssignWhose.
+  ///
+  /// In en, this message translates to:
+  /// **'Whose spots'**
+  String get evbAssignWhose;
+
+  /// No description provided for @evbAssignAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in'**
+  String get evbAssignAction;
+
+  /// No description provided for @evbAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Spot filled'**
+  String get evbAssigned;
+
+  /// No description provided for @evbEmptyPersonsNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} bills have an empty spot from a removed member: fill them before completing the event'**
+  String evbEmptyPersonsNotice(int count);
+
+  /// No description provided for @evbBillChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'This bill was changed meanwhile; reloaded'**
+  String get evbBillChanged;
+
+  /// No description provided for @evbSplitBill.
+  ///
+  /// In en, this message translates to:
+  /// **'Split bill'**
+  String get evbSplitBill;
+
+  /// No description provided for @fpRecurringKindDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt'**
+  String get fpRecurringKindDebt;
+
+  /// No description provided for @pagePrefSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get pagePrefSort;
+
+  /// No description provided for @pagePrefFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get pagePrefFilter;
+
+  /// No description provided for @pagePrefStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get pagePrefStatus;
+
+  /// No description provided for @pagePrefKind.
+  ///
+  /// In en, this message translates to:
+  /// **'Kind'**
+  String get pagePrefKind;
+
+  /// No description provided for @pagePrefLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get pagePrefLink;
+
+  /// No description provided for @pagePrefCollapsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapsed parents'**
+  String get pagePrefCollapsed;
+
+  /// No description provided for @pagePrefAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get pagePrefAll;
+
+  /// No description provided for @pagePrefPendingManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Added by me'**
+  String get pagePrefPendingManual;
+
+  /// No description provided for @pagePrefPendingOthers.
+  ///
+  /// In en, this message translates to:
+  /// **'From others'**
+  String get pagePrefPendingOthers;
+
+  /// No description provided for @pagePrefNone.
+  ///
+  /// In en, this message translates to:
+  /// **'none'**
+  String get pagePrefNone;
+
+  /// No description provided for @pagePrefValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{title}: {value}'**
+  String pagePrefValue(String title, String value);
+
+  /// No description provided for @pagePrefsChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed'**
+  String get pagePrefsChanged;
+
+  /// No description provided for @pagePrefsCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Picking on a page changes it here too | tap to set it yourself'**
+  String get pagePrefsCaption;
+
+  /// No description provided for @pagePrefsFootnote.
+  ///
+  /// In en, this message translates to:
+  /// **'Tabs, date ranges and search start fresh every time a page opens'**
+  String get pagePrefsFootnote;
+
+  /// No description provided for @pagePrefsResetAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset all to defaults'**
+  String get pagePrefsResetAll;
+
+  /// No description provided for @pagePrefsResetAllBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Every page goes back to its default filters and sorting'**
+  String get pagePrefsResetAllBody;
+
+  /// No description provided for @pagePrefsResetPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset this page'**
+  String get pagePrefsResetPage;
+
+  /// No description provided for @pagePrefsSetOnPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Set on the page itself'**
+  String get pagePrefsSetOnPage;
+
+  /// No description provided for @evbClaimTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Into my book: {name}'**
+  String evbClaimTitle(String name);
+
+  /// No description provided for @evbClaimTheyOwe.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} owes me'**
+  String evbClaimTheyOwe(String name);
+
+  /// No description provided for @evbClaimIOwe.
+  ///
+  /// In en, this message translates to:
+  /// **'I owe {name}'**
+  String evbClaimIOwe(String name);
+
+  /// No description provided for @evbClaimPaybacks.
+  ///
+  /// In en, this message translates to:
+  /// **'Paybacks / loans'**
+  String get evbClaimPaybacks;
+
+  /// No description provided for @evbClaimUntitled.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill'**
+  String get evbClaimUntitled;
+
+  /// No description provided for @evbClaimDone.
+  ///
+  /// In en, this message translates to:
+  /// **'In my book'**
+  String get evbClaimDone;
+
+  /// No description provided for @evbClaimNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The picked bills become one debt with this person; bills someone else paid get a \"paid by\" entry of my share'**
+  String get evbClaimNote;
+
+  /// No description provided for @evbClaimConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Book {count} bills'**
+  String evbClaimConfirm(int count);
+
+  /// No description provided for @evbClaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'Booked with {name}'**
+  String evbClaimed(String name);
+
+  /// No description provided for @evbClaimNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'No bills left to book'**
+  String get evbClaimNothing;
+
+  /// No description provided for @evbClaimMixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick one side at a time: they owe me, or I owe them'**
+  String get evbClaimMixed;
+
+  /// No description provided for @evbClaimAlready.
+  ///
+  /// In en, this message translates to:
+  /// **'Some bills are already in your book'**
+  String get evbClaimAlready;
+
+  /// No description provided for @evbMyCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'My book'**
+  String get evbMyCopy;
+
+  /// No description provided for @evbPaidByName.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid by {name}'**
+  String evbPaidByName(String name);
+
+  /// No description provided for @evbPaidBackName.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid {name} back'**
+  String evbPaidBackName(String name);
+
+  /// No description provided for @evbPrivateNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Private note'**
+  String get evbPrivateNote;
+
+  /// No description provided for @evbPrivateNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Only you see it'**
+  String get evbPrivateNoteHint;
+
+  /// No description provided for @evbCopyDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected: this bill doesn\'t reach my book'**
+  String get evbCopyDisconnected;
+
+  /// No description provided for @evbReconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect again'**
+  String get evbReconnect;
+
+  /// No description provided for @evbCopyOutOfSync.
+  ///
+  /// In en, this message translates to:
+  /// **'My book doesn\'t match the bill'**
+  String get evbCopyOutOfSync;
+
+  /// No description provided for @evbApplyBill.
+  ///
+  /// In en, this message translates to:
+  /// **'Update to match'**
+  String get evbApplyBill;
+
+  /// No description provided for @debtBillsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bills in this debt'**
+  String get debtBillsTitle;
+
+  /// No description provided for @debtBillSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'Split bill'**
+  String get debtBillSplit;
+
+  /// No description provided for @debtBillOutOfSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Out of sync'**
+  String get debtBillOutOfSync;
+
+  /// No description provided for @evbJoinTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Join which bill'**
+  String get evbJoinTitle;
+
+  /// No description provided for @evbJoinPaidBy.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} paid'**
+  String evbJoinPaidBy(String name);
+
+  /// No description provided for @evbJoined.
+  ///
+  /// In en, this message translates to:
+  /// **'Joined the bill'**
+  String get evbJoined;
+
+  /// No description provided for @evbSettlePairs.
+  ///
+  /// In en, this message translates to:
+  /// **'Real pairs'**
+  String get evbSettlePairs;
+
+  /// No description provided for @evbSettleSimplified.
+  ///
+  /// In en, this message translates to:
+  /// **'Fewest transfers'**
+  String get evbSettleSimplified;
+
+  /// No description provided for @evbSettleBook.
+  ///
+  /// In en, this message translates to:
+  /// **'Into my book'**
+  String get evbSettleBook;
+
+  /// No description provided for @evbSettleBookTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Book it into my book once?'**
+  String get evbSettleBookTitle;
+
+  /// No description provided for @evbSettleBookBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The money that moves becomes entries, the bill debts you already booked are cleared to zero, and real pairs can\'t be booked any more.'**
+  String get evbSettleBookBody;
+
+  /// No description provided for @evbSettleBooked.
+  ///
+  /// In en, this message translates to:
+  /// **'Booked into my book'**
+  String get evbSettleBooked;
+
+  /// No description provided for @evbSettleBookedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Booked into my book on {date}'**
+  String evbSettleBookedOn(String date);
+
+  /// No description provided for @evbSettleAlreadyBooked.
+  ///
+  /// In en, this message translates to:
+  /// **'Already booked'**
+  String get evbSettleAlreadyBooked;
+
+  /// No description provided for @evbBookLinePay.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay {name} {amount}'**
+  String evbBookLinePay(String name, String amount);
+
+  /// No description provided for @evbBookLineGet.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive from {name} {amount}'**
+  String evbBookLineGet(String name, String amount);
+
+  /// No description provided for @occurrenceNothingOwed.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is owed with this person now'**
+  String get occurrenceNothingOwed;
+
+  /// No description provided for @recurringPausedNoBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused: nothing owed for 3 rounds | it starts again by itself with a new debt with this person'**
+  String get recurringPausedNoBalance;
+
+  /// No description provided for @recurringNoBalanceChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing owed'**
+  String get recurringNoBalanceChip;
+
+  /// No description provided for @debtsPersonAddRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'Make it recurring'**
+  String get debtsPersonAddRecurring;
+
+  /// No description provided for @occurrenceDebtPickEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No entries with this person to link'**
+  String get occurrenceDebtPickEmpty;
+
+  /// No description provided for @debtFromEventLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'From event bills'**
+  String get debtFromEventLabel;
+
+  /// No description provided for @debtFromEventPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick bills'**
+  String get debtFromEventPick;
+
+  /// No description provided for @txJoinBill.
+  ///
+  /// In en, this message translates to:
+  /// **'Join a bill in an event'**
+  String get txJoinBill;
+
+  /// No description provided for @settingsAcceptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-accept new bills'**
+  String get settingsAcceptTitle;
+
+  /// No description provided for @settingsAcceptLegend.
+  ///
+  /// In en, this message translates to:
+  /// **'On = a new bill with my share goes into my book at once\nOff = a notification asks me to \"Add to my book\"'**
+  String get settingsAcceptLegend;
+
+  /// No description provided for @settingsAcceptEventsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'New bills in events I have a part in'**
+  String get settingsAcceptEventsHint;
+
+  /// No description provided for @settingsAcceptDebtsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'New split bills from linked people'**
+  String get settingsAcceptDebtsHint;
+
+  /// No description provided for @settingsAcceptShortHint.
+  ///
+  /// In en, this message translates to:
+  /// **'New bills go into my book at once'**
+  String get settingsAcceptShortHint;
+
+  /// No description provided for @settingsSyncShortHint.
+  ///
+  /// In en, this message translates to:
+  /// **'When someone edits a bill, mine changes at once'**
+  String get settingsSyncShortHint;
+
+  /// No description provided for @eventDeleteKeepsBills.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the event goes. Its bills stay as split bills, everyone stays connected, and nothing in anyone\'s book is deleted.'**
+  String get eventDeleteKeepsBills;
+
+  /// No description provided for @eventDeleteKeepsBillsShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Its bills stay, as split bills'**
+  String get eventDeleteKeepsBillsShort;
+
+  /// No description provided for @evbPayersLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid by'**
+  String get evbPayersLabel;
+
+  /// No description provided for @evbPayers.
+  ///
+  /// In en, this message translates to:
+  /// **'Payers | {count}'**
+  String evbPayers(int count);
+
+  /// No description provided for @evbAddPayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a payer'**
+  String get evbAddPayer;
+
+  /// No description provided for @evbPayersLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid by {payers}'**
+  String evbPayersLine(String payers);
 }
 
 class _AppLocalizationsDelegate

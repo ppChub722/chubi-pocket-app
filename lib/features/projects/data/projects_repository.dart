@@ -2,9 +2,10 @@ import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
-import '../../transactions/domain/refs.dart';
 import '../../transactions/domain/transaction.dart';
 import '../../notifications/domain/notification.dart' show InboxSummary;
+import '../domain/event_bill.dart';
+import '../domain/claim.dart';
 import '../domain/project.dart';
 import '../../../ui/ui.dart';
 
@@ -26,6 +27,26 @@ class QuickCreateResult {
   final Map<String, double> accountBalances;
 
   final EventPatch? patch;
+}
+
+/// The part of `EventBillApplyResult.my_copy` a notification / tx detail
+/// needs (BE: POST /event-bills/{pt_id}/apply and /disconnect).
+class MyBillCopyRef {
+  const MyBillCopyRef({this.transactionId, this.connected = false});
+
+  factory MyBillCopyRef.fromJson(Map<String, dynamic> json) {
+    final copy = json['my_copy'];
+    if (copy is! Map<String, dynamic>) return const MyBillCopyRef();
+    final tx = copy['transaction'];
+    return MyBillCopyRef(
+      transactionId: tx is Map<String, dynamic> ? tx['id'] as String? : null,
+      connected: copy['connected'] == true,
+    );
+  }
+
+  /// My copy transaction; null = none (no part in the bill / disconnected).
+  final String? transactionId;
+  final bool connected;
 }
 
 class EventTagWrite {
@@ -95,20 +116,14 @@ class ProjectsRepository {
     return Project.fromJson(res.data!);
   });
 
-  Future<ProjectDetail> detail(
-    String id, {
-    int perPage = 50,
-    bool deletePreview = false,
-  }) => _call(() async {
-    final res = await _client.dio.get<Map<String, dynamic>>(
-      '/projects/$id/detail',
-      queryParameters: <String, dynamic>{
-        'per_page': perPage.toString(),
-        if (deletePreview) 'include': 'delete_preview',
-      },
-    );
-    return ProjectDetail.fromJson(res.data!);
-  });
+  Future<ProjectDetail> detail(String id, {int perPage = 50}) =>
+      _call(() async {
+        final res = await _client.dio.get<Map<String, dynamic>>(
+          '/projects/$id/detail',
+          queryParameters: <String, dynamic>{'per_page': perPage.toString()},
+        );
+        return ProjectDetail.fromJson(res.data!);
+      });
 
   Future<ProjectDetail> create({
     required String name,
@@ -176,83 +191,16 @@ class ProjectsRepository {
     ),
   );
 
-  /// [people] = the bill's `payer` + `members` (B2, beside new_transaction).
-  Future<QuickCreateResult> quickCreate({
-    required String name,
-    Map<String, dynamic>? newTransaction,
-    List<String> transactionIds = const [],
-    bool move = false,
-    Map<String, dynamic>? people,
-  }) => _call(() async {
-    final res = await _client.dio.post<Map<String, dynamic>>(
-      '/projects/quick',
-      data: <String, dynamic>{
-        'name': name,
-        'new_transaction': ?newTransaction,
-        ...?people,
-        if (transactionIds.isNotEmpty) 'transaction_ids': transactionIds,
-        if (move) 'move': true,
-      },
-    );
-    final detail = ProjectDetail.fromJson(
-      res.data!['detail'] as Map<String, dynamic>,
-    );
-    return QuickCreateResult(
-      project: detail.project,
-      linkedCount: detail.transactions.where((t) => t.isParent).length,
-      transactionId: res.data!['new_transaction_id'] as String?,
-      accountBalances: WalletBalance.mapOf(res.data!['account_balances']),
-    );
-  });
-
-  /// [people] = the bill's `payer` + `members` (B2, beside new_transaction).
-  Future<QuickCreateResult> addBills(
-    String projectId, {
-    Map<String, dynamic>? newTransaction,
-    List<String> transactionIds = const [],
-    bool move = false,
-    Map<String, dynamic>? people,
-  }) => _call(() async {
-    final res = await _client.dio.post<Map<String, dynamic>>(
-      '/projects/$projectId/bills',
-      data: <String, dynamic>{
-        'new_transaction': ?newTransaction,
-        ...?people,
-        if (transactionIds.isNotEmpty) 'transaction_ids': transactionIds,
-        if (move) 'move': true,
-      },
-    );
-    final patch = EventPatch.fromJson(res.data!);
-    return QuickCreateResult(
-      project: patch.project,
-      linkedCount: EventPatch.rowsOf(res.data!).where((t) => t.isParent).length,
-      transactionId: res.data!['new_transaction_id'] as String?,
-      accountBalances: patch.accountBalances,
-      patch: patch,
-    );
-  });
-
-  Future<void> removeBill(String projectId, String transactionId) =>
-      _call(() async {
-        await _client.dio.delete<dynamic>(
-          '/projects/$projectId/bills/$transactionId',
-        );
-      });
-
-  Future<Map<String, double>> delete(
-    String id, {
-    bool deleteLinkedTxs = false,
-  }) => _call(() async {
-    final res = await _client.dio.delete<dynamic>(
-      '/projects/$id',
-      queryParameters: <String, dynamic>{
-        if (deleteLinkedTxs) 'delete_linked_txs': 'true',
-      },
-    );
+  /// Deletes the event only (owner 2026-10-28): its bills stay as standalone
+  /// split bills, every copy still connected; nobody's book loses a record.
+  /// Answers how many bills became split bills; my re-pointed rows ride
+  /// `effects`.
+  Future<int> delete(String id) => _call(() async {
+    final res = await _client.dio.delete<dynamic>('/projects/$id');
     final body = res.data;
     return body is Map<String, dynamic>
-        ? WalletBalance.mapOf(body['account_balances'])
-        : const <String, double>{};
+        ? (body['split_bill_count'] as num?)?.toInt() ?? 0
+        : 0;
   });
 
   Future<InboxSummary> acceptInvite(String notificationId) => _call(() async {
@@ -330,6 +278,21 @@ class ProjectsRepository {
     ),
   );
 
+  /// V15: a removed member's empty spots go to [to] (a BillPerson: `me`,
+  /// `member_id`, `contact_id` or `person_name`); [billIds] empty = every
+  /// bill of theirs. Totals never change.
+  Future<EventPatch> assignRemovedMember(
+    String projectId,
+    String memberId, {
+    required Map<String, dynamic> to,
+    List<String> billIds = const [],
+  }) => _patch(
+    _client.dio.post<Map<String, dynamic>>(
+      '/projects/$projectId/members/$memberId/assign',
+      data: {'to': to, if (billIds.isNotEmpty) 'bill_ids': billIds},
+    ),
+  );
+
   Future<List<ProjectTransaction>> listTransactions(
     String projectId, {
     int page = 1,
@@ -360,41 +323,15 @@ class ProjectsRepository {
     ];
   });
 
-  Future<EventPatch> createTransaction(
-    String projectId, {
-    required String transactionMemberId,
-    required String type,
-    required double amount,
-    required String date,
-    String? currency,
-    String? description,
-    String? note,
-    List<String> tags = const [],
-    List<String> tagIds = const [],
-    List<ProjectSplitInput> splits = const [],
-  }) => _patch(
-    _client.dio.post<Map<String, dynamic>>(
-      '/projects/$projectId/project-transactions',
-      data: <String, dynamic>{
-        'transaction_member_id': transactionMemberId,
-        'type': type,
-        'amount': amount,
-        'date': date,
-        'description': ?description,
-        'note': ?note,
-        if (tagIds.isNotEmpty) 'tag_ids': tagIds,
-        if (splits.isNotEmpty) 'splits': splits.map((s) => s.toJson()).toList(),
-      },
-    ),
-  );
-
   /// "ลงบัญชีของฉัน" in ONE call and ONE DB transaction (0.4.1-1 E8): the
   /// new bill or payback ([bill], an EventBillInput json), the payback rows
   /// of the people marked "คืนแล้ว" and my book ([myBooks], EventBillBooks).
-  /// [projectId] = an existing event, else [newEvent] (`{name, icon_code}`).
+  /// [projectId] = an existing event, else [newEvent] (`{name, icon_code}`),
+  /// else [split] = a split bill (0.4.1-2: no event, its people its members).
   Future<EventBillBookResult> bookEventBill({
     String? projectId,
     Map<String, dynamic>? newEvent,
+    bool split = false,
     required Map<String, dynamic> bill,
     required Map<String, dynamic> myBooks,
   }) => _call(() async {
@@ -403,6 +340,7 @@ class ProjectsRepository {
       data: <String, dynamic>{
         'project_id': ?projectId,
         'new_event': ?newEvent,
+        if (split) 'split': true,
         'bill': bill,
         'my_books': myBooks,
       },
@@ -411,22 +349,50 @@ class ProjectsRepository {
   });
 
   /// [bookEventBill] on an existing bill ([ptId], its parent row): [bill]
-  /// null = my book only ("ลงบัญชี" on a bill someone else recorded).
+  /// null = my book only ("ลงบัญชี" on a bill someone else recorded). My
+  /// copy always follows the bill I save (0.4.1-2). [expectedUpdatedAt] =
+  /// EventBillView.updatedAt (409 BILL_CHANGED when it moved on); [move] =
+  /// EventBillMove (`{project_id}` / `{new_event}` / `{split: true}`).
   Future<EventBillBookResult> rebookEventBill(
     String ptId, {
     Map<String, dynamic>? bill,
     required Map<String, dynamic> myBooks,
-    bool applyToMyTx = false,
+    String? expectedUpdatedAt,
+    Map<String, dynamic>? move,
   }) => _call(() async {
     final res = await _client.dio.put<Map<String, dynamic>>(
       '/event-bills/$ptId',
       data: <String, dynamic>{
         'bill': ?bill,
         'my_books': myBooks,
-        if (applyToMyTx) 'apply_to_my_tx': true,
+        'expected_updated_at': ?expectedUpdatedAt,
+        'move': ?move,
       },
     );
     return EventBillBookResult.fromJson(res.data!);
+  });
+
+  /// 0.4.1-2 SA2: one shared bill, page-ready for the bill form, from
+  /// anywhere (a child row's id answers its bill).
+  Future<EventBillView> getEventBill(String ptId) => _call(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>(
+      '/event-bills/$ptId',
+    );
+    return EventBillView.fromJson(res.data!);
+  });
+
+  /// The bill form's ลบ: a split bill is gone for everyone (the others keep
+  /// plain copies); an event bill by each member's switch. [keepMyTx] = my
+  /// copy tx and debts stay as plain records.
+  Future<EventBillDeleteResult> deleteEventBill(
+    String ptId, {
+    bool keepMyTx = false,
+  }) => _call(() async {
+    final res = await _client.dio.delete<Map<String, dynamic>>(
+      '/event-bills/$ptId',
+      queryParameters: {if (keepMyTx) 'keep_my_tx': 'true'},
+    );
+    return EventBillDeleteResult.fromJson(res.data!);
   });
 
   /// The bill sheet's before → after lines: the same body with
@@ -434,11 +400,13 @@ class ProjectsRepository {
   Future<EventBillBookPreview> previewEventBill({
     String? ptId,
     String? projectId,
+    bool split = false,
     Map<String, dynamic>? bill,
     required Map<String, dynamic> myBooks,
   }) => _call(() async {
     final body = <String, dynamic>{
       if (ptId == null) 'project_id': ?projectId,
+      if (ptId == null && split) 'split': true,
       'bill': ?bill,
       'my_books': myBooks,
     };
@@ -475,28 +443,6 @@ class ProjectsRepository {
     );
   });
 
-  /// "ลงบัญชีของฉัน" on an existing row: [unlink] keeps my rows in my books
-  /// without the link; [link] takes the remembered ones back. `relinked` =
-  /// the kinds of [link] that found any (the rest are for the caller to make).
-  Future<({List<String> relinked, EventPatch patch})> setMyBooks(
-    String projectId,
-    String ptId, {
-    List<String> link = const [],
-    List<String> unlink = const [],
-  }) => _call(() async {
-    final res = await _client.dio.put<Map<String, dynamic>>(
-      '/projects/$projectId/project-transactions/$ptId/my-books',
-      data: <String, dynamic>{'link': link, 'unlink': unlink},
-    );
-    return (
-      relinked: [
-        for (final k in (res.data!['relinked'] as List? ?? const []))
-          k as String,
-      ],
-      patch: EventPatch.fromJson(res.data!),
-    );
-  });
-
   Future<EventSettle> settle(String projectId) => _call(() async {
     final res = await _client.dio.get<Map<String, dynamic>>(
       '/projects/$projectId/settle',
@@ -504,59 +450,80 @@ class ProjectsRepository {
     return EventSettle.fromJson(res.data!);
   });
 
-  /// [transactionMemberId]: paybacks only (who paid back).
-  Future<EventPatch> updateTransaction(
-    String projectId,
-    String ptId, {
-    String? transactionMemberId,
-    double? amount,
-    String? date,
-    String? description,
-    String? note,
-    List<String>? tags,
-    List<String>? tagIds,
-    List<ProjectSplitInput>? splits,
-    bool alsoUpdateLink = false,
-  }) => _patch(
-    _client.dio.put<Map<String, dynamic>>(
-      '/projects/$projectId/project-transactions/$ptId',
-      data: <String, dynamic>{
-        'transaction_member_id': ?transactionMemberId,
-        'amount': ?amount,
-        'date': ?date,
-        'description': ?description,
-        'note': ?note,
-        'tag_ids': ?tagIds,
-        if (splits != null) 'splits': splits.map((s) => s.toJson()).toList(),
-        if (alsoUpdateLink) 'also_update_link': true,
+  /// V12 "ลงในสมุดฉัน" on a completed event: my fewest-transfers lines,
+  /// once ([lines]: member_id + account_id / category_id each); answers
+  /// the settle (booked), the rest rides `effects`.
+  Future<EventSettle> bookEventSettle(
+    String projectId, {
+    required List<Map<String, dynamic>> lines,
+  }) => _call(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/projects/$projectId/settle/book',
+      data: {'lines': lines},
+    );
+    final settle = res.data!['settle'];
+    return EventSettle.fromJson(
+      settle is Map<String, dynamic> ? settle : const {},
+    );
+  });
+
+  /// My real pairs per bill, for a claim. One person by [memberId], or by
+  /// my [contactId] / a typed [personName] (the server finds the member);
+  /// none = everyone.
+  Future<List<ClaimableBill>> claimable(
+    String projectId, {
+    String? memberId,
+    String? contactId,
+    String? personName,
+  }) => _call(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>(
+      '/projects/$projectId/claimable',
+      queryParameters: {
+        'member_id': ?memberId,
+        'contact_id': ?contactId,
+        'person_name': ?personName,
       },
-    ),
-  );
+    );
+    return ClaimableBill.listOf(res.data!);
+  });
 
-  Future<EventPatch> deleteTransaction(String projectId, String ptId) => _patch(
-    _client.dio.delete<Map<String, dynamic>>(
-      '/projects/$projectId/project-transactions/$ptId',
-    ),
-  );
+  /// "ลงสมุดของฉัน": the picked bills with one person become ONE debt (a
+  /// lump; debt-type bills a row each) + my "จ่ายโดย X" copies, in one DB
+  /// transaction. [linkTransactionId] = my existing tx as the copy of the one
+  /// bill (the tx form's join).
+  Future<ClaimResult> claimBills(
+    String projectId, {
+    required String memberId,
+    required List<String> billIds,
+    String? linkTransactionId,
+  }) => _call(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/projects/$projectId/claim',
+      data: {
+        'member_id': memberId,
+        'bill_ids': billIds,
+        'link_transaction_id': ?linkTransactionId,
+      },
+    );
+    return ClaimResult.fromJson(res.data!);
+  });
 
-  Future<String> copyToPersonal(String projectId, String ptId) =>
-      _call(() async {
-        final res = await _client.dio.post<Map<String, dynamic>>(
-          '/projects/$projectId/project-transactions/$ptId/copy',
-        );
-        final tx = res.data!['transaction'];
-        return tx is Map<String, dynamic>
-            ? tx['id'] as String
-            : res.data!['transaction_id'] as String;
-      });
+  /// "อัปเดตตาม" / "เพิ่มในสมุด": my copy takes the bill as it is now (made
+  /// when I have none). The rest of what changed rides `effects`.
+  Future<MyBillCopyRef> applyEventBill(String ptId) => _call(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/event-bills/$ptId/apply',
+    );
+    return MyBillCopyRef.fromJson(res.data!);
+  });
 
-  Future<EventPatch> toggleMark(String projectId, String ptId, bool marked) =>
-      _patch(
-        _client.dio.put<Map<String, dynamic>>(
-          '/projects/$projectId/project-transactions/$ptId/mark',
-          data: <String, dynamic>{'marked': marked},
-        ),
-      );
+  /// ตัดการเชื่อม: my copy tx + debts become plain; the bill is unchanged.
+  Future<MyBillCopyRef> disconnectEventBill(String ptId) => _call(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/event-bills/$ptId/disconnect',
+    );
+    return MyBillCopyRef.fromJson(res.data!);
+  });
 
   Future<List<BoardTag>> eventTags(String projectId) => _call(() async {
     final res = await _client.dio.get<Map<String, dynamic>>(
@@ -567,10 +534,6 @@ class ProjectsRepository {
         BoardTag.fromJson(t as Map<String, dynamic>),
     ];
   });
-
-  Future<List<String>> listTags(String projectId) async => [
-    for (final t in await eventTags(projectId)) t.name,
-  ];
 
   Future<BoardTag> createEventTag(
     String projectId,
@@ -615,6 +578,10 @@ class ProjectsRepository {
 
   Future<EventPatch> restore(String id) =>
       _patch(_client.dio.post<Map<String, dynamic>>('/projects/$id/restore'));
+
+  /// ปิดอีเวนต์ (owner only, for good): locked, every book unsynced.
+  Future<EventPatch> complete(String id) =>
+      _patch(_client.dio.post<Map<String, dynamic>>('/projects/$id/complete'));
 
   /// Copies event tags into MY personal set ([tagIds] empty = every one I don't
   /// have yet).

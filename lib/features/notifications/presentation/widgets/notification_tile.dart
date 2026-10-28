@@ -37,20 +37,21 @@ class NotificationTile extends StatelessWidget {
       notification.type == NotificationType.recurringEnding ||
       notification.type == NotificationType.recurringAutoCreated;
 
+  // Old split_created / split_changed rows: info only (their calls are gone).
   bool get _hasAction => switch (notification.type) {
-    NotificationType.splitCreated ||
-    NotificationType.splitChanged ||
     NotificationType.projectTxRecordedForYou ||
     NotificationType.projectTxChanged ||
+    NotificationType.sharedBillCreated ||
+    NotificationType.sharedBillDeleted ||
     NotificationType.recurringEnding => true,
     _ => false,
   };
 
   String _actionLabel(AppLocalizations l) => switch (notification.type) {
-    NotificationType.splitCreated => l.notifActionAddDebt,
     NotificationType.projectTxRecordedForYou => l.notifActionCopyToBook,
+    NotificationType.sharedBillCreated => l.notifActionAddToBook,
+    NotificationType.sharedBillDeleted => l.notifActionRemoveMine,
     NotificationType.projectTxChanged => l.notifActionUpdateCopy,
-    NotificationType.splitChanged => l.notifActionUpdateCopy,
     NotificationType.recurringEnding => l.notifActionExtend,
     NotificationType.recurringDue => l.notifActionOpenDue,
     _ => l.notificationAccept,
@@ -85,6 +86,7 @@ class NotificationTile extends StatelessWidget {
       rejectLabel: switch (n.type) {
         NotificationType.recurringDue => null,
         NotificationType.recurringEnding => l.notifActionLetEnd,
+        NotificationType.sharedBillDeleted => l.notifActionKeepMine,
         _ => _isRequest ? l.notificationReject : l.notifActionSkip,
       },
       rejectConfirm: _isRequest
@@ -104,7 +106,9 @@ class NotificationTile extends StatelessWidget {
       n.awaitsAnswer || (n.type == NotificationType.recurringDue && n.isUnread);
 
   String? _amount(BuildContext context) {
-    final a = notification.payload['amount'];
+    // A shared bill shows my part of it (what my copy holds).
+    final a =
+        notification.payload['my_amount'] ?? notification.payload['amount'];
     if (a is! num) return null;
     return moneyString(context, a, symbol: context.readUserCurrencySymbol);
   }
@@ -112,11 +116,16 @@ class NotificationTile extends StatelessWidget {
   static IconData _iconFor(NotificationType t) => switch (t) {
     NotificationType.splitCreated ||
     NotificationType.splitChanged => AppIcons.split,
-    NotificationType.debtDisconnected => AppIcons.link,
+    NotificationType.debtDisconnected ||
+    NotificationType.sharedBillDisconnected => AppIcons.link,
+    NotificationType.sharedBillCreated ||
+    NotificationType.sharedBillDeleted => AppIcons.receipt,
     NotificationType.projectTxRecordedForYou ||
     NotificationType.projectTxChanged ||
     NotificationType.projectInvite ||
-    NotificationType.projectAdded => AppIcons.project,
+    NotificationType.projectAdded ||
+    NotificationType.eventCompleted ||
+    NotificationType.eventMemberRemoved => AppIcons.project,
     NotificationType.contactLinkRequest => AppIcons.link,
     NotificationType.accountInvite => AppIcons.bank,
     NotificationType.recurringDue ||
@@ -159,8 +168,34 @@ class NotificationTile extends StatelessWidget {
     NotificationType.recurringAutoCreated => l.notifRecurringAutoCreated(
       (n.payload['count'] as num?)?.toInt() ?? 1,
     ),
+    NotificationType.sharedBillCreated => l.notifSharedBillCreated(
+      actor,
+      _billName(n),
+    ),
+    NotificationType.sharedBillDeleted => l.notifSharedBillDeleted(
+      actor,
+      _billName(n),
+    ),
+    NotificationType.sharedBillDisconnected => l.notifSharedBillDisconnected(
+      (n.payload['person_name'] as String?) ?? actor,
+      _billName(n),
+    ),
+    NotificationType.eventCompleted => l.notifEventCompleted(
+      n.actor?.displayName ?? (n.payload['owner_name'] as String?) ?? actor,
+      (n.payload['project_name'] as String?) ?? '',
+    ),
+    NotificationType.eventMemberRemoved => l.notifEventMemberRemoved(
+      actor,
+      (n.payload['project_name'] as String?) ?? '',
+    ),
     NotificationType.unknown => l.notifUnknown,
   };
+
+  /// A bill in a title: its description, else its event's name.
+  static String _billName(AppNotification n) {
+    final d = (n.payload['description'] as String?)?.trim() ?? '';
+    return d.isNotEmpty ? d : (n.payload['project_name'] as String?) ?? '';
+  }
 }
 
 /// "ลี ตัดการเชื่อมหนี้ ฿300 แล้ว" (D9); a tap opens my entry (deep link).

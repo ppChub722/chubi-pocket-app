@@ -13,11 +13,10 @@ import '../../accounts/presentation/wallet_errors.dart';
 import '../../contacts/data/contacts_repository.dart';
 import '../../contacts/domain/contact.dart';
 import '../../contacts/presentation/cubit/contacts_cubit.dart';
-import '../../personal_debts/data/personal_debts_repository.dart';
-import '../../personal_debts/presentation/debt_wiring.dart';
 import '../../projects/data/projects_repository.dart';
+import '../../projects/presentation/widgets/event_bill_sheet.dart'
+    show openEventBill;
 import '../../recurring/data/recurring_repository.dart';
-import '../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../domain/notification.dart';
 import 'cubit/notifications_inbox_cubit.dart';
 import 'notification_routes.dart';
@@ -53,6 +52,11 @@ abstract final class NotificationActions {
     if (n.isUnread) {
       ctx.read<NotificationsInboxCubit>().markRead(n.id);
     }
+    final bill = billOfLink(n);
+    if (bill != null) {
+      await openEventBill(ctx, bill);
+      return;
+    }
     final link = n.deepLink;
     if (link != null && link.isNotEmpty) {
       openPage(ctx, link);
@@ -62,10 +66,7 @@ abstract final class NotificationActions {
   static Future<void> accept(BuildContext ctx, AppNotification n) =>
       switch (acceptRouteOf(n.type)) {
         AcceptRoute.walletInvite => _onAcceptWalletInvite(ctx, n.id),
-        AcceptRoute.split => _onAcceptSplit(ctx, n.id),
-        AcceptRoute.copyToBook => _onCopyToBook(ctx, n),
-        AcceptRoute.updateCopy => _onUpdateCopy(ctx, n),
-        AcceptRoute.splitChange => _onApplySplitChange(ctx, n),
+        AcceptRoute.applyBill => _onApplyBill(ctx, n),
         AcceptRoute.projectInvite => _onAcceptProjectInvite(ctx, n),
         AcceptRoute.extendRecurring => _onExtendRecurring(ctx, n),
         AcceptRoute.openDue => _onOpenDue(ctx, n),
@@ -108,44 +109,6 @@ Future<void> _onRejectLinkRequest(BuildContext ctx, String id) async {
     inboxCubit.applyAnswer((await repo.rejectLinkRequest(id)).answer);
   } on ApiException catch (e) {
     _showError(messenger, e);
-  }
-}
-
-Future<void> _onAcceptSplit(BuildContext ctx, String id) async {
-  final repo = ctx.read<PersonalDebtsRepository>();
-  final inboxCubit = ctx.read<NotificationsInboxCubit>();
-  final messenger = ScaffoldMessenger.of(ctx);
-  try {
-    final result = await repo.acceptSplit(id);
-    await _reload(inboxCubit);
-    if (ctx.mounted) openPage(ctx, debtPersonPath(result.balance.key));
-  } on ApiException catch (e) {
-    _showError(messenger, e);
-  }
-}
-
-Future<void> _onApplySplitChange(BuildContext ctx, AppNotification n) async {
-  final l = AppLocalizations.of(ctx)!;
-  final repo = ctx.read<PersonalDebtsRepository>();
-  final inboxCubit = ctx.read<NotificationsInboxCubit>();
-  final messenger = ScaffoldMessenger.of(ctx);
-  try {
-    final result = await repo.applySplit(n.id);
-    await _reload(inboxCubit);
-    showAppSnackBarOn(
-      messenger,
-      result.deleted ? l.notifSplitChangeDeleted : l.notifSplitChangeUpdated,
-      tone: Tone.success,
-    );
-  } on ApiException catch (e) {
-    final known = switch (e.code) {
-      'NOTIFICATION_ACTIONED' => l.notifSplitChangeUsed,
-      'SPLIT_CHANGE_STALE' => l.notifSplitChangeStale,
-      _ when e.statusCode == 404 => l.notifSplitChangeGone,
-      _ => null,
-    };
-    if (known != null) unawaited(_reload(inboxCubit));
-    showAppSnackBarOn(messenger, known ?? e.message, tone: Tone.danger);
   }
 }
 
@@ -222,46 +185,40 @@ Future<void> _onOpenDue(BuildContext ctx, AppNotification n) async {
   openPage(ctx, link == null || link.isEmpty ? '/recurring?focus=due' : link);
 }
 
-Future<void> _onCopyToBook(BuildContext ctx, AppNotification n) async {
-  final projectId = n.payload['project_id'] as String?;
+/// "เพิ่มในสมุด" / "อัปเดตตาม" / "ลบตาม": ONE call, my copy takes the bill as
+/// it is now (the BE marks my notices about it answered; what else changed
+/// rides `effects`). A new copy opens so its category / wallet get picked.
+Future<void> _onApplyBill(BuildContext ctx, AppNotification n) async {
   final ptId = n.payload['project_transaction_id'] as String?;
-  if (projectId == null || ptId == null) return;
-  final inboxCubit = ctx.read<NotificationsInboxCubit>();
-  final messenger = ScaffoldMessenger.of(ctx);
-  try {
-    final txId = await ctx.read<ProjectsRepository>().copyToPersonal(
-      projectId,
-      ptId,
-    );
-    await inboxCubit.markActioned(n.id);
-    if (ctx.mounted) openPage(ctx, '/transactions/$txId');
-  } on ApiException catch (e) {
-    _showError(messenger, e);
-  }
-}
-
-Future<void> _onUpdateCopy(BuildContext ctx, AppNotification n) async {
-  final txId = n.payload['personal_transaction_id'] as String?;
-  final s = n.payload['suggested'];
-  if (txId == null || s is! Map) return;
+  if (ptId == null) return;
   final l = AppLocalizations.of(ctx)!;
   final inboxCubit = ctx.read<NotificationsInboxCubit>();
-  final accountsCubit = ctx.read<AccountsCubit>();
   final messenger = ScaffoldMessenger.of(ctx);
   try {
-    final result = await ctx.read<TransactionsCubit>().updateTransaction(
-      id: txId,
-      amount: (s['amount'] as num?)?.toDouble(),
-      date: s['date'] as String?,
-      description: s['description'] as String?,
-      note: s['note'] as String?,
-      alsoUpdateLink: false,
-    );
-    await inboxCubit.markActioned(n.id);
-    accountsCubit.patchBalances(result.accountBalances);
-    showAppSnackBarOn(messenger, l.notifCopyUpdated, tone: Tone.success);
+    final copy = await ctx.read<ProjectsRepository>().applyEventBill(ptId);
+    await _reload(inboxCubit);
+    final txId = copy.transactionId;
+    switch (n.type) {
+      case NotificationType.sharedBillDeleted:
+        showAppSnackBarOn(
+          messenger,
+          l.notifBillRemovedMine,
+          tone: Tone.success,
+        );
+      case NotificationType.projectTxChanged:
+        showAppSnackBarOn(messenger, l.notifCopyUpdated, tone: Tone.success);
+      default:
+        if (txId != null && ctx.mounted) openPage(ctx, '/transactions/$txId');
+    }
   } on ApiException catch (e) {
-    _showError(messenger, e);
+    final gone = e.code == 'BILL_GONE';
+    if (gone) await _reload(inboxCubit);
+    showAppSnackBarOn(messenger, switch (e.code) {
+      'BILL_GONE' => l.notifBillGone,
+      'BILL_DISCONNECTED' => l.notifBillDisconnectedMine,
+      'PROJECT_LOCKED' => l.eventErrCompleted,
+      _ => e.message,
+    }, tone: Tone.danger);
   }
 }
 

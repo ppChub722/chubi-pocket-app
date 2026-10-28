@@ -74,7 +74,6 @@ class IdentifierRow extends StatelessWidget {
   const IdentifierRow({
     required this.identifier,
     required this.providers,
-    this.hidden = false,
     this.onTap,
     this.onDelete,
     super.key,
@@ -82,7 +81,6 @@ class IdentifierRow extends StatelessWidget {
 
   final AccountIdentifier identifier;
   final List<PaymentProvider> providers;
-  final bool hidden;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
 
@@ -93,9 +91,7 @@ class IdentifierRow extends StatelessWidget {
       leading: _mark(context, identifier, providers),
       title: _kindLine(context, identifier, providers),
       onTap: onTap,
-      trailing: ListRowTrailing.value(
-        Text(hidden ? identifier.masked : identifier.formatted),
-      ),
+      trailing: ListRowTrailing.value(Text(identifier.formatted)),
       actions: [
         if (onDelete != null)
           ListRowAction.icon(
@@ -323,7 +319,5 @@ class IdentifiersVisibility extends StatelessWidget {
   final bool show;
 
   @override
-  Widget build(BuildContext context) => show && kMoneyPrivacyEnabled
-      ? const MoneyVisibilityToggle()
-      : const SizedBox(height: 40);
+  Widget build(BuildContext context) => const SizedBox(height: 40);
 }

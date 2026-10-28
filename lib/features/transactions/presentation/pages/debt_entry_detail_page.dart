@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/tab_nav.dart';
+import '../../../projects/presentation/widgets/event_bill_sheet.dart'
+    show openEventBill;
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -1082,6 +1084,34 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                                       : '/transactions/${source.id}',
                                 ),
                         ),
+                      ],
+                    ),
+                  // V7: a lump ("claim ก้อน") lists its bills; one bill shows
+                  // in the "มาจาก" card already. A row opens the bill form.
+                  if (e.bills.length > 1 && !editing)
+                    (first) => SectionCard(
+                      first: first,
+                      title: l.debtBillsTitle,
+                      children: [
+                        for (final b in e.bills)
+                          AppListRow(
+                            key: ValueKey('debtBill:${b.ptId}'),
+                            leading: const AppIcon(AppIcons.receipt),
+                            title: b.description ?? b.event.name,
+                            line2: ListRowLine(
+                              parts: [
+                                b.event.isSplit
+                                    ? l.debtBillSplit
+                                    : b.event.name,
+                              ],
+                            ),
+                            trailing: ListRowTrailing.value(
+                              MoneyText(b.amount, symbol: symbol),
+                              caption: b.inSync ? null : l.debtBillOutOfSync,
+                              captionTone: Tone.warning,
+                            ),
+                            onTap: () => openEventBill(context, b.ptId),
+                          ),
                       ],
                     ),
                 ],

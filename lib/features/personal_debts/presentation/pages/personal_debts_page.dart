@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -8,6 +10,8 @@ import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
+import '../../../auth/domain/user.dart';
+import '../../../preferences/page_prefs.dart';
 import '../../domain/debt_directory.dart';
 import '../cubit/debt_directory_cubit.dart';
 import '../../domain/debt_ledger.dart';
@@ -24,9 +28,21 @@ class PersonalDebtsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (context) =>
-        DebtPeopleCubit(directory: context.read<DebtDirectoryCubit>())..start(),
+        DebtPeopleCubit(directory: context.read<DebtDirectoryCubit>())
+          ..setFilter(_rememberedFilter(context))
+          ..start(),
     child: const _PeopleView(),
   );
+
+  /// The filter chip remembered on the account (default ทั้งหมด).
+  static DebtListFilter _rememberedFilter(BuildContext context) {
+    final pref = readPagePref(context, PagePrefIds.debts);
+    final field = pagePrefPage(
+      PagePrefIds.debts,
+    ).fields.firstWhere((f) => f.key == 'filter');
+    return DebtListFilter.values.asNameMap()[field.pick(pref)] ??
+        DebtListFilter.all;
+  }
 }
 
 class _PeopleView extends StatefulWidget {
@@ -272,7 +288,14 @@ class _PeopleViewState extends State<_PeopleView> {
                 count: count(f),
                 tone: tone,
                 selected: s.filter == f,
-                onTap: () => cubit.setFilter(f),
+                onTap: () {
+                  cubit.setFilter(f);
+                  unawaited(
+                    rememberPagePref(context, PagePrefIds.debts, {
+                      'filter': f.name,
+                    }),
+                  );
+                },
               ),
           ],
         ),

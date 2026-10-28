@@ -18,11 +18,17 @@ import '../../../categories/presentation/widgets/category_picker.dart';
 import '../../../contacts/domain/contact.dart';
 import '../../../contacts/presentation/widgets/contact_picker.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
-import '../../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
-import '../../../tags/presentation/widgets/tag_picker.dart' show askNewTagName;
+import '../../../tags/domain/tag.dart';
+import '../../../tags/presentation/widgets/tag_picker.dart'
+    show TagPicker, askNewTagName;
 import '../../../transactions/domain/transaction_type.dart';
 import '../../../transactions/presentation/widgets/category_pick_card.dart';
+import '../../../transactions/presentation/widgets/event_pick.dart';
+import '../../../transactions/presentation/widgets/event_picker.dart';
+import '../../../transactions/presentation/widgets/pick_chip_rows.dart'
+    show TagChipRow;
 import '../../data/projects_repository.dart';
+import '../../domain/event_bill.dart';
 import '../../domain/project.dart';
 import '../event_errors.dart';
 import 'member_picker.dart';
@@ -49,6 +55,45 @@ Future<bool> showEventBillSheet(
   ValueChanged<EventPatch>? onPatch,
   bool booksOnly = false,
 }) async {
+  // An existing bill opens from its own answer (my copy, rights, version):
+  // the same form as from anywhere else (SA2).
+  if (row != null) {
+    return openEventBill(
+      context,
+      row.parent.id,
+      onPatch: onPatch,
+      booksOnly: booksOnly,
+    );
+  }
+  return _showSheet(
+    context,
+    (_) => _EventBillSheet(
+      view: view,
+      kind: kind,
+      from: from,
+      to: to,
+      amount: amount,
+      onPatch: onPatch,
+    ),
+  );
+}
+
+/// 0.4.1-2 SA2 — THE bill form for an existing shared bill (event bill or
+/// split bill), opened from anywhere by its id ([ptId]; a split row's id
+/// answers its bill): ONE call (GET /event-bills/{pt_id}) on open. True =
+/// saved or deleted.
+Future<bool> openEventBill(
+  BuildContext context,
+  String ptId, {
+  ValueChanged<EventPatch>? onPatch,
+  bool booksOnly = false,
+}) => _showSheet(
+  context,
+  (_) =>
+      _EventBillLoadSheet(ptId: ptId, onPatch: onPatch, booksOnly: booksOnly),
+);
+
+Future<bool> _showSheet(BuildContext context, WidgetBuilder builder) async {
   context.read<AccountsCubit>().loadIfNeeded();
   context.read<CategoriesCubit>().loadIfNeeded();
   final saved = await showModalBottomSheet<bool>(
@@ -57,24 +102,110 @@ Future<bool> showEventBillSheet(
     useSafeArea: true,
     useRootNavigator: true,
     enableDrag: false,
-    builder: (_) => _EventBillSheet(
-      view: view,
-      row: row,
-      kind: row == null
-          ? kind
-          : (row.parent.isPayback
-                ? EventEntryKind.payback
-                : (row.parent.type == 'income'
-                      ? EventEntryKind.income
-                      : EventEntryKind.expense)),
-      from: from,
-      to: to,
-      amount: amount,
-      onPatch: onPatch,
-      booksOnly: booksOnly && row != null,
-    ),
+    builder: builder,
   );
   return saved ?? false;
+}
+
+EventEntryKind _kindOf(ProjectTransaction p) => p.isPayback
+    ? EventEntryKind.payback
+    : (p.type == 'income' ? EventEntryKind.income : EventEntryKind.expense);
+
+/// The board the form works on, built from the bill's own answer.
+ProjectView _viewOf(EventBillView b) => ProjectView(
+  project: Project(
+    id: b.event.id,
+    ownerUserId: '',
+    name: b.isSplit ? '' : b.event.name,
+    status: ProjectStatusWire.parse(b.event.status),
+    canAddBill: b.rights.canEdit,
+  ),
+  members: b.members,
+  txs: [b.tree.parent, ...b.tree.children],
+  summary: null,
+  currentUserId: null,
+  eventTags: b.tags,
+);
+
+/// Loads the bill, then shows the form: a skeleton on the first load, a
+/// full error + retry when it fails; 409 BILL_CHANGED swaps in the newer
+/// bill it carries.
+class _EventBillLoadSheet extends StatefulWidget {
+  const _EventBillLoadSheet({
+    required this.ptId,
+    this.onPatch,
+    this.booksOnly = false,
+  });
+
+  final String ptId;
+  final ValueChanged<EventPatch>? onPatch;
+  final bool booksOnly;
+
+  @override
+  State<_EventBillLoadSheet> createState() => _EventBillLoadSheetState();
+}
+
+class _EventBillLoadSheetState extends State<_EventBillLoadSheet> {
+  EventBillView? _bill;
+  Object? _error;
+
+  /// Bumped when a newer bill replaces the form (its typed state resets).
+  int _version = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _error = null);
+    try {
+      final b = await context.read<ProjectsRepository>().getEventBill(
+        widget.ptId,
+      );
+      if (mounted) setState(() => _bill = b);
+    } catch (e) {
+      if (mounted) setState(() => _error = e);
+    }
+  }
+
+  void _replace(EventBillView b) => setState(() {
+    _bill = b;
+    _version++;
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final b = _bill;
+    if (b == null) {
+      return QuickCreateSheetShell(
+        title: l.evbEditBill,
+        saveLabel: l.commonSave,
+        closeTooltip: UiConfig.stringsOf(context).close,
+        onCloseBlocked: () {},
+        body: _error != null
+            ? Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.xl),
+                child: ErrorView(error: _error!, onRetry: _load),
+              )
+            : const EntryCardSkeleton(),
+      );
+    }
+    final rows = b.tree;
+    return _EventBillSheet(
+      key: ValueKey(_version),
+      view: _viewOf(b),
+      row: rows,
+      bill: b,
+      kind: _kindOf(rows.parent),
+      onPatch: widget.onPatch,
+      onChanged: _replace,
+      // No right to edit the bill: my book only (as ⤓ ลงบัญชี).
+      booksOnly: widget.booksOnly || !b.rights.canEdit,
+    );
+  }
 }
 
 /// One person in the bill: an event member, or someone added in the sheet.
@@ -134,15 +265,24 @@ class _EventBillSheet extends StatefulWidget {
     required this.view,
     required this.kind,
     this.row,
+    this.bill,
+    this.onChanged,
     this.from,
     this.to,
     this.amount,
     this.onPatch,
     this.booksOnly = false,
+    super.key,
   });
 
   final ProjectView view;
   final ProjectTxTree? row;
+
+  /// The bill's own answer (an existing bill): rights, my copy, version.
+  final EventBillView? bill;
+
+  /// 409 BILL_CHANGED: the newer bill to show instead.
+  final ValueChanged<EventBillView>? onChanged;
   final EventEntryKind kind;
   final String? from;
   final String? to;
@@ -166,7 +306,32 @@ class _EventBillSheetState extends State<_EventBillSheet> {
   final _madeTags = <BoardTag>[];
 
   final _people = <_Person>[];
+
+  /// The (first) payer: pays what the other payers leave, and keeps the
+  /// "rest of the bill" share as before.
   String? _payerKey;
+
+  /// 0.4.1-2 multi-payer: the OTHER payers with what each paid (key →
+  /// amount); empty = one payer, today's look.
+  final _morePayers = <String, double>{};
+
+  bool get _multiPayer => _morePayers.isNotEmpty;
+
+  /// What the first payer paid: the bill minus the other payers.
+  double get _firstPaid =>
+      _total - _morePayers.values.fold<double>(0, (s, v) => s + v);
+
+  bool _isPayer(_Person p) =>
+      p.key == _payerKey || _morePayers.containsKey(p.key);
+
+  /// "ฝน" / "ฝน, ลี": every payer, for "จ่ายโดย …" / "คืน … แล้ว".
+  String get _payerNames => [for (final p in _payers) p.name].join(', ');
+
+  /// The payers, the first one first.
+  List<_Person> get _payers => [
+    ?_payer,
+    for (final k in _morePayers.keys) ?_person(k),
+  ];
 
   /// Shares the user typed (key → amount); everyone else splits the rest.
   final _typed = <String, double>{};
@@ -188,8 +353,25 @@ class _EventBillSheetState extends State<_EventBillSheet> {
   Category? _category;
   bool _saving = false;
 
+  /// My copy's own fields (SA3, never synced): my personal tags and my
+  /// private note.
+  final _myTagIds = <String>{};
+  final _knownTags = <String, Tag>{};
+  final _privateNote = TextEditingController();
+
+  /// S17 / SA9: where the bill moves on save (another event, a new one, or
+  /// out of its event into a split bill); null = it stays.
+  EventTarget? _moveTo;
+
   ProjectView get _view => widget.view;
   bool get _editing => widget.row != null;
+
+  /// A new bill picks its payer; an existing one when the BE allows it
+  /// (owner Q-B4, `rights.can_change_payer`; not on a payback).
+  bool get _canChangePayer =>
+      !_editing || (widget.bill?.rights.canChangePayer ?? false);
+
+  bool get _isSplit => widget.bill?.isSplit ?? false;
   bool get _payback => _kind == EventEntryKind.payback;
   bool get _booked => widget.row?.parent.myBooked ?? false;
   String? get _myKey => _view.me == null ? null : 'm:${_view.me!.id}';
@@ -205,8 +387,11 @@ class _EventBillSheetState extends State<_EventBillSheet> {
   }
 
   _Person? get _payer => _person(_payerKey);
-  bool get _iPaid => _payer?.isMe ?? false;
-  bool get _meInBill => _people.any((p) => p.isMe);
+
+  /// I'm among the payers (all or part of the bill).
+  bool get _iPaid =>
+      (_payer?.isMe ?? false) ||
+      (_myKey != null && _morePayers.containsKey(_myKey));
 
   @override
   void initState() {
@@ -239,18 +424,30 @@ class _EventBillSheetState extends State<_EventBillSheet> {
         _fromKey = _toKey = null;
         _people.add(payer);
         for (final c in row.children) {
-          final m = _Person.member(_view.memberOf(c));
+          // "คืนแล้ว" as saved: an unticked one would remove its payback.
+          final m = _Person.member(_view.memberOf(c))..paidBack = c.paidBack;
           _people.add(m);
           _typed[m.key] = c.amount;
         }
         _payerKey = payer.key;
+        // Several payers: the first is the bill's member (the biggest); the
+        // others with what they paid (one who has no share joins at 0).
+        for (final x in p.payers) {
+          if (x.member.id == payer.memberId) continue;
+          final m = _person('m:${x.member.id}');
+          final who = m ?? _Person.member(_view.member(x.member.id));
+          if (m == null) {
+            _people.add(who);
+            _typed[who.key] = 0;
+          }
+          _morePayers[who.key] = x.amount;
+        }
       }
       _wasBooked = p.myBooks;
     }
-    // A payback: จดหนี้ + รับคืน / จ่ายคืน both on (the debt and its money),
-    // but no จดหนี้ when my books already hold that debt in full.
+    // A payback: จดหนี้ + รับคืน / จ่ายคืน both on (the debt and its money);
+    // whether จดหนี้ is needed comes from the BE preview ([_debtOn]).
     _bookTx = _payback || _iPaid;
-    if (_payback) _bookDebt = !_debtAlreadyBooked;
     // Editing shows the row as it is: the switch and ticks = what's linked.
     if (_wasBooked.isNotEmpty) {
       _books = true;
@@ -261,35 +458,47 @@ class _EventBillSheetState extends State<_EventBillSheet> {
     if (widget.booksOnly) {
       _books = true;
       _bookTx = _bookTx || _payback || _iPaid;
-      _bookDebt =
-          _linked(ProjectTransaction.bookDebt) ||
-          (_payback ? !_debtAlreadyBooked : true);
+      _bookDebt = true;
     }
+    if (!_payback) _initMyCopy();
     _amount.addListener(_changed);
   }
 
-  bool get _involved => _fromKey == _myKey || _toKey == _myKey;
-
-  /// A payback with me in it, whose debt my books already show in full
-  /// (they owe me at least it, or I owe them at least it).
-  bool get _debtAlreadyBooked {
-    if (!_involved) return false;
-    final iPay = _fromKey == _myKey;
-    final other = _person(iPay ? _toKey : _fromKey);
-    if (other == null) return false;
-    final now = _netWith(other);
-    return iPay ? now <= -_total + 0.005 : now >= _total - 0.005;
+  /// A bill's copy (SA3): always in my book (tx + debts) unless I
+  /// disconnected it; my own fields start from my copy transaction.
+  void _initMyCopy() {
+    final copy = widget.bill?.myCopy;
+    _books = copy?.connected ?? true;
+    _bookTx = _bookDebt = true;
+    final tx = copy?.transaction;
+    if (tx == null) return;
+    _category = tx.category?.toCategory();
+    final accountId = tx.accountId;
+    if (accountId != null) {
+      _account = context.read<AccountsCubit>().byId(accountId);
+    }
+    for (final t in tx.tags) {
+      _myTagIds.add(t.id);
+      _knownTags[t.id] = t.asTag;
+    }
+    _privateNote.text = copy?.privateNote ?? '';
   }
+
+  bool get _involved => _fromKey == _myKey || _toKey == _myKey;
 
   void _changed() => setState(() {});
 
   // ---------- the BE preview (?preview=true) behind the before → after ----
 
   /// What the save would move, for the body now on screen (E8); null = none
-  /// yet (the app's own estimate shows meanwhile).
+  /// yet (no before → after lines until it comes; the app has no estimate of
+  /// its own, SA4).
   EventBillBookPreview? _preview;
   String? _previewAsked;
   Timer? _previewTimer;
+
+  /// The body [_preview] answers; != [_previewKey] = a newer one is on its way.
+  String? _previewFor;
 
   /// The body the preview is for; null = nothing to preview (my book off, or
   /// the bill not complete yet).
@@ -302,7 +511,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
   }
 
   /// After each build: a changed body asks the BE again (debounced); a
-  /// failure keeps the app's own numbers.
+  /// failure drops the lines (none rather than wrong ones).
   void _schedulePreview() {
     final want = _previewKey;
     if (want == _previewAsked) return;
@@ -317,9 +526,19 @@ class _EventBillSheetState extends State<_EventBillSheet> {
           bill: _billBody,
           myBooks: _booksBody,
         );
-        if (mounted && _previewAsked == want) setState(() => _preview = p);
+        if (mounted && _previewAsked == want) {
+          setState(() {
+            _preview = p;
+            _previewFor = want;
+          });
+        }
       } catch (_) {
-        if (mounted && _previewAsked == want) setState(() => _preview = null);
+        if (mounted && _previewAsked == want) {
+          setState(() {
+            _preview = null;
+            _previewFor = null;
+          });
+        }
       }
     });
   }
@@ -340,6 +559,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
     _amount.dispose();
     _title.dispose();
     _note.dispose();
+    _privateNote.dispose();
     super.dispose();
   }
 
@@ -373,28 +593,63 @@ class _EventBillSheetState extends State<_EventBillSheet> {
   double _shareOf(_Person p) => _shares[p.key] ?? 0;
 
   /// I paid: who owes me their share (not the ones who paid back now).
-  List<_Person> get _debtors => [
-    for (final p in _people)
-      if (p.key != _payerKey && !p.paidBack && _shareOf(p) > 0.005) p,
-  ];
-
   void _splitEqual() => setState(_typed.clear);
 
+  /// The new payer; my copy follows its role by itself (SA3: the whole bill
+  /// when I paid, my share "จ่ายโดย X" when someone else did).
   void _setPayer(_Person p) => setState(() {
     _payerKey = p.key;
     p.paidBack = false;
     _typed.remove(p.key);
-    if (!_editing && !_booked) _books = p.isMe;
-    // I paid: the bill as my tx + the others as my debtors. Someone else
-    // paid: a debt to them; my share as a tx only when ticked.
-    _bookDebt = true;
-    _bookTx = p.isMe;
   });
 
   void _remove(_Person p) => setState(() {
     _people.remove(p);
     _typed.remove(p.key);
+    _morePayers.remove(p.key);
     if (_payerKey == p.key) _payerKey = _people.firstOrNull?.key;
+  });
+
+  // ---------- payers (0.4.1-2 multi-payer) ----------
+
+  /// "+ เพิ่มคนจ่าย": someone in the bill paid a part too (starts at 0, the
+  /// first payer pays the rest).
+  Future<void> _addPayer() async {
+    final l = AppLocalizations.of(context)!;
+    final r = await showItemPicker(
+      context,
+      ItemPickerSheet(
+        title: l.evbAddPayer,
+        items: [
+          for (final p in _people)
+            if (!_isPayer(p))
+              PickerItem(id: p.key, title: p.name, leading: _personAvatar(p)),
+        ],
+      ),
+    );
+    final key = r?.id;
+    if (key == null || !mounted) return;
+    setState(() {
+      _morePayers[key] = 0;
+      _person(key)?.paidBack = false;
+    });
+  }
+
+  void _setPaid(_Person p, double? v) =>
+      setState(() => _morePayers[p.key] = v ?? 0);
+
+  /// A payer leaves the คนจ่าย list (stays in the bill); the first payer's
+  /// place goes to the next one.
+  void _removePayer(_Person p) => setState(() {
+    if (p.key != _payerKey) {
+      _morePayers.remove(p.key);
+      return;
+    }
+    final next = _morePayers.keys.firstOrNull;
+    if (next == null) return;
+    _morePayers.remove(next);
+    _payerKey = next;
+    _typed.remove(next);
   });
 
   Future<void> _addPeople() async {
@@ -420,9 +675,14 @@ class _EventBillSheetState extends State<_EventBillSheet> {
     if (r == null || !mounted) return;
     setState(() {
       final keep = r.memberIds.toSet();
-      // Members are the picker's ticks: unticked members leave the bill.
+      // Members are the picker's ticks: unticked members leave the bill (a
+      // payer that can't change stays).
       _people.removeWhere(
-        (p) => p.memberId != null && !keep.contains(p.memberId) && !p.isMe,
+        (p) =>
+            p.memberId != null &&
+            !keep.contains(p.memberId) &&
+            !p.isMe &&
+            !(!_canChangePayer && p.key == _payerKey),
       );
       for (final id in r.memberIds) {
         if (_people.any((p) => p.memberId == id)) continue;
@@ -473,6 +733,8 @@ class _EventBillSheetState extends State<_EventBillSheet> {
       if (_payerKey == p.key) _payerKey = next.key;
       final share = _typed.remove(p.key);
       if (share != null) _typed[next.key] = share;
+      final paid = _morePayers.remove(p.key);
+      if (paid != null) _morePayers[next.key] = paid;
     });
   }
 
@@ -542,25 +804,24 @@ class _EventBillSheetState extends State<_EventBillSheet> {
 
   // ---------- my books ----------
 
-  double get _myShare =>
-      _myKey == null || !_meInBill ? 0 : (_shares[_myKey!] ?? 0);
-
-  /// My balance with [p] now (> 0: they owe me): the BE preview's, else the
-  /// debts list's.
-  double _netWith(_Person p) {
-    final seen = _preview?.people[p.debtKey];
-    if (seen != null) return seen.before;
-    final dir = context.read<DebtDirectoryCubit?>();
-    final key = p.debtKey;
-    for (final b in dir?.state.people ?? const <PersonBalance>[]) {
-      if (b.key == key) return b.net;
-    }
-    return 0;
+  /// My balance with [p] before → after the save (> 0: they owe me), from the
+  /// BE preview only (SA4); null = no preview yet. A person the save doesn't
+  /// touch is not in the answer: unchanged at 0.
+  ({double before, double after})? _balanceWith(_Person p) {
+    final preview = _preview;
+    if (preview == null) return null;
+    return preview.people[p.debtKey] ?? (before: 0, after: 0);
   }
 
-  /// My balance with [p] after the save: the BE preview's, else [estimate].
-  double _afterWith(_Person p, double estimate) =>
-      _preview?.people[p.debtKey]?.after ?? estimate;
+  /// What the save does to [_account], from the preview ("−฿100"); a wallet
+  /// the preview doesn't list doesn't move.
+  String _walletLine(AppLocalizations l) {
+    final id = _account?.id;
+    final w = id == null ? null : _preview?.wallets[id];
+    final delta = w == null ? 0.0 : w.after - w.before;
+    if (delta.abs() < 0.005) return l.debtWalletNotUsed;
+    return '${delta < 0 ? '−' : '+'}${moneyString(context, delta.abs())}';
+  }
 
   String _sideText(AppLocalizations l, double net) {
     final money = moneyString(context, net.abs());
@@ -569,53 +830,63 @@ class _EventBillSheetState extends State<_EventBillSheet> {
     return l.evbNoDebt;
   }
 
-  Widget _pickCards(AppLocalizations l, {required bool walletOptional}) =>
-      IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (!_payback) ...[
-              Expanded(
-                child: CategoryPickCard(
-                  category: _category,
-                  label: l.transactionFormCategoryLabel,
-                  placeholder: l.transactionFormCategoryNone,
-                  dense: true,
-                  editable: true,
-                  onTap: _pickCategory,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-            ],
-            Expanded(
-              child: WalletPickCard(
-                account: _account,
-                label: l.transactionFormAccountLabel,
-                placeholder: walletOptional
-                    ? l.evbNoWallet
-                    : l.transactionFormAccountNone,
-                dense: true,
-                editable: true,
-                onTap: _pickAccount,
-              ),
+  /// Category (bills) + wallet; [paidBy] = someone else paid and I haven't
+  /// paid them back: the wallet slot reads "จ่ายโดย X" and takes no wallet.
+  Widget _pickCards(
+    AppLocalizations l, {
+    required bool walletOptional,
+    _Person? paidBy,
+  }) => IntrinsicHeight(
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (!_payback) ...[
+          Expanded(
+            child: CategoryPickCard(
+              category: _category,
+              label: l.transactionFormCategoryLabel,
+              placeholder: l.transactionFormCategoryNone,
+              dense: true,
+              editable: true,
+              onTap: _pickCategory,
             ),
-          ],
+          ),
+          const SizedBox(width: AppSpacing.sm),
+        ],
+        Expanded(
+          child: WalletPickCard(
+            account: paidBy == null ? _account : null,
+            label: l.transactionFormAccountLabel,
+            placeholder: walletOptional
+                ? l.evbNoWallet
+                : l.transactionFormAccountNone,
+            dense: true,
+            editable: paidBy == null,
+            paidBy: paidBy == null ? null : l.evbPaidByName(_payerNames),
+            paidByAvatar: paidBy == null ? null : _personAvatar(paidBy),
+            onTap: paidBy == null ? _pickAccount : null,
+          ),
         ),
-      );
+      ],
+    ),
+  );
 
-  /// The person a debt / repayment is with: avatar, name, [what] (their state
-  /// before → after), and what this save does: a bill adds [amount] to the
-  /// debt (เพิ่มหนี้), a payback takes it off (ลดหนี้). No [amount]: already in
-  /// my books, nothing changes.
-  Widget _personLine(
-    _Person p,
-    String what, {
-    required bool up,
-    required double? amount,
-  }) {
+  /// The person a debt / repayment is with: avatar, name, their state before
+  /// → after, and what this save does to the debt (เพิ่มหนี้ / ลดหนี้), all
+  /// from the BE preview; no preview yet = the name only, no change = no chip.
+  Widget _personLine(_Person p) {
     final l = AppLocalizations.of(context)!;
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final b = _balanceWith(p);
+    final delta = b == null ? 0.0 : b.after - b.before;
+    final changes = delta.abs() >= 0.005;
+    final up = b != null && b.after.abs() > b.before.abs();
+    final what = b == null
+        ? null
+        : changes
+        ? '${_sideText(l, b.before)} → ${_sideText(l, b.after)}'
+        : _sideText(l, b.before);
     return Row(
       children: [
         _personAvatar(p),
@@ -629,20 +900,23 @@ class _EventBillSheetState extends State<_EventBillSheet> {
                 p.name,
                 style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
-              Text(
-                what,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-              ),
+              if (what != null)
+                Text(
+                  what,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: text.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
             ],
           ),
         ),
-        if (amount != null)
+        if (changes)
           AppChip(
             label:
                 '${up ? l.evbDebtUp : l.evbDebtDown} '
-                '${moneyString(context, amount)}',
+                '${moneyString(context, delta.abs())}',
             tone: up ? AppChipTone.warning : AppChipTone.success,
             selected: true,
             size: ChipSize.mini,
@@ -657,39 +931,189 @@ class _EventBillSheetState extends State<_EventBillSheet> {
   String get _txKind =>
       _payback ? ProjectTransaction.bookRepay : ProjectTransaction.bookTx;
 
-  /// A person's state: before → after, or just now when nothing changes.
-  String _change(AppLocalizations l, double now, double delta) =>
-      delta.abs() < 0.005
-      ? _sideText(l, now)
-      : '${_sideText(l, now)} → ${_sideText(l, now + delta)}';
-
-  /// [_change] for [p], the BE preview's after when it has one.
-  String _changeOf(AppLocalizations l, _Person p, double delta) {
-    final now = _netWith(p);
-    return _change(l, now, _afterWith(p, now + delta) - now);
+  /// The before → after box for [p] (preview only); none until the first
+  /// preview, dimmed while a newer one is on its way.
+  Widget? _resultBox(AppLocalizations l, _Person p, {required bool wallet}) {
+    final b = _balanceWith(p);
+    if (b == null) return null;
+    return DebtResultBox(
+      nowLabel: l.debtResultNow(p.name),
+      before: _sideText(l, b.before),
+      afterLabel: l.debtResultAfterSave,
+      after: _sideText(l, b.after),
+      walletLabel: wallet
+          ? (_account?.name ?? l.transactionFormAccountLabel)
+          : l.transactionFormAccountLabel,
+      walletValue: wallet ? _walletLine(l) : l.debtWalletNotUsed,
+      loading: _previewFor != _previewKey,
+    );
   }
 
-  Widget? _myBooks(AppLocalizations l) {
-    final involved = _booked || (_payback ? _involved : (_iPaid || _meInBill));
+  Widget? _myBooks(AppLocalizations l) =>
+      _payback ? _paybackBooks(l) : _myCopy(l);
+
+  /// 0.4.1-2 SA3 — MY copy of the bill: booked whenever I'm in it (my
+  /// transaction + my debts of it, one value with the bill); only the
+  /// category, the wallet, my tags and my private note are mine. Someone
+  /// else paid → the wallet slot reads "จ่ายโดย X" until I tick "คืน X แล้ว".
+  /// A copy I disconnected offers "เชื่อมใหม่".
+  Widget? _myCopy(AppLocalizations l) {
+    final me = _myKey == null ? null : _person(_myKey);
+    final involved = _iPaid || me != null || widget.bill?.myCopy != null;
     if (!involved || _view.me == null) return null;
-    // A part already linked changes nothing in my books (no pickers, no
-    // before → after); unticking it unlinks it.
-    final debtLinked = _linked(ProjectTransaction.bookDebt);
+    if (!_books) {
+      return ShareCard(
+        title: l.evbMyCopy,
+        rows: [
+          AppMessage(
+            message: l.evbCopyDisconnected,
+            actions: [
+              AppMessageAction(
+                label: l.evbReconnect,
+                onPressed: () => setState(() => _books = true),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+    final payer = _payer;
+    final paidByOther = !_iPaid && payer != null && !(me?.paidBack ?? false);
+    final rows = <Widget>[
+      if (widget.bill?.myCopy case final copy?
+          when copy.connected && copy.inSync == false)
+        AppMessage(
+          message: l.evbCopyOutOfSync,
+          tone: Tone.warning,
+          actions: [
+            AppMessageAction(label: l.evbApplyBill, onPressed: _applyBill),
+          ],
+        ),
+      _pickCards(l, walletOptional: true, paidBy: paidByOther ? payer : null),
+      if (!_iPaid && payer != null && me != null)
+        LinkSwitchRow(
+          label: l.evbPaidBackName(_payerNames),
+          value: me.paidBack,
+          onChanged: (v) => setState(() => me.paidBack = v),
+        ),
+      TagChipRow(
+        selected: _myTagIds,
+        known: _knownTags,
+        onRemove: (id) => setState(() => _myTagIds.remove(id)),
+        onMore: _pickMyTags,
+      ),
+      DraftFieldRow(
+        label: l.evbPrivateNote,
+        child: AppInput.inline(
+          editing: true,
+          controller: _privateNote,
+          maxLines: 2,
+          maxLength: TextLimits.note,
+          hint: l.evbPrivateNoteHint,
+        ),
+      ),
+      ?_debtSummary(l),
+    ];
+    return ShareCard(
+      title: l.evbMyCopy,
+      rows: [
+        for (final (i, r) in rows.indexed) ...[
+          if (i > 0) const SizedBox(height: AppSpacing.sm),
+          r,
+        ],
+      ],
+    );
+  }
+
+  /// SA5 — the debts this save moves, from the BE preview only, plus the
+  /// people ticked "คืนแล้ว"; none before the first preview.
+  Widget? _debtSummary(AppLocalizations l) {
+    final preview = _preview;
+    if (preview == null) return null;
+    final lines = <BillDebtLine>[];
+    for (final p in _people) {
+      if (p.isMe) continue;
+      final b = _balanceWith(p);
+      final delta = b == null ? 0.0 : b.after - b.before;
+      if (b != null && delta.abs() >= 0.005) {
+        final up = b.after.abs() > b.before.abs();
+        lines.add(
+          BillDebtLine(
+            avatar: _personAvatar(p),
+            name: p.name,
+            state: '${_sideText(l, b.before)} → ${_sideText(l, b.after)}',
+            chip:
+                '${up ? l.evbDebtUp : l.evbDebtDown} '
+                '${moneyString(context, delta.abs())}',
+            chipTone: up ? AppChipTone.warning : AppChipTone.success,
+          ),
+        );
+      } else if (p.paidBack && !_isPayer(p)) {
+        lines.add(
+          BillDebtLine(
+            avatar: _personAvatar(p),
+            name: p.name,
+            chip: l.evbPaidBack,
+            chipTone: AppChipTone.success,
+          ),
+        );
+      }
+    }
+    if (lines.isEmpty) return null;
+    return BillDebtSummary(lines: lines, loading: _previewFor != _previewKey);
+  }
+
+  Future<void> _pickMyTags() async {
+    final next = await TagPicker.many(context, selected: _myTagIds);
+    if (next == null || !mounted) return;
+    setState(() {
+      for (final t in next.tags) {
+        _knownTags[t.id] = t;
+      }
+      _myTagIds
+        ..clear()
+        ..addAll(next.ids);
+    });
+  }
+
+  /// "อัปเดตตาม": my copy takes the bill as it is now (S7, one call); the
+  /// form reloads with it.
+  Future<void> _applyBill() async {
+    final l = AppLocalizations.of(context)!;
+    final row = widget.row;
+    if (row == null) return;
+    final repo = context.read<ProjectsRepository>();
+    setState(() => _saving = true);
+    try {
+      await repo.applyEventBill(row.parent.id);
+      final fresh = await repo.getEventBill(row.parent.id);
+      if (mounted) widget.onChanged?.call(fresh);
+    } on ApiException catch (e) {
+      if (mounted) {
+        showAppSnackBar(context, eventErrorText(l, e), tone: Tone.danger);
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  /// A payback's book: จดหนี้ (the debt it clears) + รับคืน / จ่ายคืน (the
+  /// money), as before 0.4.1-2 (V11 widens the debt-type bill).
+  Widget? _paybackBooks(AppLocalizations l) {
+    final involved = _booked || _involved;
+    if (!involved || _view.me == null) return null;
+    // A part already linked changes nothing in my books (no pickers); the
+    // before → after lines come from the BE preview; unticking it unlinks it.
     final txLinked = _linked(_txKind);
     final rows = <Widget>[];
     if (_books) {
-      if (_payback) {
+      {
         final other = _person(_fromKey == _myKey ? _toKey : _fromKey);
         final iPay = _fromKey == _myKey;
         if (other != null) {
           // จดหนี้ puts the event's debt in my books (they owe me / I owe
           // them); รับคืน / จ่ายคืน is the money that clears it. Both = even.
-          final now = _netWith(other);
-          final record = _debtOn && !debtLinked
-              ? (iPay ? -_total : _total)
-              : 0.0;
-          final repay = _bookTx && !txLinked ? (iPay ? _total : -_total) : 0.0;
-          final after = _afterWith(other, now + record + repay);
+          final box = _resultBox(l, other, wallet: true);
           rows.addAll([
             BookOptionCard(
               icon: AppIcons.debt,
@@ -703,12 +1127,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
                 _bookDebt = v;
                 _debtTouched = true;
               }),
-              child: _personLine(
-                other,
-                _change(l, now, record),
-                up: true,
-                amount: debtLinked ? null : _total,
-              ),
+              child: _personLine(other),
             ),
             BookOptionCard(
               icon: AppIcons.transfer,
@@ -721,105 +1140,9 @@ class _EventBillSheetState extends State<_EventBillSheet> {
               onChanged: (v) => setState(() => _bookTx = v),
               child: txLinked ? null : _pickCards(l, walletOptional: true),
             ),
-            DebtResultBox(
-              nowLabel: l.debtResultNow(other.name),
-              before: _sideText(l, now),
-              afterLabel: l.debtResultAfterSave,
-              after: _sideText(l, after),
-              walletLabel: _account?.name ?? l.transactionFormAccountLabel,
-              walletValue: _account == null || !_bookTx || txLinked
-                  ? l.debtWalletNotUsed
-                  : '${iPay ? '−' : '+'}${moneyString(context, _total)}',
-            ),
+            ?box,
           ]);
         }
-      } else if (_iPaid) {
-        final debtors = _debtors;
-        final owed = debtors.fold<double>(0, (s, p) => s + _shareOf(p));
-        rows.addAll([
-          BookOptionCard(
-            icon: AppIcons.receipt,
-            title: l.evbBookTx,
-            subtitle: txLinked
-                ? l.evbBooked
-                : l.evbPaidFrom(
-                    _account?.name ?? l.transactionFormAccountLabel,
-                  ),
-            amount: MoneyText(_total),
-            checked: _bookTx,
-            onChanged: (v) => setState(() => _bookTx = v),
-            child: txLinked ? null : _pickCards(l, walletOptional: true),
-          ),
-          if (debtors.isNotEmpty)
-            BookOptionCard(
-              icon: AppIcons.debt,
-              title: l.evbBookDebt,
-              subtitle: l.evbDebtorsLine(debtors.length),
-              amount: MoneyText(owed),
-              checked: _bookDebt,
-              onChanged: (v) => setState(() => _bookDebt = v),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (final (i, p) in debtors.indexed) ...[
-                    if (i > 0) const SizedBox(height: AppSpacing.sm),
-                    _personLine(
-                      p,
-                      _changeOf(l, p, debtLinked ? 0 : _shareOf(p)),
-                      up: true,
-                      amount: debtLinked ? null : _shareOf(p),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-        ]);
-      } else {
-        final payer = _payer;
-        final share = _myShare;
-        final now = payer == null ? 0.0 : _netWith(payer);
-        final owe = debtLinked ? 0.0 : share;
-        rows.addAll([
-          BookOptionCard(
-            icon: AppIcons.debt,
-            title: l.evbBookDebt,
-            subtitle: l.evbBookDebtLine(payer?.name ?? ''),
-            amount: MoneyText(share),
-            checked: _bookDebt,
-            onChanged: (v) => setState(() => _bookDebt = v),
-            child: payer == null
-                ? null
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _personLine(
-                        payer,
-                        _changeOf(l, payer, -owe),
-                        up: true,
-                        amount: debtLinked ? null : share,
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      DebtResultBox(
-                        nowLabel: l.debtResultNow(payer.name),
-                        before: _sideText(l, now),
-                        afterLabel: l.debtResultAfterSave,
-                        after: _sideText(l, _afterWith(payer, now - owe)),
-                        walletLabel: l.transactionFormAccountLabel,
-                        walletValue: l.debtWalletNotUsed,
-                      ),
-                    ],
-                  ),
-          ),
-          BookOptionCard(
-            icon: AppIcons.receipt,
-            title: l.evbBookTx,
-            subtitle: txLinked ? l.evbBooked : l.evbBookTxLine,
-            amount: MoneyText(share),
-            checked: _bookTx,
-            onChanged: (v) => setState(() => _bookTx = v),
-            child: txLinked ? null : _pickCards(l, walletOptional: true),
-          ),
-        ]);
       }
     }
     return ShareCard(
@@ -873,14 +1196,17 @@ class _EventBillSheetState extends State<_EventBillSheet> {
     ];
     BillPerson row(_Person p) {
       final payer = p.key == _payerKey;
+      // A payer that can't change: no จ่าย, no other person, no ✕ for that
+      // row.
+      final payerFixed = payer && !_canChangePayer;
       return BillPerson(
         id: p.key,
         name: p.name,
         avatar: _personAvatar(p),
         isMe: p.isMe,
-        editableName: p.typed,
+        editableName: p.typed && !payerFixed,
         onName: (v) => setState(() => p.name = v),
-        onChangePerson: () => _changePerson(p),
+        onChangePerson: payerFixed ? null : () => _changePerson(p),
         amount: shares[p.key],
         auto: !payer && !_typed.containsKey(p.key),
         onAmount: payer
@@ -892,9 +1218,12 @@ class _EventBillSheetState extends State<_EventBillSheet> {
                   _typed[p.key] = v;
                 }
               }),
-        paid: payer,
-        onPay: payer ? null : () => _setPayer(p),
-        canPaidBack: !payer && _payer != null,
+        // Several payers: who paid is the คนจ่าย card's; here only shares.
+        paid: payer && !_multiPayer,
+        onPay: payer || !_canChangePayer || _multiPayer
+            ? null
+            : () => _setPayer(p),
+        canPaidBack: !_isPayer(p) && _payer != null,
         paidBack: p.paidBack,
         onPaidBack: () => setState(() => p.paidBack = !p.paidBack),
         tag: p.isNew
@@ -904,7 +1233,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
                 tone: AppChipTone.info,
               )
             : null,
-        onRemove: _people.length > 1 ? () => _remove(p) : null,
+        onRemove: _people.length > 1 && !payerFixed ? () => _remove(p) : null,
       );
     }
 
@@ -918,6 +1247,61 @@ class _EventBillSheetState extends State<_EventBillSheet> {
           ? null
           : over > 0.005
           ? ShareStatus(l.txLinkCardOver(moneyString(context, over)), ok: false)
+          : ShareStatus(l.txLinkCardSplitOk, ok: true),
+    );
+  }
+
+  /// 0.4.1-2 multi-payer — "คนจ่าย" above "คนหาร": one payer = a "+ เพิ่ม
+  /// คนจ่าย" row (the จ่าย mark stays on the people rows, today's look);
+  /// several = their own card, each with what they paid (Σ = the bill; the
+  /// first pays the rest).
+  Widget? _payersSection(AppLocalizations l) {
+    if (_payback || _payer == null) return null;
+    final canAdd = _canChangePayer && _people.any((p) => !_isPayer(p));
+    if (!_multiPayer) {
+      if (!canAdd) return null;
+      return DraftFieldRow(
+        label: l.evbPayersLabel,
+        child: Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: AppChip(
+            label: l.evbAddPayer,
+            icon: AppIcons.add,
+            dashed: true,
+            onTap: _addPayer,
+          ),
+        ),
+      );
+    }
+    final first = _firstPaid;
+    return BillPeopleCard(
+      title: l.evbPayers(_morePayers.length + 1),
+      addLabel: l.evbAddPayer,
+      showEqually: false,
+      onAdd: canAdd ? _addPayer : () {},
+      people: [
+        for (final p in _payers)
+          BillPerson(
+            id: 'pay:${p.key}',
+            name: p.name,
+            avatar: _personAvatar(p),
+            isMe: p.isMe,
+            amount: p.key == _payerKey ? first : _morePayers[p.key],
+            // The first payer pays what the others leave.
+            auto: p.key == _payerKey,
+            onAmount: p.key == _payerKey || !_canChangePayer
+                ? null
+                : (v) => _setPaid(p, v),
+            onRemove: _canChangePayer ? () => _removePayer(p) : null,
+          ),
+      ],
+      status: _total <= 0
+          ? null
+          : first < 0.005
+          ? ShareStatus(
+              l.txLinkCardOver(moneyString(context, -first)),
+              ok: false,
+            )
           : ShareStatus(l.txLinkCardSplitOk, ok: true),
     );
   }
@@ -1054,11 +1438,16 @@ class _EventBillSheetState extends State<_EventBillSheet> {
     setState(() => _saving = true);
     try {
       final row = widget.row;
+      // My edit of the bill is my book too (linked = synced): the BE makes
+      // my copy follow the bill I save (0.4.1-2).
       final r = row != null
           ? await repo.rebookEventBill(
               row.parent.id,
               bill: _billBody,
               myBooks: _booksBody,
+              // Someone saved it since the form loaded → 409 BILL_CHANGED.
+              expectedUpdatedAt: widget.bill?.updatedAt,
+              move: _moveBody,
             )
           : await repo.bookEventBill(
               projectId: _view.project.id,
@@ -1069,12 +1458,55 @@ class _EventBillSheetState extends State<_EventBillSheet> {
       widget.onPatch?.call(r.patch);
       navigator.pop(true);
     } on ApiException catch (e) {
-      if (mounted) {
-        showAppSnackBar(context, eventErrorText(l, e), tone: Tone.danger);
+      if (!mounted) return;
+      final details = e.details ?? const <String, dynamic>{};
+      final newer = e.code == 'BILL_CHANGED' ? details['bill'] : null;
+      if (newer is Map && widget.onChanged != null) {
+        // "บิลถูกแก้แล้ว โหลดใหม่": the bill as it is now replaces the form.
+        showAppSnackBar(context, l.evbBillChanged, tone: Tone.warning);
+        widget.onChanged!(EventBillView.fromJson(newer.cast()));
+        return;
       }
+      showAppSnackBar(context, eventErrorText(l, e), tone: Tone.danger);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  /// EventBillMove for [_moveTo]: the people come along, every copy stays
+  /// connected (same bill).
+  Map<String, dynamic>? get _moveBody => switch (_moveTo) {
+    null => null,
+    ExistingEventTarget(:final project) => {'project_id': project.id},
+    NewEventTarget(:final name) => {
+      'new_event': {'name': name},
+    },
+    RemoveFromEvent() => const {'split': true},
+  };
+
+  /// The bill's event (or "บิลแบ่งจ่าย"), and where it will move.
+  String _eventName(AppLocalizations l) => switch (_moveTo) {
+    null => _isSplit ? l.evbSplitBill : _view.project.name,
+    ExistingEventTarget(:final project) => project.name,
+    NewEventTarget(:final name) => l.quickEventNewNamed(name),
+    RemoveFromEvent() => l.evbSplitBill,
+  };
+
+  Future<void> _pickMove() async {
+    final r = await EventPicker.one(
+      context,
+      suggestedName: _title.text.trim(),
+      // Out of an event = a split bill ("เอาออกจากอีเวนต์").
+      currentProjectId: _isSplit ? null : _view.project.id,
+      showClosed: false,
+    );
+    if (r == null || !mounted) return;
+    final back = switch (r) {
+      ExistingEventTarget(:final project) => project.id == _view.project.id,
+      RemoveFromEvent() => _isSplit,
+      NewEventTarget() => false,
+    };
+    setState(() => _moveTo = back ? null : r);
   }
 
   String get _day => projectDay(_date);
@@ -1105,12 +1537,27 @@ class _EventBillSheetState extends State<_EventBillSheet> {
       'description': _desc,
       'note': _noteText,
       'tag_ids': _tagIds.toList(),
-      // The payer stays on an edit (400 PAYER_FIXED).
-      if (!_editing) 'payer': payer.json,
+      // An existing bill takes its payers only when they may change (Q-B4).
+      // Several payers (0.4.1-2): `payers` + EVERY share listed (Σ = the
+      // bill); one payer: `payer`, whose share is the rest.
+      if (_canChangePayer && _multiPayer)
+        'payers': [
+          for (final p in _payers)
+            {
+              ...p.json,
+              'amount': p.key == payer.key ? _firstPaid : _morePayers[p.key],
+            },
+        ]
+      else if (_canChangePayer)
+        'payer': payer.json,
       'members': [
         for (final p in _people)
-          if (p.key != payer.key)
-            {...p.json, 'share': shares[p.key] ?? 0, 'paid_back': p.paidBack},
+          if (_multiPayer || p.key != payer.key)
+            {
+              ...p.json,
+              'share': shares[p.key] ?? 0,
+              'paid_back': !_isPayer(p) && p.paidBack,
+            },
       ],
     };
   }
@@ -1119,15 +1566,28 @@ class _EventBillSheetState extends State<_EventBillSheet> {
   /// linked part unticked is unlinked by the server, its rows stay. A
   /// payback's debt the user didn't touch = null: the server decides (no
   /// second debt when my book already holds it, E5).
-  Map<String, dynamic> get _booksBody => {
-    'on': _books,
-    'tx': _bookTx,
-    'debt': _payback && !_debtTouched && !_linked(ProjectTransaction.bookDebt)
-        ? null
-        : _bookDebt,
-    'account_id': _account?.id,
-    if (!_payback) 'category_id': _category?.id,
-  };
+  Map<String, dynamic> get _booksBody => _payback
+      ? {
+          'on': _books,
+          'tx': _bookTx,
+          'debt': !_debtTouched && !_linked(ProjectTransaction.bookDebt)
+              ? null
+              : _bookDebt,
+          'account_id': _account?.id,
+        }
+      // A bill's copy (SA3): tx + debts together; only my own fields vary
+      // (the wallet is ignored while "จ่ายโดย X").
+      : {
+          'on': _books,
+          'tx': true,
+          'debt': true,
+          'account_id': _account?.id,
+          'category_id': _category?.id,
+          'tag_ids': _myTagIds.toList(),
+          'private_note': _privateNote.text.trim().isEmpty
+              ? null
+              : _privateNote.text.trim(),
+        };
 
   Future<void> _delete() async {
     final l = AppLocalizations.of(context)!;
@@ -1144,11 +1604,13 @@ class _EventBillSheetState extends State<_EventBillSheet> {
     final navigator = Navigator.of(context);
     setState(() => _saving = true);
     try {
-      final patch = await context.read<ProjectsRepository>().deleteTransaction(
-        _view.project.id,
+      // One call (0.4.1-2): the bill, my copy and debts of it; the others'
+      // copies by their switch. A split bill answers no event patch.
+      final r = await context.read<ProjectsRepository>().deleteEventBill(
         row.parent.id,
       );
-      widget.onPatch?.call(patch);
+      final patch = r.patch;
+      if (patch != null) widget.onPatch?.call(patch);
       navigator.pop(true);
     } on ApiException catch (e) {
       if (mounted) {
@@ -1173,7 +1635,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
       final p = widget.row!.parent;
       return QuickCreateSheetShell(
         title: l.evbBookMine,
-        subtitle: p.description ?? _view.project.name,
+        subtitle: p.description ?? (_isSplit ? null : _view.project.name),
         saveLabel: l.commonSave,
         saveIcon: AppIcons.save,
         closeTooltip: UiConfig.stringsOf(context).close,
@@ -1196,19 +1658,26 @@ class _EventBillSheetState extends State<_EventBillSheet> {
                               .where((p) => p.key != _payerKey)
                               .fold<double>(0, (s, p) => s + _shareOf(p)) -
                           _total <=
-                      0.005);
+                      0.005 &&
+                  // Several payers: each paid something, the first too.
+                  (!_multiPayer ||
+                      (_firstPaid > 0.005 &&
+                          _morePayers.values.every((v) => v > 0.005))));
     return QuickCreateSheetShell(
       title: _payback
           ? (_editing ? l.evbEditPayback : l.evbNewPayback)
           : (_editing ? l.evbEditBill : l.evbNewBill),
-      subtitle: _view.project.name,
+      subtitle: _isSplit ? l.evbSplitBill : _view.project.name,
       saveLabel: l.commonSave,
       closeTooltip: UiConfig.stringsOf(context).close,
       deleteTooltip: l.projectTxDelete,
       deleteLabel: l.projectTxDelete,
       saving: _saving,
       onSave: canSave ? _save : null,
-      onDelete: _editing && !(widget.row?.parent.locked ?? false)
+      onDelete:
+          _editing &&
+              (widget.bill?.rights.canDelete ??
+                  !(widget.row?.parent.locked ?? false))
           ? _delete
           : null,
       onCloseBlocked: () {},
@@ -1217,7 +1686,25 @@ class _EventBillSheetState extends State<_EventBillSheet> {
         children: [
           _hero(l),
           gap,
-          if (!_payback) ...[_tagsRow(l), gap],
+          // A split bill has no event tags.
+          if (!_payback && !_isSplit) ...[_tagsRow(l), gap],
+          // S17: move to another event / out into a split bill (one save).
+          if (widget.bill?.rights.canMove ?? false) ...[
+            DraftFieldRow(
+              label: l.quickEventLabel,
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: AppChip(
+                  label: _eventName(l),
+                  icon: AppIcons.project,
+                  dashed: true,
+                  selected: _moveTo != null,
+                  onTap: _pickMove,
+                ),
+              ),
+            ),
+            gap,
+          ],
           DraftFieldRow(
             label: l.commonNote,
             child: AppInput.inline(
@@ -1229,6 +1716,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
             ),
           ),
           gap,
+          if (_payersSection(l) case final payers?) ...[payers, gap],
           if (!_payback) ...[_peopleCard(l), gap],
           ?books,
         ],

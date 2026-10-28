@@ -50,7 +50,13 @@ void main() {
     );
     const icon = IconCode(icon: 'star');
     final cases =
-        <({String name, Future<void> Function() run, Map<String, dynamic> want})>[
+        <
+          ({
+            String name,
+            Future<void> Function() run,
+            Map<String, dynamic> want,
+          })
+        >[
           (
             name: 'currency',
             run: () => repo.updateMe(currency: 'USD'),
@@ -58,8 +64,10 @@ void main() {
           ),
           (
             name: 'main wallet',
-            run: () =>
-                repo.updateMe(defaultAccountId: 'w2', clearDefaultAccount: false),
+            run: () => repo.updateMe(
+              defaultAccountId: 'w2',
+              clearDefaultAccount: false,
+            ),
             want: {'default_account_id': 'w2'},
           ),
           (
@@ -117,6 +125,64 @@ void main() {
             run: () => repo.setFeeCategory(null),
             want: {
               'preferences': {'fee_category_id': null},
+            },
+          ),
+          // 0.4.1-2: one account value per switch; only the one flipped goes.
+          (
+            name: 'auto sync: events only',
+            run: () => repo.setAutoSync(events: false),
+            want: {'auto_sync_events': false},
+          ),
+          (
+            name: 'auto sync: debts only',
+            run: () => repo.setAutoSync(debts: true),
+            want: {'auto_sync_debts': true},
+          ),
+          (
+            name: 'auto accept: events only',
+            run: () => repo.setAutoAccept(events: false),
+            want: {'auto_accept_events': false},
+          ),
+          (
+            name: 'auto accept: debts only',
+            run: () => repo.setAutoAccept(debts: true),
+            want: {'auto_accept_debts': true},
+          ),
+          (
+            name: 'app preferences: only the keys sent',
+            run: () => repo.updatePreferences({
+              'theme_mode': 'dark',
+              'font_th': 'Mitr',
+            }),
+            want: {
+              'preferences': {'theme_mode': 'dark', 'font_th': 'Mitr'},
+            },
+          ),
+          (
+            name: 'page prefs: one page replaced',
+            run: () => repo.setPagePref('budgets', {'sort': 'newest'}),
+            want: {
+              'preferences': {
+                'page_prefs': {
+                  'budgets': {'sort': 'newest'},
+                },
+              },
+            },
+          ),
+          (
+            name: 'page prefs: one page reset',
+            run: () => repo.setPagePref('budgets', null),
+            want: {
+              'preferences': {
+                'page_prefs': {'budgets': null},
+              },
+            },
+          ),
+          (
+            name: 'page prefs: all reset',
+            run: () => repo.resetPagePrefs(),
+            want: {
+              'preferences': {'page_prefs': null},
             },
           ),
         ];

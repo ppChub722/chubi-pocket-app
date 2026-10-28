@@ -256,28 +256,6 @@ class PersonalDebtsRepository {
       throw ApiException.fromDioException(e);
     }
   }
-
-  Future<DebtEntryWriteResult> acceptSplit(String notificationId) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/personal-debts/split-requests/$notificationId/accept',
-      );
-      return DebtEntryWriteResult.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
-
-  Future<DebtSplitChangeResult> applySplit(String notificationId) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/personal-debts/split-changes/$notificationId/apply',
-      );
-      return DebtSplitChangeResult.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
 }
 
 class DebtEntryUpdate {

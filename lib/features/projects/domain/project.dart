@@ -122,6 +122,9 @@ class Project extends Equatable {
     this.canAddBill = false,
     this.canEdit = false,
     this.canManageMembers = false,
+    this.canComplete = false,
+    this.completedAt,
+    this.emptyPersonBillCount = 0,
     this.createdAt,
     this.updatedAt,
   });
@@ -166,6 +169,19 @@ class Project extends Equatable {
   final bool canAddBill;
   final bool canEdit;
   final bool canManageMembers;
+
+  /// Owner of an active event: "ปิดอีเวนต์" is offered.
+  final bool canComplete;
+
+  /// Set once the event is completed ("ปิดอีเวนต์"): locked for good, even
+  /// after an archive / restore.
+  final DateTime? completedAt;
+
+  bool get isCompleted => completedAt != null;
+
+  /// Bills with an empty person (a removed member's spot) to assign: a
+  /// ต้องจัดการ entry; > 0 blocks completing (V15).
+  final int emptyPersonBillCount;
 
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -214,6 +230,10 @@ class Project extends Equatable {
       canAddBill: json['can_add_bill'] == true,
       canEdit: json['can_edit'] == true,
       canManageMembers: json['can_manage_members'] == true,
+      canComplete: json['can_complete'] == true,
+      completedAt: _date(json['completed_at']),
+      emptyPersonBillCount:
+          (json['empty_person_bill_count'] as num?)?.toInt() ?? 0,
       createdAt: _date(json['created_at']),
       updatedAt: _date(json['updated_at']),
     );
@@ -248,6 +268,9 @@ class Project extends Equatable {
     canAddBill,
     canEdit,
     canManageMembers,
+    canComplete,
+    completedAt,
+    emptyPersonBillCount,
     createdAt,
     updatedAt,
   ];
@@ -264,11 +287,18 @@ class ProjectMember extends Equatable {
     this.iconCode,
     this.isMe = false,
     this.contactId,
+    this.removedAt,
   });
 
   final String id;
   final String projectId;
   final String? userId;
+
+  /// Set = the owner removed them: their spot on each bill is an empty
+  /// person "( ) ____" to assign (V15). Leaving alone doesn't set it.
+  final DateTime? removedAt;
+
+  bool get isRemoved => removedAt != null;
 
   /// MY contact for this member (linked: the contact of that user; typed: my
   /// contact with the same name); null when none and on my own row.
@@ -299,6 +329,7 @@ class ProjectMember extends Equatable {
       iconCode: _icon(json['icon_code']),
       isMe: json['is_me'] == true,
       contactId: json['contact_id'] as String?,
+      removedAt: Project._date(json['removed_at']),
     );
   }
 
@@ -313,6 +344,7 @@ class ProjectMember extends Equatable {
     status,
     iconCode,
     isMe,
+    removedAt,
   ];
 }
 
@@ -422,10 +454,19 @@ class ProjectTransaction extends Equatable {
     this.myBooked = false,
     this.myBooks = const [],
     this.sourceTx,
+    this.paidBack = false,
+    this.payers = const [],
   });
 
   final String id;
   final String projectId;
+
+  /// A split row (BoardSplit): "คืนแล้ว", a payback row was made for it.
+  final bool paidBack;
+
+  /// 0.4.1-2 multi-payer: who paid how much (one entry = a single payer;
+  /// [transactionMember] = the biggest). Empty on split rows / older rows.
+  final List<({ProjectMemberRef member, double amount})> payers;
 
   /// A payback: [transactionMember] paid back the one child's member.
   bool get isPayback => type == 'payback';
@@ -514,6 +555,11 @@ class ProjectTransaction extends Equatable {
             if (b[k] == true) k,
       ],
       sourceTx: BoardSourceTx.tryParse(json['source_tx']),
+      payers: [
+        for (final p in _list(json['payers']))
+          if (ProjectMemberRef.tryParse(p['member']) case final m?)
+            (member: m, amount: _money(p['amount'])),
+      ],
     );
   }
 
@@ -536,6 +582,7 @@ class ProjectTransaction extends Equatable {
       marks: _ids(json['marks']),
       myMark: json['my_mark'] == true,
       locked: parent.locked,
+      paidBack: json['paid_back'] == true,
     );
   }
 
@@ -570,6 +617,8 @@ class ProjectTransaction extends Equatable {
       myBooked: myBooked,
       myBooks: myBooks,
       sourceTx: sourceTx,
+      paidBack: paidBack,
+      payers: payers,
     );
   }
 
@@ -606,18 +655,9 @@ class ProjectTransaction extends Equatable {
     myBooked,
     myBooks,
     sourceTx,
+    paidBack,
+    payers,
   ];
-}
-
-class ProjectSplitInput extends Equatable {
-  const ProjectSplitInput({required this.memberId, required this.amount});
-  final String memberId;
-  final double amount;
-
-  Map<String, dynamic> toJson() => {'member_id': memberId, 'amount': amount};
-
-  @override
-  List<Object?> get props => [memberId, amount];
 }
 
 class ProjectTxTree extends Equatable {
@@ -835,20 +875,51 @@ class SettleLine extends Equatable {
 /// Who pays whom: [pairs] nets each two members; [simplified] is the
 /// fewest transfers.
 class EventSettle extends Equatable {
-  const EventSettle({this.pairs = const [], this.simplified = const []});
+  const EventSettle({
+    this.pairs = const [],
+    this.simplified = const [],
+    this.simplifiedAvailable = false,
+    this.myBookedAt,
+  });
 
   final List<SettleLine> pairs;
   final List<SettleLine> simplified;
+
+  /// V12: the event is completed, so "จ่ายน้อยครั้งสุด" shows and can be
+  /// booked; while active only the real pairs show.
+  final bool simplifiedAvailable;
+
+  /// V12: when I booked the simplified lines ("ลงในสมุดฉัน", once).
+  final DateTime? myBookedAt;
+
+  /// My fewest-transfers lines (each one money transfer to book).
+  List<SettleLine> get mySimplified => [
+    for (final x in simplified)
+      if (x.mine) x,
+  ];
 
   factory EventSettle.fromJson(Map<String, dynamic> json) {
     List<SettleLine> lines(String k) => [
       for (final l in (json[k] as List?) ?? const []) ?SettleLine.tryParse(l),
     ];
-    return EventSettle(pairs: lines('pairs'), simplified: lines('simplified'));
+    final booking = json['my_settle_booking'];
+    return EventSettle(
+      pairs: lines('pairs'),
+      simplified: lines('simplified'),
+      simplifiedAvailable: json['simplified_available'] == true,
+      myBookedAt: booking is Map
+          ? DateTime.tryParse('${booking['booked_at']}')?.toLocal()
+          : null,
+    );
   }
 
   @override
-  List<Object?> get props => [pairs, simplified];
+  List<Object?> get props => [
+    pairs,
+    simplified,
+    simplifiedAvailable,
+    myBookedAt,
+  ];
 }
 
 class ProjectTagTotal extends Equatable {
@@ -886,26 +957,6 @@ List<ProjectTransaction> _board(Object? rows) => [
   for (final r in _list(rows)) ...ProjectTransaction.flatten(r),
 ];
 
-class EventDeletePreview {
-  const EventDeletePreview({
-    this.bills = 0,
-    this.members = 0,
-    this.linkedTxCount = 0,
-  });
-
-  factory EventDeletePreview.fromJson(Map<String, dynamic> json) =>
-      EventDeletePreview(
-        bills: (json['bills'] as num?)?.toInt() ?? 0,
-        members: (json['members'] as num?)?.toInt() ?? 0,
-        linkedTxCount: (json['linked_tx_count'] as num?)?.toInt() ?? 0,
-      );
-
-  final int bills;
-  final int members;
-
-  final int linkedTxCount;
-}
-
 class ProjectDetail {
   const ProjectDetail({
     required this.project,
@@ -915,10 +966,7 @@ class ProjectDetail {
     this.tags = const [],
     this.page = 1,
     this.totalPages = 1,
-    this.deletePreview,
   });
-
-  final EventDeletePreview? deletePreview;
 
   final Project project;
   final List<ProjectMember> members;
@@ -949,11 +997,6 @@ class ProjectDetail {
       tags: [for (final t in _list(json['tags'])) BoardTag.fromJson(t)],
       page: (pag?['page'] as num?)?.toInt() ?? 1,
       totalPages: (pag?['total_pages'] as num?)?.toInt() ?? 1,
-      deletePreview: json['delete_preview'] is Map<String, dynamic>
-          ? EventDeletePreview.fromJson(
-              json['delete_preview'] as Map<String, dynamic>,
-            )
-          : null,
     );
   }
 }

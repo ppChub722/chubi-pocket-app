@@ -34,9 +34,20 @@ bool txEditsInSheet(Transaction t) =>
     t.projectId == null &&
     t.eventBill == null;
 
+/// "Edit" on this tx opens its shared bill's form (0.4.1-2 SA1 / SA10): the
+/// BE's `edit_in_bill` (a connected copy, the event not completed). A
+/// completed event's bill no longer syncs and a disconnected tx has no bill:
+/// both edit on their own.
+bool txEditsAsBill(Transaction t) {
+  final bill = t.eventBill;
+  if (bill == null) return false;
+  return bill.editInBill ?? bill.event.isActive;
+}
+
 /// Editing shows the ผูกกับ tabs (0.4.0-3 B3): my own expense / income, not
 /// a repayment / debt entry, not a partner's mirror (its money is locked), not
-/// my copy of someone else's event bill (that one follows the board).
+/// my copy of someone else's event bill (that one follows the board), not a
+/// bill of a completed event (locked for good, SA10).
 bool txLinkTabsEditable(Transaction t) {
   final bill = t.eventBill;
   return DraftFormController.hasLinkTabs(t.type) &&
@@ -46,7 +57,7 @@ bool txLinkTabsEditable(Transaction t) {
       t.canEditCategory &&
       !(t.category?.isSystem ?? false) &&
       !(t.paidBy?.fromPartner ?? false) &&
-      (bill == null || (bill.isOrigin ?? bill.linked));
+      (bill == null || ((bill.isOrigin ?? bill.linked) && bill.event.isActive));
 }
 
 /// The ONE confirm of a tab switch: who and which wallet move, from the

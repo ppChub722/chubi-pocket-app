@@ -208,11 +208,6 @@ class _MonthBar extends StatelessWidget {
           last: DateTime.now(),
           onChanged: cubit.setMonth,
         ),
-        if (kMoneyPrivacyEnabled)
-          const Align(
-            alignment: Alignment.centerRight,
-            child: MoneyVisibilityToggle(),
-          ),
       ],
     );
   }

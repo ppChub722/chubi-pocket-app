@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +10,8 @@ import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
+import '../../../auth/domain/user.dart';
+import '../../../preferences/page_prefs.dart';
 import '../../domain/tag.dart';
 import '../cubit/tags_cubit.dart';
 import '../widgets/tag_chip.dart';
@@ -42,6 +46,7 @@ class _TagsPageState extends State<TagsPage>
   void initState() {
     super.initState();
     initDraft(const _TagsDraft([]));
+    _restorePrefs();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<TagsCubit>().loadIfNeeded();
     });
@@ -157,7 +162,27 @@ class _TagsPageState extends State<TagsPage>
         _selected.retainWhere(visible.contains);
       }
     });
+    _rememberPrefs();
   }
+
+  /// The sort and colour / icon filters remembered on the account.
+  void _restorePrefs() {
+    final pref = readPagePref(context, PagePrefIds.tags);
+    final fields = pagePrefPage(PagePrefIds.tags).fields;
+    PagePrefField field(String key) => fields.firstWhere((f) => f.key == key);
+    _sort = _SortBy.values.asNameMap()[field('sort').pick(pref)] ?? _sort;
+    _filterColors.addAll(field('colors').picks(pref));
+    _filterIcons.addAll(field('icons').picks(pref));
+  }
+
+  /// Search is not kept; no PUT when nothing remembered changed.
+  void _rememberPrefs() => unawaited(
+    rememberPagePref(context, PagePrefIds.tags, {
+      'sort': _sort.name,
+      'colors': _filterColors.toList(),
+      'icons': _filterIcons.toList(),
+    }),
+  );
 
   void _clearFilters() {
     _searchController.clear();
@@ -359,6 +384,7 @@ class _TagsPageState extends State<TagsPage>
       final visible = _visibleDrafts().any((d) => d.key == invalid.key);
       if (!visible) {
         setState(_clearFilters);
+        _rememberPrefs();
         showAppSnackBar(
           context,
           l.tagsFiltersClearedForError,

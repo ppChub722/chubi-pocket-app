@@ -126,12 +126,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get contactPickerEmpty => 'ยังไม่มีผู้ติดต่อ — พิมพ์ชื่อด้านบนได้เลย';
 
   @override
-  String get commonShowAmounts => 'แสดงยอดเงิน';
-
-  @override
-  String get commonHideAmounts => 'ซ่อนยอดเงิน';
-
-  @override
   String get errorNetworkTitle => 'ไม่มีการเชื่อมต่อ';
 
   @override
@@ -962,19 +956,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get projectTxNewTitle => 'เพิ่มรายการอีเวนต์';
-
-  @override
-  String get projectTxEditTitle => 'แก้ไขรายการ';
-
-  @override
   String get projectTxPaidBy => 'ใครจ่าย';
-
-  @override
-  String get projectTxReceivedBy => 'ใครรับ';
-
-  @override
-  String get projectTxTags => 'แท็ก';
 
   @override
   String get projectTxAddTag => 'แท็กใหม่';
@@ -983,44 +965,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get projectTxTagHint => 'ชื่อแท็ก';
 
   @override
-  String get projectTxDescriptionHint => 'คำอธิบาย';
-
-  @override
-  String projectTxDescriptionUse(String text) {
-    return 'ใช้ \"$text\"';
-  }
-
-  @override
-  String get projectTxDescriptionPast => 'เคยใช้ในอีเวนต์นี้';
-
-  @override
   String get projectTxSplitMember => 'ใคร';
-
-  @override
-  String get projectTxSplits => 'หารกับ';
-
-  @override
-  String get projectTxSplitsHint =>
-      'แต่ละคนต้องคืนคนจ่ายเท่าไร | คนจ่ายรับส่วนที่เหลือ';
-
-  @override
-  String get projectTxAddSplit => 'เพิ่มการหาร';
-
-  @override
-  String get projectTxSplitEqual => 'หารเท่ากัน';
-
-  @override
-  String projectTxSplitsOver(String sum) {
-    return 'ยอดหารรวม ($sum) เกินยอดรวม';
-  }
-
-  @override
-  String projectTxPayerKeeps(String amount) {
-    return 'ส่วนของคนจ่าย $amount';
-  }
-
-  @override
-  String get projectTxAmountRequired => 'ใส่ยอดมากกว่า 0';
 
   @override
   String get settingsThemeMint => 'มิ้นต์';
@@ -1030,15 +975,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get settingsNotifications => 'การแจ้งเตือน';
-
-  @override
-  String get settingsNotificationsHint =>
-      'เรื่องที่อยากรับ และสิ่งที่ทำให้อัตโนมัติ';
-
-  @override
-  String settingsNotificationsSummary(int on, int auto) {
-    return 'เปิด $on เรื่อง | อัตโนมัติ $auto เรื่อง';
-  }
 
   @override
   String get settingsFontSample => 'ตัวอย่าง ภาษาไทย ABC 123';
@@ -1100,15 +1036,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifHidden => 'ซ่อนแล้ว';
 
   @override
-  String get notifSettingsTitle => 'ตั้งค่าการแจ้งเตือน';
-
-  @override
-  String get notifSettingsReceive => 'การแจ้งเตือนที่ได้รับ';
-
-  @override
-  String get notifGroupSplits => 'การหารบิล';
-
-  @override
   String get notifGroupProjects => 'อีเวนต์';
 
   @override
@@ -1130,18 +1057,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifTypeProjectAdded => 'ถูกเพิ่มเข้าอีเวนต์';
 
   @override
-  String get notifAutoAddDebt => 'อัตโนมัติ: เพิ่มเข้าหนี้ของฉัน';
-
-  @override
-  String get notifAutoCopyToBook => 'อัตโนมัติ: บันทึกเข้าบัญชีส่วนตัว';
-
-  @override
-  String get notifAutoUpdateCopy => 'อัตโนมัติ: อัปเดตรายการส่วนตัวตาม';
-
-  @override
-  String get notifActionAddDebt => 'เพิ่มเข้าหนี้ของฉัน';
-
-  @override
   String get notifActionCopyToBook => 'บันทึกเข้าบัญชีส่วนตัว';
 
   @override
@@ -1157,12 +1072,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String notifProjectAdded(String actor, String project) {
     return '$actor เพิ่มคุณเข้าอีเวนต์ $project';
   }
-
-  @override
-  String get notifDefaultAccount => 'กระเป๋าที่รับเงิน';
-
-  @override
-  String get notifDefaultAccountNone => 'ยังไม่ได้เลือก';
 
   @override
   String get notifSettingsSaveFailed => 'บันทึกไม่ได้ — เปลี่ยนกลับแล้ว';
@@ -1317,20 +1226,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txDeleted => 'ลบรายการแล้ว';
 
   @override
-  String get txDeleteRecurringTitle => 'ลบรายการนี้?';
-
-  @override
-  String txDeleteRecurringBody(String name) {
-    return 'ผูกกับ $name';
-  }
-
-  @override
-  String get txDeleteRecurringOnly => 'ลบรายการอย่างเดียว (งวดกลับเป็นค้าง)';
-
-  @override
-  String get txDeleteRecurringSkip => 'ลบรายการและข้ามงวดนี้';
-
-  @override
   String get txSplitEqually => 'หารเท่ากัน';
 
   @override
@@ -1341,10 +1236,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get txSplitExceeds => 'ยอดหารรวมเกินยอดรายการ';
-
-  @override
-  String get txSavedTagsFailed =>
-      'บันทึกรายการแล้ว แต่ใส่แท็กไม่สำเร็จ แก้แท็กในรายการได้';
 
   @override
   String get txTransferNeedsTo => 'เลือกกระเป๋าปลายทาง';
@@ -1699,9 +1590,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsTitle => 'การตั้งค่า';
 
   @override
-  String get settingsSectionAbout => 'เกี่ยวกับ';
-
-  @override
   String get settingsChangePassword => 'เปลี่ยนรหัสผ่าน';
 
   @override
@@ -1712,9 +1600,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get settingsLanguage => 'ภาษา';
-
-  @override
-  String get settingsFont => 'ฟอนต์';
 
   @override
   String get settingsAppVersion => 'เวอร์ชันแอป';
@@ -1810,12 +1695,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get notifTypeSplitChanged => 'มีคนแก้การหารบิลกับฉัน';
-
-  @override
-  String get notifAutoApplySplitChange => 'อัตโนมัติ: อัปเดตหนี้ของฉันตาม';
-
-  @override
   String notifSplitAmountChanged(
     String who,
     String what,
@@ -1829,21 +1708,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String notifSplitRemovedYou(String who, String what) {
     return '$who เอาคุณออกจากการหาร $what';
   }
-
-  @override
-  String get notifSplitChangeUpdated => 'อัปเดตหนี้ตามแล้ว';
-
-  @override
-  String get notifSplitChangeDeleted => 'ลบหนี้รายการนี้ออกแล้ว';
-
-  @override
-  String get notifSplitChangeUsed => 'อัปเดตไปแล้ว';
-
-  @override
-  String get notifSplitChangeStale => 'อัปเดตไม่ได้แล้ว — มีการแก้ใหม่กว่านี้';
-
-  @override
-  String get notifSplitChangeGone => 'หนี้รายการนี้ถูกลบไปแล้ว';
 
   @override
   String txSplitStatusOverpaidToThem(String amount) {
@@ -1959,9 +1823,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get txTagCreateFailed => 'สร้างแท็กไม่สำเร็จ';
-
-  @override
-  String get projectTxPayerRequired => 'เลือกสมาชิกก่อน';
 
   @override
   String get quickFrom => 'จาก';
@@ -2620,16 +2481,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get walletErrorInvalidIdentifier => 'เลขบัญชีไม่ถูกต้อง';
 
   @override
-  String get categoryFeeSwitchLabel => 'ใช้เป็นหมวดค่าธรรมเนียม';
-
-  @override
-  String get categoryFeeSwitchHelper =>
-      'ค่าธรรมเนียมจากสลิปจะเข้าหมวดนี้ | ได้ทีละหมวด';
-
-  @override
-  String get categoryFeeSwitchFailed => 'ตั้งหมวดค่าธรรมเนียมไม่สำเร็จ';
-
-  @override
   String get monthPickerTitle => 'เลือกเดือน';
 
   @override
@@ -3202,14 +3053,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtCloseLabel => 'ปิดหนี้';
 
   @override
-  String get debtClosePick => 'เลือกหนี้';
-
-  @override
-  String debtCloseChosen(int n) {
-    return 'เลือกแล้ว $n หนี้';
-  }
-
-  @override
   String debtCloseConfirm(int n) {
     return 'เลือก $n หนี้';
   }
@@ -3305,22 +3148,7 @@ class AppLocalizationsTh extends AppLocalizations {
       'เจ้าของต้องโอนความเป็นเจ้าของก่อนออกจากอีเวนต์';
 
   @override
-  String get eventDeleteBody =>
-      'บิลทั้งหมดในอีเวนต์จะถูกลบ | รายการในบัญชีของคุณที่ผูกกับอีเวนต์นี้ เลือกได้ว่าจะเก็บไว้หรือลบด้วย';
-
-  @override
-  String get eventDeleteKeepTxs => 'ยืนยัน ไม่ลบรายการ';
-
-  @override
-  String eventDeleteWithTxs(int count) {
-    return 'ยืนยันและลบ $count รายการ';
-  }
-
-  @override
   String get eventDeleteConfirm => 'ยืนยันลบ';
-
-  @override
-  String get eventDeleteNotYet => 'ยังก่อน';
 
   @override
   String get occurrenceStateUpcoming => 'ล่วงหน้า';
@@ -3395,15 +3223,6 @@ class AppLocalizationsTh extends AppLocalizations {
     );
     return '$_temp0';
   }
-
-  @override
-  String get occurrenceSkipLinkedTitle => 'ข้ามงวดนี้?';
-
-  @override
-  String get occurrenceSkipKeepTx => 'ข้าม แต่เก็บรายการไว้';
-
-  @override
-  String get occurrenceSkipDeleteTx => 'ข้ามและลบรายการ';
 
   @override
   String get occurrenceDueTitle => 'ต้องจัดการ';
@@ -3579,15 +3398,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get linkedSaveBoth => 'บันทึกและแก้อีกฝั่ง';
-
-  @override
-  String get linkedDeleteTitle => 'ลบรายการที่ผูกไว้ด้วยไหม?';
-
-  @override
-  String get linkedDeleteThisOnly => 'ลบเฉพาะฝั่งนี้';
-
-  @override
-  String get linkedDeleteBoth => 'ลบทั้งสองฝั่ง';
 
   @override
   String get dueToday => 'วันนี้';
@@ -5177,9 +4987,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpEventsArchiveConsequence => 'ซ่อนไว้ ไม่นับในยอด กู้คืนได้';
 
   @override
-  String get fpEventsDeleteConsequence => 'เลือกได้ว่าจะลบบิลในอีเวนต์ด้วยไหม';
-
-  @override
   String get fpEventsRestore => 'กู้คืนอีเวนต์';
 
   @override
@@ -5291,27 +5098,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String get evbBooked => 'ลงบัญชีแล้ว';
 
   @override
-  String get evbBookDebt => 'หนี้';
-
-  @override
   String evbBookDebtLine(String name) {
     return 'ฉันค้าง $name';
   }
 
   @override
-  String get evbBookTx => 'รายการ';
-
-  @override
-  String get evbBookTxLine => 'รายจ่ายส่วนของฉัน';
-
-  @override
   String evbPaybackBy(String name) {
     return 'จ่ายคืน | จดโดย $name';
-  }
-
-  @override
-  String evbPaidFrom(String wallet) {
-    return 'จ่ายจาก $wallet';
   }
 
   @override
@@ -5342,11 +5135,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get evbSettleRecorded => 'จดแล้ว';
 
   @override
-  String evbSettleRecordBody(String from, String to, String amount) {
-    return 'จดลงหนี้สินของคุณ: $from → $to $amount';
-  }
-
-  @override
   String get evbBookedDebt => 'ลงหนี้';
 
   @override
@@ -5364,11 +5152,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get evbOnlyMine => 'เฉพาะของฉัน';
-
-  @override
-  String evbDebtorsLine(int count) {
-    return 'ลูกหนี้ $count คน';
-  }
 
   @override
   String get evbNoDebt => 'ไม่เป็นหนี้';
@@ -5410,40 +5193,16 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get notifSettingsLegend =>
-      'ปิด ไม่บอก | แจ้ง แจ้งเตือนพร้อมปุ่มกดทำทันที | อัตโนมัติ ระบบทำให้เลย แล้วแจ้งว่าทำอะไรไป';
-
-  @override
-  String get notifStateOff => 'ปิด';
-
-  @override
-  String get notifStateNotify => 'แจ้ง';
-
-  @override
-  String get notifStateAuto => 'อัตโนมัติ';
-
-  @override
   String get notifGroupRecurring => 'รายการประจำ';
 
   @override
   String get notifTypeRecurringDue => 'รายการประจำถึงกำหนด';
 
   @override
-  String get notifTypeRecurringDueHint =>
-      'อยู่ใน ต้องจัดการ หน้ารายการประจำเสมอ | ปิด = ไม่แจ้ง';
-
-  @override
   String get notifTypeRecurringEnding => 'รายการประจำใกล้จบ';
 
   @override
-  String get notifTypeRecurringEndingHint => 'เหลือไม่กี่งวด | ต่ออีกไหม';
-
-  @override
   String get notifTypeRecurringAutoCreated => 'บันทึกอัตโนมัติ';
-
-  @override
-  String get notifTypeRecurringAutoCreatedHint =>
-      'แจ้งวันละครั้ง ว่าบันทึกให้กี่รายการ | ปิด = ไม่แจ้ง';
 
   @override
   String get notifTypeRequestsHint => 'ต้องตอบ เลยปิดไม่ได้';
@@ -5453,9 +5212,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get settingsSectionMoney => 'เงิน';
-
-  @override
-  String get settingsSectionData => 'ข้อมูล';
 
   @override
   String get settingsCurrencyHint => 'เปลี่ยนแค่ป้าย ไม่แปลงยอด';
@@ -5494,7 +5250,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsMoneyDecimalsAuto => 'ซ่อนเฉพาะ .00';
 
   @override
-  String get settingsMainWalletHint => 'ใช้เป็นค่าเริ่มต้นตอนบันทึก';
+  String get settingsMainWalletHint =>
+      'ใช้ทุกครั้งที่จดรายการ ไม่ตั้ง = กระเป๋าที่ใช้ล่าสุด';
 
   @override
   String get settingsMainWalletNone => 'ยังไม่ตั้ง';
@@ -5507,9 +5264,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get settingsExportCsv => 'ส่งออก CSV';
-
-  @override
-  String get settingsComingIn04 => '0.4';
 
   @override
   String get profileSectionSecurity => 'ความปลอดภัย';
@@ -6010,36 +5764,11 @@ class AppLocalizationsTh extends AppLocalizations {
       'ถึงวันแล้วบันทึกเป็นรายการให้เลย ไม่ต้องกดยืนยัน';
 
   @override
-  String get fpRecurringAutoCreateNeeds => 'ต้องมียอดคงที่และกระเป๋าก่อน';
-
-  @override
-  String fpRecurringTxScopeTitle(int n) {
-    return 'ใช้การแก้นี้กับรายการที่บันทึกแล้ว $n รายการด้วยไหม';
-  }
-
-  @override
-  String get fpRecurringTxScopeFuture => 'เฉพาะงวดต่อจากนี้';
-
-  @override
-  String get fpRecurringTxScopeAll =>
-      'รวมที่บันทึกแล้วด้วย (ยอดกับวันที่ไม่เปลี่ยน)';
-
-  @override
-  String fpRecurringTxUpdateFailed(int n) {
-    return 'อัปเดตรายการที่บันทึกแล้วไม่ได้ $n รายการ';
-  }
-
-  @override
   String get fpM5bRecurringPerMonth => 'ต่อเดือน';
 
   @override
   String fpM5bRecurringDeleteNumbers(int items, int drafts, int linked) {
     return 'จะลบ $items งวด ร่างที่รออยู่ $drafts รายการ และเกี่ยวข้องกับรายการที่บันทึกแล้ว $linked รายการ';
-  }
-
-  @override
-  String fpM5bEventDeleteNumbers(int bills, int members) {
-    return 'จะลบบิล $bills รายการ และสมาชิก $members คน';
   }
 
   @override
@@ -6056,22 +5785,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get debtSettleChip => 'จ่ายหนี้';
-
-  @override
-  String get debtOriginFieldLabel => 'ที่มา';
-
-  @override
-  String get debtOriginPickFirst => 'เลือกคนก่อน';
-
-  @override
-  String debtOriginLend(String name) {
-    return 'ให้ $name ยืม';
-  }
-
-  @override
-  String debtOriginBorrow(String name) {
-    return 'ยืมจาก $name';
-  }
 
   @override
   String get debtRoleDebtor => 'ลูกหนี้';
@@ -6109,16 +5822,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get debtRepayFrom => 'รับคืนจาก';
-
-  @override
-  String debtRepayDescPay(String name) {
-    return 'จ่ายคืน $name';
-  }
-
-  @override
-  String debtRepayDescReceive(String name) {
-    return 'รับคืนจาก $name';
-  }
 
   @override
   String get debtMarkPaidLabel => 'ปิดหนี้';
@@ -6256,13 +5959,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get linkedEventAskTitle => 'แก้ในอีเวนต์ด้วยไหม?';
 
   @override
-  String get linkedBookAskTitle => 'แก้ในสมุดของฉันด้วยไหม?';
-
-  @override
   String get linkedMineOnly => 'แก้แค่ของฉัน';
-
-  @override
-  String get linkedEventOnly => 'แก้แค่ในอีเวนต์';
 
   @override
   String get linkedBoth => 'แก้ทั้งคู่';
@@ -6270,9 +5967,6 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get txLinkDraftNeedsExistingEvent =>
       'ร่างผูกได้กับอีเวนต์ที่มีอยู่แล้วเท่านั้น';
-
-  @override
-  String get debtQuickCreateTxLabel => 'บันทึกเป็นรายการด้วย';
 
   @override
   String debtResultNow(String name) {
@@ -6573,10 +6267,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txLinkDisconnectTitle => 'ตัดการเชื่อมกับอีเวนต์?';
 
   @override
-  String get txLinkDisconnectBody =>
-      'รายการนี้จะเป็นรายการธรรมดา บิลในอีเวนต์ไม่เปลี่ยน';
-
-  @override
   String get txLinkDisconnected => 'ตัดการเชื่อมแล้ว';
 
   @override
@@ -6613,5 +6303,514 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String debtPartnerLinked(String name) {
     return 'เชื่อมกับสมุดของ $name';
+  }
+
+  @override
+  String get eventCompleteTitle => 'ปิดอีเวนต์ถาวร?';
+
+  @override
+  String get eventCompleteBody =>
+      'ย้อนกลับไม่ได้ เพิ่มหรือแก้บิลไม่ได้อีก และรายการในสมุดของทุกคนจะเลิกซิงก์กับอีเวนต์นี้ทันที (ยังเชื่อมกันไว้)';
+
+  @override
+  String get eventCompleteConfirm => 'ปิดอีเวนต์';
+
+  @override
+  String get eventCompleted => 'ปิดอีเวนต์แล้ว';
+
+  @override
+  String get eventCompletedNotice =>
+      'อีเวนต์นี้ปิดแล้ว แก้ไขหรือเพิ่มบิลไม่ได้ และไม่ซิงก์กับสมุดของใครอีก';
+
+  @override
+  String get eventErrCompleted => 'อีเวนต์นี้ปิดแล้ว แก้ไขไม่ได้';
+
+  @override
+  String get eventErrNotActive => 'ปิดได้เฉพาะอีเวนต์ที่กำลังดำเนินการ';
+
+  @override
+  String get eventErrEmptyPerson =>
+      'ยังมีบิลที่มีช่องคนว่าง ใส่คนให้ครบก่อนปิดอีเวนต์';
+
+  @override
+  String get settingsHomeCaption => 'ทุกค่าเก็บไว้กับบัญชี ใช้ได้ทุกเครื่อง';
+
+  @override
+  String get settingsGroupSync => 'ซิงก์อัตโนมัติ';
+
+  @override
+  String get settingsGroupPagePrefs => 'ตัวกรองและการเรียง';
+
+  @override
+  String get settingsSummaryOn => 'เปิด';
+
+  @override
+  String get settingsSummaryOff => 'ปิด';
+
+  @override
+  String settingsSyncSummary(String events, String debts) {
+    return 'อีเวนต์ $events | หนี้และแบ่งจ่าย $debts';
+  }
+
+  @override
+  String settingsNotificationsOnSummary(int on, int total) {
+    return 'เปิด $on จาก $total เรื่อง';
+  }
+
+  @override
+  String settingsPagePrefsSummary(int count) {
+    return '$count หน้า | จำค่าที่เลือกล่าสุด';
+  }
+
+  @override
+  String settingsMainWalletSummary(String name) {
+    return 'กระเป๋าหลัก $name';
+  }
+
+  @override
+  String get settingsComingSoon => 'เร็วๆ นี้';
+
+  @override
+  String get settingsFontThai => 'ฟอนต์ภาษาไทย';
+
+  @override
+  String get settingsFontEnglish => 'ฟอนต์ภาษาอังกฤษ';
+
+  @override
+  String get settingsPreview => 'ตัวอย่าง';
+
+  @override
+  String get settingsSectionNumbers => 'การแสดงตัวเลข';
+
+  @override
+  String get settingsSectionEntryDefaults => 'ค่าเริ่มต้นตอนจดรายการ';
+
+  @override
+  String get settingsFeeCategory => 'หมวดค่าธรรมเนียม';
+
+  @override
+  String get settingsFeeCategoryHint => 'ใช้ตอนโอนเงินที่มีค่าธรรมเนียม';
+
+  @override
+  String get settingsSyncLegend =>
+      'เปิด = คนอื่นแก้บิล ของฉันเปลี่ยนตามทันที\nปิด = ได้แจ้งเตือน “อัปเดตตาม” ให้กดเอง';
+
+  @override
+  String get settingsSyncEvents => 'อีเวนต์';
+
+  @override
+  String get settingsSyncEventsHint => 'บิลในอีเวนต์ที่ฉันมีส่วน';
+
+  @override
+  String get settingsSyncDebts => 'หนี้และแบ่งจ่าย';
+
+  @override
+  String get settingsSyncDebtsHint => 'บิลและหนี้กับคนที่เชื่อมบัญชี';
+
+  @override
+  String get settingsSyncFootnote =>
+      'สวิตช์เดียวกับในหน้าอีเวนต์และหน้าคน เปลี่ยนที่ไหนก็เป็นค่าเดียวกัน | ปิดเสียงแจ้งเตือนแล้ว ซิงก์ยังทำงานเงียบๆ';
+
+  @override
+  String get notifSettingsOnOffLegend =>
+      'เปิด = ได้รับแจ้งเตือน | ปิด = เงียบ\nซิงก์อัตโนมัติแยกอยู่ในหน้าตั้งค่า ปิดเสียงแล้วยังอัปเดตให้เงียบๆ';
+
+  @override
+  String get notifGroupSharedBills => 'บิลที่แชร์';
+
+  @override
+  String get notifSetSplitCreatedHint => 'บิลใหม่ที่มีส่วนของฉัน';
+
+  @override
+  String get notifSetSplitChanged => 'มีคนแก้บิลที่แชร์กับฉัน';
+
+  @override
+  String get notifSetSplitChangedHint => 'ยอด วันที่ หรือคำอธิบายเปลี่ยน';
+
+  @override
+  String get notifSetSharedBillDeleted => 'มีคนลบบิลที่แชร์กับฉัน';
+
+  @override
+  String get notifSetSharedBillDeletedHint => 'สำเนาของฉันกลายเป็นรายการธรรมดา';
+
+  @override
+  String get notifSetSharedBillDisconnected =>
+      'มีคนตัดการเชื่อมบิลที่แชร์กับฉัน';
+
+  @override
+  String get notifSetSharedBillDisconnectedHint =>
+      'บิลของฉันยังอยู่ แค่ไม่เชื่อมกันแล้ว';
+
+  @override
+  String get notifSetDebtDisconnectedHint =>
+      'หนี้ของฉันยังอยู่ แค่ไม่เชื่อมกันแล้ว';
+
+  @override
+  String get notifSetProjectTxForYouHint =>
+      'คนอื่นจ่ายแทน หรือลงบิลที่ฉันเป็นคนจ่าย';
+
+  @override
+  String get notifSetProjectTxChangedHint => 'บิลที่มีส่วนของฉันเปลี่ยน';
+
+  @override
+  String get notifSetEventCompleted => 'อีเวนต์ปิดแล้ว';
+
+  @override
+  String get notifSetEventCompletedHint =>
+      'ล็อกถาวร เลิกซิงก์ เคลมได้ครั้งเดียว';
+
+  @override
+  String get notifSetEventMemberRemoved => 'ถูกเอาออกจากอีเวนต์';
+
+  @override
+  String get notifSetEventMemberRemovedHint =>
+      'รายการที่ลงไว้ยังอยู่ แค่ไม่เชื่อมกันแล้ว';
+
+  @override
+  String get notifSetRecurringAutoCreatedHint => 'ระบบลงรายการให้ตามรอบ';
+
+  @override
+  String get notifSetRequests =>
+      'คำเชิญเข้าอีเวนต์ ขอเชื่อมผู้ติดต่อ ชวนใช้กระเป๋า';
+
+  @override
+  String get notifActionAddToBook => 'เพิ่มในสมุด';
+
+  @override
+  String get notifActionRemoveMine => 'ลบตาม';
+
+  @override
+  String get notifActionKeepMine => 'เก็บไว้';
+
+  @override
+  String notifSharedBillCreated(String who, String what) {
+    return '$who บันทึกบิล $what ที่คุณมีส่วน';
+  }
+
+  @override
+  String notifSharedBillDeleted(String who, String what) {
+    return '$who ลบบิล $what';
+  }
+
+  @override
+  String notifSharedBillDisconnected(String who, String what) {
+    return '$who ตัดการเชื่อมบิล $what';
+  }
+
+  @override
+  String notifEventCompleted(String who, String name) {
+    return '$who ปิดอีเวนต์ $name แล้ว';
+  }
+
+  @override
+  String notifEventMemberRemoved(String who, String name) {
+    return '$who นำคุณออกจากอีเวนต์ $name';
+  }
+
+  @override
+  String get notifBillRemovedMine => 'ลบรายการของบิลนี้ออกจากสมุดแล้ว';
+
+  @override
+  String get notifBillGone => 'บิลนี้ถูกลบไปแล้ว';
+
+  @override
+  String get notifBillDisconnectedMine =>
+      'คุณตัดการเชื่อมบิลนี้ไว้ เชื่อมใหม่ได้จากหน้าบิล';
+
+  @override
+  String get txLinkDisconnectBodyCopy =>
+      'รายการนี้และหนี้จากบิลนี้จะเป็นรายการธรรมดา แก้เองได้ บิลไม่เปลี่ยน และการแก้บิลจะไม่ตามมาอีก';
+
+  @override
+  String get evbEmptyPerson => 'ยังไม่ระบุคน';
+
+  @override
+  String get evbAssignMe => 'ฉัน';
+
+  @override
+  String get evbAssignTitle => 'ใครแทนช่องนี้';
+
+  @override
+  String get evbAssignWhose => 'ช่องของใคร';
+
+  @override
+  String get evbAssignAction => 'ใส่คน';
+
+  @override
+  String get evbAssigned => 'ใส่คนแล้ว';
+
+  @override
+  String evbEmptyPersonsNotice(int count) {
+    return '$count บิลมีช่องคนว่าง จากคนที่ถูกนำออก ใส่คนให้ครบก่อนปิดอีเวนต์';
+  }
+
+  @override
+  String get evbBillChanged => 'บิลถูกแก้แล้ว โหลดใหม่ให้แล้ว';
+
+  @override
+  String get evbSplitBill => 'บิลแบ่งจ่าย';
+
+  @override
+  String get fpRecurringKindDebt => 'หนี้';
+
+  @override
+  String get pagePrefSort => 'เรียง';
+
+  @override
+  String get pagePrefFilter => 'กรอง';
+
+  @override
+  String get pagePrefStatus => 'สถานะ';
+
+  @override
+  String get pagePrefKind => 'ประเภท';
+
+  @override
+  String get pagePrefLink => 'การผูก';
+
+  @override
+  String get pagePrefCollapsed => 'ยุบหมวดแม่';
+
+  @override
+  String get pagePrefAll => 'ทั้งหมด';
+
+  @override
+  String get pagePrefPendingManual => 'ใส่เอง';
+
+  @override
+  String get pagePrefPendingOthers => 'จากคนอื่น';
+
+  @override
+  String get pagePrefNone => 'ไม่มี';
+
+  @override
+  String pagePrefValue(String title, String value) {
+    return '$title: $value';
+  }
+
+  @override
+  String get pagePrefsChanged => 'เปลี่ยนแล้ว';
+
+  @override
+  String get pagePrefsCaption =>
+      'เลือกในหน้าไหน ค่าตรงนี้ก็เปลี่ยนตาม | แตะเพื่อตั้งเอง';
+
+  @override
+  String get pagePrefsFootnote =>
+      'แท็บ ช่วงวันที่ และแถบค้นหา เริ่มใหม่ทุกครั้งที่เปิดหน้า';
+
+  @override
+  String get pagePrefsResetAll => 'คืนค่าเริ่มต้นทั้งหมด';
+
+  @override
+  String get pagePrefsResetAllBody =>
+      'ทุกหน้ากลับไปใช้ตัวกรองและการเรียงเริ่มต้น';
+
+  @override
+  String get pagePrefsResetPage => 'คืนค่าเริ่มต้นของหน้านี้';
+
+  @override
+  String get pagePrefsSetOnPage => 'ตั้งในหน้านั้นเอง';
+
+  @override
+  String evbClaimTitle(String name) {
+    return 'ลงสมุดของฉัน: $name';
+  }
+
+  @override
+  String evbClaimTheyOwe(String name) {
+    return '$name ติดฉัน';
+  }
+
+  @override
+  String evbClaimIOwe(String name) {
+    return 'ฉันติด $name';
+  }
+
+  @override
+  String get evbClaimPaybacks => 'คืนเงิน / ให้ยืม';
+
+  @override
+  String get evbClaimUntitled => 'บิล';
+
+  @override
+  String get evbClaimDone => 'ลงสมุดแล้ว';
+
+  @override
+  String get evbClaimNote =>
+      'บิลที่เลือกรวมเป็นหนี้ก้อนเดียวกับคนนี้ บิลที่คนอื่นจ่ายจะได้รายการ \"จ่ายโดย\" ของส่วนฉัน';
+
+  @override
+  String evbClaimConfirm(int count) {
+    return 'ลงสมุด $count บิล';
+  }
+
+  @override
+  String evbClaimed(String name) {
+    return 'ลงสมุดกับ $name แล้ว';
+  }
+
+  @override
+  String get evbClaimNothing => 'ไม่มีบิลที่ยังไม่ลงสมุด';
+
+  @override
+  String get evbClaimMixed => 'เลือกได้ทีละฝั่ง: ติดฉัน หรือ ฉันติด';
+
+  @override
+  String get evbClaimAlready => 'บางบิลลงสมุดไปแล้ว';
+
+  @override
+  String get evbMyCopy => 'สมุดของฉัน';
+
+  @override
+  String evbPaidByName(String name) {
+    return 'จ่ายโดย $name';
+  }
+
+  @override
+  String evbPaidBackName(String name) {
+    return 'คืน $name แล้ว';
+  }
+
+  @override
+  String get evbPrivateNote => 'โน้ตส่วนตัว';
+
+  @override
+  String get evbPrivateNoteHint => 'เห็นแค่คุณ';
+
+  @override
+  String get evbCopyDisconnected => 'ตัดการเชื่อมไว้ บิลนี้ไม่เข้าสมุดของฉัน';
+
+  @override
+  String get evbReconnect => 'เชื่อมใหม่';
+
+  @override
+  String get evbCopyOutOfSync => 'สมุดของฉันไม่ตรงกับบิล';
+
+  @override
+  String get evbApplyBill => 'อัปเดตตาม';
+
+  @override
+  String get debtBillsTitle => 'บิลในหนี้ก้อนนี้';
+
+  @override
+  String get debtBillSplit => 'แบ่งจ่าย';
+
+  @override
+  String get debtBillOutOfSync => 'ไม่ตรง';
+
+  @override
+  String get evbJoinTitle => 'ผูกกับบิลไหน';
+
+  @override
+  String evbJoinPaidBy(String name) {
+    return '$name จ่าย';
+  }
+
+  @override
+  String get evbJoined => 'ผูกกับบิลแล้ว';
+
+  @override
+  String get evbSettlePairs => 'ตามคู่จริง';
+
+  @override
+  String get evbSettleSimplified => 'จ่ายน้อยครั้งสุด';
+
+  @override
+  String get evbSettleBook => 'ลงในสมุดฉัน';
+
+  @override
+  String get evbSettleBookTitle => 'ลงในสมุดฉันครั้งเดียว?';
+
+  @override
+  String get evbSettleBookBody =>
+      'เงินที่โอนจริงจะเป็นรายการ หนี้จากบิลที่ลงไว้แล้วจะถูกปิดให้เป็นศูนย์ และลงคู่จริงเพิ่มไม่ได้อีก';
+
+  @override
+  String get evbSettleBooked => 'ลงในสมุดฉันแล้ว';
+
+  @override
+  String evbSettleBookedOn(String date) {
+    return 'ลงในสมุดฉันแล้วเมื่อ $date';
+  }
+
+  @override
+  String get evbSettleAlreadyBooked => 'ลงในสมุดไปแล้ว';
+
+  @override
+  String evbBookLinePay(String name, String amount) {
+    return 'จ่าย $name $amount';
+  }
+
+  @override
+  String evbBookLineGet(String name, String amount) {
+    return 'รับจาก $name $amount';
+  }
+
+  @override
+  String get occurrenceNothingOwed => 'ไม่มียอดค้างกับคนนี้แล้ว';
+
+  @override
+  String get recurringPausedNoBalance =>
+      'หยุดชั่วคราว: ไม่มียอดค้าง 3 งวด | มีหนี้ใหม่กับคนนี้เมื่อไหร่ เริ่มเองอีกครั้ง';
+
+  @override
+  String get recurringNoBalanceChip => 'ไม่มียอดค้าง';
+
+  @override
+  String get debtsPersonAddRecurring => 'ตั้งเป็นรายการประจำ';
+
+  @override
+  String get occurrenceDebtPickEmpty => 'ไม่มีรายการของคนนี้ที่ผูกได้';
+
+  @override
+  String get debtFromEventLabel => 'จากบิลอีเวนต์';
+
+  @override
+  String get debtFromEventPick => 'เลือกบิล';
+
+  @override
+  String get txJoinBill => 'ผูกกับบิลในอีเวนต์';
+
+  @override
+  String get settingsAcceptTitle => 'รับบิลใหม่อัตโนมัติ';
+
+  @override
+  String get settingsAcceptLegend =>
+      'เปิด = บิลใหม่ที่มีส่วนของฉัน ลงสมุดฉันทันที\nปิด = ได้แจ้งเตือน “เพิ่มในสมุด” ให้กดเอง';
+
+  @override
+  String get settingsAcceptEventsHint => 'บิลใหม่ในอีเวนต์ที่ฉันมีส่วน';
+
+  @override
+  String get settingsAcceptDebtsHint => 'บิลแบ่งจ่ายใหม่จากคนที่เชื่อมบัญชี';
+
+  @override
+  String get settingsAcceptShortHint => 'บิลใหม่ลงสมุดฉันทันที';
+
+  @override
+  String get settingsSyncShortHint => 'คนอื่นแก้บิล ของฉันเปลี่ยนตามทันที';
+
+  @override
+  String get eventDeleteKeepsBills =>
+      'ลบแค่อีเวนต์ บิลข้างในยังอยู่ เป็นบิลแบ่งจ่าย ทุกคนยังเชื่อมกันเหมือนเดิม ไม่มีรายการในสมุดของใครถูกลบ';
+
+  @override
+  String get eventDeleteKeepsBillsShort => 'บิลข้างในยังอยู่ เป็นบิลแบ่งจ่าย';
+
+  @override
+  String get evbPayersLabel => 'คนจ่าย';
+
+  @override
+  String evbPayers(int count) {
+    return 'คนจ่าย | $count';
+  }
+
+  @override
+  String get evbAddPayer => 'เพิ่มคนจ่าย';
+
+  @override
+  String evbPayersLine(String payers) {
+    return 'จ่าย $payers';
   }
 }

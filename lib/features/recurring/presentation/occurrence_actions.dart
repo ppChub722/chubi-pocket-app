@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 
 import '../../../app/shell/tab_nav.dart';
 import '../../../core/network/api_exception.dart';
@@ -10,6 +11,10 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
 import '../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../pending/domain/pending_transaction.dart';
+import '../../personal_debts/data/personal_debts_repository.dart';
+import '../../personal_debts/domain/debt_ledger.dart';
+import '../../personal_debts/presentation/debt_wiring.dart'
+    show debtEntryKindName;
 import '../../transactions/domain/transaction.dart';
 import '../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../transactions/presentation/widgets/quick_create_sheet.dart';
@@ -19,9 +24,15 @@ import '../data/recurring_link_repository.dart';
 import '../data/recurring_repository.dart';
 import '../domain/recurrence_rule.dart';
 import '../domain/recurring_item.dart';
+import 'recurring_rows.dart' show occurrenceDebtParts;
 
 /// Occurrences being written, so a second tap waits for the first.
 final _inFlight = <String>{};
+
+/// A write's error as the snack says it: a หนี้ จ่ายหนี้ with nothing owed
+/// (409 NOTHING_OWED) in its own words.
+String occurrenceErrorText(AppLocalizations l, ApiException e) =>
+    e.code == 'NOTHING_OWED' ? l.occurrenceNothingOwed : e.message;
 
 Future<bool> _write(
   BuildContext context,
@@ -31,6 +42,7 @@ Future<bool> _write(
   String? done,
 }) async {
   if (!_inFlight.add(key)) return false;
+  final l = AppLocalizations.of(context)!;
   final repo = RecurringRepository.of(context);
   final accounts = context.read<AccountsCubit>();
   final messenger = ScaffoldMessenger.of(context);
@@ -42,7 +54,7 @@ Future<bool> _write(
     if (done != null) showAppSnackBarOn(messenger, done, tone: Tone.success);
     return true;
   } on ApiException catch (e) {
-    showAppSnackBarOn(messenger, e.message, tone: Tone.danger);
+    showAppSnackBarOn(messenger, occurrenceErrorText(l, e), tone: Tone.danger);
     return false;
   } finally {
     _inFlight.remove(key);
@@ -52,18 +64,25 @@ Future<bool> _write(
 String? _text(String? v) => v == null || v.trim().isEmpty ? null : v.trim();
 
 /// What the sheet changed, as `PUT …/occurrences/{slot}` fields (a present
-/// key overrides, null clears).
-Map<String, dynamic> occurrenceFields(PendingDraft was, PendingDraft now) => {
+/// key overrides, null clears). A หนี้ one ([debt]) has no category, tags
+/// or second wallet: those never go.
+Map<String, dynamic> occurrenceFields(
+  PendingDraft was,
+  PendingDraft now, {
+  bool debt = false,
+}) => {
   if (now.amount != was.amount) 'amount': now.amount,
   if (now.date != was.date) 'date': now.date,
   if (_text(now.description) != _text(was.description))
     'description': _text(now.description),
   if (_text(now.note) != _text(was.note)) 'note': _text(now.note),
   if (now.accountId != was.accountId) 'account_id': now.accountId,
-  if (now.transferToAccountId != was.transferToAccountId)
-    'to_account_id': now.transferToAccountId,
-  if (now.categoryId != was.categoryId) 'category_id': now.categoryId,
-  if (!_sameSet(now.tagIds, was.tagIds)) 'tag_ids': now.tagIds,
+  if (!debt) ...{
+    if (now.transferToAccountId != was.transferToAccountId)
+      'to_account_id': now.transferToAccountId,
+    if (now.categoryId != was.categoryId) 'category_id': now.categoryId,
+    if (!_sameSet(now.tagIds, was.tagIds)) 'tag_ids': now.tagIds,
+  },
 };
 
 bool _sameSet(List<String> a, List<String> b) =>
@@ -83,7 +102,7 @@ Future<bool> confirmOccurrence(
   final slot = item.slot!;
   final rest = was == null || now == null
       ? const <String, dynamic>{}
-      : (occurrenceFields(was, now)
+      : (occurrenceFields(was, now, debt: item.isDebt)
           ..remove('amount')
           ..remove('date')
           ..remove('account_id'));
@@ -107,14 +126,14 @@ Future<bool> confirmOccurrence(
   );
 }
 
-/// ข้าม. A filled one can't be skipped (owner 2026-10-27): its tx is
-/// disconnected first.
+/// ข้าม. A filled one can't be skipped (owner 2026-10-27): its tx (a หนี้'s
+/// entry) is disconnected first.
 Future<bool> skipOccurrence(
   BuildContext context,
   RecurringItem item, {
   required ValueChanged<ItemWriteResult> onChanged,
 }) async {
-  if (item.transaction != null) {
+  if (item.transaction != null || item.debtEntry != null) {
     final l = AppLocalizations.of(context)!;
     showAppSnackBar(context, l.occurrenceSkipFilled, tone: Tone.warning);
     return false;
@@ -153,12 +172,16 @@ Future<bool> _paid(
 );
 
 /// ผูกกับรายการที่มีอยู่: picks a tx near the occurrence's date, then links
-/// it ([applyOccurrenceTx]).
+/// it ([applyOccurrenceTx]). A หนี้ one picks an entry of its person
+/// instead ([linkExistingDebtEntry]).
 Future<bool> linkExistingTx(
   BuildContext context,
   RecurringItem item, {
   required ValueChanged<ItemWriteResult> onChanged,
 }) async {
+  if (item.isDebt) {
+    return linkExistingDebtEntry(context, item, onChanged: onChanged);
+  }
   final tx = await pickOccurrenceTx(context, item);
   if (tx == null || !context.mounted) return false;
   return applyOccurrenceTx(context, item, tx, onChanged: onChanged);
@@ -222,6 +245,118 @@ Future<bool> applyOccurrenceTx(
   }
 }
 
+/// หนี้ ผูกกับรายการที่มีอยู่: picks an entry of the rule's person (same
+/// จดหนี้ | จ่ายหนี้ and direction), then fills the occurrence with it. One
+/// already on another occurrence asks before it moves.
+Future<bool> linkExistingDebtEntry(
+  BuildContext context,
+  RecurringItem item, {
+  required ValueChanged<ItemWriteResult> onChanged,
+}) async {
+  final entry = await pickOccurrenceDebtEntry(context, item);
+  if (entry == null || !context.mounted) return false;
+  if (!_inFlight.add(item.id)) return false;
+  final l = AppLocalizations.of(context)!;
+  final repo = RecurringRepository.of(context);
+  final accounts = context.read<AccountsCubit>();
+  final messenger = ScaffoldMessenger.of(context);
+  Future<ItemWriteResult> link({bool replace = false}) =>
+      repo.linkOccurrenceDebtEntry(
+        item.ruleId!,
+        item.slot!,
+        entry.id,
+        replace: replace,
+      );
+  try {
+    ItemWriteResult r;
+    try {
+      r = await link();
+    } on ApiException catch (e) {
+      if (e.code != 'ITEM_ALREADY_LINKED' || !context.mounted) rethrow;
+      final ok = await showConfirmDialog(
+        context,
+        title: l.recurringLinkSwapTitle,
+        message: l.recurringLinkMoveBody,
+        confirmLabel: l.recurringLinkSwapYes,
+      );
+      if (!ok) return false;
+      r = await link(replace: true);
+    }
+    accounts.patchBalances(r.balances);
+    HapticFeedback.mediumImpact();
+    onChanged(r);
+    showAppSnackBarOn(messenger, l.recurringLinked, tone: Tone.success);
+    return true;
+  } on ApiException catch (e) {
+    showAppSnackBarOn(messenger, recurringLinkError(l, e), tone: Tone.danger);
+    return false;
+  } finally {
+    _inFlight.remove(item.id);
+  }
+}
+
+/// An entry of a หนี้ occurrence's person with its จดหนี้ | จ่ายหนี้ and
+/// direction, newest first (nothing written).
+Future<DebtEntry?> pickOccurrenceDebtEntry(
+  BuildContext context,
+  RecurringItem item,
+) async {
+  final person = item.person;
+  if (person == null) return null;
+  final l = AppLocalizations.of(context)!;
+  final repo = context.read<PersonalDebtsRepository>();
+  final key = debtPersonKey(contactId: person.contactId, name: person.name);
+  final query = DebtEntryQuery(
+    direction: item.direction,
+    kind: item.debtSub == DebtEntrySub.repay ? 'repayment' : 'debt',
+  );
+  final byId = <String, DebtEntry>{};
+  final result = await showItemPicker(
+    context,
+    ItemPickerSheet(
+      title: l.debtLinkExistingLabel,
+      items: const [],
+      load: () async {
+        final rows = [
+          for (final e in (await repo.entries(
+            key,
+            query: query,
+            perPage: 100,
+          )).items)
+            if (e.id != item.debtEntry?.id) e,
+        ];
+        byId
+          ..clear()
+          ..addAll({for (final e in rows) e.id: e});
+        return [for (final e in rows) _debtEntryItem(l, e)];
+      },
+      searchable: true,
+      searchHint: l.commonSearch,
+      emptyText: l.occurrenceDebtPickEmpty,
+    ),
+  );
+  final id = result?.id;
+  return id == null ? null : byId[id];
+}
+
+PickerItem _debtEntryItem(AppLocalizations l, DebtEntry e) {
+  final d = e.date;
+  return PickerItem(
+    id: e.id,
+    title: e.description ?? debtEntryKindName(l, e),
+    subtitle: [
+      if (d != null) DateFormat.MMMd(l.localeName).format(d),
+      ?e.transaction?.account?.name,
+    ].join(' | '),
+    trailing: MoneyText(
+      e.amount,
+      tone: e.direction == DebtEntryDirection.received
+          ? MoneyTone.income
+          : MoneyTone.expense,
+    ),
+  );
+}
+
 /// One occurrence in the quick create sheet (แก้เฉพาะงวดนี้): บันทึก keeps the
 /// edits on this occurrence only, ยืนยัน records the tx; บันทึกในรายการ picks
 /// an existing tx instead (linked on ยืนยันและผูก). The bottom left: ข้าม, or
@@ -231,20 +366,42 @@ Future<void> openOccurrenceSheet(
   RecurringItem item, {
   required ValueChanged<ItemWriteResult> onChanged,
 }) async {
+  // A หนี้ one filled by an entry opens the entry (its tx goes with it).
+  final entry = item.debtEntry;
+  if (entry != null) {
+    openPage(context, '/personal-debts/entries/${entry.id}');
+    return;
+  }
   final tx = item.transaction;
   if (tx != null) {
     await editTransaction(context, tx.id);
     return;
   }
   final l = AppLocalizations.of(context)!;
+  final debt = item.isDebt;
   final initial = item.toDraft();
   final settled = item.state.settled;
   final archived = item.state == OccurrenceState.archived;
   await showEntrySheet(
     context,
     title: item.recurring?.name ?? item.title,
-    subtitle: l.occurrenceEditOnly,
+    // หนี้: who and จดหนี้ | จ่ายหนี้ (no category / tags of its own).
+    subtitle: [
+      l.occurrenceEditOnly,
+      if (debt) ...occurrenceDebtParts(l, item),
+    ].join(' | '),
     initial: initial,
+    // หนี้: the person card instead of the category, no tag row.
+    debtPerson: debt ? item.person : null,
+    // หนี้ fills with an entry of its person, not a transaction.
+    chips: [
+      if (debt && item.bySlot)
+        EntrySheetChip(
+          label: l.debtLinkExistingLabel,
+          icon: AppIcons.link,
+          onTap: (c) => linkExistingDebtEntry(c, item, onChanged: onChanged),
+        ),
+    ],
     barAction: switch (item.state) {
       OccurrenceState.archived => EntrySheetChip(
         label: l.occurrenceRestore,
@@ -266,7 +423,7 @@ Future<void> openOccurrenceSheet(
         : EntrySheetPaid(
             initial: item.state == OccurrenceState.paid,
             apply: (c, paid, draft) {
-              final fields = occurrenceFields(initial, draft);
+              final fields = occurrenceFields(initial, draft, debt: debt);
               final amount = paid ? fields.remove('amount') as double? : null;
               return _write(c, item.id, (r) async {
                 if (fields.isNotEmpty) {
@@ -282,9 +439,9 @@ Future<void> openOccurrenceSheet(
               }, onChanged);
             },
           ),
-    // ออมเงิน records a saving, never a transaction. A skipped one takes a
-    // tx straight away (R4).
-    link: item.isSaving
+    // ออมเงิน records a saving, never a transaction; หนี้ links an entry
+    // (the chip above). A skipped one takes a tx straight away (R4).
+    link: item.isSaving || debt
         ? null
         : EntrySheetLink(
             pick: (c) => pickOccurrenceTx(c, item),
@@ -310,7 +467,7 @@ Future<void> openOccurrenceSheet(
       EntrySheetAction(
         label: l.commonSave,
         onPressed: (draft) async {
-          final fields = occurrenceFields(initial, draft);
+          final fields = occurrenceFields(initial, draft, debt: debt);
           if (fields.isEmpty) return true;
           return _write(
             context,
@@ -489,7 +646,7 @@ Future<void> settleSelected(
       },
     if (noAmount.isNotEmpty) l.occurrenceLeftOut(noAmount.length),
     if (refused > 0) l.occurrenceLeftOutRefused(refused),
-    if (failed != null) failed.message,
+    if (failed != null) occurrenceErrorText(l, failed),
   ];
   if (parts.isEmpty) return;
   showAppSnackBarOn(

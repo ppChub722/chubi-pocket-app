@@ -144,14 +144,12 @@ Widget buildPeopleAccountsPage(BuildContext context) {
   Widget idRow(
     AccountIdentifier id, {
     List<PaymentProvider>? provs,
-    bool hidden = false,
     VoidCallback? onDelete,
   }) => AppCard(
     padding: EdgeInsets.zero,
     child: IdentifierRow(
       identifier: id,
       providers: provs ?? providers,
-      hidden: hidden,
       onDelete: onDelete,
     ),
   );
@@ -626,6 +624,25 @@ Widget buildPeopleAccountsPage(BuildContext context) {
           ),
           HubUse(
             wide: true,
+            label:
+                'WalletPickCard — "จ่ายโดย X" (0.4.1-2: someone else paid, '
+                'not paid back yet; no wallet, not tappable)',
+            page: 'The bill form\'s my copy block',
+            child: WalletPickCard(
+              account: null,
+              label: 'กระเป๋า',
+              placeholder: 'เลือกกระเป๋า',
+              paidBy: 'จ่ายโดย ฝน',
+              paidByAvatar: const PersonMark(
+                name: 'ฝน',
+                level: PersonLevel.name,
+                size: 32,
+              ),
+              onTap: () {},
+            ),
+          ),
+          HubUse(
+            wide: true,
             label: 'WalletPickCard — picked, untracked (no balance)',
             page: 'Transaction / debt / scheduled draft forms',
             child: WalletPickCard(
@@ -750,19 +767,6 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                 kind: IdentifierKind.other,
                 value: '99887766',
               ),
-            ),
-          ),
-          HubUse(
-            wide: true,
-            label: 'IdentifierRow — hidden number',
-            page: 'Account detail (privacy)',
-            child: idRow(
-              const AccountIdentifier(
-                kind: IdentifierKind.bankAccount,
-                value: '1234527806',
-                bankCode: '014',
-              ),
-              hidden: true,
             ),
           ),
           HubUse(
@@ -920,9 +924,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
       ),
       HubPlayground(
         title: 'BankMark | IdentifierRow',
-        note:
-            'BankMark: provider and size. IdentifierRow: kind, hidden, '
-            'onDelete.',
+        note: 'BankMark: provider and size. IdentifierRow: kind, onDelete.',
         controls: [
           PlayChoice<PaymentProvider>('provider', [
             for (final p in providers) (p.label('en'), p),
@@ -931,7 +933,6 @@ Widget buildPeopleAccountsPage(BuildContext context) {
           PlayChoice<IdentifierKind>('kind', [
             for (final k in IdentifierKind.values) (k.name, k),
           ]),
-          const PlayBool('hidden'),
           const PlayBool('onDelete'),
         ],
         builder: (context, v) => Column(
@@ -954,7 +955,6 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                   bankCode: '004',
                 ),
                 providers: providers,
-                hidden: v<bool>('hidden'),
                 onDelete: v<bool>('onDelete') ? () {} : null,
               ),
             ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,6 +11,8 @@ import '../../../../app/shell/shell_chrome.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
+import '../../../auth/domain/user.dart';
+import '../../../preferences/page_prefs.dart';
 import '../../domain/category.dart';
 import '../../domain/category_reorder_logic.dart';
 import '../../domain/category_tree.dart';
@@ -71,12 +75,40 @@ class _CategoriesPageState extends State<CategoriesPage> {
       _filterColors.clear();
       _filterIcons.clear();
     });
+    _rememberFilters();
     _reorder?.select(null);
   }
+
+  /// The collapsed parents and colour / icon filters remembered on the
+  /// account. Fills the existing sets: [ReorderController] shares
+  /// [_collapsedIds] by reference.
+  void _restorePrefs() {
+    final pref = readPagePref(context, PagePrefIds.categories);
+    final fields = pagePrefPage(PagePrefIds.categories).fields;
+    List<String> picks(String key) =>
+        fields.firstWhere((f) => f.key == key).picks(pref);
+    _collapsedIds.addAll(picks('collapsed'));
+    _filterColors.addAll(picks('colors'));
+    _filterIcons.addAll(picks('icons'));
+  }
+
+  void _rememberFilters() => unawaited(
+    rememberPagePref(context, PagePrefIds.categories, {
+      'colors': _filterColors.toList(),
+      'icons': _filterIcons.toList(),
+    }),
+  );
+
+  void _rememberCollapsed() => unawaited(
+    rememberPagePref(context, PagePrefIds.categories, {
+      'collapsed': _collapsedIds.toList(),
+    }),
+  );
 
   @override
   void initState() {
     super.initState();
+    _restorePrefs();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<CategoriesCubit>().loadIfNeeded();
@@ -148,7 +180,12 @@ class _CategoriesPageState extends State<CategoriesPage> {
     });
   }
 
-  void _onReorderChanged() => setState(() {});
+  /// The controller may also change the shared collapsed set (a toggle, or a
+  /// move that opens a parent): remember it (no PUT when unchanged).
+  void _onReorderChanged() {
+    setState(() {});
+    _rememberCollapsed();
+  }
 
   void _backInReorder() {
     if (!_savingReorder) _exitReorder();
@@ -200,6 +237,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
     setState(() {
       if (!_collapsedIds.remove(id)) _collapsedIds.add(id);
     });
+    _rememberCollapsed();
   }
 
   @override
@@ -360,10 +398,12 @@ class _CategoriesPageState extends State<CategoriesPage> {
                       ? _filterColors.remove(t)
                       : _filterColors.add(t),
                 );
+                _rememberFilters();
                 setPopover(() {});
               },
               onClear: () {
                 setState(_filterColors.clear);
+                _rememberFilters();
                 setPopover(() {});
               },
             ),
@@ -390,10 +430,12 @@ class _CategoriesPageState extends State<CategoriesPage> {
                       ? _filterIcons.remove(g)
                       : _filterIcons.add(g),
                 );
+                _rememberFilters();
                 setPopover(() {});
               },
               onClear: () {
                 setState(_filterIcons.clear);
+                _rememberFilters();
                 setPopover(() {});
               },
             ),
@@ -409,6 +451,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                 _query = '';
                 _filterColors.clear();
                 _filterIcons.clear();
+                _rememberFilters();
                 _enterReorder(all);
               },
       ),

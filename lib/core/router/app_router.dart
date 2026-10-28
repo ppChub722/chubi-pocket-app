@@ -57,7 +57,11 @@ import '../../features/home/presentation/pages/home_coming_soon_page.dart';
 import '../../features/settings/presentation/pages/change_password_page.dart';
 import '../../features/settings/presentation/pages/edit_profile_page.dart';
 import '../../features/archived/presentation/archived_page.dart';
+import '../../features/settings/presentation/pages/settings_app_page.dart';
+import '../../features/settings/presentation/pages/settings_money_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
+import '../../features/settings/presentation/pages/settings_page_prefs_page.dart';
+import '../../features/settings/presentation/pages/settings_sync_page.dart';
 
 GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
   return GoRouter(
@@ -336,6 +340,34 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
           path: 'notifications',
           name: 'settings-notifications',
           builder: (context, state) => const NotificationSettingsPage(),
+        ),
+        GoRoute(
+          path: 'app',
+          name: 'settings-app',
+          builder: (context, state) => const SettingsAppPage(),
+        ),
+        GoRoute(
+          path: 'money',
+          name: 'settings-money',
+          builder: (context, state) => const SettingsMoneyPage(),
+        ),
+        GoRoute(
+          path: 'sync',
+          name: 'settings-sync',
+          builder: (context, state) => const SettingsSyncPage(),
+        ),
+        GoRoute(
+          path: 'page-prefs',
+          name: 'settings-page-prefs',
+          builder: (context, state) => const SettingsPagePrefsPage(),
+          routes: [
+            GoRoute(
+              path: ':page',
+              name: 'settings-page-pref',
+              builder: (context, state) =>
+                  SettingsPagePrefPage(pageId: state.pathParameters['page']!),
+            ),
+          ],
         ),
       ],
     ),

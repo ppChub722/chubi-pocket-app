@@ -23,9 +23,6 @@ import '../../domain/refs.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../../../projects/domain/project.dart';
-import '../../../projects/presentation/widgets/member_pick_card.dart';
-import '../../../projects/presentation/widgets/member_picker.dart';
-import '../../../projects/presentation/widgets/project_common.dart';
 import '../../../projects/presentation/cubit/project_directory_cubit.dart';
 import '../cubit/tx_form_options_cubit.dart';
 import '../../domain/link_draft.dart';
@@ -35,8 +32,6 @@ import 'link_section.dart';
 import 'pick_chip_rows.dart';
 import 'splits_section.dart';
 import '../../../tags/presentation/widgets/tag_picker.dart';
-
-part 'draft_form_event.dart';
 
 class DraftFormController extends ChangeNotifier {
   DraftFormController() {
@@ -49,104 +44,6 @@ class DraftFormController extends ChangeNotifier {
   final note = TextEditingController();
 
   final description = TextEditingController();
-
-  String? payerId;
-
-  final List<String> tagNames = [];
-  final List<MemberSplitDraft> memberSplits = [];
-
-  double get memberSplitSum =>
-      memberSplits.fold(0, (a, s) => a + s.amountValue);
-
-  bool payerMissing = false;
-
-  void flagMissingPayer() {
-    payerMissing = true;
-    notifyListeners();
-  }
-
-  void setPayer(String id) {
-    payerId = id;
-    payerMissing = false;
-    // The payer can't also owe themself.
-    for (final s in memberSplits.where((s) => s.memberId == id).toList()) {
-      _dropSplit(s);
-    }
-    notifyListeners();
-  }
-
-  void toggleTagName(String name) {
-    final i = tagNames.indexWhere((t) => t.toLowerCase() == name.toLowerCase());
-    if (i >= 0) {
-      tagNames.removeAt(i);
-    } else {
-      tagNames.add(name);
-    }
-    notifyListeners();
-  }
-
-  void addMemberSplit(String? memberId, {double? amount}) {
-    final s = MemberSplitDraft(memberId);
-    if (amount != null) s.amount.text = AmountInput.format(amount);
-    s.amount.addListener(notifyListeners);
-    memberSplits.add(s);
-    notifyListeners();
-  }
-
-  void setSplitMember(MemberSplitDraft s, String memberId) {
-    s.memberId = memberId;
-    notifyListeners();
-  }
-
-  void removeMemberSplit(MemberSplitDraft s) {
-    _dropSplit(s);
-    notifyListeners();
-  }
-
-  void splitEqually(List<String> memberIds) {
-    final others = memberIds.where((id) => id != payerId).toList();
-    if (amountValue <= 0 || others.isEmpty) return;
-    final share =
-        (amountValue / (others.length + 1) * 100).floorToDouble() / 100;
-    for (final s in memberSplits.toList()) {
-      _dropSplit(s);
-    }
-    for (final id in others) {
-      addMemberSplit(id, amount: share);
-    }
-  }
-
-  void _dropSplit(MemberSplitDraft s) {
-    memberSplits.remove(s);
-    WidgetsBinding.instance.addPostFrameCallback((_) => s.amount.dispose());
-  }
-
-  void prefillProjectRow(ProjectTxTree tree) {
-    final p = tree.parent;
-    type = p.type == 'income'
-        ? TransactionType.income
-        : TransactionType.expense;
-    amount.text = AmountInput.format(p.amount);
-    date = DateTime.tryParse(p.date) ?? date;
-    payerId = p.transactionMemberId;
-    description.text = p.description ?? '';
-    note.text = p.note ?? '';
-    tagNames.addAll(p.tags);
-    for (final c in tree.children) {
-      addMemberSplit(c.transactionMemberId, amount: c.amount);
-    }
-  }
-
-  String eventSnapshot() => [
-    type.name,
-    amount.text,
-    _ymd(date),
-    payerId,
-    description.text.trim(),
-    note.text.trim(),
-    tagNames.join('\u0000'),
-    for (final s in memberSplits) '${s.memberId}=${s.amount.text}',
-  ].join('|');
 
   TransactionType type = TransactionType.expense;
   Category? category;
@@ -374,11 +271,7 @@ class DraftFormController extends ChangeNotifier {
   double get amountValue => AmountInput.parse(amount.text) ?? 0;
 
   bool get hasExtras =>
-      tagIds.isNotEmpty ||
-      projectId != null ||
-      splits.any((s) => s.isComplete) ||
-      tagNames.isNotEmpty ||
-      memberSplits.isNotEmpty;
+      tagIds.isNotEmpty || projectId != null || splits.any((s) => s.isComplete);
 
   bool get hasContent =>
       amount.text.isNotEmpty ||
@@ -509,7 +402,14 @@ class DraftFormController extends ChangeNotifier {
   };
 
   /// What leaves my wallet in [m]; 0 dims the wallet card.
-  double walletOutFor(LinkMode m) => link.walletOut(m, amountValue);
+  double walletOutFor(LinkMode m) {
+    // I paid the payer back on the spot: my share leaves my wallet (SA6).
+    final someoneElsePaid =
+        (m == LinkMode.paid && link.paidBy != null) ||
+        (m == LinkMode.event && link.eventPayer != null);
+    if (someoneElsePaid && link.mePaidBack) return myShareFor(m);
+    return link.walletOut(m, amountValue);
+  }
 
   /// Whether [m]'s card adds up (its status line is ✓).
   bool linkBalanced(LinkMode m) => switch (m) {
@@ -526,6 +426,7 @@ class DraftFormController extends ChangeNotifier {
   void setPaidBy(LinkPerson? p) {
     link.paidBy = p;
     if (p != null) link.paidBack.remove(p.key);
+    if (p == null) link.mePaidBack = false;
     if (link.mode == LinkMode.split || link.mode == LinkMode.paid) {
       link.mode = p == null ? LinkMode.split : LinkMode.paid;
     }
@@ -580,8 +481,26 @@ class DraftFormController extends ChangeNotifier {
 
   void setEventPayer(LinkPerson? p) {
     if (p != null) link.paidBack.remove(p.key);
+    if (p == null) link.mePaidBack = false;
     link.eventPayer = p;
     notifyListeners();
+  }
+
+  /// "คืน A แล้ว" on my row (SA6), when someone else paid.
+  void toggleMePaidBack() {
+    link.mePaidBack = !link.mePaidBack;
+    notifyListeners();
+  }
+
+  /// Who paid for me in [m] and isn't paid back yet: the wallet card reads
+  /// "จ่ายโดย X" (SA6); null = my wallet is in play.
+  LinkPerson? unpaidPayer(LinkMode? m) {
+    if (link.mePaidBack) return null;
+    return switch (m) {
+      LinkMode.paid when link.myPaid(amountValue) <= 0.005 => link.paidBy,
+      LinkMode.event => link.eventPayer,
+      _ => null,
+    };
   }
 
   void setEventShare(LinkPerson p, double? v) {
@@ -685,7 +604,8 @@ class DraftFormController extends ChangeNotifier {
       ..myPaidTyped = null
       ..eventPayer = null
       ..eventMeAuto = true
-      ..eventMeTyped = null;
+      ..eventMeTyped = null
+      ..mePaidBack = false;
     link.eventShares.clear();
     link.eventExtra.clear();
     final paid = t.paidBy;
@@ -720,7 +640,8 @@ class DraftFormController extends ChangeNotifier {
       ..myPaidTyped = null
       ..eventPayer = null
       ..eventMeAuto = true
-      ..eventMeTyped = null;
+      ..eventMeTyped = null
+      ..mePaidBack = false;
     link.eventShares.clear();
     link.eventExtra.clear();
     final paid = r.paidBy;
@@ -1029,18 +950,8 @@ class DraftFormController extends ChangeNotifier {
     amount.dispose();
     note.dispose();
     description.dispose();
-    for (final s in memberSplits) {
-      s.amount.dispose();
-    }
     super.dispose();
   }
-}
-
-class MemberSplitDraft {
-  MemberSplitDraft(this.memberId);
-  String? memberId;
-  final amount = TextEditingController();
-  double get amountValue => AmountInput.parse(amount.text) ?? 0;
 }
 
 String _ymd(DateTime d) =>
@@ -1084,7 +995,7 @@ class DraftForm extends StatefulWidget {
     this.eventSlot,
     this.recurringSlot,
     this.splitsReadOnly,
-    this.event,
+    this.privateNote,
     this.heroKey,
     this.chipLayout = false,
     this.cardsInHero = false,
@@ -1097,8 +1008,14 @@ class DraftForm extends StatefulWidget {
     this.rowAboveNote,
     this.heroLocked = false,
     this.linkSections = true,
+    this.debtPersonCard,
     super.key,
   });
+
+  /// Chip layout, a recurring หนี้ slot (0.4.1-2 K12): this person card
+  /// stands where the category card is, and there is no tag row (a
+  /// person-book entry has no category / tags). Null = the normal form.
+  final Widget? debtPersonCard;
 
   /// Chip layout: a row between the tags and the note (an occurrence's
   /// บันทึกในรายการ).
@@ -1132,7 +1049,8 @@ class DraftForm extends StatefulWidget {
 
   final GlobalKey? heroKey;
 
-  final DraftEvent? event;
+  /// My private note of a shared-bill copy, shown read-only under the note.
+  final String? privateNote;
 
   final bool typeLocked;
   final bool allowSplits;
@@ -1325,11 +1243,15 @@ class _DraftFormState extends State<DraftForm> {
       );
     }
     final mode = _c.isTransfer ? null : _linkMode;
+    final paidBy = _c.unpaidPayer(mode);
     return WalletPickCard(
       account: account,
       label: label,
       placeholder: placeholder,
       dense: true,
+      paidBy: paidBy == null
+          ? null
+          : AppLocalizations.of(context)!.evbPaidByName(paidBy.name),
       muted: mode != null && _c.walletOutFor(mode) <= 0.005,
       note: _walletNote(AppLocalizations.of(context)!, mode),
       onTap: _heroTap(onPick),
@@ -1370,19 +1292,6 @@ class _DraftFormState extends State<DraftForm> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final event = widget.event;
-    if (event != null) {
-      return _EventForm(
-        controller: _c,
-        event: event,
-        compact: widget.compact,
-        autofocus: widget.autofocus && !widget.readOnly,
-        locked: widget.typeLocked,
-        readOnly: widget.readOnly,
-        onPickDate: _pickDate,
-        heroKey: widget.heroKey,
-      );
-    }
     final opts = maybeTxFormOptions(context);
     final accounts = opts == null
         ? context.watch<AccountsCubit>().state.accounts
@@ -1584,19 +1493,22 @@ class _DraftFormState extends State<DraftForm> {
     final locked = widget.categoryLockedHint != null || widget.heroLocked;
     final mode = _linkMode;
     final walletNote = _walletNote(l, mode);
+    final paidBy = _c.unpaidPayer(mode);
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            child: CategoryPickCard(
-              category: _c.category,
-              label: l.transactionFormCategoryLabel,
-              placeholder: l.transactionFormCategoryNone,
-              dense: true,
-              editable: !locked,
-              onTap: locked ? null : _pickCategory,
-            ),
+            child:
+                widget.debtPersonCard ??
+                CategoryPickCard(
+                  category: _c.category,
+                  label: l.transactionFormCategoryLabel,
+                  placeholder: l.transactionFormCategoryNone,
+                  dense: true,
+                  editable: !locked,
+                  onTap: locked ? null : _pickCategory,
+                ),
           ),
           // As far apart as the cards sit from the hero's edge.
           SizedBox(width: HeroMetrics.of(context).padding.left),
@@ -1607,6 +1519,8 @@ class _DraftFormState extends State<DraftForm> {
               placeholder: l.transactionFormAccountNone,
               dense: true,
               editable: !widget.heroLocked,
+              // Someone else paid, not paid back yet: "จ่ายโดย X" (SA6).
+              paidBy: paidBy == null ? null : l.evbPaidByName(paidBy.name),
               muted: mode != null && _c.walletOutFor(mode) <= 0.005,
               note: walletNote,
               onTap: () => _pickAccount(),
@@ -1642,13 +1556,15 @@ class _DraftFormState extends State<DraftForm> {
     const gap = SizedBox(height: AppSpacing.sm);
     return [
       SizedBox(height: HeroMetrics.of(context).after),
-      TagChipRow(
-        selected: _c.tagIds,
-        onRemove: _c.toggleTag,
-        onMore: _moreTags,
-        known: _c.knownTags,
-      ),
-      gap,
+      if (widget.debtPersonCard == null) ...[
+        TagChipRow(
+          selected: _c.tagIds,
+          onRemove: _c.toggleTag,
+          onMore: _moreTags,
+          known: _c.knownTags,
+        ),
+        gap,
+      ],
       if (widget.rowAboveNote != null) ...[widget.rowAboveNote!, gap],
       DraftFieldRow(
         label: l.commonNote,
@@ -1874,6 +1790,12 @@ class _DraftFormState extends State<DraftForm> {
         SizedBox(height: HeroMetrics.of(context).after),
       ],
       ?note,
+      // 0.4.1-2 S11: my private note on a shared-bill copy (read here; it is
+      // edited in the bill form).
+      if (widget.privateNote case final p? when p.trim().isNotEmpty) ...[
+        const SizedBox(height: AppSpacing.sm),
+        NoteSection(label: l.evbPrivateNote, editing: false, text: p),
+      ],
       if (editing && _linkMode != null) ...[
         const SizedBox(height: AppSpacing.lg),
         Padding(
@@ -1903,36 +1825,6 @@ class TxTagStrip extends StatelessWidget {
       icon: AppIcons.tag,
       chips: [
         for (final t in tags) tagAppChip(context, t, size: ChipSize.chip),
-      ],
-    );
-  }
-}
-
-class _TextBlock extends StatelessWidget {
-  const _TextBlock({
-    required this.label,
-    required this.controller,
-    required this.maxLength,
-  });
-
-  final String label;
-  final TextEditingController controller;
-  final int maxLength;
-
-  @override
-  Widget build(BuildContext context) {
-    return SectionCard(
-      first: true,
-      children: [
-        DetailStacked(
-          label: label,
-          child: AppInput.inline(
-            editing: true,
-            controller: controller,
-            maxLength: maxLength,
-            maxLines: 4,
-          ),
-        ),
       ],
     );
   }
@@ -2030,7 +1922,6 @@ class _ShareLine extends StatelessWidget {
         const SizedBox(width: AppSpacing.xs),
         MoneyText(
           mine,
-          hideable: false,
           style: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w700,
             color: over ? scheme.error : txTypeColor(context, type),

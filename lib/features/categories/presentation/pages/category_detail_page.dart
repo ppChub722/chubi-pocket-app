@@ -10,8 +10,6 @@ import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
-import '../../../auth/presentation/cubit/auth_cubit.dart';
-import '../../../users/data/users_repository.dart';
 import '../../domain/category.dart';
 import '../../domain/category_reorder_logic.dart';
 import '../../domain/category_tree.dart';
@@ -178,19 +176,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     final cubit = context.read<CategoriesCubit>();
     if (cubit.state.error != null) cubit.load();
     _loadDetail();
-  }
-
-  /// One call ([LiveSetting] shows it at once, puts it back on a failure).
-  Future<bool> _setFeeCategory(bool on) async {
-    final id = _persisted?.id;
-    if (id == null) return false;
-    final me = await context.read<UsersRepository>().setFeeCategory(
-      on ? id : null,
-    );
-    if (!mounted) return true;
-    context.read<AuthCubit>().updateUser(me);
-    setState(() => _detail = _detail?.withFee(on));
-    return true;
   }
 
   @override
@@ -639,18 +624,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
               builder: (context, value, onChanged) => SettingToggleRow(
                 label: l.categoryFormIncludeInReportLabel,
                 caption: l.categoryFormIncludeInReportHelper,
-                value: value,
-                onChanged: onChanged,
-              ),
-            ),
-          if (_persisted != null && working.type == CategoryType.expense)
-            LiveSetting<bool>(
-              value: _detail?.isFeeCategory ?? false,
-              save: _setFeeCategory,
-              failedMessage: (_) => l.categoryFeeSwitchFailed,
-              builder: (context, value, onChanged) => SettingToggleRow(
-                label: l.categoryFeeSwitchLabel,
-                caption: l.categoryFeeSwitchHelper,
                 value: value,
                 onChanged: onChanged,
               ),

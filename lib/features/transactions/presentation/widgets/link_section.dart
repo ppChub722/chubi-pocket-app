@@ -202,11 +202,16 @@ class _LinkSectionState extends State<LinkSection> {
       onAuto: event ? _c.setEventMeAuto : _c.setMeAuto,
       paid: payer == null,
       onPay: payer == null ? null : () => setPayer(null),
+      // Someone else paid: "คืน X แล้ว" on my row, my share from my wallet
+      // and no debt (SA6, as in the bill form).
+      canPaidBack: payer != null,
+      paidBack: payer != null && link.mePaidBack,
+      onPaidBack: _c.toggleMePaidBack,
     );
 
-    // "คืนแล้ว": on a bill I paid (แบ่ง), or any event bill; with someone
-    // else paying a แบ่ง the shares are what I owe, nobody pays back.
-    final paidBackAllowed = event || payer == null;
+    // "คืนแล้ว" on anyone but the payer, whoever paid (a split bill holds
+    // each one's payback, 0.4.1-2 SA6).
+    const paidBackAllowed = true;
 
     BillPerson draftRow(SplitDraft d) {
       final named = d.personName.trim().isNotEmpty;

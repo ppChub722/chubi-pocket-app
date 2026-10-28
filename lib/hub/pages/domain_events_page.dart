@@ -238,6 +238,25 @@ class _EventsPageState extends State<_EventsPage> {
                 onTickTap: () => _tapped('income tick'),
                 onTap: () => _tapped('bill: income with type glyph'),
               ),
+              const AppDivider.row(),
+              // 0.4.1-2 multi-payer: 2+ payers → "จ่าย: A ฿700 | B ฿500".
+              EventBillRow(
+                title: 'ค่าเรือ',
+                amount: -1200,
+                tick: false,
+                payerName: 'ลี',
+                payerVerb: 'จ่าย',
+                payers: const [
+                  EventBillPayer(
+                    name: 'ลี',
+                    amount: '฿700',
+                    level: PersonLevel.linked,
+                  ),
+                  EventBillPayer(name: 'ปอนด์', amount: '฿500'),
+                ],
+                tags: const [_travel],
+                onTap: () => _tapped('bill: two payers'),
+              ),
             ],
           ),
         ),
@@ -461,6 +480,35 @@ class _EventsPageState extends State<_EventsPage> {
                 ),
               ],
             ),
+          ),
+        ),
+        const HubDemo(
+          title: 'BillDebtSummary — the debts a bill save moves (SA5)',
+          note:
+              'The bill form, before saving: each person my debts move with, '
+              'from the BE preview (before → after + เพิ่มหนี้ / ลดหนี้), and '
+              'the people marked คืนแล้ว. Dimmed while a newer preview loads.',
+          child: BillDebtSummary(
+            lines: [
+              BillDebtLine(
+                avatar: PersonMark(name: 'ฝน', level: PersonLevel.name),
+                name: 'ฝน',
+                state: 'ไม่มีหนี้ → ลูกหนี้ ฿300',
+                chip: 'เพิ่มหนี้ ฿300',
+              ),
+              BillDebtLine(
+                avatar: PersonMark(name: 'เบียร์', level: PersonLevel.contact),
+                name: 'เบียร์',
+                state: 'ลูกหนี้ ฿120 → ลูกหนี้ ฿420',
+                chip: 'เพิ่มหนี้ ฿300',
+              ),
+              BillDebtLine(
+                avatar: PersonMark(name: 'ต้น', level: PersonLevel.name),
+                name: 'ต้น',
+                chip: 'คืนแล้ว',
+                chipTone: AppChipTone.success,
+              ),
+            ],
           ),
         ),
         HubPlayground(

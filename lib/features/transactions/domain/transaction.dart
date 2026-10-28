@@ -70,6 +70,7 @@ class Transaction extends Equatable {
     this.tags = const [],
     this.description,
     this.note,
+    this.privateNote,
     this.projectId,
     this.transferGroupId,
     this.createdBy,
@@ -121,6 +122,10 @@ class Transaction extends Equatable {
 
   final String? description;
   final String? note;
+
+  /// 0.4.1-2 S11: my private note, only on a copy of a shared bill (never
+  /// synced, never shown to the others).
+  final String? privateNote;
 
   final String? projectId;
 
@@ -225,6 +230,7 @@ class Transaction extends Equatable {
       tags: tags,
       description: json['description'] as String?,
       note: json['note'] as String?,
+      privateNote: json['private_note'] as String?,
       projectId: project?.id,
       transferGroupId: json['transfer_group_id'] as String?,
       createdBy: json['created_by'] is Map<String, dynamic>
@@ -291,6 +297,7 @@ class Transaction extends Equatable {
     List<EmbeddedTag>? tags,
     String? description,
     String? note,
+    String? privateNote,
     String? projectId,
     String? transferGroupId,
     TransactionAuthor? createdBy,
@@ -324,6 +331,7 @@ class Transaction extends Equatable {
       tags: tags ?? this.tags,
       description: description ?? this.description,
       note: note ?? this.note,
+      privateNote: privateNote ?? this.privateNote,
       projectId: projectId ?? this.projectId,
       transferGroupId: transferGroupId ?? this.transferGroupId,
       createdBy: createdBy ?? this.createdBy,
@@ -364,6 +372,7 @@ class Transaction extends Equatable {
     tags,
     description,
     note,
+    privateNote,
     projectId,
     transferGroupId,
     createdBy,

@@ -11,6 +11,8 @@ import '../../../../app/shell/tab_root_scaffold.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
+import '../../../auth/domain/user.dart';
+import '../../../preferences/page_prefs.dart';
 import '../../domain/account.dart';
 import '../../domain/account_type.dart';
 import '../cubit/accounts_cubit.dart';
@@ -63,10 +65,35 @@ class _AccountsPageState extends State<AccountsPage> {
   @override
   void initState() {
     super.initState();
+    _restorePrefs();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(context.read<AccountsCubit>().loadIfNeeded());
     });
+  }
+
+  /// The sort and tile remembered on the account (defaults when none).
+  void _restorePrefs() {
+    final pref = readPagePref(context, PagePrefIds.wallets);
+    final fields = pagePrefPage(PagePrefIds.wallets).fields;
+    String pick(String key) =>
+        fields.firstWhere((f) => f.key == key).pick(pref);
+    _sort = _WalletSort.values.asNameMap()[pick('sort')] ?? _WalletSort.custom;
+    _tile = _WalletTile.values.asNameMap()[pick('tile')];
+  }
+
+  void _setSort(_WalletSort s) {
+    setState(() => _sort = s);
+    unawaited(rememberPagePref(context, PagePrefIds.wallets, {'sort': s.name}));
+  }
+
+  void _setTile(_WalletTile? t) {
+    setState(() => _tile = t);
+    unawaited(
+      rememberPagePref(context, PagePrefIds.wallets, {
+        'tile': t?.name ?? 'all',
+      }),
+    );
   }
 
   Future<void> _refresh() => context.read<AccountsCubit>().load();
@@ -222,7 +249,7 @@ class _AccountsPageState extends State<AccountsPage> {
       filters: [
         OptionMenuAnchor<_WalletSort>(
           selected: _sort,
-          onSelected: (s) => setState(() => _sort = s),
+          onSelected: _setSort,
           options: [
             for (final s in _WalletSort.values)
               SheetOption(value: s, label: _sortLabel(l, s)),
@@ -269,7 +296,7 @@ class _AccountsPageState extends State<AccountsPage> {
           icon: icon,
           count: count,
           selected: _tile == v,
-          onTap: () => setState(() => _tile = v),
+          onTap: () => _setTile(v),
         );
     return AppHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),

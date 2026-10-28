@@ -23,6 +23,9 @@ import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
 import '../../../projects/data/projects_repository.dart';
+import '../../../projects/presentation/event_claim.dart';
+import '../../../projects/presentation/widgets/event_bill_sheet.dart'
+    show openEventBill;
 import '../../../pending/domain/pending_transaction.dart';
 import '../../data/transactions_repository.dart';
 import '../../domain/link_draft.dart';
@@ -222,31 +225,39 @@ class _LoadedState extends State<_Loaded>
     final go = await showConfirmDialog(
       context,
       title: l.txLinkDisconnectTitle,
-      message: l.txLinkDisconnectBody,
+      message: l.txLinkDisconnectBodyCopy,
       confirmLabel: l.txLinkDisconnect,
     );
     if (!go || !mounted) return;
     final projects = context.read<ProjectsRepository>();
-    final txCubit = context.read<TransactionsCubit>();
     setSaving(true);
     try {
-      await projects.setMyBooks(
-        bill.event.id,
-        bill.billId,
-        unlink: const ['tx'],
-      );
-      // The answer is the event's patch; my row comes back without the link.
-      try {
-        await txCubit.refreshOne(widget.tx.id, afterWrite: true);
-      } on ApiException {
-        // Keep the cached row.
-      }
+      // ONE call: my copy tx + my debts of the bill become plain; the bill
+      // is unchanged. My row (and debts) come back through `effects`.
+      await projects.disconnectEventBill(bill.billId);
       _say(l.txLinkDisconnected, tone: Tone.success);
     } on ApiException catch (e) {
       _say(eventErrorMessage(l, e));
     } finally {
       if (mounted) setSaving(false);
     }
+  }
+
+  /// V10 (tx side): my tx joins ONE bill of an event someone else paid, as
+  /// my copy of it: the event, then the bill (claim sheet), ONE call; the
+  /// row comes back through `effects`.
+  Future<void> _joinBill() async {
+    final picked = await EventPicker.one(
+      context,
+      allowCreate: false,
+      showClosed: false,
+    );
+    if (picked is! ExistingEventTarget || !mounted) return;
+    await showClaimSheet(
+      context,
+      projectId: picked.project.id,
+      linkTransactionId: widget.tx.id,
+    );
   }
 
   Future<void> _pickEvent() async {
@@ -320,6 +331,11 @@ class _LoadedState extends State<_Loaded>
   }
 
   Future<void> _enterEdit({FocusNode? focus, VoidCallback? then}) async {
+    // SA1 (App-1): a shared-bill copy is edited in the one bill form.
+    if (txEditsAsBill(widget.tx)) {
+      await openEventBill(context, widget.tx.eventBill!.billId);
+      return;
+    }
     if (!_splitsPrefilled) {
       await _fetchSplitsIfMissing();
       if (!mounted || isEditing) return;
@@ -600,7 +616,9 @@ class _LoadedState extends State<_Loaded>
         try {
           await applyEventChange(
             projects,
+            txRepo: context.read<TransactionsRepository>(),
             txId: _edited.id,
+            amount: _edited.amount,
             currentProjectId: _edited.eventBill?.event.id ?? _edited.projectId,
             change: change,
             billId: _edited.eventBill?.billId,
@@ -841,6 +859,7 @@ class _LoadedState extends State<_Loaded>
                         controller: _c,
                         heroKey: _heroKey,
                         autofocus: false,
+                        privateNote: widget.tx.privateNote,
                         // The type can't change after saving; splits can, by
                         // the author (PUT /transactions/:id/splits).
                         typeLocked: true,
@@ -875,6 +894,26 @@ class _LoadedState extends State<_Loaded>
                           onApplyEvent: canEdit ? _applyEvent : null,
                           onDisconnectEvent: canEdit ? _disconnectEvent : null,
                         ),
+                      // V10: a money tx in no bill yet can join one.
+                      if (!editing &&
+                          canEdit &&
+                          tx.eventBill == null &&
+                          tx.projectId == null &&
+                          (tx.type == TransactionType.expense ||
+                              tx.type == TransactionType.income)) ...[
+                        const SizedBox(height: AppSpacing.md),
+                        InfoBox(
+                          first: true,
+                          rows: [
+                            InfoRow(
+                              key: const ValueKey('txJoinBill'),
+                              label: l.txJoinBill,
+                              showChevron: true,
+                              onTap: isSaving ? null : _joinBill,
+                            ),
+                          ],
+                        ),
+                      ],
                       // "จ่ายคืนให้ ลี ›" / "รับคืนจาก chalee ›" → the person.
                       if (repaymentPerson != null && !editing) ...[
                         const SizedBox(height: AppSpacing.md),

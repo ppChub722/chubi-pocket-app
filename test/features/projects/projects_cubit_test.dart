@@ -4,7 +4,6 @@ import 'package:chubi_pocket/core/network/api_client.dart';
 import 'package:chubi_pocket/features/projects/data/projects_repository.dart';
 import 'package:chubi_pocket/features/projects/domain/project.dart';
 import 'package:chubi_pocket/features/projects/presentation/cubit/projects_cubit.dart';
-import 'package:chubi_pocket/features/projects/presentation/event_delete_choice.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -77,12 +76,9 @@ class _Repo extends Fake implements ProjectsRepository {
   }
 
   @override
-  Future<Map<String, double>> delete(
-    String id, {
-    bool deleteLinkedTxs = false,
-  }) async {
-    calls.add('delete $id txs=$deleteLinkedTxs');
-    return const {'a1': 900};
+  Future<int> delete(String id) async {
+    calls.add('delete $id');
+    return 3;
   }
 }
 
@@ -112,7 +108,7 @@ void main() {
   });
 
   test('archive is one call and the event leaves the current list; delete '
-      'passes the txs choice and drops the row', () async {
+      'is one call (bills stay as split bills) and drops the row', () async {
     final repo = _Repo();
     final cubit = ProjectsCubit(repository: repo);
     await cubit.load();
@@ -121,32 +117,14 @@ void main() {
     expect(repo.calls, ['archive p1-0']);
     expect(cubit.state.projects.map((p) => p.id), ['p1-1']);
 
-    final balances = await cubit.delete('p1-1', deleteLinkedTxs: true);
-    expect(repo.calls.last, 'delete p1-1 txs=true');
-    expect(balances, {'a1': 900});
+    expect(await cubit.delete('p1-1'), 3);
+    expect(repo.calls.last, 'delete p1-1');
     expect(cubit.state.projects, isEmpty);
-
-    await cubit.load();
-    await cubit.delete('p1-0');
-    expect(repo.calls.last, 'delete p1-0 txs=false');
-    expect(repo.lists, hasLength(2));
     await cubit.close();
   });
 
-  test('delete dialog: the choice is the txs flag; closed or "not now" is no '
-      'call', () {
-    for (final c in [
-      (choice: null, want: null),
-      (choice: DeleteChoice.notYet, want: null),
-      (choice: DeleteChoice.keepTxs, want: false),
-      (choice: DeleteChoice.withTxs, want: true),
-    ]) {
-      expect(deleteLinkedTxsOf(c.choice), c.want, reason: '${c.choice}');
-    }
-  });
-
-  test('event requests: status, page, delete_linked_txs only when asked, '
-      'archive is one POST', () async {
+  test('event requests: status, page, delete with no flags, archive is one '
+      'POST', () async {
     final http = _Adapter();
     final repo = ProjectsRepository(
       client: _FakeApi(Dio()..httpClientAdapter = http),
@@ -163,16 +141,10 @@ void main() {
     expect(http.last!.queryParameters['page'], '2');
     expect((page.page, page.totalPages), (2, 3));
 
-    http.body = {
-      'account_balances': [
-        {'account_id': 'a1', 'balance': 900},
-      ],
-    };
-    expect(await repo.delete('e1', deleteLinkedTxs: true), {'a1': 900});
+    http.body = {'id': 'e1', 'split_bill_count': 4, 'effects': {}};
+    expect(await repo.delete('e1'), 4);
     expect(http.last!.method, 'DELETE');
     expect(http.last!.path, '/projects/e1');
-    expect(http.last!.queryParameters, {'delete_linked_txs': 'true'});
-    await repo.delete('e1');
     expect(http.last!.queryParameters, isEmpty);
 
     http.body = patchJson();

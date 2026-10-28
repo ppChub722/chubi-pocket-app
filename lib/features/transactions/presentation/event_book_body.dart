@@ -26,7 +26,12 @@ import 'widgets/draft_form.dart';
       if (note.isNotEmpty) 'note': note,
       'payer': payer?.toJson() ?? const {'me': true},
       'members': [
-        {'me': true, 'share': c.link.eventMine(amount, members)},
+        {
+          'me': true,
+          'share': c.link.eventMine(amount, members),
+          // "คืน X แล้ว" on my row (SA6): my share from my wallet, no debt.
+          if (payer != null && c.link.mePaidBack) 'paid_back': true,
+        },
         for (final p in members)
           {
             ...p.toJson(),
@@ -39,8 +44,9 @@ import 'widgets/draft_form.dart';
       'on': true,
       'tx': true,
       'debt': c.link.eventBookDebts ?? false,
-      // Someone else paid: my share has no wallet ("จ่ายโดย X").
-      'account_id': payer == null ? c.account?.id : null,
+      // Someone else paid: my share has no wallet ("จ่ายโดย X") until I
+      // paid them back.
+      'account_id': payer == null || c.link.mePaidBack ? c.account?.id : null,
       'category_id': c.category?.id,
       if (tagIds.isNotEmpty) 'tag_ids': tagIds,
     },

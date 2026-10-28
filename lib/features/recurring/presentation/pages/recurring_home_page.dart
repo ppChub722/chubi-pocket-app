@@ -12,6 +12,8 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
+import '../../../auth/domain/user.dart';
+import '../../../preferences/page_prefs.dart';
 import '../../../transactions/domain/transaction_type.dart';
 import '../../data/recurring_repository.dart';
 import '../../domain/recurrence_rule.dart' show today;
@@ -94,6 +96,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   @override
   void initState() {
     super.initState();
+    _restorePrefs();
     _offEffects = WriteEffectsBus.instance.listen(_onEffects);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -102,6 +105,20 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
       unawaited(_loadDue());
     });
   }
+
+  /// The month list's status / kind / sort remembered on the account.
+  void _restorePrefs() {
+    final pref = readPagePref(context, PagePrefIds.recurring);
+    final fields = pagePrefPage(PagePrefIds.recurring).fields;
+    String pick(String key) =>
+        fields.firstWhere((f) => f.key == key).pick(pref);
+    _status = _MonthStatus.values.asNameMap()[pick('status')] ?? _status;
+    _kind = RecurringKind.values.asNameMap()[pick('kind')];
+    _sort = _MonthSort.values.asNameMap()[pick('sort')] ?? _sort;
+  }
+
+  void _remember(Map<String, Object?> patch) =>
+      unawaited(rememberPagePref(context, PagePrefIds.recurring, patch));
 
   /// B2: slots any write changed (a tx deleted or unlinked elsewhere too)
   /// patch both lists in place; one that newly needs handling reloads
@@ -505,7 +522,10 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
             for (final s in _MonthStatus.values)
               SheetOption(value: s, label: _statusLabel(l, s)),
           ],
-          onSelected: (s) => setState(() => _status = s),
+          onSelected: (s) {
+            setState(() => _status = s);
+            _remember({'status': s.name});
+          },
         ),
         ListHeaderAction.filter<RecurringKind?>(
           label: _kind == null
@@ -524,7 +544,10 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
             ])
               SheetOption(value: k, label: recurringKindLabel(l, k)),
           ],
-          onSelected: (k) => setState(() => _kind = k),
+          onSelected: (k) {
+            setState(() => _kind = k);
+            _remember({'kind': k?.name ?? 'all'});
+          },
         ),
         ListHeaderAction.toolbar(
           _monthToolbar,
@@ -548,7 +571,10 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
           SortOption(_MonthSort.amount, l.recurringSortAmount),
           SortOption(_MonthSort.name, l.commonName),
         ],
-        onChanged: (s) => setState(() => _sort = s),
+        onChanged: (s) {
+          setState(() => _sort = s);
+          _remember({'sort': s.name});
+        },
       ),
       sidePadding: 0,
     ),
@@ -695,7 +721,10 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
       // On this page the wallet leads line 2, so the name keeps its room.
       line2: ListRowLine(
         lead: occurrenceWalletChip(context, i.account),
-        parts: [if (withDate) DateFormat.MMMEd(locale).format(i.date)],
+        parts: [
+          ...occurrenceDebtParts(l, i),
+          if (withDate) DateFormat.MMMEd(locale).format(i.date),
+        ],
         glyphs: [
           if (i.seq != null && i.total != null)
             ListRowGlyph(AppIcons.progress, text: '${i.seq}/${i.total}'),
@@ -823,10 +852,9 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     items: _due,
     leading: _icon,
     titleOf: _name,
-    // R7: its rule stopped at 3 waiting occurrences.
-    tag: (i) => i.recurring?.pauseReason == RecurringPauseReason.overdueLimit
-        ? ListRowChip(l.recurringOverdueLimitChip, tone: Tone.warning)
-        : null,
+    // R7: its rule stopped at 3 waiting occurrences; K13: a หนี้ one with
+    // nothing owed 3 rounds.
+    tag: (i) => pauseReasonChip(l, i.recurring?.pauseReason),
     onChanged: _onChanged,
     onOpen: (i) => unawaited(_openItem(i)),
   );
@@ -937,9 +965,8 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
       RecurringKind.reminder => l.recurringHomeAvgPerMonth(
         _money(sum((r) => r.avgAmount ?? r.monthlyAmount)),
       ),
-      RecurringKind.income || RecurringKind.saving => l.recurringHomePerMonth(
-        _money(sum((r) => r.monthlyAmount)),
-      ),
+      RecurringKind.income || RecurringKind.saving || RecurringKind.debt =>
+        l.recurringHomePerMonth(_money(sum((r) => r.monthlyAmount))),
     };
     return [
       AppListHeader(

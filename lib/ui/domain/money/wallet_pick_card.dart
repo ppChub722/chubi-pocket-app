@@ -15,8 +15,16 @@ class WalletPickCard extends StatelessWidget {
     this.onLongPress,
     this.muted = false,
     this.note,
+    this.paidBy,
+    this.paidByAvatar,
     super.key,
   });
+
+  /// 0.4.1-2: someone else paid and I haven't paid them back: the slot reads
+  /// "จ่ายโดย {name}" ([paidBy], the whole words) with their avatar, and
+  /// takes no wallet (not tappable).
+  final String? paidBy;
+  final Widget? paidByAvatar;
 
   final Account? account;
   final String label;
@@ -41,6 +49,18 @@ class WalletPickCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final paidBy = this.paidBy;
+    if (paidBy != null) {
+      return PickCard(
+        reserveSubtitle: true,
+        label: label,
+        value: paidBy,
+        leading:
+            paidByAvatar ?? PickCardEmptyIcon(AppIcons.member, size: _icon),
+        onTap: null,
+        dense: dense,
+      );
+    }
     final a = account;
     final accent = a?.colorOf(context);
     Widget? icon;

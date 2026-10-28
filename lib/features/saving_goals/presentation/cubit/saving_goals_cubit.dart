@@ -97,6 +97,17 @@ class SavingGoalsCubit extends Cubit<SavingGoalsState>
     return load();
   }
 
+  /// Restores the page's remembered filter / sort WITHOUT loading; true when
+  /// either changed (the page then reloads instead of [loadIfNeeded]).
+  bool applyPrefs({
+    required SavingGoalsFilter filter,
+    required SavingGoalsSort sort,
+  }) {
+    if (filter == state.filter && sort == state.sort) return false;
+    emit(state.copyWith(filter: filter, sort: sort));
+    return true;
+  }
+
   Future<void> setFilter(SavingGoalsFilter filter) {
     emit(state.copyWith(filter: filter));
     return load();

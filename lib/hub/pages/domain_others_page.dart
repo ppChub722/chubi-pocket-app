@@ -196,12 +196,49 @@ Widget buildOthersPage(BuildContext context) {
           ),
           HubUse(
             wide: true,
-            label: 'NotificationTile — one-tap: copy to my book',
+            label:
+                'NotificationTile — shared bill, my switch off: "เพิ่มในสมุด" '
+                '(one call, apply)',
             page: 'Notifications inbox',
             child: notifCard(
               notif(
-                NotificationType.projectTxRecordedForYou,
-                payload: const {'amount': 1200, 'currency': 'THB'},
+                NotificationType.sharedBillCreated,
+                payload: const {
+                  'description': 'Dinner',
+                  'amount': 1200,
+                  'my_amount': 400,
+                  'applied': false,
+                },
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label:
+                'NotificationTile — event bill deleted, my switch off: '
+                '"ลบตาม" / "เก็บไว้"',
+            page: 'Notifications inbox',
+            child: notifCard(
+              notif(
+                NotificationType.sharedBillDeleted,
+                payload: const {
+                  'description': 'Taxi',
+                  'project_name': 'Chiang Mai trip',
+                  'amount': 300,
+                  'applied': false,
+                },
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'NotificationTile — event completed: info only',
+            page: 'Notifications inbox',
+            child: notifCard(
+              notif(
+                NotificationType.eventCompleted,
+                awaitsAnswer: false,
+                payload: const {'project_name': 'Chiang Mai trip'},
               ),
             ),
           ),
@@ -293,26 +330,6 @@ Widget buildOthersPage(BuildContext context) {
             label: 'ProjectMemberAvatar — size 48',
             page: 'Project members page',
             child: const ProjectMemberAvatar(name: 'Aom Chan', size: 48),
-          ),
-          HubUse(
-            label: 'ProjectMemberPickCard — picked',
-            page: 'Project row form (payer)',
-            child: ProjectMemberPickCard(
-              name: 'Aom Chan',
-              label: 'Paid by',
-              onTap: () {},
-            ),
-          ),
-          HubUse(
-            label: 'ProjectMemberPickCard — empty with error',
-            page: 'Project row form (payer)',
-            child: ProjectMemberPickCard(
-              name: null,
-              label: 'Paid by',
-              placeholder: 'Pick who paid',
-              errorText: 'Pick who paid',
-              onTap: () {},
-            ),
           ),
           HubUse(
             wide: true,

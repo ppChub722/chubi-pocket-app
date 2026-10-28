@@ -54,46 +54,46 @@ class UsersRepository {
     }
   }
 
-  Future<User> setMoneyStyle(String style) async {
+  Future<User> _put(Map<String, dynamic> body) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(
         '/users/me',
-        data: {
-          'preferences': {'money_style': style},
-        },
+        data: body,
       );
       return User.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
+
+  /// Partial merge into `preferences` (only the keys sent change).
+  Future<User> updatePreferences(Map<String, Object?> prefs) =>
+      _put({'preferences': prefs});
+
+  Future<User> setMoneyStyle(String style) =>
+      updatePreferences({'money_style': style});
 
   /// Sets the decimals preference (`money_decimals`: always, never, auto).
-  Future<User> setMoneyDecimals(String decimals) async {
-    try {
-      final res = await _client.dio.put<Map<String, dynamic>>(
-        '/users/me',
-        data: {
-          'preferences': {'money_decimals': decimals},
-        },
-      );
-      return User.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  Future<User> setMoneyDecimals(String decimals) =>
+      updatePreferences({'money_decimals': decimals});
 
-  Future<User> setFeeCategory(String? categoryId) async {
-    try {
-      final res = await _client.dio.put<Map<String, dynamic>>(
-        '/users/me',
-        data: {
-          'preferences': {'fee_category_id': categoryId},
-        },
-      );
-      return User.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  Future<User> setFeeCategory(String? categoryId) =>
+      updatePreferences({'fee_category_id': categoryId});
+
+  /// Remembers [page]'s list choices; null resets that page.
+  Future<User> setPagePref(String page, Map<String, dynamic>? value) =>
+      updatePreferences({
+        'page_prefs': {page: value},
+      });
+
+  /// Every page back to its defaults.
+  Future<User> resetPagePrefs() => updatePreferences({'page_prefs': null});
+
+  /// The two auto-sync switches; only the one(s) passed change.
+  Future<User> setAutoSync({bool? events, bool? debts}) =>
+      _put({'auto_sync_events': ?events, 'auto_sync_debts': ?debts});
+
+  /// The two รับบิลใหม่อัตโนมัติ switches; only the one(s) passed change.
+  Future<User> setAutoAccept({bool? events, bool? debts}) =>
+      _put({'auto_accept_events': ?events, 'auto_accept_debts': ?debts});
 }

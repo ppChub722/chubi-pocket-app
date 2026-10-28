@@ -226,6 +226,7 @@ class DetailRow extends StatelessWidget {
     this.showChevron = false,
     this.locked = false,
     this.horizontalInset = AppSpacing.lg,
+    this.helperMaxLines,
     super.key,
   });
 
@@ -282,6 +283,9 @@ class DetailRow extends StatelessWidget {
 
   final double horizontalInset;
 
+  /// Null = the helper wraps; 1 = one line ending in "…" (a summary line).
+  final int? helperMaxLines;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -313,6 +317,10 @@ class DetailRow extends StatelessWidget {
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       helper!,
+                      maxLines: helperMaxLines,
+                      overflow: helperMaxLines == null
+                          ? null
+                          : TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),

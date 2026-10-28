@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +8,8 @@ import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
+import '../../../auth/domain/user.dart';
+import '../../../preferences/page_prefs.dart';
 import '../../domain/contact.dart';
 import '../cubit/contacts_cubit.dart';
 
@@ -29,12 +33,28 @@ class _ContactsPageState extends State<ContactsPage> {
   @override
   void initState() {
     super.initState();
+    _restorePrefs();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<ContactsCubit>().loadIfNeeded(keepFilter: true);
       }
     });
   }
+
+  /// The status / link / sort remembered on the account (status lives in
+  /// the cubit and filters locally, so setting it fetches nothing).
+  void _restorePrefs() {
+    final pref = readPagePref(context, PagePrefIds.contacts);
+    final fields = pagePrefPage(PagePrefIds.contacts).fields;
+    String pick(String key) =>
+        fields.firstWhere((f) => f.key == key).pick(pref);
+    context.read<ContactsCubit>().setStatusFilter(pick('status'));
+    _link = _LinkFilter.values.asNameMap()[pick('link')] ?? _link;
+    _sort = _ContactSort.values.asNameMap()[pick('sort')] ?? _sort;
+  }
+
+  void _remember(Map<String, Object?> patch) =>
+      unawaited(rememberPagePref(context, PagePrefIds.contacts, patch));
 
   @override
   void dispose() {
@@ -164,7 +184,10 @@ class _ContactsPageState extends State<ContactsPage> {
                   ),
                   trailing: OptionMenuAnchor<_ContactSort>(
                     selected: _sort,
-                    onSelected: (v) => setState(() => _sort = v),
+                    onSelected: (v) {
+                      setState(() => _sort = v);
+                      _remember({'sort': v.name});
+                    },
                     options: [
                       for (final s in _ContactSort.values)
                         SheetOption(value: s, label: _sortLabel(l, s)),
@@ -179,8 +202,10 @@ class _ContactsPageState extends State<ContactsPage> {
                   filters: [
                     OptionMenuAnchor<String>(
                       selected: state.statusFilter,
-                      onSelected: (v) =>
-                          ctx.read<ContactsCubit>().setStatusFilter(v),
+                      onSelected: (v) {
+                        ctx.read<ContactsCubit>().setStatusFilter(v);
+                        _remember({'status': v});
+                      },
                       options: [
                         for (final e in statusLabels.entries)
                           SheetOption(value: e.key, label: e.value),
@@ -195,7 +220,10 @@ class _ContactsPageState extends State<ContactsPage> {
                     ),
                     OptionMenuAnchor<_LinkFilter>(
                       selected: _link,
-                      onSelected: (v) => setState(() => _link = v),
+                      onSelected: (v) {
+                        setState(() => _link = v);
+                        _remember({'link': v.name});
+                      },
                       options: [
                         for (final f in _LinkFilter.values)
                           SheetOption(value: f, label: _linkLabel(l, f)),

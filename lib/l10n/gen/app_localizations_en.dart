@@ -126,12 +126,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactPickerEmpty => 'No contacts yet — type a name above';
 
   @override
-  String get commonShowAmounts => 'Show amounts';
-
-  @override
-  String get commonHideAmounts => 'Hide amounts';
-
-  @override
   String get errorNetworkTitle => 'No connection';
 
   @override
@@ -976,19 +970,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get projectTxNewTitle => 'Add event transaction';
-
-  @override
-  String get projectTxEditTitle => 'Edit transaction';
-
-  @override
   String get projectTxPaidBy => 'Paid by';
-
-  @override
-  String get projectTxReceivedBy => 'Received by';
-
-  @override
-  String get projectTxTags => 'Tags';
 
   @override
   String get projectTxAddTag => 'New tag';
@@ -997,44 +979,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectTxTagHint => 'Tag name';
 
   @override
-  String get projectTxDescriptionHint => 'Description';
-
-  @override
-  String projectTxDescriptionUse(String text) {
-    return 'Use \"$text\"';
-  }
-
-  @override
-  String get projectTxDescriptionPast => 'Used before in this event';
-
-  @override
   String get projectTxSplitMember => 'Who';
-
-  @override
-  String get projectTxSplits => 'Split with';
-
-  @override
-  String get projectTxSplitsHint =>
-      'How much each person owes the payer; the payer keeps the rest';
-
-  @override
-  String get projectTxAddSplit => 'Add a split';
-
-  @override
-  String get projectTxSplitEqual => 'Split equally';
-
-  @override
-  String projectTxSplitsOver(String sum) {
-    return 'Splits ($sum) are more than the total';
-  }
-
-  @override
-  String projectTxPayerKeeps(String amount) {
-    return 'Payer\'s own share $amount';
-  }
-
-  @override
-  String get projectTxAmountRequired => 'Enter an amount above 0';
 
   @override
   String get settingsThemeMint => 'Mint';
@@ -1044,15 +989,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsNotifications => 'Notifications';
-
-  @override
-  String get settingsNotificationsHint =>
-      'What you get and what happens automatically';
-
-  @override
-  String settingsNotificationsSummary(int on, int auto) {
-    return '$on on | $auto automatic';
-  }
 
   @override
   String get settingsFontSample => 'Sample ภาษาไทย 123';
@@ -1114,15 +1050,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifHidden => 'Hidden';
 
   @override
-  String get notifSettingsTitle => 'Notification settings';
-
-  @override
-  String get notifSettingsReceive => 'Notifications you get';
-
-  @override
-  String get notifGroupSplits => 'Bill splits';
-
-  @override
   String get notifGroupProjects => 'Events';
 
   @override
@@ -1145,18 +1072,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifTypeProjectAdded => 'Added to an event';
 
   @override
-  String get notifAutoAddDebt => 'Auto: add to my debts';
-
-  @override
-  String get notifAutoCopyToBook => 'Auto: add to my book';
-
-  @override
-  String get notifAutoUpdateCopy => 'Auto: update my copy to match';
-
-  @override
-  String get notifActionAddDebt => 'Add to my debts';
-
-  @override
   String get notifActionCopyToBook => 'Add to my book';
 
   @override
@@ -1172,12 +1087,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String notifProjectAdded(String actor, String project) {
     return '$actor added you to $project';
   }
-
-  @override
-  String get notifDefaultAccount => 'Receiving wallet';
-
-  @override
-  String get notifDefaultAccountNone => 'Not set';
 
   @override
   String get notifSettingsSaveFailed => 'Could not save, changed back';
@@ -1334,21 +1243,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txDeleted => 'Transaction deleted';
 
   @override
-  String get txDeleteRecurringTitle => 'Delete this transaction?';
-
-  @override
-  String txDeleteRecurringBody(String name) {
-    return 'Linked to $name';
-  }
-
-  @override
-  String get txDeleteRecurringOnly =>
-      'Delete only (the occurrence is due again)';
-
-  @override
-  String get txDeleteRecurringSkip => 'Delete and skip the occurrence';
-
-  @override
   String get txSplitEqually => 'Split equally';
 
   @override
@@ -1360,10 +1254,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get txSplitExceeds =>
       'Split total is more than the transaction amount';
-
-  @override
-  String get txSavedTagsFailed =>
-      'Saved, but the tags didn\'t stick — edit them on the transaction';
 
   @override
   String get txTransferNeedsTo => 'Pick the destination wallet';
@@ -1737,9 +1627,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTitle => 'Settings';
 
   @override
-  String get settingsSectionAbout => 'About';
-
-  @override
   String get settingsChangePassword => 'Change password';
 
   @override
@@ -1750,9 +1637,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsLanguage => 'Language';
-
-  @override
-  String get settingsFont => 'Font';
 
   @override
   String get settingsAppVersion => 'App version';
@@ -1850,12 +1734,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get notifTypeSplitChanged => 'Someone changes a split with me';
-
-  @override
-  String get notifAutoApplySplitChange => 'Auto: update my debt to match';
-
-  @override
   String notifSplitAmountChanged(
     String who,
     String what,
@@ -1869,22 +1747,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String notifSplitRemovedYou(String who, String what) {
     return '$who removed you from the split $what';
   }
-
-  @override
-  String get notifSplitChangeUpdated => 'Your debt was updated';
-
-  @override
-  String get notifSplitChangeDeleted => 'That debt was removed';
-
-  @override
-  String get notifSplitChangeUsed => 'Already updated';
-
-  @override
-  String get notifSplitChangeStale =>
-      'Can\'t update any more — there\'s a newer change';
-
-  @override
-  String get notifSplitChangeGone => 'That debt was deleted';
 
   @override
   String txSplitStatusOverpaidToThem(String amount) {
@@ -2003,9 +1865,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txTagCreateFailed => 'Couldn\'t create the tag';
-
-  @override
-  String get projectTxPayerRequired => 'Pick a member first';
 
   @override
   String get quickFrom => 'From';
@@ -2692,16 +2551,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walletErrorInvalidIdentifier => 'That account number isn’t valid';
 
   @override
-  String get categoryFeeSwitchLabel => 'Use for fees';
-
-  @override
-  String get categoryFeeSwitchHelper =>
-      'Fees from bank slips go here | one category at a time';
-
-  @override
-  String get categoryFeeSwitchFailed => 'Couldn’t set the fee category';
-
-  @override
   String get monthPickerTitle => 'Pick a month';
 
   @override
@@ -3284,14 +3133,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtCloseLabel => 'Close debts';
 
   @override
-  String get debtClosePick => 'Pick debts';
-
-  @override
-  String debtCloseChosen(int n) {
-    return '$n debts picked';
-  }
-
-  @override
   String debtCloseConfirm(int n) {
     return 'Pick $n debts';
   }
@@ -3387,22 +3228,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'The owner must transfer ownership before leaving';
 
   @override
-  String get eventDeleteBody =>
-      'Every bill in the event is deleted | your transactions linked to it can stay or be deleted too';
-
-  @override
-  String get eventDeleteKeepTxs => 'Delete, keep my transactions';
-
-  @override
-  String eventDeleteWithTxs(int count) {
-    return 'Delete and remove $count transactions';
-  }
-
-  @override
   String get eventDeleteConfirm => 'Delete';
-
-  @override
-  String get eventDeleteNotYet => 'Not now';
 
   @override
   String get occurrenceStateUpcoming => 'Upcoming';
@@ -3479,15 +3305,6 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
-
-  @override
-  String get occurrenceSkipLinkedTitle => 'Skip this occurrence?';
-
-  @override
-  String get occurrenceSkipKeepTx => 'Skip, keep the transaction';
-
-  @override
-  String get occurrenceSkipDeleteTx => 'Skip and delete the transaction';
 
   @override
   String get occurrenceDueTitle => 'Needs action';
@@ -3664,15 +3481,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get linkedSaveBoth => 'Save and update the other side';
-
-  @override
-  String get linkedDeleteTitle => 'Delete the linked item too?';
-
-  @override
-  String get linkedDeleteThisOnly => 'Delete this side only';
-
-  @override
-  String get linkedDeleteBoth => 'Delete both';
 
   @override
   String get dueToday => 'Today';
@@ -5304,9 +5112,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Hidden, not counted, can be restored';
 
   @override
-  String get fpEventsDeleteConsequence => 'You choose whether its bills go too';
-
-  @override
   String get fpEventsRestore => 'Restore event';
 
   @override
@@ -5424,27 +5229,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get evbBooked => 'In my books';
 
   @override
-  String get evbBookDebt => 'Debt';
-
-  @override
   String evbBookDebtLine(String name) {
     return 'I owe $name';
   }
 
   @override
-  String get evbBookTx => 'Transaction';
-
-  @override
-  String get evbBookTxLine => 'My share as an expense';
-
-  @override
   String evbPaybackBy(String name) {
     return 'Payback | by $name';
-  }
-
-  @override
-  String evbPaidFrom(String wallet) {
-    return 'Paid from $wallet';
   }
 
   @override
@@ -5475,11 +5266,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get evbSettleRecorded => 'Recorded';
 
   @override
-  String evbSettleRecordBody(String from, String to, String amount) {
-    return 'Record in your debts: $from → $to $amount';
-  }
-
-  @override
   String get evbBookedDebt => 'Debt';
 
   @override
@@ -5497,11 +5283,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get evbOnlyMine => 'Only mine';
-
-  @override
-  String evbDebtorsLine(int count) {
-    return '$count owe me';
-  }
 
   @override
   String get evbNoDebt => 'No debt';
@@ -5544,40 +5325,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get notifSettingsLegend =>
-      'Off: no notice | Notify: a notice with a one-tap button | Auto: done for you, then you are told what was done';
-
-  @override
-  String get notifStateOff => 'Off';
-
-  @override
-  String get notifStateNotify => 'Notify';
-
-  @override
-  String get notifStateAuto => 'Auto';
-
-  @override
   String get notifGroupRecurring => 'Recurring';
 
   @override
   String get notifTypeRecurringDue => 'Recurring items are due';
 
   @override
-  String get notifTypeRecurringDueHint =>
-      'Always listed under To do on the recurring page | Off = no notice';
-
-  @override
   String get notifTypeRecurringEnding => 'A recurring is about to end';
 
   @override
-  String get notifTypeRecurringEndingHint => 'A few items left | extend it?';
-
-  @override
   String get notifTypeRecurringAutoCreated => 'Recorded automatically';
-
-  @override
-  String get notifTypeRecurringAutoCreatedHint =>
-      'Once a day, how many were recorded | Off = no notice';
 
   @override
   String get notifTypeRequestsHint =>
@@ -5588,9 +5345,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsSectionMoney => 'Money';
-
-  @override
-  String get settingsSectionData => 'Data';
 
   @override
   String get settingsCurrencyHint =>
@@ -5630,7 +5384,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsMoneyDecimalsAuto => 'Hide .00 only';
 
   @override
-  String get settingsMainWalletHint => 'Used as the default when recording';
+  String get settingsMainWalletHint =>
+      'Used for every new entry; not set = the last wallet used';
 
   @override
   String get settingsMainWalletNone => 'Not set';
@@ -5644,9 +5399,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsExportCsv => 'Export CSV';
-
-  @override
-  String get settingsComingIn04 => '0.4';
 
   @override
   String get profileSectionSecurity => 'Security';
@@ -6154,37 +5906,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'On the day it\'s recorded for you, no confirm needed';
 
   @override
-  String get fpRecurringAutoCreateNeeds =>
-      'Needs a fixed amount and a wallet first';
-
-  @override
-  String fpRecurringTxScopeTitle(int n) {
-    return 'Apply this to the $n recorded transactions too?';
-  }
-
-  @override
-  String get fpRecurringTxScopeFuture => 'Only from now on';
-
-  @override
-  String get fpRecurringTxScopeAll =>
-      'Recorded ones too (amount and date stay)';
-
-  @override
-  String fpRecurringTxUpdateFailed(int n) {
-    return '$n recorded transactions couldn\'t be updated';
-  }
-
-  @override
   String get fpM5bRecurringPerMonth => 'Per month';
 
   @override
   String fpM5bRecurringDeleteNumbers(int items, int drafts, int linked) {
     return 'This deletes $items occurrences, $drafts waiting drafts and touches $linked saved records.';
-  }
-
-  @override
-  String fpM5bEventDeleteNumbers(int bills, int members) {
-    return 'This deletes $bills bills and $members members.';
   }
 
   @override
@@ -6201,22 +5927,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get debtSettleChip => 'Pay a debt';
-
-  @override
-  String get debtOriginFieldLabel => 'Origin';
-
-  @override
-  String get debtOriginPickFirst => 'Pick a person first';
-
-  @override
-  String debtOriginLend(String name) {
-    return 'Lent to $name';
-  }
-
-  @override
-  String debtOriginBorrow(String name) {
-    return 'Borrowed from $name';
-  }
 
   @override
   String get debtRoleDebtor => 'Owes me';
@@ -6254,16 +5964,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get debtRepayFrom => 'Got back from';
-
-  @override
-  String debtRepayDescPay(String name) {
-    return 'Paid back $name';
-  }
-
-  @override
-  String debtRepayDescReceive(String name) {
-    return 'Got back from $name';
-  }
 
   @override
   String get debtMarkPaidLabel => 'Close debts';
@@ -6402,13 +6102,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get linkedEventAskTitle => 'Change it in the event too?';
 
   @override
-  String get linkedBookAskTitle => 'Change it in my book too?';
-
-  @override
   String get linkedMineOnly => 'Only mine';
-
-  @override
-  String get linkedEventOnly => 'Only the event';
 
   @override
   String get linkedBoth => 'Both';
@@ -6416,9 +6110,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get txLinkDraftNeedsExistingEvent =>
       'A draft can only go to an existing event';
-
-  @override
-  String get debtQuickCreateTxLabel => 'Also save as a transaction';
 
   @override
   String debtResultNow(String name) {
@@ -6648,7 +6339,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Note who borrowed and who paid for whom, so you never forget to ask';
 
   @override
-  String get evbReceives => 'Got it';
+  String get evbReceives => 'Received';
 
   @override
   String get txLinkWalletNotIn => 'Not into this wallet';
@@ -6720,10 +6411,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txLinkDisconnectTitle => 'Disconnect from the event?';
 
   @override
-  String get txLinkDisconnectBody =>
-      'This becomes a plain transaction. The event\'s bill doesn\'t change';
-
-  @override
   String get txLinkDisconnected => 'Disconnected';
 
   @override
@@ -6760,5 +6447,523 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String debtPartnerLinked(String name) {
     return 'Linked with $name\'s book';
+  }
+
+  @override
+  String get eventCompleteTitle => 'Complete this event for good?';
+
+  @override
+  String get eventCompleteBody =>
+      'This can\'t be undone. No more adding or editing bills, and everyone\'s books stop syncing with this event at once (the links stay).';
+
+  @override
+  String get eventCompleteConfirm => 'Complete event';
+
+  @override
+  String get eventCompleted => 'Event completed';
+
+  @override
+  String get eventCompletedNotice =>
+      'This event is completed: bills can\'t be added or edited, and nobody\'s book syncs with it any more.';
+
+  @override
+  String get eventErrCompleted =>
+      'This event is completed and can\'t be changed';
+
+  @override
+  String get eventErrNotActive => 'Only an active event can be completed';
+
+  @override
+  String get eventErrEmptyPerson =>
+      'A bill still has an empty person slot: fill it before completing the event';
+
+  @override
+  String get settingsHomeCaption =>
+      'Saved with your account, the same on every device';
+
+  @override
+  String get settingsGroupSync => 'Auto sync';
+
+  @override
+  String get settingsGroupPagePrefs => 'Filters and sorting';
+
+  @override
+  String get settingsSummaryOn => 'on';
+
+  @override
+  String get settingsSummaryOff => 'off';
+
+  @override
+  String settingsSyncSummary(String events, String debts) {
+    return 'Events $events | Debts and splits $debts';
+  }
+
+  @override
+  String settingsNotificationsOnSummary(int on, int total) {
+    return '$on of $total on';
+  }
+
+  @override
+  String settingsPagePrefsSummary(int count) {
+    return '$count pages | remembers your last choice';
+  }
+
+  @override
+  String settingsMainWalletSummary(String name) {
+    return 'Main wallet $name';
+  }
+
+  @override
+  String get settingsComingSoon => 'Coming soon';
+
+  @override
+  String get settingsFontThai => 'Thai font';
+
+  @override
+  String get settingsFontEnglish => 'English font';
+
+  @override
+  String get settingsPreview => 'Preview';
+
+  @override
+  String get settingsSectionNumbers => 'Number display';
+
+  @override
+  String get settingsSectionEntryDefaults => 'Entry defaults';
+
+  @override
+  String get settingsFeeCategory => 'Fee category';
+
+  @override
+  String get settingsFeeCategoryHint => 'Used for transfers with a fee';
+
+  @override
+  String get settingsSyncLegend =>
+      'On = when someone edits a bill, mine changes at once\nOff = a notification asks me to \"Update\"';
+
+  @override
+  String get settingsSyncEvents => 'Events';
+
+  @override
+  String get settingsSyncEventsHint => 'Bills in events I have a part in';
+
+  @override
+  String get settingsSyncDebts => 'Debts and splits';
+
+  @override
+  String get settingsSyncDebtsHint => 'Bills and debts with linked people';
+
+  @override
+  String get settingsSyncFootnote =>
+      'The same switches as on the event page and the person page: change it anywhere, it\'s one value | Muted notifications still sync quietly';
+
+  @override
+  String get notifSettingsOnOffLegend =>
+      'On = notify me | Off = silent\nAuto sync is its own setting; muted types still update quietly';
+
+  @override
+  String get notifGroupSharedBills => 'Shared bills';
+
+  @override
+  String get notifSetSplitCreatedHint => 'A new bill with my share';
+
+  @override
+  String get notifSetSplitChanged => 'Someone edited a bill shared with me';
+
+  @override
+  String get notifSetSplitChangedHint => 'Amount, date or description changed';
+
+  @override
+  String get notifSetSharedBillDeleted =>
+      'Someone deleted a bill shared with me';
+
+  @override
+  String get notifSetSharedBillDeletedHint =>
+      'My copy becomes a plain transaction';
+
+  @override
+  String get notifSetSharedBillDisconnected =>
+      'Someone disconnected a bill shared with me';
+
+  @override
+  String get notifSetSharedBillDisconnectedHint =>
+      'My bill stays, just no longer connected';
+
+  @override
+  String get notifSetDebtDisconnectedHint =>
+      'My debt stays, just no longer connected';
+
+  @override
+  String get notifSetProjectTxForYouHint =>
+      'Someone paid for me, or booked a bill I paid';
+
+  @override
+  String get notifSetProjectTxChangedHint => 'A bill with my share changed';
+
+  @override
+  String get notifSetEventCompleted => 'Event completed';
+
+  @override
+  String get notifSetEventCompletedHint =>
+      'Locked for good, no more sync, claim once';
+
+  @override
+  String get notifSetEventMemberRemoved => 'Removed from an event';
+
+  @override
+  String get notifSetEventMemberRemovedHint =>
+      'What I booked stays, just no longer connected';
+
+  @override
+  String get notifSetRecurringAutoCreatedHint =>
+      'Entries recorded for me on schedule';
+
+  @override
+  String get notifSetRequests =>
+      'Event invites, contact link requests, wallet invites';
+
+  @override
+  String get notifActionAddToBook => 'Add to my book';
+
+  @override
+  String get notifActionRemoveMine => 'Remove mine too';
+
+  @override
+  String get notifActionKeepMine => 'Keep';
+
+  @override
+  String notifSharedBillCreated(String who, String what) {
+    return '$who recorded $what, a bill you\'re in';
+  }
+
+  @override
+  String notifSharedBillDeleted(String who, String what) {
+    return '$who deleted the bill $what';
+  }
+
+  @override
+  String notifSharedBillDisconnected(String who, String what) {
+    return '$who disconnected from the bill $what';
+  }
+
+  @override
+  String notifEventCompleted(String who, String name) {
+    return '$who completed the event $name';
+  }
+
+  @override
+  String notifEventMemberRemoved(String who, String name) {
+    return '$who removed you from the event $name';
+  }
+
+  @override
+  String get notifBillRemovedMine =>
+      'This bill\'s records were removed from your book';
+
+  @override
+  String get notifBillGone => 'This bill was deleted';
+
+  @override
+  String get notifBillDisconnectedMine =>
+      'You disconnected this bill; connect again from the bill';
+
+  @override
+  String get txLinkDisconnectBodyCopy =>
+      'This entry and your debts from this bill become plain records you edit freely. The bill doesn\'t change and its edits won\'t reach you any more.';
+
+  @override
+  String get evbEmptyPerson => 'No one yet';
+
+  @override
+  String get evbAssignMe => 'Me';
+
+  @override
+  String get evbAssignTitle => 'Who takes this spot';
+
+  @override
+  String get evbAssignWhose => 'Whose spots';
+
+  @override
+  String get evbAssignAction => 'Fill in';
+
+  @override
+  String get evbAssigned => 'Spot filled';
+
+  @override
+  String evbEmptyPersonsNotice(int count) {
+    return '$count bills have an empty spot from a removed member: fill them before completing the event';
+  }
+
+  @override
+  String get evbBillChanged => 'This bill was changed meanwhile; reloaded';
+
+  @override
+  String get evbSplitBill => 'Split bill';
+
+  @override
+  String get fpRecurringKindDebt => 'Debt';
+
+  @override
+  String get pagePrefSort => 'Sort';
+
+  @override
+  String get pagePrefFilter => 'Filter';
+
+  @override
+  String get pagePrefStatus => 'Status';
+
+  @override
+  String get pagePrefKind => 'Kind';
+
+  @override
+  String get pagePrefLink => 'Link';
+
+  @override
+  String get pagePrefCollapsed => 'Collapsed parents';
+
+  @override
+  String get pagePrefAll => 'All';
+
+  @override
+  String get pagePrefPendingManual => 'Added by me';
+
+  @override
+  String get pagePrefPendingOthers => 'From others';
+
+  @override
+  String get pagePrefNone => 'none';
+
+  @override
+  String pagePrefValue(String title, String value) {
+    return '$title: $value';
+  }
+
+  @override
+  String get pagePrefsChanged => 'Changed';
+
+  @override
+  String get pagePrefsCaption =>
+      'Picking on a page changes it here too | tap to set it yourself';
+
+  @override
+  String get pagePrefsFootnote =>
+      'Tabs, date ranges and search start fresh every time a page opens';
+
+  @override
+  String get pagePrefsResetAll => 'Reset all to defaults';
+
+  @override
+  String get pagePrefsResetAllBody =>
+      'Every page goes back to its default filters and sorting';
+
+  @override
+  String get pagePrefsResetPage => 'Reset this page';
+
+  @override
+  String get pagePrefsSetOnPage => 'Set on the page itself';
+
+  @override
+  String evbClaimTitle(String name) {
+    return 'Into my book: $name';
+  }
+
+  @override
+  String evbClaimTheyOwe(String name) {
+    return '$name owes me';
+  }
+
+  @override
+  String evbClaimIOwe(String name) {
+    return 'I owe $name';
+  }
+
+  @override
+  String get evbClaimPaybacks => 'Paybacks / loans';
+
+  @override
+  String get evbClaimUntitled => 'Bill';
+
+  @override
+  String get evbClaimDone => 'In my book';
+
+  @override
+  String get evbClaimNote =>
+      'The picked bills become one debt with this person; bills someone else paid get a \"paid by\" entry of my share';
+
+  @override
+  String evbClaimConfirm(int count) {
+    return 'Book $count bills';
+  }
+
+  @override
+  String evbClaimed(String name) {
+    return 'Booked with $name';
+  }
+
+  @override
+  String get evbClaimNothing => 'No bills left to book';
+
+  @override
+  String get evbClaimMixed =>
+      'Pick one side at a time: they owe me, or I owe them';
+
+  @override
+  String get evbClaimAlready => 'Some bills are already in your book';
+
+  @override
+  String get evbMyCopy => 'My book';
+
+  @override
+  String evbPaidByName(String name) {
+    return 'Paid by $name';
+  }
+
+  @override
+  String evbPaidBackName(String name) {
+    return 'Paid $name back';
+  }
+
+  @override
+  String get evbPrivateNote => 'Private note';
+
+  @override
+  String get evbPrivateNoteHint => 'Only you see it';
+
+  @override
+  String get evbCopyDisconnected =>
+      'Disconnected: this bill doesn\'t reach my book';
+
+  @override
+  String get evbReconnect => 'Connect again';
+
+  @override
+  String get evbCopyOutOfSync => 'My book doesn\'t match the bill';
+
+  @override
+  String get evbApplyBill => 'Update to match';
+
+  @override
+  String get debtBillsTitle => 'Bills in this debt';
+
+  @override
+  String get debtBillSplit => 'Split bill';
+
+  @override
+  String get debtBillOutOfSync => 'Out of sync';
+
+  @override
+  String get evbJoinTitle => 'Join which bill';
+
+  @override
+  String evbJoinPaidBy(String name) {
+    return '$name paid';
+  }
+
+  @override
+  String get evbJoined => 'Joined the bill';
+
+  @override
+  String get evbSettlePairs => 'Real pairs';
+
+  @override
+  String get evbSettleSimplified => 'Fewest transfers';
+
+  @override
+  String get evbSettleBook => 'Into my book';
+
+  @override
+  String get evbSettleBookTitle => 'Book it into my book once?';
+
+  @override
+  String get evbSettleBookBody =>
+      'The money that moves becomes entries, the bill debts you already booked are cleared to zero, and real pairs can\'t be booked any more.';
+
+  @override
+  String get evbSettleBooked => 'Booked into my book';
+
+  @override
+  String evbSettleBookedOn(String date) {
+    return 'Booked into my book on $date';
+  }
+
+  @override
+  String get evbSettleAlreadyBooked => 'Already booked';
+
+  @override
+  String evbBookLinePay(String name, String amount) {
+    return 'Pay $name $amount';
+  }
+
+  @override
+  String evbBookLineGet(String name, String amount) {
+    return 'Receive from $name $amount';
+  }
+
+  @override
+  String get occurrenceNothingOwed => 'Nothing is owed with this person now';
+
+  @override
+  String get recurringPausedNoBalance =>
+      'Paused: nothing owed for 3 rounds | it starts again by itself with a new debt with this person';
+
+  @override
+  String get recurringNoBalanceChip => 'Nothing owed';
+
+  @override
+  String get debtsPersonAddRecurring => 'Make it recurring';
+
+  @override
+  String get occurrenceDebtPickEmpty => 'No entries with this person to link';
+
+  @override
+  String get debtFromEventLabel => 'From event bills';
+
+  @override
+  String get debtFromEventPick => 'Pick bills';
+
+  @override
+  String get txJoinBill => 'Join a bill in an event';
+
+  @override
+  String get settingsAcceptTitle => 'Auto-accept new bills';
+
+  @override
+  String get settingsAcceptLegend =>
+      'On = a new bill with my share goes into my book at once\nOff = a notification asks me to \"Add to my book\"';
+
+  @override
+  String get settingsAcceptEventsHint => 'New bills in events I have a part in';
+
+  @override
+  String get settingsAcceptDebtsHint => 'New split bills from linked people';
+
+  @override
+  String get settingsAcceptShortHint => 'New bills go into my book at once';
+
+  @override
+  String get settingsSyncShortHint =>
+      'When someone edits a bill, mine changes at once';
+
+  @override
+  String get eventDeleteKeepsBills =>
+      'Only the event goes. Its bills stay as split bills, everyone stays connected, and nothing in anyone\'s book is deleted.';
+
+  @override
+  String get eventDeleteKeepsBillsShort => 'Its bills stay, as split bills';
+
+  @override
+  String get evbPayersLabel => 'Paid by';
+
+  @override
+  String evbPayers(int count) {
+    return 'Payers | $count';
+  }
+
+  @override
+  String get evbAddPayer => 'Add a payer';
+
+  @override
+  String evbPayersLine(String payers) {
+    return 'Paid by $payers';
   }
 }

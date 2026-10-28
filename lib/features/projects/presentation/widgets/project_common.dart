@@ -13,6 +13,22 @@ String projectStatusLabel(AppLocalizations l, ProjectStatus s) => switch (s) {
   ProjectStatus.archived => l.projectStatusArchived,
 };
 
+/// The status menu (V3): completed is reached only from an event the owner
+/// may complete ([canComplete]) and left only for archived; a [completed]
+/// event (also once archived) offers just เสร็จสิ้น | เก็บถาวร (restore of an
+/// archived one goes back to completed).
+List<ProjectStatus> eventStatusOptions(
+  ProjectStatus current, {
+  required bool completed,
+  required bool canComplete,
+}) {
+  if (completed) return const [ProjectStatus.completed, ProjectStatus.archived];
+  return [
+    for (final s in ProjectStatus.values)
+      if (s != ProjectStatus.completed || current == s || canComplete) s,
+  ];
+}
+
 AppChipTone projectStatusTone(ProjectStatus s) => switch (s) {
   ProjectStatus.active => AppChipTone.primary,
   ProjectStatus.completed => AppChipTone.success,
@@ -165,8 +181,13 @@ class ProjectView {
 
   bool get canAddTx => project.canAddBill;
 
-  /// Cancelled / archived → rows can't be edited, deleted or ticked.
-  bool get rowsLocked => project.isLocked;
+  /// Completed for good: no add / edit, nothing synced any more.
+  bool get isCompleted =>
+      project.isCompleted || project.status == ProjectStatus.completed;
+
+  /// Completed / cancelled / archived → rows can't be edited, deleted or
+  /// ticked.
+  bool get rowsLocked => project.isLocked || project.readOnly || isCompleted;
 
   List<ProjectMember> get currentMembers =>
       members.where((m) => m.status != MemberStatus.left).toList();

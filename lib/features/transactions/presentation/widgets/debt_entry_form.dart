@@ -15,6 +15,7 @@ import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
+import '../../../projects/presentation/event_claim.dart' show showClaimSheet;
 import '../../../tags/domain/tag.dart';
 import '../../../tags/presentation/widgets/tag_picker.dart';
 import '../../domain/refs.dart';
@@ -22,6 +23,8 @@ import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/tx_form_options_cubit.dart';
 import '../quick_create_bodies.dart';
+import 'event_pick.dart';
+import 'event_picker.dart';
 import 'pick_chip_rows.dart';
 import 'transaction_picker.dart';
 import 'transaction_tile.dart';
@@ -841,6 +844,43 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     if (r is AppDatePicked && mounted) _c.setDueDate(r.date);
   }
 
+  /// 0.4.1-2 V10 — "จากบิลอีเวนต์" (record side, a person picked): pick an
+  /// event, then that person's bills there; the claim (ONE call) books them
+  /// as one debt and the sheet closes.
+  Widget _fromEventRow(AppLocalizations l) => DraftFieldRow(
+    key: const ValueKey('debtFromEventRow'),
+    label: l.debtFromEventLabel,
+    dense: true,
+    child: Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: AppChip(
+        label: l.debtFromEventPick,
+        icon: AppIcons.project,
+        tone: AppChipTone.primary,
+        selected: true,
+        dashed: true,
+        onTap: _claimFromEvent,
+      ),
+    ),
+  );
+
+  Future<void> _claimFromEvent() async {
+    final p = _c.person;
+    if (p == null) return;
+    final navigator = Navigator.of(context);
+    final event = await EventPicker.one(context, allowCreate: false);
+    if (event is! ExistingEventTarget || !mounted) return;
+    final contactId = p.person.contactId;
+    final claimed = await showClaimSheet(
+      context,
+      projectId: event.project.id,
+      contactId: contactId,
+      personName: contactId == null ? p.person.name : null,
+      memberName: p.person.name,
+    );
+    if (claimed && mounted) navigator.pop(true);
+  }
+
   /// "กำหนดจ่าย" (owner 2026-10-23): like the รายการประจำ row, under โน้ต.
   Widget _dueRow(AppLocalizations l) {
     final due = _c.dueDate;
@@ -942,6 +982,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
               ),
             ),
             gap,
+            if (!repay && _c.person != null) ...[_fromEventRow(l), gap],
             if (!repay) _dueRow(l),
             // "ติดป้ายจ่ายแล้ว": only on the repay side (owner 2026-10-21).
             if (repay && _c.person != null) _closeRow(l),

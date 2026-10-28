@@ -248,6 +248,19 @@ class RecurringRepository {
   Future<ItemWriteResult> unmarkOccurrencePaid(String ruleId, String slot) =>
       _occWrite('${_occ(ruleId, slot)}/unmark-paid');
 
+  /// หนี้: fills the occurrence with an existing person-book entry of the
+  /// rule's person (same debt kind and direction). 409 ITEM_ALREADY_LINKED
+  /// when either side is taken, unless [replace].
+  Future<ItemWriteResult> linkOccurrenceDebtEntry(
+    String ruleId,
+    String slot,
+    String debtEntryId, {
+    bool replace = false,
+  }) => _occWrite(
+    '${_occ(ruleId, slot)}/link',
+    debtEntryLinkBody(debtEntryId, replace: replace),
+  );
+
   /// แก้เฉพาะงวดนี้. Presence-based: a key in [fields] overrides that value,
   /// null clears the override.
   Future<ItemWriteResult> updateOccurrence(
@@ -303,6 +316,13 @@ enum OccurrenceBulk {
   /// The `action` of `POST /recurring/occurrences/bulk`.
   final String wire;
 }
+
+/// `RecurringLinkRequest` for a หนี้ occurrence: an entry id instead of a
+/// transaction id.
+Map<String, dynamic> debtEntryLinkBody(
+  String debtEntryId, {
+  bool replace = false,
+}) => {'debt_entry_id': debtEntryId, if (replace) 'replace': true};
 
 /// One row of [RecurringRepository.settleMany]; [amount] is for confirm and
 /// mark_paid (R5).

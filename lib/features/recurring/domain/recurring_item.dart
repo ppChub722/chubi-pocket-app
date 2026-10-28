@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import '../../../core/data/write_effects.dart';
 import '../../../ui/ui.dart';
 import '../../pending/domain/pending_transaction.dart';
+import '../../personal_debts/domain/debt_direction.dart';
 import '../../projects/domain/project.dart';
 import '../../transactions/domain/refs.dart';
 import '../../transactions/domain/transaction_type.dart';
@@ -45,6 +46,36 @@ class RecurringParent extends Equatable {
   List<Object?> get props => [id, name, iconCode, kind, pauseReason];
 }
 
+/// The person-book entry that fills a หนี้ occurrence.
+class RecurringDebtEntryRef extends Equatable {
+  const RecurringDebtEntryRef({
+    required this.id,
+    required this.sub,
+    required this.direction,
+    required this.amount,
+    this.transactionId,
+  });
+
+  static RecurringDebtEntryRef? tryParse(Object? json) => json is Map
+      ? RecurringDebtEntryRef(
+          id: json['id'] as String,
+          sub: recurringDebtSubFromJson(json['kind']) ?? DebtEntrySub.record,
+          direction: DebtEntryDirection.parse(json['direction'] as String?),
+          amount: (json['amount'] as num?)?.toDouble() ?? 0,
+          transactionId: json['transaction_id'] as String?,
+        )
+      : null;
+
+  final String id;
+  final DebtEntrySub sub;
+  final DebtEntryDirection direction;
+  final double amount;
+  final String? transactionId;
+
+  @override
+  List<Object?> get props => [id, sub, direction, amount, transactionId];
+}
+
 class RecurringItem extends Equatable {
   const RecurringItem({
     required this.id,
@@ -66,6 +97,10 @@ class RecurringItem extends Equatable {
     this.transaction,
     this.savingEntryId,
     this.isSaving = false,
+    this.person,
+    this.debtEntry,
+    this.debtSub,
+    this.direction,
     this.edited = false,
     this.manual = false,
     this.createdAt,
@@ -122,6 +157,16 @@ class RecurringItem extends Equatable {
   /// ออมเงิน: recorded as a saving entry (not a transaction).
   final String? savingEntryId;
   final bool isSaving;
+
+  /// หนี้: the rule's person, and the entry that filled this occurrence.
+  final EmbeddedPerson? person;
+  final RecurringDebtEntryRef? debtEntry;
+
+  /// หนี้: จดหนี้ | จ่ายหนี้ and the money's direction, on every row.
+  final DebtEntrySub? debtSub;
+  final DebtEntryDirection? direction;
+
+  bool get isDebt => debtSub != null || person != null || debtEntry != null;
   final bool edited;
   final bool manual;
   final DateTime? createdAt;
@@ -141,7 +186,7 @@ class RecurringItem extends Equatable {
     return type == TransactionType.expense ? -a : a;
   }
 
-  static const _types = {'expense', 'income', 'transfer', 'saving'};
+  static const _types = {'expense', 'income', 'transfer', 'saving', 'debt'};
 
   /// Null for a row the app has no type for, so one such row doesn't break a
   /// whole list.
@@ -187,9 +232,22 @@ class RecurringItem extends Equatable {
     total: (json['total'] as num?)?.toInt(),
     date: parseYmd(json['date'] as String?) ?? DateTime.now(),
     daysUntil: (json['days_until'] as num?)?.toInt() ?? 0,
-    type: recurringTypeFromJson(json['type'] as String?),
+    // หนี้: money in when it comes to me (direction received).
+    type: json['type'] == 'debt' && json['direction'] == 'received'
+        ? TransactionType.income
+        : recurringTypeFromJson(json['type'] as String?),
     isSaving: json['type'] == 'saving',
     savingEntryId: json['saving_entry_id'] as String?,
+    person: json['person'] is Map
+        ? EmbeddedPerson.fromJson(
+            (json['person'] as Map).cast<String, dynamic>(),
+          )
+        : null,
+    debtEntry: RecurringDebtEntryRef.tryParse(json['debt_entry']),
+    debtSub: recurringDebtSubFromJson(json['debt_kind']),
+    direction: json['direction'] is String
+        ? DebtEntryDirection.parse(json['direction'] as String)
+        : null,
     amount: (json['amount'] as num?)?.toDouble(),
     account: json['account'] is Map<String, dynamic>
         ? AccountRef.fromJson(json['account'] as Map<String, dynamic>)
@@ -252,6 +310,10 @@ class RecurringItem extends Equatable {
     transaction,
     savingEntryId,
     isSaving,
+    person,
+    debtEntry,
+    debtSub,
+    direction,
     edited,
     manual,
     createdAt,

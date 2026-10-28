@@ -215,7 +215,8 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final p = _project;
-    final readOnly = p?.status == ProjectStatus.archived;
+    final readOnly =
+        p?.status == ProjectStatus.archived || (p?.isCompleted ?? false);
     final groups = <(String, String, List<ProjectMember>)>[
       (
         l.projectMembersTitle,

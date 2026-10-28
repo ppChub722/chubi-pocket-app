@@ -196,6 +196,9 @@ class _DueBoxesState extends State<DueBoxes> {
       line2: ListRowLine(
         lead: occurrenceWalletChip(context, i.account),
         parts: [
+          // หนี้: with whom, จดหนี้ | จ่ายหนี้ (one rule's list has them in
+          // its hero already).
+          if (widget.showDate) ...occurrenceDebtParts(l, i),
           if (widget.showDate)
             DateFormat.MMMEd(
               Localizations.localeOf(context).toLanguageTag(),

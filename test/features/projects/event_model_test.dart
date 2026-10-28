@@ -1,5 +1,12 @@
+import 'package:chubi_pocket/features/contacts/presentation/widgets/contact_picker.dart';
+import 'package:chubi_pocket/features/projects/domain/claim.dart';
 import 'package:chubi_pocket/features/projects/domain/project.dart';
+import 'package:chubi_pocket/features/projects/presentation/event_assign.dart';
 import 'package:chubi_pocket/features/projects/presentation/widgets/project_common.dart';
+import 'package:chubi_pocket/features/projects/presentation/widgets/project_tx_tiles.dart';
+import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
+import 'package:chubi_pocket/ui/ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'event_fixtures.dart';
@@ -98,6 +105,177 @@ void main() {
       expect(removed.txs.map((t) => t.id), ['b3', 'b2']);
       expect(removed.summary?.totalExpense, 750);
     });
+  });
+
+  group('V3 completed = locked for good', () {
+    ProjectView viewWith(Map<String, dynamic> event) => ProjectView.of(
+      ProjectDetail.fromJson({...detailJson(), 'event': event}),
+      currentUserId: 'u-me',
+    );
+
+    test('an active owner event offers ปิดอีเวนต์ and is not locked', () {
+      final v = viewWith({...eventJson(), 'can_complete': true});
+      expect(v.project.canComplete, isTrue);
+      expect(v.isCompleted, isFalse);
+      expect(v.rowsLocked, isFalse);
+    });
+
+    test('completed_at locks the rows, also once archived', () {
+      final done = {
+        ...eventJson(status: 'completed'),
+        'completed_at': '2026-10-27T10:00:00Z',
+        'is_locked': true,
+        'can_add_bill': false,
+        'can_edit': false,
+      };
+      final v = viewWith(done);
+      expect(v.project.completedAt, isNotNull);
+      expect(v.isCompleted, isTrue);
+      expect(v.rowsLocked, isTrue);
+      expect(v.canAddTx, isFalse);
+      final archived = viewWith({...done, 'status': 'archived'});
+      expect(archived.isCompleted, isTrue);
+      expect(archived.rowsLocked, isTrue);
+    });
+  });
+
+  group('V15 removed member = empty spots', () {
+    final l = lookupAppLocalizations(const Locale('th'));
+
+    test('removed_at + empty_person_bill_count parse; the spot is empty', () {
+      final d = ProjectDetail.fromJson({
+        ...detailJson(),
+        'event': {...eventJson(), 'empty_person_bill_count': 2},
+        'members': [
+          for (final m in membersJson())
+            m['name'] == 'Lee'
+                ? {...m, 'status': 'left', 'removed_at': '2026-10-27T09:00:00Z'}
+                : m,
+        ],
+      });
+      expect(d.project.emptyPersonBillCount, 2);
+      final lee = d.members.firstWhere((m) => m.displayName == 'Lee');
+      final me = d.members.firstWhere((m) => m.isMe);
+      expect(lee.isRemoved, isTrue);
+      expect(me.isRemoved, isFalse);
+      expect(projectMemberLevel(lee), PersonLevel.empty);
+      expect(projectMemberName(l, lee), l.evbEmptyPerson);
+      expect(projectMemberName(l, me), me.displayName);
+    });
+
+    test('the assign body is one BillPerson: me, a contact or a name', () {
+      expect(billPersonOf(const PayerMe()), {'me': true});
+      expect(billPersonOf(const PayerPerson(ContactNameTyped('Mai'))), {
+        'person_name': 'Mai',
+      });
+    });
+  });
+
+  test('V6/V9 claimable: direction, claimed, debt-type; the claim answer', () {
+    final bills = ClaimableBill.listOf({
+      'data': [
+        {
+          'pt_id': 'b1',
+          'type': 'expense',
+          'payback_kind': null,
+          'date': '2026-10-02',
+          'description': 'Dinner',
+          'bill_amount': 900,
+          'payer': {'id': 'm-me', 'name': 'Pond', 'is_me': true},
+          'other': {'id': 'm-lee', 'name': 'Lee'},
+          'direction': 'paid',
+          'amount': 300,
+          'my_transaction_id': 'tx1',
+          'payers': [
+            {
+              'member': {'id': 'm-me', 'name': 'Pond', 'is_me': true},
+              'amount': 600,
+            },
+            {
+              'member': {'id': 'm-mai', 'name': 'Mai'},
+              'amount': 300,
+            },
+          ],
+          'claimed': false,
+          'claimed_debt_id': null,
+        },
+        {
+          'pt_id': 'b2',
+          'type': 'payback',
+          'payback_kind': 'loan',
+          'date': '2026-10-03',
+          'description': null,
+          'bill_amount': 200,
+          'payer': {'id': 'm-lee', 'name': 'Lee'},
+          'other': {'id': 'm-lee', 'name': 'Lee'},
+          'direction': 'received',
+          'amount': 200,
+          'my_transaction_id': null,
+          'claimed': true,
+          'claimed_debt_id': 'd9',
+        },
+      ],
+      'totals': [],
+    });
+    expect(bills.map((b) => b.ptId), ['b1', 'b2']);
+    expect(bills.first.theyOweMe, isTrue);
+    expect(bills.first.amount, 300);
+    expect(bills.first.payers.map((p) => (p.member.name, p.amount)), [
+      ('Pond', 600),
+      ('Mai', 300),
+    ]);
+    expect(bills.last.payers, isEmpty);
+    expect(bills.last.theyOweMe, isFalse);
+    expect(bills.last.isDebtType, isTrue);
+    expect(bills.last.claimed, isTrue);
+    final r = ClaimResult.fromJson({
+      'debts': [
+        {'id': 'd1', 'amount': 500},
+      ],
+      'effects': {},
+      'bills': [],
+    });
+    expect(r.debtIds, ['d1']);
+    expect(r.amount, 500);
+  });
+
+  test('V12 settle: simplified only once completed; my lines; booked', () {
+    Map<String, dynamic> ref(String id, String name, {bool me = false}) => {
+      'id': id,
+      'name': name,
+      'is_me': me,
+    };
+    final open = EventSettle.fromJson({
+      'pairs': [
+        {
+          'from': ref('m-lee', 'Lee'),
+          'to': ref('m-me', 'Pond', me: true),
+          'amount': 300,
+        },
+      ],
+      'simplified': [],
+      'simplified_available': false,
+      'my_settle_booking': null,
+    });
+    expect(open.simplifiedAvailable, isFalse);
+    expect(open.myBookedAt, isNull);
+
+    final done = EventSettle.fromJson({
+      'pairs': [],
+      'simplified': [
+        {
+          'from': ref('m-lee', 'Lee'),
+          'to': ref('m-me', 'Pond', me: true),
+          'amount': 300,
+        },
+        {'from': ref('m-mai', 'Mai'), 'to': ref('m-lee', 'Lee'), 'amount': 50},
+      ],
+      'simplified_available': true,
+      'my_settle_booking': {'booked_at': '2026-10-27T10:00:00Z'},
+    });
+    expect(done.simplifiedAvailable, isTrue);
+    expect(done.mySimplified.single.from.name, 'Lee');
+    expect(done.myBookedAt, isNotNull);
   });
 
   test('tagIdsFor maps names (case-insensitive), unknown names left out', () {

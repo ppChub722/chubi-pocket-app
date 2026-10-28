@@ -201,10 +201,20 @@ class EventBillLink extends Equatable {
     this.isOrigin,
     this.inSync,
     this.differences = const [],
+    this.editInBill,
+    this.pendingUpdate = false,
   });
 
   final EventRef event;
   final String billId;
+
+  /// 0.4.1-2 SA1, the BE's word: "edit" opens the bill form (a connected
+  /// copy, the event not completed); false = the tx's own edit. Null = an
+  /// answer without it.
+  final bool? editInBill;
+
+  /// 0.4.1-2 S8: an "อัปเดตตาม" notice about this bill waits.
+  final bool pendingUpdate;
 
   /// B3: true = the bill is this tx ("origin"), false = my share ("copy");
   /// null on list rows / another member's tx.
@@ -257,6 +267,8 @@ class EventBillLink extends Equatable {
             event: d['event'],
           ),
     ],
+    editInBill: json['edit_in_bill'] as bool?,
+    pendingUpdate: json['pending_update'] == true,
   );
 
   @override
@@ -270,6 +282,8 @@ class EventBillLink extends Equatable {
     isOrigin,
     inSync,
     differences,
+    editInBill,
+    pendingUpdate,
   ];
 }
 
@@ -377,6 +391,7 @@ class EventRef extends Equatable {
     required this.name,
     this.iconCode,
     this.status = 'active',
+    this.kind = 'event',
   });
 
   final String id;
@@ -384,15 +399,27 @@ class EventRef extends Equatable {
   final IconCode? iconCode;
   final String status;
 
+  /// event | split (0.4.1-2 S1): a split bill's hidden one-bill "event",
+  /// never shown as an event (no chip, no page); [name] = the bill's
+  /// description.
+  final String kind;
+
+  bool get isSplit => kind == 'split';
+
+  /// Still open: its bills sync and edit in the bill form. Completed (also
+  /// archived / cancelled) = locked, no more sync (0.4.1-2 SA10).
+  bool get isActive => status == 'active';
+
   factory EventRef.fromJson(Map<String, dynamic> json) => EventRef(
     id: json['id'] as String,
     name: (json['name'] as String?) ?? '',
     iconCode: _icon(json['icon_code']),
     status: (json['status'] as String?) ?? 'active',
+    kind: (json['kind'] as String?) ?? 'event',
   );
 
   @override
-  List<Object?> get props => [id, name, iconCode, status];
+  List<Object?> get props => [id, name, iconCode, status, kind];
 }
 
 class EmbeddedPerson extends Equatable {

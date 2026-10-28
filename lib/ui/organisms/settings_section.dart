@@ -6,6 +6,7 @@ import '../atoms/ui_config.dart';
 import '../tokens/app/app_icons.dart';
 import '../atoms/app_switch.dart';
 import '../atoms/connection_scope.dart';
+import '../atoms/icon_tile.dart';
 import '../molecules/app_snackbar.dart';
 import '../molecules/detail_rows.dart';
 import '../molecules/option_menu.dart';
@@ -298,6 +299,40 @@ class SettingSummaryRow extends StatelessWidget {
   );
 }
 
+/// One group on the settings home (owner 2026-10-27): an icon tile, the
+/// group's name and ONE line summing up its current values; a tap opens the
+/// group's own page.
+class SettingsGroupRow extends StatelessWidget {
+  const SettingsGroupRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.summary,
+    super.key,
+  });
+
+  final IconData icon;
+  final String label;
+
+  /// The current values in one line, e.g. "มิ้นต์ | ตามระบบ | ไทย".
+  final String? summary;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) => DetailRow(
+    leading: IconTile(
+      icon: icon,
+      color: Theme.of(context).colorScheme.primary,
+      shape: IconTileShape.rounded,
+    ),
+    label: label,
+    helper: summary,
+    helperMaxLines: 1,
+    onTap: onTap,
+    showChevron: true,
+  );
+}
+
 /// What a [SettingMenuRow] lets people type when none of its options fits.
 class SettingMenuCustom<T> {
   const SettingMenuCustom({
@@ -534,7 +569,8 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
               selectedLabel: _isCustomValue ? widget.value : null,
               onChoose: _startTyping,
             ),
-      builder: (context, toggle) => custom != null && (_typing || _isCustomValue)
+      builder: (context, toggle) =>
+          custom != null && (_typing || _isCustomValue)
           ? _field(custom, toggle)
           : AppButton(
               label: widget.value,

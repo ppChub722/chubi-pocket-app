@@ -66,6 +66,23 @@ Widget _actionButton(
   size: ChipSize.chip.heightOf(context),
 );
 
+/// One payer of a multi-payer bill: the name and what they paid (already
+/// formatted).
+@immutable
+class EventBillPayer {
+  const EventBillPayer({
+    required this.name,
+    required this.amount,
+    this.level = PersonLevel.name,
+    this.iconCode,
+  });
+
+  final String name;
+  final String amount;
+  final PersonLevel level;
+  final IconCode? iconCode;
+}
+
 class EventBillRow extends StatelessWidget {
   const EventBillRow({
     required this.title,
@@ -84,6 +101,7 @@ class EventBillRow extends StatelessWidget {
     this.payerVerb,
     this.payerLevel = PersonLevel.name,
     this.payerIconCode,
+    this.payers = const [],
     this.caption,
     this.summary,
     this.badge,
@@ -128,6 +146,10 @@ class EventBillRow extends StatelessWidget {
   final String? payerVerb;
   final PersonLevel payerLevel;
   final IconCode? payerIconCode;
+
+  /// A multi-payer bill (2+): the payer line reads "[payerVerb]: A ฿700 |
+  /// B ฿500" (each with their mark) instead of one name.
+  final List<EventBillPayer> payers;
   final String? caption;
   final String? summary;
 
@@ -168,7 +190,8 @@ class EventBillRow extends StatelessWidget {
     final payer = payerName?.trim() ?? '';
     final verb = payerVerb;
     // "ฝน จ่าย" is its own line under the tags, sized like the bill's people.
-    final payerLine = verb != null && payer.isNotEmpty;
+    final multiPayer = verb != null && payers.length > 1;
+    final payerLine = verb != null && (payer.isNotEmpty || multiPayer);
     final line2Text = [
       if (payer.isNotEmpty && verb == null) payer,
       if (caption?.isNotEmpty ?? false) caption!,
@@ -205,29 +228,54 @@ class EventBillRow extends StatelessWidget {
       ),
     );
 
+    TextStyle? nameStyle(PersonLevel level) => level == PersonLevel.empty
+        // An empty spot reads muted, not as a name.
+        ? TextStyle(color: scheme.onSurfaceVariant)
+        : const TextStyle(fontWeight: FontWeight.w600);
+    final muted = TextStyle(color: scheme.onSurfaceVariant);
     final payerRow = Padding(
       padding: const EdgeInsets.only(top: AppSpacing.sm),
       child: Row(
         children: [
-          PersonMark(
-            name: payer,
-            level: _noBadge(payerLevel),
-            iconCode: payerIconCode,
-          ),
-          const SizedBox(width: AppSpacing.sm),
+          if (!multiPayer) ...[
+            PersonMark(
+              name: payer,
+              level: _noBadge(payerLevel),
+              iconCode: payerIconCode,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+          ],
           Flexible(
             child: Text.rich(
               TextSpan(
-                children: [
-                  TextSpan(
-                    text: payer,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  TextSpan(
-                    text: ' $verb',
-                    style: TextStyle(color: scheme.onSurfaceVariant),
-                  ),
-                ],
+                children: multiPayer
+                    // "จ่าย: (ลี) ลี ฿700 | (ปอนด์) ปอนด์ ฿500".
+                    ? [
+                        TextSpan(text: '$verb: ', style: muted),
+                        for (final (i, p) in payers.indexed) ...[
+                          if (i > 0) TextSpan(text: ' | ', style: muted),
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.middle,
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                right: AppSpacing.xs,
+                              ),
+                              child: PersonMark(
+                                name: p.name,
+                                level: _noBadge(p.level),
+                                iconCode: p.iconCode,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                          TextSpan(text: p.name, style: nameStyle(p.level)),
+                          TextSpan(text: ' ${p.amount}', style: muted),
+                        ],
+                      ]
+                    : [
+                        TextSpan(text: payer, style: nameStyle(payerLevel)),
+                        TextSpan(text: ' $verb', style: muted),
+                      ],
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -506,7 +554,12 @@ class EventBillChildRow extends StatelessWidget {
                   : Text.rich(
                       TextSpan(
                         children: [
-                          TextSpan(text: name),
+                          TextSpan(
+                            text: name,
+                            style: level == PersonLevel.empty
+                                ? TextStyle(color: scheme.onSurfaceVariant)
+                                : null,
+                          ),
                           if (caption?.isNotEmpty ?? false)
                             TextSpan(
                               text: '  ${caption!}',

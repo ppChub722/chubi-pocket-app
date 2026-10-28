@@ -99,6 +99,30 @@ class _DetailSectionsDemoState extends State<_DetailSectionsDemo> {
             ),
           ),
           HubDemo(
+            title: 'SettingsGroupRow',
+            note:
+                'The settings home: one row per group, its current values in '
+                'one line ending in "…"; a tap opens the group page.',
+            child: SettingsSection(
+              first: true,
+              title: 'Settings',
+              children: [
+                SettingsGroupRow(
+                  icon: AppIcons.colorPicker,
+                  label: 'App',
+                  summary: 'Mint | System | Thai | IBM Plex Sans Thai',
+                  onTap: noop,
+                ),
+                SettingsGroupRow(
+                  icon: AppIcons.notifications,
+                  label: 'Notifications',
+                  summary: '9 of 11 on',
+                  onTap: noop,
+                ),
+              ],
+            ),
+          ),
+          HubDemo(
             title: 'SettingDropdownRow | SettingSwitchViewRow',
             note:
                 'A dropdown row shows its value as a dashed ▾ chip (never a ›: '

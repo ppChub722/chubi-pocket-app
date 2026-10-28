@@ -1,35 +1,8 @@
 import 'package:chubi_pocket/features/notifications/data/notifications_repository.dart';
 import 'package:chubi_pocket/features/notifications/domain/notification.dart';
-import 'package:chubi_pocket/features/notifications/presentation/cubit/notification_settings_cubit.dart';
 import 'package:chubi_pocket/features/notifications/presentation/cubit/notifications_inbox_cubit.dart';
 import 'package:chubi_pocket/features/notifications/presentation/notification_routes.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-class _SettingsRepo extends Fake implements NotificationsRepository {
-  var settings = NotificationSettings.fromJson({
-    'muted_types': ['split_changed', 'recurring_ending'],
-    'auto_types': ['project_tx_changed'],
-    'default_account': null,
-  });
-  final puts = <({Set<String>? muted, Set<String>? auto})>[];
-
-  @override
-  Future<NotificationSettings> getSettings() async => settings;
-
-  @override
-  Future<NotificationSettings> updateSettings({
-    Set<String>? mutedTypes,
-    Set<String>? autoTypes,
-    String? defaultAccountId,
-    bool clearDefaultAccount = false,
-  }) async {
-    puts.add((muted: mutedTypes, auto: autoTypes));
-    return settings = NotificationSettings(
-      mutedTypes: mutedTypes ?? settings.mutedTypes,
-      autoTypes: autoTypes ?? settings.autoTypes,
-    );
-  }
-}
 
 Map<String, dynamic> _row(
   String id,
@@ -142,51 +115,6 @@ class _InboxRepo extends Fake implements NotificationsRepository {
 }
 
 void main() {
-  test('settings: a mode change is ONE PUT with only the changed list', () async {
-    final repo = _SettingsRepo();
-    final cubit = NotificationSettingsCubit(repository: repo);
-    await cubit.load();
-    final steps = [
-      (
-        name: 'notify -> auto: only auto_types',
-        type: NotificationType.splitCreated,
-        mode: NotifyMode.auto,
-        muted: null,
-        auto: {'project_tx_changed', 'split_created'},
-      ),
-      (
-        name: 'off -> notify: only muted_types',
-        type: NotificationType.recurringEnding,
-        mode: NotifyMode.notify,
-        muted: {'split_changed'},
-        auto: null,
-      ),
-      (
-        name: 'notify -> off: muted gains the type',
-        type: NotificationType.recurringDue,
-        mode: NotifyMode.off,
-        muted: {'split_changed', 'recurring_due'},
-        auto: null,
-      ),
-      (
-        name: 'auto -> off: both lists change',
-        type: NotificationType.projectTxChanged,
-        mode: NotifyMode.off,
-        muted: {'split_changed', 'recurring_due', 'project_tx_changed'},
-        auto: {'split_created'},
-      ),
-    ];
-    for (final (i, c) in steps.indexed) {
-      await cubit.setMode(c.type, c.mode);
-      expect(repo.puts, hasLength(i + 1), reason: c.name);
-      expect(repo.puts.last.muted, c.muted, reason: c.name);
-      expect(repo.puts.last.auto, c.auto, reason: c.name);
-    }
-    await cubit.setMode(NotificationType.recurringDue, NotifyMode.off);
-    expect(repo.puts, hasLength(steps.length), reason: 'same state sends none');
-    await cubit.close();
-  });
-
   test('inbox: each filter is one call with its own query', () async {
     for (final c in [
       (f: InboxFilter.all, read: null, dismissed: null, awaits: null),
@@ -226,16 +154,66 @@ void main() {
 
   test('accept / reject: which call a notification type routes to', () {
     for (final c in [
-      (t: NotificationType.accountInvite, accept: AcceptRoute.walletInvite, reject: RejectRoute.walletInvite),
-      (t: NotificationType.splitCreated, accept: AcceptRoute.split, reject: RejectRoute.dismiss),
-      (t: NotificationType.splitChanged, accept: AcceptRoute.splitChange, reject: RejectRoute.dismiss),
-      (t: NotificationType.projectTxRecordedForYou, accept: AcceptRoute.copyToBook, reject: RejectRoute.dismiss),
-      (t: NotificationType.projectTxChanged, accept: AcceptRoute.updateCopy, reject: RejectRoute.dismiss),
-      (t: NotificationType.projectInvite, accept: AcceptRoute.projectInvite, reject: RejectRoute.projectInvite),
-      (t: NotificationType.recurringEnding, accept: AcceptRoute.extendRecurring, reject: RejectRoute.markActioned),
-      (t: NotificationType.recurringDue, accept: AcceptRoute.openDue, reject: RejectRoute.dismiss),
-      (t: NotificationType.contactLinkRequest, accept: AcceptRoute.linkRequest, reject: RejectRoute.linkRequest),
-      (t: NotificationType.projectAdded, accept: AcceptRoute.linkRequest, reject: RejectRoute.dismiss),
+      (
+        t: NotificationType.accountInvite,
+        accept: AcceptRoute.walletInvite,
+        reject: RejectRoute.walletInvite,
+      ),
+      (
+        t: NotificationType.splitCreated,
+        accept: AcceptRoute.applyBill,
+        reject: RejectRoute.dismiss,
+      ),
+      (
+        t: NotificationType.splitChanged,
+        accept: AcceptRoute.applyBill,
+        reject: RejectRoute.dismiss,
+      ),
+      (
+        t: NotificationType.projectTxRecordedForYou,
+        accept: AcceptRoute.applyBill,
+        reject: RejectRoute.dismiss,
+      ),
+      (
+        t: NotificationType.projectTxChanged,
+        accept: AcceptRoute.applyBill,
+        reject: RejectRoute.dismiss,
+      ),
+      (
+        t: NotificationType.sharedBillCreated,
+        accept: AcceptRoute.applyBill,
+        reject: RejectRoute.dismiss,
+      ),
+      (
+        t: NotificationType.sharedBillDeleted,
+        accept: AcceptRoute.applyBill,
+        reject: RejectRoute.dismiss,
+      ),
+      (
+        t: NotificationType.projectInvite,
+        accept: AcceptRoute.projectInvite,
+        reject: RejectRoute.projectInvite,
+      ),
+      (
+        t: NotificationType.recurringEnding,
+        accept: AcceptRoute.extendRecurring,
+        reject: RejectRoute.markActioned,
+      ),
+      (
+        t: NotificationType.recurringDue,
+        accept: AcceptRoute.openDue,
+        reject: RejectRoute.dismiss,
+      ),
+      (
+        t: NotificationType.contactLinkRequest,
+        accept: AcceptRoute.linkRequest,
+        reject: RejectRoute.linkRequest,
+      ),
+      (
+        t: NotificationType.projectAdded,
+        accept: AcceptRoute.linkRequest,
+        reject: RejectRoute.dismiss,
+      ),
     ]) {
       expect(acceptRouteOf(c.t), c.accept, reason: c.t.name);
       expect(rejectRouteOf(c.t), c.reject, reason: c.t.name);
@@ -270,97 +248,99 @@ void main() {
     await cubit.close();
   });
 
-  test('inbox: mark all read flips the rows, numbers from the answer', () async {
-    final repo = _InboxRepo([
-      _row('n1', 'split_created', awaits: true),
-      _row('n2', 'project_added', state: 'read'),
-    ]);
-    final badge = <int>[];
-    final cubit = NotificationsInboxCubit(
-      repository: repo,
-      onUnreadChanged: badge.add,
-    );
-    await cubit.load();
-    expect(cubit.state.summary.unread, 5);
+  test(
+    'inbox: mark all read flips the rows, numbers from the answer',
+    () async {
+      final repo = _InboxRepo([
+        _row('n1', 'split_created', awaits: true),
+        _row('n2', 'project_added', state: 'read'),
+      ]);
+      final badge = <int>[];
+      final cubit = NotificationsInboxCubit(
+        repository: repo,
+        onUnreadChanged: badge.add,
+      );
+      await cubit.load();
+      expect(cubit.state.summary.unread, 5);
 
-    await cubit.markReadAll();
-    expect(repo.writes, ['read-all']);
-    expect(repo.lists, hasLength(1));
-    expect(cubit.state.notifications.every((n) => !n.isUnread), isTrue);
-    expect(cubit.state.notifications, hasLength(2));
-    expect(cubit.state.summary.unread, 0);
-    expect(cubit.state.unreadCount, 0);
-    expect(badge.last, 0);
-    await cubit.close();
-  });
+      await cubit.markReadAll();
+      expect(repo.writes, ['read-all']);
+      expect(repo.lists, hasLength(1));
+      expect(cubit.state.notifications.every((n) => !n.isUnread), isTrue);
+      expect(cubit.state.notifications, hasLength(2));
+      expect(cubit.state.summary.unread, 0);
+      expect(cubit.state.unreadCount, 0);
+      expect(badge.last, 0);
+      await cubit.close();
+    },
+  );
 
-  test('inbox: answers take the card numbers from the reply, no re-fetch', () async {
-    final repo = _InboxRepo([
-      _row('n5', 'project_invite', awaits: true),
-      _row('n7', 'contact_link_request', awaits: true),
-      _row('n8', 'account_invite', awaits: true),
-      _row('n10', 'recurring_ending', awaits: true),
-    ]);
-    final cubit = NotificationsInboxCubit(repository: repo);
-    await cubit.load();
+  test(
+    'inbox: answers take the card numbers from the reply, no re-fetch',
+    () async {
+      final repo = _InboxRepo([
+        _row('n5', 'project_invite', awaits: true),
+        _row('n7', 'contact_link_request', awaits: true),
+        _row('n8', 'account_invite', awaits: true),
+        _row('n10', 'recurring_ending', awaits: true),
+      ]);
+      final cubit = NotificationsInboxCubit(repository: repo);
+      await cubit.load();
 
-    cubit.applyInboxSummary(
-      'n5',
-      const InboxSummary(all: 4, needsAnswer: 3, unread: 4),
-    );
-    expect(
-      cubit.state.notifications.firstWhere((n) => n.id == 'n5').isActioned,
-      isTrue,
-    );
-    expect(cubit.state.summary.needsAnswer, 3);
-    expect(cubit.state.unreadCount, 4);
+      cubit.applyInboxSummary(
+        'n5',
+        const InboxSummary(all: 4, needsAnswer: 3, unread: 4),
+      );
+      expect(
+        cubit.state.notifications.firstWhere((n) => n.id == 'n5').isActioned,
+        isTrue,
+      );
+      expect(cubit.state.summary.needsAnswer, 3);
+      expect(cubit.state.unreadCount, 4);
 
-    cubit.applyAnswer(
-      NotificationActionResult(
-        notification: AppNotification.fromJson({
-          ..._row('n8', 'account_invite'),
-          'state': 'actioned',
-        }),
-        badges: const Badges(unreadNotifications: 3, pendingDrafts: 0),
-        summary: const InboxSummary(all: 4, needsAnswer: 2, unread: 3),
-      ),
-    );
-    expect(
-      cubit.state.notifications.firstWhere((n) => n.id == 'n8').isActioned,
-      isTrue,
-    );
-    expect(cubit.state.summary.needsAnswer, 2);
-    expect(cubit.state.unreadCount, 3);
-
-    cubit.applyAnswer(
-      NotificationActionResult(
-        notification: AppNotification.fromJson({
-          ..._row('n7', 'contact_link_request'),
-          'state': 'dismissed',
-        }),
-        badges: const Badges(unreadNotifications: 2, pendingDrafts: 0),
-        summary: const InboxSummary(
-          all: 3,
-          needsAnswer: 1,
-          unread: 2,
-          dismissed: 1,
+      cubit.applyAnswer(
+        NotificationActionResult(
+          notification: AppNotification.fromJson({
+            ..._row('n8', 'account_invite'),
+            'state': 'actioned',
+          }),
+          badges: const Badges(unreadNotifications: 3, pendingDrafts: 0),
+          summary: const InboxSummary(all: 4, needsAnswer: 2, unread: 3),
         ),
-      ),
-    );
-    expect(cubit.state.notifications.map((n) => n.id), [
-      'n5',
-      'n8',
-      'n10',
-    ]);
-    expect(cubit.state.summary.dismissed, 1);
+      );
+      expect(
+        cubit.state.notifications.firstWhere((n) => n.id == 'n8').isActioned,
+        isTrue,
+      );
+      expect(cubit.state.summary.needsAnswer, 2);
+      expect(cubit.state.unreadCount, 3);
 
-    await cubit.markActioned('n10');
-    expect(repo.writes, ['actioned:n10']);
-    expect(
-      cubit.state.notifications.firstWhere((n) => n.id == 'n10').isActioned,
-      isTrue,
-    );
-    expect(repo.lists, hasLength(1));
-    await cubit.close();
-  });
+      cubit.applyAnswer(
+        NotificationActionResult(
+          notification: AppNotification.fromJson({
+            ..._row('n7', 'contact_link_request'),
+            'state': 'dismissed',
+          }),
+          badges: const Badges(unreadNotifications: 2, pendingDrafts: 0),
+          summary: const InboxSummary(
+            all: 3,
+            needsAnswer: 1,
+            unread: 2,
+            dismissed: 1,
+          ),
+        ),
+      );
+      expect(cubit.state.notifications.map((n) => n.id), ['n5', 'n8', 'n10']);
+      expect(cubit.state.summary.dismissed, 1);
+
+      await cubit.markActioned('n10');
+      expect(repo.writes, ['actioned:n10']);
+      expect(
+        cubit.state.notifications.firstWhere((n) => n.id == 'n10').isActioned,
+        isTrue,
+      );
+      expect(repo.lists, hasLength(1));
+      await cubit.close();
+    },
+  );
 }

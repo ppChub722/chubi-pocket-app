@@ -58,6 +58,10 @@ class TransactionTile extends StatelessWidget {
     final now = DateTime.now();
     final upcoming =
         day != null && day.isAfter(DateTime(now.year, now.month, now.day));
+    // 0.4.1-2 SA12: my copy of a shared bill no longer matches it (auto sync
+    // off and not answered / answered no): "ไม่ตรง" on the row.
+    final outOfSync = tx.eventBill?.inSync == false;
+    final splitBill = tx.eventBill?.event.isSplit ?? false;
 
     return TxListRow(
       kind: switch (tx.type) {
@@ -71,6 +75,8 @@ class TransactionTile extends StatelessWidget {
       dimmed: upcoming,
       status: upcoming
           ? ListRowChip(dueLabel(l, date: day, withDate: false))
+          : outOfSync
+          ? ListRowChip(l.debtBillOutOfSync, tone: Tone.warning)
           : null,
       wallet: showAccount && wallet != null
           ? walletRowChip(
@@ -86,7 +92,10 @@ class TransactionTile extends StatelessWidget {
       ],
       glyphs: [
         if (tx.hasSplits)
-          ListRowGlyph(AppIcons.shared, text: '${tx.splitCount + 1}'),
+          ListRowGlyph(AppIcons.shared, text: '${tx.splitCount + 1}')
+        // A split bill (S1) shows as shared, never as an event.
+        else if (splitBill)
+          const ListRowGlyph(AppIcons.shared),
       ],
       tags: [
         for (final t in tx.tags)
@@ -103,7 +112,10 @@ class TransactionTile extends StatelessWidget {
     if (rec != null) {
       return rec.total != null ? TxSource.installment : TxSource.recurring;
     }
-    if (tx.eventBill != null || tx.projectId != null) return TxSource.event;
+    final bill = tx.eventBill;
+    // A split bill's hidden "event" is never shown as one (S1).
+    if (bill != null && bill.event.isSplit) return null;
+    if (bill != null || tx.projectId != null) return TxSource.event;
     if (tx.counterparty != null || tx.repaymentPerson != null) {
       return TxSource.debt;
     }

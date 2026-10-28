@@ -1,5 +1,8 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../ui/ui.dart' show IconCode;
+import '../../recurring/domain/recurring.dart'
+    show RecurringPauseReason, RecurringStatus, recurringDebtSubFromJson;
 import '../../transactions/domain/refs.dart';
 import '../../transactions/domain/transaction.dart';
 import 'debt_direction.dart';
@@ -314,7 +317,12 @@ class DebtEntry extends Equatable {
     this.dueDate,
     this.partnerLinked = false,
     this.disconnectedAt,
+    this.bills = const [],
   });
+
+  /// 0.4.1-2 V5 / V7: the shared bills this debt books, oldest first; one =
+  /// a per-bill debt, several = a lump ("claim ก้อน"); empty = none.
+  final List<DebtBillPart> bills;
 
   /// D9: a copy of this debt is in the other user's book now (a linked
   /// split / paid_by / partner); only then "ตัดการเชื่อม" shows.
@@ -394,6 +402,10 @@ class DebtEntry extends Equatable {
     dueDate: _date(json['due_date']),
     partnerLinked: json['partner_linked'] == true,
     disconnectedAt: _date(json['disconnected_at']),
+    bills: [
+      for (final b in (json['bills'] as List?) ?? const [])
+        if (b is Map) DebtBillPart.fromJson(b.cast<String, dynamic>()),
+    ],
   );
 
   static DebtEntry? maybe(Object? json) =>
@@ -420,6 +432,52 @@ class DebtEntry extends Equatable {
     dueDate,
     partnerLinked,
     disconnectedAt,
+    bills,
+  ];
+}
+
+/// One bill's part of a debt (BE DebtBillPart, 0.4.1-2 V5): the bill, my
+/// amount on it as my book holds it, and whether it still matches the bill.
+class DebtBillPart extends Equatable {
+  const DebtBillPart({
+    required this.ptId,
+    required this.event,
+    required this.amount,
+    this.description,
+    this.inSync = true,
+    this.editInBill = false,
+  });
+
+  final String ptId;
+  final EventRef event;
+
+  /// The bill's description (live).
+  final String? description;
+  final double amount;
+
+  /// false = "ไม่ตรง" (the bill changed and my part didn't follow).
+  final bool inSync;
+
+  /// Edit opens the bill form (connected, event not completed).
+  final bool editInBill;
+
+  factory DebtBillPart.fromJson(Map<String, dynamic> json) => DebtBillPart(
+    ptId: json['pt_id'] as String,
+    event: EventRef.fromJson(_map(json['event']) ?? const {'id': ''}),
+    description: _text(json['description']),
+    amount: (json['amount'] as num?)?.toDouble() ?? 0,
+    inSync: json['in_sync'] != false,
+    editInBill: json['edit_in_bill'] == true,
+  );
+
+  @override
+  List<Object?> get props => [
+    ptId,
+    event,
+    description,
+    amount,
+    inSync,
+    editInBill,
   ];
 }
 
@@ -527,6 +585,7 @@ class DebtPersonDetail extends Equatable {
     required this.entries,
     this.counts = const DebtCounts(),
     this.message = const DebtSummaryMessage(),
+    this.recurring = const [],
   });
 
   final PersonBalance balance;
@@ -536,16 +595,87 @@ class DebtPersonDetail extends Equatable {
 
   final DebtSummaryMessage message;
 
+  /// 0.4.1-2 K13: this person's หนี้ recurring settings (not archived),
+  /// newest first; empty = none (or an older BE).
+  final List<DebtPersonRecurring> recurring;
+
   factory DebtPersonDetail.fromJson(Map<String, dynamic> json) =>
       DebtPersonDetail(
         balance: PersonBalance.fromJson(json),
         entries: DebtEntriesPage.fromJson(json, key: 'items'),
         counts: DebtCounts.fromJson(_map(json['counts'])),
         message: DebtSummaryMessage.fromJson(_map(json['summary_message'])),
+        recurring: _list(json['recurring'], DebtPersonRecurring.fromJson),
       );
 
   @override
-  List<Object?> get props => [balance, entries, counts, message];
+  List<Object?> get props => [balance, entries, counts, message, recurring];
+}
+
+/// One หนี้ recurring setting on the person page (BE DebtPersonPage
+/// `recurring[]`); a row opens `/recurring/{id}`.
+class DebtPersonRecurring extends Equatable {
+  const DebtPersonRecurring({
+    required this.id,
+    required this.name,
+    required this.sub,
+    required this.direction,
+    required this.amount,
+    this.iconCode,
+    this.nextDate,
+    this.nextAmount,
+    this.dueCount = 0,
+    this.status = RecurringStatus.active,
+    this.pauseReason,
+  });
+
+  factory DebtPersonRecurring.fromJson(Map<String, dynamic> json) =>
+      DebtPersonRecurring(
+        id: json['id'] as String,
+        name: (json['name'] as String?) ?? '',
+        iconCode: _map(json['icon_code']) == null
+            ? null
+            : IconCode.fromJson(_map(json['icon_code'])!),
+        sub: recurringDebtSubFromJson(json['debt_kind']) ?? DebtEntrySub.record,
+        direction: DebtEntryDirection.parse(json['direction'] as String?),
+        amount: (json['amount'] as num?)?.toDouble() ?? 0,
+        nextDate: _date(json['next_date']),
+        nextAmount: (json['next_amount'] as num?)?.toDouble(),
+        dueCount: (json['due_count'] as num?)?.toInt() ?? 0,
+        status: RecurringStatus.fromJson(json['status'] as String?),
+        pauseReason: RecurringPauseReason.fromJson(json['pause_reason']),
+      );
+
+  final String id;
+  final String name;
+  final IconCode? iconCode;
+
+  /// จดหนี้ | จ่ายหนี้.
+  final DebtEntrySub sub;
+  final DebtEntryDirection direction;
+  final double amount;
+  final DateTime? nextDate;
+
+  /// จ่ายหนี้: min(amount, what is owed now).
+  final double? nextAmount;
+  final int dueCount;
+  final RecurringStatus status;
+  final RecurringPauseReason? pauseReason;
+
+  @override
+  List<Object?> get props => [
+    id,
+    name,
+    iconCode,
+    sub,
+    direction,
+    amount,
+    nextDate,
+    nextAmount,
+    dueCount,
+    status,
+    pauseReason,
+  ];
 }
 
 class DebtCounts extends Equatable {
@@ -724,29 +854,6 @@ class DebtEntryDeleteResult extends Equatable {
   List<Object?> get props => [id, transactionId, balance, accountBalances];
 }
 
-class DebtSplitChangeResult extends Equatable {
-  const DebtSplitChangeResult({
-    required this.deleted,
-    required this.balance,
-    this.entry,
-  });
-
-  final bool deleted;
-
-  final DebtEntry? entry;
-  final PersonBalance balance;
-
-  factory DebtSplitChangeResult.fromJson(Map<String, dynamic> json) =>
-      DebtSplitChangeResult(
-        deleted: json['result'] == 'deleted',
-        entry: DebtEntry.maybe(json['entry']),
-        balance: PersonBalance.fromJson(_map(json['person_balance'])!),
-      );
-
-  @override
-  List<Object?> get props => [deleted, entry, balance];
-}
-
 enum DebtEntrySort {
   dateDesc('date_desc'),
   dateAsc('date_asc'),
@@ -764,6 +871,7 @@ class DebtEntryQuery extends Equatable {
     this.direction,
     this.paid,
     this.accountId,
+    this.kind,
   });
 
   final String q;
@@ -772,6 +880,9 @@ class DebtEntryQuery extends Equatable {
 
   final bool? paid;
   final String? accountId;
+
+  /// The BE's `kind` (debt, the default | repayment | all); null = not sent.
+  final String? kind;
 
   bool get isFiltered =>
       q.trim().isNotEmpty ||
@@ -786,6 +897,7 @@ class DebtEntryQuery extends Equatable {
     'direction': ?direction?.wire,
     if (paid != null) 'paid': paid.toString(),
     'account_id': ?accountId,
+    'kind': ?kind,
   };
 
   DebtEntryQuery copyWith({
@@ -803,10 +915,11 @@ class DebtEntryQuery extends Equatable {
     direction: clearDirection ? null : (direction ?? this.direction),
     paid: clearPaid ? null : (paid ?? this.paid),
     accountId: clearAccount ? null : (accountId ?? this.accountId),
+    kind: kind,
   );
 
   @override
-  List<Object?> get props => [q, sort, direction, paid, accountId];
+  List<Object?> get props => [q, sort, direction, paid, accountId, kind];
 }
 
 String debtPersonKey({String? contactId, String? name}) => contactId != null

@@ -83,12 +83,21 @@ class BillPeopleCard extends StatelessWidget {
     this.status,
     this.maxRows,
     this.payLabel,
+    this.addLabel,
+    this.showEqually = true,
     super.key,
   });
 
   final String title;
   final List<BillPerson> people;
   final VoidCallback onAdd;
+
+  /// The add button's word (default "+ เพิ่มคน"); the bill form's คนจ่าย
+  /// section says "+ เพิ่มคนจ่าย" (0.4.1-2 multi-payer).
+  final String? addLabel;
+
+  /// False: no หารเท่ากัน button (a list of payers, not shares).
+  final bool showEqually;
 
   /// The payer chip's word; default "จ่าย" (an income: "รับ").
   final String? payLabel;
@@ -122,15 +131,16 @@ class BillPeopleCard extends StatelessWidget {
       top: top,
       title: title,
       actions: [
-        AppButton(
-          label: l.txSplitEqually,
-          variant: AppButtonVariant.outlined,
-          size: AppButtonSize.control,
-          onPressed: onEqually,
-        ),
+        if (showEqually)
+          AppButton(
+            label: l.txSplitEqually,
+            variant: AppButtonVariant.outlined,
+            size: AppButtonSize.control,
+            onPressed: onEqually,
+          ),
         AppButton(
           icon: AppIcons.add,
-          label: l.txSplitAddPerson,
+          label: addLabel ?? l.txSplitAddPerson,
           variant: AppButtonVariant.outlined,
           size: AppButtonSize.control,
           onPressed: onAdd,

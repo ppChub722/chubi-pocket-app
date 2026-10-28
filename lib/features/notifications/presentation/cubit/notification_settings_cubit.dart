@@ -36,6 +36,8 @@ class SettingsState extends Equatable {
   List<Object?> get props => [settings, status, error];
 }
 
+/// The notification page: on / off per type (mute only; auto sync is its
+/// own setting since 0.4.1-2).
 class NotificationSettingsCubit extends Cubit<SettingsState> {
   NotificationSettingsCubit({required NotificationsRepository repository})
     : _repo = repository,
@@ -58,46 +60,25 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
     }
   }
 
-  Future<void> setMode(NotificationType t, NotifyMode mode) {
-    final s = state.settings;
-    if (s == null || s.modeOf(t) == mode) return Future.value();
-    Set<String> with_(Set<String> set, bool on) =>
-        on ? {...set, t.wire} : (set.toSet()..remove(t.wire));
-    final muted = with_(s.mutedTypes, mode == NotifyMode.off);
-    final auto = with_(s.autoTypes, mode == NotifyMode.auto);
-    return update(
-      mutedTypes: s.isMuted(t) == (mode == NotifyMode.off) ? null : muted,
-      autoTypes: s.isAuto(t) == (mode == NotifyMode.auto) ? null : auto,
-    );
-  }
-
-  Future<void> update({
-    Set<String>? mutedTypes,
-    Set<String>? autoTypes,
-    DefaultAccountRef? defaultAccount,
-    bool clearDefaultAccount = false,
-  }) async {
+  /// Turns [type] on / off: ONE call; the switch flips at once and comes
+  /// back (with the error) when the save fails.
+  Future<void> setOn(String type, bool on) async {
     final before = state.settings;
     if (before == null) return;
+    final muted = before.mutedWith(type, on: on);
+    if (muted.length == before.mutedTypes.length &&
+        muted.containsAll(before.mutedTypes)) {
+      return;
+    }
     emit(
       state.copyWith(
-        settings: before.copyWith(
-          mutedTypes: mutedTypes,
-          autoTypes: autoTypes,
-          defaultAccount: defaultAccount,
-          clearDefaultAccount: clearDefaultAccount,
-        ),
+        settings: before.copyWith(mutedTypes: muted),
         status: SettingsStatus.saving,
         clearError: true,
       ),
     );
     try {
-      final updated = await _repo.updateSettings(
-        mutedTypes: mutedTypes,
-        autoTypes: autoTypes,
-        defaultAccountId: defaultAccount?.id,
-        clearDefaultAccount: clearDefaultAccount,
-      );
+      final updated = await _repo.updateSettings(mutedTypes: muted);
       emit(state.copyWith(settings: updated, status: SettingsStatus.loaded));
     } on ApiException catch (e) {
       emit(

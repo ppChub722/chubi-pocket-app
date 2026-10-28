@@ -111,6 +111,12 @@ abstract final class AppIcons {
   static const search = Icons.search;
   static const clear = Icons.clear;
   static const sort = Icons.sort;
+
+  /// Auto sync (settings › ซิงก์อัตโนมัติ, the event / person switches).
+  static const sync = Icons.sync;
+
+  /// Filters and sorting (settings › ตัวกรองและการเรียง).
+  static const filter = Icons.tune;
   static const reorder = Icons.drag_indicator;
   static const share = Icons.ios_share;
   static const copy = Icons.content_copy;

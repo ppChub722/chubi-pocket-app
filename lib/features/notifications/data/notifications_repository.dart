@@ -132,22 +132,19 @@ class NotificationsRepository {
     }
   }
 
+  /// Partial: only what is passed changes ([mutedTypes] replaces the list).
   Future<NotificationSettings> updateSettings({
     Set<String>? mutedTypes,
-    Set<String>? autoTypes,
-    String? defaultAccountId,
-    bool clearDefaultAccount = false,
+    bool? autoSyncEvents,
+    bool? autoSyncDebts,
   }) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(
         '/notifications/settings',
         data: <String, dynamic>{
           if (mutedTypes != null) 'muted_types': mutedTypes.toList(),
-          if (autoTypes != null) 'auto_types': autoTypes.toList(),
-          if (clearDefaultAccount)
-            'default_account_id': null
-          else
-            'default_account_id': ?defaultAccountId,
+          'auto_sync_events': ?autoSyncEvents,
+          'auto_sync_debts': ?autoSyncDebts,
         },
       );
       return NotificationSettings.fromJson(res.data!);

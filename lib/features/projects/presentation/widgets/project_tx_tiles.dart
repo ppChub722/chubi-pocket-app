@@ -5,6 +5,7 @@ import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/project.dart';
+import '../event_assign.dart';
 import 'event_bill_sheet.dart';
 import 'project_common.dart';
 
@@ -35,10 +36,36 @@ Widget projectTxIcon(
 }
 
 /// A member's [PersonMark] level: linked to an app account, else a typed name
-/// (with or without an icon of its own).
-PersonLevel projectMemberLevel(ProjectMember m) => m.isLinked
+/// (with or without an icon of its own); a removed member's spot is empty.
+PersonLevel projectMemberLevel(ProjectMember m) => m.isRemoved
+    ? PersonLevel.empty
+    : m.isLinked
     ? PersonLevel.linked
     : (m.iconCode != null ? PersonLevel.contact : PersonLevel.name);
+
+/// Multi-payer (0.4.1-2): the payer line's people, as the event knows them
+/// (a removed one = an empty spot); empty for one payer (the single-name
+/// line stays).
+List<EventBillPayer> projectBillPayers(
+  AppLocalizations l,
+  ProjectView view,
+  ProjectTransaction bill,
+  String Function(double amount) money,
+) => [
+  if (bill.payers.length > 1)
+    for (final p in bill.payers)
+      if (view.member(p.member.id) case final m)
+        EventBillPayer(
+          name: projectMemberName(l, m),
+          amount: money(p.amount),
+          level: projectMemberLevel(m),
+          iconCode: m.iconCode,
+        ),
+];
+
+/// A member's name on a bill: a removed member's spot reads "ยังไม่ระบุคน".
+String projectMemberName(AppLocalizations l, ProjectMember m) =>
+    m.isRemoved ? l.evbEmptyPerson : m.displayName;
 
 /// One row of the event book: a bill with its splits, or a payback. A tap
 /// opens the event sheet. My part (my line when I paid, else my split) that
@@ -105,7 +132,9 @@ class ProjectTxTreeTile extends StatelessWidget {
       return EventBillRow(
         tick: false,
         leading: IconTile(icon: AppIcons.transfer, color: color, size: 28),
-        title: '${payer.displayName} → ${to?.displayName ?? '?'}',
+        title:
+            '${projectMemberName(l, payer)} → '
+            '${to == null ? '?' : projectMemberName(l, to)}',
         amount: parent.amount,
         amountColor: color,
         symbol: symbol,
@@ -172,15 +201,27 @@ class ProjectTxTreeTile extends StatelessWidget {
             },
       linked: parent.linked,
       highlighted: highlighted,
-      payerName: payer.displayName,
-      payerVerb: l.evbPays,
+      payerName: projectMemberName(l, payer),
+      // An income bill reads the same, only the words change (Q-E3).
+      payerVerb: parent.type == 'income' ? l.evbReceives : l.evbPays,
       payerLevel: projectMemberLevel(payer),
       payerIconCode: payer.iconCode,
+      // Multi-payer (0.4.1-2): every payer with what they paid, biggest
+      // first (the BE order); one payer keeps the single-name line.
+      payers: projectBillPayers(
+        l,
+        view,
+        parent,
+        (v) => moneyString(context, v, symbol: symbol),
+      ),
       badge: iPaid ? chips : null,
       mine: iPaid && onBook != null,
       onAction: iPaid ? onBook : null,
       actionTooltip: l.evbBookMine,
-      onTap: () => _open(context),
+      // A removed payer's empty spot: the tap fills it for this bill.
+      onTap: payer.isRemoved
+          ? () => _assign(context, payer)
+          : () => _open(context),
       children: [
         for (final (i, c) in children.indexed) ...[
           if (i > 0) const AppDivider.row(),
@@ -223,7 +264,7 @@ class ProjectTxTreeTile extends StatelessWidget {
     final mine = myId != null && debtor.id == myId;
     return EventBillChildRow(
       tick: false,
-      name: debtor.displayName,
+      name: projectMemberName(AppLocalizations.of(context)!, debtor),
       amount: c.amount,
       level: projectMemberLevel(debtor),
       iconCode: debtor.iconCode,
@@ -233,8 +274,24 @@ class ProjectTxTreeTile extends StatelessWidget {
       onAction: mine ? onBook : null,
       actionTooltip: bookTooltip,
       locked: view.rowsLocked,
-      onTap: () => _open(context),
+      onTap: debtor.isRemoved
+          ? () => _assign(context, debtor)
+          : () => _open(context),
     );
+  }
+
+  /// V15: fill a removed member's empty spot on THIS bill (one call).
+  Future<void> _assign(BuildContext context, ProjectMember removed) async {
+    if (view.rowsLocked || !view.canAddTx) return;
+    final p = await assignEmptySpots(
+      context,
+      view: view,
+      removed: removed,
+      billIds: [tree.parent.id],
+    );
+    if (p == null) return;
+    final patch = onPatch;
+    patch == null ? await onChanged() : patch(p);
   }
 
   /// ⤓: the event sheet with only "ลงบัญชีของฉันด้วย"; the bill isn't

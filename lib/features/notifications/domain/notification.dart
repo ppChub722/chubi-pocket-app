@@ -2,6 +2,8 @@ import 'package:equatable/equatable.dart';
 
 import '../../../ui/ui.dart';
 
+export 'notification_settings.dart';
+
 enum NotificationType {
   splitCreated('split_created'),
 
@@ -25,6 +27,23 @@ enum NotificationType {
 
   /// The day's tx the auto-create recorded (one notice per day).
   recurringAutoCreated('recurring_auto_created'),
+
+  /// 0.4.1-2: another member saved a shared bill I have a part in; replaces
+  /// project_tx_recorded_for_you. `applied` false = "เพิ่มในสมุด" asks.
+  sharedBillCreated('shared_bill_created'),
+
+  /// A shared bill I hold a copy of was deleted; `applied` false (event
+  /// bill, my switch off) = "ลบตาม" asks, else info.
+  sharedBillDeleted('shared_bill_deleted'),
+
+  /// Another member disconnected their copy of a split bill (info).
+  sharedBillDisconnected('shared_bill_disconnected'),
+
+  /// The owner completed an event I'm in: locked, no more sync (info).
+  eventCompleted('event_completed'),
+
+  /// The owner removed me from an event; my records stay, plain (info).
+  eventMemberRemoved('event_member_removed'),
   unknown('unknown');
 
   const NotificationType(this.wire);
@@ -267,86 +286,4 @@ DateTime? _parseDate(Object? raw) {
     return DateTime.tryParse(raw);
   }
   return null;
-}
-
-class DefaultAccountRef extends Equatable {
-  const DefaultAccountRef({
-    required this.id,
-    required this.name,
-    this.iconCode,
-  });
-
-  final String id;
-  final String name;
-  final IconCode? iconCode;
-
-  factory DefaultAccountRef.fromJson(Map<String, dynamic> json) {
-    return DefaultAccountRef(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      iconCode: json['icon_code'] is Map
-          ? IconCode.fromJson(
-              (json['icon_code'] as Map).cast<String, dynamic>(),
-            )
-          : null,
-    );
-  }
-
-  @override
-  List<Object?> get props => [id, name, iconCode];
-}
-
-enum NotifyMode { off, notify, auto }
-
-class NotificationSettings extends Equatable {
-  const NotificationSettings({
-    this.mutedTypes = const {},
-    this.autoTypes = const {},
-    this.defaultAccount,
-  });
-
-  final Set<String> mutedTypes;
-  final Set<String> autoTypes;
-
-  final DefaultAccountRef? defaultAccount;
-
-  bool isMuted(NotificationType t) => mutedTypes.contains(t.wire);
-  bool isAuto(NotificationType t) => autoTypes.contains(t.wire);
-
-  NotifyMode modeOf(NotificationType t) => isMuted(t)
-      ? NotifyMode.off
-      : (isAuto(t) ? NotifyMode.auto : NotifyMode.notify);
-
-  factory NotificationSettings.fromJson(Map<String, dynamic> json) {
-    Set<String> set(String k) => {
-      ...((json[k] as List?) ?? const []).cast<String>(),
-    };
-    return NotificationSettings(
-      mutedTypes: set('muted_types'),
-      autoTypes: set('auto_types'),
-      defaultAccount: json['default_account'] is Map
-          ? DefaultAccountRef.fromJson(
-              (json['default_account'] as Map).cast<String, dynamic>(),
-            )
-          : null,
-    );
-  }
-
-  NotificationSettings copyWith({
-    Set<String>? mutedTypes,
-    Set<String>? autoTypes,
-    DefaultAccountRef? defaultAccount,
-    bool clearDefaultAccount = false,
-  }) {
-    return NotificationSettings(
-      mutedTypes: mutedTypes ?? this.mutedTypes,
-      autoTypes: autoTypes ?? this.autoTypes,
-      defaultAccount: clearDefaultAccount
-          ? null
-          : (defaultAccount ?? this.defaultAccount),
-    );
-  }
-
-  @override
-  List<Object?> get props => [mutedTypes, autoTypes, defaultAccount];
 }

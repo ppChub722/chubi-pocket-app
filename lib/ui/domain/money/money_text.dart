@@ -1,14 +1,9 @@
 import '../../atoms/amount_text.dart';
-import '../../atoms/app_icon_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../atoms/ui_config.dart';
-import '../../tokens/app/app_icons.dart';
 import '../../tokens/app/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
-import '../../../features/preferences/presentation/cubit/money_visibility_cubit.dart';
-import '../../../l10n/gen/app_localizations.dart';
 import 'money_style.dart';
 
 enum MoneyTone { plain, income, expense, signed }
@@ -29,13 +24,14 @@ class MoneyText extends StatelessWidget {
   final TextStyle? style;
 
   final String? symbol;
+
+  /// No effect since hide amounts was removed (0.4.1-2); drop with its callers.
   final bool hideable;
   final TextAlign? textAlign;
 
   @override
   Widget build(BuildContext context) {
     final symbol = this.symbol ?? UiConfig.stringsOf(context).currencySymbol;
-    final hidden = hideable && isMoneyHidden(context);
     final palette = Theme.of(context).extension<AppColors>()!;
     final money = MoneyStyleScope.of(context);
     final digits = money.digitsFor(
@@ -60,9 +56,7 @@ class MoneyText extends StatelessWidget {
       symbol: symbol,
       decimalDigits: digits,
     );
-    final text = hidden
-        ? '$symbol••••'
-        : negative == null
+    final text = negative == null
         ? formatted
         : money.apply(formatted, negative: negative);
     return AmountText(text, color: color, style: style, textAlign: textAlign);
@@ -96,7 +90,6 @@ String moneyString(BuildContext context, num amount, {String? symbol}) =>
 
 String _moneyString(BuildContext context, num amount, String? symbolOrNull) {
   final symbol = symbolOrNull ?? UiConfig.stringsOf(context).currencySymbol;
-  if (isMoneyHidden(context)) return '$symbol••••';
   final digits = MoneyStyleScope.of(
     context,
   ).digitsFor(amount, CurrencyFormatter.decimalsOfSymbol(symbol));
@@ -105,36 +98,4 @@ String _moneyString(BuildContext context, num amount, String? symbolOrNull) {
     symbol: symbol,
     decimalDigits: digits,
   );
-}
-
-const bool kMoneyPrivacyEnabled = false;
-
-bool isMoneyHidden(BuildContext context) {
-  if (!kMoneyPrivacyEnabled) return false;
-  try {
-    return context.watch<MoneyVisibilityCubit>().state;
-  } on ProviderNotFoundException {
-    return false;
-  }
-}
-
-class MoneyVisibilityToggle extends StatelessWidget {
-  const MoneyVisibilityToggle({this.size = 20, super.key});
-
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!kMoneyPrivacyEnabled) return const SizedBox.shrink();
-    final hidden = isMoneyHidden(context);
-    final l = AppLocalizations.of(context)!;
-    return AppIconButton.flat(
-      tooltip: hidden ? l.commonShowAmounts : l.commonHideAmounts,
-      iconSize: size,
-      dense: true,
-      icon: hidden ? AppIcons.hidden : AppIcons.visible,
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
-      onPressed: () => context.read<MoneyVisibilityCubit>().toggle(),
-    );
-  }
 }

@@ -1210,12 +1210,11 @@ class _AccountDetailViewState extends State<_AccountDetailView>
 
   Widget? _infoBox(AppLocalizations l, Account a) {
     final symbol = context.readUserCurrencySymbol;
-    final hidden = isMoneyHidden(context);
     final rows = <InfoRow>[
       for (final id in a.identifiers)
         InfoRow(
           label: identifierKindLine(context, id, _providers),
-          value: hidden ? id.masked : id.formatted,
+          value: id.formatted,
         ),
       if (a.isLiability) ...[
         if (a.creditLimit != null)
@@ -1284,20 +1283,21 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     value: _effectiveScope(a),
     save: (picked) => _setScope(a, picked),
     failedMessage: (e) => _errorText(l, e),
-    builder: (context, scope, onChanged) => SettingDropdownRow<WalletReportScope>(
-      label: l.walletReportScopeTitle,
-      value: _scopeLabel(l, scope),
-      selected: scope,
-      options: [
-        for (final s in [
-          WalletReportScope.none,
-          if (a.isShared) WalletReportScope.own,
-          WalletReportScope.all,
-        ])
-          SheetOption(value: s, label: _scopeLabel(l, s)),
-      ],
-      onSelected: onChanged,
-    ),
+    builder: (context, scope, onChanged) =>
+        SettingDropdownRow<WalletReportScope>(
+          label: l.walletReportScopeTitle,
+          value: _scopeLabel(l, scope),
+          selected: scope,
+          options: [
+            for (final s in [
+              WalletReportScope.none,
+              if (a.isShared) WalletReportScope.own,
+              WalletReportScope.all,
+            ])
+              SheetOption(value: s, label: _scopeLabel(l, s)),
+          ],
+          onSelected: onChanged,
+        ),
   );
 
   String _errorText(AppLocalizations l, Object e) =>
@@ -1555,7 +1555,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final owner = _isOwner;
     final list = working.identifiers;
     if (list.isEmpty && !owner) return null;
-    final hidden = !editing && isMoneyHidden(context);
     final section = SectionCard(
       first: first,
       title: l.accountIdentifiersTitle,
@@ -1589,11 +1588,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
               onRemove: () => _removeIdentifier(i),
             )
           else
-            IdentifierRow(
-              identifier: id,
-              providers: _providers,
-              hidden: hidden,
-            ),
+            IdentifierRow(identifier: id, providers: _providers),
       ],
     );
     if (editing || !owner) return section;

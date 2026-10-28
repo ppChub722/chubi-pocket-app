@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -11,8 +13,10 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../auth/domain/user.dart';
 import '../../../categories/presentation/category_label.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
+import '../../../preferences/page_prefs.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../../transactions/domain/transaction_type.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
@@ -40,6 +44,11 @@ class _PendingPageState extends State<PendingPage> {
   @override
   void initState() {
     super.initState();
+    _filter =
+        _Filter.values.asNameMap()[pagePrefPage(PagePrefIds.pending).fields
+            .firstWhere((f) => f.key == 'filter')
+            .pick(readPagePref(context, PagePrefIds.pending))] ??
+        _Filter.all;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<PendingCubit>().load();
@@ -49,8 +58,15 @@ class _PendingPageState extends State<PendingPage> {
     });
   }
 
+  /// The filter bar shows only when some items come from others; without it
+  /// a remembered filter would hide rows with no way back, so it reads ทั้งหมด.
+  _Filter get _activeFilter =>
+      (context.read<PendingCubit>().state.summary?.notManual ?? 0) > 0
+      ? _filter
+      : _Filter.all;
+
   List<PendingTransaction> _visible(List<PendingTransaction> all) =>
-      switch (_filter) {
+      switch (_activeFilter) {
         _Filter.all => all,
         _Filter.manual => all.where((p) => p.source.inManualBucket).toList(),
         _Filter.others => all.where((p) => !p.source.inManualBucket).toList(),
@@ -209,11 +225,18 @@ class _PendingPageState extends State<PendingPage> {
                         _Filter.others => l.pendingFilterOthers(others),
                       },
                       selected: _filter == f,
-                      onTap: () => setState(() {
-                        _filter = f;
-                        final shown = _visible(all).map((p) => p.id);
-                        _selected.retainAll(shown);
-                      }),
+                      onTap: () {
+                        setState(() {
+                          _filter = f;
+                          final shown = _visible(all).map((p) => p.id);
+                          _selected.retainAll(shown);
+                        });
+                        unawaited(
+                          rememberPagePref(context, PagePrefIds.pending, {
+                            'filter': f.name,
+                          }),
+                        );
+                      },
                     ),
                 ],
               ),

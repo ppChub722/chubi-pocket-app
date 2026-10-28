@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 
 import '../../personal_debts/domain/debt_ledger.dart';
-import '../../projects/domain/project.dart';
 import '../../saving_goals/domain/saving_entry.dart';
 import '../domain/link_draft.dart';
 import '../domain/transaction_type.dart';
@@ -48,31 +47,96 @@ TxCreateBody txCreateBody(DraftFormController c, LinkMode mode) {
   );
 }
 
-typedef ProjectBillBody = ({
-  String payerId,
-  String type,
-  double amount,
-  String date,
-  String? description,
-  String? note,
-  List<ProjectSplitInput> splits,
-});
-
-/// The event sheet's own bill (a new bill or an edit of one); the tags are
-/// resolved by the caller.
-ProjectBillBody projectBillBody(DraftFormController c, String payerId) => (
-  payerId: payerId,
-  type: c.type == TransactionType.income ? 'income' : 'expense',
-  amount: c.amountValue,
-  date: _ymd(c.date),
-  description: _text(c.description),
-  note: _text(c.note),
-  splits: [
-    for (final s in c.memberSplits)
-      if (s.memberId != null && s.amountValue > 0)
-        ProjectSplitInput(memberId: s.memberId!, amount: s.amountValue),
-  ],
-);
+/// 0.4.1-2 SA7 — แบ่งกับคน / คนจ่ายแทน (รับแทน) as ONE split-bill call
+/// (`POST /event-bills {split: true}`): [bill] = payer + everyone's share
+/// ("คืนแล้ว" per person), [myBooks] = my copy (tx + debts, wallet,
+/// category, my tags). จ่ายแทน where I also paid part from my wallet is a
+/// bill with two payers (0.4.1-2 multi-payer: `payers` me + them, every
+/// share listed). Null = this form isn't a split bill (no people).
+({Map<String, dynamic> bill, Map<String, dynamic> myBooks})? splitBookBodies(
+  DraftFormController c,
+  LinkMode mode,
+) {
+  if (c.isTransfer) return null;
+  final amount = c.amountValue;
+  // Everyone on the แบ่ง rows with what they owe (rows of one person add up).
+  final owed = <String, ({LinkPerson person, double share})>{};
+  for (final s in c.splits.where((s) => s.isComplete)) {
+    final p = LinkPerson(
+      name: s.personName.trim(),
+      contactId: s.contactId,
+      person: s.person,
+    );
+    final had = owed[p.key]?.share ?? 0;
+    owed[p.key] = (person: p, share: had + (s.owedAmount ?? 0));
+  }
+  final LinkPerson? payer;
+  // จ่ายแทน, I paid part too: me + them as payers (123 = me 110 + ลี 13).
+  var myPaid = 0.0;
+  switch (mode) {
+    case LinkMode.split:
+      if (owed.isEmpty) return null;
+      payer = null;
+    case LinkMode.paid:
+      final by = c.link.paidBy;
+      if (by == null) return null;
+      payer = by;
+      myPaid = c.link.myPaid(amount);
+    case LinkMode.personal || LinkMode.event:
+      return null;
+  }
+  final twoPayers = payer != null && myPaid > 0.005;
+  final mine = c.myShareFor(mode);
+  // One payer: their own share is the rest of the bill (EventBillInput), so
+  // they need not be listed. Two payers: every share is (Σ = the bill).
+  // "คืนแล้ว" on anyone but a payer, me too (SA6).
+  final mePaidBack = payer != null && !twoPayers && c.link.mePaidBack;
+  final others = [
+    for (final o in owed.values)
+      if (o.person != payer) o,
+  ];
+  final payerShare =
+      amount - mine - others.fold<double>(0, (s, o) => s + o.share);
+  final members = <Map<String, dynamic>>[
+    {'me': true, 'share': mine, if (mePaidBack) 'paid_back': true},
+    for (final o in others)
+      {
+        ...o.person.toJson(),
+        'share': o.share,
+        if (c.isPaidBack(o.person)) 'paid_back': true,
+      },
+    if (twoPayers) {...payer.toJson(), 'share': payerShare},
+  ];
+  return (
+    bill: {
+      'kind': c.type == TransactionType.income ? 'income' : 'expense',
+      'amount': amount,
+      'date': _ymd(c.date),
+      'description': _text(c.description),
+      'note': _text(c.note),
+      if (twoPayers)
+        'payers': [
+          {'me': true, 'amount': myPaid},
+          {...payer.toJson(), 'amount': amount - myPaid},
+        ]
+      else
+        'payer': payer?.toJson() ?? const {'me': true},
+      'members': members,
+    },
+    myBooks: {
+      'on': true,
+      'tx': true,
+      'debt': true,
+      // Someone else paid it all: my share takes no wallet ("จ่ายโดย X")
+      // until I paid them back; I paid part: that part is from my wallet.
+      'account_id': payer == null || mePaidBack || twoPayers
+          ? c.account?.id
+          : null,
+      'category_id': c.category?.id,
+      'tag_ids': c.tagIds.toList(),
+    },
+  );
+}
 
 typedef DebtRecordBody = ({
   String key,
