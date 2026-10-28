@@ -51,26 +51,44 @@ class SettingsPagePrefsPage extends StatelessWidget {
             bottomInset: AppSpacing.huge + inset.bottom,
             // The page legend, above the cards (inset like a card title).
             hero: DetailFootnote(l.pagePrefsCaption),
+            // Grouped like เพิ่มเติม / the nav bar (owner 2026-10-28).
             sections: [
-              (first) => SectionCard(
-                first: first,
-                title: l.pagePrefsSectionPages,
-                children: [
-                  for (final page in pagePrefPages)
-                    DetailRow(
-                      key: ValueKey('page-pref-${page.id}'),
-                      label: page.title(l),
-                      helper: pagePrefSummary(l, page, user.pagePref(page.id)),
-                      helperMaxLines: 1,
-                      trailing: page.changed(user.pagePref(page.id))
-                          ? AppBadge(label: l.pagePrefsChanged)
-                          : null,
-                      showChevron: true,
-                      onTap: () =>
-                          context.push('/settings/page-prefs/${page.id}'),
-                    ),
-                ],
-              ),
+              for (final group in pagePrefGroups)
+                (first) => SectionCard(
+                  first: first,
+                  title: group.title(l),
+                  children: [
+                    for (final page in group.pages)
+                      if (page.soon)
+                        LockedInEdit(
+                          key: ValueKey('page-pref-${page.id}'),
+                          locked: true,
+                          child: DetailRow(
+                            leading: AppIcon(page.icon),
+                            label: page.title(l),
+                            trailing: AppBadge(label: l.settingsComingSoon),
+                          ),
+                        )
+                      else
+                        DetailRow(
+                          key: ValueKey('page-pref-${page.id}'),
+                          leading: AppIcon(page.icon),
+                          label: page.title(l),
+                          helper: pagePrefSummary(
+                            l,
+                            page,
+                            user.pagePref(page.id),
+                          ),
+                          helperMaxLines: 1,
+                          trailing: page.changed(user.pagePref(page.id))
+                              ? AppBadge(label: l.pagePrefsChanged)
+                              : null,
+                          showChevron: true,
+                          onTap: () =>
+                              context.push('/settings/page-prefs/${page.id}'),
+                        ),
+                  ],
+                ),
             ],
             footnote: l.pagePrefsFootnote,
             manage: user.pagePrefs.isEmpty

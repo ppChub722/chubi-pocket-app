@@ -13,12 +13,15 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
+import '../../../auth/domain/user.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
+import '../../../preferences/page_prefs.dart';
 import '../../data/transactions_repository.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
+import '../cubit/tx_form_options_cubit.dart';
 import '../tx_list_filters.dart';
 import '../widgets/quick_create_sheet.dart';
 import '../widgets/transaction_tile.dart';
@@ -124,7 +127,14 @@ class _TransactionsListPageState extends State<TransactionsListPage>
       }
       final m = widget.initialMonth;
       if (m != null) f = f.copyWith(period: TxPeriod.month(m));
-      setState(() => _f = _base = f);
+      // The tab's list opens on its remembered sort + filters (page_prefs,
+      // 0.4.2-1); drill-downs and a wallet's list don't. The period and the
+      // search start fresh.
+      final shown = _isTabRoot ? _remembered(f) : f;
+      setState(() {
+        _base = f;
+        _f = shown;
+      });
       widget.period?.value = f.period;
       _refetch();
     });
@@ -199,6 +209,31 @@ class _TransactionsListPageState extends State<TransactionsListPage>
     setState(() => _f = f);
     widget.period?.value = f.period;
     _refetch();
+    _remember(f);
+  }
+
+  /// [base] with the remembered sort + filters, names from the caches the
+  /// app already holds (no request).
+  TxFilters _remembered(TxFilters base) {
+    final o = maybeTxFormOptions(context, watch: false)?.state.options;
+    return txFiltersFromPref(
+      base,
+      readPagePref(context, PagePrefIds.transactions),
+      accounts: o?.accountList ?? const [],
+      categories: o?.categoryList ?? const [],
+      tags: o?.tags ?? const [],
+    );
+  }
+
+  /// Remembers [f]'s sort + filters (the tab's list only); a period step or
+  /// a search changes nothing remembered, so it sends nothing.
+  void _remember(TxFilters f) {
+    if (!_isTabRoot) return;
+    final stored = readPagePref(context, PagePrefIds.transactions);
+    if (txFiltersFromPref(_base, stored).sameFiltersAs(f)) return;
+    unawaited(
+      rememberPagePref(context, PagePrefIds.transactions, txFiltersPref(f)),
+    );
   }
 
   void _onSearch(String v) {
@@ -285,12 +320,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
               selected: _f.sort,
               onSelected: (s) => _apply(_f.copyWith(sort: s)),
               options: [
-                for (final s in const [
-                  'date_desc',
-                  'date_asc',
-                  'amount_desc',
-                  'amount_asc',
-                ])
+                for (final s in txSorts)
                   SheetOption(value: s, label: txSortLabel(l, s)),
               ],
               builder: (context, toggle) => AppChip(

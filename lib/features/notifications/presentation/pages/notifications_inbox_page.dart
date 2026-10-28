@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -7,6 +9,8 @@ import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
+import '../../../auth/domain/user.dart';
+import '../../../preferences/page_prefs.dart';
 import '../../data/notifications_repository.dart';
 import '../../domain/notification.dart';
 import '../cubit/notifications_inbox_cubit.dart';
@@ -14,16 +18,26 @@ import '../cubit/unread_badge_cubit.dart';
 import '../notification_actions.dart';
 import '../widgets/notification_tile.dart';
 
+const _page = PagePrefIds.notifications;
+
+/// The inbox filter remembered in [pref] (an unknown / missing one = all).
+InboxFilter rememberedInboxFilter(Map<String, dynamic> pref) =>
+    InboxFilter.values.asNameMap()[pagePrefPage(
+      _page,
+    ).fields.firstWhere((f) => f.key == 'filter').pick(pref)] ??
+    InboxFilter.all;
+
 class NotificationsInboxPage extends StatelessWidget {
   const NotificationsInboxPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
+      // Opens on the remembered filter (page_prefs, 0.4.2-1).
       create: (ctx) => NotificationsInboxCubit(
         repository: ctx.read<NotificationsRepository>(),
         onUnreadChanged: ctx.read<UnreadBadgeCubit>().setCount,
-      )..load(),
+      )..load(filter: rememberedInboxFilter(readPagePref(ctx, _page))),
       child: const _InboxScaffold(),
     );
   }
@@ -61,6 +75,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
 
   void _pick(InboxFilter f) {
     context.read<NotificationsInboxCubit>().pick(f);
+    unawaited(rememberPagePref(context, _page, {'filter': f.name}));
   }
 
   String _filterLabel(AppLocalizations l, InboxFilter f) => switch (f) {
