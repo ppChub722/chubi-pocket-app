@@ -3,3 +3,4 @@ GET /projects/{id}/summary
 GET /transactions/summary
 POST /projects/{id}/members/{member_id}/request-link
 POST /recurring-items
+POST /telegram/webhook
