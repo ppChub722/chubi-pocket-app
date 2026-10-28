@@ -14,6 +14,7 @@ class DetailPageBody extends StatelessWidget {
     this.tabBar,
     this.tags,
     this.manage,
+    this.footnote,
     this.metaLines = const [],
     this.bottomInset = AppSpacing.xxl,
     this.topInset = 0,
@@ -31,6 +32,10 @@ class DetailPageBody extends StatelessWidget {
   final Widget? tags;
   final List<Widget? Function(bool first)> sections;
   final Widget? manage;
+
+  /// The page's footnote ([DetailFootnote]: under the sections, before
+  /// [manage], inset like a card title).
+  final String? footnote;
   final List<String> metaLines;
   final double bottomInset;
 
@@ -97,6 +102,7 @@ class DetailPageBody extends StatelessWidget {
         if (tabBar != null) ...[tabBar!, const SizedBox(height: AppSpacing.md)],
         if (tags != null) ...[tags!, const SizedBox(height: AppSpacing.md)],
         ...buildSections(),
+        if (footnote case final f?) DetailFootnote(f),
         ?manage,
         DetailMeta(lines: metaLines),
       ],

@@ -18,6 +18,8 @@ class _DetailSectionsDemo extends StatefulWidget {
 class _DetailSectionsDemoState extends State<_DetailSectionsDemo> {
   bool _a = true;
   bool _b = false;
+  bool _notify = false;
+  bool _auto = true;
   String _scope = 'Whole wallet';
   bool _noteEditing = false;
   final _note = TextEditingController(text: 'Shared with the team.');
@@ -99,10 +101,87 @@ class _DetailSectionsDemoState extends State<_DetailSectionsDemo> {
             ),
           ),
           HubDemo(
+            title: 'SettingToggleRow(leading:) | SettingPickRow',
+            note:
+                'Kit rule: a card of different settings (App, Money) gives '
+                'every row an icon; a list of one kind (notifications, page '
+                'prefs) gives none. SettingPickRow = chevron + a picker or '
+                'sheet (theme, font, wallet, category); small fixed lists are '
+                'SettingDropdownRows. All are read-only while offline.',
+            child: SettingsSection(
+              first: true,
+              title: 'Money',
+              children: [
+                SettingToggleRow(
+                  leading: const AppIcon(AppIcons.moneyColor),
+                  label: 'Red / green',
+                  caption: 'Income green, expense red',
+                  value: _a,
+                  onChanged: (v) => setState(() => _a = v),
+                ),
+                SettingPickRow(
+                  leading: const AppIcon(AppIcons.wallet),
+                  label: 'Main wallet',
+                  helper: 'Not set = the last wallet used',
+                  value: const Text('KBank'),
+                  onTap: noop,
+                ),
+              ],
+            ),
+          ),
+          HubDemo(
+            title: 'SettingSwitchColumnsRow | SettingColumnLabels',
+            note:
+                'Several switches side by side (the notification page: '
+                '[Notify] [Auto]). The column names sit in the card title row; '
+                'a null cell shows "–"; a cell without onChanged is locked '
+                '(here: auto off locks notify on).',
+            child: SectionCard(
+              first: true,
+              title: 'Shared bills',
+              trailing: const SettingColumnLabels(labels: ['Notify', 'Auto']),
+              children: [
+                SettingSwitchColumnsRow(
+                  label: 'Someone shares a bill with me',
+                  helper: _auto
+                      ? 'Auto = put it in my book at once'
+                      : 'Auto = put it in my book at once\n'
+                            "Auto is off, so notify can't be turned off",
+                  cells: [
+                    SettingSwitchCell(
+                      value: _notify || !_auto,
+                      onChanged: _auto
+                          ? (v) => setState(() => _notify = v)
+                          : null,
+                      semanticLabel: 'Notify',
+                    ),
+                    SettingSwitchCell(
+                      value: _auto,
+                      onChanged: (v) => setState(() => _auto = v),
+                      semanticLabel: 'Auto',
+                    ),
+                  ],
+                ),
+                SettingSwitchColumnsRow(
+                  label: 'Someone unlinks a debt with me',
+                  cells: [
+                    SettingSwitchCell(
+                      value: _b,
+                      onChanged: (v) => setState(() => _b = v),
+                      semanticLabel: 'Notify',
+                    ),
+                    null,
+                  ],
+                ),
+              ],
+            ),
+          ),
+          HubDemo(
             title: 'SettingsGroupRow',
             note:
-                'The settings home: one row per group, its current values in '
-                'one line ending in "…"; a tap opens the group page.',
+                'The settings home: one row per group with a plain icon, its '
+                'current values in one line ending in "…" ("|" between '
+                'values); a tap opens the group page.',
             child: SettingsSection(
               first: true,
               title: 'Settings',

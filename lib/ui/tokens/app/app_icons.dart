@@ -97,6 +97,15 @@ abstract final class AppIcons {
   static const darkMode = Icons.dark_mode_outlined;
   static const systemMode = Icons.smartphone_outlined;
   static const email = Icons.mail_outline;
+
+  /// The theme-mode setting (light / dark / system).
+  static const themeMode = Icons.contrast;
+
+  /// The red / green money colour setting.
+  static const moneyColor = Icons.water_drop_outlined;
+
+  /// Change password (a key; the lock marks a locked value).
+  static const password = Icons.key_outlined;
   static const phone = Icons.phone_outlined;
 
   static const add = Icons.add;
@@ -241,7 +250,10 @@ abstract final class AppIcons {
       'lightMode': lightMode,
       'darkMode': darkMode,
       'systemMode': systemMode,
+      'themeMode': themeMode,
       'email': email,
+      'password': password,
+      'moneyColor': moneyColor,
     },
     'Actions': {
       'add': add,

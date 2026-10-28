@@ -24,6 +24,31 @@ class DetailMeta extends StatelessWidget {
   }
 }
 
+/// A page's footnote (owner 2026-10-28): small muted lines under the cards,
+/// inset like a card title (12), not flush like [DetailMeta]. One fact per
+/// line; "|" only between values.
+class DetailFootnote extends StatelessWidget {
+  const DetailFootnote(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(
+      AppSpacing.md,
+      AppSpacing.md,
+      AppSpacing.md,
+      0,
+    ),
+    child: Text(
+      text,
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+    ),
+  );
+}
+
 List<String> detailMetaLines(
   BuildContext context, {
   DateTime? createdAt,

@@ -6,7 +6,7 @@ import '../atoms/ui_config.dart';
 import '../tokens/app/app_icons.dart';
 import '../atoms/app_switch.dart';
 import '../atoms/connection_scope.dart';
-import '../atoms/icon_tile.dart';
+import '../atoms/app_icon.dart';
 import '../molecules/app_snackbar.dart';
 import '../molecules/detail_rows.dart';
 import '../molecules/option_menu.dart';
@@ -140,6 +140,7 @@ class SettingToggleRow extends StatelessWidget {
     required this.value,
     required this.onChanged,
     this.caption,
+    this.leading,
     this.submits = true,
     super.key,
   });
@@ -150,12 +151,18 @@ class SettingToggleRow extends StatelessWidget {
   final ValueChanged<bool>? onChanged;
   final bool submits;
 
+  /// The row's icon. Kit rule (owner 2026-10-28): a card of different
+  /// settings (App, Money) gives every row an icon; a list of one kind
+  /// (notifications, page prefs) gives none.
+  final Widget? leading;
+
   @override
   Widget build(BuildContext context) {
     final off =
         onChanged == null || (submits && ConnectionScope.isOffline(context));
     final cb = off ? null : onChanged;
     return DetailRow(
+      leading: leading,
       label: label,
       helper: caption,
       onTap: cb == null ? null : () => cb(!value),
@@ -299,9 +306,9 @@ class SettingSummaryRow extends StatelessWidget {
   );
 }
 
-/// One group on the settings home (owner 2026-10-27): an icon tile, the
-/// group's name and ONE line summing up its current values; a tap opens the
-/// group's own page.
+/// One group on the settings home (owner 2026-10-27): a plain icon (owner
+/// 2026-10-28: no tinted tile), the group's name and ONE line of its current
+/// values (bare values, "|" between them); a tap opens the group's own page.
 class SettingsGroupRow extends StatelessWidget {
   const SettingsGroupRow({
     required this.icon,
@@ -320,17 +327,164 @@ class SettingsGroupRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => DetailRow(
-    leading: IconTile(
-      icon: icon,
-      color: Theme.of(context).colorScheme.primary,
-      shape: IconTileShape.rounded,
-    ),
+    leading: AppIcon(icon),
     label: label,
     helper: summary,
     helperMaxLines: 1,
     onTap: onTap,
     showChevron: true,
   );
+}
+
+/// A setting picked on a sheet or a picker (theme, font, main wallet, fee
+/// category; owner 2026-10-28: chevron + sheet only for pickers and rich
+/// previews, small fixed lists are [SettingDropdownRow]s): the value at the
+/// end, then ›. A pick is saved at once, so the row is read-only while
+/// offline ([submits]), like the switches and dropdowns.
+class SettingPickRow extends StatelessWidget {
+  const SettingPickRow({
+    required this.label,
+    this.value,
+    this.helper,
+    this.leading,
+    this.onTap,
+    this.submits = true,
+    super.key,
+  });
+
+  final String label;
+
+  /// The current value (text, swatches …), before the ›.
+  final Widget? value;
+  final String? helper;
+  final Widget? leading;
+
+  /// Opens the picker; null = nothing to pick (no ›).
+  final VoidCallback? onTap;
+  final bool submits;
+
+  @override
+  Widget build(BuildContext context) {
+    final cb = submits && ConnectionScope.isOffline(context) ? null : onTap;
+    return DetailRow(
+      leading: leading,
+      label: label,
+      helper: helper,
+      trailing: value,
+      showChevron: onTap != null,
+      onTap: cb,
+    );
+  }
+}
+
+/// The width of one switch column of a [SettingSwitchColumnsRow] (and of its
+/// [SettingColumnLabels] header), so headers, switches and "–" line up.
+const double kSettingSwitchColumn = 60;
+
+/// One switch of a [SettingSwitchColumnsRow].
+class SettingSwitchCell {
+  const SettingSwitchCell({
+    required this.value,
+    required this.onChanged,
+    required this.semanticLabel,
+  });
+
+  final bool value;
+
+  /// Null = locked: the switch shows its value but can't be flipped.
+  final ValueChanged<bool>? onChanged;
+  final String semanticLabel;
+}
+
+/// A setting row with SEVERAL switches side by side, one per column (the
+/// notification page, owner 2026-10-28: [แจ้ง] [อัตโนมัติ]). A null cell is a
+/// column this row has no switch for: it shows "–". Saved at once, so every
+/// switch is read-only while offline ([submits]). Put a [SettingColumnLabels]
+/// in the card's title row to name the columns.
+class SettingSwitchColumnsRow extends StatelessWidget {
+  const SettingSwitchColumnsRow({
+    required this.label,
+    required this.cells,
+    this.helper,
+    this.submits = true,
+    super.key,
+  });
+
+  final String label;
+  final String? helper;
+  final List<SettingSwitchCell?> cells;
+  final bool submits;
+
+  @override
+  Widget build(BuildContext context) {
+    final offline = submits && ConnectionScope.isOffline(context);
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    return DetailRow(
+      label: label,
+      helper: helper,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final cell in cells)
+            SizedBox(
+              width: kSettingSwitchColumn,
+              child: Center(
+                child: cell == null
+                    ? ExcludeSemantics(
+                        child: Text(
+                          '–',
+                          style: TextStyle(color: muted.withValues(alpha: 0.5)),
+                        ),
+                      )
+                    : AppSwitch(
+                        value: cell.value,
+                        onChanged: offline ? null : cell.onChanged,
+                        semanticLabel: cell.semanticLabel,
+                      ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The column names over the switches of [SettingSwitchColumnsRow]s, for a
+/// [SectionCard]'s `trailing` (its title row). An empty label leaves its
+/// column blank.
+class SettingColumnLabels extends StatelessWidget {
+  const SettingColumnLabels({required this.labels, super.key});
+
+  final List<String> labels;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.labelSmall?.copyWith(
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
+    );
+    // The title row ends 4 in from the card; the rows' switches end 16 in.
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(
+        end: AppSpacing.lg - AppSpacing.xs,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final label in labels)
+            SizedBox(
+              width: kSettingSwitchColumn,
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: style,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 /// What a [SettingMenuRow] lets people type when none of its options fits.

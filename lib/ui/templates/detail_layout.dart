@@ -18,6 +18,7 @@ class DetailLayout extends StatelessWidget {
     this.records,
     this.endZone,
     this.metaLines = const [],
+    this.footnote,
     this.topInset = 0,
     this.bottomInset = AppSpacing.xxl,
     this.controller,
@@ -37,6 +38,10 @@ class DetailLayout extends StatelessWidget {
   final Widget? records;
   final Widget? endZone;
   final List<String> metaLines;
+
+  /// A footnote under the sections, inset like a card title
+  /// ([DetailFootnote]); [metaLines] stay flush below it.
+  final String? footnote;
 
   final double topInset;
   final double bottomInset;
@@ -71,6 +76,7 @@ class DetailLayout extends StatelessWidget {
           records: records,
           endZone: endZone,
         ),
+        if (footnote case final f?) DetailFootnote(f),
         DetailMeta(lines: metaLines),
       ],
     );

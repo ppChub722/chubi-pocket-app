@@ -475,6 +475,27 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
           ],
         ),
         HubInApp(
+          columns: 2,
+          note:
+              'DetailFootnote — a page footnote under the cards, inset like a '
+              'card title (DetailPageBody / DetailLayout footnote:). One fact '
+              'per line.',
+          uses: [
+            const HubUse(
+              label: 'page footnote',
+              page: 'Settings › Notifications, Filters and sort',
+              child: DetailFootnote(
+                'Tabs, dates and search start fresh on every visit',
+              ),
+            ),
+            const HubUse(
+              label: 'record stamp (profile)',
+              page: 'Settings › Profile',
+              child: DetailFootnote('Saved 24 Oct 2026 12:54'),
+            ),
+          ],
+        ),
+        HubInApp(
           note: 'SummaryStats — labelled amounts in a row.',
           uses: [
             const HubUse(
