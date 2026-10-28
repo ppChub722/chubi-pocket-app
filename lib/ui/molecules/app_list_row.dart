@@ -7,14 +7,15 @@ import '../organisms/option_sheet.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/chip_size.dart';
-import '../tokens/hero_colors.dart';
 import '../tokens/tone.dart';
+import 'app_row.dart';
 import 'option_menu.dart';
 import 'split_row.dart';
 
 /// The one data row of every list: leading | title + chips / line 2 / alert |
 /// trailing value | actions. It knows no domain: money, wallets, tags and
-/// due dates come in as widgets, strings and [ListRowChip]s.
+/// due dates come in as widgets, strings and [ListRowChip]s. Built on
+/// [AppRow] (density list).
 class AppListRow extends StatelessWidget {
   const AppListRow({
     required this.leading,
@@ -102,143 +103,94 @@ class AppListRow extends StatelessWidget {
     final status = this.status;
     final titleField = this.titleField;
 
-    final body = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // The chips give way on a narrow row (under half of it each) so the
-        // title keeps room; at normal widths the cap is above the chip's own
-        // max width.
-        LayoutBuilder(
-          builder: (context, box) {
-            Widget chip(Widget c) => ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: box.maxWidth * 0.45),
-              child: c,
-            );
-            return Row(
-              children: [
-                if (titleMark case final mark?) ...[
-                  mark._build(context, textTheme.bodyLarge),
-                  const SizedBox(width: AppSpacing.xs),
-                ],
-                if (titleField != null)
-                  Expanded(child: titleField)
-                else
-                  Flexible(
-                    child: Text(
-                      title,
-                      maxLines: titleMaxLines,
-                      overflow: TextOverflow.ellipsis,
-                      style: titleStrong
-                          ? textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            )
-                          : textTheme.bodyLarge,
-                    ),
-                  ),
-                for (final c in titleChips) ...[
-                  const SizedBox(width: AppSpacing.xs),
-                  chip(c._build()),
-                ],
-                if (status != null) ...[
-                  const SizedBox(width: AppSpacing.xs),
-                  chip(status._build()),
-                ],
-              ],
-            );
-          },
-        ),
-        if (line != null)
-          Padding(padding: const EdgeInsets.only(top: 2), child: line),
-        if (third != null)
-          Padding(padding: const EdgeInsets.only(top: 2), child: third),
-        if (alert != null)
-          Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xs),
-            child: alert._build(context),
-          ),
-      ],
-    );
-
-    final tint = (checked ?? false) || highlighted
-        ? scheme.primary.withValues(alpha: 0.08)
-        : Colors.transparent;
-    final Widget row = Material(
-      color: tint,
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            AppSpacing.lg + indent,
-            AppSpacing.sm,
-            AppSpacing.lg,
-            AppSpacing.sm,
-          ),
-          child: Row(
-            children: [
-              if (checked != null) ...[
-                SelectCheck(
-                  value: checked,
-                  tooltip: checkTooltip,
-                  onTap: onCheck ?? onTap,
-                ),
-                const SizedBox(width: AppSpacing.xs),
-              ],
-              leading,
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(child: body),
-                        if (trailing != null) ...[
-                          const SizedBox(width: AppSpacing.sm),
-                          trailing._build(context, small),
-                        ],
-                        if (actions.isNotEmpty) ...[
-                          const SizedBox(width: AppSpacing.sm),
-                          GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () {},
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                for (final (i, a) in actions.indexed) ...[
-                                  if (i > 0)
-                                    const SizedBox(width: AppSpacing.sm),
-                                  a._build(context),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    if (footer != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: AppSpacing.xs),
-                        child: footer,
-                      ),
-                  ],
+    // The chips give way on a narrow row (under half of it each) so the
+    // title keeps room; at normal widths the cap is above the chip's own max
+    // width.
+    final titleRow = LayoutBuilder(
+      builder: (context, box) {
+        Widget chip(Widget c) => ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: box.maxWidth * 0.45),
+          child: c,
+        );
+        return Row(
+          children: [
+            if (titleMark case final mark?) ...[
+              mark._build(context, textTheme.bodyLarge),
+              const SizedBox(width: AppSpacing.xs),
+            ],
+            if (titleField != null)
+              Expanded(child: titleField)
+            else
+              Flexible(
+                child: Text(
+                  title,
+                  maxLines: titleMaxLines,
+                  overflow: TextOverflow.ellipsis,
+                  style: titleStrong
+                      ? textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        )
+                      : textTheme.bodyLarge,
                 ),
               ),
+            for (final c in titleChips) ...[
+              const SizedBox(width: AppSpacing.xs),
+              chip(c._build()),
             ],
-          ),
-        ),
-      ),
+            if (status != null) ...[
+              const SizedBox(width: AppSpacing.xs),
+              chip(status._build()),
+            ],
+          ],
+        );
+      },
     );
-    final accent = this.accent;
-    final colored = accent == null
-        ? row
-        : HeroColorScope(
-            colors: HeroColors.from(Theme.of(context), accent),
-            child: row,
-          );
-    return dimmed ? Opacity(opacity: 0.55, child: colored) : colored;
+
+    // Line 2 and 3 sit 2 px apart, the alert 4 px under what is above it;
+    // the shell puts the first one 2 px under the title.
+    final below = <Widget>[
+      ?line,
+      if (third != null)
+        Padding(
+          padding: EdgeInsets.only(top: line == null ? 0 : 2),
+          child: third,
+        ),
+      if (alert != null)
+        Padding(
+          padding: EdgeInsets.only(
+            top: line == null && third == null ? AppSpacing.xxs : AppSpacing.xs,
+          ),
+          child: alert._build(context),
+        ),
+    ];
+
+    return AppRow(
+      title: titleRow,
+      subtitle: below.isEmpty
+          ? null
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: below,
+            ),
+      selector: checked == null
+          ? null
+          : SelectCheck(
+              value: checked,
+              tooltip: checkTooltip,
+              onTap: onCheck ?? onTap,
+            ),
+      leading: leading,
+      trailing: trailing?._build(context, small),
+      actions: [for (final a in actions) a._build(context)],
+      footer: footer,
+      accent: accent,
+      highlighted: (checked ?? false) || highlighted,
+      dimmed: dimmed,
+      indent: indent,
+      onTap: onTap,
+      onLongPress: onLongPress,
+    );
   }
 }
 

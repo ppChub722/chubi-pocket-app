@@ -117,6 +117,7 @@ export 'molecules/linked_field_hint.dart';
 export 'molecules/linked_prompt.dart';
 export 'molecules/ask_card.dart';
 export 'molecules/hint_line.dart';
+export 'molecules/app_row.dart';
 export 'molecules/app_list_row.dart';
 export 'molecules/app_list_header.dart';
 export 'molecules/app_list_toolbar.dart';

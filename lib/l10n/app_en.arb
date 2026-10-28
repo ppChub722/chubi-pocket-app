@@ -2364,5 +2364,8 @@
   "pagePrefSetCount": "{title} {count}",
   "@pagePrefSetCount": {"placeholders":{"title":{"type":"String"},"count":{"type":"int"}}},
   "settingsMainWalletUnsetSummary": "No main wallet",
-  "pagePrefsSectionPages": "Pages"
+  "pagePrefsSectionPages": "Pages",
+  "connectionConnectingAttempt": "Connecting… {attempt}/{attempts}",
+  "@connectionConnectingAttempt": {"placeholders":{"attempt":{"type":"int"},"attempts":{"type":"int"}}},
+  "connectionCantConnect": "Can't reach the server"
 }

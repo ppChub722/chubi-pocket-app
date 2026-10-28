@@ -4,9 +4,10 @@ import '../tokens/tone.dart';
 import 'app_message.dart';
 
 enum ConnectionBannerState {
-  /// Cannot reach the server; retrying by itself.
+  /// Could not reach the server and stopped trying: a retry button.
   offline,
 
+  /// Trying to reach the server (a spinner, no error, no button).
   reconnecting,
 
   backOnline,
@@ -20,6 +21,7 @@ class ConnectionBanner extends StatelessWidget {
     required this.backText,
     required this.retryLabel,
     this.onRetry,
+    this.onClose,
     super.key,
   });
 
@@ -31,6 +33,10 @@ class ConnectionBanner extends StatelessWidget {
 
   final VoidCallback? onRetry;
 
+  /// A plain X after the action: hides the banner only (the caller decides
+  /// when it comes back). Not on "back online" (it goes by itself).
+  final VoidCallback? onClose;
+
   @override
   Widget build(BuildContext context) {
     return switch (state) {
@@ -41,10 +47,13 @@ class ConnectionBanner extends StatelessWidget {
           if (onRetry != null)
             AppMessageAction(label: retryLabel, onPressed: onRetry!),
         ],
+        onClose: onClose,
       ),
       ConnectionBannerState.reconnecting => AppMessage(
-        tone: Tone.warning,
+        tone: Tone.info,
+        busy: true,
         message: reconnectingText,
+        onClose: onClose,
       ),
       ConnectionBannerState.backOnline => AppMessage(
         tone: Tone.success,

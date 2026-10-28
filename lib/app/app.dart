@@ -20,6 +20,7 @@ import '../core/network/connection_cubit.dart';
 import '../core/logger/breadcrumbs.dart';
 import '../core/network/network_recorder.dart';
 import '../core/router/app_router.dart';
+import '../core/router/dev_hub_path.dart';
 import '../core/storage/secure_token_storage.dart';
 import '../ui/tokens/app/theme/theme_builder.dart';
 import '../features/accounts/data/accounts_repository.dart';
@@ -101,6 +102,12 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
   late final AppLifecycleListener _lifecycle;
   late final GoRouter _router;
 
+  /// The dev hub is open: app-wide error UI stays off (isDevHubPath).
+  final _onDevHub = ValueNotifier<bool>(false);
+
+  /// The app came back to the foreground (restarts a stopped health retry).
+  final _resumed = StreamController<void>.broadcast();
+
   @override
   void initState() {
     super.initState();
@@ -151,6 +158,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
       // Resume re-checks the version at most once a day (soft banner); a
       // forced update is a 426 on any call anyway.
       onResume: () {
+        _resumed.add(null);
         ShownTweenBuilder.replayAll.value++;
         unawaited(_versionCubit.checkIfDue());
         unawaited(
@@ -163,6 +171,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     _router = buildAppRouter(_authCubit, versionCubit: _versionCubit);
     _router.routerDelegate.addListener(() {
       final path = _router.routerDelegate.currentConfiguration.uri.path;
+      _onDevHub.value = routerOnDevHub(_router);
       NetworkRecorder.instance.noteRoute(path);
       Breadcrumbs.instance.page(path);
     });
@@ -174,6 +183,8 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
 
   @override
   void dispose() {
+    _onDevHub.dispose();
+    unawaited(_resumed.close());
     _lifecycle.dispose();
     _versionCubit.close();
     _authCubit.close();
@@ -234,6 +245,8 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
             create: (ctx) => ConnectionCubit(
               client: _apiClient,
               deviceOnline: ctx.read<ConnectivityCubit>().stream,
+              resumed: _resumed.stream,
+              devHub: _onDevHub,
             ),
           ),
           BlocProvider<AppVersionCubit>.value(value: _versionCubit),
@@ -386,7 +399,10 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                         valueListenable: _appRefresh.busy,
                         builder: (context, busy, shell) =>
                             SavingOverlay(saving: busy, child: shell!),
-                        child: ConnectionShell(
+                        child: ValueListenableBuilder<bool>(
+                          valueListenable: _onDevHub,
+                          builder: (context, devHub, page) =>
+                              ConnectionShell(devHub: devHub, child: page!),
                           child: RefreshScope(
                             registry: _refreshRegistry,
                             child: child ?? const SizedBox.shrink(),

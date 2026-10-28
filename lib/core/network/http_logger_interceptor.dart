@@ -18,6 +18,13 @@ class HttpLoggerInterceptor extends Interceptor {
   static const String _requestIdExtra = '__chubi_request_id';
   static const String _stopwatchExtra = '__chubi_stopwatch';
 
+  /// A /health retry's "n/N" (ConnectionCubit), logged as `attempt`.
+  static const String attemptExtra = '__chubi_attempt';
+
+  /// Failed calls with no answer since the last answer: the first logs the
+  /// steps that led to it, the rest one short line each.
+  int _failStreak = 0;
+
   static final List<String> _redactKeys = [
     'password',
     'passwd',
@@ -60,6 +67,7 @@ class HttpLoggerInterceptor extends Interceptor {
     Response<dynamic> response,
     ResponseInterceptorHandler handler,
   ) {
+    _failStreak = 0;
     final reqId = response.requestOptions.extra[_requestIdExtra] as String?;
     final latencyMs = _latencyMs(response.requestOptions);
     final fields = <String, Object?>{
@@ -86,7 +94,27 @@ class HttpLoggerInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     final reqId = err.requestOptions.extra[_requestIdExtra] as String?;
     final latencyMs = _latencyMs(err.requestOptions);
+    final attempt = err.requestOptions.extra[attemptExtra] as String?;
+    if (err.response != null) {
+      _failStreak = 0;
+    } else if (_failStreak++ > 0) {
+      // A repeat in the same streak: one line, no steps.
+      _logger.error(
+        'http.error',
+        requestId: reqId,
+        withSteps: false,
+        fields: {
+          'method': err.requestOptions.method,
+          'url': _safeUrl(err.requestOptions),
+          'type': err.type.name,
+          'attempt': ?attempt,
+        },
+      );
+      handler.next(err);
+      return;
+    }
     final fields = <String, Object?>{
+      'attempt': ?attempt,
       'method': err.requestOptions.method,
       'url': _safeUrl(err.requestOptions),
       'status': err.response?.statusCode,

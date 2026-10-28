@@ -228,7 +228,7 @@ class _PersonViewState extends State<_PersonView> {
       if (s.balance!.person.contactId == null)
         SectionCard(
           children: [
-            DetailRow(
+            AppDetailRow(
               leading: _linking
                   ? const AppSpinner(size: AppSpinnerSize.medium)
                   : const AppIcon(AppIcons.addContact),

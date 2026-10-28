@@ -27,7 +27,7 @@ class CurrencyTile extends StatelessWidget {
         '${Currencies.symbolOf(value)}  $value | ${Currencies.nameOf(l, value)}';
     final tileLabel = label ?? l.commonCurrency;
     if (onChanged == null) {
-      return DetailRow.pick(
+      return AppDetailRow.pick(
         label: tileLabel,
         value: display,
         emptyText: display,
@@ -50,7 +50,7 @@ class CurrencyTile extends StatelessWidget {
             ),
           ),
       ],
-      builder: (context, toggle) => DetailRow.pick(
+      builder: (context, toggle) => AppDetailRow.pick(
         label: tileLabel,
         value: display,
         emptyText: display,

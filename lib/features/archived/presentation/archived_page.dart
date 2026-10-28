@@ -137,7 +137,7 @@ class _ArchivedView extends StatelessWidget {
                   title: _title(l, kind),
                   children: [
                     for (final item in hub.of(kind))
-                      DetailRow(
+                      AppDetailRow(
                         key: ValueKey('archived-${kind.key}-${item.id}'),
                         leading: Opacity(
                           opacity: 0.6,

@@ -168,7 +168,7 @@ class _EditProfilePageState extends State<EditProfilePage>
                     // goes nowhere); long-press or ✏️ edits (owner
                     // 2026-10-28).
                     if (!editing)
-                      DetailRow(
+                      AppDetailRow(
                         leading: const AppIcon(AppIcons.email),
                         label: l.editProfileEmailLabel,
                         trailing: working.email.isEmpty
@@ -224,14 +224,14 @@ class _EditProfilePageState extends State<EditProfilePage>
                         title: l.profileSectionSecurity,
                         children: [
                           // The lock after the value marks it locked.
-                          DetailRow(
+                          AppDetailRow(
                             leading: const AppIcon(AppIcons.profile),
                             label: l.editProfileUsernameLabel,
                             helper: l.profileUsernameLocked,
                             locked: true,
                             trailing: Text('@${_user.username}'),
                           ),
-                          DetailRow(
+                          AppDetailRow(
                             leading: const AppIcon(AppIcons.password),
                             label: l.settingsChangePassword,
                             showChevron: true,

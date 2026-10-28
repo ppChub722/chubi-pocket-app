@@ -7,9 +7,13 @@ import '../features/auth/presentation/cubit/auth_cubit.dart';
 import '../ui/ui.dart';
 
 class ConnectionShell extends StatelessWidget {
-  const ConnectionShell({required this.child, super.key});
+  const ConnectionShell({required this.child, this.devHub = false, super.key});
 
   final Widget child;
+
+  /// On the dev hub (isDevHubPath): no offline / update banner and no
+  /// offline gating, so the widgets work without a backend.
+  final bool devHub;
 
   @override
   Widget build(BuildContext context) {
@@ -18,25 +22,30 @@ class ConnectionShell extends StatelessWidget {
     );
     return BlocBuilder<ConnectionCubit, ServerConnectionState>(
       builder: (context, conn) {
+        final quiet = coldStart || devHub;
         return ConnectionScope(
-          offline: conn.isOffline,
+          offline: !devHub && conn.isOffline,
           reconnects: conn.reconnects,
           child: Stack(
             children: [
               Column(
                 children: [
-                  const UpdateBanner(),
+                  if (devHub)
+                    const SizedBox(width: double.infinity)
+                  else
+                    const UpdateBanner(),
                   Expanded(child: child),
                 ],
               ),
               // Always in the tree (a child appearing above would remount every
-              // page below); it just reads as online on cold start.
+              // page below); it just reads as online on cold start and on the
+              // dev hub.
               Positioned(
                 top: 0,
                 left: 0,
                 right: 0,
                 child: OfflineBanner(
-                  state: coldStart ? const ServerConnectionState() : conn,
+                  state: quiet ? const ServerConnectionState() : conn,
                   onRetry: context.read<ConnectionCubit>().retryNow,
                 ),
               ),

@@ -2137,5 +2137,8 @@
   "pagePrefSetCount": "{title} {count}",
   "@pagePrefSetCount": {"placeholders":{"title":{"type":"String"},"count":{"type":"int"}}},
   "settingsMainWalletUnsetSummary": "ยังไม่ตั้งกระเป๋าหลัก",
-  "pagePrefsSectionPages": "หน้าในแอป"
+  "pagePrefsSectionPages": "หน้าในแอป",
+  "connectionConnectingAttempt": "กำลังเชื่อมต่อ… {attempt}/{attempts}",
+  "@connectionConnectingAttempt": {"placeholders":{"attempt":{"type":"int"},"attempts":{"type":"int"}}},
+  "connectionCantConnect": "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้"
 }

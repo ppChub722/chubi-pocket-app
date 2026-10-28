@@ -258,7 +258,7 @@ class EventRow extends StatelessWidget {
               child: value,
             ),
           )
-        : DetailRow(
+        : AppDetailRow(
             label: l.quickEventLabel,
             trailing: Align(
               alignment: AlignmentDirectional.centerEnd,
@@ -360,7 +360,7 @@ class RecurringLinkRow extends StatelessWidget {
               child: value,
             ),
           )
-        : DetailRow(
+        : AppDetailRow(
             label: l.txRecurringRowLabel,
             trailing: Align(
               alignment: AlignmentDirectional.centerEnd,

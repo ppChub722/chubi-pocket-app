@@ -61,6 +61,7 @@ class AppUiConfig extends StatelessWidget {
         loadMoreFailed: l.uiLoadMoreFailed,
         pickDatesHint: l.uiPickDatesHint,
         more: l.commonMore,
+        comingSoon: l.settingsComingSoon,
         currencySymbol: _userCurrencySymbol(context),
       ),
       errors: _AppErrors(l),

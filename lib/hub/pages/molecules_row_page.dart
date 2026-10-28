@@ -4,9 +4,281 @@ import '../../features/accounts/domain/account_type.dart';
 import '../../ui/ui.dart';
 import '../hub_kit.dart';
 import '../hub_playground.dart';
+import 'organisms_detail_section_page.dart' show DetailRowsDemo;
 
-/// `/dev/ui/molecules/list-row` — the one data row of every list.
-Widget buildListRowPage(BuildContext context) => const _ListRowPage();
+/// `/dev/ui/molecules/row` — the one row shell and its two presets:
+/// Shell (AppRow) → List (AppListRow, a list item) → Detail (AppDetailRow, a
+/// field of this record). AppListRow and AppDetailRow are AppRow presets.
+Widget buildRowPage(BuildContext context) => const Column(
+  crossAxisAlignment: CrossAxisAlignment.stretch,
+  children: [
+    HubSubheading(
+      'Shell',
+      note:
+          'AppRow: padding, fill, ink, dim / disabled, leading slot + corner '
+          'badge, trailing, actions, footer. Densities list / detail.',
+    ),
+    _RowShellPage(),
+    HubSubheading(
+      'List',
+      note: 'AppListRow = AppRow (density list): an item in a list.',
+    ),
+    _ListRowPage(),
+    HubSubheading(
+      'Detail',
+      note: 'AppDetailRow = AppRow (density detail): a field of this record.',
+    ),
+    _DetailPatternsPage(),
+    DetailRowsDemo(),
+  ],
+);
+
+class _RowShellPage extends StatelessWidget {
+  const _RowShellPage();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    void noop() {}
+    Widget tile(IconData icon) => IconTile(icon: icon, color: scheme.primary);
+    Widget title(String t) =>
+        Text(t, style: Theme.of(context).textTheme.bodyLarge);
+    Widget sub(String t) => Text(
+      t,
+      style: Theme.of(
+        context,
+      ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        HubDemo(
+          title: 'Density: list vs detail',
+          note:
+              'list = 8 / 8 padding, the leading as big as the caller makes '
+              'it (AppListRow). detail = 12 / 12, a 22 px muted icon, ink only '
+              'while pressed (AppDetailRow). Same shell, own rhythm.',
+          child: SectionCard(
+            first: true,
+            children: [
+              AppRow(
+                leading: tile(AppIcons.wallet),
+                title: title('List density'),
+                subtitle: sub('Line 2 sits 2 px under the title'),
+                trailing: const Text('฿120'),
+                onTap: noop,
+              ),
+              AppRow(
+                density: AppRowDensity.detail,
+                leading: const AppIcon(AppIcons.info),
+                title: title('Detail density'),
+                subtitle: sub('The helper sits 4 px under the label'),
+                trailing: const Text('Value'),
+                trailingMaxFraction: 0.5,
+                chevron: true,
+                onTap: noop,
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'Fill: highlighted, tinted (accent), plain',
+          note:
+              'highlighted = primary 8 %. tinted = the accent\'s soft wash '
+              '(HeroColors.from: contrast-checked) and, in detail density, the '
+              'leading icon in the accent. Inside a SectionCard the fill takes '
+              'the cell\'s round corners (AppRowShape).',
+          child: SectionCard(
+            first: true,
+            children: [
+              AppRow(
+                density: AppRowDensity.detail,
+                leading: const AppIcon(AppIcons.link),
+                title: title('Tinted (yellow accent)'),
+                accent: const Color(0xFFFFEB3B),
+                tinted: true,
+                onTap: noop,
+              ),
+              AppRow(
+                density: AppRowDensity.detail,
+                leading: const AppIcon(AppIcons.category),
+                title: title('Highlighted'),
+                highlighted: true,
+                onTap: noop,
+              ),
+              AppRow(
+                density: AppRowDensity.detail,
+                leading: const AppIcon(AppIcons.link),
+                title: title('Tinted (brand blue)'),
+                accent: const Color(0xFF229ED9),
+                tinted: true,
+                onTap: noop,
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'Dimmed, disabled, reserved leading',
+          note:
+              'dimmed = 55 %, still tappable. disabled = 38 %, no taps, no '
+              'ink. reserveLeading keeps the icon\'s room so titles line up.',
+          child: SectionCard(
+            first: true,
+            children: [
+              AppRow(
+                density: AppRowDensity.detail,
+                leading: const AppIcon(AppIcons.archive),
+                title: title('Dimmed'),
+                dimmed: true,
+                onTap: noop,
+              ),
+              AppRow(
+                density: AppRowDensity.detail,
+                leading: const AppIcon(AppIcons.download),
+                title: title('Disabled'),
+                disabled: true,
+                onTap: noop,
+              ),
+              AppRow(
+                density: AppRowDensity.detail,
+                reserveLeading: true,
+                title: title('No icon, room kept'),
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'Badge, trailing icon, actions, footer, select',
+          note:
+              'RowBadge puts a CornerBadge on the leading at any size (an icon '
+              'or RowBadge.logo with an image). trailingIcon = 16 px after the '
+              'value. actions never pass taps to the row. footer spans from the '
+              'title to the right.',
+          child: SectionCard(
+            first: true,
+            children: [
+              AppRow(
+                leading: const UserAvatar(displayName: 'Pond', size: 40),
+                badge: const RowBadge(icon: AppIcons.link),
+                title: title('Avatar with an icon badge'),
+                trailing: const Text('@ppond'),
+                trailingIcon: AppIcons.lock,
+              ),
+              AppRow(
+                leading: tile(AppIcons.savings),
+                title: title('Actions + footer'),
+                actions: [
+                  AppIconButton.flat(
+                    icon: AppIcons.edit,
+                    dense: true,
+                    onPressed: noop,
+                  ),
+                ],
+                footer: const LinearProgressIndicator(value: 0.6),
+                onTap: noop,
+              ),
+              AppRow(
+                selector: SelectCheck(value: true, onTap: noop),
+                leading: tile(AppIcons.wallet),
+                title: title('With a select check'),
+                highlighted: true,
+                onTap: noop,
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'A badge never moves or resizes the leading',
+          note:
+              'Each pair: the same leading without and with a badge. The '
+              'icon, logo and avatar keep their size and place; the badge only '
+              'overlays the corner (test: app_row_badge_geometry_test).',
+          child: SectionCard(
+            first: true,
+            children: [
+              for (final (label, leading, size) in [
+                ('Icon', const AppIcon(AppIcons.link), null),
+                (
+                  'Logo',
+                  const SizedBox.square(
+                    dimension: 32,
+                    child: ColoredBox(color: Color(0xFF229ED9)),
+                  ),
+                  32.0,
+                ),
+                (
+                  'Avatar',
+                  const UserAvatar(displayName: 'Pond', size: 32),
+                  32.0,
+                ),
+              ])
+                for (final badged in [false, true])
+                  AppRow(
+                    density: AppRowDensity.detail,
+                    leading: leading,
+                    leadingSize: size,
+                    badge: badged ? const RowBadge(icon: AppIcons.check) : null,
+                    title: title('$label${badged ? ' + badge' : ''}'),
+                  ),
+            ],
+          ),
+        ),
+        HubPlayground(
+          title: 'AppRow',
+          controls: [
+            PlayChoice<AppRowDensity>('density', [
+              for (final d in AppRowDensity.values) (d.name, d),
+            ]),
+            const PlayText('title', initialValue: 'Telegram'),
+            const PlayText('subtitle', initialValue: ''),
+            const PlayText('trailing', initialValue: '@ppond'),
+            const PlayBool('badge'),
+            const PlayBool('trailingIcon'),
+            const PlayBool('chevron', initialValue: true),
+            const PlayBool('tinted'),
+            const PlayBool('highlighted'),
+            const PlayBool('dimmed'),
+            const PlayBool('disabled'),
+            const PlayNum('indent', min: 0, max: 48, step: 8, initialValue: 0),
+          ],
+          builder: (context, v) {
+            final density = v<AppRowDensity>('density');
+            final sub = v<String>('subtitle');
+            final trailing = v<String>('trailing');
+            return SectionCard(
+              first: true,
+              children: [
+                AppRow(
+                  density: density,
+                  leading: density == AppRowDensity.detail
+                      ? const AppIcon(AppIcons.link)
+                      : tile(AppIcons.link),
+                  badge: v<bool>('badge')
+                      ? const RowBadge(icon: AppIcons.check)
+                      : null,
+                  leadingSize: density == AppRowDensity.detail ? 22 : 40,
+                  title: title(v<String>('title')),
+                  subtitle: sub.isEmpty ? null : Text(sub),
+                  trailing: trailing.isEmpty ? null : Text(trailing),
+                  trailingMaxFraction: 0.5,
+                  trailingIcon: v<bool>('trailingIcon') ? AppIcons.lock : null,
+                  chevron: v<bool>('chevron'),
+                  accent: const Color(0xFF229ED9),
+                  tinted: v<bool>('tinted'),
+                  highlighted: v<bool>('highlighted'),
+                  dimmed: v<bool>('dimmed'),
+                  disabled: v<bool>('disabled'),
+                  indent: v<double>('indent'),
+                  onTap: () {},
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
 
 class _ListRowPage extends StatefulWidget {
   const _ListRowPage();
@@ -984,6 +1256,314 @@ class _Card extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+const _telegram = Color(0xFF229ED9);
+const _line = Color(0xFF06C755);
+const _google = Color(0xFF4285F4);
+
+/// A stand-in for a brand logo image (the hub has no network): the real
+/// rows get a PNG from the BE.
+class _Logo extends StatelessWidget {
+  const _Logo(this.icon, this.color);
+
+  final IconData icon;
+  final Color color;
+
+  /// The same square as the avatar rows (a real logo PNG is drawn at it).
+  static const size = 32.0;
+
+  @override
+  Widget build(BuildContext context) => SizedBox.square(
+    dimension: size,
+    child: DecoratedBox(
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      child: FittedBox(
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Icon(icon, color: Theme.of(context).colorScheme.surface),
+        ),
+      ),
+    ),
+  );
+}
+
+class _DetailPatternsPage extends StatelessWidget {
+  const _DetailPatternsPage();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final grey = scheme.outline;
+    void noop() {}
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        HubDemo(
+          title: 'Leading: icon, logo, avatar + badge',
+          note:
+              'A 22 px muted icon by default. A logo or an avatar sets leadingSize (one 32 px slot): same size and place with or without a badge. A '
+              'badge (RowBadge.logo) shows at any size: the app that gave the '
+              'picture.',
+          child: SectionCard(
+            first: true,
+            title: 'Leading',
+            children: [
+              AppDetailRow(
+                icon: AppIcons.info,
+                label: 'Icon',
+                trailing: const Text('Value'),
+                onTap: noop,
+                showChevron: true,
+              ),
+              AppDetailRow(
+                leading: const _Logo(Icons.send, _telegram),
+                leadingSize: _Logo.size,
+                label: 'Logo',
+                trailing: const Text('Telegram'),
+              ),
+              AppDetailRow(
+                leading: const UserAvatar(displayName: 'Pond', size: 32),
+                leadingSize: _Logo.size,
+                badge: const RowBadge.logo(_Logo(Icons.send, _telegram)),
+                label: 'Avatar + logo badge',
+                trailing: const Text('@ppond'),
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'Connections: linked, not linked, coming soon',
+          note:
+              'Linked with a picture: the picture + the app logo as a badge, '
+              'the row tinted in the brand colour, 🔗 before the username. '
+              'Linked without a picture: the logo in colour. Not linked: the '
+              'logo in grey, a muted value. Not built: comingSoon (38 %, no '
+              'taps, the "coming soon" badge from UiStrings).',
+          child: SectionCard(
+            first: true,
+            title: 'Connections',
+            children: [
+              AppDetailRow(
+                leading: const UserAvatar(displayName: 'Pond', size: 32),
+                leadingSize: _Logo.size,
+                badge: const RowBadge.logo(_Logo(Icons.send, _telegram)),
+                label: 'Telegram',
+                valueIcon: AppIcons.link,
+                trailing: const Text('@ppond'),
+                accent: _telegram,
+                tinted: true,
+                showChevron: true,
+                onTap: noop,
+                onLongPress: noop,
+              ),
+              AppDetailRow(
+                leading: const _Logo(Icons.send, _telegram),
+                leadingSize: _Logo.size,
+                label: 'Telegram (no picture)',
+                valueIcon: AppIcons.link,
+                trailing: const Text('@ppond'),
+                accent: _telegram,
+                tinted: true,
+                showChevron: true,
+                onTap: noop,
+              ),
+              AppDetailRow(
+                leading: _Logo(Icons.send, grey),
+                leadingSize: _Logo.size,
+                label: 'Telegram (not linked)',
+                trailing: const Text('Not linked'),
+                valueColor: scheme.onSurfaceVariant,
+                showChevron: true,
+                onTap: noop,
+              ),
+              AppDetailRow(
+                leading: _Logo(Icons.chat_bubble, grey),
+                leadingSize: _Logo.size,
+                label: 'LINE',
+                comingSoon: true,
+              ),
+              AppDetailRow(
+                leading: _Logo(Icons.g_mobiledata, grey),
+                leadingSize: _Logo.size,
+                label: 'Google',
+                comingSoon: true,
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'Value: colour, lock, chain, chevron',
+          note:
+              'The value is primary unless the row passes valueColor. locked '
+              '= 🔒 after the value, and the value + lock take the theme\'s '
+              'muted text token (onSurfaceVariant: per theme, light / dark). '
+              'valueIcon = a 16 px icon before the value, in its colour. The '
+              'value takes at most half the row.',
+          child: SectionCard(
+            first: true,
+            title: 'Values',
+            children: [
+              const AppDetailRow(
+                icon: AppIcons.profile,
+                label: 'Username (locked)',
+                trailing: Text('ppond'),
+                locked: true,
+              ),
+              const AppDetailRow(
+                icon: AppIcons.link,
+                label: 'Linked account',
+                valueIcon: AppIcons.link,
+                trailing: Text('Aom'),
+              ),
+              AppDetailRow.pick(
+                icon: AppIcons.category,
+                label: 'Category',
+                emptyText: 'Pick one',
+                onTap: noop,
+              ),
+              const AppDetailRow(
+                icon: AppIcons.info,
+                label: 'A long value',
+                trailing: Text(
+                  'A value long enough to take half of the row and wrap',
+                ),
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'Permission status (valueColor by state)',
+          note:
+              'Granted / in use = primary (the default), not asked = muted, '
+              'denied = the warning token.',
+          child: SectionCard(
+            first: true,
+            title: 'Permissions',
+            children: [
+              AppDetailRow(
+                icon: AppIcons.notifications,
+                label: 'การแจ้งเตือน',
+                trailing: const Text('อนุญาตแล้ว'),
+                showChevron: true,
+                onTap: noop,
+              ),
+              AppDetailRow(
+                icon: Icons.photo_camera_outlined,
+                label: 'กล้อง',
+                trailing: const Text('ยังไม่ได้ขอ'),
+                valueColor: scheme.onSurfaceVariant,
+                showChevron: true,
+                onTap: noop,
+              ),
+              AppDetailRow(
+                icon: Icons.photo_library_outlined,
+                label: 'รูปภาพ',
+                trailing: const Text('ปฏิเสธไว้'),
+                valueColor: palette.warning,
+                showChevron: true,
+                onTap: noop,
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'Tinted: first, middle, last',
+          note:
+              'A tinted row keeps the card\'s round corners at the top and '
+              'bottom (the SectionCard hands its cell radius to the row). The '
+              'yellow accent is darkened until it reads 3:1 on the surface.',
+          child: SectionCard(
+            first: true,
+            children: [
+              for (final (label, color) in const [
+                ('Yellow', Color(0xFFFFEB3B)),
+                ('LINE green', _line),
+                ('Google blue', _google),
+              ])
+                AppDetailRow(
+                  icon: AppIcons.link,
+                  label: label,
+                  trailing: const Text('Linked'),
+                  accent: color,
+                  tinted: true,
+                  onTap: noop,
+                ),
+            ],
+          ),
+        ),
+        HubPlayground(
+          title: 'AppDetailRow',
+          controls: [
+            const PlayText('label', initialValue: 'Telegram'),
+            const PlayText('trailing', initialValue: '@ppond'),
+            const PlayText('helper', initialValue: ''),
+            const PlayText('error', initialValue: ''),
+            PlayChoice<String>('leading', const [
+              ('icon', 'icon'),
+              ('logo', 'logo'),
+              ('avatar + badge', 'avatar'),
+              ('none', 'none'),
+            ]),
+            PlayChoice<String>('valueColor', const [
+              ('primary', 'primary'),
+              ('muted', 'muted'),
+              ('warning', 'warning'),
+            ]),
+            const PlayBool('valueIcon'),
+            const PlayBool('locked'),
+            const PlayBool('showChevron', initialValue: true),
+            const PlayBool('tinted'),
+            const PlayBool('comingSoon'),
+          ],
+          builder: (context, v) {
+            String? text(String name) =>
+                v<String>(name).isEmpty ? null : v<String>(name);
+            final leading = v<String>('leading');
+            return SectionCard(
+              first: true,
+              children: [
+                AppDetailRow(
+                  label: v<String>('label'),
+                  trailing: text('trailing') == null
+                      ? null
+                      : Text(text('trailing')!),
+                  helper: text('helper'),
+                  error: text('error'),
+                  icon: leading == 'icon' ? AppIcons.link : null,
+                  leading: switch (leading) {
+                    'logo' => const _Logo(Icons.send, _telegram),
+                    'avatar' => const UserAvatar(displayName: 'Pond', size: 32),
+                    _ => null,
+                  },
+                  leadingSize: leading == 'icon' || leading == 'none'
+                      ? null
+                      : _Logo.size,
+                  badge: leading == 'avatar'
+                      ? const RowBadge.logo(_Logo(Icons.send, _telegram))
+                      : null,
+                  valueColor: switch (v<String>('valueColor')) {
+                    'muted' => scheme.onSurfaceVariant,
+                    'warning' => palette.warning,
+                    _ => null,
+                  },
+                  valueIcon: v<bool>('valueIcon') ? AppIcons.link : null,
+                  locked: v<bool>('locked'),
+                  showChevron: v<bool>('showChevron'),
+                  accent: _telegram,
+                  tinted: v<bool>('tinted'),
+                  comingSoon: v<bool>('comingSoon'),
+                  onTap: noop,
+                  onLongPress: noop,
+                ),
+              ],
+            );
+          },
         ),
       ],
     );

@@ -59,7 +59,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
         'edit") are one faint style; tapping one enters edit mode and starts '
         'adding that thing (opens its picker / adds its row).',
     '🔒 sits right after the value, so every row label stays aligned.',
-    'Pickers are DetailRow ›. Note is always shown, even empty. Manage '
+    'Pickers are AppDetailRow ›. Note is always shown, even empty. Manage '
         '(archive amber + delete red) only in edit mode, last; record info '
         '(DetailMeta) at the very bottom.',
   ];
@@ -129,7 +129,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
           description: 'What this category is and where it sits.',
           children: [
             // Filled picker.
-            DetailRow.pick(
+            AppDetailRow.pick(
               icon: _icons ? AppIcons.category : null,
               label: 'Parent',
               value: _hasParent ? 'Eating out' : null,
@@ -141,13 +141,13 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
               },
               onLongPress: enter,
             ),
-            DetailRow(
+            AppDetailRow(
               icon: _icons ? AppIcons.currency : null,
               label: 'Currency',
               trailing: const Text('THB'),
               locked: true,
             ),
-            DetailRow(
+            AppDetailRow(
               icon: _icons ? AppIcons.info : null,
               label: 'Counts in reports',
               helper: 'Off = left out of summaries',
@@ -163,7 +163,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
           title: 'Reference numbers',
           description: 'Only used to match accounts when scanning slips.',
           children: [
-            DetailRow(
+            AppDetailRow(
               label: 'No numbers yet',
               onTap: () {
                 if (!editing) _enter();
@@ -231,7 +231,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
           title: 'Link',
           description: 'Connect this contact to an app user.',
           children: [
-            DetailRow.pick(
+            AppDetailRow.pick(
               label: 'App user',
               value: null,
               emptyText: 'Not linked',
@@ -297,8 +297,8 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
           title: 'Target',
           description: 'How much and by when.',
           children: const [
-            DetailRow(label: 'Target', trailing: Text('฿30,000')),
-            DetailRow(label: 'Due', trailing: Text('31 Dec 2026')),
+            AppDetailRow(label: 'Target', trailing: Text('฿30,000')),
+            AppDetailRow(label: 'Due', trailing: Text('31 Dec 2026')),
           ],
         ),
       ],
@@ -450,7 +450,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
                     title: 'Section ${i + 1}',
                     description: 'One line about this section.',
                     children: const [
-                      DetailRow(label: 'Currency', trailing: Text('THB')),
+                      AppDetailRow(label: 'Currency', trailing: Text('THB')),
                     ],
                   ),
               ],

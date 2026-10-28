@@ -157,7 +157,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
               SectionCard(
                 first: true,
                 children: [
-                  DetailRow(
+                  AppDetailRow(
                     label: l.commonName,
                     locked: true,
                     helper: lockedHelper,
@@ -173,7 +173,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
                       maxLength: TextLimits.description,
                     ),
                   ),
-                  DetailRow(
+                  AppDetailRow(
                     label: l.contactEmailLabel,
                     locked: true,
                     helper: lockedHelper,

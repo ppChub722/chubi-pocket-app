@@ -1516,7 +1516,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final w = working;
     return SectionCard(
       children: [
-        DetailRow(
+        AppDetailRow(
           label: l.accountFormTypeLabel,
           trailing: OptionMenuAnchor<AccountType>(
             selected: w.type,
@@ -1636,17 +1636,17 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       final minPayment = AmountInput.parse(w.minPayment);
       return [
         if (statementDay != null)
-          DetailRow(
+          AppDetailRow(
             label: l.accountDetailStatementDate,
             trailing: AppText(dayOfMonthLabel(context, statementDay)),
           ),
         if (dueDay != null)
-          DetailRow(
+          AppDetailRow(
             label: l.accountDetailPaymentDue,
             trailing: AppText(dayOfMonthLabel(context, dueDay)),
           ),
         if (minPayment != null)
-          DetailRow(
+          AppDetailRow(
             label: l.accountDetailMinimumPayment,
             trailing: MoneyText(minPayment, symbol: symbol),
           ),
@@ -1657,7 +1657,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       required TextEditingController controller,
       required _Field field,
       FormFieldValidator<String>? validator,
-    }) => DetailRow(
+    }) => AppDetailRow(
       label: label,
       trailing: SizedBox(
         width: 160,
@@ -1732,7 +1732,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   }) {
     final day = int.tryParse(value.trim());
     final label = dayOfMonthLabel(context, day);
-    return DetailRow.pick(
+    return AppDetailRow.pick(
       label: title,
       value: day == null ? null : label,
       emptyText: label,

@@ -444,7 +444,7 @@ class _AccountsPageState extends State<AccountsPage> {
       if (state.archivedCount > 0)
         Padding(
           padding: const EdgeInsets.only(top: AppSpacing.md),
-          child: DetailRow(
+          child: AppDetailRow(
             leading: const AppIcon(AppIcons.archive),
             label: l.accountsArchivedLink(state.archivedCount),
             showChevron: true,

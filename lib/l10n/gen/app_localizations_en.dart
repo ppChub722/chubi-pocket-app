@@ -6975,4 +6975,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pagePrefsSectionPages => 'Pages';
+
+  @override
+  String connectionConnectingAttempt(int attempt, int attempts) {
+    return 'Connecting… $attempt/$attempts';
+  }
+
+  @override
+  String get connectionCantConnect => 'Can\'t reach the server';
 }

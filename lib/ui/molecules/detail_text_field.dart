@@ -64,7 +64,7 @@ class DetailTextField extends StatelessWidget {
             !editing &&
             !locked &&
             controller.text.trim().isEmpty) {
-          return DetailRow(
+          return AppDetailRow(
             label: label,
             trailing: DetailPlaceholder(notSetLabel ?? '—'),
             onTap: onEnterEdit,

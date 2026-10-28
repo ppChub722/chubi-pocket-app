@@ -5,7 +5,7 @@ import '../hub_kit.dart';
 
 /// `/dev/domain/budgets` — the budget-only pieces: the source chips, the
 /// scope prompt, the simple period editor (RecurrenceEditor `simple`), the
-/// field error under a DetailRow, the wallet value chip and the card-list
+/// field error under a AppDetailRow, the wallet value chip and the card-list
 /// gap of ListPageBody. The shared progress pieces are on Domain → Progress.
 Widget buildBudgetsPage(BuildContext context) => const _BudgetsPage();
 
@@ -156,20 +156,20 @@ class _BudgetsPageState extends State<_BudgetsPage> {
           ),
         ),
         HubDemo(
-          title: 'DetailRow(error:) / DetailRow.pick(error:)',
+          title: 'AppDetailRow(error:) / AppDetailRow.pick(error:)',
           note:
               'A field error under the label (required / server message), in '
               'the error colour — replaces a hand-made Column + AppMessage.',
           child: Column(
             children: [
-              DetailRow.pick(
+              AppDetailRow.pick(
                 label: 'หมวดหมู่',
                 emptyText: 'ไม่ได้เลือก',
                 error: 'เลือกอย่างน้อย 1 หมวด',
                 onTap: () {},
               ),
               const AppDivider.row(),
-              DetailRow.pick(
+              AppDetailRow.pick(
                 label: 'กระเป๋า',
                 emptyText: 'ไม่ได้เลือก',
                 valueChip: walletValueChip(context, name: 'บัญชีออมทรัพย์'),
@@ -177,7 +177,7 @@ class _BudgetsPageState extends State<_BudgetsPage> {
               ),
               const AppDivider.row(),
               // Several entities: the chips wrap, right-aligned.
-              DetailRow.pick(
+              AppDetailRow.pick(
                 label: 'หมวดหมู่',
                 emptyText: 'ไม่ได้เลือก',
                 valueChips: const [
@@ -244,7 +244,7 @@ class _BudgetsPageState extends State<_BudgetsPage> {
           title: 'walletValueChip — a wallet as a value chip',
           note:
               'Moved into the kit (ui/domain/money): `[icon] name` in the '
-              'wallet\'s colour, for DetailRow.pick(valueChip:).',
+              'wallet\'s colour, for AppDetailRow.pick(valueChip:).',
           child: Align(
             alignment: Alignment.centerLeft,
             child: walletValueChip(

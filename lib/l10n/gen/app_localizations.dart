@@ -11826,6 +11826,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pages'**
   String get pagePrefsSectionPages;
+
+  /// No description provided for @connectionConnectingAttempt.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting… {attempt}/{attempts}'**
+  String connectionConnectingAttempt(int attempt, int attempts);
+
+  /// No description provided for @connectionCantConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t reach the server'**
+  String get connectionCantConnect;
 }
 
 class _AppLocalizationsDelegate

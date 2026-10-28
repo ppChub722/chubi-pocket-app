@@ -1,0 +1,889 @@
+import 'package:flutter/material.dart';
+
+import '../../ui/ui.dart';
+import '../hub_kit.dart';
+import '../hub_playground.dart';
+
+/// `/dev/organisms/detail-section` — SectionCard (band / grouped), its
+/// header and DangerRow. [DetailRowsDemo] holds the detail-row pieces shown
+/// on the Row page (Detail section).
+Widget buildDetailSectionPage(BuildContext context) => const _RowsPage();
+
+/// The detail-row demos (HintLine, LinkedFieldHint, DetailStacked,
+/// AppDetailRow playground, DetailAddRow) for the Row page.
+class DetailRowsDemo extends StatelessWidget {
+  const DetailRowsDemo({super.key});
+
+  @override
+  Widget build(BuildContext context) => const _RowsPage(rows: true);
+}
+
+class _RowsPage extends StatefulWidget {
+  const _RowsPage({this.rows = false});
+
+  /// true = the detail-row demos; false = the section demos.
+  final bool rows;
+
+  @override
+  State<_RowsPage> createState() => _RowsPageState();
+}
+
+class _RowsPageState extends State<_RowsPage> {
+  final _viewNote = TextEditingController(text: 'Bought on the weekend sale.');
+  final _editNote = TextEditingController(text: 'Tap to change this text.');
+  final _emptyNote = TextEditingController();
+  bool _switch = true;
+  bool _repeat = true;
+  bool _editing = false;
+
+  @override
+  void dispose() {
+    _viewNote.dispose();
+    _editNote.dispose();
+    _emptyNote.dispose();
+    super.dispose();
+  }
+
+  Widget _gap() => const SizedBox(height: AppSpacing.md);
+
+  @override
+  Widget build(BuildContext context) {
+    Widget frame(Widget child) =>
+        AppCard(style: AppCardStyle.bordered, child: child);
+    Widget pageBg(Widget child) => ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: child,
+      ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (widget.rows) ...[
+          HubDemo(
+            title: 'HintLine — where something will go',
+            note:
+                'Quick create, a date after today (owner 2026-10-13): the '
+                'line under the date says it becomes an upcoming item. Not '
+                'tappable; a link next to it is an AppButton.',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const HintLine(
+                  icon: AppIcons.scheduled,
+                  text: 'Upcoming from 3 Nov 2026',
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                const HintLine(text: 'A plain hint without an icon'),
+              ],
+            ),
+          ),
+          const HubDemo(
+            title: 'LinkedFieldHint — fields shared with another record',
+            note:
+                'Edit mode, under the money fields of a transaction pulled into '
+                'an event (and of the bill on the event side): amount and date '
+                'are one record, an edit changes both. Muted, not a banner.',
+            child: LinkedFieldHint(
+              text:
+                  'Amount and date are shared with the event bill: an edit '
+                  'changes both.',
+            ),
+          ),
+          // ---- In the app ----
+          HubDemo(
+            title: 'DetailStacked with a leading icon',
+            note:
+                'leading (or a DetailLeadingScope above it) puts an icon left of the '
+                'label, the way the note shows it. NoteSection gives its field the 📝 '
+                'this way in edit mode.',
+            child: SectionCard(
+              children: [
+                DetailStacked(
+                  label: 'Categories',
+                  leading: const AppIcon(AppIcons.category),
+                  child: const Text('All Food, Groceries'),
+                ),
+                const DetailLeadingScope(
+                  leading: AppIcon(AppIcons.note),
+                  child: DetailStacked(
+                    label: 'Note',
+                    child: Text('The icon comes from the scope above.'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        if (!widget.rows) ...[
+          HubInApp(
+            columns: 2,
+            note:
+                'Every real variant, side by side, each with the page that uses it.',
+            uses: [
+              HubUse(
+                label: 'AppDetailRow — label + value',
+                page: 'Wallet / category / contact detail',
+                child: frame(
+                  const AppDetailRow(
+                    label: 'Currency',
+                    helper: 'Fixed after create',
+                    trailing: Text('THB'),
+                    locked: true,
+                  ),
+                ),
+              ),
+              HubUse(
+                label: 'AppDetailRow — switch trailing + helper',
+                page: 'Category detail, notification settings',
+                wide: true,
+                child: frame(
+                  AppDetailRow(
+                    label: 'Counts in reports',
+                    helper: 'Counts in totals and charts',
+                    trailing: AppSwitch(
+                      value: _switch,
+                      onChanged: (v) => setState(() => _switch = v),
+                    ),
+                    onTap: () => setState(() => _switch = !_switch),
+                  ),
+                ),
+              ),
+              HubUse(
+                label: 'AppDetailRow — label only (no trailing)',
+                page: 'Detail pages (section titles)',
+                child: frame(const AppDetailRow(label: 'Notifications')),
+              ),
+              HubUse(
+                label: 'AppDetailRow — leading icon + value',
+                page: 'Wallet / budget detail',
+                child: frame(
+                  const AppDetailRow(
+                    icon: AppIcons.wallet,
+                    label: 'Wallet',
+                    trailing: Text('KBank'),
+                  ),
+                ),
+              ),
+              HubUse(
+                label: 'AppDetailRow — helper under the label',
+                page: 'Category / saving goal detail',
+                child: frame(
+                  const AppDetailRow(
+                    label: 'Target',
+                    helper: 'Counts from today',
+                    trailing: Text('5,000'),
+                  ),
+                ),
+              ),
+              HubUse(
+                label: 'AppDetailRow — switch off',
+                page: 'Notification settings',
+                child: frame(
+                  AppDetailRow(
+                    label: 'Reminders',
+                    trailing: AppSwitch(value: false, onChanged: (_) {}),
+                  ),
+                ),
+              ),
+              HubUse(
+                label: 'AppDetailRow — tappable with ›',
+                page: 'Wallet detail, contact detail, accounts list',
+                child: frame(
+                  AppDetailRow(
+                    label: 'Members',
+                    trailing: const Text('3'),
+                    showChevron: true,
+                    onTap: () {},
+                  ),
+                ),
+              ),
+              HubUse(
+                label: 'DetailPairRow — a check beside what it asks for',
+                page: 'Budget detail (period: repeat | round or end)',
+                wide: true,
+                child: frame(
+                  DetailPairRow(
+                    first: DetailPairCell(
+                      label: 'Repeat',
+                      value: SelectCheck(value: _repeat, onTap: null),
+                      onTap: () => setState(() => _repeat = !_repeat),
+                    ),
+                    second: DetailPairCell(
+                      label: _repeat ? 'Round' : 'Ends',
+                      value: _repeat
+                          ? const Wrap(
+                              spacing: AppSpacing.xs,
+                              runSpacing: AppSpacing.xs,
+                              children: [
+                                AppChip(
+                                  label: 'Monthly on day 1',
+                                  icon: AppIcons.recurring,
+                                  tone: AppChipTone.primary,
+                                  size: ChipSize.chip,
+                                ),
+                                AppChip(
+                                  label: '1–31 Oct 2026',
+                                  icon: AppIcons.date,
+                                  tone: AppChipTone.primary,
+                                  size: ChipSize.chip,
+                                ),
+                                AppChip(label: 'No end', size: ChipSize.chip),
+                              ],
+                            )
+                          : const Text('11 Dec 2026'),
+                      chevron: true,
+                      onTap: () {},
+                    ),
+                  ),
+                ),
+              ),
+              HubUse(
+                label: 'AppDetailRow.pick — filled and empty',
+                page: 'Budget / saving goal / scheduled detail, debt form',
+                wide: true,
+                child: frame(
+                  Column(
+                    children: [
+                      AppDetailRow.pick(
+                        label: 'Wallet',
+                        value: 'Savings account',
+                        emptyText: 'Not selected',
+                        onTap: () {},
+                      ),
+                      const AppDivider.row(),
+                      AppDetailRow.pick(
+                        label: 'Category',
+                        value: null,
+                        emptyText: 'Not selected',
+                        onTap: () {},
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              HubUse(
+                label: 'AppDetailRow.pick — an ENTITY value as its chip',
+                page:
+                    'Category parent, budget category, goal wallet, scheduled '
+                    'account / category, event, debt counterparty',
+                wide: true,
+                child: frame(
+                  Column(
+                    children: [
+                      AppDetailRow.pick(
+                        label: 'Parent',
+                        valueChip: const ChipPath(
+                          segments: [
+                            ChipPathSegment(
+                              label: 'Food & Drinks',
+                              icon: AppIcons.category,
+                              color: Colors.orange,
+                            ),
+                            ChipPathSegment(
+                              label: 'Food Delivery',
+                              icon: AppIcons.transfer,
+                              color: Colors.green,
+                            ),
+                          ],
+                        ),
+                        emptyText: 'No parent',
+                        onTap: () {},
+                      ),
+                      const AppDivider.row(),
+                      AppDetailRow.pick(
+                        label: 'Wallet',
+                        valueChip: const AppChip(
+                          label: 'Savings',
+                          icon: AppIcons.wallet,
+                          size: ChipSize.chip,
+                        ),
+                        emptyText: 'Not selected',
+                        onTap: () {},
+                      ),
+                      const AppDivider.row(),
+                      AppDetailRow.pick(
+                        label: 'Event',
+                        emptyText: 'None',
+                        onTap: () {},
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              HubUse(
+                label: 'AppDetailRow.pick — locked',
+                page: 'Wallet detail (currency in edit mode)',
+                child: frame(
+                  AppDetailRow.pick(
+                    label: 'Currency',
+                    value: 'THB',
+                    emptyText: 'Not selected',
+                    leading: const Icon(AppIcons.currency),
+                    locked: true,
+                  ),
+                ),
+              ),
+              HubUse(
+                label: 'AppDetailRow.pick — horizontalInset 0',
+                page: 'Debt form, quick-create event pick',
+                wide: true,
+                child: frame(
+                  AppDetailRow.pick(
+                    label: 'Event',
+                    value: 'Flush to the edges',
+                    emptyText: 'Not selected',
+                    onTap: () {},
+                    horizontalInset: 0,
+                  ),
+                ),
+              ),
+              HubUse(
+                label: 'DetailStacked + AppInput.inline — view / edit',
+                page: 'Every detail page (the note)',
+                wide: true,
+                child: frame(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: AppChip(
+                            label: _editing ? 'Editing' : 'Viewing',
+                            selected: _editing,
+                            icon: AppIcons.edit,
+                            onTap: () => setState(() => _editing = !_editing),
+                          ),
+                        ),
+                      ),
+                      const AppDivider.row(),
+                      DetailStacked(
+                        label: 'Note',
+                        child: AppInput.inline(
+                          editing: _editing,
+                          controller: _viewNote,
+                          viewHint: 'No note',
+                          hint: 'Add a note',
+                          maxLines: 3,
+                          onEnterEdit: () => setState(() => _editing = true),
+                        ),
+                      ),
+                      const AppDivider.row(),
+                      DetailStacked(
+                        label: 'Empty note',
+                        child: AppInput.inline(
+                          editing: _editing,
+                          controller: _emptyNote,
+                          viewHint: 'Long-press to add a note',
+                          hint: 'Add a note',
+                          onEnterEdit: () => setState(() => _editing = true),
+                        ),
+                      ),
+                      const AppDivider.row(),
+                      DetailStacked(
+                        label: 'Second note',
+                        child: AppInput.inline(
+                          editing: _editing,
+                          controller: _editNote,
+                          hint: 'Add a note',
+                          onEnterEdit: () => setState(() => _editing = true),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              HubUse(
+                label: 'DetailAddRow',
+                page: 'Wallet detail (numbers), debt person page',
+                child: frame(
+                  Column(
+                    children: [
+                      const AppDetailRow(
+                        label: 'Phone',
+                        trailing: Text('081 234 5678'),
+                      ),
+                      const AppDivider.row(),
+                      DetailAddRow(label: 'Add a number', onTap: () {}),
+                    ],
+                  ),
+                ),
+              ),
+              HubUse(
+                label: 'SectionCard — first, with title',
+                page: 'All detail pages',
+                wide: true,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: const [
+                    SectionCard(
+                      first: true,
+                      title: 'Details',
+                      children: [
+                        AppDetailRow(label: 'Row one', trailing: Text('A')),
+                        AppDetailRow(label: 'Row two', trailing: Text('B')),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              HubUse(
+                label: 'SectionCard — trailing action + description',
+                page: 'Account / category / contact detail',
+                wide: true,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SectionCard(
+                      first: true,
+                      title: 'Sharing',
+                      description: 'A short explanation of this section.',
+                      trailing: AppChip(
+                        label: 'Share',
+                        icon: AppIcons.share,
+                        onTap: () {},
+                      ),
+                      children: const [
+                        AppDetailRow(label: 'Row one', trailing: Text('A')),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              HubUse(
+                label: 'SectionCard — locked (edit mode)',
+                page:
+                    'Account / budget / contact detail (the management block)',
+                wide: true,
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SectionCard(
+                      first: true,
+                      title: 'Management',
+                      locked: true,
+                      children: [
+                        AppDetailRow(
+                          label: 'Dimmed and inert',
+                          trailing: Text('A'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              HubUse(
+                label: 'SectionHeader — count + action',
+                page: 'Home (recent), project dashboard',
+                wide: true,
+                child: frame(
+                  SectionHeader(
+                    title: 'Recent',
+                    count: 3,
+                    actionLabel: 'See all',
+                    onAction: () {},
+                  ),
+                ),
+              ),
+              HubUse(
+                label: 'SectionHeader — total (label + amount in a colour)',
+                page: 'Debts list (ลูกหนี้ / เจ้าหนี้ sections)',
+                wide: true,
+                child: frame(
+                  SectionHeader(
+                    title: 'ลูกหนี้',
+                    count: 2,
+                    totalLabel: 'รวม',
+                    total: '฿1,200.00',
+                    totalColor: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+              HubUse(
+                label: 'SectionHeader — icon trailing',
+                page: 'No page yet (the option exists)',
+                wide: true,
+                child: frame(
+                  SectionHeader(
+                    title: 'Wallets',
+                    trailing: AppIconButton(
+                      icon: AppIcons.sort,
+                      tooltip: 'Reorder',
+                      onPressed: () {},
+                    ),
+                  ),
+                ),
+              ),
+              HubUse(
+                label: 'SectionCard — no icons',
+                page: 'Detail pages',
+                wide: true,
+                child: pageBg(
+                  const SectionCard(
+                    first: true,
+                    title: 'Details',
+                    children: [
+                      AppDetailRow(label: 'Name', trailing: Text('Food')),
+                      AppDetailRow(label: 'Type', trailing: Text('Expense')),
+                    ],
+                  ),
+                ),
+              ),
+              HubUse(
+                label: 'SectionCard — no title, no dividers',
+                page: 'Detail pages (first block under the hero)',
+                wide: true,
+                child: pageBg(
+                  const SectionCard(
+                    first: true,
+                    dividers: false,
+                    children: [
+                      AppDetailRow(label: 'Row one', trailing: Text('A')),
+                      AppDetailRow(label: 'Row two', trailing: Text('B')),
+                    ],
+                  ),
+                ),
+              ),
+              HubUse(
+                label: 'DangerRow — delete (red)',
+                page: 'Transaction detail, debt detail, event pick',
+                child: DangerRow(
+                  icon: AppIcons.delete,
+                  label: 'Delete this item',
+                  padding: EdgeInsets.zero,
+                  onTap: () {},
+                ),
+              ),
+              HubUse(
+                label: 'DangerRow — archive (caution)',
+                page: 'Detail pages (the management block)',
+                child: DangerRow(
+                  icon: AppIcons.archive,
+                  label: 'Archive this item',
+                  caution: true,
+                  padding: EdgeInsets.zero,
+                  onTap: () {},
+                ),
+              ),
+              HubUse(
+                label: 'DangerRow — disabled while saving',
+                page: 'Detail pages',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const DangerRow(
+                      icon: AppIcons.delete,
+                      label: 'Disabled (red)',
+                      padding: EdgeInsets.zero,
+                      onTap: null,
+                    ),
+                    _gap(),
+                    const DangerRow(
+                      icon: AppIcons.archive,
+                      label: 'Disabled (caution)',
+                      caution: true,
+                      padding: EdgeInsets.zero,
+                      onTap: null,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          // ---- Grouped sections ----
+          HubDemo(
+            title: 'Grouped sections — the one section style',
+            note:
+                'The green heading and its description sit above a rounded '
+                'container with a filled surface and no stroke; rows are '
+                'separated by a 2 px gap (the page shows through), only the '
+                'first and last rows carry the outer corners. A group with any '
+                'row icon reserves the icon slot on every row so titles align.',
+            child: pageBg(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SectionCard(
+                    first: true,
+                    title: 'Details',
+                    description: 'What this is and where it sits.',
+                    children: [
+                      AppDetailRow(
+                        icon: AppIcons.wallet,
+                        label: 'Wallet',
+                        trailing: const Text('KBank'),
+                      ),
+                      AppDetailRow.pick(
+                        icon: AppIcons.category,
+                        label: 'Category',
+                        value: null,
+                        emptyText: 'Not selected',
+                        onTap: () {},
+                      ),
+                      AppDetailRow(
+                        icon: AppIcons.currency,
+                        label: 'Currency',
+                        helper: 'Fixed after create',
+                        trailing: const Text('THB'),
+                        locked: true,
+                      ),
+                      AppDetailRow(
+                        icon: AppIcons.info,
+                        label: 'Counts in reports',
+                        trailing: AppSwitch(
+                          value: _switch,
+                          onChanged: (v) => setState(() => _switch = v),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SectionCard(
+                    title: 'No icons',
+                    description:
+                        'A group without icons keeps its titles flush left.',
+                    children: [
+                      AppDetailRow(label: 'Name', trailing: Text('Food')),
+                      AppDetailRow(label: 'Type', trailing: Text('Expense')),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+        if (widget.rows) ...[
+          const HubSubheading(
+            'Customize',
+            note: 'Fully custom tweaks, one per widget (collapsed).',
+          ),
+          // ---- AppDetailRow ----
+          HubPlayground(
+            title: 'AppDetailRow / AppDetailRow.pick',
+            note:
+                'kind picks the trailing: none, a value, a switch, or the pick '
+                'factory (label, value, ›). locked adds a lock after the value '
+                '(the row is not dimmed); showChevron adds › (pick sets it '
+                'itself while onTap is set).',
+            controls: [
+              PlayChoice<String>('kind', [
+                ('value', 'value'),
+                ('none', 'none'),
+                ('switch', 'switch'),
+                ('pick', 'pick'),
+                ('pick empty', 'pick empty'),
+              ]),
+              const PlayBool('icon'),
+              const PlayBool('helper'),
+              const PlayBool('locked'),
+              const PlayBool('showChevron'),
+              const PlayBool('onTap', initialValue: true),
+              const PlayNum(
+                'horizontalInset',
+                min: 0,
+                max: 24,
+                step: 8,
+                initialValue: 16,
+              ),
+            ],
+            builder: (context, v) {
+              final kind = v<String>('kind');
+              final icon = v<bool>('icon') ? AppIcons.wallet : null;
+              final helper = v<bool>('helper') ? 'A short explanation' : null;
+              final locked = v<bool>('locked');
+              final onTap = v<bool>('onTap') ? () {} : null;
+              final inset = v<double>('horizontalInset');
+              if (kind.startsWith('pick')) {
+                return frame(
+                  AppDetailRow.pick(
+                    label: 'Wallet',
+                    value: kind == 'pick' ? 'KBank savings' : null,
+                    emptyText: 'Not selected',
+                    icon: icon,
+                    locked: locked,
+                    horizontalInset: inset,
+                    onTap: onTap,
+                  ),
+                );
+              }
+              return frame(
+                HubStateful<bool>(
+                  initial: true,
+                  builder: (context, on, set) => AppDetailRow(
+                    label: 'Wallet',
+                    icon: icon,
+                    helper: helper,
+                    locked: locked,
+                    showChevron: v<bool>('showChevron'),
+                    horizontalInset: inset,
+                    onTap: onTap,
+                    trailing: switch (kind) {
+                      'value' => const Text('KBank savings'),
+                      'switch' => AppSwitch(value: on, onChanged: set),
+                      _ => null,
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+          // ---- DetailStacked ----
+          HubPlayground(
+            title: 'DetailStacked',
+            note:
+                'Label on top, the child below with its text lined up under the '
+                'label. editing flips the AppInput.inline child between a '
+                'borderless read-only view and an outlined box.',
+            controls: [
+              const PlayText('label', initialValue: 'Note'),
+              const PlayBool('editing'),
+              PlayChoice<bool>('child', [
+                ('inline input', true),
+                ('text', false),
+              ]),
+            ],
+            builder: (context, v) => frame(
+              HubWithController(
+                initial: 'Bought on the weekend sale.',
+                builder: (context, c) => DetailStacked(
+                  label: v<String>('label'),
+                  child: v<bool>('child')
+                      ? AppInput.inline(
+                          editing: v<bool>('editing'),
+                          controller: c,
+                          viewHint: 'No note',
+                          hint: 'Add a note',
+                          maxLines: 3,
+                        )
+                      : const Text('Any widget can sit under the label.'),
+                ),
+              ),
+            ),
+          ),
+          // ---- DetailAddRow ----
+          HubPlayground(
+            title: 'DetailAddRow',
+            note: 'The "add one more" row at the end of a section.',
+            controls: [
+              const PlayText('label', initialValue: 'Add a number'),
+              PlayChoice<IconData>('icon', [
+                ('add (default)', AppIcons.add),
+                ('link', AppIcons.link),
+              ]),
+              const PlayBool('onTap', initialValue: true),
+            ],
+            builder: (context, v) => frame(
+              DetailAddRow(
+                label: v<String>('label'),
+                icon: v<IconData>('icon'),
+                onTap: v<bool>('onTap') ? () {} : null,
+              ),
+            ),
+          ),
+          // ---- SectionCard ----
+        ],
+        if (!widget.rows) ...[
+          const HubSubheading(
+            'Customize',
+            note: 'Fully custom tweaks, one per widget (collapsed).',
+          ),
+          HubPlayground(
+            title: 'SectionCard',
+            note:
+                'One detail-page section: heading + description above a rounded '
+                'filled container, rows 2 px apart. locked dims and blocks the rows.',
+            controls: [
+              const PlayBool('title', initialValue: true),
+              const PlayBool('description'),
+              const PlayBool('trailing'),
+              const PlayBool('first', initialValue: true),
+              const PlayBool('locked'),
+              const PlayBool('dividers', initialValue: true),
+              const PlayBool('icons'),
+              const PlayNum('rows', min: 1, max: 5, step: 1, initialValue: 3),
+            ],
+            builder: (context, v) {
+              final icons = v<bool>('icons');
+              return pageBg(
+                SectionCard(
+                  title: v<bool>('title') ? 'Details' : null,
+                  description: v<bool>('description')
+                      ? 'What this is and where it sits.'
+                      : null,
+                  trailing: v<bool>('trailing')
+                      ? AppChip(
+                          label: 'Share',
+                          icon: AppIcons.share,
+                          onTap: () {},
+                        )
+                      : null,
+                  first: v<bool>('first'),
+                  locked: v<bool>('locked'),
+                  dividers: v<bool>('dividers'),
+                  children: [
+                    for (var i = 1; i <= v<double>('rows').round(); i++)
+                      AppDetailRow(
+                        icon: icons ? AppIcons.wallet : null,
+                        label: 'Row $i',
+                        trailing: Text('Value $i'),
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
+          // ---- SectionHeader ----
+          HubPlayground(
+            title: 'SectionHeader',
+            note:
+                'Title, optional count, then a text action OR an icon trailing.',
+            controls: [
+              const PlayText('title', initialValue: 'Recent'),
+              const PlayBool('count'),
+              const PlayBool('action'),
+              const PlayBool('trailing'),
+            ],
+            builder: (context, v) => frame(
+              SectionHeader(
+                title: v<String>('title'),
+                count: v<bool>('count') ? 12 : null,
+                actionLabel: v<bool>('action') ? 'See all' : null,
+                onAction: v<bool>('action') ? () {} : null,
+                trailing: v<bool>('trailing')
+                    ? AppIconButton(
+                        icon: AppIcons.sort,
+                        tooltip: 'Reorder',
+                        onPressed: () {},
+                      )
+                    : null,
+              ),
+            ),
+          ),
+          // ---- DangerRow ----
+          HubPlayground(
+            title: 'DangerRow',
+            note:
+                'The destructive action at the bottom of a page. caution = '
+                'amber (archive, restorable); no onTap = disabled. Default '
+                'padding is 24 above; zeroed here.',
+            controls: [
+              PlayChoice<bool>('caution', [('red', false), ('caution', true)]),
+              const PlayText('label', initialValue: 'Delete this item'),
+              const PlayBool('enabled', initialValue: true),
+            ],
+            builder: (context, v) => DangerRow(
+              icon: v<bool>('caution') ? AppIcons.archive : AppIcons.delete,
+              label: v<String>('label'),
+              caution: v<bool>('caution'),
+              padding: EdgeInsets.zero,
+              onTap: v<bool>('enabled') ? () {} : null,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}

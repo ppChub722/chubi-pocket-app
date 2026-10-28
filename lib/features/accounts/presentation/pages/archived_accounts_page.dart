@@ -60,7 +60,7 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
                 first: true,
                 children: [
                   for (final a in list)
-                    DetailRow(
+                    AppDetailRow(
                       leading: Opacity(
                         opacity: 0.6,
                         child: IconDisplay(

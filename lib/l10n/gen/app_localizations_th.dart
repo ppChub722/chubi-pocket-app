@@ -6825,4 +6825,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get pagePrefsSectionPages => 'หน้าในแอป';
+
+  @override
+  String connectionConnectingAttempt(int attempt, int attempts) {
+    return 'กำลังเชื่อมต่อ… $attempt/$attempts';
+  }
+
+  @override
+  String get connectionCantConnect => 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้';
 }

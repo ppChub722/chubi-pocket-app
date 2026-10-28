@@ -7,7 +7,7 @@ import '../hub_playground.dart';
 
 /// `/dev/domain/recurring` — recurring texts: DueText (a due date as
 /// relative words) and RecurrenceText (a RecurrenceRule in words). The
-/// Row markers (↻ / ⏲ / 🔗 / status / dimmed) are on Molecules → List row.
+/// Row markers (↻ / ⏲ / 🔗 / status / dimmed) are on Molecules → Row (List).
 Widget buildRecurringPage(BuildContext context) => const _RecurringPage();
 
 void _noop() {}
@@ -139,7 +139,7 @@ class _RecurringPage extends StatelessWidget {
           note:
               'The calendar list in date order: past rows dimmed unless '
               'still waiting, the today line before the first coming one. '
-              'Rows are AppListRow (see UI → molecules → list-row).',
+              'Rows are AppListRow (see UI → molecules → row).',
           child: SectionCard(
             children: [
               AppListRow(

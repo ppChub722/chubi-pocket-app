@@ -43,10 +43,14 @@ class UiStrings {
     this.loadMoreFailed = "Couldn't load more",
     this.pickDatesHint = 'Tap the days to pick them',
     this.more = 'More',
+    this.comingSoon = 'Coming soon',
   });
 
   final String close;
   final String more;
+
+  /// The badge of a row that is not built yet ("เร็วๆ นี้").
+  final String comingSoon;
 
   final String loadMoreFailed;
 
