@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../app_radius.dart';
+import '../../app_spacing.dart';
+import '../app_colors.dart';
 import '../fonts/app_font.dart';
 import 'app_page_transitions.dart';
 import 'app_theme.dart';
@@ -21,6 +23,7 @@ class ThemeBuilder {
     final colors = theme.colorsFor(brightness);
     final colorScheme = colors.toColorScheme();
     final textTheme = _buildTextTheme(font: font, onSurface: colors.onSurface);
+    final menuStyle = _menuStyle(colors);
 
     return ThemeData(
       useMaterial3: true,
@@ -61,6 +64,18 @@ class ThemeBuilder {
           borderRadius: BorderRadius.circular(AppRadius.lg),
           side: BorderSide(color: colors.outlineSoft),
         ),
+      ),
+      // Every dropdown / popover menu: one step above the cards
+      // (surfaceVariant), a faint outline edge and a clear shadow, so an open
+      // menu never blends into the card behind it (dark themes especially).
+      menuTheme: MenuThemeData(style: menuStyle),
+      dropdownMenuTheme: DropdownMenuThemeData(menuStyle: menuStyle),
+      popupMenuTheme: PopupMenuThemeData(
+        color: colors.surfaceVariant,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: _menuShadow(colors.brightness),
+        elevation: _menuElevation,
+        shape: _menuShape(colors),
       ),
       dividerTheme: DividerThemeData(
         color: colors.outlineSoft,
@@ -111,6 +126,30 @@ class ThemeBuilder {
       ),
     );
   }
+
+  static const double _menuElevation = 8;
+
+  static Color _menuShadow(Brightness brightness) =>
+      brightness == Brightness.dark
+      ? Colors.black
+      : Colors.black.withValues(alpha: 0.35);
+
+  static RoundedRectangleBorder _menuShape(AppColors colors) =>
+      RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        side: BorderSide(color: colors.outline.withValues(alpha: 0.7)),
+      );
+
+  static MenuStyle _menuStyle(AppColors colors) => MenuStyle(
+    backgroundColor: WidgetStatePropertyAll(colors.surfaceVariant),
+    surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+    shadowColor: WidgetStatePropertyAll(_menuShadow(colors.brightness)),
+    elevation: const WidgetStatePropertyAll(_menuElevation),
+    shape: WidgetStatePropertyAll(_menuShape(colors)),
+    padding: const WidgetStatePropertyAll(
+      EdgeInsets.symmetric(vertical: AppSpacing.xs),
+    ),
+  );
 
   static SystemUiOverlayStyle systemBarsStyle(Color background) {
     final bg = ThemeData.estimateBrightnessForColor(background);

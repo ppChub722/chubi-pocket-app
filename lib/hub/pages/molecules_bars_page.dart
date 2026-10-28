@@ -154,7 +154,10 @@ class _BarsPageState extends State<_BarsPage> {
           title: 'OptionMenuAnchor with a custom entry',
           note:
               'custom: OptionMenuCustom ends the menu with an empty input box. '
-              'SettingMenuRow turns its value into a field when it is chosen.',
+              'SettingMenuRow turns its value into a field when it is chosen. '
+              'Every menu takes its look from ThemeData.menuTheme: '
+              'surfaceVariant, faint outline edge, elevation 8 shadow, '
+              'radius 16.',
           child: Align(
             alignment: AlignmentDirectional.centerStart,
             child: OptionMenuAnchor<int>(

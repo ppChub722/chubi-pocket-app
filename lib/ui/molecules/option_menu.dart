@@ -14,19 +14,8 @@ import '../organisms/option_sheet.dart';
 typedef PopoverTriggerBuilder =
     Widget Function(BuildContext context, VoidCallback toggle);
 
-MenuStyle _menuStyle(BuildContext context) {
-  final scheme = Theme.of(context).colorScheme;
-  return MenuStyle(
-    backgroundColor: WidgetStatePropertyAll(scheme.surfaceContainerHigh),
-    elevation: const WidgetStatePropertyAll(4),
-    shape: WidgetStatePropertyAll(
-      RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
-    ),
-    padding: const WidgetStatePropertyAll(
-      EdgeInsets.symmetric(vertical: AppSpacing.xs),
-    ),
-  );
-}
+// Menu surface, edge, shadow, radius and padding come from
+// ThemeData.menuTheme (ThemeBuilder), shared by every menu in the app.
 
 void _toggle(MenuController c) => c.isOpen ? c.close() : c.open();
 
@@ -243,7 +232,6 @@ class OptionMenuAnchor<T> extends StatelessWidget {
     final custom = this.custom;
     final anchor = MenuAnchor(
       controller: controller,
-      style: _menuStyle(context),
       consumeOutsideTap: true,
       alignmentOffset: const Offset(0, AppSpacing.xs),
       menuChildren: _keepDirection(context, [
@@ -332,7 +320,6 @@ class MultiOptionMenuAnchor<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MenuAnchor(
-      style: _menuStyle(context),
       consumeOutsideTap: true,
       alignmentOffset: const Offset(0, AppSpacing.xs),
       menuChildren: [
@@ -379,7 +366,6 @@ class PopoverAnchor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MenuAnchor(
-      style: _menuStyle(context),
       consumeOutsideTap: true,
       alignmentOffset: const Offset(0, AppSpacing.xs),
       menuChildren: [
