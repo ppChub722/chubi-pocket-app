@@ -6777,7 +6777,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get notifAutoDeleteHint =>
-      'อัตโนมัติ = ลบสำเนาของฉันตาม\nใช้ค่าเดียวกับแถว \"แก้บิล\"';
+      'อีเวนต์: ตามแถว \"มีการแก้ไขรายการในอีเวนต์\"\nแบ่งจ่าย: สำเนาของฉันเป็นรายการธรรมดาเสมอ';
 
   @override
   String get notifLockedByAutoHint => 'ปิดอัตโนมัติอยู่ แจ้งปิดไม่ได้';

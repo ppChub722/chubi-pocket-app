@@ -51,7 +51,7 @@ void main() {
     expect(rows[NotificationGroup.sharedBill]!.map(line), [
       'shared_bill_created:acceptDebts',
       'project_tx_changed:syncDebts',
-      'shared_bill_deleted:syncDebts(mirror)',
+      'shared_bill_deleted:syncEvents(mirror)',
       'shared_bill_disconnected:-',
       'debt_disconnected:-',
     ]);
@@ -101,18 +101,21 @@ void main() {
     expect(requests.notifyEditable(_allOn), isFalse);
   });
 
-  test('the delete row mirrors the split update switch', () {
-    final s = _settings();
-    final deleted = notificationRows(s)[NotificationGroup.sharedBill]!
-        .firstWhere((r) => r.type == 'shared_bill_deleted');
-    const off = AutoValues(
-      acceptDebts: true,
-      acceptEvents: true,
-      syncDebts: false,
-      syncEvents: true,
-    );
-    expect(deleted.auto, AutoSwitch.syncDebts);
-    expect(deleted.notifyLocked(off), isTrue);
-    expect(deleted.notifyLocked(_allOn), isFalse);
-  });
+  test(
+    'the delete row mirrors the event update switch (event-bill deletes follow it)',
+    () {
+      final s = _settings();
+      final deleted = notificationRows(s)[NotificationGroup.sharedBill]!
+          .firstWhere((r) => r.type == 'shared_bill_deleted');
+      const off = AutoValues(
+        acceptDebts: true,
+        acceptEvents: true,
+        syncDebts: true,
+        syncEvents: false,
+      );
+      expect(deleted.auto, AutoSwitch.syncEvents);
+      expect(deleted.notifyLocked(off), isTrue);
+      expect(deleted.notifyLocked(_allOn), isFalse);
+    },
+  );
 }

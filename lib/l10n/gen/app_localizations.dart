@@ -11740,7 +11740,7 @@ abstract class AppLocalizations {
   /// No description provided for @notifAutoDeleteHint.
   ///
   /// In en, this message translates to:
-  /// **'Auto = delete my copy too\nThe same value as the \"edits a bill\" row'**
+  /// **'Events: follows the \"edits in an event\" row\nSplits: my copy always becomes a plain record'**
   String get notifAutoDeleteHint;
 
   /// No description provided for @notifLockedByAutoHint.

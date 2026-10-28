@@ -2349,7 +2349,7 @@
   "notifColumnAuto": "Auto",
   "notifAutoAcceptHint": "Auto = put it in my book at once",
   "notifAutoUpdateHint": "Auto = update mine at once",
-  "notifAutoDeleteHint": "Auto = delete my copy too\nThe same value as the \"edits a bill\" row",
+  "notifAutoDeleteHint": "Events: follows the \"edits in an event\" row\nSplits: my copy always becomes a plain record",
   "notifLockedByAutoHint": "Auto is off, so notify can't be turned off",
   "notifSetProjectAddedHint": "Someone adds me as a member",
   "notifSetRecurringDueHint": "Payments to pay / receive today",

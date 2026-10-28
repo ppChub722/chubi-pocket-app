@@ -6926,7 +6926,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notifAutoDeleteHint =>
-      'Auto = delete my copy too\nThe same value as the \"edits a bill\" row';
+      'Events: follows the \"edits in an event\" row\nSplits: my copy always becomes a plain record';
 
   @override
   String get notifLockedByAutoHint =>

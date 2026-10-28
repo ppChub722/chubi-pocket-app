@@ -163,7 +163,7 @@ Map<NotificationGroup, List<NotificationRow>> notificationRows(
               type: t.type,
               group: g,
               kind: NotificationRowKind.billDeleted,
-              auto: AutoSwitch.syncDebts,
+              auto: AutoSwitch.syncEvents,
               autoMirror: true,
             ),
           );

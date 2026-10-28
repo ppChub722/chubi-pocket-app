@@ -2122,7 +2122,7 @@
   "notifColumnAuto": "อัตโนมัติ",
   "notifAutoAcceptHint": "อัตโนมัติ = รับเข้าสมุดเลย",
   "notifAutoUpdateHint": "อัตโนมัติ = อัปเดตตามเลย",
-  "notifAutoDeleteHint": "อัตโนมัติ = ลบสำเนาของฉันตาม\nใช้ค่าเดียวกับแถว \"แก้บิล\"",
+  "notifAutoDeleteHint": "อีเวนต์: ตามแถว \"มีการแก้ไขรายการในอีเวนต์\"\nแบ่งจ่าย: สำเนาของฉันเป็นรายการธรรมดาเสมอ",
   "notifLockedByAutoHint": "ปิดอัตโนมัติอยู่ แจ้งปิดไม่ได้",
   "notifSetProjectAddedHint": "มีคนเพิ่มฉันเป็นสมาชิก",
   "notifSetRecurringDueHint": "งวดที่ต้องจ่าย / ต้องรับวันนี้",
