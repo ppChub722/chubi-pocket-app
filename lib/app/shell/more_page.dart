@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/ui.dart';
 import 'nav_layout.dart';
+import 'tab_entry.dart';
 import 'tab_nav.dart';
 import 'tab_root_scaffold.dart';
 import '../../core/network/api_client.dart';
@@ -259,15 +260,20 @@ class _MoreView extends StatelessWidget {
                 CardGrid(
                   children: [
                     for (final e in entries)
-                      TileCard(
-                        icon: e.icon,
-                        title: e.title,
-                        subtitle: e.subtitle,
-                        statuses: e.statuses,
-                        color: tint,
-                        onTap: () => e.main
-                            ? openPage(context, e.route)
-                            : context.go(e.route),
+                      Builder(
+                        builder: (card) => TileCard(
+                          icon: e.icon,
+                          title: e.title,
+                          subtitle: e.subtitle,
+                          statuses: e.statuses,
+                          color: tint,
+                          onTap: () {
+                            if (e.main) return openPage(context, e.route);
+                            // A module grows out of its card.
+                            ShellEntryOrigin.markTapped(card);
+                            context.go(e.route);
+                          },
+                        ),
                       ),
                   ],
                 ),

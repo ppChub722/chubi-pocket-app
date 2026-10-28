@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../app/shell/tab_entry.dart';
 import '../../../app/shell/tab_nav.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -37,7 +38,7 @@ abstract final class NotificationActions {
       if (!n.isActioned) return; // buttons are the action
       final accountId = n.payload['account_id'] as String?;
       if (accountId != null && accountId.isNotEmpty) {
-        openPage(ctx, '/accounts/$accountId');
+        _openFromBell(ctx, '/accounts/$accountId');
       }
       return;
     }
@@ -45,7 +46,7 @@ abstract final class NotificationActions {
       if (!n.isActioned) return; // buttons are the action
       final projectId = n.payload['project_id'] as String?;
       if (projectId != null && projectId.isNotEmpty) {
-        openPage(ctx, '/projects/$projectId');
+        _openFromBell(ctx, '/projects/$projectId');
       }
       return;
     }
@@ -59,7 +60,7 @@ abstract final class NotificationActions {
     }
     final link = n.deepLink;
     if (link != null && link.isNotEmpty) {
-      openPage(ctx, link);
+      _openFromBell(ctx, link);
     }
   }
 
@@ -182,7 +183,10 @@ Future<void> _onOpenDue(BuildContext ctx, AppNotification n) async {
     unawaited(ctx.read<NotificationsInboxCubit>().markRead(n.id));
   }
   final link = n.deepLink;
-  openPage(ctx, link == null || link.isEmpty ? '/recurring?focus=due' : link);
+  _openFromBell(
+    ctx,
+    link == null || link.isEmpty ? '/recurring?focus=due' : link,
+  );
 }
 
 /// "เพิ่มในสมุด" / "อัปเดตตาม" / "ลบตาม": ONE call, my copy takes the bill as
@@ -208,7 +212,9 @@ Future<void> _onApplyBill(BuildContext ctx, AppNotification n) async {
       case NotificationType.projectTxChanged:
         showAppSnackBarOn(messenger, l.notifCopyUpdated, tone: Tone.success);
       default:
-        if (txId != null && ctx.mounted) openPage(ctx, '/transactions/$txId');
+        if (txId != null && ctx.mounted) {
+          _openFromBell(ctx, '/transactions/$txId');
+        }
     }
   } on ApiException catch (e) {
     final gone = e.code == 'BILL_GONE';
@@ -258,7 +264,7 @@ Future<void> _onTapActionedLinkRequest(
   final messenger = ScaffoldMessenger.of(ctx);
   // Contacts are their own tab (captured up front because ctx may be gone after
   // the awaits below).
-  final open = pageOpener(ctx);
+  final open = _bellOpener(ctx);
 
   final linked = _firstWhere(
     contactsCubit.state.contacts,
@@ -321,4 +327,19 @@ T? _firstWhere<T>(Iterable<T> xs, bool Function(T) test) {
     if (test(x)) return x;
   }
   return null;
+}
+
+/// What a notification opens grows out of the bell (owner 2026-10-28).
+void _openFromBell(BuildContext ctx, String location) {
+  ShellEntryOrigin.markBell();
+  openPage(ctx, location);
+}
+
+/// [pageOpener] for later (after awaits), growing out of the bell too.
+void Function(String location, {Object? extra}) _bellOpener(BuildContext ctx) {
+  final open = pageOpener(ctx);
+  return (location, {extra}) {
+    ShellEntryOrigin.markBell();
+    open(location, extra: extra);
+  };
 }

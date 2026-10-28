@@ -11,6 +11,7 @@ import '../../l10n/gen/app_localizations.dart';
 import 'fade_branch_container.dart';
 import 'main_bottom_nav.dart';
 import 'nav_layout.dart';
+import 'tab_entry.dart';
 import 'tab_nav.dart';
 import 'top_bar_crumbs.dart';
 import '../../ui/ui.dart';
@@ -368,14 +369,17 @@ class _UniversalChips extends StatelessWidget {
           onPressed: () => _open(context, ShellTab.pending, '/pending'),
         ),
       ),
-      ShellTab.notifications => BlocBuilder<UnreadBadgeCubit, int>(
-        builder: (context, unread) => _chip(
-          icon: AppIcons.notifications,
-          tooltip: l.navNotificationsTooltip,
-          active: active,
-          badgeCount: unread,
-          onPressed: () =>
-              _open(context, ShellTab.notifications, '/notifications'),
+      // The bell: what a notification opens grows out of it.
+      ShellTab.notifications => EntryOriginAnchor.bell(
+        child: BlocBuilder<UnreadBadgeCubit, int>(
+          builder: (context, unread) => _chip(
+            icon: AppIcons.notifications,
+            tooltip: l.navNotificationsTooltip,
+            active: active,
+            badgeCount: unread,
+            onPressed: () =>
+                _open(context, ShellTab.notifications, '/notifications'),
+          ),
         ),
       ),
       ShellTab.settings => BlocBuilder<AuthCubit, AuthState>(
