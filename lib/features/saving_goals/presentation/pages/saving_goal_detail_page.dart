@@ -1179,13 +1179,13 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final now = p?.current;
     final plan = now?.plan ?? 0;
     return [
-      DetailRow.pick(
+      AppDetailRow.pick(
         label: l.savingGoalFormDeadlineLabel,
         value: due == null ? null : _day(due),
         emptyText: l.savingGoalFormDeadlinePlaceholder,
         onTap: isSaving ? null : () => _pickDeadlineLive(g),
       ),
-      DetailRow.pick(
+      AppDetailRow.pick(
         key: const ValueKey('goalPeriodAmount'),
         label: l.sgPeriodTarget,
         value: p == null ? null : money(p.amount),
@@ -1193,7 +1193,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         onTap: isSaving ? null : () => _pickPeriodAmount(g),
       ),
       if (p != null)
-        DetailRow.pick(
+        AppDetailRow.pick(
           key: const ValueKey('goalPeriodRule'),
           label: l.sgPeriodRule,
           value: recurrenceLabel(l, _periodRule(p)),
@@ -1561,7 +1561,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       // Editing has the due date only; it says itself.
       description: widget.isCreate ? l.sgPlanSectionDesc : null,
       children: [
-        DetailRow(
+        AppDetailRow(
           label: l.savingGoalFormDeadlineLabel,
           trailing: Text(
             w.deadline == null

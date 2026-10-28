@@ -89,7 +89,7 @@ class SettingsPagePrefsPage extends StatelessWidget {
                         LockedInEdit(
                           key: ValueKey('page-pref-${page.id}'),
                           locked: true,
-                          child: DetailRow(
+                          child: AppDetailRow(
                             leading: AppIcon(page.icon),
                             label: page.title(l),
                             trailing: AppBadge(label: l.settingsComingSoon),
@@ -100,7 +100,7 @@ class SettingsPagePrefsPage extends StatelessWidget {
                           key: ValueKey('page-pref-${page.id}'),
                           // A module that is off: shown, not tappable.
                           locked: !pagePrefRowEnabled(page, layout),
-                          child: DetailRow(
+                          child: AppDetailRow(
                             leading: AppIcon(page.icon),
                             label: page.title(l),
                             helper: pagePrefSummary(
@@ -126,7 +126,7 @@ class SettingsPagePrefsPage extends StatelessWidget {
                 : SectionCard(
                     title: l.pagePrefsResetTitle,
                     children: [
-                      DetailRow(
+                      AppDetailRow(
                         leading: const AppIcon(AppIcons.reset),
                         label: l.pagePrefsResetAll,
                         helper: l.pagePrefsResetAllHint,
@@ -186,7 +186,7 @@ class SettingsPagePrefPage extends StatelessWidget {
                 children: [
                   for (final f in page.fields)
                     if (f.isSet)
-                      DetailRow(
+                      AppDetailRow(
                         label: f.title(l),
                         helper: l.pagePrefsSetOnPage,
                         trailing: Text(
@@ -214,7 +214,7 @@ class SettingsPagePrefPage extends StatelessWidget {
                 ? SectionCard(
                     title: l.pagePrefsResetTitle,
                     children: [
-                      DetailRow(
+                      AppDetailRow(
                         leading: const AppIcon(AppIcons.reset),
                         label: l.pagePrefsResetPage,
                         onTap: () => _resetPage(context),

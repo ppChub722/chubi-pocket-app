@@ -77,7 +77,7 @@ class SettingsPage extends StatelessWidget {
                   first: first,
                   title: l.settingsSectionData,
                   children: [
-                    DetailRow(
+                    AppDetailRow(
                       leading: const AppIcon(AppIcons.archive),
                       label: l.settingsArchived,
                       helper: l.settingsArchivedHint,
@@ -85,13 +85,10 @@ class SettingsPage extends StatelessWidget {
                       // Inside the settings tab, like the other groups.
                       onTap: () => context.push('/archived'),
                     ),
-                    LockedInEdit(
-                      locked: true,
-                      child: DetailRow(
-                        leading: const AppIcon(AppIcons.download),
-                        label: l.settingsExportCsv,
-                        trailing: AppBadge(label: l.settingsComingSoon),
-                      ),
+                    AppDetailRow(
+                      leading: const AppIcon(AppIcons.download),
+                      label: l.settingsExportCsv,
+                      comingSoon: true,
                     ),
                     const _VersionRow(),
                   ],
@@ -178,7 +175,7 @@ class _VersionRowState extends State<_VersionRow> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return DetailRow(
+    return AppDetailRow(
       leading: const AppIcon(AppIcons.info),
       label: l.settingsAppVersion,
       trailing: Text(_version),

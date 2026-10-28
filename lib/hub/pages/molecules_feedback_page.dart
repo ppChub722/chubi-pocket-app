@@ -224,6 +224,31 @@ class _FeedbackPageState extends State<_FeedbackPage> {
           ),
         ),
         HubDemo(
+          title: 'ConnectionBanner — connecting, can\'t connect, back',
+          note:
+              'connecting = info tone + spinner, no button; can\'t connect = '
+              'danger + Retry; both end with a plain X (onClose) that only '
+              'hides the banner. Icon, text, action and X share one centre '
+              'line with even padding (AppMessage).',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final s in ConnectionBannerState.values) ...[
+                ConnectionBanner(
+                  state: s,
+                  offlineText: 'Can\'t reach the server',
+                  reconnectingText: 'Connecting… 1/6',
+                  backText: 'Connected again',
+                  retryLabel: 'Retry',
+                  onRetry: () {},
+                  onClose: () {},
+                ),
+                const SizedBox(height: AppSpacing.sm),
+              ],
+            ],
+          ),
+        ),
+        HubDemo(
           title: 'AppMessage — icon override',
           note:
               'icon: replaces the tone\'s icon (a lock on a "locked" banner); the '

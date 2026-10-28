@@ -850,7 +850,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       key: const ValueKey('debtDueRow'),
       first: first,
       children: [
-        DetailRow(
+        AppDetailRow(
           label: l.debtDueLabel,
           onLongPress: isEditing ? null : () => _edit(then: _pickDue),
           trailing: Align(
@@ -873,7 +873,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
         key: const ValueKey('debtLinkRow'),
         first: first,
         children: [
-          DetailRow(
+          AppDetailRow(
             label: l.occurrenceRecordInTx,
             trailing: Align(
               alignment: AlignmentDirectional.centerEnd,
@@ -895,7 +895,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       key: const ValueKey('debtLinkRow'),
       first: first,
       children: [
-        DetailRow(
+        AppDetailRow(
           label: l.occurrenceRecordInTx,
           helper: differs
               ? l.debtLinkedAmountDiffers(
@@ -1045,7 +1045,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                     (first) => SectionCard(
                       first: first,
                       children: [
-                        DetailRow(
+                        AppDetailRow(
                           key: const ValueKey('debtPartnerLinked'),
                           label: l.debtPartnerLinked(
                             widget.detail.balance.person.name,
@@ -1065,7 +1065,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                     (first) => SectionCard(
                       first: first,
                       children: [
-                        DetailRow(
+                        AppDetailRow(
                           label: l.debtSourceRowLabel,
                           helper: source.title,
                           showChevron:

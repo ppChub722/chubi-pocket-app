@@ -88,7 +88,7 @@ class _TabbedDetailDemoState extends State<_TabbedDetailDemo> {
           title: 'TabbedDetailBody — the debts person page shape',
           note:
               'Hero (a AppHeroCard) → belowHero (the page’s ONE primary '
-              'button, an optional DetailRow section) → the tab bar pins '
+              'button, an optional AppDetailRow section) → the tab bar pins '
               'under the top bar → each tab is a ListPageBody (toolbar, '
               'hairlines, paging with the retry row, pull-to-refresh), built '
               'the first time it shows. Scroll: the compact bar appears '

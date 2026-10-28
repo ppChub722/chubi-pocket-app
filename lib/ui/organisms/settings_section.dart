@@ -161,7 +161,7 @@ class SettingToggleRow extends StatelessWidget {
     final off =
         onChanged == null || (submits && ConnectionScope.isOffline(context));
     final cb = off ? null : onChanged;
-    return DetailRow(
+    return AppDetailRow(
       leading: leading,
       label: label,
       helper: caption,
@@ -220,7 +220,7 @@ class _SettingDropdownRowState<T> extends State<SettingDropdownRow<T>> {
     final cb = widget.submits && ConnectionScope.isOffline(context)
         ? null
         : widget.onSelected;
-    return DetailRow(
+    return AppDetailRow(
       leading: widget.leading,
       label: widget.label,
       helper: widget.helper,
@@ -263,7 +263,7 @@ class SettingSwitchViewRow extends StatelessWidget {
   Widget build(BuildContext context) => GestureDetector(
     behavior: HitTestBehavior.opaque,
     onLongPress: onLongPress,
-    child: DetailRow(
+    child: AppDetailRow(
       label: label,
       helper: caption,
       trailing: IgnorePointer(
@@ -293,7 +293,7 @@ class SettingSummaryRow extends StatelessWidget {
   final Widget? trailing;
 
   @override
-  Widget build(BuildContext context) => DetailRow(
+  Widget build(BuildContext context) => AppDetailRow(
     label: label,
     onTap: onTap,
     error: error,
@@ -326,7 +326,7 @@ class SettingsGroupRow extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => DetailRow(
+  Widget build(BuildContext context) => AppDetailRow(
     leading: AppIcon(icon),
     label: label,
     helper: summary,
@@ -366,7 +366,7 @@ class SettingPickRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cb = submits && ConnectionScope.isOffline(context) ? null : onTap;
-    return DetailRow(
+    return AppDetailRow(
       leading: leading,
       label: label,
       helper: helper,
@@ -419,7 +419,7 @@ class SettingSwitchColumnsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final offline = submits && ConnectionScope.isOffline(context);
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-    return DetailRow(
+    return AppDetailRow(
       label: label,
       helper: helper,
       trailing: Row(
@@ -769,7 +769,7 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
         ],
       );
     }
-    return DetailRow(
+    return AppDetailRow(
       label: widget.label,
       helper: widget.helper,
       onTap: cb == null || _typing

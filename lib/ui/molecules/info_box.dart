@@ -89,7 +89,7 @@ class InfoRow extends StatelessWidget {
       if (trailing == null && text != null && text.isNotEmpty) {
         trailing = Text(text);
       }
-      return DetailRow(
+      return AppDetailRow(
         label: label,
         trailing: trailing,
         onTap: onTap,
@@ -107,7 +107,7 @@ class InfoRow extends StatelessWidget {
           chevron: showChevron,
         );
         if (fits) {
-          return DetailRow(
+          return AppDetailRow(
             label: label,
             trailing: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis),
             onTap: onTap,

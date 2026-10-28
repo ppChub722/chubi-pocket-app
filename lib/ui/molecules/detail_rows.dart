@@ -6,6 +6,9 @@ import '../atoms/add_tile.dart';
 import '../atoms/app_icon.dart';
 import '../tokens/app_radius.dart';
 import '../atoms/locked_in_edit.dart';
+import '../atoms/app_badge.dart';
+import '../atoms/ui_config.dart';
+import 'app_row.dart';
 
 class SectionCard extends StatelessWidget {
   const SectionCard({
@@ -55,11 +58,12 @@ class SectionCard extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final hasTitleRow = title != null || trailing != null || leading != null;
     final reserve = children.any(
-      (c) => c is DetailRow && (c.leading != null || c.icon != null),
+      (c) => c is AppDetailRow && (c.leading != null || c.icon != null),
     );
     const outer = Radius.circular(AppRadius.lg);
-    // A rounded Material, NOT a ClipRRect: a framed field's notched label
-    // overhangs its box by half a line, and a clip would cut it in half.
+    // A rounded Material, NOT a clip: a framed field's notched label
+    // overhangs its box by half a line, and a clip would cut it in half. A
+    // filled row (tinted, highlighted) rounds its own fill from AppRowShape.
     Widget cell(int i, Widget row) {
       final radius = BorderRadius.vertical(
         top: i == 0 ? outer : Radius.zero,
@@ -81,7 +85,7 @@ class SectionCard extends StatelessWidget {
                   ),
                   child: row,
                 )
-              : row,
+              : AppRowShape(borderRadius: radius, child: row),
         ),
       );
     }
@@ -213,24 +217,36 @@ class DetailAddRow extends StatelessWidget {
   }
 }
 
-class DetailRow extends StatelessWidget {
-  const DetailRow({
+/// One field / setting / link of THIS record on a detail page: leading icon
+/// (or a logo / avatar with a [badge]) · label + helper / error · value
+/// (≤ half the row) · lock · chevron. Built on [AppRow] (density detail);
+/// list items use [AppListRow].
+class AppDetailRow extends StatelessWidget {
+  const AppDetailRow({
     required this.label,
     this.trailing,
     this.helper,
     this.error,
     this.leading,
     this.icon,
+    this.badge,
+    this.leadingSize,
     this.onTap,
     this.onLongPress,
     this.showChevron = false,
     this.locked = false,
+    this.valueIcon,
+    this.valueColor,
+    this.valueIconColor,
+    this.accent,
+    this.tinted = false,
+    this.comingSoon = false,
     this.horizontalInset = AppSpacing.lg,
     this.helperMaxLines,
     super.key,
   });
 
-  factory DetailRow.pick({
+  factory AppDetailRow.pick({
     required String label,
     String? value,
     Widget? valueChip,
@@ -245,7 +261,7 @@ class DetailRow extends StatelessWidget {
     bool locked = false,
     double horizontalInset = AppSpacing.lg,
     Key? key,
-  }) => DetailRow(
+  }) => AppDetailRow(
     key: key,
     label: label,
     helper: helper,
@@ -275,11 +291,37 @@ class DetailRow extends StatelessWidget {
   final Widget? leading;
 
   final IconData? icon;
+
+  /// A corner badge on the leading (an app's logo on its picture).
+  final RowBadge? badge;
+
+  /// A picture's size (32 for an avatar): sizes the [badge] disc; the
+  /// leading keeps its own size with or without a badge. Default 22.
+  final double? leadingSize;
   final VoidCallback? onTap;
 
   final bool showChevron;
 
   final bool locked;
+
+  /// A 16 px icon right before the value (🔗 @username).
+  final IconData? valueIcon;
+
+  /// The value text's colour; null = primary, or the muted text colour when
+  /// [locked] (owner 2026-10-28). A status
+  /// value passes its own (granted primary, not asked muted, denied warning).
+  final Color? valueColor;
+
+  /// [valueIcon] and the lock; null = [valueColor].
+  final Color? valueIconColor;
+
+  /// The row's colour (a brand's); with [tinted] the row is washed in it
+  /// and the leading icon takes it (contrast-checked).
+  final Color? accent;
+  final bool tinted;
+
+  /// Not built yet: muted, no taps, a "coming soon" badge as the value.
+  final bool comingSoon;
 
   final double horizontalInset;
 
@@ -289,84 +331,74 @@ class DetailRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final row = Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: horizontalInset,
-        vertical: AppSpacing.md,
-      ),
-      child: LayoutBuilder(
-        builder: (context, box) => Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            if (leading != null || icon != null) ...[
-              IconTheme.merge(
-                data: IconThemeData(color: scheme.onSurfaceVariant, size: 22),
-                child: leading ?? AppIcon(icon!),
-              ),
-              const SizedBox(width: AppSpacing.md),
-            ] else if (DetailGroupScope.reserves(context)) ...[
-              const SizedBox(width: 22 + AppSpacing.md),
-            ],
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(label, style: detailLabelStyle(context)),
-                  if (helper != null) ...[
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      helper!,
-                      maxLines: helperMaxLines,
-                      overflow: helperMaxLines == null
-                          ? null
-                          : TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                  if (error != null) ...[
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      error!,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: scheme.error),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            if (trailing != null) ...[
-              const SizedBox(width: AppSpacing.md),
-              ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: box.maxWidth * 0.5),
-                child: DefaultTextStyle.merge(
-                  style: Theme.of(context).textTheme.bodyLarge,
-                  textAlign: TextAlign.right,
-                  child: trailing!,
-                ),
-              ),
-            ],
-            if (locked) ...[
-              const SizedBox(width: AppSpacing.xs),
-              Icon(AppIcons.lock, size: 16, color: scheme.onSurfaceVariant),
-            ],
-            if (showChevron) ...[
-              const SizedBox(width: AppSpacing.xs),
-              Icon(AppIcons.chevronRight, color: scheme.onSurfaceVariant),
-            ],
-          ],
+    final textTheme = Theme.of(context).textTheme;
+    final helper = this.helper;
+    final error = this.error;
+    final below = <Widget>[
+      if (helper != null)
+        Text(
+          helper,
+          maxLines: helperMaxLines,
+          overflow: helperMaxLines == null ? null : TextOverflow.ellipsis,
+          style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
         ),
-      ),
-    );
-    if (onTap == null && onLongPress == null) return row;
-    return InkWell(
+      if (error != null)
+        Padding(
+          padding: EdgeInsets.only(top: helper == null ? 0 : AppSpacing.xs),
+          child: Text(
+            error,
+            style: textTheme.bodySmall?.copyWith(color: scheme.error),
+          ),
+        ),
+    ];
+    final valueIcon = this.valueIcon;
+    // A locked value reads as not editable: the theme's muted text colour.
+    final valueTint =
+        valueColor ?? (locked ? scheme.onSurfaceVariant : scheme.primary);
+    final iconTint = valueIconColor ?? valueTint;
+    final Widget? value = comingSoon
+        ? AppBadge(label: UiConfig.stringsOf(context).comingSoon)
+        : trailing;
+    return AppRow(
+      density: AppRowDensity.detail,
+      title: Text(label, style: detailLabelStyle(context)),
+      subtitle: below.isEmpty
+          ? null
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: below,
+            ),
+      leading: leading ?? (icon == null ? null : AppIcon(icon!)),
+      badge: badge,
+      leadingSize: leadingSize,
+      reserveLeading: DetailGroupScope.reserves(context),
+      trailing: value == null
+          ? null
+          : DefaultTextStyle.merge(
+              style: textTheme.bodyLarge?.copyWith(color: valueTint),
+              textAlign: TextAlign.right,
+              child: valueIcon == null || comingSoon
+                  ? value
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(valueIcon, size: 16, color: iconTint),
+                        const SizedBox(width: AppSpacing.xs),
+                        Flexible(child: value),
+                      ],
+                    ),
+            ),
+      trailingMaxFraction: 0.5,
+      trailingIcon: locked ? AppIcons.lock : null,
+      trailingIconColor: iconTint,
+      chevron: showChevron && !comingSoon,
+      accent: accent,
+      tinted: tinted,
+      disabled: comingSoon,
+      horizontalInset: horizontalInset,
       onTap: onTap,
       onLongPress: onLongPress,
-      overlayColor: _restingOverlay,
-      child: row,
     );
   }
 }

@@ -74,7 +74,7 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
         first: true,
         title: 'Recent transactions',
         children: [
-          DetailRow(
+          AppDetailRow(
             label: 'Lunch',
             trailing: MoneyText(120, tone: MoneyTone.expense),
             onTap: noop,
@@ -726,12 +726,12 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
               first: true,
               title: 'Recent transactions',
               children: [
-                DetailRow(
+                AppDetailRow(
                   label: 'Lunch',
                   trailing: MoneyText(120, tone: MoneyTone.expense),
                   onTap: noop,
                 ),
-                DetailRow(
+                AppDetailRow(
                   label: 'Taxi',
                   trailing: MoneyText(85, tone: MoneyTone.expense),
                   onTap: noop,
@@ -827,31 +827,31 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
                 SectionCard(
                   first: true,
                   children: [
-                    DetailRow(
+                    AppDetailRow(
                       label: 'Currency',
                       trailing: const Text('THB'),
                       onLongPress: enter,
                     ),
-                    DetailRow.pick(
+                    AppDetailRow.pick(
                       label: 'Parent',
                       value: 'Travel',
                       emptyText: 'Not selected',
                       onTap: editing ? () {} : null,
                       onLongPress: enter,
                     ),
-                    DetailRow.pick(
+                    AppDetailRow.pick(
                       label: 'Event',
                       value: null,
                       emptyText: 'Not selected',
                       onTap: editing ? () {} : null,
                       onLongPress: enter,
                     ),
-                    const DetailRow(
+                    const AppDetailRow(
                       label: 'Type',
                       trailing: Text('Bank'),
                       locked: true,
                     ),
-                    DetailRow(
+                    AppDetailRow(
                       label: 'Count in reports',
                       helper: 'Off = left out of summaries',
                       trailing: Switch(

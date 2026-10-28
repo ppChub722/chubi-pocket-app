@@ -58,5 +58,5 @@ Widget buildCollapsibleSectionPage(BuildContext context) => Column(
 );
 
 List<Widget> _rows(List<String> lines) => [
-  for (final l in lines) DetailRow(label: l),
+  for (final l in lines) AppDetailRow(label: l),
 ];

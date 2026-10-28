@@ -1363,7 +1363,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       title: l.recurringSectionPeriod,
       children: [
         if (!dates)
-          DetailRow(
+          AppDetailRow(
             label: l.recurringFieldStart,
             trailing: Text(
               _date(rule.start),
@@ -1373,14 +1373,14 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             showChevron: true,
             onTap: _pickStart,
           ),
-        DetailRow.pick(
+        AppDetailRow.pick(
           key: const ValueKey('repeatRow'),
           label: l.recurringFieldRepeat,
           valueChips: _repeatChips(l, rule),
           emptyText: '',
           onTap: _openRecurrenceSheet,
         ),
-        DetailRow.pick(
+        AppDetailRow.pick(
           key: const ValueKey('datesRow'),
           label: l.recurringFieldDates,
           value: dates ? _datesText(rule.dates) : null,
@@ -1695,7 +1695,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             ],
           ),
         if (w.kind == RecurringKind.subscription)
-          DetailRow(
+          AppDetailRow(
             label: l.fpRecurringTrialUntil,
             onTap: _pickTrial,
             trailing: DatePickChip(

@@ -675,7 +675,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         // Always offered, so people know it exists; it needs their email
         // first (owner 2026-10-23).
         else
-          DetailRow(
+          AppDetailRow(
             leading: _linkMark(linked: false),
             label: l.contactLinkRequest,
             helper: hasEmail
@@ -684,7 +684,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
             showChevron: true,
             onTap: hasEmail ? _requestLink : _askEmailFirst,
           ),
-        DetailRow(
+        AppDetailRow(
           label: l.contactWireTitle,
           helper: hasNames
               ? l.contactWireHint(_unlinkedNames, _unlinkedRecords)

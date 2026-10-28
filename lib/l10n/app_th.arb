@@ -1985,7 +1985,7 @@
   "settingsFeeCategory": "หมวดค่าธรรมเนียม",
   "settingsFeeCategoryHint": "ใช้ตอนโอนเงินที่มีค่าธรรมเนียม",
   "settingsSyncFootnote": "สวิตช์อัตโนมัติชุดเดียวกับในหน้าอีเวนต์และหน้าคน เปลี่ยนที่ไหนก็เป็นค่าเดียวกัน",
-  "notifSettingsOnOffLegend": "แจ้ง = ส่งแจ้งเตือนเรื่องนี้\nอัตโนมัติ = ไม่ต้องถาม ทำให้เลย\nปิดอัตโนมัติอยู่ ต้องเปิดแจ้งไว้ เพราะต้องมีคนตอบ",
+  "notifSettingsOnOffLegend": "แจ้ง = ส่งแจ้งเตือนเรื่องนี้\nอีเวนต์ / แบ่งจ่าย = อัตโนมัติ ไม่ต้องถาม ทำให้เลย\nปิดอัตโนมัติอยู่ ต้องเปิดแจ้งไว้ เพราะต้องมีคนตอบ",
   "notifGroupSharedBills": "บิลที่แชร์",
   "notifSetSplitChanged": "มีคนแก้บิลที่แชร์กับฉัน",
   "notifSetSharedBillDeleted": "มีคนลบบิลที่แชร์กับฉัน",
@@ -2122,7 +2122,7 @@
   "notifColumnAuto": "อัตโนมัติ",
   "notifAutoAcceptHint": "อัตโนมัติ = รับเข้าสมุดเลย",
   "notifAutoUpdateHint": "อัตโนมัติ = อัปเดตตามเลย",
-  "notifAutoDeleteHint": "อีเวนต์: ตามแถว \"มีการแก้ไขรายการในอีเวนต์\"\nแบ่งจ่าย: สำเนาของฉันเป็นรายการธรรมดาเสมอ",
+  "notifAutoDeleteHint": "อีเวนต์: ตามช่องอีเวนต์ของแถว \"มีคนแก้บิลที่แชร์กับฉัน\"\nแบ่งจ่าย: สำเนาของฉันเป็นรายการธรรมดาเสมอ",
   "notifLockedByAutoHint": "ปิดอัตโนมัติอยู่ แจ้งปิดไม่ได้",
   "notifSetProjectAddedHint": "มีคนเพิ่มฉันเป็นสมาชิก",
   "notifSetRecurringDueHint": "งวดที่ต้องจ่าย / ต้องรับวันนี้",
@@ -2137,5 +2137,11 @@
   "pagePrefSetCount": "{title} {count}",
   "@pagePrefSetCount": {"placeholders":{"title":{"type":"String"},"count":{"type":"int"}}},
   "settingsMainWalletUnsetSummary": "ยังไม่ตั้งกระเป๋าหลัก",
-  "pagePrefsSectionPages": "หน้าในแอป"
+  "pagePrefsSectionPages": "หน้าในแอป",
+  "connectionConnectingAttempt": "กำลังเชื่อมต่อ… {attempt}/{attempts}",
+  "@connectionConnectingAttempt": {"placeholders":{"attempt":{"type":"int"},"attempts":{"type":"int"}}},
+  "connectionCantConnect": "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้",
+  "notifSetBillCreated": "มีบิลใหม่ที่แชร์กับฉัน",
+  "notifColumnAutoEvents": "อีเวนต์",
+  "notifColumnAutoSplit": "แบ่งจ่าย"
 }

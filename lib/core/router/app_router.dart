@@ -15,6 +15,7 @@ import '../../hub/hub_page_frame.dart';
 import '../../hub/hub_registry.dart';
 import '../../ui/organisms/page_pop_observer.dart';
 import '../../app/shell/fade_branch_container.dart';
+import 'dev_hub_path.dart';
 import '../../features/app_version/presentation/cubit/app_version_cubit.dart';
 import '../../features/app_version/presentation/pages/update_required_page.dart';
 import '../../features/app_version/presentation/version_gate.dart';
@@ -75,7 +76,7 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
       final auth = authCubit.state;
       final loc = state.matchedLocation;
       final goingToAuth = loc.startsWith('/auth');
-      final goingToDev = loc.startsWith('/dev');
+      final goingToDev = isDevHubPath(state.uri.path);
 
       if (goingToDev) return null;
       final gate = versionGateRedirect(

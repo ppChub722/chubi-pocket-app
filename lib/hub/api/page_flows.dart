@@ -77,7 +77,7 @@ const List<PageFlow> pageFlows = [
   // ── App shell ────────────────────────────────────────────────────────────
   PageFlow(
     'connection',
-    'The offline banner: while the server is unreachable the app polls /health every few seconds (backoff 3 → 10 s) until it answers.',
+    'The offline banner: while the server is unreachable the app pings /health (10 s after each failed result, 6 retries, then a Retry button; never on /dev).',
     [
       FlowStep.action('Server unreachable (a network-level failure)', [
         FlowCall(

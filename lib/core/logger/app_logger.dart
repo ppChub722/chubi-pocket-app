@@ -112,7 +112,17 @@ class AppLogger {
     Map<String, Object?>? fields,
     String? requestId,
     String? userId,
-  }) => _emit(LogLevel.error, msg, fields, requestId, userId ?? _currentUserId);
+
+    /// False = one line without the steps (a repeat of a failure streak).
+    bool withSteps = true,
+  }) => _emit(
+    LogLevel.error,
+    msg,
+    fields,
+    requestId,
+    userId ?? _currentUserId,
+    withSteps: withSteps,
+  );
 
   void critical(
     String msg, {
@@ -132,13 +142,15 @@ class AppLogger {
     String msg,
     Map<String, Object?>? fields,
     String? requestId,
-    String? userId,
-  ) {
+    String? userId, {
+    bool withSteps = true,
+  }) {
     if (level.severity < _config.minLevel.severity) return;
 
     // An error carries the steps that led to it (Breadcrumbs).
-    final withSteps =
-        level.severity >= LogLevel.error.severity &&
+    final stepped =
+        withSteps &&
+            level.severity >= LogLevel.error.severity &&
             Breadcrumbs.instance.steps.isNotEmpty &&
             !(fields?.containsKey('steps') ?? false)
         ? {...?fields, 'steps': Breadcrumbs.instance.steps}
@@ -149,7 +161,7 @@ class AppLogger {
       message: msg,
       requestId: requestId,
       userId: userId,
-      fields: withSteps ?? const {},
+      fields: stepped ?? const {},
     );
 
     _ring.add(entry);

@@ -484,18 +484,31 @@ Widget buildOthersPage(BuildContext context) {
             page: 'Login, Register (signing in)',
             child: GoogleSignInButton(onPressed: () {}, loading: true),
           ),
-          for (final (label, status) in [
+          for (final (label, status, attempt) in [
             (
-              'OfflineBanner — offline: stays until the connection is back, Retry polls now',
-              ConnectionStatus.offline,
+              'OfflineBanner — a call failed: connecting… (spinner, no error, no button)',
+              ConnectionStatus.reconnecting,
+              0,
             ),
             (
-              'OfflineBanner — a retry is running',
+              'OfflineBanner — connecting… 1/6: the first retry, 10 s after the failure',
               ConnectionStatus.reconnecting,
+              1,
+            ),
+            (
+              'OfflineBanner — connecting… 6/6: the last retry',
+              ConnectionStatus.reconnecting,
+              6,
+            ),
+            (
+              'OfflineBanner — can\x27t connect: the 6th retry failed; nothing is sent until Retry, the app resuming or a network change',
+              ConnectionStatus.offline,
+              6,
             ),
             (
               'OfflineBanner — back online: a short "connected again", then it goes',
               ConnectionStatus.backOnline,
+              0,
             ),
           ])
             HubUse(
@@ -503,7 +516,11 @@ Widget buildOthersPage(BuildContext context) {
               label: label,
               page: 'App shell (every page)',
               child: OfflineBanner(
-                state: ServerConnectionState(status: status),
+                state: ServerConnectionState(
+                  status: status,
+                  attempt: attempt,
+                  attempts: ConnectionCubit.retryPolicy.retries,
+                ),
                 onRetry: () {},
               ),
             ),

@@ -123,7 +123,7 @@ class _MoneyPageState extends State<_MoneyPage> {
         HubDemo(
           title: 'CurrencyTile',
           note:
-              'A DetailRow picker that opens a popover of currencies. '
+              'A AppDetailRow picker that opens a popover of currencies. '
               'onChanged: null is the locked read-only look (after create).',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

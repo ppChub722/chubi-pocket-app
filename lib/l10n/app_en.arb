@@ -2212,7 +2212,7 @@
   "settingsFeeCategory": "Fee category",
   "settingsFeeCategoryHint": "Used for transfers with a fee",
   "settingsSyncFootnote": "The same auto switches as on the event page and the person page: change them anywhere, it's one value",
-  "notifSettingsOnOffLegend": "Notify = send me a notification about it\nAuto = don't ask, just do it\nWith auto off, notify stays on: someone has to answer",
+  "notifSettingsOnOffLegend": "Notify = send me a notification about it\nEvents / Splits = auto: don't ask, just do it\nWith auto off, notify stays on: someone has to answer",
   "notifGroupSharedBills": "Shared bills",
   "notifSetSplitChanged": "Someone edited a bill shared with me",
   "notifSetSharedBillDeleted": "Someone deleted a bill shared with me",
@@ -2349,7 +2349,7 @@
   "notifColumnAuto": "Auto",
   "notifAutoAcceptHint": "Auto = put it in my book at once",
   "notifAutoUpdateHint": "Auto = update mine at once",
-  "notifAutoDeleteHint": "Events: follows the \"edits in an event\" row\nSplits: my copy always becomes a plain record",
+  "notifAutoDeleteHint": "Events: follows the Events switch of \"Someone edited a shared bill\"\nSplits: my copy always becomes a plain record",
   "notifLockedByAutoHint": "Auto is off, so notify can't be turned off",
   "notifSetProjectAddedHint": "Someone adds me as a member",
   "notifSetRecurringDueHint": "Payments to pay / receive today",
@@ -2364,5 +2364,11 @@
   "pagePrefSetCount": "{title} {count}",
   "@pagePrefSetCount": {"placeholders":{"title":{"type":"String"},"count":{"type":"int"}}},
   "settingsMainWalletUnsetSummary": "No main wallet",
-  "pagePrefsSectionPages": "Pages"
+  "pagePrefsSectionPages": "Pages",
+  "connectionConnectingAttempt": "Connecting… {attempt}/{attempts}",
+  "@connectionConnectingAttempt": {"placeholders":{"attempt":{"type":"int"},"attempts":{"type":"int"}}},
+  "connectionCantConnect": "Can't reach the server",
+  "notifSetBillCreated": "A new bill shared with me",
+  "notifColumnAutoEvents": "Events",
+  "notifColumnAutoSplit": "Splits"
 }

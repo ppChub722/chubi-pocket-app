@@ -662,7 +662,7 @@ class _BarsPageState extends State<_BarsPage> {
                         first: true,
                         children: [
                           for (var i = 1; i <= 12; i++)
-                            DetailRow(
+                            AppDetailRow(
                               label: 'Row $i',
                               trailing: Text('Value $i'),
                             ),

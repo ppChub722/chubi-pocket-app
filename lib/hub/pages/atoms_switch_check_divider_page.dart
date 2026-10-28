@@ -19,21 +19,21 @@ Widget buildSwitchCheckDividerPage(BuildContext context) {
             'uses it.',
         uses: [
           HubUse(
-            label: 'AppSwitch — trailing of a DetailRow, the row toggles it',
+            label: 'AppSwitch — trailing of a AppDetailRow, the row toggles it',
             page: 'Detail / edit pages (include in reports, active, …)',
             wide: true,
             child: HubStateful<bool>(
               initial: true,
               builder: (context, on, set) => Column(
                 children: [
-                  DetailRow(
+                  AppDetailRow(
                     label: 'Include in my reports',
                     helper: 'Counts in totals and charts',
                     trailing: AppSwitch(value: on, onChanged: set),
                     onTap: () => set(!on),
                   ),
                   const AppDivider.row(),
-                  const DetailRow(
+                  const AppDetailRow(
                     label: 'Disabled',
                     trailing: AppSwitch(value: false, onChanged: null),
                   ),

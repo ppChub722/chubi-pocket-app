@@ -645,7 +645,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
             ?_expectedChip(l, d),
             ..._itemRows(l, d),
             if (d.items.hasMore)
-              DetailRow.pick(
+              AppDetailRow.pick(
                 label: l.bgItemsMore,
                 emptyText: l.quickEventNone,
                 error: _itemsError == null ? null : '$_itemsError',
@@ -1154,7 +1154,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       title: l.bgSectionPeriod,
       description: l.bgSectionPeriodDesc,
       children: [
-        DetailRow(
+        AppDetailRow(
           label: l.bgFieldStart,
           helper: l.bgFieldStartHelp,
           trailing: Text(

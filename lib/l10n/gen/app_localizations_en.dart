@@ -6507,7 +6507,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notifSettingsOnOffLegend =>
-      'Notify = send me a notification about it\nAuto = don\'t ask, just do it\nWith auto off, notify stays on: someone has to answer';
+      'Notify = send me a notification about it\nEvents / Splits = auto: don\'t ask, just do it\nWith auto off, notify stays on: someone has to answer';
 
   @override
   String get notifGroupSharedBills => 'Shared bills';
@@ -6926,7 +6926,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notifAutoDeleteHint =>
-      'Events: follows the \"edits in an event\" row\nSplits: my copy always becomes a plain record';
+      'Events: follows the Events switch of \"Someone edited a shared bill\"\nSplits: my copy always becomes a plain record';
 
   @override
   String get notifLockedByAutoHint =>
@@ -6975,4 +6975,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pagePrefsSectionPages => 'Pages';
+
+  @override
+  String connectionConnectingAttempt(int attempt, int attempts) {
+    return 'Connecting… $attempt/$attempts';
+  }
+
+  @override
+  String get connectionCantConnect => 'Can\'t reach the server';
+
+  @override
+  String get notifSetBillCreated => 'A new bill shared with me';
+
+  @override
+  String get notifColumnAutoEvents => 'Events';
+
+  @override
+  String get notifColumnAutoSplit => 'Splits';
 }

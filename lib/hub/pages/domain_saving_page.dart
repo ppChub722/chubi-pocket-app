@@ -6,7 +6,7 @@ import '../hub_kit.dart';
 import '../hub_playground.dart';
 
 /// `/dev/domain/saving` — saving goals v2 pieces: MilestoneRow,
-/// SavingHistoryChart, SavingMoveSheet (history rows: Molecules › List row),
+/// SavingHistoryChart, SavingMoveSheet (history rows: Molecules › Row),
 /// CloseGoalDialog and the 3-button action row under a goal's hero.
 Widget buildDomainSavingPage(BuildContext context) => const _SavingPage();
 

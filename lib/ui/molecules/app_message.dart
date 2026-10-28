@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../atoms/app_button.dart';
 import '../atoms/app_icon_button.dart';
+import '../atoms/app_spinner.dart';
+import '../atoms/ui_config.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
@@ -22,6 +24,7 @@ class AppMessage extends StatelessWidget {
     this.onClose,
     this.floating = false,
     this.icon,
+    this.busy = false,
     super.key,
   });
 
@@ -29,6 +32,9 @@ class AppMessage extends StatelessWidget {
   final Tone tone;
 
   final IconData? icon;
+
+  /// A spinner in place of the icon: something is in progress (connecting).
+  final bool busy;
   final List<AppMessageAction> actions;
 
   final VoidCallback? onClose;
@@ -63,16 +69,23 @@ class AppMessage extends StatelessWidget {
       color: color,
     );
 
+    // Icon, text, action and close share one centre line (owner
+    // 2026-10-28: the text sat high next to the button).
     final body = Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: Icon(icon ?? iconOf(tone), color: color, size: 20),
-        ),
+        if (busy)
+          SizedBox.square(
+            dimension: 20,
+            child: Center(
+              child: AppSpinner(size: AppSpinnerSize.small, color: color),
+            ),
+          )
+        else
+          Icon(icon ?? iconOf(tone), color: color, size: 20),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(message, style: text.bodyMedium),
@@ -93,6 +106,11 @@ class AppMessage extends StatelessWidget {
             dense: true,
             iconSize: 18,
             color: color,
+            // Above the Navigator (the app shell's banner) there is no
+            // Overlay for a tooltip.
+            tooltip: Overlay.maybeOf(context) == null
+                ? null
+                : UiConfig.stringsOf(context).close,
             onPressed: onClose,
           ),
       ],
@@ -108,11 +126,11 @@ class AppMessage extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.fromLTRB(
             AppSpacing.md,
-            AppSpacing.sm + 2,
+            AppSpacing.sm,
             onClose == null && actions.length != 1
                 ? AppSpacing.md
                 : AppSpacing.xs,
-            AppSpacing.sm + 2,
+            AppSpacing.sm,
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.md),

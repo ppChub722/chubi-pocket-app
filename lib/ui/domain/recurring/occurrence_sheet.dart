@@ -139,7 +139,7 @@ class _OccurrenceSheetState extends State<_OccurrenceSheet> {
               onChanged: (_) => setState(() {}),
             ),
           if (widget.withAmount) const SizedBox(height: AppSpacing.sm),
-          DetailRow.pick(
+          AppDetailRow.pick(
             label: widget.dateLabel,
             value: DateFormat.yMMMd(locale).format(_date),
             emptyText: '',

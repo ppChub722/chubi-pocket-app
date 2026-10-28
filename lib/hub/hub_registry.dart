@@ -13,8 +13,6 @@ import 'pages/domain_entity_pickers_page.dart';
 import 'pages/organisms_states_page.dart';
 import 'pages/molecules_pickers_inputs_page.dart';
 import 'pages/molecules_blocks_page.dart';
-import 'pages/molecules_split_row_page.dart';
-import 'pages/molecules_list_row_page.dart';
 import 'pages/molecules_list_header_page.dart';
 import 'debug/connection_page.dart';
 import 'debug/env_page.dart';
@@ -40,7 +38,8 @@ import 'pages/atoms_badge_avatar_page.dart';
 import 'pages/atoms_card_page.dart';
 import 'pages/atoms_switch_check_divider_page.dart';
 import 'pages/molecules_bars_page.dart';
-import 'pages/molecules_rows_page.dart';
+import 'pages/molecules_row_page.dart';
+import 'pages/organisms_detail_section_page.dart';
 import 'pages/organisms_reorder_charts_page.dart';
 import 'pages/organisms_app_hero_card_page.dart';
 import 'pages/organisms_hero_card_page.dart';
@@ -331,27 +330,40 @@ final List<HubPage> hubPages = [
   // ── Molecules
   const HubPage(
     level: HubLevel.molecules,
-    slug: 'rows',
-    title: 'Rows',
+    slug: 'row',
+    title: 'Row',
     summary:
-        'Detail rows, sections (band | grouped), danger row, list row, section header.',
-    usedBy: '32+ files',
+        'AppRow, the one row shell, and its two presets: AppListRow (an item in a list, density list) and AppDetailRow (a field of this record, density detail). Shell → List → Detail.',
+    usedBy:
+        'every data list and every detail page (tx, pending, budget, recurring, debts, events, saving, categories, tags, contacts, notifications, settings, profile)',
     covers: [
-      'DetailRow',
-      'DetailPairRow',
-      'DetailPairCell',
+      'AppRow',
+      'AppRowDensity',
+      'RowBadge',
+      'AppRowShape',
+      'AppListRow',
+      'ListRowChip',
+      'ListRowLine',
+      'ListRowGlyph',
+      'ListRowMark',
+      'ListRowTrailing',
+      'ListRowAction',
+      'ListRowAlert',
+      'walletRowChip',
+      'TxSource',
+      'txSourceMark',
+      'TxListRow',
+      'TxListKind',
+      'tagSpan',
+      'AppDetailRow',
       'LinkedFieldHint',
       'HintLine',
       'DetailStacked',
       'DetailLeadingScope',
       'DetailTextField',
       'DetailAddRow',
-      'SectionCard',
-      'DetailGroupScope',
-      'SectionHeader',
-      'DangerRow',
     ],
-    builder: buildRowsPage,
+    builder: buildRowPage,
   ),
   const HubPage(
     level: HubLevel.molecules,
@@ -411,48 +423,6 @@ final List<HubPage> hubPages = [
       'CenteredFormBody',
     ],
     builder: buildBlocksPage,
-  ),
-  const HubPage(
-    level: HubLevel.molecules,
-    slug: 'split-row',
-    title: 'Split row',
-    summary:
-        'One row of a bill split: avatar | name | amount | fixed trailing slot; me, typed, contact and linked names; auto and remove actions.',
-    usedBy: 'split editor',
-    covers: [
-      'SplitRow',
-      'SplitRowAction',
-      'SplitRowName',
-      'ShareAmountField',
-      'AutoToggleChip',
-    ],
-    builder: buildSplitRowPage,
-  ),
-  const HubPage(
-    level: HubLevel.molecules,
-    slug: 'list-row',
-    title: 'List row',
-    summary:
-        'The one data row of every list: leading | title + mini chips | line 2 | value | field + ✓; select, dimmed, alert. Knows no domain.',
-    usedBy:
-        'every data list (tx, pending, budget, recurring, debts, events, saving, categories, tags, contacts, notifications)',
-    covers: [
-      'AppListRow',
-      'ListRowChip',
-      'ListRowLine',
-      'ListRowGlyph',
-      'ListRowMark',
-      'ListRowTrailing',
-      'ListRowAction',
-      'ListRowAlert',
-      'walletRowChip',
-      'TxSource',
-      'txSourceMark',
-      'TxListRow',
-      'TxListKind',
-      'tagSpan',
-    ],
-    builder: buildListRowPage,
   ),
   const HubPage(
     level: HubLevel.molecules,
@@ -550,6 +520,23 @@ final List<HubPage> hubPages = [
     builder: buildBarsPage,
   ),
   // ── Organisms
+  const HubPage(
+    level: HubLevel.organisms,
+    slug: 'detail-section',
+    title: 'Detail section',
+    summary:
+        'SectionCard (band | grouped, 2 px gaps), its header, the pair row, DangerRow; the detail-page sections in the app.',
+    usedBy: 'every detail page, settings',
+    covers: [
+      'SectionCard',
+      'DetailGroupScope',
+      'SectionHeader',
+      'DangerRow',
+      'DetailPairRow',
+      'DetailPairCell',
+    ],
+    builder: buildDetailSectionPage,
+  ),
   const HubPage(
     level: HubLevel.organisms,
     slug: 'section-hero',
@@ -1069,7 +1056,7 @@ final List<HubPage> hubPages = [
     slug: 'budgets',
     title: 'Budgets',
     summary:
-        'Source chips, scope prompt, simple period editor, DetailRow error, wallet value chip, card-list gap.',
+        'Source chips, scope prompt, simple period editor, AppDetailRow error, wallet value chip, card-list gap.',
     generic: false,
     usedBy: 'Budget list and detail',
     covers: [
@@ -1133,10 +1120,16 @@ final List<HubPage> hubPages = [
     level: HubLevel.domain,
     slug: 'transactions',
     title: 'Transactions',
-    summary: 'Tx row, hero, draft form + chip layout, pickers, quick create.',
+    summary:
+        'Tx row, hero, draft form + chip layout, pickers, quick create, split row.',
     generic: false,
     usedBy: '~20 files',
     covers: [
+      'SplitRow',
+      'SplitRowAction',
+      'SplitRowName',
+      'ShareAmountField',
+      'AutoToggleChip',
       'TransactionHeroCard',
       'txHeroStyle',
       'txTypeChip',

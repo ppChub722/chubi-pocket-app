@@ -121,7 +121,7 @@ class _DescriptionPickerSheetState extends State<DescriptionPickerSheet> {
               title: labels.pastHeading,
               children: [
                 for (final d in matches)
-                  DetailRow(
+                  AppDetailRow(
                     leading: const AppIcon(AppIcons.history),
                     label: d,
                     onTap: () => widget.onPicked(d),
