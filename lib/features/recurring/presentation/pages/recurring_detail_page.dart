@@ -799,8 +799,8 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           editing: isEditing,
           onBack: handleBack,
         ),
-        body: SavingOverlay(
-          saving: _busy,
+        body: BusyScope(
+          busy: _busy,
           child: Form(
             key: _formKey,
             child: Builder(

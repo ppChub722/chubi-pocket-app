@@ -193,8 +193,8 @@ class _AccountsPageState extends State<AccountsPage> {
   }
 
   Widget _page(BuildContext context, AppLocalizations l) {
-    return SavingOverlay(
-      saving: _savingOrder,
+    return BusyScope(
+      busy: _savingOrder,
       child: TabRootScaffold(
         title: l.navAccounts,
         body: BlocBuilder<AccountsCubit, AccountsState>(

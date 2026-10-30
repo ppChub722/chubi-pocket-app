@@ -247,8 +247,8 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
           ),
           clipBehavior: Clip.antiAlias,
           animationDuration: const Duration(milliseconds: 250),
-          child: SavingOverlay(
-            saving: widget.saving,
+          child: BusyScope(
+            busy: widget.saving,
             child: SizedBox(
               height: MediaQuery.sizeOf(context).height * 0.94,
               child: Padding(

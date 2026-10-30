@@ -422,11 +422,10 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                         Theme.of(context).scaffoldBackgroundColor,
                       ),
                       child: KeyboardInsetsGuard(
-                        child: ValueListenableBuilder<bool>(
-                          valueListenable: _appRefresh.busy,
-                          builder: (context, busy, shell) =>
-                              SavingOverlay(saving: busy, child: shell!),
-                          child: ValueListenableBuilder<bool>(
+                        // Resume after a long break refreshes silently (no
+                        // scrim, owner 2026-10-28).
+                        child: Builder(
+                          builder: (context) => ValueListenableBuilder<bool>(
                             valueListenable: _onDevHub,
                             builder: (context, devHub, page) =>
                                 ValueListenableBuilder<bool>(

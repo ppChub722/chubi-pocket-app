@@ -815,8 +815,8 @@ class _LoadedState extends State<_Loaded>
     ];
 
     return editScope(
-      SavingOverlay(
-        saving: isSaving,
+      BusyScope(
+        busy: isSaving,
         child: Scaffold(
           appBar: AppTopBar(
             title: _titleForType(l, tx.type),

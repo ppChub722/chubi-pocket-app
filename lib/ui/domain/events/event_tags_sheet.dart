@@ -141,8 +141,8 @@ class EventTagsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final canImportAny = tags.any((t) => t.canImport);
-    return SavingOverlay(
-      saving: busy,
+    return BusyScope(
+      busy: busy,
       child: AppSheetScaffold(
         title: labels.title,
         child: Column(

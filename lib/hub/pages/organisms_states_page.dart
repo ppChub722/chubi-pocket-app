@@ -48,13 +48,6 @@ class _StatesPage extends StatelessWidget {
           note: 'Public so every phase can be shown without a real pull.',
           child: _CoinPhases(),
         ),
-        HubDemo(
-          title: 'SavingOverlay',
-          note:
-              'Dims the child, shows a spinner and blocks input while a '
-              'write is running.',
-          child: _SavingDemo(),
-        ),
 
         HubPlayground(
           title: 'AsyncStateView',
@@ -312,52 +305,6 @@ class _CoinPhases extends StatelessWidget {
           'exit 0.6',
           const CoinDropIndicator(pull: 1, drop: 0.3, exit: 0.6),
         ),
-      ],
-    );
-  }
-}
-
-class _SavingDemo extends StatefulWidget {
-  const _SavingDemo();
-
-  @override
-  State<_SavingDemo> createState() => _SavingDemoState();
-}
-
-class _SavingDemoState extends State<_SavingDemo> {
-  bool _saving = false;
-
-  Future<void> _save() async {
-    setState(() => _saving = true);
-    await Future<void>.delayed(const Duration(seconds: 2));
-    if (mounted) setState(() => _saving = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SavingOverlay(
-          saving: _saving,
-          child: AppCard(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const AppText('Main wallet', role: AppTextRole.title),
-                  const SizedBox(height: AppSpacing.sm),
-                  const AppText('Balance 12,500.00'),
-                  const SizedBox(height: AppSpacing.md),
-                  AppButton(label: 'Tap me while saving', onPressed: () {}),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        AppButton(label: 'Save for 2 s', onPressed: _saving ? null : _save),
       ],
     );
   }

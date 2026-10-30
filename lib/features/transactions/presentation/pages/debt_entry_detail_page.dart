@@ -953,8 +953,8 @@ class _DebtEntryViewState extends State<_DebtEntryView>
             ],
           );
     return editScope(
-      SavingOverlay(
-        saving: isSaving,
+      BusyScope(
+        busy: isSaving,
         child: Scaffold(
           appBar: AppTopBar(
             title: l.debtEntryTitle,

@@ -4,7 +4,7 @@ import '../atoms/app_button.dart';
 import '../atoms/ui_config.dart';
 import '../molecules/confirm_dialog.dart';
 import '../organisms/app_sheet.dart';
-import '../organisms/saving_overlay.dart';
+import '../atoms/busy_scope.dart';
 import '../tokens/app_spacing.dart';
 
 class FormSheet extends StatelessWidget {
@@ -60,8 +60,8 @@ class FormSheet extends StatelessWidget {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _close(context);
       },
-      child: SavingOverlay(
-        saving: saving,
+      child: BusyScope(
+        busy: saving,
         child: AppSheetScaffold(
           title: title,
           footer: Row(

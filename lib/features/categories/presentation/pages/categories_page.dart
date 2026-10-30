@@ -247,8 +247,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
         final users = all.where((c) => !c.isSystem).toList();
         final typeUsers = users.where((c) => c.type == _listType).toList();
         final reorder = _reorder;
-        return SavingOverlay(
-          saving: _savingReorder,
+        return BusyScope(
+          busy: _savingReorder,
           child: PopScope(
             canPop: !_reordering,
             onPopInvokedWithResult: (didPop, _) {

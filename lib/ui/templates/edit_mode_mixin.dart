@@ -9,7 +9,6 @@ import '../../app/shell/tab_nav.dart';
 import '../atoms/busy_scope.dart';
 import '../atoms/ui_config.dart';
 import '../molecules/confirm_dialog.dart';
-import '../organisms/saving_overlay.dart';
 import '../molecules/mode_action_bar.dart';
 import 'edit_draft.dart';
 import 'edit_mode_scope.dart';
@@ -36,12 +35,6 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   bool get canEdit => true;
   bool get isSaving => _saving;
 
-  /// While a save / delete runs, [editScope] puts the page under a locked
-  /// [BusyScope]: every kit input and control on it fades and ignores input,
-  /// and the pressed button (its own `loading`) spins. Off until the
-  /// [SavingOverlay] scrim is removed (next step of the loading round); a
-  /// page may turn it on early by overriding this.
-  bool get lockWhileSaving => false;
   D get original => _draft.original;
   D get working => _draft.working;
   bool get isDirty => _draft.isDirty;
@@ -201,16 +194,13 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) handleBack();
       },
-      // A save / delete in flight dims the page and blocks input
-      // ([SavingOverlay]) — the user never edits under a running call.
+      // A save / delete in flight: every kit control on the page fades and
+      // ignores input, the pressed one spins (no scrim, owner 2026-10-28).
       child: EditModeScope(
         busy: _editing || _saving,
         child: ScaffoldMessenger(
           key: _messengerKey,
-          child: SavingOverlay(
-            saving: _saving,
-            child: BusyScope(busy: lockWhileSaving && _saving, child: child),
-          ),
+          child: BusyScope(busy: _saving, child: child),
         ),
       ),
     );

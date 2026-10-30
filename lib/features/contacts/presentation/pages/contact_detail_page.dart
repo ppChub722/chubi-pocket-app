@@ -450,8 +450,8 @@ class _ContactDetailPageState extends State<ContactDetailPage>
               ),
             ),
       child: editScope(
-        SavingOverlay(
-          saving: isSaving,
+        BusyScope(
+          busy: isSaving,
           child: Scaffold(
             appBar: AppTopBar(
               // Titles never change with the mode — the action bar shows it.

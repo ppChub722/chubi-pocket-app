@@ -105,8 +105,8 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final n = _filled.length;
-    return SavingOverlay(
-      saving: _saving,
+    return BusyScope(
+      busy: _saving,
       child: Scaffold(
         appBar: AppTopBar(
           title: l.pendingAdd,

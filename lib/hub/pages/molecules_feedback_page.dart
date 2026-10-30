@@ -753,32 +753,6 @@ class _FeedbackPageState extends State<_FeedbackPage> {
             ],
           ),
         ),
-        const HubDemo(
-          title: 'LoadingView',
-          note:
-              'Skeletons, never spinners on lists. Default is a generic '
-              'shimmer block; pass skeleton for a row-shaped one.',
-          child: Column(
-            children: [
-              HubCell(
-                caption: 'Default',
-                child: SizedBox(height: 300, child: LoadingView()),
-              ),
-              HubCell(
-                caption: 'Custom skeleton',
-                child: LoadingView(
-                  skeleton: Column(
-                    children: [
-                      SkeletonBox(height: 48),
-                      SizedBox(height: AppSpacing.sm),
-                      SkeletonBox(height: 48),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
         HubDemo(
           title: 'UiConfig / UiStrings / UiErrors / UiErrorInfo / AppUiConfig',
           note:
