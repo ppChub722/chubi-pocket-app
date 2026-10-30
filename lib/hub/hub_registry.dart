@@ -6,6 +6,7 @@ import 'pages/atoms_input_page.dart';
 import 'pages/tokens_basics_page.dart';
 import 'pages/tokens_colors_type_icons_page.dart';
 import 'pages/molecules_feedback_page.dart';
+import 'pages/molecules_loading_states_page.dart';
 import 'pages/organisms_collapsible_section_page.dart';
 import 'pages/organisms_sheets_page.dart';
 import 'pages/organisms_item_picker_page.dart';
@@ -488,6 +489,16 @@ final List<HubPage> hubPages = [
       'AppUiConfig',
     ],
     builder: buildFeedbackPage,
+  ),
+  const HubPage(
+    level: HubLevel.molecules,
+    slug: 'loading-states',
+    title: 'Loading states',
+    summary:
+        'Only the pressed control spins (in place, same size); the rest of a busy region fades (BusyScope); inputs only fade. No scrims.',
+    usedBy: 'every save / delete / live setting (rollout pending)',
+    covers: ['BusyScope', 'BusyLevel', 'BusyLock', 'BusySwap', 'AppOpacity'],
+    builder: buildLoadingStatesPage,
   ),
   const HubPage(
     level: HubLevel.molecules,

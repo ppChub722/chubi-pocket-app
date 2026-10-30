@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'busy_scope.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/color_contrast.dart';
 import 'dashed_rect_border.dart';
@@ -61,8 +62,15 @@ class AppCard extends StatelessWidget {
 
   final BorderRadius? radius;
 
+  // Faded and inert under a locked [BusyScope] (a save runs elsewhere).
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => BusyLock(
+    locked:
+        (onTap != null || onLongPress != null) && BusyScope.isLocked(context),
+    child: _build(context),
+  );
+
+  Widget _build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final theme = Theme.of(context).cardTheme;
     final tint = color == null ? null : ensureContrast(color!, scheme.surface);

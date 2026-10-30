@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../atoms/app_input.dart';
+import '../atoms/busy_scope.dart';
 import 'detail_rows.dart';
 
 class DetailTextField extends StatelessWidget {
@@ -70,24 +71,29 @@ class DetailTextField extends StatelessWidget {
             onTap: onEnterEdit,
           );
         }
-        return DetailStacked(
-          label: label,
-          leading: leading,
-          child: AppInput.inline(
-            editing: editing && !locked,
-            controller: controller,
-            focusNode: focusNode,
-            maxLines: maxLines,
-            maxLength: maxLength,
-            keyboardType: keyboardType,
-            hint: hint,
-            viewHint: viewHint,
-            onEnterEdit: locked ? null : onEnterEdit,
-            onChanged: onChanged,
-            validator: validator,
-            obscurable: obscurable,
-            helper: helper,
-            errorText: errorText,
+        // Label and value fade together under a locked [BusyScope].
+        final usable = !locked && (editing || onEnterEdit != null);
+        return BusyLock(
+          locked: usable && BusyScope.isLocked(context),
+          child: DetailStacked(
+            label: label,
+            leading: leading,
+            child: AppInput.inline(
+              editing: editing && !locked,
+              controller: controller,
+              focusNode: focusNode,
+              maxLines: maxLines,
+              maxLength: maxLength,
+              keyboardType: keyboardType,
+              hint: hint,
+              viewHint: viewHint,
+              onEnterEdit: locked ? null : onEnterEdit,
+              onChanged: onChanged,
+              validator: validator,
+              obscurable: obscurable,
+              helper: helper,
+              errorText: errorText,
+            ),
           ),
         );
       },

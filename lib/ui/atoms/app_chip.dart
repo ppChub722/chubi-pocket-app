@@ -6,7 +6,9 @@ import 'package:flutter/rendering.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/app/app_colors.dart';
+import 'busy_scope.dart';
 import 'dashed_rect_border.dart';
+import '../tokens/app_opacity.dart';
 import '../tokens/chip_size.dart';
 import '../tokens/tone.dart';
 
@@ -68,6 +70,7 @@ class AppChip extends StatelessWidget {
     this.onFill,
     this.bold = false,
     this.bare = false,
+    this.loading = false,
     super.key,
   }) : assert(
          trailing != AppChipTrailing.remove || onRemove != null,
@@ -124,6 +127,10 @@ class AppChip extends StatelessWidget {
   /// No fill, no border, no side padding: a bigger icon and the label in
   /// [color] (a wallet on a list row).
   final bool bare;
+
+  /// The pressed chip while its call runs: a spinner in place of its content,
+  /// same size, taps ignored (see [BusyScope]).
+  final bool loading;
 
   static Color readableOn(Color bg, [Color? preferred]) {
     double ratio(Color a, Color b) {
@@ -183,6 +190,11 @@ class AppChip extends StatelessWidget {
         : fg;
     final iconSize = bare ? size.icon + 5 : size.icon;
     final gap = size.gap;
+    final busy = BusyScope.control(
+      context,
+      loading: loading,
+      enabled: enabled && (onTap != null || onRemove != null),
+    );
     final tap = enabled && !removeOnly
         ? (onTap ?? (trailing == AppChipTrailing.remove ? onRemove : null))
         : null;
@@ -264,29 +276,34 @@ class AppChip extends StatelessWidget {
         : size.padding;
     final borderColor = solid ?? (selected ? tint : scheme.outlineVariant);
     final ringed = dashed && inset && selected;
-    final Widget content = ConstrainedBox(
-      constraints: BoxConstraints(minHeight: height),
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: sidePad,
-          // ▾ / ✕ / 🔒 carry their own air; the filled count badge sits
-          // concentric with the chip's round end instead.
-          right: tail == null || iconOnly || bare
-              ? sidePad
-              : trailing == AppChipTrailing.count
-              ? (height - (size.icon + 2)) / 2
-              : removeOnly
-              ? sidePad - AppSpacing.xs - 4
-              : sidePad - AppSpacing.xs,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (lead != null) ...[lead, if (!iconOnly) SizedBox(width: gap)],
-            if (dotMark != null) ...[dotMark, SizedBox(width: gap)],
-            if (!iconOnly) Flexible(child: text),
-            if (tail != null) ...[SizedBox(width: size.gap), tail],
-          ],
+    final Widget content = BusySwap(
+      loading: busy.spinning,
+      color: fg,
+      spinnerSize: size.icon,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: height),
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: sidePad,
+            // ▾ / ✕ / 🔒 carry their own air; the filled count badge sits
+            // concentric with the chip's round end instead.
+            right: tail == null || iconOnly || bare
+                ? sidePad
+                : trailing == AppChipTrailing.count
+                ? (height - (size.icon + 2)) / 2
+                : removeOnly
+                ? sidePad - AppSpacing.xs - 4
+                : sidePad - AppSpacing.xs,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (lead != null) ...[lead, if (!iconOnly) SizedBox(width: gap)],
+              if (dotMark != null) ...[dotMark, SizedBox(width: gap)],
+              if (!iconOnly) Flexible(child: text),
+              if (tail != null) ...[SizedBox(width: size.gap), tail],
+            ],
+          ),
         ),
       ),
     );
@@ -347,7 +364,9 @@ class AppChip extends StatelessWidget {
       button: tap != null,
       selected: selected,
       enabled: enabled,
-      child: enabled ? chip : Opacity(opacity: 0.38, child: chip),
+      child: enabled
+          ? chip
+          : Opacity(opacity: AppOpacity.disabled, child: chip),
     );
     if (tooltip != null) {
       out = Tooltip(
@@ -359,7 +378,7 @@ class AppChip extends StatelessWidget {
     if (tap != null && height < minTapHeight) {
       out = _ExpandedHit(minHeight: minTapHeight, child: out);
     }
-    return out;
+    return BusyLock(locked: busy.locked, inert: busy.spinning, child: out);
   }
 }
 

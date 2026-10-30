@@ -245,6 +245,7 @@ class AppDetailRow extends StatelessWidget {
     this.helperMaxLines,
     this.dimmed = false,
     this.destructive = false,
+    this.loading = false,
     super.key,
   });
 
@@ -262,9 +263,11 @@ class AppDetailRow extends StatelessWidget {
     IconData? icon,
     bool locked = false,
     double horizontalInset = AppSpacing.lg,
+    bool loading = false,
     Key? key,
   }) => AppDetailRow(
     key: key,
+    loading: loading,
     label: label,
     helper: helper,
     error: error,
@@ -336,6 +339,10 @@ class AppDetailRow extends StatelessWidget {
 
   /// A red label and icon (ยกเลิกการเชื่อม); the row still lives in its card.
   final bool destructive;
+
+  /// The tapped row while its call runs ([AppRow.loading]: the › or the
+  /// value spins in place).
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
@@ -420,6 +427,7 @@ class AppDetailRow extends StatelessWidget {
       horizontalInset: horizontalInset,
       onTap: onTap,
       onLongPress: onLongPress,
+      loading: loading,
     );
   }
 }

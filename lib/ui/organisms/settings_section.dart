@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../atoms/app_button.dart';
+import '../atoms/busy_scope.dart';
 import '../atoms/ui_config.dart';
 import '../tokens/app/app_icons.dart';
 import '../atoms/app_switch.dart';
@@ -127,11 +128,18 @@ class _LiveSettingState<T> extends State<LiveSetting<T>> {
     }
   }
 
-  // The row stays enabled while saving (no grey flash); [_change] ignores
-  // taps until the save is done.
+  // While a save runs the row's own control (switch, ▾ button, ›) spins in
+  // place and the row ignores input ([BusyScope.active]); no grey flash.
+  // [_change] also ignores changes until the save is done.
   @override
-  Widget build(BuildContext context) =>
-      widget.builder(context, _value, widget.save == null ? null : _change);
+  Widget build(BuildContext context) => BusyScope.active(
+    active: _busy,
+    child: widget.builder(
+      context,
+      _value,
+      widget.save == null ? null : _change,
+    ),
+  );
 }
 
 class SettingToggleRow extends StatelessWidget {
@@ -142,6 +150,7 @@ class SettingToggleRow extends StatelessWidget {
     this.caption,
     this.leading,
     this.submits = true,
+    this.loading = false,
     super.key,
   });
 
@@ -150,6 +159,9 @@ class SettingToggleRow extends StatelessWidget {
   final bool value;
   final ValueChanged<bool>? onChanged;
   final bool submits;
+
+  /// Its save runs: the switch spins in place, the row ignores taps.
+  final bool loading;
 
   /// The row's icon. Kit rule (owner 2026-10-28): a card of different
   /// settings (App, Money) gives every row an icon; a list of one kind
@@ -161,12 +173,15 @@ class SettingToggleRow extends StatelessWidget {
     final off =
         onChanged == null || (submits && ConnectionScope.isOffline(context));
     final cb = off ? null : onChanged;
-    return AppDetailRow(
-      leading: leading,
-      label: label,
-      helper: caption,
-      onTap: cb == null ? null : () => cb(!value),
-      trailing: AppSwitch(value: value, onChanged: cb, semanticLabel: label),
+    return BusyScope.active(
+      active: loading,
+      child: AppDetailRow(
+        leading: leading,
+        label: label,
+        helper: caption,
+        onTap: cb == null ? null : () => cb(!value),
+        trailing: AppSwitch(value: value, onChanged: cb, semanticLabel: label),
+      ),
     );
   }
 }
@@ -186,11 +201,15 @@ class SettingDropdownRow<T> extends StatefulWidget {
     this.icon,
     this.iconColor,
     this.submits = true,
+    this.loading = false,
     super.key,
   });
 
   final String label;
   final String value;
+
+  /// Its save runs: the ▾ button spins in place, the row ignores taps.
+  final bool loading;
   final List<SheetOption<T>> options;
   final T? selected;
   final ValueChanged<T>? onSelected;
@@ -220,25 +239,28 @@ class _SettingDropdownRowState<T> extends State<SettingDropdownRow<T>> {
     final cb = widget.submits && ConnectionScope.isOffline(context)
         ? null
         : widget.onSelected;
-    return AppDetailRow(
-      leading: widget.leading,
-      label: widget.label,
-      helper: widget.helper,
-      onTap: cb == null ? null : _toggle,
-      trailing: OptionMenuAnchor<T>(
-        controller: _menu,
-        alignEnd: true,
-        options: widget.options,
-        selected: widget.selected,
-        onSelected: (v) => cb?.call(v),
-        builder: (context, toggle) => AppButton(
-          label: widget.value,
-          icon: widget.icon,
-          iconColor: widget.iconColor,
-          variant: AppButtonVariant.outlined,
-          size: AppButtonSize.control,
-          trailingIcon: AppIcons.dropdown,
-          onPressed: cb == null ? null : toggle,
+    return BusyScope.active(
+      active: widget.loading,
+      child: AppDetailRow(
+        leading: widget.leading,
+        label: widget.label,
+        helper: widget.helper,
+        onTap: cb == null ? null : _toggle,
+        trailing: OptionMenuAnchor<T>(
+          controller: _menu,
+          alignEnd: true,
+          options: widget.options,
+          selected: widget.selected,
+          onSelected: (v) => cb?.call(v),
+          builder: (context, toggle) => AppButton(
+            label: widget.value,
+            icon: widget.icon,
+            iconColor: widget.iconColor,
+            variant: AppButtonVariant.outlined,
+            size: AppButtonSize.control,
+            trailingIcon: AppIcons.dropdown,
+            onPressed: cb == null ? null : toggle,
+          ),
         ),
       ),
     );
@@ -349,10 +371,14 @@ class SettingPickRow extends StatelessWidget {
     this.leading,
     this.onTap,
     this.submits = true,
+    this.loading = false,
     super.key,
   });
 
   final String label;
+
+  /// Its save runs: the › spins in place, the row ignores taps.
+  final bool loading;
 
   /// The current value (text, swatches …), before the ›.
   final Widget? value;
@@ -373,6 +399,7 @@ class SettingPickRow extends StatelessWidget {
       trailing: value,
       showChevron: onTap != null,
       onTap: cb,
+      loading: loading,
     );
   }
 }
@@ -527,10 +554,14 @@ class SettingMenuRow<T> extends StatefulWidget {
     this.note,
     this.compact = false,
     this.submits = true,
+    this.loading = false,
     super.key,
   });
 
   final String label;
+
+  /// Its save runs: the ▾ button spins in place, the row ignores taps.
+  final bool loading;
 
   /// A pick is saved at once, so the row is read-only while offline.
   final bool submits;
@@ -642,59 +673,69 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
         );
     final focused = _focus.hasFocus;
     final enabled = _onSelected != null;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: enabled ? _focus.requestFocus : null,
-      child: Container(
-        height: size.heightOf(context),
-        padding: EdgeInsetsDirectional.only(start: size.padding),
-        decoration: ShapeDecoration(
-          shape: StadiumBorder(
-            side: BorderSide(
-              color: focused ? scheme.primary : scheme.outline,
-              width: focused ? 1.5 : 1,
+    final busy = BusyScope.control(context, enabled: enabled);
+    return BusyLock(
+      locked: busy.locked,
+      inert: busy.spinning,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: enabled ? _focus.requestFocus : null,
+        child: Container(
+          height: size.heightOf(context),
+          padding: EdgeInsetsDirectional.only(start: size.padding),
+          decoration: ShapeDecoration(
+            shape: StadiumBorder(
+              side: BorderSide(
+                color: focused ? scheme.primary : scheme.outline,
+                width: focused ? 1.5 : 1,
+              ),
             ),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IntrinsicWidth(
-              child: TextField(
-                controller: _text,
-                focusNode: _focus,
-                keyboardType: custom.keyboardType,
-                inputFormatters: custom.inputFormatters,
-                textAlign: TextAlign.end,
-                textInputAction: TextInputAction.done,
-                readOnly: !enabled,
-                style: style,
-                onSubmitted: (_) => _commit(),
-                decoration: InputDecoration.collapsed(
-                  hintText: custom.hint,
-                  hintStyle: style?.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IntrinsicWidth(
+                child: TextField(
+                  controller: _text,
+                  focusNode: _focus,
+                  keyboardType: custom.keyboardType,
+                  inputFormatters: custom.inputFormatters,
+                  textAlign: TextAlign.end,
+                  textInputAction: TextInputAction.done,
+                  readOnly: !enabled || busy.locked,
+                  style: style,
+                  onSubmitted: (_) => _commit(),
+                  decoration: InputDecoration.collapsed(
+                    hintText: custom.hint,
+                    hintStyle: style?.copyWith(
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+                    ),
                   ),
                 ),
               ),
-            ),
-            if (custom.suffix case final suffix?) Text(suffix, style: style),
-            InkResponse(
-              onTap: enabled ? toggle : null,
-              radius: 18,
-              child: Padding(
-                padding: EdgeInsetsDirectional.only(
-                  start: size.gap,
-                  end: size.padding,
-                ),
-                child: Icon(
-                  AppIcons.dropdown,
-                  size: size.icon + 4,
-                  color: scheme.primary,
+              if (custom.suffix case final suffix?) Text(suffix, style: style),
+              InkResponse(
+                onTap: enabled ? toggle : null,
+                radius: 18,
+                child: Padding(
+                  padding: EdgeInsetsDirectional.only(
+                    start: size.gap,
+                    end: size.padding,
+                  ),
+                  child: BusySwap(
+                    loading: busy.spinning,
+                    color: scheme.primary,
+                    spinnerSize: size.icon,
+                    child: Icon(
+                      AppIcons.dropdown,
+                      size: size.icon + 4,
+                      color: scheme.primary,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -749,42 +790,48 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
                 ),
           );
     if (widget.compact) {
-      return Row(
-        children: [
-          Expanded(
-            child: Text(
-              widget.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+      return BusyScope.active(
+        active: widget.loading,
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                widget.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+              ),
             ),
-          ),
-          value,
-          if (noteText != null) ...[
-            const SizedBox(width: AppSpacing.sm),
-            noteText,
+            value,
+            if (noteText != null) ...[
+              const SizedBox(width: AppSpacing.sm),
+              noteText,
+            ],
           ],
-        ],
+        ),
       );
     }
-    return AppDetailRow(
-      label: widget.label,
-      helper: widget.helper,
-      onTap: cb == null || _typing
-          ? null
-          : () => _menu.isOpen ? _menu.close() : _menu.open(),
-      trailing: noteText == null
-          ? value
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                value,
-                const SizedBox(width: AppSpacing.sm),
-                noteText,
-              ],
-            ),
+    return BusyScope.active(
+      active: widget.loading,
+      child: AppDetailRow(
+        label: widget.label,
+        helper: widget.helper,
+        onTap: cb == null || _typing
+            ? null
+            : () => _menu.isOpen ? _menu.close() : _menu.open(),
+        trailing: noteText == null
+            ? value
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  value,
+                  const SizedBox(width: AppSpacing.sm),
+                  noteText,
+                ],
+              ),
+      ),
     );
   }
 }

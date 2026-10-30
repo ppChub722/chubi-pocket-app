@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../atoms/app_input.dart';
+import '../atoms/busy_scope.dart';
 import '../atoms/input_formatters.dart';
 export '../atoms/input_formatters.dart' show ThousandsInputFormatter;
 import 'package:intl/intl.dart';
@@ -73,79 +74,85 @@ class AmountInput extends StatelessWidget {
       fontWeight: FontWeight.w700,
       color: accent ?? scheme.onSurface,
     );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AppInput(
-          controller: controller,
-          enabled: enabled,
-          autofocus: autofocus,
-          style: big,
-          label: label,
-          hint: '0.00',
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [
-            ThousandsInputFormatter(allowNegative: allowNegative),
-          ],
-          validator: validator,
-          onChanged: onChanged,
-          prefix: Padding(
-            padding: const EdgeInsets.only(
-              left: AppSpacing.lg,
-              right: AppSpacing.sm,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (allowNegative) ...[
-                  AppChip(
-                    label: '±',
-                    tooltip: '+ / −',
-                    bold: true,
-                    enabled: enabled,
-                    onTap: enabled ? _toggleSign : null,
+    // The amount and its quick-fill chips fade as one under a locked
+    // [BusyScope].
+    return BusyLock(
+      locked: enabled && BusyScope.isLocked(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppInput(
+            controller: controller,
+            enabled: enabled,
+            autofocus: autofocus,
+            style: big,
+            label: label,
+            hint: '0.00',
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              ThousandsInputFormatter(allowNegative: allowNegative),
+            ],
+            validator: validator,
+            onChanged: onChanged,
+            prefix: Padding(
+              padding: const EdgeInsets.only(
+                left: AppSpacing.lg,
+                right: AppSpacing.sm,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (allowNegative) ...[
+                    AppChip(
+                      label: '±',
+                      tooltip: '+ / −',
+                      bold: true,
+                      enabled: enabled,
+                      onTap: enabled ? _toggleSign : null,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                  ],
+                  Text(
+                    currencySymbol ??
+                        UiConfig.stringsOf(context).currencySymbol,
+                    style: big,
                   ),
-                  const SizedBox(width: AppSpacing.sm),
                 ],
-                Text(
-                  currencySymbol ?? UiConfig.stringsOf(context).currencySymbol,
-                  style: big,
-                ),
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.lg,
+            ),
+          ),
+          if (quickFills.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(
+              spacing: AppSpacing.sm,
+              children: [
+                for (final q in quickFills)
+                  AppChip(
+                    label: q.label,
+                    enabled: enabled,
+                    onTap: enabled
+                        ? () {
+                            final text = format(q.amount);
+                            controller.value = TextEditingValue(
+                              text: text,
+                              selection: TextSelection.collapsed(
+                                offset: text.length,
+                              ),
+                            );
+                            onChanged?.call(text);
+                          }
+                        : null,
+                  ),
               ],
             ),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.lg,
-          ),
-        ),
-        if (quickFills.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.sm),
-          Wrap(
-            spacing: AppSpacing.sm,
-            children: [
-              for (final q in quickFills)
-                AppChip(
-                  label: q.label,
-                  enabled: enabled,
-                  onTap: enabled
-                      ? () {
-                          final text = format(q.amount);
-                          controller.value = TextEditingValue(
-                            text: text,
-                            selection: TextSelection.collapsed(
-                              offset: text.length,
-                            ),
-                          );
-                          onChanged?.call(text);
-                        }
-                      : null,
-                ),
-            ],
-          ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }

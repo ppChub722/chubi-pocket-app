@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'busy_scope.dart';
 import '../tokens/app/app_icons.dart';
 
 /// The auto toggle after an amount that can fill itself (owner 2026-10-21;
@@ -25,8 +26,14 @@ class AutoToggleChip extends StatelessWidget {
 
   static const double size = 26;
 
+  // Faded and inert under a locked [BusyScope] (a save runs elsewhere).
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => BusyLock(
+    locked: onChanged != null && BusyScope.isLocked(context),
+    child: _build(context),
+  );
+
+  Widget _build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final on = value;
     final chip = Semantics(

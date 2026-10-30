@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 import 'app_input_framed.dart';
+import 'busy_scope.dart';
 import 'app_input_type.dart';
 import 'ui_config.dart';
 
@@ -460,17 +461,33 @@ class _AppInputState extends State<AppInput> {
   static UnderlineInputBorder _underline(Color c) =>
       UnderlineInputBorder(borderSide: BorderSide(color: c));
 
+  // A locked [BusyScope] (a save runs) fades the whole input, label too, and
+  // makes it read-only; the value stays readable. No spinner on inputs. A
+  // value that can't be changed anyway (locked, view mode, read-only with no
+  // tap) is text, not a control: it stays as it is.
+  bool get _busyLocked {
+    final w = widget;
+    final usable = switch (w._kind) {
+      _Kind.inline || _Kind.title => w.editing || w.onEnterEdit != null,
+      _ => !w.readOnly || w.onTap != null,
+    };
+    return w.enabled && !w.locked && usable && BusyScope.isLocked(context);
+  }
+
   @override
-  Widget build(BuildContext context) => switch (widget._kind) {
-    _Kind.field => _buildField(context),
-    _Kind.card => _withLabel(context, _buildField(context)),
-    _Kind.inline => ListenableBuilder(
-      listenable: widget.controller!,
-      builder: (context, _) => _buildInline(context),
-    ),
-    _Kind.title => _withLabel(context, _buildTitle(context)),
-    _Kind.search => _buildSearch(context),
-  };
+  Widget build(BuildContext context) => BusyLock(
+    locked: _busyLocked,
+    child: switch (widget._kind) {
+      _Kind.field => _buildField(context),
+      _Kind.card => _withLabel(context, _buildField(context)),
+      _Kind.inline => ListenableBuilder(
+        listenable: widget.controller!,
+        builder: (context, _) => _buildInline(context),
+      ),
+      _Kind.title => _withLabel(context, _buildTitle(context)),
+      _Kind.search => _buildSearch(context),
+    },
+  );
 
   Widget _withLabel(BuildContext context, Widget field) {
     final w = widget;
@@ -596,7 +613,7 @@ class _AppInputState extends State<AppInput> {
     final field = TextFormField(
       controller: w.controller,
       focusNode: w.focusNode,
-      readOnly: !editing,
+      readOnly: !editing || _busyLocked,
       minLines: 1,
       maxLines: w.maxLines,
       maxLength: w.maxLength,
@@ -667,7 +684,7 @@ class _AppInputState extends State<AppInput> {
     final field = TextFormField(
       controller: w.controller,
       focusNode: w.focusNode,
-      readOnly: !editing,
+      readOnly: !editing || _busyLocked,
       maxLength: w.maxLength,
       minLines: 1,
       maxLines: w.maxLines,
@@ -756,6 +773,7 @@ class _AppInputState extends State<AppInput> {
       builder: (context, value, _) {
         final field = TextField(
           controller: controller,
+          readOnly: _busyLocked,
           autofocus: w.autofocus,
           textInputAction: TextInputAction.search,
           // Fills the 40-high box (without this the grey capsule only wraps its

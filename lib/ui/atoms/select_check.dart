@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'busy_scope.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
@@ -18,8 +19,14 @@ class SelectCheck extends StatelessWidget {
   final double size;
   final String? tooltip;
 
+  // Faded and inert under a locked [BusyScope] (a save runs elsewhere).
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => BusyLock(
+    locked: onTap != null && BusyScope.isLocked(context),
+    child: _build(context),
+  );
+
+  Widget _build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final filled = value != false;
     final check = AnimatedContainer(

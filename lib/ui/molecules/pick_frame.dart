@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/busy_scope.dart';
 import '../atoms/app_icon_button.dart';
 import '../atoms/dashed_rect_border.dart';
 import '../tokens/app/app_icons.dart';
@@ -18,8 +19,12 @@ class PickFrame extends StatelessWidget {
   /// The picked items, or a [PickFramePrompt] while nothing is picked.
   final Widget child;
 
+  // Faded and inert under a locked [BusyScope] (a save runs elsewhere).
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      BusyLock(locked: BusyScope.isLocked(context), child: _build(context));
+
+  Widget _build(BuildContext context) {
     return DashedRectBorder(
       color: Theme.of(context).colorScheme.outline,
       strokeWidth: 1,

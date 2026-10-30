@@ -38,7 +38,12 @@ class CheckCircleButton extends StatelessWidget {
     final onFill = ThemeData.estimateBrightnessForColor(fill) == Brightness.dark
         ? Colors.white
         : Colors.black;
-    final change = loading ? null : onChanged;
+    final busy = BusyScope.control(
+      context,
+      loading: loading,
+      enabled: onChanged != null,
+    );
+    final change = busy.spinning ? null : onChanged;
     Widget box = Material(
       type: MaterialType.transparency,
       child: InkResponse(
@@ -56,12 +61,14 @@ class CheckCircleButton extends StatelessWidget {
               width: 2,
             ),
           ),
-          child: loading
-              ? Padding(
-                  padding: EdgeInsets.all(size * 0.25),
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: checked ? onFill : fill,
+          child: busy.spinning
+              ? Center(
+                  child: SizedBox.square(
+                    dimension: size * 0.5,
+                    child: AppSpinner(
+                      size: AppSpinnerSize.small,
+                      color: checked ? onFill : fill,
+                    ),
                   ),
                 )
               : checked
@@ -71,6 +78,10 @@ class CheckCircleButton extends StatelessWidget {
       ),
     );
     if (tooltip != null) box = Tooltip(message: tooltip!, child: box);
-    return Semantics(checked: checked, button: true, child: box);
+    return BusyLock(
+      locked: busy.locked,
+      inert: busy.spinning,
+      child: Semantics(checked: checked, button: true, child: box),
+    );
   }
 }

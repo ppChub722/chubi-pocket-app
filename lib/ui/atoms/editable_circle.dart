@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'busy_scope.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/avatar_metrics.dart';
 import 'corner_badge.dart';
@@ -25,8 +26,15 @@ class EditableCircle extends StatelessWidget {
 
   final VoidCallback? onLongPress;
 
+  // Faded and inert under a locked [BusyScope] (a save runs elsewhere).
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => BusyLock(
+    locked:
+        (onTap != null || onLongPress != null) && BusyScope.isLocked(context),
+    child: _build(context),
+  );
+
+  Widget _build(BuildContext context) {
     final stack = CornerBadge(
       size: size,
       icon: AppIcons.editBadge,

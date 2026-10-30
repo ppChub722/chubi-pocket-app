@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import '../tokens/app/app_icons.dart';
 import 'app_chip.dart';
 import '../tokens/chip_size.dart';
+import '../tokens/app_opacity.dart';
 import '../tokens/hero_colors.dart';
+import 'app_spinner.dart';
+import 'busy_scope.dart';
 import 'app_icon.dart';
 import 'count_badge.dart';
 
@@ -26,6 +29,7 @@ class AppIconButton extends StatelessWidget {
     required this.icon,
     required this.onPressed,
     this.tooltip,
+    this.loading = false,
     this.badgeCount = 0,
     this.destructive = false,
     this.selected = false,
@@ -41,6 +45,7 @@ class AppIconButton extends StatelessWidget {
   const AppIconButton.edit({
     required this.onPressed,
     this.tooltip,
+    this.loading = false,
     this.size,
     super.key,
   }) : icon = AppIcons.edit,
@@ -59,6 +64,7 @@ class AppIconButton extends StatelessWidget {
     required IconData icon,
     required VoidCallback? onPressed,
     String? tooltip,
+    bool loading,
     double? size,
     Color? color,
     bool selected,
@@ -70,6 +76,7 @@ class AppIconButton extends StatelessWidget {
     required IconData icon,
     required VoidCallback? onPressed,
     String? tooltip,
+    bool loading,
     double? size,
     Key? key,
   }) = _FilledIconButton;
@@ -79,6 +86,7 @@ class AppIconButton extends StatelessWidget {
     required IconData icon,
     required VoidCallback? onPressed,
     String? tooltip,
+    bool loading,
     Key? key,
   }) = _FabIconButton;
 
@@ -87,6 +95,7 @@ class AppIconButton extends StatelessWidget {
     required this.icon,
     required this.onPressed,
     this.tooltip,
+    this.loading = false,
     this.size,
     this.selected = false,
     super.key,
@@ -102,6 +111,7 @@ class AppIconButton extends StatelessWidget {
     required this.icon,
     required this.onPressed,
     this.tooltip,
+    this.loading = false,
     this.iconSize,
     this.color,
     this.dense = false,
@@ -117,6 +127,7 @@ class AppIconButton extends StatelessWidget {
   const AppIconButton.close({
     required this.onPressed,
     this.tooltip,
+    this.loading = false,
     this.iconSize,
     this.color,
     this.dense = false,
@@ -133,6 +144,7 @@ class AppIconButton extends StatelessWidget {
   const AppIconButton.clear({
     required this.onPressed,
     this.tooltip,
+    this.loading = false,
     this.iconSize,
     this.color,
     this.dense = false,
@@ -149,6 +161,7 @@ class AppIconButton extends StatelessWidget {
   const AppIconButton.more({
     required this.onPressed,
     this.tooltip,
+    this.loading = false,
     this.iconSize,
     this.color,
     this.dense = false,
@@ -165,6 +178,7 @@ class AppIconButton extends StatelessWidget {
   const AppIconButton.back({
     required this.onPressed,
     this.tooltip,
+    this.loading = false,
     this.iconSize,
     this.color,
     this.dense = false,
@@ -195,23 +209,48 @@ class AppIconButton extends StatelessWidget {
   final IconChipActivity activity;
   final double? progress;
 
+  /// The pressed button while its call runs: a spinner in place of the
+  /// glyph, same size, presses ignored (see [BusyScope]).
+  final bool loading;
+
+  static void _ignore() {}
+
+  /// The callback for Material's own buttons: kept non-null while spinning
+  /// (enabled colours), the lock drops the presses.
+  VoidCallback? _press(bool spinning) => spinning ? _ignore : onPressed;
+
   @override
   Widget build(BuildContext context) {
+    final busy = BusyScope.control(
+      context,
+      loading: loading,
+      enabled: onPressed != null,
+    );
     if (_flat) {
       final target = dense ? targetDense : targetFlat;
-      return IconButton(
-        tooltip: tooltip,
-        onPressed: onPressed,
-        padding: EdgeInsets.zero,
-        constraints: BoxConstraints.tightFor(width: target, height: target),
-        color: color,
-        icon: AppIcon(icon, size: iconSize ?? glyphFlat),
+      final glyph = iconSize ?? glyphFlat;
+      return BusyLock(
+        locked: busy.locked,
+        inert: busy.spinning,
+        child: IconButton(
+          tooltip: tooltip,
+          onPressed: _press(busy.spinning),
+          padding: EdgeInsets.zero,
+          constraints: BoxConstraints.tightFor(width: target, height: target),
+          color: color,
+          icon: BusySwap(
+            loading: busy.spinning,
+            color: color,
+            spinnerSize: glyph * 0.8,
+            child: AppIcon(icon, size: glyph),
+          ),
+        ),
       );
     }
     final size = resolveSize(context, this.size);
     final scheme = Theme.of(context).colorScheme;
     final hero = HeroColors.maybeOf(context);
-    final enabled = onPressed != null;
+    final enabled = onPressed != null || busy.spinning;
     final iconColor = destructive
         ? scheme.error
         : selected
@@ -238,7 +277,7 @@ class AppIconButton extends StatelessWidget {
     );
 
     final circle = Opacity(
-      opacity: enabled ? 1 : 0.38,
+      opacity: enabled ? 1 : AppOpacity.disabled,
       child: Material(
         color: destructive
             ? Color.alphaBlend(
@@ -261,14 +300,19 @@ class AppIconButton extends StatelessWidget {
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: onPressed,
+          onTap: busy.spinning ? null : onPressed,
           child: SizedBox(
             width: size,
             height: size,
             child: Stack(
               alignment: Alignment.center,
               children: [
-                glyph,
+                BusySwap(
+                  loading: busy.spinning,
+                  color: iconColor,
+                  spinnerSize: glyphSize * 0.8,
+                  child: glyph,
+                ),
                 if (working)
                   Positioned(
                     bottom: size * 0.1,
@@ -300,7 +344,7 @@ class AppIconButton extends StatelessWidget {
       child: chip,
     );
     if (tooltip != null) chip = Tooltip(message: tooltip!, child: chip);
-    return chip;
+    return BusyLock(locked: busy.locked, inert: busy.spinning, child: chip);
   }
 }
 
@@ -309,6 +353,7 @@ class _FilledIconButton extends AppIconButton {
     required super.icon,
     required super.onPressed,
     super.tooltip,
+    super.loading,
     super.size,
     super.key,
   }) : super._bare();
@@ -317,7 +362,12 @@ class _FilledIconButton extends AppIconButton {
   Widget build(BuildContext context) {
     final size = AppIconButton.resolveSize(context, this.size);
     final scheme = Theme.of(context).colorScheme;
-    final enabled = onPressed != null;
+    final busy = BusyScope.control(
+      context,
+      loading: loading,
+      enabled: onPressed != null,
+    );
+    final enabled = onPressed != null || busy.spinning;
     Widget button = Material(
       color: enabled
           ? scheme.primary
@@ -325,21 +375,30 @@ class _FilledIconButton extends AppIconButton {
       shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onPressed,
+        onTap: busy.spinning ? null : onPressed,
         child: SizedBox.square(
           dimension: size,
-          child: Icon(
-            icon,
-            size: size * 0.6,
-            color: enabled
-                ? scheme.onPrimary
-                : scheme.onSurface.withValues(alpha: 0.38),
+          child: BusySwap(
+            loading: busy.spinning,
+            color: scheme.onPrimary,
+            spinnerSize: size * 0.5,
+            child: Icon(
+              icon,
+              size: size * 0.6,
+              color: enabled
+                  ? scheme.onPrimary
+                  : scheme.onSurface.withValues(alpha: AppOpacity.disabled),
+            ),
           ),
         ),
       ),
     );
     if (tooltip != null) button = Tooltip(message: tooltip!, child: button);
-    return Semantics(button: true, child: button);
+    return BusyLock(
+      locked: busy.locked,
+      inert: busy.spinning,
+      child: Semantics(button: true, child: button),
+    );
   }
 }
 
@@ -348,16 +407,33 @@ class _FabIconButton extends AppIconButton {
     required super.icon,
     required super.onPressed,
     super.tooltip,
+    super.loading,
     super.key,
   }) : super._bare();
 
   @override
-  Widget build(BuildContext context) => FloatingActionButton(
-    heroTag: null,
-    tooltip: tooltip,
-    onPressed: onPressed,
-    child: Icon(icon),
-  );
+  Widget build(BuildContext context) {
+    final busy = BusyScope.control(
+      context,
+      loading: loading,
+      enabled: onPressed != null,
+    );
+    return BusyLock(
+      locked: busy.locked,
+      inert: busy.spinning,
+      child: FloatingActionButton(
+        heroTag: null,
+        tooltip: tooltip,
+        onPressed: _press(busy.spinning),
+        child: BusySwap(
+          loading: busy.spinning,
+          color: Theme.of(context).colorScheme.onPrimaryContainer,
+          spinnerSize: AppSpinnerSize.medium.dimension,
+          child: Icon(icon),
+        ),
+      ),
+    );
+  }
 }
 
 class _BareIconButton extends AppIconButton {
@@ -365,6 +441,7 @@ class _BareIconButton extends AppIconButton {
     required super.icon,
     required super.onPressed,
     super.tooltip,
+    super.loading,
     super.size,
     super.color,
     super.selected,
@@ -375,25 +452,30 @@ class _BareIconButton extends AppIconButton {
   Widget build(BuildContext context) {
     final size = AppIconButton.resolveSize(context, this.size);
     final scheme = Theme.of(context).colorScheme;
-    final enabled = onPressed != null;
+    final busy = BusyScope.control(
+      context,
+      loading: loading,
+      enabled: onPressed != null,
+    );
+    final enabled = onPressed != null || busy.spinning;
+    final tint = selected ? scheme.primary : color ?? scheme.onSurfaceVariant;
     Widget button = Opacity(
-      opacity: enabled ? 1 : 0.38,
+      opacity: enabled ? 1 : AppOpacity.disabled,
       child: Material(
         type: selected ? MaterialType.circle : MaterialType.transparency,
         color: selected ? scheme.primaryContainer : null,
         child: InkResponse(
-          onTap: onPressed,
+          onTap: busy.spinning ? null : onPressed,
           radius: size / 2,
           child: SizedBox(
             width: size,
             height: size,
             child: Center(
-              child: Icon(
-                icon,
-                size: size * 0.55,
-                color: selected
-                    ? scheme.primary
-                    : color ?? scheme.onSurfaceVariant,
+              child: BusySwap(
+                loading: busy.spinning,
+                color: tint,
+                spinnerSize: size * 0.45,
+                child: Icon(icon, size: size * 0.55, color: tint),
               ),
             ),
           ),
@@ -401,6 +483,6 @@ class _BareIconButton extends AppIconButton {
       ),
     );
     if (tooltip != null) button = Tooltip(message: tooltip!, child: button);
-    return button;
+    return BusyLock(locked: busy.locked, inert: busy.spinning, child: button);
   }
 }

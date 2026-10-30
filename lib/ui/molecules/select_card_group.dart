@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/busy_scope.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 
@@ -39,8 +40,14 @@ class SelectCardGroup<T> extends StatelessWidget {
   static const washFrom = 0.18;
   static const washTo = 0.06;
 
+  // Faded and inert under a locked [BusyScope] (a save runs elsewhere).
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => BusyLock(
+    locked: onChanged != null && BusyScope.isLocked(context),
+    child: _build(context),
+  );
+
+  Widget _build(BuildContext context) {
     final perRow = columns;
     if (perRow == null || perRow <= 0) {
       return _row(context, options, stacked: false);

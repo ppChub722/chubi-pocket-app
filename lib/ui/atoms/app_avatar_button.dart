@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'busy_scope.dart';
+
 class AppAvatarButton extends StatelessWidget {
   const AppAvatarButton({
     required this.child,
@@ -19,8 +21,14 @@ class AppAvatarButton extends StatelessWidget {
   final String? tooltip;
   final double size;
 
+  // Faded and inert under a locked [BusyScope] (a save runs elsewhere).
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => BusyLock(
+    locked: onTap != null && BusyScope.isLocked(context),
+    child: _build(context),
+  );
+
+  Widget _build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final radius = outline ?? BorderRadius.circular(size);
     final frame = Container(

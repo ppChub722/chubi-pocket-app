@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/busy_scope.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 
@@ -29,8 +30,14 @@ class SegmentedChoice<T> extends StatelessWidget {
   /// (ภาพรวม | ปฏิทิน).
   final bool expand;
 
+  // Faded and inert under a locked [BusyScope] (a save runs elsewhere).
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => BusyLock(
+    locked: enabled && BusyScope.isLocked(context),
+    child: _build(context),
+  );
+
+  Widget _build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final text = expand ? textTheme.titleSmall : textTheme.labelMedium;

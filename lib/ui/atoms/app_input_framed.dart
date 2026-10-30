@@ -4,7 +4,9 @@ import 'package:flutter/rendering.dart' show OverflowBoxFit;
 
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
+import '../tokens/app_opacity.dart';
 import 'app_icon_button.dart';
+import 'busy_scope.dart';
 import 'app_input_type.dart';
 import 'input_formatters.dart';
 import 'ui_config.dart';
@@ -233,6 +235,11 @@ class _FramedInputState extends State<FramedInput> {
     final style = w.style ?? text.bodyLarge;
 
     if (w.locked) return _locked(context, style);
+    // A locked [BusyScope] (a save runs): read-only and faded, value kept.
+    final busyLocked =
+        w.enabled &&
+        (!w.readOnly || w.onTap != null) &&
+        BusyScope.isLocked(context);
 
     final symbol = w.type == AppInputType.amount
         ? (w.currencySymbol ?? UiConfig.stringsOf(context).currencySymbol)
@@ -297,7 +304,7 @@ class _FramedInputState extends State<FramedInput> {
           controller: _c,
           focusNode: _focus,
           enabled: w.enabled,
-          readOnly: w.readOnly,
+          readOnly: w.readOnly || busyLocked,
           autofocus: w.autofocus,
           keyboardType: keyboard,
           textInputAction: w.textInputAction,
@@ -481,7 +488,12 @@ class _FramedInputState extends State<FramedInput> {
             child: decorator,
           );
         }
-        return w.enabled ? decorator : Opacity(opacity: 0.38, child: decorator);
+        return BusyLock(
+          locked: busyLocked,
+          child: w.enabled
+              ? decorator
+              : Opacity(opacity: AppOpacity.disabled, child: decorator),
+        );
       },
     );
   }

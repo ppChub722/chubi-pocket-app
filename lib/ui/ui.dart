@@ -6,6 +6,8 @@ export 'atoms/app_card.dart';
 export 'atoms/corner_badge.dart';
 export 'atoms/app_icon.dart';
 export 'atoms/app_spinner.dart';
+export 'atoms/busy_scope.dart';
+export 'tokens/app_opacity.dart';
 export 'atoms/shown_tween_builder.dart';
 export 'tokens/avatar_metrics.dart';
 export 'tokens/icon_size.dart';

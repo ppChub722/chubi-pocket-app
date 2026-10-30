@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/busy_scope.dart';
 import '../atoms/corner_badge.dart';
+import '../tokens/app_opacity.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/avatar_metrics.dart';
@@ -133,6 +135,7 @@ class AppRow extends StatelessWidget {
     this.horizontalInset = AppSpacing.lg,
     this.onTap,
     this.onLongPress,
+    this.loading = false,
     super.key,
   });
 
@@ -194,6 +197,14 @@ class AppRow extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
 
+  /// The tapped row while its call runs: taps ignored, not faded, and a
+  /// spinner in place of the first of chevron › / [trailingIcon] /
+  /// [trailing] / [leading] (same size and place). Under an active
+  /// [BusyScope] the row is inert and only a chevron spins (its own control,
+  /// a switch or a ▾ button, spins itself); under a locked one a row that
+  /// can be tapped fades.
+  final bool loading;
+
   static final WidgetStateProperty<Color?> _pressOnly =
       WidgetStateProperty.resolveWith(
         (states) =>
@@ -217,6 +228,25 @@ class AppRow extends StatelessWidget {
         : null;
     final muted = scheme.onSurfaceVariant;
     final square = leadingSize ?? d.leadingSize;
+    final level = BusyScope.of(context);
+    final interactive =
+        !disabled &&
+        (onTap != null || onLongPress != null || actions.isNotEmpty);
+    // Which slot shows the spinner: the first of › / icon / value / leading.
+    final spinChevron = chevron && (loading || level == BusyLevel.active);
+    final spinIcon = loading && !chevron && trailingIcon != null;
+    final spinValue =
+        loading && !chevron && trailingIcon == null && trailing != null;
+    final spinLead =
+        loading &&
+        !chevron &&
+        trailingIcon == null &&
+        trailing == null &&
+        leading != null;
+    final inert = loading || level == BusyLevel.active;
+    final locked = !inert && interactive && level == BusyLevel.locked;
+    Widget swap(bool on, Widget child) =>
+        BusySwap(loading: on, color: muted, child: child);
 
     Widget? lead = leading;
     if (lead != null && d.iconSize != null) {
@@ -253,6 +283,7 @@ class AppRow extends StatelessWidget {
         child: lead,
       );
     }
+    if (lead != null) lead = swap(spinLead, lead);
 
     final subtitle = this.subtitle;
     final text = Column(
@@ -276,16 +307,19 @@ class AppRow extends StatelessWidget {
           if (trailing != null) ...[
             SizedBox(width: d.valueGap),
             if (maxWidth == null)
-              trailing
+              swap(spinValue, trailing)
             else
               ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: maxWidth),
-                child: trailing,
+                child: swap(spinValue, trailing),
               ),
           ],
           if (trailingIcon != null) ...[
             const SizedBox(width: AppSpacing.xs),
-            Icon(trailingIcon, size: 16, color: trailingIconColor ?? muted),
+            swap(
+              spinIcon,
+              Icon(trailingIcon, size: 16, color: trailingIconColor ?? muted),
+            ),
           ],
           if (actions.isNotEmpty) ...[
             const SizedBox(width: AppSpacing.sm),
@@ -305,7 +339,7 @@ class AppRow extends StatelessWidget {
           ],
           if (chevron) ...[
             const SizedBox(width: AppSpacing.xs),
-            Icon(AppIcons.chevronRight, color: muted),
+            swap(spinChevron, Icon(AppIcons.chevronRight, color: muted)),
           ],
         ],
       );
@@ -376,8 +410,11 @@ class AppRow extends StatelessWidget {
     }
     if (hero != null) row = HeroColorScope(colors: hero, child: row);
     if (disabled) {
-      return IgnorePointer(child: Opacity(opacity: 0.38, child: row));
+      return IgnorePointer(
+        child: Opacity(opacity: AppOpacity.disabled, child: row),
+      );
     }
-    return dimmed ? Opacity(opacity: 0.55, child: row) : row;
+    if (dimmed) row = Opacity(opacity: AppOpacity.dimmed, child: row);
+    return BusyLock(locked: locked, inert: inert, child: row);
   }
 }

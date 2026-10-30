@@ -41,6 +41,7 @@ class AppListRow extends StatelessWidget {
     this.indent = 0,
     this.onTap,
     this.onLongPress,
+    this.loading = false,
     super.key,
   });
 
@@ -90,6 +91,9 @@ class AppListRow extends StatelessWidget {
   final double indent;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
+
+  /// The tapped row while its call runs ([AppRow.loading]).
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
@@ -190,6 +194,7 @@ class AppListRow extends StatelessWidget {
       indent: indent,
       onTap: onTap,
       onLongPress: onLongPress,
+      loading: loading,
     );
   }
 }
@@ -518,12 +523,14 @@ sealed class ListRowAction {
     IconData icon, {
     required VoidCallback? onTap,
     String? tooltip,
+    bool loading,
   }) = _IconAction;
 
   const factory ListRowAction.button(
     IconData icon, {
     required VoidCallback? onTap,
     String? tooltip,
+    bool loading,
   }) = _ButtonAction;
 
   /// ⋯ that opens [options] in a popover menu.
@@ -541,11 +548,17 @@ sealed class ListRowAction {
 }
 
 class _IconAction extends ListRowAction {
-  const _IconAction(this.icon, {required this.onTap, this.tooltip});
+  const _IconAction(
+    this.icon, {
+    required this.onTap,
+    this.tooltip,
+    this.loading = false,
+  });
 
   final IconData icon;
   final VoidCallback? onTap;
   final String? tooltip;
+  final bool loading;
 
   @override
   Widget _build(BuildContext context) => AppIconButton.flat(
@@ -554,6 +567,7 @@ class _IconAction extends ListRowAction {
     dense: true,
     color: Theme.of(context).colorScheme.onSurfaceVariant,
     onPressed: onTap,
+    loading: loading,
   );
 }
 
@@ -604,17 +618,24 @@ class _AmountAction extends ListRowAction {
 }
 
 class _ButtonAction extends ListRowAction {
-  const _ButtonAction(this.icon, {required this.onTap, this.tooltip});
+  const _ButtonAction(
+    this.icon, {
+    required this.onTap,
+    this.tooltip,
+    this.loading = false,
+  });
 
   final IconData icon;
   final VoidCallback? onTap;
   final String? tooltip;
+  final bool loading;
 
   @override
   Widget _build(BuildContext context) => AppIconButton.filled(
     icon: icon,
     onPressed: onTap,
     tooltip: tooltip,
+    loading: loading,
     size: ChipSize.chip.heightOf(context),
   );
 }

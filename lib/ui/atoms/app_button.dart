@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_spacing.dart';
 import '../tokens/chip_size.dart';
-import 'app_spinner.dart';
+import 'busy_scope.dart';
 import 'connection_scope.dart';
 
 enum AppButtonVariant {
@@ -64,6 +64,10 @@ class AppButton extends StatelessWidget {
   final Color? color;
   final AppButtonVariant variant;
   final AppButtonSize size;
+
+  /// This is the button that was pressed and its call runs: a spinner in
+  /// place of the label (same size, same colours), presses ignored. An
+  /// active [BusyScope] above does the same; a locked one fades it.
   final bool loading;
   final bool expand;
 
@@ -78,16 +82,22 @@ class AppButton extends StatelessWidget {
       (size == AppButtonSize.large ? 48 : 40);
 
   bool isEnabled(BuildContext context) =>
-      onPressed != null &&
-      !loading &&
-      !(submits && ConnectionScope.isOffline(context));
+      onPressed != null && !(submits && ConnectionScope.isOffline(context));
+
+  static void _ignore() {}
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final enabled = isEnabled(context);
+    final busy = BusyScope.control(context, loading: loading, enabled: enabled);
+    final spinning = busy.spinning;
     final observe = tapObserver;
-    final callback = !enabled
+    // While it spins it keeps its enabled colours (it is the pressed one);
+    // the lock's IgnorePointer drops the presses.
+    final callback = spinning
+        ? _ignore
+        : !enabled
         ? null
         : observe == null
         ? onPressed
@@ -121,7 +131,7 @@ class AppButton extends StatelessWidget {
             shape: shape,
             visualDensity: density,
           ),
-          child: _content(scheme.onPrimary),
+          child: _content(spinning, scheme.onPrimary),
         );
       case AppButtonVariant.tonal:
         button = FilledButton.tonal(
@@ -134,7 +144,7 @@ class AppButton extends StatelessWidget {
             shape: shape,
             visualDensity: density,
           ),
-          child: _content(scheme.onSecondaryContainer),
+          child: _content(spinning, scheme.onSecondaryContainer),
         );
       case AppButtonVariant.outlined:
         button = OutlinedButton(
@@ -149,7 +159,7 @@ class AppButton extends StatelessWidget {
             foregroundColor: color,
             side: color == null ? null : BorderSide(color: color!),
           ),
-          child: _content(color ?? scheme.primary),
+          child: _content(spinning, color ?? scheme.primary),
         );
       case AppButtonVariant.text:
         button = TextButton(
@@ -163,7 +173,7 @@ class AppButton extends StatelessWidget {
             visualDensity: density,
             foregroundColor: color,
           ),
-          child: _content(color ?? scheme.primary),
+          child: _content(spinning, color ?? scheme.primary),
         );
       case AppButtonVariant.destructive:
         button = FilledButton(
@@ -178,7 +188,7 @@ class AppButton extends StatelessWidget {
             backgroundColor: scheme.error,
             foregroundColor: scheme.onError,
           ),
-          child: _content(scheme.onError),
+          child: _content(spinning, scheme.onError),
         );
       case AppButtonVariant.destructiveOutlined:
         button = OutlinedButton(
@@ -193,16 +203,22 @@ class AppButton extends StatelessWidget {
             foregroundColor: scheme.error,
             side: BorderSide(color: scheme.error),
           ),
-          child: _content(scheme.error),
+          child: _content(spinning, scheme.error),
         );
     }
-    return button;
+    return BusyLock(locked: busy.locked, inert: spinning, child: button);
   }
 
-  Widget _content(Color spinnerColor) {
-    if (loading) {
-      return AppSpinner(size: AppSpinnerSize.small, color: spinnerColor);
-    }
+  /// The label (and icons) stay laid out under the spinner, so a loading
+  /// button is exactly as wide as before.
+  Widget _content(bool spinning, Color spinnerColor) => BusySwap(
+    loading: spinning,
+    color: spinnerColor,
+    spinnerSize: size.chipSize?.icon,
+    child: _label(),
+  );
+
+  Widget _label() {
     final chip = size.chipSize;
     final iconSize = chip?.icon ?? 18;
     final gap = chip?.gap ?? AppSpacing.sm;

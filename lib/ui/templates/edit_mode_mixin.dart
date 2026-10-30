@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/shell/shell_chrome.dart';
 import '../../app/shell/tab_nav.dart';
+import '../atoms/busy_scope.dart';
 import '../atoms/ui_config.dart';
 import '../molecules/confirm_dialog.dart';
 import '../organisms/saving_overlay.dart';
@@ -34,6 +35,13 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
 
   bool get canEdit => true;
   bool get isSaving => _saving;
+
+  /// While a save / delete runs, [editScope] puts the page under a locked
+  /// [BusyScope]: every kit input and control on it fades and ignores input,
+  /// and the pressed button (its own `loading`) spins. Off until the
+  /// [SavingOverlay] scrim is removed (next step of the loading round); a
+  /// page may turn it on early by overriding this.
+  bool get lockWhileSaving => false;
   D get original => _draft.original;
   D get working => _draft.working;
   bool get isDirty => _draft.isDirty;
@@ -199,7 +207,10 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
         busy: _editing || _saving,
         child: ScaffoldMessenger(
           key: _messengerKey,
-          child: SavingOverlay(saving: _saving, child: child),
+          child: SavingOverlay(
+            saving: _saving,
+            child: BusyScope(busy: lockWhileSaving && _saving, child: child),
+          ),
         ),
       ),
     );

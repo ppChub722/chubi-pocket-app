@@ -1,6 +1,8 @@
 import '../tokens/chip_size.dart';
 import '../atoms/app_chip.dart';
 import 'package:flutter/material.dart';
+
+import '../atoms/busy_scope.dart';
 import 'package:intl/intl.dart';
 
 import '../atoms/ui_config.dart';
@@ -117,8 +119,19 @@ class StepperPill extends StatelessWidget {
           '${DateFormat.yMMMd(locale).format(shift(StepperUnit.week, start, 0).add(const Duration(days: 6)))}',
   };
 
+  // Faded and inert under a locked [BusyScope] (a save runs elsewhere).
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => BusyLock(
+    locked:
+        (onTap != null ||
+            onPrev != null ||
+            onNext != null ||
+            _onValue != null) &&
+        BusyScope.isLocked(context),
+    child: _build(context),
+  );
+
+  Widget _build(BuildContext context) {
     final unit = _unit;
     if (unit == null) {
       return _pill(
