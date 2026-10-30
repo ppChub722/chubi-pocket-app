@@ -2163,7 +2163,6 @@
   "notifAutoAcceptHint": "อัตโนมัติ = รับเข้าสมุดเลย",
   "notifAutoUpdateHint": "อัตโนมัติ = อัปเดตตามเลย",
   "notifAutoDeleteHint": "อีเวนต์: ตามช่องอีเวนต์ของแถว \"มีคนแก้บิลที่แชร์กับฉัน\"\nแบ่งจ่าย: สำเนาของฉันเป็นรายการธรรมดาเสมอ",
-  "notifLockedByAutoHint": "ปิดอัตโนมัติอยู่ แจ้งปิดไม่ได้",
   "notifSetProjectAddedHint": "มีคนเพิ่มฉันเป็นสมาชิก",
   "notifSetRecurringDueHint": "งวดที่ต้องจ่าย / ต้องรับวันนี้",
   "notifSetRecurringEndingHint": "เหลืองวดสุดท้ายแล้ว",

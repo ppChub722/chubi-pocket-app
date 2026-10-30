@@ -162,19 +162,14 @@ class _Body extends StatelessWidget {
 
           Widget row(NotificationRow r, ({String label, String? helper}) t) {
             Widget build(AutoValues a, Map<AutoSwitch, ValueChanged<bool>> on) {
-              final locked = r.notifyLocked(a);
-              final helper = [
-                ?t.helper,
-                if (locked && r.mutable) l.notifLockedByAutoHint,
-              ].join('\n');
               return SettingSwitchColumnsRow(
                 key: ValueKey('notif-${r.key}'),
                 label: t.label,
-                helper: helper.isEmpty ? null : helper,
+                helper: t.helper,
                 cells: [
                   SettingSwitchCell(
-                    value: r.notifyOn(s, a),
-                    onChanged: r.notifyEditable(a)
+                    value: r.notifyOn(s),
+                    onChanged: r.mutable
                         ? (v) => cubit.setOn(r.type, v)
                         : null,
                     semanticLabel: '${l.notifColumnNotify} ${t.label}',

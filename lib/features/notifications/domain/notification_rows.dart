@@ -82,16 +82,9 @@ class NotificationRow {
   /// The auto switches this row shows.
   Iterable<AutoSwitch> get shownAutos => autos.whereType<AutoSwitch>();
 
-  /// An auto switch that is off = someone must answer, so the notice always
-  /// comes (the BE delivers it even when muted): the แจ้ง switch is locked on.
-  bool notifyLocked(AutoValues a) => shownAutos.any((s) => !a.of(s));
-
-  /// The แจ้ง switch as shown.
-  bool notifyOn(NotificationSettings s, AutoValues a) =>
-      !mutable || notifyLocked(a) || !s.mutedTypes.contains(type);
-
-  /// The แจ้ง switch can be flipped.
-  bool notifyEditable(AutoValues a) => mutable && !notifyLocked(a);
+  /// The แจ้ง switch as shown: independent of the auto switches (F1).
+  bool notifyOn(NotificationSettings s) =>
+      !mutable || !s.mutedTypes.contains(type);
 }
 
 const _created = {'shared_bill_created', 'split_created'};

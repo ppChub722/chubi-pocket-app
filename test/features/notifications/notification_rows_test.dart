@@ -34,13 +34,6 @@ NotificationSettings _settings({List<String> muted = const []}) =>
       'auto_sync_debts': true,
     });
 
-const _allOn = AutoValues(
-  acceptDebts: true,
-  acceptEvents: true,
-  syncDebts: true,
-  syncEvents: true,
-);
-
 void main() {
   test('rows: the new-bill and edit types are ONE row each in บิลที่แชร์ with '
       'an event and a split auto switch; requests are one row', () {
@@ -70,36 +63,14 @@ void main() {
     expect(keys.toSet(), hasLength(keys.length));
   });
 
-  test('any auto switch off locks แจ้ง on (even when muted); all on + muted '
-      '= off', () {
+  test('แจ้ง follows the mute only, whatever the auto switches (F1)', () {
     final s = _settings(muted: ['shared_bill_created', 'project_tx_changed']);
     final rows = notificationRows(s)[NotificationGroup.sharedBill]!;
-    final created = rows.first;
-    final edited = rows[1];
-    const splitOff = AutoValues(
-      acceptDebts: false,
-      acceptEvents: true,
-      syncDebts: true,
-      syncEvents: true,
-    );
-    // Split auto-accept off → asks → always delivered.
-    expect(created.notifyLocked(splitOff), isTrue);
-    expect(created.notifyOn(s, splitOff), isTrue);
-    expect(created.notifyEditable(splitOff), isFalse);
-    // Both update switches on → muted = silent.
-    expect(edited.notifyLocked(splitOff), isFalse);
-    expect(edited.notifyOn(s, splitOff), isFalse);
-    expect(edited.notifyEditable(splitOff), isTrue);
-
-    // A type without auto follows its mute; requests are always on.
-    final unlinked = rows.last;
-    expect(
-      unlinked.notifyOn(_settings(muted: ['debt_disconnected']), _allOn),
-      isFalse,
-    );
-    final requests = notificationRows(s)[NotificationGroup.request]!.single;
-    expect(requests.notifyOn(s, _allOn), isTrue);
-    expect(requests.notifyEditable(_allOn), isFalse);
+    expect(rows.first.notifyOn(s), isFalse);
+    expect(rows.first.mutable, isTrue);
+    expect(rows[1].notifyOn(s), isFalse);
+    expect(rows.last.notifyOn(_settings(muted: ['debt_disconnected'])), isFalse);
+    expect(rows.last.notifyOn(s), isTrue);
   });
 
   test(
@@ -116,8 +87,7 @@ void main() {
       );
       expect(deleted.autos, [AutoSwitch.syncEvents, null]);
       expect(deleted.autoMirror, isTrue);
-      expect(deleted.notifyLocked(off), isTrue);
-      expect(deleted.notifyLocked(_allOn), isFalse);
+      expect(off.of(AutoSwitch.syncEvents), isFalse);
     },
   );
 }

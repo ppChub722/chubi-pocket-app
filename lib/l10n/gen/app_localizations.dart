@@ -11983,12 +11983,6 @@ abstract class AppLocalizations {
   /// **'Events: follows the Events switch of \"Someone edited a shared bill\"\nSplits: my copy always becomes a plain record'**
   String get notifAutoDeleteHint;
 
-  /// No description provided for @notifLockedByAutoHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto is off, so notify can\'t be turned off'**
-  String get notifLockedByAutoHint;
-
   /// No description provided for @notifSetProjectAddedHint.
   ///
   /// In en, this message translates to:

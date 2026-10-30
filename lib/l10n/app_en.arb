@@ -2390,7 +2390,6 @@
   "notifAutoAcceptHint": "Auto = put it in my book at once",
   "notifAutoUpdateHint": "Auto = update mine at once",
   "notifAutoDeleteHint": "Events: follows the Events switch of \"Someone edited a shared bill\"\nSplits: my copy always becomes a plain record",
-  "notifLockedByAutoHint": "Auto is off, so notify can't be turned off",
   "notifSetProjectAddedHint": "Someone adds me as a member",
   "notifSetRecurringDueHint": "Payments to pay / receive today",
   "notifSetRecurringEndingHint": "The last payment is left",

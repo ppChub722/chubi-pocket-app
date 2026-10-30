@@ -7060,10 +7060,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Events: follows the Events switch of \"Someone edited a shared bill\"\nSplits: my copy always becomes a plain record';
 
   @override
-  String get notifLockedByAutoHint =>
-      'Auto is off, so notify can\'t be turned off';
-
-  @override
   String get notifSetProjectAddedHint => 'Someone adds me as a member';
 
   @override

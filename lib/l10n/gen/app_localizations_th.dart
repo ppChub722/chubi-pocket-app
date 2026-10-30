@@ -6908,9 +6908,6 @@ class AppLocalizationsTh extends AppLocalizations {
       'อีเวนต์: ตามช่องอีเวนต์ของแถว \"มีคนแก้บิลที่แชร์กับฉัน\"\nแบ่งจ่าย: สำเนาของฉันเป็นรายการธรรมดาเสมอ';
 
   @override
-  String get notifLockedByAutoHint => 'ปิดอัตโนมัติอยู่ แจ้งปิดไม่ได้';
-
-  @override
   String get notifSetProjectAddedHint => 'มีคนเพิ่มฉันเป็นสมาชิก';
 
   @override
