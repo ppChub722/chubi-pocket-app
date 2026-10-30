@@ -9,6 +9,7 @@ import '../data/write_effects.dart';
 import '../storage/secure_token_storage.dart';
 import 'api_exception.dart';
 import 'http_logger_interceptor.dart';
+import 'idempotency.dart';
 import 'network_recorder.dart';
 
 String _devBaseUrl() {
@@ -45,6 +46,7 @@ class ApiClient {
       ..headers['Content-Type'] = 'application/json'
       ..headers['Accept'] = 'application/json';
 
+    _dio.interceptors.add(_idempotencyKey());
     _dio.interceptors.add(_pageLoadTimeouts());
     _dio.interceptors.add(_authInterceptor());
     _dio.interceptors.add(HttpLoggerInterceptor());
@@ -113,6 +115,15 @@ class ApiClient {
 
   static const Duration pageLoadConnectTimeout = Duration(seconds: 5);
   static const Duration pageLoadReceiveTimeout = Duration(seconds: 10);
+
+  /// A write inside [Idempotency.run] carries its key (B2).
+  Interceptor _idempotencyKey() => InterceptorsWrapper(
+    onRequest: (options, handler) {
+      final key = Idempotency.keyFor(options);
+      if (key != null) options.headers[Idempotency.header] = key;
+      handler.next(options);
+    },
+  );
 
   Interceptor _pageLoadTimeouts() => InterceptorsWrapper(
     onRequest: (options, handler) {

@@ -9,6 +9,7 @@ import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/constants/storage_keys.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/idempotency.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -343,6 +344,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   /// The event pick, unless it's a transfer (kept for switching back).
   EventTarget? get _activeEvent => typeCanJoinEvent(_c.type) ? _event : null;
   bool _saving = false;
+
+  /// Retry after a timeout sends the same keys: never saved twice (B2).
+  final _idempotency = Idempotency();
 
   final _heroKey = GlobalKey();
 
@@ -1599,60 +1603,62 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     String? warn;
     String? newTxId;
     try {
-      if (splitBill != null) {
-        final result = await projects.bookEventBill(
-          split: true,
-          bill: splitBill.bill,
-          myBooks: splitBill.myBooks,
-        );
-        newTxId = result.transactionId;
-      } else if (event == null) {
-        final saved = await txCubit.add(
-          type: txBody.type,
-          accountId: txBody.accountId,
-          amount: txBody.amount,
-          date: txBody.date,
-          categoryId: txBody.categoryId,
-          description: txBody.description,
-          note: txBody.note,
-          transferToAccountId: txBody.transferToAccountId,
-          tagIds: txBody.tagIds,
-          splits: txBody.splits,
-          link: txBody.link,
-        );
-        accounts.patchBalances(saved.accountBalances);
-        newTxId = saved.rows.firstOrNull?.id;
-      } else {
-        // ONE call, ONE DB transaction (0.4.1-1 E8): the bill, the
-        // "คืนแล้ว" paybacks, my tx, "จดหนี้ด้วย" and its repayments; the
-        // wallets / people / rows follow the answer's effects (B2).
-        final body = eventBookBodies(_c, tagIds: tagIds);
-        final result = await projects.bookEventBill(
-          projectId: switch (event) {
-            ExistingEventTarget(:final project) => project.id,
-            _ => null,
-          },
-          newEvent: switch (event) {
-            NewEventTarget(:final name) => newEventBody(name),
-            _ => null,
-          },
-          bill: body.bill,
-          myBooks: body.myBooks,
-        );
-        newTxId = result.transactionId;
-      }
-      if (backShares.isNotEmpty) {
-        warn ??= await _repayNow(
-          debts,
-          debtDirectory,
-          accounts,
-          txCubit,
-          backShares,
-          accountId: txBody.accountId,
-          date: date,
-        );
-      }
-      warn ??= await _linkAfterCreate(newTxId);
+      await _idempotency.run(() async {
+        if (splitBill != null) {
+          final result = await projects.bookEventBill(
+            split: true,
+            bill: splitBill.bill,
+            myBooks: splitBill.myBooks,
+          );
+          newTxId = result.transactionId;
+        } else if (event == null) {
+          final saved = await txCubit.add(
+            type: txBody.type,
+            accountId: txBody.accountId,
+            amount: txBody.amount,
+            date: txBody.date,
+            categoryId: txBody.categoryId,
+            description: txBody.description,
+            note: txBody.note,
+            transferToAccountId: txBody.transferToAccountId,
+            tagIds: txBody.tagIds,
+            splits: txBody.splits,
+            link: txBody.link,
+          );
+          accounts.patchBalances(saved.accountBalances);
+          newTxId = saved.rows.firstOrNull?.id;
+        } else {
+          // ONE call, ONE DB transaction (0.4.1-1 E8): the bill, the
+          // "คืนแล้ว" paybacks, my tx, "จดหนี้ด้วย" and its repayments; the
+          // wallets / people / rows follow the answer's effects (B2).
+          final body = eventBookBodies(_c, tagIds: tagIds);
+          final result = await projects.bookEventBill(
+            projectId: switch (event) {
+              ExistingEventTarget(:final project) => project.id,
+              _ => null,
+            },
+            newEvent: switch (event) {
+              NewEventTarget(:final name) => newEventBody(name),
+              _ => null,
+            },
+            bill: body.bill,
+            myBooks: body.myBooks,
+          );
+          newTxId = result.transactionId;
+        }
+        if (backShares.isNotEmpty) {
+          warn ??= await _repayNow(
+            debts,
+            debtDirectory,
+            accounts,
+            txCubit,
+            backShares,
+            accountId: txBody.accountId,
+            date: date,
+          );
+        }
+        warn ??= await _linkAfterCreate(newTxId);
+      });
       await _remember();
       navigator.pop(true);
       showAppSnackBarOn(

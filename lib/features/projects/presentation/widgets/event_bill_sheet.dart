@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/idempotency.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -359,6 +360,9 @@ class _EventBillSheetState extends State<_EventBillSheet> {
   Account? _account;
   Category? _category;
   bool _saving = false;
+
+  /// Retry after a timeout sends the same keys: never booked twice (B2).
+  final _idempotency = Idempotency();
 
   /// My copy's own fields (SA3, never synced): my personal tags and my
   /// private note.
@@ -1452,20 +1456,22 @@ class _EventBillSheetState extends State<_EventBillSheet> {
       final row = widget.row;
       // My edit of the bill is my book too (linked = synced): the BE makes
       // my copy follow the bill I save (0.4.1-2).
-      final r = row != null
-          ? await repo.rebookEventBill(
-              row.parent.id,
-              bill: _billBody,
-              myBooks: _booksBody,
-              // Someone saved it since the form loaded → 409 BILL_CHANGED.
-              expectedUpdatedAt: widget.bill?.updatedAt,
-              move: _moveBody,
-            )
-          : await repo.bookEventBill(
-              projectId: _view.project.id,
-              bill: _billBody!,
-              myBooks: _booksBody,
-            );
+      final r = await _idempotency.run(
+        () => row != null
+            ? repo.rebookEventBill(
+                row.parent.id,
+                bill: _billBody,
+                myBooks: _booksBody,
+                // Someone saved it since the form loaded → 409 BILL_CHANGED.
+                expectedUpdatedAt: widget.bill?.updatedAt,
+                move: _moveBody,
+              )
+            : repo.bookEventBill(
+                projectId: _view.project.id,
+                bill: _billBody!,
+                myBooks: _booksBody,
+              ),
+      );
       // Wallets and people follow the answer's effects (B2) by themselves.
       widget.onPatch?.call(r.patch);
       navigator.pop(true);
@@ -1479,7 +1485,13 @@ class _EventBillSheetState extends State<_EventBillSheet> {
         widget.onChanged!(EventBillView.fromJson(newer.cast()));
         return;
       }
-      showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
+      // Network / server: Retry keeps the form and resends the same keys.
+      final status = e.statusCode;
+      if (status == null || status >= 500) {
+        showErrorSnackBar(context, e, onRetry: _save);
+      } else {
+        showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
