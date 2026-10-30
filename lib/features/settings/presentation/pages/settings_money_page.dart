@@ -38,7 +38,6 @@ class SettingsMoneyPage extends StatelessWidget {
           final style = MoneyStyle.fromPreference(user.moneyStyle);
           return DetailPageBody(
             onRefresh: () => refreshMe(context),
-            topInset: inset.top + AppSpacing.lg,
             bottomInset: AppSpacing.huge + inset.bottom,
             sections: [
               (first) => SectionCard(
@@ -123,7 +122,8 @@ Widget _liveMe<T>(
   );
 }
 
-/// Currency: a label, never converted.
+/// Currency: shown, not editable for now (changing it later would leave every
+/// amount in the old currency).
 class _CurrencyRow extends StatelessWidget {
   const _CurrencyRow({required this.user});
 
@@ -132,38 +132,15 @@ class _CurrencyRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return _liveMe<String>(
-      context,
-      value: user.currency,
-      write: (u, code) => u.updateMe(currency: code),
-      confirm: (_) => showConfirmDialog(
-        context,
-        title: l.profileCurrencyChangeTitle,
-        message: l.profileCurrencyChangeMessage,
-        confirmLabel: l.profileCurrencyChangeConfirm,
-      ),
-      builder: (context, value, onChanged) => SettingDropdownRow<String>(
-        leading: const AppIcon(AppIcons.currency),
-        label: l.profileCurrencyLabel,
-        helper: l.settingsCurrencyHint,
-        value: '$value ${Currencies.symbolOf(value)}',
-        selected: value,
-        onSelected: onChanged,
-        options: [
-          for (final c in Currencies.codes)
-            SheetOption(
-              value: c,
-              label: '$c | ${Currencies.nameOf(l, c)}',
-              leading: SizedBox(
-                width: 24,
-                child: Text(
-                  Currencies.symbolOf(c),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-        ],
-      ),
+    final code = user.currency;
+    final display =
+        '${Currencies.symbolOf(code)}  $code | ${Currencies.nameOf(l, code)}';
+    return AppDetailRow.pick(
+      leading: const AppIcon(AppIcons.currency),
+      label: l.profileCurrencyLabel,
+      value: display,
+      emptyText: display,
+      locked: true,
     );
   }
 }
