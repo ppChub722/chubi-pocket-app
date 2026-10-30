@@ -34,6 +34,7 @@ import '../features/auth/data/auth_repository.dart';
 import '../features/budgets/data/budgets_repository.dart';
 import '../features/budgets/presentation/cubit/budgets_cubit.dart';
 import '../features/auth/presentation/cubit/auth_cubit.dart';
+import '../features/auth/presentation/cubit/telegram_login_cubit.dart';
 import '../features/categories/data/categories_repository.dart';
 import '../features/categories/presentation/cubit/categories_cubit.dart';
 import '../features/connections/data/connections_repository.dart';
@@ -109,6 +110,10 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
   /// The dev hub is open: app-wide error UI stays off (isDevHubPath).
   final _onDevHub = ValueNotifier<bool>(false);
 
+  /// A signed-out auth page (login, register, Telegram): no top offline
+  /// banner there, a failed submit shows the bottom toast instead.
+  final _onAuthPage = ValueNotifier<bool>(false);
+
   /// The app came back to the foreground (restarts a stopped health retry).
   final _resumed = StreamController<void>.broadcast();
 
@@ -177,6 +182,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     _router.routerDelegate.addListener(() {
       final path = _router.routerDelegate.currentConfiguration.uri.path;
       _onDevHub.value = routerOnDevHub(_router);
+      _onAuthPage.value = path.startsWith('/auth/');
       NetworkRecorder.instance.noteRoute(path);
       Breadcrumbs.instance.page(path);
     });
@@ -189,6 +195,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
   @override
   void dispose() {
     _onDevHub.dispose();
+    _onAuthPage.dispose();
     unawaited(_resumed.close());
     _lifecycle.dispose();
     _versionCubit.close();
@@ -248,6 +255,12 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
       child: MultiBlocProvider(
         providers: [
           BlocProvider<AuthCubit>.value(value: _authCubit),
+          BlocProvider<TelegramLoginCubit>(
+            create: (_) => TelegramLoginCubit(
+              repository: _authRepository,
+              auth: _authCubit,
+            ),
+          ),
           BlocProvider<ConnectivityCubit>(create: (_) => ConnectivityCubit()),
           BlocProvider<ConnectionCubit>(
             create: (ctx) => ConnectionCubit(
@@ -416,7 +429,15 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                           child: ValueListenableBuilder<bool>(
                             valueListenable: _onDevHub,
                             builder: (context, devHub, page) =>
-                                ConnectionShell(devHub: devHub, child: page!),
+                                ValueListenableBuilder<bool>(
+                                  valueListenable: _onAuthPage,
+                                  builder: (context, authPage, _) =>
+                                      ConnectionShell(
+                                        devHub: devHub,
+                                        hideOfflineBanner: authPage,
+                                        child: page!,
+                                      ),
+                                ),
                             child: RefreshScope(
                               registry: _refreshRegistry,
                               child: child ?? const SizedBox.shrink(),

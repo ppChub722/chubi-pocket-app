@@ -132,18 +132,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorNetworkMessage => 'Check your internet and try again.';
 
   @override
-  String get errorServerTitle => 'Something went wrong';
+  String get errorGenericTitle => 'Something went wrong';
 
   @override
-  String get errorServerMessage =>
-      'Our servers had a hiccup. Please try again.';
-
-  @override
-  String get errorUnknownTitle => 'Unexpected error';
-
-  @override
-  String get errorUnknownMessage =>
-      'Something we did not expect happened. Please try again.';
+  String get errorGenericMessage => 'Please try again';
 
   @override
   String get errorValidationMessage =>
@@ -171,10 +163,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authRegisterUsernameLabel => 'Username';
 
   @override
-  String get authRegisterUsernameInvalid =>
-      '3–50 chars; lowercase a–z, 0–9, _, -';
-
-  @override
   String get authRegisterDisplayNameLabel => 'Display name';
 
   @override
@@ -196,13 +184,55 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authRegisterConfirmLabel => 'Confirm password';
 
   @override
-  String get authRegisterConfirmMismatch => 'Passwords don\'t match';
-
-  @override
   String get authRegisterCurrencyLabel => 'Currency';
 
   @override
   String get authRegisterSubmit => 'Create account';
+
+  @override
+  String get authRegisterIncomplete => 'Fill in every field correctly';
+
+  @override
+  String get authTelegramWaitTitle => 'Waiting for Telegram';
+
+  @override
+  String get authTelegramWaitBody =>
+      'Tap “Confirm” in the bot chat, then come back to this app';
+
+  @override
+  String get authTelegramReopen => 'Open Telegram again';
+
+  @override
+  String get authTelegramCheck => 'Check again';
+
+  @override
+  String get authTelegramExpired =>
+      'The link expired. Start signing in with Telegram again';
+
+  @override
+  String get authTelegramOpenFailed =>
+      'Could not open Telegram. Is the Telegram app installed?';
+
+  @override
+  String get authTelegramSignupTitle => 'Create an account with Telegram';
+
+  @override
+  String get authTelegramSignupPhoto =>
+      'Your Telegram profile picture will be your picture';
+
+  @override
+  String get authTelegramUsernameTaken =>
+      'That username is taken. We filled in a free one';
+
+  @override
+  String get authTelegramAlreadyLinked =>
+      'This Telegram is already linked to an account. Try signing in with Telegram again';
+
+  @override
+  String get authTelegramUnavailable => 'Telegram is not available right now';
+
+  @override
+  String get authRegistrationClosed => 'Sign-up is closed right now';
 
   @override
   String get authRegisterGoToLogin => 'Already have an account? Log in';

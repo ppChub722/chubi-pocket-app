@@ -8,6 +8,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/storage/secure_token_storage.dart';
 import '../../data/auth_repository.dart';
+import '../../domain/auth_token.dart';
 import '../../domain/user.dart';
 
 sealed class AuthState extends Equatable {
@@ -186,6 +187,25 @@ class AuthCubit extends Cubit<AuthState> {
       );
       emit(AuthFailure(error: e, previous: previous));
     }
+  }
+
+  /// Signed in by a path that is not the password form (Telegram): keep the
+  /// token and go in.
+  Future<void> signInWith(
+    ({User user, AuthToken token}) res, {
+    String via = 'telegram',
+  }) async {
+    await _tokens.writeAuthToken(res.token.accessToken);
+    AppLogger.instance.setUserId(res.user.id);
+    AppLogger.instance.info(
+      'auth.login_success',
+      fields: {
+        'user_id': res.user.id,
+        'username': res.user.username,
+        'via': via,
+      },
+    );
+    emit(AuthAuthenticated(res.user));
   }
 
   Future<void> changePassword({

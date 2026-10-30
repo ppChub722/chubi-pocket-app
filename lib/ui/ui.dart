@@ -61,7 +61,7 @@ export 'molecules/selection_toolbar.dart';
 export 'molecules/centered_form_body.dart';
 export 'molecules/or_divider.dart';
 export 'molecules/connection_banner.dart';
-export 'molecules/social_sign_in_button.dart';
+export 'molecules/social_sign_in_cards.dart';
 export 'molecules/card_grid.dart';
 export 'molecules/segmented_bar.dart';
 export 'molecules/segmented_choice.dart';

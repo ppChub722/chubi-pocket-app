@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../domain/auth_token.dart';
+import '../domain/telegram_login.dart';
 import '../domain/user.dart';
 
 class AuthRepository {
@@ -42,6 +43,60 @@ class AuthRepository {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/auth/login',
         data: {'identifier': identifier, 'password': password},
+      );
+      return _parseAuthResponse(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// POST /auth/telegram/start: [codeChallenge] = S256 of the app's verifier.
+  Future<TelegramLoginStart> startTelegramLogin(String codeChallenge) async {
+    try {
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        '/auth/telegram/start',
+        data: {'code_challenge': codeChallenge},
+      );
+      return TelegramLoginStart.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// POST /auth/telegram/exchange: 202 = still pending (not an error).
+  Future<TelegramExchange> exchangeTelegramLogin({
+    required String code,
+    required String codeVerifier,
+  }) async {
+    try {
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        '/auth/telegram/exchange',
+        data: {'code': code, 'code_verifier': codeVerifier},
+      );
+      return TelegramExchange.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// POST /auth/telegram/signup: an account with no password, Telegram linked.
+  Future<({User user, AuthToken token})> signupWithTelegram({
+    required String code,
+    required String codeVerifier,
+    required String displayName,
+    required String username,
+    String currency = 'THB',
+  }) async {
+    try {
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        '/auth/telegram/signup',
+        data: {
+          'code': code,
+          'code_verifier': codeVerifier,
+          'display_name': displayName,
+          'username': username,
+          'currency': currency,
+        },
       );
       return _parseAuthResponse(res.data!);
     } on DioException catch (e) {

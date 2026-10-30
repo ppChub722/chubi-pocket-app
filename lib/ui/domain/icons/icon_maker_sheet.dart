@@ -92,6 +92,19 @@ Future<IconMakerResult?> showIconMakerSheet({
   );
 }
 
+/// True when [backgroundId] is a background of [type] with no colour of its
+/// own (rainbow, snowflake, wreath, starburst): the maker has nothing to
+/// recolour, so a person's profile colours 1–3 are picked separately.
+bool backgroundHasNoPickableColors(IconType type, String? backgroundId) {
+  if (backgroundId == null) return false;
+  for (final pack in PackRegistry.packs(type: type)) {
+    for (final item in pack.backgrounds) {
+      if (item.id == backgroundId) return item.colors.isEmpty;
+    }
+  }
+  return false;
+}
+
 enum IconMakerLayers {
   all(icon: true, background: true, border: true),
   iconBackground(icon: true, background: true, border: false),
@@ -1168,11 +1181,13 @@ Future<AvatarColorsDraft?> showAvatarColorsSheet({
   required AvatarColorsDraft initial,
   required Widget Function(AvatarColorsDraft draft) previewBuilder,
   String? title,
+  bool slotsOnly = false,
 }) {
   Widget body(BuildContext ctx) => AvatarColorsPanel(
     initial: initial,
     previewBuilder: previewBuilder,
     title: title,
+    slotsOnly: slotsOnly,
     onDone: (d) => Navigator.of(ctx).pop<AvatarColorsDraft>(d),
   );
   if (MediaQuery.sizeOf(context).width >= 600) {
@@ -1216,6 +1231,7 @@ class AvatarColorsPanel extends StatefulWidget {
     required this.previewBuilder,
     required this.onDone,
     this.title,
+    this.slotsOnly = false,
     super.key,
   });
 
@@ -1223,6 +1239,10 @@ class AvatarColorsPanel extends StatefulWidget {
   final Widget Function(AvatarColorsDraft draft) previewBuilder;
   final ValueChanged<AvatarColorsDraft?> onDone;
   final String? title;
+
+  /// Colours 1–3 only: no ring styles, no ring colour (an icon whose
+  /// background has no colour of its own; the ring lives in the icon code).
+  final bool slotsOnly;
 
   @override
   State<AvatarColorsPanel> createState() => _AvatarColorsPanelState();
@@ -1463,8 +1483,13 @@ class _AvatarColorsPanelState extends State<AvatarColorsPanel> {
                         Expanded(child: _target(i, l.avatarColorsSlot(i + 1))),
                         const SizedBox(width: AppSpacing.xs),
                       ],
-                      Expanded(child: _target(_ring, l.avatarColorsRingColor)),
-                      const SizedBox(width: AppSpacing.xs),
+                      if (!widget.slotsOnly) ...[
+                        Expanded(
+                          child: _target(_ring, l.avatarColorsRingColor),
+                        ),
+                        const SizedBox(width: AppSpacing.xs),
+                      ] else
+                        const Spacer(),
                       AppIconButton.flat(
                         tooltip: l.avatarColorsClear,
                         icon: AppIcons.none,
@@ -1472,8 +1497,10 @@ class _AvatarColorsPanelState extends State<AvatarColorsPanel> {
                       ),
                     ],
                   ),
-                  _section(l.iconMakerRoleBorder),
-                  _styles(l),
+                  if (!widget.slotsOnly) ...[
+                    _section(l.iconMakerRoleBorder),
+                    _styles(l),
+                  ],
                   _section(l.iconMakerThemeColors),
                   _swatchRow([
                     for (final s in _SheetState._themeRowSpecs) _swatch(s),

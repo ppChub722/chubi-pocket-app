@@ -53,6 +53,8 @@ import '../../features/budgets/presentation/pages/budgets_list_page.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
+import '../../features/auth/presentation/pages/telegram_signup_page.dart';
+import '../../features/auth/presentation/pages/telegram_waiting_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/home/presentation/pages/home_coming_soon_page.dart';
 import '../../features/settings/presentation/pages/change_password_page.dart';
@@ -143,6 +145,16 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
         path: '/auth/register',
         name: 'auth-register',
         builder: (context, state) => const RegisterPage(),
+      ),
+      GoRoute(
+        path: '/auth/telegram',
+        name: 'auth-telegram',
+        builder: (context, state) => const TelegramWaitingPage(),
+      ),
+      GoRoute(
+        path: '/auth/telegram/signup',
+        name: 'auth-telegram-signup',
+        builder: (context, state) => const TelegramSignupPage(),
       ),
       GoRoute(
         path: '/dev',

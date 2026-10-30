@@ -1301,7 +1301,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   );
 
   String _errorText(AppLocalizations l, Object e) =>
-      e is ApiException ? walletErrorMessage(l, e) : l.errorUnknownMessage;
+      e is ApiException ? walletErrorMessage(l, e) : l.errorGenericMessage;
 
   Widget? _peopleStrip(AppLocalizations l, Account a) {
     final members = [for (final m in a.members) m, ..._pendingInvites];

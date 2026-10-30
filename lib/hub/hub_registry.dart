@@ -826,7 +826,8 @@ final List<HubPage> hubPages = [
     covers: [
       'AuthPageBody',
       'OrDivider',
-      'SocialSignInButton',
+      'SocialSignInCards',
+      'SocialSignInOption',
       'LanguageThemeBar',
     ],
     builder: buildAuthPageTemplate,
@@ -1229,6 +1230,7 @@ final List<HubPage> hubPages = [
       'AvatarBorderStyle',
       'AvatarColorsPanel',
       'showAvatarColorsSheet',
+      'backgroundHasNoPickableColors',
     ],
     builder: buildProfileConnectionsPage,
   ),

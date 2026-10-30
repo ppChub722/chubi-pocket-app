@@ -558,7 +558,7 @@ class _PersonViewState extends State<_PersonView> {
       final l = AppLocalizations.of(context)!;
       showAppSnackBar(
         context,
-        err is ApiException ? err.message : l.errorUnknownMessage,
+        err is ApiException ? err.message : l.errorGenericMessage,
         tone: Tone.danger,
       );
     } finally {

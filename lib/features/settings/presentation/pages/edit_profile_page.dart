@@ -131,7 +131,27 @@ class _EditProfilePageState extends State<EditProfilePage>
     );
     if (!mounted || r == null) return;
     if (r is IconMakerSelected) {
-      applyChange(working.copyWith(iconCode: r.iconCode));
+      var code = r.iconCode;
+      // Rainbow & co. carry no colour of their own: pick profile colours 1–3
+      // right away (they become the background colours the BE reads).
+      if (backgroundHasNoPickableColors(
+        IconType.userProfile,
+        code.background,
+      )) {
+        final picked = await showAvatarColorsSheet(
+          context: context,
+          title: l.profileColorsLabel,
+          slotsOnly: true,
+          initial: AvatarColorsDraft.from(code.bgColors, null),
+          previewBuilder: (d) => UserProfilePreview(
+            displayName: _shownName,
+            iconCode: code.copyWith(bgColors: d.colors),
+          ),
+        );
+        if (!mounted) return;
+        if (picked != null) code = code.copyWith(bgColors: picked.colors);
+      }
+      applyChange(working.copyWith(iconCode: code));
     }
     if (r is IconMakerRemoved) applyChange(working.copyWith(clearIcon: true));
   }

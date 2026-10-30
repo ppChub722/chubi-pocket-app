@@ -530,7 +530,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   }
 
   String _failedText(Object e, AppLocalizations l) =>
-      e is ApiException ? _errorText(e, l) : l.errorUnknownMessage;
+      e is ApiException ? _errorText(e, l) : l.errorGenericMessage;
 
   String _monthLabel(AppLocalizations l, bool income) {
     final month = DateFormat.MMM(

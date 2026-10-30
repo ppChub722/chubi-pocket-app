@@ -15,7 +15,6 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _formKey = GlobalKey<FormState>();
   final _identifierCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
 
@@ -37,7 +36,15 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _submit() {
-    if (!_formKey.currentState!.validate()) return;
+    // No inline errors: an empty field gets the same toast as a wrong login.
+    if (_identifierCtrl.text.trim().isEmpty || _passwordCtrl.text.isEmpty) {
+      showAppSnackBar(
+        context,
+        AppLocalizations.of(context)!.authLoginInvalidCredentials,
+        tone: Tone.danger,
+      );
+      return;
+    }
     context.read<AuthCubit>().login(
       identifier: _identifierCtrl.text.trim(),
       password: _passwordCtrl.text,
@@ -59,7 +66,6 @@ class _LoginPageState extends State<LoginPage> {
           builder: (context, state) {
             final isSubmitting = state is AuthLoading;
             return AuthPageBody(
-              formKey: _formKey,
               brand: const AuthBrandHeader(),
               groups: [
                 AppInput(
@@ -73,8 +79,6 @@ class _LoginPageState extends State<LoginPage> {
                     AutofillHints.email,
                   ],
                   textInputAction: TextInputAction.next,
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? l.commonRequired : null,
                 ),
                 AppInput(
                   controller: _passwordCtrl,
@@ -85,8 +89,6 @@ class _LoginPageState extends State<LoginPage> {
                   autofillHints: const [AutofillHints.password],
                   textInputAction: TextInputAction.done,
                   onSubmitted: (_) => _submit(),
-                  validator: (v) =>
-                      (v == null || v.isEmpty) ? l.commonRequired : null,
                 ),
               ],
               submit: AppButton(
@@ -97,9 +99,7 @@ class _LoginPageState extends State<LoginPage> {
                 size: AppButtonSize.large,
                 expand: true,
               ),
-              // TODO(google-sign-in): wire once POST /auth/google exists
-              // (contract §12).
-              alternatives: const [AuthOrDivider(), GoogleSignInButton()],
+              alternatives: const [AuthOrDivider(), AuthSocialCards()],
               switchLink: AppButton(
                 label: l.authLoginGoToRegister,
                 variant: AppButtonVariant.text,

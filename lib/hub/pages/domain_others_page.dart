@@ -466,24 +466,6 @@ Widget buildOthersPage(BuildContext context) {
             page: 'Login, Register',
             child: AuthOrDivider(),
           ),
-          const HubUse(
-            wide: true,
-            label: 'GoogleSignInButton — no handler: dimmed, "coming soon"',
-            page: 'Login, Register',
-            child: GoogleSignInButton(),
-          ),
-          HubUse(
-            wide: true,
-            label: 'GoogleSignInButton — live',
-            page: 'Login, Register (when enabled)',
-            child: GoogleSignInButton(onPressed: () {}),
-          ),
-          HubUse(
-            wide: true,
-            label: 'GoogleSignInButton — loading spinner',
-            page: 'Login, Register (signing in)',
-            child: GoogleSignInButton(onPressed: () {}, loading: true),
-          ),
           for (final (label, status, attempt) in [
             (
               'OfflineBanner — a call failed: connecting… (spinner, no error, no button)',
@@ -651,9 +633,24 @@ Widget buildOthersPage(BuildContext context) {
             const SizedBox(height: AppSpacing.md),
             AuthBrandHeader(compact: v<bool>('compact')),
             const SizedBox(height: AppSpacing.md),
-            GoogleSignInButton(
-              onPressed: v<bool>('onPressed') ? () {} : null,
-              loading: v<bool>('loading'),
+            SocialSignInCards(
+              comingSoonLabel: 'Soon',
+              options: [
+                SocialSignInOption(
+                  label: 'Telegram',
+                  logo: const ProviderLogo(url: '', name: 'Telegram', size: 40),
+                  onPressed: v<bool>('onPressed') ? () {} : null,
+                  loading: v<bool>('loading'),
+                ),
+                const SocialSignInOption(
+                  label: 'Google',
+                  logo: ProviderLogo(url: '', name: 'Google', size: 40),
+                ),
+                const SocialSignInOption(
+                  label: 'LINE',
+                  logo: ProviderLogo(url: '', name: 'LINE', size: 40),
+                ),
+              ],
             ),
           ],
         ),

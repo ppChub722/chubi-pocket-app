@@ -120,65 +120,74 @@ void main() {
         body: envelope('WRONG_PASSWORD', 'Wrong password'),
       ),
     );
-    final cases = <({String name, Future<void> Function() call, String code, int status})>[
-      (
-        name: 'register',
-        call: () {
-          stubPost(
-            '/auth/register',
-            dioErr(
-              status: 409,
-              body: envelope('USERNAME_EXISTS', 'Username already registered'),
+    final cases =
+        <
+          ({String name, Future<void> Function() call, String code, int status})
+        >[
+          (
+            name: 'register',
+            call: () {
+              stubPost(
+                '/auth/register',
+                dioErr(
+                  status: 409,
+                  body: envelope(
+                    'USERNAME_EXISTS',
+                    'Username already registered',
+                  ),
+                ),
+              );
+              return repo.register(
+                username: 'alice',
+                password: 'pw',
+                displayName: 'Alice',
+              );
+            },
+            code: 'USERNAME_EXISTS',
+            status: 409,
+          ),
+          (
+            name: 'login',
+            call: () {
+              stubPost(
+                '/auth/login',
+                dioErr(
+                  status: 401,
+                  body: envelope('INVALID_CREDENTIALS', 'Invalid credentials'),
+                ),
+              );
+              return repo.login(identifier: 'alice', password: 'wrong');
+            },
+            code: 'INVALID_CREDENTIALS',
+            status: 401,
+          ),
+          (
+            name: 'changePassword',
+            call: () => repo.changePassword(
+              currentPassword: 'wrong',
+              newPassword: 'new12345',
             ),
-          );
-          return repo.register(
-            username: 'alice',
-            password: 'pw',
-            displayName: 'Alice',
-          );
-        },
-        code: 'USERNAME_EXISTS',
-        status: 409,
-      ),
-      (
-        name: 'login',
-        call: () {
-          stubPost(
-            '/auth/login',
-            dioErr(
-              status: 401,
-              body: envelope('INVALID_CREDENTIALS', 'Invalid credentials'),
-            ),
-          );
-          return repo.login(identifier: 'alice', password: 'wrong');
-        },
-        code: 'INVALID_CREDENTIALS',
-        status: 401,
-      ),
-      (
-        name: 'changePassword',
-        call: () => repo.changePassword(
-          currentPassword: 'wrong',
-          newPassword: 'new12345',
-        ),
-        code: 'WRONG_PASSWORD',
-        status: 401,
-      ),
-      (
-        name: '/users/me',
-        call: () {
-          when(() => dio.get<Map<String, dynamic>>('/users/me')).thenThrow(
-            dioErr(
-              status: 401,
-              body: envelope('UNAUTHORIZED', 'Authorization header required'),
-            ),
-          );
-          return repo.getCurrentUser();
-        },
-        code: 'UNAUTHORIZED',
-        status: 401,
-      ),
-    ];
+            code: 'WRONG_PASSWORD',
+            status: 401,
+          ),
+          (
+            name: '/users/me',
+            call: () {
+              when(() => dio.get<Map<String, dynamic>>('/users/me')).thenThrow(
+                dioErr(
+                  status: 401,
+                  body: envelope(
+                    'UNAUTHORIZED',
+                    'Authorization header required',
+                  ),
+                ),
+              );
+              return repo.getCurrentUser();
+            },
+            code: 'UNAUTHORIZED',
+            status: 401,
+          ),
+        ];
 
     for (final c in cases) {
       await expectLater(

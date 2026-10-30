@@ -132,16 +132,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get errorNetworkMessage => 'ตรวจสอบอินเทอร์เน็ตของคุณแล้วลองใหม่';
 
   @override
-  String get errorServerTitle => 'เกิดข้อผิดพลาด';
+  String get errorGenericTitle => 'เกิดข้อผิดพลาด';
 
   @override
-  String get errorServerMessage => 'เซิร์ฟเวอร์มีปัญหาชั่วคราว กรุณาลองใหม่';
-
-  @override
-  String get errorUnknownTitle => 'ข้อผิดพลาดที่ไม่คาดคิด';
-
-  @override
-  String get errorUnknownMessage => 'เกิดสิ่งที่ไม่คาดคิด กรุณาลองใหม่';
+  String get errorGenericMessage => 'กรุณาลองใหม่อีกครั้ง';
 
   @override
   String get errorValidationMessage => 'ข้อมูลบางช่องไม่ถูกต้อง กรุณาตรวจสอบ';
@@ -168,10 +162,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get authRegisterUsernameLabel => 'ชื่อผู้ใช้';
 
   @override
-  String get authRegisterUsernameInvalid =>
-      '3–50 ตัวอักษร; ใช้ a–z พิมพ์เล็ก, 0–9, _, -';
-
-  @override
   String get authRegisterDisplayNameLabel => 'ชื่อที่แสดง';
 
   @override
@@ -193,13 +183,55 @@ class AppLocalizationsTh extends AppLocalizations {
   String get authRegisterConfirmLabel => 'ยืนยันรหัสผ่าน';
 
   @override
-  String get authRegisterConfirmMismatch => 'รหัสผ่านไม่ตรงกัน';
-
-  @override
   String get authRegisterCurrencyLabel => 'สกุลเงิน';
 
   @override
   String get authRegisterSubmit => 'สร้างบัญชี';
+
+  @override
+  String get authRegisterIncomplete => 'กรอกข้อมูลให้ครบและถูกต้อง';
+
+  @override
+  String get authTelegramWaitTitle => 'รอยืนยันใน Telegram';
+
+  @override
+  String get authTelegramWaitBody =>
+      'กด “ยืนยัน” ในแชตกับบอท แล้วกลับมาที่แอปนี้';
+
+  @override
+  String get authTelegramReopen => 'เปิด Telegram อีกครั้ง';
+
+  @override
+  String get authTelegramCheck => 'ตรวจสอบอีกครั้ง';
+
+  @override
+  String get authTelegramExpired =>
+      'ลิงก์หมดอายุ กรุณาเริ่มเข้าสู่ระบบด้วย Telegram ใหม่';
+
+  @override
+  String get authTelegramOpenFailed =>
+      'เปิด Telegram ไม่ได้ ติดตั้งแอป Telegram แล้วหรือยัง';
+
+  @override
+  String get authTelegramSignupTitle => 'สร้างบัญชีด้วย Telegram';
+
+  @override
+  String get authTelegramSignupPhoto =>
+      'รูปโปรไฟล์ Telegram จะถูกใช้เป็นรูปของคุณ';
+
+  @override
+  String get authTelegramUsernameTaken =>
+      'ชื่อผู้ใช้นี้ถูกใช้แล้ว ใส่ชื่อที่แนะนำให้แล้ว';
+
+  @override
+  String get authTelegramAlreadyLinked =>
+      'Telegram นี้ผูกกับบัญชีแล้ว ลองเข้าสู่ระบบด้วย Telegram อีกครั้ง';
+
+  @override
+  String get authTelegramUnavailable => 'ตอนนี้ยังใช้ Telegram ไม่ได้';
+
+  @override
+  String get authRegistrationClosed => 'ตอนนี้ปิดรับสมัครสมาชิก';
 
   @override
   String get authRegisterGoToLogin => 'มีบัญชีอยู่แล้ว? เข้าสู่ระบบ';

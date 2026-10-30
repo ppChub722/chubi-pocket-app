@@ -136,7 +136,7 @@ class _PeriodSummaryCardState extends State<PeriodSummaryCard> {
                     children: [
                       Expanded(
                         child: Text(
-                          l.errorUnknownMessage,
+                          l.errorGenericMessage,
                           style: textTheme.bodySmall?.copyWith(
                             color: scheme.error,
                           ),

@@ -935,7 +935,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           return true;
         },
         failedMessage: (e) =>
-            e is ApiException ? e.message : l.errorUnknownMessage,
+            e is ApiException ? e.message : l.errorGenericMessage,
         builder: (context, value, onChanged) => SettingToggleRow(
           label: l.contactShowNicknameLabel,
           value: value,

@@ -8,6 +8,26 @@ import '../hub_playground.dart';
 /// switch link · language/theme), built only from kit pieces.
 void _noop() {}
 
+/// The login / register cards: Telegram wired, Google and LINE not yet.
+Widget _socialCards() => const SocialSignInCards(
+  comingSoonLabel: 'Soon',
+  options: [
+    SocialSignInOption(
+      label: 'Telegram',
+      logo: ProviderLogo(url: '', name: 'Telegram', size: 40),
+      onPressed: _noop,
+    ),
+    SocialSignInOption(
+      label: 'Google',
+      logo: ProviderLogo(url: '', name: 'Google', size: 40),
+    ),
+    SocialSignInOption(
+      label: 'LINE',
+      logo: ProviderLogo(url: '', name: 'LINE', size: 40),
+    ),
+  ],
+);
+
 Widget buildAuthPageTemplate(BuildContext context) => const _AuthTemplate();
 
 class _AuthTemplate extends StatefulWidget {
@@ -87,12 +107,9 @@ class _AuthTemplateState extends State<_AuthTemplate> {
       expand: true,
       onPressed: _noop,
     ),
-    alternatives: const [
-      OrDivider(label: 'or'),
-      SocialSignInButton(
-        label: 'Continue with Google',
-        comingSoonLabel: 'Soon',
-      ),
+    alternatives: [
+      const OrDivider(label: 'or'),
+      _socialCards(),
     ],
     switchLink: AppButton(
       label: 'Create an account',
@@ -149,12 +166,9 @@ class _AuthTemplateState extends State<_AuthTemplate> {
       expand: true,
       onPressed: _noop,
     ),
-    alternatives: const [
-      OrDivider(label: 'or'),
-      SocialSignInButton(
-        label: 'Continue with Google',
-        comingSoonLabel: 'Soon',
-      ),
+    alternatives: [
+      const OrDivider(label: 'or'),
+      _socialCards(),
     ],
     switchLink: AppButton(
       label: 'I already have an account',
@@ -220,13 +234,13 @@ class _AuthTemplateState extends State<_AuthTemplate> {
               page: 'Login, Register',
               child: OrDivider(label: 'or'),
             ),
-            const HubUse(
-              label: 'SocialSignInButton — not wired yet: dimmed + badge',
+            HubUse(
+              wide: true,
+              label:
+                  'SocialSignInCards — 3 columns: wired (Telegram), not wired '
+                  '(Google, LINE: dimmed + badge)',
               page: 'Login, Register',
-              child: SocialSignInButton(
-                label: 'Continue with Google',
-                comingSoonLabel: 'Soon',
-              ),
+              child: _socialCards(),
             ),
             HubUse(label: 'LanguageThemeBar', page: 'Login', child: _prefs),
           ],

@@ -344,29 +344,17 @@ abstract class AppLocalizations {
   /// **'Check your internet and try again.'**
   String get errorNetworkMessage;
 
-  /// No description provided for @errorServerTitle.
+  /// No description provided for @errorGenericTitle.
   ///
   /// In en, this message translates to:
   /// **'Something went wrong'**
-  String get errorServerTitle;
+  String get errorGenericTitle;
 
-  /// No description provided for @errorServerMessage.
+  /// No description provided for @errorGenericMessage.
   ///
   /// In en, this message translates to:
-  /// **'Our servers had a hiccup. Please try again.'**
-  String get errorServerMessage;
-
-  /// No description provided for @errorUnknownTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Unexpected error'**
-  String get errorUnknownTitle;
-
-  /// No description provided for @errorUnknownMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Something we did not expect happened. Please try again.'**
-  String get errorUnknownMessage;
+  /// **'Please try again'**
+  String get errorGenericMessage;
 
   /// No description provided for @errorValidationMessage.
   ///
@@ -416,12 +404,6 @@ abstract class AppLocalizations {
   /// **'Username'**
   String get authRegisterUsernameLabel;
 
-  /// No description provided for @authRegisterUsernameInvalid.
-  ///
-  /// In en, this message translates to:
-  /// **'3–50 chars; lowercase a–z, 0–9, _, -'**
-  String get authRegisterUsernameInvalid;
-
   /// No description provided for @authRegisterDisplayNameLabel.
   ///
   /// In en, this message translates to:
@@ -464,12 +446,6 @@ abstract class AppLocalizations {
   /// **'Confirm password'**
   String get authRegisterConfirmLabel;
 
-  /// No description provided for @authRegisterConfirmMismatch.
-  ///
-  /// In en, this message translates to:
-  /// **'Passwords don\'t match'**
-  String get authRegisterConfirmMismatch;
-
   /// No description provided for @authRegisterCurrencyLabel.
   ///
   /// In en, this message translates to:
@@ -481,6 +457,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create account'**
   String get authRegisterSubmit;
+
+  /// No description provided for @authRegisterIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in every field correctly'**
+  String get authRegisterIncomplete;
+
+  /// No description provided for @authTelegramWaitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for Telegram'**
+  String get authTelegramWaitTitle;
+
+  /// No description provided for @authTelegramWaitBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap “Confirm” in the bot chat, then come back to this app'**
+  String get authTelegramWaitBody;
+
+  /// No description provided for @authTelegramReopen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Telegram again'**
+  String get authTelegramReopen;
+
+  /// No description provided for @authTelegramCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Check again'**
+  String get authTelegramCheck;
+
+  /// No description provided for @authTelegramExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'The link expired. Start signing in with Telegram again'**
+  String get authTelegramExpired;
+
+  /// No description provided for @authTelegramOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open Telegram. Is the Telegram app installed?'**
+  String get authTelegramOpenFailed;
+
+  /// No description provided for @authTelegramSignupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an account with Telegram'**
+  String get authTelegramSignupTitle;
+
+  /// No description provided for @authTelegramSignupPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Telegram profile picture will be your picture'**
+  String get authTelegramSignupPhoto;
+
+  /// No description provided for @authTelegramUsernameTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'That username is taken. We filled in a free one'**
+  String get authTelegramUsernameTaken;
+
+  /// No description provided for @authTelegramAlreadyLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'This Telegram is already linked to an account. Try signing in with Telegram again'**
+  String get authTelegramAlreadyLinked;
+
+  /// No description provided for @authTelegramUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Telegram is not available right now'**
+  String get authTelegramUnavailable;
+
+  /// No description provided for @authRegistrationClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-up is closed right now'**
+  String get authRegistrationClosed;
 
   /// No description provided for @authRegisterGoToLogin.
   ///

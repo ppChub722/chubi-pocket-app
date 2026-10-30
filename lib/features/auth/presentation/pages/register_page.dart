@@ -20,7 +20,6 @@ class _RegisterPageState extends State<RegisterPage> {
   static final _usernameRegex = RegExp(r'^[a-z0-9_-]{3,50}$');
   static final _emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
-  final _formKey = GlobalKey<FormState>();
   final _usernameCtrl = TextEditingController();
   final _displayNameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -46,8 +45,30 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
+  /// Same rules the form had inline; now one answer, a toast.
+  bool get _valid {
+    final username = _usernameCtrl.text.trim();
+    final name = _displayNameCtrl.text.trim();
+    final email = _emailCtrl.text.trim();
+    final password = _passwordCtrl.text;
+    return _usernameRegex.hasMatch(username) &&
+        password.length >= 8 &&
+        password.length <= 128 &&
+        _confirmCtrl.text == password &&
+        name.isNotEmpty &&
+        name.length <= 100 &&
+        (email.isEmpty || _emailRegex.hasMatch(email));
+  }
+
   void _submit() {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_valid) {
+      showAppSnackBar(
+        context,
+        AppLocalizations.of(context)!.authRegisterIncomplete,
+        tone: Tone.danger,
+      );
+      return;
+    }
     context.read<AuthCubit>().register(
       username: _usernameCtrl.text.trim(),
       password: _passwordCtrl.text,
@@ -86,8 +107,6 @@ class _RegisterPageState extends State<RegisterPage> {
             return AuthPageBody(
               compact: true,
               clearTopBar: true,
-              formKey: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
               brand: const AuthBrandHeader(compact: true),
               groups: [
                 SectionCard(
@@ -106,14 +125,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       autofillHints: const [AutofillHints.newUsername],
                       inputFormatters: [_lowercase],
                       textInputAction: TextInputAction.next,
-                      validator: (v) {
-                        final s = v?.trim() ?? '';
-                        if (s.isEmpty) return l.commonRequired;
-                        if (!_usernameRegex.hasMatch(s)) {
-                          return l.authRegisterUsernameInvalid;
-                        }
-                        return null;
-                      },
                     ),
                     AppInput(
                       controller: _passwordCtrl,
@@ -124,15 +135,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       obscurable: true,
                       autofillHints: const [AutofillHints.newPassword],
                       textInputAction: TextInputAction.next,
-                      validator: (v) {
-                        if (v == null || v.length < 8) {
-                          return l.authRegisterPasswordTooShort;
-                        }
-                        if (v.length > 128) {
-                          return l.authRegisterPasswordTooLong;
-                        }
-                        return null;
-                      },
                     ),
                     AppInput(
                       controller: _confirmCtrl,
@@ -141,9 +143,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       prefixIcon: AppIcons.lock,
                       obscurable: true,
                       textInputAction: TextInputAction.next,
-                      validator: (v) => v != _passwordCtrl.text
-                          ? l.authRegisterConfirmMismatch
-                          : null,
                     ),
                   ],
                 ),
@@ -159,14 +158,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       prefixIcon: AppIcons.profile,
                       autofillHints: const [AutofillHints.name],
                       textInputAction: TextInputAction.next,
-                      validator: (v) {
-                        final s = v?.trim() ?? '';
-                        if (s.isEmpty) return l.commonRequired;
-                        if (s.length > 100) {
-                          return l.authRegisterDisplayNameTooLong;
-                        }
-                        return null;
-                      },
                     ),
                     AppInput(
                       controller: _emailCtrl,
@@ -179,13 +170,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       errorText: _fieldErrorFor(l, 'email', failure),
                       textInputAction: TextInputAction.done,
                       onSubmitted: (_) => _submit(),
-                      validator: (v) {
-                        final s = v?.trim() ?? '';
-                        if (s.isEmpty) return null;
-                        return _emailRegex.hasMatch(s)
-                            ? null
-                            : l.editProfileEmailInvalid;
-                      },
                     ),
                     CurrencyTile(
                       value: _currency,
@@ -205,9 +189,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 size: AppButtonSize.large,
                 expand: true,
               ),
-              // TODO(google-sign-in): same flow as login — the BE creates the
-              // account on first sign-in.
-              alternatives: const [AuthOrDivider(), GoogleSignInButton()],
+              alternatives: const [AuthOrDivider(), AuthSocialCards()],
               switchLink: AppButton(
                 label: l.authRegisterGoToLogin,
                 variant: AppButtonVariant.text,

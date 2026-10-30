@@ -104,28 +104,27 @@ class _AppErrors extends UiErrors {
         message: l.errorNetworkMessage,
       );
     }
-    if (server) {
-      return UiErrorInfo(
-        icon: AppIcons.serverDown,
-        title: l.errorServerTitle,
-        message: l.errorServerMessage,
-      );
-    }
-    final known = switch (e?.code) {
-      'INVALID_CREDENTIALS' => l.authLoginInvalidCredentials,
-      'WRONG_PASSWORD' => l.changePasswordCurrentWrong,
-      'USERNAME_EXISTS' => l.authRegisterUsernameTaken,
-      'EMAIL_EXISTS' => l.authRegisterEmailTaken,
-      'VALIDATION_ERROR' => l.errorValidationMessage,
-      _ => null,
-    };
+    // A 5xx and an unknown error are one message: the user can only retry.
+    final known = server
+        ? null
+        : switch (e?.code) {
+            'INVALID_CREDENTIALS' => l.authLoginInvalidCredentials,
+            'WRONG_PASSWORD' => l.changePasswordCurrentWrong,
+            'USERNAME_EXISTS' => l.authRegisterUsernameTaken,
+            'EMAIL_EXISTS' => l.authRegisterEmailTaken,
+            'REGISTRATION_CLOSED' => l.authRegistrationClosed,
+            'TELEGRAM_ALREADY_LINKED' => l.authTelegramAlreadyLinked,
+            'CONNECTION_UNAVAILABLE' => l.authTelegramUnavailable,
+            'VALIDATION_ERROR' => l.errorValidationMessage,
+            _ => null,
+          };
     if (known != null) {
       return UiErrorInfo(icon: AppIcons.error, title: known, message: known);
     }
     return UiErrorInfo(
       icon: AppIcons.error,
-      title: l.errorUnknownTitle,
-      message: l.errorUnknownMessage,
+      title: l.errorGenericTitle,
+      message: l.errorGenericMessage,
     );
   }
 

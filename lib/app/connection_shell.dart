@@ -7,9 +7,18 @@ import '../features/auth/presentation/cubit/auth_cubit.dart';
 import '../ui/ui.dart';
 
 class ConnectionShell extends StatelessWidget {
-  const ConnectionShell({required this.child, this.devHub = false, super.key});
+  const ConnectionShell({
+    required this.child,
+    this.devHub = false,
+    this.hideOfflineBanner = false,
+    super.key,
+  });
 
   final Widget child;
+
+  /// Auth pages: the banner reads as online (offline there shows only the
+  /// bottom toast on submit). Offline gating stays on.
+  final bool hideOfflineBanner;
 
   /// On the dev hub (isDevHubPath): no offline / update banner and no
   /// offline gating, so the widgets work without a backend.
@@ -22,7 +31,7 @@ class ConnectionShell extends StatelessWidget {
     );
     return BlocBuilder<ConnectionCubit, ServerConnectionState>(
       builder: (context, conn) {
-        final quiet = coldStart || devHub;
+        final quiet = coldStart || devHub || hideOfflineBanner;
         return ConnectionScope(
           offline: !devHub && conn.isOffline,
           reconnects: conn.reconnects,
