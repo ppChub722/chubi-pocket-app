@@ -105,9 +105,7 @@ class _RegisterPageState extends State<RegisterPage> {
             final isSubmitting = state is AuthLoading;
             final failure = state is AuthFailure ? state : null;
             return AuthPageBody(
-              compact: true,
-              clearTopBar: true,
-              brand: const AuthBrandHeader(compact: true),
+              brand: const AuthBrandHeader(),
               groups: [
                 SectionCard(
                   first: true,

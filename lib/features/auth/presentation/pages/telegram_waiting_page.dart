@@ -118,69 +118,61 @@ class _TelegramWaitingPageState extends State<TelegramWaitingPage> {
           showParent: false,
           onBack: _cancel,
         ),
+        extendBodyBehindAppBar: true,
         body: BlocConsumer<TelegramLoginCubit, TelegramLoginState>(
           listenWhen: (a, b) =>
               a.phase != b.phase || a.failureId != b.failureId,
           listener: _onState,
-          builder: (context, s) => SafeArea(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.xxl),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Center(
-                        child: ProviderLogo(
-                          url: '/api/v1/brand-logos/telegram.png?v=1',
-                          name: 'Telegram',
-                          size: 72,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xl),
-                      Text(
-                        l.authTelegramWaitTitle,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        l.authTelegramWaitBody,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xxl),
-                      AppButton(
-                        label: l.authTelegramCheck,
-                        loading: s.checking,
-                        onPressed: _check,
-                        size: AppButtonSize.large,
-                        expand: true,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      AppButton(
-                        label: l.authTelegramReopen,
-                        variant: AppButtonVariant.outlined,
-                        onPressed: _reopen,
-                        size: AppButtonSize.large,
-                        expand: true,
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      AppButton(
-                        label: l.commonCancel,
-                        variant: AppButtonVariant.text,
-                        onPressed: _cancel,
-                        expand: true,
-                      ),
-                    ],
-                  ),
+          builder: (context, s) => BrandScreen(
+            maxWidth: 420,
+            header: const BrandHeader(),
+            children: [
+              const SizedBox(height: AppSpacing.xl),
+              const Center(
+                child: ProviderLogo(
+                  url: '/api/v1/brand-logos/telegram.png?v=1',
+                  name: 'Telegram',
+                  size: 48,
                 ),
               ),
-            ),
+              const SizedBox(height: AppSpacing.xl),
+              Text(
+                l.authTelegramWaitTitle,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                l.authTelegramWaitBody,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xxl),
+              AppButton(
+                label: l.authTelegramCheck,
+                loading: s.checking,
+                onPressed: _check,
+                size: AppButtonSize.large,
+                expand: true,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              AppButton(
+                label: l.authTelegramReopen,
+                variant: AppButtonVariant.outlined,
+                onPressed: _reopen,
+                size: AppButtonSize.large,
+                expand: true,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              AppButton(
+                label: l.commonCancel,
+                variant: AppButtonVariant.text,
+                onPressed: _cancel,
+                expand: true,
+              ),
+            ],
           ),
         ),
       ),

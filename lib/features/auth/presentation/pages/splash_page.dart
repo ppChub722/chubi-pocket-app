@@ -51,55 +51,34 @@ class _SplashPageState extends State<SplashPage> {
     return Scaffold(
       body: Stack(
         children: [
-          Column(
-            children: [
-              const Spacer(),
-              // Stuck on a startup error, the dev hub (Connection, Logs) is
-              // still one secret tap away.
-              SecretTapDetector(
-                onUnlock: () => context.push('/dev'),
-                child: const BrandLogo(),
-              ),
-              Expanded(
-                child: BlocBuilder<AuthCubit, AuthState>(
-                  builder: (context, state) {
-                    final error = state is AuthInitial
-                        ? state.startupError
-                        : null;
-                    final retry = context.read<AuthCubit>().init;
-                    return PullToRefresh(
-                      enabled: error != null,
-                      onRefresh: retry,
-                      child: SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg,
-                        ),
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 360),
-                            child: Column(
-                              children: [
-                                const SizedBox(height: AppSpacing.lg),
-                                Text(
-                                  AppLocalizations.of(context)!.appName,
-                                  style: theme.textTheme.headlineMedium,
-                                ),
-                                const SizedBox(height: AppSpacing.xl),
-                                if (error == null)
-                                  const AppSpinner(size: AppSpinnerSize.large)
-                                else
-                                  ErrorView(error: error, onRetry: retry),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+          BlocBuilder<AuthCubit, AuthState>(
+            builder: (context, state) {
+              final error = state is AuthInitial ? state.startupError : null;
+              final retry = context.read<AuthCubit>().init;
+              return PullToRefresh(
+                enabled: error != null,
+                onRefresh: retry,
+                child: BrandScreen(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  maxWidth: 360,
+                  // Stuck on a startup error, the dev hub (Connection, Logs)
+                  // is still one secret tap away.
+                  header: BrandHeader(
+                    name: AppLocalizations.of(context)!.appName,
+                    onSecretUnlock: () => context.push('/dev'),
+                  ),
+                  children: [
+                    const SizedBox(height: AppSpacing.xl),
+                    if (error == null)
+                      const Center(
+                        child: AppSpinner(size: AppSpinnerSize.large),
+                      )
+                    else
+                      ErrorView(error: error, onRetry: retry),
+                  ],
                 ),
-              ),
-            ],
+              );
+            },
           ),
           Positioned(
             left: 0,

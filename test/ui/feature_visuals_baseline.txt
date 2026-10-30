@@ -5,7 +5,6 @@ lib/app/shell/main_bottom_nav.dart	3
 lib/app/shell/more_page.dart	1
 lib/features/accounts/presentation/pages/account_detail_page.dart	1
 lib/features/accounts/presentation/widgets/wallet_members_view.dart	1
-lib/features/app_version/presentation/pages/update_required_page.dart	1
 lib/features/app_version/presentation/widgets/update_banner.dart	1
 lib/features/categories/presentation/pages/categories_page.dart	1
 lib/features/categories/presentation/widgets/category_preview_card.dart	1

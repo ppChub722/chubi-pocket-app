@@ -393,25 +393,10 @@ Widget buildOthersPage(BuildContext context) {
 
           // ── Brand, auth, banners ──
           const HubUse(
-            label: 'BrandLogo — 128 (splash)',
-            page: 'Splash, Update-required page',
+            label: 'BrandLogo — 88, the one size of every brand screen',
+            page:
+                'Splash, login, register, Telegram pages, update required, start-up failure (BrandScreen)',
             child: Align(alignment: Alignment.centerLeft, child: BrandLogo()),
-          ),
-          const HubUse(
-            label: 'BrandLogo — 88',
-            page: 'Auth header (login)',
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: BrandLogo(size: 88),
-            ),
-          ),
-          const HubUse(
-            label: 'BrandLogo — 56',
-            page: 'Auth header (register)',
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: BrandLogo(size: 56),
-            ),
           ),
           const HubUse(
             label: 'BrandLogo — 32',
@@ -453,12 +438,6 @@ Widget buildOthersPage(BuildContext context) {
             label: 'AuthBrandHeader — logo, name, tagline (5 taps opens hub)',
             page: 'Login',
             child: AuthBrandHeader(),
-          ),
-          const HubUse(
-            wide: true,
-            label: 'AuthBrandHeader — compact: smaller logo, no tagline',
-            page: 'Register',
-            child: AuthBrandHeader(compact: true),
           ),
           const HubUse(
             wide: true,
@@ -612,7 +591,7 @@ Widget buildOthersPage(BuildContext context) {
       HubPlayground(
         title: 'BrandLogo | AuthBrandHeader | GoogleSignInButton',
         note:
-            'BrandLogo: size. AuthBrandHeader: compact. GoogleSignInButton: '
+            'BrandLogo: size. GoogleSignInButton: '
             'onPressed (null = dimmed "coming soon") and loading.',
         controls: [
           const PlayNum(
@@ -622,7 +601,6 @@ Widget buildOthersPage(BuildContext context) {
             step: 16,
             initialValue: 56,
           ),
-          const PlayBool('compact'),
           const PlayBool('onPressed', initialValue: true),
           const PlayBool('loading'),
         ],
@@ -631,7 +609,7 @@ Widget buildOthersPage(BuildContext context) {
           children: [
             Center(child: BrandLogo(size: v<double>('logoSize'))),
             const SizedBox(height: AppSpacing.md),
-            AuthBrandHeader(compact: v<bool>('compact')),
+            const AuthBrandHeader(),
             const SizedBox(height: AppSpacing.md),
             SocialSignInCards(
               comingSoonLabel: 'Soon',

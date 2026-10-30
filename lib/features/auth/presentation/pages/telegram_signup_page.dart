@@ -118,9 +118,7 @@ class _TelegramSignupPageState extends State<TelegramSignupPage> {
           builder: (context, s) {
             final busy = s.phase == TelegramLoginPhase.signingUp;
             return AuthPageBody(
-              compact: true,
-              clearTopBar: true,
-              brand: const AuthBrandHeader(compact: true),
+              brand: const AuthBrandHeader(),
               groups: [
                 SectionCard(
                   first: true,

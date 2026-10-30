@@ -63,61 +63,57 @@ class UpdateRequiredView extends StatelessWidget {
         if (!didPop) SystemNavigator.pop();
       },
       child: Scaffold(
-        body: CenteredFormBody(
+        body: BrandScreen(
           maxWidth: 360,
-          padding: const EdgeInsets.all(AppSpacing.xxl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const BrandLogo(),
-              const SizedBox(height: AppSpacing.xxl),
-              Text(
-                l.appUpdateRequiredTitle,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+          header: const BrandHeader(),
+          children: [
+            const SizedBox(height: AppSpacing.xxl),
+            Text(
+              l.appUpdateRequiredTitle,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
               ),
-              const SizedBox(height: AppSpacing.md),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+            if (currentBuild != null && info.minBuild > 0) ...[
+              const SizedBox(height: AppSpacing.sm),
               Text(
-                message,
+                l.appUpdateBuildLine(currentBuild!, info.minBuild),
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge?.copyWith(
+                style: theme.textTheme.labelSmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
               ),
-              if (currentBuild != null && info.minBuild > 0) ...[
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  l.appUpdateBuildLine(currentBuild!, info.minBuild),
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-              const SizedBox(height: AppSpacing.xxl),
-              AppButton(
-                label: l.appUpdateDownload,
-                icon: Icons.download_rounded,
-                size: AppButtonSize.large,
-                expand: true,
-                onPressed: hasLink
-                    ? () => openAppDownload(context, info.downloadUrl)
-                    : null,
-              ),
-              if (!hasLink) ...[
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  l.appUpdateNoLink,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
             ],
-          ),
+            const SizedBox(height: AppSpacing.xxl),
+            AppButton(
+              label: l.appUpdateDownload,
+              icon: Icons.download_rounded,
+              size: AppButtonSize.large,
+              expand: true,
+              onPressed: hasLink
+                  ? () => openAppDownload(context, info.downloadUrl)
+                  : null,
+            ),
+            if (!hasLink) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                l.appUpdateNoLink,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );

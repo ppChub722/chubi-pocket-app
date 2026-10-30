@@ -3,9 +3,10 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 
 class BrandLogo extends StatelessWidget {
-  const BrandLogo({this.size = BrandLogo.splashSize, super.key});
+  const BrandLogo({this.size = BrandLogo.standardSize, super.key});
 
-  static const splashSize = 128.0;
+  /// The one size of the logo on a brand screen (see BrandScreen).
+  static const standardSize = 88.0;
 
   static const _asset = AssetImage('assets/icon/logo.png');
 

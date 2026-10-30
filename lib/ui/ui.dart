@@ -273,6 +273,7 @@ export 'domain/icons/type_icon_default.dart';
 export 'domain/people/user_profile_preview.dart';
 export 'organisms/reorder/reorder_outline.dart';
 export 'templates/dashboard_page_body.dart';
+export 'templates/brand_screen.dart';
 export 'templates/auth_page_body.dart';
 export 'templates/detail_layout.dart';
 export 'templates/detail_page_body.dart';

@@ -840,6 +840,7 @@ final List<HubPage> hubPages = [
     usedBy: '2 pages (Login, Register)',
     covers: [
       'AuthPageBody',
+      'BrandScreen',
       'OrDivider',
       'SocialSignInCards',
       'SocialSignInOption',

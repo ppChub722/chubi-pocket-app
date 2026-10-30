@@ -33,68 +33,72 @@ class BootErrorApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const AppIcon(
-                  Icons.error_outline,
-                  size: AppIconSize.hero,
-                  color: Colors.red,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'เปิดแอปไม่สำเร็จ\nFailed to start',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'ปิดแอปแล้วเปิดใหม่อีกครั้ง — ถ้ายังเจออยู่ กดปุ่มด้านล่าง'
-                  'เพื่อคัดลอกรายละเอียดแล้วส่งให้ผู้พัฒนา\n'
-                  '(Close and reopen the app. If it persists, copy the '
-                  'details below and send them to the developer.)',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: Colors.black54),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(8),
+        body: BrandScreen(
+          header: const BrandHeader(),
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const AppIcon(
+                    Icons.error_outline,
+                    size: AppIconSize.hero,
+                    color: Colors.red,
                   ),
-                  child: Text(
-                    '$error',
-                    maxLines: 6,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontFamily: 'monospace',
+                  const SizedBox(height: 16),
+                  const Text(
+                    'เปิดแอปไม่สำเร็จ\nFailed to start',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'ปิดแอปแล้วเปิดใหม่อีกครั้ง — ถ้ายังเจออยู่ กดปุ่มด้านล่าง'
+                    'เพื่อคัดลอกรายละเอียดแล้วส่งให้ผู้พัฒนา\n'
+                    '(Close and reopen the app. If it persists, copy the '
+                    'details below and send them to the developer.)',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: Colors.black54),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '$error',
+                      maxLines: 6,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontFamily: 'monospace',
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Builder(
-                  builder: (ctx) => AppButton(
-                    icon: Icons.copy,
-                    label: 'คัดลอกรายละเอียด / Copy details',
-                    onPressed: () async {
-                      await Clipboard.setData(ClipboardData(text: _report()));
-                      if (ctx.mounted) {
-                        ScaffoldMessenger.of(ctx).showSnackBar(
-                          const SnackBar(content: Text('คัดลอกแล้ว / Copied')),
-                        );
-                      }
-                    },
+                  const SizedBox(height: 16),
+                  Builder(
+                    builder: (ctx) => AppButton(
+                      icon: Icons.copy,
+                      label: 'คัดลอกรายละเอียด / Copy details',
+                      onPressed: () async {
+                        await Clipboard.setData(ClipboardData(text: _report()));
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            const SnackBar(
+                              content: Text('คัดลอกแล้ว / Copied'),
+                            ),
+                          );
+                        }
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

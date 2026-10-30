@@ -121,8 +121,7 @@ class _AuthTemplateState extends State<_AuthTemplate> {
   );
 
   Widget _register() => AuthPageBody(
-    compact: true,
-    brand: const BrandHeader(name: 'chubiPocket', compact: true),
+    brand: const BrandHeader(name: 'chubiPocket'),
     groups: [
       SectionCard(
         first: true,
@@ -219,9 +218,9 @@ class _AuthTemplateState extends State<_AuthTemplate> {
             HubUse(
               wide: true,
               label:
-                  'Register — compact brand, two grouped field sections '
+                  'Register — same brand header, two grouped field sections '
                   '(SectionCard fields: true), primary, "or" + Google',
-              page: 'RegisterPage (AuthPageBody compact)',
+              page: 'RegisterPage (AuthPageBody)',
               child: _framed(_register(), 760),
             ),
             const HubUse(

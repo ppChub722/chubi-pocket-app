@@ -14,9 +14,7 @@ import '../cubit/telegram_login_cubit.dart';
 const kLanguageNames = {'th': 'ไทย', 'en': 'English'};
 
 class AuthBrandHeader extends StatelessWidget {
-  const AuthBrandHeader({this.compact = false, super.key});
-
-  final bool compact;
+  const AuthBrandHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +22,6 @@ class AuthBrandHeader extends StatelessWidget {
     return BrandHeader(
       name: l.appName,
       tagline: l.authTagline,
-      compact: compact,
       onSecretUnlock: () => context.push('/dev'),
     );
   }

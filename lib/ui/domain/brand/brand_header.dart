@@ -6,34 +6,35 @@ import 'brand_logo.dart';
 
 class BrandHeader extends StatelessWidget {
   const BrandHeader({
-    required this.name,
+    this.name,
     this.tagline,
-    this.compact = false,
     this.onSecretUnlock,
     super.key,
   });
 
-  final String name;
+  final String? name;
   final String? tagline;
-  final bool compact;
   final VoidCallback? onSecretUnlock;
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final logo = BrandLogo(size: compact ? 56 : 88);
+    final logo = BrandLogo();
     return Column(
       children: [
         onSecretUnlock == null
             ? logo
             : SecretTapDetector(onUnlock: onSecretUnlock!, child: logo),
-        const SizedBox(height: AppSpacing.md),
-        Text(
-          name,
-          style: (compact ? textTheme.titleLarge : textTheme.headlineSmall)
-              ?.copyWith(fontWeight: FontWeight.w800),
-        ),
-        if (!compact && tagline != null) ...[
+        if (name != null) ...[
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            name!,
+            style: textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+        if (tagline != null) ...[
           const SizedBox(height: AppSpacing.xs),
           Text(
             tagline!,
