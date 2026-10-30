@@ -47,7 +47,6 @@ class SettingsPagePrefsPage extends StatelessWidget {
           final inset = MediaQuery.paddingOf(context);
           return DetailPageBody(
             onRefresh: () => refreshMe(context),
-            topInset: inset.top + AppSpacing.lg,
             bottomInset: AppSpacing.huge + inset.bottom,
             // The page legend, above the cards (inset like a card title).
             hero: DetailFootnote(l.pagePrefsCaption),
@@ -129,7 +128,6 @@ class SettingsPagePrefPage extends StatelessWidget {
           final pref = user.pagePref(pageId);
           return DetailPageBody(
             onRefresh: () => refreshMe(context),
-            topInset: inset.top + AppSpacing.lg,
             bottomInset: AppSpacing.huge + inset.bottom,
             sections: [
               (first) => SectionCard(

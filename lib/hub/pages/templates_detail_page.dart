@@ -72,6 +72,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
     final enter = editing ? null : _enter;
 
     final page = DetailPageBody(
+      topInset: 0,
       tags: const Wrap(
         spacing: AppSpacing.xs,
         runSpacing: AppSpacing.xs,
@@ -215,6 +216,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
 
     // Static variants: the same skeleton in the shapes the real pages use.
     Widget contactPage() => DetailPageBody(
+      topInset: 0,
       hero: AppHeroCard(
         style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
         header: HeroHeader(leading: const [], onEdit: () {}),
@@ -259,6 +261,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
     );
 
     Widget goalPage() => DetailPageBody(
+      topInset: 0,
       // A tab bar under the hero (a budget's periods / items).
       tabBar: AppTabBar<int>(
         tabs: const [

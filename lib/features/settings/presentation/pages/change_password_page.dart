@@ -129,7 +129,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
           key: _formKey,
           child: Builder(
             builder: (context) => DetailPageBody(
-              topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
               bottomInset:
                   AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
               sections: [

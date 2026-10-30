@@ -35,7 +35,6 @@ class SettingsAppPage extends StatelessWidget {
             // The account's copy of these values (another device may change
             // them).
             onRefresh: () => refreshMe(context),
-            topInset: inset.top + AppSpacing.lg,
             bottomInset: AppSpacing.huge + inset.bottom,
             sections: [
               (first) => SectionCard(

@@ -254,6 +254,7 @@ class _HeroCardPageState extends State<_HeroCardPage> {
           child: SizedBox(
             height: 220,
             child: DetailLayout(
+              topInset: 0,
               hero: AppHeroCard(
                 style: style,
                 content: [

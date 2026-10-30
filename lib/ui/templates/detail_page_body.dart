@@ -17,7 +17,7 @@ class DetailPageBody extends StatelessWidget {
     this.footnote,
     this.metaLines = const [],
     this.bottomInset = AppSpacing.xxl,
-    this.topInset = 0,
+    this.topInset,
     this.controller,
     this.physics,
     this.onRefresh,
@@ -39,7 +39,11 @@ class DetailPageBody extends StatelessWidget {
   final List<String> metaLines;
   final double bottomInset;
 
-  final double topInset;
+  /// Space above the first child. Null (default) clears the top bar the page
+  /// sits behind: the status-bar + bar height of this body's own context plus
+  /// [AppSpacing.lg]. Pass a number only to override (0 = flush, for a body
+  /// that is not under the bar).
+  final double? topInset;
   final ScrollController? controller;
   final ScrollPhysics? physics;
 
@@ -90,7 +94,7 @@ class DetailPageBody extends StatelessWidget {
           (refresh == null ? null : const AlwaysScrollableScrollPhysics()),
       padding: EdgeInsets.fromLTRB(
         AppSpacing.lg,
-        topInset,
+        topInset ?? MediaQuery.paddingOf(context).top + AppSpacing.lg,
         AppSpacing.lg,
         bottomInset,
       ),

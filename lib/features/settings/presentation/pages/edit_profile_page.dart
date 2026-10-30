@@ -311,7 +311,6 @@ class _EditProfilePageState extends State<EditProfilePage>
                 onRefresh: _refresh,
                 refreshEnabled: !editing,
                 physics: const AlwaysScrollableScrollPhysics(),
-                topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
                 bottomInset:
                     AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
                 hero: editing

@@ -184,18 +184,18 @@ class _ConnectionPageState extends State<ConnectionPage> {
         error: c == null ? _error : null,
         isEmpty: false,
         onRetry: _load,
-        builder: (context) => _body(l, _row!),
+        builder: (context) => _body(context, l, _row!),
       ),
     );
   }
 
-  Widget _body(AppLocalizations l, Connection c) {
+  Widget _body(BuildContext context, AppLocalizations l, Connection c) {
+    // The Scaffold's body context: its top padding already holds the bar.
     final inset = MediaQuery.paddingOf(context);
     final repo = context.read<ConnectionsRepository>();
     return DetailPageBody(
       onRefresh: _load,
       physics: const AlwaysScrollableScrollPhysics(),
-      topInset: inset.top + AppSpacing.lg,
       bottomInset: AppSpacing.huge + inset.bottom,
       hero: ConnectionHeroCard(
         name: c.name,

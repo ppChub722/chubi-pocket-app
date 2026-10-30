@@ -464,7 +464,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
                 builder: (context) => DetailLayout(
                   onRefresh: _isCreate ? null : _refresh,
                   refreshEnabled: !isEditing,
-                  topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
                   bottomInset:
                       AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
                   hero: isEditing ? _editHero(l) : _viewHero(l),
