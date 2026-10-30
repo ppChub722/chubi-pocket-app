@@ -298,7 +298,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                 tone: Tone.info,
                 onClose: () {},
                 actions: [
-                  AppMessageAction(label: 'Later', onPressed: () {}),
+                  AppMessageAction(label: 'Release notes', onPressed: () {}),
                   AppMessageAction(label: 'Update', onPressed: () {}),
                 ],
               ),
@@ -701,6 +701,16 @@ class _FeedbackPageState extends State<_FeedbackPage> {
           ),
         ),
 
+        const HubDemo(
+          title: 'AppMessage — shapes: 0 / 1 / 2 actions × short / long × ✕',
+          note:
+              'One line when the text fits beside at most one action; '
+              'otherwise two lines: icon + text + ✕ on the first text line, '
+              'the actions right-aligned under the text. ✕ is the only close; '
+              'an action is a verb (Undo, Retry, View, Update). Left column: '
+              'the page width. Right column (below): a 320 px box.',
+          child: _MessageMatrix(),
+        ),
         HubPlayground(
           title: 'AppMessage',
           controls: [
@@ -723,11 +733,73 @@ class _FeedbackPageState extends State<_FeedbackPage> {
             actions: [
               for (var i = 0; i < v<double>('actions').round(); i++)
                 AppMessageAction(
-                  label: i == 0 ? 'Undo' : 'Dismiss',
+                  label: i == 0 ? 'Undo' : 'View',
                   onPressed: () {},
                 ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+}
+
+const _shortText = 'Wallet deleted';
+const _longText =
+    'The wallet and its 24 transactions were deleted from this device and '
+    'from the server, so they will not come back on the other phone';
+
+/// Every shape of AppMessage: 0 / 1 / 2 actions × short / long text × ✕,
+/// at the page width and inside a 320 px box.
+class _MessageMatrix extends StatelessWidget {
+  const _MessageMatrix();
+
+  Widget _cell(int actions, bool long, bool close) {
+    final label =
+        '$actions action${actions == 1 ? '' : 's'}, '
+        '${long ? 'long' : 'short'} text, ✕ ${close ? 'on' : 'off'}';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 11)),
+        const SizedBox(height: AppSpacing.xs),
+        AppMessage(
+          message: long ? _longText : _shortText,
+          tone: Tone.danger,
+          floating: true,
+          onClose: close ? () {} : null,
+          actions: [
+            if (actions >= 1) AppMessageAction(label: 'Undo', onPressed: () {}),
+            if (actions == 2) AppMessageAction(label: 'View', onPressed: () {}),
+          ],
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget grid() => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final actions in [0, 1, 2])
+          for (final long in [false, true])
+            for (final close in [true, false]) ...[
+              _cell(actions, long, close),
+              const SizedBox(height: AppSpacing.md),
+            ],
+      ],
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        grid(),
+        const Divider(),
+        const Text('In a 320 px box', style: TextStyle(fontSize: 11)),
+        const SizedBox(height: AppSpacing.sm),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: SizedBox(width: 320, child: grid()),
         ),
       ],
     );

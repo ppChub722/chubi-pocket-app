@@ -5,7 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'row_geometry_harness.dart';
 
 /// AppMessage (owner 2026-10-28): icon, text, action and close sit on one
-/// centre line, with the same space above and below, in every tone.
+/// centre line, with the same space above and below, in every tone (wide
+/// enough that the text stays on one line; the two-line shapes are in
+/// app_message_shapes_test.dart).
 void main() {
   for (final tone in Tone.values) {
     for (final withAction in [true, false]) {
@@ -22,7 +24,7 @@ void main() {
             ],
             onClose: () {},
           ),
-          width: 420,
+          width: 600,
           scale: 1,
         );
         final box = t.getRect(
