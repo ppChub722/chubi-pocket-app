@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/network/api_exception.dart';
+import '../../core/network/connection_cubit.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/ui.dart';
 import '../hub_kit.dart';
@@ -39,7 +40,16 @@ class _FeedbackPage extends StatefulWidget {
 
 class _FeedbackPageState extends State<_FeedbackPage> {
   double _progress = 0.6;
+  int _snackCount = 0;
   String _result = 'No dialog answered yet';
+
+  void _connectionSnack(ServerConnectionState state) {
+    SnackStack.of(ScaffoldMessenger.of(context)).setSticky(
+      ConnectionSnack.stackKey,
+      (_) =>
+          ConnectionSnackMessage(state: state, onRetry: () {}, onClose: () {}),
+    );
+  }
 
   Future<void> _confirm({required bool destructive}) async {
     final ok = await showConfirmDialog(
@@ -414,7 +424,8 @@ class _FeedbackPageState extends State<_FeedbackPage> {
         HubDemo(
           title: 'showAppSnackBar',
           note:
-              'Floating, replaces the current one. Tone adds a leading icon; '
+              'Bottom only; newer snacks stack above older ones (see SnackStack). '
+              'Tone adds a leading icon; '
               'an action needs both actionLabel and onAction.',
           child: Wrap(
             spacing: AppSpacing.sm,
@@ -435,6 +446,93 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                   tone: Tone.success,
                   actionLabel: 'Undo',
                   onAction: () => showAppSnackBar(context, 'Undone'),
+                ),
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'SnackStack — several snacks, the connection snack, a sheet',
+          note:
+              'Bottom only, never a top banner. The first snack sits at the '
+              'bottom, newer ones push the older ones up; at most 3 at once '
+              '(the oldest goes), the same message replaces itself. With a '
+              'bottom bar or a floating button the stack sits above it; '
+              'without one it rises from the very bottom. The connection '
+              'snack is sticky: it keeps the bottom and the others stack '
+              'above it. A snack raised over a sheet stacks above the sheet '
+              'and the keyboard. Press the buttons several times.',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              AppButton(
+                label: 'Add a snack',
+                variant: AppButtonVariant.outlined,
+                onPressed: () => showAppSnackBar(
+                  context,
+                  'Saved #${++_snackCount}',
+                  tone: Tone.success,
+                ),
+              ),
+              AppButton(
+                label: 'Add error + Retry',
+                variant: AppButtonVariant.outlined,
+                onPressed: () => showAppSnackBar(
+                  context,
+                  'Could not save #${++_snackCount}',
+                  tone: Tone.danger,
+                  actionLabel: 'Retry',
+                  onAction: () {},
+                ),
+              ),
+              AppButton(
+                label: 'Connection: connecting 2/6',
+                variant: AppButtonVariant.tonal,
+                onPressed: () => _connectionSnack(
+                  const ServerConnectionState(
+                    status: ConnectionStatus.reconnecting,
+                    attempt: 2,
+                    attempts: 6,
+                  ),
+                ),
+              ),
+              AppButton(
+                label: 'Connection: cannot connect',
+                variant: AppButtonVariant.tonal,
+                onPressed: () => _connectionSnack(
+                  const ServerConnectionState(
+                    status: ConnectionStatus.offline,
+                    attempt: 6,
+                    attempts: 6,
+                  ),
+                ),
+              ),
+              AppButton(
+                label: 'Connection: gone',
+                variant: AppButtonVariant.text,
+                onPressed: () => SnackStack.of(
+                  messenger,
+                ).clearSticky(ConnectionSnack.stackKey),
+              ),
+              AppButton(
+                label: 'Open a sheet',
+                variant: AppButtonVariant.outlined,
+                onPressed: () => showModalBottomSheet<void>(
+                  context: context,
+                  builder: (sheet) => SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: AppButton(
+                        label: 'Add a snack over the sheet',
+                        onPressed: () => showAppSnackBar(
+                          sheet,
+                          'Over the sheet #${++_snackCount}',
+                          tone: Tone.info,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],

@@ -10,18 +10,18 @@ class ConnectionShell extends StatelessWidget {
   const ConnectionShell({
     required this.child,
     this.devHub = false,
-    this.hideOfflineBanner = false,
+    this.hideConnectionSnack = false,
     super.key,
   });
 
   final Widget child;
 
-  /// Auth pages: the banner reads as online (offline there shows only the
-  /// bottom toast on submit). Offline gating stays on.
-  final bool hideOfflineBanner;
+  /// Auth pages: the connection snack reads as online (offline there shows
+  /// only the failed submit's snack). Offline gating stays on.
+  final bool hideConnectionSnack;
 
-  /// On the dev hub (isDevHubPath): no offline / update banner and no
-  /// offline gating, so the widgets work without a backend.
+  /// On the dev hub (isDevHubPath): no connection snack / update banner and
+  /// no offline gating, so the widgets work without a backend.
   final bool devHub;
 
   @override
@@ -31,7 +31,7 @@ class ConnectionShell extends StatelessWidget {
     );
     return BlocBuilder<ConnectionCubit, ServerConnectionState>(
       builder: (context, conn) {
-        final quiet = coldStart || devHub || hideOfflineBanner;
+        final quiet = coldStart || devHub || hideConnectionSnack;
         return ConnectionScope(
           offline: !devHub && conn.isOffline,
           reconnects: conn.reconnects,
@@ -46,17 +46,13 @@ class ConnectionShell extends StatelessWidget {
                   Expanded(child: child),
                 ],
               ),
-              // Always in the tree (a child appearing above would remount every
-              // page below); it just reads as online on cold start and on the
-              // dev hub.
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: OfflineBanner(
-                  state: quiet ? const ServerConnectionState() : conn,
-                  onRetry: context.read<ConnectionCubit>().retryNow,
-                ),
+              // Draws nothing: keeps the connection snack on the bottom
+              // SnackStack (it reads as online on cold start, on the dev hub
+              // and on auth pages).
+              ConnectionSnack(
+                state: conn,
+                quiet: quiet,
+                onRetry: context.read<ConnectionCubit>().retryNow,
               ),
             ],
           ),

@@ -15,7 +15,7 @@ import '../hub_playground.dart';
 /// `/dev/domain/others` — notification tiles, project pieces,
 /// the brand logo, the auth header and the two top-of-screen banners.
 ///
-/// Gate pieces: BrandLogo, OfflineBanner. Feature pieces (sample models, no
+/// Gate pieces: BrandLogo, ConnectionSnackMessage. Feature pieces (sample models, no
 /// cubit): NotificationTile, ProjectTxIcon,
 /// ProjectMemberAvatar, projectStatusTone chips, AuthBrandHeader,
 /// AuthOrDivider, GoogleSignInButton, UpdateBannerStrip. Skipped (need
@@ -447,27 +447,27 @@ Widget buildOthersPage(BuildContext context) {
           ),
           for (final (label, status, attempt) in [
             (
-              'OfflineBanner — a call failed: connecting… (spinner, no error, no button)',
+              'ConnectionSnackMessage — a call failed: connecting… (spinner, no error, no button)',
               ConnectionStatus.reconnecting,
               0,
             ),
             (
-              'OfflineBanner — connecting… 1/6: the first retry, 10 s after the failure',
+              'ConnectionSnackMessage — connecting… 1/6: the first retry, 10 s after the failure',
               ConnectionStatus.reconnecting,
               1,
             ),
             (
-              'OfflineBanner — connecting… 6/6: the last retry',
+              'ConnectionSnackMessage — connecting… 6/6: the last retry',
               ConnectionStatus.reconnecting,
               6,
             ),
             (
-              'OfflineBanner — can\x27t connect: the 6th retry failed; nothing is sent until Retry, the app resuming or a network change',
+              'ConnectionSnackMessage — can\x27t connect: the 6th retry failed; nothing is sent until Retry, the app resuming or a network change',
               ConnectionStatus.offline,
               6,
             ),
             (
-              'OfflineBanner — back online: a short "connected again", then it goes',
+              'ConnectionSnackMessage — back online: a short "connected again", then it goes',
               ConnectionStatus.backOnline,
               0,
             ),
@@ -476,13 +476,14 @@ Widget buildOthersPage(BuildContext context) {
               wide: true,
               label: label,
               page: 'App shell (every page)',
-              child: OfflineBanner(
+              child: ConnectionSnackMessage(
                 state: ServerConnectionState(
                   status: status,
                   attempt: attempt,
                   attempts: ConnectionCubit.retryPolicy.retries,
                 ),
                 onRetry: () {},
+                onClose: () {},
               ),
             ),
           HubUse(

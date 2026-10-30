@@ -53,11 +53,13 @@ void main() {
             ],
             child: ConnectionShell(
               devHub: devHub,
-              child: Builder(
-                builder: (context) {
-                  offline = ConnectionScope.isOffline(context);
-                  return const SizedBox.expand();
-                },
+              child: Scaffold(
+                body: Builder(
+                  builder: (context) {
+                    offline = ConnectionScope.isOffline(context);
+                    return const SizedBox.expand();
+                  },
+                ),
               ),
             ),
           ),
@@ -65,6 +67,8 @@ void main() {
       );
       api.unreachable.add(null);
       await t.pump(const Duration(milliseconds: 500));
+      // The snack is set after the frame, shown on the next one.
+      await t.pump(const Duration(milliseconds: 300));
       expect(conn.state.isOffline, isTrue);
       expect(find.byType(ConnectionBanner), devHub ? findsNothing : findsOne);
       expect(offline, !devHub);
@@ -87,14 +91,19 @@ void main() {
       routes: [
         GoRoute(
           path: '/auth/login',
-          builder: (context, _) => Center(
-            child: TextButton(
-              onPressed: () => context.push('/dev'),
-              child: const Text('unlock'),
+          builder: (context, _) => Scaffold(
+            body: Center(
+              child: TextButton(
+                onPressed: () => context.push('/dev'),
+                child: const Text('unlock'),
+              ),
             ),
           ),
         ),
-        GoRoute(path: '/dev', builder: (_, _) => const Text('hub')),
+        GoRoute(
+          path: '/dev',
+          builder: (_, _) => const Scaffold(body: Text('hub')),
+        ),
       ],
     );
     void follow() => devHub.value = routerOnDevHub(router);
@@ -141,7 +150,14 @@ void main() {
     devHub.dispose();
   });
 
-  testWidgets('the X hides the banner until the state changes', (t) async {
+  Future<void> settle(WidgetTester t) async {
+    // after-frame sync, then the bar's in / out animation
+    for (var i = 0; i < 3; i++) {
+      await t.pump(const Duration(milliseconds: 300));
+    }
+  }
+
+  testWidgets('the X hides the snack until the state changes', (t) async {
     var state = const ServerConnectionState(
       status: ConnectionStatus.offline,
       attempt: 6,
@@ -158,15 +174,18 @@ void main() {
           body: StatefulBuilder(
             builder: (context, s) {
               set = s;
-              return OfflineBanner(state: state, onRetry: () {});
+              return ConnectionSnack(state: state, onRetry: () {});
             },
           ),
         ),
       ),
     );
+    await settle(t);
+    await settle(t);
     expect(find.byType(ConnectionBanner), findsOne);
     await t.tap(find.byTooltip('Close'));
-    await t.pump(const Duration(milliseconds: 300));
+    await settle(t);
+    await settle(t);
     expect(find.byType(ConnectionBanner), findsNothing);
     // A new cycle (connecting… again) brings it back.
     set(
@@ -175,12 +194,13 @@ void main() {
         attempts: 6,
       ),
     );
-    await t.pump(const Duration(milliseconds: 300));
+    await settle(t);
+    await settle(t);
     expect(find.byType(ConnectionBanner), findsOne);
     // Closed while connecting: the next retry keeps it hidden, the end
     // (can't connect) shows it again.
     await t.tap(find.byTooltip('Close'));
-    await t.pump(const Duration(milliseconds: 300));
+    await settle(t);
     set(
       () => state = const ServerConnectionState(
         status: ConnectionStatus.reconnecting,
@@ -188,7 +208,8 @@ void main() {
         attempts: 6,
       ),
     );
-    await t.pump(const Duration(milliseconds: 300));
+    await settle(t);
+    await settle(t);
     expect(find.byType(ConnectionBanner), findsNothing);
     set(
       () => state = const ServerConnectionState(
@@ -197,7 +218,8 @@ void main() {
         attempts: 6,
       ),
     );
-    await t.pump(const Duration(milliseconds: 300));
+    await settle(t);
+    await settle(t);
     expect(find.byType(ConnectionBanner), findsOne);
   });
 }

@@ -72,9 +72,7 @@ class _LogsViewerScreenState extends State<LogsViewerScreen> {
     final body = await AppLogger.instance.readAllForShare();
     await Clipboard.setData(ClipboardData(text: body));
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Copied ${body.length} chars to clipboard')),
-    );
+    showAppSnackBar(context, 'Copied ${body.length} chars to clipboard');
   }
 
   void _showEntry(LogEntry e) {

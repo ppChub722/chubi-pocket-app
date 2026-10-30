@@ -144,6 +144,7 @@ export 'organisms/page_skeletons.dart';
 export 'molecules/empty_view.dart';
 export 'molecules/error_view.dart';
 export 'molecules/app_snackbar.dart';
+export 'molecules/snack_stack.dart';
 export 'molecules/choice_dialog.dart';
 export 'molecules/confirm_dialog.dart';
 export 'molecules/error_snackbar.dart';
@@ -260,7 +261,7 @@ export 'atoms/editable_circle.dart';
 export 'debug/secret_tap.dart';
 
 export 'atoms/skeleton_box.dart';
-export 'domain/feedback/offline_banner.dart';
+export 'domain/feedback/connection_snack.dart';
 export 'domain/icons/color_token.dart';
 export 'domain/icons/icon_code.dart';
 export 'domain/icons/icon_code_widget.dart';

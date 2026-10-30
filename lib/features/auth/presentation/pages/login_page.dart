@@ -43,7 +43,7 @@ class _LoginPageState extends State<LoginPage> {
   /// the register page, nor a failed sign-up here on the way back.
   Future<void> _openRegister() async {
     // The error snackbar lives app-wide: it must not follow to register.
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    SnackStack.of(ScaffoldMessenger.of(context)).clearTransient();
     final auth = context.read<AuthCubit>()..acknowledgeFailure();
     await context.push('/auth/register');
     if (mounted) auth.acknowledgeFailure();

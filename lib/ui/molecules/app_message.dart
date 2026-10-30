@@ -10,6 +10,7 @@ import '../tokens/app/app_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/tone.dart';
+import 'snack_stack.dart';
 
 class AppMessageAction {
   const AppMessageAction({required this.label, required this.onPressed});
@@ -256,7 +257,7 @@ void showAppMessage(
   Tone tone = Tone.info,
   String? actionLabel,
   VoidCallback? onAction,
-  Duration duration = const Duration(seconds: 4),
+  Duration? duration,
 }) => showAppMessageOn(
   ScaffoldMessenger.of(context),
   message,
@@ -266,32 +267,18 @@ void showAppMessage(
   duration: duration,
 );
 
+/// A snack on the messenger's SnackStack (see SnackStack).
 void showAppMessageOn(
   ScaffoldMessengerState messenger,
   String message, {
   Tone tone = Tone.info,
   String? actionLabel,
   VoidCallback? onAction,
-  Duration duration = const Duration(seconds: 4),
-}) {
-  messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(
-        duration: duration,
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        padding: EdgeInsets.zero,
-        margin: const EdgeInsets.all(AppSpacing.md),
-        content: AppMessage(
-          message: message,
-          tone: tone,
-          floating: true,
-          actions: actionLabel != null && onAction != null
-              ? [AppMessageAction(label: actionLabel, onPressed: onAction)]
-              : const [],
-        ),
-      ),
-    );
-}
+  Duration? duration,
+}) => SnackStack.of(messenger).show(
+  message,
+  tone: tone,
+  actionLabel: actionLabel,
+  onAction: onAction,
+  duration: duration,
+);

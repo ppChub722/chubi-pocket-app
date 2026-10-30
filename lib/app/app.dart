@@ -434,7 +434,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                                   builder: (context, authPage, _) =>
                                       ConnectionShell(
                                         devHub: devHub,
-                                        hideOfflineBanner: authPage,
+                                        hideConnectionSnack: authPage,
                                         child: page!,
                                       ),
                                 ),
