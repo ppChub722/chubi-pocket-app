@@ -795,6 +795,12 @@ const List<PageFlow> pageFlows = [
       FlowCall('transferProjectOwnership'),
     ]),
     FlowStep.action('Button "ออกจากอีเวนต์"', [FlowCall('leaveProject')]),
+    FlowStep.action('"ผูกกับผู้ติดต่อของฉัน" / "เพิ่มเข้าผู้ติดต่อของฉัน"', [
+      FlowCall('bindProjectMemberContact'),
+    ]),
+    FlowStep.action('"เลิกผูกกับผู้ติดต่อของฉัน"', [
+      FlowCall('unbindProjectMemberContact'),
+    ]),
   ]),
 
   // ── Budgets ─────────────────────────────────────────────────────────────────
