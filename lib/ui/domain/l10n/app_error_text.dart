@@ -54,6 +54,7 @@ final Map<String, String Function(AppLocalizations l)> _specific = {
   'CONNECTION_UNAVAILABLE': (l) => l.authTelegramUnavailable,
   'LOGIN_CODE_INVALID': (l) => l.errLoginCodeInvalid,
   'RATE_LIMITED': (l) => l.errRateLimited,
+  'IDEMPOTENCY_IN_PROGRESS': (l) => l.errSaveInProgress,
   'PERMISSION_UNAVAILABLE': (l) => l.errPermissionUnavailable,
   'NO_PHOTO': (l) => l.errNoPhoto,
   'LAST_LOGIN_METHOD': (l) => l.connectionsErrorLastLoginMethod,
@@ -191,6 +192,7 @@ const Map<String, ErrorGroup> _groups = {
   'NOT_PROJECT_INVITE': ErrorGroup.invalid,
   'TYPE_NOT_MUTABLE': ErrorGroup.invalid,
   'OVERPAYMENT': ErrorGroup.invalid,
+  'IDEMPOTENCY_KEY_REUSED': ErrorGroup.invalid,
   // can't be edited or deleted
   'ACCOUNT_ARCHIVED': ErrorGroup.immutable,
   'SYSTEM_CATEGORY_IMMUTABLE': ErrorGroup.immutable,

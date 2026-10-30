@@ -76,6 +76,7 @@
   "errCannotLinkSelf": "A contact can’t be linked to yourself",
   "errEndTooFar": "The end must be within 2 years of the start",
   "errAmountRequired": "Enter an amount first",
+  "errSaveInProgress": "Still saving — wait a moment and try again",
   "errBillChanged": "This bill was edited — open it again",
 
   "authLoginIdentifierLabel": "Username or email",

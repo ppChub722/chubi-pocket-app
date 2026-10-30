@@ -234,6 +234,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errAmountRequired => 'Enter an amount first';
 
   @override
+  String get errSaveInProgress => 'Still saving — wait a moment and try again';
+
+  @override
   String get errBillChanged => 'This bill was edited — open it again';
 
   @override

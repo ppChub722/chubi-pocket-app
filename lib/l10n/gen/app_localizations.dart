@@ -530,6 +530,12 @@ abstract class AppLocalizations {
   /// **'Enter an amount first'**
   String get errAmountRequired;
 
+  /// No description provided for @errSaveInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Still saving — wait a moment and try again'**
+  String get errSaveInProgress;
+
   /// No description provided for @errBillChanged.
   ///
   /// In en, this message translates to:

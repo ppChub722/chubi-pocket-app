@@ -75,6 +75,7 @@
   "errCannotLinkSelf": "ผูกผู้ติดต่อกับตัวคุณเองไม่ได้",
   "errEndTooFar": "วันสิ้นสุดต้องไม่เกิน 2 ปีหลังวันเริ่ม",
   "errAmountRequired": "ใส่จำนวนเงินก่อน",
+  "errSaveInProgress": "กำลังบันทึกอยู่ รอสักครู่แล้วลองใหม่",
   "errBillChanged": "บิลนี้ถูกแก้ไขแล้ว เปิดใหม่อีกครั้ง",
 
   "authLoginIdentifierLabel": "ชื่อผู้ใช้หรืออีเมล",

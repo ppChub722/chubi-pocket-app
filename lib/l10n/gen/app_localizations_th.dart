@@ -228,6 +228,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get errAmountRequired => 'ใส่จำนวนเงินก่อน';
 
   @override
+  String get errSaveInProgress => 'กำลังบันทึกอยู่ รอสักครู่แล้วลองใหม่';
+
+  @override
   String get errBillChanged => 'บิลนี้ถูกแก้ไขแล้ว เปิดใหม่อีกครั้ง';
 
   @override
