@@ -185,7 +185,9 @@ class _Body extends StatelessWidget {
                         : null,
                     semanticLabel: '${l.notifColumnNotify} ${t.label}',
                   ),
-                  if (r.auto case final auto?)
+                  // A mirrored auto (a delete follows the edit row) can't be
+                  // flipped here: its cell stays blank.
+                  if (r.auto case final auto? when !r.autoMirror)
                     SettingSwitchCell(
                       value: a.of(auto),
                       onChanged: onAuto,
@@ -219,10 +221,7 @@ class _Body extends StatelessWidget {
 
           return DetailPageBody(
             onRefresh: cubit.load,
-            topInset: MediaQuery.paddingOf(ctx).top + AppSpacing.lg,
             bottomInset: AppSpacing.huge + MediaQuery.paddingOf(ctx).bottom,
-            // The legend above the groups (inset like a card title).
-            hero: DetailFootnote(l.notifSettingsOnOffLegend),
             sections: [
               for (final MapEntry(key: g, value: rows) in groups.entries)
                 (first) {
@@ -242,7 +241,9 @@ class _Body extends StatelessWidget {
                   );
                 },
             ],
-            footnote: l.settingsSyncFootnote,
+            // The legend sits under the groups, with the sync note.
+            footnote:
+                '${l.notifSettingsOnOffLegend}\n\n${l.settingsSyncFootnote}',
           );
         },
       ),

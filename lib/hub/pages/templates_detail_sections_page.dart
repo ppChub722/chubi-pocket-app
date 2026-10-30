@@ -134,7 +134,7 @@ class _DetailSectionsDemoState extends State<_DetailSectionsDemo> {
             note:
                 'Several switches side by side (the notification page: '
                 '[Notify] [Auto]). The column names sit in the card title row; '
-                'a null cell shows "–"; a cell without onChanged is locked '
+                'a null cell stays blank; a cell without onChanged is locked '
                 '(here: auto off locks notify on).',
             child: SectionCard(
               first: true,

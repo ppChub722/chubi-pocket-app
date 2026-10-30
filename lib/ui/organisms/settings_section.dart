@@ -405,7 +405,7 @@ class SettingPickRow extends StatelessWidget {
 }
 
 /// The width of one switch column of a [SettingSwitchColumnsRow] (and of its
-/// [SettingColumnLabels] header), so headers, switches and "–" line up.
+/// [SettingColumnLabels] header), so headers and switches line up.
 const double kSettingSwitchColumn = 60;
 
 /// One switch of a [SettingSwitchColumnsRow].
@@ -425,7 +425,7 @@ class SettingSwitchCell {
 
 /// A setting row with SEVERAL switches side by side, one per column (the
 /// notification page, owner 2026-10-28: [แจ้ง] [อัตโนมัติ]). A null cell is a
-/// column this row has no switch for: it shows "–". Saved at once, so every
+/// column this row has no switch for: it stays blank. Saved at once, so every
 /// switch is read-only while offline ([submits]). Put a [SettingColumnLabels]
 /// in the card's title row to name the columns.
 class SettingSwitchColumnsRow extends StatelessWidget {
@@ -445,7 +445,6 @@ class SettingSwitchColumnsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final offline = submits && ConnectionScope.isOffline(context);
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     return AppDetailRow(
       label: label,
       helper: helper,
@@ -457,12 +456,7 @@ class SettingSwitchColumnsRow extends StatelessWidget {
               width: kSettingSwitchColumn,
               child: Center(
                 child: cell == null
-                    ? ExcludeSemantics(
-                        child: Text(
-                          '–',
-                          style: TextStyle(color: muted.withValues(alpha: 0.5)),
-                        ),
-                      )
+                    ? null
                     : AppSwitch(
                         value: cell.value,
                         onChanged: offline ? null : cell.onChanged,

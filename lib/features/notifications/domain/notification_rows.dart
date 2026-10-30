@@ -64,7 +64,7 @@ class NotificationRow {
   final NotificationGroup group;
   final NotificationRowKind kind;
 
-  /// The auto switch in this row; null = "–".
+  /// The auto switch in this row; null = none (its cell stays blank).
   final AutoSwitch? auto;
 
   /// The auto switch only mirrors another row's (shown, not flipped here).
