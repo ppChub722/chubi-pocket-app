@@ -307,63 +307,66 @@ void main() {
     });
   });
 
-  test('only the confirmable part of a selection is sent, in one call', () async {
-    final lunch = PendingTransaction.fromJson(
-      draftJson('p1', description: 'Lunch'),
-    );
-    final noAmount = PendingTransaction.fromJson(
-      draftJson(
-        'p3',
-        amount: null,
-        needsInput: ['amount'],
-        canConfirm: false,
-        description: 'Rent reminder',
-      ),
-    );
-    for (final c in [
-      (
-        name: 'amount-less alone: nothing goes, it is blocked',
-        selected: ['p3'],
-        ready: <String>[],
-        blocked: ['p3'],
-      ),
-      (
-        name: 'mixed: only the confirmable go',
-        selected: ['p1', 'p3'],
-        ready: ['p1'],
-        blocked: ['p3'],
-      ),
-      (
-        name: 'all confirmable',
-        selected: ['p1'],
-        ready: ['p1'],
-        blocked: <String>[],
-      ),
-      (
-        name: 'an id the list does not hold still goes',
-        selected: ['p9'],
-        ready: ['p9'],
-        blocked: <String>[],
-      ),
-    ]) {
-      final r = splitSelection(c.selected, [lunch, noAmount]);
-      expect(r.ready, c.ready, reason: c.name);
-      expect(r.blocked.map((p) => p.id), c.blocked, reason: c.name);
-    }
+  test(
+    'only the confirmable part of a selection is sent, in one call',
+    () async {
+      final lunch = PendingTransaction.fromJson(
+        draftJson('p1', description: 'Lunch'),
+      );
+      final noAmount = PendingTransaction.fromJson(
+        draftJson(
+          'p3',
+          amount: null,
+          needsInput: ['amount'],
+          canConfirm: false,
+          description: 'Rent reminder',
+        ),
+      );
+      for (final c in [
+        (
+          name: 'amount-less alone: nothing goes, it is blocked',
+          selected: ['p3'],
+          ready: <String>[],
+          blocked: ['p3'],
+        ),
+        (
+          name: 'mixed: only the confirmable go',
+          selected: ['p1', 'p3'],
+          ready: ['p1'],
+          blocked: ['p3'],
+        ),
+        (
+          name: 'all confirmable',
+          selected: ['p1'],
+          ready: ['p1'],
+          blocked: <String>[],
+        ),
+        (
+          name: 'an id the list does not hold still goes',
+          selected: ['p9'],
+          ready: ['p9'],
+          blocked: <String>[],
+        ),
+      ]) {
+        final r = splitSelection(c.selected, [lunch, noAmount]);
+        expect(r.ready, c.ready, reason: c.name);
+        expect(r.blocked.map((p) => p.id), c.blocked, reason: c.name);
+      }
 
-    final repo = _Repo([
-      lunch,
-      noAmount,
-    ], summary: summaryJson(count: 2, manual: 2, ready: 1, needs: 1));
-    final cubit = PendingCubit(repository: repo);
-    await cubit.load();
-    await cubit.submit(splitSelection(['p1', 'p3'], cubit.state.items).ready);
-    expect(repo.submitCalls, [
-      ['p1'],
-    ]);
-    expect(cubit.state.items.map((e) => e.id), ['p3']);
-    expect(repo.listCalls, 1);
-    expect(cubit.state.summary?.count, 1);
-    await cubit.close();
-  });
+      final repo = _Repo([
+        lunch,
+        noAmount,
+      ], summary: summaryJson(count: 2, manual: 2, ready: 1, needs: 1));
+      final cubit = PendingCubit(repository: repo);
+      await cubit.load();
+      await cubit.submit(splitSelection(['p1', 'p3'], cubit.state.items).ready);
+      expect(repo.submitCalls, [
+        ['p1'],
+      ]);
+      expect(cubit.state.items.map((e) => e.id), ['p3']);
+      expect(repo.listCalls, 1);
+      expect(cubit.state.summary?.count, 1);
+      await cubit.close();
+    },
+  );
 }

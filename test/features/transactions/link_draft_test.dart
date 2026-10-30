@@ -263,29 +263,32 @@ void main() {
     expect(t.link!['payer'], {'contact_id': 'c2'});
   });
 
-  test('linkSave: income keeps the tab (รับแทน), a transfer carries no link', () {
-    final income = _form()
-      ..setType(TransactionType.income)
-      ..setLinkMode(LinkMode.split, hasEvent: false)
-      ..setPaidBy(_lee);
-    expect(income.linkMode(hasEvent: false), LinkMode.paid);
-    expect(
-      (income.linkSave(LinkMode.paid).link!['paid_by'] as Map)['contact_id'],
-      'c2',
-    );
+  test(
+    'linkSave: income keeps the tab (รับแทน), a transfer carries no link',
+    () {
+      final income = _form()
+        ..setType(TransactionType.income)
+        ..setLinkMode(LinkMode.split, hasEvent: false)
+        ..setPaidBy(_lee);
+      expect(income.linkMode(hasEvent: false), LinkMode.paid);
+      expect(
+        (income.linkSave(LinkMode.paid).link!['paid_by'] as Map)['contact_id'],
+        'c2',
+      );
 
-    final transfer = _form()
-      ..setType(TransactionType.transfer)
-      ..setLinkMode(LinkMode.paid, hasEvent: false);
-    final s = transfer.linkSave(LinkMode.paid);
-    expect(s.link, isNull);
-    expect(s.useWallet, isTrue);
+      final transfer = _form()
+        ..setType(TransactionType.transfer)
+        ..setLinkMode(LinkMode.paid, hasEvent: false);
+      final s = transfer.linkSave(LinkMode.paid);
+      expect(s.link, isNull);
+      expect(s.useWallet, isTrue);
 
-    expect(LinkMode.parse('paid'), LinkMode.paid);
-    expect(LinkMode.parse('event'), LinkMode.event);
-    expect(LinkMode.parse('paid_by'), isNull);
-    expect(LinkMode.parse(null), isNull);
-  });
+      expect(LinkMode.parse('paid'), LinkMode.paid);
+      expect(LinkMode.parse('event'), LinkMode.event);
+      expect(LinkMode.parse('paid_by'), isNull);
+      expect(LinkMode.parse(null), isNull);
+    },
+  );
 
   test('toDraft: only the active tab goes in', () {
     final c = _form()

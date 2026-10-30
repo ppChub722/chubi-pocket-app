@@ -34,8 +34,11 @@ Transaction _tx({
   splits: splits,
 );
 
-TxSplit _saved(String id, String name, double amount) =>
-    TxSplit(debtId: id, person: EmbeddedPerson(name: name), amount: amount);
+TxSplit _saved(String id, String name, double amount) => TxSplit(
+  debtId: id,
+  person: EmbeddedPerson(name: name),
+  amount: amount,
+);
 
 void main() {
   test('balance rule: nothing to balance alone; typed ฉัน must add up', () {

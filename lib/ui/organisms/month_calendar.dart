@@ -96,12 +96,14 @@ class MonthCalendar extends StatelessWidget {
     final sunday = DateTime(2024, 1, 7);
     final initials = [
       for (var i = 0; i < 7; i++)
-        DateFormat.E(
-          locale,
-        ).format(sunday.add(Duration(days: firstWeekday + i))).replaceAll('.', ''),
+        DateFormat.E(locale)
+            .format(sunday.add(Duration(days: firstWeekday + i)))
+            .replaceAll('.', ''),
     ];
     final now = today;
-    final todayDate = now == null ? null : DateTime(now.year, now.month, now.day);
+    final todayDate = now == null
+        ? null
+        : DateTime(now.year, now.month, now.day);
 
     Widget cell(int index) {
       final date = DateTime(month.year, month.month, index - lead + 1);
@@ -244,7 +246,10 @@ class MonthCalendar extends StatelessWidget {
             for (final i in initials)
               Expanded(
                 child: Center(
-                  child: Text(i, style: text.labelSmall?.copyWith(color: muted)),
+                  child: Text(
+                    i,
+                    style: text.labelSmall?.copyWith(color: muted),
+                  ),
                 ),
               ),
           ],

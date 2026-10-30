@@ -51,32 +51,39 @@ final _prodJson = <String, dynamic>{
 };
 
 void main() {
-  test('model: month figures parse (absent = 0), the detail carries the path', () {
-    final c = Category.fromJson(_prodJson);
-    expect(c.monthSpent, 5100);
-    expect(c.monthCount, 12);
-    final bare = Category.fromJson({'id': 'x', 'name': 'x', 'type': 'income'});
-    expect(bare.monthSpent, 0);
-    expect(bare.monthCount, 0);
+  test(
+    'model: month figures parse (absent = 0), the detail carries the path',
+    () {
+      final c = Category.fromJson(_prodJson);
+      expect(c.monthSpent, 5100);
+      expect(c.monthCount, 12);
+      final bare = Category.fromJson({
+        'id': 'x',
+        'name': 'x',
+        'type': 'income',
+      });
+      expect(bare.monthSpent, 0);
+      expect(bare.monthCount, 0);
 
-    final child = CategoryDetail.fromJson({
-      'id': 'cat2',
-      'name': 'Lunch',
-      'type': 'expense',
-      'parent_id': 'p2',
-      'path': [
-        {
-          'id': 'p1',
-          'name': 'Eating Out',
-          'icon_code': {'icon': 'food', 'color': 'orange'},
-        },
-        {'id': 'p2', 'name': 'Restaurants'},
-      ],
-    });
-    expect(child.path.map((p) => p.name), ['Eating Out', 'Restaurants']);
-    expect(child.path.first.iconCode, isNotNull);
-    expect(child.path.last.iconCode, isNull);
-  });
+      final child = CategoryDetail.fromJson({
+        'id': 'cat2',
+        'name': 'Lunch',
+        'type': 'expense',
+        'parent_id': 'p2',
+        'path': [
+          {
+            'id': 'p1',
+            'name': 'Eating Out',
+            'icon_code': {'icon': 'food', 'color': 'orange'},
+          },
+          {'id': 'p2', 'name': 'Restaurants'},
+        ],
+      });
+      expect(child.path.map((p) => p.name), ['Eating Out', 'Restaurants']);
+      expect(child.path.first.iconCode, isNotNull);
+      expect(child.path.last.iconCode, isNull);
+    },
+  );
 
   test('repository: the view switch sends only include_in_report', () async {
     final http = _Adapter()..body = _prodJson;

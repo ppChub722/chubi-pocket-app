@@ -228,12 +228,7 @@ class RecurringLinkHandle extends ChangeNotifier {
     RecurringItemLink link, {
     required VoidCallback onUnlinked,
     required void Function(String message) error,
-  }) => unlinkWith(
-    _repo(context),
-    link,
-    onUnlinked: onUnlinked,
-    error: error,
-  );
+  }) => unlinkWith(_repo(context), link, onUnlinked: onUnlinked, error: error);
 
   Future<bool> unlinkWith(
     RecurringLinkRepository repo,

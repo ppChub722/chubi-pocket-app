@@ -35,9 +35,7 @@ class BookOptionCard extends StatelessWidget {
     final subtitle = this.subtitle;
     final child = this.child;
     return Material(
-      color: checked
-          ? scheme.primary.withValues(alpha: 0.06)
-          : scheme.surface,
+      color: checked ? scheme.primary.withValues(alpha: 0.06) : scheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.md),
         side: BorderSide(

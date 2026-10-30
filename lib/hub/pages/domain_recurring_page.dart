@@ -1137,10 +1137,7 @@ class _DatePickChipDemoState extends State<_DatePickChipDemo> {
   DateTime? _date;
 
   Future<void> _pick() async {
-    final r = await AppDatePicker.show(
-      context,
-      initial: _date ?? widget.start,
-    );
+    final r = await AppDatePicker.show(context, initial: _date ?? widget.start);
     if (r is AppDatePicked && mounted) setState(() => _date = r.date);
   }
 

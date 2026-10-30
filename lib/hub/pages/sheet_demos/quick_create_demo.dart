@@ -151,9 +151,7 @@ class _DemoSheetState extends State<_DemoSheet> {
         _Variant.edit || _Variant.single || _Variant.occurrence => 'Save',
       },
       draftLabel:
-          v == _Variant.edit ||
-              v == _Variant.single ||
-              v == _Variant.occurrence
+          v == _Variant.edit || v == _Variant.single || v == _Variant.occurrence
           ? null
           : 'Save as draft',
       closeTooltip: 'Close',

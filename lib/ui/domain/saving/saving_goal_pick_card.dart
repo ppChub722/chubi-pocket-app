@@ -70,7 +70,11 @@ class SavingGoalPickCard extends StatelessWidget {
           : g.iconCode.tintFor(palette),
       leading: g == null
           ? PickCardEmptyIcon(AppIcons.quickSaving, size: _icon)
-          : IconDisplay(type: IconType.category, size: _icon, iconCode: g.iconCode),
+          : IconDisplay(
+              type: IconType.category,
+              size: _icon,
+              iconCode: g.iconCode,
+            ),
       onTap: onTap,
       onLongPress: onLongPress,
     );

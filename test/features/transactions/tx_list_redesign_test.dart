@@ -94,8 +94,7 @@ void main() {
             ],
           ),
           (
-            name:
-                'day: one day, steps across month / year ends',
+            name: 'day: one day, steps across month / year ends',
             actual: () {
               final d = TxPeriod.day(DateTime(2026, 10, 10, 18, 30));
               return [

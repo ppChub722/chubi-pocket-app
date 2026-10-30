@@ -79,62 +79,65 @@ final _eventJson = {
 void main() {
   group('read (B1 / B2)', () {
     test('parse table', () {
-      final cases = <({
-        String name,
-        Map<String, dynamic> json,
-        void Function(Transaction tx) check,
-      })>[
-        (
-          name: 'a จ่ายแทน row',
-          json: _paidJson,
-          check: (tx) {
-            expect(tx.linkMode, LinkMode.paid);
-            expect(tx.walletAmount, 110);
-            final p = tx.paidBy!;
-            expect(p.person.name, 'Lee');
-            expect(p.amount, 13);
-            expect(p.myPaid, 110);
-            expect(p.fromPartner, isFalse);
-            expect(p.key, 'c:c2');
-          },
-        ),
-        (
-          name: 'an event bill someone else paid',
-          json: _eventJson,
-          check: (tx) {
-            expect(tx.linkMode, LinkMode.event);
-            final bill = tx.eventBill!;
-            expect(bill.linked, isFalse);
-            expect(bill.payer!.name, 'Lee');
-            expect(bill.billAmount, 300);
-            expect(bill.members, hasLength(3));
-            expect(bill.members![1].member.isMe, isTrue);
-          },
-        ),
-        (
-          name: 'a list row (no B1 / B2 data) still reads',
-          json: {
-            'id': 't3',
-            'type': 'expense',
-            'amount': 5,
-            'date': '2026-10-21',
-            'event_bill': {
-              'event': {'id': 'p1', 'name': 'X'},
-              'bill_id': 'b1',
-              'linked': true,
-              'payer': null,
-              'bill_amount': 0,
-              'members': null,
-            },
-          },
-          check: (tx) {
-            expect(tx.linkMode, isNull);
-            expect(tx.paidBy, isNull);
-            expect(tx.eventBill!.payer, isNull);
-            expect(tx.eventBill!.members, isNull);
-          },
-        ),
-      ];
+      final cases =
+          <
+            ({
+              String name,
+              Map<String, dynamic> json,
+              void Function(Transaction tx) check,
+            })
+          >[
+            (
+              name: 'a จ่ายแทน row',
+              json: _paidJson,
+              check: (tx) {
+                expect(tx.linkMode, LinkMode.paid);
+                expect(tx.walletAmount, 110);
+                final p = tx.paidBy!;
+                expect(p.person.name, 'Lee');
+                expect(p.amount, 13);
+                expect(p.myPaid, 110);
+                expect(p.fromPartner, isFalse);
+                expect(p.key, 'c:c2');
+              },
+            ),
+            (
+              name: 'an event bill someone else paid',
+              json: _eventJson,
+              check: (tx) {
+                expect(tx.linkMode, LinkMode.event);
+                final bill = tx.eventBill!;
+                expect(bill.linked, isFalse);
+                expect(bill.payer!.name, 'Lee');
+                expect(bill.billAmount, 300);
+                expect(bill.members, hasLength(3));
+                expect(bill.members![1].member.isMe, isTrue);
+              },
+            ),
+            (
+              name: 'a list row (no B1 / B2 data) still reads',
+              json: {
+                'id': 't3',
+                'type': 'expense',
+                'amount': 5,
+                'date': '2026-10-21',
+                'event_bill': {
+                  'event': {'id': 'p1', 'name': 'X'},
+                  'bill_id': 'b1',
+                  'linked': true,
+                  'payer': null,
+                  'bill_amount': 0,
+                  'members': null,
+                },
+              },
+              check: (tx) {
+                expect(tx.linkMode, isNull);
+                expect(tx.paidBy, isNull);
+                expect(tx.eventBill!.payer, isNull);
+                expect(tx.eventBill!.members, isNull);
+              },
+            ),
+          ];
       for (final c in cases) {
         try {
           c.check(Transaction.fromJson(c.json));

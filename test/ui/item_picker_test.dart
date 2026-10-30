@@ -22,33 +22,36 @@ void main() {
     expect(s.ids, isEmpty);
   });
 
-  test('toggle: the box takes sub-items in; unticking one keeps the parent', () {
-    final box = PickerSelection(mode: PickerChildren.toggle)
-      ..toggle('food', _tree);
-    expect(box.takesChildren('food'), isFalse);
-    box.setTakesChildren('food', true, _tree);
-    expect(box.shownTicked('latte', _tree), isTrue);
-    expect(box.shownCount(_tree), 4);
-    expect(box.withChildren, {'food'});
+  test(
+    'toggle: the box takes sub-items in; unticking one keeps the parent',
+    () {
+      final box = PickerSelection(mode: PickerChildren.toggle)
+        ..toggle('food', _tree);
+      expect(box.takesChildren('food'), isFalse);
+      box.setTakesChildren('food', true, _tree);
+      expect(box.shownTicked('latte', _tree), isTrue);
+      expect(box.shownCount(_tree), 4);
+      expect(box.withChildren, {'food'});
 
-    final untick = PickerSelection(
-      mode: PickerChildren.toggle,
-      withChildren: const ['food'],
-    )..toggle('cafe', _tree);
-    expect(untick.takesChildren('food'), isFalse);
-    expect(untick.isPicked('food'), isTrue);
-    expect(untick.isPicked('market'), isTrue);
-    expect(untick.shownTicked('cafe', _tree), isFalse);
-    expect(untick.shownTicked('latte', _tree), isFalse);
+      final untick = PickerSelection(
+        mode: PickerChildren.toggle,
+        withChildren: const ['food'],
+      )..toggle('cafe', _tree);
+      expect(untick.takesChildren('food'), isFalse);
+      expect(untick.isPicked('food'), isTrue);
+      expect(untick.isPicked('market'), isTrue);
+      expect(untick.shownTicked('cafe', _tree), isFalse);
+      expect(untick.shownTicked('latte', _tree), isFalse);
 
-    final folded = PickerSelection(mode: PickerChildren.toggle)
-      ..toggle('food', _tree)
-      ..toggle('cafe', _tree)
-      ..toggle('latte', _tree)
-      ..toggle('market', _tree);
-    expect(folded.ids, ['food']);
-    expect(folded.takesChildren('food'), isTrue);
-  });
+      final folded = PickerSelection(mode: PickerChildren.toggle)
+        ..toggle('food', _tree)
+        ..toggle('cafe', _tree)
+        ..toggle('latte', _tree)
+        ..toggle('market', _tree);
+      expect(folded.ids, ['food']);
+      expect(folded.takesChildren('food'), isTrue);
+    },
+  );
 
   test('normalize drops stored sub-items a pick takes in', () {
     final s = PickerSelection(
@@ -59,19 +62,22 @@ void main() {
     expect(s.ids.toSet(), {'food', 'rent'});
   });
 
-  test('always: a parent takes sub-items in; unticking one drops the parent', () {
-    final s = PickerSelection(mode: PickerChildren.always)
-      ..toggle('food', _tree);
-    expect(s.withChildren, {'food'});
-    expect(s.shownTicked('latte', _tree), isTrue);
+  test(
+    'always: a parent takes sub-items in; unticking one drops the parent',
+    () {
+      final s = PickerSelection(mode: PickerChildren.always)
+        ..toggle('food', _tree);
+      expect(s.withChildren, {'food'});
+      expect(s.shownTicked('latte', _tree), isTrue);
 
-    final untick = PickerSelection(
-      mode: PickerChildren.always,
-      withChildren: const ['food'],
-    )..toggle('latte', _tree);
-    expect(untick.isPicked('food'), isFalse);
-    expect(untick.isPicked('cafe'), isFalse);
-    expect(untick.isPicked('market'), isTrue);
-    expect(untick.shownTicked('latte', _tree), isFalse);
-  });
+      final untick = PickerSelection(
+        mode: PickerChildren.always,
+        withChildren: const ['food'],
+      )..toggle('latte', _tree);
+      expect(untick.isPicked('food'), isFalse);
+      expect(untick.isPicked('cafe'), isFalse);
+      expect(untick.isPicked('market'), isTrue);
+      expect(untick.shownTicked('latte', _tree), isFalse);
+    },
+  );
 }

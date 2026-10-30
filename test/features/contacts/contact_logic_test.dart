@@ -100,25 +100,28 @@ void main() {
     expect(() => ContactDetail.fromJson({'id': 'c1'}), throwsA(isA<Error>()));
   });
 
-  test('repository: show_nickname alone in the update; detail includes', () async {
-    final http = _Adapter();
-    final repo = ContactsRepository(
-      client: _FakeApi(Dio()..httpClientAdapter = http),
-    );
+  test(
+    'repository: show_nickname alone in the update; detail includes',
+    () async {
+      final http = _Adapter();
+      final repo = ContactsRepository(
+        client: _FakeApi(Dio()..httpClientAdapter = http),
+      );
 
-    http.body = {..._prodContact(), 'show_nickname': false};
-    final updated = await repo.update('c1', showNickname: false);
-    expect(updated.showNickname, isFalse);
-    expect(http.last!.method, 'PUT');
-    expect(http.last!.path, '/contacts/c1');
-    expect(http.last!.data, {'show_nickname': false});
+      http.body = {..._prodContact(), 'show_nickname': false};
+      final updated = await repo.update('c1', showNickname: false);
+      expect(updated.showNickname, isFalse);
+      expect(http.last!.method, 'PUT');
+      expect(http.last!.path, '/contacts/c1');
+      expect(http.last!.data, {'show_nickname': false});
 
-    http.body = _prodContact();
-    await repo.get('c1');
-    expect(http.last!.queryParameters, {'include': 'unlinked_names'});
-    await repo.get('c1', deletePreview: true);
-    expect(http.last!.queryParameters, {
-      'include': 'unlinked_names,delete_preview',
-    });
-  });
+      http.body = _prodContact();
+      await repo.get('c1');
+      expect(http.last!.queryParameters, {'include': 'unlinked_names'});
+      await repo.get('c1', deletePreview: true);
+      expect(http.last!.queryParameters, {
+        'include': 'unlinked_names,delete_preview',
+      });
+    },
+  );
 }

@@ -84,10 +84,7 @@ class BudgetsRepository {
   }) => _call((dio) async {
     final res = await dio.put<Map<String, dynamic>>(
       '/budgets/$id/periods/$periodId',
-      data: {
-        if (setAmount) 'amount': amount,
-        if (setNote) 'note': note,
-      },
+      data: {if (setAmount) 'amount': amount, if (setNote) 'note': note},
     );
     return BudgetDetail.fromJson(res.data!);
   });

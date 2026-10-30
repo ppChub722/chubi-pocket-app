@@ -82,73 +82,84 @@ void main() {
     );
   });
 
-  test('DELETE /transactions/{id}: no skip_occurrence (R2), also_delete_link as given', () async {
-    adapter.body = {'id': 't1'};
-    for (final c in <({String name, bool? also, Map<String, dynamic> query})>[
-      (name: 'plain', also: null, query: {}),
-      (name: 'both sides', also: true, query: {'also_delete_link': true}),
-      (name: 'this side', also: false, query: {'also_delete_link': false}),
-    ]) {
-      await repo.delete('t1', alsoDeleteLink: c.also);
-      final sent = adapter.last!;
-      expect(sent.method, 'DELETE', reason: c.name);
-      expect(sent.path, '/transactions/t1', reason: c.name);
-      expect(sent.queryParameters, c.query, reason: c.name);
-    }
-  });
+  test(
+    'DELETE /transactions/{id}: no skip_occurrence (R2), also_delete_link as given',
+    () async {
+      adapter.body = {'id': 't1'};
+      for (final c in <({String name, bool? also, Map<String, dynamic> query})>[
+        (name: 'plain', also: null, query: {}),
+        (name: 'both sides', also: true, query: {'also_delete_link': true}),
+        (name: 'this side', also: false, query: {'also_delete_link': false}),
+      ]) {
+        await repo.delete('t1', alsoDeleteLink: c.also);
+        final sent = adapter.last!;
+        expect(sent.method, 'DELETE', reason: c.name);
+        expect(sent.path, '/transactions/t1', reason: c.name);
+        expect(sent.queryParameters, c.query, reason: c.name);
+      }
+    },
+  );
 
-  test('PUT /transactions/{id}: also_update_link and link_mode ride the body', () async {
-    adapter.body = {
-      'rows': [
-        {'id': 't1', 'type': 'expense', 'amount': 10, 'date': '2026-10-21'},
-      ],
-    };
-    for (final c in <({String name, bool? also, Map<String, dynamic>? link, Map<String, dynamic> body})>[
-      (
-        name: 'text-only edit: nothing about the link',
-        also: null,
-        link: null,
-        body: {'description': 'x'},
-      ),
-      (
-        name: 'both sides',
-        also: true,
-        link: null,
-        body: {'description': 'x', 'also_update_link': true},
-      ),
-      (
-        name: 'this side',
-        also: false,
-        link: null,
-        body: {'description': 'x', 'also_update_link': false},
-      ),
-      (
-        name: 'a tab switch carries link_mode',
-        also: null,
-        link: {'link_mode': 'personal'},
-        body: {'description': 'x', 'link_mode': 'personal'},
-      ),
-    ]) {
-      await repo.update(
-        id: 't1',
-        description: 'x',
-        alsoUpdateLink: c.also,
-        link: c.link,
-      );
-      final sent = adapter.last!;
-      expect(sent.method, 'PUT', reason: c.name);
-      expect(sent.path, '/transactions/t1', reason: c.name);
-      expect(sent.queryParameters, isEmpty, reason: c.name);
-      expect(sent.data, c.body, reason: c.name);
-    }
-  });
+  test(
+    'PUT /transactions/{id}: also_update_link and link_mode ride the body',
+    () async {
+      adapter.body = {
+        'rows': [
+          {'id': 't1', 'type': 'expense', 'amount': 10, 'date': '2026-10-21'},
+        ],
+      };
+      for (final c
+          in <
+            ({
+              String name,
+              bool? also,
+              Map<String, dynamic>? link,
+              Map<String, dynamic> body,
+            })
+          >[
+            (
+              name: 'text-only edit: nothing about the link',
+              also: null,
+              link: null,
+              body: {'description': 'x'},
+            ),
+            (
+              name: 'both sides',
+              also: true,
+              link: null,
+              body: {'description': 'x', 'also_update_link': true},
+            ),
+            (
+              name: 'this side',
+              also: false,
+              link: null,
+              body: {'description': 'x', 'also_update_link': false},
+            ),
+            (
+              name: 'a tab switch carries link_mode',
+              also: null,
+              link: {'link_mode': 'personal'},
+              body: {'description': 'x', 'link_mode': 'personal'},
+            ),
+          ]) {
+        await repo.update(
+          id: 't1',
+          description: 'x',
+          alsoUpdateLink: c.also,
+          link: c.link,
+        );
+        final sent = adapter.last!;
+        expect(sent.method, 'PUT', reason: c.name);
+        expect(sent.path, '/transactions/t1', reason: c.name);
+        expect(sent.queryParameters, isEmpty, reason: c.name);
+        expect(sent.data, c.body, reason: c.name);
+      }
+    },
+  );
 
   test('PUT ?preview=true: the tab switch is previewed, not saved', () async {
     adapter.body = {'people': <dynamic>[], 'wallets': <dynamic>[]};
-    await repo.previewUpdate(
-      id: 't1',
-      link: const {'link_mode': 'personal'},
-    );
+    await repo.previewUpdate(id: 't1', link: const {'link_mode': 'personal'});
     final sent = adapter.last!;
     expect(sent.method, 'PUT');
     expect(sent.queryParameters, {'preview': 'true'});

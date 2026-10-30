@@ -231,6 +231,7 @@ class BudgetItem extends Equatable {
   /// that is not one of theirs (an event tag) has no entry.
   final Map<String, IconCode> tagIcons;
   final EventRef? event;
+
   /// The stored occurrence; null while it is only computed.
   final String? recurringItemId;
   final int? recurringSeq;

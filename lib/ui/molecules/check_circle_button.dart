@@ -51,7 +51,10 @@ class CheckCircleButton extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: checked ? fill : Colors.transparent,
-            border: Border.all(color: checked ? fill : scheme.outline, width: 2),
+            border: Border.all(
+              color: checked ? fill : scheme.outline,
+              width: 2,
+            ),
           ),
           child: loading
               ? Padding(

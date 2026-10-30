@@ -137,13 +137,20 @@ class _LinePainter extends CustomPainter {
     final avg = average;
     if (avg != null) {
       final ay = y(avg);
-      _dashed(canvas, Offset(_padX, ay), Offset(size.width - _padX, ay),
-          Paint()
-            ..color = muted.withValues(alpha: 0.6)
-            ..strokeWidth = 1);
+      _dashed(
+        canvas,
+        Offset(_padX, ay),
+        Offset(size.width - _padX, ay),
+        Paint()
+          ..color = muted.withValues(alpha: 0.6)
+          ..strokeWidth = 1,
+      );
       if (averageLabel != null) {
         final tp = _text(averageLabel!, muted);
-        tp.paint(canvas, Offset(size.width - _padX - tp.width, ay - tp.height - 2));
+        tp.paint(
+          canvas,
+          Offset(size.width - _padX - tp.width, ay - tp.height - 2),
+        );
       }
     }
 
@@ -171,10 +178,14 @@ class _LinePainter extends CustomPainter {
 
     if (next) {
       final nx = Offset(x(n - 1), y(avg ?? points.last.amount));
-      _dashed(canvas, pts.last, nx,
-          Paint()
-            ..color = warning
-            ..strokeWidth = 2);
+      _dashed(
+        canvas,
+        pts.last,
+        nx,
+        Paint()
+          ..color = warning
+          ..strokeWidth = 2,
+      );
       canvas.drawCircle(nx, 6, Paint()..color = surface);
       canvas.drawCircle(
         nx,

@@ -72,10 +72,7 @@ class HeroFactList extends StatelessWidget {
                     f.icon!,
                     size: AppIconSize.sm,
                     color:
-                        f.iconColor ??
-                        f.dot ??
-                        hero?.accent ??
-                        scheme.primary,
+                        f.iconColor ?? f.dot ?? hero?.accent ?? scheme.primary,
                   ),
                   const SizedBox(width: AppSpacing.sm - 2),
                 ] else if (f.dot != null) ...[

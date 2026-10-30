@@ -51,7 +51,8 @@ class PointerBubbles extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, box) {
         final w = box.maxWidth;
-        final placed = <({PointerBubble b, double left, double bw, double bh})>[];
+        final placed =
+            <({PointerBubble b, double left, double bw, double bh})>[];
         final ordered = [
           ...bubbles.where((b) => b.strong),
           ...bubbles.where((b) => !b.strong),
@@ -67,7 +68,9 @@ class PointerBubbles extends StatelessWidget {
           final bw = tp.width + 2 * _padX + 2;
           final bh = tp.height + 2 * _padY + 2;
           final x = b.at.clamp(0, 1) * w;
-          final left = (x - bw / 2).clamp(0.0, math.max(0.0, w - bw)).toDouble();
+          final left = (x - bw / 2)
+              .clamp(0.0, math.max(0.0, w - bw))
+              .toDouble();
           final clash = placed.any(
             (p) => left < p.left + p.bw + _gap && p.left < left + bw + _gap,
           );

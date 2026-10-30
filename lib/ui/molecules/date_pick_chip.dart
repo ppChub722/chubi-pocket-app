@@ -55,9 +55,7 @@ class DatePickChip extends StatelessWidget {
       selected: true,
       dashed: true,
       inset: true,
-      trailing: onClear == null
-          ? AppChipTrailing.none
-          : AppChipTrailing.remove,
+      trailing: onClear == null ? AppChipTrailing.none : AppChipTrailing.remove,
       onRemove: onClear,
       onTap: onPick,
     );

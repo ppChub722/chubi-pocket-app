@@ -248,8 +248,7 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
           uses: [
             HubUse(
               label: 'Day header: total over the rows\' amounts',
-              page:
-                  'Transactions, budget, pending, saving history',
+              page: 'Transactions, budget, pending, saving history',
               child: group([
                 const AppListHeader(
                   title: 'เมื่อวาน',

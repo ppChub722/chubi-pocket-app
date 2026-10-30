@@ -448,117 +448,121 @@ void main() {
     });
   });
 
-  test('repository writes: period limit, override reset, archive, preview', () async {
-    final http = _Adapter();
-    final repo = BudgetsRepository(
-      client: _FakeApi(Dio()..httpClientAdapter = http),
-    );
-    final cases =
-        <
-          ({
-            String name,
-            Future<Object?> Function() call,
-            Object body,
-            String method,
-            String path,
-            Map<String, dynamic> query,
-            Object? data,
-          })
-        >[
-          (
-            name: 'period limit: one PUT with the amount',
-            call: () =>
-                repo.updatePeriod('b1', 'p0', amount: 9000, note: null),
-            body: _recurringDetail(),
-            method: 'PUT',
-            path: '/budgets/b1/periods/p0',
-            query: {},
-            data: {'amount': 9000, 'note': null},
-          ),
-          (
-            name: 'override reset: amount null goes back to the base',
-            call: () => repo.updatePeriod('b1', 'p0', amount: null, note: 'n'),
-            body: _recurringDetail(),
-            method: 'PUT',
-            path: '/budgets/b1/periods/p0',
-            query: {},
-            data: {'amount': null, 'note': 'n'},
-          ),
-          (
-            name: 'archive',
-            call: () => repo.archive('b1'),
-            body: _recurringDetail(),
-            method: 'POST',
-            path: '/budgets/b1/archive',
-            query: {},
-            data: null,
-          ),
-          (
-            name: 'restore',
-            call: () => repo.restore('b1'),
-            body: _recurringDetail(),
-            method: 'POST',
-            path: '/budgets/b1/restore',
-            query: {},
-            data: null,
-          ),
-          (
-            name: 'delete',
-            call: () => repo.delete('b1'),
-            body: <String, dynamic>{},
-            method: 'DELETE',
-            path: '/budgets/b1',
-            query: {},
-            data: null,
-          ),
-          (
-            name: 'delete preview',
-            call: () => repo.get('b1', deletePreview: true),
-            body: _recurringDetail(),
-            method: 'GET',
-            path: '/budgets/b1',
-            query: {'include': 'delete_preview'},
-            data: null,
-          ),
-          (
-            name: 'detail at a period',
-            call: () => repo.get('b1', periodId: 'p0'),
-            body: _recurringDetail(),
-            method: 'GET',
-            path: '/budgets/b1',
-            query: {'period_id': 'p0'},
-            data: null,
-          ),
-          (
-            name: 'list with a health tile',
-            call: () => repo.list(health: BudgetHealth.over),
-            body: _list(),
-            method: 'GET',
-            path: '/budgets',
-            query: {'status': 'active', 'sort': 'risk', 'health': 'over'},
-            data: null,
-          ),
-          (
-            name: 'list without a health tile sends no health',
-            call: () => repo.list(filter: BudgetFilter.ended),
-            body: _list(),
-            method: 'GET',
-            path: '/budgets',
-            query: {'status': 'ended', 'sort': 'risk'},
-            data: null,
-          ),
-        ];
+  test(
+    'repository writes: period limit, override reset, archive, preview',
+    () async {
+      final http = _Adapter();
+      final repo = BudgetsRepository(
+        client: _FakeApi(Dio()..httpClientAdapter = http),
+      );
+      final cases =
+          <
+            ({
+              String name,
+              Future<Object?> Function() call,
+              Object body,
+              String method,
+              String path,
+              Map<String, dynamic> query,
+              Object? data,
+            })
+          >[
+            (
+              name: 'period limit: one PUT with the amount',
+              call: () =>
+                  repo.updatePeriod('b1', 'p0', amount: 9000, note: null),
+              body: _recurringDetail(),
+              method: 'PUT',
+              path: '/budgets/b1/periods/p0',
+              query: {},
+              data: {'amount': 9000, 'note': null},
+            ),
+            (
+              name: 'override reset: amount null goes back to the base',
+              call: () =>
+                  repo.updatePeriod('b1', 'p0', amount: null, note: 'n'),
+              body: _recurringDetail(),
+              method: 'PUT',
+              path: '/budgets/b1/periods/p0',
+              query: {},
+              data: {'amount': null, 'note': 'n'},
+            ),
+            (
+              name: 'archive',
+              call: () => repo.archive('b1'),
+              body: _recurringDetail(),
+              method: 'POST',
+              path: '/budgets/b1/archive',
+              query: {},
+              data: null,
+            ),
+            (
+              name: 'restore',
+              call: () => repo.restore('b1'),
+              body: _recurringDetail(),
+              method: 'POST',
+              path: '/budgets/b1/restore',
+              query: {},
+              data: null,
+            ),
+            (
+              name: 'delete',
+              call: () => repo.delete('b1'),
+              body: <String, dynamic>{},
+              method: 'DELETE',
+              path: '/budgets/b1',
+              query: {},
+              data: null,
+            ),
+            (
+              name: 'delete preview',
+              call: () => repo.get('b1', deletePreview: true),
+              body: _recurringDetail(),
+              method: 'GET',
+              path: '/budgets/b1',
+              query: {'include': 'delete_preview'},
+              data: null,
+            ),
+            (
+              name: 'detail at a period',
+              call: () => repo.get('b1', periodId: 'p0'),
+              body: _recurringDetail(),
+              method: 'GET',
+              path: '/budgets/b1',
+              query: {'period_id': 'p0'},
+              data: null,
+            ),
+            (
+              name: 'list with a health tile',
+              call: () => repo.list(health: BudgetHealth.over),
+              body: _list(),
+              method: 'GET',
+              path: '/budgets',
+              query: {'status': 'active', 'sort': 'risk', 'health': 'over'},
+              data: null,
+            ),
+            (
+              name: 'list without a health tile sends no health',
+              call: () => repo.list(filter: BudgetFilter.ended),
+              body: _list(),
+              method: 'GET',
+              path: '/budgets',
+              query: {'status': 'ended', 'sort': 'risk'},
+              data: null,
+            ),
+          ];
 
-    for (final c in cases) {
-      http.body = c.body;
-      await c.call();
-      final sent = http.last!;
-      expect(sent.method, c.method, reason: c.name);
-      expect(sent.path, c.path, reason: c.name);
-      expect(sent.queryParameters, c.query, reason: c.name);
-      expect(sent.data, c.data, reason: c.name);
-    }
-  });
+      for (final c in cases) {
+        http.body = c.body;
+        await c.call();
+        final sent = http.last!;
+        expect(sent.method, c.method, reason: c.name);
+        expect(sent.path, c.path, reason: c.name);
+        expect(sent.queryParameters, c.query, reason: c.name);
+        expect(sent.data, c.data, reason: c.name);
+      }
+    },
+  );
 
   test('cubit: a budgets change refreshes it once loaded; one call per '
       'filter, sort or tile change', () async {

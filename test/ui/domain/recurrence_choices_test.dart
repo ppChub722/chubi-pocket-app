@@ -7,11 +7,14 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   final start = DateTime(2026, 10, 13);
 
-  RecurrenceChoices of(RecurrenceFreq freq, {DateTime? at, bool simple = false}) =>
-      RecurrenceChoices(
-        RecurrenceRule(freq: freq, start: at ?? start),
-        simple: simple,
-      );
+  RecurrenceChoices of(
+    RecurrenceFreq freq, {
+    DateTime? at,
+    bool simple = false,
+  }) => RecurrenceChoices(
+    RecurrenceRule(freq: freq, start: at ?? start),
+    simple: simple,
+  );
 
   test('weekly: toggles edit the set, the last one on stays', () {
     final c = RecurrenceChoices(

@@ -14,14 +14,13 @@ void main() {
     await initializeDateFormatting('en');
   });
 
-  String thDue(DateTime d, {bool withDate = false, int? daysUntil}) =>
-      dueLabel(
-        th,
-        date: d,
-        daysUntil: daysUntil,
-        withDate: withDate,
-        today: today,
-      );
+  String thDue(DateTime d, {bool withDate = false, int? daysUntil}) => dueLabel(
+    th,
+    date: d,
+    daysUntil: daysUntil,
+    withDate: withDate,
+    today: today,
+  );
 
   test('dueLabel: TH / EN wording from today, with the short date', () {
     expect(thDue(DateTime(2026, 10, 13)), 'วันนี้');
@@ -30,16 +29,14 @@ void main() {
     expect(thDue(DateTime(2026, 10, 16)), 'อีก 3 วัน');
     expect(thDue(DateTime(2026, 10, 11)), 'เลยกำหนด 2 วัน');
     expect(thDue(DateTime(2026, 11, 3)), 'อีก 21 วัน');
-    expect(
-      thDue(DateTime(2026, 11, 3), withDate: true),
-      'อีก 21 วัน | 3 พ.ย.',
-    );
+    expect(thDue(DateTime(2026, 11, 3), withDate: true), 'อีก 21 วัน | 3 พ.ย.');
     expect(
       thDue(DateTime(2027, 1, 2), withDate: true),
       startsWith('อีก 81 วัน | 2 ม.ค.'),
     );
 
-    String d(DateTime x) => dueLabel(en, date: x, withDate: false, today: today);
+    String d(DateTime x) =>
+        dueLabel(en, date: x, withDate: false, today: today);
     expect(d(DateTime(2026, 10, 13)), 'Today');
     expect(d(DateTime(2026, 10, 14)), 'Tomorrow');
     expect(d(DateTime(2026, 10, 12)), 'Yesterday');
@@ -84,10 +81,7 @@ void main() {
     for (final c in [
       (want: 'ทุกวัน', got: t(r(RecurrenceFreq.daily))),
       (want: 'ทุก 2 วัน', got: t(r(RecurrenceFreq.daily, interval: 2))),
-      (
-        want: 'ทุกวันจันทร์',
-        got: t(r(RecurrenceFreq.weekly, weekdays: {1})),
-      ),
+      (want: 'ทุกวันจันทร์', got: t(r(RecurrenceFreq.weekly, weekdays: {1}))),
       (want: 'ทุกวันเสาร์', got: t(r(RecurrenceFreq.weekly))),
       (
         want: 'ทุกวันจันทร์และพุธ',
@@ -133,9 +127,7 @@ void main() {
       ),
       (
         want: 'ทุก 2 เดือน | วันจันทร์ที่ 2',
-        got: t(
-          r(RecurrenceFreq.monthly, interval: 2, monthly: secondMonday),
-        ),
+        got: t(r(RecurrenceFreq.monthly, interval: 2, monthly: secondMonday)),
       ),
       (want: 'ทุกปี 3 ต.ค.', got: t(r(RecurrenceFreq.yearly))),
       (

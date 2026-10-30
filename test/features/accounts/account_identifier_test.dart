@@ -71,47 +71,44 @@ void main() {
   });
 
   test('Account.fromJson parses savings (and null when absent)', () {
-    Map<String, dynamic> savings({bool exceeds = false, bool tracked = true}) =>
+    Map<String, dynamic> savings({
+      bool exceeds = false,
+      bool tracked = true,
+    }) => {
+      'balance': 1000.0,
+      'saved': exceeds ? 1300.0 : 800.0,
+      'spare': 200.0,
+      'available': tracked ? (exceeds ? -300.0 : 200.0) : null,
+      'saved_exceeds_balance': exceeds,
+      'over_by': exceeds ? 300.0 : 0.0,
+      'buckets': [
         {
-          'balance': 1000.0,
-          'saved': exceeds ? 1300.0 : 800.0,
-          'spare': 200.0,
-          'available': tracked ? (exceeds ? -300.0 : 200.0) : null,
-          'saved_exceeds_balance': exceeds,
-          'over_by': exceeds ? 300.0 : 0.0,
-          'buckets': [
-            {
-              'type': 'goal',
-              'id': 'g1',
-              'name': 'Japan trip',
-              'icon_code': {'icon': 'flag', 'color': 'blue'},
-              'amount': 600.0,
-            },
-            {
-              'type': 'spare',
-              'name': 'Spare',
-              'icon_code': null,
-              'amount': 200.0,
-            },
-          ],
-        };
+          'type': 'goal',
+          'id': 'g1',
+          'name': 'Japan trip',
+          'icon_code': {'icon': 'flag', 'color': 'blue'},
+          'amount': 600.0,
+        },
+        {'type': 'spare', 'name': 'Spare', 'icon_code': null, 'amount': 200.0},
+      ],
+    };
     Account wallet({Map<String, dynamic>? savings, bool track = true}) =>
         Account.fromJson({
-      'id': 'w1',
-      'name': 'KBank',
-      'type': 'bank',
-      'group': 'asset',
-      'balance': 1000.0,
-      'currency': 'THB',
-      'icon_code': {'icon': 'bank', 'color': 'blue'},
-      'status': 'active',
-      'sort_order': 0,
-      'my_role': 'owner',
-      'can_edit': true,
-      'is_shared': false,
-      'track_balance': track,
-      'savings': ?savings,
-    });
+          'id': 'w1',
+          'name': 'KBank',
+          'type': 'bank',
+          'group': 'asset',
+          'balance': 1000.0,
+          'currency': 'THB',
+          'icon_code': {'icon': 'bank', 'color': 'blue'},
+          'status': 'active',
+          'sort_order': 0,
+          'my_role': 'owner',
+          'can_edit': true,
+          'is_shared': false,
+          'track_balance': track,
+          'savings': ?savings,
+        });
 
     final s = wallet(savings: savings(exceeds: true)).savings!;
     expect(s.saved, 1300);
