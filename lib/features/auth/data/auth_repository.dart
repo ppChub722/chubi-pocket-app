@@ -32,6 +32,8 @@ class AuthRepository {
       return _parseAuthResponse(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -47,6 +49,8 @@ class AuthRepository {
       return _parseAuthResponse(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -60,6 +64,8 @@ class AuthRepository {
       return TelegramLoginStart.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -76,6 +82,8 @@ class AuthRepository {
       return TelegramExchange.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -101,6 +109,8 @@ class AuthRepository {
       return _parseAuthResponse(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -126,6 +136,8 @@ class AuthRepository {
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -135,6 +147,8 @@ class AuthRepository {
       return User.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 

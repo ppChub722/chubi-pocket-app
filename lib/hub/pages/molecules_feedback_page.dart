@@ -12,6 +12,12 @@ import '../hub_playground.dart';
 Widget buildFeedbackPage(BuildContext context) => const _FeedbackPage();
 
 final _networkError = ApiException(code: 'NETWORK_ERROR', message: 'offline');
+final _slowError = ApiException(code: 'NETWORK_TIMEOUT', message: 'slow');
+final _downError = ApiException(
+  code: 'SERVER_UNAVAILABLE',
+  message: 'down',
+  statusCode: 502,
+);
 final _serverError = ApiException(
   code: 'SERVER',
   message: 'boom',
@@ -584,6 +590,8 @@ class _FeedbackPageState extends State<_FeedbackPage> {
             children: [
               for (final (label, err) in [
                 ('network', _networkError),
+                ('slow', _slowError),
+                ('server down', _downError),
                 ('server', _serverError),
                 ('unknown', _unknownError),
               ]) ...[
@@ -737,6 +745,14 @@ class _FeedbackPageState extends State<_FeedbackPage> {
               HubCell(
                 caption: 'Network, retry',
                 child: ErrorView(error: _networkError, onRetry: () {}),
+              ),
+              HubCell(
+                caption: 'Slow, retry',
+                child: ErrorView(error: _slowError, onRetry: () {}),
+              ),
+              HubCell(
+                caption: 'Server down (502/503/504), retry',
+                child: ErrorView(error: _downError, onRetry: () {}),
               ),
               HubCell(
                 caption: 'Server, retry',

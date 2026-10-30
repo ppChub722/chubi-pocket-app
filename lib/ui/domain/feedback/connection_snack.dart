@@ -103,6 +103,7 @@ class _ConnectionSnackState extends State<ConnectionSnack> {
   }
 
   void _sync() {
+    SnackStack.connectionCovers = !widget.quiet;
     final stack = _stack;
     if (stack == null) return;
     // After the frame: the stack's view must not rebuild during a build.
@@ -131,6 +132,7 @@ class _ConnectionSnackState extends State<ConnectionSnack> {
 
   @override
   void dispose() {
+    SnackStack.connectionCovers = false;
     _stack?.clearSticky(ConnectionSnack.stackKey, show: false);
     super.dispose();
   }

@@ -160,6 +160,8 @@ class TransactionsRepository {
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -171,6 +173,8 @@ class TransactionsRepository {
       return Transaction.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -186,6 +190,8 @@ class TransactionsRepository {
       return Transaction.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -242,6 +248,8 @@ class TransactionsRepository {
       }
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -287,6 +295,8 @@ class TransactionsRepository {
       return TransactionWriteResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -315,6 +325,8 @@ class TransactionsRepository {
       return TxEditPreview.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -327,6 +339,8 @@ class TransactionsRepository {
       return TransactionWriteResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -389,6 +403,8 @@ class TransactionsRepository {
       return DeleteTransactionResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -401,6 +417,8 @@ class TransactionsRepository {
       return Transaction.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -425,6 +443,8 @@ class TransactionsRepository {
       return TransactionsSummary.fromGlobalJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -441,6 +461,8 @@ class TransactionsRepository {
       return TransactionsSummary.fromAccountJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 }

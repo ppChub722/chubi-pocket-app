@@ -57,6 +57,8 @@ class ContactsRepository {
       return ContactDetail.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -89,6 +91,8 @@ class ContactsRepository {
       return AbsorbResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -120,6 +124,8 @@ class ContactsRepository {
       return Contact.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -137,6 +143,8 @@ class ContactsRepository {
       return DeleteContactResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -149,6 +157,8 @@ class ContactsRepository {
       return AbsorbResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -160,6 +170,8 @@ class ContactsRepository {
       return SenderProfile.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -207,6 +219,8 @@ class ContactsRepository {
       return data.map(UnlinkedName.fromJson).toList();
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -222,6 +236,8 @@ class ContactsRepository {
       return LinkRequestResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -231,6 +247,8 @@ class ContactsRepository {
       return Contact.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 }

@@ -42,11 +42,11 @@ class ApiException implements Exception {
     }
 
     final code = switch (e.type) {
-      DioExceptionType.connectionTimeout ||
       DioExceptionType.sendTimeout ||
       DioExceptionType.receiveTimeout => 'NETWORK_TIMEOUT',
-      DioExceptionType.connectionError => 'NETWORK_ERROR',
       DioExceptionType.cancel => 'REQUEST_CANCELLED',
+      _ when isNetworkFailure(e) => 'NETWORK_ERROR',
+      _ when _serverDown.contains(response?.statusCode) => 'SERVER_UNAVAILABLE',
       _ => 'UNKNOWN_ERROR',
     };
 
@@ -80,6 +80,9 @@ class ApiException implements Exception {
       e.type == DioExceptionType.receiveTimeout ||
       (e.type == DioExceptionType.unknown && e.error is! FormatException);
 
+  /// The proxy answered for a BE that is down or restarting.
+  static const _serverDown = {502, 503, 504};
+
   /// This exception is a network failure (see [isNetworkFailure]).
   bool get isNetwork => code == 'NETWORK_ERROR' || code == 'NETWORK_TIMEOUT';
 
@@ -100,3 +103,10 @@ class ApiException implements Exception {
 /// [ApiException] built from a network failure, or a client-side timeout.
 bool isNetworkError(Object error) =>
     error is TimeoutException || (error is ApiException && error.isNetwork);
+
+/// A network failure where the server was reached but answered too late
+/// (a client-side timeout too); the rest of [isNetworkError] is "offline".
+/// The kit's offline page view throws `TimeoutException('offline')`.
+bool isSlowNetworkError(Object error) =>
+    (error is TimeoutException && error.message != 'offline') ||
+    (error is ApiException && error.code == 'NETWORK_TIMEOUT');

@@ -24,6 +24,8 @@ class PersonalDebtsRepository {
       return DebtPersonDetail.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -47,6 +49,8 @@ class PersonalDebtsRepository {
       return DebtEntriesPage.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -100,6 +104,8 @@ class PersonalDebtsRepository {
       return DebtEntryWriteResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -148,6 +154,8 @@ class PersonalDebtsRepository {
       return DebtEntryWriteResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -183,6 +191,8 @@ class PersonalDebtsRepository {
       return DebtPreview.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -194,6 +204,8 @@ class PersonalDebtsRepository {
       return DebtEntryDetail.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -209,6 +221,8 @@ class PersonalDebtsRepository {
       return DebtEntryWriteResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -243,6 +257,8 @@ class PersonalDebtsRepository {
       return DebtEntryWriteResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -254,6 +270,8 @@ class PersonalDebtsRepository {
       return DebtEntryDeleteResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 }

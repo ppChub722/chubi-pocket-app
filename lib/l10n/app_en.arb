@@ -45,6 +45,10 @@
 
   "errorNetworkTitle": "No connection",
   "errorNetworkMessage": "Check your internet and try again.",
+  "errorSlowTitle": "Slow connection",
+  "errorSlowMessage": "The server is taking too long. Please try again.",
+  "errorServerDownTitle": "Server unavailable",
+  "errorServerDownMessage": "The service is down for a moment. Try again shortly.",
   "errorGenericTitle": "Something went wrong",
   "errorGenericMessage": "Please try again",
   "errorValidationMessage": "Some fields aren’t valid — please check them",

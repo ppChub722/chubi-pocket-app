@@ -23,6 +23,8 @@ class PendingRepository {
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -45,6 +47,8 @@ class PendingRepository {
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -60,6 +64,8 @@ class PendingRepository {
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -71,6 +77,8 @@ class PendingRepository {
       return DiscardResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -100,6 +108,8 @@ class PendingRepository {
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -112,6 +122,8 @@ class PendingRepository {
       return PendingSubmitResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -123,6 +135,8 @@ class PendingRepository {
       return PendingSubmitResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -134,6 +148,8 @@ class PendingRepository {
       return PendingSubmitResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 }

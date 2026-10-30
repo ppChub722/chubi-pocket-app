@@ -18,6 +18,8 @@ class CategoriesRepository {
       return Category.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -29,6 +31,8 @@ class CategoriesRepository {
       return CategoryDetail.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -41,6 +45,8 @@ class CategoriesRepository {
       return CategoryDetail.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -55,6 +61,8 @@ class CategoriesRepository {
       return CategoryDetail.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -67,6 +75,8 @@ class CategoriesRepository {
       return data.cast<Map<String, dynamic>>().map(Category.fromJson).toList();
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -92,6 +102,8 @@ class CategoriesRepository {
       return data.map(Category.fromJson).toList();
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 }

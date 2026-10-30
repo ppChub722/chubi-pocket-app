@@ -26,6 +26,10 @@ class SnackStack extends ChangeNotifier {
   static const defaultDuration = Duration(seconds: 4);
   static const withActionDuration = Duration(seconds: 6);
 
+  /// True while the app-wide connection snack is on duty (not quiet): a
+  /// network failure then shows that snack only, never an error snack too.
+  static bool connectionCovers = false;
+
   static final _messengers = Expando<SnackStack>('messenger snack stack');
   static final _overlays = Expando<SnackStack>('overlay snack stack');
 

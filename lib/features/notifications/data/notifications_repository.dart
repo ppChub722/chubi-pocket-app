@@ -73,6 +73,8 @@ class NotificationsRepository {
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -84,6 +86,8 @@ class NotificationsRepository {
       return (res.data?['unread_count'] as num?)?.toInt() ?? 0;
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -107,6 +111,8 @@ class NotificationsRepository {
       return InboxCounts.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -118,6 +124,8 @@ class NotificationsRepository {
       return InboxCounts.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -129,6 +137,8 @@ class NotificationsRepository {
       return NotificationSettings.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -150,6 +160,8 @@ class NotificationsRepository {
       return NotificationSettings.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -159,6 +171,8 @@ class NotificationsRepository {
       return NotificationActionResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 }

@@ -344,6 +344,30 @@ abstract class AppLocalizations {
   /// **'Check your internet and try again.'**
   String get errorNetworkMessage;
 
+  /// No description provided for @errorSlowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Slow connection'**
+  String get errorSlowTitle;
+
+  /// No description provided for @errorSlowMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The server is taking too long. Please try again.'**
+  String get errorSlowMessage;
+
+  /// No description provided for @errorServerDownTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Server unavailable'**
+  String get errorServerDownTitle;
+
+  /// No description provided for @errorServerDownMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The service is down for a moment. Try again shortly.'**
+  String get errorServerDownMessage;
+
   /// No description provided for @errorGenericTitle.
   ///
   /// In en, this message translates to:

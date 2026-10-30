@@ -116,6 +116,8 @@ class RecurringLinkRepository {
       return await run(_client.dio);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 

@@ -44,6 +44,10 @@
 
   "errorNetworkTitle": "ไม่มีการเชื่อมต่อ",
   "errorNetworkMessage": "ตรวจสอบอินเทอร์เน็ตของคุณแล้วลองใหม่",
+  "errorSlowTitle": "การเชื่อมต่อช้า",
+  "errorSlowMessage": "เซิร์ฟเวอร์ตอบช้า กรุณาลองใหม่อีกครั้ง",
+  "errorServerDownTitle": "เซิร์ฟเวอร์ไม่พร้อมใช้งาน",
+  "errorServerDownMessage": "ระบบขัดข้องชั่วคราว ลองใหม่ในอีกสักครู่",
   "errorGenericTitle": "เกิดข้อผิดพลาด",
   "errorGenericMessage": "กรุณาลองใหม่อีกครั้ง",
   "errorValidationMessage": "ข้อมูลบางช่องไม่ถูกต้อง กรุณาตรวจสอบ",

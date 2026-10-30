@@ -132,6 +132,19 @@ class AppLocalizationsTh extends AppLocalizations {
   String get errorNetworkMessage => 'ตรวจสอบอินเทอร์เน็ตของคุณแล้วลองใหม่';
 
   @override
+  String get errorSlowTitle => 'การเชื่อมต่อช้า';
+
+  @override
+  String get errorSlowMessage => 'เซิร์ฟเวอร์ตอบช้า กรุณาลองใหม่อีกครั้ง';
+
+  @override
+  String get errorServerDownTitle => 'เซิร์ฟเวอร์ไม่พร้อมใช้งาน';
+
+  @override
+  String get errorServerDownMessage =>
+      'ระบบขัดข้องชั่วคราว ลองใหม่ในอีกสักครู่';
+
+  @override
   String get errorGenericTitle => 'เกิดข้อผิดพลาด';
 
   @override

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:chubi_pocket/core/network/api_exception.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:chubi_pocket/ui/ui.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaml/yaml.dart';
@@ -75,10 +76,39 @@ void main() {
     expect(text('NEW_CODE'), l.errorGenericMessage);
   });
 
-  test('network failures, timeouts and other throws', () {
+  test('offline, slow, server down and other throws', () {
     expect(text('NETWORK_ERROR'), l.errorNetworkMessage);
-    expect(text('NETWORK_TIMEOUT'), l.errorNetworkMessage);
-    expect(errorText(l, TimeoutException('slow')), l.errorNetworkMessage);
+    expect(text('NETWORK_TIMEOUT'), l.errorSlowMessage);
+    expect(text('SERVER_UNAVAILABLE'), l.errorServerDownMessage);
+    expect(errorText(l, TimeoutException('slow')), l.errorSlowMessage);
+    expect(errorText(l, TimeoutException('offline')), l.errorNetworkMessage);
     expect(errorText(l, StateError('boom')), l.errorGenericMessage);
+  });
+
+  test('one classifier: a Dio failure gets the code its kind says', () {
+    final req = RequestOptions(path: '/x');
+    ApiException of(DioExceptionType type, {int? status, Object? error}) =>
+        ApiException.fromDioException(
+          DioException(
+            requestOptions: req,
+            type: type,
+            error: error,
+            response: status == null
+                ? null
+                : Response(requestOptions: req, statusCode: status),
+          ),
+        );
+    expect(of(DioExceptionType.connectionError).code, 'NETWORK_ERROR');
+    expect(of(DioExceptionType.connectionTimeout).code, 'NETWORK_ERROR');
+    expect(
+      of(DioExceptionType.unknown, error: const SocketException('x')).code,
+      'NETWORK_ERROR',
+    );
+    expect(of(DioExceptionType.receiveTimeout).code, 'NETWORK_TIMEOUT');
+    expect(
+      of(DioExceptionType.badResponse, status: 502).code,
+      'SERVER_UNAVAILABLE',
+    );
+    expect(of(DioExceptionType.badResponse, status: 500).code, 'UNKNOWN_ERROR');
   });
 }

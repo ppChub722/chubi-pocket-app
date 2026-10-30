@@ -91,10 +91,18 @@ class _AppErrors extends UiErrors {
   @override
   UiErrorInfo describe(Object error) {
     if (isNetworkError(error)) {
+      final slow = isSlowNetworkError(error);
       return UiErrorInfo(
         icon: AppIcons.offline,
-        title: l.errorNetworkTitle,
-        message: l.errorNetworkMessage,
+        title: slow ? l.errorSlowTitle : l.errorNetworkTitle,
+        message: slow ? l.errorSlowMessage : l.errorNetworkMessage,
+      );
+    }
+    if (error is ApiException && error.code == 'SERVER_UNAVAILABLE') {
+      return UiErrorInfo(
+        icon: AppIcons.error,
+        title: l.errorServerDownTitle,
+        message: l.errorServerDownMessage,
       );
     }
     final text = errorText(l, error);

@@ -18,6 +18,8 @@ class TagsRepository {
       return Tag.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -44,6 +46,8 @@ class TagsRepository {
       return (created: tags('created'), data: tags('data'));
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -56,6 +60,8 @@ class TagsRepository {
       return Tag.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 
@@ -64,6 +70,8 @@ class TagsRepository {
       await _client.dio.delete<Map<String, dynamic>>('/tags/$id');
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 }

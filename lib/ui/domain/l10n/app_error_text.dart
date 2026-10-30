@@ -233,8 +233,9 @@ const Map<String, ErrorGroup> _groups = {
   'UNEXPECTED_ERROR': ErrorGroup.server,
 };
 
-/// Client-side network codes: worded by [AppLocalizations.errorNetworkMessage].
-const _networkCodes = {'NETWORK_ERROR', 'NETWORK_TIMEOUT'};
+/// Client-side network codes: offline, slow, and a proxy answering for a
+/// BE that is down.
+const _networkCodes = {'NETWORK_ERROR', 'NETWORK_TIMEOUT', 'SERVER_UNAVAILABLE'};
 
 /// Every code this mapper words; the OpenAPI `Error` enum must be inside
 /// (test/ui/app_error_text_test.dart).
@@ -247,7 +248,14 @@ Set<String> get mappedErrorCodes => {
 /// The sentence for an error code. An unknown code falls back on the HTTP
 /// status class, then on the generic "try again".
 String errorTextForCode(AppLocalizations l, String code, {int? statusCode}) {
-  if (_networkCodes.contains(code)) return l.errorNetworkMessage;
+  switch (code) {
+    case 'NETWORK_ERROR':
+      return l.errorNetworkMessage;
+    case 'NETWORK_TIMEOUT':
+      return l.errorSlowMessage;
+    case 'SERVER_UNAVAILABLE':
+      return l.errorServerDownMessage;
+  }
   final specific = _specific[code];
   if (specific != null) return specific(l);
   final group = _groups[code] ?? _groupOfStatus(statusCode);
@@ -263,9 +271,13 @@ ErrorGroup _groupOfStatus(int? status) => switch (status) {
 };
 
 /// The sentence for any thrown value: an [ApiException] by code, a network
-/// failure or timeout as "no connection", anything else as "try again".
+/// failure as "no connection" or "slow", anything else as "try again".
 String errorText(AppLocalizations l, Object error) {
-  if (isNetworkError(error)) return l.errorNetworkMessage;
+  if (isNetworkError(error)) {
+    return isSlowNetworkError(error)
+        ? l.errorSlowMessage
+        : l.errorNetworkMessage;
+  }
   if (error is ApiException) {
     return errorTextForCode(l, error.code, statusCode: error.statusCode);
   }

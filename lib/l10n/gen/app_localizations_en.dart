@@ -132,6 +132,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorNetworkMessage => 'Check your internet and try again.';
 
   @override
+  String get errorSlowTitle => 'Slow connection';
+
+  @override
+  String get errorSlowMessage =>
+      'The server is taking too long. Please try again.';
+
+  @override
+  String get errorServerDownTitle => 'Server unavailable';
+
+  @override
+  String get errorServerDownMessage =>
+      'The service is down for a moment. Try again shortly.';
+
+  @override
   String get errorGenericTitle => 'Something went wrong';
 
   @override

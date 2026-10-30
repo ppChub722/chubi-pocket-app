@@ -16,6 +16,8 @@ class AppVersionRepository {
       return AppVersionInfo.fromJson(res.data ?? const <String, dynamic>{});
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
     }
   }
 }
