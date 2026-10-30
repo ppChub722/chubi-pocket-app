@@ -347,7 +347,7 @@ void main() {
         // Let the listener microtask run.
         await Future<void>.delayed(Duration.zero);
       },
-      expect: () => [const AuthUnauthenticated()],
+      expect: () => [const AuthUnauthenticated(sessionExpired: true)],
       verify: (_) {
         verify(() => tokens.clearAuthToken()).called(1);
       },

@@ -26,7 +26,6 @@ class TransactionsState extends Equatable {
   final List<Transaction> transactions;
   final TransactionsStatus status;
   final ApiException? error;
-  String? get errorMessage => error?.message;
 
   final int page;
   final int totalPages;
@@ -205,7 +204,12 @@ class TransactionsCubit extends Cubit<TransactionsState>
           clearError: true,
         ),
       );
-    } catch (_) {}
+    } catch (e, st) {
+      // The list stays; the page says so (not when offline).
+      if (seq == _seq && !isClosed) {
+        emit(state.copyWith(error: ApiException.from(e, st)));
+      }
+    }
   }
 
   Future<TransactionsPage> _fetch(_ListQuery f, {required int page}) =>

@@ -14,7 +14,6 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../../accounts/presentation/wallet_errors.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
@@ -28,7 +27,6 @@ import '../../../projects/presentation/widgets/event_bill_sheet.dart'
     show openEventBill;
 import '../../../pending/domain/pending_transaction.dart';
 import '../../../pending/presentation/cubit/pending_cubit.dart';
-import '../../../pending/presentation/pending_errors.dart';
 import '../../../tags/domain/tag.dart';
 import '../../domain/form_options.dart';
 import '../../domain/link_draft.dart';
@@ -187,7 +185,7 @@ Future<bool> editTransaction(BuildContext context, String id) async {
       tx = await cubit.refreshOne(id);
     } on ApiException catch (e) {
       if (context.mounted) {
-        showAppSnackBar(context, e.message, tone: Tone.danger);
+        showErrorSnackBar(context, e);
       }
       return false;
     }
@@ -578,7 +576,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       if (failed != null) {
         if (!mounted) return;
         setState(() => _saving = false);
-        _toast(pendingErrorText(l, failed));
+        _toast(errorTextForCode(l, failed.code));
         return;
       }
       accounts.patchBalances(result.accountBalances);
@@ -669,7 +667,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       if (failed != null) {
         if (!mounted) return;
         setState(() => _saving = false);
-        _toast(pendingErrorText(l, failed));
+        _toast(errorTextForCode(l, failed.code));
         return;
       }
       accounts.patchBalances(result.accountBalances);
@@ -972,7 +970,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         context,
         e,
         retry: _saveEditTx,
-        message: splitErrorMessage(l, e) ?? walletErrorMessage(l, e),
+        message: splitErrorMessage(l, e) ?? errorText(l, e),
       );
     }
   }
@@ -1670,8 +1668,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         e,
         retry: _save,
         message: event == null && splitBill == null
-            ? walletErrorMessage(l, e)
-            : eventErrorMessage(l, e),
+            ? errorText(l, e)
+            : errorText(l, e),
       );
     }
   }
@@ -1708,7 +1706,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       }
       return null;
     } on ApiException catch (e) {
-      return walletErrorMessage(l, e);
+      return errorText(l, e);
     }
   }
 

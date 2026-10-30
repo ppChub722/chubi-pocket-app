@@ -7,7 +7,6 @@ import '../../../ui/ui.dart';
 import '../../contacts/presentation/widgets/contact_picker.dart';
 import '../data/projects_repository.dart';
 import '../domain/project.dart';
-import 'event_errors.dart';
 import 'widgets/member_picker.dart';
 import 'widgets/project_common.dart';
 
@@ -49,7 +48,7 @@ Future<EventPatch?> assignEmptySpots(
     showAppSnackBarOn(messenger, l.evbAssigned, tone: Tone.success);
     return patch;
   } on ApiException catch (e) {
-    showAppSnackBarOn(messenger, eventErrorText(l, e), tone: Tone.danger);
+    showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
     return null;
   }
 }

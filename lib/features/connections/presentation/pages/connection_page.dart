@@ -318,8 +318,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
           if (mounted) _apply(row);
           return true;
         },
-        failedMessage: (e) =>
-            e is ApiException ? e.message : ErrorView.titleFor(context, e),
+        failedMessage: (e) => errorTextOf(context, e),
         builder: (context, value, onChanged) =>
             SettingToggleRow(label: label, value: value, onChanged: onChanged),
       ),

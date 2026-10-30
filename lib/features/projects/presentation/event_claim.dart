@@ -7,7 +7,6 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
 import '../data/projects_repository.dart';
 import '../domain/claim.dart';
-import 'event_errors.dart';
 import 'widgets/project_tx_tiles.dart' show projectTxDateLabel;
 
 /// "ลงสมุดของฉัน" from an event (V6 / V7 lump, V9 / V10 claim); the confirm
@@ -46,7 +45,7 @@ Future<bool> showClaimSheet(
       personName: personName,
     );
   } on ApiException catch (e) {
-    showAppSnackBarOn(messenger, eventErrorText(l, e), tone: Tone.danger);
+    showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
     return false;
   }
   bills = [
@@ -91,7 +90,7 @@ Future<bool> showClaimSheet(
       showAppSnackBarOn(messenger, switch (e.code) {
         'CLAIM_MIXED_DIRECTION' => l.evbClaimMixed,
         'BILL_ALREADY_BOOKED' => l.evbClaimAlready,
-        _ => eventErrorText(l, e),
+        _ => errorText(l, e),
       }, tone: Tone.danger);
       return false;
     }

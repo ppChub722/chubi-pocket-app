@@ -21,7 +21,6 @@ class CategoriesState extends Equatable {
   final CategoriesStatus status;
 
   final ApiException? error;
-  String? get errorMessage => error?.message;
 
   CategoriesState copyWith({
     List<Category>? categories,

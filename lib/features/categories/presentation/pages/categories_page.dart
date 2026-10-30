@@ -220,9 +220,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
       setState(() => _savingReorder = false);
       showAppSnackBar(
         context,
-        e.code == 'MAX_DEPTH_EXCEEDED'
-            ? l.categoryErrorMaxDepth
-            : '${l.categoriesReorderSave}: ${e.message}',
+        '${l.categoriesReorderSave}: ${errorText(l, e)}',
         tone: Tone.danger,
       );
     }

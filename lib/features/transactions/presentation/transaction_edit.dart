@@ -9,7 +9,6 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
 import '../../accounts/domain/account.dart';
 import '../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../accounts/presentation/wallet_errors.dart';
 import '../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import '../../projects/data/projects_repository.dart';
 import '../domain/link_draft.dart';
@@ -168,11 +167,7 @@ class LinkEditSession {
           return made.project.id;
         } on ApiException catch (e) {
           if (context.mounted) {
-            showAppSnackBar(
-              context,
-              eventErrorMessage(l, e),
-              tone: Tone.danger,
-            );
+            showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
           }
           return null;
         }
@@ -238,7 +233,7 @@ class LinkEditSession {
         context,
         e,
         retry: retry,
-        message: splitErrorMessage(l, e) ?? walletErrorMessage(l, e),
+        message: splitErrorMessage(l, e) ?? errorText(l, e),
       );
       return null;
     }

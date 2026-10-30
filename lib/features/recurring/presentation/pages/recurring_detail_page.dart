@@ -309,7 +309,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       HapticFeedback.mediumImpact();
       _applyItems(r);
     } on ApiException catch (e) {
-      if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+      if (mounted) showErrorSnackBar(context, e);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -370,7 +370,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       HapticFeedback.mediumImpact();
       _take(d);
     } on ApiException catch (e) {
-      if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+      if (mounted) showErrorSnackBar(context, e);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -655,7 +655,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBarOn(pageMessenger!, e.message, tone: Tone.danger);
+      showErrorSnackBarOn(pageMessenger!, e);
     }
   }
 
@@ -670,7 +670,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBarOn(pageMessenger!, e.message, tone: Tone.danger);
+      showErrorSnackBarOn(pageMessenger!, e);
     }
   }
 
@@ -704,7 +704,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBarOn(pageMessenger!, e.message, tone: Tone.danger);
+      showErrorSnackBarOn(pageMessenger!, e);
     }
   }
 
@@ -716,7 +716,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       preview = (await _repo.get(r.id, deletePreview: true)).deletePreview;
     } on ApiException catch (e) {
       if (mounted) {
-        showAppSnackBarOn(pageMessenger!, e.message, tone: Tone.danger);
+        showErrorSnackBarOn(pageMessenger!, e);
       }
       return;
     }
@@ -759,7 +759,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBarOn(pageMessenger!, e.message, tone: Tone.danger);
+      showErrorSnackBarOn(pageMessenger!, e);
       return;
     }
     if (!mounted) return;
@@ -837,7 +837,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     final r = d.recurring;
     final banner = _refreshError == null
         ? null
-        : AppMessage(tone: Tone.danger, message: _refreshError!.message);
+        : AppMessage(tone: Tone.danger, message: errorText(l, _refreshError!));
     return TabbedDetailBody<_Tab>(
       hero: _viewHero(l, d),
       belowHero: [

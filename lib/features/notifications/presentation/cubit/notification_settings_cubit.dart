@@ -17,7 +17,6 @@ class SettingsState extends Equatable {
   final NotificationSettings? settings;
   final SettingsStatus status;
   final ApiException? error;
-  String? get errorMessage => error?.message;
 
   SettingsState copyWith({
     NotificationSettings? settings,

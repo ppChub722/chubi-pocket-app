@@ -28,7 +28,7 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
       if (!mounted) return;
       showAppSnackBar(context, l.accountRestored(a.name), tone: Tone.success);
     } on ApiException catch (e) {
-      if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+      if (mounted) showErrorSnackBar(context, e);
     } finally {
       if (mounted) setState(() => _busy.remove(a.id));
     }

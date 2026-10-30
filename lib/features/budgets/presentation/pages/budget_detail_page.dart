@@ -371,7 +371,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBarOn(pageMessenger!, e.message, tone: Tone.danger);
+      showErrorSnackBarOn(pageMessenger!, e);
     }
   }
 
@@ -420,7 +420,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBarOn(pageMessenger!, e.message, tone: Tone.danger);
+      showErrorSnackBarOn(pageMessenger!, e);
     }
   }
 
@@ -434,7 +434,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBarOn(pageMessenger!, e.message, tone: Tone.danger);
+      showErrorSnackBarOn(pageMessenger!, e);
     }
   }
 
@@ -473,7 +473,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBarOn(pageMessenger!, e.message, tone: Tone.danger);
+      showErrorSnackBarOn(pageMessenger!, e);
       return;
     }
     if (!mounted) return;
@@ -499,7 +499,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBarOn(pageMessenger!, e.message, tone: Tone.danger);
+      showErrorSnackBarOn(pageMessenger!, e);
       return;
     }
     if (!mounted) return;
@@ -620,7 +620,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
     final banner = _refreshError == null
         ? null
-        : AppMessage(tone: Tone.danger, message: _refreshError!.message);
+        : AppMessage(tone: Tone.danger, message: errorText(l, _refreshError!));
 
     if (!b.recurring) {
       return DetailLayout(

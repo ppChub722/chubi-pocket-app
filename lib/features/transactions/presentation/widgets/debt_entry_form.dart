@@ -1,3 +1,4 @@
+import '../../../../core/network/api_exception.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -486,7 +487,15 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     final directory = context.read<DebtDirectoryCubit>();
     try {
       await directory.loadIfNeeded();
-    } catch (_) {}
+    } catch (e, st) {
+      if (mounted) {
+        showErrorSnackBar(
+          context,
+          ApiException.from(e, st),
+          onRetry: _loadPeople,
+        );
+      }
+    }
     if (!mounted) return;
     final p = _c.person;
     if (p != null && p.net == null) {

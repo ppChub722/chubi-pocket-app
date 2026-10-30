@@ -267,7 +267,16 @@ class _TransactionsListPageState extends State<TransactionsListPage>
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final locked = widget.lockedAccount;
-    final content = BlocBuilder<TransactionsCubit, TransactionsState>(
+    final content = BlocConsumer<TransactionsCubit, TransactionsState>(
+      // A background refresh that failed (not offline: the connection snack
+      // says that) while the list is showing.
+      listenWhen: (a, b) =>
+          b.error != null &&
+          !identical(a.error, b.error) &&
+          b.status == TransactionsStatus.loaded &&
+          !b.error!.isNetwork,
+      listener: (context, state) =>
+          showErrorSnackBar(context, state.error!, onRetry: _refetch),
       builder: (context, state) {
         final loading =
             state.status == TransactionsStatus.initial ||

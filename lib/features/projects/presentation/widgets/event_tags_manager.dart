@@ -6,7 +6,6 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
-import '../event_errors.dart';
 
 Future<void> showEventTagsManager(
   BuildContext context, {
@@ -65,7 +64,7 @@ class _EventTagsManagerState extends State<_EventTagsManager> {
       if (mounted) {
         showAppSnackBar(
           context,
-          eventErrorText(AppLocalizations.of(context)!, e),
+          errorText(AppLocalizations.of(context)!, e),
           tone: Tone.danger,
         );
       }

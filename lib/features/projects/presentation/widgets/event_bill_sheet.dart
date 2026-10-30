@@ -30,7 +30,6 @@ import '../../../transactions/presentation/widgets/pick_chip_rows.dart'
 import '../../data/projects_repository.dart';
 import '../../domain/event_bill.dart';
 import '../../domain/project.dart';
-import '../event_errors.dart';
 import 'member_picker.dart';
 import 'project_common.dart';
 import 'project_tx_tiles.dart' show projectMemberLevel;
@@ -1098,7 +1097,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
       if (mounted) widget.onChanged?.call(fresh);
     } on ApiException catch (e) {
       if (mounted) {
-        showAppSnackBar(context, eventErrorText(l, e), tone: Tone.danger);
+        showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -1336,7 +1335,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
       });
     } on ApiException catch (e) {
       if (mounted) {
-        showAppSnackBar(context, eventErrorText(l, e), tone: Tone.danger);
+        showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
       }
     }
   }
@@ -1480,7 +1479,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
         widget.onChanged!(EventBillView.fromJson(newer.cast()));
         return;
       }
-      showAppSnackBar(context, eventErrorText(l, e), tone: Tone.danger);
+      showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -1627,7 +1626,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
       navigator.pop(true);
     } on ApiException catch (e) {
       if (mounted) {
-        showAppSnackBar(context, eventErrorText(l, e), tone: Tone.danger);
+        showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
       }
     } finally {
       if (mounted) setState(() => _saving = false);

@@ -926,9 +926,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     );
   }
 
-  String _failed(Object e) => e is ApiException
-      ? e.message
-      : AppLocalizations.of(context)!.errorGenericMessage;
+  String _failed(Object e) => errorTextOf(context, e);
 
   @override
   Widget build(BuildContext context) {

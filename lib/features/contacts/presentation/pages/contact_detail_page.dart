@@ -115,7 +115,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           _loading = false;
         });
       } else {
-        showAppSnackBar(context, err.message, tone: Tone.danger);
+        showErrorSnackBar(context, err);
       }
     }
   }
@@ -302,7 +302,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       if (done != null) showAppSnackBar(context, done, tone: Tone.success);
       _patch(c);
     } on ApiException catch (e) {
-      if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+      if (mounted) showErrorSnackBar(context, e);
     }
   }
 
@@ -331,7 +331,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       showAppSnackBar(context, l.contactLinkRequested);
       _patch(c);
     } on ApiException catch (e) {
-      if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+      if (mounted) showErrorSnackBar(context, e);
     }
   }
 
@@ -395,7 +395,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           );
           return (res, picked);
         } on ApiException catch (e) {
-          if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+          if (mounted) showErrorSnackBar(context, e);
           return null;
         }
       },
@@ -933,8 +933,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           if (mounted) _patch(updated);
           return true;
         },
-        failedMessage: (e) =>
-            e is ApiException ? e.message : l.errorGenericMessage,
+        failedMessage: (e) => errorText(l, e),
         builder: (context, value, onChanged) => SettingToggleRow(
           label: l.contactShowNicknameLabel,
           value: value,

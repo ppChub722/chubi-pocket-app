@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 
 import '../logger/app_logger.dart';
@@ -68,6 +70,19 @@ class ApiException implements Exception {
     return ApiException(code: 'UNEXPECTED_ERROR', message: error.toString());
   }
 
+  /// THE network classifier: the request never got an answer (no route,
+  /// timeout, a socket error wrapped as unknown). A response of any status is
+  /// not a network failure.
+  static bool isNetworkFailure(DioException e) =>
+      e.type == DioExceptionType.connectionError ||
+      e.type == DioExceptionType.connectionTimeout ||
+      e.type == DioExceptionType.sendTimeout ||
+      e.type == DioExceptionType.receiveTimeout ||
+      (e.type == DioExceptionType.unknown && e.error is! FormatException);
+
+  /// This exception is a network failure (see [isNetworkFailure]).
+  bool get isNetwork => code == 'NETWORK_ERROR' || code == 'NETWORK_TIMEOUT';
+
   static String? _extractRequestId(DioException e) {
     final fromResponse = e.response?.headers.value('x-request-id');
     if (fromResponse != null && fromResponse.isNotEmpty) return fromResponse;
@@ -80,3 +95,8 @@ class ApiException implements Exception {
   String toString() =>
       'ApiException($code: $message${requestId != null ? " req=$requestId" : ""})';
 }
+
+/// Any thrown value that means 'could not reach the server': an
+/// [ApiException] built from a network failure, or a client-side timeout.
+bool isNetworkError(Object error) =>
+    error is TimeoutException || (error is ApiException && error.isNetwork);

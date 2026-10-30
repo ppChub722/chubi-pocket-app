@@ -362,6 +362,180 @@ abstract class AppLocalizations {
   /// **'Some fields aren’t valid — please check them'**
   String get errorValidationMessage;
 
+  /// No description provided for @errNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This item wasn’t found — it may have been deleted'**
+  String get errNotFound;
+
+  /// No description provided for @errForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'You don’t have permission to do this'**
+  String get errForbidden;
+
+  /// No description provided for @errImmutable.
+  ///
+  /// In en, this message translates to:
+  /// **'This can’t be changed or deleted'**
+  String get errImmutable;
+
+  /// No description provided for @errStale.
+  ///
+  /// In en, this message translates to:
+  /// **'This changed since you opened it — refresh and try again'**
+  String get errStale;
+
+  /// No description provided for @errSessionExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session expired — please log in again'**
+  String get errSessionExpired;
+
+  /// No description provided for @errAppOutdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Update the app to keep using it'**
+  String get errAppOutdated;
+
+  /// No description provided for @errAccountInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'This account is deactivated — reactivate it to continue'**
+  String get errAccountInactive;
+
+  /// No description provided for @errRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many tries — wait a moment and try again'**
+  String get errRateLimited;
+
+  /// No description provided for @errLoginCodeInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The login link expired or was already used — start again'**
+  String get errLoginCodeInvalid;
+
+  /// No description provided for @errCategoryNameDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'A category with this name already exists at this level'**
+  String get errCategoryNameDuplicate;
+
+  /// No description provided for @errCategoryCycle.
+  ///
+  /// In en, this message translates to:
+  /// **'A category can’t move under itself or its own sub-categories'**
+  String get errCategoryCycle;
+
+  /// No description provided for @errTagExists.
+  ///
+  /// In en, this message translates to:
+  /// **'A tag with this name already exists'**
+  String get errTagExists;
+
+  /// No description provided for @errPaidByExceeds.
+  ///
+  /// In en, this message translates to:
+  /// **'What the payer covered is more than the bill'**
+  String get errPaidByExceeds;
+
+  /// No description provided for @errPayersSum.
+  ///
+  /// In en, this message translates to:
+  /// **'The payers must add up to the bill'**
+  String get errPayersSum;
+
+  /// No description provided for @errInsufficientSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'There isn’t enough saved there'**
+  String get errInsufficientSaving;
+
+  /// No description provided for @errGoalNotActive.
+  ///
+  /// In en, this message translates to:
+  /// **'This saving goal isn’t active'**
+  String get errGoalNotActive;
+
+  /// No description provided for @errGoalReached.
+  ///
+  /// In en, this message translates to:
+  /// **'This saving goal already reached its target'**
+  String get errGoalReached;
+
+  /// No description provided for @errGoalHasSavings.
+  ///
+  /// In en, this message translates to:
+  /// **'This saving goal still holds money — close it first'**
+  String get errGoalHasSavings;
+
+  /// No description provided for @errUnsupportedImage.
+  ///
+  /// In en, this message translates to:
+  /// **'This picture can’t be used — use a PNG or JPEG'**
+  String get errUnsupportedImage;
+
+  /// No description provided for @errOcrUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading slips isn’t available right now'**
+  String get errOcrUnavailable;
+
+  /// No description provided for @errOcrTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the slip took too long — try again'**
+  String get errOcrTimeout;
+
+  /// No description provided for @errProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'The linked app didn’t answer — try again'**
+  String get errProvider;
+
+  /// No description provided for @errNoPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'The linked app has no picture to use'**
+  String get errNoPhoto;
+
+  /// No description provided for @errAvatarSource.
+  ///
+  /// In en, this message translates to:
+  /// **'This picture source has no picture any more'**
+  String get errAvatarSource;
+
+  /// No description provided for @errPermissionUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This permission can’t be turned on for this app'**
+  String get errPermissionUnavailable;
+
+  /// No description provided for @errCannotLinkSelf.
+  ///
+  /// In en, this message translates to:
+  /// **'A contact can’t be linked to yourself'**
+  String get errCannotLinkSelf;
+
+  /// No description provided for @errEndTooFar.
+  ///
+  /// In en, this message translates to:
+  /// **'The end must be within 2 years of the start'**
+  String get errEndTooFar;
+
+  /// No description provided for @errAmountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount first'**
+  String get errAmountRequired;
+
+  /// No description provided for @errBillChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'This bill was edited — open it again'**
+  String get errBillChanged;
+
   /// No description provided for @authLoginIdentifierLabel.
   ///
   /// In en, this message translates to:

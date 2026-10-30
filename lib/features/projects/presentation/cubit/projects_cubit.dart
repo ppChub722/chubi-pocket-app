@@ -30,7 +30,6 @@ class ProjectsState extends Equatable {
   final ProjectListSummary? summary;
   final ProjectsStatus status;
   final ApiException? error;
-  String? get errorMessage => error?.message;
 
   /// The BE `status`: current (all but archived) | active | unsettled |
   /// receivable | payable | ended.

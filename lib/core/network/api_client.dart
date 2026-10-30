@@ -7,6 +7,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../data/write_effects.dart';
 import '../storage/secure_token_storage.dart';
+import 'api_exception.dart';
 import 'http_logger_interceptor.dart';
 import 'network_recorder.dart';
 
@@ -162,19 +163,12 @@ class ApiClient {
     onError: (e, handler) {
       if (e.response != null) {
         _reachableController.add(null);
-      } else if (isNetworkFailure(e)) {
+      } else if (ApiException.isNetworkFailure(e)) {
         _unreachableController.add(null);
       }
       handler.next(e);
     },
   );
-
-  static bool isNetworkFailure(DioException e) =>
-      e.type == DioExceptionType.connectionError ||
-      e.type == DioExceptionType.connectionTimeout ||
-      e.type == DioExceptionType.sendTimeout ||
-      e.type == DioExceptionType.receiveTimeout ||
-      (e.type == DioExceptionType.unknown && e.error is! FormatException);
 
   Interceptor _syncVersionsReader() => InterceptorsWrapper(
     onResponse: (response, handler) {

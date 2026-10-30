@@ -29,11 +29,6 @@ import 'recurring_rows.dart' show occurrenceDebtParts;
 /// Occurrences being written, so a second tap waits for the first.
 final _inFlight = <String>{};
 
-/// A write's error as the snack says it: a หนี้ จ่ายหนี้ with nothing owed
-/// (409 NOTHING_OWED) in its own words.
-String occurrenceErrorText(AppLocalizations l, ApiException e) =>
-    e.code == 'NOTHING_OWED' ? l.occurrenceNothingOwed : e.message;
-
 Future<bool> _write(
   BuildContext context,
   String key,
@@ -54,7 +49,7 @@ Future<bool> _write(
     if (done != null) showAppSnackBarOn(messenger, done, tone: Tone.success);
     return true;
   } on ApiException catch (e) {
-    showAppSnackBarOn(messenger, occurrenceErrorText(l, e), tone: Tone.danger);
+    showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
     return false;
   } finally {
     _inFlight.remove(key);
@@ -238,7 +233,7 @@ Future<bool> applyOccurrenceTx(
     showAppSnackBarOn(messenger, l.recurringLinked, tone: Tone.success);
     return true;
   } on ApiException catch (e) {
-    showAppSnackBarOn(messenger, recurringLinkError(l, e), tone: Tone.danger);
+    showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
     return false;
   } finally {
     _inFlight.remove(item.id);
@@ -288,7 +283,7 @@ Future<bool> linkExistingDebtEntry(
     showAppSnackBarOn(messenger, l.recurringLinked, tone: Tone.success);
     return true;
   } on ApiException catch (e) {
-    showAppSnackBarOn(messenger, recurringLinkError(l, e), tone: Tone.danger);
+    showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
     return false;
   } finally {
     _inFlight.remove(item.id);
@@ -501,7 +496,7 @@ Future<void> openOccurrence(
         ? null
         : await repo.getItem(itemId);
   } on ApiException catch (e) {
-    if (context.mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+    if (context.mounted) showErrorSnackBar(context, e);
     return;
   }
   if (!context.mounted) return;
@@ -646,7 +641,7 @@ Future<void> settleSelected(
       },
     if (noAmount.isNotEmpty) l.occurrenceLeftOut(noAmount.length),
     if (refused > 0) l.occurrenceLeftOutRefused(refused),
-    if (failed != null) occurrenceErrorText(l, failed),
+    if (failed != null) errorText(l, failed),
   ];
   if (parts.isEmpty) return;
   showAppSnackBarOn(

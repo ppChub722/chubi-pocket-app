@@ -446,7 +446,7 @@ class _TagsPageState extends State<TagsPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, e.message, tone: Tone.danger);
+      showErrorSnackBar(context, e);
       return;
     }
     if (!mounted) return;

@@ -75,7 +75,10 @@ class UnreadBadgeCubit extends Cubit<int>
     try {
       final n = await _repo.unreadCount();
       if (!isClosed && n != state) emit(n);
-    } catch (_) {}
+    } catch (_) {
+      // A badge poll: the count stays, the next tick tries again. Never a
+      // snack (it runs on a timer).
+    }
   }
 
   @override

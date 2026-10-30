@@ -27,7 +27,6 @@ class DashboardState extends Equatable {
 
   final DateTime? month;
   final ApiException? error;
-  String? get errorMessage => error?.message;
 
   @override
   List<Object?> get props => [status, data, month, error];

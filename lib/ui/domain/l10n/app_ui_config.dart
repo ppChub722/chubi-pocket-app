@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -11,6 +9,7 @@ import '../../atoms/ui_config.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/app/currencies.dart';
 import '../money/money_style.dart';
+import 'app_error_text.dart';
 
 class AppUiConfig extends StatelessWidget {
   const AppUiConfig({required this.child, super.key});
@@ -91,41 +90,24 @@ class _AppErrors extends UiErrors {
 
   @override
   UiErrorInfo describe(Object error) {
-    final e = error is ApiException ? error : null;
-    final network =
-        error is TimeoutException ||
-        (e != null &&
-            (e.code == 'NETWORK_ERROR' || e.code == 'NETWORK_TIMEOUT'));
-    final server = e != null && (e.statusCode ?? 0) >= 500;
-    if (network) {
+    if (isNetworkError(error)) {
       return UiErrorInfo(
         icon: AppIcons.offline,
         title: l.errorNetworkTitle,
         message: l.errorNetworkMessage,
       );
     }
-    // A 5xx and an unknown error are one message: the user can only retry.
-    final known = server
-        ? null
-        : switch (e?.code) {
-            'INVALID_CREDENTIALS' => l.authLoginInvalidCredentials,
-            'WRONG_PASSWORD' => l.changePasswordCurrentWrong,
-            'USERNAME_EXISTS' => l.authRegisterUsernameTaken,
-            'EMAIL_EXISTS' => l.authRegisterEmailTaken,
-            'REGISTRATION_CLOSED' => l.authRegistrationClosed,
-            'TELEGRAM_ALREADY_LINKED' => l.authTelegramAlreadyLinked,
-            'CONNECTION_UNAVAILABLE' => l.authTelegramUnavailable,
-            'VALIDATION_ERROR' => l.errorValidationMessage,
-            _ => null,
-          };
-    if (known != null) {
-      return UiErrorInfo(icon: AppIcons.error, title: known, message: known);
+    final text = errorText(l, error);
+    // The generic sentence keeps its own headline; every other one is the
+    // headline itself.
+    if (text == l.errorGenericMessage) {
+      return UiErrorInfo(
+        icon: AppIcons.error,
+        title: l.errorGenericTitle,
+        message: l.errorGenericMessage,
+      );
     }
-    return UiErrorInfo(
-      icon: AppIcons.error,
-      title: l.errorGenericTitle,
-      message: l.errorGenericMessage,
-    );
+    return UiErrorInfo(icon: AppIcons.error, title: text, message: text);
   }
 
   @override

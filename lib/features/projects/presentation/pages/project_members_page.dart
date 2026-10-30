@@ -6,7 +6,6 @@ import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/top_bar_crumbs.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../event_errors.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../data/projects_repository.dart';
@@ -176,7 +175,7 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
       if (mounted) {
         showAppSnackBar(
           context,
-          eventErrorText(AppLocalizations.of(context)!, e),
+          errorText(AppLocalizations.of(context)!, e),
           tone: Tone.danger,
         );
       }
@@ -204,7 +203,7 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
       if (mounted) {
         showAppSnackBar(
           context,
-          eventErrorText(AppLocalizations.of(context)!, e),
+          errorText(AppLocalizations.of(context)!, e),
           tone: Tone.danger,
         );
       }

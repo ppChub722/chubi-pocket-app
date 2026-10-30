@@ -56,9 +56,17 @@ class AuthAuthenticated extends AuthState {
 
 /// User is signed out (or has never signed in).
 class AuthUnauthenticated extends AuthState {
-  const AuthUnauthenticated();
+  const AuthUnauthenticated({this.sessionExpired = false});
+
+  /// The server refused the token (401) while the user was signed in: the
+  /// login page says so once (see [AuthCubit.acknowledgeSessionExpired]).
+  final bool sessionExpired;
+
   @override
   bool get isAuthenticated => false;
+
+  @override
+  List<Object?> get props => [sessionExpired];
 }
 
 class AuthFailure extends AuthState {
@@ -249,7 +257,14 @@ class AuthCubit extends Cubit<AuthState> {
     AppLogger.instance.warn('auth.unauthorized_kicked');
     await _tokens.clearAuthToken();
     AppLogger.instance.setUserId(null);
-    emit(const AuthUnauthenticated());
+    emit(const AuthUnauthenticated(sessionExpired: true));
+  }
+
+  void acknowledgeSessionExpired() {
+    final s = state;
+    if (s is AuthUnauthenticated && s.sessionExpired) {
+      emit(const AuthUnauthenticated());
+    }
   }
 
   @override

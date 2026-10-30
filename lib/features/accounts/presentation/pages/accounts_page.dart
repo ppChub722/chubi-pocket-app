@@ -174,7 +174,7 @@ class _AccountsPageState extends State<AccountsPage> {
       setState(() => _savingOrder = false);
       showAppSnackBar(
         context,
-        '${l.accountsReorderSave}: ${e.message}',
+        '${l.accountsReorderSave}: ${errorText(l, e)}',
         tone: Tone.danger,
       );
     }

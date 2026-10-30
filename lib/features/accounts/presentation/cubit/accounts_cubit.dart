@@ -34,7 +34,6 @@ class AccountsState extends Equatable {
 
   final AccountsStatus status;
   final ApiException? error;
-  String? get errorMessage => error?.message;
 
   AccountsState copyWith({
     List<Account>? accounts,

@@ -15,6 +15,7 @@ class SavingPageState extends Equatable {
     this.detail,
     this.error,
     this.loadingMore = false,
+    this.moreError,
   });
 
   final SavingPageStatus status;
@@ -22,21 +23,28 @@ class SavingPageState extends Equatable {
   final ApiException? error;
   final bool loadingMore;
 
+  /// The last "load more entries" failed (the list keeps what it has and
+  /// shows a retry row).
+  final ApiException? moreError;
+
   SavingPageState copyWith({
     SavingPageStatus? status,
     SavingGoalDetail? detail,
     ApiException? error,
     bool? loadingMore,
+    ApiException? moreError,
     bool clearError = false,
+    bool clearMoreError = false,
   }) => SavingPageState(
     status: status ?? this.status,
     detail: detail ?? this.detail,
     error: clearError ? null : (error ?? this.error),
     loadingMore: loadingMore ?? this.loadingMore,
+    moreError: clearMoreError ? null : (moreError ?? this.moreError),
   );
 
   @override
-  List<Object?> get props => [status, detail, error, loadingMore];
+  List<Object?> get props => [status, detail, error, loadingMore, moreError];
 }
 
 class SavingGoalCubit extends Cubit<SavingPageState> {
@@ -72,7 +80,7 @@ class SavingGoalCubit extends Cubit<SavingPageState> {
   Future<void> loadMoreEntries() async {
     final d = state.detail;
     if (d == null || !d.entries.hasMore || state.loadingMore) return;
-    emit(state.copyWith(loadingMore: true));
+    emit(state.copyWith(loadingMore: true, clearMoreError: true));
     try {
       final next = await _repo.entries(bucketId: id, page: d.entries.page + 1);
       emit(
@@ -87,8 +95,10 @@ class SavingGoalCubit extends Cubit<SavingPageState> {
           ),
         ),
       );
-    } catch (_) {
-      emit(state.copyWith(loadingMore: false));
+    } catch (e, st) {
+      emit(
+        state.copyWith(loadingMore: false, moreError: ApiException.from(e, st)),
+      );
     }
   }
 

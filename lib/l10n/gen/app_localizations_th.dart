@@ -141,6 +141,96 @@ class AppLocalizationsTh extends AppLocalizations {
   String get errorValidationMessage => 'ข้อมูลบางช่องไม่ถูกต้อง กรุณาตรวจสอบ';
 
   @override
+  String get errNotFound => 'ไม่พบรายการนี้ อาจถูกลบไปแล้ว';
+
+  @override
+  String get errForbidden => 'คุณไม่มีสิทธิ์ทำรายการนี้';
+
+  @override
+  String get errImmutable => 'รายการนี้แก้ไขหรือลบไม่ได้';
+
+  @override
+  String get errStale => 'สถานะเปลี่ยนไปแล้ว รีเฟรชแล้วลองใหม่';
+
+  @override
+  String get errSessionExpired => 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง';
+
+  @override
+  String get errAppOutdated => 'ต้องอัปเดตแอปก่อนใช้งานต่อ';
+
+  @override
+  String get errAccountInactive =>
+      'บัญชีนี้ถูกปิดใช้งาน เปิดใช้งานอีกครั้งเพื่อดำเนินการต่อ';
+
+  @override
+  String get errRateLimited => 'ลองหลายครั้งเกินไป รอสักครู่แล้วลองใหม่';
+
+  @override
+  String get errLoginCodeInvalid =>
+      'ลิงก์เข้าสู่ระบบหมดอายุหรือถูกใช้ไปแล้ว เริ่มใหม่อีกครั้ง';
+
+  @override
+  String get errCategoryNameDuplicate => 'มีหมวดชื่อนี้ในระดับเดียวกันแล้ว';
+
+  @override
+  String get errCategoryCycle =>
+      'ย้ายหมวดไปไว้ใต้ตัวเองหรือหมวดย่อยของตัวเองไม่ได้';
+
+  @override
+  String get errTagExists => 'มีแท็กชื่อนี้แล้ว';
+
+  @override
+  String get errPaidByExceeds => 'ยอดที่ผู้จ่ายออกให้เกินยอดบิล';
+
+  @override
+  String get errPayersSum => 'ยอดของผู้จ่ายรวมกันต้องเท่ากับยอดบิล';
+
+  @override
+  String get errInsufficientSaving => 'เงินออมตรงนั้นไม่พอ';
+
+  @override
+  String get errGoalNotActive => 'เป้าหมายออมนี้ไม่ได้ใช้งานอยู่';
+
+  @override
+  String get errGoalReached => 'เป้าหมายออมนี้ครบยอดแล้ว';
+
+  @override
+  String get errGoalHasSavings => 'เป้าหมายนี้ยังมีเงินออมอยู่ ปิดเป้าหมายก่อน';
+
+  @override
+  String get errUnsupportedImage => 'ใช้รูปนี้ไม่ได้ ใช้ไฟล์ PNG หรือ JPEG';
+
+  @override
+  String get errOcrUnavailable => 'ตอนนี้อ่านสลิปไม่ได้';
+
+  @override
+  String get errOcrTimeout => 'อ่านสลิปนานเกินไป ลองใหม่อีกครั้ง';
+
+  @override
+  String get errProvider => 'แอปที่เชื่อมไว้ไม่ตอบ ลองใหม่อีกครั้ง';
+
+  @override
+  String get errNoPhoto => 'แอปที่เชื่อมไว้ไม่มีรูปให้ใช้';
+
+  @override
+  String get errAvatarSource => 'แหล่งรูปนี้ไม่มีรูปให้ใช้แล้ว';
+
+  @override
+  String get errPermissionUnavailable => 'เปิดสิทธิ์นี้ให้แอปนี้ไม่ได้';
+
+  @override
+  String get errCannotLinkSelf => 'ผูกผู้ติดต่อกับตัวคุณเองไม่ได้';
+
+  @override
+  String get errEndTooFar => 'วันสิ้นสุดต้องไม่เกิน 2 ปีหลังวันเริ่ม';
+
+  @override
+  String get errAmountRequired => 'ใส่จำนวนเงินก่อน';
+
+  @override
+  String get errBillChanged => 'บิลนี้ถูกแก้ไขแล้ว เปิดใหม่อีกครั้ง';
+
+  @override
   String get authLoginIdentifierLabel => 'ชื่อผู้ใช้หรืออีเมล';
 
   @override

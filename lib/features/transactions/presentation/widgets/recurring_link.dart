@@ -28,9 +28,6 @@ String recurringPeriodLabel(AppLocalizations l, DateTime date) =>
 bool _alreadyLinked(ApiException e) =>
     e.code == 'ITEM_ALREADY_LINKED' || e.code == 'ALREADY_LINKED';
 
-String recurringLinkError(AppLocalizations l, ApiException e) =>
-    _alreadyLinked(e) ? l.recurringLinkAlreadyLinked : e.message;
-
 /// A 409 on link: the occurrence holds another tx (its `details.transaction`)
 /// or this tx is on another occurrence. True = link with `replace`.
 Future<bool> askSwapLink(BuildContext context, ApiException e) {
@@ -160,7 +157,7 @@ class RecurringLinkHandle extends ChangeNotifier {
       _repo(context),
       txId,
       error: error,
-      errorText: (e) => recurringLinkError(l, e),
+      errorText: (e) => errorText(l, e),
       askSwap: (e) async => context.mounted && await askSwapLink(context, e),
       replace: replace,
     );
@@ -228,13 +225,23 @@ class RecurringLinkHandle extends ChangeNotifier {
     RecurringItemLink link, {
     required VoidCallback onUnlinked,
     required void Function(String message) error,
-  }) => unlinkWith(_repo(context), link, onUnlinked: onUnlinked, error: error);
+  }) {
+    final l = AppLocalizations.of(context)!;
+    return unlinkWith(
+      _repo(context),
+      link,
+      onUnlinked: onUnlinked,
+      error: error,
+      errorText: (e) => errorText(l, e),
+    );
+  }
 
   Future<bool> unlinkWith(
     RecurringLinkRepository repo,
     RecurringItemLink link, {
     required VoidCallback onUnlinked,
     required void Function(String message) error,
+    required String Function(ApiException e) errorText,
   }) async {
     final ruleId = link.recurringId;
     final slot = link.slot;
@@ -250,7 +257,7 @@ class RecurringLinkHandle extends ChangeNotifier {
       return true;
     } on ApiException catch (e) {
       _set(busy: false);
-      error(e.message);
+      error(errorText(e));
       return false;
     }
   }
@@ -268,6 +275,7 @@ class RecurringLinkHandle extends ChangeNotifier {
       error: error,
       done: done,
       doneText: AppLocalizations.of(context)!.recurringLinkedAmountUpdated,
+      errorText: (e) => errorText(AppLocalizations.of(context)!, e),
     );
   }
 
@@ -277,6 +285,7 @@ class RecurringLinkHandle extends ChangeNotifier {
     required void Function(String message) error,
     required void Function(String message) done,
     required String doneText,
+    required String Function(ApiException e) errorText,
   }) async {
     final a = _ask;
     if (a == null) return;
@@ -291,7 +300,7 @@ class RecurringLinkHandle extends ChangeNotifier {
       done(doneText);
     } on ApiException catch (e) {
       _set(busy: false, ask: a);
-      error(e.message);
+      error(errorText(e));
     }
   }
 

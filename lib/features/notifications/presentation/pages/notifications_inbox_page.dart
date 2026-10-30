@@ -187,7 +187,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
             if (state.error != null &&
                 (state.status != InboxStatus.error ||
                     state.notifications.isNotEmpty)) {
-              showAppSnackBar(ctx, state.errorMessage!, tone: Tone.danger);
+              showErrorSnackBar(ctx, state.error!);
             }
           },
           builder: (ctx, state) {

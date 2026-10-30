@@ -14,5 +14,9 @@ void showSaveFailure(
     showErrorSnackBar(context, e, onRetry: retry);
     return;
   }
-  showAppSnackBar(context, message ?? e.message, tone: Tone.danger);
+  showAppSnackBar(
+    context,
+    message ?? errorTextOf(context, e),
+    tone: Tone.danger,
+  );
 }

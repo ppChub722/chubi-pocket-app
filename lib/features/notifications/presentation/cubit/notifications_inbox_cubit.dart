@@ -53,7 +53,6 @@ class InboxState extends Equatable {
   final InboxSummary summary;
   final InboxStatus status;
   final ApiException? error;
-  String? get errorMessage => error?.message;
   final int page;
   final int totalPages;
   final InboxFilter filter;

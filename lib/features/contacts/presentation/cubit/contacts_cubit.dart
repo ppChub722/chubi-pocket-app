@@ -36,7 +36,6 @@ class ContactsState extends Equatable {
 
   final ContactsStatus status;
   final ApiException? error;
-  String? get errorMessage => error?.message;
   final String statusFilter; // active | archived | all
 
   ContactsState copyWith({

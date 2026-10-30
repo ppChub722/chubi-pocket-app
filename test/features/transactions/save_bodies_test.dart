@@ -837,6 +837,7 @@ void main() {
             error: o.said.add,
             done: o.said.add,
             doneText: 'updated',
+            errorText: (e) => e.message,
           );
           expect(o.repo.puts, update ? [('1', 3100.0)] : isEmpty);
           expect(o.said, update ? ['updated'] : isEmpty);
@@ -898,6 +899,7 @@ void main() {
             link,
             onUnlinked: () => unlinked++,
             error: o.said.add,
+            errorText: (e) => e.message,
           );
         }
         expect(o.repo.unlinks, ['item-1', 'slot:r1:2026-10-16']);
@@ -914,6 +916,7 @@ void main() {
           const RecurringItemLink(itemId: 'item-1'),
           onUnlinked: () => fail('must not run'),
           error: bad.said.add,
+          errorText: (e) => e.message,
         );
         expect(ok, isFalse);
         expect(bad.said, ['no linked transaction']);

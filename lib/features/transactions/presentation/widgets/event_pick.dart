@@ -1,4 +1,3 @@
-import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../projects/data/projects_repository.dart';
 import '../../../projects/domain/project.dart';
@@ -24,21 +23,6 @@ class ExistingEventTarget extends EventTarget {
 class RemoveFromEvent extends EventTarget {
   const RemoveFromEvent();
 }
-
-/// The event call's refusals in plain words; the BE message otherwise.
-String eventErrorMessage(AppLocalizations l, ApiException e) =>
-    switch (e.code) {
-      'TX_NOT_FOUND' => l.quickCreateErrorTxNotFound,
-      'TX_ALREADY_IN_PROJECT' => l.quickCreateErrorTxAlreadyInProject,
-      'VALIDATION_ERROR' => l.quickCreateErrorValidation,
-      'TX_NOT_BILLABLE' => l.quickCreateErrorNotBillable,
-      // 422: someone already paid their share back / a split was forgiven —
-      // those can't move into an event.
-      'TX_SPLIT_HAS_REPAYMENT' => l.txEventSplitRepaid,
-      'TX_SPLIT_CANCELLED' => l.txEventSplitCancelled,
-      'CONTACT_NOT_FOUND' || 'CONTACT_ARCHIVED' => l.txSplitErrorContact,
-      _ => e.message,
-    };
 
 /// The tx detail's event pick, on the 0.4.1-2 endpoints only (V16 retires
 /// quick / bills / my-books). [billId]: the bill my tx belongs to

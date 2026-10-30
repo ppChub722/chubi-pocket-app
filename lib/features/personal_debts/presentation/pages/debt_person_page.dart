@@ -170,7 +170,7 @@ class _PersonViewState extends State<_PersonView> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _linking = false);
-      showAppSnackBar(context, e.message, tone: Tone.danger);
+      showErrorSnackBar(context, e);
     }
   }
 
@@ -555,12 +555,7 @@ class _PersonViewState extends State<_PersonView> {
       await _cubit.setPaid(e.id, !e.paid);
     } catch (err) {
       if (!mounted) return;
-      final l = AppLocalizations.of(context)!;
-      showAppSnackBar(
-        context,
-        err is ApiException ? err.message : l.errorGenericMessage,
-        tone: Tone.danger,
-      );
+      showErrorSnackBar(context, err);
     } finally {
       if (mounted) setState(() => _paidSaving.remove(e.id));
     }

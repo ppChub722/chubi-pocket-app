@@ -98,7 +98,7 @@ class _ArchivedView extends StatelessWidget {
     if (!context.mounted) return;
     showAppSnackBar(
       context,
-      err == null ? l.archivedRestored(item.name) : err.message,
+      err == null ? l.archivedRestored(item.name) : errorText(l, err),
       tone: err == null ? Tone.success : Tone.danger,
     );
   }

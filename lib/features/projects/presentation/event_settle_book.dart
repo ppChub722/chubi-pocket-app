@@ -10,7 +10,6 @@ import '../../categories/domain/category_type.dart';
 import '../../categories/presentation/widgets/category_picker.dart';
 import '../data/projects_repository.dart';
 import '../domain/project.dart';
-import 'event_errors.dart';
 
 /// V12 "ลงในสมุดฉัน" (completed event, once): for each of my
 /// fewest-transfers lines I pick the wallet and the category of the money
@@ -69,7 +68,7 @@ Future<EventSettle?> bookMySettle(
   } on ApiException catch (e) {
     showAppSnackBarOn(messenger, switch (e.code) {
       'SETTLE_BOOKED' => l.evbSettleAlreadyBooked,
-      _ => eventErrorText(l, e),
+      _ => errorText(l, e),
     }, tone: Tone.danger);
     return null;
   }

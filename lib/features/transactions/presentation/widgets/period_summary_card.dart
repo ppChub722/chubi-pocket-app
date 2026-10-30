@@ -132,19 +132,12 @@ class _PeriodSummaryCardState extends State<PeriodSummaryCard> {
                   );
                 }
                 if (snap.hasError || snap.data == null) {
-                  return Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          l.errorGenericMessage,
-                          style: textTheme.bodySmall?.copyWith(
-                            color: scheme.error,
-                          ),
-                        ),
-                      ),
-                      AppButton(
+                  return AppMessage(
+                    tone: Tone.danger,
+                    message: errorText(l, snap.error ?? ''),
+                    actions: [
+                      AppMessageAction(
                         label: l.commonRetry,
-                        variant: AppButtonVariant.text,
                         onPressed: () => setState(() => _future = _fetch()),
                       ),
                     ],

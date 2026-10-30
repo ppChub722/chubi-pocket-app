@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/network/api_exception.dart';
+import '../../l10n/gen/app_localizations.dart';
 import '../../ui/ui.dart';
 import '../hub_kit.dart';
 import '../hub_playground.dart';
@@ -503,6 +504,17 @@ class _FeedbackPageState extends State<_FeedbackPage> {
             ],
           ),
         ),
+        const HubDemo(
+          title: 'errorText — every API error code in Thai',
+          note:
+              'The ONE mapper (errorText / errorTextForCode / errorTextOf): '
+              'every code the BE can send is worded here, never the server English '
+              'message. Grouped codes share one sentence (ErrorGroup: '
+              'not found, forbidden, invalid, cannot change, state moved on, '
+              'server). An unknown code falls back on the HTTP status class. '
+              'A test fails when an OpenAPI code has no wording.',
+          child: _ErrorTexts(),
+        ),
         HubDemo(
           title: 'showConfirmDialog / showChoiceDialog / showLinkedPrompt',
           note:
@@ -801,6 +813,34 @@ class _MessageMatrix extends StatelessWidget {
           alignment: Alignment.centerLeft,
           child: SizedBox(width: 320, child: grid()),
         ),
+      ],
+    );
+  }
+}
+
+/// Every code the mapper words, with its sentence.
+class _ErrorTexts extends StatelessWidget {
+  const _ErrorTexts();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final codes = mappedErrorCodes.toList()..sort();
+    final theme = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final c in codes)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(c, style: theme.labelSmall),
+                Text(errorTextForCode(l, c), style: theme.bodyMedium),
+              ],
+            ),
+          ),
       ],
     );
   }

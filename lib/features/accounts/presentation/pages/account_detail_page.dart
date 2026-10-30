@@ -30,7 +30,6 @@ import '../../domain/account_type.dart';
 import '../../domain/wallet_member.dart';
 import '../cubit/accounts_cubit.dart';
 import '../cubit/providers_cubit.dart';
-import '../wallet_errors.dart';
 import '../widgets/adjust_balance_sheet.dart';
 import '../widgets/identifier_widgets.dart';
 import '../widgets/wallet_members_view.dart';
@@ -480,7 +479,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, walletErrorMessage(l, e), tone: Tone.danger);
+      showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
       return;
     }
     if (!mounted) return;
@@ -528,7 +527,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, walletErrorMessage(l, e), tone: Tone.danger);
+      showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
     }
   }
 
@@ -541,7 +540,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       preview = await cubit.deletePreview(a.id);
     } on ApiException catch (e) {
       if (mounted) {
-        showAppSnackBar(context, walletErrorMessage(l, e), tone: Tone.danger);
+        showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
       }
       return;
     }
@@ -575,7 +574,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, walletErrorMessage(l, e), tone: Tone.danger);
+      showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
     }
   }
 
@@ -605,7 +604,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             : () => open('/transactions/${outcome.transactionId}'),
       );
     } on ApiException catch (e) {
-      if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+      if (mounted) showErrorSnackBar(context, e);
     }
   }
 
@@ -1301,7 +1300,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   );
 
   String _errorText(AppLocalizations l, Object e) =>
-      e is ApiException ? walletErrorMessage(l, e) : l.errorGenericMessage;
+      e is ApiException ? errorText(l, e) : l.errorGenericMessage;
 
   Widget? _peopleStrip(AppLocalizations l, Account a) {
     final members = [for (final m in a.members) m, ..._pendingInvites];

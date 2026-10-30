@@ -19,7 +19,6 @@ class TagsState extends Equatable {
   final List<Tag> tags;
   final TagsStatus status;
   final ApiException? error;
-  String? get errorMessage => error?.message;
 
   TagsState copyWith({
     List<Tag>? tags,

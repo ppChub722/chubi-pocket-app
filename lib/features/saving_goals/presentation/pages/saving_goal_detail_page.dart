@@ -244,7 +244,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      _snack(e.message, tone: Tone.danger);
+      _snack(errorTextOf(context, e), tone: Tone.danger);
       return;
     }
     if (!mounted) return;
@@ -265,7 +265,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      _snack(e.message, tone: Tone.danger);
+      _snack(errorTextOf(context, e), tone: Tone.danger);
       return;
     }
     String? failed;
@@ -281,7 +281,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         );
       }
     } on ApiException catch (e) {
-      failed = e.message;
+      failed = errorText(l, e);
     }
     if (!mounted) return;
     if (failed != null) {
@@ -311,7 +311,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     } on ApiException catch (e) {
       if (mounted) {
         setSaving(false);
-        _snack(message?.call(e) ?? e.message, tone: Tone.danger);
+        _snack(message?.call(e) ?? errorTextOf(context, e), tone: Tone.danger);
       }
       return false;
     }
@@ -356,7 +356,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     } on ApiException catch (e) {
       if (mounted) {
         setSaving(false);
-        _snack(e.message, tone: Tone.danger);
+        _snack(errorTextOf(context, e), tone: Tone.danger);
       }
       return;
     }
@@ -1327,6 +1327,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       empty: EmptyView.compact(message: l.sgv2EntriesEmpty),
       hasMore: d.entries.hasMore,
       loadingMore: s.loadingMore,
+      loadMoreError: s.moreError,
       onLoadMore: _cubit!.loadMoreEntries,
       rowCards: true,
       topInset: 0,

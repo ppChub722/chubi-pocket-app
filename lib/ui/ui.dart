@@ -40,6 +40,7 @@ export 'atoms/app_text.dart';
 export 'atoms/ui_config.dart';
 export 'templates/form_sheet.dart';
 export 'domain/l10n/app_ui_config.dart';
+export 'domain/l10n/app_error_text.dart';
 export 'tokens/typography.dart';
 export 'domain/money/currency_tile.dart';
 export 'molecules/month_picker.dart';

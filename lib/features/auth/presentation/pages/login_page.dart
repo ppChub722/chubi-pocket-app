@@ -18,6 +18,27 @@ class _LoginPageState extends State<LoginPage> {
   final _identifierCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    // A 401 kicked the user here: say why, once (the toast lives past the
+    // route change, so it is shown from the page the user lands on).
+    WidgetsBinding.instance.addPostFrameCallback((_) => _noteExpired());
+  }
+
+  void _noteExpired() {
+    if (!mounted) return;
+    final auth = context.read<AuthCubit>();
+    final s = auth.state;
+    if (s is! AuthUnauthenticated || !s.sessionExpired) return;
+    auth.acknowledgeSessionExpired();
+    showAppSnackBar(
+      context,
+      AppLocalizations.of(context)!.errSessionExpired,
+      tone: Tone.warning,
+    );
+  }
+
   /// Both auth pages read the one [AuthCubit]: a failed login must not show on
   /// the register page, nor a failed sign-up here on the way back.
   Future<void> _openRegister() async {
@@ -56,9 +77,12 @@ class _LoginPageState extends State<LoginPage> {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
       body: BlocListener<AuthCubit, AuthState>(
-        listenWhen: (_, s) => s is AuthFailure,
+        listenWhen: (_, s) =>
+            s is AuthFailure || (s is AuthUnauthenticated && s.sessionExpired),
         listener: (context, s) {
-          if (ModalRoute.of(context)?.isCurrent ?? true) {
+          if (s is AuthUnauthenticated) {
+            _noteExpired();
+          } else if (ModalRoute.of(context)?.isCurrent ?? true) {
             showErrorSnackBar(context, (s as AuthFailure).error);
           }
         },

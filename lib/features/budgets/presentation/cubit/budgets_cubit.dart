@@ -41,8 +41,6 @@ class BudgetsState extends Equatable {
   final BudgetsStatus status;
   final ApiException? error;
 
-  String? get errorMessage => error?.message;
-
   BudgetsState copyWith({
     List<Budget>? budgets,
     BudgetListSummary? summary,

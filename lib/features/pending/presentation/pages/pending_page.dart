@@ -23,7 +23,6 @@ import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../data/slip_qr_reader.dart';
 import '../../domain/pending_transaction.dart';
 import '../cubit/pending_cubit.dart';
-import '../pending_errors.dart';
 import '../pending_selection.dart';
 
 class PendingPage extends StatefulWidget {
@@ -118,7 +117,7 @@ class _PendingPageState extends State<PendingPage> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);
-      showAppSnackBar(context, e.message, tone: Tone.danger);
+      showErrorSnackBar(context, e);
     }
   }
 
@@ -142,7 +141,7 @@ class _PendingPageState extends State<PendingPage> {
       await context.read<PendingCubit>().discardMany(ids);
       if (mounted) setState(() => _selected.removeAll(ids));
     } on ApiException catch (e) {
-      if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+      if (mounted) showErrorSnackBar(context, e);
     }
   }
 
@@ -400,7 +399,7 @@ class _PendingCard extends StatelessWidget {
     // gaps).
     final needs = item.needsInput;
     final warn = item.lastError != null
-        ? pendingErrorText(l, item.lastError!)
+        ? errorTextForCode(l, item.lastError!.code)
         : needs != null
         ? (item.needs('type')
               ? l.pendingErrMissingType
@@ -510,7 +509,7 @@ class PendingSavingRow extends StatelessWidget {
     final note = d.note?.trim() ?? '';
     final needs = item.needsInput;
     final warn = item.lastError != null
-        ? pendingErrorText(l, item.lastError!)
+        ? errorTextForCode(l, item.lastError!.code)
         : (needs != null ? item.needs('wallet') : wallet == null)
         ? l.pendingSavingNoWallet
         : (needs != null ? item.needs('amount') : (d.amount ?? 0) <= 0)

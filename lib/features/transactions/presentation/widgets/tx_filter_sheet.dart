@@ -1,3 +1,4 @@
+import '../../../../core/network/api_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -27,7 +28,11 @@ Future<TxFilters?> showTxFilterSheet(
     final cubit = context.read<TxFormOptionsCubit>();
     try {
       await cubit.loadIfNeeded();
-    } catch (_) {}
+    } catch (e, st) {
+      if (context.mounted) {
+        showErrorSnackBar(context, ApiException.from(e, st));
+      }
+    }
     loaded = cubit.state.options ?? loaded;
     return _filterOptions(l, palette, loaded);
   }

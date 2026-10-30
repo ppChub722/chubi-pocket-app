@@ -142,6 +142,101 @@ class AppLocalizationsEn extends AppLocalizations {
       'Some fields aren’t valid — please check them';
 
   @override
+  String get errNotFound => 'This item wasn’t found — it may have been deleted';
+
+  @override
+  String get errForbidden => 'You don’t have permission to do this';
+
+  @override
+  String get errImmutable => 'This can’t be changed or deleted';
+
+  @override
+  String get errStale =>
+      'This changed since you opened it — refresh and try again';
+
+  @override
+  String get errSessionExpired => 'Your session expired — please log in again';
+
+  @override
+  String get errAppOutdated => 'Update the app to keep using it';
+
+  @override
+  String get errAccountInactive =>
+      'This account is deactivated — reactivate it to continue';
+
+  @override
+  String get errRateLimited => 'Too many tries — wait a moment and try again';
+
+  @override
+  String get errLoginCodeInvalid =>
+      'The login link expired or was already used — start again';
+
+  @override
+  String get errCategoryNameDuplicate =>
+      'A category with this name already exists at this level';
+
+  @override
+  String get errCategoryCycle =>
+      'A category can’t move under itself or its own sub-categories';
+
+  @override
+  String get errTagExists => 'A tag with this name already exists';
+
+  @override
+  String get errPaidByExceeds => 'What the payer covered is more than the bill';
+
+  @override
+  String get errPayersSum => 'The payers must add up to the bill';
+
+  @override
+  String get errInsufficientSaving => 'There isn’t enough saved there';
+
+  @override
+  String get errGoalNotActive => 'This saving goal isn’t active';
+
+  @override
+  String get errGoalReached => 'This saving goal already reached its target';
+
+  @override
+  String get errGoalHasSavings =>
+      'This saving goal still holds money — close it first';
+
+  @override
+  String get errUnsupportedImage =>
+      'This picture can’t be used — use a PNG or JPEG';
+
+  @override
+  String get errOcrUnavailable => 'Reading slips isn’t available right now';
+
+  @override
+  String get errOcrTimeout => 'Reading the slip took too long — try again';
+
+  @override
+  String get errProvider => 'The linked app didn’t answer — try again';
+
+  @override
+  String get errNoPhoto => 'The linked app has no picture to use';
+
+  @override
+  String get errAvatarSource => 'This picture source has no picture any more';
+
+  @override
+  String get errPermissionUnavailable =>
+      'This permission can’t be turned on for this app';
+
+  @override
+  String get errCannotLinkSelf => 'A contact can’t be linked to yourself';
+
+  @override
+  String get errEndTooFar => 'The end must be within 2 years of the start';
+
+  @override
+  String get errAmountRequired => 'Enter an amount first';
+
+  @override
+  String get errBillChanged => 'This bill was edited — open it again';
+
+  @override
   String get authLoginIdentifierLabel => 'Username or email';
 
   @override

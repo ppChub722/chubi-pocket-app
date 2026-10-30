@@ -123,7 +123,7 @@ class _HomeView extends StatelessWidget {
           listener: (c, s) {
             c.read<UnreadBadgeCubit>().setCount(s.unreadCount);
             if (s.error != null && s.status != InboxStatus.error) {
-              showAppSnackBar(c, s.errorMessage!, tone: Tone.danger);
+              showErrorSnackBar(c, s.error!);
             }
           },
         ),

@@ -1,3 +1,4 @@
+import '../../../../core/network/api_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -97,8 +98,11 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
     try {
       final o = await context.read<SavingGoalsRepository>().list();
       if (mounted) setState(() => _overview = o);
-    } catch (_) {
-      if (mounted) setState(() => _overview = const SavingGoalsOverview());
+    } catch (e, st) {
+      if (!mounted) return;
+      // An empty overview keeps the form usable; say the goals did not load.
+      setState(() => _overview = const SavingGoalsOverview());
+      showErrorSnackBar(context, ApiException.from(e, st), onRetry: _loadGoals);
     }
   }
 

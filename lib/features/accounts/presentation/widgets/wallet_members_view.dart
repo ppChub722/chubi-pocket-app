@@ -10,7 +10,6 @@ import '../../domain/account.dart';
 import '../../domain/wallet_member.dart';
 import '../cubit/accounts_cubit.dart';
 import '../../../contacts/presentation/widgets/contact_picker.dart';
-import '../wallet_errors.dart';
 
 Future<bool> inviteWalletMember(
   BuildContext context, {
@@ -54,7 +53,7 @@ Future<bool> inviteWalletMember(
       messenger,
       e.code == 'VALIDATION_ERROR'
           ? l.walletErrorInviteInvalid
-          : walletErrorMessage(l, e),
+          : errorText(l, e),
       tone: Tone.danger,
     );
     return false;
@@ -165,7 +164,7 @@ class WalletMembersView extends StatelessWidget {
       onResult(r);
       router.go('/accounts');
     } on ApiException catch (e) {
-      showAppSnackBarOn(messenger, walletErrorMessage(l, e), tone: Tone.danger);
+      showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
     }
   }
 
@@ -187,7 +186,7 @@ class WalletMembersView extends StatelessWidget {
     try {
       onResult(await cubit.removeMember(accountId: account.id, memberId: m.id));
     } on ApiException catch (e) {
-      showAppSnackBarOn(messenger, walletErrorMessage(l, e), tone: Tone.danger);
+      showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
     }
   }
 
@@ -217,7 +216,7 @@ class WalletMembersView extends StatelessWidget {
         tone: Tone.success,
       );
     } on ApiException catch (e) {
-      showAppSnackBarOn(messenger, walletErrorMessage(l, e), tone: Tone.danger);
+      showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
     }
   }
 }

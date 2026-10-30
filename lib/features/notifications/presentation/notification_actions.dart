@@ -10,7 +10,6 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
 import '../../accounts/data/accounts_repository.dart';
 import '../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../accounts/presentation/wallet_errors.dart';
 import '../../contacts/data/contacts_repository.dart';
 import '../../contacts/domain/contact.dart';
 import '../../contacts/presentation/cubit/contacts_cubit.dart';
@@ -89,7 +88,7 @@ abstract final class NotificationActions {
 Future<void> _reload(NotificationsInboxCubit cubit) => cubit.reload();
 
 void _showError(ScaffoldMessengerState messenger, ApiException e) =>
-    showAppSnackBarOn(messenger, e.message, tone: Tone.danger);
+    showErrorSnackBarOn(messenger, e);
 
 Future<void> _onAcceptLinkRequest(BuildContext ctx, String id) async {
   final repo = ctx.read<ContactsRepository>();
@@ -219,12 +218,13 @@ Future<void> _onApplyBill(BuildContext ctx, AppNotification n) async {
   } on ApiException catch (e) {
     final gone = e.code == 'BILL_GONE';
     if (gone) await _reload(inboxCubit);
-    showAppSnackBarOn(messenger, switch (e.code) {
-      'BILL_GONE' => l.notifBillGone,
-      'BILL_DISCONNECTED' => l.notifBillDisconnectedMine,
-      'PROJECT_LOCKED' => l.eventErrCompleted,
-      _ => e.message,
-    }, tone: Tone.danger);
+    // PROJECT_LOCKED here reads as "completed" (the mapper's own sentence
+    // says locked).
+    showAppSnackBarOn(
+      messenger,
+      e.code == 'PROJECT_LOCKED' ? l.eventErrCompleted : errorText(l, e),
+      tone: Tone.danger,
+    );
   }
 }
 
@@ -236,7 +236,7 @@ Future<void> _onAcceptWalletInvite(BuildContext ctx, String id) async {
   try {
     inboxCubit.applyAnswer((await accountsCubit.acceptInvite(id)).answer);
   } on ApiException catch (e) {
-    showAppSnackBarOn(messenger, walletErrorMessage(l, e), tone: Tone.danger);
+    showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
   }
 }
 
@@ -248,7 +248,7 @@ Future<void> _onRejectWalletInvite(BuildContext ctx, String id) async {
   try {
     inboxCubit.applyAnswer(await repo.rejectInvite(id));
   } on ApiException catch (e) {
-    showAppSnackBarOn(messenger, walletErrorMessage(l, e), tone: Tone.danger);
+    showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
   }
 }
 

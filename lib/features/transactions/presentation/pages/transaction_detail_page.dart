@@ -17,7 +17,6 @@ import '../../../categories/presentation/category_label.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../../accounts/presentation/wallet_errors.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
@@ -212,7 +211,7 @@ class _LoadedState extends State<_Loaded>
       accounts.patchBalances(result.accountBalances);
       _say(l.txLinkApplied, tone: Tone.success);
     } on ApiException catch (e) {
-      _say(eventErrorMessage(l, e));
+      _say(errorText(l, e));
     }
   }
 
@@ -237,7 +236,7 @@ class _LoadedState extends State<_Loaded>
       await projects.disconnectEventBill(bill.billId);
       _say(l.txLinkDisconnected, tone: Tone.success);
     } on ApiException catch (e) {
-      _say(eventErrorMessage(l, e));
+      _say(errorText(l, e));
     } finally {
       if (mounted) setSaving(false);
     }
@@ -630,7 +629,7 @@ class _LoadedState extends State<_Loaded>
           enterEdit();
           showAppSnackBar(
             context,
-            l.txEventFailedAfterSave(eventErrorMessage(l, e)),
+            l.txEventFailedAfterSave(errorText(l, e)),
             tone: Tone.danger,
           );
           return;
@@ -660,7 +659,7 @@ class _LoadedState extends State<_Loaded>
         context,
         e,
         retry: _save,
-        message: splitErrorMessage(l, e) ?? walletErrorMessage(l, e),
+        message: splitErrorMessage(l, e) ?? errorText(l, e),
       );
     }
   }
@@ -827,7 +826,7 @@ class _LoadedState extends State<_Loaded>
                       await context.read<TransactionsCubit>().refreshOne(tx.id);
                     } on ApiException catch (e) {
                       if (context.mounted) {
-                        showAppSnackBar(context, e.message, tone: Tone.danger);
+                        showErrorSnackBar(context, e);
                       }
                     }
                   },

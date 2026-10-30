@@ -26,7 +26,6 @@ class PendingState extends Equatable {
 
   final PendingStatus status;
   final ApiException? error;
-  String? get errorMessage => error?.message;
 
   final int? knownTotal;
 

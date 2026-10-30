@@ -27,7 +27,6 @@ import '../cubit/projects_cubit.dart';
 import '../event_assign.dart';
 import '../event_claim.dart';
 import '../event_settle_book.dart';
-import '../event_errors.dart';
 import '../project_board_controller.dart';
 import '../widgets/add_member_sheet.dart';
 import '../widgets/event_bill_sheet.dart';
@@ -241,7 +240,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     if (!mounted) return;
     showAppSnackBar(
       context,
-      eventErrorText(AppLocalizations.of(context)!, e),
+      errorText(AppLocalizations.of(context)!, e),
       tone: Tone.danger,
     );
   }

@@ -85,8 +85,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   static String _nameKey(String name, String? parentId) =>
       '${parentId ?? ''}|${name.trim()}';
 
-  String _errorText(ApiException e, AppLocalizations l) =>
-      e.code == 'MAX_DEPTH_EXCEEDED' ? l.categoryErrorMaxDepth : e.message;
+  String _errorText(ApiException e, AppLocalizations l) => errorText(l, e);
 
   @override
   void initState() {
@@ -341,7 +340,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBarOn(pageMessenger!, e.message, tone: Tone.danger);
+      showErrorSnackBarOn(pageMessenger!, e);
     }
   }
 
