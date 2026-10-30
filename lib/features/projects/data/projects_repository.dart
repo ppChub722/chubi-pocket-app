@@ -272,6 +272,22 @@ class ProjectsRepository {
     ),
   );
 
+  /// F3: this member is my [contactId] (for me only); null = drop my binding.
+  Future<EventPatch> setMyContact(
+    String projectId,
+    String memberId,
+    String? contactId,
+  ) => _patch(
+    contactId == null
+        ? _client.dio.delete<Map<String, dynamic>>(
+            '/projects/$projectId/members/$memberId/my-contact',
+          )
+        : _client.dio.put<Map<String, dynamic>>(
+            '/projects/$projectId/members/$memberId/my-contact',
+            data: {'contact_id': contactId},
+          ),
+  );
+
   Future<EventPatch> removeMember(String projectId, String memberId) => _patch(
     _client.dio.delete<Map<String, dynamic>>(
       '/projects/$projectId/members/$memberId',

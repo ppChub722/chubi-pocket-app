@@ -1049,6 +1049,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectMemberRemove => 'Remove from event';
 
   @override
+  String get projectMemberBindContact => 'Link to my contact';
+
+  @override
+  String get projectMemberAddContact => 'Add to my contacts';
+
+  @override
+  String get projectMemberUnbindContact => 'Unlink from my contact';
+
+  @override
+  String get projectMemberMyContact => 'My contact';
+
+  @override
+  String projectMemberContactBound(String name) {
+    return 'Linked to $name';
+  }
+
+  @override
+  String projectMemberContactAdded(String name) {
+    return 'Added $name to contacts';
+  }
+
+  @override
+  String get projectMemberContactUnbound => 'Unlinked';
+
+  @override
   String projectMemberRemoveTitle(String name) {
     return 'Remove $name?';
   }

@@ -1032,6 +1032,31 @@ class AppLocalizationsTh extends AppLocalizations {
   String get projectMemberRemove => 'นำออกจากอีเวนต์';
 
   @override
+  String get projectMemberBindContact => 'ผูกกับผู้ติดต่อของฉัน';
+
+  @override
+  String get projectMemberAddContact => 'เพิ่มเข้าผู้ติดต่อของฉัน';
+
+  @override
+  String get projectMemberUnbindContact => 'เลิกผูกกับผู้ติดต่อของฉัน';
+
+  @override
+  String get projectMemberMyContact => 'ผู้ติดต่อของฉัน';
+
+  @override
+  String projectMemberContactBound(String name) {
+    return 'ผูกกับ $name แล้ว';
+  }
+
+  @override
+  String projectMemberContactAdded(String name) {
+    return 'เพิ่ม $name เข้าผู้ติดต่อแล้ว';
+  }
+
+  @override
+  String get projectMemberContactUnbound => 'เลิกผูกแล้ว';
+
+  @override
   String projectMemberRemoveTitle(String name) {
     return 'นำ $name ออก?';
   }

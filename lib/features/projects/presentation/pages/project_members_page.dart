@@ -8,6 +8,8 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
+import '../../../contacts/data/contacts_repository.dart';
+import '../../../contacts/presentation/widgets/contact_picker.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
 import '../widgets/add_member_sheet.dart';
@@ -84,8 +86,16 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
     );
   }
 
-  Future<void> _memberActions(ProjectMember m) async {
+  /// F3: which of MY contacts a plain member is is mine to say, owner or not
+  /// (a linked member finds my contact linked to them by itself).
+  bool _contactActions(ProjectMember m) => !m.isMe && !m.isLinked;
+
+  bool _ownerActions(ProjectMember m, bool readOnly) =>
+      _isOwner && !readOnly && !m.isOwner;
+
+  Future<void> _memberActions(ProjectMember m, {required bool owner}) async {
     final l = AppLocalizations.of(context)!;
+    final bound = m.contactId != null;
     final action = await showActionSheet<String>(
       context,
       header: ActionSheetHeader(
@@ -94,31 +104,77 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
         subtitle: m.isLinked ? l.projectMemberLinked : l.projectMemberAdHoc,
       ),
       actions: [
-        SheetAction(
-          value: 'role',
-          icon: m.role == MemberRole.viewer ? AppIcons.edit : AppIcons.visible,
-          label: m.role == MemberRole.viewer
-              ? l.projectMemberMakeContributor
-              : l.projectMemberMakeViewer,
-        ),
-        SheetAction(
-          value: 'transfer',
-          icon: AppIcons.member,
-          label: l.projectMemberTransfer,
-          subtitle: m.isLinked ? null : l.projectMemberTransferNeedsAccount,
-          enabled: m.isLinked && m.status == MemberStatus.active,
-        ),
-        SheetAction(
-          value: 'remove',
-          icon: AppIcons.delete,
-          label: l.projectMemberRemove,
-          destructive: true,
-        ),
+        if (_contactActions(m)) ...[
+          SheetAction(
+            value: 'bind',
+            icon: AppIcons.link,
+            label: l.projectMemberBindContact,
+          ),
+          if (bound)
+            SheetAction(
+              value: 'unbind',
+              icon: AppIcons.unlink,
+              label: l.projectMemberUnbindContact,
+            )
+          else
+            SheetAction(
+              value: 'add-contact',
+              icon: AppIcons.add,
+              label: l.projectMemberAddContact,
+            ),
+        ],
+        if (owner) ...[
+          SheetAction(
+            value: 'role',
+            icon: m.role == MemberRole.viewer
+                ? AppIcons.edit
+                : AppIcons.visible,
+            label: m.role == MemberRole.viewer
+                ? l.projectMemberMakeContributor
+                : l.projectMemberMakeViewer,
+          ),
+          SheetAction(
+            value: 'transfer',
+            icon: AppIcons.member,
+            label: l.projectMemberTransfer,
+            subtitle: m.isLinked ? null : l.projectMemberTransferNeedsAccount,
+            enabled: m.isLinked && m.status == MemberStatus.active,
+          ),
+          SheetAction(
+            value: 'remove',
+            icon: AppIcons.delete,
+            label: l.projectMemberRemove,
+            destructive: true,
+          ),
+        ],
       ],
     );
     if (!mounted) return;
     final repo = context.read<ProjectsRepository>();
-    if (action == 'role') {
+    if (action == 'bind') {
+      final c = await ContactPicker.contactFor(
+        context,
+        name: m.displayName,
+        title: l.projectMemberBindContact,
+      );
+      if (c == null || !mounted) return;
+      await _run(
+        () => repo.setMyContact(widget.projectId, m.id, c.id),
+        done: l.projectMemberContactBound(c.name),
+      );
+    } else if (action == 'add-contact') {
+      await _run(() async {
+        final c = await context.read<ContactsRepository>().create(
+          displayName: m.displayName,
+        );
+        return repo.setMyContact(widget.projectId, m.id, c.contact.id);
+      }, done: l.projectMemberContactAdded(m.displayName));
+    } else if (action == 'unbind') {
+      await _run(
+        () => repo.setMyContact(widget.projectId, m.id, null),
+        done: l.projectMemberContactUnbound,
+      );
+    } else if (action == 'role') {
       await _run(
         () => repo.updateMemberRole(
           widget.projectId,
@@ -262,6 +318,8 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
                       parts: [
                         m.isLinked
                             ? l.projectMemberLinked
+                            : m.contactId != null
+                            ? l.projectMemberMyContact
                             : l.projectMemberAdHoc,
                       ],
                     ),
@@ -273,8 +331,11 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
                           : l.projectRoleMember,
                       tone: m.isOwner ? Tone.primary : null,
                     ),
-                    onTap: _isOwner && readOnly == false && !m.isOwner
-                        ? () => _memberActions(m)
+                    onTap: _ownerActions(m, readOnly) || _contactActions(m)
+                        ? () => _memberActions(
+                            m,
+                            owner: _ownerActions(m, readOnly),
+                          )
                         : null,
                   ),
               ],

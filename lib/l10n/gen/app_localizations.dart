@@ -1994,6 +1994,48 @@ abstract class AppLocalizations {
   /// **'Remove from event'**
   String get projectMemberRemove;
 
+  /// No description provided for @projectMemberBindContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Link to my contact'**
+  String get projectMemberBindContact;
+
+  /// No description provided for @projectMemberAddContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to my contacts'**
+  String get projectMemberAddContact;
+
+  /// No description provided for @projectMemberUnbindContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink from my contact'**
+  String get projectMemberUnbindContact;
+
+  /// No description provided for @projectMemberMyContact.
+  ///
+  /// In en, this message translates to:
+  /// **'My contact'**
+  String get projectMemberMyContact;
+
+  /// No description provided for @projectMemberContactBound.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked to {name}'**
+  String projectMemberContactBound(String name);
+
+  /// No description provided for @projectMemberContactAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {name} to contacts'**
+  String projectMemberContactAdded(String name);
+
+  /// No description provided for @projectMemberContactUnbound.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlinked'**
+  String get projectMemberContactUnbound;
+
   /// No description provided for @projectMemberRemoveTitle.
   ///
   /// In en, this message translates to:
