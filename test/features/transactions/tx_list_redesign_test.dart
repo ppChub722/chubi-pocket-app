@@ -245,6 +245,70 @@ void main() {
     }
   });
 
+  test('remembered sort + filters (page_prefs transactions): round trip, '
+      'never the period, names from the caches', () {
+    final base = TxFilters(period: TxPeriod.month(DateTime(2026, 10)));
+    final picked = base.copyWith(
+      sort: 'amount_desc',
+      types: const {TransactionType.expense, TransactionType.income},
+      wallets: [
+        Account.fromJson({
+          'id': 'w1',
+          'name': 'KBank',
+          'type': 'bank',
+          'balance': 0,
+          'currency': 'THB',
+        }),
+      ],
+      noWallet: true,
+      uncategorized: true,
+      tags: const [Tag(id: 't1', name: 'trip')],
+      amount: (min: 100, max: null),
+    );
+    final pref = txFiltersPref(picked);
+    expect(pref, {
+      'sort': 'amount_desc',
+      'types': ['expense', 'income'],
+      'wallets': ['w1', 'none'],
+      'categories': ['none'],
+      'tags': ['t1'],
+      'amount': ['min:100.0'],
+    });
+    // Stored as JSON, read on another month: the period stays the page's.
+    final later = TxFilters(period: TxPeriod.all);
+    final back = txFiltersFromPref(later, Map<String, dynamic>.from(pref));
+    expect(back.sameFiltersAs(picked), isTrue);
+    expect(back.period, TxPeriod.all);
+    expect(back.amountMin, 100);
+    expect(back.amountMax, isNull);
+    // No cache: bare ids; with one: the real tag.
+    expect(back.tags.single.name, '');
+    expect(
+      txFiltersFromPref(
+        later,
+        pref,
+        tags: const [Tag(id: 't1', name: 'trip')],
+      ).tags.single.name,
+      'trip',
+    );
+    // Nothing remembered / junk = the page's defaults.
+    expect(txFiltersFromPref(base, const {}).sameFiltersAs(base), isTrue);
+    expect(
+      txFiltersFromPref(base, {
+        'sort': 'gone',
+        'types': ['nope', 3],
+        'wallets': 'w1',
+        'amount': ['min:x'],
+      }).sameFiltersAs(base),
+      isTrue,
+    );
+    // A default pick round-trips to the default.
+    expect(
+      txFiltersFromPref(base, txFiltersPref(base)).sameFiltersAs(base),
+      isTrue,
+    );
+  });
+
   test('totals parse: the BE shape, absent → null, daily bars + average', () {
     final t = ListTotals.fromJson({
       'income': 12000.0,

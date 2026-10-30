@@ -54,4 +54,30 @@ void main() {
     // The debt entry page has exactly one route (statement lines push it).
     expect(names['personal-debt-entry'], '/personal-debts/entries/:id');
   });
+
+  test('a link into a settings page stacks it on the settings home', () {
+    final auth = _Auth();
+    when(() => auth.state).thenReturn(const AuthUnauthenticated());
+    whenListen(auth, const Stream<AuthState>.empty());
+    final router = buildAppRouter(auth);
+    addTearDown(router.dispose);
+
+    // openPage from another tab `go`es here: back must land on การตั้งค่า.
+    List<String?> stack(String location) => [
+      for (final r
+          in router.configuration.findMatch(Uri.parse(location)).routes)
+        if (r is GoRoute) r.name,
+    ];
+    expect(stack('/settings/notifications'), [
+      'settings',
+      'settings-notifications',
+    ]);
+    expect(stack('/settings/page-prefs/tx'), [
+      'settings',
+      'settings-page-prefs',
+      'settings-page-pref',
+    ]);
+    // The settings tab's first page (where it resets to) is its home.
+    expect(stack('/settings'), ['settings']);
+  });
 }

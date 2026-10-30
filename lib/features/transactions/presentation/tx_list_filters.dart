@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
 import '../../accounts/domain/account.dart';
+import '../../accounts/domain/account_type.dart';
 import '../../categories/domain/category.dart';
 import '../../categories/domain/category_type.dart';
 import '../../tags/domain/tag.dart';
@@ -220,4 +221,97 @@ class TxFilters {
             ? 1
             : 0);
   }
+}
+
+/// The list's sorts (wire values), first = the default.
+const txSorts = ['date_desc', 'date_asc', 'amount_desc', 'amount_asc'];
+
+/// The token in a remembered id set for rows without a wallet / category /
+/// tag.
+const _none = 'none';
+
+/// [f]'s remembered part (page_prefs `transactions`, 0.4.2-1): the sort and
+/// every filter as small strings; never the period (it starts fresh).
+Map<String, Object?> txFiltersPref(TxFilters f) => {
+  'sort': f.sort,
+  'types': [
+    for (final t in TransactionType.values)
+      if (f.types.contains(t)) t.name,
+  ],
+  'wallets': [for (final w in f.wallets) w.id, if (f.noWallet) _none],
+  'categories': [
+    for (final c in f.categories) c.id,
+    if (f.uncategorized) _none,
+  ],
+  'tags': [for (final t in f.tags) t.id, if (f.noTags) _none],
+  'amount': [
+    if (f.amountMin != null) 'min:${f.amountMin}',
+    if (f.amountMax != null) 'max:${f.amountMax}',
+  ],
+};
+
+/// The choices remembered in [pref] on [base]'s period (a missing filter =
+/// none; a missing sort = [base]'s). Ids resolve to the [accounts] /
+/// [categories] / [tags] the app already holds; an unknown one is kept as a
+/// bare id (the request only needs ids; the filter sheet fills in the
+/// names). Unknown values are skipped.
+TxFilters txFiltersFromPref(
+  TxFilters base,
+  Map<String, dynamic> pref, {
+  Iterable<Account> accounts = const [],
+  Iterable<Category> categories = const [],
+  Iterable<Tag> tags = const [],
+}) {
+  if (pref.isEmpty) return base;
+  List<String> strings(String key) => [
+    for (final v in pref[key] is List ? pref[key] as List : const [])
+      if (v is String) v,
+  ];
+  List<String> ids(String key) => [
+    for (final v in strings(key))
+      if (v != _none) v,
+  ];
+  bool none(String key) => strings(key).contains(_none);
+  final byWallet = {for (final a in accounts) a.id: a};
+  final byCategory = {for (final c in categories) c.id: c};
+  final byTag = {for (final t in tags) t.id: t};
+  final types = TransactionType.values.asNameMap();
+  double? bound(String prefix) {
+    for (final v in strings('amount')) {
+      if (v.startsWith(prefix)) {
+        return double.tryParse(v.substring(prefix.length));
+      }
+    }
+    return null;
+  }
+
+  final sort = pref['sort'];
+  return base.copyWith(
+    sort: txSorts.contains(sort) ? sort as String : base.sort,
+    types: {
+      for (final t in strings('types'))
+        if (types[t] != null) types[t]!,
+    },
+    wallets: [
+      for (final id in ids('wallets'))
+        byWallet[id] ??
+            Account(
+              id: id,
+              name: '',
+              type: AccountType.cash,
+              balance: 0,
+              currency: '',
+            ),
+    ],
+    noWallet: none('wallets'),
+    categories: [
+      for (final id in ids('categories'))
+        byCategory[id] ??
+            Category(id: id, name: '', type: CategoryType.expense),
+    ],
+    uncategorized: none('categories'),
+    tags: [for (final id in ids('tags')) byTag[id] ?? Tag(id: id, name: '')],
+    noTags: none('tags'),
+    amount: (min: bound('min:'), max: bound('max:')),
+  );
 }

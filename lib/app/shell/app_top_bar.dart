@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -8,6 +9,9 @@ import '../../features/notifications/presentation/cubit/unread_badge_cubit.dart'
 import '../../features/pending/presentation/cubit/pending_cubit.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'fade_branch_container.dart';
+import 'main_bottom_nav.dart';
+import 'nav_layout.dart';
+import 'tab_entry.dart';
 import 'tab_nav.dart';
 import 'top_bar_crumbs.dart';
 import '../../ui/ui.dart';
@@ -324,7 +328,7 @@ class _UniversalChips extends StatelessWidget {
       GoRouter.maybeOf(context)?.push(path);
       return;
     }
-    shell.goBranch(tab.index, initialLocation: shell.currentIndex == tab.index);
+    goTab(tab, from: shell.currentIndex, goBranch: shell.goBranch);
   }
 
   @override
@@ -332,12 +336,19 @@ class _UniversalChips extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     TickerMode.valuesOf(context);
     final shell = StatefulNavigationShell.maybeOf(context);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (final tab in ShellRow.top.tabs)
-          _chipFor(context, l, tab, shell?.currentIndex == tab.index),
-      ],
+    final layout = NavLayoutScope.of(context);
+    final current = shell == null ? null : ShellTab.values[shell.currentIndex];
+    return _ChipSwipe(
+      layout: layout,
+      current: current,
+      onSwitch: (tab) => _open(context, tab, tab.path),
+      builder: (lit) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final tab in layout.topItems)
+            _chipFor(context, l, tab, lit == tab),
+        ],
+      ),
     );
   }
 
@@ -358,14 +369,17 @@ class _UniversalChips extends StatelessWidget {
           onPressed: () => _open(context, ShellTab.pending, '/pending'),
         ),
       ),
-      ShellTab.notifications => BlocBuilder<UnreadBadgeCubit, int>(
-        builder: (context, unread) => _chip(
-          icon: AppIcons.notifications,
-          tooltip: l.navNotificationsTooltip,
-          active: active,
-          badgeCount: unread,
-          onPressed: () =>
-              _open(context, ShellTab.notifications, '/notifications'),
+      // The bell: what a notification opens grows out of it.
+      ShellTab.notifications => EntryOriginAnchor.bell(
+        child: BlocBuilder<UnreadBadgeCubit, int>(
+          builder: (context, unread) => _chip(
+            icon: AppIcons.notifications,
+            tooltip: l.navNotificationsTooltip,
+            active: active,
+            badgeCount: unread,
+            onPressed: () =>
+                _open(context, ShellTab.notifications, '/notifications'),
+          ),
         ),
       ),
       ShellTab.settings => BlocBuilder<AuthCubit, AuthState>(
@@ -390,7 +404,14 @@ class _UniversalChips extends StatelessWidget {
           );
         },
       ),
-      _ => throw ArgumentError('$tab has no top-bar chip'),
+      // Any other page a layout puts up here: its icon, no badge.
+      _ => _chip(
+        icon: MainBottomNav.itemOf(l, tab).$1,
+        tooltip: MainBottomNav.itemOf(l, tab).$3,
+        active: active,
+        badgeCount: 0,
+        onPressed: () => _open(context, tab, tab.path),
+      ),
     };
   }
 
@@ -409,6 +430,118 @@ class _UniversalChips extends StatelessWidget {
         badgeCount: badgeCount,
         selected: active,
         onPressed: onPressed,
+      ),
+    );
+  }
+}
+
+/// The top chips follow a horizontal swipe (damped, then ease back); on
+/// release it switches to the chip it points at — only while a top-row page
+/// is open, never past the last chip ([NavLayout.swipeTarget]).
+class _ChipSwipe extends StatefulWidget {
+  const _ChipSwipe({
+    required this.layout,
+    required this.current,
+    required this.onSwitch,
+    required this.builder,
+  });
+
+  final NavLayout layout;
+  final ShellTab? current;
+  final ValueChanged<ShellTab> onSwitch;
+
+  /// The chips, [lit] highlighted.
+  final Widget Function(ShellTab? lit) builder;
+
+  @override
+  State<_ChipSwipe> createState() => _ChipSwipeState();
+}
+
+class _ChipSwipeState extends State<_ChipSwipe>
+    with SingleTickerProviderStateMixin {
+  /// One chip and its gap.
+  static const _pitch = 48.0;
+  static const _maxNudge = 24.0;
+  static const _minFlingVelocity = 300.0;
+
+  late final AnimationController _nudge = AnimationController.unbounded(
+    vsync: this,
+  );
+
+  double? _dx;
+
+  @override
+  void dispose() {
+    _nudge.dispose();
+    super.dispose();
+  }
+
+  /// The chip [step] chips away, or the nearest valid one short of it.
+  ShellTab? _target(int step) {
+    final current = widget.current;
+    if (current == null) return null;
+    for (var s = step; s != 0; s -= s.sign) {
+      final t = widget.layout.swipeTarget(NavBar.top, current, s);
+      if (t != null) return t;
+    }
+    return null;
+  }
+
+  int _stepOf(double dx) => (dx / _pitch).round();
+
+  void _onStart(DragStartDetails _) {
+    _nudge.stop();
+    setState(() => _dx = 0);
+  }
+
+  void _onUpdate(DragUpdateDetails d) {
+    final dx = _dx;
+    if (dx == null) return;
+    setState(() => _dx = dx + d.delta.dx);
+    if (MediaQuery.disableAnimationsOf(context)) return;
+    final u = _dx! / (_maxNudge * 3);
+    _nudge.value = _maxNudge * u / (1 + u.abs());
+  }
+
+  void _onEnd(DragEndDetails d) {
+    final dx = _dx;
+    if (dx == null) return;
+    final v = d.primaryVelocity ?? 0;
+    var step = _stepOf(dx);
+    if (step == 0 && v.abs() >= _minFlingVelocity) step = v.sign.toInt();
+    final to = _target(step);
+    _settle();
+    if (to == null) return;
+    HapticFeedback.selectionClick();
+    widget.onSwitch(to);
+  }
+
+  void _settle() {
+    if (_dx != null) setState(() => _dx = null);
+    _nudge.animateTo(
+      0,
+      duration: AppDurations.chrome,
+      curve: AppDurations.chromeCurve,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dx = _dx;
+    final lit = dx == null
+        ? widget.current
+        : _target(_stepOf(dx)) ?? widget.current;
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragStart: _onStart,
+      onHorizontalDragUpdate: _onUpdate,
+      onHorizontalDragEnd: _onEnd,
+      onHorizontalDragCancel: _settle,
+      child: AnimatedBuilder(
+        animation: _nudge,
+        builder: (context, chips) =>
+            Transform.translate(offset: Offset(_nudge.value, 0), child: chips),
+        child: widget.builder(lit),
       ),
     );
   }

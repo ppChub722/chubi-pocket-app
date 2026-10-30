@@ -57,7 +57,15 @@ abstract final class PagePrefIds {
   static const debts = 'debts';
   static const pending = 'pending';
 
+  /// 0.4.2-1: the list's sort + filters (never its period).
+  static const transactions = 'transactions';
+
+  /// 0.4.2-1: the inbox filter.
+  static const notifications = 'notifications';
+
   static const all = [
+    transactions,
+    notifications,
     wallets,
     budgets,
     goals,

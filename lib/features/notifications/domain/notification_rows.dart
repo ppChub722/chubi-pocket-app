@@ -28,10 +28,10 @@ class AutoValues {
 
 /// What a row is about, for its words.
 enum NotificationRowKind {
-  /// A new shared bill with my part (split / event).
+  /// A new shared bill with my part (event or split).
   billCreated,
 
-  /// Someone edited a shared bill (split / event).
+  /// Someone edited a shared bill (event or split).
   billEdited,
 
   /// Someone deleted a shared bill.
@@ -41,20 +41,22 @@ enum NotificationRowKind {
   other,
 }
 
-/// One row of the notification page (owner 2026-10-28, layout ก): a [แจ้ง]
-/// switch that mutes [type], and, for a notice that asks something, an
-/// [อัตโนมัติ] switch ([auto]) that answers it by itself.
+/// The auto columns of the "บิลที่แชร์" card, in order: อีเวนต์, แบ่งจ่าย.
+const autoColumns = 2;
+
+/// One row of the notification page (owner 2026-10-28): a [แจ้ง] switch that
+/// mutes [type], then the card's auto columns.
 ///
 /// The BE has ONE type for a new shared bill and ONE for an edit, whatever
-/// the bill kind, so those two types show twice: in "บิลที่แชร์" with the
-/// debts switch and in "อีเวนต์" with the events switch. The two rows of a
-/// type share its mute value.
+/// the bill kind, so each shows as ONE row (owner: "รวมเลย") with an auto
+/// switch per kind: อีเวนต์ | แบ่งจ่าย. Rows of the other cards have no auto
+/// columns.
 class NotificationRow {
   const NotificationRow({
     required this.type,
     required this.group,
     required this.kind,
-    this.auto,
+    this.autos = const [],
     this.autoMirror = false,
     this.mutable = true,
   });
@@ -64,21 +66,25 @@ class NotificationRow {
   final NotificationGroup group;
   final NotificationRowKind kind;
 
-  /// The auto switch in this row; null = none (its cell stays blank).
-  final AutoSwitch? auto;
+  /// One entry per auto column of the card; null = blank. Empty = the card has
+  /// no auto columns.
+  final List<AutoSwitch?> autos;
 
-  /// The auto switch only mirrors another row's (shown, not flipped here).
+  /// The auto switches only mirror another row's (shown, not flipped here).
   final bool autoMirror;
 
   /// False = requests: always on.
   final bool mutable;
 
-  /// Unique on the page (a type can show in two groups).
+  /// Unique on the page.
   String get key => '${group.wire}-$type';
 
-  /// Auto off = someone must answer, so the notice always comes (the BE
-  /// delivers it even when muted): the แจ้ง switch is locked on.
-  bool notifyLocked(AutoValues a) => auto != null && !a.of(auto!);
+  /// The auto switches this row shows.
+  Iterable<AutoSwitch> get shownAutos => autos.whereType<AutoSwitch>();
+
+  /// An auto switch that is off = someone must answer, so the notice always
+  /// comes (the BE delivers it even when muted): the แจ้ง switch is locked on.
+  bool notifyLocked(AutoValues a) => shownAutos.any((s) => !a.of(s));
 
   /// The แจ้ง switch as shown.
   bool notifyOn(NotificationSettings s, AutoValues a) =>
@@ -92,9 +98,10 @@ const _created = {'shared_bill_created', 'split_created'};
 const _edited = 'project_tx_changed';
 const _deleted = 'shared_bill_deleted';
 
-/// The page's rows, grouped in page order: the BE's types of each group, plus
-/// the second row of the new-bill and edit types (see [NotificationRow]).
-/// Requests come as ONE row (they can't be muted).
+/// The page's rows, grouped in page order. The new-bill and edit types are
+/// ONE row each in "บิลที่แชร์" (whatever group the BE lists them in), with
+/// the event and split auto switches side by side. Requests come as ONE row
+/// (they can't be muted).
 Map<NotificationGroup, List<NotificationRow>> notificationRows(
   NotificationSettings s,
 ) {
@@ -116,54 +123,41 @@ Map<NotificationGroup, List<NotificationRow>> notificationRows(
         );
       }
     } else {
-      if (g == NotificationGroup.event && created.isNotEmpty) {
-        rows.add(
-          NotificationRow(
-            type: created,
-            group: g,
-            kind: NotificationRowKind.billCreated,
-            auto: AutoSwitch.acceptEvents,
-          ),
-        );
-      }
-      for (final t in s.ofGroup(g)) {
-        if (_created.contains(t.type)) {
-          if (g == NotificationGroup.event) continue; // added above
+      final shared = g == NotificationGroup.sharedBill;
+      if (shared) {
+        if (created.isNotEmpty) {
           rows.add(
             NotificationRow(
-              type: t.type,
+              type: created,
               group: g,
               kind: NotificationRowKind.billCreated,
-              auto: AutoSwitch.acceptDebts,
+              autos: const [AutoSwitch.acceptEvents, AutoSwitch.acceptDebts],
             ),
           );
-          if (g == NotificationGroup.sharedBill && hasEdited) {
-            rows.add(
-              NotificationRow(
-                type: _edited,
-                group: g,
-                kind: NotificationRowKind.billEdited,
-                auto: AutoSwitch.syncDebts,
-              ),
-            );
-          }
-        } else if (t.type == _edited) {
-          if (g == NotificationGroup.sharedBill) continue; // added above
+        }
+        if (hasEdited) {
           rows.add(
             NotificationRow(
-              type: t.type,
+              type: _edited,
               group: g,
               kind: NotificationRowKind.billEdited,
-              auto: AutoSwitch.syncEvents,
+              autos: const [AutoSwitch.syncEvents, AutoSwitch.syncDebts],
             ),
           );
-        } else if (t.type == _deleted) {
+        }
+      }
+      for (final t in s.ofGroup(g)) {
+        // Shown once, in "บิลที่แชร์" (above).
+        if (_created.contains(t.type) || t.type == _edited) continue;
+        if (t.type == _deleted) {
+          // Event-bill deletes follow the event update switch; a deleted split
+          // bill always leaves my copy as a plain tx (nothing to choose).
           rows.add(
             NotificationRow(
               type: t.type,
               group: g,
               kind: NotificationRowKind.billDeleted,
-              auto: AutoSwitch.syncEvents,
+              autos: const [AutoSwitch.syncEvents, null],
               autoMirror: true,
             ),
           );
@@ -173,6 +167,7 @@ Map<NotificationGroup, List<NotificationRow>> notificationRows(
               type: t.type,
               group: g,
               kind: NotificationRowKind.other,
+              autos: shared ? const [null, null] : const [],
               mutable: t.mutable,
             ),
           );

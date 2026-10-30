@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -9,34 +10,40 @@ import '../../features/transactions/presentation/widgets/quick_create_sheet.dart
 import 'back_history.dart';
 import 'fade_branch_container.dart';
 import 'main_bottom_nav.dart';
+import 'nav_layout.dart';
 import 'quick_create_context.dart';
 import 'shell_chrome.dart';
 import 'tab_nav.dart';
+import '../../ui/tokens/app/theme/app_page_transitions.dart';
 import '../../ui/ui.dart';
 
 class MainShell extends StatefulWidget {
-  const MainShell({required this.navigationShell, super.key});
+  const MainShell({required this.navigationShell, this.layout, super.key});
 
   final StatefulNavigationShell navigationShell;
+
+  /// Where the bars, chips and More groups sit; [NavLayout.defaults] = today.
+  final NavLayout? layout;
 
   @override
   State<MainShell> createState() => _MainShellState();
 }
 
 class _MainShellState extends State<MainShell>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   final ShellChromeController _chrome = ShellChromeController();
 
   late final QuickCreateContext _quickCreate = QuickCreateContext()
     ..currentBranch = widget.navigationShell.currentIndex;
 
-  static final _moreBranch = ShellTab.more.index;
+  NavLayout get _layout => widget.layout ?? NavLayout.defaults;
 
   ShellTab get _current => ShellTab.values[widget.navigationShell.currentIndex];
 
-  void _goBranch(int i) => widget.navigationShell.goBranch(
-    i,
-    initialLocation: i == widget.navigationShell.currentIndex,
+  void _goBranch(int i) => goTab(
+    ShellTab.values[i],
+    from: widget.navigationShell.currentIndex,
+    goBranch: widget.navigationShell.goBranch,
   );
 
   final ShellBackHistory _history = ShellBackHistory();
@@ -48,6 +55,7 @@ class _MainShellState extends State<MainShell>
     QuickCreateRouteObserver.changes.addListener(_chrome.refresh);
     // A pull re-checks the nav, so a wrongly hidden one comes back.
     PullToRefresh.onPull = _chrome.refresh;
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -63,7 +71,9 @@ class _MainShellState extends State<MainShell>
   void dispose() {
     QuickCreateRouteObserver.changes.removeListener(_chrome.refresh);
     if (PullToRefresh.onPull == _chrome.refresh) PullToRefresh.onPull = null;
+    WidgetsBinding.instance.removeObserver(this);
     _nudge.dispose();
+    _backSlide.dispose();
     _chrome.dispose();
     _quickCreate.dispose();
     super.dispose();
@@ -80,22 +90,23 @@ class _MainShellState extends State<MainShell>
   bool _swiping = false;
   double _dragDx = 0;
 
-  static bool _swipesBetweenTabs(ShellTab tab) =>
-      tab.row == ShellRow.nav || tab.row == ShellRow.top;
+  /// The body trails a swipe on a bar tab's root page (never switches tabs;
+  /// only the bars do, owner 2026-10-28).
+  bool _followsSwipe(ShellTab tab) => _layout.barOf(tab) != null;
 
   void _onDragStart(DragStartDetails _) {
     final shell = widget.navigationShell;
     final branchNav = shell.route.branches[shell.currentIndex].navigatorKey;
     _swiping =
-        _swipesBetweenTabs(_current) &&
+        _followsSwipe(_current) &&
         !_chrome.hidden &&
         !(branchNav.currentState?.canPop() ?? true);
     _dragDx = 0;
     if (_swiping) _nudge.stop();
   }
 
-  /// The body trails the finger, damped so it only ever moves a little — half
-  /// as far toward an end with no tab past it.
+  /// The body trails the finger, damped so it only ever moves a little, then
+  /// eases back.
   void _onDragUpdate(DragUpdateDetails d) {
     if (!_swiping) return;
     _dragDx += d.primaryDelta ?? 0;
@@ -103,26 +114,19 @@ class _MainShellState extends State<MainShell>
       _nudge.value = 0;
       return;
     }
-    final max = _neighbour(_dragDx) != null ? _maxNudge : _maxNudge / 2;
-    final u = _dragDx / (max * 3);
-    _nudge.value = max * u / (1 + u.abs());
+    final u = _dragDx / (_maxNudge * 3);
+    _nudge.value = _maxNudge * u / (1 + u.abs());
   }
 
   void _onDragEnd(DragEndDetails d) {
     if (!_swiping) return;
     _swiping = false;
     final v = d.primaryVelocity ?? 0;
-    if (v.abs() < _minFlingVelocity) return _settle();
-    if (_pageSwipes(v)) {
+    if (v.abs() >= _minFlingVelocity && _pageSwipes(v)) {
       HapticFeedback.selectionClick();
       _swipeHandlers[_current]!.onSwipe(v < 0 ? 1 : -1);
-      return _settle();
     }
-    final next = _neighbour(v);
-    if (next == null) return _settle();
-    _nudge.value = 0;
-    HapticFeedback.selectionClick();
-    _goBranch(next);
+    _settle();
   }
 
   final Map<ShellTab, ShellSwipeHandler> _swipeHandlers = {};
@@ -142,16 +146,20 @@ class _MainShellState extends State<MainShell>
     curve: AppDurations.chromeCurve,
   );
 
-  int? _neighbour(double dx) => _current.beside(dx < 0 ? 1 : -1)?.index;
-
   bool _askingExit = false;
 
+  late final TabBackSlide _backSlide = TabBackSlide(vsync: this);
+
+  GlobalKey<NavigatorState> get _branchNav {
+    final shell = widget.navigationShell;
+    return shell.route.branches[shell.currentIndex].navigatorKey;
+  }
+
   Future<void> _onBackAtRoot() async {
-    final to = _history.backTarget(_current);
-    if (to != null) {
-      widget.navigationShell.goBranch(to);
-      return;
-    }
+    // One back between tabs at a time.
+    if (_backSlide.underlay.value != null) return;
+    final to = _history.backTarget(_current, _layout);
+    if (to != null) return _slideBackTo(to);
     if (_askingExit) return;
     _askingExit = true;
     final l = AppLocalizations.of(context)!;
@@ -162,6 +170,82 @@ class _MainShellState extends State<MainShell>
     );
     _askingExit = false;
     if (ok) await SystemNavigator.pop();
+  }
+
+  /// A back between tabs: the open tab slides off to the right over [to]
+  /// (owner 2026-10-28), then [to] is the tab, already in place.
+  Future<void> _slideBackTo(int to) async {
+    if (MediaQuery.disableAnimationsOf(context)) return _arriveBack(to);
+    _backSlide.underlay.value = to;
+    final there = await _backSlide.finish(
+      curve: AppPageTransitionsBuilder.popCurve,
+    );
+    if (there && mounted) _arriveBack(to);
+  }
+
+  void _arriveBack(int to) {
+    _backSlide.arriveAt(to);
+    _goBranch(to);
+    // The switch ends the slide; should it not happen, drop the slide.
+    Timer(const Duration(milliseconds: 600), () {
+      if (!mounted || _current.index == to) return;
+      if (_backSlide.underlay.value == to) _backSlide.abort();
+    });
+  }
+
+  /// The tab a predictive back gesture is sliding back to.
+  int? _gestureTo;
+
+  // The Android predictive back gesture on a tab root: the tab follows the
+  // finger off to the right, the tab it goes back to under it. A page above
+  // the root, a sheet or a dialog takes the gesture itself (or nobody does
+  // and the commit runs the plain back).
+  @override
+  bool handleStartBackGesture(PredictiveBackEvent backEvent) {
+    _gestureTo = null;
+    if (backEvent.isButtonEvent || !mounted) return false;
+    if (_backSlide.underlay.value != null) return false;
+    if (MediaQuery.disableAnimationsOf(context)) return false;
+    if (!(ModalRoute.isCurrentOf(context) ?? true) || _chrome.hidden) {
+      return false;
+    }
+    if (_branchNav.currentState?.canPop() ?? true) return false;
+    final to = _history.peekBackTarget(_current, _layout);
+    if (to == null) return false;
+    _gestureTo = to;
+    _backSlide.progress.stop();
+    _backSlide.underlay.value = to;
+    _backSlide.progress.value = backEvent.progress;
+    return true;
+  }
+
+  @override
+  void handleUpdateBackGestureProgress(PredictiveBackEvent backEvent) {
+    if (_gestureTo == null) return;
+    _backSlide.progress.value = backEvent.progress;
+  }
+
+  @override
+  void handleCancelBackGesture() {
+    if (_gestureTo == null) return;
+    _gestureTo = null;
+    _backSlide.cancel();
+  }
+
+  @override
+  void handleCommitBackGesture() async {
+    final to = _gestureTo;
+    if (to == null) return;
+    _gestureTo = null;
+    // A root page that handles back itself (a select mode) keeps the tab.
+    if (await _branchNav.currentState?.maybePop() ?? false) {
+      return _backSlide.cancel();
+    }
+    if (!mounted || _history.backTarget(_current, _layout) != to) {
+      return _backSlide.cancel();
+    }
+    final there = await _backSlide.finish();
+    if (there && mounted) _arriveBack(to);
   }
 
   @override
@@ -177,13 +261,16 @@ class _MainShellState extends State<MainShell>
         if (await tab.currentState?.maybePop() ?? false) return;
         _onBackAtRoot();
       },
-      child: ShellBackScope(
-        onBack: _onBackAtRoot,
-        child: ShellSwipeScope(
-          handlers: _swipeHandlers,
-          child: QuickCreateContextScope(
-            registry: _quickCreate,
-            child: _shell(context),
+      child: NavLayoutScope(
+        layout: _layout,
+        child: ShellBackScope(
+          onBack: _onBackAtRoot,
+          child: ShellSwipeScope(
+            handlers: _swipeHandlers,
+            child: QuickCreateContextScope(
+              registry: _quickCreate,
+              child: _shell(context),
+            ),
           ),
         ),
       ),
@@ -210,7 +297,13 @@ class _MainShellState extends State<MainShell>
             onHorizontalDragUpdate: _onDragUpdate,
             onHorizontalDragEnd: _onDragEnd,
             onHorizontalDragCancel: _onDragCancel,
-            child: TabSwipeNudge(offset: _nudge, child: widget.navigationShell),
+            child: TabBackSlideScope(
+              slide: _backSlide,
+              child: TabSwipeNudge(
+                offset: _nudge,
+                child: widget.navigationShell,
+              ),
+            ),
           ),
         ),
         bottomNavigationBar: ListenableBuilder(
@@ -243,16 +336,14 @@ class _MainShellState extends State<MainShell>
               key: const ValueKey('nav'),
               listenable: _quickCreate,
               builder: (context, _) => MainBottomNav(
-                currentIndex: widget.navigationShell.currentIndex,
-                moreSelected:
-                    widget.navigationShell.currentIndex == _moreBranch,
-                onTabSelected: _goBranch,
+                items: _layout.bottomItems,
+                current: _current,
+                onSelected: (tab) => _goBranch(tab.index),
                 addMode: _quickCreate.preset.mode,
                 addWord: _quickCreate.preset.word,
                 addColor: _quickCreate.preset.color,
                 addIcon: _quickCreate.preset.icon,
                 onAddPressed: () => _openQuickCreate(context),
-                onMorePressed: () => _goBranch(_moreBranch),
               ),
             ),
     );

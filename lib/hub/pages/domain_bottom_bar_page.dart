@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../app/shell/main_bottom_nav.dart';
+import '../../app/shell/nav_layout.dart';
+import '../../app/shell/tab_nav.dart';
 import '../../ui/ui.dart';
 import '../hub_kit.dart';
 
@@ -17,7 +19,7 @@ class _BottomBarPage extends StatefulWidget {
 
 class _BottomBarPageState extends State<_BottomBarPage> {
   QuickCreateMode _mode = QuickCreateMode.tx;
-  int _tab = 0;
+  ShellTab? _tab = ShellTab.home;
 
   static const _buttonWords = {
     QuickCreateMode.tx: 'บันทึก',
@@ -43,7 +45,13 @@ class _BottomBarPageState extends State<_BottomBarPage> {
               '(QuickCreatePresetScope: mode + preset) and the + takes the '
               'MODE’s colour from QuickCreateModeColors — pages never pass a '
               'colour. A change (tab switch, push, pop) cross-fades in 200 ms. '
-              'Pick a mode below to see it.',
+              'Pick a mode below to see it. Its items come from the shell’s '
+              'NavLayout (bottomItems, + after the first half); top chips and '
+              'the More groups read the same object. A swipe drags the '
+              'highlight and switches only while one of its items is open '
+              '(a top chip / More page: it follows, then fades); past either '
+              'end it stretches and eases back. The page body never switches '
+              'tabs; the top chips swipe among themselves the same way.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -56,12 +64,11 @@ class _BottomBarPageState extends State<_BottomBarPage> {
               SizedBox(
                 height: 96,
                 child: MainBottomNav(
-                  currentIndex: _tab,
-                  onTabSelected: (i) => setState(() => _tab = i),
+                  items: NavLayout.defaults.bottomItems,
+                  current: _tab,
+                  onSelected: (t) => setState(() => _tab = t),
                   addMode: _mode,
                   onAddPressed: () {},
-                  onMorePressed: () => setState(() => _tab = 3),
-                  moreSelected: _tab == 3,
                 ),
               ),
             ],

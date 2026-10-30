@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/ui.dart';
+import 'nav_layout.dart';
+import 'tab_entry.dart';
 import 'tab_nav.dart';
 import 'tab_root_scaffold.dart';
 import '../../core/network/api_client.dart';
@@ -11,25 +13,29 @@ import '../../features/me_counts/cubit/me_counts_cubit.dart';
 import '../../features/me_counts/data/me_counts_repository.dart';
 
 /// `/more` — the เพิ่มเติม hub: every feature without a nav slot, as big cards
-/// grouped by purpose.
+/// grouped by purpose (the groups come from the shell's [NavLayout]).
 class MorePage extends StatelessWidget {
   const MorePage({
     super.key,
     @visibleForTesting this.counts,
-    @visibleForTesting this.isOn,
+    @visibleForTesting this.layout,
     @visibleForTesting this.topBar,
   });
 
   /// Tests: a ready cubit instead of the one built from [ApiClient].
   final MeCountsCubit? counts;
 
-  final bool Function(ShellTab)? isOn;
+  /// Tests: a layout instead of the shell's.
+  final NavLayout? layout;
 
   final PreferredSizeWidget? topBar;
 
   @override
   Widget build(BuildContext context) {
-    final view = _MoreView(isOn: isOn ?? (t) => t.enabled, topBar: topBar);
+    final view = _MoreView(
+      layout: layout ?? NavLayoutScope.of(context),
+      topBar: topBar,
+    );
     final given = counts;
     if (given != null) return BlocProvider.value(value: given, child: view);
     return BlocProvider(
@@ -42,9 +48,9 @@ class MorePage extends StatelessWidget {
 }
 
 class _MoreView extends StatelessWidget {
-  const _MoreView({required this.isOn, this.topBar});
+  const _MoreView({required this.layout, this.topBar});
 
-  final bool Function(ShellTab) isOn;
+  final NavLayout layout;
   final PreferredSizeWidget? topBar;
 
   @override
@@ -141,78 +147,90 @@ class _MoreView extends StatelessWidget {
             ),
         ],
       ),
-      _ => throw ArgumentError('$tab has no เพิ่มเติม card'),
-    };
-    List<_MoreEntry> cards(ShellRow row) => [
-      for (final tab in row.all)
-        if (isOn(tab)) entry(tab),
-    ];
-    final main = <_MoreEntry>[
-      _MoreEntry(
+      ShellTab.home => _MoreEntry(
         AppIcons.dashboard,
         l.navDashboard,
         l.moreDashboardDesc,
         '/',
         main: true,
       ),
-      _MoreEntry(
+      ShellTab.transactions => _MoreEntry(
         AppIcons.transactions,
         l.navTransactions,
         l.moreTransactionsDesc,
         '/transactions',
         main: true,
       ),
-      _MoreEntry(
+      ShellTab.accounts => _MoreEntry(
         AppIcons.wallet,
         l.navAccounts,
         l.moreWalletsDesc,
         '/accounts',
         main: true,
       ),
-      if (isOn(ShellTab.pending))
-        _MoreEntry(
-          AppIcons.pending,
-          l.pendingTitle,
-          l.morePendingDesc,
-          '/pending',
-          main: true,
-          statuses: [
-            if ((c?.pendingDrafts ?? 0) > 0)
-              TileStatus(
-                l.moreChipPending(c!.pendingDrafts),
-                tone: Tone.warning,
-              ),
-          ],
-        ),
-      if (isOn(ShellTab.notifications))
-        _MoreEntry(
-          AppIcons.notifications,
-          l.notificationsTitle,
-          l.moreNotificationsDesc,
-          '/notifications',
-          main: true,
-          statuses: [
-            if ((c?.unreadNotifications ?? 0) > 0)
-              TileStatus(
-                l.moreChipUnread(c!.unreadNotifications),
-                tone: Tone.info,
-              ),
-          ],
-        ),
-      _MoreEntry(
+      ShellTab.pending => _MoreEntry(
+        AppIcons.pending,
+        l.pendingTitle,
+        l.morePendingDesc,
+        '/pending',
+        main: true,
+        statuses: [
+          if ((c?.pendingDrafts ?? 0) > 0)
+            TileStatus(l.moreChipPending(c!.pendingDrafts), tone: Tone.warning),
+        ],
+      ),
+      ShellTab.notifications => _MoreEntry(
+        AppIcons.notifications,
+        l.notificationsTitle,
+        l.moreNotificationsDesc,
+        '/notifications',
+        main: true,
+        statuses: [
+          if ((c?.unreadNotifications ?? 0) > 0)
+            TileStatus(
+              l.moreChipUnread(c!.unreadNotifications),
+              tone: Tone.info,
+            ),
+        ],
+      ),
+      ShellTab.settings => _MoreEntry(
         AppIcons.settings,
         l.moreSettings,
         l.moreSettingsDesc,
         '/settings',
         main: true,
       ),
-    ];
+      ShellTab.more => throw ArgumentError('เพิ่มเติม has no card of its own'),
+    };
     final primary = Theme.of(context).colorScheme.primary;
     final groups = <(String, Color, List<_MoreEntry>)>[
-      (l.moreGroupPlan, groupColors.planning, cards(ShellRow.planning)),
-      (l.moreGroupOthers, groupColors.people, cards(ShellRow.people)),
-      (l.moreGroupSetup, groupColors.library, cards(ShellRow.library)),
-      (l.moreGroupMain, primary, main),
+      for (final g in layout.moreGroups)
+        switch (g.id) {
+          NavGroupId.planning => (
+            l.moreGroupPlan,
+            groupColors.planning,
+            [for (final t in g.items) entry(t)],
+          ),
+          NavGroupId.people => (
+            l.moreGroupOthers,
+            groupColors.people,
+            [for (final t in g.items) entry(t)],
+          ),
+          NavGroupId.library => (
+            l.moreGroupSetup,
+            groupColors.library,
+            [for (final t in g.items) entry(t)],
+          ),
+        },
+      // The bars' pages, bottom bar then top chips (เพิ่มเติม itself aside).
+      (
+        l.moreGroupMain,
+        primary,
+        [
+          for (final t in [...layout.bottomItems, ...layout.topItems])
+            if (t != ShellTab.more) entry(t),
+        ],
+      ),
     ].where((g) => g.$3.isNotEmpty).toList();
 
     return TabRootScaffold(
@@ -242,15 +260,20 @@ class _MoreView extends StatelessWidget {
                 CardGrid(
                   children: [
                     for (final e in entries)
-                      TileCard(
-                        icon: e.icon,
-                        title: e.title,
-                        subtitle: e.subtitle,
-                        statuses: e.statuses,
-                        color: tint,
-                        onTap: () => e.main
-                            ? openPage(context, e.route)
-                            : context.go(e.route),
+                      Builder(
+                        builder: (card) => TileCard(
+                          icon: e.icon,
+                          title: e.title,
+                          subtitle: e.subtitle,
+                          statuses: e.statuses,
+                          color: tint,
+                          onTap: () {
+                            if (e.main) return openPage(context, e.route);
+                            // A module grows out of its card.
+                            ShellEntryOrigin.markTapped(card);
+                            context.go(e.route);
+                          },
+                        ),
                       ),
                   ],
                 ),

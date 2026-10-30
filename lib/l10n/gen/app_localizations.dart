@@ -11098,7 +11098,7 @@ abstract class AppLocalizations {
   /// No description provided for @notifSettingsOnOffLegend.
   ///
   /// In en, this message translates to:
-  /// **'Notify = send me a notification about it\nAuto = don\'t ask, just do it\nWith auto off, notify stays on: someone has to answer'**
+  /// **'Notify = send me a notification about it\nEvents / Splits = auto: don\'t ask, just do it\nWith auto off, notify stays on: someone has to answer'**
   String get notifSettingsOnOffLegend;
 
   /// No description provided for @notifGroupSharedBills.
@@ -11794,7 +11794,7 @@ abstract class AppLocalizations {
   /// No description provided for @notifAutoDeleteHint.
   ///
   /// In en, this message translates to:
-  /// **'Events: follows the \"edits in an event\" row\nSplits: my copy always becomes a plain record'**
+  /// **'Events: follows the Events switch of \"Someone edited a shared bill\"\nSplits: my copy always becomes a plain record'**
   String get notifAutoDeleteHint;
 
   /// No description provided for @notifLockedByAutoHint.
@@ -12144,6 +12144,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t open {name}'**
   String connectionsOpenFailed(String name);
+
+  /// No description provided for @notifSetBillCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'A new bill shared with me'**
+  String get notifSetBillCreated;
+
+  /// No description provided for @notifColumnAutoEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Events'**
+  String get notifColumnAutoEvents;
+
+  /// No description provided for @notifColumnAutoSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'Splits'**
+  String get notifColumnAutoSplit;
 }
 
 class _AppLocalizationsDelegate

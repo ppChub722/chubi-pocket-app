@@ -6,20 +6,21 @@ import 'package:flutter/services.dart';
 
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/ui.dart';
+import 'nav_layout.dart';
+import 'tab_nav.dart';
 
 class MainBottomNav extends StatefulWidget {
-  const MainBottomNav({
-    required this.currentIndex,
-    required this.onTabSelected,
+  MainBottomNav({
+    required this.current,
+    required this.onSelected,
     required this.onAddPressed,
-    required this.onMorePressed,
-    this.moreSelected = false,
+    List<ShellTab>? items,
     this.addMode = QuickCreateMode.tx,
     this.addWord,
     this.addColor,
     this.addIcon,
     super.key,
-  });
+  }) : items = items ?? NavLayout.defaults.bottomItems;
 
   final QuickCreateMode addMode;
 
@@ -29,13 +30,65 @@ class MainBottomNav extends StatefulWidget {
   final Color? addColor;
   final IconData? addIcon;
 
-  final int currentIndex;
+  /// The bar's items, left to right ([NavLayout.bottomItems]); the + sits
+  /// after the first half.
+  final List<ShellTab> items;
 
-  final bool moreSelected;
+  /// The open tab; highlighted when it is one of [items].
+  final ShellTab? current;
 
-  final ValueChanged<int> onTabSelected;
+  final ValueChanged<ShellTab> onSelected;
   final VoidCallback onAddPressed;
-  final VoidCallback onMorePressed;
+
+  /// [tab]'s icon, selected icon and name in a bar.
+  static (IconData, IconData, String) itemOf(
+    AppLocalizations l,
+    ShellTab tab,
+  ) => switch (tab) {
+    ShellTab.home => (
+      AppIcons.dashboard,
+      AppIcons.dashboardActive,
+      l.navDashboard,
+    ),
+    ShellTab.transactions => (
+      AppIcons.transactions,
+      AppIcons.transactionsActive,
+      l.navTransactions,
+    ),
+    ShellTab.accounts => (
+      AppIcons.wallet,
+      AppIcons.walletActive,
+      l.navAccounts,
+    ),
+    ShellTab.more => (AppIcons.more, AppIcons.more, l.navMore),
+    ShellTab.pending => (AppIcons.pending, AppIcons.pending, l.pendingTitle),
+    ShellTab.notifications => (
+      AppIcons.notifications,
+      AppIcons.notifications,
+      l.notificationsTitle,
+    ),
+    ShellTab.settings => (AppIcons.settings, AppIcons.settings, l.moreSettings),
+    ShellTab.projects => (AppIcons.project, AppIcons.project, l.moreProjects),
+    ShellTab.contacts => (AppIcons.contact, AppIcons.contact, l.moreContacts),
+    ShellTab.budgets => (AppIcons.budget, AppIcons.budget, l.moreBudgets),
+    ShellTab.recurring => (
+      AppIcons.recurring,
+      AppIcons.recurring,
+      l.moreRecurring,
+    ),
+    ShellTab.savingGoals => (
+      AppIcons.savingGoal,
+      AppIcons.savingGoal,
+      l.moreSavingGoals,
+    ),
+    ShellTab.debts => (AppIcons.debt, AppIcons.debt, l.moreDebts),
+    ShellTab.categories => (
+      AppIcons.category,
+      AppIcons.category,
+      l.moreCategories,
+    ),
+    ShellTab.tags => (AppIcons.tag, AppIcons.tag, l.moreTags),
+  };
 
   /// Bar height, and the `+` button's outer size (ring included) — larger than
   /// the bar so it pokes out evenly above and below, centred on it.
@@ -51,7 +104,7 @@ class MainBottomNav extends StatefulWidget {
 
   /// The centre slot's width for a tab row [rowWidth] wide (owner
   /// 2026-10-22, mock QuickCreateBtn): wide enough for the icon + word
-  /// capsule; the four tabs share the rest.
+  /// capsule; the bar's items share the rest.
   static double addSlotFor(double rowWidth) =>
       (rowWidth * 0.32).clamp(96.0, 120.0);
 
@@ -85,19 +138,22 @@ class _MainBottomNavState extends State<MainBottomNav> {
 
   int _parkedSlot = 0;
 
-  int? get _selectedSlot => widget.moreSelected
-      ? 3
-      : widget.currentIndex >= 0 && widget.currentIndex <= 2
-      ? widget.currentIndex
-      : null;
+  int get _count => widget.items.length;
+
+  /// Slots before the + (the first half, rounded up).
+  int get _split => (_count + 1) ~/ 2;
+
+  int? get _selectedSlot {
+    final current = widget.current;
+    if (current == null) return null;
+    final i = widget.items.indexOf(current);
+    return i < 0 ? null : i;
+  }
 
   @override
   void didUpdateWidget(MainBottomNav old) {
     super.didUpdateWidget(old);
-    if (old.currentIndex != widget.currentIndex ||
-        old.moreSelected != widget.moreSelected) {
-      _landing = null;
-    }
+    if (old.current != widget.current) _landing = null;
   }
 
   double get _addSlot => MainBottomNav.addSlotFor(_rowWidth);
@@ -106,17 +162,17 @@ class _MainBottomNavState extends State<MainBottomNav> {
   static double _rowWidthOf(double barWidth) =>
       barWidth - 2 * (MainBottomNav._tabInset - MainBottomNav._tabGap);
 
-  double get _tabWidth => (_rowWidth - _addSlot) / 4;
+  double get _tabWidth => (_rowWidth - _addSlot) / _count;
 
-  double _slotLeft(int s) => s * _tabWidth + (s >= 2 ? _addSlot : 0);
+  double _slotLeft(int s) => s * _tabWidth + (s >= _split ? _addSlot : 0);
 
   double _slotAt(double left) {
-    for (var s = 0; s < 3; s++) {
+    for (var s = 0; s < _count - 1; s++) {
       final a = _slotLeft(s);
       final b = _slotLeft(s + 1);
       if (left <= b) return s + ((left - a) / (b - a)).clamp(0.0, 1.0);
     }
-    return 3;
+    return _count - 1.0;
   }
 
   void _onDragStart(DragStartDetails d) {
@@ -144,21 +200,35 @@ class _MainBottomNavState extends State<MainBottomNav> {
         : v < -_minFlingVelocity
         ? at.floor()
         : at.round();
-    final moved = target != _selectedSlot;
+    // No item of this bar is open (a top chip's page, a page only เพิ่มเติม
+    // opens): the highlight followed the finger, now it just fades away.
+    final moved = _selectedSlot != null && target != _selectedSlot;
     setState(() {
       _dragLeft = null;
       _landing = moved ? target : null;
     });
     if (!moved) return;
     HapticFeedback.selectionClick();
-    target == 3 ? widget.onMorePressed() : widget.onTabSelected(target);
+    widget.onSelected(widget.items[target]);
   }
 
   void _onDragCancel() {
     if (_dragLeft != null) setState(() => _dragLeft = null);
   }
 
-  double _clampLeft(double left) => left.clamp(_slotLeft(0), _slotLeft(3));
+  /// How far the highlight stretches past the first / last item.
+  static const _maxStretch = 24.0;
+
+  /// [left] kept on the items, with a damped stretch past either end (it
+  /// eases back on release).
+  double _clampLeft(double left) {
+    final lo = _slotLeft(0);
+    final hi = _slotLeft(_count - 1);
+    if (left >= lo && left <= hi) return left;
+    final over = left < lo ? left - lo : left - hi;
+    final u = over / (_maxStretch * 3);
+    return (over < 0 ? lo : hi) + _maxStretch * u / (1 + u.abs());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -276,40 +346,23 @@ class _MainBottomNavState extends State<MainBottomNav> {
   Widget _tabs(AppLocalizations l, int? lit, bool still) {
     return Row(
       children: [
-        _NavItem(
-          icon: AppIcons.dashboard,
-          iconSelected: AppIcons.dashboardActive,
-          label: l.navDashboard,
-          selected: lit == 0,
-          still: still,
-          onTap: () => widget.onTabSelected(0),
-        ),
-        _NavItem(
-          icon: AppIcons.transactions,
-          iconSelected: AppIcons.transactionsActive,
-          label: l.navTransactions,
-          selected: lit == 1,
-          still: still,
-          onTap: () => widget.onTabSelected(1),
-        ),
-        SizedBox(width: _addSlot),
-        _NavItem(
-          icon: AppIcons.wallet,
-          iconSelected: AppIcons.walletActive,
-          label: l.navAccounts,
-          selected: lit == 2,
-          still: still,
-          onTap: () => widget.onTabSelected(2),
-        ),
-        _NavItem(
-          icon: AppIcons.more,
-          iconSelected: AppIcons.more,
-          label: l.navMore,
-          selected: lit == 3,
-          still: still,
-          onTap: widget.onMorePressed,
-        ),
+        for (final (i, tab) in widget.items.indexed) ...[
+          if (i == _split) SizedBox(width: _addSlot),
+          _item(l, tab, lit == i, still),
+        ],
       ],
+    );
+  }
+
+  Widget _item(AppLocalizations l, ShellTab tab, bool selected, bool still) {
+    final (icon, iconSelected, label) = MainBottomNav.itemOf(l, tab);
+    return _NavItem(
+      icon: icon,
+      iconSelected: iconSelected,
+      label: label,
+      selected: selected,
+      still: still,
+      onTap: () => widget.onSelected(tab),
     );
   }
 }

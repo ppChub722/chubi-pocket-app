@@ -6396,7 +6396,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get notifSettingsOnOffLegend =>
-      'แจ้ง = ส่งแจ้งเตือนเรื่องนี้\nอัตโนมัติ = ไม่ต้องถาม ทำให้เลย\nปิดอัตโนมัติอยู่ ต้องเปิดแจ้งไว้ เพราะต้องมีคนตอบ';
+      'แจ้ง = ส่งแจ้งเตือนเรื่องนี้\nอีเวนต์ / แบ่งจ่าย = อัตโนมัติ ไม่ต้องถาม ทำให้เลย\nปิดอัตโนมัติอยู่ ต้องเปิดแจ้งไว้ เพราะต้องมีคนตอบ';
 
   @override
   String get notifGroupSharedBills => 'บิลที่แชร์';
@@ -6809,7 +6809,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get notifAutoDeleteHint =>
-      'อีเวนต์: ตามแถว \"มีการแก้ไขรายการในอีเวนต์\"\nแบ่งจ่าย: สำเนาของฉันเป็นรายการธรรมดาเสมอ';
+      'อีเวนต์: ตามช่องอีเวนต์ของแถว \"มีคนแก้บิลที่แชร์กับฉัน\"\nแบ่งจ่าย: สำเนาของฉันเป็นรายการธรรมดาเสมอ';
 
   @override
   String get notifLockedByAutoHint => 'ปิดอัตโนมัติอยู่ แจ้งปิดไม่ได้';
@@ -7015,4 +7015,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String connectionsOpenFailed(String name) {
     return 'เปิด $name ไม่ได้';
   }
+
+  @override
+  String get notifSetBillCreated => 'มีบิลใหม่ที่แชร์กับฉัน';
+
+  @override
+  String get notifColumnAutoEvents => 'อีเวนต์';
+
+  @override
+  String get notifColumnAutoSplit => 'แบ่งจ่าย';
 }
