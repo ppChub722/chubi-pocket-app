@@ -105,4 +105,16 @@ class UsersRepository {
   /// The two รับบิลใหม่อัตโนมัติ switches; only the one(s) passed change.
   Future<User> setAutoAccept({bool? events, bool? debts}) =>
       _put({'auto_accept_events': ?events, 'auto_accept_debts': ?debts});
+
+  /// The three requests' auto-accept switches (F2); only the one(s) passed
+  /// change.
+  Future<User> setAutoAcceptRequests({
+    bool? eventInvites,
+    bool? contactLinks,
+    bool? walletInvites,
+  }) => _put({
+    'auto_accept_event_invites': ?eventInvites,
+    'auto_accept_contact_links': ?contactLinks,
+    'auto_accept_wallet_invites': ?walletInvites,
+  });
 }

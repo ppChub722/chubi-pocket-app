@@ -5463,10 +5463,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifTypeRecurringAutoCreated => 'Recorded automatically';
 
   @override
-  String get notifTypeRequestsHint =>
-      'Needs an answer, so it can\'t be turned off';
-
-  @override
   String get settingsSectionApp => 'App';
 
   @override
@@ -6638,7 +6634,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notifSettingsOnOffLegend =>
-      'Notify = send me a notification about it\nEvents / Splits = auto: don\'t ask, just do it\nWith auto off, notify stays on: someone has to answer';
+      'Notify = send me a notification about it\nAuto (Events / Splits) = don\'t ask, just do it\nBoth off = no notification and nothing happens';
 
   @override
   String get notifGroupSharedBills => 'Shared bills';
@@ -6666,6 +6662,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifSetEventCompleted => 'Event completed';
 
   @override
+  String get notifSetEventInvite => 'Event invites';
+
+  @override
+  String get notifSetEventInviteHint => 'Auto = join the event at once';
+
+  @override
+  String get notifSetContactLink => 'Contact link requests';
+
+  @override
+  String get notifSetContactLinkHint => 'Auto = link to their contact at once';
+
+  @override
+  String get notifSetWalletInvite => 'Wallet invites';
+
+  @override
+  String get notifSetWalletInviteHint => 'Auto = join the wallet at once';
+
+  @override
   String get notifSetEventCompletedHint =>
       'Locked for good, no more updates, claim once';
 
@@ -6679,10 +6693,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notifSetRecurringAutoCreatedHint =>
       'Entries recorded for me on schedule';
-
-  @override
-  String get notifSetRequests =>
-      'Event invites, contact link requests, wallet invites';
 
   @override
   String get notifActionAddToBook => 'Add to my book';
@@ -6985,6 +6995,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAcceptTitle => 'Auto-accept new bills';
 
   @override
+  String get settingsAutoEventInvites => 'Accept event invites automatically';
+
+  @override
+  String get settingsAutoContactLinks =>
+      'Accept contact link requests automatically';
+
+  @override
+  String get settingsAutoWalletInvites => 'Accept wallet invites automatically';
+
+  @override
+  String get settingsAutoRequestCaption =>
+      'For every request; also in Settings › Notifications';
+
+  @override
   String get eventDeleteKeepsBills =>
       'Only the event goes. Its bills stay as split bills, everyone stays connected, and nothing in anyone\'s book is deleted.';
 
@@ -7058,9 +7082,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notifAutoDeleteHint =>
       'Events: follows the Events switch of \"Someone edited a shared bill\"\nSplits: my copy always becomes a plain record';
-
-  @override
-  String get notifSetProjectAddedHint => 'Someone adds me as a member';
 
   @override
   String get notifSetRecurringDueHint => 'Payments to pay / receive today';

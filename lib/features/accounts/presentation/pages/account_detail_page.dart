@@ -23,6 +23,9 @@ import '../../../transactions/domain/transactions_summary.dart';
 import '../../../transactions/presentation/pages/transactions_list_page.dart';
 import '../../../transactions/presentation/tx_list_filters.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
+import '../../../notifications/domain/notification_rows.dart' show AutoSwitch;
+import '../../../settings/presentation/widgets/auto_sync_setting.dart'
+    show RequestAutoSetting;
 import '../../domain/account.dart';
 import '../../domain/account_identifier.dart';
 import '../../domain/payment_provider.dart';
@@ -1272,6 +1275,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                   value: a.trackBalance,
                 ),
         _scopeRow(l, a),
+        const RequestAutoSetting(which: AutoSwitch.acceptWalletInvites),
       ],
     );
   }

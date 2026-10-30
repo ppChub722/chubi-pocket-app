@@ -18,8 +18,8 @@ import '../cubit/notification_settings_cubit.dart';
 /// switch. A notice that asks something (a new / edited / deleted shared bill)
 /// is ONE row in "บิลที่แชร์" with its auto switches beside it, one per bill
 /// kind: อีเวนต์ | แบ่งจ่าย (the account's auto-accept / auto-update switches,
-/// the same values the event and person pages show). An auto switch that is
-/// off locks แจ้ง on: someone must answer.
+/// the same values the event and person pages show). Each request has its own
+/// auto-accept switch. แจ้ง and อัตโนมัติ are independent (F1).
 class NotificationSettingsPage extends StatelessWidget {
   const NotificationSettingsPage({super.key});
 
@@ -52,10 +52,6 @@ class NotificationSettingsPage extends StatelessWidget {
     label: l.notifSetSharedBillDeleted,
     helper: l.notifAutoDeleteHint,
   ),
-  _ when r.group == NotificationGroup.request => (
-    label: l.notifSetRequests,
-    helper: l.notifTypeRequestsHint,
-  ),
   _ => _typeText(l, r.type),
 };
 
@@ -69,9 +65,17 @@ class NotificationSettingsPage extends StatelessWidget {
         label: l.notifTypeDebtDisconnected,
         helper: l.notifSetDebtDisconnectedHint,
       ),
-      'project_added' => (
-        label: l.notifTypeProjectAdded,
-        helper: l.notifSetProjectAddedHint,
+      'project_invite' => (
+        label: l.notifSetEventInvite,
+        helper: l.notifSetEventInviteHint,
+      ),
+      'contact_link_request' => (
+        label: l.notifSetContactLink,
+        helper: l.notifSetContactLinkHint,
+      ),
+      'account_invite' => (
+        label: l.notifSetWalletInvite,
+        helper: l.notifSetWalletInviteHint,
       ),
       'event_completed' => (
         label: l.notifSetEventCompleted,
@@ -108,14 +112,9 @@ AutoValues _autoOf(User u) => AutoValues(
   acceptEvents: u.autoAcceptEvents,
   syncDebts: u.autoSyncDebts,
   syncEvents: u.autoSyncEvents,
-);
-
-/// [values] with [s] set to [on].
-AutoValues _with(AutoValues v, AutoSwitch s, bool on) => AutoValues(
-  acceptDebts: s == AutoSwitch.acceptDebts ? on : v.acceptDebts,
-  acceptEvents: s == AutoSwitch.acceptEvents ? on : v.acceptEvents,
-  syncDebts: s == AutoSwitch.syncDebts ? on : v.syncDebts,
-  syncEvents: s == AutoSwitch.syncEvents ? on : v.syncEvents,
+  acceptEventInvites: u.autoAcceptEventInvites,
+  acceptContactLinks: u.autoAcceptContactLinks,
+  acceptWalletInvites: u.autoAcceptWalletInvites,
 );
 
 /// One `PUT /users/me` for an auto switch.
@@ -125,6 +124,15 @@ Future<User> _saveAuto(UsersRepository users, AutoSwitch s, bool on) =>
       AutoSwitch.acceptEvents => users.setAutoAccept(events: on),
       AutoSwitch.syncDebts => users.setAutoSync(debts: on),
       AutoSwitch.syncEvents => users.setAutoSync(events: on),
+      AutoSwitch.acceptEventInvites => users.setAutoAcceptRequests(
+        eventInvites: on,
+      ),
+      AutoSwitch.acceptContactLinks => users.setAutoAcceptRequests(
+        contactLinks: on,
+      ),
+      AutoSwitch.acceptWalletInvites => users.setAutoAcceptRequests(
+        walletInvites: on,
+      ),
     };
 
 class _Body extends StatelessWidget {
@@ -157,10 +165,15 @@ class _Body extends StatelessWidget {
           final cubit = ctx.read<NotificationSettingsCubit>();
           final saved = _autoOf(user);
           final groups = notificationRows(s);
-          // The auto columns of the "บิลที่แชร์" card, in [autoColumns] order.
-          final autoLabels = [l.notifColumnAutoEvents, l.notifColumnAutoSplit];
+          // A card's auto column labels: "บิลที่แชร์" has อีเวนต์ | แบ่งจ่าย
+          // ([autoColumns] order), the requests card one อัตโนมัติ.
+          List<String> autoLabelsOf(NotificationGroup g) =>
+              g == NotificationGroup.request
+              ? [l.notifColumnAuto]
+              : [l.notifColumnAutoEvents, l.notifColumnAutoSplit];
 
           Widget row(NotificationRow r, ({String label, String? helper}) t) {
+            final autoLabels = autoLabelsOf(r.group);
             Widget build(AutoValues a, Map<AutoSwitch, ValueChanged<bool>> on) {
               return SettingSwitchColumnsRow(
                 key: ValueKey('notif-${r.key}'),
@@ -169,9 +182,7 @@ class _Body extends StatelessWidget {
                 cells: [
                   SettingSwitchCell(
                     value: r.notifyOn(s),
-                    onChanged: r.mutable
-                        ? (v) => cubit.setOn(r.type, v)
-                        : null,
+                    onChanged: r.mutable ? (v) => cubit.setOn(r.type, v) : null,
                     semanticLabel: '${l.notifColumnNotify} ${t.label}',
                   ),
                   for (final (i, auto) in r.autos.indexed)
@@ -214,8 +225,11 @@ class _Body extends StatelessWidget {
                   );
                   return true;
                 },
-                builder: (context, v, onChanged) =>
-                    nest(i + 1, _with(a, auto, v), {...on, auto: ?onChanged}),
+                builder: (context, v, onChanged) => nest(
+                  i + 1,
+                  a.withSwitch(auto, v),
+                  {...on, auto: ?onChanged},
+                ),
               );
             }
 
@@ -238,7 +252,10 @@ class _Body extends StatelessWidget {
                     first: first,
                     title: _groupTitle(l, g),
                     trailing: SettingColumnLabels(
-                      labels: [l.notifColumnNotify, if (hasAuto) ...autoLabels],
+                      labels: [
+                        l.notifColumnNotify,
+                        if (hasAuto) ...autoLabelsOf(g),
+                      ],
                     ),
                     children: children,
                   );

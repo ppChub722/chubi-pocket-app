@@ -5329,9 +5329,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifTypeRecurringAutoCreated => 'บันทึกอัตโนมัติ';
 
   @override
-  String get notifTypeRequestsHint => 'ต้องตอบ เลยปิดไม่ได้';
-
-  @override
   String get settingsSectionApp => 'แอป';
 
   @override
@@ -6492,7 +6489,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get notifSettingsOnOffLegend =>
-      'แจ้ง = ส่งแจ้งเตือนเรื่องนี้\nอีเวนต์ / แบ่งจ่าย = อัตโนมัติ ไม่ต้องถาม ทำให้เลย\nปิดอัตโนมัติอยู่ ต้องเปิดแจ้งไว้ เพราะต้องมีคนตอบ';
+      'แจ้ง = ส่งแจ้งเตือนเรื่องนี้\nอัตโนมัติ (อีเวนต์ / แบ่งจ่าย) = ไม่ต้องถาม ทำให้เลย\nปิดทั้งสองอย่าง = ไม่แจ้ง และไม่ทำอะไรเลย';
 
   @override
   String get notifGroupSharedBills => 'บิลที่แชร์';
@@ -6519,6 +6516,25 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifSetEventCompleted => 'อีเวนต์ปิดแล้ว';
 
   @override
+  String get notifSetEventInvite => 'เชิญเข้าอีเวนต์';
+
+  @override
+  String get notifSetEventInviteHint => 'อัตโนมัติ = เข้าร่วมอีเวนต์เลย';
+
+  @override
+  String get notifSetContactLink => 'ขอเชื่อมผู้ติดต่อ';
+
+  @override
+  String get notifSetContactLinkHint =>
+      'อัตโนมัติ = เชื่อมกับผู้ติดต่อของเขาเลย';
+
+  @override
+  String get notifSetWalletInvite => 'ชวนใช้กระเป๋า';
+
+  @override
+  String get notifSetWalletInviteHint => 'อัตโนมัติ = เข้าร่วมกระเป๋าเลย';
+
+  @override
   String get notifSetEventCompletedHint =>
       'ล็อกถาวร เลิกอัปเดต เคลมได้ครั้งเดียว';
 
@@ -6531,10 +6547,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get notifSetRecurringAutoCreatedHint => 'ระบบลงรายการให้ตามรอบ';
-
-  @override
-  String get notifSetRequests =>
-      'คำเชิญเข้าอีเวนต์ ขอเชื่อมผู้ติดต่อ ชวนใช้กระเป๋า';
 
   @override
   String get notifActionAddToBook => 'เพิ่มในสมุด';
@@ -6834,6 +6846,19 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsAcceptTitle => 'รับบิลใหม่อัตโนมัติ';
 
   @override
+  String get settingsAutoEventInvites => 'รับคำเชิญเข้าอีเวนต์อัตโนมัติ';
+
+  @override
+  String get settingsAutoContactLinks => 'รับคำขอเชื่อมผู้ติดต่ออัตโนมัติ';
+
+  @override
+  String get settingsAutoWalletInvites => 'รับคำชวนใช้กระเป๋าอัตโนมัติ';
+
+  @override
+  String get settingsAutoRequestCaption =>
+      'ใช้กับทุกคำขอ ตั้งที่ การตั้งค่า › การแจ้งเตือน ก็ได้';
+
+  @override
   String get eventDeleteKeepsBills =>
       'ลบแค่อีเวนต์ บิลข้างในยังอยู่ เป็นบิลแบ่งจ่าย ทุกคนยังเชื่อมกันเหมือนเดิม ไม่มีรายการในสมุดของใครถูกลบ';
 
@@ -6906,9 +6931,6 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get notifAutoDeleteHint =>
       'อีเวนต์: ตามช่องอีเวนต์ของแถว \"มีคนแก้บิลที่แชร์กับฉัน\"\nแบ่งจ่าย: สำเนาของฉันเป็นรายการธรรมดาเสมอ';
-
-  @override
-  String get notifSetProjectAddedHint => 'มีคนเพิ่มฉันเป็นสมาชิก';
 
   @override
   String get notifSetRecurringDueHint => 'งวดที่ต้องจ่าย / ต้องรับวันนี้';

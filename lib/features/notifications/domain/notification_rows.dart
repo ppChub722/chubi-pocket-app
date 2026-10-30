@@ -1,30 +1,73 @@
 import 'notification_settings.dart';
 
-/// The four account auto switches (one value each, on `/users/me`; the
-/// event and person pages show the same ones).
-enum AutoSwitch { acceptDebts, acceptEvents, syncDebts, syncEvents }
+/// The account auto switches (one value each, on `/users/me`; the event,
+/// person, contacts and wallets pages show the same ones). The last three
+/// answer a request by themselves (F2).
+enum AutoSwitch {
+  acceptDebts,
+  acceptEvents,
+  syncDebts,
+  syncEvents,
+  acceptEventInvites,
+  acceptContactLinks,
+  acceptWalletInvites,
+}
 
-/// The signed-in user's four auto switches.
+/// The signed-in user's auto switches.
 class AutoValues {
   const AutoValues({
     required this.acceptDebts,
     required this.acceptEvents,
     required this.syncDebts,
     required this.syncEvents,
+    this.acceptEventInvites = false,
+    this.acceptContactLinks = false,
+    this.acceptWalletInvites = false,
   });
 
   final bool acceptDebts;
   final bool acceptEvents;
   final bool syncDebts;
   final bool syncEvents;
+  final bool acceptEventInvites;
+  final bool acceptContactLinks;
+  final bool acceptWalletInvites;
 
   bool of(AutoSwitch s) => switch (s) {
     AutoSwitch.acceptDebts => acceptDebts,
     AutoSwitch.acceptEvents => acceptEvents,
     AutoSwitch.syncDebts => syncDebts,
     AutoSwitch.syncEvents => syncEvents,
+    AutoSwitch.acceptEventInvites => acceptEventInvites,
+    AutoSwitch.acceptContactLinks => acceptContactLinks,
+    AutoSwitch.acceptWalletInvites => acceptWalletInvites,
   };
+
+  /// These values with [s] set to [on].
+  AutoValues withSwitch(AutoSwitch s, bool on) => AutoValues(
+    acceptDebts: s == AutoSwitch.acceptDebts ? on : acceptDebts,
+    acceptEvents: s == AutoSwitch.acceptEvents ? on : acceptEvents,
+    syncDebts: s == AutoSwitch.syncDebts ? on : syncDebts,
+    syncEvents: s == AutoSwitch.syncEvents ? on : syncEvents,
+    acceptEventInvites: s == AutoSwitch.acceptEventInvites
+        ? on
+        : acceptEventInvites,
+    acceptContactLinks: s == AutoSwitch.acceptContactLinks
+        ? on
+        : acceptContactLinks,
+    acceptWalletInvites: s == AutoSwitch.acceptWalletInvites
+        ? on
+        : acceptWalletInvites,
+  );
 }
+
+/// A request type's own auto-accept switch (F2); null = not a request.
+AutoSwitch? requestSwitchOf(String type) => switch (type) {
+  'project_invite' => AutoSwitch.acceptEventInvites,
+  'contact_link_request' => AutoSwitch.acceptContactLinks,
+  'account_invite' => AutoSwitch.acceptWalletInvites,
+  _ => null,
+};
 
 /// What a row is about, for its words.
 enum NotificationRowKind {
@@ -42,6 +85,7 @@ enum NotificationRowKind {
 }
 
 /// The auto columns of the "บิลที่แชร์" card, in order: อีเวนต์, แบ่งจ่าย.
+/// The requests card has one: อัตโนมัติ.
 const autoColumns = 2;
 
 /// One row of the notification page (owner 2026-10-28): a [แจ้ง] switch that
@@ -73,7 +117,7 @@ class NotificationRow {
   /// The auto switches only mirror another row's (shown, not flipped here).
   final bool autoMirror;
 
-  /// False = requests: always on.
+  /// False = the BE says it can't be muted (always on).
   final bool mutable;
 
   /// Unique on the page.
@@ -93,8 +137,8 @@ const _deleted = 'shared_bill_deleted';
 
 /// The page's rows, grouped in page order. The new-bill and edit types are
 /// ONE row each in "บิลที่แชร์" (whatever group the BE lists them in), with
-/// the event and split auto switches side by side. Requests come as ONE row
-/// (they can't be muted).
+/// the event and split auto switches side by side. Each request is its own
+/// row with its own auto-accept switch (F2).
 Map<NotificationGroup, List<NotificationRow>> notificationRows(
   NotificationSettings s,
 ) {
@@ -105,13 +149,14 @@ Map<NotificationGroup, List<NotificationRow>> notificationRows(
   for (final g in NotificationGroup.values) {
     final rows = <NotificationRow>[];
     if (g == NotificationGroup.request) {
-      if (s.ofGroup(g).isNotEmpty) {
+      for (final t in s.ofGroup(g)) {
         rows.add(
           NotificationRow(
-            type: s.ofGroup(g).first.type,
+            type: t.type,
             group: g,
             kind: NotificationRowKind.other,
-            mutable: false,
+            autos: [requestSwitchOf(t.type)],
+            mutable: t.mutable,
           ),
         );
       }

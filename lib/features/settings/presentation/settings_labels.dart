@@ -61,13 +61,16 @@ String moneySummary(AppLocalizations l, User u) {
   ].join(' | ');
 }
 
-/// How many of the four auto switches (รับบิลใหม่ / อัปเดต, events / debts)
-/// are on.
+/// How many of the auto switches (รับบิลใหม่ / อัปเดต, events / debts, and
+/// the three requests) are on.
 int autoOnCount(User u) => [
   u.autoAcceptDebts,
   u.autoAcceptEvents,
   u.autoSyncDebts,
   u.autoSyncEvents,
+  u.autoAcceptEventInvites,
+  u.autoAcceptContactLinks,
+  u.autoAcceptWalletInvites,
 ].where((on) => on).length;
 
 /// "การแจ้งเตือน": "แจ้ง N จาก 11 เรื่อง | อัตโนมัติ M เรื่อง"; null before the

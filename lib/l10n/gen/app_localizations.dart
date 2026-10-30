@@ -9278,12 +9278,6 @@ abstract class AppLocalizations {
   /// **'Recorded automatically'**
   String get notifTypeRecurringAutoCreated;
 
-  /// No description provided for @notifTypeRequestsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Needs an answer, so it can\'t be turned off'**
-  String get notifTypeRequestsHint;
-
   /// No description provided for @settingsSectionApp.
   ///
   /// In en, this message translates to:
@@ -11284,7 +11278,7 @@ abstract class AppLocalizations {
   /// No description provided for @notifSettingsOnOffLegend.
   ///
   /// In en, this message translates to:
-  /// **'Notify = send me a notification about it\nEvents / Splits = auto: don\'t ask, just do it\nWith auto off, notify stays on: someone has to answer'**
+  /// **'Notify = send me a notification about it\nAuto (Events / Splits) = don\'t ask, just do it\nBoth off = no notification and nothing happens'**
   String get notifSettingsOnOffLegend;
 
   /// No description provided for @notifGroupSharedBills.
@@ -11329,6 +11323,42 @@ abstract class AppLocalizations {
   /// **'Event completed'**
   String get notifSetEventCompleted;
 
+  /// No description provided for @notifSetEventInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Event invites'**
+  String get notifSetEventInvite;
+
+  /// No description provided for @notifSetEventInviteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto = join the event at once'**
+  String get notifSetEventInviteHint;
+
+  /// No description provided for @notifSetContactLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact link requests'**
+  String get notifSetContactLink;
+
+  /// No description provided for @notifSetContactLinkHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto = link to their contact at once'**
+  String get notifSetContactLinkHint;
+
+  /// No description provided for @notifSetWalletInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet invites'**
+  String get notifSetWalletInvite;
+
+  /// No description provided for @notifSetWalletInviteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto = join the wallet at once'**
+  String get notifSetWalletInviteHint;
+
   /// No description provided for @notifSetEventCompletedHint.
   ///
   /// In en, this message translates to:
@@ -11352,12 +11382,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Entries recorded for me on schedule'**
   String get notifSetRecurringAutoCreatedHint;
-
-  /// No description provided for @notifSetRequests.
-  ///
-  /// In en, this message translates to:
-  /// **'Event invites, contact link requests, wallet invites'**
-  String get notifSetRequests;
 
   /// No description provided for @notifActionAddToBook.
   ///
@@ -11869,6 +11893,30 @@ abstract class AppLocalizations {
   /// **'Auto-accept new bills'**
   String get settingsAcceptTitle;
 
+  /// No description provided for @settingsAutoEventInvites.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept event invites automatically'**
+  String get settingsAutoEventInvites;
+
+  /// No description provided for @settingsAutoContactLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept contact link requests automatically'**
+  String get settingsAutoContactLinks;
+
+  /// No description provided for @settingsAutoWalletInvites.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept wallet invites automatically'**
+  String get settingsAutoWalletInvites;
+
+  /// No description provided for @settingsAutoRequestCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'For every request; also in Settings › Notifications'**
+  String get settingsAutoRequestCaption;
+
   /// No description provided for @eventDeleteKeepsBills.
   ///
   /// In en, this message translates to:
@@ -11982,12 +12030,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Events: follows the Events switch of \"Someone edited a shared bill\"\nSplits: my copy always becomes a plain record'**
   String get notifAutoDeleteHint;
-
-  /// No description provided for @notifSetProjectAddedHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Someone adds me as a member'**
-  String get notifSetProjectAddedHint;
 
   /// No description provided for @notifSetRecurringDueHint.
   ///

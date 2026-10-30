@@ -102,6 +102,9 @@ class User extends Equatable {
     this.autoSyncDebts = true,
     this.autoAcceptEvents = true,
     this.autoAcceptDebts = false,
+    this.autoAcceptEventInvites = false,
+    this.autoAcceptContactLinks = false,
+    this.autoAcceptWalletInvites = false,
     this.notificationSummary,
     this.createdAt,
     this.updatedAt,
@@ -169,6 +172,12 @@ class User extends Equatable {
   final bool autoAcceptEvents;
   final bool autoAcceptDebts;
 
+  /// The three requests' own auto-accept switches (0.4.2-3 F2, default off):
+  /// เชิญเข้าอีเวนต์, ขอเชื่อมผู้ติดต่อ, ชวนใช้กระเป๋า.
+  final bool autoAcceptEventInvites;
+  final bool autoAcceptContactLinks;
+  final bool autoAcceptWalletInvites;
+
   final NotificationSummary? notificationSummary;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -228,6 +237,12 @@ class User extends Equatable {
       autoSyncDebts: (json['auto_sync_debts'] as bool?) ?? true,
       autoAcceptEvents: (json['auto_accept_events'] as bool?) ?? true,
       autoAcceptDebts: (json['auto_accept_debts'] as bool?) ?? false,
+      autoAcceptEventInvites:
+          (json['auto_accept_event_invites'] as bool?) ?? false,
+      autoAcceptContactLinks:
+          (json['auto_accept_contact_links'] as bool?) ?? false,
+      autoAcceptWalletInvites:
+          (json['auto_accept_wallet_invites'] as bool?) ?? false,
       notificationSummary: json['notification_summary'] is Map
           ? NotificationSummary.fromJson(
               (json['notification_summary'] as Map).cast<String, dynamic>(),
@@ -270,6 +285,9 @@ class User extends Equatable {
       autoSyncDebts: autoSyncDebts,
       autoAcceptEvents: autoAcceptEvents,
       autoAcceptDebts: autoAcceptDebts,
+      autoAcceptEventInvites: autoAcceptEventInvites,
+      autoAcceptContactLinks: autoAcceptContactLinks,
+      autoAcceptWalletInvites: autoAcceptWalletInvites,
       notificationSummary: notificationSummary,
       feeCategoryId: clearFeeCategory
           ? null
@@ -311,6 +329,9 @@ class User extends Equatable {
     autoSyncDebts,
     autoAcceptEvents,
     autoAcceptDebts,
+    autoAcceptEventInvites,
+    autoAcceptContactLinks,
+    autoAcceptWalletInvites,
     notificationSummary,
     createdAt,
     updatedAt,
