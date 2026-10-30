@@ -18,8 +18,12 @@ class UsersRepository {
     String? currency,
     String? defaultAccountId,
     bool clearDefaultAccount = false,
+    AvatarSettings? avatarSettings,
   }) async {
     final body = <String, dynamic>{};
+    if (avatarSettings != null) {
+      body['avatar_settings'] = avatarSettings.toJson();
+    }
     if (clearDefaultAccount) {
       body['default_account_id'] = null;
     } else if (defaultAccountId != null) {
@@ -65,6 +69,11 @@ class UsersRepository {
       throw ApiException.fromDioException(e);
     }
   }
+
+  /// The profile picture I picked (0.4.2 1b): a photo source needs that
+  /// photo (409 AVATAR_SOURCE_UNAVAILABLE).
+  Future<User> setAvatarSettings(AvatarSettings settings) =>
+      _put({'avatar_settings': settings.toJson()});
 
   /// Partial merge into `preferences` (only the keys sent change).
   Future<User> updatePreferences(Map<String, Object?> prefs) =>

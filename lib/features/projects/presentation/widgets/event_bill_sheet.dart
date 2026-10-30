@@ -216,6 +216,7 @@ class _Person {
     this.memberId,
     this.contactId,
     this.iconCode,
+    this.avatar,
     this.level = PersonLevel.name,
     this.isMe = false,
     this.isNew = false,
@@ -227,6 +228,7 @@ class _Person {
     memberId: m.id,
     contactId: m.contactId,
     iconCode: m.iconCode,
+    avatar: m.avatar,
     level: projectMemberLevel(m),
     isMe: m.isMe,
   );
@@ -236,8 +238,14 @@ class _Person {
   final String? memberId;
   final String? contactId;
   final IconCode? iconCode;
+
+  /// A member's avatar from the BE (null for a typed name).
+  final AvatarData? avatar;
   final PersonLevel level;
   final bool isMe;
+
+  AvatarData get shownAvatar =>
+      avatar ?? AvatarData.forName(name, iconCode: iconCode);
 
   /// Not an event member yet: added on save.
   final bool isNew;
@@ -1172,6 +1180,8 @@ class _EventBillSheetState extends State<_EventBillSheet> {
         ? ProjectMemberAvatar(
             name: p.name,
             iconCode: p.iconCode,
+
+            avatar: p.avatar,
             level: level,
             size: SplitRow.avatarSize,
           )
@@ -1179,6 +1189,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
             name: p.name,
             level: level,
             iconCode: p.iconCode,
+            avatar: p.avatar,
             size: SplitRow.avatarSize,
           );
   }
@@ -1203,6 +1214,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
         id: p.key,
         name: p.name,
         avatar: _personAvatar(p),
+        color: ProfileColors.of(context, p.shownAvatar),
         isMe: p.isMe,
         editableName: p.typed && !payerFixed,
         onName: (v) => setState(() => p.name = v),
@@ -1285,6 +1297,7 @@ class _EventBillSheetState extends State<_EventBillSheet> {
             id: 'pay:${p.key}',
             name: p.name,
             avatar: _personAvatar(p),
+            color: ProfileColors.of(context, p.shownAvatar),
             isMe: p.isMe,
             amount: p.key == _payerKey ? first : _morePayers[p.key],
             // The first payer pays what the others leave.

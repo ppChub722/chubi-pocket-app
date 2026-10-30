@@ -382,22 +382,27 @@ Widget buildPeopleAccountsPage(BuildContext context) {
               ],
             ),
           ),
-          const HubUse(
-            label: 'UserAvatar — 28',
+          HubUse(
+            label: 'Avatar — 28',
             page: 'Edit profile page',
-            child: UserAvatar(displayName: 'Aom Chan', size: 28),
+            child: Avatar(AvatarData.forName('Aom Chan'), size: 28),
           ),
-          const HubUse(
-            label: 'UserAvatar — 40',
+          HubUse(
+            label: 'Avatar — 40',
             page: 'Edit profile page',
-            child: UserAvatar(displayName: 'Aom Chan'),
+            child: Avatar(AvatarData.forName('Aom Chan')),
           ),
-          const HubUse(
-            label: 'UserAvatar — with its own icon',
+          HubUse(
+            label: 'Avatar — with its own icon',
             page: 'Edit profile page',
-            child: UserAvatar(
-              displayName: 'Bee',
-              iconCode: IconCode(icon: 'favorite', iconColors: ['#EF4444']),
+            child: Avatar(
+              AvatarData.forName(
+                'Bee',
+                iconCode: const IconCode(
+                  icon: 'favorite',
+                  iconColors: ['#EF4444'],
+                ),
+              ),
             ),
           ),
           const HubUse(

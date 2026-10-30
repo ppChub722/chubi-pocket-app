@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart' show Options, ResponseType;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -35,6 +36,8 @@ import '../features/budgets/presentation/cubit/budgets_cubit.dart';
 import '../features/auth/presentation/cubit/auth_cubit.dart';
 import '../features/categories/data/categories_repository.dart';
 import '../features/categories/presentation/cubit/categories_cubit.dart';
+import '../features/connections/data/connections_repository.dart';
+import '../features/connections/presentation/cubit/connections_cubit.dart';
 import '../features/contacts/data/contacts_repository.dart';
 import '../features/contacts/presentation/cubit/contacts_cubit.dart';
 import '../features/home/data/dashboard_repository.dart';
@@ -81,6 +84,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
   late final ApiClient _apiClient;
   late final AuthRepository _authRepository;
   late final UsersRepository _usersRepository;
+  late final ConnectionsRepository _connectionsRepository;
   late final AccountsRepository _accountsRepository;
   late final CategoriesRepository _categoriesRepository;
   late final TagsRepository _tagsRepository;
@@ -115,6 +119,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     _apiClient = ApiClient(tokenStorage: _tokenStorage);
     _authRepository = AuthRepository(client: _apiClient);
     _usersRepository = UsersRepository(client: _apiClient);
+    _connectionsRepository = ConnectionsRepository(client: _apiClient);
     _accountsRepository = AccountsRepository(client: _apiClient);
     _categoriesRepository = CategoriesRepository(client: _apiClient);
     _tagsRepository = TagsRepository(client: _apiClient);
@@ -204,6 +209,9 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
         RepositoryProvider<SecureTokenStorage>.value(value: _tokenStorage),
         RepositoryProvider<AuthRepository>.value(value: _authRepository),
         RepositoryProvider<UsersRepository>.value(value: _usersRepository),
+        RepositoryProvider<ConnectionsRepository>.value(
+          value: _connectionsRepository,
+        ),
         RepositoryProvider<AccountsRepository>.value(
           value: _accountsRepository,
         ),
@@ -313,6 +321,9 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
           BlocProvider<BudgetsCubit>(
             create: (_) => BudgetsCubit(repository: _budgetsRepository),
           ),
+          BlocProvider<ConnectionsCubit>(
+            create: (_) => ConnectionsCubit(repository: _connectionsRepository),
+          ),
           BlocProvider<DashboardCubit>(
             create: (_) => DashboardCubit(repository: _dashboardRepository),
           ),
@@ -389,23 +400,27 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                 onGenerateTitle: (ctx) => AppLocalizations.of(ctx)!.appName,
                 routerConfig: _router,
                 // Same status-bar style on screens without an AppTopBar.
-                builder: (context, child) => AppUiConfig(
-                  child: AnnotatedRegion<SystemUiOverlayStyle>(
-                    value: ThemeBuilder.systemBarsStyle(
-                      Theme.of(context).scaffoldBackgroundColor,
-                    ),
-                    child: KeyboardInsetsGuard(
-                      child: ValueListenableBuilder<bool>(
-                        valueListenable: _appRefresh.busy,
-                        builder: (context, busy, shell) =>
-                            SavingOverlay(saving: busy, child: shell!),
+                builder: (context, child) => ServerImageScope(
+                  baseUrl: _apiClient.dio.options.baseUrl,
+                  fetch: _fetchServerImage,
+                  child: AppUiConfig(
+                    child: AnnotatedRegion<SystemUiOverlayStyle>(
+                      value: ThemeBuilder.systemBarsStyle(
+                        Theme.of(context).scaffoldBackgroundColor,
+                      ),
+                      child: KeyboardInsetsGuard(
                         child: ValueListenableBuilder<bool>(
-                          valueListenable: _onDevHub,
-                          builder: (context, devHub, page) =>
-                              ConnectionShell(devHub: devHub, child: page!),
-                          child: RefreshScope(
-                            registry: _refreshRegistry,
-                            child: child ?? const SizedBox.shrink(),
+                          valueListenable: _appRefresh.busy,
+                          builder: (context, busy, shell) =>
+                              SavingOverlay(saving: busy, child: shell!),
+                          child: ValueListenableBuilder<bool>(
+                            valueListenable: _onDevHub,
+                            builder: (context, devHub, page) =>
+                                ConnectionShell(devHub: devHub, child: page!),
+                            child: RefreshScope(
+                              registry: _refreshRegistry,
+                              child: child ?? const SizedBox.shrink(),
+                            ),
                           ),
                         ),
                       ),
@@ -418,6 +433,18 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
         ),
       ),
     );
+  }
+
+  /// A server picture (avatars, brand logos) through the API client: the
+  /// Bearer token goes with it; the kit caches it by URL.
+  Future<Uint8List> _fetchServerImage(Uri url) async {
+    final res = await _apiClient.dio.getUri<List<int>>(
+      url,
+      options: Options(responseType: ResponseType.bytes),
+    );
+    final data = res.data;
+    if (data == null) throw StateError('no picture: $url');
+    return data is Uint8List ? data : Uint8List.fromList(data);
   }
 
   bool _authIdentityChanged(AuthState prev, AuthState curr) {
@@ -453,6 +480,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     ctx.read<ProjectsCubit>().clear();
     ctx.read<SavingGoalsCubit>().clear();
     ctx.read<BudgetsCubit>().clear();
+    ctx.read<ConnectionsCubit>().clear();
     ctx.read<DashboardCubit>().clear();
     ctx.read<PendingCubit>().clear();
     ctx.read<UnreadBadgeCubit>().clear();

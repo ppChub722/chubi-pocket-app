@@ -10,6 +10,8 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/domain/user.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
+import '../../../connections/presentation/connection_view.dart';
+import '../../../connections/presentation/cubit/connections_cubit.dart';
 import '../../../preferences/page_prefs.dart';
 import '../../../users/presentation/refresh_me.dart';
 import '../settings_labels.dart';
@@ -18,8 +20,26 @@ import 'settings_money_page.dart' show signedInUser;
 /// The settings home (0.4.1-2 P7; owner 2026-10-28 mock): the profile card,
 /// "ตั้งค่า" (the four groups, each with one line of its current values),
 /// "ข้อมูล" (archive, CSV export, version), then logout.
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  @override
+  void initState() {
+    super.initState();
+    // The card's linked-app logos (0.4.2 1b); once, then the profile /
+    // connection pages keep the rows fresh.
+    context.read<ConnectionsCubit>().ensureLoaded();
+  }
+
+  Future<void> _refresh() async {
+    final connections = context.read<ConnectionsCubit>();
+    await Future.wait([refreshMe(context), connections.load()]);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +57,7 @@ class SettingsPage extends StatelessWidget {
                 .where((p) => p.changed(user.pagePref(p.id)))
                 .length;
             return DetailPageBody(
-              onRefresh: () => refreshMe(context),
+              onRefresh: _refresh,
               physics: const AlwaysScrollableScrollPhysics(),
               topInset: inset.top + AppSpacing.sm,
               bottomInset: AppSpacing.huge + inset.bottom,
@@ -107,26 +127,37 @@ class SettingsPage extends StatelessWidget {
   }
 
   Widget _profileCard(BuildContext context, User user) {
-    final tint = user.iconCode.tintFor(
-      Theme.of(context).extension<AppColors>()!,
-      avatarName: user.displayName,
+    // Tint = my colour 1 (0.4.2 1b profile colours).
+    final tint = ProfileColors.main(
+      user.avatar,
+      palette: Theme.of(context).extension<AppColors>()!,
+      surface: Theme.of(context).colorScheme.surface,
     );
     return AppHeroCard(
       style: HeroStyle.tinted(color: tint, glyph: AppIcons.profile),
       onTap: () => context.push('/settings/profile'),
       content: [
         HeroIdentity(
-          icon: UserAvatar(
-            displayName: user.displayName,
-            iconCode: user.iconCode,
-            size: 40,
-          ),
+          icon: Avatar(user.avatar, size: 40),
           name: Text(user.displayName),
           fact: Text(
             [
               '@${user.username}',
               if (user.email?.isNotEmpty ?? false) user.email!,
             ].join(' | '),
+          ),
+          // Third line: the logos of the linked apps only.
+          description: BlocBuilder<ConnectionsCubit, ConnectionsState>(
+            buildWhen: (a, b) => a.items != b.items,
+            builder: (context, s) {
+              final logos = linkedLogos(s.items ?? const []);
+              return logos.isEmpty
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.xs),
+                      child: ProviderLogoStrip(logos: logos),
+                    );
+            },
           ),
         ),
       ],

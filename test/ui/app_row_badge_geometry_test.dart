@@ -77,7 +77,7 @@ void main() {
     ),
     'logo': ((_) => logo(), 32),
     'avatar': (
-      (_) => const UserAvatar(key: leadingKey, displayName: 'Pond', size: 32),
+      (_) => Avatar(AvatarData.forName('Pond'), key: leadingKey, size: 32),
       32,
     ),
   };
@@ -146,7 +146,7 @@ void main() {
         children: [
           AppDetailRow(
             key: const Key('a'),
-            leading: const UserAvatar(displayName: 'Pond', size: 32),
+            leading: Avatar(AvatarData.forName('Pond'), size: 32),
             leadingSize: 32,
             badge: const RowBadge.logo(ColoredBox(color: Color(0xFF229ED9))),
             label: 'Linked',
@@ -160,9 +160,9 @@ void main() {
             leadingSize: 32,
             label: 'Logo',
           ),
-          const AppDetailRow(
-            key: Key('c'),
-            leading: UserAvatar(displayName: 'Pond', size: 32),
+          AppDetailRow(
+            key: const Key('c'),
+            leading: Avatar(AvatarData.forName('Pond'), size: 32),
             leadingSize: 32,
             label: 'Plain',
           ),

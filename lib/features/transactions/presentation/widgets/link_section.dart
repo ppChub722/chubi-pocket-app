@@ -126,6 +126,7 @@ class _LinkSectionState extends State<LinkSection> {
       name: p.name,
       level: level,
       iconCode: p.person?.iconCode,
+      avatar: p.person?.avatar,
       size: SplitRow.avatarSize,
       reserveLinkSlot: true,
     );
@@ -224,6 +225,10 @@ class _LinkSectionState extends State<LinkSection> {
         autofocusName: identical(d, _justAdded),
         name: d.personName,
         avatar: _mark(_personOfDraft(d)),
+        color: ProfileColors.of(
+          context,
+          person.person?.avatar ?? AvatarData.forName(d.personName),
+        ),
         editableName: d.contactId == null,
         onName: (v) => _c.renameDraft(d, v),
         onChangePerson: () => _changeDraftPerson(d),
@@ -276,6 +281,10 @@ class _LinkSectionState extends State<LinkSection> {
             id: p.key,
             name: p.name,
             avatar: _mark(p),
+            color: ProfileColors.of(
+              context,
+              p.person?.avatar ?? AvatarData.forName(p.name),
+            ),
             amount: link.eventShareOf(p, bill, members),
             onAmount: (v) => _c.setEventShare(p, v),
             paid: p == payer,

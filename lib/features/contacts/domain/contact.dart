@@ -10,7 +10,8 @@ class LinkedUser extends Equatable {
     this.username,
     this.email,
     this.iconCode,
-  });
+    AvatarData? avatar,
+  }) : _avatar = avatar;
 
   final String id;
   final String displayName;
@@ -18,19 +19,34 @@ class LinkedUser extends Equatable {
   final String? username;
   final String? email;
   final IconCode? iconCode;
+  final AvatarData? _avatar;
 
-  factory LinkedUser.fromJson(Map<String, dynamic> json) => LinkedUser(
-    id: json['id'] as String,
-    displayName: json['display_name'] as String,
-    username: json['username'] as String?,
-    email: json['email'] as String?,
-    iconCode: json['icon_code'] != null
-        ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
-        : null,
-  );
+  /// 0.4.2 1b: the BE's avatar; built from the name + icon when absent.
+  AvatarData get avatar =>
+      _avatar ?? AvatarData.forName(displayName, iconCode: iconCode);
+
+  factory LinkedUser.fromJson(Map<String, dynamic> json) {
+    final name = json['display_name'] as String;
+    final avatar = AvatarData.parse(json, name: name);
+    return LinkedUser(
+      id: json['id'] as String,
+      displayName: name,
+      username: json['username'] as String?,
+      email: json['email'] as String?,
+      iconCode: avatar.iconCode,
+      avatar: avatar,
+    );
+  }
 
   @override
-  List<Object?> get props => [id, displayName, username, email, iconCode];
+  List<Object?> get props => [
+    id,
+    displayName,
+    username,
+    email,
+    iconCode,
+    _avatar,
+  ];
 }
 
 class Contact extends Equatable {
@@ -50,7 +66,8 @@ class Contact extends Equatable {
     this.lastUsedAt,
     this.createdAt,
     this.updatedAt,
-  });
+    AvatarData? avatar,
+  }) : _avatar = avatar;
 
   final String id;
 
@@ -67,7 +84,15 @@ class Contact extends Equatable {
   final String? description;
   final String? note;
 
+  /// The contact's icon as the BE resolves it (`avatar.icon_code`: the
+  /// linked user's when linked, else the contact's own; create / update
+  /// still send `icon_code`).
   final IconCode? iconCode;
+  final AvatarData? _avatar;
+
+  /// 0.4.2 1b: the BE's avatar; built from the name + icon when absent.
+  AvatarData get avatar =>
+      _avatar ?? AvatarData.forName(name, iconCode: iconCode);
   final LinkedUser? linkedUser;
   final ContactStatus status;
   final DateTime? lastUsedAt;
@@ -78,6 +103,7 @@ class Contact extends Equatable {
   bool get isArchived => status == ContactStatus.archived;
 
   factory Contact.fromJson(Map<String, dynamic> json) {
+    final avatar = AvatarData.parse(json, name: json['name'] as String);
     return Contact(
       id: json['id'] as String,
       name: json['name'] as String,
@@ -88,9 +114,8 @@ class Contact extends Equatable {
       phone: json['phone'] as String?,
       description: json['description'] as String?,
       note: json['note'] as String?,
-      iconCode: json['icon_code'] != null
-          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
-          : null,
+      iconCode: avatar.iconCode,
+      avatar: avatar,
       linkedUser: json['linked_user'] != null
           ? LinkedUser.fromJson(json['linked_user'] as Map<String, dynamic>)
           : null,
@@ -122,6 +147,7 @@ class Contact extends Equatable {
     lastUsedAt,
     createdAt,
     updatedAt,
+    _avatar,
   ];
 }
 
@@ -242,26 +268,40 @@ class SenderProfile extends Equatable {
     this.email,
     this.iconCode,
     this.contactId,
-  });
+    AvatarData? avatar,
+  }) : _avatar = avatar;
 
   final String id;
   final String displayName;
   final String? email;
   final IconCode? iconCode;
   final String? contactId;
+  final AvatarData? _avatar;
+
+  /// 0.4.2 1b: the BE's avatar; built from the name + icon when absent.
+  AvatarData get avatar =>
+      _avatar ?? AvatarData.forName(displayName, iconCode: iconCode);
 
   factory SenderProfile.fromJson(Map<String, dynamic> json) {
+    final name = json['display_name'] as String;
+    final avatar = AvatarData.parse(json, name: name);
     return SenderProfile(
       id: json['id'] as String,
-      displayName: json['display_name'] as String,
+      displayName: name,
       email: json['email'] as String?,
-      iconCode: json['icon_code'] != null
-          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
-          : null,
+      iconCode: avatar.iconCode,
       contactId: json['contact_id'] as String?,
+      avatar: avatar,
     );
   }
 
   @override
-  List<Object?> get props => [id, displayName, email, iconCode, contactId];
+  List<Object?> get props => [
+    id,
+    displayName,
+    email,
+    iconCode,
+    contactId,
+    _avatar,
+  ];
 }

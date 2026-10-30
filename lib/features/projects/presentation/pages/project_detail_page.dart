@@ -593,12 +593,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       fromAvatar: ProjectMemberAvatar(
         name: x.from.name,
         iconCode: x.from.iconCode,
+        avatar: x.from.avatar,
         size: 32,
       ),
       fromName: x.from.name,
       toAvatar: ProjectMemberAvatar(
         name: x.to.name,
         iconCode: x.to.iconCode,
+        avatar: x.to.avatar,
         size: 20,
       ),
       toName: x.to.name,
@@ -707,6 +709,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             leading: ProjectMemberAvatar(
               name: p.displayName,
               iconCode: p.iconCode,
+              avatar: p.avatar,
               size: 32,
             ),
             title: p.displayName,
@@ -1145,6 +1148,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             avatar: ProjectMemberAvatar(
               name: m.displayName,
               iconCode: m.iconCode,
+              avatar: m.avatar,
               level: projectMemberLevel(m),
               size: 32,
             ),

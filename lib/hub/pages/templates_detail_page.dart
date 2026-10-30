@@ -220,7 +220,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
         header: HeroHeader(leading: const [], onEdit: () {}),
         content: [
           HeroIdentity(
-            icon: const UserAvatar(displayName: 'Lee', size: 52),
+            icon: Avatar(AvatarData.forName('Lee'), size: 52),
             name: const Text('Lee'),
           ),
         ],

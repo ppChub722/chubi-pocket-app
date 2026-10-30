@@ -262,22 +262,14 @@ class _MemberRow extends StatelessWidget {
         l.walletMemberLeft(_dateOnly(member.leftAt!, locale)),
     ];
     final role = member.pending
-        ? ListRowChip(
-            l.walletMemberPending,
-            tone: Tone.warning,
-            selected: true,
-          )
+        ? ListRowChip(l.walletMemberPending, tone: Tone.warning, selected: true)
         : ListRowChip(
             member.isOwner ? l.walletMemberRoleOwner : l.walletMemberRoleMember,
             tone: member.isOwner ? Tone.primary : Tone.neutral,
             selected: true,
           );
     return AppListRow(
-      leading: UserAvatar(
-        displayName: member.name,
-        iconCode: member.iconCode,
-        size: 40,
-      ),
+      leading: Avatar(member.avatar, size: 40),
       title: isSelf ? '${member.name} (${l.walletMemberYou})' : member.name,
       status: role,
       line2: dates.isEmpty ? null : ListRowLine(parts: dates),

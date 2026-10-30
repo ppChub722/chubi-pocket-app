@@ -609,7 +609,7 @@ Widget buildOthersPage(BuildContext context) {
             ),
             content: [
               HeroIdentity(
-                icon: UserAvatar(displayName: name, size: 52),
+                icon: Avatar(AvatarData.forName(name), size: 52),
                 name: Text(name),
                 fact: Text('@${name.toLowerCase().replaceAll(' ', '')}'),
                 trailing: const AppIcon(AppIcons.chevronRight),

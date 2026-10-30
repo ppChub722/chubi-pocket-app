@@ -4,7 +4,8 @@ import '../../tokens/app/app_icons.dart';
 import '../icons/icon_code.dart';
 import '../../atoms/corner_badge.dart';
 import '../../atoms/dashed_rect_border.dart';
-import '../../atoms/user_avatar.dart';
+import 'avatar.dart';
+import 'avatar_data.dart';
 
 /// [empty] = a spot with nobody in it yet (an event member removed: "( ) ____"
 /// on their bills, to assign).
@@ -30,6 +31,7 @@ class PersonMark extends StatelessWidget {
     required this.name,
     required this.level,
     this.iconCode,
+    this.avatar,
     this.size = 20,
     this.reserveLinkSlot = false,
     this.tappable = false,
@@ -48,6 +50,10 @@ class PersonMark extends StatelessWidget {
   final PersonLevel level;
 
   final IconCode? iconCode;
+
+  /// The BE's avatar (contact / linked levels); null = built from [name] +
+  /// [iconCode].
+  final AvatarData? avatar;
   final double size;
 
   /// Kept for callers; no-op now that the badge sits on the avatar.
@@ -98,9 +104,12 @@ class PersonMark extends StatelessWidget {
                   ),
                 )
               : plain
-        : UserAvatar(
-            displayName: name.isEmpty ? '?' : name,
-            iconCode: iconCode,
+        : Avatar(
+            avatar ??
+                AvatarData.forName(
+                  name.isEmpty ? '?' : name,
+                  iconCode: iconCode,
+                ),
             size: size,
           );
     if (level != PersonLevel.linked) return mark;

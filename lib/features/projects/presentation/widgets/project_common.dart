@@ -63,8 +63,12 @@ String projectDay(DateTime d) =>
     '${d.month.toString().padLeft(2, '0')}-'
     '${d.day.toString().padLeft(2, '0')}';
 
-Widget memberAvatar(ProjectMember m, {double size = 32}) =>
-    ProjectMemberAvatar(name: m.displayName, iconCode: m.iconCode, size: size);
+Widget memberAvatar(ProjectMember m, {double size = 32}) => ProjectMemberAvatar(
+  name: m.displayName,
+  iconCode: m.iconCode,
+  avatar: m.avatar,
+  size: size,
+);
 
 class ProjectView {
   ProjectView({

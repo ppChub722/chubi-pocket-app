@@ -313,7 +313,7 @@ class _ButtonPageState extends State<_ButtonPage> {
                 child: AppAvatarButton(
                   tooltip: 'Profile',
                   onTap: () {},
-                  child: const UserAvatar(displayName: 'Aom Chan', size: 32),
+                  child: Avatar(AvatarData.forName('Aom Chan'), size: 32),
                 ),
               ),
               HubCell(
@@ -322,7 +322,7 @@ class _ButtonPageState extends State<_ButtonPage> {
                   tooltip: 'Profile',
                   active: true,
                   onTap: () {},
-                  child: const UserAvatar(displayName: 'Aom Chan', size: 32),
+                  child: Avatar(AvatarData.forName('Aom Chan'), size: 32),
                 ),
               ),
             ],
@@ -540,14 +540,16 @@ Widget _profileChip(IconCode code, {required bool active}) {
     active: active,
     tooltip: 'Profile',
     onTap: () {},
-    child: UserAvatar(
-      displayName: 'Bee',
-      iconCode: IconCode(
-        icon: code.icon,
-        iconColors: code.iconColors,
-        background: code.background,
-        bgColors: code.bgColors,
-        shape: code.shape,
+    child: Avatar(
+      AvatarData.forName(
+        'Bee',
+        iconCode: IconCode(
+          icon: code.icon,
+          iconColors: code.iconColors,
+          background: code.background,
+          bgColors: code.bgColors,
+          shape: code.shape,
+        ),
       ),
       size: 32,
     ),

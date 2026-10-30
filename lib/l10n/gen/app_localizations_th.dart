@@ -6833,4 +6833,154 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get connectionCantConnect => 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้';
+
+  @override
+  String get connectionsNotLinked => 'ยังไม่เชื่อม';
+
+  @override
+  String get connectionsPermissionChat => 'จดรายการผ่านแชต';
+
+  @override
+  String get connectionsPermissionAsk => 'ถามยอดเงิน';
+
+  @override
+  String get connectionsPermissionSlip => 'ส่งสลิป';
+
+  @override
+  String get connectionsPermissionNotify => 'แจ้งเตือน';
+
+  @override
+  String get connectionsPermissionLogin => 'เข้าสู่ระบบด้วย Google';
+
+  @override
+  String get connectionsPermissionSheets => 'ส่งรายการไป Sheets';
+
+  @override
+  String get connectionsPermissionCalendar => 'ลงวันครบกำหนดใน Calendar';
+
+  @override
+  String connectionsErrorNoPhoto(String name) {
+    return '$name ไม่ส่งรูปให้';
+  }
+
+  @override
+  String get connectionsErrorLastLoginMethod =>
+      'ตั้งรหัสผ่านก่อน ไม่งั้นจะเข้าบัญชีไม่ได้';
+
+  @override
+  String get avatarColorsTitle => 'สีและขอบรูป';
+
+  @override
+  String avatarColorsSlot(int n) {
+    return 'สี $n';
+  }
+
+  @override
+  String get avatarColorsRingColor => 'สีขอบ';
+
+  @override
+  String get avatarColorsClear => 'ล้างสีนี้';
+
+  @override
+  String get avatarBorderNone => 'ไม่มี';
+
+  @override
+  String get avatarBorderThin => 'บาง';
+
+  @override
+  String get avatarBorderThick => 'หนา';
+
+  @override
+  String get avatarBorderDashed => 'เส้นประ';
+
+  @override
+  String get profileSectionConnections => 'การเชื่อมต่อ';
+
+  @override
+  String get profileSectionPicture => 'รูปโปรไฟล์';
+
+  @override
+  String get profileSetPassword => 'ตั้งรหัสผ่าน';
+
+  @override
+  String get profileSetPasswordSnackSuccess => 'ตั้งรหัสผ่านแล้ว';
+
+  @override
+  String profileUsernameReadOnly(String username) {
+    return '@$username (แก้ไม่ได้)';
+  }
+
+  @override
+  String get profilePictureIcon => 'ไอคอน';
+
+  @override
+  String get profilePictureUpload => 'อัปโหลดเอง';
+
+  @override
+  String get profilePictureEdit => 'แก้';
+
+  @override
+  String profilePictureImportedAt(String date) {
+    return 'นำเข้าเมื่อ $date';
+  }
+
+  @override
+  String get profileColorsLabel => 'สีโปรไฟล์ 1–3';
+
+  @override
+  String get connectionsTapToLink => 'แตะเพื่อเชื่อม';
+
+  @override
+  String get connectionsSectionPermissions => 'สิทธิ์การใช้งาน';
+
+  @override
+  String connectionsPhotoFrom(String name) {
+    return 'รูปจาก $name';
+  }
+
+  @override
+  String get connectionsPhotoNotImported => 'ยังไม่ได้นำเข้า';
+
+  @override
+  String get connectionsPhotoUpdate => 'อัปเดต';
+
+  @override
+  String get connectionsPhotoImport => 'นำเข้า';
+
+  @override
+  String connectionsPhotoDeleteTitle(String name) {
+    return 'ลบรูปจาก $name?';
+  }
+
+  @override
+  String get connectionsPhotoDeleteInUse =>
+      'ใช้เป็นรูปโปรไฟล์อยู่ ลบแล้วจะใช้ไอคอนแทน';
+
+  @override
+  String connectionsChangeAccount(String name) {
+    return 'เปลี่ยนบัญชี $name';
+  }
+
+  @override
+  String get connectionsUnlink => 'ยกเลิกการเชื่อม';
+
+  @override
+  String connectionsUnlinkTitle(String name) {
+    return 'ยกเลิกการเชื่อม $name?';
+  }
+
+  @override
+  String connectionsLink(String name) {
+    return 'เชื่อม $name';
+  }
+
+  @override
+  String connectionsLinkedAt(String date) {
+    return 'เชื่อมเมื่อ $date';
+  }
+
+  @override
+  String connectionsOpenFailed(String name) {
+    return 'เปิด $name ไม่ได้';
+  }
 }

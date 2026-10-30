@@ -15,6 +15,7 @@ class BillPerson {
     this.autofocusName = false,
     this.onName,
     this.onChangePerson,
+    this.color,
     this.amount,
     this.auto = false,
     this.onAmount,
@@ -41,6 +42,10 @@ class BillPerson {
 
   /// Tap the avatar / the picked name to pick somebody else.
   final VoidCallback? onChangePerson;
+
+  /// The picked name pill's colour (the person's colour 1); null = the
+  /// name-hash colour.
+  final Color? color;
 
   final double? amount;
   final bool auto;
@@ -212,7 +217,7 @@ class _BillPersonRowState extends State<_BillPersonRow> {
             hint: l.txSplitNameHint,
             onChanged: p.onName,
           )
-        : SplitRowName.picked(p.name, onTap: p.onChangePerson);
+        : SplitRowName.picked(p.name, onTap: p.onChangePerson, color: p.color);
     final change = p.isMe ? null : p.onChangePerson;
     final avatar = change == null
         ? p.avatar

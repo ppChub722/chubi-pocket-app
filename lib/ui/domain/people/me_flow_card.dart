@@ -10,6 +10,7 @@ class MeFlowCard extends StatelessWidget {
     required this.label,
     required this.name,
     this.iconCode,
+    this.avatar,
     super.key,
   });
 
@@ -18,6 +19,9 @@ class MeFlowCard extends StatelessWidget {
   final String name;
   final IconCode? iconCode;
 
+  /// My avatar; null = built from [name] + [iconCode].
+  final AvatarData? avatar;
+
   @override
   Widget build(BuildContext context) {
     return PickCard(
@@ -25,9 +29,9 @@ class MeFlowCard extends StatelessWidget {
       dense: true,
       label: label,
       value: name,
-      leading: UserAvatar(
-        displayName: name.isEmpty ? '?' : name,
-        iconCode: iconCode,
+      leading: Avatar(
+        avatar ??
+            AvatarData.forName(name.isEmpty ? '?' : name, iconCode: iconCode),
         size: AvatarMetrics.sizeSmall,
       ),
       accent: Theme.of(context).colorScheme.primary,

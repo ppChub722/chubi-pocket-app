@@ -105,6 +105,7 @@ class SplitRowAction extends StatelessWidget {
 class SplitRowName extends StatelessWidget {
   const SplitRowName.muted(this.text, {super.key})
     : _kind = _Kind.muted,
+      color = null,
       controller = null,
       focusNode = null,
       hint = null,
@@ -122,10 +123,13 @@ class SplitRowName extends StatelessWidget {
     this.onChanged,
     super.key,
   }) : _kind = _Kind.input,
+       color = null,
        text = '',
        onTap = null;
 
-  const SplitRowName.picked(this.text, {this.onTap, super.key})
+  /// [color] = the person's colour (their profile colour 1, already
+  /// contrast-checked); null = the name-hash colour.
+  const SplitRowName.picked(this.text, {this.onTap, this.color, super.key})
     : _kind = _Kind.picked,
       controller = null,
       focusNode = null,
@@ -143,6 +147,9 @@ class SplitRowName extends StatelessWidget {
   final int maxLength;
   final ValueChanged<String>? onChanged;
   final VoidCallback? onTap;
+
+  /// The picked pill's colour (washed); null = the name-hash colour.
+  final Color? color;
 
   static const double textInset = 16;
 
@@ -210,7 +217,9 @@ class SplitRowName extends StatelessWidget {
                   vertical: AppSpacing.sm,
                 ),
                 decoration: BoxDecoration(
-                  color: AppAvatar.colorFor(text).withValues(alpha: 0.14),
+                  color: (color ?? AppAvatar.colorFor(text)).withValues(
+                    alpha: 0.14,
+                  ),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Text(

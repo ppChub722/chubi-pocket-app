@@ -13,24 +13,31 @@ class TransactionAuthor extends Equatable {
     required this.userId,
     required this.displayName,
     this.iconCode,
-  });
+    AvatarData? avatar,
+  }) : _avatar = avatar;
 
   final String userId;
   final String displayName;
   final IconCode? iconCode;
+  final AvatarData? _avatar;
+
+  /// 0.4.2 1b: the BE's avatar (UserRef); built from the name + icon when absent.
+  AvatarData get avatar =>
+      _avatar ?? AvatarData.forName(displayName, iconCode: iconCode);
 
   factory TransactionAuthor.fromJson(Map<String, dynamic> json) {
+    final name = json['display_name'] as String? ?? '';
+    final avatar = AvatarData.parse(json, name: name);
     return TransactionAuthor(
       userId: json['user_id'] as String,
-      displayName: json['display_name'] as String? ?? '',
-      iconCode: json['icon_code'] != null
-          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
-          : null,
+      displayName: name,
+      iconCode: avatar.iconCode,
+      avatar: avatar,
     );
   }
 
   @override
-  List<Object?> get props => [userId, displayName, iconCode];
+  List<Object?> get props => [userId, displayName, iconCode, _avatar];
 }
 
 /// Tag ref enriched with color + icon so the FE can render chips inline without

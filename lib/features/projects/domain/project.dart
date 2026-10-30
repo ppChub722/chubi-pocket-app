@@ -288,7 +288,8 @@ class ProjectMember extends Equatable {
     this.isMe = false,
     this.contactId,
     this.removedAt,
-  });
+    AvatarData? avatar,
+  }) : _avatar = avatar;
 
   final String id;
   final String projectId;
@@ -309,6 +310,11 @@ class ProjectMember extends Equatable {
   final MemberStatus status;
   final IconCode? iconCode;
   final bool isMe;
+  final AvatarData? _avatar;
+
+  /// 0.4.2 1b: the BE's avatar (EventMember); built from the name + icon when absent.
+  AvatarData get avatar =>
+      _avatar ?? AvatarData.forName(displayName, iconCode: iconCode);
 
   bool get isLinked => userId != null;
   bool get isAdHoc => userId == null;
@@ -318,18 +324,21 @@ class ProjectMember extends Equatable {
     Map<String, dynamic> json, {
     String projectId = '',
   }) {
+    final name =
+        (json['name'] as String?) ?? (json['display_name'] as String?) ?? '?';
+    final avatar = AvatarData.parse(json, name: name);
     return ProjectMember(
       id: json['id'] as String,
       projectId: (json['project_id'] as String?) ?? projectId,
       userId: json['user_id'] as String?,
-      displayName:
-          (json['name'] as String?) ?? (json['display_name'] as String?) ?? '?',
+      displayName: name,
       role: MemberRoleWire.parse(json['role'] as String?),
       status: MemberStatusWire.parse(json['status'] as String?),
-      iconCode: _icon(json['icon_code']),
+      iconCode: avatar.iconCode,
       isMe: json['is_me'] == true,
       contactId: json['contact_id'] as String?,
       removedAt: Project._date(json['removed_at']),
+      avatar: avatar,
     );
   }
 
@@ -345,6 +354,7 @@ class ProjectMember extends Equatable {
     iconCode,
     isMe,
     removedAt,
+    _avatar,
   ];
 }
 
@@ -355,27 +365,36 @@ class ProjectMemberRef extends Equatable {
     this.userId,
     this.iconCode,
     this.isMe = false,
-  });
+    AvatarData? avatar,
+  }) : _avatar = avatar;
 
   final String id;
   final String? userId;
   final String name;
   final IconCode? iconCode;
   final bool isMe;
+  final AvatarData? _avatar;
+
+  /// 0.4.2 1b: the BE's avatar (MemberRef); built from the name + icon when absent.
+  AvatarData get avatar =>
+      _avatar ?? AvatarData.forName(name, iconCode: iconCode);
 
   static ProjectMemberRef? tryParse(Object? json) {
     if (json is! Map<String, dynamic>) return null;
+    final name = (json['name'] as String?) ?? '?';
+    final avatar = AvatarData.parse(json, name: name);
     return ProjectMemberRef(
       id: json['id'] as String,
       userId: json['user_id'] as String?,
-      name: (json['name'] as String?) ?? '?',
-      iconCode: _icon(json['icon_code']),
+      name: name,
+      iconCode: avatar.iconCode,
       isMe: json['is_me'] == true,
+      avatar: avatar,
     );
   }
 
   @override
-  List<Object?> get props => [id, userId, name, iconCode, isMe];
+  List<Object?> get props => [id, userId, name, iconCode, isMe, _avatar];
 }
 
 class BoardTag extends Equatable {
@@ -787,12 +806,16 @@ class ProjectMemberPosition extends Equatable {
     this.received = 0,
     this.userId,
     this.iconCode,
+    this.avatar,
   });
 
   final String memberId;
   final String? userId;
   final String displayName;
   final IconCode? iconCode;
+
+  /// The member's avatar (MemberRef); null = built from the name + icon.
+  final AvatarData? avatar;
   final double paid;
   final double share;
 
@@ -811,6 +834,7 @@ class ProjectMemberPosition extends Equatable {
       userId: m?.userId ?? json['user_id'] as String?,
       displayName: m?.name ?? (json['display_name'] as String? ?? '?'),
       iconCode: m?.iconCode,
+      avatar: m?.avatar,
       paid: _money(json['paid']),
       share: _money(json['share']),
       net: _money(json['net']),
@@ -827,6 +851,7 @@ class ProjectMemberPosition extends Equatable {
     userId,
     displayName,
     iconCode,
+    avatar,
     paid,
     share,
     sent,

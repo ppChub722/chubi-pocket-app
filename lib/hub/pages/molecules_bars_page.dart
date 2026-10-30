@@ -467,7 +467,7 @@ class _BarsPageState extends State<_BarsPage> {
                 header: HeroHeader(leading: const [], onEdit: () {}),
                 content: [
                   HeroIdentity(
-                    icon: const UserAvatar(displayName: 'Bee', size: 52),
+                    icon: Avatar(AvatarData.forName('Bee'), size: 52),
                     name: const Text('Bee'),
                     fact: const Align(
                       alignment: Alignment.centerLeft,
@@ -497,7 +497,7 @@ class _BarsPageState extends State<_BarsPage> {
                 header: HeroHeader(leading: const [], onEdit: () {}),
                 content: [
                   HeroIdentity(
-                    icon: const UserAvatar(displayName: 'Lee', size: 52),
+                    icon: Avatar(AvatarData.forName('Lee'), size: 52),
                     name: const Text('Lee'),
                   ),
                 ],

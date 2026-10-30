@@ -94,6 +94,7 @@ class LinkViewRows extends StatelessWidget {
           name: m.name,
           level: m.userId != null ? PersonLevel.linked : PersonLevel.name,
           iconCode: m.iconCode,
+          avatar: m.avatar,
           size: SplitRow.avatarSize,
           reserveLinkSlot: true,
         );
@@ -125,10 +126,15 @@ class LinkViewRows extends StatelessWidget {
                 ? PersonLevel.linked
                 : PersonLevel.contact,
             iconCode: p.person.iconCode,
+            avatar: p.person.avatar,
             size: SplitRow.avatarSize,
             reserveLinkSlot: true,
           ),
-          name: SplitRowName.picked(p.person.name, onTap: openPerson),
+          name: SplitRowName.picked(
+            p.person.name,
+            onTap: openPerson,
+            color: ProfileColors.of(context, p.person.avatar),
+          ),
           amount: _amount(p.amount),
         ),
       ],
@@ -181,7 +187,10 @@ class LinkViewRows extends StatelessWidget {
         ),
         ShareRow(
           avatar: _memberMark(payer, l),
-          name: SplitRowName.picked(nameOf(payer)),
+          name: SplitRowName.picked(
+            nameOf(payer),
+            color: ProfileColors.of(context, payer.avatar),
+          ),
           amount: _amount(bill.billAmount),
         ),
         ShareSubhead(title: l.txLinkCardWhoInBill),
@@ -190,7 +199,10 @@ class LinkViewRows extends StatelessWidget {
             avatar: _memberMark(m.member, l),
             name: m.member.isMe
                 ? SplitRowName.muted(l.txLinkCardMe)
-                : SplitRowName.picked(m.member.name),
+                : SplitRowName.picked(
+                    m.member.name,
+                    color: ProfileColors.of(context, m.member.avatar),
+                  ),
             amount: _amount(m.share),
           ),
       ],

@@ -1090,6 +1090,7 @@ AppListRow _splitRow(BuildContext context, TxSplit s, VoidCallback onOpen) {
           ? PersonLevel.linked
           : PersonLevel.contact,
       iconCode: person.iconCode,
+      avatar: person.avatar,
       size: 32,
       reserveLinkSlot: true,
     ),

@@ -385,11 +385,7 @@ class _UniversalChips extends StatelessWidget {
               onTap: () => _open(context, ShellTab.settings, '/settings'),
               // The whole icon, the user's border too (it was dropped here),
               // filling the button inside its 1px frame (owner 2026-10-23).
-              child: UserAvatar(
-                displayName: user.displayName,
-                iconCode: user.iconCode,
-                size: 38,
-              ),
+              child: Avatar(user.avatar, size: 38),
             ),
           );
         },

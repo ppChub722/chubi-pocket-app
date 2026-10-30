@@ -4,12 +4,14 @@ import '../../tokens/app_spacing.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../icons/icon_code.dart';
 import '../../atoms/add_tile.dart';
-import '../../atoms/user_avatar.dart';
+import 'avatar.dart';
+import 'avatar_data.dart';
 
 class PersonRef {
   const PersonRef({
     required this.name,
     this.iconCode,
+    this.avatar,
     this.caption,
     this.isOwner = false,
     this.pending = false,
@@ -17,6 +19,12 @@ class PersonRef {
 
   final String name;
   final IconCode? iconCode;
+
+  /// The BE's avatar; null = built from [name] + [iconCode].
+  final AvatarData? avatar;
+
+  AvatarData get shownAvatar =>
+      avatar ?? AvatarData.forName(name, iconCode: iconCode);
 
   final String? caption;
   final bool isOwner;
@@ -62,11 +70,7 @@ class AvatarStack extends StatelessWidget {
                     shape: BoxShape.circle,
                     border: Border.all(color: scheme.surface, width: 1.5),
                   ),
-                  child: UserAvatar(
-                    displayName: visible[i].name,
-                    iconCode: visible[i].iconCode,
-                    size: size,
-                  ),
+                  child: Avatar(visible[i].shownAvatar, size: size),
                 ),
               ),
             ),
@@ -141,11 +145,7 @@ class MemberStrip extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        UserAvatar(
-                          displayName: members[i].name,
-                          iconCode: members[i].iconCode,
-                          size: avatarSize,
-                        ),
+                        Avatar(members[i].shownAvatar, size: avatarSize),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
                           members[i].isOwner

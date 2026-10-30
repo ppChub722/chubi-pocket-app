@@ -11838,6 +11838,258 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Can\'t reach the server'**
   String get connectionCantConnect;
+
+  /// No description provided for @connectionsNotLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Not linked'**
+  String get connectionsNotLinked;
+
+  /// No description provided for @connectionsPermissionChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Log entries by chat'**
+  String get connectionsPermissionChat;
+
+  /// No description provided for @connectionsPermissionAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for balances'**
+  String get connectionsPermissionAsk;
+
+  /// No description provided for @connectionsPermissionSlip.
+  ///
+  /// In en, this message translates to:
+  /// **'Send slips'**
+  String get connectionsPermissionSlip;
+
+  /// No description provided for @connectionsPermissionNotify.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get connectionsPermissionNotify;
+
+  /// No description provided for @connectionsPermissionLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google'**
+  String get connectionsPermissionLogin;
+
+  /// No description provided for @connectionsPermissionSheets.
+  ///
+  /// In en, this message translates to:
+  /// **'Send entries to Sheets'**
+  String get connectionsPermissionSheets;
+
+  /// No description provided for @connectionsPermissionCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Put due dates in Calendar'**
+  String get connectionsPermissionCalendar;
+
+  /// No description provided for @connectionsErrorNoPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} didn\'t send a picture'**
+  String connectionsErrorNoPhoto(String name);
+
+  /// No description provided for @connectionsErrorLastLoginMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a password first, or you won\'t be able to sign in'**
+  String get connectionsErrorLastLoginMethod;
+
+  /// No description provided for @avatarColorsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Colours & ring'**
+  String get avatarColorsTitle;
+
+  /// No description provided for @avatarColorsSlot.
+  ///
+  /// In en, this message translates to:
+  /// **'Colour {n}'**
+  String avatarColorsSlot(int n);
+
+  /// No description provided for @avatarColorsRingColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Ring'**
+  String get avatarColorsRingColor;
+
+  /// No description provided for @avatarColorsClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear this colour'**
+  String get avatarColorsClear;
+
+  /// No description provided for @avatarBorderNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get avatarBorderNone;
+
+  /// No description provided for @avatarBorderThin.
+  ///
+  /// In en, this message translates to:
+  /// **'Thin'**
+  String get avatarBorderThin;
+
+  /// No description provided for @avatarBorderThick.
+  ///
+  /// In en, this message translates to:
+  /// **'Thick'**
+  String get avatarBorderThick;
+
+  /// No description provided for @avatarBorderDashed.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashed'**
+  String get avatarBorderDashed;
+
+  /// No description provided for @profileSectionConnections.
+  ///
+  /// In en, this message translates to:
+  /// **'Connections'**
+  String get profileSectionConnections;
+
+  /// No description provided for @profileSectionPicture.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile picture'**
+  String get profileSectionPicture;
+
+  /// No description provided for @profileSetPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a password'**
+  String get profileSetPassword;
+
+  /// No description provided for @profileSetPasswordSnackSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Password set'**
+  String get profileSetPasswordSnackSuccess;
+
+  /// No description provided for @profileUsernameReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'@{username} (can\'t change)'**
+  String profileUsernameReadOnly(String username);
+
+  /// No description provided for @profilePictureIcon.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon'**
+  String get profilePictureIcon;
+
+  /// No description provided for @profilePictureUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload'**
+  String get profilePictureUpload;
+
+  /// No description provided for @profilePictureEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get profilePictureEdit;
+
+  /// No description provided for @profilePictureImportedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {date}'**
+  String profilePictureImportedAt(String date);
+
+  /// No description provided for @profileColorsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile colours 1–3'**
+  String get profileColorsLabel;
+
+  /// No description provided for @connectionsTapToLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to link'**
+  String get connectionsTapToLink;
+
+  /// No description provided for @connectionsSectionPermissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions'**
+  String get connectionsSectionPermissions;
+
+  /// No description provided for @connectionsPhotoFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture from {name}'**
+  String connectionsPhotoFrom(String name);
+
+  /// No description provided for @connectionsPhotoNotImported.
+  ///
+  /// In en, this message translates to:
+  /// **'Not imported yet'**
+  String get connectionsPhotoNotImported;
+
+  /// No description provided for @connectionsPhotoUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get connectionsPhotoUpdate;
+
+  /// No description provided for @connectionsPhotoImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get connectionsPhotoImport;
+
+  /// No description provided for @connectionsPhotoDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the picture from {name}?'**
+  String connectionsPhotoDeleteTitle(String name);
+
+  /// No description provided for @connectionsPhotoDeleteInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'It\'s your profile picture; your icon is used after deleting'**
+  String get connectionsPhotoDeleteInUse;
+
+  /// No description provided for @connectionsChangeAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Change {name} account'**
+  String connectionsChangeAccount(String name);
+
+  /// No description provided for @connectionsUnlink.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink'**
+  String get connectionsUnlink;
+
+  /// No description provided for @connectionsUnlinkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink {name}?'**
+  String connectionsUnlinkTitle(String name);
+
+  /// No description provided for @connectionsLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Link {name}'**
+  String connectionsLink(String name);
+
+  /// No description provided for @connectionsLinkedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked {date}'**
+  String connectionsLinkedAt(String date);
+
+  /// No description provided for @connectionsOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open {name}'**
+  String connectionsOpenFailed(String name);
 }
 
 class _AppLocalizationsDelegate

@@ -243,6 +243,8 @@ class AppDetailRow extends StatelessWidget {
     this.comingSoon = false,
     this.horizontalInset = AppSpacing.lg,
     this.helperMaxLines,
+    this.dimmed = false,
+    this.destructive = false,
     super.key,
   });
 
@@ -328,6 +330,13 @@ class AppDetailRow extends StatelessWidget {
   /// Null = the helper wraps; 1 = one line ending in "…" (a summary line).
   final int? helperMaxLines;
 
+  /// 55 %, still tappable (a field that does nothing yet, e.g. a permission
+  /// of an app that is not linked).
+  final bool dimmed;
+
+  /// A red label and icon (ยกเลิกการเชื่อม); the row still lives in its card.
+  final bool destructive;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -361,7 +370,12 @@ class AppDetailRow extends StatelessWidget {
         : trailing;
     return AppRow(
       density: AppRowDensity.detail,
-      title: Text(label, style: detailLabelStyle(context)),
+      title: Text(
+        label,
+        style: destructive
+            ? detailLabelStyle(context)?.copyWith(color: scheme.error)
+            : detailLabelStyle(context),
+      ),
       subtitle: below.isEmpty
           ? null
           : Column(
@@ -369,7 +383,13 @@ class AppDetailRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: below,
             ),
-      leading: leading ?? (icon == null ? null : AppIcon(icon!)),
+      leading:
+          leading ??
+          (icon == null
+              ? null
+              : destructive
+              ? Icon(icon, color: scheme.error)
+              : AppIcon(icon!)),
       badge: badge,
       leadingSize: leadingSize,
       reserveLeading: DetailGroupScope.reserves(context),
@@ -396,6 +416,7 @@ class AppDetailRow extends StatelessWidget {
       accent: accent,
       tinted: tinted,
       disabled: comingSoon,
+      dimmed: dimmed,
       horizontalInset: horizontalInset,
       onTap: onTap,
       onLongPress: onLongPress,

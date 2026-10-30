@@ -758,6 +758,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
               name: p.person.name,
               level: debtPersonLevel(p.person),
               iconCode: p.person.iconCode,
+              avatar: p.person.avatar,
               size: 32,
             ),
       editable: editable,

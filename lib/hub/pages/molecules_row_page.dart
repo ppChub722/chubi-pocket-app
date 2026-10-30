@@ -158,7 +158,7 @@ class _RowShellPage extends StatelessWidget {
             first: true,
             children: [
               AppRow(
-                leading: const UserAvatar(displayName: 'Pond', size: 40),
+                leading: Avatar(AvatarData.forName('Pond'), size: 40),
                 badge: const RowBadge(icon: AppIcons.link),
                 title: title('Avatar with an icon badge'),
                 trailing: const Text('@ppond'),
@@ -206,11 +206,7 @@ class _RowShellPage extends StatelessWidget {
                   ),
                   32.0,
                 ),
-                (
-                  'Avatar',
-                  const UserAvatar(displayName: 'Pond', size: 32),
-                  32.0,
-                ),
+                ('Avatar', Avatar(AvatarData.forName('Pond'), size: 32), 32.0),
               ])
                 for (final badged in [false, true])
                   AppRow(
@@ -1328,7 +1324,7 @@ class _DetailPatternsPage extends StatelessWidget {
                 trailing: const Text('Telegram'),
               ),
               AppDetailRow(
-                leading: const UserAvatar(displayName: 'Pond', size: 32),
+                leading: Avatar(AvatarData.forName('Pond'), size: 32),
                 leadingSize: _Logo.size,
                 badge: const RowBadge.logo(_Logo(Icons.send, _telegram)),
                 label: 'Avatar + logo badge',
@@ -1350,7 +1346,7 @@ class _DetailPatternsPage extends StatelessWidget {
             title: 'Connections',
             children: [
               AppDetailRow(
-                leading: const UserAvatar(displayName: 'Pond', size: 32),
+                leading: Avatar(AvatarData.forName('Pond'), size: 32),
                 leadingSize: _Logo.size,
                 badge: const RowBadge.logo(_Logo(Icons.send, _telegram)),
                 label: 'Telegram',
@@ -1538,7 +1534,7 @@ class _DetailPatternsPage extends StatelessWidget {
                   icon: leading == 'icon' ? AppIcons.link : null,
                   leading: switch (leading) {
                     'logo' => const _Logo(Icons.send, _telegram),
-                    'avatar' => const UserAvatar(displayName: 'Pond', size: 32),
+                    'avatar' => Avatar(AvatarData.forName('Pond'), size: 32),
                     _ => null,
                   },
                   leadingSize: leading == 'icon' || leading == 'none'

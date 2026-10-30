@@ -282,9 +282,11 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       title: l.contactNameLabel,
       initial: working.iconCode,
       previewBuilder: (code) => Center(
-        child: UserAvatar(
-          displayName: working.name.isEmpty ? '?' : working.name,
-          iconCode: code,
+        child: Avatar(
+          AvatarData.forName(
+            working.name.isEmpty ? '?' : working.name,
+            iconCode: code,
+          ),
           size: 56,
         ),
       ),
@@ -489,10 +491,15 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     );
   }
 
-  HeroStyle _heroStyle(String name, IconCode? icon) {
+  /// Tint = the person's colour 1 (0.4.2 1b profile colours).
+  HeroStyle _heroStyle(AvatarData avatar) {
     final palette = Theme.of(context).extension<AppColors>()!;
     return HeroStyle.tinted(
-      color: icon.tintFor(palette, avatarName: name),
+      color: ProfileColors.main(
+        avatar,
+        palette: palette,
+        surface: Theme.of(context).colorScheme.surface,
+      ),
       glyph: AppIcons.contact,
     );
   }
@@ -502,7 +509,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     // The avatar row is the top of the card, its buttons at the end, like the
     // wallet page; a header only when archived (owner 2026-10-23).
     return AppHeroCard(
-      style: _heroStyle(c.name, c.iconCode),
+      style: _heroStyle(c.avatar),
       header: c.isArchived
           ? HeroHeader(
               leading: [
@@ -547,6 +554,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
               name: c.name,
               level: c.isLinked ? PersonLevel.linked : PersonLevel.contact,
               iconCode: c.iconCode,
+              avatar: c.avatar,
               size: HeroIdentity.iconSize,
             ),
           ),
@@ -730,8 +738,13 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     final c = _contact;
     final w = working;
     final name = c != null && _linked ? c.name : w.name;
+    // Linked: their own avatar; unlinked: the draft's icon, as the BE
+    // will build it.
+    final avatar = c != null && _linked
+        ? c.avatar
+        : AvatarData.forName(name.isEmpty ? '?' : name, iconCode: w.iconCode);
     return AppHeroCard(
-      style: _heroStyle(name, _linked ? c!.iconCode : w.iconCode),
+      style: _heroStyle(avatar),
       mode: HeroCardMode.edit,
       content: [
         HeroIdentity(
@@ -742,6 +755,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
               name: name,
               level: _linked ? PersonLevel.linked : PersonLevel.contact,
               iconCode: _linked ? c!.iconCode : w.iconCode,
+              avatar: avatar,
               size: 44,
             ),
           ),

@@ -1527,6 +1527,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
               name: p.name,
               level: debtPersonLevel(p),
               iconCode: p.iconCode,
+              avatar: p.avatar,
               size: 32,
             ),
       onTap: editing

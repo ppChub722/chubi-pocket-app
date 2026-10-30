@@ -60,6 +60,7 @@ List<EventBillPayer> projectBillPayers(
           amount: money(p.amount),
           level: projectMemberLevel(m),
           iconCode: m.iconCode,
+          avatar: m.avatar,
         ),
 ];
 
@@ -206,6 +207,7 @@ class ProjectTxTreeTile extends StatelessWidget {
       payerVerb: parent.type == 'income' ? l.evbReceives : l.evbPays,
       payerLevel: projectMemberLevel(payer),
       payerIconCode: payer.iconCode,
+      payerAvatar: payer.avatar,
       // Multi-payer (0.4.1-2): every payer with what they paid, biggest
       // first (the BE order); one payer keeps the single-name line.
       payers: projectBillPayers(

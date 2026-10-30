@@ -277,6 +277,7 @@ class _ContactRow extends StatelessWidget {
         name: contact.name,
         level: contact.isLinked ? PersonLevel.linked : PersonLevel.contact,
         iconCode: contact.iconCode,
+        avatar: contact.avatar,
         size: 36,
       ),
       title: contact.name,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../ui/ui.dart';
 import '../hub_kit.dart';
 import '../hub_playground.dart';
+import 'avatar_states_demo.dart';
 
 /// `/dev/atoms/badge-avatar` — badge, avatars, corner badge, icon bubble.
 Widget buildBadgeAvatarPage(BuildContext context) {
@@ -31,6 +32,7 @@ Widget buildBadgeAvatarPage(BuildContext context) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
+      buildAvatarStates(context),
       HubInApp(
         columns: 2,
         note:
@@ -94,15 +96,15 @@ Widget buildBadgeAvatarPage(BuildContext context) {
             child: left(AppAvatar.icon(AppIcons.profile)),
           ),
           HubUse(
-            label: 'UserAvatar — initials fallback',
+            label: 'Avatar — initials fallback',
             page: 'Profile, members',
-            child: left(const UserAvatar(displayName: 'Aom Chan')),
+            child: left(Avatar(AvatarData.forName('Aom Chan'))),
           ),
           HubUse(
-            label: 'UserAvatar — icon maker',
+            label: 'Avatar — icon maker',
             page: 'Profile, members',
             child: left(
-              const UserAvatar(displayName: 'Aom Chan', iconCode: framed),
+              Avatar(AvatarData.forName('Aom Chan', iconCode: framed)),
             ),
           ),
           HubUse(
@@ -296,7 +298,7 @@ Widget buildBadgeAvatarPage(BuildContext context) {
         },
       ),
       HubPlayground(
-        title: 'UserAvatar',
+        title: 'Avatar (forName)',
         note:
             "A user's avatar: their chosen icon (icon maker) or, without "
             'one, an AppAvatar of their initials.',
@@ -306,9 +308,11 @@ Widget buildBadgeAvatarPage(BuildContext context) {
           PlayNum('size', min: 16, max: 80, step: 4, initialValue: 40),
         ],
         builder: (context, v) => left(
-          UserAvatar(
-            displayName: v<String>('displayName'),
-            iconCode: v<bool>('iconCode') ? framed : null,
+          Avatar(
+            AvatarData.forName(
+              v<String>('displayName'),
+              iconCode: v<bool>('iconCode') ? framed : null,
+            ),
             size: v<double>('size'),
           ),
         ),
@@ -451,8 +455,8 @@ class _Ladder extends StatelessWidget {
         row('AppAvatar.icon', (s) => AppAvatar.icon(AppIcons.profile, size: s)),
         row('AppAvatar.label', (s) => AppAvatar.label('+3', size: s)),
         row(
-          'UserAvatar — icon maker (frame + glyph)',
-          (s) => UserAvatar(displayName: 'Bee', iconCode: framed, size: s),
+          'Avatar — icon maker (frame + glyph)',
+          (s) => Avatar(AvatarData.forName('Bee', iconCode: framed), size: s),
         ),
         row(
           'IconTile — circle | soft',
@@ -606,13 +610,12 @@ class _HardLadder extends StatelessWidget {
                 ? CornerBadge(
                     size: s,
                     icon: AppIcons.link,
-                    child: UserAvatar(
-                      displayName: 'Bee',
-                      iconCode: code,
+                    child: Avatar(
+                      AvatarData.forName('Bee', iconCode: code),
                       size: s,
                     ),
                   )
-                : UserAvatar(displayName: 'Bee', iconCode: code, size: s),
+                : Avatar(AvatarData.forName('Bee', iconCode: code), size: s),
           ),
       ],
     );

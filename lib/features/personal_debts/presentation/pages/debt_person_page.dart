@@ -388,6 +388,7 @@ class _PersonViewState extends State<_PersonView> {
             name: name,
             level: debtPersonLevel(b.person),
             iconCode: b.person.iconCode,
+            avatar: b.person.avatar,
             size: 40,
           ),
           name: Text(name),

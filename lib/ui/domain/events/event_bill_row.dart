@@ -9,6 +9,7 @@ import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';
 import '../icons/icon_code.dart';
 import '../money/money_text.dart';
+import '../people/avatar_data.dart';
 import '../people/person_mark.dart';
 import 'event_tag_ref.dart';
 
@@ -75,12 +76,16 @@ class EventBillPayer {
     required this.amount,
     this.level = PersonLevel.name,
     this.iconCode,
+    this.avatar,
   });
 
   final String name;
   final String amount;
   final PersonLevel level;
   final IconCode? iconCode;
+
+  /// The BE's avatar; null = built from [name] + [iconCode].
+  final AvatarData? avatar;
 }
 
 class EventBillRow extends StatelessWidget {
@@ -101,6 +106,7 @@ class EventBillRow extends StatelessWidget {
     this.payerVerb,
     this.payerLevel = PersonLevel.name,
     this.payerIconCode,
+    this.payerAvatar,
     this.payers = const [],
     this.caption,
     this.summary,
@@ -146,6 +152,9 @@ class EventBillRow extends StatelessWidget {
   final String? payerVerb;
   final PersonLevel payerLevel;
   final IconCode? payerIconCode;
+
+  /// The payer's avatar from the BE; null = built from the name + icon.
+  final AvatarData? payerAvatar;
 
   /// A multi-payer bill (2+): the payer line reads "[payerVerb]: A ฿700 |
   /// B ฿500" (each with their mark) instead of one name.
@@ -242,6 +251,8 @@ class EventBillRow extends StatelessWidget {
               name: payer,
               level: _noBadge(payerLevel),
               iconCode: payerIconCode,
+
+              avatar: payerAvatar,
             ),
             const SizedBox(width: AppSpacing.sm),
           ],
@@ -264,6 +275,8 @@ class EventBillRow extends StatelessWidget {
                                 name: p.name,
                                 level: _noBadge(p.level),
                                 iconCode: p.iconCode,
+
+                                avatar: p.avatar,
                                 size: 16,
                               ),
                             ),
@@ -301,6 +314,8 @@ class EventBillRow extends StatelessWidget {
               name: payer,
               level: _noBadge(payerLevel),
               iconCode: payerIconCode,
+
+              avatar: payerAvatar,
               size: 16,
             ),
             const SizedBox(width: AppSpacing.xs),
@@ -464,6 +479,7 @@ class EventBillChildRow extends StatelessWidget {
     required this.amount,
     this.level = PersonLevel.name,
     this.iconCode,
+    this.avatar,
     this.caption,
     this.tone = MoneyTone.plain,
     this.symbol,
@@ -501,6 +517,9 @@ class EventBillChildRow extends StatelessWidget {
   final num amount;
   final PersonLevel level;
   final IconCode? iconCode;
+
+  /// The BE's avatar; null = built from [name] + [iconCode].
+  final AvatarData? avatar;
   final String? caption;
   final MoneyTone tone;
   final String? symbol;
@@ -533,7 +552,12 @@ class EventBillChildRow extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.sm),
             ],
-            PersonMark(name: name, level: _noBadge(level), iconCode: iconCode),
+            PersonMark(
+              name: name,
+              level: _noBadge(level),
+              iconCode: iconCode,
+              avatar: avatar,
+            ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: badge != null

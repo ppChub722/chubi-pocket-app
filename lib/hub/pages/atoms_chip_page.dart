@@ -120,7 +120,7 @@ Widget buildChipPage(BuildContext context) => Column(
           child: AppChip(
             label: v<String>('label'),
             icon: v<bool>('icon') && !avatar ? AppIcons.category : null,
-            leading: avatar ? const UserAvatar(displayName: 'Lee') : null,
+            leading: avatar ? Avatar(AvatarData.forName('Lee')) : null,
             dot: v<bool>('dot'),
             tone: v<AppChipTone?>('tone'),
             selected: v<bool>('selected'),
@@ -197,7 +197,7 @@ class _SizeMatrix extends StatelessWidget {
               ),
               AppChip(
                 label: 'Avatar',
-                leading: const UserAvatar(displayName: 'Lee'),
+                leading: Avatar(AvatarData.forName('Lee')),
                 size: s,
                 selected: selected,
               ),

@@ -295,24 +295,35 @@ class BillMemberRef extends Equatable {
     this.userId,
     this.iconCode,
     this.isMe = false,
-  });
+    AvatarData? avatar,
+  }) : _avatar = avatar;
 
   final String id;
   final String name;
   final String? userId;
   final IconCode? iconCode;
   final bool isMe;
+  final AvatarData? _avatar;
 
-  factory BillMemberRef.fromJson(Map<String, dynamic> json) => BillMemberRef(
-    id: json['id'] as String,
-    name: (json['name'] as String?) ?? '',
-    userId: json['user_id'] as String?,
-    iconCode: _icon(json['icon_code']),
-    isMe: (json['is_me'] as bool?) ?? false,
-  );
+  /// 0.4.2 1b: the BE's avatar (MemberRef); built from the name + icon when absent.
+  AvatarData get avatar =>
+      _avatar ?? AvatarData.forName(name, iconCode: iconCode);
+
+  factory BillMemberRef.fromJson(Map<String, dynamic> json) {
+    final name = (json['name'] as String?) ?? '';
+    final avatar = AvatarData.parse(json, name: name);
+    return BillMemberRef(
+      id: json['id'] as String,
+      name: name,
+      userId: json['user_id'] as String?,
+      iconCode: avatar.iconCode,
+      isMe: (json['is_me'] as bool?) ?? false,
+      avatar: avatar,
+    );
+  }
 
   @override
-  List<Object?> get props => [id, name, userId, iconCode, isMe];
+  List<Object?> get props => [id, name, userId, iconCode, isMe, _avatar];
 }
 
 class BillShare extends Equatable {
@@ -429,24 +440,42 @@ class EmbeddedPerson extends Equatable {
     this.iconCode,
     this.linked = false,
     this.linkedUserId,
-  });
+    AvatarData? avatar,
+  }) : _avatar = avatar;
 
   final String name;
   final String? contactId;
   final IconCode? iconCode;
   final bool linked;
   final String? linkedUserId;
+  final AvatarData? _avatar;
 
-  factory EmbeddedPerson.fromJson(Map<String, dynamic> json) => EmbeddedPerson(
-    name: (json['name'] as String?) ?? '',
-    contactId: json['contact_id'] as String?,
-    iconCode: _icon(json['icon_code']),
-    linked: (json['linked'] as bool?) ?? false,
-    linkedUserId: json['linked_user_id'] as String?,
-  );
+  /// 0.4.2 1b: the BE's avatar (PersonRef); built from the name + icon when absent.
+  AvatarData get avatar =>
+      _avatar ?? AvatarData.forName(name, iconCode: iconCode);
+
+  factory EmbeddedPerson.fromJson(Map<String, dynamic> json) {
+    final name = (json['name'] as String?) ?? '';
+    final avatar = AvatarData.parse(json, name: name);
+    return EmbeddedPerson(
+      name: name,
+      contactId: json['contact_id'] as String?,
+      iconCode: avatar.iconCode,
+      linked: (json['linked'] as bool?) ?? false,
+      linkedUserId: json['linked_user_id'] as String?,
+      avatar: avatar,
+    );
+  }
 
   @override
-  List<Object?> get props => [name, contactId, iconCode, linked, linkedUserId];
+  List<Object?> get props => [
+    name,
+    contactId,
+    iconCode,
+    linked,
+    linkedUserId,
+    _avatar,
+  ];
 }
 
 class TransferPeer extends Equatable {

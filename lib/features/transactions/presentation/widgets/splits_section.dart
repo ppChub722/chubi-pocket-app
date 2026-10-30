@@ -517,18 +517,15 @@ class MyAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final me = context.select<AuthCubit, (String, IconCode?)?>((c) {
+    final me = context.select<AuthCubit, AvatarData?>((c) {
       final s = c.state;
-      return s is AuthAuthenticated
-          ? (s.user.displayName, s.user.iconCode)
-          : null;
+      return s is AuthAuthenticated ? s.user.avatar : null;
     });
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        UserAvatar(
-          displayName: me?.$1 ?? fallbackName,
-          iconCode: me?.$2,
+        Avatar(
+          me ?? AvatarData.forName(fallbackName),
           size: SplitRow.avatarSize,
         ),
         SizedBox(width: PersonMark.linkSlotWidth(SplitRow.avatarSize)),
@@ -634,6 +631,7 @@ class _SplitDraftRowState extends State<SplitDraftRow> {
       name: draft.personName,
       level: level,
       iconCode: person?.iconCode,
+      avatar: person?.avatar,
       size: SplitRow.avatarSize,
       reserveLinkSlot: true,
       tappable: true,
@@ -650,7 +648,14 @@ class _SplitDraftRowState extends State<SplitDraftRow> {
               widget.onChange();
             },
           )
-        : SplitRowName.picked(draft.personName, onTap: widget.onChangePerson);
+        : SplitRowName.picked(
+            draft.personName,
+            onTap: widget.onChangePerson,
+            color: ProfileColors.of(
+              context,
+              person?.avatar ?? AvatarData.forName(draft.personName),
+            ),
+          );
 
     final avatar = GestureDetector(
       behavior: HitTestBehavior.opaque,

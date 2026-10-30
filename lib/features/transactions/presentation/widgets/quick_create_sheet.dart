@@ -1335,6 +1335,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         name: p.name,
         level: debtPersonLevel(p),
         iconCode: p.iconCode,
+        avatar: p.avatar,
         size: 32,
       ),
     );

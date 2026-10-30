@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import '../../atoms/app_button.dart';
 import '../../atoms/corner_badge.dart';
 import '../../atoms/icon_tile.dart';
-import '../../atoms/user_avatar.dart';
 import '../../molecules/confirm_dialog.dart';
 import '../../molecules/app_list_row.dart';
 import '../../tokens/tone.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_spacing.dart';
 import '../icons/icon_code.dart';
+import '../people/avatar.dart';
+import '../people/avatar_data.dart';
 
 class NotificationRejectConfirm {
   const NotificationRejectConfirm({
@@ -33,6 +34,7 @@ class NotificationTileView extends StatelessWidget {
     this.rejectLabel,
     this.system = false,
     this.actorIconCode,
+    this.actorAvatar,
     this.amountText,
     this.unread = false,
     this.pending = false,
@@ -48,6 +50,10 @@ class NotificationTileView extends StatelessWidget {
 
   final String actorName;
   final IconCode? actorIconCode;
+
+  /// The actor's avatar from the BE; null = built from [actorName] +
+  /// [actorIconCode].
+  final AvatarData? actorAvatar;
   final String title;
   final String timeText;
   final String? amountText;
@@ -95,9 +101,12 @@ class NotificationTileView extends StatelessWidget {
                 : CornerBadge(
                     size: _avatar,
                     icon: typeIcon,
-                    child: UserAvatar(
-                      displayName: actorName,
-                      iconCode: actorIconCode,
+                    child: Avatar(
+                      actorAvatar ??
+                          AvatarData.forName(
+                            actorName,
+                            iconCode: actorIconCode,
+                          ),
                       size: _avatar,
                     ),
                   ),

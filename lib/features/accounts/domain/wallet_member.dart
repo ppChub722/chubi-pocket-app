@@ -57,7 +57,8 @@ class WalletMember extends Equatable {
     this.joinedAt,
     this.leftAt,
     this.isMe = false,
-  });
+    AvatarData? avatar,
+  }) : _avatar = avatar;
 
   final String id;
   final String userId;
@@ -70,6 +71,12 @@ class WalletMember extends Equatable {
   final String? leftAt;
 
   final bool isMe;
+  final AvatarData? _avatar;
+
+  /// 0.4.2 1b: the BE's avatar (AccountMember); built from the name + icon when
+  /// absent.
+  AvatarData get avatar =>
+      _avatar ?? AvatarData.forName(name, iconCode: iconCode);
 
   String get displayName => name;
 
@@ -79,14 +86,15 @@ class WalletMember extends Equatable {
   bool get isOwner => role == WalletRole.owner;
 
   factory WalletMember.fromJson(Map<String, dynamic> json) {
+    final name = json['name'] as String? ?? '';
+    final avatar = AvatarData.parse(json, name: name);
     return WalletMember(
       id: json['id'] as String,
       userId: json['user_id'] as String,
-      name: json['name'] as String? ?? '',
+      name: name,
       role: WalletRoleWire.parse(json['role'] as String?),
-      iconCode: json['icon_code'] != null
-          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
-          : null,
+      iconCode: avatar.iconCode,
+      avatar: avatar,
       status: WalletMemberStatusWire.parse(json['status'] as String?),
       joinedAt: json['joined_at'] as String?,
       leftAt: json['left_at'] as String?,
@@ -105,5 +113,6 @@ class WalletMember extends Equatable {
     joinedAt,
     leftAt,
     isMe,
+    _avatar,
   ];
 }

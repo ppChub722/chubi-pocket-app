@@ -1,6 +1,9 @@
 import 'package:equatable/equatable.dart';
 import '../../../ui/ui.dart';
 import '../../categories/domain/category.dart';
+import '../../users/domain/avatar_settings.dart';
+
+export '../../users/domain/avatar_settings.dart';
 
 class DefaultWalletRef extends Equatable {
   const DefaultWalletRef({required this.id, required this.name, this.iconCode});
@@ -94,7 +97,10 @@ class User extends Equatable {
     this.notificationSummary,
     this.createdAt,
     this.updatedAt,
-  });
+    AvatarData? avatar,
+    this.avatarSettings,
+    this.hasPassword = true,
+  }) : _avatar = avatar;
 
   final String id;
   final String username;
@@ -104,7 +110,22 @@ class User extends Equatable {
   /// settings home.
   final String currency;
   final String? email;
+
+  /// My icon (the icon maker; `avatar.icon_code` on the wire, PUT /users/me
+  /// still takes `icon_code`).
   final IconCode? iconCode;
+  final AvatarData? _avatar;
+
+  /// 0.4.2 1b: my resolved avatar, as others see it.
+  AvatarData get avatar =>
+      _avatar ?? AvatarData.forName(displayName, iconCode: iconCode);
+
+  /// The picture I picked (GET /users/me only; null on the login answer).
+  final AvatarSettings? avatarSettings;
+
+  /// 0.4.2 1b-2: false = an account made through an outside app with no
+  /// password yet ("ตั้งรหัสผ่าน").
+  final bool hasPassword;
 
   final String? feeCategoryId;
 
@@ -153,15 +174,22 @@ class User extends Equatable {
         : const <String, dynamic>{};
     String? pref(String k) => prefs[k] is String ? prefs[k] as String : null;
     final rawPages = prefs['page_prefs'] ?? json['page_prefs'];
+    final displayName = json['display_name'] as String;
+    final avatar = AvatarData.parse(json, name: displayName);
     return User(
       id: json['id'] as String,
       username: json['username'] as String,
-      displayName: json['display_name'] as String,
+      displayName: displayName,
       currency: (json['currency'] as String?) ?? 'THB',
       email: json['email'] as String?,
-      iconCode: json['icon_code'] != null
-          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+      iconCode: avatar.iconCode,
+      avatar: avatar,
+      avatarSettings: json['avatar_settings'] is Map
+          ? AvatarSettings.fromJson(
+              (json['avatar_settings'] as Map).cast<String, dynamic>(),
+            )
           : null,
+      hasPassword: (json['has_password'] as bool?) ?? true,
       createdAt: DateTime.tryParse((json['created_at'] as String?) ?? ''),
       updatedAt: DateTime.tryParse((json['updated_at'] as String?) ?? ''),
       feeCategoryId: pref('fee_category_id'),
@@ -208,14 +236,25 @@ class User extends Equatable {
     bool clearIconCode = false,
     String? feeCategoryId,
     bool clearFeeCategory = false,
+    AvatarData? avatar,
+    AvatarSettings? avatarSettings,
+    bool? hasPassword,
   }) {
+    final nextIcon = clearIconCode ? null : (iconCode ?? this.iconCode);
     return User(
       id: id,
       username: username,
       displayName: displayName ?? this.displayName,
       currency: currency,
       email: clearEmail ? null : (email ?? this.email),
-      iconCode: clearIconCode ? null : (iconCode ?? this.iconCode),
+      iconCode: nextIcon,
+      avatar:
+          avatar ??
+          (iconCode != null || clearIconCode
+              ? this.avatar.withIcon(nextIcon)
+              : _avatar),
+      avatarSettings: avatarSettings ?? this.avatarSettings,
+      hasPassword: hasPassword ?? this.hasPassword,
       createdAt: createdAt,
       updatedAt: updatedAt,
       defaultAccount: defaultAccount,
@@ -267,5 +306,8 @@ class User extends Equatable {
     notificationSummary,
     createdAt,
     updatedAt,
+    _avatar,
+    avatarSettings,
+    hasPassword,
   ];
 }

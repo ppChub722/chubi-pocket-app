@@ -55,15 +55,17 @@ class AuthRepository {
     } on DioException catch (_) {}
   }
 
+  /// PUT /auth/password. [currentPassword] null = ตั้งรหัสผ่าน (0.4.2 1b-2):
+  /// an account with no password yet sets one with the new password only.
   Future<void> changePassword({
-    required String currentPassword,
+    required String? currentPassword,
     required String newPassword,
   }) async {
     try {
       await _client.dio.put<void>(
         '/auth/password',
         data: {
-          'current_password': currentPassword,
+          'current_password': ?currentPassword,
           'new_password': newPassword,
         },
       );

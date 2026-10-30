@@ -7,7 +7,12 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/data/auth_repository.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
+import '../../../users/presentation/refresh_me.dart';
+import 'settings_money_page.dart' show signedInUser;
 
+/// เปลี่ยนรหัสผ่าน; for an account with no password yet (made through an
+/// outside app, 0.4.2 1b-2) ตั้งรหัสผ่าน: the new password only.
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
 
@@ -25,6 +30,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
   final _confirmCtrl = TextEditingController();
 
   String? _currentFieldError;
+
+  /// No password yet: set one (no current-password field).
+  late final bool _setMode =
+      !(signedInUser(context.read<AuthCubit>().state)?.hasPassword ?? true);
 
   @override
   void initState() {
@@ -71,22 +80,27 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
     setState(() => _currentFieldError = null);
     try {
       await repo.changePassword(
-        currentPassword: w.current,
+        currentPassword: _setMode ? null : w.current,
         newPassword: w.next,
       );
       if (!mounted) return;
       showAppSnackBar(
         context,
-        l.changePasswordSnackSuccess,
+        _setMode
+            ? l.profileSetPasswordSnackSuccess
+            : l.changePasswordSnackSuccess,
         tone: Tone.success,
       );
+      // has_password flips: the profile row says เปลี่ยนรหัสผ่าน again.
+      if (_setMode) await refreshMe(context);
+      if (!mounted) return;
       commitSaved(w);
       leavePage();
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
       setState(() {
-        if (e.code == 'WRONG_PASSWORD' || e.statusCode == 401) {
+        if (!_setMode && (e.code == 'WRONG_PASSWORD' || e.statusCode == 401)) {
           _currentFieldError = l.changePasswordCurrentWrong;
         }
       });
@@ -105,7 +119,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
     return editScope(
       Scaffold(
         appBar: AppTopBar(
-          title: l.changePasswordTitle,
+          title: _setMode ? l.profileSetPassword : l.changePasswordTitle,
           showBack: true,
           editing: editing,
           onBack: handleBack,
@@ -124,24 +138,26 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
                   fields: true,
                   dividers: false,
                   children: [
-                    _passwordField(
-                      controller: _currentCtrl,
-                      label: l.changePasswordCurrentLabel,
-                      autofocus: true,
-                      errorText: _currentFieldError,
-                      onChanged: (v) {
-                        if (_currentFieldError != null) {
-                          setState(() => _currentFieldError = null);
-                        }
-                        _onText(_Field.current, v);
-                      },
-                      validator: (v) =>
-                          (v == null || v.isEmpty) ? l.commonRequired : null,
-                    ),
+                    if (!_setMode)
+                      _passwordField(
+                        controller: _currentCtrl,
+                        label: l.changePasswordCurrentLabel,
+                        autofocus: true,
+                        errorText: _currentFieldError,
+                        onChanged: (v) {
+                          if (_currentFieldError != null) {
+                            setState(() => _currentFieldError = null);
+                          }
+                          _onText(_Field.current, v);
+                        },
+                        validator: (v) =>
+                            (v == null || v.isEmpty) ? l.commonRequired : null,
+                      ),
                     _passwordField(
                       controller: _newCtrl,
                       label: l.changePasswordNewLabel,
                       helper: l.changePasswordNewHelper,
+                      autofocus: _setMode,
                       onChanged: (v) => _onText(_Field.next, v),
                       validator: (v) {
                         if (v == null || v.length < 8) {
@@ -150,7 +166,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
                         if (v.length > 128) {
                           return l.authRegisterPasswordTooLong;
                         }
-                        if (v == _currentCtrl.text) {
+                        if (!_setMode && v == _currentCtrl.text) {
                           return l.changePasswordNewMustDiffer;
                         }
                         return null;

@@ -6983,4 +6983,154 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get connectionCantConnect => 'Can\'t reach the server';
+
+  @override
+  String get connectionsNotLinked => 'Not linked';
+
+  @override
+  String get connectionsPermissionChat => 'Log entries by chat';
+
+  @override
+  String get connectionsPermissionAsk => 'Ask for balances';
+
+  @override
+  String get connectionsPermissionSlip => 'Send slips';
+
+  @override
+  String get connectionsPermissionNotify => 'Notifications';
+
+  @override
+  String get connectionsPermissionLogin => 'Sign in with Google';
+
+  @override
+  String get connectionsPermissionSheets => 'Send entries to Sheets';
+
+  @override
+  String get connectionsPermissionCalendar => 'Put due dates in Calendar';
+
+  @override
+  String connectionsErrorNoPhoto(String name) {
+    return '$name didn\'t send a picture';
+  }
+
+  @override
+  String get connectionsErrorLastLoginMethod =>
+      'Set a password first, or you won\'t be able to sign in';
+
+  @override
+  String get avatarColorsTitle => 'Colours & ring';
+
+  @override
+  String avatarColorsSlot(int n) {
+    return 'Colour $n';
+  }
+
+  @override
+  String get avatarColorsRingColor => 'Ring';
+
+  @override
+  String get avatarColorsClear => 'Clear this colour';
+
+  @override
+  String get avatarBorderNone => 'None';
+
+  @override
+  String get avatarBorderThin => 'Thin';
+
+  @override
+  String get avatarBorderThick => 'Thick';
+
+  @override
+  String get avatarBorderDashed => 'Dashed';
+
+  @override
+  String get profileSectionConnections => 'Connections';
+
+  @override
+  String get profileSectionPicture => 'Profile picture';
+
+  @override
+  String get profileSetPassword => 'Set a password';
+
+  @override
+  String get profileSetPasswordSnackSuccess => 'Password set';
+
+  @override
+  String profileUsernameReadOnly(String username) {
+    return '@$username (can\'t change)';
+  }
+
+  @override
+  String get profilePictureIcon => 'Icon';
+
+  @override
+  String get profilePictureUpload => 'Upload';
+
+  @override
+  String get profilePictureEdit => 'Edit';
+
+  @override
+  String profilePictureImportedAt(String date) {
+    return 'Imported $date';
+  }
+
+  @override
+  String get profileColorsLabel => 'Profile colours 1–3';
+
+  @override
+  String get connectionsTapToLink => 'Tap to link';
+
+  @override
+  String get connectionsSectionPermissions => 'Permissions';
+
+  @override
+  String connectionsPhotoFrom(String name) {
+    return 'Picture from $name';
+  }
+
+  @override
+  String get connectionsPhotoNotImported => 'Not imported yet';
+
+  @override
+  String get connectionsPhotoUpdate => 'Update';
+
+  @override
+  String get connectionsPhotoImport => 'Import';
+
+  @override
+  String connectionsPhotoDeleteTitle(String name) {
+    return 'Delete the picture from $name?';
+  }
+
+  @override
+  String get connectionsPhotoDeleteInUse =>
+      'It\'s your profile picture; your icon is used after deleting';
+
+  @override
+  String connectionsChangeAccount(String name) {
+    return 'Change $name account';
+  }
+
+  @override
+  String get connectionsUnlink => 'Unlink';
+
+  @override
+  String connectionsUnlinkTitle(String name) {
+    return 'Unlink $name?';
+  }
+
+  @override
+  String connectionsLink(String name) {
+    return 'Link $name';
+  }
+
+  @override
+  String connectionsLinkedAt(String date) {
+    return 'Linked $date';
+  }
+
+  @override
+  String connectionsOpenFailed(String name) {
+    return 'Couldn\'t open $name';
+  }
 }

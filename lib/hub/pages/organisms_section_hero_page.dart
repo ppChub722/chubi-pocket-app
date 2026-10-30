@@ -139,7 +139,7 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
                 header: HeroHeader(leading: const [], onEdit: noop),
                 content: [
                   HeroIdentity(
-                    icon: const UserAvatar(displayName: 'Lee', size: 52),
+                    icon: Avatar(AvatarData.forName('Lee'), size: 52),
                     name: const Text('Lee'),
                   ),
                 ],

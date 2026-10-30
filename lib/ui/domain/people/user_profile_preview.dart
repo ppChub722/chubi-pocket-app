@@ -2,18 +2,24 @@ import 'package:flutter/material.dart';
 
 import '../../tokens/app_spacing.dart';
 import '../icons/icon_code.dart';
-import '../../atoms/user_avatar.dart';
+import 'avatar.dart';
+import 'avatar_data.dart';
 
 class UserProfilePreview extends StatelessWidget {
   const UserProfilePreview({
     required this.displayName,
     this.iconCode,
+    this.avatar,
     this.size = 56,
     super.key,
   });
 
   final String displayName;
   final IconCode? iconCode;
+
+  /// The avatar to show; null = built from [displayName] + [iconCode] (the
+  /// icon maker's live preview passes only the icon).
+  final AvatarData? avatar;
   final double size;
 
   @override
@@ -25,7 +31,10 @@ class UserProfilePreview extends StatelessWidget {
       ),
       child: Row(
         children: [
-          UserAvatar(displayName: displayName, iconCode: iconCode, size: size),
+          Avatar(
+            avatar ?? AvatarData.forName(displayName, iconCode: iconCode),
+            size: size,
+          ),
           const SizedBox(width: AppSpacing.lg),
           Expanded(
             child: Text(

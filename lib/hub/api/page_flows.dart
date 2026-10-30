@@ -566,7 +566,69 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Button "ปิดบัญชี"', [FlowCall('deactivateMe')]),
     FlowStep.action('Button "เปิดบัญชีอีกครั้ง"', [FlowCall('reactivateMe')]),
     FlowStep.action('Icon packs opened (lazy)', [FlowCall('listMyPacks')]),
+    FlowStep.action('รูปโปรไฟล์ picked / colours 1–3 + border saved', [
+      FlowCall('updateMe', note: 'avatar_settings {source, colors, border}'),
+    ]),
+    FlowStep.action(
+      'Button "ลบ" on a linked app'
+      's picture',
+      [
+        FlowCall(
+          'deleteAvatarPhoto',
+          note: 'DELETE /avatars/{source}; answers my profile',
+        ),
+      ],
+    ),
   ]),
+  PageFlow(
+    'profile-connections',
+    'Profile → การเชื่อมต่อ (0.4.2 1b): one row per outside app (Telegram live; LINE / Google เร็วๆ นี้).',
+    [
+      FlowStep.open([
+        FlowCall(
+          'listConnections',
+          note:
+              'name, logo_url, brand_color, linked, account, photo, permissions',
+        ),
+      ]),
+      FlowStep.action('Each row draws its logo (cached by URL)', [
+        FlowCall('getBrandLogo', note: 'public PNG, ?v= in logo_url'),
+      ]),
+      FlowStep.action('Any person avatar of kind photo (every page)', [
+        FlowCall(
+          'getAvatarImage',
+          note: 'Bearer; cached by photo_url incl. ?v=',
+        ),
+      ]),
+    ],
+  ),
+  PageFlow(
+    'profile-connection',
+    'One outside app (0.4.2 1b): link / unlink, permissions, its picture.',
+    [
+      FlowStep.open([
+        FlowCall('getConnection', note: 'also on app resume after linking'),
+      ]),
+      FlowStep.action('Button "เชื่อม <name>" / "เปลี่ยนบัญชี"', [
+        FlowCall(
+          'startConnectionLink',
+          note: 'url → opened in the outside app',
+        ),
+      ]),
+      FlowStep.action('Button "ยกเลิกการเชื่อม" (confirmed)', [
+        FlowCall('unlinkConnection'),
+      ]),
+      FlowStep.action('Flip a permission switch', [
+        FlowCall('updateConnectionPermissions', note: '{key: bool}'),
+      ]),
+      FlowStep.action('Button "อัปเดต" (the picture)', [
+        FlowCall('importConnectionPhoto'),
+      ]),
+      FlowStep.action('Button "ลบ" (the picture, confirmed)', [
+        FlowCall('deleteAvatarPhoto'),
+      ]),
+    ],
+  ),
   PageFlow('archived', 'The archived hub (ที่เก็บถาวร) and its restores.', [
     FlowStep.open([FlowCall('getMyArchived', note: 'every kind, one call')]),
     FlowStep.action('กู้คืน (wallet)', [FlowCall('restoreAccount')]),
@@ -582,6 +644,27 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Button "สมัคร"', [FlowCall('register')]),
     FlowStep.action('Button "ออกจากระบบ"', [FlowCall('logout')]),
   ]),
+  PageFlow(
+    'auth-telegram',
+    'เข้าสู่ระบบด้วย Telegram (0.4.2 1b-2, PKCE): log in, or sign up from Telegram.',
+    [
+      FlowStep.action('Button "เข้าสู่ระบบด้วย Telegram"', [
+        FlowCall(
+          'startTelegramLogin',
+          note: 'code_challenge; url opened in Telegram',
+        ),
+      ]),
+      FlowStep.action('App resumed / "ลองอีกครั้ง" while pending', [
+        FlowCall(
+          'exchangeTelegramLogin',
+          note: '202 pending | login tokens | signup prefill',
+        ),
+      ]),
+      FlowStep.action('Sign-up page: Button "สร้างบัญชี"', [
+        FlowCall('signupWithTelegram'),
+      ]),
+    ],
+  ),
 
   // ── Events (projects) ───────────────────────────────────────────────────────
   PageFlow(

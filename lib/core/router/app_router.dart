@@ -57,6 +57,7 @@ import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/home/presentation/pages/home_coming_soon_page.dart';
 import '../../features/settings/presentation/pages/change_password_page.dart';
 import '../../features/settings/presentation/pages/edit_profile_page.dart';
+import '../../features/connections/presentation/pages/connection_page.dart';
 import '../../features/archived/presentation/archived_page.dart';
 import '../../features/settings/presentation/pages/settings_app_page.dart';
 import '../../features/settings/presentation/pages/settings_money_page.dart';
@@ -329,6 +330,16 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
           path: 'profile',
           name: 'settings-profile',
           builder: (context, state) => const EditProfilePage(),
+          routes: [
+            // 0.4.2 1b: one page for every outside app.
+            GoRoute(
+              path: 'connections/:provider',
+              name: 'settings-connection',
+              builder: (context, state) => ConnectionPage(
+                provider: state.pathParameters['provider'] ?? '',
+              ),
+            ),
+          ],
         ),
         GoRoute(
           path: 'password',

@@ -49,6 +49,7 @@ import 'pages/templates_tabbed_detail_page.dart';
 import 'pages/templates_detail_sections_page.dart';
 import 'pages/domain_others_page.dart';
 import 'pages/domain_people_accounts_page.dart';
+import 'pages/domain_profile_connections_page.dart';
 import 'pages/templates_auth_page.dart';
 import 'pages/templates_dashboard_page.dart';
 import 'pages/templates_list_page.dart';
@@ -265,12 +266,19 @@ final List<HubPage> hubPages = [
     slug: 'badge-avatar',
     title: 'Badge & avatar',
     summary:
-        'Badge, avatars, icon tile, corner badge, editable circle — with the size ladder.',
+        'Badge, avatars (the person Avatar: every state + ProfileColors), icon tile, corner badge, editable circle — with the size ladder.',
     usedBy: '40 files',
     covers: [
       'AppBadge',
       'AppAvatar',
-      'UserAvatar',
+      'Avatar',
+      'AvatarData',
+      'AvatarKind',
+      'AvatarBorder',
+      'ProfileColors',
+      'ServerImageScope',
+      'ServerImageProvider',
+      'ServerImageFetch',
       'IconTile',
       'IconTileShape',
       'IconTileStyle',
@@ -1194,6 +1202,35 @@ final List<HubPage> hubPages = [
       'WalletPickCard',
     ],
     builder: buildPeopleAccountsPage,
+  ),
+  const HubPage(
+    level: HubLevel.domain,
+    slug: 'profile-connections',
+    title: 'Profile & connections',
+    summary:
+        'Profile hero (picture + colour dots), picture radio rows, '
+        'connection rows / hero / link button, provider logos, the icon '
+        'maker\'s colour-only mode (0.4.2 1b).',
+    generic: false,
+    usedBy: 'Settings card, profile, connection page',
+    covers: [
+      'ProviderLogo',
+      'ProviderLogoStrip',
+      'ProfileColorDots',
+      'ProfileHeroAvatar',
+      'ProfileHeroCard',
+      'AvatarSourceRow',
+      'AppRadioMark',
+      'ConnectionRow',
+      'ConnectionRowState',
+      'ConnectionHeroCard',
+      'ConnectionLinkButton',
+      'AvatarColorsDraft',
+      'AvatarBorderStyle',
+      'AvatarColorsPanel',
+      'showAvatarColorsSheet',
+    ],
+    builder: buildProfileConnectionsPage,
   ),
   const HubPage(
     level: HubLevel.domain,
