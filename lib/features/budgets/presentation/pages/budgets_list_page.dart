@@ -97,7 +97,6 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
 
   Widget _body(BuildContext context, AppLocalizations l, BudgetsState state) {
     final cubit = context.read<BudgetsCubit>();
-    final s = state.summary;
     final active = state.filter == BudgetFilter.active;
     final rows = state.visible;
     final searching = state.query.trim().isNotEmpty;
@@ -115,12 +114,14 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
               state.status == BudgetsStatus.loading) &&
           state.budgets.isEmpty,
       error: state.budgets.isEmpty ? state.error : null,
-      isEmpty: rows.isEmpty,
+      // No active budgets is not a bare empty screen: the page keeps its
+      // summary (zeros), toolbar and the add tile, like saving goals.
+      isEmpty: rows.isEmpty && !(active && !searching),
       onRetry: cubit.load,
       rowCards: true,
       topInset: AppSpacing.sm,
       header: [
-        if (active && s.activeCount > 0)
+        if (active)
           _summary(context, l, state, toggleButton)
         else
           AppHeroCard(
@@ -282,7 +283,7 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
       header: HeroHeader(
         leading: [
           HeroModuleTile(AppIcons.budget),
-          _summaryChip(context, l, state, overBy),
+          if (s.activeCount > 0) _summaryChip(context, l, state, overBy),
         ],
         actions: [toggleButton],
       ),

@@ -210,7 +210,9 @@ class _AccountsPageState extends State<AccountsPage> {
                       state.status == AccountsStatus.loading) &&
                   state.accounts.isEmpty,
               error: state.accounts.isEmpty ? state.error : null,
-              isEmpty: accounts.isEmpty,
+              // No wallets is not a bare empty screen: the page keeps its
+              // summary (zeros), toolbar and the add tile, like the others.
+              isEmpty: false,
               onRetry: _refresh,
               skeletonShape: ListSkeletonShape.grid(
                 headerHeight: 192,
@@ -222,11 +224,6 @@ class _AccountsPageState extends State<AccountsPage> {
                 icon: AppIcons.wallet,
                 title: l.accountsEmptyTitle,
                 message: l.accountsEmptyMessage,
-                cta: AppButton(
-                  label: l.accountsAddNew,
-                  icon: AppIcons.add,
-                  onPressed: () => context.push('/accounts/new'),
-                ),
               ),
               sidePadding: 0,
               topInset: 0,
