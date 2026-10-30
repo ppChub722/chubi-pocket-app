@@ -492,7 +492,7 @@ class _AmountBoxState extends State<_AmountBox> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 104,
+      width: ShareAmountField.sampleWidth(context, _fieldStyle(context)),
       height: SplitRow.height,
       child: Align(
         alignment: Alignment.bottomCenter,

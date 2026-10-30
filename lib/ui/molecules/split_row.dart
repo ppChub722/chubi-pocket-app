@@ -25,7 +25,7 @@ class SplitRow extends StatelessWidget {
 
   static const double avatarSize = 36;
 
-  static const double trailingSlot = 40;
+  static const double trailingSlot = SplitRowAction.circle;
 
   final Widget avatar;
   final Widget name;
@@ -264,15 +264,23 @@ class ShareAmountField extends StatefulWidget {
   /// inline box); a longer number scrolls inside it.
   final bool compact;
 
-  static const double width = 104;
+  /// A split row's box fits "฿9,999" (owner 2026-10-30); more scrolls inside.
+  static const String sample = '9,999';
 
   static const String compactSample = '99,999';
 
   /// The width of a [compact] box in [style] (the caret's room included).
-  static double compactWidth(BuildContext context, TextStyle? style) {
+  static double compactWidth(BuildContext context, TextStyle? style) =>
+      sampleWidth(context, style, compactSample);
+
+  static double sampleWidth(
+    BuildContext context,
+    TextStyle? style, [
+    String sample = ShareAmountField.sample,
+  ]) {
     final painter = TextPainter(
       text: TextSpan(
-        text: '${UiConfig.stringsOf(context).currencySymbol}$compactSample',
+        text: '${UiConfig.stringsOf(context).currencySymbol}$sample',
         style: style,
       ),
       textDirection: TextDirection.ltr,
@@ -343,7 +351,7 @@ class _ShareAmountFieldState extends State<ShareAmountField> {
     return SizedBox(
       width: widget.compact
           ? ShareAmountField.compactWidth(context, style)
-          : ShareAmountField.width,
+          : ShareAmountField.sampleWidth(context, style),
       height: SplitRow.height,
       child: Align(
         alignment: Alignment.bottomCenter,

@@ -506,6 +506,12 @@ abstract class AppLocalizations {
   /// **'This picture source has no picture any more'**
   String get errAvatarSource;
 
+  /// No description provided for @errCurrencyLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'The currency can\'t be changed'**
+  String get errCurrencyLocked;
+
   /// No description provided for @errPermissionUnavailable.
   ///
   /// In en, this message translates to:

@@ -241,6 +241,7 @@ class AppDetailRow extends StatelessWidget {
     this.accent,
     this.tinted = false,
     this.comingSoon = false,
+    this.disabled = false,
     this.horizontalInset = AppSpacing.lg,
     this.helperMaxLines,
     this.dimmed = false,
@@ -262,11 +263,13 @@ class AppDetailRow extends StatelessWidget {
     Widget? leading,
     IconData? icon,
     bool locked = false,
+    bool disabled = false,
     double horizontalInset = AppSpacing.lg,
     bool loading = false,
     Key? key,
   }) => AppDetailRow(
     key: key,
+    disabled: disabled,
     loading: loading,
     label: label,
     helper: helper,
@@ -327,6 +330,9 @@ class AppDetailRow extends StatelessWidget {
 
   /// Not built yet: muted, no taps, a "coming soon" badge as the value.
   final bool comingSoon;
+
+  /// Shown but not changeable: the faded "off" look, no taps.
+  final bool disabled;
 
   final double horizontalInset;
 
@@ -422,7 +428,7 @@ class AppDetailRow extends StatelessWidget {
       chevron: showChevron && !comingSoon,
       accent: accent,
       tinted: tinted,
-      disabled: comingSoon,
+      disabled: comingSoon || disabled,
       dimmed: dimmed,
       horizontalInset: horizontalInset,
       onTap: onTap,

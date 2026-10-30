@@ -1399,6 +1399,8 @@ class _DetailPatternsPage extends StatelessWidget {
               'The value is primary unless the row passes valueColor. locked '
               '= 🔒 after the value, and the value + lock take the theme\'s '
               'muted text token (onSurfaceVariant: per theme, light / dark). '
+              'disabled = shown but not changeable: the faded off look, no '
+              'taps. '
               'valueIcon = a 16 px icon before the value, in its colour. The '
               'value takes at most half the row.',
           child: SectionCard(
@@ -1410,6 +1412,13 @@ class _DetailPatternsPage extends StatelessWidget {
                 label: 'Username (locked)',
                 trailing: Text('ppond'),
                 locked: true,
+              ),
+              AppDetailRow.pick(
+                icon: AppIcons.currency,
+                label: 'Currency (disabled)',
+                value: '฿  THB | Thai baht',
+                emptyText: '',
+                disabled: true,
               ),
               const AppDetailRow(
                 icon: AppIcons.link,

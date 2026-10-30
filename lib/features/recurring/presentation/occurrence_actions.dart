@@ -18,7 +18,6 @@ import '../../personal_debts/presentation/debt_wiring.dart'
 import '../../transactions/domain/transaction.dart';
 import '../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../transactions/presentation/widgets/quick_create_sheet.dart';
-import '../../transactions/presentation/widgets/recurring_link.dart';
 import '../../transactions/presentation/widgets/transaction_picker.dart';
 import '../data/recurring_link_repository.dart';
 import '../data/recurring_repository.dart';

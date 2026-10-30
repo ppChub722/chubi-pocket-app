@@ -331,8 +331,18 @@ class _LoadedState extends State<_Loaded>
 
   Future<void> _enterEdit({FocusNode? focus, VoidCallback? then}) async {
     // SA1 (App-1): a shared-bill copy is edited in the one bill form.
-    if (txEditsAsBill(widget.tx)) {
-      await openEventBill(context, widget.tx.eventBill!.billId);
+    var tx = widget.tx;
+    // A row cached before the BE linked its bill has no eventBill yet.
+    if (!txEditsAsBill(tx) && (tx.projectId != null || tx.splitCount > 0)) {
+      try {
+        tx = await context.read<TransactionsCubit>().refreshOne(tx.id);
+      } on ApiException {
+        // Keep the cached row.
+      }
+      if (!mounted || isEditing) return;
+    }
+    if (txEditsAsBill(tx)) {
+      await openEventBill(context, tx.eventBill!.billId);
       return;
     }
     if (!_splitsPrefilled) {

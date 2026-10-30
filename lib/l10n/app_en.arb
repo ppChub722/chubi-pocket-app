@@ -72,6 +72,7 @@
   "errProvider": "The linked app didn’t answer — try again",
   "errNoPhoto": "The linked app has no picture to use",
   "errAvatarSource": "This picture source has no picture any more",
+  "errCurrencyLocked": "The currency can't be changed",
   "errPermissionUnavailable": "This permission can’t be turned on for this app",
   "errCannotLinkSelf": "A contact can’t be linked to yourself",
   "errEndTooFar": "The end must be within 2 years of the start",

@@ -221,6 +221,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errAvatarSource => 'This picture source has no picture any more';
 
   @override
+  String get errCurrencyLocked => 'The currency can\'t be changed';
+
+  @override
   String get errPermissionUnavailable =>
       'This permission can’t be turned on for this app';
 

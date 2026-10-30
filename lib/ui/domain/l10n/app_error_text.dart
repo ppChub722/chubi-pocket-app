@@ -49,6 +49,7 @@ final Map<String, String Function(AppLocalizations l)> _specific = {
   'USERNAME_EXISTS': (l) => l.authRegisterUsernameTaken,
   'ACCOUNT_INACTIVE': (l) => l.errAccountInactive,
   'AVATAR_SOURCE_UNAVAILABLE': (l) => l.errAvatarSource,
+  'CURRENCY_LOCKED': (l) => l.errCurrencyLocked,
   'REGISTRATION_CLOSED': (l) => l.authRegistrationClosed,
   'TELEGRAM_ALREADY_LINKED': (l) => l.authTelegramAlreadyLinked,
   'CONNECTION_UNAVAILABLE': (l) => l.authTelegramUnavailable,

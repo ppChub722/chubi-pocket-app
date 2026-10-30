@@ -216,6 +216,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get errAvatarSource => 'แหล่งรูปนี้ไม่มีรูปให้ใช้แล้ว';
 
   @override
+  String get errCurrencyLocked => 'เปลี่ยนสกุลเงินไม่ได้';
+
+  @override
   String get errPermissionUnavailable => 'เปิดสิทธิ์นี้ให้แอปนี้ไม่ได้';
 
   @override
@@ -2697,7 +2700,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get commonMore => 'เพิ่มเติม';
 
   @override
-  String get txShareMine => 'ส่วนของคุณ';
+  String get txShareMine => 'ส่วนของฉัน';
 
   @override
   String get txSplitAuthorOnly => 'เฉพาะคนที่บันทึกรายการนี้แก้การหารได้';
@@ -2722,7 +2725,7 @@ class AppLocalizationsTh extends AppLocalizations {
       'มีรายการหารที่ยกหนี้แล้ว เอาเข้าอีเวนต์ไม่ได้';
 
   @override
-  String get txSplitExceedsShare => 'เกินส่วนของคุณ';
+  String get txSplitExceedsShare => 'เกินส่วนของฉัน';
 
   @override
   String get accountsReorderSave => 'บันทึกลำดับ';
@@ -2767,7 +2770,7 @@ class AppLocalizationsTh extends AppLocalizations {
       'การหารนี้จะอยู่ในอีเวนต์ แก้ได้ที่หน้าอีเวนต์';
 
   @override
-  String get txSplitFromMyShare => 'หารจากส่วนของคุณ';
+  String get txSplitFromMyShare => 'หารจากส่วนของฉัน';
 
   @override
   String get categoryPickerTitle => 'เลือกหมวดหมู่';
@@ -2913,7 +2916,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get txSplitUnbalanced =>
-      'ยอดที่แบ่งยังไม่ลงตัว — ส่วนของคุณรวมกับของคนอื่นต้องเท่ากับยอดรายการก่อนบันทึก';
+      'ยอดที่แบ่งยังไม่ลงตัว — ส่วนของฉันรวมกับของคนอื่นต้องเท่ากับยอดรายการก่อนบันทึก';
 
   @override
   String txShareOthersOweYou(String amount) {
@@ -3263,7 +3266,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get eventErrTagNotFound => 'ไม่พบแท็กนี้ในอีเวนต์';
 
   @override
-  String get eventErrNoShare => 'บิลนี้ไม่มีส่วนของคุณ';
+  String get eventErrNoShare => 'บิลนี้ไม่มีส่วนของฉัน';
 
   @override
   String get eventErrOwnerCannotLeave =>

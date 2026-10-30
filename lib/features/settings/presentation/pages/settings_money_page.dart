@@ -140,7 +140,7 @@ class _CurrencyRow extends StatelessWidget {
       label: l.profileCurrencyLabel,
       value: display,
       emptyText: display,
-      locked: true,
+      disabled: true,
     );
   }
 }

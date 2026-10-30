@@ -79,10 +79,17 @@ class PersonMark extends StatelessWidget {
         ),
       );
     }
-    final Widget plain = Icon(
-      AppIcons.profile,
-      size: size,
-      color: scheme.onSurfaceVariant,
+    // The outline glyph fills its box edge to edge: a touch smaller so it
+    // reads the same size as a round avatar (owner 2026-10-30).
+    final Widget plain = SizedBox.square(
+      dimension: size,
+      child: Center(
+        child: Icon(
+          AppIcons.profile,
+          size: size * 0.85,
+          color: scheme.onSurfaceVariant,
+        ),
+      ),
     );
     final Widget mark = level == PersonLevel.name
         ? tappable
