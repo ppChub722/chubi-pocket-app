@@ -34,12 +34,9 @@ void showAppSnackBar(
   if (ModalRoute.of(context) is PopupRoute) {
     final overlay = Overlay.maybeOf(context);
     if (overlay != null) {
-      SnackStack.over(overlay).show(
-        message,
-        tone: tone,
-        actionLabel: actionLabel,
-        onAction: onAction,
-      );
+      SnackStack.over(
+        overlay,
+      ).show(message, tone: tone, actionLabel: actionLabel, onAction: onAction);
       return;
     }
   }
@@ -64,4 +61,3 @@ void showAppSnackBarOn(
     messenger,
   ).show(message, tone: tone, actionLabel: actionLabel, onAction: onAction);
 }
-

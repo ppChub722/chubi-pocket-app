@@ -5,12 +5,7 @@ import '../../tokens/app_spacing.dart';
 import 'brand_logo.dart';
 
 class BrandHeader extends StatelessWidget {
-  const BrandHeader({
-    this.name,
-    this.tagline,
-    this.onSecretUnlock,
-    super.key,
-  });
+  const BrandHeader({this.name, this.tagline, this.onSecretUnlock, super.key});
 
   final String? name;
   final String? tagline;

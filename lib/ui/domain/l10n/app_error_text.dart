@@ -235,7 +235,11 @@ const Map<String, ErrorGroup> _groups = {
 
 /// Client-side network codes: offline, slow, and a proxy answering for a
 /// BE that is down.
-const _networkCodes = {'NETWORK_ERROR', 'NETWORK_TIMEOUT', 'SERVER_UNAVAILABLE'};
+const _networkCodes = {
+  'NETWORK_ERROR',
+  'NETWORK_TIMEOUT',
+  'SERVER_UNAVAILABLE',
+};
 
 /// Every code this mapper words; the OpenAPI `Error` enum must be inside
 /// (test/ui/app_error_text_test.dart).

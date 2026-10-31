@@ -21,25 +21,21 @@ void main() {
     ApiException(code: code, message: 'server says', statusCode: status),
   );
 
-  test(
-    'every OpenAPI error code has a Thai sentence',
-    () {
-      final doc = loadYaml(spec.readAsStringSync()) as YamlMap;
-      final codes =
-          ((((doc['components'] as YamlMap)['schemas'] as YamlMap)['Error']
-                      as YamlMap)['properties']['error']['properties']['code']['enum']
-                  as YamlList)
-              .cast<String>()
-              .toList();
-      expect(codes.length, greaterThan(100));
-      final missing = [
-        for (final c in codes)
-          if (!mappedErrorCodes.contains(c)) c,
-      ];
-      expect(missing, isEmpty, reason: 'add them to app_error_text.dart');
-    },
-    skip: spec.existsSync() ? false : 'BE checkout not found next to the app',
-  );
+  test('every OpenAPI error code has a Thai sentence', () {
+    final doc = loadYaml(spec.readAsStringSync()) as YamlMap;
+    final codes =
+        ((((doc['components'] as YamlMap)['schemas'] as YamlMap)['Error']
+                    as YamlMap)['properties']['error']['properties']['code']['enum']
+                as YamlList)
+            .cast<String>()
+            .toList();
+    expect(codes.length, greaterThan(100));
+    final missing = [
+      for (final c in codes)
+        if (!mappedErrorCodes.contains(c)) c,
+    ];
+    expect(missing, isEmpty, reason: 'add them to app_error_text.dart');
+  }, skip: spec.existsSync() ? false : 'BE checkout not found next to the app');
 
   test('a worded code never shows the server message', () {
     for (final c in mappedErrorCodes) {

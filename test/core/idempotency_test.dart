@@ -21,20 +21,23 @@ void main() {
     expect(first[0], startsWith(idem.base));
   });
 
-  test('a changed form gets another key; reads and calls outside get none', () async {
-    final idem = Idempotency();
-    final a = await idem.run(() async => Idempotency.keyFor(_post({'a': 1})));
-    final b = await idem.run(() async => Idempotency.keyFor(_post({'a': 2})));
-    expect(a, isNot(b));
-    expect(
-      await idem.run(
-        () async => Idempotency.keyFor(
-          RequestOptions(path: '/transactions', method: 'GET'),
+  test(
+    'a changed form gets another key; reads and calls outside get none',
+    () async {
+      final idem = Idempotency();
+      final a = await idem.run(() async => Idempotency.keyFor(_post({'a': 1})));
+      final b = await idem.run(() async => Idempotency.keyFor(_post({'a': 2})));
+      expect(a, isNot(b));
+      expect(
+        await idem.run(
+          () async => Idempotency.keyFor(
+            RequestOptions(path: '/transactions', method: 'GET'),
+          ),
         ),
-      ),
-      isNull,
-    );
-    expect(Idempotency.keyFor(_post({'a': 1})), isNull);
-    expect(Idempotency().base, isNot(idem.base));
-  });
+        isNull,
+      );
+      expect(Idempotency.keyFor(_post({'a': 1})), isNull);
+      expect(Idempotency().base, isNot(idem.base));
+    },
+  );
 }

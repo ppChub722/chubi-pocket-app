@@ -24,58 +24,53 @@ void main() {
       ? [for (final e in v) plain(e)]
       : v;
 
-  test(
-    'the BE spec parses and every endpoint says who calls it (ratchet)',
-    () {
-      final json = plain(loadYaml(file.readAsStringSync()))!;
-      final doc = ApiDoc.parse(
-        (json as Map).cast<String, dynamic>(),
-      ).withFlows(pageFlows);
-      expect(doc.endpoints, isNotEmpty);
-      expect(doc.schemas, isNotEmpty);
+  test('the BE spec parses and every endpoint says who calls it (ratchet)', () {
+    final json = plain(loadYaml(file.readAsStringSync()))!;
+    final doc = ApiDoc.parse(
+      (json as Map).cast<String, dynamic>(),
+    ).withFlows(pageFlows);
+    expect(doc.endpoints, isNotEmpty);
+    expect(doc.schemas, isNotEmpty);
 
-      // Every $ref points at something that exists.
-      final text = jsonEncode(json);
-      final dangling = <String>{};
-      for (final m in RegExp(r'"\$ref":"#/([^"]+)"').allMatches(text)) {
-        Object? at = json;
-        for (final part in m.group(1)!.split('/')) {
-          at = at is Map ? at[part] : null;
-        }
-        if (at == null) dangling.add(m.group(1)!);
+    // Every $ref points at something that exists.
+    final text = jsonEncode(json);
+    final dangling = <String>{};
+    for (final m in RegExp(r'"\$ref":"#/([^"]+)"').allMatches(text)) {
+      Object? at = json;
+      for (final part in m.group(1)!.split('/')) {
+        at = at is Map ? at[part] : null;
       }
-      expect(dangling, isEmpty, reason: 'dangling \$ref');
+      if (at == null) dangling.add(m.group(1)!);
+    }
+    expect(dangling, isEmpty, reason: 'dangling \$ref');
 
-      expect(
-        doc.endpoints.where((e) => (e.summary ?? '').isEmpty).map((e) => e.id),
-        isEmpty,
-        reason: 'every endpoint needs a summary',
-      );
+    expect(
+      doc.endpoints.where((e) => (e.summary ?? '').isEmpty).map((e) => e.id),
+      isEmpty,
+      reason: 'every endpoint needs a summary',
+    );
 
-      final unused = doc.unused.map((e) => e.id).toList()..sort();
-      final baseline = File('test/hub/api_unused_baseline.txt');
-      if (Platform.environment['UPDATE_BASELINE'] == '1' ||
-          !baseline.existsSync()) {
-        baseline.writeAsStringSync('${unused.join('\n')}\n');
-      }
-      final known = baseline
-          .readAsLinesSync()
-          .where((l) => l.trim().isNotEmpty)
-          .toSet();
-      expect(
-        unused.toSet().difference(known),
-        isEmpty,
-        reason:
-            'a spec endpoint no page flow lists — add it to page_flows.dart',
-      );
-      expect(
-        known.difference(unused.toSet()),
-        isEmpty,
-        reason:
-            'now in a flow (or is gone) — remove from the baseline '
-            '(UPDATE_BASELINE=1)',
-      );
-    },
-    skip: file.existsSync() ? false : 'BE checkout not found next to the app',
-  );
+    final unused = doc.unused.map((e) => e.id).toList()..sort();
+    final baseline = File('test/hub/api_unused_baseline.txt');
+    if (Platform.environment['UPDATE_BASELINE'] == '1' ||
+        !baseline.existsSync()) {
+      baseline.writeAsStringSync('${unused.join('\n')}\n');
+    }
+    final known = baseline
+        .readAsLinesSync()
+        .where((l) => l.trim().isNotEmpty)
+        .toSet();
+    expect(
+      unused.toSet().difference(known),
+      isEmpty,
+      reason: 'a spec endpoint no page flow lists — add it to page_flows.dart',
+    );
+    expect(
+      known.difference(unused.toSet()),
+      isEmpty,
+      reason:
+          'now in a flow (or is gone) — remove from the baseline '
+          '(UPDATE_BASELINE=1)',
+    );
+  }, skip: file.existsSync() ? false : 'BE checkout not found next to the app');
 }
