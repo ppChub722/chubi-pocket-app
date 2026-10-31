@@ -31,6 +31,7 @@ import '../features/app_version/data/app_version_repository.dart';
 import '../features/app_version/presentation/cubit/app_version_cubit.dart';
 import 'connection_shell.dart';
 import '../features/auth/data/auth_repository.dart';
+import '../features/auth/data/telegram_oidc.dart';
 import '../features/budgets/data/budgets_repository.dart';
 import '../features/budgets/presentation/cubit/budgets_cubit.dart';
 import '../features/auth/presentation/cubit/auth_cubit.dart';
@@ -86,6 +87,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
   late final AuthRepository _authRepository;
   late final UsersRepository _usersRepository;
   late final ConnectionsRepository _connectionsRepository;
+  late final TelegramOidc _telegramOidc;
   late final AccountsRepository _accountsRepository;
   late final CategoriesRepository _categoriesRepository;
   late final TagsRepository _tagsRepository;
@@ -125,6 +127,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     _authRepository = AuthRepository(client: _apiClient);
     _usersRepository = UsersRepository(client: _apiClient);
     _connectionsRepository = ConnectionsRepository(client: _apiClient);
+    _telegramOidc = TelegramOidc();
     _accountsRepository = AccountsRepository(client: _apiClient);
     _categoriesRepository = CategoriesRepository(client: _apiClient);
     _tagsRepository = TagsRepository(client: _apiClient);
@@ -219,6 +222,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
         RepositoryProvider<ConnectionsRepository>.value(
           value: _connectionsRepository,
         ),
+        RepositoryProvider<TelegramOidc>.value(value: _telegramOidc),
         RepositoryProvider<AccountsRepository>.value(
           value: _accountsRepository,
         ),
@@ -259,7 +263,9 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
             create: (_) => TelegramLoginCubit(
               repository: _authRepository,
               auth: _authCubit,
-            ),
+              oidc: _telegramOidc,
+            )..resumePending(),
+            lazy: false,
           ),
           BlocProvider<ConnectivityCubit>(create: (_) => ConnectivityCubit()),
           BlocProvider<ConnectionCubit>(

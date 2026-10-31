@@ -218,6 +218,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'The login link expired or was already used — start again';
 
   @override
+  String get errTelegramTokenInvalid =>
+      'Signing in with Telegram didn\'t work. Try again';
+
+  @override
   String get errCategoryNameDuplicate =>
       'A category with this name already exists at this level';
 
@@ -340,36 +344,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authRegisterIncomplete => 'Fill in every field correctly';
 
   @override
-  String get authTelegramWaitTitle => 'Waiting for Telegram';
-
-  @override
-  String get authTelegramWaitBody =>
-      'Tap “Confirm” in the bot chat, then come back to this app';
-
-  @override
-  String get authTelegramReopen => 'Open Telegram again';
-
-  @override
-  String get authTelegramCheck => 'Check again';
-
-  @override
-  String get authTelegramExpired =>
-      'The link expired. Start signing in with Telegram again';
-
-  @override
   String get authTelegramOpenFailed =>
       'Could not open Telegram. Is the Telegram app installed?';
-
-  @override
-  String get authTelegramSignupTitle => 'Create an account with Telegram';
-
-  @override
-  String get authTelegramSignupPhoto =>
-      'Your Telegram profile picture will be your picture';
-
-  @override
-  String get authTelegramUsernameTaken =>
-      'That username is taken. We filled in a free one';
 
   @override
   String get authTelegramAlreadyLinked =>
@@ -7347,6 +7323,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String connectionsLinkedAt(String date) {
     return 'Linked $date';
   }
+
+  @override
+  String get connectionsOpenBot => 'Open the bot chat';
 
   @override
   String connectionsOpenFailed(String name) {

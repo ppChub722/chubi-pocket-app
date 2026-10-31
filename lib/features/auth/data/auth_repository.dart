@@ -54,59 +54,15 @@ class AuthRepository {
     }
   }
 
-  /// POST /auth/telegram/start: [codeChallenge] = S256 of the app's verifier.
-  Future<TelegramLoginStart> startTelegramLogin(String codeChallenge) async {
+  /// POST /auth/telegram/token: log in with Telegram's id_token; an unknown
+  /// Telegram gets an account at once (no password, Telegram linked).
+  Future<TelegramTokenLogin> telegramLogin(String idToken) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
-        '/auth/telegram/start',
-        data: {'code_challenge': codeChallenge},
+        '/auth/telegram/token',
+        data: {'id_token': idToken},
       );
-      return TelegramLoginStart.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    } catch (e, st) {
-      throw ApiException.from(e, st);
-    }
-  }
-
-  /// POST /auth/telegram/exchange: 202 = still pending (not an error).
-  Future<TelegramExchange> exchangeTelegramLogin({
-    required String code,
-    required String codeVerifier,
-  }) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/auth/telegram/exchange',
-        data: {'code': code, 'code_verifier': codeVerifier},
-      );
-      return TelegramExchange.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    } catch (e, st) {
-      throw ApiException.from(e, st);
-    }
-  }
-
-  /// POST /auth/telegram/signup: an account with no password, Telegram linked.
-  Future<({User user, AuthToken token})> signupWithTelegram({
-    required String code,
-    required String codeVerifier,
-    required String displayName,
-    required String username,
-    String currency = 'THB',
-  }) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/auth/telegram/signup',
-        data: {
-          'code': code,
-          'code_verifier': codeVerifier,
-          'display_name': displayName,
-          'username': username,
-          'currency': currency,
-        },
-      );
-      return _parseAuthResponse(res.data!);
+      return TelegramTokenLogin.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     } catch (e, st) {

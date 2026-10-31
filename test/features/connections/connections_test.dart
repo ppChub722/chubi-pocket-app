@@ -218,15 +218,16 @@ void main() {
       expect(row.linked, isFalse);
     });
 
-    test('startLink: the URL to open', () async {
-      adapter.body = {
-        'url': 'https://t.me/chubiPocket_bot?start=abc',
-        'expires_at': '2026-10-28T09:10:00Z',
-      };
-      final s = await repo.startLink('telegram');
-      expect(adapter.last!.path, '/connections/telegram/link');
-      expect(s.url, startsWith('https://t.me/'));
-      expect(s.expiresAt, DateTime.utc(2026, 10, 28, 9, 10));
+    test('link: POST the id_token, answers the linked row', () async {
+      adapter.body = {..._telegram(), 'bot_url': 'https://t.me/chubiPocket_bot'};
+      final row = await repo.link('telegram', 'jwt');
+      expect(
+        (adapter.last!.method, adapter.last!.path),
+        ('POST', '/connections/telegram'),
+      );
+      expect(adapter.last!.data, {'id_token': 'jwt'});
+      expect(row.linked, isTrue);
+      expect(row.botUrl, 'https://t.me/chubiPocket_bot');
     });
 
     test('deleteAvatar: DELETE /avatars/{source} answers my profile', () async {

@@ -215,6 +215,10 @@ class AppLocalizationsTh extends AppLocalizations {
       'ลิงก์เข้าสู่ระบบหมดอายุหรือถูกใช้ไปแล้ว เริ่มใหม่อีกครั้ง';
 
   @override
+  String get errTelegramTokenInvalid =>
+      'เข้าสู่ระบบด้วย Telegram ไม่สำเร็จ ลองใหม่อีกครั้ง';
+
+  @override
   String get errCategoryNameDuplicate => 'มีหมวดชื่อนี้ในระดับเดียวกันแล้ว';
 
   @override
@@ -333,36 +337,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get authRegisterIncomplete => 'กรอกข้อมูลให้ครบและถูกต้อง';
 
   @override
-  String get authTelegramWaitTitle => 'รอยืนยันใน Telegram';
-
-  @override
-  String get authTelegramWaitBody =>
-      'กด “ยืนยัน” ในแชตกับบอท แล้วกลับมาที่แอปนี้';
-
-  @override
-  String get authTelegramReopen => 'เปิด Telegram อีกครั้ง';
-
-  @override
-  String get authTelegramCheck => 'ตรวจสอบอีกครั้ง';
-
-  @override
-  String get authTelegramExpired =>
-      'ลิงก์หมดอายุ กรุณาเริ่มเข้าสู่ระบบด้วย Telegram ใหม่';
-
-  @override
   String get authTelegramOpenFailed =>
       'เปิด Telegram ไม่ได้ ติดตั้งแอป Telegram แล้วหรือยัง';
-
-  @override
-  String get authTelegramSignupTitle => 'สร้างบัญชีด้วย Telegram';
-
-  @override
-  String get authTelegramSignupPhoto =>
-      'รูปโปรไฟล์ Telegram จะถูกใช้เป็นรูปของคุณ';
-
-  @override
-  String get authTelegramUsernameTaken =>
-      'ชื่อผู้ใช้นี้ถูกใช้แล้ว ใส่ชื่อที่แนะนำให้แล้ว';
 
   @override
   String get authTelegramAlreadyLinked =>
@@ -7195,6 +7171,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String connectionsLinkedAt(String date) {
     return 'เชื่อมเมื่อ $date';
   }
+
+  @override
+  String get connectionsOpenBot => 'เปิดแชทบอท';
 
   @override
   String connectionsOpenFailed(String name) {

@@ -4,7 +4,6 @@ import 'package:chubi_pocket/core/network/api_client.dart';
 import 'package:chubi_pocket/core/network/api_exception.dart';
 import 'package:chubi_pocket/features/auth/data/auth_repository.dart';
 import 'package:chubi_pocket/features/auth/data/pkce.dart';
-import 'package:chubi_pocket/features/auth/domain/telegram_login.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -58,119 +57,48 @@ void main() {
           data: body,
         );
 
-    void stubPost(String path, Response<Map<String, dynamic>> answer) {
-      when(
-        () => dio.post<Map<String, dynamic>>(path, data: any(named: 'data')),
-      ).thenAnswer((_) async => answer);
-    }
-
-    final userJson = {
-      'id': 'u-1',
-      'username': 'alice',
-      'display_name': 'Alice',
-      'currency': 'THB',
-    };
     final authJson = {
-      'user': userJson,
+      'user': {
+        'id': 'u-1',
+        'username': 'alice',
+        'display_name': 'Alice',
+        'currency': 'THB',
+      },
       'token': {'access_token': 'tok', 'expires_in': 2592000},
     };
 
-    test('start sends the challenge and parses the link', () async {
-      stubPost(
-        '/auth/telegram/start',
-        res(200, {
-          'code': 'abc',
-          'url': 'https://t.me/bot?start=login_abc',
-          'expires_at': '2026-10-30T10:05:00Z',
-        }),
-      );
+    void stubToken(Response<Map<String, dynamic>> answer) => when(
+      () => dio.post<Map<String, dynamic>>(
+        '/auth/telegram/token',
+        data: any(named: 'data'),
+      ),
+    ).thenAnswer((_) async => answer);
 
-      final start = await repo.startTelegramLogin('challenge');
+    test('login sends the id_token; 200 = an existing account', () async {
+      stubToken(res(200, {'status': 'login', 'auth': authJson}));
 
-      expect(start.code, 'abc');
-      expect(start.url, 'https://t.me/bot?start=login_abc');
-      expect(start.expiresAt, DateTime.utc(2026, 10, 30, 10, 5));
-      verify(
-        () => dio.post<Map<String, dynamic>>(
-          '/auth/telegram/start',
-          data: {'code_challenge': 'challenge'},
-        ),
-      ).called(1);
-    });
+      final r = await repo.telegramLogin('jwt');
 
-    test('exchange: pending (202), login and signup', () async {
-      stubPost(
-        '/auth/telegram/exchange',
-        res(202, {'status': 'pending', 'auth': null, 'signup': null}),
-      );
-      expect(
-        await repo.exchangeTelegramLogin(code: 'c', codeVerifier: 'v'),
-        isA<TelegramPending>(),
-      );
-
-      stubPost(
-        '/auth/telegram/exchange',
-        res(200, {'status': 'login', 'auth': authJson, 'signup': null}),
-      );
-      final login =
-          await repo.exchangeTelegramLogin(code: 'c', codeVerifier: 'v')
-              as TelegramLoggedIn;
-      expect(login.user.username, 'alice');
-      expect(login.token.accessToken, 'tok');
-
-      stubPost(
-        '/auth/telegram/exchange',
-        res(200, {
-          'status': 'signup',
-          'auth': null,
-          'signup': {
-            'display_name': 'Ann Lee',
-            'username_suggestion': 'annlee',
-            'has_photo': true,
-          },
-        }),
-      );
-      final signup =
-          await repo.exchangeTelegramLogin(code: 'c', codeVerifier: 'v')
-              as TelegramNeedsSignup;
-      expect(signup.info.displayName, 'Ann Lee');
-      expect(signup.info.usernameSuggestion, 'annlee');
-      expect(signup.info.hasPhoto, isTrue);
-    });
-
-    test('exchange keeps the code and the verifier in the body', () async {
-      stubPost(
-        '/auth/telegram/exchange',
-        res(202, {'status': 'pending', 'auth': null, 'signup': null}),
-      );
-      await repo.exchangeTelegramLogin(code: 'c1', codeVerifier: 'v1');
-      verify(
-        () => dio.post<Map<String, dynamic>>(
-          '/auth/telegram/exchange',
-          data: {'code': 'c1', 'code_verifier': 'v1'},
-        ),
-      ).called(1);
-    });
-
-    test('signup returns the signed-in answer', () async {
-      stubPost('/auth/telegram/signup', res(201, authJson));
-
-      final r = await repo.signupWithTelegram(
-        code: 'c',
-        codeVerifier: 'v',
-        displayName: 'Alice',
-        username: 'alice',
-        currency: 'THB',
-      );
-
-      expect(r.user.id, 'u-1');
+      expect(r.user.username, 'alice');
       expect(r.token.accessToken, 'tok');
+      expect(r.isNew, isFalse);
+      verify(
+        () => dio.post<Map<String, dynamic>>(
+          '/auth/telegram/token',
+          data: {'id_token': 'jwt'},
+        ),
+      ).called(1);
+    });
+
+    test('201 signup = a new member', () async {
+      stubToken(res(201, {'status': 'signup', 'auth': authJson}));
+      expect((await repo.telegramLogin('jwt')).isNew, isTrue);
     });
 
     test('an API error becomes an ApiException with its code', () async {
       when(
         () => dio.post<Map<String, dynamic>>(
-          '/auth/telegram/exchange',
+          '/auth/telegram/token',
           data: any(named: 'data'),
         ),
       ).thenThrow(
@@ -181,19 +109,19 @@ void main() {
             requestOptions: RequestOptions(path: ''),
             statusCode: 401,
             data: {
-              'error': {'code': 'LOGIN_CODE_INVALID', 'message': 'expired'},
+              'error': {'code': 'TELEGRAM_TOKEN_INVALID', 'message': 'x'},
             },
           ),
         ),
       );
 
       await expectLater(
-        repo.exchangeTelegramLogin(code: 'c', codeVerifier: 'v'),
+        repo.telegramLogin('jwt'),
         throwsA(
           isA<ApiException>().having(
             (e) => e.code,
             'code',
-            'LOGIN_CODE_INVALID',
+            'TELEGRAM_TOKEN_INVALID',
           ),
         ),
       );

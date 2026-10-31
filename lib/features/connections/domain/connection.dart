@@ -99,6 +99,7 @@ class Connection extends Equatable {
     this.linkedAt,
     this.photo,
     this.permissions = const [],
+    this.botUrl,
   });
 
   factory Connection.fromJson(Map<String, dynamic> json) => Connection(
@@ -117,6 +118,7 @@ class Connection extends Equatable {
       for (final p in (json['permissions'] as List?) ?? const [])
         if (p is Map) ConnectionPermission.fromJson(p.cast<String, dynamic>()),
     ],
+    botUrl: json['bot_url'] as String?,
   );
 
   /// telegram / line / google ([ConnectionProvider]).
@@ -144,6 +146,10 @@ class Connection extends Equatable {
   final AvatarPhoto? photo;
   final List<ConnectionPermission> permissions;
 
+  /// Telegram: `https://t.me/<bot>` (the "open the bot" row); null for other
+  /// apps or while the bot is off.
+  final String? botUrl;
+
   /// [brandColor] as a colour (bad / empty → null).
   Color? get brand {
     final hex = brandColor.startsWith('#') ? brandColor.substring(1) : '';
@@ -163,6 +169,7 @@ class Connection extends Equatable {
     account: account,
     linkedAt: linkedAt,
     permissions: permissions,
+    botUrl: botUrl,
   );
 
   ConnectionPermission? permission(String key) {
@@ -184,25 +191,6 @@ class Connection extends Equatable {
     linkedAt,
     photo,
     permissions,
+    botUrl,
   ];
-}
-
-/// POST /connections/{provider}/link: the URL to open in the outside app.
-class ConnectionLinkStart extends Equatable {
-  const ConnectionLinkStart({required this.url, this.expiresAt});
-
-  factory ConnectionLinkStart.fromJson(Map<String, dynamic> json) =>
-      ConnectionLinkStart(
-        url: (json['url'] as String?) ?? '',
-        expiresAt: DateTime.tryParse((json['expires_at'] as String?) ?? ''),
-      );
-
-  /// e.g. `https://t.me/chubiPocket_bot?start=<code>`.
-  final String url;
-
-  /// 10 minutes from the call.
-  final DateTime? expiresAt;
-
-  @override
-  List<Object?> get props => [url, expiresAt];
 }

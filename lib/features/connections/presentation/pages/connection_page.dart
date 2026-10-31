@@ -8,6 +8,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
+import '../../../auth/data/telegram_oidc.dart';
 import '../../data/connections_repository.dart';
 import '../../domain/connection.dart';
 import '../connection_actions.dart';
@@ -18,8 +19,8 @@ import '../cubit/connections_cubit.dart';
 /// One outside app (0.4.2 1b; the same page for every provider): linked =
 /// tinted hero, permission switches, its picture, เปลี่ยนบัญชี /
 /// ยกเลิกการเชื่อม; not linked = grey hero, permissions dimmed and the big
-/// `เชื่อม <App>` button. Linking opens the app; the page re-reads the row
-/// when the app comes back to the front.
+/// `เชื่อม <App>` button. Telegram links through Log In With Telegram; a
+/// linked Telegram also has เปิดแชทบอท.
 class ConnectionPage extends StatefulWidget {
   const ConnectionPage({required this.provider, super.key});
 
@@ -37,27 +38,10 @@ class _ConnectionPageState extends State<ConnectionPage> {
   /// A button's call is running (one at a time).
   bool _busy = false;
 
-  /// Sent to the outside app to link: re-read on resume.
-  bool _awaitingLink = false;
-  late final AppLifecycleListener _lifecycle;
-
   @override
   void initState() {
     super.initState();
     _row = context.read<ConnectionsCubit>().state.of(widget.provider);
-    _lifecycle = AppLifecycleListener(onResume: _onResume);
-    _load();
-  }
-
-  @override
-  void dispose() {
-    _lifecycle.dispose();
-    super.dispose();
-  }
-
-  void _onResume() {
-    if (!_awaitingLink || !mounted) return;
-    _awaitingLink = false;
     _load();
   }
 
@@ -105,33 +89,48 @@ class _ConnectionPageState extends State<ConnectionPage> {
     }
   }
 
-  /// เชื่อม / เปลี่ยนบัญชี: the link URL, opened in the outside app.
+  /// เชื่อม / เปลี่ยนบัญชี (Telegram): Telegram's consent sheet → id_token →
+  /// POST /connections/telegram.
   Future<void> _link() async {
     final c = _row;
     if (c == null || _busy) return;
     final l = AppLocalizations.of(context)!;
     final repo = context.read<ConnectionsRepository>();
+    final oidc = context.read<TelegramOidc>();
     setState(() => _busy = true);
     try {
-      final start = await repo.startLink(c.provider);
-      final uri = Uri.tryParse(start.url);
-      final opened =
-          uri != null &&
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!mounted) return;
-      if (opened) {
-        _awaitingLink = true;
-      } else {
+      final token = await oidc.signIn(TelegramOidcPurpose.link);
+      if (token == null || !mounted) return;
+      _apply(await repo.link(c.provider, token));
+    } on TelegramOidcOpenFailed {
+      if (mounted) {
         showAppSnackBar(
           context,
           l.connectionsOpenFailed(c.name),
           tone: Tone.danger,
         );
       }
+    } on TelegramOidcException catch (e, st) {
+      if (mounted) showConnectionError(context, c, ApiException.from(e, st));
     } on ApiException catch (e) {
       if (mounted) showConnectionError(context, c, e);
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// เปิดแชทบอท: the bot's chat in Telegram.
+  Future<void> _openBot(Connection c) async {
+    final uri = Uri.tryParse(c.botUrl ?? '');
+    final opened =
+        uri != null &&
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      showAppSnackBar(
+        context,
+        AppLocalizations.of(context)!.connectionsOpenFailed(c.name),
+        tone: Tone.danger,
+      );
     }
   }
 
@@ -278,6 +277,13 @@ class _ConnectionPageState extends State<ConnectionPage> {
             first: first,
             title: l.profileSectionAccount,
             children: [
+              if (c.botUrl != null)
+                AppDetailRow(
+                  icon: AppIcons.chat,
+                  label: l.connectionsOpenBot,
+                  showChevron: true,
+                  onTap: () => _openBot(c),
+                ),
               AppDetailRow(
                 icon: AppIcons.transfer,
                 label: l.connectionsChangeAccount(c.name),

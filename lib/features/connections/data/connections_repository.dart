@@ -41,14 +41,17 @@ class ConnectionsRepository {
     ),
   );
 
-  /// เชื่อม / เปลี่ยนบัญชี: the URL to open in the outside app (409
-  /// CONNECTION_UNAVAILABLE when it can't be linked now).
-  Future<ConnectionLinkStart> startLink(String provider) => _call(() async {
-    final res = await _client.dio.post<Map<String, dynamic>>(
-      '/connections/$provider/link',
-    );
-    return ConnectionLinkStart.fromJson(res.data!);
-  });
+  /// เชื่อม / เปลี่ยนบัญชี (Telegram): the id_token from Log In With
+  /// Telegram (401 TELEGRAM_TOKEN_INVALID, 409 CONNECTION_UNAVAILABLE /
+  /// LAST_LOGIN_METHOD).
+  Future<Connection> link(String provider, String idToken) => _call(
+    () async => _row(
+      await _client.dio.post<Map<String, dynamic>>(
+        '/connections/$provider',
+        data: {'id_token': idToken},
+      ),
+    ),
+  );
 
   /// ยกเลิกการเชื่อม (409 LAST_LOGIN_METHOD for a passwordless account's last
   /// linked app).

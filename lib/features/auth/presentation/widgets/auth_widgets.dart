@@ -1,9 +1,6 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -42,34 +39,27 @@ class AuthSocialCards extends StatelessWidget {
 
   static const _logos = '/api/v1/brand-logos';
 
-  Future<void> _telegram(BuildContext context) async {
-    final l = AppLocalizations.of(context)!;
-    final cubit = context.read<TelegramLoginCubit>();
-    final url = await cubit.start();
-    if (!context.mounted) return;
-    if (url == null) {
-      final e = cubit.state.failure;
-      if (e != null) showErrorSnackBar(context, e);
-      return;
-    }
-    // The waiting page is there when the user comes back from Telegram.
-    unawaited(context.push('/auth/telegram'));
-    final uri = Uri.tryParse(url);
-    final opened =
-        uri != null &&
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (opened || !context.mounted) return;
-    context.pop();
-    cubit.reset();
-    showAppSnackBar(context, l.authTelegramOpenFailed, tone: Tone.danger);
-  }
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final starting = context.select<TelegramLoginCubit, bool>(
-      (c) => c.state.phase == TelegramLoginPhase.starting,
+      (c) => c.state.busy,
     );
+    return BlocListener<TelegramLoginCubit, TelegramLoginState>(
+      listenWhen: (a, b) => a.failureId != b.failureId,
+      listener: (context, s) {
+        final e = s.failure;
+        if (s.openFailed) {
+          showAppSnackBar(context, l.authTelegramOpenFailed, tone: Tone.danger);
+        } else if (e != null) {
+          showErrorSnackBar(context, e);
+        }
+      },
+      child: _cards(context, l, starting),
+    );
+  }
+
+  Widget _cards(BuildContext context, AppLocalizations l, bool starting) {
     return SocialSignInCards(
       comingSoonLabel: l.authComingSoon,
       options: [
@@ -81,7 +71,7 @@ class AuthSocialCards extends StatelessWidget {
             size: 40,
           ),
           loading: starting,
-          onPressed: () => _telegram(context),
+          onPressed: () => context.read<TelegramLoginCubit>().signIn(),
         ),
         const SocialSignInOption(
           label: 'Google',

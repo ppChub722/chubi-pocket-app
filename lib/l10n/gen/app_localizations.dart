@@ -488,6 +488,12 @@ abstract class AppLocalizations {
   /// **'The login link expired or was already used — start again'**
   String get errLoginCodeInvalid;
 
+  /// No description provided for @errTelegramTokenInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in with Telegram didn\'t work. Try again'**
+  String get errTelegramTokenInvalid;
+
   /// No description provided for @errCategoryNameDuplicate.
   ///
   /// In en, this message translates to:
@@ -722,59 +728,11 @@ abstract class AppLocalizations {
   /// **'Fill in every field correctly'**
   String get authRegisterIncomplete;
 
-  /// No description provided for @authTelegramWaitTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Waiting for Telegram'**
-  String get authTelegramWaitTitle;
-
-  /// No description provided for @authTelegramWaitBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap “Confirm” in the bot chat, then come back to this app'**
-  String get authTelegramWaitBody;
-
-  /// No description provided for @authTelegramReopen.
-  ///
-  /// In en, this message translates to:
-  /// **'Open Telegram again'**
-  String get authTelegramReopen;
-
-  /// No description provided for @authTelegramCheck.
-  ///
-  /// In en, this message translates to:
-  /// **'Check again'**
-  String get authTelegramCheck;
-
-  /// No description provided for @authTelegramExpired.
-  ///
-  /// In en, this message translates to:
-  /// **'The link expired. Start signing in with Telegram again'**
-  String get authTelegramExpired;
-
   /// No description provided for @authTelegramOpenFailed.
   ///
   /// In en, this message translates to:
   /// **'Could not open Telegram. Is the Telegram app installed?'**
   String get authTelegramOpenFailed;
-
-  /// No description provided for @authTelegramSignupTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Create an account with Telegram'**
-  String get authTelegramSignupTitle;
-
-  /// No description provided for @authTelegramSignupPhoto.
-  ///
-  /// In en, this message translates to:
-  /// **'Your Telegram profile picture will be your picture'**
-  String get authTelegramSignupPhoto;
-
-  /// No description provided for @authTelegramUsernameTaken.
-  ///
-  /// In en, this message translates to:
-  /// **'That username is taken. We filled in a free one'**
-  String get authTelegramUsernameTaken;
 
   /// No description provided for @authTelegramAlreadyLinked.
   ///
@@ -12474,6 +12432,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Linked {date}'**
   String connectionsLinkedAt(String date);
+
+  /// No description provided for @connectionsOpenBot.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the bot chat'**
+  String get connectionsOpenBot;
 
   /// No description provided for @connectionsOpenFailed.
   ///

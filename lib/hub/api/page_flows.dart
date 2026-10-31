@@ -609,10 +609,10 @@ const List<PageFlow> pageFlows = [
       FlowStep.open([
         FlowCall('getConnection', note: 'also on app resume after linking'),
       ]),
-      FlowStep.action('Button "เชื่อม <name>" / "เปลี่ยนบัญชี"', [
+      FlowStep.action('Button "เชื่อม Telegram" / "เปลี่ยนบัญชี"', [
         FlowCall(
-          'startConnectionLink',
-          note: 'url → opened in the outside app',
+          'linkConnection',
+          note: 'id_token from Log In With Telegram (OIDC)',
         ),
       ]),
       FlowStep.action('Button "ยกเลิกการเชื่อม" (confirmed)', [
@@ -646,22 +646,30 @@ const List<PageFlow> pageFlows = [
   ]),
   PageFlow(
     'auth-telegram',
-    'เข้าสู่ระบบด้วย Telegram (0.4.2 1b-2, PKCE): log in, or sign up from Telegram.',
+    'เข้าสู่ระบบด้วย Telegram (0.4.2-4, OIDC): log in, or a new account at once.',
     [
-      FlowStep.action('Button "เข้าสู่ระบบด้วย Telegram"', [
+      FlowStep.action('Button "Telegram" (after Telegram\'s consent sheet)', [
         FlowCall(
-          'startTelegramLogin',
-          note: 'code_challenge; url opened in Telegram',
+          'telegramTokenLogin',
+          note: 'id_token; 200 login | 201 signup',
         ),
       ]),
-      FlowStep.action('App resumed / "ลองอีกครั้ง" while pending', [
-        FlowCall(
-          'exchangeTelegramLogin',
-          note: '202 pending | login tokens | signup prefill',
-        ),
+    ],
+  ),
+  PageFlow(
+    'telegram-legacy',
+    'APK builds ≤ 220 only (the /start code flows, 0.4.2 1b / 1b-2). The BE '
+        'keeps them until the force-update gate passes 0.4.2-4; then remove.',
+    [
+      FlowStep.action('Old login: Button "Telegram"', [
+        FlowCall('startTelegramLogin'),
+        FlowCall('exchangeTelegramLogin', note: 'polled'),
       ]),
-      FlowStep.action('Sign-up page: Button "สร้างบัญชี"', [
+      FlowStep.action('Old sign-up page: Button "สร้างบัญชี"', [
         FlowCall('signupWithTelegram'),
+      ]),
+      FlowStep.action('Old connection page: Button "เชื่อม Telegram"', [
+        FlowCall('startConnectionLink'),
       ]),
     ],
   ),
