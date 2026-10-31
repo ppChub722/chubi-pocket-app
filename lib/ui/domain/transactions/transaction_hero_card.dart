@@ -155,12 +155,14 @@ class TransactionHeroCard extends StatelessWidget {
     // long-press), the wrapper does.
     Widget longPressable(Widget child, FocusNode? focus) {
       if (editing) return child;
-      return GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onLongPress: onLongPressField == null
-            ? null
-            : () => onLongPressField!(focus),
-        child: AbsorbPointer(child: child),
+      return BusyLock(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onLongPress: onLongPressField == null
+              ? null
+              : () => onLongPressField!(focus),
+          child: AbsorbPointer(child: child),
+        ),
       );
     }
 
@@ -208,10 +210,12 @@ class TransactionHeroCard extends StatelessWidget {
       dashed: editing && onPickDate != null,
     );
     final datePill = !editing && onLongPressDate != null
-        ? GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onLongPress: onLongPressDate,
-            child: datePillChip,
+        ? BusyLock(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onLongPress: onLongPressDate,
+              child: datePillChip,
+            ),
           )
         : datePillChip;
     final baseAmount = compact

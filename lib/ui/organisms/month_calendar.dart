@@ -7,6 +7,7 @@ import '../tokens/app/app_colors.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/hero_colors.dart';
+import '../atoms/busy_scope.dart';
 
 enum CalendarDot {
   income,
@@ -153,76 +154,78 @@ class MonthCalendar extends StatelessWidget {
                   : BorderSide.none,
             ),
             clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              key: ValueKey('calendarDay:$day'),
-              onTap: onSelect == null ? null : () => onSelect!(date),
-              child: SizedBox(
-                height: _cellHeight,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '$day',
-                      style: text.bodyMedium?.copyWith(
-                        color: isSelected
-                            ? onAccent
-                            : past
-                            ? muted
-                            : null,
-                        fontWeight: isSelected || isToday || busy
-                            ? FontWeight.w700
-                            : null,
-                      ),
-                    ),
-                    if (colors.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            for (final (i, c) in colors.indexed)
-                              Container(
-                                key: i == 0
-                                    ? ValueKey('calendarDot:$day')
-                                    : null,
-                                width: 5,
-                                height: 5,
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 1,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? onAccent
-                                      : c.resolve(context),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                          ],
+            child: BusyLock(
+              child: InkWell(
+                key: ValueKey('calendarDay:$day'),
+                onTap: onSelect == null ? null : () => onSelect!(date),
+                child: SizedBox(
+                  height: _cellHeight,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '$day',
+                        style: text.bodyMedium?.copyWith(
+                          color: isSelected
+                              ? onAccent
+                              : past
+                              ? muted
+                              : null,
+                          fontWeight: isSelected || isToday || busy
+                              ? FontWeight.w700
+                              : null,
                         ),
                       ),
-                    if (caption != null)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 2),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            caption.text,
-                            key: ValueKey('calendarCaption:$day'),
-                            maxLines: 1,
-                            style: text.labelSmall?.copyWith(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: isSelected
-                                  ? onAccent
-                                  : caption.tone.resolve(context),
-                              fontFeatures: const [
-                                FontFeature.tabularFigures(),
-                              ],
+                      if (colors.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              for (final (i, c) in colors.indexed)
+                                Container(
+                                  key: i == 0
+                                      ? ValueKey('calendarDot:$day')
+                                      : null,
+                                  width: 5,
+                                  height: 5,
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 1,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? onAccent
+                                        : c.resolve(context),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      if (caption != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              caption.text,
+                              key: ValueKey('calendarCaption:$day'),
+                              maxLines: 1,
+                              style: text.labelSmall?.copyWith(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: isSelected
+                                    ? onAccent
+                                    : caption.tone.resolve(context),
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

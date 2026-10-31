@@ -7,6 +7,7 @@ import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/hero_colors.dart';
+import '../../atoms/busy_scope.dart';
 
 /// Which flow box is picked (a filter on the list below the hero).
 enum HeroFlowSelection { none, income, expense }
@@ -136,58 +137,60 @@ class _FlowBox extends StatelessWidget {
             width: selected ? 1.5 : 1,
           ),
         ),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: radius,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm + AppSpacing.xxs,
-              vertical: AppSpacing.xs + AppSpacing.xxs,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.16),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(3),
-                        child: AppIcon(icon, size: 12, color: color),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.xs + 1),
-                    Expanded(
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: text.labelMedium?.copyWith(
-                          color: hero?.muted ?? scheme.onSurfaceVariant,
+        child: BusyLock(
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: radius,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm + AppSpacing.xxs,
+                vertical: AppSpacing.xs + AppSpacing.xxs,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.16),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(3),
+                          child: AppIcon(icon, size: 12, color: color),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xxs),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text(
-                    amount,
-                    maxLines: 1,
-                    style: text.titleMedium?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w700,
-                      fontFeatures: const [FontFeature.tabularFigures()],
+                      const SizedBox(width: AppSpacing.xs + 1),
+                      Expanded(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: text.labelMedium?.copyWith(
+                            color: hero?.muted ?? scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xxs),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      amount,
+                      maxLines: 1,
+                      style: text.titleMedium?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w700,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

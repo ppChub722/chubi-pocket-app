@@ -5,6 +5,7 @@ import '../atoms/ui_config.dart';
 import '../atoms/app_chip.dart';
 import '../organisms/app_sheet.dart';
 import '../organisms/picker_sheet.dart';
+import '../atoms/busy_scope.dart';
 
 const int kLastDayOfMonth = 31;
 
@@ -142,19 +143,21 @@ class _DayCell extends StatelessWidget {
         color: selected ? scheme.primary : scheme.surfaceContainerHigh,
         shape: const CircleBorder(),
         clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.xs),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    color: selected ? scheme.onPrimary : scheme.onSurface,
+        child: BusyLock(
+          child: InkWell(
+            onTap: onTap,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.xs),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      color: selected ? scheme.onPrimary : scheme.onSurface,
+                    ),
                   ),
                 ),
               ),

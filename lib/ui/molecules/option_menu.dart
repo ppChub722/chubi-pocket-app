@@ -10,6 +10,7 @@ import '../domain/icons/icon_registry.dart';
 import '../atoms/app_avatar.dart';
 import 'selectable_frame.dart';
 import '../organisms/option_sheet.dart';
+import '../atoms/busy_scope.dart';
 
 typedef PopoverTriggerBuilder =
     Widget Function(BuildContext context, VoidCallback toggle);
@@ -445,20 +446,22 @@ class ColorSwatchGrid extends StatelessWidget {
       runSpacing: AppSpacing.sm,
       children: [
         for (var i = 0; i < colors.length; i++)
-          InkResponse(
-            onTap: () => onToggle(i),
-            radius: size / 2 + 6,
-            child: SelectableFrame(
-              selected: selected.contains(i),
-              radius: size / 2,
-              color: colors[i],
-              gap: 2,
-              child: Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  color: colors[i],
-                  shape: BoxShape.circle,
+          BusyLock(
+            child: InkResponse(
+              onTap: () => onToggle(i),
+              radius: size / 2 + 6,
+              child: SelectableFrame(
+                selected: selected.contains(i),
+                radius: size / 2,
+                color: colors[i],
+                gap: 2,
+                child: Container(
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    color: colors[i],
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
             ),
@@ -497,16 +500,18 @@ class IconSwatchGrid extends StatelessWidget {
       runSpacing: AppSpacing.sm,
       children: [
         for (final g in glyphs)
-          InkResponse(
-            onTap: () => onToggle(g),
-            radius: size / 2 + 6,
-            child: SelectableFrame(
-              selected: selected.contains(g),
-              radius: size / 2,
-              gap: 2,
-              child: AppAvatar.icon(
-                IconRegistry.get(g, fallback: fallback),
-                size: size,
+          BusyLock(
+            child: InkResponse(
+              onTap: () => onToggle(g),
+              radius: size / 2 + 6,
+              child: SelectableFrame(
+                selected: selected.contains(g),
+                radius: size / 2,
+                gap: 2,
+                child: AppAvatar.icon(
+                  IconRegistry.get(g, fallback: fallback),
+                  size: size,
+                ),
               ),
             ),
           ),

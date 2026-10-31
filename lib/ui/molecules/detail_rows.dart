@@ -9,6 +9,7 @@ import '../atoms/locked_in_edit.dart';
 import '../atoms/app_badge.dart';
 import '../atoms/ui_config.dart';
 import 'app_row.dart';
+import '../atoms/busy_scope.dart';
 
 class SectionCard extends StatelessWidget {
   const SectionCard({
@@ -46,10 +47,12 @@ class SectionCard extends StatelessWidget {
 
   Widget _tappable(Widget header) => onHeaderTap == null
       ? header
-      : InkWell(
-          onTap: onHeaderTap,
-          overlayColor: _restingOverlay,
-          child: header,
+      : BusyLock(
+          child: InkWell(
+            onTap: onHeaderTap,
+            overlayColor: _restingOverlay,
+            child: header,
+          ),
         );
 
   @override
@@ -537,10 +540,12 @@ class DetailStacked extends StatelessWidget {
             ),
     );
     if (onLongPress == null) return block;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onLongPress: onLongPress,
-      child: block,
+    return BusyLock(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onLongPress: onLongPress,
+        child: block,
+      ),
     );
   }
 }

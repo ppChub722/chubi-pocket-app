@@ -4,6 +4,7 @@ import '../atoms/count_badge.dart';
 import 'page_dots.dart';
 
 import '../tokens/app_spacing.dart';
+import '../atoms/busy_scope.dart';
 
 class AppTab<T> {
   const AppTab({
@@ -292,12 +293,14 @@ class _AppTabBarState<T> extends State<AppTabBar<T>> {
       child: Semantics(
         button: true,
         selected: active,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => widget.onChanged(t.value),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-            child: Center(child: label),
+        child: BusyLock(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => widget.onChanged(t.value),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+              child: Center(child: label),
+            ),
           ),
         ),
       ),

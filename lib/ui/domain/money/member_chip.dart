@@ -44,15 +44,17 @@ class MemberChip extends StatelessWidget {
           borderRadius: radius,
           side: BorderSide(color: hero?.line ?? scheme.outlineVariant),
         ),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: radius,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
-            child: MemberAvatarStack(
-              members: members,
-              size: height - 6,
-              maxVisible: maxVisible,
+        child: BusyLock(
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: radius,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
+              child: MemberAvatarStack(
+                members: members,
+                size: height - 6,
+                maxVisible: maxVisible,
+              ),
             ),
           ),
         ),

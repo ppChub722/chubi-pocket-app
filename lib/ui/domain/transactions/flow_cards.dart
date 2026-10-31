@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
+import '../../atoms/busy_scope.dart';
 
 class FlowCards extends StatelessWidget {
   const FlowCards({
@@ -100,11 +101,13 @@ class FlowCards extends StatelessWidget {
                       : Semantics(
                           button: true,
                           label: swapTooltip,
-                          child: InkWell(
-                            key: const ValueKey('flowSwap'),
-                            onTap: onSwap,
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            child: column,
+                          child: BusyLock(
+                            child: InkWell(
+                              key: const ValueKey('flowSwap'),
+                              onTap: onSwap,
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              child: column,
+                            ),
                           ),
                         ),
                 );

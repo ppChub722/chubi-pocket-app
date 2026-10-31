@@ -7,6 +7,7 @@ import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/ui_config.dart';
 import '../atoms/app_button.dart';
+import '../atoms/busy_scope.dart';
 
 DateTime _monthOf(DateTime d) => DateTime(d.year, d.month);
 
@@ -183,16 +184,18 @@ class _MonthCell extends StatelessWidget {
       color: isSelected ? scheme.primary : scheme.surfaceContainerHigh,
       shape: shape,
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Center(
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected
-                  ? scheme.onPrimary
-                  : scheme.onSurface.withValues(alpha: enabled ? 1 : 0.38),
+      child: BusyLock(
+        child: InkWell(
+          onTap: onTap,
+          child: Center(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected
+                    ? scheme.onPrimary
+                    : scheme.onSurface.withValues(alpha: enabled ? 1 : 0.38),
+              ),
             ),
           ),
         ),

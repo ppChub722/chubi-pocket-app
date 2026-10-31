@@ -12,6 +12,7 @@ import '../money/money_text.dart';
 import '../people/avatar_data.dart';
 import '../people/person_mark.dart';
 import 'event_tag_ref.dart';
+import '../../atoms/busy_scope.dart';
 
 typedef EventTagAnchorBuilder =
     Widget Function(
@@ -342,53 +343,55 @@ class EventBillRow extends StatelessWidget {
       ),
     );
 
-    Widget row = InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.sm,
-        ),
-        child: Row(
-          crossAxisAlignment: payerLine || tags.isNotEmpty
-              ? CrossAxisAlignment.start
-              : CrossAxisAlignment.center,
-          children: [
-            if (tick) ...[
-              SelectCheck(
-                value: marked,
-                onTap: locked ? null : onTickTap,
-                tooltip: tickTooltip,
+    Widget row = BusyLock(
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.sm,
+          ),
+          child: Row(
+            crossAxisAlignment: payerLine || tags.isNotEmpty
+                ? CrossAxisAlignment.start
+                : CrossAxisAlignment.center,
+            children: [
+              if (tick) ...[
+                SelectCheck(
+                  value: marked,
+                  onTap: locked ? null : onTickTap,
+                  tooltip: tickTooltip,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+              ],
+              if (leading != null) ...[
+                leading!,
+                const SizedBox(width: AppSpacing.md),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    line1,
+                    if (tags.isNotEmpty) tagLine,
+                    if (hasLine2) line2,
+                    if (payerLine) payerRow,
+                  ],
+                ),
               ),
               const SizedBox(width: AppSpacing.sm),
-            ],
-            if (leading != null) ...[
-              leading!,
-              const SizedBox(width: AppSpacing.md),
-            ],
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  line1,
-                  if (tags.isNotEmpty) tagLine,
-                  if (hasLine2) line2,
-                  if (payerLine) payerRow,
-                ],
+              MoneyText(
+                amount,
+                tone: amountColor == null ? tone : MoneyTone.plain,
+                symbol: symbol,
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: amountColor,
+                ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            MoneyText(
-              amount,
-              tone: amountColor == null ? tone : MoneyTone.plain,
-              symbol: symbol,
-              style: textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: amountColor,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -533,85 +536,87 @@ class EventBillChildRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    Widget row = InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg + indent,
-          AppSpacing.xs,
-          AppSpacing.lg,
-          AppSpacing.xs,
-        ),
-        child: Row(
-          children: [
-            if (tick) ...[
-              SelectCheck(
-                value: marked,
-                onTap: locked ? null : onTickTap,
-                tooltip: tickTooltip,
+    Widget row = BusyLock(
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg + indent,
+            AppSpacing.xs,
+            AppSpacing.lg,
+            AppSpacing.xs,
+          ),
+          child: Row(
+            children: [
+              if (tick) ...[
+                SelectCheck(
+                  value: marked,
+                  onTap: locked ? null : onTickTap,
+                  tooltip: tickTooltip,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+              ],
+              PersonMark(
+                name: name,
+                level: _noBadge(level),
+                iconCode: iconCode,
+                avatar: avatar,
               ),
               const SizedBox(width: AppSpacing.sm),
-            ],
-            PersonMark(
-              name: name,
-              level: _noBadge(level),
-              iconCode: iconCode,
-              avatar: avatar,
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: badge != null
-                  ? Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: textTheme.bodyMedium,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.xs),
-                        badge!,
-                      ],
-                    )
-                  : Text.rich(
-                      TextSpan(
+              Expanded(
+                child: badge != null
+                    ? Row(
                         children: [
-                          TextSpan(
-                            text: name,
-                            style: level == PersonLevel.empty
-                                ? TextStyle(color: scheme.onSurfaceVariant)
-                                : null,
-                          ),
-                          if (caption?.isNotEmpty ?? false)
-                            TextSpan(
-                              text: '  ${caption!}',
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: scheme.onSurfaceVariant,
-                              ),
+                          Flexible(
+                            child: Text(
+                              name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: textTheme.bodyMedium,
                             ),
+                          ),
+                          const SizedBox(width: AppSpacing.xs),
+                          badge!,
                         ],
+                      )
+                    : Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: name,
+                              style: level == PersonLevel.empty
+                                  ? TextStyle(color: scheme.onSurfaceVariant)
+                                  : null,
+                            ),
+                            if (caption?.isNotEmpty ?? false)
+                              TextSpan(
+                                text: '  ${caption!}',
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                              ),
+                          ],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.bodyMedium,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.bodyMedium,
-                    ),
-            ),
-            if (onAction != null) ...[
-              const SizedBox(width: AppSpacing.sm),
-              _actionButton(context, actionIcon, onAction!, actionTooltip),
-            ],
-            const SizedBox(width: AppSpacing.sm),
-            MoneyText(
-              amount,
-              tone: tone,
-              symbol: symbol,
-              style: textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
               ),
-            ),
-          ],
+              if (onAction != null) ...[
+                const SizedBox(width: AppSpacing.sm),
+                _actionButton(context, actionIcon, onAction!, actionTooltip),
+              ],
+              const SizedBox(width: AppSpacing.sm),
+              MoneyText(
+                amount,
+                tone: tone,
+                symbol: symbol,
+                style: textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

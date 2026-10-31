@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 import 'detail_rows.dart';
+import '../atoms/busy_scope.dart';
 
 class InfoBox extends StatelessWidget {
   const InfoBox({required this.rows, this.first = false, super.key});
@@ -134,7 +135,13 @@ class InfoRow extends StatelessWidget {
           ),
         );
         if (onTap == null) return stacked;
-        return InkWell(onTap: onTap, onLongPress: onLongPress, child: stacked);
+        return BusyLock(
+          child: InkWell(
+            onTap: onTap,
+            onLongPress: onLongPress,
+            child: stacked,
+          ),
+        );
       },
     );
   }

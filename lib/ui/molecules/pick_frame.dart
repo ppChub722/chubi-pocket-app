@@ -21,8 +21,7 @@ class PickFrame extends StatelessWidget {
 
   // Faded and inert under a locked [BusyScope] (a save runs elsewhere).
   @override
-  Widget build(BuildContext context) =>
-      BusyLock(locked: BusyScope.isLocked(context), child: _build(context));
+  Widget build(BuildContext context) => BusyLock(child: _build(context));
 
   Widget _build(BuildContext context) {
     return DashedRectBorder(

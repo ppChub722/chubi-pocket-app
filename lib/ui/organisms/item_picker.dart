@@ -19,6 +19,7 @@ import '../tokens/chip_size.dart';
 import 'app_sheet.dart';
 import 'picker_selection.dart';
 import 'picker_sheet.dart';
+import '../atoms/busy_scope.dart';
 
 enum PickerLayout { rows, cards, chips }
 
@@ -754,31 +755,33 @@ class _ItemPickerSheetState extends State<ItemPickerSheet> {
       color: focused
           ? scheme.primary.withValues(alpha: 0.10)
           : Colors.transparent,
-      child: InkWell(
-        onTap: focused ? null : _nameFocus.requestFocus,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: PickerRow.rowHeight),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.xs,
-            ),
-            child: Row(
-              children: [
-                if (leading != null) ...[
-                  leading(_name.text.trim()),
-                  const SizedBox(width: AppSpacing.md),
-                ],
-                Expanded(
-                  child: AppInput.inline(
-                    editing: true,
-                    controller: _name,
-                    focusNode: _nameFocus,
-                    hint: f.hint,
-                    maxLength: f.maxLength ?? 200,
+      child: BusyLock(
+        child: InkWell(
+          onTap: focused ? null : _nameFocus.requestFocus,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: PickerRow.rowHeight),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.xs,
+              ),
+              child: Row(
+                children: [
+                  if (leading != null) ...[
+                    leading(_name.text.trim()),
+                    const SizedBox(width: AppSpacing.md),
+                  ],
+                  Expanded(
+                    child: AppInput.inline(
+                      editing: true,
+                      controller: _name,
+                      focusNode: _nameFocus,
+                      hint: f.hint,
+                      maxLength: f.maxLength ?? 200,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -878,38 +881,40 @@ class _ItemPickerSheetState extends State<ItemPickerSheet> {
         children: [
           ?item.trailing,
           if (include)
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => setState(
-                () => _sel.setTakesChildren(
-                  item.id,
-                  !_sel.takesChildren(item.id),
-                  tree,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    widget.includeChildrenLabel!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+            BusyLock(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => setState(
+                  () => _sel.setTakesChildren(
+                    item.id,
+                    !_sel.takesChildren(item.id),
+                    tree,
                   ),
-                  const SizedBox(width: AppSpacing.xs),
-                  SelectCheck(
-                    key: ValueKey('include-${item.id}'),
-                    value: _sel.takesChildren(item.id),
-                    tooltip: widget.includeChildrenLabel,
-                    onTap: () => setState(
-                      () => _sel.setTakesChildren(
-                        item.id,
-                        !_sel.takesChildren(item.id),
-                        tree,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.includeChildrenLabel!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: AppSpacing.xs),
+                    SelectCheck(
+                      key: ValueKey('include-${item.id}'),
+                      value: _sel.takesChildren(item.id),
+                      tooltip: widget.includeChildrenLabel,
+                      onTap: () => setState(
+                        () => _sel.setTakesChildren(
+                          item.id,
+                          !_sel.takesChildren(item.id),
+                          tree,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           AppIconButton.flat(

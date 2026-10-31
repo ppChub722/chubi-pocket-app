@@ -10,6 +10,7 @@ import 'amount_input.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
+import '../atoms/busy_scope.dart';
 
 class SplitRow extends StatelessWidget {
   const SplitRow({
@@ -203,30 +204,32 @@ class SplitRowName extends StatelessWidget {
           ),
         );
       case _Kind.picked:
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: onTap,
-          child: SizedBox(
-            height: SplitRow.height,
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: Container(
-                constraints: const BoxConstraints(minHeight: frameHeight),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: textInset,
-                  vertical: AppSpacing.sm,
-                ),
-                decoration: BoxDecoration(
-                  color: (color ?? AppAvatar.colorFor(text)).withValues(
-                    alpha: 0.14,
+        return BusyLock(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onTap,
+            child: SizedBox(
+              height: SplitRow.height,
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: frameHeight),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: textInset,
+                    vertical: AppSpacing.sm,
                   ),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                child: Text(
-                  text,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: style(context),
+                  decoration: BoxDecoration(
+                    color: (color ?? AppAvatar.colorFor(text)).withValues(
+                      alpha: 0.14,
+                    ),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Text(
+                    text,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: style(context),
+                  ),
                 ),
               ),
             ),

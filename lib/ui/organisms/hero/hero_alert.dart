@@ -5,6 +5,7 @@ import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/hero_colors.dart';
+import '../../atoms/busy_scope.dart';
 
 /// An amber line in a hero (over budget, behind pace); tappable with [onTap].
 class HeroAlert extends StatelessWidget {
@@ -31,22 +32,24 @@ class HeroAlert extends StatelessWidget {
     return Material(
       color: warning.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(AppRadius.md),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 16, color: warning),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(child: Text(text, style: style)),
-              if (onTap != null)
-                Icon(AppIcons.chevronRight, size: 16, color: warning),
-            ],
+      child: BusyLock(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 16, color: warning),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(child: Text(text, style: style)),
+                if (onTap != null)
+                  Icon(AppIcons.chevronRight, size: 16, color: warning),
+              ],
+            ),
           ),
         ),
       ),

@@ -13,6 +13,7 @@ import '../atoms/skeletons.dart';
 import '../atoms/add_tile.dart';
 import '../atoms/live_items.dart';
 import 'pull_to_refresh.dart';
+import '../atoms/busy_scope.dart';
 
 class PickerSheet extends StatefulWidget {
   const PickerSheet({
@@ -270,68 +271,70 @@ class PickerRow extends StatelessWidget {
       color: selected
           ? scheme.primary.withValues(alpha: 0.10)
           : Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: rowHeight),
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.lg + indent,
-              AppSpacing.xs,
-              trailing == null && !chevron ? AppSpacing.lg : AppSpacing.xs,
-              AppSpacing.xs,
-            ),
-            child: Row(
-              children: [
-                if (checked != null) ...[
-                  SelectCheck(value: checked, onTap: null),
-                  const SizedBox(width: AppSpacing.md),
-                ],
-                if (leading != null) ...[
-                  IconTheme.merge(
-                    data: IconThemeData(
-                      size: 22,
-                      color: selected
-                          ? scheme.primary
-                          : scheme.onSurfaceVariant,
-                    ),
-                    child: leading!,
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                ],
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: textTheme.bodyLarge
-                            ?.merge(titleStyle)
-                            .copyWith(
-                              color: selected ? scheme.primary : null,
-                              fontWeight: selected ? FontWeight.w700 : null,
-                            ),
+      child: BusyLock(
+        child: InkWell(
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: rowHeight),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.lg + indent,
+                AppSpacing.xs,
+                trailing == null && !chevron ? AppSpacing.lg : AppSpacing.xs,
+                AppSpacing.xs,
+              ),
+              child: Row(
+                children: [
+                  if (checked != null) ...[
+                    SelectCheck(value: checked, onTap: null),
+                    const SizedBox(width: AppSpacing.md),
+                  ],
+                  if (leading != null) ...[
+                    IconTheme.merge(
+                      data: IconThemeData(
+                        size: 22,
+                        color: selected
+                            ? scheme.primary
+                            : scheme.onSurfaceVariant,
                       ),
-                      if (subtitle != null)
+                      child: leading!,
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                  ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                         Text(
-                          subtitle!,
+                          title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: textTheme.bodySmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
+                          style: textTheme.bodyLarge
+                              ?.merge(titleStyle)
+                              .copyWith(
+                                color: selected ? scheme.primary : null,
+                                fontWeight: selected ? FontWeight.w700 : null,
+                              ),
                         ),
-                    ],
+                        if (subtitle != null)
+                          Text(
+                            subtitle!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-                if (trailing != null)
-                  trailing!
-                else if (chevron)
-                  Icon(AppIcons.chevronRight, color: scheme.onSurfaceVariant),
-              ],
+                  if (trailing != null)
+                    trailing!
+                  else if (chevron)
+                    Icon(AppIcons.chevronRight, color: scheme.onSurfaceVariant),
+                ],
+              ),
             ),
           ),
         ),

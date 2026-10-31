@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/tone.dart';
+import '../../atoms/busy_scope.dart';
 
 /// One occurrence as a cell of [OccurrenceTileGrid] (ปรับแต่งล่วงหน้า):
 /// [label] (its month, or weekday for a weekly rule) over the big [day], then
@@ -64,74 +65,76 @@ class OccurrenceTile extends StatelessWidget {
           width: highlight ? 2 : 1,
         ),
       ),
-      child: InkWell(
-        borderRadius: radius,
-        onTap: onTap,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 72),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.sm + 2,
-              AppSpacing.sm,
-              AppSpacing.xs + 2,
-              AppSpacing.sm,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: text.labelSmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
+      child: BusyLock(
+        child: InkWell(
+          borderRadius: radius,
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 72),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.sm + 2,
+                AppSpacing.sm,
+                AppSpacing.xs + 2,
+                AppSpacing.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: text.labelSmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
-                    ),
-                    if (tag != null) _Tag(tag!, color: struck ? faint : edge),
-                  ],
-                ),
-                Text(
-                  '$day',
-                  style: text.titleLarge
-                      ?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        height: 1.15,
-                        color: !struck && tone == Tone.info && was != null
-                            ? edge
-                            : null,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      )
-                      .merge(struckStyle),
-                ),
-                Text(
-                  amount,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: text.labelMedium
-                      ?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: amountColor,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      )
-                      .merge(struckStyle),
-                ),
-                if (was != null)
+                      if (tag != null) _Tag(tag!, color: struck ? faint : edge),
+                    ],
+                  ),
                   Text(
-                    was!,
+                    '$day',
+                    style: text.titleLarge
+                        ?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          height: 1.15,
+                          color: !struck && tone == Tone.info && was != null
+                              ? edge
+                              : null,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        )
+                        .merge(struckStyle),
+                  ),
+                  Text(
+                    amount,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: text.labelSmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      decoration: TextDecoration.lineThrough,
-                    ),
+                    style: text.labelMedium
+                        ?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: amountColor,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        )
+                        .merge(struckStyle),
                   ),
-              ],
+                  if (was != null)
+                    Text(
+                      was!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: text.labelSmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),

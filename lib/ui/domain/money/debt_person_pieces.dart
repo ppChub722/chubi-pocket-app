@@ -7,6 +7,7 @@ import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';
+import '../../atoms/busy_scope.dart';
 
 /// The debt person hero's main line (owner 2026-10-22, mock DebtPerson):
 /// "รอจ่ายให้ลี" at the start, the big amount at the end, in [color].
@@ -189,43 +190,45 @@ class CycleDivider extends StatelessWidget {
     final line = Expanded(
       child: Container(height: 1, color: scheme.outlineVariant),
     );
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.sm,
-        ),
-        // The words keep at least a short line each side; a long label
-        // wraps (narrow phones, big text).
-        child: LayoutBuilder(
-          builder: (context, box) => Row(
-            children: [
-              line,
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: (box.maxWidth - 2 * AppSpacing.lg).clamp(
-                    0,
-                    double.infinity,
+    return BusyLock(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.sm,
+          ),
+          // The words keep at least a short line each side; a long label
+          // wraps (narrow phones, big text).
+          child: LayoutBuilder(
+            builder: (context, box) => Row(
+              children: [
+                line,
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: (box.maxWidth - 2 * AppSpacing.lg).clamp(
+                      0,
+                      double.infinity,
+                    ),
                   ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                  ),
-                  child: Text(
-                    label,
-                    key: const ValueKey('cycleDivider'),
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                    ),
+                    child: Text(
+                      label,
+                      key: const ValueKey('cycleDivider'),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              line,
-            ],
+                line,
+              ],
+            ),
           ),
         ),
       ),

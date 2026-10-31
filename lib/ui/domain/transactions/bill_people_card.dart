@@ -221,10 +221,12 @@ class _BillPersonRowState extends State<_BillPersonRow> {
     final change = p.isMe ? null : p.onChangePerson;
     final avatar = change == null
         ? p.avatar
-        : GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: change,
-            child: p.avatar,
+        : BusyLock(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: change,
+              child: p.avatar,
+            ),
           );
     return ShareRow(
       avatar: avatar,

@@ -8,6 +8,7 @@ import '../../tokens/app_spacing.dart';
 import '../icons/icon_code.dart';
 import '../icons/icon_code_widget.dart';
 import 'progress_tone.dart';
+import '../../atoms/busy_scope.dart';
 
 /// A budget list row: icon, title / caption and [trailing] (left / over);
 /// the bar with [percentText] as a pill on the fill, the [expected] capsule
@@ -287,7 +288,11 @@ class ProgressCard extends StatelessWidget {
 
     final row = Material(
       color: Colors.transparent,
-      child: onTap == null ? body : InkWell(onTap: onTap, child: body),
+      child: onTap == null
+          ? body
+          : BusyLock(
+              child: InkWell(onTap: onTap, child: body),
+            ),
     );
     return dimmed ? Opacity(opacity: 0.55, child: row) : row;
   }

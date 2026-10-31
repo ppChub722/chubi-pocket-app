@@ -4,6 +4,7 @@ import '../../atoms/app_icon.dart';
 import '../../atoms/select_check.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
+import '../../atoms/busy_scope.dart';
 
 /// One book my part of an event bill can go to ("หนี้" / "รายการ"): a
 /// bordered card with a tick, its icon, words and amount; [child] (the
@@ -47,47 +48,52 @@ class BookOptionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          InkWell(
-            onTap: () => onChanged(!checked),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              child: Row(
-                children: [
-                  SelectCheck(value: checked, onTap: () => onChanged(!checked)),
-                  const SizedBox(width: AppSpacing.sm),
-                  AppIcon(icon, color: scheme.onSurfaceVariant),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          title,
-                          style: text.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        if (subtitle != null)
+          BusyLock(
+            child: InkWell(
+              onTap: () => onChanged(!checked),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                child: Row(
+                  children: [
+                    SelectCheck(
+                      value: checked,
+                      onTap: () => onChanged(!checked),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    AppIcon(icon, color: scheme.onSurfaceVariant),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           Text(
-                            subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: text.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
+                            title,
+                            style: text.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                      ],
+                          if (subtitle != null)
+                            Text(
+                              subtitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: text.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  DefaultTextStyle.merge(
-                    style: text.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                    const SizedBox(width: AppSpacing.sm),
+                    DefaultTextStyle.merge(
+                      style: text.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      child: amount,
                     ),
-                    child: amount,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

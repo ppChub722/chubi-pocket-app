@@ -5,6 +5,7 @@ import '../tokens/app_spacing.dart';
 import '../tokens/chip_size.dart';
 import '../tokens/icon_size.dart';
 import 'chip_row.dart';
+import '../atoms/busy_scope.dart';
 
 /// A muted icon, then chips: what a record carries, shown quietly under its
 /// hero (a transaction's tags; a budget's categories, wallets, tags).
@@ -62,6 +63,8 @@ class IconChipStrip extends StatelessWidget {
       ],
     );
     if (onLongPress == null) return strip;
-    return GestureDetector(onLongPress: onLongPress, child: strip);
+    return BusyLock(
+      child: GestureDetector(onLongPress: onLongPress, child: strip),
+    );
   }
 }

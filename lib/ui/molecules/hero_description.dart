@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../atoms/app_input.dart';
 import '../atoms/ui_config.dart';
 import '../tokens/hero_colors.dart';
+import '../atoms/busy_scope.dart';
 
 class HeroDescription extends StatelessWidget {
   const HeroDescription({
@@ -51,14 +52,16 @@ class HeroDescription extends StatelessWidget {
       builder: (context, value, _) {
         final text = value.text.trim();
         if (text.isEmpty) return const SizedBox.shrink();
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onLongPress: onEnterEdit,
-          child: Text(
-            text,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: style,
+        return BusyLock(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onLongPress: onEnterEdit,
+            child: Text(
+              text,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: style,
+            ),
           ),
         );
       },
@@ -99,14 +102,16 @@ class HeroNameInput extends StatelessWidget {
     if (!editing) {
       return ValueListenableBuilder<TextEditingValue>(
         valueListenable: controller,
-        builder: (context, value, _) => GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onLongPress: onEnterEdit,
-          child: Text(
-            value.text,
-            maxLines: maxLines,
-            overflow: TextOverflow.ellipsis,
-            style: style ?? Theme.of(context).textTheme.titleMedium,
+        builder: (context, value, _) => BusyLock(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onLongPress: onEnterEdit,
+            child: Text(
+              value.text,
+              maxLines: maxLines,
+              overflow: TextOverflow.ellipsis,
+              style: style ?? Theme.of(context).textTheme.titleMedium,
+            ),
           ),
         ),
       );

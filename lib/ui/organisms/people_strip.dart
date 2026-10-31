@@ -7,6 +7,7 @@ import '../tokens/app/app_colors.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
+import '../atoms/busy_scope.dart';
 
 enum PeopleTone { neutral, positive, negative }
 
@@ -150,38 +151,40 @@ class _MemberCard extends StatelessWidget {
         color: scheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.xs),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                member.avatar,
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  member.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: text.labelLarge,
-                ),
-                if (member.lead != null)
+        child: BusyLock(
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.xs),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  member.avatar,
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
-                    member.lead!,
+                    member.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: text.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
+                    style: text.labelLarge,
+                  ),
+                  if (member.lead != null)
+                    Text(
+                      member.lead!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: text.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
-                if (member.caption != null)
-                  Text(
-                    member.caption!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: text.bodySmall?.copyWith(color: tone),
-                  ),
-              ],
+                  if (member.caption != null)
+                    Text(
+                      member.caption!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: text.bodySmall?.copyWith(color: tone),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -211,24 +214,26 @@ class _InviteCard extends StatelessWidget {
         borderRadius: const Radius.circular(AppRadius.lg),
         child: Material(
           type: MaterialType.transparency,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(AppIcons.add, color: color),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w600,
+          child: BusyLock(
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(AppIcons.add, color: color),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

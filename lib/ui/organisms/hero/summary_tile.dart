@@ -7,6 +7,7 @@ import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/hero_colors.dart';
 import 'hero_tiles.dart';
+import '../../atoms/busy_scope.dart';
 
 enum SummaryTileTone { neutral, green, amber, red, orange, planning }
 
@@ -133,42 +134,44 @@ class SummaryTileView extends StatelessWidget {
     return Semantics(
       button: tile.onTap != null,
       selected: tile.selected,
-      child: InkWell(
-        key: ValueKey('summaryTile:${tile.label}'),
-        onTap: tile.onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm + AppSpacing.xxs,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                tile.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: textTheme.labelMedium?.copyWith(color: muted),
-              ),
-              const SizedBox(height: AppSpacing.xxs),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: AlignmentDirectional.centerStart,
-                child: Text(
-                  tile.onTap == null ? tile.value : '${tile.value} ›',
-                  maxLines: 1,
-                  style: valueStyle,
-                ),
-              ),
-              if (tile.caption != null)
+      child: BusyLock(
+        child: InkWell(
+          key: ValueKey('summaryTile:${tile.label}'),
+          onTap: tile.onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm + AppSpacing.xxs,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 Text(
-                  tile.caption!,
+                  tile.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: textTheme.labelSmall?.copyWith(color: muted),
+                  style: textTheme.labelMedium?.copyWith(color: muted),
                 ),
-            ],
+                const SizedBox(height: AppSpacing.xxs),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    tile.onTap == null ? tile.value : '${tile.value} ›',
+                    maxLines: 1,
+                    style: valueStyle,
+                  ),
+                ),
+                if (tile.caption != null)
+                  Text(
+                    tile.caption!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.labelSmall?.copyWith(color: muted),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

@@ -6,6 +6,7 @@ import '../icons/icon_code.dart';
 import '../../atoms/add_tile.dart';
 import 'avatar.dart';
 import 'avatar_data.dart';
+import '../../atoms/busy_scope.dart';
 
 class PersonRef {
   const PersonRef({
@@ -131,40 +132,42 @@ class MemberStrip extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (var i = 0; i < members.length; i++)
-            InkWell(
-              onTap: onMemberTap == null ? null : () => onMemberTap!(i),
-              borderRadius: BorderRadius.circular(12),
-              child: Opacity(
-                opacity: members[i].pending ? 0.5 : 1,
-                child: SizedBox(
-                  width: itemWidth,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.xs,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Avatar(members[i].shownAvatar, size: avatarSize),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          members[i].isOwner
-                              ? '${members[i].name} 👑'
-                              : members[i].name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: textTheme.labelMedium,
-                        ),
-                        if (members[i].caption != null)
+            BusyLock(
+              child: InkWell(
+                onTap: onMemberTap == null ? null : () => onMemberTap!(i),
+                borderRadius: BorderRadius.circular(12),
+                child: Opacity(
+                  opacity: members[i].pending ? 0.5 : 1,
+                  child: SizedBox(
+                    width: itemWidth,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.xs,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Avatar(members[i].shownAvatar, size: avatarSize),
+                          const SizedBox(height: AppSpacing.xs),
                           Text(
-                            members[i].caption!,
+                            members[i].isOwner
+                                ? '${members[i].name} 👑'
+                                : members[i].name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: textTheme.labelSmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
+                            style: textTheme.labelMedium,
                           ),
-                      ],
+                          if (members[i].caption != null)
+                            Text(
+                              members[i].caption!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: textTheme.labelSmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

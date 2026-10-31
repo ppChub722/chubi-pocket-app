@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../tokens/app_spacing.dart';
 import '../../tokens/hero_colors.dart';
+import '../../atoms/busy_scope.dart';
 
 enum HeroNumberLayout { stacked, inline }
 
@@ -51,10 +52,12 @@ class HeroNumber extends StatelessWidget {
             : text.labelLarge?.copyWith(color: muted),
       );
       if (onLabelTap != null) {
-        labelText = GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: onLabelTap,
-          child: labelText,
+        labelText = BusyLock(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onLabelTap,
+            child: labelText,
+          ),
         );
       }
     }

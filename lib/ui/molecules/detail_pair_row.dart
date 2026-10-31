@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 import 'detail_rows.dart';
+import '../atoms/busy_scope.dart';
 
 /// One column of a [DetailPairRow]: a label over its value.
 @immutable
@@ -71,27 +72,31 @@ class DetailPairRow extends StatelessWidget {
         ),
       );
       if (c.onTap == null) return body;
-      return InkWell(onTap: c.onTap, child: body);
+      return BusyLock(
+        child: InkWell(onTap: c.onTap, child: body),
+      );
     }
 
-    return GestureDetector(
-      onLongPress: onLongPress,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              cell(first, grow: false),
-              VerticalDivider(
-                width: AppSpacing.md * 2 + 1,
-                thickness: 1,
-                indent: AppSpacing.md,
-                endIndent: AppSpacing.md,
-                color: theme.colorScheme.outlineVariant,
-              ),
-              Expanded(child: cell(second, grow: true)),
-            ],
+    return BusyLock(
+      child: GestureDetector(
+        onLongPress: onLongPress,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                cell(first, grow: false),
+                VerticalDivider(
+                  width: AppSpacing.md * 2 + 1,
+                  thickness: 1,
+                  indent: AppSpacing.md,
+                  endIndent: AppSpacing.md,
+                  color: theme.colorScheme.outlineVariant,
+                ),
+                Expanded(child: cell(second, grow: true)),
+              ],
+            ),
           ),
         ),
       ),

@@ -80,10 +80,12 @@ class DraftFieldRow extends StatelessWidget {
 Widget _longPressRow(Widget row, VoidCallback? onLongPress) =>
     onLongPress == null
     ? row
-    : GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onLongPress: onLongPress,
-        child: row,
+    : BusyLock(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onLongPress: onLongPress,
+          child: row,
+        ),
       );
 
 class SplitEventSlot {
@@ -494,13 +496,15 @@ class _SplitEventSectionState extends State<SplitEventSection> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (!widget.first) const SizedBox(height: AppSpacing.lg),
-        InkWell(
-          onTap: widget.collapsible
-              ? () => setState(() => _open = !_open)
-              : null,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-            child: header,
+        BusyLock(
+          child: InkWell(
+            onTap: widget.collapsible
+                ? () => setState(() => _open = !_open)
+                : null,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              child: header,
+            ),
           ),
         ),
         if (open) ...[

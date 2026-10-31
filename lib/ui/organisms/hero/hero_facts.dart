@@ -5,6 +5,7 @@ import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/hero_colors.dart';
 import '../../tokens/icon_size.dart';
+import '../../atoms/busy_scope.dart';
 
 @immutable
 class HeroFact {
@@ -120,10 +121,12 @@ class HeroFactList extends StatelessWidget {
 
 Widget _link(VoidCallback? onTap, Widget row) => onTap == null
     ? row
-    : InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSpacing.xs),
-        child: row,
+    : BusyLock(
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppSpacing.xs),
+          child: row,
+        ),
       );
 
 class _DashPainter extends CustomPainter {

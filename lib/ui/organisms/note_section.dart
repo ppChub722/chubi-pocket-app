@@ -5,6 +5,7 @@ import '../molecules/detail_rows.dart';
 import '../molecules/detail_text_field.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
+import '../atoms/busy_scope.dart';
 
 /// The note section: ITS OWN box (never merged into another).
 class NoteSection extends StatelessWidget {
@@ -91,10 +92,12 @@ class NoteSection extends StatelessWidget {
       );
       child = onLongPress == null
           ? row
-          : GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onLongPress: onLongPress,
-              child: row,
+          : BusyLock(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onLongPress: onLongPress,
+                child: row,
+              ),
             );
     }
     return SectionCard(first: first, children: [child]);

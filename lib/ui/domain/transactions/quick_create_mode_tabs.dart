@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/app/quick_create_mode.dart';
 import '../../tokens/app_spacing.dart';
+import '../../atoms/busy_scope.dart';
 
 /// The quick-create mode switch (รายการ | หนี้ | ออม): the active mode is a
 /// wide pill filled with ITS colour, icon and bold label; the others are
@@ -101,50 +102,52 @@ class QuickCreateModeTabs extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          if (onChanged != null && m != mode) onChanged!(m);
-        },
-        child: AnimatedContainer(
-          key: ValueKey('quickMode-${m.name}'),
-          duration: duration,
-          curve: Curves.easeOutCubic,
-          width: width,
-          height: double.infinity,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected ? color : Colors.transparent,
-            borderRadius: BorderRadius.circular((height - _inset * 2) / 2),
-            boxShadow: [
-              if (selected)
-                BoxShadow(
-                  color: color.withValues(alpha: 0.35),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
+      child: BusyLock(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            if (onChanged != null && m != mode) onChanged!(m);
+          },
+          child: AnimatedContainer(
+            key: ValueKey('quickMode-${m.name}'),
+            duration: duration,
+            curve: Curves.easeOutCubic,
+            width: width,
+            height: double.infinity,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: selected ? color : Colors.transparent,
+              borderRadius: BorderRadius.circular((height - _inset * 2) / 2),
+              boxShadow: [
+                if (selected)
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.35),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+              ],
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // The icon grows in (and shrinks out) beside the label.
+                AnimatedSize(
+                  duration: duration,
+                  curve: Curves.easeOutCubic,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: selected
+                      ? Padding(
+                          padding: const EdgeInsetsDirectional.only(
+                            end: AppSpacing.xs,
+                          ),
+                          child: Icon(iconOf(m), size: 22, color: on),
+                        )
+                      : const SizedBox.shrink(),
                 ),
-            ],
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // The icon grows in (and shrinks out) beside the label.
-              AnimatedSize(
-                duration: duration,
-                curve: Curves.easeOutCubic,
-                alignment: AlignmentDirectional.centerStart,
-                child: selected
-                    ? Padding(
-                        padding: const EdgeInsetsDirectional.only(
-                          end: AppSpacing.xs,
-                        ),
-                        child: Icon(iconOf(m), size: 22, color: on),
-                      )
-                    : const SizedBox.shrink(),
-              ),
-              Flexible(child: label),
-            ],
+                Flexible(child: label),
+              ],
+            ),
           ),
         ),
       ),

@@ -8,6 +8,7 @@ import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 import 'reorder_controller.dart';
 import 'reorder_outline.dart';
+import '../../atoms/busy_scope.dart';
 
 class ReorderListScope extends StatefulWidget {
   const ReorderListScope({
@@ -425,29 +426,31 @@ class _ReorderListScopeState extends State<ReorderListScope> {
     return _ScopeData(
       state: this,
       version: _version,
-      child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: c == null ? null : () => c.select(null),
-        child: Stack(
-          children: [
-            widget.child,
-            Positioned.fill(
-              child: IgnorePointer(
-                child: ValueListenableBuilder<_DropLine?>(
-                  valueListenable: _line,
-                  builder: (context, line, _) => line == null
-                      ? const SizedBox.shrink()
-                      : _DropIndicator(
-                          line: line,
-                          left:
-                              widget.indentBase +
-                              (line.level - 1) * widget.indentStep,
-                          right: widget.indentBase,
-                        ),
+      child: BusyLock(
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: c == null ? null : () => c.select(null),
+          child: Stack(
+            children: [
+              widget.child,
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: ValueListenableBuilder<_DropLine?>(
+                    valueListenable: _line,
+                    builder: (context, line, _) => line == null
+                        ? const SizedBox.shrink()
+                        : _DropIndicator(
+                            line: line,
+                            left:
+                                widget.indentBase +
+                                (line.level - 1) * widget.indentStep,
+                            right: widget.indentBase,
+                          ),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -622,13 +625,15 @@ class _ReorderRowState extends State<ReorderRow> {
           color: selected
               ? scheme.primary.withValues(alpha: 0.12)
               : Colors.transparent,
-          child: InkWell(
-            onTap: drag != null ? null : () => c.tapRow(widget.id),
-            child: Row(
-              children: [
-                Expanded(child: widget.child),
-                handle,
-              ],
+          child: BusyLock(
+            child: InkWell(
+              onTap: drag != null ? null : () => c.tapRow(widget.id),
+              child: Row(
+                children: [
+                  Expanded(child: widget.child),
+                  handle,
+                ],
+              ),
             ),
           ),
         );

@@ -10,6 +10,7 @@ import '../../tokens/hero_colors.dart';
 import 'avatar.dart';
 import 'avatar_data.dart';
 import 'profile_color_dots.dart';
+import '../../atoms/busy_scope.dart';
 
 /// The profile hero's picture (0.4.2 1b): the [Avatar] at [size] with, in
 /// view mode, the source app's logo as a corner [badge]; in edit mode a ✎
@@ -48,16 +49,18 @@ class ProfileHeroAvatar extends StatelessWidget {
             onLongPress: onLongPress,
             child: Avatar(avatar, size: size),
           )
-        : GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: onTap,
-            onLongPress: onLongPress,
-            child: Avatar(
-              avatar,
-              size: size,
-              badge: badge,
-              badgeColor: Theme.of(context).colorScheme.surface,
-              badgeEssential: true,
+        : BusyLock(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onTap,
+              onLongPress: onLongPress,
+              child: Avatar(
+                avatar,
+                size: size,
+                badge: badge,
+                badgeColor: Theme.of(context).colorScheme.surface,
+                badgeEssential: true,
+              ),
             ),
           );
     return Column(
@@ -138,20 +141,22 @@ class ProfileHeroCard extends StatelessWidget {
         ],
       );
     }
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onLongPress: onLongPress,
-      child: AppHeroCard(
-        style: style,
-        content: [
-          _ViewIdentity(
-            picture: picture,
-            name: name,
-            handle: handle,
-            actions: actions,
-          ),
-          if (facts.isNotEmpty) HeroFactList(facts: facts),
-        ],
+    return BusyLock(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onLongPress: onLongPress,
+        child: AppHeroCard(
+          style: style,
+          content: [
+            _ViewIdentity(
+              picture: picture,
+              name: name,
+              handle: handle,
+              actions: actions,
+            ),
+            if (facts.isNotEmpty) HeroFactList(facts: facts),
+          ],
+        ),
       ),
     );
   }

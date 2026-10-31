@@ -4,6 +4,7 @@ import '../../atoms/app_icon.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/hero_colors.dart';
 import '../../tokens/icon_size.dart';
+import '../../atoms/busy_scope.dart';
 
 /// An icon with a count beside it in the hero's caption line (👛 3, 🔗 1);
 /// [label] is what it means, for the tooltip and screen readers.
@@ -85,7 +86,11 @@ class HeroNote extends StatelessWidget {
     );
     return Align(
       alignment: alignment,
-      child: onTap == null ? body : InkWell(onTap: onTap, child: body),
+      child: onTap == null
+          ? body
+          : BusyLock(
+              child: InkWell(onTap: onTap, child: body),
+            ),
     );
   }
 }

@@ -9,6 +9,7 @@ import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 import 'occurrence_row.dart';
+import '../../atoms/busy_scope.dart';
 
 /// Under a recurring item's hero: the one occurrence to act on. [warning]
 /// (something is due): edged and washed in the warning colour, with a
@@ -102,48 +103,52 @@ class OccurrenceFocusCard extends StatelessWidget {
                 ],
               ),
             ),
-          InkWell(
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Row(
-                children: [
-                  CalendarTile(date: date, color: warning ? warn : null),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                label,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: text.bodySmall?.copyWith(color: muted),
+          BusyLock(
+            child: InkWell(
+              onTap: onTap,
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Row(
+                  children: [
+                    CalendarTile(date: date, color: warning ? warn : null),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  label,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: text.bodySmall?.copyWith(color: muted),
+                                ),
                               ),
-                            ),
-                            if (tag != null) ...[
-                              const SizedBox(width: AppSpacing.xs),
-                              tag!,
+                              if (tag != null) ...[
+                                const SizedBox(width: AppSpacing.xs),
+                                tag!,
+                              ],
                             ],
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.xxs),
-                        DefaultTextStyle.merge(
-                          style: text.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: valueColor,
-                            fontFeatures: const [FontFeature.tabularFigures()],
                           ),
-                          child: value,
-                        ),
-                      ],
+                          const SizedBox(height: AppSpacing.xxs),
+                          DefaultTextStyle.merge(
+                            style: text.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: valueColor,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
+                            child: value,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -229,37 +234,41 @@ class OccurrenceFocusNext extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    return InkWell(
-      onTap: onTap,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: scheme.outlineVariant)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.sm + AppSpacing.xxs,
+    return BusyLock(
+      child: InkWell(
+        onTap: onTap,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border(top: BorderSide(color: scheme.outlineVariant)),
           ),
-          child: Row(
-            children: [
-              Icon(AppIcons.date, size: 16, color: scheme.onSurfaceVariant),
-              const SizedBox(width: AppSpacing.xs),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: text.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.sm + AppSpacing.xxs,
+            ),
+            child: Row(
+              children: [
+                Icon(AppIcons.date, size: 16, color: scheme.onSurfaceVariant),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: text.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
-              ),
-              if (amount != null)
-                DefaultTextStyle.merge(
-                  style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                  child: amount!,
-                ),
-            ],
+                if (amount != null)
+                  DefaultTextStyle.merge(
+                    style: text.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    child: amount!,
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -357,7 +366,9 @@ class DueCard extends StatelessWidget {
               Semantics(
                 button: true,
                 expanded: shown,
-                child: InkWell(onTap: onToggle, child: head),
+                child: BusyLock(
+                  child: InkWell(onTap: onToggle, child: head),
+                ),
               ),
             if (shown) ...[...children, const SizedBox(height: AppSpacing.xs)],
           ],
@@ -428,35 +439,39 @@ class DueSelectBar extends StatelessWidget {
           builder: (context, box) => Row(
             children: [
               Expanded(
-                child: InkWell(
-                  key: const ValueKey('dueSelectAll'),
-                  onTap: onSelectAll,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  child: Row(
-                    children: [
-                      SelectCheck(
-                        value: selected == 0
-                            ? false
-                            : selected >= total
-                            ? true
-                            : null,
-                        onTap: onSelectAll,
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Flexible(
-                        child: Text(
-                          selectLabel,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: heading
-                              ? Theme.of(context).textTheme.titleSmall
-                                    ?.copyWith(fontWeight: FontWeight.w700)
-                              : Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: scheme.onSurfaceVariant,
-                                ),
+                child: BusyLock(
+                  child: InkWell(
+                    key: const ValueKey('dueSelectAll'),
+                    onTap: onSelectAll,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    child: Row(
+                      children: [
+                        SelectCheck(
+                          value: selected == 0
+                              ? false
+                              : selected >= total
+                              ? true
+                              : null,
+                          onTap: onSelectAll,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: AppSpacing.xs),
+                        Flexible(
+                          child: Text(
+                            selectLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: heading
+                                ? Theme.of(context).textTheme.titleSmall
+                                      ?.copyWith(fontWeight: FontWeight.w700)
+                                : Theme.of(
+                                    context,
+                                  ).textTheme.bodySmall?.copyWith(
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -509,18 +524,20 @@ class DueSelectBar extends StatelessWidget {
                 Semantics(
                   button: true,
                   expanded: open,
-                  child: InkResponse(
-                    key: const ValueKey('dueSectionFold'),
-                    onTap: onToggle,
-                    radius: 18,
-                    child: Padding(
-                      padding: const EdgeInsetsDirectional.only(
-                        start: AppSpacing.xs,
-                      ),
-                      child: Icon(
-                        open ? AppIcons.collapse : AppIcons.expand,
-                        size: 20,
-                        color: scheme.onSurfaceVariant,
+                  child: BusyLock(
+                    child: InkResponse(
+                      key: const ValueKey('dueSectionFold'),
+                      onTap: onToggle,
+                      radius: 18,
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.only(
+                          start: AppSpacing.xs,
+                        ),
+                        child: Icon(
+                          open ? AppIcons.collapse : AppIcons.expand,
+                          size: 20,
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ),
@@ -548,22 +565,24 @@ class DueMoreRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = Theme.of(context).colorScheme.primary;
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: accent,
-                fontWeight: FontWeight.w600,
+    return BusyLock(
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: accent,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-            Icon(AppIcons.chevronRight, size: 16, color: accent),
-          ],
+              Icon(AppIcons.chevronRight, size: 16, color: accent),
+            ],
+          ),
         ),
       ),
     );
