@@ -146,6 +146,38 @@ class AppLocalizationsEn extends AppLocalizations {
       'The service is down for a moment. Try again shortly.';
 
   @override
+  String get errFieldRequired => 'This field is required';
+
+  @override
+  String errFieldTooLong(String max) {
+    return 'Longer than $max characters';
+  }
+
+  @override
+  String errFieldTooShort(String min) {
+    return 'At least $min characters';
+  }
+
+  @override
+  String errFieldTooMany(String max) {
+    return 'At most $max items';
+  }
+
+  @override
+  String errFieldTooFew(String min) {
+    return 'At least $min items';
+  }
+
+  @override
+  String get errFieldOutOfRange => 'This value is out of range';
+
+  @override
+  String get errFieldInvalid => 'Not a valid value';
+
+  @override
+  String get errFieldTooLarge => 'The file is too large';
+
+  @override
   String get errorGenericTitle => 'Something went wrong';
 
   @override

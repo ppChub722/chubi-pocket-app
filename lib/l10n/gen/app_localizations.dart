@@ -368,6 +368,54 @@ abstract class AppLocalizations {
   /// **'The service is down for a moment. Try again shortly.'**
   String get errorServerDownMessage;
 
+  /// No description provided for @errFieldRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'This field is required'**
+  String get errFieldRequired;
+
+  /// No description provided for @errFieldTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Longer than {max} characters'**
+  String errFieldTooLong(String max);
+
+  /// No description provided for @errFieldTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'At least {min} characters'**
+  String errFieldTooShort(String min);
+
+  /// No description provided for @errFieldTooMany.
+  ///
+  /// In en, this message translates to:
+  /// **'At most {max} items'**
+  String errFieldTooMany(String max);
+
+  /// No description provided for @errFieldTooFew.
+  ///
+  /// In en, this message translates to:
+  /// **'At least {min} items'**
+  String errFieldTooFew(String min);
+
+  /// No description provided for @errFieldOutOfRange.
+  ///
+  /// In en, this message translates to:
+  /// **'This value is out of range'**
+  String get errFieldOutOfRange;
+
+  /// No description provided for @errFieldInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a valid value'**
+  String get errFieldInvalid;
+
+  /// No description provided for @errFieldTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'The file is too large'**
+  String get errFieldTooLarge;
+
   /// No description provided for @errorGenericTitle.
   ///
   /// In en, this message translates to:

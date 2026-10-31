@@ -13,6 +13,14 @@ Widget buildFeedbackPage(BuildContext context) => const _FeedbackPage();
 
 final _networkError = ApiException(code: 'NETWORK_ERROR', message: 'offline');
 final _slowError = ApiException(code: 'NETWORK_TIMEOUT', message: 'slow');
+final _fieldError = ApiException(
+  code: 'VALIDATION_ERROR',
+  message: 'bad field',
+  statusCode: 400,
+  fields: [
+    ApiFieldError(field: 'name', code: 'too_long', params: {'max': 100}),
+  ],
+);
 final _downError = ApiException(
   code: 'SERVER_UNAVAILABLE',
   message: 'down',
@@ -592,6 +600,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                 ('network', _networkError),
                 ('slow', _slowError),
                 ('server down', _downError),
+                ('field (too_long)', _fieldError),
                 ('server', _serverError),
                 ('unknown', _unknownError),
               ]) ...[

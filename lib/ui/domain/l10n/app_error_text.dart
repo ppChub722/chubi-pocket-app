@@ -279,9 +279,35 @@ String errorText(AppLocalizations l, Object error) {
         : l.errorNetworkMessage;
   }
   if (error is ApiException) {
+    // A form with no slot for the field still says what is wrong.
+    if (error.code == 'VALIDATION_ERROR' && error.fields.isNotEmpty) {
+      return fieldText(l, error.fields.first);
+    }
     return errorTextForCode(l, error.code, statusCode: error.statusCode);
   }
   return l.errorGenericMessage;
+}
+
+/// The sentence under one field of a VALIDATION_ERROR.
+String fieldText(AppLocalizations l, ApiFieldError f) {
+  String p(String k) => '${f.params[k] ?? ''}';
+  return switch (f.code) {
+    'required' => l.errFieldRequired,
+    'too_long' => l.errFieldTooLong(p('max')),
+    'too_short' => l.errFieldTooShort(p('min')),
+    'too_many' => l.errFieldTooMany(p('max')),
+    'too_few' => l.errFieldTooFew(p('min')),
+    'out_of_range' => l.errFieldOutOfRange,
+    'too_large' => l.errFieldTooLarge,
+    _ => l.errFieldInvalid,
+  };
+}
+
+/// The error a form shows under [field] (exact JSON path), null = none.
+String? fieldErrorText(AppLocalizations l, Object? error, String field) {
+  if (error is! ApiException) return null;
+  final f = error.fieldError(field);
+  return f == null ? null : fieldText(l, f);
 }
 
 /// [errorText] for a build context (page code that has no messages handy).

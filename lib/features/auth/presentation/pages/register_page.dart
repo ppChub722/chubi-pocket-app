@@ -219,7 +219,6 @@ class _RegisterPageState extends State<RegisterPage> {
     if (field == 'email' && c == 'EMAIL_EXISTS') {
       return l.authRegisterEmailTakenInline;
     }
-    final detailMsg = (failure.error.details?[field] as String?);
-    return detailMsg;
+    return fieldErrorText(l, failure.error, field);
   }
 }

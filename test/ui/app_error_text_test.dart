@@ -85,6 +85,39 @@ void main() {
     expect(errorText(l, StateError('boom')), l.errorGenericMessage);
   });
 
+  test('a VALIDATION_ERROR names its fields (details[]) in Thai', () {
+    final e = ApiException.fromDioException(
+      DioException(
+        requestOptions: RequestOptions(path: '/x'),
+        type: DioExceptionType.badResponse,
+        response: Response(
+          requestOptions: RequestOptions(path: '/x'),
+          statusCode: 400,
+          data: {
+            'error': {
+              'code': 'VALIDATION_ERROR',
+              'message': 'bad',
+              'details': [
+                {
+                  'field': 'name',
+                  'code': 'too_long',
+                  'params': {'max': 100},
+                },
+                {'field': 'note', 'code': 'required', 'params': {}},
+              ],
+            },
+          },
+        ),
+      ),
+    );
+    expect(e.fields.map((f) => f.field), ['name', 'note']);
+    expect(fieldErrorText(l, e, 'name'), l.errFieldTooLong('100'));
+    expect(fieldErrorText(l, e, 'note'), l.errFieldRequired);
+    expect(fieldErrorText(l, e, 'amount'), isNull);
+    // no slot on the form: the snack says the first field's problem
+    expect(errorText(l, e), l.errFieldTooLong('100'));
+  });
+
   test('one classifier: a Dio failure gets the code its kind says', () {
     final req = RequestOptions(path: '/x');
     ApiException of(DioExceptionType type, {int? status, Object? error}) =>

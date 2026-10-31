@@ -4,12 +4,42 @@ import 'package:dio/dio.dart';
 
 import '../logger/app_logger.dart';
 
+/// One field of a VALIDATION_ERROR (`details[]`): [field] is the JSON path in
+/// the request (`name`, `splits[0].amount`), [code] one of required /
+/// too_long / too_short / too_many / too_few / out_of_range / invalid /
+/// invalid_type / invalid_json / too_large.
+class ApiFieldError {
+  const ApiFieldError({
+    required this.field,
+    required this.code,
+    this.params = const {},
+  });
+
+  final String field;
+  final String code;
+  final Map<String, dynamic> params;
+
+  static List<ApiFieldError> listFrom(Object? details) => [
+    if (details is List)
+      for (final d in details)
+        if (d is Map && d['field'] is String && d['code'] is String)
+          ApiFieldError(
+            field: d['field'] as String,
+            code: d['code'] as String,
+            params: d['params'] is Map
+                ? Map<String, dynamic>.from(d['params'] as Map)
+                : const {},
+          ),
+  ];
+}
+
 class ApiException implements Exception {
   const ApiException({
     required this.code,
     required this.message,
     this.statusCode,
     this.details,
+    this.fields = const [],
     this.requestId,
   });
 
@@ -21,7 +51,18 @@ class ApiException implements Exception {
 
   final Map<String, dynamic>? details;
 
+  /// The fields a VALIDATION_ERROR names (its `details` list).
+  final List<ApiFieldError> fields;
+
   final String? requestId;
+
+  /// The error of one field (exact path), null when it has none.
+  ApiFieldError? fieldError(String field) {
+    for (final f in fields) {
+      if (f.field == field) return f;
+    }
+    return null;
+  }
 
   factory ApiException.fromDioException(DioException e) {
     final response = e.response;
@@ -37,6 +78,7 @@ class ApiException implements Exception {
         details: err['details'] is Map
             ? Map<String, dynamic>.from(err['details'] as Map)
             : null,
+        fields: ApiFieldError.listFrom(err['details']),
         requestId: reqId,
       );
     }

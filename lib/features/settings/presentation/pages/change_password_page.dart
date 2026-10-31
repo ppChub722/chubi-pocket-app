@@ -30,6 +30,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
   final _confirmCtrl = TextEditingController();
 
   String? _currentFieldError;
+  String? _newFieldError;
 
   /// No password yet: set one (no current-password field).
   late final bool _setMode =
@@ -77,7 +78,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
     final w = working;
     FocusScope.of(context).unfocus();
     setSaving(true);
-    setState(() => _currentFieldError = null);
+    setState(() => _currentFieldError = _newFieldError = null);
     try {
       await repo.changePassword(
         currentPassword: _setMode ? null : w.current,
@@ -102,13 +103,17 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
       setState(() {
         if (!_setMode && (e.code == 'WRONG_PASSWORD' || e.statusCode == 401)) {
           _currentFieldError = l.changePasswordCurrentWrong;
+        } else if (!_setMode) {
+          _currentFieldError = fieldErrorText(l, e, 'current_password');
         }
+        _newFieldError = fieldErrorText(l, e, 'new_password');
       });
-      if (_currentFieldError == null) {
+      if (_currentFieldError == null && _newFieldError == null) {
         final m = pageMessenger;
         m != null ? showErrorSnackBarOn(m, e) : showErrorSnackBar(context, e);
+      } else {
+        _formKey.currentState?.validate();
       }
-      if (_currentFieldError != null) _formKey.currentState?.validate();
     }
   }
 
@@ -157,7 +162,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
                       label: l.changePasswordNewLabel,
                       helper: l.changePasswordNewHelper,
                       autofocus: _setMode,
-                      onChanged: (v) => _onText(_Field.next, v),
+                      errorText: _newFieldError,
+                      onChanged: (v) {
+                        if (_newFieldError != null) {
+                          setState(() => _newFieldError = null);
+                        }
+                        _onText(_Field.next, v);
+                      },
                       validator: (v) {
                         if (v == null || v.length < 8) {
                           return l.authRegisterPasswordTooShort;

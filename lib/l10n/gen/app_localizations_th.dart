@@ -145,6 +145,38 @@ class AppLocalizationsTh extends AppLocalizations {
       'ระบบขัดข้องชั่วคราว ลองใหม่ในอีกสักครู่';
 
   @override
+  String get errFieldRequired => 'กรุณากรอกช่องนี้';
+
+  @override
+  String errFieldTooLong(String max) {
+    return 'ยาวเกิน $max ตัวอักษร';
+  }
+
+  @override
+  String errFieldTooShort(String min) {
+    return 'ต้องมีอย่างน้อย $min ตัวอักษร';
+  }
+
+  @override
+  String errFieldTooMany(String max) {
+    return 'ได้ไม่เกิน $max รายการ';
+  }
+
+  @override
+  String errFieldTooFew(String min) {
+    return 'ต้องมีอย่างน้อย $min รายการ';
+  }
+
+  @override
+  String get errFieldOutOfRange => 'ค่านี้อยู่นอกช่วงที่รับได้';
+
+  @override
+  String get errFieldInvalid => 'รูปแบบไม่ถูกต้อง';
+
+  @override
+  String get errFieldTooLarge => 'ไฟล์ใหญ่เกินไป';
+
+  @override
   String get errorGenericTitle => 'เกิดข้อผิดพลาด';
 
   @override
