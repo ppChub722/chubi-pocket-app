@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
+import '../../../core/network/idempotency.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -64,9 +65,18 @@ class AppUiConfig extends StatelessWidget {
         currencySymbol: _userCurrencySymbol(context),
       ),
       errors: _AppErrors(l),
+      saveRunner: _IdempotentSaves.new,
       child: MoneyStyleScope(style: _userMoneyStyle(context), child: child),
     );
   }
+}
+
+/// B2: every edit page's save sends its writes with Idempotency-Key.
+class _IdempotentSaves implements SaveRunner {
+  final _keys = Idempotency();
+
+  @override
+  Future<T> run<T>(Future<T> Function() save) => _keys.run(save);
 }
 
 MoneyStyle _userMoneyStyle(BuildContext context) {

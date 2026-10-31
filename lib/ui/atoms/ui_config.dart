@@ -135,16 +135,27 @@ class _DefaultErrors extends UiErrors {
   );
 }
 
+/// One form's saves, so a retry is safe: the app sends each write of [run]
+/// with a key the server remembers (B2). One runner per edit, kept until it
+/// saves or is cancelled.
+abstract interface class SaveRunner {
+  Future<T> run<T>(Future<T> Function() save);
+}
+
 class UiConfig extends InheritedWidget {
   const UiConfig({
     required this.strings,
     required this.errors,
     required super.child,
+    this.saveRunner,
     super.key,
   });
 
   final UiStrings strings;
   final UiErrors errors;
+
+  /// A new [SaveRunner] for an edit; null = saves run as they are.
+  final SaveRunner Function()? saveRunner;
 
   static const _defaults = UiConfig(
     strings: UiStrings(),
@@ -159,5 +170,7 @@ class UiConfig extends InheritedWidget {
 
   @override
   bool updateShouldNotify(UiConfig old) =>
-      strings != old.strings || errors != old.errors;
+      strings != old.strings ||
+      errors != old.errors ||
+      saveRunner != old.saveRunner;
 }

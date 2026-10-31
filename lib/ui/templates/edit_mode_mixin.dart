@@ -17,6 +17,7 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   bool _editing = false;
   bool _askingToDiscard = false;
   bool _saving = false;
+  SaveRunner? _saveRunner;
   late EditDraft<D> _draft;
   Timer? _debounce;
 
@@ -99,6 +100,7 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     _debounce?.cancel();
     _debounce = null;
     FocusScope.of(context).unfocus();
+    _saveRunner = null;
     setState(() {
       _draft.discard();
       _editing = false;
@@ -172,6 +174,7 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   void commitSaved(D saved) {
     _debounce?.cancel();
     _debounce = null;
+    _saveRunner = null;
     setState(() {
       _draft.commitSaved(saved);
       _editing = false;
@@ -217,8 +220,15 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
       undoTooltip: l.undo,
       onCancel: cancelEdit,
       onUndo: undo,
-      onSave: onSave,
+      onSave: () => runSave(() async => onSave()),
     );
+  }
+
+  /// Runs a save of this edit through the app's [SaveRunner] (the same one
+  /// until it saves or is cancelled): a retry resends the same writes safely.
+  Future<T> runSave<T>(Future<T> Function() save) {
+    final runner = _saveRunner ??= UiConfig.of(context).saveRunner?.call();
+    return runner == null ? save() : runner.run(save);
   }
 
   void _syncShellChrome() => _shellNav.changed();
