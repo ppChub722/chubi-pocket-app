@@ -40,7 +40,7 @@ class TelegramOidc {
     this.clientId = defaultClientId,
     this.redirectUri = defaultRedirect,
     Dio? dio,
-  }) : _dio = dio ?? Dio(BaseOptions(baseUrl: _base)) {
+  }) : _oauth = dio ?? Dio(BaseOptions(baseUrl: _base)) {
     _channel.setMethodCallHandler((call) async {
       if (call.method != 'redirect') return;
       final waiting = _redirect;
@@ -62,7 +62,7 @@ class TelegramOidc {
 
   final String clientId;
   final String redirectUri;
-  final Dio _dio;
+  final Dio _oauth;
   Completer<void>? _redirect;
 
   /// The whole round trip: the id_token, or null when the user did not come
@@ -158,7 +158,7 @@ class TelegramOidc {
   /// The `tg://` link that opens the consent sheet inside the Telegram app.
   Future<String?> _inAppUrl(Map<String, String> query) async {
     try {
-      final res = await _dio.get<String>(
+      final res = await _oauth.get<String>(
         '/crossapp',
         queryParameters: {...query, 'android_sdk': '1'},
         options: Options(responseType: ResponseType.plain),
@@ -175,7 +175,7 @@ class TelegramOidc {
 
   Future<String> _token(String code, String verifier) async {
     try {
-      final res = await _dio.post<Map<String, dynamic>>(
+      final res = await _oauth.post<Map<String, dynamic>>(
         '/token',
         data: {
           'grant_type': 'authorization_code',

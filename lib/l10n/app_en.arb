@@ -742,6 +742,7 @@
   "pendingSourceProject": "Event",
   "pendingSourceOcr": "Scan",
   "pendingSourceChat": "Chat",
+  "pendingSourceTelegram": "Telegram",
   "pendingSourceOther": "Other",
   "pendingSavedCount": "{count, plural, =1{1 draft saved} other{{count} drafts saved}}",
   "@pendingSavedCount": { "placeholders": { "count": { "type": "int" } } },

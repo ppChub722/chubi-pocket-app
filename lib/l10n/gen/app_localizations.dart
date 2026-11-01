@@ -3865,6 +3865,12 @@ abstract class AppLocalizations {
   /// **'Chat'**
   String get pendingSourceChat;
 
+  /// No description provided for @pendingSourceTelegram.
+  ///
+  /// In en, this message translates to:
+  /// **'Telegram'**
+  String get pendingSourceTelegram;
+
   /// No description provided for @pendingSourceOther.
   ///
   /// In en, this message translates to:

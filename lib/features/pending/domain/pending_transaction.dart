@@ -12,6 +12,7 @@ enum PendingSource {
   projectUpdate('project_update'),
   ocr('ocr'),
   chat('chat'),
+  telegram('telegram'),
   other('');
 
   const PendingSource(this.wire);
@@ -22,9 +23,9 @@ enum PendingSource {
     orElse: () => other,
   );
 
-  bool get isManual => this == manual;
+  bool get isManual => this == manual || this == telegram;
 
-  bool get inManualBucket => this == manual || this == chat;
+  bool get inManualBucket => isManual || this == chat;
 }
 
 enum PendingKind {

@@ -2127,6 +2127,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get pendingSourceChat => 'แชท';
 
   @override
+  String get pendingSourceTelegram => 'Telegram';
+
+  @override
   String get pendingSourceOther => 'อื่นๆ';
 
   @override

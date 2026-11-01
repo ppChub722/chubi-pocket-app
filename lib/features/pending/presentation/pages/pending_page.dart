@@ -479,6 +479,7 @@ class _PendingCard extends StatelessWidget {
         PendingSource.projectUpdate => l.pendingSourceProject,
         PendingSource.ocr => l.pendingSourceOcr,
         PendingSource.chat => l.pendingSourceChat,
+        PendingSource.telegram => l.pendingSourceTelegram,
         PendingSource.other => l.pendingSourceOther,
       };
 }

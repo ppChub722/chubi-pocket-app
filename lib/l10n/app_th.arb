@@ -663,6 +663,7 @@
   "pendingSourceProject": "อีเวนต์",
   "pendingSourceOcr": "สแกน",
   "pendingSourceChat": "แชท",
+  "pendingSourceTelegram": "Telegram",
   "pendingSourceOther": "อื่นๆ",
   "pendingSavedCount": "เก็บเป็นร่าง {count} รายการแล้ว",
   "pendingBatchHint": "กรอกแค่ยอดก็พอ ที่เหลือค่อยเติมในหน้ารอยืนยัน",

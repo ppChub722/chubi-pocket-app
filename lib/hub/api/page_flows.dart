@@ -656,23 +656,6 @@ const List<PageFlow> pageFlows = [
       ]),
     ],
   ),
-  PageFlow(
-    'telegram-legacy',
-    'APK builds ≤ 220 only (the /start code flows, 0.4.2 1b / 1b-2). The BE '
-        'keeps them until the force-update gate passes 0.4.2-4; then remove.',
-    [
-      FlowStep.action('Old login: Button "Telegram"', [
-        FlowCall('startTelegramLogin'),
-        FlowCall('exchangeTelegramLogin', note: 'polled'),
-      ]),
-      FlowStep.action('Old sign-up page: Button "สร้างบัญชี"', [
-        FlowCall('signupWithTelegram'),
-      ]),
-      FlowStep.action('Old connection page: Button "เชื่อม Telegram"', [
-        FlowCall('startConnectionLink'),
-      ]),
-    ],
-  ),
 
   // ── Events (projects) ───────────────────────────────────────────────────────
   PageFlow(
