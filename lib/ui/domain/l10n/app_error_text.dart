@@ -53,7 +53,6 @@ final Map<String, String Function(AppLocalizations l)> _specific = {
   'REGISTRATION_CLOSED': (l) => l.authRegistrationClosed,
   'TELEGRAM_ALREADY_LINKED': (l) => l.authTelegramAlreadyLinked,
   'CONNECTION_UNAVAILABLE': (l) => l.authTelegramUnavailable,
-  'LOGIN_CODE_INVALID': (l) => l.errLoginCodeInvalid,
   'TELEGRAM_TOKEN_INVALID': (l) => l.errTelegramTokenInvalid,
   'RATE_LIMITED': (l) => l.errRateLimited,
   'IDEMPOTENCY_IN_PROGRESS': (l) => l.errSaveInProgress,

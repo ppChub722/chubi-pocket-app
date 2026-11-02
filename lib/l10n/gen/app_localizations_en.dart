@@ -214,10 +214,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errRateLimited => 'Too many tries — wait a moment and try again';
 
   @override
-  String get errLoginCodeInvalid =>
-      'The login link expired or was already used — start again';
-
-  @override
   String get errTelegramTokenInvalid =>
       'Signing in with Telegram didn\'t work. Try again';
 

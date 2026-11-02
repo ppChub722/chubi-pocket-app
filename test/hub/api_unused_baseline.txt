@@ -1,10 +1,6 @@
 DELETE /recurring-items/{id}
 GET /projects/{id}/summary
 GET /transactions/summary
-POST /auth/telegram/exchange
-POST /auth/telegram/signup
-POST /auth/telegram/start
-POST /connections/{provider}/link
 POST /projects/{id}/members/{member_id}/request-link
 POST /recurring-items
 POST /telegram/webhook

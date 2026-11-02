@@ -211,10 +211,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get errRateLimited => 'ลองหลายครั้งเกินไป รอสักครู่แล้วลองใหม่';
 
   @override
-  String get errLoginCodeInvalid =>
-      'ลิงก์เข้าสู่ระบบหมดอายุหรือถูกใช้ไปแล้ว เริ่มใหม่อีกครั้ง';
-
-  @override
   String get errTelegramTokenInvalid =>
       'เข้าสู่ระบบด้วย Telegram ไม่สำเร็จ ลองใหม่อีกครั้ง';
 

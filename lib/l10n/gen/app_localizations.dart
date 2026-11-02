@@ -482,12 +482,6 @@ abstract class AppLocalizations {
   /// **'Too many tries — wait a moment and try again'**
   String get errRateLimited;
 
-  /// No description provided for @errLoginCodeInvalid.
-  ///
-  /// In en, this message translates to:
-  /// **'The login link expired or was already used — start again'**
-  String get errLoginCodeInvalid;
-
   /// No description provided for @errTelegramTokenInvalid.
   ///
   /// In en, this message translates to:

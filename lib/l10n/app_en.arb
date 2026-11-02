@@ -72,7 +72,6 @@
   "errAppOutdated": "Update the app to keep using it",
   "errAccountInactive": "This account is deactivated — reactivate it to continue",
   "errRateLimited": "Too many tries — wait a moment and try again",
-  "errLoginCodeInvalid": "The login link expired or was already used — start again",
   "errTelegramTokenInvalid": "Signing in with Telegram didn't work. Try again",
   "errCategoryNameDuplicate": "A category with this name already exists at this level",
   "errCategoryCycle": "A category can’t move under itself or its own sub-categories",
