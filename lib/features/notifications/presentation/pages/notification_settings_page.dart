@@ -48,19 +48,17 @@ class NotificationSettingsPage extends StatelessWidget {
     label: l.notifSetSplitChanged,
     helper: l.notifAutoUpdateHint,
   ),
-  (NotificationRowKind.billDeleted, _) => (
-    label: l.notifSetSharedBillDeleted,
-    helper: l.notifAutoDeleteHint,
-  ),
   _ => _typeText(l, r.type),
 };
 
 ({String label, String? helper})? _typeText(AppLocalizations l, String type) =>
     switch (type) {
-      'shared_bill_disconnected' => (
-        label: l.notifSetSharedBillDisconnected,
-        helper: l.notifSetSharedBillDisconnectedHint,
-      ),
+      'bill_invite' => (label: l.notifSetBillInvite, helper: null),
+      'bill_removed' => (label: l.notifSetBillRemoved, helper: null),
+      'bill_owner_changed' => (label: l.notifSetBillOwnerChanged, helper: null),
+      'bill_moved' => (label: l.notifSetBillMoved, helper: null),
+      'debt_repaid' => (label: l.notifSetDebtRepaid, helper: null),
+      'event_deleted' => (label: l.notifSetEventDeleted, helper: null),
       'debt_disconnected' => (
         label: l.notifTypeDebtDisconnected,
         helper: l.notifSetDebtDisconnectedHint,
@@ -102,6 +100,7 @@ class NotificationSettingsPage extends StatelessWidget {
 
 String _groupTitle(AppLocalizations l, NotificationGroup g) => switch (g) {
   NotificationGroup.sharedBill => l.notifGroupSharedBills,
+  NotificationGroup.debt => l.notifGroupDebts,
   NotificationGroup.event => l.notifGroupProjects,
   NotificationGroup.recurring => l.notifGroupRecurring,
   NotificationGroup.request => l.notifGroupRequests,

@@ -1049,6 +1049,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectMembersInvite => 'Invite member';
 
   @override
+  String get projectMembersAdd => 'Add member';
+
+  @override
+  String get projectMemberInvite => 'Invite';
+
+  @override
+  String get projectMemberInvited => 'Invited';
+
+  @override
+  String projectMemberInviteSent(String name) {
+    return 'Invite sent to $name';
+  }
+
+  @override
   String get projectLeave => 'Leave event';
 
   @override
@@ -3151,8 +3165,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Whether this category counts in reports and is used for fees';
 
   @override
-  String get projectMembersDescription =>
-      'People currently taking part in this event';
+  String get projectMembersUsers => 'App users';
+
+  @override
+  String get projectMembersUsersDescription =>
+      'Taking part with their own account';
+
+  @override
+  String get projectMembersNames => 'Names';
+
+  @override
+  String get projectMembersNamesDescription =>
+      'Names and contacts of yours, not taking part with an account';
 
   @override
   String get projectMembersPendingDescription =>
@@ -5376,6 +5400,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get evbTypePayback => 'Payback';
 
   @override
+  String get evbPaybackNeedsPeople =>
+      'Pick who paid back and who got it (two people)';
+
+  @override
   String evbPeople(int count) {
     return 'In the bill | $count';
   }
@@ -5424,6 +5452,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get evbMembersTitle => 'Members';
+
+  @override
+  String get evbBillChangedReopen =>
+      'Someone changed this bill first; nothing was saved. Open it again to edit.';
+
+  @override
+  String get evbLeaveTitle => 'Leave this bill';
+
+  @override
+  String get evbLeaveKeepBooks =>
+      'Keep my transaction and debts (as plain records)';
+
+  @override
+  String get evbLeaveDeleteBooks =>
+      'Delete my transaction and debts of this bill';
+
+  @override
+  String evbLumpTitle(String name) {
+    return 'Record the debt with $name';
+  }
+
+  @override
+  String evbLumpBody(String amount) {
+    return 'Every bill with them not recorded yet becomes one debt ($amount); bills already recorded are not counted again.';
+  }
+
+  @override
+  String get evbMembersAdd => 'Add';
 
   @override
   String get evbManageMembers => 'Manage members ›';
@@ -6159,7 +6215,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'The amounts don\'t add up to the bill yet. See the card\'s status line.';
 
   @override
-  String get txLinkTabSplit => 'Split';
+  String get txLinkTabSplit => 'Split the bill with others';
 
   @override
   String get txLinkBillLabel => 'Bill';
@@ -6206,7 +6262,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Paid back needs the wallet the money went into';
 
   @override
-  String get txLinkBookDebt => 'Record the debts too';
+  String get txLinkBookDebt => 'Record this bill\'s debts now';
+
+  @override
+  String get txLinkBookMine => 'Put it in my books now';
 
   @override
   String get txLinkWalletNotOut => 'Not from your wallet';
@@ -7044,6 +7103,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAutoEventInvites => 'Accept event invites automatically';
 
   @override
+  String get settingsAutoAcceptEventsCaption =>
+      'A bill someone adds to an event goes in my books at once | every event';
+
+  @override
+  String get settingsAutoSyncEventsCaption =>
+      'When someone edits a bill I booked, my books follow | every event';
+
+  @override
+  String get settingsAutoAcceptDebtsCaption =>
+      'A split bill someone invites me to: join and book it at once | everyone';
+
+  @override
+  String get settingsAutoSyncDebtsCaption =>
+      'When someone edits a split bill I booked, my books follow | everyone';
+
+  @override
   String get settingsAutoContactLinks =>
       'Accept contact link requests automatically';
 
@@ -7339,4 +7414,88 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notifColumnAutoSplit => 'Splits';
+
+  @override
+  String notifBillInvite(String who, String what) {
+    return '$who invited you to the bill $what';
+  }
+
+  @override
+  String notifBillChanged(String who, String what) {
+    return '$who edited the bill $what';
+  }
+
+  @override
+  String notifBillRemoved(String who, String what) {
+    return '$who took you off the bill $what';
+  }
+
+  @override
+  String notifBillOwnerChanged(String what) {
+    return 'You own the bill $what now';
+  }
+
+  @override
+  String notifBillMovedIn(String who, String what, String event) {
+    return '$who moved the bill $what into the event $event';
+  }
+
+  @override
+  String notifBillMovedOut(String who, String what) {
+    return '$who moved the bill $what out of its event';
+  }
+
+  @override
+  String notifDebtRepaidToMe(String who) {
+    return '$who paid you back';
+  }
+
+  @override
+  String notifDebtRepaidByMe(String who) {
+    return '$who recorded your repayment';
+  }
+
+  @override
+  String notifEventDeleted(String who, String name) {
+    return '$who deleted the event $name; its bills stay as split bills';
+  }
+
+  @override
+  String get notifActionJoin => 'Join';
+
+  @override
+  String get notifActionClaim => 'Add to my books';
+
+  @override
+  String get notifActionDeleteMine => 'Delete mine';
+
+  @override
+  String get notifActionRecordReceived => 'Record it';
+
+  @override
+  String get notifActionRecordPaid => 'Record it';
+
+  @override
+  String get notifGroupDebts => 'Debts';
+
+  @override
+  String get notifSetBillInvite => 'Someone adds me to a bill';
+
+  @override
+  String get notifSetBillRemoved => 'I\'m taken off a bill';
+
+  @override
+  String get notifSetBillOwnerChanged => 'I become a bill\'s owner';
+
+  @override
+  String get notifSetBillMoved => 'My bill moves to another event';
+
+  @override
+  String get notifSetDebtRepaid => 'My debt partner records a repayment';
+
+  @override
+  String get notifSetEventDeleted => 'An event I\'m in is deleted';
+
+  @override
+  String get projectLeavePickOwner => 'Who owns it next?';
 }

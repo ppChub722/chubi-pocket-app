@@ -122,7 +122,7 @@ void main() {
       (f: InboxFilter.needsAnswer, read: null, dismissed: null, awaits: 'true'),
       (f: InboxFilter.hidden, read: null, dismissed: 'true', awaits: null),
     ]) {
-      final repo = _InboxRepo([_row('n1', 'project_added')]);
+      final repo = _InboxRepo([_row('n1', 'bill_moved')]);
       final cubit = NotificationsInboxCubit(repository: repo);
       await cubit.load(filter: c.f);
       expect(repo.lists, hasLength(1), reason: c.f.name);
@@ -134,7 +134,7 @@ void main() {
   });
 
   test('inbox: picking the filter again is no call', () async {
-    final repo = _InboxRepo([_row('n1', 'project_added')]);
+    final repo = _InboxRepo([_row('n1', 'bill_moved')]);
     final cubit = NotificationsInboxCubit(repository: repo);
     await cubit.load();
     for (final c in [
@@ -160,34 +160,29 @@ void main() {
         reject: RejectRoute.walletInvite,
       ),
       (
-        t: NotificationType.splitCreated,
-        accept: AcceptRoute.applyBill,
-        reject: RejectRoute.dismiss,
+        t: NotificationType.billInvite,
+        accept: AcceptRoute.joinBill,
+        reject: RejectRoute.declineBill,
       ),
       (
-        t: NotificationType.splitChanged,
-        accept: AcceptRoute.applyBill,
-        reject: RejectRoute.dismiss,
+        t: NotificationType.billNew,
+        accept: AcceptRoute.claimBill,
+        reject: RejectRoute.markActioned,
       ),
       (
-        t: NotificationType.projectTxRecordedForYou,
-        accept: AcceptRoute.applyBill,
-        reject: RejectRoute.dismiss,
+        t: NotificationType.billChanged,
+        accept: AcceptRoute.syncBill,
+        reject: RejectRoute.markActioned,
       ),
       (
-        t: NotificationType.projectTxChanged,
-        accept: AcceptRoute.applyBill,
-        reject: RejectRoute.dismiss,
+        t: NotificationType.billRemoved,
+        accept: AcceptRoute.deleteBooks,
+        reject: RejectRoute.markActioned,
       ),
       (
-        t: NotificationType.sharedBillCreated,
-        accept: AcceptRoute.applyBill,
-        reject: RejectRoute.dismiss,
-      ),
-      (
-        t: NotificationType.sharedBillDeleted,
-        accept: AcceptRoute.applyBill,
-        reject: RejectRoute.dismiss,
+        t: NotificationType.debtRepaid,
+        accept: AcceptRoute.recordRepayment,
+        reject: RejectRoute.markActioned,
       ),
       (
         t: NotificationType.projectInvite,
@@ -210,7 +205,7 @@ void main() {
         reject: RejectRoute.linkRequest,
       ),
       (
-        t: NotificationType.projectAdded,
+        t: NotificationType.billMoved,
         accept: AcceptRoute.linkRequest,
         reject: RejectRoute.dismiss,
       ),
@@ -221,7 +216,7 @@ void main() {
   });
 
   test('inbox: hide = one POST, undo restores it, never a re-fetch', () async {
-    final repo = _InboxRepo([_row('n6', 'project_added', state: 'read')]);
+    final repo = _InboxRepo([_row('n6', 'bill_moved', state: 'read')]);
     final cubit = NotificationsInboxCubit(repository: repo);
     await cubit.load();
     expect(cubit.state.summary.all, 1);
@@ -239,7 +234,7 @@ void main() {
     expect(cubit.state.summary.dismissed, 0);
     expect(repo.lists, hasLength(1));
 
-    repo.hidden = [_row('h1', 'project_added', state: 'dismissed')];
+    repo.hidden = [_row('h1', 'bill_moved', state: 'dismissed')];
     await cubit.load(filter: InboxFilter.hidden);
     expect(cubit.state.notifications.map((n) => n.id), ['h1']);
     await cubit.restore('h1');
@@ -252,8 +247,8 @@ void main() {
     'inbox: mark all read flips the rows, numbers from the answer',
     () async {
       final repo = _InboxRepo([
-        _row('n1', 'split_created', awaits: true),
-        _row('n2', 'project_added', state: 'read'),
+        _row('n1', 'bill_new', awaits: true),
+        _row('n2', 'bill_moved', state: 'read'),
       ]);
       final badge = <int>[];
       final cubit = NotificationsInboxCubit(

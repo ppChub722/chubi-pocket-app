@@ -461,14 +461,27 @@ class DebtBillPart extends Equatable {
   /// Edit opens the bill form (connected, event not completed).
   final bool editInBill;
 
-  factory DebtBillPart.fromJson(Map<String, dynamic> json) => DebtBillPart(
-    ptId: json['pt_id'] as String,
-    event: EventRef.fromJson(_map(json['event']) ?? const {'id': ''}),
-    description: _text(json['description']),
-    amount: (json['amount'] as num?)?.toDouble() ?? 0,
-    inSync: json['in_sync'] != false,
-    editInBill: json['edit_in_bill'] == true,
-  );
+  /// The paper model names the paper `split_transaction_id` (event null on
+  /// a split bill: its hidden split "event"); older answers `pt_id`.
+  factory DebtBillPart.fromJson(Map<String, dynamic> json) {
+    final paper =
+        (json['split_transaction_id'] as String?) ?? json['pt_id'] as String;
+    final event = _map(json['event']);
+    return DebtBillPart(
+      ptId: paper,
+      event: event != null
+          ? EventRef.fromJson(event)
+          : EventRef(
+              id: paper,
+              name: _text(json['description']) ?? '',
+              kind: 'split',
+            ),
+      description: _text(json['description']),
+      amount: (json['amount'] as num?)?.toDouble() ?? 0,
+      inSync: json['in_sync'] != false,
+      editInBill: json['edit_in_bill'] == true || json['pt_id'] == null,
+    );
+  }
 
   @override
   List<Object?> get props => [

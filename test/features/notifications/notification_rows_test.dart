@@ -2,20 +2,24 @@ import 'package:chubi_pocket/features/notifications/domain/notification.dart';
 import 'package:chubi_pocket/features/notifications/domain/notification_rows.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// `GET /notifications/settings` as the 0.4.2-3 BE answers (pageTypes order;
-/// project_added retired, requests mutable).
+/// `GET /notifications/settings` as the paper-model BE answers (pageTypes
+/// order, every type mutable).
 NotificationSettings _settings({List<String> muted = const []}) =>
     NotificationSettings.fromJson({
       'muted_types': muted,
       'types': [
         for (final (type, group) in const [
-          ('shared_bill_created', 'shared_bill'),
-          ('shared_bill_deleted', 'shared_bill'),
-          ('shared_bill_disconnected', 'shared_bill'),
-          ('debt_disconnected', 'shared_bill'),
-          ('project_tx_changed', 'event'),
+          ('bill_invite', 'bill'),
+          ('bill_new', 'bill'),
+          ('bill_changed', 'bill'),
+          ('bill_removed', 'bill'),
+          ('bill_owner_changed', 'bill'),
+          ('bill_moved', 'bill'),
+          ('debt_repaid', 'debt'),
+          ('debt_disconnected', 'debt'),
           ('event_completed', 'event'),
           ('event_member_removed', 'event'),
+          ('event_deleted', 'event'),
           ('recurring_due', 'recurring'),
           ('recurring_ending', 'recurring'),
           ('recurring_auto_created', 'recurring'),
@@ -35,25 +39,24 @@ NotificationSettings _settings({List<String> muted = const []}) =>
     });
 
 void main() {
-  test('rows: the new-bill and edit types are ONE row each in บิลที่แชร์ with '
-      'an event and a split auto switch; each request is a row with its own '
-      'auto switch (F2)', () {
+  test('rows: a new bill and an edited one carry the event and split auto '
+      'switches; each request is a row with its own auto switch (F2)', () {
     final rows = notificationRows(_settings());
     String line(NotificationRow r) =>
-        '${r.type}:${r.autos.map((a) => a?.name ?? '-').join('|')}'
-        '${r.autoMirror ? '(mirror)' : ''}';
+        '${r.type}:${r.autos.map((a) => a?.name ?? '-').join('|')}';
     expect(rows[NotificationGroup.sharedBill]!.map(line), [
-      'shared_bill_created:acceptEvents|acceptDebts',
-      'project_tx_changed:syncEvents|syncDebts',
-      'shared_bill_deleted:syncEvents|-(mirror)',
-      'shared_bill_disconnected:-|-',
-      'debt_disconnected:-|-',
+      'bill_invite:-|-',
+      'bill_new:acceptEvents|acceptDebts',
+      'bill_changed:syncEvents|syncDebts',
+      'bill_removed:-|-',
+      'bill_owner_changed:-|-',
+      'bill_moved:-|-',
     ]);
-    // No auto columns outside บิลที่แชร์; the edit type isn't repeated.
-    expect(rows[NotificationGroup.event]!.map(line), [
-      'event_completed:',
-      'event_member_removed:',
+    expect(rows[NotificationGroup.debt]!.map(line), [
+      'debt_repaid:',
+      'debt_disconnected:',
     ]);
+    expect(rows[NotificationGroup.event], hasLength(3));
     expect(rows[NotificationGroup.recurring], hasLength(3));
     final requests = rows[NotificationGroup.request]!;
     expect(requests.map(line), [
@@ -68,33 +71,11 @@ void main() {
   });
 
   test('แจ้ง follows the mute only, whatever the auto switches (F1)', () {
-    final s = _settings(muted: ['shared_bill_created', 'project_tx_changed']);
+    final s = _settings(muted: ['bill_new', 'bill_changed']);
     final rows = notificationRows(s)[NotificationGroup.sharedBill]!;
-    expect(rows.first.notifyOn(s), isFalse);
-    expect(rows.first.mutable, isTrue);
     expect(rows[1].notifyOn(s), isFalse);
-    expect(
-      rows.last.notifyOn(_settings(muted: ['debt_disconnected'])),
-      isFalse,
-    );
-    expect(rows.last.notifyOn(s), isTrue);
+    expect(rows[1].mutable, isTrue);
+    expect(rows[2].notifyOn(s), isFalse);
+    expect(rows.first.notifyOn(s), isTrue);
   });
-
-  test(
-    'the delete row mirrors the event update switch (event-bill deletes follow it)',
-    () {
-      final deleted =
-          notificationRows(_settings())[NotificationGroup.sharedBill]!
-              .firstWhere((r) => r.type == 'shared_bill_deleted');
-      const off = AutoValues(
-        acceptDebts: true,
-        acceptEvents: true,
-        syncDebts: true,
-        syncEvents: false,
-      );
-      expect(deleted.autos, [AutoSwitch.syncEvents, null]);
-      expect(deleted.autoMirror, isTrue);
-      expect(off.of(AutoSwitch.syncEvents), isFalse);
-    },
-  );
 }

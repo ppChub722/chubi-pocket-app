@@ -5,8 +5,8 @@ import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/project.dart';
-import '../event_assign.dart';
-import 'event_bill_sheet.dart';
+import '../../../transactions/presentation/widgets/quick_create_sheet.dart'
+    show openPaperBill;
 import 'project_common.dart';
 
 String projectTxDateLabel(BuildContext context, String ymd) {
@@ -37,11 +37,8 @@ Widget projectTxIcon(
 
 /// A member's [PersonMark] level: linked to an app account, else a typed name
 /// (with or without an icon of its own); a removed member's spot is empty.
-PersonLevel projectMemberLevel(ProjectMember m) => m.isRemoved
-    ? PersonLevel.empty
-    : m.isLinked
-    ? PersonLevel.linked
-    : (m.iconCode != null ? PersonLevel.contact : PersonLevel.name);
+PersonLevel projectMemberLevel(ProjectMember m) =>
+    m.isRemoved ? PersonLevel.empty : m.level;
 
 /// Multi-payer (0.4.1-2): the payer line's people, as the event knows them
 /// (a removed one = an empty spot); empty for one payer (the single-name
@@ -152,6 +149,7 @@ class ProjectTxTreeTile extends StatelessWidget {
 
     final showTag = onShowTag;
     final iPaid = myId != null && parent.transactionMemberId == myId;
+    final me = view.me;
     final othersIn = tree.children.any((c) => c.transactionMemberId != myId);
     final onBook = book({
       ProjectTransaction.bookTx,
@@ -216,15 +214,26 @@ class ProjectTxTreeTile extends StatelessWidget {
         parent,
         (v) => moneyString(context, v, symbol: symbol),
       ),
-      badge: iPaid ? chips : null,
-      mine: iPaid && onBook != null,
-      onAction: iPaid ? onBook : null,
-      actionTooltip: l.evbBookMine,
-      // A removed payer's empty spot: the tap fills it for this bill.
-      onTap: payer.isRemoved
-          ? () => _assign(context, payer)
-          : () => _open(context),
+      onTap: () => _open(context),
       children: [
+        // I paid: my own share gets a line too, so ⤓ sits by what it books.
+        if (iPaid && me != null && parent.myShare > 0.005) ...[
+          EventBillChildRow(
+            tick: false,
+            name: projectMemberName(l, me),
+            amount: parent.myShare,
+            level: projectMemberLevel(me),
+            iconCode: me.iconCode,
+            symbol: symbol,
+            badge: chips,
+            mine: onBook != null,
+            onAction: onBook,
+            actionTooltip: l.evbBookMine,
+            locked: locked,
+            onTap: () => _open(context),
+          ),
+          if (children.isNotEmpty) const AppDivider.row(),
+        ],
         for (final (i, c) in children.indexed) ...[
           if (i > 0) const AppDivider.row(),
           _child(
@@ -276,49 +285,24 @@ class ProjectTxTreeTile extends StatelessWidget {
       onAction: mine ? onBook : null,
       actionTooltip: bookTooltip,
       locked: view.rowsLocked,
-      onTap: debtor.isRemoved
-          ? () => _assign(context, debtor)
-          : () => _open(context),
+      onTap: () => _open(context),
     );
   }
 
-  /// V15: fill a removed member's empty spot on THIS bill (one call).
-  Future<void> _assign(BuildContext context, ProjectMember removed) async {
-    if (view.rowsLocked || !view.canAddTx) return;
-    final p = await assignEmptySpots(
-      context,
-      view: view,
-      removed: removed,
-      billIds: [tree.parent.id],
-    );
-    if (p == null) return;
-    final patch = onPatch;
-    patch == null ? await onChanged() : patch(p);
-  }
-
-  /// ⤓: the event sheet with only "ลงบัญชีของฉันด้วย"; the bill isn't
-  /// changed.
-  Future<void> _book(BuildContext context) async {
-    final patch = onPatch;
-    final saved = await showEventBillSheet(
-      context,
-      view: view,
-      row: tree,
-      onPatch: patch,
-      booksOnly: true,
-    );
-    if (saved && patch == null) await onChanged();
-  }
+  /// ⤓: the bill form, where my book switches live.
+  Future<void> _book(BuildContext context) => _openForm(context);
 
   Future<void> _open(BuildContext context) async {
     if (view.rowsLocked) return;
-    final patch = onPatch;
-    final saved = await showEventBillSheet(
+    await _openForm(context);
+  }
+
+  Future<void> _openForm(BuildContext context) async {
+    final saved = await openPaperBill(
       context,
-      view: view,
-      row: tree,
-      onPatch: patch,
+      tree.parent.id,
+      projectId: view.project.id,
     );
-    if (saved && patch == null) await onChanged();
+    if (saved) await onChanged();
   }
 }

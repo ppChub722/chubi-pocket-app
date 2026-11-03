@@ -324,8 +324,10 @@ class TransactionsCubit extends Cubit<TransactionsState>
     List<String>? tagIds,
     bool? alsoUpdateLink,
     Map<String, dynamic>? link,
+    String? privateNote,
   }) async {
     final result = await _repo.update(
+      privateNote: privateNote,
       id: id,
       amount: amount,
       date: date,

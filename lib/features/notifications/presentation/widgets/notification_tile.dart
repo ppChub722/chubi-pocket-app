@@ -37,21 +37,26 @@ class NotificationTile extends StatelessWidget {
       notification.type == NotificationType.recurringEnding ||
       notification.type == NotificationType.recurringAutoCreated;
 
-  // Old split_created / split_changed rows: info only (their calls are gone).
+  bool get _isBillInvite => notification.type == NotificationType.billInvite;
+
   bool get _hasAction => switch (notification.type) {
-    NotificationType.projectTxRecordedForYou ||
-    NotificationType.projectTxChanged ||
-    NotificationType.sharedBillCreated ||
-    NotificationType.sharedBillDeleted ||
+    NotificationType.billNew ||
+    NotificationType.billChanged ||
+    NotificationType.billRemoved ||
+    NotificationType.debtRepaid ||
     NotificationType.recurringEnding => true,
     _ => false,
   };
 
   String _actionLabel(AppLocalizations l) => switch (notification.type) {
-    NotificationType.projectTxRecordedForYou => l.notifActionCopyToBook,
-    NotificationType.sharedBillCreated => l.notifActionAddToBook,
-    NotificationType.sharedBillDeleted => l.notifActionRemoveMine,
-    NotificationType.projectTxChanged => l.notifActionUpdateCopy,
+    NotificationType.billInvite => l.notifActionJoin,
+    NotificationType.billNew => l.notifActionClaim,
+    NotificationType.billChanged => l.notifActionUpdateCopy,
+    NotificationType.billRemoved => l.notifActionDeleteMine,
+    NotificationType.debtRepaid =>
+      notification.payload['direction'] == 'paid'
+          ? l.notifActionRecordPaid
+          : l.notifActionRecordReceived,
     NotificationType.recurringEnding => l.notifActionExtend,
     NotificationType.recurringDue => l.notifActionOpenDue,
     _ => l.notificationAccept,
@@ -64,7 +69,8 @@ class NotificationTile extends StatelessWidget {
     final actor =
         n.actor?.displayName ??
         (_isRecurring ? l.moreRecurring : l.notificationsSomeone);
-    final accepted = (_isRequest || _hasAction) && n.isActioned;
+    final accepted =
+        (_isRequest || _isBillInvite || _hasAction) && n.isActioned;
 
     return NotificationTileView(
       actorName: actor,
@@ -87,10 +93,13 @@ class NotificationTile extends StatelessWidget {
       rejectLabel: switch (n.type) {
         NotificationType.recurringDue => null,
         NotificationType.recurringEnding => l.notifActionLetEnd,
-        NotificationType.sharedBillDeleted => l.notifActionKeepMine,
-        _ => _isRequest ? l.notificationReject : l.notifActionSkip,
+        NotificationType.billRemoved => l.notifActionKeepMine,
+        _ =>
+          _isRequest || _isBillInvite
+              ? l.notificationReject
+              : l.notifActionSkip,
       },
-      rejectConfirm: _isRequest
+      rejectConfirm: _isRequest || _isBillInvite
           ? NotificationRejectConfirm(
               title: l.notifRejectTitle,
               message: l.notifRejectBody,
@@ -107,26 +116,26 @@ class NotificationTile extends StatelessWidget {
       n.awaitsAnswer || (n.type == NotificationType.recurringDue && n.isUnread);
 
   String? _amount(BuildContext context) {
-    // A shared bill shows my part of it (what my copy holds).
+    // A bill shows my share of it.
     final a =
-        notification.payload['my_amount'] ?? notification.payload['amount'];
+        notification.payload['my_share'] ?? notification.payload['amount'];
     if (a is! num) return null;
     return moneyString(context, a, symbol: context.readUserCurrencySymbol);
   }
 
   static IconData _iconFor(NotificationType t) => switch (t) {
-    NotificationType.splitCreated ||
-    NotificationType.splitChanged => AppIcons.split,
-    NotificationType.debtDisconnected ||
-    NotificationType.sharedBillDisconnected => AppIcons.link,
-    NotificationType.sharedBillCreated ||
-    NotificationType.sharedBillDeleted => AppIcons.receipt,
-    NotificationType.projectTxRecordedForYou ||
-    NotificationType.projectTxChanged ||
+    NotificationType.billInvite ||
+    NotificationType.billNew ||
+    NotificationType.billChanged ||
+    NotificationType.billRemoved ||
+    NotificationType.billOwnerChanged ||
+    NotificationType.billMoved => AppIcons.receipt,
+    NotificationType.debtRepaid => AppIcons.split,
+    NotificationType.debtDisconnected => AppIcons.link,
     NotificationType.projectInvite ||
-    NotificationType.projectAdded ||
     NotificationType.eventCompleted ||
-    NotificationType.eventMemberRemoved => AppIcons.project,
+    NotificationType.eventMemberRemoved ||
+    NotificationType.eventDeleted => AppIcons.project,
     NotificationType.contactLinkRequest => AppIcons.link,
     NotificationType.accountInvite => AppIcons.bank,
     NotificationType.recurringDue ||
@@ -141,20 +150,28 @@ class NotificationTile extends StatelessWidget {
     AppNotification n,
     String actor,
   ) => switch (n.type) {
-    NotificationType.splitCreated => l.notifSplitCreated(actor),
-    NotificationType.splitChanged => _splitChangeTitle(context, l, n),
+    NotificationType.billInvite => l.notifBillInvite(actor, _billName(n)),
+    NotificationType.billNew => l.notifSharedBillCreated(actor, _billName(n)),
+    NotificationType.billChanged => l.notifBillChanged(actor, _billName(n)),
+    NotificationType.billRemoved => l.notifBillRemoved(actor, _billName(n)),
+    NotificationType.billOwnerChanged => l.notifBillOwnerChanged(
+      _billName(n),
+    ),
+    NotificationType.billMoved => switch (n.payload['project_name']) {
+      final String event when event.isNotEmpty => l.notifBillMovedIn(
+        actor,
+        _billName(n),
+        event,
+      ),
+      _ => l.notifBillMovedOut(actor, _billName(n)),
+    },
+    NotificationType.debtRepaid => _debtRepaidTitle(l, n, actor),
     NotificationType.debtDisconnected => _debtDisconnectedTitle(context, l, n),
-    NotificationType.projectTxRecordedForYou => l.notifProjectTxForYou(actor),
-    NotificationType.projectTxChanged => l.notifProjectTxChanged(actor),
     NotificationType.projectInvite => l.notifProjectInvite(
       actor,
       (n.payload['project_name'] as String?) ?? '',
     ),
     NotificationType.contactLinkRequest => l.notifContactLink(actor),
-    NotificationType.projectAdded => l.notifProjectAdded(
-      actor,
-      (n.payload['project_name'] as String?) ?? '',
-    ),
     NotificationType.accountInvite => l.notificationWalletInviteTitle(
       actor,
       (n.payload['account_name'] as String?) ?? '',
@@ -169,18 +186,6 @@ class NotificationTile extends StatelessWidget {
     NotificationType.recurringAutoCreated => l.notifRecurringAutoCreated(
       (n.payload['count'] as num?)?.toInt() ?? 1,
     ),
-    NotificationType.sharedBillCreated => l.notifSharedBillCreated(
-      actor,
-      _billName(n),
-    ),
-    NotificationType.sharedBillDeleted => l.notifSharedBillDeleted(
-      actor,
-      _billName(n),
-    ),
-    NotificationType.sharedBillDisconnected => l.notifSharedBillDisconnected(
-      (n.payload['person_name'] as String?) ?? actor,
-      _billName(n),
-    ),
     NotificationType.eventCompleted => l.notifEventCompleted(
       n.actor?.displayName ?? (n.payload['owner_name'] as String?) ?? actor,
       (n.payload['project_name'] as String?) ?? '',
@@ -189,8 +194,24 @@ class NotificationTile extends StatelessWidget {
       actor,
       (n.payload['project_name'] as String?) ?? '',
     ),
+    NotificationType.eventDeleted => l.notifEventDeleted(
+      actor,
+      (n.payload['project_name'] as String?) ?? '',
+    ),
     NotificationType.unknown => l.notifUnknown,
   };
+
+  /// `direction` is as my repayment row would be: received = they paid me.
+  static String _debtRepaidTitle(
+    AppLocalizations l,
+    AppNotification n,
+    String actor,
+  ) {
+    final who = (n.payload['person_name'] as String?) ?? actor;
+    return n.payload['direction'] == 'paid'
+        ? l.notifDebtRepaidByMe(who)
+        : l.notifDebtRepaidToMe(who);
+  }
 
   /// A bill in a title: its description, else its event's name.
   static String _billName(AppNotification n) {
@@ -216,28 +237,5 @@ String _debtDisconnectedTitle(
     amount is num
         ? moneyString(context, amount, symbol: context.readUserCurrencySymbol)
         : '—',
-  );
-}
-
-String _splitChangeTitle(
-  BuildContext context,
-  AppLocalizations l,
-  AppNotification n,
-) {
-  final p = n.payload;
-  final who =
-      (p['splitter_display_name'] as String?) ??
-      n.actor?.displayName ??
-      l.notificationsSomeone;
-  final what = (p['description'] as String?)?.trim() ?? '';
-  if (p['change'] == 'removed') return l.notifSplitRemovedYou(who, what);
-  final symbol = context.readUserCurrencySymbol;
-  String money(Object? v) =>
-      v is num ? moneyString(context, v, symbol: symbol) : '—';
-  return l.notifSplitAmountChanged(
-    who,
-    what,
-    money(p['old_amount']),
-    money(p['new_amount']),
   );
 }

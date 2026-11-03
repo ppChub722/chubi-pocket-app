@@ -164,6 +164,19 @@ class _BottomBarPageState extends State<_BottomBarPage> {
             ],
           ),
         ),
+        HubDemo(
+          title: 'QuickCreateContextBar — a fixed context in its place',
+          note:
+              'The event\'s add / edit bill (owner 2026-11-03): the same form '
+              'as quick create, its tabs replaced by the event\'s name on the '
+              'same track; not a control.',
+          child: QuickCreateContextBar(
+            caption: 'อีเวนต์',
+            label: 'เที่ยวเขาใหญ่',
+            icon: AppIcons.project,
+            color: ModuleColors.of(context).people,
+          ),
+        ),
       ],
     );
   }

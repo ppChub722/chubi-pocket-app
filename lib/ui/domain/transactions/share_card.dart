@@ -4,6 +4,7 @@ import '../../molecules/split_row.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/tone.dart';
+import 'link_mode_bar.dart';
 
 /// The status line under a [ShareCard]: "✓ แบ่งครบแล้ว" when the rows add up
 /// to the bill, "ยังขาด ฿x" / "เกินยอด ฿x" otherwise (red; save waits).
@@ -27,8 +28,18 @@ class ShareCard extends StatelessWidget {
     this.headerLeading,
     this.status,
     this.top,
+    this.flat = false,
+    this.statusLeading,
     super.key,
   }) : assert(title != null || headerLeading != null, 'a card needs a header');
+
+  /// At the start of the [status] line (the share summary: "ส่วนของฉัน ฿x |
+  /// ลูกหนี้ ฿y").
+  final Widget? statusLeading;
+
+  /// Inside another card (the แบ่ง card): no surface, border or inset of its
+  /// own.
+  final bool flat;
 
   /// A row above the header, set off from it by a divider (the "add to
   /// event" row of quick create).
@@ -51,27 +62,28 @@ class ShareCard extends StatelessWidget {
     final title = this.title;
     final leading = headerLeading;
     return Container(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.sm,
-        AppSpacing.xs,
-        AppSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
+      padding: flat
+          ? EdgeInsets.zero
+          : const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.sm,
+              AppSpacing.xs,
+              AppSpacing.sm,
+            ),
+      decoration: flat
+          ? null
+          : BoxDecoration(
+              color: scheme.surface,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(color: scheme.outlineVariant),
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
           if (top != null) ...[
             top!,
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-              child: Divider(height: 1, color: scheme.outlineVariant),
-            ),
+            const RowsDivider(),
           ],
           _HeaderLine(
             actions: actions,
@@ -98,22 +110,35 @@ class ShareCard extends StatelessWidget {
                   ),
           ),
           ...rows,
-          if (status != null)
+          if (status != null || statusLeading != null)
             Padding(
               padding: const EdgeInsets.only(
                 top: AppSpacing.xs,
                 right: AppSpacing.sm,
               ),
-              child: Text(
-                status.text,
-                key: const ValueKey('shareStatus'),
-                textAlign: TextAlign.end,
-                style: text.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: (status.ok ? Tone.success : Tone.danger).color(
-                    context,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: statusLeading ?? const SizedBox.shrink(),
+                    ),
                   ),
-                ),
+                  if (status != null) ...[
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      status.text,
+                      key: const ValueKey('shareStatus'),
+                      textAlign: TextAlign.end,
+                      style: text.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: (status.ok ? Tone.success : Tone.danger).color(
+                          context,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
         ],

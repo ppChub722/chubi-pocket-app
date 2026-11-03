@@ -1,7 +1,4 @@
-import 'package:chubi_pocket/features/contacts/presentation/widgets/contact_picker.dart';
-import 'package:chubi_pocket/features/projects/domain/claim.dart';
 import 'package:chubi_pocket/features/projects/domain/project.dart';
-import 'package:chubi_pocket/features/projects/presentation/event_assign.dart';
 import 'package:chubi_pocket/features/projects/presentation/widgets/project_common.dart';
 import 'package:chubi_pocket/features/projects/presentation/widgets/project_tx_tiles.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
@@ -162,83 +159,7 @@ void main() {
       expect(projectMemberName(l, lee), l.evbEmptyPerson);
       expect(projectMemberName(l, me), me.displayName);
     });
-
-    test('the assign body is one BillPerson: me, a contact or a name', () {
-      expect(billPersonOf(const PayerMe()), {'me': true});
-      expect(billPersonOf(const PayerPerson(ContactNameTyped('Mai'))), {
-        'person_name': 'Mai',
-      });
-    });
   });
-
-  test('V6/V9 claimable: direction, claimed, debt-type; the claim answer', () {
-    final bills = ClaimableBill.listOf({
-      'data': [
-        {
-          'pt_id': 'b1',
-          'type': 'expense',
-          'payback_kind': null,
-          'date': '2026-10-02',
-          'description': 'Dinner',
-          'bill_amount': 900,
-          'payer': {'id': 'm-me', 'name': 'Pond', 'is_me': true},
-          'other': {'id': 'm-lee', 'name': 'Lee'},
-          'direction': 'paid',
-          'amount': 300,
-          'my_transaction_id': 'tx1',
-          'payers': [
-            {
-              'member': {'id': 'm-me', 'name': 'Pond', 'is_me': true},
-              'amount': 600,
-            },
-            {
-              'member': {'id': 'm-mai', 'name': 'Mai'},
-              'amount': 300,
-            },
-          ],
-          'claimed': false,
-          'claimed_debt_id': null,
-        },
-        {
-          'pt_id': 'b2',
-          'type': 'payback',
-          'payback_kind': 'loan',
-          'date': '2026-10-03',
-          'description': null,
-          'bill_amount': 200,
-          'payer': {'id': 'm-lee', 'name': 'Lee'},
-          'other': {'id': 'm-lee', 'name': 'Lee'},
-          'direction': 'received',
-          'amount': 200,
-          'my_transaction_id': null,
-          'claimed': true,
-          'claimed_debt_id': 'd9',
-        },
-      ],
-      'totals': [],
-    });
-    expect(bills.map((b) => b.ptId), ['b1', 'b2']);
-    expect(bills.first.theyOweMe, isTrue);
-    expect(bills.first.amount, 300);
-    expect(bills.first.payers.map((p) => (p.member.name, p.amount)), [
-      ('Pond', 600),
-      ('Mai', 300),
-    ]);
-    expect(bills.last.payers, isEmpty);
-    expect(bills.last.theyOweMe, isFalse);
-    expect(bills.last.isDebtType, isTrue);
-    expect(bills.last.claimed, isTrue);
-    final r = ClaimResult.fromJson({
-      'debts': [
-        {'id': 'd1', 'amount': 500},
-      ],
-      'effects': {},
-      'bills': [],
-    });
-    expect(r.debtIds, ['d1']);
-    expect(r.amount, 500);
-  });
-
   test('V12 settle: simplified only once completed; my lines; booked', () {
     Map<String, dynamic> ref(String id, String name, {bool me = false}) => {
       'id': id,

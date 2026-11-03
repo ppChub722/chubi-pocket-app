@@ -16,7 +16,7 @@ import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
-import '../../../projects/presentation/event_claim.dart' show showClaimSheet;
+import '../../../../app/shell/tab_nav.dart';
 import '../../../tags/domain/tag.dart';
 import '../../../tags/presentation/widgets/tag_picker.dart';
 import '../../domain/refs.dart';
@@ -822,16 +822,13 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
         key: const ValueKey('debtLinkRow'),
         label: l.debtLinkExistingLabel,
         dense: true,
-        child: Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: AppChip(
-            label: l.occurrenceLinkPick,
-            icon: AppIcons.link,
-            tone: AppChipTone.primary,
-            selected: true,
-            dashed: true,
-            onTap: _pickLinkTx,
-          ),
+        child: AppChip(
+          label: l.occurrenceLinkPick,
+          icon: AppIcons.link,
+          tone: AppChipTone.primary,
+          selected: true,
+          dashed: true,
+          onTap: _pickLinkTx,
         ),
       );
     }
@@ -862,34 +859,25 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     key: const ValueKey('debtFromEventRow'),
     label: l.debtFromEventLabel,
     dense: true,
-    child: Align(
-      alignment: AlignmentDirectional.centerStart,
-      child: AppChip(
-        label: l.debtFromEventPick,
-        icon: AppIcons.project,
-        tone: AppChipTone.primary,
-        selected: true,
-        dashed: true,
-        onTap: _claimFromEvent,
-      ),
+    child: AppChip(
+      label: l.debtFromEventPick,
+      icon: AppIcons.project,
+      tone: AppChipTone.primary,
+      selected: true,
+      dashed: true,
+      onTap: _claimFromEvent,
     ),
   );
 
+  /// The event's debts are booked on its page (ลงหนี้ per person).
   Future<void> _claimFromEvent() async {
-    final p = _c.person;
-    if (p == null) return;
+    if (_c.person == null) return;
     final navigator = Navigator.of(context);
+    final open = pageOpener(context);
     final event = await EventPicker.one(context, allowCreate: false);
     if (event is! ExistingEventTarget || !mounted) return;
-    final contactId = p.person.contactId;
-    final claimed = await showClaimSheet(
-      context,
-      projectId: event.project.id,
-      contactId: contactId,
-      personName: contactId == null ? p.person.name : null,
-      memberName: p.person.name,
-    );
-    if (claimed && mounted) navigator.pop(true);
+    navigator.pop(false);
+    open('/projects/${event.project.id}');
   }
 
   /// "กำหนดจ่าย" (owner 2026-10-23): like the รายการประจำ row, under โน้ต.
@@ -899,15 +887,12 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
       key: const ValueKey('debtDueRow'),
       label: l.debtDueLabel,
       dense: true,
-      child: Align(
-        alignment: AlignmentDirectional.centerStart,
-        child: DatePickChip(
-          date: due,
-          emptyLabel: l.debtDuePick,
-          format: (d) => _dayLabel(l, d),
-          onPick: _pickDue,
-          onClear: () => _c.setDueDate(null),
-        ),
+      child: DatePickChip(
+        date: due,
+        emptyLabel: l.debtDuePick,
+        format: (d) => _dayLabel(l, d),
+        onPick: _pickDue,
+        onClear: () => _c.setDueDate(null),
       ),
     );
   }
@@ -919,7 +904,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     return ListenableBuilder(
       listenable: _c,
       builder: (context, _) {
-        const gap = SizedBox(height: AppSpacing.sm);
+        const gap = SizedBox(height: AppSpacing.md);
         final repay = _c.repaying;
         final paid = _c.direction == DebtEntryDirection.paid;
         final payBack = _c.repayKind == DebtRepaymentKind.pay;
@@ -966,37 +951,43 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
               // kind's category name, the hint (owner 2026-10-26).
               titleHint: debtKindName(l, out: _c.moneyOut, repayment: repay),
               amountNote: linked ? Text(l.debtLinkedAmountNote) : null,
-              flowRow: _flowCards(l),
-            ),
-            SizedBox(height: HeroMetrics.of(context).after),
-            if (withTx && !linked) ...[
-              TagChipRow(
-                selected: _c.tagIds,
-                onRemove: _c.toggleTag,
-                onMore: _moreTags,
-                known: _c.knownTags,
-              ),
-              gap,
-            ],
-            _createTxRow(l),
-            gap,
-            if (withTx) ...[_linkRow(l), gap],
-            if (summary != null) ...[summary, gap],
-            DraftFieldRow(
-              label: l.commonNote,
-              child: AppInput.inline(
-                editing: true,
-                controller: _c.note,
-                maxLines: 5,
-                maxLength: TextLimits.note,
-                hint: l.debtNoteHint,
-              ),
+              // กำหนดจ่าย / ติดป้ายจ่ายแล้ว: the debt's own row, last in the
+              // hero (owner 2026-11-03).
+              bottomRow: !repay
+                  ? _dueRow(l)
+                  : _c.person != null
+                  ? _closeRow(l)
+                  : null,
             ),
             gap,
-            if (!repay && _c.person != null) ...[_fromEventRow(l), gap],
-            if (!repay) _dueRow(l),
-            // "ติดป้ายจ่ายแล้ว": only on the repay side (owner 2026-10-21).
-            if (repay && _c.person != null) _closeRow(l),
+            // Owner 2026-11-03: the transaction rows on top (ผูกรายการ only
+            // with บันทึกในรายการ on), then who / which wallet, the note last.
+            EntrySectionCard(
+              children: [
+                _createTxRow(l),
+                if (withTx) _linkRow(l),
+                _flowCards(l),
+                if (withTx && !linked)
+                  TagChipRow(
+                    selected: _c.tagIds,
+                    onRemove: _c.toggleTag,
+                    onMore: _moreTags,
+                    known: _c.knownTags,
+                  ),
+                ?summary,
+                if (!repay && _c.person != null) _fromEventRow(l),
+                DraftFieldRow(
+                  label: l.commonNote,
+                  child: AppInput.inline(
+                    editing: true,
+                    controller: _c.note,
+                    maxLines: 5,
+                    maxLength: TextLimits.note,
+                    hint: l.debtNoteHint,
+                  ),
+                ),
+              ],
+            ),
           ],
         );
       },

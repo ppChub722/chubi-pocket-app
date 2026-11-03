@@ -83,6 +83,7 @@ class AppInput extends StatefulWidget {
     super.key,
   }) : _kind = _Kind.field,
        underline = true,
+       boxed = false,
        symbolScale = 1.0,
        hideHintOnFocus = false,
        labelPlacement = AppInputLabelPlacement.left,
@@ -129,6 +130,7 @@ class AppInput extends StatefulWidget {
     this.showCursor,
     this.enableInteractiveSelection,
     this.underline = true,
+    this.boxed = false,
     this.symbolScale = 1.0,
     this.hideHintOnFocus = false,
     this.label,
@@ -208,6 +210,7 @@ class AppInput extends StatefulWidget {
        showCursor = null,
        enableInteractiveSelection = null,
        underline = true,
+       boxed = false,
        symbolScale = 1.0,
        hideHintOnFocus = false,
        labelPlacement = AppInputLabelPlacement.left,
@@ -271,6 +274,7 @@ class AppInput extends StatefulWidget {
        showCursor = null,
        enableInteractiveSelection = null,
        underline = true,
+       boxed = false,
        symbolScale = 1.0,
        hideHintOnFocus = false,
        viewHint = null,
@@ -334,6 +338,7 @@ class AppInput extends StatefulWidget {
        showCursor = null,
        enableInteractiveSelection = null,
        underline = true,
+       boxed = false,
        symbolScale = 1.0,
        hideHintOnFocus = false,
        labelPlacement = AppInputLabelPlacement.left,
@@ -418,6 +423,10 @@ class AppInput extends StatefulWidget {
   final bool? enableInteractiveSelection;
 
   final bool underline;
+
+  /// In a card: a framed box instead of the underline; an amount's symbol
+  /// sits at the box's start, the figures at its end.
+  final bool boxed;
 
   final double symbolScale;
 
@@ -583,6 +592,7 @@ class _AppInputState extends State<AppInput> {
       dense: w.dense,
       inCard: w._kind == _Kind.card,
       underline: w.underline,
+      boxed: w.boxed,
       symbolScale: w.symbolScale,
       hideHintOnFocus: w.hideHintOnFocus,
       focusColor: w.focusColor,

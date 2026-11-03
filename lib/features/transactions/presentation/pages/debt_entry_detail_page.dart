@@ -5,8 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/tab_nav.dart';
-import '../../../projects/presentation/widgets/event_bill_sheet.dart'
-    show openEventBill;
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -1109,7 +1107,11 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                               caption: b.inSync ? null : l.debtBillOutOfSync,
                               captionTone: Tone.warning,
                             ),
-                            onTap: () => openEventBill(context, b.ptId),
+                            onTap: () => openPaperBill(
+                              context,
+                              b.ptId,
+                              projectId: b.event.isSplit ? null : b.event.id,
+                            ),
                           ),
                       ],
                     ),

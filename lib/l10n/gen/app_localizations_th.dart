@@ -1031,6 +1031,20 @@ class AppLocalizationsTh extends AppLocalizations {
   String get projectMembersInvite => 'เชิญสมาชิก';
 
   @override
+  String get projectMembersAdd => 'เพิ่มสมาชิก';
+
+  @override
+  String get projectMemberInvite => 'เชิญ';
+
+  @override
+  String get projectMemberInvited => 'เชิญแล้ว';
+
+  @override
+  String projectMemberInviteSent(String name) {
+    return 'ส่งคำเชิญถึง $name แล้ว';
+  }
+
+  @override
   String get projectLeave => 'ออกจากอีเวนต์';
 
   @override
@@ -3072,7 +3086,17 @@ class AppLocalizationsTh extends AppLocalizations {
       'ตั้งว่าหมวดนี้นับในรายงานและใช้กับค่าธรรมเนียมหรือไม่';
 
   @override
-  String get projectMembersDescription => 'คนที่ร่วมอีเวนต์นี้อยู่ตอนนี้';
+  String get projectMembersUsers => 'ผู้ใช้แอป';
+
+  @override
+  String get projectMembersUsersDescription => 'ร่วมอีเวนต์ด้วยบัญชีของตัวเอง';
+
+  @override
+  String get projectMembersNames => 'รายชื่อ';
+
+  @override
+  String get projectMembersNamesDescription =>
+      'ชื่อหรือ contact ของคุณ ที่ไม่ได้ร่วมด้วยบัญชี';
 
   @override
   String get projectMembersPendingDescription => 'เชิญแล้ว กำลังรอให้ตอบรับ';
@@ -5242,6 +5266,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get evbTypePayback => 'จ่ายคืน';
 
   @override
+  String get evbPaybackNeedsPeople => 'เลือกคนจ่ายคืนกับคนรับให้ครบ (คนละคน)';
+
+  @override
   String evbPeople(int count) {
     return 'คนในบิล | $count';
   }
@@ -5290,6 +5317,32 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get evbMembersTitle => 'สมาชิก';
+
+  @override
+  String get evbBillChangedReopen =>
+      'มีคนแก้บิลนี้ไปก่อน ยังไม่ได้บันทึก เปิดบิลใหม่อีกครั้งแล้วแก้ต่อ';
+
+  @override
+  String get evbLeaveTitle => 'ออกจากบิลนี้';
+
+  @override
+  String get evbLeaveKeepBooks => 'เก็บรายการกับหนี้ไว้ (เป็นรายการธรรมดา)';
+
+  @override
+  String get evbLeaveDeleteBooks => 'ลบรายการกับหนี้จากบิลนี้';
+
+  @override
+  String evbLumpTitle(String name) {
+    return 'ลงหนี้กับ $name';
+  }
+
+  @override
+  String evbLumpBody(String amount) {
+    return 'ทุกบิลที่ยังไม่ได้ลงหนี้กับคนนี้ รวมเป็นหนี้ก้อนเดียว ($amount) บิลที่ลงหนี้แล้วไม่นับซ้ำ';
+  }
+
+  @override
+  String get evbMembersAdd => 'เพิ่ม';
 
   @override
   String get evbManageMembers => 'จัดการสมาชิก ›';
@@ -6016,7 +6069,7 @@ class AppLocalizationsTh extends AppLocalizations {
       'ยอดยังไม่ลงตัวกับยอดบิล — ดูบรรทัดสถานะในการ์ด';
 
   @override
-  String get txLinkTabSplit => 'แบ่ง';
+  String get txLinkTabSplit => 'แบ่งบิลกับคนอื่น';
 
   @override
   String get txLinkBillLabel => 'ยอดบิล';
@@ -6062,7 +6115,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txPaidBackNeedsWallet => 'คืนแล้วต้องเลือกกระเป๋าที่รับเงิน';
 
   @override
-  String get txLinkBookDebt => 'จดหนี้ด้วย';
+  String get txLinkBookDebt => 'จดหนี้บิลนี้เลย';
+
+  @override
+  String get txLinkBookMine => 'ลงรายการของฉันเลย';
 
   @override
   String get txLinkWalletNotOut => 'ไม่ออกจากกระเป๋า';
@@ -6894,6 +6950,22 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsAutoEventInvites => 'รับคำเชิญเข้าอีเวนต์อัตโนมัติ';
 
   @override
+  String get settingsAutoAcceptEventsCaption =>
+      'บิลที่คนอื่นเพิ่มในอีเวนต์ ลงสมุดของฉันให้เลย | ใช้กับทุกอีเวนต์';
+
+  @override
+  String get settingsAutoSyncEventsCaption =>
+      'มีคนแก้บิลที่ลงสมุดแล้ว สมุดของฉันเปลี่ยนตามให้เลย | ใช้กับทุกอีเวนต์';
+
+  @override
+  String get settingsAutoAcceptDebtsCaption =>
+      'บิลแบ่งที่คนอื่นชวน เข้าร่วมและลงสมุดของฉันให้เลย | ใช้กับทุกคน';
+
+  @override
+  String get settingsAutoSyncDebtsCaption =>
+      'มีคนแก้บิลแบ่งที่ลงสมุดแล้ว สมุดของฉันเปลี่ยนตามให้เลย | ใช้กับทุกคน';
+
+  @override
   String get settingsAutoContactLinks => 'รับคำขอเชื่อมผู้ติดต่ออัตโนมัติ';
 
   @override
@@ -7187,4 +7259,88 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get notifColumnAutoSplit => 'แบ่งจ่าย';
+
+  @override
+  String notifBillInvite(String who, String what) {
+    return '$who ชวนคุณเข้าบิล $what';
+  }
+
+  @override
+  String notifBillChanged(String who, String what) {
+    return '$who แก้บิล $what';
+  }
+
+  @override
+  String notifBillRemoved(String who, String what) {
+    return '$who นำคุณออกจากบิล $what';
+  }
+
+  @override
+  String notifBillOwnerChanged(String what) {
+    return 'คุณเป็นเจ้าของบิล $what แล้ว';
+  }
+
+  @override
+  String notifBillMovedIn(String who, String what, String event) {
+    return '$who ย้ายบิล $what เข้าอีเวนต์ $event';
+  }
+
+  @override
+  String notifBillMovedOut(String who, String what) {
+    return '$who ย้ายบิล $what ออกจากอีเวนต์';
+  }
+
+  @override
+  String notifDebtRepaidToMe(String who) {
+    return '$who คืนเงินให้คุณแล้ว';
+  }
+
+  @override
+  String notifDebtRepaidByMe(String who) {
+    return '$who บันทึกว่าได้รับเงินคืนจากคุณแล้ว';
+  }
+
+  @override
+  String notifEventDeleted(String who, String name) {
+    return '$who ลบอีเวนต์ $name บิลยังอยู่เป็นบิลแบ่ง';
+  }
+
+  @override
+  String get notifActionJoin => 'เข้าร่วม';
+
+  @override
+  String get notifActionClaim => 'ลงรายการ';
+
+  @override
+  String get notifActionDeleteMine => 'ลบรายการของฉัน';
+
+  @override
+  String get notifActionRecordReceived => 'บันทึกรับคืน';
+
+  @override
+  String get notifActionRecordPaid => 'บันทึกจ่ายคืน';
+
+  @override
+  String get notifGroupDebts => 'หนี้';
+
+  @override
+  String get notifSetBillInvite => 'มีคนชวนฉันเข้าบิล';
+
+  @override
+  String get notifSetBillRemoved => 'ฉันถูกนำออกจากบิล';
+
+  @override
+  String get notifSetBillOwnerChanged => 'ฉันได้เป็นเจ้าของบิล';
+
+  @override
+  String get notifSetBillMoved => 'บิลของฉันถูกย้ายอีเวนต์';
+
+  @override
+  String get notifSetDebtRepaid => 'คู่หนี้บันทึกการคืนเงิน';
+
+  @override
+  String get notifSetEventDeleted => 'อีเวนต์ที่ฉันอยู่ถูกลบ';
+
+  @override
+  String get projectLeavePickOwner => 'ให้ใครเป็นเจ้าของต่อ';
 }

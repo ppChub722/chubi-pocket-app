@@ -230,6 +230,7 @@ export 'domain/events/event_tag_ref.dart';
 export 'domain/events/event_tags_sheet.dart';
 export 'domain/events/settle_row.dart';
 export 'domain/transactions/entry_card.dart';
+export 'domain/transactions/entry_section_card.dart';
 export 'domain/transactions/flow_cards.dart';
 export 'domain/transactions/link_mode_bar.dart';
 export 'domain/transactions/bill_people_card.dart';

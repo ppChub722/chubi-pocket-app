@@ -32,7 +32,8 @@ class DefaultAccountRef extends Equatable {
 
 /// The groups of the notification settings page, in page order.
 enum NotificationGroup {
-  sharedBill('shared_bill'),
+  sharedBill('bill'),
+  debt('debt'),
   event('event'),
   recurring('recurring'),
   request('request');

@@ -57,6 +57,7 @@ class FramedInput extends StatefulWidget {
     this.showCursor,
     this.enableInteractiveSelection,
     this.underline = true,
+    this.boxed = false,
     this.symbolScale = 1.0,
     this.hideHintOnFocus = false,
     this.valueRow,
@@ -73,6 +74,8 @@ class FramedInput extends StatefulWidget {
   final bool allowLetters;
 
   final bool underline;
+
+  final bool boxed;
 
   final double symbolScale;
 
@@ -287,7 +290,7 @@ class _FramedInputState extends State<FramedInput> {
             w.borderColor ?? (empty ? scheme.outlineVariant : scheme.outline);
 
         final accent = w.focusColor ?? scheme.primary;
-        InputBorder frame(Color c, double width) => w.inCard
+        InputBorder frame(Color c, double width) => w.inCard && !w.boxed
             ? (w.underline || focused || hasError
                   ? UnderlineInputBorder(
                       borderSide: BorderSide(color: c, width: width),
@@ -399,6 +402,16 @@ class _FramedInputState extends State<FramedInput> {
         final Widget content;
         if (lead.isEmpty && trail.isEmpty) {
           content = inner;
+        } else if (_numeric && w.boxed) {
+          // The smaller symbol centres on the box's height, not the baseline.
+          content = Row(
+            children: [
+              ...lead,
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(child: inner),
+              ...trail,
+            ],
+          );
         } else if (_numeric) {
           content = Align(
             alignment: switch (align) {
@@ -459,7 +472,12 @@ class _FramedInputState extends State<FramedInput> {
             hoverColor: Colors.transparent,
             contentPadding:
                 w.contentPadding ??
-                (w.inCard
+                (w.inCard && w.boxed
+                    ? const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.sm,
+                      )
+                    : w.inCard
                     // No bottom inset: the underline sits right under the text.
                     ? const EdgeInsets.only(top: AppSpacing.xs)
                     : EdgeInsets.symmetric(

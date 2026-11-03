@@ -100,14 +100,24 @@ void main() {
     expect(c.linkMode(hasEvent: false), LinkMode.split);
   });
 
-  // 0.4.1-2 SA7: แบ่ง / จ่ายแทน = ONE POST /event-bills {split: true}.
-  group('split bill body', () {
-    test('แบ่ง, I paid: me + each person, คืนแล้ว, my wallet', () {
+  group('paper body', () {
+    double sum(PaperBodies b, String key) => [
+      for (final p in b.paper['people'] as List) (p as Map)[key] as num,
+    ].fold(0.0, (a, v) => a + v);
+
+    void expectBalanced(PaperBodies b) {
+      final total = (b.paper['amount'] as num).toDouble();
+      expect(sum(b, 'share'), closeTo(total, 0.005));
+      expect(sum(b, 'paid'), closeTo(total, 0.005));
+    }
+
+    test('แบ่ง, I paid: me first, rows of one person add up, คืนแล้ว', () {
       final c = _form(
         amount: '300',
         set: (c) => c
           ..link.mode = LinkMode.split
           ..setCategory(_food)
+          ..note.text = ' mine '
           ..setSplits([
             SplitDraft(personName: 'Bo', owedAmount: 50),
             SplitDraft(personName: 'Lee', contactId: 'c2', owedAmount: 100),
@@ -115,21 +125,24 @@ void main() {
           ])
           ..togglePaidBack(_lee),
       );
-      final b = splitBookBodies(c, LinkMode.split)!;
-      expect(b.bill['payer'], {'me': true});
-      expect(b.bill['amount'], 300);
-      expect(b.bill['date'], '2026-10-24');
-      expect(b.bill['members'], [
-        {'me': true, 'share': 100.0},
-        {'person_name': 'Bo', 'share': 100.0},
-        {'contact_id': 'c2', 'share': 100.0, 'paid_back': true},
+      final b = paperBodies(c, LinkMode.split)!;
+      expect(b.paper['type'], 'expense');
+      expect(b.paper['date'], '2026-10-24');
+      expect(b.paper['people'], [
+        {'me': true, 'share': 100.0, 'paid': 300.0},
+        {'person_name': 'Bo', 'share': 100.0, 'paid': 0},
+        {'contact_id': 'c2', 'share': 100.0, 'paid': 0},
       ]);
+      expect(b.paidBack, [2]);
+      expect(b.myBooks['pay'], 'debt');
       expect(b.myBooks['account_id'], 'w1');
       expect(b.myBooks['category_id'], 'cat1');
-      expect(b.myBooks['debt'], isTrue);
+      expect(b.myBooks['private_note'], 'mine');
+      expect(b.skipMyBooks, isFalse);
+      expectBalanced(b);
     });
 
-    test('จ่ายแทน, they paid it all: payer them, my share, no wallet', () {
+    test('จ่ายแทน, they paid it all: their share is the rest, no wallet', () {
       final c = _form(
         amount: '300',
         set: (c) => c
@@ -140,48 +153,33 @@ void main() {
           ])
           ..setPaidBy(_lee),
       );
-      final b = splitBookBodies(c, LinkMode.paid)!;
-      expect(b.bill['payer'], {'contact_id': 'c2'});
-      expect(b.bill['members'], [
-        {'me': true, 'share': 100.0},
-        {'person_name': 'Bo', 'share': 100.0},
+      final b = paperBodies(c, LinkMode.paid)!;
+      expect(b.paper['people'], [
+        {'me': true, 'share': 100.0, 'paid': 0.0},
+        {'person_name': 'Bo', 'share': 100.0, 'paid': 0},
+        {'contact_id': 'c2', 'share': 100.0, 'paid': 300.0},
       ]);
       expect(b.myBooks['account_id'], isNull);
+      expect(b.myBooks['pay'], 'debt');
+      expectBalanced(b);
     });
 
-    // SA6: "คืน X แล้ว" on my row brings my wallet back; others' too.
-    test('จ่ายแทน + I paid them back: my paid_back, my wallet', () {
+    test('จ่ายแทน + I paid them back: pay wallet, my wallet', () {
       final c = _form(
         amount: '300',
         set: (c) => c
           ..link.mode = LinkMode.split
-          ..setSplits([
-            SplitDraft(personName: 'Bo', owedAmount: 100),
-            SplitDraft(personName: 'Lee', contactId: 'c2', owedAmount: 100),
-          ])
+          ..setSplits([SplitDraft(personName: 'Bo', owedAmount: 100)])
           ..setPaidBy(_lee)
-          ..toggleMePaidBack()
-          ..togglePaidBack(const LinkPerson(name: 'Bo')),
+          ..toggleMePaidBack(),
       );
-      expect(c.unpaidPayer(LinkMode.paid), isNull);
-      expect(c.walletOutFor(LinkMode.paid), 100);
-      final b = splitBookBodies(c, LinkMode.paid)!;
-      expect(b.bill['members'], [
-        {'me': true, 'share': 100.0, 'paid_back': true},
-        {'person_name': 'Bo', 'share': 100.0, 'paid_back': true},
-      ]);
+      final b = paperBodies(c, LinkMode.paid)!;
+      expect(b.myBooks['pay'], 'wallet');
       expect(b.myBooks['account_id'], 'w1');
-      c.setPaidBy(null);
-      expect(c.link.mePaidBack, isFalse);
     });
 
-    test('not a split bill: no people, ส่วนตัว', () {
-      expect(splitBookBodies(_form(), LinkMode.split), isNull);
-      expect(splitBookBodies(_form(), LinkMode.personal), isNull);
-    });
-
-    // Multi-payer (owner 2026-10-28): 123 = me 110 + ลี 13, my share 123.
-    test('จ่ายแทน บางส่วน: two payers, every share, my wallet', () {
+    // Multi-payer (owner 2026-10-28): 123 = me 110 + ลี 13.
+    test('จ่ายแทน บางส่วน: both paid, my wallet', () {
       final c = _form(
         amount: '123',
         set: (c) => c
@@ -189,17 +187,125 @@ void main() {
           ..link.paidBy = _lee
           ..link.paidAmount = 13,
       );
-      final b = splitBookBodies(c, LinkMode.paid)!;
-      expect(b.bill.containsKey('payer'), isFalse);
-      expect(b.bill['payers'], [
-        {'me': true, 'amount': 110.0},
-        {'contact_id': 'c2', 'amount': 13.0},
-      ]);
-      expect(b.bill['members'], [
-        {'me': true, 'share': 123.0},
-        {'contact_id': 'c2', 'share': 0.0},
+      final b = paperBodies(c, LinkMode.paid)!;
+      expect(b.paper['people'], [
+        {'me': true, 'share': 123.0, 'paid': 110.0},
+        {'contact_id': 'c2', 'share': 0.0, 'paid': 13.0},
       ]);
       expect(b.myBooks['account_id'], 'w1');
+      expectBalanced(b);
+    });
+
+    test('a satang split, an income, people sharing too: still balanced', () {
+      final satang = _form(
+        amount: '100',
+        set: (c) => c
+          ..link.mode = LinkMode.paid
+          ..link.paidBy = _lee
+          ..link.paidAmount = 33.33,
+      );
+      expectBalanced(paperBodies(satang, LinkMode.paid)!);
+
+      final income = _form(
+        amount: '300',
+        type: TransactionType.income,
+        set: (c) => c
+          ..link.mode = LinkMode.paid
+          ..link.paidBy = _lee
+          ..link.paidAmount = 100
+          ..setSplits([SplitDraft(personName: 'Bo', owedAmount: 100)]),
+      );
+      final b = paperBodies(income, LinkMode.paid)!;
+      expect(b.paper['type'], 'income');
+      expectBalanced(b);
+    });
+
+    test('an edit keeps each person\'s row id', () {
+      final c = _form(
+        amount: '200',
+        set: (c) => c
+          ..link.mode = LinkMode.split
+          ..setSplits([
+            SplitDraft(personName: 'Lee', contactId: 'c2', owedAmount: 100),
+          ]),
+      );
+      final b = paperBodies(
+        c,
+        LinkMode.split,
+        personIds: {_lee.key: 'pp2'},
+        mePersonId: 'pp1',
+      )!;
+      final people = (b.paper['people'] as List).cast<Map>();
+      expect(people.map((p) => p['person_id']), ['pp1', 'pp2']);
+    });
+
+    test('not a paper: no people, no payer, ส่วนตัว', () {
+      expect(paperBodies(_form(), LinkMode.split), isNull);
+      expect(paperBodies(_form(), LinkMode.paid), isNull);
+      expect(paperBodies(_form(), LinkMode.personal), isNull);
+    });
+
+    group('event bill', () {
+      DraftFormController event({
+        bool? debts,
+        bool mine = false,
+        LinkPerson? payer,
+      }) => _form(
+        amount: '300',
+        set: (c) {
+          c
+            ..link.mode = LinkMode.event
+            ..setSplits([
+              SplitDraft(personName: 'Bo', owedAmount: 0),
+              SplitDraft(personName: 'Lee', contactId: 'c2', owedAmount: 0),
+            ]);
+          c.link
+            ..eventPayer = payer
+            ..eventBookDebts = debts
+            ..eventBookMine = mine;
+        },
+      );
+
+      test('equal shares; I paid it all', () {
+        final b = paperBodies(event(), LinkMode.event)!;
+        expect(b.paper['people'], [
+          {'me': true, 'share': 100.0, 'paid': 300.0},
+          {'person_name': 'Bo', 'share': 100.0, 'paid': 0},
+          {'contact_id': 'c2', 'share': 100.0, 'paid': 0},
+        ]);
+        expectBalanced(b);
+      });
+
+      test('someone else paid: they paid it all, no wallet', () {
+        final b = paperBodies(event(payer: _lee), LinkMode.event)!;
+        final people = (b.paper['people'] as List).cast<Map>();
+        expect(people.first['paid'], 0.0);
+        expect(people.last['paid'], 300.0);
+        expect(b.myBooks['account_id'], isNull);
+        expectBalanced(b);
+      });
+
+      test('the two switches: books, debts, both or the paper only', () {
+        final none = paperBodies(event(), LinkMode.event)!;
+        expect(none.skipMyBooks, isTrue);
+        expect(none.myBooks.containsKey('book_debts'), isFalse);
+
+        final mine = paperBodies(event(mine: true), LinkMode.event)!;
+        expect(mine.skipMyBooks, isFalse);
+        expect(mine.myBooks.containsKey('book_debts'), isFalse);
+
+        final debts = paperBodies(event(debts: true), LinkMode.event)!;
+        expect(debts.skipMyBooks, isFalse);
+        expect(debts.myBooks['book_debts'], isTrue);
+        expect(debts.myBooks['skip_transaction'], isTrue);
+
+        final both = paperBodies(
+          event(debts: true, mine: true),
+          LinkMode.event,
+        )!;
+        expect(both.myBooks['book_debts'], isTrue);
+        expect(both.myBooks.containsKey('skip_transaction'), isFalse);
+      });
     });
   });
 

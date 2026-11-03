@@ -479,6 +479,11 @@ class DraftFormController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setEventBookMine(bool on) {
+    link.eventBookMine = on;
+    notifyListeners();
+  }
+
   void setEventPayer(LinkPerson? p) {
     if (p != null) link.paidBack.remove(p.key);
     if (p == null) link.mePaidBack = false;
@@ -976,6 +981,22 @@ String _dayLabel(BuildContext context, DateTime d) {
   );
 }
 
+/// The event's add / edit bill (owner 2026-11-03): the quick create form for
+/// one fixed event — "คืนเงิน" where "โอนเงิน" stands, no แบ่ง switch, no
+/// รายการประจำ. [payback] = "คืนเงิน" is the type: [paybackCard] (who → who)
+/// stands where the people are, and there is no category.
+class EventBillForm {
+  const EventBillForm({
+    required this.payback,
+    required this.onPayback,
+    required this.paybackCard,
+  });
+
+  final bool payback;
+  final ValueChanged<bool> onPayback;
+  final Widget paybackCard;
+}
+
 class DraftForm extends StatefulWidget {
   const DraftForm({
     required this.controller,
@@ -1009,8 +1030,12 @@ class DraftForm extends StatefulWidget {
     this.heroLocked = false,
     this.linkSections = true,
     this.debtPersonCard,
+    this.eventBill,
     super.key,
   });
+
+  /// Non-null: the event's add / edit bill ([EventBillForm]).
+  final EventBillForm? eventBill;
 
   /// Chip layout, a recurring หนี้ slot (0.4.1-2 K12): this person card
   /// stands where the category card is, and there is no tag row (a
@@ -1320,7 +1345,15 @@ class _DraftFormState extends State<DraftForm> {
                 child: EntryCard(
                   key: widget.heroKey,
                   type: _c.type,
-                  onTypeChanged: widget.typeLocked ? null : _c.setType,
+                  onTypeChanged: widget.typeLocked
+                      ? null
+                      : (t) {
+                          if (_payback) widget.eventBill!.onPayback(false);
+                          _c.setType(t);
+                        },
+                  allowTransfer: widget.eventBill == null,
+                  extraTypeChip: _paybackChip(l),
+                  extraTypeSelected: _payback,
                   accentColor: widget.accentColor,
                   amount: _c.amount,
                   title: _c.description,
@@ -1333,22 +1366,27 @@ class _DraftFormState extends State<DraftForm> {
                   compact: widget.compact,
                   amountFocus: _amountFocus,
                   titleFocus: _descriptionFocus,
-                  amountNote: linkMode != null
+                  // แบ่ง: the share line sits on the people card's status
+                  // line instead.
+                  amountNote: linkMode != null && widget.linkSections
+                      ? null
+                      : linkMode != null
                       ? _ShareLine.ofLink(_c, linkMode, l)
                       : !isTransfer && (!editing || widget.allowSplits)
                       ? _ShareLine.of(_c)
                       : null,
-                  amountLabel: linkMode == null || linkMode == LinkMode.personal
+                  amountLabel: _payback
+                      ? l.projectResolveAmount
+                      : linkMode == null || linkMode == LinkMode.personal
                       ? null
                       : l.txLinkBillLabel,
                   missing: widget.missing,
-                  showTitle: !isTransfer,
+                  showTitle: !isTransfer && !_payback,
                   titleHint: isTransfer
                       ? null
                       : (_c.type == TransactionType.income
                             ? l.txTitleHintIncome
                             : l.txTitleHintExpense),
-                  flowRow: isTransfer ? _transferFlow(l) : _entryCards(l),
                   dateNote: _futureNote(l, editing: true),
                 ),
               )
@@ -1436,6 +1474,23 @@ class _DraftFormState extends State<DraftForm> {
         if (!widget.readOnly) return form;
         return IgnorePointer(child: Opacity(opacity: 0.6, child: form));
       },
+    );
+  }
+
+  bool get _payback => widget.eventBill?.payback ?? false;
+
+  /// The event bill's "คืนเงิน" type chip, where "โอนเงิน" stands.
+  Widget? _paybackChip(AppLocalizations l) {
+    final e = widget.eventBill;
+    if (e == null) return null;
+    return AppChip(
+      key: const ValueKey('typeChipPayback'),
+      label: l.evbTypePayback,
+      icon: e.payback ? AppIcons.transfer : null,
+      color: ModuleColors.of(context).planning,
+      selected: e.payback,
+      dashed: !e.payback,
+      onTap: e.payback ? null : () => e.onPayback(true),
     );
   }
 
@@ -1552,54 +1607,108 @@ class _DraftFormState extends State<DraftForm> {
     onSwap: _c.swapAccounts,
   );
 
+  /// Under the hero (owner 2026-11-03): the แบ่ง card, then the tx detail
+  /// card (category / wallet, tags, note, รายการประจำ).
   List<Widget> _chipBody(AppLocalizations l, {required bool isTransfer}) {
-    const gap = SizedBox(height: AppSpacing.sm);
+    const cardGap = SizedBox(height: AppSpacing.md);
+    final eventBill = widget.eventBill;
+    final Widget? split = eventBill != null && eventBill.payback
+        ? eventBill.paybackCard
+        : !widget.linkSections
+        ? null
+        : _linkMode != null
+        ? LinkSection(
+            controller: _c,
+            // A draft keeps its event on the form (project_id).
+            event: widget.chipLayout
+                ? _draftEventSlot()
+                : (widget.eventSlot ?? const SplitEventSlot()),
+            eventIsNew: widget.linkEventIsNew,
+            isEventMember: widget.linkIsEventMember,
+            flat: true,
+            fixed: eventBill != null,
+            summary: _ShareLine.ofLink(_c, _linkMode!, l),
+          )
+        : isTransfer
+        ? null
+        : _splitEventSection(
+            l,
+            editing: true,
+            first: true,
+            withRecurring: false,
+          );
+    final missing = widget.missing;
+    final bookRow = !_payback && EventBookRows.shows(_c, _linkMode);
+    // "ลงรายการของฉันเลย" off: nothing of my transaction to fill.
+    final myTx = !bookRow || _c.link.eventBookMine;
     return [
-      SizedBox(height: HeroMetrics.of(context).after),
-      if (widget.debtPersonCard == null) ...[
-        TagChipRow(
-          selected: _c.tagIds,
-          onRemove: _c.toggleTag,
-          onMore: _moreTags,
-          known: _c.knownTags,
-        ),
-        gap,
+      cardGap,
+      if (split != null) ...[
+        EntrySectionCard(children: [split]),
+        cardGap,
       ],
-      if (widget.rowAboveNote != null) ...[widget.rowAboveNote!, gap],
-      DraftFieldRow(
-        label: l.commonNote,
-        child: AppInput.inline(
-          editing: true,
-          controller: _c.note,
-          focusNode: _noteFocus,
-          maxLines: 5,
-          maxLength: TextLimits.note,
-          hint: l.txNoteAddHint,
-        ),
+      EntrySectionCard(
+        children: [
+          if (bookRow) ...[
+            EventBookRows(controller: _c),
+            // The card's own gap stands on both sides: the same look as
+            // RowsDivider.
+            if (myTx) const AppDivider(),
+          ],
+          if (myTx) ..._myTxRows(l, isTransfer: isTransfer, missing: missing),
+        ],
       ),
-      if (!widget.linkSections)
-        ...const <Widget>[]
-      else if (_linkMode != null) ...[
-        gap,
-        LinkSection(
-          controller: _c,
-          // A draft keeps its event on the form (project_id).
-          event: widget.chipLayout
-              ? _draftEventSlot()
-              : (widget.eventSlot ?? const SplitEventSlot()),
-          eventIsNew: widget.linkEventIsNew,
-          isEventMember: widget.linkIsEventMember,
-          recurring: widget.recurringSlot,
-        ),
-      ] else if (!isTransfer || widget.recurringSlot != null) ...[
-        gap,
-        ?_splitEventSection(
-          l,
-          editing: true,
-          first: true,
-          transfer: isTransfer,
-        ),
-      ],
+    ];
+  }
+
+  List<Widget> _myTxRows(
+    AppLocalizations l, {
+    required bool isTransfer,
+    required Set<EntryField> missing,
+  }) {
+    // An event bill has no รายการประจำ; its "คืนเงิน" no category and tags.
+    final recurring = widget.eventBill == null ? widget.recurringSlot : null;
+    return [
+          EntryFlagged(
+            flagged:
+                missing.contains(EntryField.wallet) ||
+                (!isTransfer && missing.contains(EntryField.category)),
+            child: isTransfer
+                ? _transferFlow(l)
+                : _payback
+                ? _walletCard(
+                    account: _c.account,
+                    label: l.transactionFormAccountLabel,
+                    placeholder: l.transactionFormAccountNone,
+                    onPick: () => _pickAccount(),
+                  )
+                : _entryCards(l),
+          ),
+          if (widget.debtPersonCard == null && !_payback)
+            TagChipRow(
+              selected: _c.tagIds,
+              onRemove: _c.toggleTag,
+              onMore: _moreTags,
+              known: _c.knownTags,
+            ),
+          ?widget.rowAboveNote,
+          if (widget.linkSections && recurring != null)
+            RecurringLinkRow(
+              slot: recurring,
+              variant: SplitEventVariant.compact,
+            ),
+          // The note last (owner 2026-11-03).
+          DraftFieldRow(
+            label: l.commonNote,
+            child: AppInput.inline(
+              editing: true,
+              controller: _c.note,
+              focusNode: _noteFocus,
+              maxLines: 5,
+              maxLength: TextLimits.note,
+              hint: l.txNoteAddHint,
+            ),
+          ),
     ];
   }
 
@@ -1662,6 +1771,7 @@ class _DraftFormState extends State<DraftForm> {
     required bool editing,
     bool first = false,
     bool transfer = false,
+    bool withRecurring = true,
   }) {
     final canEdit = editing && widget.allowSplits;
     final compact = widget.chipLayout || widget.chipRows;
@@ -1693,7 +1803,8 @@ class _DraftFormState extends State<DraftForm> {
         : widget.chipLayout
         ? _draftEventSlot()
         : widget.eventSlot;
-    if (splits == null && slot == null && widget.recurringSlot == null) {
+    final recurring = withRecurring ? widget.recurringSlot : null;
+    if (splits == null && slot == null && recurring == null) {
       return null;
     }
     return SplitEventSection(
@@ -1701,7 +1812,7 @@ class _DraftFormState extends State<DraftForm> {
       variant: compact ? SplitEventVariant.compact : SplitEventVariant.full,
       splits: splits,
       event: slot,
-      recurring: widget.recurringSlot,
+      recurring: recurring,
       collapsible: false,
       initiallyOpen: true,
     );

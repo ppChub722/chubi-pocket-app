@@ -118,7 +118,6 @@ class _TransactionsPageState extends State<_TransactionsPage> {
       name: event,
       label: 'เพิ่มในอีเวนต์',
       onTap: () => _note('pick event'),
-      onBookDebt: event == null ? null : (_) {},
       onClear: () => _note('event removed'),
       variant: SplitEventVariant.compact,
     ),
@@ -333,6 +332,44 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   chips: ['อาหาร', 'เดินทาง'],
                   selected: -1,
                 ),
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'EntrySectionCard — the cards under the entry hero',
+          note:
+              'Quick create / pending / debt / saving = 3 cards (owner '
+              '2026-11-03): the hero (the bill), the แบ่ง card (the switch; ON '
+              'shows the people inside, ShareCard flat), the tx detail card '
+              '(category | wallet, tags, note, รายการประจำ). Rows stack itemGap '
+              'apart; cards sit 12 apart. EntryFlagged = a missing pick row '
+              '(danger outline).',
+          child: Column(
+            children: [
+              EntrySectionCard(
+                children: [
+                  LinkSwitchRow(label: 'แบ่ง', value: false, onChanged: (_) {}),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              const EntrySectionCard(
+                children: [
+                  EntryFlagged(
+                    flagged: true,
+                    child: _DemoChipRow(
+                      icon: AppIcons.wallet,
+                      blank: 'เลือกกระเป๋า',
+                      chips: ['กสิกร', 'เงินสด'],
+                      selected: -1,
+                    ),
+                  ),
+                  _DemoChipRow(
+                    icon: AppIcons.tag,
+                    chips: ['#งาน', '#กิน'],
+                    selected: -1,
+                  ),
+                ],
               ),
             ],
           ),

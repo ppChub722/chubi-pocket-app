@@ -1,6 +1,5 @@
 import 'package:chubi_pocket/features/notifications/domain/notification.dart';
 import 'package:chubi_pocket/features/notifications/presentation/notification_routes.dart';
-import 'package:chubi_pocket/features/projects/data/projects_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 AppNotification _notice(
@@ -18,47 +17,35 @@ AppNotification _notice(
 });
 
 void main() {
-  test('the 0.4.1-2 types parse from their wire names', () {
+  test('the bill and event types parse from their wire names', () {
     for (final (wire, t) in [
-      ('shared_bill_created', NotificationType.sharedBillCreated),
-      ('shared_bill_deleted', NotificationType.sharedBillDeleted),
-      ('shared_bill_disconnected', NotificationType.sharedBillDisconnected),
+      ('bill_invite', NotificationType.billInvite),
+      ('bill_new', NotificationType.billNew),
+      ('bill_changed', NotificationType.billChanged),
+      ('bill_removed', NotificationType.billRemoved),
+      ('bill_owner_changed', NotificationType.billOwnerChanged),
+      ('bill_moved', NotificationType.billMoved),
+      ('debt_repaid', NotificationType.debtRepaid),
       ('event_completed', NotificationType.eventCompleted),
       ('event_member_removed', NotificationType.eventMemberRemoved),
+      ('event_deleted', NotificationType.eventDeleted),
+      ('shared_bill_created', NotificationType.unknown),
     ]) {
       expect(NotificationType.fromWire(wire), t, reason: wire);
     }
   });
 
-  test('a /event-bills deep link opens the bill form (its id); other links '
-      'are pages', () {
-    final bill = _notice('shared_bill_created', {
-      'project_transaction_id': 'pt1',
-      'applied': false,
-    }, '/event-bills/pt1');
-    expect(billOfLink(bill), 'pt1');
+  test('a bill deep link opens the bill form; other links are pages', () {
+    final event = _notice('bill_new', {}, '/projects/e1/bills/p1');
+    expect(billOfLink(event), (id: 'p1', projectId: 'e1'));
+
+    final split = _notice('bill_invite', {}, '/split-bills/p2');
+    expect(billOfLink(split), (id: 'p2', projectId: null));
 
     final completed = _notice('event_completed', {
       'project_id': 'e1',
     }, '/projects/e1');
     expect(billOfLink(completed), isNull);
     expect(billOfLink(_notice('event_member_removed', {}, null)), isNull);
-  });
-
-  test('apply / disconnect answer: my copy tx id (null with no copy)', () {
-    final made = MyBillCopyRef.fromJson({
-      'my_copy': {
-        'connected': true,
-        'role': 'share',
-        'transaction': {'id': 'tx1'},
-      },
-      'effects': <String, dynamic>{},
-    });
-    expect(made.transactionId, 'tx1');
-    expect(made.connected, isTrue);
-
-    final none = MyBillCopyRef.fromJson({'my_copy': null, 'effects': {}});
-    expect(none.transactionId, isNull);
-    expect(none.connected, isFalse);
   });
 }

@@ -226,7 +226,10 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
             symbol: symbol,
             amountNote: _availableLine(l, symbol),
             titleHint: l.savingTitleHint,
-            flowRow: FlowCards(from: _walletCard(l), to: _goalCard(l)),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          EntrySectionCard(
+            children: [FlowCards(from: _walletCard(l), to: _goalCard(l))],
           ),
         ],
       ),

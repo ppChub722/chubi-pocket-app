@@ -140,10 +140,14 @@ class LinkDraft {
   /// debt.
   bool mePaidBack = false;
 
-  /// "จดหนี้ด้วย": an event bill also goes into my debts (who owes me, or
-  /// whom I owe), as on the event bill sheet. Null = not offered (editing).
-  /// Quick create turns it on.
+  /// "จดหนี้บิลนี้เลย": an event bill's debts go in my debts now (the
+  /// event's lump skips them). Null = not offered (editing); quick create
+  /// offers it off.
   bool? eventBookDebts;
+
+  /// "ลงรายการของฉันเลย": an event bill goes in my books now; off (the
+  /// default, owner 2026-11-03) = the bill only, claimed later.
+  bool eventBookMine = false;
 
   bool eventMeAuto = true;
   double? eventMeTyped;

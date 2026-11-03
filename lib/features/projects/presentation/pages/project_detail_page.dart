@@ -24,12 +24,10 @@ import '../../../auth/domain/user.dart' show PagePrefIds;
 import '../../../preferences/page_prefs.dart';
 import '../../../settings/presentation/widgets/auto_sync_setting.dart';
 import '../cubit/projects_cubit.dart';
-import '../event_assign.dart';
-import '../event_claim.dart';
 import '../event_settle_book.dart';
 import '../project_board_controller.dart';
-import '../widgets/add_member_sheet.dart';
-import '../widgets/event_bill_sheet.dart';
+import '../../../transactions/presentation/widgets/quick_create_sheet.dart'
+    show EventBillPreset, showQuickCreateSheet;
 import '../widgets/event_tags_manager.dart';
 import '../widgets/project_common.dart';
 import '../widgets/project_tx_tiles.dart';
@@ -524,35 +522,20 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     }
   }
 
-  /// ต้องจัดการ "ใส่คน": every empty spot of a removed member (one call).
-  Future<void> _assignEmpty() async {
-    final v = _view;
-    if (v == null) return;
-    final p = await assignAllEmptySpots(context, view: v);
-    if (p != null) _applyPatch(p);
-  }
-
   Future<void> _openMembers() async {
     await context.push('/projects/${widget.id}/members');
     if (mounted) await _load();
   }
 
-  Future<void> _invite() async {
-    final l = AppLocalizations.of(context)!;
-    final added = await showAddMemberSheet(context, projectId: widget.id!);
-    if (added == null || !mounted) return;
-    _applyPatch(added.patch);
-    showAppSnackBar(
-      context,
-      l.projectAddMemberAdded(added.name),
-      tone: Tone.success,
-    );
-  }
-
   Future<void> _addTx() async {
     final view = _view;
     if (view == null) return;
-    await showEventBillSheet(context, view: view, onPatch: _applyPatch);
+    // The quick create form, fixed to this event (owner 2026-11-03).
+    final saved = await showQuickCreateSheet(
+      context,
+      eventBill: EventBillPreset(project: view.project),
+    );
+    if (saved && mounted) await _refresh();
   }
 
   Future<void> _loadSettle() async {
@@ -613,15 +596,19 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
           : null,
       recordTooltip: l.evbSettleRecord,
       onTap: v.canAddTx
-          ? () => showEventBillSheet(
-              context,
-              view: v,
-              kind: EventEntryKind.payback,
-              from: x.from.id,
-              to: x.to.id,
-              amount: x.amount,
-              onPatch: _applyPatch,
-            )
+          ? () async {
+              final saved = await showQuickCreateSheet(
+                context,
+                eventBill: EventBillPreset(
+                  project: v.project,
+                  payback: true,
+                  fromMemberId: x.from.id,
+                  toMemberId: x.to.id,
+                  amount: x.amount,
+                ),
+              );
+              if (saved && mounted) await _refresh();
+            }
           : null,
     );
     return ListPageBody(
@@ -733,18 +720,31 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
 
   /// "claim ก้อน" (V7): my bills with the other person of a pair line into
   /// my book as ONE debt (the claim sheet; replaces the old {event_id} debt).
+  /// "ลงหนี้" on my pair (the paper model): ONE lump debt per direction of
+  /// every bill with them not booked yet.
   Future<void> _claimWith(SettleLine x) async {
+    final l = AppLocalizations.of(context)!;
     final other = x.from.isMe ? x.to : x.from;
-    final claimed = await showClaimSheet(
+    final ok = await showConfirmDialog(
       context,
-      projectId: widget.id!,
-      memberId: other.id,
-      memberName: other.name,
+      title: l.evbLumpTitle(other.name),
+      message: l.evbLumpBody(moneyString(context, x.amount)),
+      confirmLabel: l.evbSettleRecord,
     );
-    if (!claimed || !mounted) return;
-    setState(() => _settle = null);
-    await _refresh();
-    await _loadSettle();
+    if (!ok || !mounted) return;
+    try {
+      final s = await context.read<ProjectsRepository>().bookSettlePair(
+        widget.id!,
+        other.id,
+      );
+      if (!mounted) return;
+      setState(() => _settle = s);
+      await _refresh();
+    } on ApiException catch (e) {
+      if (mounted) {
+        showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
+      }
+    }
   }
 
   Widget _billsTab(AppLocalizations l, ProjectView v) {
@@ -923,18 +923,11 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         ?banner,
         if (v.isCompleted)
           AppMessage(message: l.eventCompletedNotice, tone: Tone.info),
-        // ต้องจัดการ (V15): a removed member's empty spots to fill.
+        // A removed member's empty spots: filled in each bill's form.
         if (!v.isCompleted && p.emptyPersonBillCount > 0)
           AppMessage(
             message: l.evbEmptyPersonsNotice(p.emptyPersonBillCount),
             tone: Tone.warning,
-            actions: [
-              if (v.canAddTx)
-                AppMessageAction(
-                  label: l.evbAssignAction,
-                  onPressed: _assignEmpty,
-                ),
-            ],
           ),
         _tagRow(l, p.tags.map(_myTagRef).toList(), editing: false),
         NoteSection(
@@ -944,10 +937,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
           hint: l.commonLongPressToEdit,
           onLongPress: _enterOn(_focus[_Field.note]!),
         ),
-        _people(l, v),
-        // SA14: the account-wide auto switches, the same values as on the
-        // notification settings page (no updates once the event is completed).
-        if (!v.isCompleted) autoSyncSection(l, AutoSyncKind.events),
       ],
       tabs: [
         AppTab(value: _Tab.bills, label: l.evbTabBills, icon: AppIcons.receipt),
@@ -1117,6 +1106,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             if (range != null) AppChip(label: range, icon: AppIcons.date),
           ],
         ),
+        // The members, in the hero (owner 2026-11-03).
+        _people(l, v),
       ],
     );
   }
@@ -1132,15 +1123,15 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     );
   }
 
-  /// สมาชิก under the note: small cards, no numbers (they are in สรุป).
+  /// สมาชิก in the hero: small cards, no numbers (they are in สรุป); a tap
+  /// or "เพิ่ม" opens the members page (owner 2026-11-03: no "จัดการสมาชิก"
+  /// link).
   Widget _people(AppLocalizations l, ProjectView v) {
     final members = [...v.currentMembers]
       ..sort((a, b) => (b.isMe ? 1 : 0) - (a.isMe ? 1 : 0));
     return PeopleStrip(
       title: l.evbMembersTitle,
       compact: true,
-      actionLabel: l.evbManageMembers,
-      onAction: _openMembers,
       members: [
         for (final m in members)
           PeopleStripMember(
@@ -1154,12 +1145,12 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             name: m.displayName,
           ),
       ],
-      inviteLabel: l.fpEventsInvite,
+      inviteLabel: l.evbMembersAdd,
       onInvite:
           v.isOwner &&
               v.project.status != ProjectStatus.archived &&
               !v.isCompleted
-          ? _invite
+          ? _openMembers
           : null,
       onMemberTap: (_) => _openMembers(),
     );
@@ -1523,6 +1514,16 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
               summary: l.fpEventsTagsCount(v.eventTags.length),
               onTap: _manageTags,
             ),
+          // SA14: the account-wide auto switches (the same values as on the
+          // notification settings page), set here with the event's other
+          // settings (owner 2026-11-03); none once the event is completed.
+          if (v != null && !v.isCompleted) ...const [
+            AutoSyncSetting(
+              kind: AutoSyncKind.events,
+              which: AutoSyncSwitch.accept,
+            ),
+            AutoSyncSetting(kind: AutoSyncKind.events),
+          ],
         ],
       ),
       note: NoteSection(

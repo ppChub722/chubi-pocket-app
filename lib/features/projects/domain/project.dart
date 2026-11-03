@@ -288,8 +288,16 @@ class ProjectMember extends Equatable {
     this.isMe = false,
     this.contactId,
     this.removedAt,
+    this.contactLinked = false,
+    this.invited = false,
     AvatarData? avatar,
   }) : _avatar = avatar;
+
+  /// That contact of mine uses the app: the owner can invite them.
+  final bool contactLinked;
+
+  /// Invited, not joined yet (the invite can be sent again).
+  final bool invited;
 
   final String id;
   final String projectId;
@@ -338,6 +346,8 @@ class ProjectMember extends Equatable {
       isMe: json['is_me'] == true,
       contactId: json['contact_id'] as String?,
       removedAt: Project._date(json['removed_at']),
+      contactLinked: json['contact_linked'] == true,
+      invited: json['invited'] == true,
       avatar: avatar,
     );
   }
@@ -354,8 +364,20 @@ class ProjectMember extends Equatable {
     iconCode,
     isMe,
     removedAt,
+    contactLinked,
+    invited,
     _avatar,
   ];
+
+  /// How well this member is known (owner 2026-11-03): a name, my contact,
+  /// my contact using the app, and one who joined.
+  PersonLevel get level => userId != null
+      ? PersonLevel.joined
+      : contactLinked
+      ? PersonLevel.linked
+      : contactId != null
+      ? PersonLevel.contact
+      : PersonLevel.name;
 }
 
 class ProjectMemberRef extends Equatable {
@@ -641,7 +663,91 @@ class ProjectTransaction extends Equatable {
     );
   }
 
+  /// A paper (`PaperView`, the paper model) as the board's rows: the bill
+  /// with its biggest payer, and one split row per other person with a
+  /// share (a payback: the one who got it). The board's tiles read rows.
+  static List<ProjectTransaction> fromPaper(Map<String, dynamic> json) {
+    final people = _list(json['people']);
+    ProjectMemberRef ref(Map<String, dynamic> p) {
+      final person =
+          (p['person'] as Map?)?.cast<String, dynamic>() ?? const {};
+      // My contact for them names them (for me only).
+      final name = person['contact_id'] != null
+          ? (person['name'] as String?) ?? (p['name'] as String?) ?? '?'
+          : (p['name'] as String?) ?? '?';
+      final avatar = AvatarData.parse(person, name: name);
+      return ProjectMemberRef(
+        id: (p['member_id'] as String?) ?? p['id'] as String,
+        userId: person['user_id'] as String?,
+        name: name,
+        iconCode: avatar.iconCode,
+        isMe: p['is_me'] == true,
+        avatar: avatar,
+      );
+    }
+
+    final paid = [
+      for (final p in people)
+        if (_money(p['paid']) > 0) (person: p, amount: _money(p['paid'])),
+    ]..sort((a, b) => b.amount.compareTo(a.amount));
+    final first = paid.firstOrNull?.person;
+    final books = (json['my_books'] as Map?)?.cast<String, dynamic>() ?? {};
+    final rights = (json['rights'] as Map?)?.cast<String, dynamic>() ?? {};
+    final me = (json['me'] as Map?)?.cast<String, dynamic>();
+    final tagRefs = [
+      for (final t in ((json['tags'] as List?) ?? const []))
+        if (t is Map<String, dynamic>) BoardTag.fromJson(t),
+    ];
+    final hasTx = books['transaction'] != null;
+    final hasDebt = ((books['debt_ids'] as List?) ?? const []).isNotEmpty;
+    final parent = ProjectTransaction(
+      id: json['id'] as String,
+      projectId: (json['project_id'] as String?) ?? '',
+      transactionMemberId: first == null ? '' : ref(first).id,
+      transactionMember: first == null ? null : ref(first),
+      recordUserId: '',
+      type: (json['type'] as String?) ?? 'expense',
+      amount: _money(json['amount']),
+      currency: '',
+      date: (json['date'] as String?) ?? '',
+      description: json['description'] as String?,
+      note: json['note'] as String?,
+      tags: [for (final t in tagRefs) t.name],
+      tagRefs: tagRefs,
+      marks: const [],
+      myShare: me == null ? 0 : _money(me['share']),
+      locked: rights['edit'] != true,
+      myBooked: hasTx || hasDebt,
+      myBooks: [if (hasTx) bookTx, if (hasDebt) bookDebt],
+      payers: paid.length > 1
+          ? [for (final x in paid) (member: ref(x.person), amount: x.amount)]
+          : const [],
+    );
+    return [
+      parent,
+      for (final p in people)
+        if (!identical(p, first) && _money(p['share']) > 0)
+          ProjectTransaction(
+            id: p['id'] as String,
+            projectId: parent.projectId,
+            parentProjectTransactionId: parent.id,
+            transactionMemberId: ref(p).id,
+            transactionMember: ref(p),
+            recordUserId: '',
+            type: parent.type,
+            amount: _money(p['share']),
+            currency: '',
+            date: parent.date,
+            marks: const [],
+            locked: parent.locked,
+            paidBack: p['paid_back'] == true,
+          ),
+    ];
+  }
+
   static List<ProjectTransaction> flatten(Map<String, dynamic> json) {
+    // The paper model's board rows are papers.
+    if (json.containsKey('people')) return fromPaper(json);
     final parent = ProjectTransaction.fromJson(json);
     return [
       parent,
@@ -885,11 +991,15 @@ class SettleLine extends Equatable {
     final from = ProjectMemberRef.tryParse(json['from']);
     final to = ProjectMemberRef.tryParse(json['to']);
     if (from == null || to == null) return null;
+    // The paper model: booked / unbooked of the pair (all booked = recorded).
+    final booked = _money(json['booked']).abs();
+    final unbooked = _money(json['unbooked']).abs();
     return SettleLine(
       from: from,
       to: to,
       amount: _money(json['amount']),
-      recorded: json['recorded'] == true,
+      recorded:
+          json['recorded'] == true || (booked > 0.005 && unbooked <= 0.005),
     );
   }
 
@@ -1085,63 +1195,6 @@ class EventPatch {
 
   static List<ProjectTransaction> rowsOf(Map<String, dynamic> json) =>
       _board(json['rows']);
-}
-
-/// `POST /event-bills` / `PUT /event-bills/{pt_id}` (0.4.1-1 E8, one call
-/// for the bill sheet): the bill's patch and my transaction for it. The
-/// wallets, people and rows it moved arrive as its `effects` (B2: the caches
-/// apply them by themselves).
-class EventBillBookResult {
-  const EventBillBookResult({required this.patch, this.transactionId});
-
-  final EventPatch patch;
-
-  /// My transaction for the bill (made or kept); null = none.
-  final String? transactionId;
-
-  factory EventBillBookResult.fromJson(Map<String, dynamic> json) =>
-      EventBillBookResult(
-        patch: EventPatch.fromJson(json),
-        transactionId: json['transaction_id'] as String?,
-      );
-}
-
-/// The bill sheet's `?preview=true` (0.4.1-1 E8): every person and wallet
-/// the save would move, before → after; nothing is saved.
-class EventBillBookPreview {
-  const EventBillBookPreview({
-    this.people = const {},
-    this.wallets = const {},
-    this.debtDefault = true,
-  });
-
-  /// Person key → (before, after); net > 0 = they owe me.
-  final Map<String, ({double before, double after})> people;
-
-  /// Wallet id → (before, after).
-  final Map<String, ({double before, double after})> wallets;
-
-  /// What `my_books.debt: null` does on a payback (false = my book already
-  /// holds this event's debt with them).
-  final bool debtDefault;
-
-  factory EventBillBookPreview.fromJson(Map<String, dynamic> json) {
-    double n(Object? v) => (v as num?)?.toDouble() ?? 0;
-    return EventBillBookPreview(
-      people: {
-        for (final p in _list(json['people']))
-          p['key'] as String: (before: n(p['before']), after: n(p['after'])),
-      },
-      wallets: {
-        for (final w in _list(json['wallets']))
-          w['account_id'] as String: (
-            before: n(w['before']),
-            after: n(w['after']),
-          ),
-      },
-      debtDefault: json['debt_default'] as bool? ?? true,
-    );
-  }
 }
 
 /// Share / paid: active events. Receivable / payable and the counts: every

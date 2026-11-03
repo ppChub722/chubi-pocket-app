@@ -20,8 +20,21 @@ class LinkSection extends StatefulWidget {
     this.eventIsNew = false,
     this.isEventMember,
     this.recurring,
+    this.flat = false,
+    this.summary,
+    this.fixed = false,
     super.key,
   });
+
+  /// An event's own bill (owner 2026-11-03): always a bill of that event, so
+  /// no แบ่ง switch and the event row can't be changed.
+  final bool fixed;
+
+  /// Inside the แบ่ง card: the people card has no frame of its own.
+  final bool flat;
+
+  /// The share summary ("ส่วนของฉัน ฿x | ลูกหนี้ ฿y"), on the status line.
+  final Widget? summary;
 
   final DraftFormController controller;
 
@@ -93,6 +106,7 @@ class _LinkSectionState extends State<LinkSection> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final mode = _c.linkMode(hasEvent: _hasEvent);
+    if (widget.fixed) return _peopleCard(l, event: true);
     final recurring = widget.recurring;
     return LinkSectionFrame(
       recurring: recurring == null
@@ -133,10 +147,25 @@ class _LinkSectionState extends State<LinkSection> {
   }
 
   /// "เพิ่มในอีเวนต์": the top row of the card; picking one turns the bill
-  /// into an event bill.
-  Widget _eventRow(AppLocalizations l) {
+  /// into an event bill and shows "จดหนี้บิลนี้เลย" under it (off = the
+  /// event's lump, which skips pairs booked here). My transaction is asked on
+  /// the tx detail card ([EventBookRows]).
+  Widget? _eventRow(AppLocalizations l) {
     final e = widget.event;
-    return EventRow(
+    final debts = _c.link.eventBookDebts;
+    // The event's own bill: the event is on top of the sheet, only the debts
+    // row stays here.
+    if (widget.fixed) {
+      return debts == null
+          ? null
+          : LinkSwitchRow(
+              key: const ValueKey('linkBookDebtRow'),
+              label: l.txLinkBookDebt,
+              value: debts,
+              onChanged: _c.setEventBookDebts,
+            );
+    }
+    final row = EventRow(
       key: const ValueKey('linkEventRow'),
       name: e.name,
       onTap: e.onTap,
@@ -146,11 +175,21 @@ class _LinkSectionState extends State<LinkSection> {
       onLongPress: e.onLongPress,
       variant: SplitEventVariant.compact,
       label: l.txLinkAddToEvent,
-      // Debts of an event bill are only made when asked; on by default.
-      onBookDebt: _hasEvent && _c.link.eventBookDebts != null
-          ? _c.setEventBookDebts
-          : null,
-      bookDebt: _c.link.eventBookDebts ?? true,
+    );
+    if (!_hasEvent || debts == null) return row;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        row,
+        const SizedBox(height: AppSpacing.sm),
+        LinkSwitchRow(
+          key: const ValueKey('linkBookDebtRow'),
+          label: l.txLinkBookDebt,
+          value: debts,
+          onChanged: _c.setEventBookDebts,
+        ),
+      ],
     );
   }
 
@@ -270,6 +309,8 @@ class _LinkSectionState extends State<LinkSection> {
 
     return BillPeopleCard(
       key: ValueKey(event ? 'linkCardEvent' : 'linkCardSplit'),
+      flat: widget.flat,
+      statusLeading: widget.summary,
       payLabel: income ? l.evbReceives : null,
       top: _eventRow(l),
       title: l.evbPeople((event ? members.length : _c.splits.length) + 1),
@@ -313,4 +354,26 @@ class _LinkSectionState extends State<LinkSection> {
             ),
     );
   }
+}
+
+/// An event bill being added (owner 2026-11-03): "ลงรายการของฉันเลย" at the
+/// top of the tx detail card (the card IS my transaction); off = no
+/// transaction now and the rest of the card hides. Debts are their own
+/// choice, under the event row.
+class EventBookRows extends StatelessWidget {
+  const EventBookRows({required this.controller, super.key});
+
+  final DraftFormController controller;
+
+  /// Shown only for a new event bill.
+  static bool shows(DraftFormController c, LinkMode? mode) =>
+      mode == LinkMode.event && c.link.eventBookDebts != null;
+
+  @override
+  Widget build(BuildContext context) => LinkSwitchRow(
+    key: const ValueKey('linkBookMineRow'),
+    label: AppLocalizations.of(context)!.txLinkBookMine,
+    value: controller.link.eventBookMine,
+    onChanged: controller.setEventBookMine,
+  );
 }

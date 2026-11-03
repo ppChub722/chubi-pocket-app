@@ -3,7 +3,7 @@ import 'package:chubi_pocket/features/notifications/presentation/widgets/notific
 import 'package:flutter_test/flutter_test.dart';
 
 Map<String, dynamic> _json({
-  String type = 'split_created',
+  String type = 'bill_new',
   String state = 'unread',
   bool awaitsAnswer = true,
   Map<String, dynamic>? actor = const {
@@ -51,7 +51,7 @@ void main() {
     expect(
       NotificationTile.awaitsAnswer(
         AppNotification.fromJson(
-          _json(type: 'project_added', awaitsAnswer: false),
+          _json(type: 'bill_moved', awaitsAnswer: false),
         ),
       ),
       isFalse,
@@ -70,14 +70,14 @@ void main() {
 
   test('settings: default_account is a ref, not an id', () {
     final s = NotificationSettings.fromJson({
-      'muted_types': ['split_changed'],
+      'muted_types': ['bill_changed'],
       'auto_types': <String>[],
       'default_account': {'id': 'a1', 'name': 'KBank', 'icon_code': null},
       'updated_at': '2026-10-10T00:00:00Z',
     });
     expect(s.defaultAccount?.id, 'a1');
     expect(s.defaultAccount?.name, 'KBank');
-    expect(s.isMuted(NotificationType.splitChanged), isTrue);
+    expect(s.isMuted(NotificationType.billChanged), isTrue);
     expect(
       NotificationSettings.fromJson({
         'muted_types': <String>[],

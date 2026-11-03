@@ -13,9 +13,14 @@ import '../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../contacts/data/contacts_repository.dart';
 import '../../contacts/domain/contact.dart';
 import '../../contacts/presentation/cubit/contacts_cubit.dart';
+import '../../../app/shell/quick_create_context.dart' show QuickCreatePreset;
+import '../../personal_debts/data/personal_debts_repository.dart';
+import '../../personal_debts/domain/debt_direction.dart';
+import '../../personal_debts/presentation/debt_person_preset.dart';
 import '../../projects/data/projects_repository.dart';
-import '../../projects/presentation/widgets/event_bill_sheet.dart'
-    show openEventBill;
+import '../../transactions/data/transactions_repository.dart';
+import '../../transactions/presentation/widgets/quick_create_sheet.dart'
+    show openPaperBill, showQuickCreateSheet;
 import '../../recurring/data/recurring_repository.dart';
 import '../domain/notification.dart';
 import 'cubit/notifications_inbox_cubit.dart';
@@ -54,7 +59,7 @@ abstract final class NotificationActions {
     }
     final bill = billOfLink(n);
     if (bill != null) {
-      await openEventBill(ctx, bill);
+      await openPaperBill(ctx, bill.id, projectId: bill.projectId);
       return;
     }
     final link = n.deepLink;
@@ -66,7 +71,11 @@ abstract final class NotificationActions {
   static Future<void> accept(BuildContext ctx, AppNotification n) =>
       switch (acceptRouteOf(n.type)) {
         AcceptRoute.walletInvite => _onAcceptWalletInvite(ctx, n.id),
-        AcceptRoute.applyBill => _onApplyBill(ctx, n),
+        AcceptRoute.joinBill => _onAnswerBill(ctx, n, join: true),
+        AcceptRoute.claimBill => _onClaimBill(ctx, n),
+        AcceptRoute.syncBill => _onSyncBill(ctx, n),
+        AcceptRoute.deleteBooks => _onDeleteBooks(ctx, n),
+        AcceptRoute.recordRepayment => _onRecordRepayment(ctx, n),
         AcceptRoute.projectInvite => _onAcceptProjectInvite(ctx, n),
         AcceptRoute.extendRecurring => _onExtendRecurring(ctx, n),
         AcceptRoute.openDue => _onOpenDue(ctx, n),
@@ -78,6 +87,7 @@ abstract final class NotificationActions {
         RejectRoute.walletInvite => _onRejectWalletInvite(ctx, n.id),
         RejectRoute.linkRequest => _onRejectLinkRequest(ctx, n.id),
         RejectRoute.projectInvite => _onRejectProjectInvite(ctx, n.id),
+        RejectRoute.declineBill => _onAnswerBill(ctx, n, join: false),
         RejectRoute.markActioned =>
           ctx.read<NotificationsInboxCubit>().markActioned(n.id),
         RejectRoute.dismiss =>
@@ -188,44 +198,112 @@ Future<void> _onOpenDue(BuildContext ctx, AppNotification n) async {
   );
 }
 
-/// "เพิ่มในสมุด" / "อัปเดตตาม" / "ลบตาม": ONE call, my copy takes the bill as
-/// it is now (the BE marks my notices about it answered; what else changed
-/// rides `effects`). A new copy opens so its category / wallet get picked.
-Future<void> _onApplyBill(BuildContext ctx, AppNotification n) async {
-  final ptId = n.payload['project_transaction_id'] as String?;
-  if (ptId == null) return;
-  final l = AppLocalizations.of(ctx)!;
+/// Runs [write], then marks [n] answered and reloads the inbox; an error
+/// shows and leaves it asking.
+Future<void> _answer(
+  BuildContext ctx,
+  AppNotification n,
+  Future<void> Function() write, {
+  String? done,
+}) async {
   final inboxCubit = ctx.read<NotificationsInboxCubit>();
   final messenger = ScaffoldMessenger.of(ctx);
   try {
-    final copy = await ctx.read<ProjectsRepository>().applyEventBill(ptId);
+    await write();
+    await inboxCubit.markActioned(n.id);
     await _reload(inboxCubit);
-    final txId = copy.transactionId;
-    switch (n.type) {
-      case NotificationType.sharedBillDeleted:
-        showAppSnackBarOn(
-          messenger,
-          l.notifBillRemovedMine,
-          tone: Tone.success,
-        );
-      case NotificationType.projectTxChanged:
-        showAppSnackBarOn(messenger, l.notifCopyUpdated, tone: Tone.success);
-      default:
-        if (txId != null && ctx.mounted) {
-          _openFromBell(ctx, '/transactions/$txId');
-        }
-    }
+    if (done != null) showAppSnackBarOn(messenger, done, tone: Tone.success);
   } on ApiException catch (e) {
-    final gone = e.code == 'BILL_GONE';
-    if (gone) await _reload(inboxCubit);
-    // PROJECT_LOCKED here reads as "completed" (the mapper's own sentence
-    // says locked).
-    showAppSnackBarOn(
-      messenger,
-      e.code == 'PROJECT_LOCKED' ? l.eventErrCompleted : errorText(l, e),
-      tone: Tone.danger,
-    );
+    _showError(messenger, e);
   }
+}
+
+/// bill_invite: join or decline the split bill (the BE answers the notice).
+Future<void> _onAnswerBill(
+  BuildContext ctx,
+  AppNotification n, {
+  required bool join,
+}) async {
+  final bill = billOfLink(n);
+  if (bill == null) return;
+  final repo = ctx.read<ProjectsRepository>();
+  final inboxCubit = ctx.read<NotificationsInboxCubit>();
+  final messenger = ScaffoldMessenger.of(ctx);
+  try {
+    await repo.answerSplitBill(bill.id, join: join);
+    await _reload(inboxCubit);
+  } on ApiException catch (e) {
+    _showError(messenger, e);
+  }
+}
+
+/// bill_new: the bill form, where "ลงรายการของฉัน" lives; a save answers
+/// the notice.
+Future<void> _onClaimBill(BuildContext ctx, AppNotification n) async {
+  final bill = billOfLink(n);
+  if (bill == null) return;
+  final inboxCubit = ctx.read<NotificationsInboxCubit>();
+  final saved = await openPaperBill(ctx, bill.id, projectId: bill.projectId);
+  if (saved) await inboxCubit.markActioned(n.id);
+}
+
+/// bill_changed: my tx and each debt of the bill take it as it is now.
+Future<void> _onSyncBill(BuildContext ctx, AppNotification n) {
+  final l = AppLocalizations.of(ctx)!;
+  final repo = ctx.read<ProjectsRepository>();
+  final txId = n.payload['my_transaction_id'] as String?;
+  final debtIds = [
+    for (final id in (n.payload['my_debt_ids'] as List?) ?? const [])
+      if (id is String) id,
+  ];
+  return _answer(ctx, n, () async {
+    if (txId != null) await repo.syncMyTransaction(txId);
+    for (final id in debtIds) {
+      await repo.syncMyDebt(id);
+    }
+  }, done: l.notifCopyUpdated);
+}
+
+/// bill_removed: my books of it are plain already; delete them.
+Future<void> _onDeleteBooks(BuildContext ctx, AppNotification n) {
+  final l = AppLocalizations.of(ctx)!;
+  final txRepo = ctx.read<TransactionsRepository>();
+  final debtRepo = ctx.read<PersonalDebtsRepository>();
+  final txId = n.payload['my_transaction_id'] as String?;
+  final debtIds = [
+    for (final id in (n.payload['my_debt_ids'] as List?) ?? const [])
+      if (id is String) id,
+  ];
+  return _answer(ctx, n, () async {
+    if (txId != null) await txRepo.delete(txId);
+    for (final id in debtIds) {
+      await debtRepo.deleteEntry(id);
+    }
+  }, done: l.notifBillRemovedMine);
+}
+
+/// debt_repaid: quick create on the repayment, as my partner recorded it; a
+/// save answers the notice.
+Future<void> _onRecordRepayment(BuildContext ctx, AppNotification n) async {
+  final p = n.payload;
+  final key = p['key'] as String?;
+  if (key == null) return;
+  final inboxCubit = ctx.read<NotificationsInboxCubit>();
+  final saved = await showQuickCreateSheet(
+    ctx,
+    preset: QuickCreatePreset.debt(
+      person: debtPersonOf(
+        personKey: key,
+        name: (p['person_name'] as String?) ?? '',
+      ),
+      debtDirection: p['direction'] == 'paid'
+          ? DebtEntryDirection.paid
+          : DebtEntryDirection.received,
+      debtSub: DebtEntrySub.repay,
+      amount: (p['amount'] as num?)?.toDouble(),
+    ),
+  );
+  if (saved) await inboxCubit.markActioned(n.id);
 }
 
 Future<void> _onAcceptWalletInvite(BuildContext ctx, String id) async {

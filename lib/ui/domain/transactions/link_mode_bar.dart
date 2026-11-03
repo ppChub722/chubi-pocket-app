@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../atoms/app_divider.dart';
 import '../../atoms/app_switch.dart';
 import '../../tokens/app_spacing.dart';
 import 'split_event_section.dart';
@@ -23,14 +24,23 @@ class LinkSwitchRow extends StatelessWidget {
   Widget build(BuildContext context) => DraftFieldRow(
     label: label,
     dense: true,
-    child: Align(
-      alignment: AlignmentDirectional.centerStart,
-      child: AppSwitch(
-        value: value,
-        onChanged: onChanged,
-        semanticLabel: label,
-      ),
+    child: AppSwitch(
+      value: value,
+      onChanged: onChanged,
+      semanticLabel: label,
     ),
+  );
+}
+
+/// The line between the rows of an entry card (under "แบ่งบิลกับคนอื่น",
+/// under "เพิ่มในอีเวนต์"): one look and one gap everywhere.
+class RowsDivider extends StatelessWidget {
+  const RowsDivider({super.key});
+
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+    child: AppDivider(),
   );
 }
 
@@ -62,7 +72,10 @@ class LinkSectionFrame extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
         ],
         bar,
-        if (card != null) ...[const SizedBox(height: AppSpacing.sm), card],
+        if (card != null) ...[
+          const RowsDivider(),
+          card,
+        ],
       ],
     );
   }

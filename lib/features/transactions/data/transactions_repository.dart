@@ -271,11 +271,15 @@ class TransactionsRepository {
     List<String>? tagIds,
     bool? alsoUpdateLink,
     Map<String, dynamic>? link,
+    String? privateNote,
   }) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(
         '/transactions/$id',
-        data: _updateBody(
+        data: <String, dynamic>{
+          // My private note on a bill's transaction ("" clears).
+          'private_note': ?privateNote,
+          ..._updateBody(
           amount: amount,
           date: date,
           categoryId: categoryId,
@@ -291,6 +295,7 @@ class TransactionsRepository {
           alsoUpdateLink: alsoUpdateLink,
           link: link,
         ),
+        },
       );
       return TransactionWriteResult.fromJson(res.data!);
     } on DioException catch (e) {
@@ -323,20 +328,6 @@ class TransactionsRepository {
         ),
       );
       return TxEditPreview.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    } catch (e, st) {
-      throw ApiException.from(e, st);
-    }
-  }
-
-  /// "อัปเดตตามอีเวนต์": my linked tx takes the bill as it is now.
-  Future<TransactionMutationResult> applyEvent(String id) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/transactions/$id/apply-event',
-      );
-      return TransactionWriteResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     } catch (e, st) {

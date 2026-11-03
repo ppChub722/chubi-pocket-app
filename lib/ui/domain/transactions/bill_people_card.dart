@@ -90,8 +90,16 @@ class BillPeopleCard extends StatelessWidget {
     this.payLabel,
     this.addLabel,
     this.showEqually = true,
+    this.flat = false,
+    this.statusLeading,
     super.key,
   });
+
+  /// See [ShareCard.flat].
+  final bool flat;
+
+  /// See [ShareCard.statusLeading].
+  final Widget? statusLeading;
 
   final String title;
   final List<BillPerson> people;
@@ -133,6 +141,8 @@ class BillPeopleCard extends StatelessWidget {
     final rowHeight =
         SplitRow.height + ChipSize.mini.heightOf(context) + AppSpacing.md;
     return ShareCard(
+      flat: flat,
+      statusLeading: statusLeading,
       top: top,
       title: title,
       actions: [

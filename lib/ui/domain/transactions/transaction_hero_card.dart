@@ -251,6 +251,7 @@ class TransactionHeroCard extends StatelessWidget {
         hintStyle: bigAmount?.copyWith(color: accent.withValues(alpha: 0.35)),
         hideHintOnFocus: true,
         underline: editing && !amountLocked,
+        boxed: editing && !amountLocked,
       ),
       amountFocus,
     );

@@ -266,11 +266,15 @@ class Transaction extends Equatable {
               (json['recurring_item'] as Map).cast<String, dynamic>(),
             )
           : null,
-      eventBill: json['event_bill'] is Map
-          ? EventBillLink.fromJson(
-              (json['event_bill'] as Map).cast<String, dynamic>(),
-            )
-          : null,
+      eventBill: switch ((json['event_bill'], json['split_bill'])) {
+        // The paper model's book ref ({id, …}, no bill_id).
+        (final Map e, _) when e['bill_id'] == null =>
+          EventBillLink.fromPaperRef(e.cast<String, dynamic>(), split: false),
+        (final Map e, _) => EventBillLink.fromJson(e.cast<String, dynamic>()),
+        (_, final Map s) =>
+          EventBillLink.fromPaperRef(s.cast<String, dynamic>(), split: true),
+        _ => null,
+      },
       debtLink: json['counterparty'] is Map
           ? DebtLink.fromJson(
               (json['counterparty'] as Map).cast<String, dynamic>(),

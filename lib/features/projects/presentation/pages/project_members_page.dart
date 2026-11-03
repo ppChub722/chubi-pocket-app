@@ -12,9 +12,8 @@ import '../../../contacts/data/contacts_repository.dart';
 import '../../../contacts/presentation/widgets/contact_picker.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
-import '../widgets/add_member_sheet.dart';
 import '../cubit/projects_cubit.dart';
-import '../widgets/project_common.dart';
+import '../widgets/member_picker.dart';
 
 class ProjectMembersPage extends StatefulWidget {
   const ProjectMembersPage({required this.projectId, super.key});
@@ -71,19 +70,51 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
   bool get _isOwner =>
       _project != null && (_project!.isOwner || _project!.ownerUserId == _uid);
 
-  Future<void> _invite() async {
+  /// "เพิ่มสมาชิก" (owner 2026-11-03): the contact picker of quick create — a
+  /// contact (an app user is invited with the row's เชิญ) or a typed name.
+  Future<void> _add() async {
     final l = AppLocalizations.of(context)!;
-    final added = await showAddMemberSheet(
+    final r = await ContactPicker.one(
       context,
-      projectId: widget.projectId,
+      allowFreeText: true,
+      allowCreate: true,
+      title: l.projectMembersAdd,
     );
-    if (added == null || !mounted) return;
-    _apply(added.patch);
-    showAppSnackBar(
-      context,
-      l.projectAddMemberAdded(added.name),
-      tone: Tone.success,
-    );
+    if (r == null || !mounted) return;
+    final repo = context.read<ProjectsRepository>();
+    final (name, call) = switch (r) {
+      ContactPicked(:final contact) => (
+        contact.name,
+        () => repo.addMember(widget.projectId, contactId: contact.id),
+      ),
+      ContactNamePicked(:final name) || ContactNameTyped(:final name) => (
+        name,
+        () =>
+            repo.addMember(widget.projectId, displayName: name, adHoc: true),
+      ),
+    };
+    await _run(call, done: l.projectAddMemberAdded(name));
+  }
+
+  /// เชิญ / เชิญแล้ว (again): the event invite to my contact using the app.
+  Future<void> _sendInvite(ProjectMember m) => _run(
+    () => context.read<ProjectsRepository>().inviteMember(
+      widget.projectId,
+      m.id,
+    ),
+    done: AppLocalizations.of(context)!.projectMemberInviteSent(m.displayName),
+  );
+
+  /// The row's end: the role (เชิญ lives in the ⋯ menu).
+  ListRowTrailing? _trailing(AppLocalizations l, ProjectMember m) {
+    // A plain member shows no word (owner 2026-11-03: "Member" says nothing).
+    if (m.isOwner) {
+      return ListRowTrailing.text(l.projectRoleOwner, tone: Tone.primary);
+    }
+    if (m.role == MemberRole.viewer) {
+      return ListRowTrailing.text(l.projectRoleViewer);
+    }
+    return null;
   }
 
   /// F3: which of MY contacts a plain member is is mine to say, owner or not
@@ -93,65 +124,80 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
   bool _ownerActions(ProjectMember m, bool readOnly) =>
       _isOwner && !readOnly && !m.isOwner;
 
-  Future<void> _memberActions(ProjectMember m, {required bool owner}) async {
-    final l = AppLocalizations.of(context)!;
-    final bound = m.contactId != null;
-    final action = await showActionSheet<String>(
-      context,
-      header: ActionSheetHeader(
-        leading: memberAvatar(m, size: 40),
-        title: m.displayName,
-        subtitle: m.isLinked ? l.projectMemberLinked : l.projectMemberAdHoc,
+  /// The row's ⋯ menu (owner 2026-11-03: no sheet; เชิญ and ออก in it too).
+  List<SheetOption<String>> _memberOptions(
+    AppLocalizations l,
+    ProjectMember m, {
+    required bool owner,
+    required bool readOnly,
+  }) => [
+    // เชิญ / เชิญแล้ว (sent again) to my contact using the app.
+    if (_isOwner && !readOnly && m.contactLinked && m.userId == null)
+      SheetOption(
+        value: 'invite',
+        leading: AppIcon(m.invited ? AppIcons.check : AppIcons.inviteMember),
+        label: m.invited ? l.projectMemberInvited : l.projectMemberInvite,
       ),
-      actions: [
-        if (_contactActions(m)) ...[
-          SheetAction(
-            value: 'bind',
-            icon: AppIcons.link,
-            label: l.projectMemberBindContact,
-          ),
-          if (bound)
-            SheetAction(
-              value: 'unbind',
-              icon: AppIcons.unlink,
-              label: l.projectMemberUnbindContact,
-            )
-          else
-            SheetAction(
-              value: 'add-contact',
-              icon: AppIcons.add,
-              label: l.projectMemberAddContact,
-            ),
-        ],
-        if (owner) ...[
-          SheetAction(
-            value: 'role',
-            icon: m.role == MemberRole.viewer
-                ? AppIcons.edit
-                : AppIcons.visible,
-            label: m.role == MemberRole.viewer
-                ? l.projectMemberMakeContributor
-                : l.projectMemberMakeViewer,
-          ),
-          SheetAction(
-            value: 'transfer',
-            icon: AppIcons.member,
-            label: l.projectMemberTransfer,
-            subtitle: m.isLinked ? null : l.projectMemberTransferNeedsAccount,
-            enabled: m.isLinked && m.status == MemberStatus.active,
-          ),
-          SheetAction(
-            value: 'remove',
-            icon: AppIcons.delete,
-            label: l.projectMemberRemove,
-            destructive: true,
-          ),
-        ],
-      ],
-    );
-    if (!mounted) return;
+    if (_contactActions(m)) ...[
+      SheetOption(
+        value: 'bind',
+        leading: const AppIcon(AppIcons.link),
+        label: l.projectMemberBindContact,
+      ),
+      if (m.contactId != null)
+        SheetOption(
+          value: 'unbind',
+          leading: const AppIcon(AppIcons.unlink),
+          label: l.projectMemberUnbindContact,
+        )
+      else
+        SheetOption(
+          value: 'add-contact',
+          leading: const AppIcon(AppIcons.add),
+          label: l.projectMemberAddContact,
+        ),
+    ],
+    if (owner) ...[
+      SheetOption(
+        value: 'role',
+        leading: AppIcon(
+          m.role == MemberRole.viewer ? AppIcons.edit : AppIcons.visible,
+        ),
+        label: m.role == MemberRole.viewer
+            ? l.projectMemberMakeContributor
+            : l.projectMemberMakeViewer,
+      ),
+      // Only a joined app user can own the event.
+      if (m.isLinked && m.status == MemberStatus.active)
+        SheetOption(
+          value: 'transfer',
+          leading: const AppIcon(AppIcons.member),
+          label: l.projectMemberTransfer,
+        ),
+      SheetOption(
+        value: 'remove',
+        leading: const AppIcon(AppIcons.delete),
+        label: l.projectMemberRemove,
+        destructive: true,
+      ),
+    ],
+    if (m.isMe && !readOnly)
+      SheetOption(
+        value: 'leave',
+        leading: const AppIcon(AppIcons.logout),
+        label: l.projectLeave,
+        destructive: true,
+      ),
+  ];
+
+  Future<void> _memberAction(ProjectMember m, String action) async {
+    final l = AppLocalizations.of(context)!;
     final repo = context.read<ProjectsRepository>();
-    if (action == 'bind') {
+    if (action == 'invite') {
+      await _sendInvite(m);
+    } else if (action == 'leave') {
+      await _leave();
+    } else if (action == 'bind') {
       final c = await ContactPicker.contactFor(
         context,
         name: m.displayName,
@@ -212,8 +258,31 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
     }
   }
 
+  /// ออกจากอีเวนต์; the owner hands the event to a joined app user first.
   Future<void> _leave() async {
     final l = AppLocalizations.of(context)!;
+    final repo = context.read<ProjectsRepository>();
+    ProjectMember? heir;
+    if (_isOwner) {
+      final can = [
+        for (final m in _members)
+          if (!m.isMe && m.isLinked && m.status == MemberStatus.active) m,
+      ];
+      if (can.isEmpty) {
+        showAppSnackBar(
+          context,
+          l.projectMemberTransferNeedsAccount,
+          tone: Tone.danger,
+        );
+        return;
+      }
+      heir = await EventMemberPicker.one(
+        context,
+        members: can,
+        title: l.projectLeavePickOwner,
+      );
+      if (heir == null || !mounted) return;
+    }
     final ok = await showConfirmDialog(
       context,
       title: l.projectLeaveTitle(_project!.name),
@@ -223,7 +292,10 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
     );
     if (!ok || !mounted) return;
     try {
-      await context.read<ProjectsRepository>().leave(widget.projectId);
+      if (heir != null) {
+        await repo.transferOwnership(widget.projectId, heir.userId!);
+      }
+      await repo.leave(widget.projectId);
       if (!mounted) return;
       showAppSnackBar(context, l.projectLeft);
       context.go('/projects');
@@ -274,9 +346,18 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
         p?.status == ProjectStatus.archived || (p?.isCompleted ?? false);
     final groups = <(String, String, List<ProjectMember>)>[
       (
-        l.projectMembersTitle,
-        l.projectMembersDescription,
-        _members.where((m) => m.status == MemberStatus.active).toList(),
+        l.projectMembersUsers,
+        l.projectMembersUsersDescription,
+        _members
+            .where((m) => m.status == MemberStatus.active && m.isLinked)
+            .toList(),
+      ),
+      (
+        l.projectMembersNames,
+        l.projectMembersNamesDescription,
+        _members
+            .where((m) => m.status == MemberStatus.active && !m.isLinked)
+            .toList(),
       ),
       (
         l.projectMembersPending,
@@ -289,7 +370,6 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
         _members.where((m) => m.status == MemberStatus.left).toList(),
       ),
     ].where((g) => g.$3.isNotEmpty).toList();
-    final amMember = _members.any((m) => m.userId == _uid);
     final body = Builder(
       builder: (context) => ListPageBody(
         loading: _loading,
@@ -310,33 +390,17 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
               description: description,
               children: [
                 for (final m in list)
-                  AppListRow(
-                    dimmed: m.status != MemberStatus.active,
-                    leading: memberAvatar(m, size: 40),
-                    title: m.displayName,
-                    line2: ListRowLine(
-                      parts: [
-                        m.isLinked
-                            ? l.projectMemberLinked
-                            : m.contactId != null
-                            ? l.projectMemberMyContact
-                            : l.projectMemberAdHoc,
-                      ],
+                  _MemberRow(
+                    key: ValueKey('member:${m.id}'),
+                    member: m,
+                    trailing: _trailing(l, m),
+                    options: _memberOptions(
+                      l,
+                      m,
+                      owner: _ownerActions(m, readOnly),
+                      readOnly: readOnly,
                     ),
-                    trailing: ListRowTrailing.text(
-                      m.isOwner
-                          ? l.projectRoleOwner
-                          : m.role == MemberRole.viewer
-                          ? l.projectRoleViewer
-                          : l.projectRoleMember,
-                      tone: m.isOwner ? Tone.primary : null,
-                    ),
-                    onTap: _ownerActions(m, readOnly) || _contactActions(m)
-                        ? () => _memberActions(
-                            m,
-                            owner: _ownerActions(m, readOnly),
-                          )
-                        : null,
+                    onSelected: (a) => _memberAction(m, a),
                   ),
               ],
             ),
@@ -344,18 +408,11 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.lg),
               child: AddTile(
-                label: l.projectMembersInvite,
+                label: l.projectMembersAdd,
                 variant: AddTileVariant.row,
                 icon: AppIcons.inviteMember,
-                onTap: _invite,
+                onTap: _add,
               ),
-            ),
-          if (!_isOwner && amMember)
-            DangerRow(
-              icon: AppIcons.logout,
-              label: l.projectLeave,
-              onTap: _leave,
-              padding: const EdgeInsets.only(top: AppSpacing.lg),
             ),
         ],
       ),
@@ -374,6 +431,44 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
       ),
       extendBodyBehindAppBar: true,
       body: body,
+    );
+  }
+}
+
+/// A member row: its actions in a ⋯ menu at the end (owner 2026-11-03).
+class _MemberRow extends StatelessWidget {
+  const _MemberRow({
+    required this.member,
+    required this.trailing,
+    required this.options,
+    required this.onSelected,
+    super.key,
+  });
+
+  final ProjectMember member;
+  final ListRowTrailing? trailing;
+  final List<SheetOption<String>> options;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final m = member;
+    return AppListRow(
+      dimmed: m.status != MemberStatus.active,
+      // The level reads from the mark (owner 2026-11-03): no "ไม่มีบัญชีแอป"
+      // line.
+      leading: PersonMark(
+        name: m.displayName,
+        level: m.level,
+        avatar: m.avatar,
+        size: 40,
+      ),
+      title: m.displayName,
+      trailing: trailing,
+      actions: [
+        if (options.isNotEmpty)
+          ListRowAction.menu<String>(options: options, onSelected: onSelected),
+      ],
     );
   }
 }

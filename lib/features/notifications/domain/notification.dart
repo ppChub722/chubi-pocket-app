@@ -5,21 +5,36 @@ import '../../../ui/ui.dart';
 export 'notification_settings.dart';
 
 enum NotificationType {
-  splitCreated('split_created'),
+  /// I was put on a split bill: join or decline.
+  billInvite('bill_invite'),
 
-  splitChanged('split_changed'),
+  /// A new event bill I am on; `applied` false = claim it.
+  billNew('bill_new'),
+
+  /// A bill I have books of changed; `applied` false = "อัปเดต".
+  billChanged('bill_changed'),
+
+  /// I am off a bill (removed, or it was deleted); my books are plain now;
+  /// `applied` false = keep or delete them.
+  billRemoved('bill_removed'),
+
+  /// The owner left: I own the bill now (info).
+  billOwnerChanged('bill_owner_changed'),
+
+  /// A bill I am on moved into / out of an event (info).
+  billMoved('bill_moved'),
+
+  /// My partner recorded a repayment on our pair; no `repayment_id` = record
+  /// it on my side.
+  debtRepaid('debt_repaid'),
 
   /// 0.4.1-1 D9: the other side disconnected a linked debt (info only;
   /// payload person_name / amount / direction, deep link to my entry).
   debtDisconnected('debt_disconnected'),
-  projectTxRecordedForYou('project_tx_recorded_for_you'),
-  projectTxChanged('project_tx_changed'),
   projectInvite('project_invite'),
   contactLinkRequest('contact_link_request'),
 
   accountInvite('account_invite'),
-
-  projectAdded('project_added'),
 
   recurringDue('recurring_due'),
 
@@ -28,22 +43,14 @@ enum NotificationType {
   /// The day's tx the auto-create recorded (one notice per day).
   recurringAutoCreated('recurring_auto_created'),
 
-  /// 0.4.1-2: another member saved a shared bill I have a part in; replaces
-  /// project_tx_recorded_for_you. `applied` false = "เพิ่มในสมุด" asks.
-  sharedBillCreated('shared_bill_created'),
-
-  /// A shared bill I hold a copy of was deleted; `applied` false (event
-  /// bill, my switch off) = "ลบตาม" asks, else info.
-  sharedBillDeleted('shared_bill_deleted'),
-
-  /// Another member disconnected their copy of a split bill (info).
-  sharedBillDisconnected('shared_bill_disconnected'),
-
   /// The owner completed an event I'm in: locked, no more sync (info).
   eventCompleted('event_completed'),
 
   /// The owner removed me from an event; my records stay, plain (info).
   eventMemberRemoved('event_member_removed'),
+
+  /// The owner deleted an event I'm in; its bills stay as split bills (info).
+  eventDeleted('event_deleted'),
   unknown('unknown');
 
   const NotificationType(this.wire);

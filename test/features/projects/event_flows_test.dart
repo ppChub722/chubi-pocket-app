@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:chubi_pocket/core/network/api_client.dart';
 import 'package:chubi_pocket/features/projects/data/projects_repository.dart';
-import 'package:chubi_pocket/features/projects/domain/claim.dart';
 import 'package:chubi_pocket/features/projects/domain/project.dart';
 import 'package:chubi_pocket/features/projects/presentation/widgets/project_common.dart';
 import 'package:chubi_pocket/features/projects/presentation/widgets/project_tx_tiles.dart';
@@ -45,8 +44,8 @@ class _Adapter implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
-/// 0.4.1-2 events app (App-2): the logic behind complete, delete, empty
-/// spots, lump / claim / join, settle booking and multi-payer lines.
+/// The events app: complete, delete, settle booking, my tx's paper link and
+/// multi-payer lines.
 void main() {
   final l = lookupAppLocalizations(const Locale('th'));
 
@@ -134,32 +133,6 @@ void main() {
     });
   });
 
-  test('join (tx form / tx detail): only money bills someone else paid, '
-      'not booked, with no copy of mine', () {
-    ClaimableBill bill({
-      String type = 'expense',
-      bool payerIsMe = false,
-      String? myTx,
-      bool claimed = false,
-    }) => ClaimableBill.tryParse({
-      'pt_id': 'b',
-      'type': type,
-      'date': '2026-10-02',
-      'bill_amount': 900,
-      'payer': {'id': 'm-x', 'name': 'X', 'is_me': payerIsMe},
-      'other': {'id': 'm-x', 'name': 'X'},
-      'direction': 'received',
-      'amount': 300,
-      'my_transaction_id': myTx,
-      'claimed': claimed,
-    })!;
-    expect(bill().joinable, isTrue);
-    expect(bill(payerIsMe: true).joinable, isFalse);
-    expect(bill(myTx: 'tx1').joinable, isFalse);
-    expect(bill(claimed: true).joinable, isFalse);
-    expect(bill(type: 'payback').joinable, isFalse);
-  });
-
   test(
     'event write requests: one call each, the right path and body',
     () async {
@@ -181,43 +154,6 @@ void main() {
       expect(await repo.delete('e1'), 2);
       expect(http.last!.queryParameters, isEmpty);
 
-      // V15 empty spots: a BillPerson, bill_ids only when narrowed.
-      http.body = patchJson();
-      await repo.assignRemovedMember('e1', 'm-lee', to: {'me': true});
-      expect(http.last!.path, '/projects/e1/members/m-lee/assign');
-      expect(http.last!.data, {
-        'to': {'me': true},
-      });
-      await repo.assignRemovedMember(
-        'e1',
-        'm-lee',
-        to: {'person_name': 'Mai'},
-        billIds: ['b1'],
-      );
-      expect((http.last!.data as Map)['bill_ids'], ['b1']);
-
-      // Claim: the person by member / contact / name; the claim body.
-      http.body = {'data': [], 'totals': []};
-      await repo.claimable('e1', contactId: 'c1');
-      expect(http.last!.path, '/projects/e1/claimable');
-      expect(http.last!.queryParameters, {'contact_id': 'c1'});
-      await repo.claimable('e1', personName: 'Mai');
-      expect(http.last!.queryParameters, {'person_name': 'Mai'});
-
-      http.body = {'debts': [], 'effects': {}, 'bills': []};
-      await repo.claimBills('e1', memberId: 'm-lee', billIds: ['b1', 'b2']);
-      expect(http.last!.data, {
-        'member_id': 'm-lee',
-        'bill_ids': ['b1', 'b2'],
-      });
-      await repo.claimBills(
-        'e1',
-        memberId: 'm-lee',
-        billIds: ['b1'],
-        linkTransactionId: 'tx9',
-      );
-      expect((http.last!.data as Map)['link_transaction_id'], 'tx9');
-
       // V12 settle booking answers the booked settle.
       http.body = {
         'settle': {
@@ -228,28 +164,17 @@ void main() {
         },
         'effects': {},
       };
-      final booked = await repo.bookEventSettle(
-        'e1',
-        lines: [
-          {'member_id': 'm-lee', 'account_id': 'a1', 'category_id': null},
-        ],
-      );
+      final booked = await repo.bookEventSettle('e1', accountId: 'a1');
       expect(http.last!.path, '/projects/e1/settle/book');
+      expect(http.last!.data, {'mode': 'simplified', 'account_id': 'a1'});
       expect(booked.myBookedAt, isNotNull);
 
-      // Shared-bill notices / tx detail: apply and disconnect, no body.
-      http.body = {
-        'my_copy': {
-          'connected': true,
-          'transaction': {'id': 'tx1'},
-        },
-        'effects': {},
-      };
-      expect((await repo.applyEventBill('b1')).transactionId, 'tx1');
-      expect(http.last!.path, '/event-bills/b1/apply');
-      http.body = {'my_copy': null, 'effects': {}};
-      expect((await repo.disconnectEventBill('b1')).transactionId, isNull);
-      expect(http.last!.path, '/event-bills/b1/disconnect');
+      // Tx detail: my tx follows / leaves its paper, no body.
+      http.body = {'paper': {'id': 'b1'}, 'effects': {}};
+      await repo.syncMyTransaction('tx1');
+      expect(http.last!.path, '/transactions/tx1/paper-sync');
+      await repo.unlinkMyTransaction('tx1');
+      expect(http.last!.path, '/transactions/tx1/unlink-paper');
     },
   );
 }

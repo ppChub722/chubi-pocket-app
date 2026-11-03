@@ -7,9 +7,13 @@ import '../../atoms/dashed_rect_border.dart';
 import 'avatar.dart';
 import 'avatar_data.dart';
 
-/// [empty] = a spot with nobody in it yet (an event member removed: "( ) ____"
-/// on their bills, to assign).
-enum PersonLevel { name, contact, linked, empty }
+/// How well a person is known (owner 2026-11-03): [name] = a typed name (a
+/// plain person glyph, never initials: those are an app user's default
+/// avatar); [contact] = my contact (its icon); [linked] = my contact using
+/// the app (🔗 on the corner); [joined] = that person joined (no badge: the
+/// members page lists joined people in their own section). [empty] = a spot with nobody in it yet (an event member removed:
+/// "( ) ____" on their bills, to assign).
+enum PersonLevel { name, contact, linked, joined, empty }
 
 class PersonLinkBadge extends StatelessWidget {
   const PersonLinkBadge({this.size = defaultSize, super.key});
@@ -120,7 +124,7 @@ class PersonMark extends StatelessWidget {
             size: size,
           );
     if (level != PersonLevel.linked) return mark;
-    // A touch bigger than other corner badges, the chain nearly filling it
+    // A touch bigger than other corner badges, the glyph nearly filling it
     // (owner 2026-10-23).
     return CornerBadge(
       size: size,

@@ -238,6 +238,27 @@ class EventBillLink extends Equatable {
   /// rows.
   final List<BillShare>? members;
 
+  /// The paper model (`PaperBookRef`): `split_bill` or `event_bill` = `{id,
+  /// amount, description, my_share, in_sync, event?}`; a split bill's
+  /// "event" is the hidden split one ([EventRef.isSplit]).
+  factory EventBillLink.fromPaperRef(
+    Map<String, dynamic> json, {
+    required bool split,
+  }) => EventBillLink(
+    event: !split && json['event'] is Map
+        ? EventRef.fromJson((json['event'] as Map).cast<String, dynamic>())
+        : EventRef(
+            id: json['id'] as String,
+            name: (json['description'] as String?) ?? '',
+            kind: 'split',
+          ),
+    billId: json['id'] as String,
+    linked: true,
+    billAmount: (json['amount'] as num?)?.toDouble() ?? 0,
+    inSync: json['in_sync'] as bool?,
+    editInBill: true,
+  );
+
   factory EventBillLink.fromJson(Map<String, dynamic> json) => EventBillLink(
     event: EventRef.fromJson((json['event'] as Map).cast<String, dynamic>()),
     billId: json['bill_id'] as String,

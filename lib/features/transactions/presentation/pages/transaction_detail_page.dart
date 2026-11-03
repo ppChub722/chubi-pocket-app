@@ -22,9 +22,7 @@ import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
 import '../../../projects/data/projects_repository.dart';
-import '../../../projects/presentation/event_claim.dart';
-import '../../../projects/presentation/widgets/event_bill_sheet.dart'
-    show openEventBill;
+import '../widgets/quick_create_sheet.dart' show openPaperBill;
 import '../../../pending/domain/pending_transaction.dart';
 import '../../data/transactions_repository.dart';
 import '../../domain/link_draft.dart';
@@ -200,15 +198,11 @@ class _LoadedState extends State<_Loaded>
   /// "อัปเดตตามอีเวนต์": my linked tx takes the bill as it is now.
   Future<void> _applyEvent() async {
     final l = AppLocalizations.of(context)!;
-    final repo = context.read<TransactionsRepository>();
+    final projects = context.read<ProjectsRepository>();
     final txCubit = context.read<TransactionsCubit>();
-    final accounts = context.read<AccountsCubit>();
     try {
-      final result = await repo.applyEvent(widget.tx.id);
-      for (final row in result.rows) {
-        txCubit.patchRow(row, afterWrite: true);
-      }
-      accounts.patchBalances(result.accountBalances);
+      await projects.syncMyTransaction(widget.tx.id);
+      await txCubit.refreshOne(widget.tx.id);
       _say(l.txLinkApplied, tone: Tone.success);
     } on ApiException catch (e) {
       _say(errorText(l, e));
@@ -231,32 +225,16 @@ class _LoadedState extends State<_Loaded>
     final projects = context.read<ProjectsRepository>();
     setSaving(true);
     try {
-      // ONE call: my copy tx + my debts of the bill become plain; the bill
-      // is unchanged. My row (and debts) come back through `effects`.
-      await projects.disconnectEventBill(bill.billId);
+      await projects.unlinkMyTransaction(widget.tx.id);
+      if (mounted) {
+        await context.read<TransactionsCubit>().refreshOne(widget.tx.id);
+      }
       _say(l.txLinkDisconnected, tone: Tone.success);
     } on ApiException catch (e) {
       _say(errorText(l, e));
     } finally {
       if (mounted) setSaving(false);
     }
-  }
-
-  /// V10 (tx side): my tx joins ONE bill of an event someone else paid, as
-  /// my copy of it: the event, then the bill (claim sheet), ONE call; the
-  /// row comes back through `effects`.
-  Future<void> _joinBill() async {
-    final picked = await EventPicker.one(
-      context,
-      allowCreate: false,
-      showClosed: false,
-    );
-    if (picked is! ExistingEventTarget || !mounted) return;
-    await showClaimSheet(
-      context,
-      projectId: picked.project.id,
-      linkTransactionId: widget.tx.id,
-    );
   }
 
   Future<void> _pickEvent() async {
@@ -342,7 +320,12 @@ class _LoadedState extends State<_Loaded>
       if (!mounted || isEditing) return;
     }
     if (txEditsAsBill(tx)) {
-      await openEventBill(context, tx.eventBill!.billId);
+      final bill = tx.eventBill!;
+      await openPaperBill(
+        context,
+        bill.billId,
+        projectId: bill.event.isSplit ? null : bill.event.id,
+      );
       return;
     }
     if (!_splitsPrefilled) {
@@ -628,7 +611,10 @@ class _LoadedState extends State<_Loaded>
             txRepo: context.read<TransactionsRepository>(),
             txId: _edited.id,
             amount: _edited.amount,
-            currentProjectId: _edited.eventBill?.event.id ?? _edited.projectId,
+            currentProjectId: switch (_edited.eventBill?.event) {
+              final e? => e.isSplit ? null : e.id,
+              null => _edited.projectId,
+            },
             change: change,
             billId: _edited.eventBill?.billId,
           );
@@ -903,26 +889,6 @@ class _LoadedState extends State<_Loaded>
                           onApplyEvent: canEdit ? _applyEvent : null,
                           onDisconnectEvent: canEdit ? _disconnectEvent : null,
                         ),
-                      // V10: a money tx in no bill yet can join one.
-                      if (!editing &&
-                          canEdit &&
-                          tx.eventBill == null &&
-                          tx.projectId == null &&
-                          (tx.type == TransactionType.expense ||
-                              tx.type == TransactionType.income)) ...[
-                        const SizedBox(height: AppSpacing.md),
-                        InfoBox(
-                          first: true,
-                          rows: [
-                            InfoRow(
-                              key: const ValueKey('txJoinBill'),
-                              label: l.txJoinBill,
-                              showChevron: true,
-                              onTap: isSaving ? null : _joinBill,
-                            ),
-                          ],
-                        ),
-                      ],
                       // "จ่ายคืนให้ ลี ›" / "รับคืนจาก chalee ›" → the person.
                       if (repaymentPerson != null && !editing) ...[
                         const SizedBox(height: AppSpacing.md),

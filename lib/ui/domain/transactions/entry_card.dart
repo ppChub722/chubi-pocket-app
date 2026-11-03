@@ -35,8 +35,21 @@ class EntryCard extends StatelessWidget {
     this.typeBadge,
     this.accentColor,
     this.dateNote,
+    this.bottomRow,
+    this.allowTransfer = true,
+    this.extraTypeChip,
+    this.extraTypeSelected = false,
     super.key,
   });
+
+  /// The card's last row (the debt's กำหนดจ่าย).
+  final Widget? bottomRow;
+
+  /// See [TransactionHeroCard.allowTransfer] / [TransactionHeroCard.extraTypeChip]
+  /// (an event bill: "คืนเงิน" where "โอนเงิน" stands).
+  final bool allowTransfer;
+  final Widget? extraTypeChip;
+  final bool extraTypeSelected;
 
   final TransactionType type;
   final ValueChanged<TransactionType>? onTypeChanged;
@@ -135,6 +148,9 @@ class EntryCard extends StatelessWidget {
       typeBadge: typeBadge,
       accentColor: accentColor,
       dateNote: dateNote,
+      allowTransfer: allowTransfer,
+      extraTypeChip: extraTypeChip,
+      extraTypeSelected: extraTypeSelected,
       inline: true,
       footer: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -163,6 +179,7 @@ class EntryCard extends StatelessWidget {
               flagged: missing.contains(EntryField.category),
             ),
           ],
+          if (bottomRow case final row?) ...[SizedBox(height: gap), row],
         ],
       ),
     );

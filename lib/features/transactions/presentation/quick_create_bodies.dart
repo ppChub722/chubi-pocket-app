@@ -47,96 +47,135 @@ TxCreateBody txCreateBody(DraftFormController c, LinkMode mode) {
   );
 }
 
-/// 0.4.1-2 SA7 — แบ่งกับคน / คนจ่ายแทน (รับแทน) as ONE split-bill call
-/// (`POST /event-bills {split: true}`): [bill] = payer + everyone's share
-/// ("คืนแล้ว" per person), [myBooks] = my copy (tx + debts, wallet,
-/// category, my tags). จ่ายแทน where I also paid part from my wallet is a
-/// bill with two payers (0.4.1-2 multi-payer: `payers` me + them, every
-/// share listed). Null = this form isn't a split bill (no people).
-({Map<String, dynamic> bill, Map<String, dynamic> myBooks})? splitBookBodies(
+typedef PaperBodies = ({
+  Map<String, dynamic> paper,
+  Map<String, dynamic> myBooks,
+
+  /// An event bill with "ลงรายการของฉันเลย" off: the paper only.
+  bool skipMyBooks,
+
+  /// The people (by their place in `paper.people`) marked "คืนแล้ว": a mark
+  /// set after the paper is made.
+  List<int> paidBack,
+});
+
+/// The แบ่ง card as ONE paper (paper model 2026-11-02): a split bill
+/// ([LinkMode.split] I paid, [LinkMode.paid] someone else paid, maybe part
+/// by me) or an event bill ([LinkMode.event]). Every person carries their
+/// share of the whole bill and what they paid; the note is my private note
+/// (owner 2026-11-03: the note row is mine). Null = no people yet.
+PaperBodies? paperBodies(
   DraftFormController c,
-  LinkMode mode,
-) {
-  if (c.isTransfer) return null;
+  LinkMode mode, {
+  Map<String, String> personIds = const {},
+  String? mePersonId,
+}) {
+  if (c.isTransfer || mode == LinkMode.personal) return null;
+  // An edit keeps each person's row (their books stay linked to it).
+  Map<String, dynamic> keep(LinkPerson p) => {
+    ...p.toJson(),
+    'person_id': ?personIds[p.key],
+  };
   final amount = c.amountValue;
-  // Everyone on the แบ่ง rows with what they owe (rows of one person add up).
-  final owed = <String, ({LinkPerson person, double share})>{};
-  for (final s in c.splits.where((s) => s.isComplete)) {
-    final p = LinkPerson(
-      name: s.personName.trim(),
-      contactId: s.contactId,
-      person: s.person,
-    );
-    final had = owed[p.key]?.share ?? 0;
-    owed[p.key] = (person: p, share: had + (s.owedAmount ?? 0));
-  }
-  final LinkPerson? payer;
-  // จ่ายแทน, I paid part too: me + them as payers (123 = me 110 + ลี 13).
+  final people = <Map<String, dynamic>>[];
+  final paidBack = <int>[];
+  LinkPerson? payer;
   var myPaid = 0.0;
-  switch (mode) {
-    case LinkMode.split:
-      if (owed.isEmpty) return null;
-      payer = null;
-    case LinkMode.paid:
-      final by = c.link.paidBy;
-      if (by == null) return null;
-      payer = by;
+  var mine = 0.0;
+  if (mode == LinkMode.event) {
+    final members = c.eventMembers;
+    payer = c.link.eventPayer;
+    mine = c.link.eventMine(amount, members);
+    myPaid = payer == null ? amount : 0;
+    for (final p in members) {
+      if (c.isPaidBack(p) && p != payer) paidBack.add(people.length + 1);
+      people.add({
+        ...keep(p),
+        'share': c.link.eventShareOf(p, amount, members),
+        'paid': p == payer ? amount : 0,
+      });
+    }
+  } else {
+    // Everyone on the แบ่ง rows with what they owe (rows of one person add
+    // up).
+    final owed = <String, ({LinkPerson person, double share})>{};
+    for (final s in c.splits.where((s) => s.isComplete)) {
+      final p = LinkPerson(
+        name: s.personName.trim(),
+        contactId: s.contactId,
+        person: s.person,
+      );
+      final had = owed[p.key]?.share ?? 0;
+      owed[p.key] = (person: p, share: had + (s.owedAmount ?? 0));
+    }
+    if (mode == LinkMode.paid) {
+      payer = c.link.paidBy;
+      if (payer == null) return null;
       myPaid = c.link.myPaid(amount);
-    case LinkMode.personal || LinkMode.event:
-      return null;
+    } else {
+      if (owed.isEmpty) return null;
+      myPaid = amount;
+    }
+    mine = c.myShareFor(mode);
+    var othersShare = 0.0;
+    for (final o in owed.values) {
+      if (o.person == payer) continue;
+      othersShare += o.share;
+      if (c.isPaidBack(o.person)) paidBack.add(people.length + 1);
+      people.add({...keep(o.person), 'share': o.share, 'paid': 0});
+    }
+    // The payer's own share is the rest of the bill.
+    final p = payer;
+    if (p != null) {
+      people.add({
+        ...keep(p),
+        'share': _round2(amount - mine - othersShare),
+        'paid': _round2(amount - myPaid),
+      });
+    }
   }
-  final twoPayers = payer != null && myPaid > 0.005;
-  final mine = c.myShareFor(mode);
-  // One payer: their own share is the rest of the bill (EventBillInput), so
-  // they need not be listed. Two payers: every share is (Σ = the bill).
-  // "คืนแล้ว" on anyone but a payer, me too (SA6).
-  final mePaidBack = payer != null && !twoPayers && c.link.mePaidBack;
-  final others = [
-    for (final o in owed.values)
-      if (o.person != payer) o,
-  ];
-  final payerShare =
-      amount - mine - others.fold<double>(0, (s, o) => s + o.share);
-  final members = <Map<String, dynamic>>[
-    {'me': true, 'share': mine, if (mePaidBack) 'paid_back': true},
-    for (final o in others)
-      {
-        ...o.person.toJson(),
-        'share': o.share,
-        if (c.isPaidBack(o.person)) 'paid_back': true,
-      },
-    if (twoPayers) {...payer.toJson(), 'share': payerShare},
-  ];
+  // "คืน X แล้ว" on my row: my share from my wallet, no debt.
+  final mePaidBack = payer != null && myPaid <= 0.005 && c.link.mePaidBack;
+  final event = mode == LinkMode.event;
+  final debts = event && (c.link.eventBookDebts ?? false);
+  final myTx = !event || c.link.eventBookMine;
   return (
-    bill: {
-      'kind': c.type == TransactionType.income ? 'income' : 'expense',
+    paper: {
+      'type': c.type == TransactionType.income ? 'income' : 'expense',
       'amount': amount,
       'date': _ymd(c.date),
       'description': _text(c.description),
-      'note': _text(c.note),
-      if (twoPayers)
-        'payers': [
-          {'me': true, 'amount': myPaid},
-          {...payer.toJson(), 'amount': amount - myPaid},
-        ]
-      else
-        'payer': payer?.toJson() ?? const {'me': true},
-      'members': members,
+      'split_mode': 'custom',
+      'people': [
+        {
+          'me': true,
+          'person_id': ?mePersonId,
+          'share': _round2(mine),
+          'paid': _round2(myPaid),
+        },
+        ...people,
+      ],
     },
     myBooks: {
-      'on': true,
-      'tx': true,
-      'debt': true,
+      'pay': mePaidBack ? 'wallet' : 'debt',
       // Someone else paid it all: my share takes no wallet ("จ่ายโดย X")
-      // until I paid them back; I paid part: that part is from my wallet.
-      'account_id': payer == null || mePaidBack || twoPayers
-          ? c.account?.id
-          : null,
-      'category_id': c.category?.id,
+      // until I paid them back.
+      'account_id': myPaid > 0.005 || mePaidBack ? c.account?.id : null,
+      'category_id': c.isTransfer ? null : c.category?.id,
       'tag_ids': c.tagIds.toList(),
+      'private_note': _text(c.note),
+      // An event bill's debts now; else the event's lump makes them.
+      if (debts) 'book_debts': true,
+      // Debts without my transaction ("ลงรายการของฉันเลย" off).
+      if (debts && !myTx) 'skip_transaction': true,
     },
+    // Neither: the paper only.
+    skipMyBooks: !myTx && !debts,
+    paidBack: paidBack,
   );
 }
+
+double _round2(double v) => (v * 100).roundToDouble() / 100;
 
 typedef DebtRecordBody = ({
   String key,

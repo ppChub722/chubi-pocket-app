@@ -50,29 +50,47 @@ class DraftFieldRow extends StatelessWidget {
     return widest.ceilToDouble() + AppSpacing.xs;
   }
 
+  /// An input or a picked row takes the rest of the line; anything else
+  /// (a switch, a chip) sits at the end (owner 2026-11-03: label left, value
+  /// right).
+  bool get _fills => child is AppInput || child is PickedRowFrame;
+
   @override
   Widget build(BuildContext context) {
+    final fills = _fills;
+    final text = Padding(
+      padding: EdgeInsets.only(top: dense ? 0 : 10),
+      child: Text(
+        label,
+        maxLines: fills ? 1 : 2,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
     return Row(
       crossAxisAlignment: dense
           ? CrossAxisAlignment.center
           : CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: labelWidthOf(context),
-          child: Padding(
-            padding: EdgeInsets.only(top: dense ? 0 : 10),
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+      children: fills
+          ? [
+              text,
+              const SizedBox(width: AppSpacing.md),
+              Expanded(child: child),
+            ]
+          : [
+              Expanded(child: text),
+              const SizedBox(width: AppSpacing.md),
+              // No IntrinsicWidth: a value may hold a LayoutBuilder (the event
+              // chip), which can't report one.
+              Flexible(
+                child: Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: child,
+                ),
               ),
-            ),
-          ),
-        ),
-        Expanded(child: child),
-      ],
+            ],
     );
   }
 }
@@ -182,8 +200,6 @@ class EventRow extends StatelessWidget {
     this.onLongPress,
     this.variant = SplitEventVariant.full,
     this.label,
-    this.onBookDebt,
-    this.bookDebt = true,
     super.key,
   });
 
@@ -194,11 +210,6 @@ class EventRow extends StatelessWidget {
   final bool editing;
   final VoidCallback? onLongPress;
   final SplitEventVariant variant;
-
-  /// At the end of the row, "จดหนี้ด้วย": the bill's debts go in my debts too.
-  /// Null = no switch.
-  final ValueChanged<bool>? onBookDebt;
-  final bool bookDebt;
 
   /// Replaces "อีเวนต์" as the row's label ("เพิ่มในอีเวนต์").
   final String? label;
@@ -217,49 +228,9 @@ class EventRow extends StatelessWidget {
     );
     final custom = label;
     final Widget row = custom != null
-        // Its own label: as wide as the words, not the forms' shared column.
-        ? Row(
-            children: [
-              Text(
-                custom,
-                maxLines: 1,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: value,
-                ),
-              ),
-              if (onBookDebt != null) ...[
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  l.txLinkBookDebt,
-                  maxLines: 1,
-                  style: Theme.of(context).textTheme.labelMedium,
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                AppSwitch(
-                  value: bookDebt,
-                  onChanged: onBookDebt,
-                  semanticLabel: l.txLinkBookDebt,
-                ),
-              ],
-            ],
-          )
+        ? DraftFieldRow(label: custom, dense: true, child: value)
         : _compact
-        ? DraftFieldRow(
-            label: l.quickEventLabel,
-            dense: true,
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: value,
-            ),
-          )
+        ? DraftFieldRow(label: l.quickEventLabel, dense: true, child: value)
         : AppDetailRow(
             label: l.quickEventLabel,
             trailing: Align(
@@ -357,10 +328,7 @@ class RecurringLinkRow extends StatelessWidget {
         ? DraftFieldRow(
             label: l.txRecurringRowLabel,
             dense: true,
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: value,
-            ),
+            child: value,
           )
         : AppDetailRow(
             label: l.txRecurringRowLabel,

@@ -68,6 +68,17 @@ class AutoSyncSetting extends StatelessWidget {
         label: which == AutoSyncSwitch.sync
             ? l.settingsGroupSync
             : l.settingsAcceptTitle,
+        // What the switch does, and that it is one value for the account.
+        caption: switch ((which, kind)) {
+          (AutoSyncSwitch.accept, AutoSyncKind.events) =>
+            l.settingsAutoAcceptEventsCaption,
+          (AutoSyncSwitch.sync, AutoSyncKind.events) =>
+            l.settingsAutoSyncEventsCaption,
+          (AutoSyncSwitch.accept, AutoSyncKind.debts) =>
+            l.settingsAutoAcceptDebtsCaption,
+          (AutoSyncSwitch.sync, AutoSyncKind.debts) =>
+            l.settingsAutoSyncDebtsCaption,
+        },
         value: value,
         onChanged: onChanged,
       ),
@@ -88,11 +99,11 @@ Widget autoSyncSection(
   description: kind == AutoSyncKind.events
       ? l.settingsAutoEventsDescription
       : l.settingsAutoDebtsDescription,
+  // Event invites are an account-wide request switch: only on the
+  // notification settings page (owner 2026-11-03).
   children: [
     AutoSyncSetting(kind: kind, which: AutoSyncSwitch.accept),
     AutoSyncSetting(kind: kind),
-    if (kind == AutoSyncKind.events)
-      const RequestAutoSetting(which: AutoSwitch.acceptEventInvites),
   ],
 );
 

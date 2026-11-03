@@ -115,12 +115,16 @@ Widget buildOthersPage(BuildContext context) {
           ),
           HubUse(
             wide: true,
-            label: 'NotificationTile — one-tap: add the debt (split created)',
+            label: 'NotificationTile — split bill invite: join / decline',
             page: 'Notifications inbox',
             child: notifCard(
               notif(
-                NotificationType.splitCreated,
-                payload: const {'amount': 450, 'currency': 'THB'},
+                NotificationType.billInvite,
+                payload: const {
+                  'description': 'Dinner',
+                  'amount': 900,
+                  'my_share': 300,
+                },
               ),
             ),
           ),
@@ -197,16 +201,33 @@ Widget buildOthersPage(BuildContext context) {
           HubUse(
             wide: true,
             label:
-                'NotificationTile — shared bill, my switch off: "เพิ่มในสมุด" '
-                '(one call, apply)',
+                'NotificationTile — new event bill, my switch off: '
+                '"ลงรายการ" (the bill form)',
             page: 'Notifications inbox',
             child: notifCard(
               notif(
-                NotificationType.sharedBillCreated,
+                NotificationType.billNew,
                 payload: const {
                   'description': 'Dinner',
+                  'project_name': 'Chiang Mai trip',
                   'amount': 1200,
-                  'my_amount': 400,
+                  'my_share': 400,
+                  'applied': false,
+                },
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'NotificationTile — bill changed: "อัปเดตตาม" / "ข้าม"',
+            page: 'Notifications inbox',
+            child: notifCard(
+              notif(
+                NotificationType.billChanged,
+                payload: const {
+                  'description': 'Taxi',
+                  'amount': 300,
+                  'my_share': 100,
                   'applied': false,
                 },
               ),
@@ -215,17 +236,32 @@ Widget buildOthersPage(BuildContext context) {
           HubUse(
             wide: true,
             label:
-                'NotificationTile — event bill deleted, my switch off: '
-                '"ลบตาม" / "เก็บไว้"',
+                'NotificationTile — taken off a bill: "ลบรายการของฉัน" / '
+                '"เก็บไว้"',
             page: 'Notifications inbox',
             child: notifCard(
               notif(
-                NotificationType.sharedBillDeleted,
+                NotificationType.billRemoved,
                 payload: const {
                   'description': 'Taxi',
-                  'project_name': 'Chiang Mai trip',
                   'amount': 300,
                   'applied': false,
+                },
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'NotificationTile — partner paid me back: "บันทึกรับคืน"',
+            page: 'Notifications inbox',
+            child: notifCard(
+              notif(
+                NotificationType.debtRepaid,
+                payload: const {
+                  'person_name': 'Lee',
+                  'key': 'c:c2',
+                  'amount': 250,
+                  'direction': 'received',
                 },
               ),
             ),
@@ -256,14 +292,14 @@ Widget buildOthersPage(BuildContext context) {
           ),
           HubUse(
             wide: true,
-            label: 'NotificationTile — read + actioned split',
+            label: 'NotificationTile — read + answered bill',
             page: 'Notifications inbox',
             child: notifCard(
               notif(
-                NotificationType.splitCreated,
+                NotificationType.billNew,
                 readAt: now,
                 actionedAt: now,
-                payload: const {'amount': 450, 'currency': 'THB'},
+                payload: const {'description': 'Dinner', 'my_share': 450},
               ),
             ),
           ),
@@ -273,8 +309,11 @@ Widget buildOthersPage(BuildContext context) {
             page: 'Notifications inbox',
             child: notifCard(
               notif(
-                NotificationType.projectAdded,
-                payload: const {'project_name': 'Chiang Mai trip'},
+                NotificationType.billMoved,
+                payload: const {
+                  'description': 'Taxi',
+                  'project_name': 'Chiang Mai trip',
+                },
               ),
             ),
           ),
@@ -284,7 +323,7 @@ Widget buildOthersPage(BuildContext context) {
             page: 'Notifications inbox',
             child: notifCard(
               notif(
-                NotificationType.projectAdded,
+                NotificationType.eventDeleted,
                 readAt: now,
                 payload: const {'project_name': 'Chiang Mai trip'},
               ),

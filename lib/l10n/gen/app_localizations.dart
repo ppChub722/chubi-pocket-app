@@ -1988,6 +1988,30 @@ abstract class AppLocalizations {
   /// **'Invite member'**
   String get projectMembersInvite;
 
+  /// No description provided for @projectMembersAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add member'**
+  String get projectMembersAdd;
+
+  /// No description provided for @projectMemberInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite'**
+  String get projectMemberInvite;
+
+  /// No description provided for @projectMemberInvited.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited'**
+  String get projectMemberInvited;
+
+  /// No description provided for @projectMemberInviteSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite sent to {name}'**
+  String projectMemberInviteSent(String name);
+
   /// No description provided for @projectLeave.
   ///
   /// In en, this message translates to:
@@ -5557,11 +5581,29 @@ abstract class AppLocalizations {
   /// **'Whether this category counts in reports and is used for fees'**
   String get categorySettingsSectionDescription;
 
-  /// No description provided for @projectMembersDescription.
+  /// No description provided for @projectMembersUsers.
   ///
   /// In en, this message translates to:
-  /// **'People currently taking part in this event'**
-  String get projectMembersDescription;
+  /// **'App users'**
+  String get projectMembersUsers;
+
+  /// No description provided for @projectMembersUsersDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Taking part with their own account'**
+  String get projectMembersUsersDescription;
+
+  /// No description provided for @projectMembersNames.
+  ///
+  /// In en, this message translates to:
+  /// **'Names'**
+  String get projectMembersNames;
+
+  /// No description provided for @projectMembersNamesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Names and contacts of yours, not taking part with an account'**
+  String get projectMembersNamesDescription;
 
   /// No description provided for @projectMembersPendingDescription.
   ///
@@ -9116,6 +9158,12 @@ abstract class AppLocalizations {
   /// **'Payback'**
   String get evbTypePayback;
 
+  /// No description provided for @evbPaybackNeedsPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick who paid back and who got it (two people)'**
+  String get evbPaybackNeedsPeople;
+
   /// No description provided for @evbPeople.
   ///
   /// In en, this message translates to:
@@ -9199,6 +9247,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Members'**
   String get evbMembersTitle;
+
+  /// No description provided for @evbBillChangedReopen.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone changed this bill first; nothing was saved. Open it again to edit.'**
+  String get evbBillChangedReopen;
+
+  /// No description provided for @evbLeaveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave this bill'**
+  String get evbLeaveTitle;
+
+  /// No description provided for @evbLeaveKeepBooks.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep my transaction and debts (as plain records)'**
+  String get evbLeaveKeepBooks;
+
+  /// No description provided for @evbLeaveDeleteBooks.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete my transaction and debts of this bill'**
+  String get evbLeaveDeleteBooks;
+
+  /// No description provided for @evbLumpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record the debt with {name}'**
+  String evbLumpTitle(String name);
+
+  /// No description provided for @evbLumpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Every bill with them not recorded yet becomes one debt ({amount}); bills already recorded are not counted again.'**
+  String evbLumpBody(String amount);
+
+  /// No description provided for @evbMembersAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get evbMembersAdd;
 
   /// No description provided for @evbManageMembers.
   ///
@@ -10486,7 +10576,7 @@ abstract class AppLocalizations {
   /// No description provided for @txLinkTabSplit.
   ///
   /// In en, this message translates to:
-  /// **'Split'**
+  /// **'Split the bill with others'**
   String get txLinkTabSplit;
 
   /// No description provided for @txLinkBillLabel.
@@ -10570,8 +10660,14 @@ abstract class AppLocalizations {
   /// No description provided for @txLinkBookDebt.
   ///
   /// In en, this message translates to:
-  /// **'Record the debts too'**
+  /// **'Record this bill\'s debts now'**
   String get txLinkBookDebt;
+
+  /// No description provided for @txLinkBookMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Put it in my books now'**
+  String get txLinkBookMine;
 
   /// No description provided for @txLinkWalletNotOut.
   ///
@@ -11971,6 +12067,30 @@ abstract class AppLocalizations {
   /// **'Accept event invites automatically'**
   String get settingsAutoEventInvites;
 
+  /// No description provided for @settingsAutoAcceptEventsCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'A bill someone adds to an event goes in my books at once | every event'**
+  String get settingsAutoAcceptEventsCaption;
+
+  /// No description provided for @settingsAutoSyncEventsCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'When someone edits a bill I booked, my books follow | every event'**
+  String get settingsAutoSyncEventsCaption;
+
+  /// No description provided for @settingsAutoAcceptDebtsCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'A split bill someone invites me to: join and book it at once | everyone'**
+  String get settingsAutoAcceptDebtsCaption;
+
+  /// No description provided for @settingsAutoSyncDebtsCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'When someone edits a split bill I booked, my books follow | everyone'**
+  String get settingsAutoSyncDebtsCaption;
+
   /// No description provided for @settingsAutoContactLinks.
   ///
   /// In en, this message translates to:
@@ -12462,6 +12582,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Splits'**
   String get notifColumnAutoSplit;
+
+  /// No description provided for @notifBillInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} invited you to the bill {what}'**
+  String notifBillInvite(String who, String what);
+
+  /// No description provided for @notifBillChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} edited the bill {what}'**
+  String notifBillChanged(String who, String what);
+
+  /// No description provided for @notifBillRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} took you off the bill {what}'**
+  String notifBillRemoved(String who, String what);
+
+  /// No description provided for @notifBillOwnerChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'You own the bill {what} now'**
+  String notifBillOwnerChanged(String what);
+
+  /// No description provided for @notifBillMovedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} moved the bill {what} into the event {event}'**
+  String notifBillMovedIn(String who, String what, String event);
+
+  /// No description provided for @notifBillMovedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} moved the bill {what} out of its event'**
+  String notifBillMovedOut(String who, String what);
+
+  /// No description provided for @notifDebtRepaidToMe.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} paid you back'**
+  String notifDebtRepaidToMe(String who);
+
+  /// No description provided for @notifDebtRepaidByMe.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} recorded your repayment'**
+  String notifDebtRepaidByMe(String who);
+
+  /// No description provided for @notifEventDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} deleted the event {name}; its bills stay as split bills'**
+  String notifEventDeleted(String who, String name);
+
+  /// No description provided for @notifActionJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Join'**
+  String get notifActionJoin;
+
+  /// No description provided for @notifActionClaim.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to my books'**
+  String get notifActionClaim;
+
+  /// No description provided for @notifActionDeleteMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete mine'**
+  String get notifActionDeleteMine;
+
+  /// No description provided for @notifActionRecordReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Record it'**
+  String get notifActionRecordReceived;
+
+  /// No description provided for @notifActionRecordPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Record it'**
+  String get notifActionRecordPaid;
+
+  /// No description provided for @notifGroupDebts.
+  ///
+  /// In en, this message translates to:
+  /// **'Debts'**
+  String get notifGroupDebts;
+
+  /// No description provided for @notifSetBillInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone adds me to a bill'**
+  String get notifSetBillInvite;
+
+  /// No description provided for @notifSetBillRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m taken off a bill'**
+  String get notifSetBillRemoved;
+
+  /// No description provided for @notifSetBillOwnerChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'I become a bill\'s owner'**
+  String get notifSetBillOwnerChanged;
+
+  /// No description provided for @notifSetBillMoved.
+  ///
+  /// In en, this message translates to:
+  /// **'My bill moves to another event'**
+  String get notifSetBillMoved;
+
+  /// No description provided for @notifSetDebtRepaid.
+  ///
+  /// In en, this message translates to:
+  /// **'My debt partner records a repayment'**
+  String get notifSetDebtRepaid;
+
+  /// No description provided for @notifSetEventDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'An event I\'m in is deleted'**
+  String get notifSetEventDeleted;
+
+  /// No description provided for @projectLeavePickOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Who owns it next?'**
+  String get projectLeavePickOwner;
 }
 
 class _AppLocalizationsDelegate

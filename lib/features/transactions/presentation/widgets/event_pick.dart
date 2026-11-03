@@ -24,13 +24,11 @@ class RemoveFromEvent extends EventTarget {
   const RemoveFromEvent();
 }
 
-/// The tx detail's event pick, on the 0.4.1-2 endpoints only (V16 retires
-/// quick / bills / my-books). [billId]: the bill my tx belongs to
-/// (`event_bill.bill_id`): another event moves the bill (PUT /event-bills
-/// move, every copy stays connected); leaving only disconnects my copy (POST
-/// /event-bills/{id}/disconnect; the bill stays, rule f). Not in a bill yet:
-/// my tx becomes a bill I paid in that event ([amount] = my share, the PUT
-/// /transactions อีเวนต์ link, as the tab does); a new event is made first.
+/// The tx detail's event pick. [billId]: the paper my tx belongs to: another
+/// event moves the paper (every copy stays connected); leaving only unlinks
+/// my tx (the paper stays). Not in a paper yet: my tx becomes a bill I paid
+/// in that event ([amount] = my share, the PUT /transactions อีเวนต์ link,
+/// as the tab does); a new event is made first.
 Future<void> applyEventChange(
   ProjectsRepository repo, {
   required TransactionsRepository txRepo,
@@ -41,25 +39,22 @@ Future<void> applyEventChange(
   String? billId,
 }) async {
   if (billId != null) {
+    final String to;
     switch (change) {
       case RemoveFromEvent():
-        await repo.disconnectEventBill(billId);
+        await repo.unlinkMyTransaction(txId);
+        return;
       case ExistingEventTarget(:final project):
         if (project.id == currentProjectId) return;
-        await repo.rebookEventBill(
-          billId,
-          myBooks: const {'on': true},
-          move: {'project_id': project.id},
-        );
+        to = project.id;
       case NewEventTarget(:final name):
-        await repo.rebookEventBill(
-          billId,
-          myBooks: const {'on': true},
-          move: {
-            'new_event': {'name': name},
-          },
-        );
+        to = (await repo.create(name: name)).project.id;
     }
+    await repo.movePaper(
+      billId,
+      fromProjectId: currentProjectId,
+      toProjectId: to,
+    );
     return;
   }
   final String projectId;

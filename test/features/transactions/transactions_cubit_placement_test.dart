@@ -104,6 +104,7 @@ class _Repo extends Fake implements TransactionsRepository {
     List<String>? tagIds,
     bool? alsoUpdateLink,
     Map<String, dynamic>? link,
+    String? privateNote,
   }) async => next!;
 }
 
