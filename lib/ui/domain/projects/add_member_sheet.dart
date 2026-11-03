@@ -103,6 +103,7 @@ class _AddMemberSheetState extends State<AddMemberSheet> {
     return FormSheet(
       title: l.title,
       primaryLabel: l.submit,
+      primaryKind: ButtonIconKind.add,
       onPrimary: _submit,
       saving: _saving,
       dirty: _name.text.trim().isNotEmpty || _email.text.trim().isNotEmpty,

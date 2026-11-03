@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../atoms/app_button.dart';
+import '../../tokens/button_icon_kind.dart';
 import '../../atoms/app_card.dart';
 import '../../atoms/app_chip.dart';
 import '../../atoms/app_input.dart';
@@ -272,6 +273,7 @@ class _SavingMoveSheetState extends State<SavingMoveSheet> {
       title: widget.title,
       footer: AppButton(
         label: widget.saveLabel,
+        kind: ButtonIconKind.save,
         expand: true,
         submits: true,
         onPressed: ok ? _save : null,

@@ -510,6 +510,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
           : '',
       cta: _filtered
           ? AppButton(
+              kind: ButtonIconKind.clear,
               label: l.transactionsClearFilters,
               variant: AppButtonVariant.tonal,
               onPressed: _clearFilters,

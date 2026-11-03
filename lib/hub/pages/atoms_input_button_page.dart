@@ -89,6 +89,26 @@ class _ButtonPageState extends State<_ButtonPage> {
           ),
         ),
         HubDemo(
+          title: 'kind — icon by role',
+          note:
+              'AppButton(kind:) takes its icon from ButtonIconKind, one table '
+              'for the whole app (Save, Cancel, Clear, ...). An explicit icon: '
+              'wins. viewAll puts its icon after the label. Not set = no icon.',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final k in ButtonIconKind.values)
+                AppButton(
+                  label: k.name,
+                  kind: k,
+                  variant: AppButtonVariant.outlined,
+                  onPressed: () {},
+                ),
+            ],
+          ),
+        ),
+        HubDemo(
           title: 'submits — offline',
           note:
               'A button that sends to the server (save, submit, sign in, '

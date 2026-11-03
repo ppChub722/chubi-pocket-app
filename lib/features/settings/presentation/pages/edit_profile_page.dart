@@ -520,6 +520,7 @@ class _EditProfilePageState extends State<EditProfilePage>
           onTap: () => _pick(AvatarSource.icon),
           actions: [
             AppButton(
+              kind: ButtonIconKind.photo,
               label: l.profilePictureEdit,
               variant: AppButtonVariant.outlined,
               size: AppButtonSize.chip,
@@ -541,6 +542,7 @@ class _EditProfilePageState extends State<EditProfilePage>
             onTap: () => _pick(c.provider),
             actions: [
               AppButton(
+                kind: ButtonIconKind.photo,
                 label: l.connectionsPhotoUpdate,
                 variant: AppButtonVariant.outlined,
                 size: AppButtonSize.chip,
@@ -548,6 +550,7 @@ class _EditProfilePageState extends State<EditProfilePage>
                 onPressed: _busy ? null : () => _importPhoto(c),
               ),
               AppButton(
+                kind: ButtonIconKind.delete,
                 label: l.commonDelete,
                 variant: AppButtonVariant.destructiveOutlined,
                 size: AppButtonSize.chip,

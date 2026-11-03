@@ -1,4 +1,5 @@
 import '../atoms/app_icon_button.dart';
+import '../tokens/button_icon_kind.dart';
 import 'package:flutter/material.dart';
 
 import '../atoms/app_button.dart';
@@ -131,6 +132,7 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
             Expanded(
               child: AppButton(
                 label: strings.clear,
+                kind: ButtonIconKind.clear,
                 variant: AppButtonVariant.outlined,
                 onPressed: () => _set(<DateTime>{}),
               ),
@@ -141,6 +143,7 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
             flex: 2,
             child: AppButton(
               label: widget.confirmLabel(_picked.length),
+              kind: ButtonIconKind.apply,
               expand: true,
               onPressed: _picked.isEmpty
                   ? null

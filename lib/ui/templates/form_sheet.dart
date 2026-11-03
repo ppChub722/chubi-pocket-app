@@ -6,6 +6,7 @@ import '../molecules/confirm_dialog.dart';
 import '../organisms/app_sheet.dart';
 import '../atoms/busy_scope.dart';
 import '../tokens/app_spacing.dart';
+import '../tokens/button_icon_kind.dart';
 
 class FormSheet extends StatelessWidget {
   const FormSheet({
@@ -18,6 +19,7 @@ class FormSheet extends StatelessWidget {
     this.saving = false,
     this.dirty = false,
     this.destructive = false,
+    this.primaryKind,
     super.key,
   });
 
@@ -34,6 +36,9 @@ class FormSheet extends StatelessWidget {
   final bool saving;
   final bool dirty;
   final bool destructive;
+
+  /// Null = delete when [destructive], save otherwise.
+  final ButtonIconKind? primaryKind;
 
   Future<void> _close(BuildContext context) async {
     if (!dirty) {
@@ -70,6 +75,7 @@ class FormSheet extends StatelessWidget {
                 Expanded(
                   child: AppButton(
                     label: cancelLabel ?? s.cancel,
+                    kind: ButtonIconKind.cancel,
                     variant: AppButtonVariant.outlined,
                     size: AppButtonSize.large,
                     expand: true,
@@ -81,6 +87,11 @@ class FormSheet extends StatelessWidget {
               Expanded(
                 child: AppButton(
                   label: primaryLabel,
+                  kind:
+                      primaryKind ??
+                      (destructive
+                          ? ButtonIconKind.delete
+                          : ButtonIconKind.save),
                   variant: destructive
                       ? AppButtonVariant.destructive
                       : AppButtonVariant.primary,

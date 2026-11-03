@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/app_button.dart';
+import '../tokens/button_icon_kind.dart';
 
 class ModeActionBar extends StatelessWidget {
   const ModeActionBar({
@@ -44,6 +45,7 @@ class ModeActionBar extends StatelessWidget {
             Expanded(
               child: AppButton(
                 label: cancelLabel,
+                kind: ButtonIconKind.cancel,
                 variant: AppButtonVariant.outlined,
                 size: AppButtonSize.large,
                 expand: true,
@@ -73,6 +75,7 @@ class ModeActionBar extends StatelessWidget {
             Expanded(
               child: AppButton(
                 label: saveLabel,
+                kind: ButtonIconKind.save,
                 size: AppButtonSize.large,
                 expand: true,
                 loading: saving,

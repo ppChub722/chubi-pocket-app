@@ -892,6 +892,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         children: [
           if (d.items.hasMore)
             AppButton(
+              kind: ButtonIconKind.viewAll,
               label: l.bgItemsMore,
               variant: AppButtonVariant.outlined,
               onPressed: _itemsBusy ? null : _loadMoreItems,
@@ -920,6 +921,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       onRetryMore: _loadAllPeriods,
       footer: more
           ? AppButton(
+              kind: ButtonIconKind.viewAll,
               label: l.bgPeriodsAll,
               variant: AppButtonVariant.outlined,
               onPressed: _periodsBusy ? null : _loadAllPeriods,

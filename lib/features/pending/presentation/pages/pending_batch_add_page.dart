@@ -162,6 +162,7 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   AppButton(
+                    kind: ButtonIconKind.save,
                     label: l.pendingSaveAsDrafts(n),
                     expand: true,
                     loading: _saving,
@@ -169,6 +170,7 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
                     onPressed: n == 0 ? null : () => _save(submit: false),
                   ),
                   AppButton(
+                    kind: ButtonIconKind.submit,
                     label: l.pendingSubmitAllNow(n),
                     variant: AppButtonVariant.text,
                     submits: true,

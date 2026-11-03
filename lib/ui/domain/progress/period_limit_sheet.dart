@@ -192,6 +192,7 @@ class _PeriodLimitSheetState extends State<_PeriodLimitSheet> {
                 padding: const EdgeInsets.only(top: AppSpacing.sm),
                 child: AppButton(
                   label: widget.resetLabel,
+                  kind: ButtonIconKind.reset,
                   variant: AppButtonVariant.text,
                   size: AppButtonSize.chip,
                   onPressed: () => setState(

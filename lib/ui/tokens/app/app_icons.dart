@@ -131,6 +131,9 @@ abstract final class AppIcons {
   static const copy = Icons.content_copy;
   static const download = Icons.file_download_outlined;
   static const send = Icons.send_outlined;
+  static const today = Icons.today;
+  static const photo = Icons.photo_camera_outlined;
+  static const skip = Icons.skip_next;
   static const importSlip = Icons.document_scanner_outlined;
   static const chat = Icons.chat_bubble_outline;
   static const logout = Icons.logout;
@@ -272,6 +275,9 @@ abstract final class AppIcons {
       'share': share,
       'copy': copy,
       'send': send,
+      'today': today,
+      'photo': photo,
+      'skip': skip,
       'importSlip': importSlip,
       'chat': chat,
       'logout': logout,

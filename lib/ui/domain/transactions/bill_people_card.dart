@@ -148,6 +148,7 @@ class BillPeopleCard extends StatelessWidget {
       actions: [
         if (showEqually)
           AppButton(
+            kind: ButtonIconKind.split,
             label: l.txSplitEqually,
             variant: AppButtonVariant.outlined,
             size: AppButtonSize.control,

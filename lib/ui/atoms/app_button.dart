@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/app_spacing.dart';
+import '../tokens/button_icon_kind.dart';
 import '../tokens/chip_size.dart';
 import 'busy_scope.dart';
 import 'connection_scope.dart';
@@ -40,6 +41,7 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.iconColor,
     this.trailingIcon,
+    this.kind,
     this.color,
     this.variant = AppButtonVariant.primary,
     this.size = AppButtonSize.regular,
@@ -58,6 +60,15 @@ class AppButton extends StatelessWidget {
 
   /// After the label, e.g. ▾ on a button that opens a menu.
   final IconData? trailingIcon;
+
+  /// The button's role; its icon comes from [ButtonIconKind] unless [icon] /
+  /// [trailingIcon] is given.
+  final ButtonIconKind? kind;
+
+  IconData? get _icon => icon ?? (kind?.trailing == false ? kind!.icon : null);
+
+  IconData? get _trailingIcon =>
+      trailingIcon ?? (kind?.trailing == true ? kind!.icon : null);
 
   /// Text and outlined only: the label / border colour in place of primary,
   /// e.g. a tone's colour on a tinted message.
@@ -229,18 +240,18 @@ class AppButton extends StatelessWidget {
       softWrap: false,
       overflow: TextOverflow.ellipsis,
     );
-    if (icon == null && trailingIcon == null) return text;
+    if (_icon == null && _trailingIcon == null) return text;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (icon != null) ...[
-          Icon(icon, size: iconSize, color: iconColor),
+        if (_icon != null) ...[
+          Icon(_icon, size: iconSize, color: iconColor),
           SizedBox(width: gap),
         ],
         Flexible(child: text),
-        if (trailingIcon != null) ...[
+        if (_trailingIcon != null) ...[
           SizedBox(width: gap),
-          Icon(trailingIcon, size: iconSize + 4),
+          Icon(_trailingIcon, size: iconSize + 4),
         ],
       ],
     );

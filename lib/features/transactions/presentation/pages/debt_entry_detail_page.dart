@@ -1048,6 +1048,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                             widget.detail.balance.person.name,
                           ),
                           trailing: AppButton(
+                            kind: ButtonIconKind.disconnect,
                             key: const ValueKey('debtDisconnectPartner'),
                             label: l.txLinkDisconnect,
                             variant: AppButtonVariant.outlined,

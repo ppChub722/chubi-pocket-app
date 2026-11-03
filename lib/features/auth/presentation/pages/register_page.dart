@@ -180,6 +180,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
               ],
               submit: AppButton(
+                kind: ButtonIconKind.submit,
                 label: l.authRegisterSubmit,
                 submits: true,
                 onPressed: isSubmitting ? null : _submit,

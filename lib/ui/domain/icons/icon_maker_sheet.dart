@@ -1565,11 +1565,13 @@ Future<Color?> _showColorWheelDialog(BuildContext context, Color seed) {
       actions: [
         AppButton(
           label: l.commonCancel,
+          kind: ButtonIconKind.cancel,
           variant: AppButtonVariant.text,
           onPressed: () => Navigator.of(ctx).pop(),
         ),
         AppButton(
           label: l.colorPickerUse,
+          kind: ButtonIconKind.apply,
           onPressed: () => Navigator.of(ctx).pop(selected),
         ),
       ],

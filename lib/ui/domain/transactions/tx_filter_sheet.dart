@@ -574,6 +574,7 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
           Expanded(
             child: AppButton(
               label: _l.clear,
+              kind: ButtonIconKind.clear,
               variant: AppButtonVariant.outlined,
               expand: true,
               onPressed: _clear,
@@ -584,6 +585,7 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
             flex: 2,
             child: AppButton(
               label: _l.apply,
+              kind: ButtonIconKind.apply,
               expand: true,
               onPressed: () => widget.onApply(_f),
             ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../atoms/app_button.dart';
+import '../tokens/button_icon_kind.dart';
 import '../atoms/app_icon.dart';
 import '../atoms/ui_config.dart';
 import '../tokens/app/app_icons.dart';
@@ -43,6 +44,7 @@ class LoadMoreErrorRow extends StatelessWidget {
           if (onRetry != null)
             AppButton(
               label: strings.retry,
+              kind: ButtonIconKind.retry,
               variant: AppButtonVariant.text,
               onPressed: onRetry,
             ),

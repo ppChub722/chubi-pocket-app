@@ -176,6 +176,7 @@ class _PendingPageState extends State<PendingPage> {
           : ShellChromeHider(
               child: PinnedBar(
                 child: AppButton(
+                  kind: ButtonIconKind.submit,
                   label: l.pendingSubmitSelected(_selected.length),
                   expand: true,
                   loading: _submitting,

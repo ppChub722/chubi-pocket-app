@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
+import '../../tokens/button_icon_kind.dart';
 import '../../atoms/app_button.dart';
 import '../../atoms/app_chip.dart';
 import '../../atoms/app_input.dart';
@@ -77,6 +78,7 @@ class _RecurrenceSheetState extends State<_RecurrenceSheet> {
           Expanded(
             child: AppButton(
               label: strings.cancel,
+              kind: ButtonIconKind.cancel,
               variant: AppButtonVariant.outlined,
               size: AppButtonSize.large,
               expand: true,
@@ -87,6 +89,7 @@ class _RecurrenceSheetState extends State<_RecurrenceSheet> {
           Expanded(
             child: AppButton(
               label: l.commonOk,
+              kind: ButtonIconKind.confirm,
               size: AppButtonSize.large,
               expand: true,
               onPressed: () => Navigator.of(context).pop(_rule),
