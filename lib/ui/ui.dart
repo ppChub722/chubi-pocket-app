@@ -68,6 +68,7 @@ export 'molecules/social_sign_in_cards.dart';
 export 'molecules/card_grid.dart';
 export 'molecules/segmented_bar.dart';
 export 'molecules/segmented_choice.dart';
+export 'tokens/button_icon_kind.dart';
 export 'tokens/chip_size.dart';
 export 'tokens/hero_colors.dart';
 export 'tokens/hero_metrics.dart';

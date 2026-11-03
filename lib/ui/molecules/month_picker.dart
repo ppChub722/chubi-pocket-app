@@ -1,4 +1,5 @@
 import '../atoms/app_icon_button.dart';
+import '../tokens/button_icon_kind.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -107,6 +108,7 @@ class _MonthPickerGridState extends State<MonthPickerGrid> {
             const SizedBox(height: AppSpacing.md),
             AppButton(
               label: l.thisMonth,
+              kind: ButtonIconKind.today,
               variant: AppButtonVariant.tonal,
               expand: true,
               onPressed: () => widget.onPicked(thisMonth),

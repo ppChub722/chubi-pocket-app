@@ -251,6 +251,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
                       ),
                 actions: [
                   AppButton(
+                    kind: ButtonIconKind.photo,
                     label: c.photo == null
                         ? l.connectionsPhotoImport
                         : l.connectionsPhotoUpdate,
@@ -263,6 +264,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
                   ),
                   if (c.photo != null)
                     AppButton(
+                      kind: ButtonIconKind.delete,
                       label: l.commonDelete,
                       variant: AppButtonVariant.destructiveOutlined,
                       size: AppButtonSize.chip,

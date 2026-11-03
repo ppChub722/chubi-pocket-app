@@ -1,4 +1,5 @@
 import '../atoms/app_icon_button.dart';
+import '../tokens/button_icon_kind.dart';
 import 'package:flutter/material.dart';
 
 import '../atoms/app_button.dart';
@@ -202,6 +203,7 @@ class _AppDateRangePickerSheetState extends State<AppDateRangePickerSheet> {
               ),
               AppButton(
                 label: strings.save,
+                kind: ButtonIconKind.save,
                 onPressed: _start == null
                     ? null
                     : () => widget.onResult(

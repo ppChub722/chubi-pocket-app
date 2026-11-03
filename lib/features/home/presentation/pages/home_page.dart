@@ -827,6 +827,7 @@ class _Recent extends StatelessWidget {
       trailing: d.recent.isEmpty
           ? null
           : AppButton(
+              kind: ButtonIconKind.viewAll,
               label: l.homeRecentViewAll,
               variant: AppButtonVariant.text,
               onPressed: () => context.go('/transactions'),

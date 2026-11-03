@@ -673,6 +673,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                 )
               else if (simplified && s.mySimplified.isNotEmpty)
                 AppButton(
+                  kind: ButtonIconKind.settle,
                   key: const ValueKey('settleBook'),
                   label: l.evbSettleBook,
                   onPressed: () => _bookSettle(s),

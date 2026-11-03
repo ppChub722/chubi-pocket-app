@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../atoms/app_button.dart';
+import '../tokens/button_icon_kind.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 
@@ -42,6 +43,7 @@ class AskCard extends StatelessWidget {
                 Expanded(
                   child: AppButton(
                     label: noLabel,
+                    kind: ButtonIconKind.cancel,
                     variant: AppButtonVariant.outlined,
                     onPressed: busy ? null : onNo,
                   ),
@@ -50,6 +52,7 @@ class AskCard extends StatelessWidget {
                 Expanded(
                   child: AppButton(
                     label: yesLabel,
+                    kind: ButtonIconKind.confirm,
                     submits: true,
                     loading: busy,
                     onPressed: busy ? null : onYes,

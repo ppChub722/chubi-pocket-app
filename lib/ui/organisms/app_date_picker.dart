@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../atoms/app_button.dart';
+import '../tokens/button_icon_kind.dart';
 import '../atoms/ui_config.dart';
 import '../molecules/month_picker.dart';
 import '../tokens/app_spacing.dart';
@@ -173,6 +174,7 @@ class AppDatePickerSheet extends StatelessWidget {
                 Expanded(
                   child: AppButton(
                     label: strings.clear,
+                    kind: ButtonIconKind.clear,
                     variant: AppButtonVariant.outlined,
                     onPressed: () => onResult(const AppDateCleared()),
                   ),
@@ -182,6 +184,7 @@ class AppDatePickerSheet extends StatelessWidget {
                 Expanded(
                   child: AppButton(
                     label: strings.today,
+                    kind: ButtonIconKind.today,
                     variant: AppButtonVariant.tonal,
                     onPressed: () => onResult(AppDatePicked(today)),
                   ),

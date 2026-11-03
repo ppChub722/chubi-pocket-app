@@ -159,6 +159,7 @@ class LinkViewRows extends StatelessWidget {
       actions: [
         if (disconnect != null)
           AppButton(
+            kind: ButtonIconKind.disconnect,
             key: const ValueKey('linkViewDisconnectEvent'),
             label: l.txLinkDisconnect,
             variant: AppButtonVariant.outlined,

@@ -116,6 +116,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ],
               submit: AppButton(
+                kind: ButtonIconKind.submit,
                 label: l.authLoginSubmit,
                 submits: true,
                 onPressed: isSubmitting ? null : _submit,

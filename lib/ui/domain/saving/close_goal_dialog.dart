@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../atoms/app_button.dart';
 import '../../atoms/app_card.dart';
 import '../../tokens/app_spacing.dart';
+import '../../tokens/button_icon_kind.dart';
 import '../money/money_text.dart';
 
 enum CloseGoalChoice { toSpare, backToWallets }
@@ -126,6 +127,7 @@ class CloseGoalDialog extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           AppButton(
+            kind: ButtonIconKind.cancel,
             label: cancelLabel,
             variant: AppButtonVariant.text,
             expand: true,

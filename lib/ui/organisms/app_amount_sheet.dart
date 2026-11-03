@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../atoms/app_button.dart';
+import '../tokens/button_icon_kind.dart';
 import '../molecules/amount_input.dart';
 import '../molecules/hint_line.dart';
 import '../templates/form_sheet.dart';
@@ -120,6 +121,7 @@ class _AmountSheetState extends State<_AmountSheet> {
               alignment: AlignmentDirectional.centerStart,
               child: AppButton(
                 label: clear,
+                kind: ButtonIconKind.clear,
                 variant: AppButtonVariant.text,
                 size: AppButtonSize.chip,
                 onPressed: () =>

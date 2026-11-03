@@ -8,6 +8,7 @@ import '../../tokens/app/app_colors.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
+import '../../tokens/button_icon_kind.dart';
 import 'occurrence_row.dart';
 import '../../atoms/busy_scope.dart';
 
@@ -490,6 +491,7 @@ class DueSelectBar extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       AppButton(
+                        kind: ButtonIconKind.skip,
                         key: const ValueKey('dueSkipSelected'),
                         label: skipLabel,
                         onPressed: any ? onSkip : null,
@@ -500,6 +502,7 @@ class DueSelectBar extends StatelessWidget {
                       if (paidLabel != null && onPaid != null) ...[
                         const SizedBox(width: AppSpacing.sm),
                         AppButton(
+                          kind: ButtonIconKind.paid,
                           key: const ValueKey('duePaidSelected'),
                           label: paidLabel!,
                           onPressed: any ? onPaid : null,
@@ -510,6 +513,7 @@ class DueSelectBar extends StatelessWidget {
                       ],
                       const SizedBox(width: AppSpacing.sm),
                       AppButton(
+                        kind: ButtonIconKind.confirm,
                         key: const ValueKey('dueConfirmSelected'),
                         label: confirmLabel,
                         onPressed: any ? onConfirm : null,

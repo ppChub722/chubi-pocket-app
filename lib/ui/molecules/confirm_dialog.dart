@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../atoms/app_button.dart';
+import '../tokens/button_icon_kind.dart';
 import '../atoms/ui_config.dart';
 
 Future<bool> showConfirmDialog(
@@ -20,11 +21,13 @@ Future<bool> showConfirmDialog(
       actions: [
         AppButton(
           label: cancelLabel ?? cancel,
+          kind: ButtonIconKind.cancel,
           variant: AppButtonVariant.text,
           onPressed: () => Navigator.pop(ctx, false),
         ),
         AppButton(
           label: confirmLabel,
+          kind: destructive ? ButtonIconKind.delete : ButtonIconKind.confirm,
           variant: destructive
               ? AppButtonVariant.destructive
               : AppButtonVariant.primary,
