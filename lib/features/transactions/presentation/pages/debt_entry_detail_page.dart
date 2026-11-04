@@ -610,9 +610,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
   void _edit({FocusNode? focus, VoidCallback? then}) {
     final txId = _originTxId;
     if (txId == null) return enterEdit(focus: focus, then: then);
-    editTransaction(context, txId).then((saved) {
-      if (saved && mounted) widget.onRefresh();
-    });
+    editTransaction(context, txId);
   }
 
   /// "มาจาก (แบ่งบิล)" — the kind in words.

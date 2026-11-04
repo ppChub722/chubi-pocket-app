@@ -164,12 +164,27 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Split editor opened (lazy)', [
       FlowCall('listContacts', note: 'person picker'),
     ]),
-    FlowStep.action('Button "บันทึก" (splits)', [
-      FlowCall.unspecified(
-        'PUT',
-        '/transactions/{id}/splits',
-        note: 'gone in the paper model; a tx gets people as a paper',
+    FlowStep.action('Opened on my bill row (its แบ่ง card)', [
+      FlowCall('getSplitBill'),
+      FlowCall('getEventBill'),
+    ]),
+    FlowStep.action('"บันทึก" with แบ่ง switched on (a plain row)', [
+      FlowCall(
+        'createSplitBill',
+        note: 'my_books.transaction_id = this row (no second row)',
       ),
+      FlowCall('createEventBill', note: 'an event picked on the card'),
+    ]),
+    FlowStep.action('"บันทึก" on my bill row', [
+      FlowCall('updateSplitBill', note: 'version → 409 BILL_CHANGED'),
+      FlowCall('updateEventBill'),
+    ]),
+    FlowStep.action('"บันทึก" with แบ่ง switched off / "ลบ" on a bill row', [
+      FlowCall(
+        'leaveSplitBill',
+        note: 'books keep (off) / delete (ลบ); the last one out deletes it',
+      ),
+      FlowCall('leaveEventBill'),
     ]),
     FlowStep.action('Button "ลบ"', [
       FlowCall(

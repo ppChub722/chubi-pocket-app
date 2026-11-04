@@ -43,7 +43,6 @@ class _Adapter implements HttpClientAdapter {
 Map<String, dynamic> _prodContact() => {
   'id': 'c1',
   'name': 'Lee Cooper',
-  'nickname': 'Coop',
   'show_nickname': true,
   'display_name': 'Lee Cooper',
   'email': 'lee@example.com',
@@ -73,7 +72,6 @@ void main() {
   test('prod-shaped JSON parses; a malformed body throws', () {
     final d = ContactDetail.fromJson(_prodContact());
     expect(d.contact.displayName, 'Lee Cooper');
-    expect(d.contact.nickname, 'Coop');
     expect(d.contact.showNickname, isTrue);
     expect(d.contact.phone, isNull);
     expect(d.contact.isLinked, isTrue);

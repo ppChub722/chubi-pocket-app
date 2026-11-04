@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
@@ -22,7 +21,6 @@ import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
 import '../../../projects/data/projects_repository.dart';
-import '../widgets/quick_create_sheet.dart' show openPaperBill;
 import '../../../pending/domain/pending_transaction.dart';
 import '../../data/transactions_repository.dart';
 import '../../domain/link_draft.dart';
@@ -35,6 +33,8 @@ import '../delete_results.dart';
 import '../transaction_edit.dart';
 import '../tx_rules.dart';
 import '../save_failure.dart';
+import '../paper_edit.dart';
+import '../quick_create_bodies.dart';
 import '../widgets/draft_form.dart';
 import 'debt_entry_detail_page.dart';
 import '../widgets/event_pick.dart';
@@ -44,9 +44,15 @@ import '../widgets/recurring_link.dart';
 import '../widgets/tx_compact_hero.dart';
 
 class TransactionDetailPage extends StatefulWidget {
-  const TransactionDetailPage({required this.transactionId, super.key});
+  const TransactionDetailPage({
+    required this.transactionId,
+    this.startEditing = false,
+    super.key,
+  });
 
   final String transactionId;
+
+  final bool startEditing;
 
   @override
   State<TransactionDetailPage> createState() => _TransactionDetailPageState();
@@ -95,7 +101,13 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
         final tx = context.read<TransactionsCubit>().byId(widget.transactionId);
         final link = tx?.counterparty;
         if (link != null) return DebtEntryDetailPage(entryId: link.entryId);
-        if (tx != null) return _Loaded(tx: tx, fetching: _fetching);
+        if (tx != null) {
+          return _Loaded(
+            tx: tx,
+            fetching: _fetching,
+            startEditing: widget.startEditing,
+          );
+        }
         final missing = _error?.statusCode == 404;
         return Scaffold(
           appBar: AppTopBar(title: l.navTransactions, showBack: true),
@@ -117,9 +129,14 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
 }
 
 class _Loaded extends StatefulWidget {
-  const _Loaded({required this.tx, this.fetching = false});
+  const _Loaded({
+    required this.tx,
+    this.fetching = false,
+    this.startEditing = false,
+  });
   final Transaction tx;
   final bool fetching;
+  final bool startEditing;
 
   @override
   State<_Loaded> createState() => _LoadedState();
@@ -135,8 +152,6 @@ class _LoadedState extends State<_Loaded>
   String? _initialToAccountId;
 
   bool _restoring = false;
-
-  bool _splitsPrefilled = true;
 
   final _scroll = ScrollController();
 
@@ -165,7 +180,7 @@ class _LoadedState extends State<_Loaded>
       _eventChange != null ||
       _pendingUnlink ||
       _link.candidateFor(_edited.type) != null ||
-      _linkChanged;
+      (_billBaseline != null && _billSnapshot() != _billBaseline);
 
   @override
   void cancelEdit() {
@@ -173,27 +188,70 @@ class _LoadedState extends State<_Loaded>
     _pendingUnlink = false;
     _link.clear();
     super.cancelEdit();
-    _prefillLink();
+    _reload();
   }
 
-  // ── ผูกกับ (0.4.0-3 B3): edit opens on the saved tab ─────────────────
-  late final _linkEdit = LinkEditSession(_c);
+  // ── แบ่ง (owner 2026-11-03): the quick-create card on this page ─────────
+  /// The bill this row is my book of, as read for the form; null = a plain
+  /// row (or not loaded yet).
+  PaperEditSession? _paper;
 
-  bool get _linkTabs => _linkEdit.active;
+  /// The row is my book of a bill (its card shows once [_paper] is read).
+  bool get _inBill => widget.tx.eventBill != null;
 
-  void _prefillLink() => _linkEdit.start(widget.tx, enabled: canEdit);
+  /// The แบ่ง card: a money row of mine, or my book of a bill.
+  bool get _linkTabs =>
+      _inBill ||
+      (canEdit &&
+          txCanEditSplits(_edited) &&
+          DraftFormController.hasLinkTabs(_edited.type));
 
-  bool get _linkChanged => _linkEdit.changed;
+  /// The bill part of the form as opened (the switch, people, shares,
+  /// marks, event), to tell a change.
+  String? _billBaseline;
 
-  /// A tab switch: checks, preview, ONE confirm. Null = stop.
-  Future<Map<String, dynamic>?> _linkForSave() => _linkEdit.prepare(
-    context,
-    t: _edited,
-    event: _eventChange,
-    initialAccountId: _initialAccountId,
-    accounts: _accountPool([_edited.account]),
-    retry: _save,
-  );
+  /// The event of my bill now (an event bill's; a split bill has none).
+  String? get _billEventId => switch (widget.tx.eventBill?.event) {
+    final e? when !e.isSplit => e.id,
+    _ => null,
+  };
+
+  /// The form has an event: the saved one unless changed.
+  bool get _hasEvent => switch (_eventChange) {
+    null => _billEventId != null,
+    RemoveFromEvent() => false,
+    _ => true,
+  };
+
+  LinkMode get _mode => _c.linkMode(hasEvent: _hasEvent);
+
+  String _billSnapshot() {
+    final mode = _mode;
+    final b = paperBodies(_c, mode, personIds: _paper?.personIds ?? const {});
+    return jsonEncode([
+      mode.name,
+      b?.paper['people'],
+      b?.paper['split_mode'],
+      b?.paidBack,
+      _c.link.eventBookDebts,
+    ]);
+  }
+
+  Future<void> _loadPaper() async {
+    final bill = widget.tx.eventBill;
+    if (bill == null) return;
+    try {
+      final p = await context.read<ProjectsRepository>().getPaper(
+        bill.billId,
+        projectId: bill.event.isSplit ? null : bill.event.id,
+      );
+      if (!mounted) return;
+      setState(() => _paper = PaperEditSession(p));
+      if (!isEditing) _reload();
+    } on ApiException catch (e) {
+      if (mounted) showErrorSnackBar(context, e);
+    }
+  }
 
   /// "อัปเดตตามอีเวนต์": my linked tx takes the bill as it is now.
   Future<void> _applyEvent() async {
@@ -209,37 +267,9 @@ class _LoadedState extends State<_Loaded>
     }
   }
 
-  /// "ตัดการเชื่อม" (0.4.1-1): ONE call, my-books unlink of my tx; the bill
-  /// stays as it is, my debt / repayment rows of it stay linked.
-  Future<void> _disconnectEvent() async {
-    final l = AppLocalizations.of(context)!;
-    final bill = widget.tx.eventBill;
-    if (bill == null) return;
-    final go = await showConfirmDialog(
-      context,
-      title: l.txLinkDisconnectTitle,
-      message: l.txLinkDisconnectBodyCopy,
-      confirmLabel: l.txLinkDisconnect,
-    );
-    if (!go || !mounted) return;
-    final projects = context.read<ProjectsRepository>();
-    setSaving(true);
-    try {
-      await projects.unlinkMyTransaction(widget.tx.id);
-      if (mounted) {
-        await context.read<TransactionsCubit>().refreshOne(widget.tx.id);
-      }
-      _say(l.txLinkDisconnected, tone: Tone.success);
-    } on ApiException catch (e) {
-      _say(errorText(l, e));
-    } finally {
-      if (mounted) setSaving(false);
-    }
-  }
-
   Future<void> _pickEvent() async {
     final l = AppLocalizations.of(context)!;
-    final current = widget.tx.projectId;
+    final current = _billEventId;
     final description = _c.description.text.trim();
     final date = DateFormatter.medium(
       _c.date,
@@ -264,27 +294,22 @@ class _LoadedState extends State<_Loaded>
         _ => picked,
       },
     );
-    _c.eventChanged(hasEvent: _eventName(l, widget.tx) != null);
+    _c.eventChanged(hasEvent: _hasEvent);
   }
 
   void _clearEvent() {
     setState(
-      () => _eventChange = widget.tx.projectId == null
+      () => _eventChange = _billEventId == null
           ? null
           : const RemoveFromEvent(),
     );
-    _c.eventChanged(
-      hasEvent: _eventName(AppLocalizations.of(context)!, widget.tx) != null,
-    );
+    _c.eventChanged(hasEvent: _hasEvent);
   }
 
+  /// The event row's name: my bill's event (a split bill has none).
   String? _eventName(AppLocalizations l, Transaction tx) =>
       switch (_eventChange) {
-        null =>
-          tx.eventBill?.event.name ??
-              (tx.projectId == null
-                  ? null
-                  : tx.project?.name ?? l.txDetailSourceProject),
+        null => _billEventId == null ? null : tx.eventBill?.event.name,
         final change => eventTargetName(l, change),
       };
 
@@ -295,43 +320,21 @@ class _LoadedState extends State<_Loaded>
     _prefill();
     initDraft(_c.toDraft());
     _c.addListener(_onFormChanged);
-  }
-
-  Future<void> _fetchSplitsIfMissing() async {
-    final tx = widget.tx;
-    if (tx.splitCount == 0 || tx.splits.isNotEmpty) return;
-    try {
-      await context.read<TransactionsCubit>().refreshOne(tx.id);
-    } on ApiException {
-      // Keep the cached row.
+    if (widget.startEditing && canEdit) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _enterEdit();
+      });
+    } else if (_inBill) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadPaper());
     }
   }
 
+  /// Edit on this page (owner 2026-11-03), a bill row too: its card turns
+  /// editable once the bill is read.
   Future<void> _enterEdit({FocusNode? focus, VoidCallback? then}) async {
-    // SA1 (App-1): a shared-bill copy is edited in the one bill form.
-    var tx = widget.tx;
-    // A row cached before the BE linked its bill has no eventBill yet.
-    if (!txEditsAsBill(tx) && (tx.projectId != null || tx.splitCount > 0)) {
-      try {
-        tx = await context.read<TransactionsCubit>().refreshOne(tx.id);
-      } on ApiException {
-        // Keep the cached row.
-      }
-      if (!mounted || isEditing) return;
-    }
-    if (txEditsAsBill(tx)) {
-      final bill = tx.eventBill!;
-      await openPaperBill(
-        context,
-        bill.billId,
-        projectId: bill.event.isSplit ? null : bill.event.id,
-      );
-      return;
-    }
-    if (!_splitsPrefilled) {
-      await _fetchSplitsIfMissing();
-      if (!mounted || isEditing) return;
-      _reload();
+    if (_inBill && _paper == null) {
+      await _loadPaper();
+      if (!mounted || isEditing || _paper == null) return;
     }
     enterEdit(focus: focus, then: then);
   }
@@ -502,10 +505,44 @@ class _LoadedState extends State<_Loaded>
       toAccount: view.other?.toAccount(),
     );
     _restoring = false;
-    _splitsPrefilled = edited.splitCount == 0 || edited.splits.isNotEmpty;
     _initialAccountId = _c.account?.id;
     _initialToAccountId = _c.toAccount?.id;
-    _prefillLink();
+    // My bill into the แบ่ง card (its amount is the bill's; my share shows
+    // under it); a plain row starts with แบ่ง off.
+    final paper = _paper;
+    if (paper != null) {
+      _paper = PaperEditSession(paper.paper);
+      _restoring = true;
+      _paper!.prefill(context, _c);
+      _restoring = false;
+    } else {
+      _c.setLinkMode(LinkMode.personal, hasEvent: false);
+    }
+    _eventChange = null;
+    _billBaseline = _linkTabs ? _billSnapshot() : null;
+    _billOn = _mode != LinkMode.personal;
+  }
+
+  /// แบ่ง on as last seen, to catch the switch flipping.
+  bool _billOn = false;
+
+  static String _amountText(double v) =>
+      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
+
+  /// Owner 2026-11-03: on my bill row the amount field follows the switch
+  /// in view: off → my row's own amount, on → the bill's; a typed amount
+  /// (neither) stays.
+  void _swapBillAmount() {
+    final on = _mode != LinkMode.personal;
+    if (on == _billOn) return;
+    _billOn = on;
+    final paper = _paper;
+    if (paper == null || !isEditing) return;
+    final from = on ? _edited.amount : paper.paper.amount;
+    final to = on ? paper.paper.amount : _edited.amount;
+    final typed = double.tryParse(_c.amount.text.replaceAll(',', ''));
+    if (typed != null && (typed - from).abs() >= 0.005) return;
+    _c.amount.text = _amountText(to);
   }
 
   void _reload() {
@@ -527,10 +564,11 @@ class _LoadedState extends State<_Loaded>
 
   void _onFormChanged() {
     if (_restoring) return;
+    _swapBillAmount();
     final next = _c.toDraft();
     final w = working;
     if (next == w) {
-      // A ผูกกับ change lives outside the draft: refresh บันทึก.
+      // A แบ่ง change lives outside the draft: refresh บันทึก.
       if (_linkTabs && isEditing) setState(() {});
       return;
     }
@@ -555,17 +593,24 @@ class _LoadedState extends State<_Loaded>
     }
   }
 
-  bool _splitsEditable = false;
 
+  /// บันทึก (owner 2026-11-03): my row's own fields, then the แบ่ง card,
+  /// all at once:
+  /// - a plain row with แบ่ง on → a new bill whose my-book is this row;
+  /// - my bill row → the bill (version-checked) + my fields + marks;
+  /// - my bill row with แบ่ง off → I leave the bill, the row stays plain
+  ///   (the last one out deletes it).
   Future<void> _save() async {
     final l = AppLocalizations.of(context)!;
     commitTextSession();
-    final onSplitTab = _linkEdit.onSplitTab;
+    final mode = _linkTabs ? _mode : LinkMode.personal;
+    final bill = mode != LinkMode.personal;
+    final paper = _paper;
     final problem = transactionEditProblem(
       l,
       _c,
-      splitsEditable: _splitsEditable,
-      checkSplits: onSplitTab,
+      splitsEditable: false,
+      checkSplits: false,
       savedAmount: _edited.amount,
     );
     if (problem != null) {
@@ -573,76 +618,98 @@ class _LoadedState extends State<_Loaded>
       showAppSnackBar(context, problem, tone: Tone.danger);
       return;
     }
-    if (onSplitTab && !await confirmIncompleteSplits(context, _c)) return;
-    if (!mounted) return;
-    // A ผูกกับ tab switch: preview + ONE confirm, then it rides in the PUT.
-    final link = _linkChanged ? await _linkForSave() : null;
-    if (_linkChanged && link == null) return;
-    if (!mounted) return;
-    final ask = await askLinkedTxSave(context, widget.tx);
-    if (ask.cancelled || !mounted) return;
-    final alsoUpdateLink = ask.alsoUpdateLink;
+    if (bill && !_c.linkBalanced(mode)) {
+      HapticFeedback.lightImpact();
+      showAppSnackBar(context, l.txLinkModeUnbalanced, tone: Tone.danger);
+      return;
+    }
     setSaving(true);
     final projects = context.read<ProjectsRepository>();
     final txCubit = context.read<TransactionsCubit>();
     final accountsCubit = context.read<AccountsCubit>();
+    final txRepo = context.read<TransactionsRepository>();
+    String? warn;
     try {
-      final outcome = await saveTransactionEdit(
-        context,
-        t: _edited,
-        c: _c,
-        initialAccountId: _initialAccountId,
-        initialToAccountId: _initialToAccountId,
-        alsoUpdateLink: alsoUpdateLink,
-        link: link,
-      );
-      final warn = outcome.warning;
-      if (!mounted) return;
-      // Under the tabs the event moves with the tab switch; the old event
-      // call only moves a bill between events on the อีเวนต์ tab.
-      final change =
-          link == null && (!_linkTabs || _c.pickedTab == LinkMode.event)
-          ? _eventChange
-          : null;
-      if (change != null) {
-        try {
-          await applyEventChange(
-            projects,
-            txRepo: context.read<TransactionsRepository>(),
-            txId: _edited.id,
-            amount: _edited.amount,
-            currentProjectId: switch (_edited.eventBill?.event) {
-              final e? => e.isSplit ? null : e.id,
-              null => _edited.projectId,
-            },
-            change: change,
-            billId: _edited.eventBill?.billId,
-          );
-        } on ApiException catch (e) {
+      if (paper != null && bill) {
+        // My bill: the bill and my own fields in one session; then a moved
+        // event.
+        final ok = await paper.save(
+          projects: projects,
+          txs: txCubit,
+          c: _c,
+          mode: mode,
+        );
+        if (!ok) {
           if (!mounted) return;
-          commitSaved(working);
-          _reload();
-          enterEdit();
-          showAppSnackBar(
-            context,
-            l.txEventFailedAfterSave(errorText(l, e)),
-            tone: Tone.danger,
-          );
+          setSaving(false);
+          showAppSnackBar(context, l.evbPaybackNeedsPeople, tone: Tone.danger);
           return;
         }
-        _eventChange = null;
-        try {
-          await txCubit.refreshOne(_edited.id, afterWrite: true);
-        } on ApiException {
-          // Keep the cached row.
+        final change = _eventChange;
+        if (change != null) {
+          await applyEventChange(
+            projects,
+            txRepo: txRepo,
+            txId: _edited.id,
+            amount: _edited.amount,
+            currentProjectId: _billEventId,
+            change: change,
+            billId: paper.paper.id,
+          );
         }
-        if (!mounted) return;
+      } else {
+        if (paper != null) {
+          // แบ่ง off: out of the bill, my row kept.
+          await projects.leavePaper(
+            paper.paper.id,
+            projectId: paper.paper.projectId,
+            keepBooks: true,
+          );
+          if (!mounted) return;
+        }
+        final outcome = await saveTransactionEdit(
+          context,
+          t: _edited,
+          c: _c,
+          initialAccountId: _initialAccountId,
+          initialToAccountId: _initialToAccountId,
+        );
+        warn = outcome.warning;
+        if (bill) {
+          // แบ่ง on: a new bill around this row (my book = this row).
+          final body = paperBodies(_c, mode);
+          if (body != null) {
+            final event = _eventChange;
+            final created = await projects.createPaper(
+              projectId: event is ExistingEventTarget ? event.project.id : null,
+              newEvent: event is NewEventTarget ? event.name : null,
+              paper: body.paper,
+              myBooks: {...body.myBooks, 'transaction_id': _edited.id},
+            );
+            await PaperEditSession.markPaidBack(
+              projects,
+              paperId: created.paperId,
+              projectId: created.projectId,
+              personIds: created.personIds,
+              paidBack: body.paidBack,
+            );
+          }
+        }
       }
-      await _applyRecurringChange(txCubit, accountsCubit);
       if (!mounted) return;
+      await _applyRecurringChange(txCubit, accountsCubit);
+      try {
+        await txCubit.refreshOne(_edited.id, afterWrite: true);
+      } on ApiException {
+        // Keep the cached row.
+      }
+      if (!mounted) return;
+      _paper = null;
+      _eventChange = null;
       HapticFeedback.mediumImpact();
       commitSaved(working);
       _reload();
+      if (widget.tx.eventBill != null || bill) unawaited(_loadPaper());
       showAppSnackBar(
         context,
         warn ?? l.quickSaved,
@@ -655,10 +722,13 @@ class _LoadedState extends State<_Loaded>
         context,
         e,
         retry: _save,
-        message: splitErrorMessage(l, e) ?? errorText(l, e),
+        message: e.code == 'BILL_CHANGED'
+            ? l.evbBillChangedReopen
+            : errorText(l, e),
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -676,52 +746,23 @@ class _LoadedState extends State<_Loaded>
         (isSystemRow &&
             !tx.isLocked &&
             (tx.category?.isDebtRepayment ?? false));
+    // แบ่ง is edited on this page (owner 2026-11-03): a plain money row of
+    // mine, or my bill row once the bill is read (and I may edit it).
     final canEditSplits =
-        canEdit && txCanEditSplits(_edited) && _splitsPrefilled;
-    _splitsEditable = canEditSplits;
+        canEdit &&
+        _linkTabs &&
+        (!_inBill || (_paper?.paper.canEdit ?? false));
     final editing = isEditing;
-
-    final splitCount = math.max(tx.splitCount, tx.splits.length);
-    final hasSplits = splitCount > 0;
     final created = tx.createdAt;
     final updated = tx.updatedAt;
-    // The bill this row is on (event_bill) opens on the event's board; an older
-    // row without it opens the event.
+    // An event bill opens on the event's board.
     final bill = tx.eventBill;
+    final billEventId = _billEventId;
     void openProject() => openPage(
       context,
-      bill != null
-          ? '/projects/${bill.event.id}?bill=${bill.billId}'
-          : '/projects/${tx.projectId}',
+      '/projects/$billEventId?bill=${bill?.billId}',
     );
-    final canJoinEvent = canEdit && txCanJoinEvent(_edited);
 
-    final eventName =
-        bill?.event.name ??
-        (tx.projectId == null
-            ? null
-            : tx.project?.name ?? l.txDetailSourceProject);
-    Widget splitsLongPressable(Widget section) => canEdit
-        ? GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onLongPress: _enterEdit,
-            child: section,
-          )
-        : section;
-    Widget splitsBlock(List<Widget> rows) => Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.md,
-          ),
-          child: Text(l.txSplitPeopleLabel, style: detailLabelStyle(context)),
-        ),
-        ...rows,
-      ],
-    );
-    final Widget? splitsReadOnly;
     final SplitEventSlot? eventSlot;
     final SplitRecurringSlot? recurringSlot;
     // The recurring link: the saved one (unless its removal is held), else a
@@ -737,15 +778,11 @@ class _LoadedState extends State<_Loaded>
     }
 
     if (editing) {
-      splitsReadOnly = null;
-      // Under the tabs the อีเวนต์ card always has its event chip.
-      eventSlot = canJoinEvent || _linkTabs
-          ? SplitEventSlot(
-              name: _eventName(l, tx),
-              onTap: _pickEvent,
-              onClear: _eventName(l, tx) == null ? null : _clearEvent,
-            )
-          : null;
+      eventSlot = SplitEventSlot(
+        name: _eventName(l, tx),
+        onTap: _pickEvent,
+        onClear: _eventName(l, tx) == null ? null : _clearEvent,
+      );
       recurringSlot = canEdit
           ? _link.slot(
               context,
@@ -760,23 +797,12 @@ class _LoadedState extends State<_Loaded>
             )
           : null;
     } else {
-      splitsReadOnly = tx.splits.isNotEmpty
-          ? splitsLongPressable(
-              splitsBlock([
-                for (final s in tx.splits)
-                  _splitRow(context, s, () => _openSplits(s)),
-              ]),
-            )
-          : hasSplits && widget.fetching
-          ? splitsBlock([
-              for (var i = 0; i < splitCount; i++) const ListRowSkeleton(),
-            ])
-          : null;
-      // Only what is linked shows here; the empty "add" rows live in the
-      // edit page.
-      eventSlot = eventName != null
-          ? SplitEventSlot(name: eventName, onTap: openProject, editing: false)
-          : null;
+      final eventName = _eventName(l, tx);
+      eventSlot = SplitEventSlot(
+        name: eventName,
+        onTap: eventName == null ? null : openProject,
+        editing: false,
+      );
       recurringSlot = recurringItem == null
           ? null
           : _link.slot(
@@ -855,10 +881,10 @@ class _LoadedState extends State<_Loaded>
                         heroKey: _heroKey,
                         autofocus: false,
                         privateNote: widget.tx.privateNote,
-                        // The type can't change after saving; splits can, by
-                        // the author (PUT /transactions/:id/splits).
+                        // The type can't change after saving.
                         typeLocked: true,
-                        cardsInHero: true,
+                        // Quick create's cards (owner 2026-11-03).
+                        detailCards: true,
                         allowSplits: canEditSplits,
                         editing: editing,
                         categoryLockedHint: repaymentPerson != null
@@ -871,7 +897,6 @@ class _LoadedState extends State<_Loaded>
                             ? (f) => _enterEdit(focus: f)
                             : null,
                         onViewTap: _longPressHint,
-                        splitsReadOnly: splitsReadOnly,
                         eventSlot: eventSlot,
                         recurringSlot: recurringSlot,
                         linkTabs: _linkTabs,
@@ -880,14 +905,11 @@ class _LoadedState extends State<_Loaded>
                             _eventChange is NewEventTarget ||
                             _eventChange is ExistingEventTarget,
                       ),
-                      // ผูกกับ summary rows (0.4.0-3): › = the card,
-                      // read-only.
+                      // My row differs from its bill: "อัปเดตตาม".
                       if (!editing)
                         LinkViewRows(
                           tx: tx,
-                          onOpenEvent: openProject,
                           onApplyEvent: canEdit ? _applyEvent : null,
-                          onDisconnectEvent: canEdit ? _disconnectEvent : null,
                         ),
                       // "จ่ายคืนให้ ลี ›" / "รับคืนจาก chalee ›" → the person.
                       if (repaymentPerson != null && !editing) ...[
@@ -954,19 +976,6 @@ class _LoadedState extends State<_Loaded>
     );
   }
 
-  void _openSplits([TxSplit? person]) {
-    final splits = widget.tx.splits;
-    if (person == null && splits.length != 1) {
-      openPage(context, '/personal-debts');
-      return;
-    }
-    final s = person ?? splits.single;
-    final key = s.contactId != null
-        ? 'c:${s.contactId}'
-        : 'n:${s.personName.trim().toLowerCase()}';
-    openPage(context, '/personal-debts/people/${Uri.encodeComponent(key)}');
-  }
-
   Future<void> _confirmDelete(
     BuildContext context,
     AppLocalizations l, {
@@ -1006,10 +1015,23 @@ class _LoadedState extends State<_Loaded>
     final debts = DebtDirectoryCubit.maybeOf(context);
     final messenger = ScaffoldMessenger.of(context);
     final back = ShellBackScope.maybeOf(context);
+    final projects = context.read<ProjectsRepository>();
+    final bill = tx.eventBill;
     setSaving(true);
     try {
-      final result = await txCubit.remove(tx.id);
-      applyTxDeleteResult(result, accounts: accountsCubit, debts: debts);
+      if (bill != null) {
+        // My bill row (owner 2026-11-03): leave the bill with my books
+        // deleted; the last one out deletes the bill. The row rides effects.
+        await projects.leavePaper(
+          bill.billId,
+          projectId: bill.event.isSplit ? null : bill.event.id,
+          keepBooks: false,
+        );
+        txCubit.dropRow(tx.id);
+      } else {
+        final result = await txCubit.remove(tx.id);
+        applyTxDeleteResult(result, accounts: accountsCubit, debts: debts);
+      }
       showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
       if (router.canPop()) {
         router.pop();
@@ -1033,50 +1055,3 @@ String _titleForType(AppLocalizations l, TransactionType t) => switch (t) {
   TransactionType.income => l.transactionTypeIncome,
   TransactionType.transfer => l.transactionTypeTransfer,
 };
-
-AppListRow _splitRow(BuildContext context, TxSplit s, VoidCallback onOpen) {
-  final l = AppLocalizations.of(context)!;
-  final person = s.person;
-  String money(double v) => moneyString(context, v);
-  final status = switch (s.status) {
-    _ when s.isOverpaid =>
-      s.owedToMe
-          ? l.txSplitStatusOverpaidToThem(money(-s.outstanding))
-          : l.txSplitStatusOverpaidByMe(money(-s.outstanding)),
-    'settled' => s.owedToMe ? l.txSplitStatusPaid : l.txSplitStatusRepaid,
-    'cancelled' => l.txSplitStatusCancelled,
-    _ when s.settledAmount > 0.005 =>
-      s.owedToMe
-          ? l.txSplitStatusPartPaid(money(s.settledAmount), money(s.amount))
-          : l.txSplitStatusPartRepaid(money(s.settledAmount), money(s.amount)),
-    _ =>
-      s.owedToMe
-          ? l.txSplitStatusAwaiting(money(s.outstanding))
-          : l.txSplitStatusToPay(money(s.outstanding)),
-  };
-  return AppListRow(
-    title: s.personName,
-    onTap: onOpen,
-    leading: PersonMark(
-      name: s.personName,
-      level: s.contactId == null
-          ? PersonLevel.name
-          : person.linked
-          ? PersonLevel.linked
-          : PersonLevel.contact,
-      iconCode: person.iconCode,
-      avatar: person.avatar,
-      size: 32,
-      reserveLinkSlot: true,
-    ),
-    trailing: ListRowTrailing.value(
-      Text(money(s.amount)),
-      caption: status,
-      captionTone: s.isOverpaid
-          ? Tone.warning
-          : s.status == 'settled'
-          ? Tone.success
-          : null,
-    ),
-  );
-}

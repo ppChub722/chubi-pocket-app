@@ -74,7 +74,6 @@ class _ContactsPageState extends State<ContactsPage> {
           (q.isEmpty ||
               c.name.toLowerCase().contains(q) ||
               c.displayName.toLowerCase().contains(q) ||
-              (c.nickname?.toLowerCase().contains(q) ?? false) ||
               (c.description?.toLowerCase().contains(q) ?? false) ||
               (c.email?.toLowerCase().contains(q) ?? false) ||
               (c.phone?.contains(q) ?? false));

@@ -76,8 +76,46 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
         clearError: true,
       ),
     );
+    await _put(before, () => _repo.updateSettings(mutedTypes: muted));
+  }
+
+  /// A partner's "paid you back" into my book at once; same flip-back rule.
+  Future<void> setAutoAcceptRepayments(bool on) async {
+    final before = state.settings;
+    if (before == null || before.autoAcceptRepayments == on) return;
+    emit(
+      state.copyWith(
+        settings: before.copyWith(autoAcceptRepayments: on),
+        status: SettingsStatus.saving,
+        clearError: true,
+      ),
+    );
+    await _put(
+      before,
+      () => _repo.updateSettings(autoAcceptRepayments: on),
+    );
+  }
+
+  /// Taken off a bill: [mode] `ask` | `keep` | `delete`.
+  Future<void> setOnSplitRemoved(String mode) async {
+    final before = state.settings;
+    if (before == null || before.onSplitRemoved == mode) return;
+    emit(
+      state.copyWith(
+        settings: before.copyWith(onSplitRemoved: mode),
+        status: SettingsStatus.saving,
+        clearError: true,
+      ),
+    );
+    await _put(before, () => _repo.updateSettings(onSplitRemoved: mode));
+  }
+
+  Future<void> _put(
+    NotificationSettings before,
+    Future<NotificationSettings> Function() call,
+  ) async {
     try {
-      final updated = await _repo.updateSettings(mutedTypes: muted);
+      final updated = await call();
       emit(state.copyWith(settings: updated, status: SettingsStatus.loaded));
     } on ApiException catch (e) {
       emit(

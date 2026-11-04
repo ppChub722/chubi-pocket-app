@@ -638,7 +638,6 @@ abstract final class ContactPicker {
           trailing: trailing(p),
           keywords: [
             c.displayName,
-            ?c.nickname,
             ?c.description,
             ?c.email,
             ?c.phone,

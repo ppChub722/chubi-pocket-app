@@ -12714,6 +12714,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Who owns it next?'**
   String get projectLeavePickOwner;
+
+  /// No description provided for @notifAutoRepaidHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto = record it in my book at once (main wallet)'**
+  String get notifAutoRepaidHint;
+
+  /// No description provided for @notifSetOnSplitRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'My records when I\'m taken off a bill'**
+  String get notifSetOnSplitRemoved;
+
+  /// No description provided for @notifOnSplitRemovedAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask me'**
+  String get notifOnSplitRemovedAsk;
+
+  /// No description provided for @notifOnSplitRemovedKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get notifOnSplitRemovedKeep;
+
+  /// No description provided for @notifOnSplitRemovedDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get notifOnSplitRemovedDelete;
 }
 
 class _AppLocalizationsDelegate

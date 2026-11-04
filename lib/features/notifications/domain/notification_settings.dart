@@ -84,6 +84,8 @@ class NotificationSettings extends Equatable {
     this.types = const [],
     this.autoSyncEvents = true,
     this.autoSyncDebts = true,
+    this.autoAcceptRepayments = false,
+    this.onSplitRemoved = 'ask',
     this.defaultAccount,
   });
 
@@ -93,6 +95,12 @@ class NotificationSettings extends Equatable {
   final List<NotificationTypeSetting> types;
   final bool autoSyncEvents;
   final bool autoSyncDebts;
+
+  /// A partner's `debt_repaid` goes into my book at once.
+  final bool autoAcceptRepayments;
+
+  /// Taken off a bill, my records of it: `ask` | `keep` | `delete`.
+  final String onSplitRemoved;
 
   /// The main wallet (กระเป๋าหลัก); the เงิน page sets it.
   final DefaultAccountRef? defaultAccount;
@@ -130,6 +138,8 @@ class NotificationSettings extends Equatable {
       types: types,
       autoSyncEvents: (json['auto_sync_events'] as bool?) ?? true,
       autoSyncDebts: (json['auto_sync_debts'] as bool?) ?? true,
+      autoAcceptRepayments: (json['auto_accept_repayments'] as bool?) ?? false,
+      onSplitRemoved: (json['on_split_removed'] as String?) ?? 'ask',
       defaultAccount: json['default_account'] is Map
           ? DefaultAccountRef.fromJson(
               (json['default_account'] as Map).cast<String, dynamic>(),
@@ -142,6 +152,8 @@ class NotificationSettings extends Equatable {
     Set<String>? mutedTypes,
     bool? autoSyncEvents,
     bool? autoSyncDebts,
+    bool? autoAcceptRepayments,
+    String? onSplitRemoved,
   }) {
     final muted = mutedTypes ?? this.mutedTypes;
     return NotificationSettings(
@@ -152,6 +164,8 @@ class NotificationSettings extends Equatable {
       ],
       autoSyncEvents: autoSyncEvents ?? this.autoSyncEvents,
       autoSyncDebts: autoSyncDebts ?? this.autoSyncDebts,
+      autoAcceptRepayments: autoAcceptRepayments ?? this.autoAcceptRepayments,
+      onSplitRemoved: onSplitRemoved ?? this.onSplitRemoved,
       defaultAccount: defaultAccount,
     );
   }
@@ -162,6 +176,8 @@ class NotificationSettings extends Equatable {
     types,
     autoSyncEvents,
     autoSyncDebts,
+    autoAcceptRepayments,
+    onSplitRemoved,
     defaultAccount,
   ];
 }

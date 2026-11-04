@@ -7343,4 +7343,19 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get projectLeavePickOwner => 'ให้ใครเป็นเจ้าของต่อ';
+
+  @override
+  String get notifAutoRepaidHint => 'อัตโนมัติ = บันทึกลงสมุดเลย (กระเป๋าหลัก)';
+
+  @override
+  String get notifSetOnSplitRemoved => 'รายการของฉันเมื่อถูกนำออกจากบิล';
+
+  @override
+  String get notifOnSplitRemovedAsk => 'ถามก่อน';
+
+  @override
+  String get notifOnSplitRemovedKeep => 'เก็บไว้';
+
+  @override
+  String get notifOnSplitRemovedDelete => 'ลบทิ้ง';
 }

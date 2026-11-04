@@ -2315,5 +2315,10 @@
   "notifSetBillMoved": "บิลของฉันถูกย้ายอีเวนต์",
   "notifSetDebtRepaid": "คู่หนี้บันทึกการคืนเงิน",
   "notifSetEventDeleted": "อีเวนต์ที่ฉันอยู่ถูกลบ",
-  "projectLeavePickOwner": "ให้ใครเป็นเจ้าของต่อ"
+  "projectLeavePickOwner": "ให้ใครเป็นเจ้าของต่อ",
+  "notifAutoRepaidHint": "อัตโนมัติ = บันทึกลงสมุดเลย (กระเป๋าหลัก)",
+  "notifSetOnSplitRemoved": "รายการของฉันเมื่อถูกนำออกจากบิล",
+  "notifOnSplitRemovedAsk": "ถามก่อน",
+  "notifOnSplitRemovedKeep": "เก็บไว้",
+  "notifOnSplitRemovedDelete": "ลบทิ้ง"
 }

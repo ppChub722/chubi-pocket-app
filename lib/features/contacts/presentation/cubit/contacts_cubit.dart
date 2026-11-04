@@ -122,7 +122,6 @@ class ContactsCubit extends Cubit<ContactsState>
 
   Future<Contact> create({
     required String displayName,
-    String? nickname,
     bool? showNickname,
     String? email,
     String? phone,
@@ -132,7 +131,6 @@ class ContactsCubit extends Cubit<ContactsState>
   }) async {
     final res = await _repo.create(
       displayName: displayName,
-      nickname: nickname,
       showNickname: showNickname,
       email: email,
       phone: phone,
@@ -147,7 +145,6 @@ class ContactsCubit extends Cubit<ContactsState>
   Future<Contact> update(
     String id, {
     String? displayName,
-    String? nickname,
     bool? showNickname,
     String? email,
     String? phone,
@@ -158,7 +155,6 @@ class ContactsCubit extends Cubit<ContactsState>
     final updated = await _repo.update(
       id,
       displayName: displayName,
-      nickname: nickname,
       showNickname: showNickname,
       email: email,
       phone: phone,

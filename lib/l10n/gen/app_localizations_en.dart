@@ -7498,4 +7498,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get projectLeavePickOwner => 'Who owns it next?';
+
+  @override
+  String get notifAutoRepaidHint =>
+      'Auto = record it in my book at once (main wallet)';
+
+  @override
+  String get notifSetOnSplitRemoved => 'My records when I\'m taken off a bill';
+
+  @override
+  String get notifOnSplitRemovedAsk => 'Ask me';
+
+  @override
+  String get notifOnSplitRemovedKeep => 'Keep';
+
+  @override
+  String get notifOnSplitRemovedDelete => 'Delete';
 }

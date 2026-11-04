@@ -1031,8 +1031,15 @@ class DraftForm extends StatefulWidget {
     this.linkSections = true,
     this.debtPersonCard,
     this.eventBill,
+    this.detailCards = false,
     super.key,
   });
+
+  /// The transaction page (owner 2026-11-03, after quick create): the hero
+  /// without the category / wallet tiles, then the แบ่ง card (read-only when
+  /// not editing; none for a plain row), then the detail card (the tiles,
+  /// tags, รายการประจำ, note).
+  final bool detailCards;
 
   /// Non-null: the event's add / edit bill ([EventBillForm]).
   final EventBillForm? eventBill;
@@ -1431,6 +1438,13 @@ class _DraftFormState extends State<DraftForm> {
               ),
             if (entryLayout)
               ..._chipBody(l, isTransfer: isTransfer)
+            else if (widget.detailCards)
+              ..._detailBody(
+                l,
+                editing: editing,
+                isTransfer: isTransfer,
+                longPressable: longPressable,
+              )
             else ...[
               SizedBox(height: HeroMetrics.of(context).after),
               if (!widget.cardsInHero)
@@ -1656,6 +1670,87 @@ class _DraftFormState extends State<DraftForm> {
             if (myTx) const AppDivider(),
           ],
           if (myTx) ..._myTxRows(l, isTransfer: isTransfer, missing: missing),
+        ],
+      ),
+    ];
+  }
+
+  List<Widget> _detailBody(
+    AppLocalizations l, {
+    required bool editing,
+    required bool isTransfer,
+    required Widget Function(Widget child) longPressable,
+  }) {
+    const cardGap = SizedBox(height: AppSpacing.md);
+    final mode = _linkMode;
+    final bill = mode != null && mode != LinkMode.personal;
+    final Widget? split = isTransfer || mode == null
+        ? null
+        : editing
+        ? (widget.allowSplits
+              ? LinkSection(
+                  controller: _c,
+                  event: widget.eventSlot ?? const SplitEventSlot(),
+                  eventIsNew: widget.linkEventIsNew,
+                  isEventMember: widget.linkIsEventMember,
+                  flat: true,
+                  summary: bill ? _ShareLine.ofLink(_c, mode, l) : null,
+                )
+              : null)
+        // Viewing: the bill's card as it is, nothing to change.
+        : bill
+        ? longPressable(
+            IgnorePointer(
+              child: LinkSection(
+                controller: _c,
+                event: widget.eventSlot ?? const SplitEventSlot(),
+                flat: true,
+                summary: _ShareLine.ofLink(_c, mode, l),
+              ),
+            ),
+          )
+        : null;
+    final recurring = widget.recurringSlot;
+    final note = _c.note.text.trim();
+    return [
+      cardGap,
+      if (split != null) ...[EntrySectionCard(children: [split]), cardGap],
+      EntrySectionCard(
+        children: [
+          longPressable(_cardsRow(l, isTransfer: isTransfer)),
+          if (editing || _c.tagIds.isNotEmpty)
+            ..._tagsBlock(editing: editing, longPress: longPressable),
+          if (recurring != null)
+            RecurringLinkRow(
+              slot: recurring,
+              variant: SplitEventVariant.compact,
+            ),
+          if (editing || note.isNotEmpty || widget.onEnterEdit != null)
+            longPressable(
+              DraftFieldRow(
+                label: l.commonNote,
+                child: editing
+                    ? AppInput.inline(
+                        editing: true,
+                        controller: _c.note,
+                        focusNode: _noteFocus,
+                        maxLines: 5,
+                        maxLength: TextLimits.note,
+                        hint: l.txNoteAddHint,
+                      )
+                    : Text(
+                        note.isEmpty ? l.commonLongPressToEdit : note,
+                        textAlign: TextAlign.end,
+                        style: note.isEmpty
+                            ? Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              )
+                            : null,
+                      ),
+              ),
+            ),
         ],
       ),
     ];

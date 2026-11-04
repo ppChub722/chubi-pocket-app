@@ -57,7 +57,10 @@ class NotificationSettingsPage extends StatelessWidget {
       'bill_removed' => (label: l.notifSetBillRemoved, helper: null),
       'bill_owner_changed' => (label: l.notifSetBillOwnerChanged, helper: null),
       'bill_moved' => (label: l.notifSetBillMoved, helper: null),
-      'debt_repaid' => (label: l.notifSetDebtRepaid, helper: null),
+      'debt_repaid' => (
+        label: l.notifSetDebtRepaid,
+        helper: l.notifAutoRepaidHint,
+      ),
       'event_deleted' => (label: l.notifSetEventDeleted, helper: null),
       'debt_disconnected' => (
         label: l.notifTypeDebtDisconnected,
@@ -167,9 +170,20 @@ class _Body extends StatelessWidget {
           // A card's auto column labels: "บิลที่แชร์" has อีเวนต์ | แบ่งจ่าย
           // ([autoColumns] order), the requests card one อัตโนมัติ.
           List<String> autoLabelsOf(NotificationGroup g) =>
-              g == NotificationGroup.request
+              g == NotificationGroup.request || g == NotificationGroup.debt
               ? [l.notifColumnAuto]
               : [l.notifColumnAutoEvents, l.notifColumnAutoSplit];
+
+          // "หนี้" has one auto column: a repayment into my book at once (a
+          // notification setting, not a /users/me one).
+          SettingSwitchCell? debtAuto(NotificationRow r, String label) =>
+              r.type == 'debt_repaid'
+              ? SettingSwitchCell(
+                  value: s.autoAcceptRepayments,
+                  onChanged: cubit.setAutoAcceptRepayments,
+                  semanticLabel: '${l.notifColumnAuto} $label',
+                )
+              : null;
 
           Widget row(NotificationRow r, ({String label, String? helper}) t) {
             final autoLabels = autoLabelsOf(r.group);
@@ -196,6 +210,7 @@ class _Body extends StatelessWidget {
                       )
                     else
                       null,
+                  if (r.group == NotificationGroup.debt) debtAuto(r, t.label),
                 ],
               );
             }
@@ -235,6 +250,28 @@ class _Body extends StatelessWidget {
             return nest(0, saved, const {});
           }
 
+          // Taken off a bill: what happens to my records of it.
+          Widget removedRow() {
+            final options = [
+              SheetOption(value: 'ask', label: l.notifOnSplitRemovedAsk),
+              SheetOption(value: 'keep', label: l.notifOnSplitRemovedKeep),
+              SheetOption(value: 'delete', label: l.notifOnSplitRemovedDelete),
+            ];
+            return SettingDropdownRow<String>(
+              key: const ValueKey('notif-on-split-removed'),
+              label: l.notifSetOnSplitRemoved,
+              value:
+                  options
+                      .where((o) => o.value == s.onSplitRemoved)
+                      .firstOrNull
+                      ?.label ??
+                  l.notifOnSplitRemovedAsk,
+              options: options,
+              selected: s.onSplitRemoved,
+              onSelected: cubit.setOnSplitRemoved,
+            );
+          }
+
           return DetailPageBody(
             onRefresh: cubit.load,
             bottomInset: AppSpacing.huge + MediaQuery.paddingOf(ctx).bottom,
@@ -243,10 +280,15 @@ class _Body extends StatelessWidget {
                 (first) {
                   final children = [
                     for (final r in rows)
-                      if (_rowText(l, r) case final t?) row(r, t),
+                      if (_rowText(l, r) case final t?) ...[
+                        row(r, t),
+                        if (r.type == 'bill_removed') removedRow(),
+                      ],
                   ];
                   if (children.isEmpty) return null;
-                  final hasAuto = rows.any((r) => r.autos.isNotEmpty);
+                  final hasAuto =
+                      g == NotificationGroup.debt ||
+                      rows.any((r) => r.autos.isNotEmpty);
                   return SectionCard(
                     first: first,
                     title: _groupTitle(l, g),

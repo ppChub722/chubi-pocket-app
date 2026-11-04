@@ -21,7 +21,6 @@ import 'package:chubi_pocket/features/transactions/presentation/widgets/draft_fo
 import 'package:chubi_pocket/features/transactions/presentation/widgets/recurring_link.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/saving_entry_form.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/splits_section.dart';
-import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 final _wallet = Account.fromJson({
@@ -752,25 +751,6 @@ void main() {
     });
   });
 
-  test('the ask → also_update_link flag', () {
-    for (final k in [
-      (choice: LinkedChoice.bothSides, cancelled: false, flag: true),
-      (choice: LinkedChoice.thisSideOnly, cancelled: false, flag: false),
-      (choice: null, cancelled: true, flag: null),
-    ]) {
-      final a = linkedSaveAnswer(k.choice);
-      expect(a.cancelled, k.cancelled, reason: '${k.choice}');
-      expect(a.alsoUpdateLink, k.flag, reason: '${k.choice}');
-    }
-    final none = linkedSaveAnswer(null, asked: false);
-    expect((none.cancelled, none.alsoUpdateLink), (false, null));
-    expect(
-      linkedSaveAsks(Transaction.fromJson(_tx())),
-      isFalse,
-      reason: 'a plain tx is not asked',
-    );
-  });
-
   test('debt entry PUT: only what changed', () {
     DebtEntryDraft draft({
       DebtEntryDirection direction = DebtEntryDirection.paid,
@@ -1030,13 +1010,6 @@ void main() {
     );
   });
 }
-
-Map<String, dynamic> _tx() => {
-  'id': 't1',
-  'type': 'expense',
-  'amount': 10,
-  'date': '2026-10-21',
-};
 
 class _Repo implements RecurringLinkRepository {
   _Repo({this.differs, this.linkError});

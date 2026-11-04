@@ -47,6 +47,8 @@ class _Repo extends Fake implements NotificationsRepository {
     Set<String>? mutedTypes,
     bool? autoSyncEvents,
     bool? autoSyncDebts,
+    bool? autoAcceptRepayments,
+    String? onSplitRemoved,
   }) async {
     puts.add(mutedTypes);
     if (fail) {

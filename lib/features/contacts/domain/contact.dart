@@ -55,8 +55,7 @@ class Contact extends Equatable {
     required this.name,
     required this.displayName,
     required this.status,
-    this.nickname,
-    this.showNickname = true,
+    this.showNickname = false,
     this.email,
     this.phone,
     this.description,
@@ -72,8 +71,6 @@ class Contact extends Equatable {
   final String id;
 
   final String name;
-
-  final String? nickname;
 
   final bool showNickname;
 
@@ -107,8 +104,7 @@ class Contact extends Equatable {
     return Contact(
       id: json['id'] as String,
       name: json['name'] as String,
-      nickname: json['nickname'] as String?,
-      showNickname: json['show_nickname'] as bool? ?? true,
+      showNickname: json['show_nickname'] as bool? ?? false,
       displayName: json['display_name'] as String,
       email: json['email'] as String?,
       phone: json['phone'] as String?,
@@ -134,7 +130,6 @@ class Contact extends Equatable {
   List<Object?> get props => [
     id,
     name,
-    nickname,
     showNickname,
     displayName,
     email,

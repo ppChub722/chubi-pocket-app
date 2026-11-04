@@ -1,3 +1,5 @@
+import '../../transactions/domain/refs.dart' show EmbeddedPerson;
+
 double _money(Object? v) => (v as num?)?.toDouble() ?? 0;
 
 /// One person on a paper (`PaperPerson`): their row id (kept on an edit),
@@ -10,15 +12,21 @@ class PaperPersonView {
     required this.paid,
     this.memberId,
     this.contactId,
+    this.person,
     this.isMe = false,
     this.paidBack = false,
     this.status = 'joined',
   });
 
   final String id;
+
+  /// The name typed on the bill.
   final String name;
   final String? memberId;
   final String? contactId;
+
+  /// My contact for them (its shown name and avatar); null = none.
+  final EmbeddedPerson? person;
   final bool isMe;
   final double share;
   final double paid;
@@ -32,6 +40,9 @@ class PaperPersonView {
       name: (j['name'] as String?) ?? '',
       memberId: j['member_id'] as String?,
       contactId: person['contact_id'] as String?,
+      person: person['contact_id'] == null
+          ? null
+          : EmbeddedPerson.fromJson(person),
       isMe: j['is_me'] == true,
       share: _money(j['share']),
       paid: _money(j['paid']),

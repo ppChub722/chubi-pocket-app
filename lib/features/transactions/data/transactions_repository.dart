@@ -178,23 +178,6 @@ class TransactionsRepository {
     }
   }
 
-  Future<Transaction> updateSplits(
-    String id,
-    List<Map<String, dynamic>> splits,
-  ) async {
-    try {
-      final res = await _client.dio.put<Map<String, dynamic>>(
-        '/transactions/$id/splits',
-        data: {'splits': splits},
-      );
-      return Transaction.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    } catch (e, st) {
-      throw ApiException.from(e, st);
-    }
-  }
-
   Future<TransactionMutationResult> create({
     required TransactionType type,
     String? accountId,

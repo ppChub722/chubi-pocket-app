@@ -64,7 +64,6 @@ class ContactsRepository {
 
   Future<AbsorbResult> create({
     required String displayName,
-    String? nickname,
     bool? showNickname,
     String? email,
     String? phone,
@@ -78,7 +77,6 @@ class ContactsRepository {
         '/contacts',
         data: <String, dynamic>{
           'display_name': displayName,
-          'nickname': ?(nickname == null || nickname.isEmpty ? null : nickname),
           'show_nickname': ?showNickname,
           'email': ?email,
           'phone': ?phone,
@@ -99,7 +97,6 @@ class ContactsRepository {
   Future<Contact> update(
     String id, {
     String? displayName,
-    String? nickname,
     bool? showNickname,
     String? email,
     String? phone,
@@ -112,7 +109,6 @@ class ContactsRepository {
         '/contacts/$id',
         data: <String, dynamic>{
           'display_name': ?displayName,
-          if (nickname != null) 'nickname': nickname.isEmpty ? null : nickname,
           'show_nickname': ?showNickname,
           'email': ?email,
           'phone': ?phone,

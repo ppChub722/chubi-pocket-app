@@ -1,280 +1,16 @@
 import 'dart:convert';
 
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
-import '../../accounts/domain/account.dart';
 import '../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
-import '../../projects/data/projects_repository.dart';
-import '../domain/link_draft.dart';
 import '../domain/transaction.dart';
-import '../domain/transaction_type.dart';
-import '../data/transactions_repository.dart';
 import 'cubit/transactions_cubit.dart';
-import 'save_failure.dart';
 import 'widgets/draft_form.dart';
-import 'widgets/event_pick.dart';
-
-/// A plain income / expense of mine edits in the quick create sheet. Splits,
-/// an event bill, a debt entry, a transfer, a system or locked row, another
-/// member's row: its detail page.
-bool txEditsInSheet(Transaction t) =>
-    t.type != TransactionType.transfer &&
-    !t.isDebtEntry &&
-    !t.isLocked &&
-    t.canEditCategory &&
-    !(t.category?.isSystem ?? false) &&
-    t.splitCount == 0 &&
-    t.projectId == null &&
-    t.eventBill == null;
-
-/// "Edit" on this tx opens its shared bill's form (0.4.1-2 SA1 / SA10): the
-/// BE's `edit_in_bill` (a connected copy, the event not completed). A
-/// completed event's bill no longer syncs and a disconnected tx has no bill:
-/// both edit on their own.
-bool txEditsAsBill(Transaction t) {
-  final bill = t.eventBill;
-  if (bill == null) return false;
-  return bill.editInBill ?? bill.event.isActive;
-}
-
-/// Editing shows the ผูกกับ tabs (0.4.0-3 B3): my own expense / income, not
-/// a repayment / debt entry, not a partner's mirror (its money is locked), not
-/// my copy of someone else's event bill (that one follows the board), not a
-/// bill of a completed event (locked for good, SA10).
-bool txLinkTabsEditable(Transaction t) {
-  final bill = t.eventBill;
-  return DraftFormController.hasLinkTabs(t.type) &&
-      !t.isDebtEntry &&
-      !t.isRepayment &&
-      !t.isLocked &&
-      t.canEditCategory &&
-      !(t.category?.isSystem ?? false) &&
-      !(t.paidBy?.fromPartner ?? false) &&
-      (bill == null || ((bill.isOrigin ?? bill.linked) && bill.event.isActive));
-}
-
-/// The ONE confirm of a tab switch: who and which wallet move, from the
-/// BE preview. True = save.
-Future<bool> confirmLinkPreview(
-  BuildContext context,
-  TxEditPreview preview, {
-  required String Function(String accountId) walletName,
-}) async {
-  final l = AppLocalizations.of(context)!;
-  String money(double v) => moneyString(context, v);
-  final lines = [
-    for (final p in preview.people)
-      if ((p.after - p.before).abs() > 0.005)
-        l.txLinkPreviewLine(p.name, money(p.before), money(p.after)),
-    for (final w in preview.wallets)
-      if ((w.after - w.before).abs() > 0.005)
-        l.txLinkPreviewLine(
-          walletName(w.accountId),
-          money(w.before),
-          money(w.after),
-        ),
-  ];
-  final go = await showChoiceDialog<bool>(
-    context,
-    title: l.txLinkPreviewTitle,
-    message: lines.isEmpty ? l.txLinkPreviewNone : lines.join('\n'),
-    choices: [
-      DialogChoice(
-        value: true,
-        label: l.transactionFormSave,
-        variant: AppButtonVariant.primary,
-      ),
-      DialogChoice(value: false, label: l.commonCancel),
-    ],
-  );
-  return go ?? false;
-}
-
-/// The ผูกกับ tabs while editing a saved tx (0.4.0-3 B3, owner: the SAME
-/// form everywhere): tx detail and the quick create sheet both use it. The
-/// edit opens on the saved tab; a switch (or other จ่ายแทน / อีเวนต์ data)
-/// is previewed, confirmed ONCE, then rides in the PUT as link_mode + the
-/// tab's data.
-class LinkEditSession {
-  LinkEditSession(this.c);
-
-  final DraftFormController c;
-
-  /// The tabs show for this tx ([txLinkTabsEditable]).
-  bool active = false;
-
-  LinkMode? _origin;
-  String? _baseline;
-
-  void start(Transaction t, {bool enabled = true}) {
-    active = enabled && txLinkTabsEditable(t);
-    if (!active) return;
-    c.prefillLink(t);
-    final m = c.link.mode!;
-    _origin = m;
-    _baseline = c.linkSnapshot(m);
-  }
-
-  /// The แบ่ง rows are what's saved (their checks / the incomplete ask).
-  bool get onSplitTab => !active || c.pickedTab == LinkMode.split;
-
-  /// Another tab, or other จ่ายแทน / อีเวนต์ data: the PUT carries
-  /// link_mode (a แบ่ง edit on a แบ่ง tx keeps today's splits call).
-  bool get changed {
-    final m = active ? c.pickedTab : null;
-    if (m == null) return false;
-    if (m != _origin) return true;
-    return (m == LinkMode.paid || m == LinkMode.event) &&
-        c.linkSnapshot(m) != _baseline;
-  }
-
-  String? _problem(AppLocalizations l, LinkMode m) {
-    if (m == LinkMode.paid && c.link.paidBy == null) {
-      return l.txLinkModeNeedsPayer;
-    }
-    if (c.markedWithoutName(m)) return l.debtCounterpartyRequired;
-    if (!c.linkBalanced(m)) {
-      return m == LinkMode.split ? l.txSplitUnbalanced : l.txLinkModeUnbalanced;
-    }
-    return null;
-  }
-
-  /// The event a switch into อีเวนต์ goes to: the one picked (a new one is
-  /// made first), else the one on the form ([formProjectId]: the sheet keeps
-  /// it there), else the tx's own.
-  static Future<String?> _projectId(
-    BuildContext context,
-    Transaction t,
-    EventTarget? picked,
-    String? formProjectId,
-  ) async {
-    final l = AppLocalizations.of(context)!;
-    if (picked == null && formProjectId != null) return formProjectId;
-    switch (picked) {
-      case ExistingEventTarget(:final project):
-        return project.id;
-      case NewEventTarget(:final name):
-        try {
-          final made = await context.read<ProjectsRepository>().create(
-            name: name,
-          );
-          return made.project.id;
-        } on ApiException catch (e) {
-          if (context.mounted) {
-            showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
-          }
-          return null;
-        }
-      case RemoveFromEvent():
-        break;
-      case null:
-        final id = t.eventBill?.event.id ?? t.projectId;
-        if (id != null) return id;
-    }
-    if (context.mounted) {
-      showAppSnackBar(context, l.txLinkModeNeedsEvent, tone: Tone.danger);
-    }
-    return null;
-  }
-
-  /// Checks, preview, the ONE confirm. Returns the PUT part; null = stop
-  /// (a problem said, cancelled, or refused).
-  Future<Map<String, dynamic>?> prepare(
-    BuildContext context, {
-    required Transaction t,
-    required EventTarget? event,
-    required String? initialAccountId,
-    required List<Account> accounts,
-    required VoidCallback retry,
-  }) async {
-    final l = AppLocalizations.of(context)!;
-    final m = c.pickedTab!;
-    final problem = _problem(l, m);
-    if (problem != null) {
-      HapticFeedback.lightImpact();
-      showAppSnackBar(context, problem, tone: Tone.danger);
-      return null;
-    }
-    final projectId = m == LinkMode.event
-        ? await _projectId(context, t, event, c.projectId)
-        : null;
-    if (m == LinkMode.event && projectId == null) return null;
-    if (!context.mounted) return null;
-    final link = c.linkEditJson(m, projectId: projectId);
-    final repo = context.read<TransactionsRepository>();
-    final accountId = c.account?.id;
-    final accountChanged = accountId != initialAccountId;
-    try {
-      // When someone else pays the event, `amount` is the BILL (be-A).
-      final preview = await repo.previewUpdate(
-        id: t.id,
-        amount: c.saveAmountFor(m),
-        accountId: accountChanged ? accountId : null,
-        clearAccount: accountChanged && accountId == null,
-        link: link,
-      );
-      if (!context.mounted) return null;
-      final go = await confirmLinkPreview(
-        context,
-        preview,
-        walletName: (id) =>
-            accounts.where((a) => a.id == id).firstOrNull?.name ?? id,
-      );
-      return go ? link : null;
-    } on ApiException catch (e) {
-      if (!context.mounted) return null;
-      showSaveFailure(
-        context,
-        e,
-        retry: retry,
-        message: splitErrorMessage(l, e) ?? errorText(l, e),
-      );
-      return null;
-    }
-  }
-}
-
-/// Saving an edit of my tx that's tied to another record asks whether that
-/// side changes too. An event bill (made from my tx, or my copy; 0.4.0-3
-/// B3, owner's words) asks "แก้ในอีเวนต์ด้วยไหม?" [แก้แค่ของฉัน]
-/// [แก้ทั้งคู่]. A recurring slot is never asked about: it reads the tx
-/// (0.4.1-1 R1). The answer is `also_update_link` (= apply_to_event on the
-/// BE). cancelled = stop.
-Future<({bool cancelled, bool? alsoUpdateLink})> askLinkedTxSave(
-  BuildContext context,
-  Transaction t,
-) async {
-  final l = AppLocalizations.of(context)!;
-  final event = t.eventBill != null;
-  if (!linkedSaveAsks(t)) return linkedSaveAnswer(null, asked: false);
-  final choice = await showLinkedPrompt(
-    context,
-    title: event ? l.linkedEventAskTitle : l.linkedSaveTitle,
-    cancelLabel: l.linkedCancel,
-    thisSideLabel: event ? l.linkedMineOnly : l.linkedSaveThisOnly,
-    bothSidesLabel: event ? l.linkedBoth : l.linkedSaveBoth,
-  );
-  return linkedSaveAnswer(choice);
-}
-
-bool linkedSaveAsks(Transaction t) => t.eventBill != null;
-
-/// The ask's answer as the PUT flag: both sides = true, this side = false,
-/// no ask = null, cancelled = stop.
-({bool cancelled, bool? alsoUpdateLink}) linkedSaveAnswer(
-  LinkedChoice? choice, {
-  bool asked = true,
-}) {
-  if (!asked) return (cancelled: false, alsoUpdateLink: null);
-  if (choice == null) return (cancelled: true, alsoUpdateLink: null);
-  return (cancelled: false, alsoUpdateLink: choice == LinkedChoice.bothSides);
-}
 
 /// The rule the server would reject first; null = ready to save.
 /// [savedAmount]: the tx's stored amount. A 0 the system wrote (sync,
@@ -440,7 +176,6 @@ Future<TransactionEditOutcome> saveTransactionEdit(
   final txCubit = context.read<TransactionsCubit>();
   final accounts = context.read<AccountsCubit>();
   final debts = DebtDirectoryCubit.maybeOf(context);
-  final repo = context.read<TransactionsRepository>();
   final body = txEditBody(
     t,
     c,
@@ -449,12 +184,7 @@ Future<TransactionEditOutcome> saveTransactionEdit(
     alsoUpdateLink: alsoUpdateLink,
     link: link,
   );
-  Future<Transaction?> putSplits() async {
-    if (!body.splitsChanged) return null;
-    return repo.updateSplits(t.id, body.splits);
-  }
-
-  if (body.lowering) await putSplits();
+  // People on a row live on its bill now (paper model): no splits here.
   final result = await txCubit.updateTransaction(
     id: t.id,
     amount: body.amount,
@@ -477,10 +207,6 @@ Future<TransactionEditOutcome> saveTransactionEdit(
   // moves everyone's in it.
   for (final b in [?result.personBalance, ...result.personBalances]) {
     debts?.applyBalance(b);
-  }
-  if (!body.lowering && body.splitsChanged) {
-    final row = await putSplits();
-    if (row != null) txCubit.patchRow(row, afterWrite: true);
   }
   return const TransactionEditOutcome();
 }

@@ -26,7 +26,6 @@ import '../../../personal_debts/presentation/debt_wiring.dart';
 import '../../../projects/data/projects_repository.dart';
 import '../../../projects/domain/paper.dart';
 import '../../../projects/domain/project.dart';
-import 'splits_section.dart' show SplitDraft;
 import '../../../projects/presentation/widgets/member_picker.dart';
 import '../../../projects/presentation/widgets/project_common.dart'
     show memberAvatar;
@@ -40,7 +39,7 @@ import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
 import '../cubit/tx_form_options_cubit.dart';
-import '../delete_results.dart';
+import '../paper_edit.dart';
 import '../quick_create_bodies.dart';
 import '../save_failure.dart';
 import '../transaction_edit.dart';
@@ -177,42 +176,13 @@ Future<bool> showEntrySheet(
   );
 }
 
-/// Opens a committed tx for editing (0.4.1-2 SA1, the one router): its
-/// shared bill's form when the BE says so ([txEditsAsBill]), the quick
-/// create sheet when it is a plain one ([txEditsInSheet]), else its detail
-/// page. True = saved or deleted in a sheet.
-Future<bool> editTransaction(BuildContext context, String id) async {
-  final cubit = context.read<TransactionsCubit>();
-  var tx = cubit.byId(id);
-  if (tx == null) {
-    try {
-      tx = await cubit.refreshOne(id);
-    } on ApiException catch (e) {
-      if (context.mounted) {
-        showErrorSnackBar(context, e);
-      }
-      return false;
-    }
-  }
-  if (!context.mounted) return false;
-  final bill = tx.eventBill;
-  if (bill != null && txEditsAsBill(tx)) {
-    return openPaperBill(
-      context,
-      bill.billId,
-      projectId: bill.event.isSplit ? null : bill.event.id,
-    );
-  }
-  if (!txEditsInSheet(tx)) {
-    openPage(context, '/transactions/$id');
-    return false;
-  }
-  return showQuickCreateSheet(context, editTransaction: tx);
-}
+/// Opens a committed tx for editing: its page in edit mode, a bill row too
+/// (owner 2026-11-03: edit is the page, not a sheet).
+void editTransaction(BuildContext context, String id) =>
+    openPage(context, '/transactions/$id/edit');
 
 Future<bool> showQuickCreateSheet(
   BuildContext context, {
-  Transaction? editTransaction,
   QuickCreatePreset? preset,
   ValueChanged<DebtEntryWriteResult>? onDebtSaved,
   ValueChanged<SavingWriteResult>? onSavingSaved,
@@ -250,7 +220,6 @@ Future<bool> showQuickCreateSheet(
     builder: (sheetContext) {
       final sheet = _QuickCreateSheet(
         prefs: prefs,
-        editTransaction: editTransaction,
         draft: draft,
         account: account,
         initialToAccount: toAccount,
@@ -347,7 +316,6 @@ enum _CloseChoice { draft, keepEditing, discard }
 class _QuickCreateSheet extends StatefulWidget {
   const _QuickCreateSheet({
     required this.prefs,
-    this.editTransaction,
     this.draft,
     this.account,
     this.initialToAccount,
@@ -397,9 +365,6 @@ class _QuickCreateSheet extends StatefulWidget {
   /// Editing this pending draft instead of creating.
   final PendingTransaction? draft;
 
-  /// Editing this committed (plain) tx instead of creating.
-  final Transaction? editTransaction;
-
   @override
   State<_QuickCreateSheet> createState() => _QuickCreateSheetState();
 }
@@ -431,9 +396,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
   bool get _isEntry => widget.entry != null;
 
-  bool get _isEditTx => widget.editTransaction != null;
-
-  bool get _draftLike => _editingDraft || _isEntry || _isEditTx;
+  bool get _draftLike => _editingDraft || _isEntry;
 
   /// A draft as first shown — after prefill, so the defaults it fills in
   /// (today, expense) for a draft without them don't count as edits.
@@ -441,8 +404,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
   bool get _dirty => _draftLike
       ? _draftBaseline != null &&
-            (_c.toDraft(keepIncomplete: true) != _draftBaseline ||
-                _linkEdit.changed)
+            _c.toDraft(keepIncomplete: true) != _draftBaseline
       : _paperEdit
       ? _paperBaseline != null && _paperSnapshot() != _paperBaseline
       : _hasKeyData;
@@ -486,10 +448,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         .then((_) => snap())
         .catchError((Object _) {});
   }
-
-  /// Editing a saved tx: the ผูกกับ tabs, as on tx detail (owner: the SAME
-  /// form everywhere; 0.4.0-3 B3).
-  late final _linkEdit = LinkEditSession(_c);
 
   bool get _hasKeyData =>
       _c.amountValue > 0 || _c.description.text.trim().isNotEmpty;
@@ -576,31 +534,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   }
 
   void _prefillDraft() {
-    final tx = widget.editTransaction;
-    if (tx != null) {
-      final options = maybeTxFormOptions(context, watch: false)?.state.options;
-      final accounts = [
-        ...?options?.accountList,
-        if (options == null) ...context.read<AccountsCubit>().state.accounts,
-      ];
-      final categories = [
-        ...?options?.categoryList,
-        if (options == null)
-          ...context.read<CategoriesCubit>().state.categories,
-      ];
-      final account = tx.account;
-      if (account != null && !accounts.any((a) => a.id == account.id)) {
-        accounts.add(account.toAccount());
-      }
-      final category = tx.category;
-      if (category != null && !categories.any((c) => c.id == category.id)) {
-        categories.add(category.toCategory());
-      }
-      _c.prefillTransaction(tx, accounts: accounts, categories: categories);
-      _linkEdit.start(tx);
-      _draftBaseline = _c.toDraft(keepIncomplete: true);
-      return;
-    }
     final entry = widget.entry;
     if (entry != null) {
       final options = maybeTxFormOptions(context, watch: false)?.state.options;
@@ -1037,105 +970,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       navigator.pop(true);
     } else {
       setState(() => _saving = false);
-    }
-  }
-
-  Future<void> _saveEditTx() async {
-    final l = AppLocalizations.of(context)!;
-    final tx = widget.editTransaction!;
-    final problem = transactionEditProblem(
-      l,
-      _c,
-      splitsEditable: false,
-      checkSplits: _linkEdit.onSplitTab,
-      savedAmount: widget.editTransaction?.amount,
-    );
-    if (problem != null) {
-      HapticFeedback.lightImpact();
-      _toast(problem);
-      return;
-    }
-    // A ผูกกับ tab switch: preview + ONE confirm, then it rides in the PUT.
-    final changed = _linkEdit.changed;
-    final link = changed
-        ? await _linkEdit.prepare(
-            context,
-            t: tx,
-            event: _event,
-            initialAccountId: tx.accountId,
-            accounts: [
-              ...?maybeTxFormOptions(
-                context,
-                watch: false,
-              )?.state.options?.accountList,
-              ?tx.account?.toAccount(),
-            ],
-            retry: _saveEditTx,
-          )
-        : null;
-    if (changed && link == null) return;
-    if (!mounted) return;
-    final ask = await askLinkedTxSave(context, tx);
-    if (ask.cancelled || !mounted) return;
-    final alsoUpdateLink = ask.alsoUpdateLink;
-    final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-    setState(() => _saving = true);
-    try {
-      final outcome = await saveTransactionEdit(
-        context,
-        t: tx,
-        c: _c,
-        initialAccountId: tx.accountId,
-        initialToAccountId: null,
-        alsoUpdateLink: alsoUpdateLink,
-        link: link,
-      );
-      HapticFeedback.mediumImpact();
-      navigator.pop(true);
-      showAppSnackBarOn(
-        messenger,
-        outcome.warning ?? l.quickSaved,
-        tone: outcome.warning == null ? Tone.success : Tone.warning,
-      );
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() => _saving = false);
-      showSaveFailure(
-        context,
-        e,
-        retry: _saveEditTx,
-        message: splitErrorMessage(l, e) ?? errorText(l, e),
-      );
-    }
-  }
-
-  /// A recurring slot the tx filled is skipped by the server (R2): no ask.
-  Future<void> _deleteEditTx() async {
-    final l = AppLocalizations.of(context)!;
-    final tx = widget.editTransaction!;
-    final ok = await showConfirmDialog(
-      context,
-      title: l.transactionDetailDeleteConfirmTitle,
-      message: l.transactionDetailDeleteConfirmBody,
-      confirmLabel: l.transactionDetailDeleteConfirmAction,
-      destructive: true,
-    );
-    if (!ok || !mounted) return;
-    final txCubit = context.read<TransactionsCubit>();
-    final accounts = context.read<AccountsCubit>();
-    final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-    setState(() => _saving = true);
-    try {
-      final result = await txCubit.remove(tx.id);
-      applyTxDeleteResult(result, accounts: accounts);
-      navigator.pop(true);
-      showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() => _saving = false);
-      showSaveFailure(context, e, retry: _deleteEditTx);
     }
   }
 
@@ -1578,141 +1412,26 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  /// An edit keeps each person's row: [LinkPerson.key] → person_id.
-  final _personIds = <String, String>{};
+  /// The bill being edited (owner 2026-11-03: the same form as quick
+  /// create); null = a new entry.
+  late final PaperEditSession? _paperSession = switch (widget.eventBill?.edit) {
+    final p? => PaperEditSession(p),
+    null => null,
+  };
 
-  /// "คืนแล้ว" as the bill was opened (only the changes are sent).
-  final _paidBackAtOpen = <String>{};
+  Map<String, String> get _personIds => _paperSession?.personIds ?? const {};
 
-  /// A bill's person as the form keys them: an event bill by name (the
-  /// event matches its members by name), a split bill by my contact.
-  LinkPerson _personOf(PaperPersonView x, {required bool event}) => LinkPerson(
-    name: x.name,
-    contactId: event ? null : x.contactId,
-  );
-
-  /// The bill being edited into the form (owner 2026-11-03: the same form
-  /// as quick create): the bill's fields, its people with their shares and
-  /// payer, the marks; my own fields come from my transaction of it.
   void _prefillPaper(PaperView p) {
-    final event = p.projectId != null;
-    if (!p.isPayback) {
-      _c.setType(
-        p.type == 'income' ? TransactionType.income : TransactionType.expense,
-      );
-    }
-    _c.amount.text = _amountText(p.amount);
-    _c.description.text = p.description ?? '';
-    if (DateTime.tryParse(p.date) case final d?) _c.setDate(d);
-    _c.link.eventBookMine = p.myTransaction != null;
-    _c.link.eventBookDebts = p.myDebtIds.isNotEmpty;
-    final tx = p.myTransaction == null
-        ? null
-        : Transaction.fromJson(p.myTransaction!);
-    if (tx != null) {
-      _c.note.text = tx.privateNote ?? '';
-      _c.setTagIds({for (final t in tx.tags) t.id});
-      for (final t in tx.tags) {
-        _c.knownTags[t.id] = Tag(id: t.id, name: t.name, iconCode: t.iconCode);
-      }
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        final cat = tx.category;
-        final acc = tx.account;
-        _c.setCategory(
-          cat == null
-              ? null
-              : context
-                        .read<CategoriesCubit>()
-                        .state
-                        .categories
-                        .where((c) => c.id == cat.id)
-                        .firstOrNull ??
-                    cat.toCategory(),
-        );
-        if (acc != null) {
-          _c.setAccount(
-            context
-                    .read<AccountsCubit>()
-                    .state
-                    .accounts
-                    .where((a) => a.id == acc.id)
-                    .firstOrNull ??
-                acc.toAccount(),
-          );
-        }
-      });
-    }
+    final session = _paperSession!;
+    session.prefill(context, _c);
     if (p.isPayback) {
-      _fromMemberId = p.people.where((x) => x.paid > 0).firstOrNull?.memberId;
-      _toMemberId = p.people.where((x) => x.share > 0).firstOrNull?.memberId;
-      return;
-    }
-    final me = p.me;
-    final others = [
-      for (final x in p.people)
-        if (!x.isMe) x,
-    ];
-    final payers = [
-      for (final x in others)
-        if (x.paid > 0.005) x,
-    ]..sort((a, b) => b.paid.compareTo(a.paid));
-    final payer = payers.firstOrNull;
-    _c.addPeople([for (final x in others) _personOf(x, event: event)]);
-    for (final x in others) {
-      final key = _personOf(x, event: event).key;
-      _personIds[key] = x.id;
-      if (x.paidBack) {
-        _c.link.paidBack.add(key);
-        _paidBackAtOpen.add(key);
-      }
-    }
-    if (event) {
-      _c.link.eventPayer = payer == null ? null : _personOf(payer, event: true);
-      for (final x in others) {
-        _c.link.eventShares[_personOf(x, event: true).key] = x.share;
-      }
-      _c.link.eventMeAuto = false;
-      _c.link.eventMeTyped = me?.share ?? 0;
-    } else {
-      for (final s in _c.splits) {
-        final x = others
-            .where((o) => _personOf(o, event: false).key == _draftKey(s))
-            .firstOrNull;
-        if (x != null) s.owedAmount = x.share;
-      }
-      _c.setSplits(List.of(_c.splits));
-      _c.setMeAmount(me?.share ?? 0);
-      if (payer != null) {
-        _c.setPaidBy(_personOf(payer, event: false));
-        _c.setPaidAmount(payer.paid);
-        if ((me?.paid ?? 0) > 0.005) _c.setMyPaid(me!.paid);
-      }
-      _c.setLinkMode(LinkMode.split, hasEvent: false);
+      _fromMemberId = session.fromMemberId;
+      _toMemberId = session.toMemberId;
     }
   }
 
-  static String _draftKey(SplitDraft s) => LinkPerson(
-    name: s.personName.trim(),
-    contactId: s.contactId,
-  ).key;
-
-  /// Saves the edited bill (`PUT` with the version read: 409 BILL_CHANGED
-  /// when someone saved meanwhile), then what my switches add to my books
-  /// and the "คืนแล้ว" marks that changed.
+  /// Saves the edited bill (the shared session), then closes.
   Future<void> _saveEdit(AppLocalizations l, PaperView edit) async {
-    final mode = _linkMode;
-    final body = paperBodies(
-      _c,
-      mode,
-      personIds: _personIds,
-      mePersonId: edit.me?.id,
-    );
-    if (body == null) {
-      HapticFeedback.lightImpact();
-      _toast(l.evbPaybackNeedsPeople);
-      return;
-    }
     final projects = context.read<ProjectsRepository>();
     final txs = context.read<TransactionsCubit>();
     final navigator = Navigator.of(context);
@@ -1720,51 +1439,18 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     setState(() => _saving = true);
     String? warn;
     try {
-      final saved = await projects.updatePaper(
-        edit.id,
-        projectId: edit.projectId,
-        paper: body.paper,
-        version: edit.version,
+      final ok = await _paperSession!.save(
+        projects: projects,
+        txs: txs,
+        c: _c,
+        mode: _linkMode,
       );
-      // My books: the pieces newly asked for.
-      final wantTx = _c.link.eventBookMine && edit.myTransaction == null;
-      final wantDebts =
-          (_c.link.eventBookDebts ?? false) && edit.myDebtIds.isEmpty;
-      final split = edit.projectId == null;
-      if (split ? edit.myTransaction == null : (wantTx || wantDebts)) {
-        await projects.claimPaper(
-          edit.id,
-          projectId: edit.projectId,
-          claim: {
-            ...body.myBooks,
-            if (!split && !wantTx) 'skip_transaction': true,
-            if (!split && wantDebts) 'book_debts': true,
-          },
-        );
-      }
-      // My own fields on my transaction (never synced).
-      if (edit.myTransaction?['id'] case final String txId) {
-        await txs.updateTransaction(
-          id: txId,
-          categoryId: _c.category?.id,
-          clearCategory: _c.category == null,
-          accountId: _c.account?.id,
-          tagIds: _c.tagIds.toList(),
-          privateNote: _c.note.text.trim(),
-        );
-      }
-      // "คืนแล้ว" marks that changed.
-      for (final key in {..._paidBackAtOpen, ..._c.link.paidBack}) {
-        final now = _c.link.paidBack.contains(key);
-        if (now == _paidBackAtOpen.contains(key)) continue;
-        final pid = _personIds[key];
-        if (pid == null) continue;
-        await projects.markPaperPaidBack(
-          saved.paperId,
-          pid,
-          projectId: edit.projectId,
-          paidBack: now,
-        );
+      if (!ok) {
+        if (!mounted) return;
+        setState(() => _saving = false);
+        HapticFeedback.lightImpact();
+        _toast(l.evbPaybackNeedsPeople);
+        return;
       }
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -1783,6 +1469,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       tone: warn == null ? Tone.success : Tone.warning,
     );
   }
+
 
   /// ออกจากบิล: keep my books of it as plain records, or delete them.
   Future<void> _leaveBill(PaperView edit) async {
@@ -2178,7 +1865,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       heroKey: _heroKey,
       title: _isEntry
           ? widget.entry!.title
-          : _isEditTx || _paperEdit
+          : _paperEdit
           ? l.transactionFormTitleEdit
           : _editingDraft
           ? l.pendingEditTitle
@@ -2208,8 +1895,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                 : null)
           : _isEntry
           ? (widget.entry!.onDelete == null ? null : _deleteEntry)
-          : _isEditTx
-          ? _deleteEditTx
           : _editingDraft
           ? _discardDraft
           : null,
@@ -2232,14 +1917,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       // One word for every entry: บันทึก records, links or keeps the edits.
       saveLabel: _isEntry
           ? _entryAction(primary: true).label
-          : _isEditTx
-          ? l.transactionFormSave
           : (_editingDraft ? l.pendingSubmitThis : l.quickSave),
       // A picked transaction settles the occurrence: no draft save beside it.
       draftLabel: _isEntry
           ? (_entryTx != null ? null : _entrySecondary?.label)
-          : _isEditTx ||
-                _isDebt ||
+          : _isDebt ||
                 widget.eventBill != null ||
                 (_isSaving && !_isSavingDraft)
           ? null
@@ -2254,8 +1936,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                 : _entryCreate && widget.entry!.createAction != null
                 ? () => _runEntry(widget.entry!.createAction!)
                 : () => _runEntry(_entryAction(primary: true)))
-          : _isEditTx
-          ? (waiting || _draftBaseline == null ? null : _saveEditTx)
           : _isSavingDraft
           ? _submitSavingDraft
           : _isDebt
@@ -2300,9 +1980,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                 controller: _c,
                 defaultAccount: _defaultAccount(accounts, options: options),
                 // An entry keeps its type: the occurrence API takes none.
-                typeLocked: _isEditTx || _isEntry,
+                typeLocked: _isEntry,
                 // An entry saves a PendingDraft: no splits there.
-                allowSplits: !_isEditTx && !_isEntry,
+                allowSplits: !_isEntry,
                 rowAboveNote: _isEntry ? _entryRows(l) : null,
                 debtPersonCard: _debtPersonCard(l),
                 heroLocked: _entryTx != null,
@@ -2310,7 +1990,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                 linkSections: !_isEntry,
                 eventPending: _activeEvent != null,
                 // ผูกกับ (0.4.0-3): a new expense; the form shows the tabs.
-                linkTabs: !_draftLike || _linkEdit.active || _editingDraft,
+                linkTabs: !_draftLike || _editingDraft,
                 linkEventIsNew: _event is NewEventTarget,
                 linkIsEventMember: _isEventMember,
                 recurringSlot: widget.eventBill == null
@@ -2324,8 +2004,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                         paybackCard: _paybackCard(l),
                       ),
                 eventSlot:
-                    (!_draftLike || _linkEdit.active) &&
-                        typeCanJoinEvent(_c.type)
+                    !_draftLike && typeCanJoinEvent(_c.type)
                     ? SplitEventSlot(
                         name: eventTargetName(l, _event),
                         onTap: _pickEvent,

@@ -368,7 +368,7 @@ Future<void> openOccurrenceSheet(
   }
   final tx = item.transaction;
   if (tx != null) {
-    await editTransaction(context, tx.id);
+    editTransaction(context, tx.id);
     return;
   }
   final l = AppLocalizations.of(context)!;

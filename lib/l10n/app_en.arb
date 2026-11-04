@@ -2542,5 +2542,10 @@
   "notifSetBillMoved": "My bill moves to another event",
   "notifSetDebtRepaid": "My debt partner records a repayment",
   "notifSetEventDeleted": "An event I'm in is deleted",
-  "projectLeavePickOwner": "Who owns it next?"
+  "projectLeavePickOwner": "Who owns it next?",
+  "notifAutoRepaidHint": "Auto = record it in my book at once (main wallet)",
+  "notifSetOnSplitRemoved": "My records when I'm taken off a bill",
+  "notifOnSplitRemovedAsk": "Ask me",
+  "notifOnSplitRemovedKeep": "Keep",
+  "notifOnSplitRemovedDelete": "Delete"
 }

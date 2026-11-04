@@ -47,7 +47,7 @@ class ContactDetailPage extends StatefulWidget {
   State<ContactDetailPage> createState() => _ContactDetailPageState();
 }
 
-enum _Field { name, nickname, description, email, phone, note }
+enum _Field { name, description, email, phone, note }
 
 class _ContactDetailPageState extends State<ContactDetailPage>
     with EditModeMixin<ContactDetailPage, _ContactDraft> {
@@ -150,7 +150,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     }
 
     sync(_Field.name, working.name);
-    sync(_Field.nickname, working.nickname);
     sync(_Field.email, working.email);
     sync(_Field.phone, working.phone);
     sync(_Field.description, working.description);
@@ -159,7 +158,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
 
   void _onText(_Field f, String v) => applyTextChange(f, switch (f) {
     _Field.name => working.copyWith(name: v),
-    _Field.nickname => working.copyWith(nickname: v),
     _Field.email => working.copyWith(email: v),
     _Field.phone => working.copyWith(phone: v),
     _Field.description => working.copyWith(description: v),
@@ -180,8 +178,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       if (_isCreate) {
         final created = await cubit.create(
           displayName: w.name,
-          nickname: w.nickname.isEmpty ? null : w.nickname,
-          showNickname: w.showNickname,
           email: w.email.isEmpty ? null : w.email,
           phone: w.phone.isEmpty ? null : w.phone,
           description: w.description.isEmpty ? null : w.description,
@@ -208,9 +204,9 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       }
       final updated = await cubit.update(
         _contact!.id,
-        displayName: _linked ? null : w.name,
-        nickname: w.nickname,
-        showNickname: w.showNickname,
+        // Linked, my name for them is the nickname (owner 2026-11-03).
+        displayName: w.name,
+        showNickname: _linked ? w.showNickname : null,
         email: _linked ? null : w.email,
         phone: w.phone,
         description: w.description,
@@ -610,14 +606,15 @@ class _ContactDetailPageState extends State<ContactDetailPage>
 
   Widget? _viewInfo(AppLocalizations l) {
     final c = _contact!;
-    // Only a linked person has a nickname (their name comes from their
-    // account); its switch sits right under it. Email / phone are in the hero.
+    // Linked: my name for them is the nickname (their name comes from their
+    // account, owner 2026-11-03); its switch sits right under it. Email /
+    // phone are in the hero.
     if (!c.isLinked) return null;
     final faint = Theme.of(context).colorScheme.onSurfaceVariant;
-    final nickname = c.nickname;
+    final nickname = c.displayName;
     return SectionCard(
       children: [
-        nickname == null || nickname.trim().isEmpty
+        nickname.trim().isEmpty
             ? InfoRow(
                 label: l.contactNicknameLabel,
                 valueWidget: Text(
@@ -626,12 +623,12 @@ class _ContactDetailPageState extends State<ContactDetailPage>
                     context,
                   ).textTheme.bodyMedium?.copyWith(color: faint),
                 ),
-                onLongPress: _enterOn(_Field.nickname),
+                onLongPress: _enterOn(_Field.name),
               )
             : InfoRow(
                 label: l.contactNicknameLabel,
                 value: nickname,
-                onLongPress: _enterOn(_Field.nickname),
+                onLongPress: _enterOn(_Field.name),
               ),
         _viewNicknameSwitch(l, c),
       ],
@@ -798,7 +795,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
   /// fields, read-only, and live — the nickname while "แสดงชื่อเล่น" is on,
   /// else the account's name (owner 2026-10-23).
   Widget _lockedName(AppLocalizations l, Contact c, _ContactDraft w) {
-    final nick = w.nickname.trim();
+    final nick = w.name.trim();
     final shown = w.showNickname && nick.isNotEmpty
         ? nick
         : (c.linkedUser?.displayName ?? c.name);
@@ -848,20 +845,17 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     final w = working;
     return SectionCard(
       children: [
-        // Nickname + its switch: linked people only (owner 2026-10-23). With
-        // the switch off the nickname isn't used, so its field greys out.
+        // Linked: my name for them, as the nickname, + its switch (owner
+        // 2026-11-03). Editable either way; it shows only with the switch on
+        // (and again as their name once unlinked).
         if (_linked) ...[
-          IgnorePointer(
-            ignoring: !w.showNickname,
-            child: Opacity(
-              opacity: w.showNickname ? 1 : 0.45,
-              child: field(
-                _Field.nickname,
-                l.contactNicknameLabel,
-                hint: l.contactNicknameHint,
-                maxLength: TextLimits.name,
-              ),
-            ),
+          field(
+            _Field.name,
+            l.contactNicknameLabel,
+            hint: l.contactNicknameHint,
+            maxLength: TextLimits.name,
+            validator: (v) =>
+                (v?.trim() ?? '').isEmpty ? l.contactNameRequired : null,
           ),
           SettingToggleRow(
             label: l.contactShowNicknameLabel,
@@ -969,8 +963,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
 class _ContactDraft {
   const _ContactDraft({
     this.name = '',
-    this.nickname = '',
-    this.showNickname = true,
+    this.showNickname = false,
     this.description = '',
     this.email = '',
     this.phone = '',
@@ -980,7 +973,6 @@ class _ContactDraft {
 
   factory _ContactDraft.from(Contact c) => _ContactDraft(
     name: c.displayName,
-    nickname: c.nickname ?? '',
     showNickname: c.showNickname,
     description: c.description ?? '',
     email: c.email ?? '',
@@ -990,7 +982,6 @@ class _ContactDraft {
   );
 
   final String name;
-  final String nickname;
   final bool showNickname;
   final String description;
   final String email;
@@ -1000,7 +991,6 @@ class _ContactDraft {
 
   _ContactDraft trimmed() => _ContactDraft(
     name: name.trim(),
-    nickname: nickname.trim(),
     showNickname: showNickname,
     description: description.trim(),
     email: email.trim(),
@@ -1011,7 +1001,6 @@ class _ContactDraft {
 
   _ContactDraft copyWith({
     String? name,
-    String? nickname,
     bool? showNickname,
     String? description,
     String? email,
@@ -1020,7 +1009,6 @@ class _ContactDraft {
     IconCode? iconCode,
   }) => _ContactDraft(
     name: name ?? this.name,
-    nickname: nickname ?? this.nickname,
     showNickname: showNickname ?? this.showNickname,
     description: description ?? this.description,
     email: email ?? this.email,
@@ -1033,7 +1021,6 @@ class _ContactDraft {
   bool operator ==(Object other) =>
       other is _ContactDraft &&
       other.name == name &&
-      other.nickname == nickname &&
       other.showNickname == showNickname &&
       other.description == description &&
       other.email == email &&
@@ -1044,7 +1031,6 @@ class _ContactDraft {
   @override
   int get hashCode => Object.hash(
     name,
-    nickname,
     showNickname,
     description,
     email,

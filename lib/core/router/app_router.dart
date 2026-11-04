@@ -252,6 +252,14 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
       builder: (context, state) =>
           TransactionDetailPage(transactionId: state.pathParameters['id']!),
     ),
+    GoRoute(
+      path: '/transactions/:id/edit',
+      name: 'transaction-edit',
+      builder: (context, state) => TransactionDetailPage(
+        transactionId: state.pathParameters['id']!,
+        startEditing: true,
+      ),
+    ),
   ],
   ShellTab.accounts => [
     GoRoute(

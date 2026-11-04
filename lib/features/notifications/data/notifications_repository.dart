@@ -147,6 +147,8 @@ class NotificationsRepository {
     Set<String>? mutedTypes,
     bool? autoSyncEvents,
     bool? autoSyncDebts,
+    bool? autoAcceptRepayments,
+    String? onSplitRemoved,
   }) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(
@@ -155,6 +157,8 @@ class NotificationsRepository {
           if (mutedTypes != null) 'muted_types': mutedTypes.toList(),
           'auto_sync_events': ?autoSyncEvents,
           'auto_sync_debts': ?autoSyncDebts,
+          'auto_accept_repayments': ?autoAcceptRepayments,
+          'on_split_removed': ?onSplitRemoved,
         },
       );
       return NotificationSettings.fromJson(res.data!);
