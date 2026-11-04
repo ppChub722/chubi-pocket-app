@@ -28,6 +28,10 @@ class EditDraft<D extends Object> {
     return true;
   }
 
+  /// [next] folds into the current step: no new undo step (something that
+  /// follows from the last change, e.g. data loaded for it).
+  void amend(D next) => working = next;
+
   void textChange(Object field, D next) {
     if (_sessionStart == null) {
       _sessionStart = working;

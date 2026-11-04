@@ -29,8 +29,14 @@ class QuickCreateSheetShell extends StatefulWidget {
     this.barActionIcon,
     this.draftIcon,
     this.saveIcon,
+    this.onUndo,
+    this.undoTooltip,
     super.key,
   });
+
+  /// Set: one step back, shown in the title row (null = nothing to undo).
+  final VoidCallback? onUndo;
+  final String? undoTooltip;
 
   /// A plain extra action at the bottom left (ข้าม / ยกเลิกจ่ายแล้ว).
   final String? barActionLabel;
@@ -308,6 +314,12 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
                                           ),
                                   ),
                                 ),
+                                if (widget.onUndo != null && !widget.saving)
+                                  AppIconButton.flat(
+                                    icon: AppIcons.undo,
+                                    tooltip: widget.undoTooltip,
+                                    onPressed: widget.onUndo,
+                                  ),
                                 if (widget.onDelete != null &&
                                     deleteButton == null)
                                   AppIconButton.flat(

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,6 +14,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/idempotency.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../ui/templates/edit_draft.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
@@ -31,6 +33,8 @@ import '../../../projects/presentation/widgets/project_common.dart'
     show memberAvatar;
 import '../../../pending/domain/pending_transaction.dart';
 import '../../../pending/presentation/cubit/pending_cubit.dart';
+import '../../../recurring/data/recurring_link_repository.dart'
+    show LinkCandidate;
 import '../../../tags/domain/tag.dart';
 import '../../domain/form_options.dart';
 import '../../domain/link_draft.dart';
@@ -313,6 +317,56 @@ Future<bool> openPaperBill(
 
 enum _CloseChoice { draft, keepEditing, discard }
 
+/// The sheet's own picks beside the form, for an undo step.
+typedef _SheetPicks = ({
+  Account? account,
+  Account? toAccount,
+  Category? category,
+  String? projectId,
+  EventTarget? event,
+  List<ProjectMember>? members,
+  bool payback,
+  String? from,
+  String? to,
+  LinkCandidate? recurring,
+  Transaction? entryTx,
+  Object? beforeEntryTx,
+  bool entryCreate,
+  bool entryPaid,
+});
+
+/// One undo step of the รายการ form: everything on it, so undo takes back
+/// any action, a pick as much as a typed field.
+@immutable
+class _SheetDraft {
+  const _SheetDraft(this.tx, this.bill, this.picks);
+
+  final PendingDraft tx;
+  final BillState bill;
+  final _SheetPicks picks;
+
+  /// Only my own text fields differ from [o] (a typing burst).
+  bool sameButText(_SheetDraft o) =>
+      bill == o.bill &&
+      picks == o.picks &&
+      tx.type == o.tx.type &&
+      tx.date == o.tx.date &&
+      tx.accountId == o.tx.accountId &&
+      tx.categoryId == o.tx.categoryId &&
+      tx.transferToAccountId == o.tx.transferToAccountId &&
+      listEquals(tx.tagIds, o.tx.tagIds);
+
+  @override
+  bool operator ==(Object other) =>
+      other is _SheetDraft &&
+      other.tx == tx &&
+      other.bill == bill &&
+      other.picks == picks;
+
+  @override
+  int get hashCode => Object.hash(tx, bill, picks);
+}
+
 class _QuickCreateSheet extends StatefulWidget {
   const _QuickCreateSheet({
     required this.prefs,
@@ -513,7 +567,138 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       }
     }
     _c.addListener(() {
-      if (mounted) setState(() {});
+      if (mounted) setState(_track);
+    });
+    unawaited(_startHistory());
+  }
+
+  /// The รายการ form's undo steps; null until the form is filled in as
+  /// first shown (options, prefill, default wallet), so none of that is one.
+  EditDraft<_SheetDraft>? _history;
+  bool _restoring = false;
+  bool _batching = false;
+  Timer? _typing;
+
+  Future<void> _startHistory() async {
+    final opts = maybeTxFormOptions(context, watch: false);
+    if (opts != null && opts.state.isLoading) {
+      try {
+        await opts.stream.firstWhere((s) => !s.isLoading);
+      } on Object {
+        return;
+      }
+    }
+    // The prefill lands, then the form's own first-frame fills.
+    await WidgetsBinding.instance.endOfFrame;
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted || _history != null) return;
+    setState(() => _history = EditDraft(_snap()));
+  }
+
+  _SheetDraft _snap() => _SheetDraft(
+    _c.toDraft(keepIncomplete: true),
+    _c.bill(),
+    (
+      account: _c.account,
+      toAccount: _c.toAccount,
+      category: _c.category,
+      projectId: _c.projectId,
+      event: _event,
+      members: _eventMembers,
+      payback: _payback,
+      from: _fromMemberId,
+      to: _toMemberId,
+      recurring: _link.candidate,
+      entryTx: _entryTx,
+      beforeEntryTx: _beforeEntryTx,
+      entryCreate: _entryCreate,
+      entryPaid: _entryPaid,
+    ),
+  );
+
+  /// Records what just changed as an undo step (a typing burst is one).
+  /// Call inside setState.
+  void _track() {
+    final h = _history;
+    if (h == null || _restoring || _batching) return;
+    final next = _snap();
+    final w = h.working;
+    if (next == w) return;
+    if (next.sameButText(w)) {
+      final field = next.tx.note != w.tx.note
+          ? 'note'
+          : next.tx.description != w.tx.description
+          ? 'description'
+          : 'amount';
+      h.textChange(field, next);
+      _typing?.cancel();
+      _typing = Timer(const Duration(milliseconds: 500), () {
+        if (mounted) setState(h.commitSession);
+      });
+    } else {
+      _typing?.cancel();
+      h.change(next);
+    }
+  }
+
+  /// Several changes as one step; [amend] folds them into the last step
+  /// (what follows from it, not a new action).
+  void _batch(void Function() fn, {bool amend = false}) {
+    _batching = true;
+    try {
+      fn();
+    } finally {
+      _batching = false;
+    }
+    if (!mounted) return;
+    setState(() {
+      final h = _history;
+      if (!amend) return _track();
+      if (h != null && !_restoring) h.amend(_snap());
+    });
+  }
+
+  bool get _canUndo =>
+      !_isDebt && !_isSaving && (_history?.canUndo ?? false);
+
+  void _undo() {
+    final h = _history;
+    if (h == null || !h.canUndo) return;
+    HapticFeedback.selectionClick();
+    _typing?.cancel();
+    h.undo();
+    final d = h.working;
+    final p = d.picks;
+    _restoring = true;
+    try {
+      _c.restoreTransaction(
+        d.tx,
+        accounts: [?p.account, ?p.toAccount],
+        categories: [?p.category],
+      );
+      _c.projectId = p.projectId;
+      _c.restoreBill(d.bill);
+      _link.restore(p.recurring);
+    } finally {
+      _restoring = false;
+    }
+    setState(() {
+      _event = p.event;
+      _eventMembers = p.members;
+      _payback = p.payback;
+      _fromMemberId = p.from;
+      _toMemberId = p.to;
+      _entryTx = p.entryTx;
+      _beforeEntryTx =
+          p.beforeEntryTx
+              as ({
+                String amount,
+                DateTime date,
+                Account? account,
+                Category? category,
+              })?;
+      _entryCreate = p.entryCreate;
+      _entryPaid = p.entryPaid;
     });
   }
 
@@ -792,39 +977,41 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     if (link == null) return;
     final tx = await link.pick(context);
     if (tx == null || !mounted) return;
-    _beforeEntryTx ??= (
-      amount: _c.amount.text,
-      date: _c.date,
-      account: _c.account,
-      category: _c.category,
-    );
     final opts = maybeTxFormOptions(context, watch: false)?.state.options;
     final accounts =
         opts?.accountList ?? context.read<AccountsCubit>().state.accounts;
     final categories =
         opts?.categoryList ?? context.read<CategoriesCubit>().state.categories;
-    _c.amount.text = AmountInput.format(tx.amount);
-    _c.setDate(DateTime.tryParse(tx.date) ?? _c.date);
-    _c.setAccount(
-      accounts.where((a) => a.id == tx.accountId).firstOrNull ??
-          tx.account?.toAccount(),
-    );
-    _c.setCategory(
-      categories.where((c) => c.id == tx.categoryId).firstOrNull ??
-          tx.category?.toCategory(),
-    );
-    setState(() => _entryTx = tx);
+    _batch(() {
+      _beforeEntryTx ??= (
+        amount: _c.amount.text,
+        date: _c.date,
+        account: _c.account,
+        category: _c.category,
+      );
+      _c.amount.text = AmountInput.format(tx.amount);
+      _c.setDate(DateTime.tryParse(tx.date) ?? _c.date);
+      _c.setAccount(
+        accounts.where((a) => a.id == tx.accountId).firstOrNull ??
+            tx.account?.toAccount(),
+      );
+      _c.setCategory(
+        categories.where((c) => c.id == tx.categoryId).firstOrNull ??
+            tx.category?.toCategory(),
+      );
+      _entryTx = tx;
+    });
   }
 
   void _clearEntryTx() {
-    final was = _beforeEntryTx;
-    if (was != null) {
-      _c.amount.text = was.amount;
-      _c.setDate(was.date);
-      _c.setAccount(was.account);
-      _c.setCategory(was.category);
-    }
-    setState(() {
+    _batch(() {
+      final was = _beforeEntryTx;
+      if (was != null) {
+        _c.amount.text = was.amount;
+        _c.setDate(was.date);
+        _c.setAccount(was.account);
+        _c.setCategory(was.category);
+      }
       _entryTx = null;
       _beforeEntryTx = null;
     });
@@ -884,7 +1071,10 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
             value: _entryCreate,
             onTap: _saving || tx != null || _entryPaid
                 ? null
-                : () => setState(() => _entryCreate = !_entryCreate),
+                : () => setState(() {
+                    _entryCreate = !_entryCreate;
+                    _track();
+                  }),
           ),
         ),
       if (paid != null)
@@ -896,7 +1086,10 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
             value: _entryPaid,
             onTap: _saving || tx != null || _entryCreate
                 ? null
-                : () => setState(() => _entryPaid = !_entryPaid),
+                : () => setState(() {
+                    _entryPaid = !_entryPaid;
+                    _track();
+                  }),
           ),
         ),
       if (entry.link != null)
@@ -1016,6 +1209,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
   @override
   void dispose() {
+    _typing?.cancel();
     _c.dispose();
     _link.dispose();
     _debt.dispose();
@@ -1096,7 +1290,12 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  void _switchMode(QuickCreateMode m) {
+  /// The text carried into the รายการ form is part of the switch, not an
+  /// undo step.
+  void _switchMode(QuickCreateMode m) =>
+      _batch(() => _switchModeNow(m), amend: true);
+
+  void _switchModeNow(QuickCreateMode m) {
     if (m == _mode) return;
     final from = _fieldsOf(_mode);
     final to = _fieldsOf(m);
@@ -1339,7 +1538,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   }
 
   void _onLinkChanged() {
-    if (mounted) setState(() {});
+    if (mounted) setState(_track);
   }
 
   Future<void> _pickRecurring() => _link.choose(
@@ -1383,8 +1582,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       useRootNavigator: false,
     );
     if (picked != null && mounted) {
-      setState(() => _event = picked);
-      _c.eventChanged(hasEvent: true);
+      _batch(() {
+        _event = picked;
+        _eventMembers = null;
+        _c.eventChanged(hasEvent: true);
+      });
       unawaited(_loadEventMembers(picked));
     }
   }
@@ -1401,12 +1603,15 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     try {
       final members = await projects.listMembers(target.project.id);
       if (!mounted || !identical(_event, target)) return;
-      setState(() => _eventMembers = members);
-      // The event's people join a new bill (after whoever is already in
-      // it); an edited bill keeps its own people.
-      if (widget.eventBill?.edit == null) {
-        _c.addPeople(DraftFormController.peopleOfMembers(members));
-      }
+      // Part of the event pick: undo takes them back with it.
+      _batch(() {
+        _eventMembers = members;
+        // The event's people join a new bill (after whoever is already in
+        // it); an edited bill keeps its own people.
+        if (widget.eventBill?.edit == null) {
+          _c.addPeople(DraftFormController.peopleOfMembers(members));
+        }
+      }, amend: true);
     } on ApiException {
       // No tags; the save still adds whoever isn't a member.
     }
@@ -1597,7 +1802,12 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
             selectedId: id,
             title: label,
           );
-          if (picked != null && mounted) setState(() => set(picked.id));
+          if (picked != null && mounted) {
+            setState(() {
+              set(picked.id);
+              _track();
+            });
+          }
         },
       );
     }
@@ -1610,6 +1820,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         final from = _fromMemberId;
         _fromMemberId = _toMemberId;
         _toMemberId = from;
+        _track();
       }),
     );
   }
@@ -1907,6 +2118,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           ? _sav.hasKeyData
           : _dirty,
       onCloseBlocked: _confirmClose,
+      onUndo: _canUndo ? _undo : null,
+      undoTooltip: l.commonUndo,
       barActionLabel: widget.entry?.barAction?.label,
       barActionIcon: widget.entry?.barAction?.icon,
       draftIcon: _isEntry ? AppIcons.save : null,
@@ -2000,7 +2213,10 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                     ? null
                     : EventBillForm(
                         payback: _payback,
-                        onPayback: (v) => setState(() => _payback = v),
+                        onPayback: (v) => setState(() {
+                          _payback = v;
+                          _track();
+                        }),
                         paybackCard: _paybackCard(l),
                       ),
                 eventSlot:
@@ -2010,10 +2226,10 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                         onTap: _pickEvent,
                         onClear: _event == null
                             ? null
-                            : () {
-                                setState(() => _event = null);
+                            : () => _batch(() {
+                                _event = null;
                                 _c.eventChanged(hasEvent: false);
-                              },
+                              }),
                       )
                     : null,
               ),

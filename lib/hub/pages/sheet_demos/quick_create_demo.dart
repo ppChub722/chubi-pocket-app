@@ -163,6 +163,14 @@ class _DemoSheetState extends State<_DemoSheet> {
       saving: _saving,
       dirty: !_empty,
       onCloseBlocked: _ask,
+      // Shows once there is a step to take back (here: anything typed).
+      onUndo: _empty
+          ? null
+          : () {
+              _amount.clear();
+              _title.clear();
+            },
+      undoTooltip: 'Undo',
       onSave: _empty ? null : _save,
       onSaveDraft: _empty || _saving ? null : () => Navigator.of(context).pop(),
       body: Column(
