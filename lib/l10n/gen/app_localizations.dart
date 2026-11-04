@@ -2636,6 +2636,12 @@ abstract class AppLocalizations {
   /// **'Pick the destination wallet'**
   String get txTransferNeedsTo;
 
+  /// No description provided for @txTransferNeedsOneWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a wallet on at least one side'**
+  String get txTransferNeedsOneWallet;
+
   /// No description provided for @txTransferSameWallet.
   ///
   /// In en, this message translates to:
@@ -11226,6 +11232,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Loan taken'**
   String get categorySystemLoanTaken;
+
+  /// No description provided for @categorySystemWithdraw.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal'**
+  String get categorySystemWithdraw;
+
+  /// No description provided for @categorySystemDeposit.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit'**
+  String get categorySystemDeposit;
 
   /// No description provided for @categorySystemLockedHelper.
   ///

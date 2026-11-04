@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
 import '../../ui.dart';
@@ -29,6 +30,7 @@ class TransactionHeroCard extends StatelessWidget {
     this.titleHint,
     this.showTitle = true,
     this.titlePlaceholder,
+    this.titleFallback,
     this.titleMaxLength = TextLimits.description,
     this.onTitleTap,
     this.titleReadOnly = false,
@@ -97,6 +99,10 @@ class TransactionHeroCard extends StatelessWidget {
   final bool showTitle;
 
   final String? titlePlaceholder;
+
+  /// Shown as the title itself in view when none is typed (a system
+  /// category's row: its category name).
+  final String? titleFallback;
   final int titleMaxLength;
 
   final VoidCallback? onTitleTap;
@@ -142,6 +148,17 @@ class TransactionHeroCard extends StatelessWidget {
     TransactionType.income,
     if (allowTransfer && !debt && !repay) TransactionType.transfer,
   ];
+
+  /// The tap area over the amount takes the tap from the field itself, so it
+  /// has to bring the keyboard back when the field already has focus (the
+  /// keyboard closed with back): requestFocus alone does nothing then.
+  static void _focusAmount(FocusNode focus) {
+    if (focus.hasFocus) {
+      SystemChannels.textInput.invokeMethod<void>('TextInput.show');
+    } else {
+      focus.requestFocus();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -305,6 +322,19 @@ class TransactionHeroCard extends StatelessWidget {
 
     final titleCell = !showTitle
         ? null
+        : !editing && title.text.trim().isEmpty && titleFallback != null
+        ? longPressable(
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              child: Text(
+                titleFallback!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: titleStyle,
+              ),
+            ),
+            titleFocus,
+          )
         : !editing && title.text.trim().isEmpty
         ? (titlePlaceholder == null
               ? const SizedBox.shrink()
@@ -341,7 +371,7 @@ class TransactionHeroCard extends StatelessWidget {
         start: titleCell,
         end: amountField(align: TextAlign.end),
         onEndAreaTap: editing && amountFocus != null
-            ? amountFocus!.requestFocus
+            ? () => _focusAmount(amountFocus!)
             : null,
         below: [?amountErrorText],
       ),

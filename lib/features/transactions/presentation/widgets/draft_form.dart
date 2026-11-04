@@ -302,7 +302,7 @@ class DraftFormController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setToAccount(Account a) {
+  void setToAccount(Account? a) {
     toAccount = a;
     notifyListeners();
   }
@@ -1051,6 +1051,7 @@ class DraftForm extends StatefulWidget {
     this.extra,
     this.typeLocked = false,
     this.allowSplits = true,
+    this.transferOneSide = false,
     this.categoryLockedHint,
     this.readOnly = false,
     this.editing = true,
@@ -1131,6 +1132,10 @@ class DraftForm extends StatefulWidget {
 
   final bool typeLocked;
   final bool allowSplits;
+
+  /// A new transfer may leave one wallet empty: from only = ถอนเงิน, to only
+  /// = เพิ่มเงิน.
+  final bool transferOneSide;
 
   /// Non-null → the category card can't be changed; this says why.
   final String? categoryLockedHint;
@@ -1220,12 +1225,12 @@ class _DraftFormState extends State<DraftForm> {
         ?(to ? _c.account?.id : (_c.isTransfer ? _c.toAccount?.id : null)),
       },
       title: to ? l.quickTo : null,
-      allowNone: !_c.isTransfer && !to,
+      allowNone: _c.isTransfer ? widget.transferOneSide : !to,
       allowCreate: true,
     );
     if (!mounted || r == null) return;
     if (to) {
-      if (r is AccountPicked) _c.setToAccount(r.account);
+      _c.setToAccount(r is AccountPicked ? r.account : null);
     } else {
       _c.setAccount(r is AccountPicked ? r.account : null);
     }
@@ -1284,6 +1289,13 @@ class _DraftFormState extends State<DraftForm> {
       TransactionType.income => l.transactionTypeIncome,
       TransactionType.transfer => l.transactionTypeTransfer,
     };
+  }
+
+  /// A system category's row has no description of its own: its category
+  /// name stands as the title.
+  String? _systemTitle(AppLocalizations l) {
+    final c = _c.category;
+    return c != null && c.isSystem ? categoryDisplayName(l, c) : null;
   }
 
   VoidCallback? _heroTap(VoidCallback pick, {bool locked = false}) {
@@ -1452,6 +1464,7 @@ class _DraftFormState extends State<DraftForm> {
                 titlePlaceholder: widget.cardsInHero
                     ? _titlePlaceholder(l)
                     : null,
+                titleFallback: _systemTitle(l),
                 dateLabel: _dayLabel(context, _c.date),
                 dateNote: _futureNote(l, editing: editing),
                 onPickDate: _pickDate,

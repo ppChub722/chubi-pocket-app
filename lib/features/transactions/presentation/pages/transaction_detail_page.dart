@@ -216,7 +216,9 @@ class _LoadedState extends State<_Loaded>
     final tx = widget.tx;
     // A repayment (0.4.0-3) is an ordinary row apart from its locked
     // category: amount, date, wallet, words and tags can change.
-    if (tx.isRepayment) return !tx.isLocked;
+    if (tx.isRepayment || (tx.category?.isOneSided ?? false)) {
+      return !tx.isLocked;
+    }
     final isSystemRow =
         tx.type != TransactionType.transfer && (tx.category?.isSystem ?? false);
     return !isSystemRow && !tx.isLocked;
@@ -821,7 +823,8 @@ class _LoadedState extends State<_Loaded>
     final isSystemRow =
         repaymentPerson == null &&
         tx.type != TransactionType.transfer &&
-        (tx.category?.isSystem ?? false);
+        (tx.category?.isSystem ?? false) &&
+        !(tx.category?.isOneSided ?? false);
     final isRepayment =
         repaymentPerson != null ||
         (isSystemRow &&

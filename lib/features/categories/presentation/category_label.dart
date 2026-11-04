@@ -17,6 +17,8 @@ String? _systemName(AppLocalizations l, Category c) {
     'DEBT_PAID' => l.categorySystemDebtPaid,
     'LOAN_GIVEN' => l.categorySystemLoanGiven,
     'LOAN_TAKEN' => l.categorySystemLoanTaken,
+    'WITHDRAW' => l.categorySystemWithdraw,
+    'DEPOSIT' => l.categorySystemDeposit,
     _ => null,
   };
 }

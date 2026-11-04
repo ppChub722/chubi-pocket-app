@@ -1444,6 +1444,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txTransferNeedsTo => 'Pick the destination wallet';
 
   @override
+  String get txTransferNeedsOneWallet => 'Pick a wallet on at least one side';
+
+  @override
   String get txTransferSameWallet =>
       'Source and destination must be different wallets';
 
@@ -6611,6 +6614,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categorySystemLoanTaken => 'Loan taken';
+
+  @override
+  String get categorySystemWithdraw => 'Withdrawal';
+
+  @override
+  String get categorySystemDeposit => 'Deposit';
 
   @override
   String get categorySystemLockedHelper =>

@@ -117,5 +117,7 @@ class IconRegistry {
     'system_opening': Icons.flag_outlined,
     'system_debt_received': Icons.call_received,
     'system_debt_paid': Icons.payments_outlined,
+    'system_withdraw': Icons.output,
+    'system_deposit': Icons.input,
   };
 }

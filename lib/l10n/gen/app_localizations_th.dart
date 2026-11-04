@@ -1422,6 +1422,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txTransferNeedsTo => 'เลือกกระเป๋าปลายทาง';
 
   @override
+  String get txTransferNeedsOneWallet => 'เลือกกระเป๋าอย่างน้อยหนึ่งฝั่ง';
+
+  @override
   String get txTransferSameWallet =>
       'กระเป๋าต้นทางกับปลายทางต้องไม่ใช่อันเดียวกัน';
 
@@ -6464,6 +6467,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get categorySystemLoanTaken => 'กู้ยืม';
+
+  @override
+  String get categorySystemWithdraw => 'ถอนเงิน';
+
+  @override
+  String get categorySystemDeposit => 'เพิ่มเงิน';
 
   @override
   String get categorySystemLockedHelper =>

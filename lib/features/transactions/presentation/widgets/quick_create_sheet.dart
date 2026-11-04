@@ -1898,10 +1898,15 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   String? _problem(AppLocalizations l) {
     if (_c.amountValue <= 0) return l.quickAmountRequired;
     if (_c.isTransfer) {
-      if (_c.account == null || _c.toAccount == null) {
+      final from = _c.account, to = _c.toAccount;
+      // One side is enough: from only = ถอนเงิน, to only = เพิ่มเงิน.
+      if (from == null && to == null) return l.txTransferNeedsOneWallet;
+      if (!_transferOneSide && (from == null || to == null)) {
         return l.txTransferNeedsTo;
       }
-      if (_c.account!.id == _c.toAccount!.id) return l.txTransferSameWallet;
+      if (from != null && to != null && from.id == to.id) {
+        return l.txTransferSameWallet;
+      }
     }
     final mode = _linkMode;
     if (!_c.isTransfer && mode == LinkMode.split) {
@@ -2060,6 +2065,10 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
   bool get _summaryTitle => !_draftLike;
 
+  /// A new transfer or a draft's may have one wallet only; a recurring
+  /// occurrence keeps both.
+  bool get _transferOneSide => !_isEntry;
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -2196,6 +2205,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                 typeLocked: _isEntry,
                 // An entry saves a PendingDraft: no splits there.
                 allowSplits: !_isEntry,
+                transferOneSide: _transferOneSide,
                 rowAboveNote: _isEntry ? _entryRows(l) : null,
                 debtPersonCard: _debtPersonCard(l),
                 heroLocked: _entryTx != null,
