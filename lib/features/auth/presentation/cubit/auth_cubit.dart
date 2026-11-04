@@ -170,6 +170,7 @@ class AuthCubit extends Cubit<AuthState> {
     required String displayName,
     String? email,
     String currency = 'THB',
+    String? language,
   }) async {
     final previous = state;
     emit(AuthLoading(previous));
@@ -180,6 +181,7 @@ class AuthCubit extends Cubit<AuthState> {
         displayName: displayName,
         email: email,
         currency: currency,
+        language: language,
       );
       await _tokens.writeAuthToken(res.token.accessToken);
       AppLogger.instance.setUserId(res.user.id);

@@ -38,14 +38,19 @@ class TelegramLoginCubit extends Cubit<TelegramLoginState> {
     required AuthRepository repository,
     required AuthCubit auth,
     required TelegramOidc oidc,
+    String Function()? languageCode,
   }) : _repo = repository,
        _auth = auth,
        _oidc = oidc,
+       _languageCode = languageCode,
        super(const TelegramLoginState());
 
   final AuthRepository _repo;
   final AuthCubit _auth;
   final TelegramOidc _oidc;
+
+  /// The app language, sent so a new account gets its starter categories in it.
+  final String Function()? _languageCode;
 
   Future<void> signIn() async {
     if (state.busy) return;
@@ -87,7 +92,10 @@ class TelegramLoginCubit extends Cubit<TelegramLoginState> {
   void cancel() => _oidc.cancel();
 
   Future<void> _finish(String idToken) async {
-    final res = await _repo.telegramLogin(idToken);
+    final language = _languageCode?.call();
+    final res = language == null
+        ? await _repo.telegramLogin(idToken)
+        : await _repo.telegramLogin(idToken, language: language);
     emit(TelegramLoginState(failureId: state.failureId));
     await _auth.signInWith((user: res.user, token: res.token));
   }

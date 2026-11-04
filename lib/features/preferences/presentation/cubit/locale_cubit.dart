@@ -22,6 +22,9 @@ class LocaleCubit extends Cubit<Locale> {
     );
   }
 
+  /// The saved app language code, for callers outside the widget tree.
+  static String codeOf(SharedPreferences prefs) => _load(prefs).languageCode;
+
   Future<void> set(Locale locale) async {
     if (state == locale) return;
     emit(locale);

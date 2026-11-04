@@ -17,6 +17,7 @@ class AuthRepository {
     required String displayName,
     String? email,
     String currency = 'THB',
+    String? language,
   }) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
@@ -27,6 +28,7 @@ class AuthRepository {
           'display_name': displayName,
           if (email != null && email.isNotEmpty) 'email': email,
           'currency': currency,
+          'language': ?language,
         },
       );
       return _parseAuthResponse(res.data!);
@@ -56,11 +58,15 @@ class AuthRepository {
 
   /// POST /auth/telegram/token: log in with Telegram's id_token; an unknown
   /// Telegram gets an account at once (no password, Telegram linked).
-  Future<TelegramTokenLogin> telegramLogin(String idToken) async {
+  /// [language] only sets the starter categories' language of a new account.
+  Future<TelegramTokenLogin> telegramLogin(
+    String idToken, {
+    String? language,
+  }) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/auth/telegram/token',
-        data: {'id_token': idToken},
+        data: {'id_token': idToken, 'language': ?language},
       );
       return TelegramTokenLogin.fromJson(res.data!);
     } on DioException catch (e) {

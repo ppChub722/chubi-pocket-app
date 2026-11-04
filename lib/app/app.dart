@@ -264,6 +264,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
               repository: _authRepository,
               auth: _authCubit,
               oidc: _telegramOidc,
+              languageCode: () => LocaleCubit.codeOf(widget.prefs),
             )..resumePending(),
             lazy: false,
           ),

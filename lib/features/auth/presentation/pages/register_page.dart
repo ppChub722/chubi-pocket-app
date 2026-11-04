@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
+import '../../../preferences/presentation/cubit/locale_cubit.dart';
 import '../cubit/auth_cubit.dart';
 import '../widgets/auth_widgets.dart';
 
@@ -75,6 +76,7 @@ class _RegisterPageState extends State<RegisterPage> {
       displayName: _displayNameCtrl.text.trim(),
       email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
       currency: _currency,
+      language: context.read<LocaleCubit>().state.languageCode,
     );
   }
 
