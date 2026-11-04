@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/bloc/cubit_feed.dart';
 import '../../../../core/data/sync_refresh.dart';
 import '../../../../core/data/sync_set.dart';
@@ -58,7 +58,7 @@ abstract final class RecurringPicker {
     OccurrenceLoader? loadOccurrences,
   }) async {
     while (true) {
-      final rule = await _rule(
+      final (:rule, :created) = await _rule(
         context,
         type: type,
         createRoute: createRoute,
@@ -71,6 +71,16 @@ abstract final class RecurringPicker {
       final twoStep =
           rule?.occurrence.bySlot == true || loadOccurrences != null;
       if (rule == null || !twoStep || !context.mounted) return rule;
+      // Just made from here (owner 2026-11-04): its occurrence nearest the
+      // tx, no second sheet.
+      if (created) {
+        final near = await _nearest(
+          rule,
+          loadOccurrences ?? _repoLoader(context),
+          txDate,
+        );
+        if (near != null || !context.mounted) return near;
+      }
       final step = await _occurrence(
         context,
         rule,
@@ -89,10 +99,38 @@ abstract final class RecurringPicker {
     return (ruleId, txDate) => repo.occurrences(ruleId, txDate: txDate);
   }
 
+  /// [rule]'s occurrence the BE suggests for [txDate] (else the first open
+  /// one); null when none can be read.
+  static Future<LinkCandidate?> _nearest(
+    LinkCandidate rule,
+    OccurrenceLoader load,
+    DateTime? txDate,
+  ) async {
+    try {
+      final r = await load(rule.setting.id, txDate);
+      final open = [
+        for (final i in r.items)
+          if (i.state != OccurrenceState.archived) i,
+      ];
+      final item =
+          open.where((i) => i.slot == r.suggestedSlot).firstOrNull ??
+          open.firstOrNull;
+      if (item == null) return null;
+      return LinkCandidate(
+        setting: rule.setting,
+        occurrence: LinkOccurrence.ofItem(item),
+        likely: rule.likely,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   static List<LinkCandidate> _byDue(List<LinkCandidate> all) =>
       [...all]..sort((a, b) => a.occurrence.date.compareTo(b.occurrence.date));
 
-  static Future<LinkCandidate?> _rule(
+  /// Step 1; `created` = the rule was just made through "สร้างรายการประจำ".
+  static Future<({LinkCandidate? rule, bool created})> _rule(
     BuildContext context, {
     required TransactionType type,
     required String? createRoute,
@@ -164,14 +202,27 @@ abstract final class RecurringPicker {
           noMatchText: l.recurringNoMatch,
         ),
       );
-      if (result == null) return null;
+      const none = (rule: null, created: false);
+      if (result == null) return none;
       if (result.action == _create) {
-        if (context.mounted) openPage(context, createRoute!);
-        return null;
+        if (!context.mounted) return none;
+        // The create page pops with the new rule's id: back here, it is
+        // picked (owner 2026-11-04).
+        final made = await GoRouter.of(context).push<Object?>(createRoute!);
+        if (made is! String || cache == null) return none;
+        await cache.load();
+        final rule = candidatesOf()
+            .where((c) => c.setting.id == made)
+            .firstOrNull;
+        return (rule: rule, created: rule != null);
       }
       final id = result.id;
-      return latest.where((c) => c.setting.id == id).firstOrNull ??
-          start.where((c) => c.setting.id == id).firstOrNull;
+      return (
+        rule:
+            latest.where((c) => c.setting.id == id).firstOrNull ??
+            start.where((c) => c.setting.id == id).firstOrNull,
+        created: false,
+      );
     } finally {
       unawaited(feed?.dispose());
     }

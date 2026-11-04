@@ -21,7 +21,10 @@ import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
 import '../../../projects/data/projects_repository.dart';
+import '../../../projects/domain/paper.dart' show PaperView;
 import '../../../pending/domain/pending_transaction.dart';
+import '../../../recurring/data/recurring_link_repository.dart'
+    show LinkCandidate;
 import '../../data/transactions_repository.dart';
 import '../../domain/link_draft.dart';
 import '../../domain/refs.dart';
@@ -142,8 +145,53 @@ class _Loaded extends StatefulWidget {
   State<_Loaded> createState() => _LoadedState();
 }
 
+/// One undo step of this page (owner 2026-11-04: undo tracks every action):
+/// my row's fields, the bill (people, shares, payer, marks), the event change,
+/// the recurring pick and its unlink.
+@immutable
+class _TxDraft {
+  const _TxDraft({
+    required this.tx,
+    required this.bill,
+    required this.event,
+    required this.unlink,
+    required this.recurring,
+  });
+
+  final PendingDraft tx;
+  final BillState bill;
+  final EventTarget? event;
+  final bool unlink;
+  final LinkCandidate? recurring;
+
+  /// Only my row's text fields differ from [o] (a typing session).
+  bool sameButText(_TxDraft o) =>
+      bill == o.bill &&
+      identical(event, o.event) &&
+      unlink == o.unlink &&
+      identical(recurring, o.recurring) &&
+      tx.type == o.tx.type &&
+      tx.date == o.tx.date &&
+      tx.accountId == o.tx.accountId &&
+      tx.categoryId == o.tx.categoryId &&
+      tx.transferToAccountId == o.tx.transferToAccountId &&
+      listEquals(tx.tagIds, o.tx.tagIds);
+
+  @override
+  bool operator ==(Object other) =>
+      other is _TxDraft &&
+      other.tx == tx &&
+      other.bill == bill &&
+      identical(other.event, event) &&
+      other.unlink == unlink &&
+      identical(other.recurring, recurring);
+
+  @override
+  int get hashCode => Object.hash(tx, bill, unlink);
+}
+
 class _LoadedState extends State<_Loaded>
-    with EditModeMixin<_Loaded, PendingDraft> {
+    with EditModeMixin<_Loaded, _TxDraft> {
   final _c = DraftFormController();
 
   late Transaction _edited;
@@ -155,7 +203,7 @@ class _LoadedState extends State<_Loaded>
 
   final _scroll = ScrollController();
 
-  /// The รายการประจำ row: links right away (one call), never on บันทึก.
+  /// The รายการประจำ row: a pick / unlink is held and sent on บันทึก.
   final _link = RecurringLinkHandle();
   final _heroKey = GlobalKey();
 
@@ -237,14 +285,19 @@ class _LoadedState extends State<_Loaded>
     ]);
   }
 
+  /// The bill as GET /transactions/{id} brought it (one call, owner
+  /// 2026-11-04), else read on its own (a row from a list).
   Future<void> _loadPaper() async {
     final bill = widget.tx.eventBill;
     if (bill == null) return;
     try {
-      final p = await context.read<ProjectsRepository>().getPaper(
-        bill.billId,
-        projectId: bill.event.isSplit ? null : bill.event.id,
-      );
+      final p = switch (widget.tx.paperJson) {
+        final j? => PaperView.fromJson(j),
+        null => await context.read<ProjectsRepository>().getPaper(
+          bill.billId,
+          projectId: bill.event.isSplit ? null : bill.event.id,
+        ),
+      };
       if (!mounted) return;
       setState(() => _paper = PaperEditSession(p));
       if (!isEditing) _reload();
@@ -299,9 +352,8 @@ class _LoadedState extends State<_Loaded>
 
   void _clearEvent() {
     setState(
-      () => _eventChange = _billEventId == null
-          ? null
-          : const RemoveFromEvent(),
+      () =>
+          _eventChange = _billEventId == null ? null : const RemoveFromEvent(),
     );
     _c.eventChanged(hasEvent: _hasEvent);
   }
@@ -318,13 +370,14 @@ class _LoadedState extends State<_Loaded>
     super.initState();
     _link.addListener(_onLinkChanged);
     _prefill();
-    initDraft(_c.toDraft());
+    initDraft(_draft());
     _c.addListener(_onFormChanged);
     if (widget.startEditing && canEdit) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _enterEdit();
       });
-    } else if (_inBill) {
+    } else if (_inBill && (widget.tx.paperJson != null || !widget.fetching)) {
+      // Still fetching a list row: the fetched row brings its bill.
       WidgetsBinding.instance.addPostFrameCallback((_) => _loadPaper());
     }
   }
@@ -359,8 +412,22 @@ class _LoadedState extends State<_Loaded>
   @override
   void didUpdateWidget(_Loaded old) {
     super.didUpdateWidget(old);
-    // Refreshed underneath (pull, another page) — rebase unless editing.
-    if (old.tx != widget.tx && !isEditing) _reload();
+    // Refreshed underneath (pull, another page, a save) — rebase unless
+    // editing. A bill row reads its bill first, then rebases on both.
+    if (isEditing) return;
+    if (old.tx == widget.tx) {
+      // The fetch failed (same row): read the bill on its own.
+      if (old.fetching && !widget.fetching && _inBill && _paper == null) {
+        unawaited(_loadPaper());
+      }
+      return;
+    }
+    if (_inBill) {
+      unawaited(_loadPaper());
+    } else {
+      _paper = null;
+      _reload();
+    }
   }
 
   @override
@@ -372,7 +439,10 @@ class _LoadedState extends State<_Loaded>
   }
 
   void _onLinkChanged() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    // A recurring pick while editing is an undo step too.
+    if (!_restoring && isEditing) _onFormChanged();
+    setState(() {});
   }
 
   void _say(String message, {Tone tone = Tone.danger}) {
@@ -406,6 +476,7 @@ class _LoadedState extends State<_Loaded>
       _link.clear();
     } else {
       setState(() => _pendingUnlink = true);
+      _onFormChanged();
     }
   }
 
@@ -547,52 +618,55 @@ class _LoadedState extends State<_Loaded>
 
   void _reload() {
     _prefill();
-    resetDraft(_c.toDraft());
+    resetDraft(_draft());
   }
+
+  _TxDraft _draft() => _TxDraft(
+    tx: _c.toDraft(),
+    bill: _c.bill(),
+    event: _eventChange,
+    unlink: _pendingUnlink,
+    recurring: _link.candidate,
+  );
 
   @override
   void onDraftRestored() {
     _restoring = true;
+    final w = working;
     final view = _transferView(widget.tx);
     _c.restoreTransaction(
-      working,
+      w.tx,
       accounts: _accountPool([view.edited.account, view.other]),
       categories: _categoryPool(view.edited.category),
     );
+    _eventChange = w.event;
+    _pendingUnlink = w.unlink;
+    _link.restore(w.recurring);
+    _c.restoreBill(w.bill);
+    _billOn = _mode != LinkMode.personal;
     _restoring = false;
   }
 
   void _onFormChanged() {
     if (_restoring) return;
     _swapBillAmount();
-    final next = _c.toDraft();
+    final next = _draft();
     final w = working;
     if (next == w) {
-      // A แบ่ง change lives outside the draft: refresh บันทึก.
       if (_linkTabs && isEditing) setState(() {});
       return;
     }
-    final textOnly =
-        next.type == w.type &&
-        next.date == w.date &&
-        next.accountId == w.accountId &&
-        next.categoryId == w.categoryId &&
-        next.transferToAccountId == w.transferToAccountId &&
-        listEquals(next.tagIds, w.tagIds);
-    if (textOnly) {
-      final field = next.note != w.note
+    if (next.sameButText(w)) {
+      final field = next.tx.note != w.tx.note
           ? 'note'
-          : next.description != w.description
+          : next.tx.description != w.tx.description
           ? 'description'
-          : jsonEncode(next.splits) != jsonEncode(w.splits)
-          ? 'splits'
           : 'amount';
       applyTextChange(field, next);
     } else {
       applyChange(next);
     }
   }
-
 
   /// บันทึก (owner 2026-11-03): my row's own fields, then the แบ่ง card,
   /// all at once:
@@ -704,12 +778,20 @@ class _LoadedState extends State<_Loaded>
         // Keep the cached row.
       }
       if (!mounted) return;
-      _paper = null;
-      _eventChange = null;
       HapticFeedback.mediumImpact();
       commitSaved(working);
-      _reload();
-      if (widget.tx.eventBill != null || bill) unawaited(_loadPaper());
+      // The form already shows what was saved: keep that look (no flash of
+      // a plain row) while the bill is read again; the held picks are sent.
+      _eventChange = null;
+      _pendingUnlink = false;
+      _link.restore(null);
+      resetDraft(_draft());
+      _billBaseline = _linkTabs ? _billSnapshot() : null;
+      if (!bill) {
+        _paper = null;
+        _reload();
+      }
+      // A bill: the refreshed row brings it (didUpdateWidget).
       showAppSnackBar(
         context,
         warn ?? l.quickSaved,
@@ -728,7 +810,6 @@ class _LoadedState extends State<_Loaded>
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -749,19 +830,15 @@ class _LoadedState extends State<_Loaded>
     // แบ่ง is edited on this page (owner 2026-11-03): a plain money row of
     // mine, or my bill row once the bill is read (and I may edit it).
     final canEditSplits =
-        canEdit &&
-        _linkTabs &&
-        (!_inBill || (_paper?.paper.canEdit ?? false));
+        canEdit && _linkTabs && (!_inBill || (_paper?.paper.canEdit ?? false));
     final editing = isEditing;
     final created = tx.createdAt;
     final updated = tx.updatedAt;
     // An event bill opens on the event's board.
     final bill = tx.eventBill;
     final billEventId = _billEventId;
-    void openProject() => openPage(
-      context,
-      '/projects/$billEventId?bill=${bill?.billId}',
-    );
+    void openProject() =>
+        openPage(context, '/projects/$billEventId?bill=${bill?.billId}');
 
     final SplitEventSlot? eventSlot;
     final SplitRecurringSlot? recurringSlot;

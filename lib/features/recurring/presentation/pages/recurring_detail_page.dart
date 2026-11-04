@@ -90,6 +90,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   final _rowAmounts = <String, double?>{};
   bool _busy = false;
   bool _changed = false;
+
+  /// The rule this page just made: a create pops with its id (the recurring
+  /// picker picks it, owner 2026-11-04).
+  String? _createdId;
   bool _walletMissing = false;
   bool _goalMissing = false;
   bool _personMissing = false;
@@ -382,7 +386,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   @override
   void leavePage() {
     if (context.canPop()) {
-      context.pop(_changed);
+      context.pop(widget.isCreate ? _createdId : _changed);
     } else {
       super.leavePage();
     }
@@ -646,6 +650,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       HapticFeedback.mediumImpact();
       _changed = true;
       if (widget.isCreate) {
+        _createdId = d.recurring.id;
         commitSaved(working);
         leavePage();
         return;

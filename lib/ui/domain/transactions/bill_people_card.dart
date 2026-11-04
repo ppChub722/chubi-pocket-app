@@ -92,8 +92,13 @@ class BillPeopleCard extends StatelessWidget {
     this.showEqually = true,
     this.flat = false,
     this.statusLeading,
+    this.readOnly = false,
     super.key,
   });
+
+  /// A saved bill being viewed (owner 2026-11-04): no header buttons, no ×
+  /// or auto toggle, only the chips that are on, amounts in fixed boxes.
+  final bool readOnly;
 
   /// See [ShareCard.flat].
   final bool flat;
@@ -134,6 +139,7 @@ class BillPeopleCard extends StatelessWidget {
           key: ValueKey(p.id),
           person: p,
           payLabel: payLabel ?? l.evbPays,
+          readOnly: readOnly,
         ),
     ];
     final max = maxRows;
@@ -145,8 +151,9 @@ class BillPeopleCard extends StatelessWidget {
       statusLeading: statusLeading,
       top: top,
       title: title,
+      showHeader: !readOnly,
       actions: [
-        if (showEqually)
+        if (showEqually && !readOnly)
           AppButton(
             kind: ButtonIconKind.split,
             label: l.txSplitEqually,
@@ -154,13 +161,14 @@ class BillPeopleCard extends StatelessWidget {
             size: AppButtonSize.control,
             onPressed: onEqually,
           ),
-        AppButton(
-          icon: AppIcons.add,
-          label: addLabel ?? l.txSplitAddPerson,
-          variant: AppButtonVariant.outlined,
-          size: AppButtonSize.control,
-          onPressed: onAdd,
-        ),
+        if (!readOnly)
+          AppButton(
+            icon: AppIcons.add,
+            label: addLabel ?? l.txSplitAddPerson,
+            variant: AppButtonVariant.outlined,
+            size: AppButtonSize.control,
+            onPressed: onAdd,
+          ),
       ],
       rows: [
         if (max == null)
@@ -184,11 +192,13 @@ class _BillPersonRow extends StatefulWidget {
   const _BillPersonRow({
     required this.person,
     required this.payLabel,
+    this.readOnly = false,
     super.key,
   });
 
   final BillPerson person;
   final String payLabel;
+  final bool readOnly;
 
   @override
   State<_BillPersonRow> createState() => _BillPersonRowState();
@@ -217,8 +227,11 @@ class _BillPersonRowState extends State<_BillPersonRow> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final p = widget.person;
+    final readOnly = widget.readOnly;
     final Widget name = p.isMe
         ? SplitRowName.muted(p.name)
+        : readOnly
+        ? SplitRowName.picked(p.name, onTap: null, color: p.color)
         : p.editableName
         ? SplitRowName.input(
             controller: _name,
@@ -229,7 +242,7 @@ class _BillPersonRowState extends State<_BillPersonRow> {
             onChanged: p.onName,
           )
         : SplitRowName.picked(p.name, onTap: p.onChangePerson, color: p.color);
-    final change = p.isMe ? null : p.onChangePerson;
+    final change = p.isMe || readOnly ? null : p.onChangePerson;
     final avatar = change == null
         ? p.avatar
         : BusyLock(
@@ -246,22 +259,28 @@ class _BillPersonRowState extends State<_BillPersonRow> {
         spacing: AppSpacing.xs,
         runSpacing: AppSpacing.xs,
         children: [
-          if (p.paid || p.onPay != null)
-            PayChip(label: widget.payLabel, paid: p.paid, onTap: p.onPay),
-          if (p.canPaidBack)
+          if (p.paid || (p.onPay != null && !readOnly))
+            PayChip(
+              label: widget.payLabel,
+              paid: p.paid,
+              onTap: readOnly ? null : p.onPay,
+            ),
+          if (p.canPaidBack && (p.paidBack || !readOnly))
             PaidBackChip(
               label: l.evbPaidBack,
               paidBack: p.paidBack,
-              onTap: p.onPaidBack,
+              onTap: readOnly ? null : p.onPaidBack,
             ),
         ],
       ),
       amount: ShareAmountField(
         value: p.amount,
         auto: p.auto,
-        onChanged: p.onAmount,
+        onChanged: readOnly ? null : p.onAmount,
       ),
-      trailing: p.onRemove != null
+      trailing: readOnly
+          ? null
+          : p.onRemove != null
           ? SplitRowAction(
               icon: AppIcons.close,
               tooltip: l.txSplitRemove,

@@ -371,6 +371,27 @@ Widget buildOthersPage(BuildContext context) {
             child: const ProjectMemberAvatar(name: 'Aom Chan', size: 48),
           ),
           HubUse(
+            label:
+                'TypeActorMark — the type big, the actor half size on its '
+                'corner (owner 2026-11-04)',
+            page: 'Notifications inbox, Home',
+            child: Wrap(
+              spacing: AppSpacing.lg,
+              children: [
+                for (final icon in [
+                  AppIcons.link,
+                  AppIcons.project,
+                  AppIcons.receipt,
+                ])
+                  TypeActorMark(
+                    icon: icon,
+                    color: Theme.of(context).colorScheme.primary,
+                    actor: AvatarData.forName('Aom Chan'),
+                  ),
+              ],
+            ),
+          ),
+          HubUse(
             wide: true,
             label: 'NotificationTileView — pending, unread (plain values)',
             page: 'Notifications inbox, Home',

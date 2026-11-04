@@ -155,6 +155,52 @@ class LinkDraft {
   /// People of a saved bill that aren't in แบ่ง (B3 edit: event members).
   final List<LinkPerson> eventExtra = [];
 
+  /// A copy of every field (an undo step).
+  LinkDraft copy() => LinkDraft()..setFrom(this);
+
+  void setFrom(LinkDraft o) {
+    mode = o.mode;
+    paidBy = o.paidBy;
+    paidAmount = o.paidAmount;
+    myPaidAuto = o.myPaidAuto;
+    myPaidTyped = o.myPaidTyped;
+    eventPayer = o.eventPayer;
+    eventShares
+      ..clear()
+      ..addAll(o.eventShares);
+    paidBack
+      ..clear()
+      ..addAll(o.paidBack);
+    mePaidBack = o.mePaidBack;
+    eventBookDebts = o.eventBookDebts;
+    eventBookMine = o.eventBookMine;
+    eventMeAuto = o.eventMeAuto;
+    eventMeTyped = o.eventMeTyped;
+    eventExtra
+      ..clear()
+      ..addAll(o.eventExtra);
+  }
+
+  /// Every field as plain values, to tell two states apart.
+  List<Object?> get signature => [
+    mode?.name,
+    paidBy?.key,
+    paidAmount,
+    myPaidAuto,
+    myPaidTyped,
+    eventPayer?.key,
+    [
+      for (final k in eventShares.keys.toList()..sort()) [k, eventShares[k]],
+    ],
+    paidBack.toList()..sort(),
+    mePaidBack,
+    eventBookDebts,
+    eventBookMine,
+    eventMeAuto,
+    eventMeTyped,
+    [for (final p in eventExtra) p.key],
+  ];
+
   /// Everyone in the bill but me: the แบ่ง people, plus whoever paid for me
   /// (carried over from จ่ายแทน), the event payer and a saved bill's people.
   /// Each once.

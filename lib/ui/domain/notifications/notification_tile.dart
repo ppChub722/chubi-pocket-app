@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../atoms/app_button.dart';
-import '../../atoms/corner_badge.dart';
 import '../../atoms/icon_tile.dart';
 import '../../molecules/confirm_dialog.dart';
 import '../../molecules/app_list_row.dart';
@@ -9,8 +8,8 @@ import '../../tokens/tone.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_spacing.dart';
 import '../icons/icon_code.dart';
-import '../people/avatar.dart';
 import '../people/avatar_data.dart';
+import 'type_actor_mark.dart';
 
 class NotificationRejectConfirm {
   const NotificationRejectConfirm({
@@ -89,50 +88,69 @@ class NotificationTileView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final done = acceptedLabel != null;
+    final mark = done ? scheme.onSurfaceVariant : scheme.primary;
     return ColoredBox(
       color: scheme.primary.withValues(alpha: unread ? 0.06 : 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppListRow(
-            onTap: onTap,
-            leading: system
-                ? IconTile(icon: typeIcon, color: scheme.primary, size: _avatar)
-                : CornerBadge(
-                    size: _avatar,
-                    icon: typeIcon,
-                    child: Avatar(
-                      actorAvatar ??
+          // Handled (owner 2026-11-04): the whole row greys out, its type
+          // icon grey too, see-through with the rest.
+          Opacity(
+            opacity: done ? 0.55 : 1,
+            child: AppListRow(
+              onTap: onTap,
+              leading: system
+                  ? IconTile(icon: typeIcon, color: mark, size: _avatar)
+                  : TypeActorMark(
+                      icon: typeIcon,
+                      color: mark,
+                      size: _avatar,
+                      actor:
+                          actorAvatar ??
                           AvatarData.forName(
                             actorName,
                             iconCode: actorIconCode,
                           ),
-                      size: _avatar,
                     ),
-                  ),
-            title: title,
-            titleStrong: unread,
-            titleMaxLines: 3,
-            line2: ListRowLine(
-              lead: acceptedLabel == null
-                  ? null
-                  : ListRowChip(
-                      acceptedLabel!,
-                      icon: AppIcons.success,
-                      tone: Tone.success,
-                      selected: true,
-                    ),
-              parts: [timeText, ?amountText],
+              title: title,
+              titleStrong: unread,
+              titleMaxLines: 3,
+              line2: ListRowLine(
+                lead: acceptedLabel == null
+                    ? null
+                    : ListRowChip(
+                        acceptedLabel!,
+                        icon: AppIcons.success,
+                        tone: Tone.neutral,
+                        selected: true,
+                      ),
+                parts: [timeText, ?amountText],
+              ),
+              // A handled notice opens its page: › says so (owner 2026-11-04,
+              // in place of "แตะเพื่อเปิด").
+              trailing: unread || acceptedLabel != null
+                  ? ListRowTrailing.value(
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (unread)
+                            Icon(
+                              Icons.circle,
+                              size: AppSpacing.sm,
+                              color: scheme.primary,
+                            ),
+                          if (acceptedLabel != null)
+                            Icon(
+                              AppIcons.chevronRight,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                        ],
+                      ),
+                    )
+                  : null,
             ),
-            trailing: unread
-                ? ListRowTrailing.value(
-                    Icon(
-                      Icons.circle,
-                      size: AppSpacing.sm,
-                      color: scheme.primary,
-                    ),
-                  )
-                : null,
           ),
           if (pending)
             Padding(

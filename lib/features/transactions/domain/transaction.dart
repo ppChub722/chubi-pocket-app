@@ -83,6 +83,7 @@ class Transaction extends Equatable {
     this.createdBy,
     this.isLocked = false,
     this.canEditCategory = true,
+    this.paperJson,
     this.createdAt,
     this.updatedAt,
     this.splitCount = 0,
@@ -179,6 +180,10 @@ class Transaction extends Equatable {
   final bool isLocked;
   final bool canEditCategory;
 
+  /// GET /transactions/{id} only: the bill this row is my book of, as GET of
+  /// that bill gives it (the page shows it without a second call).
+  final Map<String, dynamic>? paperJson;
+
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -247,6 +252,7 @@ class Transaction extends Equatable {
           : null,
       isLocked: (json['is_locked'] as bool?) ?? false,
       canEditCategory: (json['can_edit_category'] as bool?) ?? true,
+      paperJson: (json['paper'] as Map?)?.cast<String, dynamic>(),
       createdAt: DateTime.tryParse(
         (json['created_at'] as String?) ?? '',
       )?.toLocal(),
@@ -271,8 +277,10 @@ class Transaction extends Equatable {
         (final Map e, _) when e['bill_id'] == null =>
           EventBillLink.fromPaperRef(e.cast<String, dynamic>(), split: false),
         (final Map e, _) => EventBillLink.fromJson(e.cast<String, dynamic>()),
-        (_, final Map s) =>
-          EventBillLink.fromPaperRef(s.cast<String, dynamic>(), split: true),
+        (_, final Map s) => EventBillLink.fromPaperRef(
+          s.cast<String, dynamic>(),
+          split: true,
+        ),
         _ => null,
       },
       debtLink: json['counterparty'] is Map
@@ -314,6 +322,7 @@ class Transaction extends Equatable {
     TransactionAuthor? createdBy,
     bool? isLocked,
     bool? canEditCategory,
+    Map<String, dynamic>? paperJson,
     DateTime? createdAt,
     DateTime? updatedAt,
     int? splitCount,
@@ -348,6 +357,7 @@ class Transaction extends Equatable {
       createdBy: createdBy ?? this.createdBy,
       isLocked: isLocked ?? this.isLocked,
       canEditCategory: canEditCategory ?? this.canEditCategory,
+      paperJson: paperJson ?? this.paperJson,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       splitCount: splitCount ?? this.splitCount,
@@ -389,6 +399,7 @@ class Transaction extends Equatable {
     createdBy,
     isLocked,
     canEditCategory,
+    paperJson,
     createdAt,
     updatedAt,
     splitCount,

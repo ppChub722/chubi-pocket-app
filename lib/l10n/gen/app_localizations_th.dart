@@ -1208,7 +1208,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifUnknown => 'การแจ้งเตือน';
 
   @override
-  String get notifAccepted => 'ตอบรับแล้ว | แตะเพื่อเปิด';
+  String get notifAccepted => 'ตอบรับแล้ว';
 
   @override
   String get notifRejectTitle => 'ปฏิเสธคำขอนี้?';
@@ -1247,7 +1247,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifActionSkip => 'ข้าม';
 
   @override
-  String get notifActionDone => 'ทำแล้ว | แตะเพื่อเปิด';
+  String get notifActionDone => 'ทำแล้ว';
 
   @override
   String notifProjectAdded(String actor, String project) {
@@ -6110,6 +6110,9 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get txLinkAddToEvent => 'เพิ่มในอีเวนต์';
+
+  @override
+  String get txLinkInEvent => 'อยู่ในอีเวนต์';
 
   @override
   String get txPaidBackNeedsWallet => 'คืนแล้วต้องเลือกกระเป๋าที่รับเงิน';

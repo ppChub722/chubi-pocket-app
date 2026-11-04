@@ -236,6 +236,41 @@ void main() {
       )!;
       final people = (b.paper['people'] as List).cast<Map>();
       expect(people.map((p) => p['person_id']), ['pp1', 'pp2']);
+      // The BE takes exactly one way to name a person.
+      for (final p in people) {
+        expect(
+          p.keys.where(
+            (k) => const {
+              'me',
+              'member_id',
+              'contact_id',
+              'person_name',
+            }.contains(k),
+          ),
+          isEmpty,
+        );
+      }
+    });
+
+    test('undo: the bill state comes back whole (event people too)', () {
+      final c = _form(
+        amount: '800',
+        set: (c) => c
+          ..setLinkMode(LinkMode.event, hasEvent: true)
+          ..addPeople([_lee])
+          ..setEventShare(_lee, 500),
+      );
+      final before = c.bill();
+      c
+        ..setEventShare(_lee, 400)
+        ..togglePaidBack(_lee)
+        ..setSplits(const []);
+      expect(c.bill(), isNot(before));
+      c.restoreBill(before);
+      expect(c.bill(), before);
+      expect(c.splitPeople, [_lee]);
+      expect(c.link.eventShares[_lee.key], 500);
+      expect(c.isPaidBack(_lee), isFalse);
     });
 
     test('not a paper: no people, no payer, ส่วนตัว', () {

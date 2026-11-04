@@ -24,11 +24,7 @@ class LinkSwitchRow extends StatelessWidget {
   Widget build(BuildContext context) => DraftFieldRow(
     label: label,
     dense: true,
-    child: AppSwitch(
-      value: value,
-      onChanged: onChanged,
-      semanticLabel: label,
-    ),
+    child: AppSwitch(value: value, onChanged: onChanged, semanticLabel: label),
   );
 }
 
@@ -55,7 +51,8 @@ class LinkSectionFrame extends StatelessWidget {
     super.key,
   });
 
-  final Widget bar;
+  /// Null = no switch row (a saved bill being viewed): the card alone.
+  final Widget? bar;
   final Widget? recurring;
   final Widget? card;
 
@@ -63,6 +60,7 @@ class LinkSectionFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final recurring = this.recurring;
     final card = this.card;
+    final bar = this.bar;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -71,11 +69,8 @@ class LinkSectionFrame extends StatelessWidget {
           recurring,
           const SizedBox(height: AppSpacing.sm),
         ],
-        bar,
-        if (card != null) ...[
-          const RowsDivider(),
-          card,
-        ],
+        ?bar,
+        if (card != null) ...[if (bar != null) const RowsDivider(), card],
       ],
     );
   }

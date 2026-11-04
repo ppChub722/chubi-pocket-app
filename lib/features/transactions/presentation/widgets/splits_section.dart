@@ -23,6 +23,22 @@ class SplitDraft {
        _savedPerson = savedPerson,
        person = savedPerson;
 
+  SplitDraft._copy(SplitDraft o)
+    : personName = o.personName,
+      contactId = o.contactId,
+      contactDisplayName = o.contactDisplayName,
+      owedAmount = o.owedAmount,
+      person = o.person,
+      _savedPerson = o._savedPerson,
+      debtId = o.debtId,
+      _savedName = o._savedName,
+      _savedContactId = o._savedContactId,
+      settledAmount = o.settledAmount,
+      cancelled = o.cancelled;
+
+  /// The row as it is now, saved state and all (an undo step).
+  SplitDraft copy() => SplitDraft._copy(this);
+
   String personName;
   String? contactId;
   String? contactDisplayName;

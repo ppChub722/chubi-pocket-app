@@ -2285,7 +2285,7 @@ abstract class AppLocalizations {
   /// No description provided for @notifAccepted.
   ///
   /// In en, this message translates to:
-  /// **'Accepted | tap to open'**
+  /// **'Accepted'**
   String get notifAccepted;
 
   /// No description provided for @notifRejectTitle.
@@ -2363,7 +2363,7 @@ abstract class AppLocalizations {
   /// No description provided for @notifActionDone.
   ///
   /// In en, this message translates to:
-  /// **'Done | tap to open'**
+  /// **'Done'**
   String get notifActionDone;
 
   /// No description provided for @notifProjectAdded.
@@ -10650,6 +10650,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add to event'**
   String get txLinkAddToEvent;
+
+  /// No description provided for @txLinkInEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'In event'**
+  String get txLinkInEvent;
 
   /// No description provided for @txPaidBackNeedsWallet.
   ///

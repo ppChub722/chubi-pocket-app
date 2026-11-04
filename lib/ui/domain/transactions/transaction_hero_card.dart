@@ -17,6 +17,7 @@ class TransactionHeroCard extends StatelessWidget {
     this.typeBadge,
     this.accentColor,
     this.amountLocked = false,
+    this.amountBoxed,
     this.dateNote,
     this.onPickDate,
     this.symbol,
@@ -65,6 +66,10 @@ class TransactionHeroCard extends StatelessWidget {
   final Color? accentColor;
 
   final bool amountLocked;
+
+  /// The amount in an input's frame even when it can't be typed (a saved
+  /// bill being viewed, owner 2026-11-04). Null = framed only while it can.
+  final bool? amountBoxed;
 
   final Widget? dateNote;
 
@@ -250,8 +255,8 @@ class TransactionHeroCard extends StatelessWidget {
         hint: '0',
         hintStyle: bigAmount?.copyWith(color: accent.withValues(alpha: 0.35)),
         hideHintOnFocus: true,
-        underline: editing && !amountLocked,
-        boxed: editing && !amountLocked,
+        underline: amountBoxed ?? (editing && !amountLocked),
+        boxed: amountBoxed ?? (editing && !amountLocked),
       ),
       amountFocus,
     );
@@ -327,7 +332,12 @@ class TransactionHeroCard extends StatelessWidget {
       HeroFields(
         // With labels above the inputs, give the labels the same air under
         // the chips as the other rows get (the label row adds ~4 itself).
-        gapBefore: editing ? AppSpacing.sm : 0,
+        // A framed amount in view has no label: it gets its own air.
+        gapBefore: editing
+            ? AppSpacing.sm
+            : (amountBoxed ?? false)
+            ? AppSpacing.md
+            : 0,
         start: titleCell,
         end: amountField(align: TextAlign.end),
         onEndAreaTap: editing && amountFocus != null

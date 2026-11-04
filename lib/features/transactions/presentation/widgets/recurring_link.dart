@@ -82,6 +82,17 @@ class RecurringLinkHandle extends ChangeNotifier {
   RecurringAmountAsk? get ask => _ask;
   bool get busy => _busy;
 
+  /// The pick as it is (any type), for an undo step.
+  LinkCandidate? get candidate => _candidate;
+
+  /// Undo: the pick back as it was, with no question open.
+  void restore(LinkCandidate? candidate) {
+    if (identical(candidate, _candidate) && _ask == null) return;
+    _candidate = candidate;
+    _ask = null;
+    notifyListeners();
+  }
+
   void clear() {
     _candidate = null;
     _ask = null;

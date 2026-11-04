@@ -111,16 +111,24 @@ class _TransactionsPageState extends State<_TransactionsPage> {
   /// The people card of the event bill sheet and quick create's แบ่ง tab:
   /// ฉัน first (the payer), a typed name (an input), a picked person and —
   /// with [event] — the "เพิ่มในอีเวนต์" row on top.
-  Widget _peopleCard({String? event, bool income = false}) => BillPeopleCard(
+  Widget _peopleCard({
+    String? event,
+    bool income = false,
+    bool readOnly = false,
+  }) => BillPeopleCard(
     title: 'คนในบิล | 3',
     payLabel: income ? 'รับ' : null,
-    top: EventRow(
-      name: event,
-      label: 'เพิ่มในอีเวนต์',
-      onTap: () => _note('pick event'),
-      onClear: () => _note('event removed'),
-      variant: SplitEventVariant.compact,
-    ),
+    readOnly: readOnly,
+    top: readOnly && event == null
+        ? null
+        : EventRow(
+            name: event,
+            label: readOnly ? 'อยู่ในอีเวนต์' : 'เพิ่มในอีเวนต์',
+            onTap: () => _note('pick event'),
+            onClear: readOnly ? null : () => _note('event removed'),
+            editing: !readOnly,
+            variant: SplitEventVariant.compact,
+          ),
     onEqually: () => _note('equally'),
     onAdd: () => _note('add people'),
     status: const ShareStatus('✓ แบ่งครบแล้ว', ok: true),
@@ -233,6 +241,24 @@ class _TransactionsPageState extends State<_TransactionsPage> {
               ),
               const SizedBox(height: AppSpacing.sm),
               if (_linkMode == 1) _peopleCard(event: 'ทริปเขาใหญ่'),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'BillPeopleCard — readOnly (a saved bill, viewed)',
+          note:
+              'The tx page in view (owner 2026-11-04): no "คนในบิล | n" header '
+              '(ShareCard showHeader: false), no หารเท่ากัน / เพิ่มคน, '
+              'no ✕ or auto toggle, only the จ่าย / คืนแล้ว chips that are on, '
+              'amounts fixed. The event row only when there is one, as '
+              '"อยู่ในอีเวนต์ X"; LinkSectionFrame drops the switch row '
+              '(bar: null).',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              LinkSectionFrame(bar: null, card: _peopleCard(readOnly: true)),
+              const SizedBox(height: AppSpacing.md),
+              _peopleCard(readOnly: true, event: 'ทริปเขาใหญ่'),
             ],
           ),
         ),
@@ -498,6 +524,23 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 inline: true,
                 editing: false,
                 onEdit: () => _note('hero: edit tapped'),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              // amountBoxed: a saved bill viewed, the amount framed but not
+              // typed (owner 2026-11-04).
+              TransactionHeroCard(
+                type: TransactionType.expense,
+                amount: _amount,
+                title: _title,
+                dateLabel: 'Today',
+                inline: true,
+                editing: false,
+                amountBoxed: true,
+                amountLabel: 'ยอดบิล',
+                amountNote: Text(
+                  'ส่วนของฉัน ฿300',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
               TransactionHeroCard(

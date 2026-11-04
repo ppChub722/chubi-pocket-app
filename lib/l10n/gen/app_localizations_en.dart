@@ -1226,7 +1226,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifUnknown => 'Notification';
 
   @override
-  String get notifAccepted => 'Accepted | tap to open';
+  String get notifAccepted => 'Accepted';
 
   @override
   String get notifRejectTitle => 'Decline this request?';
@@ -1266,7 +1266,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifActionSkip => 'Skip';
 
   @override
-  String get notifActionDone => 'Done | tap to open';
+  String get notifActionDone => 'Done';
 
   @override
   String notifProjectAdded(String actor, String project) {
@@ -6256,6 +6256,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txLinkAddToEvent => 'Add to event';
+
+  @override
+  String get txLinkInEvent => 'In event';
 
   @override
   String get txPaidBackNeedsWallet =>

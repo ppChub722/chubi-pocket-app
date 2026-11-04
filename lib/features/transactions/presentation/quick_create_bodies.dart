@@ -71,10 +71,12 @@ PaperBodies? paperBodies(
   String? mePersonId,
 }) {
   if (c.isTransfer || mode == LinkMode.personal) return null;
-  // An edit keeps each person's row (their books stay linked to it).
-  Map<String, dynamic> keep(LinkPerson p) => {
-    ...p.toJson(),
-    'person_id': ?personIds[p.key],
+  // An edit keeps each person's row (their books stay linked to it): a kept
+  // row is its person_id alone (the BE takes exactly one way to name a
+  // person).
+  Map<String, dynamic> keep(LinkPerson p) => switch (personIds[p.key]) {
+    final id? => {'person_id': id},
+    _ => p.toJson(),
   };
   final amount = c.amountValue;
   final people = <Map<String, dynamic>>[];
@@ -148,8 +150,9 @@ PaperBodies? paperBodies(
       'split_mode': 'custom',
       'people': [
         {
-          'me': true,
-          'person_id': ?mePersonId,
+          // My row kept by its id (as `me` it would be a new row and the old
+          // one would read as removed).
+          if (mePersonId != null) 'person_id': mePersonId else 'me': true,
           'share': _round2(mine),
           'paid': _round2(myPaid),
         },

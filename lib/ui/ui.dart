@@ -296,4 +296,5 @@ export 'tokens/app_radius.dart';
 export 'tokens/app_spacing.dart';
 export 'domain/projects/project_member_avatar.dart';
 export 'domain/notifications/notification_tile.dart';
+export 'domain/notifications/type_actor_mark.dart';
 export 'domain/projects/add_member_sheet.dart';

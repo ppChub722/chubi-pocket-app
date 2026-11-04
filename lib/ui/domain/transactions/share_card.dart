@@ -30,8 +30,13 @@ class ShareCard extends StatelessWidget {
     this.top,
     this.flat = false,
     this.statusLeading,
+    this.showHeader = true,
     super.key,
   }) : assert(title != null || headerLeading != null, 'a card needs a header');
+
+  /// False: no header line at all (a saved bill being viewed, owner
+  /// 2026-11-04).
+  final bool showHeader;
 
   /// At the start of the [status] line (the share summary: "ส่วนของฉัน ฿x |
   /// ลูกหนี้ ฿y").
@@ -81,34 +86,32 @@ class ShareCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (top != null) ...[
-            top!,
-            const RowsDivider(),
-          ],
-          _HeaderLine(
-            actions: actions,
-            title: title == null
-                ? leading!
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (leading != null) ...[
-                        leading,
-                        const SizedBox(width: AppSpacing.sm),
-                      ],
-                      Flexible(
-                        child: Text(
-                          title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: text.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
+          if (top != null) ...[top!, const RowsDivider()],
+          if (showHeader)
+            _HeaderLine(
+              actions: actions,
+              title: title == null
+                  ? leading!
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (leading != null) ...[
+                          leading,
+                          const SizedBox(width: AppSpacing.sm),
+                        ],
+                        Flexible(
+                          child: Text(
+                            title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: text.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-          ),
+                      ],
+                    ),
+            ),
           ...rows,
           if (status != null || statusLeading != null)
             Padding(

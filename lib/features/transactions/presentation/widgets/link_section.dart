@@ -23,8 +23,13 @@ class LinkSection extends StatefulWidget {
     this.flat = false,
     this.summary,
     this.fixed = false,
+    this.readOnly = false,
     super.key,
   });
+
+  /// A saved bill being viewed (owner 2026-11-04): no switch row, the event
+  /// row only when it has one ("อยู่ในอีเวนต์ X"), the people card read-only.
+  final bool readOnly;
 
   /// An event's own bill (owner 2026-11-03): always a bill of that event, so
   /// no แบ่ง switch and the event row can't be changed.
@@ -118,15 +123,20 @@ class _LinkSectionState extends State<LinkSection> {
       card: mode == LinkMode.personal
           ? null
           : _peopleCard(l, event: mode == LinkMode.event),
-      bar: LinkSwitchRow(
-        key: const ValueKey('linkSwitchRow'),
-        label: l.txLinkTabSplit,
-        value: mode != LinkMode.personal,
-        onChanged: (on) => _c.setLinkMode(
-          on ? LinkMode.split : LinkMode.personal,
-          hasEvent: _hasEvent,
-        ),
-      ),
+      bar: widget.readOnly
+          ? null
+          : LinkSwitchRow(
+              key: const ValueKey('linkSwitchRow'),
+              label: l.txLinkTabSplit,
+              value: mode != LinkMode.personal,
+              // An event bill stays a bill until its event is removed.
+              onChanged: _hasEvent && mode == LinkMode.event
+                  ? null
+                  : (on) => _c.setLinkMode(
+                      on ? LinkMode.split : LinkMode.personal,
+                      hasEvent: _hasEvent,
+                    ),
+            ),
     );
   }
 
@@ -164,6 +174,18 @@ class _LinkSectionState extends State<LinkSection> {
               value: debts,
               onChanged: _c.setEventBookDebts,
             );
+    }
+    if (widget.readOnly) {
+      return _hasEvent
+          ? EventRow(
+              key: const ValueKey('linkEventRow'),
+              name: e.name,
+              onTap: e.onTap,
+              editing: false,
+              variant: SplitEventVariant.compact,
+              label: l.txLinkInEvent,
+            )
+          : null;
     }
     final row = EventRow(
       key: const ValueKey('linkEventRow'),
@@ -310,6 +332,7 @@ class _LinkSectionState extends State<LinkSection> {
     return BillPeopleCard(
       key: ValueKey(event ? 'linkCardEvent' : 'linkCardSplit'),
       flat: widget.flat,
+      readOnly: widget.readOnly,
       statusLeading: widget.summary,
       payLabel: income ? l.evbReceives : null,
       top: _eventRow(l),

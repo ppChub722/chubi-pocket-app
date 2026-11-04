@@ -126,6 +126,8 @@ class PaperEditSession {
       }
     }
     if (isEvent) {
+      // Before the payer: switching to the event tab clears it.
+      c.setLinkMode(LinkMode.event, hasEvent: true);
       c.link.eventPayer = payer == null ? null : personOf(payer);
       for (final x in others) {
         c.link.eventShares[personOf(x).key] = x.share;
@@ -175,7 +177,8 @@ class PaperEditSession {
       version: edit.version,
     );
     final wantTx = c.link.eventBookMine && edit.myTransaction == null;
-    final wantDebts = (c.link.eventBookDebts ?? false) && edit.myDebtIds.isEmpty;
+    final wantDebts =
+        (c.link.eventBookDebts ?? false) && edit.myDebtIds.isEmpty;
     final split = edit.projectId == null;
     if (split ? edit.myTransaction == null : (wantTx || wantDebts)) {
       await projects.claimPaper(

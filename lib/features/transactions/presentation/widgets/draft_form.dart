@@ -711,6 +711,23 @@ class DraftFormController extends ChangeNotifier {
   bool meAuto = true;
   double? _meTyped;
 
+  /// The bill part of the form (the แบ่ง rows, my share, the ผูกกับ state)
+  /// as it is now; [restoreBill] puts it back (undo).
+  BillState bill() => BillState._(
+    splits: [for (final s in splits) s.copy()],
+    meAuto: meAuto,
+    meTyped: _meTyped,
+    link: link.copy(),
+  );
+
+  void restoreBill(BillState b) {
+    splits = [for (final s in b.splits) s.copy()];
+    meAuto = b.meAuto;
+    _meTyped = b.meTyped;
+    link.setFrom(b.link);
+    notifyListeners();
+  }
+
   void setMeAmount(double? v) {
     _meTyped = v;
     meAuto = false;
@@ -957,6 +974,34 @@ class DraftFormController extends ChangeNotifier {
     description.dispose();
     super.dispose();
   }
+}
+
+/// The bill part of a [DraftFormController] at one moment (an undo step).
+@immutable
+class BillState {
+  BillState._({
+    required this.splits,
+    required this.meAuto,
+    required this.meTyped,
+    required this.link,
+  }) : _key = jsonEncode([
+         for (final s in splits) [s.toJson(), s.person?.contactId],
+         meAuto,
+         meTyped,
+         link.signature,
+       ]);
+
+  final List<SplitDraft> splits;
+  final bool meAuto;
+  final double? meTyped;
+  final LinkDraft link;
+  final String _key;
+
+  @override
+  bool operator ==(Object other) => other is BillState && other._key == _key;
+
+  @override
+  int get hashCode => _key.hashCode;
 }
 
 String _ymd(DateTime d) =>
@@ -1425,13 +1470,24 @@ class _DraftFormState extends State<DraftForm> {
                       },
                 inline: true,
                 amountNote: linkMode != null
-                    ? _ShareLine.ofLink(_c, linkMode, l)
+                    ? (editing ? _ShareLine.ofLink : _ShareLine.mineOfLink)(
+                        _c,
+                        linkMode,
+                        l,
+                      )
                     : !isTransfer && (!editing || widget.allowSplits)
                     ? _ShareLine.of(_c)
                     : null,
                 amountLabel: linkMode == null || linkMode == LinkMode.personal
                     ? null
                     : l.txLinkBillLabel,
+                // A bill viewed: its amount framed, not typed.
+                amountBoxed:
+                    !editing &&
+                        linkMode != null &&
+                        linkMode != LinkMode.personal
+                    ? true
+                    : null,
                 footer: widget.cardsInHero
                     ? _cardsRow(l, isTransfer: isTransfer)
                     : null,
@@ -1705,6 +1761,7 @@ class _DraftFormState extends State<DraftForm> {
                 controller: _c,
                 event: widget.eventSlot ?? const SplitEventSlot(),
                 flat: true,
+                readOnly: true,
                 summary: _ShareLine.ofLink(_c, mode, l),
               ),
             ),
@@ -1714,7 +1771,10 @@ class _DraftFormState extends State<DraftForm> {
     final note = _c.note.text.trim();
     return [
       cardGap,
-      if (split != null) ...[EntrySectionCard(children: [split]), cardGap],
+      if (split != null) ...[
+        EntrySectionCard(children: [split]),
+        cardGap,
+      ],
       EntrySectionCard(
         children: [
           longPressable(_cardsRow(l, isTransfer: isTransfer)),
@@ -1729,6 +1789,8 @@ class _DraftFormState extends State<DraftForm> {
             longPressable(
               DraftFieldRow(
                 label: l.commonNote,
+                // Viewing: the text sits level with the label.
+                dense: !editing,
                 child: editing
                     ? AppInput.inline(
                         editing: true,
@@ -1764,46 +1826,43 @@ class _DraftFormState extends State<DraftForm> {
     // An event bill has no รายการประจำ; its "คืนเงิน" no category and tags.
     final recurring = widget.eventBill == null ? widget.recurringSlot : null;
     return [
-          EntryFlagged(
-            flagged:
-                missing.contains(EntryField.wallet) ||
-                (!isTransfer && missing.contains(EntryField.category)),
-            child: isTransfer
-                ? _transferFlow(l)
-                : _payback
-                ? _walletCard(
-                    account: _c.account,
-                    label: l.transactionFormAccountLabel,
-                    placeholder: l.transactionFormAccountNone,
-                    onPick: () => _pickAccount(),
-                  )
-                : _entryCards(l),
-          ),
-          if (widget.debtPersonCard == null && !_payback)
-            TagChipRow(
-              selected: _c.tagIds,
-              onRemove: _c.toggleTag,
-              onMore: _moreTags,
-              known: _c.knownTags,
-            ),
-          ?widget.rowAboveNote,
-          if (widget.linkSections && recurring != null)
-            RecurringLinkRow(
-              slot: recurring,
-              variant: SplitEventVariant.compact,
-            ),
-          // The note last (owner 2026-11-03).
-          DraftFieldRow(
-            label: l.commonNote,
-            child: AppInput.inline(
-              editing: true,
-              controller: _c.note,
-              focusNode: _noteFocus,
-              maxLines: 5,
-              maxLength: TextLimits.note,
-              hint: l.txNoteAddHint,
-            ),
-          ),
+      EntryFlagged(
+        flagged:
+            missing.contains(EntryField.wallet) ||
+            (!isTransfer && missing.contains(EntryField.category)),
+        child: isTransfer
+            ? _transferFlow(l)
+            : _payback
+            ? _walletCard(
+                account: _c.account,
+                label: l.transactionFormAccountLabel,
+                placeholder: l.transactionFormAccountNone,
+                onPick: () => _pickAccount(),
+              )
+            : _entryCards(l),
+      ),
+      if (widget.debtPersonCard == null && !_payback)
+        TagChipRow(
+          selected: _c.tagIds,
+          onRemove: _c.toggleTag,
+          onMore: _moreTags,
+          known: _c.knownTags,
+        ),
+      ?widget.rowAboveNote,
+      if (widget.linkSections && recurring != null)
+        RecurringLinkRow(slot: recurring, variant: SplitEventVariant.compact),
+      // The note last (owner 2026-11-03).
+      DraftFieldRow(
+        label: l.commonNote,
+        child: AppInput.inline(
+          editing: true,
+          controller: _c.note,
+          focusNode: _noteFocus,
+          maxLines: 5,
+          maxLength: TextLimits.note,
+          hint: l.txNoteAddHint,
+        ),
+      ),
     ];
   }
 
@@ -2042,6 +2101,7 @@ class _ShareLine extends StatelessWidget {
     required this.mine,
     required this.others,
     this.owe,
+    this.mineOnly = false,
   });
 
   final TransactionType type;
@@ -2050,6 +2110,24 @@ class _ShareLine extends StatelessWidget {
 
   /// "ค้าง ลี ฿13": who I owe for this bill, and how much.
   final ({String name, double amount})? owe;
+
+  /// Only "ส่วนของฉัน ฿x" (a saved bill's hero, owner 2026-11-04).
+  final bool mineOnly;
+
+  /// [ofLink] without the "| …" tail.
+  static Widget? mineOfLink(
+    DraftFormController c,
+    LinkMode m,
+    AppLocalizations l,
+  ) => switch (ofLink(c, m, l)) {
+    final _ShareLine s => _ShareLine(
+      type: s.type,
+      mine: s.mine,
+      others: s.others,
+      mineOnly: true,
+    ),
+    final other => other,
+  };
 
   /// Under ผูกกับ: my REAL share in [m] (owner 2026-10-21); ส่วนตัว has none.
   static Widget? ofLink(DraftFormController c, LinkMode m, AppLocalizations l) {
@@ -2109,7 +2187,9 @@ class _ShareLine extends StatelessWidget {
     final over = mine < -0.005;
     final othersText = moneyString(context, others);
     final owe = this.owe;
-    final String? tail = owe != null
+    final String? tail = mineOnly
+        ? null
+        : owe != null
         ? l.txLinkShareIOwe(owe.name, moneyString(context, owe.amount))
         : others > 0.005
         ? (type == TransactionType.income
