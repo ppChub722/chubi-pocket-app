@@ -19,10 +19,11 @@ class AppPageTransitionsBuilder extends PageTransitionsBuilder {
   static const _inner = FadeForwardsPageTransitionsBuilder();
 
   /// A back slide's length (a gesture's commit takes the rest of it).
-  static const popDuration = Duration(milliseconds: 350);
+  static const popDuration = Duration(milliseconds: 260);
 
-  /// A back slide's curve: fast off the mark, settling at the edge.
-  static const popCurve = Curves.easeOutCubic;
+  /// A back slide's curve (ease-in, owner 2026-11-05): slow off the mark,
+  /// quickening on the way out.
+  static const popCurve = Curves.easeIn;
 
   static bool _landing = false;
   static Timer? _landingEnd;
