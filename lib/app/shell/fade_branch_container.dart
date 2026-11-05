@@ -44,6 +44,33 @@ class _FadeBranchContainerState extends State<FadeBranchContainer>
   final Set<int> _claimed = {};
 
   @override
+  void initState() {
+    super.initState();
+    ShellReopen.signal.addListener(_replay);
+  }
+
+  /// The open tab was tapped: its first page arrives with the entry again.
+  void _replay() {
+    if (!mounted) return;
+    final tab = ShellTab.values[widget.currentIndex];
+    _claimed.remove(widget.currentIndex);
+    setState(() {
+      _entry = resolveTabEntry(
+        from: tab,
+        to: tab,
+        layout: NavLayoutScope.read(context),
+        reopen: true,
+        reducedMotion: MediaQuery.disableAnimationsOf(context),
+      );
+    });
+    if (_entry.kind == TabEntryKind.none) {
+      _ctrl.value = 1;
+    } else {
+      _ctrl.forward(from: 0);
+    }
+  }
+
+  @override
   void didUpdateWidget(FadeBranchContainer old) {
     super.didUpdateWidget(old);
     if (old.currentIndex != widget.currentIndex) {
@@ -78,6 +105,7 @@ class _FadeBranchContainerState extends State<FadeBranchContainer>
 
   @override
   void dispose() {
+    ShellReopen.signal.removeListener(_replay);
     _ctrl.dispose();
     super.dispose();
   }

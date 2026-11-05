@@ -1,4 +1,5 @@
 import 'package:chubi_pocket/app/shell/nav_layout.dart';
+import 'package:chubi_pocket/app/shell/tab_entry.dart';
 import 'package:chubi_pocket/app/shell/tab_nav.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -22,60 +23,24 @@ void main() {
       expect(ShellTab.ofPath(tab.path), tab, reason: tab.path);
     }
   });
-  test('which tab switches land on the first page', () {
-    final t = ShellTab.values;
-    // Only the profile / settings tab forgets its stack when left.
-    expect(t.where((tab) => tab.resetsOnReturn), [ShellTab.settings]);
-    final cases = <(String, ShellTab, ShellTab, bool)>[
-      (
-        'a nav tab keeps its stack',
-        ShellTab.transactions,
-        ShellTab.home,
-        false,
-      ),
-      (
-        'settings → กระเป๋า keeps it',
-        ShellTab.settings,
-        ShellTab.accounts,
-        false,
-      ),
-      ('เพิ่มเติม keeps its stack', ShellTab.home, ShellTab.more, false),
-      ('a card tab keeps its stack', ShellTab.more, ShellTab.budgets, false),
-      ('a top chip keeps its stack', ShellTab.home, ShellTab.pending, false),
-      (
-        'settings from a nav tab',
-        ShellTab.transactions,
-        ShellTab.settings,
-        true,
-      ),
-      ('settings from a chip', ShellTab.notifications, ShellTab.settings, true),
-      ('settings from a card tab', ShellTab.budgets, ShellTab.settings, true),
-      ('tap the open nav tab', ShellTab.accounts, ShellTab.accounts, true),
-      ('tap the open เพิ่มเติม', ShellTab.more, ShellTab.more, true),
-      ('tap the open chip', ShellTab.pending, ShellTab.pending, true),
-      ('tap the open avatar', ShellTab.settings, ShellTab.settings, true),
-    ];
-    for (final (name, from, to, root) in cases) {
-      expect(to.opensAtRootFrom(from), root, reason: name);
-    }
-    // Every other switch keeps the arriving tab's stack.
-    for (final from in t) {
-      for (final to in t) {
-        if (from == to || to == ShellTab.settings) continue;
-        expect(to.opensAtRootFrom(from), isFalse, reason: '$from → $to');
-      }
-    }
-  });
+  test('a switch starts the tab over, a back keeps it, the open tab replays', () {
+    final calls = <String>[];
+    void go(int i, {bool initialLocation = false}) =>
+        calls.add('$i:$initialLocation');
+    const to = ShellTab.accounts;
 
-  test('only coming back to settings drops its pages unseen', () {
-    for (final from in ShellTab.values) {
-      for (final to in ShellTab.values) {
-        expect(
-          goTabDropsPages(to, from: from.index),
-          to == ShellTab.settings && from != ShellTab.settings,
-          reason: '$from → $to',
-        );
-      }
-    }
+    goTab(to, from: ShellTab.home.index, goBranch: go, canPop: (_) => false);
+    expect(calls.removeLast(), '${to.index}:true', reason: 'starts over');
+
+    goTab(to, from: ShellTab.home.index, goBranch: go, back: true);
+    expect(calls.removeLast(), '${to.index}:false', reason: 'a back keeps it');
+
+    goTab(to, from: to.index, goBranch: go, canPop: (_) => false);
+    expect(calls, isEmpty, reason: 'already on its first page: nothing');
+
+    final before = ShellReopen.signal.value;
+    goTab(to, from: to.index, goBranch: go, canPop: (_) => true);
+    expect(calls.removeLast(), '${to.index}:true');
+    expect(ShellReopen.signal.value, before + 1, reason: 'the entry replays');
   });
 }

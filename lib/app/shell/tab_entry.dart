@@ -103,28 +103,35 @@ class TabEntry {
   String toString() => 'TabEntry(${kind.name}, side: $side, origin: $origin)';
 }
 
+/// Asks the shell to play the open tab's entry again: tapping the tab
+/// already open starts it over (see [goTab]).
+abstract final class ShellReopen {
+  static final ValueNotifier<int> signal = ValueNotifier(0);
+
+  static void request() => signal.value++;
+}
+
 /// How [to] arrives when the shell switches to it from [from] (owner
-/// 2026-10-28): a back lands in place; a known [origin] (a More card, the
-/// bell) grows out of it; a bottom-bar page slides in from the side of the
-/// previous bottom-bar page, or up from below when none was highlighted; a
-/// top-row page slides down from above; anything else grows out of the
-/// middle of the screen.
+/// 2026-10-28, bottom bar 2026-11-05): a back lands in place; a known
+/// [origin] (a More card, the bell) grows out of it; a bottom-bar page grows
+/// (scale + fade) up out of the bottom bar; a top-row page slides down from
+/// above; anything else grows out of the middle of the screen. A [reopen]
+/// (the open tab tapped) plays the same entry again.
 TabEntry resolveTabEntry({
   required ShellTab from,
   required ShellTab to,
   required NavLayout layout,
   Alignment? origin,
   bool back = false,
+  bool reopen = false,
   bool reducedMotion = false,
 }) {
-  if (back || from == to) return TabEntry.none;
+  if (back || (from == to && !reopen)) return TabEntry.none;
   if (reducedMotion) return TabEntry.fade;
   if (origin != null) return TabEntry.expand(origin);
   switch (layout.barOf(to)) {
     case NavBar.bottom:
-      if (layout.barOf(from) != NavBar.bottom) return TabEntry.up;
-      final items = layout.bottomItems;
-      return TabEntry.side((items.indexOf(to) - items.indexOf(from)).sign);
+      return const TabEntry.expand(Alignment.bottomCenter);
     case NavBar.top:
       return TabEntry.down;
     case null:

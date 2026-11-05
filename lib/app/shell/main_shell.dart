@@ -40,10 +40,12 @@ class _MainShellState extends State<MainShell>
 
   ShellTab get _current => ShellTab.values[widget.navigationShell.currentIndex];
 
-  void _goBranch(int i) => goTab(
+  void _goBranch(int i, {bool back = false}) => goTab(
     ShellTab.values[i],
     from: widget.navigationShell.currentIndex,
     goBranch: widget.navigationShell.goBranch,
+    canPop: branchCanPop(widget.navigationShell.route),
+    back: back,
   );
 
   final ShellBackHistory _history = ShellBackHistory();
@@ -185,7 +187,8 @@ class _MainShellState extends State<MainShell>
 
   void _arriveBack(int to) {
     _backSlide.arriveAt(to);
-    _goBranch(to);
+    // A back returns to the tab as it was left.
+    _goBranch(to, back: true);
     // The switch ends the slide; should it not happen, drop the slide.
     Timer(const Duration(milliseconds: 600), () {
       if (!mounted || _current.index == to) return;

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../ui/tokens/app/app_modules.dart';
 import '../../ui/tokens/app/theme/app_page_transitions.dart';
 import 'nav_layout.dart';
+import 'tab_entry.dart';
 
 enum ShellTab {
   home,
@@ -72,14 +73,6 @@ enum ShellTab {
     return ofPath(path);
   }
 
-  /// Left for another tab, this tab comes back at its first page instead of
-  /// the page it was left on (owner 2026-10-28: the profile / settings tab).
-  bool get resetsOnReturn => this == settings;
-
-  /// Whether switching [from] a tab to this one lands on this tab's first
-  /// page: tapping the tab already open pops it home, and a tab that
-  /// [resetsOnReturn] always starts there. Other tabs keep their stack.
-  bool opensAtRootFrom(ShellTab from) => from == this || resetsOnReturn;
 }
 
 String? offModuleRedirect(String location, {NavLayout? layout}) {
@@ -90,27 +83,37 @@ String? offModuleRedirect(String location, {NavLayout? layout}) {
 }
 
 /// The one way the shell switches tabs (nav bar, top-bar chips, swipes, back
-/// on a tab root); see [ShellTab.opensAtRootFrom]. A link into a page of
-/// another tab goes through [openPage] instead.
+/// on a tab root). A link into a page of another tab goes through
+/// [openPage] instead.
+///
+/// Entering a tab starts it over (owner 2026-11-05): the pages it was left on
+/// leave unseen and its first page arrives with the tab's entry. Tapping the
+/// tab already open does the same, playing the entry again (nothing happens
+/// when it is already on its first page). A [back] returns to the tab as it
+/// was left.
 void goTab(
   ShellTab to, {
   required int from,
   required void Function(int index, {bool initialLocation}) goBranch,
+  bool Function(int index)? canPop,
+  bool back = false,
 }) {
-  final root = to.opensAtRootFrom(ShellTab.values[from]);
-  // Back to a tab that starts over: the page it was left on leaves unseen,
-  // the tab's home arrives with the tab's own entry only.
-  if (goTabDropsPages(to, from: from)) {
-    AppPageTransitionsBuilder.popNextWithoutAnimation();
+  if (back) {
+    goBranch(to.index, initialLocation: false);
+    return;
   }
-  goBranch(to.index, initialLocation: root);
+  final reopen = to.index == from;
+  final stacked = canPop?.call(to.index) ?? true;
+  if (reopen && !stacked) return;
+  if (stacked) AppPageTransitionsBuilder.popNextWithoutAnimation();
+  goBranch(to.index, initialLocation: true);
+  if (reopen) ShellReopen.request();
 }
 
-/// Whether switching [from] → [to] drops [to]'s pages without a back slide:
-/// only a tab that [ShellTab.resetsOnReturn], entered from another tab
-/// (tapping the open tab pops home with the usual slide).
-bool goTabDropsPages(ShellTab to, {required int from}) =>
-    to.resetsOnReturn && to.index != from;
+/// Whether the tab [index] of [route] has a page above its first one.
+bool Function(int index) branchCanPop(StatefulShellRoute route) =>
+    (index) =>
+        route.branches[index].navigatorKey.currentState?.canPop() ?? true;
 
 void Function(String location, {Object? extra}) pageOpener(
   BuildContext context,

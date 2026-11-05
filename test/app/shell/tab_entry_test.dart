@@ -11,36 +11,36 @@ void main() {
   test('how a tab arrives, per where it comes from', () {
     final cases = <(String, ShellTab, ShellTab, Alignment?, bool, TabEntry)>[
       (
-        'bottom → bottom to the right: from the right',
+        'bottom → bottom: grows up out of the bar',
         ShellTab.home,
         ShellTab.accounts,
         null,
         false,
-        const TabEntry.side(1),
+        const TabEntry.expand(Alignment.bottomCenter),
       ),
       (
-        'bottom → bottom to the left: from the left',
+        'bottom → bottom, the other way: the same',
         ShellTab.more,
         ShellTab.transactions,
         null,
         false,
-        const TabEntry.side(-1),
+        const TabEntry.expand(Alignment.bottomCenter),
       ),
       (
-        'top chip → bottom: up from below',
+        'top chip → bottom: grows up out of the bar',
         ShellTab.pending,
         ShellTab.home,
         null,
         false,
-        TabEntry.up,
+        const TabEntry.expand(Alignment.bottomCenter),
       ),
       (
-        'More-only page → bottom: up from below',
+        'More-only page → bottom: grows up out of the bar',
         ShellTab.budgets,
         ShellTab.transactions,
         null,
         false,
-        TabEntry.up,
+        const TabEntry.expand(Alignment.bottomCenter),
       ),
       (
         'bottom → top chip: down from above',
@@ -116,11 +116,19 @@ void main() {
     );
   });
 
-  test('the bars follow the layout: an off item is skipped for the side', () {
-    final off = d.withOff({ShellTab.transactions});
+  test('tapping the open tab plays its entry again, a back lands in place', () {
     expect(
-      resolveTabEntry(from: ShellTab.home, to: ShellTab.accounts, layout: off),
-      const TabEntry.side(1),
+      resolveTabEntry(
+        from: ShellTab.accounts,
+        to: ShellTab.accounts,
+        layout: d,
+        reopen: true,
+      ),
+      const TabEntry.expand(Alignment.bottomCenter),
+    );
+    expect(
+      resolveTabEntry(from: ShellTab.accounts, to: ShellTab.accounts, layout: d),
+      TabEntry.none,
     );
   });
 
