@@ -27,8 +27,6 @@ import '../widgets/debt_entry_form.dart';
 import '../widgets/draft_form.dart';
 import '../widgets/pick_chip_rows.dart';
 import '../widgets/quick_create_sheet.dart';
-import '../widgets/transaction_picker.dart';
-import '../widgets/transaction_tile.dart';
 
 class DebtEntryDetailPage extends StatefulWidget {
   const DebtEntryDetailPage({required this.entryId, super.key});
@@ -358,29 +356,6 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     );
   }
 
-  /// บันทึกในรายการ: one of my transactions of the entry's way (paid =
-  /// expense), or สร้างรายการจากหนี้ on top. A pick saves at once.
-  Future<void> _pickLink() async {
-    final l = AppLocalizations.of(context)!;
-    final e = _entry;
-    final r = await TransactionPicker.pick(
-      context,
-      type: e.direction == DebtEntryDirection.paid
-          ? TransactionType.expense
-          : TransactionType.income,
-      near: e.date ?? DateTime.now(),
-      amount: e.amount,
-      createLabel: l.debtLinkTx,
-      exclude: (t) => t.debtLink != null,
-    );
-    if (r == null || !mounted) return;
-    final tx = r.tx;
-    if (tx == null) return _linkTx();
-    await _writeLink((repo) => repo.linkTx(e.id, tx.id));
-  }
-
-  Future<void> _unlink() => _writeLink((repo) => repo.unlinkTx(_entry.id));
-
   /// D9: my copy stops following the other user's (my side only, ONE
   /// call); it stays a plain debt with that person. They get a notice.
   Future<void> _disconnectPartner() async {
@@ -676,7 +651,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
         leading: const PickCardEmptyIcon(AppIcons.link, size: 32),
         editable: editing,
         onLongPress: editing ? null : () => _edit(),
-        onTap: _pickLink,
+        onTap: _linkTx,
       );
     }
     // The wallet's own card, as in quick create: its icon, colours, balance.
@@ -859,70 +834,40 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     );
   }
 
-  /// บันทึกในรายการ above กำหนดจ่าย: the linked transaction as its list row
-  /// (view: tap opens it; edit: tap picks again, ✕ unlinks), or a dashed
-  /// ผูกรายการ. Each saves at once.
-  Widget _linkSection(AppLocalizations l, String symbol, bool first) {
-    final tx = _linked;
-    final busy = isSaving;
-    if (tx == null) {
-      return SectionCard(
-        key: const ValueKey('debtLinkRow'),
-        first: first,
-        children: [
-          AppDetailRow(
-            label: l.occurrenceRecordInTx,
-            trailing: Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: AppChip(
-                label: l.occurrenceLinkPick,
-                icon: AppIcons.add,
-                tone: AppChipTone.primary,
-                selected: true,
-                dashed: true,
-                onTap: busy ? null : _pickLink,
+  String _failed(Object e) => errorTextOf(context, e);
+
+  /// The note as the tx page's row: label left, text right; a long press
+  /// edits.
+  Widget _noteRow(AppLocalizations l) {
+    final editing = isEditing;
+    final note = _c.note.text.trim();
+    final theme = Theme.of(context);
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: editing ? null : () => _edit(),
+      child: DraftFieldRow(
+        label: l.commonNote,
+        dense: !editing,
+        child: editing
+            ? AppInput.inline(
+                editing: true,
+                controller: _c.note,
+                maxLines: 5,
+                maxLength: TextLimits.note,
+                hint: l.debtNoteHint,
+              )
+            : Text(
+                note.isEmpty ? l.commonLongPressToEdit : note,
+                textAlign: TextAlign.end,
+                style: note.isEmpty
+                    ? theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      )
+                    : null,
               ),
-            ),
-          ),
-        ],
-      );
-    }
-    final differs = (tx.amount - _entry.amount).abs() > 0.004;
-    return SectionCard(
-      key: const ValueKey('debtLinkRow'),
-      first: first,
-      children: [
-        AppDetailRow(
-          label: l.occurrenceRecordInTx,
-          helper: differs
-              ? l.debtLinkedAmountDiffers(
-                  moneyString(context, tx.amount, symbol: symbol),
-                )
-              : null,
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            0,
-            AppSpacing.lg,
-            AppSpacing.md,
-          ),
-          child: PickedRowFrame(
-            onTap: busy
-                ? null
-                : isEditing
-                ? _pickLink
-                : () => openPage(context, '/transactions/${tx.id}'),
-            onRemove: isEditing && !busy ? _unlink : null,
-            removeTooltip: l.commonRemove,
-            child: TransactionTile(transaction: tx, showDate: true),
-          ),
-        ),
-      ],
+      ),
     );
   }
-
-  String _failed(Object e) => errorTextOf(context, e);
 
   @override
   Widget build(BuildContext context) {
@@ -1003,35 +948,20 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                       symbol: symbol,
                       onEdit: () => _edit(),
                       onLongPressField: (f) => _edit(focus: f),
-                      footer: _cards(l, symbol),
+                    ),
+                    // The tx page's card (owner 2026-11-05): the cards, tags
+                    // and note under the hero, in one frame.
+                    const SizedBox(height: AppSpacing.md),
+                    EntrySectionCard(
+                      children: [
+                        _cards(l, symbol),
+                        ?tags,
+                        _noteRow(l),
+                      ],
                     ),
                   ],
                 ),
-                tags: tags,
                 sections: [
-                  (first) => NoteSection(
-                    first: first,
-                    label: l.commonNote,
-                    editing: editing,
-                    text: _c.note.text,
-                    hint: l.commonLongPressToEdit,
-                    onLongPress: () => _edit(),
-                    editField: DetailTextField(
-                      label: l.commonNote,
-                      controller: _c.note,
-                      editing: true,
-                      maxLines: 5,
-                      maxLength: TextLimits.note,
-                      hint: l.debtNoteHint,
-                    ),
-                  ),
-                  // Debts and repayments alike: connect one of my
-                  // transactions while there is none, or show / disconnect
-                  // the connected one (a tx made from the entry is the
-                  // wallet card above).
-                  if (!_sourced &&
-                      (widget.detail.transaction == null || _connected))
-                    (first) => _linkSection(l, symbol, first),
                   if (!e.isRepayment && (editing || _c.dueDate != null))
                     (first) => _dueSection(l, first),
                   // D9: a copy lives in the other user's book; disconnect my

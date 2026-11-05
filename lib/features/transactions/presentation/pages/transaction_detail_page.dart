@@ -19,7 +19,6 @@ import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
-import '../../../personal_debts/presentation/debt_wiring.dart';
 import '../../../projects/data/projects_repository.dart';
 import '../../../projects/domain/paper.dart' show PaperView;
 import '../../../pending/domain/pending_transaction.dart';
@@ -70,7 +69,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
   void initState() {
     super.initState();
     final cached = context.read<TransactionsCubit>().byId(widget.transactionId);
-    if (cached?.isDebtEntry ?? false) {
+    if (cached?.debtLink != null) {
       _fetching = false;
       return;
     }
@@ -102,7 +101,9 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
     return BlocBuilder<TransactionsCubit, TransactionsState>(
       builder: (context, state) {
         final tx = context.read<TransactionsCubit>().byId(widget.transactionId);
-        final link = tx?.counterparty;
+        // A debt and a repayment alike open the person-book entry's page
+        // (owner 2026-11-05).
+        final link = tx?.debtLink;
         if (link != null) return DebtEntryDetailPage(entryId: link.entryId);
         if (tx != null) {
           return _Loaded(
@@ -214,9 +215,8 @@ class _LoadedState extends State<_Loaded>
   @override
   bool get canEdit {
     final tx = widget.tx;
-    // A repayment (0.4.0-3) is an ordinary row apart from its locked
-    // category: amount, date, wallet, words and tags can change.
-    if (tx.isRepayment || (tx.category?.isOneSided ?? false)) {
+    // A one-sided system row (deposit / withdraw) is editable.
+    if (tx.category?.isOneSided ?? false) {
       return !tx.isLocked;
     }
     final isSystemRow =
@@ -817,19 +817,14 @@ class _LoadedState extends State<_Loaded>
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final tx = widget.tx;
-    // A repayment tied to a person (0.4.0-3) is editable, so it is not a
-    // read-only system row; the older repayment rows (no person) still are.
-    final repaymentPerson = tx.repaymentPerson;
+    // A debt or a repayment of the person book opens its own page; only an
+    // older repayment row with no person is left here, a read-only system row.
     final isSystemRow =
-        repaymentPerson == null &&
         tx.type != TransactionType.transfer &&
         (tx.category?.isSystem ?? false) &&
         !(tx.category?.isOneSided ?? false);
     final isRepayment =
-        repaymentPerson != null ||
-        (isSystemRow &&
-            !tx.isLocked &&
-            (tx.category?.isDebtRepayment ?? false));
+        isSystemRow && !tx.isLocked && (tx.category?.isDebtRepayment ?? false);
     // แบ่ง is edited on this page (owner 2026-11-03): a plain money row of
     // mine, or my bill row once the bill is read (and I may edit it).
     final canEditSplits =
@@ -967,9 +962,7 @@ class _LoadedState extends State<_Loaded>
                         detailCards: true,
                         allowSplits: canEditSplits,
                         editing: editing,
-                        categoryLockedHint: repaymentPerson != null
-                            ? l.txRepaymentCategoryLocked
-                            : _edited.canEditCategory
+                        categoryLockedHint: _edited.canEditCategory
                             ? null
                             : l.transactionFormCategoryAuthorOnlyHint,
                         onEdit: canEdit ? _enterEdit : null,
@@ -991,27 +984,6 @@ class _LoadedState extends State<_Loaded>
                           tx: tx,
                           onApplyEvent: canEdit ? _applyEvent : null,
                         ),
-                      // "จ่ายคืนให้ ลี ›" / "รับคืนจาก chalee ›" → the person.
-                      if (repaymentPerson != null && !editing) ...[
-                        const SizedBox(height: AppSpacing.md),
-                        InfoBox(
-                          first: true,
-                          rows: [
-                            InfoRow(
-                              key: const ValueKey('repaymentPerson'),
-                              label: tx.type == TransactionType.expense
-                                  ? l.debtRepayTo
-                                  : l.debtRepayFrom,
-                              value: repaymentPerson.name,
-                              showChevron: true,
-                              onTap: () => openPage(
-                                context,
-                                debtPersonPath(repaymentPerson.key),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
                     ],
                   ),
                   sections: const [],
