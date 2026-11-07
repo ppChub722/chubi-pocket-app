@@ -7272,6 +7272,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get connectionsPermissionChat => 'Log entries by chat';
 
   @override
+  String get connectionsPermissionAuto =>
+      'Book straight to the ledger (skip pending)';
+
+  @override
   String get connectionsPermissionAsk => 'Ask for balances';
 
   @override

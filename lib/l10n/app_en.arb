@@ -2461,6 +2461,7 @@
   "connectionCantConnect": "Can't reach the server",
   "connectionsNotLinked": "Not linked",
   "connectionsPermissionChat": "Log entries by chat",
+  "connectionsPermissionAuto": "Book straight to the ledger (skip pending)",
   "connectionsPermissionAsk": "Ask for balances",
   "connectionsPermissionSlip": "Send slips",
   "connectionsPermissionNotify": "Notifications",

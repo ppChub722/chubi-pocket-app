@@ -7117,6 +7117,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get connectionsPermissionChat => 'จดรายการผ่านแชต';
 
   @override
+  String get connectionsPermissionAuto =>
+      'บันทึกลงบัญชีทันที (ไม่ผ่านหน้ารอยืนยัน)';
+
+  @override
   String get connectionsPermissionAsk => 'ถามยอดเงิน';
 
   @override

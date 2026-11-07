@@ -12343,6 +12343,12 @@ abstract class AppLocalizations {
   /// **'Log entries by chat'**
   String get connectionsPermissionChat;
 
+  /// No description provided for @connectionsPermissionAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Book straight to the ledger (skip pending)'**
+  String get connectionsPermissionAuto;
+
   /// No description provided for @connectionsPermissionAsk.
   ///
   /// In en, this message translates to:

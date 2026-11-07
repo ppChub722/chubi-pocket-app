@@ -2234,6 +2234,7 @@
   "connectionCantConnect": "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้",
   "connectionsNotLinked": "ยังไม่เชื่อม",
   "connectionsPermissionChat": "จดรายการผ่านแชต",
+  "connectionsPermissionAuto": "บันทึกลงบัญชีทันที (ไม่ผ่านหน้ารอยืนยัน)",
   "connectionsPermissionAsk": "ถามยอดเงิน",
   "connectionsPermissionSlip": "ส่งสลิป",
   "connectionsPermissionNotify": "แจ้งเตือน",
