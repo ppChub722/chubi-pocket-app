@@ -1277,9 +1277,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifSettingsSaveFailed => 'Could not save, changed back';
 
   @override
-  String get profileUsernameLocked => 'Username cannot be changed';
-
-  @override
   String homeUpcomingInDays(int days) {
     String _temp0 = intl.Intl.pluralLogic(
       days,
@@ -1470,7 +1467,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authRegisterSectionProfile => 'About you';
 
   @override
-  String get authRegisterUsernameHint => 'a-z 0-9 _ -, 3 to 50 characters';
+  String get authRegisterUsernameHint =>
+      'A-Z a-z 0-9 _ - ., 3 to 50 characters';
+
+  @override
+  String get editProfileUsernameInvalid =>
+      'A-Z a-z 0-9 _ - ., 3 to 50 characters; a dot can\'t be first, last or doubled';
 
   @override
   String get authRegisterPasswordHint => 'At least 8 characters';
@@ -7339,11 +7341,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileSetPasswordSnackSuccess => 'Password set';
-
-  @override
-  String profileUsernameReadOnly(String username) {
-    return '@$username (can\'t change)';
-  }
 
   @override
   String get profilePictureIcon => 'Icon';

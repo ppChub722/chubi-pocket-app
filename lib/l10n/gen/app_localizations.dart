@@ -2378,12 +2378,6 @@ abstract class AppLocalizations {
   /// **'Could not save, changed back'**
   String get notifSettingsSaveFailed;
 
-  /// No description provided for @profileUsernameLocked.
-  ///
-  /// In en, this message translates to:
-  /// **'Username cannot be changed'**
-  String get profileUsernameLocked;
-
   /// No description provided for @homeUpcomingInDays.
   ///
   /// In en, this message translates to:
@@ -2687,8 +2681,14 @@ abstract class AppLocalizations {
   /// No description provided for @authRegisterUsernameHint.
   ///
   /// In en, this message translates to:
-  /// **'a-z 0-9 _ -, 3 to 50 characters'**
+  /// **'A-Z a-z 0-9 _ - ., 3 to 50 characters'**
   String get authRegisterUsernameHint;
+
+  /// No description provided for @editProfileUsernameInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'A-Z a-z 0-9 _ - ., 3 to 50 characters; a dot can\'t be first, last or doubled'**
+  String get editProfileUsernameInvalid;
 
   /// No description provided for @authRegisterPasswordHint.
   ///
@@ -12468,12 +12468,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Password set'**
   String get profileSetPasswordSnackSuccess;
-
-  /// No description provided for @profileUsernameReadOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'@{username} (can\'t change)'**
-  String profileUsernameReadOnly(String username);
 
   /// No description provided for @profilePictureIcon.
   ///

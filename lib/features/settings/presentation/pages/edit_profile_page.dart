@@ -10,6 +10,7 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/domain/user.dart';
+import '../../../auth/domain/username_rules.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../connections/data/connections_repository.dart';
 import '../../../connections/domain/connection.dart';
@@ -24,7 +25,7 @@ import '../profile_changes.dart';
 /// โปรไฟล์ (0.4.2 1b, like the contact page). View: the hero (picture +
 /// colour dots, name, @username, ✏️, the email row), "การเชื่อมต่อ" (one row
 /// per outside app) and "ความปลอดภัย". Edit (✏️ / long-press): the hero
-/// with the name and email inputs and the picture preview (tap = the icon
+/// with the name, username and email inputs and the picture preview (tap = the icon
 /// maker: full for the icon, colour-only for a photo), then the
 /// "รูปโปรไฟล์" radio list. ยกเลิก / บันทึก.
 class EditProfilePage extends StatefulWidget {
@@ -34,7 +35,7 @@ class EditProfilePage extends StatefulWidget {
   State<EditProfilePage> createState() => _EditProfilePageState();
 }
 
-enum _Field { name, email }
+enum _Field { name, username, email }
 
 class _EditProfilePageState extends State<EditProfilePage>
     with EditModeMixin<EditProfilePage, _ProfileDraft> {
@@ -43,6 +44,7 @@ class _EditProfilePageState extends State<EditProfilePage>
   final _emailCtrl = TextEditingController();
   final _usernameCtrl = TextEditingController();
   late User _user;
+  String? _usernameError;
   String? _emailError;
 
   /// An import / delete of a picture is running.
@@ -72,6 +74,9 @@ class _EditProfilePageState extends State<EditProfilePage>
   @override
   void onDraftRestored() {
     if (_nameCtrl.text != working.name) _nameCtrl.text = working.name;
+    if (_usernameCtrl.text != working.username) {
+      _usernameCtrl.text = working.username;
+    }
     if (_emailCtrl.text != working.email) _emailCtrl.text = working.email;
   }
 
@@ -242,13 +247,19 @@ class _EditProfilePageState extends State<EditProfilePage>
       originalName: o.name,
       originalEmail: o.email,
       originalIconCode: o.iconCode,
+      username: w.username,
+      originalUsername: o.username,
     );
     final auth = context.read<AuthCubit>();
     FocusScope.of(context).unfocus();
     setSaving(true);
-    setState(() => _emailError = null);
+    setState(() {
+      _usernameError = null;
+      _emailError = null;
+    });
     try {
       final updated = await context.read<UsersRepository>().updateMe(
+        username: changes.username,
         displayName: changes.displayName,
         email: changes.email,
         iconCode: changes.iconCode,
@@ -264,7 +275,10 @@ class _EditProfilePageState extends State<EditProfilePage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      if (e.code == 'EMAIL_EXISTS') {
+      if (e.code == 'USERNAME_EXISTS') {
+        setState(() => _usernameError = l.authRegisterUsernameTakenInline);
+        _formKey.currentState?.validate();
+      } else if (e.code == 'EMAIL_EXISTS') {
         setState(() => _emailError = l.editProfileEmailTaken);
         _formKey.currentState?.validate();
       } else {
@@ -376,8 +390,6 @@ class _EditProfilePageState extends State<EditProfilePage>
   Widget _editHero(AppLocalizations l, List<Connection> items) {
     final preview = _preview(items);
     final text = Theme.of(context).textTheme;
-    final handle = l.profileUsernameReadOnly(_user.username);
-    if (_usernameCtrl.text != handle) _usernameCtrl.text = handle;
     return ProfileHeroCard(
       editing: true,
       tint: _tint(preview),
@@ -407,7 +419,17 @@ class _EditProfilePageState extends State<EditProfilePage>
         AppInput.card(
           controller: _usernameCtrl,
           label: l.editProfileUsernameLabel,
-          locked: true,
+          maxLength: 50,
+          onChanged: (v) {
+            if (_usernameError != null) setState(() => _usernameError = null);
+            applyTextChange(_Field.username, working.copyWith(username: v));
+          },
+          validator: (v) {
+            if (_usernameError != null) return _usernameError;
+            return isValidUsername(v?.trim() ?? '')
+                ? null
+                : l.editProfileUsernameInvalid;
+          },
         ),
         AppInput.card(
           controller: _emailCtrl,
@@ -475,14 +497,6 @@ class _EditProfilePageState extends State<EditProfilePage>
     first: first,
     title: l.profileSectionSecurity,
     children: [
-      // The lock after the value marks it locked.
-      AppDetailRow(
-        icon: AppIcons.profile,
-        label: l.editProfileUsernameLabel,
-        helper: l.profileUsernameLocked,
-        locked: true,
-        trailing: Text('@${_user.username}'),
-      ),
       AppDetailRow(
         icon: AppIcons.password,
         label: _user.hasPassword
@@ -567,6 +581,7 @@ class _EditProfilePageState extends State<EditProfilePage>
 class _ProfileDraft extends Equatable {
   const _ProfileDraft({
     required this.name,
+    required this.username,
     required this.email,
     required this.settings,
     this.iconCode,
@@ -574,12 +589,14 @@ class _ProfileDraft extends Equatable {
 
   factory _ProfileDraft.from(User u) => _ProfileDraft(
     name: u.displayName,
+    username: u.username,
     email: u.email ?? '',
     iconCode: u.iconCode,
     settings: u.avatarSettings ?? const AvatarSettings(),
   );
 
   final String name;
+  final String username;
   final String email;
   final IconCode? iconCode;
 
@@ -588,17 +605,19 @@ class _ProfileDraft extends Equatable {
 
   _ProfileDraft copyWith({
     String? name,
+    String? username,
     String? email,
     IconCode? iconCode,
     bool clearIcon = false,
     AvatarSettings? settings,
   }) => _ProfileDraft(
     name: name ?? this.name,
+    username: username ?? this.username,
     email: email ?? this.email,
     iconCode: clearIcon ? null : (iconCode ?? this.iconCode),
     settings: settings ?? this.settings,
   );
 
   @override
-  List<Object?> get props => [name, email, iconCode, settings];
+  List<Object?> get props => [name, username, email, iconCode, settings];
 }

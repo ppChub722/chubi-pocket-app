@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -7,6 +6,7 @@ import '../../../../app/shell/app_top_bar.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../preferences/presentation/cubit/locale_cubit.dart';
+import '../../domain/username_rules.dart';
 import '../cubit/auth_cubit.dart';
 import '../widgets/auth_widgets.dart';
 
@@ -18,7 +18,6 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  static final _usernameRegex = RegExp(r'^[a-z0-9_-]{3,50}$');
   static final _emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
   final _usernameCtrl = TextEditingController();
@@ -52,7 +51,7 @@ class _RegisterPageState extends State<RegisterPage> {
     final name = _displayNameCtrl.text.trim();
     final email = _emailCtrl.text.trim();
     final password = _passwordCtrl.text;
-    return _usernameRegex.hasMatch(username) &&
+    return isValidUsername(username) &&
         password.length >= 8 &&
         password.length <= 128 &&
         _confirmCtrl.text == password &&
@@ -123,7 +122,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       prefixIcon: AppIcons.profile,
                       errorText: _fieldErrorFor(l, 'username', failure),
                       autofillHints: const [AutofillHints.newUsername],
-                      inputFormatters: [_lowercase],
                       textInputAction: TextInputAction.next,
                     ),
                     AppInput(
@@ -203,11 +201,6 @@ class _RegisterPageState extends State<RegisterPage> {
       ),
     );
   }
-
-  static final _lowercase = TextInputFormatter.withFunction(
-    (oldValue, newValue) =>
-        newValue.copyWith(text: newValue.text.toLowerCase()),
-  );
 
   String? _fieldErrorFor(
     AppLocalizations l,
