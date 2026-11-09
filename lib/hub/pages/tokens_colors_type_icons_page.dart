@@ -7,6 +7,7 @@ import '../hub_kit.dart';
 /// theme / mode in Debug → Theme switcher or the status bar toggle).
 Widget buildColorsPage(BuildContext context) {
   final palette = Theme.of(context).extension<AppColors>()!;
+  final modules = ModuleColors.of(context);
   final scheme = Theme.of(context).colorScheme;
   final module = ModuleColors.of(context);
   Widget swatch(String name, Color c, Color on) => HubCell(
@@ -70,10 +71,10 @@ Widget buildColorsPage(BuildContext context) {
           cells: [
             swatch('income', palette.income, palette.onIncome),
             swatch('expense', palette.expense, palette.onExpense),
-            swatch('walletAsset', palette.walletAsset, palette.onPrimary),
+            swatch('walletAsset', modules.walletAsset, palette.onPrimary),
             swatch(
               'walletLiability',
-              palette.walletLiability,
+              modules.walletLiability,
               palette.onPrimary,
             ),
           ],

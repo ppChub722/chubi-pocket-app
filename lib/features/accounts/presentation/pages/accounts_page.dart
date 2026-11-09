@@ -281,9 +281,8 @@ class _AccountsPageState extends State<AccountsPage> {
   ) {
     final t = state.totals;
     final net = MoneyText(t.net == 0 ? 0 : t.net);
-    final palette = Theme.of(context).extension<AppColors>()!;
     final savedColor = ModuleColors.of(context).planning;
-    final debtColor = palette.walletLiability;
+    final debtColor = ModuleColors.of(context).walletLiability;
     final hasDebt = t.cardDebt.abs() >= 0.005;
     final cards = state.accounts.where((a) => a.type.isCredit).length;
     final total = t.availableTotal + t.savedTotal + t.cardDebt.abs();

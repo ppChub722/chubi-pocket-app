@@ -18,11 +18,15 @@ final mintTheme = AppTheme(
     library: Color(0xFF10B981),
     people: Color(0xFF0EA5E9),
     planning: Color(0xFF6366F1),
+    walletAsset: Color(0xFF0D9488),
+    walletLiability: Color(0xFFEA580C),
   ),
   darkModules: const ModuleColors(
     library: Color(0xFF34D399),
     people: Color(0xFF38BDF8),
     planning: Color(0xFF818CF8),
+    walletAsset: Color(0xFF2DD4BF),
+    walletLiability: Color(0xFFFB923C),
   ),
   lightColors: const AppColors(
     brightness: Brightness.light,
@@ -52,8 +56,6 @@ final mintTheme = AppTheme(
     onSuccess: Color(0xFFFFFFFF),
     error: Color(0xFFEF4444),
     onError: Color(0xFFFFFFFF),
-    walletAsset: Color(0xFF0D9488),
-    walletLiability: Color(0xFFEA580C),
   ),
   darkColors: const AppColors(
     brightness: Brightness.dark,
@@ -83,7 +85,5 @@ final mintTheme = AppTheme(
     onSuccess: Color(0xFF052E16),
     error: Color(0xFFF87171),
     onError: Color(0xFF450A0A),
-    walletAsset: Color(0xFF2DD4BF),
-    walletLiability: Color(0xFFFB923C),
   ),
 );

@@ -383,7 +383,7 @@ class OtherMembersStack extends StatelessWidget {
 
 Color accountBalanceColor(BuildContext context, Account account) {
   final palette = Theme.of(context).extension<AppColors>()!;
-  if (account.isLiability) return palette.walletLiability;
+  if (account.isLiability) return ModuleColors.of(context).walletLiability;
   return account.iconCode.tintFor(palette);
 }
 

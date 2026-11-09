@@ -539,7 +539,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
               'The filters show only when there are cards to filter by.',
           child: Builder(
             builder: (context) {
-              final palette = Theme.of(context).extension<AppColors>()!;
+              final debtColor = ModuleColors.of(context).walletLiability;
               final saved = ModuleColors.of(context).planning;
               return AppHeroCard(
                 style: HeroStyle.tinted(
@@ -559,7 +559,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                       parts: [
                         (0.992, HeroColors.maybeOf(context)!.accent),
                         (0.01, saved),
-                        (0.003, palette.walletLiability),
+                        (0.003, debtColor),
                       ],
                     ),
                   ),
@@ -583,8 +583,8 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                           'Card debt | 25% of the limit',
                           '฿12,400',
                           icon: AppIcons.creditCard,
-                          iconColor: palette.walletLiability,
-                          color: palette.walletLiability,
+                          iconColor: debtColor,
+                          color: debtColor,
                         ),
                       ],
                     ),

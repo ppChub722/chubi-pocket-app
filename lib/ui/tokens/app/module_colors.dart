@@ -10,12 +10,16 @@ class ModuleColors extends ThemeExtension<ModuleColors> {
     required this.planning,
     this.debt = defaultDebt,
     this.saving = defaultSaving,
+    this.walletAsset = defaultWalletAsset,
+    this.walletLiability = defaultWalletLiability,
   });
 
   /// The create-mode colours (owner 2026-10-22, mock QuickCreateBtn): จดหนี้
   /// purple, ออมเงิน blue — the same in every theme unless one overrides.
   static const Color defaultDebt = Color(0xFF7A5AE0);
   static const Color defaultSaving = Color(0xFF3B7DD8);
+  static const Color defaultWalletAsset = Color(0xFF0D9488);
+  static const Color defaultWalletLiability = Color(0xFFEA580C);
 
   /// A recurring setting's default icon colour by its kind (ค่าบริการ /
   /// ผ่อน / รายรับ / แจ้งเตือน; ออมเงิน = [defaultSaving]).
@@ -36,6 +40,10 @@ class ModuleColors extends ThemeExtension<ModuleColors> {
   /// Saving mode.
   final Color saving;
 
+  /// A wallet's money (assets) and what is owed on it (liabilities).
+  final Color walletAsset;
+  final Color walletLiability;
+
   static ModuleColors of(BuildContext context) {
     final theme = Theme.of(context);
     final set = theme.extension<ModuleColors>();
@@ -52,12 +60,16 @@ class ModuleColors extends ThemeExtension<ModuleColors> {
     Color? planning,
     Color? debt,
     Color? saving,
+    Color? walletAsset,
+    Color? walletLiability,
   }) => ModuleColors(
     library: library ?? this.library,
     people: people ?? this.people,
     planning: planning ?? this.planning,
     debt: debt ?? this.debt,
     saving: saving ?? this.saving,
+    walletAsset: walletAsset ?? this.walletAsset,
+    walletLiability: walletLiability ?? this.walletLiability,
   );
 
   @override
@@ -69,6 +81,8 @@ class ModuleColors extends ThemeExtension<ModuleColors> {
       planning: Color.lerp(planning, other.planning, t)!,
       debt: Color.lerp(debt, other.debt, t)!,
       saving: Color.lerp(saving, other.saving, t)!,
+      walletAsset: Color.lerp(walletAsset, other.walletAsset, t)!,
+      walletLiability: Color.lerp(walletLiability, other.walletLiability, t)!,
     );
   }
 }
