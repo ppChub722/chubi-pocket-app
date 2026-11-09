@@ -157,6 +157,17 @@ class ShellBackScope extends InheritedWidget {
   bool updateShouldNotify(ShellBackScope old) => onBack != old.onBack;
 }
 
+/// The app's [PageExitScope.onLeave]: pop the page — or, opened alone in its
+/// tab with nothing to pop, let the shell's back take over (previous tab, the
+/// เพิ่มเติม hub, or the dashboard).
+void leaveShellPage(BuildContext context) {
+  if (context.canPop()) {
+    context.pop();
+  } else {
+    ShellBackScope.maybeOf(context)?.call();
+  }
+}
+
 abstract interface class ShellSwipeHandler {
   bool canSwipe(int dir);
 

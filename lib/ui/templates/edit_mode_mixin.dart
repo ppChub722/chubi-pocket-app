@@ -2,16 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../app/shell/shell_chrome.dart';
-import '../../app/shell/tab_nav.dart';
 import '../atoms/busy_scope.dart';
 import '../atoms/ui_config.dart';
 import '../molecules/confirm_dialog.dart';
 import '../molecules/mode_action_bar.dart';
 import 'edit_draft.dart';
 import 'edit_mode_scope.dart';
+import 'page_exit_scope.dart';
+import 'shell_chrome.dart';
 
 mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   bool _editing = false;
@@ -45,13 +44,7 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
 
   bool get leaveOnCancel => false;
 
-  void leavePage() {
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      ShellBackScope.maybeOf(context)?.call();
-    }
-  }
+  void leavePage() => PageExitScope.leave(context);
 
   void initDraft(D draft, {bool editing = false}) {
     _draft = EditDraft(draft);

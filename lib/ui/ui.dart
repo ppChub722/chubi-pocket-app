@@ -281,6 +281,8 @@ export 'templates/detail_layout.dart';
 export 'templates/detail_page_body.dart';
 export 'templates/edit_mode_scope.dart';
 export 'templates/edit_mode_mixin.dart';
+export 'templates/page_exit_scope.dart';
+export 'templates/shell_chrome.dart';
 export 'templates/list_page_body.dart';
 export 'templates/tabbed_detail_body.dart';
 export 'tokens/app_colors.dart';
