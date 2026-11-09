@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
-import 'package:pp_forge_ui/pp_forge_ui.dart';
+import 'package:pp_forge_core/ui.dart';
 
 enum OccurrenceState {
   upcoming(StatusKind.upcoming),

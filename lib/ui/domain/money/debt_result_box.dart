@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_ui/pp_forge_ui.dart';
+import 'package:pp_forge_core/ui.dart';
 import '../../app_aliases.dart';
 
 /// Quick create's debt result box (owner 2026-10-21, mock QuickCreateDebt):

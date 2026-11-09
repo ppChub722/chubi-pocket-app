@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_ui/pp_forge_ui.dart';
+import 'package:pp_forge_core/ui.dart';
 import '../../app_aliases.dart';
 
 /// One place a profile picture can come from (0.4.2 1b): the edit page's

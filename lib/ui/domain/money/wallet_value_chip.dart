@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../features/accounts/domain/account_type.dart';
 import '../tokens/app_icons.dart';
-import 'package:pp_forge_ui/pp_forge_ui.dart';
+import 'package:pp_forge_core/ui.dart';
 import '../../app_aliases.dart';
 import '../icons/type_icon_default.dart';
 import 'wallet_card.dart';

@@ -1,4 +1,4 @@
-import 'package:pp_forge_ui/pp_forge_ui.dart';
+import 'package:pp_forge_core/ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 List<OutlineItem> o(String spec) => [

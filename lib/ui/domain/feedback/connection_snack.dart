@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/network/connection_cubit.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import 'package:pp_forge_ui/pp_forge_ui.dart';
+import 'package:pp_forge_core/ui.dart';
 
 /// The connection state as one message (connecting… n/N, can't connect +
 /// Retry, back online); the content of the connection snack.

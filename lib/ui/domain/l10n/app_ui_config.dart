@@ -6,7 +6,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../features/auth/presentation/cubit/auth_cubit.dart';
-import 'package:pp_forge_ui/pp_forge_ui.dart';
+import 'package:pp_forge_core/ui.dart';
 import '../tokens/app_icons.dart';
 import '../tokens/currencies.dart';
 import '../money/money_style.dart';

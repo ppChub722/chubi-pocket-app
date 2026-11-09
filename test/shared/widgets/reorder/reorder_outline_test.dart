@@ -1,4 +1,4 @@
-import 'package:pp_forge_ui/pp_forge_ui.dart';
+import 'package:pp_forge_core/ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// `'A:1 A1:2 B:1'` → an outline (one section).

@@ -1,6 +1,6 @@
 library;
 
-export 'package:pp_forge_ui/pp_forge_ui.dart';
+export 'package:pp_forge_core/ui.dart';
 export 'app_aliases.dart';
 
 export 'domain/l10n/app_ui_config.dart';

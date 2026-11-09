@@ -5,7 +5,7 @@
 /// keep working. New code may use either name.
 library;
 
-import 'package:pp_forge_ui/pp_forge_ui.dart';
+import 'package:pp_forge_core/ui.dart';
 
 typedef AppAmountResult = PpForgeAmountResult;
 typedef AppAmountSheet = PpForgeAmountSheet;

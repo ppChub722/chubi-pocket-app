@@ -877,10 +877,10 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.5.0"
-  pp_forge_ui:
+  pp_forge_core:
     dependency: "direct main"
     description:
-      path: "../pp-forge-ui"
+      path: "../pp-forge-core"
       relative: true
     source: path
     version: "0.1.0"

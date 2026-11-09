@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_ui/pp_forge_ui.dart';
+import 'package:pp_forge_core/ui.dart';
 import '../../app_aliases.dart';
 
 /// A person's profile colours 1…[count] as dots (0.4.2 1b, under the avatar

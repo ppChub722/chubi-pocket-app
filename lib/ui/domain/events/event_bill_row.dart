@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_ui/pp_forge_ui.dart';
+import 'package:pp_forge_core/ui.dart';
 import '../tokens/app_icons.dart';
 import '../../app_aliases.dart';
 import '../money/money_text.dart';
