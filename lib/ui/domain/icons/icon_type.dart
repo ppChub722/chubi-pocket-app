@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'icon_code.dart';
+import '../../app_aliases.dart';
 
 enum IconType {
   account,

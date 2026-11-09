@@ -1,5 +1,5 @@
 import '../icon_type.dart';
-import 'icon_pack.dart';
+import '../../../app_aliases.dart';
 import 'base/pack_account.dart';
 import 'base/pack_category.dart';
 import 'base/pack_contact.dart';

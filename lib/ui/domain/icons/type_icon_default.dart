@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'icon_code.dart';
-import 'icon_registry.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../../app_aliases.dart';
 
 /// The icon + colour an item of a given type (a wallet's cash / bank …) shows

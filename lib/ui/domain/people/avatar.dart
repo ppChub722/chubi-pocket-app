@@ -3,11 +3,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'package:pp_forge_ui/pp_forge_ui.dart';
-import '../icons/color_token.dart';
+import '../../app_aliases.dart';
 import '../icons/icon_display.dart';
 import '../icons/icon_type.dart';
 import 'avatar_data.dart';
-import '../../app_aliases.dart';
 
 /// THE person picture (0.4.2 1b): draws the BE's `avatar` as it says —
 /// a photo (Bearer-loaded through [ServerImageScope], cached by its URL; on
@@ -91,7 +90,7 @@ class _InitialsFace extends StatelessWidget {
     final spec = avatar.colors.isEmpty ? '' : avatar.colors.first;
     final color = spec.isEmpty || palette == null
         ? _specColor(spec, scheme)
-        : resolveColor(spec, palette);
+        : ppForgeResolveColor(spec, palette);
     return _Disc(
       size: size,
       color: color,
@@ -168,7 +167,7 @@ class _PhotoFace extends StatelessWidget {
         ? scheme.outline
         : palette == null
         ? _specColor(spec, scheme)
-        : resolveColor(spec, palette);
+        : ppForgeResolveColor(spec, palette);
     return CustomPaint(
       foregroundPainter: _RingPainter(
         color: color,

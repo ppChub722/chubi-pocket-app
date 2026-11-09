@@ -139,14 +139,14 @@ abstract final class AppIcons {
   static const importSlip = Icons.document_scanner_outlined;
   static const chat = PpForgeIcons.chat;
   static const logout = Icons.logout;
-  static const iconPicker = Icons.interests_outlined;
-  static const colorPicker = Icons.palette_outlined;
+  static const iconPicker = PpForgeIcons.iconPicker;
+  static const colorPicker = PpForgeIcons.colorPicker;
 
   static const moneyStyle = Icons.exposure_outlined;
 
   static const moneyDecimals = Icons.pin_outlined;
-  static const eyedropper = Icons.colorize_outlined;
-  static const useDefaultIcon = Icons.hide_image_outlined;
+  static const eyedropper = PpForgeIcons.eyedropper;
+  static const useDefaultIcon = PpForgeIcons.useDefaultIcon;
   static const pause = Icons.pause_circle_outline;
   static const resume = Icons.play_circle_outline;
   static const stop = Icons.stop_circle_outlined;
@@ -158,7 +158,7 @@ abstract final class AppIcons {
   static const collapse = PpForgeIcons.collapse;
   static const check = PpForgeIcons.check;
   static const save = PpForgeIcons.save;
-  static const none = Icons.block;
+  static const none = PpForgeIcons.none;
   static const lock = PpForgeIcons.lock;
 
   static const visible = PpForgeIcons.visible;

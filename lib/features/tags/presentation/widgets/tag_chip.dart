@@ -8,7 +8,7 @@ import '../../domain/tag.dart';
 /// stored bg colour must not win here).
 Color tagColor(IconCode? code, AppColors palette) =>
     (code?.iconColors.isNotEmpty ?? false)
-    ? resolveColor(code!.iconColors.first, palette)
+    ? ppForgeResolveColor(code!.iconColors.first, palette)
     : palette.primary;
 
 AppChip tagAppChip(

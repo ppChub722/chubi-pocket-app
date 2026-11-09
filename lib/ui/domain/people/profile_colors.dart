@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'package:pp_forge_ui/pp_forge_ui.dart';
-import '../icons/color_token.dart';
-import 'avatar_data.dart';
 import '../../app_aliases.dart';
+import 'avatar_data.dart';
 
 /// Picks a person's colours from their profile colours (`avatar.colors`,
 /// colour 1 = the main one) for a page: hero tints, the settings card, split
@@ -23,7 +22,7 @@ abstract final class ProfileColors {
     final spec = _slotSpec(colors, n);
     final color = spec == null
         ? (fallback ?? palette.primary)
-        : resolveColor(spec, palette);
+        : ppForgeResolveColor(spec, palette);
     return ensureContrast(color, surface);
   }
 
@@ -58,7 +57,7 @@ abstract final class ProfileColors {
     final base = <Color>[];
     for (final spec in colors) {
       if (spec.isEmpty) continue;
-      final c = resolveColor(spec, palette);
+      final c = ppForgeResolveColor(spec, palette);
       if (!base.any((b) => b.toARGB32() == c.toARGB32())) base.add(c);
     }
     if (base.isEmpty) base.add(fallback ?? palette.primary);

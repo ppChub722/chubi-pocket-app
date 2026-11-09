@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../tokens/app_icons.dart';
-import '../icons/icon_code.dart';
+import '../../app_aliases.dart';
 import '../people/avatar_data.dart';
 import 'type_actor_mark.dart';
-import '../../app_aliases.dart';
 
 class NotificationRejectConfirm {
   const NotificationRejectConfirm({

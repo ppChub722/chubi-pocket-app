@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../tokens/app_icons.dart';
-import '../icons/icon_code.dart';
-import '../icons/icon_code_widget.dart';
-import 'progress_tone.dart';
 import '../../app_aliases.dart';
+import 'progress_tone.dart';
 
 /// A budget list row: icon, title / caption and [trailing] (left / over);
 /// the bar with [percentText] as a pill on the fill, the [expected] capsule

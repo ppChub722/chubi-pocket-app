@@ -1,4 +1,4 @@
-import '../icon_pack.dart';
+import '../../../../app_aliases.dart';
 
 const commonBaseBackgrounds = <IconPackItem>[
   IconPackItem(id: 'solid', colors: ['@presetThemeColor1']),

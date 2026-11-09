@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:pp_forge_ui/pp_forge_ui.dart';
-import 'icon_code.dart';
-import 'icon_code_widget.dart';
+import '../../app_aliases.dart';
 import 'icon_type.dart';
 
 class IconDisplay extends StatelessWidget {

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:pp_forge_ui/pp_forge_ui.dart';
-import '../icons/color_token.dart';
 import '../../app_aliases.dart';
 
 /// A person's profile colours 1…[count] as dots (0.4.2 1b, under the avatar
@@ -45,7 +44,7 @@ class ProfileColorDots extends StatelessWidget {
       }
       final color = palette == null
           ? scheme.primary
-          : resolveColor(spec, palette);
+          : ppForgeResolveColor(spec, palette);
       return Container(
         width: size,
         height: size,

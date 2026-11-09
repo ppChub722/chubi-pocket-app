@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../icons/icon_code.dart';
+import '../../app_aliases.dart';
 import '../people/avatar_data.dart';
 import '../people/person_mark.dart';
 

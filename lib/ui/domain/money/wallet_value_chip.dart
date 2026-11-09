@@ -3,11 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../features/accounts/domain/account_type.dart';
 import '../tokens/app_icons.dart';
 import 'package:pp_forge_ui/pp_forge_ui.dart';
-import '../icons/icon_code.dart';
-import '../icons/icon_registry.dart';
+import '../../app_aliases.dart';
 import '../icons/type_icon_default.dart';
 import 'wallet_card.dart';
-import '../../app_aliases.dart';
 
 /// A wallet as a field's value: its icon + name in its own colour, its
 /// [type]'s default until the user picks one.

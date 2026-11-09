@@ -623,7 +623,7 @@ class _TagsPageState extends State<TagsPage>
       ),
       contentBuilder: (context, close) => StatefulBuilder(
         builder: (context, setPopover) => ColorSwatchGrid(
-          colors: [for (final t in tokens) resolveColor(t, palette)],
+          colors: [for (final t in tokens) ppForgeResolveColor(t, palette)],
           selected: {
             for (final (i, t) in tokens.indexed)
               if (_filterColors.contains(t)) i,

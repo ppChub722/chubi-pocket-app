@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart' show StringCharacters;
 
-import '../icons/icon_code.dart';
 import '../../app_aliases.dart';
 
 /// What an [AvatarData] draws (the BE decides, the app never picks).

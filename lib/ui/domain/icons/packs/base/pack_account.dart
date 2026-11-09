@@ -1,4 +1,4 @@
-import '../icon_pack.dart';
+import '../../../../app_aliases.dart';
 import '_shared.dart';
 
 const basePackAccount = IconPack(

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../icons/icon_code.dart';
+import '../../app_aliases.dart';
 import 'avatar.dart';
 import 'avatar_data.dart';
-import '../../app_aliases.dart';
 
 class UserProfilePreview extends StatelessWidget {
   const UserProfilePreview({

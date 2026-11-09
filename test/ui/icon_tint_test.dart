@@ -1,5 +1,5 @@
-import 'package:chubi_pocket/ui/domain/icons/icon_code.dart';
 import 'package:pp_forge_ui/pp_forge_ui.dart';
+import 'package:chubi_pocket/ui/app_aliases.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

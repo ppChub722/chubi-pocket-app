@@ -92,17 +92,12 @@ export 'domain/money/member_chip.dart';
 export 'debug/secret_tap.dart';
 
 export 'domain/feedback/connection_snack.dart';
-export 'domain/icons/color_token.dart';
-export 'domain/icons/icon_code.dart';
-export 'domain/icons/icon_code_widget.dart';
 export 'domain/icons/icon_display.dart';
+export 'domain/icons/avatar_colors_sheet.dart';
 export 'domain/icons/icon_maker_sheet.dart';
-export 'domain/icons/icon_registry.dart';
-export 'domain/icons/icon_shape.dart';
 export 'domain/icons/icon_type.dart';
 export 'domain/icons/type_icon_default.dart';
 export 'domain/people/user_profile_preview.dart';
-export 'domain/icons/icon_swatch_grid.dart';
 export 'domain/tokens/chubi_themes.dart';
 export 'domain/tokens/app_icons.dart';
 export 'domain/tokens/currencies.dart';

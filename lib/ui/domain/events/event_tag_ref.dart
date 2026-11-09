@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_icons.dart';
 import 'package:pp_forge_ui/pp_forge_ui.dart';
-import '../icons/color_token.dart';
-import '../icons/icon_code.dart';
-import '../icons/icon_registry.dart';
 import '../../app_aliases.dart';
 
 class EventTagRef {
@@ -16,7 +13,7 @@ class EventTagRef {
   /// The tag's one colour: its icon colour (tags never show a bg), else the
   /// entity tint ([IconCodeTint.tintFor]), else primary.
   Color colorOf(AppColors palette) => (iconCode?.iconColors.isNotEmpty ?? false)
-      ? resolveColor(iconCode!.iconColors.first, palette)
+      ? ppForgeResolveColor(iconCode!.iconColors.first, palette)
       : iconCode.tintFor(palette);
 
   Widget chip(BuildContext context, {VoidCallback? onTap, double? maxWidth}) {

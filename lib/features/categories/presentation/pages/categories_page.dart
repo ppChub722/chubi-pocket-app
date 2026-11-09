@@ -383,7 +383,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
           ),
           contentBuilder: (context, close) => StatefulBuilder(
             builder: (context, setPopover) => ColorSwatchGrid(
-              colors: [for (final t in colors) resolveColor(t, palette)],
+              colors: [for (final t in colors) ppForgeResolveColor(t, palette)],
               selected: {
                 for (final (i, t) in colors.indexed)
                   if (_filterColors.contains(t)) i,

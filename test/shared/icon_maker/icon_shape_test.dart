@@ -1,4 +1,4 @@
-import 'package:chubi_pocket/ui/domain/icons/icon_code.dart';
+import 'package:chubi_pocket/ui/app_aliases.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

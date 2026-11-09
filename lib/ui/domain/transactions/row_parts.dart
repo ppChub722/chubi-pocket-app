@@ -4,13 +4,10 @@ import '../../../features/accounts/domain/account_type.dart';
 import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../tokens/app_icons.dart';
 import '../tokens/module_colors.dart';
-import '../icons/color_token.dart';
-import '../icons/icon_code.dart';
-import '../icons/icon_registry.dart';
+import '../../app_aliases.dart';
 import '../icons/icon_type.dart';
 import '../icons/type_icon_default.dart';
 import '../money/wallet_card.dart';
-import '../../app_aliases.dart';
 
 /// Where a transaction row came from, shown as its [AppListRow.titleMark].
 enum TxSource { recurring, installment, event, debt, pending }
@@ -44,7 +41,7 @@ ListRowChip walletRowChip(
       ? code.bgColorFor(palette)
       : code.iconColors.isEmpty
       ? null
-      : resolveColor(code.iconColors.first, palette);
+      : ppForgeResolveColor(code.iconColors.first, palette);
   return ListRowChip(
     name,
     icon: code == null
@@ -64,7 +61,7 @@ InlineSpan tagSpan(BuildContext context, String name, {IconCode? iconCode}) {
     style: TextStyle(
       color: colors.isEmpty
           ? palette.primary
-          : resolveColor(colors.first, palette),
+          : ppForgeResolveColor(colors.first, palette),
       fontWeight: FontWeight.w600,
     ),
   );

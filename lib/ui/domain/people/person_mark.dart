@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/app_icons.dart';
-import '../icons/icon_code.dart';
 import 'package:pp_forge_ui/pp_forge_ui.dart';
+import '../../app_aliases.dart';
 import 'avatar.dart';
 import 'avatar_data.dart';
 
