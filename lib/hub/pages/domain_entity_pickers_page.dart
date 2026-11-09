@@ -6,7 +6,7 @@ import '../../features/categories/presentation/cubit/categories_cubit.dart';
 import '../../features/categories/presentation/widgets/category_picker.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 import 'entity_pickers/account_picker_demos.dart';
 import 'entity_pickers/bank_picker_demos.dart';
 import 'entity_pickers/contact_picker_demos.dart';

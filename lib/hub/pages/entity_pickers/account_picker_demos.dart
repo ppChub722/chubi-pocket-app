@@ -5,7 +5,7 @@ import '../../../features/accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../features/accounts/presentation/widgets/account_picker.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
-import '../../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// [AccountPicker] as each page will open it, on the real wallets cache.
 class AccountPickerDemos extends StatelessWidget {

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 import 'avatar_states_demo.dart';
 
 /// Profile + connections (0.4.2 1b): the profile hero (picture + colour

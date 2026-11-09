@@ -4,8 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// The hub's fake picture server: a path with `ok` paints a picture, any
 /// other path fails (the fallback demos). No network.

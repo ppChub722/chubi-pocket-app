@@ -10,7 +10,7 @@ import '../../../features/transactions/domain/transaction_type.dart';
 import '../../../features/transactions/presentation/widgets/recurring_link.dart';
 import '../../../features/transactions/presentation/widgets/transaction_picker.dart';
 import '../../../ui/ui.dart';
-import '../../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// [RecurringPicker] as the transaction pages open it, on the real recurring
 /// cache.

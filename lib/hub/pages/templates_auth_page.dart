@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/templates/auth-page` — the Auth template: sign in and register are the
 /// same skeleton (brand · banner · form groups · primary button · "or" + social ·

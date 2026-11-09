@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_playground.dart';
-import 'toolbar_toggle_demo.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/templates/list-page` — the ListPage template: search + filters
 /// pinned above a list that has one loading / error / empty / refresh story.

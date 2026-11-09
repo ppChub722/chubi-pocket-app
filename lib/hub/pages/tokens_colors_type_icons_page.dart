@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/tokens/colors` — the palette of the active theme and mode (switch
 /// theme / mode in Debug → Theme switcher or the status bar toggle).

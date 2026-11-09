@@ -4,7 +4,7 @@ import '../../app/shell/main_bottom_nav.dart';
 import '../../app/shell/nav_layout.dart';
 import '../../app/shell/tab_nav.dart';
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// The shell's bottom bar and its centre + (owner 2026-10-12: quick create =
 /// ONE sheet with a per-page default; the + wears the mode's colour).

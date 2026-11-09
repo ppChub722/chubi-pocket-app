@@ -7,7 +7,7 @@ import '../../../features/projects/presentation/cubit/project_directory_cubit.da
 import '../../../features/projects/presentation/widgets/member_picker.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
-import '../../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// [EventMemberPicker] as the event bill form opens it (payer, split member),
 /// on the first event of the events cache.

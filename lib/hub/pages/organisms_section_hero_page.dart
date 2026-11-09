@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/organisms/section-hero` — AppHeroCard, the detail-page sections
 /// (SectionCard / ManageSection / DetailMeta), LockedInEdit and SummaryStats.

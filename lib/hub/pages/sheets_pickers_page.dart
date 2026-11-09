@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/domain/pickers` — the new-tag name sheet (the tag picker's create
 /// flow; the pickers themselves are on the entity pickers page).

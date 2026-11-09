@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/ui/atoms/chip` — the one chip: a playground with every option live,
 /// then the three sizes × every trailing, in both selected states.

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/network/api_exception.dart';
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/templates/form-sheet` — the form sheet template.
 Widget buildFormSheetPage(BuildContext context) => const _FormSheetPage();

@@ -6,7 +6,7 @@ import '../../../features/personal_debts/domain/debt_ledger.dart';
 import '../../../features/personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import '../../../features/personal_debts/presentation/widgets/debt_entry_picker.dart';
 import '../../../ui/ui.dart';
-import '../../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// [DebtEntryPicker] as the debt form's "mark as paid" opens it, on the first
 /// person of the debts cache that has open entries.

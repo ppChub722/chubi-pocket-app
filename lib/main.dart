@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app/app.dart';
 import 'app/boot_error_app.dart';
 import 'core/logger/app_logger.dart';
+import 'hub/hub_registry.dart';
 import 'ui/ui.dart';
 
 Future<void> main() async {
@@ -41,6 +42,7 @@ Future<void> main() async {
       await _setHighRefreshRate();
 
       configureChubiThemes();
+      configureAppHub();
 
       final prefs = await SharedPreferences.getInstance();
 

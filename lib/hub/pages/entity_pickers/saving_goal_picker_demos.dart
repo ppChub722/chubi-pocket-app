@@ -5,7 +5,7 @@ import '../../../features/saving_goals/data/saving_goals_repository.dart';
 import '../../../features/saving_goals/presentation/widgets/saving_goal_picker.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
-import '../../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// [SavingGoalPicker] as the saving entry form and the goal page's "move"
 /// open it, on the real goals.

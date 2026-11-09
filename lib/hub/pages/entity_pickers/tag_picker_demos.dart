@@ -5,7 +5,7 @@ import '../../../features/tags/presentation/cubit/tags_cubit.dart';
 import '../../../features/tags/presentation/widgets/tag_picker.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
-import '../../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// [TagPicker] as each page opens it, on the real tags cache.
 class TagPickerDemos extends StatelessWidget {

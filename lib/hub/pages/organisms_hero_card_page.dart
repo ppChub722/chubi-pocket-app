@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/organisms/hero-card` — the 0.4.0 detail hero (rows A–G as one API),
 /// its edit variant, and the DetailLayout slot order.

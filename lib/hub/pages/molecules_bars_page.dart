@@ -6,8 +6,7 @@ import '../../features/transactions/domain/transaction_type.dart';
 import '../../features/accounts/presentation/widgets/wallet_compact_hero.dart';
 import '../../features/transactions/presentation/widgets/tx_compact_hero.dart';
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/molecules/bars` — tab, action, hero, filter and chip bars, and the
 /// popover anchors. One playground per widget, then "In the app".

@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../features/accounts/domain/account_type.dart';
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
-import 'organisms_detail_section_page.dart' show DetailRowsDemo;
+import 'package:pp_forge_core/hub.dart';
+
 
 /// `/dev/ui/molecules/row` — the one row shell and its two presets:
 /// Shell (AppRow) → List (AppListRow, a list item) → Detail (AppDetailRow, a

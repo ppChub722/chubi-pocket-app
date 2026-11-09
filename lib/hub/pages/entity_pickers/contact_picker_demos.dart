@@ -8,7 +8,7 @@ import '../../../features/contacts/presentation/widgets/contact_picker.dart';
 import '../../../features/personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
-import '../../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// The people pickers as each page opens them, on the real caches.
 class ContactPickerDemos extends StatelessWidget {

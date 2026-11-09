@@ -7,7 +7,7 @@ import '../../../features/accounts/domain/payment_provider.dart';
 import '../../../features/accounts/presentation/cubit/providers_cubit.dart';
 import '../../../features/accounts/presentation/widgets/bank_picker.dart';
 import '../../../ui/ui.dart';
-import '../../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// [BankPicker] as the identifier editor will open it, on the real providers
 /// cache.

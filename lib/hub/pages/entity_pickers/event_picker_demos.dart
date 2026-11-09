@@ -5,7 +5,7 @@ import '../../../features/projects/presentation/cubit/project_directory_cubit.da
 import '../../../features/transactions/presentation/widgets/event_pick.dart';
 import '../../../features/transactions/presentation/widgets/event_picker.dart';
 import '../../../ui/ui.dart';
-import '../../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// [EventPicker] as each page opens it, on the real events cache.
 class EventPickerDemos extends StatelessWidget {

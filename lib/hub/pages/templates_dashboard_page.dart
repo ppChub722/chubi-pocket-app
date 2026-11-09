@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/templates/dashboard` — the Dashboard template: a home overview is
 /// ONE skeleton. Two zones: a "right now" snapshot (not period-scoped) and a

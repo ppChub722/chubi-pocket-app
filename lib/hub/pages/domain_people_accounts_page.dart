@@ -8,7 +8,7 @@ import '../../features/accounts/domain/wallet_member.dart';
 import '../../features/accounts/presentation/widgets/bank_picker_sheet.dart';
 import '../../features/accounts/presentation/widgets/identifier_widgets.dart';
 import '../../ui/ui.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/domain/people-accounts` — the three looks of a person, member
 /// strips and stacks, and the wallet pieces (card, icon, pick card, banks,

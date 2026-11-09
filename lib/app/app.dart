@@ -70,6 +70,7 @@ import '../features/preferences/presentation/cubit/preferences_sync_cubit.dart';
 import '../features/preferences/presentation/cubit/theme_id_cubit.dart';
 import '../features/preferences/presentation/cubit/theme_mode_cubit.dart';
 import '../l10n/gen/app_localizations.dart';
+import '../hub/hub_environment_binder.dart';
 import '../ui/ui.dart';
 
 class ChubiPocketApp extends StatefulWidget {
@@ -424,32 +425,35 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                   baseUrl: _apiClient.dio.options.baseUrl,
                   fetch: _fetchServerImage,
                   child: AppUiConfig(
-                    child: PageExitScope(
-                      onLeave: leaveShellPage,
-                      child: AnnotatedRegion<SystemUiOverlayStyle>(
-                        value: ThemeBuilder.systemBarsStyle(
-                          Theme.of(context).scaffoldBackgroundColor,
-                        ),
-                        child: KeyboardInsetsGuard(
-                          // Resume after a long break refreshes silently (no
-                          // scrim, owner 2026-10-28).
-                          child: Builder(
-                            builder: (context) => ValueListenableBuilder<bool>(
-                              valueListenable: _onDevHub,
-                              builder: (context, devHub, page) =>
+                    child: HubEnvironmentBinder(
+                      child: PageExitScope(
+                        onLeave: leaveShellPage,
+                        child: AnnotatedRegion<SystemUiOverlayStyle>(
+                          value: ThemeBuilder.systemBarsStyle(
+                            Theme.of(context).scaffoldBackgroundColor,
+                          ),
+                          child: KeyboardInsetsGuard(
+                            // Resume after a long break refreshes silently (no
+                            // scrim, owner 2026-10-28).
+                            child: Builder(
+                              builder: (context) =>
                                   ValueListenableBuilder<bool>(
-                                    valueListenable: _onAuthPage,
-                                    builder: (context, authPage, _) =>
-                                        ConnectionShell(
-                                          devHub: devHub,
-                                          hideConnectionSnack: authPage,
-                                          child: page!,
+                                    valueListenable: _onDevHub,
+                                    builder: (context, devHub, page) =>
+                                        ValueListenableBuilder<bool>(
+                                          valueListenable: _onAuthPage,
+                                          builder: (context, authPage, _) =>
+                                              ConnectionShell(
+                                                devHub: devHub,
+                                                hideConnectionSnack: authPage,
+                                                child: page!,
+                                              ),
                                         ),
+                                    child: RefreshScope(
+                                      registry: _refreshRegistry,
+                                      child: child ?? const SizedBox.shrink(),
+                                    ),
                                   ),
-                              child: RefreshScope(
-                                registry: _refreshRegistry,
-                                child: child ?? const SizedBox.shrink(),
-                              ),
                             ),
                           ),
                         ),
