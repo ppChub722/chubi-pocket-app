@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/utils/date_formatter.dart';
+import '../atoms/date_formatter.dart';
 import '../atoms/app_chip.dart';
 import '../atoms/ui_config.dart';
 import '../tokens/pp_forge_icons.dart';

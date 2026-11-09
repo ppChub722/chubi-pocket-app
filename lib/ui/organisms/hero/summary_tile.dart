@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../atoms/app_card.dart';
 import '../../tokens/app_colors.dart';
-import '../../tokens/app/module_colors.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/hero_colors.dart';
 import 'hero_tiles.dart';
 import '../../atoms/busy_scope.dart';
 
-enum SummaryTileTone { neutral, green, amber, red, orange, planning }
+enum SummaryTileTone { neutral, green, amber, red, orange }
 
 @immutable
 class SummaryTile {
@@ -55,7 +54,6 @@ class SummaryTileView extends StatelessWidget {
       SummaryTileTone.amber => hero?.warning ?? palette.warning,
       SummaryTileTone.red => hero?.danger ?? palette.expense,
       SummaryTileTone.orange => Colors.deepOrange,
-      SummaryTileTone.planning => ModuleColors.of(context).planning,
     };
     final valueColor = tile.tone == SummaryTileTone.neutral
         ? (hero?.text ?? scheme.onSurface)

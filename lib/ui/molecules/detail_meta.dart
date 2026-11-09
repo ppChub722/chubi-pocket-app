@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../atoms/ui_config.dart';
 import '../tokens/app_spacing.dart';
-import '../../core/utils/date_formatter.dart';
+import '../atoms/date_formatter.dart';
 
 class DetailMeta extends StatelessWidget {
   const DetailMeta({required this.lines, super.key});
