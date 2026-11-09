@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
-import '../../tokens/tone.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 
 String dueLabel(
   AppLocalizations l, {

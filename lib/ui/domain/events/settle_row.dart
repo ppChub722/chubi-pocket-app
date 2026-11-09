@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../molecules/app_list_row.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../tokens/app_icons.dart';
-import '../../tokens/tone.dart';
 import '../../app_aliases.dart';
 
 /// One จัดการ line of an event: [fromName] owes [toName] [amount]. A line

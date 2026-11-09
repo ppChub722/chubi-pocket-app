@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/user_currency.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';

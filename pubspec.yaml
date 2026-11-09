@@ -48,6 +48,10 @@ dependencies:
   package_info_plus: ^8.1.2
   flutter_colorpicker: ^1.1.0
 
+  # The generic UI kit: tokens, atoms, molecules, organisms, templates.
+  pp_forge_ui:
+    path: ../pp-forge-ui
+
   # Slip import (0.3.1, Android only): pick slips from the gallery and read
   # their QR on the phone. ML Kit has no web build — the import UI is hidden
   # on web (SlipQrReader.isSupported).

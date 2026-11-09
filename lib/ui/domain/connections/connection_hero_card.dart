@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../molecules/hero_style.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../tokens/app_icons.dart';
-import '../../tokens/hero_colors.dart';
 import '../people/avatar.dart';
 import '../people/avatar_data.dart';
 import 'provider_logo.dart';

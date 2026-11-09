@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/select_check.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../tokens/app_icons.dart';
-import '../../tokens/chip_size.dart';
 import '../icons/icon_code.dart';
 import '../money/money_text.dart';
 import '../people/avatar_data.dart';
 import '../people/person_mark.dart';
 import 'event_tag_ref.dart';
-import '../../atoms/busy_scope.dart';
 import '../../app_aliases.dart';
 
 typedef EventTagAnchorBuilder =

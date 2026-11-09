@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/app_icons.dart';
-import '../../atoms/busy_scope.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../../app_aliases.dart';
 
 class FlowCards extends StatelessWidget {

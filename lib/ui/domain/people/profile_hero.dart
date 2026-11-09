@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/editable_circle.dart';
-import '../../molecules/hero_style.dart';
-import '../../organisms/hero/app_hero_card.dart';
-import '../../organisms/hero/hero_facts.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../tokens/app_icons.dart';
-import '../../tokens/hero_colors.dart';
 import 'avatar.dart';
 import 'avatar_data.dart';
 import 'profile_color_dots.dart';
-import '../../atoms/busy_scope.dart';
 import '../../app_aliases.dart';
 
 /// The profile hero's picture (0.4.2 1b): the [Avatar] at [size] with, in

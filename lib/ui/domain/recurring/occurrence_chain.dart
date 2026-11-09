@@ -2,8 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../molecules/pointer_bubbles.dart';
-import '../../tokens/hero_colors.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../../app_aliases.dart';
 
 /// One occurrence's mark on an [OccurrenceChain].

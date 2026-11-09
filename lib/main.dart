@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/app.dart';
 import 'app/boot_error_app.dart';
-import 'ui/tokens/app/fonts/font_preloader.dart';
 import 'core/logger/app_logger.dart';
 import 'ui/ui.dart';
 

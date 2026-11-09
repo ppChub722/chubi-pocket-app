@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../features/accounts/domain/account_type.dart';
 import '../tokens/app_icons.dart';
-import '../../tokens/chip_size.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../icons/icon_code.dart';
 import '../icons/icon_registry.dart';
 import '../icons/type_icon_default.dart';

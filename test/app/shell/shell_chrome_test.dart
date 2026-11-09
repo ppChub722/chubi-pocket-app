@@ -1,4 +1,4 @@
-import 'package:chubi_pocket/ui/templates/shell_chrome.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// The shell nav must NEVER stay hidden when no editing bar is on screen

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/select_check.dart';
-import '../../atoms/busy_scope.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../../app_aliases.dart';
 
 /// One book my part of an event bill can go to ("หนี้" / "รายการ"): a

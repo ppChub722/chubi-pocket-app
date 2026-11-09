@@ -2,9 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../atoms/corner_badge.dart';
-import '../../atoms/server_image.dart';
-import '../../tokens/avatar_metrics.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../icons/color_token.dart';
 import '../icons/icon_display.dart';
 import '../icons/icon_type.dart';

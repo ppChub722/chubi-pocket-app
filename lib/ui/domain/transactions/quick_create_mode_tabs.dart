@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_icons.dart';
 import '../tokens/quick_create_mode.dart';
-import '../../atoms/busy_scope.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../../app_aliases.dart';
 
 /// The quick-create mode switch (รายการ | หนี้ | ออม): the active mode is a

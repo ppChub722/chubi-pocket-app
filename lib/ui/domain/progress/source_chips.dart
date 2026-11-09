@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/chip_size.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../../app_aliases.dart';
 
 class SourceChipItem {

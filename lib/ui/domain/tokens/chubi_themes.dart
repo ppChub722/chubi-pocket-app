@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app/theme/theme_registry.dart';
-import '../../tokens/app/theme/themes/mint_theme.dart';
-import '../../tokens/app/theme/themes/sweet_theme.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import 'module_colors.dart';
 
 /// chubi-pocket's brand colours per kit theme: the module colours (and the

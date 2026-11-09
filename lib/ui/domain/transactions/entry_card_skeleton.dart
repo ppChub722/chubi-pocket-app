@@ -1,11 +1,6 @@
-import '../../tokens/hero_metrics.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import 'package:flutter/material.dart';
 
-import '../../atoms/skeleton_box.dart';
-import '../../molecules/hero_shell.dart';
-import '../../molecules/hero_style.dart';
-import '../../organisms/hero/hero_fields.dart';
-import '../../tokens/chip_size.dart';
 import '../../app_aliases.dart';
 
 class EntryCardSkeleton extends StatelessWidget {

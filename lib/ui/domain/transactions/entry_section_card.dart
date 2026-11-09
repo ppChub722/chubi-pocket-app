@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/hero_metrics.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../../app_aliases.dart';
 
 /// One of the cards under the entry hero (owner 2026-11-03): the แบ่ง card

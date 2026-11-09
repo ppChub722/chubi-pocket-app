@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/skeleton_box.dart';
-import '../../molecules/progress_row.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../tokens/app_icons.dart';
 import '../icons/icon_code.dart';
 import '../icons/icon_code_widget.dart';
 import 'progress_tone.dart';
-import '../../atoms/busy_scope.dart';
 import '../../app_aliases.dart';
 
 /// A budget list row: icon, title / caption and [trailing] (left / over);

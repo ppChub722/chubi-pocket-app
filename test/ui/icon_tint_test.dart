@@ -1,6 +1,5 @@
 import 'package:chubi_pocket/ui/domain/icons/icon_code.dart';
-import 'package:chubi_pocket/ui/tokens/app/theme/theme_registry.dart';
-import 'package:chubi_pocket/ui/tokens/color_contrast.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

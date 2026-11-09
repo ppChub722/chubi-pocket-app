@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/icon_tile.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../people/avatar.dart';
 import '../people/avatar_data.dart';
 

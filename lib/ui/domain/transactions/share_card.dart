@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../molecules/split_row.dart';
-import '../../tokens/tone.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import 'link_mode_bar.dart';
 import '../../app_aliases.dart';
 

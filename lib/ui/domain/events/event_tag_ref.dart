@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/app_icons.dart';
-import '../../tokens/chip_size.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../icons/color_token.dart';
 import '../icons/icon_code.dart';
 import '../icons/icon_registry.dart';

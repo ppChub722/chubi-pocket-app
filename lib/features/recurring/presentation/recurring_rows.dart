@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/utils/date_formatter.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
 import '../../personal_debts/domain/debt_direction.dart';

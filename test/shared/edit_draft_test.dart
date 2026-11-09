@@ -1,4 +1,4 @@
-import 'package:chubi_pocket/ui/templates/edit_draft.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

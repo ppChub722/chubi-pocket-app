@@ -1,9 +1,8 @@
-import '../../organisms/hero/status_amount_line.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/utils/currency_formatter.dart';
 import '../tokens/app_icons.dart';
-import '../../tokens/chip_size.dart';
 import 'money_text.dart';
 import 'net_balance.dart';
 import '../../app_aliases.dart';

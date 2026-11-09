@@ -1,5 +1,3 @@
-import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
-import 'package:chubi_pocket/ui/tokens/color_contrast.dart';
 import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';

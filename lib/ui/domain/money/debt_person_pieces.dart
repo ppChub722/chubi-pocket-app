@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/app_icons.dart';
-import '../../tokens/chip_size.dart';
-import '../../atoms/busy_scope.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import '../../app_aliases.dart';
 
 /// The debt person hero's main line (owner 2026-10-22, mock DebtPerson):

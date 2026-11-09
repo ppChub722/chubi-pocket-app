@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../tokens/avatar_metrics.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import 'color_token.dart';
 import 'icon_code.dart';
 import 'icon_registry.dart';

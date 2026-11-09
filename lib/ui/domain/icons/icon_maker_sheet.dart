@@ -4,7 +4,6 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'packs/icon_pack.dart';
 import 'packs/pack_registry.dart';
-import '../../atoms/dashed_rect_border.dart';
 import '../../ui.dart';
 
 sealed class IconMakerResult {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/pp_forge_icons.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 
 abstract final class AppIcons {
   static const dashboard = Icons.dashboard_outlined;

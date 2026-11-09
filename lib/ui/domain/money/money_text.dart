@@ -1,4 +1,4 @@
-import '../../atoms/amount_text.dart';
+import 'package:pp_forge_ui/pp_forge_ui.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/utils/currency_formatter.dart';

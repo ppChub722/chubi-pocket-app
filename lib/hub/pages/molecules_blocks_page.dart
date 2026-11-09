@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../../ui/tokens/app/theme/themes/sweet_theme.dart';
 import '../hub_kit.dart';
 
 /// `/dev/ui/molecules/blocks` — page building blocks: the select-mode bar, the

@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/bloc/cubit_feed.dart';
 import '../../../../core/data/sync_refresh.dart';
 import '../../../../core/data/sync_set.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../projects/domain/project.dart';
