@@ -11,16 +11,16 @@ import 'ui_config.dart';
 
 enum _Kind { field, card, inline, title, search }
 
-enum AppInputLabelPlacement { left, above }
+enum PpForgeInputLabelPlacement { left, above }
 
-enum AppInputSize {
+enum PpForgeInputSize {
   regular(valueRow: 34, valueBaseline: 24),
 
   title(valueRow: 44, valueBaseline: 32),
 
   hero(valueRow: 44, valueBaseline: 34);
 
-  const AppInputSize({required this.valueRow, required this.valueBaseline});
+  const PpForgeInputSize({required this.valueRow, required this.valueBaseline});
 
   final double valueRow;
 
@@ -32,8 +32,8 @@ enum AppInputSize {
       MediaQuery.textScalerOf(context).scale(v).roundToDouble();
 }
 
-class AppInput extends StatefulWidget {
-  const AppInput({
+class PpForgeInput extends StatefulWidget {
+  const PpForgeInput({
     this.controller,
     this.focusNode,
     this.label,
@@ -67,7 +67,7 @@ class AppInput extends StatefulWidget {
     this.textAlign,
     this.style,
     this.dense = false,
-    this.type = AppInputType.text,
+    this.type = PpForgeInputType.text,
     this.decimals,
     this.allowLetters = false,
     this.allowNegative = false,
@@ -86,7 +86,7 @@ class AppInput extends StatefulWidget {
        boxed = false,
        symbolScale = 1.0,
        hideHintOnFocus = false,
-       labelPlacement = AppInputLabelPlacement.left,
+       labelPlacement = PpForgeInputLabelPlacement.left,
        labelWidth = null,
        size = null,
        editing = true,
@@ -95,7 +95,7 @@ class AppInput extends StatefulWidget {
        clearTooltip = null,
        padding = null;
 
-  const AppInput.card({
+  const PpForgeInput.card({
     this.controller,
     this.focusNode,
     this.hint,
@@ -118,7 +118,7 @@ class AppInput extends StatefulWidget {
     this.inputFormatters,
     this.textAlign,
     this.style,
-    this.type = AppInputType.text,
+    this.type = PpForgeInputType.text,
     this.decimals,
     this.allowLetters = false,
     this.allowNegative = false,
@@ -134,7 +134,7 @@ class AppInput extends StatefulWidget {
     this.symbolScale = 1.0,
     this.hideHintOnFocus = false,
     this.label,
-    this.labelPlacement = AppInputLabelPlacement.left,
+    this.labelPlacement = PpForgeInputLabelPlacement.left,
     this.labelWidth,
     this.size,
     this.helper,
@@ -157,7 +157,7 @@ class AppInput extends StatefulWidget {
        clearTooltip = null,
        padding = null;
 
-  const AppInput.inline({
+  const PpForgeInput.inline({
     required this.editing,
     required TextEditingController this.controller,
     this.focusNode,
@@ -196,7 +196,7 @@ class AppInput extends StatefulWidget {
        textAlign = null,
        style = null,
        dense = true,
-       type = AppInputType.text,
+       type = PpForgeInputType.text,
        decimals = null,
        allowLetters = false,
        allowNegative = false,
@@ -213,13 +213,13 @@ class AppInput extends StatefulWidget {
        boxed = false,
        symbolScale = 1.0,
        hideHintOnFocus = false,
-       labelPlacement = AppInputLabelPlacement.left,
+       labelPlacement = PpForgeInputLabelPlacement.left,
        labelWidth = null,
        size = null,
        clearTooltip = null,
        padding = null;
 
-  const AppInput.title({
+  const PpForgeInput.title({
     required this.editing,
     required TextEditingController this.controller,
     this.focusNode,
@@ -231,7 +231,7 @@ class AppInput extends StatefulWidget {
     this.maxLines = 1,
     this.style,
     this.label,
-    this.labelPlacement = AppInputLabelPlacement.left,
+    this.labelPlacement = PpForgeInputLabelPlacement.left,
     this.labelWidth,
     this.size,
     super.key,
@@ -260,7 +260,7 @@ class AppInput extends StatefulWidget {
        inputFormatters = null,
        textAlign = null,
        dense = false,
-       type = AppInputType.text,
+       type = PpForgeInputType.text,
        decimals = null,
        allowLetters = false,
        allowNegative = false,
@@ -281,17 +281,17 @@ class AppInput extends StatefulWidget {
        clearTooltip = null,
        padding = null;
 
-  const AppInput.search({
+  const PpForgeInput.search({
     required this.onChanged,
     this.controller,
     this.hint,
     this.clearTooltip,
     this.autofocus = false,
     this.padding = const EdgeInsets.fromLTRB(
-      AppSpacing.lg,
-      AppSpacing.xs,
-      AppSpacing.lg,
-      AppSpacing.xs,
+      PpForgeSpacing.lg,
+      PpForgeSpacing.xs,
+      PpForgeSpacing.lg,
+      PpForgeSpacing.xs,
     ),
     super.key,
   }) : _kind = _Kind.search,
@@ -324,7 +324,7 @@ class AppInput extends StatefulWidget {
        textAlign = null,
        style = null,
        dense = false,
-       type = AppInputType.text,
+       type = PpForgeInputType.text,
        decimals = null,
        allowLetters = false,
        allowNegative = false,
@@ -341,7 +341,7 @@ class AppInput extends StatefulWidget {
        boxed = false,
        symbolScale = 1.0,
        hideHintOnFocus = false,
-       labelPlacement = AppInputLabelPlacement.left,
+       labelPlacement = PpForgeInputLabelPlacement.left,
        labelWidth = null,
        size = null,
        editing = true,
@@ -353,10 +353,10 @@ class AppInput extends StatefulWidget {
   final FocusNode? focusNode;
   final String? label;
 
-  final AppInputLabelPlacement labelPlacement;
+  final PpForgeInputLabelPlacement labelPlacement;
   final double? labelWidth;
 
-  final AppInputSize? size;
+  final PpForgeInputSize? size;
   final String? hint;
   final String? helper;
 
@@ -400,7 +400,7 @@ class AppInput extends StatefulWidget {
 
   final bool dense;
 
-  final AppInputType type;
+  final PpForgeInputType type;
 
   final int? decimals;
   final bool allowLetters;
@@ -442,10 +442,10 @@ class AppInput extends StatefulWidget {
   final EdgeInsetsGeometry? padding;
 
   @override
-  State<AppInput> createState() => _AppInputState();
+  State<PpForgeInput> createState() => _AppInputState();
 }
 
-class _AppInputState extends State<AppInput> {
+class _AppInputState extends State<PpForgeInput> {
   TextEditingController? _own;
 
   bool _inlineObscured = true;
@@ -513,7 +513,7 @@ class _AppInputState extends State<AppInput> {
       ),
     );
     final size = w.size;
-    if (w.labelPlacement == AppInputLabelPlacement.above) {
+    if (w.labelPlacement == PpForgeInputLabelPlacement.above) {
       return Column(
         // Hug the content: under a loose bounded parent (an Align in a row) a
         // max-size Column would take the whole height and push the field up.
@@ -523,7 +523,7 @@ class _AppInputState extends State<AppInput> {
           size == null
               ? text
               : SizedBox(
-                  height: AppInputSize.scaled(context, AppInputSize.labelRow),
+                  height: PpForgeInputSize.scaled(context, PpForgeInputSize.labelRow),
                   child: Align(
                     alignment: AlignmentDirectional.centerStart,
                     child: text,
@@ -542,7 +542,7 @@ class _AppInputState extends State<AppInput> {
         w.labelWidth == null
             ? Flexible(flex: 0, child: text)
             : SizedBox(width: w.labelWidth, child: text),
-        const SizedBox(width: AppSpacing.md),
+        const SizedBox(width: PpForgeSpacing.md),
         Expanded(child: field),
       ],
     );
@@ -556,10 +556,10 @@ class _AppInputState extends State<AppInput> {
       label: w._kind == _Kind.field ? w.label : null,
       valueRow: w.size == null
           ? null
-          : AppInputSize.scaled(context, w.size!.valueRow),
+          : PpForgeInputSize.scaled(context, w.size!.valueRow),
       valueBaseline: w.size == null
           ? null
-          : AppInputSize.scaled(context, w.size!.valueBaseline),
+          : PpForgeInputSize.scaled(context, w.size!.valueBaseline),
       hint: w.hint,
       helper: w.helper,
       errorText: w.errorText,
@@ -639,9 +639,9 @@ class _AppInputState extends State<AppInput> {
         errorMaxLines: 3,
         hintMaxLines: 1,
         suffixIcon: w.obscurable && editing
-            ? AppIconButton.flat(
+            ? PpForgeIconButton.flat(
                 icon: _inlineObscured ? PpForgeIcons.visible : PpForgeIcons.hidden,
-                iconSize: AppIconButton.glyphSmall,
+                iconSize: PpForgeIconButton.glyphSmall,
                 onPressed: () =>
                     setState(() => _inlineObscured = !_inlineObscured),
               )
@@ -655,7 +655,7 @@ class _AppInputState extends State<AppInput> {
             : editing
             ? w.hint
             : (w.onEnterEdit != null
-                  ? (w.viewHint ?? UiConfig.stringsOf(context).longPressToEdit)
+                  ? (w.viewHint ?? PpForgeConfig.stringsOf(context).longPressToEdit)
                   : null),
         hintStyle: text.bodyLarge?.copyWith(
           color: scheme.onSurfaceVariant.withValues(alpha: 0.4),
@@ -664,7 +664,7 @@ class _AppInputState extends State<AppInput> {
         isDense: true,
         counterText: '',
         contentPadding: EdgeInsets.symmetric(
-          horizontal: flush ? 0 : AppSpacing.md,
+          horizontal: flush ? 0 : PpForgeSpacing.md,
           vertical: 10,
         ),
         enabledBorder: flush
@@ -704,7 +704,7 @@ class _AppInputState extends State<AppInput> {
         isDense: true,
         counterText: '',
         contentPadding: sz == null
-            ? const EdgeInsets.symmetric(vertical: AppSpacing.xs)
+            ? const EdgeInsets.symmetric(vertical: PpForgeSpacing.xs)
             : EdgeInsets.zero,
         hintText: w.hint,
         hintStyle: textStyle?.copyWith(
@@ -743,13 +743,13 @@ class _AppInputState extends State<AppInput> {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+              padding: const EdgeInsets.only(bottom: PpForgeSpacing.xs),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: AppInputSize.scaled(ctx, sz.valueRow),
+                  minHeight: PpForgeInputSize.scaled(ctx, sz.valueRow),
                 ),
                 child: Baseline(
-                  baseline: AppInputSize.scaled(ctx, sz.valueBaseline),
+                  baseline: PpForgeInputSize.scaled(ctx, sz.valueBaseline),
                   baselineType: TextBaseline.alphabetic,
                   child: field,
                 ),
@@ -796,7 +796,7 @@ class _AppInputState extends State<AppInput> {
           onChanged: w.onChanged,
           decoration: InputDecoration(
             isDense: true,
-            hintText: w.hint ?? UiConfig.stringsOf(context).search,
+            hintText: w.hint ?? PpForgeConfig.stringsOf(context).search,
             prefixIcon: const Icon(PpForgeIcons.search, size: 18),
             prefixIconConstraints: const BoxConstraints(minWidth: 36),
             suffixIconConstraints: const BoxConstraints(
@@ -805,11 +805,11 @@ class _AppInputState extends State<AppInput> {
             ),
             suffixIcon: value.text.isEmpty
                 ? null
-                : AppIconButton.flat(
+                : PpForgeIconButton.flat(
                     tooltip:
-                        w.clearTooltip ?? UiConfig.stringsOf(context).clear,
+                        w.clearTooltip ?? PpForgeConfig.stringsOf(context).clear,
                     icon: PpForgeIcons.close,
-                    iconSize: AppIconButton.glyphXs,
+                    iconSize: PpForgeIconButton.glyphXs,
                     onPressed: () {
                       controller.clear();
                       w.onChanged?.call('');
@@ -818,8 +818,8 @@ class _AppInputState extends State<AppInput> {
             filled: true,
             fillColor: scheme.surfaceContainerHighest,
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm,
+              horizontal: PpForgeSpacing.md,
+              vertical: PpForgeSpacing.sm,
             ),
             border: border(Colors.transparent, 0),
             enabledBorder: border(Colors.transparent, 0),

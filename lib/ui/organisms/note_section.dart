@@ -47,7 +47,7 @@ class NoteSection extends StatelessWidget {
     if (editing) {
       // The same 📝 as in view mode, whatever field the page passes.
       child = DetailLeadingScope(
-        leading: const AppIcon(PpForgeIcons.note),
+        leading: const PpForgeIcon(PpForgeIcons.note),
         child:
             editField ??
             DetailTextField(
@@ -61,23 +61,23 @@ class NoteSection extends StatelessWidget {
     } else {
       final row = Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
+          horizontal: PpForgeSpacing.lg,
+          vertical: PpForgeSpacing.md,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             IconTheme.merge(
               data: IconThemeData(color: scheme.onSurfaceVariant, size: 22),
-              child: const AppIcon(PpForgeIcons.note),
+              child: const PpForgeIcon(PpForgeIcons.note),
             ),
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: PpForgeSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label, style: detailLabelStyle(context)),
-                  const SizedBox(height: AppSpacing.xs),
+                  const SizedBox(height: PpForgeSpacing.xs),
                   empty
                       ? DetailPlaceholder(hint ?? '—')
                       : Text(

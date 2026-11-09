@@ -49,7 +49,7 @@ Future<AdjustBalanceSheetResult?> showAdjustBalanceFormSheet(
   bool isCredit = false,
   bool setOnly = false,
 }) {
-  return showAppSheetCustom<AdjustBalanceSheetResult>(
+  return showPpForgeSheetCustom<AdjustBalanceSheetResult>(
     context,
     builder: (_) => AdjustBalanceSheet(
       name: name,

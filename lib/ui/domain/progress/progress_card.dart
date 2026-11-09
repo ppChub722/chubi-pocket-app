@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../atoms/skeleton_box.dart';
 import '../../molecules/progress_row.dart';
-import '../../tokens/app_colors.dart';
 import '../tokens/app_icons.dart';
-import '../../tokens/app_spacing.dart';
 import '../icons/icon_code.dart';
 import '../icons/icon_code_widget.dart';
 import 'progress_tone.dart';
 import '../../atoms/busy_scope.dart';
+import '../../app_aliases.dart';
 
 /// A budget list row: icon, title / caption and [trailing] (left / over);
 /// the bar with [percentText] as a pill on the fill, the [expected] capsule

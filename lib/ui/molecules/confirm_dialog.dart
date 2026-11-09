@@ -12,25 +12,25 @@ Future<bool> showConfirmDialog(
   String? cancelLabel,
   bool destructive = false,
 }) async {
-  final cancel = UiConfig.stringsOf(context).cancel;
+  final cancel = PpForgeConfig.stringsOf(context).cancel;
   final ok = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
       title: Text(title),
       content: message == null ? null : Text(message),
       actions: [
-        AppButton(
+        PpForgeButton(
           label: cancelLabel ?? cancel,
           kind: ButtonIconKind.cancel,
-          variant: AppButtonVariant.text,
+          variant: PpForgeButtonVariant.text,
           onPressed: () => Navigator.pop(ctx, false),
         ),
-        AppButton(
+        PpForgeButton(
           label: confirmLabel,
           kind: destructive ? ButtonIconKind.delete : ButtonIconKind.confirm,
           variant: destructive
-              ? AppButtonVariant.destructive
-              : AppButtonVariant.primary,
+              ? PpForgeButtonVariant.destructive
+              : PpForgeButtonVariant.primary,
           onPressed: () => Navigator.pop(ctx, true),
         ),
       ],

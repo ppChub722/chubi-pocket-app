@@ -29,7 +29,7 @@ class HeroRingRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, box) {
-      const gap = AppSpacing.lg;
+      const gap = PpForgeSpacing.lg;
       final factsWidth = math.max(factsMinWidth, box.maxWidth / 2);
       final size = (box.maxWidth - gap - factsWidth).clamp(96.0, maxRing);
       return Row(
@@ -115,7 +115,7 @@ class HeroRing extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: EdgeInsets.all(stroke + AppSpacing.sm),
+            padding: EdgeInsets.all(stroke + PpForgeSpacing.sm),
             child: FittedBox(
               fit: BoxFit.scaleDown,
               child: Column(

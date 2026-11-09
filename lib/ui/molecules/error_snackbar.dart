@@ -10,11 +10,11 @@ void showErrorSnackBar(
   Object error, {
   VoidCallback? onRetry,
 }) {
-  showAppSnackBar(
+  showPpForgeSnackBar(
     context,
     ErrorView.titleFor(context, error),
     tone: Tone.danger,
-    actionLabel: onRetry == null ? null : UiConfig.stringsOf(context).retry,
+    actionLabel: onRetry == null ? null : PpForgeConfig.stringsOf(context).retry,
     onAction: onRetry,
   );
 }
@@ -25,11 +25,11 @@ void showErrorSnackBarOn(
   VoidCallback? onRetry,
 }) {
   final context = messenger.context;
-  showAppSnackBarOn(
+  showPpForgeSnackBarOn(
     messenger,
     ErrorView.titleFor(context, error),
     tone: Tone.danger,
-    actionLabel: onRetry == null ? null : UiConfig.stringsOf(context).retry,
+    actionLabel: onRetry == null ? null : PpForgeConfig.stringsOf(context).retry,
     onAction: onRetry,
   );
 }

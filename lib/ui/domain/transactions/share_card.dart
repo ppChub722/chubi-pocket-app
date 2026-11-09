@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../molecules/split_row.dart';
-import '../../tokens/app_radius.dart';
-import '../../tokens/app_spacing.dart';
 import '../../tokens/tone.dart';
 import 'link_mode_bar.dart';
+import '../../app_aliases.dart';
 
 /// The status line under a [ShareCard]: "✓ แบ่งครบแล้ว" when the rows add up
 /// to the bill, "ยังขาด ฿x" / "เกินยอด ฿x" otherwise (red; save waits).

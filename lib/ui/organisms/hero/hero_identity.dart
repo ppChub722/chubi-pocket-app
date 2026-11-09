@@ -48,7 +48,7 @@ class HeroIdentity extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   for (final (i, a) in actions.indexed) ...[
-                    if (i > 0) const SizedBox(width: AppSpacing.sm),
+                    if (i > 0) const SizedBox(width: PpForgeSpacing.sm),
                     a,
                   ],
                 ],
@@ -65,7 +65,7 @@ class HeroIdentity extends StatelessWidget {
         HeroColors.maybeOf(context)?.muted ??
         Theme.of(context).colorScheme.onSurfaceVariant;
     final text = Theme.of(context).textTheme;
-    final editing = AppHeroScope.maybeOf(context)?.editing ?? false;
+    final editing = PpForgeHeroScope.maybeOf(context)?.editing ?? false;
     final hasText = name != null || fact != null || description != null;
     final under = below;
     final trailing = _end;
@@ -84,13 +84,13 @@ class HeroIdentity extends StatelessWidget {
                   fact: fact,
                   description: description,
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: PpForgeSpacing.md),
                 under,
               ],
             ),
           ),
           if (trailing != null) ...[
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             trailing,
           ],
         ],
@@ -107,7 +107,7 @@ class HeroIdentity extends StatelessWidget {
             dimension: iconSize,
             child: FittedBox(fit: BoxFit.contain, child: mark),
           ),
-        if (icon != null && hasText) const SizedBox(width: AppSpacing.md),
+        if (icon != null && hasText) const SizedBox(width: PpForgeSpacing.md),
         if (hasText)
           Expanded(
             child: Column(
@@ -129,7 +129,7 @@ class HeroIdentity extends StatelessWidget {
             ),
           ),
         if (trailing != null) ...[
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: PpForgeSpacing.sm),
           trailing,
         ],
       ],

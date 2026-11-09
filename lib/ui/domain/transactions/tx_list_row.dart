@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../atoms/icon_tile.dart';
 import '../../molecules/app_list_row.dart';
-import '../../tokens/app_colors.dart';
 import '../tokens/app_icons.dart';
 import '../icons/icon_code.dart';
 import '../icons/icon_display.dart';
 import '../icons/icon_type.dart';
 import 'row_parts.dart';
+import '../../app_aliases.dart';
 
 /// What a money row is; picks its icon when it has no category. Savings take
 /// the money colours: in = income, out = expense, a move = transfer.

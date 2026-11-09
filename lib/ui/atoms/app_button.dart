@@ -6,7 +6,7 @@ import '../tokens/chip_size.dart';
 import 'busy_scope.dart';
 import 'connection_scope.dart';
 
-enum AppButtonVariant {
+enum PpForgeButtonVariant {
   primary,
 
   tonal,
@@ -22,20 +22,20 @@ enum AppButtonVariant {
 
 /// [mini], [chip] and [control] match the chip heights, padding, icon and label
 /// style of the same-named `ChipSize`.
-enum AppButtonSize {
+enum PpForgeButtonSize {
   mini(ChipSize.mini),
   chip(ChipSize.chip),
   control(ChipSize.control),
   regular(null),
   large(null);
 
-  const AppButtonSize(this.chipSize);
+  const PpForgeButtonSize(this.chipSize);
 
   final ChipSize? chipSize;
 }
 
-class AppButton extends StatelessWidget {
-  const AppButton({
+class PpForgeButton extends StatelessWidget {
+  const PpForgeButton({
     required this.label,
     required this.onPressed,
     this.icon,
@@ -43,8 +43,8 @@ class AppButton extends StatelessWidget {
     this.trailingIcon,
     this.kind,
     this.color,
-    this.variant = AppButtonVariant.primary,
-    this.size = AppButtonSize.regular,
+    this.variant = PpForgeButtonVariant.primary,
+    this.size = PpForgeButtonSize.regular,
     this.loading = false,
     this.expand = false,
     this.submits = false,
@@ -73,8 +73,8 @@ class AppButton extends StatelessWidget {
   /// Text and outlined only: the label / border colour in place of primary,
   /// e.g. a tone's colour on a tinted message.
   final Color? color;
-  final AppButtonVariant variant;
-  final AppButtonSize size;
+  final PpForgeButtonVariant variant;
+  final PpForgeButtonSize size;
 
   /// This is the button that was pressed and its call runs: a spinner in
   /// place of the label (same size, same colours), presses ignored. An
@@ -90,7 +90,7 @@ class AppButton extends StatelessWidget {
 
   double _height(BuildContext context) =>
       size.chipSize?.heightOf(context) ??
-      (size == AppButtonSize.large ? 48 : 40);
+      (size == PpForgeButtonSize.large ? 48 : 40);
 
   bool isEnabled(BuildContext context) =>
       onPressed != null && !(submits && ConnectionScope.isOffline(context));
@@ -119,7 +119,7 @@ class AppButton extends StatelessWidget {
     final chip = size.chipSize;
     final minSize = Size(expand ? double.infinity : 0, _height(context));
     final padding = EdgeInsets.symmetric(
-      horizontal: chip?.padding ?? AppSpacing.lg,
+      horizontal: chip?.padding ?? PpForgeSpacing.lg,
     );
     final textStyle = chip
         ?.textStyle(context)
@@ -131,7 +131,7 @@ class AppButton extends StatelessWidget {
 
     final Widget button;
     switch (variant) {
-      case AppButtonVariant.primary:
+      case PpForgeButtonVariant.primary:
         button = FilledButton(
           onPressed: callback,
           style: FilledButton.styleFrom(
@@ -144,7 +144,7 @@ class AppButton extends StatelessWidget {
           ),
           child: _content(spinning, scheme.onPrimary),
         );
-      case AppButtonVariant.tonal:
+      case PpForgeButtonVariant.tonal:
         button = FilledButton.tonal(
           onPressed: callback,
           style: FilledButton.styleFrom(
@@ -157,7 +157,7 @@ class AppButton extends StatelessWidget {
           ),
           child: _content(spinning, scheme.onSecondaryContainer),
         );
-      case AppButtonVariant.outlined:
+      case PpForgeButtonVariant.outlined:
         button = OutlinedButton(
           onPressed: callback,
           style: OutlinedButton.styleFrom(
@@ -172,7 +172,7 @@ class AppButton extends StatelessWidget {
           ),
           child: _content(spinning, color ?? scheme.primary),
         );
-      case AppButtonVariant.text:
+      case PpForgeButtonVariant.text:
         button = TextButton(
           onPressed: callback,
           style: TextButton.styleFrom(
@@ -186,7 +186,7 @@ class AppButton extends StatelessWidget {
           ),
           child: _content(spinning, color ?? scheme.primary),
         );
-      case AppButtonVariant.destructive:
+      case PpForgeButtonVariant.destructive:
         button = FilledButton(
           onPressed: callback,
           style: FilledButton.styleFrom(
@@ -201,7 +201,7 @@ class AppButton extends StatelessWidget {
           ),
           child: _content(spinning, scheme.onError),
         );
-      case AppButtonVariant.destructiveOutlined:
+      case PpForgeButtonVariant.destructiveOutlined:
         button = OutlinedButton(
           onPressed: callback,
           style: OutlinedButton.styleFrom(
@@ -232,7 +232,7 @@ class AppButton extends StatelessWidget {
   Widget _label() {
     final chip = size.chipSize;
     final iconSize = chip?.icon ?? 18;
-    final gap = chip?.gap ?? AppSpacing.sm;
+    final gap = chip?.gap ?? PpForgeSpacing.sm;
     // One line always: a long label ends in "…" instead of wrapping.
     final text = Text(
       label,

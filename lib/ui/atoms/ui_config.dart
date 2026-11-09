@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 @immutable
-class UiStrings {
-  const UiStrings({
+class PpForgeStrings {
+  const PpForgeStrings({
     this.close = 'Close',
     this.cancel = 'Cancel',
     this.save = 'Save',
@@ -106,8 +106,8 @@ class UiStrings {
 }
 
 @immutable
-class UiErrorInfo {
-  const UiErrorInfo({
+class PpForgeErrorInfo {
+  const PpForgeErrorInfo({
     required this.icon,
     required this.title,
     required this.message,
@@ -118,17 +118,17 @@ class UiErrorInfo {
   final String message;
 }
 
-abstract class UiErrors {
-  const UiErrors();
+abstract class PpForgeErrors {
+  const PpForgeErrors();
 
-  UiErrorInfo describe(Object error);
+  PpForgeErrorInfo describe(Object error);
 }
 
-class _DefaultErrors extends UiErrors {
+class _DefaultErrors extends PpForgeErrors {
   const _DefaultErrors();
 
   @override
-  UiErrorInfo describe(Object error) => const UiErrorInfo(
+  PpForgeErrorInfo describe(Object error) => const PpForgeErrorInfo(
     icon: Icons.error_outline,
     title: 'Unexpected error',
     message: 'Something we did not expect happened. Please try again.',
@@ -142,8 +142,8 @@ abstract interface class SaveRunner {
   Future<T> run<T>(Future<T> Function() save);
 }
 
-class UiConfig extends InheritedWidget {
-  const UiConfig({
+class PpForgeConfig extends InheritedWidget {
+  const PpForgeConfig({
     required this.strings,
     required this.errors,
     required super.child,
@@ -151,25 +151,25 @@ class UiConfig extends InheritedWidget {
     super.key,
   });
 
-  final UiStrings strings;
-  final UiErrors errors;
+  final PpForgeStrings strings;
+  final PpForgeErrors errors;
 
   /// A new [SaveRunner] for an edit; null = saves run as they are.
   final SaveRunner Function()? saveRunner;
 
-  static const _defaults = UiConfig(
-    strings: UiStrings(),
+  static const _defaults = PpForgeConfig(
+    strings: PpForgeStrings(),
     errors: _DefaultErrors(),
     child: SizedBox.shrink(),
   );
 
-  static UiConfig of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<UiConfig>() ?? _defaults;
+  static PpForgeConfig of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<PpForgeConfig>() ?? _defaults;
 
-  static UiStrings stringsOf(BuildContext context) => of(context).strings;
+  static PpForgeStrings stringsOf(BuildContext context) => of(context).strings;
 
   @override
-  bool updateShouldNotify(UiConfig old) =>
+  bool updateShouldNotify(PpForgeConfig old) =>
       strings != old.strings ||
       errors != old.errors ||
       saveRunner != old.saveRunner;

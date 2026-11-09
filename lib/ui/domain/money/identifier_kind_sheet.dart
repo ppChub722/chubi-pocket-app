@@ -57,7 +57,7 @@ Future<IdentifierKindChoice?> showIdentifierKindSelectSheet(
   required PickBank pickBank,
   String? currentBankCode,
 }) {
-  return showAppSheetCustom<IdentifierKindChoice>(
+  return showPpForgeSheetCustom<IdentifierKindChoice>(
     context,
     builder: (_) => _KindSheet(
       kinds: kinds,

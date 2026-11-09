@@ -6,15 +6,15 @@ import '../atoms/app_button.dart';
 import '../atoms/ui_config.dart';
 import '../tokens/app_spacing.dart';
 
-/// A named range [AppDatePicker.range] offers above its calendar.
-class AppDateRangePreset {
-  const AppDateRangePreset(this.label, this.range);
+/// A named range [PpForgeDatePicker.range] offers above its calendar.
+class PpForgeDateRangePreset {
+  const PpForgeDateRangePreset(this.label, this.range);
   final String label;
   final DateTimeRange range;
 }
 
-class AppDateRangePickerSheet extends StatefulWidget {
-  const AppDateRangePickerSheet({
+class PpForgeDateRangePickerSheet extends StatefulWidget {
+  const PpForgeDateRangePickerSheet({
     required this.first,
     required this.last,
     required this.onResult,
@@ -26,15 +26,15 @@ class AppDateRangePickerSheet extends StatefulWidget {
   final DateTimeRange? initial;
   final DateTime first;
   final DateTime last;
-  final List<AppDateRangePreset> presets;
+  final List<PpForgeDateRangePreset> presets;
   final ValueChanged<DateTimeRange> onResult;
 
   @override
-  State<AppDateRangePickerSheet> createState() =>
+  State<PpForgeDateRangePickerSheet> createState() =>
       _AppDateRangePickerSheetState();
 }
 
-class _AppDateRangePickerSheetState extends State<AppDateRangePickerSheet> {
+class _AppDateRangePickerSheetState extends State<PpForgeDateRangePickerSheet> {
   late DateTime _month;
   DateTime? _start;
   DateTime? _end;
@@ -85,7 +85,7 @@ class _AppDateRangePickerSheetState extends State<AppDateRangePickerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final strings = UiConfig.stringsOf(context);
+    final strings = PpForgeConfig.stringsOf(context);
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final loc = MaterialLocalizations.of(context);
@@ -106,9 +106,9 @@ class _AppDateRangePickerSheetState extends State<AppDateRangePickerSheet> {
             height: 40,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
               itemCount: widget.presets.length,
-              separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
+              separatorBuilder: (_, _) => const SizedBox(width: PpForgeSpacing.sm),
               itemBuilder: (_, i) {
                 final p = widget.presets[i];
                 return ActionChip(
@@ -123,10 +123,10 @@ class _AppDateRangePickerSheetState extends State<AppDateRangePickerSheet> {
             ),
           ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+          padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.sm),
           child: Row(
             children: [
-              AppIconButton.flat(
+              PpForgeIconButton.flat(
                 tooltip: strings.periodPrev,
                 onPressed: _canPrev ? () => _shift(-1) : null,
                 icon: Icons.chevron_left,
@@ -138,7 +138,7 @@ class _AppDateRangePickerSheetState extends State<AppDateRangePickerSheet> {
                   style: text.titleMedium,
                 ),
               ),
-              AppIconButton.flat(
+              PpForgeIconButton.flat(
                 tooltip: strings.periodNext,
                 onPressed: _canNext ? () => _shift(1) : null,
                 icon: Icons.chevron_right,
@@ -147,7 +147,7 @@ class _AppDateRangePickerSheetState extends State<AppDateRangePickerSheet> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
           child: Row(
             children: [
               for (var i = 0; i < 7; i++)
@@ -164,9 +164,9 @@ class _AppDateRangePickerSheetState extends State<AppDateRangePickerSheet> {
             ],
           ),
         ),
-        const SizedBox(height: AppSpacing.xs),
+        const SizedBox(height: PpForgeSpacing.xs),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
           child: Column(
             children: [
               for (var row = 0; row < cells ~/ 7; row++)
@@ -188,10 +188,10 @@ class _AppDateRangePickerSheetState extends State<AppDateRangePickerSheet> {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.md,
-            AppSpacing.lg,
-            AppSpacing.lg,
+            PpForgeSpacing.lg,
+            PpForgeSpacing.md,
+            PpForgeSpacing.lg,
+            PpForgeSpacing.lg,
           ),
           child: Row(
             children: [
@@ -201,7 +201,7 @@ class _AppDateRangePickerSheetState extends State<AppDateRangePickerSheet> {
                   style: text.bodyLarge,
                 ),
               ),
-              AppButton(
+              PpForgeButton(
                 label: strings.save,
                 kind: ButtonIconKind.save,
                 onPressed: _start == null

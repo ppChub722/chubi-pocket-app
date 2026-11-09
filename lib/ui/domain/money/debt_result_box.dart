@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app_radius.dart';
-import '../../tokens/app_spacing.dart';
 import '../../tokens/tone.dart';
+import '../../app_aliases.dart';
 
 /// Quick create's debt result box (owner 2026-10-21, mock QuickCreateDebt):
 /// three rows, the words left and the value right —

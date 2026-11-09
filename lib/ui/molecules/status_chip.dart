@@ -4,32 +4,32 @@ import '../atoms/app_chip.dart';
 import '../tokens/chip_size.dart';
 
 enum StatusKind {
-  active(AppChipTone.success),
+  active(PpForgeChipTone.success),
 
-  paused(AppChipTone.neutral),
+  paused(PpForgeChipTone.neutral),
 
-  archived(AppChipTone.neutral),
+  archived(PpForgeChipTone.neutral),
 
-  endingSoon(AppChipTone.warning),
+  endingSoon(PpForgeChipTone.warning),
 
-  warning(AppChipTone.warning),
+  warning(PpForgeChipTone.warning),
 
-  over(AppChipTone.danger),
+  over(PpForgeChipTone.danger),
 
-  done(AppChipTone.success),
+  done(PpForgeChipTone.success),
 
-  cancelled(AppChipTone.neutral),
+  cancelled(PpForgeChipTone.neutral),
 
-  upcoming(AppChipTone.info),
+  upcoming(PpForgeChipTone.info),
 
-  pending(AppChipTone.warning),
+  pending(PpForgeChipTone.warning),
 
   /// Never produced (its date came, nothing was made).
-  notCreated(AppChipTone.neutral);
+  notCreated(PpForgeChipTone.neutral);
 
   const StatusKind(this.tone);
 
-  final AppChipTone tone;
+  final PpForgeChipTone tone;
 }
 
 class StatusChip extends StatelessWidget {
@@ -46,7 +46,7 @@ class StatusChip extends StatelessWidget {
 
   const StatusChip.tone({
     required this.label,
-    required AppChipTone this.tone,
+    required PpForgeChipTone this.tone,
     this.icon,
     this.size,
     this.onTap,
@@ -55,7 +55,7 @@ class StatusChip extends StatelessWidget {
   }) : _kind = null;
 
   final String label;
-  final AppChipTone? tone;
+  final PpForgeChipTone? tone;
   final StatusKind? _kind;
 
   final IconData? icon;
@@ -69,14 +69,14 @@ class StatusChip extends StatelessWidget {
   final bool emphasis;
 
   @override
-  Widget build(BuildContext context) => AppChip(
+  Widget build(BuildContext context) => PpForgeChip(
     label: label,
     tone: tone ?? _kind!.tone,
     icon: icon,
     dot: icon == null,
     selected: true,
     size: size,
-    trailing: onTap == null ? AppChipTrailing.none : AppChipTrailing.dropdown,
+    trailing: onTap == null ? PpForgeChipTrailing.none : PpForgeChipTrailing.dropdown,
     onTap: onTap,
     bold: emphasis,
   );

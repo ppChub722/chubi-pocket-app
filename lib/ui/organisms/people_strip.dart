@@ -78,9 +78,9 @@ class PeopleStrip extends StatelessWidget {
           description: description,
           trailing: actionLabel == null || onAction == null
               ? null
-              : AppButton(
+              : PpForgeButton(
                   label: actionLabel!,
-                  variant: AppButtonVariant.text,
+                  variant: PpForgeButtonVariant.text,
                   onPressed: onAction,
                 ),
           children: const [],
@@ -98,7 +98,7 @@ class PeopleStrip extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   for (final (i, m) in members.indexed) ...[
-                    if (i > 0) const SizedBox(width: AppSpacing.sm),
+                    if (i > 0) const SizedBox(width: PpForgeSpacing.sm),
                     _MemberCard(
                       member: m,
                       width: width,
@@ -107,7 +107,7 @@ class PeopleStrip extends StatelessWidget {
                   ],
                   if (onInvite != null) ...[
                     if (members.isNotEmpty)
-                      const SizedBox(width: AppSpacing.sm),
+                      const SizedBox(width: PpForgeSpacing.sm),
                     _InviteCard(
                       label: inviteLabel,
                       width: width,
@@ -139,7 +139,7 @@ class _MemberCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final colors = Theme.of(context).extension<AppColors>();
+    final colors = Theme.of(context).extension<PpForgeColors>();
     final tone = switch (member.tone) {
       PeopleTone.neutral => scheme.onSurfaceVariant,
       PeopleTone.positive => colors?.income ?? scheme.primary,
@@ -149,18 +149,18 @@ class _MemberCard extends StatelessWidget {
       width: width,
       child: Material(
         color: scheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(PpForgeRadius.lg),
         clipBehavior: Clip.antiAlias,
         child: BusyLock(
           child: InkWell(
             onTap: onTap,
             child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.xs),
+              padding: const EdgeInsets.all(PpForgeSpacing.xs),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   member.avatar,
-                  const SizedBox(height: AppSpacing.xs),
+                  const SizedBox(height: PpForgeSpacing.xs),
                   Text(
                     member.name,
                     maxLines: 1,
@@ -211,18 +211,18 @@ class _InviteCard extends StatelessWidget {
       width: width,
       child: DashedRectBorder(
         color: color,
-        borderRadius: const Radius.circular(AppRadius.lg),
+        borderRadius: const Radius.circular(PpForgeRadius.lg),
         child: Material(
           type: MaterialType.transparency,
           child: BusyLock(
             child: InkWell(
               onTap: onTap,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
+              borderRadius: BorderRadius.circular(PpForgeRadius.lg),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(PpForgeIcons.add, color: color),
-                  const SizedBox(height: AppSpacing.xs),
+                  const SizedBox(height: PpForgeSpacing.xs),
                   Text(
                     label,
                     maxLines: 1,

@@ -385,7 +385,7 @@ class _TagsPageState extends State<TagsPage>
       if (!visible) {
         setState(_clearFilters);
         _rememberPrefs();
-        showAppSnackBar(
+        showPpForgeSnackBar(
           context,
           l.tagsFiltersClearedForError,
           tone: Tone.warning,

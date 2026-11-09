@@ -12,7 +12,7 @@ import 'count_badge.dart';
 
 enum IconChipActivity { none, progress, done }
 
-class AppIconButton extends StatelessWidget {
+class PpForgeIconButton extends StatelessWidget {
   static const double targetFlat = 48;
   static const double targetDense = 40;
   static const double glyphFlat = 24;
@@ -25,7 +25,7 @@ class AppIconButton extends StatelessWidget {
   static double resolveSize(BuildContext context, [double? size]) =>
       size ?? (ChipSizeScope.of(context) ?? ChipSize.control).heightOf(context);
 
-  const AppIconButton({
+  const PpForgeIconButton({
     required this.icon,
     required this.onPressed,
     this.tooltip,
@@ -42,7 +42,7 @@ class AppIconButton extends StatelessWidget {
        color = null,
        dense = false;
 
-  const AppIconButton.edit({
+  const PpForgeIconButton.edit({
     required this.onPressed,
     this.tooltip,
     this.loading = false,
@@ -60,7 +60,7 @@ class AppIconButton extends StatelessWidget {
        dense = false;
 
   /// No circle until [selected] (then primaryContainer).
-  const factory AppIconButton.bare({
+  const factory PpForgeIconButton.bare({
     required IconData icon,
     required VoidCallback? onPressed,
     String? tooltip,
@@ -72,7 +72,7 @@ class AppIconButton extends StatelessWidget {
   }) = _BareIconButton;
 
   /// Filled in primary with the icon in onPrimary (a row's ✓).
-  const factory AppIconButton.filled({
+  const factory PpForgeIconButton.filled({
     required IconData icon,
     required VoidCallback? onPressed,
     String? tooltip,
@@ -82,7 +82,7 @@ class AppIconButton extends StatelessWidget {
   }) = _FilledIconButton;
 
   /// The page's floating action (Scaffold.floatingActionButton).
-  const factory AppIconButton.fab({
+  const factory PpForgeIconButton.fab({
     required IconData icon,
     required VoidCallback? onPressed,
     String? tooltip,
@@ -90,7 +90,7 @@ class AppIconButton extends StatelessWidget {
     Key? key,
   }) = _FabIconButton;
 
-  const AppIconButton._bare({
+  const PpForgeIconButton._bare({
     this.color,
     required this.icon,
     required this.onPressed,
@@ -107,7 +107,7 @@ class AppIconButton extends StatelessWidget {
        iconSize = null,
        dense = false;
 
-  const AppIconButton.flat({
+  const PpForgeIconButton.flat({
     required this.icon,
     required this.onPressed,
     this.tooltip,
@@ -124,7 +124,7 @@ class AppIconButton extends StatelessWidget {
        progress = null,
        _flat = true;
 
-  const AppIconButton.close({
+  const PpForgeIconButton.close({
     required this.onPressed,
     this.tooltip,
     this.loading = false,
@@ -141,7 +141,7 @@ class AppIconButton extends StatelessWidget {
        progress = null,
        _flat = true;
 
-  const AppIconButton.clear({
+  const PpForgeIconButton.clear({
     required this.onPressed,
     this.tooltip,
     this.loading = false,
@@ -158,7 +158,7 @@ class AppIconButton extends StatelessWidget {
        progress = null,
        _flat = true;
 
-  const AppIconButton.more({
+  const PpForgeIconButton.more({
     required this.onPressed,
     this.tooltip,
     this.loading = false,
@@ -175,7 +175,7 @@ class AppIconButton extends StatelessWidget {
        progress = null,
        _flat = true;
 
-  const AppIconButton.back({
+  const PpForgeIconButton.back({
     required this.onPressed,
     this.tooltip,
     this.loading = false,
@@ -242,7 +242,7 @@ class AppIconButton extends StatelessWidget {
             loading: busy.spinning,
             color: color,
             spinnerSize: glyph * 0.8,
-            child: AppIcon(icon, size: glyph),
+            child: PpForgeIcon(icon, size: glyph),
           ),
         ),
       );
@@ -277,7 +277,7 @@ class AppIconButton extends StatelessWidget {
     );
 
     final circle = Opacity(
-      opacity: enabled ? 1 : AppOpacity.disabled,
+      opacity: enabled ? 1 : PpForgeOpacity.disabled,
       child: Material(
         color: destructive
             ? Color.alphaBlend(
@@ -348,7 +348,7 @@ class AppIconButton extends StatelessWidget {
   }
 }
 
-class _FilledIconButton extends AppIconButton {
+class _FilledIconButton extends PpForgeIconButton {
   const _FilledIconButton({
     required super.icon,
     required super.onPressed,
@@ -360,7 +360,7 @@ class _FilledIconButton extends AppIconButton {
 
   @override
   Widget build(BuildContext context) {
-    final size = AppIconButton.resolveSize(context, this.size);
+    final size = PpForgeIconButton.resolveSize(context, this.size);
     final scheme = Theme.of(context).colorScheme;
     final busy = BusyScope.control(
       context,
@@ -387,7 +387,7 @@ class _FilledIconButton extends AppIconButton {
               size: size * 0.6,
               color: enabled
                   ? scheme.onPrimary
-                  : scheme.onSurface.withValues(alpha: AppOpacity.disabled),
+                  : scheme.onSurface.withValues(alpha: PpForgeOpacity.disabled),
             ),
           ),
         ),
@@ -402,7 +402,7 @@ class _FilledIconButton extends AppIconButton {
   }
 }
 
-class _FabIconButton extends AppIconButton {
+class _FabIconButton extends PpForgeIconButton {
   const _FabIconButton({
     required super.icon,
     required super.onPressed,
@@ -428,7 +428,7 @@ class _FabIconButton extends AppIconButton {
         child: BusySwap(
           loading: busy.spinning,
           color: Theme.of(context).colorScheme.onPrimaryContainer,
-          spinnerSize: AppSpinnerSize.medium.dimension,
+          spinnerSize: PpForgeSpinnerSize.medium.dimension,
           child: Icon(icon),
         ),
       ),
@@ -436,7 +436,7 @@ class _FabIconButton extends AppIconButton {
   }
 }
 
-class _BareIconButton extends AppIconButton {
+class _BareIconButton extends PpForgeIconButton {
   const _BareIconButton({
     required super.icon,
     required super.onPressed,
@@ -450,7 +450,7 @@ class _BareIconButton extends AppIconButton {
 
   @override
   Widget build(BuildContext context) {
-    final size = AppIconButton.resolveSize(context, this.size);
+    final size = PpForgeIconButton.resolveSize(context, this.size);
     final scheme = Theme.of(context).colorScheme;
     final busy = BusyScope.control(
       context,
@@ -460,7 +460,7 @@ class _BareIconButton extends AppIconButton {
     final enabled = onPressed != null || busy.spinning;
     final tint = selected ? scheme.primary : color ?? scheme.onSurfaceVariant;
     Widget button = Opacity(
-      opacity: enabled ? 1 : AppOpacity.disabled,
+      opacity: enabled ? 1 : PpForgeOpacity.disabled,
       child: Material(
         type: selected ? MaterialType.circle : MaterialType.transparency,
         color: selected ? scheme.primaryContainer : null,

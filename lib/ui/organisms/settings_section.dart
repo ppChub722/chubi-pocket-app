@@ -118,11 +118,11 @@ class _LiveSettingState<T> extends State<LiveSetting<T>> {
       if (!saved) _hasShown = false;
     });
     if (error != null) {
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         widget.failedMessage(error),
         tone: Tone.danger,
-        actionLabel: UiConfig.stringsOf(context).retry,
+        actionLabel: PpForgeConfig.stringsOf(context).retry,
         onAction: () => _change(next),
       );
     }
@@ -175,12 +175,12 @@ class SettingToggleRow extends StatelessWidget {
     final cb = off ? null : onChanged;
     return BusyScope.active(
       active: loading,
-      child: AppDetailRow(
+      child: PpForgeDetailRow(
         leading: leading,
         label: label,
         helper: caption,
         onTap: cb == null ? null : () => cb(!value),
-        trailing: AppSwitch(value: value, onChanged: cb, semanticLabel: label),
+        trailing: PpForgeSwitch(value: value, onChanged: cb, semanticLabel: label),
       ),
     );
   }
@@ -241,7 +241,7 @@ class _SettingDropdownRowState<T> extends State<SettingDropdownRow<T>> {
         : widget.onSelected;
     return BusyScope.active(
       active: widget.loading,
-      child: AppDetailRow(
+      child: PpForgeDetailRow(
         leading: widget.leading,
         label: widget.label,
         helper: widget.helper,
@@ -252,12 +252,12 @@ class _SettingDropdownRowState<T> extends State<SettingDropdownRow<T>> {
           options: widget.options,
           selected: widget.selected,
           onSelected: (v) => cb?.call(v),
-          builder: (context, toggle) => AppButton(
+          builder: (context, toggle) => PpForgeButton(
             label: widget.value,
             icon: widget.icon,
             iconColor: widget.iconColor,
-            variant: AppButtonVariant.outlined,
-            size: AppButtonSize.control,
+            variant: PpForgeButtonVariant.outlined,
+            size: PpForgeButtonSize.control,
             trailingIcon: PpForgeIcons.dropdown,
             onPressed: cb == null ? null : toggle,
           ),
@@ -285,11 +285,11 @@ class SettingSwitchViewRow extends StatelessWidget {
   Widget build(BuildContext context) => GestureDetector(
     behavior: HitTestBehavior.opaque,
     onLongPress: onLongPress,
-    child: AppDetailRow(
+    child: PpForgeDetailRow(
       label: label,
       helper: caption,
       trailing: IgnorePointer(
-        child: AppSwitch(value: value, onChanged: (_) {}, semanticLabel: label),
+        child: PpForgeSwitch(value: value, onChanged: (_) {}, semanticLabel: label),
       ),
     ),
   );
@@ -315,7 +315,7 @@ class SettingSummaryRow extends StatelessWidget {
   final Widget? trailing;
 
   @override
-  Widget build(BuildContext context) => AppDetailRow(
+  Widget build(BuildContext context) => PpForgeDetailRow(
     label: label,
     onTap: onTap,
     error: error,
@@ -348,8 +348,8 @@ class SettingsGroupRow extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => AppDetailRow(
-    leading: AppIcon(icon),
+  Widget build(BuildContext context) => PpForgeDetailRow(
+    leading: PpForgeIcon(icon),
     label: label,
     helper: summary,
     helperMaxLines: 1,
@@ -392,7 +392,7 @@ class SettingPickRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cb = submits && ConnectionScope.isOffline(context) ? null : onTap;
-    return AppDetailRow(
+    return PpForgeDetailRow(
       leading: leading,
       label: label,
       helper: helper,
@@ -445,7 +445,7 @@ class SettingSwitchColumnsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final offline = submits && ConnectionScope.isOffline(context);
-    return AppDetailRow(
+    return PpForgeDetailRow(
       label: label,
       helper: helper,
       trailing: Row(
@@ -457,7 +457,7 @@ class SettingSwitchColumnsRow extends StatelessWidget {
               child: Center(
                 child: cell == null
                     ? null
-                    : AppSwitch(
+                    : PpForgeSwitch(
                         value: cell.value,
                         onChanged: offline ? null : cell.onChanged,
                         semanticLabel: cell.semanticLabel,
@@ -486,7 +486,7 @@ class SettingColumnLabels extends StatelessWidget {
     // The title row ends 4 in from the card; the rows' switches end 16 in.
     return Padding(
       padding: const EdgeInsetsDirectional.only(
-        end: AppSpacing.lg - AppSpacing.xs,
+        end: PpForgeSpacing.lg - PpForgeSpacing.xs,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -761,10 +761,10 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
       builder: (context, toggle) =>
           custom != null && (_typing || _isCustomValue)
           ? _field(custom, toggle)
-          : AppButton(
+          : PpForgeButton(
               label: widget.value,
-              variant: AppButtonVariant.outlined,
-              size: AppButtonSize.control,
+              variant: PpForgeButtonVariant.outlined,
+              size: PpForgeButtonSize.control,
               trailingIcon: PpForgeIcons.dropdown,
               onPressed: cb == null ? null : toggle,
             ),
@@ -800,7 +800,7 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
             ),
             value,
             if (noteText != null) ...[
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
               noteText,
             ],
           ],
@@ -809,7 +809,7 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
     }
     return BusyScope.active(
       active: widget.loading,
-      child: AppDetailRow(
+      child: PpForgeDetailRow(
         label: widget.label,
         helper: widget.helper,
         onTap: cb == null || _typing
@@ -821,7 +821,7 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   value,
-                  const SizedBox(width: AppSpacing.sm),
+                  const SizedBox(width: PpForgeSpacing.sm),
                   noteText,
                 ],
               ),

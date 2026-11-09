@@ -13,8 +13,8 @@ import 'package:flutter/services.dart' show PredictiveBackEvent;
 ///   commit vs cancel on release; a commit finishes from where the finger
 ///   let go, a cancel springs back). Without predictive back (older
 ///   Android) the same slide just plays.
-class AppPageTransitionsBuilder extends PageTransitionsBuilder {
-  const AppPageTransitionsBuilder();
+class PpForgePageTransitionsBuilder extends PageTransitionsBuilder {
+  const PpForgePageTransitionsBuilder();
 
   static const _inner = FadeForwardsPageTransitionsBuilder();
 
@@ -232,12 +232,12 @@ class _RenderPopSlide extends RenderProxyBox {
   /// How far right the page sits, a fraction of its width.
   double get _shift {
     final a = _animation;
-    final finger = AppPageTransitionsBuilder._gestureOn(route);
+    final finger = PpForgePageTransitionsBuilder._gestureOn(route);
     if (!finger && !a.status.isAnimating) _byFinger = false;
     if (finger && a.value < 1) _byFinger = true;
-    if (!AppPageTransitionsBuilder._popping(route, a)) return 0;
+    if (!PpForgePageTransitionsBuilder._popping(route, a)) return 0;
     final out = (1 - a.value).clamp(0.0, 1.0);
-    return _byFinger ? out : AppPageTransitionsBuilder.popCurve.transform(out);
+    return _byFinger ? out : PpForgePageTransitionsBuilder.popCurve.transform(out);
   }
 
   Offset _offset = Offset.zero;
@@ -247,7 +247,7 @@ class _RenderPopSlide extends RenderProxyBox {
   @override
   void paint(PaintingContext context, Offset offset) {
     // Dropped by a tab that starts over: gone at once, no slide.
-    _hidden = AppPageTransitionsBuilder._isDropped(route, _animation);
+    _hidden = PpForgePageTransitionsBuilder._isDropped(route, _animation);
     if (_hidden) return;
     _offset = Offset(_shift * size.width, 0);
     super.paint(context, offset + _offset);

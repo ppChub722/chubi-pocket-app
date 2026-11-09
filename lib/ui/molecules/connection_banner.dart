@@ -40,22 +40,22 @@ class ConnectionBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (state) {
-      ConnectionBannerState.offline => AppMessage(
+      ConnectionBannerState.offline => PpForgeMessage(
         tone: Tone.danger,
         message: offlineText,
         actions: [
           if (onRetry != null)
-            AppMessageAction(label: retryLabel, onPressed: onRetry!),
+            PpForgeMessageAction(label: retryLabel, onPressed: onRetry!),
         ],
         onClose: onClose,
       ),
-      ConnectionBannerState.reconnecting => AppMessage(
+      ConnectionBannerState.reconnecting => PpForgeMessage(
         tone: Tone.info,
         busy: true,
         message: reconnectingText,
         onClose: onClose,
       ),
-      ConnectionBannerState.backOnline => AppMessage(
+      ConnectionBannerState.backOnline => PpForgeMessage(
         tone: Tone.success,
         message: backText,
       ),

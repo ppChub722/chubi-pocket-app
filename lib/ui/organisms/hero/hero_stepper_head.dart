@@ -20,7 +20,7 @@ class HeroStepperHead extends StatelessWidget {
     final stepper = this.stepper;
     return Row(
       children: [
-        if (stepper != null) ...[stepper, const SizedBox(width: AppSpacing.sm)],
+        if (stepper != null) ...[stepper, const SizedBox(width: PpForgeSpacing.sm)],
         Expanded(
           child: Text(
             title,

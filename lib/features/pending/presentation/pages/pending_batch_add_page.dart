@@ -66,11 +66,11 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
     final l = AppLocalizations.of(context)!;
     final rows = _filled;
     if (rows.isEmpty) {
-      showAppSnackBar(context, l.quickAmountRequired, tone: Tone.warning);
+      showPpForgeSnackBar(context, l.quickAmountRequired, tone: Tone.warning);
       return;
     }
     if (submit && rows.any((r) => !r.splitsBalanced)) {
-      showAppSnackBar(context, l.txSplitUnbalanced, tone: Tone.danger);
+      showPpForgeSnackBar(context, l.txSplitUnbalanced, tone: Tone.danger);
       return;
     }
     final pending = context.read<PendingCubit>();
@@ -93,7 +93,7 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
         if (r.failed.isNotEmpty) tone = Tone.warning;
       }
       navigator.pop(true);
-      showAppSnackBarOn(messenger, msg, tone: tone);
+      showPpForgeSnackBarOn(messenger, msg, tone: tone);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);

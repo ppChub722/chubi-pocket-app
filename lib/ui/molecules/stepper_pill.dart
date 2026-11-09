@@ -144,7 +144,7 @@ class StepperPill extends StatelessWidget {
         nextTooltip: nextTooltip,
       );
     }
-    final strings = UiConfig.stringsOf(context);
+    final strings = PpForgeConfig.stringsOf(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final start = startOf(unit, _value!);
     final prev = shift(unit, start, -1);
@@ -164,7 +164,7 @@ class StepperPill extends StatelessWidget {
           onTap ??
           (isMonth
               ? () async {
-                  final picked = await AppDatePicker.month(
+                  final picked = await PpForgeDatePicker.month(
                     context,
                     selected: start,
                     first: _first,
@@ -217,13 +217,13 @@ class StepperPill extends StatelessWidget {
     }
 
     Widget labelButton = InkWell(
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(PpForgeRadius.md),
       onTap: onTap,
       child: Container(
         constraints: BoxConstraints(minHeight: height),
         alignment: Alignment.center,
         padding: EdgeInsets.symmetric(
-          horizontal: arrows ? AppSpacing.xs : AppSpacing.md,
+          horizontal: arrows ? PpForgeSpacing.xs : PpForgeSpacing.md,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

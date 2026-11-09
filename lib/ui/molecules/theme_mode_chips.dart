@@ -28,11 +28,11 @@ class ThemeModeChips extends StatelessWidget {
       (ThemeMode.system, PpForgeIcons.systemMode, systemLabel),
     ];
     return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: [
         for (final (mode, icon, label) in items)
-          AppChip(
+          PpForgeChip(
             label: label,
             icon: icon,
             selected: mode == selected,

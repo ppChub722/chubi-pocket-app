@@ -2,9 +2,9 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../ui/domain/tokens/app_modules.dart';
-import '../../ui/tokens/app/theme/app_page_transitions.dart';
 import 'nav_layout.dart';
 import 'tab_entry.dart';
+import '../../ui/app_aliases.dart';
 
 enum ShellTab {
   home,

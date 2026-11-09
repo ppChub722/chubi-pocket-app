@@ -77,7 +77,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
 
   Future<void> _submit() async {
     if (_name.text.trim().isEmpty) {
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         AppLocalizations.of(context)!.contactNameRequired,
         tone: Tone.danger,

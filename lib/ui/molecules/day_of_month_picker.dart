@@ -15,7 +15,7 @@ class DayOfMonthPick {
 }
 
 String dayOfMonthLabel(BuildContext context, int? day) {
-  final l = UiConfig.stringsOf(context);
+  final l = PpForgeConfig.stringsOf(context);
   return switch (day) {
     null => l.dayNone,
     kLastDayOfMonth => l.dayLast,
@@ -29,7 +29,7 @@ Future<DayOfMonthPick?> showDayOfMonthPicker(
   int? selected,
   bool allowNone = true,
 }) {
-  return showAppSheetCustom<DayOfMonthPick>(
+  return showPpForgeSheetCustom<DayOfMonthPick>(
     context,
     builder: (_) => PickerSheet(
       title: title,
@@ -49,10 +49,10 @@ class DayOfMonthGrid extends StatelessWidget {
     this.allowNone = true,
     this.days = kLastDayOfMonth,
     this.padding = const EdgeInsets.fromLTRB(
-      AppSpacing.lg,
-      AppSpacing.xs,
-      AppSpacing.lg,
-      AppSpacing.lg,
+      PpForgeSpacing.lg,
+      PpForgeSpacing.xs,
+      PpForgeSpacing.lg,
+      PpForgeSpacing.lg,
     ),
     super.key,
   });
@@ -68,7 +68,7 @@ class DayOfMonthGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = UiConfig.stringsOf(context);
+    final l = PpForgeConfig.stringsOf(context);
     final withLast = days >= kLastDayOfMonth;
     return Padding(
       padding: padding,
@@ -80,8 +80,8 @@ class DayOfMonthGrid extends StatelessWidget {
             crossAxisCount: 7,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: AppSpacing.xs,
-            crossAxisSpacing: AppSpacing.xs,
+            mainAxisSpacing: PpForgeSpacing.xs,
+            crossAxisSpacing: PpForgeSpacing.xs,
             children: [
               for (var d = 1; d <= (withLast ? kLastDayOfMonth - 1 : days); d++)
                 _DayCell(
@@ -99,12 +99,12 @@ class DayOfMonthGrid extends StatelessWidget {
             ],
           ),
           if (allowNone) ...[
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: PpForgeSpacing.md),
             Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
+              spacing: PpForgeSpacing.sm,
+              runSpacing: PpForgeSpacing.sm,
               children: [
-                AppChip(
+                PpForgeChip(
                   label: l.dayNone,
                   selected: selected == null,
                   onTap: () => onPicked(null),
@@ -148,7 +148,7 @@ class _DayCell extends StatelessWidget {
             onTap: onTap,
             child: Center(
               child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.xs),
+                padding: const EdgeInsets.all(PpForgeSpacing.xs),
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(

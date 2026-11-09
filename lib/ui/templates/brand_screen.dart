@@ -40,10 +40,10 @@ class BrandScreen extends StatelessWidget {
         child: SingleChildScrollView(
           physics: physics,
           padding: EdgeInsets.fromLTRB(
-            AppSpacing.lg,
+            PpForgeSpacing.lg,
             safeTop + logoTop,
-            AppSpacing.lg,
-            AppSpacing.xl,
+            PpForgeSpacing.lg,
+            PpForgeSpacing.xl,
           ),
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: maxWidth),

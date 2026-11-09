@@ -44,7 +44,7 @@ class SummaryTileView extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     // In a hero a neutral tile takes the card's color, the rest its status set.
     final hero = HeroColors.maybeOf(context);
     final muted = hero?.muted ?? scheme.onSurfaceVariant;
@@ -68,16 +68,16 @@ class SummaryTileView extends StatelessWidget {
       // the tile keeps the same edges and gaps whether chosen or not.
       // In a hero the tile is a plain (white on light) card on the card's
       // line; only the value carries the tone. Outside one it is tinted.
-      child: AppCard(
+      child: PpForgeCard(
         key: ValueKey('summaryTile:${tile.label}'),
-        style: hero != null ? AppCardStyle.plain : AppCardStyle.tinted,
+        style: hero != null ? PpForgeCardStyle.plain : PpForgeCardStyle.tinted,
         color: hero != null ? null : color,
         borderColor: hero?.line,
         selected: tile.selected,
-        radius: BorderRadius.circular(AppRadius.md),
+        radius: BorderRadius.circular(PpForgeRadius.md),
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.md,
+          horizontal: PpForgeSpacing.sm,
+          vertical: PpForgeSpacing.md,
         ),
         onTap: tile.onTap,
         child: Column(
@@ -90,7 +90,7 @@ class SummaryTileView extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: textTheme.labelMedium?.copyWith(color: muted),
             ),
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: PpForgeSpacing.xs),
             // A long amount shrinks to fit a narrow tile instead of "…".
             FittedBox(
               fit: BoxFit.scaleDown,
@@ -138,8 +138,8 @@ class SummaryTileView extends StatelessWidget {
           onTap: tile.onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm + AppSpacing.xxs,
+              horizontal: PpForgeSpacing.md,
+              vertical: PpForgeSpacing.sm + PpForgeSpacing.xxs,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,7 +151,7 @@ class SummaryTileView extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: textTheme.labelMedium?.copyWith(color: muted),
                 ),
-                const SizedBox(height: AppSpacing.xxs),
+                const SizedBox(height: PpForgeSpacing.xxs),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: AlignmentDirectional.centerStart,

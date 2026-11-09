@@ -482,7 +482,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
+      showPpForgeSnackBar(context, errorText(l, e), tone: Tone.danger);
       return;
     }
     if (!mounted) return;
@@ -508,7 +508,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final l = AppLocalizations.of(context)!;
     final a = widget.account!;
     if (a.isShared) {
-      showAppSnackBar(context, l.accountArchiveHasMembers, tone: Tone.warning);
+      showPpForgeSnackBar(context, l.accountArchiveHasMembers, tone: Tone.warning);
       return;
     }
     final ok = await showConfirmDialog(
@@ -525,12 +525,12 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     setSaving(true);
     try {
       await cubit.remove(a.id);
-      showAppSnackBarOn(messenger, l.accountArchived, tone: Tone.success);
+      showPpForgeSnackBarOn(messenger, l.accountArchived, tone: Tone.success);
       router.go('/accounts');
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
+      showPpForgeSnackBar(context, errorText(l, e), tone: Tone.danger);
     }
   }
 
@@ -543,13 +543,13 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       preview = await cubit.deletePreview(a.id);
     } on ApiException catch (e) {
       if (mounted) {
-        showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
+        showPpForgeSnackBar(context, errorText(l, e), tone: Tone.danger);
       }
       return;
     }
     if (!mounted) return;
     if (preview == null) {
-      showAppSnackBar(context, l.accountArchiveHasMembers, tone: Tone.warning);
+      showPpForgeSnackBar(context, l.accountArchiveHasMembers, tone: Tone.warning);
       return;
     }
     final ok = await showConfirmDialog(
@@ -572,12 +572,12 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     setSaving(true);
     try {
       await cubit.deleteForever(a.id);
-      showAppSnackBarOn(messenger, l.fpWalletDeleted, tone: Tone.success);
+      showPpForgeSnackBarOn(messenger, l.fpWalletDeleted, tone: Tone.success);
       router.go('/accounts');
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
+      showPpForgeSnackBar(context, errorText(l, e), tone: Tone.danger);
     }
   }
 
@@ -597,7 +597,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       );
       widget.onAccount?.call(outcome.account);
       if (!mounted) return;
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         l.accountAdjustBalanceSuccess,
         tone: Tone.success,
@@ -1338,7 +1338,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final members = widget.members;
     if (members == null) return;
     final cubit = context.read<AccountsCubit>();
-    await showAppSheetCustom<void>(
+    await showPpForgeSheetCustom<void>(
       context,
       builder: (sheetContext) => BlocProvider<AccountsCubit>.value(
         value: cubit,

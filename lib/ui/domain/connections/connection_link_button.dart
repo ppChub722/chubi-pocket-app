@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_button.dart';
 import '../../tokens/color_contrast.dart';
+import '../../app_aliases.dart';
 
 /// The big `เชื่อม <App>` button of an unlinked connection page (0.4.2 1b):
 /// a full-width primary [AppButton] filled with the app's [brand] colour,

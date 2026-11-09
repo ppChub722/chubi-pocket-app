@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_badge.dart';
-import '../../atoms/app_radio_mark.dart';
-import '../../atoms/ui_config.dart';
-import '../../molecules/app_row.dart';
 import '../../molecules/detail_rows.dart';
+import '../../app_aliases.dart';
 
 /// One place a profile picture can come from (0.4.2 1b): the edit page's
 /// "รูปโปรไฟล์" radio list (ไอคอน · อัปโหลดเอง · one row per linked app)

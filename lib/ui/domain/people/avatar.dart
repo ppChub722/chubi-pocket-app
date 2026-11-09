@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 
 import '../../atoms/corner_badge.dart';
 import '../../atoms/server_image.dart';
-import '../../tokens/app_colors.dart';
 import '../../tokens/avatar_metrics.dart';
 import '../icons/color_token.dart';
 import '../icons/icon_display.dart';
 import '../icons/icon_type.dart';
 import 'avatar_data.dart';
+import '../../app_aliases.dart';
 
 /// THE person picture (0.4.2 1b): draws the BE's `avatar` as it says —
 /// a photo (Bearer-loaded through [ServerImageScope], cached by its URL; on

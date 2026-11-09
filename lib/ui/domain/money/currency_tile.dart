@@ -5,7 +5,7 @@ import '../tokens/currencies.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../molecules/option_menu.dart';
 import '../../organisms/option_sheet.dart';
-import '../../molecules/detail_rows.dart';
+import '../../app_aliases.dart';
 
 class CurrencyTile extends StatelessWidget {
   const CurrencyTile({

@@ -46,10 +46,10 @@ class SegmentedChoice<T> extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: scheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(PpForgeRadius.lg),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xxs),
+          padding: const EdgeInsets.all(PpForgeSpacing.xxs),
           child: Row(
             mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
             children: [
@@ -106,16 +106,16 @@ class _Segment extends StatelessWidget {
       selected: on,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(PpForgeRadius.lg),
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: on ? scheme.primaryContainer : null,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderRadius: BorderRadius.circular(PpForgeRadius.lg),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm,
+              horizontal: PpForgeSpacing.md,
+              vertical: PpForgeSpacing.sm,
             ),
             child: Text(
               label,

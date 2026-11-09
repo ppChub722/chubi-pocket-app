@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 
 @immutable
-class AppFont {
-  const AppFont({
+class PpForgeFont {
+  const PpForgeFont({
     required this.id,
     required this.family,
     required this.supportedLanguages,

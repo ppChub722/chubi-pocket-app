@@ -41,15 +41,15 @@ class LanguageThemeBar extends StatelessWidget {
             for (final e in languages.entries)
               SheetOption(value: e.key, label: e.value),
           ],
-          builder: (context, toggle) => AppChip(
+          builder: (context, toggle) => PpForgeChip(
             label: languages[languageCode] ?? languageCode,
             icon: PpForgeIcons.language,
-            trailing: AppChipTrailing.dropdown,
+            trailing: PpForgeChipTrailing.dropdown,
             onTap: toggle,
           ),
         ),
-        const SizedBox(width: AppSpacing.sm),
-        AppIconButton(
+        const SizedBox(width: PpForgeSpacing.sm),
+        PpForgeIconButton(
           icon: dark ? PpForgeIcons.lightMode : PpForgeIcons.darkMode,
           tooltip: dark ? lightTooltip : darkTooltip,
           onPressed: onToggleTheme,

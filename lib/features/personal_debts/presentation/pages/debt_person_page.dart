@@ -113,7 +113,7 @@ class _PersonViewState extends State<_PersonView> {
     final l = AppLocalizations.of(context)!;
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
-    showAppSnackBar(context, l.fpDebtsCopied, tone: Tone.success);
+    showPpForgeSnackBar(context, l.fpDebtsCopied, tone: Tone.success);
   }
 
   Future<void> _share(String text) =>
@@ -126,7 +126,7 @@ class _PersonViewState extends State<_PersonView> {
     final name = _name(s);
     final owedToMe = (s.balance?.net ?? 0) > 0;
     final m = s.message;
-    return showAppSheet<void>(
+    return showPpForgeSheet<void>(
       context,
       title: owedToMe
           ? l.debtPersonChaseTitle(name)
@@ -158,7 +158,7 @@ class _PersonViewState extends State<_PersonView> {
         name,
       ])).absorbedCount;
       if (!mounted) return;
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         l.debtsPersonLinked(n, contact.name),
         tone: Tone.success,

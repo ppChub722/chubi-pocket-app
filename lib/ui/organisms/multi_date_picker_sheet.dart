@@ -17,7 +17,7 @@ Future<Set<DateTime>?> showMultiDatePicker(
   required String Function(int count) confirmLabel,
   ValueChanged<Set<DateTime>>? onChanged,
 }) {
-  return showAppSheetCustom<Set<DateTime>>(
+  return showPpForgeSheetCustom<Set<DateTime>>(
     context,
     builder: (ctx) => MultiDatePickerSheet(
       initial: initial,
@@ -109,7 +109,7 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final strings = UiConfig.stringsOf(context);
+    final strings = PpForgeConfig.stringsOf(context);
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final loc = MaterialLocalizations.of(context);
@@ -124,24 +124,24 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
         ? loc.formatShortMonthDay(d)
         : '${loc.formatShortMonthDay(d)} ${loc.formatYear(d)}';
 
-    return AppSheetScaffold(
+    return PpForgeSheetScaffold(
       title: widget.title,
       footer: Row(
         children: [
           if (_picked.isNotEmpty) ...[
             Expanded(
-              child: AppButton(
+              child: PpForgeButton(
                 label: strings.clear,
                 kind: ButtonIconKind.clear,
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () => _set(<DateTime>{}),
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
           ],
           Expanded(
             flex: 2,
-            child: AppButton(
+            child: PpForgeButton(
               label: widget.confirmLabel(_picked.length),
               kind: ButtonIconKind.apply,
               expand: true,
@@ -157,10 +157,10 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.sm),
             child: Row(
               children: [
-                AppIconButton.flat(
+                PpForgeIconButton.flat(
                   tooltip: strings.monthPrev,
                   onPressed: _canPrev ? () => _shift(-1) : null,
                   icon: Icons.chevron_left,
@@ -172,7 +172,7 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
                     style: text.titleMedium,
                   ),
                 ),
-                AppIconButton.flat(
+                PpForgeIconButton.flat(
                   tooltip: strings.monthNext,
                   onPressed: _canNext ? () => _shift(1) : null,
                   icon: Icons.chevron_right,
@@ -181,7 +181,7 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
             child: Row(
               children: [
                 for (var i = 0; i < 7; i++)
@@ -198,9 +198,9 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: PpForgeSpacing.xs),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
             child: Column(
               children: [
                 for (var row = 0; row < cells ~/ 7; row++)
@@ -217,10 +217,10 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.md,
-              AppSpacing.lg,
-              AppSpacing.sm,
+              PpForgeSpacing.lg,
+              PpForgeSpacing.md,
+              PpForgeSpacing.lg,
+              PpForgeSpacing.sm,
             ),
             child: sorted.isEmpty
                 ? Text(
@@ -230,15 +230,15 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
                     ),
                   )
                 : Wrap(
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
+                    spacing: PpForgeSpacing.sm,
+                    runSpacing: PpForgeSpacing.sm,
                     children: [
                       for (final d in sorted)
-                        AppChip(
+                        PpForgeChip(
                           key: ValueKey(d),
                           label: chipLabel(d),
                           selected: true,
-                          trailing: AppChipTrailing.remove,
+                          trailing: PpForgeChipTrailing.remove,
                           onRemove: () => _remove(d),
                         ),
                     ],

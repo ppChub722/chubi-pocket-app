@@ -22,7 +22,7 @@ class _FormSheetPageState extends State<_FormSheetPage> {
     bool destructive = false,
     bool showCancel = true,
   }) async {
-    final result = await showAppSheetCustom<String>(
+    final result = await showPpForgeSheetCustom<String>(
       context,
       builder: (ctx) => _DemoForm(
         fail: fail,
@@ -83,7 +83,7 @@ class _FormSheetPageState extends State<_FormSheetPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppText(
-                '| Open it with showAppSheetCustom; return FormSheet from the builder.',
+                '| Open it with showPpForgeSheetCustom; return FormSheet from the builder.',
               ),
               AppText(
                 '| Primary disabled until the form is valid; dirty = anything changed.',

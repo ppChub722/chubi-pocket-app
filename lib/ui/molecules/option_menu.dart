@@ -32,10 +32,10 @@ class _PopoverTitle extends StatelessWidget {
       padding:
           padding ??
           const EdgeInsets.fromLTRB(
-            AppSpacing.md + 2,
-            AppSpacing.xs,
-            AppSpacing.md + 2,
-            AppSpacing.xs,
+            PpForgeSpacing.md + 2,
+            PpForgeSpacing.xs,
+            PpForgeSpacing.md + 2,
+            PpForgeSpacing.xs,
           ),
       child: Text(
         title,
@@ -66,7 +66,7 @@ class _PopoverItem extends StatelessWidget {
         !(option.submits && ConnectionScope.isOffline(context));
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xs + 2,
+        horizontal: PpForgeSpacing.xs + 2,
         vertical: 2,
       ),
       child: MenuItemButton(
@@ -80,7 +80,7 @@ class _PopoverItem extends StatelessWidget {
           ),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(PpForgeRadius.md),
               side: selected
                   ? BorderSide(color: scheme.primary, width: 1.5)
                   : BorderSide.none,
@@ -144,7 +144,7 @@ class _PopoverCustomItem extends StatelessWidget {
     final chosen = custom.selectedLabel;
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xs + 2,
+        horizontal: PpForgeSpacing.xs + 2,
         vertical: 2,
       ),
       child: MenuItemButton(
@@ -153,16 +153,16 @@ class _PopoverCustomItem extends StatelessWidget {
           minimumSize: const WidgetStatePropertyAll(Size(140, 44)),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(PpForgeRadius.md),
             ),
           ),
         ),
         child: Container(
           constraints: const BoxConstraints(minWidth: 112, minHeight: 36),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.md),
           decoration: BoxDecoration(
             color: scheme.surface,
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(PpForgeRadius.md),
             border: Border.all(
               color: chosen != null ? scheme.primary : scheme.outline,
               width: chosen != null ? 1.5 : 1,
@@ -181,7 +181,7 @@ class _PopoverCustomItem extends StatelessWidget {
                     : text?.copyWith(color: scheme.onSurfaceVariant),
               ),
               if (chosen == null && custom.suffix != null) ...[
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: PpForgeSpacing.sm),
                 Text(
                   custom.suffix!,
                   style: text?.copyWith(color: scheme.onSurfaceVariant),
@@ -232,7 +232,7 @@ class OptionMenuAnchor<T> extends StatelessWidget {
     final anchor = MenuAnchor(
       controller: controller,
       consumeOutsideTap: true,
-      alignmentOffset: const Offset(0, AppSpacing.xs),
+      alignmentOffset: const Offset(0, PpForgeSpacing.xs),
       menuChildren: _keepDirection(context, [
         if (title != null) _PopoverTitle(title!),
         for (final o in options)
@@ -242,7 +242,7 @@ class OptionMenuAnchor<T> extends StatelessWidget {
             onPressed: () => onSelected(o.value),
           ),
         if (custom != null) ...[
-          const AppDivider(height: AppSpacing.sm),
+          const PpForgeDivider(height: PpForgeSpacing.sm),
           _PopoverCustomItem(custom),
         ],
       ]),
@@ -283,11 +283,11 @@ class PopoverClearItem extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const AppDivider(height: AppSpacing.sm),
+        const PpForgeDivider(height: PpForgeSpacing.sm),
         MenuItemButton(
           leadingIcon: const Icon(PpForgeIcons.clear, size: 18),
           onPressed: onPressed,
-          child: Text(label ?? UiConfig.stringsOf(context).clear),
+          child: Text(label ?? PpForgeConfig.stringsOf(context).clear),
         ),
       ],
     );
@@ -320,7 +320,7 @@ class MultiOptionMenuAnchor<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return MenuAnchor(
       consumeOutsideTap: true,
-      alignmentOffset: const Offset(0, AppSpacing.xs),
+      alignmentOffset: const Offset(0, PpForgeSpacing.xs),
       menuChildren: [
         if (title != null) _PopoverTitle(title!),
         for (final o in options)
@@ -366,7 +366,7 @@ class PopoverAnchor extends StatelessWidget {
   Widget build(BuildContext context) {
     return MenuAnchor(
       consumeOutsideTap: true,
-      alignmentOffset: const Offset(0, AppSpacing.xs),
+      alignmentOffset: const Offset(0, PpForgeSpacing.xs),
       menuChildren: [
         Builder(
           builder: (ctx) {
@@ -375,8 +375,8 @@ class PopoverAnchor extends StatelessWidget {
               constraints: BoxConstraints(maxWidth: maxWidth),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
+                  horizontal: PpForgeSpacing.md,
+                  vertical: PpForgeSpacing.sm,
                 ),
                 child: title == null
                     ? contentBuilder(ctx, () => controller?.close())
@@ -387,7 +387,7 @@ class PopoverAnchor extends StatelessWidget {
                           _PopoverTitle(
                             title!,
                             padding: const EdgeInsets.only(
-                              bottom: AppSpacing.sm,
+                              bottom: PpForgeSpacing.sm,
                             ),
                           ),
                           contentBuilder(ctx, () => controller?.close()),
@@ -440,8 +440,8 @@ class ColorSwatchGrid extends StatelessWidget {
 
   Widget _grid() {
     return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: [
         for (var i = 0; i < colors.length; i++)
           BusyLock(

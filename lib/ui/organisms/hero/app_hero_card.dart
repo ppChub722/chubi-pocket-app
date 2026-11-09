@@ -7,13 +7,13 @@ import '../../tokens/pp_forge_icons.dart';
 import '../../tokens/hero_colors.dart';
 import '../../tokens/hero_metrics.dart';
 
-/// Pieces inside read it from [AppHeroScope].
+/// Pieces inside read it from [PpForgeHeroScope].
 enum HeroCardMode { view, edit, create }
 
 /// Header + content + footer on one surface and inset. Content alone can't
 /// fold, folded alone can't expand; both fold, driven by [open].
-class AppHeroCard extends StatelessWidget {
-  const AppHeroCard({
+class PpForgeHeroCard extends StatelessWidget {
+  const PpForgeHeroCard({
     required this.style,
     this.mode = HeroCardMode.view,
     this.header,
@@ -26,7 +26,7 @@ class AppHeroCard extends StatelessWidget {
     super.key,
   }) : assert(
          content != null || folded != null,
-         'AppHeroCard needs content and / or a folded version',
+         'PpForgeHeroCard needs content and / or a folded version',
        ),
        assert(
          (content != null && folded != null) == (open != null),
@@ -51,7 +51,7 @@ class AppHeroCard extends StatelessWidget {
     final notifier = open;
     if (!_foldable || notifier == null) {
       final isOpen = content != null;
-      return AppHeroScope(
+      return PpForgeHeroScope(
         mode: mode,
         open: isOpen,
         toggle: null,
@@ -60,7 +60,7 @@ class AppHeroCard extends StatelessWidget {
     }
     return ValueListenableBuilder<bool>(
       valueListenable: notifier,
-      builder: (context, isOpen, _) => AppHeroScope(
+      builder: (context, isOpen, _) => PpForgeHeroScope(
         mode: mode,
         open: isOpen,
         toggle: () => notifier.value = !isOpen,
@@ -98,9 +98,9 @@ class AppHeroCard extends StatelessWidget {
   }
 }
 
-/// What an [AppHeroCard] tells the pieces inside it.
-class AppHeroScope extends InheritedWidget {
-  const AppHeroScope({
+/// What an [PpForgeHeroCard] tells the pieces inside it.
+class PpForgeHeroScope extends InheritedWidget {
+  const PpForgeHeroScope({
     required this.mode,
     required this.open,
     required this.toggle,
@@ -119,31 +119,31 @@ class AppHeroScope extends InheritedWidget {
   bool get canFold => toggle != null;
   bool get editing => mode != HeroCardMode.view;
 
-  static AppHeroScope? maybeOf(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<AppHeroScope>();
+  static PpForgeHeroScope? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<PpForgeHeroScope>();
 
   /// The mode of the enclosing card; [HeroCardMode.view] outside one.
   static HeroCardMode modeOf(BuildContext context) =>
       maybeOf(context)?.mode ?? HeroCardMode.view;
 
   @override
-  bool updateShouldNotify(AppHeroScope old) =>
+  bool updateShouldNotify(PpForgeHeroScope old) =>
       mode != old.mode || open != old.open || canFold != old.canFold;
 }
 
-/// The ⌄ / ⌃ of an [AppHeroCard] — [HeroHeader] places it; it draws nothing
+/// The ⌄ / ⌃ of an [PpForgeHeroCard] — [HeroHeader] places it; it draws nothing
 /// when the card can't fold.
-class AppHeroFoldButton extends StatelessWidget {
-  const AppHeroFoldButton({super.key});
+class PpForgeHeroFoldButton extends StatelessWidget {
+  const PpForgeHeroFoldButton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final scope = AppHeroScope.maybeOf(context);
+    final scope = PpForgeHeroScope.maybeOf(context);
     if (scope == null || !scope.canFold) return const SizedBox.shrink();
     return Semantics(
       button: true,
       expanded: scope.open,
-      child: AppIconButton.bare(
+      child: PpForgeIconButton.bare(
         icon: scope.open ? PpForgeIcons.collapse : PpForgeIcons.expand,
         onPressed: scope.toggle,
         size: size,

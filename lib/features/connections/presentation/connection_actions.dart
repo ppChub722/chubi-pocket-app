@@ -24,7 +24,7 @@ void showConnectionError(BuildContext context, Connection c, Object error) {
   if (text == null) {
     showErrorSnackBar(context, error);
   } else {
-    showAppSnackBar(context, text, tone: Tone.danger);
+    showPpForgeSnackBar(context, text, tone: Tone.danger);
   }
 }
 

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_icon.dart';
 import '../../atoms/select_check.dart';
-import '../../tokens/app_radius.dart';
-import '../../tokens/app_spacing.dart';
 import '../../atoms/busy_scope.dart';
+import '../../app_aliases.dart';
 
 /// One book my part of an event bill can go to ("หนี้" / "รายการ"): a
 /// bordered card with a tick, its icon, words and amount; [child] (the

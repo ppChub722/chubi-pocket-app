@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app_colors.dart';
 import '../../tokens/color_contrast.dart';
 import '../icons/color_token.dart';
 import 'avatar_data.dart';
+import '../../app_aliases.dart';
 
 /// Picks a person's colours from their profile colours (`avatar.colors`,
 /// colour 1 = the main one) for a page: hero tints, the settings card, split

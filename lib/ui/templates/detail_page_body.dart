@@ -16,7 +16,7 @@ class DetailPageBody extends StatelessWidget {
     this.manage,
     this.footnote,
     this.metaLines = const [],
-    this.bottomInset = AppSpacing.xxl,
+    this.bottomInset = PpForgeSpacing.xxl,
     this.topInset,
     this.controller,
     this.physics,
@@ -41,7 +41,7 @@ class DetailPageBody extends StatelessWidget {
 
   /// Space above the first child. Null (default) clears the top bar the page
   /// sits behind: the status-bar + bar height of this body's own context plus
-  /// [AppSpacing.lg]. Pass a number only to override (0 = flush, for a body
+  /// [PpForgeSpacing.lg]. Pass a number only to override (0 = flush, for a body
   /// that is not under the bar).
   final double? topInset;
   final ScrollController? controller;
@@ -93,9 +93,9 @@ class DetailPageBody extends StatelessWidget {
           physics ??
           (refresh == null ? null : const AlwaysScrollableScrollPhysics()),
       padding: EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        topInset ?? MediaQuery.paddingOf(context).top + AppSpacing.lg,
-        AppSpacing.lg,
+        PpForgeSpacing.lg,
+        topInset ?? MediaQuery.paddingOf(context).top + PpForgeSpacing.lg,
+        PpForgeSpacing.lg,
         bottomInset,
       ),
       children: [
@@ -103,8 +103,8 @@ class DetailPageBody extends StatelessWidget {
           hero!,
           SizedBox(height: HeroMetrics.of(context).after),
         ],
-        if (tabBar != null) ...[tabBar!, const SizedBox(height: AppSpacing.md)],
-        if (tags != null) ...[tags!, const SizedBox(height: AppSpacing.md)],
+        if (tabBar != null) ...[tabBar!, const SizedBox(height: PpForgeSpacing.md)],
+        if (tags != null) ...[tags!, const SizedBox(height: PpForgeSpacing.md)],
         ...buildSections(),
         if (footnote case final f?) DetailFootnote(f),
         ?manage,

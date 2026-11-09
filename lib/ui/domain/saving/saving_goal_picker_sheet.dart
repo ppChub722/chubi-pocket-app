@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../atoms/dashed_rect_border.dart';
-import '../../tokens/app_radius.dart';
-import '../../tokens/app_spacing.dart';
+import '../../app_aliases.dart';
 
 class SavingGoalPick {
   const SavingGoalPick({

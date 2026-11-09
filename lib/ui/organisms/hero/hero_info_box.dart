@@ -11,7 +11,7 @@ import '../../tokens/icon_size.dart';
 class HeroInsetBox extends StatelessWidget {
   const HeroInsetBox({
     required this.child,
-    this.padding = const EdgeInsets.all(AppSpacing.md),
+    this.padding = const EdgeInsets.all(PpForgeSpacing.md),
     super.key,
   });
 
@@ -26,7 +26,7 @@ class HeroInsetBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: hero?.insetOrSoft ?? scheme.surfaceContainer,
         border: Border.all(color: hero?.line ?? scheme.outlineVariant),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(PpForgeRadius.lg),
       ),
       child: Padding(padding: padding, child: child),
     );
@@ -61,12 +61,12 @@ class HeroInfoBox extends StatelessWidget {
         decoration: BoxDecoration(
           color: hero?.soft ?? scheme.surfaceContainer,
           border: Border.all(color: hero?.line ?? scheme.outlineVariant),
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(PpForgeRadius.md),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm + AppSpacing.xxs,
-            vertical: AppSpacing.xs,
+            horizontal: PpForgeSpacing.sm + PpForgeSpacing.xxs,
+            vertical: PpForgeSpacing.xs,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -76,12 +76,12 @@ class HeroInfoBox extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (icon != null) ...[
-                    AppIcon(
+                    PpForgeIcon(
                       icon!,
-                      size: AppIconSize.sm,
+                      size: PpForgeIconSize.sm,
                       color: hero?.accent ?? scheme.primary,
                     ),
-                    const SizedBox(width: AppSpacing.xxs),
+                    const SizedBox(width: PpForgeSpacing.xxs),
                   ],
                   Flexible(
                     child: Text(

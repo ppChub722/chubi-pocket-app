@@ -39,7 +39,7 @@ class HeroTiles extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final hero = HeroColors.maybeOf(context);
     final line = hero?.line ?? scheme.outlineVariant;
-    final radius = BorderRadius.circular(AppRadius.lg);
+    final radius = BorderRadius.circular(PpForgeRadius.lg);
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(

@@ -171,7 +171,7 @@ class _AccountsPageState extends State<AccountsPage> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _savingOrder = false);
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         '${l.accountsReorderSave}: ${errorText(l, e)}',
         tone: Tone.danger,

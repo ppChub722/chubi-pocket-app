@@ -42,7 +42,7 @@ class EndZone extends StatelessWidget {
     final sorted = [...actions]
       ..sort((a, b) => a.kind.index.compareTo(b.kind.index));
     return Padding(
-      padding: EdgeInsets.only(top: first ? 0 : AppSpacing.lg),
+      padding: EdgeInsets.only(top: first ? 0 : PpForgeSpacing.lg),
       child: Column(
         children: [
           for (final (i, a) in sorted.indexed)
@@ -58,7 +58,7 @@ class EndZone extends StatelessWidget {
               consequence: a.consequence,
               neutral: a.kind == EndZoneKind.close,
               caution: a.kind == EndZoneKind.archive,
-              padding: EdgeInsets.only(top: i > 0 ? AppSpacing.sm : 0),
+              padding: EdgeInsets.only(top: i > 0 ? PpForgeSpacing.sm : 0),
               onTap: a.submits && offline ? null : a.onTap,
             ),
         ],

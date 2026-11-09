@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../ui/tokens/app/theme/app_page_transitions.dart';
 import '../../ui/ui.dart';
 import '../hub_kit.dart';
 
@@ -262,7 +261,7 @@ Widget buildSizesPage(BuildContext context) {
           child: AppChip(
             label: 'Tap near me',
             size: ChipSize.chip,
-            onTap: () => showAppSnackBar(context, 'Tapped'),
+            onTap: () => showPpForgeSnackBar(context, 'Tapped'),
           ),
         ),
       ),

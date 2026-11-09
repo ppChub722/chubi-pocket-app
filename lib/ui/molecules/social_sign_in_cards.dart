@@ -45,7 +45,7 @@ class SocialSignInCards extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (final (i, o) in options.indexed) ...[
-          if (i > 0) const SizedBox(width: AppSpacing.sm),
+          if (i > 0) const SizedBox(width: PpForgeSpacing.sm),
           Expanded(
             child: _Card(option: o, comingSoonLabel: comingSoonLabel),
           ),
@@ -65,7 +65,7 @@ class _Card extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final soon = option.onPressed == null;
-    final radius = BorderRadius.circular(AppRadius.lg);
+    final radius = BorderRadius.circular(PpForgeRadius.lg);
     return Semantics(
       button: true,
       enabled: !soon,
@@ -88,8 +88,8 @@ class _Card extends StatelessWidget {
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.xs,
-                  vertical: AppSpacing.md,
+                  horizontal: PpForgeSpacing.xs,
+                  vertical: PpForgeSpacing.md,
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -103,14 +103,14 @@ class _Card extends StatelessWidget {
                             )
                           : option.logo,
                     ),
-                    const SizedBox(height: AppSpacing.xs),
+                    const SizedBox(height: PpForgeSpacing.xs),
                     Text(
                       option.label,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
-                    const SizedBox(height: AppSpacing.xxs),
+                    const SizedBox(height: PpForgeSpacing.xxs),
                     // Always there (hidden when wired) so the cards match.
                     Visibility(
                       visible: soon,
@@ -118,9 +118,9 @@ class _Card extends StatelessWidget {
                       maintainAnimation: true,
                       maintainState: true,
                       child: IgnorePointer(
-                        child: AppChip(
+                        child: PpForgeChip(
                           label: comingSoonLabel,
-                          tone: AppChipTone.info,
+                          tone: PpForgeChipTone.info,
                           selected: true,
                           size: ChipSize.mini,
                         ),

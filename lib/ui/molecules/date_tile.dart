@@ -38,7 +38,7 @@ class CalendarTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: scheme.surface,
         border: Border.all(color: hero?.line ?? scheme.outlineVariant),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(PpForgeRadius.md),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -47,13 +47,13 @@ class CalendarTile extends StatelessWidget {
           ColoredBox(
             color: accent,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+              padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xxs),
               child: Text(
                 DateFormat.MMM(locale).format(date),
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 style: text.labelMedium?.copyWith(
-                  color: AppChip.readableOn(accent, Colors.white),
+                  color: PpForgeChip.readableOn(accent, Colors.white),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -69,7 +69,7 @@ class CalendarTile extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+            padding: const EdgeInsets.only(bottom: PpForgeSpacing.xs),
             child: Text(
               DateFormat.EEEE(locale).format(date),
               textAlign: TextAlign.center,

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../tokens/tone.dart';
 
-class AppBadge extends StatelessWidget {
-  const AppBadge({
+class PpForgeBadge extends StatelessWidget {
+  const PpForgeBadge({
     required this.label,
     this.tone = Tone.neutral,
     this.icon,

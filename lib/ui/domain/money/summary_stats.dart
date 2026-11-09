@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app_spacing.dart';
 import 'money_text.dart';
+import '../../app_aliases.dart';
 
 class SummaryStat {
   const SummaryStat({

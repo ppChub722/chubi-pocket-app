@@ -14,7 +14,7 @@ Future<void> showEventTagsManager(
   required ValueChanged<EventPatch> onPatch,
   required void Function(EventTagImportResult result) onImported,
 }) {
-  return showAppSheetCustom<void>(
+  return showPpForgeSheetCustom<void>(
     context,
     builder: (_) => _EventTagsManager(
       projectId: projectId,
@@ -62,7 +62,7 @@ class _EventTagsManagerState extends State<_EventTagsManager> {
       if (mounted) setState(() => _tags = next);
     } on ApiException catch (e) {
       if (mounted) {
-        showAppSnackBar(
+        showPpForgeSnackBar(
           context,
           errorText(AppLocalizations.of(context)!, e),
           tone: Tone.danger,

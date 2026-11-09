@@ -55,12 +55,12 @@ class PickCard extends StatelessWidget {
     final empty = value == null;
     final tint = empty ? null : accent;
     final hasError = errorText != null;
-    final Widget card = AppCard(
+    final Widget card = PpForgeCard(
       style: empty
-          ? AppCardStyle.flat
+          ? PpForgeCardStyle.flat
           : tint == null
-          ? AppCardStyle.plain
-          : AppCardStyle.tinted,
+          ? PpForgeCardStyle.plain
+          : PpForgeCardStyle.tinted,
       color: tint,
       glyph: empty ? null : watermark,
       glyphSize: 72,
@@ -79,13 +79,13 @@ class PickCard extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 64),
         child: Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.md,
+            horizontal: PpForgeSpacing.md,
+            vertical: PpForgeSpacing.md,
           ),
           child: Row(
             children: [
               Opacity(opacity: empty ? 0.6 : 1, child: leading),
-              SizedBox(width: dense ? AppSpacing.sm : AppSpacing.md),
+              SizedBox(width: dense ? PpForgeSpacing.sm : PpForgeSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,7 +158,7 @@ class PickCard extends StatelessWidget {
     if (empty) {
       return DashedRectBorder(
         color: hasError ? scheme.error : scheme.outline,
-        borderRadius: const Radius.circular(AppRadius.lg),
+        borderRadius: const Radius.circular(PpForgeRadius.lg),
         child: card,
       );
     }
@@ -177,7 +177,7 @@ class PickCard extends StatelessWidget {
                 strokeWidth: 1,
                 dashLength: 4,
                 gapLength: 3,
-                borderRadius: const Radius.circular(AppRadius.lg),
+                borderRadius: const Radius.circular(PpForgeRadius.lg),
                 child: const SizedBox.expand(),
               ),
             ),
@@ -188,7 +188,7 @@ class PickCard extends StatelessWidget {
                 padding: const EdgeInsets.all(3),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppRadius.lg - 3),
+                    borderRadius: BorderRadius.circular(PpForgeRadius.lg - 3),
                     border: Border.all(color: line),
                   ),
                 ),

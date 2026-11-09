@@ -626,7 +626,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     }
     if (!formOk || !walletOk || !goalOk || !personOk) return;
     if (!working.countOk) {
-      showAppSnackBarOn(
+      showPpForgeSnackBarOn(
         pageMessenger!,
         l.fpRecurringCountRequired,
         tone: Tone.danger,
@@ -1974,7 +1974,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     final first = _nextItem?.date ?? _upcoming.items.firstOrNull?.date;
     final year = ValueNotifier<int>((first ?? today()).year);
     unawaited(
-      showAppSheetCustom<void>(
+      showPpForgeSheetCustom<void>(
         context,
         builder: (_) => ValueListenableBuilder<int>(
           valueListenable: _sheetTick,

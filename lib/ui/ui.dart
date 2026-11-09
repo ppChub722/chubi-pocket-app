@@ -7,6 +7,7 @@ export 'atoms/corner_badge.dart';
 export 'atoms/app_icon.dart';
 export 'atoms/app_spinner.dart';
 export 'atoms/busy_scope.dart';
+export 'app_aliases.dart';
 export 'tokens/app_opacity.dart';
 export 'atoms/shown_tween_builder.dart';
 export 'tokens/avatar_metrics.dart';

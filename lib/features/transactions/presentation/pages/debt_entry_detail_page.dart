@@ -300,7 +300,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
 
   void _say(String text, Tone tone) {
     final m = pageMessenger;
-    if (m != null) showAppSnackBarOn(m, text, tone: tone);
+    if (m != null) showPpForgeSnackBarOn(m, text, tone: tone);
   }
 
   Future<void> _save() async {
@@ -375,7 +375,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       return r;
     });
     if (mounted && done) {
-      showAppSnackBar(context, l.txLinkDisconnected, tone: Tone.success);
+      showPpForgeSnackBar(context, l.txLinkDisconnected, tone: Tone.success);
     }
   }
 
@@ -500,7 +500,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     try {
       final r = await repo.deleteEntry(_entry.id);
       applyDebtEntryDeleteResult(r, accounts: accounts, txs: txCubit);
-      showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
+      showPpForgeSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
       if (router == null) {
         navigator.maybePop();
       } else if (router.canPop()) {

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_chip.dart';
 import '../tokens/app_icons.dart';
-import '../../tokens/app_spacing.dart';
 import 'net_balance.dart';
+import '../../app_aliases.dart';
 
 /// Quick create's debt mode (owner 2026-10-21, mock "หนี้: 2 chip +
 /// ลูกศรสลับทิศ"): two chips where the tx mode has รายจ่าย / รายรับ —

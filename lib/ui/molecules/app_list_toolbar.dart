@@ -11,24 +11,24 @@ import 'sort_chip.dart';
 
 /// A list's search box, then its filter chips with the sort at the end.
 /// With [state] the whole block opens and closes from an
-/// [AppListToolbarToggle] (🔍); without it the block stays open.
-class AppListToolbar extends StatelessWidget {
-  const AppListToolbar({
+/// [PpForgeListToolbarToggle] (🔍); without it the block stays open.
+class PpForgeListToolbar extends StatelessWidget {
+  const PpForgeListToolbar({
     this.state,
     this.search,
     this.filters = const [],
     this.sort,
     this.trailing,
-    this.sidePadding = AppSpacing.lg,
+    this.sidePadding = PpForgeSpacing.lg,
     super.key,
   }) : assert(sort == null || trailing == null);
 
-  static const double gap = AppSpacing.sm;
+  static const double gap = PpForgeSpacing.sm;
 
-  final AppListToolbarState? state;
+  final PpForgeListToolbarState? state;
   final ListToolbarSearch? search;
 
-  /// Chip-size chips (a dropdown [AppChip], a toggle chip).
+  /// Chip-size chips (a dropdown [PpForgeChip], a toggle chip).
   final List<Widget> filters;
   final SortChip<dynamic>? sort;
 
@@ -59,12 +59,12 @@ class AppListToolbar extends StatelessWidget {
     final end = sort ?? trailing;
     final hasFilters = filters.isNotEmpty || end != null;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xs),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (search != null)
-            AppInput.search(
+            PpForgeInput.search(
               key: search.key,
               controller: search.controller,
               onChanged: search.onChanged,
@@ -87,7 +87,7 @@ class AppListToolbar extends StatelessWidget {
   }
 }
 
-/// The search box of an [AppListToolbar].
+/// The search box of an [PpForgeListToolbar].
 @immutable
 class ListToolbarSearch {
   const ListToolbarSearch({
@@ -103,34 +103,34 @@ class ListToolbarSearch {
   final Key? key;
 }
 
-/// Open / closed of an [AppListToolbar]; [of] keeps it per page while the
+/// Open / closed of an [PpForgeListToolbar]; [of] keeps it per page while the
 /// app runs.
-class AppListToolbarState extends ValueNotifier<bool> {
-  AppListToolbarState._(super.open);
+class PpForgeListToolbarState extends ValueNotifier<bool> {
+  PpForgeListToolbarState._(super.open);
 
-  AppListToolbarState.local({bool open = false}) : super(open);
+  PpForgeListToolbarState.local({bool open = false}) : super(open);
 
-  static final Map<String, AppListToolbarState> _byKey = {};
+  static final Map<String, PpForgeListToolbarState> _byKey = {};
 
-  static AppListToolbarState of(String pageKey, {bool open = false}) =>
-      _byKey.putIfAbsent(pageKey, () => AppListToolbarState._(open));
+  static PpForgeListToolbarState of(String pageKey, {bool open = false}) =>
+      _byKey.putIfAbsent(pageKey, () => PpForgeListToolbarState._(open));
 
   static void resetAll() => _byKey.clear();
 
   void toggle() => value = !value;
 }
 
-/// The 🔍 that opens an [AppListToolbar]; a dot while it's closed with a
+/// The 🔍 that opens an [PpForgeListToolbar]; a dot while it's closed with a
 /// filter on.
-class AppListToolbarToggle extends StatelessWidget {
-  const AppListToolbarToggle({
+class PpForgeListToolbarToggle extends StatelessWidget {
+  const PpForgeListToolbarToggle({
     required this.state,
     this.filtered = false,
     this.tooltip,
     super.key,
   });
 
-  final AppListToolbarState state;
+  final PpForgeListToolbarState state;
   final bool filtered;
   final String? tooltip;
 

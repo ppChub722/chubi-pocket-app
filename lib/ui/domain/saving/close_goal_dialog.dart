@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_button.dart';
-import '../../atoms/app_card.dart';
-import '../../tokens/app_spacing.dart';
 import '../../tokens/button_icon_kind.dart';
 import '../money/money_text.dart';
+import '../../app_aliases.dart';
 
 enum CloseGoalChoice { toSpare, backToWallets }
 

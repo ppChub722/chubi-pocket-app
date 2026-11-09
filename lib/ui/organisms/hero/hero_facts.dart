@@ -58,7 +58,7 @@ class HeroFactList extends StatelessWidget {
         for (final (i, f) in facts.indexed) ...[
           if (i > 0)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xs),
               child: CustomPaint(
                 size: const Size.fromHeight(1),
                 painter: _DashPainter(line),
@@ -69,13 +69,13 @@ class HeroFactList extends StatelessWidget {
             Row(
               children: [
                 if (f.icon != null) ...[
-                  AppIcon(
+                  PpForgeIcon(
                     f.icon!,
-                    size: AppIconSize.sm,
+                    size: PpForgeIconSize.sm,
                     color:
                         f.iconColor ?? f.dot ?? hero?.accent ?? scheme.primary,
                   ),
-                  const SizedBox(width: AppSpacing.sm - 2),
+                  const SizedBox(width: PpForgeSpacing.sm - 2),
                 ] else if (f.dot != null) ...[
                   DecoratedBox(
                     decoration: BoxDecoration(
@@ -84,7 +84,7 @@ class HeroFactList extends StatelessWidget {
                     ),
                     child: const SizedBox.square(dimension: 8),
                   ),
-                  const SizedBox(width: AppSpacing.sm - 2),
+                  const SizedBox(width: PpForgeSpacing.sm - 2),
                 ],
                 Expanded(
                   child: Text(
@@ -94,7 +94,7 @@ class HeroFactList extends StatelessWidget {
                     style: text?.copyWith(color: muted),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.lg),
+                const SizedBox(width: PpForgeSpacing.lg),
                 Text(
                   f.value,
                   maxLines: 1,
@@ -105,9 +105,9 @@ class HeroFactList extends StatelessWidget {
                   ),
                 ),
                 if (f.onTap != null)
-                  AppIcon(
+                  PpForgeIcon(
                     PpForgeIcons.chevronRight,
-                    size: AppIconSize.sm,
+                    size: PpForgeIconSize.sm,
                     color: muted,
                   ),
               ],
@@ -124,7 +124,7 @@ Widget _link(VoidCallback? onTap, Widget row) => onTap == null
     : BusyLock(
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppSpacing.xs),
+          borderRadius: BorderRadius.circular(PpForgeSpacing.xs),
           child: row,
         ),
       );

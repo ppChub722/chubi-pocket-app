@@ -28,7 +28,7 @@ Future<OccurrenceEdit?> showOccurrenceSheet(
   bool amountRequired = false,
   OccurrenceFocus focus = OccurrenceFocus.amount,
 }) {
-  return showAppSheetCustom<OccurrenceEdit>(
+  return showPpForgeSheetCustom<OccurrenceEdit>(
     context,
     builder: (_) => _OccurrenceSheet(
       title: title,
@@ -160,7 +160,7 @@ Future<int?> showCountSheet(
   int min = 1,
   int max = 999,
 }) {
-  return showAppSheetCustom<int>(
+  return showPpForgeSheetCustom<int>(
     context,
     builder: (_) => _CountSheet(
       title: title,

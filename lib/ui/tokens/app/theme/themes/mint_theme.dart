@@ -8,12 +8,12 @@ const _mintPrimaryDark = Color(0xFF4DD6C1);
 const _deepTeal = Color(0xFF0E7C7B);
 const _deepTealLight = Color(0xFF4FB3B2);
 
-final mintTheme = AppTheme(
+final mintTheme = PpForgeTheme(
   id: 'mint',
   nameKey: 'theme_mint',
   isPremium: false,
   previewSwatch: const [_mintPrimary, _deepTeal, Color(0xFFF7F8FA)],
-  lightColors: const AppColors(
+  lightColors: const PpForgeColors(
     brightness: Brightness.light,
     primary: _mintPrimary,
     onPrimary: Color(0xFFFFFFFF),
@@ -42,7 +42,7 @@ final mintTheme = AppTheme(
     error: Color(0xFFEF4444),
     onError: Color(0xFFFFFFFF),
   ),
-  darkColors: const AppColors(
+  darkColors: const PpForgeColors(
     brightness: Brightness.dark,
     primary: _mintPrimaryDark,
     onPrimary: Color(0xFF003830),

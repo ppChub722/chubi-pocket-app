@@ -200,7 +200,7 @@ class ContactPickerDemos extends StatelessWidget {
                     if (failed) return picked;
                     failed = true;
                     if (context.mounted) {
-                      showAppSnackBar(
+                      showPpForgeSnackBar(
                         context,
                         'Save failed (demo)',
                         tone: Tone.danger,

@@ -8,12 +8,12 @@ import '../templates/form_sheet.dart';
 import '../tokens/app_spacing.dart';
 import 'app_sheet.dart';
 
-/// What [AppAmountSheet.show] answers: an [amount], or [cleared] (the clear
+/// What [PpForgeAmountSheet.show] answers: an [amount], or [cleared] (the clear
 /// link was tapped).
 @immutable
-class AppAmountResult {
-  const AppAmountResult.amount(double this.amount) : cleared = false;
-  const AppAmountResult.cleared() : amount = null, cleared = true;
+class PpForgeAmountResult {
+  const PpForgeAmountResult.amount(double this.amount) : cleared = false;
+  const PpForgeAmountResult.cleared() : amount = null, cleared = true;
 
   final double? amount;
   final bool cleared;
@@ -23,8 +23,8 @@ class AppAmountResult {
 /// amount input, an optional [helper] line, and [clearLabel] (shown while
 /// there is an [initial]) to take the value away. Save is on once the amount
 /// is above 0 and differs from [initial]; null = dismissed.
-abstract final class AppAmountSheet {
-  static Future<AppAmountResult?> show(
+abstract final class PpForgeAmountSheet {
+  static Future<PpForgeAmountResult?> show(
     BuildContext context, {
     required String title,
     required String label,
@@ -33,7 +33,7 @@ abstract final class AppAmountSheet {
     double? initial,
     String? helper,
     String? clearLabel,
-  }) => showAppSheetCustom<AppAmountResult>(
+  }) => showPpForgeSheetCustom<PpForgeAmountResult>(
     context,
     builder: (_) => _AmountSheet(
       title: title,
@@ -99,7 +99,7 @@ class _AmountSheetState extends State<_AmountSheet> {
       primaryLabel: widget.saveLabel,
       dirty: _changed,
       onPrimary: v != null && v > 0 && _changed
-          ? () => Navigator.of(context).pop(AppAmountResult.amount(v))
+          ? () => Navigator.of(context).pop(PpForgeAmountResult.amount(v))
           : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -112,24 +112,24 @@ class _AmountSheetState extends State<_AmountSheet> {
             onChanged: (_) => setState(() {}),
           ),
           if (helper != null) ...[
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: PpForgeSpacing.sm),
             HintLine(text: helper),
           ],
           if (clear != null && widget.initial != null) ...[
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: PpForgeSpacing.sm),
             Align(
               alignment: AlignmentDirectional.centerStart,
-              child: AppButton(
+              child: PpForgeButton(
                 label: clear,
                 kind: ButtonIconKind.clear,
-                variant: AppButtonVariant.text,
-                size: AppButtonSize.chip,
+                variant: PpForgeButtonVariant.text,
+                size: PpForgeButtonSize.chip,
                 onPressed: () =>
-                    Navigator.of(context).pop(const AppAmountResult.cleared()),
+                    Navigator.of(context).pop(const PpForgeAmountResult.cleared()),
               ),
             ),
           ],
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: PpForgeSpacing.md),
         ],
       ),
     );

@@ -16,7 +16,7 @@ enum CalendarDot {
   neutral;
 
   Color resolve(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     return switch (this) {
       income => palette.income,
       expense => palette.expense,
@@ -132,7 +132,7 @@ class MonthCalendar extends StatelessWidget {
       final caption = captions[day];
       final edge = edges[day]?.resolve(context);
       final busy = colors.isNotEmpty || caption != null || edge != null;
-      final onAccent = AppChip.readableOn(accent, Colors.white);
+      final onAccent = PpForgeChip.readableOn(accent, Colors.white);
       final fill = isSelected
           ? accent
           : busy
@@ -144,7 +144,7 @@ class MonthCalendar extends StatelessWidget {
           child: Material(
             color: fill ?? Colors.transparent,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(PpForgeRadius.md),
               side: isSelected
                   ? BorderSide.none
                   : isToday
@@ -242,7 +242,7 @@ class MonthCalendar extends StatelessWidget {
           Center(
             child: StepperPill.month(value: month, onChanged: onMonthChanged),
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: PpForgeSpacing.sm),
         ],
         Row(
           children: [
@@ -257,7 +257,7 @@ class MonthCalendar extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: AppSpacing.xs),
+        const SizedBox(height: PpForgeSpacing.xs),
         for (var r = 0; r < rows; r++)
           Row(children: [for (var c = 0; c < 7; c++) cell(r * 7 + c)]),
       ],

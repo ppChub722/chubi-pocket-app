@@ -8,14 +8,14 @@ import '../tokens/app_spacing.dart';
 import '../tokens/avatar_metrics.dart';
 import '../tokens/hero_colors.dart';
 
-/// How tall and how spaced an [AppRow] is. A list item ([AppListRow]) and a
-/// field of a detail page ([AppDetailRow]) share the shell, not the rhythm.
-enum AppRowDensity {
+/// How tall and how spaced an [PpForgeRow] is. A list item ([PpForgeListRow]) and a
+/// field of a detail page ([PpForgeDetailRow]) share the shell, not the rhythm.
+enum PpForgeRowDensity {
   /// 8 / 8 padding; the leading is as big as the caller makes it.
   list(
-    vertical: AppSpacing.sm,
-    valueGap: AppSpacing.sm,
-    subtitleGap: AppSpacing.xxs,
+    vertical: PpForgeSpacing.sm,
+    valueGap: PpForgeSpacing.sm,
+    subtitleGap: PpForgeSpacing.xxs,
     leadingSize: AvatarMetrics.sizeMedium,
     iconSize: null,
     inkOnPressOnly: false,
@@ -24,16 +24,16 @@ enum AppRowDensity {
 
   /// 12 / 12 padding, a 22 px muted leading icon, ink only while pressed.
   detail(
-    vertical: AppSpacing.md,
-    valueGap: AppSpacing.md,
-    subtitleGap: AppSpacing.xs,
+    vertical: PpForgeSpacing.md,
+    valueGap: PpForgeSpacing.md,
+    subtitleGap: PpForgeSpacing.xs,
     leadingSize: 22,
     iconSize: 22,
     inkOnPressOnly: true,
     ownMaterial: false,
   );
 
-  const AppRowDensity({
+  const PpForgeRowDensity({
     required this.vertical,
     required this.valueGap,
     required this.subtitleGap,
@@ -52,7 +52,7 @@ enum AppRowDensity {
   final double subtitleGap;
 
   /// The leading slot's size for a [RowBadge] and for
-  /// [AppRow.reserveLeading].
+  /// [PpForgeRow.reserveLeading].
   final double leadingSize;
 
   /// Icons in the leading slot get this size and the muted colour; null =
@@ -67,7 +67,7 @@ enum AppRowDensity {
   final bool ownMaterial;
 }
 
-/// A corner badge on [AppRow.leading]: an icon or a brand logo image.
+/// A corner badge on [PpForgeRow.leading]: an icon or a brand logo image.
 @immutable
 class RowBadge {
   const RowBadge({this.icon, this.image, this.color, this.tooltip})
@@ -89,8 +89,8 @@ class RowBadge {
 
 /// The corner radius of the card cell a row sits in ([SectionCard] sets it),
 /// so a filled row (tinted, highlighted) keeps the card's round corners.
-class AppRowShape extends InheritedWidget {
-  const AppRowShape({
+class PpForgeRowShape extends InheritedWidget {
+  const PpForgeRowShape({
     required this.borderRadius,
     required super.child,
     super.key,
@@ -99,18 +99,18 @@ class AppRowShape extends InheritedWidget {
   final BorderRadius borderRadius;
 
   static BorderRadius? of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<AppRowShape>()?.borderRadius;
+      context.dependOnInheritedWidgetOfExactType<PpForgeRowShape>()?.borderRadius;
 
   @override
-  bool updateShouldNotify(AppRowShape old) => borderRadius != old.borderRadius;
+  bool updateShouldNotify(PpForgeRowShape old) => borderRadius != old.borderRadius;
 }
 
-/// The one row shell under [AppListRow] and [AppDetailRow]: [selector] ·
+/// The one row shell under [PpForgeListRow] and [PpForgeDetailRow]: [selector] ·
 /// leading (+ [badge]) · title / subtitle · trailing (+ icon) · actions ·
 /// chevron, then [footer]. It owns padding, fill (highlighted / tinted from
 /// [accent]), ink, dim and disabled; the two rows own their content.
-class AppRow extends StatelessWidget {
-  const AppRow({
+class PpForgeRow extends StatelessWidget {
+  const PpForgeRow({
     required this.title,
     this.subtitle,
     this.leading,
@@ -130,9 +130,9 @@ class AppRow extends StatelessWidget {
     this.highlighted = false,
     this.dimmed = false,
     this.disabled = false,
-    this.density = AppRowDensity.list,
+    this.density = PpForgeRowDensity.list,
     this.indent = 0,
-    this.horizontalInset = AppSpacing.lg,
+    this.horizontalInset = PpForgeSpacing.lg,
     this.onTap,
     this.onLongPress,
     this.loading = false,
@@ -141,7 +141,7 @@ class AppRow extends StatelessWidget {
 
   final Widget title;
 
-  /// Under [title], [AppRowDensity.subtitleGap] below it.
+  /// Under [title], [PpForgeRowDensity.subtitleGap] below it.
   final Widget? subtitle;
   final Widget? leading;
 
@@ -191,7 +191,7 @@ class AppRow extends StatelessWidget {
 
   /// 38 %, no taps, no ink (coming soon, not allowed).
   final bool disabled;
-  final AppRowDensity density;
+  final PpForgeRowDensity density;
   final double indent;
   final double horizontalInset;
   final VoidCallback? onTap;
@@ -315,14 +315,14 @@ class AppRow extends StatelessWidget {
               ),
           ],
           if (trailingIcon != null) ...[
-            const SizedBox(width: AppSpacing.xs),
+            const SizedBox(width: PpForgeSpacing.xs),
             swap(
               spinIcon,
               Icon(trailingIcon, size: 16, color: trailingIconColor ?? muted),
             ),
           ],
           if (actions.isNotEmpty) ...[
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () {},
@@ -330,7 +330,7 @@ class AppRow extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   for (final (i, a) in actions.indexed) ...[
-                    if (i > 0) const SizedBox(width: AppSpacing.sm),
+                    if (i > 0) const SizedBox(width: PpForgeSpacing.sm),
                     a,
                   ],
                 ],
@@ -338,7 +338,7 @@ class AppRow extends StatelessWidget {
             ),
           ],
           if (chevron) ...[
-            const SizedBox(width: AppSpacing.xs),
+            const SizedBox(width: PpForgeSpacing.xs),
             swap(spinChevron, Icon(PpForgeIcons.chevronRight, color: muted)),
           ],
         ],
@@ -349,13 +349,13 @@ class AppRow extends StatelessWidget {
       children: [
         if (selector case final s?) ...[
           s,
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: PpForgeSpacing.xs),
         ],
         if (lead != null) ...[
           lead,
-          const SizedBox(width: AppSpacing.md),
+          const SizedBox(width: PpForgeSpacing.md),
         ] else if (reserveLeading) ...[
-          SizedBox(width: square + AppSpacing.md),
+          SizedBox(width: square + PpForgeSpacing.md),
         ],
         Expanded(
           child: Column(
@@ -365,7 +365,7 @@ class AppRow extends StatelessWidget {
               line(maxWidth),
               if (footer case final f?)
                 Padding(
-                  padding: const EdgeInsets.only(top: AppSpacing.xs),
+                  padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
                   child: f,
                 ),
             ],
@@ -389,7 +389,7 @@ class AppRow extends StatelessWidget {
             ),
     );
 
-    final radius = AppRowShape.of(context);
+    final radius = PpForgeRowShape.of(context);
     final tappable = !disabled && (onTap != null || onLongPress != null);
     if (tappable) {
       row = InkWell(
@@ -411,10 +411,10 @@ class AppRow extends StatelessWidget {
     if (hero != null) row = HeroColorScope(colors: hero, child: row);
     if (disabled) {
       return IgnorePointer(
-        child: Opacity(opacity: AppOpacity.disabled, child: row),
+        child: Opacity(opacity: PpForgeOpacity.disabled, child: row),
       );
     }
-    if (dimmed) row = Opacity(opacity: AppOpacity.dimmed, child: row);
+    if (dimmed) row = Opacity(opacity: PpForgeOpacity.dimmed, child: row);
     return BusyLock(locked: locked, inert: inert, child: row);
   }
 }

@@ -24,27 +24,27 @@ class HeroAlert extends StatelessWidget {
   Widget build(BuildContext context) {
     final warning =
         HeroColors.maybeOf(context)?.warning ??
-        Theme.of(context).extension<AppColors>()!.warning;
+        Theme.of(context).extension<PpForgeColors>()!.warning;
     final style = Theme.of(context).textTheme.bodySmall?.copyWith(
       color: warning,
       fontWeight: FontWeight.w600,
     );
     return Material(
       color: warning.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(PpForgeRadius.md),
       child: BusyLock(
         child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(PpForgeRadius.md),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm,
+              horizontal: PpForgeSpacing.md,
+              vertical: PpForgeSpacing.sm,
             ),
             child: Row(
               children: [
                 Icon(icon, size: 16, color: warning),
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: PpForgeSpacing.sm),
                 Expanded(child: Text(text, style: style)),
                 if (onTap != null)
                   Icon(PpForgeIcons.chevronRight, size: 16, color: warning),

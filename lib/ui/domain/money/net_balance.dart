@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/utils/currency_formatter.dart';
-import '../../tokens/app_colors.dart';
 import 'money_text.dart';
+import '../../app_aliases.dart';
 
 /// The debt-state colour everywhere a debt says who owes whom: รอรับ (they
 /// owe me) green, รอจ่าย (I owe) red (owner 2026-10-17). The debts pages, the

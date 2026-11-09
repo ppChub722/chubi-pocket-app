@@ -35,16 +35,16 @@ class HeroDescription extends StatelessWidget {
           Theme.of(context).colorScheme.onSurfaceVariant,
     );
     if (editing) {
-      return AppInput.card(
+      return PpForgeInput.card(
         controller: controller,
         focusNode: focusNode,
         hint: hint,
-        label: UiConfig.stringsOf(context).fieldDescription,
+        label: PpForgeConfig.stringsOf(context).fieldDescription,
         maxLines: 2,
         maxLength: maxLength,
         onChanged: onChanged,
         style: style,
-        size: AppInputSize.regular,
+        size: PpForgeInputSize.regular,
       );
     }
     return ValueListenableBuilder<TextEditingValue>(
@@ -119,7 +119,7 @@ class HeroNameInput extends StatelessWidget {
     return _input(context);
   }
 
-  Widget _input(BuildContext context) => AppInput.title(
+  Widget _input(BuildContext context) => PpForgeInput.title(
     editing: editing,
     controller: controller,
     focusNode: focusNode,
@@ -130,9 +130,9 @@ class HeroNameInput extends StatelessWidget {
     maxLength: maxLength,
     maxLines: maxLines,
     style: style,
-    label: UiConfig.stringsOf(context).fieldName,
+    label: PpForgeConfig.stringsOf(context).fieldName,
     // The description's row height, so name and description sit close and
     // the name lines up with the icon's top (owner 2026-10-23).
-    size: AppInputSize.regular,
+    size: PpForgeInputSize.regular,
   );
 }

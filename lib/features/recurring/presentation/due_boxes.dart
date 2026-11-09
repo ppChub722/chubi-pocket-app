@@ -111,7 +111,7 @@ class _DueBoxesState extends State<DueBoxes> {
       return;
     }
     if (settleAmount(i, _typed) == null) {
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         AppLocalizations.of(context)!.occurrenceNeedsAmount,
         tone: Tone.warning,
@@ -243,7 +243,7 @@ void confirmOccurrenceRow(
   }
   final amounts = {i.id: ?typed};
   if (settleAmount(i, amounts) == null) {
-    showAppSnackBar(
+    showPpForgeSnackBar(
       context,
       AppLocalizations.of(context)!.occurrenceNeedsAmount,
       tone: Tone.warning,

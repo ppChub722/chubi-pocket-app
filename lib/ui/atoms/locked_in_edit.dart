@@ -14,7 +14,7 @@ class LockedInEdit extends StatelessWidget {
       ignoring: locked,
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 180),
-        opacity: locked ? AppOpacity.disabled : 1,
+        opacity: locked ? PpForgeOpacity.disabled : 1,
         child: child,
       ),
     );

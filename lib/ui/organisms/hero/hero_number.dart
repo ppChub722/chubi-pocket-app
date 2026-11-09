@@ -67,13 +67,13 @@ class HeroNumber extends StatelessWidget {
       children: [
         if (inline && labelText != null) ...[
           labelText,
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: PpForgeSpacing.sm),
         ],
         Flexible(
           child: DefaultTextStyle.merge(style: big, child: value),
         ),
         if (target != null) ...[
-          SizedBox(width: inline ? AppSpacing.sm : AppSpacing.xs),
+          SizedBox(width: inline ? PpForgeSpacing.sm : PpForgeSpacing.xs),
           Flexible(
             child: Text(
               target!,

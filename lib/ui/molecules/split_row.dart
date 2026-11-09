@@ -49,7 +49,7 @@ class SplitRow extends StatelessWidget {
           height: height,
           child: Align(alignment: Alignment.centerLeft, child: avatar),
         ),
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: PpForgeSpacing.sm),
         Expanded(
           child: under == null
               ? name
@@ -59,13 +59,13 @@ class SplitRow extends StatelessWidget {
                   children: [
                     name,
                     Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                      padding: const EdgeInsets.only(bottom: PpForgeSpacing.xs),
                       child: under,
                     ),
                   ],
                 ),
         ),
-        const SizedBox(width: AppSpacing.xs),
+        const SizedBox(width: PpForgeSpacing.xs),
         amount,
         SizedBox(
           width: trailingSlot,
@@ -94,7 +94,7 @@ class SplitRowAction extends StatelessWidget {
   final bool selected;
 
   @override
-  Widget build(BuildContext context) => AppIconButton.bare(
+  Widget build(BuildContext context) => PpForgeIconButton.bare(
     icon: icon,
     tooltip: tooltip,
     onPressed: onTap,
@@ -186,7 +186,7 @@ class SplitRowName extends StatelessWidget {
         return SizedBox(
           height: SplitRow.height,
           child: Center(
-            child: AppInput(
+            child: PpForgeInput(
               controller: controller,
               focusNode: focusNode,
               autofocus: autofocus,
@@ -196,8 +196,8 @@ class SplitRowName extends StatelessWidget {
               dense: true,
               hint: hint,
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.sm,
+                horizontal: PpForgeSpacing.md,
+                vertical: PpForgeSpacing.sm,
               ),
               onChanged: onChanged,
             ),
@@ -216,13 +216,13 @@ class SplitRowName extends StatelessWidget {
                   constraints: const BoxConstraints(minHeight: frameHeight),
                   padding: const EdgeInsets.symmetric(
                     horizontal: textInset,
-                    vertical: AppSpacing.sm,
+                    vertical: PpForgeSpacing.sm,
                   ),
                   decoration: BoxDecoration(
-                    color: (color ?? AppAvatar.colorFor(text)).withValues(
+                    color: (color ?? PpForgeAvatar.colorFor(text)).withValues(
                       alpha: 0.14,
                     ),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    borderRadius: BorderRadius.circular(PpForgeRadius.md),
                   ),
                   child: Text(
                     text,
@@ -283,7 +283,7 @@ class ShareAmountField extends StatefulWidget {
   ]) {
     final painter = TextPainter(
       text: TextSpan(
-        text: '${UiConfig.stringsOf(context).currencySymbol}$sample',
+        text: '${PpForgeConfig.stringsOf(context).currencySymbol}$sample',
         style: style,
       ),
       textDirection: TextDirection.ltr,
@@ -292,7 +292,7 @@ class ShareAmountField extends StatefulWidget {
     )..layout();
     final w = painter.width;
     painter.dispose();
-    return w.ceilToDouble() + AppSpacing.xs;
+    return w.ceilToDouble() + PpForgeSpacing.xs;
   }
 
   @override
@@ -358,10 +358,10 @@ class _ShareAmountFieldState extends State<ShareAmountField> {
       height: SplitRow.height,
       child: Align(
         alignment: Alignment.bottomCenter,
-        child: AppInput.card(
+        child: PpForgeInput.card(
           controller: _amount,
           focusNode: _focus,
-          type: AppInputType.amount,
+          type: PpForgeInputType.amount,
           style: style,
           hint: widget.hint,
           enabled: widget.enabled && onChanged != null,
@@ -387,10 +387,10 @@ class SplitPickChip extends StatelessWidget {
     constraints: const BoxConstraints(minHeight: SplitRow.height),
     child: Align(
       alignment: AlignmentDirectional.centerStart,
-      child: AppChip(
+      child: PpForgeChip(
         icon: PpForgeIcons.add,
         label: label,
-        tone: AppChipTone.primary,
+        tone: PpForgeChipTone.primary,
         selected: true,
         dashed: true,
         onTap: onTap,

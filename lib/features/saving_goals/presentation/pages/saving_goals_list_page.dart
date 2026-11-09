@@ -115,7 +115,7 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
                   b.status == SavingGoalsStatus.error &&
                   b.overview.summary.currency.isNotEmpty,
               listener: (c, _) =>
-                  showAppSnackBar(c, l.fpGoalsRefreshFailed, tone: Tone.danger),
+                  showPpForgeSnackBar(c, l.fpGoalsRefreshFailed, tone: Tone.danger),
             ),
           ],
           child: BlocBuilder<SavingGoalsCubit, SavingGoalsState>(

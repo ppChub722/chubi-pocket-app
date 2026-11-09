@@ -20,7 +20,7 @@ class DetailLayout extends StatelessWidget {
     this.metaLines = const [],
     this.footnote,
     this.topInset,
-    this.bottomInset = AppSpacing.xxl,
+    this.bottomInset = PpForgeSpacing.xxl,
     this.controller,
     this.physics,
     this.onRefresh,
@@ -45,7 +45,7 @@ class DetailLayout extends StatelessWidget {
 
   /// Space above the hero. Null (default) clears the top bar the page sits
   /// behind: the status-bar + bar height of this body's own context plus
-  /// [AppSpacing.lg]. Pass a number only to override (0 = flush).
+  /// [PpForgeSpacing.lg]. Pass a number only to override (0 = flush).
   final double? topInset;
   final double bottomInset;
   final ScrollController? controller;
@@ -62,9 +62,9 @@ class DetailLayout extends StatelessWidget {
           physics ??
           (refresh == null ? null : const AlwaysScrollableScrollPhysics()),
       padding: EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        topInset ?? MediaQuery.paddingOf(context).top + AppSpacing.lg,
-        AppSpacing.lg,
+        PpForgeSpacing.lg,
+        topInset ?? MediaQuery.paddingOf(context).top + PpForgeSpacing.lg,
+        PpForgeSpacing.lg,
         bottomInset,
       ),
       children: [

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/app_icons.dart';
-import '../../tokens/app_radius.dart';
-import '../../tokens/app_spacing.dart';
 import 'net_balance.dart';
+import '../../app_aliases.dart';
 
 enum DebtSummaryTone { owedToMe, iOwe, cleared, warn }
 

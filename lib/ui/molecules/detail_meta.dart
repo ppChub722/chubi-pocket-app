@@ -13,7 +13,7 @@ class DetailMeta extends StatelessWidget {
   Widget build(BuildContext context) {
     if (lines.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.xl),
+      padding: const EdgeInsets.only(top: PpForgeSpacing.xl),
       child: Text(
         lines.join('\n'),
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -35,9 +35,9 @@ class DetailFootnote extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.fromLTRB(
-      AppSpacing.md,
-      AppSpacing.md,
-      AppSpacing.md,
+      PpForgeSpacing.md,
+      PpForgeSpacing.md,
+      PpForgeSpacing.md,
       0,
     ),
     child: Text(
@@ -54,7 +54,7 @@ List<String> detailMetaLines(
   DateTime? createdAt,
   DateTime? updatedAt,
 }) {
-  final l = UiConfig.stringsOf(context);
+  final l = PpForgeConfig.stringsOf(context);
   final locale = Localizations.localeOf(context).toLanguageTag();
   String stamp(DateTime d) =>
       '${DateFormatter.medium(d, locale: locale)} '

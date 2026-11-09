@@ -9,17 +9,17 @@ import 'app_date_range_picker.dart';
 import 'app_sheet.dart';
 import 'period_picker_sheet.dart';
 
-sealed class AppDateResult {
-  const AppDateResult();
+sealed class PpForgeDateResult {
+  const PpForgeDateResult();
 }
 
-class AppDatePicked extends AppDateResult {
-  const AppDatePicked(this.date);
+class PpForgeDatePicked extends PpForgeDateResult {
+  const PpForgeDatePicked(this.date);
   final DateTime date;
 }
 
-class AppDateCleared extends AppDateResult {
-  const AppDateCleared();
+class PpForgeDateCleared extends PpForgeDateResult {
+  const PpForgeDateCleared();
 }
 
 /// The app's one date picker; every page picks a date through it:
@@ -28,10 +28,10 @@ class AppDateCleared extends AppDateResult {
 /// - [month]: a month,
 /// - [period]: a day, week, month or year, everything, or a range.
 /// [title] names the field (วันที่ครบกำหนด); none = the kit's default.
-abstract final class AppDatePicker {
+abstract final class PpForgeDatePicker {
   /// A calendar where a tap on a day picks it and closes, plus วันนี้ (when
   /// today is in range) and ล้าง ([clearable]).
-  static Future<AppDateResult?> show(
+  static Future<PpForgeDateResult?> show(
     BuildContext context, {
     required DateTime initial,
     DateTime? first,
@@ -41,10 +41,10 @@ abstract final class AppDatePicker {
   }) {
     final f = first ?? DateTime(2000);
     final l = last ?? DateTime.now().add(const Duration(days: 365 * 20));
-    return showAppSheet<AppDateResult>(
+    return showPpForgeSheet<PpForgeDateResult>(
       context,
-      title: title ?? UiConfig.stringsOf(context).pickDate,
-      builder: (ctx) => AppDatePickerSheet(
+      title: title ?? PpForgeConfig.stringsOf(context).pickDate,
+      builder: (ctx) => PpForgeDatePickerSheet(
         initial: initial,
         first: f,
         last: l,
@@ -62,14 +62,14 @@ abstract final class AppDatePicker {
     DateTime? first,
     DateTime? last,
     String? title,
-    List<AppDateRangePreset> presets = const [],
+    List<PpForgeDateRangePreset> presets = const [],
   }) {
     final f = first ?? DateTime(2000);
     final l = last ?? DateTime.now().add(const Duration(days: 365 * 20));
-    return showAppSheet<DateTimeRange>(
+    return showPpForgeSheet<DateTimeRange>(
       context,
-      title: title ?? UiConfig.stringsOf(context).pickDate,
-      builder: (ctx) => AppDateRangePickerSheet(
+      title: title ?? PpForgeConfig.stringsOf(context).pickDate,
+      builder: (ctx) => PpForgeDateRangePickerSheet(
         initial: initial,
         first: f,
         last: l,
@@ -87,9 +87,9 @@ abstract final class AppDatePicker {
     DateTime? last,
     String? title,
   }) {
-    return showAppSheet<DateTime>(
+    return showPpForgeSheet<DateTime>(
       context,
-      title: title ?? UiConfig.stringsOf(context).monthPickerTitle,
+      title: title ?? PpForgeConfig.stringsOf(context).monthPickerTitle,
       builder: (ctx) => MonthPickerGrid(
         selected: selected,
         first: first,
@@ -106,15 +106,15 @@ abstract final class AppDatePicker {
     required PeriodPick current,
     required PeriodPickerLabels labels,
     DateTime? last,
-  }) => showAppSheet<PeriodPick>(
+  }) => showPpForgeSheet<PeriodPick>(
     context,
     title: labels.title,
     builder: (ctx) => Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
+        PpForgeSpacing.lg,
         0,
-        AppSpacing.lg,
-        AppSpacing.lg,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.lg,
       ),
       child: PeriodPickerSheet(
         current: current,
@@ -126,8 +126,8 @@ abstract final class AppDatePicker {
   );
 }
 
-class AppDatePickerSheet extends StatelessWidget {
-  const AppDatePickerSheet({
+class PpForgeDatePickerSheet extends StatelessWidget {
+  const PpForgeDatePickerSheet({
     required this.initial,
     required this.first,
     required this.last,
@@ -140,14 +140,14 @@ class AppDatePickerSheet extends StatelessWidget {
   final DateTime first;
   final DateTime last;
   final bool clearable;
-  final ValueChanged<AppDateResult> onResult;
+  final ValueChanged<PpForgeDateResult> onResult;
 
   DateTime _clamp(DateTime d) =>
       d.isBefore(first) ? first : (d.isAfter(last) ? last : d);
 
   @override
   Widget build(BuildContext context) {
-    final strings = UiConfig.stringsOf(context);
+    final strings = PpForgeConfig.stringsOf(context);
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final canToday = !today.isBefore(first) && !today.isAfter(last);
@@ -159,34 +159,34 @@ class AppDatePickerSheet extends StatelessWidget {
           initialDate: _clamp(initial),
           firstDate: first,
           lastDate: last,
-          onDateChanged: (d) => onResult(AppDatePicked(d)),
+          onDateChanged: (d) => onResult(PpForgeDatePicked(d)),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
+            PpForgeSpacing.lg,
             0,
-            AppSpacing.lg,
-            AppSpacing.lg,
+            PpForgeSpacing.lg,
+            PpForgeSpacing.lg,
           ),
           child: Row(
             children: [
               if (clearable)
                 Expanded(
-                  child: AppButton(
+                  child: PpForgeButton(
                     label: strings.clear,
                     kind: ButtonIconKind.clear,
-                    variant: AppButtonVariant.outlined,
-                    onPressed: () => onResult(const AppDateCleared()),
+                    variant: PpForgeButtonVariant.outlined,
+                    onPressed: () => onResult(const PpForgeDateCleared()),
                   ),
                 ),
-              if (clearable && canToday) const SizedBox(width: AppSpacing.sm),
+              if (clearable && canToday) const SizedBox(width: PpForgeSpacing.sm),
               if (canToday)
                 Expanded(
-                  child: AppButton(
+                  child: PpForgeButton(
                     label: strings.today,
                     kind: ButtonIconKind.today,
-                    variant: AppButtonVariant.tonal,
-                    onPressed: () => onResult(AppDatePicked(today)),
+                    variant: PpForgeButtonVariant.tonal,
+                    onPressed: () => onResult(PpForgeDatePicked(today)),
                   ),
                 ),
             ],

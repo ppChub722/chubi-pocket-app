@@ -1,5 +1,5 @@
-class AppIconSize {
-  const AppIconSize._();
+class PpForgeIconSize {
+  const PpForgeIconSize._();
 
   static const double xs = 12;
   static const double sm = 16;

@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../molecules/hero_style.dart';
-import '../../organisms/hero/app_hero_card.dart';
 import '../tokens/app_icons.dart';
-import '../../tokens/app_spacing.dart';
 import '../../tokens/hero_colors.dart';
 import '../people/avatar.dart';
 import '../people/avatar_data.dart';
 import 'provider_logo.dart';
+import '../../app_aliases.dart';
 
 /// The connection page's hero (0.4.2 1b, one page for every app). Linked:
 /// tinted with the [brand] colour, the app's picture (or its logo) at 56 px

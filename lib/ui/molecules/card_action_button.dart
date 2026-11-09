@@ -22,15 +22,15 @@ class CardActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final size = AppIconButton.resolveSize(context);
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
+    final size = PpForgeIconButton.resolveSize(context);
     return SizedBox(
       width: size,
       height: size,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          AppIconButton(
+          PpForgeIconButton(
             icon: icon,
             onPressed: onTap,
             tooltip: tooltip,

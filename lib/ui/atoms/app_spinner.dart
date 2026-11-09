@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 
-enum AppSpinnerSize {
+enum PpForgeSpinnerSize {
   small(16, 2),
   medium(24, 2.5),
   large(36, 3.5);
 
-  const AppSpinnerSize(this.dimension, this.stroke);
+  const PpForgeSpinnerSize(this.dimension, this.stroke);
   final double dimension;
   final double stroke;
 }
 
-class AppSpinner extends StatelessWidget {
-  const AppSpinner({
-    this.size = AppSpinnerSize.medium,
+class PpForgeSpinner extends StatelessWidget {
+  const PpForgeSpinner({
+    this.size = PpForgeSpinnerSize.medium,
     this.color,
     this.value,
     super.key,
   });
 
-  final AppSpinnerSize size;
+  final PpForgeSpinnerSize size;
 
   final Color? color;
 

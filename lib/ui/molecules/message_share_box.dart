@@ -63,8 +63,8 @@ class _MessageShareBoxState extends State<MessageShareBox> {
           widget.label,
           style: text.labelLarge?.copyWith(color: scheme.onSurfaceVariant),
         ),
-        const SizedBox(height: AppSpacing.sm),
-        AppInput(
+        const SizedBox(height: PpForgeSpacing.sm),
+        PpForgeInput(
           key: widget.fieldKey,
           controller: _controller,
           minLines: 4,
@@ -72,22 +72,22 @@ class _MessageShareBoxState extends State<MessageShareBox> {
           keyboardType: TextInputType.multiline,
           textInputAction: TextInputAction.newline,
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PpForgeSpacing.sm),
         Row(
           children: [
             Expanded(
-              child: AppButton(
+              child: PpForgeButton(
                 key: widget.copyKey,
                 label: widget.copyLabel,
                 icon: Icons.content_copy_rounded,
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 expand: true,
                 onPressed: () => widget.onCopy(_controller.text),
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             Expanded(
-              child: AppButton(
+              child: PpForgeButton(
                 key: widget.shareKey,
                 label: widget.shareLabel,
                 icon: Icons.ios_share_rounded,

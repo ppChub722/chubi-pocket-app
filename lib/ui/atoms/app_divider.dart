@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_spacing.dart';
 
-class AppDivider extends StatelessWidget {
-  const AppDivider({this.height = 1, this.indent = 0, super.key});
+class PpForgeDivider extends StatelessWidget {
+  const PpForgeDivider({this.height = 1, this.indent = 0, super.key});
 
-  const AppDivider.row({super.key}) : height = 1, indent = AppSpacing.lg;
+  const PpForgeDivider.row({super.key}) : height = 1, indent = PpForgeSpacing.lg;
 
   final double height;
 

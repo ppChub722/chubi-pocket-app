@@ -7,8 +7,8 @@ class PageDots extends StatelessWidget {
     required this.count,
     required this.index,
     this.padding = const EdgeInsets.only(
-      top: AppSpacing.lg,
-      bottom: AppSpacing.sm,
+      top: PpForgeSpacing.lg,
+      bottom: PpForgeSpacing.sm,
     ),
     super.key,
   });
@@ -35,7 +35,7 @@ class PageDots extends StatelessWidget {
           children: [
             for (var i = 0; i < count; i++)
               Padding(
-                padding: EdgeInsets.only(left: i == 0 ? 0 : AppSpacing.xs),
+                padding: EdgeInsets.only(left: i == 0 ? 0 : PpForgeSpacing.xs),
                 child: AnimatedContainer(
                   key: ValueKey(i == index ? 'pageDotCurrent' : 'pageDot$i'),
                   duration: const Duration(milliseconds: 200),

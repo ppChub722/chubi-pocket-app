@@ -14,7 +14,7 @@ void showSaveFailure(
     showErrorSnackBar(context, e, onRetry: retry);
     return;
   }
-  showAppSnackBar(
+  showPpForgeSnackBar(
     context,
     message ?? errorTextOf(context, e),
     tone: Tone.danger,

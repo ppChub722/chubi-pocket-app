@@ -38,11 +38,11 @@ void main() {
         return const SizedBox.expand();
       },
     );
-    showAppSnackBar(ctx, 'first');
+    showPpForgeSnackBar(ctx, 'first');
     await t.pump(const Duration(milliseconds: 400));
-    showAppSnackBar(ctx, 'second');
+    showPpForgeSnackBar(ctx, 'second');
     await t.pump(const Duration(milliseconds: 400));
-    showAppSnackBar(ctx, 'third');
+    showPpForgeSnackBar(ctx, 'third');
     await t.pump(const Duration(milliseconds: 400));
     expect(_of(t, 'first').top, greaterThan(_of(t, 'second').top));
     expect(_of(t, 'second').top, greaterThan(_of(t, 'third').top));
@@ -66,12 +66,12 @@ void main() {
       },
     );
     for (final m in ['a', 'b', 'c', 'd']) {
-      showAppSnackBar(ctx, m);
+      showPpForgeSnackBar(ctx, m);
       await t.pump(const Duration(milliseconds: 300));
     }
     expect(find.text('a'), findsNothing);
     expect(find.text('d'), findsOne);
-    showAppSnackBar(ctx, 'b');
+    showPpForgeSnackBar(ctx, 'b');
     await t.pump(const Duration(milliseconds: 300));
     expect(find.text('b'), findsOne);
     // 'b' came again: it is the newest, so it is above 'd'.
@@ -91,7 +91,7 @@ void main() {
       },
       bottomBar: const SizedBox(height: 80, child: Text('bar')),
     );
-    showAppSnackBar(ctx, 'hi');
+    showPpForgeSnackBar(ctx, 'hi');
     await t.pump(const Duration(milliseconds: 400));
     expect(_of(t, 'hi').bottom, lessThanOrEqualTo(_of(t, 'bar').top));
     await t.pump(const Duration(seconds: 7));
@@ -109,7 +109,7 @@ void main() {
       },
     );
     var undone = 0;
-    showAppSnackBar(
+    showPpForgeSnackBar(
       ctx,
       'Deleted',
       actionLabel: 'Undo',
@@ -139,7 +139,7 @@ void main() {
     final stack = SnackStack.of(ScaffoldMessenger.of(ctx));
     stack.setSticky('connection', (_) => const Text('offline'));
     await t.pump(const Duration(milliseconds: 400));
-    showAppSnackBar(ctx, 'saved');
+    showPpForgeSnackBar(ctx, 'saved');
     await t.pump(const Duration(milliseconds: 400));
     // The sticky one came first: bottom; the transient one is above it.
     expect(_of(t, 'offline').top, greaterThan(_of(t, 'saved').top));

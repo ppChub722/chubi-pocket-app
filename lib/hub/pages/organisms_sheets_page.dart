@@ -43,7 +43,7 @@ class _SheetsPageState extends State<_SheetsPage> {
     variant: AppButtonVariant.outlined,
   );
 
-  Future<void> _standardSheet() => showAppSheet<void>(
+  Future<void> _standardSheet() => showPpForgeSheet<void>(
     context,
     title: 'Sheet title',
     builder: (_) => const Padding(
@@ -62,7 +62,7 @@ class _SheetsPageState extends State<_SheetsPage> {
     ),
   );
 
-  Future<void> _customSheet() => showAppSheetCustom<void>(
+  Future<void> _customSheet() => showPpForgeSheetCustom<void>(
     context,
     builder: (ctx) => SizedBox(
       height: MediaQuery.sizeOf(ctx).height,
@@ -91,7 +91,7 @@ class _SheetsPageState extends State<_SheetsPage> {
     bool empty = false,
     bool create = false,
   }) {
-    return showAppSheetCustom<void>(
+    return showPpForgeSheetCustom<void>(
       context,
       builder: (ctx) => PickerSheet(
         title: 'Choose wallet',
@@ -144,7 +144,7 @@ class _SheetsPageState extends State<_SheetsPage> {
   Future<void> _multiPicker() async {
     const bills = ['Dinner', 'Taxi', 'Hotel', 'Snacks', 'Tickets'];
     final picked = <String>{};
-    final added = await showAppSheetCustom<Set<String>>(
+    final added = await showPpForgeSheetCustom<Set<String>>(
       context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheet) => PickerSheet(
@@ -586,7 +586,7 @@ class _SheetsPageState extends State<_SheetsPage> {
           ),
         ),
         HubDemo(
-          title: 'AppSheetScaffold, showAppSheet, showAppSheetCustom',
+          title: 'AppSheetScaffold, showPpForgeSheet, showPpForgeSheetCustom',
           note:
               'The standard bottom sheet: drag handle, title, scrolling body, '
               'pinned footer. Custom = a sheet that builds its own scaffold.',
@@ -594,11 +594,11 @@ class _SheetsPageState extends State<_SheetsPage> {
             cells: [
               HubCell(
                 caption: 'Title + footer',
-                child: _demoButton('showAppSheet', _standardSheet),
+                child: _demoButton('showPpForgeSheet', _standardSheet),
               ),
               HubCell(
                 caption: 'Full height',
-                child: _demoButton('showAppSheetCustom', _customSheet),
+                child: _demoButton('showPpForgeSheetCustom', _customSheet),
               ),
             ],
           ),
@@ -681,7 +681,7 @@ class _SheetsPageState extends State<_SheetsPage> {
         ),
 
         HubPlayground(
-          title: 'showAppSheet',
+          title: 'showPpForgeSheet',
           note:
               'The standard bottom sheet: a title, a body that scrolls and an '
               'optional pinned footer. Set the options, then open it.',
@@ -700,7 +700,7 @@ class _SheetsPageState extends State<_SheetsPage> {
             alignment: Alignment.centerLeft,
             child: AppButton(
               label: 'Open the sheet',
-              onPressed: () => showAppSheet<void>(
+              onPressed: () => showPpForgeSheet<void>(
                 context,
                 title: v<String>('title').isEmpty ? null : v<String>('title'),
                 builder: (_) => Padding(

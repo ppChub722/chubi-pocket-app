@@ -13,32 +13,32 @@ class ErrorView extends StatelessWidget {
   final VoidCallback? onRetry;
 
   static String titleFor(BuildContext context, Object e) =>
-      UiConfig.of(context).errors.describe(e).title;
+      PpForgeConfig.of(context).errors.describe(e).title;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final config = UiConfig.of(context);
+    final config = PpForgeConfig.of(context);
     final info = config.errors.describe(error);
 
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 360),
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: const EdgeInsets.all(PpForgeSpacing.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(info.icon, size: 64, color: scheme.error),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: PpForgeSpacing.lg),
               Text(
                 info.title,
                 style: theme.textTheme.headlineMedium,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: PpForgeSpacing.lg),
               Text(
                 info.message,
                 style: theme.textTheme.bodyMedium?.copyWith(
@@ -47,8 +47,8 @@ class ErrorView extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               if (onRetry != null) ...[
-                const SizedBox(height: AppSpacing.lg),
-                AppButton(
+                const SizedBox(height: PpForgeSpacing.lg),
+                PpForgeButton(
                   label: config.strings.retry,
                   kind: ButtonIconKind.retry,
                   onPressed: onRetry,

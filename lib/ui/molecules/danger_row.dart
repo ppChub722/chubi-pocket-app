@@ -10,7 +10,7 @@ class DangerRow extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
-    this.padding = const EdgeInsets.only(top: AppSpacing.xl),
+    this.padding = const EdgeInsets.only(top: PpForgeSpacing.xl),
     this.caution = false,
     this.neutral = false,
     this.consequence,
@@ -43,7 +43,7 @@ class DangerRow extends StatelessWidget {
     final tint = neutral
         ? scheme.primary
         : caution
-        ? Theme.of(context).extension<AppColors>()!.warning
+        ? Theme.of(context).extension<PpForgeColors>()!.warning
         : scheme.error;
     final busy = BusyScope.control(
       context,
@@ -60,7 +60,7 @@ class DangerRow extends StatelessWidget {
         child: Material(
           color: tint.withValues(alpha: enabled ? 0.08 : 0.04),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(PpForgeRadius.md),
             side: BorderSide(color: color.withValues(alpha: 0.35)),
           ),
           clipBehavior: Clip.antiAlias,
@@ -70,8 +70,8 @@ class DangerRow extends StatelessWidget {
               constraints: const BoxConstraints(minHeight: 48),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
+                  horizontal: PpForgeSpacing.md,
+                  vertical: PpForgeSpacing.sm,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -86,7 +86,7 @@ class DangerRow extends StatelessWidget {
                           spinnerSize: 18,
                           child: Icon(icon, size: 20, color: color),
                         ),
-                        const SizedBox(width: AppSpacing.sm),
+                        const SizedBox(width: PpForgeSpacing.sm),
                         Flexible(
                           child: Text(
                             label,

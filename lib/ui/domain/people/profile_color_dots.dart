@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../atoms/dashed_rect_border.dart';
-import '../../tokens/app_colors.dart';
 import '../icons/color_token.dart';
+import '../../app_aliases.dart';
 
 /// A person's profile colours 1…[count] as dots (0.4.2 1b, under the avatar
 /// on the profile hero): a set slot = its colour, an unset one (past the

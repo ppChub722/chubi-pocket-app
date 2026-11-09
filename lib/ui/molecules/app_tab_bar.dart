@@ -6,8 +6,8 @@ import 'page_dots.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/busy_scope.dart';
 
-class AppTab<T> {
-  const AppTab({
+class PpForgeTab<T> {
+  const PpForgeTab({
     required this.value,
     required this.label,
     this.badgeCount = 0,
@@ -28,8 +28,8 @@ class AppTab<T> {
 /// With [pager] the pill rides the page position, so swiping the content
 /// moves it too, and a drag on the bar moves the content with it.
 /// Always the theme's primary (no per-tab colours).
-class AppTabBar<T> extends StatefulWidget {
-  const AppTabBar({
+class PpForgeTabBar<T> extends StatefulWidget {
+  const PpForgeTabBar({
     required this.tabs,
     required this.selected,
     required this.onChanged,
@@ -38,29 +38,29 @@ class AppTabBar<T> extends StatefulWidget {
     super.key,
   });
 
-  final List<AppTab<T>> tabs;
+  final List<PpForgeTab<T>> tabs;
   final T selected;
   final ValueChanged<T> onChanged;
 
   /// False: no track border (tabs inside a card that already frames them).
   final bool framed;
 
-  /// The [AppTabPager]'s controller, when the tabs page content.
+  /// The [PpForgeTabPager]'s controller, when the tabs page content.
   final PageController? pager;
 
   static const double height = 40;
 
-  /// The pill's slide, and the [AppTabPager]'s content slide with it.
+  /// The pill's slide, and the [PpForgeTabPager]'s content slide with it.
   static const duration = Duration(milliseconds: 300);
   static const curve = Cubic(0.2, 0.8, 0.2, 1);
 
   static const pillKey = ValueKey('app-tab-bar-pill');
 
   @override
-  State<AppTabBar<T>> createState() => _AppTabBarState<T>();
+  State<PpForgeTabBar<T>> createState() => _AppTabBarState<T>();
 }
 
-class _AppTabBarState<T> extends State<AppTabBar<T>> {
+class _AppTabBarState<T> extends State<PpForgeTabBar<T>> {
   static const _inset = 3.0;
 
   /// The finger's travel while dragging the bar; null when not dragging.
@@ -112,8 +112,8 @@ class _AppTabBarState<T> extends State<AppTabBar<T>> {
     // Snap the content too (it followed the finger).
     _pages?.animateToPage(
       target,
-      duration: AppTabBar.duration,
-      curve: AppTabBar.curve,
+      duration: PpForgeTabBar.duration,
+      curve: PpForgeTabBar.curve,
     );
     final value = widget.tabs[target].value;
     if (value != widget.selected) widget.onChanged(value);
@@ -140,11 +140,11 @@ class _AppTabBarState<T> extends State<AppTabBar<T>> {
       onHorizontalDragEnd: _onDragEnd,
       onHorizontalDragCancel: _onDragEnd,
       child: Container(
-        height: AppTabBar.height,
+        height: PpForgeTabBar.height,
         padding: const EdgeInsets.all(_inset),
         decoration: BoxDecoration(
           color: scheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(AppTabBar.height / 2),
+          borderRadius: BorderRadius.circular(PpForgeTabBar.height / 2),
           border: widget.framed
               ? Border.all(color: scheme.outlineVariant)
               : null,
@@ -177,7 +177,7 @@ class _AppTabBarState<T> extends State<AppTabBar<T>> {
                 // animates to the tab itself.
                 if (pager != null)
                   AnimatedBuilder(
-                    key: AppTabBar.pillKey,
+                    key: PpForgeTabBar.pillKey,
                     animation: pager,
                     builder: (context, child) => Positioned(
                       left: leftOf(_position),
@@ -190,9 +190,9 @@ class _AppTabBarState<T> extends State<AppTabBar<T>> {
                   )
                 else
                   AnimatedPositioned(
-                    key: AppTabBar.pillKey,
-                    duration: dragging ? Duration.zero : AppTabBar.duration,
-                    curve: AppTabBar.curve,
+                    key: PpForgeTabBar.pillKey,
+                    duration: dragging ? Duration.zero : PpForgeTabBar.duration,
+                    curve: PpForgeTabBar.curve,
                     left: leftOf(_position),
                     width: _segment,
                     top: 0,
@@ -216,7 +216,7 @@ class _AppTabBarState<T> extends State<AppTabBar<T>> {
   static const double _iconSize = 16;
 
   /// The count badge beside the label: its gap plus a two-digit width.
-  static const double _badgeWidth = AppSpacing.xs + 26;
+  static const double _badgeWidth = PpForgeSpacing.xs + 26;
 
   /// Whether [label] (+ the icon) fits one segment, its side padding taken.
   bool _fits(
@@ -235,16 +235,16 @@ class _AppTabBarState<T> extends State<AppTabBar<T>> {
     )..layout();
     final need =
         painter.width +
-        (withIcon ? _iconSize + AppSpacing.xs : 0) +
+        (withIcon ? _iconSize + PpForgeSpacing.xs : 0) +
         (withBadge ? _badgeWidth : 0) +
-        AppSpacing.xs * 2;
+        PpForgeSpacing.xs * 2;
     painter.dispose();
     return need <= _segment;
   }
 
   Widget _segmentOf(
     BuildContext context,
-    AppTab<T> t,
+    PpForgeTab<T> t,
     int n,
     Color strong,
     ColorScheme scheme,
@@ -280,11 +280,11 @@ class _AppTabBarState<T> extends State<AppTabBar<T>> {
       children: [
         if (showIcon) ...[
           Icon(icon, size: _iconSize, color: tint),
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: PpForgeSpacing.xs),
         ],
         Flexible(child: text),
         if (t.badgeCount > 0) ...[
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: PpForgeSpacing.xs),
           CountBadge(count: t.badgeCount),
         ],
       ],
@@ -298,7 +298,7 @@ class _AppTabBarState<T> extends State<AppTabBar<T>> {
             behavior: HitTestBehavior.opaque,
             onTap: () => widget.onChanged(t.value),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+              padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.xs),
               child: Center(child: label),
             ),
           ),
@@ -311,8 +311,8 @@ class _AppTabBarState<T> extends State<AppTabBar<T>> {
 /// The tabs' pages. Changing tab slides the content with the pill (same
 /// duration and curve); swiping the content changes tabs too, and the bar's
 /// pill rides along (owner 2026-10-21: swipe works on both).
-class AppTabPager<T> extends StatefulWidget {
-  const AppTabPager({
+class PpForgeTabPager<T> extends StatefulWidget {
+  const PpForgeTabPager({
     required this.values,
     required this.selected,
     required this.onChanged,
@@ -335,18 +335,18 @@ class AppTabPager<T> extends StatefulWidget {
 
   final bool showPageDots;
 
-  static const duration = AppTabBar.duration;
-  static const curve = AppTabBar.curve;
+  static const duration = PpForgeTabBar.duration;
+  static const curve = PpForgeTabBar.curve;
 
   @override
-  State<AppTabPager<T>> createState() => _AppTabPagerState<T>();
+  State<PpForgeTabPager<T>> createState() => _AppTabPagerState<T>();
 }
 
-class _AppTabPagerState<T> extends State<AppTabPager<T>> {
+class _AppTabPagerState<T> extends State<PpForgeTabPager<T>> {
   bool _sliding = false;
 
   @override
-  void didUpdateWidget(AppTabPager<T> old) {
+  void didUpdateWidget(PpForgeTabPager<T> old) {
     super.didUpdateWidget(old);
     final c = widget.controller;
     final i = widget.values.indexOf(widget.selected);
@@ -355,8 +355,8 @@ class _AppTabPagerState<T> extends State<AppTabPager<T>> {
     c
         .animateToPage(
           i,
-          duration: AppTabPager.duration,
-          curve: AppTabPager.curve,
+          duration: PpForgeTabPager.duration,
+          curve: PpForgeTabPager.curve,
         )
         .whenComplete(() => _sliding = false);
   }

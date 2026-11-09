@@ -295,9 +295,9 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   void _snack(String message, {Tone tone = Tone.neutral}) {
     final m = pageMessenger;
     if (m != null) {
-      showAppSnackBarOn(m, message, tone: tone);
+      showPpForgeSnackBarOn(m, message, tone: tone);
     } else if (mounted) {
-      showAppSnackBar(context, message, tone: tone);
+      showPpForgeSnackBar(context, message, tone: tone);
     }
   }
 

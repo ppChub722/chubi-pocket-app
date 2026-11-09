@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/app_icons.dart';
-import '../../tokens/app_radius.dart';
-import '../../tokens/app_spacing.dart';
 import '../../atoms/busy_scope.dart';
+import '../../app_aliases.dart';
 
 class FlowCards extends StatelessWidget {
   const FlowCards({

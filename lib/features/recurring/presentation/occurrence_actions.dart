@@ -45,10 +45,10 @@ Future<bool> _write(
     accounts.patchBalances(r.balances);
     HapticFeedback.mediumImpact();
     onChanged(r);
-    if (done != null) showAppSnackBarOn(messenger, done, tone: Tone.success);
+    if (done != null) showPpForgeSnackBarOn(messenger, done, tone: Tone.success);
     return true;
   } on ApiException catch (e) {
-    showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
+    showPpForgeSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
     return false;
   } finally {
     _inFlight.remove(key);
@@ -129,7 +129,7 @@ Future<bool> skipOccurrence(
 }) async {
   if (item.transaction != null || item.debtEntry != null) {
     final l = AppLocalizations.of(context)!;
-    showAppSnackBar(context, l.occurrenceSkipFilled, tone: Tone.warning);
+    showPpForgeSnackBar(context, l.occurrenceSkipFilled, tone: Tone.warning);
     return false;
   }
   return _write(
@@ -229,10 +229,10 @@ Future<bool> applyOccurrenceTx(
     if (fresh != null) txCubit.patchRow(fresh, afterWrite: true);
     HapticFeedback.mediumImpact();
     onChanged(ItemWriteResult(items: [?r.item], balances: r.balances));
-    showAppSnackBarOn(messenger, l.recurringLinked, tone: Tone.success);
+    showPpForgeSnackBarOn(messenger, l.recurringLinked, tone: Tone.success);
     return true;
   } on ApiException catch (e) {
-    showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
+    showPpForgeSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
     return false;
   } finally {
     _inFlight.remove(item.id);
@@ -279,10 +279,10 @@ Future<bool> linkExistingDebtEntry(
     accounts.patchBalances(r.balances);
     HapticFeedback.mediumImpact();
     onChanged(r);
-    showAppSnackBarOn(messenger, l.recurringLinked, tone: Tone.success);
+    showPpForgeSnackBarOn(messenger, l.recurringLinked, tone: Tone.success);
     return true;
   } on ApiException catch (e) {
-    showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
+    showPpForgeSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
     return false;
   } finally {
     _inFlight.remove(item.id);
@@ -643,7 +643,7 @@ Future<void> settleSelected(
     if (failed != null) errorText(l, failed),
   ];
   if (parts.isEmpty) return;
-  showAppSnackBarOn(
+  showPpForgeSnackBarOn(
     messenger,
     parts.join(' | '),
     tone: failed != null
@@ -673,7 +673,7 @@ OccurrenceActions settleAllActions(
         if (noAmount.isNotEmpty) l.occurrenceLeftOut(noAmount.length),
         if (refused > 0) l.occurrenceLeftOutRefused(refused),
       ];
-      showAppSnackBarOn(
+      showPpForgeSnackBarOn(
         messenger,
         left.isEmpty ? l.quickSaved : left.join(' | '),
         tone: left.isEmpty ? Tone.success : Tone.warning,

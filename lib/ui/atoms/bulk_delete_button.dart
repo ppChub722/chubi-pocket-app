@@ -13,7 +13,7 @@ class BulkDeleteButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppIconButton(
+    return PpForgeIconButton(
       icon: PpForgeIcons.delete,
       destructive: true,
       tooltip: tooltip,

@@ -47,7 +47,7 @@ class FramedInput extends StatefulWidget {
     this.style,
     this.dense = false,
     this.inCard = false,
-    this.type = AppInputType.text,
+    this.type = PpForgeInputType.text,
     this.allowNegative = false,
     this.currencySymbol,
     this.minWidth,
@@ -127,7 +127,7 @@ class FramedInput extends StatefulWidget {
   final bool dense;
 
   final bool inCard;
-  final AppInputType type;
+  final PpForgeInputType type;
 
   final bool allowNegative;
 
@@ -200,9 +200,9 @@ class _FramedInputState extends State<FramedInput> {
   }
 
   bool get _numeric =>
-      widget.type == AppInputType.amount ||
-      widget.type == AppInputType.number ||
-      widget.type == AppInputType.percent;
+      widget.type == PpForgeInputType.amount ||
+      widget.type == PpForgeInputType.number ||
+      widget.type == PpForgeInputType.percent;
 
   Widget _valueRow(Widget content) {
     final row = Baseline(
@@ -244,37 +244,37 @@ class _FramedInputState extends State<FramedInput> {
         (!w.readOnly || w.onTap != null) &&
         BusyScope.isLocked(context);
 
-    final symbol = w.type == AppInputType.amount
-        ? (w.currencySymbol ?? UiConfig.stringsOf(context).currencySymbol)
+    final symbol = w.type == PpForgeInputType.amount
+        ? (w.currencySymbol ?? PpForgeConfig.stringsOf(context).currencySymbol)
         : null;
     final suffixText =
-        w.suffixText ?? (w.type == AppInputType.percent ? '%' : null);
+        w.suffixText ?? (w.type == PpForgeInputType.percent ? '%' : null);
     final align = w.textAlign ?? (_numeric ? TextAlign.end : TextAlign.start);
     final formatters = <TextInputFormatter>[
-      if (w.type == AppInputType.amount)
+      if (w.type == PpForgeInputType.amount)
         ThousandsInputFormatter(allowNegative: w.allowNegative),
-      if (w.type == AppInputType.number)
+      if (w.type == PpForgeInputType.number)
         FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-      if (w.type == AppInputType.percent)
+      if (w.type == PpForgeInputType.percent)
         RangeInputFormatter(0, 100, decimals: w.decimals ?? 2),
-      if (w.type == AppInputType.reference && !w.allowLetters)
+      if (w.type == PpForgeInputType.reference && !w.allowLetters)
         FilteringTextInputFormatter.digitsOnly,
       ...?w.inputFormatters,
     ];
     final keyboard =
         w.keyboardType ??
         switch (w.type) {
-          AppInputType.amount ||
-          AppInputType.number => TextInputType.numberWithOptions(
+          PpForgeInputType.amount ||
+          PpForgeInputType.number => TextInputType.numberWithOptions(
             decimal: true,
             signed: w.allowNegative,
           ),
-          AppInputType.percent => const TextInputType.numberWithOptions(
+          PpForgeInputType.percent => const TextInputType.numberWithOptions(
             decimal: true,
           ),
-          AppInputType.reference =>
+          PpForgeInputType.reference =>
             w.allowLetters ? TextInputType.text : TextInputType.number,
-          AppInputType.text => null,
+          PpForgeInputType.text => null,
         };
     final faint = scheme.onSurfaceVariant.withValues(alpha: 0.4);
 
@@ -359,7 +359,7 @@ class _FramedInputState extends State<FramedInput> {
         final lead = <Widget>[
           if (w.prefixIcon != null) ...[
             Icon(w.prefixIcon, size: 20, color: scheme.onSurfaceVariant),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
           ],
           ?w.prefix,
           if (symbol != null)
@@ -384,14 +384,14 @@ class _FramedInputState extends State<FramedInput> {
           if (w.obscurable)
             // Does not make the field taller than its siblings: the button
             // overflows the one text line instead (same height for every
-            // AppInput, with or without the eye).
+            // PpForgeInput, with or without the eye).
             SizedBox(
               width: 40,
               height: 24,
               child: OverflowBox(
                 maxWidth: 40,
                 maxHeight: 40,
-                child: AppIconButton.flat(
+                child: PpForgeIconButton.flat(
                   icon: _obscured ? PpForgeIcons.visible : PpForgeIcons.hidden,
                   dense: true,
                   onPressed: () => setState(() => _obscured = !_obscured),
@@ -407,7 +407,7 @@ class _FramedInputState extends State<FramedInput> {
           content = Row(
             children: [
               ...lead,
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
               Expanded(child: inner),
               ...trail,
             ],
@@ -474,14 +474,14 @@ class _FramedInputState extends State<FramedInput> {
                 w.contentPadding ??
                 (w.inCard && w.boxed
                     ? const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: AppSpacing.sm,
+                        horizontal: PpForgeSpacing.md,
+                        vertical: PpForgeSpacing.sm,
                       )
                     : w.inCard
                     // No bottom inset: the underline sits right under the text.
-                    ? const EdgeInsets.only(top: AppSpacing.xs)
+                    ? const EdgeInsets.only(top: PpForgeSpacing.xs)
                     : EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
+                        horizontal: PpForgeSpacing.md,
                         vertical: w.dense ? 10 : 14,
                       )),
             border: frame(idle, 1),
@@ -510,7 +510,7 @@ class _FramedInputState extends State<FramedInput> {
           locked: busyLocked,
           child: w.enabled
               ? decorator
-              : Opacity(opacity: AppOpacity.disabled, child: decorator),
+              : Opacity(opacity: PpForgeOpacity.disabled, child: decorator),
         );
       },
     );

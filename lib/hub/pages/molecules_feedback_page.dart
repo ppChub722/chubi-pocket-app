@@ -366,7 +366,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                   AppButton(
                     label: 'Show: success + Undo',
                     variant: AppButtonVariant.outlined,
-                    onPressed: () => showAppSnackBar(
+                    onPressed: () => showPpForgeSnackBar(
                       context,
                       'Wallet deleted',
                       tone: Tone.success,
@@ -377,7 +377,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                   AppButton(
                     label: 'Show: error + Retry',
                     variant: AppButtonVariant.tonal,
-                    onPressed: () => showAppSnackBar(
+                    onPressed: () => showPpForgeSnackBar(
                       context,
                       'Could not save',
                       tone: Tone.danger,
@@ -436,7 +436,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
           ),
         ),
         HubDemo(
-          title: 'showAppSnackBar',
+          title: 'showPpForgeSnackBar',
           note:
               'Bottom only; newer snacks stack above older ones (see SnackStack). '
               'Tone adds a leading icon; '
@@ -450,16 +450,16 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                   label: t.name,
                   variant: AppButtonVariant.outlined,
                   onPressed: () =>
-                      showAppSnackBar(context, 'Tone ${t.name}', tone: t),
+                      showPpForgeSnackBar(context, 'Tone ${t.name}', tone: t),
                 ),
               AppButton(
                 label: 'with action',
-                onPressed: () => showAppSnackBar(
+                onPressed: () => showPpForgeSnackBar(
                   context,
                   'Wallet deleted',
                   tone: Tone.success,
                   actionLabel: 'Undo',
-                  onAction: () => showAppSnackBar(context, 'Undone'),
+                  onAction: () => showPpForgeSnackBar(context, 'Undone'),
                 ),
               ),
             ],
@@ -483,7 +483,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
               AppButton(
                 label: 'Add a snack',
                 variant: AppButtonVariant.outlined,
-                onPressed: () => showAppSnackBar(
+                onPressed: () => showPpForgeSnackBar(
                   context,
                   'Saved #${++_snackCount}',
                   tone: Tone.success,
@@ -492,7 +492,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
               AppButton(
                 label: 'Add error + Retry',
                 variant: AppButtonVariant.outlined,
-                onPressed: () => showAppSnackBar(
+                onPressed: () => showPpForgeSnackBar(
                   context,
                   'Could not save #${++_snackCount}',
                   tone: Tone.danger,
@@ -539,7 +539,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                       padding: const EdgeInsets.all(AppSpacing.lg),
                       child: AppButton(
                         label: 'Add a snack over the sheet',
-                        onPressed: () => showAppSnackBar(
+                        onPressed: () => showPpForgeSnackBar(
                           sheet,
                           'Over the sheet #${++_snackCount}',
                           tone: Tone.info,
@@ -553,7 +553,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
           ),
         ),
         HubDemo(
-          title: 'showAppSnackBarOn',
+          title: 'showPpForgeSnackBarOn',
           note:
               'Same, on a messenger captured up front, for calls after an '
               'await or a pop when the context may be gone.',
@@ -567,7 +567,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                   variant: AppButtonVariant.outlined,
                   onPressed: () async {
                     await Future<void>.delayed(const Duration(seconds: 1));
-                    showAppSnackBarOn(
+                    showPpForgeSnackBarOn(
                       messenger,
                       'After a pause: ${t.name}',
                       tone: t,
@@ -576,7 +576,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                 ),
               AppButton(
                 label: 'with action',
-                onPressed: () => showAppSnackBarOn(
+                onPressed: () => showPpForgeSnackBarOn(
                   messenger,
                   'Saved',
                   tone: Tone.info,

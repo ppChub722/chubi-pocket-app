@@ -19,7 +19,7 @@ class HeroFilter {
   final int count;
 
   /// A status color shown as a dot (ปกติ / ใกล้เต็ม / เกินงบ); null = none.
-  final AppChipTone? tone;
+  final PpForgeChipTone? tone;
 
   /// What the filter keeps (a wallet, a bank, a card); takes the dot's place.
   final IconData? icon;
@@ -36,18 +36,18 @@ class HeroFilterChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Wrap(
-    spacing: AppSpacing.xs,
-    runSpacing: AppSpacing.xs,
+    spacing: PpForgeSpacing.xs,
+    runSpacing: PpForgeSpacing.xs,
     children: [
       for (final f in filters)
-        AppChip(
+        PpForgeChip(
           key: ValueKey('heroFilter:${f.label}'),
           label: f.label,
           icon: f.icon,
           dot: f.icon == null && f.tone != null,
           tone: f.tone,
           selected: f.selected,
-          trailing: AppChipTrailing.count,
+          trailing: PpForgeChipTrailing.count,
           count: f.count,
           size: ChipSize.chip,
           onTap: f.onTap,

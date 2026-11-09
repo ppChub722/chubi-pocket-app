@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../tokens/typography.dart';
 
-class AppText extends StatelessWidget {
-  const AppText(
+class PpForgeText extends StatelessWidget {
+  const PpForgeText(
     this.text, {
-    this.role = AppTextRole.body,
+    this.role = PpForgeTextRole.body,
     this.color,
     this.weight,
     this.italic = false,
@@ -17,7 +17,7 @@ class AppText extends StatelessWidget {
   });
 
   final String text;
-  final AppTextRole role;
+  final PpForgeTextRole role;
   final Color? color;
   final FontWeight? weight;
 
@@ -29,7 +29,7 @@ class AppText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var style = AppTypography.of(context, role);
+    var style = PpForgeTypography.of(context, role);
     if (color != null || weight != null || italic) {
       style = style?.copyWith(
         color: color,

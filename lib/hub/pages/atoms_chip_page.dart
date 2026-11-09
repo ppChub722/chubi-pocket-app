@@ -73,7 +73,7 @@ Widget buildChipPage(BuildContext context) => Column(
           StatusChip(
             label: 'active ▾ (onTap)',
             kind: StatusKind.active,
-            onTap: () => showAppSnackBar(context, 'พัก / ทำต่อ'),
+            onTap: () => showPpForgeSnackBar(context, 'พัก / ทำต่อ'),
           ),
         ],
       ),

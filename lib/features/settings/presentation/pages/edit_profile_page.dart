@@ -269,7 +269,7 @@ class _EditProfilePageState extends State<EditProfilePage>
       auth.updateUser(updated);
       if (!mounted) return;
       HapticFeedback.mediumImpact();
-      showAppSnackBar(context, l.editProfileSnackSuccess, tone: Tone.success);
+      showPpForgeSnackBar(context, l.editProfileSnackSuccess, tone: Tone.success);
       _user = updated;
       commitSaved(_ProfileDraft.from(updated));
     } on ApiException catch (e) {

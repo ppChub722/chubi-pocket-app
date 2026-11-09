@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app_colors.dart';
+import '../../app_aliases.dart';
 
 enum ProgressTone {
   neutral,

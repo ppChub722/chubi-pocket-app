@@ -109,7 +109,7 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
       return;
     }
     if (_draft.needsDiscardPrompt) {
-      final l = UiConfig.stringsOf(context);
+      final l = PpForgeConfig.stringsOf(context);
       _askingToDiscard = true;
       final ok = await showConfirmDialog(
         context,
@@ -203,7 +203,7 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   }
 
   Widget editActionBar({required VoidCallback onSave, bool canSave = true}) {
-    final l = UiConfig.stringsOf(context);
+    final l = PpForgeConfig.stringsOf(context);
     return ModeActionBar(
       canUndo: canUndo && !_saving,
       canSave: canSave && isDirty && !_saving,
@@ -220,7 +220,7 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   /// Runs a save of this edit through the app's [SaveRunner] (the same one
   /// until it saves or is cancelled): a retry resends the same writes safely.
   Future<T> runSave<T>(Future<T> Function() save) {
-    final runner = _saveRunner ??= UiConfig.of(context).saveRunner?.call();
+    final runner = _saveRunner ??= PpForgeConfig.of(context).saveRunner?.call();
     return runner == null ? save() : runner.run(save);
   }
 

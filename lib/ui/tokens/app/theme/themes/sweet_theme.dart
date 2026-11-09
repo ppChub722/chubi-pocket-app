@@ -7,12 +7,12 @@ const _sweetPink = Color(0xFFFFB3C6);
 const _sweetPinkDeep = Color(0xFFFF8FB1);
 const _sweetAccent = Color(0xFFFFD6E0);
 
-final sweetTheme = AppTheme(
+final sweetTheme = PpForgeTheme(
   id: 'sweet',
   nameKey: 'theme_sweet',
   isPremium: false,
   previewSwatch: const [_sweetPink, _sweetAccent, Color(0xFFFFFFFF)],
-  lightColors: const AppColors(
+  lightColors: const PpForgeColors(
     brightness: Brightness.light,
     primary: _sweetPinkDeep,
     onPrimary: Color(0xFFFFFFFF),
@@ -41,7 +41,7 @@ final sweetTheme = AppTheme(
     error: Color(0xFFE11D63),
     onError: Color(0xFFFFFFFF),
   ),
-  darkColors: const AppColors(
+  darkColors: const PpForgeColors(
     brightness: Brightness.dark,
     primary: _sweetPink,
     onPrimary: Color(0xFF4A1029),

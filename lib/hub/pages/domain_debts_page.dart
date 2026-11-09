@@ -105,7 +105,7 @@ class _DebtsPageState extends State<_DebtsPage> {
                 settleLabel: 'จ่ายคืน ฿230',
                 onSettle: () => _note('settle'),
                 shareLabel: 'สรุปยอด',
-                onShare: () => showAppSheet<void>(
+                onShare: () => showPpForgeSheet<void>(
                   context,
                   title: 'สรุปยอดกับลี',
                   builder: (_) => DebtShareSheet(

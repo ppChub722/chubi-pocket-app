@@ -237,7 +237,7 @@ Future<Tag?> createOrFindTag(BuildContext context, String name) async {
   try {
     return await cubit.add(Tag(id: 'draft', name: n));
   } on ApiException {
-    showAppSnackBarOn(messenger, l.txTagCreateFailed, tone: Tone.danger);
+    showPpForgeSnackBarOn(messenger, l.txTagCreateFailed, tone: Tone.danger);
     return null;
   }
 }

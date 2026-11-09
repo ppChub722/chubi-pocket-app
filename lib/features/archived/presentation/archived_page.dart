@@ -96,7 +96,7 @@ class _ArchivedView extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final err = await context.read<ArchivedCubit>().restore(kind, item.id);
     if (!context.mounted) return;
-    showAppSnackBar(
+    showPpForgeSnackBar(
       context,
       err == null ? l.archivedRestored(item.name) : errorText(l, err),
       tone: err == null ? Tone.success : Tone.danger,

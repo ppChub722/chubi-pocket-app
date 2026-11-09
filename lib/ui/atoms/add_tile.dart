@@ -40,9 +40,9 @@ class AddTile extends StatelessWidget {
     if (!inList) return tile;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.lg,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.md,
+        PpForgeSpacing.lg,
         0,
       ),
       child: tile,
@@ -62,7 +62,7 @@ class AddTile extends StatelessWidget {
           onTap: onTap,
           customBorder: const CircleBorder(),
           child: SizedBox(
-            width: circleSize + AppSpacing.lg,
+            width: circleSize + PpForgeSpacing.lg,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -75,7 +75,7 @@ class AddTile extends StatelessWidget {
                     child: Icon(icon, color: color),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: PpForgeSpacing.xs),
                 Text(
                   label,
                   maxLines: 1,
@@ -91,7 +91,7 @@ class AddTile extends StatelessWidget {
       case AddTileVariant.card:
       case AddTileVariant.row:
         final isCard = variant == AddTileVariant.card;
-        final radius = isCard ? AppRadius.lg : AppRadius.md;
+        final radius = isCard ? PpForgeRadius.lg : PpForgeRadius.md;
         return DashedRectBorder(
           color: color,
           borderRadius: Radius.circular(radius),
@@ -104,14 +104,14 @@ class AddTile extends StatelessWidget {
                 constraints: const BoxConstraints(minHeight: 44),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.xs,
+                    horizontal: PpForgeSpacing.md,
+                    vertical: PpForgeSpacing.xs,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(icon, size: 20, color: color),
-                      const SizedBox(width: AppSpacing.sm),
+                      const SizedBox(width: PpForgeSpacing.sm),
                       Flexible(
                         child: Text(
                           label,

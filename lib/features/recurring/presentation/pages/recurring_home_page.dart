@@ -167,7 +167,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
           _itemsError = err;
         });
       } else {
-        showAppSnackBar(
+        showPpForgeSnackBar(
           context,
           AppLocalizations.of(context)!.fpRecurringRefreshFailed,
           tone: Tone.danger,

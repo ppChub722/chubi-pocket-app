@@ -62,13 +62,13 @@ class ChipRow extends StatelessWidget {
     final more = onMore == null
         ? null
         : moreFirst
-        ? AppChip(
+        ? PpForgeChip(
             label: moreLabel ?? '',
             icon: PpForgeIcons.add,
             dashed: true,
             onTap: onMore,
           )
-        : AppChip(
+        : PpForgeChip(
             label: moreLabel ?? '',
             icon: PpForgeIcons.more,
             dashed: true,
@@ -82,7 +82,7 @@ class ChipRow extends StatelessWidget {
       children: [
         if (icon != null) ...[
           Icon(icon, size: 18, color: scheme.onSurfaceVariant),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: PpForgeSpacing.sm),
         ],
         if (label != null) ...[
           Text(
@@ -92,7 +92,7 @@ class ChipRow extends StatelessWidget {
               context,
             ).textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: PpForgeSpacing.sm),
         ],
         Expanded(
           child: lines != null
@@ -108,11 +108,11 @@ class ChipRow extends StatelessWidget {
                     children: [
                       if (moreFirst && more != null) ...[
                         more,
-                        const SizedBox(width: AppSpacing.xs),
+                        const SizedBox(width: PpForgeSpacing.xs),
                       ],
                       for (final c in chips) ...[
                         c,
-                        const SizedBox(width: AppSpacing.xs),
+                        const SizedBox(width: PpForgeSpacing.xs),
                       ],
                       if (!moreFirst) ?more,
                     ],
@@ -182,7 +182,7 @@ class _RenderLimitedWrap extends RenderBox
     markNeedsLayout();
   }
 
-  static const _gap = AppSpacing.xs;
+  static const _gap = PpForgeSpacing.xs;
 
   int _maxLines;
   set maxLines(int v) {
@@ -364,7 +364,7 @@ class _LimitedChipWrapState extends State<LimitedChipWrap> {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             ...widget.chips,
-            AppChip(
+            PpForgeChip(
               key: const ValueKey('chipWrapFold'),
               label: '',
               icon: PpForgeIcons.collapse,
@@ -386,7 +386,7 @@ class _LimitedChipWrapState extends State<LimitedChipWrap> {
         },
         children: [
           ...widget.chips,
-          AppChip(
+          PpForgeChip(
             key: const ValueKey('chipWrapMore'),
             label: _hidden > 0 ? '+$_hidden' : '+',
             size: widget.size,

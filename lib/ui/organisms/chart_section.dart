@@ -23,7 +23,7 @@ class ChartSection extends StatelessWidget {
     title: title,
     description: description,
     children: [
-      Padding(padding: const EdgeInsets.all(AppSpacing.md), child: chart),
+      Padding(padding: const EdgeInsets.all(PpForgeSpacing.md), child: chart),
     ],
   );
 }

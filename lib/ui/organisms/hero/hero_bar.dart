@@ -132,7 +132,7 @@ class HeroBar extends StatelessWidget {
         ),
         if (left != null || right != null)
           Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
             child: Row(
               children: [
                 Expanded(
@@ -257,7 +257,7 @@ class _Legend extends StatelessWidget {
         height: 8,
         decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
       ),
-      const SizedBox(width: AppSpacing.xs),
+      const SizedBox(width: PpForgeSpacing.xs),
       Flexible(
         child: Text(
           text,
@@ -290,7 +290,7 @@ class HeroValueLine extends StatelessWidget {
             style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ),
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: PpForgeSpacing.sm),
         DefaultTextStyle.merge(
           style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
           child: value,

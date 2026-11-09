@@ -15,9 +15,9 @@ import 'split_row.dart';
 /// The one data row of every list: leading | title + chips / line 2 / alert |
 /// trailing value | actions. It knows no domain: money, wallets, tags and
 /// due dates come in as widgets, strings and [ListRowChip]s. Built on
-/// [AppRow] (density list).
-class AppListRow extends StatelessWidget {
-  const AppListRow({
+/// [PpForgeRow] (density list).
+class PpForgeListRow extends StatelessWidget {
+  const PpForgeListRow({
     required this.leading,
     this.title = '',
     this.titleField,
@@ -79,7 +79,7 @@ class AppListRow extends StatelessWidget {
   final bool highlighted;
 
   /// The row's own colour (its item's): pieces inside that follow a hero's
-  /// colours (a footer chain or bar) take it, as in an [AppHeroCard].
+  /// colours (a footer chain or bar) take it, as in an [PpForgeHeroCard].
   final Color? accent;
 
   /// Non-null = select mode: a check before [leading].
@@ -92,7 +92,7 @@ class AppListRow extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
 
-  /// The tapped row while its call runs ([AppRow.loading]).
+  /// The tapped row while its call runs ([PpForgeRow.loading]).
   final bool loading;
 
   @override
@@ -120,7 +120,7 @@ class AppListRow extends StatelessWidget {
           children: [
             if (titleMark case final mark?) ...[
               mark._build(context, textTheme.bodyLarge),
-              const SizedBox(width: AppSpacing.xs),
+              const SizedBox(width: PpForgeSpacing.xs),
             ],
             if (titleField != null)
               Expanded(child: titleField)
@@ -138,11 +138,11 @@ class AppListRow extends StatelessWidget {
                 ),
               ),
             for (final c in titleChips) ...[
-              const SizedBox(width: AppSpacing.xs),
+              const SizedBox(width: PpForgeSpacing.xs),
               chip(c._build()),
             ],
             if (status != null) ...[
-              const SizedBox(width: AppSpacing.xs),
+              const SizedBox(width: PpForgeSpacing.xs),
               chip(status._build()),
             ],
           ],
@@ -162,13 +162,13 @@ class AppListRow extends StatelessWidget {
       if (alert != null)
         Padding(
           padding: EdgeInsets.only(
-            top: line == null && third == null ? AppSpacing.xxs : AppSpacing.xs,
+            top: line == null && third == null ? PpForgeSpacing.xxs : PpForgeSpacing.xs,
           ),
           child: alert._build(context),
         ),
     ];
 
-    return AppRow(
+    return PpForgeRow(
       title: titleRow,
       subtitle: below.isEmpty
           ? null
@@ -199,7 +199,7 @@ class AppListRow extends StatelessWidget {
   }
 }
 
-/// A chip of an [AppListRow]; always drawn as a mini [AppChip].
+/// A chip of an [PpForgeListRow]; always drawn as a mini [PpForgeChip].
 @immutable
 class ListRowChip {
   const ListRowChip(
@@ -225,21 +225,21 @@ class ListRowChip {
   /// The tint in place of [tone]; with [bare] the icon and label colour.
   final Color? color;
 
-  /// See [AppChip.bare].
+  /// See [PpForgeChip.bare].
   final bool bare;
 
-  Widget _build() => AppChip(
+  Widget _build() => PpForgeChip(
     label: label,
     icon: icon,
     leading: leading,
-    tone: tone == null ? null : AppChipTone.fromTone(tone!),
+    tone: tone == null ? null : PpForgeChipTone.fromTone(tone!),
     color: color,
     selected: selected,
     fill: fill,
     onFill: onFill,
     bare: bare,
     size: ChipSize.mini,
-    maxWidth: AppListRow.chipMaxWidth,
+    maxWidth: PpForgeListRow.chipMaxWidth,
   );
 }
 
@@ -316,11 +316,11 @@ class ListRowLine {
                   child: lead._build(),
                 ),
                 if (hasText || icon != null)
-                  const SizedBox(width: AppSpacing.xs),
+                  const SizedBox(width: PpForgeSpacing.xs),
               ],
               if (icon != null) ...[
                 Icon(icon, size: 14, color: small?.color),
-                if (hasText) const SizedBox(width: AppSpacing.xxs),
+                if (hasText) const SizedBox(width: PpForgeSpacing.xxs),
               ],
               if (hasText)
                 Flexible(
@@ -355,7 +355,7 @@ class ListRowLine {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         for (final g in glyphs) ...[
-                          const SizedBox(width: AppSpacing.sm),
+                          const SizedBox(width: PpForgeSpacing.sm),
                           g._build(small),
                         ],
                       ],
@@ -383,7 +383,7 @@ class ListRowLine {
   }
 }
 
-/// [AppListRow.titleMark]: the glyph alone in its colour (no disc), a little
+/// [PpForgeListRow.titleMark]: the glyph alone in its colour (no disc), a little
 /// larger than the title's letters (text scale included).
 @immutable
 class ListRowMark {
@@ -561,7 +561,7 @@ class _IconAction extends ListRowAction {
   final bool loading;
 
   @override
-  Widget _build(BuildContext context) => AppIconButton.flat(
+  Widget _build(BuildContext context) => PpForgeIconButton.flat(
     icon: icon,
     tooltip: tooltip,
     dense: true,
@@ -587,7 +587,7 @@ class _MenuAction<T> extends ListRowAction {
     options: options,
     onSelected: onSelected,
     builder: (context, toggle) =>
-        AppIconButton.more(onPressed: toggle, tooltip: tooltip, dense: true),
+        PpForgeIconButton.more(onPressed: toggle, tooltip: tooltip, dense: true),
   );
 }
 
@@ -631,7 +631,7 @@ class _ButtonAction extends ListRowAction {
   final bool loading;
 
   @override
-  Widget _build(BuildContext context) => AppIconButton.filled(
+  Widget _build(BuildContext context) => PpForgeIconButton.filled(
     icon: icon,
     onPressed: onTap,
     tooltip: tooltip,
@@ -654,7 +654,7 @@ class ListRowAlert {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(PpForgeIcons.warning, size: 14, color: color),
-        const SizedBox(width: AppSpacing.xs),
+        const SizedBox(width: PpForgeSpacing.xs),
         Expanded(
           child: Text(
             text,

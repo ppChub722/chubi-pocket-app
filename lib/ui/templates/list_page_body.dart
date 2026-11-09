@@ -35,9 +35,9 @@ class ListPageBody extends StatefulWidget {
     this.rowCards = false,
     this.rowDividerIndent = defaultRowDividerIndent,
     this.rowGap = 0,
-    this.topInset = AppSpacing.md,
+    this.topInset = PpForgeSpacing.md,
     this.bottomInset = floatingBarClearance,
-    this.sidePadding = AppSpacing.lg,
+    this.sidePadding = PpForgeSpacing.lg,
     super.key,
   }) : assert(
          children == const <Widget>[] || builder == null,
@@ -156,7 +156,7 @@ class _ListPageBodyState extends State<ListPageBody> {
                 children: [
                   for (final h in w.scrollHeader) ...[
                     h,
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: PpForgeSpacing.md),
                   ],
                   ...(w.rowCards
                       ? cardedRows(w.children)
@@ -213,7 +213,7 @@ class TabbedListPageBody<T> extends StatelessWidget {
     super.key,
   });
 
-  final List<AppTab<T>> tabs;
+  final List<PpForgeTab<T>> tabs;
   final T selected;
   final ValueChanged<T> onChanged;
 
@@ -245,12 +245,12 @@ class TabbedListPageBody<T> extends StatelessWidget {
         if (!headerBelowTabs) ...header,
         Padding(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.sm,
-            AppSpacing.lg,
-            AppSpacing.sm,
+            PpForgeSpacing.lg,
+            PpForgeSpacing.sm,
+            PpForgeSpacing.lg,
+            PpForgeSpacing.sm,
           ),
-          child: AppTabBar<T>(
+          child: PpForgeTabBar<T>(
             tabs: tabs,
             selected: selected,
             onChanged: onChanged,
@@ -262,7 +262,7 @@ class TabbedListPageBody<T> extends StatelessWidget {
           child: MediaQuery.removePadding(
             context: context,
             removeTop: true,
-            child: AppTabPager<T>(
+            child: PpForgeTabPager<T>(
               values: [for (final t in tabs) t.value],
               selected: selected,
               onChanged: onChanged,

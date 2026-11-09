@@ -217,7 +217,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _savingReorder = false);
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         '${l.categoriesReorderSave}: ${errorText(l, e)}',
         tone: Tone.danger,
@@ -527,7 +527,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
   void _add(AppLocalizations l, CategoryType type) {
     if (!context.read<CategoriesCubit>().canAddMore) {
-      showAppSnackBar(context, l.categoriesLimitReached, tone: Tone.warning);
+      showPpForgeSnackBar(context, l.categoriesLimitReached, tone: Tone.warning);
       return;
     }
     context.push('/categories/new?type=${type.toJson()}');

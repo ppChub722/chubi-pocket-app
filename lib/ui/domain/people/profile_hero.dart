@@ -5,12 +5,12 @@ import '../../molecules/hero_style.dart';
 import '../../organisms/hero/app_hero_card.dart';
 import '../../organisms/hero/hero_facts.dart';
 import '../tokens/app_icons.dart';
-import '../../tokens/app_spacing.dart';
 import '../../tokens/hero_colors.dart';
 import 'avatar.dart';
 import 'avatar_data.dart';
 import 'profile_color_dots.dart';
 import '../../atoms/busy_scope.dart';
+import '../../app_aliases.dart';
 
 /// The profile hero's picture (0.4.2 1b): the [Avatar] at [size] with, in
 /// view mode, the source app's logo as a corner [badge]; in edit mode a ✎

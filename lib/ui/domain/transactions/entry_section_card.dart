@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_card.dart';
-import '../../tokens/app_radius.dart';
-import '../../tokens/app_spacing.dart';
 import '../../tokens/hero_metrics.dart';
+import '../../app_aliases.dart';
 
 /// One of the cards under the entry hero (owner 2026-11-03): the แบ่ง card
 /// and the tx detail card (category / wallet, tags, note, รายการประจำ). Its

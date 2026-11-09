@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_chip.dart';
-import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';
+import '../../app_aliases.dart';
 
 /// One person of a [BillDebtSummary]: who, their state with me before →
 /// after the save ([state], null = not known yet) and what the save does

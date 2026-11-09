@@ -3,7 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'pp_forge_icons.dart';
 
 /// What a button does, which fixes its icon: one table, so every Save /
-/// Cancel / Clear in the app wears the same icon. `AppButton(kind:)` reads it;
+/// Cancel / Clear in the app wears the same icon. `PpForgeButton(kind:)` reads it;
 /// an explicit `icon:` still wins.
 enum ButtonIconKind {
   save(PpForgeIcons.save),

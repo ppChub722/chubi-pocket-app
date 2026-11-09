@@ -57,7 +57,7 @@ class SelectCardGroup<T> extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         for (var start = 0; start < options.length; start += perRow) ...[
-          if (start > 0) const SizedBox(height: AppSpacing.sm),
+          if (start > 0) const SizedBox(height: PpForgeSpacing.sm),
           _row(
             context,
             options.sublist(start, (start + perRow).clamp(0, options.length)),
@@ -78,7 +78,7 @@ class SelectCardGroup<T> extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (var i = 0; i < items.length; i++) ...[
-            if (i > 0) const SizedBox(width: AppSpacing.sm),
+            if (i > 0) const SizedBox(width: PpForgeSpacing.sm),
             Expanded(child: _card(context, items[i], stacked: stacked)),
           ],
         ],
@@ -168,7 +168,7 @@ class SelectCardGroup<T> extends StatelessWidget {
         children: [
           if (iconDisc != null) ...[
             iconDisc,
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: PpForgeSpacing.sm),
           ],
           label,
           ?description,
@@ -179,7 +179,7 @@ class SelectCardGroup<T> extends StatelessWidget {
         children: [
           if (iconDisc != null) ...[
             iconDisc,
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
           ],
           Expanded(
             child: Column(
@@ -206,7 +206,7 @@ class SelectCardGroup<T> extends StatelessWidget {
                 ],
               )
             : null,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(PpForgeRadius.md),
         border: Border.all(
           color: active ? accent.withValues(alpha: dim) : scheme.outlineVariant,
           width: active ? 2 : 1,
@@ -215,12 +215,12 @@ class SelectCardGroup<T> extends StatelessWidget {
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(PpForgeRadius.md),
           onTap: onChanged == null ? null : () => onChanged!(o.value),
           child: Padding(
             padding: EdgeInsets.symmetric(
-              horizontal: stacked ? AppSpacing.sm : AppSpacing.md,
-              vertical: AppSpacing.md,
+              horizontal: stacked ? PpForgeSpacing.sm : PpForgeSpacing.md,
+              vertical: PpForgeSpacing.md,
             ),
             child: content,
           ),

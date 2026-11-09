@@ -10,7 +10,7 @@ class StatusAmountLine extends StatelessWidget {
   const StatusAmountLine({
     required this.status,
     required this.amount,
-    this.tone = AppChipTone.neutral,
+    this.tone = PpForgeChipTone.neutral,
     this.color,
     this.icon,
     this.chipSize = ChipSize.mini,
@@ -27,7 +27,7 @@ class StatusAmountLine extends StatelessWidget {
 
   /// The amount (an amount text); it is styled big here.
   final Widget amount;
-  final AppChipTone tone;
+  final PpForgeChipTone tone;
   final Color? color;
 
   @override
@@ -35,14 +35,14 @@ class StatusAmountLine extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     return Row(
       children: [
-        AppChip(
+        PpForgeChip(
           label: status,
           icon: icon,
           tone: tone,
           selected: true,
           size: chipSize,
         ),
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: PpForgeSpacing.sm),
         Flexible(
           child: DefaultTextStyle.merge(
             style: text.headlineMedium?.copyWith(

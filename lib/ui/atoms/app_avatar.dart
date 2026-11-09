@@ -4,14 +4,14 @@ import '../tokens/avatar_metrics.dart';
 
 /// The one round avatar: initials on a name-hashed colour, a tinted initial, a
 /// glyph, or a custom label (the "+3" overflow of a stack).
-class AppAvatar extends StatelessWidget {
-  const AppAvatar({required this.name, this.size = 40, super.key})
+class PpForgeAvatar extends StatelessWidget {
+  const PpForgeAvatar({required this.name, this.size = 40, super.key})
     : _mode = _Mode.initials,
       _glyph = null,
       _color = null,
       _text = null;
 
-  const AppAvatar.tinted({
+  const PpForgeAvatar.tinted({
     required this.name,
     required Color color,
     this.size = 40,
@@ -21,7 +21,7 @@ class AppAvatar extends StatelessWidget {
        _color = color,
        _text = null;
 
-  const AppAvatar.brand({
+  const PpForgeAvatar.brand({
     required this.name,
     required Color color,
     this.size = 40,
@@ -31,7 +31,7 @@ class AppAvatar extends StatelessWidget {
        _color = color,
        _text = null;
 
-  const AppAvatar.icon(IconData glyph, {this.size = 40, super.key})
+  const PpForgeAvatar.icon(IconData glyph, {this.size = 40, super.key})
     : name = '',
       _mode = _Mode.glyph,
       _glyph = glyph,
@@ -39,7 +39,7 @@ class AppAvatar extends StatelessWidget {
       _text = null;
 
   /// Any short text (a "+3" overflow count) on a neutral disc.
-  const AppAvatar.label(String text, {this.size = 40, super.key})
+  const PpForgeAvatar.label(String text, {this.size = 40, super.key})
     : name = '',
       _mode = _Mode.label,
       _glyph = null,

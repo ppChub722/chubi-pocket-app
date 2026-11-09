@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../features/accounts/domain/account_type.dart';
 import '../../molecules/app_list_row.dart';
-import '../../tokens/app_colors.dart';
 import '../tokens/app_icons.dart';
 import '../tokens/module_colors.dart';
 import '../../tokens/color_contrast.dart';
@@ -12,6 +11,7 @@ import '../icons/icon_registry.dart';
 import '../icons/icon_type.dart';
 import '../icons/type_icon_default.dart';
 import '../money/wallet_card.dart';
+import '../../app_aliases.dart';
 
 /// Where a transaction row came from, shown as its [AppListRow.titleMark].
 enum TxSource { recurring, installment, event, debt, pending }

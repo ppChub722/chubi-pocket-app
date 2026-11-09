@@ -20,7 +20,7 @@ Future<void> openAppDownload(BuildContext context, String url) async {
         mode: LaunchMode.externalApplication,
       ).catchError((_) => false);
   if (!ok && context.mounted) {
-    showAppSnackBar(context, l.appUpdateOpenFailed, tone: Tone.danger);
+    showPpForgeSnackBar(context, l.appUpdateOpenFailed, tone: Tone.danger);
   }
 }
 

@@ -220,7 +220,7 @@ class _ConnectionCheckScreenState extends State<ConnectionCheckScreen> {
                     ? null
                     : () {
                         Clipboard.setData(ClipboardData(text: _report));
-                        showAppSnackBar(context, 'Report copied');
+                        showPpForgeSnackBar(context, 'Report copied');
                       },
               ),
             ],

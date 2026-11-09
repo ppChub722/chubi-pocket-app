@@ -23,9 +23,9 @@ class DashboardPageBody extends StatelessWidget {
     this.tiles,
     this.lists = const [],
     this.skeletonShape = const DashboardSkeletonShape(),
-    this.topInset = AppSpacing.xs,
+    this.topInset = PpForgeSpacing.xs,
     this.bottomInset = 96,
-    this.sidePadding = AppSpacing.lg,
+    this.sidePadding = PpForgeSpacing.lg,
     super.key,
   });
 
@@ -56,7 +56,7 @@ class DashboardPageBody extends StatelessWidget {
   final double sidePadding;
 
   static Widget _dim(bool dim, Widget child) => AnimatedOpacity(
-    duration: AppDurations.fast,
+    duration: PpForgeDurations.fast,
     opacity: dim ? 0.5 : 1,
     child: child,
   );
@@ -92,8 +92,8 @@ class DashboardPageBody extends StatelessWidget {
           ),
           children: [
             if (banner != null) ...[
-              AppMessage(message: banner!, tone: Tone.danger),
-              const SizedBox(height: AppSpacing.md),
+              PpForgeMessage(message: banner!, tone: Tone.danger),
+              const SizedBox(height: PpForgeSpacing.md),
             ],
             _dim(
               refreshing,
@@ -103,10 +103,10 @@ class DashboardPageBody extends StatelessWidget {
               ),
             ),
             if (period != null) ...[
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               // Never dims: the period is what is loading.
               period!,
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
             ],
             _dim(
               refreshing,
@@ -116,7 +116,7 @@ class DashboardPageBody extends StatelessWidget {
                   ...kpis,
                   ...charts,
                   if (tiles != null) ...[
-                    const SizedBox(height: AppSpacing.lg),
+                    const SizedBox(height: PpForgeSpacing.lg),
                     tiles!,
                   ],
                   ...lists,

@@ -10,7 +10,7 @@ import 'snack_stack.dart';
 /// connection snack already says it: offline shows that one snack only.
 bool _saidByConnectionSnack(BuildContext context, String message, Tone tone) {
   if (tone != Tone.danger || !SnackStack.connectionCovers) return false;
-  final errors = UiConfig.of(context).errors;
+  final errors = PpForgeConfig.of(context).errors;
   for (final e in [TimeoutException('offline'), TimeoutException('slow')]) {
     final info = errors.describe(e);
     if (message.contains(info.message) || message.contains(info.title)) {
@@ -23,7 +23,7 @@ bool _saidByConnectionSnack(BuildContext context, String message, Tone tone) {
 /// Shows a snack on the SnackStack: bottom only, newer ones push the older
 /// ones up (see SnackStack). Over a sheet (no Scaffold) it stacks above the
 /// sheet.
-void showAppSnackBar(
+void showPpForgeSnackBar(
   BuildContext context,
   String message, {
   Tone tone = Tone.neutral,
@@ -40,7 +40,7 @@ void showAppSnackBar(
       return;
     }
   }
-  showAppSnackBarOn(
+  showPpForgeSnackBarOn(
     ScaffoldMessenger.of(context),
     message,
     tone: tone,
@@ -49,7 +49,7 @@ void showAppSnackBar(
   );
 }
 
-void showAppSnackBarOn(
+void showPpForgeSnackBarOn(
   ScaffoldMessengerState messenger,
   String message, {
   Tone tone = Tone.neutral,

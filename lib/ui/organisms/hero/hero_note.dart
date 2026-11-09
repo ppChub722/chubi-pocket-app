@@ -33,8 +33,8 @@ class CountMark extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppIcon(icon, size: AppIconSize.sm, color: color),
-            const SizedBox(width: AppSpacing.xxs),
+            PpForgeIcon(icon, size: PpForgeIconSize.sm, color: color),
+            const SizedBox(width: PpForgeSpacing.xxs),
             Text(
               '$count',
               style: Theme.of(

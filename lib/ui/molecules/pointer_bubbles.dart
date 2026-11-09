@@ -32,7 +32,7 @@ class PointerBubbles extends StatelessWidget {
   final List<PointerBubble> bubbles;
 
   static const _arrow = 5.0;
-  static const _padX = AppSpacing.sm;
+  static const _padX = PpForgeSpacing.sm;
   static const _padY = 1.0;
   static const _gap = 4.0;
 
@@ -105,7 +105,7 @@ class PointerBubbles extends StatelessWidget {
     final edge = b.strong
         ? b.color
         : Color.alphaBlend(b.color.withValues(alpha: 0.4), surface);
-    final ink = b.strong ? AppChip.readableOn(b.color) : b.color;
+    final ink = b.strong ? PpForgeChip.readableOn(b.color) : b.color;
     final x = b.at.clamp(0, 1) * w;
     final arrowX = x
         .clamp(p.left + _arrow + 1, p.left + p.bw - _arrow - 1)
@@ -162,7 +162,7 @@ class _BubblePainter extends CustomPainter {
   final double boxHeight;
   final double tailX;
 
-  static const _r = AppSpacing.sm;
+  static const _r = PpForgeSpacing.sm;
   static const _a = PointerBubbles._arrow;
 
   @override

@@ -38,19 +38,19 @@ class IconChipStrip extends StatelessWidget {
         SizedBox(
           height: size.heightOf(context),
           child: Center(
-            child: AppIcon(
+            child: PpForgeIcon(
               icon,
-              size: AppIconSize.md,
+              size: PpForgeIconSize.md,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ),
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: PpForgeSpacing.sm),
         Expanded(
           child: lines == null
               ? Wrap(
-                  spacing: AppSpacing.xs,
-                  runSpacing: AppSpacing.xs,
+                  spacing: PpForgeSpacing.xs,
+                  runSpacing: PpForgeSpacing.xs,
                   children: chips,
                 )
               : LimitedChipWrap(

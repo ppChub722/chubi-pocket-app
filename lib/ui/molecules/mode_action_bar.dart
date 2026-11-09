@@ -35,31 +35,31 @@ class ModeActionBar extends StatelessWidget {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.sm,
-          AppSpacing.lg,
-          AppSpacing.md,
+          PpForgeSpacing.lg,
+          PpForgeSpacing.sm,
+          PpForgeSpacing.lg,
+          PpForgeSpacing.md,
         ),
         child: Row(
           children: [
             Expanded(
-              child: AppButton(
+              child: PpForgeButton(
                 label: cancelLabel,
                 kind: ButtonIconKind.cancel,
-                variant: AppButtonVariant.outlined,
-                size: AppButtonSize.large,
+                variant: PpForgeButtonVariant.outlined,
+                size: PpForgeButtonSize.large,
                 expand: true,
                 onPressed: saving ? null : onCancel,
               ),
             ),
             if (onUndo != null) ...[
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 220),
                 transitionBuilder: (child, anim) =>
                     ScaleTransition(scale: anim, child: child),
                 child: canUndo && !saving
-                    ? AppIconButton(
+                    ? PpForgeIconButton(
                         key: const ValueKey('undo-on'),
                         tooltip: undoTooltip,
                         onPressed: onUndo,
@@ -67,16 +67,16 @@ class ModeActionBar extends StatelessWidget {
                       )
                     : SizedBox.square(
                         key: const ValueKey('undo-off'),
-                        dimension: AppIconButton.resolveSize(context),
+                        dimension: PpForgeIconButton.resolveSize(context),
                       ),
               ),
             ],
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             Expanded(
-              child: AppButton(
+              child: PpForgeButton(
                 label: saveLabel,
                 kind: ButtonIconKind.save,
-                size: AppButtonSize.large,
+                size: PpForgeButtonSize.large,
                 expand: true,
                 loading: saving,
                 submits: true,

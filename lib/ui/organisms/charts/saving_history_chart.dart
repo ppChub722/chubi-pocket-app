@@ -132,7 +132,7 @@ class SavingHistoryChart extends StatelessWidget {
           height: 8,
           decoration: ShapeDecoration(color: c, shape: const CircleBorder()),
         ),
-        const SizedBox(width: AppSpacing.xs),
+        const SizedBox(width: PpForgeSpacing.xs),
         Text(label, style: small),
       ],
     );
@@ -143,7 +143,7 @@ class SavingHistoryChart extends StatelessWidget {
       children: [
         if (caption != null) ...[
           Text(caption!, style: small),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: PpForgeSpacing.xs),
         ],
         SizedBox(
           height: height,
@@ -168,10 +168,10 @@ class SavingHistoryChart extends StatelessWidget {
         if (actualLegend != null ||
             neededLegend != null ||
             (planLegend != null && plan.any((v) => v != null))) ...[
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: PpForgeSpacing.xs),
           Wrap(
-            spacing: AppSpacing.md,
-            runSpacing: AppSpacing.xs,
+            spacing: PpForgeSpacing.md,
+            runSpacing: PpForgeSpacing.xs,
             children: [
               if (actualLegend != null) legend(series, actualLegend!),
               if (neededLegend != null) legend(needed, neededLegend!),

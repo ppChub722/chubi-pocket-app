@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 /// A radio circle (one of a few, exactly one picked): a ring, filled with a
 /// dot when [selected]. Only the mark; the row around it takes the tap.
 /// [enabled] false = the muted ring (a "coming soon" choice).
-class AppRadioMark extends StatelessWidget {
-  const AppRadioMark({
+class PpForgeRadioMark extends StatelessWidget {
+  const PpForgeRadioMark({
     required this.selected,
     this.enabled = true,
     this.size = 20,

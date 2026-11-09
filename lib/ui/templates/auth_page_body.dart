@@ -33,28 +33,28 @@ class AuthPageBody extends StatelessWidget {
         child: BrandScreen(
           header: brand,
           children: [
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: PpForgeSpacing.xl),
             for (final (i, g) in groups.indexed) ...[
-              if (i > 0) const SizedBox(height: AppSpacing.md),
+              if (i > 0) const SizedBox(height: PpForgeSpacing.md),
               g,
             ],
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: PpForgeSpacing.xl),
             submit,
             if (alternatives.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: PpForgeSpacing.lg),
               for (final (i, a) in alternatives.indexed) ...[
-                if (i > 0) const SizedBox(height: AppSpacing.lg),
+                if (i > 0) const SizedBox(height: PpForgeSpacing.lg),
                 a,
               ],
             ],
             if (switchLink != null) ...[
               SizedBox(
-                height: alternatives.isNotEmpty ? AppSpacing.lg : AppSpacing.md,
+                height: alternatives.isNotEmpty ? PpForgeSpacing.lg : PpForgeSpacing.md,
               ),
               switchLink!,
             ],
             if (footer != null) ...[
-              const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: PpForgeSpacing.xl),
               footer!,
             ],
           ],

@@ -201,7 +201,7 @@ class _ScaffoldHost implements _Host {
         backgroundColor: Colors.transparent,
         elevation: 0,
         padding: EdgeInsets.zero,
-        margin: const EdgeInsets.all(AppSpacing.md),
+        margin: const EdgeInsets.all(PpForgeSpacing.md),
         content: SnackStackView(stack: stack),
       ),
     );
@@ -237,12 +237,12 @@ class _OverlayHost implements _Host {
     if (_entry != null) return; // the view listens to the stack itself
     final entry = OverlayEntry(
       builder: (context) => Positioned(
-        left: AppSpacing.lg,
-        right: AppSpacing.lg,
+        left: PpForgeSpacing.lg,
+        right: PpForgeSpacing.lg,
         bottom:
             MediaQuery.viewInsetsOf(context).bottom +
             MediaQuery.viewPaddingOf(context).bottom +
-            AppSpacing.md,
+            PpForgeSpacing.md,
         child: SnackStackView(stack: stack),
       ),
     );
@@ -272,7 +272,7 @@ class SnackStackView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (final (i, e) in newestFirst.indexed) ...[
-                if (i > 0) const SizedBox(height: AppSpacing.sm),
+                if (i > 0) const SizedBox(height: PpForgeSpacing.sm),
                 _SnackTile(key: ValueKey(e.id), entry: e, stack: stack),
               ],
             ],
@@ -294,13 +294,13 @@ class _SnackTile extends StatelessWidget {
     final animate = !MediaQuery.disableAnimationsOf(context);
     final content =
         entry._content?.call(context) ??
-        AppMessage(
+        PpForgeMessage(
           message: entry.message,
           tone: entry.tone,
           floating: true,
           actions: [
             if (entry.actionLabel != null && entry.onAction != null)
-              AppMessageAction(
+              PpForgeMessageAction(
                 label: entry.actionLabel!,
                 onPressed: () {
                   stack.dismiss(entry.id);

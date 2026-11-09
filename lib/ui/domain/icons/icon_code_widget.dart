@@ -2,12 +2,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../tokens/app_colors.dart';
 import '../../tokens/avatar_metrics.dart';
 import 'color_token.dart';
 import 'icon_code.dart';
 import 'icon_registry.dart';
 import 'icon_shape.dart';
+import '../../app_aliases.dart';
 
 enum IconDisplayMode { full, compact }
 

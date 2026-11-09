@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../tokens/icon_size.dart';
 
-/// The one icon: a glyph at an [AppIconSize] step, in the surrounding icon
+/// The one icon: a glyph at an [PpForgeIconSize] step, in the surrounding icon
 /// colour unless [color] is given (a theme token, never a literal).
-class AppIcon extends StatelessWidget {
-  const AppIcon(
+class PpForgeIcon extends StatelessWidget {
+  const PpForgeIcon(
     this.icon, {
     this.size,
     this.color,

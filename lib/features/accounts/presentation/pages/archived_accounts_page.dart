@@ -26,7 +26,7 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
     try {
       await context.read<AccountsCubit>().restore(a.id);
       if (!mounted) return;
-      showAppSnackBar(context, l.accountRestored(a.name), tone: Tone.success);
+      showPpForgeSnackBar(context, l.accountRestored(a.name), tone: Tone.success);
     } on ApiException catch (e) {
       if (mounted) showErrorSnackBar(context, e);
     } finally {

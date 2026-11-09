@@ -1,1 +1,1 @@
-enum AppInputType { text, amount, number, percent, reference }
+enum PpForgeInputType { text, amount, number, percent, reference }

@@ -29,13 +29,13 @@ class TagRow extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 1),
-          child: AppIcon(PpForgeIcons.tag, size: AppIconSize.sm, color: muted),
+          child: PpForgeIcon(PpForgeIcons.tag, size: PpForgeIconSize.sm, color: muted),
         ),
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: PpForgeSpacing.sm),
         Expanded(
           child: Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
+            spacing: PpForgeSpacing.xs,
+            runSpacing: PpForgeSpacing.xs,
             children: [
               if (label != null)
                 Padding(
@@ -49,7 +49,7 @@ class TagRow extends StatelessWidget {
                 ),
               ...tags,
               if (onAdd != null)
-                AppChip(
+                PpForgeChip(
                   label: addLabel ?? '',
                   icon: PpForgeIcons.add,
                   size: ChipSize.mini,

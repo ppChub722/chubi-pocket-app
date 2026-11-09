@@ -32,7 +32,7 @@ class ReorderMoveBar extends StatelessWidget {
   }
 
   Widget _bar(BuildContext context) {
-    final l = UiConfig.stringsOf(context);
+    final l = PpForgeConfig.stringsOf(context);
     final scheme = Theme.of(context).colorScheme;
     final c = controller;
     Widget button(
@@ -40,22 +40,22 @@ class ReorderMoveBar extends StatelessWidget {
       String tooltip,
       bool enabled,
       VoidCallback onTap,
-    ) => AppIconButton.flat(
+    ) => PpForgeIconButton.flat(
       tooltip: tooltip,
       icon: icon,
       onPressed: enabled ? onTap : null,
     );
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      padding: const EdgeInsets.only(top: PpForgeSpacing.sm),
       // Hugs the bar (a bare Center would take a bottom bar's full height).
       child: Center(
         heightFactor: 1,
         child: Material(
           elevation: 3,
           color: scheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
+          borderRadius: BorderRadius.circular(PpForgeRadius.pill),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+            padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.xs),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

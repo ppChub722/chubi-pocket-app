@@ -300,7 +300,7 @@ Future<bool> openPaperBill(
     if (pid != null) project = await repo.get(pid);
   } on ApiException catch (e) {
     if (context.mounted) {
-      showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
+      showPpForgeSnackBar(context, errorText(l, e), tone: Tone.danger);
     }
     return false;
   }
@@ -807,7 +807,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       }
       await _remember();
       navigator.pop(true);
-      showAppSnackBarOn(messenger, l.pendingSavedAsDraft, tone: Tone.success);
+      showPpForgeSnackBarOn(messenger, l.pendingSavedAsDraft, tone: Tone.success);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -844,7 +844,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       accounts.patchBalances(result.accountBalances);
       await _remember();
       navigator.pop(true);
-      showAppSnackBarOn(messenger, l.quickSaved, tone: Tone.success);
+      showPpForgeSnackBarOn(messenger, l.quickSaved, tone: Tone.success);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -899,7 +899,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     try {
       await pending.updateDraft(widget.draft!.id, _savingDraft());
       navigator.pop(true);
-      showAppSnackBarOn(messenger, l.pendingSavedAsDraft, tone: Tone.success);
+      showPpForgeSnackBarOn(messenger, l.pendingSavedAsDraft, tone: Tone.success);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -934,7 +934,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       }
       accounts.patchBalances(result.accountBalances);
       navigator.pop(true);
-      showAppSnackBarOn(messenger, l.savingEntrySaved, tone: Tone.success);
+      showPpForgeSnackBarOn(messenger, l.savingEntrySaved, tone: Tone.success);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -1391,7 +1391,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       widget.onDebtSaved?.call(r);
       debtDirectory.applyBalance(r.balance);
       navigator.pop(true);
-      showAppSnackBarOn(messenger, l.debtEntrySaved, tone: Tone.success);
+      showPpForgeSnackBarOn(messenger, l.debtEntrySaved, tone: Tone.success);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -1453,7 +1453,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       widget.onDebtSaved?.call(r);
       debtDirectory.applyBalance(r.balance);
       navigator.pop(true);
-      showAppSnackBarOn(messenger, l.debtEntrySaved, tone: Tone.success);
+      showPpForgeSnackBarOn(messenger, l.debtEntrySaved, tone: Tone.success);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -1488,7 +1488,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       accounts.patchSavings(r.walletSavings);
       widget.onSavingSaved?.call(r);
       navigator.pop(true);
-      showAppSnackBarOn(messenger, l.savingEntrySaved, tone: Tone.success);
+      showPpForgeSnackBarOn(messenger, l.savingEntrySaved, tone: Tone.success);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -1668,7 +1668,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       }
     }
     navigator.pop(true);
-    showAppSnackBarOn(
+    showPpForgeSnackBarOn(
       messenger,
       warn ?? l.quickSaved,
       tone: warn == null ? Tone.success : Tone.warning,
@@ -1768,7 +1768,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
               ),
       );
       navigator.pop(true);
-      showAppSnackBarOn(messenger, l.quickSaved, tone: Tone.success);
+      showPpForgeSnackBarOn(messenger, l.quickSaved, tone: Tone.success);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -1889,7 +1889,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   Future<bool> _confirmIncompleteSplits() =>
       confirmIncompleteSplits(context, _c);
 
-  void _toast(String msg) => showAppSnackBar(context, msg, tone: Tone.danger);
+  void _toast(String msg) => showPpForgeSnackBar(context, msg, tone: Tone.danger);
 
   String _ymd(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -2046,7 +2046,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       });
       await _remember();
       navigator.pop(true);
-      showAppSnackBarOn(
+      showPpForgeSnackBarOn(
         messenger,
         warn ?? l.quickSaved,
         tone: warn == null ? Tone.success : Tone.warning,

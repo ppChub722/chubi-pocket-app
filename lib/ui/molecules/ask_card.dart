@@ -29,28 +29,28 @@ class AskCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: scheme.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(PpForgeRadius.md),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(PpForgeSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(message, style: Theme.of(context).textTheme.bodyMedium),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: PpForgeSpacing.sm),
             Row(
               children: [
                 Expanded(
-                  child: AppButton(
+                  child: PpForgeButton(
                     label: noLabel,
                     kind: ButtonIconKind.cancel,
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: busy ? null : onNo,
                   ),
                 ),
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: PpForgeSpacing.sm),
                 Expanded(
-                  child: AppButton(
+                  child: PpForgeButton(
                     label: yesLabel,
                     kind: ButtonIconKind.confirm,
                     submits: true,

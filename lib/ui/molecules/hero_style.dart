@@ -66,16 +66,16 @@ class HeroSurface extends StatelessWidget {
   Widget _card(BuildContext context) {
     final color = style.color;
     if (color == null) {
-      return AppCard(
-        style: AppCardStyle.bordered,
+      return PpForgeCard(
+        style: PpForgeCardStyle.bordered,
         onTap: onTap,
         radius: radius,
         margin: margin,
         child: child,
       );
     }
-    return AppCard(
-      style: AppCardStyle.tinted,
+    return PpForgeCard(
+      style: PpForgeCardStyle.tinted,
       color: color,
       glyph: style.glyph,
       glyphSize: glyphSize,

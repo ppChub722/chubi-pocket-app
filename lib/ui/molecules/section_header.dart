@@ -21,10 +21,10 @@ class SectionHeader extends StatelessWidget implements ListBreak {
     // No end inset: the trailing ends flush with the cards below it (the
     // list's gutter), owner 2026-10-21.
     this.padding = const EdgeInsets.fromLTRB(
-      AppSpacing.lg,
-      AppSpacing.md,
+      PpForgeSpacing.lg,
+      PpForgeSpacing.md,
       0,
-      AppSpacing.xs,
+      PpForgeSpacing.xs,
     ),
     super.key,
   });
@@ -61,8 +61,8 @@ class SectionHeader extends StatelessWidget implements ListBreak {
                 textBaseline: TextBaseline.alphabetic,
                 children: [
                   if (totalLabel != null) ...[
-                    AppText(totalLabel!, role: AppTextRole.caption),
-                    const SizedBox(width: AppSpacing.xs),
+                    PpForgeText(totalLabel!, role: PpForgeTextRole.caption),
+                    const SizedBox(width: PpForgeSpacing.xs),
                   ],
                   Text(
                     total,
@@ -83,7 +83,7 @@ class SectionHeader extends StatelessWidget implements ListBreak {
             children: [
               if (leading != null) ...[
                 leading!,
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: PpForgeSpacing.sm),
               ],
               // One Expanded holds the title + count, so the trailing always
               // sits at the end. (A loose Flexible title + a Spacer left the
@@ -103,7 +103,7 @@ class SectionHeader extends StatelessWidget implements ListBreak {
                       ),
                     ),
                     if (count != null) ...[
-                      const SizedBox(width: AppSpacing.xs),
+                      const SizedBox(width: PpForgeSpacing.xs),
                       Text(
                         '| $count',
                         style: textTheme.titleMedium?.copyWith(
@@ -115,17 +115,17 @@ class SectionHeader extends StatelessWidget implements ListBreak {
                 ),
               ),
               if (hasEnd) ...[
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: PpForgeSpacing.sm),
                 ConstrainedBox(
                   constraints: BoxConstraints(maxWidth: endMax),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (actionLabel != null && onAction != null)
-                        AppButton(
+                        PpForgeButton(
                           label: actionLabel!,
                           onPressed: onAction,
-                          variant: AppButtonVariant.text,
+                          variant: PpForgeButtonVariant.text,
                           trailingIcon: PpForgeIcons.chevronRight,
                         ),
                       if (end != null) Flexible(child: end),

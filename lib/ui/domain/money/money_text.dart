@@ -1,10 +1,9 @@
 import '../../atoms/amount_text.dart';
 import 'package:flutter/material.dart';
 
-import '../../atoms/ui_config.dart';
-import '../../tokens/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import 'money_style.dart';
+import '../../app_aliases.dart';
 
 enum MoneyTone { plain, income, expense, signed }
 

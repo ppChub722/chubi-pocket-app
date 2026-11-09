@@ -20,8 +20,8 @@ class TodayLine extends StatelessWidget {
         Theme.of(context).colorScheme.primary;
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.xxs,
+        horizontal: PpForgeSpacing.lg,
+        vertical: PpForgeSpacing.xxs,
       ),
       child: Row(
         children: [
@@ -32,7 +32,7 @@ class TodayLine extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: PpForgeSpacing.sm),
           Expanded(
             child: Container(
               height: 1.5,

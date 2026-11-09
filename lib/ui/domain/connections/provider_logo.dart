@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../atoms/server_image.dart';
-import '../../tokens/app_spacing.dart';
+import '../../app_aliases.dart';
 
 /// An outside app's logo (0.4.2 1b): the BE's `logo_url` (a 96 px PNG,
 /// cached by its `?v=`) drawn through [ServerImageScope]. [grey] = the app is

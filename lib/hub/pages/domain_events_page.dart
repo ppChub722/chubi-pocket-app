@@ -128,7 +128,7 @@ class _EventsPageState extends State<_EventsPage> {
           child: AppButton(
             label: 'เปิดชีต',
             variant: AppButtonVariant.tonal,
-            onPressed: () => showAppSheetCustom<void>(
+            onPressed: () => showPpForgeSheetCustom<void>(
               context,
               builder: (_) => EventTagsSheet(
                 tags: const [

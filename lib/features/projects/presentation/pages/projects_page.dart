@@ -77,7 +77,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
       } catch (_) {
         _fillFailed = true;
         if (mounted) {
-          showAppSnackBar(context, l.uiLoadMoreFailed, tone: Tone.danger);
+          showPpForgeSnackBar(context, l.uiLoadMoreFailed, tone: Tone.danger);
         }
       }
     });

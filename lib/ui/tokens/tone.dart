@@ -6,7 +6,7 @@ enum Tone { neutral, primary, success, warning, danger, info }
 
 extension ToneColor on Tone {
   Color color(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final scheme = Theme.of(context).colorScheme;
     return switch (this) {
       Tone.neutral => scheme.onSurfaceVariant,

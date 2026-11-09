@@ -448,7 +448,7 @@ class _LoadedState extends State<_Loaded>
   }
 
   void _say(String message, {Tone tone = Tone.danger}) {
-    if (mounted) showAppSnackBar(context, message, tone: tone);
+    if (mounted) showPpForgeSnackBar(context, message, tone: tone);
   }
 
   Future<void> _linkRecurring() async {
@@ -691,12 +691,12 @@ class _LoadedState extends State<_Loaded>
     );
     if (problem != null) {
       HapticFeedback.lightImpact();
-      showAppSnackBar(context, problem, tone: Tone.danger);
+      showPpForgeSnackBar(context, problem, tone: Tone.danger);
       return;
     }
     if (bill && !_c.linkBalanced(mode)) {
       HapticFeedback.lightImpact();
-      showAppSnackBar(context, l.txLinkModeUnbalanced, tone: Tone.danger);
+      showPpForgeSnackBar(context, l.txLinkModeUnbalanced, tone: Tone.danger);
       return;
     }
     setSaving(true);
@@ -718,7 +718,7 @@ class _LoadedState extends State<_Loaded>
         if (!ok) {
           if (!mounted) return;
           setSaving(false);
-          showAppSnackBar(context, l.evbPaybackNeedsPeople, tone: Tone.danger);
+          showPpForgeSnackBar(context, l.evbPaybackNeedsPeople, tone: Tone.danger);
           return;
         }
         final change = _eventChange;
@@ -794,7 +794,7 @@ class _LoadedState extends State<_Loaded>
         _reload();
       }
       // A bill: the refreshed row brings it (didUpdateWidget).
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         warn ?? l.quickSaved,
         tone: warn == null ? Tone.success : Tone.warning,
@@ -1084,7 +1084,7 @@ class _LoadedState extends State<_Loaded>
         final result = await txCubit.remove(tx.id);
         applyTxDeleteResult(result, accounts: accountsCubit, debts: debts);
       }
-      showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
+      showPpForgeSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
       if (router.canPop()) {
         router.pop();
       } else {

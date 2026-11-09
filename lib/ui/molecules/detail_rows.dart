@@ -61,12 +61,12 @@ class SectionCard extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final hasTitleRow = title != null || trailing != null || leading != null;
     final reserve = children.any(
-      (c) => c is AppDetailRow && (c.leading != null || c.icon != null),
+      (c) => c is PpForgeDetailRow && (c.leading != null || c.icon != null),
     );
-    const outer = Radius.circular(AppRadius.lg);
+    const outer = Radius.circular(PpForgeRadius.lg);
     // A rounded Material, NOT a clip: a framed field's notched label
     // overhangs its box by half a line, and a clip would cut it in half. A
-    // filled row (tinted, highlighted) rounds its own fill from AppRowShape.
+    // filled row (tinted, highlighted) rounds its own fill from PpForgeRowShape.
     Widget cell(int i, Widget row) {
       final radius = BorderRadius.vertical(
         top: i == 0 ? outer : Radius.zero,
@@ -81,14 +81,14 @@ class SectionCard extends StatelessWidget {
           child: fields
               ? Padding(
                   padding: EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    i == 0 ? AppSpacing.md : AppSpacing.xs,
-                    AppSpacing.lg,
-                    i == children.length - 1 ? AppSpacing.md : AppSpacing.xs,
+                    PpForgeSpacing.lg,
+                    i == 0 ? PpForgeSpacing.md : PpForgeSpacing.xs,
+                    PpForgeSpacing.lg,
+                    i == children.length - 1 ? PpForgeSpacing.md : PpForgeSpacing.xs,
                   ),
                   child: row,
                 )
-              : AppRowShape(borderRadius: radius, child: row),
+              : PpForgeRowShape(borderRadius: radius, child: row),
         ),
       );
     }
@@ -108,7 +108,7 @@ class SectionCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (!first) const SizedBox(height: AppSpacing.lg),
+        if (!first) const SizedBox(height: PpForgeSpacing.lg),
         if (hasTitleRow || description != null)
           _tappable(
             Column(
@@ -117,16 +117,16 @@ class SectionCard extends StatelessWidget {
                 if (hasTitleRow)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.md,
+                      PpForgeSpacing.md,
                       0,
-                      AppSpacing.xs,
-                      AppSpacing.xs,
+                      PpForgeSpacing.xs,
+                      PpForgeSpacing.xs,
                     ),
                     child: Row(
                       children: [
                         if (leading != null) ...[
                           leading!,
-                          const SizedBox(width: AppSpacing.sm),
+                          const SizedBox(width: PpForgeSpacing.sm),
                         ],
                         Expanded(
                           child: Text(
@@ -144,10 +144,10 @@ class SectionCard extends StatelessWidget {
                 if (description != null)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.md,
+                      PpForgeSpacing.md,
                       0,
-                      AppSpacing.md,
-                      AppSpacing.sm,
+                      PpForgeSpacing.md,
+                      PpForgeSpacing.sm,
                     ),
                     child: Text(
                       description!,
@@ -207,8 +207,8 @@ class DetailAddRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.sm,
+        horizontal: PpForgeSpacing.lg,
+        vertical: PpForgeSpacing.sm,
       ),
       child: AddTile(
         label: label,
@@ -222,10 +222,10 @@ class DetailAddRow extends StatelessWidget {
 
 /// One field / setting / link of THIS record on a detail page: leading icon
 /// (or a logo / avatar with a [badge]) · label + helper / error · value
-/// (≤ half the row) · lock · chevron. Built on [AppRow] (density detail);
-/// list items use [AppListRow].
-class AppDetailRow extends StatelessWidget {
-  const AppDetailRow({
+/// (≤ half the row) · lock · chevron. Built on [PpForgeRow] (density detail);
+/// list items use [PpForgeListRow].
+class PpForgeDetailRow extends StatelessWidget {
+  const PpForgeDetailRow({
     required this.label,
     this.trailing,
     this.helper,
@@ -245,7 +245,7 @@ class AppDetailRow extends StatelessWidget {
     this.tinted = false,
     this.comingSoon = false,
     this.disabled = false,
-    this.horizontalInset = AppSpacing.lg,
+    this.horizontalInset = PpForgeSpacing.lg,
     this.helperMaxLines,
     this.dimmed = false,
     this.destructive = false,
@@ -253,7 +253,7 @@ class AppDetailRow extends StatelessWidget {
     super.key,
   });
 
-  factory AppDetailRow.pick({
+  factory PpForgeDetailRow.pick({
     required String label,
     String? value,
     Widget? valueChip,
@@ -267,10 +267,10 @@ class AppDetailRow extends StatelessWidget {
     IconData? icon,
     bool locked = false,
     bool disabled = false,
-    double horizontalInset = AppSpacing.lg,
+    double horizontalInset = PpForgeSpacing.lg,
     bool loading = false,
     Key? key,
-  }) => AppDetailRow(
+  }) => PpForgeDetailRow(
     key: key,
     disabled: disabled,
     loading: loading,
@@ -349,7 +349,7 @@ class AppDetailRow extends StatelessWidget {
   /// A red label and icon (ยกเลิกการเชื่อม); the row still lives in its card.
   final bool destructive;
 
-  /// The tapped row while its call runs ([AppRow.loading]: the › or the
+  /// The tapped row while its call runs ([PpForgeRow.loading]: the › or the
   /// value spins in place).
   final bool loading;
 
@@ -369,7 +369,7 @@ class AppDetailRow extends StatelessWidget {
         ),
       if (error != null)
         Padding(
-          padding: EdgeInsets.only(top: helper == null ? 0 : AppSpacing.xs),
+          padding: EdgeInsets.only(top: helper == null ? 0 : PpForgeSpacing.xs),
           child: Text(
             error,
             style: textTheme.bodySmall?.copyWith(color: scheme.error),
@@ -382,10 +382,10 @@ class AppDetailRow extends StatelessWidget {
         valueColor ?? (locked ? scheme.onSurfaceVariant : scheme.primary);
     final iconTint = valueIconColor ?? valueTint;
     final Widget? value = comingSoon
-        ? AppBadge(label: UiConfig.stringsOf(context).comingSoon)
+        ? PpForgeBadge(label: PpForgeConfig.stringsOf(context).comingSoon)
         : trailing;
-    return AppRow(
-      density: AppRowDensity.detail,
+    return PpForgeRow(
+      density: PpForgeRowDensity.detail,
       title: Text(
         label,
         style: destructive
@@ -405,7 +405,7 @@ class AppDetailRow extends StatelessWidget {
               ? null
               : destructive
               ? Icon(icon, color: scheme.error)
-              : AppIcon(icon!)),
+              : PpForgeIcon(icon!)),
       badge: badge,
       leadingSize: leadingSize,
       reserveLeading: DetailGroupScope.reserves(context),
@@ -420,7 +420,7 @@ class AppDetailRow extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(valueIcon, size: 16, color: iconTint),
-                        const SizedBox(width: AppSpacing.xs),
+                        const SizedBox(width: PpForgeSpacing.xs),
                         Flexible(child: value),
                       ],
                     ),
@@ -477,8 +477,8 @@ class _PickValue extends StatelessWidget {
     if (many != null && many.isNotEmpty) {
       return Wrap(
         alignment: WrapAlignment.end,
-        spacing: AppSpacing.xs,
-        runSpacing: AppSpacing.xs,
+        spacing: PpForgeSpacing.xs,
+        runSpacing: PpForgeSpacing.xs,
         children: many,
       );
     }
@@ -513,14 +513,14 @@ class DetailStacked extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: detailLabelStyle(context)),
-        const SizedBox(height: AppSpacing.xs),
+        const SizedBox(height: PpForgeSpacing.xs),
         child,
       ],
     );
     final block = Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.md,
+        horizontal: PpForgeSpacing.lg,
+        vertical: PpForgeSpacing.md,
       ),
       child: lead == null
           ? stack
@@ -534,7 +534,7 @@ class DetailStacked extends StatelessWidget {
                   ),
                   child: lead,
                 ),
-                const SizedBox(width: AppSpacing.md),
+                const SizedBox(width: PpForgeSpacing.md),
                 Expanded(child: stack),
               ],
             ),

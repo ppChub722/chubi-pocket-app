@@ -32,7 +32,7 @@ class _LoginPageState extends State<LoginPage> {
     final s = auth.state;
     if (s is! AuthUnauthenticated || !s.sessionExpired) return;
     auth.acknowledgeSessionExpired();
-    showAppSnackBar(
+    showPpForgeSnackBar(
       context,
       AppLocalizations.of(context)!.errSessionExpired,
       tone: Tone.warning,
@@ -59,7 +59,7 @@ class _LoginPageState extends State<LoginPage> {
   void _submit() {
     // No inline errors: an empty field gets the same toast as a wrong login.
     if (_identifierCtrl.text.trim().isEmpty || _passwordCtrl.text.isEmpty) {
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         AppLocalizations.of(context)!.authLoginInvalidCredentials,
         tone: Tone.danger,

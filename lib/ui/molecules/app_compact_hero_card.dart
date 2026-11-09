@@ -5,8 +5,8 @@ import '../tokens/app_durations.dart';
 import '../tokens/app_spacing.dart';
 import 'hero_style.dart';
 
-class AppCompactHeroCard extends StatelessWidget {
-  const AppCompactHeroCard({
+class PpForgeCompactHeroCard extends StatelessWidget {
+  const PpForgeCompactHeroCard({
     required this.title,
     this.leading,
     this.trailing,
@@ -33,16 +33,16 @@ class AppCompactHeroCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final duration = MediaQuery.disableAnimationsOf(context)
         ? Duration.zero
-        : AppDurations.chrome;
+        : PpForgeDurations.chrome;
     final content = ConstrainedBox(
       constraints: BoxConstraints(minHeight: height),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.md),
         child: Row(
           children: [
             if (leading != null) ...[
               leading!,
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
             ],
             Expanded(
               child: DefaultTextStyle.merge(
@@ -55,7 +55,7 @@ class AppCompactHeroCard extends StatelessWidget {
               ),
             ),
             if (trailing != null) ...[
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
               trailing!,
             ],
           ],
@@ -81,11 +81,11 @@ class AppCompactHeroCard extends StatelessWidget {
       child: AnimatedSlide(
         offset: visible ? Offset.zero : const Offset(0, -0.5),
         duration: duration,
-        curve: AppDurations.chromeCurve,
+        curve: PpForgeDurations.chromeCurve,
         child: AnimatedOpacity(
           opacity: visible ? 1 : 0,
           duration: duration,
-          curve: AppDurations.chromeCurve,
+          curve: PpForgeDurations.chromeCurve,
           child: bar,
         ),
       ),
@@ -104,7 +104,7 @@ class CompactHeroScope extends StatefulWidget {
 
   final GlobalKey heroKey;
 
-  final AppCompactHeroCard bar;
+  final PpForgeCompactHeroCard bar;
 
   final Widget child;
 
@@ -164,10 +164,10 @@ class _CompactHeroScopeState extends State<CompactHeroScope> {
           child: widget.child,
         ),
         Positioned(
-          top: _line + AppSpacing.xs,
-          left: AppSpacing.md,
-          right: AppSpacing.md,
-          child: AppCompactHeroCard(
+          top: _line + PpForgeSpacing.xs,
+          left: PpForgeSpacing.md,
+          right: PpForgeSpacing.md,
+          child: PpForgeCompactHeroCard(
             key: bar.key,
             style: bar.style,
             leading: bar.leading,

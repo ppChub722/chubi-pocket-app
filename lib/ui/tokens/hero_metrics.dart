@@ -7,11 +7,11 @@ import 'app_spacing.dart';
 
 class HeroMetrics extends ThemeExtension<HeroMetrics> {
   const HeroMetrics({
-    this.padding = const EdgeInsets.all(AppSpacing.md),
-    this.gap = AppSpacing.md,
-    this.itemGap = AppSpacing.sm,
-    this.after = AppSpacing.lg,
-    this.foldedRadius = AppRadius.xl,
+    this.padding = const EdgeInsets.all(PpForgeSpacing.md),
+    this.gap = PpForgeSpacing.md,
+    this.itemGap = PpForgeSpacing.sm,
+    this.after = PpForgeSpacing.lg,
+    this.foldedRadius = PpForgeRadius.xl,
     this.compactHeight = 44,
   });
 

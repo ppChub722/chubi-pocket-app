@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../molecules/app_list_row.dart';
 import '../tokens/app_icons.dart';
-import '../../tokens/app_spacing.dart';
 import '../../tokens/tone.dart';
+import '../../app_aliases.dart';
 
 /// One จัดการ line of an event: [fromName] owes [toName] [amount]. A line
 /// with me in it ([mine]) has [onRecord] (จดเป็นหนี้) and, once recorded,

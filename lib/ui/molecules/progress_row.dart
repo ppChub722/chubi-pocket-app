@@ -204,7 +204,7 @@ class ProgressRow extends StatelessWidget {
                   children: [?labels, withFill],
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
               // The size of a hero fact's value (the lines under it).
               Text(
                 end,
@@ -222,7 +222,7 @@ class ProgressRow extends StatelessWidget {
       children: [
         line,
         if (label != null || trailing != null) ...[
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: PpForgeSpacing.xs),
           Row(
             children: [
               if (label != null)
@@ -276,8 +276,8 @@ class ProgressRow extends StatelessWidget {
       textScaler: MediaQuery.textScalerOf(context),
       maxLines: 1,
     )..layout();
-    final w = tp.width + (AppSpacing.xs + AppSpacing.xxs) * 2;
-    final h = math.max(minHeight, tp.height + AppSpacing.xxs * 2);
+    final w = tp.width + (PpForgeSpacing.xs + PpForgeSpacing.xxs) * 2;
+    final h = math.max(minHeight, tp.height + PpForgeSpacing.xxs * 2);
     final pill = Container(
       key: const ValueKey('progressFillLabel'),
       width: w,

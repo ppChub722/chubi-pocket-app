@@ -60,13 +60,13 @@ class InfoRow extends StatelessWidget {
       return w;
     }
 
-    final inner = width - 2 * AppSpacing.lg;
-    final chevronW = chevron ? AppSpacing.xs + 24 : 0;
+    final inner = width - 2 * PpForgeSpacing.lg;
+    final chevronW = chevron ? PpForgeSpacing.xs + 24 : 0;
     final valueMax = inner * 0.5 - chevronW;
     final valueW = measure(value, theme.textTheme.bodyLarge);
     if (valueW > valueMax) return false;
     final labelW = measure(label, detailLabelStyle(context));
-    return labelW + AppSpacing.md + valueW + chevronW <= inner;
+    return labelW + PpForgeSpacing.md + valueW + chevronW <= inner;
   }
 
   @override
@@ -82,15 +82,15 @@ class InfoRow extends StatelessWidget {
       if (trailing == null && many != null && many.isNotEmpty) {
         trailing = Wrap(
           alignment: WrapAlignment.end,
-          spacing: AppSpacing.xs,
-          runSpacing: AppSpacing.xs,
+          spacing: PpForgeSpacing.xs,
+          runSpacing: PpForgeSpacing.xs,
           children: many,
         );
       }
       if (trailing == null && text != null && text.isNotEmpty) {
         trailing = Text(text);
       }
-      return AppDetailRow(
+      return PpForgeDetailRow(
         label: label,
         trailing: trailing,
         onTap: onTap,
@@ -108,7 +108,7 @@ class InfoRow extends StatelessWidget {
           chevron: showChevron,
         );
         if (fits) {
-          return AppDetailRow(
+          return PpForgeDetailRow(
             label: label,
             trailing: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis),
             onTap: onTap,
@@ -125,7 +125,7 @@ class InfoRow extends StatelessWidget {
                 child: Text(text, style: Theme.of(context).textTheme.bodyLarge),
               ),
               if (showChevron) ...[
-                const SizedBox(width: AppSpacing.xs),
+                const SizedBox(width: PpForgeSpacing.xs),
                 Icon(
                   PpForgeIcons.chevronRight,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,

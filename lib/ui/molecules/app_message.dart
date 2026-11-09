@@ -12,8 +12,8 @@ import '../tokens/app_spacing.dart';
 import '../tokens/tone.dart';
 import 'snack_stack.dart';
 
-class AppMessageAction {
-  const AppMessageAction({required this.label, required this.onPressed});
+class PpForgeMessageAction {
+  const PpForgeMessageAction({required this.label, required this.onPressed});
 
   final String label;
   final VoidCallback onPressed;
@@ -30,8 +30,8 @@ class AppMessageAction {
 ///
 /// The close ✕ is the only way to dismiss. An action is a verb that does
 /// something (Undo, Retry, View, Update), never "Dismiss" / "Close".
-class AppMessage extends StatelessWidget {
-  const AppMessage({
+class PpForgeMessage extends StatelessWidget {
+  const PpForgeMessage({
     required this.message,
     this.tone = Tone.info,
     this.actions = const [],
@@ -49,7 +49,7 @@ class AppMessage extends StatelessWidget {
 
   /// A spinner in place of the icon: something is in progress (connecting).
   final bool busy;
-  final List<AppMessageAction> actions;
+  final List<PpForgeMessageAction> actions;
 
   final VoidCallback? onClose;
 
@@ -67,7 +67,7 @@ class AppMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    assert(actions.length <= 2, 'an AppMessage has at most two actions');
+    assert(actions.length <= 2, 'an PpForgeMessage has at most two actions');
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final color = tone.color(context);
@@ -77,11 +77,11 @@ class AppMessage extends StatelessWidget {
       scheme.surface,
     );
 
-    Widget button(AppMessageAction a) => AppButton(
+    Widget button(PpForgeMessageAction a) => PpForgeButton(
       label: a.label,
       onPressed: a.onPressed,
-      variant: AppButtonVariant.text,
-      size: AppButtonSize.control,
+      variant: PpForgeButtonVariant.text,
+      size: PpForgeButtonSize.control,
       color: color,
     );
 
@@ -89,14 +89,14 @@ class AppMessage extends StatelessWidget {
         ? SizedBox.square(
             dimension: _iconSize,
             child: Center(
-              child: AppSpinner(size: AppSpinnerSize.small, color: color),
+              child: PpForgeSpinner(size: PpForgeSpinnerSize.small, color: color),
             ),
           )
         : Icon(icon ?? iconOf(tone), color: color, size: _iconSize);
 
     final closeBtn = onClose == null
         ? null
-        : AppIconButton.clear(
+        : PpForgeIconButton.clear(
             dense: true,
             iconSize: 18,
             color: color,
@@ -104,7 +104,7 @@ class AppMessage extends StatelessWidget {
             // Overlay for a tooltip.
             tooltip: Overlay.maybeOf(context) == null
                 ? null
-                : UiConfig.stringsOf(context).close,
+                : PpForgeConfig.stringsOf(context).close,
             onPressed: onClose,
           );
 
@@ -114,7 +114,7 @@ class AppMessage extends StatelessWidget {
         color: fill,
         elevation: floating ? 4 : 0,
         shadowColor: scheme.shadow.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(PpForgeRadius.md),
         child: LayoutBuilder(
           builder: (context, box) {
             final stacked = _stacked(context, box.maxWidth, text.bodyMedium!);
@@ -125,7 +125,7 @@ class AppMessage extends StatelessWidget {
               body = Row(
                 children: [
                   leading(),
-                  const SizedBox(width: AppSpacing.sm),
+                  const SizedBox(width: PpForgeSpacing.sm),
                   Expanded(child: Text(message, style: text.bodyMedium)),
                   if (actions.length == 1) button(actions.first),
                   ?closeBtn,
@@ -135,7 +135,7 @@ class AppMessage extends StatelessWidget {
               final lineH = _measure(context, 'A', text.bodyMedium!).height;
               final headH = closeBtn == null
                   ? lineH
-                  : math.max(lineH, AppIconButton.targetDense);
+                  : math.max(lineH, PpForgeIconButton.targetDense);
               body = Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -147,7 +147,7 @@ class AppMessage extends StatelessWidget {
                         height: headH,
                         child: Center(child: leading()),
                       ),
-                      const SizedBox(width: AppSpacing.sm),
+                      const SizedBox(width: PpForgeSpacing.sm),
                       Expanded(
                         child: Padding(
                           padding: EdgeInsets.only(top: (headH - lineH) / 2),
@@ -164,7 +164,7 @@ class AppMessage extends StatelessWidget {
                   Align(
                     alignment: AlignmentDirectional.centerEnd,
                     child: Wrap(
-                      spacing: AppSpacing.xs,
+                      spacing: PpForgeSpacing.xs,
                       children: [for (final a in actions) button(a)],
                     ),
                   ),
@@ -173,13 +173,13 @@ class AppMessage extends StatelessWidget {
             }
             return Container(
               padding: EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.sm,
+                PpForgeSpacing.md,
+                PpForgeSpacing.sm,
                 _rightPadding(stacked),
-                AppSpacing.sm,
+                PpForgeSpacing.sm,
               ),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderRadius: BorderRadius.circular(PpForgeRadius.md),
                 border: Border.all(color: color.withValues(alpha: 0.4)),
               ),
               child: body,
@@ -194,7 +194,7 @@ class AppMessage extends StatelessWidget {
     final tight = stacked
         ? onClose != null
         : onClose != null || actions.length == 1;
-    return tight ? AppSpacing.xs : AppSpacing.md;
+    return tight ? PpForgeSpacing.xs : PpForgeSpacing.md;
   }
 
   Size _measure(
@@ -226,15 +226,15 @@ class AppMessage extends StatelessWidget {
     // Over-estimates the control button (label + side padding) a little, so
     // a close call goes to two lines rather than squeezing the text.
     final actionW =
-        _measure(context, actions.first.label, label).width + 2 * AppSpacing.md;
-    final closeW = onClose == null ? 0.0 : AppIconButton.targetDense;
+        _measure(context, actions.first.label, label).width + 2 * PpForgeSpacing.md;
+    final closeW = onClose == null ? 0.0 : PpForgeIconButton.targetDense;
     final room =
         maxWidth -
         _border * 2 -
-        AppSpacing.md -
+        PpForgeSpacing.md -
         _rightPadding(false) -
         _iconSize -
-        AppSpacing.sm -
+        PpForgeSpacing.sm -
         actionW -
         closeW;
     if (room <= 0) return true;
@@ -251,14 +251,14 @@ class AppMessage extends StatelessWidget {
   }
 }
 
-void showAppMessage(
+void showPpForgeMessage(
   BuildContext context,
   String message, {
   Tone tone = Tone.info,
   String? actionLabel,
   VoidCallback? onAction,
   Duration? duration,
-}) => showAppMessageOn(
+}) => showPpForgeMessageOn(
   ScaffoldMessenger.of(context),
   message,
   tone: tone,
@@ -268,7 +268,7 @@ void showAppMessage(
 );
 
 /// A snack on the messenger's SnackStack (see SnackStack).
-void showAppMessageOn(
+void showPpForgeMessageOn(
   ScaffoldMessengerState messenger,
   String message, {
   Tone tone = Tone.info,

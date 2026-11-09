@@ -11,7 +11,7 @@ enum BusyLevel {
   idle,
 
   /// Something else is running: every interactive piece below is faded
-  /// ([AppOpacity.disabled]) and ignores input; inputs keep their value
+  /// ([PpForgeOpacity.disabled]) and ignores input; inputs keep their value
   /// readable and turn read-only. No spinner.
   locked,
 
@@ -25,7 +25,7 @@ enum BusyLevel {
 /// interactive kit piece below reads it.
 ///
 ///     BusyScope(busy: saving, child: form)       // the form fades + locks
-///     AppButton(label: 'Save', loading: saving)  // the pressed one spins
+///     PpForgeButton(label: 'Save', loading: saving)  // the pressed one spins
 ///
 /// Explicit flags still win: a piece's own `loading: true` spins even inside a
 /// locked scope, and a disabled piece (`onPressed: null`, `enabled: false`)
@@ -103,7 +103,7 @@ class _BusyData extends InheritedWidget {
       level != old.level || faded != old.faded;
 }
 
-/// The one "locked" look of the kit: faded to [AppOpacity.disabled] and inert,
+/// The one "locked" look of the kit: faded to [PpForgeOpacity.disabled] and inert,
 /// size and position unchanged. [locked] null = the [BusyScope]'s; true / false
 /// = this piece's own say (false: it doesn't fade, the pieces inside still read
 /// the scope). Never fades twice: a lock inside a faded lock only stops input.
@@ -132,10 +132,10 @@ class BusyLock extends StatelessWidget {
     return IgnorePointer(
       ignoring: on || inert,
       child: AnimatedOpacity(
-        opacity: fade ? AppOpacity.disabled : 1,
+        opacity: fade ? PpForgeOpacity.disabled : 1,
         duration: MediaQuery.maybeDisableAnimationsOf(context) ?? false
             ? Duration.zero
-            : AppDurations.fast,
+            : PpForgeDurations.fast,
         child: _BusyData(
           level: on ? BusyLevel.locked : level,
           faded: alreadyFaded || fade,
@@ -146,7 +146,7 @@ class BusyLock extends StatelessWidget {
   }
 }
 
-/// A control's content swapped for the kit's [AppSpinner] while [loading]: the
+/// A control's content swapped for the kit's [PpForgeSpinner] while [loading]: the
 /// content stays laid out (invisible), so the control keeps its exact size
 /// and position; the spinner is centred on it.
 class BusySwap extends StatelessWidget {
@@ -164,12 +164,12 @@ class BusySwap extends StatelessWidget {
   /// Null = the theme's primary.
   final Color? color;
 
-  /// The spinner's side; null = [AppSpinnerSize.small] (16).
+  /// The spinner's side; null = [PpForgeSpinnerSize.small] (16).
   final double? spinnerSize;
 
   @override
   Widget build(BuildContext context) {
-    final side = spinnerSize ?? AppSpinnerSize.small.dimension;
+    final side = spinnerSize ?? PpForgeSpinnerSize.small.dimension;
     // passthrough: the content gets exactly the constraints it would get
     // without this wrapper, so it lays out the same, loading or not.
     return Stack(
@@ -189,7 +189,7 @@ class BusySwap extends StatelessWidget {
             child: Center(
               child: SizedBox.square(
                 dimension: side,
-                child: AppSpinner(size: AppSpinnerSize.small, color: color),
+                child: PpForgeSpinner(size: PpForgeSpinnerSize.small, color: color),
               ),
             ),
           ),

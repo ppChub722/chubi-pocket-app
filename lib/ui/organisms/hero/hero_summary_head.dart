@@ -52,19 +52,19 @@ class HeroSummaryHead extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       HeroModuleTile(icon),
-      const SizedBox(width: AppSpacing.md),
+      const SizedBox(width: PpForgeSpacing.md),
       Expanded(
         child: HeroNumber(label: label, value: amount, color: amountColor),
       ),
       if (actions.isNotEmpty) ...[
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: PpForgeSpacing.sm),
         ChipSizeScope(
           size: ChipSize.control,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               for (final (i, a) in actions.indexed) ...[
-                if (i > 0) const SizedBox(width: AppSpacing.sm),
+                if (i > 0) const SizedBox(width: PpForgeSpacing.sm),
                 a,
               ],
             ],

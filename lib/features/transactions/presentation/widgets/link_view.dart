@@ -83,7 +83,7 @@ class LinkViewRows extends StatelessWidget {
   }
 
   static Future<void> _show(BuildContext context, Widget card) =>
-      showAppSheet<void>(context, padded: true, builder: (_) => card);
+      showPpForgeSheet<void>(context, padded: true, builder: (_) => card);
 
   static Widget _amount(double v) =>
       ShareAmountField(value: v, onChanged: null);

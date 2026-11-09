@@ -19,18 +19,18 @@ class LoadMoreErrorRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final strings = UiConfig.stringsOf(context);
+    final strings = PpForgeConfig.stringsOf(context);
     final scheme = Theme.of(context).colorScheme;
     return SizedBox(
       height: height,
       child: Row(
         children: [
-          AppIcon(
+          PpForgeIcon(
             PpForgeIcons.error,
-            size: AppIconSize.md,
+            size: PpForgeIconSize.md,
             color: scheme.onSurfaceVariant,
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: PpForgeSpacing.sm),
           Expanded(
             child: Text(
               message ?? strings.loadMoreFailed,
@@ -42,10 +42,10 @@ class LoadMoreErrorRow extends StatelessWidget {
             ),
           ),
           if (onRetry != null)
-            AppButton(
+            PpForgeButton(
               label: strings.retry,
               kind: ButtonIconKind.retry,
-              variant: AppButtonVariant.text,
+              variant: PpForgeButtonVariant.text,
               onPressed: onRetry,
             ),
         ],

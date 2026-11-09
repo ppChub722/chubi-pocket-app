@@ -110,7 +110,7 @@ class SideSheetScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final strings = UiConfig.stringsOf(context);
+    final strings = PpForgeConfig.stringsOf(context);
     final scheme = Theme.of(context).colorScheme;
     return SafeArea(
       left: false,
@@ -119,10 +119,10 @@ class SideSheetScaffold extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.sm,
-              AppSpacing.xs,
-              AppSpacing.sm,
+              PpForgeSpacing.lg,
+              PpForgeSpacing.sm,
+              PpForgeSpacing.xs,
+              PpForgeSpacing.sm,
             ),
             child: Row(
               children: [
@@ -132,14 +132,14 @@ class SideSheetScaffold extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
-                AppIconButton.close(
+                PpForgeIconButton.close(
                   tooltip: strings.close,
                   onPressed: () => Navigator.of(context).maybePop(),
                 ),
               ],
             ),
           ),
-          const AppDivider(),
+          const PpForgeDivider(),
           Expanded(child: SingleChildScrollView(child: body)),
           if (footer != null)
             Container(
@@ -147,10 +147,10 @@ class SideSheetScaffold extends StatelessWidget {
                 border: Border(top: BorderSide(color: scheme.outlineVariant)),
               ),
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.sm,
-                AppSpacing.lg,
-                AppSpacing.sm,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.sm,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.sm,
               ),
               child: footer,
             ),
@@ -177,9 +177,9 @@ class SideSheetSection extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.lg,
-        AppSpacing.lg,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.lg,
         0,
       ),
       child: SectionCard(

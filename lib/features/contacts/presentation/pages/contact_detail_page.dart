@@ -263,7 +263,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     try {
       await context.read<ContactsCubit>().delete(c.id);
       if (!mounted) return;
-      showAppSnackBar(context, l.contactDeleted(c.name), tone: Tone.success);
+      showPpForgeSnackBar(context, l.contactDeleted(c.name), tone: Tone.success);
       commitSaved(working);
       leavePage();
     } on ApiException catch (e) {
@@ -298,7 +298,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     try {
       final c = await action();
       if (!mounted) return;
-      if (done != null) showAppSnackBar(context, done, tone: Tone.success);
+      if (done != null) showPpForgeSnackBar(context, done, tone: Tone.success);
       _patch(c);
     } on ApiException catch (e) {
       if (mounted) showErrorSnackBar(context, e);
@@ -327,7 +327,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       // Same toast on hit and miss — never reveals whether the email belongs to
       // a user.
       if (!mounted) return;
-      showAppSnackBar(context, l.contactLinkRequested);
+      showPpForgeSnackBar(context, l.contactLinkRequested);
       _patch(c);
     } on ApiException catch (e) {
       if (mounted) showErrorSnackBar(context, e);
@@ -359,7 +359,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
   /// No email yet: open edit on the email field and say why.
   void _askEmailFirst() {
     final l = AppLocalizations.of(context)!;
-    showAppSnackBar(context, l.contactLinkNeedsEmail);
+    showPpForgeSnackBar(context, l.contactLinkNeedsEmail);
     _enterOn(_Field.email)();
   }
 
@@ -402,7 +402,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     if (!mounted || wired == null) return;
     final (res, picked) = wired;
     if (res.absorbedCount > 0) {
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         l.contactWireDone(res.absorbedCount, res.contact.name),
         tone: Tone.success,

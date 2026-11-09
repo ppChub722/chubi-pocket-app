@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app_spacing.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../icons/icon_code.dart';
 import '../../atoms/add_tile.dart';
 import 'avatar.dart';
 import 'avatar_data.dart';
 import '../../atoms/busy_scope.dart';
+import '../../app_aliases.dart';
 
 class PersonRef {
   const PersonRef({

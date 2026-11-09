@@ -15,9 +15,9 @@ class ReorderListScope extends StatefulWidget {
     required this.child,
     required this.scrollController,
     this.controller,
-    this.indentStep = AppSpacing.xxl,
+    this.indentStep = PpForgeSpacing.xxl,
     this.levelStep = 32,
-    this.indentBase = AppSpacing.lg,
+    this.indentBase = PpForgeSpacing.lg,
     this.dropLabel,
     super.key,
   });
@@ -517,7 +517,7 @@ class _DropIndicator extends StatelessWidget {
                 borderRadius: BorderRadius.circular(labelHeight / 2),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.sm),
                 child: Center(
                   widthFactor: 1,
                   child: Text(
@@ -679,7 +679,7 @@ class _Proxy extends StatelessWidget {
     return Material(
       elevation: 8,
       color: scheme.surfaceContainerHigh,
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(PpForgeRadius.md),
       clipBehavior: Clip.antiAlias,
       child: SizedBox(width: width, child: child),
     );

@@ -223,7 +223,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     final cubit = context.read<CategoriesCubit>();
     final l = AppLocalizations.of(context)!;
     if (_isCreate && !cubit.canAddMore) {
-      showAppSnackBarOn(
+      showPpForgeSnackBarOn(
         pageMessenger!,
         l.categoriesLimitReached,
         tone: Tone.warning,
@@ -284,7 +284,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     } on CategoryLimitExceeded {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBarOn(
+      showPpForgeSnackBarOn(
         pageMessenger!,
         l.categoriesLimitReached,
         tone: Tone.warning,
@@ -299,7 +299,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         _formKey.currentState?.validate();
         return;
       }
-      showAppSnackBarOn(pageMessenger!, _errorText(e, l), tone: Tone.danger);
+      showPpForgeSnackBarOn(pageMessenger!, _errorText(e, l), tone: Tone.danger);
       return;
     }
     if (!mounted) return;
@@ -329,7 +329,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     try {
       await cubit.remove(c.id);
       if (!mounted) return;
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         l.categoryDeletedResult(c.name),
         tone: Tone.success,

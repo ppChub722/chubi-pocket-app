@@ -5,26 +5,26 @@ import '../tokens/app_radius.dart';
 import '../tokens/color_contrast.dart';
 import 'dashed_rect_border.dart';
 
-enum AppCardStyle { plain, bordered, accent, tinted, flat }
+enum PpForgeCardStyle { plain, bordered, accent, tinted, flat }
 
-/// Tells the [AppCard]s below it that they are options of a picker: the chosen
+/// Tells the [PpForgeCard]s below it that they are options of a picker: the chosen
 /// one gets one solid line, the others a dashed one.
-class AppCardPick extends InheritedWidget {
-  const AppCardPick({required this.chosen, required super.child, super.key});
+class PpForgeCardPick extends InheritedWidget {
+  const PpForgeCardPick({required this.chosen, required super.child, super.key});
 
   final bool chosen;
 
-  static AppCardPick? maybeOf(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<AppCardPick>();
+  static PpForgeCardPick? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<PpForgeCardPick>();
 
   @override
-  bool updateShouldNotify(AppCardPick old) => chosen != old.chosen;
+  bool updateShouldNotify(PpForgeCardPick old) => chosen != old.chosen;
 }
 
-class AppCard extends StatelessWidget {
-  const AppCard({
+class PpForgeCard extends StatelessWidget {
+  const PpForgeCard({
     required this.child,
-    this.style = AppCardStyle.plain,
+    this.style = PpForgeCardStyle.plain,
     this.color,
     this.glyph,
     this.glyphSize = 88,
@@ -38,13 +38,13 @@ class AppCard extends StatelessWidget {
     this.radius,
     super.key,
   }) : assert(
-         style != AppCardStyle.tinted && style != AppCardStyle.accent ||
+         style != PpForgeCardStyle.tinted && style != PpForgeCardStyle.accent ||
              color != null,
          'accent and tinted cards need a color',
        );
 
   final Widget child;
-  final AppCardStyle style;
+  final PpForgeCardStyle style;
 
   final Color? color;
 
@@ -76,31 +76,31 @@ class AppCard extends StatelessWidget {
     final tint = color == null ? null : ensureContrast(color!, scheme.surface);
 
     final Color? fill = switch (style) {
-      AppCardStyle.plain => null,
-      AppCardStyle.bordered || AppCardStyle.accent => scheme.surfaceContainer,
-      AppCardStyle.tinted => null,
-      AppCardStyle.flat => Colors.transparent,
+      PpForgeCardStyle.plain => null,
+      PpForgeCardStyle.bordered || PpForgeCardStyle.accent => scheme.surfaceContainer,
+      PpForgeCardStyle.tinted => null,
+      PpForgeCardStyle.flat => Colors.transparent,
     };
     var border =
         borderColor ??
         switch (style) {
-          AppCardStyle.plain =>
+          PpForgeCardStyle.plain =>
             (theme.shape is RoundedRectangleBorder
                     ? (theme.shape! as RoundedRectangleBorder).side.color
                     : null) ??
                 scheme.outlineVariant,
-          AppCardStyle.bordered => scheme.outlineVariant,
-          AppCardStyle.accent => tint!,
-          AppCardStyle.tinted => tint!.withValues(alpha: 0.25),
-          AppCardStyle.flat => Colors.transparent,
+          PpForgeCardStyle.bordered => scheme.outlineVariant,
+          PpForgeCardStyle.accent => tint!,
+          PpForgeCardStyle.tinted => tint!.withValues(alpha: 0.25),
+          PpForgeCardStyle.flat => Colors.transparent,
         };
     var width =
         borderWidth ??
         switch (style) {
-          AppCardStyle.accent => 1.5,
+          PpForgeCardStyle.accent => 1.5,
           _ => 1.0,
         };
-    final pick = AppCardPick.maybeOf(context);
+    final pick = PpForgeCardPick.maybeOf(context);
     final dashed = pick != null && !pick.chosen;
     if (selected || (pick?.chosen ?? false)) {
       border = scheme.primary;
@@ -113,7 +113,7 @@ class AppCard extends StatelessWidget {
         ? child
         : Padding(padding: padding!, child: child);
 
-    if (style == AppCardStyle.tinted && glyph != null) {
+    if (style == PpForgeCardStyle.tinted && glyph != null) {
       // passthrough: a card given a fixed height keeps its content laid out in
       // that height (centred by the child), glyph or not.
       body = Stack(
@@ -135,7 +135,7 @@ class AppCard extends StatelessWidget {
     if (onTap != null || onLongPress != null) {
       body = InkWell(onTap: onTap, onLongPress: onLongPress, child: body);
     }
-    if (style == AppCardStyle.tinted) {
+    if (style == PpForgeCardStyle.tinted) {
       body = DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -151,11 +151,11 @@ class AppCard extends StatelessWidget {
       );
     }
 
-    final corners = radius ?? BorderRadius.circular(AppRadius.lg);
+    final corners = radius ?? BorderRadius.circular(PpForgeRadius.lg);
     final card = Card(
       margin: margin,
       clipBehavior: Clip.antiAlias,
-      elevation: style == AppCardStyle.flat ? 0 : null,
+      elevation: style == PpForgeCardStyle.flat ? 0 : null,
       color: fill,
       shape: RoundedRectangleBorder(
         borderRadius: corners,

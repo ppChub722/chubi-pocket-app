@@ -33,10 +33,10 @@ class DatePickChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final d = date;
     if (d == null) {
-      return AppChip(
-        label: emptyLabel ?? UiConfig.stringsOf(context).pickDate,
+      return PpForgeChip(
+        label: emptyLabel ?? PpForgeConfig.stringsOf(context).pickDate,
         icon: PpForgeIcons.add,
-        tone: AppChipTone.primary,
+        tone: PpForgeChipTone.primary,
         selected: true,
         dashed: true,
         onTap: onPick,
@@ -48,14 +48,14 @@ class DatePickChip extends StatelessWidget {
           d,
           locale: Localizations.localeOf(context).toLanguageTag(),
         );
-    if (onPick == null) return AppChip(label: label, icon: PpForgeIcons.date);
-    return AppChip(
+    if (onPick == null) return PpForgeChip(label: label, icon: PpForgeIcons.date);
+    return PpForgeChip(
       label: label,
       icon: PpForgeIcons.date,
       selected: true,
       dashed: true,
       inset: true,
-      trailing: onClear == null ? AppChipTrailing.none : AppChipTrailing.remove,
+      trailing: onClear == null ? PpForgeChipTrailing.none : PpForgeChipTrailing.remove,
       onRemove: onClear,
       onTap: onPick,
     );

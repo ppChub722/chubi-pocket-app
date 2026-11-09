@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_icons.dart';
 import '../tokens/quick_create_mode.dart';
-import '../../tokens/app_spacing.dart';
 import '../../atoms/busy_scope.dart';
+import '../../app_aliases.dart';
 
 /// The quick-create mode switch (รายการ | หนี้ | ออม): the active mode is a
 /// wide pill filled with ITS colour, icon and bold label; the others are

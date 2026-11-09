@@ -104,7 +104,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
       _apply(await repo.link(c.provider, token));
     } on TelegramOidcOpenFailed {
       if (mounted) {
-        showAppSnackBar(
+        showPpForgeSnackBar(
           context,
           l.connectionsOpenFailed(c.name),
           tone: Tone.danger,
@@ -126,7 +126,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
         uri != null &&
         await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened && mounted) {
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         AppLocalizations.of(context)!.connectionsOpenFailed(c.name),
         tone: Tone.danger,

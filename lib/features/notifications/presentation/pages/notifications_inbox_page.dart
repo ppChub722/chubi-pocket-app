@@ -98,7 +98,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
     final messenger = ScaffoldMessenger.of(context);
     final ok = await cubit.hide(n.id);
     if (!ok) return;
-    showAppSnackBarOn(
+    showPpForgeSnackBarOn(
       messenger,
       l.notifHidden,
       actionLabel: l.notifUndo,

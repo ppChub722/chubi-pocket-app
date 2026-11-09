@@ -45,7 +45,7 @@ class FormSheet extends StatelessWidget {
       Navigator.of(context).maybePop();
       return;
     }
-    final s = UiConfig.stringsOf(context);
+    final s = PpForgeConfig.stringsOf(context);
     final discard = await showConfirmDialog(
       context,
       title: s.discardTitle,
@@ -59,7 +59,7 @@ class FormSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = UiConfig.stringsOf(context);
+    final s = PpForgeConfig.stringsOf(context);
     return PopScope(
       canPop: !dirty || saving,
       onPopInvokedWithResult: (didPop, _) {
@@ -67,25 +67,25 @@ class FormSheet extends StatelessWidget {
       },
       child: BusyScope(
         busy: saving,
-        child: AppSheetScaffold(
+        child: PpForgeSheetScaffold(
           title: title,
           footer: Row(
             children: [
               if (showCancel) ...[
                 Expanded(
-                  child: AppButton(
+                  child: PpForgeButton(
                     label: cancelLabel ?? s.cancel,
                     kind: ButtonIconKind.cancel,
-                    variant: AppButtonVariant.outlined,
-                    size: AppButtonSize.large,
+                    variant: PpForgeButtonVariant.outlined,
+                    size: PpForgeButtonSize.large,
                     expand: true,
                     onPressed: saving ? null : () => _close(context),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.md),
+                const SizedBox(width: PpForgeSpacing.md),
               ],
               Expanded(
-                child: AppButton(
+                child: PpForgeButton(
                   label: primaryLabel,
                   kind:
                       primaryKind ??
@@ -93,9 +93,9 @@ class FormSheet extends StatelessWidget {
                           ? ButtonIconKind.delete
                           : ButtonIconKind.save),
                   variant: destructive
-                      ? AppButtonVariant.destructive
-                      : AppButtonVariant.primary,
-                  size: AppButtonSize.large,
+                      ? PpForgeButtonVariant.destructive
+                      : PpForgeButtonVariant.primary,
+                  size: PpForgeButtonSize.large,
                   expand: true,
                   // Offline: a save can't reach the server, so the button
                   // disables itself (the banner says why); typed input stays.
@@ -106,7 +106,7 @@ class FormSheet extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
             child: child,
           ),
         ),

@@ -236,7 +236,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
 
   void _showError(ApiException e) {
     if (!mounted) return;
-    showAppSnackBar(
+    showPpForgeSnackBar(
       context,
       errorText(AppLocalizations.of(context)!, e),
       tone: Tone.danger,
@@ -251,7 +251,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     final s = w.startDate;
     final e = w.endDate;
     if (s != null && e != null && e.isBefore(s)) {
-      showAppSnackBar(context, l.eventDatesInvalid, tone: Tone.danger);
+      showPpForgeSnackBar(context, l.eventDatesInvalid, tone: Tone.danger);
       return;
     }
     final planned = AmountInput.parse(w.planned);
@@ -316,7 +316,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     try {
       final p = await context.read<ProjectsCubit>().archive(widget.id!);
       if (!mounted) return;
-      showAppSnackBarOn(pageMessenger!, l.fpEventsArchived, tone: Tone.success);
+      showPpForgeSnackBarOn(pageMessenger!, l.fpEventsArchived, tone: Tone.success);
       _applyPatch(p);
       commitSaved(_Draft.from(p.project));
     } on ApiException catch (e) {
@@ -332,7 +332,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     try {
       final p = await context.read<ProjectsCubit>().restore(widget.id!);
       if (!mounted) return;
-      showAppSnackBarOn(pageMessenger!, l.fpEventsRestored, tone: Tone.success);
+      showPpForgeSnackBarOn(pageMessenger!, l.fpEventsRestored, tone: Tone.success);
       _applyPatch(p);
       commitSaved(_Draft.from(p.project));
     } on ApiException catch (e) {
@@ -360,7 +360,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       // No wallet moves; my re-pointed rows come back through `effects`.
       await context.read<ProjectsCubit>().delete(p.id);
       if (!mounted) return;
-      showAppSnackBar(context, l.projectDeleted, tone: Tone.success);
+      showPpForgeSnackBar(context, l.projectDeleted, tone: Tone.success);
       commitSaved(working);
       leavePage();
     } on ApiException catch (e) {
@@ -440,7 +440,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       onImported: (r) {
         if (r.created.isNotEmpty) unawaited(tags.load());
         if (mounted) {
-          showAppSnackBar(
+          showPpForgeSnackBar(
             context,
             l.eventTagsImported(r.created.length),
             tone: Tone.success,
@@ -469,7 +469,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       final p = await context.read<ProjectsCubit>().complete(widget.id!);
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, l.eventCompleted, tone: Tone.success);
+      showPpForgeSnackBar(context, l.eventCompleted, tone: Tone.success);
       _applyPatch(p);
       resetDraft(_Draft.from(p.project));
     } on ApiException catch (e) {
@@ -512,7 +512,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         status: next,
       );
       if (!mounted) return;
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         l.projectStatusChanged(projectStatusLabel(l, next)),
       );
@@ -743,7 +743,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       await _refresh();
     } on ApiException catch (e) {
       if (mounted) {
-        showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
+        showPpForgeSnackBar(context, errorText(l, e), tone: Tone.danger);
       }
     }
   }
@@ -795,7 +795,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     } catch (_) {
       _moreFailed = true;
       if (mounted) {
-        showAppSnackBar(
+        showPpForgeSnackBar(
           context,
           AppLocalizations.of(context)!.uiLoadMoreFailed,
           tone: Tone.danger,
@@ -1395,7 +1395,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       if (!mounted) return;
       setState(() => _view = _view?.withEventTags(r.tags));
       if (r.created.isNotEmpty) unawaited(tags.load());
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         l.eventTagsImported(r.created.length),
         tone: Tone.success,

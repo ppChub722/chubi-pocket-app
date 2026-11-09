@@ -52,17 +52,17 @@ class HeroFlowRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final hero = HeroColors.maybeOf(context);
-    final strings = UiConfig.stringsOf(context);
+    final strings = PpForgeConfig.stringsOf(context);
     return Row(
       children: [
-        AppIconButton(
+        PpForgeIconButton(
           key: const ValueKey('heroFlowPrev'),
           icon: PpForgeIcons.chevronLeft,
           size: _step,
           tooltip: prevTooltip ?? strings.periodPrev,
           onPressed: onPrev,
         ),
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: PpForgeSpacing.sm),
         Expanded(
           child: _FlowBox(
             key: const ValueKey('heroFlowIncome'),
@@ -74,7 +74,7 @@ class HeroFlowRow extends StatelessWidget {
             onTap: onTapIncome,
           ),
         ),
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: PpForgeSpacing.sm),
         Expanded(
           child: _FlowBox(
             key: const ValueKey('heroFlowExpense'),
@@ -86,8 +86,8 @@ class HeroFlowRow extends StatelessWidget {
             onTap: onTapExpense,
           ),
         ),
-        const SizedBox(width: AppSpacing.sm),
-        AppIconButton(
+        const SizedBox(width: PpForgeSpacing.sm),
+        PpForgeIconButton(
           key: const ValueKey('heroFlowNext'),
           icon: PpForgeIcons.chevronRight,
           size: _step,
@@ -122,7 +122,7 @@ class _FlowBox extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final hero = HeroColors.maybeOf(context);
-    final radius = BorderRadius.circular(AppRadius.md);
+    final radius = BorderRadius.circular(PpForgeRadius.md);
     return Semantics(
       button: onTap != null,
       selected: selected,
@@ -143,8 +143,8 @@ class _FlowBox extends StatelessWidget {
             borderRadius: radius,
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm + AppSpacing.xxs,
-                vertical: AppSpacing.xs + AppSpacing.xxs,
+                horizontal: PpForgeSpacing.sm + PpForgeSpacing.xxs,
+                vertical: PpForgeSpacing.xs + PpForgeSpacing.xxs,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,10 +159,10 @@ class _FlowBox extends StatelessWidget {
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(3),
-                          child: AppIcon(icon, size: 12, color: color),
+                          child: PpForgeIcon(icon, size: 12, color: color),
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.xs + 1),
+                      const SizedBox(width: PpForgeSpacing.xs + 1),
                       Expanded(
                         child: Text(
                           label,
@@ -175,7 +175,7 @@ class _FlowBox extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.xxs),
+                  const SizedBox(height: PpForgeSpacing.xxs),
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: AlignmentDirectional.centerStart,

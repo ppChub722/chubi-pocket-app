@@ -1,13 +1,12 @@
 import '../../tokens/hero_metrics.dart';
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_input.dart';
 import '../../atoms/skeleton_box.dart';
 import '../../molecules/hero_shell.dart';
 import '../../molecules/hero_style.dart';
 import '../../organisms/hero/hero_fields.dart';
-import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';
+import '../../app_aliases.dart';
 
 class EntryCardSkeleton extends StatelessWidget {
   const EntryCardSkeleton({this.rows = 2, this.editing = true, super.key});

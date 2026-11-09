@@ -62,7 +62,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   void _submit() {
     if (!_valid) {
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         AppLocalizations.of(context)!.authRegisterIncomplete,
         tone: Tone.danger,

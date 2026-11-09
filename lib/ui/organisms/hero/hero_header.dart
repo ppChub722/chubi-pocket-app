@@ -37,18 +37,18 @@ class HeroHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scope = AppHeroScope.maybeOf(context);
+    final scope = PpForgeHeroScope.maybeOf(context);
     final mode = scope?.mode ?? HeroCardMode.view;
     final edit = mode == HeroCardMode.view && onEdit != null
         ? CardActionButton(
             key: const ValueKey('heroEdit'),
             icon: PpForgeIcons.edit,
-            tooltip: editTooltip ?? UiConfig.stringsOf(context).edit,
+            tooltip: editTooltip ?? PpForgeConfig.stringsOf(context).edit,
             onTap: onEdit,
           )
         : null;
     final fold = scope != null && scope.canFold
-        ? const AppHeroFoldButton(key: ValueKey('heroFold'))
+        ? const PpForgeHeroFoldButton(key: ValueKey('heroFold'))
         : null;
     final trailing = [
       ...actions,
@@ -73,7 +73,7 @@ class HeroHeader extends StatelessWidget {
   }
 
   static const double _foldTuck = 10;
-  static const double _foldReserve = AppHeroFoldButton.size - _foldTuck - 4;
+  static const double _foldReserve = PpForgeHeroFoldButton.size - _foldTuck - 4;
 }
 
 /// The list head row: controls sized to the module tile, the fill stretched.

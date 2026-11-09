@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'busy_scope.dart';
 
-class AppAvatarButton extends StatelessWidget {
-  const AppAvatarButton({
+class PpForgeAvatarButton extends StatelessWidget {
+  const PpForgeAvatarButton({
     required this.child,
     required this.onTap,
     this.outline,

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_chip.dart';
-import '../../tokens/app_colors.dart';
 import '../tokens/app_icons.dart';
 import '../../tokens/chip_size.dart';
 import '../icons/color_token.dart';
 import '../icons/icon_code.dart';
 import '../icons/icon_registry.dart';
+import '../../app_aliases.dart';
 
 class EventTagRef {
   const EventTagRef(this.name, {this.iconCode});

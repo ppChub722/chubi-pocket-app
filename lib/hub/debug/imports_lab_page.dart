@@ -199,7 +199,7 @@ class _Block extends StatelessWidget {
           GestureDetector(
             onLongPress: () {
               Clipboard.setData(ClipboardData(text: text));
-              showAppSnackBar(context, '$label copied');
+              showPpForgeSnackBar(context, '$label copied');
             },
             child: Container(
               padding: const EdgeInsets.all(AppSpacing.sm),

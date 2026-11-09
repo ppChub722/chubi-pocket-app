@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_chip.dart';
-import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';
+import '../../app_aliases.dart';
 
 class SourceChipItem {
   const SourceChipItem(

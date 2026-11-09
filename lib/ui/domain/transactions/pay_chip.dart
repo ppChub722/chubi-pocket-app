@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_chip.dart';
 import '../tokens/app_icons.dart';
 import '../../tokens/chip_size.dart';
+import '../../app_aliases.dart';
 
 /// "จ่าย" under a person's name in a bill: ✓ and filled on the one who paid,
 /// dashed on everyone else (tap = they paid). The event bill and quick

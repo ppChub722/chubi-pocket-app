@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app_spacing.dart';
 import '../icons/icon_code.dart';
 import 'avatar.dart';
 import 'avatar_data.dart';
+import '../../app_aliases.dart';
 
 class UserProfilePreview extends StatelessWidget {
   const UserProfilePreview({

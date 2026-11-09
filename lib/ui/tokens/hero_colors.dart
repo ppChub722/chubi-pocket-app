@@ -23,7 +23,7 @@ class HeroColors {
 
   factory HeroColors.from(ThemeData theme, Color? color) {
     final scheme = theme.colorScheme;
-    final palette = theme.extension<AppColors>();
+    final palette = theme.extension<PpForgeColors>();
     final surface = scheme.surface;
     final accent = ensureContrast(color ?? scheme.primary, surface);
     Color wash(double alpha) =>

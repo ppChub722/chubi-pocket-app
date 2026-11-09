@@ -7,7 +7,6 @@ import 'package:flutter/rendering.dart';
 import 'nav_layout.dart';
 import 'tab_entry.dart';
 import 'tab_nav.dart';
-import '../../ui/tokens/app/theme/app_page_transitions.dart';
 import '../../ui/ui.dart';
 
 class FadeBranchContainer extends StatefulWidget {

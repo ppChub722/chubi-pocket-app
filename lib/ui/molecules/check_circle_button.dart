@@ -37,7 +37,7 @@ class CheckCircleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final size = AppIconButton.resolveSize(context, this.size);
+    final size = PpForgeIconButton.resolveSize(context, this.size);
     final fill = color ?? HeroColors.maybeOf(context)?.accent ?? scheme.primary;
     final onFill = ThemeData.estimateBrightnessForColor(fill) == Brightness.dark
         ? Colors.white
@@ -69,8 +69,8 @@ class CheckCircleButton extends StatelessWidget {
               ? Center(
                   child: SizedBox.square(
                     dimension: size * 0.5,
-                    child: AppSpinner(
-                      size: AppSpinnerSize.small,
+                    child: PpForgeSpinner(
+                      size: PpForgeSpinnerSize.small,
                       color: checked ? onFill : fill,
                     ),
                   ),

@@ -32,7 +32,7 @@ class IconTile extends StatelessWidget {
 
   final IconData? badgeIcon;
 
-  static const gap = SizedBox(height: AppSpacing.sm);
+  static const gap = SizedBox(height: PpForgeSpacing.sm);
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +47,7 @@ class IconTile extends StatelessWidget {
             : BoxShape.rectangle,
         borderRadius: shape == IconTileShape.circle
             ? null
-            : BorderRadius.circular(size >= 40 ? AppRadius.md : AppRadius.sm),
+            : BorderRadius.circular(size >= 40 ? PpForgeRadius.md : PpForgeRadius.sm),
       ),
       child: Icon(
         icon,

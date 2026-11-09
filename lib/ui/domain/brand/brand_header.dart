@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../debug/secret_tap.dart';
-import '../../tokens/app_spacing.dart';
 import 'brand_logo.dart';
+import '../../app_aliases.dart';
 
 class BrandHeader extends StatelessWidget {
   const BrandHeader({this.name, this.tagline, this.onSecretUnlock, super.key});

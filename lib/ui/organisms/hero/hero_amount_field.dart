@@ -43,17 +43,17 @@ class HeroAmountField extends StatelessWidget {
       color: color,
       fontFeatures: const [FontFeature.tabularFigures()],
     );
-    return AppInput.card(
+    return PpForgeInput.card(
       controller: controller,
       focusNode: focusNode,
       label: label,
-      labelPlacement: AppInputLabelPlacement.above,
+      labelPlacement: PpForgeInputLabelPlacement.above,
       helper: helper,
-      type: AppInputType.amount,
-      currencySymbol: symbol ?? UiConfig.stringsOf(context).currencySymbol,
+      type: PpForgeInputType.amount,
+      currencySymbol: symbol ?? PpForgeConfig.stringsOf(context).currencySymbol,
       symbolScale: 0.7,
       minWidth: 12,
-      size: AppInputSize.hero,
+      size: PpForgeInputSize.hero,
       textAlign: TextAlign.end,
       style: big,
       hint: '0',

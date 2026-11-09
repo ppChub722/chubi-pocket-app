@@ -42,7 +42,7 @@ class DailyBars extends StatelessWidget {
   Widget build(BuildContext context) {
     if (bars.isEmpty) return const SizedBox.shrink();
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final text = Theme.of(context).textTheme;
     final max = bars.fold<double>(0, (m, b) => b.value > m ? b.value : m);
     // Inside a hero the bars take the card's color; alone, the expense red.
@@ -87,7 +87,7 @@ class DailyBars extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: colorOf(b.kind),
                                 borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(AppRadius.xs),
+                                  top: Radius.circular(PpForgeRadius.xs),
                                 ),
                               ),
                               child: const SizedBox.expand(),
@@ -103,7 +103,7 @@ class DailyBars extends StatelessWidget {
         ),
         if (startLabel != null || centerLabel != null || endLabel != null)
           Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
             child: Row(
               children: [
                 Expanded(

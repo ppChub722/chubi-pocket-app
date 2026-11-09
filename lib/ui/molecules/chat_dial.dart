@@ -51,7 +51,7 @@ class _ChatDialState extends State<ChatDial> {
     final scheme = Theme.of(context).colorScheme;
     final width =
         widget.openWidth ??
-        MediaQuery.sizeOf(context).width - AppSpacing.lg * 2;
+        MediaQuery.sizeOf(context).width - PpForgeSpacing.lg * 2;
     return AnimatedSize(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOutCubic,
@@ -64,22 +64,22 @@ class _ChatDialState extends State<ChatDial> {
                 elevation: 4,
                 shadowColor: scheme.shadow.withValues(alpha: 0.3),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  borderRadius: BorderRadius.circular(PpForgeRadius.xl),
                   side: BorderSide(color: scheme.outlineVariant),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xs,
+                    horizontal: PpForgeSpacing.xs,
                   ),
                   child: Row(
                     children: [
-                      AppIconButton.close(
+                      PpForgeIconButton.close(
                         tooltip: widget.closeTooltip,
                         iconSize: 20,
                         onPressed: () => setState(() => _open = false),
                       ),
                       Expanded(
-                        child: AppInput.card(
+                        child: PpForgeInput.card(
                           controller: _text,
                           autofocus: true,
                           textInputAction: TextInputAction.send,
@@ -88,19 +88,19 @@ class _ChatDialState extends State<ChatDial> {
                           hint: widget.hint,
                         ),
                       ),
-                      AppIconButton.filled(
+                      PpForgeIconButton.filled(
                         icon: PpForgeIcons.send,
                         tooltip: widget.sendTooltip,
                         size: 36,
                         onPressed: _send,
                       ),
-                      const SizedBox(width: AppSpacing.xs),
+                      const SizedBox(width: PpForgeSpacing.xs),
                     ],
                   ),
                 ),
               ),
             )
-          : AppIconButton.fab(
+          : PpForgeIconButton.fab(
               icon: PpForgeIcons.chat,
               tooltip: widget.tooltip,
               onPressed: () => setState(() => _open = true),

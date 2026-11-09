@@ -85,7 +85,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
         newPassword: w.next,
       );
       if (!mounted) return;
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         _setMode
             ? l.profileSetPasswordSnackSuccess

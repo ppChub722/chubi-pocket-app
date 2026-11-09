@@ -2,9 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_chip.dart';
 import '../../molecules/pointer_bubbles.dart';
 import '../../tokens/hero_colors.dart';
+import '../../app_aliases.dart';
 
 /// One occurrence's mark on an [OccurrenceChain].
 enum ChainDot {

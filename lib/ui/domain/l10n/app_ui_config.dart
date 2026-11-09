@@ -11,6 +11,7 @@ import '../tokens/app_icons.dart';
 import '../tokens/currencies.dart';
 import '../money/money_style.dart';
 import 'app_error_text.dart';
+import '../../app_aliases.dart';
 
 class AppUiConfig extends StatelessWidget {
   const AppUiConfig({required this.child, super.key});

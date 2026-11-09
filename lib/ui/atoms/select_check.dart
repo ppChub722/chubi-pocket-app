@@ -51,7 +51,7 @@ class SelectCheck extends StatelessWidget {
     );
     final tappable = InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.sm),
+      borderRadius: BorderRadius.circular(PpForgeRadius.sm),
       child: Padding(padding: const EdgeInsets.all(4), child: check),
     );
     return tooltip == null
@@ -81,14 +81,14 @@ class SelectAllCount extends StatelessWidget {
     final value = selected == 0 ? false : (selected >= total ? true : null);
     return InkWell(
       onTap: tap,
-      borderRadius: BorderRadius.circular(AppRadius.sm),
+      borderRadius: BorderRadius.circular(PpForgeRadius.sm),
       child: Padding(
-        padding: const EdgeInsets.only(right: AppSpacing.sm),
+        padding: const EdgeInsets.only(right: PpForgeSpacing.sm),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             SelectCheck(value: value, tooltip: tooltip, onTap: tap),
-            const SizedBox(width: AppSpacing.xs),
+            const SizedBox(width: PpForgeSpacing.xs),
             Text(
               '$selected/$total',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(

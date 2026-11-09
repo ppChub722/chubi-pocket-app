@@ -48,19 +48,19 @@ class DetailPairRow extends StatelessWidget {
         child: c.value,
       );
       final body = Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(c.label, style: detailLabelStyle(context)),
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: PpForgeSpacing.xs),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (grow) Expanded(child: value) else value,
                 if (c.chevron) ...[
-                  const SizedBox(width: AppSpacing.xs),
+                  const SizedBox(width: PpForgeSpacing.xs),
                   Icon(
                     PpForgeIcons.chevronRight,
                     color: theme.colorScheme.onSurfaceVariant,
@@ -81,17 +81,17 @@ class DetailPairRow extends StatelessWidget {
       child: GestureDetector(
         onLongPress: onLongPress,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
           child: IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 cell(first, grow: false),
                 VerticalDivider(
-                  width: AppSpacing.md * 2 + 1,
+                  width: PpForgeSpacing.md * 2 + 1,
                   thickness: 1,
-                  indent: AppSpacing.md,
-                  endIndent: AppSpacing.md,
+                  indent: PpForgeSpacing.md,
+                  endIndent: PpForgeSpacing.md,
                   color: theme.colorScheme.outlineVariant,
                 ),
                 Expanded(child: cell(second, grow: true)),

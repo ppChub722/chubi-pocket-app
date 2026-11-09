@@ -269,7 +269,7 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
           if (!m.isMe && m.isLinked && m.status == MemberStatus.active) m,
       ];
       if (can.isEmpty) {
-        showAppSnackBar(
+        showPpForgeSnackBar(
           context,
           l.projectMemberTransferNeedsAccount,
           tone: Tone.danger,
@@ -297,11 +297,11 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
       }
       await repo.leave(widget.projectId);
       if (!mounted) return;
-      showAppSnackBar(context, l.projectLeft);
+      showPpForgeSnackBar(context, l.projectLeft);
       context.go('/projects');
     } on ApiException catch (e) {
       if (mounted) {
-        showAppSnackBar(
+        showPpForgeSnackBar(
           context,
           errorText(AppLocalizations.of(context)!, e),
           tone: Tone.danger,
@@ -326,10 +326,10 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
       final p = await action();
       if (!mounted) return;
       _apply(p);
-      showAppSnackBar(context, done, tone: Tone.success);
+      showPpForgeSnackBar(context, done, tone: Tone.success);
     } on ApiException catch (e) {
       if (mounted) {
-        showAppSnackBar(
+        showPpForgeSnackBar(
           context,
           errorText(AppLocalizations.of(context)!, e),
           tone: Tone.danger,

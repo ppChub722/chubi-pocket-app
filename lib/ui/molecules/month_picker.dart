@@ -12,7 +12,7 @@ import '../atoms/busy_scope.dart';
 
 DateTime _monthOf(DateTime d) => DateTime(d.year, d.month);
 
-/// The body of [AppDatePicker.month].
+/// The body of [PpForgeDatePicker.month].
 class MonthPickerGrid extends StatefulWidget {
   const MonthPickerGrid({
     required this.selected,
@@ -44,7 +44,7 @@ class _MonthPickerGridState extends State<MonthPickerGrid> {
 
   @override
   Widget build(BuildContext context) {
-    final l = UiConfig.stringsOf(context);
+    final l = PpForgeConfig.stringsOf(context);
     final textTheme = Theme.of(context).textTheme;
     final locale = Localizations.localeOf(context).toLanguageTag();
     final selected = _monthOf(widget.selected);
@@ -52,7 +52,7 @@ class _MonthPickerGridState extends State<MonthPickerGrid> {
     final thisMonth = DateTime(now.year, now.month);
 
     Widget yearStep(IconData icon, String tooltip, int to) =>
-        AppIconButton.flat(
+        PpForgeIconButton.flat(
           icon: icon,
           tooltip: tooltip,
           onPressed: _yearAllowed(to) ? () => setState(() => _year = to) : null,
@@ -60,10 +60,10 @@ class _MonthPickerGridState extends State<MonthPickerGrid> {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
+        PpForgeSpacing.lg,
         0,
-        AppSpacing.lg,
-        AppSpacing.md,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.md,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -84,13 +84,13 @@ class _MonthPickerGridState extends State<MonthPickerGrid> {
               yearStep(PpForgeIcons.chevronRight, l.yearNext, _year + 1),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: PpForgeSpacing.sm),
           GridView.count(
             crossAxisCount: 4,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: AppSpacing.sm,
-            crossAxisSpacing: AppSpacing.sm,
+            mainAxisSpacing: PpForgeSpacing.sm,
+            crossAxisSpacing: PpForgeSpacing.sm,
             childAspectRatio: 1.6,
             children: [
               for (var i = 1; i <= 12; i++)
@@ -105,11 +105,11 @@ class _MonthPickerGridState extends State<MonthPickerGrid> {
             ],
           ),
           if (_allowed(thisMonth)) ...[
-            const SizedBox(height: AppSpacing.md),
-            AppButton(
+            const SizedBox(height: PpForgeSpacing.md),
+            PpForgeButton(
               label: l.thisMonth,
               kind: ButtonIconKind.today,
-              variant: AppButtonVariant.tonal,
+              variant: PpForgeButtonVariant.tonal,
               expand: true,
               onPressed: () => widget.onPicked(thisMonth),
             ),
@@ -139,8 +139,8 @@ class MonthOfYearGrid extends StatelessWidget {
       crossAxisCount: 6,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: AppSpacing.xs,
-      crossAxisSpacing: AppSpacing.xs,
+      mainAxisSpacing: PpForgeSpacing.xs,
+      crossAxisSpacing: PpForgeSpacing.xs,
       childAspectRatio: 1.4,
       children: [
         for (var i = 1; i <= 12; i++)
@@ -177,7 +177,7 @@ class _MonthCell extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final enabled = onTap != null;
     final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(PpForgeRadius.md),
       side: isCurrent && !isSelected
           ? BorderSide(color: scheme.primary)
           : BorderSide.none,

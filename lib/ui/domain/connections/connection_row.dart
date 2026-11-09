@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../molecules/app_row.dart';
-import '../../molecules/detail_rows.dart';
 import '../tokens/app_icons.dart';
 import '../../tokens/hero_colors.dart';
 import '../people/avatar.dart';
 import '../people/avatar_data.dart';
 import 'provider_logo.dart';
+import '../../app_aliases.dart';
 
 /// How a connection row looks (the app maps its data onto it).
 enum ConnectionRowState {

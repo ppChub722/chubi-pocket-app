@@ -29,14 +29,14 @@ class PickFrame extends StatelessWidget {
       strokeWidth: 1,
       dashLength: 4,
       gapLength: 3,
-      borderRadius: const Radius.circular(AppRadius.md),
+      borderRadius: const Radius.circular(PpForgeRadius.md),
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(PpForgeRadius.md),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.sm),
+            padding: const EdgeInsets.all(PpForgeSpacing.sm),
             child: SizedBox(width: double.infinity, child: child),
           ),
         ),
@@ -70,17 +70,17 @@ class PickedRowFrame extends StatelessWidget {
       strokeWidth: 1.5,
       dashLength: 4,
       gapLength: 3,
-      borderRadius: const Radius.circular(AppRadius.md),
+      borderRadius: const Radius.circular(PpForgeRadius.md),
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(PpForgeRadius.md),
           onTap: onTap,
           child: Row(
             children: [
               Expanded(child: IgnorePointer(child: child)),
               if (onRemove != null)
-                AppIconButton.flat(
+                PpForgeIconButton.flat(
                   icon: PpForgeIcons.close,
                   tooltip: removeTooltip,
                   dense: true,
@@ -108,7 +108,7 @@ class PickFramePrompt extends StatelessWidget {
       child: Row(
         children: [
           Icon(PpForgeIcons.add, size: 16, color: color),
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: PpForgeSpacing.xs),
           Flexible(
             child: Text(
               label,

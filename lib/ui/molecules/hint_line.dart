@@ -5,7 +5,7 @@ import '../tokens/app_spacing.dart';
 import '../tokens/icon_size.dart';
 
 /// A muted line under a field: what will happen, or a soft warning. A link
-/// beside it is an AppButton of its own.
+/// beside it is an PpForgeButton of its own.
 class HintLine extends StatelessWidget {
   const HintLine({required this.text, this.icon, super.key});
 
@@ -22,8 +22,8 @@ class HintLine extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (icon != null) ...[
-          AppIcon(icon!, size: AppIconSize.sm, color: scheme.onSurfaceVariant),
-          const SizedBox(width: AppSpacing.xs),
+          PpForgeIcon(icon!, size: PpForgeIconSize.sm, color: scheme.onSurfaceVariant),
+          const SizedBox(width: PpForgeSpacing.xs),
         ],
         Flexible(
           child: Text(

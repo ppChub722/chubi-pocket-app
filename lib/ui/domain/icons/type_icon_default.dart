@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app_colors.dart';
 import 'icon_code.dart';
 import 'icon_registry.dart';
+import '../../app_aliases.dart';
 
 /// The icon + colour an item of a given type (a wallet's cash / bank …) shows
 /// until the user picks their own; a null [IconCode] means "not picked".

@@ -7,6 +7,7 @@ import '../icons/icon_code.dart';
 import '../icons/icon_display.dart';
 import '../icons/icon_type.dart';
 import '../money/money_text.dart';
+import '../../app_aliases.dart';
 
 class EventListRow extends StatelessWidget {
   const EventListRow({

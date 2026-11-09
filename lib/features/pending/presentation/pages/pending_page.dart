@@ -105,7 +105,7 @@ class _PendingPageState extends State<PendingPage> {
         );
       });
       if (r.submitted.isNotEmpty) {
-        showAppSnackBarOn(
+        showPpForgeSnackBarOn(
           messenger,
           l.pendingSubmittedCount(r.submitted.length),
           tone: Tone.success,

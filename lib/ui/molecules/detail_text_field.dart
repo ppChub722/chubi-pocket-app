@@ -65,7 +65,7 @@ class DetailTextField extends StatelessWidget {
             !editing &&
             !locked &&
             controller.text.trim().isEmpty) {
-          return AppDetailRow(
+          return PpForgeDetailRow(
             label: label,
             trailing: DetailPlaceholder(notSetLabel ?? '—'),
             onTap: onEnterEdit,
@@ -78,7 +78,7 @@ class DetailTextField extends StatelessWidget {
           child: DetailStacked(
             label: label,
             leading: leading,
-            child: AppInput.inline(
+            child: PpForgeInput.inline(
               editing: editing && !locked,
               controller: controller,
               focusNode: focusNode,

@@ -63,7 +63,7 @@ class _CollapsibleSectionState extends State<CollapsibleSection> {
             AnimatedRotation(
               turns: open ? 0.5 : 0,
               duration: const Duration(milliseconds: 160),
-              child: AppIcon(PpForgeIcons.expand, color: scheme.onSurfaceVariant),
+              child: PpForgeIcon(PpForgeIcons.expand, color: scheme.onSurfaceVariant),
             ),
         ],
       ),

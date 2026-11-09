@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app_radius.dart';
-import '../../tokens/app_spacing.dart';
 import '../../tokens/tone.dart';
 import '../../atoms/busy_scope.dart';
+import '../../app_aliases.dart';
 
 /// One occurrence as a cell of [OccurrenceTileGrid] (ปรับแต่งล่วงหน้า):
 /// [label] (its month, or weekday for a weekly rule) over the big [day], then

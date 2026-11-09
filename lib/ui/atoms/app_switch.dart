@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'busy_scope.dart';
 
-class AppSwitch extends StatelessWidget {
-  const AppSwitch({
+class PpForgeSwitch extends StatelessWidget {
+  const PpForgeSwitch({
     required this.value,
     required this.onChanged,
     this.semanticLabel,

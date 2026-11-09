@@ -123,7 +123,7 @@ class _AsyncStateViewState extends State<AsyncStateView> {
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         ErrorView.titleFor(context, e),
         tone: Tone.danger,

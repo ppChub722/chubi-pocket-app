@@ -46,10 +46,10 @@ Future<bool> inviteWalletMember(
       contactId: contact.id,
     );
     onResult(result);
-    showAppSnackBarOn(messenger, l.walletInviteSent, tone: Tone.success);
+    showPpForgeSnackBarOn(messenger, l.walletInviteSent, tone: Tone.success);
     return true;
   } on ApiException catch (e) {
-    showAppSnackBarOn(
+    showPpForgeSnackBarOn(
       messenger,
       e.code == 'VALIDATION_ERROR'
           ? l.walletErrorInviteInvalid
@@ -164,7 +164,7 @@ class WalletMembersView extends StatelessWidget {
       onResult(r);
       router.go('/accounts');
     } on ApiException catch (e) {
-      showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
+      showPpForgeSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
     }
   }
 
@@ -186,7 +186,7 @@ class WalletMembersView extends StatelessWidget {
     try {
       onResult(await cubit.removeMember(accountId: account.id, memberId: m.id));
     } on ApiException catch (e) {
-      showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
+      showPpForgeSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
     }
   }
 
@@ -210,13 +210,13 @@ class WalletMembersView extends StatelessWidget {
         newOwnerUserId: m.userId,
       );
       onResult(r);
-      showAppSnackBarOn(
+      showPpForgeSnackBarOn(
         messenger,
         l.walletTransferOwnershipSuccess,
         tone: Tone.success,
       );
     } on ApiException catch (e) {
-      showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
+      showPpForgeSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
     }
   }
 }

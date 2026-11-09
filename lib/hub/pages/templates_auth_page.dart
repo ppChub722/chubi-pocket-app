@@ -202,7 +202,7 @@ class _AuthTemplateState extends State<_AuthTemplate> {
                     children: [
                       AppChip(
                         label: 'Failed attempt (error snackbar)',
-                        onTap: () => showAppSnackBar(
+                        onTap: () => showPpForgeSnackBar(
                           context,
                           'Wrong username or password',
                           tone: Tone.danger,

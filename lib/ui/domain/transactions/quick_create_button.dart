@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_button.dart';
-import '../../atoms/app_chip.dart';
-import '../../atoms/app_icon.dart';
-import '../../atoms/app_icon_button.dart';
 import '../tokens/app_icons.dart';
 import '../tokens/quick_create_mode.dart';
-import '../../tokens/app_durations.dart';
-import '../../tokens/icon_size.dart';
+import '../../app_aliases.dart';
 
 /// The mode's glyph (mock QuickCreateBtn): + for a transaction, the debt /
 /// saving module icons.
