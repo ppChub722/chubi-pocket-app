@@ -10,8 +10,9 @@ import 'package:flutter_test/flutter_test.dart';
 ///   lib/features/**                                       imports ONLY the gate
 ///
 /// 1. A feature file imports nothing from lib/ui except `ui/ui.dart`.
-/// 2. A generic piece must not import features, the localisation strings or
-///    the network layer. Today's violations are listed in
+/// 2. A generic piece imports only other generic pieces, Flutter, intl and
+///    google_fonts: no domain, gate, features, core, app shell, l10n, router or
+///    bloc. Today's violations are listed in
 ///    `test/ui/generic_baseline.txt` and can only shrink: a NEW one fails, a
 ///    fixed one fails until it is removed from the baseline (so the list is
 ///    always the real debt). Regenerate with `UPDATE_BASELINE=1 flutter test`.
@@ -46,25 +47,29 @@ void main() {
     );
   });
 
-  test('generic layers do not import features / l10n / network (ratchet)', () {
+  test('generic layers import nothing of the app (ratchet)', () {
+    // The generic kit is what moves into the ppForge package: it may import
+    // only itself, Flutter and a few pure packages — never lib/ui/domain,
+    // the gate, features, core, the app shell, l10n, the router or bloc.
     const generic = ['tokens', 'atoms', 'molecules', 'organisms', 'templates'];
+    const allowedPackages = {'flutter', 'intl', 'google_fonts', 'characters'};
     final found = <String>{};
     for (final layer in generic) {
       final dir = Directory('lib/ui/$layer');
       if (!dir.existsSync()) continue;
       for (final f in dartFiles(dir.path)) {
-        // tokens/app = the app's own values (themes, money colours, Thai
-        // currency names) — not part of the generic core.
-        if (norm(f.path).contains('/tokens/app/')) continue;
+        final from = norm(f.path);
         for (final i in importsOf(f)) {
-          final n = norm(i);
-          if (n.contains('/features/') ||
-              n.contains('l10n/gen/app_localizations') ||
-              n.contains('/core/network/')) {
-            found.add(
-              '${norm(f.path)} → ${n.split('/').skip(n.contains('package:') ? 0 : 0).where((s) => s != '..' && s != '.').join('/')}',
-            );
+          if (i.startsWith('dart:')) continue;
+          if (i.startsWith('package:')) {
+            final pkg = i.substring(8).split('/').first;
+            if (allowedPackages.contains(pkg)) continue;
+            found.add('$from → $i');
+            continue;
           }
+          final target = Uri.parse(from).resolve(i).path;
+          final inGeneric = generic.any((g) => target.startsWith('lib/ui/$g/'));
+          if (!inGeneric) found.add('$from → $i');
         }
       }
     }
