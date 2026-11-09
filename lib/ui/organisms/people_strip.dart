@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../atoms/app_button.dart';
 import '../atoms/dashed_rect_border.dart';
 import '../molecules/detail_rows.dart';
-import '../tokens/app/app_colors.dart';
+import '../tokens/app_colors.dart';
 import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';

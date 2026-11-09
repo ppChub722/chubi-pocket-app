@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
 import '../../atoms/app_avatar.dart';
-import '../../tokens/app/app_colors.dart';
+import '../../tokens/app_colors.dart';
 import 'color_token.dart';
 
 class IconCode extends Equatable {

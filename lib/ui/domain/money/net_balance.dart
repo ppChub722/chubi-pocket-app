@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/utils/currency_formatter.dart';
-import '../../tokens/app/app_colors.dart';
+import '../../tokens/app_colors.dart';
 import 'money_text.dart';
 
 /// The debt-state colour everywhere a debt says who owes whom: รอรับ (they

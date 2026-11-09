@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'app/app_colors.dart';
+import 'app_colors.dart';
 
 enum Tone { neutral, primary, success, warning, danger, info }
 

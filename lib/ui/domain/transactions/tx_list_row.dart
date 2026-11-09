@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../atoms/icon_tile.dart';
 import '../../molecules/app_list_row.dart';
-import '../../tokens/app/app_colors.dart';
+import '../../tokens/app_colors.dart';
 import '../../tokens/app/app_icons.dart';
 import '../icons/icon_code.dart';
 import '../icons/icon_display.dart';

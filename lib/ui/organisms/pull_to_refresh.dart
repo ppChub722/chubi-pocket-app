@@ -9,7 +9,7 @@ import 'page_pop_observer.dart';
 import 'reconnect_reload.dart';
 import '../tokens/app_durations.dart';
 import '../tokens/pp_forge_icons.dart';
-import '../tokens/app/app_colors.dart';
+import '../tokens/app_colors.dart';
 
 class PullToRefresh extends StatefulWidget {
   const PullToRefresh({

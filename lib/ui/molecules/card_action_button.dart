@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../atoms/app_icon_button.dart';
-import '../tokens/app/app_colors.dart';
+import '../tokens/app_colors.dart';
 
 class CardActionButton extends StatelessWidget {
   const CardActionButton({

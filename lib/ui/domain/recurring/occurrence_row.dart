@@ -6,7 +6,7 @@ import '../../atoms/app_icon_button.dart';
 import '../../atoms/ui_config.dart';
 import '../../molecules/option_menu.dart';
 import '../../organisms/option_sheet.dart';
-import '../../tokens/app/app_colors.dart';
+import '../../tokens/app_colors.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';

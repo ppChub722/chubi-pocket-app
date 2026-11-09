@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app/app_colors.dart';
+import '../../tokens/app_colors.dart';
 import '../../tokens/color_contrast.dart';
 import '../icons/color_token.dart';
 import 'avatar_data.dart';

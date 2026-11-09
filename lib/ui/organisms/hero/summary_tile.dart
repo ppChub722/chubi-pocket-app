@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../atoms/app_card.dart';
-import '../../tokens/app/app_colors.dart';
+import '../../tokens/app_colors.dart';
 import '../../tokens/app/module_colors.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';

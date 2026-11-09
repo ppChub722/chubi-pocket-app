@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../atoms/corner_badge.dart';
 import '../../atoms/server_image.dart';
-import '../../tokens/app/app_colors.dart';
+import '../../tokens/app_colors.dart';
 import '../../tokens/avatar_metrics.dart';
 import '../icons/color_token.dart';
 import '../icons/icon_display.dart';

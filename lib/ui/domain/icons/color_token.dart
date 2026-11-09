@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app/app_colors.dart';
+import '../../tokens/app_colors.dart';
 
 Color resolveColor(String spec, AppColors palette) {
   if (spec.isEmpty) return palette.primary;

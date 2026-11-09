@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../atoms/app_chip.dart';
 import '../molecules/stepper_pill.dart';
-import '../tokens/app/app_colors.dart';
+import '../tokens/app_colors.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/hero_colors.dart';

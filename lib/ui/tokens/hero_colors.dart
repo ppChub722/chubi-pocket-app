@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'app/app_colors.dart';
+import 'app_colors.dart';
 import 'color_contrast.dart';
 
 /// The colors a hero card hands to the pieces inside it, all made from the

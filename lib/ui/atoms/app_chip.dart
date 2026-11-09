@@ -5,7 +5,7 @@ import 'package:flutter/rendering.dart';
 
 import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
-import '../tokens/app/app_colors.dart';
+import '../tokens/app_colors.dart';
 import 'busy_scope.dart';
 import 'dashed_rect_border.dart';
 import '../tokens/app_opacity.dart';

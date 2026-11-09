@@ -7,7 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../app_radius.dart';
 import '../../app_spacing.dart';
-import '../app_colors.dart';
+import '../../app_colors.dart';
 import '../fonts/app_font.dart';
 import 'app_page_transitions.dart';
 import 'app_theme.dart';

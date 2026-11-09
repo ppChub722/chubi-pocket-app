@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../atoms/busy_scope.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
-import '../tokens/app/app_colors.dart';
+import '../tokens/app_colors.dart';
 
 class DangerRow extends StatelessWidget {
   const DangerRow({

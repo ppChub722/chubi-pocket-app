@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../atoms/dashed_rect_border.dart';
-import '../../tokens/app/app_colors.dart';
+import '../../tokens/app_colors.dart';
 import '../icons/color_token.dart';
 
 /// A person's profile colours 1…[count] as dots (0.4.2 1b, under the avatar
