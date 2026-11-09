@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../atoms/app_input.dart';
 import '../../organisms/app_sheet.dart';
 import '../../templates/form_sheet.dart';
-import '../../tokens/app/text_limits.dart';
+import '../tokens/text_limits.dart';
 
 /// Naming a new tag (the tag picker's "add a tag" with nothing typed).
 Future<String?> showNewTagNameSheet(

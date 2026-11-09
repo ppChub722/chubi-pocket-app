@@ -4,8 +4,8 @@ import '../../atoms/app_button.dart';
 import '../../atoms/app_chip.dart';
 import '../../atoms/app_icon.dart';
 import '../../atoms/app_icon_button.dart';
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app/quick_create_mode.dart';
+import '../tokens/app_icons.dart';
+import '../tokens/quick_create_mode.dart';
 import '../../tokens/app_durations.dart';
 import '../../tokens/icon_size.dart';
 

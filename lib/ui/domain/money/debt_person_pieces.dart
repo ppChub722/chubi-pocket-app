@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../atoms/app_button.dart';
 import '../../atoms/app_chip.dart';
 import '../../atoms/app_input.dart';
-import '../../tokens/app/app_icons.dart';
+import '../tokens/app_icons.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';

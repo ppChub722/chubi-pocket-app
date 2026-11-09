@@ -41,6 +41,8 @@ Future<void> main() async {
 
       await _setHighRefreshRate();
 
+      configureChubiThemes();
+
       final prefs = await SharedPreferences.getInstance();
 
       try {

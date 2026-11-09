@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app/app_icons.dart';
+import '../tokens/app_icons.dart';
 import '../icons/icon_code.dart';
 import '../../atoms/corner_badge.dart';
 import '../../atoms/dashed_rect_border.dart';

@@ -5,7 +5,7 @@ import '../../atoms/icon_tile.dart';
 import '../../molecules/confirm_dialog.dart';
 import '../../molecules/app_list_row.dart';
 import '../../tokens/tone.dart';
-import '../../tokens/app/app_icons.dart';
+import '../tokens/app_icons.dart';
 import '../../tokens/app_spacing.dart';
 import '../icons/icon_code.dart';
 import '../people/avatar_data.dart';

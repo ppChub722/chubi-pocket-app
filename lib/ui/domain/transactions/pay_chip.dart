@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../atoms/app_chip.dart';
-import '../../tokens/app/app_icons.dart';
+import '../tokens/app_icons.dart';
 import '../../tokens/chip_size.dart';
 
 /// "จ่าย" under a person's name in a bill: ✓ and filled on the one who paid,

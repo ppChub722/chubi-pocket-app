@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../atoms/app_chip.dart';
 import '../../tokens/app_colors.dart';
-import '../../tokens/app/app_icons.dart';
+import '../tokens/app_icons.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';
 import 'money_text.dart';

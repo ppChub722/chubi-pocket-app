@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../app_colors.dart';
-import '../module_colors.dart';
 
 @immutable
 class AppTheme {
@@ -13,15 +12,33 @@ class AppTheme {
     required this.darkColors,
     required this.previewSwatch,
     this.sku,
-    this.lightModules,
-    this.darkModules,
+    this.lightExtensions = const [],
+    this.darkExtensions = const [],
   });
 
-  final ModuleColors? lightModules;
-  final ModuleColors? darkModules;
+  /// A host app's own [ThemeExtension]s (its brand colours, say), attached to
+  /// the built [ThemeData] next to the kit's.
+  final List<ThemeExtension<dynamic>> lightExtensions;
+  final List<ThemeExtension<dynamic>> darkExtensions;
 
-  ModuleColors? modulesFor(Brightness brightness) =>
-      brightness == Brightness.dark ? darkModules : lightModules;
+  List<ThemeExtension<dynamic>> extensionsFor(Brightness brightness) =>
+      brightness == Brightness.dark ? darkExtensions : lightExtensions;
+
+  /// This theme plus [light] / [dark] extensions of the host.
+  AppTheme withExtensions({
+    List<ThemeExtension<dynamic>> light = const [],
+    List<ThemeExtension<dynamic>> dark = const [],
+  }) => AppTheme(
+    id: id,
+    nameKey: nameKey,
+    isPremium: isPremium,
+    lightColors: lightColors,
+    darkColors: darkColors,
+    previewSwatch: previewSwatch,
+    sku: sku,
+    lightExtensions: [...lightExtensions, ...light],
+    darkExtensions: [...darkExtensions, ...dark],
+  );
 
   final String id;
   final String nameKey;

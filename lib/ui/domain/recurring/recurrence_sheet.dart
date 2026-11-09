@@ -14,7 +14,7 @@ import '../../molecules/day_of_month_picker.dart';
 import '../../molecules/month_picker.dart';
 import '../../organisms/app_date_picker.dart';
 import '../../organisms/app_sheet.dart';
-import '../../tokens/app/app_icons.dart';
+import '../tokens/app_icons.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/typography.dart';
 import 'recurrence_choices.dart';

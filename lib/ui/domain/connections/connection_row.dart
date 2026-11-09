@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../molecules/app_row.dart';
 import '../../molecules/detail_rows.dart';
-import '../../tokens/app/app_icons.dart';
+import '../tokens/app_icons.dart';
 import '../../tokens/hero_colors.dart';
 import '../people/avatar.dart';
 import '../people/avatar_data.dart';

@@ -36,7 +36,7 @@ class ThemeBuilder {
         colors,
         const ControlSizes(),
         const HeroMetrics(),
-        ?theme.modulesFor(brightness),
+        ...theme.extensionsFor(brightness),
       ],
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {

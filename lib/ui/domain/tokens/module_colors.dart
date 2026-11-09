@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../app_colors.dart';
+import '../../tokens/app_colors.dart';
 
 @immutable
 class ModuleColors extends ThemeExtension<ModuleColors> {

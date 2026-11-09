@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../atoms/app_chip.dart';
-import '../../tokens/app/app_icons.dart';
+import '../tokens/app_icons.dart';
 import '../../tokens/app_spacing.dart';
 import 'net_balance.dart';
 

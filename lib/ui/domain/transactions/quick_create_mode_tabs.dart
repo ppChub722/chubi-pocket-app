@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app/quick_create_mode.dart';
+import '../tokens/app_icons.dart';
+import '../tokens/quick_create_mode.dart';
 import '../../tokens/app_spacing.dart';
 import '../../atoms/busy_scope.dart';
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../molecules/app_list_row.dart';
-import '../../tokens/app/app_icons.dart';
+import '../tokens/app_icons.dart';
 import '../../tokens/tone.dart';
 import '../icons/icon_code.dart';
 import '../icons/icon_display.dart';

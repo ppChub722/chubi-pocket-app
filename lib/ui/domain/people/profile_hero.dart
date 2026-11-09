@@ -4,7 +4,7 @@ import '../../atoms/editable_circle.dart';
 import '../../molecules/hero_style.dart';
 import '../../organisms/hero/app_hero_card.dart';
 import '../../organisms/hero/hero_facts.dart';
-import '../../tokens/app/app_icons.dart';
+import '../tokens/app_icons.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/hero_colors.dart';
 import 'avatar.dart';

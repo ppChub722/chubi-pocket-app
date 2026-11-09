@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../app_colors.dart';
 import '../app_theme.dart';
-import '../../module_colors.dart';
 
 const _sweetPink = Color(0xFFFFB3C6);
 const _sweetPinkDeep = Color(0xFFFF8FB1);
@@ -13,20 +12,6 @@ final sweetTheme = AppTheme(
   nameKey: 'theme_sweet',
   isPremium: false,
   previewSwatch: const [_sweetPink, _sweetAccent, Color(0xFFFFFFFF)],
-  lightModules: const ModuleColors(
-    library: Color(0xFFEC4899),
-    people: Color(0xFFF97316),
-    planning: Color(0xFFA855F7),
-    walletAsset: Color(0xFF0284C7),
-    walletLiability: Color(0xFFEA580C),
-  ),
-  darkModules: const ModuleColors(
-    library: Color(0xFFF472B6),
-    people: Color(0xFFFB923C),
-    planning: Color(0xFFC084FC),
-    walletAsset: Color(0xFF38BDF8),
-    walletLiability: Color(0xFFFB923C),
-  ),
   lightColors: const AppColors(
     brightness: Brightness.light,
     primary: _sweetPinkDeep,

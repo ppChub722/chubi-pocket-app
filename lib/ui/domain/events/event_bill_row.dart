@@ -4,7 +4,7 @@ import '../../atoms/app_chip.dart';
 import '../../atoms/app_divider.dart';
 import '../../atoms/app_icon_button.dart';
 import '../../atoms/select_check.dart';
-import '../../tokens/app/app_icons.dart';
+import '../tokens/app_icons.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';
 import '../icons/icon_code.dart';

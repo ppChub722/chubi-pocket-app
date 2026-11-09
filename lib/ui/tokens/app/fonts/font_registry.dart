@@ -38,7 +38,7 @@ class FontRegistry {
     previewSample: 'สวัสดี นักกีฬา ชมพู่ ๑,๒๓๔',
   );
 
-  static const List<AppFont> all = [
+  static List<AppFont> _all = const [
     inter,
     nunito,
     poppins,
@@ -46,10 +46,25 @@ class FontRegistry {
     mitr,
   ];
 
-  static const Map<String, String> defaultsByLanguage = {
+  static Map<String, String> _defaultsByLanguage = const {
     'en': 'Inter',
     'th': 'IBM Plex Sans Thai',
   };
+
+  static List<AppFont> get all => _all;
+
+  static Map<String, String> get defaultsByLanguage => _defaultsByLanguage;
+
+  /// Replaces the built-in font set — a host app registers its own fonts and
+  /// the default font id per language code once at start-up.
+  static void configure(
+    List<AppFont> fonts, {
+    required Map<String, String> defaultsByLanguage,
+  }) {
+    assert(fonts.isNotEmpty);
+    _all = List.unmodifiable(fonts);
+    _defaultsByLanguage = Map.unmodifiable(defaultsByLanguage);
+  }
 
   static String defaultIdFor(String languageCode) =>
       defaultsByLanguage[languageCode] ?? all.first.id;
