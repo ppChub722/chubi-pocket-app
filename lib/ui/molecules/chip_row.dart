@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/app_chip.dart';
 import '../tokens/chip_size.dart';
@@ -64,13 +64,13 @@ class ChipRow extends StatelessWidget {
         : moreFirst
         ? AppChip(
             label: moreLabel ?? '',
-            icon: AppIcons.add,
+            icon: PpForgeIcons.add,
             dashed: true,
             onTap: onMore,
           )
         : AppChip(
             label: moreLabel ?? '',
-            icon: AppIcons.more,
+            icon: PpForgeIcons.more,
             dashed: true,
             onTap: onMore,
           );
@@ -367,7 +367,7 @@ class _LimitedChipWrapState extends State<LimitedChipWrap> {
             AppChip(
               key: const ValueKey('chipWrapFold'),
               label: '',
-              icon: AppIcons.collapse,
+              icon: PpForgeIcons.collapse,
               size: widget.size,
               onTap: () => setState(() => _open = false),
             ),

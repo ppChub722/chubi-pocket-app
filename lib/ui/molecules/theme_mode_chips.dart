@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/app_chip.dart';
 
@@ -23,9 +23,9 @@ class ThemeModeChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      (ThemeMode.light, AppIcons.lightMode, lightLabel),
-      (ThemeMode.dark, AppIcons.darkMode, darkLabel),
-      (ThemeMode.system, AppIcons.systemMode, systemLabel),
+      (ThemeMode.light, PpForgeIcons.lightMode, lightLabel),
+      (ThemeMode.dark, PpForgeIcons.darkMode, darkLabel),
+      (ThemeMode.system, PpForgeIcons.systemMode, systemLabel),
     ];
     return Wrap(
       spacing: AppSpacing.sm,

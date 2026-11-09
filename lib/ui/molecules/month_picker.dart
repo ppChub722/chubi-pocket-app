@@ -3,7 +3,7 @@ import '../tokens/button_icon_kind.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/ui_config.dart';
@@ -71,7 +71,7 @@ class _MonthPickerGridState extends State<MonthPickerGrid> {
         children: [
           Row(
             children: [
-              yearStep(AppIcons.chevronLeft, l.yearPrev, _year - 1),
+              yearStep(PpForgeIcons.chevronLeft, l.yearPrev, _year - 1),
               Expanded(
                 child: Text(
                   DateFormat.y(locale).format(DateTime(_year)),
@@ -81,7 +81,7 @@ class _MonthPickerGridState extends State<MonthPickerGrid> {
                   ),
                 ),
               ),
-              yearStep(AppIcons.chevronRight, l.yearNext, _year + 1),
+              yearStep(PpForgeIcons.chevronRight, l.yearNext, _year + 1),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),

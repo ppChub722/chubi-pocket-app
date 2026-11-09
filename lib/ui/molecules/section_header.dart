@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../atoms/app_button.dart';
 import '../atoms/app_text.dart';
 import '../atoms/list_break.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/typography.dart';
 
@@ -126,7 +126,7 @@ class SectionHeader extends StatelessWidget implements ListBreak {
                           label: actionLabel!,
                           onPressed: onAction,
                           variant: AppButtonVariant.text,
-                          trailingIcon: AppIcons.chevronRight,
+                          trailingIcon: PpForgeIcons.chevronRight,
                         ),
                       if (end != null) Flexible(child: end),
                     ],

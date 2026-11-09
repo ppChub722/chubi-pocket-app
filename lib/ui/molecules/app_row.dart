@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../atoms/busy_scope.dart';
 import '../atoms/corner_badge.dart';
 import '../tokens/app_opacity.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/avatar_metrics.dart';
 import '../tokens/hero_colors.dart';
@@ -339,7 +339,7 @@ class AppRow extends StatelessWidget {
           ],
           if (chevron) ...[
             const SizedBox(width: AppSpacing.xs),
-            swap(spinChevron, Icon(AppIcons.chevronRight, color: muted)),
+            swap(spinChevron, Icon(PpForgeIcons.chevronRight, color: muted)),
           ],
         ],
       );

@@ -1,7 +1,7 @@
 import '../atoms/app_icon_button.dart';
 import 'package:flutter/material.dart';
 
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/app_button.dart';
 import '../tokens/button_icon_kind.dart';
@@ -63,7 +63,7 @@ class ModeActionBar extends StatelessWidget {
                         key: const ValueKey('undo-on'),
                         tooltip: undoTooltip,
                         onPressed: onUndo,
-                        icon: AppIcons.undo,
+                        icon: PpForgeIcons.undo,
                       )
                     : SizedBox.square(
                         key: const ValueKey('undo-off'),

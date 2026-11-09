@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../atoms/app_icon.dart';
-import '../../tokens/app/app_icons.dart';
+import '../../tokens/pp_forge_icons.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/hero_colors.dart';
 import '../../tokens/icon_size.dart';
@@ -106,7 +106,7 @@ class HeroFactList extends StatelessWidget {
                 ),
                 if (f.onTap != null)
                   AppIcon(
-                    AppIcons.chevronRight,
+                    PpForgeIcons.chevronRight,
                     size: AppIconSize.sm,
                     color: muted,
                   ),

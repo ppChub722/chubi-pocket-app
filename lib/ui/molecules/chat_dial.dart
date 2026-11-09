@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../atoms/app_icon_button.dart';
 import '../atoms/app_input.dart';
 
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 
@@ -89,7 +89,7 @@ class _ChatDialState extends State<ChatDial> {
                         ),
                       ),
                       AppIconButton.filled(
-                        icon: AppIcons.send,
+                        icon: PpForgeIcons.send,
                         tooltip: widget.sendTooltip,
                         size: 36,
                         onPressed: _send,
@@ -101,7 +101,7 @@ class _ChatDialState extends State<ChatDial> {
               ),
             )
           : AppIconButton.fab(
-              icon: AppIcons.chat,
+              icon: PpForgeIcons.chat,
               tooltip: widget.tooltip,
               onPressed: () => setState(() => _open = true),
             ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../atoms/app_chip.dart';
 import '../atoms/app_icon.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/chip_size.dart';
 import '../tokens/icon_size.dart';
@@ -29,7 +29,7 @@ class TagRow extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 1),
-          child: AppIcon(AppIcons.tag, size: AppIconSize.sm, color: muted),
+          child: AppIcon(PpForgeIcons.tag, size: AppIconSize.sm, color: muted),
         ),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
@@ -51,7 +51,7 @@ class TagRow extends StatelessWidget {
               if (onAdd != null)
                 AppChip(
                   label: addLabel ?? '',
-                  icon: AppIcons.add,
+                  icon: PpForgeIcons.add,
                   size: ChipSize.mini,
                   dashed: true,
                   onTap: onAdd,

@@ -2,7 +2,7 @@ import 'app_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import 'app_input_framed.dart';
 import 'busy_scope.dart';
@@ -640,7 +640,7 @@ class _AppInputState extends State<AppInput> {
         hintMaxLines: 1,
         suffixIcon: w.obscurable && editing
             ? AppIconButton.flat(
-                icon: _inlineObscured ? AppIcons.visible : AppIcons.hidden,
+                icon: _inlineObscured ? PpForgeIcons.visible : PpForgeIcons.hidden,
                 iconSize: AppIconButton.glyphSmall,
                 onPressed: () =>
                     setState(() => _inlineObscured = !_inlineObscured),
@@ -797,7 +797,7 @@ class _AppInputState extends State<AppInput> {
           decoration: InputDecoration(
             isDense: true,
             hintText: w.hint ?? UiConfig.stringsOf(context).search,
-            prefixIcon: const Icon(AppIcons.search, size: 18),
+            prefixIcon: const Icon(PpForgeIcons.search, size: 18),
             prefixIconConstraints: const BoxConstraints(minWidth: 36),
             suffixIconConstraints: const BoxConstraints(
               minWidth: 40,
@@ -808,7 +808,7 @@ class _AppInputState extends State<AppInput> {
                 : AppIconButton.flat(
                     tooltip:
                         w.clearTooltip ?? UiConfig.stringsOf(context).clear,
-                    icon: AppIcons.close,
+                    icon: PpForgeIcons.close,
                     iconSize: AppIconButton.glyphXs,
                     onPressed: () {
                       controller.clear();

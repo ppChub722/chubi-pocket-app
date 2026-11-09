@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../atoms/app_icon.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/icon_size.dart';
 
@@ -19,7 +19,7 @@ class LinkedFieldHint extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppIcon(
-          AppIcons.link,
+          PpForgeIcons.link,
           size: AppIconSize.sm,
           color: scheme.onSurfaceVariant,
         ),

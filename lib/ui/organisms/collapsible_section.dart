@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../atoms/app_icon.dart';
 import '../molecules/detail_rows.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 
 class CollapsibleSection extends StatefulWidget {
   const CollapsibleSection({
@@ -63,7 +63,7 @@ class _CollapsibleSectionState extends State<CollapsibleSection> {
             AnimatedRotation(
               turns: open ? 0.5 : 0,
               duration: const Duration(milliseconds: 160),
-              child: AppIcon(AppIcons.expand, color: scheme.onSurfaceVariant),
+              child: AppIcon(PpForgeIcons.expand, color: scheme.onSurfaceVariant),
             ),
         ],
       ),

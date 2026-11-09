@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 
+import '../pp_forge_icons.dart';
+
 abstract final class AppIcons {
   static const dashboard = Icons.dashboard_outlined;
   static const dashboardActive = Icons.dashboard;
   static const transactions = Icons.list_alt_outlined;
   static const transactionsActive = Icons.list_alt;
-  static const wallet = Icons.account_balance_wallet_outlined;
+  static const wallet = PpForgeIcons.wallet;
   static const walletActive = Icons.account_balance_wallet;
-  static const more = Icons.more_horiz;
-  static const back = Icons.arrow_back;
-  static const arrowForward = Icons.arrow_forward;
-  static const close = Icons.close;
+  static const more = PpForgeIcons.more;
+  static const back = PpForgeIcons.back;
+  static const arrowForward = PpForgeIcons.arrowForward;
+  static const close = PpForgeIcons.close;
   static const notifications = Icons.notifications_outlined;
   static const pending = Icons.move_to_inbox_outlined;
 
@@ -20,8 +22,8 @@ abstract final class AppIcons {
   static const markAllRead = Icons.done_all;
   static const profile = Icons.person_outline;
 
-  static const category = Icons.category_outlined;
-  static const tag = Icons.sell_outlined;
+  static const category = PpForgeIcons.category;
+  static const tag = PpForgeIcons.tag;
   static const amount = Icons.payments_outlined;
   static const contact = Icons.contacts_outlined;
   static const project = Icons.groups_outlined;
@@ -46,8 +48,8 @@ abstract final class AppIcons {
   static const inviteMember = Icons.person_add_alt_1_outlined;
   static const addContact = Icons.person_add_outlined;
   static const addDebt = Icons.note_add_outlined;
-  static const settle = Icons.price_check;
-  static const history = Icons.history;
+  static const settle = PpForgeIcons.settle;
+  static const history = PpForgeIcons.history;
 
   static const bank = Icons.account_balance_outlined;
   static const cash = Icons.payments_outlined;
@@ -63,18 +65,18 @@ abstract final class AppIcons {
   /// "ไม่ระบุหมวด" — rows without a category (filters, pickers).
   static const noCategory = Icons.label_off_outlined;
   static const currency = Icons.currency_exchange;
-  static const date = Icons.calendar_today_outlined;
-  static const note = Icons.sticky_note_2_outlined;
-  static const split = Icons.call_split;
+  static const date = PpForgeIcons.date;
+  static const note = PpForgeIcons.note;
+  static const split = PpForgeIcons.split;
 
   /// A row's mark for a shared bill, with the head count beside it.
   static const shared = Icons.group_outlined;
 
-  static const auto = Icons.auto_mode;
-  static const link = Icons.link;
-  static const unlink = Icons.link_off;
-  static const trendUp = Icons.arrow_upward;
-  static const trendDown = Icons.arrow_downward;
+  static const auto = PpForgeIcons.auto;
+  static const link = PpForgeIcons.link;
+  static const unlink = PpForgeIcons.unlink;
+  static const trendUp = PpForgeIcons.trendUp;
+  static const trendDown = PpForgeIcons.trendDown;
   static const trendFlat = Icons.remove;
 
   // Hero fact labels (HeroFact.icon).
@@ -88,14 +90,14 @@ abstract final class AppIcons {
   static const target = Icons.track_changes;
 
   // A month's money in / out (HeroFlowRow).
-  static const flowIn = Icons.south_west;
-  static const flowOut = Icons.north_east;
+  static const flowIn = PpForgeIcons.flowIn;
+  static const flowOut = PpForgeIcons.flowOut;
 
-  static const language = Icons.language_outlined;
+  static const language = PpForgeIcons.language;
   static const font = Icons.text_fields_outlined;
-  static const lightMode = Icons.light_mode_outlined;
-  static const darkMode = Icons.dark_mode_outlined;
-  static const systemMode = Icons.smartphone_outlined;
+  static const lightMode = PpForgeIcons.lightMode;
+  static const darkMode = PpForgeIcons.darkMode;
+  static const systemMode = PpForgeIcons.systemMode;
   static const email = Icons.mail_outline;
 
   /// The theme-mode setting (light / dark / system).
@@ -108,34 +110,34 @@ abstract final class AppIcons {
   static const password = Icons.key_outlined;
   static const phone = Icons.phone_outlined;
 
-  static const add = Icons.add;
-  static const edit = Icons.edit_outlined;
-  static const editBadge = Icons.edit; // small filled pencil on avatars
-  static const delete = Icons.delete_outline;
-  static const archive = Icons.archive_outlined;
+  static const add = PpForgeIcons.add;
+  static const edit = PpForgeIcons.edit;
+  static const editBadge = PpForgeIcons.editBadge;
+  static const delete = PpForgeIcons.delete;
+  static const archive = PpForgeIcons.archive;
   static const unarchive = Icons.unarchive_outlined;
-  static const undo = Icons.undo;
-  static const reset = Icons.restart_alt;
-  static const refresh = Icons.refresh;
-  static const search = Icons.search;
-  static const clear = Icons.clear;
-  static const sort = Icons.sort;
+  static const undo = PpForgeIcons.undo;
+  static const reset = PpForgeIcons.reset;
+  static const refresh = PpForgeIcons.refresh;
+  static const search = PpForgeIcons.search;
+  static const clear = PpForgeIcons.clear;
+  static const sort = PpForgeIcons.sort;
 
   /// Auto sync (settings › ซิงก์อัตโนมัติ, the event / person switches).
   static const sync = Icons.sync;
 
   /// Filters and sorting (settings › ตัวกรองและการเรียง).
   static const filter = Icons.tune;
-  static const reorder = Icons.drag_indicator;
-  static const share = Icons.ios_share;
+  static const reorder = PpForgeIcons.reorder;
+  static const share = PpForgeIcons.share;
   static const copy = Icons.content_copy;
   static const download = Icons.file_download_outlined;
-  static const send = Icons.send_outlined;
-  static const today = Icons.today;
-  static const photo = Icons.photo_camera_outlined;
-  static const skip = Icons.skip_next;
+  static const send = PpForgeIcons.send;
+  static const today = PpForgeIcons.today;
+  static const photo = PpForgeIcons.photo;
+  static const skip = PpForgeIcons.skip;
   static const importSlip = Icons.document_scanner_outlined;
-  static const chat = Icons.chat_bubble_outline;
+  static const chat = PpForgeIcons.chat;
   static const logout = Icons.logout;
   static const iconPicker = Icons.interests_outlined;
   static const colorPicker = Icons.palette_outlined;
@@ -149,23 +151,23 @@ abstract final class AppIcons {
   static const resume = Icons.play_circle_outline;
   static const stop = Icons.stop_circle_outlined;
 
-  static const chevronRight = Icons.chevron_right;
-  static const chevronLeft = Icons.chevron_left;
-  static const dropdown = Icons.arrow_drop_down;
-  static const expand = Icons.expand_more;
-  static const collapse = Icons.expand_less;
-  static const check = Icons.check;
-  static const save = Icons.save_outlined;
+  static const chevronRight = PpForgeIcons.chevronRight;
+  static const chevronLeft = PpForgeIcons.chevronLeft;
+  static const dropdown = PpForgeIcons.dropdown;
+  static const expand = PpForgeIcons.expand;
+  static const collapse = PpForgeIcons.collapse;
+  static const check = PpForgeIcons.check;
+  static const save = PpForgeIcons.save;
   static const none = Icons.block;
-  static const lock = Icons.lock_outline;
+  static const lock = PpForgeIcons.lock;
 
-  static const visible = Icons.visibility_outlined;
-  static const hidden = Icons.visibility_off_outlined;
+  static const visible = PpForgeIcons.visible;
+  static const hidden = PpForgeIcons.hidden;
 
-  static const success = Icons.check_circle_outline;
-  static const error = Icons.error_outline;
-  static const warning = Icons.warning_amber_outlined;
-  static const info = Icons.info_outline;
+  static const success = PpForgeIcons.success;
+  static const error = PpForgeIcons.error;
+  static const warning = PpForgeIcons.warning;
+  static const info = PpForgeIcons.info;
   static const offline = Icons.wifi_off_outlined;
   static const serverDown = Icons.cloud_off_outlined;
   static const empty = Icons.inbox_outlined;

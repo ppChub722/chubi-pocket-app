@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../atoms/app_icon.dart';
 import '../molecules/detail_rows.dart';
 import '../molecules/detail_text_field.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/busy_scope.dart';
 
@@ -47,7 +47,7 @@ class NoteSection extends StatelessWidget {
     if (editing) {
       // The same 📝 as in view mode, whatever field the page passes.
       child = DetailLeadingScope(
-        leading: const AppIcon(AppIcons.note),
+        leading: const AppIcon(PpForgeIcons.note),
         child:
             editField ??
             DetailTextField(
@@ -69,7 +69,7 @@ class NoteSection extends StatelessWidget {
           children: [
             IconTheme.merge(
               data: IconThemeData(color: scheme.onSurfaceVariant, size: 22),
-              child: const AppIcon(AppIcons.note),
+              child: const AppIcon(PpForgeIcons.note),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(

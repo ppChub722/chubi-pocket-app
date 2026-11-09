@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../tokens/app/app_colors.dart';
-import '../../tokens/app/app_icons.dart';
+import '../../tokens/pp_forge_icons.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/hero_colors.dart';
@@ -12,7 +12,7 @@ class HeroAlert extends StatelessWidget {
   const HeroAlert({
     required this.text,
     this.onTap,
-    this.icon = AppIcons.warning,
+    this.icon = PpForgeIcons.warning,
     super.key,
   });
 
@@ -47,7 +47,7 @@ class HeroAlert extends StatelessWidget {
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(child: Text(text, style: style)),
                 if (onTap != null)
-                  Icon(AppIcons.chevronRight, size: 16, color: warning),
+                  Icon(PpForgeIcons.chevronRight, size: 16, color: warning),
               ],
             ),
           ),

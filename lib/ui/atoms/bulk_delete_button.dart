@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import 'app_icon_button.dart';
 import 'connection_scope.dart';
 
@@ -14,7 +14,7 @@ class BulkDeleteButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppIconButton(
-      icon: AppIcons.delete,
+      icon: PpForgeIcons.delete,
       destructive: true,
       tooltip: tooltip,
       onPressed: ConnectionScope.isOffline(context) ? null : onPressed,

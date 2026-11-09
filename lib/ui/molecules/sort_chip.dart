@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../atoms/app_chip.dart';
 import '../organisms/option_sheet.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import 'option_menu.dart';
 
 class SortOption<T> {
@@ -44,7 +44,7 @@ class SortChip<T> extends StatelessWidget {
       ],
       builder: (context, toggle) => AppChip(
         label: current.label,
-        icon: icon ?? AppIcons.sort,
+        icon: icon ?? PpForgeIcons.sort,
         trailing: AppChipTrailing.dropdown,
         tooltip: tooltip,
         onTap: toggle,

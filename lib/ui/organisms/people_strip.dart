@@ -4,7 +4,7 @@ import '../atoms/app_button.dart';
 import '../atoms/dashed_rect_border.dart';
 import '../molecules/detail_rows.dart';
 import '../tokens/app/app_colors.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/busy_scope.dart';
@@ -221,7 +221,7 @@ class _InviteCard extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(AppIcons.add, color: color),
+                  Icon(PpForgeIcons.add, color: color),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     label,

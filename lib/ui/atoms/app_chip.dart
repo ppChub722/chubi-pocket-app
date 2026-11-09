@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/app/app_colors.dart';
 import 'busy_scope.dart';
@@ -222,7 +222,7 @@ class AppChip extends StatelessWidget {
     final Widget? tail = switch (trailing) {
       AppChipTrailing.none => null,
       AppChipTrailing.dropdown => Icon(
-        AppIcons.dropdown,
+        PpForgeIcons.dropdown,
         size: iconSize + 4,
         color: fg,
       ),
@@ -235,16 +235,16 @@ class AppChip extends StatelessWidget {
                   width: iconSize + 8,
                   height: height,
                   child: Center(
-                    child: Icon(AppIcons.close, size: iconSize, color: fg),
+                    child: Icon(PpForgeIcons.close, size: iconSize, color: fg),
                   ),
                 ),
               )
             : onTap == null
-            ? Icon(AppIcons.close, size: iconSize, color: fg)
+            ? Icon(PpForgeIcons.close, size: iconSize, color: fg)
             : InkResponse(
                 onTap: enabled ? onRemove : null,
                 radius: height / 2,
-                child: Icon(AppIcons.close, size: iconSize, color: fg),
+                child: Icon(PpForgeIcons.close, size: iconSize, color: fg),
               ),
       AppChipTrailing.count =>
         count <= 0 ? null : _Count(count: count, color: fg, size: size),

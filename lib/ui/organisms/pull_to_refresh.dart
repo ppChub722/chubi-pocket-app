@@ -8,7 +8,7 @@ import '../atoms/ui_config.dart';
 import 'page_pop_observer.dart';
 import 'reconnect_reload.dart';
 import '../tokens/app_durations.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app/app_colors.dart';
 
 class PullToRefresh extends StatefulWidget {
@@ -330,7 +330,7 @@ class CoinDropIndicator extends StatelessWidget {
                       scaleY: 1 - squash,
                       alignment: Alignment.bottomCenter,
                       child: Icon(
-                        AppIcons.wallet,
+                        PpForgeIcons.wallet,
                         size: 24,
                         color: scheme.primary,
                       ),

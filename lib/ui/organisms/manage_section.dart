@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../atoms/connection_scope.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../molecules/danger_row.dart';
 
@@ -66,7 +66,7 @@ class ManageSection extends StatelessWidget {
             ),
           if (archiveLabel != null)
             DangerRow(
-              icon: AppIcons.archive,
+              icon: PpForgeIcons.archive,
               label: archiveLabel!,
               consequence: archiveConsequence,
               caution: true,
@@ -77,7 +77,7 @@ class ManageSection extends StatelessWidget {
             ),
           if (deleteLabel != null)
             DangerRow(
-              icon: AppIcons.delete,
+              icon: PpForgeIcons.delete,
               label: deleteLabel!,
               consequence: deleteConsequence,
               padding: EdgeInsets.only(

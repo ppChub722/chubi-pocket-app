@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../atoms/app_chip.dart';
 import '../atoms/app_input.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/chip_size.dart';
 import 'card_action_button.dart';
@@ -138,7 +138,7 @@ class AppListToolbarToggle extends StatelessWidget {
   Widget build(BuildContext context) => ValueListenableBuilder<bool>(
     valueListenable: state,
     builder: (context, open, _) => CardActionButton(
-      icon: AppIcons.search,
+      icon: PpForgeIcons.search,
       tooltip: tooltip,
       selected: open,
       showDot: !open && filtered,

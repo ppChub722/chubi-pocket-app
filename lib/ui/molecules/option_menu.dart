@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../atoms/app_divider.dart';
 import '../atoms/connection_scope.dart';
 
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/ui_config.dart';
@@ -287,7 +287,7 @@ class PopoverClearItem extends StatelessWidget {
       children: [
         const AppDivider(height: AppSpacing.sm),
         MenuItemButton(
-          leadingIcon: const Icon(AppIcons.clear, size: 18),
+          leadingIcon: const Icon(PpForgeIcons.clear, size: 18),
           onPressed: onPressed,
           child: Text(label ?? UiConfig.stringsOf(context).clear),
         ),
@@ -478,7 +478,7 @@ class IconSwatchGrid extends StatelessWidget {
     required this.onToggle,
     this.onClear,
     this.clearLabel,
-    this.fallback = AppIcons.category,
+    this.fallback = PpForgeIcons.category,
     this.size = 32,
     super.key,
   });

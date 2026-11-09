@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../tokens/app/app_icons.dart';
+import '../../tokens/pp_forge_icons.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 import 'reorder_controller.dart';
@@ -660,7 +660,7 @@ class _Handle extends StatelessWidget {
       width: 48,
       height: 48,
       child: Icon(
-        AppIcons.reorder,
+        PpForgeIcons.reorder,
         color: active ? scheme.primary : scheme.onSurfaceVariant,
       ),
     );

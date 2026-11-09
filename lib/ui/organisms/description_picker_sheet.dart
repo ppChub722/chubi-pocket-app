@@ -4,7 +4,7 @@ import '../atoms/add_tile.dart';
 import '../atoms/app_icon.dart';
 import '../atoms/app_input.dart';
 import '../molecules/detail_rows.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import 'app_sheet.dart';
 
@@ -95,7 +95,7 @@ class _DescriptionPickerSheetState extends State<DescriptionPickerSheet> {
               controller: _text,
               autofocus: true,
               hint: labels.hint,
-              prefixIcon: AppIcons.note,
+              prefixIcon: PpForgeIcons.note,
               maxLength: widget.maxLength,
               textInputAction: TextInputAction.done,
               onChanged: (_) => setState(() {}),
@@ -122,7 +122,7 @@ class _DescriptionPickerSheetState extends State<DescriptionPickerSheet> {
               children: [
                 for (final d in matches)
                   AppDetailRow(
-                    leading: const AppIcon(AppIcons.history),
+                    leading: const AppIcon(PpForgeIcons.history),
                     label: d,
                     onTap: () => widget.onPicked(d),
                   ),

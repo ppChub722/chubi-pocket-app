@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import 'app_chip.dart';
 import '../tokens/chip_size.dart';
 import '../tokens/app_opacity.dart';
@@ -48,7 +48,7 @@ class AppIconButton extends StatelessWidget {
     this.loading = false,
     this.size,
     super.key,
-  }) : icon = AppIcons.edit,
+  }) : icon = PpForgeIcons.edit,
        badgeCount = 0,
        destructive = false,
        selected = false,
@@ -132,7 +132,7 @@ class AppIconButton extends StatelessWidget {
     this.color,
     this.dense = false,
     super.key,
-  }) : icon = AppIcons.close,
+  }) : icon = PpForgeIcons.close,
        size = null,
        badgeCount = 0,
        destructive = false,
@@ -149,7 +149,7 @@ class AppIconButton extends StatelessWidget {
     this.color,
     this.dense = false,
     super.key,
-  }) : icon = AppIcons.clear,
+  }) : icon = PpForgeIcons.clear,
        size = null,
        badgeCount = 0,
        destructive = false,
@@ -166,7 +166,7 @@ class AppIconButton extends StatelessWidget {
     this.color,
     this.dense = false,
     super.key,
-  }) : icon = AppIcons.more,
+  }) : icon = PpForgeIcons.more,
        size = null,
        badgeCount = 0,
        destructive = false,
@@ -183,7 +183,7 @@ class AppIconButton extends StatelessWidget {
     this.color,
     this.dense = false,
     super.key,
-  }) : icon = AppIcons.back,
+  }) : icon = PpForgeIcons.back,
        size = null,
        badgeCount = 0,
        destructive = false,
@@ -271,7 +271,7 @@ class AppIconButton extends StatelessWidget {
         AnimatedOpacity(
           duration: fade,
           opacity: done ? 1 : 0,
-          child: Icon(AppIcons.check, size: glyphSize, color: scheme.primary),
+          child: Icon(PpForgeIcons.check, size: glyphSize, color: scheme.primary),
         ),
       ],
     );

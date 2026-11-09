@@ -72,7 +72,7 @@ class CheckCircleButton extends StatelessWidget {
                   ),
                 )
               : checked
-              ? Icon(AppIcons.check, size: size * 0.55, color: onFill)
+              ? Icon(PpForgeIcons.check, size: size * 0.55, color: onFill)
               : null,
         ),
       ),

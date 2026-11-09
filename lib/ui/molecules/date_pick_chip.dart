@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/utils/date_formatter.dart';
 import '../atoms/app_chip.dart';
 import '../atoms/ui_config.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 
 /// An optional date as a chip: none = dashed "+ เลือกวันที่", set = the day
 /// with ✕. A null [onPick] shows just the day (view mode).
@@ -35,7 +35,7 @@ class DatePickChip extends StatelessWidget {
     if (d == null) {
       return AppChip(
         label: emptyLabel ?? UiConfig.stringsOf(context).pickDate,
-        icon: AppIcons.add,
+        icon: PpForgeIcons.add,
         tone: AppChipTone.primary,
         selected: true,
         dashed: true,
@@ -48,10 +48,10 @@ class DatePickChip extends StatelessWidget {
           d,
           locale: Localizations.localeOf(context).toLanguageTag(),
         );
-    if (onPick == null) return AppChip(label: label, icon: AppIcons.date);
+    if (onPick == null) return AppChip(label: label, icon: PpForgeIcons.date);
     return AppChip(
       label: label,
-      icon: AppIcons.date,
+      icon: PpForgeIcons.date,
       selected: true,
       dashed: true,
       inset: true,

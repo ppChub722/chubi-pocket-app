@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../atoms/busy_scope.dart';
 import '../atoms/app_icon_button.dart';
 import '../atoms/dashed_rect_border.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/chip_size.dart';
@@ -81,7 +81,7 @@ class PickedRowFrame extends StatelessWidget {
               Expanded(child: IgnorePointer(child: child)),
               if (onRemove != null)
                 AppIconButton.flat(
-                  icon: AppIcons.close,
+                  icon: PpForgeIcons.close,
                   tooltip: removeTooltip,
                   dense: true,
                   onPressed: onRemove,
@@ -107,7 +107,7 @@ class PickFramePrompt extends StatelessWidget {
       height: ChipSize.chip.heightOf(context),
       child: Row(
         children: [
-          Icon(AppIcons.add, size: 16, color: color),
+          Icon(PpForgeIcons.add, size: 16, color: color),
           const SizedBox(width: AppSpacing.xs),
           Flexible(
             child: Text(

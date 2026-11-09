@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../atoms/app_chip.dart';
 import '../atoms/app_icon_button.dart';
 import '../molecules/option_menu.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import 'option_sheet.dart';
 
@@ -43,14 +43,14 @@ class LanguageThemeBar extends StatelessWidget {
           ],
           builder: (context, toggle) => AppChip(
             label: languages[languageCode] ?? languageCode,
-            icon: AppIcons.language,
+            icon: PpForgeIcons.language,
             trailing: AppChipTrailing.dropdown,
             onTap: toggle,
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
         AppIconButton(
-          icon: dark ? AppIcons.lightMode : AppIcons.darkMode,
+          icon: dark ? PpForgeIcons.lightMode : PpForgeIcons.darkMode,
           tooltip: dark ? lightTooltip : darkTooltip,
           onPressed: onToggleTheme,
         ),

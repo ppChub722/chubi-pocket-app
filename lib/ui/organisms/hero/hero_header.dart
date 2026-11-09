@@ -4,7 +4,7 @@ import '../../atoms/app_chip.dart';
 import '../../atoms/ui_config.dart';
 import '../../molecules/card_action_button.dart';
 import '../../molecules/hero_shell.dart';
-import '../../tokens/app/app_icons.dart';
+import '../../tokens/pp_forge_icons.dart';
 import '../../tokens/chip_size.dart';
 import '../../tokens/hero_metrics.dart';
 import 'app_hero_card.dart';
@@ -42,7 +42,7 @@ class HeroHeader extends StatelessWidget {
     final edit = mode == HeroCardMode.view && onEdit != null
         ? CardActionButton(
             key: const ValueKey('heroEdit'),
-            icon: AppIcons.edit,
+            icon: PpForgeIcons.edit,
             tooltip: editTooltip ?? UiConfig.stringsOf(context).edit,
             onTap: onEdit,
           )

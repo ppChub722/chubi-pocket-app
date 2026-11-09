@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'busy_scope.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import 'dashed_rect_border.dart';
@@ -13,7 +13,7 @@ class AddTile extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.variant = AddTileVariant.card,
-    this.icon = AppIcons.add,
+    this.icon = PpForgeIcons.add,
     this.circleSize = 48,
     this.inList = false,
     super.key,

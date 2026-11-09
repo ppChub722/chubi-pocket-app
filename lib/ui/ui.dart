@@ -11,6 +11,7 @@ export 'tokens/app_opacity.dart';
 export 'atoms/shown_tween_builder.dart';
 export 'tokens/avatar_metrics.dart';
 export 'tokens/icon_size.dart';
+export 'tokens/pp_forge_icons.dart';
 export 'atoms/app_icon_button.dart';
 export 'atoms/input_formatters.dart';
 export 'atoms/count_badge.dart';

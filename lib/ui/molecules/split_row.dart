@@ -7,7 +7,7 @@ import '../atoms/app_input.dart';
 import '../atoms/app_input_type.dart';
 import '../atoms/ui_config.dart';
 import 'amount_input.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/busy_scope.dart';
@@ -388,7 +388,7 @@ class SplitPickChip extends StatelessWidget {
     child: Align(
       alignment: AlignmentDirectional.centerStart,
       child: AppChip(
-        icon: AppIcons.add,
+        icon: PpForgeIcons.add,
         label: label,
         tone: AppChipTone.primary,
         selected: true,

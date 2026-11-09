@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 
 import '../atoms/ui_config.dart';
 import '../organisms/app_date_picker.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/hero_colors.dart';
@@ -240,7 +240,7 @@ class StepperPill extends StatelessWidget {
             ),
             if (onTap != null && caret)
               Icon(
-                AppIcons.dropdown,
+                PpForgeIcons.dropdown,
                 size: chipSize.icon + 4,
                 color: hero?.muted ?? scheme.onSurfaceVariant,
               ),
@@ -263,9 +263,9 @@ class StepperPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (arrows) step(AppIcons.chevronLeft, prevTooltip, onPrev),
+          if (arrows) step(PpForgeIcons.chevronLeft, prevTooltip, onPrev),
           Flexible(child: labelButton),
-          if (arrows) step(AppIcons.chevronRight, nextTooltip, onNext),
+          if (arrows) step(PpForgeIcons.chevronRight, nextTooltip, onNext),
         ],
       ),
     );

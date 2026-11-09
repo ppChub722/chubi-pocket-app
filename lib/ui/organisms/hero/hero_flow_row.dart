@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../atoms/app_icon.dart';
 import '../../atoms/app_icon_button.dart';
 import '../../atoms/ui_config.dart';
-import '../../tokens/app/app_icons.dart';
+import '../../tokens/pp_forge_icons.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/hero_colors.dart';
@@ -57,7 +57,7 @@ class HeroFlowRow extends StatelessWidget {
       children: [
         AppIconButton(
           key: const ValueKey('heroFlowPrev'),
-          icon: AppIcons.chevronLeft,
+          icon: PpForgeIcons.chevronLeft,
           size: _step,
           tooltip: prevTooltip ?? strings.periodPrev,
           onPressed: onPrev,
@@ -66,7 +66,7 @@ class HeroFlowRow extends StatelessWidget {
         Expanded(
           child: _FlowBox(
             key: const ValueKey('heroFlowIncome'),
-            icon: AppIcons.flowIn,
+            icon: PpForgeIcons.flowIn,
             label: incomeLabel,
             amount: income,
             color: hero?.success ?? scheme.primary,
@@ -78,7 +78,7 @@ class HeroFlowRow extends StatelessWidget {
         Expanded(
           child: _FlowBox(
             key: const ValueKey('heroFlowExpense'),
-            icon: AppIcons.flowOut,
+            icon: PpForgeIcons.flowOut,
             label: expenseLabel,
             amount: expense,
             color: hero?.danger ?? scheme.error,
@@ -89,7 +89,7 @@ class HeroFlowRow extends StatelessWidget {
         const SizedBox(width: AppSpacing.sm),
         AppIconButton(
           key: const ValueKey('heroFlowNext'),
-          icon: AppIcons.chevronRight,
+          icon: PpForgeIcons.chevronRight,
           size: _step,
           tooltip: nextTooltip ?? strings.periodNext,
           onPressed: onNext,

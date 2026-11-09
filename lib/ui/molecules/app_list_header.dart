@@ -4,7 +4,7 @@ import '../atoms/app_button.dart';
 import '../atoms/app_chip.dart';
 import '../atoms/list_break.dart';
 import '../organisms/option_sheet.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/chip_size.dart';
 import 'app_list_toolbar.dart';
@@ -292,7 +292,7 @@ class _LinkHeaderAction extends ListHeaderAction {
     label: label,
     onPressed: onTap,
     variant: AppButtonVariant.text,
-    trailingIcon: AppIcons.chevronRight,
+    trailingIcon: PpForgeIcons.chevronRight,
   );
 }
 

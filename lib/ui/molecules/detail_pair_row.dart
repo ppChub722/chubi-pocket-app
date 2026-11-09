@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import 'detail_rows.dart';
 import '../atoms/busy_scope.dart';
@@ -62,7 +62,7 @@ class DetailPairRow extends StatelessWidget {
                 if (c.chevron) ...[
                   const SizedBox(width: AppSpacing.xs),
                   Icon(
-                    AppIcons.chevronRight,
+                    PpForgeIcons.chevronRight,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ],

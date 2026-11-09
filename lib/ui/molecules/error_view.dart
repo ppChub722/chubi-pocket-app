@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../atoms/app_button.dart';
 import '../tokens/button_icon_kind.dart';
 import '../atoms/ui_config.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 
 class ErrorView extends StatelessWidget {
@@ -52,7 +52,7 @@ class ErrorView extends StatelessWidget {
                   label: config.strings.retry,
                   kind: ButtonIconKind.retry,
                   onPressed: onRetry,
-                  icon: AppIcons.refresh,
+                  icon: PpForgeIcons.refresh,
                 ),
               ],
             ],

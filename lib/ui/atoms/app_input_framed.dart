@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart' show OverflowBoxFit;
 
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/app_opacity.dart';
 import 'app_icon_button.dart';
@@ -392,7 +392,7 @@ class _FramedInputState extends State<FramedInput> {
                 maxWidth: 40,
                 maxHeight: 40,
                 child: AppIconButton.flat(
-                  icon: _obscured ? AppIcons.visible : AppIcons.hidden,
+                  icon: _obscured ? PpForgeIcons.visible : PpForgeIcons.hidden,
                   dense: true,
                   onPressed: () => setState(() => _obscured = !_obscured),
                 ),
@@ -534,7 +534,7 @@ class _FramedInputState extends State<FramedInput> {
           Row(
             children: [
               Expanded(child: Text(_c.text, style: style)),
-              Icon(AppIcons.lock, size: 16, color: scheme.onSurfaceVariant),
+              Icon(PpForgeIcons.lock, size: 16, color: scheme.onSurfaceVariant),
             ],
           ),
         ],

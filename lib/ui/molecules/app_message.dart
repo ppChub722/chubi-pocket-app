@@ -6,7 +6,7 @@ import '../atoms/app_button.dart';
 import '../atoms/app_icon_button.dart';
 import '../atoms/app_spinner.dart';
 import '../atoms/ui_config.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/tone.dart';
@@ -56,10 +56,10 @@ class AppMessage extends StatelessWidget {
   final bool floating;
 
   static IconData iconOf(Tone tone) => switch (tone) {
-    Tone.danger => AppIcons.error,
-    Tone.warning => AppIcons.warning,
-    Tone.success => AppIcons.success,
-    _ => AppIcons.info,
+    Tone.danger => PpForgeIcons.error,
+    Tone.warning => PpForgeIcons.warning,
+    Tone.success => PpForgeIcons.success,
+    _ => PpForgeIcons.info,
   };
 
   static const _iconSize = 20.0;

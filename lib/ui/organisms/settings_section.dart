@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../atoms/app_button.dart';
 import '../atoms/busy_scope.dart';
 import '../atoms/ui_config.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../atoms/app_switch.dart';
 import '../atoms/connection_scope.dart';
 import '../atoms/app_icon.dart';
@@ -258,7 +258,7 @@ class _SettingDropdownRowState<T> extends State<SettingDropdownRow<T>> {
             iconColor: widget.iconColor,
             variant: AppButtonVariant.outlined,
             size: AppButtonSize.control,
-            trailingIcon: AppIcons.dropdown,
+            trailingIcon: PpForgeIcons.dropdown,
             onPressed: cb == null ? null : toggle,
           ),
         ),
@@ -721,7 +721,7 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
                     color: scheme.primary,
                     spinnerSize: size.icon,
                     child: Icon(
-                      AppIcons.dropdown,
+                      PpForgeIcons.dropdown,
                       size: size.icon + 4,
                       color: scheme.primary,
                     ),
@@ -765,7 +765,7 @@ class _SettingMenuRowState<T> extends State<SettingMenuRow<T>> {
               label: widget.value,
               variant: AppButtonVariant.outlined,
               size: AppButtonSize.control,
-              trailingIcon: AppIcons.dropdown,
+              trailingIcon: PpForgeIcons.dropdown,
               onPressed: cb == null ? null : toggle,
             ),
     );

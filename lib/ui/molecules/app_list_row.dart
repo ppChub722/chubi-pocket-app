@@ -4,7 +4,7 @@ import '../atoms/app_chip.dart';
 import '../atoms/app_icon_button.dart';
 import '../atoms/select_check.dart';
 import '../organisms/option_sheet.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/chip_size.dart';
 import '../tokens/tone.dart';
@@ -653,7 +653,7 @@ class ListRowAlert {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(AppIcons.warning, size: 14, color: color),
+        Icon(PpForgeIcons.warning, size: 14, color: color),
         const SizedBox(width: AppSpacing.xs),
         Expanded(
           child: Text(

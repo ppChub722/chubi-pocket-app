@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'busy_scope.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/avatar_metrics.dart';
 import 'corner_badge.dart';
 
@@ -37,7 +37,7 @@ class EditableCircle extends StatelessWidget {
   Widget _build(BuildContext context) {
     final stack = CornerBadge(
       size: size,
-      icon: AppIcons.editBadge,
+      icon: PpForgeIcons.editBadge,
       show: onTap != null,
       essential: true,
       child: child,

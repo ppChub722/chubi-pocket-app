@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/add_tile.dart';
 import '../atoms/app_icon.dart';
@@ -195,7 +195,7 @@ class DetailAddRow extends StatelessWidget {
   const DetailAddRow({
     required this.label,
     required this.onTap,
-    this.icon = AppIcons.add,
+    this.icon = PpForgeIcons.add,
     super.key,
   });
 
@@ -426,7 +426,7 @@ class AppDetailRow extends StatelessWidget {
                     ),
             ),
       trailingMaxFraction: 0.5,
-      trailingIcon: locked ? AppIcons.lock : null,
+      trailingIcon: locked ? PpForgeIcons.lock : null,
       trailingIconColor: iconTint,
       chevron: showChevron && !comingSoon,
       accent: accent,

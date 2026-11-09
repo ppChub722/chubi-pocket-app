@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../atoms/app_icon_button.dart';
 import '../../molecules/hero_shell.dart';
 import '../../molecules/hero_style.dart';
-import '../../tokens/app/app_icons.dart';
+import '../../tokens/pp_forge_icons.dart';
 import '../../tokens/hero_colors.dart';
 import '../../tokens/hero_metrics.dart';
 
@@ -144,7 +144,7 @@ class AppHeroFoldButton extends StatelessWidget {
       button: true,
       expanded: scope.open,
       child: AppIconButton.bare(
-        icon: scope.open ? AppIcons.collapse : AppIcons.expand,
+        icon: scope.open ? PpForgeIcons.collapse : PpForgeIcons.expand,
         onPressed: scope.toggle,
         size: size,
         color: HeroColors.maybeOf(context)?.muted,

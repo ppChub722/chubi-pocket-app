@@ -13,7 +13,7 @@ import '../molecules/danger_row.dart';
 import '../molecules/detail_rows.dart';
 import '../molecules/empty_view.dart';
 import '../molecules/app_list_header.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/chip_size.dart';
 import 'app_sheet.dart';
@@ -918,7 +918,7 @@ class _ItemPickerSheetState extends State<ItemPickerSheet> {
               ),
             ),
           AppIconButton.flat(
-            icon: expanded ? AppIcons.collapse : AppIcons.expand,
+            icon: expanded ? PpForgeIcons.collapse : PpForgeIcons.expand,
             onPressed: view.forced.contains(item.id)
                 ? null
                 : () => setState(() {

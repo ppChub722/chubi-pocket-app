@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'busy_scope.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 
 /// The auto toggle after an amount that can fill itself (owner 2026-10-21;
 /// the auto icon, the same everywhere, 2026-10-23): on = the row takes the
@@ -60,7 +60,7 @@ class AutoToggleChip extends StatelessWidget {
             ),
           ),
           child: Icon(
-            AppIcons.auto,
+            PpForgeIcons.auto,
             size: 16,
             color: on ? scheme.primary : scheme.onSurfaceVariant,
           ),

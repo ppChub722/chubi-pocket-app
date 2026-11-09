@@ -1,7 +1,7 @@
 import '../../atoms/app_icon_button.dart';
 import 'package:flutter/material.dart';
 
-import '../../tokens/app/app_icons.dart';
+import '../../tokens/pp_forge_icons.dart';
 import '../../tokens/app_radius.dart';
 import '../../tokens/app_spacing.dart';
 import '../../atoms/ui_config.dart';
@@ -61,26 +61,26 @@ class ReorderMoveBar extends StatelessWidget {
               children: [
                 if (c.isTree)
                   button(
-                    AppIcons.back,
+                    PpForgeIcons.back,
                     l.reorderOutdent,
                     c.canOutdent,
                     c.outdent,
                   ),
                 button(
-                  AppIcons.trendUp,
+                  PpForgeIcons.trendUp,
                   l.reorderMoveUp,
                   c.canMoveUp,
                   c.moveUp,
                 ),
                 button(
-                  AppIcons.trendDown,
+                  PpForgeIcons.trendDown,
                   l.reorderMoveDown,
                   c.canMoveDown,
                   c.moveDown,
                 ),
                 if (c.isTree)
                   button(
-                    AppIcons.arrowForward,
+                    PpForgeIcons.arrowForward,
                     l.reorderIndent,
                     c.canIndent,
                     c.indent,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../atoms/app_chip.dart';
 import '../atoms/app_icon.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/chip_size.dart';
 import '../tokens/icon_size.dart';
@@ -34,7 +34,7 @@ class ChipPath extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
                 child: AppIcon(
-                  AppIcons.chevronRight,
+                  PpForgeIcons.chevronRight,
                   size: AppIconSize.sm,
                   color: scheme.onSurfaceVariant,
                 ),

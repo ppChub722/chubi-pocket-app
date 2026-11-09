@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../atoms/connection_scope.dart';
 import '../molecules/danger_row.dart';
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 
 enum EndZoneKind { close, archive, delete }
@@ -50,9 +50,9 @@ class EndZone extends StatelessWidget {
               icon:
                   a.icon ??
                   switch (a.kind) {
-                    EndZoneKind.close => AppIcons.check,
-                    EndZoneKind.archive => AppIcons.archive,
-                    EndZoneKind.delete => AppIcons.delete,
+                    EndZoneKind.close => PpForgeIcons.check,
+                    EndZoneKind.archive => PpForgeIcons.archive,
+                    EndZoneKind.delete => PpForgeIcons.delete,
                   },
               label: a.label,
               consequence: a.consequence,

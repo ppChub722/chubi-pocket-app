@@ -5,7 +5,7 @@ import '../atoms/app_icon_button.dart';
 import '../atoms/select_check.dart';
 import '../atoms/app_input.dart';
 
-import '../tokens/app/app_icons.dart';
+import '../tokens/pp_forge_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/ui_config.dart';
 import '../molecules/error_view.dart';
@@ -159,7 +159,7 @@ class _PickerSheetState extends State<PickerSheet> {
                   Padding(
                     padding: const EdgeInsets.only(right: AppSpacing.xs),
                     child: AppIconButton(
-                      icon: AppIcons.search,
+                      icon: PpForgeIcons.search,
                       tooltip: widget.searchHint ?? strings.search,
                       selected: _searchOpen,
                       onPressed: _toggleSearch,
@@ -332,7 +332,7 @@ class PickerRow extends StatelessWidget {
                   if (trailing != null)
                     trailing!
                   else if (chevron)
-                    Icon(AppIcons.chevronRight, color: scheme.onSurfaceVariant),
+                    Icon(PpForgeIcons.chevronRight, color: scheme.onSurfaceVariant),
                 ],
               ),
             ),
