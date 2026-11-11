@@ -160,7 +160,14 @@ class _FadeBranchContainerState extends State<FadeBranchContainer>
                       entry: () => _entry,
                       // A page with a TabSwitchBody animates its body itself.
                       active: () => !_claimed.contains(i),
-                      child: _BranchIndex(index: i, child: widget.children[i]),
+                      // Own layer: the entry moves / fades it without
+                      // repainting the page every frame.
+                      child: RepaintBoundary(
+                        child: _BranchIndex(
+                          index: i,
+                          child: widget.children[i],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -521,7 +528,7 @@ class TabSwitchBody extends StatelessWidget {
       animation: scope.animation,
       entry: () => entry,
       active: () => true,
-      child: child,
+      child: RepaintBoundary(child: child),
     );
     final nudge = TabSwipeNudge.maybeOf(context);
     if (nudge == null) return body;
