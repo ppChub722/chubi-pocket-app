@@ -1258,9 +1258,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifSettingsSaveFailed => 'บันทึกไม่ได้ — เปลี่ยนกลับแล้ว';
 
   @override
-  String get profileUsernameLocked => 'เปลี่ยนชื่อผู้ใช้ไม่ได้';
-
-  @override
   String homeUpcomingInDays(int days) {
     String _temp0 = intl.Intl.pluralLogic(
       days,
@@ -1447,7 +1444,11 @@ class AppLocalizationsTh extends AppLocalizations {
   String get authRegisterSectionProfile => 'เกี่ยวกับคุณ';
 
   @override
-  String get authRegisterUsernameHint => 'a-z 0-9 _ - | 3–50 ตัว';
+  String get authRegisterUsernameHint => 'A-Z a-z 0-9 _ - . | 3–50 ตัว';
+
+  @override
+  String get editProfileUsernameInvalid =>
+      'A-Z a-z 0-9 _ - . | 3–50 ตัว | จุดห้ามอยู่หน้า ท้าย หรือติดกัน';
 
   @override
   String get authRegisterPasswordHint => 'อย่างน้อย 8 ตัวอักษร';
@@ -7117,6 +7118,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get connectionsPermissionChat => 'จดรายการผ่านแชต';
 
   @override
+  String get connectionsPermissionAuto =>
+      'บันทึกลงบัญชีทันที (ไม่ผ่านหน้ารอยืนยัน)';
+
+  @override
   String get connectionsPermissionAsk => 'ถามยอดเงิน';
 
   @override
@@ -7180,11 +7185,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get profileSetPasswordSnackSuccess => 'ตั้งรหัสผ่านแล้ว';
-
-  @override
-  String profileUsernameReadOnly(String username) {
-    return '@$username (แก้ไม่ได้)';
-  }
 
   @override
   String get profilePictureIcon => 'ไอคอน';

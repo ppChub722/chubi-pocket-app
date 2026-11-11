@@ -11,6 +11,7 @@ class UsersRepository {
   final ApiClient _client;
 
   Future<User> updateMe({
+    String? username,
     String? displayName,
     String? email,
     IconCode? iconCode,
@@ -29,6 +30,7 @@ class UsersRepository {
     } else if (defaultAccountId != null) {
       body['default_account_id'] = defaultAccountId;
     }
+    if (username != null) body['username'] = username;
     if (displayName != null) body['display_name'] = displayName;
     if (email != null) body['email'] = email;
     if (currency != null) body['currency'] = currency;

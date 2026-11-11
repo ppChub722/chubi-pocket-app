@@ -5,6 +5,7 @@ import '../../../l10n/gen/app_localizations.dart';
 String connectionPermissionLabel(AppLocalizations l, String key) =>
     switch (key) {
       'chat' => l.connectionsPermissionChat,
+      'auto' => l.connectionsPermissionAuto,
       'ask' => l.connectionsPermissionAsk,
       'slip' => l.connectionsPermissionSlip,
       'notify' => l.connectionsPermissionNotify,
