@@ -89,7 +89,8 @@ void main() {
       'linked_user': null,
       'delete_preview': {'debt_records': 3, 'event_members': 2, 'linked': true},
     });
-    expect(withPreview.contact.showNickname, isTrue);
+    // Absent / null = off (the one contact name, 2026-11-04).
+    expect(withPreview.contact.showNickname, isFalse);
     expect(withPreview.contact.isLinked, isFalse);
     expect(withPreview.deletePreview!.debtRecords, 3);
     expect(withPreview.deletePreview!.eventMembers, 2);

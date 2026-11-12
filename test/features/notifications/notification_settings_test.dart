@@ -6,14 +6,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// `GET /notifications/settings` as the 0.4.1-2 BE answers (BE-3 spec).
 Map<String, dynamic> _settingsJson({
-  List<String> muted = const ['split_changed'],
+  List<String> muted = const ['bill_changed'],
 }) => {
   'muted_types': muted,
   'types': [
     for (final (type, group, mutable) in [
-      ('split_created', 'shared_bill', true),
-      ('split_changed', 'shared_bill', true),
-      ('debt_disconnected', 'shared_bill', true),
+      ('bill_new', 'bill', true),
+      ('bill_changed', 'bill', true),
+      ('debt_disconnected', 'debt', true),
       ('project_tx_changed', 'event', true),
       ('recurring_due', 'recurring', true),
       ('project_invite', 'request', false),
@@ -67,10 +67,10 @@ void main() {
     expect(s.autoSyncDebts, isFalse);
     expect(s.defaultAccount?.name, 'KBank');
     expect(s.ofGroup(NotificationGroup.sharedBill).map((t) => t.type), [
-      'split_created',
-      'split_changed',
-      'debt_disconnected',
+      'bill_new',
+      'bill_changed',
     ]);
+    expect(s.ofGroup(NotificationGroup.debt).single.type, 'debt_disconnected');
     expect(s.ofGroup(NotificationGroup.sharedBill)[1].on, isFalse);
     expect(s.ofGroup(NotificationGroup.request).single.mutable, isFalse);
     // A group this build doesn't know is left out, not a crash.
@@ -89,16 +89,16 @@ void main() {
       await cubit.load();
 
       await cubit.setOn('recurring_due', false);
-      expect(repo.puts.single, {'split_changed', 'recurring_due'});
+      expect(repo.puts.single, {'bill_changed', 'recurring_due'});
       expect(
         cubit.state.settings!.ofGroup(NotificationGroup.recurring).single.on,
         isFalse,
       );
 
-      await cubit.setOn('split_changed', true);
+      await cubit.setOn('bill_changed', true);
       expect(repo.puts.last, {'recurring_due'});
 
-      await cubit.setOn('split_changed', true);
+      await cubit.setOn('bill_changed', true);
       expect(repo.puts, hasLength(2), reason: 'already on: no call');
       await cubit.close();
     },

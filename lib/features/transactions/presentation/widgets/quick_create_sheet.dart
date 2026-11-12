@@ -14,7 +14,6 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/idempotency.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../ui/templates/edit_draft.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';

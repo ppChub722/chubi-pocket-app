@@ -170,7 +170,10 @@ void main() {
       expect(booked.myBookedAt, isNotNull);
 
       // Tx detail: my tx follows / leaves its paper, no body.
-      http.body = {'paper': {'id': 'b1'}, 'effects': {}};
+      http.body = {
+        'paper': {'id': 'b1'},
+        'effects': {},
+      };
       await repo.syncMyTransaction('tx1');
       expect(http.last!.path, '/transactions/tx1/paper-sync');
       await repo.unlinkMyTransaction('tx1');

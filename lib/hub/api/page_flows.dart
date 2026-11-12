@@ -500,6 +500,12 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Event link request: reject', [
       FlowCall('rejectProjectLinkRequest'),
     ]),
+    FlowStep.action('Split bill invite: join', [
+      FlowCall('joinSplitBill', note: 'the BE answers the notice'),
+    ]),
+    FlowStep.action('Split bill invite: decline', [
+      FlowCall('declineSplitBill', note: 'the BE answers the notice'),
+    ]),
     FlowStep.action('Split paid: "บันทึกรับเงิน"', [
       FlowCall(
         'getDebtEntry',
@@ -1004,6 +1010,12 @@ const List<PageFlow> pageFlows = [
         FlowCall(
           'disconnectDebtPartner',
           note: 'my side only; the other user gets debt_disconnected',
+        ),
+      ]),
+      FlowStep.action('Row "บิลถูกแก้ | อัปเดตตามบิล" (a debt of a paper)', [
+        FlowCall(
+          'syncDebtToPaper',
+          note: 'my debt takes the paper as it is now',
         ),
       ]),
       FlowStep.action('Button "ลบ"', [

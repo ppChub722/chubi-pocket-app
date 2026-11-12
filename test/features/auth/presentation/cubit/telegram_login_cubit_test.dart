@@ -49,7 +49,9 @@ void main() {
   });
 
   test('Telegram id_token → POST /auth/telegram/token → signed in', () async {
-    when(() => oidc.signIn(TelegramOidcPurpose.login)).thenAnswer((_) async => 'jwt');
+    when(
+      () => oidc.signIn(TelegramOidcPurpose.login),
+    ).thenAnswer((_) async => 'jwt');
     final c = make();
 
     await c.signIn();
@@ -99,9 +101,9 @@ void main() {
   });
 
   test('a login redirect that came back after the app was killed', () async {
-    when(
-      () => oidc.resume(),
-    ).thenAnswer((_) async => (purpose: TelegramOidcPurpose.login, token: 'jwt'));
+    when(() => oidc.resume()).thenAnswer(
+      (_) async => (purpose: TelegramOidcPurpose.login, token: 'jwt'),
+    );
     final c = make();
 
     await c.resumePending();
@@ -111,9 +113,9 @@ void main() {
   });
 
   test('a pending link redirect is not a login', () async {
-    when(
-      () => oidc.resume(),
-    ).thenAnswer((_) async => (purpose: TelegramOidcPurpose.link, token: 'jwt'));
+    when(() => oidc.resume()).thenAnswer(
+      (_) async => (purpose: TelegramOidcPurpose.link, token: 'jwt'),
+    );
     final c = make();
 
     await c.resumePending();

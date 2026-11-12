@@ -104,6 +104,10 @@ const _reviewed = {
   'lib/app/shell/more_page.dart',
   // A tab's breadcrumb parent: always a root of the page's own tab.
   'lib/app/shell/top_bar_crumbs.dart',
+  // The recurring picker (shown in the tx page and a debt page) awaits the
+  // create page's result, the new rule's id, which openPage can't return; the
+  // route is the fixed '/recurring/new' passed in by the caller.
+  'lib/features/recurring/presentation/widgets/recurring_picker.dart',
 };
 
 Iterable<File> _dartFiles() => Directory('lib')

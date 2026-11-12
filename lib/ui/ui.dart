@@ -281,6 +281,7 @@ export 'templates/brand_screen.dart';
 export 'templates/auth_page_body.dart';
 export 'templates/detail_layout.dart';
 export 'templates/detail_page_body.dart';
+export 'templates/edit_draft.dart';
 export 'templates/edit_mode_scope.dart';
 export 'templates/edit_mode_mixin.dart';
 export 'templates/list_page_body.dart';
