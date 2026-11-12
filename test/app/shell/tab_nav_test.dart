@@ -23,24 +23,31 @@ void main() {
       expect(ShellTab.ofPath(tab.path), tab, reason: tab.path);
     }
   });
-  test('a switch starts the tab over, a back keeps it, the open tab replays', () {
-    final calls = <String>[];
-    void go(int i, {bool initialLocation = false}) =>
-        calls.add('$i:$initialLocation');
-    const to = ShellTab.accounts;
+  test(
+    'a switch starts the tab over, a back keeps it, the open tab replays',
+    () {
+      final calls = <String>[];
+      void go(int i, {bool initialLocation = false}) =>
+          calls.add('$i:$initialLocation');
+      const to = ShellTab.accounts;
 
-    goTab(to, from: ShellTab.home.index, goBranch: go, canPop: (_) => false);
-    expect(calls.removeLast(), '${to.index}:true', reason: 'starts over');
+      goTab(to, from: ShellTab.home.index, goBranch: go, canPop: (_) => false);
+      expect(calls.removeLast(), '${to.index}:true', reason: 'starts over');
 
-    goTab(to, from: ShellTab.home.index, goBranch: go, back: true);
-    expect(calls.removeLast(), '${to.index}:false', reason: 'a back keeps it');
+      goTab(to, from: ShellTab.home.index, goBranch: go, back: true);
+      expect(
+        calls.removeLast(),
+        '${to.index}:false',
+        reason: 'a back keeps it',
+      );
 
-    goTab(to, from: to.index, goBranch: go, canPop: (_) => false);
-    expect(calls, isEmpty, reason: 'already on its first page: nothing');
+      goTab(to, from: to.index, goBranch: go, canPop: (_) => false);
+      expect(calls, isEmpty, reason: 'already on its first page: nothing');
 
-    final before = ShellReopen.signal.value;
-    goTab(to, from: to.index, goBranch: go, canPop: (_) => true);
-    expect(calls.removeLast(), '${to.index}:true');
-    expect(ShellReopen.signal.value, before + 1, reason: 'the entry replays');
-  });
+      final before = ShellReopen.signal.value;
+      goTab(to, from: to.index, goBranch: go, canPop: (_) => true);
+      expect(calls.removeLast(), '${to.index}:true');
+      expect(ShellReopen.signal.value, before + 1, reason: 'the entry replays');
+    },
+  );
 }

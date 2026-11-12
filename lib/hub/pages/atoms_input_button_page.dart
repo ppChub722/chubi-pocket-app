@@ -349,6 +349,87 @@ class _ButtonPageState extends State<_ButtonPage> {
           ),
         ),
         HubDemo(
+          title: 'MirrorSurface — any shape',
+          note:
+              'The app\'s one glass (AppGlass.standard = soft, Samsung style: '
+              'blur, livelier colours, milky tint, top light, thin border, '
+              'outside shadow; AppGlass.liquid = the Apple-style lens shader) '
+              'on any ShapeBorder. The top bar\'s pill and chips (via '
+              'MirrorScope) and the bottom bar use it; the profile chip stays '
+              'solid. Shown over stripes, since glass needs something behind '
+              'it.',
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFFE53935),
+                  Color(0xFFFFB300),
+                  Color(0xFF43A047),
+                  Color(0xFF1E88E5),
+                  Color(0xFF8E24AA),
+                ],
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Wrap(
+                spacing: AppSpacing.lg,
+                runSpacing: AppSpacing.md,
+                children: [
+                  for (final (caption, shape, w, h)
+                      in <(String, ShapeBorder, double, double)>[
+                        ('circle', const CircleBorder(), 40, 40),
+                        ('stadium', const StadiumBorder(), 120, 40),
+                        (
+                          'rounded 22',
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          120,
+                          44,
+                        ),
+                        for (final s in IconShape.values)
+                          (
+                            s.name,
+                            RoundedRectangleBorder(borderRadius: s.radius(48)),
+                            48,
+                            48,
+                          ),
+                      ])
+                    HubCell(
+                      caption: caption,
+                      child: MirrorSurface(
+                        shape: shape,
+                        child: SizedBox(width: w, height: h),
+                      ),
+                    ),
+                  HubCell(
+                    caption: 'selected',
+                    child: MirrorScope(
+                      child: AppIconButton(
+                        icon: AppIcons.notifications,
+                        selected: true,
+                        onPressed: () {},
+                      ),
+                    ),
+                  ),
+                  HubCell(
+                    caption: 'chip',
+                    child: MirrorScope(
+                      child: AppIconButton(
+                        icon: AppIcons.pending,
+                        badgeCount: 3,
+                        onPressed: () {},
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        HubDemo(
           title: 'Profile chip — hard-case Icon Maker avatars',
           note:
               'The top bar\'s profile chip with the avatars that stress it: '

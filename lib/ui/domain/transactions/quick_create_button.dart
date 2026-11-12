@@ -9,22 +9,22 @@ import '../../tokens/app/quick_create_mode.dart';
 import '../../tokens/app_durations.dart';
 import '../../tokens/icon_size.dart';
 
-/// The mode's glyph (mock QuickCreateBtn): + for a transaction, the debt /
-/// saving module icons.
+/// The mode's glyph: the record glyph for a transaction, the debt / saving
+/// module icons.
 IconData quickCreateModeIcon(QuickCreateMode mode) => switch (mode) {
-  QuickCreateMode.tx => AppIcons.add,
+  QuickCreateMode.tx => AppIcons.record,
   QuickCreateMode.debt => AppIcons.debt,
   QuickCreateMode.saving => AppIcons.savings,
 };
 
-/// The shell's centre create button. With a [label] (owner 2026-10-22, mock
-/// QuickCreateBtn) it is a [capsuleHeight] capsule — the mode's icon + the
-/// word (บันทึก / จดหนี้ / ออมเงิน) in the mode's colour; without, the round +.
+/// The shell's centre create button (owner 2026-11-12): a round button, no
+/// ring, glowing evenly in its colour; the page's icon with its [label] (the
+/// word) under it. The nav draws the bar's own shape round it.
 class QuickCreateButton extends StatelessWidget {
   const QuickCreateButton({
     required this.onPressed,
     this.mode = QuickCreateMode.tx,
-    this.size = 76,
+    this.size = diameter,
     this.label,
     this.tooltip,
     this.color,
@@ -44,8 +44,7 @@ class QuickCreateButton extends StatelessWidget {
   final Color? color;
   final IconData? icon;
 
-  static const double _ring = 4;
-  static const double capsuleHeight = 48;
+  static const double diameter = 72;
 
   @override
   Widget build(BuildContext context) {
@@ -56,82 +55,64 @@ class QuickCreateButton extends StatelessWidget {
         ? AppChip.readableOn(color!)
         : QuickCreateModeColors.onOf(context, mode);
     final label = this.label;
-    final Widget button;
-    if (label != null) {
-      button = TweenAnimationBuilder<Color?>(
+    final glyph = icon ?? quickCreateModeIcon(mode);
+    final button = SizedBox.square(
+      dimension: size,
+      child: TweenAnimationBuilder<Color?>(
         tween: ColorTween(end: fill),
         duration: still ? Duration.zero : AppDurations.fast,
         curve: Curves.easeOutCubic,
-        builder: (context, color, _) => SizedBox(
-          height: capsuleHeight,
-          child: Material(
+        builder: (context, color, _) => DecoratedBox(
+          decoration: BoxDecoration(
             color: color,
-            shape: const StadiumBorder(),
-            elevation: 4,
-            shadowColor: color?.withValues(alpha: 0.35),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: onPressed,
-              child: Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(12, 0, 16, 0),
-                // A long word shrinks rather than breaking the bar.
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AppIcon(
-                        icon ?? quickCreateModeIcon(mode),
-                        size: AppIconSize.lg,
-                        color: on,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        label,
-                        key: const ValueKey('quickCreateLabel'),
-                        maxLines: 1,
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: on,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: (color ?? fill).withValues(alpha: 0.5),
+                blurRadius: 6,
               ),
-            ),
+            ],
           ),
-        ),
-      );
-    } else {
-      button = Container(
-        width: size,
-        height: size,
-        padding: const EdgeInsets.all(_ring),
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor,
-          shape: BoxShape.circle,
-        ),
-        child: TweenAnimationBuilder<Color?>(
-          tween: ColorTween(end: fill),
-          duration: still ? Duration.zero : AppDurations.fast,
-          curve: Curves.easeOutCubic,
-          builder: (context, color, _) => Material(
-            color: color,
+          child: Material(
+            type: MaterialType.transparency,
             shape: const CircleBorder(),
-            elevation: 6,
-            shadowColor: color?.withValues(alpha: 0.6),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: onPressed,
               child: Center(
-                child: AppIcon(AppIcons.add, size: AppIconSize.xl, color: on),
+                child: label == null
+                    ? AppIcon(glyph, size: AppIconSize.xl, color: on)
+                    : Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        // A long word shrinks rather than leaving the circle.
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              AppIcon(glyph, size: 26, color: on),
+                              const SizedBox(height: 4),
+                              Text(
+                                label,
+                                key: const ValueKey('quickCreateLabel'),
+                                maxLines: 1,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: on,
+                                  fontSize: 11.5,
+                                  height: 1.1,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
               ),
             ),
           ),
         ),
-      );
-    }
+      ),
+    );
     return tooltip == null ? button : Tooltip(message: tooltip, child: button);
   }
 }

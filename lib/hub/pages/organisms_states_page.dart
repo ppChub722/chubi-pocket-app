@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/network/api_exception.dart';
@@ -26,8 +28,23 @@ class _StatesPage extends StatelessWidget {
               'One rule for every async screen: first load shows the '
               'skeleton, a failure shows ErrorView + retry, nothing to show '
               'shows the empty view, data wins. A failed refresh with data '
-              'on screen raises a snackbar instead of hiding the data.',
+              'on screen raises a snackbar instead of hiding the data. Owner '
+              '2026-11-12: every page that opens, or is pushed, goes through '
+              'this one widget. The skeleton appears only after '
+              'AppMotion.duration (a quick load never flashes it), fades in, '
+              'and when the data arrives it fades out over the content (a '
+              'cross-fade, not a jump); all its boxes share one shimmer '
+              '(SkeletonShimmer).',
           child: _AsyncDemo(),
+        ),
+        const HubDemo(
+          title: 'AsyncStateView — opening a page, fast and slow',
+          note:
+              'Opens a page whose data takes a given time. Fast (80 ms): no '
+              'skeleton at all. Normal (600 ms) and slow (2.5 s): the '
+              'skeleton fades in after 150 ms, then cross-fades to the '
+              'content.',
+          child: _OpenDemo(),
         ),
         HubDemo(
           title: 'AsyncStateView.fallback',
@@ -128,6 +145,83 @@ Widget _selector<T>({
       AppChip(label: label, selected: v == value, onTap: () => onChanged(v)),
   ],
 );
+
+class _OpenDemo extends StatefulWidget {
+  const _OpenDemo();
+
+  @override
+  State<_OpenDemo> createState() => _OpenDemoState();
+}
+
+class _OpenDemoState extends State<_OpenDemo> {
+  bool _loading = false;
+  bool _opened = false;
+  int _key = 0;
+  Timer? _timer;
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _open(Duration after) {
+    _timer?.cancel();
+    setState(() {
+      _opened = true;
+      _loading = true;
+      // A fresh view each time, so it is a first load again.
+      _key++;
+    });
+    _timer = Timer(after, () {
+      if (mounted) setState(() => _loading = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: [
+            AppButton(
+              label: 'Fast 80 ms',
+              variant: AppButtonVariant.outlined,
+              onPressed: () => _open(const Duration(milliseconds: 80)),
+            ),
+            AppButton(
+              label: 'Normal 600 ms',
+              variant: AppButtonVariant.outlined,
+              onPressed: () => _open(const Duration(milliseconds: 600)),
+            ),
+            AppButton(
+              label: 'Slow 2.5 s',
+              variant: AppButtonVariant.outlined,
+              onPressed: () => _open(const Duration(milliseconds: 2500)),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _stageBox(
+          context,
+          _opened
+              ? AsyncStateView(
+                  key: ValueKey(_key),
+                  loading: _loading,
+                  error: null,
+                  isEmpty: _loading,
+                  onRetry: () async {},
+                  builder: (_) => _sampleList(),
+                )
+              : const Center(child: AppText('Tap a button to open the page')),
+        ),
+      ],
+    );
+  }
+}
 
 enum _Mode { loading, error, empty, data, refreshFailed }
 

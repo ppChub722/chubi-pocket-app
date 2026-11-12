@@ -6566,6 +6566,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickCreateBtnSaving => 'Save money';
 
   @override
+  String get quickCreateBtnAdd => 'Add';
+
+  @override
   String get debtsEmptyOpenTitle => 'No open debts';
 
   @override

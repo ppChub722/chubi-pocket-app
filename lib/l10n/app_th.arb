@@ -2004,6 +2004,7 @@
   "quickCreateBtnTx": "บันทึก",
   "quickCreateBtnDebt": "จดหนี้",
   "quickCreateBtnSaving": "ออมเงิน",
+  "quickCreateBtnAdd": "เพิ่ม",
   "debtsEmptyOpenTitle": "ยังไม่มีหนี้ค้าง",
   "debtsEmptyOpenMessage": "จดไว้ว่าใครยืม ใครจ่ายแทน จะได้ไม่ลืมทวง",
   "evbReceives": "รับ",

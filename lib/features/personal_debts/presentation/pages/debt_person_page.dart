@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/quick_create_context.dart';
+import '../../../../app/shell/quick_create_look.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -87,7 +88,7 @@ class _PersonViewState extends State<_PersonView> {
     personKey: s.personKey,
     name: _name(s),
     balance: s.balance,
-  );
+  ).withLook(QuickCreateLook.debt(context));
 
   /// Every statement line opens its own page, debt or repayment (0.4.1-1 D4:
   /// a repayment is a person-book row, its id the entry's, a transaction

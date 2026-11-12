@@ -130,3 +130,5 @@ flutter:
   assets:
     - assets/icon/  # logo on the login / register brand header
     # - assets/avatars/
+  shaders:
+    - shaders/liquid_glass.frag  # MirrorSurface's refracting glass (Impeller)

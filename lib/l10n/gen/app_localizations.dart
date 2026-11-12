@@ -11143,6 +11143,12 @@ abstract class AppLocalizations {
   /// **'Save money'**
   String get quickCreateBtnSaving;
 
+  /// No description provided for @quickCreateBtnAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get quickCreateBtnAdd;
+
   /// No description provided for @debtsEmptyOpenTitle.
   ///
   /// In en, this message translates to:

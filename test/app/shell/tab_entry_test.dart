@@ -8,79 +8,63 @@ void main() {
   final d = NavLayout.defaults;
   const card = Alignment(-0.5, 0.2);
 
-  test('how a tab arrives, per where it comes from', () {
+  test('every switch slides in from the right, a back lands in place', () {
     final cases = <(String, ShellTab, ShellTab, Alignment?, bool, TabEntry)>[
       (
-        'bottom → bottom: grows up out of the bar',
+        'bottom → bottom',
         ShellTab.home,
         ShellTab.accounts,
         null,
         false,
-        const TabEntry.expand(Alignment.bottomCenter),
+        TabEntry.slide,
       ),
       (
-        'bottom → bottom, the other way: the same',
+        'the other way: the same',
         ShellTab.more,
         ShellTab.transactions,
         null,
         false,
-        const TabEntry.expand(Alignment.bottomCenter),
+        TabEntry.slide,
       ),
       (
-        'top chip → bottom: grows up out of the bar',
+        'top chip → bottom',
         ShellTab.pending,
         ShellTab.home,
         null,
         false,
-        const TabEntry.expand(Alignment.bottomCenter),
+        TabEntry.slide,
       ),
       (
-        'More-only page → bottom: grows up out of the bar',
-        ShellTab.budgets,
-        ShellTab.transactions,
-        null,
-        false,
-        const TabEntry.expand(Alignment.bottomCenter),
-      ),
-      (
-        'bottom → top chip: down from above',
+        'bottom → top chip',
         ShellTab.home,
         ShellTab.notifications,
         null,
         false,
-        TabEntry.down,
+        TabEntry.slide,
       ),
       (
-        'top → top: down from above',
+        'top → top',
         ShellTab.pending,
         ShellTab.settings,
         null,
         false,
-        TabEntry.down,
+        TabEntry.slide,
       ),
       (
-        'More card → module: grows out of the card',
+        'More card → module: the origin no longer matters',
         ShellTab.more,
         ShellTab.debts,
         card,
         false,
-        const TabEntry.expand(card),
+        TabEntry.slide,
       ),
       (
-        'notification → a bottom page: grows out of the bell',
+        'notification → a bottom page',
         ShellTab.notifications,
         ShellTab.accounts,
         Alignment.topRight,
         false,
-        const TabEntry.expand(Alignment.topRight),
-      ),
-      (
-        'no known origin (a link) → module: grows out of the centre',
-        ShellTab.home,
-        ShellTab.projects,
-        null,
-        false,
-        const TabEntry.expand(),
+        TabEntry.slide,
       ),
       (
         'a back: already in place',
@@ -124,10 +108,14 @@ void main() {
         layout: d,
         reopen: true,
       ),
-      const TabEntry.expand(Alignment.bottomCenter),
+      TabEntry.slide,
     );
     expect(
-      resolveTabEntry(from: ShellTab.accounts, to: ShellTab.accounts, layout: d),
+      resolveTabEntry(
+        from: ShellTab.accounts,
+        to: ShellTab.accounts,
+        layout: d,
+      ),
       TabEntry.none,
     );
   });
@@ -150,21 +138,17 @@ void main() {
     );
   });
 
-  test('small shifts and a 0.8 → 1 grow, all landing in place', () {
-    for (final e in [
-      const TabEntry.side(1),
-      TabEntry.up,
-      TabEntry.down,
-      const TabEntry.expand(card),
-    ]) {
-      expect(e.offsetAt(1), Offset.zero, reason: '$e');
-      expect(e.scaleAt(1), 1, reason: '$e');
-      expect(e.opacityAt(0), 0, reason: '$e');
-    }
-    expect(const TabEntry.side(-1).offsetAt(0), const Offset(-0.06, 0));
-    expect(TabEntry.up.offsetAt(0), const Offset(0, 0.06));
-    expect(TabEntry.down.offsetAt(0), const Offset(0, -0.06));
-    expect(const TabEntry.expand(card).scaleAt(0), 0.8);
+  test('a slide starts 80 % of the way and fades in, landing in place', () {
+    expect(TabEntry.slide.offsetAt(0), const Offset(0.2, 0));
+    expect(TabEntry.slide.offsetAt(1), Offset.zero);
+    expect(TabEntry.slide.opacityAt(0), 0);
+    expect(TabEntry.slide.opacityAt(1), 1);
+    expect(TabEntry.fade.opacityAt(0), 0);
+    expect(TabEntry.fade.offsetAt(0), Offset.zero);
     expect(TabEntry.none.opacityAt(0), 1);
+    expect(TabEntry.none.offsetAt(0), Offset.zero);
+    final m = TabEntry.slide.transformAt(0, const Size(400, 800));
+    expect(m.getTranslation().x, 80);
+    expect(m.getTranslation().y, 0);
   });
 }

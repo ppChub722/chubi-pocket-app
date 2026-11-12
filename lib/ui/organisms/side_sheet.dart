@@ -5,6 +5,7 @@ import '../molecules/detail_rows.dart';
 import '../atoms/app_icon_button.dart';
 import '../atoms/app_divider.dart';
 
+import '../tokens/app_durations.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/ui_config.dart';
 
@@ -22,7 +23,7 @@ Future<T?> showSideSheet<T>(
     barrierDismissible: true,
     barrierLabel: l.modalBarrierDismissLabel,
     barrierColor: Colors.black54,
-    transitionDuration: const Duration(milliseconds: 280),
+    transitionDuration: AppMotion.duration,
     pageBuilder: (ctx, _, _) => _SideSheetPanel(
       widthFactor: widthFactor,
       maxWidth: maxWidth,
@@ -32,8 +33,8 @@ Future<T?> showSideSheet<T>(
       position: Tween(begin: const Offset(1, 0), end: Offset.zero).animate(
         CurvedAnimation(
           parent: animation,
-          curve: Curves.easeOutCubic,
-          reverseCurve: Curves.easeInCubic,
+          curve: AppMotion.curve,
+          reverseCurve: AppMotion.reverseCurve,
         ),
       ),
       child: child,

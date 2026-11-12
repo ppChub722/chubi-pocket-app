@@ -5,8 +5,12 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart' show PredictiveBackEvent;
 
+import '../../app_durations.dart';
+
 /// Android page transitions (owner 2026-10-28):
-/// - a push arrives as FadeForwards (fade + a short slide);
+/// - a push slides in from the RIGHT over the page it covers, which stays in
+///   place (owner 2026-11-12: the mirror of a back, like a tab's entry), from
+///   80 % of the way there (a short slide, not from the edge);
 /// - every back — the ← button, the system back button and the predictive
 ///   back GESTURE — slides the page off to the RIGHT, the page under it
 ///   already in place. The gesture follows the finger (Android decides
@@ -16,14 +20,10 @@ import 'package:flutter/services.dart' show PredictiveBackEvent;
 class AppPageTransitionsBuilder extends PageTransitionsBuilder {
   const AppPageTransitionsBuilder();
 
-  static const _inner = FadeForwardsPageTransitionsBuilder();
-
-  /// A back slide's length (a gesture's commit takes the rest of it).
-  static const popDuration = Duration(milliseconds: 260);
-
-  /// A back slide's curve (ease-in, owner 2026-11-05): slow off the mark,
-  /// quickening on the way out.
-  static const popCurve = Curves.easeIn;
+  /// A back slide's length (a gesture's commit takes the rest of it) and its
+  /// curve: [AppMotion]'s, like every other arrival and leaving.
+  static const popDuration = AppMotion.duration;
+  static const popCurve = AppMotion.curve;
 
   static bool _landing = false;
   static Timer? _landingEnd;
@@ -78,7 +78,7 @@ class AppPageTransitionsBuilder extends PageTransitionsBuilder {
   }
 
   @override
-  Duration get transitionDuration => _inner.transitionDuration;
+  Duration get transitionDuration => AppMotion.duration;
 
   @override
   Duration get reverseTransitionDuration => popDuration;
@@ -99,25 +99,15 @@ class AppPageTransitionsBuilder extends PageTransitionsBuilder {
         route: route,
         animation: animation,
         child: _CoveredRouteGate(
-          child: _inner.buildTransitions(
-            route,
-            context,
-            // The push look only: a back is the slide around it.
-            _Held(
+          // The push look only: a back is the slide around it. The page
+          // under stays where it is.
+          child: _PushSlide(
+            animation: _Held(
               animation,
               held: () => landed || _popping(route, animation),
               heldValue: 1,
             ),
-            // FadeForwards' shift while a page covers this one, held in
-            // place while the page above slides back off it.
-            _Held(
-              secondaryAnimation,
-              held: () =>
-                  secondaryAnimation.status == AnimationStatus.reverse ||
-                  _gestureOn(route),
-              heldValue: 0,
-            ),
-            child,
+            child: child,
           ),
         ),
       ),
@@ -129,6 +119,52 @@ class AppPageTransitionsBuilder extends PageTransitionsBuilder {
 
   static bool _gestureOn(PageRoute<dynamic> route) =>
       route.navigator?.userGestureInProgress ?? false;
+}
+
+/// Slides its child in from the right, fading in, as [animation] runs 0 → 1.
+class _PushSlide extends StatefulWidget {
+  const _PushSlide({required this.animation, required this.child});
+
+  final Animation<double> animation;
+  final Widget child;
+
+  @override
+  State<_PushSlide> createState() => _PushSlideState();
+}
+
+class _PushSlideState extends State<_PushSlide> {
+  late CurvedAnimation _curve = _make();
+
+  CurvedAnimation _make() =>
+      CurvedAnimation(parent: widget.animation, curve: AppMotion.curve);
+
+  @override
+  void didUpdateWidget(_PushSlide old) {
+    super.didUpdateWidget(old);
+    if (old.animation != widget.animation) {
+      _curve.dispose();
+      _curve = _make();
+    }
+  }
+
+  @override
+  void dispose() {
+    _curve.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _curve,
+    builder: (context, child) => Opacity(
+      opacity: AppMotion.enterOpacity(_curve.value).clamp(0.0, 1.0),
+      child: FractionalTranslation(
+        translation: Offset(AppMotion.enterShift(_curve.value), 0),
+        child: child,
+      ),
+    ),
+    child: widget.child,
+  );
 }
 
 /// [parent], or [heldValue] (with a settled status) while [held].

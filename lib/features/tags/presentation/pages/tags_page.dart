@@ -8,6 +8,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../app/shell/quick_create_context.dart';
+import '../../../../app/shell/quick_create_look.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/domain/user.dart';
@@ -463,8 +465,23 @@ class _TagsPageState extends State<TagsPage>
     (d) => createdIds[d.key] == null ? d : d.withServerId(createdIds[d.key]!),
   );
 
+  /// The centre button goes to this page's create page (owner 2026-11-12).
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => QuickCreatePresetScope(
+    preset: QuickCreatePreset.create(
+      QuickCreateLook.add(
+        context,
+        color: ModuleColors.of(context).library,
+        icon: AppIcons.tag,
+      ),
+      () {
+        if (!isSaving) _addTag();
+      },
+    ),
+    child: _page(context),
+  );
+
+  Widget _page(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return editScope(
       Scaffold(

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../ui/tokens/app/theme/app_page_transitions.dart';
 import '../../ui/ui.dart';
 import '../hub_kit.dart';
 
@@ -123,13 +122,8 @@ Widget buildRadiusDurationPage(BuildContext context) {
         title: 'AppDurations',
         note:
             'Motion lengths. Every animation also respects the device’s '
-            '“reduce motion” setting (zero duration). Navigation: a push '
-            'is FadeForwards (450 ms); every back (←, system back, the '
-            'predictive back gesture) slides the page off to the right in '
-            '“pop” (AppPageTransitionsBuilder.popDuration), the page under '
-            'it held in place, the gesture dragging it; a tab switch takes '
-            '“chrome”: a 6 % shift (side / up / down) or a 0.8 → 1 grow '
-            'out of the tapped spot, with a fade.',
+            '“reduce motion” setting (zero duration). Arriving and leaving '
+            'pages and sheets are NOT here: see AppMotion below.',
         child: Column(
           children: [
             for (final (name, d) in <(String, Duration)>[
@@ -138,14 +132,157 @@ Widget buildRadiusDurationPage(BuildContext context) {
               ('normal', AppDurations.normal),
               ('slow', AppDurations.slow),
               ('chrome', AppDurations.chrome),
-              ('pop', AppPageTransitionsBuilder.popDuration),
             ])
               _DurationBar(name: name, duration: d),
           ],
         ),
       ),
+      const HubDemo(
+        title: 'AppMotion — arriving and leaving',
+        note:
+            'THE one motion of coming and going (owner 2026-11-12), used by '
+            'everything: a push and a tab’s first page (AppMotion.enterShift '
+            '/ enterOpacity), every back in a tab or across tabs '
+            '(AppPageTransitionsBuilder.popDuration / popCurve, the TabBackSlide), '
+            'bottom sheets (AppMotion.sheetStyle) and the side sheet. 150 ms, '
+            'easeOutQuart; a page enters sliding in from the right, fading '
+            'in, starting 80 % of the way to where it lands (slideFrom 0.2), '
+            'and leaves sliding off to the right, the page under it held in '
+            'place. A sheet closes through the flipped curve (fast first). '
+            'Change AppMotion and all of it changes. Dialogs and popup menus '
+            'keep Flutter’s own. Tap the buttons to play it.',
+        child: _MotionDemo(),
+      ),
     ],
   );
+}
+
+/// The live sample of [AppMotion]: a page stage that enters and leaves through
+/// the real functions, and the two sheets.
+class _MotionDemo extends StatefulWidget {
+  const _MotionDemo();
+
+  @override
+  State<_MotionDemo> createState() => _MotionDemoState();
+}
+
+class _MotionDemoState extends State<_MotionDemo>
+    with SingleTickerProviderStateMixin {
+  // 0 = off the right edge... landed = 1 (the arrival's own t).
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: AppMotion.duration,
+    value: 1,
+  );
+  late final CurvedAnimation _curve = CurvedAnimation(
+    parent: _ctrl,
+    curve: AppMotion.curve,
+  );
+  bool _leaving = false;
+
+  @override
+  void dispose() {
+    _curve.dispose();
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _enter() {
+    setState(() => _leaving = false);
+    _ctrl.forward(from: 0);
+  }
+
+  void _leave() {
+    setState(() => _leaving = true);
+    _ctrl.forward(from: 0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppText(
+          'duration ${AppMotion.duration.inMilliseconds} ms | curve '
+          'easeOutQuart | slideFrom ${AppMotion.slideFrom}',
+          role: AppTextRole.caption,
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        ClipRect(
+          child: Container(
+            height: 150,
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainerHigh,
+              border: Border.all(color: scheme.outlineVariant),
+            ),
+            child: AnimatedBuilder(
+              animation: _curve,
+              builder: (context, child) {
+                final t = _curve.value;
+                // Entering: the shared shift and fade. Leaving: the page
+                // goes off to the right by the same curve.
+                final shift = _leaving ? t : AppMotion.enterShift(t);
+                final opacity = _leaving ? 1.0 : AppMotion.enterOpacity(t);
+                return Opacity(
+                  opacity: opacity.clamp(0.0, 1.0),
+                  child: FractionalTranslation(
+                    translation: Offset(shift, 0),
+                    child: child,
+                  ),
+                );
+              },
+              child: Container(
+                color: scheme.primaryContainer,
+                alignment: Alignment.center,
+                child: const AppText('a page', role: AppTextRole.body),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: [
+            AppButton(
+              label: 'Enter',
+              variant: AppButtonVariant.outlined,
+              onPressed: _enter,
+            ),
+            AppButton(
+              label: 'Leave',
+              variant: AppButtonVariant.outlined,
+              onPressed: _leave,
+            ),
+            AppButton(
+              label: 'Bottom sheet',
+              variant: AppButtonVariant.outlined,
+              onPressed: () => showAppSheet<void>(
+                context,
+                title: 'AppMotion.sheetStyle',
+                builder: (_) => const Padding(
+                  padding: EdgeInsets.all(AppSpacing.lg),
+                  child: AppText('In and out through AppMotion.'),
+                ),
+              ),
+            ),
+            AppButton(
+              label: 'Side sheet',
+              variant: AppButtonVariant.outlined,
+              onPressed: () => showSideSheet<void>(
+                context,
+                builder: (_) => const Padding(
+                  padding: EdgeInsets.all(AppSpacing.lg),
+                  child: AppText('In and out through AppMotion.'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }
 
 class _DurationBar extends StatefulWidget {

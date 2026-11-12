@@ -119,19 +119,55 @@ class _ListPageBodyState extends State<ListPageBody> {
     return false;
   }
 
+  /// The header and the state view keep their state (a focused search field)
+  /// when the header moves between the list and the column above a state view.
+  final _headerKey = GlobalKey();
+  final _stateKey = GlobalKey();
+
   @override
   Widget build(BuildContext context) {
     final w = widget;
     final mq = MediaQuery.paddingOf(context);
     final bar = w.clearTopBar ? mq.top : 0.0;
     final hasHeader = w.header.isNotEmpty;
+    // Nothing is pinned: with rows the header scrolls with them; the
+    // skeleton / empty / error states (nothing to scroll) keep it above.
+    final headerScrolls = hasHeader && !w.isEmpty && w.builder == null;
     final padding = EdgeInsets.fromLTRB(
       w.sidePadding,
       w.topInset + (hasHeader ? 0 : bar),
       w.sidePadding,
       w.bottomInset + mq.bottom,
     );
+    final header = KeyedSubtree(
+      key: _headerKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: w.header,
+      ),
+    );
+    final rows = [
+      for (final h in w.scrollHeader) ...[
+        h,
+        const SizedBox(height: AppSpacing.md),
+      ],
+      ...(w.rowCards
+          ? cardedRows(w.children)
+          : w.rowDividers
+          ? dividedRows(context, w.children, indent: w.rowDividerIndent)
+          : w.rowGap > 0
+          ? _gapped(w.children, w.rowGap)
+          : w.children),
+      if (w.loadingMore) ...const [
+        ListRowSkeleton(),
+        ListRowSkeleton(),
+      ] else if (w.loadMoreError != null)
+        LoadMoreErrorRow(onRetry: w.onRetryMore ?? w.onLoadMore),
+      ?w.footer,
+      const PageDotsFooter(),
+    ];
     final list = AsyncStateView(
+      key: _stateKey,
       loading: w.loading,
       error: w.error,
       isEmpty: w.isEmpty,
@@ -149,46 +185,40 @@ class _ListPageBodyState extends State<ListPageBody> {
           onNotification: _onScroll,
           child:
               w.builder?.call(context, padding) ??
-              ListView(
-                controller: w.controller,
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: padding,
-                children: [
-                  for (final h in w.scrollHeader) ...[
-                    h,
-                    const SizedBox(height: AppSpacing.md),
-                  ],
-                  ...(w.rowCards
-                      ? cardedRows(w.children)
-                      : w.rowDividers
-                      ? dividedRows(
-                          context,
-                          w.children,
-                          indent: w.rowDividerIndent,
-                        )
-                      : w.rowGap > 0
-                      ? _gapped(w.children, w.rowGap)
-                      : w.children),
-                  if (w.loadingMore) ...const [
-                    ListRowSkeleton(),
-                    ListRowSkeleton(),
-                  ] else if (w.loadMoreError != null)
-                    LoadMoreErrorRow(onRetry: w.onRetryMore ?? w.onLoadMore),
-                  ?w.footer,
-                  const PageDotsFooter(),
-                ],
-              ),
+              (headerScrolls
+                  ? CustomScrollView(
+                      controller: w.controller,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        SliverPadding(
+                          padding: EdgeInsets.only(top: bar),
+                          sliver: SliverToBoxAdapter(child: header),
+                        ),
+                        SliverPadding(
+                          padding: padding,
+                          sliver: SliverList(
+                            delegate: SliverChildListDelegate(rows),
+                          ),
+                        ),
+                      ],
+                    )
+                  : ListView(
+                      controller: w.controller,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: padding,
+                      children: rows,
+                    )),
         ),
       ),
     );
-    if (!hasHeader) return _consumed(list);
+    if (!hasHeader || headerScrolls) return _consumed(list);
     return _consumed(
       Padding(
         padding: EdgeInsets.only(top: bar),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ...w.header,
+            header,
             Expanded(child: list),
           ],
         ),

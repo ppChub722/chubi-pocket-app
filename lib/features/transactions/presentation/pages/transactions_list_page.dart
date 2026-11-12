@@ -376,6 +376,8 @@ class _TransactionsListPageState extends State<TransactionsListPage>
 
     if (widget.embedded) return content;
     return Scaffold(
+      // The list runs under the top bar, like the wallets page.
+      extendBodyBehindAppBar: true,
       appBar: AppTopBar(
         title: widget.title ?? l.navTransactions,
         showBack: widget.title != null,

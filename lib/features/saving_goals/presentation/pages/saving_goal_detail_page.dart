@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
+import '../../../../app/shell/quick_create_look.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -680,9 +681,9 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
     if (d == null) return page;
     return QuickCreatePresetScope(
-      preset: goal == null
-          ? const QuickCreatePreset.saving()
-          : QuickCreatePreset.saving(goalId: goal.id),
+      preset: QuickCreatePreset.saving(
+        goalId: goal?.id,
+      ).withLook(QuickCreateLook.saving(context)),
       child: page,
     );
   }

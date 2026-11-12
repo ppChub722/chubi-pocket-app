@@ -9,6 +9,7 @@ import 'app_spinner.dart';
 import 'busy_scope.dart';
 import 'app_icon.dart';
 import 'count_badge.dart';
+import 'mirror_surface.dart';
 
 enum IconChipActivity { none, progress, done }
 
@@ -276,64 +277,82 @@ class AppIconButton extends StatelessWidget {
       ],
     );
 
+    final body = SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          BusySwap(
+            loading: busy.spinning,
+            color: iconColor,
+            spinnerSize: glyphSize * 0.8,
+            child: glyph,
+          ),
+          if (working)
+            Positioned(
+              bottom: size * 0.1,
+              child: SizedBox(
+                width: size * 0.42,
+                height: 3,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    color: scheme.primary,
+                    backgroundColor: scheme.surfaceContainerHighest,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+    final onTap = busy.spinning ? null : onPressed;
+
+    // The top bar's chips (a [MirrorScope]) are mirrors; a destructive one
+    // keeps its error look.
+    final mirror = MirrorScope.of(context) && !destructive;
     final circle = Opacity(
       opacity: enabled ? 1 : AppOpacity.disabled,
-      child: Material(
-        color: destructive
-            ? Color.alphaBlend(
-                scheme.error.withValues(alpha: 0.12),
-                scheme.surfaceContainerHigh,
-              )
-            : selected
-            ? scheme.primaryContainer
-            : scheme.surfaceContainerHigh,
-        elevation: enabled ? 1.5 : 0,
-        shadowColor: scheme.shadow.withValues(alpha: 0.2),
-        shape: CircleBorder(
-          side: destructive
-              ? BorderSide(color: scheme.error, width: 1.5)
-              : BorderSide(
-                  color: selected
-                      ? scheme.primary
-                      : hero?.line ?? scheme.outlineVariant,
+      child: mirror
+          ? MirrorSurface(
+              shape: const CircleBorder(),
+              tint: selected ? scheme.primaryContainer : null,
+              rim: selected ? scheme.primary : null,
+              elevated: enabled,
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: onTap,
+                  child: body,
                 ),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: busy.spinning ? null : onPressed,
-          child: SizedBox(
-            width: size,
-            height: size,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                BusySwap(
-                  loading: busy.spinning,
-                  color: iconColor,
-                  spinnerSize: glyphSize * 0.8,
-                  child: glyph,
-                ),
-                if (working)
-                  Positioned(
-                    bottom: size * 0.1,
-                    child: SizedBox(
-                      width: size * 0.42,
-                      height: 3,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(2),
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          color: scheme.primary,
-                          backgroundColor: scheme.surfaceContainerHighest,
-                        ),
+              ),
+            )
+          : Material(
+              color: destructive
+                  ? Color.alphaBlend(
+                      scheme.error.withValues(alpha: 0.12),
+                      scheme.surfaceContainerHigh,
+                    )
+                  : selected
+                  ? scheme.primaryContainer
+                  : scheme.surfaceContainerHigh,
+              elevation: enabled ? 1.5 : 0,
+              shadowColor: scheme.shadow.withValues(alpha: 0.2),
+              shape: CircleBorder(
+                side: destructive
+                    ? BorderSide(color: scheme.error, width: 1.5)
+                    : BorderSide(
+                        color: selected
+                            ? scheme.primary
+                            : hero?.line ?? scheme.outlineVariant,
                       ),
-                    ),
-                  ),
-              ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(onTap: onTap, child: body),
             ),
-          ),
-        ),
-      ),
     );
 
     Widget chip = working

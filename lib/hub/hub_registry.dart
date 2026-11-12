@@ -182,7 +182,7 @@ final List<HubPage> hubPages = [
     summary:
         'Corner radii; motion durations and curves (respect “reduce motion”).',
     usedBy: '~50 sites',
-    covers: ['AppRadius', 'AppDurations'],
+    covers: ['AppRadius', 'AppDurations', 'AppMotion'],
     builder: buildRadiusDurationPage,
   ),
   const HubPage(
@@ -519,6 +519,7 @@ final List<HubPage> hubPages = [
       'AppTabPager',
       'ModeActionBar',
       'PinnedBar',
+      'StatusBarScrim',
       'HeroContent',
       'HeroSpacedRow',
       'HeroTopRow',

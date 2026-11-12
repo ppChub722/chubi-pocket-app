@@ -48,8 +48,6 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
-  static const scrimKey = ValueKey('app-top-bar-scrim');
-
   static const _leftTag = 'app-top-bar-left';
   static const _chipsTag = 'app-top-bar-chips';
 
@@ -64,9 +62,9 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       parentEnabled: !editing,
       onBack: onBack ?? () => _defaultBack(context),
     );
-    final inset = MediaQuery.paddingOf(context).top;
+    // No fade under the bar (owner 2026-11-12): the page runs right up under
+    // it and glows through the glass chips.
     return AppBar(
-      flexibleSpace: TopScrim(key: scrimKey, inset: inset),
       backgroundColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
@@ -74,7 +72,8 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       // The toolbar clips by default — chips sliding up would be cut at its top
       // edge instead of leaving the screen.
       clipBehavior: Clip.none,
-      titleSpacing: AppSpacing.md,
+      // The page gutter, like the content and the bottom bar.
+      titleSpacing: AppSpacing.lg,
       title: Align(
         alignment: Alignment.centerLeft,
         child: _LeftSlot(data: left),
@@ -315,7 +314,8 @@ class _ChipsSlot extends StatelessWidget {
   Widget build(BuildContext context) => _ParkingHero(
     tag: AppTopBar._chipsTag,
     parked: hidden,
-    child: const _UniversalChips(),
+    // Inside the Hero's child so a flight keeps the mirrors.
+    child: const MirrorScope(child: _UniversalChips()),
   );
 }
 
@@ -390,12 +390,16 @@ class _UniversalChips extends StatelessWidget {
       ShellTab.settings => BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {
           final user = _userOf(state);
-          if (user == null) return const SizedBox(width: AppSpacing.sm);
-          final outline = IconShape.fromId(user.iconCode?.shape).radius(40);
+          if (user == null) return const SizedBox(width: AppSpacing.lg);
+          // A photo is always drawn round, so its frame is a circle too;
+          // only an icon follows its own shape.
+          final outline = user.avatar.hasPhoto
+              ? null
+              : IconShape.fromId(user.iconCode?.shape).radius(40);
           return Padding(
             padding: const EdgeInsets.only(
               left: AppSpacing.sm,
-              right: AppSpacing.md,
+              right: AppSpacing.lg,
             ),
             child: AppAvatarButton(
               tooltip: l.navProfileTooltip,
@@ -580,135 +584,131 @@ class _LeftGroup extends StatelessWidget {
     final slot = titleSlot;
     final hasTitle = title != null || slot != null;
     if (!showBack && !hasTitle) return const SizedBox.shrink();
-    return Material(
-      color: scheme.surfaceContainerHigh,
-      elevation: 1.5,
-      shadowColor: scheme.shadow.withValues(alpha: 0.2),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
-        side: BorderSide(color: scheme.outlineVariant),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: AnimatedSize(
-        duration: AppDurations.chrome,
-        curve: AppDurations.chromeCurve,
-        alignment: Alignment.centerLeft,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 40),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (showBack) ...[
-                InkWell(
-                  onTap: onBack,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.md,
-                      AppSpacing.sm,
-                      AppSpacing.sm,
-                      AppSpacing.sm,
-                    ),
-                    child: AnimatedSwitcher(
-                      duration: AppDurations.chrome,
-                      switchInCurve: AppDurations.chromeCurve,
-                      switchOutCurve: AppDurations.chromeCurve,
-                      transitionBuilder: (child, a) => FadeTransition(
-                        opacity: a,
-                        child: RotationTransition(
-                          turns: Tween<double>(
-                            begin: -0.125,
-                            end: 0,
-                          ).animate(a),
-                          child: child,
-                        ),
-                      ),
-                      child: AppIcon(
-                        backIcon,
-                        key: ValueKey(backIcon),
-                        size: AppIconSize.md,
-                      ),
-                    ),
-                  ),
-                ),
-                Container(width: 1, height: 20, color: scheme.outlineVariant),
-              ],
-              if (crumb != null) ...[
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.sizeOf(context).width * 0.4,
-                  ),
-                  child: InkWell(
-                    onTap: parentEnabled
-                        ? () => goToCrumb(context, crumb)
-                        : null,
+    return MirrorSurface(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      child: Material(
+        type: MaterialType.transparency,
+        child: AnimatedSize(
+          duration: AppDurations.chrome,
+          curve: AppDurations.chromeCurve,
+          alignment: Alignment.centerLeft,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 40),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (showBack) ...[
+                  InkWell(
+                    onTap: onBack,
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(
                         AppSpacing.md,
                         AppSpacing.sm,
-                        AppSpacing.xs,
+                        AppSpacing.sm,
                         AppSpacing.sm,
                       ),
-                      child: Text(
-                        crumb.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
+                      child: AnimatedSwitcher(
+                        duration: AppDurations.chrome,
+                        switchInCurve: AppDurations.chromeCurve,
+                        switchOutCurve: AppDurations.chromeCurve,
+                        transitionBuilder: (child, a) => FadeTransition(
+                          opacity: a,
+                          child: RotationTransition(
+                            turns: Tween<double>(
+                              begin: -0.125,
+                              end: 0,
+                            ).animate(a),
+                            child: child,
+                          ),
+                        ),
+                        child: AppIcon(
+                          backIcon,
+                          key: ValueKey(backIcon),
+                          size: AppIconSize.md,
                         ),
                       ),
                     ),
                   ),
-                ),
-                AppIcon(
-                  AppIcons.chevronRight,
-                  size: AppIconSize.sm,
-                  color: scheme.onSurfaceVariant,
-                ),
-              ],
-              if (hasTitle)
-                Flexible(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      crumb != null ? AppSpacing.xs : AppSpacing.md,
-                      AppSpacing.sm,
-                      AppSpacing.md,
-                      AppSpacing.sm,
+                  Container(width: 1, height: 20, color: scheme.outlineVariant),
+                ],
+                if (crumb != null) ...[
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.sizeOf(context).width * 0.4,
                     ),
-                    child: AnimatedSwitcher(
-                      duration: MediaQuery.disableAnimationsOf(context)
-                          ? Duration.zero
-                          : AppDurations.chrome,
-                      switchInCurve: AppDurations.chromeCurve,
-                      switchOutCurve: AppDurations.chromeCurve,
-                      layoutBuilder: (current, previous) => Stack(
-                        alignment: Alignment.centerLeft,
-                        children: [...previous, ?current],
+                    child: InkWell(
+                      onTap: parentEnabled
+                          ? () => goToCrumb(context, crumb)
+                          : null,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.md,
+                          AppSpacing.sm,
+                          AppSpacing.xs,
+                          AppSpacing.sm,
+                        ),
+                        child: Text(
+                          crumb.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
                       ),
-                      child: slot != null
-                          ? KeyedSubtree(
-                              key:
-                                  slot.key ??
-                                  const ValueKey('app-top-bar-title-slot'),
-                              child: DefaultTextStyle.merge(
-                                style: textTheme.titleMedium,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                child: slot,
-                              ),
-                            )
-                          : Text(
-                              title!,
-                              key: ValueKey(title),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: textTheme.titleMedium,
-                            ),
                     ),
                   ),
-                )
-              else
-                const SizedBox(width: AppSpacing.xs),
-            ],
+                  AppIcon(
+                    AppIcons.chevronRight,
+                    size: AppIconSize.sm,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ],
+                if (hasTitle)
+                  Flexible(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        crumb != null ? AppSpacing.xs : AppSpacing.md,
+                        AppSpacing.sm,
+                        AppSpacing.md,
+                        AppSpacing.sm,
+                      ),
+                      child: AnimatedSwitcher(
+                        duration: MediaQuery.disableAnimationsOf(context)
+                            ? Duration.zero
+                            : AppDurations.chrome,
+                        switchInCurve: AppDurations.chromeCurve,
+                        switchOutCurve: AppDurations.chromeCurve,
+                        layoutBuilder: (current, previous) => Stack(
+                          alignment: Alignment.centerLeft,
+                          children: [...previous, ?current],
+                        ),
+                        child: slot != null
+                            ? KeyedSubtree(
+                                key:
+                                    slot.key ??
+                                    const ValueKey('app-top-bar-title-slot'),
+                                child: DefaultTextStyle.merge(
+                                  style: textTheme.titleMedium,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  child: slot,
+                                ),
+                              )
+                            : Text(
+                                title!,
+                                key: ValueKey(title),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: textTheme.titleMedium,
+                              ),
+                      ),
+                    ),
+                  )
+                else
+                  const SizedBox(width: AppSpacing.xs),
+              ],
+            ),
           ),
         ),
       ),

@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/quick_create_context.dart';
+import '../../../../app/shell/quick_create_look.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -146,8 +148,21 @@ class _ContactsPageState extends State<ContactsPage> {
     );
   }
 
+  /// The centre button goes to this page's create page (owner 2026-11-12).
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => QuickCreatePresetScope(
+    preset: QuickCreatePreset.create(
+      QuickCreateLook.add(
+        context,
+        color: ModuleColors.of(context).library,
+        icon: AppIcons.contact,
+      ),
+      _add,
+    ),
+    child: _page(context),
+  );
+
+  Widget _page(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final statusLabels = {
       'active': l.contactsFilterActive,

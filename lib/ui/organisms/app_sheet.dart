@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../tokens/app_durations.dart';
 import '../tokens/app_spacing.dart';
 
 Future<T?> showAppSheet<T>(
@@ -12,6 +13,7 @@ Future<T?> showAppSheet<T>(
 }) {
   return showModalBottomSheet<T>(
     context: context,
+    sheetAnimationStyle: AppMotion.sheetStyle,
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
@@ -32,6 +34,7 @@ Future<T?> showAppSheetCustom<T>(
 }) {
   return showModalBottomSheet<T>(
     context: context,
+    sheetAnimationStyle: AppMotion.sheetStyle,
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,

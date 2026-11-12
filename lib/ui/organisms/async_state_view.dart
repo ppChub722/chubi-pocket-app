@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../atoms/skeleton_box.dart';
+import '../tokens/app_durations.dart';
 import '../tokens/tone.dart';
 import '../molecules/error_view.dart';
 import '../molecules/app_snackbar.dart';
@@ -68,8 +70,29 @@ class AsyncStateView extends StatefulWidget {
   State<AsyncStateView> createState() => _AsyncStateViewState();
 }
 
-class _AsyncStateViewState extends State<AsyncStateView> {
+class _AsyncStateViewState extends State<AsyncStateView>
+    with SingleTickerProviderStateMixin {
   bool _settled = false;
+
+  /// The skeleton comes only after [AppMotion.duration] (owner 2026-11-12): a
+  /// load that is quick (a cached page, a fast answer) never flashes it.
+  Timer? _skeletonTimer;
+  bool _skeletonDue = false;
+
+  /// The skeleton that was showing when the content arrived: it stays over the
+  /// content and fades out (the content is already in place under it), so the
+  /// swap is a cross-fade, not a jump. [_fade] 1 = fully there.
+  Widget? _leaving;
+  Widget? _lastSkeleton;
+  AsyncStateKind? _lastKind;
+  late final AnimationController _fade = AnimationController(
+    vsync: this,
+    duration: AppMotion.duration,
+  );
+  late final CurvedAnimation _fadeCurve = CurvedAnimation(
+    parent: _fade,
+    curve: AppMotion.curve,
+  );
 
   Timer? _slowTimer;
 
@@ -79,12 +102,29 @@ class _AsyncStateViewState extends State<AsyncStateView> {
   void initState() {
     super.initState();
     _syncSlowTimer();
+    _syncSkeletonTimer();
   }
 
   @override
   void dispose() {
     _slowTimer?.cancel();
+    _skeletonTimer?.cancel();
+    _fadeCurve.dispose();
+    _fade.dispose();
     super.dispose();
+  }
+
+  void _syncSkeletonTimer() {
+    if (!_firstLoading) {
+      _skeletonTimer?.cancel();
+      _skeletonTimer = null;
+      _skeletonDue = false;
+      return;
+    }
+    if (_skeletonDue) return;
+    _skeletonTimer ??= Timer(AppMotion.duration, () {
+      if (mounted) setState(() => _skeletonDue = true);
+    });
   }
 
   bool get _firstLoading => widget.loading && widget.isEmpty && !_settled;
@@ -114,6 +154,7 @@ class _AsyncStateViewState extends State<AsyncStateView> {
   void didUpdateWidget(AsyncStateView old) {
     super.didUpdateWidget(old);
     _syncSlowTimer();
+    _syncSkeletonTimer();
     final e = widget.error;
     if (!widget.snackOnRefreshError ||
         e == null ||
@@ -144,7 +185,25 @@ class _AsyncStateViewState extends State<AsyncStateView> {
       slow: _slow,
       isOffline: () => ConnectionScope.isOffline(context),
     );
-    return switch (kind) {
+    final reduced = MediaQuery.disableAnimationsOf(context);
+    // Content (or anything) arriving over a skeleton that was on screen: the
+    // skeleton fades out over it.
+    if (_lastKind == AsyncStateKind.skeleton &&
+        kind != AsyncStateKind.skeleton &&
+        _lastSkeleton != null &&
+        !reduced) {
+      _leaving = _lastSkeleton;
+      _lastSkeleton = null;
+      _fade.value = 1;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _fade.reverse().whenComplete(() {
+          if (mounted) setState(() => _leaving = null);
+        });
+      });
+    }
+    _lastKind = kind;
+    final view = switch (kind) {
       AsyncStateKind.content => w.builder(context),
       AsyncStateKind.offline => _pullable(
         ErrorView(error: TimeoutException('offline'), onRetry: _retry),
@@ -152,16 +211,48 @@ class _AsyncStateViewState extends State<AsyncStateView> {
       AsyncStateKind.slow => _pullable(
         ErrorView(error: TimeoutException('still loading'), onRetry: _retry),
       ),
-      AsyncStateKind.skeleton =>
-        w.skeleton ??
-            (w._detail
-                ? const DetailPageSkeleton()
-                : const ListPageSkeleton(rows: 6)),
+      AsyncStateKind.skeleton => _skeleton(w),
       AsyncStateKind.error => _pullable(
         ErrorView(error: w.error!, onRetry: w.onRetry),
       ),
       AsyncStateKind.empty => _pullable(w.empty!),
     };
+    final leaving = _leaving;
+    return Stack(
+      fit: StackFit.passthrough,
+      children: [
+        view,
+        if (leaving != null)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: FadeTransition(opacity: _fadeCurve, child: leaving),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// The skeleton, after the short wait, fading in; one shimmer for all of it.
+  Widget _skeleton(AsyncStateView w) {
+    if (!_skeletonDue) {
+      _lastSkeleton = null;
+      return const SizedBox.expand();
+    }
+    final skeleton = SkeletonShimmer(
+      child:
+          w.skeleton ??
+          (w._detail
+              ? const DetailPageSkeleton()
+              : const ListPageSkeleton(rows: 6)),
+    );
+    _lastSkeleton = skeleton;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: AppMotion.duration,
+      curve: AppMotion.curve,
+      builder: (context, v, child) => Opacity(opacity: v, child: child),
+      child: skeleton,
+    );
   }
 
   Widget _pullable(Widget view) {

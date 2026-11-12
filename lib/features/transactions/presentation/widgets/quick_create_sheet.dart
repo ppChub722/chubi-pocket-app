@@ -213,6 +213,7 @@ Future<bool> showQuickCreateSheet(
   if (!context.mounted) return false;
   final saved = await showModalBottomSheet<bool>(
     context: context,
+    sheetAnimationStyle: AppMotion.sheetStyle,
     isScrollControlled: true,
     useSafeArea: true,
     // Over the whole shell, wherever it's opened from: inside a tab it would
@@ -231,6 +232,7 @@ Future<bool> showQuickCreateSheet(
         initialCategory: category,
         initialTag: tag,
         initialMode: preset?.mode ?? QuickCreateMode.tx,
+        lockMode: preset != null,
         debtPerson: preset?.person == null
             ? null
             : DebtPick(
@@ -377,6 +379,7 @@ class _QuickCreateSheet extends StatefulWidget {
     this.initialCategory,
     this.initialTag,
     this.initialMode = QuickCreateMode.tx,
+    this.lockMode = false,
     this.debtPerson,
     this.onDebtSaved,
     this.onSavingSaved,
@@ -402,6 +405,10 @@ class _QuickCreateSheet extends StatefulWidget {
   final Tag? initialTag;
 
   final QuickCreateMode initialMode;
+
+  /// The page the sheet opens from chose its mode (owner 2026-11-12): no
+  /// tx / debt / saving tabs to switch.
+  final bool lockMode;
 
   final DebtPick? debtPerson;
   final ValueChanged<DebtEntryWriteResult>? onDebtSaved;
@@ -595,26 +602,23 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     setState(() => _history = EditDraft(_snap()));
   }
 
-  _SheetDraft _snap() => _SheetDraft(
-    _c.toDraft(keepIncomplete: true),
-    _c.bill(),
-    (
-      account: _c.account,
-      toAccount: _c.toAccount,
-      category: _c.category,
-      projectId: _c.projectId,
-      event: _event,
-      members: _eventMembers,
-      payback: _payback,
-      from: _fromMemberId,
-      to: _toMemberId,
-      recurring: _link.candidate,
-      entryTx: _entryTx,
-      beforeEntryTx: _beforeEntryTx,
-      entryCreate: _entryCreate,
-      entryPaid: _entryPaid,
-    ),
-  );
+  _SheetDraft _snap() =>
+      _SheetDraft(_c.toDraft(keepIncomplete: true), _c.bill(), (
+        account: _c.account,
+        toAccount: _c.toAccount,
+        category: _c.category,
+        projectId: _c.projectId,
+        event: _event,
+        members: _eventMembers,
+        payback: _payback,
+        from: _fromMemberId,
+        to: _toMemberId,
+        recurring: _link.candidate,
+        entryTx: _entryTx,
+        beforeEntryTx: _beforeEntryTx,
+        entryCreate: _entryCreate,
+        entryPaid: _entryPaid,
+      ));
 
   /// Records what just changed as an undo step (a typing burst is one).
   /// Call inside setState.
@@ -658,8 +662,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     });
   }
 
-  bool get _canUndo =>
-      !_isDebt && !_isSaving && (_history?.canUndo ?? false);
+  bool get _canUndo => !_isDebt && !_isSaving && (_history?.canUndo ?? false);
 
   void _undo() {
     final h = _history;
@@ -1675,7 +1678,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     );
   }
 
-
   /// ออกจากบิล: keep my books of it as plain records, or delete them.
   Future<void> _leaveBill(PaperView edit) async {
     final l = AppLocalizations.of(context)!;
@@ -2054,12 +2056,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      showSaveFailure(
-        context,
-        e,
-        retry: _save,
-        message: errorText(l, e),
-      );
+      showSaveFailure(context, e, retry: _save, message: errorText(l, e));
     }
   }
 
@@ -2229,8 +2226,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                         }),
                         paybackCard: _paybackCard(l),
                       ),
-                eventSlot:
-                    !_draftLike && typeCanJoinEvent(_c.type)
+                eventSlot: !_draftLike && typeCanJoinEvent(_c.type)
                     ? SplitEventSlot(
                         name: eventTargetName(l, _event),
                         onTap: _pickEvent,
@@ -2275,9 +2271,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: QuickCreateContextBar(
-              caption: eventBill.project == null
-                  ? null
-                  : l.quickEventLabel,
+              caption: eventBill.project == null ? null : l.quickEventLabel,
               label: eventBill.project?.name ?? l.evbSplitBill,
               icon: eventBill.project == null
                   ? AppIcons.split
@@ -2296,7 +2290,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _modeChips(l),
+        if (!widget.lockMode) _modeChips(l),
         if (_isDebt)
           DebtEntryForm(controller: _debt, heroKey: _heroKey, autofocus: true)
         else if (_isSaving)

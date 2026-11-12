@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
+import '../../../../app/shell/quick_create_look.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -444,7 +445,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
                 linked: _contact!.isLinked,
                 linkedUserId: _contact!.linkedUser?.id,
               ),
-            ),
+            ).withLook(QuickCreateLook.debt(context)),
       child: editScope(
         BusyScope(
           busy: isSaving,

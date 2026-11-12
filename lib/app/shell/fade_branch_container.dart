@@ -4,11 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
+import '../../ui/tokens/app_durations.dart' show AppMotion;
 import 'nav_layout.dart';
 import 'tab_entry.dart';
 import 'tab_nav.dart';
-import '../../ui/tokens/app/theme/app_page_transitions.dart';
-import '../../ui/ui.dart';
 
 class FadeBranchContainer extends StatefulWidget {
   const FadeBranchContainer({
@@ -28,12 +27,15 @@ class _FadeBranchContainerState extends State<FadeBranchContainer>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
-    duration: AppDurations.chrome,
+    // Shorter than AppDurations.chrome (450ms): fewer expensive raster frames
+    // per tab switch.
+    duration: AppMotion.duration,
     value: 1,
   );
   late final Animation<double> _curve = CurvedAnimation(
     parent: _ctrl,
-    curve: AppDurations.chromeCurve,
+    // Fast start, a long soft landing.
+    curve: AppMotion.curve,
   );
   int? _previous;
 
@@ -261,8 +263,10 @@ class TabBackSlide {
     return done.future;
   }
 
+  static const _backDuration = AppMotion.duration;
+
   static Duration _remaining(double fraction) =>
-      AppPageTransitionsBuilder.popDuration * fraction.clamp(0.0, 1.0);
+      _backDuration * fraction.clamp(0.0, 1.0);
 
   void dispose() {
     progress.dispose();
@@ -415,7 +419,7 @@ class _BranchIndex extends InheritedWidget {
   bool updateShouldNotify(_BranchIndex old) => index != old.index;
 }
 
-/// Paints its child arriving per [entry] (fade + shift / grow) while
+/// Paints its child arriving per [entry] (a slide, or a fade) while
 /// [animation] runs, when [active].
 class _EntryPaint extends SingleChildRenderObjectWidget {
   const _EntryPaint({
@@ -480,16 +484,29 @@ class _RenderEntryPaint extends RenderProxyBox {
       return;
     }
     final transform = e.transformAt(t, size);
+    final alpha = (e.opacityAt(t).clamp(0.0, 1.0) * 255).round();
+    final old = layer;
+    if (alpha >= 255) {
+      // A slide: one translate, no opacity layer to render through.
+      layer = context.pushTransform(
+        needsCompositing,
+        offset,
+        transform,
+        super.paint,
+        oldLayer: old is TransformLayer ? old : null,
+      );
+      return;
+    }
     layer = context.pushOpacity(
       offset,
-      (e.opacityAt(t).clamp(0.0, 1.0) * 255).round(),
+      alpha,
       (context, offset) => context.pushTransform(
         needsCompositing,
         offset,
         transform,
         super.paint,
       ),
-      oldLayer: layer as OpacityLayer?,
+      oldLayer: old is OpacityLayer ? old : null,
     );
   }
 }

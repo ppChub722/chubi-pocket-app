@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/quick_create_context.dart';
+import '../../../../app/shell/quick_create_look.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -94,8 +96,21 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
     SavingGoalsFilter.archived => l.sgv2FilterArchived,
   };
 
+  /// The centre button goes to this page's create page (owner 2026-11-12).
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => QuickCreatePresetScope(
+    preset: QuickCreatePreset.create(
+      QuickCreateLook.add(
+        context,
+        color: ModuleColors.of(context).saving,
+        icon: AppIcons.savingGoal,
+      ),
+      _add,
+    ),
+    child: _page(context),
+  );
+
+  Widget _page(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppTopBar(title: l.savingGoalsTitle, showBack: true),
