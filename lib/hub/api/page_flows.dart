@@ -250,20 +250,14 @@ const List<PageFlow> pageFlows = [
         'createEventBill',
         note: 'the paper + my claim (book_debts / skip_transaction)',
       ),
-      FlowCall(
-        'markEventBillPerson',
-        note: 'one per person marked "คืนแล้ว"',
-      ),
+      FlowCall('markEventBillPerson', note: 'one per person marked "คืนแล้ว"'),
     ]),
     FlowStep.action('Button "บันทึก" (แบ่งบิลกับคนอื่น, no event)', [
       FlowCall(
         'createSplitBill',
         note: 'the paper + my claim; new_event makes the event with it',
       ),
-      FlowCall(
-        'markSplitBillPerson',
-        note: 'one per person marked "คืนแล้ว"',
-      ),
+      FlowCall('markSplitBillPerson', note: 'one per person marked "คืนแล้ว"'),
     ]),
     FlowStep.action('Button "บันทึกร่าง"', [
       FlowCall('createPending', note: 'saves a draft'),

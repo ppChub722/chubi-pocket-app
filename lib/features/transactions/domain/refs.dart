@@ -95,6 +95,7 @@ class EmbeddedCategory extends Equatable {
       isDebtRepayment ||
       systemKind == 'LOAN_GIVEN' ||
       systemKind == 'LOAN_TAKEN';
+
   /// ถอนเงิน / เพิ่มเงิน (a transfer with one wallet): an ordinary row
   /// apart from its locked category.
   bool get isOneSided => systemKind == 'WITHDRAW' || systemKind == 'DEPOSIT';

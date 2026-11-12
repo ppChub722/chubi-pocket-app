@@ -89,8 +89,7 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
       ),
       ContactNamePicked(:final name) || ContactNameTyped(:final name) => (
         name,
-        () =>
-            repo.addMember(widget.projectId, displayName: name, adHoc: true),
+        () => repo.addMember(widget.projectId, displayName: name, adHoc: true),
       ),
     };
     await _run(call, done: l.projectAddMemberAdded(name));
@@ -98,10 +97,8 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
 
   /// เชิญ / เชิญแล้ว (again): the event invite to my contact using the app.
   Future<void> _sendInvite(ProjectMember m) => _run(
-    () => context.read<ProjectsRepository>().inviteMember(
-      widget.projectId,
-      m.id,
-    ),
+    () =>
+        context.read<ProjectsRepository>().inviteMember(widget.projectId, m.id),
     done: AppLocalizations.of(context)!.projectMemberInviteSent(m.displayName),
   );
 

@@ -63,7 +63,9 @@ class TelegramLoginCubit extends Cubit<TelegramLoginState> {
       }
       await _finish(token);
     } on TelegramOidcOpenFailed {
-      emit(TelegramLoginState(openFailed: true, failureId: state.failureId + 1));
+      emit(
+        TelegramLoginState(openFailed: true, failureId: state.failureId + 1),
+      );
     } on TelegramOidcException catch (e) {
       AppLogger.instance.warn('auth.telegram_oidc_failed ${e.message}');
       _fail(ApiException.from(e, StackTrace.current));
@@ -100,7 +102,6 @@ class TelegramLoginCubit extends Cubit<TelegramLoginState> {
     await _auth.signInWith((user: res.user, token: res.token));
   }
 
-  void _fail(ApiException e) => emit(
-    TelegramLoginState(failure: e, failureId: state.failureId + 1),
-  );
+  void _fail(ApiException e) =>
+      emit(TelegramLoginState(failure: e, failureId: state.failureId + 1));
 }

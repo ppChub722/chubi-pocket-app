@@ -90,10 +90,7 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
         clearError: true,
       ),
     );
-    await _put(
-      before,
-      () => _repo.updateSettings(autoAcceptRepayments: on),
-    );
+    await _put(before, () => _repo.updateSettings(autoAcceptRepayments: on));
   }
 
   /// Taken off a bill: [mode] `ask` | `keep` | `delete`.

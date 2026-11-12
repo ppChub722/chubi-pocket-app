@@ -74,11 +74,7 @@ class DraftFieldRow extends StatelessWidget {
           ? CrossAxisAlignment.center
           : CrossAxisAlignment.start,
       children: fills
-          ? [
-              text,
-              const SizedBox(width: AppSpacing.md),
-              Expanded(child: child),
-            ]
+          ? [text, const SizedBox(width: AppSpacing.md), Expanded(child: child)]
           : [
               Expanded(child: text),
               const SizedBox(width: AppSpacing.md),
@@ -325,11 +321,7 @@ class RecurringLinkRow extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final value = _value(context, l);
     final row = _compact
-        ? DraftFieldRow(
-            label: l.txRecurringRowLabel,
-            dense: true,
-            child: value,
-          )
+        ? DraftFieldRow(label: l.txRecurringRowLabel, dense: true, child: value)
         : AppDetailRow(
             label: l.txRecurringRowLabel,
             trailing: Align(

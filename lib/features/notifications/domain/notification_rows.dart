@@ -150,8 +150,14 @@ Map<NotificationGroup, List<NotificationRow>> notificationRows(
           },
           autos: switch (t.type) {
             _ when g == NotificationGroup.request => [requestSwitchOf(t.type)],
-            'bill_new' => const [AutoSwitch.acceptEvents, AutoSwitch.acceptDebts],
-            'bill_changed' => const [AutoSwitch.syncEvents, AutoSwitch.syncDebts],
+            'bill_new' => const [
+              AutoSwitch.acceptEvents,
+              AutoSwitch.acceptDebts,
+            ],
+            'bill_changed' => const [
+              AutoSwitch.syncEvents,
+              AutoSwitch.syncDebts,
+            ],
             _ => shared ? const [null, null] : const [],
           },
           mutable: t.mutable,
