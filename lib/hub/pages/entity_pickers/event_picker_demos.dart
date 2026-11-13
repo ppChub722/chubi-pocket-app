@@ -22,11 +22,12 @@ class EventPickerDemos extends StatelessWidget {
     RemoveFromEvent() => 'remove from the event',
   };
 
-  Widget _new(String label, Future<EventTarget?> Function() run) => PpForgeButton(
-    label: label,
-    variant: PpForgeButtonVariant.outlined,
-    onPressed: () async => onResult(_say(await run())),
-  );
+  Widget _new(String label, Future<EventTarget?> Function() run) =>
+      PpForgeButton(
+        label: label,
+        variant: PpForgeButtonVariant.outlined,
+        onPressed: () async => onResult(_say(await run())),
+      );
 
   Widget _demo(String title, String note, List<Widget> buttons) => HubDemo(
     title: title,

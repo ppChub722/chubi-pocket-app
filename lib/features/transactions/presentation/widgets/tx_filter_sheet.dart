@@ -185,7 +185,10 @@ TxFilterOptions _filterOptions(
         TxFilterOption(
           id: c.id,
           label: categoryDisplayName(l, c),
-          icon: PpForgeIconRegistry.get(c.iconCode?.icon, fallback: AppIcons.category),
+          icon: PpForgeIconRegistry.get(
+            c.iconCode?.icon,
+            fallback: AppIcons.category,
+          ),
           color: c.iconCode.tintFor(palette),
           subtitle: c.type == CategoryType.income
               ? l.transactionTypeIncome

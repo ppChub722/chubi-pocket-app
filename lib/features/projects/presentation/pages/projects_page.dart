@@ -254,7 +254,12 @@ class _ProjectsPageState extends State<ProjectsPage> {
           filters: [
             for (final (f, label, tone, count) in [
               ('current', l.fpEventsFilterAll, null, s.all),
-              ('active', l.fpEventsTileActive, PpForgeChipTone.success, s.active),
+              (
+                'active',
+                l.fpEventsTileActive,
+                PpForgeChipTone.success,
+                s.active,
+              ),
               (
                 'unsettled',
                 l.fpEventsTileUnsettled,

@@ -9,11 +9,17 @@ Widget buildEventsPage(BuildContext context) => const _EventsPage();
 
 // Sample data (Thai, as the app shows it). Colours are theme tokens.
 const _trip = PpForgeIconCode(icon: 'flight', bgColors: ['@presetThemeColor1']);
-const _party = PpForgeIconCode(icon: 'nightlife', bgColors: ['@presetThemeColor2']);
+const _party = PpForgeIconCode(
+  icon: 'nightlife',
+  bgColors: ['@presetThemeColor2'],
+);
 const _work = PpForgeIconCode(icon: 'work', bgColors: ['@presetThemeColor3']);
 const _food = EventTagRef(
   'อาหาร',
-  iconCode: PpForgeIconCode(icon: 'restaurant', iconColors: ['@presetThemeColor2']),
+  iconCode: PpForgeIconCode(
+    icon: 'restaurant',
+    iconColors: ['@presetThemeColor2'],
+  ),
 );
 const _stay = EventTagRef(
   'ที่พัก',

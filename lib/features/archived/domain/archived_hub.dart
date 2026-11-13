@@ -37,7 +37,9 @@ class ArchivedItem {
     return ArchivedItem(
       id: json['id'] as String,
       name: (json['name'] as String?) ?? '',
-      iconCode: icon is Map<String, dynamic> ? PpForgeIconCode.fromJson(icon) : null,
+      iconCode: icon is Map<String, dynamic>
+          ? PpForgeIconCode.fromJson(icon)
+          : null,
       archivedAt: DateTime.tryParse(
         json['archived_at'] as String? ?? '',
       )?.toLocal(),

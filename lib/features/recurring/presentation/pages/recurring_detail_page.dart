@@ -841,7 +841,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     final r = d.recurring;
     final banner = _refreshError == null
         ? null
-        : PpForgeMessage(tone: Tone.danger, message: errorText(l, _refreshError!));
+        : PpForgeMessage(
+            tone: Tone.danger,
+            message: errorText(l, _refreshError!),
+          );
     return TabbedDetailBody<_Tab>(
       hero: _viewHero(l, d),
       belowHero: [

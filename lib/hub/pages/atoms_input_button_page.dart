@@ -128,7 +128,11 @@ class _ButtonPageState extends State<_ButtonPage> {
                   runSpacing: PpForgeSpacing.sm,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    PpForgeButton(label: 'Save', submits: true, onPressed: () {}),
+                    PpForgeButton(
+                      label: 'Save',
+                      submits: true,
+                      onPressed: () {},
+                    ),
                     PpForgeButton(
                       label: 'Cancel',
                       variant: PpForgeButtonVariant.outlined,
@@ -197,11 +201,17 @@ class _ButtonPageState extends State<_ButtonPage> {
             children: [
               HubCell(
                 caption: 'hero 32',
-                child: PpForgeIconButton.edit(tooltip: 'Edit', onPressed: () {}),
+                child: PpForgeIconButton.edit(
+                  tooltip: 'Edit',
+                  onPressed: () {},
+                ),
               ),
               HubCell(
                 caption: 'list 36',
-                child: PpForgeIconButton.edit(tooltip: 'Edit', onPressed: () {}),
+                child: PpForgeIconButton.edit(
+                  tooltip: 'Edit',
+                  onPressed: () {},
+                ),
               ),
               const HubCell(
                 caption: 'disabled',
@@ -517,19 +527,31 @@ class _ButtonPageState extends State<_ButtonPage> {
             children: [
               HubCell(
                 caption: 'close',
-                child: PpForgeIconButton.close(tooltip: 'Close', onPressed: () {}),
+                child: PpForgeIconButton.close(
+                  tooltip: 'Close',
+                  onPressed: () {},
+                ),
               ),
               HubCell(
                 caption: 'clear',
-                child: PpForgeIconButton.clear(tooltip: 'Clear', onPressed: () {}),
+                child: PpForgeIconButton.clear(
+                  tooltip: 'Clear',
+                  onPressed: () {},
+                ),
               ),
               HubCell(
                 caption: 'more',
-                child: PpForgeIconButton.more(tooltip: 'More', onPressed: () {}),
+                child: PpForgeIconButton.more(
+                  tooltip: 'More',
+                  onPressed: () {},
+                ),
               ),
               HubCell(
                 caption: 'back',
-                child: PpForgeIconButton.back(tooltip: 'Back', onPressed: () {}),
+                child: PpForgeIconButton.back(
+                  tooltip: 'Back',
+                  onPressed: () {},
+                ),
               ),
               HubCell(
                 caption: 'flat 🗑 (error)',

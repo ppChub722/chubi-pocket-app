@@ -891,7 +891,10 @@ class _DemoChipRow extends StatelessWidget {
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           const SizedBox(width: PpForgeSpacing.xs),
-          if (first != null) ...[first, const SizedBox(width: PpForgeSpacing.xs)],
+          if (first != null) ...[
+            first,
+            const SizedBox(width: PpForgeSpacing.xs),
+          ],
           for (final (i, c) in chips.indexed)
             if (blank == null || i != selected) ...[
               PpForgeChip(
@@ -1097,7 +1100,10 @@ class _SplitRowPageState extends State<_SplitRowPage> {
                 ? Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const PpForgeAvatar(name: 'Me', size: SplitRow.avatarSize),
+                      const PpForgeAvatar(
+                        name: 'Me',
+                        size: SplitRow.avatarSize,
+                      ),
                       SizedBox(
                         width: PersonMark.linkSlotWidth(SplitRow.avatarSize),
                       ),

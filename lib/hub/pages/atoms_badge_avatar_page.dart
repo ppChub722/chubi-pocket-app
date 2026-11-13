@@ -58,7 +58,11 @@ Widget buildBadgeAvatarPage(BuildContext context) {
               runSpacing: PpForgeSpacing.sm,
               children: [
                 PpForgeBadge(label: '3', icon: Icons.sell_outlined),
-                PpForgeBadge(label: 'linked', icon: Icons.link, tone: Tone.primary),
+                PpForgeBadge(
+                  label: 'linked',
+                  icon: Icons.link,
+                  tone: Tone.primary,
+                ),
               ],
             ),
           ),
@@ -291,7 +295,10 @@ Widget buildBadgeAvatarPage(BuildContext context) {
               size: size,
             ),
             'icon' => PpForgeAvatar.icon(AppIcons.profile, size: size),
-            'label' => PpForgeAvatar.label(name.isEmpty ? '+3' : name, size: size),
+            'label' => PpForgeAvatar.label(
+              name.isEmpty ? '+3' : name,
+              size: size,
+            ),
             _ => PpForgeAvatar(name: name, size: size),
           });
         },
@@ -449,9 +456,13 @@ class _Ladder extends StatelessWidget {
         ),
         row(
           'PpForgeAvatar.tinted',
-          (s) => PpForgeAvatar.tinted(name: 'Bee', color: scheme.primary, size: s),
+          (s) =>
+              PpForgeAvatar.tinted(name: 'Bee', color: scheme.primary, size: s),
         ),
-        row('PpForgeAvatar.icon', (s) => PpForgeAvatar.icon(AppIcons.profile, size: s)),
+        row(
+          'PpForgeAvatar.icon',
+          (s) => PpForgeAvatar.icon(AppIcons.profile, size: s),
+        ),
         row('PpForgeAvatar.label', (s) => PpForgeAvatar.label('+3', size: s)),
         row(
           'Avatar — icon maker (frame + glyph)',

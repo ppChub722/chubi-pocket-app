@@ -78,7 +78,9 @@ class _SheetsPageState extends State<_SheetsPage> {
         ),
         child: const Padding(
           padding: EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
-          child: PpForgeText('A sheet that builds its own PpForgeSheetScaffold.'),
+          child: PpForgeText(
+            'A sheet that builds its own PpForgeSheetScaffold.',
+          ),
         ),
       ),
     ),
@@ -585,7 +587,8 @@ class _SheetsPageState extends State<_SheetsPage> {
           ),
         ),
         HubDemo(
-          title: 'PpForgeSheetScaffold, showPpForgeSheet, showPpForgeSheetCustom',
+          title:
+              'PpForgeSheetScaffold, showPpForgeSheet, showPpForgeSheetCustom',
           note:
               'The standard bottom sheet: drag handle, title, scrolling body, '
               'pinned footer. Custom = a sheet that builds its own scaffold.',

@@ -717,7 +717,11 @@ class _LoadedState extends State<_Loaded>
         if (!ok) {
           if (!mounted) return;
           setSaving(false);
-          showPpForgeSnackBar(context, l.evbPaybackNeedsPeople, tone: Tone.danger);
+          showPpForgeSnackBar(
+            context,
+            l.evbPaybackNeedsPeople,
+            tone: Tone.danger,
+          );
           return;
         }
         final change = _eventChange;
@@ -928,7 +932,8 @@ class _LoadedState extends State<_Loaded>
                   },
                   controller: _scroll,
                   physics: const AlwaysScrollableScrollPhysics(),
-                  topInset: MediaQuery.paddingOf(context).top + PpForgeSpacing.md,
+                  topInset:
+                      MediaQuery.paddingOf(context).top + PpForgeSpacing.md,
                   bottomInset: 96 + MediaQuery.paddingOf(context).bottom,
                   // The form renders hero -> note -> tags -> the headed
                   // "แบ่งรายการ" section itself, so it is the whole hero.

@@ -808,7 +808,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       }
       await _remember();
       navigator.pop(true);
-      showPpForgeSnackBarOn(messenger, l.pendingSavedAsDraft, tone: Tone.success);
+      showPpForgeSnackBarOn(
+        messenger,
+        l.pendingSavedAsDraft,
+        tone: Tone.success,
+      );
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -900,7 +904,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     try {
       await pending.updateDraft(widget.draft!.id, _savingDraft());
       navigator.pop(true);
-      showPpForgeSnackBarOn(messenger, l.pendingSavedAsDraft, tone: Tone.success);
+      showPpForgeSnackBarOn(
+        messenger,
+        l.pendingSavedAsDraft,
+        tone: Tone.success,
+      );
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -1889,7 +1897,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   Future<bool> _confirmIncompleteSplits() =>
       confirmIncompleteSplits(context, _c);
 
-  void _toast(String msg) => showPpForgeSnackBar(context, msg, tone: Tone.danger);
+  void _toast(String msg) =>
+      showPpForgeSnackBar(context, msg, tone: Tone.danger);
 
   String _ymd(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';

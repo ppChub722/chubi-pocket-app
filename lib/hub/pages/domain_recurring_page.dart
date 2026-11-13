@@ -328,7 +328,9 @@ class _RecurringPage extends StatelessWidget {
               '/ ข้าม.',
           child: Builder(
             builder: (context) {
-              final warning = Theme.of(context).extension<PpForgeColors>()!.warning;
+              final warning = Theme.of(
+                context,
+              ).extension<PpForgeColors>()!.warning;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -1136,7 +1138,10 @@ class _DatePickChipDemoState extends State<_DatePickChipDemo> {
   DateTime? _date;
 
   Future<void> _pick() async {
-    final r = await PpForgeDatePicker.show(context, initial: _date ?? widget.start);
+    final r = await PpForgeDatePicker.show(
+      context,
+      initial: _date ?? widget.start,
+    );
     if (r is PpForgeDatePicked && mounted) setState(() => _date = r.date);
   }
 

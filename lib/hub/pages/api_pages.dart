@@ -92,7 +92,10 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: PpForgeSpacing.md, bottom: PpForgeSpacing.xs),
+    padding: const EdgeInsets.only(
+      top: PpForgeSpacing.md,
+      bottom: PpForgeSpacing.xs,
+    ),
     child: Text(
       text.toUpperCase(),
       style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -144,7 +147,9 @@ class _Card extends StatelessWidget {
         child: Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
-            tilePadding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.md),
+            tilePadding: const EdgeInsets.symmetric(
+              horizontal: PpForgeSpacing.md,
+            ),
             childrenPadding: const EdgeInsets.fromLTRB(
               PpForgeSpacing.md,
               0,
@@ -357,7 +362,9 @@ class _CallRow extends StatelessWidget {
         method: call.method!,
         path: call.path!,
         subtitle: call.note,
-        badges: const [PpForgeChip(label: 'not in spec yet', size: ChipSize.mini)],
+        badges: const [
+          PpForgeChip(label: 'not in spec yet', size: ChipSize.mini),
+        ],
       );
     }
     final e = doc.byOperation(call.operationId!);

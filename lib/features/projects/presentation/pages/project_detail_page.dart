@@ -315,7 +315,11 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     try {
       final p = await context.read<ProjectsCubit>().archive(widget.id!);
       if (!mounted) return;
-      showPpForgeSnackBarOn(pageMessenger!, l.fpEventsArchived, tone: Tone.success);
+      showPpForgeSnackBarOn(
+        pageMessenger!,
+        l.fpEventsArchived,
+        tone: Tone.success,
+      );
       _applyPatch(p);
       commitSaved(_Draft.from(p.project));
     } on ApiException catch (e) {
@@ -331,7 +335,11 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     try {
       final p = await context.read<ProjectsCubit>().restore(widget.id!);
       if (!mounted) return;
-      showPpForgeSnackBarOn(pageMessenger!, l.fpEventsRestored, tone: Tone.success);
+      showPpForgeSnackBarOn(
+        pageMessenger!,
+        l.fpEventsRestored,
+        tone: Tone.success,
+      );
       _applyPatch(p);
       commitSaved(_Draft.from(p.project));
     } on ApiException catch (e) {
@@ -940,7 +948,11 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         ),
       ],
       tabs: [
-        PpForgeTab(value: _Tab.bills, label: l.evbTabBills, icon: AppIcons.receipt),
+        PpForgeTab(
+          value: _Tab.bills,
+          label: l.evbTabBills,
+          icon: AppIcons.receipt,
+        ),
         PpForgeTab(
           value: _Tab.summary,
           label: l.evbTabSummary,
@@ -997,7 +1009,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         dot: true,
         tone: projectStatusTone(status),
         selected: true,
-        trailing: canChange ? PpForgeChipTrailing.dropdown : PpForgeChipTrailing.none,
+        trailing: canChange
+            ? PpForgeChipTrailing.dropdown
+            : PpForgeChipTrailing.none,
         onTap: canChange ? toggle : null,
       ),
     );
@@ -1323,7 +1337,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             message: l.fpEventsLoadFailed,
             tone: Tone.warning,
             actions: [
-              PpForgeMessageAction(label: l.commonRetry, onPressed: board.reload),
+              PpForgeMessageAction(
+                label: l.commonRetry,
+                onPressed: board.reload,
+              ),
             ],
           ),
         if (loadingBills)

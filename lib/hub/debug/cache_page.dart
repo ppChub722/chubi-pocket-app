@@ -259,7 +259,8 @@ class _CachePageState extends State<CachePage> {
                                 size: ChipSize.mini,
                                 selected: true,
                                 tone: switch (e.status) {
-                                  'loaded' || 'polling' => PpForgeChipTone.success,
+                                  'loaded' ||
+                                  'polling' => PpForgeChipTone.success,
                                   'error' => PpForgeChipTone.danger,
                                   'loading' => PpForgeChipTone.info,
                                   _ => PpForgeChipTone.neutral,
@@ -281,7 +282,9 @@ class _CachePageState extends State<CachePage> {
                       _busy.contains(e.name)
                           ? const Padding(
                               padding: EdgeInsets.all(PpForgeSpacing.sm),
-                              child: PpForgeSpinner(size: PpForgeSpinnerSize.small),
+                              child: PpForgeSpinner(
+                                size: PpForgeSpinnerSize.small,
+                              ),
                             )
                           : IconButton(
                               tooltip: 'Reload',

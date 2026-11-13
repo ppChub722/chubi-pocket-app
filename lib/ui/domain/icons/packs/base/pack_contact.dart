@@ -5,7 +5,10 @@ const basePackContact = PpForgeIconPack(
   id: 'base',
   icons: [
     PpForgeIconPackItem(id: 'person', colors: ['@presetThemeColorOnIcon']),
-    PpForgeIconPackItem(id: 'contact_page', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(
+      id: 'contact_page',
+      colors: ['@presetThemeColorOnIcon'],
+    ),
     PpForgeIconPackItem(id: 'apartment', colors: ['@presetThemeColorOnIcon']),
     PpForgeIconPackItem(id: 'badge', colors: ['@presetThemeColorOnIcon']),
     PpForgeIconPackItem(id: 'work', colors: ['@presetThemeColorOnIcon']),

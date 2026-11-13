@@ -449,7 +449,8 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
           ),
         ),
         HubDemo(
-          title: 'StepperPill presets + MonthPickerGrid + PpForgeDatePicker.month',
+          title:
+              'StepperPill presets + MonthPickerGrid + PpForgeDatePicker.month',
           note:
               'One pill for every period. StepperPill (a button) steps by month '
               'and opens PpForgeDatePicker.month on tap; StepperPill.period does '
@@ -586,7 +587,9 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                   ),
                   HubCell(
                     caption: 'dayOfMonthLabel(kLastDayOfMonth)',
-                    child: PpForgeText(dayOfMonthLabel(context, kLastDayOfMonth)),
+                    child: PpForgeText(
+                      dayOfMonthLabel(context, kLastDayOfMonth),
+                    ),
                   ),
                 ],
               ),

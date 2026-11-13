@@ -75,7 +75,12 @@ class _DashboardTemplateState extends State<_DashboardTemplate> {
     children: [
       const SectionHeader(
         title: 'Needs attention',
-        padding: EdgeInsets.fromLTRB(PpForgeSpacing.xs, PpForgeSpacing.lg, 0, 0),
+        padding: EdgeInsets.fromLTRB(
+          PpForgeSpacing.xs,
+          PpForgeSpacing.lg,
+          0,
+          0,
+        ),
       ),
       PpForgeCard(
         margin: const EdgeInsets.only(top: PpForgeSpacing.xs),

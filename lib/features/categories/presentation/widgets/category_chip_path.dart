@@ -16,7 +16,10 @@ Widget categoryPathItemsChipPath(
       for (final p in items)
         ChipPathSegment(
           label: p.name,
-          icon: PpForgeIconRegistry.get(p.iconCode?.icon, fallback: AppIcons.category),
+          icon: PpForgeIconRegistry.get(
+            p.iconCode?.icon,
+            fallback: AppIcons.category,
+          ),
           color: p.iconCode.tintFor(palette),
         ),
     ],

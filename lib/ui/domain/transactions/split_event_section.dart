@@ -74,7 +74,11 @@ class DraftFieldRow extends StatelessWidget {
           ? CrossAxisAlignment.center
           : CrossAxisAlignment.start,
       children: fills
-          ? [text, const SizedBox(width: PpForgeSpacing.md), Expanded(child: child)]
+          ? [
+              text,
+              const SizedBox(width: PpForgeSpacing.md),
+              Expanded(child: child),
+            ]
           : [
               Expanded(child: text),
               const SizedBox(width: PpForgeSpacing.md),

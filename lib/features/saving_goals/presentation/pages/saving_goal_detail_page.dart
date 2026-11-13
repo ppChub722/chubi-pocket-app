@@ -1022,7 +1022,10 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       content: [
         HeroIdentity(
           icon: IconTile(icon: AppIcons.savingGoal, color: color, size: 40),
-          description: PpForgeText(l.sgv2SpareHint, role: PpForgeTextRole.caption),
+          description: PpForgeText(
+            l.sgv2SpareHint,
+            role: PpForgeTextRole.caption,
+          ),
         ),
         HeroNumber(
           label: l.sgv2Spare,
@@ -1147,7 +1150,10 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
                 PpForgeSpacing.lg,
                 0,
               ),
-              child: PpForgeText(l.sgRecurringLabel, role: PpForgeTextRole.caption),
+              child: PpForgeText(
+                l.sgRecurringLabel,
+                role: PpForgeTextRole.caption,
+              ),
             ),
           for (final r in dir.rules)
             if (mine(r))
@@ -1542,12 +1548,17 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     return PpForgeChip(
       label: wallet?.name ?? l.fpGoalsNoWallet,
       icon: d == null
-          ? PpForgeIconRegistry.get(wallet?.iconCode?.icon, fallback: AppIcons.wallet)
+          ? PpForgeIconRegistry.get(
+              wallet?.iconCode?.icon,
+              fallback: AppIcons.wallet,
+            )
           : wallet?.iconCode.glyphOr(d),
       color: d == null
           ? wallet?.iconCode.tintFor(palette)
           : wallet?.iconCode.tintOr(d, palette),
-      trailing: onTap == null ? PpForgeChipTrailing.none : PpForgeChipTrailing.dropdown,
+      trailing: onTap == null
+          ? PpForgeChipTrailing.none
+          : PpForgeChipTrailing.dropdown,
       size: ChipSize.control,
       onTap: onTap,
     );

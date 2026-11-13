@@ -83,7 +83,8 @@ class _SplashPageState extends State<SplashPage> {
           Positioned(
             left: 0,
             right: 0,
-            bottom: PpForgeSpacing.lg + MediaQuery.viewPaddingOf(context).bottom,
+            bottom:
+                PpForgeSpacing.lg + MediaQuery.viewPaddingOf(context).bottom,
             child: Text(
               _version,
               textAlign: TextAlign.center,

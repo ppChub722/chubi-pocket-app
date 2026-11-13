@@ -51,6 +51,9 @@ class BankBrandMark extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      PpForgeAvatar.brand(name: _letters, color: BankBrand.of(code), size: size);
+  Widget build(BuildContext context) => PpForgeAvatar.brand(
+    name: _letters,
+    color: BankBrand.of(code),
+    size: size,
+  );
 }

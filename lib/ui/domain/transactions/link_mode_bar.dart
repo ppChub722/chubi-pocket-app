@@ -22,7 +22,11 @@ class LinkSwitchRow extends StatelessWidget {
   Widget build(BuildContext context) => DraftFieldRow(
     label: label,
     dense: true,
-    child: PpForgeSwitch(value: value, onChanged: onChanged, semanticLabel: label),
+    child: PpForgeSwitch(
+      value: value,
+      onChanged: onChanged,
+      semanticLabel: label,
+    ),
   );
 }
 

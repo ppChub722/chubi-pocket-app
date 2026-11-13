@@ -323,7 +323,9 @@ class _DotsPainter extends CustomPainter {
         final tp = TextPainter(
           text: TextSpan(
             text: text,
-            style: textStyle?.copyWith(color: ink ?? PpForgeChip.readableOn(fill)),
+            style: textStyle?.copyWith(
+              color: ink ?? PpForgeChip.readableOn(fill),
+            ),
           ),
           textDirection: textDirection,
           textScaler: textScaler,

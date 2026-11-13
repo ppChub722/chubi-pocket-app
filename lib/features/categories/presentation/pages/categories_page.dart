@@ -545,7 +545,11 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
   void _add(AppLocalizations l, CategoryType type) {
     if (!context.read<CategoriesCubit>().canAddMore) {
-      showPpForgeSnackBar(context, l.categoriesLimitReached, tone: Tone.warning);
+      showPpForgeSnackBar(
+        context,
+        l.categoriesLimitReached,
+        tone: Tone.warning,
+      );
       return;
     }
     context.push('/categories/new?type=${type.toJson()}');

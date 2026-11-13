@@ -60,7 +60,9 @@ class AvatarData extends Equatable {
     kind: AvatarKind.parse(json['kind']),
     photoUrl: json['photo_url'] as String?,
     iconCode: json['icon_code'] is Map
-        ? PpForgeIconCode.fromJson((json['icon_code'] as Map).cast<String, dynamic>())
+        ? PpForgeIconCode.fromJson(
+            (json['icon_code'] as Map).cast<String, dynamic>(),
+          )
         : null,
     initials: (json['initials'] as String?) ?? '',
     colors: _strings(json['colors']),

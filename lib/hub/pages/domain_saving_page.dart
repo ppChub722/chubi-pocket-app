@@ -138,8 +138,10 @@ class _SavingPageState extends State<_SavingPage> {
     const months = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const actual = <double>[10, 16, 22, 28, 34, 40];
     const projection = <double>[44, 48];
-    Widget box(Widget child) =>
-        PpForgeCard(padding: const EdgeInsets.all(PpForgeSpacing.md), child: child);
+    Widget box(Widget child) => PpForgeCard(
+      padding: const EdgeInsets.all(PpForgeSpacing.md),
+      child: child,
+    );
     final tint = Theme.of(context).colorScheme.primary;
 
     return Column(

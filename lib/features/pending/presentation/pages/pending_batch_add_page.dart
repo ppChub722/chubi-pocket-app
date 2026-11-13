@@ -127,7 +127,10 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
                 PpForgeSpacing.lg,
                 PpForgeSpacing.sm,
               ),
-              child: PpForgeText(l.pendingBatchHint, role: PpForgeTextRole.caption),
+              child: PpForgeText(
+                l.pendingBatchHint,
+                role: PpForgeTextRole.caption,
+              ),
             ),
             Expanded(
               child: ListView(

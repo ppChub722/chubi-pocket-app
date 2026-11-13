@@ -12,7 +12,10 @@ const basePackProjectMember = PpForgeIconPack(
     PpForgeIconPackItem(id: 'engineering', colors: ['@presetThemeColorOnIcon']),
     PpForgeIconPackItem(id: 'work', colors: ['@presetThemeColorOnIcon']),
     PpForgeIconPackItem(id: 'star', colors: ['@presetThemeColorOnIcon']),
-    PpForgeIconPackItem(id: 'fitness_center', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(
+      id: 'fitness_center',
+      colors: ['@presetThemeColorOnIcon'],
+    ),
   ],
   backgrounds: commonBaseBackgrounds,
   borders: commonBaseBorders,

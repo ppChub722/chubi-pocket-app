@@ -144,7 +144,11 @@ class QuickCreateHeadButton extends StatelessWidget {
         child: InkWell(
           onTap: onPressed,
           child: Center(
-            child: PpForgeIcon(AppIcons.add, size: PpForgeIconSize.md, color: color),
+            child: PpForgeIcon(
+              AppIcons.add,
+              size: PpForgeIconSize.md,
+              color: color,
+            ),
           ),
         ),
       ),

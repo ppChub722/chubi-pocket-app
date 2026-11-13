@@ -57,7 +57,9 @@ class SavingWalletRef extends Equatable {
     return SavingWalletRef(
       id: json['id'] as String,
       name: json['name'] as String,
-      iconCode: icon is Map<String, dynamic> ? PpForgeIconCode.fromJson(icon) : null,
+      iconCode: icon is Map<String, dynamic>
+          ? PpForgeIconCode.fromJson(icon)
+          : null,
       logoUrl: json['logo_url'] as String?,
       type: json['type'] as String?,
       group: json['group'] as String?,
@@ -331,7 +333,9 @@ class SavingGoal extends Equatable {
       currency: json['currency'] as String? ?? '',
       state: SavingGoalState.fromJson(json['state'] as String?),
       deadline: json['deadline'] as String?,
-      iconCode: icon is Map<String, dynamic> ? PpForgeIconCode.fromJson(icon) : null,
+      iconCode: icon is Map<String, dynamic>
+          ? PpForgeIconCode.fromJson(icon)
+          : null,
       description: json['description'] as String?,
       note: json['note'] as String?,
       savedAmount: (json['saved_amount'] as num?)?.toDouble() ?? 0,

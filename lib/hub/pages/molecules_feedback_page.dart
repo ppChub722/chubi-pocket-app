@@ -314,7 +314,9 @@ class _FeedbackPageState extends State<_FeedbackPage> {
               PpForgeMessage(
                 message: 'Could not load wallets',
                 tone: Tone.danger,
-                actions: [PpForgeMessageAction(label: 'Retry', onPressed: () {})],
+                actions: [
+                  PpForgeMessageAction(label: 'Retry', onPressed: () {}),
+                ],
               ),
               const SizedBox(height: PpForgeSpacing.sm),
               PpForgeMessage(
@@ -322,7 +324,10 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                 tone: Tone.info,
                 onClose: () {},
                 actions: [
-                  PpForgeMessageAction(label: 'Release notes', onPressed: () {}),
+                  PpForgeMessageAction(
+                    label: 'Release notes',
+                    onPressed: () {},
+                  ),
                   PpForgeMessageAction(label: 'Update', onPressed: () {}),
                 ],
               ),
@@ -778,7 +783,8 @@ class _FeedbackPageState extends State<_FeedbackPage> {
           ),
         ),
         HubDemo(
-          title: 'PpForgeConfig / PpForgeStrings / PpForgeErrors / PpForgeErrorInfo / AppUiConfig',
+          title:
+              'PpForgeConfig / PpForgeStrings / PpForgeErrors / PpForgeErrorInfo / AppUiConfig',
           note:
               'Generic widgets read their words from PpForgeConfig; the app '
               'installs AppUiConfig once at its root. Below, the same '
@@ -810,7 +816,8 @@ class _FeedbackPageState extends State<_FeedbackPage> {
         ),
 
         const HubDemo(
-          title: 'PpForgeMessage — shapes: 0 / 1 / 2 actions × short / long × ✕',
+          title:
+              'PpForgeMessage — shapes: 0 / 1 / 2 actions × short / long × ✕',
           note:
               'One line when the text fits beside at most one action; '
               'otherwise two lines: icon + text + ✕ on the first text line, '
@@ -877,8 +884,10 @@ class _MessageMatrix extends StatelessWidget {
           floating: true,
           onClose: close ? () {} : null,
           actions: [
-            if (actions >= 1) PpForgeMessageAction(label: 'Undo', onPressed: () {}),
-            if (actions == 2) PpForgeMessageAction(label: 'View', onPressed: () {}),
+            if (actions >= 1)
+              PpForgeMessageAction(label: 'Undo', onPressed: () {}),
+            if (actions == 2)
+              PpForgeMessageAction(label: 'View', onPressed: () {}),
           ],
         ),
       ],

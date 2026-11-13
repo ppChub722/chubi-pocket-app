@@ -262,7 +262,10 @@ abstract final class RecurringPicker {
 
   static Widget _amount(AppLocalizations l, TransactionType type, double? a) =>
       a == null
-      ? PpForgeText(l.recurringPickerAwaitingAmount, role: PpForgeTextRole.caption)
+      ? PpForgeText(
+          l.recurringPickerAwaitingAmount,
+          role: PpForgeTextRole.caption,
+        )
       : MoneyText(
           a,
           tone: switch (type) {

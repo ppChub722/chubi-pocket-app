@@ -329,7 +329,12 @@ class _SplitsSectionState extends State<SplitsSection> {
     final Widget? closing;
     if (_withMe) {
       closing = Padding(
-        padding: EdgeInsets.fromLTRB(edge, PpForgeSpacing.xs, edge, PpForgeSpacing.xs),
+        padding: EdgeInsets.fromLTRB(
+          edge,
+          PpForgeSpacing.xs,
+          edge,
+          PpForgeSpacing.xs,
+        ),
         child: _LeftLine(
           left: splitLeft(widget.totalAmount, widget.me, widget.drafts),
         ),
@@ -377,7 +382,10 @@ class _SplitsSectionState extends State<SplitsSection> {
                 ),
               ),
             ),
-          for (final r in rows) ...[const SizedBox(height: PpForgeSpacing.xs), r],
+          for (final r in rows) ...[
+            const SizedBox(height: PpForgeSpacing.xs),
+            r,
+          ],
           if (closing != null) ...[
             const SizedBox(height: PpForgeSpacing.xs),
             closing,

@@ -262,7 +262,8 @@ class TransactionHeroCard extends StatelessWidget {
         cursorColor: scheme.primary,
         focusColor: accent,
         symbolScale: 0.7,
-        currencySymbol: symbol ?? PpForgeConfig.stringsOf(context).currencySymbol,
+        currencySymbol:
+            symbol ?? PpForgeConfig.stringsOf(context).currencySymbol,
         minWidth: 12,
         size: PpForgeInputSize.hero,
         label: editing && inline

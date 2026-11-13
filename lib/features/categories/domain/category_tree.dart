@@ -29,7 +29,10 @@ class CategoryTree {
     return current;
   }
 
-  static PpForgeIconCode? resolveIconCode(Category category, List<Category> all) {
+  static PpForgeIconCode? resolveIconCode(
+    Category category,
+    List<Category> all,
+  ) {
     return category.iconCode ?? rootOf(category, all).iconCode;
   }
 

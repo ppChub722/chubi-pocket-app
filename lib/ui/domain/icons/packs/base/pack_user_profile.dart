@@ -8,8 +8,14 @@ const basePackUserProfile = PpForgeIconPack(
     PpForgeIconPackItem(id: 'man', colors: ['@presetThemeColorOnIcon']),
     PpForgeIconPackItem(id: 'woman', colors: ['@presetThemeColorOnIcon']),
     PpForgeIconPackItem(id: 'face_smile', colors: ['@presetThemeColorOnIcon']),
-    PpForgeIconPackItem(id: 'bakery_dining', colors: ['@presetThemeColorOnIcon']),
-    PpForgeIconPackItem(id: 'fitness_center', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(
+      id: 'bakery_dining',
+      colors: ['@presetThemeColorOnIcon'],
+    ),
+    PpForgeIconPackItem(
+      id: 'fitness_center',
+      colors: ['@presetThemeColorOnIcon'],
+    ),
     PpForgeIconPackItem(id: 'work', colors: ['@presetThemeColorOnIcon']),
     PpForgeIconPackItem(id: 'star', colors: ['@presetThemeColorOnIcon']),
   ],

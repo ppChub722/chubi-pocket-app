@@ -150,7 +150,10 @@ class _AvatarColorsPanelState extends State<AvatarColorsPanel> {
   };
 
   Widget _section(String label) => Padding(
-    padding: const EdgeInsets.only(top: PpForgeSpacing.md, bottom: PpForgeSpacing.sm),
+    padding: const EdgeInsets.only(
+      top: PpForgeSpacing.md,
+      bottom: PpForgeSpacing.sm,
+    ),
     child: Text(
       label,
       style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -174,7 +177,10 @@ class _AvatarColorsPanelState extends State<AvatarColorsPanel> {
             radius: 20,
             gap: 2,
             child: spec.isEmpty
-                ? const SizedBox.square(dimension: 36, child: PpForgeEmptySwatch())
+                ? const SizedBox.square(
+                    dimension: 36,
+                    child: PpForgeEmptySwatch(),
+                  )
                 : PpForgeColorDot(spec: spec, size: 36),
           ),
           const SizedBox(height: 2),
@@ -342,9 +348,7 @@ class _AvatarColorsPanelState extends State<AvatarColorsPanel> {
                     for (final s in ppForgeThemeColorSpecs) _swatch(s),
                   ]),
                   _section(l.iconMakerCommonColors),
-                  _swatchRow([
-                    for (final s in chubiCommonColors) _swatch(s),
-                  ]),
+                  _swatchRow([for (final s in chubiCommonColors) _swatch(s)]),
                   _section(l.iconMakerCustomColors),
                   _swatchRow([
                     _picker(l),

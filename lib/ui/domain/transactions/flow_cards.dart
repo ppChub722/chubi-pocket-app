@@ -103,7 +103,9 @@ class FlowCards extends StatelessWidget {
                             child: InkWell(
                               key: const ValueKey('flowSwap'),
                               onTap: onSwap,
-                              borderRadius: BorderRadius.circular(PpForgeRadius.md),
+                              borderRadius: BorderRadius.circular(
+                                PpForgeRadius.md,
+                              ),
                               child: column,
                             ),
                           ),

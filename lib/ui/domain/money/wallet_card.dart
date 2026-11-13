@@ -104,7 +104,11 @@ class _HorizontalLayout extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              PpForgeText(account.name, role: PpForgeTextRole.title, maxLines: 1),
+              PpForgeText(
+                account.name,
+                role: PpForgeTextRole.title,
+                maxLines: 1,
+              ),
               const SizedBox(height: PpForgeSpacing.xxs),
               PpForgeText(
                 hasDesc ? desc : accountTypeLabel(context, account.type),
@@ -283,7 +287,10 @@ class _InfoLine extends StatelessWidget {
       children: [
         PpForgeIcon(icon, size: PpForgeIconSize.xs, color: color),
         const SizedBox(width: PpForgeSpacing.xxs),
-        PpForgeText(moneyString(context, amount), role: PpForgeTextRole.caption),
+        PpForgeText(
+          moneyString(context, amount),
+          role: PpForgeTextRole.caption,
+        ),
       ],
     );
     return Align(

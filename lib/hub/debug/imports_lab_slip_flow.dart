@@ -252,7 +252,10 @@ class _Step extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(top: PpForgeSpacing.md, bottom: PpForgeSpacing.xs),
+      padding: const EdgeInsets.only(
+        top: PpForgeSpacing.md,
+        bottom: PpForgeSpacing.xs,
+      ),
       child: Row(
         children: [
           CircleAvatar(

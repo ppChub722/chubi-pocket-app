@@ -157,7 +157,9 @@ class _EditProfilePageState extends State<EditProfilePage>
       }
       applyChange(working.copyWith(iconCode: code));
     }
-    if (r is PpForgeIconMakerRemoved) applyChange(working.copyWith(clearIcon: true));
+    if (r is PpForgeIconMakerRemoved) {
+      applyChange(working.copyWith(clearIcon: true));
+    }
   }
 
   Future<void> _openColors(List<Connection> items) async {
@@ -268,7 +270,11 @@ class _EditProfilePageState extends State<EditProfilePage>
       auth.updateUser(updated);
       if (!mounted) return;
       HapticFeedback.mediumImpact();
-      showPpForgeSnackBar(context, l.editProfileSnackSuccess, tone: Tone.success);
+      showPpForgeSnackBar(
+        context,
+        l.editProfileSnackSuccess,
+        tone: Tone.success,
+      );
       _user = updated;
       commitSaved(_ProfileDraft.from(updated));
     } on ApiException catch (e) {

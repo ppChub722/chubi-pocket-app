@@ -268,7 +268,9 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
                       child: Column(
                         children: [
                           Padding(
-                            padding: const EdgeInsets.only(top: PpForgeSpacing.sm),
+                            padding: const EdgeInsets.only(
+                              top: PpForgeSpacing.sm,
+                            ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(2),
                               child: ColoredBox(

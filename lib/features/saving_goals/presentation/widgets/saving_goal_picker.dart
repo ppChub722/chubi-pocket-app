@@ -129,8 +129,13 @@ abstract final class SavingGoalPicker {
         SavingGoalPick(
           id: item.id,
           name: item.title,
-          icon: PpForgeIconRegistry.get(iconCode?.icon, fallback: AppIcons.savingGoal),
-          color: iconCode.tintFor(Theme.of(context).extension<PpForgeColors>()!),
+          icon: PpForgeIconRegistry.get(
+            iconCode?.icon,
+            fallback: AppIcons.savingGoal,
+          ),
+          color: iconCode.tintFor(
+            Theme.of(context).extension<PpForgeColors>()!,
+          ),
           amountText: money(savedAmount),
           targetText: targetAmount == null ? null : money(targetAmount),
           caption: item.subtitle,

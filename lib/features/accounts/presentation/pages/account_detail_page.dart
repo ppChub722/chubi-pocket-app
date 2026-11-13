@@ -507,7 +507,11 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final l = AppLocalizations.of(context)!;
     final a = widget.account!;
     if (a.isShared) {
-      showPpForgeSnackBar(context, l.accountArchiveHasMembers, tone: Tone.warning);
+      showPpForgeSnackBar(
+        context,
+        l.accountArchiveHasMembers,
+        tone: Tone.warning,
+      );
       return;
     }
     final ok = await showConfirmDialog(
@@ -548,7 +552,11 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     }
     if (!mounted) return;
     if (preview == null) {
-      showPpForgeSnackBar(context, l.accountArchiveHasMembers, tone: Tone.warning);
+      showPpForgeSnackBar(
+        context,
+        l.accountArchiveHasMembers,
+        tone: Tone.warning,
+      );
       return;
     }
     final ok = await showConfirmDialog(
@@ -856,7 +864,12 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       onRefresh: _refresh,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(PpForgeSpacing.lg, 0, PpForgeSpacing.lg, bottom),
+        padding: EdgeInsets.fromLTRB(
+          PpForgeSpacing.lg,
+          0,
+          PpForgeSpacing.lg,
+          bottom,
+        ),
         children: [
           for (final s in [
             _overviewInfo(l, a),
@@ -922,8 +935,12 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     );
   }
 
-  EdgeInsets _tabInsets(double bottom) =>
-      EdgeInsets.fromLTRB(PpForgeSpacing.lg, PpForgeSpacing.md, PpForgeSpacing.lg, bottom);
+  EdgeInsets _tabInsets(double bottom) => EdgeInsets.fromLTRB(
+    PpForgeSpacing.lg,
+    PpForgeSpacing.md,
+    PpForgeSpacing.lg,
+    bottom,
+  );
 
   String _periodLabel(TxPeriod p) {
     final locale = Localizations.localeOf(context).languageCode;

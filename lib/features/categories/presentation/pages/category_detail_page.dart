@@ -299,7 +299,11 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         _formKey.currentState?.validate();
         return;
       }
-      showPpForgeSnackBarOn(pageMessenger!, _errorText(e, l), tone: Tone.danger);
+      showPpForgeSnackBarOn(
+        pageMessenger!,
+        _errorText(e, l),
+        tone: Tone.danger,
+      );
       return;
     }
     if (!mounted) return;

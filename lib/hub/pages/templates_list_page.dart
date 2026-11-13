@@ -119,7 +119,11 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
     // Static state variants (the live one above switches between them).
     Widget stateBody(_State s, {bool withCta = false}) => ListPageBody(
       header: [
-        PpForgeInput.search(controller: _search, hint: 'Search', onChanged: (_) {}),
+        PpForgeInput.search(
+          controller: _search,
+          hint: 'Search',
+          onChanged: (_) {},
+        ),
       ],
       loading: s == _State.loading,
       error: s == _State.error ? const _DemoError() : null,

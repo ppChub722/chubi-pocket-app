@@ -186,7 +186,11 @@ class _HeroCardPageState extends State<_HeroCardPage> {
             style: blueStyle,
             header: HeroHeader(
               leading: [
-                PpForgeChip(label: 'รอรับ', color: palette.income, selected: true),
+                PpForgeChip(
+                  label: 'รอรับ',
+                  color: palette.income,
+                  selected: true,
+                ),
               ],
               onEdit: () {},
             ),

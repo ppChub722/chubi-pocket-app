@@ -132,7 +132,9 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
     if (_isOwner && !readOnly && m.contactLinked && m.userId == null)
       SheetOption(
         value: 'invite',
-        leading: PpForgeIcon(m.invited ? AppIcons.check : AppIcons.inviteMember),
+        leading: PpForgeIcon(
+          m.invited ? AppIcons.check : AppIcons.inviteMember,
+        ),
         label: m.invited ? l.projectMemberInvited : l.projectMemberInvite,
       ),
     if (_contactActions(m)) ...[

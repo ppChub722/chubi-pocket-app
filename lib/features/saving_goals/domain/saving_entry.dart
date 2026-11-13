@@ -37,7 +37,9 @@ class SavingEndpoint extends Equatable {
       },
       id: json['id'] as String?,
       name: json['name'] as String?,
-      iconCode: icon is Map<String, dynamic> ? PpForgeIconCode.fromJson(icon) : null,
+      iconCode: icon is Map<String, dynamic>
+          ? PpForgeIconCode.fromJson(icon)
+          : null,
     );
   }
 

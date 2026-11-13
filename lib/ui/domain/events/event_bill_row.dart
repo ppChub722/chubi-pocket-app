@@ -293,7 +293,10 @@ class EventBillRow extends StatelessWidget {
             const SizedBox(width: PpForgeSpacing.xs),
             Icon(AppIcons.link, size: 14, color: scheme.onSurfaceVariant),
           ],
-          if (badge != null) ...[const SizedBox(width: PpForgeSpacing.xs), badge!],
+          if (badge != null) ...[
+            const SizedBox(width: PpForgeSpacing.xs),
+            badge!,
+          ],
           if (action != null) ...[const Spacer(), action],
         ],
       ),

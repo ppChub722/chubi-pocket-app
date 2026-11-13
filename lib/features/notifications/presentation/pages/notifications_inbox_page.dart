@@ -242,7 +242,9 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
                         direction: DismissDirection.endToStart,
                         background: Container(
                           alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: PpForgeSpacing.xl),
+                          padding: const EdgeInsets.only(
+                            right: PpForgeSpacing.xl,
+                          ),
                           color: Theme.of(
                             ctx,
                           ).colorScheme.surfaceContainerHighest,

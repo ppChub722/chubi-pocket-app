@@ -256,7 +256,10 @@ class _TagsPageState extends State<TagsPage>
         child: PpForgeChip(
           label: draft.name,
           icon: PpForgeIconRegistry.get(iconCode.icon, fallback: AppIcons.tag),
-          color: tagColor(iconCode, Theme.of(context).extension<PpForgeColors>()!),
+          color: tagColor(
+            iconCode,
+            Theme.of(context).extension<PpForgeColors>()!,
+          ),
           selected: true,
         ),
       ),
@@ -282,7 +285,10 @@ class _TagsPageState extends State<TagsPage>
         child: PpForgeChip(
           label: 'Aa',
           icon: PpForgeIconRegistry.get(iconCode.icon, fallback: AppIcons.tag),
-          color: tagColor(iconCode, Theme.of(context).extension<PpForgeColors>()!),
+          color: tagColor(
+            iconCode,
+            Theme.of(context).extension<PpForgeColors>()!,
+          ),
           selected: true,
         ),
       ),
@@ -315,7 +321,10 @@ class _TagsPageState extends State<TagsPage>
         child: PpForgeChip(
           label: 'Aa',
           icon: PpForgeIconRegistry.get(iconCode.icon, fallback: AppIcons.tag),
-          color: tagColor(iconCode, Theme.of(context).extension<PpForgeColors>()!),
+          color: tagColor(
+            iconCode,
+            Theme.of(context).extension<PpForgeColors>()!,
+          ),
           selected: true,
         ),
       ),

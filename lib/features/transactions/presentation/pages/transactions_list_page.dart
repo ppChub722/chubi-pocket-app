@@ -286,7 +286,9 @@ class _TransactionsListPageState extends State<TransactionsListPage>
           if (widget.embedded) ...[
             const SizedBox(height: PpForgeSpacing.sm),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
+              padding: const EdgeInsets.symmetric(
+                horizontal: PpForgeSpacing.lg,
+              ),
               child: Row(
                 children: [
                   Flexible(child: _periodPill()),

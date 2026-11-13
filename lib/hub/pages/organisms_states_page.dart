@@ -141,7 +141,11 @@ Widget _selector<T>({
   runSpacing: PpForgeSpacing.sm,
   children: [
     for (final (v, label) in options)
-      PpForgeChip(label: label, selected: v == value, onTap: () => onChanged(v)),
+      PpForgeChip(
+        label: label,
+        selected: v == value,
+        onTap: () => onChanged(v),
+      ),
   ],
 );
 
@@ -215,7 +219,9 @@ class _OpenDemoState extends State<_OpenDemo> {
                   onRetry: () async {},
                   builder: (_) => _sampleList(),
                 )
-              : const Center(child: PpForgeText('Tap a button to open the page')),
+              : const Center(
+                  child: PpForgeText('Tap a button to open the page'),
+                ),
         ),
       ],
     );

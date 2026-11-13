@@ -4,7 +4,6 @@ import '../../features/accounts/domain/account_type.dart';
 import '../../ui/ui.dart';
 import 'package:pp_forge_core/hub.dart';
 
-
 /// `/dev/ui/molecules/row` — the one row shell and its two presets:
 /// Shell (PpForgeRow) → List (PpForgeListRow, a list item) → Detail (PpForgeDetailRow, a
 /// field of this record). PpForgeListRow and PpForgeDetailRow are PpForgeRow presets.
@@ -25,7 +24,8 @@ Widget buildRowPage(BuildContext context) => const Column(
     _ListRowPage(),
     HubSubheading(
       'Detail',
-      note: 'PpForgeDetailRow = PpForgeRow (density detail): a field of this record.',
+      note:
+          'PpForgeDetailRow = PpForgeRow (density detail): a field of this record.',
     ),
     _DetailPatternsPage(),
     DetailRowsDemo(),

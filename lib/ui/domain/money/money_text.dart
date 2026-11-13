@@ -29,7 +29,8 @@ class MoneyText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final symbol = this.symbol ?? PpForgeConfig.stringsOf(context).currencySymbol;
+    final symbol =
+        this.symbol ?? PpForgeConfig.stringsOf(context).currencySymbol;
     final palette = Theme.of(context).extension<PpForgeColors>()!;
     final money = MoneyStyleScope.of(context);
     final digits = money.digitsFor(
@@ -87,7 +88,8 @@ String moneyString(BuildContext context, num amount, {String? symbol}) =>
     _moneyString(context, amount, symbol);
 
 String _moneyString(BuildContext context, num amount, String? symbolOrNull) {
-  final symbol = symbolOrNull ?? PpForgeConfig.stringsOf(context).currencySymbol;
+  final symbol =
+      symbolOrNull ?? PpForgeConfig.stringsOf(context).currencySymbol;
   final digits = MoneyStyleScope.of(
     context,
   ).digitsFor(amount, CurrencyFormatter.decimalsOfSymbol(symbol));

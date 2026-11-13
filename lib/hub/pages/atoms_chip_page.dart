@@ -63,7 +63,10 @@ Widget buildChipPage(BuildContext context) => Column(
         runSpacing: PpForgeSpacing.xs,
         children: [
           for (final k in StatusKind.values) StatusChip(label: k.name, kind: k),
-          const StatusChip.tone(label: 'tone: info', tone: PpForgeChipTone.info),
+          const StatusChip.tone(
+            label: 'tone: info',
+            tone: PpForgeChipTone.info,
+          ),
           const StatusChip(
             label: 'mini',
             kind: StatusKind.paused,

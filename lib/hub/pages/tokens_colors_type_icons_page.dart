@@ -137,7 +137,8 @@ Widget buildTypographyPage(BuildContext context) {
 }
 
 const _roleNote = <PpForgeTextRole, String>{
-  PpForgeTextRole.display: 'A big number or heading on its own — a hero’s amount.',
+  PpForgeTextRole.display:
+      'A big number or heading on its own — a hero’s amount.',
   PpForgeTextRole.title: 'A page or hero title.',
   PpForgeTextRole.section:
       'The big green heading of a detail section (หัวข้อ section).',

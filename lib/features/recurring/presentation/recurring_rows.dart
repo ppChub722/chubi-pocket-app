@@ -94,7 +94,9 @@ class RecurringRow extends StatelessWidget {
     final icon = r.shownIconCode;
     return PpForgeListRow(
       // The item's own colour for what the row holds (the footer's chain).
-      accent: icon.accentColorFor(Theme.of(context).extension<PpForgeColors>()!),
+      accent: icon.accentColorFor(
+        Theme.of(context).extension<PpForgeColors>()!,
+      ),
       leading: IconDisplay(type: IconType.category, size: 36, iconCode: icon),
       title: r.name,
       // Its state (พัก / ใกล้ครบ) or when it is next ("อีก 3 วัน") beside the

@@ -6,11 +6,6 @@ export 'domain/l10n/app_ui_config.dart';
 export 'domain/l10n/app_error_text.dart';
 export 'domain/money/currency_tile.dart';
 
-
-
-
-
-
 export 'domain/money/money_style.dart';
 export 'domain/money/money_text.dart';
 export 'domain/money/wallet_value_chip.dart';

@@ -248,7 +248,8 @@ class _BarsPageState extends State<_BarsPage> {
               ),
             ),
             HubUse(
-              label: 'PpForgeTabBar + PpForgeTabPager — swipe the bar or the page',
+              label:
+                  'PpForgeTabBar + PpForgeTabPager — swipe the bar or the page',
               page: 'Detail pages with tabs, categories',
               wide: true,
               child: _frame(
@@ -633,7 +634,10 @@ class _BarsPageState extends State<_BarsPage> {
                   top: 0,
                   bar: PpForgeCompactHeroCard(
                     style: _heroStyle,
-                    leading: const PpForgeChip(label: 'Expense', selected: true),
+                    leading: const PpForgeChip(
+                      label: 'Expense',
+                      selected: true,
+                    ),
                     title: const Text('Chicken rice'),
                     trailing: Text('1,250.00', style: text.titleSmall),
                   ),
@@ -742,7 +746,9 @@ class _BarsPageState extends State<_BarsPage> {
               label: 'ChipRow — view only, no icon, no More',
               page: 'Transaction form (read-only)',
               child: ChipRow(
-                chips: [for (final n in _chipNames.take(3)) PpForgeChip(label: n)],
+                chips: [
+                  for (final n in _chipNames.take(3)) PpForgeChip(label: n),
+                ],
               ),
             ),
             HubUse(
@@ -763,7 +769,9 @@ class _BarsPageState extends State<_BarsPage> {
               child: ChipRow(
                 maxLines: 2,
                 moreOnlyWhenCut: true,
-                chips: [for (final n in _chipNames.take(4)) PpForgeChip(label: n)],
+                chips: [
+                  for (final n in _chipNames.take(4)) PpForgeChip(label: n),
+                ],
                 onMore: () {},
                 moreLabel: 'More',
               ),
@@ -1180,7 +1188,11 @@ class _BarsPageState extends State<_BarsPage> {
                     ),
                 ],
                 trailing: v<bool>('trailing')
-                    ? PpForgeChip(label: 'Date', icon: AppIcons.sort, onTap: () {})
+                    ? PpForgeChip(
+                        label: 'Date',
+                        icon: AppIcons.sort,
+                        onTap: () {},
+                      )
                     : null,
               ),
             ),

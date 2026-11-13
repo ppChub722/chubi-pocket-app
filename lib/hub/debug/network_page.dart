@@ -100,7 +100,9 @@ class _NetworkPageState extends State<NetworkPage> {
             height: 44,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
+              padding: const EdgeInsets.symmetric(
+                horizontal: PpForgeSpacing.lg,
+              ),
               children: [
                 for (final f in _Filter.values) ...[
                   PpForgeChip(

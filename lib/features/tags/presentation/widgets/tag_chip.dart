@@ -27,7 +27,9 @@ PpForgeChip tagAppChip(
     color: tagColor(tag.iconCode, palette),
     selected: selected ?? true,
     onTap: onTap,
-    trailing: onRemove == null ? PpForgeChipTrailing.none : PpForgeChipTrailing.remove,
+    trailing: onRemove == null
+        ? PpForgeChipTrailing.none
+        : PpForgeChipTrailing.remove,
     onRemove: onRemove,
     removeOnly: onRemove != null,
     size: size,

@@ -264,7 +264,11 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     try {
       await context.read<ContactsCubit>().delete(c.id);
       if (!mounted) return;
-      showPpForgeSnackBar(context, l.contactDeleted(c.name), tone: Tone.success);
+      showPpForgeSnackBar(
+        context,
+        l.contactDeleted(c.name),
+        tone: Tone.success,
+      );
       commitSaved(working);
       leavePage();
     } on ApiException catch (e) {
@@ -465,7 +469,8 @@ class _ContactDetailPageState extends State<ContactDetailPage>
                   onRefresh: _isCreate ? null : _refresh,
                   refreshEnabled: !isEditing,
                   bottomInset:
-                      PpForgeSpacing.huge + MediaQuery.paddingOf(context).bottom,
+                      PpForgeSpacing.huge +
+                      MediaQuery.paddingOf(context).bottom,
                   hero: isEditing ? _editHero(l) : _viewHero(l),
                   info: isEditing ? _editInfo(l) : _viewInfo(l),
                   people: isEditing || _isCreate ? null : _linkSection(l),

@@ -45,14 +45,21 @@ ListRowChip walletRowChip(
     name,
     icon: code == null
         ? AppIcons.noWallet
-        : PpForgeIconRegistry.get(code.icon, fallback: IconType.account.fallbackIcon),
+        : PpForgeIconRegistry.get(
+            code.icon,
+            fallback: IconType.account.fallbackIcon,
+          ),
     color: own == null ? null : ensureContrast(own, surface),
     bare: true,
   );
 }
 
 /// "#name" in the tag's icon colour, for [ListRowLine.spans].
-InlineSpan tagSpan(BuildContext context, String name, {PpForgeIconCode? iconCode}) {
+InlineSpan tagSpan(
+  BuildContext context,
+  String name, {
+  PpForgeIconCode? iconCode,
+}) {
   final palette = Theme.of(context).extension<PpForgeColors>()!;
   final colors = iconCode?.iconColors ?? const [];
   return TextSpan(

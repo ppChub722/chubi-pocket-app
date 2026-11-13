@@ -139,7 +139,9 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                   dashed: editing,
                 ),
               ],
-              actions: [PpForgeIconButton(icon: AppIcons.search, onPressed: () {})],
+              actions: [
+                PpForgeIconButton(icon: AppIcons.search, onPressed: () {}),
+              ],
               onEdit: () {},
             )
           : null,

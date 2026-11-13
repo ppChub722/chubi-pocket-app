@@ -111,7 +111,10 @@ class EntryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(PpForgeRadius.md),
         border: Border.all(color: error),
       ),
-      child: Padding(padding: const EdgeInsets.all(PpForgeSpacing.xxs), child: row),
+      child: Padding(
+        padding: const EdgeInsets.all(PpForgeSpacing.xxs),
+        child: row,
+      ),
     );
   }
 

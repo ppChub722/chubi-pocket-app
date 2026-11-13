@@ -341,7 +341,11 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
                         selected: !editing,
                         onTap: () => setState(() => _editing = false),
                       ),
-                      PpForgeChip(label: 'Edit', selected: editing, onTap: _enter),
+                      PpForgeChip(
+                        label: 'Edit',
+                        selected: editing,
+                        onTap: _enter,
+                      ),
                       PpForgeChip(
                         label: 'Status chips',
                         selected: _chips,
@@ -452,7 +456,10 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
                     title: 'Section ${i + 1}',
                     description: 'One line about this section.',
                     children: const [
-                      PpForgeDetailRow(label: 'Currency', trailing: Text('THB')),
+                      PpForgeDetailRow(
+                        label: 'Currency',
+                        trailing: Text('THB'),
+                      ),
                     ],
                   ),
               ],

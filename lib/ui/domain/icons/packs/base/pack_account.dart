@@ -9,7 +9,10 @@ const basePackAccount = PpForgeIconPack(
     PpForgeIconPackItem(id: 'bank', colors: ['@presetThemeColorOnIcon']),
     PpForgeIconPackItem(id: 'savings', colors: ['@presetThemeColorOnIcon']),
     PpForgeIconPackItem(id: 'card', colors: ['@presetThemeColorOnIcon']),
-    PpForgeIconPackItem(id: 'contactless_card', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(
+      id: 'contactless_card',
+      colors: ['@presetThemeColorOnIcon'],
+    ),
     PpForgeIconPackItem(id: 'e_wallet', colors: ['@presetThemeColorOnIcon']),
     PpForgeIconPackItem(id: 'gift_card', colors: ['@presetThemeColorOnIcon']),
     PpForgeIconPackItem(id: 'travel', colors: ['@presetThemeColorOnIcon']),

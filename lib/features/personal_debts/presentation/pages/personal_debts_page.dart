@@ -276,7 +276,11 @@ class _PeopleViewState extends State<_PeopleView> {
           filters: [
             for (final (f, label, tone) in [
               (DebtListFilter.all, l.debtsFilterAll, null),
-              (DebtListFilter.receivable, l.debtsOwedToMe, PpForgeChipTone.success),
+              (
+                DebtListFilter.receivable,
+                l.debtsOwedToMe,
+                PpForgeChipTone.success,
+              ),
               (DebtListFilter.payable, l.debtsIOwe, PpForgeChipTone.danger),
               (
                 DebtListFilter.overdue30,

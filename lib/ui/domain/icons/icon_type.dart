@@ -30,7 +30,10 @@ extension IconTypeX on IconType {
   bool get hasPicker => this != IconType.transaction;
 
   PpForgeIconCode applyDisplayRules(PpForgeIconCode code) => switch (this) {
-    IconType.tag => PpForgeIconCode(icon: code.icon, iconColors: code.iconColors),
+    IconType.tag => PpForgeIconCode(
+      icon: code.icon,
+      iconColors: code.iconColors,
+    ),
     _ => code,
   };
 

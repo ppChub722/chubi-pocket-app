@@ -207,7 +207,10 @@ class _ViewIdentity extends StatelessWidget {
             ),
           ),
         ),
-        for (final a in actions) ...[const SizedBox(width: PpForgeSpacing.sm), a],
+        for (final a in actions) ...[
+          const SizedBox(width: PpForgeSpacing.sm),
+          a,
+        ],
       ],
     );
   }

@@ -1,7 +1,6 @@
 import 'package:pp_forge_core/ui.dart';
 import 'package:flutter/material.dart';
 
-
 class EntryCardSkeleton extends StatelessWidget {
   const EntryCardSkeleton({this.rows = 2, this.editing = true, super.key});
 

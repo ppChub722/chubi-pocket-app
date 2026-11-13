@@ -555,7 +555,8 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
                 builder: (context) {
                   final barInset = MediaQuery.paddingOf(context).top;
                   final bottom =
-                      PpForgeSpacing.huge + MediaQuery.paddingOf(context).bottom;
+                      PpForgeSpacing.huge +
+                      MediaQuery.paddingOf(context).bottom;
                   final d = _detail;
                   return (d == null || isEditing)
                       ? _editBody(context, l, b, barInset, bottom)
@@ -619,7 +620,10 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
     final banner = _refreshError == null
         ? null
-        : PpForgeMessage(tone: Tone.danger, message: errorText(l, _refreshError!));
+        : PpForgeMessage(
+            tone: Tone.danger,
+            message: errorText(l, _refreshError!),
+          );
 
     if (!b.recurring) {
       return DetailLayout(
@@ -954,7 +958,11 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
 
   Widget? _periodBadge(AppLocalizations l, Budget b, BudgetPeriod x) {
     if (x.isCurrent) {
-      return PpForgeChip(label: l.bgPeriodNow, size: ChipSize.mini, selected: true);
+      return PpForgeChip(
+        label: l.bgPeriodNow,
+        size: ChipSize.mini,
+        selected: true,
+      );
     }
     if (x.overridden) {
       return PpForgeChip(
@@ -1271,7 +1279,10 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
                   ),
                 ],
               ),
-              if (!w.allScope) ...[const SizedBox(height: PpForgeSpacing.sm), hint],
+              if (!w.allScope) ...[
+                const SizedBox(height: PpForgeSpacing.sm),
+                hint,
+              ],
               if (_scopeMissing && w.scopeEmpty) ...[
                 const SizedBox(height: PpForgeSpacing.xs),
                 Text(

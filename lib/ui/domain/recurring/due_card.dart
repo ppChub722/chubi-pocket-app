@@ -363,7 +363,10 @@ class DueCard extends StatelessWidget {
                   child: InkWell(onTap: onToggle, child: head),
                 ),
               ),
-            if (shown) ...[...children, const SizedBox(height: PpForgeSpacing.xs)],
+            if (shown) ...[
+              ...children,
+              const SizedBox(height: PpForgeSpacing.xs),
+            ],
           ],
         ),
       ),

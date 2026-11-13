@@ -550,7 +550,9 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
                     ),
                   ),
                   const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: PpForgeSpacing.sm),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: PpForgeSpacing.sm,
+                    ),
                     child: Text('–'),
                   ),
                   Expanded(

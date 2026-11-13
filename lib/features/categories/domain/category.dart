@@ -176,7 +176,9 @@ class CategoryPathItem extends Equatable {
         id: json['id'] as String,
         name: json['name'] as String,
         iconCode: json['icon_code'] is Map<String, dynamic>
-            ? PpForgeIconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+            ? PpForgeIconCode.fromJson(
+                json['icon_code'] as Map<String, dynamic>,
+              )
             : null,
       );
 

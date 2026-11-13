@@ -949,7 +949,10 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
             if (r.kind == k) r,
         ]),
       if (paused.isNotEmpty) ...[
-        PpForgeListHeader(title: l.fpRecurringPausedGroup, count: paused.length),
+        PpForgeListHeader(
+          title: l.fpRecurringPausedGroup,
+          count: paused.length,
+        ),
         SectionCard(children: [for (final r in paused) _ruleRow(r)]),
       ],
     ];

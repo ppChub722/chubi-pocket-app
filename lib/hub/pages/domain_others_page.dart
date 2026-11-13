@@ -361,7 +361,10 @@ Widget buildOthersPage(BuildContext context) {
             page: 'Project members page, dashboard',
             child: const ProjectMemberAvatar(
               name: 'Bee',
-              iconCode: PpForgeIconCode(icon: 'favorite', iconColors: ['#EF4444']),
+              iconCode: PpForgeIconCode(
+                icon: 'favorite',
+                iconColors: ['#EF4444'],
+              ),
             ),
           ),
           HubUse(

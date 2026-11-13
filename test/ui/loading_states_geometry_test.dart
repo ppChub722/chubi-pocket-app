@@ -41,10 +41,16 @@ void main() {
     ),
     'PpForgeIconButton.edit': (l) =>
         PpForgeIconButton.edit(loading: l, onPressed: noop),
-    'PpForgeIconButton.bare': (l) =>
-        PpForgeIconButton.bare(icon: AppIcons.refresh, loading: l, onPressed: noop),
-    'PpForgeIconButton.filled': (l) =>
-        PpForgeIconButton.filled(icon: AppIcons.check, loading: l, onPressed: noop),
+    'PpForgeIconButton.bare': (l) => PpForgeIconButton.bare(
+      icon: AppIcons.refresh,
+      loading: l,
+      onPressed: noop,
+    ),
+    'PpForgeIconButton.filled': (l) => PpForgeIconButton.filled(
+      icon: AppIcons.check,
+      loading: l,
+      onPressed: noop,
+    ),
     'PpForgeIconButton.flat': (l) =>
         PpForgeIconButton.flat(icon: AppIcons.add, loading: l, onPressed: noop),
     'PpForgeIconButton.close dense': (l) =>
