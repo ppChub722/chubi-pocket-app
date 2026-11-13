@@ -35,6 +35,14 @@ while [[ $# -gt 0 ]]; do
 done
 cd "$APP_DIR"
 
+# The app's signing key: without it gradle falls back to this PC's debug key,
+# Telegram login breaks and the APK will not install over the testers' copy.
+if [[ ! -f android/key.properties ]]; then
+  echo "✗ android/key.properties is missing: copy it (and keep the storeFile path right)" >&2
+  echo "  from the backup of C:\Users\poomp\keys\chubi-pocket\ (see ops/apk-testing.md)." >&2
+  exit 1
+fi
+
 # The pinned SDK (FVM); the `flutter` on PATH is too old for this project.
 FLUTTER="$HOME/fvm/versions/3.47.3/bin/flutter"
 [[ -x "$FLUTTER" ]] || FLUTTER="$APP_DIR/.fvm/flutter_sdk/bin/flutter"
