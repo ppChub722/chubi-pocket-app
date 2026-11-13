@@ -1015,10 +1015,10 @@ class _SplitRowPageState extends State<_SplitRowPage> {
               ),
               SplitRow(
                 avatar: const PersonMark(
-                  name: 'Mali',
                   level: PersonLevel.name,
                   size: SplitRow.avatarSize,
                   reserveLinkSlot: true,
+                  avatar: null,
                 ),
                 name: SplitRowName.input(
                   controller: _typed,
@@ -1033,11 +1033,11 @@ class _SplitRowPageState extends State<_SplitRowPage> {
                 ),
               ),
               SplitRow(
-                avatar: const PersonMark(
-                  name: 'Bee',
+                avatar: PersonMark(
                   level: PersonLevel.contact,
                   size: SplitRow.avatarSize,
                   reserveLinkSlot: true,
+                  avatar: AvatarData.forName('Bee'),
                 ),
                 name: const SplitRowName.picked('Bee', onTap: _noop),
                 amount: const _DemoAmount('฿150.00'),
@@ -1048,10 +1048,10 @@ class _SplitRowPageState extends State<_SplitRowPage> {
                 ),
               ),
               SplitRow(
-                avatar: const PersonMark(
-                  name: 'Ton',
+                avatar: PersonMark(
                   level: PersonLevel.linked,
                   size: SplitRow.avatarSize,
+                  avatar: AvatarData.forName('Ton'),
                 ),
                 name: const SplitRowName.picked('Ton', onTap: _noop),
                 amount: const _DemoAmount('฿150.00'),
@@ -1110,7 +1110,6 @@ class _SplitRowPageState extends State<_SplitRowPage> {
                     ],
                   )
                 : PersonMark(
-                    name: 'Mali',
                     level: switch (kind) {
                       1 => PersonLevel.name,
                       2 => PersonLevel.contact,
@@ -1118,6 +1117,7 @@ class _SplitRowPageState extends State<_SplitRowPage> {
                     },
                     size: SplitRow.avatarSize,
                     reserveLinkSlot: kind != 3,
+                    avatar: null,
                   );
             return HubWithController(
               initial: 'Mali',

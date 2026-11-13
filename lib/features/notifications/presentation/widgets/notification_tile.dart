@@ -73,8 +73,7 @@ class NotificationTile extends StatelessWidget {
 
     return NotificationTileView(
       actorName: actor,
-      actorIconCode: n.actor?.iconCode,
-      actorAvatar: n.actor?.avatar,
+      actorAvatar: n.actor?.avatar ?? AvatarData.forName(actor),
       title: _title(context, l, n, actor),
       timeText: DateFormatter.time(
         n.createdAt.toLocal(),

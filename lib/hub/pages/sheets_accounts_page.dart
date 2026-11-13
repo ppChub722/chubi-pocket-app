@@ -66,8 +66,10 @@ AdjustBalanceStrings _adjustStrings({required bool credit}) =>
       diffLabel: 'Difference',
       descriptionLabel: 'Description',
       noteLabel: 'Note',
+      dateLabel: 'Date',
+      formatDate: (d) => '${d.year}-${d.month}-${d.day}',
       noChange: 'No change.',
-      willCreate: (diff) => 'Creates an adjustment of $diff, dated today.',
+      willCreate: (diff, date) => 'Creates an adjustment of $diff, dated $date.',
     );
 
 class _SheetsAccountsPage extends StatefulWidget {

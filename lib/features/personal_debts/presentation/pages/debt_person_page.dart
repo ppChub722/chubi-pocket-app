@@ -28,7 +28,6 @@ import '../cubit/debt_people_cubit.dart';
 import '../cubit/debt_person_cubit.dart';
 import '../debt_person_preset.dart';
 import '../debt_wiring.dart';
-import '../../../settings/presentation/widgets/auto_sync_setting.dart';
 
 /// หนี้ · หน้าคน (owner 2026-10-22, mock DebtPerson): the hero (avatar,
 /// name, age | since, 🔍; "รอจ่ายให้ลี" + the big amount; [จ่ายคืน ฿x]
@@ -240,8 +239,6 @@ class _PersonViewState extends State<_PersonView> {
             ),
           ],
         ),
-      // Auto sync only reaches a linked person; one account-wide value.
-      if (s.balance!.person.linked) autoSyncSection(l, AutoSyncKind.debts),
       _recurringSection(l, s),
       PpForgeListToolbar(
         state: _toolbar,
@@ -386,9 +383,7 @@ class _PersonViewState extends State<_PersonView> {
       content: [
         HeroIdentity(
           icon: PersonMark(
-            name: name,
             level: debtPersonLevel(b.person),
-            iconCode: b.person.iconCode,
             avatar: b.person.avatar,
             size: 40,
           ),

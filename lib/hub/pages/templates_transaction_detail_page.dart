@@ -460,10 +460,10 @@ class _PersonRow extends StatelessWidget {
       child: Row(
         children: [
           PersonMark(
-            name: s.personName,
             level: PersonLevel.name,
             size: 32,
             reserveLinkSlot: true,
+            avatar: null,
           ),
           const SizedBox(width: PpForgeSpacing.md),
           Expanded(

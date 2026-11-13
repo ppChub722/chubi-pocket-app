@@ -130,8 +130,10 @@ class _EditProfilePageState extends State<EditProfilePage>
       title: l.editProfileTitle,
       initial: working.iconCode,
       removeLabel: l.commonRemove,
-      previewBuilder: (code) =>
-          UserProfilePreview(displayName: _shownName, iconCode: code),
+      previewBuilder: (code) => UserProfilePreview(
+        displayName: _shownName,
+        avatar: AvatarData.forName(_shownName, iconCode: code),
+      ),
     );
     if (!mounted || r == null) return;
     if (r is PpForgeIconMakerSelected) {
@@ -149,7 +151,10 @@ class _EditProfilePageState extends State<EditProfilePage>
           initial: AvatarColorsDraft.from(code.bgColors, null),
           previewBuilder: (d) => UserProfilePreview(
             displayName: _shownName,
-            iconCode: code.copyWith(bgColors: d.colors),
+            avatar: AvatarData.forName(
+              _shownName,
+              iconCode: code.copyWith(bgColors: d.colors),
+            ),
           ),
         );
         if (!mounted) return;

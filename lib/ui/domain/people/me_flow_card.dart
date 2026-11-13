@@ -9,18 +9,16 @@ class MeFlowCard extends StatelessWidget {
   const MeFlowCard({
     required this.label,
     required this.name,
-    this.iconCode,
-    this.avatar,
+    required this.avatar,
     super.key,
   });
 
   /// "ฉัน".
   final String label;
   final String name;
-  final PpForgeIconCode? iconCode;
 
-  /// My avatar; null = built from [name] + [iconCode].
-  final AvatarData? avatar;
+  /// My avatar (the signed-in user's `.avatar`).
+  final AvatarData avatar;
 
   @override
   Widget build(BuildContext context) {
@@ -29,11 +27,7 @@ class MeFlowCard extends StatelessWidget {
       dense: true,
       label: label,
       value: name,
-      leading: Avatar(
-        avatar ??
-            AvatarData.forName(name.isEmpty ? '?' : name, iconCode: iconCode),
-        size: AvatarMetrics.sizeSmall,
-      ),
+      leading: Avatar(avatar, size: AvatarMetrics.sizeSmall),
       accent: Theme.of(context).colorScheme.primary,
       onTap: null,
     );

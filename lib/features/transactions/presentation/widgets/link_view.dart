@@ -91,9 +91,7 @@ class LinkViewRows extends StatelessWidget {
   static Widget _memberMark(BillMemberRef m, AppLocalizations l) => m.isMe
       ? MyAvatar(fallbackName: l.txLinkCardMe)
       : PersonMark(
-          name: m.name,
           level: m.userId != null ? PersonLevel.linked : PersonLevel.name,
-          iconCode: m.iconCode,
           avatar: m.avatar,
           size: SplitRow.avatarSize,
           reserveLinkSlot: true,
@@ -119,13 +117,11 @@ class LinkViewRows extends StatelessWidget {
         ),
         ShareRow(
           avatar: PersonMark(
-            name: p.person.name,
             level: p.person.contactId == null
                 ? PersonLevel.name
                 : p.person.linked
                 ? PersonLevel.linked
                 : PersonLevel.contact,
-            iconCode: p.person.iconCode,
             avatar: p.person.avatar,
             size: SplitRow.avatarSize,
             reserveLinkSlot: true,

@@ -23,12 +23,22 @@ import 'package:pp_forge_core/hub.dart';
 Widget buildPeopleAccountsPage(BuildContext context) {
   final scheme = Theme.of(context).colorScheme;
 
-  const people = [
-    PersonRef(name: 'ppOnd', caption: 'You', isOwner: true),
-    PersonRef(name: 'Aom Chan'),
-    PersonRef(name: 'Bank', caption: 'Pending', pending: true),
-    PersonRef(name: 'Cat'),
-    PersonRef(name: 'Dao'),
+  final people = [
+    PersonRef(
+      name: 'ppOnd',
+      caption: 'You',
+      isOwner: true,
+      avatar: AvatarData.forName('ppOnd'),
+    ),
+    PersonRef(name: 'Aom Chan', avatar: AvatarData.forName('Aom Chan')),
+    PersonRef(
+      name: 'Bank',
+      caption: 'Pending',
+      pending: true,
+      avatar: AvatarData.forName('Bank'),
+    ),
+    PersonRef(name: 'Cat', avatar: AvatarData.forName('Cat')),
+    PersonRef(name: 'Dao', avatar: AvatarData.forName('Dao')),
   ];
 
   const members = [
@@ -138,8 +148,8 @@ Widget buildPeopleAccountsPage(BuildContext context) {
       SizedBox(width: 168, child: AccountCard(account: a, horizontal: false));
 
   Widget mark(String name, PersonLevel level, [double? size]) => size == null
-      ? PersonMark(name: name, level: level)
-      : PersonMark(name: name, level: level, size: size);
+      ? PersonMark(level: level, avatar: AvatarData.forName(name))
+      : PersonMark(level: level, size: size, avatar: AvatarData.forName(name));
 
   Widget idRow(
     AccountIdentifier id, {
@@ -215,17 +225,17 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                 'reserveLinkSlot — unlinked marks keep the badge space so '
                 'every name starts at the same x',
             page: 'Contact picker sheet, Splits section',
-            child: const PpForgeCard(
+            child: PpForgeCard(
               padding: EdgeInsets.zero,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   PpForgeListRow(
                     leading: PersonMark(
-                      name: 'มาตาก',
                       level: PersonLevel.linked,
                       size: 40,
                       reserveLinkSlot: true,
+                      avatar: AvatarData.forName('มาตาก'),
                     ),
                     title: 'มาตาก',
                     line2: ListRowLine(parts: ['linked']),
@@ -233,10 +243,10 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                   PpForgeDivider.row(),
                   PpForgeListRow(
                     leading: PersonMark(
-                      name: 'บี',
                       level: PersonLevel.contact,
                       size: 40,
                       reserveLinkSlot: true,
+                      avatar: AvatarData.forName('บี'),
                     ),
                     title: 'บี',
                     line2: ListRowLine(parts: ['contact — slot kept empty']),
@@ -244,10 +254,10 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                   PpForgeDivider.row(),
                   PpForgeListRow(
                     leading: PersonMark(
-                      name: 'ลี',
                       level: PersonLevel.name,
                       size: 40,
                       reserveLinkSlot: true,
+                      avatar: null,
                     ),
                     title: 'ลี',
                     line2: ListRowLine(parts: ['typed name — slot kept empty']),
@@ -260,21 +270,27 @@ Widget buildPeopleAccountsPage(BuildContext context) {
             wide: true,
             label: 'PersonMark in a chip — name | contact | linked',
             page: 'Split / payer chips',
-            child: const Wrap(
+            child: Wrap(
               spacing: PpForgeSpacing.sm,
               runSpacing: PpForgeSpacing.sm,
               children: [
                 PpForgeChip(
                   label: 'ลี',
-                  leading: PersonMark(name: 'ลี', level: PersonLevel.name),
+                  leading: PersonMark(level: PersonLevel.name, avatar: null),
                 ),
                 PpForgeChip(
                   label: 'บี',
-                  leading: PersonMark(name: 'บี', level: PersonLevel.contact),
+                  leading: PersonMark(
+                    level: PersonLevel.contact,
+                    avatar: AvatarData.forName('บี'),
+                  ),
                 ),
                 PpForgeChip(
                   label: 'ต้น',
-                  leading: PersonMark(name: 'ต้น', level: PersonLevel.linked),
+                  leading: PersonMark(
+                    level: PersonLevel.linked,
+                    avatar: AvatarData.forName('ต้น'),
+                  ),
                 ),
               ],
             ),
@@ -287,18 +303,18 @@ Widget buildPeopleAccountsPage(BuildContext context) {
             page: 'Project dashboard tab',
             child: MemberStrip(members: people, onInvite: () {}),
           ),
-          const HubUse(
+          HubUse(
             wide: true,
             label: 'MemberStrip — no invite, avatarSize 36',
             page: 'Project dashboard tab (viewer)',
             child: MemberStrip(members: people, avatarSize: 36),
           ),
-          const HubUse(
+          HubUse(
             label: 'AvatarStack — 3 of 5, size 32 (+N bubble)',
             page: 'Account detail, Account cards',
             child: AvatarStack(people: people, maxVisible: 3, size: 32),
           ),
-          const HubUse(
+          HubUse(
             label: 'AvatarStack — all fit',
             page: 'Account detail',
             child: AvatarStack(people: people, maxVisible: 5),
@@ -405,11 +421,14 @@ Widget buildPeopleAccountsPage(BuildContext context) {
               ),
             ),
           ),
-          const HubUse(
+          HubUse(
             wide: true,
             label: 'UserProfilePreview — the compact profile row',
             page: 'Edit profile page',
-            child: UserProfilePreview(displayName: 'Aom Chan'),
+            child: UserProfilePreview(
+              displayName: 'Aom Chan',
+              avatar: AvatarData.forName('Aom Chan'),
+            ),
           ),
 
           // ── Wallet cards ──
@@ -639,9 +658,9 @@ Widget buildPeopleAccountsPage(BuildContext context) {
               placeholder: 'เลือกกระเป๋า',
               paidBy: 'จ่ายโดย ฝน',
               paidByAvatar: const PersonMark(
-                name: 'ฝน',
                 level: PersonLevel.name,
                 size: 32,
+                avatar: null,
               ),
               onTap: () {},
             ),
@@ -816,10 +835,10 @@ Widget buildPeopleAccountsPage(BuildContext context) {
         builder: (context, v) => Align(
           alignment: Alignment.centerLeft,
           child: PersonMark(
-            name: 'ต้น',
             level: v<PersonLevel>('level'),
             size: v<double>('size'),
             reserveLinkSlot: v<bool>('reserveLinkSlot'),
+            avatar: AvatarData.forName('ต้น'),
           ),
         ),
       ),

@@ -21,7 +21,6 @@ import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
 import '../../../auth/domain/user.dart' show PagePrefIds;
 import '../../../preferences/page_prefs.dart';
-import '../../../settings/presentation/widgets/auto_sync_setting.dart';
 import '../cubit/projects_cubit.dart';
 import '../event_settle_book.dart';
 import '../project_board_controller.dart';
@@ -579,19 +578,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         (simplified ? s?.simplified : s?.pairs) ?? const <SettleLine>[];
     Widget line(SettleLine x) => SettleRow(
       key: ValueKey('settle:${x.from.id}:${x.to.id}'),
-      fromAvatar: ProjectMemberAvatar(
-        name: x.from.name,
-        iconCode: x.from.iconCode,
-        avatar: x.from.avatar,
-        size: 32,
-      ),
+      fromAvatar: ProjectMemberAvatar(avatar: x.from.avatar, size: 32),
       fromName: x.from.name,
-      toAvatar: ProjectMemberAvatar(
-        name: x.to.name,
-        iconCode: x.to.iconCode,
-        avatar: x.to.avatar,
-        size: 20,
-      ),
+      toAvatar: ProjectMemberAvatar(avatar: x.to.avatar, size: 20),
       toName: x.to.name,
       amount: MoneyText(x.amount),
       mine: x.mine,
@@ -700,12 +689,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         for (final p in rows)
           PpForgeListRow(
             key: ValueKey('net:${p.memberId}'),
-            leading: ProjectMemberAvatar(
-              name: p.displayName,
-              iconCode: p.iconCode,
-              avatar: p.avatar,
-              size: 32,
-            ),
+            leading: ProjectMemberAvatar(avatar: p.avatar, size: 32),
             title: p.displayName,
             line2: ListRowLine(
               parts: [l.fpEventsMemberPaid(moneyString(context, p.paid))],
@@ -1151,13 +1135,11 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         for (final m in members)
           PeopleStripMember(
             avatar: ProjectMemberAvatar(
-              name: m.displayName,
-              iconCode: m.iconCode,
               avatar: m.avatar,
               level: projectMemberLevel(m),
               size: 32,
             ),
-            name: m.displayName,
+            name: memberName(l, m.displayName, isMe: m.isMe),
           ),
       ],
       inviteLabel: l.evbMembersAdd,
@@ -1532,16 +1514,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
               summary: l.fpEventsTagsCount(v.eventTags.length),
               onTap: _manageTags,
             ),
-          // SA14: the account-wide auto switches (the same values as on the
-          // notification settings page), set here with the event's other
-          // settings (owner 2026-11-03); none once the event is completed.
-          if (v != null && !v.isCompleted) ...const [
-            AutoSyncSetting(
-              kind: AutoSyncKind.events,
-              which: AutoSyncSwitch.accept,
-            ),
-            AutoSyncSetting(kind: AutoSyncKind.events),
-          ],
         ],
       ),
       note: NoteSection(

@@ -205,6 +205,7 @@ class _EventsPageState extends State<_EventsPage> {
                   builder: (context, toggle) => chip(toggle),
                 ),
                 onTap: () => _tapped('bill: unresolved (tap tick)'),
+                payerAvatar: AvatarData.forName('มาตาก'),
               ),
               const PpForgeDivider.row(),
               EventBillRow(
@@ -219,6 +220,7 @@ class _EventsPageState extends State<_EventsPage> {
                 tags: const [_food, _travel],
                 onTagTap: (_, i) => _tapped('tag $i tapped'),
                 onTap: () => _tapped('bill: resolved'),
+                payerAvatar: AvatarData.forName('ฉัน'),
               ),
               const PpForgeDivider.row(),
               EventBillRow(
@@ -231,6 +233,7 @@ class _EventsPageState extends State<_EventsPage> {
                 onTagTap: (_, _) => _tapped('never fires'),
                 locked: true,
                 onTap: () => _tapped('never fires'),
+                payerAvatar: AvatarData.forName('บีม'),
               ),
               const PpForgeDivider.row(),
               EventBillRow(
@@ -242,6 +245,7 @@ class _EventsPageState extends State<_EventsPage> {
                 caption: '4 ต.ค.',
                 onTickTap: () => _tapped('income tick'),
                 onTap: () => _tapped('bill: income with type glyph'),
+                payerAvatar: AvatarData.forName('มาตาก'),
               ),
               const PpForgeDivider.row(),
               // 0.4.1-2 multi-payer: 2+ payers → "จ่าย: A ฿700 | B ฿500".
@@ -251,16 +255,22 @@ class _EventsPageState extends State<_EventsPage> {
                 tick: false,
                 payerName: 'ลี',
                 payerVerb: 'จ่าย',
-                payers: const [
+                payers: [
                   EventBillPayer(
                     name: 'ลี',
                     amount: '฿700',
                     level: PersonLevel.linked,
+                    avatar: AvatarData.forName('ลี'),
                   ),
-                  EventBillPayer(name: 'ปอนด์', amount: '฿500'),
+                  EventBillPayer(
+                    name: 'ปอนด์',
+                    amount: '฿500',
+                    avatar: AvatarData.forName('ปอนด์'),
+                  ),
                 ],
                 tags: const [_travel],
                 onTap: () => _tapped('bill: two payers'),
+                payerAvatar: AvatarData.forName('ลี'),
               ),
             ],
           ),
@@ -288,6 +298,7 @@ class _EventsPageState extends State<_EventsPage> {
             tags: const [_travel],
             onTickTap: () => _tapped('parent tick'),
             onTap: () => _tapped('bill with children'),
+            payerAvatar: AvatarData.forName('ฉัน'),
             children: [
               EventBillChildRow(
                 name: 'มาตาก',
@@ -296,6 +307,7 @@ class _EventsPageState extends State<_EventsPage> {
                 amount: 2400,
                 marked: _childAMarked,
                 onTickTap: () => setState(() => _childAMarked = !_childAMarked),
+                avatar: AvatarData.forName('มาตาก'),
               ),
               EventBillChildRow(
                 name: 'บีม',
@@ -304,6 +316,7 @@ class _EventsPageState extends State<_EventsPage> {
                 amount: 2400,
                 marked: _childBMarked,
                 onTickTap: () => setState(() => _childBMarked = !_childBMarked),
+                avatar: AvatarData.forName('บีม'),
               ),
               EventBillChildRow(
                 name: 'ต้น',
@@ -311,6 +324,7 @@ class _EventsPageState extends State<_EventsPage> {
                 amount: 2400,
                 locked: true,
                 onTickTap: () => _tapped('never fires'),
+                avatar: AvatarData.forName('ต้น'),
               ),
             ],
           ),
@@ -334,6 +348,7 @@ class _EventsPageState extends State<_EventsPage> {
                 payerName: 'ฝน',
                 payerVerb: 'จ่าย',
                 onTap: () => _tapped('book bill'),
+                payerAvatar: AvatarData.forName('ฝน'),
                 children: [
                   EventBillChildRow(
                     tick: false,
@@ -344,12 +359,14 @@ class _EventsPageState extends State<_EventsPage> {
                     actionTooltip: 'ลงบัญชี',
                     badge: const EventBookedChips(labels: ['ลงรายการ']),
                     onTap: () => _tapped('my part'),
+                    avatar: AvatarData.forName('ฉัน'),
                   ),
                   EventBillChildRow(
                     tick: false,
                     name: 'ต้น',
                     amount: 160,
                     onTap: () => _tapped('their part'),
+                    avatar: AvatarData.forName('ต้น'),
                   ),
                 ],
               ),
@@ -366,6 +383,7 @@ class _EventsPageState extends State<_EventsPage> {
                 amountColor: ModuleColors.of(context).planning,
                 caption: 'จ่ายคืน | จดโดย ฉัน',
                 onTap: () => _tapped('payback'),
+                payerAvatar: null,
               ),
               const PpForgeDivider.row(),
               EventBillRow(
@@ -378,6 +396,7 @@ class _EventsPageState extends State<_EventsPage> {
                 onAction: () => _tapped('ลงบัญชี (I paid)'),
                 actionTooltip: 'ลงบัญชี',
                 onTap: () => _tapped('book bill'),
+                payerAvatar: AvatarData.forName('ฉัน'),
               ),
             ],
           ),
@@ -393,15 +412,15 @@ class _EventsPageState extends State<_EventsPage> {
             children: [
               SettleRow(
                 fromAvatar: const PersonMark(
-                  name: 'เบียร์',
                   level: PersonLevel.name,
                   size: 32,
+                  avatar: null,
                 ),
                 fromName: 'เบียร์',
                 toAvatar: const PersonMark(
-                  name: 'ฉัน',
                   level: PersonLevel.name,
                   size: 20,
+                  avatar: null,
                 ),
                 toName: 'ฉัน',
                 amount: const MoneyText(3230),
@@ -412,15 +431,15 @@ class _EventsPageState extends State<_EventsPage> {
               ),
               SettleRow(
                 fromAvatar: const PersonMark(
-                  name: 'ฉัน',
                   level: PersonLevel.name,
                   size: 32,
+                  avatar: null,
                 ),
                 fromName: 'ฉัน',
                 toAvatar: const PersonMark(
-                  name: 'ต้น',
                   level: PersonLevel.name,
                   size: 20,
+                  avatar: null,
                 ),
                 toName: 'ต้น',
                 amount: const MoneyText(120),
@@ -431,15 +450,15 @@ class _EventsPageState extends State<_EventsPage> {
               ),
               SettleRow(
                 fromAvatar: const PersonMark(
-                  name: 'ฝน',
                   level: PersonLevel.name,
                   size: 32,
+                  avatar: null,
                 ),
                 fromName: 'ฝน',
                 toAvatar: const PersonMark(
-                  name: 'เบียร์',
                   level: PersonLevel.name,
                   size: 20,
+                  avatar: null,
                 ),
                 toName: 'เบียร์',
                 amount: const MoneyText(500),
@@ -487,7 +506,7 @@ class _EventsPageState extends State<_EventsPage> {
             ),
           ),
         ),
-        const HubDemo(
+        HubDemo(
           title: 'BillDebtSummary — the debts a bill save moves (SA5)',
           note:
               'The bill form, before saving: each person my debts move with, '
@@ -496,19 +515,22 @@ class _EventsPageState extends State<_EventsPage> {
           child: BillDebtSummary(
             lines: [
               BillDebtLine(
-                avatar: PersonMark(name: 'ฝน', level: PersonLevel.name),
+                avatar: PersonMark(level: PersonLevel.name, avatar: null),
                 name: 'ฝน',
                 state: 'ไม่มีหนี้ → ลูกหนี้ ฿300',
                 chip: 'เพิ่มหนี้ ฿300',
               ),
               BillDebtLine(
-                avatar: PersonMark(name: 'เบียร์', level: PersonLevel.contact),
+                avatar: PersonMark(
+                  level: PersonLevel.contact,
+                  avatar: AvatarData.forName('เบียร์'),
+                ),
                 name: 'เบียร์',
                 state: 'ลูกหนี้ ฿120 → ลูกหนี้ ฿420',
                 chip: 'เพิ่มหนี้ ฿300',
               ),
               BillDebtLine(
-                avatar: PersonMark(name: 'ต้น', level: PersonLevel.name),
+                avatar: PersonMark(level: PersonLevel.name, avatar: null),
                 name: 'ต้น',
                 chip: 'คืนแล้ว',
                 chipTone: PpForgeChipTone.success,
@@ -568,6 +590,7 @@ class _EventsPageState extends State<_EventsPage> {
               linked: v<bool>('linked'),
               locked: v<bool>('locked'),
               onTap: () {},
+              payerAvatar: AvatarData.forName(v<String>('payerName')),
             );
           },
         ),
@@ -609,6 +632,7 @@ class _HighlightDemoState extends State<_HighlightDemo> {
           linked: true,
           highlighted: _on,
           onTap: () {},
+          payerAvatar: AvatarData.forName('บี'),
         ),
         const SizedBox(height: PpForgeSpacing.sm),
         PpForgeButton(

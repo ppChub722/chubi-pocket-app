@@ -1530,13 +1530,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       errorText: editing && _personMissing ? l.debtPickPerson : null,
       leading: p == null
           ? const PickCardEmptyIcon(AppIcons.contact, size: 32)
-          : PersonMark(
-              name: p.name,
-              level: debtPersonLevel(p),
-              iconCode: p.iconCode,
-              avatar: p.avatar,
-              size: 32,
-            ),
+          : PersonMark(level: debtPersonLevel(p), avatar: p.avatar, size: 32),
       onTap: editing
           ? _pickPerson
           : () => openPage(context, debtPersonPath(p!)),

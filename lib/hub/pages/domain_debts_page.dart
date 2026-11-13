@@ -57,7 +57,11 @@ class _DebtsPageState extends State<_DebtsPage> {
     editable: true,
     reserveSubtitle: true,
     accent: Theme.of(context).colorScheme.primary,
-    leading: const PersonMark(name: 'ลี', level: PersonLevel.linked, size: 32),
+    leading: PersonMark(
+      level: PersonLevel.linked,
+      size: 32,
+      avatar: AvatarData.forName('ลี'),
+    ),
     onTap: () => _note('person card'),
   );
 
@@ -70,7 +74,11 @@ class _DebtsPageState extends State<_DebtsPage> {
           editable: true,
           onTap: () => _note('wallet card'),
         )
-      : const MeFlowCard(label: 'ฉัน', name: 'ปอนด์');
+      : MeFlowCard(
+          label: 'ฉัน',
+          name: 'ปอนด์',
+          avatar: AvatarData.forName('ปอนด์'),
+        );
 
   @override
   Widget build(BuildContext context) {
@@ -177,10 +185,10 @@ class _DebtsPageState extends State<_DebtsPage> {
               // line is the warning colour.
               _list([
                 PpForgeListRow(
-                  leading: const PersonMark(
-                    name: 'ลี',
+                  leading: PersonMark(
                     level: PersonLevel.linked,
                     size: 36,
+                    avatar: AvatarData.forName('ลี'),
                   ),
                   title: 'ลี ทดสอบ',
                   line2: const ListRowLine(parts: ['ครบกำหนด 30 ต.ค.']),
@@ -190,10 +198,10 @@ class _DebtsPageState extends State<_DebtsPage> {
                   onTap: () => _note('person'),
                 ),
                 PpForgeListRow(
-                  leading: const PersonMark(
-                    name: 'แบงค์',
+                  leading: PersonMark(
                     level: PersonLevel.contact,
                     size: 36,
+                    avatar: AvatarData.forName('แบงค์'),
                   ),
                   title: 'แบงค์ ทดสอบ',
                   line2: const ListRowLine(

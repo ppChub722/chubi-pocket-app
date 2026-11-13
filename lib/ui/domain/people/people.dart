@@ -5,24 +5,23 @@ import 'package:pp_forge_core/ui.dart';
 import 'avatar.dart';
 import 'avatar_data.dart';
 
+/// A member's name in any member list: "Pond (คุณ)" when it is me.
+String memberName(AppLocalizations l, String name, {required bool isMe}) =>
+    isMe ? '$name (${l.personYou})' : name;
+
 class PersonRef {
   const PersonRef({
     required this.name,
-    this.iconCode,
-    this.avatar,
+    required this.avatar,
     this.caption,
     this.isOwner = false,
     this.pending = false,
   });
 
   final String name;
-  final PpForgeIconCode? iconCode;
 
-  /// The BE's avatar; null = built from [name] + [iconCode].
-  final AvatarData? avatar;
-
-  AvatarData get shownAvatar =>
-      avatar ?? AvatarData.forName(name, iconCode: iconCode);
+  /// The person's avatar (the model's `.avatar`).
+  final AvatarData avatar;
 
   final String? caption;
   final bool isOwner;
@@ -68,7 +67,7 @@ class AvatarStack extends StatelessWidget {
                     shape: BoxShape.circle,
                     border: Border.all(color: scheme.surface, width: 1.5),
                   ),
-                  child: Avatar(visible[i].shownAvatar, size: size),
+                  child: Avatar(visible[i].avatar, size: size),
                 ),
               ),
             ),
@@ -144,7 +143,7 @@ class MemberStrip extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Avatar(members[i].shownAvatar, size: avatarSize),
+                          Avatar(members[i].avatar, size: avatarSize),
                           const SizedBox(height: PpForgeSpacing.xs),
                           Text(
                             members[i].isOwner

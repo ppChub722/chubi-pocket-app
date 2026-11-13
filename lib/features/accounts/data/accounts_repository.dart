@@ -46,11 +46,19 @@ class AccountsRepository {
     });
   }
 
-  Future<Account> create(Account draft) {
+  /// [inviteContactIds]: linked contacts invited in the same call.
+  Future<Account> create(
+    Account draft, {
+    List<String> inviteContactIds = const [],
+  }) {
     return _guard(() async {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/accounts',
-        data: draft.toCreateJson(),
+        data: {
+          ...draft.toCreateJson(),
+          if (inviteContactIds.isNotEmpty)
+            'invite_contact_ids': inviteContactIds,
+        },
       );
       return Account.fromJson(res.data!);
     });
@@ -61,6 +69,17 @@ class AccountsRepository {
       final res = await _client.dio.put<Map<String, dynamic>>(
         '/accounts/${account.id}',
         data: account.toUpdateJson(currentBalance: currentBalance),
+      );
+      return Account.fromJson(res.data!);
+    });
+  }
+
+  /// `PUT /v1/accounts/:id` with only `auto_save`: the savings wallet switch.
+  Future<Account> setAutoSave(String id, {required bool on}) {
+    return _guard(() async {
+      final res = await _client.dio.put<Map<String, dynamic>>(
+        '/accounts/$id',
+        data: <String, dynamic>{'auto_save': on},
       );
       return Account.fromJson(res.data!);
     });

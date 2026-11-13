@@ -10,6 +10,13 @@ import '../../domain/wallet_member.dart';
 import '../cubit/accounts_cubit.dart';
 import '../../../contacts/presentation/widgets/contact_picker.dart';
 
+/// A wallet member's role word: รอตอบรับ / เจ้าของ / สมาชิก.
+String walletMemberRole(AppLocalizations l, WalletMember m) => m.pending
+    ? l.walletMemberPending
+    : m.isOwner
+    ? l.walletMemberRoleOwner
+    : l.walletMemberRoleMember;
+
 Future<bool> inviteWalletMember(
   BuildContext context, {
   required Account account,
@@ -259,16 +266,18 @@ class _MemberRow extends StatelessWidget {
       if (member.leftAt != null)
         l.walletMemberLeft(_dateOnly(member.leftAt!, locale)),
     ];
-    final role = member.pending
-        ? ListRowChip(l.walletMemberPending, tone: Tone.warning, selected: true)
-        : ListRowChip(
-            member.isOwner ? l.walletMemberRoleOwner : l.walletMemberRoleMember,
-            tone: member.isOwner ? Tone.primary : Tone.neutral,
-            selected: true,
-          );
+    final role = ListRowChip(
+      walletMemberRole(l, member),
+      tone: member.pending
+          ? Tone.warning
+          : member.isOwner
+          ? Tone.primary
+          : Tone.neutral,
+      selected: true,
+    );
     return PpForgeListRow(
       leading: Avatar(member.avatar, size: 40),
-      title: isSelf ? '${member.name} (${l.walletMemberYou})' : member.name,
+      title: memberName(l, member.name, isMe: isSelf),
       status: role,
       line2: dates.isEmpty ? null : ListRowLine(parts: dates),
       actions: [

@@ -126,6 +126,28 @@ void main() {
     );
   });
 
+  test('a wallet reads auto_save (a savings wallet), false when absent', () {
+    Account wallet(Map<String, dynamic> extra) => Account.fromJson({
+      'id': 'w1',
+      'name': 'Savings',
+      'type': 'bank',
+      'group': 'asset',
+      'balance': 1000.0,
+      'currency': 'THB',
+      'status': 'active',
+      'sort_order': 0,
+      'my_role': 'owner',
+      'can_edit': true,
+      'is_shared': false,
+      ...extra,
+    });
+    expect(wallet({}).autoSave, isFalse);
+    expect(wallet({'auto_save': true}).autoSave, isTrue);
+    expect(wallet({'auto_save': true}).copyWith(name: 'x').autoSave, isTrue);
+    // The switch has its own call: a wallet edit never carries it.
+    expect(wallet({'auto_save': true}).toUpdateJson().containsKey('auto_save'), isFalse);
+  });
+
   test('User reads fee_category_id from preferences', () {
     final base = {
       'id': 'u1',

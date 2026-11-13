@@ -288,9 +288,7 @@ class _ContactRow extends StatelessWidget {
     ].where((s) => s.isNotEmpty).join(' | ');
     return PpForgeListRow(
       leading: PersonMark(
-        name: contact.name,
         level: contact.isLinked ? PersonLevel.linked : PersonLevel.contact,
-        iconCode: contact.iconCode,
         avatar: contact.avatar,
         size: 36,
       ),

@@ -2541,7 +2541,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walletMemberPending => 'Pending';
 
   @override
-  String get walletMemberYou => 'You';
+  String get personYou => 'You';
 
   @override
   String walletMemberJoined(String date) {
@@ -2696,9 +2696,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountAdjustBalanceDiffLabel => 'Difference';
 
   @override
-  String accountAdjustBalanceWillCreate(String amount) {
-    return 'This adds an \"Adjust balance\" transaction of $amount, dated today.';
+  String accountAdjustBalanceWillCreate(String amount, String date) {
+    return 'This adds an \"Adjust balance\" transaction of $amount, dated $date.';
   }
+
+  @override
+  String get accountAdjustBalanceDateLabel => 'Date';
 
   @override
   String get accountIdentifiersTitle => 'Reference numbers';
@@ -4652,6 +4655,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get savingEntryAutoSaveNeedsGoal =>
+      'This wallet already saves automatically. Pick a goal to set money aside for.';
+
+  @override
   String get savingEntrySaved => 'Saving recorded';
 
   @override
@@ -4821,6 +4828,44 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get walletAutoSaveLabel => 'Savings wallet';
+
+  @override
+  String get walletAutoSaveHelper =>
+      'Everything in this wallet counts as saved; money in and out moves your savings.';
+
+  @override
+  String get walletAutoSaveNeedsTrack => 'Turn on balance tracking first.';
+
+  @override
+  String get walletAutoSaveShared =>
+      'Not available while the wallet has other members.';
+
+  @override
+  String get walletAutoSaveOnTitle => 'Turn on savings wallet?';
+
+  @override
+  String get walletAutoSaveOnBody =>
+      'The unallocated saving booked in this wallet will be cleared and the whole balance counts as saved. Money set aside for goals stays as it is.';
+
+  @override
+  String get walletAutoSaveOnAction => 'Turn on';
+
+  @override
+  String get walletAutoSaveOffTitle => 'Turn off savings wallet?';
+
+  @override
+  String walletAutoSaveOffBody(String amount) {
+    return '$amount is set aside for goals. Turning it off keeps that as it is; the unallocated part becomes available in the wallet again.';
+  }
+
+  @override
+  String get walletAutoSaveOffAction => 'Turn off';
+
+  @override
+  String get walletAutoSaveChip => 'Auto-save';
+
+  @override
   String get fpWalletCreditUsedLabel => 'Used on the card';
 
   @override
@@ -4878,12 +4923,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpWalletInviteLabel => 'Invite';
-
-  @override
-  String get fpWalletOwnerCaption => 'Owner';
-
-  @override
-  String get fpWalletMemberCaption => 'Member';
 
   @override
   String fpTxAvgDaily(String amount) {

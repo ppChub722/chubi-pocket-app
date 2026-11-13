@@ -725,9 +725,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       leading: p == null
           ? const PickCardEmptyIcon(AppIcons.contact, size: 32)
           : PersonMark(
-              name: p.person.name,
               level: debtPersonLevel(p.person),
-              iconCode: p.person.iconCode,
               avatar: p.person.avatar,
               size: 32,
             ),

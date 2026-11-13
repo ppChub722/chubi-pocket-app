@@ -16,9 +16,6 @@ import '../../../transactions/domain/refs.dart';
 import '../../data/contacts_repository.dart';
 import '../../domain/contact.dart';
 import '../../../transactions/presentation/save_failure.dart';
-import '../../../notifications/domain/notification_rows.dart' show AutoSwitch;
-import '../../../settings/presentation/widgets/auto_sync_setting.dart'
-    show RequestAutoSetting;
 import '../cubit/contacts_cubit.dart';
 import '../widgets/contact_picker.dart';
 
@@ -555,9 +552,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
                     );
                   },
             child: PersonMark(
-              name: c.name,
               level: c.isLinked ? PersonLevel.linked : PersonLevel.contact,
-              iconCode: c.iconCode,
               avatar: c.avatar,
               size: HeroIdentity.iconSize,
             ),
@@ -705,7 +700,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           showChevron: hasNames,
           onTap: hasNames ? _openWireNames : null,
         ),
-        const RequestAutoSetting(which: AutoSwitch.acceptContactLinks),
       ],
     );
   }
@@ -758,9 +752,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
             size: 44,
             onTap: _linked ? null : _openIconMaker,
             child: PersonMark(
-              name: name,
               level: _linked ? PersonLevel.linked : PersonLevel.contact,
-              iconCode: _linked ? c!.iconCode : w.iconCode,
               avatar: avatar,
               size: 44,
             ),

@@ -33,7 +33,14 @@ class SavingEntryController extends ChangeNotifier {
 
   bool get hasKeyData => amountValue > 0 || note.text.trim().isNotEmpty;
 
-  double? get available => account?.savings?.available;
+  /// A savings wallet allocates from its unallocated part (its "available" is
+  /// always 0: the whole balance is saved).
+  double? get available => account?.autoSave == true
+      ? account?.savings?.spare
+      : account?.savings?.available;
+
+  /// A savings wallet books no unallocated saving: only a goal allocation.
+  bool get needsGoal => account?.autoSave == true && goalId == null;
 
   double get overBy {
     final a = available;
@@ -138,6 +145,13 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
   );
 
   Widget? _availableLine(AppLocalizations l, String symbol) {
+    if (_c.needsGoal) {
+      return PpForgeText(
+        l.savingEntryAutoSaveNeedsGoal,
+        role: PpForgeTextRole.caption,
+        color: Theme.of(context).colorScheme.error,
+      );
+    }
     final a = _c.available;
     if (a == null) return null;
     if (_c.overBy > 0) {

@@ -19,7 +19,7 @@ class MemberAvatarStack extends StatelessWidget {
   Widget build(BuildContext context) {
     return AvatarStack(
       people: [
-        for (final m in members) PersonRef(name: m.name, iconCode: m.iconCode),
+        for (final m in members) PersonRef(name: m.name, avatar: m.avatar),
       ],
       size: size,
       maxVisible: maxVisible,

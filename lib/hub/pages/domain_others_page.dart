@@ -354,23 +354,20 @@ Widget buildOthersPage(BuildContext context) {
           HubUse(
             label: 'ProjectMemberAvatar — a coloured initial',
             page: 'Project members page, member pick card',
-            child: const ProjectMemberAvatar(name: 'Aom Chan'),
+            child: ProjectMemberAvatar(avatar: AvatarData.forName('Aom Chan')),
           ),
           HubUse(
             label: 'ProjectMemberAvatar — own icon',
             page: 'Project members page, dashboard',
-            child: const ProjectMemberAvatar(
-              name: 'Bee',
-              iconCode: PpForgeIconCode(
-                icon: 'favorite',
-                iconColors: ['#EF4444'],
-              ),
-            ),
+            child: ProjectMemberAvatar(avatar: memberWithIcon.avatar),
           ),
           HubUse(
             label: 'ProjectMemberAvatar — size 48',
             page: 'Project members page',
-            child: const ProjectMemberAvatar(name: 'Aom Chan', size: 48),
+            child: ProjectMemberAvatar(
+              size: 48,
+              avatar: AvatarData.forName('Aom Chan'),
+            ),
           ),
           HubUse(
             label:
@@ -417,6 +414,7 @@ Widget buildOthersPage(BuildContext context) {
                 onTap: () {},
                 onAccept: () {},
                 onReject: () {},
+                actorAvatar: AvatarData.forName('Aom Chan'),
               ),
             ),
           ),
@@ -435,6 +433,7 @@ Widget buildOthersPage(BuildContext context) {
                 acceptLabel: 'Add',
                 rejectLabel: 'Skip',
                 onTap: () {},
+                actorAvatar: AvatarData.forName('Bee'),
               ),
             ),
           ),
@@ -608,11 +607,10 @@ Widget buildOthersPage(BuildContext context) {
             HubCell(
               caption: 'ProjectMemberAvatar',
               child: ProjectMemberAvatar(
-                name: v<bool>('memberIcon') ? 'Bee' : 'Aom Chan',
-                iconCode: v<bool>('memberIcon')
-                    ? memberWithIcon.iconCode
-                    : null,
                 size: v<double>('size'),
+                avatar: v<bool>('memberIcon')
+                    ? memberWithIcon.avatar
+                    : AvatarData.forName('Aom Chan'),
               ),
             ),
           ],

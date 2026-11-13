@@ -147,9 +147,7 @@ class _LinkSectionState extends State<LinkSection> {
         ? PersonLevel.linked
         : PersonLevel.contact;
     return PersonMark(
-      name: p.name,
       level: level,
-      iconCode: p.person?.iconCode,
       avatar: p.person?.avatar,
       size: SplitRow.avatarSize,
       reserveLinkSlot: true,

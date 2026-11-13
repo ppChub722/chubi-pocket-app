@@ -30,10 +30,8 @@ class PersonLinkBadge extends StatelessWidget {
 
 class PersonMark extends StatelessWidget {
   const PersonMark({
-    required this.name,
     required this.level,
-    this.iconCode,
-    this.avatar,
+    required this.avatar,
     this.size = 20,
     this.reserveLinkSlot = false,
     this.tappable = false,
@@ -48,13 +46,10 @@ class PersonMark extends StatelessWidget {
   /// The badge sits on the avatar, so no row needs a slot beside it.
   static double linkSlotWidth(double size) => 0;
 
-  final String name;
   final PersonLevel level;
 
-  final PpForgeIconCode? iconCode;
-
-  /// The BE's avatar (contact / linked levels); null = built from [name] +
-  /// [iconCode].
+  /// The person's avatar (the model's `.avatar`); null = nobody known yet (a
+  /// typed name): the plain glyph. [PersonLevel.name] never shows it.
   final AvatarData? avatar;
   final double size;
 
@@ -93,7 +88,8 @@ class PersonMark extends StatelessWidget {
         ),
       ),
     );
-    final Widget mark = level == PersonLevel.name
+    final shown = avatar;
+    final Widget mark = level == PersonLevel.name || shown == null
         ? tappable
               ? SizedBox.square(
                   dimension: size,
@@ -113,14 +109,7 @@ class PersonMark extends StatelessWidget {
                   ),
                 )
               : plain
-        : Avatar(
-            avatar ??
-                AvatarData.forName(
-                  name.isEmpty ? '?' : name,
-                  iconCode: iconCode,
-                ),
-            size: size,
-          );
+        : Avatar(shown, size: size);
     if (level != PersonLevel.linked) return mark;
     // A touch bigger than other corner badges, the glyph nearly filling it
     // (owner 2026-10-23).

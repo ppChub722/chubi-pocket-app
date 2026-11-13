@@ -485,7 +485,11 @@ class _Ladder extends StatelessWidget {
         ),
         row(
           'PersonMark — contact',
-          (s) => PersonMark(name: 'Bee', level: PersonLevel.contact, size: s),
+          (s) => PersonMark(
+            level: PersonLevel.contact,
+            size: s,
+            avatar: AvatarData.forName('Bee'),
+          ),
         ),
         row(
           'CornerBadge — 🔗 (hidden below 40)',

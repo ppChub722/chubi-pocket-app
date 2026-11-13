@@ -6,6 +6,7 @@ typedef AdjustBalanceSheetResult = ({
   double balance,
   String? description,
   String? note,
+  DateTime date,
 });
 
 /// The words of [AdjustBalanceSheet] — the caller passes its localised strings
@@ -19,6 +20,8 @@ class AdjustBalanceStrings {
     required this.diffLabel,
     required this.descriptionLabel,
     required this.noteLabel,
+    required this.dateLabel,
+    required this.formatDate,
     required this.noChange,
     required this.willCreate,
   });
@@ -33,10 +36,14 @@ class AdjustBalanceStrings {
   final String descriptionLabel;
   final String noteLabel;
 
+  /// The adjustment's date row (a card's statement closes on a day: adjust on it).
+  final String dateLabel;
+  final String Function(DateTime date) formatDate;
+
   /// Caption while nothing would change.
   final String noChange;
 
-  final String Function(String diff) willCreate;
+  final String Function(String diff, String date) willCreate;
 }
 
 Future<AdjustBalanceSheetResult?> showAdjustBalanceFormSheet(
@@ -92,6 +99,24 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
   late final TextEditingController _controller;
   final _description = TextEditingController();
   final _note = TextEditingController();
+  DateTime _date = _today();
+
+  static DateTime _today() {
+    final n = DateTime.now();
+    return DateTime(n.year, n.month, n.day);
+  }
+
+  Future<void> _pickDate() async {
+    final r = await PpForgeDatePicker.show(
+      context,
+      initial: _date,
+      first: DateTime(2000),
+      last: _today(),
+    );
+    if (r is PpForgeDatePicked) {
+      setState(() => _date = DateTime(r.date.year, r.date.month, r.date.day));
+    }
+  }
 
   bool get _isCredit => widget.isCredit;
 
@@ -154,6 +179,7 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
               balance: next,
               description: _opt(_description),
               note: _opt(_note),
+              date: widget.setOnly ? _today() : _date,
             ))
           : null,
       child: Column(
@@ -230,6 +256,21 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
           if (!widget.setOnly) ...[
             const SizedBox(height: PpForgeSpacing.md),
             _FieldRow(
+              label: s.dateLabel,
+              child: Padding(
+                padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: PpForgeChip(
+                    label: s.formatDate(_date),
+                    icon: Icons.event_outlined,
+                    onTap: _pickDate,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: PpForgeSpacing.sm),
+            _FieldRow(
               label: s.descriptionLabel,
               child: PpForgeInput(
                 controller: _description,
@@ -249,7 +290,7 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
             ),
             const SizedBox(height: PpForgeSpacing.sm),
             Text(
-              canAdjust ? s.willCreate(diffText) : s.noChange,
+              canAdjust ? s.willCreate(diffText, s.formatDate(_date)) : s.noChange,
               style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ],

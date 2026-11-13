@@ -466,9 +466,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
                   '${p.net > 0 ? l.debtRoleDebtor : l.debtRoleCreditor} '
                   '${moneyString(context, p.net.abs(), symbol: symbol)}',
               leading: PersonMark(
-                name: p.person.name,
                 level: debtPersonLevel(p.person),
-                iconCode: p.person.iconCode,
                 avatar: p.person.avatar,
                 size: 32,
               ),
@@ -662,9 +660,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
       leading: p == null
           ? const PickCardEmptyIcon(AppIcons.contact, size: 32)
           : PersonMark(
-              name: p.person.name,
               level: debtPersonLevel(p.person),
-              iconCode: p.person.iconCode,
               avatar: p.person.avatar,
               size: 32,
             ),
@@ -707,7 +703,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     return MeFlowCard(
       label: l.txLinkCardMe,
       name: user?.displayName ?? l.txLinkCardMe,
-      iconCode: user?.iconCode,
+      avatar: user?.avatar ?? AvatarData.forName(l.txLinkCardMe),
     );
   }
 

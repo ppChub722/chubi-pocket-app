@@ -56,14 +56,16 @@ class PickerMember {
   const PickerMember({
     required this.id,
     required this.name,
-    this.iconCode,
+    required this.avatar,
     this.level = PersonLevel.name,
     this.contactId,
   });
 
   final String id;
   final String name;
-  final PpForgeIconCode? iconCode;
+
+  /// The member's `.avatar`; null = a typed name (the plain glyph).
+  final AvatarData? avatar;
   final PersonLevel level;
 
   /// My contact for this member: that contact isn't listed again below.
@@ -213,7 +215,7 @@ abstract final class ContactPicker {
             PickerItem(
               id: 'm:${m.id}',
               title: m.name,
-              leading: _mark(m.name, m.level, m.iconCode),
+              leading: _mark(m.avatar, m.level),
               group: memberGroup,
               data: m,
             ),
@@ -270,7 +272,7 @@ abstract final class ContactPicker {
           freeText: PickerFreeText(
             hint: l.contactPickerTypeName,
             saveLabel: l.contactPickerUseName,
-            leading: (typed) => _mark(typed, PersonLevel.name, null),
+            leading: (typed) => _mark(null, PersonLevel.name),
             maxLength: TextLimits.name,
           ),
           searchable: true,
@@ -394,7 +396,7 @@ abstract final class ContactPicker {
               ? PickerFreeText(
                   hint: l.contactPickerTypeName,
                   saveLabel: l.contactPickerUseName,
-                  leading: (typed) => _mark(typed, PersonLevel.name, null),
+                  leading: (typed) => _mark(null, PersonLevel.name),
                   initial: initialName?.trim() ?? '',
                   maxLength: TextLimits.name,
                 )
@@ -485,7 +487,7 @@ abstract final class ContactPicker {
               id: c.id,
               title: c.name,
               subtitle: c.email,
-              leading: _mark(c.name, PersonLevel.linked, c.iconCode, size: 40),
+              leading: _mark(c.avatar, PersonLevel.linked, size: 40),
               data: c,
             ),
       ],
@@ -578,14 +580,12 @@ abstract final class ContactPicker {
   static bool _isName(String id) => id.startsWith('n:');
 
   static Widget _mark(
-    String name,
-    PersonLevel level,
-    PpForgeIconCode? iconCode, {
+    AvatarData? avatar,
+    PersonLevel level, {
     double size = 36,
   }) => PersonMark(
-    name: name,
     level: level,
-    iconCode: iconCode,
+    avatar: avatar,
     size: size,
     reserveLinkSlot: true,
   );
@@ -631,9 +631,8 @@ abstract final class ContactPicker {
           title: c.name,
           subtitle: about.isNotEmpty ? about : (email.isEmpty ? null : email),
           leading: _mark(
-            c.name,
+            c.avatar,
             c.isLinked ? PersonLevel.linked : PersonLevel.contact,
-            c.iconCode,
           ),
           trailing: trailing(p),
           keywords: [c.displayName, ?c.description, ?c.email, ?c.phone],
@@ -648,7 +647,7 @@ abstract final class ContactPicker {
         PickerItem(
           id: p.key,
           title: p.person.name,
-          leading: _mark(p.person.name, PersonLevel.name, p.person.iconCode),
+          leading: _mark(p.person.avatar, PersonLevel.name),
           trailing: trailing(p),
           data: p,
         ),

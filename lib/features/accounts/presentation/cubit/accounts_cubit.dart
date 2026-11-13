@@ -142,8 +142,14 @@ class AccountsCubit extends Cubit<AccountsState>
 
   Future<void> load() => loadSynced();
 
-  Future<Account> add(Account draft) async {
-    final created = await _repo.create(draft);
+  Future<Account> add(
+    Account draft, {
+    List<String> inviteContactIds = const [],
+  }) async {
+    final created = await _repo.create(
+      draft,
+      inviteContactIds: inviteContactIds,
+    );
     emit(state.copyWith(accounts: [...state.accounts, created]));
     return created;
   }
@@ -164,6 +170,12 @@ class AccountsCubit extends Cubit<AccountsState>
       on: on,
       currentBalance: currentBalance,
     );
+    _replace(updated);
+    return updated;
+  }
+
+  Future<Account> setAutoSave(String id, {required bool on}) async {
+    final updated = await _repo.setAutoSave(id, on: on);
     _replace(updated);
     return updated;
   }

@@ -911,16 +911,19 @@ class ProjectMemberPosition extends Equatable {
     this.received = 0,
     this.userId,
     this.iconCode,
-    this.avatar,
-  });
+    AvatarData? avatar,
+  }) : _avatar = avatar;
 
   final String memberId;
   final String? userId;
   final String displayName;
   final PpForgeIconCode? iconCode;
 
-  /// The member's avatar (MemberRef); null = built from the name + icon.
-  final AvatarData? avatar;
+  final AvatarData? _avatar;
+
+  /// The member's avatar (MemberRef); built from the name + icon when absent.
+  AvatarData get avatar =>
+      _avatar ?? AvatarData.forName(displayName, iconCode: iconCode);
   final double paid;
   final double share;
 
@@ -956,7 +959,7 @@ class ProjectMemberPosition extends Equatable {
     userId,
     displayName,
     iconCode,
-    avatar,
+    _avatar,
     paid,
     share,
     sent,

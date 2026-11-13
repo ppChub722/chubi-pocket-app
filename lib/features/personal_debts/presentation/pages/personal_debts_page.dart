@@ -105,9 +105,7 @@ class _PeopleViewState extends State<_PeopleView> {
     return PpForgeListRow(
       key: ValueKey(p.key),
       leading: PersonMark(
-        name: p.person.name,
         level: debtPersonLevel(p.person),
-        iconCode: p.person.iconCode,
         avatar: p.person.avatar,
         size: 36,
       ),

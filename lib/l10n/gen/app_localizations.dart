@@ -4489,11 +4489,11 @@ abstract class AppLocalizations {
   /// **'Pending'**
   String get walletMemberPending;
 
-  /// No description provided for @walletMemberYou.
+  /// No description provided for @personYou.
   ///
   /// In en, this message translates to:
   /// **'You'**
-  String get walletMemberYou;
+  String get personYou;
 
   /// No description provided for @walletMemberJoined.
   ///
@@ -4744,8 +4744,14 @@ abstract class AppLocalizations {
   /// No description provided for @accountAdjustBalanceWillCreate.
   ///
   /// In en, this message translates to:
-  /// **'This adds an \"Adjust balance\" transaction of {amount}, dated today.'**
-  String accountAdjustBalanceWillCreate(String amount);
+  /// **'This adds an \"Adjust balance\" transaction of {amount}, dated {date}.'**
+  String accountAdjustBalanceWillCreate(String amount, String date);
+
+  /// No description provided for @accountAdjustBalanceDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get accountAdjustBalanceDateLabel;
 
   /// No description provided for @accountIdentifiersTitle.
   ///
@@ -7891,6 +7897,12 @@ abstract class AppLocalizations {
   /// **'{amount} more than is free (still allowed)'**
   String savingEntryOverAvailable(String amount);
 
+  /// No description provided for @savingEntryAutoSaveNeedsGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'This wallet already saves automatically. Pick a goal to set money aside for.'**
+  String get savingEntryAutoSaveNeedsGoal;
+
   /// No description provided for @savingEntrySaved.
   ///
   /// In en, this message translates to:
@@ -8197,6 +8209,72 @@ abstract class AppLocalizations {
   /// **'Saved {amount} more than the wallet holds'**
   String fpWalletSavedOverAlert(String amount);
 
+  /// No description provided for @walletAutoSaveLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Savings wallet'**
+  String get walletAutoSaveLabel;
+
+  /// No description provided for @walletAutoSaveHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything in this wallet counts as saved; money in and out moves your savings.'**
+  String get walletAutoSaveHelper;
+
+  /// No description provided for @walletAutoSaveNeedsTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on balance tracking first.'**
+  String get walletAutoSaveNeedsTrack;
+
+  /// No description provided for @walletAutoSaveShared.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available while the wallet has other members.'**
+  String get walletAutoSaveShared;
+
+  /// No description provided for @walletAutoSaveOnTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on savings wallet?'**
+  String get walletAutoSaveOnTitle;
+
+  /// No description provided for @walletAutoSaveOnBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The unallocated saving booked in this wallet will be cleared and the whole balance counts as saved. Money set aside for goals stays as it is.'**
+  String get walletAutoSaveOnBody;
+
+  /// No description provided for @walletAutoSaveOnAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on'**
+  String get walletAutoSaveOnAction;
+
+  /// No description provided for @walletAutoSaveOffTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off savings wallet?'**
+  String get walletAutoSaveOffTitle;
+
+  /// No description provided for @walletAutoSaveOffBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} is set aside for goals. Turning it off keeps that as it is; the unallocated part becomes available in the wallet again.'**
+  String walletAutoSaveOffBody(String amount);
+
+  /// No description provided for @walletAutoSaveOffAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off'**
+  String get walletAutoSaveOffAction;
+
+  /// No description provided for @walletAutoSaveChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-save'**
+  String get walletAutoSaveChip;
+
   /// No description provided for @fpWalletCreditUsedLabel.
   ///
   /// In en, this message translates to:
@@ -8286,18 +8364,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invite'**
   String get fpWalletInviteLabel;
-
-  /// No description provided for @fpWalletOwnerCaption.
-  ///
-  /// In en, this message translates to:
-  /// **'Owner'**
-  String get fpWalletOwnerCaption;
-
-  /// No description provided for @fpWalletMemberCaption.
-  ///
-  /// In en, this message translates to:
-  /// **'Member'**
-  String get fpWalletMemberCaption;
 
   /// No description provided for @fpTxAvgDaily.
   ///

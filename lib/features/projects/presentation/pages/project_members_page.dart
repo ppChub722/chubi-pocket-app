@@ -456,13 +456,12 @@ class _MemberRow extends StatelessWidget {
       dimmed: m.status != MemberStatus.active,
       // The level reads from the mark (owner 2026-11-03): no "ไม่มีบัญชีแอป"
       // line.
-      leading: PersonMark(
-        name: m.displayName,
-        level: m.level,
-        avatar: m.avatar,
-        size: 40,
+      leading: PersonMark(level: m.level, avatar: m.avatar, size: 40),
+      title: memberName(
+        AppLocalizations.of(context)!,
+        m.displayName,
+        isMe: m.isMe,
       ),
-      title: m.displayName,
       trailing: trailing,
       actions: [
         if (options.isNotEmpty)

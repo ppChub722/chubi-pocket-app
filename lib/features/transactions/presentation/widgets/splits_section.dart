@@ -652,9 +652,7 @@ class _SplitDraftRowState extends State<SplitDraftRow> {
         : PersonLevel.contact;
 
     final mark = PersonMark(
-      name: draft.personName,
       level: level,
-      iconCode: person?.iconCode,
       avatar: person?.avatar,
       size: SplitRow.avatarSize,
       reserveLinkSlot: true,

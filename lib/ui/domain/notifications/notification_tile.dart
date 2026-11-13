@@ -24,10 +24,9 @@ class NotificationTileView extends StatelessWidget {
     required this.timeText,
     required this.typeIcon,
     required this.acceptLabel,
+    required this.actorAvatar,
     this.rejectLabel,
     this.system = false,
-    this.actorIconCode,
-    this.actorAvatar,
     this.amountText,
     this.unread = false,
     this.pending = false,
@@ -42,11 +41,9 @@ class NotificationTileView extends StatelessWidget {
   static const double _avatar = 40;
 
   final String actorName;
-  final PpForgeIconCode? actorIconCode;
 
-  /// The actor's avatar from the BE; null = built from [actorName] +
-  /// [actorIconCode].
-  final AvatarData? actorAvatar;
+  /// The actor's `.avatar` (a name-only actor: built from the name).
+  final AvatarData actorAvatar;
   final String title;
   final String timeText;
   final String? amountText;
@@ -101,12 +98,7 @@ class NotificationTileView extends StatelessWidget {
                       icon: typeIcon,
                       color: mark,
                       size: _avatar,
-                      actor:
-                          actorAvatar ??
-                          AvatarData.forName(
-                            actorName,
-                            iconCode: actorIconCode,
-                          ),
+                      actor: actorAvatar,
                     ),
               title: title,
               titleStrong: unread,

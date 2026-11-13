@@ -105,10 +105,22 @@ class ContactPickerDemos extends StatelessWidget {
                 membersLabel: 'คนในอีเวนต์',
                 confirmLabel: (n) => 'เพิ่ม $n คน',
                 selectedMemberIds: const {'m1'},
-                members: const [
-                  PickerMember(id: 'm1', name: 'ฉัน'),
-                  PickerMember(id: 'm2', name: 'ฝน'),
-                  PickerMember(id: 'm3', name: 'ต้น'),
+                members: [
+                  PickerMember(
+                    id: 'm1',
+                    name: 'ฉัน',
+                    avatar: AvatarData.forName('ฉัน'),
+                  ),
+                  PickerMember(
+                    id: 'm2',
+                    name: 'ฝน',
+                    avatar: AvatarData.forName('ฝน'),
+                  ),
+                  PickerMember(
+                    id: 'm3',
+                    name: 'ต้น',
+                    avatar: AvatarData.forName('ต้น'),
+                  ),
                 ],
               );
               if (r == null) return 'cancelled';

@@ -53,6 +53,7 @@ class Account extends Equatable {
     this.myRole = WalletRole.owner,
     this.canEdit = true,
     this.trackBalance = true,
+    this.autoSave = false,
     this.savings,
     this.monthIn = 0,
     this.monthOut = 0,
@@ -70,6 +71,10 @@ class Account extends Equatable {
   final double balance;
 
   final bool trackBalance;
+
+  /// A savings wallet (owner 2026-11-13): the whole balance counts as saved;
+  /// only the owner can turn it on, never on a card or a shared wallet.
+  final bool autoSave;
 
   final WalletSavings? savings;
 
@@ -169,6 +174,7 @@ class Account extends Equatable {
     WalletRole? myRole,
     bool? canEdit,
     bool? trackBalance,
+    bool? autoSave,
     WalletSavings? savings,
     double? monthIn,
     double? monthOut,
@@ -203,6 +209,7 @@ class Account extends Equatable {
       myRole: myRole ?? this.myRole,
       canEdit: canEdit ?? this.canEdit,
       trackBalance: trackBalance ?? this.trackBalance,
+      autoSave: autoSave ?? this.autoSave,
       savings: savings ?? this.savings,
       monthIn: monthIn ?? this.monthIn,
       monthOut: monthOut ?? this.monthOut,
@@ -254,6 +261,7 @@ class Account extends Equatable {
       myRole: WalletRoleWire.parse(json['my_role'] as String?),
       canEdit: (json['can_edit'] as bool?) ?? false,
       trackBalance: (json['track_balance'] as bool?) ?? true,
+      autoSave: (json['auto_save'] as bool?) ?? false,
       savings: json['savings'] is Map<String, dynamic>
           ? WalletSavings.fromJson(json['savings'] as Map<String, dynamic>)
           : null,
@@ -283,6 +291,7 @@ class Account extends Equatable {
       },
       if (identifiers.isNotEmpty)
         'identifiers': [for (final i in identifiers) i.toJson()],
+      if (myReportScope != null) 'report_scope': myReportScope!.wire,
     };
   }
 
@@ -333,6 +342,7 @@ class Account extends Equatable {
     myRole,
     canEdit,
     trackBalance,
+    autoSave,
     savings,
     monthIn,
     monthOut,

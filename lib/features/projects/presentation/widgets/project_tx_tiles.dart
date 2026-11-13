@@ -55,7 +55,6 @@ List<EventBillPayer> projectBillPayers(
           name: projectMemberName(l, m),
           amount: money(p.amount),
           level: projectMemberLevel(m),
-          iconCode: m.iconCode,
           avatar: m.avatar,
         ),
 ];
@@ -127,6 +126,7 @@ class ProjectTxTreeTile extends StatelessWidget {
           ? book({ProjectTransaction.bookDebt, ProjectTransaction.bookRepay})
           : null;
       return EventBillRow(
+        payerAvatar: null,
         tick: false,
         leading: IconTile(icon: AppIcons.transfer, color: color, size: 28),
         title:
@@ -203,7 +203,6 @@ class ProjectTxTreeTile extends StatelessWidget {
       // An income bill reads the same, only the words change (Q-E3).
       payerVerb: parent.type == 'income' ? l.evbReceives : l.evbPays,
       payerLevel: projectMemberLevel(payer),
-      payerIconCode: payer.iconCode,
       payerAvatar: payer.avatar,
       // Multi-payer (0.4.1-2): every payer with what they paid, biggest
       // first (the BE order); one payer keeps the single-name line.
@@ -222,7 +221,7 @@ class ProjectTxTreeTile extends StatelessWidget {
             name: projectMemberName(l, me),
             amount: parent.myShare,
             level: projectMemberLevel(me),
-            iconCode: me.iconCode,
+            avatar: me.avatar,
             symbol: symbol,
             badge: chips,
             mine: onBook != null,
@@ -277,7 +276,7 @@ class ProjectTxTreeTile extends StatelessWidget {
       name: projectMemberName(AppLocalizations.of(context)!, debtor),
       amount: c.amount,
       level: projectMemberLevel(debtor),
-      iconCode: debtor.iconCode,
+      avatar: debtor.avatar,
       symbol: symbol,
       badge: mine ? chips : null,
       mine: mine && onBook != null,

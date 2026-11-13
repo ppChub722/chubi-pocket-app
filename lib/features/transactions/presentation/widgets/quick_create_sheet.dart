@@ -1518,9 +1518,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       editable: false,
       onTap: null,
       leading: PersonMark(
-        name: p.name,
         level: debtPersonLevel(p),
-        iconCode: p.iconCode,
         avatar: p.avatar,
         size: 32,
       ),

@@ -1019,10 +1019,10 @@ class _ListRowPageState extends State<_ListRowPage> {
               child: _Card(
                 rows: [
                   PpForgeListRow(
-                    leading: const PersonMark(
-                      name: 'ฝน',
+                    leading: PersonMark(
                       level: PersonLevel.contact,
                       size: 36,
+                      avatar: AvatarData.forName('ฝน'),
                     ),
                     title: 'ฝน',
                     line2: const ListRowLine(parts: ['ค้าง 12 วัน']),
@@ -1032,11 +1032,11 @@ class _ListRowPageState extends State<_ListRowPage> {
                     onTap: () {},
                   ),
                   PpForgeListRow(
-                    leading: const PersonMark(
-                      name: 'บอส',
+                    leading: PersonMark(
                       level: PersonLevel.linked,
                       size: 36,
                       linkOnCorner: true,
+                      avatar: AvatarData.forName('บอส'),
                     ),
                     title: 'บอส',
                     line2: ListRowLine(

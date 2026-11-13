@@ -15,6 +15,8 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
+import '../../../contacts/domain/contact.dart';
+import '../../../contacts/presentation/widgets/contact_picker.dart';
 import '../../../transactions/data/transactions_repository.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../../transactions/domain/transaction_type.dart';
@@ -22,9 +24,6 @@ import '../../../transactions/domain/transactions_summary.dart';
 import '../../../transactions/presentation/pages/transactions_list_page.dart';
 import '../../../transactions/presentation/tx_list_filters.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
-import '../../../notifications/domain/notification_rows.dart' show AutoSwitch;
-import '../../../settings/presentation/widgets/auto_sync_setting.dart'
-    show RequestAutoSetting;
 import '../../domain/account.dart';
 import '../../domain/account_identifier.dart';
 import '../../domain/payment_provider.dart';
@@ -447,7 +446,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             paymentDueDate: dueDay,
             minimumPayment: minPayment,
             identifiers: w.cleanIdentifiers,
+            myReportScope: w.effectiveScope,
           ),
+          inviteContactIds: [for (final c in w.invitees) c.id],
         );
       } else {
         final p = widget.account!;
@@ -601,6 +602,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         newBalance: result.balance,
         description: result.description,
         note: result.note,
+        date: result.date.toIso8601String().substring(0, 10),
       );
       widget.onAccount?.call(outcome.account);
       if (!mounted) return;
@@ -639,6 +641,42 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       a.id,
       on: on,
       currentBalance: balance,
+    );
+    widget.onAccount?.call(updated);
+    return true;
+  }
+
+  /// The savings wallet switch: one call, asked first because it changes what
+  /// counts as saved. Off warns when goals hold money; they stay as they are.
+  Future<bool> _setAutoSave(Account a, bool on) async {
+    final l = AppLocalizations.of(context)!;
+    final inGoals = a.savings == null
+        ? 0.0
+        : a.savings!.buckets
+              .where((b) => b.isGoal)
+              .fold<double>(0, (sum, b) => sum + b.amount);
+    final bool ok;
+    if (on) {
+      ok = await showConfirmDialog(
+        context,
+        title: l.walletAutoSaveOnTitle,
+        message: l.walletAutoSaveOnBody,
+        confirmLabel: l.walletAutoSaveOnAction,
+      );
+    } else if (inGoals > 0) {
+      ok = await showConfirmDialog(
+        context,
+        title: l.walletAutoSaveOffTitle,
+        message: l.walletAutoSaveOffBody(moneyString(context, inGoals)),
+        confirmLabel: l.walletAutoSaveOffAction,
+      );
+    } else {
+      ok = true;
+    }
+    if (!ok || !mounted) return false;
+    final updated = await context.read<AccountsCubit>().setAutoSave(
+      a.id,
+      on: on,
     );
     widget.onAccount?.call(updated);
     return true;
@@ -1074,6 +1112,14 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                 selected: true,
               ),
             ),
+            if (a.autoSave)
+              Builder(
+                builder: (context) => PpForgeChip(
+                  label: l.walletAutoSaveChip,
+                  color: HeroColors.maybeOf(context)?.accent,
+                  selected: true,
+                ),
+              ),
             if (a.isShared)
               MemberChip(members: members, onTap: () => _openMembers(a)),
           ],
@@ -1240,20 +1286,15 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             label: l.accountFormCreditLimitLabel,
             value: moneyString(context, a.creditLimit!, symbol: symbol),
           ),
-        if (a.paymentDueDate != null)
-          InfoRow(
-            label: l.accountDetailPaymentDue,
-            value: dayOfMonthLabel(context, a.paymentDueDate),
-          ),
         if (a.statementDate != null)
           InfoRow(
             label: l.accountDetailStatementDate,
             value: dayOfMonthLabel(context, a.statementDate),
           ),
-        if (a.minimumPayment != null)
+        if (a.paymentDueDate != null)
           InfoRow(
-            label: l.accountDetailMinimumPayment,
-            value: moneyString(context, a.minimumPayment!, symbol: symbol),
+            label: l.accountDetailPaymentDue,
+            value: dayOfMonthLabel(context, a.paymentDueDate),
           ),
       ],
     ];
@@ -1290,9 +1331,36 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                   caption: l.walletTrackHelper,
                   value: a.trackBalance,
                 ),
+        if (_isOwner && !a.isLiability) _autoSaveRow(l, a),
         _scopeRow(l, a),
-        const RequestAutoSetting(which: AutoSwitch.acceptWalletInvites),
       ],
+    );
+  }
+
+  /// The savings wallet switch (saves at once). Greyed out, with the reason, while the
+  /// wallet can't be one: no balance tracking, or other members.
+  Widget _autoSaveRow(AppLocalizations l, Account a) {
+    final String? blocked = !a.trackBalance
+        ? l.walletAutoSaveNeedsTrack
+        : (a.isShared && !a.autoSave ? l.walletAutoSaveShared : null);
+    if (blocked != null) {
+      return SettingToggleRow(
+        label: l.walletAutoSaveLabel,
+        caption: blocked,
+        value: a.autoSave,
+        onChanged: null,
+      );
+    }
+    return LiveSetting<bool>(
+      value: a.autoSave,
+      save: (on) => _setAutoSave(a, on),
+      failedMessage: (e) => _errorText(l, e),
+      builder: (context, value, onChanged) => SettingToggleRow(
+        label: l.walletAutoSaveLabel,
+        caption: l.walletAutoSaveHelper,
+        value: value,
+        onChanged: onChanged,
+      ),
     );
   }
 
@@ -1319,6 +1387,92 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         ),
   );
 
+  /// Create: part of the draft, sent with the create call.
+  Widget _createScopeRow(AppLocalizations l) {
+    final w = working;
+    final scope = w.effectiveScope;
+    return SettingDropdownRow<WalletReportScope>(
+      label: l.walletReportScopeTitle,
+      value: _scopeLabel(l, scope),
+      selected: scope,
+      options: [
+        for (final s in [
+          WalletReportScope.none,
+          if (w.invitees.isNotEmpty) WalletReportScope.own,
+          WalletReportScope.all,
+        ])
+          SheetOption(value: s, label: _scopeLabel(l, s)),
+      ],
+      onSelected: (s) => applyChange(working.copyWith(reportScope: s)),
+    );
+  }
+
+  /// Create: me as the owner plus the contacts to invite; the invites go out
+  /// with the create call.
+  Widget _createPeople(AppLocalizations l) {
+    final auth = context.read<AuthCubit>().state;
+    final me = auth is AuthAuthenticated ? auth.user : null;
+    final invitees = working.invitees;
+    return PeopleStrip(
+      title: l.walletMembersTitle,
+      description: l.accountMembersSectionDescription,
+      members: [
+        PeopleStripMember(
+          avatar: Avatar(
+            me?.avatar ?? AvatarData.forName(l.personYou),
+            size: 36,
+          ),
+          name: me == null
+              ? l.personYou
+              : memberName(l, me.displayName, isMe: true),
+          caption: l.walletMemberRoleOwner,
+        ),
+        for (final c in invitees)
+          PeopleStripMember(
+            avatar: Avatar(c.avatar, size: 36),
+            name: c.name,
+            caption: l.walletMemberPending,
+          ),
+      ],
+      inviteLabel: l.fpWalletInviteLabel,
+      onInvite: isSaving ? null : _pickInvitee,
+      onMemberTap: (i) {
+        if (i > 0 && !isSaving) _removeInvitee(invitees[i - 1]);
+      },
+    );
+  }
+
+  Future<void> _pickInvitee() async {
+    final contact = await ContactPicker.walletInvite(
+      context,
+      excludeUserIds: {
+        for (final c in working.invitees)
+          if (c.linkedUser != null) c.linkedUser!.id,
+      },
+    );
+    if (contact == null || !mounted) return;
+    applyChange(working.copyWith(invitees: [...working.invitees, contact]));
+  }
+
+  Future<void> _removeInvitee(Contact c) async {
+    final l = AppLocalizations.of(context)!;
+    final ok = await showConfirmDialog(
+      context,
+      title: l.walletRemoveMemberConfirmTitle(c.name),
+      confirmLabel: l.walletRemoveMemberAction,
+      destructive: true,
+    );
+    if (!ok || !mounted) return;
+    applyChange(
+      working.copyWith(
+        invitees: [
+          for (final x in working.invitees)
+            if (x.id != c.id) x,
+        ],
+      ),
+    );
+  }
+
   String _errorText(AppLocalizations l, Object e) =>
       e is ApiException ? errorText(l, e) : l.errorGenericMessage;
 
@@ -1332,9 +1486,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       members: [
         for (final m in members)
           PeopleStripMember(
-            avatar: MemberAvatarStack(members: [m], size: 36, maxVisible: 1),
-            name: m.name,
-            caption: m.isMe ? l.fpWalletOwnerCaption : l.fpWalletMemberCaption,
+            avatar: Avatar(m.avatar, size: 36),
+            name: memberName(l, m.name, isMe: m.isMe),
+            caption: walletMemberRole(l, m),
           ),
       ],
       inviteLabel: l.fpWalletInviteLabel,
@@ -1438,6 +1592,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       ),
       info: _editInfo(l),
       settings: _editSettings(l, a),
+      people: _isCreate ? _createPeople(l) : null,
       note: NoteSection(
         label: l.commonNote,
         editing: true,
@@ -1503,7 +1658,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
           submits: false,
           onChanged: (v) => applyChange(working.copyWith(trackBalance: v)),
         ),
-      if (a != null) _scopeRow(l, a),
+      if (a != null) _scopeRow(l, a) else _createScopeRow(l),
     ];
     if (children.isEmpty) return null;
     return SettingsSection(
@@ -1652,7 +1807,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     if (!isEditing) {
       final statementDay = int.tryParse(w.statementDay);
       final dueDay = int.tryParse(w.dueDay);
-      final minPayment = AmountInput.parse(w.minPayment);
       return [
         if (statementDay != null)
           PpForgeDetailRow(
@@ -1663,11 +1817,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
           PpForgeDetailRow(
             label: l.accountDetailPaymentDue,
             trailing: PpForgeText(dayOfMonthLabel(context, dueDay)),
-          ),
-        if (minPayment != null)
-          PpForgeDetailRow(
-            label: l.accountDetailMinimumPayment,
-            trailing: MoneyText(minPayment, symbol: symbol),
           ),
       ];
     }
@@ -1714,33 +1863,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         controller: _dueDayController,
         apply: (v) => working.copyWith(dueDay: v),
       ),
-      amountRow(
-        label: l.accountFormMinimumPaymentLabel,
-        controller: _minPaymentController,
-        field: _Field.minPayment,
-      ),
-      // A warning, not a block: the minimum can't sensibly exceed the limit,
-      // but the user knows their card.
-      if (_minOverLimit(w))
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            PpForgeSpacing.lg,
-            0,
-            PpForgeSpacing.lg,
-            PpForgeSpacing.sm,
-          ),
-          child: PpForgeMessage(
-            tone: Tone.warning,
-            message: l.accountMinPaymentOverLimit,
-          ),
-        ),
     ];
-  }
-
-  static bool _minOverLimit(_AccountDraft w) {
-    final limit = AmountInput.parse(w.creditLimit);
-    final min = AmountInput.parse(w.minPayment);
-    return limit != null && min != null && min > limit;
   }
 
   Widget _dayRow({
@@ -1784,6 +1907,8 @@ class _AccountDraft {
     this.minPayment = '',
     this.identifiers = const [],
     this.trackBalance = true,
+    this.reportScope = WalletReportScope.all,
+    this.invitees = const [],
   });
 
   final String name;
@@ -1800,6 +1925,17 @@ class _AccountDraft {
   final List<AccountIdentifier> identifiers;
 
   final bool trackBalance;
+
+  /// Create only: sent with the create call (an existing wallet saves these
+  /// at once, outside the draft).
+  final WalletReportScope reportScope;
+  final List<Contact> invitees;
+
+  /// `own` needs another member; with nobody invited it means `all`.
+  WalletReportScope get effectiveScope =>
+      invitees.isEmpty && reportScope == WalletReportScope.own
+      ? WalletReportScope.all
+      : reportScope;
 
   factory _AccountDraft.from(Account a) => _AccountDraft(
     name: a.name,
@@ -1848,6 +1984,8 @@ class _AccountDraft {
     String? minPayment,
     List<AccountIdentifier>? identifiers,
     bool? trackBalance,
+    WalletReportScope? reportScope,
+    List<Contact>? invitees,
     bool clearIcon = false,
   }) {
     return _AccountDraft(
@@ -1863,6 +2001,8 @@ class _AccountDraft {
       minPayment: minPayment ?? this.minPayment,
       identifiers: identifiers ?? this.identifiers,
       trackBalance: trackBalance ?? this.trackBalance,
+      reportScope: reportScope ?? this.reportScope,
+      invitees: invitees ?? this.invitees,
     );
   }
 
@@ -1880,7 +2020,11 @@ class _AccountDraft {
       other.dueDay == dueDay &&
       other.minPayment == minPayment &&
       other.trackBalance == trackBalance &&
-      listEquals(other.identifiers, identifiers);
+      other.reportScope == reportScope &&
+      listEquals(other.identifiers, identifiers) &&
+      listEquals(_ids(other.invitees), _ids(invitees));
+
+  static List<String> _ids(List<Contact> cs) => [for (final c in cs) c.id];
 
   @override
   int get hashCode => Object.hash(
@@ -1896,5 +2040,7 @@ class _AccountDraft {
     minPayment,
     Object.hashAll(identifiers),
     trackBalance,
+    reportScope,
+    Object.hashAll(_ids(invitees)),
   );
 }

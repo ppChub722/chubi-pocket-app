@@ -1,33 +1,22 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_core/ui.dart';
 import '../people/avatar_data.dart';
 import '../people/person_mark.dart';
 
 class ProjectMemberAvatar extends StatelessWidget {
   const ProjectMemberAvatar({
-    required this.name,
-    this.iconCode,
-    this.avatar,
+    required this.avatar,
     this.level = PersonLevel.contact,
     this.size = 32,
     super.key,
   });
 
-  final String name;
-  final PpForgeIconCode? iconCode;
-
-  /// The BE's avatar; null = built from [name] + [iconCode].
-  final AvatarData? avatar;
+  /// The member's avatar (the model's `.avatar`).
+  final AvatarData avatar;
   final PersonLevel level;
   final double size;
 
   @override
-  Widget build(BuildContext context) => PersonMark(
-    name: name,
-    level: level,
-    iconCode: iconCode,
-    avatar: avatar,
-    size: size,
-  );
+  Widget build(BuildContext context) =>
+      PersonMark(level: level, avatar: avatar, size: size);
 }

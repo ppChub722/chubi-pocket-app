@@ -434,7 +434,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountTypeCreditCard => 'บัตรเครดิต';
 
   @override
-  String get accountTypePayLater => 'ผ่อนทีหลัง';
+  String get accountTypePayLater => 'จ่ายทีหลัง';
 
   @override
   String get accountDetailNotFound => 'ไม่พบกระเป๋า';
@@ -2469,7 +2469,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get walletMemberPending => 'รอตอบรับ';
 
   @override
-  String get walletMemberYou => 'คุณ';
+  String get personYou => 'คุณ';
 
   @override
   String walletMemberJoined(String date) {
@@ -2622,9 +2622,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountAdjustBalanceDiffLabel => 'ส่วนต่าง';
 
   @override
-  String accountAdjustBalanceWillCreate(String amount) {
-    return 'ระบบจะสร้างรายการ \"ปรับยอด\" $amount ลงวันนี้';
+  String accountAdjustBalanceWillCreate(String amount, String date) {
+    return 'ระบบจะสร้างรายการ \"ปรับยอด\" $amount ลงวันที่ $date';
   }
+
+  @override
+  String get accountAdjustBalanceDateLabel => 'วันที่';
 
   @override
   String get accountIdentifiersTitle => 'เลขอ้างอิง';
@@ -4529,6 +4532,10 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
+  String get savingEntryAutoSaveNeedsGoal =>
+      'กระเป๋านี้ออมอัตโนมัติอยู่แล้ว เลือกเป้าหมายที่จะจัดสรรเข้า';
+
+  @override
   String get savingEntrySaved => 'บันทึกเงินออมแล้ว';
 
   @override
@@ -4698,6 +4705,43 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
+  String get walletAutoSaveLabel => 'กระเป๋าเงินออม';
+
+  @override
+  String get walletAutoSaveHelper =>
+      'เงินทั้งหมดในกระเป๋านี้นับเป็นเงินออม เงินเข้า-ออกปรับเงินออมเอง';
+
+  @override
+  String get walletAutoSaveNeedsTrack => 'เปิดติดตามยอดเงินก่อน จึงจะใช้ได้';
+
+  @override
+  String get walletAutoSaveShared => 'กระเป๋าที่มีสมาชิกอื่นใช้ไม่ได้';
+
+  @override
+  String get walletAutoSaveOnTitle => 'เปิดกระเป๋าเงินออม?';
+
+  @override
+  String get walletAutoSaveOnBody =>
+      'เงินออมทั่วไปที่บันทึกไว้ในกระเป๋านี้จะถูกล้าง แล้วนับเงินทั้งกระเป๋าเป็นเงินออมแทน เงินที่จัดสรรเข้าเป้าหมายยังอยู่เหมือนเดิม';
+
+  @override
+  String get walletAutoSaveOnAction => 'เปิด';
+
+  @override
+  String get walletAutoSaveOffTitle => 'ปิดกระเป๋าเงินออม?';
+
+  @override
+  String walletAutoSaveOffBody(String amount) {
+    return 'มีเงินจัดสรรเข้าเป้าหมายอยู่ $amount ปิดแล้วเงินที่จัดสรรยังอยู่เหมือนเดิม ส่วนที่ยังไม่จัดสรรจะกลับเป็นเงินที่ใช้ได้ของกระเป๋า';
+  }
+
+  @override
+  String get walletAutoSaveOffAction => 'ปิด';
+
+  @override
+  String get walletAutoSaveChip => 'ออมอัตโนมัติ';
+
+  @override
   String get fpWalletCreditUsedLabel => 'ยอดใช้ไป';
 
   @override
@@ -4754,12 +4798,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpWalletInviteLabel => 'เชิญ';
-
-  @override
-  String get fpWalletOwnerCaption => 'เจ้าของ';
-
-  @override
-  String get fpWalletMemberCaption => 'สมาชิก';
 
   @override
   String fpTxAvgDaily(String amount) {

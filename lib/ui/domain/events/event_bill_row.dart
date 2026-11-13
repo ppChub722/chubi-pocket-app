@@ -68,17 +68,15 @@ class EventBillPayer {
   const EventBillPayer({
     required this.name,
     required this.amount,
+    required this.avatar,
     this.level = PersonLevel.name,
-    this.iconCode,
-    this.avatar,
   });
 
   final String name;
   final String amount;
   final PersonLevel level;
-  final PpForgeIconCode? iconCode;
 
-  /// The BE's avatar; null = built from [name] + [iconCode].
+  /// The payer's `.avatar`; null = a typed name (the plain glyph).
   final AvatarData? avatar;
 }
 
@@ -98,9 +96,8 @@ class EventBillRow extends StatelessWidget {
     this.tagAnchorBuilder,
     this.payerName,
     this.payerVerb,
+    required this.payerAvatar,
     this.payerLevel = PersonLevel.name,
-    this.payerIconCode,
-    this.payerAvatar,
     this.payers = const [],
     this.caption,
     this.summary,
@@ -145,9 +142,9 @@ class EventBillRow extends StatelessWidget {
   /// With it, line 2 reads "**[payerName]** [payerVerb]" (ฝน จ่าย).
   final String? payerVerb;
   final PersonLevel payerLevel;
-  final PpForgeIconCode? payerIconCode;
 
-  /// The payer's avatar from the BE; null = built from the name + icon.
+  /// The payer's `.avatar`; null = no payer or a typed name (the plain
+  /// glyph).
   final AvatarData? payerAvatar;
 
   /// A multi-payer bill (2+): the payer line reads "[payerVerb]: A ฿700 |
@@ -241,13 +238,7 @@ class EventBillRow extends StatelessWidget {
       child: Row(
         children: [
           if (!multiPayer) ...[
-            PersonMark(
-              name: payer,
-              level: _noBadge(payerLevel),
-              iconCode: payerIconCode,
-
-              avatar: payerAvatar,
-            ),
+            PersonMark(level: _noBadge(payerLevel), avatar: payerAvatar),
             const SizedBox(width: PpForgeSpacing.sm),
           ],
           Flexible(
@@ -266,10 +257,7 @@ class EventBillRow extends StatelessWidget {
                                 right: PpForgeSpacing.xs,
                               ),
                               child: PersonMark(
-                                name: p.name,
                                 level: _noBadge(p.level),
-                                iconCode: p.iconCode,
-
                                 avatar: p.avatar,
                                 size: 16,
                               ),
@@ -308,10 +296,7 @@ class EventBillRow extends StatelessWidget {
         children: [
           if (payer.isNotEmpty && !payerLine) ...[
             PersonMark(
-              name: payer,
               level: _noBadge(payerLevel),
-              iconCode: payerIconCode,
-
               avatar: payerAvatar,
               size: 16,
             ),
@@ -476,9 +461,8 @@ class EventBillChildRow extends StatelessWidget {
   const EventBillChildRow({
     required this.name,
     required this.amount,
+    required this.avatar,
     this.level = PersonLevel.name,
-    this.iconCode,
-    this.avatar,
     this.caption,
     this.tone = MoneyTone.plain,
     this.symbol,
@@ -515,9 +499,8 @@ class EventBillChildRow extends StatelessWidget {
   final String name;
   final num amount;
   final PersonLevel level;
-  final PpForgeIconCode? iconCode;
 
-  /// The BE's avatar; null = built from [name] + [iconCode].
+  /// The person's `.avatar`; null = a typed name (the plain glyph).
   final AvatarData? avatar;
   final String? caption;
   final MoneyTone tone;
@@ -552,12 +535,7 @@ class EventBillChildRow extends StatelessWidget {
                 ),
                 const SizedBox(width: PpForgeSpacing.sm),
               ],
-              PersonMark(
-                name: name,
-                level: _noBadge(level),
-                iconCode: iconCode,
-                avatar: avatar,
-              ),
+              PersonMark(level: _noBadge(level), avatar: avatar),
               const SizedBox(width: PpForgeSpacing.sm),
               Expanded(
                 child: badge != null

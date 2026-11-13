@@ -7,18 +7,16 @@ import 'avatar_data.dart';
 class UserProfilePreview extends StatelessWidget {
   const UserProfilePreview({
     required this.displayName,
-    this.iconCode,
-    this.avatar,
+    required this.avatar,
     this.size = 56,
     super.key,
   });
 
   final String displayName;
-  final PpForgeIconCode? iconCode;
 
-  /// The avatar to show; null = built from [displayName] + [iconCode] (the
-  /// icon maker's live preview passes only the icon).
-  final AvatarData? avatar;
+  /// The avatar to show (the icon maker's live preview builds one from the
+  /// name + the icon being made).
+  final AvatarData avatar;
   final double size;
 
   @override
@@ -30,10 +28,7 @@ class UserProfilePreview extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Avatar(
-            avatar ?? AvatarData.forName(displayName, iconCode: iconCode),
-            size: size,
-          ),
+          Avatar(avatar, size: size),
           const SizedBox(width: PpForgeSpacing.lg),
           Expanded(
             child: Text(
