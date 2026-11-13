@@ -53,7 +53,7 @@ class TelegramOidc {
 
   /// The App Link Telegram made for this app (package + signing key are
   /// registered in BotFather: a new signing key must be registered again).
-  static const defaultRedirect = 'https://app3978689569-login.tg.dev/tglogin';
+  static const defaultRedirect = 'https://app3272567738-login.tg.dev/tglogin';
   static const scopes = ['openid', 'profile', 'telegram:bot_access'];
 
   static const _base = 'https://oauth.telegram.org';

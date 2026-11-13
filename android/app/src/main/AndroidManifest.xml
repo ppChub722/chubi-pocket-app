@@ -43,7 +43,7 @@
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="https" android:host="app3978689569-login.tg.dev" android:pathPrefix="/tglogin"/>
+                <data android:scheme="https" android:host="app3272567738-login.tg.dev" android:pathPrefix="/tglogin"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
