@@ -47,9 +47,17 @@ if [[ -z "$CHROME" ]]; then
 fi
 
 # Own profile → a fresh window that honours --window-size even when a normal
-# Chrome is already open (it'd otherwise just add a tab there).
-PROFILE="${TMPDIR:-/tmp}/chubi-pocket-chrome"
+# Chrome is already open (it'd otherwise just add a tab there). One profile
+# per port, so two checkouts (5173 / 5174) keep their own windows.
+PROFILE_NAME="chubi-pocket-chrome-${PORT}"
+PROFILE="${TMPDIR:-/tmp}/${PROFILE_NAME}"
 command -v cygpath >/dev/null && PROFILE="$(cygpath -w "$PROFILE")"
+
+# Close this port's window from an earlier run: Chrome would reuse it and
+# keep showing the old (blank or stale) page instead of the new build.
+if command -v powershell.exe >/dev/null; then
+  powershell.exe -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='chrome.exe'\" | Where-Object { \$_.CommandLine -like '*${PROFILE_NAME}*' } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue }" >/dev/null 2>&1 || true
+fi
 
 (
   until curl -sf -o /dev/null "$URL"; do sleep 1; done
