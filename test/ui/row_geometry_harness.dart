@@ -7,12 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Shared by the row geometry baselines (AppRow plan step 0): pumps one row
+/// Shared by the row geometry baselines (PpForgeRow plan step 0): pumps one row
 /// at a width and text scale, then records rects, a sampled fill pixel and
 /// the opacity above a piece as one comparable string.
 ///
 /// The expected strings are literals in each test, recorded at app main
-/// `8e28650` before the rows moved onto AppRow. To print fresh values
+/// `8e28650` before the rows moved onto PpForgeRow. To print fresh values
 /// (only when a change is meant and explained), run with
 /// `GEOMETRY_OUT=<file>`: each case appends `'<id>': '<snapshot>',`.
 const geometryWidths = [320.0, 420.0, 800.0];

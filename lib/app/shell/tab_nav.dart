@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../ui/domain/tokens/app_modules.dart';
 import 'nav_layout.dart';
 import 'tab_entry.dart';
-import '../../ui/app_aliases.dart';
+import 'package:pp_forge_core/ui.dart';
 
 enum ShellTab {
   home,
@@ -104,7 +104,7 @@ void goTab(
   final reopen = to.index == from;
   final stacked = canPop?.call(to.index) ?? true;
   if (reopen && !stacked) return;
-  if (stacked) AppPageTransitionsBuilder.popNextWithoutAnimation();
+  if (stacked) PpForgePageTransitionsBuilder.popNextWithoutAnimation();
   goBranch(to.index, initialLocation: true);
   if (reopen) ShellReopen.request();
 }
@@ -126,7 +126,7 @@ void Function(String location, {Object? extra}) pageOpener(
     if (here == null || there == null || here == there) {
       router.push(location, extra: extra);
     } else {
-      AppPageTransitionsBuilder.landNextWithoutPush();
+      PpForgePageTransitionsBuilder.landNextWithoutPush();
       router.go(location, extra: extra);
     }
   };

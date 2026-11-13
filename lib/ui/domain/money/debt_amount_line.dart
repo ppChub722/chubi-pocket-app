@@ -5,7 +5,6 @@ import '../../../core/utils/currency_formatter.dart';
 import '../tokens/app_icons.dart';
 import 'money_text.dart';
 import 'net_balance.dart';
-import '../../app_aliases.dart';
 
 class DebtAmountLine extends StatelessWidget {
   const DebtAmountLine({
@@ -41,7 +40,7 @@ class DebtAmountLine extends StatelessWidget {
       status: owedToMe ? owedToMeLabel : iOweLabel,
       icon: owedToMe ? AppIcons.flowIn : AppIcons.flowOut,
       chipSize: ChipSize.control,
-      tone: owedToMe ? AppChipTone.success : AppChipTone.danger,
+      tone: owedToMe ? PpForgeChipTone.success : PpForgeChipTone.danger,
       color: debtStateColor(context, owedToMe: owedToMe),
       amount: MoneyText(net.abs(), symbol: currencySymbol),
     );
@@ -56,7 +55,7 @@ class DebtAgeText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     return Text(
       text,
       maxLines: 1,
@@ -90,7 +89,7 @@ class DebtNetLine extends StatelessWidget {
           label,
           style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
         ),
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: PpForgeSpacing.sm),
         Flexible(
           child: MoneyText(
             net,

@@ -1,24 +1,24 @@
-import '../../../../app_aliases.dart';
+import 'package:pp_forge_core/ui.dart';
 
-const commonBaseBackgrounds = <IconPackItem>[
-  IconPackItem(id: 'solid', colors: ['@presetThemeColor1']),
-  IconPackItem(
+const commonBaseBackgrounds = <PpForgeIconPackItem>[
+  PpForgeIconPackItem(id: 'solid', colors: ['@presetThemeColor1']),
+  PpForgeIconPackItem(
     id: 'superGradientA',
     colors: ['@presetThemeColor1', '@presetThemeColor2'],
   ),
-  IconPackItem(
+  PpForgeIconPackItem(
     id: 'radialGlow',
     colors: ['@presetThemeColor1Lighter', '@presetThemeColor1'],
   ),
-  IconPackItem(
+  PpForgeIconPackItem(
     id: 'stripedPatternDi',
     colors: ['@presetThemeColor1', '@presetThemeColor2', '@presetThemeColor3'],
   ),
-  IconPackItem(id: 'rainbow', colors: []),
+  PpForgeIconPackItem(id: 'rainbow', colors: []),
 ];
 
-const commonBaseBorders = <IconPackItem>[
-  IconPackItem(id: 'thin', colors: ['@presetThemeColorBorder']),
-  IconPackItem(id: 'thick', colors: ['@presetThemeColorBorder']),
-  IconPackItem(id: 'dashed', colors: ['@presetThemeColorBorder']),
+const commonBaseBorders = <PpForgeIconPackItem>[
+  PpForgeIconPackItem(id: 'thin', colors: ['@presetThemeColorBorder']),
+  PpForgeIconPackItem(id: 'thick', colors: ['@presetThemeColorBorder']),
+  PpForgeIconPackItem(id: 'dashed', colors: ['@presetThemeColorBorder']),
 ];

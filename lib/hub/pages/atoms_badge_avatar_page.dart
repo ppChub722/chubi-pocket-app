@@ -13,7 +13,7 @@ Widget buildBadgeAvatarPage(BuildContext context) {
     ('tertiary', scheme.tertiary),
     ('error', scheme.error),
   ];
-  const framed = IconCode(
+  const framed = PpForgeIconCode(
     icon: 'person',
     background: 'solid',
     bgColors: ['#26A69A'],
@@ -23,8 +23,8 @@ Widget buildBadgeAvatarPage(BuildContext context) {
   Widget left(Widget child) =>
       Align(alignment: Alignment.centerLeft, child: child);
   Widget wrap(List<Widget> children) => Wrap(
-    spacing: AppSpacing.sm,
-    runSpacing: AppSpacing.sm,
+    spacing: PpForgeSpacing.sm,
+    runSpacing: PpForgeSpacing.sm,
     crossAxisAlignment: WrapCrossAlignment.center,
     children: children,
   );
@@ -39,60 +39,60 @@ Widget buildBadgeAvatarPage(BuildContext context) {
             'uses it.',
         uses: [
           HubUse(
-            label: 'AppBadge — allocation %',
+            label: 'PpForgeBadge — allocation %',
             page: 'Saving goals list',
-            child: left(const AppBadge(label: '62%')),
+            child: left(const PpForgeBadge(label: '62%')),
           ),
           HubUse(
-            label: 'AppBadge — every tone',
+            label: 'PpForgeBadge — every tone',
             page: 'Roles, "no wallet"',
             child: wrap([
-              for (final t in Tone.values) AppBadge(label: t.name, tone: t),
+              for (final t in Tone.values) PpForgeBadge(label: t.name, tone: t),
             ]),
           ),
           const HubUse(
-            label: 'AppBadge — with icon',
+            label: 'PpForgeBadge — with icon',
             page: 'Counts, tags',
             child: Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
+              spacing: PpForgeSpacing.sm,
+              runSpacing: PpForgeSpacing.sm,
               children: [
-                AppBadge(label: '3', icon: Icons.sell_outlined),
-                AppBadge(label: 'linked', icon: Icons.link, tone: Tone.primary),
+                PpForgeBadge(label: '3', icon: Icons.sell_outlined),
+                PpForgeBadge(label: 'linked', icon: Icons.link, tone: Tone.primary),
               ],
             ),
           ),
           HubUse(
-            label: 'AppAvatar — initials (hashed colour)',
+            label: 'PpForgeAvatar — initials (hashed colour)',
             page: 'Contacts, wallet members',
             child: wrap(const [
-              AppAvatar(name: 'Aom Chan'),
-              AppAvatar(name: 'Bee'),
-              AppAvatar(name: 'Dao Ploy'),
+              PpForgeAvatar(name: 'Aom Chan'),
+              PpForgeAvatar(name: 'Bee'),
+              PpForgeAvatar(name: 'Dao Ploy'),
             ]),
           ),
           HubUse(
-            label: 'AppAvatar — empty name (neutral person)',
+            label: 'PpForgeAvatar — empty name (neutral person)',
             page: 'Unnamed contact',
-            child: left(const AppAvatar(name: '')),
+            child: left(const PpForgeAvatar(name: '')),
           ),
           HubUse(
-            label: 'AppAvatar.tinted — each colour',
+            label: 'PpForgeAvatar.tinted — each colour',
             page: 'Projects (member marks)',
             child: wrap([
               for (final (_, c) in colors())
-                AppAvatar.tinted(name: 'Bee', color: c),
+                PpForgeAvatar.tinted(name: 'Bee', color: c),
             ]),
           ),
           HubUse(
-            label: 'AppAvatar.label — "+N" overflow',
+            label: 'PpForgeAvatar.label — "+N" overflow',
             page: 'Wallet member stack',
-            child: left(const AppAvatar.label('+3', size: 32)),
+            child: left(const PpForgeAvatar.label('+3', size: 32)),
           ),
           HubUse(
-            label: 'AppAvatar.icon — a glyph',
+            label: 'PpForgeAvatar.icon — a glyph',
             page: 'Generic person',
-            child: left(AppAvatar.icon(AppIcons.profile)),
+            child: left(PpForgeAvatar.icon(AppIcons.profile)),
           ),
           HubUse(
             label: 'Avatar — initials fallback',
@@ -160,7 +160,7 @@ Widget buildBadgeAvatarPage(BuildContext context) {
               const CornerBadge(
                 size: 40,
                 icon: AppIcons.link,
-                child: AppAvatar(name: 'Bee'),
+                child: PpForgeAvatar(name: 'Bee'),
               ),
             ),
           ),
@@ -172,7 +172,7 @@ Widget buildBadgeAvatarPage(BuildContext context) {
                 size: 64,
                 icon: AppIcons.link,
                 color: scheme.tertiary,
-                child: const AppAvatar(name: 'Bee', size: 64),
+                child: const PpForgeAvatar(name: 'Bee', size: 64),
               ),
             ),
           ),
@@ -183,7 +183,7 @@ Widget buildBadgeAvatarPage(BuildContext context) {
               const CornerBadge(
                 size: 32,
                 icon: AppIcons.link,
-                child: AppAvatar(name: 'Bee', size: 32),
+                child: PpForgeAvatar(name: 'Bee', size: 32),
               ),
             ),
           ),
@@ -195,7 +195,7 @@ Widget buildBadgeAvatarPage(BuildContext context) {
                 size: 40,
                 icon: AppIcons.link,
                 show: false,
-                child: AppAvatar(name: 'Bee'),
+                child: PpForgeAvatar(name: 'Bee'),
               ),
             ),
           ),
@@ -206,7 +206,7 @@ Widget buildBadgeAvatarPage(BuildContext context) {
               EditableCircle(
                 size: 48,
                 onTap: () {},
-                child: const AppAvatar(name: 'Bee', size: 48),
+                child: const PpForgeAvatar(name: 'Bee', size: 48),
               ),
             ),
           ),
@@ -216,7 +216,7 @@ Widget buildBadgeAvatarPage(BuildContext context) {
             child: left(
               const EditableCircle(
                 size: 64,
-                child: AppAvatar(name: 'Bee', size: 64),
+                child: PpForgeAvatar(name: 'Bee', size: 64),
               ),
             ),
           ),
@@ -232,7 +232,7 @@ Widget buildBadgeAvatarPage(BuildContext context) {
       ),
       const _Ladder(),
       Padding(
-        padding: const EdgeInsets.only(top: AppSpacing.md),
+        padding: const EdgeInsets.only(top: PpForgeSpacing.md),
         child: Text(
           'Icon Maker avatars — the hard cases',
           style: text.titleMedium,
@@ -245,21 +245,21 @@ Widget buildBadgeAvatarPage(BuildContext context) {
         'shape hold up as the size drops.',
         style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
       ),
-      const SizedBox(height: AppSpacing.md),
+      const SizedBox(height: PpForgeSpacing.md),
       const _HardLadder(),
-      const SizedBox(height: AppSpacing.xl),
+      const SizedBox(height: PpForgeSpacing.xl),
       HubPlayground(
-        title: 'AppBadge',
+        title: 'PpForgeBadge',
         note:
             'A small rectangular label — roles, counts, "no wallet". Quieter '
-            'than a status chip. Status words use AppChip, not a badge.',
+            'than a status chip. Status words use PpForgeChip, not a badge.',
         controls: [
           PlayChoice<Tone>('tone', [for (final t in Tone.values) (t.name, t)]),
           const PlayText('label', initialValue: 'badge'),
           const PlayBool('icon'),
         ],
         builder: (context, v) => left(
-          AppBadge(
+          PpForgeBadge(
             label: v<String>('label'),
             tone: v<Tone>('tone'),
             icon: v<bool>('icon') ? Icons.sell_outlined : null,
@@ -267,7 +267,7 @@ Widget buildBadgeAvatarPage(BuildContext context) {
         ),
       ),
       HubPlayground(
-        title: 'AppAvatar',
+        title: 'PpForgeAvatar',
         note:
             'The one round avatar. initials = first letters of two words on a '
             'hashed colour (empty name = neutral person); tinted = first '
@@ -285,14 +285,14 @@ Widget buildBadgeAvatarPage(BuildContext context) {
           final size = v<double>('size');
           final name = v<String>('name');
           return left(switch (v<String>('mode')) {
-            'tinted' => AppAvatar.tinted(
+            'tinted' => PpForgeAvatar.tinted(
               name: name,
               color: v<Color>('color'),
               size: size,
             ),
-            'icon' => AppAvatar.icon(AppIcons.profile, size: size),
-            'label' => AppAvatar.label(name.isEmpty ? '+3' : name, size: size),
-            _ => AppAvatar(name: name, size: size),
+            'icon' => PpForgeAvatar.icon(AppIcons.profile, size: size),
+            'label' => PpForgeAvatar.label(name.isEmpty ? '+3' : name, size: size),
+            _ => PpForgeAvatar(name: name, size: size),
           });
         },
       ),
@@ -300,7 +300,7 @@ Widget buildBadgeAvatarPage(BuildContext context) {
         title: 'Avatar (forName)',
         note:
             "A user's avatar: their chosen icon (icon maker) or, without "
-            'one, an AppAvatar of their initials.',
+            'one, an PpForgeAvatar of their initials.',
         controls: const [
           PlayText('displayName', initialValue: 'Aom Chan'),
           PlayBool('iconCode'),
@@ -369,7 +369,7 @@ Widget buildBadgeAvatarPage(BuildContext context) {
               show: v<bool>('show'),
               essential: v<bool>('essential'),
               color: v<Color?>('color'),
-              child: AppAvatar(name: 'Bee', size: size),
+              child: PpForgeAvatar(name: 'Bee', size: size),
             ),
           );
         },
@@ -389,7 +389,7 @@ Widget buildBadgeAvatarPage(BuildContext context) {
             EditableCircle(
               size: size,
               onTap: v<bool>('onTap') ? () {} : null,
-              child: AppAvatar(name: 'Bee', size: size),
+              child: PpForgeAvatar(name: 'Bee', size: size),
             ),
           );
         },
@@ -407,7 +407,7 @@ class _Ladder extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    const framed = IconCode(
+    const framed = PpForgeIconCode(
       icon: 'person',
       background: 'solid',
       bgColors: ['#26A69A'],
@@ -419,7 +419,7 @@ class _Ladder extends StatelessWidget {
       Widget Function(double s) build, {
       List<double> sizes = _sizes,
     }) => Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      padding: const EdgeInsets.only(bottom: PpForgeSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -427,10 +427,10 @@ class _Ladder extends StatelessWidget {
             name,
             style: text.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
           ),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: PpForgeSpacing.xs),
           Wrap(
-            spacing: AppSpacing.md,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.md,
+            runSpacing: PpForgeSpacing.sm,
             crossAxisAlignment: WrapCrossAlignment.end,
             children: [
               for (final s in sizes)
@@ -444,15 +444,15 @@ class _Ladder extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         row(
-          'AppAvatar — initials',
-          (s) => AppAvatar(name: 'Aom Chan', size: s),
+          'PpForgeAvatar — initials',
+          (s) => PpForgeAvatar(name: 'Aom Chan', size: s),
         ),
         row(
-          'AppAvatar.tinted',
-          (s) => AppAvatar.tinted(name: 'Bee', color: scheme.primary, size: s),
+          'PpForgeAvatar.tinted',
+          (s) => PpForgeAvatar.tinted(name: 'Bee', color: scheme.primary, size: s),
         ),
-        row('AppAvatar.icon', (s) => AppAvatar.icon(AppIcons.profile, size: s)),
-        row('AppAvatar.label', (s) => AppAvatar.label('+3', size: s)),
+        row('PpForgeAvatar.icon', (s) => PpForgeAvatar.icon(AppIcons.profile, size: s)),
+        row('PpForgeAvatar.label', (s) => PpForgeAvatar.label('+3', size: s)),
         row(
           'Avatar — icon maker (frame + glyph)',
           (s) => Avatar(AvatarData.forName('Bee', iconCode: framed), size: s),
@@ -481,7 +481,7 @@ class _Ladder extends StatelessWidget {
           (s) => CornerBadge(
             size: s,
             icon: AppIcons.link,
-            child: AppAvatar(name: 'Bee', size: s),
+            child: PpForgeAvatar(name: 'Bee', size: s),
           ),
         ),
         row(
@@ -489,7 +489,7 @@ class _Ladder extends StatelessWidget {
           (s) => EditableCircle(
             size: s,
             onTap: () {},
-            child: AppAvatar(name: 'Bee', size: s),
+            child: PpForgeAvatar(name: 'Bee', size: s),
           ),
           sizes: const [40.0, 48.0, 64.0],
         ),
@@ -498,7 +498,7 @@ class _Ladder extends StatelessWidget {
   }
 }
 
-IconCode _ic({
+PpForgeIconCode _ic({
   String? icon = 'person',
   String? background = 'solid',
   List<String> bg = const ['#26A69A'],
@@ -506,7 +506,7 @@ IconCode _ic({
   String? border,
   List<String> borderColors = const [],
   String? shape,
-}) => IconCode(
+}) => PpForgeIconCode(
   icon: icon,
   iconColors: fg,
   background: background,
@@ -518,12 +518,12 @@ IconCode _ic({
 
 /// The Icon Maker hard cases (frames, shapes, gradients, low contrast) —
 /// shared with the Button page's profile-chip demo.
-final List<(String, IconCode)> hubHardAvatarCases = _HardLadder._cases;
+final List<(String, PpForgeIconCode)> hubHardAvatarCases = _HardLadder._cases;
 
 class _HardLadder extends StatelessWidget {
   const _HardLadder();
 
-  static final _cases = <(String, IconCode)>[
+  static final _cases = <(String, PpForgeIconCode)>[
     ('thin frame', _ic(border: 'thin', borderColors: ['#00695C'])),
     ('thick frame', _ic(border: 'thick', borderColors: ['#00695C'])),
     (
@@ -597,9 +597,9 @@ class _HardLadder extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    Widget strip(IconCode code, {required bool badge}) => Wrap(
-      spacing: AppSpacing.md,
-      runSpacing: AppSpacing.sm,
+    Widget strip(PpForgeIconCode code, {required bool badge}) => Wrap(
+      spacing: PpForgeSpacing.md,
+      runSpacing: PpForgeSpacing.sm,
       crossAxisAlignment: WrapCrossAlignment.end,
       children: [
         for (final s in _sizes)
@@ -623,7 +623,7 @@ class _HardLadder extends StatelessWidget {
       children: [
         for (final (name, code) in _cases)
           Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+            padding: const EdgeInsets.only(bottom: PpForgeSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -633,9 +633,9 @@ class _HardLadder extends StatelessWidget {
                     color: scheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: PpForgeSpacing.xs),
                 strip(code, badge: false),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: PpForgeSpacing.sm),
                 strip(code, badge: true),
               ],
             ),

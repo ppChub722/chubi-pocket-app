@@ -211,7 +211,7 @@ Future<bool> showQuickCreateSheet(
   if (!context.mounted) return false;
   final saved = await showModalBottomSheet<bool>(
     context: context,
-    sheetAnimationStyle: AppMotion.sheetStyle,
+    sheetAnimationStyle: PpForgePageMotion.sheetStyle,
     isScrollControlled: true,
     useSafeArea: true,
     // Over the whole shell, wherever it's opened from: inside a tab it would
@@ -1098,10 +1098,10 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           label: l.occurrenceRecordInTx,
           dense: true,
           child: tx == null
-              ? AppChip(
+              ? PpForgeChip(
                   label: l.occurrenceLinkPick,
                   icon: AppIcons.add,
-                  tone: AppChipTone.primary,
+                  tone: PpForgeChipTone.primary,
                   selected: true,
                   dashed: true,
                   onTap: _saving || _entryCreate || _entryPaid
@@ -1123,7 +1123,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final (i, r) in rows.indexed) ...[
-          if (i > 0) const SizedBox(height: AppSpacing.sm),
+          if (i > 0) const SizedBox(height: PpForgeSpacing.sm),
           r,
         ],
       ],
@@ -1134,11 +1134,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final chips = widget.entry?.chips ?? const [];
     if (chips.isEmpty) return null;
     return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: [
         for (final c in chips)
-          AppChip(
+          PpForgeChip(
             label: c.label,
             icon: c.icon,
             // Each one writes at once.
@@ -1262,7 +1262,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       ? QuickCreateModeColors.of(context, _mode)
       : null;
   Color _eventColor(Project p) =>
-      p.iconCode.tintFor(Theme.of(context).extension<AppColors>()!);
+      p.iconCode.tintFor(Theme.of(context).extension<PpForgeColors>()!);
 
   bool get _isDebt => _mode == QuickCreateMode.debt;
   bool get _isSaving => _mode == QuickCreateMode.saving;
@@ -1317,7 +1317,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   }
 
   Widget _modeChips(AppLocalizations l) => Padding(
-    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+    padding: const EdgeInsets.only(bottom: PpForgeSpacing.sm),
     child: QuickCreateModeTabs(
       mode: _mode,
       labels: {
@@ -1355,7 +1355,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           DialogChoice(
             value: true,
             label: l.debtOverpayConfirm,
-            variant: AppButtonVariant.primary,
+            variant: PpForgeButtonVariant.primary,
           ),
           DialogChoice(value: false, label: l.debtOverpayEdit),
         ],
@@ -1789,7 +1789,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         value: m?.displayName,
         placeholder: l.quickEventNone,
         leading: m == null
-            ? const AppIcon(AppIcons.member)
+            ? const PpForgeIcon(AppIcons.member)
             : memberAvatar(m, size: 32),
         dense: true,
         editable: true,
@@ -1865,13 +1865,13 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           DialogChoice(
             value: _CloseChoice.draft,
             label: l.pendingKeepAsDraft,
-            variant: AppButtonVariant.primary,
+            variant: PpForgeButtonVariant.primary,
           ),
         DialogChoice(value: _CloseChoice.keepEditing, label: l.editKeepEditing),
         DialogChoice(
           value: _CloseChoice.discard,
           label: editing ? l.editDiscardConfirm : l.quickDiscardEntry,
-          variant: AppButtonVariant.destructive,
+          variant: PpForgeButtonVariant.destructive,
         ),
       ],
     );
@@ -2184,7 +2184,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         l,
         () => waiting && optState!.status == TxFormOptionsStatus.error
             ? Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.xl),
+                padding: const EdgeInsets.only(top: PpForgeSpacing.xl),
                 child: ErrorView(error: optState.error!, onRetry: opts.load),
               )
             : _draftLike && _draftBaseline == null
@@ -2267,7 +2267,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            padding: const EdgeInsets.only(bottom: PpForgeSpacing.sm),
             child: QuickCreateContextBar(
               caption: eventBill.project == null ? null : l.quickEventLabel,
               label: eventBill.project?.name ?? l.evbSplitBill,

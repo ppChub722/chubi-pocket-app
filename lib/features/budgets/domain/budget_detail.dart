@@ -229,7 +229,7 @@ class BudgetItem extends Equatable {
 
   /// The icon of each of the user's own tags by name (from `tag_refs`); a name
   /// that is not one of theirs (an event tag) has no entry.
-  final Map<String, IconCode> tagIcons;
+  final Map<String, PpForgeIconCode> tagIcons;
   final EventRef? event;
 
   /// The stored occurrence; null while it is only computed.
@@ -263,7 +263,7 @@ class BudgetItem extends Equatable {
           if (r is Map<String, dynamic> &&
               r['name'] is String &&
               r['icon_code'] is Map<String, dynamic>)
-            r['name'] as String: IconCode.fromJson(
+            r['name'] as String: PpForgeIconCode.fromJson(
               r['icon_code'] as Map<String, dynamic>,
             ),
       },

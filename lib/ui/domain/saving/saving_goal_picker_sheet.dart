@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:pp_forge_core/ui.dart';
-import '../../app_aliases.dart';
 
 class SavingGoalPick {
   const SavingGoalPick({
@@ -41,7 +40,7 @@ class SavingGoalCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final radius = BorderRadius.circular(AppRadius.md);
+    final radius = BorderRadius.circular(PpForgeRadius.md);
     final amount = pick.amountText;
     final target = pick.targetText;
     final progress = pick.progress;
@@ -61,7 +60,7 @@ class SavingGoalCard extends StatelessWidget {
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.all(PpForgeSpacing.md),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -73,7 +72,7 @@ class SavingGoalCard extends StatelessWidget {
                         backgroundColor: pick.color.withValues(alpha: 0.2),
                         child: Icon(pick.icon, size: 16, color: pick.color),
                       ),
-                      const SizedBox(width: AppSpacing.sm),
+                      const SizedBox(width: PpForgeSpacing.sm),
                       Expanded(
                         child: Text(
                           pick.name,
@@ -87,7 +86,7 @@ class SavingGoalCard extends StatelessWidget {
                     ],
                   ),
                   if (amount != null) ...[
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: PpForgeSpacing.sm),
                     Text.rich(
                       TextSpan(
                         text: amount,
@@ -110,7 +109,7 @@ class SavingGoalCard extends StatelessWidget {
                     ),
                   ],
                   if (progress != null) ...[
-                    const SizedBox(height: AppSpacing.xs),
+                    const SizedBox(height: PpForgeSpacing.xs),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(99),
                       child: LinearProgressIndicator(
@@ -122,7 +121,7 @@ class SavingGoalCard extends StatelessWidget {
                     ),
                   ],
                   if (pick.caption != null) ...[
-                    const SizedBox(height: AppSpacing.xs),
+                    const SizedBox(height: PpForgeSpacing.xs),
                     Text(
                       pick.caption!,
                       maxLines: 2,
@@ -145,7 +144,7 @@ class SavingGoalCard extends StatelessWidget {
         strokeWidth: 1,
         dashLength: 4,
         gapLength: 3,
-        borderRadius: Radius.circular(AppRadius.md),
+        borderRadius: Radius.circular(PpForgeRadius.md),
         child: card,
       );
     }

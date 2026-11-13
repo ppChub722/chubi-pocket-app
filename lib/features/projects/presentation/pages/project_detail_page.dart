@@ -71,7 +71,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   bool _simplified = false;
   ApiException? _settleError;
 
-  final _toolbarOpen = AppListToolbarState.local();
+  final _toolbarOpen = PpForgeListToolbarState.local();
   final _billSearch = TextEditingController();
   Timer? _debounce;
   ProjectBoardController? _board;
@@ -377,7 +377,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       title: l.projectIconLabel,
       initial: working.iconCode,
     );
-    if (!mounted || r is! IconMakerSelected) return;
+    if (!mounted || r is! PpForgeIconMakerSelected) return;
     applyChange(working.copyWith(iconCode: r.iconCode));
   }
 
@@ -386,7 +386,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     final w = working;
     final start = w.startDate ?? w.endDate;
     final end = w.endDate ?? w.startDate;
-    final r = await AppDatePicker.range(
+    final r = await PpForgeDatePicker.range(
       context,
       title: l.fpEventsDatesLabel,
       initial: start == null ? null : DateTimeRange(start: start, end: end!),
@@ -618,7 +618,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         await _refresh();
         await _loadSettle();
       },
-      topInset: AppSpacing.sm,
+      topInset: PpForgeSpacing.sm,
       empty: EmptyView.compact(message: l.evbAllSettled),
       children: [
         _nets(l, v),
@@ -645,10 +645,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
               else ...[
                 for (final x in lines) line(x),
                 if (!simplified)
-                  AppText(l.evbSettleHint, role: AppTextRole.caption),
+                  PpForgeText(l.evbSettleHint, role: PpForgeTextRole.caption),
               ],
               if (simplified && booked != null)
-                AppMessage(
+                PpForgeMessage(
                   message: l.evbSettleBookedOn(
                     DateFormatter.short(
                       booked,
@@ -658,7 +658,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                   tone: Tone.success,
                 )
               else if (simplified && s.mySimplified.isNotEmpty)
-                AppButton(
+                PpForgeButton(
                   kind: ButtonIconKind.settle,
                   key: const ValueKey('settleBook'),
                   label: l.evbSettleBook,
@@ -690,7 +690,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       title: l.evbNets,
       children: [
         for (final p in rows)
-          AppListRow(
+          PpForgeListRow(
             key: ValueKey('net:${p.memberId}'),
             leading: ProjectMemberAvatar(
               name: p.displayName,
@@ -819,7 +819,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         alignment: 0.3,
         duration: MediaQuery.disableAnimationsOf(context)
             ? Duration.zero
-            : AppDurations.chrome,
+            : PpForgeDurations.chrome,
       );
     });
   }
@@ -865,7 +865,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             builder: (context) {
               final barInset = MediaQuery.paddingOf(context).top;
               final bottom =
-                  AppSpacing.huge + MediaQuery.paddingOf(context).bottom;
+                  PpForgeSpacing.huge + MediaQuery.paddingOf(context).bottom;
               if (isEditing || _isCreate) {
                 return _editBody(l, v, barInset, bottom);
               }
@@ -885,7 +885,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       preset: QuickCreatePreset.custom(
         word: l.evbNewBill,
         color: v.project.iconCode.tintFor(
-          Theme.of(context).extension<AppColors>()!,
+          Theme.of(context).extension<PpForgeColors>()!,
         ),
         icon: AppIcons.eventBill,
         onCreate: _addTx,
@@ -905,16 +905,16 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         ? null
         : Padding(
             padding: EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              barInset + AppSpacing.sm,
-              AppSpacing.lg,
+              PpForgeSpacing.lg,
+              barInset + PpForgeSpacing.sm,
+              PpForgeSpacing.lg,
               0,
             ),
-            child: AppMessage(
+            child: PpForgeMessage(
               message: l.fpEventsLoadFailed,
               tone: Tone.warning,
               actions: [
-                AppMessageAction(label: l.commonRetry, onPressed: _load),
+                PpForgeMessageAction(label: l.commonRetry, onPressed: _load),
               ],
             ),
           );
@@ -923,10 +923,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       belowHero: [
         ?banner,
         if (v.isCompleted)
-          AppMessage(message: l.eventCompletedNotice, tone: Tone.info),
+          PpForgeMessage(message: l.eventCompletedNotice, tone: Tone.info),
         // A removed member's empty spots: filled in each bill's form.
         if (!v.isCompleted && p.emptyPersonBillCount > 0)
-          AppMessage(
+          PpForgeMessage(
             message: l.evbEmptyPersonsNotice(p.emptyPersonBillCount),
             tone: Tone.warning,
           ),
@@ -940,8 +940,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         ),
       ],
       tabs: [
-        AppTab(value: _Tab.bills, label: l.evbTabBills, icon: AppIcons.receipt),
-        AppTab(
+        PpForgeTab(value: _Tab.bills, label: l.evbTabBills, icon: AppIcons.receipt),
+        PpForgeTab(
           value: _Tab.summary,
           label: l.evbTabSummary,
           icon: AppIcons.project,
@@ -988,16 +988,16 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
           SheetOption<ProjectStatus?>(
             value: null,
             label: l.projectDeleteThis,
-            leading: const AppIcon(AppIcons.delete),
+            leading: const PpForgeIcon(AppIcons.delete),
             submits: true,
           ),
       ],
-      builder: (context, toggle) => AppChip(
+      builder: (context, toggle) => PpForgeChip(
         label: projectStatusLabel(l, status),
         dot: true,
         tone: projectStatusTone(status),
         selected: true,
-        trailing: canChange ? AppChipTrailing.dropdown : AppChipTrailing.none,
+        trailing: canChange ? PpForgeChipTrailing.dropdown : PpForgeChipTrailing.none,
         onTap: canChange ? toggle : null,
       ),
     );
@@ -1020,7 +1020,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
 
   Widget _viewHero(AppLocalizations l, ProjectView v) {
     final p = v.project;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final tint = p.iconCode.tintFor(palette);
     final range = projectDateRange(context, p.startDate, p.endDate);
     final planned = p.plannedAmount;
@@ -1035,7 +1035,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       sent: myPos?.sent ?? 0.0,
     );
     String money(double x) => moneyString(context, x);
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: HeroStyle.tinted(color: tint, glyph: AppIcons.project),
       content: [
         HeroIdentity(
@@ -1056,7 +1056,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
               CardActionButton(
                 key: const ValueKey('heroEdit'),
                 icon: AppIcons.edit,
-                tooltip: UiConfig.stringsOf(context).edit,
+                tooltip: PpForgeConfig.stringsOf(context).edit,
                 onTap: enterEdit,
               ),
           ],
@@ -1104,7 +1104,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         HeroChipRow(
           chips: [
             _statusChip(l, p.status),
-            if (range != null) AppChip(label: range, icon: AppIcons.date),
+            if (range != null) PpForgeChip(label: range, icon: AppIcons.date),
           ],
         ),
         // The members, in the hero (owner 2026-11-03).
@@ -1205,7 +1205,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AppChip(
+          PpForgeChip(
             key: const ValueKey('billsSearch'),
             label: '',
             icon: AppIcons.search,
@@ -1215,8 +1215,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             count: _toolbarOpen.value ? 0 : searched,
             onTap: () => setState(_toolbarOpen.toggle),
           ),
-          const SizedBox(width: AppSpacing.xs),
-          AppChip(
+          const SizedBox(width: PpForgeSpacing.xs),
+          PpForgeChip(
             key: const ValueKey('billsOnlyMine'),
             label: l.evbOnlyMine,
             icon: AppIcons.member,
@@ -1245,8 +1245,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               toolsRow,
-              const SizedBox(height: AppSpacing.xs),
-              AppListToolbar(
+              const SizedBox(height: PpForgeSpacing.xs),
+              PpForgeListToolbar(
                 sidePadding: 0,
                 search: ListToolbarSearch(
                   controller: _billSearch,
@@ -1269,18 +1269,18 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                           leading: memberAvatar(m, size: 28),
                         ),
                     ],
-                    builder: (context, toggle) => AppChip(
+                    builder: (context, toggle) => PpForgeChip(
                       label: board.payerId == null
                           ? l.fpEventsPayerFilter
                           : '${l.fpEventsPayerFilter}: '
                                 '${v.member(board.payerId!).displayName}',
                       selected: board.payerId != null,
-                      trailing: AppChipTrailing.dropdown,
+                      trailing: PpForgeChipTrailing.dropdown,
                       onTap: toggle,
                     ),
                   ),
                   if (v.eventTags.isNotEmpty)
-                    AppChip(
+                    PpForgeChip(
                       key: const ValueKey('billsTagFilter'),
                       label:
                           v.eventTags
@@ -1290,7 +1290,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                           l.transactionFormTagsLabel,
                       icon: AppIcons.tag,
                       selected: board.tagId != null,
-                      trailing: AppChipTrailing.dropdown,
+                      trailing: PpForgeChipTrailing.dropdown,
                       onTap: () => _pickBoardTag(v, board),
                     ),
                 ],
@@ -1308,10 +1308,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                     for (final e in sortLabels.entries)
                       SheetOption(value: e.key, label: e.value),
                   ],
-                  builder: (context, toggle) => AppChip(
+                  builder: (context, toggle) => PpForgeChip(
                     label: sortLabels[board.sort]!,
                     icon: AppIcons.sort,
-                    trailing: AppChipTrailing.dropdown,
+                    trailing: PpForgeChipTrailing.dropdown,
                     onTap: toggle,
                   ),
                 ),
@@ -1319,11 +1319,11 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             ],
           ),
         if (board.error != null)
-          AppMessage(
+          PpForgeMessage(
             message: l.fpEventsLoadFailed,
             tone: Tone.warning,
             actions: [
-              AppMessageAction(label: l.commonRetry, onPressed: board.reload),
+              PpForgeMessageAction(label: l.commonRetry, onPressed: board.reload),
             ],
           ),
         if (loadingBills)
@@ -1428,7 +1428,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     double bottom,
   ) {
     final w = working;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final tint = w.iconCode.tintFor(palette);
     final p = v?.project;
     final range = w.startDate == null && w.endDate == null
@@ -1441,9 +1441,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     final archived = p?.status == ProjectStatus.archived;
     return DetailLayout(
       onRefresh: null,
-      topInset: barInset + AppSpacing.lg,
+      topInset: barInset + PpForgeSpacing.lg,
       bottomInset: bottom,
-      hero: AppHeroCard(
+      hero: PpForgeHeroCard(
         style: HeroStyle.tinted(color: tint, glyph: AppIcons.project),
         mode: HeroCardMode.edit,
         content: [
@@ -1500,11 +1500,11 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             onTap: _pickRange,
             trailing: range == null
                 ? null
-                : AppChip(
+                : PpForgeChip(
                     label: range,
                     icon: AppIcons.date,
                     selected: true,
-                    trailing: AppChipTrailing.remove,
+                    trailing: PpForgeChipTrailing.remove,
                     onTap: _pickRange,
                     onRemove: _clearRange,
                   ),
@@ -1534,7 +1534,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         maxLength: TextLimits.note,
         editField: DetailStacked(
           label: l.commonNote,
-          child: AppInput.inline(
+          child: PpForgeInput.inline(
             editing: true,
             controller: _ctrl[_Field.note]!,
             focusNode: _focus[_Field.note],
@@ -1614,7 +1614,7 @@ class _Draft {
   final String planned;
   final DateTime? startDate;
   final DateTime? endDate;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   final Set<String> tagIds;
 
@@ -1625,7 +1625,7 @@ class _Draft {
     String? planned,
     DateTime? Function()? startDate,
     DateTime? Function()? endDate,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
     Set<String>? tagIds,
   }) => _Draft(
     name: name ?? this.name,

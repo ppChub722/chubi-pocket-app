@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'row_geometry_harness.dart';
 
-/// AppRow plan step 3: a tinted row's accent stays readable, and a tinted
+/// PpForgeRow plan step 3: a tinted row's accent stays readable, and a tinted
 /// first / last row in a SectionCard keeps the card's round corners.
 void main() {
   double ratio(Color a, Color b) {
@@ -40,7 +40,7 @@ void main() {
       SectionCard(
         first: true,
         children: [
-          AppDetailRow(
+          PpForgeDetailRow(
             key: first,
             icon: AppIcons.link,
             label: 'First',
@@ -48,7 +48,7 @@ void main() {
             tinted: true,
             onTap: noop,
           ),
-          AppDetailRow(
+          PpForgeDetailRow(
             key: last,
             icon: AppIcons.link,
             label: 'Last',
@@ -112,7 +112,7 @@ void main() {
             body: SectionCard(
               first: true,
               children: [
-                AppDetailRow(
+                PpForgeDetailRow(
                   label: 'Username',
                   trailing: Text('ppond', key: Key('value')),
                   locked: true,

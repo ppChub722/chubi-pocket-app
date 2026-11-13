@@ -1,21 +1,21 @@
-import '../../../../app_aliases.dart';
+import 'package:pp_forge_core/ui.dart';
 import '_shared.dart';
 
-const basePackAccount = IconPack(
+const basePackAccount = PpForgeIconPack(
   id: 'base',
   icons: [
-    IconPackItem(id: 'wallet', colors: ['@presetThemeColorOnIcon']),
-    IconPackItem(id: 'cash', colors: ['@presetThemeColorOnIcon']),
-    IconPackItem(id: 'bank', colors: ['@presetThemeColorOnIcon']),
-    IconPackItem(id: 'savings', colors: ['@presetThemeColorOnIcon']),
-    IconPackItem(id: 'card', colors: ['@presetThemeColorOnIcon']),
-    IconPackItem(id: 'contactless_card', colors: ['@presetThemeColorOnIcon']),
-    IconPackItem(id: 'e_wallet', colors: ['@presetThemeColorOnIcon']),
-    IconPackItem(id: 'gift_card', colors: ['@presetThemeColorOnIcon']),
-    IconPackItem(id: 'travel', colors: ['@presetThemeColorOnIcon']),
-    IconPackItem(id: 'shopping', colors: ['@presetThemeColorOnIcon']),
-    IconPackItem(id: 'business', colors: ['@presetThemeColorOnIcon']),
-    IconPackItem(id: 'loan', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'wallet', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'cash', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'bank', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'savings', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'card', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'contactless_card', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'e_wallet', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'gift_card', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'travel', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'shopping', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'business', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'loan', colors: ['@presetThemeColorOnIcon']),
   ],
   backgrounds: commonBaseBackgrounds,
   borders: commonBaseBorders,

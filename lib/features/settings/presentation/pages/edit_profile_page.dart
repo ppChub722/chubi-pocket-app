@@ -111,7 +111,7 @@ class _EditProfilePageState extends State<EditProfilePage>
 
   Color _tint(AvatarData avatar) => ProfileColors.main(
     avatar,
-    palette: Theme.of(context).extension<AppColors>()!,
+    palette: Theme.of(context).extension<PpForgeColors>()!,
     surface: Theme.of(context).colorScheme.surface,
   );
 
@@ -134,7 +134,7 @@ class _EditProfilePageState extends State<EditProfilePage>
           UserProfilePreview(displayName: _shownName, iconCode: code),
     );
     if (!mounted || r == null) return;
-    if (r is IconMakerSelected) {
+    if (r is PpForgeIconMakerSelected) {
       var code = r.iconCode;
       // Rainbow & co. carry no colour of their own: pick profile colours 1–3
       // right away (they become the background colours the BE reads).
@@ -157,7 +157,7 @@ class _EditProfilePageState extends State<EditProfilePage>
       }
       applyChange(working.copyWith(iconCode: code));
     }
-    if (r is IconMakerRemoved) applyChange(working.copyWith(clearIcon: true));
+    if (r is PpForgeIconMakerRemoved) applyChange(working.copyWith(clearIcon: true));
   }
 
   Future<void> _openColors(List<Connection> items) async {
@@ -325,7 +325,7 @@ class _EditProfilePageState extends State<EditProfilePage>
                 refreshEnabled: !editing,
                 physics: const AlwaysScrollableScrollPhysics(),
                 bottomInset:
-                    AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
+                    PpForgeSpacing.huge + MediaQuery.paddingOf(context).bottom,
                 hero: editing
                     ? _editHero(l, cs.items ?? const [])
                     : _viewHero(l, cs.items ?? const []),
@@ -371,7 +371,7 @@ class _EditProfilePageState extends State<EditProfilePage>
         CardActionButton(
           key: const ValueKey('heroEdit'),
           icon: AppIcons.edit,
-          tooltip: UiConfig.stringsOf(context).edit,
+          tooltip: PpForgeConfig.stringsOf(context).edit,
           onTap: enterEdit,
         ),
       ],
@@ -399,7 +399,7 @@ class _EditProfilePageState extends State<EditProfilePage>
         dotsLabel: l.profileColorsLabel,
       ),
       fields: [
-        AppInput.card(
+        PpForgeInput.card(
           controller: _nameCtrl,
           label: l.editProfileDisplayNameLabel,
           style: text.titleMedium,
@@ -415,7 +415,7 @@ class _EditProfilePageState extends State<EditProfilePage>
             return null;
           },
         ),
-        AppInput.card(
+        PpForgeInput.card(
           controller: _usernameCtrl,
           label: l.editProfileUsernameLabel,
           maxLength: 50,
@@ -430,7 +430,7 @@ class _EditProfilePageState extends State<EditProfilePage>
                 : l.editProfileUsernameInvalid;
           },
         ),
-        AppInput.card(
+        PpForgeInput.card(
           controller: _emailCtrl,
           label: l.editProfileEmailLabel,
           maxLength: TextLimits.email,
@@ -468,9 +468,9 @@ class _EditProfilePageState extends State<EditProfilePage>
       children: [
         if (items == null)
           // Nothing loaded and the load failed: one row to try again.
-          AppDetailRow(
+          PpForgeDetailRow(
             icon: AppIcons.refresh,
-            label: UiConfig.stringsOf(context).retry,
+            label: PpForgeConfig.stringsOf(context).retry,
             helper: ErrorView.titleFor(context, cs.error!),
             onTap: () => context.read<ConnectionsCubit>().load(),
           )
@@ -496,7 +496,7 @@ class _EditProfilePageState extends State<EditProfilePage>
     first: first,
     title: l.profileSectionSecurity,
     children: [
-      AppDetailRow(
+      PpForgeDetailRow(
         icon: AppIcons.password,
         label: _user.hasPassword
             ? l.settingsChangePassword
@@ -532,11 +532,11 @@ class _EditProfilePageState extends State<EditProfilePage>
           selected: source == AvatarSource.icon,
           onTap: () => _pick(AvatarSource.icon),
           actions: [
-            AppButton(
+            PpForgeButton(
               kind: ButtonIconKind.photo,
               label: l.profilePictureEdit,
-              variant: AppButtonVariant.outlined,
-              size: AppButtonSize.chip,
+              variant: PpForgeButtonVariant.outlined,
+              size: PpForgeButtonSize.chip,
               onPressed: _openIconMaker,
             ),
           ],
@@ -554,19 +554,19 @@ class _EditProfilePageState extends State<EditProfilePage>
             selected: source == c.provider,
             onTap: () => _pick(c.provider),
             actions: [
-              AppButton(
+              PpForgeButton(
                 kind: ButtonIconKind.photo,
                 label: l.connectionsPhotoUpdate,
-                variant: AppButtonVariant.outlined,
-                size: AppButtonSize.chip,
+                variant: PpForgeButtonVariant.outlined,
+                size: PpForgeButtonSize.chip,
                 submits: true,
                 onPressed: _busy ? null : () => _importPhoto(c),
               ),
-              AppButton(
+              PpForgeButton(
                 kind: ButtonIconKind.delete,
                 label: l.commonDelete,
-                variant: AppButtonVariant.destructiveOutlined,
-                size: AppButtonSize.chip,
+                variant: PpForgeButtonVariant.destructiveOutlined,
+                size: PpForgeButtonSize.chip,
                 submits: true,
                 onPressed: _busy ? null : () => _deletePhoto(c),
               ),
@@ -597,7 +597,7 @@ class _ProfileDraft extends Equatable {
   final String name;
   final String username;
   final String email;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   /// The picture pick (source + a photo's colours and ring).
   final AvatarSettings settings;
@@ -606,7 +606,7 @@ class _ProfileDraft extends Equatable {
     String? name,
     String? username,
     String? email,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
     bool clearIcon = false,
     AvatarSettings? settings,
   }) => _ProfileDraft(

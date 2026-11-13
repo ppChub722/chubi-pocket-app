@@ -17,11 +17,11 @@ void main() {
   void noop() {}
 
   final small = <String, Piece>{
-    for (final v in AppButtonVariant.values)
-      'AppButton.${v.name}': (l) =>
-          AppButton(label: 'Save', variant: v, loading: l, onPressed: noop),
-    for (final s in AppButtonSize.values)
-      'AppButton size ${s.name} + icon': (l) => AppButton(
+    for (final v in PpForgeButtonVariant.values)
+      'PpForgeButton.${v.name}': (l) =>
+          PpForgeButton(label: 'Save', variant: v, loading: l, onPressed: noop),
+    for (final s in PpForgeButtonSize.values)
+      'PpForgeButton size ${s.name} + icon': (l) => PpForgeButton(
         label: 'Add',
         icon: AppIcons.add,
         trailingIcon: AppIcons.dropdown,
@@ -29,59 +29,59 @@ void main() {
         loading: l,
         onPressed: noop,
       ),
-    'AppButton disabled': (l) =>
-        AppButton(label: 'Save', loading: l, onPressed: null),
-    'AppIconButton': (l) =>
-        AppIconButton(icon: AppIcons.share, loading: l, onPressed: noop),
-    'AppIconButton badge': (l) => AppIconButton(
+    'PpForgeButton disabled': (l) =>
+        PpForgeButton(label: 'Save', loading: l, onPressed: null),
+    'PpForgeIconButton': (l) =>
+        PpForgeIconButton(icon: AppIcons.share, loading: l, onPressed: noop),
+    'PpForgeIconButton badge': (l) => PpForgeIconButton(
       icon: AppIcons.share,
       badgeCount: 3,
       loading: l,
       onPressed: noop,
     ),
-    'AppIconButton.edit': (l) =>
-        AppIconButton.edit(loading: l, onPressed: noop),
-    'AppIconButton.bare': (l) =>
-        AppIconButton.bare(icon: AppIcons.refresh, loading: l, onPressed: noop),
-    'AppIconButton.filled': (l) =>
-        AppIconButton.filled(icon: AppIcons.check, loading: l, onPressed: noop),
-    'AppIconButton.flat': (l) =>
-        AppIconButton.flat(icon: AppIcons.add, loading: l, onPressed: noop),
-    'AppIconButton.close dense': (l) =>
-        AppIconButton.close(dense: true, loading: l, onPressed: noop),
-    'AppIconButton.more': (l) =>
-        AppIconButton.more(loading: l, onPressed: noop),
-    'AppIconButton.fab': (l) =>
-        AppIconButton.fab(icon: AppIcons.add, loading: l, onPressed: noop),
+    'PpForgeIconButton.edit': (l) =>
+        PpForgeIconButton.edit(loading: l, onPressed: noop),
+    'PpForgeIconButton.bare': (l) =>
+        PpForgeIconButton.bare(icon: AppIcons.refresh, loading: l, onPressed: noop),
+    'PpForgeIconButton.filled': (l) =>
+        PpForgeIconButton.filled(icon: AppIcons.check, loading: l, onPressed: noop),
+    'PpForgeIconButton.flat': (l) =>
+        PpForgeIconButton.flat(icon: AppIcons.add, loading: l, onPressed: noop),
+    'PpForgeIconButton.close dense': (l) =>
+        PpForgeIconButton.close(dense: true, loading: l, onPressed: noop),
+    'PpForgeIconButton.more': (l) =>
+        PpForgeIconButton.more(loading: l, onPressed: noop),
+    'PpForgeIconButton.fab': (l) =>
+        PpForgeIconButton.fab(icon: AppIcons.add, loading: l, onPressed: noop),
     'CheckCircleButton': (l) =>
         CheckCircleButton(checked: true, loading: l, onChanged: (_) {}),
     for (final s in ChipSize.values)
-      'AppChip ${s.name}': (l) => AppChip(
+      'PpForgeChip ${s.name}': (l) => PpForgeChip(
         label: 'Pay now',
         icon: AppIcons.check,
         size: s,
         loading: l,
         onTap: noop,
       ),
-    'AppChip toggle selected': (l) =>
-        AppChip(label: 'Monthly', selected: true, loading: l, onTap: noop),
-    'AppChip dropdown': (l) => AppChip(
+    'PpForgeChip toggle selected': (l) =>
+        PpForgeChip(label: 'Monthly', selected: true, loading: l, onTap: noop),
+    'PpForgeChip dropdown': (l) => PpForgeChip(
       label: 'Food',
-      trailing: AppChipTrailing.dropdown,
+      trailing: PpForgeChipTrailing.dropdown,
       loading: l,
       onTap: noop,
     ),
-    'AppChip remove': (l) => AppChip(
+    'PpForgeChip remove': (l) => PpForgeChip(
       label: 'Food',
-      trailing: AppChipTrailing.remove,
+      trailing: PpForgeChipTrailing.remove,
       onRemove: noop,
       loading: l,
       onTap: noop,
     ),
-    'AppSwitch on': (l) =>
-        AppSwitch(value: true, loading: l, onChanged: (_) {}),
-    'AppSwitch off': (l) =>
-        AppSwitch(value: false, loading: l, onChanged: (_) {}),
+    'PpForgeSwitch on': (l) =>
+        PpForgeSwitch(value: true, loading: l, onChanged: (_) {}),
+    'PpForgeSwitch off': (l) =>
+        PpForgeSwitch(value: false, loading: l, onChanged: (_) {}),
   };
 
   const options = [
@@ -122,7 +122,7 @@ void main() {
       submits: false,
       onTap: noop,
     ),
-    'AppDetailRow chevron': (l) => AppDetailRow(
+    'PpForgeDetailRow chevron': (l) => PpForgeDetailRow(
       label: 'Category',
       icon: AppIcons.category,
       trailing: const Text('Food'),
@@ -130,26 +130,26 @@ void main() {
       loading: l,
       onTap: noop,
     ),
-    'AppDetailRow value': (l) => AppDetailRow(
+    'PpForgeDetailRow value': (l) => PpForgeDetailRow(
       label: 'Category',
       trailing: const Text('Food'),
       loading: l,
       onTap: noop,
     ),
-    'AppDetailRow lock': (l) => AppDetailRow(
+    'PpForgeDetailRow lock': (l) => PpForgeDetailRow(
       label: 'Currency',
       trailing: const Text('THB'),
       locked: true,
       loading: l,
       onTap: noop,
     ),
-    'AppDetailRow leading only': (l) => AppDetailRow(
+    'PpForgeDetailRow leading only': (l) => PpForgeDetailRow(
       label: 'Open',
       icon: AppIcons.wallet,
       loading: l,
       onTap: noop,
     ),
-    'AppListRow tap + trailing + action': (l) => AppListRow(
+    'PpForgeListRow tap + trailing + action': (l) => PpForgeListRow(
       leading: const Icon(AppIcons.wallet),
       title: 'Groceries',
       line2: const ListRowLine(parts: ['Today']),
@@ -158,7 +158,7 @@ void main() {
       loading: l,
       onTap: noop,
     ),
-    'AppListRow button action': (l) => AppListRow(
+    'PpForgeListRow button action': (l) => PpForgeListRow(
       leading: const Icon(AppIcons.wallet),
       title: 'Groceries',
       actions: [ListRowAction.button(AppIcons.check, loading: l, onTap: noop)],
@@ -174,19 +174,19 @@ void main() {
   };
 
   final inputs = <String, Widget Function()>{
-    'AppInput': () => AppInput(
+    'PpForgeInput': () => PpForgeInput(
       label: 'Description',
       controller: TextEditingController(text: 'Lunch'),
     ),
-    'AppInput.card': () => AppInput.card(
+    'PpForgeInput.card': () => PpForgeInput.card(
       label: 'Description',
       controller: TextEditingController(text: 'Lunch'),
     ),
-    'AppInput.inline editing': () => AppInput.inline(
+    'PpForgeInput.inline editing': () => PpForgeInput.inline(
       editing: true,
       controller: TextEditingController(text: 'Lunch'),
     ),
-    'AppInput.search': () => AppInput.search(
+    'PpForgeInput.search': () => PpForgeInput.search(
       controller: TextEditingController(text: 'tea'),
       onChanged: (_) {},
     ),
@@ -266,7 +266,7 @@ void main() {
         final normal = await measure(t, build(false), width);
         final loading = await measure(t, build(true), width);
         expect(
-          find.byType(AppSpinner),
+          find.byType(PpForgeSpinner),
           findsWidgets,
           reason: '$name: loading shows the spinner',
         );
@@ -289,7 +289,7 @@ void main() {
           width,
         );
         same(name, normal, faded, 'fading');
-        expect(find.byType(AppSpinner), findsNothing, reason: name);
+        expect(find.byType(PpForgeSpinner), findsNothing, reason: name);
       });
     }
   }

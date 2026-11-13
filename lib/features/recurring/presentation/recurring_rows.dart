@@ -52,14 +52,14 @@ extension RecurringKindIconDefault on RecurringKind {
 
 /// What a recurring item shows: its own icon, else its category's, else its
 /// kind's.
-IconCode recurringIconCode({
+PpForgeIconCode recurringIconCode({
   required RecurringKind kind,
-  IconCode? own,
-  IconCode? category,
+  PpForgeIconCode? own,
+  PpForgeIconCode? category,
 }) => (own ?? category).orDefault(kind.iconDefault);
 
 extension RecurringShownIcon on Recurring {
-  IconCode get shownIconCode => recurringIconCode(
+  PpForgeIconCode get shownIconCode => recurringIconCode(
     kind: kind,
     own: iconCode,
     category: category?.iconCode,
@@ -92,9 +92,9 @@ class RecurringRow extends StatelessWidget {
     final known = shown != null && shown > 0;
     final account = r.account;
     final icon = r.shownIconCode;
-    return AppListRow(
+    return PpForgeListRow(
       // The item's own colour for what the row holds (the footer's chain).
-      accent: icon.accentColorFor(Theme.of(context).extension<AppColors>()!),
+      accent: icon.accentColorFor(Theme.of(context).extension<PpForgeColors>()!),
       leading: IconDisplay(type: IconType.category, size: 36, iconCode: icon),
       title: r.name,
       // Its state (พัก / ใกล้ครบ) or when it is next ("อีก 3 วัน") beside the

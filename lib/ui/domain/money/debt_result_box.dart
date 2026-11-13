@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:pp_forge_core/ui.dart';
-import '../../app_aliases.dart';
 
 /// Quick create's debt result box (owner 2026-10-21, mock QuickCreateDebt):
 /// three rows, the words left and the value right —
@@ -61,7 +60,7 @@ class DebtResultBox extends StatelessWidget {
             style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ),
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: PpForgeSpacing.sm),
         Flexible(
           child: Text(
             value,
@@ -82,28 +81,28 @@ class DebtResultBox extends StatelessWidget {
       child: Container(
         key: const ValueKey('debtResultBox'),
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm + AppSpacing.xxs,
+          horizontal: PpForgeSpacing.md,
+          vertical: PpForgeSpacing.sm + PpForgeSpacing.xxs,
         ),
         decoration: BoxDecoration(
           color: scheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(PpForgeRadius.lg),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
             row(nowLabel, before, color: beforeColor),
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: PpForgeSpacing.xs),
             row(afterLabel, after, color: afterColor, weight: FontWeight.w700),
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: PpForgeSpacing.xs),
             row(
               walletLabel,
               walletValue,
               key: const ValueKey('debtResultWallet'),
             ),
             if (warning != null) ...[
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: PpForgeSpacing.xs),
               Text(
                 warning,
                 key: const ValueKey('debtResultWarning'),

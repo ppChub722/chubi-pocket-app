@@ -123,7 +123,7 @@ class _MoneyPageState extends State<_MoneyPage> {
         HubDemo(
           title: 'CurrencyTile',
           note:
-              'A AppDetailRow picker that opens a popover of currencies. '
+              'A PpForgeDetailRow picker that opens a popover of currencies. '
               'onChanged: null is the locked read-only look (after create).',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -132,9 +132,9 @@ class _MoneyPageState extends State<_MoneyPage> {
                 value: _currency,
                 onChanged: (v) => setState(() => _currency = v),
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               const CurrencyTile(value: 'THB', onChanged: null),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               CurrencyTile(
                 value: 'EUR',
                 label: 'Account currency',

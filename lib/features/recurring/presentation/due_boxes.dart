@@ -183,7 +183,7 @@ class _DueBoxesState extends State<DueBoxes> {
   /// and date | caption; the amount field (filled in when known) and ✓.
   Widget _row(AppLocalizations l, RecurringItem i) {
     final extra = widget.caption?.call(i);
-    return AppListRow(
+    return PpForgeListRow(
       key: ValueKey('due-${i.id}'),
       checked: canSettleSelected(i) ? _picked.contains(i.id) : null,
       onCheck: () => setState(() {

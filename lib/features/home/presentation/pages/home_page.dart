@@ -229,12 +229,12 @@ class _MonthSlideState extends State<_MonthSlide>
 
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
-    duration: AppDurations.chrome,
+    duration: PpForgeDurations.chrome,
     value: 1,
   );
   late final Animation<double> _curve = CurvedAnimation(
     parent: _ctrl,
-    curve: AppDurations.chromeCurve,
+    curve: PpForgeDurations.chromeCurve,
   );
   int _side = 0;
 
@@ -280,11 +280,11 @@ class _NetWorthCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final textTheme = Theme.of(context).textTheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final muted = textTheme.bodySmall?.copyWith(
       color: Theme.of(context).colorScheme.onSurfaceVariant,
     );
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: HeroStyle.tinted(color: palette.primary, glyph: AppIcons.wallet),
       onTap: () => context.go('/accounts'),
       content: [
@@ -324,16 +324,16 @@ class _MonthCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final textTheme = Theme.of(context).textTheme;
     final pct = previous.expense > 0
         ? ((current.expense - previous.expense) / previous.expense * 100)
               .round()
         : null;
-    return AppCard(
+    return PpForgeCard(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(PpForgeSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -357,7 +357,7 @@ class _MonthCard extends StatelessWidget {
               ],
             ),
             if (pct != null) ...[
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               Row(
                 children: [
                   Text(
@@ -366,14 +366,14 @@ class _MonthCard extends StatelessWidget {
                       color: scheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.xs),
-                  AppIcon(
+                  const SizedBox(width: PpForgeSpacing.xs),
+                  PpForgeIcon(
                     pct > 0
                         ? AppIcons.trendUp
                         : pct < 0
                         ? AppIcons.trendDown
                         : AppIcons.trendFlat,
-                    size: AppIconSize.sm,
+                    size: PpForgeIconSize.sm,
                     color: pct > 0
                         ? palette.expense
                         : pct < 0
@@ -405,7 +405,7 @@ class _UpcomingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final textTheme = Theme.of(context).textTheme;
     final when = item.overdue
         ? l.homeOverdueDays(-item.daysUntil)
@@ -415,11 +415,11 @@ class _UpcomingCard extends StatelessWidget {
     final isCard = item.kind == UpcomingKind.cardDue;
     return SizedBox(
       width: 112,
-      child: AppCard(
+      child: PpForgeCard(
         margin: EdgeInsets.zero,
         borderColor: item.overdue ? palette.expense : null,
         borderWidth: item.overdue ? 1.5 : null,
-        padding: const EdgeInsets.all(AppSpacing.sm),
+        padding: const EdgeInsets.all(PpForgeSpacing.sm),
         onTap: isCard
             ? () => openPage(context, '/accounts/${item.id}')
             : () => openOccurrence(
@@ -449,7 +449,7 @@ class _UpcomingCard extends StatelessWidget {
               imageUrl: item.logoUrl,
               iconCode: item.iconCode,
             ),
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: PpForgeSpacing.xs),
             Text(
               isCard ? '${l.homeCardDue} ${item.name}' : item.name,
               maxLines: 1,
@@ -505,10 +505,10 @@ class _WhereItWent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionHeader(title: l.homeWhereMoneyWent),
-        AppCard(
+        PpForgeCard(
           margin: EdgeInsets.zero,
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.all(PpForgeSpacing.lg),
             child: rows.isEmpty
                 ? Text(l.homeNoExpense, style: textTheme.bodyMedium)
                 : Row(
@@ -526,24 +526,24 @@ class _WhereItWent extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.lg),
+                      const SizedBox(width: PpForgeSpacing.lg),
                       Expanded(
                         child: Column(
                           children: [
                             for (final r in rows)
-                              AppCard(
-                                style: AppCardStyle.flat,
-                                radius: BorderRadius.circular(AppRadius.sm),
+                              PpForgeCard(
+                                style: PpForgeCardStyle.flat,
+                                radius: BorderRadius.circular(PpForgeRadius.sm),
                                 onTap: r.$4 == null
                                     ? null
                                     : () => context.push('/browse?${r.$4}'),
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: AppSpacing.xs,
+                                  vertical: PpForgeSpacing.xs,
                                 ),
                                 child: Row(
                                   children: [
                                     _colorKey(r.$3),
-                                    const SizedBox(width: AppSpacing.sm),
+                                    const SizedBox(width: PpForgeSpacing.sm),
                                     Expanded(
                                       child: Text(
                                         r.$1,
@@ -592,7 +592,7 @@ class _TrendState extends State<_Trend> {
   Widget build(BuildContext context) {
     if (widget.points.isEmpty) return const SizedBox.shrink();
     final l = AppLocalizations.of(context)!;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final textTheme = Theme.of(context).textTheme;
     final locale = _locale(context);
     final sel = _selected ?? widget.points.length - 1;
@@ -601,7 +601,7 @@ class _TrendState extends State<_Trend> {
       mainAxisSize: MainAxisSize.min,
       children: [
         _colorKey(c),
-        const SizedBox(width: AppSpacing.xs),
+        const SizedBox(width: PpForgeSpacing.xs),
         Text('$label ', style: textTheme.bodySmall),
         MoneyText(
           v,
@@ -613,10 +613,10 @@ class _TrendState extends State<_Trend> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionHeader(title: l.homeTrend),
-        AppCard(
+        PpForgeCard(
           margin: EdgeInsets.zero,
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.all(PpForgeSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -624,16 +624,16 @@ class _TrendState extends State<_Trend> {
                   DateFormat.yMMMM(locale).format(p.month),
                   style: textTheme.labelMedium,
                 ),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: PpForgeSpacing.xs),
                 Wrap(
-                  spacing: AppSpacing.lg,
-                  runSpacing: AppSpacing.xs,
+                  spacing: PpForgeSpacing.lg,
+                  runSpacing: PpForgeSpacing.xs,
                   children: [
                     key(palette.income, l.homeIncome, p.income),
                     key(palette.expense, l.homeExpense, p.expense),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: PpForgeSpacing.md),
                 PairedBarChart(
                   height: 80,
                   colorA: palette.income,
@@ -694,7 +694,7 @@ class _Tiles extends StatelessWidget {
               alert: b.overLimitCount > 0,
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: PpForgeSpacing.sm),
           Expanded(
             child: _Tile(
               title: l.moreDebts,
@@ -707,7 +707,7 @@ class _Tiles extends StatelessWidget {
               caption: debts.openCount == 0 ? l.homeDebtsNone : null,
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: PpForgeSpacing.sm),
           Expanded(
             child: _Tile(
               title: l.moreSavingGoals,
@@ -755,17 +755,17 @@ class _Tile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final textTheme = Theme.of(context).textTheme;
-    return AppCard(
-      style: AppCardStyle.tinted,
+    return PpForgeCard(
+      style: PpForgeCardStyle.tinted,
       color: tint,
       glyph: icon,
       glyphSize: 64,
       margin: EdgeInsets.zero,
       onTap: () => openPage(context, route),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(PpForgeSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -785,7 +785,7 @@ class _Tile extends StatelessWidget {
                 color: scheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: PpForgeSpacing.xs),
             if (value != null)
               DefaultTextStyle.merge(
                 style: textTheme.titleSmall?.copyWith(
@@ -794,7 +794,7 @@ class _Tile extends StatelessWidget {
                 child: value!,
               ),
             if (progress != null) ...[
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: PpForgeSpacing.xs),
               ProgressRow(value: progress!, height: 4, color: tint),
             ],
             const Spacer(),
@@ -826,21 +826,21 @@ class _Recent extends StatelessWidget {
       title: l.homeRecentTitle,
       trailing: d.recent.isEmpty
           ? null
-          : AppButton(
+          : PpForgeButton(
               kind: ButtonIconKind.viewAll,
               label: l.homeRecentViewAll,
-              variant: AppButtonVariant.text,
+              variant: PpForgeButtonVariant.text,
               onPressed: () => context.go('/transactions'),
             ),
       children: d.recent.isEmpty
           ? [
               Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
+                padding: const EdgeInsets.all(PpForgeSpacing.lg),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(l.homeNoTxYet, textAlign: TextAlign.center),
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: PpForgeSpacing.md),
                     AddTile(
                       label: l.homeAddFirstTx,
                       variant: AddTileVariant.row,
@@ -901,8 +901,8 @@ class _TodoSection extends StatelessWidget {
         SectionHeader(
           title: l.homeTodoTitle,
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.xs,
-            AppSpacing.lg,
+            PpForgeSpacing.xs,
+            PpForgeSpacing.lg,
             0,
             0,
           ),
@@ -937,7 +937,7 @@ class _TodoSection extends StatelessWidget {
               children: [
                 Text('${l.homeComingUpWindow(upcoming.days)}  ', style: muted),
                 MoneyText(-upcoming.totalExpense, tone: MoneyTone.signed),
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: PpForgeSpacing.sm),
               ],
             ),
             child: SizedBox(
@@ -946,7 +946,7 @@ class _TodoSection extends StatelessWidget {
                 scrollDirection: Axis.horizontal,
                 itemCount: soon.length,
                 separatorBuilder: (_, _) =>
-                    const SizedBox(width: AppSpacing.sm),
+                    const SizedBox(width: PpForgeSpacing.sm),
                 itemBuilder: (context, i) => _UpcomingCard(item: soon[i]),
               ),
             ),
@@ -977,14 +977,14 @@ class _TodoGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      padding: const EdgeInsets.only(top: PpForgeSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SectionHeader(
-            leading: AppIcon(
+            leading: PpForgeIcon(
               icon,
-              size: AppIconSize.md,
+              size: PpForgeIconSize.md,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             title: title,
@@ -992,7 +992,7 @@ class _TodoGroup extends StatelessWidget {
             actionLabel: l.homeRecentViewAll,
             onAction: onViewAll,
             trailing: trailing,
-            padding: const EdgeInsets.fromLTRB(AppSpacing.xs, 0, 0, 0),
+            padding: const EdgeInsets.fromLTRB(PpForgeSpacing.xs, 0, 0, 0),
           ),
           child,
         ],
@@ -1043,16 +1043,16 @@ class _DraftsCard extends StatelessWidget {
       );
     }
 
-    return AppCard(
+    return PpForgeCard(
       margin: EdgeInsets.zero,
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(PpForgeSpacing.md),
       onTap: () => openPage(context, '/pending'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (final p in drafts.take(2)) ...[
             row(p),
-            const SizedBox(height: AppSpacing.xxs),
+            const SizedBox(height: PpForgeSpacing.xxs),
           ],
           Text(
             total > 2
@@ -1081,7 +1081,7 @@ class _NotificationsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final shown = notes.take(_shown).toList();
-    return AppCard(
+    return PpForgeCard(
       margin: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1096,10 +1096,10 @@ class _NotificationsCard extends StatelessWidget {
           if (total > shown.length)
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
+                PpForgeSpacing.md,
                 0,
-                AppSpacing.md,
-                AppSpacing.md,
+                PpForgeSpacing.md,
+                PpForgeSpacing.md,
               ),
               child: Text(
                 l.pendingBlockMore(total - shown.length),

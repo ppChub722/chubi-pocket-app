@@ -327,7 +327,7 @@ class Recurring extends Equatable {
   final String name;
   final String? description;
   final String? note;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final RecurringKind kind;
 
   /// หนี้ only: the person, จดหนี้ | จ่ายหนี้, the money's direction, the
@@ -413,7 +413,7 @@ class Recurring extends Equatable {
       description: json['description'] as String?,
       note: json['note'] as String?,
       iconCode: json['icon_code'] is Map<String, dynamic>
-          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+          ? PpForgeIconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
       kind: switch (json['type']) {
         'saving' => RecurringKind.saving,
@@ -579,7 +579,7 @@ class RecurringWrite extends Equatable {
   final String? goalId;
   final String? description;
   final String? note;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final TransactionType type;
 
   final double? amount;

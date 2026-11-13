@@ -9,8 +9,8 @@ import '../../../ui/ui.dart';
 
 double _d(Object? v) => (v as num?)?.toDouble() ?? 0;
 int _i(Object? v) => (v as num?)?.toInt() ?? 0;
-IconCode? _icon(Object? v) =>
-    v is Map<String, dynamic> ? IconCode.fromJson(v) : null;
+PpForgeIconCode? _icon(Object? v) =>
+    v is Map<String, dynamic> ? PpForgeIconCode.fromJson(v) : null;
 
 class Dashboard extends Equatable {
   const Dashboard({
@@ -216,7 +216,7 @@ class CategorySlice extends Equatable {
 
   String? get categoryId => category?.id;
   String get name => category?.name ?? '';
-  IconCode? get iconCode => category?.iconCode;
+  PpForgeIconCode? get iconCode => category?.iconCode;
 
   factory CategorySlice.fromJson(Map<String, dynamic> json) => CategorySlice(
     category: json['category'] is Map<String, dynamic>
@@ -285,7 +285,7 @@ class UpcomingItem extends Equatable {
 
   final int daysUntil;
   final bool overdue;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final String? logoUrl;
 
   factory UpcomingItem.fromJson(Map<String, dynamic> json) => UpcomingItem(

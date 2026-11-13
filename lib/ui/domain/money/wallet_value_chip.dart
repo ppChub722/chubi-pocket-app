@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../features/accounts/domain/account_type.dart';
 import '../tokens/app_icons.dart';
 import 'package:pp_forge_core/ui.dart';
-import '../../app_aliases.dart';
 import '../icons/type_icon_default.dart';
 import 'wallet_card.dart';
 
@@ -12,15 +11,15 @@ import 'wallet_card.dart';
 Widget walletValueChip(
   BuildContext context, {
   required String name,
-  IconCode? iconCode,
+  PpForgeIconCode? iconCode,
   AccountType? type,
 }) {
-  final palette = Theme.of(context).extension<AppColors>()!;
+  final palette = Theme.of(context).extension<PpForgeColors>()!;
   final d = type?.iconDefault;
-  return AppChip(
+  return PpForgeChip(
     label: name,
     icon: d == null
-        ? IconRegistry.get(iconCode?.icon, fallback: AppIcons.wallet)
+        ? PpForgeIconRegistry.get(iconCode?.icon, fallback: AppIcons.wallet)
         : iconCode.glyphOr(d),
     color: d == null ? iconCode.tintFor(palette) : iconCode.tintOr(d, palette),
     size: ChipSize.chip,

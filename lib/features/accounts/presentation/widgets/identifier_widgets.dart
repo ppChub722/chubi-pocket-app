@@ -40,7 +40,7 @@ Widget _mark(
 }) {
   final bank = identifierHasBank(id.kind) ? _bankOf(id, providers) : null;
   if (bank != null) return BankMark(provider: bank, size: size);
-  return AppIcon(
+  return PpForgeIcon(
     identifierKindIcon(id.kind),
     size: size * 0.9,
     color: Theme.of(context).colorScheme.primary,
@@ -87,7 +87,7 @@ class IdentifierRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return AppListRow(
+    return PpForgeListRow(
       leading: _mark(context, identifier, providers),
       title: _kindLine(context, identifier, providers),
       onTap: onTap,
@@ -182,14 +182,14 @@ class _IdentifierEditRowState extends State<IdentifierEditRow> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final id = widget.identifier;
-    return AppListRow(
-      leading: AppChip(
+    return PpForgeListRow(
+      leading: PpForgeChip(
         label: _kindLine(context, id, widget.providers),
         leading: _mark(context, id, widget.providers, size: 18),
-        trailing: AppChipTrailing.dropdown,
+        trailing: PpForgeChipTrailing.dropdown,
         onTap: _pickKind,
       ),
-      titleField: AppInput(
+      titleField: PpForgeInput(
         controller: _number,
         autofocus: widget.autofocus,
         dense: true,

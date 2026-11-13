@@ -55,7 +55,7 @@ Widget buildOthersPage(BuildContext context) {
     actionedAt: actionedAt,
   );
 
-  Widget notifCard(AppNotification n) => AppCard(
+  Widget notifCard(AppNotification n) => PpForgeCard(
     padding: EdgeInsets.zero,
     child: NotificationTile(
       notification: n,
@@ -71,7 +71,7 @@ Widget buildOthersPage(BuildContext context) {
     displayName: 'Bee',
     role: MemberRole.owner,
     status: MemberStatus.active,
-    iconCode: IconCode(icon: 'favorite', iconColors: ['#EF4444']),
+    iconCode: PpForgeIconCode(icon: 'favorite', iconColors: ['#EF4444']),
   );
   ProjectTransaction ptx(String type) => ProjectTransaction(
     id: type,
@@ -361,7 +361,7 @@ Widget buildOthersPage(BuildContext context) {
             page: 'Project members page, dashboard',
             child: const ProjectMemberAvatar(
               name: 'Bee',
-              iconCode: IconCode(icon: 'favorite', iconColors: ['#EF4444']),
+              iconCode: PpForgeIconCode(icon: 'favorite', iconColors: ['#EF4444']),
             ),
           ),
           HubUse(
@@ -375,7 +375,7 @@ Widget buildOthersPage(BuildContext context) {
                 'corner (owner 2026-11-04)',
             page: 'Notifications inbox, Home',
             child: Wrap(
-              spacing: AppSpacing.lg,
+              spacing: PpForgeSpacing.lg,
               children: [
                 for (final icon in [
                   AppIcons.link,
@@ -394,7 +394,7 @@ Widget buildOthersPage(BuildContext context) {
             wide: true,
             label: 'NotificationTileView — pending, unread (plain values)',
             page: 'Notifications inbox, Home',
-            child: AppCard(
+            child: PpForgeCard(
               padding: EdgeInsets.zero,
               child: NotificationTileView(
                 actorName: 'Aom Chan',
@@ -421,7 +421,7 @@ Widget buildOthersPage(BuildContext context) {
             wide: true,
             label: 'NotificationTileView — answered chip',
             page: 'Notifications inbox, Home',
-            child: AppCard(
+            child: PpForgeCard(
               padding: EdgeInsets.zero,
               child: NotificationTileView(
                 actorName: 'Bee',
@@ -441,7 +441,7 @@ Widget buildOthersPage(BuildContext context) {
               page: 'Projects list, Project detail',
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: AppChip(
+                child: PpForgeChip(
                   label: s.name,
                   dot: true,
                   selected: true,
@@ -618,13 +618,13 @@ Widget buildOthersPage(BuildContext context) {
       HubPlayground(
         title: 'Profile card (settings) — tint = avatar colour',
         note:
-            'The settings profile card is a AppHeroCard tinted with the '
+            'The settings profile card is a PpForgeHeroCard tinted with the '
             'avatar\'s own colour: the icon colour, else the initials colour '
-            '(IconCode.tintFor with avatarName). Three users, three tints.',
+            '(PpForgeIconCode.tintFor with avatarName). Three users, three tints.',
         controls: const [],
         builder: (context, v) {
-          final palette = Theme.of(context).extension<AppColors>()!;
-          Widget card(String name) => AppHeroCard(
+          final palette = Theme.of(context).extension<PpForgeColors>()!;
+          Widget card(String name) => PpForgeHeroCard(
             style: HeroStyle.tinted(
               color: null.tintFor(palette, avatarName: name),
             ),
@@ -633,7 +633,7 @@ Widget buildOthersPage(BuildContext context) {
                 icon: Avatar(AvatarData.forName(name), size: 52),
                 name: Text(name),
                 fact: Text('@${name.toLowerCase().replaceAll(' ', '')}'),
-                trailing: const AppIcon(AppIcons.chevronRight),
+                trailing: const PpForgeIcon(AppIcons.chevronRight),
               ),
             ],
           );
@@ -641,7 +641,7 @@ Widget buildOthersPage(BuildContext context) {
             children: [
               for (final n in const ['QA Lead', 'Aom Chan', 'Bee'])
                 Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  padding: const EdgeInsets.only(bottom: PpForgeSpacing.sm),
                   child: card(n),
                 ),
             ],
@@ -668,9 +668,9 @@ Widget buildOthersPage(BuildContext context) {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Center(child: BrandLogo(size: v<double>('logoSize'))),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: PpForgeSpacing.md),
             const AuthBrandHeader(),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: PpForgeSpacing.md),
             SocialSignInCards(
               comingSoonLabel: 'Soon',
               options: [

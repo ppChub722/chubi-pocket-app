@@ -9,7 +9,7 @@ Widget buildListPageTemplate(BuildContext context) => const _ListPageTemplate();
 
 enum _State { data, loading, error, empty }
 
-Widget _dayHead(String title, num total) => AppListHeader(
+Widget _dayHead(String title, num total) => PpForgeListHeader(
   title: title,
   trailing: ListHeaderTrailing.value(MoneyText(total, tone: MoneyTone.signed)),
 );
@@ -40,17 +40,17 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
     final scheme = Theme.of(context).colorScheme;
     final rows = [
       for (var i = 0; i < 8; i++)
-        AppCard(
-          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+        PpForgeCard(
+          margin: const EdgeInsets.only(bottom: PpForgeSpacing.sm),
           onTap: _selecting
               ? () => setState(() {
                   if (!_picked.remove(i)) _picked.add(i);
                 })
               : () {},
-          child: AppListRow(
+          child: PpForgeListRow(
             title: 'Item ${i + 1}',
             line2: const ListRowLine(parts: ['A line about it']),
-            leading: const AppAvatar.icon(AppIcons.wallet, size: 36),
+            leading: const PpForgeAvatar.icon(AppIcons.wallet, size: 36),
             checked: _selecting ? _picked.contains(i) : null,
             onCheck: _selecting
                 ? () => setState(() {
@@ -61,11 +61,11 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
         ),
     ];
 
-    // Search + filters / sort as ONE block (AppListToolbar): the chip row sits
+    // Search + filters / sort as ONE block (PpForgeListToolbar): the chip row sits
     // one size below the 40 capsule (chip 28).
     final header = <Widget>[
       if (_selecting)
-        AppListToolbar(
+        PpForgeListToolbar(
           search: ListToolbarSearch(controller: _search, hint: 'Search'),
           filters: [
             SelectAllCount(
@@ -83,22 +83,22 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
           trailing: BulkDeleteButton(onPressed: _picked.isEmpty ? null : () {}),
         )
       else
-        AppListToolbar(
+        PpForgeListToolbar(
           search: ListToolbarSearch(controller: _search, hint: 'Search'),
           filters: const [
-            AppChip(
+            PpForgeChip(
               label: 'Status',
-              trailing: AppChipTrailing.dropdown,
+              trailing: PpForgeChipTrailing.dropdown,
               onTap: _noop,
             ),
-            AppChip(
+            PpForgeChip(
               label: 'Sort',
               icon: AppIcons.sort,
-              trailing: AppChipTrailing.dropdown,
+              trailing: PpForgeChipTrailing.dropdown,
               onTap: _noop,
             ),
           ],
-          trailing: AppIconButton(
+          trailing: PpForgeIconButton(
             icon: AppIcons.edit,
             size: 36,
             onPressed: () => setState(() => _selecting = true),
@@ -110,7 +110,7 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
       height: height,
       decoration: BoxDecoration(
         border: Border.all(color: scheme.outlineVariant),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(PpForgeRadius.lg),
       ),
       clipBehavior: Clip.antiAlias,
       child: child,
@@ -119,7 +119,7 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
     // Static state variants (the live one above switches between them).
     Widget stateBody(_State s, {bool withCta = false}) => ListPageBody(
       header: [
-        AppInput.search(controller: _search, hint: 'Search', onChanged: (_) {}),
+        PpForgeInput.search(controller: _search, hint: 'Search', onChanged: (_) {}),
       ],
       loading: s == _State.loading,
       error: s == _State.error ? const _DemoError() : null,
@@ -155,16 +155,16 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Wrap(
-                    spacing: AppSpacing.xs,
-                    runSpacing: AppSpacing.xs,
+                    spacing: PpForgeSpacing.xs,
+                    runSpacing: PpForgeSpacing.xs,
                     children: [
                       for (final s in _State.values)
-                        AppChip(
+                        PpForgeChip(
                           label: s.name,
                           selected: _state == s,
                           onTap: () => setState(() => _state = s),
                         ),
-                      AppChip(
+                      PpForgeChip(
                         label: _selecting ? 'Done selecting' : 'Select',
                         icon: AppIcons.check,
                         selected: _selecting,
@@ -175,7 +175,7 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: PpForgeSpacing.md),
                   framed(
                     ListPageBody(
                       header: header,
@@ -363,7 +363,7 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
                   loadMoreError: const _DemoError(),
                   onRetryMore: () {},
                   footer: const Padding(
-                    padding: EdgeInsets.all(AppSpacing.md),
+                    padding: EdgeInsets.all(PpForgeSpacing.md),
                     child: Center(child: Text('footer slot')),
                   ),
                   children: rows.take(2).toList(),
@@ -413,7 +413,7 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
               ListPageBody(
                 header: v<bool>('header')
                     ? [
-                        AppInput.search(
+                        PpForgeInput.search(
                           controller: _search,
                           hint: 'Search',
                           onChanged: (_) {},

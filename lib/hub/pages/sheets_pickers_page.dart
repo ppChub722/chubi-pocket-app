@@ -30,12 +30,12 @@ class _PickersPageState extends State<_PickersPage> {
               'The name sheet the tag picker opens when its search box is '
               'empty. Resolves the typed name / null (dismissed).',
           child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
-              AppButton(
+              PpForgeButton(
                 label: 'New-tag name sheet',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () async {
                   final n = await showNewTagNameSheet(
                     context,
@@ -49,7 +49,7 @@ class _PickersPageState extends State<_PickersPage> {
             ],
           ),
         ),
-        HubDemo(title: 'Last result', child: AppText(_result)),
+        HubDemo(title: 'Last result', child: PpForgeText(_result)),
       ],
     );
   }

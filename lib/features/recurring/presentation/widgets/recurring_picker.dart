@@ -250,7 +250,7 @@ abstract final class RecurringPicker {
       subtitle: '${recurrenceLabel(l, s.rule)} | $period $status',
       group: c.likely ? _likely : (c.isReminder ? _reminders : _recurring),
       leading: c.isReminder
-          ? const AppIcon(AppIcons.notifications)
+          ? const PpForgeIcon(AppIcons.notifications)
           : IconDisplay(
               type: IconType.category,
               size: 36,
@@ -262,7 +262,7 @@ abstract final class RecurringPicker {
 
   static Widget _amount(AppLocalizations l, TransactionType type, double? a) =>
       a == null
-      ? AppText(l.recurringPickerAwaitingAmount, role: AppTextRole.caption)
+      ? PpForgeText(l.recurringPickerAwaitingAmount, role: PpForgeTextRole.caption)
       : MoneyText(
           a,
           tone: switch (type) {

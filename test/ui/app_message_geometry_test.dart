@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'row_geometry_harness.dart';
 
-/// AppMessage (owner 2026-10-28): icon, text, action and close sit on one
+/// PpForgeMessage (owner 2026-10-28): icon, text, action and close sit on one
 /// centre line, with the same space above and below, in every tone (wide
 /// enough that the text stays on one line; the two-line shapes are in
 /// app_message_shapes_test.dart).
@@ -15,12 +15,12 @@ void main() {
         addTearDown(t.view.reset);
         await pumpGeometryRow(
           t,
-          AppMessage(
+          PpForgeMessage(
             tone: tone,
             message: "Can't reach the server",
             actions: [
               if (withAction)
-                AppMessageAction(label: 'Retry', onPressed: () {}),
+                PpForgeMessageAction(label: 'Retry', onPressed: () {}),
             ],
             onClose: () {},
           ),
@@ -30,7 +30,7 @@ void main() {
         final box = t.getRect(
           find
               .descendant(
-                of: find.byType(AppMessage),
+                of: find.byType(PpForgeMessage),
                 matching: find.byType(Material),
               )
               .first,
@@ -38,13 +38,13 @@ void main() {
         final row = t.getRect(
           find
               .descendant(
-                of: find.byType(AppMessage),
+                of: find.byType(PpForgeMessage),
                 matching: find.byType(Row),
               )
               .first,
         );
         final centres = [
-          t.getRect(find.byIcon(AppMessage.iconOf(tone))).center.dy,
+          t.getRect(find.byIcon(PpForgeMessage.iconOf(tone))).center.dy,
           t.getRect(find.text("Can't reach the server")).center.dy,
           if (withAction) t.getRect(find.text('Retry')).center.dy,
           t.getRect(find.byIcon(AppIcons.clear)).center.dy,
@@ -53,7 +53,7 @@ void main() {
           expect(c, closeTo(centres.first, 0.5));
         }
         expect(row.top - box.top, closeTo(box.bottom - row.bottom, 0.01));
-        expect(row.top - box.top, greaterThanOrEqualTo(AppSpacing.sm));
+        expect(row.top - box.top, greaterThanOrEqualTo(PpForgeSpacing.sm));
       });
     }
   }

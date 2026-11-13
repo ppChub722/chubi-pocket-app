@@ -238,10 +238,10 @@ class _LinkSectionState extends State<LinkSection> {
     final isMember = widget.isEventMember;
     Widget? tagFor(LinkPerson p) =>
         event && (widget.eventIsNew || (isMember != null && !isMember(p)))
-        ? AppChip(
+        ? PpForgeChip(
             label: l.txLinkCardNewToEvent,
             size: ChipSize.mini,
-            tone: AppChipTone.info,
+            tone: PpForgeChipTone.info,
             selected: true,
           )
         : null;

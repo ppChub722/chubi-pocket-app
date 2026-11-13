@@ -154,7 +154,7 @@ class Connection extends Equatable {
   Color? get brand {
     final hex = brandColor.startsWith('#') ? brandColor.substring(1) : '';
     final ok = hex.length == 6 && int.tryParse(hex, radix: 16) != null;
-    return ok ? IconCode.hexToColor(brandColor) : null;
+    return ok ? PpForgeIconCode.hexToColor(brandColor) : null;
   }
 
   /// The same row after its picture was deleted (DELETE /avatars/{source}

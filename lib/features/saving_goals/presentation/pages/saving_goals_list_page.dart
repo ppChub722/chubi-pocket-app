@@ -77,7 +77,7 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
   }
 
   final _search = TextEditingController();
-  final _toolbar = AppListToolbarState.of('saving_goals');
+  final _toolbar = PpForgeListToolbarState.of('saving_goals');
 
   String _query = '';
   _GoalChip _chip = _GoalChip.all;
@@ -182,7 +182,7 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
       _GoalChip chip,
       String label,
       int count, {
-      AppChipTone? tone,
+      PpForgeChipTone? tone,
     }) => HeroFilter(
       label: label,
       count: count,
@@ -190,20 +190,20 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
       selected: _chip == chip,
       onTap: () => _setChip(chip),
     );
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
       margin: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        AppSpacing.xs,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.sm,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.xs,
       ),
       header: HeroSummaryHead(
         icon: AppIcons.savings,
         label: l.fpGoalsFactTotal,
         amount: MoneyText(s.savedTotal, symbol: symbol),
         actions: [
-          AppListToolbarToggle(
+          PpForgeListToolbarToggle(
             state: _toolbar,
             filtered:
                 _query.isNotEmpty ||
@@ -263,13 +263,13 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
               _GoalChip.short,
               l.fpGoalsFilterShort,
               s.countShort,
-              tone: AppChipTone.warning,
+              tone: PpForgeChipTone.warning,
             ),
             filter(
               _GoalChip.done,
               l.fpGoalsReached,
               s.countDone,
-              tone: AppChipTone.success,
+              tone: PpForgeChipTone.success,
             ),
             filter(_GoalChip.free, l.fpGoalsFilterFree, s.countNoTarget),
           ],
@@ -283,7 +283,7 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
     SavingGoalsState state,
     SavingGoalsCubit cubit,
   ) {
-    return AppListToolbar(
+    return PpForgeListToolbar(
       state: _toolbar,
       search: ListToolbarSearch(
         controller: _search,
@@ -311,10 +311,10 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
             for (final f in SavingGoalsFilter.values)
               SheetOption(value: f, label: _filterLabel(l, f)),
           ],
-          builder: (context, toggle) => AppChip(
+          builder: (context, toggle) => PpForgeChip(
             label: l.fpGoalsStatusChip(_filterLabel(l, state.filter)),
             selected: state.filter != SavingGoalsFilter.active,
-            trailing: AppChipTrailing.dropdown,
+            trailing: PpForgeChipTrailing.dropdown,
             onTap: toggle,
           ),
         ),
@@ -346,9 +346,9 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
       if (goals.isNotEmpty)
         Padding(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.xs,
-            AppSpacing.lg,
+            PpForgeSpacing.lg,
+            PpForgeSpacing.xs,
+            PpForgeSpacing.lg,
             0,
           ),
           child: SectionCard(
@@ -364,7 +364,7 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
   Widget _row(BuildContext context, AppLocalizations l, SavingGoal g) {
     final symbol = context.readUserCurrencySymbol;
     String money(double v) => moneyString(context, v, symbol: symbol);
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final tint = g.iconCode.tintFor(palette);
     final behind =
         !g.isArchived && !g.isCompleted && g.status == SavingStatus.behind;
@@ -377,15 +377,15 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
         : null;
     final target = g.targetAmount;
     final saved = MoneyText(g.savedAmount, symbol: symbol);
-    final leading = IconCodeWidget(
+    final leading = PpForgeIconCodeWidget(
       iconCode: g.iconCode,
       size: 36,
-      displayMode: IconDisplayMode.compact,
+      displayMode: PpForgeIconDisplayMode.compact,
       fallbackIcon: AppIcons.savingGoal,
       fallbackColor: tint,
     );
     if (target == null) {
-      return AppListRow(
+      return PpForgeListRow(
         key: ValueKey(g.id),
         leading: leading,
         title: g.name,
@@ -411,7 +411,7 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
     final left = g.remainingAmount ?? target - g.savedAmount;
     final goal = l.sgv2ChartTarget(money(target));
     final due = savingGoalDueCaption(context, l, g);
-    return AppListRow(
+    return PpForgeListRow(
       key: ValueKey(g.id),
       leading: leading,
       title: g.name,

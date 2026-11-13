@@ -6,7 +6,7 @@ import '../../domain/category.dart';
 import '../../domain/category_tree.dart';
 import '../category_label.dart';
 
-AppChip categoryAppChip(
+PpForgeChip categoryAppChip(
   BuildContext context,
   Category category, {
   required List<Category> all,
@@ -15,11 +15,11 @@ AppChip categoryAppChip(
   bool dashed = false,
   ChipSize size = ChipSize.control,
 }) {
-  final palette = Theme.of(context).extension<AppColors>()!;
+  final palette = Theme.of(context).extension<PpForgeColors>()!;
   final code = CategoryTree.resolveIconCode(category, all);
-  return AppChip(
+  return PpForgeChip(
     label: categoryDisplayName(AppLocalizations.of(context)!, category),
-    icon: IconRegistry.get(code?.icon, fallback: AppIcons.category),
+    icon: PpForgeIconRegistry.get(code?.icon, fallback: AppIcons.category),
     color: code.tintFor(palette),
     selected: selected,
     onTap: onTap,

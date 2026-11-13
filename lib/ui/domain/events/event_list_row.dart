@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:pp_forge_core/ui.dart';
 import '../tokens/app_icons.dart';
-import '../../app_aliases.dart';
 import '../icons/icon_display.dart';
 import '../icons/icon_type.dart';
 import '../money/money_text.dart';
@@ -27,7 +26,7 @@ class EventListRow extends StatelessWidget {
   static const double iconSize = 40;
 
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   /// Line 2, joined with " | ".
   final List<String> meta;
@@ -47,7 +46,7 @@ class EventListRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppListRow(
+    return PpForgeListRow(
       leading: IconDisplay(
         type: IconType.project,
         size: iconSize,

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:pp_forge_core/ui.dart';
 import '../tokens/text_limits.dart';
-import '../../app_aliases.dart';
 
 /// Naming a new tag (the tag picker's "add a tag" with nothing typed).
 Future<String?> showNewTagNameSheet(
@@ -61,7 +60,7 @@ class _NewTagNameSheetState extends State<_NewTagNameSheet> {
       title: widget.title,
       primaryLabel: widget.saveLabel,
       onPrimary: () => Navigator.pop(context, _text.text),
-      child: AppInput(
+      child: PpForgeInput(
         controller: _text,
         autofocus: true,
         maxLength: widget.maxLength,

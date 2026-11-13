@@ -195,27 +195,27 @@ class _ConnectionCheckScreenState extends State<ConnectionCheckScreen> {
       appBar: AppBar(title: const Text('Connection')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.md,
-          AppSpacing.lg,
-          AppSpacing.huge,
+          PpForgeSpacing.lg,
+          PpForgeSpacing.md,
+          PpForgeSpacing.lg,
+          PpForgeSpacing.huge,
         ),
         children: [
           Row(
             children: [
-              AppButton(
+              PpForgeButton(
                 label: _running ? 'Checking…' : 'Check again',
                 icon: Icons.refresh,
-                size: AppButtonSize.control,
+                size: PpForgeButtonSize.control,
                 loading: _running,
                 onPressed: _running ? null : _run,
               ),
-              const SizedBox(width: AppSpacing.sm),
-              AppButton(
+              const SizedBox(width: PpForgeSpacing.sm),
+              PpForgeButton(
                 label: 'Copy report',
                 icon: Icons.copy,
-                size: AppButtonSize.control,
-                variant: AppButtonVariant.outlined,
+                size: PpForgeButtonSize.control,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: _checks.isEmpty
                     ? null
                     : () {
@@ -225,7 +225,7 @@ class _ConnectionCheckScreenState extends State<ConnectionCheckScreen> {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: PpForgeSpacing.md),
           for (final c in _checks)
             ListTile(
               contentPadding: EdgeInsets.zero,

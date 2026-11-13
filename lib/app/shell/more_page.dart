@@ -241,20 +241,20 @@ class _MoreView extends StatelessWidget {
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              MediaQuery.paddingOf(context).top + AppSpacing.xs,
-              AppSpacing.lg,
-              AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
+              PpForgeSpacing.lg,
+              MediaQuery.paddingOf(context).top + PpForgeSpacing.xs,
+              PpForgeSpacing.lg,
+              PpForgeSpacing.huge + MediaQuery.paddingOf(context).bottom,
             ),
             children: [
               for (final (title, tint, entries) in groups) ...[
                 SectionHeader(
                   title: title,
                   padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.xs,
-                    AppSpacing.lg,
+                    PpForgeSpacing.xs,
+                    PpForgeSpacing.lg,
                     0,
-                    AppSpacing.sm,
+                    PpForgeSpacing.sm,
                   ),
                 ),
                 CardGrid(

@@ -77,7 +77,7 @@ abstract final class BankPicker {
           none: allowNone
               ? PickerNone(
                   label: noneLabel ?? l.identifierBankNone,
-                  leading: const AppIcon(AppIcons.bank),
+                  leading: const PpForgeIcon(AppIcons.bank),
                 )
               : null,
           searchable: true,

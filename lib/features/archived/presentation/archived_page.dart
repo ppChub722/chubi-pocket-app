@@ -136,11 +136,11 @@ class _ArchivedView extends StatelessWidget {
                   title: _title(l, kind),
                   children: [
                     for (final item in hub.of(kind))
-                      AppDetailRow(
+                      PpForgeDetailRow(
                         key: ValueKey('archived-${kind.key}-${item.id}'),
                         leading: Opacity(
                           opacity: 0.6,
-                          child: IconCodeWidget(
+                          child: PpForgeIconCodeWidget(
                             iconCode: item.iconCode,
                             size: AvatarMetrics.sizeMedium,
                             fallbackIcon: _fallback(kind),
@@ -151,10 +151,10 @@ class _ArchivedView extends StatelessWidget {
                         onTap: () =>
                             openPage(context, kind.detailPath(item.id)),
                         trailing: item.canRestore
-                            ? AppChip(
+                            ? PpForgeChip(
                                 label: l.archivedRestore,
                                 icon: AppIcons.unarchive,
-                                tone: AppChipTone.primary,
+                                tone: PpForgeChipTone.primary,
                                 selected: true,
                                 onTap: state.busy.contains(item.id)
                                     ? null

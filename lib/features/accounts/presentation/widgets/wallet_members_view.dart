@@ -109,7 +109,7 @@ class WalletMembersView extends StatelessWidget {
           ),
           if (owner)
             Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.md),
+              padding: const EdgeInsets.only(top: PpForgeSpacing.md),
               child: AddTile(
                 label: l.walletInviteFromContacts,
                 variant: AddTileVariant.row,
@@ -266,7 +266,7 @@ class _MemberRow extends StatelessWidget {
             tone: member.isOwner ? Tone.primary : Tone.neutral,
             selected: true,
           );
-    return AppListRow(
+    return PpForgeListRow(
       leading: Avatar(member.avatar, size: 40),
       title: isSelf ? '${member.name} (${l.walletMemberYou})' : member.name,
       status: role,

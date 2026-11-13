@@ -189,7 +189,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
       NetworkRecorder.instance.noteRoute(path);
       Breadcrumbs.instance.page(path);
     });
-    AppButton.tapObserver = Breadcrumbs.instance.tap;
+    PpForgeButton.tapObserver = Breadcrumbs.instance.tap;
     _versionCubit.check();
 
     _authCubit.init();

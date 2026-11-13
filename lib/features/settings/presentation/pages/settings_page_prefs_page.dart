@@ -73,7 +73,7 @@ class SettingsPagePrefsPage extends StatelessWidget {
           final inset = MediaQuery.paddingOf(context);
           return DetailPageBody(
             onRefresh: () => refreshMe(context),
-            bottomInset: AppSpacing.huge + inset.bottom,
+            bottomInset: PpForgeSpacing.huge + inset.bottom,
             // The page legend, above the cards (inset like a card title).
             hero: DetailFootnote(l.pagePrefsCaption),
             // Grouped like เพิ่มเติม / the nav bar (owner 2026-10-28).
@@ -88,10 +88,10 @@ class SettingsPagePrefsPage extends StatelessWidget {
                         LockedInEdit(
                           key: ValueKey('page-pref-${page.id}'),
                           locked: true,
-                          child: AppDetailRow(
-                            leading: AppIcon(page.icon),
+                          child: PpForgeDetailRow(
+                            leading: PpForgeIcon(page.icon),
                             label: page.title(l),
-                            trailing: AppBadge(label: l.settingsComingSoon),
+                            trailing: PpForgeBadge(label: l.settingsComingSoon),
                           ),
                         )
                       else
@@ -99,8 +99,8 @@ class SettingsPagePrefsPage extends StatelessWidget {
                           key: ValueKey('page-pref-${page.id}'),
                           // A module that is off: shown, not tappable.
                           locked: !pagePrefRowEnabled(page, layout),
-                          child: AppDetailRow(
-                            leading: AppIcon(page.icon),
+                          child: PpForgeDetailRow(
+                            leading: PpForgeIcon(page.icon),
                             label: page.title(l),
                             helper: pagePrefSummary(
                               l,
@@ -109,7 +109,7 @@ class SettingsPagePrefsPage extends StatelessWidget {
                             ),
                             helperMaxLines: 1,
                             trailing: page.changed(user.pagePref(page.id))
-                                ? AppBadge(label: l.pagePrefsChanged)
+                                ? PpForgeBadge(label: l.pagePrefsChanged)
                                 : null,
                             showChevron: pagePrefRowEnabled(page, layout),
                             onTap: () =>
@@ -125,8 +125,8 @@ class SettingsPagePrefsPage extends StatelessWidget {
                 : SectionCard(
                     title: l.pagePrefsResetTitle,
                     children: [
-                      AppDetailRow(
-                        leading: const AppIcon(AppIcons.reset),
+                      PpForgeDetailRow(
+                        leading: const PpForgeIcon(AppIcons.reset),
                         label: l.pagePrefsResetAll,
                         helper: l.pagePrefsResetAllHint,
                         onTap: () => _resetAll(context),
@@ -176,7 +176,7 @@ class SettingsPagePrefPage extends StatelessWidget {
           final pref = user.pagePref(pageId);
           return DetailPageBody(
             onRefresh: () => refreshMe(context),
-            bottomInset: AppSpacing.huge + inset.bottom,
+            bottomInset: PpForgeSpacing.huge + inset.bottom,
             sections: [
               (first) => SectionCard(
                 first: first,
@@ -184,7 +184,7 @@ class SettingsPagePrefPage extends StatelessWidget {
                 children: [
                   for (final f in page.fields)
                     if (f.isSet)
-                      AppDetailRow(
+                      PpForgeDetailRow(
                         label: f.title(l),
                         helper: l.pagePrefsSetOnPage,
                         trailing: Text(
@@ -212,8 +212,8 @@ class SettingsPagePrefPage extends StatelessWidget {
                 ? SectionCard(
                     title: l.pagePrefsResetTitle,
                     children: [
-                      AppDetailRow(
-                        leading: const AppIcon(AppIcons.reset),
+                      PpForgeDetailRow(
+                        leading: const PpForgeIcon(AppIcons.reset),
                         label: l.pagePrefsResetPage,
                         onTap: () => _resetPage(context),
                       ),

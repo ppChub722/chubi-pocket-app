@@ -35,7 +35,7 @@ class SettingsAppPage extends StatelessWidget {
             // The account's copy of these values (another device may change
             // them).
             onRefresh: () => refreshMe(context),
-            bottomInset: AppSpacing.huge + inset.bottom,
+            bottomInset: PpForgeSpacing.huge + inset.bottom,
             sections: [
               (first) => SectionCard(
                 first: first,
@@ -57,12 +57,12 @@ class SettingsAppPage extends StatelessWidget {
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg,
-                      vertical: AppSpacing.xl,
+                      horizontal: PpForgeSpacing.lg,
+                      vertical: PpForgeSpacing.xl,
                     ),
-                    child: AppText(
+                    child: PpForgeText(
                       l.settingsFontSample,
-                      role: AppTextRole.title,
+                      role: PpForgeTextRole.title,
                     ),
                   ),
                 ],
@@ -105,11 +105,11 @@ Widget _livePref<T>(
 class _ThemeRow extends StatelessWidget {
   const _ThemeRow();
 
-  static Widget _swatches(AppTheme t) => Row(
+  static Widget _swatches(PpForgeTheme t) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
       for (final c in t.previewSwatch.take(2))
-        Icon(Icons.circle, size: AppSpacing.lg, color: c),
+        Icon(Icons.circle, size: PpForgeSpacing.lg, color: c),
     ],
   );
 
@@ -126,7 +126,7 @@ class _ThemeRow extends StatelessWidget {
             .where((t) => t.id == value)
             .firstOrNull;
         return SettingPickRow(
-          leading: const AppIcon(AppIcons.colorPicker),
+          leading: const PpForgeIcon(AppIcons.colorPicker),
           label: l.settingsTheme,
           value: current == null
               ? null
@@ -134,7 +134,7 @@ class _ThemeRow extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _swatches(current),
-                    const SizedBox(width: AppSpacing.xs),
+                    const SizedBox(width: PpForgeSpacing.xs),
                     Text(themeName(l, current)),
                   ],
                 ),
@@ -174,7 +174,7 @@ class _ThemeModeRow extends StatelessWidget {
       wire: (m) => m.name,
       key: PreferencesSyncCubit.themeModeKey,
       builder: (context, mode, onChanged) => SettingDropdownRow<ThemeMode>(
-        leading: const AppIcon(AppIcons.themeMode),
+        leading: const PpForgeIcon(AppIcons.themeMode),
         label: l.settingsAppearance,
         value: themeModeLabel(l, mode),
         selected: mode,
@@ -204,7 +204,7 @@ class _LanguageRow extends StatelessWidget {
       wire: (code) => code,
       key: PreferencesSyncCubit.languageKey,
       builder: (context, code, onChanged) => SettingDropdownRow<String>(
-        leading: const AppIcon(AppIcons.language),
+        leading: const PpForgeIcon(AppIcons.language),
         label: l.settingsLanguage,
         value: kLanguageNames[code] ?? code,
         selected: code,
@@ -239,7 +239,7 @@ class _FontRow extends StatelessWidget {
       builder: (context, id, onChanged) {
         final current = FontRegistry.byId(id);
         return SettingPickRow(
-          leading: const AppIcon(AppIcons.font),
+          leading: const PpForgeIcon(AppIcons.font),
           label: label,
           value: Text(current.family),
           onTap: available.length < 2 || onChanged == null

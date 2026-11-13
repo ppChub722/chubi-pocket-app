@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'row_geometry_harness.dart';
 
-/// AppRow plan step 0: the detail row's geometry, fill and opacity inside a
+/// PpForgeRow plan step 0: the detail row's geometry, fill and opacity inside a
 /// SectionCard, recorded at app main `8e28650` (before DetailRow moved onto
-/// AppRow and became AppDetailRow). The rebuild must keep every value. One
+/// PpForgeRow and became PpForgeDetailRow). The rebuild must keep every value. One
 /// meant change since: step 3b (owner 2026-10-28) turned detail values
 /// primary, so `valueColor` went from FF2B1A21 (onSurface) to FFFF8FB1
 /// (primary); a locked value is muted (onSurfaceVariant, FF6B5258) and the
@@ -41,13 +41,13 @@ void main() {
   final cases = <String, GeometryCase>{
     'value': (
       build: () => card([
-        const AppDetailRow(key: rowKey, label: 'Label', trailing: value),
+        const PpForgeDetailRow(key: rowKey, label: 'Label', trailing: value),
       ]),
       measure: withValue,
     ),
     'icon': (
       build: () => card([
-        const AppDetailRow(
+        const PpForgeDetailRow(
           key: rowKey,
           icon: AppIcons.info,
           label: 'Label',
@@ -61,9 +61,9 @@ void main() {
     ),
     'leading': (
       build: () => card([
-        const AppDetailRow(
+        const PpForgeDetailRow(
           key: rowKey,
-          leading: AppIcon(AppIcons.archive, key: leadingKey),
+          leading: PpForgeIcon(AppIcons.archive, key: leadingKey),
           label: 'Label',
           trailing: value,
         ),
@@ -75,14 +75,14 @@ void main() {
     ),
     'emptySlot': (
       build: () => card([
-        const AppDetailRow(icon: AppIcons.info, label: 'First'),
-        const AppDetailRow(key: rowKey, label: 'Label', trailing: value),
+        const PpForgeDetailRow(icon: AppIcons.info, label: 'First'),
+        const PpForgeDetailRow(key: rowKey, label: 'Label', trailing: value),
       ]),
       measure: withValue,
     ),
     'lock': (
       build: () => card([
-        const AppDetailRow(
+        const PpForgeDetailRow(
           key: rowKey,
           label: 'Label',
           trailing: value,
@@ -96,7 +96,7 @@ void main() {
     ),
     'chevron': (
       build: () => card([
-        AppDetailRow(
+        PpForgeDetailRow(
           key: rowKey,
           label: 'Label',
           trailing: value,
@@ -111,7 +111,7 @@ void main() {
     ),
     'pick': (
       build: () => card([
-        AppDetailRow.pick(
+        PpForgeDetailRow.pick(
           key: rowKey,
           label: 'Label',
           emptyText: 'Pick one',
@@ -127,7 +127,7 @@ void main() {
     ),
     'helper': (
       build: () => card([
-        const AppDetailRow(
+        const PpForgeDetailRow(
           key: rowKey,
           icon: AppIcons.info,
           label: 'Label',
@@ -145,7 +145,7 @@ void main() {
     ),
     'helperOneLine': (
       build: () => card([
-        const AppDetailRow(
+        const PpForgeDetailRow(
           key: rowKey,
           label: 'Label',
           helper: 'Helper text under the label that is long enough to wrap',
@@ -162,7 +162,7 @@ void main() {
     ),
     'error': (
       build: () => card([
-        const AppDetailRow(
+        const PpForgeDetailRow(
           key: rowKey,
           label: 'Label',
           error: 'Error text',
@@ -177,7 +177,7 @@ void main() {
     ),
     'longValue': (
       build: () => card([
-        const AppDetailRow(
+        const PpForgeDetailRow(
           key: rowKey,
           icon: AppIcons.info,
           label: 'Label',

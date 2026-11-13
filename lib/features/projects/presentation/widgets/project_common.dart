@@ -28,11 +28,11 @@ List<ProjectStatus> eventStatusOptions(
   ];
 }
 
-AppChipTone projectStatusTone(ProjectStatus s) => switch (s) {
-  ProjectStatus.active => AppChipTone.primary,
-  ProjectStatus.completed => AppChipTone.success,
-  ProjectStatus.cancelled => AppChipTone.danger,
-  ProjectStatus.archived => AppChipTone.neutral,
+PpForgeChipTone projectStatusTone(ProjectStatus s) => switch (s) {
+  ProjectStatus.active => PpForgeChipTone.primary,
+  ProjectStatus.completed => PpForgeChipTone.success,
+  ProjectStatus.cancelled => PpForgeChipTone.danger,
+  ProjectStatus.archived => PpForgeChipTone.neutral,
 };
 
 String? projectLockMessage(AppLocalizations l, ProjectStatus s) => switch (s) {

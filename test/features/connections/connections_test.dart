@@ -147,7 +147,7 @@ void main() {
     test('the spec example parses', () {
       final c = Connection.fromJson(_telegram());
       expect(c.provider, ConnectionProvider.telegram);
-      expect(c.brand, IconCode.hexToColor('#26A5E4'));
+      expect(c.brand, PpForgeIconCode.hexToColor('#26A5E4'));
       expect(c.logoUrl, endsWith('?v=1'));
       expect(c.available && c.linked, isTrue);
       expect(c.account, '@nong');
@@ -291,7 +291,7 @@ void main() {
 
     test('an icon edit keeps a photo avatar a photo', () {
       final me = User.fromJson(_profile());
-      const code = IconCode(icon: 'star', bgColors: ['#123456']);
+      const code = PpForgeIconCode(icon: 'star', bgColors: ['#123456']);
       final next = me.copyWith(iconCode: code);
       expect(next.iconCode, code);
       expect(next.avatar.kind, AvatarKind.photo);

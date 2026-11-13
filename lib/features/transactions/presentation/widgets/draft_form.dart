@@ -1241,13 +1241,13 @@ class _DraftFormState extends State<DraftForm> {
   }
 
   Future<void> _pickDate() async {
-    final r = await AppDatePicker.show(
+    final r = await PpForgeDatePicker.show(
       context,
       initial: _c.date,
       first: DateTime(2000),
       last: DateTime.now().add(const Duration(days: 365)),
     );
-    if (r is AppDatePicked) _c.setDate(r.date);
+    if (r is PpForgeDatePicked) _c.setDate(r.date);
   }
 
   List<Widget> _tagsBlock({
@@ -1521,10 +1521,10 @@ class _DraftFormState extends State<DraftForm> {
                 if (!isTransfer && categoryHint != null)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.md,
+                      PpForgeSpacing.md,
                       0,
-                      AppSpacing.md,
-                      AppSpacing.sm,
+                      PpForgeSpacing.md,
+                      PpForgeSpacing.sm,
                     ),
                     child: Text(
                       categoryHint,
@@ -1543,7 +1543,7 @@ class _DraftFormState extends State<DraftForm> {
                     onMore: _pickCategory,
                     order: _categoryOrders.putIfAbsent(_c.type, ChipOrder.new),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: PpForgeSpacing.sm),
                 ],
                 if (!widget.cardsInHero) ..._tagsBlock(editing: true),
               ] else if (!widget.cardsInHero && _c.tagIds.isNotEmpty) ...[
@@ -1565,7 +1565,7 @@ class _DraftFormState extends State<DraftForm> {
   Widget? _paybackChip(AppLocalizations l) {
     final e = widget.eventBill;
     if (e == null) return null;
-    return AppChip(
+    return PpForgeChip(
       key: const ValueKey('typeChipPayback'),
       label: l.evbTypePayback,
       icon: e.payback ? AppIcons.transfer : null,
@@ -1582,11 +1582,11 @@ class _DraftFormState extends State<DraftForm> {
     if (!isAfterToday(_c.date)) return null;
     final when = dueLabel(l, date: _c.date, withDate: false);
     if (!editing) {
-      return AppChip(
+      return PpForgeChip(
         key: const ValueKey('txFutureChip'),
         label: when,
         size: ChipSize.mini,
-        tone: AppChipTone.info,
+        tone: PpForgeChipTone.info,
         selected: true,
       );
     }
@@ -1692,7 +1692,7 @@ class _DraftFormState extends State<DraftForm> {
   /// Under the hero (owner 2026-11-03): the แบ่ง card, then the tx detail
   /// card (category / wallet, tags, note, รายการประจำ).
   List<Widget> _chipBody(AppLocalizations l, {required bool isTransfer}) {
-    const cardGap = SizedBox(height: AppSpacing.md);
+    const cardGap = SizedBox(height: PpForgeSpacing.md);
     final eventBill = widget.eventBill;
     final Widget? split = eventBill != null && eventBill.payback
         ? eventBill.paybackCard
@@ -1735,7 +1735,7 @@ class _DraftFormState extends State<DraftForm> {
             EventBookRows(controller: _c),
             // The card's own gap stands on both sides: the same look as
             // RowsDivider.
-            if (myTx) const AppDivider(),
+            if (myTx) const PpForgeDivider(),
           ],
           if (myTx) ..._myTxRows(l, isTransfer: isTransfer, missing: missing),
         ],
@@ -1749,7 +1749,7 @@ class _DraftFormState extends State<DraftForm> {
     required bool isTransfer,
     required Widget Function(Widget child) longPressable,
   }) {
-    const cardGap = SizedBox(height: AppSpacing.md);
+    const cardGap = SizedBox(height: PpForgeSpacing.md);
     final mode = _linkMode;
     final bill = mode != null && mode != LinkMode.personal;
     final Widget? split = isTransfer || mode == null
@@ -1804,7 +1804,7 @@ class _DraftFormState extends State<DraftForm> {
                 // Viewing: the text sits level with the label.
                 dense: !editing,
                 child: editing
-                    ? AppInput.inline(
+                    ? PpForgeInput.inline(
                         editing: true,
                         controller: _c.note,
                         focusNode: _noteFocus,
@@ -1866,7 +1866,7 @@ class _DraftFormState extends State<DraftForm> {
       // The note last (owner 2026-11-03).
       DraftFieldRow(
         label: l.commonNote,
-        child: AppInput.inline(
+        child: PpForgeInput.inline(
           editing: true,
           controller: _c.note,
           focusNode: _noteFocus,
@@ -1894,7 +1894,7 @@ class _DraftFormState extends State<DraftForm> {
                 foreignName: _c.foreignAccountName,
               ),
             ),
-            AppIconButton.flat(
+            PpForgeIconButton.flat(
               tooltip: editing ? l.quickSwap : null,
               dense: true,
               icon: AppIcons.arrowForward,
@@ -2038,7 +2038,7 @@ class _DraftFormState extends State<DraftForm> {
             onLongPress: enter == null ? null : () => enter(_noteFocus),
             editField: DetailStacked(
               label: l.commonNote,
-              child: AppInput.inline(
+              child: PpForgeInput.inline(
                 editing: true,
                 controller: _c.note,
                 focusNode: _noteFocus,
@@ -2070,13 +2070,13 @@ class _DraftFormState extends State<DraftForm> {
       // 0.4.1-2 S11: my private note on a shared-bill copy (read here; it is
       // edited in the bill form).
       if (widget.privateNote case final p? when p.trim().isNotEmpty) ...[
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PpForgeSpacing.sm),
         NoteSection(label: l.evbPrivateNote, editing: false, text: p),
       ],
       if (editing && _linkMode != null) ...[
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: PpForgeSpacing.lg),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.md),
           child: LinkSection(
             controller: _c,
             event: widget.eventSlot ?? const SplitEventSlot(),
@@ -2217,7 +2217,7 @@ class _ShareLine extends StatelessWidget {
           l.txShareMine,
           style: textTheme.labelLarge?.copyWith(color: scheme.onSurfaceVariant),
         ),
-        const SizedBox(width: AppSpacing.xs),
+        const SizedBox(width: PpForgeSpacing.xs),
         MoneyText(
           mine,
           style: textTheme.titleMedium?.copyWith(
@@ -2226,7 +2226,7 @@ class _ShareLine extends StatelessWidget {
           ),
         ),
         if (tail != null) ...[
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: PpForgeSpacing.xs),
           Flexible(
             child: Text(
               '| $tail',

@@ -28,9 +28,6 @@ void main() {
     final seen = <Uri>{};
     void visit(Uri file, Set<String> into) {
       if (!seen.add(file)) return;
-      // The App* / Ui* names of pp_forge_core pieces: not pieces of their
-      // own (the package's hub covers the real ones).
-      if (file.path.endsWith('/app_aliases.dart')) return;
       final src = File.fromUri(file).readAsStringSync();
       for (final m in decl.allMatches(src)) {
         into.add(m.group(1) ?? m.group(2) ?? m.group(3)!);

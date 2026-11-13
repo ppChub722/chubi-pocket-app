@@ -928,7 +928,7 @@ class _LoadedState extends State<_Loaded>
                   },
                   controller: _scroll,
                   physics: const AlwaysScrollableScrollPhysics(),
-                  topInset: MediaQuery.paddingOf(context).top + AppSpacing.md,
+                  topInset: MediaQuery.paddingOf(context).top + PpForgeSpacing.md,
                   bottomInset: 96 + MediaQuery.paddingOf(context).bottom,
                   // The form renders hero -> note -> tags -> the headed
                   // "แบ่งรายการ" section itself, so it is the whole hero.
@@ -936,19 +936,19 @@ class _LoadedState extends State<_Loaded>
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       if (isSystemRow) ...[
-                        AppMessage(
+                        PpForgeMessage(
                           message: isRepayment
                               ? l.txDetailRepaymentBanner
                               : l.transactionDetailSystemRowBanner,
                           tone: Tone.info,
                         ),
-                        const SizedBox(height: AppSpacing.md),
+                        const SizedBox(height: PpForgeSpacing.md),
                       ] else if (tx.isLocked) ...[
-                        AppMessage(
+                        PpForgeMessage(
                           message: l.transactionFormLockedBanner,
                           tone: Tone.warning,
                         ),
-                        const SizedBox(height: AppSpacing.md),
+                        const SizedBox(height: PpForgeSpacing.md),
                       ],
                       DraftForm(
                         controller: _c,
@@ -1010,7 +1010,7 @@ class _LoadedState extends State<_Loaded>
     );
   }
 
-  AppCompactHeroCard _compactBar(BuildContext context) {
+  PpForgeCompactHeroCard _compactBar(BuildContext context) {
     final category = _c.isTransfer ? null : _c.category;
     return txCompactHeroBar(
       context,

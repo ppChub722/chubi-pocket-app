@@ -64,15 +64,15 @@ class _SyncPageState extends State<SyncPage> {
           final rounds = coordinator.rounds.reversed.toList();
           return ListView(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.md,
-              AppSpacing.lg,
-              AppSpacing.huge,
+              PpForgeSpacing.lg,
+              PpForgeSpacing.md,
+              PpForgeSpacing.lg,
+              PpForgeSpacing.huge,
             ),
             children: [
               Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
+                spacing: PpForgeSpacing.sm,
+                runSpacing: PpForgeSpacing.sm,
                 children: [
                   FilledButton(
                     onPressed: _busy
@@ -88,15 +88,15 @@ class _SyncPageState extends State<SyncPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               Text(
                 'Clear device data deletes the saved copy; restart the app to '
                 'see a cold start from the server.',
                 style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               Text('Datasets', style: text.titleSmall),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: PpForgeSpacing.xs),
               for (final set in SyncSet.values)
                 _row(
                   context,
@@ -105,9 +105,9 @@ class _SyncPageState extends State<SyncPage> {
                   server: versions[set.wire],
                   tracked: true,
                 ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               Text('Page data (version only)', style: text.titleSmall),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: PpForgeSpacing.xs),
               for (final key in SyncKey.values)
                 _row(
                   context,
@@ -116,9 +116,9 @@ class _SyncPageState extends State<SyncPage> {
                   server: versions[key.wire],
                   tracked: false,
                 ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               Text('Last ${rounds.length} rounds', style: text.titleSmall),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: PpForgeSpacing.xs),
               if (rounds.isEmpty)
                 Text(
                   'No round yet.',
@@ -128,9 +128,9 @@ class _SyncPageState extends State<SyncPage> {
                 ),
               for (final r in rounds)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: AppCard(
-                    padding: const EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.only(bottom: PpForgeSpacing.sm),
+                  child: PpForgeCard(
+                    padding: const EdgeInsets.all(PpForgeSpacing.md),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -169,9 +169,9 @@ class _SyncPageState extends State<SyncPage> {
     final scheme = Theme.of(context).colorScheme;
     final inSync = held != null && held == server;
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: AppCard(
-        padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.only(bottom: PpForgeSpacing.sm),
+      child: PpForgeCard(
+        padding: const EdgeInsets.all(PpForgeSpacing.md),
         child: Row(
           children: [
             Expanded(
@@ -192,15 +192,15 @@ class _SyncPageState extends State<SyncPage> {
               ),
             ),
             if (tracked)
-              AppChip(
+              PpForgeChip(
                 label: held == null
                     ? 'not held'
                     : (inSync ? 'in sync' : 'behind'),
                 size: ChipSize.mini,
                 selected: true,
                 tone: held == null
-                    ? AppChipTone.neutral
-                    : (inSync ? AppChipTone.success : AppChipTone.info),
+                    ? PpForgeChipTone.neutral
+                    : (inSync ? PpForgeChipTone.success : PpForgeChipTone.info),
               ),
           ],
         ),

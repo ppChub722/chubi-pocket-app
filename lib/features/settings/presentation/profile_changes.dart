@@ -12,17 +12,17 @@ class ProfileChanges {
   final String? username;
   final String? displayName;
   final String? email;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final bool clearIconCode;
 }
 
 ProfileChanges profileChanges({
   required String name,
   required String email,
-  required IconCode? iconCode,
+  required PpForgeIconCode? iconCode,
   required String originalName,
   required String originalEmail,
-  required IconCode? originalIconCode,
+  required PpForgeIconCode? originalIconCode,
   String? username,
   String? originalUsername,
 }) {

@@ -60,7 +60,7 @@ class _BottomBarPageState extends State<_BottomBarPage> {
                 labels: _labels,
                 onChanged: (m) => setState(() => _mode = m),
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               SizedBox(
                 height: 96,
                 child: MainBottomNav(
@@ -104,7 +104,7 @@ class _BottomBarPageState extends State<_BottomBarPage> {
                     ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               HubRow(
                 cells: [
                   for (final m in QuickCreateMode.values)
@@ -136,7 +136,7 @@ class _BottomBarPageState extends State<_BottomBarPage> {
                     ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               EmptyView(
                 icon: AppIcons.debt,
                 title: 'ยังไม่มีหนี้ค้าง',
@@ -154,7 +154,7 @@ class _BottomBarPageState extends State<_BottomBarPage> {
           title: 'QuickCreateModeTabs — the sheet’s mode switch',
           note:
               'At the very top of the quick create, above the EntryCard: the '
-              'app\'s one tab style (AppTabBar pill), an icon on each mode, '
+              'app\'s one tab style (PpForgeTabBar pill), an icon on each mode, '
               'in the theme primary (no per-mode colours, owner 2026-10-21).',
           child: HubRow(
             cells: [

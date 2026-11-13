@@ -15,7 +15,7 @@ class UpdateBanner extends StatelessWidget {
     final state = cubit?.state;
     final show = state != null && state.showBanner;
     return AnimatedSize(
-      duration: AppDurations.fast,
+      duration: PpForgeDurations.fast,
       curve: Curves.easeOut,
       alignment: Alignment.bottomCenter,
       child: show
@@ -46,13 +46,13 @@ class UpdateBannerStrip extends StatelessWidget {
       bottom: false,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.xs,
+          horizontal: PpForgeSpacing.md,
+          vertical: PpForgeSpacing.xs,
         ),
-        child: AppMessage(
+        child: PpForgeMessage(
           message: l.appUpdateAvailable,
           actions: [
-            AppMessageAction(
+            PpForgeMessageAction(
               label: l.appUpdateAvailableAction,
               onPressed: onUpdate,
             ),

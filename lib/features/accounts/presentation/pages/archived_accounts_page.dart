@@ -60,7 +60,7 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
                 first: true,
                 children: [
                   for (final a in list)
-                    AppDetailRow(
+                    PpForgeDetailRow(
                       leading: Opacity(
                         opacity: 0.6,
                         child: IconDisplay(
@@ -75,10 +75,10 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
                           : null,
                       trailing: !a.canEdit
                           ? null
-                          : AppChip(
+                          : PpForgeChip(
                               label: l.accountRestore,
                               icon: AppIcons.unarchive,
-                              tone: AppChipTone.primary,
+                              tone: PpForgeChipTone.primary,
                               selected: true,
                               onTap: _busy.contains(a.id)
                                   ? null

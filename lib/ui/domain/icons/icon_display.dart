@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:pp_forge_core/ui.dart';
-import '../../app_aliases.dart';
 import 'icon_type.dart';
 
 class IconDisplay extends StatelessWidget {
@@ -17,7 +16,7 @@ class IconDisplay extends StatelessWidget {
   final IconType type;
   final double size;
   final String? imageUrl;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   /// No [iconCode]: the default disc in this colour (a wallet passes the
   /// colour its card falls back to, so icon and card match; owner
@@ -43,7 +42,7 @@ class IconDisplay extends StatelessWidget {
 
   Widget _iconWidget(BuildContext context) {
     if (iconCode != null) {
-      return IconCodeWidget(
+      return PpForgeIconCodeWidget(
         iconCode: type.applyDisplayRules(iconCode!),
         size: size,
         fallbackIcon: type.fallbackIcon,

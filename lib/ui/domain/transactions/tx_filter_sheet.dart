@@ -21,7 +21,7 @@ class TxFilterOption {
   final String id;
   final String label;
 
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   final IconData? icon;
 
@@ -353,13 +353,13 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
       ),
   ];
 
-  AppChip _chip({
+  PpForgeChip _chip({
     required String label,
     required bool selected,
     required VoidCallback onTap,
     IconData? icon,
     Color? color,
-  }) => AppChip(
+  }) => PpForgeChip(
     label: label,
     icon: icon,
     color: color,
@@ -386,7 +386,7 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
         if (_fits(c, _f.types)) c,
     ];
     final tags = o?.tags ?? const <TxFilterOption>[];
-    AppChip all({required bool selected, required VoidCallback onTap}) =>
+    PpForgeChip all({required bool selected, required VoidCallback onTap}) =>
         _chip(label: _l.all, selected: selected, onTap: onTap);
     return SideSheetScaffold(
       title: _l.title,
@@ -541,22 +541,22 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
               child: Row(
                 children: [
                   Expanded(
-                    child: AppInput(
+                    child: PpForgeInput(
                       controller: _min,
-                      type: AppInputType.amount,
+                      type: PpForgeInputType.amount,
                       dense: true,
                       hint: _l.amountMin,
                       onChanged: (_) => _amountChanged(),
                     ),
                   ),
                   const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                    padding: EdgeInsets.symmetric(horizontal: PpForgeSpacing.sm),
                     child: Text('–'),
                   ),
                   Expanded(
-                    child: AppInput(
+                    child: PpForgeInput(
                       controller: _max,
-                      type: AppInputType.amount,
+                      type: PpForgeInputType.amount,
                       dense: true,
                       hint: _l.amountMax,
                       onChanged: (_) => _amountChanged(),
@@ -565,25 +565,25 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: PpForgeSpacing.xl),
           ],
         ),
       ),
       footer: Row(
         children: [
           Expanded(
-            child: AppButton(
+            child: PpForgeButton(
               label: _l.clear,
               kind: ButtonIconKind.clear,
-              variant: AppButtonVariant.outlined,
+              variant: PpForgeButtonVariant.outlined,
               expand: true,
               onPressed: _clear,
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: PpForgeSpacing.sm),
           Expanded(
             flex: 2,
-            child: AppButton(
+            child: PpForgeButton(
               label: _l.apply,
               kind: ButtonIconKind.apply,
               expand: true,

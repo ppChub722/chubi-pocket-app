@@ -12,14 +12,14 @@ class DefaultAccountRef extends Equatable {
 
   final String id;
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   factory DefaultAccountRef.fromJson(Map<String, dynamic> json) {
     return DefaultAccountRef(
       id: json['id'] as String,
       name: json['name'] as String,
       iconCode: json['icon_code'] is Map
-          ? IconCode.fromJson(
+          ? PpForgeIconCode.fromJson(
               (json['icon_code'] as Map).cast<String, dynamic>(),
             )
           : null,

@@ -42,9 +42,9 @@ class ContactPickerDemos extends StatelessWidget {
     return _sampleNames;
   }
 
-  Widget _new(String label, Future<String> Function() run) => AppButton(
+  Widget _new(String label, Future<String> Function() run) => PpForgeButton(
     label: label,
-    variant: AppButtonVariant.outlined,
+    variant: PpForgeButtonVariant.outlined,
     onPressed: () async => onResult(await run()),
   );
 
@@ -52,8 +52,8 @@ class ContactPickerDemos extends StatelessWidget {
     title: title,
     note: note,
     child: Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: buttons,
     ),
   );
@@ -216,7 +216,7 @@ class ContactPickerDemos extends StatelessWidget {
         if (contacts.isEmpty)
           const HubDemo(
             title: 'No contacts',
-            child: AppText('The contacts cache is empty: sign in first.'),
+            child: PpForgeText('The contacts cache is empty: sign in first.'),
           ),
       ],
     );

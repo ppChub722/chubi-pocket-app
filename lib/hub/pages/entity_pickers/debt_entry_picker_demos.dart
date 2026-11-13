@@ -26,9 +26,9 @@ class DebtEntryPickerDemos extends StatelessWidget {
     return d.isEmpty ? e.amount.toStringAsFixed(2) : d;
   }
 
-  Widget _new(String label, Future<String> Function() run) => AppButton(
+  Widget _new(String label, Future<String> Function() run) => PpForgeButton(
     label: label,
-    variant: AppButtonVariant.outlined,
+    variant: PpForgeButtonVariant.outlined,
     onPressed: () async => onResult(await run()),
   );
 
@@ -36,8 +36,8 @@ class DebtEntryPickerDemos extends StatelessWidget {
     title: title,
     note: note,
     child: Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: buttons,
     ),
   );
@@ -64,7 +64,7 @@ class DebtEntryPickerDemos extends StatelessWidget {
         if (p == null)
           const HubDemo(
             title: 'No debt people',
-            child: AppText(
+            child: PpForgeText(
               'The debts cache is empty: sign in and add a debt first. Only '
               'the typed-name demo below works without one.',
             ),

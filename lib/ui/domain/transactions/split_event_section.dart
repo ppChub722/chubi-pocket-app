@@ -47,13 +47,13 @@ class DraftFieldRow extends StatelessWidget {
       if (p.width > widest) widest = p.width;
       p.dispose();
     }
-    return widest.ceilToDouble() + AppSpacing.xs;
+    return widest.ceilToDouble() + PpForgeSpacing.xs;
   }
 
   /// An input or a picked row takes the rest of the line; anything else
   /// (a switch, a chip) sits at the end (owner 2026-11-03: label left, value
   /// right).
-  bool get _fills => child is AppInput || child is PickedRowFrame;
+  bool get _fills => child is PpForgeInput || child is PickedRowFrame;
 
   @override
   Widget build(BuildContext context) {
@@ -74,10 +74,10 @@ class DraftFieldRow extends StatelessWidget {
           ? CrossAxisAlignment.center
           : CrossAxisAlignment.start,
       children: fills
-          ? [text, const SizedBox(width: AppSpacing.md), Expanded(child: child)]
+          ? [text, const SizedBox(width: PpForgeSpacing.md), Expanded(child: child)]
           : [
               Expanded(child: text),
-              const SizedBox(width: AppSpacing.md),
+              const SizedBox(width: PpForgeSpacing.md),
               // No IntrinsicWidth: a value may hold a LayoutBuilder (the event
               // chip), which can't report one.
               Flexible(
@@ -148,10 +148,10 @@ class EventPickChip extends StatelessWidget {
       if (onTap == null || locked) {
         return DetailPlaceholder(l.quickEventNone);
       }
-      return AppChip(
+      return PpForgeChip(
         icon: AppIcons.add,
         label: l.quickEventAdd,
-        tone: AppChipTone.primary,
+        tone: PpForgeChipTone.primary,
         selected: true,
         dashed: true,
         onTap: onTap,
@@ -164,7 +164,7 @@ class EventPickChip extends StatelessWidget {
       children: [
         Flexible(
           child: LayoutBuilder(
-            builder: (context, c) => AppChip(
+            builder: (context, c) => PpForgeChip(
               icon: AppIcons.project,
               color: ModuleColors.of(context).people,
               label: n,
@@ -174,8 +174,8 @@ class EventPickChip extends StatelessWidget {
               maxWidth: c.maxWidth.isFinite ? c.maxWidth : null,
               onTap: locked ? null : onTap,
               trailing: removable
-                  ? AppChipTrailing.remove
-                  : AppChipTrailing.none,
+                  ? PpForgeChipTrailing.remove
+                  : PpForgeChipTrailing.none,
               onRemove: removable ? onClear : null,
               tooltip: removable ? l.quickEventRemove : null,
             ),
@@ -231,7 +231,7 @@ class EventRow extends StatelessWidget {
         ? DraftFieldRow(label: custom, dense: true, child: value)
         : _compact
         ? DraftFieldRow(label: l.quickEventLabel, dense: true, child: value)
-        : AppDetailRow(
+        : PpForgeDetailRow(
             label: l.quickEventLabel,
             trailing: Align(
               alignment: AlignmentDirectional.centerEnd,
@@ -245,7 +245,7 @@ class EventRow extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _longPressRow(row, onLongPress),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PpForgeSpacing.sm),
         tail,
       ],
     );
@@ -292,10 +292,10 @@ class RecurringLinkRow extends StatelessWidget {
       if (slot.onTap == null || slot.locked) {
         return DetailPlaceholder(l.quickEventNone);
       }
-      return AppChip(
+      return PpForgeChip(
         icon: AppIcons.add,
         label: l.txRecurringPick,
-        tone: AppChipTone.primary,
+        tone: PpForgeChipTone.primary,
         selected: true,
         dashed: true,
         onTap: slot.onTap,
@@ -309,7 +309,7 @@ class RecurringLinkRow extends StatelessWidget {
       children: [
         Flexible(
           child: LayoutBuilder(
-            builder: (context, c) => AppChip(
+            builder: (context, c) => PpForgeChip(
               icon: AppIcons.recurring,
               color: ModuleColors.of(context).planning,
               label: period == null ? n : '$n | $period',
@@ -319,8 +319,8 @@ class RecurringLinkRow extends StatelessWidget {
               maxWidth: c.maxWidth.isFinite ? c.maxWidth : null,
               onTap: slot.locked ? null : slot.onTap,
               trailing: removable
-                  ? AppChipTrailing.remove
-                  : AppChipTrailing.none,
+                  ? PpForgeChipTrailing.remove
+                  : PpForgeChipTrailing.none,
               onRemove: removable ? slot.onClear : null,
               tooltip: removable ? l.txRecurringUnlink : null,
             ),
@@ -336,7 +336,7 @@ class RecurringLinkRow extends StatelessWidget {
     final value = _value(context, l);
     final row = _compact
         ? DraftFieldRow(label: l.txRecurringRowLabel, dense: true, child: value)
-        : AppDetailRow(
+        : PpForgeDetailRow(
             label: l.txRecurringRowLabel,
             trailing: Align(
               alignment: AlignmentDirectional.centerEnd,
@@ -351,12 +351,12 @@ class RecurringLinkRow extends StatelessWidget {
         _longPressRow(row, slot.onLongPress),
         Padding(
           padding: _compact
-              ? const EdgeInsets.only(top: AppSpacing.xs)
+              ? const EdgeInsets.only(top: PpForgeSpacing.xs)
               : const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
+                  PpForgeSpacing.lg,
                   0,
-                  AppSpacing.lg,
-                  AppSpacing.md,
+                  PpForgeSpacing.lg,
+                  PpForgeSpacing.md,
                 ),
           child: ask,
         ),
@@ -407,7 +407,7 @@ class _SplitEventSectionState extends State<SplitEventSection> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!widget.first) const SizedBox(height: AppSpacing.lg),
+          if (!widget.first) const SizedBox(height: PpForgeSpacing.lg),
           CollapsibleSection(
             title: l.txSplitSectionTitle,
             hint: l.txSplitSectionHint,
@@ -456,38 +456,38 @@ class _SplitEventSectionState extends State<SplitEventSection> {
               style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ),
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: PpForgeSpacing.xs),
         ],
         if (widget.collapsible)
           AnimatedRotation(
             turns: open ? 0.5 : 0,
             duration: const Duration(milliseconds: 160),
-            child: AppIcon(AppIcons.expand, color: scheme.onSurfaceVariant),
+            child: PpForgeIcon(AppIcons.expand, color: scheme.onSurfaceVariant),
           ),
       ],
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (!widget.first) const SizedBox(height: AppSpacing.lg),
+        if (!widget.first) const SizedBox(height: PpForgeSpacing.lg),
         BusyLock(
           child: InkWell(
             onTap: widget.collapsible
                 ? () => setState(() => _open = !_open)
                 : null,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xs),
               child: header,
             ),
           ),
         ),
         if (open) ...[
           if (widget.splits != null) ...[
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: PpForgeSpacing.xs),
             widget.splits!,
           ],
           if (e != null) ...[
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: PpForgeSpacing.sm),
             EventRow(
               name: e.name,
               onTap: e.onTap,
@@ -499,7 +499,7 @@ class _SplitEventSectionState extends State<SplitEventSection> {
             ),
           ],
           if (widget.recurring != null) ...[
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: PpForgeSpacing.sm),
             RecurringLinkRow(
               slot: widget.recurring!,
               variant: SplitEventVariant.compact,
@@ -509,7 +509,7 @@ class _SplitEventSectionState extends State<SplitEventSection> {
             Padding(
               padding: EdgeInsets.only(
                 left: DraftFieldRow.labelWidthOf(context),
-                top: AppSpacing.xs,
+                top: PpForgeSpacing.xs,
               ),
               child: Text(
                 widget.helper!,

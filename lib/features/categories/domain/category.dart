@@ -29,7 +29,7 @@ class Category extends Equatable {
   final String name;
   final String? parentId;
   final CategoryType type;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final String? description;
   final String? note;
   final bool includeInReport;
@@ -56,7 +56,7 @@ class Category extends Equatable {
       type: CategoryType.values.byName(json['type'] as String),
       parentId: json['parent_id'] as String?,
       iconCode: json['icon_code'] != null
-          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+          ? PpForgeIconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
       description: json['description'] as String?,
       note: json['note'] as String?,
@@ -106,7 +106,7 @@ class Category extends Equatable {
     String? parentId,
     bool clearParent = false,
     CategoryType? type,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
     String? description,
     bool clearDescription = false,
     String? note,
@@ -176,14 +176,14 @@ class CategoryPathItem extends Equatable {
         id: json['id'] as String,
         name: json['name'] as String,
         iconCode: json['icon_code'] is Map<String, dynamic>
-            ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+            ? PpForgeIconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
             : null,
       );
 
   final String id;
   final String name;
 
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   @override
   List<Object?> get props => [id, name, iconCode];
@@ -304,7 +304,7 @@ class CategoryRef extends Equatable {
     name: json['name'] as String,
     type: CategoryType.values.byName(json['type'] as String),
     iconCode: json['icon_code'] != null
-        ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+        ? PpForgeIconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
         : null,
     isSystem: (json['is_system'] as bool?) ?? false,
     systemKind: json['system_kind'] as String?,
@@ -314,7 +314,7 @@ class CategoryRef extends Equatable {
   final String id;
   final String name;
   final CategoryType type;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final bool isSystem;
   final String? systemKind;
   final String? parentId;

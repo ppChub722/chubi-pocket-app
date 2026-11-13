@@ -1,17 +1,17 @@
-import '../../../../app_aliases.dart';
+import 'package:pp_forge_core/ui.dart';
 import '_shared.dart';
 
-const basePackUserProfile = IconPack(
+const basePackUserProfile = PpForgeIconPack(
   id: 'base',
   icons: [
-    IconPackItem(id: 'person', colors: ['@presetThemeColorOnIcon']),
-    IconPackItem(id: 'man', colors: ['@presetThemeColorOnIcon']),
-    IconPackItem(id: 'woman', colors: ['@presetThemeColorOnIcon']),
-    IconPackItem(id: 'face_smile', colors: ['@presetThemeColorOnIcon']),
-    IconPackItem(id: 'bakery_dining', colors: ['@presetThemeColorOnIcon']),
-    IconPackItem(id: 'fitness_center', colors: ['@presetThemeColorOnIcon']),
-    IconPackItem(id: 'work', colors: ['@presetThemeColorOnIcon']),
-    IconPackItem(id: 'star', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'person', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'man', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'woman', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'face_smile', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'bakery_dining', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'fitness_center', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'work', colors: ['@presetThemeColorOnIcon']),
+    PpForgeIconPackItem(id: 'star', colors: ['@presetThemeColorOnIcon']),
   ],
   backgrounds: commonBaseBackgrounds,
   borders: commonBaseBorders,

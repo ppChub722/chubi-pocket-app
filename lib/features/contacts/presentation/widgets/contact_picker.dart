@@ -63,7 +63,7 @@ class PickerMember {
 
   final String id;
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final PersonLevel level;
 
   /// My contact for this member: that contact isn't listed again below.
@@ -580,7 +580,7 @@ abstract final class ContactPicker {
   static Widget _mark(
     String name,
     PersonLevel level,
-    IconCode? iconCode, {
+    PpForgeIconCode? iconCode, {
     double size = 36,
   }) => PersonMark(
     name: name,

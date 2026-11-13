@@ -274,7 +274,7 @@ class _Body extends StatelessWidget {
 
           return DetailPageBody(
             onRefresh: cubit.load,
-            bottomInset: AppSpacing.huge + MediaQuery.paddingOf(ctx).bottom,
+            bottomInset: PpForgeSpacing.huge + MediaQuery.paddingOf(ctx).bottom,
             sections: [
               for (final MapEntry(key: g, value: rows) in groups.entries)
                 (first) {

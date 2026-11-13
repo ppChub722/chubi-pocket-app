@@ -92,7 +92,7 @@ class _LoginPageState extends State<LoginPage> {
             return AuthPageBody(
               brand: const AuthBrandHeader(),
               groups: [
-                AppInput(
+                PpForgeInput(
                   controller: _identifierCtrl,
                   enabled: !isSubmitting,
                   label: l.authLoginIdentifierLabel,
@@ -104,7 +104,7 @@ class _LoginPageState extends State<LoginPage> {
                   ],
                   textInputAction: TextInputAction.next,
                 ),
-                AppInput(
+                PpForgeInput(
                   controller: _passwordCtrl,
                   enabled: !isSubmitting,
                   label: l.authLoginPasswordLabel,
@@ -115,19 +115,19 @@ class _LoginPageState extends State<LoginPage> {
                   onSubmitted: (_) => _submit(),
                 ),
               ],
-              submit: AppButton(
+              submit: PpForgeButton(
                 kind: ButtonIconKind.submit,
                 label: l.authLoginSubmit,
                 submits: true,
                 onPressed: isSubmitting ? null : _submit,
                 loading: isSubmitting,
-                size: AppButtonSize.large,
+                size: PpForgeButtonSize.large,
                 expand: true,
               ),
               alternatives: const [AuthOrDivider(), AuthSocialCards()],
-              switchLink: AppButton(
+              switchLink: PpForgeButton(
                 label: l.authLoginGoToRegister,
-                variant: AppButtonVariant.text,
+                variant: PpForgeButtonVariant.text,
                 expand: true,
                 onPressed: isSubmitting ? null : _openRegister,
               ),

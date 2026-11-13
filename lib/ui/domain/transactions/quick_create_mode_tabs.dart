@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../tokens/app_icons.dart';
 import '../tokens/quick_create_mode.dart';
 import 'package:pp_forge_core/ui.dart';
-import '../../app_aliases.dart';
 
 /// The quick-create mode switch (รายการ | หนี้ | ออม): the active mode is a
 /// wide pill filled with ITS colour, icon and bold label; the others are
@@ -127,7 +126,7 @@ class QuickCreateModeTabs extends StatelessWidget {
                   ),
               ],
             ),
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+            padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.xs),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -139,7 +138,7 @@ class QuickCreateModeTabs extends StatelessWidget {
                   child: selected
                       ? Padding(
                           padding: const EdgeInsetsDirectional.only(
-                            end: AppSpacing.xs,
+                            end: PpForgeSpacing.xs,
                           ),
                           child: Icon(iconOf(m), size: 22, color: on),
                         )
@@ -185,7 +184,7 @@ class QuickCreateContextBar extends StatelessWidget {
     // carries the colour.
     return Container(
       height: height,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.sm),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(height / 2),
@@ -202,7 +201,7 @@ class QuickCreateContextBar extends StatelessWidget {
             ),
             child: Icon(icon, size: 20, color: color),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: PpForgeSpacing.sm),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

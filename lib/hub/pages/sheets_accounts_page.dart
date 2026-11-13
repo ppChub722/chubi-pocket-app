@@ -81,10 +81,10 @@ class _SheetsAccountsPageState extends State<_SheetsAccountsPage> {
   String _result = 'nothing picked yet';
   void _say(Object? v) => setState(() => _result = '$v');
 
-  Widget _open(String label, Future<void> Function() open) => AppButton(
+  Widget _open(String label, Future<void> Function() open) => PpForgeButton(
     label: label,
     onPressed: open,
-    variant: AppButtonVariant.outlined,
+    variant: PpForgeButtonVariant.outlined,
   );
 
   Future<void> _setBalance() async {
@@ -198,7 +198,7 @@ class _SheetsAccountsPageState extends State<_SheetsAccountsPage> {
               'BankBrandMark — brand colour by BOT code, lettered from the '
               'short name.',
           child: Wrap(
-            spacing: AppSpacing.md,
+            spacing: PpForgeSpacing.md,
             children: [
               BankBrandMark(code: '004', shortName: 'KBANK'),
               BankBrandMark(code: '014', shortName: 'SCB', size: 24),

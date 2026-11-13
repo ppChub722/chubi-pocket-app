@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart' show StringCharacters;
 
-import '../../app_aliases.dart';
+import 'package:pp_forge_core/ui.dart';
 
 /// What an [AvatarData] draws (the BE decides, the app never picks).
 enum AvatarKind {
@@ -60,7 +60,7 @@ class AvatarData extends Equatable {
     kind: AvatarKind.parse(json['kind']),
     photoUrl: json['photo_url'] as String?,
     iconCode: json['icon_code'] is Map
-        ? IconCode.fromJson((json['icon_code'] as Map).cast<String, dynamic>())
+        ? PpForgeIconCode.fromJson((json['icon_code'] as Map).cast<String, dynamic>())
         : null,
     initials: (json['initials'] as String?) ?? '',
     colors: _strings(json['colors']),
@@ -73,7 +73,7 @@ class AvatarData extends Equatable {
   /// icon: hub demos, a typed name not saved yet, a payload cached before
   /// 0.4.2. Colours: the icon's (backgrounds, icons, borders, no repeats),
   /// else the name-hash colour.
-  factory AvatarData.forName(String name, {IconCode? iconCode}) {
+  factory AvatarData.forName(String name, {PpForgeIconCode? iconCode}) {
     final fromIcon = iconCode == null ? const <String>[] : iconColors(iconCode);
     return AvatarData(
       kind: iconCode == null ? AvatarKind.initials : AvatarKind.icon,
@@ -95,7 +95,7 @@ class AvatarData extends Equatable {
     return AvatarData.forName(
       name,
       iconCode: legacy is Map
-          ? IconCode.fromJson(legacy.cast<String, dynamic>())
+          ? PpForgeIconCode.fromJson(legacy.cast<String, dynamic>())
           : null,
     );
   }
@@ -107,7 +107,7 @@ class AvatarData extends Equatable {
   final String? photoUrl;
 
   /// The person's icon when they have one (also with a photo: the fallback).
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   /// Up to two letters; '' for an empty name.
   final String initials;
@@ -125,7 +125,7 @@ class AvatarData extends Equatable {
   /// The same person with [code] as their icon (an icon edit before the
   /// server answers): a photo stays a photo (the icon is its fallback);
   /// otherwise it becomes an icon / initials avatar with the icon's colours.
-  AvatarData withIcon(IconCode? code) {
+  AvatarData withIcon(PpForgeIconCode? code) {
     if (kind == AvatarKind.photo) {
       return AvatarData(
         kind: kind,
@@ -156,7 +156,7 @@ class AvatarData extends Equatable {
 
   /// An icon's colours in the BE's order: backgrounds, then icons, then
   /// borders, no repeats, no empty entries.
-  static List<String> iconColors(IconCode code) {
+  static List<String> iconColors(PpForgeIconCode code) {
     final out = <String>[];
     for (final c in [
       ...code.bgColors,
@@ -185,7 +185,7 @@ class AvatarData extends Equatable {
 
   /// The name-hash colour (the 12-colour palette) as `#RRGGBB`.
   static String nameColorHex(String name) {
-    final argb = AppAvatar.colorFor(name).toARGB32();
+    final argb = PpForgeAvatar.colorFor(name).toARGB32();
     return '#${(argb & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
   }
 

@@ -54,7 +54,7 @@ class _PeopleView extends StatefulWidget {
 
 class _PeopleViewState extends State<_PeopleView> {
   final _search = TextEditingController();
-  final _toolbar = AppListToolbarState.of('personal_debts');
+  final _toolbar = PpForgeListToolbarState.of('personal_debts');
 
   @override
   void dispose() {
@@ -102,7 +102,7 @@ class _PeopleViewState extends State<_PeopleView> {
   /// colour repeats it.
   Widget _row(AppLocalizations l, PersonBalance p) {
     final (line2, warn) = _line2(l, p);
-    return AppListRow(
+    return PpForgeListRow(
       key: ValueKey(p.key),
       leading: PersonMark(
         name: p.person.name,
@@ -132,7 +132,7 @@ class _PeopleViewState extends State<_PeopleView> {
   /// ลูกหนี้ / เจ้าหนี้ / เคลียร์แล้ว, each under its header (icon, people,
   /// total); the totals are the whole list's, not just the loaded pages.
   List<Widget> _sections(AppLocalizations l, DebtPeopleState s, String symbol) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final scheme = Theme.of(context).colorScheme;
     final owedToMe = [
       for (final p in s.items)
@@ -152,9 +152,9 @@ class _PeopleViewState extends State<_PeopleView> {
       Color color,
       int count,
       double? total,
-    ) => AppListHeader(
+    ) => PpForgeListHeader(
       key: ValueKey('debtsSection-$title'),
-      leading: AppIcon(icon, size: AppIconSize.md, color: color),
+      leading: PpForgeIcon(icon, size: PpForgeIconSize.md, color: color),
       title: title,
       count: count,
       trailing: total == null
@@ -209,16 +209,16 @@ class _PeopleViewState extends State<_PeopleView> {
     final t = s.totals;
     final counts = s.counts;
     int count(DebtListFilter f) => counts[f] ?? 0;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final net = t.net;
-    return AppHeroCard(
+    return PpForgeHeroCard(
       // The จดหนี้ button's colour, so the page reads as the debt module.
       style: HeroStyle.tinted(color: ModuleColors.of(context).debt),
       margin: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        AppSpacing.md,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.sm,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.md,
       ),
       header: HeroSummaryHead(
         icon: AppIcons.debt,
@@ -230,7 +230,7 @@ class _PeopleViewState extends State<_PeopleView> {
         actions: [
           ListenableBuilder(
             listenable: _search,
-            builder: (context, _) => AppListToolbarToggle(
+            builder: (context, _) => PpForgeListToolbarToggle(
               state: _toolbar,
               filtered: _search.text.isNotEmpty,
               tooltip: l.commonSearch,
@@ -276,12 +276,12 @@ class _PeopleViewState extends State<_PeopleView> {
           filters: [
             for (final (f, label, tone) in [
               (DebtListFilter.all, l.debtsFilterAll, null),
-              (DebtListFilter.receivable, l.debtsOwedToMe, AppChipTone.success),
-              (DebtListFilter.payable, l.debtsIOwe, AppChipTone.danger),
+              (DebtListFilter.receivable, l.debtsOwedToMe, PpForgeChipTone.success),
+              (DebtListFilter.payable, l.debtsIOwe, PpForgeChipTone.danger),
               (
                 DebtListFilter.overdue30,
                 l.debtsOver30Label,
-                AppChipTone.warning,
+                PpForgeChipTone.warning,
               ),
             ])
               HeroFilter(
@@ -345,10 +345,10 @@ class _PeopleViewState extends State<_PeopleView> {
               // ONE card of people (mock).
               rowCards: true,
               rowDividers: true,
-              topInset: AppSpacing.sm,
+              topInset: PpForgeSpacing.sm,
               header: [
                 _hero(l, s, symbol),
-                AppListToolbar(
+                PpForgeListToolbar(
                   state: _toolbar,
                   search: ListToolbarSearch(
                     controller: _search,

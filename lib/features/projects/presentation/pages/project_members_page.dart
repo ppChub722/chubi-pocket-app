@@ -132,32 +132,32 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
     if (_isOwner && !readOnly && m.contactLinked && m.userId == null)
       SheetOption(
         value: 'invite',
-        leading: AppIcon(m.invited ? AppIcons.check : AppIcons.inviteMember),
+        leading: PpForgeIcon(m.invited ? AppIcons.check : AppIcons.inviteMember),
         label: m.invited ? l.projectMemberInvited : l.projectMemberInvite,
       ),
     if (_contactActions(m)) ...[
       SheetOption(
         value: 'bind',
-        leading: const AppIcon(AppIcons.link),
+        leading: const PpForgeIcon(AppIcons.link),
         label: l.projectMemberBindContact,
       ),
       if (m.contactId != null)
         SheetOption(
           value: 'unbind',
-          leading: const AppIcon(AppIcons.unlink),
+          leading: const PpForgeIcon(AppIcons.unlink),
           label: l.projectMemberUnbindContact,
         )
       else
         SheetOption(
           value: 'add-contact',
-          leading: const AppIcon(AppIcons.add),
+          leading: const PpForgeIcon(AppIcons.add),
           label: l.projectMemberAddContact,
         ),
     ],
     if (owner) ...[
       SheetOption(
         value: 'role',
-        leading: AppIcon(
+        leading: PpForgeIcon(
           m.role == MemberRole.viewer ? AppIcons.edit : AppIcons.visible,
         ),
         label: m.role == MemberRole.viewer
@@ -168,12 +168,12 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
       if (m.isLinked && m.status == MemberStatus.active)
         SheetOption(
           value: 'transfer',
-          leading: const AppIcon(AppIcons.member),
+          leading: const PpForgeIcon(AppIcons.member),
           label: l.projectMemberTransfer,
         ),
       SheetOption(
         value: 'remove',
-        leading: const AppIcon(AppIcons.delete),
+        leading: const PpForgeIcon(AppIcons.delete),
         label: l.projectMemberRemove,
         destructive: true,
       ),
@@ -181,7 +181,7 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
     if (m.isMe && !readOnly)
       SheetOption(
         value: 'leave',
-        leading: const AppIcon(AppIcons.logout),
+        leading: const PpForgeIcon(AppIcons.logout),
         label: l.projectLeave,
         destructive: true,
       ),
@@ -403,7 +403,7 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
             ),
           if (_isOwner && readOnly == false)
             Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.lg),
+              padding: const EdgeInsets.only(top: PpForgeSpacing.lg),
               child: AddTile(
                 label: l.projectMembersAdd,
                 variant: AddTileVariant.row,
@@ -450,7 +450,7 @@ class _MemberRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final m = member;
-    return AppListRow(
+    return PpForgeListRow(
       dimmed: m.status != MemberStatus.active,
       // The level reads from the mark (owner 2026-11-03): no "ไม่มีบัญชีแอป"
       // line.

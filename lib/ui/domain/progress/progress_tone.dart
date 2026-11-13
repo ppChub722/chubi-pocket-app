@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../app_aliases.dart';
+import 'package:pp_forge_core/ui.dart';
 
 enum ProgressTone {
   neutral,
@@ -17,7 +17,7 @@ enum ProgressTone {
 
   Color resolve(BuildContext context, {Color? entityTint}) {
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     return switch (this) {
       ProgressTone.neutral => entityTint ?? scheme.primary,
       ProgressTone.normal => scheme.primary,

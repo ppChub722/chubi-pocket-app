@@ -144,7 +144,7 @@ ProgressTone budgetProgressTone(BudgetPeriod p) => switch (p.tone) {
 };
 
 Color budgetTint(BuildContext context, Budget budget) =>
-    budget.iconCode.tintFor(Theme.of(context).extension<AppColors>()!);
+    budget.iconCode.tintFor(Theme.of(context).extension<PpForgeColors>()!);
 
 Color budgetToneColor(BuildContext context, Budget budget, BudgetPeriod p) =>
     budgetProgressTone(

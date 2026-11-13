@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:pp_forge_core/ui.dart';
 import '../tokens/app_icons.dart';
-import '../../app_aliases.dart';
 import '../money/money_text.dart';
 import '../people/avatar_data.dart';
 import '../people/person_mark.dart';
@@ -37,11 +36,11 @@ class EventBookedChips extends StatelessWidget {
     mainAxisSize: MainAxisSize.min,
     children: [
       for (final (i, t) in labels.indexed) ...[
-        if (i > 0) const SizedBox(width: AppSpacing.xs),
-        AppChip(
+        if (i > 0) const SizedBox(width: PpForgeSpacing.xs),
+        PpForgeChip(
           label: t,
           icon: AppIcons.check,
-          tone: AppChipTone.success,
+          tone: PpForgeChipTone.success,
           size: ChipSize.mini,
         ),
       ],
@@ -55,7 +54,7 @@ Widget _actionButton(
   IconData icon,
   VoidCallback onTap,
   String? tooltip,
-) => AppIconButton.filled(
+) => PpForgeIconButton.filled(
   icon: icon,
   onPressed: onTap,
   tooltip: tooltip,
@@ -77,7 +76,7 @@ class EventBillPayer {
   final String name;
   final String amount;
   final PersonLevel level;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   /// The BE's avatar; null = built from [name] + [iconCode].
   final AvatarData? avatar;
@@ -146,7 +145,7 @@ class EventBillRow extends StatelessWidget {
   /// With it, line 2 reads "**[payerName]** [payerVerb]" (ฝน จ่าย).
   final String? payerVerb;
   final PersonLevel payerLevel;
-  final IconCode? payerIconCode;
+  final PpForgeIconCode? payerIconCode;
 
   /// The payer's avatar from the BE; null = built from the name + icon.
   final AvatarData? payerAvatar;
@@ -217,14 +216,14 @@ class EventBillRow extends StatelessWidget {
     );
 
     final tagLine = Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         physics: const NeverScrollableScrollPhysics(),
         child: Row(
           children: [
             for (var i = 0; i < tags.length; i++) ...[
-              if (i > 0) const SizedBox(width: AppSpacing.xs),
+              if (i > 0) const SizedBox(width: PpForgeSpacing.xs),
               _tag(context, i),
             ],
           ],
@@ -238,7 +237,7 @@ class EventBillRow extends StatelessWidget {
         : const TextStyle(fontWeight: FontWeight.w600);
     final muted = TextStyle(color: scheme.onSurfaceVariant);
     final payerRow = Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      padding: const EdgeInsets.only(top: PpForgeSpacing.sm),
       child: Row(
         children: [
           if (!multiPayer) ...[
@@ -249,7 +248,7 @@ class EventBillRow extends StatelessWidget {
 
               avatar: payerAvatar,
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
           ],
           Flexible(
             child: Text.rich(
@@ -264,7 +263,7 @@ class EventBillRow extends StatelessWidget {
                             alignment: PlaceholderAlignment.middle,
                             child: Padding(
                               padding: const EdgeInsets.only(
-                                right: AppSpacing.xs,
+                                right: PpForgeSpacing.xs,
                               ),
                               child: PersonMark(
                                 name: p.name,
@@ -291,10 +290,10 @@ class EventBillRow extends StatelessWidget {
             ),
           ),
           if (linked) ...[
-            const SizedBox(width: AppSpacing.xs),
+            const SizedBox(width: PpForgeSpacing.xs),
             Icon(AppIcons.link, size: 14, color: scheme.onSurfaceVariant),
           ],
-          if (badge != null) ...[const SizedBox(width: AppSpacing.xs), badge!],
+          if (badge != null) ...[const SizedBox(width: PpForgeSpacing.xs), badge!],
           if (action != null) ...[const Spacer(), action],
         ],
       ),
@@ -313,7 +312,7 @@ class EventBillRow extends StatelessWidget {
               avatar: payerAvatar,
               size: 16,
             ),
-            const SizedBox(width: AppSpacing.xs),
+            const SizedBox(width: PpForgeSpacing.xs),
           ],
           if (line2Text.isNotEmpty)
             Flexible(
@@ -325,11 +324,11 @@ class EventBillRow extends StatelessWidget {
               ),
             ),
           if (linked && !payerLine) ...[
-            const SizedBox(width: AppSpacing.xs),
+            const SizedBox(width: PpForgeSpacing.xs),
             Icon(AppIcons.link, size: 14, color: scheme.onSurfaceVariant),
           ],
           if (badge != null && !payerLine) ...[
-            const SizedBox(width: AppSpacing.xs),
+            const SizedBox(width: PpForgeSpacing.xs),
             badge!,
           ],
           if (action != null && !payerLine) ...[const Spacer(), action],
@@ -342,8 +341,8 @@ class EventBillRow extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.sm,
+            horizontal: PpForgeSpacing.lg,
+            vertical: PpForgeSpacing.sm,
           ),
           child: Row(
             crossAxisAlignment: payerLine || tags.isNotEmpty
@@ -356,11 +355,11 @@ class EventBillRow extends StatelessWidget {
                   onTap: locked ? null : onTickTap,
                   tooltip: tickTooltip,
                 ),
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: PpForgeSpacing.sm),
               ],
               if (leading != null) ...[
                 leading!,
-                const SizedBox(width: AppSpacing.md),
+                const SizedBox(width: PpForgeSpacing.md),
               ],
               Expanded(
                 child: Column(
@@ -374,7 +373,7 @@ class EventBillRow extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
               MoneyText(
                 amount,
                 tone: amountColor == null ? tone : MoneyTone.plain,
@@ -398,7 +397,7 @@ class EventBillRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       // The payer above, the rest of the bill below.
-      children: [row, const AppDivider.row(), ...children],
+      children: [row, const PpForgeDivider.row(), ...children],
     );
   }
 }
@@ -494,7 +493,7 @@ class EventBillChildRow extends StatelessWidget {
     super.key,
   });
 
-  static const double indent = AppSpacing.xxl;
+  static const double indent = PpForgeSpacing.xxl;
 
   /// My share isn't in my books yet: the row keeps a light tint.
   final bool mine;
@@ -513,7 +512,7 @@ class EventBillChildRow extends StatelessWidget {
   final String name;
   final num amount;
   final PersonLevel level;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   /// The BE's avatar; null = built from [name] + [iconCode].
   final AvatarData? avatar;
@@ -535,10 +534,10 @@ class EventBillChildRow extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg + indent,
-            AppSpacing.xs,
-            AppSpacing.lg,
-            AppSpacing.xs,
+            PpForgeSpacing.lg + indent,
+            PpForgeSpacing.xs,
+            PpForgeSpacing.lg,
+            PpForgeSpacing.xs,
           ),
           child: Row(
             children: [
@@ -548,7 +547,7 @@ class EventBillChildRow extends StatelessWidget {
                   onTap: locked ? null : onTickTap,
                   tooltip: tickTooltip,
                 ),
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: PpForgeSpacing.sm),
               ],
               PersonMark(
                 name: name,
@@ -556,7 +555,7 @@ class EventBillChildRow extends StatelessWidget {
                 iconCode: iconCode,
                 avatar: avatar,
               ),
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
               Expanded(
                 child: badge != null
                     ? Row(
@@ -569,7 +568,7 @@ class EventBillChildRow extends StatelessWidget {
                               style: textTheme.bodyMedium,
                             ),
                           ),
-                          const SizedBox(width: AppSpacing.xs),
+                          const SizedBox(width: PpForgeSpacing.xs),
                           badge!,
                         ],
                       )
@@ -597,10 +596,10 @@ class EventBillChildRow extends StatelessWidget {
                       ),
               ),
               if (onAction != null) ...[
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: PpForgeSpacing.sm),
                 _actionButton(context, actionIcon, onAction!, actionTooltip),
               ],
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
               MoneyText(
                 amount,
                 tone: tone,

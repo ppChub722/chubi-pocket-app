@@ -50,7 +50,9 @@ dependencies:
 
   # The generic UI kit: tokens, atoms, molecules, organisms, templates.
   pp_forge_core:
-    path: ../pp-forge-core
+    git:
+      url: https://ppChub722@github.com/ppChub722/pp-forge-core.git
+      ref: v0.1.0
 
   # Slip import (0.3.1, Android only): pick slips from the gallery and read
   # their QR on the phone. ML Kit has no web build — the import UI is hidden

@@ -13,7 +13,7 @@ class Tag extends Equatable {
 
   final String id;
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final String? description;
   final String? note;
   final int usageCount;
@@ -23,7 +23,7 @@ class Tag extends Equatable {
       id: json['id'] as String,
       name: json['name'] as String,
       iconCode: json['icon_code'] != null
-          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+          ? PpForgeIconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
       description: json['description'] as String?,
       note: json['note'] as String?,
@@ -52,7 +52,7 @@ class Tag extends Equatable {
   Tag copyWith({
     String? id,
     String? name,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
     String? description,
     String? note,
     int? usageCount,

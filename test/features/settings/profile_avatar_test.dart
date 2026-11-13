@@ -4,7 +4,7 @@ import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  const icon = IconCode(
+  const icon = PpForgeIconCode(
     icon: 'person',
     background: 'solid',
     bgColors: ['#5AA9F0'],

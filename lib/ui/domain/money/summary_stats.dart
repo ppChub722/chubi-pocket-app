@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'money_text.dart';
-import '../../app_aliases.dart';
+import 'package:pp_forge_core/ui.dart';
 
 class SummaryStat {
   const SummaryStat({
@@ -34,7 +34,7 @@ class SummaryStats extends StatelessWidget {
               if (i > 0)
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
+                    horizontal: PpForgeSpacing.sm,
                   ),
                   child: Text(
                     '|',

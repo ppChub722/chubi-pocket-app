@@ -20,9 +20,9 @@ class SavingGoalPickerDemos extends StatelessWidget {
     SavingGoalPicked(:final goal) => goal.name,
   };
 
-  Widget _new(String label, Future<String> Function() run) => AppButton(
+  Widget _new(String label, Future<String> Function() run) => PpForgeButton(
     label: label,
-    variant: AppButtonVariant.outlined,
+    variant: PpForgeButtonVariant.outlined,
     onPressed: () async => onResult(await run()),
   );
 
@@ -30,8 +30,8 @@ class SavingGoalPickerDemos extends StatelessWidget {
     title: title,
     note: note,
     child: Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: buttons,
     ),
   );

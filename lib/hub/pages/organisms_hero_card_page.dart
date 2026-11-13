@@ -29,7 +29,7 @@ class _HeroCardPageState extends State<_HeroCardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final tint = palette.expense;
     final style = HeroStyle.tinted(color: tint, glyph: AppIcons.category);
     final blue = const Color(0xFF0EA5E9);
@@ -37,7 +37,7 @@ class _HeroCardPageState extends State<_HeroCardPage> {
     final avatar = IconDisplay(
       type: IconType.category,
       size: 40,
-      iconCode: const IconCode(bgColors: ['#7E57C2', '#26A69A']),
+      iconCode: const PpForgeIconCode(bgColors: ['#7E57C2', '#26A69A']),
     );
     Widget desc(String s) => Text(
       s,
@@ -45,7 +45,7 @@ class _HeroCardPageState extends State<_HeroCardPage> {
         color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
     );
-    final toggle = AppListToolbarState.local();
+    final toggle = PpForgeListToolbarState.local();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -55,11 +55,11 @@ class _HeroCardPageState extends State<_HeroCardPage> {
           note:
               'Name lives in the top bar; the card shows icon + description. '
               'C: label link + the big number in a semantic colour.',
-          child: AppHeroCard(
+          child: PpForgeHeroCard(
             style: style,
             header: HeroHeader(
               leading: [
-                AppChip(
+                PpForgeChip(
                   label: 'รายจ่าย',
                   icon: AppIcons.expense,
                   color: palette.expense,
@@ -87,11 +87,11 @@ class _HeroCardPageState extends State<_HeroCardPage> {
           note:
               'Links → 🔍 → ✏️ in the slot. The bar has 25/50/75 ticks; three '
               'tappable tiles; one amber alert line.',
-          child: AppHeroCard(
+          child: PpForgeHeroCard(
             style: blueStyle,
             header: HeroHeader(
-              leading: const [AppChip(label: 'ตามแผน', selected: true)],
-              actions: [AppListToolbarToggle(state: toggle)],
+              leading: const [PpForgeChip(label: 'ตามแผน', selected: true)],
+              actions: [PpForgeListToolbarToggle(state: toggle)],
               onEdit: () {},
             ),
             content: [
@@ -130,10 +130,10 @@ class _HeroCardPageState extends State<_HeroCardPage> {
           title: 'Detail hero — budget (D pace tick) / wallet (D split)',
           child: Column(
             children: [
-              AppHeroCard(
+              PpForgeHeroCard(
                 style: blueStyle,
                 header: HeroHeader(
-                  leading: const [AppChip(label: 'รายปี', selected: true)],
+                  leading: const [PpForgeChip(label: 'รายปี', selected: true)],
                   onEdit: () {},
                 ),
                 content: [
@@ -155,12 +155,12 @@ class _HeroCardPageState extends State<_HeroCardPage> {
                   desc('นับ: อาหาร | เตือนที่ 80%'),
                 ],
               ),
-              const SizedBox(height: AppSpacing.lg),
-              AppHeroCard(
+              const SizedBox(height: PpForgeSpacing.lg),
+              PpForgeHeroCard(
                 style: style,
                 header: HeroHeader(
                   leading: const [
-                    AppChip(label: 'บัญชีธนาคาร', selected: true),
+                    PpForgeChip(label: 'บัญชีธนาคาร', selected: true),
                   ],
                   onEdit: () {},
                 ),
@@ -182,11 +182,11 @@ class _HeroCardPageState extends State<_HeroCardPage> {
         ),
         HubDemo(
           title: 'Detail hero — people (name + fact), embedded slot',
-          child: AppHeroCard(
+          child: PpForgeHeroCard(
             style: blueStyle,
             header: HeroHeader(
               leading: [
-                AppChip(label: 'รอรับ', color: palette.income, selected: true),
+                PpForgeChip(label: 'รอรับ', color: palette.income, selected: true),
               ],
               onEdit: () {},
             ),
@@ -211,14 +211,14 @@ class _HeroCardPageState extends State<_HeroCardPage> {
               'Editable chips as dropdowns, icon ✎, underlined name / '
               'description, outlined amount on the tint. Rows D–G, the slot '
               'and the settings line are hidden.',
-          child: AppHeroCard(
+          child: PpForgeHeroCard(
             style: blueStyle,
             mode: HeroCardMode.edit,
             header: HeroHeader(
               leading: const [
-                AppChip(
+                PpForgeChip(
                   label: 'ตามแผน',
-                  trailing: AppChipTrailing.dropdown,
+                  trailing: PpForgeChipTrailing.dropdown,
                   selected: true,
                 ),
               ],
@@ -255,7 +255,7 @@ class _HeroCardPageState extends State<_HeroCardPage> {
             height: 220,
             child: DetailLayout(
               topInset: 0,
-              hero: AppHeroCard(
+              hero: PpForgeHeroCard(
                 style: style,
                 content: [
                   HeroIdentity(icon: avatar, description: desc('hero')),
@@ -286,10 +286,10 @@ class _DemoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(AppSpacing.sm),
+    padding: const EdgeInsets.all(PpForgeSpacing.sm),
     decoration: BoxDecoration(
       border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(PpForgeRadius.md),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,

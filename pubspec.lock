@@ -880,9 +880,11 @@ packages:
   pp_forge_core:
     dependency: "direct main"
     description:
-      path: "../pp-forge-core"
-      relative: true
-    source: path
+      path: "."
+      ref: "v0.1.0"
+      resolved-ref: a1e22df7cb9d37d35706957cd0eb151ddb2c0b48
+      url: "https://ppChub722@github.com/ppChub722/pp-forge-core.git"
+    source: git
     version: "0.1.0"
   provider:
     dependency: transitive

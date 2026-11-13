@@ -65,8 +65,8 @@ class _RecurringPage extends StatelessWidget {
               'pending | a real tx = done | archived = "don\'t want it". One '
               'tone per state (StatusChip).',
           child: Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
+            spacing: PpForgeSpacing.xs,
+            runSpacing: PpForgeSpacing.xs,
             children: [
               for (final s in OccurrenceState.values)
                 OccurrenceStateChip(state: s),
@@ -110,8 +110,8 @@ class _RecurringPage extends StatelessWidget {
               'any caption ("พรุ่งนี้"). inline: the two on one line ("3 ศ."), '
               'end aligned, for a month\'s compact list.',
           child: Wrap(
-            spacing: AppSpacing.lg,
-            runSpacing: AppSpacing.md,
+            spacing: PpForgeSpacing.lg,
+            runSpacing: PpForgeSpacing.md,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               CalendarTile(date: inDays(14)),
@@ -138,10 +138,10 @@ class _RecurringPage extends StatelessWidget {
           note:
               'The calendar list in date order: past rows dimmed unless '
               'still waiting, the today line before the first coming one. '
-              'Rows are AppListRow (see UI → molecules → row).',
+              'Rows are PpForgeListRow (see UI → molecules → row).',
           child: SectionCard(
             children: [
-              AppListRow(
+              PpForgeListRow(
                 leading: const IconDisplay(type: IconType.category, size: 36),
                 title: 'ค่าเน็ตบ้าน',
                 line2: const ListRowLine(
@@ -154,7 +154,7 @@ class _RecurringPage extends StatelessWidget {
                 dimmed: true,
               ),
               const TodayLine(label: 'วันนี้ 23 ต.ค.'),
-              AppListRow(
+              PpForgeListRow(
                 leading: const IconDisplay(type: IconType.category, size: 36),
                 title: 'อาหารแมว',
                 line2: const ListRowLine(parts: ['ส. 24 ต.ค.']),
@@ -253,8 +253,8 @@ class _RecurringPage extends StatelessWidget {
             children: [
               Padding(
                 padding: EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.sm,
+                  horizontal: PpForgeSpacing.lg,
+                  vertical: PpForgeSpacing.sm,
                 ),
                 child: Align(
                   alignment: AlignmentDirectional.centerEnd,
@@ -281,7 +281,7 @@ class _RecurringPage extends StatelessWidget {
               'much is paid (จ่ายแล้ว / เหลือ), then HeroTiles(joined: true): '
               'income and the month\'s count in one inset box.',
           child: Builder(
-            builder: (context) => AppHeroCard(
+            builder: (context) => PpForgeHeroCard(
               style: HeroStyle.tinted(
                 color: Theme.of(context).colorScheme.primary,
               ),
@@ -328,7 +328,7 @@ class _RecurringPage extends StatelessWidget {
               '/ ข้าม.',
           child: Builder(
             builder: (context) {
-              final warning = Theme.of(context).extension<AppColors>()!.warning;
+              final warning = Theme.of(context).extension<PpForgeColors>()!.warning;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -338,7 +338,7 @@ class _RecurringPage extends StatelessWidget {
                     trailing: '2 งวด',
                     date: inDays(-20),
                     label: 'เลยมา 20 วัน',
-                    tag: AppChip(
+                    tag: PpForgeChip(
                       label: 'ค้าง',
                       color: warning,
                       selected: true,
@@ -368,7 +368,7 @@ class _RecurringPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: PpForgeSpacing.md),
                   OccurrenceFocusCard(
                     date: inDays(14),
                     label: 'ครั้งถัดไป | อีก 14 วัน',
@@ -409,7 +409,7 @@ class _RecurringPage extends StatelessWidget {
                   '$total installments',
                   style: Theme.of(context).textTheme.labelMedium,
                 ),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: PpForgeSpacing.xs),
                 OccurrenceChain(
                   dots: [
                     for (var i = 0; i < total; i++)
@@ -424,13 +424,13 @@ class _RecurringPage extends StatelessWidget {
                           : ChainDot.future,
                   ],
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: PpForgeSpacing.lg),
               ],
               Text(
                 'Open (no end): Mar → next Nov + 3 to come',
                 style: Theme.of(context).textTheme.labelMedium,
               ),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: PpForgeSpacing.xs),
               OccurrenceChain(
                 open: true,
                 firstLabel: 'มี.ค. 26',
@@ -456,7 +456,7 @@ class _RecurringPage extends StatelessWidget {
               'a point with its amount, a dashed average, and the next period '
               'a hollow "?" in warning at the average. Colors come from the '
               'hero.',
-          child: AppHeroCard(
+          child: PpForgeHeroCard(
             style: HeroStyle.tinted(
               color: Theme.of(context).colorScheme.tertiary,
             ),
@@ -484,11 +484,11 @@ class _RecurringPage extends StatelessWidget {
               'amountRequired = a reminder with no amount: needs an amount '
               '> 0 to save. withAmount: false = the date only.',
           child: Wrap(
-            spacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
             children: [
-              AppButton(
+              PpForgeButton(
                 label: 'Edit amount',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () => showOccurrenceSheet(
                   context,
                   title: 'Edit amount',
@@ -502,9 +502,9 @@ class _RecurringPage extends StatelessWidget {
                   last: inDays(400),
                 ),
               ),
-              AppButton(
+              PpForgeButton(
                 label: 'Enter amount (reminder)',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () => showOccurrenceSheet(
                   context,
                   title: 'Enter amount',
@@ -518,9 +518,9 @@ class _RecurringPage extends StatelessWidget {
                   amountRequired: true,
                 ),
               ),
-              AppButton(
+              PpForgeButton(
                 label: 'Count (showCountSheet)',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () => showCountSheet(
                   context,
                   title: 'Number of payments',
@@ -529,9 +529,9 @@ class _RecurringPage extends StatelessWidget {
                   initial: 10,
                 ),
               ),
-              AppButton(
+              PpForgeButton(
                 label: 'Move date',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () => showOccurrenceSheet(
                   context,
                   title: 'Move date',
@@ -915,9 +915,9 @@ class _RecurrenceSheetDemoState extends State<_RecurrenceSheetDemo> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        AppButton(
+        PpForgeButton(
           label: 'AppRecurrenceSheet.show',
-          variant: AppButtonVariant.outlined,
+          variant: PpForgeButtonVariant.outlined,
           onPressed: () async {
             final r = await AppRecurrenceSheet.show(context, initial: _rule);
             if (!mounted) return;
@@ -927,10 +927,10 @@ class _RecurrenceSheetDemoState extends State<_RecurrenceSheetDemo> {
             });
           },
         ),
-        const SizedBox(height: AppSpacing.sm),
-        AppText(
+        const SizedBox(height: PpForgeSpacing.sm),
+        PpForgeText(
           '$_last | ${recurrenceLabel(l, _rule, showEnd: true)}',
-          role: AppTextRole.caption,
+          role: PpForgeTextRole.caption,
         ),
       ],
     );
@@ -1007,7 +1007,7 @@ class _PickDemoState extends State<_PickDemo> {
         _bar('รอใส่ยอด', 'fill', fillIds),
         if (!_folded.contains('fill'))
           for (final (i, (name, sub)) in _fill.indexed)
-            AppListRow(
+            PpForgeListRow(
               checked: _picked.contains(fillIds[i]),
               onCheck: _toggle(fillIds[i]),
               leading: const IconDisplay(type: IconType.category, size: 36),
@@ -1034,7 +1034,7 @@ class _PickDemoState extends State<_PickDemo> {
         _bar('รอยืนยัน', 'ready', readyIds),
         if (!_folded.contains('ready'))
           for (final (i, (name, sub, amount)) in _ready.indexed)
-            AppListRow(
+            PpForgeListRow(
               checked: _picked.contains(readyIds[i]),
               onCheck: _toggle(readyIds[i]),
               leading: const IconDisplay(type: IconType.category, size: 36),
@@ -1116,7 +1116,7 @@ class _CalendarDemoState extends State<_CalendarDemo> {
             onChanged: (m) => setState(() => _month = m),
           ),
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: PpForgeSpacing.md),
         calendar,
       ],
     );
@@ -1136,14 +1136,14 @@ class _DatePickChipDemoState extends State<_DatePickChipDemo> {
   DateTime? _date;
 
   Future<void> _pick() async {
-    final r = await AppDatePicker.show(context, initial: _date ?? widget.start);
-    if (r is AppDatePicked && mounted) setState(() => _date = r.date);
+    final r = await PpForgeDatePicker.show(context, initial: _date ?? widget.start);
+    if (r is PpForgeDatePicked && mounted) setState(() => _date = r.date);
   }
 
   @override
   Widget build(BuildContext context) => Wrap(
-    spacing: AppSpacing.md,
-    runSpacing: AppSpacing.sm,
+    spacing: PpForgeSpacing.md,
+    runSpacing: PpForgeSpacing.sm,
     crossAxisAlignment: WrapCrossAlignment.center,
     children: [
       DatePickChip(

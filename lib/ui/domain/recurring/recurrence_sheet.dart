@@ -7,7 +7,6 @@ import '../tokens/app_icons.dart';
 import 'recurrence_choices.dart';
 import 'recurrence_rule.dart';
 import 'recurrence_text.dart';
-import '../../app_aliases.dart';
 
 /// The app's one repeat / period sheet: ทุก [N] [วัน / สัปดาห์ / เดือน / ปี],
 /// then when it falls, then when it ends. [simple] = a period (a budget's or
@@ -58,27 +57,27 @@ class _RecurrenceSheetState extends State<_RecurrenceSheet> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final strings = UiConfig.stringsOf(context);
-    return AppSheetScaffold(
+    final strings = PpForgeConfig.stringsOf(context);
+    return PpForgeSheetScaffold(
       title: widget.title ?? l.recurSheetTitle,
       footer: Row(
         children: [
           Expanded(
-            child: AppButton(
+            child: PpForgeButton(
               label: strings.cancel,
               kind: ButtonIconKind.cancel,
-              variant: AppButtonVariant.outlined,
-              size: AppButtonSize.large,
+              variant: PpForgeButtonVariant.outlined,
+              size: PpForgeButtonSize.large,
               expand: true,
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),
-          const SizedBox(width: AppSpacing.md),
+          const SizedBox(width: PpForgeSpacing.md),
           Expanded(
-            child: AppButton(
+            child: PpForgeButton(
               label: l.commonOk,
               kind: ButtonIconKind.confirm,
-              size: AppButtonSize.large,
+              size: PpForgeButtonSize.large,
               expand: true,
               onPressed: () => Navigator.of(context).pop(_rule),
             ),
@@ -86,7 +85,7 @@ class _RecurrenceSheetState extends State<_RecurrenceSheet> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
         child: RecurrenceEditor(
           initial: widget.initial,
           simple: widget.simple,
@@ -165,13 +164,13 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
 
   Future<void> _pickEndDate() async {
     final start = DateTime(_start.year, _start.month, _start.day);
-    final r = await AppDatePicker.show(
+    final r = await PpForgeDatePicker.show(
       context,
       initial: _c.endDate,
       first: start,
       last: RecurrenceChoices.lastEndOf(_start),
     );
-    if (r is AppDatePicked && mounted) {
+    if (r is PpForgeDatePicked && mounted) {
       final d = r.date;
       _edit(() => _c.endDate = DateTime(d.year, d.month, d.day));
     }
@@ -187,26 +186,26 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final strings = UiConfig.stringsOf(context);
+    final strings = PpForgeConfig.stringsOf(context);
     final scheme = Theme.of(context).colorScheme;
     final loc = MaterialLocalizations.of(context);
 
     Widget section(String title, Widget child) => Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.lg),
+      padding: const EdgeInsets.only(top: PpForgeSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          AppText(title, role: AppTextRole.caption),
-          const SizedBox(height: AppSpacing.sm),
+          PpForgeText(title, role: PpForgeTextRole.caption),
+          const SizedBox(height: PpForgeSpacing.sm),
           child,
         ],
       ),
     );
 
     Widget chips(List<Widget> children) => Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: children,
     );
 
@@ -216,10 +215,10 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
       ValueChanged<int> onValue,
     ) => SizedBox(
       width: 72,
-      child: AppInput(
+      child: PpForgeInput(
         controller: c,
         dense: true,
-        type: AppInputType.number,
+        type: PpForgeInputType.number,
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
         inputFormatters: [RangeInputFormatter(1, max)],
@@ -242,7 +241,7 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
       ValueChanged<int> onTap,
     ) => chips([
       for (final d in weekOrder)
-        AppChip(
+        PpForgeChip(
           key: ValueKey('$key$d'),
           label: loc.narrowWeekdays[d % 7],
           tooltip: _weekdayName(l, d),
@@ -258,33 +257,33 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        AppText(
+        PpForgeText(
           recurrenceLabel(l, _rule, showEnd: widget.showEnd),
-          role: AppTextRole.title,
+          role: PpForgeTextRole.title,
           color: scheme.primary,
         ),
         if (moved) ...[
-          const SizedBox(height: AppSpacing.xs),
-          AppText(
+          const SizedBox(height: PpForgeSpacing.xs),
+          PpForgeText(
             l.recurSheetStartMoves(
               DateFormat.yMMMd(l.localeName).format(_rule.start),
             ),
             key: const ValueKey('recurStartMoves'),
-            role: AppTextRole.caption,
+            role: PpForgeTextRole.caption,
           ),
         ],
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: PpForgeSpacing.md),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            AppText(l.recurSheetEvery),
-            const SizedBox(width: AppSpacing.sm),
+            PpForgeText(l.recurSheetEvery),
+            const SizedBox(width: PpForgeSpacing.sm),
             numberField(_intervalText, 99, (n) => _edit(() => _c.interval = n)),
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: PpForgeSpacing.md),
             Expanded(
               child: chips([
                 for (final f in _units)
-                  AppChip(
+                  PpForgeChip(
                     label: _unitLabel(l, f),
                     selected: _c.freq == f,
                     onTap: () => _edit(() => _c.freq = f),
@@ -317,7 +316,7 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
               children: [
                 if (!widget.simple) ...[
                   chips([
-                    AppChip(
+                    PpForgeChip(
                       key: const ValueKey('recurByDay'),
                       label: l.recurSheetByDay,
                       selected: byDay,
@@ -325,7 +324,7 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
                         () => _c.monthlyMode = RecurrenceMonthlyMode.day,
                       ),
                     ),
-                    AppChip(
+                    PpForgeChip(
                       key: const ValueKey('recurByWeekday'),
                       label: l.recurSheetByWeekday,
                       selected: !byDay,
@@ -334,7 +333,7 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
                       ),
                     ),
                   ]),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: PpForgeSpacing.md),
                 ],
                 if (byDay)
                   DayOfMonthGrid(
@@ -354,7 +353,7 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
                       4,
                       RecurrenceMonthly.lastWeek,
                     ])
-                      AppChip(
+                      PpForgeChip(
                         key: ValueKey('recurNth$n'),
                         label: n == RecurrenceMonthly.lastWeek
                             ? strings.dayLastShort
@@ -363,7 +362,7 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
                         onTap: () => _edit(() => _c.nth = n),
                       ),
                   ]),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: PpForgeSpacing.sm),
                   weekdayChips(
                     'recurNthWeekday',
                     (d) => _c.nthWeekday == d,
@@ -390,7 +389,7 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
                     );
                   }),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: PpForgeSpacing.md),
                 DayOfMonthGrid(
                   key: const ValueKey('recurYearDay'),
                   days: RecurrenceChoices.daysIn(_c.yearMonth),
@@ -415,23 +414,23 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
                     (RecurrenceEndKind.onDate, l.recurSheetEndOnDate),
                     (RecurrenceEndKind.afterCount, l.recurSheetEndAfter),
                   ])
-                    AppChip(
+                    PpForgeChip(
                       label: label,
                       selected: _c.endKind == kind,
                       onTap: () => _edit(() => _c.endKind = kind),
                     ),
                 ]),
                 if (_c.endKind == RecurrenceEndKind.onDate) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  AppChip(
+                  const SizedBox(height: PpForgeSpacing.md),
+                  PpForgeChip(
                     label: DateFormat.yMMMd(l.localeName).format(_c.endDate),
                     icon: AppIcons.date,
-                    trailing: AppChipTrailing.dropdown,
+                    trailing: PpForgeChipTrailing.dropdown,
                     onTap: _pickEndDate,
                   ),
                 ],
                 if (_c.endKind == RecurrenceEndKind.afterCount) ...[
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: PpForgeSpacing.md),
                   Row(
                     children: [
                       numberField(
@@ -439,15 +438,15 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
                         999,
                         (n) => _edit(() => _c.endCount = n),
                       ),
-                      const SizedBox(width: AppSpacing.sm),
-                      AppText(l.recurSheetOccurrences(_c.endCount)),
+                      const SizedBox(width: PpForgeSpacing.sm),
+                      PpForgeText(l.recurSheetOccurrences(_c.endCount)),
                     ],
                   ),
                 ],
               ],
             ),
           ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PpForgeSpacing.sm),
       ],
     );
   }

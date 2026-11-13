@@ -49,7 +49,7 @@ class TxSummaryTitle extends StatelessWidget {
             ),
           ),
           if (c != null) ...[
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             Flexible(
               child: Text(
                 categoryDisplayName(l, c),

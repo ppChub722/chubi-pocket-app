@@ -353,7 +353,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     includeInReport: working.includeInReport,
   );
 
-  IconCode? _resolvedDisplayIconCode() {
+  PpForgeIconCode? _resolvedDisplayIconCode() {
     if (working.iconCode != null || working.parentId == null) {
       return working.iconCode;
     }
@@ -389,7 +389,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         parentPath: breadcrumb,
       ),
     );
-    if (!mounted || result is! IconMakerSelected) return;
+    if (!mounted || result is! PpForgeIconMakerSelected) return;
     applyChange(working.copyWith(iconCode: result.iconCode));
   }
 
@@ -570,8 +570,8 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     return DetailLayout(
       onRefresh: _isCreate ? null : _loadDetail,
       physics: const AlwaysScrollableScrollPhysics(),
-      topInset: topInset + AppSpacing.lg,
-      bottomInset: AppSpacing.huge + bottomInset,
+      topInset: topInset + PpForgeSpacing.lg,
+      bottomInset: PpForgeSpacing.huge + bottomInset,
       hero: _hero(l, all, editing),
       info: InfoBox(
         rows: [
@@ -669,7 +669,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   }
 
   Widget _hero(AppLocalizations l, List<Category> all, bool editing) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final isIncome = working.type == CategoryType.income;
     final typeColor = isIncome ? palette.income : palette.expense;
     final iconCode = _resolvedDisplayIconCode();
@@ -690,16 +690,16 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
                 label: l.categoryTypeIncome,
               ),
             ],
-            builder: (context, toggle) => AppChip(
+            builder: (context, toggle) => PpForgeChip(
               label: typeLabel,
               icon: typeIcon,
               color: typeColor,
               selected: true,
-              trailing: AppChipTrailing.dropdown,
+              trailing: PpForgeChipTrailing.dropdown,
               onTap: toggle,
             ),
           )
-        : AppChip(
+        : PpForgeChip(
             label: typeLabel,
             icon: typeIcon,
             color: typeColor,
@@ -719,7 +719,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       onChanged: (v) => _onText(_TextField.description, v),
     );
     if (editing) {
-      return AppHeroCard(
+      return PpForgeHeroCard(
         style: style,
         mode: HeroCardMode.edit,
         header: HeroHeader(leading: [typeChip]),
@@ -748,7 +748,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         ],
       );
     }
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: style,
       header: HeroHeader(leading: [typeChip], onEdit: enterEdit),
       content: [
@@ -803,7 +803,7 @@ class _CategoryDraft {
   final String name;
   final CategoryType type;
   final String? parentId;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final String description;
   final String note;
   final bool includeInReport;
@@ -829,7 +829,7 @@ class _CategoryDraft {
     CategoryType? type,
     String? parentId,
     bool clearParent = false,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
     String? description,
     String? note,
     bool? includeInReport,

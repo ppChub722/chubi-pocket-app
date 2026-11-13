@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_icons.dart';
 import 'net_balance.dart';
-import '../../app_aliases.dart';
+import 'package:pp_forge_core/ui.dart';
 
 enum DebtSummaryTone { owedToMe, iOwe, cleared, warn }
 
@@ -51,18 +51,18 @@ class DebtSummaryRow extends StatelessWidget {
       key: const ValueKey('debtSummary'),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(PpForgeRadius.md),
         border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
+          horizontal: PpForgeSpacing.md,
+          vertical: PpForgeSpacing.sm,
         ),
         child: Row(
           children: [
             Icon(icon, size: 20, color: color),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             Expanded(
               child: Text.rich(
                 TextSpan(
@@ -84,7 +84,7 @@ class DebtSummaryRow extends StatelessWidget {
               ),
             ),
             if (amount != null) ...[
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
               Text(
                 amount,
                 style: text.titleMedium?.copyWith(

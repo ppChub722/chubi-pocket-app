@@ -85,9 +85,9 @@ class WalletPickCard extends StatelessWidget {
           ? null
           : MoneyText(
               a.balance,
-              style: AppTypography.of(
+              style: PpForgeTypography.of(
                 context,
-                AppTextRole.money,
+                PpForgeTextRole.money,
               )?.copyWith(color: accent),
             ),
       accent: accent,

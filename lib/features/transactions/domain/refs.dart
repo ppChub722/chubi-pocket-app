@@ -6,8 +6,8 @@ import '../../categories/domain/category.dart';
 import '../../categories/domain/category_type.dart';
 import '../../../ui/ui.dart';
 
-IconCode? _icon(Object? v) =>
-    v is Map<String, dynamic> ? IconCode.fromJson(v) : null;
+PpForgeIconCode? _icon(Object? v) =>
+    v is Map<String, dynamic> ? PpForgeIconCode.fromJson(v) : null;
 
 class AccountRef extends Equatable {
   const AccountRef({
@@ -23,7 +23,7 @@ class AccountRef extends Equatable {
 
   final String id;
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final String? logoUrl;
   final AccountType type;
 
@@ -80,7 +80,7 @@ class EmbeddedCategory extends Equatable {
   final String id;
   final String name;
   final CategoryType type;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final bool isSystem;
 
   final String? systemKind;
@@ -154,7 +154,7 @@ class RecurringItemLink extends Equatable {
 
   final String? recurringId;
   final String? recurringName;
-  final IconCode? recurringIconCode;
+  final PpForgeIconCode? recurringIconCode;
   final int? seq;
   final int? total;
 
@@ -326,7 +326,7 @@ class BillMemberRef extends Equatable {
   final String id;
   final String name;
   final String? userId;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final bool isMe;
   final AvatarData? _avatar;
 
@@ -432,7 +432,7 @@ class EventRef extends Equatable {
 
   final String id;
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final String status;
 
   /// event | split (0.4.1-2 S1): a split bill's hidden one-bill "event",
@@ -470,7 +470,7 @@ class EmbeddedPerson extends Equatable {
 
   final String name;
   final String? contactId;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final bool linked;
   final String? linkedUserId;
   final AvatarData? _avatar;

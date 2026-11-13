@@ -44,7 +44,7 @@ Widget avatarDemoScope(Widget child) => ServerImageScope(
   child: child,
 );
 
-const _icon = IconCode(
+const _icon = PpForgeIconCode(
   icon: 'person',
   background: 'solid',
   bgColors: ['#26A69A'],
@@ -55,7 +55,7 @@ const _icon = IconCode(
 AvatarData _photo({
   AvatarBorder? border,
   bool broken = false,
-  IconCode? icon,
+  PpForgeIconCode? icon,
 }) => AvatarData(
   kind: AvatarKind.photo,
   photoUrl: broken ? '/api/v1/avatars/gone?v=1' : '/api/v1/avatars/ok?v=2',
@@ -77,10 +77,10 @@ Widget _logo() => const ColoredBox(
 Widget buildAvatarStates(BuildContext context) {
   Widget left(Widget child) =>
       Align(alignment: Alignment.centerLeft, child: child);
-  final palette = Theme.of(context).extension<AppColors>()!;
+  final palette = Theme.of(context).extension<PpForgeColors>()!;
   final surface = Theme.of(context).colorScheme.surface;
   Widget dots(List<Color> cs) => Wrap(
-    spacing: AppSpacing.xs,
+    spacing: PpForgeSpacing.xs,
     children: [
       for (final c in cs)
         Container(
@@ -187,7 +187,7 @@ Widget buildAvatarStates(BuildContext context) {
               page: 'Everywhere',
               wide: true,
               child: Wrap(
-                spacing: AppSpacing.sm,
+                spacing: PpForgeSpacing.sm,
                 crossAxisAlignment: WrapCrossAlignment.end,
                 children: [
                   for (final s in const [20.0, 32.0, 40.0, 56.0, 80.0])

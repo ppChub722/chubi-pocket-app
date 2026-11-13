@@ -18,7 +18,7 @@ class TransactionAuthor extends Equatable {
 
   final String userId;
   final String displayName;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final AvatarData? _avatar;
 
   /// 0.4.2 1b: the BE's avatar (UserRef); built from the name + icon when absent.
@@ -46,14 +46,14 @@ class EmbeddedTag extends Equatable {
   const EmbeddedTag({required this.id, required this.name, this.iconCode});
   final String id;
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   factory EmbeddedTag.fromJson(Map<String, dynamic> json) {
     return EmbeddedTag(
       id: json['id'] as String,
       name: json['name'] as String,
       iconCode: json['icon_code'] is Map<String, dynamic>
-          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+          ? PpForgeIconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
     );
   }

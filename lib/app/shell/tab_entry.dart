@@ -3,7 +3,7 @@ import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/widgets.dart';
 
-import '../../ui/ui.dart' show AppMotion;
+import '../../ui/ui.dart' show PpForgePageMotion;
 import 'nav_layout.dart';
 import 'tab_nav.dart';
 
@@ -32,13 +32,13 @@ class TabEntry {
 
   final TabEntryKind kind;
 
-  /// The page's shift at [t] (0 → 1), a fraction of its width ([AppMotion]).
+  /// The page's shift at [t] (0 → 1), a fraction of its width ([PpForgePageMotion]).
   Offset offsetAt(double t) => kind == TabEntryKind.slide
-      ? Offset(AppMotion.enterShift(t), 0)
+      ? Offset(PpForgePageMotion.enterShift(t), 0)
       : Offset.zero;
 
   double opacityAt(double t) =>
-      kind == TabEntryKind.none ? 1 : AppMotion.enterOpacity(t);
+      kind == TabEntryKind.none ? 1 : PpForgePageMotion.enterOpacity(t);
 
   /// The paint transform at [t] for a page of [size].
   Matrix4 transformAt(double t, Size size) {

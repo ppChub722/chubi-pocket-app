@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../app_aliases.dart';
+import 'package:pp_forge_core/ui.dart';
 import '../people/avatar_data.dart';
 import '../people/person_mark.dart';
 
@@ -15,7 +15,7 @@ class ProjectMemberAvatar extends StatelessWidget {
   });
 
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   /// The BE's avatar; null = built from [name] + [iconCode].
   final AvatarData? avatar;

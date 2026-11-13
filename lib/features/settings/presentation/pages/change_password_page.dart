@@ -135,7 +135,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
           child: Builder(
             builder: (context) => DetailPageBody(
               bottomInset:
-                  AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
+                  PpForgeSpacing.huge + MediaQuery.paddingOf(context).bottom,
               sections: [
                 (first) => SectionCard(
                   first: first,
@@ -211,10 +211,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
     String? errorText,
     bool autofocus = false,
     ValueChanged<String>? onSubmitted,
-  }) => AppInput.card(
+  }) => PpForgeInput.card(
     controller: controller,
     label: label,
-    labelPlacement: AppInputLabelPlacement.above,
+    labelPlacement: PpForgeInputLabelPlacement.above,
     helper: helper,
     obscurable: true,
     autofocus: autofocus,

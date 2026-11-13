@@ -22,9 +22,9 @@ class EventPickerDemos extends StatelessWidget {
     RemoveFromEvent() => 'remove from the event',
   };
 
-  Widget _new(String label, Future<EventTarget?> Function() run) => AppButton(
+  Widget _new(String label, Future<EventTarget?> Function() run) => PpForgeButton(
     label: label,
-    variant: AppButtonVariant.outlined,
+    variant: PpForgeButtonVariant.outlined,
     onPressed: () async => onResult(_say(await run())),
   );
 
@@ -32,8 +32,8 @@ class EventPickerDemos extends StatelessWidget {
     title: title,
     note: note,
     child: Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: buttons,
     ),
   );
@@ -98,7 +98,7 @@ class EventPickerDemos extends StatelessWidget {
         if (events.isEmpty)
           const HubDemo(
             title: 'No open events',
-            child: AppText(
+            child: PpForgeText(
               'The events cache has no open event you can add to: sign in '
               'first, or every event shows its empty / create state.',
             ),

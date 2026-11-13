@@ -87,9 +87,9 @@ class _TagsPageState extends State<TagsPage>
   FocusNode _focusFor(String key) => _focus.putIfAbsent(key, FocusNode.new);
   GlobalKey _tileKey(String key) => _tileKeys.putIfAbsent(key, GlobalKey.new);
 
-  static String? _colorOf(IconCode? c) =>
+  static String? _colorOf(PpForgeIconCode? c) =>
       (c?.iconColors.isNotEmpty ?? false) ? c!.iconColors.first : null;
-  static String? _iconOf(IconCode? c) => c?.icon;
+  static String? _iconOf(PpForgeIconCode? c) => c?.icon;
 
   bool get _canBulk => _selected.isNotEmpty && !isSaving;
 
@@ -97,7 +97,7 @@ class _TagsPageState extends State<TagsPage>
       _query.trim().isNotEmpty ||
       (!isEditing && (_filterColors.isNotEmpty || _filterIcons.isNotEmpty));
 
-  bool _matches(String name, IconCode? iconCode) {
+  bool _matches(String name, PpForgeIconCode? iconCode) {
     final q = _query.trim().toLowerCase();
     if (q.isNotEmpty && !name.toLowerCase().contains(q)) return false;
     if (isEditing) return true;
@@ -253,15 +253,15 @@ class _TagsPageState extends State<TagsPage>
       showBackground: false,
       showBorder: false,
       previewBuilder: (iconCode) => Center(
-        child: AppChip(
+        child: PpForgeChip(
           label: draft.name,
-          icon: IconRegistry.get(iconCode.icon, fallback: AppIcons.tag),
-          color: tagColor(iconCode, Theme.of(context).extension<AppColors>()!),
+          icon: PpForgeIconRegistry.get(iconCode.icon, fallback: AppIcons.tag),
+          color: tagColor(iconCode, Theme.of(context).extension<PpForgeColors>()!),
           selected: true,
         ),
       ),
     );
-    if (!mounted || result is! IconMakerSelected) return;
+    if (!mounted || result is! PpForgeIconMakerSelected) return;
     applyChange(
       working.map(
         (d) => d.key == draft.key ? d.copyWith(iconCode: result.iconCode) : d,
@@ -279,21 +279,21 @@ class _TagsPageState extends State<TagsPage>
       showBorder: false,
       showIconPicker: false,
       previewBuilder: (iconCode) => Center(
-        child: AppChip(
+        child: PpForgeChip(
           label: 'Aa',
-          icon: IconRegistry.get(iconCode.icon, fallback: AppIcons.tag),
-          color: tagColor(iconCode, Theme.of(context).extension<AppColors>()!),
+          icon: PpForgeIconRegistry.get(iconCode.icon, fallback: AppIcons.tag),
+          color: tagColor(iconCode, Theme.of(context).extension<PpForgeColors>()!),
           selected: true,
         ),
       ),
     );
-    if (!mounted || result is! IconMakerSelected) return;
+    if (!mounted || result is! PpForgeIconMakerSelected) return;
     final colors = result.iconCode.iconColors;
     applyChange(
       working.map(
         (d) => _selected.contains(d.key)
             ? d.copyWith(
-                iconCode: (d.iconCode ?? const IconCode()).copyWith(
+                iconCode: (d.iconCode ?? const PpForgeIconCode()).copyWith(
                   iconColors: colors,
                 ),
               )
@@ -312,21 +312,21 @@ class _TagsPageState extends State<TagsPage>
       showBorder: false,
       showColorPicker: false,
       previewBuilder: (iconCode) => Center(
-        child: AppChip(
+        child: PpForgeChip(
           label: 'Aa',
-          icon: IconRegistry.get(iconCode.icon, fallback: AppIcons.tag),
-          color: tagColor(iconCode, Theme.of(context).extension<AppColors>()!),
+          icon: PpForgeIconRegistry.get(iconCode.icon, fallback: AppIcons.tag),
+          color: tagColor(iconCode, Theme.of(context).extension<PpForgeColors>()!),
           selected: true,
         ),
       ),
     );
-    if (!mounted || result is! IconMakerSelected) return;
+    if (!mounted || result is! PpForgeIconMakerSelected) return;
     final glyph = result.iconCode.icon;
     applyChange(
       working.map(
         (d) => _selected.contains(d.key)
             ? d.copyWith(
-                iconCode: (d.iconCode ?? const IconCode()).copyWith(
+                iconCode: (d.iconCode ?? const PpForgeIconCode()).copyWith(
                   icon: glyph,
                 ),
               )
@@ -555,7 +555,7 @@ class _TagsPageState extends State<TagsPage>
     final codes = tags.map((t) => t.iconCode);
     final colors = {for (final c in codes) ?_colorOf(c)}.toList()..sort();
     final icons = {for (final c in codes) ?_iconOf(c)}.toList()..sort();
-    return AppListToolbar(
+    return PpForgeListToolbar(
       search: ListToolbarSearch(
         controller: _searchController,
         hint: l.tagsSearchHint,
@@ -572,22 +572,22 @@ class _TagsPageState extends State<TagsPage>
               for (final s in _SortBy.values)
                 SheetOption(value: s, label: _sortLabel(l, s)),
             ],
-            builder: (context, toggle) => AppChip(
+            builder: (context, toggle) => PpForgeChip(
               label: _sortLabel(l, _sort),
               icon: AppIcons.sort,
-              trailing: AppChipTrailing.dropdown,
+              trailing: PpForgeChipTrailing.dropdown,
               onTap: toggle,
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
-          AppIconButton.edit(tooltip: l.commonEdit, onPressed: _beginEdit),
+          const SizedBox(width: PpForgeSpacing.sm),
+          PpForgeIconButton.edit(tooltip: l.commonEdit, onPressed: _beginEdit),
         ],
       ),
     );
   }
 
   Widget _editBar(AppLocalizations l, List<_TagDraft> visible) {
-    return AppListToolbar(
+    return PpForgeListToolbar(
       search: ListToolbarSearch(
         controller: _searchController,
         hint: l.tagsSearchHint,
@@ -600,18 +600,18 @@ class _TagsPageState extends State<TagsPage>
           tooltip: l.tagsSelectAll,
           onTap: () => _toggleSelectAll(visible),
         ),
-        AppChip(
+        PpForgeChip(
           icon: AppIcons.colorPicker,
           label: l.tagsBulkColor,
-          tone: AppChipTone.primary,
+          tone: PpForgeChipTone.primary,
           selected: true,
           enabled: _canBulk,
           onTap: _bulkColor,
         ),
-        AppChip(
+        PpForgeChip(
           icon: AppIcons.iconPicker,
           label: l.tagsBulkIcon,
-          tone: AppChipTone.primary,
+          tone: PpForgeChipTone.primary,
           selected: true,
           enabled: _canBulk,
           onTap: _bulkIcon,
@@ -625,15 +625,15 @@ class _TagsPageState extends State<TagsPage>
   }
 
   Widget _colorFilter(AppLocalizations l, List<String> tokens) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     return PopoverAnchor(
-      builder: (context, toggle) => AppChip(
+      builder: (context, toggle) => PpForgeChip(
         label: l.tagFormColorLabel,
         icon: AppIcons.colorPicker,
         selected: _filterColors.isNotEmpty,
         trailing: _filterColors.isEmpty
-            ? AppChipTrailing.dropdown
-            : AppChipTrailing.count,
+            ? PpForgeChipTrailing.dropdown
+            : PpForgeChipTrailing.count,
         count: _filterColors.length,
         enabled: tokens.isNotEmpty,
         onTap: toggle,
@@ -665,19 +665,19 @@ class _TagsPageState extends State<TagsPage>
 
   Widget _iconFilter(AppLocalizations l, List<String> glyphs) {
     return PopoverAnchor(
-      builder: (context, toggle) => AppChip(
+      builder: (context, toggle) => PpForgeChip(
         label: l.tagFormIconLabel,
         icon: AppIcons.iconPicker,
         selected: _filterIcons.isNotEmpty,
         trailing: _filterIcons.isEmpty
-            ? AppChipTrailing.dropdown
-            : AppChipTrailing.count,
+            ? PpForgeChipTrailing.dropdown
+            : PpForgeChipTrailing.count,
         count: _filterIcons.length,
         enabled: glyphs.isNotEmpty,
         onTap: toggle,
       ),
       contentBuilder: (context, close) => StatefulBuilder(
-        builder: (context, setPopover) => IconSwatchGrid(
+        builder: (context, setPopover) => PpForgeIconSwatchGrid(
           fallback: AppIcons.tag,
           glyphs: glyphs,
           selected: _filterIcons,
@@ -703,7 +703,7 @@ class _TagsPageState extends State<TagsPage>
     return _rowsWithFooter(
       rows: [
         for (final t in shown)
-          AppListRow(
+          PpForgeListRow(
             key: _tileKey(t.id),
             leading: IconDisplay(
               type: IconType.tag,
@@ -735,7 +735,7 @@ class _TagsPageState extends State<TagsPage>
         padding: padding,
         rows: [
           for (final d in visible)
-            AppListRow(
+            PpForgeListRow(
               key: _tileKey(d.key),
               checked: _selected.contains(d.key),
               onTap: () => _toggleSelect(d.key),
@@ -748,11 +748,11 @@ class _TagsPageState extends State<TagsPage>
                   iconCode: d.iconCode,
                 ),
               ),
-              titleField: AppInput(
+              titleField: PpForgeInput(
                 controller: _controllerFor(d),
                 focusNode: _focusFor(d.key),
                 maxLength: TextLimits.tagName,
-                style: AppTypography.of(context, AppTextRole.body),
+                style: PpForgeTypography.of(context, PpForgeTextRole.body),
                 onChanged: (v) => applyTextChange(
                   d.key,
                   working.map((e) => e.key == d.key ? e.copyWith(name: v) : e),
@@ -796,14 +796,14 @@ class _RowList extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (final (i, row) in rows.indexed) ...[
-            if (i > 0) const AppDivider.row(),
+            if (i > 0) const PpForgeDivider.row(),
             row,
           ],
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.md,
-              AppSpacing.lg,
+              PpForgeSpacing.lg,
+              PpForgeSpacing.md,
+              PpForgeSpacing.lg,
               0,
             ),
             child: footer,
@@ -819,14 +819,14 @@ List<Widget> _rowsWithFooter({
   required Widget footer,
 }) => [
   for (final (i, row) in rows.indexed) ...[
-    if (i > 0) const AppDivider.row(),
+    if (i > 0) const PpForgeDivider.row(),
     row,
   ],
   Padding(
     padding: const EdgeInsets.fromLTRB(
-      AppSpacing.lg,
-      AppSpacing.md,
-      AppSpacing.lg,
+      PpForgeSpacing.lg,
+      PpForgeSpacing.md,
+      PpForgeSpacing.lg,
       0,
     ),
     child: footer,
@@ -863,7 +863,7 @@ class _TagDraft {
   final String key;
   final String? serverId;
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   final String description;
   final String note;
@@ -879,7 +879,7 @@ class _TagDraft {
 
   _TagDraft copyWith({
     String? name,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
     String? description,
     String? note,
   }) => _TagDraft(

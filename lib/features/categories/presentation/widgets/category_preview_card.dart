@@ -19,13 +19,13 @@ class CategoryPreviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final accent = category.iconCode.tintFor(palette);
-    return AppCard(
-      style: AppCardStyle.accent,
+    return PpForgeCard(
+      style: PpForgeCardStyle.accent,
       color: accent,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(PpForgeSpacing.md),
         child: Row(
           children: [
             EditableCircle(
@@ -37,30 +37,30 @@ class CategoryPreviewCard extends StatelessWidget {
                 iconCode: category.iconCode,
               ),
             ),
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: PpForgeSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  AppText(
+                  PpForgeText(
                     category.name.isEmpty ? l.commonName : category.name,
-                    role: AppTextRole.title,
+                    role: PpForgeTextRole.title,
                     maxLines: 1,
                   ),
                   if (parentPath != null && parentPath!.isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    AppText(
+                    PpForgeText(
                       parentPath!,
-                      role: AppTextRole.caption,
+                      role: PpForgeTextRole.caption,
                       maxLines: 1,
                     ),
                   ],
                   if (!category.includeInReport) ...[
                     const SizedBox(height: 2),
-                    AppText(
+                    PpForgeText(
                       l.categoryHiddenFromReport,
-                      role: AppTextRole.caption,
+                      role: PpForgeTextRole.caption,
                     ),
                   ],
                 ],

@@ -30,9 +30,9 @@ class AccountPickerDemos extends StatelessWidget {
     return s.isEmpty ? 'nothing' : s;
   }
 
-  Widget _new(String label, Future<String> Function() run) => AppButton(
+  Widget _new(String label, Future<String> Function() run) => PpForgeButton(
     label: label,
-    variant: AppButtonVariant.outlined,
+    variant: PpForgeButtonVariant.outlined,
     onPressed: () async => onResult(await run()),
   );
 
@@ -40,8 +40,8 @@ class AccountPickerDemos extends StatelessWidget {
     title: title,
     note: note,
     child: Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: buttons,
     ),
   );
@@ -191,7 +191,7 @@ class AccountPickerDemos extends StatelessWidget {
         if (active.isEmpty)
           const HubDemo(
             title: 'No wallets',
-            child: AppText('The wallets cache is empty: sign in first.'),
+            child: PpForgeText('The wallets cache is empty: sign in first.'),
           ),
       ],
     );

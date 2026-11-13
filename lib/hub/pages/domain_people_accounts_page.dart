@@ -50,7 +50,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
     balance: 48200,
     currency: 'THB',
     description: 'Salary account',
-    iconCode: IconCode(icon: 'account_balance', iconColors: ['#138F2D']),
+    iconCode: PpForgeIconCode(icon: 'account_balance', iconColors: ['#138F2D']),
     monthIn: 52000,
     monthOut: 18300,
     savings: WalletSavings(balance: 48200, saved: 20000),
@@ -73,7 +73,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
     creditUsedPct: 25,
     creditAvailable: 37600,
     daysUntilDue: 3,
-    iconCode: IconCode(icon: 'credit_card', iconColors: ['#EF4444']),
+    iconCode: PpForgeIconCode(icon: 'credit_card', iconColors: ['#EF4444']),
   );
   const cardNoDue = Account(
     id: 'a5',
@@ -145,7 +145,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
     AccountIdentifier id, {
     List<PaymentProvider>? provs,
     VoidCallback? onDelete,
-  }) => AppCard(
+  }) => PpForgeCard(
     padding: EdgeInsets.zero,
     child: IdentifierRow(
       identifier: id,
@@ -205,7 +205,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
             label: 'PersonLinkBadge — 16 (fixed) and 24',
             page: 'Next to a linked avatar',
             child: const Wrap(
-              spacing: AppSpacing.sm,
+              spacing: PpForgeSpacing.sm,
               children: [PersonLinkBadge(), PersonLinkBadge(size: 24)],
             ),
           ),
@@ -215,12 +215,12 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                 'reserveLinkSlot — unlinked marks keep the badge space so '
                 'every name starts at the same x',
             page: 'Contact picker sheet, Splits section',
-            child: const AppCard(
+            child: const PpForgeCard(
               padding: EdgeInsets.zero,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  AppListRow(
+                  PpForgeListRow(
                     leading: PersonMark(
                       name: 'มาตาก',
                       level: PersonLevel.linked,
@@ -230,8 +230,8 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                     title: 'มาตาก',
                     line2: ListRowLine(parts: ['linked']),
                   ),
-                  AppDivider.row(),
-                  AppListRow(
+                  PpForgeDivider.row(),
+                  PpForgeListRow(
                     leading: PersonMark(
                       name: 'บี',
                       level: PersonLevel.contact,
@@ -241,8 +241,8 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                     title: 'บี',
                     line2: ListRowLine(parts: ['contact — slot kept empty']),
                   ),
-                  AppDivider.row(),
-                  AppListRow(
+                  PpForgeDivider.row(),
+                  PpForgeListRow(
                     leading: PersonMark(
                       name: 'ลี',
                       level: PersonLevel.name,
@@ -261,18 +261,18 @@ Widget buildPeopleAccountsPage(BuildContext context) {
             label: 'PersonMark in a chip — name | contact | linked',
             page: 'Split / payer chips',
             child: const Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
+              spacing: PpForgeSpacing.sm,
+              runSpacing: PpForgeSpacing.sm,
               children: [
-                AppChip(
+                PpForgeChip(
                   label: 'ลี',
                   leading: PersonMark(name: 'ลี', level: PersonLevel.name),
                 ),
-                AppChip(
+                PpForgeChip(
                   label: 'บี',
                   leading: PersonMark(name: 'บี', level: PersonLevel.contact),
                 ),
-                AppChip(
+                PpForgeChip(
                   label: 'ต้น',
                   leading: PersonMark(name: 'ต้น', level: PersonLevel.linked),
                 ),
@@ -316,7 +316,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
           HubUse(
             label: 'MemberAvatarStack — 5 members, size 28 (3 + "+2")',
             page: 'Account detail hero header',
-            child: AppHeroCard(
+            child: PpForgeHeroCard(
               style: HeroStyle.tinted(
                 color: Theme.of(context).colorScheme.primary,
               ),
@@ -344,22 +344,22 @@ Widget buildPeopleAccountsPage(BuildContext context) {
             wide: true,
             label: 'MemberChip — the members in a chip-height pill (+N)',
             page: 'Account detail hero, bottom chip row',
-            child: AppHeroCard(
+            child: PpForgeHeroCard(
               style: HeroStyle.tinted(
                 color: Theme.of(context).colorScheme.primary,
               ),
               content: [
                 Wrap(
-                  spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.sm,
+                  spacing: PpForgeSpacing.sm,
+                  runSpacing: PpForgeSpacing.sm,
                   children: [
-                    const AppChip(
+                    const PpForgeChip(
                       label: 'Bank',
                       icon: AppIcons.bank,
                       selected: true,
                       size: ChipSize.chip,
                     ),
-                    const AppChip(
+                    const PpForgeChip(
                       label: 'Mine only',
                       selected: true,
                       size: ChipSize.chip,
@@ -398,7 +398,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
             child: Avatar(
               AvatarData.forName(
                 'Bee',
-                iconCode: const IconCode(
+                iconCode: const PpForgeIconCode(
                   icon: 'favorite',
                   iconColors: ['#EF4444'],
                 ),
@@ -456,14 +456,14 @@ Widget buildPeopleAccountsPage(BuildContext context) {
               child: AccountCardSurface(
                 account: bank,
                 child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.all(PpForgeSpacing.md),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const AccountIconCircle(account: bank, size: 40),
-                      const SizedBox(height: AppSpacing.sm),
+                      const SizedBox(height: PpForgeSpacing.sm),
                       Text(bank.name, style: text.titleMedium),
-                      const AppText('฿••••', role: AppTextRole.money),
+                      const PpForgeText('฿••••', role: PpForgeTextRole.money),
                     ],
                   ),
                 ),
@@ -478,16 +478,16 @@ Widget buildPeopleAccountsPage(BuildContext context) {
               child: AccountCardSurface(
                 account: shared,
                 child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.all(PpForgeSpacing.md),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       AccountIconCircle(account: shared, size: 40),
-                      const SizedBox(height: AppSpacing.sm),
+                      const SizedBox(height: PpForgeSpacing.sm),
                       Text(shared.name, style: text.titleMedium),
-                      const SizedBox(height: AppSpacing.xs),
+                      const SizedBox(height: PpForgeSpacing.xs),
                       MemberAvatarStack(members: members.skip(1).toList()),
-                      const SizedBox(height: AppSpacing.xs),
+                      const SizedBox(height: PpForgeSpacing.xs),
                       MoneyText(
                         shared.balance,
                         style: text.titleMedium?.copyWith(
@@ -549,8 +549,8 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                 '(TypeIconDefault), until the user picks theirs; last = custom',
             page: 'Wallet avatar, hero, chips, tx rows, type dropdown',
             child: Wrap(
-              spacing: AppSpacing.md,
-              runSpacing: AppSpacing.sm,
+              spacing: PpForgeSpacing.md,
+              runSpacing: PpForgeSpacing.sm,
               children: [
                 for (final t in AccountType.values)
                   Column(
@@ -566,7 +566,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                         ),
                         size: 40,
                       ),
-                      const SizedBox(height: AppSpacing.xs),
+                      const SizedBox(height: PpForgeSpacing.xs),
                       walletValueChip(
                         context,
                         name: accountTypeLabel(context, t),
@@ -578,7 +578,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const AccountIconCircle(account: bank, size: 40),
-                    const SizedBox(height: AppSpacing.xs),
+                    const SizedBox(height: PpForgeSpacing.xs),
                     walletValueChip(
                       context,
                       name: bank.name,
@@ -841,7 +841,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
               maxVisible: v<double>('maxVisible').round(),
               size: v<double>('size'),
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: PpForgeSpacing.md),
             MemberStrip(
               members: people,
               avatarSize: v<double>('size'),
@@ -950,8 +950,8 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                 size: v<double>('size'),
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            AppCard(
+            const SizedBox(height: PpForgeSpacing.sm),
+            PpForgeCard(
               padding: EdgeInsets.zero,
               child: IdentifierRow(
                 identifier: AccountIdentifier(

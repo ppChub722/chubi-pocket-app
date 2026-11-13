@@ -76,7 +76,7 @@ class _EventTagsManagerState extends State<_EventTagsManager> {
   Future<List<BoardTag>> _write({
     String? id,
     required String name,
-    IconCode? icon,
+    PpForgeIconCode? icon,
   }) async {
     final w = await _repo.writeEventTag(
       widget.projectId,

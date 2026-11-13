@@ -43,9 +43,9 @@ class MemberPickerDemos extends StatelessWidget {
 
   static String _say(ProjectMember? m) => m?.displayName ?? 'closed';
 
-  Widget _new(String label, Future<String> Function() run) => AppButton(
+  Widget _new(String label, Future<String> Function() run) => PpForgeButton(
     label: label,
-    variant: AppButtonVariant.outlined,
+    variant: PpForgeButtonVariant.outlined,
     onPressed: () async => onResult(await run()),
   );
 
@@ -53,8 +53,8 @@ class MemberPickerDemos extends StatelessWidget {
     title: title,
     note: note,
     child: Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: buttons,
     ),
   );

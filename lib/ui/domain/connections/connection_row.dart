@@ -5,7 +5,6 @@ import '../tokens/app_icons.dart';
 import '../people/avatar.dart';
 import '../people/avatar_data.dart';
 import 'provider_logo.dart';
-import '../../app_aliases.dart';
 
 /// How a connection row looks (the app maps its data onto it).
 enum ConnectionRowState {
@@ -23,7 +22,7 @@ enum ConnectionRowState {
 }
 
 /// One outside app on the profile page's "การเชื่อมต่อ" (0.4.2 1b), an
-/// [AppDetailRow]: linked rows are tinted with the [brand] colour and show
+/// [PpForgeDetailRow]: linked rows are tinted with the [brand] colour and show
 /// 🔗 + the account in it; an unlinked row is grey with [notLinkedLabel].
 class ConnectionRow extends StatelessWidget {
   const ConnectionRow({
@@ -70,7 +69,7 @@ class ConnectionRow extends StatelessWidget {
             state == ConnectionRowState.linkedPhoto &&
             photo != null &&
             photo.isNotEmpty;
-        return AppDetailRow(
+        return PpForgeDetailRow(
           leading: withPhoto
               ? Avatar(
                   AvatarData(
@@ -100,7 +99,7 @@ class ConnectionRow extends StatelessWidget {
           onTap: onTap,
         );
       case ConnectionRowState.unlinked:
-        return AppDetailRow(
+        return PpForgeDetailRow(
           leading: ProviderLogo(
             url: logoUrl,
             name: name,
@@ -116,7 +115,7 @@ class ConnectionRow extends StatelessWidget {
           onTap: onTap,
         );
       case ConnectionRowState.comingSoon:
-        return AppDetailRow(
+        return PpForgeDetailRow(
           leading: ProviderLogo(
             url: logoUrl,
             name: name,

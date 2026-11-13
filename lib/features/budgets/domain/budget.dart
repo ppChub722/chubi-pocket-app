@@ -204,7 +204,7 @@ class Budget extends Equatable {
   final String name;
   final String? description;
   final String? note;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   final double amount;
 
@@ -238,7 +238,7 @@ class Budget extends Equatable {
     description: json['description'] as String?,
     note: json['note'] as String?,
     iconCode: json['icon_code'] is Map<String, dynamic>
-        ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+        ? PpForgeIconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
         : null,
     amount: _money(json['amount']),
     warnPct: (json['warn_pct'] as num?)?.toInt(),

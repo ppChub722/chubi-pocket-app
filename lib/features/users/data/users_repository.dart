@@ -14,7 +14,7 @@ class UsersRepository {
     String? username,
     String? displayName,
     String? email,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
     bool clearIconCode = false,
     String? currency,
     String? defaultAccountId,

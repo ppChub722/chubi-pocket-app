@@ -85,8 +85,8 @@ extension MemberStatusWire on MemberStatus {
   }
 }
 
-IconCode? _icon(Object? json) =>
-    json is Map<String, dynamic> ? IconCode.fromJson(json) : null;
+PpForgeIconCode? _icon(Object? json) =>
+    json is Map<String, dynamic> ? PpForgeIconCode.fromJson(json) : null;
 
 double _money(Object? v) => (v as num?)?.toDouble() ?? 0;
 
@@ -139,7 +139,7 @@ class Project extends Equatable {
   final String? endDate;
   final ProjectStatus status;
   final int membersCount;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   final double? plannedAmount;
 
@@ -316,7 +316,7 @@ class ProjectMember extends Equatable {
   final String displayName;
   final MemberRole role;
   final MemberStatus status;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final bool isMe;
   final AvatarData? _avatar;
 
@@ -393,7 +393,7 @@ class ProjectMemberRef extends Equatable {
   final String id;
   final String? userId;
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final bool isMe;
   final AvatarData? _avatar;
 
@@ -430,7 +430,7 @@ class BoardTag extends Equatable {
 
   final String id;
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   final bool mine;
 
@@ -917,7 +917,7 @@ class ProjectMemberPosition extends Equatable {
   final String memberId;
   final String? userId;
   final String displayName;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   /// The member's avatar (MemberRef); null = built from the name + icon.
   final AvatarData? avatar;

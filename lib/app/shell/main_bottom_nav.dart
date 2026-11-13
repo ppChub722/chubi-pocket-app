@@ -233,10 +233,10 @@ class _MainBottomNavState extends State<MainBottomNav> {
       top: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
+          PpForgeSpacing.lg,
           0,
-          AppSpacing.lg,
-          AppSpacing.sm,
+          PpForgeSpacing.lg,
+          PpForgeSpacing.sm,
         ),
         child: GestureDetector(
           behavior: HitTestBehavior.translucent,
@@ -266,8 +266,8 @@ class _MainBottomNavState extends State<MainBottomNav> {
                     // The app's one glass. Temporary fps probe:
                     // --dart-define=NO_NAV_BLUR=true drops the frost.
                     look: const bool.fromEnvironment('NO_NAV_BLUR')
-                        ? AppGlass.standard.withoutFrost()
-                        : AppGlass.standard,
+                        ? PpForgeGlass.standard.withoutFrost()
+                        : PpForgeGlass.standard,
                     child: Material(
                       type: MaterialType.transparency,
                       child: Center(
@@ -424,7 +424,7 @@ class _SlidingHighlight extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const gap = MainBottomNav._tabGap;
-    final grow = still ? Duration.zero : AppDurations.chrome;
+    final grow = still ? Duration.zero : PpForgeDurations.chrome;
     return AnimatedPositioned(
       duration: slide && !still
           ? const Duration(milliseconds: 300)
@@ -436,11 +436,11 @@ class _SlidingHighlight extends StatelessWidget {
       bottom: MainBottomNav._tabInset,
       child: AnimatedScale(
         duration: grow,
-        curve: AppDurations.chromeCurve,
+        curve: PpForgeDurations.chromeCurve,
         scale: visible ? 1 : 0,
         child: AnimatedOpacity(
           duration: grow,
-          curve: AppDurations.chromeCurve,
+          curve: PpForgeDurations.chromeCurve,
           opacity: visible ? 1 : 0,
           child: DecoratedBox(
             decoration: BoxDecoration(
@@ -501,9 +501,9 @@ class _NavItem extends StatelessWidget {
               builder: (context, color, _) => Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  AppIcon(
+                  PpForgeIcon(
                     selected ? iconSelected : icon,
-                    size: AppIconSize.xl,
+                    size: PpForgeIconSize.xl,
                     color: color,
                   ),
                   const SizedBox(height: 2),

@@ -122,20 +122,20 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
+                PpForgeSpacing.lg,
                 0,
-                AppSpacing.lg,
-                AppSpacing.sm,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.sm,
               ),
-              child: AppText(l.pendingBatchHint, role: AppTextRole.caption),
+              child: PpForgeText(l.pendingBatchHint, role: PpForgeTextRole.caption),
             ),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
+                  PpForgeSpacing.lg,
                   0,
-                  AppSpacing.lg,
-                  AppSpacing.xxl,
+                  PpForgeSpacing.lg,
+                  PpForgeSpacing.xxl,
                 ),
                 children: [
                   for (var i = 0; i < _rows.length; i++) ...[
@@ -145,7 +145,7 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
                       autofocus: i == _rows.length - 1,
                       onRemove: _rows.length == 1 ? null : () => _removeRow(i),
                     ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: PpForgeSpacing.sm),
                   ],
                   AddTile(
                     label: l.pendingAddRow,
@@ -156,12 +156,12 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
               ),
             ),
             PinnedBar(
-              bottomGap: AppSpacing.sm,
+              bottomGap: PpForgeSpacing.sm,
               keyboardGap: 0,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  AppButton(
+                  PpForgeButton(
                     kind: ButtonIconKind.save,
                     label: l.pendingSaveAsDrafts(n),
                     expand: true,
@@ -169,10 +169,10 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
                     submits: true,
                     onPressed: n == 0 ? null : () => _save(submit: false),
                   ),
-                  AppButton(
+                  PpForgeButton(
                     kind: ButtonIconKind.submit,
                     label: l.pendingSubmitAllNow(n),
-                    variant: AppButtonVariant.text,
+                    variant: PpForgeButtonVariant.text,
                     submits: true,
                     onPressed: _saving || n == 0
                         ? null
@@ -204,17 +204,17 @@ class _RowCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.sm),
+    return PpForgeCard(
+      padding: const EdgeInsets.all(PpForgeSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (onRemove != null)
             Align(
               alignment: Alignment.centerRight,
-              child: AppIconButton.close(
+              child: PpForgeIconButton.close(
                 tooltip: l.pendingRemoveRow,
-                iconSize: AppIconSize.lg,
+                iconSize: PpForgeIconSize.lg,
                 color: scheme.onSurfaceVariant,
                 onPressed: onRemove,
               ),

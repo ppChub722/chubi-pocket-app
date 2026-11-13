@@ -117,7 +117,7 @@ class _KindSheet extends StatelessWidget {
             children: [
               for (final k in kinds)
                 PickerRow(
-                  leading: AppIcon(k.icon),
+                  leading: PpForgeIcon(k.icon),
                   title: k.label,
                   selected: k.id == currentKindId,
                   onTap: () {
@@ -136,7 +136,7 @@ class _KindSheet extends StatelessWidget {
               if (current != null && current.hasBank)
                 PickerRow(
                   leading: bank == null
-                      ? const AppIcon(AppIcons.bank)
+                      ? const PpForgeIcon(AppIcons.bank)
                       : BankBrandMark(
                           code: bank.code,
                           shortName: bank.shortName,
@@ -150,7 +150,7 @@ class _KindSheet extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: PpForgeSpacing.sm),
         ],
       ),
     );

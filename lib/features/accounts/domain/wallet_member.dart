@@ -64,7 +64,7 @@ class WalletMember extends Equatable {
   final String userId;
   final String name;
   final WalletRole role;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final WalletMemberStatus status;
 
   final String? joinedAt;

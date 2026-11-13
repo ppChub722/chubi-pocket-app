@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../app_aliases.dart';
+import 'package:pp_forge_core/ui.dart';
 
 @immutable
 class ModuleColors extends ThemeExtension<ModuleColors> {
@@ -49,7 +49,7 @@ class ModuleColors extends ThemeExtension<ModuleColors> {
     final set = theme.extension<ModuleColors>();
     if (set != null) return set;
     final primary =
-        theme.extension<AppColors>()?.primary ?? theme.colorScheme.primary;
+        theme.extension<PpForgeColors>()?.primary ?? theme.colorScheme.primary;
     return ModuleColors(library: primary, people: primary, planning: primary);
   }
 

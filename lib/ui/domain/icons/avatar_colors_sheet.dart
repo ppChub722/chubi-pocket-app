@@ -26,13 +26,13 @@ Future<AvatarColorsDraft?> showAvatarColorsSheet({
       context: context,
       builder: (ctx) => Dialog(
         insetPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.xl,
+          horizontal: PpForgeSpacing.lg,
+          vertical: PpForgeSpacing.xl,
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560, maxHeight: 720),
           child: Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.lg),
+            padding: const EdgeInsets.only(top: PpForgeSpacing.lg),
             child: body(ctx),
           ),
         ),
@@ -41,7 +41,7 @@ Future<AvatarColorsDraft?> showAvatarColorsSheet({
   }
   return showModalBottomSheet<AvatarColorsDraft>(
     context: context,
-    sheetAnimationStyle: AppMotion.sheetStyle,
+    sheetAnimationStyle: PpForgePageMotion.sheetStyle,
     isScrollControlled: true,
     showDragHandle: true,
     useSafeArea: true,
@@ -126,7 +126,7 @@ class _AvatarColorsPanelState extends State<AvatarColorsPanel> {
   );
 
   Future<void> _pickCustom() async {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final current = _specOf(_focus);
     final seed = current.isEmpty
         ? Theme.of(context).colorScheme.primary
@@ -150,7 +150,7 @@ class _AvatarColorsPanelState extends State<AvatarColorsPanel> {
   };
 
   Widget _section(String label) => Padding(
-    padding: const EdgeInsets.only(top: AppSpacing.md, bottom: AppSpacing.sm),
+    padding: const EdgeInsets.only(top: PpForgeSpacing.md, bottom: PpForgeSpacing.sm),
     child: Text(
       label,
       style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -208,7 +208,7 @@ class _AvatarColorsPanelState extends State<AvatarColorsPanel> {
   Widget _swatchRow(List<Widget> cells) => Row(
     children: [
       for (var i = 0; i < cells.length; i++) ...[
-        if (i > 0) const SizedBox(width: AppSpacing.sm),
+        if (i > 0) const SizedBox(width: PpForgeSpacing.sm),
         Expanded(child: AspectRatio(aspectRatio: 1, child: cells[i])),
       ],
     ],
@@ -242,7 +242,7 @@ class _AvatarColorsPanelState extends State<AvatarColorsPanel> {
     return Row(
       children: [
         for (final (i, style) in AvatarBorderStyle.all.indexed) ...[
-          if (i > 0) const SizedBox(width: AppSpacing.sm),
+          if (i > 0) const SizedBox(width: PpForgeSpacing.sm),
           Expanded(
             child: SizedBox(
               height: 76,
@@ -255,8 +255,8 @@ class _AvatarColorsPanelState extends State<AvatarColorsPanel> {
                         size: 28,
                         color: scheme.onSurfaceVariant,
                       )
-                    : IconCodeWidget(
-                        iconCode: IconCode(
+                    : PpForgeIconCodeWidget(
+                        iconCode: PpForgeIconCode(
                           border: style,
                           borderColors: [ringColor],
                         ),
@@ -285,10 +285,10 @@ class _AvatarColorsPanelState extends State<AvatarColorsPanel> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.xl,
+              PpForgeSpacing.xl,
               0,
-              AppSpacing.xl,
-              AppSpacing.xs,
+              PpForgeSpacing.xl,
+              PpForgeSpacing.xs,
             ),
             child: Text(
               widget.title ?? l.avatarColorsTitle,
@@ -298,16 +298,16 @@ class _AvatarColorsPanelState extends State<AvatarColorsPanel> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+            padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.sm),
             child: Center(child: widget.previewBuilder(_draft)),
           ),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.sm,
-                AppSpacing.lg,
-                AppSpacing.lg,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.sm,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.lg,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -317,16 +317,16 @@ class _AvatarColorsPanelState extends State<AvatarColorsPanel> {
                     children: [
                       for (var i = 0; i < AvatarColorsDraft.slotCount; i++) ...[
                         Expanded(child: _target(i, l.avatarColorsSlot(i + 1))),
-                        const SizedBox(width: AppSpacing.xs),
+                        const SizedBox(width: PpForgeSpacing.xs),
                       ],
                       if (!widget.slotsOnly) ...[
                         Expanded(
                           child: _target(_ring, l.avatarColorsRingColor),
                         ),
-                        const SizedBox(width: AppSpacing.xs),
+                        const SizedBox(width: PpForgeSpacing.xs),
                       ] else
                         const Spacer(),
-                      AppIconButton.flat(
+                      PpForgeIconButton.flat(
                         tooltip: l.avatarColorsClear,
                         icon: AppIcons.none,
                         onPressed: canClear ? _clearFocused : null,
@@ -357,7 +357,7 @@ class _AvatarColorsPanelState extends State<AvatarColorsPanel> {
               ),
             ),
           ),
-          const AppDivider(),
+          const PpForgeDivider(),
           ModeActionBar(
             canSave: true,
             canUndo: _undo.isNotEmpty,

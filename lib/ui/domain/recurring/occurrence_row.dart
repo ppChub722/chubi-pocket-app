@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:pp_forge_core/ui.dart';
 import '../tokens/app_icons.dart';
-import '../../app_aliases.dart';
 
 /// One thing a due occurrence can do.
 @immutable
@@ -39,28 +38,28 @@ class OccurrenceActions extends StatelessWidget {
   final OccurrenceAction primary;
   final List<OccurrenceAction> more;
 
-  /// The ⋯ button's label; defaults to [UiStrings.more].
+  /// The ⋯ button's label; defaults to [PpForgeStrings.more].
   final String? moreTooltip;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    Widget button = AppButton(
+    Widget button = PpForgeButton(
       label: primary.label,
       onPressed: primary.onTap,
       submits: primary.submits,
-      size: AppButtonSize.chip,
+      size: PpForgeButtonSize.chip,
       variant: primary.destructive
-          ? AppButtonVariant.destructive
-          : AppButtonVariant.primary,
+          ? PpForgeButtonVariant.destructive
+          : PpForgeButtonVariant.primary,
     );
     if (primary.warning && !primary.destructive) {
-      final warning = theme.extension<AppColors>()!.warning;
+      final warning = theme.extension<PpForgeColors>()!.warning;
       button = Theme(
         data: theme.copyWith(
           colorScheme: theme.colorScheme.copyWith(
             primary: warning,
-            onPrimary: AppChip.readableOn(warning, Colors.white),
+            onPrimary: PpForgeChip.readableOn(warning, Colors.white),
           ),
         ),
         child: button,
@@ -74,7 +73,7 @@ class OccurrenceActions extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           button,
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: PpForgeSpacing.xs),
           OptionMenuAnchor<int>(
             options: [
               for (final (i, a) in more.indexed)
@@ -87,9 +86,9 @@ class OccurrenceActions extends StatelessWidget {
                 ),
             ],
             onSelected: (i) => more[i].onTap?.call(),
-            builder: (context, toggle) => AppIconButton(
+            builder: (context, toggle) => PpForgeIconButton(
               icon: AppIcons.more,
-              tooltip: moreTooltip ?? UiConfig.stringsOf(context).more,
+              tooltip: moreTooltip ?? PpForgeConfig.stringsOf(context).more,
               onPressed: toggle,
             ),
           ),

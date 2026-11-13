@@ -12,7 +12,7 @@ import '../../preferences/presentation/cubit/theme_mode_cubit.dart';
 
 /// Names of the settings values, shared by the settings home summaries and
 /// the group pages, so a value reads the same in both.
-String themeName(AppLocalizations l, AppTheme t) => switch (t.id) {
+String themeName(AppLocalizations l, PpForgeTheme t) => switch (t.id) {
   'mint' => l.settingsThemeMint,
   'sweet' => l.settingsThemeSweet,
   _ => t.id,

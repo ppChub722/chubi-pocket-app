@@ -63,7 +63,7 @@ class _PersonView extends StatefulWidget {
 
 class _PersonViewState extends State<_PersonView> {
   final _search = TextEditingController();
-  final _toolbar = AppListToolbarState.local();
+  final _toolbar = PpForgeListToolbarState.local();
   bool _linking = false;
   bool _showEarlier = false;
 
@@ -229,10 +229,10 @@ class _PersonViewState extends State<_PersonView> {
       if (s.balance!.person.contactId == null)
         SectionCard(
           children: [
-            AppDetailRow(
+            PpForgeDetailRow(
               leading: _linking
-                  ? const AppSpinner(size: AppSpinnerSize.medium)
-                  : const AppIcon(AppIcons.addContact),
+                  ? const PpForgeSpinner(size: PpForgeSpinnerSize.medium)
+                  : const PpForgeIcon(AppIcons.addContact),
               label: l.debtsPersonAddContact,
               helper: l.debtsPersonAddContactHint,
               showChevron: true,
@@ -243,7 +243,7 @@ class _PersonViewState extends State<_PersonView> {
       // Auto sync only reaches a linked person; one account-wide value.
       if (s.balance!.person.linked) autoSyncSection(l, AutoSyncKind.debts),
       _recurringSection(l, s),
-      AppListToolbar(
+      PpForgeListToolbar(
         state: _toolbar,
         search: ListToolbarSearch(
           controller: _search,
@@ -315,7 +315,7 @@ class _PersonViewState extends State<_PersonView> {
     final next = r.nextDate;
     final amount = r.nextAmount ?? r.amount;
     final received = r.direction == DebtEntryDirection.received;
-    return AppListRow(
+    return PpForgeListRow(
       key: ValueKey('debtPersonRecurring:${r.id}'),
       leading: IconDisplay(
         type: IconType.category,
@@ -362,7 +362,7 @@ class _PersonViewState extends State<_PersonView> {
     final l = AppLocalizations.of(context)!;
     final b = s.balance!;
     final symbol = debtCurrencySymbol(context);
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final side = NetSide.of(b.net);
     final color = switch (side) {
       NetSide.owedToMe => palette.income,
@@ -381,7 +381,7 @@ class _PersonViewState extends State<_PersonView> {
         l.debtPersonSince(DateFormat.yMMM(_locale).format(first)),
     ].join(' | ');
     final money = moneyString(context, b.net.abs(), symbol: symbol);
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: style,
       content: [
         HeroIdentity(
@@ -404,7 +404,7 @@ class _PersonViewState extends State<_PersonView> {
               ),
             ListenableBuilder(
               listenable: _search,
-              builder: (context, _) => AppListToolbarToggle(
+              builder: (context, _) => PpForgeListToolbarToggle(
                 state: _toolbar,
                 filtered: _search.text.isNotEmpty || s.query.isFiltered,
                 tooltip: l.commonSearch,
@@ -462,7 +462,7 @@ class _PersonViewState extends State<_PersonView> {
         ),
         if (_showEarlier)
           for (final w in _rows(context, s, s.earlier))
-            w is AppListHeader ? w : Opacity(opacity: 0.7, child: w),
+            w is PpForgeListHeader ? w : Opacity(opacity: 0.7, child: w),
       ],
     ];
   }
@@ -476,7 +476,7 @@ class _PersonViewState extends State<_PersonView> {
   /// colour, toward zero = "ลดลง ฿x" in the brand colour.
   (String, Color) _dayNote(double change, double? after, String symbol) {
     final l = AppLocalizations.of(context)!;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final money = moneyString(context, change.abs(), symbol: symbol);
     final end = after ?? _cubit.state.balance?.net ?? change;
     final before = end - change;
@@ -531,7 +531,7 @@ class _PersonViewState extends State<_PersonView> {
           final after = be?.balanceAfter ?? sameDay.first.runningBalance;
           final (note, color) = _dayNote(change, after, symbol);
           out.add(
-            AppListHeader(
+            PpForgeListHeader(
               key: ValueKey('day:$key:${identical(list, s.earlier)}'),
               title: _dayLabel(date),
               trailing: ListHeaderTrailing.text(note, color: color),
@@ -602,7 +602,7 @@ class _PersonViewState extends State<_PersonView> {
             : (paid ? l.debtEntryPaidTo(name) : l.debtEntryReceivedFrom(name)));
     final sub = _originLine(l, e, name);
     final wallet = e.origin?.account ?? e.transaction?.account;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     // A debt's icon IS its จ่ายแล้ว circle (the detail page's): tap it to
     // tick / untick here; the rest of the row opens the debt.
     final Widget leading = e.isRepayment
@@ -622,7 +622,7 @@ class _PersonViewState extends State<_PersonView> {
             tooltip: l.debtsPaidChip,
           );
     // A repayment's amount stays plain, a debt's takes the side's colour.
-    return AppListRow(
+    return PpForgeListRow(
       key: ValueKey(e.id),
       leading: leading,
       title: title,
@@ -663,10 +663,10 @@ class _PersonViewState extends State<_PersonView> {
       for (final o in options.entries)
         SheetOption(value: o.key, label: o.value),
     ],
-    builder: (context, toggle) => AppChip(
+    builder: (context, toggle) => PpForgeChip(
       label: '$label: ${options[value]}',
       selected: value != null,
-      trailing: AppChipTrailing.dropdown,
+      trailing: PpForgeChipTrailing.dropdown,
       onTap: toggle,
     ),
   );

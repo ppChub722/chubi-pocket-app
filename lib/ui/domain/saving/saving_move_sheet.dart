@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:pp_forge_core/ui.dart';
 import '../money/money_text.dart';
-import '../../app_aliases.dart';
 
 class SavingMoveEnd {
   const SavingMoveEnd({
@@ -165,10 +164,10 @@ class _SavingMoveSheetState extends State<SavingMoveSheet> {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final cap = text.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
-    return AppCard(
+    return PpForgeCard(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
+        horizontal: PpForgeSpacing.md,
+        vertical: PpForgeSpacing.sm,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,7 +178,7 @@ class _SavingMoveSheetState extends State<SavingMoveSheet> {
             children: [
               if (e.leading != null) ...[
                 e.leading!,
-                const SizedBox(width: AppSpacing.xs),
+                const SizedBox(width: PpForgeSpacing.xs),
               ],
               Expanded(
                 child: Text(
@@ -208,14 +207,14 @@ class _SavingMoveSheetState extends State<SavingMoveSheet> {
     final text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
+        horizontal: PpForgeSpacing.md,
+        vertical: PpForgeSpacing.sm,
       ),
       child: Row(
         children: [
           if (r.leading != null) ...[
             r.leading!,
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: PpForgeSpacing.md),
           ],
           Expanded(
             child: Column(
@@ -232,13 +231,13 @@ class _SavingMoveSheetState extends State<SavingMoveSheet> {
               ],
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: PpForgeSpacing.sm),
           if (_editing)
             SizedBox(
               width: 140,
-              child: AppInput(
+              child: PpForgeInput(
                 controller: _parts[r.walletId],
-                type: AppInputType.amount,
+                type: PpForgeInputType.amount,
                 currencySymbol: widget.currencySymbol,
                 dense: true,
                 onChanged: (_) => setState(() => _touched = true),
@@ -261,9 +260,9 @@ class _SavingMoveSheetState extends State<SavingMoveSheet> {
     final text = Theme.of(context).textTheme;
     final sum = _sum;
     final ok = _ok;
-    return AppSheetScaffold(
+    return PpForgeSheetScaffold(
       title: widget.title,
-      footer: AppButton(
+      footer: PpForgeButton(
         label: widget.saveLabel,
         kind: ButtonIconKind.save,
         expand: true,
@@ -271,7 +270,7 @@ class _SavingMoveSheetState extends State<SavingMoveSheet> {
         onPressed: ok ? _save : null,
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -280,21 +279,21 @@ class _SavingMoveSheetState extends State<SavingMoveSheet> {
                 Expanded(child: _end(context, widget.from)),
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
+                    horizontal: PpForgeSpacing.sm,
                   ),
                   child: Text('→', style: text.titleMedium),
                 ),
                 Expanded(child: _end(context, widget.to)),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: PpForgeSpacing.md),
             AmountInput(
               controller: _amount,
               label: widget.amountLabel,
               currencySymbol: widget.currencySymbol,
               onChanged: (_) => _amountChanged(),
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: PpForgeSpacing.md),
             Row(
               children: [
                 Expanded(
@@ -303,7 +302,7 @@ class _SavingMoveSheetState extends State<SavingMoveSheet> {
                     style: text.titleSmall?.copyWith(color: scheme.primary),
                   ),
                 ),
-                AppChip(
+                PpForgeChip(
                   label: widget.editLabel,
                   icon: Icons.edit_outlined,
                   size: ChipSize.mini,
@@ -312,16 +311,16 @@ class _SavingMoveSheetState extends State<SavingMoveSheet> {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.sm),
-            AppCard(
+            const SizedBox(height: PpForgeSpacing.sm),
+            PpForgeCard(
               child: Column(
                 children: [for (final r in widget.splits) _row(context, r)],
               ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.xs,
-                vertical: AppSpacing.sm,
+                horizontal: PpForgeSpacing.xs,
+                vertical: PpForgeSpacing.sm,
               ),
               child: Text(
                 ok

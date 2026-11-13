@@ -25,7 +25,7 @@ Widget projectTxIcon(
   ProjectTransaction tx, {
   double size = 36,
 }) {
-  final palette = Theme.of(context).extension<AppColors>()!;
+  final palette = Theme.of(context).extension<PpForgeColors>()!;
   final isExpense = tx.type == 'expense';
   return IconTile(
     icon: isExpense ? AppIcons.expense : AppIcons.income,
@@ -183,12 +183,12 @@ class ProjectTxTreeTile extends StatelessWidget {
                   if (!tag.mine && addToMine != null)
                     SheetOption(
                       value: 'mine',
-                      leading: const AppIcon(AppIcons.add),
+                      leading: const PpForgeIcon(AppIcons.add),
                       label: l.eventTagAddToMine,
                     ),
                   SheetOption(
                     value: 'show',
-                    leading: const AppIcon(AppIcons.search),
+                    leading: const PpForgeIcon(AppIcons.search),
                     label: l.eventTagShowBills,
                   ),
                 ],
@@ -231,10 +231,10 @@ class ProjectTxTreeTile extends StatelessWidget {
             locked: locked,
             onTap: () => _open(context),
           ),
-          if (children.isNotEmpty) const AppDivider.row(),
+          if (children.isNotEmpty) const PpForgeDivider.row(),
         ],
         for (final (i, c) in children.indexed) ...[
-          if (i > 0) const AppDivider.row(),
+          if (i > 0) const PpForgeDivider.row(),
           _child(
             context,
             c,

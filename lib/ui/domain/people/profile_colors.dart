@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:pp_forge_core/ui.dart';
-import '../../app_aliases.dart';
 import 'avatar_data.dart';
 
 /// Picks a person's colours from their profile colours (`avatar.colors`,
@@ -15,7 +14,7 @@ abstract final class ProfileColors {
   static Color slot(
     List<String> colors,
     int n, {
-    required AppColors palette,
+    required PpForgeColors palette,
     required Color surface,
     Color? fallback,
   }) {
@@ -29,14 +28,14 @@ abstract final class ProfileColors {
   /// Colour 1 of [avatar] (its main colour).
   static Color main(
     AvatarData avatar, {
-    required AppColors palette,
+    required PpForgeColors palette,
     required Color surface,
   }) => slot(avatar.colors, 0, palette: palette, surface: surface);
 
   /// Slot [n] of [avatar] in the theme of [context], against its surface.
   static Color of(BuildContext context, AvatarData avatar, {int n = 0}) {
     final theme = Theme.of(context);
-    final palette = theme.extension<AppColors>();
+    final palette = theme.extension<PpForgeColors>();
     final surface = theme.colorScheme.surface;
     if (palette == null) {
       return ensureContrast(theme.colorScheme.primary, surface);
@@ -49,7 +48,7 @@ abstract final class ProfileColors {
   static List<Color> distinct(
     List<String> colors,
     int k, {
-    required AppColors palette,
+    required PpForgeColors palette,
     required Color surface,
     Color? fallback,
   }) {

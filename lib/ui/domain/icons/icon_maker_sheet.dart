@@ -44,21 +44,21 @@ PpForgeIconMakerStrings chubiIconMakerStrings(AppLocalizations l) =>
     useThis: l.iconPickerUseThis,
     all: l.transactionsRangeAll,
       shapeLabel: (s) => switch (s) {
-        IconShape.circle => l.iconShapeCircle,
-        IconShape.squircle => l.iconShapeSquircle,
-        IconShape.rounded => l.iconShapeRounded,
-        IconShape.square => l.iconShapeSquare,
-        IconShape.leaf => l.iconShapeLeaf,
-        IconShape.drop => l.iconShapeDrop,
+        PpForgeIconShape.circle => l.iconShapeCircle,
+        PpForgeIconShape.squircle => l.iconShapeSquircle,
+        PpForgeIconShape.rounded => l.iconShapeRounded,
+        PpForgeIconShape.square => l.iconShapeSquare,
+        PpForgeIconShape.leaf => l.iconShapeLeaf,
+        PpForgeIconShape.drop => l.iconShapeDrop,
       },
     );
 
-Future<IconMakerResult?> showIconMakerSheet({
+Future<PpForgeIconMakerResult?> showIconMakerSheet({
   required BuildContext context,
   required IconType type,
-  IconCode? initial,
+  PpForgeIconCode? initial,
   Widget? previewSubtitle,
-  Widget Function(IconCode)? previewBuilder,
+  Widget Function(PpForgeIconCode)? previewBuilder,
   String? title,
   String? iconSectionLabel,
   String? colorSectionLabel,

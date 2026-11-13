@@ -38,7 +38,7 @@ class SettingsMoneyPage extends StatelessWidget {
           final style = MoneyStyle.fromPreference(user.moneyStyle);
           return DetailPageBody(
             onRefresh: () => refreshMe(context),
-            bottomInset: AppSpacing.huge + inset.bottom,
+            bottomInset: PpForgeSpacing.huge + inset.bottom,
             sections: [
               (first) => SectionCard(
                 first: first,
@@ -135,8 +135,8 @@ class _CurrencyRow extends StatelessWidget {
     final code = user.currency;
     final display =
         '${Currencies.symbolOf(code)}  $code | ${Currencies.nameOf(l, code)}';
-    return AppDetailRow.pick(
-      leading: const AppIcon(AppIcons.currency),
+    return PpForgeDetailRow.pick(
+      leading: const PpForgeIcon(AppIcons.currency),
       label: l.profileCurrencyLabel,
       value: display,
       emptyText: display,
@@ -170,7 +170,7 @@ class _MoneyStyleRow extends StatelessWidget {
       write: (u, sign) =>
           u.setMoneyStyle(current.copyWith(sign: sign).preference),
       builder: (context, sign, onChanged) => SettingDropdownRow<MoneySign>(
-        leading: const AppIcon(AppIcons.moneyStyle),
+        leading: const PpForgeIcon(AppIcons.moneyStyle),
         label: l.settingsMoneyStyle,
         helper: l.settingsMoneyStyleHint,
         value: moneySignLabel(l, sign),
@@ -199,7 +199,7 @@ class _MoneyDecimalsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final symbol = UiConfig.stringsOf(context).currencySymbol;
+    final symbol = PpForgeConfig.stringsOf(context).currencySymbol;
     String example(MoneyDecimals d) {
       final s = MoneyStyle(decimals: d);
       return '${formatMoneyWith(s, 1000, symbol: symbol)} | '
@@ -212,7 +212,7 @@ class _MoneyDecimalsRow extends StatelessWidget {
       write: (u, d) => u.setMoneyDecimals(d.preference),
       builder: (context, current, onChanged) =>
           SettingDropdownRow<MoneyDecimals>(
-            leading: const AppIcon(AppIcons.moneyDecimals),
+            leading: const PpForgeIcon(AppIcons.moneyDecimals),
             label: l.settingsMoneyDecimals,
             helper: l.settingsMoneyDecimalsHint,
             value: moneyDecimalsLabel(l, current),
@@ -246,7 +246,7 @@ class _MoneyColorRow extends StatelessWidget {
       write: (u, on) =>
           u.setMoneyStyle(current.copyWith(colored: on).preference),
       builder: (context, value, onChanged) => SettingToggleRow(
-        leading: const AppIcon(AppIcons.moneyColor),
+        leading: const PpForgeIcon(AppIcons.moneyColor),
         label: l.settingsMoneyColor,
         caption: l.settingsMoneyColorHint,
         value: value,
@@ -275,7 +275,7 @@ class _MainWalletRow extends StatelessWidget {
       write: (u, r) =>
           u.updateMe(defaultAccountId: r.id, clearDefaultAccount: r.id == null),
       builder: (context, value, onChanged) => SettingPickRow(
-        leading: const AppIcon(AppIcons.wallet),
+        leading: const PpForgeIcon(AppIcons.wallet),
         label: l.settingsMainWallet,
         helper: l.settingsMainWalletHint,
         value: Text(value.name ?? l.settingsMainWalletNone),
@@ -316,7 +316,7 @@ class _FeeCategoryRow extends StatelessWidget {
       value: (id: user.feeCategoryId, name: user.feeCategory?.name),
       write: (u, r) => u.setFeeCategory(r.id),
       builder: (context, value, onChanged) => SettingPickRow(
-        leading: const AppIcon(AppIcons.receipt),
+        leading: const PpForgeIcon(AppIcons.receipt),
         label: l.settingsFeeCategory,
         helper: l.settingsFeeCategoryHint,
         value: Text(value.name ?? l.settingsMainWalletNone),

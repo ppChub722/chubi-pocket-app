@@ -109,7 +109,7 @@ class _ApiDocLoaderState extends State<ApiDocLoader> {
                   ),
                 ),
               ),
-              AppChip(
+              PpForgeChip(
                 icon: AppIcons.refresh,
                 label: _loading ? 'Loading…' : 'Reload',
                 size: ChipSize.control,
@@ -117,14 +117,14 @@ class _ApiDocLoaderState extends State<ApiDocLoader> {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: PpForgeSpacing.md),
           widget.builder(context, doc),
         ],
       );
     }
     if (_error != null) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+        padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xl),
         child: Column(
           children: [
             Text(
@@ -132,8 +132,8 @@ class _ApiDocLoaderState extends State<ApiDocLoader> {
               textAlign: TextAlign.center,
               style: TextStyle(color: scheme.error),
             ),
-            const SizedBox(height: AppSpacing.md),
-            AppChip(
+            const SizedBox(height: PpForgeSpacing.md),
+            PpForgeChip(
               icon: AppIcons.refresh,
               label: 'Retry',
               size: ChipSize.control,
@@ -144,7 +144,7 @@ class _ApiDocLoaderState extends State<ApiDocLoader> {
       );
     }
     return const Padding(
-      padding: EdgeInsets.symmetric(vertical: AppSpacing.huge),
+      padding: EdgeInsets.symmetric(vertical: PpForgeSpacing.huge),
       child: Center(child: CircularProgressIndicator()),
     );
   }

@@ -158,12 +158,12 @@ class LinkViewRows extends StatelessWidget {
       key: const ValueKey('linkViewEventCard'),
       actions: [
         if (disconnect != null)
-          AppButton(
+          PpForgeButton(
             kind: ButtonIconKind.disconnect,
             key: const ValueKey('linkViewDisconnectEvent'),
             label: l.txLinkDisconnect,
-            variant: AppButtonVariant.outlined,
-            size: AppButtonSize.control,
+            variant: PpForgeButtonVariant.outlined,
+            size: PpForgeButtonSize.control,
             onPressed: () {
               Navigator.of(context, rootNavigator: true).pop();
               disconnect();

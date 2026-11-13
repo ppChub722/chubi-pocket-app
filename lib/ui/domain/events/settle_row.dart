@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:pp_forge_core/ui.dart';
 import '../tokens/app_icons.dart';
-import '../../app_aliases.dart';
 
 /// One จัดการ line of an event: [fromName] owes [toName] [amount]. A line
 /// with me in it ([mine]) has [onRecord] (จดเป็นหนี้) and, once recorded,
@@ -41,7 +40,7 @@ class SettleRow extends StatelessWidget {
     final style = Theme.of(context).textTheme.bodyLarge;
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     final recorded = recordedLabel;
-    return AppListRow(
+    return PpForgeListRow(
       leading: fromAvatar,
       titleField: Row(
         children: [
@@ -54,11 +53,11 @@ class SettleRow extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+            padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.xs),
             child: Icon(AppIcons.arrowForward, size: 16, color: muted),
           ),
           toAvatar,
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: PpForgeSpacing.xs),
           Flexible(
             child: Text(
               toName,

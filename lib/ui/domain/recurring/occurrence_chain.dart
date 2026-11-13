@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'package:pp_forge_core/ui.dart';
-import '../../app_aliases.dart';
 
 /// One occurrence's mark on an [OccurrenceChain].
 enum ChainDot {
@@ -324,7 +323,7 @@ class _DotsPainter extends CustomPainter {
         final tp = TextPainter(
           text: TextSpan(
             text: text,
-            style: textStyle?.copyWith(color: ink ?? AppChip.readableOn(fill)),
+            style: textStyle?.copyWith(color: ink ?? PpForgeChip.readableOn(fill)),
           ),
           textDirection: textDirection,
           textScaler: textScaler,

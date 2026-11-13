@@ -1,5 +1,4 @@
 import 'package:pp_forge_core/ui.dart';
-import 'package:chubi_pocket/ui/app_aliases.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -8,16 +7,16 @@ void main() {
     ThemeRegistry.defaultThemeId,
   ).colorsFor(Brightness.light);
   test('tintFor: first bg colour, else first icon colour, else fallback', () {
-    final bg = IconCode(
+    final bg = PpForgeIconCode(
       bgColors: ['#FF0000', '#00FF00'],
       iconColors: ['#0000FF'],
     );
     expect(bg.tintFor(palette), const Color(0xFFFF0000)); // first stop only
-    const icon = IconCode(iconColors: ['#0000FF']);
+    const icon = PpForgeIconCode(iconColors: ['#0000FF']);
     expect(icon.tintFor(palette), const Color(0xFF0000FF));
-    const none = IconCode();
+    const none = PpForgeIconCode();
     expect(none.tintFor(palette, fallback: Colors.teal), Colors.teal);
-    IconCode? missing;
+    PpForgeIconCode? missing;
     expect(missing.tintFor(palette), palette.primary);
   });
 

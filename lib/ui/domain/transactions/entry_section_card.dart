@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:pp_forge_core/ui.dart';
-import '../../app_aliases.dart';
 
 /// One of the cards under the entry hero (owner 2026-11-03): the แบ่ง card
 /// and the tx detail card (category / wallet, tags, note, รายการประจำ). Its
@@ -14,15 +13,15 @@ class EntrySectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rows = children;
-    return AppCard(
-      style: AppCardStyle.bordered,
+    return PpForgeCard(
+      style: PpForgeCardStyle.bordered,
       padding: HeroMetrics.of(context).padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
           for (var i = 0; i < rows.length; i++) ...[
-            if (i > 0) const SizedBox(height: AppSpacing.sm),
+            if (i > 0) const SizedBox(height: PpForgeSpacing.sm),
             rows[i],
           ],
         ],
@@ -44,11 +43,11 @@ class EntryFlagged extends StatelessWidget {
     if (!flagged) return child;
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(PpForgeRadius.md),
         border: Border.all(color: Theme.of(context).colorScheme.error),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xxs),
+        padding: const EdgeInsets.all(PpForgeSpacing.xxs),
         child: child,
       ),
     );

@@ -18,7 +18,7 @@ class LinkedUser extends Equatable {
 
   final String? username;
   final String? email;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final AvatarData? _avatar;
 
   /// 0.4.2 1b: the BE's avatar; built from the name + icon when absent.
@@ -84,7 +84,7 @@ class Contact extends Equatable {
   /// The contact's icon as the BE resolves it (`avatar.icon_code`: the
   /// linked user's when linked, else the contact's own; create / update
   /// still send `icon_code`).
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final AvatarData? _avatar;
 
   /// 0.4.2 1b: the BE's avatar; built from the name + icon when absent.
@@ -269,7 +269,7 @@ class SenderProfile extends Equatable {
   final String id;
   final String displayName;
   final String? email;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final String? contactId;
   final AvatarData? _avatar;
 

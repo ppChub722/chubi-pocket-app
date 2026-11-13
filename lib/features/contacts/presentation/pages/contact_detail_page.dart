@@ -291,7 +291,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         ),
       ),
     );
-    if (!mounted || result is! IconMakerSelected) return;
+    if (!mounted || result is! PpForgeIconMakerSelected) return;
     applyChange(working.copyWith(iconCode: result.iconCode));
   }
 
@@ -347,7 +347,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     if (!linked) {
       return Icon(AppIcons.link, size: 22, color: scheme.onSurfaceVariant);
     }
-    final success = Theme.of(context).extension<AppColors>()!.success;
+    final success = Theme.of(context).extension<PpForgeColors>()!.success;
     return IconTile(
       icon: AppIcons.link,
       color: success,
@@ -465,7 +465,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
                   onRefresh: _isCreate ? null : _refresh,
                   refreshEnabled: !isEditing,
                   bottomInset:
-                      AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
+                      PpForgeSpacing.huge + MediaQuery.paddingOf(context).bottom,
                   hero: isEditing ? _editHero(l) : _viewHero(l),
                   info: isEditing ? _editInfo(l) : _viewInfo(l),
                   people: isEditing || _isCreate ? null : _linkSection(l),
@@ -492,7 +492,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
 
   /// Tint = the person's colour 1 (0.4.2 1b profile colours).
   HeroStyle _heroStyle(AvatarData avatar) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     return HeroStyle.tinted(
       color: ProfileColors.main(
         avatar,
@@ -507,15 +507,15 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     final c = _contact!;
     // The avatar row is the top of the card, its buttons at the end, like the
     // wallet page; a header only when archived (owner 2026-10-23).
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: _heroStyle(c.avatar),
       header: c.isArchived
           ? HeroHeader(
               leading: [
-                AppChip(
+                PpForgeChip(
                   label: l.contactArchivedBadge,
                   icon: AppIcons.archive,
-                  tone: AppChipTone.warning,
+                  tone: PpForgeChipTone.warning,
                   selected: true,
                 ),
               ],
@@ -536,7 +536,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
             CardActionButton(
               key: const ValueKey('heroEdit'),
               icon: AppIcons.edit,
-              tooltip: UiConfig.stringsOf(context).edit,
+              tooltip: PpForgeConfig.stringsOf(context).edit,
               onTap: enterEdit,
             ),
           ],
@@ -658,7 +658,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         // Like the note row: an icon in front, here a filled "active" circle
         // once linked; ⋯ holds the one action (owner 2026-10-23).
         if (c.isLinked)
-          AppListRow(
+          PpForgeListRow(
             leading: _linkMark(linked: true),
             title: l.contactLinkedAccount(u?.displayName ?? c.name),
             line2: account == null || account.isEmpty
@@ -683,7 +683,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         // Always offered, so people know it exists; it needs their email
         // first (owner 2026-10-23).
         else
-          AppDetailRow(
+          PpForgeDetailRow(
             leading: _linkMark(linked: false),
             label: l.contactLinkRequest,
             helper: hasEmail
@@ -692,7 +692,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
             showChevron: true,
             onTap: hasEmail ? _requestLink : _askEmailFirst,
           ),
-        AppDetailRow(
+        PpForgeDetailRow(
           label: l.contactWireTitle,
           helper: hasNames
               ? l.contactWireHint(_unlinkedNames, _unlinkedRecords)
@@ -722,7 +722,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       maxLength: TextLimits.note,
       editField: DetailStacked(
         label: l.commonNote,
-        child: AppInput.inline(
+        child: PpForgeInput.inline(
           editing: true,
           controller: _ctrl[_Field.note]!,
           focusNode: _focus[_Field.note],
@@ -744,7 +744,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     final avatar = c != null && _linked
         ? c.avatar
         : AvatarData.forName(name.isEmpty ? '?' : name, iconCode: w.iconCode);
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: _heroStyle(avatar),
       mode: HeroCardMode.edit,
       content: [
@@ -809,7 +809,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       textBaseline: TextBaseline.alphabetic,
       children: [
         Text(l.contactNameLabel, style: labelStyle),
-        const SizedBox(width: AppSpacing.md),
+        const SizedBox(width: PpForgeSpacing.md),
         Expanded(
           child: Text(
             shown,
@@ -841,7 +841,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       keyboardType: keyboard,
       onChanged: (v) => _onText(f, v),
       validator: validator,
-      leading: icon == null ? null : AppIcon(icon),
+      leading: icon == null ? null : PpForgeIcon(icon),
     );
     final w = working;
     return SectionCard(
@@ -867,7 +867,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           // The account's email: not editable; a small 🔗 after it says why.
           DetailStacked(
             label: l.contactEmailLabel,
-            leading: const AppIcon(AppIcons.email),
+            leading: const PpForgeIcon(AppIcons.email),
             child: Row(
               children: [
                 Flexible(
@@ -878,7 +878,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                 ),
-                const SizedBox(width: AppSpacing.xs),
+                const SizedBox(width: PpForgeSpacing.xs),
                 Tooltip(
                   message: l.contactEmailFromAccount,
                   triggerMode: TooltipTriggerMode.tap,
@@ -988,7 +988,7 @@ class _ContactDraft {
   final String email;
   final String phone;
   final String note;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   _ContactDraft trimmed() => _ContactDraft(
     name: name.trim(),
@@ -1007,7 +1007,7 @@ class _ContactDraft {
     String? email,
     String? phone,
     String? note,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
   }) => _ContactDraft(
     name: name ?? this.name,
     showNickname: showNickname ?? this.showNickname,

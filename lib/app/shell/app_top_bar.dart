@@ -73,7 +73,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       // edge instead of leaving the screen.
       clipBehavior: Clip.none,
       // The page gutter, like the content and the bottom bar.
-      titleSpacing: AppSpacing.lg,
+      titleSpacing: PpForgeSpacing.lg,
       title: Align(
         alignment: Alignment.centerLeft,
         child: _LeftSlot(data: left),
@@ -173,8 +173,8 @@ class _ParkingHero extends StatelessWidget {
       ignoring: parked,
       child: TweenAnimationBuilder<double>(
         tween: Tween(end: parked ? 1 : 0),
-        duration: AppDurations.chrome,
-        curve: AppDurations.chromeCurve,
+        duration: PpForgeDurations.chrome,
+        curve: PpForgeDurations.chromeCurve,
         builder: (context, p, hero) => park(context, p, hero!),
         child: hero,
       ),
@@ -205,7 +205,7 @@ class _ParkingHero extends StatelessWidget {
           ? flying
           : FadeTransition(
               opacity: AppTopBar._towardDestination(animation, direction)
-                  .drive(CurveTween(curve: AppDurations.chromeCurve))
+                  .drive(CurveTween(curve: PpForgeDurations.chromeCurve))
                   .drive(Tween(begin: from, end: to)),
               child: flying,
             ),
@@ -390,18 +390,18 @@ class _UniversalChips extends StatelessWidget {
       ShellTab.settings => BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {
           final user = _userOf(state);
-          if (user == null) return const SizedBox(width: AppSpacing.lg);
+          if (user == null) return const SizedBox(width: PpForgeSpacing.lg);
           // A photo is always drawn round, so its frame is a circle too;
           // only an icon follows its own shape.
           final outline = user.avatar.hasPhoto
               ? null
-              : IconShape.fromId(user.iconCode?.shape).radius(40);
+              : PpForgeIconShape.fromId(user.iconCode?.shape).radius(40);
           return Padding(
             padding: const EdgeInsets.only(
-              left: AppSpacing.sm,
-              right: AppSpacing.lg,
+              left: PpForgeSpacing.sm,
+              right: PpForgeSpacing.lg,
             ),
-            child: AppAvatarButton(
+            child: PpForgeAvatarButton(
               tooltip: l.navProfileTooltip,
               outline: outline,
               active: active,
@@ -432,8 +432,8 @@ class _UniversalChips extends StatelessWidget {
     required VoidCallback onPressed,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(left: AppSpacing.sm),
-      child: AppIconButton(
+      padding: const EdgeInsets.only(left: PpForgeSpacing.sm),
+      child: PpForgeIconButton(
         icon: icon,
         tooltip: tooltip,
         badgeCount: badgeCount,
@@ -529,8 +529,8 @@ class _ChipSwipeState extends State<_ChipSwipe>
     if (_dx != null) setState(() => _dx = null);
     _nudge.animateTo(
       0,
-      duration: AppDurations.chrome,
-      curve: AppDurations.chromeCurve,
+      duration: PpForgeDurations.chrome,
+      curve: PpForgeDurations.chromeCurve,
     );
   }
 
@@ -589,8 +589,8 @@ class _LeftGroup extends StatelessWidget {
       child: Material(
         type: MaterialType.transparency,
         child: AnimatedSize(
-          duration: AppDurations.chrome,
-          curve: AppDurations.chromeCurve,
+          duration: PpForgeDurations.chrome,
+          curve: PpForgeDurations.chromeCurve,
           alignment: Alignment.centerLeft,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 40),
@@ -602,15 +602,15 @@ class _LeftGroup extends StatelessWidget {
                     onTap: onBack,
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.md,
-                        AppSpacing.sm,
-                        AppSpacing.sm,
-                        AppSpacing.sm,
+                        PpForgeSpacing.md,
+                        PpForgeSpacing.sm,
+                        PpForgeSpacing.sm,
+                        PpForgeSpacing.sm,
                       ),
                       child: AnimatedSwitcher(
-                        duration: AppDurations.chrome,
-                        switchInCurve: AppDurations.chromeCurve,
-                        switchOutCurve: AppDurations.chromeCurve,
+                        duration: PpForgeDurations.chrome,
+                        switchInCurve: PpForgeDurations.chromeCurve,
+                        switchOutCurve: PpForgeDurations.chromeCurve,
                         transitionBuilder: (child, a) => FadeTransition(
                           opacity: a,
                           child: RotationTransition(
@@ -621,10 +621,10 @@ class _LeftGroup extends StatelessWidget {
                             child: child,
                           ),
                         ),
-                        child: AppIcon(
+                        child: PpForgeIcon(
                           backIcon,
                           key: ValueKey(backIcon),
-                          size: AppIconSize.md,
+                          size: PpForgeIconSize.md,
                         ),
                       ),
                     ),
@@ -642,10 +642,10 @@ class _LeftGroup extends StatelessWidget {
                           : null,
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.md,
-                          AppSpacing.sm,
-                          AppSpacing.xs,
-                          AppSpacing.sm,
+                          PpForgeSpacing.md,
+                          PpForgeSpacing.sm,
+                          PpForgeSpacing.xs,
+                          PpForgeSpacing.sm,
                         ),
                         child: Text(
                           crumb.label,
@@ -658,9 +658,9 @@ class _LeftGroup extends StatelessWidget {
                       ),
                     ),
                   ),
-                  AppIcon(
+                  PpForgeIcon(
                     AppIcons.chevronRight,
-                    size: AppIconSize.sm,
+                    size: PpForgeIconSize.sm,
                     color: scheme.onSurfaceVariant,
                   ),
                 ],
@@ -668,17 +668,17 @@ class _LeftGroup extends StatelessWidget {
                   Flexible(
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
-                        crumb != null ? AppSpacing.xs : AppSpacing.md,
-                        AppSpacing.sm,
-                        AppSpacing.md,
-                        AppSpacing.sm,
+                        crumb != null ? PpForgeSpacing.xs : PpForgeSpacing.md,
+                        PpForgeSpacing.sm,
+                        PpForgeSpacing.md,
+                        PpForgeSpacing.sm,
                       ),
                       child: AnimatedSwitcher(
                         duration: MediaQuery.disableAnimationsOf(context)
                             ? Duration.zero
-                            : AppDurations.chrome,
-                        switchInCurve: AppDurations.chromeCurve,
-                        switchOutCurve: AppDurations.chromeCurve,
+                            : PpForgeDurations.chrome,
+                        switchInCurve: PpForgeDurations.chromeCurve,
+                        switchOutCurve: PpForgeDurations.chromeCurve,
                         layoutBuilder: (current, previous) => Stack(
                           alignment: Alignment.centerLeft,
                           children: [...previous, ?current],
@@ -706,7 +706,7 @@ class _LeftGroup extends StatelessWidget {
                     ),
                   )
                 else
-                  const SizedBox(width: AppSpacing.xs),
+                  const SizedBox(width: PpForgeSpacing.xs),
               ],
             ),
           ),

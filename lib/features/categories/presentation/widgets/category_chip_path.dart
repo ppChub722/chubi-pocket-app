@@ -10,13 +10,13 @@ Widget categoryPathItemsChipPath(
   BuildContext context,
   List<CategoryPathItem> items,
 ) {
-  final palette = Theme.of(context).extension<AppColors>()!;
+  final palette = Theme.of(context).extension<PpForgeColors>()!;
   return ChipPath(
     segments: [
       for (final p in items)
         ChipPathSegment(
           label: p.name,
-          icon: IconRegistry.get(p.iconCode?.icon, fallback: AppIcons.category),
+          icon: PpForgeIconRegistry.get(p.iconCode?.icon, fallback: AppIcons.category),
           color: p.iconCode.tintFor(palette),
         ),
     ],
@@ -28,14 +28,14 @@ Widget categoryChipPath(
   Category category, {
   required List<Category> all,
 }) {
-  final palette = Theme.of(context).extension<AppColors>()!;
+  final palette = Theme.of(context).extension<PpForgeColors>()!;
   final l = AppLocalizations.of(context)!;
 
   ChipPathSegment segment(String label, Category? c) {
     final code = c == null ? null : CategoryTree.resolveIconCode(c, all);
     return ChipPathSegment(
       label: label,
-      icon: IconRegistry.get(code?.icon, fallback: AppIcons.category),
+      icon: PpForgeIconRegistry.get(code?.icon, fallback: AppIcons.category),
       color: code.tintFor(palette),
     );
   }
