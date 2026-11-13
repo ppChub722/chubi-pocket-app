@@ -881,11 +881,11 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v0.1.0"
-      resolved-ref: a1e22df7cb9d37d35706957cd0eb151ddb2c0b48
+      ref: "v0.1.1"
+      resolved-ref: bf81a3ffc98d225b6102b1d342e6e1f81b777bb6
       url: "https://ppChub722@github.com/ppChub722/pp-forge-core.git"
     source: git
-    version: "0.1.0"
+    version: "0.1.1"
   provider:
     dependency: transitive
     description:
