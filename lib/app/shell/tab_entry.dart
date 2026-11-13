@@ -3,21 +3,14 @@ import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/widgets.dart';
 
+import '../../ui/ui.dart' show AppMotion;
 import 'nav_layout.dart';
 import 'tab_nav.dart';
 
 enum TabEntryKind {
-  /// From the side of the previous bottom-bar item.
-  side,
-
-  /// Up from below: into a bottom-bar page from a page it doesn't highlight.
-  up,
-
-  /// Down from above: into a top-row page.
-  down,
-
-  /// Grows (scale + fade) out of where it was tapped.
-  expand,
+  /// Slides in from the right while fading in (owner 2026-11-12): the mirror
+  /// of a back, where the page above slides off to the right.
+  slide,
 
   /// Fades only (reduced motion).
   fade,
@@ -26,81 +19,41 @@ enum TabEntryKind {
   none,
 }
 
-/// How a page group arrives on a tab switch: a small shift or a grow out of
-/// the tapped spot, with a fade, over [AppDurations.chrome].
+/// How a page group arrives on a tab switch: it slides in from the right,
+/// fading in (the duration is FadeBranchContainer's) — no scale, so it is a
+/// translate and an opacity of the page's layer.
 @immutable
 class TabEntry {
-  const TabEntry._(this.kind, {this.side = 0, this.origin = Alignment.center});
+  const TabEntry._(this.kind);
 
-  /// From the right when [side] > 0, from the left when < 0.
-  const TabEntry.side(int side) : this._(TabEntryKind.side, side: side);
-
-  /// Grows out of [origin] (the page's own alignment).
-  const TabEntry.expand([Alignment origin = Alignment.center])
-    : this._(TabEntryKind.expand, origin: origin);
-
-  static const up = TabEntry._(TabEntryKind.up);
-  static const down = TabEntry._(TabEntryKind.down);
+  static const slide = TabEntry._(TabEntryKind.slide);
   static const fade = TabEntry._(TabEntryKind.fade);
   static const none = TabEntry._(TabEntryKind.none);
 
   final TabEntryKind kind;
-  final int side;
-  final Alignment origin;
 
-  /// The shift a slide starts from (a fraction of the page).
-  static const shift = 0.06;
+  /// The page's shift at [t] (0 → 1), a fraction of its width ([AppMotion]).
+  Offset offsetAt(double t) => kind == TabEntryKind.slide
+      ? Offset(AppMotion.enterShift(t), 0)
+      : Offset.zero;
 
-  /// The scale a grow starts from.
-  static const scaleFrom = 0.8;
-
-  /// The page's shift at [t] (0 → 1), a fraction of its size.
-  Offset offsetAt(double t) {
-    final k = shift * (1 - t);
-    return switch (kind) {
-      TabEntryKind.side => Offset(side.sign * k, 0),
-      TabEntryKind.up => Offset(0, k),
-      TabEntryKind.down => Offset(0, -k),
-      _ => Offset.zero,
-    };
-  }
-
-  double scaleAt(double t) =>
-      kind == TabEntryKind.expand ? scaleFrom + (1 - scaleFrom) * t : 1;
-
-  double opacityAt(double t) => kind == TabEntryKind.none ? 1 : t;
+  double opacityAt(double t) =>
+      kind == TabEntryKind.none ? 1 : AppMotion.enterOpacity(t);
 
   /// The paint transform at [t] for a page of [size].
   Matrix4 transformAt(double t, Size size) {
     final o = offsetAt(t);
-    final s = scaleAt(t);
-    final m = Matrix4.translationValues(
-      o.dx * size.width,
-      o.dy * size.height,
-      0,
-    );
-    if (s != 1) {
-      final p = origin.alongSize(size);
-      m
-        ..translateByDouble(p.dx, p.dy, 0, 1)
-        ..scaleByDouble(s, s, 1, 1)
-        ..translateByDouble(-p.dx, -p.dy, 0, 1);
-    }
-    return m;
+    return Matrix4.translationValues(o.dx * size.width, o.dy * size.height, 0);
   }
 
   @override
-  bool operator ==(Object other) =>
-      other is TabEntry &&
-      other.kind == kind &&
-      other.side == side &&
-      other.origin == origin;
+  bool operator ==(Object other) => other is TabEntry && other.kind == kind;
 
   @override
-  int get hashCode => Object.hash(kind, side, origin);
+  int get hashCode => kind.hashCode;
 
   @override
-  String toString() => 'TabEntry(${kind.name}, side: $side, origin: $origin)';
+  String toString() => 'TabEntry(${kind.name})';
 }
 
 /// Asks the shell to play the open tab's entry again: tapping the tab
@@ -112,11 +65,9 @@ abstract final class ShellReopen {
 }
 
 /// How [to] arrives when the shell switches to it from [from] (owner
-/// 2026-10-28, bottom bar 2026-11-05): a back lands in place; a known
-/// [origin] (a More card, the bell) grows out of it; a bottom-bar page grows
-/// (scale + fade) up out of the bottom bar; a top-row page slides down from
-/// above; anything else grows out of the middle of the screen. A [reopen]
-/// (the open tab tapped) plays the same entry again.
+/// 2026-11-12): a back lands in place; anything else slides in from the right.
+/// A [reopen] (the open tab tapped) plays the same entry again. [origin] (a
+/// More card, the bell) no longer shapes the entry.
 TabEntry resolveTabEntry({
   required ShellTab from,
   required ShellTab to,
@@ -126,17 +77,11 @@ TabEntry resolveTabEntry({
   bool reopen = false,
   bool reducedMotion = false,
 }) {
+  // Temporary fps probe: --dart-define=NO_TAB_ANIM=true
+  if (const bool.fromEnvironment('NO_TAB_ANIM')) return TabEntry.none;
   if (back || (from == to && !reopen)) return TabEntry.none;
   if (reducedMotion) return TabEntry.fade;
-  if (origin != null) return TabEntry.expand(origin);
-  switch (layout.barOf(to)) {
-    case NavBar.bottom:
-      return const TabEntry.expand(Alignment.bottomCenter);
-    case NavBar.top:
-      return TabEntry.down;
-    case null:
-      return const TabEntry.expand();
-  }
+  return TabEntry.slide;
 }
 
 /// [rect] (global) as an alignment inside a page of [size] at the origin;

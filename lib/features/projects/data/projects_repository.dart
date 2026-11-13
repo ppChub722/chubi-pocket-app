@@ -478,19 +478,17 @@ class ProjectsRepository {
   /// V12 "ลงในสมุดฉัน" on a completed event: my fewest-transfers lines,
   /// once; [accountId] = the wallet of the money that moves. Answers the
   /// settle (booked), the rest rides `effects`.
-  Future<EventSettle> bookEventSettle(
-    String projectId, {
-    String? accountId,
-  }) => _call(() async {
-    final res = await _client.dio.post<Map<String, dynamic>>(
-      '/projects/$projectId/settle/book',
-      data: {'mode': 'simplified', 'account_id': ?accountId},
-    );
-    final settle = res.data!['settle'];
-    return EventSettle.fromJson(
-      settle is Map<String, dynamic> ? settle : const {},
-    );
-  });
+  Future<EventSettle> bookEventSettle(String projectId, {String? accountId}) =>
+      _call(() async {
+        final res = await _client.dio.post<Map<String, dynamic>>(
+          '/projects/$projectId/settle/book',
+          data: {'mode': 'simplified', 'account_id': ?accountId},
+        );
+        final settle = res.data!['settle'];
+        return EventSettle.fromJson(
+          settle is Map<String, dynamic> ? settle : const {},
+        );
+      });
 
   Future<List<BoardTag>> eventTags(String projectId) => _call(() async {
     final res = await _client.dio.get<Map<String, dynamic>>(

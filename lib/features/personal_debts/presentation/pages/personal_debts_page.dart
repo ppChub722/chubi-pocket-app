@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/quick_create_context.dart';
+import '../../../../app/shell/quick_create_look.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -309,7 +310,9 @@ class _PeopleViewState extends State<_PeopleView> {
     final symbol = debtCurrencySymbol(context);
     final cubit = context.read<DebtPeopleCubit>();
     return QuickCreatePresetScope(
-      preset: const QuickCreatePreset.debt(),
+      preset: const QuickCreatePreset.debt().withLook(
+        QuickCreateLook.debt(context),
+      ),
       child: Scaffold(
         appBar: AppTopBar(title: l.moreDebts, showBack: true),
         extendBodyBehindAppBar: true,

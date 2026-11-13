@@ -1,1 +1,4 @@
 GET /transactions/summary
+POST /split-bills/{}/${join ? 
+POST {}/claim
+POST {}/leave

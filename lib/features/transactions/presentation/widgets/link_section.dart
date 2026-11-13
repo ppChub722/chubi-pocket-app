@@ -187,7 +187,7 @@ class _LinkSectionState extends State<LinkSection> {
             )
           : null;
     }
-    final row = EventRow(
+    return EventRow(
       key: const ValueKey('linkEventRow'),
       name: e.name,
       onTap: e.onTap,
@@ -197,21 +197,14 @@ class _LinkSectionState extends State<LinkSection> {
       onLongPress: e.onLongPress,
       variant: SplitEventVariant.compact,
       label: l.txLinkAddToEvent,
-    );
-    if (!_hasEvent || debts == null) return row;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        row,
-        const SizedBox(height: AppSpacing.sm),
-        LinkSwitchRow(
-          key: const ValueKey('linkBookDebtRow'),
-          label: l.txLinkBookDebt,
-          value: debts,
-          onChanged: _c.setEventBookDebts,
-        ),
-      ],
+      footer: !_hasEvent || debts == null
+          ? null
+          : LinkSwitchRow(
+              key: const ValueKey('linkBookDebtRow'),
+              label: l.txLinkBookDebt,
+              value: debts,
+              onChanged: _c.setEventBookDebts,
+            ),
     );
   }
 

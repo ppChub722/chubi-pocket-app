@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../app/shell/quick_create_context.dart';
+import '../../../../app/shell/quick_create_look.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/domain/user.dart';
@@ -237,8 +239,24 @@ class _CategoriesPageState extends State<CategoriesPage> {
     _rememberCollapsed();
   }
 
+  /// The centre button goes to this page's create page (owner 2026-11-12).
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => QuickCreatePresetScope(
+    preset: QuickCreatePreset.create(
+      QuickCreateLook.add(
+        context,
+        color: ModuleColors.of(context).library,
+        icon: AppIcons.category,
+      ),
+      () {
+        if (_reordering) return;
+        _add(AppLocalizations.of(context)!, _listType);
+      },
+    ),
+    child: _page(context),
+  );
+
+  Widget _page(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return BlocBuilder<CategoriesCubit, CategoriesState>(
       builder: (context, state) {

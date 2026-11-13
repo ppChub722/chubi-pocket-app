@@ -43,8 +43,8 @@ class _BottomBarPageState extends State<_BottomBarPage> {
           note:
               'The real shell bar. Each page says what the + opens '
               '(QuickCreatePresetScope: mode + preset) and the + takes the '
-              'MODE’s colour from QuickCreateModeColors — pages never pass a '
-              'colour. A change (tab switch, push, pop) cross-fades in 200 ms. '
+              'page’s own word, colour and icon (QuickCreateLook; none given = '
+              'the plain บันทึก button). This demo fakes them per mode. A change (tab switch, push, pop) cross-fades in 200 ms. '
               'Pick a mode below to see it. Its items come from the shell’s '
               'NavLayout (bottomItems, + after the first half); top chips and '
               'the More groups read the same object. A swipe drags the '
@@ -67,7 +67,9 @@ class _BottomBarPageState extends State<_BottomBarPage> {
                   items: NavLayout.defaults.bottomItems,
                   current: _tab,
                   onSelected: (t) => setState(() => _tab = t),
-                  addMode: _mode,
+                  addWord: _buttonWords[_mode],
+                  addColor: QuickCreateModeColors.of(context, _mode),
+                  addIcon: quickCreateModeIcon(_mode),
                   onAddPressed: () {},
                 ),
               ),
@@ -77,15 +79,15 @@ class _BottomBarPageState extends State<_BottomBarPage> {
         HubDemo(
           title: 'QuickCreateButton — every mode',
           note:
-              'Owner 2026-10-22 (mock QuickCreateBtn): in the bar it is a '
-              '48-high capsule — the mode icon (quickCreateModeIcon) + the '
-              'word บันทึก / จดหนี้ / ออมเงิน. tx = the theme primary | debt = '
-              'ModuleColors.debt (#7A5AE0) | saving = ModuleColors.saving '
-              '(#3B7DD8). Without a label: the round + (kept for reuse). '
-              'Per page: Home / More / tx list / wallets / categories / tags '
-              'lists and pending → tx; a wallet → tx + that wallet; a '
-              'category → tx + that category; debts list → debt; a debt '
-              'person / contact → debt + that person.',
+              'Owner 2026-11-12: a 72 round button, no ring, glowing evenly in '
+              'its colour, the page’s icon with its word under it; the bar '
+              'grows an 84 round bump round it (one shape, capsule + circle). '
+              'The PAGE sets the look and what it opens. Default = บันทึก '
+              '(post_add, primary, tx sheet); a debt page = จดหนี้ (debt '
+              'sheet); a saving goal = ออมเงิน (saving sheet); a list page = '
+              'เพิ่ม in its module’s colour and icon → its create page; an '
+              'event = เพิ่มบิล (receipt_long, the event’s colour). A page '
+              'that gives a preset locks the sheet to that mode (no tabs).',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -93,7 +95,7 @@ class _BottomBarPageState extends State<_BottomBarPage> {
                 cells: [
                   for (final m in QuickCreateMode.values)
                     HubCell(
-                      caption: '${m.name} capsule',
+                      caption: '${m.name} + word',
                       child: QuickCreateButton(
                         mode: m,
                         label: _buttonWords[m],
@@ -107,7 +109,7 @@ class _BottomBarPageState extends State<_BottomBarPage> {
                 cells: [
                   for (final m in QuickCreateMode.values)
                     HubCell(
-                      caption: '${m.name} round',
+                      caption: '${m.name} icon only',
                       child: QuickCreateButton(mode: m, onPressed: () {}),
                     ),
                 ],

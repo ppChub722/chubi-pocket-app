@@ -6418,6 +6418,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get quickCreateBtnSaving => 'ออมเงิน';
 
   @override
+  String get quickCreateBtnAdd => 'เพิ่ม';
+
+  @override
   String get debtsEmptyOpenTitle => 'ยังไม่มีหนี้ค้าง';
 
   @override

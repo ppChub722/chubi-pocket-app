@@ -8,6 +8,7 @@ import '../../features/tags/domain/tag.dart';
 import '../../features/transactions/domain/refs.dart';
 import '../../ui/ui.dart';
 import 'fade_branch_container.dart';
+import 'quick_create_look.dart';
 
 class QuickCreatePreset {
   const QuickCreatePreset({
@@ -20,24 +21,27 @@ class QuickCreatePreset {
     this.debtDirection,
     this.debtSub,
     this.amount,
-  }) : word = null,
-       color = null,
-       icon = null,
-       onCreate = null;
+    this.word,
+    this.color,
+    this.icon,
+  }) : onCreate = null;
 
-  const QuickCreatePreset.saving({this.goalId})
-    : mode = QuickCreateMode.saving,
-      account = null,
-      category = null,
-      tag = null,
-      person = null,
-      debtDirection = null,
-      debtSub = null,
-      amount = null,
-      word = null,
-      color = null,
-      icon = null,
-      onCreate = null;
+  /// [word] / [color] / [icon] ([QuickCreateLook]): how the page wants the +
+  /// (none = the plain บันทึก button).
+  const QuickCreatePreset.saving({
+    this.goalId,
+    this.word,
+    this.color,
+    this.icon,
+  }) : mode = QuickCreateMode.saving,
+       account = null,
+       category = null,
+       tag = null,
+       person = null,
+       debtDirection = null,
+       debtSub = null,
+       amount = null,
+       onCreate = null;
 
   /// [debtSub] repay + [person] + [amount]: "รับคืนแล้ว ฿82" on a person page.
   const QuickCreatePreset.debt({
@@ -45,14 +49,14 @@ class QuickCreatePreset {
     this.debtDirection,
     this.debtSub,
     this.amount,
+    this.word,
+    this.color,
+    this.icon,
   }) : mode = QuickCreateMode.debt,
        account = null,
        category = null,
        tag = null,
        goalId = null,
-       word = null,
-       color = null,
-       icon = null,
        onCreate = null;
 
   /// A page's OWN create action in the centre capsule (owner 2026-10-23: an
@@ -74,7 +78,52 @@ class QuickCreatePreset {
        debtSub = null,
        amount = null;
 
+  const QuickCreatePreset._all({
+    required this.mode,
+    required this.account,
+    required this.category,
+    required this.tag,
+    required this.person,
+    required this.goalId,
+    required this.debtDirection,
+    required this.debtSub,
+    required this.amount,
+    required this.word,
+    required this.color,
+    required this.icon,
+    required this.onCreate,
+  });
+
   static const none = QuickCreatePreset();
+
+  /// A list page's + (owner 2026-11-12): [look] on the button, [onCreate]
+  /// opening the page's create page instead of quick create.
+  static QuickCreatePreset create(
+    QuickCreateLook look,
+    VoidCallback onCreate,
+  ) => QuickCreatePreset.custom(
+    word: look.word,
+    color: look.color,
+    icon: look.icon,
+    onCreate: onCreate,
+  );
+
+  /// This preset (what the + opens) with the page's own look on the button.
+  QuickCreatePreset withLook(QuickCreateLook look) => QuickCreatePreset._all(
+    mode: mode,
+    account: account,
+    category: category,
+    tag: tag,
+    person: person,
+    goalId: goalId,
+    debtDirection: debtDirection,
+    debtSub: debtSub,
+    amount: amount,
+    word: look.word,
+    color: look.color,
+    icon: look.icon,
+    onCreate: onCreate,
+  );
 
   final String? word;
   final Color? color;

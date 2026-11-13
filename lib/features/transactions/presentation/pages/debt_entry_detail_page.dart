@@ -952,11 +952,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                     // and note under the hero, in one frame.
                     const SizedBox(height: AppSpacing.md),
                     EntrySectionCard(
-                      children: [
-                        _cards(l, symbol),
-                        ?tags,
-                        _noteRow(l),
-                      ],
+                      children: [_cards(l, symbol), ?tags, _noteRow(l)],
                     ),
                   ],
                 ),

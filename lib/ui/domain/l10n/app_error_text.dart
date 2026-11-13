@@ -155,6 +155,7 @@ const Map<String, ErrorGroup> _groups = {
   'NOT_IN_BILL': ErrorGroup.notFound,
   // forbidden
   'NOT_MEMBER': ErrorGroup.forbidden,
+  'NOT_BILL_OWNER': ErrorGroup.forbidden,
   'DEBT_TX_AUTHOR_ONLY': ErrorGroup.forbidden,
   'SOURCE_PT_NOT_FOR_USER': ErrorGroup.forbidden,
   'NOT_FOR_YOU': ErrorGroup.forbidden,
@@ -193,6 +194,8 @@ const Map<String, ErrorGroup> _groups = {
   'NOT_PROJECT_INVITE': ErrorGroup.invalid,
   'TYPE_NOT_MUTABLE': ErrorGroup.invalid,
   'OVERPAYMENT': ErrorGroup.invalid,
+  'MERGE_TWO_USERS': ErrorGroup.invalid,
+  'NOT_PAPER_BOOK': ErrorGroup.invalid,
   'IDEMPOTENCY_KEY_REUSED': ErrorGroup.invalid,
   // can't be edited or deleted
   'ACCOUNT_ARCHIVED': ErrorGroup.immutable,
@@ -208,6 +211,9 @@ const Map<String, ErrorGroup> _groups = {
   'PT_IS_CHILD': ErrorGroup.immutable,
   // already done / state moved on
   'ALREADY_ACTIVE': ErrorGroup.stale,
+  'ALREADY_CLAIMED': ErrorGroup.stale,
+  'NOTHING_TO_CLAIM': ErrorGroup.stale,
+  'SETTLE_NOTHING': ErrorGroup.stale,
   'ALREADY_ARCHIVED': ErrorGroup.stale,
   'NOT_ARCHIVED': ErrorGroup.stale,
   'ALREADY_LINKED': ErrorGroup.stale,

@@ -1026,6 +1026,40 @@ class _BarsPageState extends State<_BarsPage> {
             ),
           ),
         ),
+        // ---- StatusBarScrim ----
+        HubPlayground(
+          title: 'StatusBarScrim',
+          note:
+              'MirrorSurface glass behind the phone status bar, app-wide (app.dart '
+              'builder). The page scrolls under it; the strip is as tall as '
+              'the status bar (simulated here).',
+          controls: const [
+            PlayNum('statusBar', min: 0, max: 48, step: 4, initialValue: 28),
+          ],
+          builder: (context, v) => _frame(
+            ClipRect(
+              child: SizedBox(
+                height: 120,
+                child: MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    viewPadding: EdgeInsets.only(top: v<double>('statusBar')),
+                  ),
+                  child: StatusBarScrim(
+                    child: ListView(
+                      children: [
+                        for (var i = 0; i < 12; i++)
+                          AppListRow(
+                            leading: const AppIcon(AppIcons.wallet),
+                            title: 'Row ${i + 1} scrolls under the strip',
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
         // ---- HeroContent / HeroTopRow ----
         HubPlayground(
           title: 'HeroContent + HeroTopRow',

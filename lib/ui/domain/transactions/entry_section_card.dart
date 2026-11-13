@@ -47,7 +47,10 @@ class EntryFlagged extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: Theme.of(context).colorScheme.error),
       ),
-      child: Padding(padding: const EdgeInsets.all(AppSpacing.xxs), child: child),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xxs),
+        child: child,
+      ),
     );
   }
 }

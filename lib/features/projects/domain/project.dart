@@ -669,8 +669,7 @@ class ProjectTransaction extends Equatable {
   static List<ProjectTransaction> fromPaper(Map<String, dynamic> json) {
     final people = _list(json['people']);
     ProjectMemberRef ref(Map<String, dynamic> p) {
-      final person =
-          (p['person'] as Map?)?.cast<String, dynamic>() ?? const {};
+      final person = (p['person'] as Map?)?.cast<String, dynamic>() ?? const {};
       // My contact for them names them (for me only).
       final name = person['contact_id'] != null
           ? (person['name'] as String?) ?? (p['name'] as String?) ?? '?'

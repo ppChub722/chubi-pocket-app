@@ -72,7 +72,6 @@ enum ShellTab {
     if (path == '/settings/notifications') return notifications;
     return ofPath(path);
   }
-
 }
 
 String? offModuleRedirect(String location, {NavLayout? layout}) {

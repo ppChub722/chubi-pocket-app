@@ -1,6 +1,10 @@
+DELETE /projects/{id}/bills/{bid}/people/{pid}
 DELETE /recurring-items/{id}
-GET /projects/{id}/summary
+DELETE /split-bills/{id}/people/{pid}
+GET /split-bills
 GET /transactions/summary
-POST /projects/{id}/members/{member_id}/request-link
+POST /personal-debts/{id}/unlink-paper
+POST /projects/{id}/members/{member_id}/merge
 POST /recurring-items
 POST /telegram/webhook
+PUT /projects/{id}/my-defaults

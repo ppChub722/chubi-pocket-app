@@ -1,5 +1,3 @@
-import 'dart:ui' show ImageFilter;
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,17 +13,14 @@ class MainBottomNav extends StatefulWidget {
     required this.onSelected,
     required this.onAddPressed,
     List<ShellTab>? items,
-    this.addMode = QuickCreateMode.tx,
     this.addWord,
     this.addColor,
     this.addIcon,
     super.key,
   }) : items = items ?? NavLayout.defaults.bottomItems;
 
-  final QuickCreateMode addMode;
-
-  /// A page's own create action (QuickCreatePreset.custom): its word, colour
-  /// and icon in place of the mode's.
+  /// The + button's word, colour and icon as the open page gave them
+  /// ([QuickCreateLook]); none = the plain บันทึก button.
   final String? addWord;
   final Color? addColor;
   final IconData? addIcon;
@@ -90,8 +85,7 @@ class MainBottomNav extends StatefulWidget {
     ShellTab.tags => (AppIcons.tag, AppIcons.tag, l.moreTags),
   };
 
-  /// Bar height, and the `+` button's outer size (ring included) — larger than
-  /// the bar so it pokes out evenly above and below, centred on it.
+  /// The bar's height.
   static const double _barHeight = 64;
 
   static const double _radius = 24;
@@ -100,23 +94,24 @@ class MainBottomNav extends StatefulWidget {
 
   static const double _barRadius = _radius + _tabInset;
   static const double _tabGap = 2;
-  static const double _addSize = 76;
 
-  /// The centre slot's width for a tab row [rowWidth] wide (owner
-  /// 2026-10-22, mock QuickCreateBtn): wide enough for the icon + word
-  /// capsule; the bar's items share the rest.
+  /// The round bump the bar grows round the centre button (owner 2026-11-12):
+  /// wider than the bar, so it pokes out evenly above and below. The bar and
+  /// the bump are ONE shape ([_NavShape]); the button (72) sits in it.
+  static const double _addSize = 84;
+
+  /// The centre slot's width for a tab row [rowWidth] wide: the bump's
+  /// width and a little; the bar's items share the rest.
   static double addSlotFor(double rowWidth) =>
-      (rowWidth * 0.32).clamp(96.0, 120.0);
+      (rowWidth * 0.26).clamp(88.0, 104.0);
 
-  /// The capsule's word per mode.
+  /// The button's word per mode.
   static String addLabel(AppLocalizations l, QuickCreateMode mode) =>
       switch (mode) {
         QuickCreateMode.tx => l.quickCreateBtnTx,
         QuickCreateMode.debt => l.quickCreateBtnDebt,
         QuickCreateMode.saving => l.quickCreateBtnSaving,
       };
-
-  static const double _blur = 16;
 
   @override
   State<MainBottomNav> createState() => _MainBottomNavState();
@@ -157,10 +152,6 @@ class _MainBottomNavState extends State<MainBottomNav> {
   }
 
   double get _addSlot => MainBottomNav.addSlotFor(_rowWidth);
-
-  /// The tab row inside a bar [barWidth] wide.
-  static double _rowWidthOf(double barWidth) =>
-      barWidth - 2 * (MainBottomNav._tabInset - MainBottomNav._tabGap);
 
   double get _tabWidth => (_rowWidth - _addSlot) / _count;
 
@@ -233,7 +224,6 @@ class _MainBottomNavState extends State<MainBottomNav> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
     final still = MediaQuery.disableAnimationsOf(context);
     final dragLeft = _dragLeft;
     final lit = dragLeft != null
@@ -256,84 +246,80 @@ class _MainBottomNavState extends State<MainBottomNav> {
           onHorizontalDragEnd: _onDragEnd,
           onHorizontalDragCancel: _onDragCancel,
           child: SizedBox(
+            width: double.infinity,
             height: MainBottomNav._addSize,
             child: Stack(
               alignment: Alignment.center,
+              // The bump and the button’s glow reach past the box.
+              clipBehavior: Clip.none,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(MainBottomNav._barRadius),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(
-                      sigmaX: MainBottomNav._blur,
-                      sigmaY: MainBottomNav._blur,
+                Positioned.fill(
+                  // The same glass as the top bar's chips (MirrorSurface),
+                  // cut to the bar + bump shape.
+                  child: MirrorSurface(
+                    shape: const _NavShapeBorder(),
+                    bar: const GlassBar(
+                      height: MainBottomNav._barHeight,
+                      cornerRadius: MainBottomNav._barRadius,
+                      bumpRadius: MainBottomNav._addSize / 2,
                     ),
+                    // The app's one glass. Temporary fps probe:
+                    // --dart-define=NO_NAV_BLUR=true drops the frost.
+                    look: const bool.fromEnvironment('NO_NAV_BLUR')
+                        ? AppGlass.standard.withoutFrost()
+                        : AppGlass.standard,
                     child: Material(
-                      color: scheme.surfaceContainerHigh.withValues(
-                        alpha: 0.72,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          MainBottomNav._barRadius,
-                        ),
-                        side: BorderSide(color: scheme.outlineVariant),
-                      ),
-                      child: SizedBox(
-                        height: MainBottomNav._barHeight,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal:
-                                MainBottomNav._tabInset - MainBottomNav._tabGap,
-                          ),
-                          child: LayoutBuilder(
-                            builder: (context, box) {
-                              _rowWidth = box.maxWidth;
-                              final slot = _landing ?? _selectedSlot;
-                              final shown = dragLeft != null || slot != null;
-                              final appearing =
-                                  shown &&
-                                  _shownSlot == null &&
-                                  dragLeft == null;
-                              if (slot != null) _parkedSlot = slot;
-                              _shownSlot = shown ? (slot ?? -1) : null;
-                              return Stack(
-                                children: [
-                                  _SlidingHighlight(
-                                    left: dragLeft ?? _slotLeft(_parkedSlot),
-                                    width: _tabWidth,
-                                    visible: shown,
-                                    // Pinned to the finger; slides slot to slot
-                                    // otherwise.
-                                    slide: dragLeft == null && !appearing,
-                                    still: still,
-                                  ),
-                                  _tabs(l, lit, still),
-                                ],
-                              );
-                            },
+                      type: MaterialType.transparency,
+                      child: Center(
+                        child: SizedBox(
+                          height: MainBottomNav._barHeight,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal:
+                                  MainBottomNav._tabInset -
+                                  MainBottomNav._tabGap,
+                            ),
+                            child: LayoutBuilder(
+                              builder: (context, box) {
+                                _rowWidth = box.maxWidth;
+                                final slot = _landing ?? _selectedSlot;
+                                final shown = dragLeft != null || slot != null;
+                                final appearing =
+                                    shown &&
+                                    _shownSlot == null &&
+                                    dragLeft == null;
+                                if (slot != null) _parkedSlot = slot;
+                                _shownSlot = shown ? (slot ?? -1) : null;
+                                return Stack(
+                                  children: [
+                                    _SlidingHighlight(
+                                      left: dragLeft ?? _slotLeft(_parkedSlot),
+                                      width: _tabWidth,
+                                      visible: shown,
+                                      // Pinned to the finger; slides slot to
+                                      // slot otherwise.
+                                      slide: dragLeft == null && !appearing,
+                                      still: still,
+                                    ),
+                                    _tabs(l, lit, still),
+                                  ],
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-                LayoutBuilder(
-                  builder: (context, box) => ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth:
-                          MainBottomNav.addSlotFor(_rowWidthOf(box.maxWidth)) -
-                          2 * MainBottomNav._tabGap,
-                    ),
-                    child: QuickCreateButton(
-                      mode: widget.addMode,
-                      label:
-                          widget.addWord ??
-                          MainBottomNav.addLabel(l, widget.addMode),
-                      color: widget.addColor,
-                      icon: widget.addIcon,
-                      tooltip: widget.addWord ?? l.navAddTransaction,
-                      onPressed: widget.onAddPressed,
-                    ),
-                  ),
+                QuickCreateButton(
+                  label:
+                      widget.addWord ??
+                      MainBottomNav.addLabel(l, QuickCreateMode.tx),
+                  color: widget.addColor,
+                  icon: widget.addIcon,
+                  tooltip: widget.addWord ?? l.navAddTransaction,
+                  onPressed: widget.onAddPressed,
                 ),
               ],
             ),
@@ -365,6 +351,56 @@ class _MainBottomNavState extends State<MainBottomNav> {
       onTap: () => widget.onSelected(tab),
     );
   }
+}
+
+/// The bar's one shape: the capsule and the round bump at its middle,
+/// united (owner 2026-11-12). The rect is the whole box — the bump's height —
+/// and the bar is centred in it.
+class _NavShapeBorder extends ShapeBorder {
+  const _NavShapeBorder();
+
+  @override
+  EdgeInsetsGeometry get dimensions => EdgeInsets.zero;
+
+  @override
+  Path getInnerPath(Rect rect, {TextDirection? textDirection}) =>
+      getOuterPath(rect, textDirection: textDirection);
+
+  @override
+  Path getOuterPath(Rect rect, {TextDirection? textDirection}) {
+    const bar = MainBottomNav._barHeight;
+    final top = rect.center.dy - bar / 2;
+    return Path.combine(
+      PathOperation.union,
+      Path()..addRRect(
+        RRect.fromLTRBR(
+          rect.left,
+          top,
+          rect.right,
+          top + bar,
+          const Radius.circular(MainBottomNav._barRadius),
+        ),
+      ),
+      Path()..addOval(
+        Rect.fromCircle(
+          center: rect.center,
+          radius: MainBottomNav._addSize / 2,
+        ),
+      ),
+    );
+  }
+
+  @override
+  void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {}
+
+  @override
+  ShapeBorder scale(double t) => this;
+
+  @override
+  bool operator ==(Object other) => other is _NavShapeBorder;
+
+  @override
+  int get hashCode => 0;
 }
 
 class _SlidingHighlight extends StatelessWidget {

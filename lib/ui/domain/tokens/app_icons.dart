@@ -111,6 +111,11 @@ abstract final class AppIcons {
   static const phone = Icons.phone_outlined;
 
   static const add = PpForgeIcons.add;
+
+  /// The shell's centre "บันทึก" button (owner 2026-11-12) and an event's
+  /// "เพิ่มบิล" in the same slot.
+  static const record = Icons.post_add;
+  static const eventBill = Icons.receipt_long;
   static const edit = PpForgeIcons.edit;
   static const editBadge = PpForgeIcons.editBadge;
   static const delete = PpForgeIcons.delete;

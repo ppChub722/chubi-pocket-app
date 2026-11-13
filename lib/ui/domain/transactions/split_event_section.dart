@@ -74,11 +74,7 @@ class DraftFieldRow extends StatelessWidget {
           ? CrossAxisAlignment.center
           : CrossAxisAlignment.start,
       children: fills
-          ? [
-              text,
-              const SizedBox(width: AppSpacing.md),
-              Expanded(child: child),
-            ]
+          ? [text, const SizedBox(width: AppSpacing.md), Expanded(child: child)]
           : [
               Expanded(child: text),
               const SizedBox(width: AppSpacing.md),
@@ -200,6 +196,7 @@ class EventRow extends StatelessWidget {
     this.onLongPress,
     this.variant = SplitEventVariant.full,
     this.label,
+    this.footer,
     super.key,
   });
 
@@ -213,6 +210,9 @@ class EventRow extends StatelessWidget {
 
   /// Replaces "อีเวนต์" as the row's label ("เพิ่มในอีเวนต์").
   final String? label;
+
+  /// A row right under it (the "book the debts" switch of a new event bill).
+  final Widget? footer;
 
   bool get _compact => variant == SplitEventVariant.compact;
 
@@ -238,7 +238,17 @@ class EventRow extends StatelessWidget {
               child: value,
             ),
           );
-    return _longPressRow(row, onLongPress);
+    final tail = footer;
+    if (tail == null) return _longPressRow(row, onLongPress);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _longPressRow(row, onLongPress),
+        const SizedBox(height: AppSpacing.sm),
+        tail,
+      ],
+    );
   }
 }
 
@@ -325,11 +335,7 @@ class RecurringLinkRow extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final value = _value(context, l);
     final row = _compact
-        ? DraftFieldRow(
-            label: l.txRecurringRowLabel,
-            dense: true,
-            child: value,
-          )
+        ? DraftFieldRow(label: l.txRecurringRowLabel, dense: true, child: value)
         : AppDetailRow(
             label: l.txRecurringRowLabel,
             trailing: Align(

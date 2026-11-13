@@ -41,6 +41,7 @@ Future<AvatarColorsDraft?> showAvatarColorsSheet({
   }
   return showModalBottomSheet<AvatarColorsDraft>(
     context: context,
+    sheetAnimationStyle: AppMotion.sheetStyle,
     isScrollControlled: true,
     showDragHandle: true,
     useSafeArea: true,

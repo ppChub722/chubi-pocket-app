@@ -8,7 +8,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'shell/keyboard_insets_guard.dart';
 import 'shell/tab_nav.dart';
 import '../core/data/data_changes.dart';
 import '../core/data/sync_coordinator.dart';
@@ -398,6 +397,10 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
               },
               child: MaterialApp.router(
                 debugShowCheckedModeBanner: false,
+                // Temporary fps probe: --dart-define=PERF_OVERLAY=true
+                showPerformanceOverlay: const bool.fromEnvironment(
+                  'PERF_OVERLAY',
+                ),
                 title: 'chubiPocket',
                 theme: ThemeBuilder.build(
                   theme: theme,
@@ -432,28 +435,30 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                           value: ThemeBuilder.systemBarsStyle(
                             Theme.of(context).scaffoldBackgroundColor,
                           ),
-                          child: KeyboardInsetsGuard(
-                            // Resume after a long break refreshes silently (no
-                            // scrim, owner 2026-10-28).
-                            child: Builder(
-                              builder: (context) =>
-                                  ValueListenableBuilder<bool>(
-                                    valueListenable: _onDevHub,
-                                    builder: (context, devHub, page) =>
-                                        ValueListenableBuilder<bool>(
-                                          valueListenable: _onAuthPage,
-                                          builder: (context, authPage, _) =>
-                                              ConnectionShell(
-                                                devHub: devHub,
-                                                hideConnectionSnack: authPage,
-                                                child: page!,
-                                              ),
-                                        ),
-                                    child: RefreshScope(
-                                      registry: _refreshRegistry,
-                                      child: child ?? const SizedBox.shrink(),
+                          child: StatusBarScrim(
+                            child: KeyboardInsetsGuard(
+                              // Resume after a long break refreshes silently (no
+                              // scrim, owner 2026-10-28).
+                              child: Builder(
+                                builder: (context) =>
+                                    ValueListenableBuilder<bool>(
+                                      valueListenable: _onDevHub,
+                                      builder: (context, devHub, page) =>
+                                          ValueListenableBuilder<bool>(
+                                            valueListenable: _onAuthPage,
+                                            builder: (context, authPage, _) =>
+                                                ConnectionShell(
+                                                  devHub: devHub,
+                                                  hideConnectionSnack: authPage,
+                                                  child: page!,
+                                                ),
+                                          ),
+                                      child: RefreshScope(
+                                        registry: _refreshRegistry,
+                                        child: child ?? const SizedBox.shrink(),
+                                      ),
                                     ),
-                                  ),
+                              ),
                             ),
                           ),
                         ),

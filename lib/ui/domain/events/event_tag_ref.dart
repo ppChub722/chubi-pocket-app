@@ -11,7 +11,7 @@ class EventTagRef {
   final IconCode? iconCode;
 
   /// The tag's one colour: its icon colour (tags never show a bg), else the
-  /// entity tint ([IconCodeTint.tintFor]), else primary.
+  /// entity tint ([PpForgeIconCodeTint.tintFor]), else primary.
   Color colorOf(AppColors palette) => (iconCode?.iconColors.isNotEmpty ?? false)
       ? ppForgeResolveColor(iconCode!.iconColors.first, palette)
       : iconCode.tintFor(palette);

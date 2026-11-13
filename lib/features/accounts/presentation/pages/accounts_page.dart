@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/tab_root_scaffold.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../app/shell/quick_create_context.dart';
+import '../../../../app/shell/quick_create_look.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/domain/user.dart';
@@ -187,7 +189,19 @@ class _AccountsPageState extends State<AccountsPage> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop && _reordering) _exitReorder();
       },
-      child: _page(context, l),
+      child: QuickCreatePresetScope(
+        preset: QuickCreatePreset.create(
+          QuickCreateLook.add(
+            context,
+            color: QuickCreateModeColors.of(context, QuickCreateMode.tx),
+            icon: AppIcons.wallet,
+          ),
+          () {
+            if (!_reordering) _open(() => context.push('/accounts/new'));
+          },
+        ),
+        child: _page(context, l),
+      ),
     );
   }
 

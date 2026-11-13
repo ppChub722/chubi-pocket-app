@@ -153,9 +153,7 @@ class NotificationTile extends StatelessWidget {
     NotificationType.billNew => l.notifSharedBillCreated(actor, _billName(n)),
     NotificationType.billChanged => l.notifBillChanged(actor, _billName(n)),
     NotificationType.billRemoved => l.notifBillRemoved(actor, _billName(n)),
-    NotificationType.billOwnerChanged => l.notifBillOwnerChanged(
-      _billName(n),
-    ),
+    NotificationType.billOwnerChanged => l.notifBillOwnerChanged(_billName(n)),
     NotificationType.billMoved => switch (n.payload['project_name']) {
       final String event when event.isNotEmpty => l.notifBillMovedIn(
         actor,

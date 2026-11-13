@@ -636,12 +636,7 @@ abstract final class ContactPicker {
             c.iconCode,
           ),
           trailing: trailing(p),
-          keywords: [
-            c.displayName,
-            ?c.description,
-            ?c.email,
-            ?c.phone,
-          ],
+          keywords: [c.displayName, ?c.description, ?c.email, ?c.phone],
           data: c,
         ),
         p,

@@ -177,9 +177,7 @@ class _MainShellState extends State<MainShell>
   Future<void> _slideBackTo(int to) async {
     if (MediaQuery.disableAnimationsOf(context)) return _arriveBack(to);
     _backSlide.underlay.value = to;
-    final there = await _backSlide.finish(
-      curve: AppPageTransitionsBuilder.popCurve,
-    );
+    final there = await _backSlide.finish(curve: AppMotion.curve);
     if (there && mounted) _arriveBack(to);
   }
 
@@ -289,27 +287,31 @@ class _MainShellState extends State<MainShell>
   Widget _shell(BuildContext context) {
     return ShellChrome(
       controller: _chrome,
-      child: Scaffold(
-        extendBody: true,
-        body: _NavClearance(
-          child: GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onHorizontalDragStart: _onDragStart,
-            onHorizontalDragUpdate: _onDragUpdate,
-            onHorizontalDragEnd: _onDragEnd,
-            onHorizontalDragCancel: _onDragCancel,
-            child: TabBackSlideScope(
-              slide: _backSlide,
-              child: TabSwipeNudge(
-                offset: _nudge,
-                child: widget.navigationShell,
+      // The glass (MirrorSurface) in the top bars and the bottom bar reads
+      // the screen behind it once for all of them.
+      child: BackdropGroup(
+        child: Scaffold(
+          extendBody: true,
+          body: _NavClearance(
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onHorizontalDragStart: _onDragStart,
+              onHorizontalDragUpdate: _onDragUpdate,
+              onHorizontalDragEnd: _onDragEnd,
+              onHorizontalDragCancel: _onDragCancel,
+              child: TabBackSlideScope(
+                slide: _backSlide,
+                child: TabSwipeNudge(
+                  offset: _nudge,
+                  child: widget.navigationShell,
+                ),
               ),
             ),
           ),
-        ),
-        bottomNavigationBar: ListenableBuilder(
-          listenable: _chrome,
-          builder: (context, _) => _animatedNav(context),
+          bottomNavigationBar: ListenableBuilder(
+            listenable: _chrome,
+            builder: (context, _) => _animatedNav(context),
+          ),
         ),
       ),
     );
@@ -340,7 +342,6 @@ class _MainShellState extends State<MainShell>
                 items: _layout.bottomItems,
                 current: _current,
                 onSelected: (tab) => _goBranch(tab.index),
-                addMode: _quickCreate.preset.mode,
                 addWord: _quickCreate.preset.word,
                 addColor: _quickCreate.preset.color,
                 addIcon: _quickCreate.preset.icon,

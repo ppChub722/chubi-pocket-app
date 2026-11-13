@@ -2231,6 +2231,7 @@
   "quickCreateBtnTx": "Add",
   "quickCreateBtnDebt": "Add debt",
   "quickCreateBtnSaving": "Save money",
+  "quickCreateBtnAdd": "Add",
   "debtsEmptyOpenTitle": "No open debts",
   "debtsEmptyOpenMessage": "Note who borrowed and who paid for whom, so you never forget to ask",
   "evbReceives": "Got it",

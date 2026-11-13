@@ -250,20 +250,14 @@ const List<PageFlow> pageFlows = [
         'createEventBill',
         note: 'the paper + my claim (book_debts / skip_transaction)',
       ),
-      FlowCall(
-        'markEventBillPerson',
-        note: 'one per person marked "คืนแล้ว"',
-      ),
+      FlowCall('markEventBillPerson', note: 'one per person marked "คืนแล้ว"'),
     ]),
     FlowStep.action('Button "บันทึก" (แบ่งบิลกับคนอื่น, no event)', [
       FlowCall(
         'createSplitBill',
         note: 'the paper + my claim; new_event makes the event with it',
       ),
-      FlowCall(
-        'markSplitBillPerson',
-        note: 'one per person marked "คืนแล้ว"',
-      ),
+      FlowCall('markSplitBillPerson', note: 'one per person marked "คืนแล้ว"'),
     ]),
     FlowStep.action('Button "บันทึกร่าง"', [
       FlowCall('createPending', note: 'saves a draft'),
@@ -505,6 +499,12 @@ const List<PageFlow> pageFlows = [
     ]),
     FlowStep.action('Event link request: reject', [
       FlowCall('rejectProjectLinkRequest'),
+    ]),
+    FlowStep.action('Split bill invite: join', [
+      FlowCall('joinSplitBill', note: 'the BE answers the notice'),
+    ]),
+    FlowStep.action('Split bill invite: decline', [
+      FlowCall('declineSplitBill', note: 'the BE answers the notice'),
     ]),
     FlowStep.action('Split paid: "บันทึกรับเงิน"', [
       FlowCall(
@@ -1010,6 +1010,12 @@ const List<PageFlow> pageFlows = [
         FlowCall(
           'disconnectDebtPartner',
           note: 'my side only; the other user gets debt_disconnected',
+        ),
+      ]),
+      FlowStep.action('Row "บิลถูกแก้ | อัปเดตตามบิล" (a debt of a paper)', [
+        FlowCall(
+          'syncDebtToPaper',
+          note: 'my debt takes the paper as it is now',
         ),
       ]),
       FlowStep.action('Button "ลบ"', [

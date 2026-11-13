@@ -219,7 +219,10 @@ void main() {
     });
 
     test('link: POST the id_token, answers the linked row', () async {
-      adapter.body = {..._telegram(), 'bot_url': 'https://t.me/chubiPocket_bot'};
+      adapter.body = {
+        ..._telegram(),
+        'bot_url': 'https://t.me/chubiPocket_bot',
+      };
       final row = await repo.link('telegram', 'jwt');
       expect(
         (adapter.last!.method, adapter.last!.path),

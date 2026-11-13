@@ -880,13 +880,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       ),
     );
     if (v == null || isEditing || _isCreate || !v.canAddTx) return page;
-    // The centre capsule is this event's "เพิ่มบิล" (the event's colour).
+    // The centre button is this event's "เพิ่มบิล" (the event's colour).
     return QuickCreatePresetScope(
       preset: QuickCreatePreset.custom(
         word: l.evbNewBill,
         color: v.project.iconCode.tintFor(
           Theme.of(context).extension<AppColors>()!,
         ),
+        icon: AppIcons.eventBill,
         onCreate: _addTx,
       ),
       child: page,

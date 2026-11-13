@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/quick_create_context.dart';
+import '../../../../app/shell/quick_create_look.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/data/write_effects.dart';
@@ -253,8 +255,21 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   Future<void> _openItem(RecurringItem i) =>
       openOccurrenceSheet(context, i, onChanged: _onChanged);
 
+  /// The centre button goes to this page's create page (owner 2026-11-12).
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => QuickCreatePresetScope(
+    preset: QuickCreatePreset.create(
+      QuickCreateLook.add(
+        context,
+        color: ModuleColors.of(context).planning,
+        icon: AppIcons.recurring,
+      ),
+      () => _open('/recurring/new'),
+    ),
+    child: _page(context),
+  );
+
+  Widget _page(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final dir = context.watch<RecurringDirectoryCubit>().state;
     final items = _items ?? const <RecurringItem>[];
