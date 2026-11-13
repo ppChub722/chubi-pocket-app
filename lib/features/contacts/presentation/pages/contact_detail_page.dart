@@ -419,17 +419,24 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     final l = AppLocalizations.of(context)!;
 
     if (!_isCreate && _contact == null) {
-      return Scaffold(
-        appBar: AppTopBar(title: l.moreContacts, showBack: true),
-        extendBodyBehindAppBar: true,
-        body: AsyncStateView.fallback(
-          loading: _loading,
-          error: _error,
-          onRetry: _load,
-          notFound: EmptyView(
-            icon: AppIcons.contact,
-            title: l.contactNotFound,
-            message: '',
+      // The button is หนี้ from the start (the person fills in once loaded),
+      // never the plain บันทึก first.
+      return QuickCreatePresetScope(
+        preset: const QuickCreatePreset.debt().withLook(
+          QuickCreateLook.debt(context),
+        ),
+        child: Scaffold(
+          appBar: AppTopBar(title: l.moreContacts, showBack: true),
+          extendBodyBehindAppBar: true,
+          body: AsyncStateView.fallback(
+            loading: _loading,
+            error: _error,
+            onRetry: _load,
+            notFound: EmptyView(
+              icon: AppIcons.contact,
+              title: l.contactNotFound,
+              message: '',
+            ),
           ),
         ),
       );

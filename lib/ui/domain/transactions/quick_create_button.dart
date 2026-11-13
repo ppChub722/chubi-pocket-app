@@ -24,11 +24,16 @@ class QuickCreateButton extends StatelessWidget {
     this.tooltip,
     this.color,
     this.icon,
+    this.loading = false,
     super.key,
   });
 
   final VoidCallback onPressed;
   final QuickCreateMode mode;
+
+  /// The page on screen is loading (owner 2026-11-13): a spinner in the
+  /// icon's place, taps ignored; the colour and word are already the page's.
+  final bool loading;
 
   final double size;
   final String? label;
@@ -51,6 +56,16 @@ class QuickCreateButton extends StatelessWidget {
         : QuickCreateModeColors.onOf(context, mode);
     final label = this.label;
     final glyph = icon ?? quickCreateModeIcon(mode);
+    Widget mark(double size) => AnimatedSwitcher(
+      duration: still ? Duration.zero : PpForgeDurations.fast,
+      child: loading
+          ? SizedBox.square(
+              key: const ValueKey('quickCreateLoading'),
+              dimension: size,
+              child: Center(child: PpForgeSpinner(color: on)),
+            )
+          : PpForgeIcon(glyph, size: size, color: on),
+    );
     final button = SizedBox.square(
       dimension: size,
       child: TweenAnimationBuilder<Color?>(
@@ -73,10 +88,10 @@ class QuickCreateButton extends StatelessWidget {
             shape: const CircleBorder(),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
-              onTap: onPressed,
+              onTap: loading ? null : onPressed,
               child: Center(
                 child: label == null
-                    ? PpForgeIcon(glyph, size: PpForgeIconSize.xl, color: on)
+                    ? mark(PpForgeIconSize.xl)
                     : Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         // A long word shrinks rather than leaving the circle.
@@ -85,7 +100,7 @@ class QuickCreateButton extends StatelessWidget {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              PpForgeIcon(glyph, size: 26, color: on),
+                              mark(26),
                               const SizedBox(height: 4),
                               Text(
                                 label,

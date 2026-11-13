@@ -229,8 +229,9 @@ Future<bool> showQuickCreateSheet(
         initialType: type,
         initialCategory: category,
         initialTag: tag,
+        // The page's mode is only the starting tab: tx / debt / saving can
+        // always be switched (owner 2026-11-13, replaces the 11-12 lock).
         initialMode: preset?.mode ?? QuickCreateMode.tx,
-        lockMode: preset != null,
         debtPerson: preset?.person == null
             ? null
             : DebtPick(
@@ -377,7 +378,6 @@ class _QuickCreateSheet extends StatefulWidget {
     this.initialCategory,
     this.initialTag,
     this.initialMode = QuickCreateMode.tx,
-    this.lockMode = false,
     this.debtPerson,
     this.onDebtSaved,
     this.onSavingSaved,
@@ -403,10 +403,6 @@ class _QuickCreateSheet extends StatefulWidget {
   final Tag? initialTag;
 
   final QuickCreateMode initialMode;
-
-  /// The page the sheet opens from chose its mode (owner 2026-11-12): no
-  /// tx / debt / saving tabs to switch.
-  final bool lockMode;
 
   final DebtPick? debtPerson;
   final ValueChanged<DebtEntryWriteResult>? onDebtSaved;
@@ -2295,7 +2291,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (!widget.lockMode) _modeChips(l),
+        _modeChips(l),
         if (_isDebt)
           DebtEntryForm(controller: _debt, heroKey: _heroKey, autofocus: true)
         else if (_isSaving)

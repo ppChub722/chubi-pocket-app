@@ -96,6 +96,26 @@ class QuickCreatePreset {
 
   static const none = QuickCreatePreset();
 
+  /// A page that can't know its button before its data loads (an event: its
+  /// colour, whether bills can be added): the button keeps the look it has
+  /// and spins until the page sets its own (owner 2026-11-13). Compared with
+  /// `identical` (its fields equal [none]'s).
+  static final QuickCreatePreset pending = QuickCreatePreset._all(
+    mode: QuickCreateMode.tx,
+    account: null,
+    category: null,
+    tag: null,
+    person: null,
+    goalId: null,
+    debtDirection: null,
+    debtSub: null,
+    amount: null,
+    word: null,
+    color: null,
+    icon: null,
+    onCreate: null,
+  );
+
   /// A list page's + (owner 2026-11-12): [look] on the button, [onCreate]
   /// opening the page's create page instead of quick create.
   static QuickCreatePreset create(
@@ -183,15 +203,35 @@ class QuickCreatePreset {
 class QuickCreateContext extends ChangeNotifier {
   QuickCreateContext() {
     QuickCreateRouteObserver.changes.addListener(refresh);
+    loadingRegistry.addListener(refresh);
   }
+
+  /// The kit's loading views report here ([LoadingScope] in the shell): the
+  /// button spins while the page on screen loads (owner 2026-11-13).
+  final LoadingRegistry loadingRegistry = LoadingRegistry();
 
   final List<QuickCreateEntry> _entries = [];
   QuickCreatePreset _preset = QuickCreatePreset.none;
+  bool _loading = false;
   int? _currentBranch;
   bool _scheduled = false;
   bool _disposed = false;
 
   QuickCreatePreset get preset => _preset;
+
+  /// Something on the page on screen is loading.
+  bool get loading => _loading;
+
+  /// [context] sits on the page on screen: its route on top, in the open tab.
+  bool isShowing(BuildContext context) {
+    if (!context.mounted || !(ModalRoute.of(context)?.isCurrent ?? false)) {
+      return false;
+    }
+    final branch = TabSwitchScope.branchOf(context);
+    final current = _currentBranch;
+    if (branch != null && current != null) return branch == current;
+    return TickerMode.valuesOf(context).enabled;
+  }
 
   int? get currentBranch => _currentBranch;
   set currentBranch(int? i) {
@@ -224,9 +264,14 @@ class QuickCreateContext extends ChangeNotifier {
       ..addPostFrameCallback((_) {
         _scheduled = false;
         if (_disposed) return;
-        final next = active() ?? QuickCreatePreset.none;
-        if (next == _preset) return;
+        final found = active() ?? QuickCreatePreset.none;
+        final next = identical(found, QuickCreatePreset.pending)
+            ? _preset
+            : found;
+        final loading = loadingRegistry.loading.any(isShowing);
+        if (next == _preset && loading == _loading) return;
         _preset = next;
+        _loading = loading;
         notifyListeners();
       })
       ..scheduleFrame();
@@ -236,6 +281,9 @@ class QuickCreateContext extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     QuickCreateRouteObserver.changes.removeListener(refresh);
+    loadingRegistry
+      ..removeListener(refresh)
+      ..dispose();
     super.dispose();
   }
 }
@@ -313,15 +361,7 @@ class _QuickCreatePresetScopeState extends State<QuickCreatePresetScope> {
     _isShowing,
   );
 
-  bool _isShowing() {
-    if (!mounted || !(ModalRoute.of(context)?.isCurrent ?? false)) {
-      return false;
-    }
-    final branch = TabSwitchScope.branchOf(context);
-    final current = _registry?.currentBranch;
-    if (branch != null && current != null) return branch == current;
-    return TickerMode.valuesOf(context).enabled;
-  }
+  bool _isShowing() => mounted && (_registry?.isShowing(context) ?? false);
 
   @override
   void didChangeDependencies() {
@@ -335,7 +375,12 @@ class _QuickCreatePresetScopeState extends State<QuickCreatePresetScope> {
   @override
   void didUpdateWidget(QuickCreatePresetScope old) {
     super.didUpdateWidget(old);
-    if (widget.preset == _entry.preset) return;
+    bool pending(QuickCreatePreset p) =>
+        identical(p, QuickCreatePreset.pending);
+    if (widget.preset == _entry.preset &&
+        pending(widget.preset) == pending(_entry.preset)) {
+      return;
+    }
     _entry.preset = widget.preset;
     _registry?.refresh();
   }

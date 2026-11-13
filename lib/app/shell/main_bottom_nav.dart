@@ -16,6 +16,7 @@ class MainBottomNav extends StatefulWidget {
     this.addWord,
     this.addColor,
     this.addIcon,
+    this.addLoading = false,
     super.key,
   }) : items = items ?? NavLayout.defaults.bottomItems;
 
@@ -24,6 +25,9 @@ class MainBottomNav extends StatefulWidget {
   final String? addWord;
   final Color? addColor;
   final IconData? addIcon;
+
+  /// The page on screen is loading: the centre button spins.
+  final bool addLoading;
 
   /// The bar's items, left to right ([NavLayout.bottomItems]); the + sits
   /// after the first half.
@@ -318,6 +322,7 @@ class _MainBottomNavState extends State<MainBottomNav> {
                       MainBottomNav.addLabel(l, QuickCreateMode.tx),
                   color: widget.addColor,
                   icon: widget.addIcon,
+                  loading: widget.addLoading,
                   tooltip: widget.addWord ?? l.navAddTransaction,
                   onPressed: widget.onAddPressed,
                 ),

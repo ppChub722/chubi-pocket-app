@@ -268,7 +268,10 @@ class _MainShellState extends State<MainShell>
             handlers: _swipeHandlers,
             child: QuickCreateContextScope(
               registry: _quickCreate,
-              child: _shell(context),
+              child: LoadingScope(
+                registry: _quickCreate.loadingRegistry,
+                child: _shell(context),
+              ),
             ),
           ),
         ),
@@ -278,6 +281,8 @@ class _MainShellState extends State<MainShell>
 
   void _openQuickCreate(BuildContext context) {
     final preset = _quickCreate.active() ?? QuickCreatePreset.none;
+    // The page doesn't know its button yet (it spins, taps are off anyway).
+    if (identical(preset, QuickCreatePreset.pending)) return;
     // A page with its own create action (an event's "เพิ่มบิล") runs it.
     final own = preset.onCreate;
     if (own != null) return own();
@@ -345,6 +350,7 @@ class _MainShellState extends State<MainShell>
                 addWord: _quickCreate.preset.word,
                 addColor: _quickCreate.preset.color,
                 addIcon: _quickCreate.preset.icon,
+                addLoading: _quickCreate.loading,
                 onAddPressed: () => _openQuickCreate(context),
               ),
             ),

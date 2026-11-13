@@ -821,7 +821,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     final l = AppLocalizations.of(context)!;
     final v = _view;
     if (v == null && !_isCreate) {
-      return Scaffold(
+      final loading = Scaffold(
         appBar: AppTopBar(title: l.navProjects, showBack: true),
         extendBodyBehindAppBar: true,
         body: Builder(
@@ -839,6 +839,13 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             ),
           ),
         ),
+      );
+      // Its button (เพิ่มบิล in the event's colour, or none) is known only
+      // once it loads: keep the current one meanwhile; an error = no button.
+      if (_error != null) return loading;
+      return QuickCreatePresetScope(
+        preset: QuickCreatePreset.pending,
+        child: loading,
       );
     }
     final page = editScope(

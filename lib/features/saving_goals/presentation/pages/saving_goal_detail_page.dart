@@ -587,6 +587,18 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     if (widget.isCreate) return _page(l, null, null);
+    // From the route's id, so the button is ออม while the page loads too,
+    // never the plain บันทึก first.
+    final id = widget.id!;
+    return QuickCreatePresetScope(
+      preset: QuickCreatePreset.saving(
+        goalId: id == SavingGoalsRepository.spareId ? null : id,
+      ).withLook(QuickCreateLook.saving(context)),
+      child: _loaded(l),
+    );
+  }
+
+  Widget _loaded(AppLocalizations l) {
     return MultiBlocListener(
       listeners: [
         BlocListener<TransactionsCubit, TransactionsState>(
@@ -678,13 +690,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
             : null,
       ),
     );
-    if (d == null) return page;
-    return QuickCreatePresetScope(
-      preset: QuickCreatePreset.saving(
-        goalId: goal?.id,
-      ).withLook(QuickCreateLook.saving(context)),
-      child: page,
-    );
+    return page;
   }
 
   Widget _viewBody(AppLocalizations l, SavingGoalDetail d, SavingPageState s) {
