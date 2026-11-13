@@ -50,7 +50,7 @@ class AuthSocialCards extends StatelessWidget {
       listener: (context, s) {
         final e = s.failure;
         if (s.openFailed) {
-          showAppSnackBar(context, l.authTelegramOpenFailed, tone: Tone.danger);
+          showPpForgeSnackBar(context, l.authTelegramOpenFailed, tone: Tone.danger);
         } else if (e != null) {
           showErrorSnackBar(context, e);
         }

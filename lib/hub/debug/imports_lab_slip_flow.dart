@@ -124,7 +124,7 @@ class _SlipFlowCardState extends State<_SlipFlowCard> {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(PpForgeSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -133,7 +133,7 @@ class _SlipFlowCardState extends State<_SlipFlowCard> {
               'names → /slip-imports/check → new vs seen → scan-slip per new file',
               style: textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: PpForgeSpacing.sm),
             TextField(
               controller: _files,
               minLines: 2,
@@ -145,7 +145,7 @@ class _SlipFlowCardState extends State<_SlipFlowCard> {
                 isDense: true,
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: PpForgeSpacing.sm),
             Row(
               children: [
                 Expanded(
@@ -161,7 +161,7 @@ class _SlipFlowCardState extends State<_SlipFlowCard> {
                     label: const Text('Run flow'),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: PpForgeSpacing.sm),
                 OutlinedButton(
                   onPressed: _busy ? null : _clearHistory,
                   child: const Text('Clear history'),
@@ -252,7 +252,10 @@ class _Step extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.md, bottom: AppSpacing.xs),
+      padding: const EdgeInsets.only(
+        top: PpForgeSpacing.md,
+        bottom: PpForgeSpacing.xs,
+      ),
       child: Row(
         children: [
           CircleAvatar(
@@ -263,7 +266,7 @@ class _Step extends StatelessWidget {
               style: TextStyle(fontSize: 12, color: scheme.onPrimary),
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: PpForgeSpacing.sm),
           Expanded(
             child: Text(title, style: Theme.of(context).textTheme.titleSmall),
           ),
@@ -327,7 +330,7 @@ class _Status extends StatelessWidget {
     final ok = _isOk(exchange);
     final elapsed = exchange.elapsed;
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
       child: Row(
         children: [
           Icon(
@@ -335,7 +338,7 @@ class _Status extends StatelessWidget {
             size: 18,
             color: ok ? Colors.green : Theme.of(context).colorScheme.error,
           ),
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: PpForgeSpacing.xs),
           Expanded(
             child: Text(
               [

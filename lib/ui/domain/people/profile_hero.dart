@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/editable_circle.dart';
-import '../../molecules/hero_style.dart';
-import '../../organisms/hero/app_hero_card.dart';
-import '../../organisms/hero/hero_facts.dart';
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app_spacing.dart';
-import '../../tokens/hero_colors.dart';
+import 'package:pp_forge_core/ui.dart';
+import '../tokens/app_icons.dart';
 import 'avatar.dart';
 import 'avatar_data.dart';
 import 'profile_color_dots.dart';
-import '../../atoms/busy_scope.dart';
 
 /// The profile hero's picture (0.4.2 1b): the [Avatar] at [size] with, in
 /// view mode, the source app's logo as a corner [badge]; in edit mode a ✎
@@ -67,7 +61,7 @@ class ProfileHeroAvatar extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         picture,
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PpForgeSpacing.sm),
         ProfileColorDots(colors: avatar.colors, semanticLabel: dotsLabel),
       ],
     );
@@ -115,7 +109,7 @@ class ProfileHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = HeroStyle.tinted(color: tint, glyph: AppIcons.profile);
     if (editing) {
-      return AppHeroCard(
+      return PpForgeHeroCard(
         style: style,
         mode: HeroCardMode.edit,
         content: [
@@ -123,14 +117,14 @@ class ProfileHeroCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               picture,
-              const SizedBox(width: AppSpacing.md),
+              const SizedBox(width: PpForgeSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     for (final (i, f) in fields.indexed) ...[
-                      if (i > 0) const SizedBox(height: AppSpacing.sm),
+                      if (i > 0) const SizedBox(height: PpForgeSpacing.sm),
                       f,
                     ],
                   ],
@@ -145,7 +139,7 @@ class ProfileHeroCard extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onLongPress: onLongPress,
-        child: AppHeroCard(
+        child: PpForgeHeroCard(
           style: style,
           content: [
             _ViewIdentity(
@@ -185,10 +179,10 @@ class _ViewIdentity extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         picture,
-        const SizedBox(width: AppSpacing.md),
+        const SizedBox(width: PpForgeSpacing.md),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -213,7 +207,10 @@ class _ViewIdentity extends StatelessWidget {
             ),
           ),
         ),
-        for (final a in actions) ...[const SizedBox(width: AppSpacing.sm), a],
+        for (final a in actions) ...[
+          const SizedBox(width: PpForgeSpacing.sm),
+          a,
+        ],
       ],
     );
   }

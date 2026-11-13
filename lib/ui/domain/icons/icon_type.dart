@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'icon_code.dart';
+import 'package:pp_forge_core/ui.dart';
 
 enum IconType {
   account,
@@ -29,8 +29,11 @@ extension IconTypeX on IconType {
 
   bool get hasPicker => this != IconType.transaction;
 
-  IconCode applyDisplayRules(IconCode code) => switch (this) {
-    IconType.tag => IconCode(icon: code.icon, iconColors: code.iconColors),
+  PpForgeIconCode applyDisplayRules(PpForgeIconCode code) => switch (this) {
+    IconType.tag => PpForgeIconCode(
+      icon: code.icon,
+      iconColors: code.iconColors,
+    ),
     _ => code,
   };
 

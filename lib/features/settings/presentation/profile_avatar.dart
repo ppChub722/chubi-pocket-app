@@ -8,7 +8,7 @@ import '../../users/domain/avatar_settings.dart';
 /// otherwise the icon (or initials) of [name].
 AvatarData profilePreviewAvatar({
   required String name,
-  required IconCode? iconCode,
+  required PpForgeIconCode? iconCode,
   required AvatarSettings settings,
   String? photoUrl,
 }) {

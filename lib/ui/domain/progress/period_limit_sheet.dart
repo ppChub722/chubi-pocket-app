@@ -44,7 +44,7 @@ Future<PeriodLimitResult?> showPeriodLimitSheet(
   String? note,
   bool overridden = false,
 }) {
-  return showAppSheetCustom<PeriodLimitResult>(
+  return showPpForgeSheetCustom<PeriodLimitResult>(
     context,
     builder: (_) => _PeriodLimitSheet(
       title: title,
@@ -166,7 +166,7 @@ class _PeriodLimitSheetState extends State<_PeriodLimitSheet> {
         children: [
           if (subtitle != null) ...[
             Text(subtitle, style: text.bodyMedium?.copyWith(color: muted)),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: PpForgeSpacing.md),
           ],
           if (base != null || used != null) ...[
             StatGrid(
@@ -177,7 +177,7 @@ class _PeriodLimitSheetState extends State<_PeriodLimitSheet> {
                   StatTile(caption: widget.usedCaption ?? '', value: used),
               ],
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: PpForgeSpacing.lg),
           ],
           AmountInput(
             controller: _amount,
@@ -189,20 +189,20 @@ class _PeriodLimitSheetState extends State<_PeriodLimitSheet> {
             Align(
               alignment: AlignmentDirectional.centerStart,
               child: Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.sm),
-                child: AppButton(
+                padding: const EdgeInsets.only(top: PpForgeSpacing.sm),
+                child: PpForgeButton(
                   label: widget.resetLabel,
                   kind: ButtonIconKind.reset,
-                  variant: AppButtonVariant.text,
-                  size: AppButtonSize.chip,
+                  variant: PpForgeButtonVariant.text,
+                  size: PpForgeButtonSize.chip,
                   onPressed: () => setState(
                     () => _amount.text = AmountInput.format(widget.baseAmount),
                   ),
                 ),
               ),
             ),
-          const SizedBox(height: AppSpacing.lg),
-          AppInput.card(
+          const SizedBox(height: PpForgeSpacing.lg),
+          PpForgeInput.card(
             controller: _note,
             label: widget.noteLabel,
             hint: widget.noteHint,

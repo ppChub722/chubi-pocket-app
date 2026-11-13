@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../features/transactions/domain/transaction_type.dart';
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/domain/debts` — the debts pieces: NetBalance, the debt hero pieces
-/// and the debt pages' rows (AppListRow). Sample data is Thai (what the debts
+/// and the debt pages' rows (PpForgeListRow). Sample data is Thai (what the debts
 /// pages pass from l10n).
 Widget buildDebtsPage(BuildContext context) => const _DebtsPage();
 
@@ -38,13 +37,13 @@ class _DebtsPageState extends State<_DebtsPage> {
 
   void _note(String s) => setState(() => _last = s);
 
-  Widget _list(List<Widget> rows) => AppCard(
+  Widget _list(List<Widget> rows) => PpForgeCard(
     padding: EdgeInsets.zero,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final (i, r) in rows.indexed) ...[
-          if (i > 0) const AppDivider.row(),
+          if (i > 0) const PpForgeDivider.row(),
           r,
         ],
       ],
@@ -80,7 +79,7 @@ class _DebtsPageState extends State<_DebtsPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text('Last tap: $_last', style: text.bodySmall),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: PpForgeSpacing.md),
         // ---- Debt pages (owner 2026-10-22, mocks DebtPerson / DebtEntry) ----
         HubDemo(
           title: 'Debt person + entry pieces',
@@ -99,13 +98,13 @@ class _DebtsPageState extends State<_DebtsPage> {
                 amount: const MoneyText(230),
                 color: debtStateColor(context, owedToMe: false),
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               DebtPersonActions(
                 color: debtStateColor(context, owedToMe: false),
                 settleLabel: 'จ่ายคืน ฿230',
                 onSettle: () => _note('settle'),
                 shareLabel: 'สรุปยอด',
-                onShare: () => showAppSheet<void>(
+                onShare: () => showPpForgeSheet<void>(
                   context,
                   title: 'สรุปยอดกับลี',
                   builder: (_) => DebtShareSheet(
@@ -127,17 +126,17 @@ class _DebtsPageState extends State<_DebtsPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
-              AppListHeader(
+              const SizedBox(height: PpForgeSpacing.md),
+              PpForgeListHeader(
                 title: 'ศ. 10 ต.ค. 2026',
                 trailing: ListHeaderTrailing.text(
                   'ลดลง ฿400',
                   color: Theme.of(context).colorScheme.primary,
                 ),
               ),
-              // Statement rows: the app's AppListRow (owner 2026-10-23).
+              // Statement rows: the app's PpForgeListRow (owner 2026-10-23).
               _list([
-                AppListRow(
+                PpForgeListRow(
                   leading: IconTile(
                     icon: AppIcons.cash,
                     color: Theme.of(context).colorScheme.primary,
@@ -148,7 +147,7 @@ class _DebtsPageState extends State<_DebtsPage> {
                   trailing: ListRowTrailing.value(const MoneyText(400)),
                   onTap: () => _note('repayment'),
                 ),
-                AppListRow(
+                PpForgeListRow(
                   leading: IconTile(
                     icon: AppIcons.debt,
                     color: Theme.of(context).colorScheme.tertiary,
@@ -173,11 +172,11 @@ class _DebtsPageState extends State<_DebtsPage> {
                 color: debtStateColor(context, owedToMe: true),
                 paidLabel: '✓ จ่ายแล้ว',
               ),
-              const SizedBox(height: AppSpacing.sm),
-              // The debts list rows: AppListRow; past 30 days or overdue the
+              const SizedBox(height: PpForgeSpacing.sm),
+              // The debts list rows: PpForgeListRow; past 30 days or overdue the
               // line is the warning colour.
               _list([
-                AppListRow(
+                PpForgeListRow(
                   leading: const PersonMark(
                     name: 'ลี',
                     level: PersonLevel.linked,
@@ -190,7 +189,7 @@ class _DebtsPageState extends State<_DebtsPage> {
                   ),
                   onTap: () => _note('person'),
                 ),
-                AppListRow(
+                PpForgeListRow(
                   leading: const PersonMark(
                     name: 'แบงค์',
                     level: PersonLevel.contact,
@@ -240,7 +239,7 @@ class _DebtsPageState extends State<_DebtsPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               DebtResultBox(
                 nowLabel: 'ลี ตอนนี้',
                 afterLabel: 'หลังบันทึก',
@@ -252,7 +251,7 @@ class _DebtsPageState extends State<_DebtsPage> {
                 walletValue: '−฿200.00',
                 warning: 'เกินยอดค้าง — หลังบันทึกจะกลายเป็น $_owedToMe ฿40.00',
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               DebtResultBox(
                 nowLabel: 'ลี ตอนนี้',
                 afterLabel: 'หลังบันทึก',
@@ -264,7 +263,7 @@ class _DebtsPageState extends State<_DebtsPage> {
                 walletValue: 'ไม่เปลี่ยน',
                 loading: true,
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
             ],
           ),
         ),
@@ -305,18 +304,18 @@ class _DebtsPageState extends State<_DebtsPage> {
                   swapTooltip: 'สลับ',
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               Row(
                 children: [
                   const Expanded(child: Text('ทำรายการเงิน (tx) ด้วย')),
-                  AppSwitch(
+                  PpForgeSwitch(
                     value: _moneyMoves,
                     onChanged: (v) => setState(() => _moneyMoves = v),
                     semanticLabel: 'ทำรายการเงิน',
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               DebtSummaryRow(
                 label: 'หลังบันทึก',
                 words: _towardMe ? 'ลี เป็นลูกหนี้' : 'ลี เป็นเจ้าหนี้',
@@ -325,13 +324,13 @@ class _DebtsPageState extends State<_DebtsPage> {
                     ? DebtSummaryTone.owedToMe
                     : DebtSummaryTone.iOwe,
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               const DebtSummaryRow(
                 label: 'หลังบันทึก',
                 words: 'เคลียร์ครบกับ ลี แล้ว',
                 tone: DebtSummaryTone.cleared,
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               const DebtSummaryRow(
                 label: 'หลังบันทึก',
                 words: 'ลี กลายเป็นเจ้าหนี้',

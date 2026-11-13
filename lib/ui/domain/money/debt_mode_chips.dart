@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_chip.dart';
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app_spacing.dart';
+import '../tokens/app_icons.dart';
 import 'net_balance.dart';
+import 'package:pp_forge_core/ui.dart';
 
 /// Quick create's debt mode (owner 2026-10-21, mock "หนี้: 2 chip +
 /// ลูกศรสลับทิศ"): two chips where the tx mode has รายจ่าย / รายรับ —
@@ -40,7 +39,7 @@ class DebtModeChips extends StatelessWidget {
     Widget chip(String label, IconData icon, bool isSettle) {
       final selected = isSettle == settle;
       final dashed = change != null && !selected;
-      return AppChip(
+      return PpForgeChip(
         key: ValueKey(isSettle ? 'debtModeSettle' : 'debtModeRecord'),
         label: label,
         icon: dashed ? null : icon,
@@ -57,8 +56,8 @@ class DebtModeChips extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
-          spacing: AppSpacing.xs,
-          runSpacing: AppSpacing.xs,
+          spacing: PpForgeSpacing.xs,
+          runSpacing: PpForgeSpacing.xs,
           children: [
             chip(recordLabel, AppIcons.debt, false),
             chip(settleLabel, AppIcons.cash, true),
@@ -66,7 +65,7 @@ class DebtModeChips extends StatelessWidget {
         ),
         if (caption != null)
           Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xxs),
+            padding: const EdgeInsets.only(top: PpForgeSpacing.xxs),
             child: Text(
               caption,
               key: const ValueKey('debtModeCaption'),

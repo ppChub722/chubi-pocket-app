@@ -48,6 +48,12 @@ dependencies:
   package_info_plus: ^8.1.2
   flutter_colorpicker: ^1.1.0
 
+  # The generic UI kit: tokens, atoms, molecules, organisms, templates.
+  pp_forge_core:
+    git:
+      url: https://ppChub722@github.com/ppChub722/pp-forge-core.git
+      ref: v0.1.1
+
   # Slip import (0.3.1, Android only): pick slips from the gallery and read
   # their QR on the phone. ML Kit has no web build — the import UI is hidden
   # on web (SlipQrReader.isSupported).
@@ -130,5 +136,3 @@ flutter:
   assets:
     - assets/icon/  # logo on the login / register brand header
     # - assets/avatars/
-  shaders:
-    - shaders/liquid_glass.frag  # MirrorSurface's refracting glass (Impeller)

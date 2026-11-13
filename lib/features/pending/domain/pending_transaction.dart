@@ -172,13 +172,13 @@ class TagRef extends Equatable {
 
   final String id;
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   factory TagRef.fromJson(Map<String, dynamic> json) => TagRef(
     id: json['id'] as String,
     name: (json['name'] as String?) ?? '',
     iconCode: json['icon_code'] is Map<String, dynamic>
-        ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+        ? PpForgeIconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
         : null,
   );
 
@@ -191,13 +191,13 @@ class SavingGoalRef extends Equatable {
 
   final String id;
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   factory SavingGoalRef.fromJson(Map<String, dynamic> json) => SavingGoalRef(
     id: json['id'] as String,
     name: (json['name'] as String?) ?? '',
     iconCode: json['icon_code'] is Map<String, dynamic>
-        ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+        ? PpForgeIconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
         : null,
   );
 

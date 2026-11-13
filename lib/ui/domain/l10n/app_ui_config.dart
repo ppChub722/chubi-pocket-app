@@ -6,9 +6,9 @@ import '../../../l10n/gen/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../features/auth/presentation/cubit/auth_cubit.dart';
-import '../../atoms/ui_config.dart';
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app/currencies.dart';
+import 'package:pp_forge_core/ui.dart';
+import '../tokens/app_icons.dart';
+import '../tokens/currencies.dart';
 import '../money/money_style.dart';
 import 'app_error_text.dart';
 
@@ -20,8 +20,8 @@ class AppUiConfig extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return UiConfig(
-      strings: UiStrings(
+    return PpForgeConfig(
+      strings: PpForgeStrings(
         close: l.commonClose,
         cancel: l.commonCancel,
         save: l.commonSave,
@@ -93,23 +93,23 @@ MoneyStyle _userMoneyStyle(BuildContext context) {
   }
 }
 
-class _AppErrors extends UiErrors {
+class _AppErrors extends PpForgeErrors {
   const _AppErrors(this.l);
 
   final AppLocalizations l;
 
   @override
-  UiErrorInfo describe(Object error) {
+  PpForgeErrorInfo describe(Object error) {
     if (isNetworkError(error)) {
       final slow = isSlowNetworkError(error);
-      return UiErrorInfo(
+      return PpForgeErrorInfo(
         icon: AppIcons.offline,
         title: slow ? l.errorSlowTitle : l.errorNetworkTitle,
         message: slow ? l.errorSlowMessage : l.errorNetworkMessage,
       );
     }
     if (error is ApiException && error.code == 'SERVER_UNAVAILABLE') {
-      return UiErrorInfo(
+      return PpForgeErrorInfo(
         icon: AppIcons.error,
         title: l.errorServerDownTitle,
         message: l.errorServerDownMessage,
@@ -119,13 +119,13 @@ class _AppErrors extends UiErrors {
     // The generic sentence keeps its own headline; every other one is the
     // headline itself.
     if (text == l.errorGenericMessage) {
-      return UiErrorInfo(
+      return PpForgeErrorInfo(
         icon: AppIcons.error,
         title: l.errorGenericTitle,
         message: l.errorGenericMessage,
       );
     }
-    return UiErrorInfo(icon: AppIcons.error, title: text, message: text);
+    return PpForgeErrorInfo(icon: AppIcons.error, title: text, message: text);
   }
 
   @override
@@ -136,7 +136,7 @@ class _AppErrors extends UiErrors {
 }
 
 String _userCurrencySymbol(BuildContext context) {
-  const fallback = UiStrings();
+  const fallback = PpForgeStrings();
   try {
     final code = context.select<AuthCubit, String?>(
       (c) => switch (c.state) {

@@ -24,7 +24,7 @@ class ProjectsPage extends StatefulWidget {
 
 class _ProjectsPageState extends State<ProjectsPage> {
   final _search = TextEditingController();
-  final _toolbarOpen = AppListToolbarState.of('events');
+  final _toolbarOpen = PpForgeListToolbarState.of('events');
   Timer? _debounce;
   final _scroll = ScrollController();
 
@@ -79,7 +79,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
       } catch (_) {
         _fillFailed = true;
         if (mounted) {
-          showAppSnackBar(context, l.uiLoadMoreFailed, tone: Tone.danger);
+          showPpForgeSnackBar(context, l.uiLoadMoreFailed, tone: Tone.danger);
         }
       }
     });
@@ -161,7 +161,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
     ];
     List<Widget> section(String title, List<Project> rows) => [
       if (rows.isNotEmpty) ...[
-        AppListHeader(
+        PpForgeListHeader(
           key: ValueKey('eventsSection-$title'),
           title: title,
           count: rows.length,
@@ -185,17 +185,17 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
   Widget _hero(AppLocalizations l, ProjectsState state) {
     final s = state.summary ?? const ProjectListSummary();
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final cubit = context.read<ProjectsCubit>();
     final net = s.net;
     String money(double v) => moneyString(context, v);
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
       margin: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        AppSpacing.md,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.sm,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.md,
       ),
       header: HeroSummaryHead(
         icon: AppIcons.project,
@@ -207,7 +207,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
         actions: [
           ListenableBuilder(
             listenable: _search,
-            builder: (context, _) => AppListToolbarToggle(
+            builder: (context, _) => PpForgeListToolbarToggle(
               state: _toolbarOpen,
               filtered:
                   _search.text.isNotEmpty ||
@@ -254,14 +254,19 @@ class _ProjectsPageState extends State<ProjectsPage> {
           filters: [
             for (final (f, label, tone, count) in [
               ('current', l.fpEventsFilterAll, null, s.all),
-              ('active', l.fpEventsTileActive, AppChipTone.success, s.active),
+              (
+                'active',
+                l.fpEventsTileActive,
+                PpForgeChipTone.success,
+                s.active,
+              ),
               (
                 'unsettled',
                 l.fpEventsTileUnsettled,
-                AppChipTone.warning,
+                PpForgeChipTone.warning,
                 s.unsettled,
               ),
-              ('ended', l.fpEventsTileEnded, AppChipTone.neutral, s.ended),
+              ('ended', l.fpEventsTileEnded, PpForgeChipTone.neutral, s.ended),
             ])
               HeroFilter(
                 label: label,
@@ -278,7 +283,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
   Widget _toolbar(AppLocalizations l, ProjectsState state) {
     final cubit = context.read<ProjectsCubit>();
-    return AppListToolbar(
+    return PpForgeListToolbar(
       state: _toolbarOpen,
       search: ListToolbarSearch(
         controller: _search,
@@ -286,12 +291,12 @@ class _ProjectsPageState extends State<ProjectsPage> {
         onChanged: _onSearch,
       ),
       filters: [
-        AppChip(
+        PpForgeChip(
           label: l.transactionFormTagsLabel,
           icon: AppIcons.tag,
           selected: state.tagIds.isNotEmpty,
           count: state.tagIds.length,
-          trailing: AppChipTrailing.dropdown,
+          trailing: PpForgeChipTrailing.dropdown,
           onTap: () => _pickTags(state),
         ),
       ],
@@ -302,10 +307,10 @@ class _ProjectsPageState extends State<ProjectsPage> {
           for (final s in ProjectSort.values)
             SheetOption(value: s, label: _sortLabel(l, s)),
         ],
-        builder: (context, toggle) => AppChip(
+        builder: (context, toggle) => PpForgeChip(
           label: _sortLabel(l, state.sort),
           icon: AppIcons.sort,
-          trailing: AppChipTrailing.dropdown,
+          trailing: PpForgeChipTrailing.dropdown,
           onTap: toggle,
         ),
       ),
@@ -347,14 +352,14 @@ class _ProjectsPageState extends State<ProjectsPage> {
                 if (state.error != null && state.projects.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg,
-                      vertical: AppSpacing.sm,
+                      horizontal: PpForgeSpacing.lg,
+                      vertical: PpForgeSpacing.sm,
                     ),
-                    child: AppMessage(
+                    child: PpForgeMessage(
                       message: l.fpEventsLoadFailed,
                       tone: Tone.warning,
                       actions: [
-                        AppMessageAction(
+                        PpForgeMessageAction(
                           label: l.commonRetry,
                           onPressed: cubit.load,
                         ),
@@ -381,11 +386,11 @@ class _ProjectsPageState extends State<ProjectsPage> {
                       message: l.projectsEmptyMessage,
                       cta: create,
                     ),
-              topInset: AppSpacing.sm,
+              topInset: PpForgeSpacing.sm,
               rowCards: true,
               rowDividers: true,
               rowDividerIndent:
-                  AppSpacing.lg + EventListRow.iconSize + AppSpacing.md,
+                  PpForgeSpacing.lg + EventListRow.iconSize + PpForgeSpacing.md,
               controller: _scroll,
               hasMore: state.hasMore,
               loadingMore: state.loadingMore,

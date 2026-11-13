@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_button.dart';
-import '../../atoms/app_card.dart';
-import '../../tokens/app_spacing.dart';
-import '../../tokens/button_icon_kind.dart';
+import 'package:pp_forge_core/ui.dart';
 import '../money/money_text.dart';
 
 enum CloseGoalChoice { toSpare, backToWallets }
@@ -70,10 +67,10 @@ class CloseGoalDialog extends StatelessWidget {
         children: [
           Text(message),
           if (returns.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.md),
-            AppCard(
+            const SizedBox(height: PpForgeSpacing.md),
+            PpForgeCard(
               color: scheme.surfaceContainerHighest,
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.all(PpForgeSpacing.md),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -83,11 +80,11 @@ class CloseGoalDialog extends StatelessWidget {
                       color: scheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xs),
+                  const SizedBox(height: PpForgeSpacing.xs),
                   for (final r in returns)
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.xs,
+                        vertical: PpForgeSpacing.xs,
                       ),
                       child: Row(
                         children: [
@@ -111,25 +108,25 @@ class CloseGoalDialog extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: AppSpacing.lg),
-          AppButton(
+          const SizedBox(height: PpForgeSpacing.lg),
+          PpForgeButton(
             label: toSpareLabel,
             expand: true,
             onPressed: () => Navigator.pop(context, CloseGoalChoice.toSpare),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          AppButton(
+          const SizedBox(height: PpForgeSpacing.sm),
+          PpForgeButton(
             label: backToWalletsLabel,
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             expand: true,
             onPressed: () =>
                 Navigator.pop(context, CloseGoalChoice.backToWallets),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          AppButton(
+          const SizedBox(height: PpForgeSpacing.sm),
+          PpForgeButton(
             kind: ButtonIconKind.cancel,
             label: cancelLabel,
-            variant: AppButtonVariant.text,
+            variant: PpForgeButtonVariant.text,
             expand: true,
             onPressed: () => Navigator.pop(context),
           ),

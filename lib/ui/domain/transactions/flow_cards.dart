@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app_radius.dart';
-import '../../tokens/app_spacing.dart';
-import '../../atoms/busy_scope.dart';
+import '../tokens/app_icons.dart';
+import 'package:pp_forge_core/ui.dart';
 
 class FlowCards extends StatelessWidget {
   const FlowCards({
@@ -34,7 +32,7 @@ class FlowCards extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         row,
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PpForgeSpacing.sm),
         Text(
           caption,
           key: const ValueKey('flowCaption'),
@@ -76,7 +74,7 @@ class FlowCards extends StatelessWidget {
                               color: scheme.onSurface.withValues(alpha: 0.08),
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.all(AppSpacing.sm),
+                              padding: const EdgeInsets.all(PpForgeSpacing.sm),
                               child: Icon(
                                 AppIcons.arrowForward,
                                 size: 22,
@@ -84,7 +82,7 @@ class FlowCards extends StatelessWidget {
                               ),
                             ),
                           ),
-                    const SizedBox(height: AppSpacing.xs),
+                    const SizedBox(height: PpForgeSpacing.xs),
                     Icon(
                       AppIcons.cash,
                       key: const ValueKey('flowMoney'),
@@ -105,7 +103,9 @@ class FlowCards extends StatelessWidget {
                             child: InkWell(
                               key: const ValueKey('flowSwap'),
                               onTap: onSwap,
-                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              borderRadius: BorderRadius.circular(
+                                PpForgeRadius.md,
+                              ),
                               child: column,
                             ),
                           ),

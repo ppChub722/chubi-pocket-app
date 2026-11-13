@@ -6,7 +6,7 @@ import '../../features/categories/presentation/cubit/categories_cubit.dart';
 import '../../features/categories/presentation/widgets/category_picker.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 import 'entity_pickers/account_picker_demos.dart';
 import 'entity_pickers/bank_picker_demos.dart';
 import 'entity_pickers/contact_picker_demos.dart';
@@ -67,9 +67,9 @@ class _EntityPickersPageState extends State<_EntityPickersPage> {
             r.withChildren.contains(c.id) ? '${c.name} (+subs)' : c.name,
         ].join(', ');
 
-  Widget _button(String label, Future<String> Function() run) => AppButton(
+  Widget _button(String label, Future<String> Function() run) => PpForgeButton(
     label: label,
-    variant: AppButtonVariant.outlined,
+    variant: PpForgeButtonVariant.outlined,
     onPressed: () async => _say(await run()),
   );
 
@@ -78,16 +78,16 @@ class _EntityPickersPageState extends State<_EntityPickersPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        HubDemo(title: 'Last answer', child: AppText(_result)),
+        HubDemo(title: 'Last answer', child: PpForgeText(_result)),
         HubDemo(
           title: 'Entity',
           note: 'Each picker in the setups the pages use, on the real caches.',
           child: Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
+            spacing: PpForgeSpacing.xs,
+            runSpacing: PpForgeSpacing.xs,
             children: [
               for (final e in _Entity.values)
-                AppChip(
+                PpForgeChip(
                   label: e.label,
                   selected: e == _entity,
                   dashed: e != _entity,
@@ -125,8 +125,8 @@ class _EntityPickersPageState extends State<_EntityPickersPage> {
       title: title,
       note: note,
       child: Wrap(
-        spacing: AppSpacing.sm,
-        runSpacing: AppSpacing.sm,
+        spacing: PpForgeSpacing.sm,
+        runSpacing: PpForgeSpacing.sm,
         children: buttons,
       ),
     );
@@ -250,7 +250,7 @@ class _EntityPickersPageState extends State<_EntityPickersPage> {
       if (all.isEmpty)
         const HubDemo(
           title: 'No categories',
-          child: AppText('The categories cache is empty: sign in first.'),
+          child: PpForgeText('The categories cache is empty: sign in first.'),
         ),
     ];
   }

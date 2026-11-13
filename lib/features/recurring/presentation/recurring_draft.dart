@@ -164,7 +164,7 @@ class RecurringDraft {
   final String description;
   final String note;
   final String amount;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final TransactionType type;
   final String? accountId;
   final String? toAccountId;
@@ -348,7 +348,7 @@ class RecurringDraft {
     String? description,
     String? note,
     String? amount,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
     bool clearIcon = false,
     TransactionType? type,
     String? accountId,

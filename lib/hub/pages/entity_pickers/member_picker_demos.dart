@@ -7,7 +7,7 @@ import '../../../features/projects/presentation/cubit/project_directory_cubit.da
 import '../../../features/projects/presentation/widgets/member_picker.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
-import '../../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// [EventMemberPicker] as the event bill form opens it (payer, split member),
 /// on the first event of the events cache.
@@ -43,9 +43,9 @@ class MemberPickerDemos extends StatelessWidget {
 
   static String _say(ProjectMember? m) => m?.displayName ?? 'closed';
 
-  Widget _new(String label, Future<String> Function() run) => AppButton(
+  Widget _new(String label, Future<String> Function() run) => PpForgeButton(
     label: label,
-    variant: AppButtonVariant.outlined,
+    variant: PpForgeButtonVariant.outlined,
     onPressed: () async => onResult(await run()),
   );
 
@@ -53,8 +53,8 @@ class MemberPickerDemos extends StatelessWidget {
     title: title,
     note: note,
     child: Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: buttons,
     ),
   );

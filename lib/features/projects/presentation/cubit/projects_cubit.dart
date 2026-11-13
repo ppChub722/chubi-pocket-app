@@ -215,7 +215,7 @@ class ProjectsCubit extends Cubit<ProjectsState>
     String? endDate,
     double? plannedAmount,
     List<String> tagIds = const [],
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
   }) async {
     final d = await _repo.create(
       name: name,
@@ -241,7 +241,7 @@ class ProjectsCubit extends Cubit<ProjectsState>
     bool clearStartDate = false,
     bool clearEndDate = false,
     ProjectStatus? status,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
     double? plannedAmount,
     bool clearPlannedAmount = false,
     List<String>? tagIds,

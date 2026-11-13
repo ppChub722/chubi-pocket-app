@@ -5,7 +5,7 @@ extension BuildContextX on BuildContext {
   ThemeData get theme => Theme.of(this);
   TextTheme get textTheme => theme.textTheme;
   ColorScheme get colorScheme => theme.colorScheme;
-  AppColors get appColors => theme.extension<AppColors>()!;
+  PpForgeColors get appColors => theme.extension<PpForgeColors>()!;
 
   MediaQueryData get mq => MediaQuery.of(this);
   Size get screenSize => mq.size;

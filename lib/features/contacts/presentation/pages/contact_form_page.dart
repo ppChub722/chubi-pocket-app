@@ -77,7 +77,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
 
   Future<void> _submit() async {
     if (_name.text.trim().isEmpty) {
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         AppLocalizations.of(context)!.contactNameRequired,
         tone: Tone.danger,
@@ -141,31 +141,31 @@ class _ContactFormPageState extends State<ContactFormPage> {
           if (loadingExisting) return const DetailPageSkeleton();
           return ListView(
             padding: EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              top + AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.xxl + MediaQuery.paddingOf(context).bottom,
+              PpForgeSpacing.lg,
+              top + PpForgeSpacing.lg,
+              PpForgeSpacing.lg,
+              PpForgeSpacing.xxl + MediaQuery.paddingOf(context).bottom,
             ),
             children: [
-              AppMessage(
+              PpForgeMessage(
                 tone: Tone.info,
                 message: _isLinkExisting
                     ? l.contactLinkBannerExisting(name2)
                     : l.contactLinkBannerNew(name2),
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               SectionCard(
                 first: true,
                 children: [
-                  AppDetailRow(
+                  PpForgeDetailRow(
                     label: l.commonName,
                     locked: true,
                     helper: lockedHelper,
-                    trailing: AppText(name),
+                    trailing: PpForgeText(name),
                   ),
                   DetailStacked(
                     label: l.commonDescription,
-                    child: AppInput.inline(
+                    child: PpForgeInput.inline(
                       editing: true,
                       controller: _description,
                       hint: l.contactDescriptionHint,
@@ -173,17 +173,17 @@ class _ContactFormPageState extends State<ContactFormPage> {
                       maxLength: TextLimits.description,
                     ),
                   ),
-                  AppDetailRow(
+                  PpForgeDetailRow(
                     label: l.contactEmailLabel,
                     locked: true,
                     helper: lockedHelper,
                     trailing: _email.text.isEmpty
                         ? DetailPlaceholder(l.contactFieldNotSet)
-                        : AppText(_email.text),
+                        : PpForgeText(_email.text),
                   ),
                   DetailStacked(
                     label: l.contactPhoneLabel,
-                    child: AppInput.inline(
+                    child: PpForgeInput.inline(
                       editing: true,
                       controller: _phone,
                       maxLength: TextLimits.phone,
@@ -192,7 +192,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
                   ),
                   DetailStacked(
                     label: l.commonNote,
-                    child: AppInput.inline(
+                    child: PpForgeInput.inline(
                       editing: true,
                       controller: _note,
                       hint: l.contactNoteHint,

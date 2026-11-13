@@ -72,7 +72,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   late bool _focusDue = widget.focusDue;
 
   final _search = TextEditingController();
-  final _toolbar = AppListToolbarState.of('recurring');
+  final _toolbar = PpForgeListToolbarState.of('recurring');
   String _query = '';
 
   // The calendar list's 🔍 / filters / sort, behind its own toggle.
@@ -80,7 +80,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
 
   /// Amounts typed in the calendar list's rows, by occurrence.
   final _rowAmounts = <String, double?>{};
-  final _monthToolbar = AppListToolbarState.of('recurringMonth');
+  final _monthToolbar = PpForgeListToolbarState.of('recurringMonth');
   String _monthQuery = '';
   _MonthStatus _status = _MonthStatus.all;
   RecurringKind? _kind;
@@ -169,7 +169,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
           _itemsError = err;
         });
       } else {
-        showAppSnackBar(
+        showPpForgeSnackBar(
           context,
           AppLocalizations.of(context)!.fpRecurringRefreshFailed,
           tone: Tone.danger,
@@ -284,24 +284,24 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
           isEmpty: _items == null,
           onRetry: _refresh,
           empty: EmptyView.compact(message: l.recurringEmptyTitle),
-          topInset: AppSpacing.md,
+          topInset: PpForgeSpacing.md,
           // The tabs stay on screen while the month scrolls under them.
           header: [
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.sm,
-                AppSpacing.lg,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.sm,
+                PpForgeSpacing.lg,
                 0,
               ),
-              child: AppTabBar<RecurringHomeTab>(
+              child: PpForgeTabBar<RecurringHomeTab>(
                 tabs: [
-                  AppTab(
+                  PpForgeTab(
                     value: RecurringHomeTab.overview,
                     label: l.recurringHomeTabOverview,
                     icon: AppIcons.pie,
                   ),
-                  AppTab(
+                  PpForgeTab(
                     value: RecurringHomeTab.calendar,
                     label: l.fpRecurringTabCalendar,
                     icon: AppIcons.date,
@@ -316,7 +316,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
             _hero(l, items),
             if (_tab == RecurringHomeTab.overview) ...[
               if (_due.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: PpForgeSpacing.md),
                 _dueCard(l, dir),
               ],
               ..._allRules(l, dir),
@@ -377,7 +377,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     final captions = _tab == RecurringHomeTab.calendar
         ? _captions(l, items)
         : const <int, CalendarCaption>{};
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
       header: HeroHeader(
         leading: const [HeroModuleTile(AppIcons.recurring)],
@@ -524,7 +524,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     int count, {
     bool day = false,
   }) => [
-    AppListHeader(
+    PpForgeListHeader(
       title: title,
       count: count,
       onClearTitle: day ? () => setState(() => _day = null) : null,
@@ -571,7 +571,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
         ),
       ],
     ),
-    AppListToolbar(
+    PpForgeListToolbar(
       state: _monthToolbar,
       search: ListToolbarSearch(
         controller: _monthSearch,
@@ -679,7 +679,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     return rows;
   }
 
-  IconCode? _iconOf(RecurringItem i) {
+  PpForgeIconCode? _iconOf(RecurringItem i) {
     final rule = _ruleOf(context.read<RecurringDirectoryCubit>().state, i);
     final kind = rule?.kind ?? i.recurring?.kind;
     final own = i.recurring?.iconCode ?? rule?.iconCode;
@@ -715,7 +715,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
       !i.state.settled &&
       (_todo(i) || _unknown(i));
 
-  /// A list row (AppListRow): the item's icon, its name and state pill,
+  /// A list row (PpForgeListRow): the item's icon, its name and state pill,
   /// then its wallet and date | ⏲ n/total. One waiting on the user ends with
   /// its amount in a field (filled in when known; empty = รอใส่ยอด) and ✓;
   /// the rest show the amount, พรุ่งนี้ under it.
@@ -728,7 +728,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     final locale = Localizations.localeOf(context).toLanguageTag();
     final act = _actionable(i);
     final field = act;
-    return AppListRow(
+    return PpForgeListRow(
       key: ValueKey('occ-${i.id}'),
       leading: _icon(i),
       title: _name(i),
@@ -885,7 +885,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
           r,
     ];
     final head = [
-      AppListHeader(
+      PpForgeListHeader(
         title: l.recurringHomeAllTitle,
         actions: [
           ListHeaderAction.toolbar(
@@ -900,7 +900,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
           ),
         ],
       ),
-      AppListToolbar(
+      PpForgeListToolbar(
         state: _toolbar,
         search: ListToolbarSearch(
           controller: _search,
@@ -949,7 +949,10 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
             if (r.kind == k) r,
         ]),
       if (paused.isNotEmpty) ...[
-        AppListHeader(title: l.fpRecurringPausedGroup, count: paused.length),
+        PpForgeListHeader(
+          title: l.fpRecurringPausedGroup,
+          count: paused.length,
+        ),
         SectionCard(children: [for (final r in paused) _ruleRow(r)]),
       ],
     ];
@@ -984,7 +987,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
         l.recurringHomePerMonth(_money(sum((r) => r.monthlyAmount))),
     };
     return [
-      AppListHeader(
+      PpForgeListHeader(
         title: recurringKindLabel(l, kind),
         count: rules.length,
         trailing: ListHeaderTrailing.text(totals),

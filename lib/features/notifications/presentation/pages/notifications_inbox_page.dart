@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/tab_nav.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/domain/user.dart';
@@ -98,7 +97,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
     final messenger = ScaffoldMessenger.of(context);
     final ok = await cubit.hide(n.id);
     if (!ok) return;
-    showAppSnackBarOn(
+    showPpForgeSnackBarOn(
       messenger,
       l.notifHidden,
       actionLabel: l.notifUndo,
@@ -113,10 +112,10 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
         '${_filterLabel(l, f)} | ${_filterCount(s, f)}';
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.sm,
-        AppSpacing.md,
-        AppSpacing.sm,
+        PpForgeSpacing.md,
+        PpForgeSpacing.sm,
+        PpForgeSpacing.md,
+        PpForgeSpacing.sm,
       ),
       child: Row(
         children: [
@@ -127,10 +126,10 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
                 SheetOption(value: f, label: label(f)),
             ],
             onSelected: _pick,
-            builder: (context, toggle) => AppChip(
+            builder: (context, toggle) => PpForgeChip(
               label: label(state.filter),
               selected: state.filter != InboxFilter.all,
-              trailing: AppChipTrailing.dropdown,
+              trailing: PpForgeChipTrailing.dropdown,
               onTap: toggle,
             ),
           ),
@@ -140,7 +139,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
             tooltip: l.notifReadAllTooltip,
             onTap: s.unread > 0 ? cubit.markReadAll : null,
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: PpForgeSpacing.sm),
           CardActionButton(
             icon: AppIcons.settings,
             tooltip: l.notifSettingsTooltip,
@@ -204,7 +203,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
               final day = '${local.year}-${local.month}-${local.day}';
               if (day != lastDay) {
                 lastDay = day;
-                rows.add(AppListHeader(title: _dayLabel(ctx, local)));
+                rows.add(PpForgeListHeader(title: _dayLabel(ctx, local)));
               }
               final tile = NotificationTile(
                 notification: n,
@@ -225,12 +224,12 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
                             alignment: Alignment.centerRight,
                             child: Padding(
                               padding: const EdgeInsets.only(
-                                right: AppSpacing.md,
+                                right: PpForgeSpacing.md,
                               ),
-                              child: AppButton(
+                              child: PpForgeButton(
                                 label: l.notifRestore,
                                 icon: AppIcons.unarchive,
-                                variant: AppButtonVariant.text,
+                                variant: PpForgeButtonVariant.text,
                                 submits: true,
                                 onPressed: () => cubit.restore(n.id),
                               ),
@@ -243,11 +242,13 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
                         direction: DismissDirection.endToStart,
                         background: Container(
                           alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: AppSpacing.xl),
+                          padding: const EdgeInsets.only(
+                            right: PpForgeSpacing.xl,
+                          ),
                           color: Theme.of(
                             ctx,
                           ).colorScheme.surfaceContainerHighest,
-                          child: const AppIcon(AppIcons.hidden),
+                          child: const PpForgeIcon(AppIcons.hidden),
                         ),
                         onDismissed: (_) => _hide(n),
                         child: tile,
@@ -270,7 +271,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
               header: [_topRow(ctx, l, state)],
               topInset: 0,
               sidePadding: 0,
-              bottomInset: AppSpacing.huge,
+              bottomInset: PpForgeSpacing.huge,
               rowDividers: true,
               rowDividerIndent: 68,
               hasMore: state.hasMore,

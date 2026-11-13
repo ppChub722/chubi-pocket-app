@@ -9,7 +9,6 @@ import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/quick_create_look.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -183,9 +182,9 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       title: l.savingGoalFormIconLabel,
     );
     if (!mounted || result == null) return;
-    if (result is IconMakerSelected) {
+    if (result is PpForgeIconMakerSelected) {
       applyChange(working.copyWith(iconCode: result.iconCode));
-    } else if (result is IconMakerRemoved) {
+    } else if (result is PpForgeIconMakerRemoved) {
       applyChange(working.copyWith(clearIcon: true));
     }
   }
@@ -201,7 +200,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final now = DateTime.now();
     final current = working.deadline;
     final first = current != null && current.isBefore(now) ? current : now;
-    final picked = await AppDatePicker.show(
+    final picked = await PpForgeDatePicker.show(
       context,
       title: AppLocalizations.of(context)!.savingGoalFormDeadlineLabel,
       initial: current ?? now.add(const Duration(days: 90)),
@@ -211,9 +210,9 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
     if (!mounted || picked == null) return;
     switch (picked) {
-      case AppDatePicked(:final date):
+      case PpForgeDatePicked(:final date):
         applyChange(working.copyWith(deadline: date));
-      case AppDateCleared():
+      case PpForgeDateCleared():
         applyChange(working.copyWith(clearDeadline: true));
     }
   }
@@ -296,9 +295,9 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   void _snack(String message, {Tone tone = Tone.neutral}) {
     final m = pageMessenger;
     if (m != null) {
-      showAppSnackBarOn(m, message, tone: tone);
+      showPpForgeSnackBarOn(m, message, tone: tone);
     } else if (mounted) {
-      showAppSnackBar(context, message, tone: tone);
+      showPpForgeSnackBar(context, message, tone: tone);
     }
   }
 
@@ -692,7 +691,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final goal = d.goal;
     final symbol = context.readUserCurrencySymbol;
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final accent = goal == null
         ? scheme.primary
         : goal.iconCode.tintFor(palette);
@@ -703,12 +702,12 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           ? _spareHero(l, d, style, symbol)
           : _goalHero(l, goal, style, accent, symbol),
       belowHero: [?_actionBar(l, d)],
-      compactBar: AppCompactHeroCard(
+      compactBar: PpForgeCompactHeroCard(
         style: style,
-        leading: IconCodeWidget(
+        leading: PpForgeIconCodeWidget(
           iconCode: goal?.iconCode,
           size: 28,
-          displayMode: IconDisplayMode.compact,
+          displayMode: PpForgeIconDisplayMode.compact,
           fallbackIcon: AppIcons.savingGoal,
           fallbackColor: accent,
         ),
@@ -716,12 +715,12 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         trailing: MoneyText(saved, symbol: symbol),
       ),
       tabs: [
-        AppTab(
+        PpForgeTab(
           value: _GoalTab.overview,
           label: l.sgv2Overview,
           icon: AppIcons.pie,
         ),
-        AppTab(
+        PpForgeTab(
           value: _GoalTab.entries,
           label: l.sgv2Entries,
           icon: AppIcons.receipt,
@@ -887,7 +886,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           ),
       ],
     ];
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: style,
       header: active
           ? null
@@ -897,7 +896,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           icon: EditableCircle(
             size: HeroIdentity.iconSize,
             onLongPress: _enterEditThenOpenMaker,
-            child: IconCodeWidget(
+            child: PpForgeIconCodeWidget(
               iconCode: g.iconCode,
               size: HeroIdentity.iconSize,
               fallbackIcon: AppIcons.savingGoal,
@@ -942,11 +941,11 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     mainAxisSize: MainAxisSize.min,
     children: [
       ?box,
-      if (box != null) const SizedBox(width: AppSpacing.sm),
+      if (box != null) const SizedBox(width: PpForgeSpacing.sm),
       CardActionButton(
         key: const ValueKey('heroEdit'),
         icon: AppIcons.edit,
-        tooltip: UiConfig.stringsOf(context).edit,
+        tooltip: PpForgeConfig.stringsOf(context).edit,
         onTap: enterEdit,
       ),
     ],
@@ -960,7 +959,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     String symbol,
   ) {
     final active = g.state == SavingGoalState.active;
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: style,
       header: active
           ? null
@@ -970,7 +969,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           icon: EditableCircle(
             size: HeroIdentity.iconSize,
             onLongPress: _enterEditThenOpenMaker,
-            child: IconCodeWidget(
+            child: PpForgeIconCodeWidget(
               iconCode: g.iconCode,
               size: HeroIdentity.iconSize,
               fallbackIcon: AppIcons.savingGoal,
@@ -1018,12 +1017,15 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     String symbol,
   ) {
     final color = Theme.of(context).colorScheme.primary;
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: style,
       content: [
         HeroIdentity(
           icon: IconTile(icon: AppIcons.savingGoal, color: color, size: 40),
-          description: AppText(l.sgv2SpareHint, role: AppTextRole.caption),
+          description: PpForgeText(
+            l.sgv2SpareHint,
+            role: PpForgeTextRole.caption,
+          ),
         ),
         HeroNumber(
           label: l.sgv2Spare,
@@ -1143,12 +1145,15 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           if (planned)
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.md,
-                AppSpacing.lg,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.md,
+                PpForgeSpacing.lg,
                 0,
               ),
-              child: AppText(l.sgRecurringLabel, role: AppTextRole.caption),
+              child: PpForgeText(
+                l.sgRecurringLabel,
+                role: PpForgeTextRole.caption,
+              ),
             ),
           for (final r in dir.rules)
             if (mine(r))
@@ -1180,13 +1185,13 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final now = p?.current;
     final plan = now?.plan ?? 0;
     return [
-      AppDetailRow.pick(
+      PpForgeDetailRow.pick(
         label: l.savingGoalFormDeadlineLabel,
         value: due == null ? null : _day(due),
         emptyText: l.savingGoalFormDeadlinePlaceholder,
         onTap: isSaving ? null : () => _pickDeadlineLive(g),
       ),
-      AppDetailRow.pick(
+      PpForgeDetailRow.pick(
         key: const ValueKey('goalPeriodAmount'),
         label: l.sgPeriodTarget,
         value: p == null ? null : money(p.amount),
@@ -1194,7 +1199,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         onTap: isSaving ? null : () => _pickPeriodAmount(g),
       ),
       if (p != null)
-        AppDetailRow.pick(
+        PpForgeDetailRow.pick(
           key: const ValueKey('goalPeriodRule'),
           label: l.sgPeriodRule,
           value: recurrenceLabel(l, _periodRule(p)),
@@ -1203,7 +1208,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         ),
       if (now != null && plan + 0.004 < now.target)
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
           child: HintLine(
             icon: AppIcons.warning,
             text: l.sgPeriodPlanShort(money(plan), money(p!.amount)),
@@ -1230,7 +1235,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final now = DateTime.now();
     final current = g.deadline == null ? null : DateTime.tryParse(g.deadline!);
     final first = current != null && current.isBefore(now) ? current : now;
-    final picked = await AppDatePicker.show(
+    final picked = await PpForgeDatePicker.show(
       context,
       title: l.savingGoalFormDeadlineLabel,
       initial: current ?? now.add(const Duration(days: 90)),
@@ -1240,15 +1245,15 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
     if (!mounted || picked == null) return;
     final value = switch (picked) {
-      AppDatePicked(:final date) => _ymdOf(date),
-      AppDateCleared() => null,
+      PpForgeDatePicked(:final date) => _ymdOf(date),
+      PpForgeDateCleared() => null,
     };
     await _run(() => _cubit!.patch({'deadline': value}));
   }
 
   Future<void> _pickPeriodAmount(SavingGoal g) async {
     final l = AppLocalizations.of(context)!;
-    final r = await AppAmountSheet.show(
+    final r = await PpForgeAmountSheet.show(
       context,
       title: l.sgPeriodTarget,
       label: l.sgPeriodTargetField,
@@ -1360,7 +1365,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final locale = Localizations.localeOf(context).languageCode;
     return [
       for (final MapEntry(key: date, value: entries) in days.entries) ...[
-        AppListHeader(
+        PpForgeListHeader(
           title: switch (DateFormatter.parseDay(date)) {
             final day? => DateFormatter.friendly(
               day,
@@ -1438,15 +1443,15 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   Widget _editBody(AppLocalizations l, SavingGoalDetail? d, BuildContext ctx) {
     final goal = d?.goal;
     final symbol = context.readUserCurrencySymbol;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final accent = working.iconCode.tintFor(palette);
     final barInset = MediaQuery.paddingOf(ctx).top;
-    final bottom = AppSpacing.huge + MediaQuery.paddingOf(ctx).bottom;
+    final bottom = PpForgeSpacing.huge + MediaQuery.paddingOf(ctx).bottom;
     return DetailLayout(
       onRefresh: null,
-      topInset: barInset + AppSpacing.lg,
+      topInset: barInset + PpForgeSpacing.lg,
       bottomInset: bottom,
-      hero: AppHeroCard(
+      hero: PpForgeHeroCard(
         style: HeroStyle.tinted(color: accent, glyph: AppIcons.savingGoal),
         mode: HeroCardMode.edit,
         content: [
@@ -1454,7 +1459,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
             icon: EditableCircle(
               size: 44,
               onTap: _openIconMaker,
-              child: IconCodeWidget(
+              child: PpForgeIconCodeWidget(
                 iconCode: working.iconCode,
                 size: 44,
                 fallbackIcon: AppIcons.savingGoal,
@@ -1506,7 +1511,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         maxLength: TextLimits.note,
         editField: DetailStacked(
           label: l.commonNote,
-          child: AppInput.inline(
+          child: PpForgeInput.inline(
             editing: true,
             controller: _noteCtrl,
             focusNode: _noteFocus,
@@ -1538,17 +1543,22 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     SavingWalletRef? wallet, {
     VoidCallback? onTap,
   }) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final d = AccountType.tryParse(wallet?.type)?.iconDefault;
-    return AppChip(
+    return PpForgeChip(
       label: wallet?.name ?? l.fpGoalsNoWallet,
       icon: d == null
-          ? IconRegistry.get(wallet?.iconCode?.icon, fallback: AppIcons.wallet)
+          ? PpForgeIconRegistry.get(
+              wallet?.iconCode?.icon,
+              fallback: AppIcons.wallet,
+            )
           : wallet?.iconCode.glyphOr(d),
       color: d == null
           ? wallet?.iconCode.tintFor(palette)
           : wallet?.iconCode.tintOr(d, palette),
-      trailing: onTap == null ? AppChipTrailing.none : AppChipTrailing.dropdown,
+      trailing: onTap == null
+          ? PpForgeChipTrailing.none
+          : PpForgeChipTrailing.dropdown,
       size: ChipSize.control,
       onTap: onTap,
     );
@@ -1563,7 +1573,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       // Editing has the due date only; it says itself.
       description: widget.isCreate ? l.sgPlanSectionDesc : null,
       children: [
-        AppDetailRow(
+        PpForgeDetailRow(
           label: l.savingGoalFormDeadlineLabel,
           trailing: Text(
             w.deadline == null
@@ -1585,19 +1595,19 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: PpForgeSpacing.sm),
                 Row(
                   children: [
                     Expanded(
-                      child: AppInput.card(
+                      child: PpForgeInput.card(
                         controller: _openingCtrl,
-                        type: AppInputType.amount,
+                        type: PpForgeInputType.amount,
                         currencySymbol: symbol,
                         hint: '0',
                         onChanged: (v) => _onText(_Field.opening, v),
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
+                    const SizedBox(width: PpForgeSpacing.sm),
                     _walletChip(l, w.openingWallet, onTap: _pickOpeningWallet),
                   ],
                 ),
@@ -1671,7 +1681,7 @@ class _GoalDraft {
 
   final String target;
   final DateTime? deadline;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final String description;
   final String note;
 
@@ -1690,7 +1700,7 @@ class _GoalDraft {
     String? target,
     DateTime? deadline,
     bool clearDeadline = false,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
     bool clearIcon = false,
     String? description,
     String? note,

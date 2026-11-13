@@ -53,7 +53,7 @@ class BudgetDraft extends Equatable {
   final String note;
 
   final String amount;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   final int? warnPct;
   final bool allScope;
@@ -135,7 +135,7 @@ class BudgetDraft extends Equatable {
     String? description,
     String? note,
     String? amount,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
     bool clearIcon = false,
     int? warnPct,
     bool clearWarn = false,

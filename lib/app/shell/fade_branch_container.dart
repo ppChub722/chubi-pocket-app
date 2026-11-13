@@ -4,10 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-import '../../ui/tokens/app_durations.dart' show AppMotion;
 import 'nav_layout.dart';
 import 'tab_entry.dart';
 import 'tab_nav.dart';
+import '../../ui/ui.dart';
 
 class FadeBranchContainer extends StatefulWidget {
   const FadeBranchContainer({
@@ -27,15 +27,15 @@ class _FadeBranchContainerState extends State<FadeBranchContainer>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
-    // Shorter than AppDurations.chrome (450ms): fewer expensive raster frames
+    // Shorter than PpForgeDurations.chrome (450ms): fewer expensive raster frames
     // per tab switch.
-    duration: AppMotion.duration,
+    duration: PpForgePageMotion.duration,
     value: 1,
   );
   late final Animation<double> _curve = CurvedAnimation(
     parent: _ctrl,
     // Fast start, a long soft landing.
-    curve: AppMotion.curve,
+    curve: PpForgePageMotion.curve,
   );
   int? _previous;
 
@@ -263,7 +263,7 @@ class TabBackSlide {
     return done.future;
   }
 
-  static const _backDuration = AppMotion.duration;
+  static const _backDuration = PpForgePageMotion.duration;
 
   static Duration _remaining(double fraction) =>
       _backDuration * fraction.clamp(0.0, 1.0);

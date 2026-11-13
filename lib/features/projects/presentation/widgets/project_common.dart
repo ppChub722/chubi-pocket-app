@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/project.dart';
@@ -29,11 +28,11 @@ List<ProjectStatus> eventStatusOptions(
   ];
 }
 
-AppChipTone projectStatusTone(ProjectStatus s) => switch (s) {
-  ProjectStatus.active => AppChipTone.primary,
-  ProjectStatus.completed => AppChipTone.success,
-  ProjectStatus.cancelled => AppChipTone.danger,
-  ProjectStatus.archived => AppChipTone.neutral,
+PpForgeChipTone projectStatusTone(ProjectStatus s) => switch (s) {
+  ProjectStatus.active => PpForgeChipTone.primary,
+  ProjectStatus.completed => PpForgeChipTone.success,
+  ProjectStatus.cancelled => PpForgeChipTone.danger,
+  ProjectStatus.archived => PpForgeChipTone.neutral,
 };
 
 String? projectLockMessage(AppLocalizations l, ProjectStatus s) => switch (s) {

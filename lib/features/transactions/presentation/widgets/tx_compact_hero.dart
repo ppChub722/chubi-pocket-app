@@ -4,19 +4,19 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/transaction_type.dart';
 
-AppCompactHeroCard txCompactHeroBar(
+PpForgeCompactHeroCard txCompactHeroBar(
   BuildContext context, {
   required TransactionType type,
   required String description,
   required double amount,
   String? categoryName,
-  IconCode? categoryIcon,
+  PpForgeIconCode? categoryIcon,
   String? symbol,
   VoidCallback? onTap,
 }) {
   final l = AppLocalizations.of(context)!;
   final theme = Theme.of(context);
-  final palette = theme.extension<AppColors>()!;
+  final palette = theme.extension<PpForgeColors>()!;
   final typeColor = txTypeColor(context, type);
   final typeLabel = switch (type) {
     TransactionType.expense => l.transactionTypeExpense,
@@ -29,7 +29,7 @@ AppCompactHeroCard txCompactHeroBar(
   // would just repeat it.
   final title = text.isNotEmpty ? text : (category ?? typeLabel);
   final showChip = text.isNotEmpty && category != null;
-  return AppCompactHeroCard(
+  return PpForgeCompactHeroCard(
     style: txHeroStyle(context, type),
     onTap: onTap,
     title: Row(
@@ -50,7 +50,7 @@ AppCompactHeroCard txCompactHeroBar(
         ),
         if (showChip) ...[
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.sm),
             child: Text(
               '|',
               style: theme.textTheme.titleSmall?.copyWith(
@@ -60,9 +60,9 @@ AppCompactHeroCard txCompactHeroBar(
             ),
           ),
           Flexible(
-            child: AppChip(
+            child: PpForgeChip(
               label: category,
-              icon: IconRegistry.get(
+              icon: PpForgeIconRegistry.get(
                 categoryIcon?.icon,
                 fallback: AppIcons.category,
               ),

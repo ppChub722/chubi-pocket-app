@@ -5,7 +5,7 @@ import '../../../features/tags/presentation/cubit/tags_cubit.dart';
 import '../../../features/tags/presentation/widgets/tag_picker.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
-import '../../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// [TagPicker] as each page opens it, on the real tags cache.
 class TagPickerDemos extends StatelessWidget {
@@ -26,9 +26,9 @@ class TagPickerDemos extends StatelessWidget {
       ? 'closed'
       : _names([if (r.none) 'none', for (final t in r.tags) t.name]);
 
-  Widget _new(String label, Future<String> Function() run) => AppButton(
+  Widget _new(String label, Future<String> Function() run) => PpForgeButton(
     label: label,
-    variant: AppButtonVariant.outlined,
+    variant: PpForgeButtonVariant.outlined,
     onPressed: () async => onResult(await run()),
   );
 
@@ -36,8 +36,8 @@ class TagPickerDemos extends StatelessWidget {
     title: title,
     note: note,
     child: Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: buttons,
     ),
   );
@@ -155,7 +155,7 @@ class TagPickerDemos extends StatelessWidget {
         if (all.isEmpty)
           const HubDemo(
             title: 'No tags',
-            child: AppText('The tags cache is empty: sign in first.'),
+            child: PpForgeText('The tags cache is empty: sign in first.'),
           ),
       ],
     );

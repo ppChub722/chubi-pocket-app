@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/network/api_exception.dart';
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/organisms/sheets` — bottom sheets, pickers, option / action menus
 /// and the side sheet.
@@ -37,23 +36,23 @@ class _SheetsPageState extends State<_SheetsPage> {
 
   void _say(Object? v) => setState(() => _result = '$v');
 
-  Widget _demoButton(String label, VoidCallback onPressed) => AppButton(
+  Widget _demoButton(String label, VoidCallback onPressed) => PpForgeButton(
     label: label,
     onPressed: onPressed,
-    variant: AppButtonVariant.outlined,
+    variant: PpForgeButtonVariant.outlined,
   );
 
-  Future<void> _standardSheet() => showAppSheet<void>(
+  Future<void> _standardSheet() => showPpForgeSheet<void>(
     context,
     title: 'Sheet title',
     builder: (_) => const Padding(
-      padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      child: AppText('Body scrolls when tall; the footer stays pinned.'),
+      padding: EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
+      child: PpForgeText('Body scrolls when tall; the footer stays pinned.'),
     ),
     footer: Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(PpForgeSpacing.lg),
       child: Builder(
-        builder: (ctx) => AppButton(
+        builder: (ctx) => PpForgeButton(
           label: 'Confirm',
           expand: true,
           onPressed: () => Navigator.of(ctx).pop(),
@@ -62,24 +61,26 @@ class _SheetsPageState extends State<_SheetsPage> {
     ),
   );
 
-  Future<void> _customSheet() => showAppSheetCustom<void>(
+  Future<void> _customSheet() => showPpForgeSheetCustom<void>(
     context,
     builder: (ctx) => SizedBox(
       height: MediaQuery.sizeOf(ctx).height,
-      child: AppSheetScaffold(
+      child: PpForgeSheetScaffold(
         title: 'Full-height custom sheet',
         footer: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: AppButton(
+          padding: const EdgeInsets.all(PpForgeSpacing.lg),
+          child: PpForgeButton(
             label: 'Close',
-            variant: AppButtonVariant.tonal,
+            variant: PpForgeButtonVariant.tonal,
             expand: true,
             onPressed: () => Navigator.of(ctx).pop(),
           ),
         ),
         child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          child: AppText('A sheet that builds its own AppSheetScaffold.'),
+          padding: EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
+          child: PpForgeText(
+            'A sheet that builds its own PpForgeSheetScaffold.',
+          ),
         ),
       ),
     ),
@@ -91,7 +92,7 @@ class _SheetsPageState extends State<_SheetsPage> {
     bool empty = false,
     bool create = false,
   }) {
-    return showAppSheetCustom<void>(
+    return showPpForgeSheetCustom<void>(
       context,
       builder: (ctx) => PickerSheet(
         title: 'Choose wallet',
@@ -115,8 +116,8 @@ class _SheetsPageState extends State<_SheetsPage> {
               .toList();
           if (empty || rows.isEmpty) {
             return const Padding(
-              padding: EdgeInsets.all(AppSpacing.xxl),
-              child: Center(child: AppText('No wallets yet')),
+              padding: EdgeInsets.all(PpForgeSpacing.xxl),
+              child: Center(child: PpForgeText('No wallets yet')),
             );
           }
           return Column(
@@ -144,7 +145,7 @@ class _SheetsPageState extends State<_SheetsPage> {
   Future<void> _multiPicker() async {
     const bills = ['Dinner', 'Taxi', 'Hotel', 'Snacks', 'Tickets'];
     final picked = <String>{};
-    final added = await showAppSheetCustom<Set<String>>(
+    final added = await showPpForgeSheetCustom<Set<String>>(
       context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheet) => PickerSheet(
@@ -251,23 +252,23 @@ class _SheetsPageState extends State<_SheetsPage> {
             title: 'Wallets',
             icon: AppIcons.wallet,
             child: Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
+              spacing: PpForgeSpacing.sm,
+              runSpacing: PpForgeSpacing.sm,
               children: [
-                AppChip(label: 'Cash', selected: true),
-                AppChip(label: 'Savings'),
-                AppChip(label: 'Credit card'),
+                PpForgeChip(label: 'Cash', selected: true),
+                PpForgeChip(label: 'Savings'),
+                PpForgeChip(label: 'Credit card'),
               ],
             ),
           ),
           SideSheetSection(
             title: 'Type',
             child: Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
+              spacing: PpForgeSpacing.sm,
+              runSpacing: PpForgeSpacing.sm,
               children: [
-                AppChip(label: 'Income'),
-                AppChip(label: 'Expense', selected: true),
+                PpForgeChip(label: 'Income'),
+                PpForgeChip(label: 'Expense', selected: true),
               ],
             ),
           ),
@@ -276,15 +277,15 @@ class _SheetsPageState extends State<_SheetsPage> {
       footer: Row(
         children: [
           Expanded(
-            child: AppButton(
+            child: PpForgeButton(
               label: 'Reset',
-              variant: AppButtonVariant.outlined,
+              variant: PpForgeButtonVariant.outlined,
               onPressed: () => Navigator.of(ctx).pop(),
             ),
           ),
-          const SizedBox(width: AppSpacing.md),
+          const SizedBox(width: PpForgeSpacing.md),
           Expanded(
-            child: AppButton(
+            child: PpForgeButton(
               label: 'Apply',
               onPressed: () => Navigator.of(ctx).pop(),
             ),
@@ -304,19 +305,19 @@ class _SheetsPageState extends State<_SheetsPage> {
           note: 'The real sheets and where they are used.',
         ),
         HubDemo(
-          title: 'AppAmountSheet.show — one amount setting',
+          title: 'PpForgeAmountSheet.show — one amount setting',
           note:
               'A setting that is one amount (a saving goal\'s เป้าต่อรอบ): '
               'label over the amount input, an optional helper line, and a '
               'clear link while there is a value. Save is on once the amount '
-              'is above 0 and differs. Resolves AppAmountResult.amount / '
+              'is above 0 and differs. Resolves PpForgeAmountResult.amount / '
               '.cleared / null (dismissed).',
           child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
               _demoButton('Empty', () async {
-                final r = await AppAmountSheet.show(
+                final r = await PpForgeAmountSheet.show(
                   context,
                   title: 'เป้าต่อรอบ',
                   label: 'ยอดต่อรอบ',
@@ -326,7 +327,7 @@ class _SheetsPageState extends State<_SheetsPage> {
                 _say(r == null ? null : (r.cleared ? 'cleared' : r.amount));
               }),
               _demoButton('With a value + clear', () async {
-                final r = await AppAmountSheet.show(
+                final r = await PpForgeAmountSheet.show(
                   context,
                   title: 'เป้าต่อรอบ',
                   label: 'ยอดต่อรอบ',
@@ -342,29 +343,29 @@ class _SheetsPageState extends State<_SheetsPage> {
           ),
         ),
         HubDemo(
-          title: 'AppDatePicker.show + AppDatePickerSheet',
+          title: 'PpForgeDatePicker.show + PpForgeDatePickerSheet',
           note:
               'THE date picker, every page picks one date through it: a bottom '
               'sheet with a calendar — tapping a day picks it at once — plus '
               '"Today" and, when clearable, "Clear"; title names the field. '
-              'Resolves with AppDatePicked(date) / AppDateCleared / null '
+              'Resolves with PpForgeDatePicked(date) / PpForgeDateCleared / null '
               '(dismissed). Used by the quick-create date, the scheduled next '
               "billing, a goal deadline (clearable), a debt's payment date, a "
               'budget start / end, event bills, settle-up.',
           child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
               _demoButton('Pick a date', () async {
-                final r = await AppDatePicker.show(
+                final r = await PpForgeDatePicker.show(
                   context,
                   initial: DateTime.now(),
                 );
-                _say(r is AppDatePicked ? r.date : r);
+                _say(r is PpForgeDatePicked ? r.date : r);
               }),
               _demoButton('Deadline (clearable, future only)', () async {
                 final now = DateTime.now();
-                final r = await AppDatePicker.show(
+                final r = await PpForgeDatePicker.show(
                   context,
                   initial: now.add(const Duration(days: 90)),
                   first: now,
@@ -372,7 +373,7 @@ class _SheetsPageState extends State<_SheetsPage> {
                   title: 'Deadline',
                   clearable: true,
                 );
-                _say(r is AppDatePicked ? r.date : r);
+                _say(r is PpForgeDatePicked ? r.date : r);
               }),
             ],
           ),
@@ -391,12 +392,12 @@ class _SheetsPageState extends State<_SheetsPage> {
               'live. Reference: PeriodPickerSheet (wrapper: transactions '
               'period_sheet.dart).',
           child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
               _demoButton('Period sheet (reference)', () async {
                 final now = DateTime.now();
-                final r = await AppDatePicker.period(
+                final r = await PpForgeDatePicker.period(
                   context,
                   current: PeriodPick(PeriodUnit.month, now),
                   labels: const PeriodPickerLabels(
@@ -418,27 +419,27 @@ class _SheetsPageState extends State<_SheetsPage> {
           ),
         ),
         HubDemo(
-          title: 'AppDatePicker.range + AppDateRangePickerSheet',
+          title: 'PpForgeDatePicker.range + PpForgeDateRangePickerSheet',
           note:
               'A from–to range, same sheet look as the date picker: tap a '
               'day to start, another to end (tap again to start over), then '
               'Save. Optional preset chips above the calendar. Resolves with a '
               'DateTimeRange / null (dismissed). Used by the transactions '
-              'custom period and an event\'s dates. AppDatePicker.period '
-              '(above) and AppDatePicker.month (StepperPill) are the other '
+              'custom period and an event\'s dates. PpForgeDatePicker.period '
+              '(above) and PpForgeDatePicker.month (StepperPill) are the other '
               'two kinds.',
           child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
               _demoButton('Pick a range', () async {
-                final r = await AppDatePicker.range(context);
+                final r = await PpForgeDatePicker.range(context);
                 _say(r);
               }),
               _demoButton('With presets, up to today', () async {
                 final now = DateTime.now();
                 final today = DateTime(now.year, now.month, now.day);
-                final r = await AppDatePicker.range(
+                final r = await PpForgeDatePicker.range(
                   context,
                   last: today,
                   initial: DateTimeRange(
@@ -446,14 +447,14 @@ class _SheetsPageState extends State<_SheetsPage> {
                     end: today,
                   ),
                   presets: [
-                    AppDateRangePreset(
+                    PpForgeDateRangePreset(
                       'Last 7 days',
                       DateTimeRange(
                         start: today.subtract(const Duration(days: 6)),
                         end: today,
                       ),
                     ),
-                    AppDateRangePreset(
+                    PpForgeDateRangePreset(
                       'This month',
                       DateTimeRange(
                         start: DateTime(today.year, today.month),
@@ -486,8 +487,8 @@ class _SheetsPageState extends State<_SheetsPage> {
                   final today = DateTime(now.year, now.month, now.day);
                   return SizedBox(
                     height: 600,
-                    child: AppCard(
-                      style: AppCardStyle.bordered,
+                    child: PpForgeCard(
+                      style: PpForgeCardStyle.bordered,
                       child: MultiDatePickerSheet(
                         initial: {
                           today.add(const Duration(days: 3)),
@@ -504,7 +505,7 @@ class _SheetsPageState extends State<_SheetsPage> {
                   );
                 },
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               Align(
                 alignment: Alignment.centerLeft,
                 child: _demoButton('Open the multi-date sheet', () async {
@@ -569,8 +570,8 @@ class _SheetsPageState extends State<_SheetsPage> {
                 onTap: () {},
               ),
               const PickerConfirmBar(label: 'Add (1)', onPressed: null),
-              const SizedBox(height: AppSpacing.sm),
-              AppButton(
+              const SizedBox(height: PpForgeSpacing.sm),
+              PpForgeButton(
                 label: 'Open a multi-select picker',
                 onPressed: _multiPicker,
               ),
@@ -580,13 +581,14 @@ class _SheetsPageState extends State<_SheetsPage> {
         HubDemo(
           title: 'Last result',
           note: 'What the sheets resolve with.',
-          child: AppText(
+          child: PpForgeText(
             '$_result - wallet: $_wallet, currency: $_currency, sort: $_sort',
-            role: AppTextRole.caption,
+            role: PpForgeTextRole.caption,
           ),
         ),
         HubDemo(
-          title: 'AppSheetScaffold, showAppSheet, showAppSheetCustom',
+          title:
+              'PpForgeSheetScaffold, showPpForgeSheet, showPpForgeSheetCustom',
           note:
               'The standard bottom sheet: drag handle, title, scrolling body, '
               'pinned footer. Custom = a sheet that builds its own scaffold.',
@@ -594,11 +596,11 @@ class _SheetsPageState extends State<_SheetsPage> {
             cells: [
               HubCell(
                 caption: 'Title + footer',
-                child: _demoButton('showAppSheet', _standardSheet),
+                child: _demoButton('showPpForgeSheet', _standardSheet),
               ),
               HubCell(
                 caption: 'Full height',
-                child: _demoButton('showAppSheetCustom', _customSheet),
+                child: _demoButton('showPpForgeSheetCustom', _customSheet),
               ),
             ],
           ),
@@ -681,7 +683,7 @@ class _SheetsPageState extends State<_SheetsPage> {
         ),
 
         HubPlayground(
-          title: 'showAppSheet',
+          title: 'showPpForgeSheet',
           note:
               'The standard bottom sheet: a title, a body that scrolls and an '
               'optional pinned footer. Set the options, then open it.',
@@ -698,14 +700,14 @@ class _SheetsPageState extends State<_SheetsPage> {
           ],
           builder: (context, v) => Align(
             alignment: Alignment.centerLeft,
-            child: AppButton(
+            child: PpForgeButton(
               label: 'Open the sheet',
-              onPressed: () => showAppSheet<void>(
+              onPressed: () => showPpForgeSheet<void>(
                 context,
                 title: v<String>('title').isEmpty ? null : v<String>('title'),
                 builder: (_) => Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
+                    horizontal: PpForgeSpacing.lg,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -713,18 +715,18 @@ class _SheetsPageState extends State<_SheetsPage> {
                       for (var i = 0; i < v<double>('bodyLines').round(); i++)
                         const Padding(
                           padding: EdgeInsets.symmetric(
-                            vertical: AppSpacing.xs,
+                            vertical: PpForgeSpacing.xs,
                           ),
-                          child: AppText('A line of the body.'),
+                          child: PpForgeText('A line of the body.'),
                         ),
                     ],
                   ),
                 ),
                 footer: v<bool>('footer')
                     ? Padding(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        padding: const EdgeInsets.all(PpForgeSpacing.lg),
                         child: Builder(
-                          builder: (ctx) => AppButton(
+                          builder: (ctx) => PpForgeButton(
                             label: 'Confirm',
                             expand: true,
                             onPressed: () => Navigator.of(ctx).pop(),

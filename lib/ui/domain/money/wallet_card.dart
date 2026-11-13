@@ -27,7 +27,7 @@ class AccountCard extends StatelessWidget {
       // Grid card only — on the row form it would sit under the balance.
       showGlyph: !horizontal,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(PpForgeSpacing.md),
         child: horizontal
             ? _HorizontalLayout(account: account, onIconTap: onIconTap)
             : _VerticalLayout(account: account, onIconTap: onIconTap),
@@ -98,37 +98,41 @@ class _HorizontalLayout extends StatelessWidget {
           size: AvatarMetrics.sizeLarge,
           onTap: onIconTap,
         ),
-        const SizedBox(width: AppSpacing.md),
+        const SizedBox(width: PpForgeSpacing.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              AppText(account.name, role: AppTextRole.title, maxLines: 1),
-              const SizedBox(height: AppSpacing.xxs),
-              AppText(
+              PpForgeText(
+                account.name,
+                role: PpForgeTextRole.title,
+                maxLines: 1,
+              ),
+              const SizedBox(height: PpForgeSpacing.xxs),
+              PpForgeText(
                 hasDesc ? desc : accountTypeLabel(context, account.type),
-                role: AppTextRole.caption,
+                role: PpForgeTextRole.caption,
                 maxLines: 1,
               ),
               if (hasNote) ...[
-                const SizedBox(height: AppSpacing.xxs),
-                AppText(
+                const SizedBox(height: PpForgeSpacing.xxs),
+                PpForgeText(
                   note,
-                  role: AppTextRole.caption,
+                  role: PpForgeTextRole.caption,
                   italic: true,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
               if (account.isShared) ...[
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: PpForgeSpacing.xs),
                 OtherMembersStack(account: account),
               ],
             ],
           ),
         ),
-        const SizedBox(width: AppSpacing.md),
+        const SizedBox(width: PpForgeSpacing.md),
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisSize: MainAxisSize.min,
@@ -136,13 +140,13 @@ class _HorizontalLayout extends StatelessWidget {
             if (account.showsBalance)
               MoneyText(
                 accountDisplayBalance(account),
-                style: AppTypography.of(
+                style: PpForgeTypography.of(
                   context,
-                  AppTextRole.money,
+                  PpForgeTextRole.money,
                 )?.copyWith(color: accountBalanceColor(context, account)),
               ),
             if (account.creditUsedPct != null) ...[
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: PpForgeSpacing.xs),
               SizedBox(
                 width: 100,
                 child: ProgressRow(
@@ -184,30 +188,30 @@ class _VerticalLayout extends StatelessWidget {
               size: AvatarMetrics.sizeMedium,
               onTap: onIconTap,
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  AppText(
+                  PpForgeText(
                     account.name,
-                    role: AppTextRole.title,
+                    role: PpForgeTextRole.title,
                     weight: FontWeight.w700,
                     maxLines: 1,
                   ),
-                  AppText(
+                  PpForgeText(
                     desc != null && desc.isNotEmpty
                         ? desc
                         : accountTypeLabel(context, account.type),
-                    role: AppTextRole.caption,
+                    role: PpForgeTextRole.caption,
                     maxLines: 1,
                   ),
                 ],
               ),
             ),
             if (account.isShared) ...[
-              const SizedBox(width: AppSpacing.xs),
+              const SizedBox(width: PpForgeSpacing.xs),
               OtherMembersStack(account: account),
             ],
           ],
@@ -215,25 +219,25 @@ class _VerticalLayout extends StatelessWidget {
         const Spacer(),
         if (account.showsBalance) _InfoLine(account: account),
         if (account.showsBalance) ...[
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: PpForgeSpacing.xs),
           MoneyText(
             accountDisplayBalance(account),
-            style: AppTypography.of(
+            style: PpForgeTypography.of(
               context,
-              AppTextRole.money,
+              PpForgeTextRole.money,
             )?.copyWith(color: accountBalanceColor(context, account)),
           ),
           if (account.savings case final s? when s.saved > 0)
-            AppText(
+            PpForgeText(
               AppLocalizations.of(
                 context,
               )!.fpWalletSavedLegend(moneyString(context, s.saved)),
-              role: AppTextRole.caption,
+              role: PpForgeTextRole.caption,
               maxLines: 1,
             ),
         ],
         if (utilization != null) ...[
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: PpForgeSpacing.xs),
           ProgressRow(
             value: utilization,
             color: accent,
@@ -256,22 +260,22 @@ class _InfoLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final days = account.daysUntilDue;
     final available = account.creditAvailable;
     if (account.type.isCredit && days != null && days >= 0) {
-      return AppText(
+      return PpForgeText(
         days == 0 ? l.accountCardDueToday : l.accountCardDueIn(days),
-        role: AppTextRole.caption,
+        role: PpForgeTextRole.caption,
         color: days <= 7 ? palette.warning : null,
         weight: days <= 7 ? FontWeight.w700 : null,
         maxLines: 1,
       );
     }
     if (account.type.isCredit && available != null) {
-      return AppText(
+      return PpForgeText(
         l.fpWalletCardLeft(moneyString(context, available)),
-        role: AppTextRole.caption,
+        role: PpForgeTextRole.caption,
         maxLines: 1,
       );
     }
@@ -281,9 +285,12 @@ class _InfoLine extends StatelessWidget {
     Widget part(IconData icon, Color color, double amount) => Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        AppIcon(icon, size: AppIconSize.xs, color: color),
-        const SizedBox(width: AppSpacing.xxs),
-        AppText(moneyString(context, amount), role: AppTextRole.caption),
+        PpForgeIcon(icon, size: PpForgeIconSize.xs, color: color),
+        const SizedBox(width: PpForgeSpacing.xxs),
+        PpForgeText(
+          moneyString(context, amount),
+          role: PpForgeTextRole.caption,
+        ),
       ],
     );
     return Align(
@@ -294,7 +301,7 @@ class _InfoLine extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             part(AppIcons.trendUp, palette.income, account.monthIn),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             part(AppIcons.trendDown, palette.expense, account.monthOut),
           ],
         ),
@@ -382,8 +389,8 @@ class OtherMembersStack extends StatelessWidget {
 }
 
 Color accountBalanceColor(BuildContext context, Account account) {
-  final palette = Theme.of(context).extension<AppColors>()!;
-  if (account.isLiability) return palette.walletLiability;
+  final palette = Theme.of(context).extension<PpForgeColors>()!;
+  if (account.isLiability) return ModuleColors.of(context).walletLiability;
   return account.iconCode.tintFor(palette);
 }
 

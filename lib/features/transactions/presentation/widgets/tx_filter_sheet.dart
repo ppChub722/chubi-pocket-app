@@ -22,7 +22,7 @@ Future<TxFilters?> showTxFilterSheet(
   bool walletLocked = false,
 }) async {
   final l = AppLocalizations.of(context)!;
-  final palette = Theme.of(context).extension<AppColors>()!;
+  final palette = Theme.of(context).extension<PpForgeColors>()!;
   var loaded = const TxFormOptions();
   Future<TxFilterOptions> load() async {
     final cubit = context.read<TxFormOptionsCubit>();
@@ -165,7 +165,7 @@ TxFilterSelection _selectionOf(TxFilters f) => TxFilterSelection(
 
 TxFilterOptions _filterOptions(
   AppLocalizations l,
-  AppColors palette,
+  PpForgeColors palette,
   TxFormOptions o,
 ) => TxFilterOptions(
   wallets: [
@@ -185,7 +185,10 @@ TxFilterOptions _filterOptions(
         TxFilterOption(
           id: c.id,
           label: categoryDisplayName(l, c),
-          icon: IconRegistry.get(c.iconCode?.icon, fallback: AppIcons.category),
+          icon: PpForgeIconRegistry.get(
+            c.iconCode?.icon,
+            fallback: AppIcons.category,
+          ),
           color: c.iconCode.tintFor(palette),
           subtitle: c.type == CategoryType.income
               ? l.transactionTypeIncome
@@ -208,7 +211,7 @@ TxFilterOptions _filterOptions(
       TxFilterOption(
         id: t.id,
         label: t.name.isEmpty ? l.tagFormNameLabel : t.name,
-        icon: IconRegistry.get(t.iconCode?.icon, fallback: AppIcons.tag),
+        icon: PpForgeIconRegistry.get(t.iconCode?.icon, fallback: AppIcons.tag),
         color: tagColor(t.iconCode, palette),
         iconCode: t.iconCode,
       ),

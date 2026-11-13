@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
-import '../../../../app/shell/shell_chrome.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/quick_create_look.dart';
@@ -64,7 +63,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
       _filterColors.isNotEmpty ||
       _filterIcons.isNotEmpty;
 
-  static String? _colorOf(IconCode? c) {
+  static String? _colorOf(PpForgeIconCode? c) {
     if (c == null) return null;
     if (c.bgColors.isNotEmpty) return c.bgColors.first;
     return c.iconColors.isNotEmpty ? c.iconColors.first : null;
@@ -220,7 +219,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _savingReorder = false);
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         '${l.categoriesReorderSave}: ${errorText(l, e)}',
         tone: Tone.danger,
@@ -291,12 +290,12 @@ class _CategoriesPageState extends State<CategoriesPage> {
                       ? const []
                       : [_header(l, typeUsers, all)],
                   tabs: [
-                    AppTab(
+                    PpForgeTab(
                       value: CategoryType.expense,
                       label: l.categoryTypeExpense,
                       icon: AppIcons.expense,
                     ),
-                    AppTab(
+                    PpForgeTab(
                       value: CategoryType.income,
                       label: l.categoryTypeIncome,
                       icon: AppIcons.income,
@@ -357,12 +356,12 @@ class _CategoriesPageState extends State<CategoriesPage> {
         ),
         Positioned.fill(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: AppText(
+              child: PpForgeText(
                 l.categoriesReorderTapHint,
-                role: AppTextRole.caption,
+                role: PpForgeTextRole.caption,
               ),
             ),
           ),
@@ -376,13 +375,13 @@ class _CategoriesPageState extends State<CategoriesPage> {
     List<Category> typeUsers,
     List<Category> all,
   ) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final codes = [
       for (final c in typeUsers) CategoryTree.resolveIconCode(c, typeUsers),
     ];
     final colors = {for (final c in codes) ?_colorOf(c)}.toList()..sort();
     final icons = {for (final c in codes) ?c?.icon}.toList()..sort();
-    return AppListToolbar(
+    return PpForgeListToolbar(
       search: ListToolbarSearch(
         controller: _search,
         hint: l.categoriesSearchHint,
@@ -390,19 +389,19 @@ class _CategoriesPageState extends State<CategoriesPage> {
       ),
       filters: [
         PopoverAnchor(
-          builder: (context, toggle) => AppChip(
+          builder: (context, toggle) => PpForgeChip(
             label: l.iconMakerTabColor,
             icon: AppIcons.colorPicker,
             selected: _filterColors.isNotEmpty,
             count: _filterColors.length,
             trailing: _filterColors.isEmpty
-                ? AppChipTrailing.dropdown
-                : AppChipTrailing.count,
+                ? PpForgeChipTrailing.dropdown
+                : PpForgeChipTrailing.count,
             onTap: colors.isEmpty ? null : toggle,
           ),
           contentBuilder: (context, close) => StatefulBuilder(
             builder: (context, setPopover) => ColorSwatchGrid(
-              colors: [for (final t in colors) resolveColor(t, palette)],
+              colors: [for (final t in colors) ppForgeResolveColor(t, palette)],
               selected: {
                 for (final (i, t) in colors.indexed)
                   if (_filterColors.contains(t)) i,
@@ -426,18 +425,18 @@ class _CategoriesPageState extends State<CategoriesPage> {
           ),
         ),
         PopoverAnchor(
-          builder: (context, toggle) => AppChip(
+          builder: (context, toggle) => PpForgeChip(
             label: l.iconMakerRoleIcon,
             icon: AppIcons.iconPicker,
             selected: _filterIcons.isNotEmpty,
             count: _filterIcons.length,
             trailing: _filterIcons.isEmpty
-                ? AppChipTrailing.dropdown
-                : AppChipTrailing.count,
+                ? PpForgeChipTrailing.dropdown
+                : PpForgeChipTrailing.count,
             onTap: icons.isEmpty ? null : toggle,
           ),
           contentBuilder: (context, close) => StatefulBuilder(
-            builder: (context, setPopover) => IconSwatchGrid(
+            builder: (context, setPopover) => PpForgeIconSwatchGrid(
               glyphs: icons,
               selected: _filterIcons,
               onToggle: (g) {
@@ -458,7 +457,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
           ),
         ),
       ],
-      trailing: AppIconButton.edit(
+      trailing: PpForgeIconButton.edit(
         tooltip: l.categoriesReorderEnter,
         onPressed: typeUsers.length < 2
             ? null
@@ -515,8 +514,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
       builder: (context, padding) => ReorderListScope(
         controller: _reorder,
         scrollController: _scrollControllers[type]!,
-        indentStep: AppSpacing.xxl,
-        indentBase: AppSpacing.lg,
+        indentStep: PpForgeSpacing.xxl,
+        indentBase: PpForgeSpacing.lg,
         dropLabel: (parentId) {
           final parent = parentId == null ? null : byId[parentId];
           return parent == null
@@ -546,7 +545,11 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
   void _add(AppLocalizations l, CategoryType type) {
     if (!context.read<CategoriesCubit>().canAddMore) {
-      showAppSnackBar(context, l.categoriesLimitReached, tone: Tone.warning);
+      showPpForgeSnackBar(
+        context,
+        l.categoriesLimitReached,
+        tone: Tone.warning,
+      );
       return;
     }
     context.push('/categories/new?type=${type.toJson()}');
@@ -594,15 +597,15 @@ class _ListBody extends StatelessWidget {
       padding: padding,
       children: [
         for (final (i, row) in rows.indexed) ...[
-          if (i > 0) const AppDivider.row(),
+          if (i > 0) const PpForgeDivider.row(),
           row,
         ],
         if (onAdd != null)
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.md,
-              AppSpacing.lg,
+              PpForgeSpacing.lg,
+              PpForgeSpacing.md,
+              PpForgeSpacing.lg,
               0,
             ),
             child: AddTile(label: addLabel, onTap: onAdd),
@@ -696,7 +699,7 @@ class _RowContent extends StatelessWidget {
   });
 
   final Category category;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final int depth;
   final bool reorderMode;
   final bool hasChildren;
@@ -708,8 +711,8 @@ class _RowContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final hidden = !category.includeInReport;
-    return AppListRow(
-      indent: depth * AppSpacing.xxl,
+    return PpForgeListRow(
+      indent: depth * PpForgeSpacing.xxl,
       leading: IconDisplay(
         type: IconType.category,
         size: 36,

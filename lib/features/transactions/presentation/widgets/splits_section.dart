@@ -261,19 +261,19 @@ class _SplitsSectionState extends State<SplitsSection> {
     final sectioned = widget.embedded && !widget.compact;
     const chipSize = ChipSize.control;
     final pillChildren = <Widget>[
-      AppButton(
+      PpForgeButton(
         icon: AppIcons.add,
         label: l.txSplitAddPerson,
-        variant: AppButtonVariant.outlined,
-        size: AppButtonSize.control,
+        variant: PpForgeButtonVariant.outlined,
+        size: PpForgeButtonSize.control,
         onPressed: _addPerson,
       ),
       if (!widget.embedded || widget.drafts.isNotEmpty) ...[
-        const SizedBox(width: AppSpacing.xs),
-        AppChip(
+        const SizedBox(width: PpForgeSpacing.xs),
+        PpForgeChip(
           icon: AppIcons.split,
           label: l.txSplitEqually,
-          tone: AppChipTone.primary,
+          tone: PpForgeChipTone.primary,
           selected: true,
           size: chipSize,
           enabled: widget.drafts.isNotEmpty && widget.totalAmount > 0,
@@ -283,8 +283,8 @@ class _SplitsSectionState extends State<SplitsSection> {
     ];
     final pills = widget.compact
         ? Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
+            spacing: PpForgeSpacing.xs,
+            runSpacing: PpForgeSpacing.xs,
             children: [
               for (final c in pillChildren)
                 if (c is! SizedBox) c,
@@ -294,8 +294,8 @@ class _SplitsSectionState extends State<SplitsSection> {
     Widget inset(Widget w) => sectioned
         ? Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.xs,
+              horizontal: PpForgeSpacing.lg,
+              vertical: PpForgeSpacing.xs,
             ),
             child: w,
           )
@@ -325,18 +325,23 @@ class _SplitsSectionState extends State<SplitsSection> {
           ),
         ),
     ];
-    final edge = sectioned ? AppSpacing.lg : 0.0;
+    final edge = sectioned ? PpForgeSpacing.lg : 0.0;
     final Widget? closing;
     if (_withMe) {
       closing = Padding(
-        padding: EdgeInsets.fromLTRB(edge, AppSpacing.xs, edge, AppSpacing.xs),
+        padding: EdgeInsets.fromLTRB(
+          edge,
+          PpForgeSpacing.xs,
+          edge,
+          PpForgeSpacing.xs,
+        ),
         child: _LeftLine(
           left: splitLeft(widget.totalAmount, widget.me, widget.drafts),
         ),
       );
     } else if (_peopleTotal > widget.totalAmount + 0.005) {
       closing = Padding(
-        padding: EdgeInsets.fromLTRB(edge, AppSpacing.xs, edge, 0),
+        padding: EdgeInsets.fromLTRB(edge, PpForgeSpacing.xs, edge, 0),
         child: Text(
           widget.overText ?? l.txSplitOver,
           style: theme.textTheme.bodySmall?.copyWith(
@@ -351,7 +356,7 @@ class _SplitsSectionState extends State<SplitsSection> {
     final helper = widget.helper == null
         ? null
         : Padding(
-            padding: EdgeInsets.fromLTRB(edge, 0, edge, AppSpacing.xs),
+            padding: EdgeInsets.fromLTRB(edge, 0, edge, PpForgeSpacing.xs),
             child: Text(
               widget.helper!,
               style: theme.textTheme.bodySmall?.copyWith(
@@ -368,7 +373,7 @@ class _SplitsSectionState extends State<SplitsSection> {
             Padding(
               padding: EdgeInsets.only(
                 left: DraftFieldRow.labelWidthOf(context),
-                top: AppSpacing.xs,
+                top: PpForgeSpacing.xs,
               ),
               child: Text(
                 widget.helper!,
@@ -377,9 +382,12 @@ class _SplitsSectionState extends State<SplitsSection> {
                 ),
               ),
             ),
-          for (final r in rows) ...[const SizedBox(height: AppSpacing.xs), r],
+          for (final r in rows) ...[
+            const SizedBox(height: PpForgeSpacing.xs),
+            r,
+          ],
           if (closing != null) ...[
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: PpForgeSpacing.xs),
             closing,
           ],
         ],
@@ -391,8 +399,8 @@ class _SplitsSectionState extends State<SplitsSection> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.md,
+              horizontal: PpForgeSpacing.lg,
+              vertical: PpForgeSpacing.md,
             ),
             child: Row(
               children: [
@@ -426,7 +434,7 @@ class _SplitsSectionState extends State<SplitsSection> {
           ],
         ),
         ?helper,
-        for (final r in rows) ...[const SizedBox(height: AppSpacing.xs), r],
+        for (final r in rows) ...[const SizedBox(height: PpForgeSpacing.xs), r],
         ?closing,
       ],
     );
@@ -441,7 +449,7 @@ class _LeftLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final style = Theme.of(context).textTheme.bodyMedium;
     final (IconData? icon, String text, Color color) = left.abs() <= 0.005
         ? (AppIcons.success, l.txSplitBalanced, palette.success)
@@ -452,8 +460,8 @@ class _LeftLine extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         if (icon != null) ...[
-          AppIcon(icon, size: AppIconSize.sm, color: color),
-          const SizedBox(width: AppSpacing.xs),
+          PpForgeIcon(icon, size: PpForgeIconSize.sm, color: color),
+          const SizedBox(width: PpForgeSpacing.xs),
         ],
         Flexible(
           child: Text(
@@ -512,10 +520,10 @@ class _AmountBoxState extends State<_AmountBox> {
       height: SplitRow.height,
       child: Align(
         alignment: Alignment.bottomCenter,
-        child: AppInput.card(
+        child: PpForgeInput.card(
           controller: _amount,
           focusNode: _focus,
-          type: AppInputType.amount,
+          type: PpForgeInputType.amount,
           style: _fieldStyle(context),
           hint: '0',
           onChanged: (v) => widget.onChanged(AmountInput.parse(v)),
@@ -702,8 +710,8 @@ class _SplitDraftRowState extends State<SplitDraftRow> {
         row,
         Padding(
           padding: const EdgeInsets.only(
-            left: AppSpacing.sm,
-            top: AppSpacing.xs,
+            left: PpForgeSpacing.sm,
+            top: PpForgeSpacing.xs,
           ),
           child: Text(
             draft.cancelled

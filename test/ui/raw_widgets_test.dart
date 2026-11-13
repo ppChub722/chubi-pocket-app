@@ -57,7 +57,7 @@ void main() {
   };
 
   // The kit and the shell build on raw Material, but a button is always
-  // AppButton / AppIconButton, the only files that wrap Material's.
+  // PpForgeButton / PpForgeIconButton, the only files that wrap Material's.
   const buttons = [
     'TextButton',
     'FilledButton',

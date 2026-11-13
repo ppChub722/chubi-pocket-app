@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/organisms/app-hero-card` — THE hero card: header · content ·
 /// footer, three modes, expanded / folded versions, and every hub piece a
@@ -38,9 +37,9 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
     super.dispose();
   }
 
-  Color get _red => Theme.of(context).extension<AppColors>()!.expense;
-  Color get _green => Theme.of(context).extension<AppColors>()!.income;
-  Color get _amber => Theme.of(context).extension<AppColors>()!.warning;
+  Color get _red => Theme.of(context).extension<PpForgeColors>()!.expense;
+  Color get _green => Theme.of(context).extension<PpForgeColors>()!.income;
+  Color get _amber => Theme.of(context).extension<PpForgeColors>()!.warning;
 
   Widget _circle(IconData icon, Color color, {double size = 40}) => Container(
     width: size,
@@ -92,10 +91,10 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
       HeroIdentity(
         icon: _circle(AppIcons.category, _red),
         name: editing
-            ? AppInput.title(editing: true, controller: _name)
+            ? PpForgeInput.title(editing: true, controller: _name)
             : Text(name),
         description: editing
-            ? AppInput.card(controller: _desc, underline: true)
+            ? PpForgeInput.card(controller: _desc, underline: true)
             : _muted('Fresh food and drinks'),
       ),
       if (editing)
@@ -125,22 +124,24 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
         small: true,
       ),
     ];
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: HeroStyle.tinted(color: _red, glyph: AppIcons.category),
       mode: mode,
       header: v<bool>('header')
           ? HeroHeader(
               leading: [
-                AppChip(
+                PpForgeChip(
                   label: 'Monthly',
                   icon: AppIcons.scheduled,
                   selected: true,
-                  tone: AppChipTone.neutral,
+                  tone: PpForgeChipTone.neutral,
                   onTap: editing ? () {} : null,
                   dashed: editing,
                 ),
               ],
-              actions: [AppIconButton(icon: AppIcons.search, onPressed: () {})],
+              actions: [
+                PpForgeIconButton(icon: AppIcons.search, onPressed: () {}),
+              ],
               onEdit: () {},
             )
           : null,
@@ -161,7 +162,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         HubPlayground(
-          title: 'AppHeroCard',
+          title: 'PpForgeHeroCard',
           note:
               'header | content | footer. The card adds ✏️ (view only) and '
               '⌄ / ⌃ (both versions) to the header itself; spacing comes '
@@ -193,7 +194,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
               marker: 0.26,
               markerLabel: 'Today',
               alert: 0.8,
-              alertColor: Theme.of(context).extension<AppColors>()!.warning,
+              alertColor: Theme.of(context).extension<PpForgeColors>()!.warning,
               alertLabel: 'Warn',
               left: 'Used ฿3,120',
               right: 'Up to ฿2,080 by today',
@@ -217,7 +218,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                 ('pink', HeroStyle.tinted(color: Color(0xFFD9488F))),
                 ('plain = theme primary', HeroStyle.plain()),
               ]) ...[
-                AppHeroCard(
+                PpForgeHeroCard(
                   style: style,
                   content: [
                     HeroIdentity(
@@ -262,7 +263,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                     const _HeroColorSwatches(),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: PpForgeSpacing.md),
               ],
             ],
           ),
@@ -294,7 +295,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                 ),
                 ('Over', 1.15, _red, (StatusKind.over, 'Over by ฿300')),
               ]) ...[
-                AppHeroCard(
+                PpForgeHeroCard(
                   style: const HeroStyle.tinted(color: Color(0xFFB35BC9)),
                   content: [
                     HeroIdentity(
@@ -312,7 +313,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                             title: 'Monthly on the 1st',
                             subtitle: '12 days left | 20/31',
                           ),
-                          const SizedBox(width: AppSpacing.sm),
+                          const SizedBox(width: PpForgeSpacing.sm),
                           CardActionButton(icon: AppIcons.edit, onTap: () {}),
                         ],
                       ),
@@ -376,7 +377,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: PpForgeSpacing.md),
               ],
             ],
           ),
@@ -392,7 +393,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
           child: Builder(
             builder: (context) {
               final scheme = Theme.of(context).colorScheme;
-              return AppHeroCard(
+              return PpForgeHeroCard(
                 style: HeroStyle.tinted(color: scheme.primary),
                 header: HeroHeader(
                   leading: const [
@@ -404,7 +405,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                     ),
                   ],
                   actions: [
-                    AppIconButton(icon: AppIcons.search, onPressed: () {}),
+                    PpForgeIconButton(icon: AppIcons.search, onPressed: () {}),
                   ],
                 ),
                 content: [
@@ -441,19 +442,19 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                       HeroFilter(
                         label: 'On track',
                         count: 1,
-                        tone: AppChipTone.success,
+                        tone: PpForgeChipTone.success,
                         onTap: () {},
                       ),
                       HeroFilter(
                         label: 'Near',
                         count: 1,
-                        tone: AppChipTone.warning,
+                        tone: PpForgeChipTone.warning,
                         onTap: () {},
                       ),
                       HeroFilter(
                         label: 'Over',
                         count: 0,
-                        tone: AppChipTone.danger,
+                        tone: PpForgeChipTone.danger,
                         onTap: () {},
                       ),
                     ],
@@ -479,7 +480,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                 ('Oct', HeroFlowSelection.none),
                 ('Sep', HeroFlowSelection.expense),
               ]) ...[
-                AppHeroCard(
+                PpForgeHeroCard(
                   style: HeroStyle.tinted(
                     color: Theme.of(context).colorScheme.primary,
                   ),
@@ -497,9 +498,9 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: PpForgeSpacing.md),
               ],
-              AppHeroCard(
+              PpForgeHeroCard(
                 style: HeroStyle.tinted(
                   color: Theme.of(context).colorScheme.tertiary,
                 ),
@@ -512,13 +513,13 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                           label: 'Next | in 14 days',
                           value: Text('-฿419'),
                         ),
-                        const SizedBox(height: AppSpacing.md),
+                        const SizedBox(height: PpForgeSpacing.md),
                         Wrap(
-                          spacing: AppSpacing.sm,
+                          spacing: PpForgeSpacing.sm,
                           children: [
-                            AppChip(label: 'Edit amount', onTap: () {}),
-                            AppChip(label: 'Move date', onTap: () {}),
-                            AppChip(label: 'Skip', onTap: () {}),
+                            PpForgeChip(label: 'Edit amount', onTap: () {}),
+                            PpForgeChip(label: 'Move date', onTap: () {}),
+                            PpForgeChip(label: 'Skip', onTap: () {}),
                           ],
                         ),
                       ],
@@ -539,9 +540,9 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
               'The filters show only when there are cards to filter by.',
           child: Builder(
             builder: (context) {
-              final palette = Theme.of(context).extension<AppColors>()!;
+              final debtColor = ModuleColors.of(context).walletLiability;
               final saved = ModuleColors.of(context).planning;
-              return AppHeroCard(
+              return PpForgeHeroCard(
                 style: HeroStyle.tinted(
                   color: Theme.of(context).colorScheme.primary,
                 ),
@@ -550,7 +551,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                   label: 'My net worth | 3 wallets',
                   amount: const Text('฿4,199,485'),
                   actions: [
-                    AppIconButton(icon: AppIcons.search, onPressed: () {}),
+                    PpForgeIconButton(icon: AppIcons.search, onPressed: () {}),
                   ],
                 ),
                 content: [
@@ -559,7 +560,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                       parts: [
                         (0.992, HeroColors.maybeOf(context)!.accent),
                         (0.01, saved),
-                        (0.003, palette.walletLiability),
+                        (0.003, debtColor),
                       ],
                     ),
                   ),
@@ -583,8 +584,8 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                           'Card debt | 25% of the limit',
                           '฿12,400',
                           icon: AppIcons.creditCard,
-                          iconColor: palette.walletLiability,
-                          color: palette.walletLiability,
+                          iconColor: debtColor,
+                          color: debtColor,
                         ),
                       ],
                     ),
@@ -628,7 +629,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
               'share height, padding, radius, font and icon size. Each keeps '
               'its colour; the status dropdown keeps its ▾. Wraps with 6 px '
               'gaps, never overflows. A plan status chip goes LAST.',
-          child: AppHeroCard(
+          child: PpForgeHeroCard(
             style: HeroStyle.tinted(
               color: Theme.of(context).colorScheme.primary,
             ),
@@ -640,18 +641,18 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                     kind: StatusKind.active,
                     onTap: () {},
                   ),
-                  const AppChip(
+                  const PpForgeChip(
                     label: 'Subscription',
                     selected: true,
-                    tone: AppChipTone.neutral,
+                    tone: PpForgeChipTone.neutral,
                   ),
-                  const AppChip(
+                  const PpForgeChip(
                     label: 'Transportation',
                     icon: AppIcons.category,
                     size: ChipSize.control,
                   ),
-                  const AppChip(label: 'Wallet', icon: AppIcons.wallet),
-                  AppChip(
+                  const PpForgeChip(label: 'Wallet', icon: AppIcons.wallet),
+                  PpForgeChip(
                     label: 'Trip tag',
                     icon: AppIcons.tag,
                     color: Theme.of(context).colorScheme.error,
@@ -674,7 +675,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
               'before it when the plan can be stepped; no divider. Without a '
               'stepper it is the plain title (the saving goals list: always '
               'this month, "This month\'s saving plan | October 2026").',
-          child: AppHeroCard(
+          child: PpForgeHeroCard(
             style: HeroStyle.tinted(
               color: Theme.of(context).colorScheme.primary,
             ),
@@ -711,7 +712,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
               'fill, the card line, accent arrows, flat), the 🔍 and the '
               'daily bars take their colors from the card; status colors '
               '(the net, the income / expense tiles) still win.',
-          child: AppHeroCard(
+          child: PpForgeHeroCard(
             style: HeroStyle.tinted(color: scheme.primary),
             open: _listOpen,
             header: HeroHeader(
@@ -771,7 +772,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
           note:
               'HeroHeader(fill:) with no fold and no actions: the month '
               'stepper runs from the module tile to the card edge.',
-          child: AppHeroCard(
+          child: PpForgeHeroCard(
             style: HeroStyle.tinted(color: scheme.primary),
             header: HeroHeader(
               leading: const [HeroModuleTile(AppIcons.scheduled)],
@@ -790,18 +791,18 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
           note:
               'content: HeroFields (description | amount, fixed-height '
               'inputs, no extra gap). footer: two pick cards.',
-          child: AppHeroCard(
+          child: PpForgeHeroCard(
             style: HeroStyle.tinted(color: _red),
             mode: HeroCardMode.edit,
             header: HeroHeader(
               leading: [
-                AppChip(
+                PpForgeChip(
                   label: 'Expense',
                   icon: AppIcons.expense,
                   color: _red,
                   selected: true,
                 ),
-                AppChip(
+                PpForgeChip(
                   label: 'Income',
                   color: _green,
                   dashed: true,
@@ -809,7 +810,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                 ),
               ],
               actions: [
-                AppChip(
+                PpForgeChip(
                   label: 'Today',
                   icon: AppIcons.date,
                   dashed: true,
@@ -819,20 +820,20 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
             ),
             content: [
               HeroFields(
-                start: AppInput.card(
+                start: PpForgeInput.card(
                   controller: _what,
-                  size: AppInputSize.hero,
+                  size: PpForgeInputSize.hero,
                   label: 'Description',
-                  labelPlacement: AppInputLabelPlacement.above,
+                  labelPlacement: PpForgeInputLabelPlacement.above,
                   underline: true,
                   focusColor: _red,
                 ),
-                end: AppInput.card(
+                end: PpForgeInput.card(
                   controller: _amount,
-                  type: AppInputType.amount,
-                  size: AppInputSize.hero,
+                  type: PpForgeInputType.amount,
+                  size: PpForgeInputSize.hero,
                   label: 'Amount',
-                  labelPlacement: AppInputLabelPlacement.above,
+                  labelPlacement: PpForgeInputLabelPlacement.above,
                   textAlign: TextAlign.end,
                   currencySymbol: '฿',
                   symbolScale: 0.7,
@@ -871,7 +872,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
         HubDemo(
           title: 'Identity only — no header, no footer',
           note: 'A profile hero: the header is left out, so nothing is drawn.',
-          child: AppHeroCard(
+          child: PpForgeHeroCard(
             style: HeroStyle.tinted(
               color: scheme.primary,
               glyph: AppIcons.profile,
@@ -888,7 +889,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
         HubDemo(
           title: 'Folded only — can’t expand',
           note: 'Only a folded version: a floating pill, no ⌄.',
-          child: AppHeroCard(
+          child: PpForgeHeroCard(
             style: HeroStyle.tinted(color: _green),
             header: HeroHeader(
               leading: [StepperPill(label: '2026', onTap: () {})],
@@ -968,7 +969,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                 caption: 'CountMark',
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  spacing: AppSpacing.sm,
+                  spacing: PpForgeSpacing.sm,
                   children: [
                     CountMark(
                       icon: AppIcons.wallet,
@@ -995,7 +996,7 @@ class _AppHeroCardPageState extends State<_AppHeroCardPage> {
                 caption: 'StatusAmountLine',
                 child: StatusAmountLine(
                   status: 'To receive',
-                  tone: AppChipTone.success,
+                  tone: PpForgeChipTone.success,
                   color: _green,
                   amount: const AmountText('฿1,232'),
                 ),
@@ -1035,8 +1036,8 @@ class _HeroColorSwatches extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = HeroColors.maybeOf(context)!;
     return Wrap(
-      spacing: AppSpacing.md,
-      runSpacing: AppSpacing.xs,
+      spacing: PpForgeSpacing.md,
+      runSpacing: PpForgeSpacing.xs,
       children: [
         for (final (name, color) in [
           ('accent', c.accent),
@@ -1059,7 +1060,7 @@ class _HeroColorSwatches extends StatelessWidget {
                 ),
                 child: const SizedBox.square(dimension: 14),
               ),
-              const SizedBox(width: AppSpacing.xs),
+              const SizedBox(width: PpForgeSpacing.xs),
               Text(
                 name,
                 style: Theme.of(

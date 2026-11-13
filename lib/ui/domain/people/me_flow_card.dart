@@ -17,7 +17,7 @@ class MeFlowCard extends StatelessWidget {
   /// "ฉัน".
   final String label;
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   /// My avatar; null = built from [name] + [iconCode].
   final AvatarData? avatar;

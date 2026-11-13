@@ -6,10 +6,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
-import '../../../../app/shell/shell_chrome.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
@@ -106,7 +104,7 @@ class _PendingPageState extends State<PendingPage> {
         );
       });
       if (r.submitted.isNotEmpty) {
-        showAppSnackBarOn(
+        showPpForgeSnackBarOn(
           messenger,
           l.pendingSubmittedCount(r.submitted.length),
           tone: Tone.success,
@@ -175,7 +173,7 @@ class _PendingPageState extends State<PendingPage> {
           ? null
           : ShellChromeHider(
               child: PinnedBar(
-                child: AppButton(
+                child: PpForgeButton(
                   kind: ButtonIconKind.submit,
                   label: l.pendingSubmitSelected(_selected.length),
                   expand: true,
@@ -202,10 +200,10 @@ class _PendingPageState extends State<PendingPage> {
                 ),
                 trailing: [
                   if (canImportSlip)
-                    AppChip(
+                    PpForgeChip(
                       icon: AppIcons.importSlip,
                       label: l.pendingImportSlip,
-                      tone: AppChipTone.primary,
+                      tone: PpForgeChipTone.primary,
                       selected: true,
                       onTap: importSlip,
                     ),
@@ -217,8 +215,8 @@ class _PendingPageState extends State<PendingPage> {
               FilterBar(
                 chips: [
                   for (final f in _Filter.values)
-                    AppChip(
-                      trailing: AppChipTrailing.dropdown,
+                    PpForgeChip(
+                      trailing: PpForgeChipTrailing.dropdown,
                       label: switch (f) {
                         _Filter.all => l.pendingFilterAll(total),
                         _Filter.manual => l.pendingFilterManual(manual),
@@ -243,12 +241,12 @@ class _PendingPageState extends State<PendingPage> {
             if (result != null && result.failed > 0)
               Padding(
                 padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
+                  PpForgeSpacing.lg,
                   0,
-                  AppSpacing.lg,
-                  AppSpacing.sm,
+                  PpForgeSpacing.lg,
+                  PpForgeSpacing.sm,
                 ),
-                child: AppMessage(
+                child: PpForgeMessage(
                   message: l.pendingResult(result.done, result.failed),
                   tone: Tone.warning,
                   onClose: () => setState(() => _lastResult = null),
@@ -279,7 +277,7 @@ class _PendingPageState extends State<PendingPage> {
                     variant: AddTileVariant.row,
                     onTap: importSlip,
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: PpForgeSpacing.sm),
                 ],
                 AddTile(
                   label: l.pendingAdd,
@@ -292,9 +290,9 @@ class _PendingPageState extends State<PendingPage> {
             ..._rows(context, visible),
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.md,
-                AppSpacing.lg,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.md,
+                PpForgeSpacing.lg,
                 0,
               ),
               child: AddTile(
@@ -326,7 +324,7 @@ class _PendingPageState extends State<PendingPage> {
       final d = DateFormatter.parseDay(k);
       if (k.isNotEmpty) {
         out.add(
-          AppListHeader(
+          PpForgeListHeader(
             title: d == null
                 ? k
                 : DateFormatter.friendly(
@@ -374,7 +372,7 @@ class _PendingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     if (item.isSaving) {
       return PendingSavingRow(
         item: item,
@@ -437,7 +435,7 @@ class _PendingCard extends StatelessWidget {
             size: 36,
           );
 
-    return AppListRow(
+    return PpForgeListRow(
       leading: leading,
       title: title,
       checked: selected,
@@ -504,7 +502,7 @@ class PendingSavingRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final d = item.draft;
     final wallet = item.resolved.account;
     final bucket = item.resolved.goal?.name ?? l.sgv2Spare;
@@ -518,7 +516,7 @@ class PendingSavingRow extends StatelessWidget {
         ? l.pendingErrMissingAmount
         : null;
 
-    return AppListRow(
+    return PpForgeListRow(
       leading: IconTile(icon: AppIcons.savingDeposit, color: palette.income),
       title: note.isNotEmpty ? note : bucket,
       checked: selected,

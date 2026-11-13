@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../features/saving_goals/domain/saving_goal.dart';
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/domain/saving` — saving goals v2 pieces: MilestoneRow,
 /// SavingHistoryChart, SavingMoveSheet (history rows: Molecules › Row),
@@ -139,8 +138,10 @@ class _SavingPageState extends State<_SavingPage> {
     const months = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const actual = <double>[10, 16, 22, 28, 34, 40];
     const projection = <double>[44, 48];
-    Widget box(Widget child) =>
-        AppCard(padding: const EdgeInsets.all(AppSpacing.md), child: child);
+    Widget box(Widget child) => PpForgeCard(
+      padding: const EdgeInsets.all(PpForgeSpacing.md),
+      child: child,
+    );
     final tint = Theme.of(context).colorScheme.primary;
 
     return Column(
@@ -250,8 +251,8 @@ class _SavingPageState extends State<_SavingPage> {
               'เลือกเป้าหมาย" (a new ออมเงิน recurring). Used by the saving '
               'form and the ออมเงิน recurring page.',
           child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
               for (final (goal, spare) in [
                 (
@@ -285,25 +286,25 @@ class _SavingPageState extends State<_SavingPage> {
           ),
         ),
         HubDemo(
-          title: 'Saving goal row — AppListRow + ProgressRow.fillLabel',
+          title: 'Saving goal row — PpForgeListRow + ProgressRow.fillLabel',
           note:
               'The goals list: name + "ช้ากว่าแผน" | "ภายใน <deadline>" | '
               'saved (or "ครบแล้ว ✓") over "เป้า <target>" | bar with the % on '
               'the fill\'s end. A goal without a target has no bar.',
           child: Builder(
             builder: (context) {
-              final palette = Theme.of(context).extension<AppColors>()!;
-              Widget icon(IconData i) => IconCodeWidget(
+              final palette = Theme.of(context).extension<PpForgeColors>()!;
+              Widget icon(IconData i) => PpForgeIconCodeWidget(
                 iconCode: null,
                 size: 36,
-                displayMode: IconDisplayMode.compact,
+                displayMode: PpForgeIconDisplayMode.compact,
                 fallbackIcon: i,
                 fallbackColor: palette.info,
               );
               return SectionCard(
                 first: true,
                 children: [
-                  AppListRow(
+                  PpForgeListRow(
                     leading: icon(AppIcons.savingGoal),
                     title: 'ซื้อ MacBook',
                     status: const ListRowChip('ช้ากว่าแผน', tone: Tone.warning),
@@ -319,7 +320,7 @@ class _SavingPageState extends State<_SavingPage> {
                     ),
                     onTap: () {},
                   ),
-                  AppListRow(
+                  PpForgeListRow(
                     leading: icon(AppIcons.savingGoal),
                     title: 'ของขวัญวันเกิดแม่',
                     line2: const ListRowLine(parts: ['ภายใน 15 พ.ย. 2026']),
@@ -335,7 +336,7 @@ class _SavingPageState extends State<_SavingPage> {
                     ),
                     onTap: () {},
                   ),
-                  AppListRow(
+                  PpForgeListRow(
                     leading: icon(AppIcons.savingGoal),
                     title: 'เงินสำรองฉุกเฉิน',
                     line2: const ListRowLine(parts: ['ออมต่อเนื่อง']),
@@ -389,27 +390,27 @@ class _SavingPageState extends State<_SavingPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
+                spacing: PpForgeSpacing.sm,
+                runSpacing: PpForgeSpacing.sm,
                 children: [
-                  AppButton(
+                  PpForgeButton(
                     label: 'Move sheet',
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: () => _move(withdraw: false),
                   ),
-                  AppButton(
+                  PpForgeButton(
                     label: 'Withdraw sheet',
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: () => _move(withdraw: true),
                   ),
-                  AppButton(
+                  PpForgeButton(
                     label: 'Close goal dialog',
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: _close,
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               Text(_result, style: Theme.of(context).textTheme.bodySmall),
             ],
           ),
@@ -421,8 +422,8 @@ class _SavingPageState extends State<_SavingPage> {
               'amount / target, progress and a caption. Picked = tinted with '
               'a solid border, else a dashed one. Tap to pick.',
           child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
               for (final g in _goals())
                 SizedBox(

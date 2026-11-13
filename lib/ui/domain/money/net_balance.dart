@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/utils/currency_formatter.dart';
-import '../../tokens/app/app_colors.dart';
 import 'money_text.dart';
+import 'package:pp_forge_core/ui.dart';
 
 /// The debt-state colour everywhere a debt says who owes whom: รอรับ (they
 /// owe me) green, รอจ่าย (I owe) red (owner 2026-10-17). The debts pages, the
 /// person hero and the quick-create direction chips (รอรับ / รอจ่าย)
 /// all take it from here.
 Color debtStateColor(BuildContext context, {required bool owedToMe}) {
-  final palette = Theme.of(context).extension<AppColors>()!;
+  final palette = Theme.of(context).extension<PpForgeColors>()!;
   return owedToMe ? palette.income : palette.expense;
 }
 

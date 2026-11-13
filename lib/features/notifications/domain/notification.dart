@@ -74,7 +74,7 @@ class NotificationActor extends Equatable {
 
   final String userId;
   final String displayName;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final AvatarData? _avatar;
 
   /// 0.4.2 1b: the BE's avatar (UserRef); built from the name + icon when absent.

@@ -7,7 +7,7 @@ import '../../../features/accounts/domain/payment_provider.dart';
 import '../../../features/accounts/presentation/cubit/providers_cubit.dart';
 import '../../../features/accounts/presentation/widgets/bank_picker.dart';
 import '../../../ui/ui.dart';
-import '../../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// [BankPicker] as the identifier editor will open it, on the real providers
 /// cache.
@@ -23,9 +23,9 @@ class BankPickerDemos extends StatelessWidget {
     BuildContext context,
     String label,
     Future<String> Function() run,
-  ) => AppButton(
+  ) => PpForgeButton(
     label: label,
-    variant: AppButtonVariant.outlined,
+    variant: PpForgeButtonVariant.outlined,
     onPressed: () async {
       unawaited(context.read<ProvidersCubit>().loadIfNeeded());
       onResult(await run());
@@ -48,8 +48,8 @@ class BankPickerDemos extends StatelessWidget {
               'under the name, "ไม่ระบุ" on top (picked when no bank is set); '
               'the search matches Thai, English, short name and code.',
           child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
               _new(
                 context,
@@ -78,7 +78,7 @@ class BankPickerDemos extends StatelessWidget {
         if (providers.isEmpty)
           const HubDemo(
             title: 'No banks',
-            child: AppText(
+            child: PpForgeText(
               'The providers cache is empty: a button loads it, or sign in '
               'first.',
             ),

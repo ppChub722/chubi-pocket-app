@@ -6,31 +6,31 @@ import '../../../ui/ui.dart';
 /// Demo of [QuickCreateSheetShell] — the frame of the `+` quick create sheet
 /// with a fake body (hero card + chips). Save / close just pop.
 Widget buildQuickCreateDemo(BuildContext context) => Wrap(
-  spacing: AppSpacing.sm,
-  runSpacing: AppSpacing.sm,
+  spacing: PpForgeSpacing.sm,
+  runSpacing: PpForgeSpacing.sm,
   children: [
-    AppButton(
+    PpForgeButton(
       label: 'New transaction',
       onPressed: () => _open(context, _Variant.create),
     ),
-    AppButton(
+    PpForgeButton(
       label: 'Edit draft (delete)',
-      variant: AppButtonVariant.outlined,
+      variant: PpForgeButtonVariant.outlined,
       onPressed: () => _open(context, _Variant.draft),
     ),
-    AppButton(
+    PpForgeButton(
       label: 'Edit (delete button bottom left)',
-      variant: AppButtonVariant.outlined,
+      variant: PpForgeButtonVariant.outlined,
       onPressed: () => _open(context, _Variant.edit),
     ),
-    AppButton(
+    PpForgeButton(
       label: 'Single save button',
-      variant: AppButtonVariant.outlined,
+      variant: PpForgeButtonVariant.outlined,
       onPressed: () => _open(context, _Variant.single),
     ),
-    AppButton(
+    PpForgeButton(
       label: 'One occurrence (subtitle + headerBar)',
-      variant: AppButtonVariant.outlined,
+      variant: PpForgeButtonVariant.outlined,
       onPressed: () => _open(context, _Variant.occurrence),
     ),
   ],
@@ -114,20 +114,20 @@ class _DemoSheetState extends State<_DemoSheet> {
       subtitle: v == _Variant.occurrence ? 'แก้เฉพาะงวดนี้' : null,
       headerBar: v == _Variant.occurrence
           ? Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
+              spacing: PpForgeSpacing.sm,
+              runSpacing: PpForgeSpacing.sm,
               children: [
-                AppChip(
+                PpForgeChip(
                   label: 'ข้าม',
                   icon: AppIcons.none,
                   onTap: () => Navigator.of(context).pop(),
                 ),
-                AppChip(
+                PpForgeChip(
                   label: 'จ่ายแล้ว',
                   icon: AppIcons.check,
                   onTap: () => Navigator.of(context).pop(),
                 ),
-                AppChip(
+                PpForgeChip(
                   label: 'ผูกกับรายการที่มีอยู่',
                   icon: AppIcons.link,
                   onTap: () {},
@@ -186,21 +186,21 @@ class _DemoSheetState extends State<_DemoSheet> {
             onTypeChanged: (t) => setState(() => _type = t),
             onPickDate: () {},
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: PpForgeSpacing.md),
           const Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
-              AppChip(label: 'Food'),
-              AppChip(label: 'Cash'),
-              AppChip(label: 'Lunch'),
-              AppChip(label: 'Work'),
+              PpForgeChip(label: 'Food'),
+              PpForgeChip(label: 'Cash'),
+              PpForgeChip(label: 'Lunch'),
+              PpForgeChip(label: 'Work'),
             ],
           ),
           // Tall enough to scroll, so the title-row summary can show.
           for (var i = 1; i <= 12; i++) ...[
-            const SizedBox(height: AppSpacing.md),
-            AppChip(label: 'Filler row $i'),
+            const SizedBox(height: PpForgeSpacing.md),
+            PpForgeChip(label: 'Filler row $i'),
           ],
         ],
       ),

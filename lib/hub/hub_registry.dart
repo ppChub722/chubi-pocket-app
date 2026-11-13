@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
 
+import 'package:pp_forge_core/hub.dart';
+import 'api/page_flows.dart';
 import 'pages/atoms_chip_page.dart';
 import 'pages/atoms_input_button_page.dart';
-import 'pages/atoms_input_page.dart';
-import 'pages/tokens_basics_page.dart';
 import 'pages/tokens_colors_type_icons_page.dart';
 import 'pages/molecules_feedback_page.dart';
-import 'pages/molecules_loading_states_page.dart';
-import 'pages/organisms_collapsible_section_page.dart';
 import 'pages/organisms_sheets_page.dart';
-import 'pages/organisms_item_picker_page.dart';
 import 'pages/domain_entity_pickers_page.dart';
 import 'pages/organisms_states_page.dart';
 import 'pages/molecules_pickers_inputs_page.dart';
-import 'pages/molecules_blocks_page.dart';
 import 'pages/molecules_list_header_page.dart';
 import 'debug/connection_page.dart';
 import 'debug/env_page.dart';
@@ -36,18 +32,12 @@ import 'pages/templates_transaction_detail_page.dart';
 import 'pages/domain_transactions_page.dart';
 import 'pages/sheets_transactions_page.dart';
 import 'pages/atoms_badge_avatar_page.dart';
-import 'pages/atoms_card_page.dart';
-import 'pages/atoms_switch_check_divider_page.dart';
 import 'pages/molecules_bars_page.dart';
 import 'pages/molecules_row_page.dart';
-import 'pages/organisms_detail_section_page.dart';
-import 'pages/organisms_reorder_charts_page.dart';
 import 'pages/organisms_app_hero_card_page.dart';
 import 'pages/organisms_hero_card_page.dart';
 import 'pages/organisms_section_hero_page.dart';
 import 'pages/templates_detail_page.dart';
-import 'pages/templates_tabbed_detail_page.dart';
-import 'pages/templates_detail_sections_page.dart';
 import 'pages/domain_others_page.dart';
 import 'pages/domain_people_accounts_page.dart';
 import 'pages/domain_profile_connections_page.dart';
@@ -62,139 +52,41 @@ import 'pages/sheets_pickers_page.dart';
 /// Every piece the app is built from has a page here; every UI change lands
 /// here first, the owner reviews it, then the pages adopt it. English only.
 ///
-/// Atomic Design: tokens → atoms → molecules → organisms → templates, then
-/// the app's own domain pieces and the debug tools.
-enum HubLevel {
-  tokens(
-    'Tokens',
-    'The values everything is built from: spacing, radius, sizes, colours, type, icons.',
-  ),
-  atoms(
-    'Atoms',
-    'One job each: a button, a chip, an input, a switch, a divider, an avatar.',
-  ),
-  molecules(
-    'Molecules',
-    'A few atoms working together: a detail row, a search bar, a snackbar.',
-  ),
-  organisms(
-    'Organisms',
-    'A whole region: a section, a hero, a sheet, an async list state.',
-  ),
-  templates(
-    'Templates',
-    'A page skeleton with slots: detail page, list page, form sheet.',
-  ),
-  domain(
+/// The kit's pages (tokens … templates) come from pp_forge_core's `hub.dart`;
+/// this file holds the app's own levels and the pages that still show app
+/// data.
+abstract final class AppHubLevel {
+  static const domain = HubLevel(
+    'domain',
     'Domain',
     'The app’s own pieces: money, people, transactions, accounts, debts.',
-  ),
-  api(
+    icon: Icons.apps_outlined,
+  );
+  static const api = HubLevel(
+    'api',
     'API',
     'Read from the server OpenAPI spec: endpoints, schemas, which page calls what.',
-  ),
-  labs('Labs', 'Experiments against the real server: slips, chat parse.'),
-  debug('Debug', 'Tools for developers: logs, environment, network, cache.');
-
-  const HubLevel(this.title, this.blurb);
-  final String title;
-  final String blurb;
-
-  /// The portal section this level lives in: ui | api | labs | debug.
-  String get sectionName => switch (this) {
-    api => 'api',
-    labs => 'labs',
-    debug => 'debug',
-    _ => 'ui',
-  };
-
-  bool get isUi => sectionName == 'ui';
-}
-
-/// One hub page. [generic] pieces never import features, app models,
-/// localisation strings or money colours (they can move to a core library
-/// later); [domain] ones may.
-class HubPage {
-  const HubPage({
-    required this.level,
-    required this.slug,
-    required this.title,
-    required this.summary,
-    this.generic = true,
-    this.covers = const [],
-    this.usedBy = '',
-    this.phase = 0,
-    this.legacyRoute,
-    this.builder,
-    this.screen,
-  });
-
-  final HubLevel level;
-  final String slug;
-  final String title;
-
-  /// One line: what these pieces are and when to use them.
-  final String summary;
-  final bool generic;
-
-  /// Public pieces (class / function names exported by `ui.dart`) this page
-  /// shows — the coverage test checks every exported piece is on some page.
-  final List<String> covers;
-  final String usedBy;
-
-  /// The phase that builds this page (0 = live).
-  final int phase;
-
-  /// A current screen that already shows (part of) it, until the page is built.
-  final String? legacyRoute;
-  final WidgetBuilder? builder;
-
-  /// A full screen with its own Scaffold (the debug tools): shown as is,
-  /// without the page frame.
-  final WidgetBuilder? screen;
-
-  String get id => '${level.name}/$slug';
-
-  /// `/dev/ui/<level>/<slug>` for the UI levels, `/dev/<section>/<slug>` for
-  /// api / labs / debug.
-  String get path => level.isUi
-      ? '/dev/ui/${level.name}/$slug'
-      : '/dev/${level.sectionName}/$slug';
-  bool get live => builder != null || screen != null;
+    icon: Icons.api_outlined,
+    section: 'api',
+  );
+  static const labs = HubLevel(
+    'labs',
+    'Labs',
+    'Experiments against the real server: slips, chat parse.',
+    icon: Icons.science_outlined,
+    section: 'labs',
+  );
+  static const debug = HubLevel(
+    'debug',
+    'Debug',
+    'Tools for developers: logs, environment, network, cache.',
+    icon: Icons.bug_report_outlined,
+    section: 'debug',
+  );
 }
 
 /// Every hub page, in index order. Pages fill in phase by phase.
-final List<HubPage> hubPages = [
-  // ── Tokens
-  const HubPage(
-    level: HubLevel.tokens,
-    slug: 'spacing',
-    title: 'Spacing',
-    summary: 'AppSpacing steps and gaps in context.',
-    usedBy: '~300 sites',
-    covers: ['AppSpacing'],
-    builder: buildSpacingPage,
-  ),
-  const HubPage(
-    level: HubLevel.tokens,
-    slug: 'radius-duration',
-    title: 'Radius & duration',
-    summary:
-        'Corner radii; motion durations and curves (respect “reduce motion”).',
-    usedBy: '~50 sites',
-    covers: ['AppRadius', 'AppDurations', 'AppMotion'],
-    builder: buildRadiusDurationPage,
-  ),
-  const HubPage(
-    level: HubLevel.tokens,
-    slug: 'sizes',
-    title: 'Sizes',
-    summary:
-        'Chip 20 / 28 / 32, control heights, icon sizes, the 44 tap target.',
-    usedBy: 'chips, heroes',
-    covers: ['ChipSize', 'AppIconSize'],
-    builder: buildSizesPage,
-  ),
+final List<HubPage> appHubPages = [
   const HubPage(
     level: HubLevel.tokens,
     slug: 'colors',
@@ -203,7 +95,13 @@ final List<HubPage> hubPages = [
         'Semantic palette per theme and mode, money colours, module colours.',
     generic: false,
     usedBy: 'everything',
-    covers: ['AppColors', 'ModuleColors', 'Tone', 'ToneColor'],
+    covers: [
+      'PpForgeColors',
+      'ModuleColors',
+      'Tone',
+      'ToneColor',
+      'configureChubiThemes',
+    ],
     builder: buildColorsPage,
   ),
   const HubPage(
@@ -213,7 +111,7 @@ final List<HubPage> hubPages = [
     summary:
         'The seven roles: display, title, section, label, body, caption, money.',
     usedBy: '53 files',
-    covers: ['AppText', 'AppTextRole', 'AppTypography'],
+    covers: ['PpForgeText', 'PpForgeTextRole', 'PpForgeTypography'],
     builder: buildTypographyPage,
   ),
   const HubPage(
@@ -223,7 +121,7 @@ final List<HubPage> hubPages = [
     summary: 'AppIcons — every icon by name.',
     generic: false,
     usedBy: '~150 sites',
-    covers: ['AppIcons'],
+    covers: ['AppIcons', 'chubiIconMakerStrings'],
     builder: buildIconsPage,
   ),
   // ── Atoms
@@ -235,20 +133,15 @@ final List<HubPage> hubPages = [
         'Button variants × sizes × states; icon buttons (edit, shell chips, flat close / clear / more / back); edit-mode bar; bulk delete.',
     usedBy: '28 files',
     covers: [
-      'AppButton',
-      'AppButtonVariant',
-      'AppButtonSize',
-      'AppIconButton',
+      'PpForgeButton',
+      'PpForgeButtonVariant',
+      'PpForgeButtonSize',
+      'PpForgeIconButton',
       'ButtonIconKind',
-      'AppAvatarButton',
+      'PpForgeAvatarButton',
       'CountBadge',
       'IconChipActivity',
       'BulkDeleteButton',
-      'MirrorSurface',
-      'MirrorScope',
-      'AppGlass',
-      'GlassLook',
-      'GlassBar',
     ],
     builder: buildButtonPage,
   ),
@@ -259,9 +152,9 @@ final List<HubPage> hubPages = [
     summary: 'The one chip: three sizes, every state, trailing and tone.',
     usedBy: '47 files',
     covers: [
-      'AppChip',
-      'AppChipTone',
-      'AppChipTrailing',
+      'PpForgeChip',
+      'PpForgeChipTone',
+      'PpForgeChipTrailing',
       'ChipSizeScope',
       'StatusChip',
       'StatusKind',
@@ -276,8 +169,8 @@ final List<HubPage> hubPages = [
         'Badge, avatars (the person Avatar: every state + ProfileColors), icon tile, corner badge, editable circle — with the size ladder.',
     usedBy: '40 files',
     covers: [
-      'AppBadge',
-      'AppAvatar',
+      'PpForgeBadge',
+      'PpForgeAvatar',
       'Avatar',
       'AvatarData',
       'AvatarKind',
@@ -294,69 +187,21 @@ final List<HubPage> hubPages = [
     ],
     builder: buildBadgeAvatarPage,
   ),
-  const HubPage(
-    level: HubLevel.atoms,
-    slug: 'input',
-    title: 'Input',
-    summary:
-        'One text input: field, inline, title, search; looks filled, outlined, underline, pill, bare.',
-    usedBy: '~95 sites',
-    covers: [
-      'AppInput',
-      'AppInputType',
-      'AppInputLabelPlacement',
-      'AppInputSize',
-    ],
-    builder: buildInputPage,
-  ),
-  const HubPage(
-    level: HubLevel.atoms,
-    slug: 'switch-check-divider',
-    title: 'Switch, check & divider',
-    summary: 'Switch, select check, dividers, add tile, skeletons, spinner.',
-    usedBy: '45 files',
-    covers: [
-      'AppSwitch',
-      'AppDivider',
-      'SelectCheck',
-      'SelectAllCount',
-      'AddTile',
-      'AddTileVariant',
-      'AppSpinner',
-      'AppSpinnerSize',
-      'AppIcon',
-      'SkeletonBox',
-      'SkeletonLine',
-      'SkeletonCircle',
-      'SkeletonText',
-      'SkeletonListTile',
-    ],
-    builder: buildSwitchCheckDividerPage,
-  ),
-  const HubPage(
-    level: HubLevel.atoms,
-    slug: 'card',
-    title: 'Card',
-    summary: 'Surfaces: plain, bordered, accent, tinted, flat.',
-    usedBy: '~38 sites',
-    covers: ['AppCard', 'AppCardStyle', 'AppCardPick'],
-    builder: buildCardPage,
-  ),
   // ── Molecules
   const HubPage(
     level: HubLevel.molecules,
     slug: 'row',
     title: 'Row',
     summary:
-        'AppRow, the one row shell, and its two presets: AppListRow (an item in a list, density list) and AppDetailRow (a field of this record, density detail). Shell → List → Detail.',
+        'PpForgeRow, the one row shell, and its two presets: PpForgeListRow (an item in a list, density list) and PpForgeDetailRow (a field of this record, density detail). Shell → List → Detail.',
     usedBy:
         'every data list and every detail page (tx, pending, budget, recurring, debts, events, saving, categories, tags, contacts, notifications, settings, profile)',
     covers: [
-      'AppRow',
-      'AppRowDensity',
+      'PpForgeRow',
+      'PpForgeRowDensity',
       'RowBadge',
-      'AppRowShape',
-      'AppListRow',
+      'PpForgeRowShape',
+      'PpForgeListRow',
       'ListRowChip',
       'ListRowLine',
       'ListRowGlyph',
@@ -370,7 +215,7 @@ final List<HubPage> hubPages = [
       'TxListRow',
       'TxListKind',
       'tagSpan',
-      'AppDetailRow',
+      'PpForgeDetailRow',
       'LinkedFieldHint',
       'HintLine',
       'DetailStacked',
@@ -416,44 +261,19 @@ final List<HubPage> hubPages = [
   ),
   const HubPage(
     level: HubLevel.molecules,
-    slug: 'blocks',
-    title: 'Page blocks',
-    summary: 'Select-mode bar, tile grid, pinned tab bar, centred form body.',
-    usedBy: 'tags, pending, More, event detail, auth',
-    covers: [
-      'SelectionToolbar',
-      'SelectionAction',
-      'ActionBar',
-      'TopScrim',
-      'ActionBarItem',
-      'ChipPath',
-      'ChipPathSegment',
-      'CardGrid',
-      'TileCard',
-      'TileStatus',
-      'PinnedTabBarDelegate',
-      'SegmentedBar',
-      'BarSegment',
-      'LegendDot',
-      'CenteredFormBody',
-    ],
-    builder: buildBlocksPage,
-  ),
-  const HubPage(
-    level: HubLevel.molecules,
     slug: 'list-header',
     title: 'List header & toolbar',
     summary:
-        'AppListHeader: the head of a group of rows (title 14 w600 | count, value, actions, a ✕ title chip). AppListToolbar: search, filters, sort, opened by 🔍. Know no domain.',
+        'PpForgeListHeader: the head of a group of rows (title 14 w600 | count, value, actions, a ✕ title chip). PpForgeListToolbar: search, filters, sort, opened by 🔍. Know no domain.',
     usedBy: 'hub only (migration pending)',
     covers: [
-      'AppListHeader',
+      'PpForgeListHeader',
       'ListHeaderTrailing',
       'ListHeaderAction',
-      'AppListToolbar',
+      'PpForgeListToolbar',
       'ListToolbarSearch',
-      'AppListToolbarState',
-      'AppListToolbarToggle',
+      'PpForgeListToolbarState',
+      'PpForgeListToolbarToggle',
     ],
     builder: buildListHeaderPage,
   ),
@@ -462,19 +282,19 @@ final List<HubPage> hubPages = [
     slug: 'feedback',
     title: 'Feedback',
     summary:
-        'Banner and snackbar (one AppMessage design), dialogs, progress row, empty / error / loading views, the UI config.',
+        'Banner and snackbar (one PpForgeMessage design), dialogs, progress row, empty / error / loading views, the UI config.',
     usedBy: '~80 sites',
     covers: [
-      'AppMessage',
+      'PpForgeMessage',
       'ConnectionBanner',
       'ConnectionBannerState',
       'ConnectionScope',
-      'AppMessageAction',
-      'showAppMessage',
-      'showAppMessageOn',
+      'PpForgeMessageAction',
+      'showPpForgeMessage',
+      'showPpForgeMessageOn',
       'ProgressRow',
-      'showAppSnackBar',
-      'showAppSnackBarOn',
+      'showPpForgeSnackBar',
+      'showPpForgeSnackBarOn',
       'showErrorSnackBar',
       'showErrorSnackBarOn',
       'errorText',
@@ -494,23 +314,13 @@ final List<HubPage> hubPages = [
       'EditScope',
       'EmptyView',
       'ErrorView',
-      'UiConfig',
-      'UiStrings',
-      'UiErrors',
-      'UiErrorInfo',
+      'PpForgeConfig',
+      'PpForgeStrings',
+      'PpForgeErrors',
+      'PpForgeErrorInfo',
       'AppUiConfig',
     ],
     builder: buildFeedbackPage,
-  ),
-  const HubPage(
-    level: HubLevel.molecules,
-    slug: 'loading-states',
-    title: 'Loading states',
-    summary:
-        'Only the pressed control spins (in place, same size); the rest of a busy region fades (BusyScope); inputs only fade. No scrims.',
-    usedBy: 'every save / delete / live setting (rollout pending)',
-    covers: ['BusyScope', 'BusyLevel', 'BusyLock', 'BusySwap', 'AppOpacity'],
-    builder: buildLoadingStatesPage,
   ),
   const HubPage(
     level: HubLevel.molecules,
@@ -520,16 +330,15 @@ final List<HubPage> hubPages = [
         'Tab bar, mode action bar, pinned bar, hero shell + compact hero bar, filter bar, chip row, popovers.',
     usedBy: '~25 files',
     covers: [
-      'AppTab',
-      'AppTabBar',
-      'AppTabPager',
+      'PpForgeTab',
+      'PpForgeTabBar',
+      'PpForgeTabPager',
       'ModeActionBar',
       'PinnedBar',
-      'StatusBarScrim',
       'HeroContent',
       'HeroSpacedRow',
       'HeroTopRow',
-      'AppCompactHeroCard',
+      'PpForgeCompactHeroCard',
       'CompactHeroScope',
       'HeroStyle',
       'HeroSurface',
@@ -545,29 +354,11 @@ final List<HubPage> hubPages = [
       'PopoverClearItem',
       'PopoverTriggerBuilder',
       'ColorSwatchGrid',
-      'IconSwatchGrid',
+      'PpForgeIconSwatchGrid',
       'SortChip',
       'SortOption',
     ],
     builder: buildBarsPage,
-  ),
-  // ── Organisms
-  const HubPage(
-    level: HubLevel.organisms,
-    slug: 'detail-section',
-    title: 'Detail section',
-    summary:
-        'SectionCard (band | grouped, 2 px gaps), its header, the pair row, DangerRow; the detail-page sections in the app.',
-    usedBy: 'every detail page, settings',
-    covers: [
-      'SectionCard',
-      'DetailGroupScope',
-      'SectionHeader',
-      'DangerRow',
-      'DetailPairRow',
-      'DetailPairCell',
-    ],
-    builder: buildDetailSectionPage,
   ),
   const HubPage(
     level: HubLevel.organisms,
@@ -584,7 +375,7 @@ final List<HubPage> hubPages = [
       'LockedInEdit',
       'SummaryStats',
       'SummaryStat',
-      'IconCodeTint',
+      'PpForgeIconCodeTint',
       'HeroDescription',
       'HeroNameInput',
       'EditModeScope',
@@ -610,9 +401,9 @@ final List<HubPage> hubPages = [
         'THE hero: header | content | footer, view / edit / create, expanded / folded, and every piece a page builds its hero from.',
     usedBy: 'transactions (list, detail, quick create), wallets (list, detail)',
     covers: [
-      'AppHeroCard',
-      'AppHeroScope',
-      'AppHeroFoldButton',
+      'PpForgeHeroCard',
+      'PpForgeHeroScope',
+      'PpForgeHeroFoldButton',
       'HeroCardMode',
       'HeroHeader',
       'HeroIdentity',
@@ -667,9 +458,9 @@ final List<HubPage> hubPages = [
         'App sheet, picker sheet, option sheet, action sheet, side sheet, the date picker.',
     usedBy: '~40 files',
     covers: [
-      'AppSheetScaffold',
-      'showAppSheet',
-      'showAppSheetCustom',
+      'PpForgeSheetScaffold',
+      'showPpForgeSheet',
+      'showPpForgeSheetCustom',
       'PickerSheet',
       'PickerRow',
       'PickerConfirmBar',
@@ -682,60 +473,23 @@ final List<HubPage> hubPages = [
       'SideSheetScaffold',
       'SideSheetSection',
       'showSideSheet',
-      'AppDatePicker',
-      'AppDatePickerSheet',
-      'AppAmountSheet',
-      'AppAmountResult',
+      'PpForgeDatePicker',
+      'PpForgeDatePickerSheet',
+      'PpForgeAmountSheet',
+      'PpForgeAmountResult',
       'PeriodPickerSheet',
       'PeriodPick',
       'PeriodUnit',
       'PeriodPickerLabels',
-      'AppDateRangePickerSheet',
+      'PpForgeDateRangePickerSheet',
       'MultiDatePickerSheet',
       'showMultiDatePicker',
-      'AppDateRangePreset',
-      'AppDateResult',
-      'AppDatePicked',
-      'AppDateCleared',
+      'PpForgeDateRangePreset',
+      'PpForgeDateResult',
+      'PpForgeDatePicked',
+      'PpForgeDateCleared',
     ],
     builder: buildSheetsPage,
-  ),
-  const HubPage(
-    level: HubLevel.organisms,
-    slug: 'item-picker',
-    title: 'Item picker',
-    summary:
-        'The one picker every entity picker is built on: single / multi, rows / cards / chips, groups, filter tabs, a tree with sub-items, none, create.',
-    usedBy: 'entity pickers (moving over)',
-    covers: [
-      'ItemPickerSheet',
-      'showItemPicker',
-      'PickerItem',
-      'PickerGroup',
-      'PickerFilter',
-      'PickerNone',
-      'PickerCreate',
-      'PickerFreeText',
-      'PickerAction',
-      'PickerResult',
-      'PickerData',
-      'PickerLayout',
-      'PickerCardBuilder',
-      'PickerChildren',
-      'PickerTree',
-      'PickerSelection',
-    ],
-    builder: buildItemPickerPage,
-  ),
-  const HubPage(
-    level: HubLevel.organisms,
-    slug: 'collapsible-section',
-    title: 'Collapsible section',
-    summary:
-        'A section whose heading toggles it: title, hint while open, summary while closed, a mark and an action.',
-    usedBy: 'split block, debt history',
-    covers: ['CollapsibleSection'],
-    builder: buildCollapsibleSectionPage,
   ),
   const HubPage(
     level: HubLevel.organisms,
@@ -756,26 +510,6 @@ final List<HubPage> hubPages = [
     ],
     builder: buildStatesPage,
   ),
-  const HubPage(
-    level: HubLevel.organisms,
-    slug: 'reorder-charts',
-    title: 'Reorder & charts',
-    summary: 'Reorder list, donut, paired bars.',
-    usedBy: '6 files',
-    covers: [
-      'ReorderController',
-      'ReorderListScope',
-      'ReorderRow',
-      'ReorderMoveBar',
-      'OutlineItem',
-      'DonutChart',
-      'DonutSegment',
-      'ChartPalette',
-      'PairedBarChart',
-      'BarPair',
-    ],
-    builder: buildReorderChartsPage,
-  ),
   // ── Templates
   const HubPage(
     level: HubLevel.templates,
@@ -795,51 +529,6 @@ final List<HubPage> hubPages = [
       'TagsStripSkeleton',
     ],
     builder: buildDetailPageTemplate,
-  ),
-  const HubPage(
-    level: HubLevel.templates,
-    slug: 'tabbed-detail',
-    title: 'Tabbed detail',
-    summary:
-        'Hero → below-hero block → pinned tab bar → one lazy ListPageBody per tab; compact hero bar.',
-    usedBy: 'Debts person page, events, wallets (adopting)',
-    covers: ['TabbedDetailBody', 'PageDots', 'PageDotsScope', 'PageDotsFooter'],
-    builder: buildTabbedDetailTemplate,
-  ),
-  const HubPage(
-    level: HubLevel.templates,
-    slug: 'detail-sections',
-    title: 'Detail sections',
-    summary:
-        'Info box (one row / auto-stacked), settings, people strip, note, end zone, tag row.',
-    usedBy: 'Detail pages (adopting)',
-    covers: [
-      'InfoBox',
-      'InfoRow',
-      'SettingsSection',
-      'SettingToggleRow',
-      'SettingSummaryRow',
-      'SettingsGroupRow',
-      'SettingPickRow',
-      'SettingSwitchColumnsRow',
-      'SettingSwitchCell',
-      'SettingColumnLabels',
-      'SettingDropdownRow',
-      'SettingMenuRow',
-      'SettingMenuCustom',
-      'SettingSwitchViewRow',
-      'LiveSetting',
-      'PeopleStrip',
-      'PeopleStripMember',
-      'NoteSection',
-      'EndZone',
-      'EndZoneAction',
-      'EndZoneKind',
-      'PeopleTone',
-      'TagRow',
-      'IconChipStrip',
-    ],
-    builder: buildDetailSectionsPage,
   ),
   const HubPage(
     level: HubLevel.templates,
@@ -915,7 +604,7 @@ final List<HubPage> hubPages = [
   ),
   // ── Domain
   const HubPage(
-    level: HubLevel.domain,
+    level: AppHubLevel.domain,
     slug: 'money',
     title: 'Money',
     summary: 'Money text, money list tile, currency tile.',
@@ -935,7 +624,7 @@ final List<HubPage> hubPages = [
     builder: buildMoneyPage,
   ),
   const HubPage(
-    level: HubLevel.domain,
+    level: AppHubLevel.domain,
     slug: 'sheets-transactions',
     title: 'Transaction sheets',
     summary:
@@ -959,11 +648,11 @@ final List<HubPage> hubPages = [
     builder: buildSheetsTransactionsPage,
   ),
   const HubPage(
-    level: HubLevel.domain,
+    level: AppHubLevel.domain,
     slug: 'debts',
     title: 'Debts',
     summary:
-        'The net balance (row / hero), the debt hero pieces (amount line, age, net line, message box) and the debt pages\' AppListRow rows.',
+        'The net balance (row / hero), the debt hero pieces (amount line, age, net line, message box) and the debt pages\' PpForgeListRow rows.',
     generic: false,
     usedBy: 'Debts list, debt person page, quick create debt mode',
     covers: [
@@ -988,7 +677,7 @@ final List<HubPage> hubPages = [
     builder: buildDebtsPage,
   ),
   const HubPage(
-    level: HubLevel.domain,
+    level: AppHubLevel.domain,
     slug: 'recurring',
     title: 'Recurring',
     summary:
@@ -1039,7 +728,7 @@ final List<HubPage> hubPages = [
     builder: buildRecurringPage,
   ),
   const HubPage(
-    level: HubLevel.domain,
+    level: AppHubLevel.domain,
     slug: 'saving',
     title: 'Saving goals',
     summary:
@@ -1069,7 +758,7 @@ final List<HubPage> hubPages = [
     builder: buildDomainSavingPage,
   ),
   const HubPage(
-    level: HubLevel.domain,
+    level: AppHubLevel.domain,
     slug: 'progress',
     title: 'Progress',
     summary:
@@ -1087,11 +776,11 @@ final List<HubPage> hubPages = [
     builder: buildProgressPage,
   ),
   const HubPage(
-    level: HubLevel.domain,
+    level: AppHubLevel.domain,
     slug: 'budgets',
     title: 'Budgets',
     summary:
-        'Source chips, scope prompt, simple period editor, AppDetailRow error, wallet value chip, card-list gap.',
+        'Source chips, scope prompt, simple period editor, PpForgeDetailRow error, wallet value chip, card-list gap.',
     generic: false,
     usedBy: 'Budget list and detail',
     covers: [
@@ -1107,7 +796,7 @@ final List<HubPage> hubPages = [
     builder: buildBudgetsPage,
   ),
   const HubPage(
-    level: HubLevel.domain,
+    level: AppHubLevel.domain,
     slug: 'events',
     title: 'Events',
     summary:
@@ -1133,7 +822,7 @@ final List<HubPage> hubPages = [
     builder: buildEventsPage,
   ),
   const HubPage(
-    level: HubLevel.domain,
+    level: AppHubLevel.domain,
     slug: 'bottom-bar',
     title: 'Bottom bar & +',
     summary:
@@ -1153,7 +842,7 @@ final List<HubPage> hubPages = [
     builder: buildBottomBarPage,
   ),
   const HubPage(
-    level: HubLevel.domain,
+    level: AppHubLevel.domain,
     slug: 'transactions',
     title: 'Transactions',
     summary:
@@ -1201,7 +890,7 @@ final List<HubPage> hubPages = [
     builder: buildTransactionsPage,
   ),
   const HubPage(
-    level: HubLevel.domain,
+    level: AppHubLevel.domain,
     slug: 'people-accounts',
     title: 'People & accounts',
     summary:
@@ -1235,7 +924,7 @@ final List<HubPage> hubPages = [
     builder: buildPeopleAccountsPage,
   ),
   const HubPage(
-    level: HubLevel.domain,
+    level: AppHubLevel.domain,
     slug: 'profile-connections',
     title: 'Profile & connections',
     summary:
@@ -1251,7 +940,7 @@ final List<HubPage> hubPages = [
       'ProfileHeroAvatar',
       'ProfileHeroCard',
       'AvatarSourceRow',
-      'AppRadioMark',
+      'PpForgeRadioMark',
       'ConnectionRow',
       'ConnectionRowState',
       'ConnectionHeroCard',
@@ -1265,7 +954,7 @@ final List<HubPage> hubPages = [
     builder: buildProfileConnectionsPage,
   ),
   const HubPage(
-    level: HubLevel.domain,
+    level: AppHubLevel.domain,
     slug: 'sheets-projects',
     title: 'Sheets: events',
     summary:
@@ -1281,7 +970,7 @@ final List<HubPage> hubPages = [
     builder: buildSheetsProjectsPage,
   ),
   const HubPage(
-    level: HubLevel.domain,
+    level: AppHubLevel.domain,
     slug: 'sheets-accounts',
     title: 'Wallet sheets',
     summary:
@@ -1305,7 +994,7 @@ final List<HubPage> hubPages = [
     builder: buildSheetsAccountsPage,
   ),
   const HubPage(
-    level: HubLevel.domain,
+    level: AppHubLevel.domain,
     slug: 'entity-pickers',
     title: 'Entity pickers',
     summary:
@@ -1316,7 +1005,7 @@ final List<HubPage> hubPages = [
     builder: buildEntityPickersPage,
   ),
   const HubPage(
-    level: HubLevel.domain,
+    level: AppHubLevel.domain,
     slug: 'pickers',
     title: 'New tag name',
     summary: 'The new-tag name sheet the tag picker opens to create a tag.',
@@ -1326,7 +1015,7 @@ final List<HubPage> hubPages = [
     builder: buildSheetsPickersPage,
   ),
   const HubPage(
-    level: HubLevel.domain,
+    level: AppHubLevel.domain,
     slug: 'others',
     title: 'Others',
     summary:
@@ -1351,7 +1040,7 @@ final List<HubPage> hubPages = [
   ),
   // ── API (read from GET /api/v1/openapi.json)
   const HubPage(
-    level: HubLevel.api,
+    level: AppHubLevel.api,
     slug: 'pages',
     title: 'Pages',
     summary:
@@ -1360,7 +1049,7 @@ final List<HubPage> hubPages = [
     builder: buildApiPagesPage,
   ),
   const HubPage(
-    level: HubLevel.api,
+    level: AppHubLevel.api,
     slug: 'schemas',
     title: 'Schemas',
     summary: 'The shared component schemas: fields, types, required, examples.',
@@ -1369,7 +1058,7 @@ final List<HubPage> hubPages = [
   ),
   // ── Debug
   HubPage(
-    level: HubLevel.debug,
+    level: AppHubLevel.debug,
     slug: 'logs',
     title: 'Logs',
     summary: 'Live log tail, level filter, search, copy.',
@@ -1377,7 +1066,7 @@ final List<HubPage> hubPages = [
     screen: (_) => const LogsViewerScreen(),
   ),
   HubPage(
-    level: HubLevel.labs,
+    level: AppHubLevel.labs,
     slug: 'imports',
     title: 'Imports lab',
     summary: 'Real slips (QR + OCR), parse-text, the slip flow.',
@@ -1385,7 +1074,7 @@ final List<HubPage> hubPages = [
     screen: (_) => const ImportsLabScreen(),
   ),
   HubPage(
-    level: HubLevel.debug,
+    level: AppHubLevel.debug,
     slug: 'env',
     title: 'Environment',
     summary: 'API base URL, build mode, platform, app version and build.',
@@ -1393,7 +1082,7 @@ final List<HubPage> hubPages = [
     screen: (_) => const EnvInfoScreen(),
   ),
   HubPage(
-    level: HubLevel.debug,
+    level: AppHubLevel.debug,
     slug: 'connection',
     title: 'Connection',
     summary:
@@ -1402,7 +1091,7 @@ final List<HubPage> hubPages = [
     screen: (_) => const ConnectionCheckScreen(),
   ),
   HubPage(
-    level: HubLevel.debug,
+    level: AppHubLevel.debug,
     slug: 'network',
     title: 'Network',
     summary:
@@ -1411,7 +1100,7 @@ final List<HubPage> hubPages = [
     screen: (_) => const NetworkPage(),
   ),
   HubPage(
-    level: HubLevel.debug,
+    level: AppHubLevel.debug,
     slug: 'cache',
     title: 'Cache',
     summary:
@@ -1420,7 +1109,7 @@ final List<HubPage> hubPages = [
     screen: (_) => const CachePage(),
   ),
   HubPage(
-    level: HubLevel.debug,
+    level: AppHubLevel.debug,
     slug: 'sync',
     title: 'Sync',
     summary:
@@ -1430,9 +1119,57 @@ final List<HubPage> hubPages = [
   ),
 ];
 
-HubPage? hubPageFor(String level, String slug) {
-  for (final p in hubPages) {
-    if (p.level.name == level && p.slug == slug) return p;
-  }
-  return null;
+/// Every hub page: the kit's, then the app's.
+final List<HubPage> hubPages = [...kitHubPages, ...appHubPages];
+
+/// The portal's sections: the kit's UI section (plus the app's domain level),
+/// api, labs and debug.
+final List<HubSection> hubSections = [
+  const HubSection(
+    'ui',
+    'UI',
+    'The app’s building blocks, smallest to whole page.',
+    Icons.widgets_outlined,
+    [...HubLevel.kit, AppHubLevel.domain],
+  ),
+  HubSection(
+    'api',
+    'API',
+    'What each page calls and when, the shared schemas, spec coverage.',
+    Icons.api_outlined,
+    const [AppHubLevel.api],
+    countLabel: (p) => '${p.length} views | ${pageFlows.length} app pages',
+  ),
+  const HubSection(
+    'labs',
+    'Labs',
+    'Experiments against the real server: slips, chat parse.',
+    Icons.science_outlined,
+    [AppHubLevel.labs],
+  ),
+  const HubSection(
+    'debug',
+    'Debug',
+    'Logs, environment, the network calls and the in-memory cache.',
+    Icons.bug_report_outlined,
+    [AppHubLevel.debug],
+  ),
+];
+
+IconData? hubPageIcon(HubPage p) => switch (p.slug) {
+  'logs' => Icons.receipt_long_outlined,
+  'env' => Icons.info_outline,
+  'network' => Icons.swap_vert,
+  'cache' => Icons.memory_outlined,
+  'imports' => Icons.document_scanner_outlined,
+  'pages' => Icons.account_tree_outlined,
+  'schemas' => Icons.data_object,
+  _ => null,
+};
+
+/// Hands the registry to the portal. Call once at startup.
+void configureAppHub() {
+  PpForgeHub.pages = hubPages;
+  PpForgeHub.sections = hubSections;
+  PpForgeHub.pageIcon = hubPageIcon;
 }

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/domain/budgets` — the budget-only pieces: the source chips, the
 /// scope prompt, the simple period editor (RecurrenceEditor `simple`), the
-/// field error under a AppDetailRow, the wallet value chip and the card-list
+/// field error under a PpForgeDetailRow, the wallet value chip and the card-list
 /// gap of ListPageBody. The shared progress pieces are on Domain → Progress.
 Widget buildBudgetsPage(BuildContext context) => const _BudgetsPage();
 
@@ -39,12 +39,12 @@ class _BudgetsPageState extends State<_BudgetsPage> {
               const HubCell(
                 caption: 'kinds',
                 child: Wrap(
-                  spacing: AppSpacing.xs,
+                  spacing: PpForgeSpacing.xs,
                   children: [
                     SourceChip('ปกติ'),
-                    SourceChip('อีเวนต์', tone: AppChipTone.info),
-                    SourceChip('รายการประจำ', tone: AppChipTone.primary),
-                    SourceChip('รอยืนยัน', tone: AppChipTone.warning),
+                    SourceChip('อีเวนต์', tone: PpForgeChipTone.info),
+                    SourceChip('รายการประจำ', tone: PpForgeChipTone.primary),
+                    SourceChip('รอยืนยัน', tone: PpForgeChipTone.warning),
                   ],
                 ),
               ),
@@ -82,9 +82,9 @@ class _BudgetsPageState extends State<_BudgetsPage> {
               'EditScope.following / EditScope.all, or null.',
           child: Row(
             children: [
-              AppButton(
+              PpForgeButton(
                 label: 'Open prompt',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () async {
                   final r = await showScopePrompt(
                     context,
@@ -96,7 +96,7 @@ class _BudgetsPageState extends State<_BudgetsPage> {
                   if (mounted) setState(() => _picked = '${r?.name}');
                 },
               ),
-              const SizedBox(width: AppSpacing.md),
+              const SizedBox(width: PpForgeSpacing.md),
               Text('→ $_picked'),
             ],
           ),
@@ -120,12 +120,12 @@ class _BudgetsPageState extends State<_BudgetsPage> {
                 ),
               ),
               Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
+                spacing: PpForgeSpacing.sm,
+                runSpacing: PpForgeSpacing.sm,
                 children: [
-                  AppButton(
+                  PpForgeButton(
                     label: 'Open as sheet',
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: () async {
                       final r = await AppRecurrenceSheet.show(
                         context,
@@ -136,9 +136,9 @@ class _BudgetsPageState extends State<_BudgetsPage> {
                     },
                   ),
                   // A saving goal's รอบ: no end (the goal ends it), its own title.
-                  AppButton(
+                  PpForgeButton(
                     label: 'Goal period (showEnd: false, title)',
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: () async {
                       final r = await AppRecurrenceSheet.show(
                         context,
@@ -156,35 +156,35 @@ class _BudgetsPageState extends State<_BudgetsPage> {
           ),
         ),
         HubDemo(
-          title: 'AppDetailRow(error:) / AppDetailRow.pick(error:)',
+          title: 'PpForgeDetailRow(error:) / PpForgeDetailRow.pick(error:)',
           note:
               'A field error under the label (required / server message), in '
-              'the error colour — replaces a hand-made Column + AppMessage.',
+              'the error colour — replaces a hand-made Column + PpForgeMessage.',
           child: Column(
             children: [
-              AppDetailRow.pick(
+              PpForgeDetailRow.pick(
                 label: 'หมวดหมู่',
                 emptyText: 'ไม่ได้เลือก',
                 error: 'เลือกอย่างน้อย 1 หมวด',
                 onTap: () {},
               ),
-              const AppDivider.row(),
-              AppDetailRow.pick(
+              const PpForgeDivider.row(),
+              PpForgeDetailRow.pick(
                 label: 'กระเป๋า',
                 emptyText: 'ไม่ได้เลือก',
                 valueChip: walletValueChip(context, name: 'บัญชีออมทรัพย์'),
                 onTap: () {},
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               // Several entities: the chips wrap, right-aligned.
-              AppDetailRow.pick(
+              PpForgeDetailRow.pick(
                 label: 'หมวดหมู่',
                 emptyText: 'ไม่ได้เลือก',
                 valueChips: const [
-                  AppChip(label: 'อาหาร', selected: true),
-                  AppChip(label: 'เดินทาง', selected: true),
-                  AppChip(label: 'ของใช้ในบ้าน', selected: true),
-                  AppChip(label: 'บันเทิง', selected: true),
+                  PpForgeChip(label: 'อาหาร', selected: true),
+                  PpForgeChip(label: 'เดินทาง', selected: true),
+                  PpForgeChip(label: 'ของใช้ในบ้าน', selected: true),
+                  PpForgeChip(label: 'บันเทิง', selected: true),
                 ],
                 onTap: () {},
               ),
@@ -202,9 +202,9 @@ class _BudgetsPageState extends State<_BudgetsPage> {
               'changed), or null.',
           child: Row(
             children: [
-              AppButton(
+              PpForgeButton(
                 label: 'Open sheet',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () async {
                   final r = await showPeriodLimitSheet(
                     context,
@@ -235,7 +235,7 @@ class _BudgetsPageState extends State<_BudgetsPage> {
                   }
                 },
               ),
-              const SizedBox(width: AppSpacing.md),
+              const SizedBox(width: PpForgeSpacing.md),
               Text('→ $_limit'),
             ],
           ),
@@ -244,13 +244,13 @@ class _BudgetsPageState extends State<_BudgetsPage> {
           title: 'walletValueChip — a wallet as a value chip',
           note:
               'Moved into the kit (ui/domain/money): `[icon] name` in the '
-              'wallet\'s colour, for AppDetailRow.pick(valueChip:).',
+              'wallet\'s colour, for PpForgeDetailRow.pick(valueChip:).',
           child: Align(
             alignment: Alignment.centerLeft,
             child: walletValueChip(
               context,
               name: 'บัตร KTC',
-              iconCode: const IconCode(
+              iconCode: const PpForgeIconCode(
                 icon: 'credit_card',
                 iconColors: ['#0284C7'],
               ),

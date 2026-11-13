@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app/app_icons.dart';
-import '../icons/icon_code.dart';
-import '../../atoms/corner_badge.dart';
-import '../../atoms/dashed_rect_border.dart';
+import '../tokens/app_icons.dart';
+import 'package:pp_forge_core/ui.dart';
 import 'avatar.dart';
 import 'avatar_data.dart';
 
@@ -53,7 +51,7 @@ class PersonMark extends StatelessWidget {
   final String name;
   final PersonLevel level;
 
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   /// The BE's avatar (contact / linked levels); null = built from [name] +
   /// [iconCode].

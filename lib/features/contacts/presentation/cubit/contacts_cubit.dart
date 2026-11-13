@@ -127,7 +127,7 @@ class ContactsCubit extends Cubit<ContactsState>
     String? phone,
     String? description,
     String? note,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
   }) async {
     final res = await _repo.create(
       displayName: displayName,
@@ -150,7 +150,7 @@ class ContactsCubit extends Cubit<ContactsState>
     String? phone,
     String? description,
     String? note,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
   }) async {
     final updated = await _repo.update(
       id,

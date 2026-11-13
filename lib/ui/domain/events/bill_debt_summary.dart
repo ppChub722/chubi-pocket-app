@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_chip.dart';
-import '../../tokens/app_spacing.dart';
-import '../../tokens/chip_size.dart';
+import 'package:pp_forge_core/ui.dart';
 
 /// One person of a [BillDebtSummary]: who, their state with me before →
 /// after the save ([state], null = not known yet) and what the save does
@@ -13,14 +11,14 @@ class BillDebtLine {
     required this.name,
     this.state,
     this.chip,
-    this.chipTone = AppChipTone.warning,
+    this.chipTone = PpForgeChipTone.warning,
   });
 
   final Widget avatar;
   final String name;
   final String? state;
   final String? chip;
-  final AppChipTone chipTone;
+  final PpForgeChipTone chipTone;
 }
 
 /// 0.4.1-2 SA5 — the bill form's debt summary before saving: one line per
@@ -42,7 +40,7 @@ class BillDebtSummary extends StatelessWidget {
       return Row(
         children: [
           p.avatar,
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: PpForgeSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,7 +65,7 @@ class BillDebtSummary extends StatelessWidget {
             ),
           ),
           if (chip != null)
-            AppChip(
+            PpForgeChip(
               label: chip,
               tone: p.chipTone,
               selected: true,
@@ -85,7 +83,7 @@ class BillDebtSummary extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           for (final (i, p) in lines.indexed) ...[
-            if (i > 0) const SizedBox(height: AppSpacing.sm),
+            if (i > 0) const SizedBox(height: PpForgeSpacing.sm),
             line(p),
           ],
         ],

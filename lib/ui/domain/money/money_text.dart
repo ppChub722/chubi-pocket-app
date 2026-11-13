@@ -1,8 +1,6 @@
-import '../../atoms/amount_text.dart';
+import 'package:pp_forge_core/ui.dart';
 import 'package:flutter/material.dart';
 
-import '../../atoms/ui_config.dart';
-import '../../tokens/app/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import 'money_style.dart';
 
@@ -31,8 +29,9 @@ class MoneyText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final symbol = this.symbol ?? UiConfig.stringsOf(context).currencySymbol;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final symbol =
+        this.symbol ?? PpForgeConfig.stringsOf(context).currencySymbol;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final money = MoneyStyleScope.of(context);
     final digits = money.digitsFor(
       amount,
@@ -89,7 +88,8 @@ String moneyString(BuildContext context, num amount, {String? symbol}) =>
     _moneyString(context, amount, symbol);
 
 String _moneyString(BuildContext context, num amount, String? symbolOrNull) {
-  final symbol = symbolOrNull ?? UiConfig.stringsOf(context).currencySymbol;
+  final symbol =
+      symbolOrNull ?? PpForgeConfig.stringsOf(context).currencySymbol;
   final digits = MoneyStyleScope.of(
     context,
   ).digitsFor(amount, CurrencyFormatter.decimalsOfSymbol(symbol));

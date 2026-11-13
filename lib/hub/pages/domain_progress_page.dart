@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/domain/progress` — the progress pieces shared by budgets and saving
 /// goals: ProgressRow with the expected segment, ProgressCard (row / compact /
@@ -15,7 +14,7 @@ class _ProgressPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tones = [for (final t in ProgressTone.values) (t.name, t)];
-    const entity = IconCode(icon: 'restaurant', iconColors: ['#F97316']);
+    const entity = PpForgeIconCode(icon: 'restaurant', iconColors: ['#F97316']);
 
     Widget bar(String caption, double v, double? e, ProgressTone t) => SizedBox(
       width: 300,
@@ -83,9 +82,9 @@ class _ProgressPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              AppButton(
+              PpForgeButton(
                 label: 'Replay (as on app resume)',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () => ShownTweenBuilder.replayAll.value++,
               ),
             ],
@@ -118,10 +117,10 @@ class _ProgressPage extends StatelessWidget {
                 ? StatusChip.tone(
                     label: tone.name,
                     tone: switch (tone) {
-                      ProgressTone.danger => AppChipTone.danger,
-                      ProgressTone.warning => AppChipTone.warning,
-                      ProgressTone.success => AppChipTone.success,
-                      _ => AppChipTone.neutral,
+                      ProgressTone.danger => PpForgeChipTone.danger,
+                      ProgressTone.warning => PpForgeChipTone.warning,
+                      ProgressTone.success => PpForgeChipTone.success,
+                      _ => PpForgeChipTone.neutral,
                     },
                     size: ChipSize.mini,
                   )
@@ -244,7 +243,7 @@ class _ProgressPage extends StatelessWidget {
                 label: 'ใช้ ฿4,860 จาก ฿4,000',
                 percentText: '122%',
               ),
-              const AppDivider(),
+              const PpForgeDivider(),
               ProgressCard.compact(
                 title: 'ก.ย. 2026',
                 value: 1.06,
@@ -252,9 +251,9 @@ class _ProgressPage extends StatelessWidget {
                 label: '฿8,460 จาก ฿8,000',
                 percentText: '106%',
               ),
-              const AppDivider(),
+              const PpForgeDivider(),
               const ProgressCard.skeleton(),
-              const AppDivider(),
+              const PpForgeDivider(),
               const ProgressCard.skeleton(compact: true),
             ],
           ),

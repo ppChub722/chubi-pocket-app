@@ -4,18 +4,18 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('profile edit sends only what changed', () {
-    const star = IconCode(icon: 'star');
-    const bank = IconCode(icon: 'bank');
+    const star = PpForgeIconCode(icon: 'star');
+    const bank = PpForgeIconCode(icon: 'bank');
     for (final c
         in <
           ({
             String name,
             String newName,
             String newEmail,
-            IconCode? newIcon,
+            PpForgeIconCode? newIcon,
             String? wantName,
             String? wantEmail,
-            IconCode? wantIcon,
+            PpForgeIconCode? wantIcon,
             bool wantClear,
           })
         >[

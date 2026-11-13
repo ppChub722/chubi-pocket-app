@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
@@ -279,13 +278,13 @@ class _DebtEntryViewState extends State<_DebtEntryView>
   }
 
   Future<void> _pickDate() async {
-    final r = await AppDatePicker.show(
+    final r = await PpForgeDatePicker.show(
       context,
       initial: _c.date,
       first: DateTime(2000),
       last: DateTime.now().add(const Duration(days: 365)),
     );
-    if (r is AppDatePicked) _c.setDate(r.date);
+    if (r is PpForgeDatePicked) _c.setDate(r.date);
   }
 
   Future<void> _moreTags() async {
@@ -300,7 +299,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
 
   void _say(String text, Tone tone) {
     final m = pageMessenger;
-    if (m != null) showAppSnackBarOn(m, text, tone: tone);
+    if (m != null) showPpForgeSnackBarOn(m, text, tone: tone);
   }
 
   Future<void> _save() async {
@@ -375,7 +374,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       return r;
     });
     if (mounted && done) {
-      showAppSnackBar(context, l.txLinkDisconnected, tone: Tone.success);
+      showPpForgeSnackBar(context, l.txLinkDisconnected, tone: Tone.success);
     }
   }
 
@@ -500,7 +499,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     try {
       final r = await repo.deleteEntry(_entry.id);
       applyDebtEntryDeleteResult(r, accounts: accounts, txs: txCubit);
-      showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
+      showPpForgeSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
       if (router == null) {
         navigator.maybePop();
       } else if (router.canPop()) {
@@ -558,7 +557,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
             tooltip: l.debtsPaidChip,
             onChanged: (_) => _togglePaid(),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: PpForgeSpacing.sm),
           Text(
             status,
             style: theme.textTheme.titleMedium?.copyWith(
@@ -689,9 +688,9 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       children: [
         card,
         PositionedDirectional(
-          top: AppSpacing.xs,
-          end: AppSpacing.xs,
-          child: AppIconButton.flat(
+          top: PpForgeSpacing.xs,
+          end: PpForgeSpacing.xs,
+          child: PpForgeIconButton.flat(
             key: const ValueKey('debtUnlinkTx'),
             icon: AppIcons.close,
             iconSize: 16,
@@ -764,7 +763,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
         children: [
           Expanded(child: personCard),
           if (origin != null) ...[
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             Expanded(
               child: Opacity(
                 // Edit mode: shown, never changed here.
@@ -788,7 +787,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
             ),
           ] else ...[
             // Alone it keeps the create form's half width.
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             const Spacer(),
           ],
         ],
@@ -798,13 +797,13 @@ class _DebtEntryViewState extends State<_DebtEntryView>
 
   Future<void> _pickDue() async {
     final from = DateTime(_c.date.year, _c.date.month, _c.date.day);
-    final r = await AppDatePicker.show(
+    final r = await PpForgeDatePicker.show(
       context,
       initial: _c.dueDate ?? from,
       first: from,
       last: from.add(const Duration(days: 365 * 5)),
     );
-    if (r is AppDatePicked && mounted) _c.setDueDate(r.date);
+    if (r is PpForgeDatePicked && mounted) _c.setDueDate(r.date);
   }
 
   /// "กำหนดจ่าย" under โน้ต, like quick create's row; view mode shows it only
@@ -822,7 +821,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       key: const ValueKey('debtDueRow'),
       first: first,
       children: [
-        AppDetailRow(
+        PpForgeDetailRow(
           label: l.debtDueLabel,
           onLongPress: isEditing ? null : () => _edit(then: _pickDue),
           trailing: Align(
@@ -849,7 +848,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
         label: l.commonNote,
         dense: !editing,
         child: editing
-            ? AppInput.inline(
+            ? PpForgeInput.inline(
                 editing: true,
                 controller: _c.note,
                 maxLines: 5,
@@ -910,17 +909,17 @@ class _DebtEntryViewState extends State<_DebtEntryView>
               builder: (context, _) => DetailPageBody(
                 onRefresh: widget.onRefresh,
                 physics: const AlwaysScrollableScrollPhysics(),
-                topInset: MediaQuery.paddingOf(context).top + AppSpacing.md,
+                topInset: MediaQuery.paddingOf(context).top + PpForgeSpacing.md,
                 bottomInset: 96 + MediaQuery.paddingOf(context).bottom,
                 hero: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (_sourced && editing) ...[
-                      AppMessage(
+                      PpForgeMessage(
                         message: l.debtSourceHint(source?.title ?? ''),
                         tone: Tone.info,
                       ),
-                      const SizedBox(height: AppSpacing.md),
+                      const SizedBox(height: PpForgeSpacing.md),
                     ],
                     TransactionHeroCard(
                       key: _heroKey,
@@ -951,7 +950,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                     ),
                     // The tx page's card (owner 2026-11-05): the cards, tags
                     // and note under the hero, in one frame.
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: PpForgeSpacing.md),
                     EntrySectionCard(
                       children: [_cards(l, symbol), ?tags, _noteRow(l)],
                     ),
@@ -966,17 +965,17 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                     (first) => SectionCard(
                       first: first,
                       children: [
-                        AppDetailRow(
+                        PpForgeDetailRow(
                           key: const ValueKey('debtPartnerLinked'),
                           label: l.debtPartnerLinked(
                             widget.detail.balance.person.name,
                           ),
-                          trailing: AppButton(
+                          trailing: PpForgeButton(
                             kind: ButtonIconKind.disconnect,
                             key: const ValueKey('debtDisconnectPartner'),
                             label: l.txLinkDisconnect,
-                            variant: AppButtonVariant.outlined,
-                            size: AppButtonSize.control,
+                            variant: PpForgeButtonVariant.outlined,
+                            size: PpForgeButtonSize.control,
                             onPressed: isSaving ? null : _disconnectPartner,
                           ),
                         ),
@@ -987,7 +986,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                     (first) => SectionCard(
                       first: first,
                       children: [
-                        AppDetailRow(
+                        PpForgeDetailRow(
                           label: l.debtSourceRowLabel,
                           helper: source.title,
                           showChevron:
@@ -1016,9 +1015,9 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                       title: l.debtBillsTitle,
                       children: [
                         for (final b in e.bills)
-                          AppListRow(
+                          PpForgeListRow(
                             key: ValueKey('debtBill:${b.ptId}'),
-                            leading: const AppIcon(AppIcons.receipt),
+                            leading: const PpForgeIcon(AppIcons.receipt),
                             title: b.description ?? b.event.name,
                             line2: ListRowLine(
                               parts: [

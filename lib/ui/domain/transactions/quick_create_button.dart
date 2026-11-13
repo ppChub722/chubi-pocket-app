@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_button.dart';
-import '../../atoms/app_chip.dart';
-import '../../atoms/app_icon.dart';
-import '../../atoms/app_icon_button.dart';
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app/quick_create_mode.dart';
-import '../../tokens/app_durations.dart';
-import '../../tokens/icon_size.dart';
+import '../tokens/app_icons.dart';
+import '../tokens/quick_create_mode.dart';
+import 'package:pp_forge_core/ui.dart';
 
 /// The mode's glyph: the record glyph for a transaction, the debt / saving
 /// module icons.
@@ -52,7 +47,7 @@ class QuickCreateButton extends StatelessWidget {
     final still = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     final fill = color ?? QuickCreateModeColors.of(context, mode);
     final on = color != null
-        ? AppChip.readableOn(color!)
+        ? PpForgeChip.readableOn(color!)
         : QuickCreateModeColors.onOf(context, mode);
     final label = this.label;
     final glyph = icon ?? quickCreateModeIcon(mode);
@@ -60,7 +55,7 @@ class QuickCreateButton extends StatelessWidget {
       dimension: size,
       child: TweenAnimationBuilder<Color?>(
         tween: ColorTween(end: fill),
-        duration: still ? Duration.zero : AppDurations.fast,
+        duration: still ? Duration.zero : PpForgeDurations.fast,
         curve: Curves.easeOutCubic,
         builder: (context, color, _) => DecoratedBox(
           decoration: BoxDecoration(
@@ -81,7 +76,7 @@ class QuickCreateButton extends StatelessWidget {
               onTap: onPressed,
               child: Center(
                 child: label == null
-                    ? AppIcon(glyph, size: AppIconSize.xl, color: on)
+                    ? PpForgeIcon(glyph, size: PpForgeIconSize.xl, color: on)
                     : Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         // A long word shrinks rather than leaving the circle.
@@ -90,7 +85,7 @@ class QuickCreateButton extends StatelessWidget {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              AppIcon(glyph, size: 26, color: on),
+                              PpForgeIcon(glyph, size: 26, color: on),
                               const SizedBox(height: 4),
                               Text(
                                 label,
@@ -137,7 +132,7 @@ class QuickCreateHeadButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = QuickCreateModeColors.of(context, mode);
-    final side = AppIconButton.resolveSize(context, size);
+    final side = PpForgeIconButton.resolveSize(context, size);
     final button = SizedBox.square(
       dimension: side,
       child: Material(
@@ -149,7 +144,11 @@ class QuickCreateHeadButton extends StatelessWidget {
         child: InkWell(
           onTap: onPressed,
           child: Center(
-            child: AppIcon(AppIcons.add, size: AppIconSize.md, color: color),
+            child: PpForgeIcon(
+              AppIcons.add,
+              size: PpForgeIconSize.md,
+              color: color,
+            ),
           ),
         ),
       ),
@@ -159,7 +158,7 @@ class QuickCreateHeadButton extends StatelessWidget {
 }
 
 /// The empty state's call to action (mock QuickCreateBtn "ตอนยังไม่มีข้อมูล"):
-/// a filled [AppButton] in the page's mode colour, + and the word.
+/// a filled [PpForgeButton] in the page's mode colour, + and the word.
 class QuickCreateCtaButton extends StatelessWidget {
   const QuickCreateCtaButton({
     required this.mode,
@@ -183,10 +182,10 @@ class QuickCreateCtaButton extends StatelessWidget {
           onPrimary: QuickCreateModeColors.onOf(context, mode),
         ),
       ),
-      child: AppButton(
+      child: PpForgeButton(
         label: label,
         icon: AppIcons.add,
-        size: AppButtonSize.control,
+        size: PpForgeButtonSize.control,
         onPressed: onPressed,
       ),
     );

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_chip.dart';
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/chip_size.dart';
+import '../tokens/app_icons.dart';
+import 'package:pp_forge_core/ui.dart';
 
 /// "จ่าย" under a person's name in a bill: ✓ and filled on the one who paid,
 /// dashed on everyone else (tap = they paid). The event bill and quick
@@ -22,7 +21,7 @@ class PayChip extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => AppChip(
+  Widget build(BuildContext context) => PpForgeChip(
     label: label,
     icon: AppIcons.check,
     selected: paid,
@@ -47,12 +46,12 @@ class PaidBackChip extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => AppChip(
+  Widget build(BuildContext context) => PpForgeChip(
     label: label,
     icon: AppIcons.check,
     selected: paidBack,
     dashed: !paidBack,
-    tone: AppChipTone.info,
+    tone: PpForgeChipTone.info,
     size: ChipSize.mini,
     onTap: onTap,
   );

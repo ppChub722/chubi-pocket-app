@@ -114,7 +114,7 @@ class ProjectsRepository {
     String? endDate,
     double? plannedAmount,
     List<String> tagIds = const [],
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
   }) => _call(() async {
     final res = await _client.dio.post<Map<String, dynamic>>(
       '/projects',
@@ -142,7 +142,7 @@ class ProjectsRepository {
     bool clearStartDate = false,
     bool clearEndDate = false,
     ProjectStatus? status,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
     double? plannedAmount,
     bool clearPlannedAmount = false,
     List<String>? tagIds,
@@ -503,7 +503,7 @@ class ProjectsRepository {
   Future<BoardTag> createEventTag(
     String projectId,
     String name, {
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
   }) async =>
       (await writeEventTag(projectId, name: name, iconCode: iconCode)).tag;
 
@@ -511,7 +511,7 @@ class ProjectsRepository {
     String projectId, {
     String? tagId,
     required String name,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
   }) => _call(() async {
     final body = <String, dynamic>{
       'name': name,

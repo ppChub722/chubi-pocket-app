@@ -2,7 +2,6 @@ import '../../../../core/network/api_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
@@ -122,13 +121,13 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
   }
 
   Future<void> _pickDate() async {
-    final r = await AppDatePicker.show(
+    final r = await PpForgeDatePicker.show(
       context,
       initial: _c.date,
       first: DateTime(2000),
       last: DateTime.now().add(const Duration(days: 365)),
     );
-    if (r is AppDatePicked) _c.setDate(r.date);
+    if (r is PpForgeDatePicked) _c.setDate(r.date);
   }
 
   String _dayLabel(AppLocalizations l, DateTime d) => DateFormatter.friendly(
@@ -142,17 +141,17 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
     final a = _c.available;
     if (a == null) return null;
     if (_c.overBy > 0) {
-      return AppText(
+      return PpForgeText(
         l.savingEntryOverAvailable(
           moneyString(context, _c.overBy, symbol: symbol),
         ),
-        role: AppTextRole.caption,
+        role: PpForgeTextRole.caption,
         color: Theme.of(context).colorScheme.error,
       );
     }
-    return AppText(
+    return PpForgeText(
       l.savingEntryAvailable(moneyString(context, a, symbol: symbol)),
-      role: AppTextRole.caption,
+      role: PpForgeTextRole.caption,
     );
   }
 
@@ -208,7 +207,7 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
           EntryCard(
             key: widget.heroKey,
             type: TransactionType.income,
-            typeBadge: AppChip(
+            typeBadge: PpForgeChip(
               label: l.quickModeSaving,
               icon: AppIcons.quickSaving,
               color: QuickCreateModeColors.of(context, QuickCreateMode.saving),
@@ -227,7 +226,7 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
             amountNote: _availableLine(l, symbol),
             titleHint: l.savingTitleHint,
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: PpForgeSpacing.md),
           EntrySectionCard(
             children: [FlowCards(from: _walletCard(l), to: _goalCard(l))],
           ),

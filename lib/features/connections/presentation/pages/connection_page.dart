@@ -5,7 +5,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/top_bar_crumbs.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/data/telegram_oidc.dart';
@@ -104,7 +103,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
       _apply(await repo.link(c.provider, token));
     } on TelegramOidcOpenFailed {
       if (mounted) {
-        showAppSnackBar(
+        showPpForgeSnackBar(
           context,
           l.connectionsOpenFailed(c.name),
           tone: Tone.danger,
@@ -126,7 +125,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
         uri != null &&
         await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened && mounted) {
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         AppLocalizations.of(context)!.connectionsOpenFailed(c.name),
         tone: Tone.danger,
@@ -195,7 +194,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
     return DetailPageBody(
       onRefresh: _load,
       physics: const AlwaysScrollableScrollPhysics(),
-      bottomInset: AppSpacing.huge + inset.bottom,
+      bottomInset: PpForgeSpacing.huge + inset.bottom,
       hero: ConnectionHeroCard(
         name: c.name,
         logoUrl: c.logoUrl,
@@ -220,7 +219,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
               ),
         if (!c.linked)
           (first) => Padding(
-            padding: EdgeInsets.only(top: first ? 0 : AppSpacing.xxl),
+            padding: EdgeInsets.only(top: first ? 0 : PpForgeSpacing.xxl),
             child: ConnectionLinkButton(
               label: l.connectionsLink(c.name),
               brand: c.brand,
@@ -250,24 +249,24 @@ class _ConnectionPageState extends State<ConnectionPage> {
                         size: AvatarSourceRow.thumbSize,
                       ),
                 actions: [
-                  AppButton(
+                  PpForgeButton(
                     kind: ButtonIconKind.photo,
                     label: c.photo == null
                         ? l.connectionsPhotoImport
                         : l.connectionsPhotoUpdate,
-                    variant: AppButtonVariant.outlined,
-                    size: AppButtonSize.chip,
+                    variant: PpForgeButtonVariant.outlined,
+                    size: PpForgeButtonSize.chip,
                     submits: true,
                     onPressed: _busy
                         ? null
                         : () => _run(() => repo.importPhoto(c.provider)),
                   ),
                   if (c.photo != null)
-                    AppButton(
+                    PpForgeButton(
                       kind: ButtonIconKind.delete,
                       label: l.commonDelete,
-                      variant: AppButtonVariant.destructiveOutlined,
-                      size: AppButtonSize.chip,
+                      variant: PpForgeButtonVariant.destructiveOutlined,
+                      size: PpForgeButtonSize.chip,
                       submits: true,
                       onPressed: _busy ? null : _deletePhoto,
                     ),
@@ -280,19 +279,19 @@ class _ConnectionPageState extends State<ConnectionPage> {
             title: l.profileSectionAccount,
             children: [
               if (c.botUrl != null)
-                AppDetailRow(
+                PpForgeDetailRow(
                   icon: AppIcons.chat,
                   label: l.connectionsOpenBot,
                   showChevron: true,
                   onTap: () => _openBot(c),
                 ),
-              AppDetailRow(
+              PpForgeDetailRow(
                 icon: AppIcons.transfer,
                 label: l.connectionsChangeAccount(c.name),
                 showChevron: true,
                 onTap: _busy ? null : _link,
               ),
-              AppDetailRow(
+              PpForgeDetailRow(
                 icon: AppIcons.unlink,
                 label: l.connectionsUnlink,
                 destructive: true,
@@ -313,11 +312,11 @@ class _ConnectionPageState extends State<ConnectionPage> {
   ) {
     final label = connectionPermissionLabel(l, p.key);
     return switch (permissionRowState(c, p)) {
-      PermissionRowState.comingSoon => AppDetailRow(
+      PermissionRowState.comingSoon => PpForgeDetailRow(
         label: label,
         comingSoon: true,
       ),
-      PermissionRowState.dimmed => AppDetailRow(label: label, dimmed: true),
+      PermissionRowState.dimmed => PpForgeDetailRow(label: label, dimmed: true),
       PermissionRowState.toggle => LiveSetting<bool>(
         key: ValueKey('perm-${p.key}'),
         value: p.on,

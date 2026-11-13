@@ -54,7 +54,7 @@ class _Repo extends Fake implements ProjectsRepository {
     String? endDate,
     double? plannedAmount,
     List<String> tagIds = const [],
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
   }) async {
     calls.add('create $name');
     return _Detail();

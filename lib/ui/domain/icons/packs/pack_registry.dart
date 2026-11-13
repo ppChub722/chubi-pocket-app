@@ -1,5 +1,5 @@
 import '../icon_type.dart';
-import 'icon_pack.dart';
+import 'package:pp_forge_core/ui.dart';
 import 'base/pack_account.dart';
 import 'base/pack_category.dart';
 import 'base/pack_contact.dart';
@@ -12,7 +12,7 @@ import 'base/pack_user_profile.dart';
 class PackRegistry {
   PackRegistry._();
 
-  static const Map<IconType, IconPack> _basePacks = {
+  static const Map<IconType, PpForgeIconPack> _basePacks = {
     IconType.account: basePackAccount,
     IconType.category: basePackCategory,
     IconType.contact: basePackContact,
@@ -23,13 +23,13 @@ class PackRegistry {
     IconType.userProfile: basePackUserProfile,
   };
 
-  static const Map<String, IconPack> _extraPacks = {};
+  static const Map<String, PpForgeIconPack> _extraPacks = {};
 
-  static List<IconPack> packs({
+  static List<PpForgeIconPack> packs({
     required IconType type,
     List<String> grantedPackIds = const [],
   }) {
-    final result = <IconPack>[];
+    final result = <PpForgeIconPack>[];
     final base = _basePacks[type];
     if (base != null) result.add(base);
     for (final id in grantedPackIds) {

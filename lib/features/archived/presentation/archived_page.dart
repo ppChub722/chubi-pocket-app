@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../app/shell/app_top_bar.dart';
 import '../../../app/shell/tab_nav.dart';
 import '../../../core/network/api_client.dart';
-import '../../../core/utils/date_formatter.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
 import '../../budgets/presentation/budget_labels.dart' show budgetRowMoney;
@@ -96,7 +95,7 @@ class _ArchivedView extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final err = await context.read<ArchivedCubit>().restore(kind, item.id);
     if (!context.mounted) return;
-    showAppSnackBar(
+    showPpForgeSnackBar(
       context,
       err == null ? l.archivedRestored(item.name) : errorText(l, err),
       tone: err == null ? Tone.success : Tone.danger,
@@ -137,11 +136,11 @@ class _ArchivedView extends StatelessWidget {
                   title: _title(l, kind),
                   children: [
                     for (final item in hub.of(kind))
-                      AppDetailRow(
+                      PpForgeDetailRow(
                         key: ValueKey('archived-${kind.key}-${item.id}'),
                         leading: Opacity(
                           opacity: 0.6,
-                          child: IconCodeWidget(
+                          child: PpForgeIconCodeWidget(
                             iconCode: item.iconCode,
                             size: AvatarMetrics.sizeMedium,
                             fallbackIcon: _fallback(kind),
@@ -152,10 +151,10 @@ class _ArchivedView extends StatelessWidget {
                         onTap: () =>
                             openPage(context, kind.detailPath(item.id)),
                         trailing: item.canRestore
-                            ? AppChip(
+                            ? PpForgeChip(
                                 label: l.archivedRestore,
                                 icon: AppIcons.unarchive,
-                                tone: AppChipTone.primary,
+                                tone: PpForgeChipTone.primary,
                                 selected: true,
                                 onTap: state.busy.contains(item.id)
                                     ? null

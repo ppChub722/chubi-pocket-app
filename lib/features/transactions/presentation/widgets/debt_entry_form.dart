@@ -4,7 +4,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
@@ -61,7 +60,7 @@ Widget? debtNetSubtitle(
   if (net == null) return null;
   if (net.abs() <= 0.004) return Text(l.debtSettledLabel);
   final owedToMe = net > 0;
-  final palette = Theme.of(context).extension<AppColors>()!;
+  final palette = Theme.of(context).extension<PpForgeColors>()!;
   final money = moneyString(
     context,
     net.abs(),
@@ -74,9 +73,9 @@ Widget? debtNetSubtitle(
       children: [
         TextSpan(
           text: money,
-          style: AppTypography.of(
+          style: PpForgeTypography.of(
             context,
-            AppTextRole.money,
+            PpForgeTextRole.money,
           )?.copyWith(color: owedToMe ? palette.income : palette.expense),
         ),
       ],
@@ -526,13 +525,13 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
   }
 
   Future<void> _pickDate() async {
-    final r = await AppDatePicker.show(
+    final r = await PpForgeDatePicker.show(
       context,
       initial: _c.date,
       first: DateTime(2000),
       last: DateTime.now().add(const Duration(days: 365)),
     );
-    if (r is AppDatePicked) _c.setDate(r.date);
+    if (r is PpForgeDatePicked) _c.setDate(r.date);
   }
 
   Future<void> _moreTags() async {
@@ -763,9 +762,9 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     final theme = Theme.of(context);
     return InkWell(
       onTap: () => onChanged(!value),
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(PpForgeRadius.md),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xs),
         child: Row(
           children: [
             Expanded(
@@ -787,7 +786,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
                 ],
               ),
             ),
-            AppSwitch(
+            PpForgeSwitch(
               key: key,
               value: value,
               onChanged: onChanged,
@@ -822,10 +821,10 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
         key: const ValueKey('debtLinkRow'),
         label: l.debtLinkExistingLabel,
         dense: true,
-        child: AppChip(
+        child: PpForgeChip(
           label: l.occurrenceLinkPick,
           icon: AppIcons.link,
-          tone: AppChipTone.primary,
+          tone: PpForgeChipTone.primary,
           selected: true,
           dashed: true,
           onTap: _pickLinkTx,
@@ -843,13 +842,13 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
 
   Future<void> _pickDue() async {
     final from = DateTime(_c.date.year, _c.date.month, _c.date.day);
-    final r = await AppDatePicker.show(
+    final r = await PpForgeDatePicker.show(
       context,
       initial: _c.dueDate ?? from,
       first: from,
       last: from.add(const Duration(days: 365 * 5)),
     );
-    if (r is AppDatePicked && mounted) _c.setDueDate(r.date);
+    if (r is PpForgeDatePicked && mounted) _c.setDueDate(r.date);
   }
 
   /// 0.4.1-2 V10 — "จากบิลอีเวนต์" (record side, a person picked): pick an
@@ -859,10 +858,10 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     key: const ValueKey('debtFromEventRow'),
     label: l.debtFromEventLabel,
     dense: true,
-    child: AppChip(
+    child: PpForgeChip(
       label: l.debtFromEventPick,
       icon: AppIcons.project,
-      tone: AppChipTone.primary,
+      tone: PpForgeChipTone.primary,
       selected: true,
       dashed: true,
       onTap: _claimFromEvent,
@@ -904,7 +903,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     return ListenableBuilder(
       listenable: _c,
       builder: (context, _) {
-        const gap = SizedBox(height: AppSpacing.md);
+        const gap = SizedBox(height: PpForgeSpacing.md);
         final repay = _c.repaying;
         final paid = _c.direction == DebtEntryDirection.paid;
         final payBack = _c.repayKind == DebtRepaymentKind.pay;
@@ -978,7 +977,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
                 if (!repay && _c.person != null) _fromEventRow(l),
                 DraftFieldRow(
                   label: l.commonNote,
-                  child: AppInput.inline(
+                  child: PpForgeInput.inline(
                     editing: true,
                     controller: _c.note,
                     maxLines: 5,

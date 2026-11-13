@@ -2,31 +2,30 @@ import 'package:flutter/material.dart';
 
 import '../../features/accounts/domain/account_type.dart';
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
-import 'organisms_detail_section_page.dart' show DetailRowsDemo;
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/ui/molecules/row` — the one row shell and its two presets:
-/// Shell (AppRow) → List (AppListRow, a list item) → Detail (AppDetailRow, a
-/// field of this record). AppListRow and AppDetailRow are AppRow presets.
+/// Shell (PpForgeRow) → List (PpForgeListRow, a list item) → Detail (PpForgeDetailRow, a
+/// field of this record). PpForgeListRow and PpForgeDetailRow are PpForgeRow presets.
 Widget buildRowPage(BuildContext context) => const Column(
   crossAxisAlignment: CrossAxisAlignment.stretch,
   children: [
     HubSubheading(
       'Shell',
       note:
-          'AppRow: padding, fill, ink, dim / disabled, leading slot + corner '
+          'PpForgeRow: padding, fill, ink, dim / disabled, leading slot + corner '
           'badge, trailing, actions, footer. Densities list / detail.',
     ),
     _RowShellPage(),
     HubSubheading(
       'List',
-      note: 'AppListRow = AppRow (density list): an item in a list.',
+      note: 'PpForgeListRow = PpForgeRow (density list): an item in a list.',
     ),
     _ListRowPage(),
     HubSubheading(
       'Detail',
-      note: 'AppDetailRow = AppRow (density detail): a field of this record.',
+      note:
+          'PpForgeDetailRow = PpForgeRow (density detail): a field of this record.',
     ),
     _DetailPatternsPage(),
     DetailRowsDemo(),
@@ -56,21 +55,21 @@ class _RowShellPage extends StatelessWidget {
           title: 'Density: list vs detail',
           note:
               'list = 8 / 8 padding, the leading as big as the caller makes '
-              'it (AppListRow). detail = 12 / 12, a 22 px muted icon, ink only '
-              'while pressed (AppDetailRow). Same shell, own rhythm.',
+              'it (PpForgeListRow). detail = 12 / 12, a 22 px muted icon, ink only '
+              'while pressed (PpForgeDetailRow). Same shell, own rhythm.',
           child: SectionCard(
             first: true,
             children: [
-              AppRow(
+              PpForgeRow(
                 leading: tile(AppIcons.wallet),
                 title: title('List density'),
                 subtitle: sub('Line 2 sits 2 px under the title'),
                 trailing: const Text('฿120'),
                 onTap: noop,
               ),
-              AppRow(
-                density: AppRowDensity.detail,
-                leading: const AppIcon(AppIcons.info),
+              PpForgeRow(
+                density: PpForgeRowDensity.detail,
+                leading: const PpForgeIcon(AppIcons.info),
                 title: title('Detail density'),
                 subtitle: sub('The helper sits 4 px under the label'),
                 trailing: const Text('Value'),
@@ -87,28 +86,28 @@ class _RowShellPage extends StatelessWidget {
               'highlighted = primary 8 %. tinted = the accent\'s soft wash '
               '(HeroColors.from: contrast-checked) and, in detail density, the '
               'leading icon in the accent. Inside a SectionCard the fill takes '
-              'the cell\'s round corners (AppRowShape).',
+              'the cell\'s round corners (PpForgeRowShape).',
           child: SectionCard(
             first: true,
             children: [
-              AppRow(
-                density: AppRowDensity.detail,
-                leading: const AppIcon(AppIcons.link),
+              PpForgeRow(
+                density: PpForgeRowDensity.detail,
+                leading: const PpForgeIcon(AppIcons.link),
                 title: title('Tinted (yellow accent)'),
                 accent: const Color(0xFFFFEB3B),
                 tinted: true,
                 onTap: noop,
               ),
-              AppRow(
-                density: AppRowDensity.detail,
-                leading: const AppIcon(AppIcons.category),
+              PpForgeRow(
+                density: PpForgeRowDensity.detail,
+                leading: const PpForgeIcon(AppIcons.category),
                 title: title('Highlighted'),
                 highlighted: true,
                 onTap: noop,
               ),
-              AppRow(
-                density: AppRowDensity.detail,
-                leading: const AppIcon(AppIcons.link),
+              PpForgeRow(
+                density: PpForgeRowDensity.detail,
+                leading: const PpForgeIcon(AppIcons.link),
                 title: title('Tinted (brand blue)'),
                 accent: const Color(0xFF229ED9),
                 tinted: true,
@@ -125,22 +124,22 @@ class _RowShellPage extends StatelessWidget {
           child: SectionCard(
             first: true,
             children: [
-              AppRow(
-                density: AppRowDensity.detail,
-                leading: const AppIcon(AppIcons.archive),
+              PpForgeRow(
+                density: PpForgeRowDensity.detail,
+                leading: const PpForgeIcon(AppIcons.archive),
                 title: title('Dimmed'),
                 dimmed: true,
                 onTap: noop,
               ),
-              AppRow(
-                density: AppRowDensity.detail,
-                leading: const AppIcon(AppIcons.download),
+              PpForgeRow(
+                density: PpForgeRowDensity.detail,
+                leading: const PpForgeIcon(AppIcons.download),
                 title: title('Disabled'),
                 disabled: true,
                 onTap: noop,
               ),
-              AppRow(
-                density: AppRowDensity.detail,
+              PpForgeRow(
+                density: PpForgeRowDensity.detail,
                 reserveLeading: true,
                 title: title('No icon, room kept'),
               ),
@@ -157,18 +156,18 @@ class _RowShellPage extends StatelessWidget {
           child: SectionCard(
             first: true,
             children: [
-              AppRow(
+              PpForgeRow(
                 leading: Avatar(AvatarData.forName('Pond'), size: 40),
                 badge: const RowBadge(icon: AppIcons.link),
                 title: title('Avatar with an icon badge'),
                 trailing: const Text('@ppond'),
                 trailingIcon: AppIcons.lock,
               ),
-              AppRow(
+              PpForgeRow(
                 leading: tile(AppIcons.savings),
                 title: title('Actions + footer'),
                 actions: [
-                  AppIconButton.flat(
+                  PpForgeIconButton.flat(
                     icon: AppIcons.edit,
                     dense: true,
                     onPressed: noop,
@@ -177,7 +176,7 @@ class _RowShellPage extends StatelessWidget {
                 footer: const LinearProgressIndicator(value: 0.6),
                 onTap: noop,
               ),
-              AppRow(
+              PpForgeRow(
                 selector: SelectCheck(value: true, onTap: noop),
                 leading: tile(AppIcons.wallet),
                 title: title('With a select check'),
@@ -197,7 +196,7 @@ class _RowShellPage extends StatelessWidget {
             first: true,
             children: [
               for (final (label, leading, size) in [
-                ('Icon', const AppIcon(AppIcons.link), null),
+                ('Icon', const PpForgeIcon(AppIcons.link), null),
                 (
                   'Logo',
                   const SizedBox.square(
@@ -209,8 +208,8 @@ class _RowShellPage extends StatelessWidget {
                 ('Avatar', Avatar(AvatarData.forName('Pond'), size: 32), 32.0),
               ])
                 for (final badged in [false, true])
-                  AppRow(
-                    density: AppRowDensity.detail,
+                  PpForgeRow(
+                    density: PpForgeRowDensity.detail,
                     leading: leading,
                     leadingSize: size,
                     badge: badged ? const RowBadge(icon: AppIcons.check) : null,
@@ -220,10 +219,10 @@ class _RowShellPage extends StatelessWidget {
           ),
         ),
         HubPlayground(
-          title: 'AppRow',
+          title: 'PpForgeRow',
           controls: [
-            PlayChoice<AppRowDensity>('density', [
-              for (final d in AppRowDensity.values) (d.name, d),
+            PlayChoice<PpForgeRowDensity>('density', [
+              for (final d in PpForgeRowDensity.values) (d.name, d),
             ]),
             const PlayText('title', initialValue: 'Telegram'),
             const PlayText('subtitle', initialValue: ''),
@@ -238,21 +237,21 @@ class _RowShellPage extends StatelessWidget {
             const PlayNum('indent', min: 0, max: 48, step: 8, initialValue: 0),
           ],
           builder: (context, v) {
-            final density = v<AppRowDensity>('density');
+            final density = v<PpForgeRowDensity>('density');
             final sub = v<String>('subtitle');
             final trailing = v<String>('trailing');
             return SectionCard(
               first: true,
               children: [
-                AppRow(
+                PpForgeRow(
                   density: density,
-                  leading: density == AppRowDensity.detail
-                      ? const AppIcon(AppIcons.link)
+                  leading: density == PpForgeRowDensity.detail
+                      ? const PpForgeIcon(AppIcons.link)
                       : tile(AppIcons.link),
                   badge: v<bool>('badge')
                       ? const RowBadge(icon: AppIcons.check)
                       : null,
-                  leadingSize: density == AppRowDensity.detail ? 22 : 40,
+                  leadingSize: density == PpForgeRowDensity.detail ? 22 : 40,
                   title: title(v<String>('title')),
                   subtitle: sub.isEmpty ? null : Text(sub),
                   trailing: trailing.isEmpty ? null : Text(trailing),
@@ -294,7 +293,7 @@ class _ListRowPageState extends State<_ListRowPage> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final bank = ListRowChip(
       'เงินในธนาคาร',
       icon: AppIcons.bank,
@@ -329,9 +328,9 @@ class _ListRowPageState extends State<_ListRowPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         HubPlayground(
-          title: 'AppListRow',
+          title: 'PpForgeListRow',
           note:
-              'Every chip is a mini AppChip built from a ListRowChip. Line 2 '
+              'Every chip is a mini PpForgeChip built from a ListRowChip. Line 2 '
               'is always one text line tall. Taps on actions never reach '
               'onTap. The row knows no domain: money comes in through '
               'ListRowTrailing.value, words as strings.',
@@ -393,7 +392,7 @@ class _ListRowPageState extends State<_ListRowPage> {
             final captionTone = caption == null ? null : Tone.warning;
             return _Card(
               rows: [
-                AppListRow(
+                PpForgeListRow(
                   leading: tile(AppIcons.expense, palette.expense),
                   title: v<String>('title'),
                   titleMaxLines: v<int>('titleMaxLines'),
@@ -499,12 +498,12 @@ class _ListRowPageState extends State<_ListRowPage> {
                           SheetOption(
                             value: 'rename',
                             label: 'เปลี่ยนชื่อ',
-                            leading: AppIcon(AppIcons.edit),
+                            leading: PpForgeIcon(AppIcons.edit),
                           ),
                           SheetOption(
                             value: 'delete',
                             label: 'ลบ',
-                            leading: AppIcon(AppIcons.delete),
+                            leading: PpForgeIcon(AppIcons.delete),
                             destructive: true,
                           ),
                         ],
@@ -583,7 +582,7 @@ class _ListRowPageState extends State<_ListRowPage> {
           child: _Card(
             rows: [
               for (final s in TxSource.values)
-                AppListRow(
+                PpForgeListRow(
                   leading: tile(AppIcons.category, palette.warning),
                   title: s.name,
                   titleMark: txSourceMark(context, s),
@@ -607,14 +606,14 @@ class _ListRowPageState extends State<_ListRowPage> {
               '#name in the tag\'s icon colour, for ListRowLine.spans.',
           child: _Card(
             rows: [
-              AppListRow(
+              PpForgeListRow(
                 leading: tile(AppIcons.category, palette.warning),
                 title: 'Filled wallet',
                 titleChips: [
                   walletRowChip(
                     context,
                     name: 'เงินในธนาคาร',
-                    iconCode: const IconCode(
+                    iconCode: const PpForgeIconCode(
                       icon: 'account_balance',
                       background: 'solid',
                       bgColors: ['#F06292'],
@@ -628,21 +627,21 @@ class _ListRowPageState extends State<_ListRowPage> {
                     tagSpan(
                       context,
                       'งาน',
-                      iconCode: const IconCode(iconColors: ['#26A69A']),
+                      iconCode: const PpForgeIconCode(iconColors: ['#26A69A']),
                     ),
                     tagSpan(context, 'ไม่มีสี'),
                   ],
                 ),
                 trailing: ListRowTrailing.value(money(-120)),
               ),
-              AppListRow(
+              PpForgeListRow(
                 leading: tile(AppIcons.category, palette.info),
                 title: 'Wallet without a colour',
                 titleChips: [
                   walletRowChip(
                     context,
                     name: 'บัญชีออมทรัพย์',
-                    iconCode: const IconCode(
+                    iconCode: const PpForgeIconCode(
                       icon: 'savings',
                       iconColors: ['#F06292'],
                     ),
@@ -651,7 +650,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                 trailing: ListRowTrailing.value(money(-80)),
               ),
               for (final t in AccountType.values)
-                AppListRow(
+                PpForgeListRow(
                   leading: tile(AppIcons.category, palette.info),
                   title: 'Not picked: the type\'s default',
                   titleChips: [
@@ -663,7 +662,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                   ],
                   trailing: ListRowTrailing.value(money(-50)),
                 ),
-              AppListRow(
+              PpForgeListRow(
                 leading: tile(AppIcons.category, palette.error),
                 title: 'No wallet',
                 titleChips: [walletRowChip(context, name: 'ไม่ระบุกระเป๋า')],
@@ -674,21 +673,21 @@ class _ListRowPageState extends State<_ListRowPage> {
         ),
         HubInApp(
           note:
-              'Today\'s lists redrawn with AppListRow, before any page moves '
+              'Today\'s lists redrawn with PpForgeListRow, before any page moves '
               'over. Data is made up.',
           uses: [
             HubUse(
               label: 'Wallet chip, category | tags, shared glyph + head count',
               page: 'Transactions (TransactionTile)',
               child: _Card(
-                header: const AppListHeader(
+                header: const PpForgeListHeader(
                   title: '21 ต.ค.',
                   trailing: ListHeaderTrailing.value(
                     MoneyText(-1149, tone: MoneyTone.signed),
                   ),
                 ),
                 rows: [
-                  AppListRow(
+                  PpForgeListRow(
                     leading: tile(AppIcons.category, palette.warning),
                     title: 'กาแฟ + ขนม',
                     titleChips: [cash],
@@ -696,7 +695,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                     trailing: ListRowTrailing.value(money(-120)),
                     onTap: () {},
                   ),
-                  AppListRow(
+                  PpForgeListRow(
                     leading: tile(AppIcons.recurring, palette.info),
                     title: 'Spotify ประจำเดือน ต.ค. 2026',
                     titleChips: [bank],
@@ -707,7 +706,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                     trailing: ListRowTrailing.value(money(-129)),
                     onTap: () {},
                   ),
-                  AppListRow(
+                  PpForgeListRow(
                     leading: tile(AppIcons.category, palette.error),
                     title: 'ตั๋วหนัง (ฝนจ่ายให้)',
                     titleChips: const [noWallet],
@@ -726,7 +725,7 @@ class _ListRowPageState extends State<_ListRowPage> {
               page: 'Pending',
               child: _Card(
                 rows: [
-                  AppListRow(
+                  PpForgeListRow(
                     checked: _picked.contains('sb'),
                     onCheck: () => _toggle('sb'),
                     leading: tile(AppIcons.category, palette.warning),
@@ -744,7 +743,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                     trailing: ListRowTrailing.value(money(-165)),
                     onTap: () {},
                   ),
-                  AppListRow(
+                  PpForgeListRow(
                     checked: _picked.contains('tf'),
                     onCheck: () => _toggle('tf'),
                     leading: tile(AppIcons.expense, palette.expense),
@@ -768,14 +767,14 @@ class _ListRowPageState extends State<_ListRowPage> {
               label: 'Source chip, recurring glyph, expected = dimmed',
               page: 'Budget detail',
               child: _Card(
-                header: const AppListHeader(
+                header: const PpForgeListHeader(
                   title: '22 ต.ค.',
                   trailing: ListHeaderTrailing.value(
                     MoneyText(-1068, tone: MoneyTone.signed),
                   ),
                 ),
                 rows: [
-                  AppListRow(
+                  PpForgeListRow(
                     leading: tile(AppIcons.category, palette.success),
                     title: 'Lotus’s',
                     titleChips: [bank],
@@ -786,7 +785,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                     trailing: ListRowTrailing.value(money(-649)),
                     onTap: () {},
                   ),
-                  AppListRow(
+                  PpForgeListRow(
                     dimmed: true,
                     leading: tile(AppIcons.recurring, palette.info),
                     title: 'Netflix',
@@ -808,7 +807,7 @@ class _ListRowPageState extends State<_ListRowPage> {
               page: 'Recurring list (RecurringRow)',
               child: _Card(
                 rows: [
-                  AppListRow(
+                  PpForgeListRow(
                     leading: tile(AppIcons.recurring, palette.info),
                     title: 'ผ่อน iPhone',
                     titleChips: [bank],
@@ -821,7 +820,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                     trailing: ListRowTrailing.value(money(-2990)),
                     onTap: () {},
                   ),
-                  AppListRow(
+                  PpForgeListRow(
                     dimmed: true,
                     leading: tile(AppIcons.recurring, palette.warning),
                     title: 'ค่าไฟ',
@@ -844,7 +843,7 @@ class _ListRowPageState extends State<_ListRowPage> {
               page: 'Recurring · ต้องจัดการ (DueBoxes)',
               child: _Card(
                 rows: [
-                  AppListRow(
+                  PpForgeListRow(
                     checked: _picked.contains('spotify'),
                     onCheck: () => _toggle('spotify'),
                     leading: tile(AppIcons.recurring, palette.info),
@@ -868,7 +867,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                     ],
                     onTap: () {},
                   ),
-                  AppListRow(
+                  PpForgeListRow(
                     checked: _picked.contains('power'),
                     onCheck: () => _toggle('power'),
                     leading: tile(AppIcons.recurring, palette.warning),
@@ -897,7 +896,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                     ],
                     onTap: () {},
                   ),
-                  AppListRow(
+                  PpForgeListRow(
                     checked: _picked.contains('water'),
                     onCheck: () => _toggle('water'),
                     leading: tile(AppIcons.recurring, palette.info),
@@ -933,7 +932,7 @@ class _ListRowPageState extends State<_ListRowPage> {
               page: 'Recurring · month list',
               child: _Card(
                 rows: [
-                  AppListRow(
+                  PpForgeListRow(
                     leading: tile(AppIcons.recurring, palette.info),
                     title: 'Netflix',
                     titleChips: [bank],
@@ -944,7 +943,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                     ),
                     onTap: () {},
                   ),
-                  AppListRow(
+                  PpForgeListRow(
                     leading: tile(AppIcons.recurring, palette.info),
                     title: 'ผ่อน iPhone',
                     titleChips: [bank],
@@ -967,7 +966,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                     ],
                     onTap: () {},
                   ),
-                  AppListRow(
+                  PpForgeListRow(
                     dimmed: true,
                     leading: tile(AppIcons.recurring, palette.info),
                     title: 'เน็ตบ้าน',
@@ -987,7 +986,7 @@ class _ListRowPageState extends State<_ListRowPage> {
               page: 'Recurring detail · occurrences',
               child: _Card(
                 rows: [
-                  AppListRow(
+                  PpForgeListRow(
                     leading: DateTile(date: DateTime(2026, 10, 26)),
                     title: 'Spotify ประจำเดือน ต.ค. 2026',
                     titleMaxLines: 2,
@@ -1000,7 +999,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                     ),
                     onTap: () {},
                   ),
-                  AppListRow(
+                  PpForgeListRow(
                     leading: DateTile(date: DateTime(2026, 11, 5)),
                     title: 'ค่าไฟ ประจำเดือน พ.ย. 2026',
                     titleMaxLines: 2,
@@ -1019,7 +1018,7 @@ class _ListRowPageState extends State<_ListRowPage> {
               page: 'Debts · people / statement',
               child: _Card(
                 rows: [
-                  AppListRow(
+                  PpForgeListRow(
                     leading: const PersonMark(
                       name: 'ฝน',
                       level: PersonLevel.contact,
@@ -1032,7 +1031,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                     ),
                     onTap: () {},
                   ),
-                  AppListRow(
+                  PpForgeListRow(
                     leading: const PersonMark(
                       name: 'บอส',
                       level: PersonLevel.linked,
@@ -1056,7 +1055,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                     ),
                     onTap: () {},
                   ),
-                  AppListRow(
+                  PpForgeListRow(
                     leading: tile(AppIcons.debt, scheme.tertiary),
                     title: 'ตั๋วหนัง',
                     status: const ListRowChip('จ่ายแล้ว', icon: AppIcons.check),
@@ -1074,14 +1073,14 @@ class _ListRowPageState extends State<_ListRowPage> {
               page: 'Saving goal · history',
               child: _Card(
                 rows: [
-                  AppListRow(
+                  PpForgeListRow(
                     leading: tile(AppIcons.savingDeposit, palette.income),
                     title: 'ออม',
                     line2: ListRowLine.custom(
                       Row(
                         children: [
                           Flexible(
-                            child: AppChip(
+                            child: PpForgeChip(
                               label: 'เงินในธนาคาร',
                               icon: AppIcons.bank,
                               fill: scheme.primary,
@@ -1108,7 +1107,7 @@ class _ListRowPageState extends State<_ListRowPage> {
             HubUse(
               label:
                   'accent: the row\'s own colour reaches pieces inside (the '
-                  'installment chain), like an AppHeroCard',
+                  'installment chain), like an PpForgeHeroCard',
               page: 'Recurring · installments',
               child: _Card(
                 rows: [
@@ -1117,7 +1116,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                     ('ผ่อน iPhone 17', scheme.primary, 4, 12),
                     ('ผ่อนโซฟา', palette.warning, 6, 6),
                   ])
-                    AppListRow(
+                    PpForgeListRow(
                       accent: color,
                       leading: tile(AppIcons.recurring, color),
                       title: name,
@@ -1150,7 +1149,7 @@ class _ListRowPageState extends State<_ListRowPage> {
               page: 'Events list / event tags',
               child: _Card(
                 rows: [
-                  AppListRow(
+                  PpForgeListRow(
                     leading: tile(AppIcons.project, palette.info),
                     title: 'ทริปเชียงใหม่',
                     line2: const ListRowLine(parts: ['5 คน', '12–15 พ.ย.']),
@@ -1162,7 +1161,7 @@ class _ListRowPageState extends State<_ListRowPage> {
                     ),
                     onTap: () {},
                   ),
-                  AppListRow(
+                  PpForgeListRow(
                     leading: tile(AppIcons.tag, palette.success),
                     title: 'ค่าที่พัก',
                     line2: const ListRowLine(parts: ['8 บิล']),
@@ -1173,12 +1172,12 @@ class _ListRowPageState extends State<_ListRowPage> {
                           SheetOption(
                             value: 'rename',
                             label: 'เปลี่ยนชื่อ',
-                            leading: AppIcon(AppIcons.edit),
+                            leading: PpForgeIcon(AppIcons.edit),
                           ),
                           SheetOption(
                             value: 'delete',
                             label: 'ลบ',
-                            leading: AppIcon(AppIcons.delete),
+                            leading: PpForgeIcon(AppIcons.delete),
                             destructive: true,
                           ),
                         ],
@@ -1195,21 +1194,21 @@ class _ListRowPageState extends State<_ListRowPage> {
               page: 'Categories / tags / contacts',
               child: _Card(
                 rows: [
-                  AppListRow(
+                  PpForgeListRow(
                     leading: tile(AppIcons.category, palette.warning),
                     title: 'Dining',
                     line2: const ListRowLine(parts: ['หมวดย่อย 4']),
                     trailing: const ListRowTrailing.text('12 รายการ'),
                     onTap: () {},
                   ),
-                  AppListRow(
+                  PpForgeListRow(
                     indent: 28,
                     leading: tile(AppIcons.category, palette.warning),
                     title: 'Food Delivery',
                     trailing: const ListRowTrailing.text('7 รายการ'),
                     onTap: () {},
                   ),
-                  AppListRow(
+                  PpForgeListRow(
                     checked: _picked.contains('ent'),
                     onCheck: () => _toggle('ent'),
                     leading: tile(AppIcons.category, palette.error),
@@ -1240,9 +1239,9 @@ class _Card extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ?header,
-        AppCard(
+        PpForgeCard(
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderRadius: BorderRadius.circular(PpForgeRadius.lg),
             child: Column(
               children: [
                 for (final (i, r) in rows.indexed) ...[
@@ -1294,7 +1293,7 @@ class _DetailPatternsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final grey = scheme.outline;
     void noop() {}
     return Column(
@@ -1310,20 +1309,20 @@ class _DetailPatternsPage extends StatelessWidget {
             first: true,
             title: 'Leading',
             children: [
-              AppDetailRow(
+              PpForgeDetailRow(
                 icon: AppIcons.info,
                 label: 'Icon',
                 trailing: const Text('Value'),
                 onTap: noop,
                 showChevron: true,
               ),
-              AppDetailRow(
+              PpForgeDetailRow(
                 leading: const _Logo(Icons.send, _telegram),
                 leadingSize: _Logo.size,
                 label: 'Logo',
                 trailing: const Text('Telegram'),
               ),
-              AppDetailRow(
+              PpForgeDetailRow(
                 leading: Avatar(AvatarData.forName('Pond'), size: 32),
                 leadingSize: _Logo.size,
                 badge: const RowBadge.logo(_Logo(Icons.send, _telegram)),
@@ -1340,12 +1339,12 @@ class _DetailPatternsPage extends StatelessWidget {
               'the row tinted in the brand colour, 🔗 before the username. '
               'Linked without a picture: the logo in colour. Not linked: the '
               'logo in grey, a muted value. Not built: comingSoon (38 %, no '
-              'taps, the "coming soon" badge from UiStrings).',
+              'taps, the "coming soon" badge from PpForgeStrings).',
           child: SectionCard(
             first: true,
             title: 'Connections',
             children: [
-              AppDetailRow(
+              PpForgeDetailRow(
                 leading: Avatar(AvatarData.forName('Pond'), size: 32),
                 leadingSize: _Logo.size,
                 badge: const RowBadge.logo(_Logo(Icons.send, _telegram)),
@@ -1358,7 +1357,7 @@ class _DetailPatternsPage extends StatelessWidget {
                 onTap: noop,
                 onLongPress: noop,
               ),
-              AppDetailRow(
+              PpForgeDetailRow(
                 leading: const _Logo(Icons.send, _telegram),
                 leadingSize: _Logo.size,
                 label: 'Telegram (no picture)',
@@ -1369,7 +1368,7 @@ class _DetailPatternsPage extends StatelessWidget {
                 showChevron: true,
                 onTap: noop,
               ),
-              AppDetailRow(
+              PpForgeDetailRow(
                 leading: _Logo(Icons.send, grey),
                 leadingSize: _Logo.size,
                 label: 'Telegram (not linked)',
@@ -1378,13 +1377,13 @@ class _DetailPatternsPage extends StatelessWidget {
                 showChevron: true,
                 onTap: noop,
               ),
-              AppDetailRow(
+              PpForgeDetailRow(
                 leading: _Logo(Icons.chat_bubble, grey),
                 leadingSize: _Logo.size,
                 label: 'LINE',
                 comingSoon: true,
               ),
-              AppDetailRow(
+              PpForgeDetailRow(
                 leading: _Logo(Icons.g_mobiledata, grey),
                 leadingSize: _Logo.size,
                 label: 'Google',
@@ -1407,32 +1406,32 @@ class _DetailPatternsPage extends StatelessWidget {
             first: true,
             title: 'Values',
             children: [
-              const AppDetailRow(
+              const PpForgeDetailRow(
                 icon: AppIcons.profile,
                 label: 'Username (locked)',
                 trailing: Text('ppond'),
                 locked: true,
               ),
-              AppDetailRow.pick(
+              PpForgeDetailRow.pick(
                 icon: AppIcons.currency,
                 label: 'Currency (disabled)',
                 value: '฿  THB | Thai baht',
                 emptyText: '',
                 disabled: true,
               ),
-              const AppDetailRow(
+              const PpForgeDetailRow(
                 icon: AppIcons.link,
                 label: 'Linked account',
                 valueIcon: AppIcons.link,
                 trailing: Text('Aom'),
               ),
-              AppDetailRow.pick(
+              PpForgeDetailRow.pick(
                 icon: AppIcons.category,
                 label: 'Category',
                 emptyText: 'Pick one',
                 onTap: noop,
               ),
-              const AppDetailRow(
+              const PpForgeDetailRow(
                 icon: AppIcons.info,
                 label: 'A long value',
                 trailing: Text(
@@ -1451,14 +1450,14 @@ class _DetailPatternsPage extends StatelessWidget {
             first: true,
             title: 'Permissions',
             children: [
-              AppDetailRow(
+              PpForgeDetailRow(
                 icon: AppIcons.notifications,
                 label: 'การแจ้งเตือน',
                 trailing: const Text('อนุญาตแล้ว'),
                 showChevron: true,
                 onTap: noop,
               ),
-              AppDetailRow(
+              PpForgeDetailRow(
                 icon: Icons.photo_camera_outlined,
                 label: 'กล้อง',
                 trailing: const Text('ยังไม่ได้ขอ'),
@@ -1466,7 +1465,7 @@ class _DetailPatternsPage extends StatelessWidget {
                 showChevron: true,
                 onTap: noop,
               ),
-              AppDetailRow(
+              PpForgeDetailRow(
                 icon: Icons.photo_library_outlined,
                 label: 'รูปภาพ',
                 trailing: const Text('ปฏิเสธไว้'),
@@ -1491,7 +1490,7 @@ class _DetailPatternsPage extends StatelessWidget {
                 ('LINE green', _line),
                 ('Google blue', _google),
               ])
-                AppDetailRow(
+                PpForgeDetailRow(
                   icon: AppIcons.link,
                   label: label,
                   trailing: const Text('Linked'),
@@ -1503,7 +1502,7 @@ class _DetailPatternsPage extends StatelessWidget {
           ),
         ),
         HubPlayground(
-          title: 'AppDetailRow',
+          title: 'PpForgeDetailRow',
           controls: [
             const PlayText('label', initialValue: 'Telegram'),
             const PlayText('trailing', initialValue: '@ppond'),
@@ -1533,7 +1532,7 @@ class _DetailPatternsPage extends StatelessWidget {
             return SectionCard(
               first: true,
               children: [
-                AppDetailRow(
+                PpForgeDetailRow(
                   label: v<String>('label'),
                   trailing: text('trailing') == null
                       ? null

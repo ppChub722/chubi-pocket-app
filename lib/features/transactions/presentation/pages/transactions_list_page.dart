@@ -9,7 +9,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/tab_nav.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
@@ -75,10 +74,10 @@ class _TransactionsListPageState extends State<TransactionsListPage>
   String _q = '';
   Timer? _debounce;
   final _search = TextEditingController();
-  late final _toolbarOpen = AppListToolbarState.of(
+  late final _toolbarOpen = PpForgeListToolbarState.of(
     widget.embedded ? 'transactions_wallet' : 'transactions',
   );
-  final _summaryOpen = AppListToolbarState.of(
+  final _summaryOpen = PpForgeListToolbarState.of(
     'transactions_summary',
     open: true,
   );
@@ -285,16 +284,18 @@ class _TransactionsListPageState extends State<TransactionsListPage>
         final activeFilters = _f.activeCount(_base);
         final header = <Widget>[
           if (widget.embedded) ...[
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: PpForgeSpacing.sm),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              padding: const EdgeInsets.symmetric(
+                horizontal: PpForgeSpacing.lg,
+              ),
               child: Row(
                 children: [
                   Flexible(child: _periodPill()),
                   const Spacer(),
                   ListenableBuilder(
                     listenable: _search,
-                    builder: (context, _) => AppListToolbarToggle(
+                    builder: (context, _) => PpForgeListToolbarToggle(
                       state: _toolbarOpen,
                       filtered: activeFilters > 0 || _q.isNotEmpty,
                       tooltip: l.commonSearch,
@@ -306,8 +307,8 @@ class _TransactionsListPageState extends State<TransactionsListPage>
           ] else if (state.totals case final t?)
             _summary(l, t, activeFilters)
           else
-            const SizedBox(height: AppSpacing.sm),
-          AppListToolbar(
+            const SizedBox(height: PpForgeSpacing.sm),
+          PpForgeListToolbar(
             state: _toolbarOpen,
             search: ListToolbarSearch(
               key: const ValueKey('tx-search'),
@@ -316,11 +317,11 @@ class _TransactionsListPageState extends State<TransactionsListPage>
               hint: l.transactionsSearchHint,
             ),
             filters: [
-              AppChip(
+              PpForgeChip(
                 label: l.transactionsFiltersTitle,
                 icon: Icons.tune,
                 selected: activeFilters > 0,
-                trailing: AppChipTrailing.count,
+                trailing: PpForgeChipTrailing.count,
                 count: activeFilters,
                 onTap: _openFilters,
               ),
@@ -332,10 +333,10 @@ class _TransactionsListPageState extends State<TransactionsListPage>
                 for (final s in txSorts)
                   SheetOption(value: s, label: txSortLabel(l, s)),
               ],
-              builder: (context, toggle) => AppChip(
+              builder: (context, toggle) => PpForgeChip(
                 label: txSortLabel(l, _f.sort),
                 icon: AppIcons.sort,
-                trailing: AppChipTrailing.dropdown,
+                trailing: PpForgeChipTrailing.dropdown,
                 onTap: toggle,
               ),
             ),
@@ -361,7 +362,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
           footer: locked == null || state.transactions.isEmpty
               ? null
               : Padding(
-                  padding: const EdgeInsets.only(top: AppSpacing.md),
+                  padding: const EdgeInsets.only(top: PpForgeSpacing.md),
                   child: AddTile(
                     label: l.navAddTransaction,
                     onTap: () => showQuickCreateSheet(context, account: locked),
@@ -405,21 +406,21 @@ class _TransactionsListPageState extends State<TransactionsListPage>
     void toggle(TransactionType type) =>
         _apply(_f.copyWith(types: only(type) ? const {} : {type}));
     final net = MoneyText(t.net, tone: MoneyTone.signed);
-    return AppHeroCard(
+    return PpForgeHeroCard(
       // The page color (the ▤ tile's); its pieces take their colors from it.
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
       margin: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        AppSpacing.xs,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.sm,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.xs,
       ),
       open: _summaryOpen,
       header: HeroHeader(
         leading: const [HeroModuleTile(AppIcons.transactions)],
         fill: _periodPill(),
         actions: [
-          AppListToolbarToggle(
+          PpForgeListToolbarToggle(
             state: _toolbarOpen,
             filtered: activeFilters > 0 || _q.isNotEmpty,
             tooltip: l.commonSearch,
@@ -511,10 +512,10 @@ class _TransactionsListPageState extends State<TransactionsListPage>
           ? l.transactionsListEmptyMessage
           : '',
       cta: _filtered
-          ? AppButton(
+          ? PpForgeButton(
               kind: ButtonIconKind.clear,
               label: l.transactionsClearFilters,
-              variant: AppButtonVariant.tonal,
+              variant: PpForgeButtonVariant.tonal,
               onPressed: _clearFilters,
             )
           : AddTile(
@@ -545,7 +546,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
             .where((t) => t.type != TransactionType.transfer)
             .fold<double>(0, (a, t) => a + t.signedAmount);
         children.add(
-          AppListHeader(
+          PpForgeListHeader(
             title: d == null
                 ? e.key
                 : DateFormatter.friendly(

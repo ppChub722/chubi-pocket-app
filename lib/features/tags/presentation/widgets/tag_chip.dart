@@ -6,12 +6,12 @@ import '../../domain/tag.dart';
 
 /// A tag's one colour — its icon tint (tags never show a bg / border, so a
 /// stored bg colour must not win here).
-Color tagColor(IconCode? code, AppColors palette) =>
+Color tagColor(PpForgeIconCode? code, PpForgeColors palette) =>
     (code?.iconColors.isNotEmpty ?? false)
-    ? resolveColor(code!.iconColors.first, palette)
+    ? ppForgeResolveColor(code!.iconColors.first, palette)
     : palette.primary;
 
-AppChip tagAppChip(
+PpForgeChip tagAppChip(
   BuildContext context,
   Tag tag, {
   bool? selected,
@@ -20,14 +20,16 @@ AppChip tagAppChip(
   ChipSize size = ChipSize.control,
 }) {
   final l = AppLocalizations.of(context)!;
-  final palette = Theme.of(context).extension<AppColors>()!;
-  return AppChip(
+  final palette = Theme.of(context).extension<PpForgeColors>()!;
+  return PpForgeChip(
     label: tag.name.isEmpty ? l.tagFormNameLabel : tag.name,
-    icon: IconRegistry.get(tag.iconCode?.icon, fallback: AppIcons.tag),
+    icon: PpForgeIconRegistry.get(tag.iconCode?.icon, fallback: AppIcons.tag),
     color: tagColor(tag.iconCode, palette),
     selected: selected ?? true,
     onTap: onTap,
-    trailing: onRemove == null ? AppChipTrailing.none : AppChipTrailing.remove,
+    trailing: onRemove == null
+        ? PpForgeChipTrailing.none
+        : PpForgeChipTrailing.remove,
     onRemove: onRemove,
     removeOnly: onRemove != null,
     size: size,

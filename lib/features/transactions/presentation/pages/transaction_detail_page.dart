@@ -10,7 +10,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../categories/presentation/category_label.dart';
 import '../../../../ui/ui.dart';
@@ -448,7 +447,7 @@ class _LoadedState extends State<_Loaded>
   }
 
   void _say(String message, {Tone tone = Tone.danger}) {
-    if (mounted) showAppSnackBar(context, message, tone: tone);
+    if (mounted) showPpForgeSnackBar(context, message, tone: tone);
   }
 
   Future<void> _linkRecurring() async {
@@ -691,12 +690,12 @@ class _LoadedState extends State<_Loaded>
     );
     if (problem != null) {
       HapticFeedback.lightImpact();
-      showAppSnackBar(context, problem, tone: Tone.danger);
+      showPpForgeSnackBar(context, problem, tone: Tone.danger);
       return;
     }
     if (bill && !_c.linkBalanced(mode)) {
       HapticFeedback.lightImpact();
-      showAppSnackBar(context, l.txLinkModeUnbalanced, tone: Tone.danger);
+      showPpForgeSnackBar(context, l.txLinkModeUnbalanced, tone: Tone.danger);
       return;
     }
     setSaving(true);
@@ -718,7 +717,11 @@ class _LoadedState extends State<_Loaded>
         if (!ok) {
           if (!mounted) return;
           setSaving(false);
-          showAppSnackBar(context, l.evbPaybackNeedsPeople, tone: Tone.danger);
+          showPpForgeSnackBar(
+            context,
+            l.evbPaybackNeedsPeople,
+            tone: Tone.danger,
+          );
           return;
         }
         final change = _eventChange;
@@ -794,7 +797,7 @@ class _LoadedState extends State<_Loaded>
         _reload();
       }
       // A bill: the refreshed row brings it (didUpdateWidget).
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         warn ?? l.quickSaved,
         tone: warn == null ? Tone.success : Tone.warning,
@@ -929,7 +932,8 @@ class _LoadedState extends State<_Loaded>
                   },
                   controller: _scroll,
                   physics: const AlwaysScrollableScrollPhysics(),
-                  topInset: MediaQuery.paddingOf(context).top + AppSpacing.md,
+                  topInset:
+                      MediaQuery.paddingOf(context).top + PpForgeSpacing.md,
                   bottomInset: 96 + MediaQuery.paddingOf(context).bottom,
                   // The form renders hero -> note -> tags -> the headed
                   // "แบ่งรายการ" section itself, so it is the whole hero.
@@ -937,19 +941,19 @@ class _LoadedState extends State<_Loaded>
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       if (isSystemRow) ...[
-                        AppMessage(
+                        PpForgeMessage(
                           message: isRepayment
                               ? l.txDetailRepaymentBanner
                               : l.transactionDetailSystemRowBanner,
                           tone: Tone.info,
                         ),
-                        const SizedBox(height: AppSpacing.md),
+                        const SizedBox(height: PpForgeSpacing.md),
                       ] else if (tx.isLocked) ...[
-                        AppMessage(
+                        PpForgeMessage(
                           message: l.transactionFormLockedBanner,
                           tone: Tone.warning,
                         ),
-                        const SizedBox(height: AppSpacing.md),
+                        const SizedBox(height: PpForgeSpacing.md),
                       ],
                       DraftForm(
                         controller: _c,
@@ -1011,7 +1015,7 @@ class _LoadedState extends State<_Loaded>
     );
   }
 
-  AppCompactHeroCard _compactBar(BuildContext context) {
+  PpForgeCompactHeroCard _compactBar(BuildContext context) {
     final category = _c.isTransfer ? null : _c.category;
     return txCompactHeroBar(
       context,
@@ -1084,7 +1088,7 @@ class _LoadedState extends State<_Loaded>
         final result = await txCubit.remove(tx.id);
         applyTxDeleteResult(result, accounts: accountsCubit, debts: debts);
       }
-      showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
+      showPpForgeSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
       if (router.canPop()) {
         router.pop();
       } else {

@@ -20,7 +20,7 @@ Future<void> openAppDownload(BuildContext context, String url) async {
         mode: LaunchMode.externalApplication,
       ).catchError((_) => false);
   if (!ok && context.mounted) {
-    showAppSnackBar(context, l.appUpdateOpenFailed, tone: Tone.danger);
+    showPpForgeSnackBar(context, l.appUpdateOpenFailed, tone: Tone.danger);
   }
 }
 
@@ -67,7 +67,7 @@ class UpdateRequiredView extends StatelessWidget {
           maxWidth: 360,
           header: const BrandHeader(),
           children: [
-            const SizedBox(height: AppSpacing.xxl),
+            const SizedBox(height: PpForgeSpacing.xxl),
             Text(
               l.appUpdateRequiredTitle,
               textAlign: TextAlign.center,
@@ -75,7 +75,7 @@ class UpdateRequiredView extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: PpForgeSpacing.md),
             Text(
               message,
               textAlign: TextAlign.center,
@@ -84,7 +84,7 @@ class UpdateRequiredView extends StatelessWidget {
               ),
             ),
             if (currentBuild != null && info.minBuild > 0) ...[
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               Text(
                 l.appUpdateBuildLine(currentBuild!, info.minBuild),
                 textAlign: TextAlign.center,
@@ -93,18 +93,18 @@ class UpdateRequiredView extends StatelessWidget {
                 ),
               ),
             ],
-            const SizedBox(height: AppSpacing.xxl),
-            AppButton(
+            const SizedBox(height: PpForgeSpacing.xxl),
+            PpForgeButton(
               label: l.appUpdateDownload,
               icon: Icons.download_rounded,
-              size: AppButtonSize.large,
+              size: PpForgeButtonSize.large,
               expand: true,
               onPressed: hasLink
                   ? () => openAppDownload(context, info.downloadUrl)
                   : null,
             ),
             if (!hasLink) ...[
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               Text(
                 l.appUpdateNoLink,
                 textAlign: TextAlign.center,

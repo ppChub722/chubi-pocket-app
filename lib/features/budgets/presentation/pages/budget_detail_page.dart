@@ -7,7 +7,6 @@ import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
 import '../cubit/budgets_cubit.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -226,9 +225,9 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       title: l.recurringFieldIcon,
     );
     if (!mounted || r == null) return;
-    if (r is IconMakerSelected) {
+    if (r is PpForgeIconMakerSelected) {
       _change(working.copyWith(iconCode: r.iconCode));
-    } else if (r is IconMakerRemoved) {
+    } else if (r is PpForgeIconMakerRemoved) {
       _change(working.copyWith(clearIcon: true));
     }
   }
@@ -281,13 +280,13 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
   Future<void> _pickStart() async {
     final current = working.start;
     final now = today();
-    final picked = await AppDatePicker.show(
+    final picked = await PpForgeDatePicker.show(
       context,
       initial: current,
       first: DateTime(now.year - 2, 1, 1),
       last: DateTime(now.year + 5, 12, 31),
     );
-    if (!mounted || picked is! AppDatePicked) return;
+    if (!mounted || picked is! PpForgeDatePicked) return;
     _change(working.copyWith(start: picked.date));
   }
 
@@ -316,13 +315,13 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     if (!mounted || choice == null) return;
     if (!choice) return _change(working.copyWith(end: const BudgetEnd.none()));
     final start = working.start;
-    final picked = await AppDatePicker.show(
+    final picked = await PpForgeDatePicker.show(
       context,
       initial: working.end.date ?? start.add(const Duration(days: 30)),
       first: start,
       last: DateTime(start.year + 5, 12, 31),
     );
-    if (!mounted || picked is! AppDatePicked) return;
+    if (!mounted || picked is! PpForgeDatePicked) return;
     _change(working.copyWith(end: BudgetEnd.onDate(picked.date)));
   }
 
@@ -556,7 +555,8 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
                 builder: (context) {
                   final barInset = MediaQuery.paddingOf(context).top;
                   final bottom =
-                      AppSpacing.huge + MediaQuery.paddingOf(context).bottom;
+                      PpForgeSpacing.huge +
+                      MediaQuery.paddingOf(context).bottom;
                   final d = _detail;
                   return (d == null || isEditing)
                       ? _editBody(context, l, b, barInset, bottom)
@@ -601,7 +601,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (final (i, s) in strips.indexed) ...[
-                if (i > 0) const SizedBox(height: AppSpacing.sm),
+                if (i > 0) const SizedBox(height: PpForgeSpacing.sm),
                 s,
               ],
             ],
@@ -620,11 +620,14 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
     final banner = _refreshError == null
         ? null
-        : AppMessage(tone: Tone.danger, message: errorText(l, _refreshError!));
+        : PpForgeMessage(
+            tone: Tone.danger,
+            message: errorText(l, _refreshError!),
+          );
 
     if (!b.recurring) {
       return DetailLayout(
-        topInset: barInset + AppSpacing.lg,
+        topInset: barInset + PpForgeSpacing.lg,
         bottomInset: bottom,
         onRefresh: _load,
         hero: Column(
@@ -645,7 +648,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
             ?_expectedChip(l, d),
             ..._itemRows(l, d),
             if (d.items.hasMore)
-              AppDetailRow.pick(
+              PpForgeDetailRow.pick(
                 label: l.bgItemsMore,
                 emptyText: l.quickEventNone,
                 error: _itemsError == null ? null : '$_itemsError',
@@ -661,12 +664,12 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       hero: _viewHero(l, d),
       belowHero: [?banner, ?scope, note],
       tabs: [
-        AppTab(
+        PpForgeTab(
           value: _Tab.items,
           label: l.fpBudgetsTabItems,
           icon: AppIcons.receipt,
         ),
-        AppTab(
+        PpForgeTab(
           value: _Tab.periods,
           label: l.fpBudgetsTabPeriods,
           icon: AppIcons.history,
@@ -682,11 +685,11 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
   }
 
-  AppCompactHeroCard _compactBar(BudgetDetail d) {
+  PpForgeCompactHeroCard _compactBar(BudgetDetail d) {
     final b = d.budget;
     final p = b.period;
     final over = p.overBy > 0;
-    return AppCompactHeroCard(
+    return PpForgeCompactHeroCard(
       style: HeroStyle.tinted(
         color: budgetTint(context, b),
         glyph: AppIcons.budget,
@@ -696,13 +699,13 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         size: 28,
         iconCode: b.iconCode,
       ),
-      title: AppText(b.name, role: AppTextRole.title),
+      title: PpForgeText(b.name, role: PpForgeTextRole.title),
       trailing: MoneyText(
         over ? p.overBy : p.remaining,
         symbol: context.readUserCurrencySymbol,
-        style: AppTypography.of(
+        style: PpForgeTypography.of(
           context,
-          AppTextRole.money,
+          PpForgeTextRole.money,
         )?.copyWith(color: budgetToneColor(context, b, p)),
       ),
     );
@@ -753,7 +756,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     final next = b.recurring && end != null
         ? DateTime(end.year, end.month, end.day + 1)
         : null;
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: HeroStyle.tinted(
         color: budgetTint(context, b),
         glyph: AppIcons.budget,
@@ -799,11 +802,11 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
             children: [
               box,
               if (_canEdit) ...[
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: PpForgeSpacing.sm),
                 CardActionButton(
                   key: const ValueKey('heroEdit'),
                   icon: AppIcons.edit,
-                  tooltip: UiConfig.stringsOf(context).edit,
+                  tooltip: PpForgeConfig.stringsOf(context).edit,
                   onTap: enterEdit,
                 ),
               ],
@@ -859,7 +862,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
               if (p.overridden)
                 StatusChip.tone(
                   label: l.bgPeriodOverridden,
-                  tone: AppChipTone.neutral,
+                  tone: PpForgeChipTone.neutral,
                 ),
               // The plan status chip goes LAST.
               if (active)
@@ -891,10 +894,10 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (d.items.hasMore)
-            AppButton(
+            PpForgeButton(
               kind: ButtonIconKind.viewAll,
               label: l.bgItemsMore,
-              variant: AppButtonVariant.outlined,
+              variant: PpForgeButtonVariant.outlined,
               onPressed: _itemsBusy ? null : _loadMoreItems,
             ),
           DetailMeta(lines: meta),
@@ -920,10 +923,10 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       loadMoreError: _periodsError,
       onRetryMore: _loadAllPeriods,
       footer: more
-          ? AppButton(
+          ? PpForgeButton(
               kind: ButtonIconKind.viewAll,
               label: l.bgPeriodsAll,
-              variant: AppButtonVariant.outlined,
+              variant: PpForgeButtonVariant.outlined,
               onPressed: _periodsBusy ? null : _loadAllPeriods,
             )
           : null,
@@ -955,14 +958,18 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
 
   Widget? _periodBadge(AppLocalizations l, Budget b, BudgetPeriod x) {
     if (x.isCurrent) {
-      return AppChip(label: l.bgPeriodNow, size: ChipSize.mini, selected: true);
+      return PpForgeChip(
+        label: l.bgPeriodNow,
+        size: ChipSize.mini,
+        selected: true,
+      );
     }
     if (x.overridden) {
-      return AppChip(
+      return PpForgeChip(
         label: l.bgPeriodOverridden,
         size: ChipSize.mini,
         selected: true,
-        tone: AppChipTone.info,
+        tone: PpForgeChipTone.info,
       );
     }
     return budgetStatusChip(l, b, period: x, size: ChipSize.mini);
@@ -976,10 +983,10 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     if (n == 0) return null;
     return Align(
       alignment: AlignmentDirectional.centerStart,
-      child: AppChip(
+      child: PpForgeChip(
         label: l.bgFactPending,
         icon: AppIcons.scheduled,
-        trailing: AppChipTrailing.count,
+        trailing: PpForgeChipTrailing.count,
         count: n,
         selected: _showExpected,
         onTap: () => setState(() => _showExpected = !_showExpected),
@@ -1008,7 +1015,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     final days = byDay.keys.toList()..sort((a, b) => b.compareTo(a));
     return [
       for (final day in days) ...[
-        AppListHeader(
+        PpForgeListHeader(
           title: budgetDate(context, day),
           trailing: ListHeaderTrailing.value(
             MoneyText(
@@ -1119,22 +1126,22 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     final stop = w.end.kind == 'date' ? w.end.date : null;
     if (stop != null && stop.isBefore(end)) end = stop;
     return Wrap(
-      spacing: AppSpacing.xs,
-      runSpacing: AppSpacing.xs,
+      spacing: PpForgeSpacing.xs,
+      runSpacing: PpForgeSpacing.xs,
       children: [
-        AppChip(
+        PpForgeChip(
           label: _roundText(l, w),
           icon: AppIcons.recurring,
-          tone: AppChipTone.primary,
+          tone: PpForgeChipTone.primary,
           size: ChipSize.chip,
         ),
-        AppChip(
+        PpForgeChip(
           label: budgetRangeShort(context, w.start, end),
           icon: AppIcons.date,
-          tone: AppChipTone.primary,
+          tone: PpForgeChipTone.primary,
           size: ChipSize.chip,
         ),
-        AppChip(label: _roundEndText(l, w), size: ChipSize.chip),
+        PpForgeChip(label: _roundEndText(l, w), size: ChipSize.chip),
       ],
     );
   }
@@ -1156,7 +1163,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       title: l.bgSectionPeriod,
       description: l.bgSectionPeriodDesc,
       children: [
-        AppDetailRow(
+        PpForgeDetailRow(
           label: l.bgFieldStart,
           helper: l.bgFieldStartHelp,
           trailing: Text(
@@ -1244,8 +1251,8 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.md,
+            horizontal: PpForgeSpacing.lg,
+            vertical: PpForgeSpacing.md,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1258,7 +1265,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
                       style: detailLabelStyle(context),
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.md),
+                  const SizedBox(width: PpForgeSpacing.md),
                   SegmentedChoice<bool>(
                     segments: [
                       ChoiceSegment(true, l.bgScopeAll),
@@ -1272,9 +1279,12 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
                   ),
                 ],
               ),
-              if (!w.allScope) ...[const SizedBox(height: AppSpacing.sm), hint],
+              if (!w.allScope) ...[
+                const SizedBox(height: PpForgeSpacing.sm),
+                hint,
+              ],
               if (_scopeMissing && w.scopeEmpty) ...[
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: PpForgeSpacing.xs),
                 Text(
                   l.bgScopeRequired,
                   style: text.bodySmall?.copyWith(color: scheme.error),
@@ -1302,7 +1312,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         : LimitedChipWrap(chips: chips, onMore: onPick, expandable: false);
     return DetailStacked(
       label: label,
-      leading: AppIcon(icon),
+      leading: PpForgeIcon(icon),
       child: PickFrame(
         onTap: onPick,
         child: wrap ?? PickFramePrompt(pickLabel),
@@ -1314,14 +1324,14 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     AppLocalizations l,
     List<BudgetScopeCategory> cats,
   ) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     return [
       for (final c in cats)
-        AppChip(
+        PpForgeChip(
           label: c.includeChildren
               ? l.bgScopeChildren(c.category.name)
               : c.category.name,
-          icon: IconRegistry.get(
+          icon: PpForgeIconRegistry.get(
             c.category.iconCode?.icon,
             fallback: AppIcons.category,
           ),
@@ -1333,10 +1343,10 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
   }
 
   List<Widget> _walletChips(List<AccountRef> wallets) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     return [
       for (final a in wallets)
-        AppChip(
+        PpForgeChip(
           label: a.name,
           icon: a.iconCode.glyphOr(a.type.iconDefault),
           color: a.iconCode.tintOr(a.type.iconDefault, palette),
@@ -1347,15 +1357,15 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
   }
 
   List<Widget> _tagChips(List<String> names) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final known = context.read<TagsCubit>().state.tags;
     return [
       for (final n in names)
         if (known.where((t) => t.name.toLowerCase() == n.toLowerCase())
             case final match)
-          AppChip(
+          PpForgeChip(
             label: n,
-            icon: IconRegistry.get(
+            icon: PpForgeIconRegistry.get(
               match.firstOrNull?.iconCode?.icon,
               fallback: AppIcons.tag,
             ),
@@ -1376,13 +1386,13 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     double bottom,
   ) {
     final w = working;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final accent = w.iconCode.tintFor(palette);
     return DetailLayout(
-      topInset: barInset + AppSpacing.lg,
+      topInset: barInset + PpForgeSpacing.lg,
       bottomInset: bottom,
       onRefresh: widget.isCreate ? null : _load,
-      hero: AppHeroCard(
+      hero: PpForgeHeroCard(
         style: HeroStyle.tinted(color: accent, glyph: AppIcons.budget),
         mode: HeroCardMode.edit,
         content: [
@@ -1437,7 +1447,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         maxLength: TextLimits.note,
         editField: DetailStacked(
           label: l.commonNote,
-          child: AppInput.inline(
+          child: PpForgeInput.inline(
             editing: true,
             controller: _ctrl[_Field.note]!,
             focusNode: _noteFocus,

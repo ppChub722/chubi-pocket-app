@@ -53,10 +53,10 @@ Future<EventSettle?> bookMySettle(
       projectId,
       accountId: wallet is AccountPicked ? wallet.account.id : null,
     );
-    showAppSnackBarOn(messenger, l.evbSettleBooked, tone: Tone.success);
+    showPpForgeSnackBarOn(messenger, l.evbSettleBooked, tone: Tone.success);
     return next;
   } on ApiException catch (e) {
-    showAppSnackBarOn(messenger, switch (e.code) {
+    showPpForgeSnackBarOn(messenger, switch (e.code) {
       'SETTLE_BOOKED' => l.evbSettleAlreadyBooked,
       _ => errorText(l, e),
     }, tone: Tone.danger);

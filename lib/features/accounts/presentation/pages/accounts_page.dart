@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../app/shell/shell_chrome.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/tab_root_scaffold.dart';
 import '../../../../core/network/api_exception.dart';
@@ -36,7 +35,7 @@ class _AccountsPageState extends State<AccountsPage> {
   _WalletSort _sort = _WalletSort.custom;
   _WalletTile? _tile;
   final _search = TextEditingController();
-  final _toolbarOpen = AppListToolbarState.of('wallets');
+  final _toolbarOpen = PpForgeListToolbarState.of('wallets');
 
   ReorderController? _reorder;
   final _reorderScroll = ScrollController();
@@ -174,7 +173,7 @@ class _AccountsPageState extends State<AccountsPage> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _savingOrder = false);
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         '${l.accountsReorderSave}: ${errorText(l, e)}',
         tone: Tone.danger,
@@ -250,7 +249,7 @@ class _AccountsPageState extends State<AccountsPage> {
   }
 
   Widget _listToolbar(AppLocalizations l, List<Account> accounts) {
-    return AppListToolbar(
+    return PpForgeListToolbar(
       state: _toolbarOpen,
       search: ListToolbarSearch(
         controller: _search,
@@ -265,16 +264,16 @@ class _AccountsPageState extends State<AccountsPage> {
             for (final s in _WalletSort.values)
               SheetOption(value: s, label: _sortLabel(l, s)),
           ],
-          builder: (context, toggle) => AppChip(
+          builder: (context, toggle) => PpForgeChip(
             label: _sortLabel(l, _sort),
             icon: AppIcons.sort,
             selected: _sort != _WalletSort.custom,
-            trailing: AppChipTrailing.dropdown,
+            trailing: PpForgeChipTrailing.dropdown,
             onTap: toggle,
           ),
         ),
       ],
-      trailing: AppChip(
+      trailing: PpForgeChip(
         label: l.fpWalletsReorderChip,
         icon: AppIcons.reorder,
         onTap: _canReorder(accounts) ? () => _enterReorder(accounts) : null,
@@ -295,9 +294,8 @@ class _AccountsPageState extends State<AccountsPage> {
   ) {
     final t = state.totals;
     final net = MoneyText(t.net == 0 ? 0 : t.net);
-    final palette = Theme.of(context).extension<AppColors>()!;
     final savedColor = ModuleColors.of(context).planning;
-    final debtColor = palette.walletLiability;
+    final debtColor = ModuleColors.of(context).walletLiability;
     final hasDebt = t.cardDebt.abs() >= 0.005;
     final cards = state.accounts.where((a) => a.type.isCredit).length;
     final total = t.availableTotal + t.savedTotal + t.cardDebt.abs();
@@ -309,13 +307,13 @@ class _AccountsPageState extends State<AccountsPage> {
           selected: _tile == v,
           onTap: () => _setTile(v),
         );
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
       margin: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        AppSpacing.md,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.sm,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.md,
       ),
       header: HeroSummaryHead(
         icon: AppIcons.wallet,
@@ -328,7 +326,7 @@ class _AccountsPageState extends State<AccountsPage> {
         actions: [
           ListenableBuilder(
             listenable: _search,
-            builder: (context, _) => AppListToolbarToggle(
+            builder: (context, _) => PpForgeListToolbarToggle(
               state: _toolbarOpen,
               filtered:
                   _search.text.isNotEmpty ||
@@ -442,9 +440,9 @@ class _AccountsPageState extends State<AccountsPage> {
         _grid(context, accounts, list, cols),
       Padding(
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.md,
-          AppSpacing.lg,
+          PpForgeSpacing.lg,
+          PpForgeSpacing.md,
+          PpForgeSpacing.lg,
           0,
         ),
         child: AddTile(
@@ -454,9 +452,9 @@ class _AccountsPageState extends State<AccountsPage> {
       ),
       if (state.archivedCount > 0)
         Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.md),
-          child: AppDetailRow(
-            leading: const AppIcon(AppIcons.archive),
+          padding: const EdgeInsets.only(top: PpForgeSpacing.md),
+          child: PpForgeDetailRow(
+            leading: const PpForgeIcon(AppIcons.archive),
             label: l.accountsArchivedLink(state.archivedCount),
             showChevron: true,
             onTap: () => _open(() => context.push('/accounts/archived')),
@@ -483,7 +481,7 @@ class _AccountsPageState extends State<AccountsPage> {
         .where((b) => b.type == type)
         .fold<double?>(null, (s, b) => (s ?? 0) + b.balance);
     return [
-      AppListHeader(
+      PpForgeListHeader(
         title: accountTypeLabel(context, type),
         count: of.length,
         trailing: showSubtotal && sum != null && of.every((a) => a.showsBalance)
@@ -501,15 +499,15 @@ class _AccountsPageState extends State<AccountsPage> {
     int cols,
   ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         padding: EdgeInsets.zero,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: cols,
-          mainAxisSpacing: AppSpacing.md,
-          crossAxisSpacing: AppSpacing.md,
+          mainAxisSpacing: PpForgeSpacing.md,
+          crossAxisSpacing: PpForgeSpacing.md,
           mainAxisExtent: _cardExtent,
         ),
         itemCount: list.length,
@@ -543,20 +541,20 @@ class _AccountsPageState extends State<AccountsPage> {
             child: ListView(
               controller: _reorderScroll,
               padding: EdgeInsets.only(
-                top: MediaQuery.paddingOf(context).top + AppSpacing.sm,
-                bottom: AppSpacing.lg,
+                top: MediaQuery.paddingOf(context).top + PpForgeSpacing.sm,
+                bottom: PpForgeSpacing.lg,
               ),
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
+                    PpForgeSpacing.lg,
                     0,
-                    AppSpacing.lg,
-                    AppSpacing.sm,
+                    PpForgeSpacing.lg,
+                    PpForgeSpacing.sm,
                   ),
-                  child: AppText(
+                  child: PpForgeText(
                     l.accountsReorderTapHint,
-                    role: AppTextRole.caption,
+                    role: PpForgeTextRole.caption,
                   ),
                 ),
                 for (final item in c.visible())
@@ -566,10 +564,10 @@ class _AccountsPageState extends State<AccountsPage> {
                       id: a.id,
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.lg,
-                          AppSpacing.xs,
+                          PpForgeSpacing.lg,
+                          PpForgeSpacing.xs,
                           0,
-                          AppSpacing.xs,
+                          PpForgeSpacing.xs,
                         ),
                         child: AccountCard(account: a, horizontal: true),
                       ),

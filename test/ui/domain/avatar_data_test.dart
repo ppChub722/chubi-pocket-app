@@ -1,4 +1,3 @@
-import 'package:chubi_pocket/ui/tokens/color_contrast.dart';
 import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:flutter/material.dart';
@@ -94,15 +93,15 @@ void main() {
       expect(none.colors, [AvatarData.nameColorHex('Bee')]);
     });
 
-    test('forName: initials + the name-hash colour (as AppAvatar)', () {
+    test('forName: initials + the name-hash colour (as PpForgeAvatar)', () {
       expect(AvatarData.initialsOf('aom chan  dao'), 'AC');
       expect(AvatarData.initialsOf('  '), '');
       expect(AvatarData.initialsOf('ปอนด์'), 'ป');
       expect(AvatarData.initialsOf('👍🏽 ok'), '👍🏽O');
       for (final n in ['Bee', 'ปอนด์', 'Aom Chan', '']) {
         expect(
-          IconCode.hexToColor(AvatarData.nameColorHex(n)),
-          AppAvatar.colorFor(n),
+          PpForgeIconCode.hexToColor(AvatarData.nameColorHex(n)),
+          PpForgeAvatar.colorFor(n),
         );
       }
       expect(AvatarData.forName('').colors, hasLength(1));
@@ -115,7 +114,7 @@ void main() {
         'initials': 'P',
         'colors': ['#E8A33D'],
       });
-      const code = IconCode(icon: 'star', bgColors: ['#123456']);
+      const code = PpForgeIconCode(icon: 'star', bgColors: ['#123456']);
       final p2 = photo.withIcon(code);
       expect(p2.kind, AvatarKind.photo);
       expect(p2.iconCode, code);

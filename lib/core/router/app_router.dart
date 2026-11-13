@@ -1,19 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/shell/main_shell.dart';
 import '../../app/shell/more_page.dart';
 import '../../app/shell/quick_create_context.dart';
-import '../../app/shell/shell_chrome.dart';
+import 'package:pp_forge_core/ui.dart';
 import '../../app/shell/tab_nav.dart';
-import '../../hub/hub_index_screen.dart';
-import '../../hub/hub_page_frame.dart';
-import '../../hub/hub_registry.dart';
-import '../../ui/organisms/page_pop_observer.dart';
+import 'package:pp_forge_core/hub.dart';
 import '../../app/shell/fade_branch_container.dart';
 import 'dev_hub_path.dart';
 import '../../features/app_version/presentation/cubit/app_version_cubit.dart';
@@ -144,61 +140,7 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
         name: 'auth-register',
         builder: (context, state) => const RegisterPage(),
       ),
-      GoRoute(
-        path: '/dev',
-        name: 'dev-hub',
-        builder: (context, state) => const HubIndexScreen(),
-        routes: [
-          GoRoute(
-            path: 'ui/:level',
-            name: 'hub-ui-level',
-            builder: (context, state) {
-              final level = HubLevel.values
-                  .where(
-                    (l) => l.isUi && l.name == state.pathParameters['level'],
-                  )
-                  .firstOrNull;
-              return level == null
-                  ? const HubIndexScreen()
-                  : HubLevelScreen(level: level);
-            },
-            routes: [
-              GoRoute(
-                path: ':slug',
-                name: 'hub-ui-page',
-                builder: (context, state) => _hubPage(
-                  context,
-                  state.pathParameters['level']!,
-                  state.pathParameters['slug']!,
-                ),
-              ),
-            ],
-          ),
-          GoRoute(
-            path: ':section',
-            name: 'hub-section',
-            builder: (context, state) {
-              final section = HubSection.byName(
-                state.pathParameters['section']!,
-              );
-              return section == null
-                  ? const HubIndexScreen()
-                  : HubSectionScreen(section: section);
-            },
-            routes: [
-              GoRoute(
-                path: ':slug',
-                name: 'hub-page',
-                builder: (context, state) => _hubPage(
-                  context,
-                  state.pathParameters['section']!,
-                  state.pathParameters['slug']!,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+      hubRoute(),
     ],
   );
 }
@@ -634,8 +576,3 @@ class _StreamToListenable extends ChangeNotifier {
   }
 }
 
-Widget _hubPage(BuildContext context, String group, String slug) {
-  final page = hubPageFor(group, slug);
-  if (page == null) return const HubIndexScreen();
-  return page.screen?.call(context) ?? HubPageScreen(page: page);
-}

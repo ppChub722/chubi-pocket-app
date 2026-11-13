@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_button.dart';
-import '../../tokens/color_contrast.dart';
+import 'package:pp_forge_core/ui.dart';
 
 /// The big `เชื่อม <App>` button of an unlinked connection page (0.4.2 1b):
-/// a full-width primary [AppButton] filled with the app's [brand] colour,
+/// a full-width primary [PpForgeButton] filled with the app's [brand] colour,
 /// white text, as the apps' own buttons are (owner mock 2026-10-28). A brand
 /// too light for white text (Telegram #26A5E4 is ~2.6:1) is darkened until
 /// the label reads at [minContrast] ([fillFor]).
@@ -37,12 +36,12 @@ class ConnectionLinkButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final button = AppButton(
+    final button = PpForgeButton(
       label: label,
       onPressed: onPressed,
       loading: loading,
       expand: true,
-      size: AppButtonSize.large,
+      size: PpForgeButtonSize.large,
       submits: true,
     );
     final brand = this.brand;

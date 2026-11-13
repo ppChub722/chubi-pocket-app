@@ -1,24 +1,29 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// Events (projects) pieces: EventListRow, EventTagRef, EventBillRow,
 /// EventBillChildRow, SettleRow.
 Widget buildEventsPage(BuildContext context) => const _EventsPage();
 
 // Sample data (Thai, as the app shows it). Colours are theme tokens.
-const _trip = IconCode(icon: 'flight', bgColors: ['@presetThemeColor1']);
-const _party = IconCode(icon: 'nightlife', bgColors: ['@presetThemeColor2']);
-const _work = IconCode(icon: 'work', bgColors: ['@presetThemeColor3']);
+const _trip = PpForgeIconCode(icon: 'flight', bgColors: ['@presetThemeColor1']);
+const _party = PpForgeIconCode(
+  icon: 'nightlife',
+  bgColors: ['@presetThemeColor2'],
+);
+const _work = PpForgeIconCode(icon: 'work', bgColors: ['@presetThemeColor3']);
 const _food = EventTagRef(
   'อาหาร',
-  iconCode: IconCode(icon: 'restaurant', iconColors: ['@presetThemeColor2']),
+  iconCode: PpForgeIconCode(
+    icon: 'restaurant',
+    iconColors: ['@presetThemeColor2'],
+  ),
 );
 const _stay = EventTagRef(
   'ที่พัก',
-  iconCode: IconCode(icon: 'home', iconColors: ['@presetThemeColor3']),
+  iconCode: PpForgeIconCode(icon: 'home', iconColors: ['@presetThemeColor3']),
 );
 const _travel = EventTagRef('เดินทาง');
 
@@ -43,7 +48,7 @@ class _EventsPageState extends State<_EventsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     return Column(
@@ -52,7 +57,7 @@ class _EventsPageState extends State<_EventsPage> {
         HubDemo(
           title: 'EventListRow — the 0.4.0 events list row',
           note:
-              'Built on AppListRow. Icon, name + a mini 👥 N chip (members) + '
+              'Built on PpForgeListRow. Icon, name + a mini 👥 N chip (members) + '
               'an optional status chip (เกินงบ), meta on line 2 (dates | my '
               'share) and my '
               'position at the right: ได้คืน (green, +) / ต้องจ่าย (red, −); '
@@ -78,7 +83,7 @@ class _EventsPageState extends State<_EventsPage> {
                 ),
                 onTap: () => _tapped('row: owed'),
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               EventListRow(
                 name: 'งานสัมมนา',
                 iconCode: _work,
@@ -96,7 +101,7 @@ class _EventsPageState extends State<_EventsPage> {
                 ),
                 onTap: () => _tapped('row: owe'),
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               EventListRow(
                 name: 'ปาร์ตี้ปีใหม่',
                 iconCode: _party,
@@ -106,7 +111,7 @@ class _EventsPageState extends State<_EventsPage> {
                 caption: 'เคลียร์แล้ว',
                 onTap: () => _tapped('row: even'),
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               const EventListRow(
                 name: 'ทริปภูเก็ต',
                 members: 3,
@@ -125,10 +130,10 @@ class _EventsPageState extends State<_EventsPage> {
               'Rows with a ⋯ menu (rename | icon / colour | import to my tags '
               '| delete), "+ add", "import all". The name / icon / delete '
               'steps open from the sheet.',
-          child: AppButton(
+          child: PpForgeButton(
             label: 'เปิดชีต',
-            variant: AppButtonVariant.tonal,
-            onPressed: () => showAppSheetCustom<void>(
+            variant: PpForgeButtonVariant.tonal,
+            onPressed: () => showPpForgeSheetCustom<void>(
               context,
               builder: (_) => EventTagsSheet(
                 tags: const [
@@ -172,7 +177,7 @@ class _EventsPageState extends State<_EventsPage> {
         HubDemo(
           title: 'EventBillRow — a board bill',
           note:
-              'AppListRow geometry. Leading square tick = the resolve STATE '
+              'PpForgeListRow geometry. Leading square tick = the resolve STATE '
               '(SelectCheck look, not a selection); a marked row fades. '
               'Event tags ride on line 1 as mini chips, each its own tap '
               '(onTagTap gets the chip context, or tagAnchorBuilder wraps it '
@@ -201,7 +206,7 @@ class _EventsPageState extends State<_EventsPage> {
                 ),
                 onTap: () => _tapped('bill: unresolved (tap tick)'),
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               EventBillRow(
                 title: 'ข้าวเย็น',
                 amount: -1280,
@@ -215,7 +220,7 @@ class _EventsPageState extends State<_EventsPage> {
                 onTagTap: (_, i) => _tapped('tag $i tapped'),
                 onTap: () => _tapped('bill: resolved'),
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               EventBillRow(
                 title: 'ค่ารถตู้',
                 amount: -2400,
@@ -227,7 +232,7 @@ class _EventsPageState extends State<_EventsPage> {
                 locked: true,
                 onTap: () => _tapped('never fires'),
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               EventBillRow(
                 title: 'เงินคืนจากโรงแรม',
                 amount: 500,
@@ -238,7 +243,7 @@ class _EventsPageState extends State<_EventsPage> {
                 onTickTap: () => _tapped('income tick'),
                 onTap: () => _tapped('bill: income with type glyph'),
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               // 0.4.1-2 multi-payer: 2+ payers → "จ่าย: A ฿700 | B ฿500".
               EventBillRow(
                 title: 'ค่าเรือ',
@@ -348,7 +353,7 @@ class _EventsPageState extends State<_EventsPage> {
                   ),
                 ],
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               EventBillRow(
                 tick: false,
                 leading: IconTile(
@@ -362,7 +367,7 @@ class _EventsPageState extends State<_EventsPage> {
                 caption: 'จ่ายคืน | จดโดย ฉัน',
                 onTap: () => _tapped('payback'),
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               EventBillRow(
                 tick: false,
                 title: 'ค่าที่พัก',
@@ -469,7 +474,7 @@ class _EventsPageState extends State<_EventsPage> {
                     walletValue: 'ไม่เปลี่ยน',
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: PpForgeSpacing.sm),
                 BookOptionCard(
                   icon: AppIcons.receipt,
                   title: 'รายการ',
@@ -506,7 +511,7 @@ class _EventsPageState extends State<_EventsPage> {
                 avatar: PersonMark(name: 'ต้น', level: PersonLevel.name),
                 name: 'ต้น',
                 chip: 'คืนแล้ว',
-                chipTone: AppChipTone.success,
+                chipTone: PpForgeChipTone.success,
               ),
             ],
           ),
@@ -605,10 +610,10 @@ class _HighlightDemoState extends State<_HighlightDemo> {
           highlighted: _on,
           onTap: () {},
         ),
-        const SizedBox(height: AppSpacing.sm),
-        AppButton(
+        const SizedBox(height: PpForgeSpacing.sm),
+        PpForgeButton(
           label: 'Play the highlight',
-          variant: AppButtonVariant.tonal,
+          variant: PpForgeButtonVariant.tonal,
           onPressed: _play,
         ),
       ],

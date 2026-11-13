@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_button.dart';
-import '../../atoms/icon_tile.dart';
-import '../../molecules/confirm_dialog.dart';
-import '../../molecules/app_list_row.dart';
-import '../../tokens/tone.dart';
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app_spacing.dart';
-import '../icons/icon_code.dart';
+import 'package:pp_forge_core/ui.dart';
+import '../tokens/app_icons.dart';
 import '../people/avatar_data.dart';
 import 'type_actor_mark.dart';
 
@@ -48,7 +42,7 @@ class NotificationTileView extends StatelessWidget {
   static const double _avatar = 40;
 
   final String actorName;
-  final IconCode? actorIconCode;
+  final PpForgeIconCode? actorIconCode;
 
   /// The actor's avatar from the BE; null = built from [actorName] +
   /// [actorIconCode].
@@ -99,7 +93,7 @@ class NotificationTileView extends StatelessWidget {
           // icon grey too, see-through with the rest.
           Opacity(
             opacity: done ? 0.55 : 1,
-            child: AppListRow(
+            child: PpForgeListRow(
               onTap: onTap,
               leading: system
                   ? IconTile(icon: typeIcon, color: mark, size: _avatar)
@@ -138,7 +132,7 @@ class NotificationTileView extends StatelessWidget {
                           if (unread)
                             Icon(
                               Icons.circle,
-                              size: AppSpacing.sm,
+                              size: PpForgeSpacing.sm,
                               color: scheme.primary,
                             ),
                           if (acceptedLabel != null)
@@ -155,15 +149,15 @@ class NotificationTileView extends StatelessWidget {
           if (pending)
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg + _avatar + AppSpacing.md,
+                PpForgeSpacing.lg + _avatar + PpForgeSpacing.md,
                 0,
-                AppSpacing.lg,
-                AppSpacing.md,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.md,
               ),
               child: Row(
                 children: [
                   Expanded(
-                    child: AppButton(
+                    child: PpForgeButton(
                       label: acceptLabel,
                       icon: AppIcons.check,
                       submits: true,
@@ -171,11 +165,11 @@ class NotificationTileView extends StatelessWidget {
                     ),
                   ),
                   if (rejectLabel != null) ...[
-                    const SizedBox(width: AppSpacing.sm),
+                    const SizedBox(width: PpForgeSpacing.sm),
                     Expanded(
-                      child: AppButton(
+                      child: PpForgeButton(
                         label: rejectLabel!,
-                        variant: AppButtonVariant.outlined,
+                        variant: PpForgeButtonVariant.outlined,
                         submits: true,
                         onPressed: () => _reject(context),
                       ),

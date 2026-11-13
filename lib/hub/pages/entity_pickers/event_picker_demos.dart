@@ -5,7 +5,7 @@ import '../../../features/projects/presentation/cubit/project_directory_cubit.da
 import '../../../features/transactions/presentation/widgets/event_pick.dart';
 import '../../../features/transactions/presentation/widgets/event_picker.dart';
 import '../../../ui/ui.dart';
-import '../../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// [EventPicker] as each page opens it, on the real events cache.
 class EventPickerDemos extends StatelessWidget {
@@ -22,18 +22,19 @@ class EventPickerDemos extends StatelessWidget {
     RemoveFromEvent() => 'remove from the event',
   };
 
-  Widget _new(String label, Future<EventTarget?> Function() run) => AppButton(
-    label: label,
-    variant: AppButtonVariant.outlined,
-    onPressed: () async => onResult(_say(await run())),
-  );
+  Widget _new(String label, Future<EventTarget?> Function() run) =>
+      PpForgeButton(
+        label: label,
+        variant: PpForgeButtonVariant.outlined,
+        onPressed: () async => onResult(_say(await run())),
+      );
 
   Widget _demo(String title, String note, List<Widget> buttons) => HubDemo(
     title: title,
     note: note,
     child: Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: buttons,
     ),
   );
@@ -98,7 +99,7 @@ class EventPickerDemos extends StatelessWidget {
         if (events.isEmpty)
           const HubDemo(
             title: 'No open events',
-            child: AppText(
+            child: PpForgeText(
               'The events cache has no open event you can add to: sign in '
               'first, or every event shows its empty / create state.',
             ),

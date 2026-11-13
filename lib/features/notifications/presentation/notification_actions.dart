@@ -212,7 +212,7 @@ Future<void> _answer(
     await write();
     await inboxCubit.markActioned(n.id);
     await _reload(inboxCubit);
-    if (done != null) showAppSnackBarOn(messenger, done, tone: Tone.success);
+    if (done != null) showPpForgeSnackBarOn(messenger, done, tone: Tone.success);
   } on ApiException catch (e) {
     _showError(messenger, e);
   }
@@ -314,7 +314,7 @@ Future<void> _onAcceptWalletInvite(BuildContext ctx, String id) async {
   try {
     inboxCubit.applyAnswer((await accountsCubit.acceptInvite(id)).answer);
   } on ApiException catch (e) {
-    showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
+    showPpForgeSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
   }
 }
 
@@ -326,7 +326,7 @@ Future<void> _onRejectWalletInvite(BuildContext ctx, String id) async {
   try {
     inboxCubit.applyAnswer(await repo.rejectInvite(id));
   } on ApiException catch (e) {
-    showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
+    showPpForgeSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
   }
 }
 

@@ -36,7 +36,7 @@ class CategoryPickCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final all = context.watch<CategoriesCubit>().state.categories;
     final c = category;
     final iconCode = c == null ? null : CategoryTree.resolveIconCode(c, all);

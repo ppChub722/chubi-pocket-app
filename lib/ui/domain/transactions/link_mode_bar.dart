@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_divider.dart';
-import '../../atoms/app_switch.dart';
-import '../../tokens/app_spacing.dart';
 import 'split_event_section.dart';
+import 'package:pp_forge_core/ui.dart';
 
 /// The ผูกกับ choice as a row like the others (โน้ต, รายการประจำ): the label
 /// ("แบ่ง") and a switch. Off = a plain transaction, on = the bill with
@@ -24,7 +22,11 @@ class LinkSwitchRow extends StatelessWidget {
   Widget build(BuildContext context) => DraftFieldRow(
     label: label,
     dense: true,
-    child: AppSwitch(value: value, onChanged: onChanged, semanticLabel: label),
+    child: PpForgeSwitch(
+      value: value,
+      onChanged: onChanged,
+      semanticLabel: label,
+    ),
   );
 }
 
@@ -35,8 +37,8 @@ class RowsDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const Padding(
-    padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
-    child: AppDivider(),
+    padding: EdgeInsets.symmetric(vertical: PpForgeSpacing.sm),
+    child: PpForgeDivider(),
   );
 }
 
@@ -67,7 +69,7 @@ class LinkSectionFrame extends StatelessWidget {
       children: [
         if (recurring != null) ...[
           recurring,
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: PpForgeSpacing.sm),
         ],
         ?bar,
         if (card != null) ...[if (bar != null) const RowsDivider(), card],

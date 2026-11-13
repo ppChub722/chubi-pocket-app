@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_icon.dart';
-import '../../atoms/select_check.dart';
-import '../../tokens/app_radius.dart';
-import '../../tokens/app_spacing.dart';
-import '../../atoms/busy_scope.dart';
+import 'package:pp_forge_core/ui.dart';
 
 /// One book my part of an event bill can go to ("หนี้" / "รายการ"): a
 /// bordered card with a tick, its icon, words and amount; [child] (the
@@ -38,7 +34,7 @@ class BookOptionCard extends StatelessWidget {
     return Material(
       color: checked ? scheme.primary.withValues(alpha: 0.06) : scheme.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(PpForgeRadius.md),
         side: BorderSide(
           color: checked ? scheme.primary : scheme.outlineVariant,
         ),
@@ -52,16 +48,16 @@ class BookOptionCard extends StatelessWidget {
             child: InkWell(
               onTap: () => onChanged(!checked),
               child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.sm),
+                padding: const EdgeInsets.all(PpForgeSpacing.sm),
                 child: Row(
                   children: [
                     SelectCheck(
                       value: checked,
                       onTap: () => onChanged(!checked),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                    AppIcon(icon, color: scheme.onSurfaceVariant),
-                    const SizedBox(width: AppSpacing.sm),
+                    const SizedBox(width: PpForgeSpacing.sm),
+                    PpForgeIcon(icon, color: scheme.onSurfaceVariant),
+                    const SizedBox(width: PpForgeSpacing.sm),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,7 +81,7 @@ class BookOptionCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
+                    const SizedBox(width: PpForgeSpacing.sm),
                     DefaultTextStyle.merge(
                       style: text.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
@@ -100,10 +96,10 @@ class BookOptionCard extends StatelessWidget {
           if (checked && child != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.sm,
+                PpForgeSpacing.sm,
                 0,
-                AppSpacing.sm,
-                AppSpacing.sm,
+                PpForgeSpacing.sm,
+                PpForgeSpacing.sm,
               ),
               child: child,
             ),

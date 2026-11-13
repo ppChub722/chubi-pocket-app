@@ -41,9 +41,9 @@ class BootErrorApp extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const AppIcon(
+                  const PpForgeIcon(
                     Icons.error_outline,
-                    size: AppIconSize.hero,
+                    size: PpForgeIconSize.hero,
                     color: Colors.red,
                   ),
                   const SizedBox(height: 16),
@@ -80,7 +80,7 @@ class BootErrorApp extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Builder(
-                    builder: (ctx) => AppButton(
+                    builder: (ctx) => PpForgeButton(
                       icon: Icons.copy,
                       label: 'คัดลอกรายละเอียด / Copy details',
                       onPressed: () async {

@@ -2,11 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../atoms/corner_badge.dart';
-import '../../atoms/server_image.dart';
-import '../../tokens/app/app_colors.dart';
-import '../../tokens/avatar_metrics.dart';
-import '../icons/color_token.dart';
+import 'package:pp_forge_core/ui.dart';
 import '../icons/icon_display.dart';
 import '../icons/icon_type.dart';
 import 'avatar_data.dart';
@@ -77,7 +73,7 @@ class _InitialsFace extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>();
+    final palette = Theme.of(context).extension<PpForgeColors>();
     final initials = avatar.initials;
     if (initials.isEmpty) {
       return _Disc(
@@ -93,7 +89,7 @@ class _InitialsFace extends StatelessWidget {
     final spec = avatar.colors.isEmpty ? '' : avatar.colors.first;
     final color = spec.isEmpty || palette == null
         ? _specColor(spec, scheme)
-        : resolveColor(spec, palette);
+        : ppForgeResolveColor(spec, palette);
     return _Disc(
       size: size,
       color: color,
@@ -164,13 +160,13 @@ class _PhotoFace extends StatelessWidget {
     );
     final border = avatar.border;
     if (border == null || border.isNone) return picture;
-    final palette = Theme.of(context).extension<AppColors>();
+    final palette = Theme.of(context).extension<PpForgeColors>();
     final spec = border.colors.isEmpty ? '' : border.colors.first;
     final color = spec.isEmpty
         ? scheme.outline
         : palette == null
         ? _specColor(spec, scheme)
-        : resolveColor(spec, palette);
+        : ppForgeResolveColor(spec, palette);
     return CustomPaint(
       foregroundPainter: _RingPainter(
         color: color,

@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/icon_tile.dart';
-import '../../molecules/app_list_row.dart';
-import '../../tokens/app/app_colors.dart';
-import '../../tokens/app/app_icons.dart';
-import '../icons/icon_code.dart';
+import 'package:pp_forge_core/ui.dart';
+import '../tokens/app_icons.dart';
 import '../icons/icon_display.dart';
 import '../icons/icon_type.dart';
 import 'row_parts.dart';
@@ -43,7 +40,7 @@ class TxListRow extends StatelessWidget {
   final String title;
 
   /// The category's icon; null = the [kind]'s.
-  final IconCode? icon;
+  final PpForgeIconCode? icon;
 
   /// The value at the right (a MoneyText); left out while [actions] show.
   final Widget? amount;
@@ -78,7 +75,7 @@ class TxListRow extends StatelessWidget {
     if (code != null) {
       return IconDisplay(type: IconType.category, size: 36, iconCode: code);
     }
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final scheme = Theme.of(context).colorScheme;
     return IconTile(
       icon: switch (kind) {
@@ -101,7 +98,7 @@ class TxListRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final amount = this.amount;
     final source = this.source;
-    return AppListRow(
+    return PpForgeListRow(
       leading: _leading(context),
       title: title,
       titleMark: source == null ? null : txSourceMark(context, source),

@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../molecules/hero_style.dart';
-import '../../organisms/hero/app_hero_card.dart';
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app_spacing.dart';
-import '../../tokens/hero_colors.dart';
+import 'package:pp_forge_core/ui.dart';
+import '../tokens/app_icons.dart';
 import '../people/avatar.dart';
 import '../people/avatar_data.dart';
 import 'provider_logo.dart';
@@ -46,7 +43,7 @@ class ConnectionHeroCard extends StatelessWidget {
     final style = linked && brand != null
         ? HeroStyle.tinted(color: brand, glyph: AppIcons.link)
         : const HeroStyle.plain();
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: style,
       content: [
         _Identity(
@@ -113,7 +110,7 @@ class _Identity extends StatelessWidget {
     return Row(
       children: [
         picture,
-        const SizedBox(width: AppSpacing.md),
+        const SizedBox(width: PpForgeSpacing.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,7 +129,7 @@ class _Identity extends StatelessWidget {
                         size: 16,
                         color: hero?.accent ?? scheme.primary,
                       ),
-                      const SizedBox(width: AppSpacing.xs + 2),
+                      const SizedBox(width: PpForgeSpacing.xs + 2),
                       Flexible(
                         child: Text(
                           account,

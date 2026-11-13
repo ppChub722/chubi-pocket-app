@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/templates/auth-page` — the Auth template: sign in and register are the
 /// same skeleton (brand · banner · form groups · primary button · "or" + social ·
@@ -61,10 +61,10 @@ class _AuthTemplateState extends State<_AuthTemplate> {
       child: DecoratedBox(
         decoration: BoxDecoration(
           border: Border.all(color: scheme.outlineVariant),
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(PpForgeRadius.md),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(PpForgeRadius.md),
           child: Material(color: scheme.surfaceContainerLowest, child: child),
         ),
       ),
@@ -87,13 +87,13 @@ class _AuthTemplateState extends State<_AuthTemplate> {
       tagline: 'Know where your money goes',
     ),
     groups: [
-      AppInput(
+      PpForgeInput(
         controller: _id,
         label: 'Username or email',
         prefixIcon: AppIcons.profile,
         onChanged: (_) {},
       ),
-      AppInput(
+      PpForgeInput(
         controller: _pw,
         label: 'Password',
         prefixIcon: AppIcons.lock,
@@ -101,9 +101,9 @@ class _AuthTemplateState extends State<_AuthTemplate> {
         onChanged: (_) {},
       ),
     ],
-    submit: AppButton(
+    submit: PpForgeButton(
       label: 'Sign in',
-      size: AppButtonSize.large,
+      size: PpForgeButtonSize.large,
       expand: true,
       onPressed: _noop,
     ),
@@ -111,9 +111,9 @@ class _AuthTemplateState extends State<_AuthTemplate> {
       const OrDivider(label: 'or'),
       _socialCards(),
     ],
-    switchLink: AppButton(
+    switchLink: PpForgeButton(
       label: 'Create an account',
-      variant: AppButtonVariant.text,
+      variant: PpForgeButtonVariant.text,
       expand: true,
       onPressed: _noop,
     ),
@@ -129,14 +129,14 @@ class _AuthTemplateState extends State<_AuthTemplate> {
         dividers: false,
         title: 'Account',
         children: [
-          AppInput(
+          PpForgeInput(
             controller: _user,
             label: 'Username',
             helper: 'Lowercase letters, numbers, _ and -',
             prefixIcon: AppIcons.profile,
             onChanged: (_) {},
           ),
-          AppInput(
+          PpForgeInput(
             controller: _pw,
             label: 'Password',
             prefixIcon: AppIcons.lock,
@@ -150,7 +150,7 @@ class _AuthTemplateState extends State<_AuthTemplate> {
         dividers: false,
         title: 'Profile',
         children: [
-          AppInput(
+          PpForgeInput(
             controller: _email,
             label: 'Email (optional)',
             prefixIcon: AppIcons.email,
@@ -159,9 +159,9 @@ class _AuthTemplateState extends State<_AuthTemplate> {
         ],
       ),
     ],
-    submit: AppButton(
+    submit: PpForgeButton(
       label: 'Create account',
-      size: AppButtonSize.large,
+      size: PpForgeButtonSize.large,
       expand: true,
       onPressed: _noop,
     ),
@@ -169,9 +169,9 @@ class _AuthTemplateState extends State<_AuthTemplate> {
       const OrDivider(label: 'or'),
       _socialCards(),
     ],
-    switchLink: AppButton(
+    switchLink: PpForgeButton(
       label: 'I already have an account',
-      variant: AppButtonVariant.text,
+      variant: PpForgeButtonVariant.text,
       expand: true,
       onPressed: _noop,
     ),
@@ -198,11 +198,11 @@ class _AuthTemplateState extends State<_AuthTemplate> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Wrap(
-                    spacing: AppSpacing.xs,
+                    spacing: PpForgeSpacing.xs,
                     children: [
-                      AppChip(
+                      PpForgeChip(
                         label: 'Failed attempt (error snackbar)',
-                        onTap: () => showAppSnackBar(
+                        onTap: () => showPpForgeSnackBar(
                           context,
                           'Wrong username or password',
                           tone: Tone.danger,
@@ -210,7 +210,7 @@ class _AuthTemplateState extends State<_AuthTemplate> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: PpForgeSpacing.md),
                   _framed(_login(), 700),
                 ],
               ),

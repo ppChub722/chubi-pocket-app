@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/bloc/cubit_feed.dart';
 import '../../../../core/data/sync_refresh.dart';
 import '../../../../core/data/sync_set.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../projects/domain/project.dart';
@@ -55,7 +54,7 @@ abstract final class EventPicker {
             id: p.id,
             title: p.name,
             subtitle: _subtitle(l, locale, p),
-            leading: const AppIcon(AppIcons.project),
+            leading: const PpForgeIcon(AppIcons.project),
             group: _openGroup,
           ),
       if (showClosed)
@@ -68,7 +67,7 @@ abstract final class EventPicker {
                 _statusLabel(l, p.status),
                 ?_subtitle(l, locale, p),
               ].join(' | '),
-              leading: const AppIcon(AppIcons.project),
+              leading: const PpForgeIcon(AppIcons.project),
               group: _closedGroup,
               enabled: false,
             ),
@@ -142,7 +141,7 @@ abstract final class EventPicker {
               ? PickerFreeText(
                   hint: l.quickEventNameLabel,
                   saveLabel: l.quickEventCreateNamed,
-                  leading: (_) => const AppIcon(AppIcons.add),
+                  leading: (_) => const PpForgeIcon(AppIcons.add),
                   initial: _clip(suggestedName),
                   maxLength: TextLimits.name,
                 )

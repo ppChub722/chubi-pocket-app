@@ -69,7 +69,7 @@ class ContactsRepository {
     String? phone,
     String? description,
     String? note,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
     List<String>? absorbNames,
   }) async {
     try {
@@ -102,7 +102,7 @@ class ContactsRepository {
     String? phone,
     String? description,
     String? note,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
   }) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(

@@ -42,7 +42,7 @@ class SavingGoalPickCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final g = goal;
     String money(double v) => moneyString(context, v);
     final target = g?.targetAmount;

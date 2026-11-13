@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/server_image.dart';
-import '../../tokens/app_spacing.dart';
+import 'package:pp_forge_core/ui.dart';
 
 /// An outside app's logo (0.4.2 1b): the BE's `logo_url` (a 96 px PNG,
 /// cached by its `?v=`) drawn through [ServerImageScope]. [grey] = the app is
@@ -86,8 +85,8 @@ class ProviderLogoStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     if (logos.isEmpty) return const SizedBox.shrink();
     return Wrap(
-      spacing: AppSpacing.xs + 2,
-      runSpacing: AppSpacing.xs,
+      spacing: PpForgeSpacing.xs + 2,
+      runSpacing: PpForgeSpacing.xs,
       children: [
         for (final (url, name) in logos)
           ProviderLogo(url: url, name: name, size: size),

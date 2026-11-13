@@ -62,7 +62,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   void _submit() {
     if (!_valid) {
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         AppLocalizations.of(context)!.authRegisterIncomplete,
         tone: Tone.danger,
@@ -114,7 +114,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   dividers: false,
                   title: l.authRegisterSectionAccount,
                   children: [
-                    AppInput(
+                    PpForgeInput(
                       controller: _usernameCtrl,
                       enabled: !isSubmitting,
                       label: l.authRegisterUsernameLabel,
@@ -124,7 +124,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       autofillHints: const [AutofillHints.newUsername],
                       textInputAction: TextInputAction.next,
                     ),
-                    AppInput(
+                    PpForgeInput(
                       controller: _passwordCtrl,
                       enabled: !isSubmitting,
                       label: l.authRegisterPasswordLabel,
@@ -134,7 +134,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       autofillHints: const [AutofillHints.newPassword],
                       textInputAction: TextInputAction.next,
                     ),
-                    AppInput(
+                    PpForgeInput(
                       controller: _confirmCtrl,
                       enabled: !isSubmitting,
                       label: l.authRegisterConfirmLabel,
@@ -149,7 +149,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   dividers: false,
                   title: l.authRegisterSectionProfile,
                   children: [
-                    AppInput(
+                    PpForgeInput(
                       controller: _displayNameCtrl,
                       enabled: !isSubmitting,
                       label: l.authRegisterDisplayNameLabel,
@@ -157,7 +157,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       autofillHints: const [AutofillHints.name],
                       textInputAction: TextInputAction.next,
                     ),
-                    AppInput(
+                    PpForgeInput(
                       controller: _emailCtrl,
                       enabled: !isSubmitting,
                       label: l.authRegisterEmailLabel,
@@ -179,19 +179,19 @@ class _RegisterPageState extends State<RegisterPage> {
                   ],
                 ),
               ],
-              submit: AppButton(
+              submit: PpForgeButton(
                 kind: ButtonIconKind.submit,
                 label: l.authRegisterSubmit,
                 submits: true,
                 onPressed: isSubmitting ? null : _submit,
                 loading: isSubmitting,
-                size: AppButtonSize.large,
+                size: PpForgeButtonSize.large,
                 expand: true,
               ),
               alternatives: const [AuthOrDivider(), AuthSocialCards()],
-              switchLink: AppButton(
+              switchLink: PpForgeButton(
                 label: l.authRegisterGoToLogin,
-                variant: AppButtonVariant.text,
+                variant: PpForgeButtonVariant.text,
                 expand: true,
                 onPressed: isSubmitting ? null : _toLogin,
               ),

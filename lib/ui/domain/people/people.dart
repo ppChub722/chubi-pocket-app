@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app_spacing.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../icons/icon_code.dart';
-import '../../atoms/add_tile.dart';
+import 'package:pp_forge_core/ui.dart';
 import 'avatar.dart';
 import 'avatar_data.dart';
-import '../../atoms/busy_scope.dart';
 
 class PersonRef {
   const PersonRef({
@@ -19,7 +16,7 @@ class PersonRef {
   });
 
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   /// The BE's avatar; null = built from [name] + [iconCode].
   final AvatarData? avatar;
@@ -124,10 +121,10 @@ class MemberStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final itemWidth = avatarSize + AppSpacing.lg;
+    final itemWidth = avatarSize + PpForgeSpacing.lg;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -142,13 +139,13 @@ class MemberStrip extends StatelessWidget {
                     width: itemWidth,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.xs,
+                        vertical: PpForgeSpacing.xs,
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Avatar(members[i].shownAvatar, size: avatarSize),
-                          const SizedBox(height: AppSpacing.xs),
+                          const SizedBox(height: PpForgeSpacing.xs),
                           Text(
                             members[i].isOwner
                                 ? '${members[i].name} 👑'
@@ -175,7 +172,7 @@ class MemberStrip extends StatelessWidget {
             ),
           if (onInvite != null)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xs),
               child: AddTile(
                 label:
                     inviteLabel ?? AppLocalizations.of(context)!.commonInvite,

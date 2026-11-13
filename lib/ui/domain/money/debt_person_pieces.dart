@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_button.dart';
-import '../../atoms/app_chip.dart';
-import '../../atoms/app_input.dart';
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app_radius.dart';
-import '../../tokens/app_spacing.dart';
-import '../../tokens/chip_size.dart';
-import '../../atoms/busy_scope.dart';
+import '../tokens/app_icons.dart';
+import 'package:pp_forge_core/ui.dart';
 
 /// The debt person hero's main line (owner 2026-10-22, mock DebtPerson):
 /// "รอจ่ายให้ลี" at the start, the big amount at the end, in [color].
@@ -39,7 +33,7 @@ class DebtSentenceAmount extends StatelessWidget {
             style: text.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ),
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: PpForgeSpacing.sm),
         Flexible(
           flex: 2,
           child: FittedBox(
@@ -92,14 +86,14 @@ class DebtEntryNote extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: AppSpacing.xs),
+        const SizedBox(width: PpForgeSpacing.xs),
         DefaultTextStyle.merge(
           style: text?.copyWith(color: color, fontWeight: FontWeight.w700),
           child: amount,
         ),
         if (paid != null) ...[
-          const SizedBox(width: AppSpacing.xs),
-          AppChip(
+          const SizedBox(width: PpForgeSpacing.xs),
+          PpForgeChip(
             key: const ValueKey('debtEntryPaid'),
             label: paid,
             size: ChipSize.mini,
@@ -147,25 +141,25 @@ class DebtPersonActions extends StatelessWidget {
           if (settle != null && onSettle != null) ...[
             Expanded(
               flex: 16,
-              child: AppButton(
+              child: PpForgeButton(
                 key: const ValueKey('debtSettle'),
                 label: settle,
                 icon: AppIcons.cash,
-                size: AppButtonSize.control,
+                size: PpForgeButtonSize.control,
                 expand: true,
                 onPressed: onSettle,
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
           ],
           Expanded(
             flex: 10,
-            child: AppButton(
+            child: PpForgeButton(
               key: const ValueKey('debtShare'),
               label: shareLabel,
               icon: AppIcons.share,
-              variant: AppButtonVariant.outlined,
-              size: AppButtonSize.control,
+              variant: PpForgeButtonVariant.outlined,
+              size: PpForgeButtonSize.control,
               expand: true,
               onPressed: onShare,
             ),
@@ -193,11 +187,11 @@ class CycleDivider extends StatelessWidget {
     return BusyLock(
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(PpForgeRadius.md),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.sm,
+            horizontal: PpForgeSpacing.lg,
+            vertical: PpForgeSpacing.sm,
           ),
           // The words keep at least a short line each side; a long label
           // wraps (narrow phones, big text).
@@ -207,14 +201,14 @@ class CycleDivider extends StatelessWidget {
                 line,
                 ConstrainedBox(
                   constraints: BoxConstraints(
-                    maxWidth: (box.maxWidth - 2 * AppSpacing.lg).clamp(
+                    maxWidth: (box.maxWidth - 2 * PpForgeSpacing.lg).clamp(
                       0,
                       double.infinity,
                     ),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
+                      horizontal: PpForgeSpacing.sm,
                     ),
                     child: Text(
                       label,
@@ -281,21 +275,21 @@ class _DebtShareSheetState extends State<DebtShareSheet> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
+        PpForgeSpacing.lg,
         0,
-        AppSpacing.lg,
-        AppSpacing.lg,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.lg,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
           Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
+            spacing: PpForgeSpacing.xs,
+            runSpacing: PpForgeSpacing.xs,
             children: [
               for (final (i, v) in widget.variants.indexed)
-                AppChip(
+                PpForgeChip(
                   key: ValueKey('shareVariant$i'),
                   label: v.label,
                   selected: i == _picked,
@@ -304,29 +298,29 @@ class _DebtShareSheetState extends State<DebtShareSheet> {
                 ),
             ],
           ),
-          const SizedBox(height: AppSpacing.md),
-          AppInput(
+          const SizedBox(height: PpForgeSpacing.md),
+          PpForgeInput(
             key: const ValueKey('shareText'),
             controller: _text,
             label: widget.fieldLabel,
             minLines: 5,
             maxLines: 10,
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: PpForgeSpacing.md),
           Row(
             children: [
               Expanded(
-                child: AppButton(
+                child: PpForgeButton(
                   label: widget.copyLabel,
                   icon: AppIcons.copy,
-                  variant: AppButtonVariant.outlined,
+                  variant: PpForgeButtonVariant.outlined,
                   expand: true,
                   onPressed: () => widget.onCopy(_text.text),
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
               Expanded(
-                child: AppButton(
+                child: PpForgeButton(
                   label: widget.shareLabel,
                   icon: AppIcons.share,
                   expand: true,

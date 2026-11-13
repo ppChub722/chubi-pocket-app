@@ -83,7 +83,7 @@ class LinkViewRows extends StatelessWidget {
   }
 
   static Future<void> _show(BuildContext context, Widget card) =>
-      showAppSheet<void>(context, padded: true, builder: (_) => card);
+      showPpForgeSheet<void>(context, padded: true, builder: (_) => card);
 
   static Widget _amount(double v) =>
       ShareAmountField(value: v, onChanged: null);
@@ -158,12 +158,12 @@ class LinkViewRows extends StatelessWidget {
       key: const ValueKey('linkViewEventCard'),
       actions: [
         if (disconnect != null)
-          AppButton(
+          PpForgeButton(
             kind: ButtonIconKind.disconnect,
             key: const ValueKey('linkViewDisconnectEvent'),
             label: l.txLinkDisconnect,
-            variant: AppButtonVariant.outlined,
-            size: AppButtonSize.control,
+            variant: PpForgeButtonVariant.outlined,
+            size: PpForgeButtonSize.control,
             onPressed: () {
               Navigator.of(context, rootNavigator: true).pop();
               disconnect();

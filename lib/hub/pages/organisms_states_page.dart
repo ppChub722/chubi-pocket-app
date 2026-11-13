@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/network/api_exception.dart';
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/organisms/states` — async states, pull to refresh, saving overlay.
 Widget buildStatesPage(BuildContext context) => const _StatesPage();
@@ -31,7 +30,7 @@ class _StatesPage extends StatelessWidget {
               'on screen raises a snackbar instead of hiding the data. Owner '
               '2026-11-12: every page that opens, or is pushed, goes through '
               'this one widget. The skeleton appears only after '
-              'AppMotion.duration (a quick load never flashes it), fades in, '
+              'PpForgePageMotion.duration (a quick load never flashes it), fades in, '
               'and when the data arrives it fades out over the content (a '
               'cross-fade, not a jump); all its boxes share one shimmer '
               '(SkeletonShimmer).',
@@ -104,7 +103,7 @@ Widget _stageBox(BuildContext context, Widget child) => Container(
   height: _stageHeight,
   decoration: BoxDecoration(
     border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-    borderRadius: BorderRadius.circular(AppRadius.md),
+    borderRadius: BorderRadius.circular(PpForgeRadius.md),
   ),
   clipBehavior: Clip.antiAlias,
   child: child,
@@ -112,15 +111,15 @@ Widget _stageBox(BuildContext context, Widget child) => Container(
 
 Widget _sampleList() => ListView(
   physics: const AlwaysScrollableScrollPhysics(),
-  padding: const EdgeInsets.all(AppSpacing.md),
+  padding: const EdgeInsets.all(PpForgeSpacing.md),
   children: [
     for (final name in ['Groceries', 'Rent', 'Coffee', 'Transport', 'Salary'])
       Padding(
-        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-        child: AppCard(
+        padding: const EdgeInsets.only(bottom: PpForgeSpacing.sm),
+        child: PpForgeCard(
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: AppText(name),
+            padding: const EdgeInsets.all(PpForgeSpacing.md),
+            child: PpForgeText(name),
           ),
         ),
       ),
@@ -138,11 +137,15 @@ Widget _selector<T>({
   required T value,
   required ValueChanged<T> onChanged,
 }) => Wrap(
-  spacing: AppSpacing.sm,
-  runSpacing: AppSpacing.sm,
+  spacing: PpForgeSpacing.sm,
+  runSpacing: PpForgeSpacing.sm,
   children: [
     for (final (v, label) in options)
-      AppChip(label: label, selected: v == value, onTap: () => onChanged(v)),
+      PpForgeChip(
+        label: label,
+        selected: v == value,
+        onTap: () => onChanged(v),
+      ),
   ],
 );
 
@@ -184,27 +187,27 @@ class _OpenDemoState extends State<_OpenDemo> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
+          spacing: PpForgeSpacing.sm,
+          runSpacing: PpForgeSpacing.sm,
           children: [
-            AppButton(
+            PpForgeButton(
               label: 'Fast 80 ms',
-              variant: AppButtonVariant.outlined,
+              variant: PpForgeButtonVariant.outlined,
               onPressed: () => _open(const Duration(milliseconds: 80)),
             ),
-            AppButton(
+            PpForgeButton(
               label: 'Normal 600 ms',
-              variant: AppButtonVariant.outlined,
+              variant: PpForgeButtonVariant.outlined,
               onPressed: () => _open(const Duration(milliseconds: 600)),
             ),
-            AppButton(
+            PpForgeButton(
               label: 'Slow 2.5 s',
-              variant: AppButtonVariant.outlined,
+              variant: PpForgeButtonVariant.outlined,
               onPressed: () => _open(const Duration(milliseconds: 2500)),
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: PpForgeSpacing.md),
         _stageBox(
           context,
           _opened
@@ -216,7 +219,9 @@ class _OpenDemoState extends State<_OpenDemo> {
                   onRetry: () async {},
                   builder: (_) => _sampleList(),
                 )
-              : const Center(child: AppText('Tap a button to open the page')),
+              : const Center(
+                  child: PpForgeText('Tap a button to open the page'),
+                ),
         ),
       ],
     );
@@ -274,7 +279,7 @@ class _AsyncDemoState extends State<_AsyncDemo> {
             }
           },
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: PpForgeSpacing.md),
         _stageBox(
           context,
           AsyncStateView(
@@ -296,10 +301,10 @@ class _AsyncDemoState extends State<_AsyncDemo> {
           ),
         ),
         if (_mode == _Mode.refreshFailed) ...[
-          const SizedBox(height: AppSpacing.md),
-          AppButton(
+          const SizedBox(height: PpForgeSpacing.md),
+          PpForgeButton(
             label: 'Fail the refresh again',
-            variant: AppButtonVariant.tonal,
+            variant: PpForgeButtonVariant.tonal,
             onPressed: () {
               setState(() => _error = null);
               WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -340,7 +345,7 @@ class _FallbackDemoState extends State<_FallbackDemo> {
           value: _mode,
           onChanged: (m) => setState(() => _mode = m),
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: PpForgeSpacing.md),
         _stageBox(
           context,
           AsyncStateView.fallback(

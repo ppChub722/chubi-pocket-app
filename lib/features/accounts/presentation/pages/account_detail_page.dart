@@ -12,7 +12,6 @@ import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
@@ -395,9 +394,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     );
     if (!mounted) return;
     // "Use default" = back to the type's icon, which then follows the type.
-    if (result is IconMakerRemoved) {
+    if (result is PpForgeIconMakerRemoved) {
       applyChange(working.copyWith(clearIcon: true));
-    } else if (result is IconMakerSelected &&
+    } else if (result is PpForgeIconMakerSelected &&
         result.iconCode != preview.shownIconCode) {
       applyChange(working.copyWith(iconCode: result.iconCode));
     }
@@ -482,7 +481,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
+      showPpForgeSnackBar(context, errorText(l, e), tone: Tone.danger);
       return;
     }
     if (!mounted) return;
@@ -508,7 +507,11 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final l = AppLocalizations.of(context)!;
     final a = widget.account!;
     if (a.isShared) {
-      showAppSnackBar(context, l.accountArchiveHasMembers, tone: Tone.warning);
+      showPpForgeSnackBar(
+        context,
+        l.accountArchiveHasMembers,
+        tone: Tone.warning,
+      );
       return;
     }
     final ok = await showConfirmDialog(
@@ -525,12 +528,12 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     setSaving(true);
     try {
       await cubit.remove(a.id);
-      showAppSnackBarOn(messenger, l.accountArchived, tone: Tone.success);
+      showPpForgeSnackBarOn(messenger, l.accountArchived, tone: Tone.success);
       router.go('/accounts');
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
+      showPpForgeSnackBar(context, errorText(l, e), tone: Tone.danger);
     }
   }
 
@@ -543,13 +546,17 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       preview = await cubit.deletePreview(a.id);
     } on ApiException catch (e) {
       if (mounted) {
-        showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
+        showPpForgeSnackBar(context, errorText(l, e), tone: Tone.danger);
       }
       return;
     }
     if (!mounted) return;
     if (preview == null) {
-      showAppSnackBar(context, l.accountArchiveHasMembers, tone: Tone.warning);
+      showPpForgeSnackBar(
+        context,
+        l.accountArchiveHasMembers,
+        tone: Tone.warning,
+      );
       return;
     }
     final ok = await showConfirmDialog(
@@ -572,12 +579,12 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     setSaving(true);
     try {
       await cubit.deleteForever(a.id);
-      showAppSnackBarOn(messenger, l.fpWalletDeleted, tone: Tone.success);
+      showPpForgeSnackBarOn(messenger, l.fpWalletDeleted, tone: Tone.success);
       router.go('/accounts');
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, errorText(l, e), tone: Tone.danger);
+      showPpForgeSnackBar(context, errorText(l, e), tone: Tone.danger);
     }
   }
 
@@ -597,7 +604,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       );
       widget.onAccount?.call(outcome.account);
       if (!mounted) return;
-      showAppSnackBar(
+      showPpForgeSnackBar(
         context,
         l.accountAdjustBalanceSuccess,
         tone: Tone.success,
@@ -648,8 +655,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       0,
       duration: MediaQuery.disableAnimationsOf(context)
           ? Duration.zero
-          : AppDurations.chrome,
-      curve: AppDurations.chromeCurve,
+          : PpForgeDurations.chrome,
+      curve: PpForgeDurations.chromeCurve,
     );
   }
 
@@ -745,7 +752,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             builder: (context) {
               final barInset = MediaQuery.paddingOf(context).top;
               final bottom =
-                  AppSpacing.huge + MediaQuery.paddingOf(context).bottom;
+                  PpForgeSpacing.huge + MediaQuery.paddingOf(context).bottom;
               if (a == null || isEditing) {
                 return _editBody(l, a, barInset, bottom);
               }
@@ -791,9 +798,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.lg,
-                  AppSpacing.lg,
+                  PpForgeSpacing.lg,
+                  PpForgeSpacing.lg,
+                  PpForgeSpacing.lg,
                   0,
                 ),
                 child: KeyedSubtree(key: _heroKey, child: _viewHero(l, a)),
@@ -806,13 +813,13 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             SliverPersistentHeader(
               pinned: true,
               delegate: PinnedTabBarDelegate(
-                child: AppTabBar<AccountDetailTab>(
+                child: PpForgeTabBar<AccountDetailTab>(
                   selected: _tab,
                   onChanged: _goTab,
                   pager: _pages,
                   tabs: [
                     for (final t in tabs)
-                      AppTab(
+                      PpForgeTab(
                         value: t,
                         label: _tabLabel(l, t),
                         icon: switch (t) {
@@ -826,7 +833,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
               ),
             ),
           ],
-          body: AppTabPager<AccountDetailTab>(
+          body: PpForgeTabPager<AccountDetailTab>(
             controller: _pages,
             values: tabs,
             selected: _tab,
@@ -857,7 +864,12 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       onRefresh: _refresh,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, bottom),
+        padding: EdgeInsets.fromLTRB(
+          PpForgeSpacing.lg,
+          0,
+          PpForgeSpacing.lg,
+          bottom,
+        ),
         children: [
           for (final s in [
             _overviewInfo(l, a),
@@ -899,9 +911,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       description: l.fpWalletSavedInDesc,
       children: [
         for (final b in buckets)
-          AppListRow(
+          PpForgeListRow(
             title: b.isGoal ? b.name : l.sgv2SpareTitle,
-            leading: IconCodeWidget(
+            leading: PpForgeIconCodeWidget(
               iconCode: b.isGoal ? b.iconCode : null,
               size: 36,
               fallbackIcon: b.isGoal
@@ -923,8 +935,12 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     );
   }
 
-  EdgeInsets _tabInsets(double bottom) =>
-      EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, bottom);
+  EdgeInsets _tabInsets(double bottom) => EdgeInsets.fromLTRB(
+    PpForgeSpacing.lg,
+    PpForgeSpacing.md,
+    PpForgeSpacing.lg,
+    bottom,
+  );
 
   String _periodLabel(TxPeriod p) {
     final locale = Localizations.localeOf(context).languageCode;
@@ -978,7 +994,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       for (final m in a.members)
         if (m.isActive) m,
     ];
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: accountHeroStyle(context, a),
       content: [
         HeroIdentity(
@@ -1006,7 +1022,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
               ? CardActionButton(
                   key: const ValueKey('heroEdit'),
                   icon: AppIcons.edit,
-                  tooltip: UiConfig.stringsOf(context).edit,
+                  tooltip: PpForgeConfig.stringsOf(context).edit,
                   onTap: enterEdit,
                 )
               : null,
@@ -1043,7 +1059,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         flow,
         HeroChipRow(
           chips: [
-            AppChip(
+            PpForgeChip(
               label: accountTypeLabel(context, a.type),
               icon: a.type.icon,
               color: a.colorOf(context),
@@ -1052,7 +1068,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             // Border and text in one colour, like the type chip (owner
             // 2026-10-23): the card's own colour.
             Builder(
-              builder: (context) => AppChip(
+              builder: (context) => PpForgeChip(
                 label: _scopeChipLabel(l, _effectiveScope(a)),
                 color: HeroColors.maybeOf(context)?.accent,
                 selected: true,
@@ -1201,9 +1217,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
           ];
     return ActionBar(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.lg,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.md,
+        PpForgeSpacing.lg,
         0,
       ),
       actions: items,
@@ -1338,7 +1354,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final members = widget.members;
     if (members == null) return;
     final cubit = context.read<AccountsCubit>();
-    await showAppSheetCustom<void>(
+    await showPpForgeSheetCustom<void>(
       context,
       builder: (sheetContext) => BlocProvider<AccountsCubit>.value(
         value: cubit,
@@ -1348,7 +1364,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             account: a,
             members: members,
             onRefresh: _refresh,
-            padding: _tabInsets(AppSpacing.lg),
+            padding: _tabInsets(PpForgeSpacing.lg),
             onResult: (r) {
               widget.onMembers?.call(r);
               Navigator.of(sheetContext).pop();
@@ -1368,11 +1384,11 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final preview = _preview(l);
     final w = working;
     return DetailLayout(
-      topInset: barInset + AppSpacing.lg,
+      topInset: barInset + PpForgeSpacing.lg,
       bottomInset: bottom,
       hero: KeyedSubtree(
         key: _heroKey,
-        child: AppHeroCard(
+        child: PpForgeHeroCard(
           style: accountHeroStyle(context, preview),
           mode: _isCreate ? HeroCardMode.create : HeroCardMode.edit,
           content: [
@@ -1429,7 +1445,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         maxLength: TextLimits.note,
         editField: DetailStacked(
           label: l.commonNote,
-          child: AppInput.inline(
+          child: PpForgeInput.inline(
             editing: true,
             controller: _noteController,
             focusNode: _noteFocus,
@@ -1519,7 +1535,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final w = working;
     return SectionCard(
       children: [
-        AppDetailRow(
+        PpForgeDetailRow(
           label: l.accountFormTypeLabel,
           trailing: OptionMenuAnchor<AccountType>(
             selected: w.type,
@@ -1529,15 +1545,15 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                 SheetOption(
                   value: t,
                   label: accountTypeLabel(context, t),
-                  leading: AppIcon(t.icon, color: t.iconDefault.color),
+                  leading: PpForgeIcon(t.icon, color: t.iconDefault.color),
                 ),
             ],
-            builder: (context, toggle) => AppChip(
+            builder: (context, toggle) => PpForgeChip(
               label: accountTypeLabel(context, w.type),
               icon: w.type.icon,
               color: w.type.iconDefault.color,
               selected: true,
-              trailing: AppChipTrailing.dropdown,
+              trailing: PpForgeChipTrailing.dropdown,
               onTap: toggle,
             ),
           ),
@@ -1563,10 +1579,10 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       title: l.accountIdentifiersTitle,
       description: l.accountIdentifiersHint,
       trailing: editing
-          ? AppChip(
+          ? PpForgeChip(
               icon: AppIcons.add,
               label: l.accountIdentifiersAdd,
-              tone: AppChipTone.primary,
+              tone: PpForgeChipTone.primary,
               selected: true,
               onTap: _addIdentifier,
             )
@@ -1639,17 +1655,17 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       final minPayment = AmountInput.parse(w.minPayment);
       return [
         if (statementDay != null)
-          AppDetailRow(
+          PpForgeDetailRow(
             label: l.accountDetailStatementDate,
-            trailing: AppText(dayOfMonthLabel(context, statementDay)),
+            trailing: PpForgeText(dayOfMonthLabel(context, statementDay)),
           ),
         if (dueDay != null)
-          AppDetailRow(
+          PpForgeDetailRow(
             label: l.accountDetailPaymentDue,
-            trailing: AppText(dayOfMonthLabel(context, dueDay)),
+            trailing: PpForgeText(dayOfMonthLabel(context, dueDay)),
           ),
         if (minPayment != null)
-          AppDetailRow(
+          PpForgeDetailRow(
             label: l.accountDetailMinimumPayment,
             trailing: MoneyText(minPayment, symbol: symbol),
           ),
@@ -1660,13 +1676,13 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       required TextEditingController controller,
       required _Field field,
       FormFieldValidator<String>? validator,
-    }) => AppDetailRow(
+    }) => PpForgeDetailRow(
       label: label,
       trailing: SizedBox(
         width: 160,
-        child: AppInput(
+        child: PpForgeInput(
           controller: controller,
-          type: AppInputType.amount,
+          type: PpForgeInputType.amount,
           dense: true,
           currencySymbol: symbol,
           hint: '0',
@@ -1708,12 +1724,12 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       if (_minOverLimit(w))
         Padding(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
+            PpForgeSpacing.lg,
             0,
-            AppSpacing.lg,
-            AppSpacing.sm,
+            PpForgeSpacing.lg,
+            PpForgeSpacing.sm,
           ),
-          child: AppMessage(
+          child: PpForgeMessage(
             tone: Tone.warning,
             message: l.accountMinPaymentOverLimit,
           ),
@@ -1735,7 +1751,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   }) {
     final day = int.tryParse(value.trim());
     final label = dayOfMonthLabel(context, day);
-    return AppDetailRow.pick(
+    return PpForgeDetailRow.pick(
       label: title,
       value: day == null ? null : label,
       emptyText: label,
@@ -1772,7 +1788,7 @@ class _AccountDraft {
 
   final String name;
   final AccountType type;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final String description;
   final String note;
 
@@ -1822,7 +1838,7 @@ class _AccountDraft {
   _AccountDraft copyWith({
     String? name,
     AccountType? type,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
     String? description,
     String? note,
     String? opening,

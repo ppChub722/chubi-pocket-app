@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../molecules/split_row.dart';
-import '../../tokens/app_radius.dart';
-import '../../tokens/app_spacing.dart';
-import '../../tokens/tone.dart';
+import 'package:pp_forge_core/ui.dart';
 import 'link_mode_bar.dart';
 
 /// The status line under a [ShareCard]: "✓ แบ่งครบแล้ว" when the rows add up
@@ -70,16 +67,16 @@ class ShareCard extends StatelessWidget {
       padding: flat
           ? EdgeInsets.zero
           : const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.sm,
-              AppSpacing.xs,
-              AppSpacing.sm,
+              PpForgeSpacing.md,
+              PpForgeSpacing.sm,
+              PpForgeSpacing.xs,
+              PpForgeSpacing.sm,
             ),
       decoration: flat
           ? null
           : BoxDecoration(
               color: scheme.surface,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
+              borderRadius: BorderRadius.circular(PpForgeRadius.lg),
               border: Border.all(color: scheme.outlineVariant),
             ),
       child: Column(
@@ -97,7 +94,7 @@ class ShareCard extends StatelessWidget {
                       children: [
                         if (leading != null) ...[
                           leading,
-                          const SizedBox(width: AppSpacing.sm),
+                          const SizedBox(width: PpForgeSpacing.sm),
                         ],
                         Flexible(
                           child: Text(
@@ -116,8 +113,8 @@ class ShareCard extends StatelessWidget {
           if (status != null || statusLeading != null)
             Padding(
               padding: const EdgeInsets.only(
-                top: AppSpacing.xs,
-                right: AppSpacing.sm,
+                top: PpForgeSpacing.xs,
+                right: PpForgeSpacing.sm,
               ),
               child: Row(
                 children: [
@@ -128,7 +125,7 @@ class ShareCard extends StatelessWidget {
                     ),
                   ),
                   if (status != null) ...[
-                    const SizedBox(width: AppSpacing.sm),
+                    const SizedBox(width: PpForgeSpacing.sm),
                     Text(
                       status.text,
                       key: const ValueKey('shareStatus'),
@@ -162,7 +159,7 @@ class ShareSubhead extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
       child: _HeaderLine(
         actions: actions,
         title: Text(
@@ -199,22 +196,22 @@ class _HeaderLine extends StatelessWidget {
     );
     if (actions.isEmpty) {
       return Padding(
-        padding: const EdgeInsetsDirectional.only(end: AppSpacing.xs),
+        padding: const EdgeInsetsDirectional.only(end: PpForgeSpacing.xs),
         child: head,
       );
     }
     return Padding(
-      padding: const EdgeInsetsDirectional.only(end: AppSpacing.xs),
+      padding: const EdgeInsetsDirectional.only(end: PpForgeSpacing.xs),
       child: Wrap(
         alignment: WrapAlignment.spaceBetween,
         crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: AppSpacing.sm,
-        runSpacing: AppSpacing.xs,
+        spacing: PpForgeSpacing.sm,
+        runSpacing: PpForgeSpacing.xs,
         children: [
           head,
           Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
+            spacing: PpForgeSpacing.xs,
+            runSpacing: PpForgeSpacing.xs,
             children: actions,
           ),
         ],
@@ -264,8 +261,8 @@ class ShareRow extends StatelessWidget {
         row,
         Padding(
           padding: const EdgeInsetsDirectional.only(
-            start: SplitRow.avatarSize + AppSpacing.sm,
-            bottom: AppSpacing.xs,
+            start: SplitRow.avatarSize + PpForgeSpacing.sm,
+            bottom: PpForgeSpacing.xs,
           ),
           child: Align(alignment: AlignmentDirectional.centerStart, child: tag),
         ),

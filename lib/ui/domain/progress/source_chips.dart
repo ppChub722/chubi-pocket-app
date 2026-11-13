@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_chip.dart';
-import '../../tokens/app_spacing.dart';
-import '../../tokens/chip_size.dart';
+import 'package:pp_forge_core/ui.dart';
 
 class SourceChipItem {
   const SourceChipItem(
     this.label, {
     this.icon,
     this.color,
-    this.tone = AppChipTone.neutral,
+    this.tone = PpForgeChipTone.neutral,
   });
 
   final String label;
   final IconData? icon;
 
   final Color? color;
-  final AppChipTone tone;
+  final PpForgeChipTone tone;
 }
 
 class SourceChip extends StatelessWidget {
@@ -24,7 +22,7 @@ class SourceChip extends StatelessWidget {
     this.label, {
     this.icon,
     this.color,
-    this.tone = AppChipTone.neutral,
+    this.tone = PpForgeChipTone.neutral,
     this.onTap,
     super.key,
   });
@@ -32,11 +30,11 @@ class SourceChip extends StatelessWidget {
   final String label;
   final IconData? icon;
   final Color? color;
-  final AppChipTone tone;
+  final PpForgeChipTone tone;
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => AppChip(
+  Widget build(BuildContext context) => PpForgeChip(
     label: label,
     icon: icon,
     color: color,
@@ -68,8 +66,8 @@ class SourceChips extends StatelessWidget {
         : items;
     final hidden = items.length - shown.length;
     return Wrap(
-      spacing: AppSpacing.xs,
-      runSpacing: AppSpacing.xs,
+      spacing: PpForgeSpacing.xs,
+      runSpacing: PpForgeSpacing.xs,
       children: [
         for (final i in shown)
           SourceChip(i.label, icon: i.icon, color: i.color, tone: i.tone),

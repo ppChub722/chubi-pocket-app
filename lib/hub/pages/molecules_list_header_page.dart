@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
-/// `/dev/ui/molecules/list-header` — AppListHeader (the head of a group of
-/// rows) and AppListToolbar (search, filters, sort; opened by 🔍).
+/// `/dev/ui/molecules/list-header` — PpForgeListHeader (the head of a group of
+/// rows) and PpForgeListToolbar (search, filters, sort; opened by 🔍).
 Widget buildListHeaderPage(BuildContext context) => const _ListHeaderPage();
 
 class _ListHeaderPage extends StatefulWidget {
@@ -19,9 +19,9 @@ enum _Status { all, waiting, paid }
 enum _Sort { date, amount, name }
 
 class _ListHeaderPageState extends State<_ListHeaderPage> {
-  final _monthTools = AppListToolbarState.local();
-  final _allTools = AppListToolbarState.local();
-  final _playTools = AppListToolbarState.local(open: true);
+  final _monthTools = PpForgeListToolbarState.local();
+  final _allTools = PpForgeListToolbarState.local();
+  final _playTools = PpForgeListToolbarState.local(open: true);
   final _search = TextEditingController();
   _Status _status = _Status.all;
   String? _kind;
@@ -80,9 +80,9 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final scheme = Theme.of(context).colorScheme;
-    Widget row(String title, num amount, Color color) => AppListRow(
+    Widget row(String title, num amount, Color color) => PpForgeListRow(
       leading: IconTile(icon: AppIcons.category, color: color),
       title: title,
       trailing: ListRowTrailing.value(
@@ -90,9 +90,9 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
       ),
       onTap: () {},
     );
-    Widget card(List<Widget> rows) => AppCard(
+    Widget card(List<Widget> rows) => PpForgeCard(
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(PpForgeRadius.lg),
         child: Column(
           children: [
             for (final (i, r) in rows.indexed) ...[
@@ -116,7 +116,7 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         HubPlayground(
-          title: 'AppListHeader',
+          title: 'PpForgeListHeader',
           note:
               'Title 14 w600, "| count" muted, the same on every list. The '
               'value ends over the rows\' amounts (16 in); actions end at the '
@@ -143,13 +143,13 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
             ]),
           ],
           builder: (context, v) => group([
-            AppListHeader(
+            PpForgeListHeader(
               title: v<String>('title'),
               count: v<bool>('count') ? 7 : null,
               leading: v<bool>('leading')
-                  ? AppIcon(
+                  ? PpForgeIcon(
                       AppIcons.recurring,
-                      size: AppIconSize.md,
+                      size: PpForgeIconSize.md,
                       color: scheme.onSurfaceVariant,
                     )
                   : null,
@@ -194,10 +194,10 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
           ]),
         ),
         HubPlayground(
-          title: 'AppListToolbar',
+          title: 'PpForgeListToolbar',
           note:
               'Search box, then filter chips with the sort at the end. With '
-              'a state it opens and closes from the 🔍 (AppListToolbarToggle '
+              'a state it opens and closes from the 🔍 (PpForgeListToolbarToggle '
               '/ ListHeaderAction.toolbar); without one it stays open '
               '(categories, tags, contacts).',
           controls: [
@@ -211,15 +211,15 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
               Align(
                 alignment: Alignment.centerRight,
                 child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  child: AppListToolbarToggle(
+                  padding: const EdgeInsets.all(PpForgeSpacing.sm),
+                  child: PpForgeListToolbarToggle(
                     state: _playTools,
                     filtered: _search.text.isNotEmpty,
                     tooltip: 'Search',
                   ),
                 ),
               ),
-            AppListToolbar(
+            PpForgeListToolbar(
               state: v<bool>('state') ? _playTools : null,
               search: v<bool>('search')
                   ? ListToolbarSearch(
@@ -230,7 +230,7 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
                   : null,
               filters: v<bool>('filters')
                   ? [
-                      AppChip(
+                      PpForgeChip(
                         label: 'ตัวกรอง',
                         icon: AppIcons.sort,
                         onTap: () {},
@@ -250,7 +250,7 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
               label: 'Day header: total over the rows\' amounts',
               page: 'Transactions, budget, pending, saving history',
               child: group([
-                const AppListHeader(
+                const PpForgeListHeader(
                   title: 'เมื่อวาน',
                   trailing: ListHeaderTrailing.value(
                     MoneyText(149650, tone: MoneyTone.signed),
@@ -266,7 +266,7 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
               label: 'Kind section: count + totals as text',
               page: 'Recurring · all',
               child: group([
-                const AppListHeader(
+                const PpForgeListHeader(
                   title: 'ค่าสมาชิก',
                   count: 7,
                   trailing: ListHeaderTrailing.text(
@@ -280,10 +280,10 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
               label: 'Leading icon, "รวม" + total in the side\'s colour',
               page: 'Debts',
               child: group([
-                AppListHeader(
-                  leading: AppIcon(
+                PpForgeListHeader(
+                  leading: PpForgeIcon(
                     AppIcons.debt,
-                    size: AppIconSize.md,
+                    size: PpForgeIconSize.md,
                     color: palette.income,
                   ),
                   title: 'คนอื่นติดเรา',
@@ -300,10 +300,10 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
               label: 'Leading icon, count, "ดูทั้งหมด ›"',
               page: 'None yet (Home keeps SectionHeader)',
               child: group([
-                AppListHeader(
-                  leading: AppIcon(
+                PpForgeListHeader(
+                  leading: PpForgeIcon(
                     AppIcons.transactions,
-                    size: AppIconSize.md,
+                    size: PpForgeIconSize.md,
                     color: scheme.onSurfaceVariant,
                   ),
                   title: 'รายการล่าสุด',
@@ -317,7 +317,7 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
               label: '🔍 + ＋ at the end; the toolbar opens under it',
               page: 'Recurring · all',
               child: group([
-                AppListHeader(
+                PpForgeListHeader(
                   title: 'รายการประจำทั้งหมด',
                   actions: [
                     ListHeaderAction.toolbar(_allTools, tooltip: 'Search'),
@@ -328,7 +328,7 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
                     ),
                   ],
                 ),
-                AppListToolbar(
+                PpForgeListToolbar(
                   state: _allTools,
                   search: ListToolbarSearch(
                     controller: _search,
@@ -344,7 +344,7 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
                   '🔍; a picked day is a ✕ chip that goes back to the month',
               page: 'Recurring · calendar list',
               child: group([
-                AppListHeader(
+                PpForgeListHeader(
                   title: _dayPicked ? 'วันนี้' : 'ตุลาคม 2026',
                   count: _dayPicked ? 1 : 26,
                   onClearTitle: _dayPicked
@@ -359,7 +359,7 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
                     ),
                   ],
                 ),
-                AppListToolbar(
+                PpForgeListToolbar(
                   state: _monthTools,
                   search: ListToolbarSearch(
                     controller: _search,
@@ -370,10 +370,10 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
                 card([row('ค่าไฟ', -1305, palette.warning)]),
                 if (!_dayPicked)
                   Padding(
-                    padding: const EdgeInsets.all(AppSpacing.sm),
-                    child: AppButton(
+                    padding: const EdgeInsets.all(PpForgeSpacing.sm),
+                    child: PpForgeButton(
                       label: 'Pick a day again (demo)',
-                      variant: AppButtonVariant.text,
+                      variant: PpForgeButtonVariant.text,
                       onPressed: () => setState(() => _dayPicked = true),
                     ),
                   ),
@@ -383,13 +383,13 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
               label: 'No state: search + chips + sort always open',
               page: 'Categories, tags, contacts',
               child: group([
-                AppListToolbar(
+                PpForgeListToolbar(
                   search: ListToolbarSearch(
                     controller: _search,
                     hint: 'ค้นหาหมวด',
                   ),
                   filters: [
-                    AppChip(label: 'รายจ่าย', selected: true, onTap: () {}),
+                    PpForgeChip(label: 'รายจ่าย', selected: true, onTap: () {}),
                   ],
                   sort: _sortChip(),
                 ),
@@ -400,7 +400,7 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
               label: 'Day header: a coloured note instead of a total',
               page: 'Debt person statement',
               child: group([
-                AppListHeader(
+                PpForgeListHeader(
                   title: '21 ต.ค.',
                   trailing: ListHeaderTrailing.text(
                     'เพิ่ม ฿70',
@@ -414,7 +414,7 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
               label: 'Trailing that isn\'t a sort chip: a menu + edit',
               page: 'Tags, contacts',
               child: group([
-                AppListToolbar(
+                PpForgeListToolbar(
                   search: ListToolbarSearch(
                     controller: _search,
                     hint: 'ค้นหาแท็ก',
@@ -422,14 +422,14 @@ class _ListHeaderPageState extends State<_ListHeaderPage> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      AppChip(
+                      PpForgeChip(
                         label: 'ชื่อ',
                         icon: AppIcons.sort,
-                        trailing: AppChipTrailing.dropdown,
+                        trailing: PpForgeChipTrailing.dropdown,
                         onTap: () {},
                       ),
-                      const SizedBox(width: AppSpacing.sm),
-                      AppIconButton.edit(tooltip: 'Edit', onPressed: () {}),
+                      const SizedBox(width: PpForgeSpacing.sm),
+                      PpForgeIconButton.edit(tooltip: 'Edit', onPressed: () {}),
                     ],
                   ),
                 ),

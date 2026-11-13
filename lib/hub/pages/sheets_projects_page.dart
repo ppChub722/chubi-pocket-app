@@ -42,15 +42,15 @@ class _SheetsProjectsPageState extends State<_SheetsProjectsPage> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(PpForgeSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppText('Last result: $_result'),
-          const SizedBox(height: AppSpacing.md),
-          AppButton(
+          PpForgeText('Last result: $_result'),
+          const SizedBox(height: PpForgeSpacing.md),
+          PpForgeButton(
             label: 'Add member',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: _addMember,
           ),
         ],

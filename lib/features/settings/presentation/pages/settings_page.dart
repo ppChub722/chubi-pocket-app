@@ -59,8 +59,8 @@ class _SettingsPageState extends State<SettingsPage> {
             return DetailPageBody(
               onRefresh: _refresh,
               physics: const AlwaysScrollableScrollPhysics(),
-              topInset: inset.top + AppSpacing.sm,
-              bottomInset: AppSpacing.huge + inset.bottom,
+              topInset: inset.top + PpForgeSpacing.sm,
+              bottomInset: PpForgeSpacing.huge + inset.bottom,
               hero: _profileCard(context, user),
               sections: [
                 (first) => SectionCard(
@@ -97,16 +97,16 @@ class _SettingsPageState extends State<SettingsPage> {
                   first: first,
                   title: l.settingsSectionData,
                   children: [
-                    AppDetailRow(
-                      leading: const AppIcon(AppIcons.archive),
+                    PpForgeDetailRow(
+                      leading: const PpForgeIcon(AppIcons.archive),
                       label: l.settingsArchived,
                       helper: l.settingsArchivedHint,
                       showChevron: true,
                       // Inside the settings tab, like the other groups.
                       onTap: () => context.push('/archived'),
                     ),
-                    AppDetailRow(
-                      leading: const AppIcon(AppIcons.download),
+                    PpForgeDetailRow(
+                      leading: const PpForgeIcon(AppIcons.download),
                       label: l.settingsExportCsv,
                       comingSoon: true,
                     ),
@@ -130,10 +130,10 @@ class _SettingsPageState extends State<SettingsPage> {
     // Tint = my colour 1 (0.4.2 1b profile colours).
     final tint = ProfileColors.main(
       user.avatar,
-      palette: Theme.of(context).extension<AppColors>()!,
+      palette: Theme.of(context).extension<PpForgeColors>()!,
       surface: Theme.of(context).colorScheme.surface,
     );
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: HeroStyle.tinted(color: tint, glyph: AppIcons.profile),
       onTap: () => context.push('/settings/profile'),
       content: [
@@ -154,7 +154,7 @@ class _SettingsPageState extends State<SettingsPage> {
               return logos.isEmpty
                   ? const SizedBox.shrink()
                   : Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.xs),
+                      padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
                       child: ProviderLogoStrip(logos: logos),
                     );
             },
@@ -206,8 +206,8 @@ class _VersionRowState extends State<_VersionRow> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return AppDetailRow(
-      leading: const AppIcon(AppIcons.info),
+    return PpForgeDetailRow(
+      leading: const PpForgeIcon(AppIcons.info),
       label: l.settingsAppVersion,
       trailing: Text(_version),
       onTap: () {

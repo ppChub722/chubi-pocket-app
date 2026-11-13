@@ -86,9 +86,9 @@ class _PeriodSummaryCardState extends State<PeriodSummaryCard> {
       SummaryPeriod.year: l.transactionsRangeYear,
       SummaryPeriod.all: l.transactionsRangeAll,
     };
-    return AppCard(
+    return PpForgeCard(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(PpForgeSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -107,16 +107,16 @@ class _PeriodSummaryCardState extends State<PeriodSummaryCard> {
                     for (final p in SummaryPeriod.values)
                       SheetOption(value: p, label: labels[p]!),
                   ],
-                  builder: (context, toggle) => AppChip(
+                  builder: (context, toggle) => PpForgeChip(
                     label: labels[_period]!,
                     selected: true,
-                    trailing: AppChipTrailing.dropdown,
+                    trailing: PpForgeChipTrailing.dropdown,
                     onTap: toggle,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: PpForgeSpacing.md),
             FutureBuilder<TransactionsSummary>(
               future: _future,
               builder: (context, snap) {
@@ -124,19 +124,19 @@ class _PeriodSummaryCardState extends State<PeriodSummaryCard> {
                   return const Row(
                     children: [
                       Expanded(child: SkeletonBox(height: 36)),
-                      SizedBox(width: AppSpacing.md),
+                      SizedBox(width: PpForgeSpacing.md),
                       Expanded(child: SkeletonBox(height: 36)),
-                      SizedBox(width: AppSpacing.md),
+                      SizedBox(width: PpForgeSpacing.md),
                       Expanded(child: SkeletonBox(height: 36)),
                     ],
                   );
                 }
                 if (snap.hasError || snap.data == null) {
-                  return AppMessage(
+                  return PpForgeMessage(
                     tone: Tone.danger,
                     message: errorText(l, snap.error ?? ''),
                     actions: [
-                      AppMessageAction(
+                      PpForgeMessageAction(
                         label: l.commonRetry,
                         onPressed: () => setState(() => _future = _fetch()),
                       ),
@@ -166,7 +166,7 @@ class _PeriodSummaryCardState extends State<PeriodSummaryCard> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: PpForgeSpacing.sm),
                     Text(
                       l.accountDetailSummaryTransactions(s.transactionCount),
                       style: textTheme.bodySmall?.copyWith(

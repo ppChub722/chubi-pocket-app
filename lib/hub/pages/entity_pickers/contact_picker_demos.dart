@@ -8,7 +8,7 @@ import '../../../features/contacts/presentation/widgets/contact_picker.dart';
 import '../../../features/personal_debts/presentation/cubit/debt_directory_cubit.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
-import '../../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// The people pickers as each page opens them, on the real caches.
 class ContactPickerDemos extends StatelessWidget {
@@ -42,9 +42,9 @@ class ContactPickerDemos extends StatelessWidget {
     return _sampleNames;
   }
 
-  Widget _new(String label, Future<String> Function() run) => AppButton(
+  Widget _new(String label, Future<String> Function() run) => PpForgeButton(
     label: label,
-    variant: AppButtonVariant.outlined,
+    variant: PpForgeButtonVariant.outlined,
     onPressed: () async => onResult(await run()),
   );
 
@@ -52,8 +52,8 @@ class ContactPickerDemos extends StatelessWidget {
     title: title,
     note: note,
     child: Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: buttons,
     ),
   );
@@ -200,7 +200,7 @@ class ContactPickerDemos extends StatelessWidget {
                     if (failed) return picked;
                     failed = true;
                     if (context.mounted) {
-                      showAppSnackBar(
+                      showPpForgeSnackBar(
                         context,
                         'Save failed (demo)',
                         tone: Tone.danger,
@@ -216,7 +216,7 @@ class ContactPickerDemos extends StatelessWidget {
         if (contacts.isEmpty)
           const HubDemo(
             title: 'No contacts',
-            child: AppText('The contacts cache is empty: sign in first.'),
+            child: PpForgeText('The contacts cache is empty: sign in first.'),
           ),
       ],
     );

@@ -129,10 +129,10 @@ class CategoryChipRow extends StatelessWidget {
                     onTap: onMore,
                     dashed: true,
                   )
-                : AppChip(
+                : PpForgeChip(
                     label: pickLabel!,
                     icon: AppIcons.add,
-                    tone: AppChipTone.primary,
+                    tone: PpForgeChipTone.primary,
                     selected: true,
                     dashed: true,
                     onTap: onMore,
@@ -261,7 +261,7 @@ class WalletChipRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final opts = maybeTxFormOptions(context);
     final accState = opts == null ? context.watch<AccountsCubit>().state : null;
     final accounts = opts == null
@@ -316,10 +316,10 @@ class WalletChipRow extends StatelessWidget {
                     selected: true,
                     onTap: onMore,
                   )
-                : AppChip(
+                : PpForgeChip(
                     label: pickLabel!,
                     icon: AppIcons.add,
-                    tone: AppChipTone.primary,
+                    tone: PpForgeChipTone.primary,
                     selected: true,
                     dashed: true,
                     onTap: onMore,
@@ -383,12 +383,12 @@ List<String> _topUp(List<String> first, List<String> rest, int max) {
   return out;
 }
 
-AppChip _walletChip(
+PpForgeChip _walletChip(
   Account a,
-  AppColors palette, {
+  PpForgeColors palette, {
   required bool selected,
   required VoidCallback? onTap,
-}) => AppChip(
+}) => PpForgeChip(
   label: a.name,
   icon: a.iconCode.glyphOr(a.type.iconDefault),
   color: a.iconCode.tintOr(a.type.iconDefault, palette),

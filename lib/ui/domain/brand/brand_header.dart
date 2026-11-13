@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../debug/secret_tap.dart';
-import '../../tokens/app_spacing.dart';
 import 'brand_logo.dart';
+import 'package:pp_forge_core/ui.dart';
 
 class BrandHeader extends StatelessWidget {
   const BrandHeader({this.name, this.tagline, this.onSecretUnlock, super.key});
@@ -21,7 +21,7 @@ class BrandHeader extends StatelessWidget {
             ? logo
             : SecretTapDetector(onUnlock: onSecretUnlock!, child: logo),
         if (name != null) ...[
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: PpForgeSpacing.md),
           Text(
             name!,
             style: textTheme.headlineSmall?.copyWith(
@@ -30,7 +30,7 @@ class BrandHeader extends StatelessWidget {
           ),
         ],
         if (tagline != null) ...[
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: PpForgeSpacing.xs),
           Text(
             tagline!,
             textAlign: TextAlign.center,

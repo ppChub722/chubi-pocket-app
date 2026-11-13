@@ -112,7 +112,7 @@ abstract final class TagPicker {
     bool useRootNavigator = true,
   }) async {
     final l = AppLocalizations.of(context)!;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     TagsCubit? cache;
     if (tags == null) {
       try {
@@ -204,14 +204,14 @@ abstract final class TagPicker {
 
   static List<PickerItem> _items(
     AppLocalizations l,
-    AppColors palette,
+    PpForgeColors palette,
     List<Tag> all,
   ) => [
     for (final t in all)
       PickerItem(
         id: t.id,
         title: t.name.isEmpty ? l.tagFormNameLabel : t.name,
-        icon: IconRegistry.get(t.iconCode?.icon, fallback: AppIcons.tag),
+        icon: PpForgeIconRegistry.get(t.iconCode?.icon, fallback: AppIcons.tag),
         color: tagColor(t.iconCode, palette),
       ),
   ];
@@ -237,7 +237,7 @@ Future<Tag?> createOrFindTag(BuildContext context, String name) async {
   try {
     return await cubit.add(Tag(id: 'draft', name: n));
   } on ApiException {
-    showAppSnackBarOn(messenger, l.txTagCreateFailed, tone: Tone.danger);
+    showPpForgeSnackBarOn(messenger, l.txTagCreateFailed, tone: Tone.danger);
     return null;
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app_spacing.dart';
-import '../icons/icon_code.dart';
+import 'package:pp_forge_core/ui.dart';
 import 'avatar.dart';
 import 'avatar_data.dart';
 
@@ -15,7 +14,7 @@ class UserProfilePreview extends StatelessWidget {
   });
 
   final String displayName;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   /// The avatar to show; null = built from [displayName] + [iconCode] (the
   /// icon maker's live preview passes only the icon).
@@ -26,8 +25,8 @@ class UserProfilePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
+        horizontal: PpForgeSpacing.md,
+        vertical: PpForgeSpacing.sm,
       ),
       child: Row(
         children: [
@@ -35,7 +34,7 @@ class UserProfilePreview extends StatelessWidget {
             avatar ?? AvatarData.forName(displayName, iconCode: iconCode),
             size: size,
           ),
-          const SizedBox(width: AppSpacing.lg),
+          const SizedBox(width: PpForgeSpacing.lg),
           Expanded(
             child: Text(
               displayName,

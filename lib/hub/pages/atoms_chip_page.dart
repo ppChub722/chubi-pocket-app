@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/ui/atoms/chip` — the one chip: a playground with every option live,
 /// then the three sizes × every trailing, in both selected states.
@@ -10,39 +9,39 @@ Widget buildChipPage(BuildContext context) => Column(
   crossAxisAlignment: CrossAxisAlignment.stretch,
   children: [
     HubDemo(
-      title: 'AppChip.bare — the wallet on a list row',
+      title: 'PpForgeChip.bare — the wallet on a list row',
       note:
           'No fill, no border, no side padding: a bigger icon and the label '
           'in color (w600). Without a color it is muted. walletRowChip '
           'builds it from a wallet\'s own colour.',
       child: Wrap(
-        spacing: AppSpacing.lg,
-        runSpacing: AppSpacing.sm,
+        spacing: PpForgeSpacing.lg,
+        runSpacing: PpForgeSpacing.sm,
         children: [
-          AppChip(
+          PpForgeChip(
             label: 'เงินในธนาคาร',
             icon: AppIcons.bank,
             color: Theme.of(context).colorScheme.primary,
             size: ChipSize.mini,
             bare: true,
           ),
-          AppChip(
+          PpForgeChip(
             label: 'เงินเงินเงิน',
             icon: AppIcons.cash,
-            color: Theme.of(context).extension<AppColors>()!.expense,
+            color: Theme.of(context).extension<PpForgeColors>()!.expense,
             size: ChipSize.mini,
             bare: true,
           ),
-          const AppChip(
+          const PpForgeChip(
             label: 'ไม่ระบุกระเป๋า',
             icon: AppIcons.noWallet,
             size: ChipSize.mini,
             bare: true,
           ),
-          AppChip(
+          PpForgeChip(
             label: 'chip size',
             icon: AppIcons.savings,
-            color: Theme.of(context).extension<AppColors>()!.income,
+            color: Theme.of(context).extension<PpForgeColors>()!.income,
             size: ChipSize.chip,
             bare: true,
           ),
@@ -60,11 +59,14 @@ Widget buildChipPage(BuildContext context) => Column(
           'พัก / ทำต่อ). Recurring items use OccurrenceStateChip (Domain › '
           'Recurring).',
       child: Wrap(
-        spacing: AppSpacing.xs,
-        runSpacing: AppSpacing.xs,
+        spacing: PpForgeSpacing.xs,
+        runSpacing: PpForgeSpacing.xs,
         children: [
           for (final k in StatusKind.values) StatusChip(label: k.name, kind: k),
-          const StatusChip.tone(label: 'tone: info', tone: AppChipTone.info),
+          const StatusChip.tone(
+            label: 'tone: info',
+            tone: PpForgeChipTone.info,
+          ),
           const StatusChip(
             label: 'mini',
             kind: StatusKind.paused,
@@ -73,7 +75,7 @@ Widget buildChipPage(BuildContext context) => Column(
           StatusChip(
             label: 'active ▾ (onTap)',
             kind: StatusKind.active,
-            onTap: () => showAppSnackBar(context, 'พัก / ทำต่อ'),
+            onTap: () => showPpForgeSnackBar(context, 'พัก / ทำต่อ'),
           ),
         ],
       ),
@@ -87,20 +89,20 @@ Widget buildChipPage(BuildContext context) => Column(
     const _SizeMatrix(),
 
     HubPlayground(
-      title: 'AppChip',
-      note: 'Every option AppChip has.',
+      title: 'PpForgeChip',
+      note: 'Every option PpForgeChip has.',
       controls: [
         PlayText('label', initialValue: 'Food'),
-        PlayChoice<AppChipTone?>('tone', [
+        PlayChoice<PpForgeChipTone?>('tone', [
           ('default', null),
-          for (final t in AppChipTone.values) (t.name, t),
+          for (final t in PpForgeChipTone.values) (t.name, t),
         ]),
         PlayChoice<ChipSize>('size', [
           for (final s in ChipSize.values)
             ('${s.name} ${ControlSizes.fallback.heightOf(s).round()}', s),
         ], initial: ChipSize.control),
-        PlayChoice<AppChipTrailing>('trailing', [
-          for (final t in AppChipTrailing.values) (t.name, t),
+        PlayChoice<PpForgeChipTrailing>('trailing', [
+          for (final t in PpForgeChipTrailing.values) (t.name, t),
         ]),
         PlayNum('count', min: 0, max: 120, step: 1, initialValue: 3),
         PlayBool('icon', initialValue: true),
@@ -117,16 +119,16 @@ Widget buildChipPage(BuildContext context) => Column(
         final maxWidth = v<double>('maxWidth');
         return Align(
           alignment: Alignment.centerLeft,
-          child: AppChip(
+          child: PpForgeChip(
             label: v<String>('label'),
             icon: v<bool>('icon') && !avatar ? AppIcons.category : null,
             leading: avatar ? Avatar(AvatarData.forName('Lee')) : null,
             dot: v<bool>('dot'),
-            tone: v<AppChipTone?>('tone'),
+            tone: v<PpForgeChipTone?>('tone'),
             selected: v<bool>('selected'),
             dashed: v<bool>('dashed'),
             onTap: v<bool>('tappable') ? () {} : null,
-            trailing: v<AppChipTrailing>('trailing'),
+            trailing: v<PpForgeChipTrailing>('trailing'),
             onRemove: () {},
             count: v<double>('count').round(),
             size: v<ChipSize>('size'),
@@ -151,10 +153,10 @@ class _SizeMatrix extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     Widget row(ChipSize s, String name, List<Widget> chips) => Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.only(bottom: PpForgeSpacing.sm),
       child: Wrap(
-        spacing: AppSpacing.xs,
-        runSpacing: AppSpacing.xs,
+        spacing: PpForgeSpacing.xs,
+        runSpacing: PpForgeSpacing.xs,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           SizedBox(
@@ -180,7 +182,7 @@ class _SizeMatrix extends StatelessWidget {
       children: [
         for (final selected in [false, true]) ...[
           Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+            padding: const EdgeInsets.only(bottom: PpForgeSpacing.xs),
             child: Text(
               selected ? 'Selected' : 'Not selected',
               style: textTheme.labelLarge,
@@ -188,59 +190,59 @@ class _SizeMatrix extends StatelessWidget {
           ),
           for (final (s, name) in sizes)
             row(s, name, [
-              AppChip(label: 'Food', size: s, selected: selected),
-              AppChip(
+              PpForgeChip(label: 'Food', size: s, selected: selected),
+              PpForgeChip(
                 label: 'Icon',
                 icon: AppIcons.category,
                 size: s,
                 selected: selected,
               ),
-              AppChip(
+              PpForgeChip(
                 label: 'Avatar',
                 leading: Avatar(AvatarData.forName('Lee')),
                 size: s,
                 selected: selected,
               ),
-              AppChip(label: 'Dot', dot: true, size: s, selected: selected),
-              AppChip(
+              PpForgeChip(label: 'Dot', dot: true, size: s, selected: selected),
+              PpForgeChip(
                 label: 'Filter',
                 size: s,
                 selected: selected,
-                trailing: AppChipTrailing.dropdown,
+                trailing: PpForgeChipTrailing.dropdown,
                 onTap: () {},
               ),
               if (s != ChipSize.mini)
-                AppChip(
+                PpForgeChip(
                   label: 'Removable',
                   size: s,
                   selected: selected,
-                  trailing: AppChipTrailing.remove,
+                  trailing: PpForgeChipTrailing.remove,
                   onRemove: () {},
                 ),
-              AppChip(label: 'Editable', size: s, dashed: true),
-              AppChip(
+              PpForgeChip(label: 'Editable', size: s, dashed: true),
+              PpForgeChip(
                 label: 'Count',
                 size: s,
                 selected: selected,
-                trailing: AppChipTrailing.count,
+                trailing: PpForgeChipTrailing.count,
                 count: 3,
               ),
-              AppChip(
+              PpForgeChip(
                 label: 'Count',
                 size: s,
                 selected: selected,
-                trailing: AppChipTrailing.count,
+                trailing: PpForgeChipTrailing.count,
                 count: 120,
               ),
-              AppChip(
+              PpForgeChip(
                 label: 'Count 0 (hidden)',
                 size: s,
                 selected: selected,
-                trailing: AppChipTrailing.count,
+                trailing: PpForgeChipTrailing.count,
                 count: 0,
               ),
             ]),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: PpForgeSpacing.sm),
         ],
       ],
     );

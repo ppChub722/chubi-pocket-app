@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app/app_colors.dart';
-import '../../tokens/color_contrast.dart';
-import '../icons/color_token.dart';
+import 'package:pp_forge_core/ui.dart';
 import 'avatar_data.dart';
 
 /// Picks a person's colours from their profile colours (`avatar.colors`,
@@ -16,28 +14,28 @@ abstract final class ProfileColors {
   static Color slot(
     List<String> colors,
     int n, {
-    required AppColors palette,
+    required PpForgeColors palette,
     required Color surface,
     Color? fallback,
   }) {
     final spec = _slotSpec(colors, n);
     final color = spec == null
         ? (fallback ?? palette.primary)
-        : resolveColor(spec, palette);
+        : ppForgeResolveColor(spec, palette);
     return ensureContrast(color, surface);
   }
 
   /// Colour 1 of [avatar] (its main colour).
   static Color main(
     AvatarData avatar, {
-    required AppColors palette,
+    required PpForgeColors palette,
     required Color surface,
   }) => slot(avatar.colors, 0, palette: palette, surface: surface);
 
   /// Slot [n] of [avatar] in the theme of [context], against its surface.
   static Color of(BuildContext context, AvatarData avatar, {int n = 0}) {
     final theme = Theme.of(context);
-    final palette = theme.extension<AppColors>();
+    final palette = theme.extension<PpForgeColors>();
     final surface = theme.colorScheme.surface;
     if (palette == null) {
       return ensureContrast(theme.colorScheme.primary, surface);
@@ -50,7 +48,7 @@ abstract final class ProfileColors {
   static List<Color> distinct(
     List<String> colors,
     int k, {
-    required AppColors palette,
+    required PpForgeColors palette,
     required Color surface,
     Color? fallback,
   }) {
@@ -58,7 +56,7 @@ abstract final class ProfileColors {
     final base = <Color>[];
     for (final spec in colors) {
       if (spec.isEmpty) continue;
-      final c = resolveColor(spec, palette);
+      final c = ppForgeResolveColor(spec, palette);
       if (!base.any((b) => b.toARGB32() == c.toARGB32())) base.add(c);
     }
     if (base.isEmpty) base.add(fallback ?? palette.primary);

@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_badge.dart';
-import '../../atoms/app_radio_mark.dart';
-import '../../atoms/ui_config.dart';
-import '../../molecules/app_row.dart';
-import '../../molecules/detail_rows.dart';
+import 'package:pp_forge_core/ui.dart';
 
 /// One place a profile picture can come from (0.4.2 1b): the edit page's
 /// "รูปโปรไฟล์" radio list (ไอคอน · อัปโหลดเอง · one row per linked app)
@@ -40,11 +36,11 @@ class AvatarSourceRow extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final selected = this.selected;
     final subtitle = this.subtitle;
-    return AppRow(
-      density: AppRowDensity.detail,
+    return PpForgeRow(
+      density: PpForgeRowDensity.detail,
       selector: selected == null
           ? null
-          : AppRadioMark(selected: selected, enabled: !comingSoon),
+          : PpForgeRadioMark(selected: selected, enabled: !comingSoon),
       leading: thumb,
       leadingSize: thumb == null ? null : thumbSize,
       title: Text(title, style: detailLabelStyle(context)),
@@ -57,7 +53,7 @@ class AvatarSourceRow extends StatelessWidget {
               style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
       trailing: comingSoon
-          ? AppBadge(label: UiConfig.stringsOf(context).comingSoon)
+          ? PpForgeBadge(label: PpForgeConfig.stringsOf(context).comingSoon)
           : null,
       actions: comingSoon ? const [] : actions,
       disabled: comingSoon,

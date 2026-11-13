@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
-import '../../molecules/status_chip.dart';
-import '../../tokens/chip_size.dart';
+import 'package:pp_forge_core/ui.dart';
 
 enum OccurrenceState {
   upcoming(StatusKind.upcoming),

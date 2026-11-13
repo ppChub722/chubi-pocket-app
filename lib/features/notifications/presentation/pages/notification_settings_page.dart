@@ -150,8 +150,11 @@ class _Body extends StatelessWidget {
         listenWhen: (a, b) =>
             a.error != b.error && b.error != null && b.settings != null,
         // Never the raw error: the switch is already back.
-        listener: (ctx, state) =>
-            showAppSnackBar(ctx, l.notifSettingsSaveFailed, tone: Tone.danger),
+        listener: (ctx, state) => showPpForgeSnackBar(
+          ctx,
+          l.notifSettingsSaveFailed,
+          tone: Tone.danger,
+        ),
         builder: (ctx, state) {
           final s = state.settings;
           final user = signedInUser(ctx.watch<AuthCubit>().state);
@@ -274,7 +277,7 @@ class _Body extends StatelessWidget {
 
           return DetailPageBody(
             onRefresh: cubit.load,
-            bottomInset: AppSpacing.huge + MediaQuery.paddingOf(ctx).bottom,
+            bottomInset: PpForgeSpacing.huge + MediaQuery.paddingOf(ctx).bottom,
             sections: [
               for (final MapEntry(key: g, value: rows) in groups.entries)
                 (first) {

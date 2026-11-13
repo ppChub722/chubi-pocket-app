@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../ui/ui.dart' show IconCode;
+import '../../../ui/ui.dart' show PpForgeIconCode;
 import '../../recurring/domain/recurring.dart'
     show RecurringPauseReason, RecurringStatus, recurringDebtSubFromJson;
 import '../../transactions/domain/refs.dart';
@@ -648,7 +648,7 @@ class DebtPersonRecurring extends Equatable {
         name: (json['name'] as String?) ?? '',
         iconCode: _map(json['icon_code']) == null
             ? null
-            : IconCode.fromJson(_map(json['icon_code'])!),
+            : PpForgeIconCode.fromJson(_map(json['icon_code'])!),
         sub: recurringDebtSubFromJson(json['debt_kind']) ?? DebtEntrySub.record,
         direction: DebtEntryDirection.parse(json['direction'] as String?),
         amount: (json['amount'] as num?)?.toDouble() ?? 0,
@@ -661,7 +661,7 @@ class DebtPersonRecurring extends Equatable {
 
   final String id;
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   /// จดหนี้ | จ่ายหนี้.
   final DebtEntrySub sub;

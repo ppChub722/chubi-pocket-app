@@ -12,7 +12,6 @@ import 'fade_branch_container.dart';
 import 'main_bottom_nav.dart';
 import 'nav_layout.dart';
 import 'quick_create_context.dart';
-import 'shell_chrome.dart';
 import 'tab_nav.dart';
 import '../../ui/ui.dart';
 
@@ -143,8 +142,8 @@ class _MainShellState extends State<MainShell>
 
   void _settle() => _nudge.animateTo(
     0,
-    duration: AppDurations.chrome,
-    curve: AppDurations.chromeCurve,
+    duration: PpForgeDurations.chrome,
+    curve: PpForgeDurations.chromeCurve,
   );
 
   bool _askingExit = false;
@@ -178,7 +177,7 @@ class _MainShellState extends State<MainShell>
   Future<void> _slideBackTo(int to) async {
     if (MediaQuery.disableAnimationsOf(context)) return _arriveBack(to);
     _backSlide.underlay.value = to;
-    final there = await _backSlide.finish(curve: AppMotion.curve);
+    final there = await _backSlide.finish(curve: PpForgePageMotion.curve);
     if (there && mounted) _arriveBack(to);
   }
 

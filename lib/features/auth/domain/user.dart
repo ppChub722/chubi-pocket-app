@@ -13,7 +13,7 @@ class DefaultWalletRef extends Equatable {
         id: json['id'] as String,
         name: json['name'] as String,
         iconCode: json['icon_code'] is Map
-            ? IconCode.fromJson(
+            ? PpForgeIconCode.fromJson(
                 (json['icon_code'] as Map).cast<String, dynamic>(),
               )
             : null,
@@ -21,7 +21,7 @@ class DefaultWalletRef extends Equatable {
 
   final String id;
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   @override
   List<Object?> get props => [id, name, iconCode];
@@ -124,7 +124,7 @@ class User extends Equatable {
 
   /// My icon (the icon maker; `avatar.icon_code` on the wire, PUT /users/me
   /// still takes `icon_code`).
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final AvatarData? _avatar;
 
   /// 0.4.2 1b: my resolved avatar, as others see it.
@@ -254,7 +254,7 @@ class User extends Equatable {
   User copyWith({
     String? displayName,
     String? email,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
     bool clearEmail = false,
     bool clearIconCode = false,
     String? feeCategoryId,

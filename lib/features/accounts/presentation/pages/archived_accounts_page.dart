@@ -26,7 +26,11 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
     try {
       await context.read<AccountsCubit>().restore(a.id);
       if (!mounted) return;
-      showAppSnackBar(context, l.accountRestored(a.name), tone: Tone.success);
+      showPpForgeSnackBar(
+        context,
+        l.accountRestored(a.name),
+        tone: Tone.success,
+      );
     } on ApiException catch (e) {
       if (mounted) showErrorSnackBar(context, e);
     } finally {
@@ -60,7 +64,7 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
                 first: true,
                 children: [
                   for (final a in list)
-                    AppDetailRow(
+                    PpForgeDetailRow(
                       leading: Opacity(
                         opacity: 0.6,
                         child: IconDisplay(
@@ -75,10 +79,10 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
                           : null,
                       trailing: !a.canEdit
                           ? null
-                          : AppChip(
+                          : PpForgeChip(
                               label: l.accountRestore,
                               icon: AppIcons.unarchive,
-                              tone: AppChipTone.primary,
+                              tone: PpForgeChipTone.primary,
                               selected: true,
                               onTap: _busy.contains(a.id)
                                   ? null

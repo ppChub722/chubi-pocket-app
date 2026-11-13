@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app/currencies.dart';
+import '../tokens/app_icons.dart';
+import '../tokens/currencies.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../molecules/option_menu.dart';
-import '../../organisms/option_sheet.dart';
-import '../../molecules/detail_rows.dart';
+import 'package:pp_forge_core/ui.dart';
 
 class CurrencyTile extends StatelessWidget {
   const CurrencyTile({
@@ -27,7 +25,7 @@ class CurrencyTile extends StatelessWidget {
         '${Currencies.symbolOf(value)}  $value | ${Currencies.nameOf(l, value)}';
     final tileLabel = label ?? l.commonCurrency;
     if (onChanged == null) {
-      return AppDetailRow.pick(
+      return PpForgeDetailRow.pick(
         label: tileLabel,
         value: display,
         emptyText: display,
@@ -50,7 +48,7 @@ class CurrencyTile extends StatelessWidget {
             ),
           ),
       ],
-      builder: (context, toggle) => AppDetailRow.pick(
+      builder: (context, toggle) => PpForgeDetailRow.pick(
         label: tileLabel,
         value: display,
         emptyText: display,

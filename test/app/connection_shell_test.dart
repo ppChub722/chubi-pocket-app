@@ -7,7 +7,6 @@ import 'package:chubi_pocket/core/network/connection_cubit.dart';
 import 'package:chubi_pocket/core/router/dev_hub_path.dart';
 import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/ui/ui.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';

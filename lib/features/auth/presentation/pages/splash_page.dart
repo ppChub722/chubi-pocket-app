@@ -68,10 +68,10 @@ class _SplashPageState extends State<SplashPage> {
                     onSecretUnlock: () => context.push('/dev'),
                   ),
                   children: [
-                    const SizedBox(height: AppSpacing.xl),
+                    const SizedBox(height: PpForgeSpacing.xl),
                     if (error == null)
                       const Center(
-                        child: AppSpinner(size: AppSpinnerSize.large),
+                        child: PpForgeSpinner(size: PpForgeSpinnerSize.large),
                       )
                     else
                       ErrorView(error: error, onRetry: retry),
@@ -83,7 +83,8 @@ class _SplashPageState extends State<SplashPage> {
           Positioned(
             left: 0,
             right: 0,
-            bottom: AppSpacing.lg + MediaQuery.viewPaddingOf(context).bottom,
+            bottom:
+                PpForgeSpacing.lg + MediaQuery.viewPaddingOf(context).bottom,
             child: Text(
               _version,
               textAlign: TextAlign.center,

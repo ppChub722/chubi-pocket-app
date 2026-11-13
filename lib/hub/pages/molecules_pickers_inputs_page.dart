@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/molecules/pickers-inputs` — pick cards, steppers, month / day
 /// pickers, the amount input, chip rows, filter bar, theme chips, chat dial.
@@ -115,7 +114,7 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
 
   @override
   Widget build(BuildContext context) {
-    const gap = SizedBox(height: AppSpacing.md);
+    const gap = SizedBox(height: PpForgeSpacing.md);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -146,7 +145,7 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                       'Dining',
                       'Cafe',
                     ])
-                      AppChip(
+                      PpForgeChip(
                         label: n,
                         icon: AppIcons.category,
                         size: ChipSize.chip,
@@ -154,7 +153,7 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               PickFrame(
                 onTap: () {},
                 child: const PickFramePrompt('Choose wallets'),
@@ -171,7 +170,7 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
           child: PickedRowFrame(
             onTap: () {},
             onRemove: () {},
-            child: AppListRow(
+            child: PpForgeListRow(
               leading: const IconDisplay(
                 type: IconType.category,
                 size: 36,
@@ -200,7 +199,7 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                 '3 lines — empty | picked | error',
                 style: Theme.of(context).textTheme.labelMedium,
               ),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: PpForgeSpacing.xs),
               const PickCard(
                 label: 'Wallet',
                 placeholder: 'Choose a wallet',
@@ -208,7 +207,7 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                 reserveSubtitle: true,
                 onTap: null,
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               PickCard(
                 label: 'Wallet',
                 value: 'Savings',
@@ -218,7 +217,7 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                 reserveSubtitle: true,
                 onTap: () {},
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               const PickCard(
                 label: 'Wallet',
                 placeholder: 'Choose a wallet',
@@ -227,26 +226,26 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                 reserveSubtitle: true,
                 onTap: null,
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               Text(
                 '2 lines (plain) — empty | picked | error',
                 style: Theme.of(context).textTheme.labelMedium,
               ),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: PpForgeSpacing.xs),
               const PickCard(
                 label: 'Payer',
                 placeholder: 'Choose a member',
                 leading: PickCardEmptyIcon(AppIcons.contact),
                 onTap: null,
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               const PickCard(
                 label: 'Payer',
                 value: 'Aom',
                 leading: PickCardEmptyIcon(AppIcons.contact),
                 onTap: null,
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               const PickCard(
                 label: 'Payer',
                 placeholder: 'Choose a member',
@@ -301,10 +300,10 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                 trailing: const Icon(AppIcons.chevronRight),
                 onTap: () {},
               ),
-              const SizedBox(height: AppSpacing.xs),
-              const AppText(
+              const SizedBox(height: PpForgeSpacing.xs),
+              const PpForgeText(
                 'Tap the first card to toggle empty / picked.',
-                role: AppTextRole.caption,
+                role: PpForgeTextRole.caption,
               ),
             ],
           ),
@@ -326,9 +325,9 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
             children: [
               for (final spec in _selectSpecs) ...[
                 Text(spec.title, style: Theme.of(context).textTheme.labelLarge),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: PpForgeSpacing.xs),
                 _selectPair(spec),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: PpForgeSpacing.md),
               ],
             ],
           ),
@@ -450,10 +449,11 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
           ),
         ),
         HubDemo(
-          title: 'StepperPill presets + MonthPickerGrid + AppDatePicker.month',
+          title:
+              'StepperPill presets + MonthPickerGrid + PpForgeDatePicker.month',
           note:
               'One pill for every period. StepperPill (a button) steps by month '
-              'and opens AppDatePicker.month on tap; StepperPill.period does '
+              'and opens PpForgeDatePicker.month on tap; StepperPill.period does '
               'the same for a week (Mon–Sun) and a year (budgets). first / last '
               'bound the arrows. The grid is the picker sheet body.',
           child: Column(
@@ -504,33 +504,33 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
               gap,
               Row(
                 children: [
-                  AppButton(
-                    label: 'AppDatePicker.month',
-                    variant: AppButtonVariant.tonal,
+                  PpForgeButton(
+                    label: 'PpForgeDatePicker.month',
+                    variant: PpForgeButtonVariant.tonal,
                     onPressed: () async {
-                      final m = await AppDatePicker.month(
+                      final m = await PpForgeDatePicker.month(
                         context,
                         selected: _month,
                       );
                       if (m != null) setState(() => _pickedMonth = m);
                     },
                   ),
-                  const SizedBox(width: AppSpacing.md),
+                  const SizedBox(width: PpForgeSpacing.md),
                   Expanded(
-                    child: AppText(
+                    child: PpForgeText(
                       _pickedMonth == null
                           ? 'Result: not picked yet'
                           : 'Result: ${_pickedMonth!.year}-'
                                 '${_pickedMonth!.month}',
-                      role: AppTextRole.caption,
+                      role: PpForgeTextRole.caption,
                     ),
                   ),
                 ],
               ),
               gap,
-              const AppText(
+              const PpForgeText(
                 'MonthPickerGrid (inline, bounded Jun 2026 - Mar 2027)',
-                role: AppTextRole.caption,
+                role: PpForgeTextRole.caption,
               ),
               MonthPickerGrid(
                 selected: _month,
@@ -553,9 +553,9 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
             children: [
               Row(
                 children: [
-                  AppButton(
+                  PpForgeButton(
                     label: 'showDayOfMonthPicker',
-                    variant: AppButtonVariant.tonal,
+                    variant: PpForgeButtonVariant.tonal,
                     onPressed: () async {
                       final DayOfMonthPick? r = await showDayOfMonthPicker(
                         context,
@@ -565,11 +565,11 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                       if (r != null) setState(() => _day = r.day);
                     },
                   ),
-                  const SizedBox(width: AppSpacing.md),
+                  const SizedBox(width: PpForgeSpacing.md),
                   Expanded(
-                    child: AppText(
+                    child: PpForgeText(
                       dayOfMonthLabel(context, _day),
-                      role: AppTextRole.label,
+                      role: PpForgeTextRole.label,
                     ),
                   ),
                 ],
@@ -579,31 +579,33 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                 cells: [
                   HubCell(
                     caption: 'dayOfMonthLabel(null)',
-                    child: AppText(dayOfMonthLabel(context, null)),
+                    child: PpForgeText(dayOfMonthLabel(context, null)),
                   ),
                   HubCell(
                     caption: 'dayOfMonthLabel(5)',
-                    child: AppText(dayOfMonthLabel(context, 5)),
+                    child: PpForgeText(dayOfMonthLabel(context, 5)),
                   ),
                   HubCell(
                     caption: 'dayOfMonthLabel(kLastDayOfMonth)',
-                    child: AppText(dayOfMonthLabel(context, kLastDayOfMonth)),
+                    child: PpForgeText(
+                      dayOfMonthLabel(context, kLastDayOfMonth),
+                    ),
                   ),
                 ],
               ),
               gap,
-              const AppText(
+              const PpForgeText(
                 'DayOfMonthGrid (allowNone: true)',
-                role: AppTextRole.caption,
+                role: PpForgeTextRole.caption,
               ),
               DayOfMonthGrid(
                 selected: _gridDay,
                 onPicked: (d) => setState(() => _gridDay = d),
               ),
               gap,
-              const AppText(
+              const PpForgeText(
                 'DayOfMonthGrid (allowNone: false)',
-                role: AppTextRole.caption,
+                role: PpForgeTextRole.caption,
               ),
               DayOfMonthGrid(
                 selected: _gridDay ?? 1,
@@ -640,9 +642,9 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                 onPicked: (d) => setState(() => _yearDay = d ?? _yearDay),
               ),
               gap,
-              AppText(
+              PpForgeText(
                 'Picked: day $_yearDay of month $_yearMonth',
-                role: AppTextRole.caption,
+                role: PpForgeTextRole.caption,
               ),
             ],
           ),
@@ -690,11 +692,11 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
               gap,
               ListenableBuilder(
                 listenable: _plain,
-                builder: (_, _) => AppText(
+                builder: (_, _) => PpForgeText(
                   'parse("${_plain.text}") = '
                   '${AmountInput.parse(_plain.text)}'
                   ' / format(1234.5) = ${AmountInput.format(1234.5)}',
-                  role: AppTextRole.caption,
+                  role: PpForgeTextRole.caption,
                 ),
               ),
             ],
@@ -730,7 +732,7 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                   ChoiceSegment('auto', 'Auto'),
                 ],
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               SegmentedChoice<String>(
                 expand: true,
                 selected: _notify == 'off' ? 'overview' : 'calendar',
@@ -768,9 +770,9 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                   ),
                 ),
               ),
-              AppText(
+              PpForgeText(
                 _sent == null ? 'Sent: nothing yet' : 'Sent: $_sent',
-                role: AppTextRole.caption,
+                role: PpForgeTextRole.caption,
               ),
             ],
           ),

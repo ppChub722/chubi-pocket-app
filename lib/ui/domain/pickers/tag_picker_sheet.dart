@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_input.dart';
-import '../../organisms/app_sheet.dart';
-import '../../templates/form_sheet.dart';
-import '../../tokens/app/text_limits.dart';
+import 'package:pp_forge_core/ui.dart';
+import '../tokens/text_limits.dart';
 
 /// Naming a new tag (the tag picker's "add a tag" with nothing typed).
 Future<String?> showNewTagNameSheet(
@@ -14,7 +12,7 @@ Future<String?> showNewTagNameSheet(
   int maxLength = TextLimits.tagName,
   String initial = '',
 }) async {
-  final name = await showAppSheetCustom<String>(
+  final name = await showPpForgeSheetCustom<String>(
     context,
     builder: (_) => _NewTagNameSheet(
       title: title,
@@ -62,7 +60,7 @@ class _NewTagNameSheetState extends State<_NewTagNameSheet> {
       title: widget.title,
       primaryLabel: widget.saveLabel,
       onPrimary: () => Navigator.pop(context, _text.text),
-      child: AppInput(
+      child: PpForgeInput(
         controller: _text,
         autofocus: true,
         maxLength: widget.maxLength,

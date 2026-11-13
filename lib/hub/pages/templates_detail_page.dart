@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/templates/detail-page` — the DetailPage template: one page skeleton
 /// for every entity (wallet, category, contact, event, budget, goal,
@@ -59,7 +58,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
         'edit") are one faint style; tapping one enters edit mode and starts '
         'adding that thing (opens its picker / adds its row).',
     '🔒 sits right after the value, so every row label stays aligned.',
-    'Pickers are AppDetailRow ›. Note is always shown, even empty. Manage '
+    'Pickers are PpForgeDetailRow ›. Note is always shown, even empty. Manage '
         '(archive amber + delete red) only in edit mode, last; record info '
         '(DetailMeta) at the very bottom.',
   ];
@@ -74,14 +73,14 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
     final page = DetailPageBody(
       topInset: 0,
       tags: const Wrap(
-        spacing: AppSpacing.xs,
-        runSpacing: AppSpacing.xs,
+        spacing: PpForgeSpacing.xs,
+        runSpacing: PpForgeSpacing.xs,
         children: [
-          AppChip(label: '#daily', size: ChipSize.mini),
-          AppChip(label: '#work', size: ChipSize.mini),
+          PpForgeChip(label: '#daily', size: ChipSize.mini),
+          PpForgeChip(label: '#work', size: ChipSize.mini),
         ],
       ),
-      hero: AppHeroCard(
+      hero: PpForgeHeroCard(
         style: HeroStyle.tinted(
           color: scheme.primary,
           glyph: AppIcons.category,
@@ -89,15 +88,15 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
         header: HeroHeader(
           leading: _chips
               ? const [
-                  AppChip(
+                  PpForgeChip(
                     label: 'Expense',
                     icon: AppIcons.expense,
-                    tone: AppChipTone.danger,
+                    tone: PpForgeChipTone.danger,
                     selected: true,
                   ),
-                  AppChip(
+                  PpForgeChip(
                     label: 'Hidden from report',
-                    tone: AppChipTone.neutral,
+                    tone: PpForgeChipTone.neutral,
                     selected: true,
                   ),
                 ]
@@ -130,7 +129,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
           description: 'What this category is and where it sits.',
           children: [
             // Filled picker.
-            AppDetailRow.pick(
+            PpForgeDetailRow.pick(
               icon: _icons ? AppIcons.category : null,
               label: 'Parent',
               value: _hasParent ? 'Eating out' : null,
@@ -142,17 +141,17 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
               },
               onLongPress: enter,
             ),
-            AppDetailRow(
+            PpForgeDetailRow(
               icon: _icons ? AppIcons.currency : null,
               label: 'Currency',
               trailing: const Text('THB'),
               locked: true,
             ),
-            AppDetailRow(
+            PpForgeDetailRow(
               icon: _icons ? AppIcons.info : null,
               label: 'Counts in reports',
               helper: 'Off = left out of summaries',
-              trailing: AppSwitch(
+              trailing: PpForgeSwitch(
                 value: _inReport,
                 onChanged: (v) => setState(() => _inReport = v),
               ),
@@ -164,7 +163,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
           title: 'Reference numbers',
           description: 'Only used to match accounts when scanning slips.',
           children: [
-            AppDetailRow(
+            PpForgeDetailRow(
               label: 'No numbers yet',
               onTap: () {
                 if (!editing) _enter();
@@ -178,7 +177,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
           children: [
             DetailStacked(
               label: 'Note',
-              child: AppInput.inline(
+              child: PpForgeInput.inline(
                 editing: editing,
                 controller: _note,
                 maxLines: 5,
@@ -208,7 +207,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
       height: height,
       decoration: BoxDecoration(
         border: Border.all(color: scheme.outlineVariant),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(PpForgeRadius.lg),
       ),
       clipBehavior: Clip.antiAlias,
       child: child,
@@ -217,7 +216,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
     // Static variants: the same skeleton in the shapes the real pages use.
     Widget contactPage() => DetailPageBody(
       topInset: 0,
-      hero: AppHeroCard(
+      hero: PpForgeHeroCard(
         style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
         header: HeroHeader(leading: const [], onEdit: () {}),
         content: [
@@ -233,7 +232,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
           title: 'Link',
           description: 'Connect this contact to an app user.',
           children: [
-            AppDetailRow.pick(
+            PpForgeDetailRow.pick(
               label: 'App user',
               value: null,
               emptyText: 'Not linked',
@@ -246,7 +245,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
           children: [
             DetailStacked(
               label: 'Note',
-              child: AppInput.inline(
+              child: PpForgeInput.inline(
                 editing: false,
                 controller: _note,
                 maxLines: 3,
@@ -263,24 +262,24 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
     Widget goalPage() => DetailPageBody(
       topInset: 0,
       // A tab bar under the hero (a budget's periods / items).
-      tabBar: AppTabBar<int>(
+      tabBar: PpForgeTabBar<int>(
         tabs: const [
-          AppTab(value: 0, label: 'Periods', icon: AppIcons.history),
-          AppTab(value: 1, label: 'Items', icon: AppIcons.receipt),
+          PpForgeTab(value: 0, label: 'Periods', icon: AppIcons.history),
+          PpForgeTab(value: 1, label: 'Items', icon: AppIcons.receipt),
         ],
         selected: 0,
         onChanged: (_) {},
       ),
-      hero: AppHeroCard(
+      hero: PpForgeHeroCard(
         style: HeroStyle.tinted(
-          color: Theme.of(context).extension<AppColors>()!.success,
+          color: Theme.of(context).extension<PpForgeColors>()!.success,
         ),
         header: HeroHeader(
           leading: const [
-            AppChip(
+            PpForgeChip(
               label: 'Goal reached',
               icon: AppIcons.success,
-              tone: AppChipTone.success,
+              tone: PpForgeChipTone.success,
               selected: true,
             ),
           ],
@@ -300,8 +299,8 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
           title: 'Target',
           description: 'How much and by when.',
           children: const [
-            AppDetailRow(label: 'Target', trailing: Text('฿30,000')),
-            AppDetailRow(label: 'Due', trailing: Text('31 Dec 2026')),
+            PpForgeDetailRow(label: 'Target', trailing: Text('฿30,000')),
+            PpForgeDetailRow(label: 'Due', trailing: Text('31 Dec 2026')),
           ],
         ),
       ],
@@ -334,28 +333,32 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Wrap(
-                    spacing: AppSpacing.xs,
-                    runSpacing: AppSpacing.xs,
+                    spacing: PpForgeSpacing.xs,
+                    runSpacing: PpForgeSpacing.xs,
                     children: [
-                      AppChip(
+                      PpForgeChip(
                         label: 'View',
                         selected: !editing,
                         onTap: () => setState(() => _editing = false),
                       ),
-                      AppChip(label: 'Edit', selected: editing, onTap: _enter),
-                      AppChip(
+                      PpForgeChip(
+                        label: 'Edit',
+                        selected: editing,
+                        onTap: _enter,
+                      ),
+                      PpForgeChip(
                         label: 'Status chips',
                         selected: _chips,
                         onTap: () => setState(() => _chips = !_chips),
                       ),
-                      AppChip(
+                      PpForgeChip(
                         label: 'Row icons',
                         selected: _icons,
                         onTap: () => setState(() => _icons = !_icons),
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: PpForgeSpacing.md),
                   framed(page, height: 760),
                 ],
               ),
@@ -397,7 +400,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
             children: [
               for (final (i, r) in _rules.indexed)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                  padding: const EdgeInsets.only(bottom: PpForgeSpacing.xs),
                   child: Text('${i + 1}. $r', style: text.bodySmall),
                 ),
             ],
@@ -434,7 +437,7 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
             DetailPageBody(
               topInset: v<double>('topInset'),
               bottomInset: v<double>('bottomInset'),
-              hero: AppHeroCard(
+              hero: PpForgeHeroCard(
                 style: HeroStyle.tinted(
                   color: Theme.of(context).colorScheme.primary,
                 ),
@@ -453,7 +456,10 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
                     title: 'Section ${i + 1}',
                     description: 'One line about this section.',
                     children: const [
-                      AppDetailRow(label: 'Currency', trailing: Text('THB')),
+                      PpForgeDetailRow(
+                        label: 'Currency',
+                        trailing: Text('THB'),
+                      ),
                     ],
                   ),
               ],

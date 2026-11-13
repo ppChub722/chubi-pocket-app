@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 import 'avatar_states_demo.dart';
 
 /// Profile + connections (0.4.2 1b): the profile hero (picture + colour
@@ -26,7 +25,7 @@ Widget buildProfileConnectionsPage(BuildContext context) {
   );
   const iconAvatar = AvatarData(
     kind: AvatarKind.icon,
-    iconCode: IconCode(
+    iconCode: PpForgeIconCode(
       icon: 'person',
       background: 'solid',
       bgColors: ['#5AA9F0'],
@@ -34,12 +33,12 @@ Widget buildProfileConnectionsPage(BuildContext context) {
     initials: 'PP',
     colors: ['#5AA9F0', '#4DD6C1', '#9575CD'],
   );
-  Widget chip(String label, {bool danger = false}) => AppButton(
+  Widget chip(String label, {bool danger = false}) => PpForgeButton(
     label: label,
     variant: danger
-        ? AppButtonVariant.destructiveOutlined
-        : AppButtonVariant.outlined,
-    size: AppButtonSize.chip,
+        ? PpForgeButtonVariant.destructiveOutlined
+        : PpForgeButtonVariant.outlined,
+    size: PpForgeButtonSize.chip,
     onPressed: noop,
   );
 
@@ -61,7 +60,7 @@ Widget buildProfileConnectionsPage(BuildContext context) {
               page: 'Connection rows',
               child: left(
                 const Wrap(
-                  spacing: AppSpacing.sm,
+                  spacing: PpForgeSpacing.sm,
                   children: [
                     ProviderLogo(url: logo, name: 'Telegram'),
                     ProviderLogo(url: logo, name: 'Telegram', grey: true),
@@ -100,11 +99,11 @@ Widget buildProfileConnectionsPage(BuildContext context) {
               page: 'รูปโปรไฟล์ list',
               child: left(
                 const Wrap(
-                  spacing: AppSpacing.sm,
+                  spacing: PpForgeSpacing.sm,
                   children: [
-                    AppRadioMark(selected: true),
-                    AppRadioMark(selected: false),
-                    AppRadioMark(selected: false, enabled: false),
+                    PpForgeRadioMark(selected: true),
+                    PpForgeRadioMark(selected: false),
+                    PpForgeRadioMark(selected: false, enabled: false),
                   ],
                 ),
               ),
@@ -139,7 +138,7 @@ Widget buildProfileConnectionsPage(BuildContext context) {
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               ProfileHeroCard(
                 tint: const Color(0xFF5AA9F0),
                 picture: const ProfileHeroAvatar(avatar: iconAvatar),
@@ -165,16 +164,16 @@ Widget buildProfileConnectionsPage(BuildContext context) {
               onTap: noop,
             ),
             fields: [
-              AppInput.card(
+              PpForgeInput.card(
                 controller: TextEditingController(text: 'ppond'),
                 label: 'ชื่อที่แสดง',
               ),
-              AppInput.card(
+              PpForgeInput.card(
                 controller: TextEditingController(text: '@ppond (แก้ไม่ได้)'),
                 label: 'ชื่อผู้ใช้',
                 locked: true,
               ),
-              AppInput.card(
+              PpForgeInput.card(
                 controller: TextEditingController(text: 'poompich@example.com'),
                 label: 'อีเมล',
               ),
@@ -286,7 +285,7 @@ Widget buildProfileConnectionsPage(BuildContext context) {
                 account: '@a_rather_long_telegram_username_here',
                 linkedAtText: 'เชื่อมเมื่อ 28 ต.ค. 2026',
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               const ConnectionHeroCard(
                 name: 'Telegram',
                 logoUrl: logo,
@@ -294,13 +293,13 @@ Widget buildProfileConnectionsPage(BuildContext context) {
                 brand: tg,
                 notLinkedLabel: 'ยังไม่เชื่อม',
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               ConnectionLinkButton(
                 label: 'เชื่อม Telegram',
                 brand: tg,
                 onPressed: noop,
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               ConnectionLinkButton(
                 label: 'เชื่อม LINE',
                 brand: const Color(0xFF06C755),
@@ -351,7 +350,7 @@ Widget buildProfileConnectionsPage(BuildContext context) {
             ]),
           ],
           builder: (context, v) => left(
-            AppButton(
+            PpForgeButton(
               label: 'Open',
               onPressed: () => showAvatarColorsSheet(
                 context: context,

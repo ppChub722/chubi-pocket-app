@@ -48,7 +48,7 @@ void main() {
         timezone: () async => null,
       ),
     );
-    const icon = IconCode(icon: 'star');
+    const icon = PpForgeIconCode(icon: 'star');
     final cases =
         <
           ({

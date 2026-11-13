@@ -204,7 +204,7 @@ class TransactionHeroCard extends StatelessWidget {
                 for (final t in _types)
                   if (canSwitch || (t == type && !extraTypeSelected)) t,
               ].indexed) ...[
-                if (i > 0) const SizedBox(width: AppSpacing.xs),
+                if (i > 0) const SizedBox(width: PpForgeSpacing.xs),
                 txTypeChip(
                   context,
                   type: t,
@@ -218,14 +218,14 @@ class TransactionHeroCard extends StatelessWidget {
                 ),
               ],
               if (extraTypeChip != null) ...[
-                const SizedBox(width: AppSpacing.xs),
+                const SizedBox(width: PpForgeSpacing.xs),
                 extraTypeChip!,
               ],
             ],
           ),
         ),
     ];
-    final datePillChip = AppChip(
+    final datePillChip = PpForgeChip(
       label: dateLabel,
       icon: AppIcons.date,
       onTap: editing ? onPickDate : null,
@@ -249,10 +249,10 @@ class TransactionHeroCard extends StatelessWidget {
       fontFeatures: const [FontFeature.tabularFigures()],
     );
     Widget amountField({TextAlign align = TextAlign.start}) => longPressable(
-      AppInput.card(
+      PpForgeInput.card(
         controller: amount,
         focusNode: amountFocus,
-        type: AppInputType.amount,
+        type: PpForgeInputType.amount,
         autofocus: autofocus && editing && !amountLocked,
         readOnly: !editing || amountLocked,
         enableInteractiveSelection: editing && !amountLocked,
@@ -262,13 +262,14 @@ class TransactionHeroCard extends StatelessWidget {
         cursorColor: scheme.primary,
         focusColor: accent,
         symbolScale: 0.7,
-        currencySymbol: symbol ?? UiConfig.stringsOf(context).currencySymbol,
+        currencySymbol:
+            symbol ?? PpForgeConfig.stringsOf(context).currencySymbol,
         minWidth: 12,
-        size: AppInputSize.hero,
+        size: PpForgeInputSize.hero,
         label: editing && inline
             ? (amountLabel ?? l.transactionFormAmountLabel)
             : null,
-        labelPlacement: AppInputLabelPlacement.above,
+        labelPlacement: PpForgeInputLabelPlacement.above,
         hint: '0',
         hintStyle: bigAmount?.copyWith(color: accent.withValues(alpha: 0.35)),
         hideHintOnFocus: true,
@@ -285,8 +286,8 @@ class TransactionHeroCard extends StatelessWidget {
           );
     Widget titleField({int maxLines = 3}) => longPressable(
       Padding(
-        padding: const EdgeInsets.only(right: AppSpacing.sm),
-        child: AppInput.card(
+        padding: const EdgeInsets.only(right: PpForgeSpacing.sm),
+        child: PpForgeInput.card(
           controller: title,
           focusNode: titleFocus,
           readOnly: !editing || titleReadOnly || onTitleTap != null,
@@ -297,9 +298,9 @@ class TransactionHeroCard extends StatelessWidget {
           enableInteractiveSelection:
               editing && onTitleTap == null && !titleReadOnly,
           maxLength: titleMaxLength,
-          size: inline ? AppInputSize.hero : null,
+          size: inline ? PpForgeInputSize.hero : null,
           label: editing && inline ? (titleLabel ?? l.commonDescription) : null,
-          labelPlacement: AppInputLabelPlacement.above,
+          labelPlacement: PpForgeInputLabelPlacement.above,
           minLines: 1,
           maxLines: maxLines,
           textInputAction: TextInputAction.done,
@@ -325,7 +326,7 @@ class TransactionHeroCard extends StatelessWidget {
         : !editing && title.text.trim().isEmpty && titleFallback != null
         ? longPressable(
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xs),
               child: Text(
                 titleFallback!,
                 maxLines: 2,
@@ -341,7 +342,7 @@ class TransactionHeroCard extends StatelessWidget {
               : longPressable(
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.xs,
+                      vertical: PpForgeSpacing.xs,
                     ),
                     child: Text(
                       titlePlaceholder!,
@@ -364,9 +365,9 @@ class TransactionHeroCard extends StatelessWidget {
         // the chips as the other rows get (the label row adds ~4 itself).
         // A framed amount in view has no label: it gets its own air.
         gapBefore: editing
-            ? AppSpacing.sm
+            ? PpForgeSpacing.sm
             : (amountBoxed ?? false)
-            ? AppSpacing.md
+            ? PpForgeSpacing.md
             : 0,
         start: titleCell,
         end: amountField(align: TextAlign.end),
@@ -416,7 +417,7 @@ class TransactionHeroCard extends StatelessWidget {
     // An [accentColor] (the saving mode's planning purple) washes the whole
     // card, not just the amount, so it never reads as green income. Debt
     // words wash it in the debt-state colour, like their chips and amount.
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: accentColor != null || debt || repay
           ? HeroStyle.tinted(color: accent)
           : txHeroStyle(context, type),
@@ -432,7 +433,7 @@ class TransactionHeroCard extends StatelessWidget {
       footer: [
         if (inline && footer != null)
           Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.md),
+            padding: const EdgeInsets.only(top: PpForgeSpacing.md),
             child: footer,
           ),
       ],
@@ -450,7 +451,7 @@ HeroStyle txHeroStyle(BuildContext context, TransactionType type) {
 }
 
 Color txTypeColor(BuildContext context, TransactionType t) {
-  final palette = Theme.of(context).extension<AppColors>()!;
+  final palette = Theme.of(context).extension<PpForgeColors>()!;
   return switch (t) {
     TransactionType.expense => palette.expense,
     TransactionType.income => palette.income,
@@ -475,7 +476,7 @@ Color txWordsColor(
   return debtStateColor(context, owedToMe: repay ? !expense : expense);
 }
 
-AppChip txTypeChip(
+PpForgeChip txTypeChip(
   BuildContext context, {
   required TransactionType? type,
   required bool selected,
@@ -507,7 +508,7 @@ AppChip txTypeChip(
     ),
     TransactionType.transfer => (AppIcons.transfer, l.transactionTypeTransfer),
   };
-  return AppChip(
+  return PpForgeChip(
     label: label,
     icon: dashed && !selected ? null : icon,
     color: type == null

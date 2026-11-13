@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/dashed_rect_border.dart';
-import '../../tokens/app/app_colors.dart';
-import '../icons/color_token.dart';
+import 'package:pp_forge_core/ui.dart';
 
 /// A person's profile colours 1…[count] as dots (0.4.2 1b, under the avatar
 /// on the profile hero): a set slot = its colour, an unset one (past the
@@ -31,7 +29,7 @@ class ProfileColorDots extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>();
+    final palette = Theme.of(context).extension<PpForgeColors>();
     Widget dot(String spec) {
       if (spec.isEmpty) {
         return DashedRectBorder(
@@ -45,7 +43,7 @@ class ProfileColorDots extends StatelessWidget {
       }
       final color = palette == null
           ? scheme.primary
-          : resolveColor(spec, palette);
+          : ppForgeResolveColor(spec, palette);
       return Container(
         width: size,
         height: size,

@@ -10,7 +10,7 @@ import '../../../features/transactions/domain/transaction_type.dart';
 import '../../../features/transactions/presentation/widgets/recurring_link.dart';
 import '../../../features/transactions/presentation/widgets/transaction_picker.dart';
 import '../../../ui/ui.dart';
-import '../../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// [RecurringPicker] as the transaction pages open it, on the real recurring
 /// cache.
@@ -62,9 +62,9 @@ class RecurringPickerDemos extends StatelessWidget {
     );
   }
 
-  Widget _new(String label, Future<String> Function() run) => AppButton(
+  Widget _new(String label, Future<String> Function() run) => PpForgeButton(
     label: label,
-    variant: AppButtonVariant.outlined,
+    variant: PpForgeButtonVariant.outlined,
     onPressed: () async => onResult(await run()),
   );
 
@@ -72,8 +72,8 @@ class RecurringPickerDemos extends StatelessWidget {
     title: title,
     note: note,
     child: Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: buttons,
     ),
   );
@@ -188,7 +188,7 @@ class RecurringPickerDemos extends StatelessWidget {
         if (directory.state.rules.isEmpty)
           const HubDemo(
             title: 'No recurring',
-            child: AppText(
+            child: PpForgeText(
               'The recurring cache is empty: sign in first (the pickers load '
               'it when opened).',
             ),

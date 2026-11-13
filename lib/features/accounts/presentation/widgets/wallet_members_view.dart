@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/account.dart';
@@ -46,10 +45,10 @@ Future<bool> inviteWalletMember(
       contactId: contact.id,
     );
     onResult(result);
-    showAppSnackBarOn(messenger, l.walletInviteSent, tone: Tone.success);
+    showPpForgeSnackBarOn(messenger, l.walletInviteSent, tone: Tone.success);
     return true;
   } on ApiException catch (e) {
-    showAppSnackBarOn(
+    showPpForgeSnackBarOn(
       messenger,
       e.code == 'VALIDATION_ERROR'
           ? l.walletErrorInviteInvalid
@@ -110,7 +109,7 @@ class WalletMembersView extends StatelessWidget {
           ),
           if (owner)
             Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.md),
+              padding: const EdgeInsets.only(top: PpForgeSpacing.md),
               child: AddTile(
                 label: l.walletInviteFromContacts,
                 variant: AddTileVariant.row,
@@ -164,7 +163,7 @@ class WalletMembersView extends StatelessWidget {
       onResult(r);
       router.go('/accounts');
     } on ApiException catch (e) {
-      showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
+      showPpForgeSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
     }
   }
 
@@ -186,7 +185,7 @@ class WalletMembersView extends StatelessWidget {
     try {
       onResult(await cubit.removeMember(accountId: account.id, memberId: m.id));
     } on ApiException catch (e) {
-      showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
+      showPpForgeSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
     }
   }
 
@@ -210,13 +209,13 @@ class WalletMembersView extends StatelessWidget {
         newOwnerUserId: m.userId,
       );
       onResult(r);
-      showAppSnackBarOn(
+      showPpForgeSnackBarOn(
         messenger,
         l.walletTransferOwnershipSuccess,
         tone: Tone.success,
       );
     } on ApiException catch (e) {
-      showAppSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
+      showPpForgeSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
     }
   }
 }
@@ -267,7 +266,7 @@ class _MemberRow extends StatelessWidget {
             tone: member.isOwner ? Tone.primary : Tone.neutral,
             selected: true,
           );
-    return AppListRow(
+    return PpForgeListRow(
       leading: Avatar(member.avatar, size: 40),
       title: isSelf ? '${member.name} (${l.walletMemberYou})' : member.name,
       status: role,

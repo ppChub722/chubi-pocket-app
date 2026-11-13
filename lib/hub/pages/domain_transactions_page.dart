@@ -12,8 +12,7 @@ import '../../features/transactions/presentation/widgets/period_summary_card.dar
 import '../../features/transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../features/transactions/presentation/widgets/transaction_tile.dart';
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// `/dev/domain/transactions` — the transaction row, hero card, chip
 /// builders and the pieces that need live app data.
@@ -25,10 +24,10 @@ void _noop() {}
 /// with [people] two plain person lines under it.
 Widget _splitSample(SplitEventVariant variant, bool people) {
   final compact = variant == SplitEventVariant.compact;
-  final chip = AppChip(
+  final chip = PpForgeChip(
     icon: AppIcons.add,
     label: 'Add person',
-    tone: AppChipTone.primary,
+    tone: PpForgeChipTone.primary,
     selected: true,
     dashed: compact,
     size: compact ? ChipSize.chip : ChipSize.control,
@@ -38,8 +37,8 @@ Widget _splitSample(SplitEventVariant variant, bool people) {
     for (final p in const ['Lee  ฿200', 'Mai  ฿150'])
       Padding(
         padding: EdgeInsets.symmetric(
-          horizontal: compact ? 0 : AppSpacing.lg,
-          vertical: AppSpacing.xs,
+          horizontal: compact ? 0 : PpForgeSpacing.lg,
+          vertical: PpForgeSpacing.xs,
         ),
         child: Text(p),
       ),
@@ -50,7 +49,7 @@ Widget _splitSample(SplitEventVariant variant, bool people) {
       if (compact)
         DraftFieldRow(label: 'Split', dense: true, child: chip)
       else
-        AppDetailRow(label: 'Split', trailing: chip),
+        PpForgeDetailRow(label: 'Split', trailing: chip),
       if (people) ...lines,
     ],
   );
@@ -59,12 +58,12 @@ Widget _splitSample(SplitEventVariant variant, bool people) {
 const _tagFood = Tag(
   id: 't1',
   name: 'lunch',
-  iconCode: IconCode(iconColors: ['#E67E22']),
+  iconCode: PpForgeIconCode(iconColors: ['#E67E22']),
 );
 const _tagWork = Tag(
   id: 't2',
   name: 'work',
-  iconCode: IconCode(iconColors: ['#3F8EFC']),
+  iconCode: PpForgeIconCode(iconColors: ['#3F8EFC']),
 );
 const _tagTrip = Tag(id: 't3', name: 'trip');
 
@@ -72,13 +71,13 @@ const _catFood = Category(
   id: 'c1',
   name: 'อาหาร',
   type: CategoryType.expense,
-  iconCode: IconCode(iconColors: ['#E67E22']),
+  iconCode: PpForgeIconCode(iconColors: ['#E67E22']),
 );
 const _catSalary = Category(
   id: 'c2',
   name: 'เงินเดือน',
   type: CategoryType.income,
-  iconCode: IconCode(iconColors: ['#2ECC71']),
+  iconCode: PpForgeIconCode(iconColors: ['#2ECC71']),
 );
 
 class _TransactionsPage extends StatefulWidget {
@@ -156,10 +155,10 @@ class _TransactionsPageState extends State<_TransactionsPage> {
         canPaidBack: true,
         tag: event == null
             ? null
-            : const AppChip(
+            : const PpForgeChip(
                 label: 'ใหม่ · เพิ่มเข้าอีเวนต์',
                 size: ChipSize.mini,
-                tone: AppChipTone.info,
+                tone: PpForgeChipTone.info,
                 selected: true,
               ),
         onRemove: () {},
@@ -184,7 +183,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
       context: context,
       builder: (_) => Dialog(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: const EdgeInsets.all(PpForgeSpacing.lg),
           child: DraftForm(
             controller: controller,
             chipLayout: chipLayout,
@@ -239,7 +238,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 value: _linkMode == 1,
                 onChanged: (v) => setState(() => _linkMode = v ? 1 : 0),
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               if (_linkMode == 1) _peopleCard(event: 'ทริปเขาใหญ่'),
             ],
           ),
@@ -257,7 +256,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               LinkSectionFrame(bar: null, card: _peopleCard(readOnly: true)),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               _peopleCard(readOnly: true, event: 'ทริปเขาใหญ่'),
             ],
           ),
@@ -272,7 +271,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _peopleCard(income: true),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               _peopleCard(income: true, event: 'ทริปเขาใหญ่'),
             ],
           ),
@@ -332,13 +331,13 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   selected: 0,
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               const _DemoChipRow(
                 icon: AppIcons.tag,
                 chips: ['#งาน', '#กิน'],
                 selected: -1,
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               EntryCard(
                 type: TransactionType.expense,
                 amount: TextEditingController(),
@@ -378,7 +377,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   LinkSwitchRow(label: 'แบ่ง', value: false, onChanged: (_) {}),
                 ],
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               const EntrySectionCard(
                 children: [
                   EntryFlagged(
@@ -458,7 +457,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
           child: Column(
             children: [
               EntryCardSkeleton(),
-              SizedBox(height: AppSpacing.md),
+              SizedBox(height: PpForgeSpacing.md),
               EntryCardSkeleton(editing: false),
             ],
           ),
@@ -478,7 +477,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   onPickDate: () {},
                   compact: true,
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: PpForgeSpacing.md),
               ],
             ],
           ),
@@ -502,7 +501,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
             showTitle: false,
             extraTypeSelected: true,
             accentColor: ModuleColors.of(context).planning,
-            extraTypeChip: AppChip(
+            extraTypeChip: PpForgeChip(
               label: 'จ่ายคืน',
               icon: AppIcons.transfer,
               color: ModuleColors.of(context).planning,
@@ -525,7 +524,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 editing: false,
                 onEdit: () => _note('hero: edit tapped'),
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               // amountBoxed: a saved bill viewed, the amount framed but not
               // typed (owner 2026-11-04).
               TransactionHeroCard(
@@ -542,7 +541,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               TransactionHeroCard(
                 type: TransactionType.income,
                 amount: _amount,
@@ -551,7 +550,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 inline: true,
                 editing: false,
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               TransactionHeroCard(
                 type: TransactionType.expense,
                 amount: _amount,
@@ -564,7 +563,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               TransactionHeroCard(
                 type: TransactionType.expense,
                 amount: _amount,
@@ -590,7 +589,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   HubCell(
                     caption: 'txTypeChip (null = all)',
                     child: Wrap(
-                      spacing: AppSpacing.xs,
+                      spacing: PpForgeSpacing.xs,
                       children: [
                         txTypeChip(context, type: null, selected: true),
                         for (final t in TransactionType.values)
@@ -603,7 +602,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                         'txTypeChip: the chosen one is solid (it does nothing '
                         'on tap); the others are dashed with no icon',
                     child: Wrap(
-                      spacing: AppSpacing.xs,
+                      spacing: PpForgeSpacing.xs,
                       children: [
                         txTypeChip(
                           context,
@@ -667,7 +666,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   HubCell(
                     caption: 'categoryAppChip',
                     child: Wrap(
-                      spacing: AppSpacing.xs,
+                      spacing: PpForgeSpacing.xs,
                       children: [
                         categoryAppChip(
                           context,
@@ -694,7 +693,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   HubCell(
                     caption: 'tagAppChip',
                     child: Wrap(
-                      spacing: AppSpacing.xs,
+                      spacing: PpForgeSpacing.xs,
                       children: [
                         tagAppChip(context, _tagFood, onTap: () {}),
                         tagAppChip(
@@ -728,7 +727,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   variant.name,
                   style: Theme.of(context).textTheme.labelSmall,
                 ),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: PpForgeSpacing.xs),
                 for (final (label, people, slot) in [
                   ('empty', false, const SplitEventSlot(onTap: _noop)),
                   (
@@ -769,7 +768,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                         ? 'This split will live in the event.'
                         : null,
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: PpForgeSpacing.md),
                 ],
               ],
             ],
@@ -791,17 +790,17 @@ class _TransactionsPageState extends State<_TransactionsPage> {
               'Live data: opens the real form (a local DraftFormController) '
               'in a dialog. chipLayout is the pending drafts layout.',
           child: Wrap(
-            spacing: AppSpacing.md,
-            runSpacing: AppSpacing.md,
+            spacing: PpForgeSpacing.md,
+            runSpacing: PpForgeSpacing.md,
             children: [
-              AppButton(
+              PpForgeButton(
                 label: 'Open DraftForm',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () => _openForm(false),
               ),
-              AppButton(
+              PpForgeButton(
                 label: 'Open DraftForm (chipLayout)',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () => _openForm(true),
               ),
             ],
@@ -821,10 +820,10 @@ class _TransactionsPageState extends State<_TransactionsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Wrap(
-                spacing: AppSpacing.md,
-                runSpacing: AppSpacing.md,
+                spacing: PpForgeSpacing.md,
+                runSpacing: PpForgeSpacing.md,
                 children: [
-                  AppButton(
+                  PpForgeButton(
                     label: 'showQuickCreateSheet',
                     onPressed: () async {
                       final r = await showQuickCreateSheet(context);
@@ -833,7 +832,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               Text(
                 'Last result: $_last',
                 style: Theme.of(context).textTheme.bodySmall,
@@ -875,8 +874,8 @@ class _DemoChipRow extends StatelessWidget {
     final first = blank == null
         ? null
         : selected >= 0
-        ? AppChip(label: chips[selected], selected: true, onTap: () {})
-        : AppChip(
+        ? PpForgeChip(label: chips[selected], selected: true, onTap: () {})
+        : PpForgeChip(
             label: blank!,
             icon: AppIcons.add,
             dashed: true,
@@ -886,21 +885,24 @@ class _DemoChipRow extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          AppIcon(
+          PpForgeIcon(
             icon,
-            size: AppIconSize.md,
+            size: PpForgeIconSize.md,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(width: AppSpacing.xs),
-          if (first != null) ...[first, const SizedBox(width: AppSpacing.xs)],
+          const SizedBox(width: PpForgeSpacing.xs),
+          if (first != null) ...[
+            first,
+            const SizedBox(width: PpForgeSpacing.xs),
+          ],
           for (final (i, c) in chips.indexed)
             if (blank == null || i != selected) ...[
-              AppChip(
+              PpForgeChip(
                 label: c,
                 selected: blank == null && i == selected,
                 onTap: () {},
               ),
-              const SizedBox(width: AppSpacing.xs),
+              const SizedBox(width: PpForgeSpacing.xs),
             ],
         ],
       ),
@@ -968,7 +970,7 @@ class _SplitRowPageState extends State<_SplitRowPage> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               ShareAmountField(value: 99999, onChanged: (_) {}, compact: true),
-              const SizedBox(width: AppSpacing.md),
+              const SizedBox(width: PpForgeSpacing.md),
               ShareAmountField(
                 value: null,
                 onChanged: (_) {},
@@ -996,7 +998,7 @@ class _SplitRowPageState extends State<_SplitRowPage> {
                 avatar: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const AppAvatar(name: 'Me', size: SplitRow.avatarSize),
+                    const PpForgeAvatar(name: 'Me', size: SplitRow.avatarSize),
                     SizedBox(
                       width: PersonMark.linkSlotWidth(SplitRow.avatarSize),
                     ),
@@ -1098,7 +1100,10 @@ class _SplitRowPageState extends State<_SplitRowPage> {
                 ? Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const AppAvatar(name: 'Me', size: SplitRow.avatarSize),
+                      const PpForgeAvatar(
+                        name: 'Me',
+                        size: SplitRow.avatarSize,
+                      ),
                       SizedBox(
                         width: PersonMark.linkSlotWidth(SplitRow.avatarSize),
                       ),

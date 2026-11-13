@@ -24,7 +24,9 @@ class RecurringParent extends Equatable {
         id: json['id'] as String,
         name: (json['name'] as String?) ?? '',
         iconCode: json['icon_code'] is Map<String, dynamic>
-            ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+            ? PpForgeIconCode.fromJson(
+                json['icon_code'] as Map<String, dynamic>,
+              )
             : null,
         kind: json['kind'] is String
             ? RecurringKind.fromJson(json['kind'] as String)
@@ -34,7 +36,7 @@ class RecurringParent extends Equatable {
 
   final String id;
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
 
   /// Null from a BE that doesn't send it yet.
   final RecurringKind? kind;

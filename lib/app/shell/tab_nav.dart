@@ -1,10 +1,10 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../ui/tokens/app/app_modules.dart';
-import '../../ui/tokens/app/theme/app_page_transitions.dart';
+import '../../ui/domain/tokens/app_modules.dart';
 import 'nav_layout.dart';
 import 'tab_entry.dart';
+import 'package:pp_forge_core/ui.dart';
 
 enum ShellTab {
   home,
@@ -104,7 +104,7 @@ void goTab(
   final reopen = to.index == from;
   final stacked = canPop?.call(to.index) ?? true;
   if (reopen && !stacked) return;
-  if (stacked) AppPageTransitionsBuilder.popNextWithoutAnimation();
+  if (stacked) PpForgePageTransitionsBuilder.popNextWithoutAnimation();
   goBranch(to.index, initialLocation: true);
   if (reopen) ShellReopen.request();
 }
@@ -126,7 +126,7 @@ void Function(String location, {Object? extra}) pageOpener(
     if (here == null || there == null || here == there) {
       router.push(location, extra: extra);
     } else {
-      AppPageTransitionsBuilder.landNextWithoutPush();
+      PpForgePageTransitionsBuilder.landNextWithoutPush();
       router.go(location, extra: extra);
     }
   };
@@ -154,6 +154,17 @@ class ShellBackScope extends InheritedWidget {
 
   @override
   bool updateShouldNotify(ShellBackScope old) => onBack != old.onBack;
+}
+
+/// The app's [PageExitScope.onLeave]: pop the page — or, opened alone in its
+/// tab with nothing to pop, let the shell's back take over (previous tab, the
+/// เพิ่มเติม hub, or the dashboard).
+void leaveShellPage(BuildContext context) {
+  if (context.canPop()) {
+    context.pop();
+  } else {
+    ShellBackScope.maybeOf(context)?.call();
+  }
 }
 
 abstract interface class ShellSwipeHandler {

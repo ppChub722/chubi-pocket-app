@@ -72,7 +72,7 @@ class _LogsViewerScreenState extends State<LogsViewerScreen> {
     final body = await AppLogger.instance.readAllForShare();
     await Clipboard.setData(ClipboardData(text: body));
     if (!mounted) return;
-    showAppSnackBar(context, 'Copied ${body.length} chars to clipboard');
+    showPpForgeSnackBar(context, 'Copied ${body.length} chars to clipboard');
   }
 
   void _showEntry(LogEntry e) {
@@ -115,9 +115,9 @@ class _LogsViewerScreenState extends State<LogsViewerScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.sm,
-              AppSpacing.md,
+              PpForgeSpacing.md,
+              PpForgeSpacing.sm,
+              PpForgeSpacing.md,
               0,
             ),
             child: Column(
@@ -133,7 +133,7 @@ class _LogsViewerScreenState extends State<LogsViewerScreen> {
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: PpForgeSpacing.sm),
                 TextField(
                   controller: _searchCtrl,
                   decoration: const InputDecoration(
@@ -144,7 +144,7 @@ class _LogsViewerScreenState extends State<LogsViewerScreen> {
                   ),
                   onChanged: (_) => setState(() {}),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: PpForgeSpacing.sm),
                 _LevelFilterRow(
                   current: _minFilter,
                   onChanged: (v) => setState(() => _minFilter = v),
@@ -183,14 +183,14 @@ class _LevelFilterRow extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          AppChip(
+          PpForgeChip(
             label: 'All',
             selected: current == null,
             onTap: () => onChanged(null),
           ),
           const SizedBox(width: 4),
           for (final lvl in LogLevel.values) ...[
-            AppChip(
+            PpForgeChip(
               label: '${lvl.tag} ${lvl.wire.toLowerCase()}',
               selected: current == lvl,
               onTap: () => onChanged(lvl),
@@ -229,7 +229,7 @@ class _EntryTile extends StatelessWidget {
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
+          horizontal: PpForgeSpacing.md,
           vertical: 8,
         ),
         child: Row(
@@ -301,7 +301,7 @@ class _EntryDetailSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(PpForgeSpacing.md),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

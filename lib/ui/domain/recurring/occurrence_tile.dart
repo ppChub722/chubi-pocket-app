@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app_radius.dart';
-import '../../tokens/app_spacing.dart';
-import '../../tokens/tone.dart';
-import '../../atoms/busy_scope.dart';
+import 'package:pp_forge_core/ui.dart';
 
 /// One occurrence as a cell of [OccurrenceTileGrid] (ปรับแต่งล่วงหน้า):
 /// [label] (its month, or weekday for a weekly rule) over the big [day], then
@@ -44,7 +41,7 @@ class OccurrenceTile extends StatelessWidget {
     final edge = highlight ? Tone.primary.color(context) : tone.color(context);
     final washed = highlight || tone == Tone.info;
     final faint = scheme.onSurfaceVariant.withValues(alpha: 0.6);
-    final radius = BorderRadius.circular(AppRadius.lg);
+    final radius = BorderRadius.circular(PpForgeRadius.lg);
     final struckStyle = struck
         ? TextStyle(color: faint, decoration: TextDecoration.lineThrough)
         : const TextStyle();
@@ -73,10 +70,10 @@ class OccurrenceTile extends StatelessWidget {
             constraints: const BoxConstraints(minHeight: 72),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.sm + 2,
-                AppSpacing.sm,
-                AppSpacing.xs + 2,
-                AppSpacing.sm,
+                PpForgeSpacing.sm + 2,
+                PpForgeSpacing.sm,
+                PpForgeSpacing.xs + 2,
+                PpForgeSpacing.sm,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,7 +155,7 @@ class _Tag extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
+        borderRadius: BorderRadius.circular(PpForgeRadius.pill),
       ),
       child: Text(
         label,
@@ -191,7 +188,7 @@ class OccurrenceTileGrid extends StatelessWidget {
     for (var i = 0; i < children.length; i += columns) {
       final cells = [
         for (var k = 0; k < columns; k++) ...[
-          if (k > 0) const SizedBox(width: AppSpacing.sm),
+          if (k > 0) const SizedBox(width: PpForgeSpacing.sm),
           Expanded(
             child: i + k < children.length
                 ? children[i + k]
@@ -199,7 +196,7 @@ class OccurrenceTileGrid extends StatelessWidget {
           ),
         ],
       ];
-      if (rows.isNotEmpty) rows.add(const SizedBox(height: AppSpacing.sm));
+      if (rows.isNotEmpty) rows.add(const SizedBox(height: PpForgeSpacing.sm));
       rows.add(
         IntrinsicHeight(
           child: Row(

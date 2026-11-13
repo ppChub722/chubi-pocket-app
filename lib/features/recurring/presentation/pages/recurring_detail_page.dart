@@ -10,7 +10,6 @@ import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/data/write_effects.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -425,9 +424,9 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       title: l.recurringFieldIcon,
     );
     if (!mounted || r == null) return;
-    if (r is IconMakerSelected) {
+    if (r is PpForgeIconMakerSelected) {
       _change(working.copyWith(iconCode: r.iconCode));
-    } else if (r is IconMakerRemoved) {
+    } else if (r is PpForgeIconMakerRemoved) {
       _change(working.copyWith(clearIcon: true));
     }
   }
@@ -559,13 +558,13 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   Future<void> _pickStart() async {
     final now = today();
     final current = working.rule.start;
-    final picked = await AppDatePicker.show(
+    final picked = await PpForgeDatePicker.show(
       context,
       initial: current,
       first: current.isBefore(now) ? current : now,
       last: DateTime(now.year + 2, now.month, now.day),
     );
-    if (!mounted || picked is! AppDatePicked) return;
+    if (!mounted || picked is! PpForgeDatePicked) return;
     final d = picked.date;
     final r = working.rule;
     _change(
@@ -594,7 +593,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     final l = AppLocalizations.of(context)!;
     final now = today();
     final current = working.trialUntil;
-    final picked = await AppDatePicker.show(
+    final picked = await PpForgeDatePicker.show(
       context,
       initial: current ?? now.add(const Duration(days: 30)),
       first: now,
@@ -603,9 +602,9 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       clearable: current != null,
     );
     if (!mounted || picked == null) return;
-    if (picked is AppDatePicked) {
+    if (picked is PpForgeDatePicked) {
       _change(working.copyWith(trialUntil: picked.date));
-    } else if (picked is AppDateCleared) {
+    } else if (picked is PpForgeDateCleared) {
       _change(working.copyWith(clearTrial: true));
     }
   }
@@ -626,7 +625,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     }
     if (!formOk || !walletOk || !goalOk || !personOk) return;
     if (!working.countOk) {
-      showAppSnackBarOn(
+      showPpForgeSnackBarOn(
         pageMessenger!,
         l.fpRecurringCountRequired,
         tone: Tone.danger,
@@ -812,7 +811,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
               builder: (context) {
                 final barInset = MediaQuery.paddingOf(context).top;
                 final bottom =
-                    AppSpacing.huge + MediaQuery.paddingOf(context).bottom;
+                    PpForgeSpacing.huge + MediaQuery.paddingOf(context).bottom;
                 final d = _detail;
                 return (d == null || isEditing)
                     ? _editBody(context, l, r, barInset, bottom)
@@ -827,7 +826,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   }
 
   HeroStyle _style(Recurring r) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     return HeroStyle.tinted(
       color: r.shownIconCode.tintFor(palette),
       glyph: AppIcons.scheduled,
@@ -842,7 +841,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     final r = d.recurring;
     final banner = _refreshError == null
         ? null
-        : AppMessage(tone: Tone.danger, message: errorText(l, _refreshError!));
+        : PpForgeMessage(
+            tone: Tone.danger,
+            message: errorText(l, _refreshError!),
+          );
     return TabbedDetailBody<_Tab>(
       hero: _viewHero(l, d),
       belowHero: [
@@ -858,13 +860,13 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         ),
       ],
       tabs: [
-        AppTab(
+        PpForgeTab(
           value: _Tab.past,
           label: l.fpRecurringTabPast,
           badgeCount: r.counts.notCreated,
           icon: AppIcons.history,
         ),
-        AppTab(
+        PpForgeTab(
           value: _Tab.upcoming,
           label: l.fpRecurringTabUpcoming,
           icon: AppIcons.date,
@@ -880,34 +882,34 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     );
   }
 
-  AppCompactHeroCard _compactBar(Recurring r) {
+  PpForgeCompactHeroCard _compactBar(Recurring r) {
     final amount = r.amount;
-    return AppCompactHeroCard(
+    return PpForgeCompactHeroCard(
       style: _style(r),
       leading: IconDisplay(
         type: IconType.category,
         size: 28,
         iconCode: r.shownIconCode,
       ),
-      title: AppText(r.name, role: AppTextRole.title),
+      title: PpForgeText(r.name, role: PpForgeTextRole.title),
       trailing: amount == null || amount <= 0
           ? null
           : MoneyText(
               signedOf(r.type, amount, saving: r.isSaving),
               tone: toneOf(r.type, saving: r.isSaving),
               symbol: context.readUserCurrencySymbol,
-              style: AppTypography.of(context, AppTextRole.money),
+              style: PpForgeTypography.of(context, PpForgeTextRole.money),
             ),
     );
   }
 
   Widget? _notice(AppLocalizations l, Recurring r) {
     if (r.endingSoon && r.actions.extend) {
-      return AppMessage(
+      return PpForgeMessage(
         message: l.recurringEndingSoon(r.counts.upcoming),
         tone: Tone.warning,
         actions: [
-          AppMessageAction(
+          PpForgeMessageAction(
             label: l.recurringExtend,
             onPressed: () => _action(RecurringAction.extend),
           ),
@@ -917,18 +919,18 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     if (r.status == RecurringStatus.paused) {
       // R7: why it's paused; resume starts at the current period (R8).
       return switch (r.pauseReason) {
-        RecurringPauseReason.overdueLimit => AppMessage(
+        RecurringPauseReason.overdueLimit => PpForgeMessage(
           message: l.recurringPausedOverdue,
           tone: Tone.warning,
         ),
-        RecurringPauseReason.goalInactive => AppMessage(
+        RecurringPauseReason.goalInactive => PpForgeMessage(
           message: l.recurringPausedGoal,
         ),
         // K13: a new debt with the person starts it again by itself.
-        RecurringPauseReason.noBalance => AppMessage(
+        RecurringPauseReason.noBalance => PpForgeMessage(
           message: l.recurringPausedNoBalance,
         ),
-        _ => AppMessage(message: l.recurringPausedNotice),
+        _ => PpForgeMessage(message: l.recurringPausedNotice),
       };
     }
     return null;
@@ -952,7 +954,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     ];
     final next = _nextItem;
     final symbol = context.readUserCurrencySymbol;
-    final warning = Theme.of(context).extension<AppColors>()!.warning;
+    final warning = Theme.of(context).extension<PpForgeColors>()!.warning;
     bool unknown(RecurringItem i) => i.amount == null || i.amount! <= 0;
     Widget money(RecurringItem i) => MoneyText(
       signedOf(i.type, i.amount!, saving: i.isSaving),
@@ -1020,9 +1022,9 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       label: dueLabel(l, date: first.date, daysUntil: first.daysUntil),
       tag: first.state == OccurrenceState.upcoming
           ? null
-          : AppChip(
+          : PpForgeChip(
               label: waitingLabel(l, first),
-              tone: AppChipTone.warning,
+              tone: PpForgeChipTone.warning,
               selected: true,
               size: ChipSize.mini,
             ),
@@ -1101,7 +1103,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     final rule = r.rule;
     final description = (r.description ?? '').trim();
     final stats = _stats(l, r, d.stats);
-    return AppHeroCard(
+    return PpForgeHeroCard(
       style: _style(r),
       content: [
         HeroIdentity(
@@ -1143,11 +1145,11 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
                       )
                     : _endText(l, rule.end),
               ),
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
               CardActionButton(
                 key: const ValueKey('heroEdit'),
                 icon: AppIcons.edit,
-                tooltip: UiConfig.stringsOf(context).edit,
+                tooltip: PpForgeConfig.stringsOf(context).edit,
                 onTap: enterEdit,
               ),
             ],
@@ -1303,14 +1305,14 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
               SheetOption(
                 value: RecurringAction.pause,
                 label: l.recurringPause,
-                leading: const AppIcon(AppIcons.pause),
+                leading: const PpForgeIcon(AppIcons.pause),
                 submits: true,
               ),
             if (r.actions.resume)
               SheetOption(
                 value: RecurringAction.resume,
                 label: l.recurringResume,
-                leading: const AppIcon(AppIcons.resume),
+                leading: const PpForgeIcon(AppIcons.resume),
                 submits: true,
               ),
           ],
@@ -1319,28 +1321,28 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         )
       else
         _statusChip(l, r),
-      AppChip(
+      PpForgeChip(
         label: recurringKindLabel(l, r.kind),
         selected: true,
-        tone: AppChipTone.neutral,
+        tone: PpForgeChipTone.neutral,
       ),
       for (final t in r.tags) _tagChip(t.name, t.iconCode),
       if (r.autoCreate)
-        AppChip(
+        PpForgeChip(
           key: const ValueKey('heroAutoCreate'),
           label: l.fpRecurringAutoChip,
           icon: AppIcons.recurring,
           selected: true,
-          tone: AppChipTone.primary,
+          tone: PpForgeChipTone.primary,
         ),
     ];
   }
 
-  Widget _tagChip(String name, IconCode? iconCode) {
-    final palette = Theme.of(context).extension<AppColors>()!;
-    return AppChip(
+  Widget _tagChip(String name, PpForgeIconCode? iconCode) {
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
+    return PpForgeChip(
       label: name,
-      icon: IconRegistry.get(iconCode?.icon, fallback: AppIcons.tag),
+      icon: PpForgeIconRegistry.get(iconCode?.icon, fallback: AppIcons.tag),
       color: EventTagRef(name, iconCode: iconCode).colorOf(palette),
       selected: true,
       size: ChipSize.mini,
@@ -1368,7 +1370,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       title: l.recurringSectionPeriod,
       children: [
         if (!dates)
-          AppDetailRow(
+          PpForgeDetailRow(
             label: l.recurringFieldStart,
             trailing: Text(
               _date(rule.start),
@@ -1378,14 +1380,14 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             showChevron: true,
             onTap: _pickStart,
           ),
-        AppDetailRow.pick(
+        PpForgeDetailRow.pick(
           key: const ValueKey('repeatRow'),
           label: l.recurringFieldRepeat,
           valueChips: _repeatChips(l, rule),
           emptyText: '',
           onTap: _openRecurrenceSheet,
         ),
-        AppDetailRow.pick(
+        PpForgeDetailRow.pick(
           key: const ValueKey('datesRow'),
           label: l.recurringFieldDates,
           value: dates ? _datesText(rule.dates) : null,
@@ -1399,23 +1401,23 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   List<Widget> _repeatChips(AppLocalizations l, RecurrenceRule rule) {
     if (rule.freq == RecurrenceFreq.dates) {
       return [
-        AppChip(
+        PpForgeChip(
           label: l.recurringFieldDates,
           icon: AppIcons.date,
-          tone: AppChipTone.primary,
+          tone: PpForgeChipTone.primary,
           size: ChipSize.chip,
         ),
       ];
     }
     final end = rule.end;
     return [
-      AppChip(
+      PpForgeChip(
         label: recurrenceLabel(l, rule),
         icon: AppIcons.recurring,
-        tone: AppChipTone.primary,
+        tone: PpForgeChipTone.primary,
         size: ChipSize.chip,
       ),
-      AppChip(
+      PpForgeChip(
         label:
             working.kind == RecurringKind.installment &&
                 end.kind == RecurrenceEndKind.afterCount
@@ -1654,7 +1656,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
                 SheetOption(
                   value: k,
                   label: recurringKindLabel(l, k),
-                  leading: AppIcon(
+                  leading: PpForgeIcon(
                     recurringKindIcon(k),
                     color: k.iconDefault.color,
                   ),
@@ -1675,12 +1677,12 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
               SheetOption(
                 value: TransactionType.expense,
                 label: l.transactionTypeExpense,
-                leading: const AppIcon(AppIcons.expense),
+                leading: const PpForgeIcon(AppIcons.expense),
               ),
               SheetOption(
                 value: TransactionType.transfer,
                 label: l.transactionTypeTransfer,
-                leading: const AppIcon(AppIcons.transfer),
+                leading: const PpForgeIcon(AppIcons.transfer),
               ),
             ],
           ),
@@ -1701,7 +1703,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             ],
           ),
         if (w.kind == RecurringKind.subscription)
-          AppDetailRow(
+          PpForgeDetailRow(
             label: l.fpRecurringTrialUntil,
             onTap: _pickTrial,
             trailing: DatePickChip(
@@ -1726,12 +1728,12 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           Padding(
             key: const ValueKey('autoCreateZeroWarn'),
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
+              PpForgeSpacing.lg,
               0,
-              AppSpacing.lg,
-              AppSpacing.md,
+              PpForgeSpacing.lg,
+              PpForgeSpacing.md,
             ),
-            child: AppMessage(
+            child: PpForgeMessage(
               tone: Tone.warning,
               message: l.fpRecurringAutoCreateZeroWarn,
             ),
@@ -1801,7 +1803,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         : i.state == OccurrenceState.paid || i.state == OccurrenceState.done
         ? (l.occurrenceStatePaid, null, null)
         : (null, null, null);
-    return AppListRow(
+    return PpForgeListRow(
       key: ValueKey('occ-${i.id}'),
       leading: DateTile(date: i.date),
       // The rule's own name: the date is on the left, n/total on line 2.
@@ -1817,14 +1819,14 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           if (pill != null)
             WidgetSpan(
               alignment: PlaceholderAlignment.middle,
-              child: AppChip(
+              child: PpForgeChip(
                 label: pill,
                 tone: tone == null
-                    ? AppChipTone.neutral
-                    : AppChipTone.fromTone(tone),
+                    ? PpForgeChipTone.neutral
+                    : PpForgeChipTone.fromTone(tone),
                 selected: tone != null,
                 size: ChipSize.mini,
-                maxWidth: AppListRow.chipMaxWidth,
+                maxWidth: PpForgeListRow.chipMaxWidth,
               ),
             ),
           if (sub != null) TextSpan(text: sub),
@@ -1880,7 +1882,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       isEmpty: items.isEmpty,
       onRetry: _load,
       rowCards: true,
-      topInset: AppSpacing.sm,
+      topInset: PpForgeSpacing.sm,
       hasMore: _produced.hasMore,
       loadingMore: _producedMore,
       onLoadMore: _loadMoreProduced,
@@ -1908,7 +1910,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       error: null,
       isEmpty: items.isEmpty,
       onRetry: _load,
-      topInset: AppSpacing.sm,
+      topInset: PpForgeSpacing.sm,
       rowGap: 0,
       empty: EmptyView(
         icon: AppIcons.scheduled,
@@ -1937,9 +1939,9 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           first: next == null,
           title: l.recurringAheadCustomize,
           children: [
-            AppListRow(
+            PpForgeListRow(
               key: const ValueKey('upcomingCustomize'),
-              leading: const AppAvatar.icon(AppIcons.edit),
+              leading: const PpForgeAvatar.icon(AppIcons.edit),
               title: l.recurringAheadCustomize,
               titleStrong: true,
               line2: ListRowLine(parts: [l.recurringAheadCustomizeHint]),
@@ -1974,7 +1976,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     final first = _nextItem?.date ?? _upcoming.items.firstOrNull?.date;
     final year = ValueNotifier<int>((first ?? today()).year);
     unawaited(
-      showAppSheetCustom<void>(
+      showPpForgeSheetCustom<void>(
         context,
         builder: (_) => ValueListenableBuilder<int>(
           valueListenable: _sheetTick,
@@ -2039,8 +2041,8 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         for (final MapEntry(key: m, value: list) in byMonth.entries) ...[
           Padding(
             padding: const EdgeInsets.only(
-              top: AppSpacing.sm,
-              bottom: AppSpacing.xs + 2,
+              top: PpForgeSpacing.sm,
+              bottom: PpForgeSpacing.xs + 2,
             ),
             child: Text(
               DateFormat.yMMMM(_locale).format(DateTime(shown, m)),
@@ -2069,7 +2071,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       header: years.isEmpty || lastYear == years.first
           ? null
           : Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              padding: const EdgeInsets.only(bottom: PpForgeSpacing.sm),
               child: Center(
                 child: StepperPill.period(
                   key: const ValueKey('aheadYear'),
@@ -2084,10 +2086,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             ),
       builder: (_, _) => Padding(
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
+          PpForgeSpacing.lg,
           0,
-          AppSpacing.lg,
-          AppSpacing.lg,
+          PpForgeSpacing.lg,
+          PpForgeSpacing.lg,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2095,7 +2097,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           children: [
             ...body,
             if (_upcomingMore) ...[
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               const ListRowSkeleton(),
             ],
           ],
@@ -2114,7 +2116,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     required bool last,
     required bool weekly,
   }) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final symbol = context.readUserCurrencySymbol;
     final skipped = i.state == OccurrenceState.archived;
     final slot = parseYmd(i.slot);
@@ -2186,7 +2188,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     double bottom,
   ) {
     final w = working;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final icon = recurringIconCode(
       kind: w.kind,
       own: w.iconCode,
@@ -2198,10 +2200,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     final accent = icon.tintFor(palette);
     final tags = context.watch<TagsCubit>();
     return DetailLayout(
-      topInset: barInset + AppSpacing.lg,
+      topInset: barInset + PpForgeSpacing.lg,
       bottomInset: bottom,
       onRefresh: widget.isCreate ? null : _load,
-      hero: AppHeroCard(
+      hero: PpForgeHeroCard(
         style: HeroStyle.tinted(color: accent, glyph: AppIcons.scheduled),
         mode: HeroCardMode.edit,
         content: [
@@ -2266,8 +2268,8 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (w.kind == RecurringKind.reminder) ...[
-            AppMessage(message: l.fpRecurringReminderHint),
-            const SizedBox(height: AppSpacing.md),
+            PpForgeMessage(message: l.fpRecurringReminderHint),
+            const SizedBox(height: PpForgeSpacing.md),
           ],
           _periodSection(l),
           _detailSection(l),
@@ -2280,7 +2282,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         maxLength: TextLimits.note,
         editField: DetailStacked(
           label: l.commonNote,
-          child: AppInput.inline(
+          child: PpForgeInput.inline(
             editing: true,
             controller: _ctrl[_Field.note]!,
             focusNode: _noteFocus,

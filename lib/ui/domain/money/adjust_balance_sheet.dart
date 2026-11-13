@@ -49,7 +49,7 @@ Future<AdjustBalanceSheetResult?> showAdjustBalanceFormSheet(
   bool isCredit = false,
   bool setOnly = false,
 }) {
-  return showAppSheetCustom<AdjustBalanceSheetResult>(
+  return showPpForgeSheetCustom<AdjustBalanceSheetResult>(
     context,
     builder: (_) => AdjustBalanceSheet(
       name: name,
@@ -144,7 +144,7 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
       color: tint,
       fontFeatures: const [FontFeature.tabularFigures()],
     );
-    final moneyStyle = AppTypography.of(context, AppTextRole.money);
+    final moneyStyle = PpForgeTypography.of(context, PpForgeTextRole.money);
 
     return FormSheet(
       title: s.title,
@@ -160,10 +160,10 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          AppCard(
-            style: AppCardStyle.tinted,
+          PpForgeCard(
+            style: PpForgeCardStyle.tinted,
             color: tint,
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.all(PpForgeSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
@@ -176,7 +176,7 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: PpForgeSpacing.xs),
                 if (!widget.setOnly) ...[
                   _CardLine(
                     label: s.currentLabel,
@@ -186,7 +186,7 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
                       style: moneyStyle?.copyWith(color: tint),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: PpForgeSpacing.md),
                 ],
                 Text(
                   s.newLabel,
@@ -194,9 +194,9 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
                     color: scheme.onSurfaceVariant,
                   ),
                 ),
-                AppInput.card(
+                PpForgeInput.card(
                   controller: _controller,
-                  type: AppInputType.amount,
+                  type: PpForgeInputType.amount,
                   allowNegative: true,
                   autofocus: true,
                   style: bigAmount,
@@ -212,7 +212,7 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
                   onChanged: (_) => setState(() {}),
                 ),
                 if (!widget.setOnly) ...[
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: PpForgeSpacing.md),
                   _CardLine(
                     label: s.diffLabel,
                     value: MoneyText(
@@ -228,32 +228,32 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
             ),
           ),
           if (!widget.setOnly) ...[
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: PpForgeSpacing.md),
             _FieldRow(
               label: s.descriptionLabel,
-              child: AppInput(
+              child: PpForgeInput(
                 controller: _description,
                 dense: true,
                 maxLength: TextLimits.description,
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: PpForgeSpacing.sm),
             _FieldRow(
               label: s.noteLabel,
-              child: AppInput(
+              child: PpForgeInput(
                 controller: _note,
                 dense: true,
                 maxLength: TextLimits.note,
                 maxLines: 3,
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: PpForgeSpacing.sm),
             Text(
               canAdjust ? s.willCreate(diffText) : s.noChange,
               style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ],
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: PpForgeSpacing.sm),
         ],
       ),
     );
@@ -298,7 +298,7 @@ class _FieldRow extends StatelessWidget {
         SizedBox(
           width: 88,
           child: Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.md),
+            padding: const EdgeInsets.only(top: PpForgeSpacing.md),
             child: Text(
               label,
               style: theme.textTheme.bodyMedium?.copyWith(

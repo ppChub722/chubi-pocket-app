@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../molecules/message_share_box.dart';
+import 'package:pp_forge_core/ui.dart';
 
 /// The debt summary message (copy / share) — a [MessageShareBox] with the
 /// debt page's keys.

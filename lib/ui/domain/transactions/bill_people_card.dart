@@ -145,7 +145,7 @@ class BillPeopleCard extends StatelessWidget {
     final max = maxRows;
     // A row: the name line, the chips line, a little for a tag.
     final rowHeight =
-        SplitRow.height + ChipSize.mini.heightOf(context) + AppSpacing.md;
+        SplitRow.height + ChipSize.mini.heightOf(context) + PpForgeSpacing.md;
     return ShareCard(
       flat: flat,
       statusLeading: statusLeading,
@@ -154,19 +154,19 @@ class BillPeopleCard extends StatelessWidget {
       showHeader: !readOnly,
       actions: [
         if (showEqually && !readOnly)
-          AppButton(
+          PpForgeButton(
             kind: ButtonIconKind.split,
             label: l.txSplitEqually,
-            variant: AppButtonVariant.outlined,
-            size: AppButtonSize.control,
+            variant: PpForgeButtonVariant.outlined,
+            size: PpForgeButtonSize.control,
             onPressed: onEqually,
           ),
         if (!readOnly)
-          AppButton(
+          PpForgeButton(
             icon: AppIcons.add,
             label: addLabel ?? l.txSplitAddPerson,
-            variant: AppButtonVariant.outlined,
-            size: AppButtonSize.control,
+            variant: PpForgeButtonVariant.outlined,
+            size: PpForgeButtonSize.control,
             onPressed: onAdd,
           ),
       ],
@@ -256,8 +256,8 @@ class _BillPersonRowState extends State<_BillPersonRow> {
       avatar: avatar,
       name: name,
       chips: Wrap(
-        spacing: AppSpacing.xs,
-        runSpacing: AppSpacing.xs,
+        spacing: PpForgeSpacing.xs,
+        runSpacing: PpForgeSpacing.xs,
         children: [
           if (p.paid || (p.onPay != null && !readOnly))
             PayChip(

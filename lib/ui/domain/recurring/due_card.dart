@@ -1,16 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_button.dart';
-import '../../atoms/app_chip.dart';
-import '../../atoms/select_check.dart';
-import '../../molecules/date_tile.dart';
-import '../../tokens/app/app_colors.dart';
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app_radius.dart';
-import '../../tokens/app_spacing.dart';
-import '../../tokens/button_icon_kind.dart';
+import 'package:pp_forge_core/ui.dart';
+import '../tokens/app_icons.dart';
 import 'occurrence_row.dart';
-import '../../atoms/busy_scope.dart';
 
 /// Under a recurring item's hero: the one occurrence to act on. [warning]
 /// (something is due): edged and washed in the warning colour, with a
@@ -57,7 +49,7 @@ class OccurrenceFocusCard extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final text = theme.textTheme;
-    final warn = theme.extension<AppColors>()!.warning;
+    final warn = theme.extension<PpForgeColors>()!.warning;
     final muted = scheme.onSurfaceVariant;
     return Container(
       clipBehavior: Clip.antiAlias,
@@ -65,7 +57,7 @@ class OccurrenceFocusCard extends StatelessWidget {
         color: warning
             ? Color.alphaBlend(warn.withValues(alpha: 0.07), scheme.surface)
             : scheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(PpForgeRadius.lg),
         border: Border.all(
           color: warning ? warn.withValues(alpha: 0.6) : scheme.outlineVariant,
           width: warning ? 1.5 : 1,
@@ -78,15 +70,15 @@ class OccurrenceFocusCard extends StatelessWidget {
           if (title != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.md,
-                AppSpacing.lg,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.md,
+                PpForgeSpacing.lg,
                 0,
               ),
               child: Row(
                 children: [
                   Icon(AppIcons.warning, size: 18, color: warn),
-                  const SizedBox(width: AppSpacing.xs),
+                  const SizedBox(width: PpForgeSpacing.xs),
                   Expanded(
                     child: Text(
                       title!,
@@ -108,11 +100,11 @@ class OccurrenceFocusCard extends StatelessWidget {
             child: InkWell(
               onTap: onTap,
               child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
+                padding: const EdgeInsets.all(PpForgeSpacing.lg),
                 child: Row(
                   children: [
                     CalendarTile(date: date, color: warning ? warn : null),
-                    const SizedBox(width: AppSpacing.md),
+                    const SizedBox(width: PpForgeSpacing.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,12 +121,12 @@ class OccurrenceFocusCard extends StatelessWidget {
                                 ),
                               ),
                               if (tag != null) ...[
-                                const SizedBox(width: AppSpacing.xs),
+                                const SizedBox(width: PpForgeSpacing.xs),
                                 tag!,
                               ],
                             ],
                           ),
-                          const SizedBox(height: AppSpacing.xxs),
+                          const SizedBox(height: PpForgeSpacing.xxs),
                           DefaultTextStyle.merge(
                             style: text.headlineSmall?.copyWith(
                               fontWeight: FontWeight.w700,
@@ -156,15 +148,15 @@ class OccurrenceFocusCard extends StatelessWidget {
           if (actions.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
+                PpForgeSpacing.lg,
                 0,
-                AppSpacing.lg,
-                AppSpacing.md,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.md,
               ),
               child: Row(
                 children: [
                   for (final (i, a) in actions.indexed) ...[
-                    if (i > 0) const SizedBox(width: AppSpacing.sm),
+                    if (i > 0) const SizedBox(width: PpForgeSpacing.sm),
                     Expanded(
                       child: _button(
                         context,
@@ -177,7 +169,7 @@ class OccurrenceFocusCard extends StatelessWidget {
               ),
             ),
           ...footer,
-          if (footer.isNotEmpty) const SizedBox(height: AppSpacing.xs),
+          if (footer.isNotEmpty) const SizedBox(height: PpForgeSpacing.xs),
         ],
       ),
     );
@@ -189,25 +181,25 @@ class OccurrenceFocusCard extends StatelessWidget {
     required bool primary,
   }) {
     final theme = Theme.of(context);
-    Widget button = AppButton(
+    Widget button = PpForgeButton(
       label: a.label,
       onPressed: a.onTap,
       submits: a.submits,
       variant: a.destructive
-          ? AppButtonVariant.destructive
+          ? PpForgeButtonVariant.destructive
           : primary
-          ? AppButtonVariant.primary
-          : AppButtonVariant.outlined,
-      size: AppButtonSize.control,
+          ? PpForgeButtonVariant.primary
+          : PpForgeButtonVariant.outlined,
+      size: PpForgeButtonSize.control,
       expand: true,
     );
     if (primary && a.warning && !a.destructive) {
-      final warn = theme.extension<AppColors>()!.warning;
+      final warn = theme.extension<PpForgeColors>()!.warning;
       button = Theme(
         data: theme.copyWith(
           colorScheme: theme.colorScheme.copyWith(
             primary: warn,
-            onPrimary: AppChip.readableOn(warn, Colors.white),
+            onPrimary: PpForgeChip.readableOn(warn, Colors.white),
           ),
         ),
         child: button,
@@ -244,13 +236,13 @@ class OccurrenceFocusNext extends StatelessWidget {
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.sm + AppSpacing.xxs,
+              horizontal: PpForgeSpacing.lg,
+              vertical: PpForgeSpacing.sm + PpForgeSpacing.xxs,
             ),
             child: Row(
               children: [
                 Icon(AppIcons.date, size: 16, color: scheme.onSurfaceVariant),
-                const SizedBox(width: AppSpacing.xs),
+                const SizedBox(width: PpForgeSpacing.xs),
                 Expanded(
                   child: Text(
                     label,
@@ -305,19 +297,19 @@ class DueCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final warning = Theme.of(context).extension<AppColors>()!.warning;
+    final warning = Theme.of(context).extension<PpForgeColors>()!.warning;
     final shown = open || onToggle == null;
     final head = Padding(
       padding: EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.md,
-        onToggle == null ? AppSpacing.lg : AppSpacing.md,
-        shown ? AppSpacing.xs : AppSpacing.md,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.md,
+        onToggle == null ? PpForgeSpacing.lg : PpForgeSpacing.md,
+        shown ? PpForgeSpacing.xs : PpForgeSpacing.md,
       ),
       child: Row(
         children: [
           Icon(AppIcons.warning, size: 18, color: warning),
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: PpForgeSpacing.xs),
           Expanded(
             child: Text(
               title,
@@ -333,7 +325,7 @@ class DueCard extends StatelessWidget {
               style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           if (onToggle != null) ...[
-            const SizedBox(width: AppSpacing.xs),
+            const SizedBox(width: PpForgeSpacing.xs),
             Icon(
               shown ? AppIcons.collapse : AppIcons.expand,
               key: const ValueKey('dueCardFold'),
@@ -351,7 +343,7 @@ class DueCard extends StatelessWidget {
           warning.withValues(alpha: 0.07),
           scheme.surface,
         ),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(PpForgeRadius.lg),
         border: Border.all(color: warning.withValues(alpha: 0.6), width: 1.5),
       ),
       child: AnimatedSize(
@@ -371,7 +363,10 @@ class DueCard extends StatelessWidget {
                   child: InkWell(onTap: onToggle, child: head),
                 ),
               ),
-            if (shown) ...[...children, const SizedBox(height: AppSpacing.xs)],
+            if (shown) ...[
+              ...children,
+              const SizedBox(height: PpForgeSpacing.xs),
+            ],
           ],
         ),
       ),
@@ -429,12 +424,12 @@ class DueSelectBar extends StatelessWidget {
         border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
       ),
       child: Padding(
-        // The same start as an AppListRow: its check sits over the rows'.
+        // The same start as an PpForgeListRow: its check sits over the rows'.
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.xs,
-          AppSpacing.lg,
-          AppSpacing.sm,
+          PpForgeSpacing.lg,
+          PpForgeSpacing.xs,
+          PpForgeSpacing.lg,
+          PpForgeSpacing.sm,
         ),
         child: LayoutBuilder(
           builder: (context, box) => Row(
@@ -444,7 +439,7 @@ class DueSelectBar extends StatelessWidget {
                   child: InkWell(
                     key: const ValueKey('dueSelectAll'),
                     onTap: onSelectAll,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderRadius: BorderRadius.circular(PpForgeRadius.sm),
                     child: Row(
                       children: [
                         SelectCheck(
@@ -455,7 +450,7 @@ class DueSelectBar extends StatelessWidget {
                               : null,
                           onTap: onSelectAll,
                         ),
-                        const SizedBox(width: AppSpacing.xs),
+                        const SizedBox(width: PpForgeSpacing.xs),
                         Flexible(
                           child: Text(
                             selectLabel,
@@ -490,35 +485,35 @@ class DueSelectBar extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      AppButton(
+                      PpForgeButton(
                         kind: ButtonIconKind.skip,
                         key: const ValueKey('dueSkipSelected'),
                         label: skipLabel,
                         onPressed: any ? onSkip : null,
                         submits: true,
-                        variant: AppButtonVariant.outlined,
-                        size: AppButtonSize.chip,
+                        variant: PpForgeButtonVariant.outlined,
+                        size: PpForgeButtonSize.chip,
                       ),
                       if (paidLabel != null && onPaid != null) ...[
-                        const SizedBox(width: AppSpacing.sm),
-                        AppButton(
+                        const SizedBox(width: PpForgeSpacing.sm),
+                        PpForgeButton(
                           kind: ButtonIconKind.paid,
                           key: const ValueKey('duePaidSelected'),
                           label: paidLabel!,
                           onPressed: any ? onPaid : null,
                           submits: true,
-                          variant: AppButtonVariant.outlined,
-                          size: AppButtonSize.chip,
+                          variant: PpForgeButtonVariant.outlined,
+                          size: PpForgeButtonSize.chip,
                         ),
                       ],
-                      const SizedBox(width: AppSpacing.sm),
-                      AppButton(
+                      const SizedBox(width: PpForgeSpacing.sm),
+                      PpForgeButton(
                         kind: ButtonIconKind.confirm,
                         key: const ValueKey('dueConfirmSelected'),
                         label: confirmLabel,
                         onPressed: any ? onConfirm : null,
                         submits: true,
-                        size: AppButtonSize.chip,
+                        size: PpForgeButtonSize.chip,
                       ),
                     ],
                   ),
@@ -535,7 +530,7 @@ class DueSelectBar extends StatelessWidget {
                       radius: 18,
                       child: Padding(
                         padding: const EdgeInsetsDirectional.only(
-                          start: AppSpacing.xs,
+                          start: PpForgeSpacing.xs,
                         ),
                         child: Icon(
                           open ? AppIcons.collapse : AppIcons.expand,
@@ -573,7 +568,7 @@ class DueMoreRow extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+          padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.sm),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

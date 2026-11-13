@@ -77,7 +77,7 @@ Future<bool> confirmIncompleteSplits(
       DialogChoice(
         value: false,
         label: l.editKeepEditing,
-        variant: AppButtonVariant.primary,
+        variant: PpForgeButtonVariant.primary,
       ),
       DialogChoice(value: true, label: l.txSplitSkipIncomplete),
     ],

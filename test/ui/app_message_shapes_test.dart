@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'row_geometry_harness.dart';
 
-/// AppMessage shapes (owner 2026-10-30): one line when the text fits beside at
+/// PpForgeMessage shapes (owner 2026-10-30): one line when the text fits beside at
 /// most one action; otherwise icon + text + ✕ on the first text line and the
 /// actions right-aligned under the text.
 const _short = 'Wallet deleted';
@@ -12,17 +12,17 @@ const _long =
     'The wallet and its 24 transactions were deleted from this device and '
     'from the server, so they will not come back on the other phone';
 
-AppMessage _message({
+PpForgeMessage _message({
   required String text,
   required int actions,
   bool close = true,
-}) => AppMessage(
+}) => PpForgeMessage(
   tone: Tone.danger,
   message: text,
   onClose: close ? () {} : null,
   actions: [
-    if (actions >= 1) AppMessageAction(label: 'Undo', onPressed: () {}),
-    if (actions == 2) AppMessageAction(label: 'View', onPressed: () {}),
+    if (actions >= 1) PpForgeMessageAction(label: 'Undo', onPressed: () {}),
+    if (actions == 2) PpForgeMessageAction(label: 'View', onPressed: () {}),
   ],
 );
 
@@ -57,7 +57,7 @@ void main() {
           final box = t.getRect(
             find
                 .descendant(
-                  of: find.byType(AppMessage),
+                  of: find.byType(PpForgeMessage),
                   matching: find.byType(Material),
                 )
                 .first,

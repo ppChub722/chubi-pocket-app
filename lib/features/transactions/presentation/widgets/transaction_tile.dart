@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/shell/tab_nav.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../categories/presentation/category_label.dart';

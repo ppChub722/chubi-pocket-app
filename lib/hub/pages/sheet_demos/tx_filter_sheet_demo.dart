@@ -121,17 +121,17 @@ class _TxFilterSheetDemoState extends State<_TxFilterSheetDemo> {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Wrap(
-        spacing: AppSpacing.sm,
-        runSpacing: AppSpacing.sm,
+        spacing: PpForgeSpacing.sm,
+        runSpacing: PpForgeSpacing.sm,
         children: [
-          AppButton(
+          PpForgeButton(
             label: 'Filters',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: () => _open(options: Future.value(_options)),
           ),
-          AppButton(
+          PpForgeButton(
             label: 'Loading (2 s)',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: () => _open(
               options: Future.delayed(
                 const Duration(seconds: 2),
@@ -139,28 +139,28 @@ class _TxFilterSheetDemoState extends State<_TxFilterSheetDemo> {
               ),
             ),
           ),
-          AppButton(
+          PpForgeButton(
             label: 'Many options',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: () => _open(options: Future.value(_manyOptions)),
           ),
-          AppButton(
+          PpForgeButton(
             label: 'Amount range preset',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: () => _open(
               options: Future.value(_options),
               initial: const TxFilterSelection(amountMin: 100, amountMax: 5000),
             ),
           ),
-          AppButton(
+          PpForgeButton(
             label: 'Wallet locked',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: () =>
                 _open(options: Future.value(_options), walletLocked: true),
           ),
         ],
       ),
-      const SizedBox(height: AppSpacing.sm),
+      const SizedBox(height: PpForgeSpacing.sm),
       Text(_result),
     ],
   );

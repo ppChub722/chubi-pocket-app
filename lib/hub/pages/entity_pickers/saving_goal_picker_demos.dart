@@ -5,7 +5,7 @@ import '../../../features/saving_goals/data/saving_goals_repository.dart';
 import '../../../features/saving_goals/presentation/widgets/saving_goal_picker.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
-import '../../hub_kit.dart';
+import 'package:pp_forge_core/hub.dart';
 
 /// [SavingGoalPicker] as the saving entry form and the goal page's "move"
 /// open it, on the real goals.
@@ -20,9 +20,9 @@ class SavingGoalPickerDemos extends StatelessWidget {
     SavingGoalPicked(:final goal) => goal.name,
   };
 
-  Widget _new(String label, Future<String> Function() run) => AppButton(
+  Widget _new(String label, Future<String> Function() run) => PpForgeButton(
     label: label,
-    variant: AppButtonVariant.outlined,
+    variant: PpForgeButtonVariant.outlined,
     onPressed: () async => onResult(await run()),
   );
 
@@ -30,8 +30,8 @@ class SavingGoalPickerDemos extends StatelessWidget {
     title: title,
     note: note,
     child: Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: buttons,
     ),
   );

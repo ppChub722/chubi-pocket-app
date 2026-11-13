@@ -90,7 +90,7 @@ class Account extends Equatable {
 
   /// Read-only: the user's currency, set by the BE (never sent on writes).
   final String currency;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final String? logoUrl;
 
   final double? creditLimit;
@@ -124,14 +124,14 @@ class Account extends Equatable {
   bool get isArchived => status == AccountStatus.archived;
 
   /// The icon as shown: the user's own, else the type's default.
-  IconCode get shownIconCode => iconCode.orDefault(type.iconDefault);
+  PpForgeIconCode get shownIconCode => iconCode.orDefault(type.iconDefault);
 
   IconData get shownIcon => iconCode.glyphOr(type.iconDefault);
 
   /// The wallet's own colour: the user's, else the type's default.
   Color colorOf(BuildContext context) => iconCode.tintOr(
     type.iconDefault,
-    Theme.of(context).extension<AppColors>()!,
+    Theme.of(context).extension<PpForgeColors>()!,
   );
 
   List<WalletMember> get otherMembers => members.where((m) => !m.isMe).toList();
@@ -149,7 +149,7 @@ class Account extends Equatable {
     AccountType? type,
     double? balance,
     String? currency,
-    IconCode? iconCode,
+    PpForgeIconCode? iconCode,
     String? description,
     String? note,
     double? creditLimit,
@@ -221,7 +221,7 @@ class Account extends Equatable {
       balance: (json['balance'] as num).toDouble(),
       currency: json['currency'] as String,
       iconCode: json['icon_code'] != null
-          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+          ? PpForgeIconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
       description: json['description'] as String?,
       note: json['note'] as String?,
@@ -355,7 +355,7 @@ class WalletSavingsBucket extends Equatable {
   final bool isGoal;
   final String? id;
   final String name;
-  final IconCode? iconCode;
+  final PpForgeIconCode? iconCode;
   final double amount;
 
   factory WalletSavingsBucket.fromJson(Map<String, dynamic> json) =>
@@ -364,7 +364,9 @@ class WalletSavingsBucket extends Equatable {
         id: json['id'] as String?,
         name: json['name'] as String? ?? '',
         iconCode: json['icon_code'] is Map<String, dynamic>
-            ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+            ? PpForgeIconCode.fromJson(
+                json['icon_code'] as Map<String, dynamic>,
+              )
             : null,
         amount: (json['amount'] as num?)?.toDouble() ?? 0,
       );

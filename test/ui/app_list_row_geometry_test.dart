@@ -4,14 +4,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'row_geometry_harness.dart';
 
-/// AppRow plan step 0: AppListRow's geometry, fill and opacity, recorded at
-/// app main `8e28650` (before AppListRow moved onto AppRow). The rebuild must
+/// PpForgeRow plan step 0: PpForgeListRow's geometry, fill and opacity, recorded at
+/// app main `8e28650` (before PpForgeListRow moved onto PpForgeRow). The rebuild must
 /// keep every value; a change here is a visual change to every list.
 void main() {
   const leadingKey = Key('leading');
   const valueKey = Key('value');
   const footerKey = Key('footer');
-  final row = find.byType(AppListRow);
+  final row = find.byType(PpForgeListRow);
   final title = find.text('Title text');
   void noop() {}
 
@@ -39,11 +39,11 @@ void main() {
 
   final cases = <String, GeometryCase>{
     'plain': (
-      build: () => AppListRow(leading: leading(), title: 'Title text'),
+      build: () => PpForgeListRow(leading: leading(), title: 'Title text'),
       measure: base,
     ),
     'check': (
-      build: () => AppListRow(
+      build: () => PpForgeListRow(
         leading: leading(),
         title: 'Title text',
         checked: true,
@@ -55,7 +55,7 @@ void main() {
       },
     ),
     'markChipsStatus': (
-      build: () => AppListRow(
+      build: () => PpForgeListRow(
         leading: leading(),
         title: 'Title text',
         titleMark: const ListRowMark(Icons.link, color: Color(0xFF00897B)),
@@ -70,7 +70,7 @@ void main() {
       },
     ),
     'lines': (
-      build: () => AppListRow(
+      build: () => PpForgeListRow(
         leading: leading(),
         title: 'Title text',
         line2: const ListRowLine(
@@ -91,7 +91,7 @@ void main() {
       },
     ),
     'trailing': (
-      build: () => AppListRow(
+      build: () => PpForgeListRow(
         leading: leading(),
         title: 'Title text',
         trailing: const ListRowTrailing.value(
@@ -106,7 +106,7 @@ void main() {
       },
     ),
     'actions': (
-      build: () => AppListRow(
+      build: () => PpForgeListRow(
         leading: leading(),
         title: 'Title text',
         trailing: const ListRowTrailing.text('Due'),
@@ -123,7 +123,7 @@ void main() {
       },
     ),
     'footer': (
-      build: () => AppListRow(
+      build: () => PpForgeListRow(
         leading: leading(),
         title: 'Title text',
         trailing: const ListRowTrailing.value(Text('99', key: valueKey)),
@@ -138,11 +138,11 @@ void main() {
     ),
     'indent': (
       build: () =>
-          AppListRow(leading: leading(), title: 'Title text', indent: 24),
+          PpForgeListRow(leading: leading(), title: 'Title text', indent: 24),
       measure: base,
     ),
     'dimmed': (
-      build: () => AppListRow(
+      build: () => PpForgeListRow(
         leading: leading(),
         title: 'Title text',
         trailing: const ListRowTrailing.value(Text('99', key: valueKey)),
@@ -155,7 +155,7 @@ void main() {
       },
     ),
     'highlighted': (
-      build: () => AppListRow(
+      build: () => PpForgeListRow(
         leading: leading(),
         title: 'Title text',
         highlighted: true,
@@ -164,7 +164,7 @@ void main() {
       measure: base,
     ),
     'accent': (
-      build: () => AppListRow(
+      build: () => PpForgeListRow(
         leading: leading(),
         title: 'Title text',
         accent: const Color(0xFFFFC107),

@@ -54,10 +54,10 @@ void main() {
       (e.renderObject! as RenderParagraph).text.style?.fontSize ?? 0,
   ];
 
-  final leadings = <String, (Widget Function(AppRowDensity), double?)>{
+  final leadings = <String, (Widget Function(PpForgeRowDensity), double?)>{
     'icon': (
-      (d) => d == AppRowDensity.detail
-          ? const AppIcon(AppIcons.link, key: leadingKey)
+      (d) => d == PpForgeRowDensity.detail
+          ? const PpForgeIcon(AppIcons.link, key: leadingKey)
           : const IconTile(
               key: leadingKey,
               icon: AppIcons.link,
@@ -66,8 +66,8 @@ void main() {
       null,
     ),
     'icon in a slot': (
-      (d) => d == AppRowDensity.detail
-          ? const AppIcon(AppIcons.link, key: leadingKey)
+      (d) => d == PpForgeRowDensity.detail
+          ? const PpForgeIcon(AppIcons.link, key: leadingKey)
           : const IconTile(
               key: leadingKey,
               icon: AppIcons.link,
@@ -82,11 +82,11 @@ void main() {
     ),
   };
 
-  Widget row(AppRowDensity d, Widget leading, double? size, RowBadge? b) =>
+  Widget row(PpForgeRowDensity d, Widget leading, double? size, RowBadge? b) =>
       SectionCard(
         first: true,
         children: [
-          AppRow(
+          PpForgeRow(
             key: rowKey,
             density: d,
             leading: leading,
@@ -98,7 +98,7 @@ void main() {
         ],
       );
 
-  for (final density in AppRowDensity.values) {
+  for (final density in PpForgeRowDensity.values) {
     for (final MapEntry(key: kind, value: (leading, size))
         in leadings.entries) {
       for (final badge in const [
@@ -144,14 +144,14 @@ void main() {
       SectionCard(
         first: true,
         children: [
-          AppDetailRow(
+          PpForgeDetailRow(
             key: const Key('a'),
             leading: Avatar(AvatarData.forName('Pond'), size: 32),
             leadingSize: 32,
             badge: const RowBadge.logo(ColoredBox(color: Color(0xFF229ED9))),
             label: 'Linked',
           ),
-          const AppDetailRow(
+          const PpForgeDetailRow(
             key: Key('b'),
             leading: SizedBox.square(
               dimension: 32,
@@ -160,7 +160,7 @@ void main() {
             leadingSize: 32,
             label: 'Logo',
           ),
-          AppDetailRow(
+          PpForgeDetailRow(
             key: const Key('c'),
             leading: Avatar(AvatarData.forName('Pond'), size: 32),
             leadingSize: 32,

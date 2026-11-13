@@ -9,7 +9,7 @@ Future<TxPeriod?> showPeriodSheet(
   required TxPeriod current,
 }) async {
   final l = AppLocalizations.of(context)!;
-  final pick = await AppDatePicker.period(
+  final pick = await PpForgeDatePicker.period(
     context,
     current: PeriodPick(
       PeriodUnit.values.byName(current.kind.name),
