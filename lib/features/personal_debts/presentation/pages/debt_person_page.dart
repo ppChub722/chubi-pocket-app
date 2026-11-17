@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,10 +17,8 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../contacts/presentation/cubit/contacts_cubit.dart';
 import '../../../contacts/presentation/widgets/contact_picker.dart';
-import '../../../recurring/domain/recurring.dart'
-    show RecurringKind, RecurringStatus;
-import '../../../recurring/presentation/recurring_rows.dart'
-    show debtParts, pauseReasonChip, recurringIconCode;
+import '../../../recurring/data/recurring_repository.dart';
+import '../../../recurring/domain/recurring.dart' show RecurringKind;
 import '../../../transactions/domain/refs.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 
@@ -98,7 +98,7 @@ class _PersonViewState extends State<_PersonView> {
   /// [จ่ายคืน ฿x] / [รับคืน ฿x]: quick create, settle chip, the open amount.
   Future<void> _settle(DebtPersonState s) async {
     final net = s.balance?.net ?? 0;
-    await showQuickCreateSheet(
+    final saved = await showQuickCreateSheet(
       context,
       preset: QuickCreatePreset.debt(
         person: _person(s),
@@ -107,6 +107,34 @@ class _PersonViewState extends State<_PersonView> {
         amount: net.abs(),
       ),
     );
+    if (saved && mounted) await _offerInstallmentMark(s, owedToMe: net > 0);
+  }
+
+  /// After a repayment: ทำเครื่องหมายว่าจ่ายงวดแล้ว on the oldest unticked
+  /// installment of this counterparty's plan item on that side (a tick only;
+  /// the money is the repayment).
+  Future<void> _offerInstallmentMark(
+    DebtPersonState s, {
+    required bool owedToMe,
+  }) async {
+    final pick = installmentToMark(s.recurrings, owedToMe: owedToMe);
+    if (pick == null) return;
+    final l = AppLocalizations.of(context)!;
+    final ok = await showConfirmDialog(
+      context,
+      title: l.debtsMarkInstallment,
+      message: l.debtsMarkInstallmentOf(pick.item.name, pick.seq),
+      confirmLabel: l.recurringInstallmentMarkPaid,
+    );
+    if (!ok || !mounted) return;
+    try {
+      await RecurringRepository.of(
+        context,
+      ).markInstallment(pick.item.id, pick.seq, paid: true);
+      if (mounted) unawaited(_cubit.load());
+    } on ApiException catch (e) {
+      if (mounted) showErrorSnackBar(context, e);
+    }
   }
 
   Future<void> _copy(String text) async {
@@ -225,7 +253,7 @@ class _PersonViewState extends State<_PersonView> {
     final q = s.query;
     return [
       _hero(context, s),
-      if (s.balance!.person.contactId == null)
+      if (s.balance!.person.contactId == null && !s.balance!.isInstitution)
         SectionCard(
           children: [
             PpForgeDetailRow(
@@ -239,7 +267,7 @@ class _PersonViewState extends State<_PersonView> {
             ),
           ],
         ),
-      _recurringSection(l, s),
+      ?_recurringSection(l, s),
       PpForgeListToolbar(
         state: _toolbar,
         search: ListToolbarSearch(
@@ -276,82 +304,139 @@ class _PersonViewState extends State<_PersonView> {
     ];
   }
 
-  /// K13: the person's หนี้ recurring settings (each opens its page), then
-  /// ตั้งเป็นรายการประจำ: a new หนี้ setting with this person picked.
-  Widget _recurringSection(AppLocalizations l, DebtPersonState s) {
-    final person = s.balance!.person;
-    final rules = s.recurring;
+  /// 0.4.3 section รายการประจำ: one card per item of this counterparty (its
+  /// plan's n/N, what is left on its side, its lines); a tap opens the item.
+  /// An institution's cards' debts follow. Shown only when there is one.
+  Widget? _recurringSection(AppLocalizations l, DebtPersonState s) {
+    final items = s.recurrings;
+    final cards = s.cardDebts;
+    if (items.isEmpty && cards.isEmpty) return null;
+    final symbol = debtCurrencySymbol(context);
+    String money(double v) => moneyString(context, v, symbol: symbol);
     return SectionCard(
-      title: rules.isEmpty ? null : l.recurringTitle,
+      key: const ValueKey('debtRecurrings'),
+      title: '${l.debtsRecurringSection} | ${items.length}',
       children: [
-        for (final r in rules) _recurringRow(l, r),
-        DetailAddRow(
-          key: const ValueKey('debtPersonAddRecurring'),
-          label: l.debtsPersonAddRecurring,
-          icon: AppIcons.recurring,
-          onTap: () => openPage(
-            context,
-            Uri(
-              path: '/recurring/new',
-              queryParameters: {
-                'kind': RecurringKind.debt.toJson(),
-                'person_name': person.name,
-                'contact': ?person.contactId,
-              },
-            ).toString(),
+        for (final r in items)
+          RecurringItemCard(
+            key: ValueKey('debtRecurring:${r.id}'),
+            margin: const EdgeInsets.fromLTRB(
+              PpForgeSpacing.md,
+              0,
+              PpForgeSpacing.md,
+              PpForgeSpacing.sm,
+            ),
+            title: r.name,
+            iconCode: r.iconCode,
+            sideLabel: switch (r.signedLeft) {
+              final v? when v > 0.005 => l.debtsSideOwed(money(v)),
+              final v? when v < -0.005 => l.debtsSideOwe(money(v.abs())),
+              _ => null,
+            },
+            sideTone: switch (r.signedLeft) {
+              final v? when v > 0.005 => Tone.success,
+              final v? when v < -0.005 => Tone.danger,
+              _ => null,
+            },
+            chain: _planDots(r.plan),
+            lines: _lineSummaries(l, r, money),
+            onTap: () => openPage(context, '/recurring/${r.id}'),
           ),
-        ),
+        for (final c in cards)
+          PpForgeListRow(
+            key: ValueKey('debtCard:${c.account.id}'),
+            leading: const PpForgeAvatar.icon(AppIcons.creditCard, size: 36),
+            title: l.debtsCardDebt,
+            line2: ListRowLine(parts: [c.account.name]),
+            trailing: ListRowTrailing.value(
+              MoneyText(c.amount, symbol: symbol, tone: MoneyTone.expense),
+            ),
+            onTap: () => openPage(context, '/accounts/${c.account.id}'),
+          ),
       ],
     );
   }
 
-  /// One setting: its icon and name (ไม่มียอดค้าง / พักไว้ beside it), then
-  /// จดหนี้ | จ่ายหนี้ and when it is next; its next amount on the right.
-  Widget _recurringRow(AppLocalizations l, DebtPersonRecurring r) {
-    final paused = r.status == RecurringStatus.paused;
-    final next = r.nextDate;
-    final amount = r.nextAmount ?? r.amount;
-    final received = r.direction == DebtEntryDirection.received;
-    return PpForgeListRow(
-      key: ValueKey('debtPersonRecurring:${r.id}'),
-      leading: IconDisplay(
-        type: IconType.category,
-        size: 36,
-        iconCode: recurringIconCode(kind: RecurringKind.debt, own: r.iconCode),
-      ),
-      title: r.name,
-      status: paused
-          ? (pauseReasonChip(l, r.pauseReason) ??
-                ListRowChip(
-                  l.recurringStatusPaused,
-                  tone: Tone.warning,
-                  icon: AppIcons.pause,
-                ))
-          : r.dueCount > 0
-          ? ListRowChip(
-              l.occurrenceStateNotCreated,
-              tone: Tone.warning,
-              selected: true,
-            )
-          : null,
-      line2: ListRowLine(
-        icon: AppIcons.recurring,
-        parts: [
-          ...debtParts(l, person: null, sub: r.sub),
-          if (next != null && !paused) dueLabel(l, date: next),
-        ],
-      ),
-      trailing: amount > 0
-          ? ListRowTrailing.value(
-              MoneyText(
-                received ? amount : -amount,
-                tone: MoneyTone.signed,
-                symbol: debtCurrencySymbol(context),
+  /// A plan's installments as chain dots: ticked = paid, the next one
+  /// current, the rest ahead.
+  static List<ChainDot>? _planDots(DebtRecurringPlan? p) {
+    if (p == null || p.count <= 0) return null;
+    return [
+      for (var i = 0; i < p.count; i++)
+        i < p.done
+            ? ChainDot.paid
+            : i == p.done
+            ? ChainDot.current
+            : ChainDot.future,
+    ];
+  }
+
+  /// An item's lines in one line each: จดหนี้ / จ่ายหนี้, the wallet or who
+  /// pays for me, the next date; without lines from the BE, its next round.
+  List<RecurringLineSummary> _lineSummaries(
+    AppLocalizations l,
+    DebtCounterpartyRecurring r,
+    String Function(double) money,
+  ) {
+    String? date(DateTime? d) =>
+        d == null ? null : DateFormat.MMMd(_locale).format(d);
+    Widget? amount(double? a) => a == null || a <= 0 ? null : Text(money(a));
+    if (r.lines.isEmpty) {
+      final next = date(r.nextDate);
+      return next == null
+          ? const []
+          : [
+              RecurringLineSummary(
+                text: '${l.recurringAheadNext} $next',
+                amount: amount(r.nextAmount),
               ),
-            )
-          : null,
-      dimmed: paused,
-      onTap: () => openPage(context, '/recurring/${r.id}'),
+            ];
+    }
+    return [
+      for (final line in r.lines)
+        RecurringLineSummary(
+          text: [
+            line.repayment ? l.debtSettleChip : l.debtRecordChip,
+            if (line.paidByName != null)
+              l.recurringLinePaidBy(line.paidByName!)
+            else
+              ?line.accountName,
+            ?date(line.nextDate),
+          ].join(' · '),
+          amount: amount(line.amount),
+          paidBy: line.paidByName != null,
+        ),
+    ];
+  }
+
+  /// + จดหนี้: quick create in debt mode with this person.
+  Future<void> _record(DebtPersonState s) => showQuickCreateSheet(
+    context,
+    preset: QuickCreatePreset.debt(
+      person: _person(s),
+      debtSub: DebtEntrySub.record,
+    ),
+  );
+
+  /// + รายการประจำ: a new หนี้ item with this counterparty picked.
+  void _newRecurring(DebtPersonState s) {
+    final b = s.balance!;
+    final i = b.institution;
+    openPage(
+      context,
+      Uri(
+        path: '/recurring/new',
+        queryParameters: {
+          'kind': RecurringKind.debt.toJson(),
+          if (i != null) ...{
+            'institution': i.id,
+            'institution_name': i.name,
+          } else ...{
+            'person_name': b.person.name,
+            'contact': ?b.person.contactId,
+          },
+        },
+      ).toString(),
     );
   }
 
@@ -382,14 +467,26 @@ class _PersonViewState extends State<_PersonView> {
       style: style,
       content: [
         HeroIdentity(
-          icon: PersonMark(
-            level: debtPersonLevel(b.person),
-            avatar: b.person.avatar,
-            size: 40,
-          ),
+          icon: b.institution != null
+              ? InstitutionMark(
+                  name: b.institution!.name,
+                  iconCode: b.institution!.iconCode,
+                )
+              : PersonMark(
+                  level: debtPersonLevel(b.person),
+                  avatar: b.person.avatar,
+                  size: 40,
+                ),
           name: Text(name),
           fact: fact.isEmpty ? null : DebtAgeText(fact, warn: (days ?? 0) > 30),
           actions: [
+            if (b.institution != null)
+              CardActionButton(
+                icon: AppIcons.bank,
+                tooltip: l.debtsInstitutionInfo,
+                onTap: () =>
+                    openPage(context, '/institutions/${b.institution!.id}'),
+              ),
             if (b.person.contactId != null)
               CardActionButton(
                 icon: AppIcons.contact,
@@ -428,6 +525,23 @@ class _PersonViewState extends State<_PersonView> {
               ? l.debtPersonChase
               : l.debtPersonSummary,
           onShare: () => _openShare(s),
+        ),
+        HeroChipRow(
+          chips: [
+            if (!b.isInstitution)
+              PpForgeChip(
+                key: const ValueKey('debtAddEntry'),
+                label: l.debtAddEntry,
+                icon: AppIcons.add,
+                onTap: () => unawaited(_record(s)),
+              ),
+            PpForgeChip(
+              key: const ValueKey('debtAddRecurring'),
+              label: l.debtAddRecurring,
+              icon: AppIcons.add,
+              onTap: () => _newRecurring(s),
+            ),
+          ],
         ),
       ],
     );
@@ -622,6 +736,11 @@ class _PersonViewState extends State<_PersonView> {
       leading: leading,
       title: title,
       titleChips: [
+        if (e.recurring case final ref?)
+          ListRowChip(
+            debtRecurringTagText(ref, _cubit.state.recurrings),
+            icon: AppIcons.recurring,
+          ),
         if (wallet != null)
           walletRowChip(
             context,

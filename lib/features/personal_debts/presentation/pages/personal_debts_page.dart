@@ -104,12 +104,8 @@ class _PeopleViewState extends State<_PeopleView> {
     final (line2, warn) = _line2(l, p);
     return PpForgeListRow(
       key: ValueKey(p.key),
-      leading: PersonMark(
-        level: debtPersonLevel(p.person),
-        avatar: p.person.avatar,
-        size: 36,
-      ),
-      title: p.person.name,
+      leading: _mark(p),
+      title: p.institution?.name ?? p.person.name,
       line2: line2 == null
           ? null
           : ListRowLine(parts: [line2], tone: warn ? Tone.warning : null),
@@ -127,79 +123,128 @@ class _PeopleViewState extends State<_PeopleView> {
     );
   }
 
-  /// ลูกหนี้ / เจ้าหนี้ / เคลียร์แล้ว, each under its header (icon, people,
-  /// total); the totals are the whole list's, not just the loaded pages.
+  /// 0.4.3: สถาบันการเงิน, then บุคคล; one group per counterparty (its mark,
+  /// name and net; ⌄ folds it), its first rows from the BE and "ดูทั้ง N"
+  /// to its page. A row from an older BE with no preview stays one row.
   List<Widget> _sections(AppLocalizations l, DebtPeopleState s, String symbol) {
-    final palette = Theme.of(context).extension<PpForgeColors>()!;
-    final scheme = Theme.of(context).colorScheme;
-    final owedToMe = [
+    final institutions = [
       for (final p in s.items)
-        if (p.net > 0.005) p,
+        if (p.isInstitution) p,
     ];
-    final iOwe = [
+    final people = [
       for (final p in s.items)
-        if (p.net < -0.005) p,
+        if (!p.isInstitution) p,
     ];
-    final even = [
-      for (final p in s.items)
-        if (p.net.abs() <= 0.005) p,
-    ];
-    Widget head(
-      String title,
-      IconData icon,
-      Color color,
-      int count,
-      double? total,
-    ) => PpForgeListHeader(
+    Widget head(String title, IconData icon, int count) => PpForgeListHeader(
       key: ValueKey('debtsSection-$title'),
-      leading: PpForgeIcon(icon, size: PpForgeIconSize.md, color: color),
+      leading: PpForgeIcon(icon, size: PpForgeIconSize.md),
       title: title,
       count: count,
-      trailing: total == null
-          ? null
-          : ListHeaderTrailing.value(
-              MoneyText(
-                total,
-                symbol: symbol,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(color: color),
-              ),
-              prefix: l.debtsSectionTotal,
-            ),
     );
     return [
-      if (owedToMe.isNotEmpty) ...[
-        head(
-          l.debtsOwedToMe,
-          AppIcons.flowIn,
-          palette.income,
-          s.counts[DebtListFilter.receivable] ?? owedToMe.length,
-          s.totals.owedToMe,
-        ),
-        for (final p in owedToMe) _row(l, p),
+      if (institutions.isNotEmpty) ...[
+        head(l.debtsSectionInstitutions, AppIcons.bank, institutions.length),
+        for (final p in institutions) _group(l, p, symbol),
       ],
-      if (iOwe.isNotEmpty) ...[
-        head(
-          l.debtsIOwe,
-          AppIcons.flowOut,
-          palette.expense,
-          s.counts[DebtListFilter.payable] ?? iOwe.length,
-          s.totals.iOwe,
-        ),
-        for (final p in iOwe) _row(l, p),
-      ],
-      if (even.isNotEmpty) ...[
-        head(
-          l.debtsEven,
-          AppIcons.check,
-          scheme.onSurfaceVariant,
-          even.length,
-          null,
-        ),
-        for (final p in even) _row(l, p),
+      if (people.isNotEmpty) ...[
+        head(l.debtsSectionPeople, AppIcons.contact, people.length),
+        for (final p in people) _group(l, p, symbol),
       ],
     ];
+  }
+
+  Widget _mark(PersonBalance p, {double size = 36}) {
+    final i = p.institution;
+    return i != null
+        ? InstitutionMark(name: i.name, iconCode: i.iconCode, size: size)
+        : PersonMark(
+            level: debtPersonLevel(p.person),
+            avatar: p.person.avatar,
+            size: size,
+          );
+  }
+
+  MoneyText _net(double net) => MoneyText(
+    net.abs(),
+    tone: net > 0.005
+        ? MoneyTone.income
+        : net < -0.005
+        ? MoneyTone.expense
+        : MoneyTone.plain,
+  );
+
+  Widget _group(AppLocalizations l, PersonBalance p, String symbol) {
+    if (p.entriesPreview.isEmpty) return _row(l, p);
+    final (line2, _) = _line2(l, p);
+    final all = p.entriesCount ?? p.entryCount;
+    return CollapsibleSection(
+      key: ValueKey('debtGroup-${p.key}'),
+      title: p.institution?.name ?? p.person.name,
+      summary: line2,
+      leading: _mark(p),
+      trailing: _net(p.net),
+      children: [
+        for (final r in p.entriesPreview.take(3)) _previewRow(l, p, r, symbol),
+        DueMoreRow(
+          key: ValueKey('debtGroupAll-${p.key}'),
+          label: all > 3 ? l.debtsSeeAll(all) : l.debtsOpenPage,
+          onTap: () => _open(p),
+        ),
+      ],
+    );
+  }
+
+  /// One of a group's first rows: a debt / repayment, a recurring item (n/N
+  /// and its next date), a card's debt or the general debts in one line.
+  Widget _previewRow(
+    AppLocalizations l,
+    PersonBalance p,
+    DebtPreviewRow r,
+    String symbol,
+  ) {
+    final locale = Localizations.localeOf(context).languageCode;
+    final date = r.date;
+    String? when(DateTime? d) => d == null
+        ? null
+        : DateFormatter.friendly(
+            d,
+            today: l.commonToday,
+            yesterday: l.commonYesterday,
+            locale: locale,
+          );
+    final plan = r.plan;
+    final (String title, IconData icon, String? path) = switch (r.kind) {
+      DebtPreviewKind.recurring => (
+        r.title ?? '',
+        AppIcons.recurring,
+        r.id == null ? null : '/recurring/${r.id}',
+      ),
+      DebtPreviewKind.cardDebt => (
+        '${l.debtsCardDebt} | ${r.title ?? ''}',
+        AppIcons.creditCard,
+        r.id == null ? null : '/accounts/${r.id}',
+      ),
+      DebtPreviewKind.general => (
+        r.count == null ? l.debtsGeneral : l.debtsGeneralCount(r.count!),
+        AppIcons.debt,
+        null,
+      ),
+      DebtPreviewKind.entry => (
+        r.title ?? l.debtsGeneral,
+        AppIcons.debt,
+        r.id == null ? null : '/personal-debts/${r.id}',
+      ),
+    };
+    return PpForgeListRow(
+      key: ValueKey('debtPreview-${p.key}-${r.kind.name}-${r.id}'),
+      leading: PpForgeAvatar.icon(icon, size: 32),
+      title: title,
+      line2: ListRowLine(
+        parts: [if (plan != null) '${plan.done}/${plan.count}', ?when(date)],
+      ),
+      trailing: ListRowTrailing.value(_net(r.amount)),
+      onTap: path == null ? () => _open(p) : () => openPage(context, path),
+    );
   }
 
   Widget _hero(AppLocalizations l, DebtPeopleState s, String symbol) {
@@ -259,6 +304,18 @@ class _PeopleViewState extends State<_PeopleView> {
               iconColor: palette.expense,
               color: palette.expense,
             ),
+            if (t.payThisMonth != null)
+              HeroFact(
+                l.debtsThisMonthPay,
+                moneyString(context, t.payThisMonth!, symbol: symbol),
+                icon: AppIcons.date,
+              ),
+            if (t.receiveThisMonth != null)
+              HeroFact(
+                l.debtsThisMonthReceive,
+                moneyString(context, t.receiveThisMonth!, symbol: symbol),
+                icon: AppIcons.date,
+              ),
             HeroFact(
               l.debtsOver30Label,
               l.debtsPeopleCount(count(DebtListFilter.overdue30)),

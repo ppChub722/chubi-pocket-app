@@ -40,6 +40,10 @@ enum NotificationType {
 
   recurringEnding('recurring_ending'),
 
+  /// 0.4.3: a reminder before a round is due (the item's reminders);
+  /// payload recurring_id, recurring_rule_id, name, date, amount.
+  recurringDueSoon('recurring_due_soon'),
+
   /// The day's tx the auto-create recorded (one notice per day).
   recurringAutoCreated('recurring_auto_created'),
 

@@ -40,6 +40,7 @@ import '../features/categories/presentation/cubit/categories_cubit.dart';
 import '../features/connections/data/connections_repository.dart';
 import '../features/connections/presentation/cubit/connections_cubit.dart';
 import '../features/contacts/data/contacts_repository.dart';
+import '../features/institutions/data/institutions_repository.dart';
 import '../features/contacts/presentation/cubit/contacts_cubit.dart';
 import '../features/home/data/dashboard_repository.dart';
 import '../features/pending/data/pending_repository.dart';
@@ -94,6 +95,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
   late final TransactionsRepository _transactionsRepository;
   late final NotificationsRepository _notificationsRepository;
   late final ContactsRepository _contactsRepository;
+  late final InstitutionsRepository _institutionsRepository;
   late final PersonalDebtsRepository _personalDebtsRepository;
   late final ProjectsRepository _projectsRepository;
   late final SavingGoalsRepository _savingGoalsRepository;
@@ -134,6 +136,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     _transactionsRepository = TransactionsRepository(client: _apiClient);
     _notificationsRepository = NotificationsRepository(client: _apiClient);
     _contactsRepository = ContactsRepository(client: _apiClient);
+    _institutionsRepository = InstitutionsRepository(client: _apiClient);
     _personalDebtsRepository = PersonalDebtsRepository(client: _apiClient);
     _projectsRepository = ProjectsRepository(client: _apiClient);
     _savingGoalsRepository = SavingGoalsRepository(client: _apiClient);
@@ -238,6 +241,9 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
         ),
         RepositoryProvider<ContactsRepository>.value(
           value: _contactsRepository,
+        ),
+        RepositoryProvider<InstitutionsRepository>.value(
+          value: _institutionsRepository,
         ),
         RepositoryProvider<PersonalDebtsRepository>.value(
           value: _personalDebtsRepository,

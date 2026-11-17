@@ -9,10 +9,11 @@ import '../domain/recurring.dart';
 import '../domain/recurring_item.dart';
 
 String recurringKindLabel(AppLocalizations l, RecurringKind k) => switch (k) {
+  RecurringKind.expense => l.fpRecurringKindExpense,
   RecurringKind.subscription => l.fpRecurringKindSubscription,
-  RecurringKind.installment => l.fpRecurringKindInstallment,
+  RecurringKind.bill => l.fpRecurringKindBill,
   RecurringKind.income => l.fpRecurringKindIncome,
-  RecurringKind.reminder => l.fpRecurringKindReminder,
+  RecurringKind.transfer => l.fpRecurringKindTransfer,
   RecurringKind.saving => l.fpRecurringKindSaving,
   RecurringKind.debt => l.fpRecurringKindDebt,
 };
@@ -27,7 +28,7 @@ extension RecurringKindIconDefault on RecurringKind {
       iconId: 'subscriptions',
       color: ModuleColors.defaultSubscription,
     ),
-    RecurringKind.installment => const TypeIconDefault(
+    RecurringKind.expense => const TypeIconDefault(
       iconId: 'timelapse',
       color: ModuleColors.defaultInstallment,
     ),
@@ -35,8 +36,12 @@ extension RecurringKindIconDefault on RecurringKind {
       iconId: 'cash',
       color: ModuleColors.defaultIncome,
     ),
-    RecurringKind.reminder => const TypeIconDefault(
+    RecurringKind.bill => const TypeIconDefault(
       iconId: 'notifications',
+      color: ModuleColors.defaultReminder,
+    ),
+    RecurringKind.transfer => const TypeIconDefault(
+      iconId: 'swap_horiz',
       color: ModuleColors.defaultReminder,
     ),
     RecurringKind.saving => const TypeIconDefault(
@@ -88,9 +93,12 @@ class RecurringRow extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final r = recurring;
     final next = r.nextDate;
-    final shown = amount ?? r.amount;
+    // 0.4.3: an item with 2+ lines shows "N รายการ" and this month's total.
+    final many = r.linesCount > 1;
+    final shown = amount ?? (many ? r.monthTotal : r.amount);
     final known = shown != null && shown > 0;
-    final account = r.account;
+    final account = many ? null : r.account;
+    final planCount = r.planCount;
     final icon = r.shownIconCode;
     return PpForgeListRow(
       // The item's own colour for what the row holds (the footer's chain).
@@ -125,12 +133,25 @@ class RecurringRow extends StatelessWidget {
               ),
         icon: AppIcons.recurring,
         parts: [
-          recurrenceLabel(l, r.rule),
+          many
+              ? l.recurringLinesCount(r.linesCount)
+              : recurrenceLabel(l, r.rule),
+          if (!many && r.paidBy != null) l.recurringLinePaidBy(r.paidBy!.name),
           // หนี้: with whom, จดหนี้ | จ่ายหนี้.
-          if (r.isDebt) ...debtParts(l, person: r.person?.name, sub: r.debtSub),
+          if (r.isDebt)
+            ...debtParts(
+              l,
+              person: r.counterparty?.name ?? r.person?.name,
+              sub: many ? null : r.debtSub,
+            ),
         ],
         glyphs: [
-          if (r.progressTotal != null)
+          if (planCount != null)
+            ListRowGlyph(
+              AppIcons.progress,
+              text: '${r.planDone ?? 0}/$planCount',
+            )
+          else if (r.progressTotal != null)
             ListRowGlyph(
               AppIcons.progress,
               text: '${r.progressDone}/${r.progressTotal}',
@@ -154,6 +175,10 @@ class RecurringRow extends StatelessWidget {
 
   static ListRowChip? _status(AppLocalizations l, Recurring r) =>
       switch (r.status) {
+        _ when r.isComplete => ListRowChip(
+          l.recurringStatusDone,
+          tone: Tone.success,
+        ),
         // หนี้ with nothing owed 3 rounds (K13): it starts again by itself.
         RecurringStatus.paused
             when r.pauseReason == RecurringPauseReason.noBalance =>

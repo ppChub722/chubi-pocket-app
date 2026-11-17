@@ -24,6 +24,7 @@ import '../../features/categories/domain/category_type.dart';
 import '../../features/categories/presentation/pages/categories_page.dart';
 import '../../features/categories/presentation/pages/category_detail_page.dart';
 import '../../features/contacts/presentation/pages/contact_detail_page.dart';
+import '../../features/institutions/presentation/pages/institution_detail_page.dart';
 import '../../features/contacts/presentation/pages/contact_form_page.dart';
 import '../../features/contacts/presentation/pages/contacts_page.dart';
 import '../../features/notifications/presentation/pages/notification_settings_page.dart';
@@ -380,6 +381,17 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
     ),
   ],
   ShellTab.contacts => [
+    GoRoute(
+      path: '/institutions/new',
+      name: 'institution-new',
+      builder: (context, state) => const InstitutionDetailPage(),
+    ),
+    GoRoute(
+      path: '/institutions/:id',
+      name: 'institution-detail',
+      builder: (context, state) =>
+          InstitutionDetailPage(id: state.pathParameters['id']!),
+    ),
     GoRoute(
       path: '/contacts',
       name: 'contacts',

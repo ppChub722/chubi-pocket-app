@@ -9,6 +9,20 @@ import '../../transactions/domain/refs.dart';
 import '../../transactions/domain/transaction_type.dart';
 import 'recurrence_rule.dart';
 import 'recurring.dart';
+import 'recurring_page.dart';
+
+/// Which item each line (`recurring_rule_id`) belongs to, learned from every
+/// round the app reads (0.4.3): a round is written at
+/// `/recurring/{item}/lines/{line}/occurrences/{slot}`. A line not seen
+/// yet is taken as its own item (a migrated item keeps its rule's id).
+abstract final class RecurringLineIndex {
+  static final _items = <String, String>{};
+
+  static void remember({required String line, required String item}) =>
+      _items[line] = item;
+
+  static String itemOf(String line) => _items[line] ?? line;
+}
 
 class RecurringParent extends Equatable {
   const RecurringParent({
@@ -28,8 +42,11 @@ class RecurringParent extends Equatable {
                 json['icon_code'] as Map<String, dynamic>,
               )
             : null,
-        kind: json['kind'] is String
-            ? RecurringKind.fromJson(json['kind'] as String)
+        kind: json['type'] is String || json['kind'] is String
+            ? RecurringKind.fromJson(
+                json['type'] as String?,
+                legacyKind: json['kind'] as String?,
+              )
             : null,
         pauseReason: RecurringPauseReason.fromJson(json['pause_reason']),
       );
@@ -188,7 +205,15 @@ class RecurringItem extends Equatable {
     return type == TransactionType.expense ? -a : a;
   }
 
-  static const _types = {'expense', 'income', 'transfer', 'saving', 'debt'};
+  static const _types = {
+    'expense',
+    'subscription',
+    'bill',
+    'income',
+    'transfer',
+    'saving',
+    'debt',
+  };
 
   /// Null for a row the app has no type for, so one such row doesn't break a
   /// whole list.
@@ -202,7 +227,13 @@ class RecurringItem extends Equatable {
     final recurring = json['recurring'] is Map<String, dynamic>
         ? RecurringParent.fromJson(json['recurring'] as Map<String, dynamic>)
         : null;
-    final ruleId = json['rule_id'] as String? ?? recurring?.id;
+    final ruleId =
+        json['recurring_rule_id'] as String? ??
+        json['rule_id'] as String? ??
+        recurring?.id;
+    if (ruleId != null && recurring != null) {
+      RecurringLineIndex.remember(line: ruleId, item: recurring.id);
+    }
     final slot = json['slot'] as String?;
     final id = json['id'] as String?;
     return RecurringItem._fromJson(
@@ -394,6 +425,7 @@ class ItemPage extends Equatable {
 class RecurringDetail extends Equatable {
   const RecurringDetail({
     required this.recurring,
+    this.page,
     this.produced = const ItemPage(),
     this.upcoming = const ItemPage(),
     this.balances = const {},
@@ -401,6 +433,30 @@ class RecurringDetail extends Equatable {
     this.stats,
   });
 
+  /// 0.4.3: the item page ([page]) with its rounds, fetched apart
+  /// (`/recurring/{id}/items`).
+  factory RecurringDetail.fromPage(
+    RecurringPage page, {
+    ItemPage produced = const ItemPage(),
+    ItemPage upcoming = const ItemPage(),
+    RecurringDeletePreview? deletePreview,
+  }) => RecurringDetail(
+    recurring: page.view,
+    page: page,
+    stats: page.stats,
+    produced: produced,
+    upcoming: upcoming,
+    balances: page.balances,
+    deletePreview:
+        deletePreview ??
+        (page.json['delete_preview'] is Map<String, dynamic>
+            ? RecurringDeletePreview.fromJson(
+                page.json['delete_preview'] as Map<String, dynamic>,
+              )
+            : null),
+  );
+
+  /// Today's rule page (`{recurring, items, upcoming, …}`).
   factory RecurringDetail.fromJson(Map<String, dynamic> json) =>
       RecurringDetail(
         recurring: Recurring.fromJson(
@@ -419,7 +475,24 @@ class RecurringDetail extends Equatable {
             : null,
       );
 
+  /// The item as one rule (its main line's numbers).
   final Recurring recurring;
+
+  /// 0.4.3: the item with every line, its plan and reminders; null from
+  /// today's rule page.
+  final RecurringPage? page;
+
+  /// The same detail with fresh rounds.
+  RecurringDetail withRounds({ItemPage? produced, ItemPage? upcoming}) =>
+      RecurringDetail(
+        recurring: recurring,
+        page: page,
+        produced: produced ?? this.produced,
+        upcoming: upcoming ?? this.upcoming,
+        balances: balances,
+        deletePreview: deletePreview,
+        stats: stats,
+      );
 
   final ItemPage upcoming;
 
@@ -435,6 +508,7 @@ class RecurringDetail extends Equatable {
   @override
   List<Object?> get props => [
     recurring,
+    page,
     produced,
     upcoming,
     balances,
@@ -488,8 +562,13 @@ class ItemWriteResult extends Equatable {
           if (json['id'] is String) json['id'] as String,
         ],
         balances: WalletBalance.mapOf(json['account_balances']),
+        // 0.4.3: the item page (its main line as one rule); a rule before.
         setting: json['setting'] is Map<String, dynamic>
-            ? Recurring.fromJson(json['setting'] as Map<String, dynamic>)
+            ? ((json['setting'] as Map).containsKey('lines')
+                  ? RecurringPage.fromJson(
+                      json['setting'] as Map<String, dynamic>,
+                    ).view
+                  : Recurring.fromJson(json['setting'] as Map<String, dynamic>))
             : null,
         leftOut: [
           for (final e in (json['left_out'] as List?) ?? const [])

@@ -95,6 +95,8 @@ class DebtPersonState extends Equatable {
     this.earlier = const DebtEntryList(),
     this.error,
     this.recurring = const [],
+    this.recurrings = const [],
+    this.cardDebts = const [],
   });
 
   final String personKey;
@@ -106,6 +108,11 @@ class DebtPersonState extends Equatable {
 
   /// K13: the person's หนี้ recurring settings (from the person load).
   final List<DebtPersonRecurring> recurring;
+
+  /// 0.4.3: the counterparty's recurring items (section รายการประจำ) and,
+  /// for an institution, its cards' debts.
+  final List<DebtCounterpartyRecurring> recurrings;
+  final List<DebtCardDebt> cardDebts;
 
   final DebtEntryQuery query;
   final DebtEntryList current;
@@ -133,6 +140,8 @@ class DebtPersonState extends Equatable {
     ApiException? error,
     bool clearError = false,
     List<DebtPersonRecurring>? recurring,
+    List<DebtCounterpartyRecurring>? recurrings,
+    List<DebtCardDebt>? cardDebts,
   }) => DebtPersonState(
     personKey: personKey,
     status: status ?? this.status,
@@ -144,6 +153,8 @@ class DebtPersonState extends Equatable {
     earlier: earlier ?? this.earlier,
     error: clearError ? null : (error ?? this.error),
     recurring: recurring ?? this.recurring,
+    recurrings: recurrings ?? this.recurrings,
+    cardDebts: cardDebts ?? this.cardDebts,
   );
 
   DebtPersonState withList(DebtCycle c, DebtEntryList list) =>
@@ -163,6 +174,8 @@ class DebtPersonState extends Equatable {
     earlier,
     error,
     recurring,
+    recurrings,
+    cardDebts,
   ];
 }
 
@@ -210,6 +223,8 @@ class DebtPersonCubit extends Cubit<DebtPersonState>
           counts: d.counts,
           message: d.message,
           recurring: d.recurring,
+          recurrings: d.recurrings,
+          cardDebts: d.cardDebts,
           current: filtered || curGen != _gen[DebtCycle.current]
               ? null
               : state.current.copyWith(

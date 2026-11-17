@@ -5697,6 +5697,18 @@ class AppLocalizationsTh extends AppLocalizations {
       'งวดนี้ผูกไปแล้ว (หรือรายการนี้ผูกอยู่แล้ว)';
 
   @override
+  String get errInstitutionInUse =>
+      'สถาบันนี้ยังมีหนี้ รายการประจำ หรือกระเป๋าผูกอยู่ ลบไม่ได้';
+
+  @override
+  String get errRecurringLastLine =>
+      'รายการประจำต้องมีอย่างน้อย 1 บรรทัด ถ้าไม่ใช้แล้วให้ลบทั้งรายการ';
+
+  @override
+  String get errInstallmentNeedsInstitution =>
+      'ผ่อนผ่านบัตรได้เฉพาะบัตรที่ผูกสถาบันการเงินแล้ว';
+
+  @override
   String get recurringPickerGroupNearest => 'งวดใกล้เคียง';
 
   @override
@@ -5950,7 +5962,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpRecurringNextOnce(String due) {
-    return 'ครั้งถัดไป | $due';
+    return 'งวดถัดไป | $due';
   }
 
   @override
@@ -5971,7 +5983,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpRecurringStatAvg => 'เฉลี่ย';
 
   @override
-  String get fpRecurringStatPrev => 'ครั้งก่อน';
+  String get fpRecurringStatPrev => 'งวดก่อน';
 
   @override
   String get fpRecurringStatMax => 'สูงสุด';
@@ -5987,13 +5999,13 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get fpRecurringChartLabel => 'ยอดแต่ละครั้ง';
+  String get fpRecurringChartLabel => 'ยอดแต่ละงวด';
 
   @override
   String get fpRecurringAutoChip => 'บันทึกอัตโนมัติ';
 
   @override
-  String get fpRecurringTagNext => 'ครั้งถัดไป';
+  String get fpRecurringTagNext => 'งวดถัดไป';
 
   @override
   String get fpRecurringTagMoved => 'เลื่อนแล้ว';
@@ -7411,4 +7423,371 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get notifOnSplitRemovedDelete => 'ลบทิ้ง';
+
+  @override
+  String get recurringStatusDone => 'ครบแล้ว';
+
+  @override
+  String get fpRecurringStatTotal => 'รวม';
+
+  @override
+  String get fpRecurringKindExpense => 'รายจ่าย';
+
+  @override
+  String get fpRecurringKindBill => 'บิล';
+
+  @override
+  String get fpRecurringKindTransfer => 'โอน';
+
+  @override
+  String get recurringDeleteKeepsWritten =>
+      'ลบรายการประจำนี้และทุกบรรทัด | รายการที่บันทึกไปแล้วยังอยู่ หนี้ที่เกิดแล้วกลายเป็นหนี้ทั่วไปของคู่หนี้ ยอดคงเหลือไม่เปลี่ยน';
+
+  @override
+  String get fpRecurringPlanIncomplete =>
+      'ใส่แผนผ่อนให้ครบ: เงินต้น จำนวนงวด และดอกเบี้ย';
+
+  @override
+  String get institutionPickTitle => 'เลือกสถาบัน';
+
+  @override
+  String get institutionEmpty => 'ยังไม่มีสถาบัน';
+
+  @override
+  String get institutionAdd => 'เพิ่มสถาบัน';
+
+  @override
+  String institutionAddNamed(String name) {
+    return 'เพิ่ม \"$name\"';
+  }
+
+  @override
+  String get institutionKindBank => 'ธนาคาร';
+
+  @override
+  String get institutionKindCard => 'บัตรเครดิต';
+
+  @override
+  String get institutionKindFinance => 'สินเชื่อ';
+
+  @override
+  String get institutionKindStore => 'ร้านค้า';
+
+  @override
+  String get institutionKindOther => 'อื่นๆ';
+
+  @override
+  String get recurringCounterpartyLabel => 'คู่หนี้';
+
+  @override
+  String get recurringCounterpartyPerson => 'บุคคล';
+
+  @override
+  String get recurringCounterpartyInstitution => 'สถาบันการเงิน';
+
+  @override
+  String get recurringSourceLabel => 'จ่ายจาก';
+
+  @override
+  String get recurringSourceWallet => 'กระเป๋า';
+
+  @override
+  String get recurringSourcePaidBy => 'คนจ่ายแทน';
+
+  @override
+  String get recurringPaidByPick => 'เลือกคนจ่ายแทน';
+
+  @override
+  String get recurringPlanSection => 'แผนผ่อน';
+
+  @override
+  String get recurringPlanToggle => 'มีแผนผ่อนเป็นงวด';
+
+  @override
+  String get recurringPlanPrincipal => 'เงินต้น';
+
+  @override
+  String get recurringPlanCount => 'จำนวนงวด';
+
+  @override
+  String get recurringPlanFirstDue => 'งวดแรก';
+
+  @override
+  String get recurringPlanMethod => 'วิธีคิดดอกเบี้ย';
+
+  @override
+  String get recurringPlanMethodNone => 'ไม่มีดอก';
+
+  @override
+  String get recurringPlanMethodFlat => 'Flat';
+
+  @override
+  String get recurringPlanMethodReducing => 'ลดต้นลดดอก';
+
+  @override
+  String get recurringPlanMethodFixed => 'ค่างวดคงที่';
+
+  @override
+  String get recurringPlanMethodManual => 'ใส่เองรายงวด';
+
+  @override
+  String get recurringPlanRate => 'อัตรา (% ต่อปี)';
+
+  @override
+  String get recurringPlanInstallment => 'ค่างวด';
+
+  @override
+  String get recurringPlanOnCard => 'ผ่อนผ่านบัตร';
+
+  @override
+  String get recurringPlanCard => 'บัตร';
+
+  @override
+  String get recurringPlanTable => 'ตารางงวด';
+
+  @override
+  String get recurringPlanTotalInterest => 'ดอกรวม';
+
+  @override
+  String get recurringPlanTotalPay => 'จ่ายรวม';
+
+  @override
+  String get recurringPlanPaidPrincipal => 'จ่ายต้นแล้ว';
+
+  @override
+  String get recurringPlanLeft => 'เหลือ';
+
+  @override
+  String get recurringPlanLeftPrincipal => 'เงินต้นคงเหลือ';
+
+  @override
+  String get recurringPlanLeftInterest => 'ดอกที่ยังต้องจ่าย';
+
+  @override
+  String recurringPlanSplit(String principal, String interest) {
+    return 'ต้น $principal · ดอก $interest';
+  }
+
+  @override
+  String recurringPlanNext(int n, int total, String due) {
+    return 'งวดถัดไป ($n/$total) | $due';
+  }
+
+  @override
+  String get recurringPlanOnCardNote =>
+      'ไม่ต้องบันทึกจ่ายแยก จ่ายรวมกับใบแจ้งยอดบัตรด้วยปุ่ม \"ชำระบัตร\"';
+
+  @override
+  String get recurringPlanClose => 'ปิดแผนก่อนกำหนด';
+
+  @override
+  String get recurringPlanCloseConsequence =>
+      'งวดที่ยังไม่ติ๊กถูกข้าม งวดที่จ่ายแล้วเก็บเป็นประวัติ';
+
+  @override
+  String get recurringPlanCloseBody =>
+      'ปิดแผนนี้ก่อนกำหนด? งวดที่ยังไม่ได้ติ๊กจ่ายจะถูกข้าม';
+
+  @override
+  String get recurringPlanClosed => 'ปิดแผนแล้ว';
+
+  @override
+  String get recurringInstallmentEdit => 'แก้งวดนี้';
+
+  @override
+  String get recurringInstallmentMarkPaid => 'จ่ายงวดแล้ว';
+
+  @override
+  String get recurringInstallmentUnmark => 'ยังไม่จ่าย';
+
+  @override
+  String recurringInstallmentTitle(int n) {
+    return 'งวดที่ $n';
+  }
+
+  @override
+  String get recurringInstallmentUpcoming => 'รอ';
+
+  @override
+  String get recurringInstallmentDue => 'ถึงกำหนด';
+
+  @override
+  String get recurringInstallmentPaid => 'จ่ายแล้ว';
+
+  @override
+  String get recurringInstallmentSkipped => 'ข้าม';
+
+  @override
+  String get recurringInstallmentDueDate => 'วันครบกำหนด';
+
+  @override
+  String get recurringInstallmentPrincipal => 'เงินต้น';
+
+  @override
+  String get recurringInstallmentInterest => 'ดอกเบี้ย';
+
+  @override
+  String get recurringLinesSection => 'บรรทัด';
+
+  @override
+  String get recurringLineAdd => 'เพิ่มบรรทัด';
+
+  @override
+  String recurringLinePaidBy(String name) {
+    return '$name จ่ายแทน';
+  }
+
+  @override
+  String get recurringLineDeleteTitle => 'ลบบรรทัดนี้?';
+
+  @override
+  String get recurringLineDeleteBody => 'สิ่งที่บรรทัดนี้บันทึกไปแล้วยังอยู่';
+
+  @override
+  String recurringLinesCount(int n) {
+    return '$n รายการ';
+  }
+
+  @override
+  String get recurringRemindersSection => 'การเตือน';
+
+  @override
+  String get recurringReminderAdd => 'เพิ่มการเตือน';
+
+  @override
+  String get recurringReminderAnchorDue => 'ก่อนถึงกำหนด';
+
+  @override
+  String get recurringReminderAnchorStart => 'ก่อนเริ่ม';
+
+  @override
+  String get recurringReminderAnchorEnd => 'ก่อนสิ้นสุด';
+
+  @override
+  String recurringReminderDays(int n) {
+    return '$n วัน';
+  }
+
+  @override
+  String get recurringReminderSameDay => 'วันนั้น';
+
+  @override
+  String get debtsSectionInstitutions => 'สถาบันการเงิน';
+
+  @override
+  String get debtsSectionPeople => 'บุคคล';
+
+  @override
+  String debtsSeeAll(int n) {
+    return 'ดูทั้ง $n';
+  }
+
+  @override
+  String get debtsOpenPage => 'เปิดหน้า';
+
+  @override
+  String get debtsGeneral => 'หนี้ทั่วไป';
+
+  @override
+  String debtsGeneralCount(int n) {
+    return 'หนี้ทั่วไป $n รายการ';
+  }
+
+  @override
+  String get debtsCardDebt => 'หนี้บัตรเครดิต';
+
+  @override
+  String get debtAddEntry => 'จดหนี้';
+
+  @override
+  String get debtAddRecurring => 'รายการประจำ';
+
+  @override
+  String get debtsRecurringSection => 'รายการประจำ';
+
+  @override
+  String debtsSideOwed(String amount) {
+    return 'ต้องได้ $amount';
+  }
+
+  @override
+  String debtsSideOwe(String amount) {
+    return 'ต้องจ่าย $amount';
+  }
+
+  @override
+  String debtsLineNext(String when, String date) {
+    return '$when · ถัดไป $date';
+  }
+
+  @override
+  String get debtsMarkInstallment => 'ทำเครื่องหมายว่าจ่ายงวดแล้ว';
+
+  @override
+  String debtsMarkInstallmentOf(String name, int n) {
+    return '$name งวด $n';
+  }
+
+  @override
+  String get debtsThisMonthPay => 'เดือนนี้ต้องจ่าย';
+
+  @override
+  String get debtsThisMonthReceive => 'เดือนนี้ต้องได้';
+
+  @override
+  String get debtsInstitutionInfo => 'ข้อมูลสถาบัน';
+
+  @override
+  String get institutionTitle => 'สถาบัน';
+
+  @override
+  String get institutionNewTitle => 'สถาบันใหม่';
+
+  @override
+  String get institutionKindLabel => 'ประเภท';
+
+  @override
+  String get institutionPhone => 'เบอร์โทร';
+
+  @override
+  String get institutionEmail => 'อีเมล';
+
+  @override
+  String get institutionWebsite => 'เว็บไซต์';
+
+  @override
+  String get institutionWallets => 'กระเป๋าที่ผูก';
+
+  @override
+  String get institutionArchiveBody =>
+      'ซ่อนจากรายการ หนี้และกระเป๋าที่ผูกไว้ยังอยู่ คืนค่าได้';
+
+  @override
+  String get institutionDeleteBody =>
+      'ลบได้เมื่อไม่มีหนี้ รายการประจำ หรือกระเป๋าผูกอยู่';
+
+  @override
+  String get institutionNotFound => 'ไม่พบสถาบันนี้';
+
+  @override
+  String get institutionField => 'สถาบัน';
+
+  @override
+  String get quickInstallment => 'ผ่อน';
+
+  @override
+  String get quickInstallmentHint =>
+      'แบ่งจ่ายเป็นงวดผ่านบัตร | ราคาเต็มเข้าบัตรตอนนี้';
+
+  @override
+  String notifRecurringDueSoon(String name, String amount, String when) {
+    return '$name จะตัด $amount $when';
+  }
+
+  @override
+  String get notifTypeRecurringDueSoon => 'ใกล้ถึงกำหนด';
+
+  @override
+  String get notifSetRecurringDueSoonHint =>
+      'เตือนก่อนถึงกำหนดตามที่ตั้งไว้ในแต่ละรายการประจำ';
 }

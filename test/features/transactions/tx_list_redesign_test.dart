@@ -74,6 +74,7 @@ class _Repo extends Fake implements TransactionsRepository {
     List<Map<String, dynamic>>? splits,
     String? sourceProjectTransactionId,
     Map<String, dynamic>? link,
+    Map<String, dynamic>? installment,
   }) async => next!;
 }
 

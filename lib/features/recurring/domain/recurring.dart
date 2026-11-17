@@ -6,11 +6,17 @@ import '../../personal_debts/domain/debt_direction.dart';
 import '../../transactions/domain/refs.dart';
 import '../../transactions/domain/transaction_type.dart';
 import 'recurrence_rule.dart';
+import 'recurring_item.dart';
+import 'recurring_page.dart' show RecurringCounterparty;
 
 enum RecurringStatus {
   active,
   paused,
-  archived;
+  archived,
+
+  /// ครบแล้ว: an item with an end whose every round is recorded / skipped
+  /// (0.4.3; the app also derives it, [Recurring.isComplete]).
+  done;
 
   static RecurringStatus fromJson(String? v) => RecurringStatus.values
       .firstWhere((s) => s.name == v, orElse: () => RecurringStatus.active);
@@ -39,37 +45,78 @@ enum RecurringPauseReason {
   };
 }
 
+/// A recurring item's type (0.4.3: 7 types; every line is the item's type).
+/// "ผ่อนชำระ" is an expense with an end, "เตือนจ่าย" a bill or a transfer;
+/// "ทดลองฟรีถึง" is gone.
 enum RecurringKind {
-  subscription,
-  installment,
-  income,
-  reminder,
+  /// รายจ่าย.
+  expense,
 
-  /// ออมเงิน: wallet → a saving goal (or ยังไม่จัดสรร); the BE's type `saving`.
+  /// ค่าสมาชิก.
+  subscription,
+
+  /// บิล: may start without an amount.
+  bill,
+  income,
+
+  /// โอน: wallet → wallet.
+  transfer,
+
+  /// ออมเงิน: wallet → a saving goal (or ยังไม่จัดสรร).
   saving,
 
-  /// หนี้ (0.4.1-2 K): each occurrence books a person-book entry (จดหนี้ |
-  /// จ่ายหนี้) with one person; the BE's type `debt`. No category / tags.
+  /// หนี้: each round books a debt / repayment with the item's counterparty.
+  /// No category / tags.
   debt;
 
-  static RecurringKind fromJson(String? v) => RecurringKind.values.firstWhere(
-    (k) => k.name == v,
-    orElse: () => RecurringKind.subscription,
-  );
+  /// The wire `type`; an older payload's `kind` (subscription | installment |
+  /// income | reminder) still reads.
+  static RecurringKind fromJson(String? type, {String? legacyKind}) {
+    for (final k in values) {
+      if (k.name == type && k != expense && k != income && k != transfer) {
+        return k;
+      }
+    }
+    return switch (legacyKind) {
+      'saving' => saving,
+      'debt' => debt,
+      'bill' => bill,
+      'expense' => expense,
+      'transfer' => transfer,
+      'subscription' => subscription,
+      'installment' => expense,
+      'income' => income,
+      'reminder' => type == 'transfer' ? transfer : bill,
+      _ => switch (type) {
+        'income' => income,
+        'transfer' => transfer,
+        _ => expense,
+      },
+    };
+  }
 
   String toJson() => name;
 
-  /// Saving leaves the wallet, so the app treats it as an expense; a debt's
-  /// side comes from its direction, not this type.
-  TransactionType get defaultType =>
-      this == income ? TransactionType.income : TransactionType.expense;
+  /// The money side of a round: saving leaves the wallet, so it reads as an
+  /// expense; a debt's side comes from its direction, not this type.
+  TransactionType get defaultType => switch (this) {
+    income => TransactionType.income,
+    transfer => TransactionType.transfer,
+    _ => TransactionType.expense,
+  };
+
+  /// May start without an amount (บิล / โอน: เตือนจ่าย before).
+  bool get amountOptional => this == bill || this == transfer;
 }
 
-/// The wire type: `saving` / `debt` read as an expense here (the kind and,
-/// for a debt, the direction decide how they show).
-TransactionType recurringTypeFromJson(String? v) => v == 'saving' || v == 'debt'
-    ? TransactionType.expense
-    : TransactionType.fromJson(v ?? 'expense');
+/// The wire type as a money type: the item types other than income /
+/// transfer read as an expense here (the kind and, for a debt, the direction
+/// decide how they show).
+TransactionType recurringTypeFromJson(String? v) => switch (v) {
+  'income' => TransactionType.income,
+  'transfer' => TransactionType.transfer,
+  _ => TransactionType.expense,
+};
 
 /// A หนี้ rule's entry kind: จดหนี้ (`debt`) or จ่ายหนี้ (`repayment`).
 DebtEntrySub? recurringDebtSubFromJson(Object? v) => switch (v) {
@@ -165,19 +212,23 @@ class CurrentOccurrence extends Equatable {
     required this.date,
     required this.daysUntil,
     required this.status,
+    required this.ruleId,
     this.amount,
     this.slot,
   });
 
-  /// A computed occurrence has no row: its id is `slot:{rule}:{slot}`, the
-  /// same key as RecurringItem.id.
+  /// A computed occurrence has no row: its id is `slot:{line}:{slot}`, the
+  /// same key as RecurringItem.id. [recurringId]: the item it belongs to.
   factory CurrentOccurrence.fromJson(
     Map<String, dynamic> json, {
-    required String ruleId,
+    required String recurringId,
   }) {
     final slot = json['slot'] as String?;
+    final line = json['recurring_rule_id'] as String? ?? recurringId;
+    RecurringLineIndex.remember(line: line, item: recurringId);
     return CurrentOccurrence(
-      itemId: json['item_id'] as String? ?? 'slot:$ruleId:$slot',
+      itemId: json['item_id'] as String? ?? 'slot:$line:$slot',
+      ruleId: line,
       slot: slot,
       date: parseYmd(json['date'] as String?) ?? DateTime.now(),
       daysUntil: (json['days_until'] as num?)?.toInt() ?? 0,
@@ -188,6 +239,9 @@ class CurrentOccurrence extends Equatable {
 
   final String itemId;
 
+  /// Its line (`recurring_rule_id`): a round is addressed by line + slot.
+  final String ruleId;
+
   /// The original date ("YYYY-MM-DD"); null from an old BE.
   final String? slot;
   final DateTime date;
@@ -197,7 +251,15 @@ class CurrentOccurrence extends Equatable {
   final OccurrenceState status;
 
   @override
-  List<Object?> get props => [itemId, slot, date, daysUntil, amount, status];
+  List<Object?> get props => [
+    itemId,
+    ruleId,
+    slot,
+    date,
+    daysUntil,
+    amount,
+    status,
+  ];
 }
 
 /// One occurrence of an installment rule's chain (the BE sends it for rules
@@ -321,7 +383,23 @@ class Recurring extends Equatable {
     this.zeroRounds = 0,
     this.createdAt,
     this.updatedAt,
+    this.linesCount = 1,
+    this.monthTotal,
+    this.counterparty,
+    this.planDone,
+    this.planCount,
+    this.paidBy,
   });
+
+  /// 0.4.3 list rows: the item's lines, this month's total over them, its
+  /// counterparty (หนี้), its plan's ticked / all installments and a
+  /// single line's คนจ่ายแทน.
+  final int linesCount;
+  final double? monthTotal;
+  final RecurringCounterparty? counterparty;
+  final int? planDone;
+  final int? planCount;
+  final EmbeddedPerson? paidBy;
 
   final String id;
   final String name;
@@ -391,11 +469,35 @@ class Recurring extends Equatable {
 
   bool get hasAmount => amount != null && amount! > 0;
 
+  /// The one rule the detail page shows by (owner 2026-11-17): an end (a
+  /// count, an end date, or picked dates) vs open-ended.
+  bool get hasEnd =>
+      rule.freq == RecurrenceFreq.dates ||
+      rule.end.kind != RecurrenceEndKind.never;
+
+  /// ครบแล้ว: ended, and nothing is left to come or to handle.
+  bool get isComplete =>
+      status == RecurringStatus.done ||
+      (hasEnd &&
+          status != RecurringStatus.archived &&
+          counts.produced > 0 &&
+          counts.upcoming == 0 &&
+          counts.notCreated == 0 &&
+          counts.pending == 0);
+
   bool get isSaving => kind == RecurringKind.saving;
 
   bool get isDebt => kind == RecurringKind.debt;
 
-  static const _types = {'expense', 'income', 'transfer', 'saving', 'debt'};
+  static const _types = {
+    'expense',
+    'subscription',
+    'bill',
+    'income',
+    'transfer',
+    'saving',
+    'debt',
+  };
 
   /// Null for a rule the app has no type for, so one such rule doesn't break
   /// a whole list.
@@ -407,6 +509,9 @@ class Recurring extends Equatable {
 
   factory Recurring.fromJson(Map<String, dynamic> json) {
     final progress = json['progress'] as Map<String, dynamic>?;
+    final next = json['next'] is Map ? json['next'] as Map : null;
+    final counterparty = RecurringCounterparty.tryParse(json['counterparty']);
+    final plan = json['plan'] is Map ? json['plan'] as Map : null;
     return Recurring(
       id: json['id'] as String,
       name: (json['name'] as String?) ?? '',
@@ -415,16 +520,18 @@ class Recurring extends Equatable {
       iconCode: json['icon_code'] is Map<String, dynamic>
           ? PpForgeIconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
-      kind: switch (json['type']) {
-        'saving' => RecurringKind.saving,
-        'debt' => RecurringKind.debt,
-        _ => RecurringKind.fromJson(json['kind'] as String?),
-      },
+      kind: RecurringKind.fromJson(
+        json['type'] as String?,
+        legacyKind: json['kind'] as String?,
+      ),
       person: json['person'] is Map
           ? EmbeddedPerson.fromJson(
               (json['person'] as Map).cast<String, dynamic>(),
             )
-          : null,
+          : counterparty?.person ??
+                (counterparty == null || counterparty.isInstitution
+                    ? null
+                    : EmbeddedPerson(name: counterparty.name)),
       debtSub: recurringDebtSubFromJson(json['debt_kind']),
       direction: json['direction'] is String
           ? DebtEntryDirection.parse(json['direction'] as String)
@@ -462,15 +569,16 @@ class Recurring extends Equatable {
       monthlyAmount: (json['monthly_amount'] as num?)?.toDouble(),
       savedCount: (json['saved_count'] as num?)?.toInt() ?? 0,
       pendingCount: (json['pending_count'] as num?)?.toInt() ?? 0,
-      nextAmount: (json['next_amount'] as num?)?.toDouble(),
+      nextAmount: ((json['next_amount'] ?? next?['amount']) as num?)
+          ?.toDouble(),
       currentOccurrence: json['current_occurrence'] is Map<String, dynamic>
           ? CurrentOccurrence.fromJson(
               json['current_occurrence'] as Map<String, dynamic>,
-              ruleId: json['id'] as String,
+              recurringId: json['id'] as String,
             )
           : null,
-      nextDate: parseYmd(json['next_date'] as String?),
-      daysUntil: (json['days_until'] as num?)?.toInt(),
+      nextDate: parseYmd((json['next_date'] ?? next?['date']) as String?),
+      daysUntil: ((json['days_until'] ?? next?['days_until']) as num?)?.toInt(),
       progressDone: (progress?['done'] as num?)?.toInt() ?? 0,
       progressTotal: (progress?['total'] as num?)?.toInt(),
       endingSoon: json['ending_soon'] == true,
@@ -491,6 +599,16 @@ class Recurring extends Equatable {
       pauseReason: RecurringPauseReason.fromJson(json['pause_reason']),
       createdAt: DateTime.tryParse((json['created_at'] as String?) ?? ''),
       updatedAt: DateTime.tryParse((json['updated_at'] as String?) ?? ''),
+      linesCount: (json['lines_count'] as num?)?.toInt() ?? 1,
+      monthTotal: (json['month_total'] as num?)?.toDouble(),
+      counterparty: counterparty,
+      planDone: (plan?['done'] as num?)?.toInt(),
+      planCount: (plan?['count'] as num?)?.toInt(),
+      paidBy: json['paid_by'] is Map
+          ? EmbeddedPerson.fromJson(
+              (json['paid_by'] as Map).cast<String, dynamic>(),
+            )
+          : null,
     );
   }
 
@@ -539,101 +657,291 @@ class Recurring extends Equatable {
     zeroRounds,
     createdAt,
     updatedAt,
+    linesCount,
+    monthTotal,
+    counterparty,
+    planDone,
+    planCount,
+    paidBy,
   ];
 }
 
+/// A line's schedule on the wire (0.4.3): the rule's fields inline, then
+/// `start_date` and `end`.
+Map<String, dynamic> scheduleToJson(RecurrenceRule r) {
+  final j = recurrenceToJson(r);
+  return {
+    ...(j['rule'] as Map<String, dynamic>),
+    'start_date': j['start_date'],
+    'end': j['end'],
+  };
+}
+
+/// A line's schedule from the wire (see [scheduleToJson]).
+RecurrenceRule scheduleFromJson(Map<String, dynamic>? s) => recurrenceFromJson(
+  s,
+  start: s?['start_date'] as String?,
+  end: s?['end'] as Map<String, dynamic>?,
+);
+
+/// One line of an item write (`LineInput`): a wallet or a person paying for
+/// me ([paidByContactId] / [paidByName]), its amount and its schedule. [id]
+/// = update that line; none = a new one.
+class RecurringLineWrite extends Equatable {
+  const RecurringLineWrite({
+    required this.rule,
+    this.id,
+    this.amount,
+    this.accountId,
+    this.paidByContactId,
+    this.paidByName,
+    this.toAccountId,
+    this.debtSub,
+    this.autoCreate = false,
+  });
+
+  final String? id;
+  final double? amount;
+  final String? accountId;
+  final String? paidByContactId;
+  final String? paidByName;
+  final String? toAccountId;
+  final DebtEntrySub? debtSub;
+  final RecurrenceRule rule;
+  final bool autoCreate;
+
+  bool get paidBy => paidByContactId != null || paidByName != null;
+
+  Map<String, dynamic> toJson() => {
+    'id': ?id,
+    'amount': amount ?? 0,
+    'source': paidBy
+        ? {
+            'paid_by': {
+              'contact_id': paidByContactId,
+              'person_name': paidByContactId == null ? paidByName : null,
+            },
+          }
+        : {'account_id': accountId},
+    'to_account_id': toAccountId,
+    if (debtSub != null) 'debt_kind': recurringDebtSubToJson(debtSub!),
+    'schedule': scheduleToJson(rule),
+    'auto_create': autoCreate,
+  };
+
+  @override
+  List<Object?> get props => [
+    id,
+    amount,
+    accountId,
+    paidByContactId,
+    paidByName,
+    toAccountId,
+    debtSub,
+    rule,
+    autoCreate,
+  ];
+}
+
+/// How a plan's interest is worked out (`interest_method`).
+enum PlanInterestMethod {
+  none,
+  flat,
+  reducing,
+  fixed,
+  manual;
+
+  static PlanInterestMethod fromJson(Object? v) =>
+      values.firstWhere((m) => m.name == v, orElse: () => none);
+}
+
+/// `PlanInput`: a debt item's installment plan.
+class RecurringPlanWrite extends Equatable {
+  const RecurringPlanWrite({
+    required this.principal,
+    required this.count,
+    required this.start,
+    this.method = PlanInterestMethod.none,
+    this.rate,
+    this.installmentAmount,
+    this.cardAccountId,
+    this.openingAccountId,
+  });
+
+  final double principal;
+  final int count;
+
+  /// The first installment's due date.
+  final DateTime start;
+  final PlanInterestMethod method;
+
+  /// % a year (flat / reducing).
+  final double? rate;
+
+  /// fixed: the amount of every installment.
+  final double? installmentAmount;
+
+  /// ผ่อนผ่านบัตร: the card that holds the debt (no opening debt row).
+  final String? cardAccountId;
+
+  /// The wallet the opening debt row's money went through (optional).
+  final String? openingAccountId;
+
+  Map<String, dynamic> toJson() => {
+    'principal': principal,
+    'count': count,
+    'start_date': ymd(start),
+    'interest_method': method.name,
+    'interest_rate': rate,
+    'installment_amount': installmentAmount,
+    'card_account_id': cardAccountId,
+    'opening_account_id': ?openingAccountId,
+  };
+
+  @override
+  List<Object?> get props => [
+    principal,
+    count,
+    start,
+    method,
+    rate,
+    installmentAmount,
+    cardAccountId,
+    openingAccountId,
+  ];
+}
+
+/// When a reminder fires (`anchor`): before a round is due, before the item
+/// starts or before it ends.
+enum ReminderAnchor {
+  due,
+  start,
+  end;
+
+  static ReminderAnchor fromJson(Object? v) =>
+      values.firstWhere((a) => a.name == v, orElse: () => due);
+}
+
+class RecurringReminder extends Equatable {
+  const RecurringReminder({
+    this.anchor = ReminderAnchor.due,
+    this.daysBefore = 1,
+    this.time = '09:00',
+    this.id,
+  });
+
+  factory RecurringReminder.fromJson(Map<String, dynamic> json) =>
+      RecurringReminder(
+        id: json['id'] as String?,
+        anchor: ReminderAnchor.fromJson(json['anchor']),
+        daysBefore: (json['days_before'] as num?)?.toInt() ?? 0,
+        time: (json['time'] as String?) ?? '09:00',
+      );
+
+  final String? id;
+  final ReminderAnchor anchor;
+  final int daysBefore;
+
+  /// "HH:mm".
+  final String time;
+
+  RecurringReminder copyWith({
+    ReminderAnchor? anchor,
+    int? daysBefore,
+    String? time,
+  }) => RecurringReminder(
+    id: id,
+    anchor: anchor ?? this.anchor,
+    daysBefore: daysBefore ?? this.daysBefore,
+    time: time ?? this.time,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'anchor': anchor.name,
+    'days_before': daysBefore,
+    'time': time,
+  };
+
+  @override
+  List<Object?> get props => [id, anchor, daysBefore, time];
+}
+
+/// `POST / PUT /recurring` (`RecurringInput`, 0.4.3): the item, its
+/// counterparty (หนี้: a contact, a typed name or an institution), its plan,
+/// reminders and every line ([lines]: one with an id = update, none = new,
+/// one left out = deleted).
 class RecurringWrite extends Equatable {
   const RecurringWrite({
     required this.name,
     required this.kind,
-    required this.type,
-    required this.rule,
-    this.amount,
-    this.trialUntil,
+    required this.lines,
     this.description,
     this.note,
     this.iconCode,
-    this.accountId,
-    this.toAccountId,
     this.categoryId,
     this.tagIds = const [],
     this.goalId,
-    this.autoCreate = false,
     this.contactId,
     this.personName,
-    this.debtSub,
+    this.institutionId,
     this.direction,
+    this.plan,
+    this.reminders = const [],
   });
 
   final String name;
   final RecurringKind kind;
-
-  /// หนี้ only: the person (a contact, else a typed name), จดหนี้ | จ่ายหนี้
-  /// and the money's direction.
-  final String? contactId;
-  final String? personName;
-  final DebtEntrySub? debtSub;
-  final DebtEntryDirection? direction;
-
-  /// Saving only (null = ยังไม่จัดสรร).
-  final String? goalId;
   final String? description;
   final String? note;
   final PpForgeIconCode? iconCode;
-  final TransactionType type;
-
-  final double? amount;
-
-  final DateTime? trialUntil;
-  final String? accountId;
-  final String? toAccountId;
   final String? categoryId;
   final List<String> tagIds;
-  final RecurrenceRule rule;
-  final bool autoCreate;
 
-  Map<String, dynamic> toJson({bool forUpdate = false}) {
+  /// Saving only (null = ยังไม่จัดสรร).
+  final String? goalId;
+
+  /// หนี้ only: exactly one of these.
+  final String? contactId;
+  final String? personName;
+  final String? institutionId;
+
+  /// หนี้ only: paid = they owe me, received = I owe them.
+  final DebtEntryDirection? direction;
+  final RecurringPlanWrite? plan;
+  final List<RecurringReminder> reminders;
+
+  /// LineInput JSON per line ([RecurringLineWrite.toJson], or a line kept as
+  /// the BE sent it).
+  final List<Map<String, dynamic>> lines;
+
+  Map<String, dynamic> toJson() {
+    final debt = kind == RecurringKind.debt;
     final saving = kind == RecurringKind.saving;
-    if (kind == RecurringKind.debt) {
-      // No category / tags / goal / transfer on a debt rule (400 otherwise).
-      return <String, dynamic>{
-        'name': name,
-        'kind': kind.toJson(),
-        'type': 'debt',
-        'description': description,
-        'note': note,
-        'icon_code': iconCode?.toJson(),
-        'amount': amount ?? 0,
-        'account_id': accountId,
-        'contact_id': contactId,
-        'person_name': contactId == null ? personName : null,
-        'debt_kind': recurringDebtSubToJson(debtSub ?? DebtEntrySub.record),
-        'direction': (direction ?? DebtEntryDirection.paid).wire,
-        'auto_create': autoCreate,
-        ...recurrenceToJson(rule),
-      };
-    }
-    return <String, dynamic>{
+    final noCategory = debt || saving || kind == RecurringKind.transfer;
+    return {
       'name': name,
-      'kind': kind.toJson(),
+      'type': kind.toJson(),
       'description': description,
       'note': note,
       'icon_code': iconCode?.toJson(),
-      'type': saving ? 'saving' : type.toJson(),
-      'amount': amount ?? 0,
-      'account_id': accountId,
-      'to_account_id': type == TransactionType.transfer ? toAccountId : null,
-      'category_id': saving || type == TransactionType.transfer
-          ? null
-          : categoryId,
-      'tag_ids': saving ? const <String>[] : tagIds,
+      'category_id': noCategory ? null : categoryId,
+      'tag_ids': debt || saving ? const <String>[] : tagIds,
       'goal_id': saving ? goalId : null,
-      'auto_create': autoCreate,
-      if (kind == RecurringKind.subscription && trialUntil != null)
-        'trial_until': ymd(trialUntil!)
-      else if (forUpdate)
-        'trial_until': '',
-      ...recurrenceToJson(rule),
+      'counterparty': debt
+          ? {
+              'contact_id': institutionId == null ? contactId : null,
+              'person_name': institutionId == null && contactId == null
+                  ? personName
+                  : null,
+              'institution_id': institutionId,
+            }
+          : null,
+      'debt_direction': debt
+          ? (direction ?? DebtEntryDirection.paid).wire
+          : null,
+      'plan': debt ? plan?.toJson() : null,
+      'reminders': [for (final r in reminders) r.toJson()],
+      'lines': lines,
     };
   }
 
@@ -644,19 +952,15 @@ class RecurringWrite extends Equatable {
     description,
     note,
     iconCode,
-    type,
-    amount,
-    trialUntil,
-    accountId,
-    toAccountId,
     categoryId,
     tagIds,
     goalId,
-    rule,
-    autoCreate,
     contactId,
     personName,
-    debtSub,
+    institutionId,
     direction,
+    plan,
+    reminders,
+    lines,
   ];
 }

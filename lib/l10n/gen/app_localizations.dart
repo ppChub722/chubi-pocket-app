@@ -9926,6 +9926,24 @@ abstract class AppLocalizations {
   /// **'That period is already linked (or this transaction is linked already)'**
   String get recurringLinkAlreadyLinked;
 
+  /// No description provided for @errInstitutionInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Debts, recurring items or wallets still use this institution, so it can\'t be deleted'**
+  String get errInstitutionInUse;
+
+  /// No description provided for @errRecurringLastLine.
+  ///
+  /// In en, this message translates to:
+  /// **'A recurring item needs at least one line; delete the whole item instead'**
+  String get errRecurringLastLine;
+
+  /// No description provided for @errInstallmentNeedsInstitution.
+  ///
+  /// In en, this message translates to:
+  /// **'Card installments need a card linked to an institution'**
+  String get errInstallmentNeedsInstitution;
+
   /// No description provided for @recurringPickerGroupNearest.
   ///
   /// In en, this message translates to:
@@ -12840,6 +12858,666 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete'**
   String get notifOnSplitRemovedDelete;
+
+  /// No description provided for @recurringStatusDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get recurringStatusDone;
+
+  /// No description provided for @fpRecurringStatTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get fpRecurringStatTotal;
+
+  /// No description provided for @fpRecurringKindExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get fpRecurringKindExpense;
+
+  /// No description provided for @fpRecurringKindBill.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill'**
+  String get fpRecurringKindBill;
+
+  /// No description provided for @fpRecurringKindTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get fpRecurringKindTransfer;
+
+  /// No description provided for @recurringDeleteKeepsWritten.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this recurring item and every line | What it already recorded stays; its debts become general debts of the counterparty, the balance doesn\'t change'**
+  String get recurringDeleteKeepsWritten;
+
+  /// No description provided for @fpRecurringPlanIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish the plan: principal, number of installments and interest'**
+  String get fpRecurringPlanIncomplete;
+
+  /// No description provided for @institutionPickTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick an institution'**
+  String get institutionPickTitle;
+
+  /// No description provided for @institutionEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No institutions yet'**
+  String get institutionEmpty;
+
+  /// No description provided for @institutionAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add institution'**
+  String get institutionAdd;
+
+  /// No description provided for @institutionAddNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Add \"{name}\"'**
+  String institutionAddNamed(String name);
+
+  /// No description provided for @institutionKindBank.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank'**
+  String get institutionKindBank;
+
+  /// No description provided for @institutionKindCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit card'**
+  String get institutionKindCard;
+
+  /// No description provided for @institutionKindFinance.
+  ///
+  /// In en, this message translates to:
+  /// **'Finance'**
+  String get institutionKindFinance;
+
+  /// No description provided for @institutionKindStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Store'**
+  String get institutionKindStore;
+
+  /// No description provided for @institutionKindOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get institutionKindOther;
+
+  /// No description provided for @recurringCounterpartyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'With'**
+  String get recurringCounterpartyLabel;
+
+  /// No description provided for @recurringCounterpartyPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Person'**
+  String get recurringCounterpartyPerson;
+
+  /// No description provided for @recurringCounterpartyInstitution.
+  ///
+  /// In en, this message translates to:
+  /// **'Institution'**
+  String get recurringCounterpartyInstitution;
+
+  /// No description provided for @recurringSourceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid from'**
+  String get recurringSourceLabel;
+
+  /// No description provided for @recurringSourceWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet'**
+  String get recurringSourceWallet;
+
+  /// No description provided for @recurringSourcePaidBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid by someone'**
+  String get recurringSourcePaidBy;
+
+  /// No description provided for @recurringPaidByPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Who pays for me'**
+  String get recurringPaidByPick;
+
+  /// No description provided for @recurringPlanSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Installment plan'**
+  String get recurringPlanSection;
+
+  /// No description provided for @recurringPlanToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay in installments'**
+  String get recurringPlanToggle;
+
+  /// No description provided for @recurringPlanPrincipal.
+  ///
+  /// In en, this message translates to:
+  /// **'Principal'**
+  String get recurringPlanPrincipal;
+
+  /// No description provided for @recurringPlanCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Installments'**
+  String get recurringPlanCount;
+
+  /// No description provided for @recurringPlanFirstDue.
+  ///
+  /// In en, this message translates to:
+  /// **'First installment'**
+  String get recurringPlanFirstDue;
+
+  /// No description provided for @recurringPlanMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest'**
+  String get recurringPlanMethod;
+
+  /// No description provided for @recurringPlanMethodNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No interest'**
+  String get recurringPlanMethodNone;
+
+  /// No description provided for @recurringPlanMethodFlat.
+  ///
+  /// In en, this message translates to:
+  /// **'Flat'**
+  String get recurringPlanMethodFlat;
+
+  /// No description provided for @recurringPlanMethodReducing.
+  ///
+  /// In en, this message translates to:
+  /// **'Reducing balance'**
+  String get recurringPlanMethodReducing;
+
+  /// No description provided for @recurringPlanMethodFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed installment'**
+  String get recurringPlanMethodFixed;
+
+  /// No description provided for @recurringPlanMethodManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Typed per installment'**
+  String get recurringPlanMethodManual;
+
+  /// No description provided for @recurringPlanRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate (% a year)'**
+  String get recurringPlanRate;
+
+  /// No description provided for @recurringPlanInstallment.
+  ///
+  /// In en, this message translates to:
+  /// **'Installment'**
+  String get recurringPlanInstallment;
+
+  /// No description provided for @recurringPlanOnCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Installments on a card'**
+  String get recurringPlanOnCard;
+
+  /// No description provided for @recurringPlanCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Card'**
+  String get recurringPlanCard;
+
+  /// No description provided for @recurringPlanTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Installments'**
+  String get recurringPlanTable;
+
+  /// No description provided for @recurringPlanTotalInterest.
+  ///
+  /// In en, this message translates to:
+  /// **'Total interest'**
+  String get recurringPlanTotalInterest;
+
+  /// No description provided for @recurringPlanTotalPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Total to pay'**
+  String get recurringPlanTotalPay;
+
+  /// No description provided for @recurringPlanPaidPrincipal.
+  ///
+  /// In en, this message translates to:
+  /// **'Principal paid'**
+  String get recurringPlanPaidPrincipal;
+
+  /// No description provided for @recurringPlanLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get recurringPlanLeft;
+
+  /// No description provided for @recurringPlanLeftPrincipal.
+  ///
+  /// In en, this message translates to:
+  /// **'Principal left'**
+  String get recurringPlanLeftPrincipal;
+
+  /// No description provided for @recurringPlanLeftInterest.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest left'**
+  String get recurringPlanLeftInterest;
+
+  /// No description provided for @recurringPlanSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'Principal {principal} · interest {interest}'**
+  String recurringPlanSplit(String principal, String interest);
+
+  /// No description provided for @recurringPlanNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next installment ({n}/{total}) | {due}'**
+  String recurringPlanNext(int n, int total, String due);
+
+  /// No description provided for @recurringPlanOnCardNote.
+  ///
+  /// In en, this message translates to:
+  /// **'No separate payment: it\'s paid with the card statement (\"Pay card\")'**
+  String get recurringPlanOnCardNote;
+
+  /// No description provided for @recurringPlanClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close the plan early'**
+  String get recurringPlanClose;
+
+  /// No description provided for @recurringPlanCloseConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Unticked installments are skipped; paid ones stay as history'**
+  String get recurringPlanCloseConsequence;
+
+  /// No description provided for @recurringPlanCloseBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Close this plan early? Installments not ticked paid are skipped'**
+  String get recurringPlanCloseBody;
+
+  /// No description provided for @recurringPlanClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan closed'**
+  String get recurringPlanClosed;
+
+  /// No description provided for @recurringInstallmentEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit this installment'**
+  String get recurringInstallmentEdit;
+
+  /// No description provided for @recurringInstallmentMarkPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Installment paid'**
+  String get recurringInstallmentMarkPaid;
+
+  /// No description provided for @recurringInstallmentUnmark.
+  ///
+  /// In en, this message translates to:
+  /// **'Not paid'**
+  String get recurringInstallmentUnmark;
+
+  /// No description provided for @recurringInstallmentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Installment {n}'**
+  String recurringInstallmentTitle(int n);
+
+  /// No description provided for @recurringInstallmentUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get recurringInstallmentUpcoming;
+
+  /// No description provided for @recurringInstallmentDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Due'**
+  String get recurringInstallmentDue;
+
+  /// No description provided for @recurringInstallmentPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get recurringInstallmentPaid;
+
+  /// No description provided for @recurringInstallmentSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get recurringInstallmentSkipped;
+
+  /// No description provided for @recurringInstallmentDueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Due date'**
+  String get recurringInstallmentDueDate;
+
+  /// No description provided for @recurringInstallmentPrincipal.
+  ///
+  /// In en, this message translates to:
+  /// **'Principal'**
+  String get recurringInstallmentPrincipal;
+
+  /// No description provided for @recurringInstallmentInterest.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest'**
+  String get recurringInstallmentInterest;
+
+  /// No description provided for @recurringLinesSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Lines'**
+  String get recurringLinesSection;
+
+  /// No description provided for @recurringLineAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add line'**
+  String get recurringLineAdd;
+
+  /// No description provided for @recurringLinePaidBy.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} pays'**
+  String recurringLinePaidBy(String name);
+
+  /// No description provided for @recurringLineDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this line?'**
+  String get recurringLineDeleteTitle;
+
+  /// No description provided for @recurringLineDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'What this line already recorded stays'**
+  String get recurringLineDeleteBody;
+
+  /// No description provided for @recurringLinesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} lines'**
+  String recurringLinesCount(int n);
+
+  /// No description provided for @recurringRemindersSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get recurringRemindersSection;
+
+  /// No description provided for @recurringReminderAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add reminder'**
+  String get recurringReminderAdd;
+
+  /// No description provided for @recurringReminderAnchorDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Before it\'s due'**
+  String get recurringReminderAnchorDue;
+
+  /// No description provided for @recurringReminderAnchorStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Before it starts'**
+  String get recurringReminderAnchorStart;
+
+  /// No description provided for @recurringReminderAnchorEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Before it ends'**
+  String get recurringReminderAnchorEnd;
+
+  /// No description provided for @recurringReminderDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} days'**
+  String recurringReminderDays(int n);
+
+  /// No description provided for @recurringReminderSameDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Same day'**
+  String get recurringReminderSameDay;
+
+  /// No description provided for @debtsSectionInstitutions.
+  ///
+  /// In en, this message translates to:
+  /// **'Institutions'**
+  String get debtsSectionInstitutions;
+
+  /// No description provided for @debtsSectionPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get debtsSectionPeople;
+
+  /// No description provided for @debtsSeeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all {n}'**
+  String debtsSeeAll(int n);
+
+  /// No description provided for @debtsOpenPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get debtsOpenPage;
+
+  /// No description provided for @debtsGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General debts'**
+  String get debtsGeneral;
+
+  /// No description provided for @debtsGeneralCount.
+  ///
+  /// In en, this message translates to:
+  /// **'General debts, {n} rows'**
+  String debtsGeneralCount(int n);
+
+  /// No description provided for @debtsCardDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit card debt'**
+  String get debtsCardDebt;
+
+  /// No description provided for @debtAddEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Record debt'**
+  String get debtAddEntry;
+
+  /// No description provided for @debtAddRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring'**
+  String get debtAddRecurring;
+
+  /// No description provided for @debtsRecurringSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring'**
+  String get debtsRecurringSection;
+
+  /// No description provided for @debtsSideOwed.
+  ///
+  /// In en, this message translates to:
+  /// **'Owed to me {amount}'**
+  String debtsSideOwed(String amount);
+
+  /// No description provided for @debtsSideOwe.
+  ///
+  /// In en, this message translates to:
+  /// **'I owe {amount}'**
+  String debtsSideOwe(String amount);
+
+  /// No description provided for @debtsLineNext.
+  ///
+  /// In en, this message translates to:
+  /// **'{when} · next {date}'**
+  String debtsLineNext(String when, String date);
+
+  /// No description provided for @debtsMarkInstallment.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark an installment paid'**
+  String get debtsMarkInstallment;
+
+  /// No description provided for @debtsMarkInstallmentOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} installment {n}'**
+  String debtsMarkInstallmentOf(String name, int n);
+
+  /// No description provided for @debtsThisMonthPay.
+  ///
+  /// In en, this message translates to:
+  /// **'To pay this month'**
+  String get debtsThisMonthPay;
+
+  /// No description provided for @debtsThisMonthReceive.
+  ///
+  /// In en, this message translates to:
+  /// **'To receive this month'**
+  String get debtsThisMonthReceive;
+
+  /// No description provided for @debtsInstitutionInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Institution info'**
+  String get debtsInstitutionInfo;
+
+  /// No description provided for @institutionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Institution'**
+  String get institutionTitle;
+
+  /// No description provided for @institutionNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New institution'**
+  String get institutionNewTitle;
+
+  /// No description provided for @institutionKindLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Kind'**
+  String get institutionKindLabel;
+
+  /// No description provided for @institutionPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get institutionPhone;
+
+  /// No description provided for @institutionEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get institutionEmail;
+
+  /// No description provided for @institutionWebsite.
+  ///
+  /// In en, this message translates to:
+  /// **'Website'**
+  String get institutionWebsite;
+
+  /// No description provided for @institutionWallets.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked wallets'**
+  String get institutionWallets;
+
+  /// No description provided for @institutionArchiveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden from lists; its debts and linked wallets stay. Can be restored'**
+  String get institutionArchiveBody;
+
+  /// No description provided for @institutionDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Can be deleted when no debt, recurring item or wallet points at it'**
+  String get institutionDeleteBody;
+
+  /// No description provided for @institutionNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Institution not found'**
+  String get institutionNotFound;
+
+  /// No description provided for @institutionField.
+  ///
+  /// In en, this message translates to:
+  /// **'Institution'**
+  String get institutionField;
+
+  /// No description provided for @quickInstallment.
+  ///
+  /// In en, this message translates to:
+  /// **'Installments'**
+  String get quickInstallment;
+
+  /// No description provided for @quickInstallmentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Split it into installments on the card | the full price goes on the card now'**
+  String get quickInstallmentHint;
+
+  /// No description provided for @notifRecurringDueSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} takes {amount} {when}'**
+  String notifRecurringDueSoon(String name, String amount, String when);
+
+  /// No description provided for @notifTypeRecurringDueSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up'**
+  String get notifTypeRecurringDueSoon;
+
+  /// No description provided for @notifSetRecurringDueSoonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders before a round is due, as each recurring item sets them'**
+  String get notifSetRecurringDueSoonHint;
 }
 
 class _AppLocalizationsDelegate

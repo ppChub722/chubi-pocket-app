@@ -74,6 +74,18 @@ class AccountsRepository {
     });
   }
 
+  /// `PUT /v1/accounts/:id` with only `institution_id` (0.4.3): the wallet's
+  /// institution (null = none).
+  Future<Account> setInstitution(String id, String? institutionId) {
+    return _guard(() async {
+      final res = await _client.dio.put<Map<String, dynamic>>(
+        '/accounts/$id',
+        data: <String, dynamic>{'institution_id': institutionId},
+      );
+      return Account.fromJson(res.data!);
+    });
+  }
+
   /// `PUT /v1/accounts/:id` with only `auto_save`: the savings wallet switch.
   Future<Account> setAutoSave(String id, {required bool on}) {
     return _guard(() async {

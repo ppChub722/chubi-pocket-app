@@ -49,6 +49,7 @@ enum ShellTab {
     'archived': settings,
     'projects': projects,
     'contacts': contacts,
+    'institutions': contacts,
     'budgets': budgets,
     'recurring': recurring,
     'saving-goals': savingGoals,

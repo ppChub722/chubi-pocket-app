@@ -36,7 +36,8 @@ void main() {
     expect(r.pendingCount, 2);
     expect(r.hasAmount, isTrue);
     final w = Recurring.fromJson(reminderJson());
-    expect(w.kind, RecurringKind.reminder);
+    // 0.4.3: an old "reminder" reads as บิล.
+    expect(w.kind, RecurringKind.bill);
     expect(w.amount, isNull);
     expect(w.hasAmount, isFalse);
     expect(w.currentOccurrence?.status, OccurrenceState.pending);
@@ -60,16 +61,16 @@ void main() {
     expect(RecurringItem.fromJson(prodItemJson(amount: null)).amount, isNull);
   });
 
-  test('the write: a reminder sends amount 0, a create leaves trial out', () {
+  test('the write: a bill sends its line with amount 0, no trial', () {
     final draft = RecurringDraft.blank(
-      preset: const RecurringPreset(kind: RecurringKind.reminder),
+      preset: const RecurringPreset(kind: RecurringKind.bill),
     ).copyWith(name: 'Water', accountId: 'a1');
     final body = draft.toWrite().toJson();
-    expect(body['kind'], 'reminder');
-    expect(body['amount'], 0);
+    expect(body['type'], 'bill');
     expect(body.containsKey('trial_until'), isFalse);
-    // A PUT clears the trial with "".
-    expect(draft.toWrite().toJson(forUpdate: true)['trial_until'], '');
+    final line = (body['lines'] as List).single as Map<String, dynamic>;
+    expect(line['amount'], 0);
+    expect(line['source'], {'account_id': 'a1'});
   });
 
   test('prefill: type / amount / category / name / account from the query', () {
@@ -88,7 +89,9 @@ void main() {
     expect(AmountInput.parse(d.amount), 30000);
     final body = d.toWrite().toJson();
     expect(body['category_id'], 'c9');
-    expect(body['account_id'], 'a1');
+    expect(((body['lines'] as List).single as Map)['source'], {
+      'account_id': 'a1',
+    });
     expect(body['type'], 'income');
   });
 }

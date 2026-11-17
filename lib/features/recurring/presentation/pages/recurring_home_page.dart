@@ -550,13 +550,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
           active: _kind != null,
           options: [
             SheetOption(value: null, label: l.recurringFilterAllKinds),
-            for (final k in const [
-              RecurringKind.subscription,
-              RecurringKind.installment,
-              RecurringKind.reminder,
-              RecurringKind.income,
-              RecurringKind.saving,
-            ])
+            for (final k in RecurringKind.values)
               SheetOption(value: k, label: recurringKindLabel(l, k)),
           ],
           onSelected: (k) {
@@ -938,12 +932,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     ];
     return [
       ...head,
-      for (final k in const [
-        RecurringKind.subscription,
-        RecurringKind.installment,
-        RecurringKind.reminder,
-        RecurringKind.income,
-      ])
+      for (final k in RecurringKind.values)
         ..._kindGroup(l, k, [
           for (final r in live)
             if (r.kind == k) r,
@@ -971,20 +960,12 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
         _money(sum((r) => r.monthlyAmount)),
         _money(sum((r) => r.yearlyCost)),
       ),
-      RecurringKind.installment => l.recurringHomeLeft(
-        _money(
-          sum(
-            (r) => r.progressTotal == null
-                ? null
-                : (r.amount ?? 0) * (r.progressTotal! - r.progressDone),
-          ),
-        ),
+      RecurringKind.bill => l.recurringHomeAvgPerMonth(
+        _money(sum((r) => r.monthTotal ?? r.avgAmount ?? r.monthlyAmount)),
       ),
-      RecurringKind.reminder => l.recurringHomeAvgPerMonth(
-        _money(sum((r) => r.avgAmount ?? r.monthlyAmount)),
+      _ => l.recurringHomePerMonth(
+        _money(sum((r) => r.monthTotal ?? r.monthlyAmount)),
       ),
-      RecurringKind.income || RecurringKind.saving || RecurringKind.debt =>
-        l.recurringHomePerMonth(_money(sum((r) => r.monthlyAmount))),
     };
     return [
       PpForgeListHeader(

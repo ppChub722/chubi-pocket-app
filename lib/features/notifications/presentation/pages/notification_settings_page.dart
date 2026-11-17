@@ -90,6 +90,10 @@ class NotificationSettingsPage extends StatelessWidget {
         label: l.notifTypeRecurringDue,
         helper: l.notifSetRecurringDueHint,
       ),
+      'recurring_due_soon' => (
+        label: l.notifTypeRecurringDueSoon,
+        helper: l.notifSetRecurringDueSoonHint,
+      ),
       'recurring_ending' => (
         label: l.notifTypeRecurringEnding,
         helper: l.notifSetRecurringEndingHint,

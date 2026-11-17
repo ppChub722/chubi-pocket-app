@@ -254,7 +254,7 @@ class RecurringLinkHandle extends ChangeNotifier {
     required void Function(String message) error,
     required String Function(ApiException e) errorText,
   }) async {
-    final ruleId = link.recurringId;
+    final ruleId = link.recurringRuleId ?? link.recurringId;
     final slot = link.slot;
     _set(busy: true);
     try {

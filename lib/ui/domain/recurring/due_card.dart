@@ -2,242 +2,41 @@ import 'package:flutter/material.dart';
 
 import 'package:pp_forge_core/ui.dart';
 import '../tokens/app_icons.dart';
-import 'occurrence_row.dart';
 
-/// Under a recurring item's hero: the one occurrence to act on. [warning]
-/// (something is due): edged and washed in the warning colour, with a
-/// [title] head ("ต้องจัดการ", [trailing] count). Otherwise the next
-/// occurrence, quiet. Either way: a calendar sheet, [label] over the big
-/// [value], the [actions] as equal buttons (the first filled when
-/// [primaryFirst]), then [footer] rows ([DueMoreRow], [OccurrenceFocusNext]).
-class OccurrenceFocusCard extends StatelessWidget {
-  const OccurrenceFocusCard({
-    required this.date,
-    required this.label,
-    required this.value,
-    this.valueColor,
-    this.tag,
-    this.title,
-    this.trailing,
-    this.actions = const [],
-    this.primaryFirst = false,
-    this.footer = const [],
-    this.warning = false,
-    this.onTap,
-    super.key,
-  });
-
-  final DateTime date;
-  final String label;
-
-  /// MoneyText, or a Text ("รอใส่ยอด") with [valueColor].
-  final Widget value;
-  final Color? valueColor;
-
-  /// A state pill beside [label] ("รอยืนยัน").
-  final Widget? tag;
-  final String? title;
-  final String? trailing;
-  final List<OccurrenceAction> actions;
-  final bool primaryFirst;
-  final List<Widget> footer;
-  final bool warning;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final text = theme.textTheme;
-    final warn = theme.extension<PpForgeColors>()!.warning;
-    final muted = scheme.onSurfaceVariant;
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: warning
-            ? Color.alphaBlend(warn.withValues(alpha: 0.07), scheme.surface)
-            : scheme.surface,
-        borderRadius: BorderRadius.circular(PpForgeRadius.lg),
-        border: Border.all(
-          color: warning ? warn.withValues(alpha: 0.6) : scheme.outlineVariant,
-          width: warning ? 1.5 : 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (title != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                PpForgeSpacing.lg,
-                PpForgeSpacing.md,
-                PpForgeSpacing.lg,
-                0,
-              ),
-              child: Row(
-                children: [
-                  Icon(AppIcons.warning, size: 18, color: warn),
-                  const SizedBox(width: PpForgeSpacing.xs),
-                  Expanded(
-                    child: Text(
-                      title!,
-                      style: text.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: warn,
-                      ),
-                    ),
-                  ),
-                  if (trailing != null)
-                    Text(
-                      trailing!,
-                      style: text.bodySmall?.copyWith(color: muted),
-                    ),
-                ],
-              ),
-            ),
-          BusyLock(
-            child: InkWell(
-              onTap: onTap,
-              child: Padding(
-                padding: const EdgeInsets.all(PpForgeSpacing.lg),
-                child: Row(
-                  children: [
-                    CalendarTile(date: date, color: warning ? warn : null),
-                    const SizedBox(width: PpForgeSpacing.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  label,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: text.bodySmall?.copyWith(color: muted),
-                                ),
-                              ),
-                              if (tag != null) ...[
-                                const SizedBox(width: PpForgeSpacing.xs),
-                                tag!,
-                              ],
-                            ],
-                          ),
-                          const SizedBox(height: PpForgeSpacing.xxs),
-                          DefaultTextStyle.merge(
-                            style: text.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: valueColor,
-                              fontFeatures: const [
-                                FontFeature.tabularFigures(),
-                              ],
-                            ),
-                            child: value,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          if (actions.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                PpForgeSpacing.lg,
-                0,
-                PpForgeSpacing.lg,
-                PpForgeSpacing.md,
-              ),
-              child: Row(
-                children: [
-                  for (final (i, a) in actions.indexed) ...[
-                    if (i > 0) const SizedBox(width: PpForgeSpacing.sm),
-                    Expanded(
-                      child: _button(
-                        context,
-                        a,
-                        primary: primaryFirst && i == 0,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ...footer,
-          if (footer.isNotEmpty) const SizedBox(height: PpForgeSpacing.xs),
-        ],
-      ),
-    );
-  }
-
-  Widget _button(
-    BuildContext context,
-    OccurrenceAction a, {
-    required bool primary,
-  }) {
-    final theme = Theme.of(context);
-    Widget button = PpForgeButton(
-      label: a.label,
-      onPressed: a.onTap,
-      submits: a.submits,
-      variant: a.destructive
-          ? PpForgeButtonVariant.destructive
-          : primary
-          ? PpForgeButtonVariant.primary
-          : PpForgeButtonVariant.outlined,
-      size: PpForgeButtonSize.control,
-      expand: true,
-    );
-    if (primary && a.warning && !a.destructive) {
-      final warn = theme.extension<PpForgeColors>()!.warning;
-      button = Theme(
-        data: theme.copyWith(
-          colorScheme: theme.colorScheme.copyWith(
-            primary: warn,
-            onPrimary: PpForgeChip.readableOn(warn, Colors.white),
-          ),
-        ),
-        child: button,
-      );
-    }
-    return button;
-  }
-}
-
-/// The next occurrence as one line at the foot of an [OccurrenceFocusCard]
-/// that shows a due one: "ครั้งถัดไป | อีก 27 วัน | 19 พ.ย." and its amount.
-class OccurrenceFocusNext extends StatelessWidget {
-  const OccurrenceFocusNext({
+/// The next occurrence as one slim row inside an item's hero (0.4.3 plan E):
+/// "งวดถัดไป (6/12) | อีก 12 วัน" and its amount (or [amountText] in
+/// [amountColor] when it has none yet). A tap edits this occurrence.
+class HeroNextOccurrence extends StatelessWidget {
+  const HeroNextOccurrence({
     required this.label,
     this.amount,
+    this.amountText,
+    this.amountColor,
     this.onTap,
     super.key,
   });
 
   final String label;
   final Widget? amount;
+  final String? amountText;
+  final Color? amountColor;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final value = amount ?? (amountText == null ? null : Text(amountText!));
     return BusyLock(
-      child: InkWell(
-        onTap: onTap,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            border: Border(top: BorderSide(color: scheme.outlineVariant)),
-          ),
-          child: Padding(
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(PpForgeRadius.lg),
+          child: HeroInsetBox(
             padding: const EdgeInsets.symmetric(
-              horizontal: PpForgeSpacing.lg,
-              vertical: PpForgeSpacing.sm + PpForgeSpacing.xxs,
+              horizontal: PpForgeSpacing.md,
+              vertical: PpForgeSpacing.sm,
             ),
             child: Row(
               children: [
@@ -248,18 +47,19 @@ class OccurrenceFocusNext extends StatelessWidget {
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: text.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
+                    style: text.bodyMedium,
                   ),
                 ),
-                if (amount != null)
+                if (value != null) ...[
+                  const SizedBox(width: PpForgeSpacing.sm),
                   DefaultTextStyle.merge(
                     style: text.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
+                      color: amountColor,
                     ),
-                    child: amount!,
+                    child: value,
                   ),
+                ],
               ],
             ),
           ),
@@ -270,7 +70,7 @@ class OccurrenceFocusNext extends StatelessWidget {
 }
 
 /// "ต้องจัดการ": the occurrences that are due (or still need an amount), in
-/// one card edged and washed in the warning colour (as [OccurrenceFocusCard]).
+/// one card edged and washed in the warning colour.
 /// [children]: a [DueSelectBar] first when rows can be picked, then
 /// OccurrenceRows and [DueMoreRow]s. With [onToggle] it
 /// folds like a hero card: ⌄ / ⌃ at the head's end (the whole head taps);

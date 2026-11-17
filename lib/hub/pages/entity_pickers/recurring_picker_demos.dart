@@ -25,7 +25,9 @@ class RecurringPickerDemos extends StatelessWidget {
             '${c.replace ? ', replace' : ''})';
 
   /// Step 2 rows for any rule: 2 overdue, 1 recorded on another tx, 2 coming.
-  static Future<({List<RecurringItem> items, String? suggestedSlot})>
+  static Future<
+    ({List<RecurringItem> items, String? suggestedSlot, String? suggestedLine})
+  >
   _fakeOccurrences(String ruleId, DateTime? txDate) async {
     await Future<void>.delayed(const Duration(milliseconds: 400));
     final now = DateTime.now();
@@ -37,7 +39,7 @@ class RecurringPickerDemos extends StatelessWidget {
     }) {
       final d = ymd(now.add(Duration(days: days)));
       return {
-        'rule_id': ruleId,
+        'recurring_rule_id': ruleId,
         'slot': d,
         'date': d,
         'days_until': days,
@@ -59,6 +61,7 @@ class RecurringPickerDemos extends StatelessWidget {
     return (
       items: [for (final r in rows) RecurringItem.fromJson(r)],
       suggestedSlot: rows.first['slot'] as String,
+      suggestedLine: ruleId,
     );
   }
 

@@ -136,7 +136,7 @@ class RecurringDirectoryCubit extends Cubit<RecurringDirectoryState>
                 final s => s.name,
               },
               amount: r.currentOccurrence!.amount,
-              ruleId: r.id,
+              ruleId: r.currentOccurrence!.ruleId,
               slot: r.currentOccurrence!.slot,
             ),
           ),

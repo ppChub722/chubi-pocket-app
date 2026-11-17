@@ -61,7 +61,7 @@ void main() {
   test('a filled debt occurrence carries its person and entry', () {
     final item = RecurringItem.tryParse({
       'id': 'i1',
-      'rule_id': 'r1',
+      'recurring_rule_id': 'r1',
       'slot': '2026-11-01',
       'stored': true,
       'date': '2026-11-01',
@@ -90,35 +90,42 @@ void main() {
   test(
     'a debt write sends person + kind + direction, never category / tags',
     () {
+      // 0.4.3: the item carries the counterparty and the direction; the
+      // line its amount, kind and schedule.
       final body = RecurringWrite(
         name: 'คืนแม่',
         kind: RecurringKind.debt,
-        type: TransactionType.expense,
-        rule: recurrenceFromJson(
-          {
-            'freq': 'monthly',
-            'interval': 1,
-            'by_month_day': [1],
-          },
-          start: '2026-11-01',
-          end: {'kind': 'none'},
-        ),
-        amount: 300,
         categoryId: 'cat-should-not-go',
         tagIds: const ['t1'],
         personName: 'แม่',
-        debtSub: DebtEntrySub.repay,
         direction: DebtEntryDirection.paid,
+        lines: [
+          RecurringLineWrite(
+            rule: recurrenceFromJson(
+              {'freq': 'monthly', 'interval': 1},
+              start: '2026-11-01',
+              end: {'kind': 'none'},
+            ),
+            amount: 300,
+            debtSub: DebtEntrySub.repay,
+          ).toJson(),
+        ],
       ).toJson();
       expect(body['type'], 'debt');
-      expect(body['kind'], 'debt');
-      expect(body['person_name'], 'แม่');
-      expect(body['contact_id'], isNull);
-      expect(body['debt_kind'], 'repayment');
-      expect(body['direction'], 'paid');
-      expect(body.containsKey('category_id'), isFalse);
-      expect(body.containsKey('tag_ids'), isFalse);
-      expect(body.containsKey('goal_id'), isFalse);
+      expect(body['counterparty'], {
+        'contact_id': null,
+        'person_name': 'แม่',
+        'institution_id': null,
+      });
+      expect(body['debt_direction'], 'paid');
+      expect(body['category_id'], isNull);
+      expect(body['tag_ids'], isEmpty);
+      expect(body['goal_id'], isNull);
+      final line = (body['lines'] as List).single as Map<String, dynamic>;
+      expect(line['debt_kind'], 'repayment');
+      expect(line['amount'], 300);
+      expect(line['source'], {'account_id': null});
+      expect((line['schedule'] as Map)['start_date'], '2026-11-01');
     },
   );
 
@@ -142,10 +149,12 @@ void main() {
     );
     expect(d.type, TransactionType.income);
     final w = d.copyWith(amount: '300').toWrite().toJson();
-    expect(w['contact_id'], 'c1');
-    expect(w['person_name'], isNull, reason: 'a contact wins over the name');
-    expect(w['debt_kind'], 'repayment');
-    expect(w['direction'], 'received');
+    final cp = w['counterparty'] as Map<String, dynamic>;
+    expect(cp['contact_id'], 'c1');
+    expect(cp['person_name'], isNull, reason: 'a contact wins over the name');
+    expect(w['debt_direction'], 'received');
+    final line = (w['lines'] as List).single as Map<String, dynamic>;
+    expect(line['debt_kind'], 'repayment');
 
     final empty = RecurringDraft.blank(
       preset: const RecurringPreset(kind: RecurringKind.debt),

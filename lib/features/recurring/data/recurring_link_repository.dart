@@ -26,12 +26,13 @@ class LinkOccurrence {
 
   factory LinkOccurrence.fromJson(Map<String, dynamic> json) => LinkOccurrence(
     itemId:
-        json['item_id'] as String? ?? 'slot:${json['rule_id']}:${json['slot']}',
+        json['item_id'] as String? ??
+        'slot:${json['recurring_rule_id'] ?? json['rule_id']}:${json['slot']}',
     date: parseYmd(json['date'] as String?) ?? DateTime.now(),
     daysUntil: (json['days_until'] as num?)?.toInt() ?? 0,
     status: (json['status'] as String?) ?? 'upcoming',
     amount: (json['amount'] as num?)?.toDouble(),
-    ruleId: json['rule_id'] as String?,
+    ruleId: (json['recurring_rule_id'] ?? json['rule_id']) as String?,
     slot: json['slot'] as String?,
   );
 
@@ -153,16 +154,17 @@ class RecurringLinkRepository {
     bool replace = false,
   }) => _link('/recurring-items/$itemId/link', transactionId, replace);
 
+  /// A round's address (0.4.3): its item, its line ([ruleId]) and its slot.
+  String _occ(String ruleId, String slot) =>
+      '/recurring/${RecurringLineIndex.itemOf(ruleId)}/lines/$ruleId'
+      '/occurrences/$slot';
+
   Future<LinkResult> linkOccurrence(
     String ruleId,
     String slot,
     String transactionId, {
     bool replace = false,
-  }) => _link(
-    '/recurring/$ruleId/occurrences/$slot/link',
-    transactionId,
-    replace,
-  );
+  }) => _link('${_occ(ruleId, slot)}/link', transactionId, replace);
 
   Future<RecurringItem?> _unlink(String path) => _call((dio) async {
     final res = await dio.post<Map<String, dynamic>>(path);
@@ -175,7 +177,7 @@ class RecurringLinkRepository {
 
   /// The occurrence goes back to ค้าง / ยังไม่ถึง; the tx stays.
   Future<RecurringItem?> unlinkOccurrence(String ruleId, String slot) =>
-      _unlink('/recurring/$ruleId/occurrences/$slot/unlink');
+      _unlink('${_occ(ruleId, slot)}/unlink');
 
   Future<void> updateAmount(String recurringId, double amount) =>
       _call((dio) async {

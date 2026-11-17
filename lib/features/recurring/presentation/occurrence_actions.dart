@@ -45,7 +45,9 @@ Future<bool> _write(
     accounts.patchBalances(r.balances);
     HapticFeedback.mediumImpact();
     onChanged(r);
-    if (done != null) showPpForgeSnackBarOn(messenger, done, tone: Tone.success);
+    if (done != null) {
+      showPpForgeSnackBarOn(messenger, done, tone: Tone.success);
+    }
     return true;
   } on ApiException catch (e) {
     showPpForgeSnackBarOn(messenger, errorText(l, e), tone: Tone.danger);
@@ -148,20 +150,6 @@ Future<bool> _restore(
   context,
   item.id,
   (r) => r.restoreOccurrence(item.ruleId!, item.slot!),
-  onChanged,
-);
-
-Future<bool> _paid(
-  BuildContext context,
-  RecurringItem item,
-  ValueChanged<ItemWriteResult> onChanged, {
-  required bool paid,
-}) => _write(
-  context,
-  item.id,
-  (r) => paid
-      ? r.markOccurrencePaid(item.ruleId!, item.slot!)
-      : r.unmarkOccurrencePaid(item.ruleId!, item.slot!),
   onChanged,
 );
 
@@ -506,46 +494,6 @@ Future<void> openOccurrence(
   await openOccurrenceSheet(context, item, onChanged: onChanged);
 }
 
-/// A due occurrence's buttons laid out in an OccurrenceFocusCard: the main
-/// one (ยืนยัน / ใส่ยอด; a draft's ยืนยัน opens รอยืนยัน), จ่ายแล้ว, ข้าม. The
-/// rest are in its sheet (a tap on the card).
-List<OccurrenceAction> occurrenceFocusActions(
-  BuildContext context,
-  RecurringItem item, {
-  required ValueChanged<ItemWriteResult> onChanged,
-}) {
-  final l = AppLocalizations.of(context)!;
-  void sheet() =>
-      unawaited(openOccurrenceSheet(context, item, onChanged: onChanged));
-  final unknown = item.needsAmount || item.amount == null;
-  return [
-    unknown
-        ? OccurrenceAction(
-            label: l.occurrenceEnterAmount,
-            warning: true,
-            onTap: sheet,
-          )
-        : OccurrenceAction(
-            label: l.occurrenceConfirm,
-            onTap: () => unawaited(
-              confirmOccurrence(context, item, onChanged: onChanged),
-            ),
-          ),
-    // จ่ายแล้ว keeps an amount (R5): without one the sheet asks for it.
-    OccurrenceAction(
-      label: l.occurrenceMarkPaid,
-      onTap: unknown
-          ? sheet
-          : () => unawaited(_paid(context, item, onChanged, paid: true)),
-    ),
-    OccurrenceAction(
-      label: l.occurrenceSkip,
-      onTap: () =>
-          unawaited(skipOccurrence(context, item, onChanged: onChanged)),
-    ),
-  ];
-}
-
 /// Can be picked for ยืนยันที่เลือก / ข้ามที่เลือก: addressable by slot (an
 /// old draft too) and not settled.
 bool canSettleSelected(RecurringItem i) => i.bySlot && !i.state.settled;
@@ -654,31 +602,36 @@ Future<void> settleSelected(
   );
 }
 
-/// A rule's all-at-once buttons: ยืนยันทั้งหมด (the
+/// An item's all-at-once buttons (every line's due rounds): ยืนยันทั้งหมด (the
 /// ones with an amount; the rest stay, a snack says how many), ⋯
 /// จ่ายแล้วทั้งหมด / ข้ามทั้งหมด.
 OccurrenceActions settleAllActions(
   BuildContext context,
-  String ruleId, {
+  String recurringId, {
   required ValueChanged<ItemWriteResult> onChanged,
 }) {
   final l = AppLocalizations.of(context)!;
   final messenger = ScaffoldMessenger.of(context);
   void run(OccurrenceBulk action) => unawaited(
-    _write(context, 'rule:$ruleId', (r) => r.settleAll(ruleId, action), (r) {
-      onChanged(r);
-      final noAmount = r.leftOut.where((o) => o.reason == 'needs_amount');
-      final refused = r.leftOut.length - noAmount.length;
-      final left = [
-        if (noAmount.isNotEmpty) l.occurrenceLeftOut(noAmount.length),
-        if (refused > 0) l.occurrenceLeftOutRefused(refused),
-      ];
-      showPpForgeSnackBarOn(
-        messenger,
-        left.isEmpty ? l.quickSaved : left.join(' | '),
-        tone: left.isEmpty ? Tone.success : Tone.warning,
-      );
-    }),
+    _write(
+      context,
+      'rule:$recurringId',
+      (r) => r.settleAll(recurringId, action),
+      (r) {
+        onChanged(r);
+        final noAmount = r.leftOut.where((o) => o.reason == 'needs_amount');
+        final refused = r.leftOut.length - noAmount.length;
+        final left = [
+          if (noAmount.isNotEmpty) l.occurrenceLeftOut(noAmount.length),
+          if (refused > 0) l.occurrenceLeftOutRefused(refused),
+        ];
+        showPpForgeSnackBarOn(
+          messenger,
+          left.isEmpty ? l.quickSaved : left.join(' | '),
+          tone: left.isEmpty ? Tone.success : Tone.warning,
+        );
+      },
+    ),
   );
   return OccurrenceActions(
     primary: OccurrenceAction(

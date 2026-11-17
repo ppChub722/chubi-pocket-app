@@ -53,7 +53,7 @@ Map<String, dynamic> _item(
   String status = 'upcoming',
 }) => {
   'id': id,
-  'rule_id': 'r1',
+  'recurring_rule_id': 'r1',
   'slot': slot,
   'date': slot,
   'type': 'expense',
@@ -88,17 +88,23 @@ void main() {
 
       await repo.updateOccurrence('r1', '2026-11-03', {'amount': 500});
       expect(http.last!.method, 'PUT');
-      expect(http.last!.path, '/recurring/r1/occurrences/2026-11-03');
+      expect(http.last!.path, '/recurring/r1/lines/r1/occurrences/2026-11-03');
       expect(http.last!.data, {'amount': 500});
 
       await repo.skipOccurrence('r1', '2026-11-03');
       expect(http.last!.method, 'POST');
-      expect(http.last!.path, '/recurring/r1/occurrences/2026-11-03/skip');
+      expect(
+        http.last!.path,
+        '/recurring/r1/lines/r1/occurrences/2026-11-03/skip',
+      );
       expect(http.last!.data, isNull, reason: 'no delete_tx (0.4.1-1)');
 
       // R5: จ่ายแล้ว keeps an amount.
       await repo.markOccurrencePaid('r1', '2026-11-03', amount: 480);
-      expect(http.last!.path, '/recurring/r1/occurrences/2026-11-03/mark-paid');
+      expect(
+        http.last!.path,
+        '/recurring/r1/lines/r1/occurrences/2026-11-03/mark-paid',
+      );
       expect(http.last!.data, {'amount': 480});
       await repo.markOccurrencePaid('r1', '2026-11-03');
       expect(http.last!.data, <String, dynamic>{});
@@ -117,7 +123,7 @@ void main() {
 
       await repo.updateOccurrence('r1', '2026-11-03', {'description': null});
       expect(http.last!.method, 'PUT');
-      expect(http.last!.path, '/recurring/r1/occurrences/2026-11-03');
+      expect(http.last!.path, '/recurring/r1/lines/r1/occurrences/2026-11-03');
       expect(http.last!.data, {'description': null});
     },
   );

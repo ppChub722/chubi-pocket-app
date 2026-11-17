@@ -5839,6 +5839,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'That period is already linked (or this transaction is linked already)';
 
   @override
+  String get errInstitutionInUse =>
+      'Debts, recurring items or wallets still use this institution, so it can\'t be deleted';
+
+  @override
+  String get errRecurringLastLine =>
+      'A recurring item needs at least one line; delete the whole item instead';
+
+  @override
+  String get errInstallmentNeedsInstitution =>
+      'Card installments need a card linked to an institution';
+
+  @override
   String get recurringPickerGroupNearest => 'Nearest';
 
   @override
@@ -7569,4 +7581,371 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notifOnSplitRemovedDelete => 'Delete';
+
+  @override
+  String get recurringStatusDone => 'Completed';
+
+  @override
+  String get fpRecurringStatTotal => 'Total';
+
+  @override
+  String get fpRecurringKindExpense => 'Expense';
+
+  @override
+  String get fpRecurringKindBill => 'Bill';
+
+  @override
+  String get fpRecurringKindTransfer => 'Transfer';
+
+  @override
+  String get recurringDeleteKeepsWritten =>
+      'Delete this recurring item and every line | What it already recorded stays; its debts become general debts of the counterparty, the balance doesn\'t change';
+
+  @override
+  String get fpRecurringPlanIncomplete =>
+      'Finish the plan: principal, number of installments and interest';
+
+  @override
+  String get institutionPickTitle => 'Pick an institution';
+
+  @override
+  String get institutionEmpty => 'No institutions yet';
+
+  @override
+  String get institutionAdd => 'Add institution';
+
+  @override
+  String institutionAddNamed(String name) {
+    return 'Add \"$name\"';
+  }
+
+  @override
+  String get institutionKindBank => 'Bank';
+
+  @override
+  String get institutionKindCard => 'Credit card';
+
+  @override
+  String get institutionKindFinance => 'Finance';
+
+  @override
+  String get institutionKindStore => 'Store';
+
+  @override
+  String get institutionKindOther => 'Other';
+
+  @override
+  String get recurringCounterpartyLabel => 'With';
+
+  @override
+  String get recurringCounterpartyPerson => 'Person';
+
+  @override
+  String get recurringCounterpartyInstitution => 'Institution';
+
+  @override
+  String get recurringSourceLabel => 'Paid from';
+
+  @override
+  String get recurringSourceWallet => 'Wallet';
+
+  @override
+  String get recurringSourcePaidBy => 'Paid by someone';
+
+  @override
+  String get recurringPaidByPick => 'Who pays for me';
+
+  @override
+  String get recurringPlanSection => 'Installment plan';
+
+  @override
+  String get recurringPlanToggle => 'Pay in installments';
+
+  @override
+  String get recurringPlanPrincipal => 'Principal';
+
+  @override
+  String get recurringPlanCount => 'Installments';
+
+  @override
+  String get recurringPlanFirstDue => 'First installment';
+
+  @override
+  String get recurringPlanMethod => 'Interest';
+
+  @override
+  String get recurringPlanMethodNone => 'No interest';
+
+  @override
+  String get recurringPlanMethodFlat => 'Flat';
+
+  @override
+  String get recurringPlanMethodReducing => 'Reducing balance';
+
+  @override
+  String get recurringPlanMethodFixed => 'Fixed installment';
+
+  @override
+  String get recurringPlanMethodManual => 'Typed per installment';
+
+  @override
+  String get recurringPlanRate => 'Rate (% a year)';
+
+  @override
+  String get recurringPlanInstallment => 'Installment';
+
+  @override
+  String get recurringPlanOnCard => 'Installments on a card';
+
+  @override
+  String get recurringPlanCard => 'Card';
+
+  @override
+  String get recurringPlanTable => 'Installments';
+
+  @override
+  String get recurringPlanTotalInterest => 'Total interest';
+
+  @override
+  String get recurringPlanTotalPay => 'Total to pay';
+
+  @override
+  String get recurringPlanPaidPrincipal => 'Principal paid';
+
+  @override
+  String get recurringPlanLeft => 'Left';
+
+  @override
+  String get recurringPlanLeftPrincipal => 'Principal left';
+
+  @override
+  String get recurringPlanLeftInterest => 'Interest left';
+
+  @override
+  String recurringPlanSplit(String principal, String interest) {
+    return 'Principal $principal · interest $interest';
+  }
+
+  @override
+  String recurringPlanNext(int n, int total, String due) {
+    return 'Next installment ($n/$total) | $due';
+  }
+
+  @override
+  String get recurringPlanOnCardNote =>
+      'No separate payment: it\'s paid with the card statement (\"Pay card\")';
+
+  @override
+  String get recurringPlanClose => 'Close the plan early';
+
+  @override
+  String get recurringPlanCloseConsequence =>
+      'Unticked installments are skipped; paid ones stay as history';
+
+  @override
+  String get recurringPlanCloseBody =>
+      'Close this plan early? Installments not ticked paid are skipped';
+
+  @override
+  String get recurringPlanClosed => 'Plan closed';
+
+  @override
+  String get recurringInstallmentEdit => 'Edit this installment';
+
+  @override
+  String get recurringInstallmentMarkPaid => 'Installment paid';
+
+  @override
+  String get recurringInstallmentUnmark => 'Not paid';
+
+  @override
+  String recurringInstallmentTitle(int n) {
+    return 'Installment $n';
+  }
+
+  @override
+  String get recurringInstallmentUpcoming => 'Upcoming';
+
+  @override
+  String get recurringInstallmentDue => 'Due';
+
+  @override
+  String get recurringInstallmentPaid => 'Paid';
+
+  @override
+  String get recurringInstallmentSkipped => 'Skipped';
+
+  @override
+  String get recurringInstallmentDueDate => 'Due date';
+
+  @override
+  String get recurringInstallmentPrincipal => 'Principal';
+
+  @override
+  String get recurringInstallmentInterest => 'Interest';
+
+  @override
+  String get recurringLinesSection => 'Lines';
+
+  @override
+  String get recurringLineAdd => 'Add line';
+
+  @override
+  String recurringLinePaidBy(String name) {
+    return '$name pays';
+  }
+
+  @override
+  String get recurringLineDeleteTitle => 'Delete this line?';
+
+  @override
+  String get recurringLineDeleteBody => 'What this line already recorded stays';
+
+  @override
+  String recurringLinesCount(int n) {
+    return '$n lines';
+  }
+
+  @override
+  String get recurringRemindersSection => 'Reminders';
+
+  @override
+  String get recurringReminderAdd => 'Add reminder';
+
+  @override
+  String get recurringReminderAnchorDue => 'Before it\'s due';
+
+  @override
+  String get recurringReminderAnchorStart => 'Before it starts';
+
+  @override
+  String get recurringReminderAnchorEnd => 'Before it ends';
+
+  @override
+  String recurringReminderDays(int n) {
+    return '$n days';
+  }
+
+  @override
+  String get recurringReminderSameDay => 'Same day';
+
+  @override
+  String get debtsSectionInstitutions => 'Institutions';
+
+  @override
+  String get debtsSectionPeople => 'People';
+
+  @override
+  String debtsSeeAll(int n) {
+    return 'See all $n';
+  }
+
+  @override
+  String get debtsOpenPage => 'Open';
+
+  @override
+  String get debtsGeneral => 'General debts';
+
+  @override
+  String debtsGeneralCount(int n) {
+    return 'General debts, $n rows';
+  }
+
+  @override
+  String get debtsCardDebt => 'Credit card debt';
+
+  @override
+  String get debtAddEntry => 'Record debt';
+
+  @override
+  String get debtAddRecurring => 'Recurring';
+
+  @override
+  String get debtsRecurringSection => 'Recurring';
+
+  @override
+  String debtsSideOwed(String amount) {
+    return 'Owed to me $amount';
+  }
+
+  @override
+  String debtsSideOwe(String amount) {
+    return 'I owe $amount';
+  }
+
+  @override
+  String debtsLineNext(String when, String date) {
+    return '$when · next $date';
+  }
+
+  @override
+  String get debtsMarkInstallment => 'Mark an installment paid';
+
+  @override
+  String debtsMarkInstallmentOf(String name, int n) {
+    return '$name installment $n';
+  }
+
+  @override
+  String get debtsThisMonthPay => 'To pay this month';
+
+  @override
+  String get debtsThisMonthReceive => 'To receive this month';
+
+  @override
+  String get debtsInstitutionInfo => 'Institution info';
+
+  @override
+  String get institutionTitle => 'Institution';
+
+  @override
+  String get institutionNewTitle => 'New institution';
+
+  @override
+  String get institutionKindLabel => 'Kind';
+
+  @override
+  String get institutionPhone => 'Phone';
+
+  @override
+  String get institutionEmail => 'Email';
+
+  @override
+  String get institutionWebsite => 'Website';
+
+  @override
+  String get institutionWallets => 'Linked wallets';
+
+  @override
+  String get institutionArchiveBody =>
+      'Hidden from lists; its debts and linked wallets stay. Can be restored';
+
+  @override
+  String get institutionDeleteBody =>
+      'Can be deleted when no debt, recurring item or wallet points at it';
+
+  @override
+  String get institutionNotFound => 'Institution not found';
+
+  @override
+  String get institutionField => 'Institution';
+
+  @override
+  String get quickInstallment => 'Installments';
+
+  @override
+  String get quickInstallmentHint =>
+      'Split it into installments on the card | the full price goes on the card now';
+
+  @override
+  String notifRecurringDueSoon(String name, String amount, String when) {
+    return '$name takes $amount $when';
+  }
+
+  @override
+  String get notifTypeRecurringDueSoon => 'Coming up';
+
+  @override
+  String get notifSetRecurringDueSoonHint =>
+      'Reminders before a round is due, as each recurring item sets them';
 }

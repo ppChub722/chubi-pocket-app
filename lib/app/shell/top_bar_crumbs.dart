@@ -31,6 +31,7 @@ TopBarCrumb? defaultTopBarCrumb(BuildContext context) {
     'accounts' => (l.navAccounts, 'accounts'),
     'projects' => (l.navProjects, 'projects'),
     'contacts' => (l.moreContacts, 'contacts'),
+    'institutions' => (l.moreContacts, 'contacts'),
     'personal-debts' => (l.moreDebts, 'personal-debts'),
     'categories' => (l.moreCategories, 'categories'),
     'budgets' => (l.moreBudgets, 'budgets'),

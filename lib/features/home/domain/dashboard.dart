@@ -292,7 +292,9 @@ class UpcomingItem extends Equatable {
     kind: json['kind'] == 'card_due'
         ? UpcomingKind.cardDue
         : UpcomingKind.recurring,
-    id: json['id'] as String? ?? 'slot:${json['rule_id']}:${json['slot']}',
+    id:
+        json['id'] as String? ??
+        'slot:${json['recurring_rule_id'] ?? json['rule_id']}:${json['slot']}',
     name: json['name'] as String? ?? '',
     type: json['type'] == 'income'
         ? TransactionType.income
@@ -303,7 +305,7 @@ class UpcomingItem extends Equatable {
     overdue: json['overdue'] as bool? ?? false,
     iconCode: _icon(json['icon_code']),
     logoUrl: json['logo_url'] as String?,
-    ruleId: json['rule_id'] as String?,
+    ruleId: (json['recurring_rule_id'] ?? json['rule_id']) as String?,
     slot: json['slot'] as String?,
   );
 

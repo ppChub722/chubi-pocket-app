@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/quick_create_look.dart';
 import '../../../../app/shell/fade_branch_container.dart';
@@ -14,6 +15,10 @@ import '../../../auth/domain/user.dart';
 import '../../../preferences/page_prefs.dart';
 import '../../domain/contact.dart';
 import '../cubit/contacts_cubit.dart';
+import '../../../institutions/data/institutions_repository.dart';
+import '../../../institutions/domain/institution.dart';
+import '../../../institutions/presentation/widgets/institution_picker.dart'
+    show institutionKindLabel;
 
 class ContactsPage extends StatefulWidget {
   const ContactsPage({super.key});
@@ -27,6 +32,21 @@ enum _ContactSort { recent, nameAsc, nameDesc }
 enum _LinkFilter { all, linked, unlinked }
 
 class _ContactsPageState extends State<ContactsPage> {
+  /// 0.4.3 section สถาบันการเงิน (loaded once; again after its page).
+  List<Institution> _institutions = const [];
+
+  Future<void> _loadInstitutions() async {
+    try {
+      final list = await InstitutionsRepository.of(context).list();
+      if (mounted) setState(() => _institutions = list);
+    } catch (_) {
+      // The contacts still show; the section waits for the next load.
+    }
+  }
+
+  /// Its page (same tab); the list reloads when this page loads again.
+  Future<void> _openInstitution(String path) async => openPage(context, path);
+
   final _searchController = TextEditingController();
   String _query = '';
   _ContactSort _sort = _ContactSort.recent;
@@ -35,6 +55,9 @@ class _ContactsPageState extends State<ContactsPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_loadInstitutions());
+    });
     _restorePrefs();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -184,7 +207,7 @@ class _ContactsPageState extends State<ContactsPage> {
                       state.status == ContactsStatus.loading) &&
                   state.contacts.isEmpty,
               error: state.contacts.isEmpty ? state.error : null,
-              isEmpty: shown.isEmpty,
+              isEmpty: shown.isEmpty && _institutions.isEmpty,
               onRetry: ctx.read<ContactsCubit>().load,
               empty: _empty(l, state),
               sidePadding: 0,
@@ -254,6 +277,11 @@ class _ContactsPageState extends State<ContactsPage> {
                 ),
               ],
               children: [
+                PpForgeListHeader(
+                  key: const ValueKey('contactsPeople'),
+                  title: l.debtsSectionPeople,
+                  count: shown.length,
+                ),
                 for (var i = 0; i < shown.length; i++) ...[
                   _ContactRow(contact: shown[i]),
                   if (i < shown.length - 1) const PpForgeDivider.row(),
@@ -267,12 +295,59 @@ class _ContactsPageState extends State<ContactsPage> {
                   ),
                   child: AddTile(label: l.contactsAddNew, onTap: _add),
                 ),
+                ..._institutionSection(l),
               ],
             );
           },
         ),
       ),
     );
+  }
+}
+
+/// The contacts page's สถาบันการเงิน: the institutions matching the search,
+/// then + เพิ่มสถาบัน.
+extension on _ContactsPageState {
+  List<Widget> _institutionSection(AppLocalizations l) {
+    final q = _query.trim().toLowerCase();
+    final shown = [
+      for (final i in _institutions)
+        if (q.isEmpty || i.name.toLowerCase().contains(q)) i,
+    ];
+    return [
+      PpForgeListHeader(
+        key: const ValueKey('contactsInstitutions'),
+        title: l.debtsSectionInstitutions,
+        count: shown.length,
+      ),
+      for (final i in shown)
+        PpForgeListRow(
+          key: ValueKey('institution-${i.id}'),
+          leading: InstitutionMark(
+            name: i.name,
+            iconCode: i.iconCode,
+            shortName: i.provider?.shortName,
+            color: InstitutionMark.parseHex(i.provider?.color),
+            size: 36,
+          ),
+          title: i.name,
+          line2: ListRowLine(parts: [institutionKindLabel(l, i.kind)]),
+          onTap: () => unawaited(_openInstitution('/institutions/${i.id}')),
+        ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+          PpForgeSpacing.lg,
+          PpForgeSpacing.md,
+          PpForgeSpacing.lg,
+          0,
+        ),
+        child: AddTile(
+          key: const ValueKey('institutionAdd'),
+          label: l.institutionAdd,
+          onTap: () => unawaited(_openInstitution('/institutions/new')),
+        ),
+      ),
+    ];
   }
 }
 

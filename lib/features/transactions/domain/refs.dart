@@ -4,6 +4,7 @@ import '../../accounts/domain/account.dart';
 import '../../accounts/domain/account_type.dart';
 import '../../categories/domain/category.dart';
 import '../../categories/domain/category_type.dart';
+import '../../recurring/domain/recurring_item.dart' show RecurringLineIndex;
 import '../../../ui/ui.dart';
 
 PpForgeIconCode? _icon(Object? v) =>
@@ -142,6 +143,7 @@ class RecurringItemLink extends Equatable {
   const RecurringItemLink({
     required this.itemId,
     this.recurringId,
+    this.recurringRuleId,
     this.recurringName,
     this.recurringIconCode,
     this.seq,
@@ -152,7 +154,11 @@ class RecurringItemLink extends Equatable {
   /// The stored row's id, or `slot:{rule}:{slot}` when the BE sends none.
   final String itemId;
 
+  /// The recurring item (`/recurring/{id}`, 0.4.3).
   final String? recurringId;
+
+  /// Its line (`recurring_rule_id`): the round is addressed by line + slot.
+  final String? recurringRuleId;
   final String? recurringName;
   final PpForgeIconCode? recurringIconCode;
   final int? seq;
@@ -164,11 +170,16 @@ class RecurringItemLink extends Equatable {
   factory RecurringItemLink.fromJson(Map<String, dynamic> json) {
     final r = json['recurring'];
     final rec = r is Map ? r.cast<String, dynamic>() : null;
-    final ruleId = rec?['id'] as String? ?? json['rule_id'] as String?;
+    final itemId = rec?['id'] as String? ?? json['rule_id'] as String?;
+    final ruleId = rec?['recurring_rule_id'] as String? ?? itemId;
+    if (ruleId != null && itemId != null) {
+      RecurringLineIndex.remember(line: ruleId, item: itemId);
+    }
     final slot = json['slot'] as String?;
     return RecurringItemLink(
       itemId: json['item_id'] as String? ?? 'slot:$ruleId:$slot',
-      recurringId: ruleId,
+      recurringId: itemId,
+      recurringRuleId: ruleId,
       recurringName: rec?['name'] as String?,
       recurringIconCode: _icon(rec?['icon_code']),
       seq: (json['seq'] as num?)?.toInt(),
@@ -186,6 +197,7 @@ class RecurringItemLink extends Equatable {
   List<Object?> get props => [
     itemId,
     recurringId,
+    recurringRuleId,
     recurringName,
     recurringIconCode,
     seq,

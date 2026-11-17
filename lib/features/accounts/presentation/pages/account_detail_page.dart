@@ -29,6 +29,8 @@ import '../../domain/account_identifier.dart';
 import '../../domain/payment_provider.dart';
 import '../../domain/account_type.dart';
 import '../../domain/wallet_member.dart';
+import '../../../institutions/presentation/widgets/institution_picker.dart';
+import '../../data/accounts_repository.dart';
 import '../cubit/accounts_cubit.dart';
 import '../cubit/providers_cubit.dart';
 import '../widgets/adjust_balance_sheet.dart';
@@ -1332,9 +1334,49 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                   value: a.trackBalance,
                 ),
         if (_isOwner && !a.isLiability) _autoSaveRow(l, a),
+        _institutionRow(l, a),
         _scopeRow(l, a),
       ],
     );
+  }
+
+  /// 0.4.3 สถาบัน: the institution this wallet belongs to. The owner picks it
+  /// (saves at once); a tap on a set one opens its page.
+  Widget _institutionRow(AppLocalizations l, Account a) {
+    final i = a.institution;
+    return PpForgeDetailRow(
+      key: const ValueKey('walletInstitution'),
+      leading: i == null
+          ? const PpForgeIcon(AppIcons.bank)
+          : InstitutionMark(name: i.name, iconCode: i.iconCode, size: 28),
+      label: l.institutionField,
+      trailing: Text(i?.name ?? '–'),
+      showChevron: true,
+      onTap: !_isOwner
+          ? (i == null
+                ? null
+                : () => openPage(context, '/institutions/${i.id}'))
+          : () => unawaited(_pickInstitution(a)),
+    );
+  }
+
+  Future<void> _pickInstitution(Account a) async {
+    final picked = await InstitutionPicker.one(
+      context,
+      selectedId: a.institution?.id,
+    );
+    if (picked == null || !mounted) return;
+    try {
+      final updated = await context.read<AccountsRepository>().setInstitution(
+        a.id,
+        picked.id,
+      );
+      if (!mounted) return;
+      context.read<AccountsCubit>().upsert(updated);
+      widget.onAccount?.call(updated);
+    } on ApiException catch (e) {
+      if (mounted) showErrorSnackBar(context, e);
+    }
   }
 
   /// The savings wallet switch (saves at once). Greyed out, with the reason, while the

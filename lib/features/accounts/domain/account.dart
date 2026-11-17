@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'account_identifier.dart';
 import 'account_type.dart';
 import 'wallet_member.dart';
+import '../../institutions/domain/institution.dart' show InstitutionRef;
 import '../../../ui/ui.dart';
 
 enum WalletGroup {
@@ -61,7 +62,12 @@ class Account extends Equatable {
     this.daysUntilDue,
     this.creditUsedPct,
     this.creditAvailable,
+    this.institution,
   }) : _group = group;
+
+  /// 0.4.3: the institution this wallet belongs to (a card's issuer, the
+  /// bank); null = none.
+  final InstitutionRef? institution;
 
   final String id;
   final String name;
@@ -214,6 +220,7 @@ class Account extends Equatable {
       monthIn: monthIn ?? this.monthIn,
       monthOut: monthOut ?? this.monthOut,
       dueDateNext: dueDateNext ?? this.dueDateNext,
+      institution: institution,
       daysUntilDue: daysUntilDue ?? this.daysUntilDue,
       creditUsedPct: creditUsedPct ?? this.creditUsedPct,
       creditAvailable: creditAvailable ?? this.creditAvailable,
@@ -268,6 +275,7 @@ class Account extends Equatable {
       monthIn: (json['month_in'] as num?)?.toDouble() ?? 0,
       monthOut: (json['month_out'] as num?)?.toDouble() ?? 0,
       dueDateNext: DateTime.tryParse(json['due_date_next'] as String? ?? ''),
+      institution: InstitutionRef.tryParse(json['institution']),
       daysUntilDue: (json['days_until_due'] as num?)?.toInt(),
       creditUsedPct: (json['credit_used_pct'] as num?)?.toInt(),
       creditAvailable: (json['credit_available'] as num?)?.toDouble(),
@@ -347,6 +355,7 @@ class Account extends Equatable {
     monthIn,
     monthOut,
     dueDateNext,
+    institution,
     daysUntilDue,
     creditUsedPct,
     creditAvailable,

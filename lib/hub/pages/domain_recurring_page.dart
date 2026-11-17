@@ -318,51 +318,26 @@ class _RecurringPage extends StatelessWidget {
           ),
         ),
         HubDemo(
-          title: 'OccurrenceFocusCard — under an item\'s hero',
+          title: 'HeroNextOccurrence — the next one, inside an item\'s hero',
           note:
-              'One card for what to do next. warning: ต้องจัดการ head, the '
-              'oldest due one big (CalendarTile in warning) with its buttons '
-              '(the first filled; ใส่ยอด in warning), then footer rows '
-              '(DueMoreRow, OccurrenceFocusNext = ครั้งถัดไป '
-              'as a line). Quiet: the next occurrence with แก้ยอด / เลื่อนวัน '
-              '/ ข้าม.',
+              'The hero\'s last row (0.4.3 plan E): "งวดถัดไป (6/12) | อีก 12 '
+              'วัน" with an end, "งวดถัดไป | …" without; its amount, or '
+              'รอใส่ยอด in warning. A tap opens the occurrence (แก้เฉพาะงวดนี้). '
+              'What is due sits under the hero as the รอยืนยัน box (DueBoxes), '
+              'for any count.',
           child: Builder(
             builder: (context) {
-              final warning = Theme.of(
-                context,
-              ).extension<PpForgeColors>()!.warning;
+              final palette = Theme.of(context).extension<PpForgeColors>()!;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  OccurrenceFocusCard(
-                    warning: true,
-                    title: 'ต้องจัดการ',
-                    trailing: '2 งวด',
-                    date: inDays(-20),
-                    label: 'เลยมา 20 วัน',
-                    tag: PpForgeChip(
-                      label: 'ค้าง',
-                      color: warning,
-                      selected: true,
-                      size: ChipSize.mini,
-                    ),
-                    value: const MoneyText(
-                      -419,
-                      tone: MoneyTone.signed,
-                      symbol: '฿',
-                    ),
-                    primaryFirst: true,
-                    actions: const [
-                      OccurrenceAction(label: 'ยืนยัน', onTap: _noop),
-                      OccurrenceAction(label: 'จ่ายแล้ว', onTap: _noop),
-                      OccurrenceAction(label: 'ข้าม', onTap: _noop),
-                    ],
-                    footer: [
-                      const DueMoreRow(label: 'ดูทั้ง 2 งวด', onTap: _noop),
-                      OccurrenceFocusNext(
-                        label: 'ครั้งถัดไป | อีก 11 วัน',
-                        amount: const MoneyText(
-                          -419,
+                  PpForgeHeroCard(
+                    style: HeroStyle.tinted(color: palette.info),
+                    content: const [
+                      HeroNextOccurrence(
+                        label: 'งวดถัดไป (6/12) | อีก 12 วัน',
+                        amount: MoneyText(
+                          -1750,
                           tone: MoneyTone.signed,
                           symbol: '฿',
                         ),
@@ -371,16 +346,15 @@ class _RecurringPage extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: PpForgeSpacing.md),
-                  OccurrenceFocusCard(
-                    date: inDays(14),
-                    label: 'ครั้งถัดไป | อีก 14 วัน',
-                    value: const Text('รอใส่ยอด'),
-                    valueColor: warning,
-                    primaryFirst: true,
-                    actions: const [
-                      OccurrenceAction(label: 'ใส่ยอด', onTap: _noop),
-                      OccurrenceAction(label: 'เลื่อนวัน', onTap: _noop),
-                      OccurrenceAction(label: 'ข้าม', onTap: _noop),
+                  PpForgeHeroCard(
+                    style: HeroStyle.tinted(color: palette.expense),
+                    content: [
+                      HeroNextOccurrence(
+                        label: 'งวดถัดไป | อีก 20 วัน',
+                        amountText: 'รอใส่ยอด',
+                        amountColor: palette.warning,
+                        onTap: _noop,
+                      ),
                     ],
                   ),
                 ],

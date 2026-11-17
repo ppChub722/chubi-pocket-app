@@ -15,6 +15,7 @@ import '../../../../core/network/idempotency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
+import '../../../accounts/domain/account_type.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
@@ -52,6 +53,7 @@ import 'saving_entry_form.dart';
 import 'draft_form.dart';
 import 'event_pick.dart';
 import 'event_picker.dart';
+import 'installment_card.dart';
 import 'recurring_link.dart';
 import 'transaction_tile.dart';
 import 'tx_summary_title.dart';
@@ -423,6 +425,17 @@ class _QuickCreateSheet extends StatefulWidget {
 
 class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   final _c = DraftFormController();
+
+  /// 0.4.3 ผ่อน: the purchase split into installments on its card / pay-later
+  /// wallet (null = paid in full).
+  QuickInstallment? _installment;
+
+  /// ผ่อน shows for a plain expense on a card or pay-later wallet.
+  bool get _installmentAllowed =>
+      _c.type == TransactionType.expense &&
+      _linkMode == LinkMode.personal &&
+      (_c.account?.type == AccountType.creditCard ||
+          _c.account?.type == AccountType.payLater);
 
   EventTarget? _event;
 
@@ -2038,6 +2051,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
             note: txBody.note,
             transferToAccountId: txBody.transferToAccountId,
             tagIds: txBody.tagIds,
+            installment: _installmentAllowed && (_installment?.ok ?? false)
+                ? _installment!.toJson()
+                : null,
           );
           accounts.patchBalances(saved.accountBalances);
           newTxId = saved.rows.firstOrNull?.id;
@@ -2293,8 +2309,15 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           DebtEntryForm(controller: _debt, heroKey: _heroKey, autofocus: true)
         else if (_isSaving)
           SavingEntryForm(controller: _sav, heroKey: _heroKey, autofocus: true)
-        else
+        else ...[
           txBody(),
+          if (_installmentAllowed)
+            QuickInstallmentCard(
+              value: _installment,
+              amount: _c.amountValue,
+              onChanged: (v) => setState(() => _installment = v),
+            ),
+        ],
       ],
     );
   }

@@ -913,7 +913,7 @@ const List<PageFlow> pageFlows = [
       FlowStep.open([
         FlowCall(
           'listRecurringItems',
-          note: 'home card: ?month=&status=all&rule_id=, then by slot',
+          note: 'home card: ?month=&status=all&recurring_rule_id=, then by slot',
         ),
         FlowCall('getRecurringItem', note: 'a stored row by id'),
       ]),

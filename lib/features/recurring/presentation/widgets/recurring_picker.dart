@@ -18,12 +18,21 @@ import '../../domain/recurring_item.dart';
 import '../cubit/recurring_directory_cubit.dart';
 import '../recurring_rows.dart';
 
-/// One rule's occurrences around a tx date, and the one the BE would pick.
+/// One item's rounds (every line's) around a tx date, and the one the BE
+/// would pick: its slot and its line.
 typedef OccurrenceLoader =
-    Future<({List<RecurringItem> items, String? suggestedSlot})> Function(
-      String ruleId,
-      DateTime? txDate,
-    );
+    Future<
+      ({
+        List<RecurringItem> items,
+        String? suggestedSlot,
+        String? suggestedLine,
+      })
+    >
+    Function(String ruleId, DateTime? txDate);
+
+/// The round the BE suggests: [slot] on [line] (any line when null).
+bool isSuggestedRound(RecurringItem i, String? slot, String? line) =>
+    slot != null && i.slot == slot && (line == null || i.ruleId == line);
 
 /// The recurring a transaction links to, in two steps: the rule (nearest due
 /// first, under น่าจะใช่ / รายการประจำ / เตือนจ่าย), then which of its
@@ -113,7 +122,11 @@ abstract final class RecurringPicker {
           if (i.state != OccurrenceState.archived) i,
       ];
       final item =
-          open.where((i) => i.slot == r.suggestedSlot).firstOrNull ??
+          open
+              .where(
+                (i) => isSuggestedRound(i, r.suggestedSlot, r.suggestedLine),
+              )
+              .firstOrNull ??
           open.firstOrNull;
       if (item == null) return null;
       return LinkCandidate(
@@ -312,7 +325,11 @@ abstract final class RecurringPicker {
                   l,
                   setting,
                   i,
-                  nearest: i.slot == r.suggestedSlot,
+                  nearest: isSuggestedRound(
+                    i,
+                    r.suggestedSlot,
+                    r.suggestedLine,
+                  ),
                   txId: txId,
                 ),
             ];

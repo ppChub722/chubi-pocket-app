@@ -34,6 +34,7 @@ class NotificationTile extends StatelessWidget {
   bool get _isRecurring =>
       notification.type == NotificationType.recurringDue ||
       notification.type == NotificationType.recurringEnding ||
+      notification.type == NotificationType.recurringDueSoon ||
       notification.type == NotificationType.recurringAutoCreated;
 
   bool get _isBillInvite => notification.type == NotificationType.billInvite;
@@ -121,6 +122,34 @@ class NotificationTile extends StatelessWidget {
     return moneyString(context, a, symbol: context.readUserCurrencySymbol);
   }
 
+  /// 0.4.3 reminder: "{name} จะตัด {amount} {when}" (the date as words).
+  String _dueSoon(BuildContext context, AppLocalizations l, AppNotification n) {
+    final p = n.payload;
+    final amount = p['amount'];
+    final date = DateTime.tryParse((p['date'] as String?) ?? '');
+    final now = DateTime.now();
+    final days = date == null
+        ? null
+        : DateTime(
+            date.year,
+            date.month,
+            date.day,
+          ).difference(DateTime(now.year, now.month, now.day)).inDays;
+    return l
+        .notifRecurringDueSoon(
+          (p['name'] as String?) ?? '',
+          amount is num
+              ? moneyString(
+                  context,
+                  amount,
+                  symbol: context.readUserCurrencySymbol,
+                )
+              : '',
+          date == null ? '' : dueLabel(l, date: date, daysUntil: days),
+        )
+        .trim();
+  }
+
   static IconData _iconFor(NotificationType t) => switch (t) {
     NotificationType.billInvite ||
     NotificationType.billNew ||
@@ -138,6 +167,7 @@ class NotificationTile extends StatelessWidget {
     NotificationType.accountInvite => AppIcons.bank,
     NotificationType.recurringDue ||
     NotificationType.recurringEnding ||
+    NotificationType.recurringDueSoon ||
     NotificationType.recurringAutoCreated => AppIcons.recurring,
     NotificationType.unknown => AppIcons.notifications,
   };
@@ -179,6 +209,7 @@ class NotificationTile extends StatelessWidget {
       (n.payload['name'] as String?) ?? '',
       (n.payload['left'] as num?)?.toInt() ?? 0,
     ),
+    NotificationType.recurringDueSoon => _dueSoon(context, l, n),
     NotificationType.recurringAutoCreated => l.notifRecurringAutoCreated(
       (n.payload['count'] as num?)?.toInt() ?? 1,
     ),

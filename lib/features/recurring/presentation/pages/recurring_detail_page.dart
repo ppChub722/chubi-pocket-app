@@ -16,6 +16,7 @@ import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../accounts/presentation/widgets/account_picker.dart';
+import '../../../institutions/presentation/widgets/institution_picker.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../categories/presentation/widgets/category_picker.dart';
@@ -38,11 +39,14 @@ import '../../data/recurring_repository.dart';
 import '../../domain/recurrence_rule.dart';
 import '../../domain/recurring.dart';
 import '../../domain/recurring_item.dart';
+import '../../domain/recurring_page.dart';
 import '../due_boxes.dart';
 import '../item_write_apply.dart';
 import '../occurrence_actions.dart';
 import '../recurring_draft.dart';
 import '../recurring_rows.dart';
+import '../widgets/recurring_plan_form.dart';
+import '../widgets/recurring_reminders_form.dart';
 
 enum _Tab { past, upcoming }
 
@@ -218,7 +222,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       _produced = d.produced;
       _upcoming = d.upcoming;
     });
-    if (!isEditing) resetDraft(RecurringDraft.from(d.recurring));
+    if (!isEditing) resetDraft(RecurringDraft.fromDetail(d));
   }
 
   Future<void> _loadMoreProduced() async {
@@ -302,72 +306,121 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     if (r.setting == null) _load();
   }
 
-  Future<void> _occurrenceCall(Future<ItemWriteResult> Function() call) async {
-    setState(() => _busy = true);
-    final accounts = context.read<AccountsCubit>();
+  Future<void> _action(RecurringAction a) =>
+      _detailCall(() => _repo.action(widget.id!, a));
+
+  /// The form on one line ([lineId]) or a new blank one ([newLine]); the
+  /// item's other lines go back unchanged.
+  void _editLine({String? lineId, bool newLine = false}) {
+    final d = _detail;
+    if (d == null) return;
+    resetDraft(RecurringDraft.fromDetail(d, lineId: lineId, newLine: newLine));
+    onDraftRestored();
+    enterEdit();
+  }
+
+  Future<void> _lineMenu(RecurringLine line, LineMenu a) async {
+    final l = AppLocalizations.of(context)!;
+    final id = widget.id!;
+    if (a == LineMenu.edit) return _editLine(lineId: line.id);
+    if (a == LineMenu.delete) {
+      final ok = await showConfirmDialog(
+        context,
+        title: l.recurringLineDeleteTitle,
+        message: l.recurringLineDeleteBody,
+        confirmLabel: l.commonDelete,
+        destructive: true,
+      );
+      if (!ok || !mounted) return;
+    }
+    await _detailCall(
+      () => switch (a) {
+        LineMenu.delete => _repo.deleteLine(id, line.id),
+        LineMenu.pause => _repo.lineAction(id, line.id, RecurringAction.pause),
+        LineMenu.resume => _repo.lineAction(
+          id,
+          line.id,
+          RecurringAction.resume,
+        ),
+        LineMenu.archive => _repo.lineAction(
+          id,
+          line.id,
+          RecurringAction.archive,
+        ),
+        LineMenu.restore => _repo.lineAction(
+          id,
+          line.id,
+          RecurringAction.restore,
+        ),
+        LineMenu.edit => throw StateError('handled above'),
+      },
+    );
+  }
+
+  /// ตารางงวด: the installments (one call), a tap = แก้งวดนี้ / tick.
+  Future<void> _openPlanTable() async {
+    final List<PlanInstallment> rows;
     try {
-      final r = await call();
-      accounts.patchBalances(r.balances);
-      if (!mounted) return;
-      HapticFeedback.mediumImpact();
-      _applyItems(r);
+      rows = await _repo.installments(widget.id!);
     } on ApiException catch (e) {
       if (mounted) showErrorSnackBar(context, e);
-    } finally {
-      if (mounted) setState(() => _busy = false);
+      return;
+    }
+    if (!mounted) return;
+    await showPlanTable(
+      context,
+      rows,
+      onPick: (i) => unawaited(_installmentMenu(i)),
+    );
+  }
+
+  Future<void> _installmentMenu(PlanInstallment i) async {
+    final id = widget.id!;
+    final a = await showInstallmentMenu(context, i);
+    if (!mounted || a == null) return;
+    switch (a) {
+      case InstallmentMenu.edit:
+        final r = await showInstallmentEditSheet(context, i);
+        if (r == null || !mounted) return;
+        await _detailCall(
+          () => _repo.updateInstallment(
+            id,
+            i.seq,
+            dueDate: r.due,
+            amount: r.amount,
+            principal: r.principal,
+            interest: r.interest,
+          ),
+        );
+      case InstallmentMenu.markPaid || InstallmentMenu.unmark:
+        await _detailCall(
+          () => _repo.markInstallment(
+            id,
+            i.seq,
+            paid: a == InstallmentMenu.markPaid,
+          ),
+        );
     }
   }
 
-  Future<void> _editOccurrence(
-    RecurringItem i, {
-    required OccurrenceFocus focus,
-  }) async {
-    final l = AppLocalizations.of(context)!;
-    final unknown = i.amount == null || i.amount! <= 0;
-    final now = today();
-    final r = await showOccurrenceSheet(
-      context,
-      title: focus == OccurrenceFocus.date
-          ? l.fpRecurringOccMoveTitle
-          : (unknown ? l.fpRecurringOccEnterTitle : l.fpRecurringOccEditTitle),
-      saveLabel: l.commonSave,
-      dateLabel: l.fpRecurringOccDate,
-      amountLabel: l.fpRecurringOccAmount,
-      date: i.date,
-      amount: unknown ? null : i.amount,
-      symbol: context.readUserCurrencySymbol,
-      first: i.date.isBefore(now) ? i.date : now,
-      last: DateTime(now.year + 2, now.month, now.day),
-      withAmount: focus == OccurrenceFocus.amount,
-      amountRequired: unknown,
-      focus: focus,
-    );
-    if (!mounted || r == null) return;
-    final date = r.date == i.date ? null : r.date;
-    await _occurrenceCall(
-      () => _repo.updateOccurrence(i.ruleId!, i.slot!, {
-        'date': ?(date == null ? null : ymd(date)),
-        'amount': ?r.amount,
-      }),
-    );
-  }
-
-  Future<void> _skip(RecurringItem i) async {
+  /// ปิดแผนก่อนกำหนด: the unticked installments are skipped.
+  Future<void> _closePlan() async {
     final l = AppLocalizations.of(context)!;
     final ok = await showConfirmDialog(
       context,
-      title: l.fpRecurringSkipTitle,
-      message: l.fpRecurringSkipBody,
-      confirmLabel: l.fpRecurringActSkip,
+      title: l.recurringPlanClose,
+      message: l.recurringPlanCloseBody,
+      confirmLabel: l.recurringPlanClose,
     );
     if (!ok || !mounted) return;
-    await _occurrenceCall(() => _repo.skipOccurrence(i.ruleId!, i.slot!));
+    await _run(() => _repo.closePlan(widget.id!));
   }
 
-  Future<void> _action(RecurringAction a) async {
+  /// One call that answers with the item page; the page takes it.
+  Future<void> _detailCall(Future<RecurringDetail> Function() call) async {
     setState(() => _busy = true);
     try {
-      final d = await _repo.action(widget.id!, a);
+      final d = await call();
       if (!mounted) return;
       _changed = true;
       HapticFeedback.mediumImpact();
@@ -518,17 +571,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     _change(working.copyWith(tagIds: picked.ids));
   }
 
-  void _setMode(TransactionType picked) {
-    if (picked == working.type) return;
-    _change(
-      working.copyWith(
-        type: picked,
-        clearCategory: true,
-        accountId: working.accountId,
-      ),
-    );
-  }
-
   Future<void> _pickDates() async {
     final l = AppLocalizations.of(context)!;
     final first = today();
@@ -589,26 +631,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     _change(working.copyWith(rule: picked));
   }
 
-  Future<void> _pickTrial() async {
-    final l = AppLocalizations.of(context)!;
-    final now = today();
-    final current = working.trialUntil;
-    final picked = await PpForgeDatePicker.show(
-      context,
-      initial: current ?? now.add(const Duration(days: 30)),
-      first: now,
-      last: DateTime(now.year + 2, now.month, now.day),
-      title: l.fpRecurringTrialUntil,
-      clearable: current != null,
-    );
-    if (!mounted || picked == null) return;
-    if (picked is PpForgeDatePicked) {
-      _change(working.copyWith(trialUntil: picked.date));
-    } else if (picked is PpForgeDateCleared) {
-      _change(working.copyWith(clearTrial: true));
-    }
-  }
-
   Future<void> _save() async {
     commitTextSession();
     final l = AppLocalizations.of(context)!;
@@ -624,10 +646,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       });
     }
     if (!formOk || !walletOk || !goalOk || !personOk) return;
-    if (!working.countOk) {
+    if (!working.planOk) {
       showPpForgeSnackBarOn(
         pageMessenger!,
-        l.fpRecurringCountRequired,
+        l.fpRecurringPlanIncomplete,
         tone: Tone.danger,
       );
       return;
@@ -655,7 +677,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         return;
       }
       _take(d);
-      commitSaved(RecurringDraft.from(d.recurring));
+      commitSaved(RecurringDraft.fromDetail(d));
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
@@ -670,7 +692,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       if (!mounted) return;
       _changed = true;
       _take(d);
-      commitSaved(RecurringDraft.from(d.recurring));
+      commitSaved(RecurringDraft.fromDetail(d));
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
@@ -712,53 +734,22 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     }
   }
 
+  /// Deletes the item and its lines; what its rounds wrote stays (txs as
+  /// they are, debt rows become general debts of the counterparty).
   Future<void> _delete(Recurring r) async {
     final l = AppLocalizations.of(context)!;
-    bool deleteTxs = false;
-    final RecurringDeletePreview? preview;
-    try {
-      preview = (await _repo.get(r.id, deletePreview: true)).deletePreview;
-    } on ApiException catch (e) {
-      if (mounted) {
-        showErrorSnackBarOn(pageMessenger!, e);
-      }
-      return;
-    }
-    if (!mounted) return;
-    final linked = preview?.linkedTransactions ?? 0;
-    final numbers = preview == null
-        ? l.recurringDeleteBody
-        : l.fpM5bRecurringDeleteNumbers(
-            preview.items,
-            preview.pendingDrafts,
-            preview.linkedTransactions,
-          );
-    if (linked > 0) {
-      final choice = await showLinkedPrompt(
-        context,
-        title: l.recurringDeleteTitle,
-        message: numbers,
-        cancelLabel: l.linkedCancel,
-        thisSideLabel: l.recurringDeleteKeepTxs,
-        bothSidesLabel: l.recurringDeleteWithTxs(linked),
-        destructive: true,
-      );
-      if (!mounted || choice == null) return;
-      deleteTxs = choice == LinkedChoice.bothSides;
-    } else {
-      final ok = await showConfirmDialog(
-        context,
-        title: l.recurringDeleteTitle,
-        message: numbers,
-        confirmLabel: l.commonDelete,
-        destructive: true,
-      );
-      if (!ok || !mounted) return;
-    }
+    final ok = await showConfirmDialog(
+      context,
+      title: l.recurringDeleteTitle,
+      message: l.recurringDeleteKeepsWritten,
+      confirmLabel: l.commonDelete,
+      destructive: true,
+    );
+    if (!ok || !mounted) return;
     setSaving(true);
     final accounts = context.read<AccountsCubit>();
     try {
-      final balances = await _repo.delete(r.id, deleteLinkedTxs: deleteTxs);
+      final balances = await _repo.delete(r.id);
       accounts.patchBalances(balances);
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -851,6 +842,14 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         ?banner,
         ?_notice(l, r),
         ?_focusCard(l, r),
+        if (d.page?.plan case final plan?)
+          RecurringPlanSection(plan: plan, onTable: _openPlanTable),
+        if (d.page case final page? when page.lines.length > 1)
+          RecurringLinesSection(
+            page: page,
+            onMenu: (line, a) => unawaited(_lineMenu(line, a)),
+            onAdd: page.actions.addLine ? () => _editLine(newLine: true) : null,
+          ),
         NoteSection(
           label: l.commonNote,
           editing: false,
@@ -911,7 +910,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         actions: [
           PpForgeMessageAction(
             label: l.recurringExtend,
-            onPressed: () => _action(RecurringAction.extend),
+            onPressed: () => _detailCall(
+              () =>
+                  _repo.extend(widget.id!, lineId: _detail?.page?.mainLine?.id),
+            ),
           ),
         ],
       );
@@ -936,10 +938,9 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     return null;
   }
 
-  /// Under the hero, one card. Something to do (a due occurrence, or this
-  /// month's coming one with no amount yet): ต้องจัดการ, the oldest one big
-  /// with its buttons, the all-at-once row, ดูทั้ง n งวด, then ครั้งถัดไป as a
-  /// line. Nothing to do: the next occurrence with แก้ยอด / เลื่อนวัน / ข้าม.
+  /// Under the hero: what to do (a due occurrence, or this month's coming
+  /// one with no amount yet) as the list page's รอยืนยัน box, for any count
+  /// (plan E). Nothing to do: nothing here; the next one is in the hero.
   Widget? _focusCard(AppLocalizations l, Recurring r) {
     final due = [
       for (final i in _produced.items)
@@ -952,107 +953,70 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       for (final i in _upcoming.items)
         if (i.needsAmount && i.state == OccurrenceState.upcoming) i,
     ];
-    final next = _nextItem;
-    final symbol = context.readUserCurrencySymbol;
-    final warning = Theme.of(context).extension<PpForgeColors>()!.warning;
-    bool unknown(RecurringItem i) => i.amount == null || i.amount! <= 0;
-    Widget money(RecurringItem i) => MoneyText(
-      signedOf(i.type, i.amount!, saving: i.isSaving),
-      tone: toneOf(i.type, saving: i.isSaving),
-      symbol: symbol,
-    );
-    String nextLabel(RecurringItem i) {
-      final when = dueLabel(l, date: i.date, daysUntil: i.daysUntil);
-      final seq = i.seq;
-      final total = i.total;
-      return r.kind == RecurringKind.installment && seq != null && total != null
-          ? l.fpRecurringNextInstallment(seq, total, when)
-          : l.fpRecurringNextOnce(when);
-    }
-
-    if (todo.isEmpty) {
-      if (next == null) return null;
-      final u = unknown(next);
-      return OccurrenceFocusCard(
-        key: const ValueKey('heroNext'),
-        date: next.date,
-        label: nextLabel(next),
-        value: u ? Text(l.fpRecurringAwaitingValue) : money(next),
-        valueColor: u ? warning : null,
-        primaryFirst: u,
-        actions: [
-          OccurrenceAction(
-            label: u ? l.fpRecurringActEnterAmount : l.fpRecurringActEditAmount,
-            onTap: () =>
-                unawaited(_editOccurrence(next, focus: OccurrenceFocus.amount)),
-          ),
-          OccurrenceAction(
-            label: l.fpRecurringActMove,
-            onTap: () =>
-                unawaited(_editOccurrence(next, focus: OccurrenceFocus.date)),
-          ),
-          OccurrenceAction(
-            label: l.fpRecurringActSkip,
-            onTap: () => unawaited(_skip(next)),
-          ),
-        ],
-        onTap: () => _openOccurrence(next),
-      );
-    }
+    if (todo.isEmpty) return null;
     final total = r.counts.notCreated > due.length
         ? r.counts.notCreated + todo.length - due.length
         : todo.length;
-    final nextLine = next != null && !todo.any((i) => i.id == next.id)
-        ? OccurrenceFocusNext(
-            key: const ValueKey('focusNext'),
-            label: nextLabel(next),
-            amount: unknown(next) ? null : money(next),
-            onTap: () => _openOccurrence(next),
-          )
-        : null;
-    if (todo.length > 1) return _dueList(l, todo, total, nextLine);
-    final first = todo.first;
-    final u = unknown(first);
-    return OccurrenceFocusCard(
-      key: const ValueKey('detailDue'),
-      warning: true,
-      title: l.occurrenceDueTitle,
-      trailing: total > 1 ? l.fpRecurringCountUnit(total) : null,
-      date: first.date,
-      label: dueLabel(l, date: first.date, daysUntil: first.daysUntil),
-      tag: first.state == OccurrenceState.upcoming
+    return _dueList(l, todo, total);
+  }
+
+  /// "งวดถัดไป (6/12) | อีก 12 วัน" for an item with an end, else
+  /// "งวดถัดไป | อีก 20 วัน".
+  String _nextLabel(AppLocalizations l, Recurring r, RecurringItem i) {
+    final when = dueLabel(l, date: i.date, daysUntil: i.daysUntil);
+    final seq = i.seq;
+    final total = i.total;
+    return r.hasEnd && seq != null && total != null
+        ? l.fpRecurringNextInstallment(seq, total, when)
+        : l.fpRecurringNextOnce(when);
+  }
+
+  /// The hero's last row: the next occurrence; a tap edits it.
+  Widget? _heroNext(AppLocalizations l, Recurring r) {
+    // A plan's next installment, with principal / interest (a card plan
+    // has no rounds of its own: it is billed on the card).
+    final plan = _detail?.page?.plan;
+    if (plan != null &&
+        plan.next != null &&
+        (plan.onCard || _nextItem == null)) {
+      final i = plan.next!;
+      final symbol = context.readUserCurrencySymbol;
+      return HeroNextOccurrence(
+        key: const ValueKey('heroNextInstallment'),
+        label: planNextLabel(
+          l,
+          plan,
+          i,
+          (v) => moneyString(context, v, symbol: symbol),
+        ),
+        amount: MoneyText(-i.amount, tone: MoneyTone.signed, symbol: symbol),
+        onTap: () => unawaited(_installmentMenu(i)),
+      );
+    }
+    final next = _nextItem;
+    if (next == null) return null;
+    final unknown = next.amount == null || next.amount! <= 0;
+    return HeroNextOccurrence(
+      key: const ValueKey('heroNext'),
+      label: _nextLabel(l, r, next),
+      amount: unknown
           ? null
-          : PpForgeChip(
-              label: waitingLabel(l, first),
-              tone: PpForgeChipTone.warning,
-              selected: true,
-              size: ChipSize.mini,
+          : MoneyText(
+              signedOf(next.type, next.amount!, saving: next.isSaving),
+              tone: toneOf(next.type, saving: next.isSaving),
+              symbol: context.readUserCurrencySymbol,
             ),
-      value: u ? Text(l.fpRecurringAwaitingValue) : money(first),
-      valueColor: u ? warning : null,
-      primaryFirst: true,
-      actions: occurrenceFocusActions(context, first, onChanged: _applyItems),
-      onTap: () => _openOccurrence(first),
-      footer: [
-        if (total > 1)
-          DueMoreRow(
-            label: l.occurrenceDueMore(total),
-            onTap: () => _onTab(_Tab.past),
-          ),
-        ?nextLine,
-      ],
+      amountText: unknown ? l.fpRecurringAwaitingValue : null,
+      amountColor: unknown
+          ? Theme.of(context).extension<PpForgeColors>()!.warning
+          : null,
+      onTap: () => _openOccurrence(next),
     );
   }
 
-  /// ต้องจัดการ with 2 or more: the two boxes (รอใส่ยอด / รอยืนยัน) as on
-  /// the list page, the date on the left (it is one rule), up to 5 per box,
-  /// ดูทั้ง n งวด to the ประวัติ tab, then ครั้งถัดไป.
-  Widget _dueList(
-    AppLocalizations l,
-    List<RecurringItem> todo,
-    int total,
-    Widget? nextLine,
-  ) {
+  /// ต้องจัดการ: the รอยืนยัน box as on the list page, the date on the left
+  /// (it is one item), ดูทั้ง n งวด to the past tab.
+  Widget _dueList(AppLocalizations l, List<RecurringItem> todo, int total) {
     final hidden = total - todo.length;
     return DueBoxes(
       key: const ValueKey('detailDue'),
@@ -1069,7 +1033,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
               onTap: () => _onTab(_Tab.past),
             )
           : null,
-      footer: nextLine,
     );
   }
 
@@ -1079,7 +1042,9 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
 
   Widget _statusChip(AppLocalizations l, Recurring r, {VoidCallback? onTap}) {
     final (label, kind) = switch (r.status) {
+      _ when r.isComplete => (l.recurringStatusDone, StatusKind.done),
       RecurringStatus.active => (l.recurringStatusActive, StatusKind.active),
+      RecurringStatus.done => (l.recurringStatusDone, StatusKind.done),
       RecurringStatus.paused => (l.recurringStatusPaused, StatusKind.paused),
       RecurringStatus.archived => (
         l.recurringStatusArchived,
@@ -1139,10 +1104,12 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
                 key: const ValueKey('heroRound'),
                 icon: AppIcons.recurring,
                 title: recurrenceLabel(l, rule),
-                subtitle: rule.end.kind == RecurrenceEndKind.never
+                subtitle: !r.hasEnd
                     ? l.fpRecurringSince(
                         DateFormat.yMMM(_locale).format(rule.start),
                       )
+                    : rule.freq == RecurrenceFreq.dates
+                    ? l.fpRecurringCountUnit(rule.dates.length)
                     : _endText(l, rule.end),
               ),
               const SizedBox(width: PpForgeSpacing.sm),
@@ -1159,6 +1126,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         if (stats.isNotEmpty) HeroTiles(joined: true, children: stats),
         ?_pickCards(l),
         HeroChipRow(chips: _heroChips(l, r)),
+        ?_heroNext(l, r),
       ],
     );
   }
@@ -1171,8 +1139,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     return null;
   }
 
-  /// A bill whose amount changes draws its recorded amounts as a line;
-  /// everything else its occurrences as a chain.
+  /// One rule for the chain, the tiles and the wording (plan E): an item
+  /// with an end ([Recurring.hasEnd]) draws every occurrence as a numbered
+  /// chain; an open-ended one whose amount changes draws its recorded
+  /// amounts as a line, else its recent occurrences as an open chain.
   Widget? _track(AppLocalizations l, Recurring r, RecurringStats? s) {
     final series = s?.series ?? const [];
     final dayLabels =
@@ -1181,7 +1151,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     String x(DateTime d) => dayLabels
         ? DateFormat.Md(_locale).format(d)
         : DateFormat.MMM(_locale).format(d);
-    if (!r.hasAmount && series.length >= 2) {
+    if (!r.hasEnd && !r.hasAmount && series.length >= 2) {
       final recent = series.length > 6
           ? series.sublist(series.length - 6)
           : series;
@@ -1202,7 +1172,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     }
     final chain = _chain(r);
     if (chain.dots.isEmpty) return null;
-    final open = r.rule.end.kind == RecurrenceEndKind.never;
+    final open = !r.hasEnd;
     final total = r.progressTotal;
     return OccurrenceChain(
       key: const ValueKey('heroChain'),
@@ -1216,12 +1186,12 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     );
   }
 
-  /// A rule with an end: every occurrence (the BE's `chain`, else from the
-  /// progress). No end: the loaded history, the next one and two after.
+  /// With an end: every occurrence (the BE's `chain`, else from the
+  /// progress). Open-ended: the loaded history, the next one and two after.
   ({List<ChainDot> dots, DateTime? first, DateTime? current}) _chain(
     Recurring r,
   ) {
-    final ended = endChainDots(r);
+    final ended = r.hasEnd ? endChainDots(r) : null;
     if (ended != null) return (dots: ended, first: null, current: null);
     final past = _produced.items.take(8).toList().reversed.toList();
     final ahead = [
@@ -1244,48 +1214,60 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     );
   }
 
-  /// Installment: paid / left / last one. A bill that changes: average /
-  /// last time / highest. Else: per month / per year / recorded.
+  /// Always three tiles (plan E), by [Recurring.hasEnd]. With an end: paid /
+  /// left / the last one (picked dates: รวม, never ปีละ). Open-ended with an
+  /// amount that changes: average / last time / highest; else per month /
+  /// per year / recorded. A value not known yet shows "–".
   List<Widget> _stats(AppLocalizations l, Recurring r, RecurringStats? s) {
     final symbol = context.readUserCurrencySymbol;
-    String money(double v) => moneyString(context, v, symbol: symbol);
+    String money(double? v) =>
+        v == null ? '–' : moneyString(context, v, symbol: symbol);
     Widget tile(String label, String value) => SummaryTileView(
       tile: SummaryTile(label: label, value: value),
     );
-    if (r.kind == RecurringKind.installment) {
+    if (r.hasEnd) {
       final per = r.amount ?? 0;
-      final total = r.progressTotal;
+      final count = r.progressTotal;
+      final paid = s?.paidTotal ?? per * r.progressDone;
       final left =
           s?.remainingTotal ??
-          (total == null ? null : per * (total - r.progressDone));
+          (count == null || !r.hasAmount
+              ? null
+              : per * (count - r.progressDone));
+      if (r.rule.freq == RecurrenceFreq.dates) {
+        return [
+          tile(l.fpRecurringStatPaid, money(paid)),
+          tile(l.fpRecurringStatRemaining, money(left)),
+          tile(
+            l.fpRecurringStatTotal,
+            money(left == null ? null : paid + left),
+          ),
+        ];
+      }
       final allShown = !_upcoming.windowed && !_upcoming.hasMore;
       final last =
           r.chain?.lastOrNull?.slot ??
           (allShown ? _upcoming.items.lastOrNull?.date : null) ??
           r.rule.end.date;
       return [
-        tile(
-          l.fpRecurringStatPaid,
-          money(s?.paidTotal ?? per * r.progressDone),
-        ),
-        if (left != null) tile(l.fpRecurringStatRemaining, money(left)),
-        if (last != null) tile(l.fpRecurringStatLast, _monthYear(last)),
+        tile(l.fpRecurringStatPaid, money(paid)),
+        tile(l.fpRecurringStatRemaining, money(left)),
+        tile(l.fpRecurringStatLast, last == null ? '–' : _monthYear(last)),
       ];
     }
     if (!r.hasAmount) {
-      final avg = s?.avgAmount ?? r.avgAmount;
-      final prev = s?.lastAmount;
-      final max = s?.maxAmount;
       return [
-        if (avg != null) tile(l.fpRecurringStatAvg, money(avg)),
-        if (prev != null) tile(l.fpRecurringStatPrev, money(prev)),
-        if (max != null) tile(l.fpRecurringStatMax, money(max)),
+        tile(l.fpRecurringStatAvg, money(s?.avgAmount ?? r.avgAmount)),
+        tile(l.fpRecurringStatPrev, money(s?.lastAmount)),
+        tile(l.fpRecurringStatMax, money(s?.maxAmount)),
       ];
     }
     final monthly = r.monthlyAmount;
     return [
-      if (monthly != null && monthly > 0)
-        tile(l.fpM5bRecurringPerMonth, money(monthly)),
+      tile(
+        l.fpM5bRecurringPerMonth,
+        money(monthly != null && monthly > 0 ? monthly : null),
+      ),
       tile(l.fpRecurringTileYearly, money(r.yearlyCost)),
       tile(
         l.fpRecurringTileSaved,
@@ -1357,7 +1339,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   String _endText(AppLocalizations l, RecurrenceEnd end) => switch (end.kind) {
     RecurrenceEndKind.never => l.recurringEndNever,
     RecurrenceEndKind.onDate => l.recurEndUntil(_date(end.date!)),
-    RecurrenceEndKind.afterCount => l.recurEndCount(end.count ?? 0),
+    RecurrenceEndKind.afterCount => l.fpRecurringCountUnit(end.count ?? 0),
   };
 
   /// Edit: when it runs. ทำซ้ำ opens the kit's custom-repeat sheet (its end
@@ -1418,9 +1400,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         size: ChipSize.chip,
       ),
       PpForgeChip(
-        label:
-            working.kind == RecurringKind.installment &&
-                end.kind == RecurrenceEndKind.afterCount
+        label: end.kind == RecurrenceEndKind.afterCount
             ? l.fpRecurringCountValue(end.count ?? 0)
             : _endText(l, end),
         size: ChipSize.chip,
@@ -1494,7 +1474,9 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
                 : () => openPage(context, '/categories/${category!.id}'),
             onLongPress: editing ? null : () => enterEdit(then: _pickCategory),
           );
-    final walletCard = !editing && account == null
+    final walletCard = w.paidBy != null
+        ? _paidByCard(l)
+        : !editing && account == null
         ? null
         : wallet(account, l.transactionFormAccountLabel);
     if (categoryCard == null || walletCard == null) {
@@ -1520,22 +1502,37 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     final editing = isEditing;
     final w = working;
     final p = w.person;
+    final inst = w.institution;
     final person = PickCard(
-      label: l.debtPersonPickerTitle,
-      value: p?.name,
+      label: l.recurringCounterpartyLabel,
+      value: inst?.name ?? p?.name,
       placeholder: l.debtPickPerson,
       dense: true,
       editable: editing,
       accent: Theme.of(context).colorScheme.primary,
       errorText: editing && _personMissing ? l.debtPickPerson : null,
-      leading: p == null
+      leading: inst != null
+          ? InstitutionMark(name: inst.name, iconCode: inst.iconCode, size: 32)
+          : p == null
           ? const PickCardEmptyIcon(AppIcons.contact, size: 32)
           : PersonMark(level: debtPersonLevel(p), avatar: p.avatar, size: 32),
       onTap: editing
-          ? _pickPerson
-          : () => openPage(context, debtPersonPath(p!)),
-      onLongPress: editing ? null : () => enterEdit(then: _pickPerson),
+          ? _pickCounterparty
+          : () => openPage(
+              context,
+              inst != null
+                  ? '/personal-debts/people/${Uri.encodeComponent(inst.debtKey)}'
+                  : debtPersonPath(p!),
+            ),
+      onLongPress: editing ? null : () => enterEdit(then: _pickCounterparty),
     );
+    if (w.paidBy != null) {
+      return FlowCards(
+        key: const ValueKey('debtFlow'),
+        from: person,
+        to: _paidByCard(l),
+      );
+    }
     final wallet = WalletPickCard(
       account: account,
       label: l.transactionFormAccountLabel,
@@ -1572,6 +1569,67 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   static String debtPersonPath(EmbeddedPerson p) =>
       '/personal-debts/people/'
       '${Uri.encodeComponent(debtPersonKey(contactId: p.contactId, name: p.name))}';
+
+  /// หนี้: a person or an institution (two short options, central).
+  Future<void> _pickCounterparty() async {
+    final l = AppLocalizations.of(context)!;
+    final institution = await showChoiceDialog<bool>(
+      context,
+      title: l.recurringCounterpartyLabel,
+      choices: [
+        DialogChoice(value: false, label: l.recurringCounterpartyPerson),
+        DialogChoice(value: true, label: l.recurringCounterpartyInstitution),
+      ],
+    );
+    if (!mounted || institution == null) return;
+    if (!institution) return _pickPerson();
+    final picked = await InstitutionPicker.one(
+      context,
+      selectedId: working.institution?.id,
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _personMissing = false);
+    _change(working.withInstitution(picked));
+  }
+
+  /// คนจ่ายแทน: the person who pays this line for me.
+  Future<void> _pickPaidBy() async {
+    final p = working.paidBy;
+    final picked = await showDebtPersonPicker(
+      context,
+      selected: p == null
+          ? null
+          : DebtPick(
+              key: debtPersonKey(contactId: p.contactId, name: p.name),
+              person: p,
+            ),
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _walletMissing = false);
+    _change(working.withPaidBy(picked.person));
+  }
+
+  /// The line's คนจ่ายแทน in place of its wallet card.
+  Widget _paidByCard(AppLocalizations l) {
+    final editing = isEditing;
+    final p = working.paidBy!;
+    return PickCard(
+      key: const ValueKey('paidByCard'),
+      label: l.recurringSourcePaidBy,
+      value: p.name,
+      placeholder: l.recurringPaidByPick,
+      dense: true,
+      editable: editing,
+      accent: Theme.of(context).colorScheme.primary,
+      leading: PersonMark(
+        level: debtPersonLevel(p),
+        avatar: p.avatar,
+        size: 32,
+      ),
+      onTap: editing ? _pickPaidBy : () => openPage(context, debtPersonPath(p)),
+      onLongPress: editing ? null : () => enterEdit(then: _pickPaidBy),
+    );
+  }
 
   Future<void> _pickPerson() async {
     final p = working.person;
@@ -1626,7 +1684,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   /// Edit: what it is and its options. ประเภท and แบบ drop down in place.
   Widget _detailSection(AppLocalizations l) {
     final w = working;
-    final transfer = w.isTransfer;
     return SectionCard(
       children: [
         SettingDropdownRow<RecurringKind>(
@@ -1657,27 +1714,21 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
                 ),
           ],
         ),
-        if (w.kind == RecurringKind.reminder)
-          SettingDropdownRow<TransactionType>(
-            label: l.fpRecurringFieldMode,
-            value: transfer
-                ? l.transactionTypeTransfer
-                : l.transactionTypeExpense,
-            icon: transfer ? AppIcons.transfer : AppIcons.expense,
-            selected: w.type,
+        if (w.canPaidBy && !w.cardPlan)
+          SettingDropdownRow<bool>(
+            key: const ValueKey('sourceRow'),
+            label: l.recurringSourceLabel,
+            value: w.paidBy == null
+                ? l.recurringSourceWallet
+                : l.recurringSourcePaidBy,
+            selected: w.paidBy != null,
             submits: false,
-            onSelected: _setMode,
+            onSelected: (paid) => paid
+                ? unawaited(_pickPaidBy())
+                : _change(working.withPaidBy(null)),
             options: [
-              SheetOption(
-                value: TransactionType.expense,
-                label: l.transactionTypeExpense,
-                leading: const PpForgeIcon(AppIcons.expense),
-              ),
-              SheetOption(
-                value: TransactionType.transfer,
-                label: l.transactionTypeTransfer,
-                leading: const PpForgeIcon(AppIcons.transfer),
-              ),
+              SheetOption(value: false, label: l.recurringSourceWallet),
+              SheetOption(value: true, label: l.recurringSourcePaidBy),
             ],
           ),
         if (w.isDebt)
@@ -1695,16 +1746,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
               SheetOption(value: DebtEntrySub.record, label: l.debtRecordChip),
               SheetOption(value: DebtEntrySub.repay, label: l.debtSettleChip),
             ],
-          ),
-        if (w.kind == RecurringKind.subscription)
-          PpForgeDetailRow(
-            label: l.fpRecurringTrialUntil,
-            onTap: _pickTrial,
-            trailing: DatePickChip(
-              date: w.trialUntil,
-              onPick: _pickTrial,
-              onClear: () => _change(w.copyWith(clearTrial: true)),
-            ),
           ),
         SettingToggleRow(
           key: const ValueKey('autoCreateRow'),
@@ -2240,6 +2281,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             onChanged: (v) => _onText(_Field.amount, v),
             validator: (v) {
               final n = AmountInput.parse(v);
+              if (w.cardPlan) return null;
               if (w.amountOptional && (v ?? '').trim().isEmpty) return null;
               return (n == null || n <= 0) ? l.recurringAmountInvalid : null;
             },
@@ -2261,12 +2303,18 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       info: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (w.kind == RecurringKind.reminder) ...[
-            PpForgeMessage(message: l.fpRecurringReminderHint),
-            const SizedBox(height: PpForgeSpacing.md),
-          ],
-          _periodSection(l),
+          if (!w.cardPlan) _periodSection(l),
           _detailSection(l),
+          if (w.isDebt)
+            RecurringPlanForm(
+              plan: w.plan,
+              onChanged: (p) => _change(working.withPlan(p)),
+            ),
+          RecurringRemindersForm(
+            reminders: w.reminders,
+            hasEnd: w.rule.end.kind != RecurrenceEndKind.never,
+            onChanged: (r) => _change(working.withReminders(r)),
+          ),
         ],
       ),
       note: NoteSection(
@@ -2310,6 +2358,14 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           consequence: l.fpRecurringDuplicateConsequence,
           onTap: isSaving ? null : () => _duplicate(r),
         ),
+        if (_detail?.page?.plan case final plan? when !plan.closed)
+          EndZoneAction(
+            kind: EndZoneKind.close,
+            icon: AppIcons.check,
+            label: l.recurringPlanClose,
+            consequence: l.recurringPlanCloseConsequence,
+            onTap: isSaving ? null : _closePlan,
+          ),
         if (canArchive)
           EndZoneAction(
             kind: EndZoneKind.archive,

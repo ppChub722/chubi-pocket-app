@@ -179,7 +179,11 @@ Future<void> _onExtendRecurring(BuildContext ctx, AppNotification n) async {
   final inboxCubit = ctx.read<NotificationsInboxCubit>();
   final messenger = ScaffoldMessenger.of(ctx);
   try {
-    await repo.extend(id, end: extendedEnd(n.payload));
+    await repo.extend(
+      id,
+      lineId: n.payload['recurring_rule_id'] as String?,
+      end: extendedEnd(n.payload),
+    );
     await _reload(inboxCubit);
   } on ApiException catch (e) {
     _showError(messenger, e);

@@ -1,12 +1,15 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../ui/ui.dart' show PpForgeIconCode;
+import '../../institutions/domain/institution.dart' show InstitutionRef;
 import '../../recurring/domain/recurring.dart'
     show RecurringPauseReason, RecurringStatus, recurringDebtSubFromJson;
 import '../../transactions/domain/refs.dart';
 import '../../transactions/domain/transaction.dart';
+import 'debt_counterparty.dart';
 import 'debt_direction.dart';
 
+export 'debt_counterparty.dart';
 export 'debt_direction.dart';
 export 'debt_link.dart';
 
@@ -64,7 +67,28 @@ class PersonBalance extends Equatable {
     this.firstActivityAt,
     this.lastActivity,
     this.nextDueDate,
+    this.kind = DebtCounterpartyKind.person,
+    this.institution,
+    this.entriesPreview = const [],
+    this.entriesCount,
   });
+
+  /// 0.4.3: a person or an institution (`i:` key).
+  final DebtCounterpartyKind kind;
+
+  /// The institution of an `i:` row; null for a person.
+  final InstitutionRef? institution;
+
+  /// The list group's first rows (BE: the first 3); empty = an older BE.
+  final List<DebtPreviewRow> entriesPreview;
+
+  /// How many rows the group has in all ("ดูทั้ง N"); null = not sent.
+  final int? entriesCount;
+
+  bool get isInstitution => kind == DebtCounterpartyKind.institution;
+
+  /// A plan of a recurring item among the group's rows ("มีงวด").
+  bool get hasPlan => entriesPreview.any((r) => r.plan != null);
 
   /// The earliest due date among the unpaid debts on the person's current
   /// side; null when even or none has one.
@@ -110,6 +134,16 @@ class PersonBalance extends Equatable {
         ? DebtLastActivity.fromJson(_map(json['last_activity'])!)
         : null,
     nextDueDate: _date(json['next_due_date']),
+    kind: DebtCounterpartyKind.fromJson(
+      json['kind'],
+      key: json['key'] as String?,
+    ),
+    institution: institutionOf(json, json['key'] as String),
+    entriesPreview: [
+      for (final r in (json['entries_preview'] as List?) ?? const [])
+        ?DebtPreviewRow.tryParse(r),
+    ],
+    entriesCount: (json['entries_count'] as num?)?.toInt(),
   );
 
   static PersonBalance? maybe(Object? json) =>
@@ -128,6 +162,10 @@ class PersonBalance extends Equatable {
     firstActivityAt,
     lastActivity,
     nextDueDate,
+    kind,
+    institution,
+    entriesPreview,
+    entriesCount,
   ];
 }
 
@@ -176,7 +214,14 @@ class DebtTotals extends Equatable {
     this.iOwePeople = 0,
     this.over30DaysPeople = 0,
     this.counts,
+    this.payThisMonth,
+    this.receiveThisMonth,
   });
+
+  /// 0.4.3: what comes due this month to pay / to receive (null = an older
+  /// BE).
+  final double? payThisMonth;
+  final double? receiveThisMonth;
 
   /// The list's filter chips (0.4.0-3): people with something open, per
   /// side, and older than 30 days. Null = an older BE (count on the device).
@@ -204,6 +249,8 @@ class DebtTotals extends Equatable {
           owedToMePeople: (json['owed_to_me_people'] as num?)?.toInt() ?? 0,
           iOwePeople: (json['i_owe_people'] as num?)?.toInt() ?? 0,
           over30DaysPeople: (json['over_30_days_people'] as num?)?.toInt() ?? 0,
+          payThisMonth: (json['pay_this_month'] as num?)?.toDouble(),
+          receiveThisMonth: (json['receive_this_month'] as num?)?.toDouble(),
           counts: switch (_map(json['counts'])) {
             final c? => (
               all: (c['all'] as num?)?.toInt() ?? 0,
@@ -225,6 +272,8 @@ class DebtTotals extends Equatable {
     iOwePeople,
     over30DaysPeople,
     counts,
+    payThisMonth,
+    receiveThisMonth,
   ];
 }
 
@@ -318,7 +367,12 @@ class DebtEntry extends Equatable {
     this.partnerLinked = false,
     this.disconnectedAt,
     this.bills = const [],
+    this.recurring,
   });
+
+  /// 0.4.3: the recurring item this row belongs to (its tag "ผ่อนโทรศัพท์
+  /// 3/12"); null = a general debt.
+  final DebtRecurringRef? recurring;
 
   /// 0.4.1-2 V5 / V7: the shared bills this debt books, oldest first; one =
   /// a per-bill debt, several = a lump ("claim ก้อน"); empty = none.
@@ -406,6 +460,7 @@ class DebtEntry extends Equatable {
       for (final b in (json['bills'] as List?) ?? const [])
         if (b is Map) DebtBillPart.fromJson(b.cast<String, dynamic>()),
     ],
+    recurring: DebtRecurringRef.tryParse(json['recurring']),
   );
 
   static DebtEntry? maybe(Object? json) =>
@@ -433,6 +488,7 @@ class DebtEntry extends Equatable {
     partnerLinked,
     disconnectedAt,
     bills,
+    recurring,
   ];
 }
 
@@ -599,6 +655,8 @@ class DebtPersonDetail extends Equatable {
     this.counts = const DebtCounts(),
     this.message = const DebtSummaryMessage(),
     this.recurring = const [],
+    this.recurrings = const [],
+    this.cardDebts = const [],
   });
 
   final PersonBalance balance;
@@ -612,6 +670,13 @@ class DebtPersonDetail extends Equatable {
   /// newest first; empty = none (or an older BE).
   final List<DebtPersonRecurring> recurring;
 
+  /// 0.4.3: this counterparty's recurring items (section รายการประจำ), each
+  /// with its plan; an older BE's `recurring[]` rows read the same way.
+  final List<DebtCounterpartyRecurring> recurrings;
+
+  /// 0.4.3, an institution's page: "หนี้บัตรเครดิต" per linked card.
+  final List<DebtCardDebt> cardDebts;
+
   factory DebtPersonDetail.fromJson(Map<String, dynamic> json) =>
       DebtPersonDetail(
         balance: PersonBalance.fromJson(json),
@@ -619,10 +684,26 @@ class DebtPersonDetail extends Equatable {
         counts: DebtCounts.fromJson(_map(json['counts'])),
         message: DebtSummaryMessage.fromJson(_map(json['summary_message'])),
         recurring: _list(json['recurring'], DebtPersonRecurring.fromJson),
+        recurrings: _list(
+          json['recurrings'] ?? json['recurring'],
+          DebtCounterpartyRecurring.fromJson,
+        ),
+        cardDebts: [
+          for (final c in (json['card_debts'] as List?) ?? const [])
+            ?DebtCardDebt.tryParse(c),
+        ],
       );
 
   @override
-  List<Object?> get props => [balance, entries, counts, message, recurring];
+  List<Object?> get props => [
+    balance,
+    entries,
+    counts,
+    message,
+    recurring,
+    recurrings,
+    cardDebts,
+  ];
 }
 
 /// One หนี้ recurring setting on the person page (BE DebtPersonPage

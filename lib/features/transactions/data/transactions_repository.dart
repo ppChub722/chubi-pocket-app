@@ -191,6 +191,7 @@ class TransactionsRepository {
     List<Map<String, dynamic>>? splits,
     String? sourceProjectTransactionId,
     Map<String, dynamic>? link,
+    Map<String, dynamic>? installment,
   }) async {
     try {
       final body = <String, dynamic>{
@@ -204,6 +205,9 @@ class TransactionsRepository {
         'description': ?description,
         'note': ?note,
         'transfer_to_account_id': ?transferToAccountId,
+        // 0.4.3 ผ่อน: an expense on a card / pay-later wallet also makes a
+        // debt item with its plan (one write).
+        'installment': ?installment,
         if (tagIds.isNotEmpty) 'tag_ids': tagIds,
         if (splits != null && splits.isNotEmpty) 'splits': splits,
         'source_project_transaction_id': ?sourceProjectTransactionId,
